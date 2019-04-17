@@ -44,7 +44,7 @@ describe('ConnectPage', () => {
       .getByText('Add plugin')
       .click();
 
-    cy.uploadPlugin(
+    cy.uploadJar(
       'input[type=file]',
       'plugin/ohara-it-sink.jar',
       'ohara-it-sink.jar',

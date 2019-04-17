@@ -15,52 +15,71 @@
  */
 
 import * as URLS from '../../src/constants/urls';
+import { makeRandomStr } from '../utils';
 
-const testData = {
-  cluster: 'embedded_worker_cluster',
-  pipeline: {
-    name: 'pl00',
-  },
-  jarName: 'streamApp.jar',
-};
+let pipelineParams;
 
 describe('StreamApp', () => {
-  before(() => {
-    cy.deleteAllPipelines();
-    cy.insertPipeline(testData.cluster, testData.pipeline);
-  });
-
   beforeEach(() => {
+    pipelineParams = {
+      name: makeRandomStr(),
+      workerName: 'cluster',
+    };
+    cy.createPipeline(pipelineParams);
     cy.visit(URLS.PIPELINE);
   });
 
-  it('creates a streamApp and displays in the streamApp list modal', () => {
-    // open pipeline edit page
-    cy.getAllByTestId('edit-pipeline')
-      .should('have.length', 1)
-      .click()
+  it('adds a streamApp into pipeline graph', () => {
+    cy.getByText(pipelineParams.name)
+      .then($el => {
+        cy.wrap($el.parent()).as('targetPipeline');
+
+        cy.get('@targetPipeline')
+          .getByTestId('edit-pipeline')
+          .click();
+      })
       .location('pathname')
       .should('contain', '/pipelines/edit/');
 
-    // open streamApp modal and upload a jar file
     cy.getByTestId('toolbar-streams')
       .click()
-      .get('input[type=file]')
-      .uploadFile(testData.jarName)
-      .wait(500)
-      .getAllByTestId('stream-app-item')
-      .should('have.length', 1);
+      .uploadJar(
+        'input[type=file]',
+        'streamApp/streamApp.jar',
+        'streamApp.jar',
+        'application/java-archive',
+      )
+      .wait(500);
+
+    cy.getByText('Stream app successfully uploaded!')
+      .should('have.length', 1)
+      .getByText('streamApp.jar')
+      .getByText('Add')
+      .click()
+      .getByText('Untitled streamApp')
+      .should('be.exist');
   });
 
-  it('updates streamApp name to "streamApp_2.jar"', () => {
-    // open streamApp modal
-    cy.getByTestId('edit-pipeline')
-      .click()
-      .getByTestId('toolbar-streams')
-      .click();
+  it('edits streamApp name', () => {
+    cy.getByText(pipelineParams.name)
+      .then($el => {
+        cy.wrap($el.parent()).as('targetPipeline');
 
-    // rename to 'streamApp_2.jar'
-    cy.getByText(testData.jarName)
+        cy.get('@targetPipeline')
+          .getByTestId('edit-pipeline')
+          .click();
+      })
+      .getByTestId('toolbar-streams')
+      .click()
+      .get('input[type=file]')
+      .uploadJar(
+        'input[type=file]',
+        'streamApp/streamApp.jar',
+        'streamApp.jar',
+        'application/java-archive',
+      )
+      .wait(500)
+      .getByText('streamApp.jar')
       .click()
       .getByTestId('title-input')
       .type('{leftarrow}{leftarrow}{leftarrow}{leftarrow}')
@@ -71,14 +90,25 @@ describe('StreamApp', () => {
   });
 
   it('deletes streamApp', () => {
-    // open streamApp modal
-    cy.getByTestId('edit-pipeline')
-      .click()
-      .getByTestId('toolbar-streams')
-      .click();
+    cy.getByText(pipelineParams.name)
+      .then($el => {
+        cy.wrap($el.parent()).as('targetPipeline');
 
-    // deletes the first item from stream app list
-    cy.getByTestId('delete-stream-app')
+        cy.get('@targetPipeline')
+          .getByTestId('edit-pipeline')
+          .click();
+      })
+      .getByTestId('toolbar-streams')
+      .click()
+      .get('input[type=file]')
+      .uploadJar(
+        'input[type=file]',
+        'streamApp/streamApp.jar',
+        'streamApp.jar',
+        'application/java-archive',
+      )
+      .wait(500)
+      .getByTestId('delete-stream-app')
       .click()
       .getByText('Yes, Delete this row')
       .click()

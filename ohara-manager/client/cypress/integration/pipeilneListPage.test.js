@@ -45,8 +45,12 @@ describe('PipelineListPage', () => {
 
   it('edits a pipeline', () => {
     const pipelineName = makeRandomStr();
+    const pipelineParams = {
+      name: pipelineName,
+      workerName: serviceNames.workerName,
+    };
 
-    cy.insertPipeline(serviceNames.workerName, { name: pipelineName })
+    cy.createPipeline(pipelineParams)
       .visit(URLS.PIPELINE)
       .getByTestId('edit-pipeline')
       .click()
@@ -57,8 +61,12 @@ describe('PipelineListPage', () => {
 
   it('deletes a pipeline', () => {
     const pipelineName = makeRandomStr();
+    const pipelineParams = {
+      name: pipelineName,
+      workerName: serviceNames.workerName,
+    };
 
-    cy.insertPipeline(serviceNames.workerName, { name: pipelineName })
+    cy.createPipeline(pipelineParams)
       .visit(URLS.PIPELINE)
       .getByText(pipelineName)
       .getByTestId('delete-pipeline')
