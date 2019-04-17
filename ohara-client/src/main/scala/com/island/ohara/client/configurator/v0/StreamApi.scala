@@ -153,18 +153,18 @@ object StreamApi {
     *
     * @param name cluster name
     * @param imageName image name
-    * @param ports port list (useless in stream)
     * @param nodeNames actual running nodes
     * @param state the state of this warehouse (see '''ContainerState''')
     */
   final case class StreamClusterInfo(
     name: String,
     imageName: String,
-    // We don't care the ports since streamApp communicates by broker
-    ports: Seq[Int] = Seq.empty,
     nodeNames: Seq[String] = Seq.empty,
     state: Option[String] = None
-  ) extends ClusterInfo
+  ) extends ClusterInfo {
+    // We don't care the ports since streamApp communicates by broker
+    override def ports: Seq[Int] = Seq.empty
+  }
 
   // StreamApp List Request Body
   final case class StreamListRequest(jarName: String)

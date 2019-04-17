@@ -16,6 +16,7 @@
 
 package com.island.ohara.client.configurator.v0
 
+import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.VersionUtils
 import org.junit.Test
@@ -42,5 +43,22 @@ class TestStreamApi extends SmallTest with Matchers {
   def checkClusterNameChar(): Unit = {
     val appId = "this!@is#_not@@allow))string"
     an[IllegalArgumentException] should be thrownBy StreamApi.formatClusterName(appId)
+  }
+
+  @Test
+  def checkPortsShouldBeEmpty(): Unit = {
+    val info = StreamClusterInfo(
+      name = "foo",
+      imageName = "bar",
+      nodeNames = Seq("fake"),
+      state = Some("RUNNING")
+    )
+
+    info.name shouldBe "foo"
+    info.imageName shouldBe "bar"
+    info.nodeNames.size shouldBe 1
+    info.nodeNames.head shouldBe "fake"
+    info.state.get shouldBe "RUNNING"
+    info.ports shouldBe Seq.empty
   }
 }
