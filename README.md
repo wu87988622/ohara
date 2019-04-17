@@ -4,6 +4,7 @@ Easy to deploy the streaming application
 
 [![Build Status](https://builds.is-land.com.tw/buildStatus/icon?job=PostCommit-OHARA)](https://builds.is-land.com.tw/job/PostCommit-OHARA/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![jFrog Bintray](https://img.shields.io/bintray/v/oharastream/ohara/ohara-client.svg)](https://bintray.com/oharastream/ohara)
 
 ### Getting Started
 
