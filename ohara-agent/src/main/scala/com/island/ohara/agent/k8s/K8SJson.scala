@@ -16,8 +16,10 @@
 
 package com.island.ohara.agent.k8s
 
-import spray.json.{DeserializationException, JsObject, JsString, JsValue, RootJsonFormat}
+import com.island.ohara.agent.k8s.K8SClient.ImagePullPolicy
+import spray.json.{DeserializationException, JsArray, JsObject, JsString, JsValue, RootJsonFormat}
 import spray.json.DefaultJsonProtocol._
+import spray.json._
 
 object K8SJson {
   //for show container information
@@ -108,8 +110,38 @@ object K8SJson {
                                       image: String,
                                       env: Seq[CreatePodEnv],
                                       ports: Seq[CreatePodPortMapping],
-                                      imagePullPolicy: String)
-  implicit val CREATEPOD_CONTAINER_FORMAT: RootJsonFormat[CreatePodContainer] = jsonFormat5(CreatePodContainer)
+                                      imagePullPolicy: ImagePullPolicy)
+
+  implicit val CREATEPOD_CONTAINER_FORMAT: RootJsonFormat[CreatePodContainer] = new RootJsonFormat[CreatePodContainer] {
+    override def write(obj: CreatePodContainer): JsValue = JsObject(
+      "name" -> JsString(obj.name),
+      "image" -> JsString(obj.image),
+      "env" -> JsArray(obj.env.map(_.toJson).toVector),
+      "ports" -> JsArray(obj.ports.map(_.toJson).toVector),
+      "imagePullPolicy" -> JsString(obj.imagePullPolicy.toString())
+    )
+
+    override def read(json: JsValue): CreatePodContainer =
+      json.asJsObject.getFields("name", "image", "env", "ports", "imagePullPolicy") match {
+        case Seq(JsString(name), JsString(image), JsArray(env), JsArray(ports), JsString(imagePullPolicy)) =>
+          CreatePodContainer(
+            name,
+            image,
+            env.map(_.convertTo[CreatePodEnv]),
+            ports.map(_.convertTo[CreatePodPortMapping]),
+            imagePullPolicy match {
+              case "ALWAYS" =>
+                ImagePullPolicy.ALWAYS
+              case "NEVER" =>
+                ImagePullPolicy.NEVER
+              case "IfNotPresent" =>
+                ImagePullPolicy.IFNOTPRESENT
+              case _ =>
+                throw new IllegalArgumentException(s"The ${imagePullPolicy} isn't image pull policy value")
+            }
+          )
+      }
+  }
 
   final case class CreatePodNodeSelector(hostname: String)
   implicit val CREATEPOD_NODESELECTOR_FORMAT: RootJsonFormat[CreatePodNodeSelector] =

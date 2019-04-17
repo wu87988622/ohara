@@ -17,16 +17,46 @@
 package com.island.ohara.agent.k8s
 
 import com.island.ohara.agent.k8s.K8SClient.ImagePullPolicy
+import com.island.ohara.agent.k8s.K8SJson.CreatePodContainer
 import com.island.ohara.common.rule.SmallTest
 import org.junit.Test
 import org.scalatest.Matchers
+import spray.json._
 
 class TestK8SClient extends SmallTest with Matchers {
 
   @Test
   def testCreatorEnumator(): Unit = {
-    ImagePullPolicy.Always.toString shouldBe "Always"
-    ImagePullPolicy.IfNotPresent.toString shouldBe "IfNotPresent"
-    ImagePullPolicy.Never.toString shouldBe "Never"
+    ImagePullPolicy.ALWAYS.toString shouldBe "Always"
+    ImagePullPolicy.IFNOTPRESENT.toString shouldBe "IfNotPresent"
+    ImagePullPolicy.NEVER.toString shouldBe "Never"
+  }
+
+  @Test
+  def testCreatePodContainerNonePolicy(): Unit = {
+    val json: String =
+      CreatePodContainer("podName", "image", Seq(), Seq(), ImagePullPolicy.IFNOTPRESENT).toJson.toString
+    json shouldBe "{\"name\":\"podName\",\"image\":\"image\",\"ports\":[],\"imagePullPolicy\":\"IfNotPresent\",\"env\":[]}"
+  }
+
+  @Test
+  def testPolicyIsAlways(): Unit = {
+    val json: String =
+      CreatePodContainer("podName", "image", Seq(), Seq(), ImagePullPolicy.ALWAYS).toJson.toString
+    json shouldBe "{\"name\":\"podName\",\"image\":\"image\",\"ports\":[],\"imagePullPolicy\":\"Always\",\"env\":[]}"
+  }
+
+  @Test
+  def testPolicyIsNever(): Unit = {
+    val json: String =
+      CreatePodContainer("podName", "image", Seq(), Seq(), ImagePullPolicy.NEVER).toJson.toString
+    json shouldBe "{\"name\":\"podName\",\"image\":\"image\",\"ports\":[],\"imagePullPolicy\":\"Never\",\"env\":[]}"
+  }
+
+  @Test
+  def testPolicyIsIfNotPresent(): Unit = {
+    val json: String =
+      CreatePodContainer("podName", "image", Seq(), Seq(), ImagePullPolicy.IFNOTPRESENT).toJson.toString
+    json shouldBe "{\"name\":\"podName\",\"image\":\"image\",\"ports\":[],\"imagePullPolicy\":\"IfNotPresent\",\"env\":[]}"
   }
 }

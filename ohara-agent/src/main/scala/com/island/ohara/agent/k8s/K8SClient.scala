@@ -16,6 +16,8 @@
 
 package com.island.ohara.agent.k8s
 
+import java.util.Objects
+
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
@@ -44,6 +46,8 @@ import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, Port
 import com.island.ohara.common.util.{CommonUtils, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 import spray.json.{RootJsonFormat, _}
+import com.island.ohara.client.kafka.Enum
+import com.island.ohara.common.annotations.Optional
 
 import scala.concurrent.{Await, ExecutionContext, Future}
 
@@ -231,14 +235,12 @@ object K8SClient {
 
       override def containerCreator(): ContainerCreator = new ContainerCreator() {
         private[this] var name: String = CommonUtils.randomString()
+        private[this] var imagePullPolicy: ImagePullPolicy = ImagePullPolicy.IFNOTPRESENT
         private[this] var imageName: String = _
         private[this] var hostname: String = _
         private[this] var nodename: String = _
         private[this] var domainName: String = _
         private[this] var labelName: String = _
-
-        private[this] var imagePullPolicy: ImagePullPolicy.Value = ImagePullPolicy.IfNotPresent
-
         private[this] var envs: Map[String, String] = Map.empty
         private[this] var ports: Map[Int, Int] = Map.empty
 
@@ -282,8 +284,9 @@ object K8SClient {
           this
         }
 
-        override def pullImagePolicy(imagePullPolicy: ImagePullPolicy.Value): ContainerCreator = {
-          this.imagePullPolicy = imagePullPolicy
+        @Optional
+        override def pullImagePolicy(imagePullPolicy: ImagePullPolicy): ContainerCreator = {
+          this.imagePullPolicy = Objects.requireNonNull(imagePullPolicy, "pullImagePolicy should not be null")
           this
         }
 
@@ -298,7 +301,7 @@ object K8SClient {
                                  imageName,
                                  envs.map(x => CreatePodEnv(x._1, x._2)).toSeq,
                                  ports.map(x => CreatePodPortMapping(x._1, x._2)).toSeq,
-                                 imagePullPolicy.toString))
+                                 imagePullPolicy))
           )
 
           val requestJson =
@@ -370,10 +373,20 @@ object K8SClient {
 
     def labelName(labelName: String): ContainerCreator
 
-    def pullImagePolicy(imagePullPolicy: ImagePullPolicy.Value): ContainerCreator
+    def pullImagePolicy(imagePullPolicy: ImagePullPolicy): ContainerCreator
   }
 
-  object ImagePullPolicy extends Enumeration {
-    val Always, Never, IfNotPresent = Value
+  sealed abstract class ImagePullPolicy
+  object ImagePullPolicy extends Enum[ImagePullPolicy] {
+
+    case object ALWAYS extends ImagePullPolicy {
+      override def toString: String = "Always"
+    }
+    case object NEVER extends ImagePullPolicy {
+      override def toString: String = "Never"
+    }
+    case object IFNOTPRESENT extends ImagePullPolicy {
+      override def toString: String = "IfNotPresent"
+    }
   }
 }
