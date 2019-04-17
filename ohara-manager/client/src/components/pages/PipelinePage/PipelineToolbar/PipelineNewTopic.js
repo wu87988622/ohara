@@ -80,6 +80,7 @@ class PipelineNewTopic extends React.Component {
             list={topics}
             selected={currentTopic}
             handleChange={this.handleSelectChange}
+            data-testid="topic-select"
           />
         </React.Fragment>
       </Box>

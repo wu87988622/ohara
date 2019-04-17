@@ -17,7 +17,7 @@
 import * as URLS from '../../src/constants/urls';
 import { makeServiceNames } from '../utils';
 
-describe('PipelinePage', () => {
+describe('PipelineNewPage', () => {
   const serviceNames = makeServiceNames();
 
   before(() => {
@@ -29,33 +29,28 @@ describe('PipelinePage', () => {
   });
 
   beforeEach(() => {
-    cy.visit(URLS.PIPELINE);
-    cy.getByTestId('new-pipeline').click();
-    cy.getByText('Next').click();
+    cy.visit(URLS.PIPELINE)
+      .getByTestId('new-pipeline')
+      .click()
+      .getByText('Next')
+      .click();
   });
 
-  it('creates a pipeline and displays in the pipeline list page', () => {
-    // This is needed so cypress can get the correct DOM element to act on
-    cy.wait(300);
+  it('adds a new topic into pipeline graph', () => {
+    cy.createTopic().as('createTopic');
 
-    const pipelineName = 'Test pipeline';
-
-    cy.getByText('Untitled pipeline')
-      .click({ force: true })
-      .getByTestId('title-input')
-      .clear()
-      .type(pipelineName)
-      .blur();
-
-    cy.visit(URLS.HOME);
-    cy.getByText(pipelineName)
-      .should('have.length', 1)
-      .siblings('td')
-      .getByTestId('delete-pipeline')
-      .find('button')
+    cy.getByTestId('toolbar-topics')
       .click()
-      .getByText('Yes, Delete this pipeline')
-      .click();
+      .get('@createTopic')
+      .then(topic => {
+        cy.getByTestId('topic-select').select(topic.name);
+      })
+      .getByText('Add')
+      .click()
+      .get('@createTopic')
+      .then(topic => {
+        cy.getByText(topic.name).should('be.exist');
+      });
   });
 
   it('Creates a FTP source connector', () => {

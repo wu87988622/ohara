@@ -16,7 +16,7 @@
 
 import 'cypress-testing-library/add-commands';
 
-import { makeRandomPort, getFakeNode } from '../utils';
+import { makeRandomPort, getFakeNode, makeRandomStr } from './utils';
 import { setUserKey } from '../../src/utils/authUtils';
 import { VALID_USER } from '../../src/constants/cypress';
 import * as _ from '../../src/utils/commonUtils';
@@ -206,6 +206,15 @@ Cypress.Commands.add('insertPipeline', (cluster, pipeline) => {
     rules: pipeline.rules || {},
     workerClusterName: cluster,
   });
+});
+
+Cypress.Commands.add('createTopic', overrides => {
+  cy.request('POST', '/api/topics', {
+    name: makeRandomStr(),
+    numberOfReplications: 1,
+    numberOfPartitions: 1,
+    ...overrides,
+  }).then(({ body }) => body); // we'll need the returned data later on
 });
 
 /**
