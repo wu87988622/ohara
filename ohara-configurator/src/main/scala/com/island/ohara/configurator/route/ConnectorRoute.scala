@@ -60,39 +60,37 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
     request
   }
 
-  private[route] def errorMessage(state: Option[ConnectorState]): Option[String] = state
-    .filter(_ == ConnectorState.FAILED)
-    .map(_ => "Some terrible things happen on your connector... Please use LOG APIs to see more details")
-
   private[this] def update(
     connectorConfig: ConnectorDescription,
     workerClient: WorkerClient,
     counters: Seq[CounterMBean])(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
     workerClient
       .status(connectorConfig.id)
-      .map(s => Some(s.connector.state))
+      .map(s => Some(s.connector.state) -> s.connector.trace)
       .recover {
         case e: Throwable =>
-          LOG.error(s"failed to fetch stats for $connectorConfig", e)
-          None
+          val message = s"failed to fetch stats for $connectorConfig"
+          LOG.error(message, e)
+          None -> None
       }
-      .map { state =>
-        connectorConfig.copy(
-          state = state,
-          error = errorMessage(state),
-          metrics = Metrics(
-            counters
-              .filter(_.group() == connectorConfig.id)
-              .map(
-                c =>
-                  CounterInfo(
-                    value = c.getValue,
-                    startTime = c.getStartTime,
-                    unit = c.getUnit,
-                    document = c.getDocument
-                ))
+      .map {
+        case (state, trace) =>
+          connectorConfig.copy(
+            state = state,
+            error = trace,
+            metrics = Metrics(
+              counters
+                .filter(_.group() == connectorConfig.id)
+                .map(
+                  c =>
+                    CounterInfo(
+                      value = c.getValue,
+                      startTime = c.getStartTime,
+                      unit = c.getUnit,
+                      document = c.getDocument
+                  ))
+            )
           )
-        )
       }
 
   def apply(implicit store: DataStore, workerCollie: WorkerCollie, executionContext: ExecutionContext): server.Route =

@@ -150,10 +150,9 @@ private[configurator] object PipelineRoute {
               })
               workerClient
                 .exist(data.id)
-                .flatMap(
-                  if (_) workerClient.status(data.id).map(c => Some(c.connector.state)) else Future.successful(None))
-                .map { state =>
-                  state -> SettingDefinitions.kind(
+                .flatMap(if (_) workerClient.status(data.id).map(Some(_)) else Future.successful(None))
+                .map { connectorInfo =>
+                  connectorInfo -> SettingDefinitions.kind(
                     connectors
                       .find(_.className == data.className)
                       .getOrElse(throw new NoSuchElementException(s"${data.className} doesn't exist"))
@@ -161,14 +160,14 @@ private[configurator] object PipelineRoute {
                       .asJava)
                 }
                 .map {
-                  case (state, kind) =>
+                  case (connectorInfo, kind) =>
                     ObjectAbstract(
                       id = data.id,
                       name = data.name,
                       kind = kind,
                       className = Some(data.className),
-                      state = state.map(_.name),
-                      error = ConnectorRoute.errorMessage(state),
+                      state = connectorInfo.map(_.connector.state.name),
+                      error = connectorInfo.flatMap(_.connector.trace),
                       metrics = metrics,
                       lastModified = data.lastModified
                     )
