@@ -146,7 +146,7 @@ class PipelineToolbar extends React.Component {
           // If we have the supported connectors data at hand, let's set the
           // default connector so they can be rendered in connector modal
 
-          const { activeConnector, connectorType } = this.state;
+          const { activeConnector, connectorType = '' } = this.state;
           if (!activeConnector && !isEmptyStr(connectorType)) {
             this.setDefaultConnector(connectorType);
           }

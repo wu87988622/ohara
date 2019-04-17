@@ -22,6 +22,7 @@ describe('PipelineNewPage', () => {
   const serviceNames = makeServiceNames();
 
   before(() => {
+    cy.createTopic().as('createTopic');
     cy.initServices(serviceNames);
   });
 
@@ -38,8 +39,6 @@ describe('PipelineNewPage', () => {
   });
 
   it('adds a new topic into pipeline graph', () => {
-    cy.createTopic().as('createTopic');
-
     cy.getByTestId('toolbar-topics')
       .click()
       .get('@createTopic')
