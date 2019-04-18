@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory
 import spray.json.DefaultJsonProtocol._
 
 import scala.collection.JavaConverters._
+import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.sys.process._
 
@@ -108,53 +109,56 @@ private[configurator] object StreamRoute {
         pathPrefix(STREAM_LIST_PREFIX_PATH) {
           //upload jars
           post {
-            formFields(Parameters.CLUSTER_NAME.?) { reqName =>
-              storeUploadedFiles(StreamApi.INPUT_KEY, StreamApi.saveTmpFile) { files =>
-                complete(
-                  // here we try to find the pre-defined wk if not assigned by request
-                  CollieUtils.workerClient(reqName).map(_._1.name).map { wkName =>
-                    log.debug(s"worker: $wkName, files: ${files.map(_._1.fileName)}")
-                    Future
-                      .sequence(files.map {
-                        case (metadata, file) =>
-                          if (file.length() > StreamApi.MAX_FILE_SIZE) {
-                            throw new RuntimeException(
-                              s"the file : ${metadata.fileName} size is bigger than ${StreamApi.MAX_FILE_SIZE / 1024 / 1024} MB."
-                            )
-                          }
-                          jarStore.add(file, s"${metadata.fileName}")
-                      })
-                      .map {
-                        jarInfos =>
-                          val jars = Future.sequence(jarInfos.map { jarInfo =>
-                            val time = CommonUtils.current()
-                            val streamId = CommonUtils.uuid()
-                            store
-                              .add(
-                                toStore(
-                                  workerClusterName = wkName,
-                                  streamId = streamId,
-                                  jarInfo = jarInfo,
-                                  lastModified = time
-                                )
+            //see https://github.com/akka/akka-http/issues/1216#issuecomment-311973943
+            toStrictEntity(1.seconds) {
+              formFields(Parameters.CLUSTER_NAME.?) { reqName =>
+                storeUploadedFiles(StreamApi.INPUT_KEY, StreamApi.saveTmpFile) { files =>
+                  complete(
+                    // here we try to find the pre-defined wk if not assigned by request
+                    CollieUtils.workerClient(reqName).map(_._1.name).map { wkName =>
+                      log.debug(s"worker: $wkName, files: ${files.map(_._1.fileName)}")
+                      Future
+                        .sequence(files.map {
+                          case (metadata, file) =>
+                            if (file.length() > StreamApi.MAX_FILE_SIZE) {
+                              throw new RuntimeException(
+                                s"the file : ${metadata.fileName} size is bigger than ${StreamApi.MAX_FILE_SIZE / 1024 / 1024} MB."
                               )
-                              .map { data =>
-                                StreamListResponse(
-                                  data.id,
-                                  data.name,
-                                  jarInfo.name,
-                                  data.lastModified
+                            }
+                            jarStore.add(file, s"${metadata.fileName}")
+                        })
+                        .map {
+                          jarInfos =>
+                            val jars = Future.sequence(jarInfos.map { jarInfo =>
+                              val time = CommonUtils.current()
+                              val streamId = CommonUtils.uuid()
+                              store
+                                .add(
+                                  toStore(
+                                    workerClusterName = wkName,
+                                    streamId = streamId,
+                                    jarInfo = jarInfo,
+                                    lastModified = time
+                                  )
                                 )
-                              }
-                          })
-                          //delete temp jars after success
-                          files.foreach {
-                            case (_, file) => file.deleteOnExit()
-                          }
-                          jars
-                      }
-                  }
-                )
+                                .map { data =>
+                                  StreamListResponse(
+                                    data.id,
+                                    data.name,
+                                    jarInfo.name,
+                                    data.lastModified
+                                  )
+                                }
+                            })
+                            //delete temp jars after success
+                            files.foreach {
+                              case (_, file) => file.deleteOnExit()
+                            }
+                            jars
+                        }
+                    }
+                  )
+                }
               }
             }
           } ~
