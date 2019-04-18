@@ -27,57 +27,31 @@ import org.apache.kafka.connect.sink.SinkRecord;
  * Also, it doesn't have method to return value schema because the value schema is useless to user.
  */
 public class RowSinkRecord {
-  /**
-   * The timestamp type of the records. NOTED: those names MUST be same with
-   * org.apache.kafka.common.record.TimestampType
-   */
-  enum TimestampType {
-    NO_TIMESTAMP_TYPE,
-    CREATE_TIME,
-    LOG_APPEND_TIME;
 
-    private static TimestampType to(org.apache.kafka.common.record.TimestampType type) {
-      if (type == org.apache.kafka.common.record.TimestampType.NO_TIMESTAMP_TYPE)
-        return NO_TIMESTAMP_TYPE;
-      if (type == org.apache.kafka.common.record.TimestampType.CREATE_TIME) return CREATE_TIME;
-      if (type == org.apache.kafka.common.record.TimestampType.LOG_APPEND_TIME)
-        return LOG_APPEND_TIME;
-      throw new IllegalArgumentException("unknown " + type);
-    }
-
-    private static org.apache.kafka.common.record.TimestampType to(TimestampType type) {
-      switch (type) {
-        case NO_TIMESTAMP_TYPE:
-          return org.apache.kafka.common.record.TimestampType.NO_TIMESTAMP_TYPE;
-        case CREATE_TIME:
-          return org.apache.kafka.common.record.TimestampType.CREATE_TIME;
-        case LOG_APPEND_TIME:
-          return org.apache.kafka.common.record.TimestampType.LOG_APPEND_TIME;
-        default:
-          throw new IllegalArgumentException("unknown " + type);
-      }
-    }
-  }
-
-  private final String topic;
+  private final String topicName;
   private final Row row;
   private final int partition;
   private final long offset;
   private final long timestamp;
-  private final TimestampType tsType;
+  private final TimestampType timestampType;
 
   private RowSinkRecord(
-      String topic, Row row, int partition, long offset, long timestamp, TimestampType tsType) {
-    this.topic = topic;
-    this.row = row;
+      String topicName,
+      Row row,
+      int partition,
+      long offset,
+      long timestamp,
+      TimestampType timestampType) {
+    this.topicName = CommonUtils.requireNonEmpty(topicName);
+    this.row = Objects.requireNonNull(row);
     this.partition = partition;
     this.offset = offset;
     this.timestamp = timestamp;
-    this.tsType = tsType;
+    this.timestampType = Objects.requireNonNull(timestampType);
   }
 
-  public String topic() {
-    return topic;
+  public String topicName() {
+    return topicName;
   }
 
   public Row row() {
@@ -97,7 +71,7 @@ public class RowSinkRecord {
   }
 
   public TimestampType timestampType() {
-    return tsType;
+    return timestampType;
   }
 
   /**
@@ -106,7 +80,7 @@ public class RowSinkRecord {
    */
   static RowSinkRecord of(SinkRecord record) {
     return builder()
-        .topic(record.topic())
+        .topicName(record.topic())
         // add a room to accept the row in kafka
         .row(
             (record.key() instanceof Row)
@@ -129,15 +103,15 @@ public class RowSinkRecord {
       // do nothing
     }
 
-    private String topic;
+    private String topicName;
     private Row row;
     private Integer partition;
     private Long offset;
     private Long timestamp;
-    private TimestampType tsType;
+    private TimestampType timestampType;
 
-    public Builder topic(String topic) {
-      this.topic = Objects.requireNonNull(topic);
+    public Builder topicName(String topicName) {
+      this.topicName = CommonUtils.requireNonEmpty(topicName);
       return this;
     }
 
@@ -161,19 +135,19 @@ public class RowSinkRecord {
       return this;
     }
 
-    public Builder timestampType(TimestampType tsType) {
-      this.tsType = Objects.requireNonNull(tsType);
+    public Builder timestampType(TimestampType timestampType) {
+      this.timestampType = Objects.requireNonNull(timestampType);
       return this;
     }
 
     public RowSinkRecord build() {
       return new RowSinkRecord(
-          Objects.requireNonNull(topic),
+          CommonUtils.requireNonEmpty(topicName),
           Objects.requireNonNull(row),
           Objects.requireNonNull(partition),
           Objects.requireNonNull(offset),
           Objects.requireNonNull(timestamp),
-          Objects.requireNonNull(tsType));
+          Objects.requireNonNull(timestampType));
     }
   }
 }

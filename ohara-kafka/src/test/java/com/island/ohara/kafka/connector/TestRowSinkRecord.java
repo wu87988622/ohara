@@ -27,12 +27,27 @@ import org.junit.Test;
 public class TestRowSinkRecord extends SmallTest {
 
   @Test(expected = NullPointerException.class)
+  public void nullTopic() {
+    RowSinkRecord.builder().topicName(null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void emptyTopic() {
+    RowSinkRecord.builder().topicName("");
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void nullRow() {
+    RowSinkRecord.builder().row(null);
+  }
+
+  @Test(expected = NullPointerException.class)
   public void requireTopic() {
     RowSinkRecord.builder()
         .row(Row.of(Cell.of(methodName(), 123)))
         .timestamp(CommonUtils.current())
         .partition(123)
-        .timestampType(RowSinkRecord.TimestampType.NO_TIMESTAMP_TYPE)
+        .timestampType(TimestampType.NO_TIMESTAMP_TYPE)
         .offset(123)
         .build();
   }
@@ -40,10 +55,10 @@ public class TestRowSinkRecord extends SmallTest {
   @Test(expected = NullPointerException.class)
   public void requireRow() {
     RowSinkRecord.builder()
-        .topic("asdasd")
+        .topicName("asdasd")
         .timestamp(CommonUtils.current())
         .partition(123)
-        .timestampType(RowSinkRecord.TimestampType.NO_TIMESTAMP_TYPE)
+        .timestampType(TimestampType.NO_TIMESTAMP_TYPE)
         .offset(123)
         .build();
   }
@@ -51,10 +66,10 @@ public class TestRowSinkRecord extends SmallTest {
   @Test(expected = NullPointerException.class)
   public void requireTimestamp() {
     RowSinkRecord.builder()
-        .topic("asdasd")
+        .topicName("asdasd")
         .row(Row.of(Cell.of(methodName(), 123)))
         .partition(123)
-        .timestampType(RowSinkRecord.TimestampType.NO_TIMESTAMP_TYPE)
+        .timestampType(TimestampType.NO_TIMESTAMP_TYPE)
         .offset(123)
         .build();
   }
@@ -62,10 +77,10 @@ public class TestRowSinkRecord extends SmallTest {
   @Test(expected = NullPointerException.class)
   public void requirePartition() {
     RowSinkRecord.builder()
-        .topic("asdasd")
+        .topicName("asdasd")
         .row(Row.of(Cell.of(methodName(), 123)))
         .timestamp(CommonUtils.current())
-        .timestampType(RowSinkRecord.TimestampType.NO_TIMESTAMP_TYPE)
+        .timestampType(TimestampType.NO_TIMESTAMP_TYPE)
         .offset(123)
         .build();
   }
@@ -73,7 +88,7 @@ public class TestRowSinkRecord extends SmallTest {
   @Test(expected = NullPointerException.class)
   public void requireTimestampType() {
     RowSinkRecord.builder()
-        .topic("asdasd")
+        .topicName("asdasd")
         .row(Row.of(Cell.of(methodName(), 123)))
         .timestamp(CommonUtils.current())
         .partition(123)
@@ -84,11 +99,11 @@ public class TestRowSinkRecord extends SmallTest {
   @Test(expected = NullPointerException.class)
   public void requireOffset() {
     RowSinkRecord.builder()
-        .topic("asdasd")
+        .topicName("asdasd")
         .row(Row.of(Cell.of(methodName(), 123)))
         .timestamp(CommonUtils.current())
         .partition(123)
-        .timestampType(RowSinkRecord.TimestampType.NO_TIMESTAMP_TYPE)
+        .timestampType(TimestampType.NO_TIMESTAMP_TYPE)
         .build();
   }
 
@@ -99,18 +114,18 @@ public class TestRowSinkRecord extends SmallTest {
     long ts = CommonUtils.current();
     int partition = 123;
     long offset = 12345;
-    RowSinkRecord.TimestampType tsType = RowSinkRecord.TimestampType.NO_TIMESTAMP_TYPE;
+    TimestampType tsType = TimestampType.NO_TIMESTAMP_TYPE;
 
     RowSinkRecord r =
         RowSinkRecord.builder()
-            .topic(topic)
+            .topicName(topic)
             .row(row)
             .timestamp(ts)
             .partition(partition)
             .timestampType(tsType)
             .offset(offset)
             .build();
-    assertEquals(topic, r.topic());
+    assertEquals(topic, r.topicName());
     assertEquals(row, r.row());
     assertEquals(ts, r.timestamp());
     assertEquals(partition, r.partition());

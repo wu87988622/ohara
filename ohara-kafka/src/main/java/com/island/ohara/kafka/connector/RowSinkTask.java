@@ -201,7 +201,7 @@ public abstract class RowSinkTask extends SinkTask {
             Collectors.toMap(
                 x ->
                     new org.apache.kafka.common.TopicPartition(
-                        x.getKey().topic(), x.getKey().partition()),
+                        x.getKey().topicName(), x.getKey().partition()),
                 x -> new OffsetAndMetadata(x.getValue().offset(), x.getValue().metadata())));
   }
   // -------------------------------------------------[UN-OVERRIDE]-------------------------------------------------//

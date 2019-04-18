@@ -41,7 +41,7 @@ class HDFSSinkTask extends RowSinkTask {
   override protected def _preCommit(
     offsets: util.Map[TopicPartition, TopicOffset]): util.Map[TopicPartition, TopicOffset] = {
     logger.debug("running flush function.")
-    offsets.asScala.foreach { case (p, o) => logger.debug(s"[${p.topic}-${p.partition}] offset: ${o.offset}") }
+    offsets.asScala.foreach { case (p, o) => logger.debug(s"[${p.topicName}-${p.partition}] offset: ${o.offset}") }
     offsets
   }
 

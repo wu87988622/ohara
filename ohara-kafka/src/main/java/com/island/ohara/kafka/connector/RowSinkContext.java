@@ -60,7 +60,7 @@ public interface RowSinkContext {
                     Collectors.toMap(
                         entry ->
                             new org.apache.kafka.common.TopicPartition(
-                                entry.getKey().topic(), entry.getKey().partition()),
+                                entry.getKey().topicName(), entry.getKey().partition()),
                         Map.Entry::getValue)));
   }
 }

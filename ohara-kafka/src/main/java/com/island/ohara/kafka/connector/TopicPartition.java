@@ -16,6 +16,7 @@
 
 package com.island.ohara.kafka.connector;
 
+import com.island.ohara.common.util.CommonUtils;
 import java.util.Objects;
 
 /**
@@ -23,17 +24,17 @@ import java.util.Objects;
  *
  * @see org.apache.kafka.common.TopicPartition
  */
-public class TopicPartition {
-  private final String topic;
+public final class TopicPartition {
+  private final String topicName;
   private final int partition;
 
-  public TopicPartition(String topic, int partition) {
-    this.topic = topic;
+  public TopicPartition(String topicName, int partition) {
+    this.topicName = CommonUtils.requireNonEmpty(topicName);
     this.partition = partition;
   }
 
-  public String topic() {
-    return topic;
+  public String topicName() {
+    return topicName;
   }
 
   public int partition() {
@@ -45,11 +46,11 @@ public class TopicPartition {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     TopicPartition that = (TopicPartition) o;
-    return partition == that.partition && Objects.equals(topic, that.topic);
+    return partition == that.partition && Objects.equals(topicName, that.topicName);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(topic, partition);
+    return Objects.hash(topicName, partition);
   }
 }

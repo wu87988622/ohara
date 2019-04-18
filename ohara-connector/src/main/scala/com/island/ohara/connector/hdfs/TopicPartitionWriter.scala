@@ -39,8 +39,8 @@ class TopicPartitionWriter(config: HDFSSinkConnectorConfig,
   var tmpFilePath: String = _
   val partitionName: String = s"partition${partition.partition}"
 
-  val tmpDir: String = s"${config.tmpDir}/${partition.topic}/$partitionName"
-  val dataDir: String = s"${config.dataDir}/${partition.topic}/$partitionName"
+  val tmpDir: String = s"${config.tmpDir}/${partition.topicName}/$partitionName"
+  val dataDir: String = s"${config.dataDir}/${partition.topicName}/$partitionName"
 
   val filePrefixName: String = config.dataFilePrefixName
   val flushLineCount: Int = config.flushLineCount
