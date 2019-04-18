@@ -16,18 +16,10 @@
 
 import * as URLS from '../../src/constants/urls';
 import { CONNECTOR_TYPES } from '../../src/constants/pipelines';
-import { makeServiceNames } from '../utils';
 
 describe('PipelineNewPage', () => {
-  const serviceNames = makeServiceNames();
-
   before(() => {
     cy.createTopic().as('createTopic');
-    cy.initServices(serviceNames);
-  });
-
-  after(() => {
-    cy.clearServices(serviceNames);
   });
 
   beforeEach(() => {
@@ -71,65 +63,84 @@ describe('PipelineNewPage', () => {
     });
   });
 
-  context('Source connectors', () => {
-    beforeEach(() => {
-      cy.getByTestId('toolbar-sources').click();
-      cy.getByText('Add a new source connector').should('be.exist');
-    });
+  it('adds all connectors', () => {
+    const filters = [
+      {
+        type: CONNECTOR_TYPES.ftpSource,
+        nodeType: 'FtpSource',
+        connectorLen: 1,
+        toolbarTestId: 'toolbar-sources',
+      },
+      {
+        type: CONNECTOR_TYPES.jdbcSource,
+        nodeType: 'JDBCSourceConnector',
+        connectorLen: 2,
+        toolbarTestId: 'toolbar-sources',
+      },
+      {
+        type: CONNECTOR_TYPES.ftpSink,
+        nodeType: 'FtpSink',
+        connectorLen: 3,
+        toolbarTestId: 'toolbar-sinks',
+      },
+      {
+        type: CONNECTOR_TYPES.hdfsSink,
+        nodeType: 'HDFSSinkConnector',
+        connectorLen: 4,
+        toolbarTestId: 'toolbar-sinks',
+      },
+    ];
 
-    it('adds a FTP source connector', () => {
-      cy.getByText(CONNECTOR_TYPES.ftpSource)
+    cy.server();
+    cy.route('POST', '/api/connectors').as('createConnector');
+
+    cy.wrap(filters).each(filter => {
+      const { toolbarTestId, type, connectorLen, nodeType } = filter;
+      cy.getByTestId(toolbarTestId).click();
+      cy.getByText(type)
         .click()
         .getByText('Add')
         .click();
 
-      cy.getByText('Untitled source')
-        .should('have.length', '1')
+      cy.wait('@createConnector')
+        .getAllByText(/Untitled (source|sink)/)
+        .should('have.length', connectorLen)
         .get('.node-type')
-        .should('contain', 'FtpSource');
-    });
-
-    it('adds a JDBC source connector', () => {
-      cy.getByText(CONNECTOR_TYPES.jdbcSource)
-        .click()
-        .getByText('Add')
-        .click();
-
-      cy.getByText('Untitled source')
-        .should('have.length', '1')
-        .get('.node-type')
-        .should('contain', 'JDBCSourceConnector');
+        .should('contain', nodeType);
     });
   });
 
-  context('Sink connectors', () => {
-    beforeEach(() => {
-      cy.getByTestId('toolbar-sinks').click();
-      cy.getByText('Add a new sink connector').should('be.exist');
-    });
+  it('saves and remove a connector even after page refresh', () => {
+    cy.getByTestId('toolbar-sources')
+      .click()
+      .getByText(CONNECTOR_TYPES.jdbcSource)
+      .click()
+      .getByText('Add')
+      .click()
+      .getByText('Untitled source')
+      .should('have.length', '1')
+      .get('.node-type')
+      .should('contain', 'JDBCSourceConnector')
+      .wait(3000)
+      .reload()
+      .getByText('Untitled source')
+      .should('have.length', '1')
+      .get('.node-type')
+      .should('contain', 'JDBCSourceConnector');
 
-    it('adds a FTP sink connector', () => {
-      cy.getByText(CONNECTOR_TYPES.ftpSink)
-        .click()
-        .getByText('Add')
-        .click();
-
-      cy.getByText('Untitled sink')
-        .should('have.length', '1')
-        .get('.node-type')
-        .should('contain', 'FtpSink');
-    });
-
-    it('adds a HDFS sink connector', () => {
-      cy.getByText(CONNECTOR_TYPES.hdfsSink)
-        .click()
-        .getByText('Add')
-        .click();
-
-      cy.getByText('Untitled sink')
-        .should('have.length', '1')
-        .get('.node-type')
-        .should('contain', 'HDFSSinkConnector');
-    });
+    cy.getByText('Untitled source')
+      .click()
+      .getByTestId('delete-button')
+      .click()
+      .getByText('Yes, Remove this connector')
+      .click()
+      .getByText('Successfully deleted the connector: Untitled source')
+      .should('be.exist')
+      .wait(3000)
+      .reload()
+      .queryByText('Untitled source', { timeout: 500 })
+      .should('not.be.exist')
+      .get('.node-type')
+      .should('not.be.exist');
   });
 });
