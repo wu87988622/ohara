@@ -28,10 +28,31 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 class TestPerfDefinition extends WithBrokerWorker with Matchers {
-
+  private[this] val perfSource = new PerfSource
   private[this] val workerClient = WorkerClient(testUtil().workersConnProps())
-
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
+
+  @Test
+  def checkBatch(): Unit = {
+    val definition = perfSource.definitions().asScala.find(_.key() == PERF_BATCH).get
+    definition.required shouldBe false
+    definition.defaultValue shouldBe "10"
+    definition.editable() shouldBe true
+    definition.internal() shouldBe false
+    definition.reference() shouldBe "NONE"
+    definition.valueType() shouldBe SettingDefinition.Type.INT.name()
+  }
+
+  @Test
+  def checkFrequence(): Unit = {
+    val definition = perfSource.definitions().asScala.find(_.key() == PERF_FREQUENCE).get
+    definition.required shouldBe false
+    definition.defaultValue shouldBe "1 second"
+    definition.editable() shouldBe true
+    definition.internal() shouldBe false
+    definition.reference() shouldBe "NONE"
+    definition.valueType() shouldBe SettingDefinition.Type.STRING.name()
+  }
 
   @Test
   def testSource(): Unit = {
