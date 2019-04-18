@@ -45,11 +45,11 @@ describe('<PipelineNewPage />', () => {
 
     // TODO: change this to a more real world like case, e.g., mock data returns by some requests
     wrapper.setState({
-      pipelines: { name: 'test', workerClusterName: 'abc' },
+      pipeline: { name: 'test', workerClusterName: 'abc' },
     });
   });
 
-  afterEach(() => wrapper.setState({ pipelines: {} }));
+  afterEach(() => wrapper.setState({ pipeline: {} }));
 
   it('renders self', () => {
     expect(wrapper.find('Wrapper').length).toBe(1);

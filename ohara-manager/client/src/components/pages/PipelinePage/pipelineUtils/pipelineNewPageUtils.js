@@ -52,13 +52,13 @@ export const removePrevConnector = (rules, connectorId) => {
 };
 
 export const updatePipelineParams = ({
-  pipelines,
+  pipeline,
   update = null,
   sinkId = null,
   streamAppId = null,
 }) => {
   let params = null;
-  let { rules } = pipelines;
+  let { rules } = pipeline;
 
   // Remove previous connector from the graph as we're only allowing single
   // connection in v0.2
@@ -68,14 +68,14 @@ export const updatePipelineParams = ({
   }
 
   // Extract necessary props for later update
-  // This is due to we currently have both new and old API in the pipelines
+  // This is due to we currently have both new and old API in the pipeline
   // When they're putting together, it would reset pipeline graph on each update...
-  const { id, name, status, workerClusterName } = pipelines;
+  const { id, name, status, workerClusterName } = pipeline;
   const pipelineProps = { id, name, status, workerClusterName };
 
   // If update is not specify, just pass down the entire pipeline
   if (isNull(update)) {
-    params = pipelines;
+    params = pipeline;
   } else {
     const { id, to } = update;
     const updatedRule = { [id]: to };
@@ -157,8 +157,8 @@ export const updateGraph = ({
   return updatedGraph;
 };
 
-export const loadGraph = pipelines => {
-  const { objects, rules } = pipelines;
+export const loadGraph = pipeline => {
+  const { objects, rules } = pipeline;
 
   const updatedGraph = Object.keys(rules).map(x => {
     const target = objects.find(object => object.id === x);

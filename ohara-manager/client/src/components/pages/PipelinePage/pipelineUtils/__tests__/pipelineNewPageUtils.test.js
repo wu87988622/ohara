@@ -35,17 +35,17 @@ describe('removePrevConnector()', () => {
 
 describe('updatePipelineparams()', () => {
   it('returns the pipeline if the update is only for the pipeline name', () => {
-    const pipelines = {
+    const pipeline = {
       name: 'abc',
       objects: {},
       rules: {},
     };
 
-    expect(updatePipelineParams({ pipelines })).toBe(pipelines);
+    expect(updatePipelineParams({ pipeline })).toBe(pipeline);
   });
 
   it('updates params correctly', () => {
-    const pipelines = {
+    const pipeline = {
       id: '123',
       name: 'abc',
       objects: {},
@@ -59,20 +59,20 @@ describe('updatePipelineparams()', () => {
     const update = { id: 'a', to: ['g'] };
     const sinkId = 'c';
     const expected = {
-      id: pipelines.id,
-      name: pipelines.name,
-      status: pipelines.status,
-      workerClusterName: pipelines.workerClusterName,
+      id: pipeline.id,
+      name: pipeline.name,
+      status: pipeline.status,
+      workerClusterName: pipeline.workerClusterName,
       rules: { a: ['g'], b: ['d'] },
     };
 
-    expect(updatePipelineParams({ pipelines, update, sinkId })).toEqual(
+    expect(updatePipelineParams({ pipeline, update, sinkId })).toEqual(
       expected,
     );
   });
 
   it('updates the rules when the update includes rules update', () => {
-    const pipelines = {
+    const pipeline = {
       id: '123',
       name: 'abc',
       objects: {},
@@ -85,14 +85,14 @@ describe('updatePipelineparams()', () => {
       [update.id]: update.to,
     };
     const expected = {
-      id: pipelines.id,
-      name: pipelines.name,
-      status: pipelines.status,
-      workerClusterName: pipelines.workerClusterName,
-      rules: { ...pipelines.rules, ...updateRule },
+      id: pipeline.id,
+      name: pipeline.name,
+      status: pipeline.status,
+      workerClusterName: pipeline.workerClusterName,
+      rules: { ...pipeline.rules, ...updateRule },
     };
 
-    expect(updatePipelineParams({ pipelines, update })).toEqual(expected);
+    expect(updatePipelineParams({ pipeline, update })).toEqual(expected);
   });
 });
 
@@ -218,7 +218,7 @@ describe('updateGraph()', () => {
 
 describe('loadGraph()', () => {
   it('creates the correct data structure', () => {
-    const pipelines = {
+    const pipeline = {
       objects: [
         { id: '1', name: 'a', kind: 'Source' },
         { id: '2', name: 'b', kind: 'Sink' },
@@ -246,6 +246,6 @@ describe('loadGraph()', () => {
       },
     ];
 
-    expect(loadGraph(pipelines)).toEqual(expected);
+    expect(loadGraph(pipeline)).toEqual(expected);
   });
 });

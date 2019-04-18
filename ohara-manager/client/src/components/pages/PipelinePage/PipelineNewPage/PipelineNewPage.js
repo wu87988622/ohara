@@ -67,7 +67,7 @@ class PipelineNewPage extends React.Component {
     isUpdating: false,
     hasChanges: false,
     runningConnectors: 0,
-    pipelines: {},
+    pipeline: {},
     pipelineTopics: [],
   };
 
@@ -104,8 +104,8 @@ class PipelineNewPage extends React.Component {
           updatedPipeline.objects,
         );
 
-        this.setState({ pipelines: updatedPipeline, pipelineTopics }, () => {
-          this.loadGraph(this.state.pipelines);
+        this.setState({ pipeline: updatedPipeline, pipelineTopics }, () => {
+          this.loadGraph(this.state.pipeline);
         });
       }
     }
@@ -124,9 +124,9 @@ class PipelineNewPage extends React.Component {
     await this.updatePipeline({ ...params });
   };
 
-  loadGraph = pipelines => {
+  loadGraph = pipeline => {
     this.setState(() => {
-      return { graph: loadGraph(pipelines) };
+      return { graph: loadGraph(pipeline) };
     });
   };
 
@@ -150,9 +150,9 @@ class PipelineNewPage extends React.Component {
   };
 
   handlePipelineTitleChange = ({ target: { value: title } }) => {
-    this.setState(({ pipelines }) => {
-      const updatedPipeline = { ...pipelines, name: title };
-      return { pipelines: updatedPipeline };
+    this.setState(({ pipeline }) => {
+      const updatedPipeline = { ...pipeline, name: title };
+      return { pipeline: updatedPipeline };
     });
   };
 
@@ -175,9 +175,9 @@ class PipelineNewPage extends React.Component {
   };
 
   updatePipeline = async (update = {}) => {
-    const { pipelines } = this.state;
-    const { id, status } = pipelines;
-    const params = updatePipelineParams({ pipelines, ...update });
+    const { pipeline } = this.state;
+    const { id, status } = pipeline;
+    const params = updatePipelineParams({ pipeline, ...update });
 
     this.setState({ isUpdating: true }, async () => {
       const res = await pipelineApi.updatePipeline({ id, params });
@@ -191,7 +191,7 @@ class PipelineNewPage extends React.Component {
 
         // Keep the pipeline status since that's not stored on the configurator
         this.setState({
-          pipelines: { ...updatedPipelines, status },
+          pipeline: { ...updatedPipelines, status },
           pipelineTopics,
         });
       }
@@ -202,7 +202,7 @@ class PipelineNewPage extends React.Component {
     const pipelineId = get(this.props.match, 'params.pipelineId', null);
     await this.fetchPipeline(pipelineId);
 
-    const { status, objects: connectors } = this.state.pipelines;
+    const { status, objects: connectors } = this.state.pipeline;
 
     if (!status) {
       toastr.error(MESSAGES.CANNOT_START_PIPELINE_ERROR);
@@ -269,11 +269,11 @@ class PipelineNewPage extends React.Component {
       toastr.success(`Pipeline has been successfully ${action}!`);
       let status = action === 'started' ? 'Running' : 'Stopped';
 
-      this.setState(({ pipelines }) => {
+      this.setState(({ pipeline }) => {
         return {
           runningConnectors: 0,
-          pipelines: {
-            ...pipelines,
+          pipeline: {
+            ...pipeline,
             status,
           },
         };
@@ -295,17 +295,17 @@ class PipelineNewPage extends React.Component {
       pipelineTopics,
       currentTopic,
       hasChanges,
-      pipelines,
+      pipeline,
     } = this.state;
 
-    if (isEmpty(pipelines)) return null;
+    if (isEmpty(pipeline)) return null;
 
     const pipelineId = get(this, 'props.match.params.pipelineId', null);
     const {
       name: pipelineTitle,
       status: pipelineStatus,
       workerClusterName,
-    } = pipelines;
+    } = pipeline;
 
     const isPipelineRunning = pipelineStatus === 'Running' ? true : false;
 
@@ -323,6 +323,7 @@ class PipelineNewPage extends React.Component {
       refreshGraph: this.refreshGraph,
       updateHasChanges: this.updateHasChanges,
       isPipelineRunning,
+      pipeline,
       hasChanges,
       graph,
     };
@@ -359,7 +360,7 @@ class PipelineNewPage extends React.Component {
               <PipelineGraph
                 {...this.props}
                 graph={graph}
-                pipeline={pipelines}
+                pipeline={pipeline}
                 updateGraph={this.updateGraph}
                 resetGraph={this.resetGraph}
               />

@@ -38,7 +38,8 @@ describe('PipelineNewPage', () => {
       .click();
   });
 
-  it('adds a new topic into pipeline graph', () => {
+  it('adds and removes a topic into/from pipeline graph', () => {
+    // Add the topic
     cy.getByTestId('toolbar-topics')
       .click()
       .get('@createTopic')
@@ -51,6 +52,23 @@ describe('PipelineNewPage', () => {
       .then(topic => {
         cy.getByText(topic.name).should('be.exist');
       });
+
+    // Remove the topic
+    cy.get('@createTopic').then(topic => {
+      cy.server();
+      cy.route('GET', '/api/pipelines/*').as('pipelines');
+
+      cy.getByText(topic.name)
+        .click()
+        .getByTestId('delete-button')
+        .click()
+        .getByText('Yes, Remove this topic')
+        .click()
+        .getByText(`Successfully deleted the topic: ${topic.name}`)
+        .wait('@pipelines')
+        .queryByText(topic.name, { timeout: 500 })
+        .should('not.be.exist');
+    });
   });
 
   context('Source connectors', () => {
