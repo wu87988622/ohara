@@ -50,7 +50,7 @@ const props = {
   isLoading: false,
   updateCurrentTopic: jest.fn(),
   resetCurrentTopic: jest.fn(),
-  currWorkerClusterName: 'abc',
+  workerClusterName: 'abc',
 };
 
 describe('<PipelineToolbar />', () => {

@@ -92,24 +92,24 @@ class StreamApp extends React.Component {
     }
   };
 
-  handleSave = async ({ name, instances, fromTopic, toTopic }) => {
+  handleSave = async ({ name, instances, from, to }) => {
     const { topics, graph, updateGraph } = this.props;
     const { streamAppId } = this.state;
 
-    const fromTopics = topics.reduce((acc, { name, id }) => {
-      return name === fromTopic ? [...acc, id] : acc;
+    const fromTopic = topics.reduce((acc, { name, id }) => {
+      return name === from ? [...acc, id] : acc;
     }, []);
 
-    const toTopics = topics.reduce((acc, { name, id }) => {
-      return name === toTopic ? [...acc, id] : acc;
+    const toTopic = topics.reduce((acc, { name, id }) => {
+      return name === to ? [...acc, id] : acc;
     }, []);
 
     const params = {
       id: streamAppId,
       name,
       instances,
-      fromTopics,
-      toTopics,
+      from: fromTopic,
+      to: toTopic,
     };
 
     const res = await streamApi.updateProperty(params);
@@ -118,14 +118,14 @@ class StreamApp extends React.Component {
     if (isSuccess) {
       const [streamApp] = graph.filter(g => g.id === streamAppId);
       const [prevFromTopic] = graph.filter(g => g.to.includes(streamAppId));
-      const isToUpdate = streamApp.to[0] !== toTopics[0];
+      const isToUpdate = streamApp.to[0] !== toTopic[0];
 
       if (isToUpdate) {
         const currStreamApp = findByGraphId(graph, streamAppId);
-        const toUpdate = { ...currStreamApp, to: toTopics };
+        const toUpdate = { ...currStreamApp, to: toTopic };
         updateGraph({ update: toUpdate });
       } else {
-        let currTopic = findByGraphId(graph, fromTopics[0]);
+        let currTopic = findByGraphId(graph, fromTopic[0]);
         let fromUpdateTo;
 
         if (currTopic) {
@@ -203,15 +203,15 @@ class StreamApp extends React.Component {
 
     if (!streamApp) return null;
 
-    const { name, instances, jarName, fromTopics, toTopics } = streamApp;
-    const from = topics.find(({ id }) => id === fromTopics[0]);
-    const to = topics.find(({ id }) => id === toTopics[0]);
+    const { name, instances, jarName, from, to } = streamApp;
+    const fromTopic = topics.find(({ id }) => id === from[0]);
+    const toTopic = topics.find(({ id }) => id === to[0]);
 
     const initialValues = {
       name: _.isEmptyStr(name) ? 'Untitled stream app' : name,
       instances: `${instances}`,
-      fromTopic: !isEmpty(from) ? from.name : null,
-      toTopic: !isEmpty(to) ? to.name : null,
+      fromTopic: !isEmpty(fromTopic) ? from.name : null,
+      toTopic: !isEmpty(toTopic) ? toTopic.name : null,
     };
 
     return (

@@ -70,7 +70,7 @@ class PipelineToolbar extends React.Component {
     updateCurrentTopic: PropTypes.func.isRequired,
     resetCurrentTopic: PropTypes.func.isRequired,
     currentTopic: PropTypes.object,
-    currWorkerClusterName: PropTypes.string.isRequired,
+    workerClusterName: PropTypes.string.isRequired,
   };
 
   state = {
@@ -90,15 +90,13 @@ class PipelineToolbar extends React.Component {
   }
 
   fetchWorker = async () => {
-    const { currWorkerClusterName } = this.props;
+    const { workerClusterName } = this.props;
     const res = await fetchWorkers();
     this.setState({ isFetchWorkerWorking: false });
     const workers = get(res, 'data.result', null);
 
     if (workers) {
-      const currWorker = workers.find(
-        ({ name }) => name === currWorkerClusterName,
-      );
+      const currWorker = workers.find(({ name }) => name === workerClusterName);
 
       if (currWorker) {
         const result = currWorker.connectors.map(connector => {

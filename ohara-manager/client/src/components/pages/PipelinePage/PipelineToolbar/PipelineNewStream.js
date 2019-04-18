@@ -48,6 +48,7 @@ class PipelineNewStream extends React.Component {
     activeConnector: PropTypes.oneOfType([PropTypes.object, PropTypes.string]),
     updateGraph: PropTypes.func.isRequired,
     updateAddBtnStatus: PropTypes.func.isRequired,
+    workerClusterName: PropTypes.string.isRequired,
   };
 
   state = {
@@ -92,6 +93,7 @@ class PipelineNewStream extends React.Component {
           toastr.error(`This file name is duplicate. '${filename}'`);
           return;
         }
+
         this.uploadJar(file);
       }
     });
@@ -162,8 +164,8 @@ class PipelineNewStream extends React.Component {
   };
 
   fetchJar = async () => {
-    const { pipelineId } = this.state;
-    const res = await streamApi.fetchJar(pipelineId);
+    const { workerClusterName } = this.props;
+    const res = await streamApi.fetchJar(workerClusterName);
     this.setState(() => ({ isLoading: false }));
 
     const jars = get(res, 'data.result', null);
@@ -177,8 +179,8 @@ class PipelineNewStream extends React.Component {
   };
 
   uploadJar = async file => {
-    const { pipelineId } = this.state;
-    const res = await streamApi.uploadJar({ pipelineId, file });
+    const { workerClusterName } = this.props;
+    const res = await streamApi.uploadJar({ workerClusterName, file });
     const isSuccess = get(res, 'data.isSuccess', false);
     if (isSuccess) {
       toastr.success(MESSAGES.STREAM_APP_UPLOAD_SUCCESS);

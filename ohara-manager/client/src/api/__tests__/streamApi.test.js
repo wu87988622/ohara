@@ -23,7 +23,7 @@ const url = '/api/stream';
 describe('fetchJar()', () => {
   afterEach(jest.clearAllMocks);
 
-  const id = 'abc';
+  const workerClusterName = 'abc';
 
   it('handles success http call', async () => {
     const res = {
@@ -34,9 +34,11 @@ describe('fetchJar()', () => {
 
     axiosInstance.get.mockImplementation(() => Promise.resolve(res));
 
-    const result = await streamApi.fetchJar(id);
+    const result = await streamApi.fetchJar(workerClusterName);
     expect(axiosInstance.get).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.get).toHaveBeenCalledWith(`${url}/jars/${id}`);
+    expect(axiosInstance.get).toHaveBeenCalledWith(
+      `${url}/jars?cluster=${workerClusterName}`,
+    );
     expect(result).toBe(res);
   });
 
@@ -48,10 +50,12 @@ describe('fetchJar()', () => {
     };
     axiosInstance.get.mockImplementation(() => Promise.resolve(res));
 
-    const result = await streamApi.fetchJar(id);
+    const result = await streamApi.fetchJar(workerClusterName);
 
     expect(axiosInstance.get).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.get).toHaveBeenCalledWith(`${url}/jars/${id}`);
+    expect(axiosInstance.get).toHaveBeenCalledWith(
+      `${url}/jars?cluster=${workerClusterName}`,
+    );
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(result);
   });
@@ -67,7 +71,7 @@ describe('fetchJar()', () => {
 
     axiosInstance.get.mockImplementation(() => Promise.reject(res));
 
-    await streamApi.fetchJar(id);
+    await streamApi.fetchJar(workerClusterName);
     expect(axiosInstance.get).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(res);
@@ -78,13 +82,15 @@ describe('uploadJar()', () => {
   afterEach(jest.clearAllMocks);
 
   const params = {
-    pipelineId: 'abc',
+    workerClusterName: 'abc',
     file: {},
   };
 
-  const { pipelineId, file } = params;
+  const { workerClusterName, file } = params;
   const formData = new FormData();
   formData.append('streamapp', file);
+  formData.append('cluster', workerClusterName);
+
   const config = {
     headers: {
       'content-type': 'multipart/form-data',
@@ -103,7 +109,7 @@ describe('uploadJar()', () => {
     const result = await streamApi.uploadJar(params);
     expect(axiosInstance.post).toHaveBeenCalledTimes(1);
     expect(axiosInstance.post).toHaveBeenCalledWith(
-      `${url}/jars/${pipelineId}`,
+      `${url}/jars`,
       formData,
       config,
     );
@@ -122,7 +128,7 @@ describe('uploadJar()', () => {
 
     expect(axiosInstance.post).toHaveBeenCalledTimes(1);
     expect(axiosInstance.post).toHaveBeenCalledWith(
-      `${url}/jars/${pipelineId}`,
+      `${url}/jars`,
       formData,
       config,
     );
@@ -337,8 +343,8 @@ describe('updateProperty()', () => {
   const streamAppId = params.id;
   const data = {
     name: params.name,
-    fromTopics: params.fromTopics || [],
-    toTopics: params.toTopics || [],
+    from: params.from || [],
+    to: params.to || [],
     instances: params.instances ? Number(params.instances) : 1,
   };
 

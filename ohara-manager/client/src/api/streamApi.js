@@ -18,9 +18,11 @@ import { get } from 'lodash';
 
 import { handleError, axiosInstance } from 'utils/apiUtils';
 
-export const fetchJar = async pipelineId => {
+export const fetchJar = async workerClusterName => {
   try {
-    const res = await axiosInstance.get(`/api/stream/jars/${pipelineId}`);
+    const res = await axiosInstance.get(
+      `/api/stream/jars?cluster=${workerClusterName}`,
+    );
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -35,10 +37,13 @@ export const fetchJar = async pipelineId => {
 
 export const uploadJar = async params => {
   try {
-    const { pipelineId, file } = params;
-    const url = `/api/stream/jars/${pipelineId}`;
+    const { workerClusterName, file } = params;
+    const url = `/api/stream/jars`;
     const formData = new FormData();
+
     formData.append('streamapp', file);
+    formData.append('cluster', workerClusterName);
+
     const config = {
       headers: {
         'content-type': 'multipart/form-data',
@@ -116,8 +121,8 @@ export const updateProperty = async params => {
     const url = `/api/stream/property/${streamAppId}`;
     const data = {
       name: params.name,
-      fromTopics: params.fromTopics || [],
-      toTopics: params.toTopics || [],
+      from: params.from || [],
+      to: params.to || [],
       instances: params.instances ? Number(params.instances) : 1,
     };
     const res = await axiosInstance.put(url, data);

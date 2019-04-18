@@ -353,7 +353,7 @@ class PipelineNewPage extends React.Component {
               isLoading={isLoading}
               resetCurrentTopic={this.resetCurrentTopic}
               updateCurrentTopic={this.updateCurrentTopic}
-              currWorkerClusterName={workerClusterName}
+              workerClusterName={workerClusterName}
             />
 
             <Main>
