@@ -36,7 +36,8 @@ trait JarStore extends Releasable {
     * @param file jar file
     * @return a async thread which is doing the upload
     */
-  def add(file: File)(implicit executionContext: ExecutionContext): Future[JarInfo] = add(file, file.getName)
+  def add(file: File)(implicit executionContext: ExecutionContext): Future[JarInfo] =
+    add(CommonUtils.requireExist(file), file.getName)
 
   /**
     * add a jar into store. This is a async method so you need to check the result of future.
@@ -65,15 +66,14 @@ trait JarStore extends Releasable {
     * @param id jar's id
     * @return jar description
     */
-  def jarInfo(id: String)(implicit executionContext: ExecutionContext): Future[JarInfo] = if (CommonUtils.isEmpty(id))
-    Future.failed(new IllegalArgumentException(s"$id can't be empty"))
-  else jarInfos.map(_.find(_.id == id).head)
-
-  def jarInfos(ids: Seq[String])(implicit executionContext: ExecutionContext): Future[Seq[JarInfo]] = jarInfos.map {
-    jars =>
-      ids.foreach(id => if (!jars.exists(_.id == id)) throw new NoSuchElementException(s"$id doesn't exist"))
-      jars.filter(jar => ids.contains(jar.id))
-  }
+  def jarInfo(id: String)(implicit executionContext: ExecutionContext): Future[JarInfo] =
+    jarInfos
+      .map { jarInfos =>
+        // check the input arguments
+        CommonUtils.requireNonEmpty(id)
+        jarInfos
+      }
+      .map(_.find(_.id == id).head)
 
   def jarInfos(implicit executionContext: ExecutionContext): Future[Seq[JarInfo]]
 
@@ -82,13 +82,45 @@ trait JarStore extends Releasable {
     * @param id jar's id
     * @return url connection
     */
-  def url(id: String)(implicit executionContext: ExecutionContext): Future[URL]
+  def url(id: String)(implicit executionContext: ExecutionContext): Future[URL] =
+    urls
+      .map { us =>
+        // check the input arguments
+        CommonUtils.requireNonEmpty(id)
+        us
+      }
+      .map(_.find(_._1 == id).head._2)
 
-  def urls(ids: Seq[String])(implicit executionContext: ExecutionContext): Future[Seq[URL]]
+  /**
+    * generate urls for all ids
+    * @param executionContext thread pool
+    * @return urls
+    */
+  def urls(implicit executionContext: ExecutionContext): Future[Map[String, URL]]
 
-  def urls(implicit executionContext: ExecutionContext): Future[Seq[URL]]
-
+  /**
+    * check the existence of a jar
+    * @param id jar id
+    * @param executionContext thread pool
+    * @return true if jar exists. otherwise, false
+    */
   def exist(id: String)(implicit executionContext: ExecutionContext): Future[Boolean]
 
-  def nonExist(id: String)(implicit executionContext: ExecutionContext): Future[Boolean] = exist(id).map(!_)
+  /**
+    * Rename a existent jar
+    * @param id jar id
+    * @param newName new name of jar
+    * @param executionContext thread pool
+    * @return updated jar info
+    */
+  def rename(id: String, newName: String)(implicit executionContext: ExecutionContext): Future[JarInfo]
+
+  /**
+    * Create a local file storing the jar.
+    * NOTED: you should NOT modify the file since the returned file may be referenced to true data.
+    * @param id jar's id
+    * @param executionContext thread pool
+    * @return local file
+    */
+  def toFile(id: String)(implicit executionContext: ExecutionContext): Future[File]
 }

@@ -22,11 +22,10 @@ import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterCreationRe
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterCreationRequest
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterCreationRequest
-import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, ZookeeperApi}
+import com.island.ohara.client.configurator.v0._
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.configurator.jar.JarStore
 import com.island.ohara.it.IntegrationTest
 import com.island.ohara.it.agent.{ClusterNameHolder, CollieTestUtils}
 import com.island.ohara.it.connector.{DumbSinkConnector, DumbSourceConnector}
@@ -62,7 +61,6 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
 
   private[this] val configurator: Configurator =
     Configurator.builder().advertisedHostname(publicHostname).advertisedPort(publicPort).build()
-  private[this] val jarStore: JarStore = configurator.jarStore
 
   private[this] val zkApi = ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port)
 
@@ -94,9 +92,11 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
   def test(): Unit = {
     val currentPath = new File(".").getCanonicalPath
     // Both jars are pre-generated. see readme in test/resources
+
     val jars = result(
       Future.traverse(Seq(new File(currentPath, "build/libs/ohara-it-source.jar"),
-                          new File(currentPath, "build/libs/ohara-it-sink.jar")))(jarStore.add))
+                          new File(currentPath, "build/libs/ohara-it-sink.jar")))(
+        JarApi.access().hostname(configurator.hostname).port(configurator.port).upload))
 
     val zkCluster = result(
       zkApi.add(

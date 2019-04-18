@@ -16,8 +16,6 @@
 
 package com.island.ohara.configurator
 
-import java.io.File
-import java.net.URL
 import java.util.concurrent.{ExecutionException, TimeUnit}
 
 import akka.actor.ActorSystem
@@ -35,9 +33,8 @@ import com.island.ohara.client.configurator.ConfiguratorApiInfo
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterCreationRequest
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeCreationRequest}
 import com.island.ohara.client.configurator.v0.ValidationApi.NodeValidationRequest
-import com.island.ohara.client.configurator.v0.ZookeeperApi
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterCreationRequest
-import com.island.ohara.client.configurator.v0._
+import com.island.ohara.client.configurator.v0.{ZookeeperApi, _}
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce}
 import com.island.ohara.configurator.jar.{JarStore, LocalJarStore}
@@ -46,9 +43,9 @@ import com.island.ohara.configurator.store.DataStore
 import com.typesafe.scalalogging.Logger
 import spray.json.DeserializationException
 
+import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.{Duration, _}
-import scala.concurrent.{Await, Future}
 
 /**
   * A simple impl from Configurator. This impl maintains all subclass from ohara data in a single ohara store.
@@ -69,31 +66,24 @@ class Configurator private[configurator] (advertisedHostname: Option[String],
     extends ReleaseOnce
     with SprayJsonSupport {
 
-  private def size: Int = store.size
+  private[configurator] def size: Int = store.size
+
+  /**
+    * If you don't assign a advertised hostname explicitly, local hostname will be chosen.
+    * @return advertised hostname of configurator.
+    */
+  val hostname: String = advertisedHostname.getOrElse(CommonUtils.hostname())
+
+  /**
+    * If you don't assign a port explicitly, a random port will be chosen.
+    * Pre-generating a random port can solve the initialization of components in configurator.
+    * @return port bound by configurator.
+    */
+  val port: Int = advertisedPort.getOrElse(CommonUtils.availablePort())
 
   private[this] val log = Logger(classOf[Configurator])
 
   private[this] val jarLocalHome = CommonUtils.createTempDir("Configurator").getAbsolutePath
-
-  /**
-    * the route is exposed to worker cluster. They will download all assigned jars to start worker process.
-    * TODO: should we integrate this route to our public API?? by chia
-    */
-  private[this] def jarDownloadRoute(): server.Route = path(JarApi.JAR_PREFIX_PATH / Segment) { idWithExtension =>
-    // We force all url end with .jar
-    if (!idWithExtension.endsWith(".jar")) complete(StatusCodes.NotFound -> s"$idWithExtension doesn't exist")
-    else {
-      val id = idWithExtension.substring(0, idWithExtension.indexOf(".jar"))
-      val jarFolder = new File(jarLocalHome, id)
-      if (!jarFolder.exists() || !jarFolder.isDirectory) complete(StatusCodes.NotFound -> s"$id doesn't exist")
-      else {
-        val jars = jarFolder.listFiles()
-        if (jars == null || jars.isEmpty) complete(StatusCodes.NotFound)
-        else if (jars.size != 1) complete(StatusCodes.InternalServerError -> s"duplicate jars for $id")
-        else getFromFile(jars.head)
-      }
-    }
-  }
 
   private[this] implicit val brokerCollie: BrokerCollie = clusterCollie.brokerCollie()
   private[this] implicit val workerCollie: WorkerCollie = clusterCollie.workerCollie()
@@ -163,10 +153,10 @@ class Configurator private[configurator] (advertisedHostname: Option[String],
     try Await.result(
       Http().bindAndHandle(
         handler = handleExceptions(exceptionHandler())(
-          handleRejections(rejectionHandler())(basicRoute() ~ privateRoute() ~ jarDownloadRoute()) ~ finalRoute()),
+          handleRejections(rejectionHandler())(basicRoute() ~ privateRoute()) ~ finalRoute()),
         // we bind the service on all network adapter.
         interface = CommonUtils.anyLocalAddress(),
-        port = advertisedPort.getOrElse(0)
+        port = port
       ),
       initializationTimeout.toMillis milliseconds
     )
@@ -177,30 +167,15 @@ class Configurator private[configurator] (advertisedHostname: Option[String],
     }
 
   /**
-    * If you don't assign a advertised hostname explicitly, local hostname will be chosen.
-    * @return advertised hostname of configurator.
-    */
-  def hostname: String = advertisedHostname.getOrElse(CommonUtils.hostname())
-
-  /**
-    * If you don't assign a port explicitly, a random port will be chosen.
-    * @return port bound by configurator.
-    */
-  def port: Int = httpServer.localAddress.getPort
-
-  /**
     * We create an internal jar store based on http server of configurator.
     */
-  implicit val jarStore: JarStore = new LocalJarStore(jarLocalHome) {
-    log.info(s"path of jar:$jarLocalHome")
-    override protected def doUrls(): Future[Map[String, URL]] = jarInfos.map(_.map { plugin =>
-      plugin.id -> new URL(s"http://${CommonUtils.address(hostname)}:$port/${JarApi.JAR_PREFIX_PATH}/${plugin.id}.jar")
-    }.toMap)
-
-    override protected def doClose(): Unit = {
-      // do nothing
-    }
-  }
+  private[configurator] implicit val jarStore: JarStore = new LocalJarStore(
+    homeFolder = jarLocalHome,
+    // the download API is in JarsRoute now.
+    urlPrefix = s"${ConfiguratorApiInfo.V0}/${JarApi.DOWNLOAD_JAR_PREFIX_PATH}",
+    advertisedHostname = hostname,
+    advertisedPort = port
+  )
 
   /**
     * Do what you want to do when calling closing.
@@ -300,7 +275,7 @@ object Configurator {
         (node: Node) => {
           val dockerClient =
             DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
-          try checkImageExists(node, dockerClient.imageNames)
+          try checkImageExists(node, dockerClient.imageNames())
           finally dockerClient.close()
         }
       )

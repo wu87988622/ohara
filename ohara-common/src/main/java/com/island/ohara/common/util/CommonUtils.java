@@ -440,6 +440,17 @@ public final class CommonUtils {
     return requireNonEmpty(s, () -> "");
   }
 
+  /**
+   * Check the null and existence of input file
+   *
+   * @param file file
+   * @return an non-null and existent file
+   */
+  public static File requireExist(File file) {
+    if (!Objects.requireNonNull(file).exists()) throw new IllegalArgumentException();
+    return file;
+  }
+
   public static <T extends Collection<?>> T requireNonEmpty(T s) {
     return requireNonEmpty(s, () -> "");
   }

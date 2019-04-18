@@ -16,7 +16,6 @@
 
 package com.island.ohara.configurator.route
 
-import java.io.File
 import java.util.Objects
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
@@ -38,7 +37,6 @@ import spray.json.DefaultJsonProtocol._
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
-import scala.sys.process._
 
 private[configurator] object StreamRoute {
 
@@ -209,30 +207,18 @@ private[configurator] object StreamRoute {
                     complete(
                       store
                         .value[StreamAppDescription](id)
-                        .flatMap { data =>
-                          // get the old jar url
-                          jarStore
-                            .url(data.jarInfo.id)
-                            .flatMap { url =>
-                              val tmpFile =
-                                new File(StreamApi.TMP_ROOT, CommonUtils.randomString(5))
-                              // download the jar file from remote ftp server by URL
-                              (url #> tmpFile).!!
-                              // upload the jar with new jar name
-                              jarStore.add(tmpFile, req.jarName)
-                            }
-                            .flatMap { jarInfo =>
-                              store.update[StreamAppDescription](
-                                id,
-                                previous =>
-                                  Future.successful(
-                                    previous.copy(
-                                      jarInfo = jarInfo,
-                                      lastModified = CommonUtils.current()
-                                    )
+                        .flatMap(data => jarStore.rename(data.jarInfo.id, req.jarName))
+                        .flatMap { jarInfo =>
+                          store.update[StreamAppDescription](
+                            id,
+                            previous =>
+                              Future.successful(
+                                previous.copy(
+                                  jarInfo = jarInfo,
+                                  lastModified = CommonUtils.current()
                                 )
-                              )
-                            }
+                            )
+                          )
                         }
                         .map(
                           data =>

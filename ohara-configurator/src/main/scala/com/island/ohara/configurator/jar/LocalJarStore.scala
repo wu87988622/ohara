@@ -21,41 +21,59 @@ import java.net.URL
 
 import com.island.ohara.client.configurator.v0.JarApi.JarInfo
 import com.island.ohara.common.util.{CommonUtils, ReleaseOnce}
+import com.island.ohara.configurator.jar.LocalJarStore._
 import com.typesafe.scalalogging.Logger
 import org.apache.commons.io.FileUtils
 
 import scala.concurrent.{ExecutionContext, Future}
-import LocalJarStore._
-private[configurator] abstract class LocalJarStore(val homeFolder: String) extends ReleaseOnce with JarStore {
+private[configurator] class LocalJarStore(val homeFolder: String,
+                                          urlPrefix: String,
+                                          advertisedHostname: String,
+                                          advertisedPort: Int)
+    extends ReleaseOnce
+    with JarStore {
 
-  override def add(file: File, newName: String)(implicit executionContext: ExecutionContext): Future[JarInfo] = Future {
-    def generateFolder(): File = {
-      var rval: File = null
-      while (rval == null) {
-        val id = CommonUtils.randomString(ID_LENGTH)
-        val f = new File(homeFolder, id)
-        if (!f.exists()) {
-          if (!f.mkdir()) throw new IllegalArgumentException(s"fail to create folder on ${f.getAbsolutePath}")
-          rval = f
+  private[this] def toFolder(id: String): File = new File(homeFolder, CommonUtils.requireNonEmpty(id))
+
+  override def urls(implicit executionContext: ExecutionContext): Future[Map[String, URL]] = jarInfos.map(_.map {
+    plugin =>
+      plugin.id -> new URL(s"http://$advertisedHostname:$advertisedPort/$urlPrefix/${plugin.id}.jar")
+  }.toMap)
+
+  override def toFile(id: String)(implicit executionContext: ExecutionContext): Future[File] =
+    jarInfo(id).map(jarInfo => CommonUtils.requireExist(new File(CommonUtils.requireExist(toFolder(id)), jarInfo.name)))
+
+  override def add(file: File, newName: String)(implicit executionContext: ExecutionContext): Future[JarInfo] =
+    Future {
+      CommonUtils.requireNonEmpty(newName)
+      CommonUtils.requireExist(file)
+      def generateFolder(): File = {
+        var rval: File = null
+        while (rval == null) {
+          val id = CommonUtils.randomString(ID_LENGTH)
+          val f = toFolder(id)
+          if (!f.exists()) {
+            if (!f.mkdir()) throw new IllegalArgumentException(s"fail to create folder on ${f.getAbsolutePath}")
+            rval = f
+          }
         }
+        rval
       }
-      rval
+      val folder = generateFolder()
+      val id = folder.getName
+      val newFile = new File(folder, newName)
+      if (newFile.exists()) throw new IllegalArgumentException(s"${newFile.getAbsolutePath} already exists")
+      FileUtils.copyFile(file, newFile)
+      LOG.debug(s"copy $file to $newFile")
+      val plugin = JarInfo(
+        id = id,
+        name = newFile.getName,
+        size = newFile.length(),
+        lastModified = newFile.lastModified()
+      )
+      LOG.info(s"add $plugin")
+      plugin
     }
-    val folder = generateFolder()
-    val id = folder.getName
-    val newFile = new File(folder, newName)
-    if (newFile.exists()) throw new IllegalArgumentException(s"${newFile.getAbsolutePath} already exists")
-    FileUtils.copyFile(file, newFile)
-    LOG.debug(s"copy $file to $newFile")
-    val plugin = JarInfo(
-      id = id,
-      name = newFile.getName,
-      size = newFile.length(),
-      lastModified = newFile.lastModified()
-    )
-    LOG.info(s"add $plugin")
-    plugin
-  }
 
   override def jarInfos(implicit executionContext: ExecutionContext): Future[Seq[JarInfo]] = Future.successful {
     // TODO: We should cache the plugins. because seeking to disk is a slow operation...
@@ -82,57 +100,61 @@ private[configurator] abstract class LocalJarStore(val homeFolder: String) exten
     else Seq.empty
   }
 
-  override def remove(id: String)(implicit executionContext: ExecutionContext): Future[JarInfo] = jarInfo(id).map {
-    jar =>
-      val file = new File(homeFolder, id)
+  override def remove(id: String)(implicit executionContext: ExecutionContext): Future[JarInfo] =
+    jarInfo(id).map { jar =>
+      CommonUtils.requireNonEmpty(id)
+      val file = toFolder(id)
       if (!file.exists()) throw new NoSuchElementException(s"$id doesn't exist")
       if (!file.isDirectory) throw new IllegalArgumentException(s"$id doesn't reference to a folder")
       FileUtils.forceDelete(file)
       jar
-  }
-
-  override def url(id: String)(implicit executionContext: ExecutionContext): Future[URL] = doUrls().map(_(id))
-
-  override def urls(ids: Seq[String])(implicit executionContext: ExecutionContext): Future[Seq[URL]] = doUrls().map {
-    idAndUrl =>
-      ids.foreach(id => if (!idAndUrl.exists(_._1 == id)) throw new NoSuchElementException(s"$id doesn't exist"))
-      idAndUrl.values.toSeq
-  }
-
-  override def urls(implicit executionContext: ExecutionContext): Future[Seq[URL]] = doUrls().map(_.values.toSeq)
-
-  protected def doUrls(): Future[Map[String, URL]]
+    }
 
   override def exist(id: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
-    if (CommonUtils.isEmpty(id))
-      Future.failed(new IllegalArgumentException("id can't by empty"))
-    else Future.successful(new File(homeFolder, id).exists())
+    Future.successful(toFolder(CommonUtils.requireNonEmpty(id)).exists())
 
   override def update(id: String, file: File)(implicit executionContext: ExecutionContext): Future[JarInfo] =
-    if (file == null)
-      Future.failed(new IllegalArgumentException(s"file can't be null"))
-    else
-      exist(id).flatMap(
-        if (_) try {
-          CommonUtils.deleteFiles(new File(homeFolder, id))
-          val folder = new File(homeFolder, id)
-          if (!folder.mkdir()) throw new IllegalArgumentException(s"fail to create folder on $folder")
-          val newFile = new File(folder, file.getName)
-          if (newFile.exists()) throw new IllegalArgumentException(s"${newFile.getAbsolutePath} already exists")
-          FileUtils.copyFile(file, newFile)
-          LOG.debug(s"copy $file to $newFile")
-          val plugin = JarInfo(
-            id = id,
-            name = newFile.getName,
-            size = newFile.length(),
-            lastModified = CommonUtils.current()
-          )
-          LOG.info(s"update $id by $plugin")
-          Future.successful(plugin)
-        } catch {
-          case e: Throwable => Future.failed(e)
-        } else Future.failed(new IllegalArgumentException(s"$id doesn't exist"))
+    jarInfo(id).map { _ =>
+      CommonUtils.requireExist(file)
+      val folder = toFolder(id)
+      CommonUtils.deleteFiles(folder)
+      if (!folder.mkdir()) throw new IllegalArgumentException(s"fail to create folder on $folder")
+      val newFile = new File(folder, file.getName)
+      if (newFile.exists()) throw new IllegalArgumentException(s"${newFile.getAbsolutePath} already exists")
+      FileUtils.copyFile(file, newFile)
+      LOG.debug(s"copy $file to $newFile")
+      val plugin = JarInfo(
+        id = id,
+        name = newFile.getName,
+        size = newFile.length(),
+        lastModified = CommonUtils.current()
       )
+      LOG.info(s"update $id by $plugin")
+      plugin
+    }
+
+  override def rename(id: String, newName: String)(implicit executionContext: ExecutionContext): Future[JarInfo] =
+    jarInfo(id).map { jarInfo =>
+      CommonUtils.requireNonEmpty(newName)
+      if (jarInfo.name == newName) jarInfo
+      else {
+        val folder = toFolder(id)
+        val previousFIle = new File(folder, jarInfo.name)
+        val newFile = new File(folder, newName)
+        LOG.debug(s"copy file from $previousFIle to $newFile")
+        FileUtils.moveFile(previousFIle, newFile)
+        JarInfo(
+          id = id,
+          name = newFile.getName,
+          size = newFile.length(),
+          lastModified = CommonUtils.current()
+        )
+      }
+    }
+
+  override protected def doClose(): Unit = {
+    // do nothing
+  }
 }
 
 object LocalJarStore {

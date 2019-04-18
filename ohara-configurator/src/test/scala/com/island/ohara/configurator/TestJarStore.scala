@@ -41,29 +41,109 @@ class TestJarStore extends SmallTest with Matchers {
     finally output.close()
     tempFile
   }
+  private[this] def generateFile(): File = generateFile(CommonUtils.randomString().getBytes)
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
   @Test
-  def listNonexistentId(): Unit = {
-    an[NoSuchElementException] should be thrownBy result(configurator.jarStore.jarInfo("Asdasd"))
-    an[NoSuchElementException] should be thrownBy result(configurator.jarStore.jarInfos(Seq("Asdasd")))
-    an[NoSuchElementException] should be thrownBy result(configurator.jarStore.url("Asdasd"))
-    an[NoSuchElementException] should be thrownBy result(configurator.jarStore.urls(Seq("Asdasd")))
+  def nullIdInJarInfo(): Unit = an[NullPointerException] should be thrownBy result(configurator.jarStore.jarInfo(null))
+
+  @Test
+  def emptyIdInJarInfo(): Unit =
+    an[IllegalArgumentException] should be thrownBy result(configurator.jarStore.jarInfo(""))
+
+  @Test
+  def nullIdInUrl(): Unit = an[NullPointerException] should be thrownBy result(configurator.jarStore.url(null))
+
+  @Test
+  def emptyIdInUrl(): Unit = an[IllegalArgumentException] should be thrownBy result(configurator.jarStore.url(""))
+
+  @Test
+  def nullFileInAdd(): Unit = an[NullPointerException] should be thrownBy result(configurator.jarStore.add(null))
+
+  @Test
+  def nonexistentFileInAdd(): Unit =
+    an[IllegalArgumentException] should be thrownBy result(
+      configurator.jarStore.add(new File(CommonUtils.randomString())))
+
+  @Test
+  def nullFileInAdd2(): Unit = an[NullPointerException] should be thrownBy result(configurator.jarStore.add(null, "aa"))
+
+  @Test
+  def nonexistentFileInAdd2(): Unit = an[IllegalArgumentException] should be thrownBy result(
+    configurator.jarStore.add(new File(CommonUtils.randomString(), "aa")))
+
+  @Test
+  def nullNewNameInAdd(): Unit =
+    an[NullPointerException] should be thrownBy result(configurator.jarStore.add(generateFile(), null))
+
+  @Test
+  def emptyNameInAdd(): Unit =
+    an[IllegalArgumentException] should be thrownBy result(configurator.jarStore.add(generateFile(), ""))
+
+  @Test
+  def nullIdInUpdate(): Unit =
+    an[NullPointerException] should be thrownBy result(configurator.jarStore.update(null, generateFile()))
+
+  @Test
+  def emptyIdInUpdate(): Unit =
+    an[IllegalArgumentException] should be thrownBy result(configurator.jarStore.update("", generateFile()))
+
+  @Test
+  def nullFileInUpdate(): Unit = {
+    val jarInfo = result(configurator.jarStore.add(generateFile()))
+    an[NullPointerException] should be thrownBy result(configurator.jarStore.update(jarInfo.id, null))
   }
+
+  @Test
+  def nonexistentFileInUpdate(): Unit = {
+    val jarInfo = result(configurator.jarStore.add(generateFile()))
+    an[IllegalArgumentException] should be thrownBy result(
+      configurator.jarStore.update(jarInfo.id, new File(CommonUtils.randomString())))
+  }
+
+  @Test
+  def nonexistentIdInJarInfo(): Unit =
+    an[NoSuchElementException] should be thrownBy result(configurator.jarStore.jarInfo("Asdasd"))
+
+  @Test
+  def nonexistentIdInUrl(): Unit =
+    an[NoSuchElementException] should be thrownBy result(configurator.jarStore.url("Asdasd"))
+
+  @Test
+  def nullIdInRename(): Unit =
+    an[NullPointerException] should be thrownBy result(configurator.jarStore.rename(null, CommonUtils.randomString()))
+
+  @Test
+  def emptyIdInRename(): Unit =
+    an[IllegalArgumentException] should be thrownBy result(configurator.jarStore.rename("", CommonUtils.randomString()))
+
+  @Test
+  def nullNewNameInRename(): Unit = {
+    val jarInfo = result(configurator.jarStore.add(generateFile()))
+    an[NullPointerException] should be thrownBy result(configurator.jarStore.rename(jarInfo.id, null))
+  }
+
+  @Test
+  def emptyNewNameInRename(): Unit = {
+    val jarInfo = result(configurator.jarStore.add(generateFile()))
+    an[IllegalArgumentException] should be thrownBy result(configurator.jarStore.rename(jarInfo.id, ""))
+  }
+
+  @Test
+  def nullIdInToFile(): Unit = an[NullPointerException] should be thrownBy result(configurator.jarStore.toFile(null))
+
+  @Test
+  def emptyIdInToFile(): Unit = an[IllegalArgumentException] should be thrownBy result(configurator.jarStore.toFile(""))
 
   @Test
   def listNonexistentIdWithExistOne(): Unit = {
     val f = generateFile(CommonUtils.randomString().getBytes)
     val plugin = result(access.upload(f))
-    val jars = result(configurator.jarStore.jarInfos(Seq(plugin.id)))
-    jars.size shouldBe 1
-    jars.head shouldBe plugin
+    val jar = result(configurator.jarStore.jarInfo(plugin.id))
+    jar shouldBe plugin
 
     result(configurator.jarStore.jarInfo(plugin.id)) shouldBe plugin
-
-    an[NoSuchElementException] should be thrownBy result(configurator.jarStore.jarInfos(Seq("Asdasd", plugin.id)))
-    an[NoSuchElementException] should be thrownBy result(configurator.jarStore.urls(Seq("Asdasd", plugin.id)))
   }
 
   @Test

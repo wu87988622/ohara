@@ -27,9 +27,16 @@ import spray.json.RootJsonFormat
 import scala.concurrent.{ExecutionContext, Future}
 object JarApi {
   val JAR_PREFIX_PATH: String = "jars"
+
+  /**
+    * This is a specific prefix which enables user to download binary of jar
+    */
+  val DOWNLOAD_JAR_PREFIX_PATH: String = "downloadJars"
+
   final case class JarInfo(id: String, name: String, size: Long, lastModified: Long) extends Data {
     override def kind: String = "jar"
   }
+
   implicit val JAR_JSON_FORMAT: RootJsonFormat[JarInfo] = jsonFormat4(JarInfo)
 
   sealed abstract class Access extends BasicAccess(JAR_PREFIX_PATH) {

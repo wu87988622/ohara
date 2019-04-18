@@ -37,8 +37,8 @@ object WorkerRoute {
       defaultImage = WorkerApi.IMAGE_NAME_DEFAULT,
       hookBeforeDelete = (_, name) => Future.successful(name),
       hookOfCreation = (clusters, req: WorkerClusterCreationRequest) =>
-        jarStore
-          .urls(req.jars)
+        Future
+          .traverse(req.jars)(jarStore.url)
           .map { jars =>
             val wkClusters = clusters.filter(_.isInstanceOf[WorkerClusterInfo]).map(_.asInstanceOf[WorkerClusterInfo])
 

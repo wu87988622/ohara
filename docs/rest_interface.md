@@ -3007,10 +3007,14 @@ Jar APIs is a useful entry of putting your jar on ohara and then start related s
 accept a **jars** element which can carry the jar id pointing to a existent jar in ohara. The worker cluster will load all
 connectors of the input jar, and then you are able to use the connectors on the worker cluster.
 
-After you succeed to upload a jar to ohara, the lifecycle of jar is held by ohara so you can't **remove** or **update** the jar
-arbitrarily. You can consider this APIs as a way to set custom jars in running [worker cluster](#create-a-worker-cluster).
+The properties stored by ohara are shown below.
+1. id (**string**) — the jar id
+1. name (**string**) — the file name
+1. size (**long**) — file size
+1. lastModified (**long**) — the time of uploading this file
 
 ----------
+
 ### upload a jar to ohara
 
 *POST /v0/jars*
@@ -3034,10 +3038,65 @@ You have to specify the file name since it is a part of metadata stored by ohara
 }
 ```
 
-1. id (**string**) — the jar id
-1. name (**string**) — the file name
-1. size (**long**) — file size
-1. lastModified (**long**) — the time of uploading this file
+----------
+
+### list all jars
+
+*GET /v0/jars*
+
+**Example Response**
+```json
+[
+  {
+    "id": "aaa",
+    "name": "aa.jar",
+    "size": 12345,
+    "lastModified": 7777
+  }
+]
+```
+----------
+
+### delete a jar
+
+*DELETE /v0/jars/$id*
+
+**Example Response**
+```json
+{
+  "id": "aaa",
+  "name": "aa.jar",
+  "size": 12345,
+  "lastModified": 7777
+}
+```
+
+> If you delete a jar is used by other services, you also break the scalability of service as you can't run the jar
+  on any new nodes
+  
+----------
+
+### get a jar
+
+*GET /v0/jars/$id*
+
+**Example Response**
+```json
+{
+  "id": "aaa",
+  "name": "aa.jar",
+  "size": 12345,
+  "lastModified": 7777
+}
+```
+----------
+
+### download a jar
+
+*GET /v0/downloadJars/$id*
+
+> This API is used by internally, and you should not have interest in downloading jar. However, human begins are so complicated.
+  At any rate, ohara open this door to advanced user but noted that this API is not in ohara standard format.
 ----------
 ## Logs
 
