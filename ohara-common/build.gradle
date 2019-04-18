@@ -84,6 +84,10 @@ def date() {
 
 task initializer {
   doLast {
+    // Jenkins, sometimes, has to build temporary images, which have specific tag, to run IT tests.
+    // and all tests in IT have to use the temporary images.
+    def version = project.version
+    if(project.hasProperty("ohara.version")) version = project.getProperty("ohara.version")
     def file = new File("$projectDir" + "/src/main/java/com/island/ohara/common/util/VersionUtils.java")
     if (file.exists()) file.delete()
     def writer = new FileWriter(file)
@@ -91,7 +95,7 @@ task initializer {
       def code = """package com.island.ohara.common.util;
 // DON'T touch this file!!! It is generated dynamically. see ohara-common/build.gradle
 public final class VersionUtils {
-  public static final String VERSION = \"${project.version}\";
+  public static final String VERSION = \"$version\";
   public static final String USER = \"${user()}\";
   public static final String REVISION = \"${revision()}\";
   public static final String DATE = \"${date()}\";
