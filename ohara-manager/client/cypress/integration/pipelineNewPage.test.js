@@ -151,6 +151,7 @@ describe('PipelineNewPage', () => {
     it('ftp sink source connect to topic write to graph', () => {
       cy.server();
       cy.route('PUT', '/api/pipelines/*').as('graph');
+      cy.route('GET', '/api/connectors/*').as('getGraph');
 
       cy.getByTestId('toolbar-sinks')
         .click()
@@ -184,6 +185,7 @@ describe('PipelineNewPage', () => {
         .should('have.length', '1')
         .getByText('FTP Sink 2/2')
         .click()
+        .wait('@getGraph')
         .get('@graphTopic')
         .then(topic => {
           cy.getByTestId('read-topic-select').select(topic.name);
@@ -198,6 +200,7 @@ describe('PipelineNewPage', () => {
         .should('have.length', '1')
         .getByText('FTP Source 2/2')
         .click()
+        .wait('@getGraph')
         .get('@graphTopic')
         .then(topic => {
           cy.getByTestId('write-topic-select').select(topic.name);
@@ -210,6 +213,7 @@ describe('PipelineNewPage', () => {
     it('hdfs sink source connect to topic write to graph', () => {
       cy.server();
       cy.route('PUT', '/api/pipelines/*').as('graph');
+      cy.route('GET', '/api/connectors/*').as('getGraph');
 
       cy.getByTestId('toolbar-sinks')
         .click()
@@ -239,6 +243,7 @@ describe('PipelineNewPage', () => {
 
       cy.getByText('HDFSSinkConnector')
         .click()
+        .wait('@getGraph')
         .getByText('HDFS sink connector')
         .should('have.length', '1')
         .get('@graphTopic')
@@ -251,6 +256,7 @@ describe('PipelineNewPage', () => {
 
       cy.getByText('JDBCSourceConnector')
         .click()
+        .wait('@getGraph')
         .getByText('JDBC source connector')
         .should('have.length', '1')
         .get('@graphTopic')
