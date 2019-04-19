@@ -144,7 +144,7 @@ describe('PipelineNewPage', () => {
       .should('not.be.exist');
   });
 
-  context.only('Graph connectors', () => {
+  context('Graph connectors', () => {
     beforeEach(() => {
       cy.createTopic().as('graphTopic');
     });
