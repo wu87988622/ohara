@@ -232,6 +232,7 @@ class HdfsSink extends React.Component {
 
     const params = {
       name,
+      'connector.name': name,
       schema: [],
       className: CONNECTOR_TYPES.hdfsSink,
       topics,

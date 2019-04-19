@@ -286,6 +286,7 @@ class JdbcSource extends React.Component {
 
     const params = {
       name,
+      'connector.name': name,
       schema: [],
       className: CONNECTOR_TYPES.jdbcSource,
       topics,

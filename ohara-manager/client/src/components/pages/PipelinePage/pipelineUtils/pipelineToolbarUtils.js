@@ -52,6 +52,7 @@ export const createConnector = async ({ updateGraph, connector }) => {
       // Use the old API
       const params = {
         name: connectorName,
+        'connector.name': connectorName,
         className: className,
         schema: [],
         topics: [],

@@ -452,6 +452,7 @@ class FtpSource extends React.Component {
 
     const params = {
       name,
+      'connector.name': name,
       schema: _schema,
       className: CONNECTOR_TYPES.ftpSource,
       topics,
