@@ -17,11 +17,15 @@
 
 
 if [[ "$1" == "-v" ]] || [[ "$1" == "-version" ]]; then
-  if [[ -f "$KAFKA_HOME/bin/true_version" ]]; then
-    VERSION=$(cat "$KAFKA_HOME/bin/true_version")
-    echo "broker $VERSION"
+  if [[ -f "$KAFKA_HOME/bin/broker_version" ]]; then
+    echo "broker $(cat "$KAFKA_HOME/bin/broker_version")"
   else
     echo "broker: unknown"
+  fi
+    if [[ -f "$KAFKA_HOME/bin/ohara_version" ]]; then
+    echo "ohara $(cat "$KAFKA_HOME/bin/ohara_version")"
+  else
+    echo "ohara: unknown"
   fi
   exit
 fi

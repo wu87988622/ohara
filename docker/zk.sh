@@ -15,13 +15,16 @@
 # limitations under the License.
 #
 
-
 if [[ "$1" == "-v" ]] || [[ "$1" == "-version" ]]; then
-  if [[ -f "$ZOOKEEPER_HOME/bin/true_version" ]]; then
-    VERSION=$(cat "$ZOOKEEPER_HOME/bin/true_version")
-    echo "zookeeper $VERSION"
+  if [[ -f "$ZOOKEEPER_HOME/bin/zookeeper_version" ]]; then
+    echo "zookeeper $(cat "$ZOOKEEPER_HOME/bin/zookeeper_version")"
   else
     echo "zookeeper: unknown"
+  fi
+    if [[ -f "$ZOOKEEPER_HOME/bin/ohara_version" ]]; then
+    echo "ohara $(cat "$ZOOKEEPER_HOME/bin/ohara_version")"
+  else
+    echo "ohara: unknown"
   fi
   exit
 fi

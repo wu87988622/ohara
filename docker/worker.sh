@@ -23,9 +23,9 @@ if [[ "$1" == "-v" ]] || [[ "$1" == "-version" ]]; then
     echo "connect-worker: unknown"
   fi
     if [[ -f "$KAFKA_HOME/bin/ohara_version" ]]; then
-    echo "ohara connectors $(cat "$KAFKA_HOME/bin/ohara_version")"
+    echo "ohara $(cat "$KAFKA_HOME/bin/ohara_version")"
   else
-    echo "ohara connectors: unknown"
+    echo "ohara: unknown"
   fi
   exit
 fi

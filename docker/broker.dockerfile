@@ -30,7 +30,7 @@ RUN wget https://archive.apache.org/dist/kafka/${KAFKA_VERSION}/kafka_${SCALA_VE
 RUN mkdir ${KAFKA_DIR}
 RUN tar -zxvf kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz -C ${KAFKA_DIR}
 RUN rm -f kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
-RUN echo "$KAFKA_VERSION" > $(find "${KAFKA_DIR}" -maxdepth 1 -type d -name "kafka_*")/bin/true_version
+RUN echo "$KAFKA_VERSION" > $(find "${KAFKA_DIR}" -maxdepth 1 -type d -name "kafka_*")/bin/broker_version
 
 # download Prometheus exporter
 ARG EXPORTER_VERSION=0.3.1
@@ -45,6 +45,7 @@ ARG REPO="https://github.com/oharastream/ohara.git"
 WORKDIR /testpatch/ohara
 RUN git clone $REPO /testpatch/ohara
 RUN git checkout $COMMIT
+RUN git rev-parse HEAD > $(find "${KAFKA_DIR}" -maxdepth 1 -type d -name "kafka_*")/bin/ohara_version
 
 FROM centos:7.6.1810
 
