@@ -17,11 +17,11 @@
 package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
-import com.island.ohara.agent.{NoSuchClusterException, WorkerCollie}
+import com.island.ohara.agent.{Crane, NoSuchClusterException, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorDescription
-import com.island.ohara.client.configurator.v0.Data
+import com.island.ohara.client.configurator.v0.{Data, StreamApi}
 import com.island.ohara.client.configurator.v0.PipelineApi._
-import com.island.ohara.client.configurator.v0.StreamApi.StreamAppDescription
+import com.island.ohara.client.configurator.v0.StreamApi.{StreamAppDescription, StreamClusterInfo}
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
@@ -44,6 +44,7 @@ private[configurator] object PipelineRoute {
 
   private[this] def toRes(id: String, request: PipelineCreationRequest, swallow: Boolean = false)(
     implicit workerCollie: WorkerCollie,
+    crane: Crane,
     store: DataStore,
     executionContext: ExecutionContext): Future[Pipeline] =
     toRes(Map(id -> request), swallow).map(_.head)
@@ -56,6 +57,7 @@ private[configurator] object PipelineRoute {
     */
   private[this] def toRes(reqs: Map[String, PipelineCreationRequest], swallow: Boolean)(
     implicit workerCollie: WorkerCollie,
+    crane: Crane,
     store: DataStore,
     executionContext: ExecutionContext): Future[Seq[Pipeline]] =
     workerCollie.clusters
@@ -123,6 +125,7 @@ private[configurator] object PipelineRoute {
     */
   private[this] def abstracts(rules: Map[String, Seq[String]], workerClient: WorkerClient, counters: Seq[CounterMBean])(
     implicit store: DataStore,
+    crane: Crane,
     executionContext: ExecutionContext): Future[List[ObjectAbstract]] =
     Future
       .sequence(
@@ -189,18 +192,36 @@ private[configurator] object PipelineRoute {
                 }
 
             case data: StreamAppDescription =>
-              Future.successful(
-                ObjectAbstract(
-                  id = data.id,
-                  name = data.name,
-                  kind = data.kind,
-                  className = None,
-                  state = data.state,
-                  error = None,
-                  metrics = Metrics(Seq.empty),
-                  lastModified = data.lastModified
-                ))
-
+              crane
+                .get(StreamApi.formatClusterName(data.id))
+                .map(_._1.asInstanceOf[StreamClusterInfo])
+                .map { info =>
+                  ObjectAbstract(
+                    id = data.id,
+                    name = data.name,
+                    kind = data.kind,
+                    className = None,
+                    state = info.state,
+                    error = None,
+                    metrics = Metrics(Seq.empty),
+                    lastModified = data.lastModified
+                  )
+                }
+                .recover {
+                  case e: Throwable =>
+                    LOG.error(s"failed to fetch status of streamApp: ${data.id}", e)
+                    ObjectAbstract(
+                      id = data.id,
+                      name = data.name,
+                      kind = data.kind,
+                      className = None,
+                      state = None,
+                      error = Some(s"Failed to get status of streamApp: ${data.id}." +
+                        s"This may be temporary since our container cluster is too busy to sync status of streamApp. ${e.getMessage}"),
+                      metrics = Metrics(Seq.empty),
+                      lastModified = data.lastModified
+                    )
+                }
             case data =>
               Future.successful(
                 ObjectAbstract(id = data.id,
@@ -292,6 +313,7 @@ private[configurator] object PipelineRoute {
 
   private[this] def update(pipeline: Pipeline)(implicit store: DataStore,
                                                workerCollie: WorkerCollie,
+                                               crane: Crane,
                                                executionContext: ExecutionContext): Future[Pipeline] =
     update(Seq(pipeline)).map(_.head)
 
@@ -301,6 +323,7 @@ private[configurator] object PipelineRoute {
     */
   private[this] def update(pipelines: Seq[Pipeline])(implicit store: DataStore,
                                                      workerCollie: WorkerCollie,
+                                                     crane: Crane,
                                                      executionContext: ExecutionContext): Future[Seq[Pipeline]] =
     toRes(
       pipelines.map { pipeline =>
@@ -336,7 +359,10 @@ private[configurator] object PipelineRoute {
         else throw new IllegalArgumentException(s"$invalidIds don't exist!!!")
       }
 
-  def apply(implicit store: DataStore, workerCollie: WorkerCollie, executionContext: ExecutionContext): server.Route =
+  def apply(implicit store: DataStore,
+            workerCollie: WorkerCollie,
+            crane: Crane,
+            executionContext: ExecutionContext): server.Route =
     RouteUtils.basicRoute[PipelineCreationRequest, Pipeline](
       root = PIPELINES_PREFIX_PATH,
       hookOfAdd = (t: TargetCluster, id: Id, request: PipelineCreationRequest) =>

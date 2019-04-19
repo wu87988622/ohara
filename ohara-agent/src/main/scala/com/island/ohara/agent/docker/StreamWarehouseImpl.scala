@@ -84,6 +84,7 @@ private class StreamWarehouseImpl(nodeCollie: NodeCollie,
                                 )
                               )
                               .name(name)
+                              .command(StreamApi.MAIN_ENTRY)
                               .execute()
                           )
                           Some(node.name)

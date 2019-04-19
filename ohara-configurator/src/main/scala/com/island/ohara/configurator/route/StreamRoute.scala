@@ -74,8 +74,42 @@ private[configurator] object StreamRoute {
       from = from,
       to = to,
       state = None,
+      error = None,
       lastModified = lastModified
     )
+
+  /**
+    * Update the streamApp cluster state.
+    * If there are some exceptions, we will update the state to None and return error message
+    *
+    * @param id the streamApp id
+    * @param store data store
+    * @param crane manager of container clusters
+    * @param executionContext execution context
+    * @return updated streamApp data
+    */
+  private[this] def updateState(id: String)(implicit
+                                            store: DataStore,
+                                            crane: Crane,
+                                            executionContext: ExecutionContext): Future[StreamAppDescription] = {
+    store.value[StreamAppDescription](id).flatMap { props =>
+      crane
+        .get(formatClusterName(props.id))
+        .filter(_._1.isInstanceOf[StreamClusterInfo])
+        .map(_._1.asInstanceOf[StreamClusterInfo].state -> None)
+        .recover {
+          case ex: Throwable =>
+            log.error(s"failed to fetch stats for $props, maybe cluster not exists?", ex)
+            None -> Some(ex.getMessage)
+        }
+        .flatMap {
+          case (state, error) =>
+            store.update[StreamAppDescription](
+              props.id,
+              previous => Future.successful(previous.copy(state = state, error = error)))
+        }
+    }
+  }
 
   /**
     * Assert the require streamApp properties
@@ -256,31 +290,18 @@ private[configurator] object StreamRoute {
                 } ~
                 // get property
                 get {
-                  complete(
-                    store
-                      .value[StreamAppDescription](id)
-                      .map(
-                        data =>
-                          StreamPropertyResponse(
-                            id,
-                            data.jarInfo.name,
-                            data.name,
-                            data.from,
-                            data.to,
-                            data.instances,
-                            data.lastModified
-                        )
-                      )
-                  )
+                  complete(updateState(id))
                 } ~
-                // update
+                // update property
                 put {
                   entity(as[StreamPropertyRequest]) { req =>
                     complete(
-                      store
-                        .update[StreamAppDescription](
-                          id,
-                          previous =>
+                      store.update[StreamAppDescription](
+                        id,
+                        previous =>
+                          if (previous.state.isDefined)
+                            throw new RuntimeException(s"You cannot update property on non-stopped streamApp")
+                          else
                             Future.successful(
                               previous.copy(
                                 name = req.name,
@@ -290,19 +311,7 @@ private[configurator] object StreamRoute {
                                 lastModified = CommonUtils.current()
                               )
                           )
-                        )
-                        .map(
-                          newData =>
-                            StreamPropertyResponse(
-                              id,
-                              newData.jarInfo.name,
-                              newData.name,
-                              newData.from,
-                              newData.to,
-                              newData.instances,
-                              newData.lastModified
-                          )
-                        )
+                      )
                     )
                   }
                 }
@@ -314,56 +323,53 @@ private[configurator] object StreamRoute {
           // start streamApp
           path(START_COMMAND) {
             put {
-              complete(store.value[StreamAppDescription](id).flatMap {
-                data =>
-                  assertParameters(data)
-                  // we assume streamApp has following conditions:
-                  // 1) use any available node of worker cluster to run streamApp
-                  // 2) use one from/to pair topic (multiple from/to topics will need to discuss flow)
+              complete(store.value[StreamAppDescription](id).flatMap { data =>
+                assertParameters(data)
+                // we assume streamApp has following conditions:
+                // 1) use any available node of worker cluster to run streamApp
+                // 2) use one from/to pair topic (multiple from/to topics will need to discuss flow)
 
-                  // get the broker info and topic info from worker cluster name
-                  CollieUtils
-                    .both(Some(data.workerClusterName))
-                    // get broker props from worker cluster
-                    .map { case (_, topicAdmin, _, _) => topicAdmin.connectionProps }
-                    .flatMap { bkProps =>
-                      jarStore
-                        .url(data.jarInfo.id)
-                        .flatMap {
-                          val streamAppId =
-                            StreamApi.formatAppId(data.id)
-                          url =>
-                            crane
-                              .streamWarehouse()
-                              .creator()
-                              .clusterName(formatClusterName(data.id))
-                              .instances(data.instances)
-                              .imageName(STREAMAPP_IMAGE)
-                              .jarUrl(url.toString)
-                              .appId(streamAppId)
-                              .brokerProps(bkProps)
-                              .fromTopics(data.from)
-                              .toTopics(data.to)
-                              .create()
-                        }
-                        // if start failed (no matter why), we change the status to "EXITED"
-                        // in order to identify "fail started"(status: EXITED) and "successful stopped"(status = None)
-                        .recover {
-                          case ex: Throwable =>
-                            log.error(s"start streamApp failed : ${ex.getMessage}")
-                            StreamClusterInfo(
-                              name = data.id,
-                              imageName = STREAMAPP_IMAGE,
-                              state = Some(ContainerState.EXITED.name)
-                            )
-                        }
-                    }
-                    .flatMap { clusterInfo =>
+                // get the broker info and topic info from worker cluster name
+                CollieUtils
+                  .both(Some(data.workerClusterName))
+                  // get broker props from worker cluster
+                  .map { case (_, topicAdmin, _, _) => topicAdmin.connectionProps }
+                  .flatMap { bkProps =>
+                    jarStore
+                      .url(data.jarInfo.id)
+                      .flatMap {
+                        val streamAppId =
+                          StreamApi.formatAppId(data.id)
+                        url =>
+                          crane
+                            .streamWarehouse()
+                            .creator()
+                            .clusterName(formatClusterName(data.id))
+                            .instances(data.instances)
+                            .imageName(STREAMAPP_IMAGE)
+                            .jarUrl(url.toString)
+                            .appId(streamAppId)
+                            .brokerProps(bkProps)
+                            .fromTopics(data.from)
+                            .toTopics(data.to)
+                            .create()
+                      }
+                      .map(_.state -> None)
+                  }
+                  // if start failed (no matter why), we change the status to "EXITED"
+                  // in order to identify "fail started"(status: EXITED) and "successful stopped"(status = None)
+                  .recover {
+                    case ex: Throwable =>
+                      log.error(s"start streamApp failed: ", ex)
+                      Some(ContainerState.EXITED.name) -> Some(ex.getMessage)
+                  }
+                  .flatMap {
+                    case (state, error) =>
                       store.update[StreamAppDescription](
                         id,
-                        data => Future.successful(data.copy(state = clusterInfo.state))
+                        data => Future.successful(data.copy(state = state, error = error))
                       )
-                    }
+                  }
               })
             }
           } ~
@@ -373,20 +379,20 @@ private[configurator] object StreamRoute {
               complete(
                 store.value[StreamAppDescription](id).flatMap { data =>
                   crane
-                  // if remove failed, we throw the exception instead of swallowing it
+                  // if remove failed, we log the exception and return "EXITED" state
                     .remove(formatClusterName(data.id))
-                    .map(
-                      _ =>
-                        StreamClusterInfo(
-                          name = formatClusterName(data.id),
-                          imageName = STREAMAPP_IMAGE,
-                          state = None
-                      ))
-                    .flatMap { info =>
-                      store.update[StreamAppDescription](
-                        id,
-                        data => Future.successful(data.copy(state = info.state))
-                      )
+                    .map(_ => None -> None)
+                    .recover {
+                      case ex: Throwable =>
+                        log.error(s"failed to stop streamApp for $id.", ex)
+                        Some(ContainerState.EXITED.name) -> Some(ex.getMessage)
+                    }
+                    .flatMap {
+                      case (state, error) =>
+                        store.update[StreamAppDescription](
+                          id,
+                          data => Future.successful(data.copy(state = state, error = error))
+                        )
                     }
                 }
               )

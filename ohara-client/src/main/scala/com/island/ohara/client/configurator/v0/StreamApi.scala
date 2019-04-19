@@ -121,6 +121,8 @@ object StreamApi {
     * @param jarInfo uploaded jar information
     * @param from the candidate topics for streamApp consume from
     * @param to the candidate topics for streamApp produce to
+    * @param state the state of streamApp (stopped streamApp does not have this field)
+    * @param error the error message if the state was failed to fetch
     * @param lastModified this data change time
     */
   final case class StreamAppDescription(workerClusterName: String,
@@ -131,6 +133,7 @@ object StreamApi {
                                         from: Seq[String],
                                         to: Seq[String],
                                         state: Option[String],
+                                        error: Option[String],
                                         lastModified: Long)
       extends Data {
     override def kind: String = "streamApp"
@@ -145,7 +148,7 @@ object StreamApi {
           toTopics: $to
       """.stripMargin
   }
-  implicit val STREAM_ACTION_RESPONSE_JSON_FORMAT: RootJsonFormat[StreamAppDescription] = jsonFormat9(
+  implicit val STREAM_ACTION_RESPONSE_JSON_FORMAT: RootJsonFormat[StreamAppDescription] = jsonFormat10(
     StreamAppDescription)
 
   /**
@@ -179,18 +182,6 @@ object StreamApi {
   final case class StreamPropertyRequest(name: String, from: Seq[String], to: Seq[String], instances: Int)
   implicit val STREAM_PROPERTY_REQUEST_JSON_FORMAT: RootJsonFormat[StreamPropertyRequest] = jsonFormat4(
     StreamPropertyRequest)
-
-  // StreamApp Property Response Body
-  final case class StreamPropertyResponse(id: String,
-                                          jarName: String,
-                                          name: String,
-                                          from: Seq[String],
-                                          to: Seq[String],
-                                          instances: Int,
-                                          lastModified: Long)
-  implicit val STREAM_PROPERTY_RESPONSE_JSON_FORMAT: RootJsonFormat[StreamPropertyResponse] = jsonFormat7(
-    StreamPropertyResponse
-  )
 
   sealed abstract class ActionAccess extends BasicAccess(s"$STREAM_PREFIX_PATH") {
 
@@ -326,14 +317,14 @@ object StreamApi {
   sealed trait PropertyAccess {
     def hostname(hostname: String)(implicit executionContext: ExecutionContext): PropertyAccess
     def port(port: Int)(implicit executionContext: ExecutionContext): PropertyAccess
-    def get(id: String)(implicit executionContext: ExecutionContext): Future[StreamPropertyResponse]
+    def get(id: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription]
     def update(id: String, request: StreamPropertyRequest)(
-      implicit executionContext: ExecutionContext): Future[StreamPropertyResponse]
+      implicit executionContext: ExecutionContext): Future[StreamAppDescription]
   }
 
   def accessOfProperty(): PropertyAccess = new PropertyAccess {
-    private[this] val access: Access[StreamPropertyRequest, StreamPropertyResponse] =
-      new Access[StreamPropertyRequest, StreamPropertyResponse](
+    private[this] val access: Access[StreamPropertyRequest, StreamAppDescription] =
+      new Access[StreamPropertyRequest, StreamAppDescription](
         s"$STREAM_PREFIX_PATH/$STREAM_PROPERTY_PREFIX_PATH"
       )
 
@@ -346,12 +337,12 @@ object StreamApi {
       this
     }
 
-    override def get(id: String)(implicit executionContext: ExecutionContext): Future[StreamPropertyResponse] =
+    override def get(id: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription] =
       access.get(id)
     override def update(
       id: String,
       request: StreamPropertyRequest
-    )(implicit executionContext: ExecutionContext): Future[StreamPropertyResponse] =
+    )(implicit executionContext: ExecutionContext): Future[StreamAppDescription] =
       access.update(id, request)
   }
 }

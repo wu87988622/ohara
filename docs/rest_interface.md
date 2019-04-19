@@ -2736,6 +2736,7 @@ The following information of StreamApp are updated by ohara.
 1. from (**array(string)**) — topics of streamApp consume with
 1. to (**array(string)**) — topics of streamApp produce to
 1. state (**option(string)**) — only started/failed streamApp has state
+1. error (**option(string)**) — the error message from a failed streamApp. If the streamApp is fine or un-started, you won't get this field.
 1. lastModified (**long**) — last modified this jar time
 ----------
 ### start a StreamApp
@@ -2862,27 +2863,35 @@ Currently, this api is only used for changing jar name.
 
 **Example Response**
 
-1. id (**string**) — id of this streamApp
-1. jarName (**string**) — the upload jar name
-1. name (**string**) — the streamApp name
-1. from (**array(string)**) — source topics for this streamApp
-1. to (**array(string)**) — target topics for this streamApp
-1. instances (**int**) — the number of running streamApp application at same time
-1. state (**string**) — the state of running streamApp. If the streamApp is not started, you won't see this field
+1. workerClusterName (**string**) — worker cluster name this streamApp belong to
+1. id (**string**) — unique id of this streamApp
+1. name (**string**) — custom name of this streamApp
+1. instances ( **int**) — numbers of streamApp container
+1. jarInfo (**object**) — uploaded jar information
+1. from (**array(string)**) — topics of streamApp consume with
+1. to (**array(string)**) — topics of streamApp produce to
+1. state (**option(string)**) — only started/failed streamApp has state
 1. lastModified (**long**) — last modified this jar time
 
 ```json
 {
+  "workerClusterName": "wk01",
   "id": "d312871a-4a05-488d-aae0-c8b27c5312c2",
-  "jarName": "new-name.jar",
   "name": "my-app",
+  "instances": 3,
+  "jarInfo": {
+    "id": "1b022c59-93f9-452c-a062-f8e4cb6c00fe",
+    "name": "new-name.jar",
+    "size": 1234,
+    "lastModified": 1542102595892
+  },
   "from": [
     "topic1"
   ],
   "to": [
     "topic2"
   ],
-  "instances": 3,
+ 
   "state": "RUNNING",
   "lastModified": 1542102595892
 }
@@ -2901,6 +2910,7 @@ Update the properties of a non-started streamApp.
 1. to (**array(string)**) — new target topics
 1. instances (**int**) — new number of running streamApp
 
+```json
 {
   "name": "my-new-app",
   "from": [
@@ -2911,31 +2921,38 @@ Update the properties of a non-started streamApp.
   ],
   "instances": 3
 }
+```
 
 **Example Response**
 
-1. id (**string**) — id of this streamApp
-1. jarName (**string**) — the upload jar name
-1. name (**string**) — the streamApp name
-1. from (**array(string)**) — source topics for this streamApp
-1. to (**array(string)**) — target topics for this streamApp
-1. instances (**int**) — the number of running streamApp application at same time
-1. state (**string**) — the state of running streamApp. If the streamApp is not started, you won't see this field
+1. workerClusterName (**string**) — worker cluster name this streamApp belong to
+1. id (**string**) — unique id of this streamApp
+1. name (**string**) — custom name of this streamApp
+1. instances ( **int**) — numbers of streamApp container
+1. jarInfo (**object**) — uploaded jar information
+1. from (**array(string)**) — topics of streamApp consume with
+1. to (**array(string)**) — topics of streamApp produce to
+1. state (**option(string)**) — only started/failed streamApp has state
 1. lastModified (**long**) — last modified this jar time
 
 ```json
 {
+  "workerClusterName": "wk01",
   "id": "d312871a-4a05-488d-aae0-c8b27c5312c2",
-  "jarName": "new-name.jar",
-  "name": "my-app",
+  "name": "my-new-app",
+  "instances": 1,
+  "jarInfo": {
+    "id": "1b022c59-93f9-452c-a062-f8e4cb6c00fe",
+    "name": "new-name.jar",
+    "size": 1234,
+    "lastModified": 1542102595892
+  },
   "from": [
-    "topic1"
+    "topicA"
   ],
   "to": [
-    "topic2"
+    "topicB"
   ],
-  "instances": 3,
-  "state": "RUNNING",
   "lastModified": 1542102595892
 }
 ```
