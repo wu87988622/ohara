@@ -257,6 +257,9 @@ RowSourceTask is the unit of executing **poll**. A connector can invokes multipl
 than 1 via [Connector APIs](rest_interface.md#connector). RowSourceTask has similar lifecycle to Source connector. Worker
 cluster call **start** to initialize a task and call **stop** to terminate a task.
 
+----------
+
+#### _pull()
 You can ignore all methods except for **_poll**. Worker cluster call **_poll** regularly to get **RowSourceRecord**s and then
 save them to topics. Worker cluster does not care for your implementation. All you have to do is to put your data in ***RowSourceRecord**.
 RowSourceRecord is a complicated object having many elements. Some elements are significant. For example, **partition**
@@ -354,7 +357,7 @@ NOT block _poll(). On the contrary, returning an empty list can yield the resour
 
 ----------
 
-#### data from _poll() are committed async.
+#### data from _poll() are committed async
 You don't expect that the data you generated are commit at once, right? Committing data invokes a large latency since
 we need to sync data to multiple nodes and result in many disk I/O. Worker has another thread sending your data in background.
 If your connector needs to know the time of committing data, you can override the **_commitRecord(RowSourceRecord)**.
@@ -378,6 +381,189 @@ public abstract class RowSourceTask extends SourceTask {
 ----------
 
 ### Sink connector
+
+```java
+public abstract class RowSinkConnector extends SinkConnector {
+
+  /**
+   * Start this Connector. This method will only be called on a clean Connector, i.e. it has either
+   * just been instantiated and initialized or _stop() has been invoked.
+   *
+   * @param config configuration settings
+   */
+  protected abstract void _start(TaskConfig config);
+
+  /** stop this connector */
+  protected abstract void _stop();
+
+  /**
+   * Returns the RowSinkTask implementation for this Connector.
+   *
+   * @return a RowSinkTask class
+   */
+  protected abstract Class<? extends RowSinkTask> _taskClass();
+
+  /**
+   * Return the settings for source task. NOTED: It is illegal to assign different topics to
+   * RowSinkTask
+   *
+   * @param maxTasks number of tasks for this connector
+   * @return the settings for each tasks
+   */
+  protected abstract List<TaskConfig> _taskConfigs(int maxTasks);
+}
+```
+
+Sink connector is similar to [source connector](#source-connector). It also have [_start(TaskConfig)](#_starttaskconfig),
+[_stop()](#_stop), [_taskClass()](#_taskclass), [_taskConfigs(int maxTasks)](#_taskconfigsint-maxtasks),
+[partition and offsets](#partition-and-offsets). The main difference between sink connector and source connector is that
+sink connector do pull data from topic and then push processed data to outside system. Hence, it does have
+[_put](#_putlistrowsinkrecord-records) rather than [_pull](#_pull)
+
+> Though sink connector and source connector have many identical methods, you should NOT make a connector mixed sink and source.
+  Because Both connector are **abstract** class, you can't have a class extending both of them in java.
+
+Sink connector also has to provide the task class to worker cluster. The sink task in ohara is called **RowSinkTask**.
+It is also distributed across whole worker cluster when you running a sink connector. 
+
+----------
+
+### RowSinkTask
+
+```java
+public abstract class RowSinkTask extends SinkTask {
+
+  /**
+   * Start the Task. This should handle any configuration parsing and one-time setup from the task.
+   *
+   * @param config initial configuration
+   */
+  protected abstract void _start(TaskConfig config);
+
+  /**
+   * Perform any cleanup to stop this task. In SinkTasks, this method is invoked only once
+   * outstanding calls to other methods have completed (e.g., _put() has returned) and a final
+   * flush() and offset commit has completed. Implementations from this method should only need to
+   * perform final cleanup operations, such as closing network connections to the sink system.
+   */
+  protected abstract void _stop();
+
+  /**
+   * Put the table record in the sink. Usually this should send the records to the sink
+   * asynchronously and immediately return.
+   *
+   * @param records table record
+   */
+  protected abstract void _put(List<RowSinkRecord> records);
+}  
+```
+
+RowSinkTask is similar to [RowSourceTask](#rowsourcetask) that both of them have _start and _stop phase. RowSinkTask is
+executed by a separate thread on worker also.
+
+----------
+
+#### _put(List<RowSinkRecord> records)
+
+Worker invokes a separate thread to fetch data from topic and put the data to sink task. The input data is called **RowSinkRecord**
+which carries not only row but also metadata.
+1. topicName (**string**) — where the dat come from
+1. Row (**row**) — input data
+1. partition (**int**) — index of partition
+1. offset (**long**) — offset in topic-partition;
+1. timestamp (**long**) — data timestamp
+1. TimestampType (**enum**) — the way of generating timestamp
+    - NO_TIMESTAMP_TYPE — means timestamp is nothing for this data
+    - CREATE_TIME — the timestamp is provided by user or the time of sending this data 
+    - LOG_APPEND_TIME — the timestamp is broker's local time when the data is append
+
+----------
+
+#### partition and offsets
+
+Sink task has a component, which is called **RowSinkContext**, saving the offset and partitions for input data. Commonly,
+it is not big news to you since kafka has responsibility to manage data offset in topic-partition to avoid losing data.
+However, if you have something more than data lost, such as exactly once, you can manage the data offset manually and then
+use RowSinkContext to change the offset of input data.
+
+
+----------
+
+#### handle exception in _put(List<RowSinkRecord>)
+Any thrown exception will make this connector failed and stopped. You should handle the recoverable error and throw
+the exception which obstruct connector from running. 
+
+```java
+public interface RowSinkContext {
+  /**
+   * Reset the consumer offsets for the given topic partitions. SinkTasks should use this if they
+   * manage offsets in the sink data store rather than using Kafka consumer offsets. For example, an
+   * HDFS connector might record offsets in HDFS to provide exactly once delivery. When the SinkTask
+   * is started or a rebalance occurs, the task would reload offsets from HDFS and use this method
+   * to reset the consumer to those offsets.
+   *
+   * <p>SinkTasks that do not manage their own offsets do not need to use this method.
+   *
+   * @param offsets map from offsets for topic partitions
+   */
+  void offset(Map<TopicPartition, Long> offsets);
+
+  /**
+   * Reset the consumer offsets for the given topic partition. SinkTasks should use if they manage
+   * offsets in the sink data store rather than using Kafka consumer offsets. For example, an HDFS
+   * connector might record offsets in HDFS to provide exactly once delivery. When the topic
+   * partition is recovered the task would reload offsets from HDFS and use this method to reset the
+   * consumer to the offset.
+   *
+   * <p>SinkTasks that do not manage their own offsets do not need to use this method.
+   *
+   * @param partition the topic partition to reset offset.
+   * @param offset the offset to reset to.
+   */
+  default void offset(TopicPartition partition, Long offset) {
+    this.offset(Collections.singletonMap(partition, offset));
+  }
+}
+```
+
+> Noted that data offset is a order in topic-partition so the input of RowSinkContext.offset consists of topic name
+  and partition. 
+
+----------
+
+#### handle exception in _put(List<RowSinkRecord>)
+see [handle exception in _poll()](#handle-exception-in-_poll)
+
+----------
+
+#### commit your output data when kafka commit input data
+
+While feeding data into your sink task, kakfa also tries to commit previous data that make the data disappear from you.
+The method **_preCommit** is a callback of committing data offset. If you want to manage the offsets, you can change what
+to commit by kafka. Another use case is that you have some stuff which needs to be committed also, and you can trigger
+the commit in this callback.
+
+```java
+public abstract class RowSinkTask extends SinkTask {
+  /**
+   * Pre-commit hook invoked prior to an offset commit.
+   *
+   * <p>The default implementation simply return the offsets and is thus able to assume all offsets
+   * are safe to commit.
+   *
+   * @param offsets the current offset state as from the last call to _put, provided for convenience
+   *     but could also be determined by tracking all offsets included in the RowSourceRecord's
+   *     passed to _put.
+   * @return an empty map if Connect-managed offset commit is not desired, otherwise a map from
+   *     offsets by topic-partition that are safe to commit.
+   */
+  protected Map<TopicPartition, TopicOffset> _preCommit(Map<TopicPartition, TopicOffset> offsets) {
+    return offsets;
+  }
+}  
+```
+
+> The offsets exceeding the latest consumed offset are discarded
 
 ----------
 
