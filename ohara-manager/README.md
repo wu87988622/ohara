@@ -244,7 +244,7 @@ yarn test
 
 ## Clean
 
-Clean up all running processes as well as `test-reports/` on the **Server**, `node_moduels/` on both **Server** and **Client** directories:
+Clean up all running processes, removing `test-reports/` in the **Server** and `/build` directory in the **Client**:
 
 ```sh
 yarn clean
@@ -325,7 +325,7 @@ We highly recommend that you use [Visual Studio Code](https://code.visualstudio.
 
   We're using `forever` to start our node.js servers on CI, and `nodemon` while in development, so you need to use the following commands to kill them. `kill -9` or `fuser` might not work as you expected.
 
-  use `yarn clean:process` command or `pkill node` to kill all the node.js processes
+  use `yarn clean:processes` command or `pkill node` to kill all the node.js processes
 
 - **While running test in jest's watch modal, an error is thrown**
 
