@@ -15,13 +15,14 @@
  */
 
 package com.island.ohara.agent.docker
+import com.island.ohara.client.Enum
 
 /**
   * docker's network driver.
   */
 sealed abstract class NetworkDriver
 
-object NetworkDriver {
+object NetworkDriver extends Enum[NetworkDriver] {
 
   /**
     * The default network driver.

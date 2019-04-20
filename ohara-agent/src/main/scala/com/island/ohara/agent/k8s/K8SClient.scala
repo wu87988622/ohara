@@ -46,7 +46,7 @@ import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, Port
 import com.island.ohara.common.util.{CommonUtils, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 import spray.json.{RootJsonFormat, _}
-import com.island.ohara.client.kafka.Enum
+import com.island.ohara.client.Enum
 import com.island.ohara.common.annotations.Optional
 
 import scala.concurrent.{Await, ExecutionContext, Future}

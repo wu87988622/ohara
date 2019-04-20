@@ -115,10 +115,7 @@ object TopicAdmin {
               admin
                 .createTopics(
                   util.Arrays.asList(new NewTopic(name, numberOfPartitions, numberOfReplications).configs(Map(
-                    TopicConfig.CLEANUP_POLICY_CONFIG -> (cleanupPolicy match {
-                      case CleanupPolicy.COMPACTED => TopicConfig.CLEANUP_POLICY_COMPACT
-                      case _                       => TopicConfig.CLEANUP_POLICY_DELETE
-                    })
+                    TopicConfig.CLEANUP_POLICY_CONFIG -> cleanupPolicy.name
                   ).asJava)))
                 .values()
                 .get(name)
@@ -210,7 +207,7 @@ object TopicAdmin {
 
     @Optional("default is CleanupPolicy.DELETE")
     def cleanupPolicy(cleanupPolicy: CleanupPolicy): Creator = {
-      this.cleanupPolicy = cleanupPolicy
+      this.cleanupPolicy = Objects.requireNonNull(cleanupPolicy)
       this
     }
 
@@ -219,7 +216,7 @@ object TopicAdmin {
       name = Objects.requireNonNull(name),
       numberOfPartitions = CommonUtils.requirePositiveInt(numberOfPartitions),
       numberOfReplications = CommonUtils.requirePositiveShort(numberOfReplications),
-      cleanupPolicy
+      cleanupPolicy = Objects.requireNonNull(cleanupPolicy)
     )
 
     protected def doCreate(executionContext: ExecutionContext,

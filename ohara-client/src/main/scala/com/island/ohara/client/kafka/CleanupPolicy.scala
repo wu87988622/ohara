@@ -15,16 +15,19 @@
  */
 
 package com.island.ohara.client.kafka
+import com.island.ohara.client.Enum
 
 /**
   * Mapping to kafka's topic cleanup policy.
-  * see org.apache.kafka.common.config.TopicConfig.CLEANUP_POLICY_CONFIG
-  * see org.apache.kafka.common.config.TopicConfig.CLEANUP_POLICY_COMPACT
-  * see org.apache.kafka.common.config.TopicConfig.CLEANUP_POLICY_DELETE
+  * NOTED: the name is part of "kafka topic config", so "DON'T" change it arbitrarily
+  *
+  * @see org.apache.kafka.common.config.TopicConfig.CLEANUP_POLICY_CONFIG
+  * @see org.apache.kafka.common.config.TopicConfig.CLEANUP_POLICY_COMPACT
+  * @see org.apache.kafka.common.config.TopicConfig.CLEANUP_POLICY_DELETE
   */
-sealed abstract class CleanupPolicy
+sealed abstract class CleanupPolicy(val name: String)
 
-object CleanupPolicy {
-  case object DELETE extends CleanupPolicy
-  case object COMPACTED extends CleanupPolicy
+object CleanupPolicy extends Enum[CleanupPolicy] {
+  case object DELETE extends CleanupPolicy("delete")
+  case object COMPACTED extends CleanupPolicy("compact")
 }

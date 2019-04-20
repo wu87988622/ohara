@@ -15,7 +15,7 @@
  */
 
 package com.island.ohara.client.configurator.v0
-import com.island.ohara.client.kafka.Enum
+import com.island.ohara.client.Enum
 import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.kafka.connector.json.{ConnectorFormatter, PropGroups, SettingDefinition, StringList}
 import spray.json.{JsArray, JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}

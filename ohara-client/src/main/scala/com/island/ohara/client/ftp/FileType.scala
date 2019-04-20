@@ -15,10 +15,11 @@
  */
 
 package com.island.ohara.client.ftp
+import com.island.ohara.client.Enum
 
 abstract sealed class FileType
 
-object FileType {
+object FileType extends Enum[FileType] {
   case object FILE extends FileType
   case object FOLDER extends FileType
   case object NONEXISTENT extends FileType

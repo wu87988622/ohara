@@ -15,7 +15,7 @@
  */
 
 package com.island.ohara.it.prometheus
-
+import com.island.ohara.client.Enum
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsString, JsValue, RootJsonFormat}
 
@@ -28,36 +28,20 @@ object PrometheusJson {
   final case class Targets(status: String, data: Data)
   final case class Data(activeTargets: Seq[TargetSeq], droppedTargets: Seq[TargetSeq])
 
-  abstract sealed class Health extends Serializable {
-    // adding a field to display the name from enumeration avoid we break the compatibility when moving code...
-    val name: String
-  }
+  abstract sealed class Health(val name: String)
 
-  object Health {
-    case object UP extends Health {
-      val name = "up"
-    }
+  object Health extends Enum[Health] {
+    case object UP extends Health("up")
 
-    case object Down extends Health {
-      val name = "down"
-    }
+    case object Down extends Health("down")
 
-    case object UnKnown extends Health {
-      val name = "unknown"
-    }
-
-    val all: Seq[Health] = Seq(
-      UP,
-      Down,
-      UnKnown
-    )
+    case object UnKnown extends Health("unknown")
   }
 
   implicit val STATE_JSON_FORMAT: RootJsonFormat[Health] = new RootJsonFormat[Health] {
     override def write(obj: Health): JsValue = JsString(obj.name)
-    override def read(json: JsValue): Health = Health.all
-      .find(_.name == json.asInstanceOf[JsString].value)
-      .getOrElse(throw new IllegalArgumentException(s"Unknown state name:${json.asInstanceOf[JsString].value}"))
+    override def read(json: JsValue): Health =
+      Health.forName(json.asInstanceOf[JsString].value)
   }
 
   final case class TargetSeq(discoveredLabels: DiscoveredLabels,

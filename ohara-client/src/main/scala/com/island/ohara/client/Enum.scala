@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.client.kafka
+package com.island.ohara.client
 
 import scala.reflect.ClassTag
 

@@ -15,8 +15,7 @@
  */
 
 package com.island.ohara.agent.k8s
-
-import com.island.ohara.client.kafka.Enum
+import com.island.ohara.client.Enum
 
 /**
   * The name is a part of "Restful APIs" so "DON'T" change it arbitrarily
