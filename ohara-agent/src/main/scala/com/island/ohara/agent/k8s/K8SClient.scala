@@ -120,9 +120,7 @@ object K8SClient {
       override def images(nodeName: String)(implicit executionContext: ExecutionContext): Future[Seq[String]] =
         Http().singleRequest(HttpRequest(HttpMethods.GET, uri = s"${k8sApiServerURL}/nodes/${nodeName}")).flatMap {
           response =>
-            Unmarshal(response.entity).to[NodeItems] map { r =>
-              r.status.images.filter(x => x.names.size >= 2).map(x => x.names.last)
-            }
+            Unmarshal(response.entity).to[NodeItems] map (_.status.images.flatMap(_.names))
         }
 
       override def checkNode(nodeName: String)(implicit executionContext: ExecutionContext): Future[Report] = {
