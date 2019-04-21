@@ -567,6 +567,51 @@ public abstract class RowSinkTask extends SinkTask {
 
 ----------
 
+## version
+
+We all love to show how good we are. If you are a connector designer, ohara connector offers a way to show the verion,
+revision and author for a connector.
+
+```java
+public abstract class RowSourceConnector extends SourceConnector {
+  /**
+   * Get the version from this connector.
+   *
+   * @return the version, formatted as a String
+   */
+  protected ConnectorVersion _version() {
+    return ConnectorVersion.builder().build();
+  }
+}
+```
+
+By default, all information in ConnectorVersion are **unknown**. You can override one of them or all of them when writing 
+connector. The version information of a connector is showed by [Worker API](rest_interface.md#worker).
+
+> Don't return null, please!!!
+
+You can build a ConnectorVersion with fluent pattern.
+```java
+public class ExampleOfConnectorVersion {
+  public static ConnectorVersion build() {
+    return ConnectorVersion.builder()
+              .version("my_version")
+              .revision("my_revision")
+              .author("my_user")
+              .build();
+  }
+}
+```
+
+All official connectors have identical ConnectorVersion consisting of ohara's version, sha of commit and name of release manager.
+Feel free to fill what you want in ConnectorVersion. For example, it is ok to leave **unknown** in **Author** if you 
+are the people that we can't talk. However, Please don't use illegal values like **null** or **empty string**.
+
+> Version in ohara connector is different to kafka connector. The later only supports **version** and it's APIs show only
+  **version**. Hence, you can't get revision, author or other [settings](#setting-definitions) through kafka APIs 
+
+----------
+
 ## metrics
 
 ----------
