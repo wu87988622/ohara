@@ -720,3 +720,81 @@ public class ExampleOfCreatingReadonlySettingDefinition {
 ----------
 
 ## metrics
+
+We are live in a world filled with number, and so do connectors. While a connector is running, ohara collects many counts
+from the data flow for the connector in background. All of counters (and other records which will be introduced in the future)
+are called **metrics**, and it can be fetched by [Connector APIs](rest_interface.md#connector).
+Apart from official metrics, connector developers are also able to build custom metrics for custom connectors,
+and all custom metrics are also showed by [Connector APIs](rest_interface.md#connector).
+
+Ohara leverage JMX to offer the metrics APIs to connector. It means all metrics you created are stored as Java beans and 
+is accessible through JMX service. That is why you have to define a port via [Worker APIs](rest_interface.md#worker)
+for creating a worker cluster. Although you can see all java mbeans via the JMX client (such as JMC), ohara still encourage
+you to apply [Connector APIs](rest_interface.md#connector) as it offers a more readable format of metrics.
+
+----------
+
+### counter
+
+Counter is a common use case for metrics that you can increment/decrement/add/ a number atomically. A counter consists of
+following members.
+1. group (**string**) — the group of this counter
+1. name (**string**) — the name of this counter
+1. unit (**string**) — the unit of value
+1. document (**string**) — the document for this metrics
+1. startTime (**long**) — the time to start this counter
+1. value (**long**) — current value of count
+
+A example of creating a counter is shown below.
+```java
+public class ExampleOfCreatingCounter {
+  public static Counter sizeCounter(String group) {
+    return Counter.builder()
+        .group(group)
+        .name("row.size")
+        .unit("bytes")
+        .document("size (in bytes) of rows")
+        .startTime(CommonUtils.current())
+        .value(0)
+        .register();
+  }
+}
+```
+
+> Though **unit** and **document* are declared optional, making them have meaning description can help reader to understand
+  the magic number from your counter.
+
+> The counter created by connector always has the group same to id of connector, since ohara needs to find the counters
+  for specific connector in [Connector APIs](rest_interface.md#connector)
+
+----------
+
+### official metrics
+
+There are two official metrics for connector - row counter and bytes counter. The former is the number of processed rows,
+and the later is the number of processed data. Both of them are updated when data are pull/push from/to your connector.
+Normally, you don't need to care for them when designing connectors. However, you can read the source code in ConnectorUtils.java
+to see how ohara create official counters.
+
+----------
+
+### create your own counters
+
+In order to reduce your duplicate code, ohara offers the **CounterBuilder** to all connectors. CounterBuilder is a wrap
+of Counter.Builder with some pre-defined variables, and hence the creation of CounterBuilder must be after initializing
+the connector/task.
+ ```java
+ public class ExampleOfCreatingCustomBuilder {
+   public static Counter custom(RowSinkTask task) {
+     return task.counterBuilder()
+         .unit("bytes")
+         .document("size (in bytes) of rows")
+         .startTime(CommonUtils.current())
+         .value(0)
+         .register();
+   }
+ }
+ ```
+ 
+> Ohara doesn't obstruct you from using Counter directly. However, using CounterBuilder make sure that your custom metrics
+  are available in [Connector APIs](rest_interface.md#connector).
