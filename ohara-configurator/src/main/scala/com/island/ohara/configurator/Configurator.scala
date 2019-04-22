@@ -344,15 +344,15 @@ object Configurator {
           .access()
           .hostname(CommonUtils.hostname())
           .port(configurator.port)
-          .add(
-            BrokerClusterCreationRequest(
-              name = PRE_CREATE_BK_NAME,
-              imageName = None,
-              zookeeperClusterName = Some(PRE_CREATE_ZK_NAME),
-              exporterPort = None,
-              clientPort = None,
-              nodeNames = Seq(node.name)
-            )),
+          .add(BrokerClusterCreationRequest(
+            name = PRE_CREATE_BK_NAME,
+            imageName = None,
+            zookeeperClusterName = Some(PRE_CREATE_ZK_NAME),
+            exporterPort = None,
+            clientPort = None,
+            jmxPort = None,
+            nodeNames = Seq(node.name)
+          )),
         30 seconds
       )
       LOG.info(s"succeed to create bk cluster:$bkCluster")

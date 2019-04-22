@@ -44,9 +44,10 @@ fi
 # jmx setting
 
 if [[ -z $JMX_PORT ]]; then
-  echo "JMX_PORT is required!!!"
-  exit 2
+  # this default value should be equal to WorkerApi.JMX_PORT_DEFAULT
+  $JMX_PORT="8084"
 fi
+
 if [[ -z $JMX_HOSTNAME ]]; then
   echo "JMX_HOSTNAME is required!!!"
   exit 2

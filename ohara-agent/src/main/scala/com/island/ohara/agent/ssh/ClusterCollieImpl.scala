@@ -107,6 +107,7 @@ private[agent] class ClusterCollieImpl(expiredTime: Duration, nodeCollie: NodeCo
         zookeeperClusterName = first.environments(ZOOKEEPER_CLUSTER_NAME),
         exporterPort = first.environments(BrokerCollie.EXPORTER_PORT_KEY).toInt,
         clientPort = first.environments(BrokerCollie.CLIENT_PORT_KEY).toInt,
+        jmxPort = first.environments(BrokerCollie.JMX_PORT_KEY).toInt,
         nodeNames = containers.map(_.nodeName)
       ))
   }

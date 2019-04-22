@@ -23,8 +23,8 @@ import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
 
-import scala.concurrent.{ExecutionContext, Future}
 import scala.collection.JavaConverters._
+import scala.concurrent.{ExecutionContext, Future}
 
 trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator] {
 
@@ -52,6 +52,7 @@ object BrokerCollie {
     private[this] var clientPort: Int = BrokerApi.CLIENT_PORT_DEFAULT
     private[this] var zookeeperClusterName: String = _
     private[this] var exporterPort: Int = BrokerApi.EXPORTER_PORT_DEFAULT
+    private[this] var jmxPort: Int = BrokerApi.JMX_PORT_DEFAULT
 
     def zookeeperClusterName(zookeeperClusterName: String): ClusterCreator = {
       this.zookeeperClusterName = CommonUtils.requireNonEmpty(zookeeperClusterName)
@@ -70,6 +71,12 @@ object BrokerCollie {
       this
     }
 
+    @Optional("default is BrokerApi.CLIENT_PORT_DEFAULT")
+    def jmxPort(jmxPort: Int): ClusterCreator = {
+      this.jmxPort = CommonUtils.requirePositiveInt(jmxPort)
+      this
+    }
+
     override def create()(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] = doCreate(
       executionContext = Objects.requireNonNull(executionContext),
       clusterName = CommonUtils.requireNonEmpty(clusterName),
@@ -77,6 +84,7 @@ object BrokerCollie {
       zookeeperClusterName = CommonUtils.requireNonEmpty(zookeeperClusterName),
       clientPort = CommonUtils.requirePositiveInt(clientPort),
       exporterPort = CommonUtils.requirePositiveInt(exporterPort),
+      jmxPort = CommonUtils.requirePositiveInt(jmxPort),
       nodeNames = CommonUtils.requireNonEmpty(nodeNames.asJava).asScala
     )
 
@@ -86,6 +94,7 @@ object BrokerCollie {
                            zookeeperClusterName: String,
                            clientPort: Int,
                            exporterPort: Int,
+                           jmxPort: Int,
                            nodeNames: Seq[String]): Future[BrokerClusterInfo]
   }
 
@@ -96,4 +105,6 @@ object BrokerCollie {
   private[agent] val ADVERTISED_HOSTNAME_KEY: String = "BROKER_ADVERTISED_HOSTNAME"
   private[agent] val ADVERTISED_CLIENT_PORT_KEY: String = "BROKER_ADVERTISED_CLIENT_PORT"
   private[agent] val EXPORTER_PORT_KEY: String = "PROMETHEUS_EXPORTER_PORT"
+  private[agent] val JMX_HOSTNAME_KEY: String = "JMX_HOSTNAME"
+  private[agent] val JMX_PORT_KEY: String = "JMX_PORT"
 }

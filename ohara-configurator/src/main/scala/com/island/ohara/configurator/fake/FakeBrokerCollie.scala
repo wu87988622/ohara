@@ -33,7 +33,7 @@ private[configurator] class FakeBrokerCollie(bkConnectionProps: String)
     */
   private[this] val fakeAdminCache = new ConcurrentHashMap[BrokerClusterInfo, FakeTopicAdmin]
   override def creator(): BrokerCollie.ClusterCreator =
-    (executionContext, clusterName, imageName, zookeeperClusterName, clientPort, exporterPort, nodeNames) =>
+    (executionContext, clusterName, imageName, zookeeperClusterName, clientPort, exporterPort, jmxPort, nodeNames) =>
       Future.successful(
         addCluster(
           FakeBrokerClusterInfo(
@@ -41,6 +41,7 @@ private[configurator] class FakeBrokerCollie(bkConnectionProps: String)
             imageName = imageName,
             clientPort = clientPort,
             exporterPort = exporterPort,
+            jmxPort = jmxPort,
             zookeeperClusterName = zookeeperClusterName,
             nodeNames = nodeNames
           )))
@@ -59,6 +60,7 @@ private[configurator] class FakeBrokerCollie(bkConnectionProps: String)
             zookeeperClusterName = previous.zookeeperClusterName,
             exporterPort = previous.exporterPort,
             clientPort = previous.clientPort,
+            jmxPort = previous.jmxPort,
             nodeNames = previous.nodeNames.filterNot(_ == nodeName)
           )))
   }
@@ -77,6 +79,7 @@ private[configurator] class FakeBrokerCollie(bkConnectionProps: String)
             zookeeperClusterName = previous.zookeeperClusterName,
             clientPort = previous.clientPort,
             exporterPort = previous.exporterPort,
+            jmxPort = previous.jmxPort,
             nodeNames = previous.nodeNames :+ nodeName
           )))
   }

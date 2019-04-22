@@ -118,6 +118,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
           imageName = None,
           clientPort = Some(CommonUtils.availablePort()),
           exporterPort = Some(CommonUtils.availablePort()),
+          jmxPort = Some(CommonUtils.availablePort()),
           zookeeperClusterName = Some(zkCluster.name),
           nodeNames = nodeCache.map(_.name)
         )

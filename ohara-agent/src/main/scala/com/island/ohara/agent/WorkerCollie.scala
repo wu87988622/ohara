@@ -155,7 +155,7 @@ object WorkerCollie {
       this
     }
 
-    @Optional("default is WorkerApi.CLIENT_PORT_DEFAULT.WorkerApi.CLIENT_PORT_DEFAULT")
+    @Optional("default is WorkerApi.CLIENT_PORT_DEFAULT")
     def jmxPort(jmxPort: Int): ClusterCreator = {
       this.jmxPort = CommonUtils.requirePositiveInt(jmxPort)
       this

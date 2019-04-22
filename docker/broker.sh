@@ -41,6 +41,27 @@ if [[ -f "$CONFIG" ]]; then
   exit 2
 fi
 
+# jmx setting
+
+if [[ -z $JMX_PORT ]]; then
+  # Noted the default value should be equal to BrokerApi.JMX_PORT_DEFAULT
+  $JMX_PORT="9093"
+fi
+
+if [[ -z $JMX_HOSTNAME ]]; then
+  echo "JMX_HOSTNAME is required!!!"
+  exit 2
+fi
+
+# this option will rewrite the default setting in kafka script
+export KAFKA_JMX_OPTS="-Dcom.sun.management.jmxremote \
+-Dcom.sun.management.jmxremote.authenticate=false \
+-Dcom.sun.management.jmxremote.ssl=false \
+-Dcom.sun.management.jmxremote.port=$JMX_PORT \
+-Dcom.sun.management.jmxremote.rmi.port=$JMX_PORT \
+-Djava.rmi.server.hostname=$JMX_HOSTNAME
+"
+
 # default setting
 echo "num.network.threads=3" >> "$CONFIG"
 echo "num.io.threads=8" >> "$CONFIG"
@@ -93,12 +114,12 @@ fi
 
 if [[ ! -z "$PROMETHEUS_EXPORTER" ]]; then
   if [[ ! -f "$PROMETHEUS_EXPORTER" ]]; then
-    echo "$PROMETHEUS_EXPORTER exporter don't exist!!!"
+    echo "PROMETHEUS_EXPORTER exporter doesn't exist!!!"
     exit 2
   fi
 
   if [[ ! -f "$PROMETHEUS_EXPORTER_CONFIG" ]]; then
-    echo "$PROMETHEUS_EXPORTER_CONFIG exporter config don't exist!!!"
+    echo "PROMETHEUS_EXPORTER_CONFIG exporter config doesn't exist!!!"
     exit 2
   fi
 
@@ -106,11 +127,7 @@ if [[ ! -z "$PROMETHEUS_EXPORTER" ]]; then
     PROMETHEUS_EXPORTER_PORT="7071"
   fi
 
-  if [[ -z "$JMX_PORT" ]]; then
-    JMX_PORT="9090"
-  fi
-
-  KAFKA_OPTS="-javaagent:$PROMETHEUS_EXPORTER=$PROMETHEUS_EXPORTER_PORT:$PROMETHEUS_EXPORTER_CONFIG"
+  export KAFKA_OPTS="-javaagent:$PROMETHEUS_EXPORTER=$PROMETHEUS_EXPORTER_PORT:$PROMETHEUS_EXPORTER_CONFIG"
 fi
 
-exec env JMX_PORT=$JMX_PORT KAFKA_OPTS=$KAFKA_OPTS $KAFKA_HOME/bin/kafka-server-start.sh "$CONFIG"
+exec $KAFKA_HOME/bin/kafka-server-start.sh "$CONFIG"

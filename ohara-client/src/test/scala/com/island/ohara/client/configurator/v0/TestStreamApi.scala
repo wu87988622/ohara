@@ -59,6 +59,6 @@ class TestStreamApi extends SmallTest with Matchers {
     info.nodeNames.size shouldBe 1
     info.nodeNames.head shouldBe "fake"
     info.state.get shouldBe "RUNNING"
-    info.ports shouldBe Seq.empty
+    info.ports shouldBe Set.empty
   }
 }

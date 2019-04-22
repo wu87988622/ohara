@@ -23,5 +23,6 @@ private[configurator] case class FakeBrokerClusterInfo(name: String,
                                                        zookeeperClusterName: String,
                                                        exporterPort: Int,
                                                        clientPort: Int,
+                                                       jmxPort: Int,
                                                        nodeNames: Seq[String])
     extends BrokerClusterInfo

@@ -93,7 +93,7 @@ object WorkerApi {
                                                 jars: Seq[String],
                                                 nodeNames: Seq[String])
       extends ClusterCreationRequest {
-    override def ports: Seq[Int] = Seq(clientPort.getOrElse(CLIENT_PORT_DEFAULT), jmxPort.getOrElse(JMX_PORT_DEFAULT))
+    override def ports: Set[Int] = Set(clientPort.getOrElse(CLIENT_PORT_DEFAULT), jmxPort.getOrElse(JMX_PORT_DEFAULT))
   }
 
   implicit val WORKER_CLUSTER_CREATION_REQUEST_JSON_FORMAT: RootJsonFormat[WorkerClusterCreationRequest] =
@@ -137,7 +137,7 @@ object WorkerApi {
       * Our client to broker and worker accept the connection props:host:port,host2:port2
       */
     def connectionProps: String = nodeNames.map(n => s"$n:$clientPort").mkString(",")
-    override def ports: Seq[Int] = Seq(clientPort, jmxPort)
+    override def ports: Set[Int] = Set(clientPort, jmxPort)
   }
 
   private[this] def toCaseClass(obj: WorkerClusterInfo): WorkerClusterInfoImpl = obj match {

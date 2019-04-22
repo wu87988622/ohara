@@ -135,6 +135,7 @@ class ConfiguratorBuilder {
         imageName = "None",
         zookeeperClusterName = "None",
         exporterPort = -1,
+        jmxPort = -1,
         clientPort = port,
         nodeNames = Seq(host)
       )
@@ -216,6 +217,7 @@ class ConfiguratorBuilder {
             // Assigning a negative value can make test fail quickly.
             clientPort = -1,
             exporterPort = -1,
+            jmxPort = -1,
             nodeNames = zkCluster.nodeNames
           ))
     }

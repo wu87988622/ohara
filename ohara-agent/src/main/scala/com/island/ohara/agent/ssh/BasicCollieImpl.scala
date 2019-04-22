@@ -160,6 +160,7 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: Cl
                 imageName = c.imageName,
                 clientPort = c.clientPort,
                 exporterPort = c.exporterPort,
+                jmxPort = c.jmxPort,
                 zookeeperClusterName = c.zookeeperClusterName,
                 nodeNames = c.nodeNames.filter(_ != nodeName)
               )

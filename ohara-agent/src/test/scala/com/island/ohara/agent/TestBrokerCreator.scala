@@ -27,13 +27,14 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class TestBrokerCreator extends SmallTest with Matchers {
 
   private[this] def bkCreator(): BrokerCollie.ClusterCreator =
-    (executionContext, clusterName, imageName, zookeeperClusterName, clientPort, exporterPort, nodeNames) => {
+    (executionContext, clusterName, imageName, zookeeperClusterName, clientPort, exporterPort, jmxPort, nodeNames) => {
       // the inputs have been checked (NullPointerException). Hence, we throw another exception here.
       if (executionContext == null) throw new AssertionError()
       if (clusterName == null || clusterName.isEmpty) throw new AssertionError()
       if (imageName == null || imageName.isEmpty) throw new AssertionError()
       if (clientPort <= 0) throw new AssertionError()
       if (exporterPort <= 0) throw new AssertionError()
+      if (jmxPort <= 0) throw new AssertionError()
       if (zookeeperClusterName == null || zookeeperClusterName.isEmpty) throw new AssertionError()
       if (nodeNames == null || nodeNames.isEmpty) throw new AssertionError()
       Future.successful(
@@ -43,6 +44,7 @@ class TestBrokerCreator extends SmallTest with Matchers {
           zookeeperClusterName = zookeeperClusterName,
           clientPort = clientPort,
           exporterPort = exporterPort,
+          jmxPort = jmxPort,
           nodeNames = nodeNames
         ))
     }
@@ -85,6 +87,11 @@ class TestBrokerCreator extends SmallTest with Matchers {
   @Test
   def negativeExporterPort(): Unit = {
     an[IllegalArgumentException] should be thrownBy bkCreator().exporterPort(-1)
+  }
+
+  @Test
+  def negativeJmxPort(): Unit = {
+    an[IllegalArgumentException] should be thrownBy bkCreator().jmxPort(-1)
   }
 
   @Test

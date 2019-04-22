@@ -166,7 +166,7 @@ object StreamApi {
     state: Option[String] = None
   ) extends ClusterInfo {
     // We don't care the ports since streamApp communicates by broker
-    override def ports: Seq[Int] = Seq.empty
+    override def ports: Set[Int] = Set.empty
   }
 
   // StreamApp List Request Body

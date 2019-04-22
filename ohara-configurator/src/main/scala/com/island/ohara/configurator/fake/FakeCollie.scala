@@ -43,7 +43,7 @@ private[configurator] abstract class FakeCollie[T <: ClusterInfo, Creator <: Clu
         FAKE_KIND_NAME,
         name = CommonUtils.randomString(10),
         size = "unknown",
-        portMappings = Seq(PortMapping("fake host", cluster.ports.map(p => PortPair(p, p)))),
+        portMappings = Seq(PortMapping("fake host", cluster.ports.map(p => PortPair(p, p)).toSeq)),
         environments = Map.empty,
         hostname = CommonUtils.randomString(10)
       )

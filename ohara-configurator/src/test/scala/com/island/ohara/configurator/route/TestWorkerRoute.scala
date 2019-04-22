@@ -203,6 +203,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
           zookeeperClusterName = Some(zkClusterName),
           clientPort = Some(CommonUtils.availablePort()),
           exporterPort = Some(CommonUtils.availablePort()),
+          jmxPort = Some(CommonUtils.availablePort()),
           nodeNames = nodeNames
         ))).name shouldBe anotherBk
     try {

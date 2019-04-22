@@ -36,5 +36,5 @@ trait ClusterCreationRequest {
   /**
     * @return ports used by this cluster
     */
-  def ports: Seq[Int]
+  def ports: Set[Int]
 }

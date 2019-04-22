@@ -76,6 +76,7 @@ object BrokerRoute {
           .clusterName(req.name)
           .clientPort(req.clientPort.getOrElse(BrokerApi.CLIENT_PORT_DEFAULT))
           .exporterPort(req.exporterPort.getOrElse(BrokerApi.EXPORTER_PORT_DEFAULT))
+          .jmxPort(req.jmxPort.getOrElse(BrokerApi.JMX_PORT_DEFAULT))
           .zookeeperClusterName(zkName)
           .imageName(req.imageName.getOrElse(BrokerApi.IMAGE_NAME_DEFAULT))
           .nodeNames(req.nodeNames)

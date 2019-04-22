@@ -71,6 +71,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
   override protected def bk_create(clusterName: String,
                                    clientPort: Int,
                                    exporterPort: Int,
+                                   jmxPort: Int,
                                    zkClusterName: String,
                                    nodeNames: Seq[String]): Future[BrokerApi.BrokerClusterInfo] =
     bkCollie
@@ -79,6 +80,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
       .clusterName(clusterName)
       .clientPort(clientPort)
       .exporterPort(exporterPort)
+      .jmxPort(jmxPort)
       .zookeeperClusterName(zkClusterName)
       .nodeNames(nodeNames)
       .create()

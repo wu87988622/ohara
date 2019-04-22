@@ -83,6 +83,7 @@ class TestContainerRoute extends MediumTest with Matchers {
           zookeeperClusterName = Some(zkClusterName),
           exporterPort = None,
           clientPort = None,
+          jmxPort = None,
           nodeNames = nodeNames
         )))
 

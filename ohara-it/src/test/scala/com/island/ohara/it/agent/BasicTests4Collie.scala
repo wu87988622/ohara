@@ -70,6 +70,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
   protected def bk_create(clusterName: String,
                           clientPort: Int,
                           exporterPort: Int,
+                          jmxPort: Int,
                           zkClusterName: String,
                           nodeNames: Seq[String]): Future[BrokerClusterInfo]
   protected def bk_cluster(clusterName: String): Future[BrokerClusterInfo] =
@@ -190,12 +191,14 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       val nodeName: String = nodeCache.head.name
       val clientPort = CommonUtils.availablePort()
       val exporterPort = CommonUtils.availablePort()
+      val jmxPort = CommonUtils.availablePort()
       def assert(brokerCluster: BrokerClusterInfo): BrokerClusterInfo = {
         brokerCluster.zookeeperClusterName shouldBe zkCluster.name
         brokerCluster.name shouldBe clusterName
         brokerCluster.nodeNames.head shouldBe nodeName
         brokerCluster.clientPort shouldBe clientPort
         brokerCluster.exporterPort shouldBe exporterPort
+        brokerCluster.jmxPort shouldBe jmxPort
         brokerCluster
       }
 
@@ -205,6 +208,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
             clusterName = clusterName,
             clientPort = clientPort,
             exporterPort = exporterPort,
+            jmxPort = jmxPort,
             zkClusterName = zkCluster.name,
             nodeNames = Seq(nodeName)
           )))
@@ -226,15 +230,18 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         container.nodeName shouldBe nodeName
         container.name.contains(clusterName) shouldBe true
         container.hostname.contains(clusterName) shouldBe true
-        container.portMappings.head.portPairs.size shouldBe 2
+        container.portMappings.head.portPairs.size shouldBe 3
         container.portMappings.head.portPairs.exists(_.containerPort == clientPort) shouldBe true
         container.environments.exists(_._2 == clientPort.toString) shouldBe true
         var curCluster = bkCluster
-        testTopic(bkCluster)
+        testTopic(curCluster)
+        testJmx(curCluster)
         curCluster = testAddNodeToRunningBrokerCluster(curCluster)
-        testTopic(bkCluster)
+        testTopic(curCluster)
+        testJmx(curCluster)
         curCluster = testRemoveNodeToRunningBrokerCluster(curCluster)
-        testTopic(bkCluster)
+        testTopic(curCluster)
+        testJmx(curCluster)
       } finally if (cleanup) {
         result(bk_delete(bkCluster.name))
         assertNoCluster(() => result(bk_clusters()), bkCluster.name)
@@ -390,6 +397,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
           clusterName = generateClusterName(),
           clientPort = CommonUtils.availablePort(),
           exporterPort = CommonUtils.availablePort(),
+          jmxPort = CommonUtils.availablePort(),
           zkClusterName = zkCluster.name,
           nodeNames = Seq(nodeCache.head.name)
         ))
@@ -484,6 +492,10 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
             false
       }
     )
+
+  private[this] def testJmx(cluster: BrokerClusterInfo): Unit = cluster.nodeNames.foreach { node =>
+    BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().size() should not be 0
+  }
 
   private[this] def testJmx(cluster: WorkerClusterInfo): Unit = cluster.nodeNames.foreach { node =>
     BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().size() should not be 0
@@ -601,6 +613,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
               clusterName = bkNames(index),
               clientPort = CommonUtils.availablePort(),
               exporterPort = CommonUtils.availablePort(),
+              jmxPort = CommonUtils.availablePort(),
               zkClusterName = zk.name,
               nodeNames = Seq(nodeCache.head.name)
             ))
@@ -662,6 +675,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
           clusterName = bkName,
           clientPort = CommonUtils.availablePort(),
           exporterPort = CommonUtils.availablePort(),
+          jmxPort = CommonUtils.availablePort(),
           zkClusterName = zk.name,
           nodeNames = Seq(nodeCache.head.name)
         ))

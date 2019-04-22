@@ -49,7 +49,7 @@ object ZookeeperApi {
                                                    electionPort: Option[Int],
                                                    nodeNames: Seq[String])
       extends ClusterCreationRequest {
-    override def ports: Seq[Int] = Seq(clientPort.getOrElse(CLIENT_PORT_DEFAULT),
+    override def ports: Set[Int] = Set(clientPort.getOrElse(CLIENT_PORT_DEFAULT),
                                        peerPort.getOrElse(PEER_PORT_DEFAULT),
                                        electionPort.getOrElse(ELECTION_PORT_DEFAULT))
   }
@@ -61,7 +61,7 @@ object ZookeeperApi {
     def clientPort: Int
     def peerPort: Int
     def electionPort: Int
-    override def ports: Seq[Int] = Set(clientPort, peerPort, electionPort).toSeq
+    override def ports: Set[Int] = Set(clientPort, peerPort, electionPort)
   }
 
   object ZookeeperClusterInfo {

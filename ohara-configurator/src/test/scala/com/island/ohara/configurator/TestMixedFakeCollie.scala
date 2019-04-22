@@ -66,6 +66,7 @@ class TestMixedFakeCollie extends WithBrokerWorker with Matchers {
               imageName = None,
               exporterPort = None,
               clientPort = None,
+              jmxPort = None,
               nodeNames = nodes.map(_.name)
             )),
         10 seconds
@@ -100,6 +101,7 @@ class TestMixedFakeCollie extends WithBrokerWorker with Matchers {
               imageName = None,
               exporterPort = None,
               clientPort = None,
+              jmxPort = None,
               nodeNames = nodes.map(_.name)
             )),
         10 seconds

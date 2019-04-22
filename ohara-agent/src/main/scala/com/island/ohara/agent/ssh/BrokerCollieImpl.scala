@@ -43,7 +43,7 @@ private class BrokerCollieImpl(nodeCollie: NodeCollie,
     * @return creator of broker cluster
     */
   override def creator(): BrokerCollie.ClusterCreator =
-    (executionContext, clusterName, imageName, zookeeperClusterName, clientPort, exporterPort, nodeNames) => {
+    (executionContext, clusterName, imageName, zookeeperClusterName, clientPort, exporterPort, jmxPort, nodeNames) => {
       implicit val exec: ExecutionContext = executionContext
       clusterCache.get.flatMap { clusters =>
         clusters
@@ -130,7 +130,8 @@ private class BrokerCollieImpl(nodeCollie: NodeCollie,
                             .imageName(imageName)
                             .portMappings(Map(
                               clientPort -> clientPort,
-                              exporterPort -> exporterPort
+                              exporterPort -> exporterPort,
+                              jmxPort -> jmxPort
                             ))
                             .hostname(containerName)
                             .envs(Map(
@@ -140,7 +141,9 @@ private class BrokerCollieImpl(nodeCollie: NodeCollie,
                               BrokerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
                               BrokerCollie.EXPORTER_PORT_KEY -> exporterPort.toString,
                               BrokerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
-                              ZOOKEEPER_CLUSTER_NAME -> zookeeperClusterName
+                              ZOOKEEPER_CLUSTER_NAME -> zookeeperClusterName,
+                              BrokerCollie.JMX_HOSTNAME_KEY -> node.name,
+                              BrokerCollie.JMX_PORT_KEY -> jmxPort.toString
                             ))
                             .name(containerName)
                             .route(route ++ existRoute)
@@ -170,6 +173,7 @@ private class BrokerCollieImpl(nodeCollie: NodeCollie,
                     zookeeperClusterName = zookeeperClusterName,
                     exporterPort = exporterPort,
                     clientPort = clientPort,
+                    jmxPort = jmxPort,
                     nodeNames = successfulNodeNames ++ existNodes.map(_._1.name)
                   )
                 }

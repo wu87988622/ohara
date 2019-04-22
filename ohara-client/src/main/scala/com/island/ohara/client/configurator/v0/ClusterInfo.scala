@@ -37,7 +37,7 @@ trait ClusterInfo {
     * We "highlight" this method since port checking is a important thing for configurator
     * @return ports used by this cluster
     */
-  def ports: Seq[Int]
+  def ports: Set[Int]
 
   /**
     * @return nodes running this cluster

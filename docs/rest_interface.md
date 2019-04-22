@@ -1603,8 +1603,9 @@ cluster can be used by only a broker cluster. It will fail if you try to multi b
 The properties which can be set by user are shown below.
 1. name (**string**) — cluster name
 1. imageName (**string**) — docker image
-1. clientPort (**int**) — broker client port.
+1. clientPort (**int**) — broker client port
 1. exporterPort (**int**) — port used by internal communication
+1. jmxPort (**int**) — port used by jmx service
 1. zookeeperClusterName (**String**) — name of zookeeper cluster used to store metadata of broker cluster
 1. nodeNames (**array(string)**) — the nodes running the broker process
 ----------
@@ -1616,6 +1617,7 @@ The properties which can be set by user are shown below.
 1. imageName (**string**) — docker image
 1. clientPort (**int**) — broker client port.
 1. exporterPort (**int**) — port used by internal communication
+1. jmxPort (**int**) — port used by jmx service
 1. zookeeperClusterName (**String**) — name of zookeeper cluster used to store metadata of broker cluster
 1. nodeNames (**array(string)**) — the nodes running the broker process
 
@@ -1628,6 +1630,7 @@ The properties which can be set by user are shown below.
   "zookeeperClusterName": "zk00",
   "clientPort": 12345,
   "exporterPort": 12346,
+  "jmxPort": 12347,
   "nodeNames": [
     "node00"
   ]
@@ -1643,6 +1646,7 @@ The properties which can be set by user are shown below.
   "imageName": "oharastream/broker:0.4-SNAPSHOT",
   "exporterPort": 12346,
   "clientPort": 12345,
+  "jmxPort": 12347,
   "nodeNames": [
     "node00"
   ]
@@ -1676,6 +1680,7 @@ different purpose (a dangerous behavior, right?).
   "imageName": "oharastream/broker:0.4-SNAPSHOT",
   "exporterPort": 7071,
   "clientPort": 9092,
+  "jmxPort": 9093,
   "nodeNames": [
     "node00"
   ]
@@ -1696,6 +1701,7 @@ different purpose (a dangerous behavior, right?).
     "imageName": "oharastream/broker:0.4-SNAPSHOT",
     "exporterPort": 7071,
     "clientPort": 9092,
+    "jmxPort": 9093,
     "nodeNames": [
       "node00"
     ]
@@ -1721,6 +1727,7 @@ It is disallowed to remove a broker cluster used by a running [worker cluster](#
   "imageName": "oharastream/broker:0.4-SNAPSHOT",
   "exporterPort": 7071,
   "clientPort": 9092,
+  "jmxPort": 9093,
   "nodeNames": [
     "node00"
   ]
@@ -1740,6 +1747,7 @@ It is disallowed to remove a broker cluster used by a running [worker cluster](#
   "imageName": "oharastream/broker:0.4-SNAPSHOT",
   "exporterPort": 7071,
   "clientPort": 9092,
+  "jmxPort": 9093,
   "nodeNames": [
     "node00"
   ]
@@ -1762,6 +1770,7 @@ However, the balance is not triggered at once.
   "imageName": "oharastream/broker:0.4-SNAPSHOT",
   "exporterPort": 7071,
   "clientPort": 9092,
+  "jmxPort": 9093,
   "nodeNames": [
     "node01",
     "node00"
@@ -1785,6 +1794,7 @@ running broker cluster invoke a lot of data move. The loading may burn out the r
   "imageName": "oharastream/broker:0.4-SNAPSHOT",
   "exporterPort": 7071,
   "clientPort": 9092,
+  "jmxPort": 9093,
   "nodeNames": [
     "node00"
   ]

@@ -266,7 +266,14 @@ private object K8SClusterCollieImpl {
       with K8SBasicCollieImpl[BrokerClusterInfo, BrokerCollie.ClusterCreator] {
 
     override def creator(): BrokerCollie.ClusterCreator =
-      (executionContext, clusterName, imageName, zookeeperClusterName, clientPort, exporterPort, nodeNames) => {
+      (executionContext,
+       clusterName,
+       imageName,
+       zookeeperClusterName,
+       clientPort,
+       exporterPort,
+       jmxPort,
+       nodeNames) => {
         implicit val exec: ExecutionContext = executionContext
         exist(clusterName)
           .flatMap(if (_) containers(clusterName) else Future.successful(Seq.empty))
@@ -325,7 +332,8 @@ private object K8SClusterCollieImpl {
                       .domainName(K8S_DOMAIN_NAME)
                       .portMappings(Map(
                         clientPort -> clientPort,
-                        exporterPort -> exporterPort
+                        exporterPort -> exporterPort,
+                        jmxPort -> jmxPort
                       ))
                       .hostname(hostname)
                       .envs(Map(
@@ -335,7 +343,9 @@ private object K8SClusterCollieImpl {
                         BrokerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
                         BrokerCollie.EXPORTER_PORT_KEY -> exporterPort.toString,
                         BrokerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
-                        ZOOKEEPER_CLUSTER_NAME -> zookeeperClusterName
+                        ZOOKEEPER_CLUSTER_NAME -> zookeeperClusterName,
+                        BrokerCollie.JMX_HOSTNAME_KEY -> node.name,
+                        BrokerCollie.JMX_PORT_KEY -> jmxPort.toString
                       ))
                       .name(hostname)
                       .run()
@@ -355,6 +365,7 @@ private object K8SClusterCollieImpl {
                 zookeeperClusterName = zookeeperClusterName,
                 exporterPort = exporterPort,
                 clientPort = clientPort,
+                jmxPort = jmxPort,
                 nodeNames = successfulNodeNames ++ existNodes.map(_._1.name)
               )
           }
@@ -368,6 +379,7 @@ private object K8SClusterCollieImpl {
       .zookeeperClusterName(previousCluster.zookeeperClusterName)
       .clientPort(previousCluster.clientPort)
       .exporterPort(previousCluster.exporterPort)
+      .jmxPort(previousCluster.jmxPort)
       .imageName(previousCluster.imageName)
       .nodeName(newNodeName)
       .create()
@@ -383,6 +395,7 @@ private object K8SClusterCollieImpl {
         zookeeperClusterName = first.environments(ZOOKEEPER_CLUSTER_NAME),
         exporterPort = first.environments(BrokerCollie.EXPORTER_PORT_KEY).toInt,
         clientPort = first.environments(BrokerCollie.CLIENT_PORT_KEY).toInt,
+        jmxPort = first.environments(BrokerCollie.JMX_PORT_KEY).toInt,
         nodeNames = containers.map(_.nodeName)
       )
     }

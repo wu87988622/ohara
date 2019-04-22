@@ -165,15 +165,15 @@ class TestTopicRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(
-          BrokerClusterCreationRequest(
-            name = CommonUtils.randomString(10),
-            imageName = None,
-            zookeeperClusterName = Some(zk2.name),
-            exporterPort = None,
-            clientPort = Some(123),
-            nodeNames = zk2.nodeNames
-          )))
+        .add(BrokerClusterCreationRequest(
+          name = CommonUtils.randomString(10),
+          imageName = None,
+          zookeeperClusterName = Some(zk2.name),
+          exporterPort = None,
+          jmxPort = None,
+          clientPort = Some(123),
+          nodeNames = zk2.nodeNames
+        )))
 
     an[IllegalArgumentException] should be thrownBy result(
       topicApi.add(

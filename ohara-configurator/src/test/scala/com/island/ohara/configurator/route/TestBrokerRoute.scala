@@ -86,15 +86,15 @@ class TestBrokerRoute extends MediumTest with Matchers {
   @Test
   def removeBrokerClusterUsedByWorkerCluster(): Unit = {
     val bk = result(
-      brokerApi.add(
-        BrokerClusterCreationRequest(
-          name = CommonUtils.randomString(10),
-          imageName = None,
-          zookeeperClusterName = Some(zkClusterName),
-          exporterPort = None,
-          clientPort = Some(123),
-          nodeNames = nodeNames
-        )))
+      brokerApi.add(BrokerClusterCreationRequest(
+        name = CommonUtils.randomString(10),
+        imageName = None,
+        zookeeperClusterName = Some(zkClusterName),
+        exporterPort = None,
+        clientPort = Some(123),
+        jmxPort = None,
+        nodeNames = nodeNames
+      )))
 
     val wk = result(
       WorkerApi
@@ -161,6 +161,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
             zookeeperClusterName = None,
             exporterPort = Some(CommonUtils.availablePort()),
             clientPort = Some(CommonUtils.availablePort()),
+            jmxPort = Some(CommonUtils.availablePort()),
             nodeNames = nodeNames
           ))
       )
@@ -179,6 +180,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
           zookeeperClusterName = None,
           exporterPort = Some(CommonUtils.availablePort()),
           clientPort = Some(CommonUtils.availablePort()),
+          jmxPort = Some(CommonUtils.availablePort()),
           nodeNames = Seq("asdasdasd")
         ))
     )
@@ -194,6 +196,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
           zookeeperClusterName = None,
           exporterPort = None,
           clientPort = Some(123),
+          jmxPort = None,
           nodeNames = Seq.empty
         ))
     )
@@ -207,6 +210,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
       zookeeperClusterName = Some("Asdasdasd"),
       exporterPort = None,
       clientPort = Some(123),
+      jmxPort = None,
       nodeNames = nodeNames
     )
     an[IllegalArgumentException] should be thrownBy assert(request, result(brokerApi.add(request)))
@@ -223,6 +227,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
       zookeeperClusterName = Some(zkClusterName),
       exporterPort = None,
       clientPort = Some(CommonUtils.availablePort()),
+      jmxPort = None,
       nodeNames = nodeNames
     )
 
@@ -246,6 +251,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
       zookeeperClusterName = Some(zkClusterName),
       exporterPort = None,
       clientPort = Some(123),
+      jmxPort = None,
       nodeNames = nodeNames
     )
     assert(request, result(brokerApi.add(request)))
@@ -258,6 +264,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
       imageName = None,
       exporterPort = Some(CommonUtils.availablePort()),
       clientPort = Some(CommonUtils.availablePort()),
+      jmxPort = Some(CommonUtils.availablePort()),
       zookeeperClusterName = Some(zkClusterName),
       nodeNames = nodeNames
     )
@@ -282,6 +289,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
       imageName = None,
       exporterPort = Some(CommonUtils.availablePort()),
       clientPort = Some(CommonUtils.availablePort()),
+      jmxPort = Some(CommonUtils.availablePort()),
       zookeeperClusterName = Some(zk2.name),
       nodeNames = nodeNames
     )
@@ -299,6 +307,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
       name = CommonUtils.randomString(10),
       imageName = None,
       clientPort = Some(123),
+      jmxPort = None,
       exporterPort = None,
       zookeeperClusterName = Some(zkClusterName),
       nodeNames = nodeNames
@@ -316,6 +325,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
       imageName = None,
       clientPort = Some(123),
       exporterPort = None,
+      jmxPort = None,
       zookeeperClusterName = Some(zkClusterName),
       nodeNames = nodeNames
     )
@@ -335,6 +345,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
       imageName = None,
       clientPort = Some(123),
       exporterPort = None,
+      jmxPort = None,
       zookeeperClusterName = Some(zkClusterName),
       nodeNames = Seq(nodeNames.head)
     )
@@ -346,6 +357,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
       imageName = cluster.imageName,
       clientPort = cluster.clientPort,
       exporterPort = cluster.exporterPort,
+      jmxPort = cluster.jmxPort,
       zookeeperClusterName = cluster.zookeeperClusterName,
       nodeNames = cluster.nodeNames :+ nodeNames.last
     )
@@ -357,6 +369,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
       imageName = None,
       clientPort = Some(123),
       exporterPort = None,
+      jmxPort = None,
       zookeeperClusterName = Some(zkClusterName),
       nodeNames = nodeNames
     )
@@ -368,6 +381,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
       imageName = cluster.imageName,
       clientPort = cluster.clientPort,
       exporterPort = cluster.exporterPort,
+      jmxPort = cluster.jmxPort,
       zookeeperClusterName = cluster.zookeeperClusterName,
       nodeNames = cluster.nodeNames.filter(_ != nodeNames.last)
     )
@@ -380,6 +394,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
       imageName = None,
       clientPort = Some(123),
       exporterPort = None,
+      jmxPort = None,
       zookeeperClusterName = Some(zkClusterName),
       nodeNames = nodeNames
     )
@@ -393,6 +408,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
       imageName = None,
       exporterPort = None,
       clientPort = Some(123),
+      jmxPort = None,
       zookeeperClusterName = Some(zkClusterName),
       nodeNames = nodeNames
     )
@@ -413,6 +429,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
       imageName = None,
       exporterPort = None,
       clientPort = Some(123),
+      jmxPort = None,
       zookeeperClusterName = Some(zkClusterName),
       nodeNames = nodeNames
     )
@@ -448,6 +465,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
       name = CommonUtils.randomString(10),
       imageName = None,
       zookeeperClusterName = None,
+      jmxPort = Some(CommonUtils.availablePort()),
       clientPort = Some(clientPort),
       exporterPort = Some(CommonUtils.availablePort()),
       nodeNames = nodeNames
@@ -471,19 +489,19 @@ class TestBrokerRoute extends MediumTest with Matchers {
         )))
 
     an[IllegalArgumentException] should be thrownBy result(
-      brokerApi.add(request.copy(name = CommonUtils.randomString(10), zookeeperClusterName = Some(zk2.name))))
-
-    an[IllegalArgumentException] should be thrownBy result(
-      brokerApi.add(
-        request.copy(name = CommonUtils.randomString(10),
-                     zookeeperClusterName = Some(zk2.name),
-                     exporterPort = Some(CommonUtils.availablePort()))))
+      brokerApi.add(request.copy(
+        name = CommonUtils.randomString(10),
+        zookeeperClusterName = Some(zk2.name),
+        exporterPort = Some(CommonUtils.availablePort()),
+        jmxPort = Some(CommonUtils.availablePort())
+      )))
 
     // pass
     result(
       brokerApi.add(request.copy(
         name = CommonUtils.randomString(10),
         zookeeperClusterName = Some(zk2.name),
+        jmxPort = Some(CommonUtils.availablePort()),
         clientPort = Some(CommonUtils.availablePort()),
         exporterPort = Some(CommonUtils.availablePort())
       )))
@@ -495,6 +513,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
     val request = BrokerClusterCreationRequest(
       name = CommonUtils.randomString(10),
       imageName = None,
+      jmxPort = Some(CommonUtils.availablePort()),
       zookeeperClusterName = None,
       clientPort = Some(CommonUtils.availablePort()),
       exporterPort = Some(exporterPort),
@@ -519,19 +538,68 @@ class TestBrokerRoute extends MediumTest with Matchers {
         )))
 
     an[IllegalArgumentException] should be thrownBy result(
-      brokerApi.add(request.copy(name = CommonUtils.randomString(10), zookeeperClusterName = Some(zk2.name))))
-
-    an[IllegalArgumentException] should be thrownBy result(
-      brokerApi.add(
-        request.copy(name = CommonUtils.randomString(10),
-                     zookeeperClusterName = Some(zk2.name),
-                     clientPort = Some(CommonUtils.availablePort()))))
+      brokerApi.add(request.copy(
+        name = CommonUtils.randomString(10),
+        zookeeperClusterName = Some(zk2.name),
+        clientPort = Some(CommonUtils.availablePort()),
+        jmxPort = Some(CommonUtils.availablePort())
+      )))
 
     // pass
     result(
       brokerApi.add(request.copy(
         name = CommonUtils.randomString(10),
         zookeeperClusterName = Some(zk2.name),
+        jmxPort = Some(CommonUtils.availablePort()),
+        clientPort = Some(CommonUtils.availablePort()),
+        exporterPort = Some(CommonUtils.availablePort())
+      )))
+  }
+
+  @Test
+  def jmxPortConflict(): Unit = {
+    val jmxPort = CommonUtils.availablePort()
+    val request = BrokerClusterCreationRequest(
+      name = CommonUtils.randomString(10),
+      imageName = None,
+      jmxPort = Some(jmxPort),
+      zookeeperClusterName = None,
+      clientPort = Some(CommonUtils.availablePort()),
+      exporterPort = Some(CommonUtils.availablePort()),
+      nodeNames = nodeNames
+    )
+
+    // pass
+    result(brokerApi.add(request))
+
+    val zk2 = result(
+      ZookeeperApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .add(ZookeeperClusterCreationRequest(
+          name = CommonUtils.randomString(10),
+          imageName = None,
+          clientPort = Some(CommonUtils.availablePort()),
+          electionPort = Some(CommonUtils.availablePort()),
+          peerPort = Some(CommonUtils.availablePort()),
+          nodeNames = nodeNames
+        )))
+
+    an[IllegalArgumentException] should be thrownBy result(
+      brokerApi.add(request.copy(
+        name = CommonUtils.randomString(10),
+        zookeeperClusterName = Some(zk2.name),
+        clientPort = Some(CommonUtils.availablePort()),
+        exporterPort = Some(CommonUtils.availablePort())
+      )))
+
+    // pass
+    result(
+      brokerApi.add(request.copy(
+        name = CommonUtils.randomString(10),
+        zookeeperClusterName = Some(zk2.name),
+        jmxPort = Some(CommonUtils.availablePort()),
         clientPort = Some(CommonUtils.availablePort()),
         exporterPort = Some(CommonUtils.availablePort())
       )))
@@ -543,6 +611,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
     val request = BrokerClusterCreationRequest(
       name = CommonUtils.randomString(10),
       imageName = None,
+      jmxPort = None,
       zookeeperClusterName = None,
       clientPort = Some(CommonUtils.availablePort()),
       exporterPort = Some(CommonUtils.availablePort()),
