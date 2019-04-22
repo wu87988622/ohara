@@ -1,4 +1,4 @@
-# custom connector guideline
+# Custom Connector Guideline
 
 Ohara custom connector is based on [kafka connector](https://docs.confluent.io/current/connect/managing/index.html).
 It offers a platform that enables you to define some simple actions to connect topic to any other system.
@@ -11,11 +11,23 @@ scalability, and durability, you can also monitor your connector for [logs](rest
 The following sections start to explain how to write a good connector on ohara. You don't need to read it through if you
 are familiar with [kafka connector](https://docs.confluent.io/current/connect/managing/index.html). However, ohara connector has some
 improvements which are not in [kafka connector](https://docs.confluent.io/current/connect/managing/index.html) so it has
-worth of taking a look at [metrics](#metrics) and [setting definitions](#setting-definitions.)
+worth of taking a look at [metrics](#metrics) and [setting definitions](#setting-definitions)
 
 ----------
 
-## ohara connector overview
+## Quick Links
+- [Overview](#ohara-connector-overview)
+- [Source Connector](#source-connector)
+- [Source Task](#source-task)
+- [Sink Connector](#sink-connector)
+- [Sink Task](#sink-task)
+- [Version](#version)
+- [Setting Definitions](#setting-definitions)
+- [Metrics](#metrics)
+
+----------
+
+## Ohara Connector Overview
 
 Ohara connector is composed of [source connect](#source-connector) and [sink connector](#sink-connector). 
 [source connect](#source-connector) is used to pull data **from external system to topic**. By contrast, [sink connector](#sink-connector)
@@ -25,7 +37,7 @@ connector and then distributes the source/sink tasks across cluster.
 
 ----------
 
-### data model
+### Data Model
 
 Ohara has defined a table structure data in code base. We call it **row**. A row is comprised of multiple **cells**. Each cell has
 its **name**, **value** and **tags**. The value in cell is a generic type which accepts any serializable type of value.
@@ -137,7 +149,7 @@ Throwing exception is better than generating corrupt data!
 
 ----------
 
-### Source connector
+## Source Connector
 
 Source connector is used to pull data from outside system and then push processed data to ohara topics. A basic implementation
 for a source connector only includes four methods - _start, _stop, _taskClass, and _taskConfigs
@@ -179,7 +191,7 @@ public abstract class RowSourceConnector extends SourceConnector {
 
 ----------
 
-#### _start(TaskConfig)
+### _start(TaskConfig)
 After instantizing a connector, the first method called by worker is **start()**. You should initialize your connector
 in **start** method, since it has a input parameter **TaskConfig** carrying all settings, such as target topics,
 connector name and user-defined configs, from user. If you (connector developer) are a good friend of your connector user,
@@ -196,7 +208,7 @@ It can't eliminate incorrect configs completely, but it save your time of fighti
 
 ----------
 
-#### _stop()
+### _stop()
 
 This method is invoked by calling [STOP API](rest_interface.md#stop-a-connector). You can release the resources allocated by
 connector, or send a email to shout at someone. It is ok to throw an exception when you fails to **stop** the connector.
@@ -204,15 +216,15 @@ Worker cluster will mark **failure** on the connector, and the world keeps runni
 
 ----------
 
-#### _taskClass()
+### _taskClass()
 
-This method returns the java class of [RowSourceTask](#rowsourcetask) implementation. It tells worker cluster which class
+This method returns the java class of [RowSourceTask](#source-task) implementation. It tells worker cluster which class
 should be created to pull data from external system. Noted that connector and task may not be created on same node (jvm)
 so you should NOT share any objects between them (for example, make them to access a global variable).
 
 ----------
 
-#### _taskConfigs(int maxTasks)
+### _taskConfigs(int maxTasks)
 
 Connector has to generate configs for each task. The value of **maxTasks** is configured by [Connector API](rest_interface.md#connector).
 If you prefer to make all tasks do identical job, you can just clone the task config passe by [start](#_starttaskconfig).
@@ -224,7 +236,7 @@ input value - maxTasks. Otherwise, you will get a exception when running your co
 
 ----------
 
-### RowSourceTask
+## Source Task
 
 ```java
 public abstract class RowSourceTask extends SourceTask {
@@ -259,7 +271,7 @@ cluster call **start** to initialize a task and call **stop** to terminate a tas
 
 ----------
 
-#### _pull()
+### _pull()
 You can ignore all methods except for **_poll**. Worker cluster call **_poll** regularly to get **RowSourceRecord**s and then
 save them to topics. Worker cluster does not care for your implementation. All you have to do is to put your data in ***RowSourceRecord**.
 RowSourceRecord is a complicated object having many elements. Some elements are significant. For example, **partition**
@@ -280,7 +292,7 @@ public class ExampleOfRowSourceRecord {
 
 ----------
 
-#### partition and offsets
+### Partition and Offsets in Source
 
 De-duplicating data is not a easy job. When you keep pulling data from external system to topics, you always need a place
 to record which data have not processed. Connector offers two specific objects for you to record the **offset** and **partition**
@@ -342,14 +354,14 @@ public abstract class RowSourceTask extends SourceTask {
 
 ----------
 
-#### handle exception in _poll()
+### Handle Exception in _poll()
 Throwing exception make connector in **failure** state, and inactivate connector until you restart it. Hence, you SHOULD
 catch and handle the exception as best you can. However, swallowing all exception is also a weired behavior. You SHOULD
 fails the connector when encountering unrecoverable exception.
 
 ----------
 
-#### blocking action is unwelcome in _poll()
+### Blocking Action Is Unwelcome In _poll()
 Task is executed on a separate thread and there are many remaining processing for data after _poll(). Hence, you should 
 NOT block _poll(). On the contrary, returning an empty list can yield the resource to remaining processing.
 
@@ -357,7 +369,7 @@ NOT block _poll(). On the contrary, returning an empty list can yield the resour
 
 ----------
 
-#### data from _poll() are committed async
+### Data From _poll() Are Committed Async
 You don't expect that the data you generated are commit at once, right? Committing data invokes a large latency since
 we need to sync data to multiple nodes and result in many disk I/O. Worker has another thread sending your data in background.
 If your connector needs to know the time of committing data, you can override the **_commitRecord(RowSourceRecord)**.
@@ -380,7 +392,7 @@ public abstract class RowSourceTask extends SourceTask {
 
 ----------
 
-### Sink connector
+## Sink Connector
 
 ```java
 public abstract class RowSinkConnector extends SinkConnector {
@@ -416,7 +428,7 @@ public abstract class RowSinkConnector extends SinkConnector {
 
 Sink connector is similar to [source connector](#source-connector). It also have [_start(TaskConfig)](#_starttaskconfig),
 [_stop()](#_stop), [_taskClass()](#_taskclass), [_taskConfigs(int maxTasks)](#_taskconfigsint-maxtasks),
-[partition and offsets](#partition-and-offsets). The main difference between sink connector and source connector is that
+[partition and offsets](#partition-and-offsets-in-source). The main difference between sink connector and source connector is that
 sink connector do pull data from topic and then push processed data to outside system. Hence, it does have
 [_put](#_putlistrowsinkrecord-records) rather than [_pull](#_pull)
 
@@ -428,7 +440,7 @@ It is also distributed across whole worker cluster when you running a sink conne
 
 ----------
 
-### RowSinkTask
+## Sink Task
 
 ```java
 public abstract class RowSinkTask extends SinkTask {
@@ -458,12 +470,12 @@ public abstract class RowSinkTask extends SinkTask {
 }  
 ```
 
-RowSinkTask is similar to [RowSourceTask](#rowsourcetask) that both of them have _start and _stop phase. RowSinkTask is
+RowSinkTask is similar to [RowSourceTask](#source-task) that both of them have _start and _stop phase. RowSinkTask is
 executed by a separate thread on worker also.
 
 ----------
 
-#### _put(List<RowSinkRecord> records)
+### _put(List<RowSinkRecord> records)
 
 Worker invokes a separate thread to fetch data from topic and put the data to sink task. The input data is called **RowSinkRecord**
 which carries not only row but also metadata.
@@ -479,7 +491,7 @@ which carries not only row but also metadata.
 
 ----------
 
-#### partition and offsets
+### Partition and Offsets In Sink
 
 Sink task has a component, which is called **RowSinkContext**, saving the offset and partitions for input data. Commonly,
 it is not big news to you since kafka has responsibility to manage data offset in topic-partition to avoid losing data.
@@ -489,7 +501,7 @@ use RowSinkContext to change the offset of input data.
 
 ----------
 
-#### handle exception in _put(List<RowSinkRecord>)
+### Handle Exception In _put(List<RowSinkRecord>)
 Any thrown exception will make this connector failed and stopped. You should handle the recoverable error and throw
 the exception which obstruct connector from running. 
 
@@ -531,12 +543,12 @@ public interface RowSinkContext {
 
 ----------
 
-#### handle exception in _put(List<RowSinkRecord>)
+### Handle Exception In _put(List<RowSinkRecord>)
 see [handle exception in _poll()](#handle-exception-in-_poll)
 
 ----------
 
-#### commit your output data when kafka commit input data
+### Commit Your Output Data When Kafka Commit Input Data
 
 While feeding data into your sink task, kakfa also tries to commit previous data that make the data disappear from you.
 The method **_preCommit** is a callback of committing data offset. If you want to manage the offsets, you can change what
@@ -567,7 +579,7 @@ public abstract class RowSinkTask extends SinkTask {
 
 ----------
 
-## version
+## Version
 
 We all love to show how good we are. If you are a connector designer, ohara connector offers a way to show the verion,
 revision and author for a connector.
@@ -612,7 +624,7 @@ are the people that we can't talk. However, Please don't use illegal values like
 
 ----------
 
-## setting definitions
+## Setting Definitions
 
 A powerful connector always has a complicated configuration. In order to be a best friend of connector users, ohara connector
 has a method which can return the details of setting definitions, and ohara suggests that all connector developers ought to
@@ -654,7 +666,7 @@ We all hate write documentation so it would be better to make your code readable
 
 ----------
 
-### reference, internal and tableKeys are NOT public
+### Reference, Internal and TableKeys Are NOT Public
 
 Ohara offers a great UI, which is located at ohara-manager. The UI requires some **private** information to generate forms
 for custom connectors. The such private information is specific-purpose and is meaningless to non-ohara developers.
@@ -663,7 +675,7 @@ to use them.
 
 ----------
 
-### optional, required and default value
+### Optional, Required And Default Value
 
 We know a great connector must have countless settings and only The Chosen One can control it. In order to shorten the gap
 between your connectors and human begin, ohara encourage custom connector developers to offer the default values to most of
@@ -695,7 +707,7 @@ will display the following information.
 
 ----------
 
-### A readonly SettingDefinition
+### A Readonly Setting Definition
 
 You can declare a **readonly** setting that not only exposes something of your connector to user but also remind user
 the setting can't be changed at runtime. For instance, the information of [version](#version) is fixed after you have
@@ -719,7 +731,7 @@ public class ExampleOfCreatingReadonlySettingDefinition {
 
 ----------
 
-## metrics
+## Metrics
 
 We are live in a world filled with number, and so do connectors. While a connector is running, ohara collects many counts
 from the data flow for the connector in background. All of counters (and other records which will be introduced in the future)
@@ -734,7 +746,7 @@ you to apply [Connector APIs](rest_interface.md#connector) as it offers a more r
 
 ----------
 
-### counter
+### Counter
 
 Counter is a common use case for metrics that you can increment/decrement/add/ a number atomically. A counter consists of
 following members.
@@ -769,7 +781,7 @@ public class ExampleOfCreatingCounter {
 
 ----------
 
-### official metrics
+### Official Metrics
 
 There are two official metrics for connector - row counter and bytes counter. The former is the number of processed rows,
 and the later is the number of processed data. Both of them are updated when data are pull/push from/to your connector.
@@ -778,7 +790,7 @@ to see how ohara create official counters.
 
 ----------
 
-### create your own counters
+### Create Your Own Counters
 
 In order to reduce your duplicate code, ohara offers the **CounterBuilder** to all connectors. CounterBuilder is a wrap
 of Counter.Builder with some pre-defined variables, and hence the creation of CounterBuilder must be after initializing
