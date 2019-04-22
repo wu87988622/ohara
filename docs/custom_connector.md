@@ -612,8 +612,111 @@ are the people that we can't talk. However, Please don't use illegal values like
 
 ----------
 
-## metrics
+## setting definitions
+
+A powerful connector always has a complicated configuration. In order to be a best friend of connector users, ohara connector
+has a method which can return the details of setting definitions, and ohara suggests that all connector developers ought to
+implement the method so as to guide users through the complicated settings of your connectors.
+
+> If you have no interest in settings or your connector is too simple to have any settings, you can just skip this section.
+
+SettingDefinition is a class used to describe the details of **a** setting. It consists of following arguments.
+1. displayName (**string**) — the readable name of this setting
+1. group (**string**) — the group of this setting (all core setting are in core group)
+1. orderInGroup (**int**) — the order in group
+1. editable (**boolean**) — true if this setting is modifiable 
+1. key (**string**) — the key of configuration
+1. [valueType](rest_interface.md#setting-type) (**string**) — the type of value
+1. defaultValue (**string**) — the default value
+1. documentation (**string**) — the explanation of this definition
+1. [reference](rest_interface.md#setting-reference) (**string**) — works for ohara manager. It represents the reference of value.
+1. required(**boolean**) — true if this setting has no default value and you have to assign a value. Otherwise, you can’t start connector.
+1. internal (**string**) — true if this setting is assigned by system automatically.
+1. tableKeys (**array(string)**) — the column name when the type is TABLE
+
+> You can call [Worker APIs](rest_interface.md#worker) to get all connectors' setting definitions
+
+Although a SettingDefinition can include many elements, you can simply build a SettingDefinition with only what you need.
+An extreme example is that you can create a SettingDefinition with only key.
+```java
+public class ExampleOfSettingDefinition {
+  public static SettingDefinition create(String key) {
+    return SettingDefinition.builder()
+            .key(key)
+            .build();
+  }
+}
+```
+
+Notwithstanding it is flexible to build a SettingDefinition, we encourage connector developers to create a description-rich
+SettingDefinition. More description to your setting produces more **document** in calling [Worker APIs](rest_interface.md#worker).
+We all hate write documentation so it would be better to make your code readable.
 
 ----------
 
-## setting definitions
+### reference, internal and tableKeys are NOT public
+
+Ohara offers a great UI, which is located at ohara-manager. The UI requires some **private** information to generate forms
+for custom connectors. The such private information is specific-purpose and is meaningless to non-ohara developers.
+Hence, all of them are declared as package-private and ohara does not encourage custom connector developers to stop at nothing
+to use them.
+
+----------
+
+### optional, required and default value
+
+We know a great connector must have countless settings and only The Chosen One can control it. In order to shorten the gap
+between your connectors and human begin, ohara encourage custom connector developers to offer the default values to most of
+settings as much as possible. Assigning a default value to a SettingDefinition is a piece of cake.
+```java
+public class ExampleOfAssigningDefaultValueToSettingDefinition {
+  public static SettingDefinition create(String key, String defaultValue) {
+    return SettingDefinition.builder()
+            .key(key)
+            .optional(defaultValue)
+            .build();
+  }
+}
+```
+
+> the default value is declared as **string** type as it must be **readable** in Restful APIs.
+
+After calling the **optional(String)** method, the response, which is created by [Worker APIs](rest_interface.md#worker),
+will display the following information.
+```json
+{
+  "required": false,
+  "defaultValue": "ur_default_value"
+}
+```
+
+> The default value will be added to [TaskConfig](#_starttaskconfig) automatically if the specified key
+  is not already associated with a value.
+
+----------
+
+### A readonly SettingDefinition
+
+You can declare a **readonly** setting that not only exposes something of your connector to user but also remind user
+the setting can't be changed at runtime. For instance, the information of [version](#version) is fixed after you have
+completed your connector so it is not a **editable** setting. Hence, ohara define a setting for **version** with a
+readonly label. By the way, you should assign a default value to a readonly setting since a readonly setting
+without default value is really weird. There is a example of creating a readonly setting.
+
+```java
+public class ExampleOfCreatingReadonlySettingDefinition {
+  public static SettingDefinition createReadonly(String key, String defaultValue) {
+    return SettingDefinition.builder()
+            .key(key)
+            .optional(defaultValue)
+            .readonly()
+            .build();
+  }
+}
+```
+
+> The input value will be removed automatically if the associated setting is declared readonly.
+
+----------
+
+## metrics
