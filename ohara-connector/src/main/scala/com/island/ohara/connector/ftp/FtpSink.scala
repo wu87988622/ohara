@@ -52,7 +52,7 @@ class FtpSink extends RowSinkConnector {
       .map(
         index =>
           config.append(FtpSinkTaskProps(
-            output = CommonUtils.path(props.output, s"${config.name}_$index"),
+            output = CommonUtils.path(props.output, s"${config.id}_$index"),
             needHeader = props.needHeader,
             encode = props.encode,
             hostname = props.hostname,

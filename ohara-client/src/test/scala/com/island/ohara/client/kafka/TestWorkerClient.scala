@@ -22,7 +22,7 @@ import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorState
 import com.island.ohara.common.data.{Row, Serializer}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.Consumer
-import com.island.ohara.kafka.connector.json.{ConnectorFormatter, ConverterType, SettingDefinition, StringList}
+import com.island.ohara.kafka.connector.json.{ConverterType, SettingDefinition, StringList}
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.Test
 import org.scalatest.Matchers
@@ -43,7 +43,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
         .connectorCreator()
         .topicName(topicName)
         .connectorClass(classOf[MyConnector])
-        .name(connectorName)
+        .id(connectorName)
         .numberOfTasks(1)
         .create)
 
@@ -62,7 +62,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
         .connectorCreator()
         .topicName(topicName)
         .connectorClass(classOf[BrokenConnector])
-        .name(connectorName)
+        .id(connectorName)
         .numberOfTasks(1)
         .create)
 
@@ -79,7 +79,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
         .connectorCreator()
         .topicName(topicName)
         .connectorClass(classOf[MyConnector])
-        .name(connectorName)
+        .id(connectorName)
         .numberOfTasks(1)
         .create)
     try {
@@ -134,7 +134,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
         .connectorValidator()
         .connectorClassName(classOf[MyConnector].getName)
         .settings(Map(
-          ConnectorFormatter.NAME_KEY -> name,
+          SettingDefinition.CONNECTOR_ID_DEFINITION.key() -> name,
           SettingDefinition.TOPIC_NAMES_DEFINITION.key() -> StringList.toJsonString(
             Collections.singletonList(topicName)),
           SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key() -> numberOfTasks.toString

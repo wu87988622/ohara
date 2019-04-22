@@ -31,7 +31,7 @@ public class TestConnectorFormatter extends SmallTest {
     List<String> topicNames = Collections.singletonList(CommonUtils.randomString());
     Creation creation =
         ConnectorFormatter.of()
-            .name(CommonUtils.randomString())
+            .id(CommonUtils.randomString())
             .topicNames(topicNames)
             .requestOfCreation();
     Assert.assertNotNull(creation.configs().get(SettingDefinition.TOPIC_NAMES_DEFINITION.key()));
@@ -45,7 +45,7 @@ public class TestConnectorFormatter extends SmallTest {
     List<String> topicNames = Arrays.asList(CommonUtils.randomString(), CommonUtils.randomString());
     Creation creation =
         ConnectorFormatter.of()
-            .name(CommonUtils.randomString())
+            .id(CommonUtils.randomString())
             .topicNames(topicNames)
             .requestOfCreation();
     Assert.assertNotNull(creation.configs().get(SettingDefinition.TOPIC_NAMES_DEFINITION.key()));
@@ -58,17 +58,17 @@ public class TestConnectorFormatter extends SmallTest {
   public void configsNameShouldBeRemoved() {
     Creation creation =
         ConnectorFormatter.of()
-            .name(CommonUtils.randomString())
+            .id(CommonUtils.randomString())
             .topicName(CommonUtils.randomString())
             .requestOfCreation();
-    Assert.assertNull(creation.configs().get(ConnectorFormatter.NAME_KEY));
+    Assert.assertNull(creation.configs().get(SettingDefinition.CONNECTOR_ID_DEFINITION.key()));
   }
 
   @Test
   public void testSetKeyConverter() {
     Creation creation =
         ConnectorFormatter.of()
-            .name(CommonUtils.randomString())
+            .id(CommonUtils.randomString())
             .converterTypeOfKey(ConverterType.JSON)
             .converterTypeOfValue(ConverterType.JSON)
             .requestOfCreation();
@@ -81,7 +81,7 @@ public class TestConnectorFormatter extends SmallTest {
     List<String> topicNames = Arrays.asList(CommonUtils.randomString(), CommonUtils.randomString());
     Creation creation =
         ConnectorFormatter.of()
-            .name(CommonUtils.randomString())
+            .id(CommonUtils.randomString())
             .topicNames(topicNames)
             .requestOfCreation();
     Assert.assertEquals(
@@ -96,11 +96,11 @@ public class TestConnectorFormatter extends SmallTest {
 
   @Test(expected = NullPointerException.class)
   public void nullName() {
-    ConnectorFormatter.of().name(null).requestOfCreation();
+    ConnectorFormatter.of().id(null).requestOfCreation();
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void emptyName() {
-    ConnectorFormatter.of().name("").requestOfCreation();
+    ConnectorFormatter.of().id("").requestOfCreation();
   }
 }

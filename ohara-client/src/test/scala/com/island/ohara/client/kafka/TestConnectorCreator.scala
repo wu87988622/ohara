@@ -32,10 +32,10 @@ class TestConnectorCreator extends SmallTest with Matchers {
   def nullSchema(): Unit = an[NullPointerException] should be thrownBy notWorkingClient.connectorCreator().columns(null)
 
   @Test
-  def nullId(): Unit = an[NullPointerException] should be thrownBy notWorkingClient.connectorCreator().name(null)
+  def nullId(): Unit = an[NullPointerException] should be thrownBy notWorkingClient.connectorCreator().id(null)
 
   @Test
-  def emptyId(): Unit = an[IllegalArgumentException] should be thrownBy notWorkingClient.connectorCreator().name("")
+  def emptyId(): Unit = an[IllegalArgumentException] should be thrownBy notWorkingClient.connectorCreator().id("")
 
   @Test
   def illegalNumberOfTasks(): Unit =

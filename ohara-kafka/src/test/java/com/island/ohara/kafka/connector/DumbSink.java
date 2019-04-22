@@ -43,6 +43,7 @@ public class DumbSink extends RowSinkConnector {
   @Override
   protected List<TaskConfig> _taskConfigs(int maxTasks) {
     return Collections.singletonList(
-        ConnectorFormatter.of().name("test").topicName("topic").columns(columns).taskConfig());
+        TaskConfig.of(
+            ConnectorFormatter.of().id("test").topicName("topic").columns(columns).raw()));
   }
 }

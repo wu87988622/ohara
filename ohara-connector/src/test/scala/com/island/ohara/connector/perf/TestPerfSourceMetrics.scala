@@ -45,7 +45,7 @@ class TestPerfSourceMetrics extends WithBrokerWorker with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[PerfSource])
         .numberOfTasks(1)
-        .name(connectorName)
+        .id(connectorName)
         .settings(props.toMap)
         .create,
       10 seconds

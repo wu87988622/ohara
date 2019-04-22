@@ -171,7 +171,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
                       else
                         wkClient
                           .connectorCreator()
-                          .name(connectorDesc.id)
+                          .id(connectorDesc.id)
                           .className(connectorDesc.className)
                           .columns(connectorDesc.columns)
                           .settings(connectorDesc.plain)

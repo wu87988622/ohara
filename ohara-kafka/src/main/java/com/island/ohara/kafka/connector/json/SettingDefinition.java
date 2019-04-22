@@ -23,6 +23,7 @@ import com.island.ohara.common.annotations.Nullable;
 import com.island.ohara.common.annotations.Optional;
 import com.island.ohara.common.util.CommonUtils;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.runtime.rest.entities.ConfigKeyInfo;
 
@@ -39,6 +40,22 @@ public class SettingDefinition implements JsonObject {
   static final String COLUMN_NEW_NAME_KEY = "newName";
   static final String COLUMN_DATA_TYPE_KEY = "dataType";
   // -------------------------------[default setting]-------------------------------//
+  private static final AtomicInteger ORDER_COUNTER = new AtomicInteger(0);
+  /**
+   * this setting is mapped to kafka's name. In starting connector, ohara assign id to connector
+   * rather than the name specified by user.
+   */
+  public static final SettingDefinition CONNECTOR_ID_DEFINITION =
+      SettingDefinition.builder()
+          .displayName("Connector id")
+          .key("name")
+          .valueType(Type.STRING)
+          .documentation("the id of this connector")
+          .group(CORE_GROUP)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
+          .internal()
+          .build();
+
   public static final SettingDefinition CONNECTOR_CLASS_DEFINITION =
       SettingDefinition.builder()
           .displayName("Connector class")
@@ -46,7 +63,7 @@ public class SettingDefinition implements JsonObject {
           .valueType(Type.CLASS)
           .documentation("the class name of connector")
           .group(CORE_GROUP)
-          .orderInGroup(0)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .build();
   public static final SettingDefinition CONNECTOR_NAME_DEFINITION =
       SettingDefinition.builder()
@@ -55,7 +72,7 @@ public class SettingDefinition implements JsonObject {
           .valueType(Type.STRING)
           .documentation("the name of connector")
           .group(CORE_GROUP)
-          .orderInGroup(1)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .optional()
           .build();
   public static final SettingDefinition TOPIC_NAMES_DEFINITION =
@@ -66,7 +83,7 @@ public class SettingDefinition implements JsonObject {
           .documentation("the topics used by connector")
           .reference(Reference.TOPIC)
           .group(CORE_GROUP)
-          .orderInGroup(2)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .build();
   public static final SettingDefinition NUMBER_OF_TASKS_DEFINITION =
       SettingDefinition.builder()
@@ -75,7 +92,7 @@ public class SettingDefinition implements JsonObject {
           .valueType(Type.INT)
           .documentation("the number of tasks invoked by connector")
           .group(CORE_GROUP)
-          .orderInGroup(3)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .build();
   public static final SettingDefinition COLUMNS_DEFINITION =
       SettingDefinition.builder()
@@ -85,7 +102,7 @@ public class SettingDefinition implements JsonObject {
           .documentation("output schema")
           .optional()
           .group(CORE_GROUP)
-          .orderInGroup(6)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .tableKeys(
               Arrays.asList(ORDER_KEY, COLUMN_DATA_TYPE_KEY, COLUMN_NAME_KEY, COLUMN_NEW_NAME_KEY))
           .build();
@@ -101,7 +118,7 @@ public class SettingDefinition implements JsonObject {
           .reference(Reference.WORKER_CLUSTER)
           .group(CORE_GROUP)
           .optional()
-          .orderInGroup(7)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .build();
   public static final SettingDefinition KEY_CONVERTER_DEFINITION =
       SettingDefinition.builder()
@@ -111,7 +128,7 @@ public class SettingDefinition implements JsonObject {
           .documentation("key converter")
           .group(CORE_GROUP)
           .optional(ConverterType.NONE.className())
-          .orderInGroup(4)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .internal()
           .build();
 
@@ -123,7 +140,7 @@ public class SettingDefinition implements JsonObject {
           .documentation("value converter")
           .group(CORE_GROUP)
           .optional(ConverterType.NONE.className())
-          .orderInGroup(5)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .internal()
           .build();
 
@@ -135,7 +152,7 @@ public class SettingDefinition implements JsonObject {
           .documentation("version of connector")
           .group(CORE_GROUP)
           .optional("unknown")
-          .orderInGroup(8)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .readonly()
           .build();
 
@@ -147,7 +164,7 @@ public class SettingDefinition implements JsonObject {
           .documentation("revision of connector")
           .group(CORE_GROUP)
           .optional("unknown")
-          .orderInGroup(9)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .readonly()
           .build();
 
@@ -159,7 +176,7 @@ public class SettingDefinition implements JsonObject {
           .documentation("author of connector")
           .group(CORE_GROUP)
           .optional("unknown")
-          .orderInGroup(10)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .readonly()
           .build();
 
@@ -172,7 +189,7 @@ public class SettingDefinition implements JsonObject {
           .documentation("kind of connector")
           .group(CORE_GROUP)
           .optional("connector")
-          .orderInGroup(11)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .readonly()
           .build();
 
@@ -188,6 +205,7 @@ public class SettingDefinition implements JsonObject {
     TOPIC,
     WORKER_CLUSTER
   }
+
   // -------------------------------[type]-------------------------------//
   public enum Type {
     BOOLEAN,
@@ -201,6 +219,7 @@ public class SettingDefinition implements JsonObject {
     PASSWORD,
     TABLE
   }
+
   // -------------------------------[key]-------------------------------//
   private static final String REFERENCE_KEY = "reference";
   private static final String GROUP_KEP = "group";
@@ -342,7 +361,6 @@ public class SettingDefinition implements JsonObject {
     return documentation;
   }
 
-  @Nullable
   @JsonProperty(REFERENCE_KEY)
   public String reference() {
     return reference.name();
@@ -501,7 +519,7 @@ public class SettingDefinition implements JsonObject {
      * This property is required by ohara manager. There are some official setting having particular
      * control on UI.
      */
-    @Optional("default is no reference")
+    @Optional("default is None")
     Builder reference(Reference reference) {
       this.reference = Objects.requireNonNull(reference);
       return this;

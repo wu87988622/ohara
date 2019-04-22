@@ -32,7 +32,7 @@ class PerfSource extends RowSourceConnector {
     * this method is exposed to test scope
     */
   @VisibleForTesting
-  override protected[perf] def _start(config: TaskConfig): Unit = {
+  override protected def _start(config: TaskConfig): Unit = {
     if (config.topicNames().isEmpty) throw new IllegalArgumentException("topics can't be empty")
     val props = PerfSourceProps(config.raw().asScala.toMap)
     if (props.batch < 0) throw new IllegalArgumentException(s"batch:${props.batch} can't be negative")

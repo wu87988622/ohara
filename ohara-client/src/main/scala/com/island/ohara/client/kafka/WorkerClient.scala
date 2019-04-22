@@ -211,7 +211,7 @@ object WorkerClient {
         }
 
       override def connectorCreator(): Creator = (executionContext,
-                                                  name,
+                                                  id,
                                                   className,
                                                   topicNames,
                                                   numberOfTasks,
@@ -235,7 +235,7 @@ object WorkerClient {
                 .columns(columns.asJava)
                 .converterTypeOfKey(converterTypeOfKey)
                 .converterTypeOfValue(converterTypeOfValue)
-                .name(name)
+                .id(id)
                 .requestOfCreation()
           ),
           "connectorCreator"
@@ -315,7 +315,7 @@ object WorkerClient {
   trait Creator {
     private[this] var converterTypeOfKey: ConverterType = ConverterType.NONE
     private[this] var converterTypeOfValue: ConverterType = ConverterType.NONE
-    private[this] var name: String = _
+    private[this] var id: String = _
     private[this] var connectorClassName: String = _
     private[this] var topicNames: Seq[String] = Seq.empty
     private[this] var numberOfTasks: Int = 1
@@ -323,13 +323,13 @@ object WorkerClient {
     private[this] var columns: Seq[Column] = Seq.empty
 
     /**
-      * set the connector name. It should be a unique name.
+      * set the connector id. It should be a unique id.
       *
-      * @param name connector name
+      * @param id connector id
       * @return this one
       */
-    def name(name: String): Creator = {
-      this.name = CommonUtils.requireNonEmpty(name)
+    def id(id: String): Creator = {
+      this.id = CommonUtils.requireNonEmpty(id)
       this
     }
 
@@ -450,7 +450,7 @@ object WorkerClient {
     def create()(implicit executionContext: ExecutionContext): Future[ConnectorCreationResponse] =
       doCreate(
         executionContext = Objects.requireNonNull(executionContext),
-        name = CommonUtils.requireNonEmpty(name),
+        id = CommonUtils.requireNonEmpty(id),
         connectorClassName = CommonUtils.requireNonEmpty(connectorClassName),
         topicNames = CommonUtils.requireNonEmpty(topicNames.asJava).asScala,
         numberOfTasks = CommonUtils.requirePositiveInt(numberOfTasks),
@@ -466,7 +466,7 @@ object WorkerClient {
       * @return response
       */
     protected def doCreate(executionContext: ExecutionContext,
-                           name: String,
+                           id: String,
                            connectorClassName: String,
                            topicNames: Seq[String],
                            numberOfTasks: Int,
@@ -482,7 +482,13 @@ object WorkerClient {
       * we store classname as a member since this member will bed used in url
       */
     private[this] var connectorClassName: String = _
-    private[this] val formatter: ConnectorFormatter = ConnectorFormatter.of()
+    private[this] val formatter: ConnectorFormatter = {
+      val tmp = ConnectorFormatter.of()
+      // id is required now but it is always assigned by configurator.
+      // We generate the name for it to avoid error
+      tmp.id(CommonUtils.randomString())
+      tmp
+    }
 
     def connectorClassName(connectorClassName: String): Validator = {
       this.connectorClassName = connectorClassName
@@ -529,7 +535,7 @@ object WorkerClient {
       * @param numberOfTasks max number from sink task
       * @return this one
       */
-    @Optional("default is 1")
+    @Optional("Default is none")
     def numberOfTasks(numberOfTasks: Int): Validator = {
       this.formatter.numberOfTasks(CommonUtils.requirePositiveInt(numberOfTasks))
       this
@@ -540,7 +546,7 @@ object WorkerClient {
       * @param columns columns
       * @return this builder
       */
-    @Optional("default is all columns")
+    @Optional("Default is none")
     def columns(columns: Seq[Column]): Validator = {
       this.formatter.columns(CommonUtils.requireNonEmpty(columns.asJava))
       this

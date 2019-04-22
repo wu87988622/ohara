@@ -27,8 +27,8 @@ import java.util.stream.Collectors;
 
 /** Request of Kafka Connector APIs matched to request of POST /connectors */
 public class Creation implements JsonObject {
-  public static final String NAME_KEY = ConnectorFormatter.NAME_KEY;
-  public static final String CONFIGS_KEY = "config";
+  private static final String NAME_KEY = "name";
+  private static final String CONFIGS_KEY = "config";
   private final String name;
   private final Map<String, String> configs;
 

@@ -27,6 +27,7 @@ public final class SettingDefinitions {
   /** the default definitions for all ohara connector. */
   public static final List<SettingDefinition> DEFINITIONS_DEFAULT =
       Arrays.asList(
+          SettingDefinition.CONNECTOR_ID_DEFINITION,
           SettingDefinition.CONNECTOR_CLASS_DEFINITION,
           SettingDefinition.CONNECTOR_NAME_DEFINITION,
           SettingDefinition.COLUMNS_DEFINITION,

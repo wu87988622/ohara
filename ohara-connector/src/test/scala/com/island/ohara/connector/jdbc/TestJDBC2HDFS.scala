@@ -103,7 +103,7 @@ class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
     Await.result(
       workerClient
         .connectorCreator()
-        .name(jdbcSourceConnectorName)
+        .id(jdbcSourceConnectorName)
         .connectorClass(classOf[JDBCSourceConnector])
         .topicName(topicName)
         .numberOfTasks(1)
@@ -115,7 +115,7 @@ class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
     Await.result(
       workerClient
         .connectorCreator()
-        .name(hdfsSinkConnectorName)
+        .id(hdfsSinkConnectorName)
         .connectorClass(classOf[HDFSSinkConnector])
         .topicName(topicName)
         .settings(hdfsProps.toMap)

@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.annotations.Optional;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.util.CommonUtils;
-import com.island.ohara.kafka.connector.TaskConfig;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -35,9 +34,6 @@ import java.util.Map;
  * of creating connector 3) Request of validating connector
  */
 public final class ConnectorFormatter {
-  // --------------------[KAFKA KEYs]--------------------//
-  public static final String NAME_KEY = "name";
-
   public static ConnectorFormatter of() {
     return new ConnectorFormatter();
   }
@@ -50,8 +46,8 @@ public final class ConnectorFormatter {
     converterTypeOfValue(ConverterType.NONE);
   }
 
-  public ConnectorFormatter name(String name) {
-    return setting(NAME_KEY, name);
+  public ConnectorFormatter id(String id) {
+    return setting(SettingDefinition.CONNECTOR_ID_DEFINITION.key(), id);
   }
 
   public ConnectorFormatter setting(String key, String value) {
@@ -122,7 +118,12 @@ public final class ConnectorFormatter {
     return ImmutableMap.copyOf(settings);
   }
 
-  public TaskConfig taskConfig() {
-    return TaskConfig.of(ImmutableMap.copyOf(settings));
+  /**
+   * Return the settings in kafka representation
+   *
+   * @return an readonly settings
+   */
+  public Map<String, String> raw() {
+    return Collections.unmodifiableMap(settings);
   }
 }

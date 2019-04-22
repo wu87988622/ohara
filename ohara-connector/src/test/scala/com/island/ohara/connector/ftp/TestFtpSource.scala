@@ -146,7 +146,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
-        .name(connectorName)
+        .id(connectorName)
         .columns(schema)
         .settings(props.toMap)
         .create)
@@ -186,7 +186,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
-        .name(connectorName)
+        .id(connectorName)
         .columns(Seq(
           Column.builder().name("name").newName("newName").dataType(DataType.STRING).order(1).build(),
           Column.builder().name("ranking").newName("newRanking").dataType(DataType.INT).order(2).build(),
@@ -230,7 +230,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
-        .name(connectorName)
+        .id(connectorName)
         .columns(Seq(
           Column.builder().name("name").dataType(DataType.OBJECT).order(1).build(),
           Column.builder().name("ranking").dataType(DataType.INT).order(2).build(),
@@ -268,7 +268,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
-        .name(connectorName)
+        .id(connectorName)
         .columns(schema)
         .settings(props.toMap)
         .create)
@@ -303,7 +303,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
-        .name(connectorName)
+        .id(connectorName)
         .settings(props.toMap)
         .create)
     try {
@@ -337,7 +337,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
-        .name(connectorName)
+        .id(connectorName)
         .columns(schema)
         // will use default UTF-8
         .settings(props.copy(encode = None).toMap)
@@ -372,7 +372,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
-        .name(connectorName)
+        .id(connectorName)
         .columns(schema)
         // will use default UTF-8
         .settings(props.copy(encode = Some("")).toMap)
@@ -407,7 +407,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
-        .name(connectorName)
+        .id(connectorName)
         // skip last column
         .columns(schema.slice(0, schema.length - 1))
         .settings(props.toMap)
@@ -439,7 +439,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
-        .name(connectorName)
+        .id(connectorName)
         // the name can't be casted to int
         .columns(Seq(Column.builder().name("name").dataType(DataType.INT).order(1).build()))
         .settings(props.toMap)
@@ -467,7 +467,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
-        .name(connectorName)
+        .id(connectorName)
         .columns(schema)
         .settings(props.copy(inputFolder = "/abc").toMap)
         .create)
@@ -484,7 +484,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
-        .name(connectorName)
+        .id(connectorName)
         .columns(Seq(
           // 0 is invalid
           Column.builder().name("name").dataType(DataType.STRING).order(0).build(),
@@ -506,7 +506,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
-        .name(connectorName)
+        .id(connectorName)
         .columns(schema)
         .settings(props.copy(completedFolder = None).toMap)
         .create)

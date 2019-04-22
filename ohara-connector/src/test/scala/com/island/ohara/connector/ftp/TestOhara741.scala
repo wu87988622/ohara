@@ -41,10 +41,8 @@ class TestOhara741 extends SmallTest with Matchers {
       encode = Some("UTF-8")
     )
 
-    val taskConfig = ConnectorFormatter.of().name("aa").settings(props.toMap.asJava).taskConfig()
-
     val sink = new FtpSink
-    sink._start(taskConfig)
+    sink.start(ConnectorFormatter.of().id("aa").settings(props.toMap.asJava).raw())
 
     val ftpClient = FtpClient
       .builder()

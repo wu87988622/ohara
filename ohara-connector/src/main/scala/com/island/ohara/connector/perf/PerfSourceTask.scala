@@ -29,7 +29,7 @@ class PerfSourceTask extends RowSourceTask {
   private[perf] var schema: Seq[Column] = _
   private[this] var lastPoll: Long = -1
   @VisibleForTesting
-  override protected[perf] def _start(config: TaskConfig): Unit = {
+  override protected def _start(config: TaskConfig): Unit = {
     this.props = PerfSourceProps(config.raw().asScala.toMap)
     this.topics = config.topicNames().asScala
     this.schema = config.columns.asScala

@@ -141,7 +141,7 @@ public abstract class RowSinkTask extends SinkTask {
   protected CounterBuilder counterBuilder() {
     if (taskConfig == null)
       throw new IllegalArgumentException("you can't create a counter before starting connector");
-    return new CounterBuilder(taskConfig.name());
+    return new CounterBuilder(taskConfig.id());
   }
 
   @VisibleForTesting TaskConfig taskConfig = null;
@@ -149,8 +149,8 @@ public abstract class RowSinkTask extends SinkTask {
   @Override
   public final void start(Map<String, String> props) {
     taskConfig = TaskConfig.of(ImmutableMap.copyOf(props));
-    rowCounter = ConnectorUtils.rowCounter(taskConfig.name());
-    sizeCounter = ConnectorUtils.sizeCounter(taskConfig.name());
+    rowCounter = ConnectorUtils.rowCounter(taskConfig.id());
+    sizeCounter = ConnectorUtils.sizeCounter(taskConfig.id());
     _start(taskConfig);
   }
 

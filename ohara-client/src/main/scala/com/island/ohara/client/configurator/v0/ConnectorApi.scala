@@ -17,7 +17,7 @@
 package com.island.ohara.client.configurator.v0
 import com.island.ohara.client.Enum
 import com.island.ohara.common.data.{Column, DataType}
-import com.island.ohara.kafka.connector.json.{ConnectorFormatter, PropGroups, SettingDefinition, StringList}
+import com.island.ohara.kafka.connector.json.{PropGroups, SettingDefinition, StringList}
 import spray.json.{JsArray, JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
 import scala.collection.JavaConverters._
@@ -255,7 +255,7 @@ object ConnectorApi {
         "metrics" -> METRICS_JSON_FORMAT.write(obj.metrics),
         "lastModified" -> JsNumber(obj.lastModified),
         // TODO: remove this (https://github.com/oharastream/ohara/issues/518) by chia
-        "name" -> obj.plain.get(ConnectorFormatter.NAME_KEY).map(JsString(_)).getOrElse(JsNull),
+        "name" -> obj.plain.get(SettingDefinition.CONNECTOR_NAME_DEFINITION.key()).map(JsString(_)).getOrElse(JsNull),
         "schema" -> JsArray(obj.columns.map(COLUMN_JSON_FORMAT.write).toVector),
         "className" -> obj.plain
           .get(SettingDefinition.CONNECTOR_CLASS_DEFINITION.key())

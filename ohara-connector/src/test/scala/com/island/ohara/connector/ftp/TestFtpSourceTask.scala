@@ -63,7 +63,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
 
   private[this] def createTask() = {
     val task = new FtpSourceTask()
-    task._start(ConnectorFormatter.of().name(methodName()).settings(props.toMap.asJava).taskConfig())
+    task.start(ConnectorFormatter.of().id(methodName()).settings(props.toMap.asJava).raw())
     task
   }
 
@@ -217,14 +217,14 @@ class TestFtpSourceTask extends SmallTest with Matchers {
     }
     val task = new FtpSourceTask()
 
-    task._start(
+    task.start(
       ConnectorFormatter
         .of()
-        .name(methodName())
+        .id(methodName())
         .topicName(methodName())
         .columns(schema.asJava)
         .settings(props.toMap.asJava)
-        .taskConfig())
+        .raw())
     task.transform(data) shouldBe data.map {
       case (index, cells) => (index, Row.of(cells: _*))
     }
@@ -244,14 +244,14 @@ class TestFtpSourceTask extends SmallTest with Matchers {
 
     val task = new FtpSourceTask()
 
-    task._start(
+    task.start(
       ConnectorFormatter
         .of()
-        .name(methodName())
+        .id(methodName())
         .topicName(methodName())
         .column(column)
         .settings(props.toMap.asJava)
-        .taskConfig())
+        .raw())
     val transformedData = task.transform(data)
     transformedData.size shouldBe data.size
     transformedData.values.foreach(row => {

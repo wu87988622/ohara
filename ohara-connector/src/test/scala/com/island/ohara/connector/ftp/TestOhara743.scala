@@ -43,8 +43,6 @@ class TestOhara743 extends SmallTest with Matchers {
       encode = Some("UTF-8")
     )
 
-    val taskConfig = ConnectorFormatter.of().name("aa").settings(props.toMap.asJava).taskConfig()
-
     val ftpClient = FtpClient
       .builder()
       .hostname(ftpServer.hostname)
@@ -56,7 +54,7 @@ class TestOhara743 extends SmallTest with Matchers {
     try {
       ftpClient.mkdir(props.inputFolder)
       val source = new FtpSource
-      source._start(taskConfig)
+      source.start(ConnectorFormatter.of().id("aa").settings(props.toMap.asJava).raw())
       ftpClient.exist(props.errorFolder) shouldBe true
       ftpClient.exist(props.completedFolder.get) shouldBe true
     } finally ftpClient.close()

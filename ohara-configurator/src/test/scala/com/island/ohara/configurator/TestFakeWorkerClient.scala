@@ -33,8 +33,7 @@ class TestFakeWorkerClient extends SmallTest with Matchers {
     val topicName = methodName
     val className = methodName
     val fake = new FakeWorkerClient()
-    result(
-      fake.connectorCreator().name(connectorName).topicName(topicName).numberOfTasks(1).className(className).create)
+    result(fake.connectorCreator().id(connectorName).topicName(topicName).numberOfTasks(1).className(className).create)
 
     result(fake.exist(connectorName)) shouldBe true
 

@@ -57,7 +57,7 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[PerfSource])
         .numberOfTasks(1)
-        .name(connectorName)
+        .id(connectorName)
         .columns(schema)
         .settings(props.toMap)
         .create,
