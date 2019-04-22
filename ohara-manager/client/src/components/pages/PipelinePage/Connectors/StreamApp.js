@@ -22,8 +22,8 @@ import { get, isEmpty } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
 import * as streamApi from 'api/streamApi';
-import * as _ from 'utils/commonUtils';
 import Controller from './Controller';
+import { isEmptyStr } from 'utils/commonUtils';
 import { STREAM_APP_STATES, STREAM_APP_ACTIONS } from 'constants/pipelines';
 import { Box } from 'common/Layout';
 import { Label } from 'common/Form';
@@ -92,10 +92,7 @@ class StreamApp extends React.Component {
     }
   };
 
-  handleSave = async ({ name, instances, from, to }) => {
-    const { topics, graph, updateGraph } = this.props;
-    const { streamAppId } = this.state;
-
+  getTopics = ({ topics, from, to }) => {
     const fromTopic = topics.reduce((acc, { name, id }) => {
       return name === from ? [...acc, id] : acc;
     }, []);
@@ -103,6 +100,14 @@ class StreamApp extends React.Component {
     const toTopic = topics.reduce((acc, { name, id }) => {
       return name === to ? [...acc, id] : acc;
     }, []);
+
+    return { fromTopic, toTopic };
+  };
+
+  handleSave = async ({ name, instances, from, to }) => {
+    const { topics, graph, updateGraph } = this.props;
+    const { streamAppId } = this.state;
+    const { fromTopic, toTopic } = this.getTopics({ topics, from, to });
 
     const params = {
       id: streamAppId,
@@ -120,32 +125,34 @@ class StreamApp extends React.Component {
       const [prevFromTopic] = graph.filter(g => g.to.includes(streamAppId));
       const isToUpdate = streamApp.to[0] !== toTopic[0];
 
+      // To topic update
       if (isToUpdate) {
         const currStreamApp = findByGraphId(graph, streamAppId);
         const toUpdate = { ...currStreamApp, to: toTopic };
         updateGraph({ update: toUpdate });
       } else {
+        // From topic update
         let currTopic = findByGraphId(graph, fromTopic[0]);
-        let fromUpdateTo;
+        let fromUpdate;
 
         if (currTopic) {
-          fromUpdateTo = [...new Set([...currTopic.to, streamAppId])];
+          fromUpdate = [...new Set([...currTopic.to, streamAppId])];
         } else {
           if (prevFromTopic) {
-            fromUpdateTo = prevFromTopic.to.filter(t => t !== streamAppId);
+            fromUpdate = prevFromTopic.to.filter(t => t !== streamAppId);
           } else {
-            fromUpdateTo = [];
+            fromUpdate = [];
           }
           currTopic = prevFromTopic;
         }
 
-        const fromUpdate = {
+        const update = {
           ...currTopic,
-          to: fromUpdateTo,
+          to: fromUpdate,
         };
 
         updateGraph({
-          update: fromUpdate,
+          update,
           isFromTopic: true,
           streamAppId,
           updatedName: params.name,
@@ -203,15 +210,16 @@ class StreamApp extends React.Component {
 
     if (!streamApp) return null;
 
-    const { name, instances, jarName, from, to } = streamApp;
+    const { name, instances, jarInfo, from, to } = streamApp;
+    const { name: jarName } = jarInfo;
     const fromTopic = topics.find(({ id }) => id === from[0]);
     const toTopic = topics.find(({ id }) => id === to[0]);
 
     const initialValues = {
-      name: _.isEmptyStr(name) ? 'Untitled stream app' : name,
-      instances: `${instances}`,
-      fromTopic: !isEmpty(fromTopic) ? from.name : null,
-      toTopic: !isEmpty(toTopic) ? toTopic.name : null,
+      name: isEmptyStr(name) ? 'Untitled stream app' : name,
+      instances: String(instances),
+      from: !isEmpty(fromTopic) ? fromTopic.name : null,
+      to: !isEmpty(toTopic) ? toTopic.name : null,
     };
 
     return (
@@ -236,8 +244,9 @@ class StreamApp extends React.Component {
               </s.TitleWrapper>
               <s.FormRow>
                 <s.FormCol width="70%">
-                  <Label>Name</Label>
+                  <Label htmlFor="name-input">Name</Label>
                   <Field
+                    id="name-input"
                     name="name"
                     component={InputField}
                     width="100%"
@@ -245,8 +254,9 @@ class StreamApp extends React.Component {
                   />
                 </s.FormCol>
                 <s.FormCol width="30%">
-                  <Label>Instances</Label>
+                  <Label htmlFor="input-instances">Instances</Label>
                   <Field
+                    id="input-instances"
                     name="instances"
                     component={InputField}
                     type="number"
@@ -259,9 +269,10 @@ class StreamApp extends React.Component {
               </s.FormRow>
               <s.FormRow>
                 <s.FormCol width="50%">
-                  <Label>From topic</Label>
+                  <Label htmlFor="">From topic</Label>
                   <Field
-                    name="fromTopic"
+                    id="select-from"
+                    name="from"
                     component={SelectField}
                     list={topics}
                     width="100%"
@@ -273,7 +284,7 @@ class StreamApp extends React.Component {
                 <s.FormCol width="50%">
                   <Label>To topic</Label>
                   <Field
-                    name="toTopic"
+                    name="to"
                     component={SelectField}
                     list={topics}
                     width="100%"
