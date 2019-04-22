@@ -80,7 +80,8 @@ class TestK8SSimple extends IntegrationTest with Matchers {
   def testK8SClientContainer(): Unit = {
     val k8sClient = K8SClient(k8sApiServerURL)
 
-    val containers: Seq[ContainerInfo] = k8sClient.containers.filter(_.name.equals(TestK8SSimple.uuid))
+    val containers: Seq[ContainerInfo] = result(
+      k8sClient.containers.map(c => c.filter(_.name.equals(TestK8SSimple.uuid))))
     val containerSize: Int = containers.size
     containerSize shouldBe 1
     val container: ContainerInfo = containers.head
@@ -101,11 +102,12 @@ class TestK8SSimple extends IntegrationTest with Matchers {
     try {
       //Create Pod for test delete
       TestK8SSimple.createZookeeperPod(k8sApiServerURL, podName)
-      val containers: Seq[ContainerInfo] = k8sClient.containers.filter(_.hostname.equals(podName))
+      val containers: Seq[ContainerInfo] =
+        result(k8sClient.containers.map(cs => cs.filter(_.hostname.equals(podName))))
       containers.size shouldBe 1
     } finally {
       //Remove a container
-      k8sClient.remove(podName).name shouldBe podName
+      result(k8sClient.remove(podName)).name shouldBe podName
     }
   }
 
@@ -119,22 +121,23 @@ class TestK8SSimple extends IntegrationTest with Matchers {
 
       var isContainerRunning: Boolean = false
       while (!isContainerRunning) {
-        if (k8sClient.containers.count(c => c.hostname.contains(podName) && c.state == K8sContainerState.RUNNING.name) == 1) {
+        if (result(k8sClient.containers).count(c =>
+              c.hostname.contains(podName) && c.state == K8sContainerState.RUNNING.name) == 1) {
           isContainerRunning = true
         }
       }
 
-      val logs: String = k8sClient.log(podName)
+      val logs: String = result(k8sClient.log(podName))
       logs.contains("ZooKeeper JMX enabled by default") shouldBe true
     } finally {
-      k8sClient.remove(podName).name shouldBe podName
+      result(k8sClient.remove(podName)).name shouldBe podName
     }
   }
 
   @Test
   def testErrorResponse(): Unit = {
     val k8sClient = K8SClient(s"$k8sApiServerURL/error_test")
-    an[RuntimeException] should be thrownBy k8sClient.containers
+    an[RuntimeException] should be thrownBy result(k8sClient.containers)
   }
 
   @Test
@@ -142,28 +145,32 @@ class TestK8SSimple extends IntegrationTest with Matchers {
     val containerName: String = s"zookeeper-container-${CommonUtils.randomString(10)}"
     val k8sClient = K8SClient(k8sApiServerURL)
     try {
-      val result: Option[ContainerInfo] = k8sClient
-        .containerCreator()
-        .name(containerName)
-        .domainName("default")
-        .labelName("ohara")
-        .nodename(nodeServerNames.head)
-        .hostname(containerName)
-        .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
-        .envs(Map())
-        .portMappings(Map())
-        .run()
-      result.get.name shouldBe containerName
+      val result: Future[Option[ContainerInfo]] =
+        k8sClient
+          .containerCreator()
+          .flatMap(
+            creator =>
+              creator
+                .name(containerName)
+                .domainName("default")
+                .labelName("ohara")
+                .nodename(nodeServerNames.head)
+                .hostname(containerName)
+                .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
+                .envs(Map())
+                .portMappings(Map())
+                .run())
+      Await.result(result, TIMEOUT).get.name shouldBe containerName
     } finally {
       // Remove a container
-      k8sClient.remove(containerName).name shouldBe containerName
+      result(k8sClient.remove(containerName)).name shouldBe containerName
     }
   }
 
   @Test
   def testK8SNodeInfo(): Unit = {
     val k8sClient = K8SClient(k8sApiServerURL)
-    val nodes = k8sClient.nodeNameIPInfo
+    val nodes = result(k8sClient.nodeNameIPInfo)
     nodes.size shouldBe 3
 
     nodes.map(x => x.hostnames.head).mkString(",").contains(TestK8SSimple.NODE_SERVER_NAME.get) shouldBe true
@@ -172,7 +179,7 @@ class TestK8SSimple extends IntegrationTest with Matchers {
   @Test
   def testK8SImages(): Unit = {
     val k8sClient = K8SClient(k8sApiServerURL)
-    val images: Seq[String] = Await.result(k8sClient.images(nodeServerNames.last), TIMEOUT).map(x => x.split(":").head)
+    val images: Seq[String] = result(k8sClient.images(nodeServerNames.last)).map(x => x.split(":").head)
     //After installed K8S, created k8s.gcr.io/kube-proxy and k8s.gcr.io/pause two docker image.
     images.size >= 2 shouldBe true
     images.contains("k8s.gcr.io/kube-proxy") shouldBe true
@@ -181,32 +188,26 @@ class TestK8SSimple extends IntegrationTest with Matchers {
   @Test
   def testSlaveNode(): Unit = {
     val k8sClient = K8SClient(k8sApiServerURL)
-    val k8sNode: Boolean = Await.result(k8sClient.checkNode(nodeServerNames.last), TIMEOUT).isK8SNode
+    val k8sNode: Boolean = result(k8sClient.checkNode(nodeServerNames.last)).isK8SNode
     k8sNode shouldBe true
 
-    val unknownNode: Boolean = Await.result(k8sClient.checkNode("ohara-it-08"), TIMEOUT).isK8SNode
+    val unknownNode: Boolean = result(k8sClient.checkNode("ohara-it-08")).isK8SNode
     unknownNode shouldBe false
   }
 
   @Test
   def testNodeHealth(): Unit = {
     val k8sClient = K8SClient(k8sApiServerURL)
-    val oharaIt03: Boolean = Await
-      .result(k8sClient.checkNode(nodeServerNames.head), TIMEOUT)
-      .statusInfo
-      .getOrElse(K8SStatusInfo(false, ""))
-      .isHealth
+    val oharaIt03: Boolean =
+      result(k8sClient.checkNode(nodeServerNames.head)).statusInfo.getOrElse(K8SStatusInfo(false, "")).isHealth
     oharaIt03 shouldBe true
 
-    val oharaIt04: Boolean = Await
-      .result(k8sClient.checkNode(nodeServerNames.last), TIMEOUT)
-      .statusInfo
-      .getOrElse(K8SStatusInfo(false, ""))
-      .isHealth
+    val oharaIt04: Boolean =
+      result(k8sClient.checkNode(nodeServerNames.last)).statusInfo.getOrElse(K8SStatusInfo(false, "")).isHealth
     oharaIt04 shouldBe true
 
     val oharaIt08: Boolean =
-      Await.result(k8sClient.checkNode("ohara-it-08"), TIMEOUT).statusInfo.getOrElse(K8SStatusInfo(false, "")).isHealth
+      result(k8sClient.checkNode("ohara-it-08")).statusInfo.getOrElse(K8SStatusInfo(false, "")).isHealth
     oharaIt08 shouldBe false
   }
 }
@@ -214,6 +215,7 @@ class TestK8SSimple extends IntegrationTest with Matchers {
 object TestK8SSimple {
   implicit val actorSystem: ActorSystem = ActorSystem("TestK8SServer")
   implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
+
   val K8S_API_SERVER_URL_KEY: String = "ohara.it.k8s"
   val K8S_API_NODE_NAME_KEY: String = "ohara.it.k8s.nodename"
 

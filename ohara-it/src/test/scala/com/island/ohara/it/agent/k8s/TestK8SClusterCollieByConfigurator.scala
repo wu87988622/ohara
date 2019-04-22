@@ -26,7 +26,10 @@ import com.island.ohara.it.agent.{BasicTests4ClusterCollieByConfigurator, Cluste
 import com.typesafe.scalalogging.Logger
 import org.junit.{After, Before}
 
+import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration._
 
 class TestK8SClusterCollieByConfigurator extends BasicTests4ClusterCollieByConfigurator {
   private[this] val log = Logger(classOf[TestK8SClusterCollieByConfigurator])
@@ -35,6 +38,8 @@ class TestK8SClusterCollieByConfigurator extends BasicTests4ClusterCollieByConfi
 
   private[this] val API_SERVER_URL: Option[String] = sys.env.get(K8S_API_SERVER_URL_KEY)
   private[this] val NODE_SERVER_NAME: Option[String] = sys.env.get(K8S_API_NODE_NAME_KEY)
+
+  private[this] val TIMEOUT: FiniteDuration = 30 seconds
 
   override protected val nodeCache: Seq[Node] =
     if (API_SERVER_URL.isEmpty || NODE_SERVER_NAME.isEmpty) Seq.empty
@@ -62,7 +67,8 @@ class TestK8SClusterCollieByConfigurator extends BasicTests4ClusterCollieByConfi
           val k8sClient = K8SClient(API_SERVER_URL.get)
           try {
             nodeCache.foreach { node =>
-              k8sClient.containers
+              Await
+                .result(k8sClient.containers, TIMEOUT)
                 .filter(container => usedClusterNames.exists(clusterName => container.name.contains(clusterName)))
                 .foreach { container =>
                   try {

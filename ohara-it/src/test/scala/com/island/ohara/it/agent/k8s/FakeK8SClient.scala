@@ -22,20 +22,6 @@ import com.island.ohara.client.configurator.v0.ContainerApi
 import scala.concurrent.{ExecutionContext, Future}
 
 class FakeK8SClient(isK8SNode: Boolean, k8sStatusInfo: Option[K8SStatusInfo]) extends K8SClient {
-  override def containers(implicit executionContext: ExecutionContext): Seq[ContainerApi.ContainerInfo] = ???
-
-  override def remove(name: String)(implicit executionContext: ExecutionContext): ContainerApi.ContainerInfo = ???
-
-  override def forceRemove(name: String)(implicit executionContext: ExecutionContext): ContainerApi.ContainerInfo = ???
-
-  override def removeNode(clusterName: String, nodeName: String, serviceName: String)(
-    implicit executionContext: ExecutionContext): Seq[ContainerApi.ContainerInfo] = ???
-
-  override def log(name: String): String = ???
-
-  override def nodeNameIPInfo(implicit executionContext: ExecutionContext): Seq[K8SJson.HostAliases] = ???
-
-  override def containerCreator(): K8SClient.ContainerCreator = ???
 
   override def images(nodeName: String)(implicit executionContext: ExecutionContext): Future[Seq[String]] = ???
 
@@ -43,6 +29,19 @@ class FakeK8SClient(isK8SNode: Boolean, k8sStatusInfo: Option[K8SStatusInfo]) ex
     Report(nodeName, isK8SNode, k8sStatusInfo)
   }
 
-  /** Do what you want to do when calling closing. */
   override protected def doClose(): Unit = ???
+
+  override def containers(implicit executionContext: ExecutionContext): Future[Seq[ContainerApi.ContainerInfo]] = ???
+
+  override def remove(name: String)(implicit executionContext: ExecutionContext): Future[ContainerApi.ContainerInfo] =
+    ???
+
+  override def removeNode(clusterName: String, nodeName: String, serviceName: String)(
+    implicit executionContext: ExecutionContext): Future[Seq[ContainerApi.ContainerInfo]] = ???
+
+  override def log(name: String)(implicit executionContext: ExecutionContext): Future[String] = ???
+
+  override def nodeNameIPInfo(implicit executionContext: ExecutionContext): Future[Seq[K8SJson.HostAliases]] = ???
+
+  override def containerCreator()(implicit executionContext: ExecutionContext): Future[K8SClient.ContainerCreator] = ???
 }

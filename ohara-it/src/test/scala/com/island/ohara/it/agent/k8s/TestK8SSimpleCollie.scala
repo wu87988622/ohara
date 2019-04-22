@@ -49,6 +49,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
 
   private[this] var clusterCollie: ClusterCollie = _
   private[this] var nodeNames: Seq[String] = _
+  private[this] val TIMEOUT: FiniteDuration = 30 seconds
 
   @Before
   def testBefore(): Unit = {
@@ -190,7 +191,6 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
         } finally result(workerCollie.remove(workerClusterName))
       } finally result(brokerCollie.remove(brokerClusterName))
     } finally result(zookeeperCollie.remove(zkClusterName))
-
   }
 
   @Test
@@ -337,7 +337,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
         result(brokerCollie.removeNode(brokerClusterName, firstNode))
 
         val k8sClient: K8SClient = K8SClient(API_SERVER_URL.get)
-        await(() => !k8sClient.containers.exists(c => c.hostname.contains(firstContainerName)))
+        await(() => !Await.result(k8sClient.containers, TIMEOUT).exists(c => c.hostname.contains(firstContainerName)))
         result(brokerCollie.cluster(brokerClusterName))._2.size shouldBe 1
       } finally result(brokerCollie.remove(brokerClusterName))
     } finally result(zookeeperCollie.remove(zkClusterName))
@@ -389,7 +389,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
           result(workerCollie.removeNode(workerClusterName, firstNode))
 
           val k8sClient: K8SClient = K8SClient(API_SERVER_URL.get)
-          await(() => !k8sClient.containers.exists(c => c.hostname.contains(firstContainerName)))
+          await(() => !Await.result(k8sClient.containers, TIMEOUT).exists(c => c.hostname.contains(firstContainerName)))
           result(workerCollie.cluster(workerClusterName))._2.size shouldBe 1
         } finally result(workerCollie.remove(workerClusterName))
       } finally result(brokerCollie.remove(brokerClusterName))
@@ -462,8 +462,9 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
           val k8sClient: K8SClient = K8SClient(API_SERVER_URL.get)
           await(
             () =>
-              k8sClient.containers.count(c =>
-                c.hostname.contains(workerContainerHostName) && c.state == K8sContainerState.RUNNING.name) == 1
+              Await
+                .result(k8sClient.containers, TIMEOUT)
+                .count(c => c.hostname.contains(workerContainerHostName) && c.state == K8sContainerState.RUNNING.name) == 1
           )
 
           val logMessage: String = "Kafka Connect distributed worker initializing ..."

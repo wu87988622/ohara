@@ -34,8 +34,9 @@ import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterInfo}
 import com.island.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
+import scala.concurrent.duration._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Failure, Try}
 
 private[agent] class K8SClusterCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
@@ -72,6 +73,7 @@ private[agent] class K8SClusterCollieImpl(nodeCollie: NodeCollie, k8sClient: K8S
 
 private object K8SClusterCollieImpl {
   private[this] val LOG = Logger(classOf[K8SClusterCollieImpl])
+  private[this] val TIMEOUT: FiniteDuration = 30 seconds
 
   private[this] trait K8SBasicCollieImpl[T <: ClusterInfo, Creator <: ClusterCreator[T]]
       extends Collie[T, Creator]
@@ -106,57 +108,67 @@ private object K8SClusterCollieImpl {
       implicit executionContext: ExecutionContext): Future[T]
 
     override def remove(clusterName: String)(implicit executionContext: ExecutionContext): Future[T] = {
-      cluster(clusterName).flatMap {
-        case (cluster, container) =>
-          container.map(c => k8sClient.remove(c.name))
-          nodeCollie.nodes(cluster.nodeNames).map { nodes =>
-            cluster
-          }
-      }
+      cluster(clusterName)
+        .flatMap {
+          case (cluster, containers) =>
+            Future.sequence(containers.map(c => k8sClient.remove(c.name).map(_ => cluster)))
+        }
+        .map(clusters => clusters.head)
     }
 
     override def removeNode(clusterName: String, nodeName: String)(
-      implicit executionContext: ExecutionContext): Future[T] = containers(clusterName)
-      .flatMap { runningContainers =>
-        runningContainers.size match {
-          case 0 => Future.failed(new IllegalArgumentException(s"$clusterName doesn't exist"))
-          case 1 if runningContainers.map(_.nodeName).contains(nodeName) =>
-            Future.failed(new IllegalArgumentException(
-              s"$clusterName is a single-node cluster. You can't remove the last node by removeNode(). Please use remove(clusterName) instead"))
-          case _ => nodeCollie.node(nodeName)
+      implicit executionContext: ExecutionContext): Future[T] = {
+      containers(clusterName)
+        .flatMap { runningContainers =>
+          runningContainers.size match {
+            case 0 => Future.failed(new IllegalArgumentException(s"$clusterName doesn't exist"))
+            case 1 if runningContainers.map(_.nodeName).contains(nodeName) =>
+              Future.failed(new IllegalArgumentException(
+                s"$clusterName is a single-node cluster. You can't remove the last node by removeNode(). Please use remove(clusterName) instead"))
+            case _ =>
+              k8sClient.removeNode(clusterName, nodeName, service.name)
+          }
         }
-      }
-      .flatMap { targetNode =>
-        k8sClient.removeNode(clusterName, targetNode.name, service.name)
-        cluster(clusterName).map(_._1)
-      }
-
+        .flatMap { _ =>
+          cluster(clusterName).map(_._1)
+        }
+    }
     override def logs(clusterName: String)(
-      implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] = {
-      Future {
-        k8sClient.containers
-          .filter(_.name.startsWith(clusterName))
-          .map(container => {
-            container -> k8sClient.log(container.hostname)
-          })
-          .toMap
+      implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
+      k8sClient.containers
+        .flatMap(
+          cs =>
+            Future.sequence(
+              cs.filter(_.name.startsWith(clusterName))
+                .map(container => k8sClient.log(container.hostname).map(container -> _))
+          ))
+        .map(_.toMap)
+
+    def query(clusterName: String, service: Service)(
+      implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] = {
+      nodeCollie.nodes().flatMap { nodes =>
+        Future
+          .sequence(nodes.map(n => {
+            k8sClient.containers.map(cs => cs.filter(x => x.name.startsWith(s"$clusterName$DIVIDER${service.name}")))
+          }))
+          .map(_.flatten)
       }
     }
 
-    def query(clusterName: String, service: Service)(
-      implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] = nodeCollie
-      .nodes()
-      .map(_.flatMap(_ => {
-        k8sClient.containers.filter(_.name.startsWith(s"$clusterName$DIVIDER${service.name}"))
-      }))
-
     override def clusters(implicit executionContext: ExecutionContext): Future[Map[T, Seq[ContainerInfo]]] = nodeCollie
       .nodes()
-      .map(
-        _.flatMap(node =>
-          k8sClient.containers.filter(x =>
-            x.nodeName.equals(node.name) && x.name.contains(s"$DIVIDER${service.name}$DIVIDER")))
-          .map(container => container.name.split(DIVIDER).head -> container)
+      .flatMap(
+        nodes =>
+          Future.sequence(
+            nodes.map(node => {
+              k8sClient.containers.map(cs =>
+                cs.filter(x => x.nodeName.equals(node.name) && x.name.contains(s"$DIVIDER${service.name}$DIVIDER")))
+            })
+        )
+      )
+      .map(_.flatten)
+      .map(f => {
+        f.map(container => container.name.split(DIVIDER).head -> container)
           .groupBy(_._1)
           .map {
             case (clusterName, value) => clusterName -> value.map(_._2)
@@ -165,7 +177,8 @@ private object K8SClusterCollieImpl {
             case (clusterName, containers) =>
               toClusterDescription(clusterName, containers).map(_ -> containers)
           }
-          .toSeq)
+          .toSeq
+      })
       .flatMap(Future.sequence(_))
       .map(_.toMap)
 
@@ -190,29 +203,33 @@ private object K8SClusterCollieImpl {
             val successfulNodeNames: Seq[String] = nodes.zipWithIndex
               .flatMap {
                 case ((node, hostname), index) =>
-                  try k8sClient
-                    .containerCreator()
-                    .imageName(imageName)
-                    .portMappings(
-                      Map(
-                        clientPort -> clientPort,
-                        peerPort -> peerPort,
-                        electionPort -> electionPort
-                      ))
-                    .nodename(node.name)
-                    .hostname(s"${hostname}-${node.name}")
-                    .labelName(OHARA_LABEL)
-                    .domainName(K8S_DOMAIN_NAME)
-                    .envs(Map(
-                      ZookeeperCollie.ID_KEY -> index.toString,
-                      ZookeeperCollie.CLIENT_PORT_KEY -> clientPort.toString,
-                      ZookeeperCollie.PEER_PORT_KEY -> peerPort.toString,
-                      ZookeeperCollie.ELECTION_PORT_KEY -> electionPort.toString,
-                      ZookeeperCollie.SERVERS_KEY -> zkServers
-                    ))
-                    .name(hostname)
-                    .run()
-                  catch {
+                  try {
+                    val creatorContainerInfo: Future[Option[ContainerInfo]] = k8sClient
+                      .containerCreator()
+                      .flatMap(
+                        creator =>
+                          creator
+                            .imageName(imageName)
+                            .portMappings(Map(
+                              clientPort -> clientPort,
+                              peerPort -> peerPort,
+                              electionPort -> electionPort
+                            ))
+                            .nodename(node.name)
+                            .hostname(s"${hostname}-${node.name}")
+                            .labelName(OHARA_LABEL)
+                            .domainName(K8S_DOMAIN_NAME)
+                            .envs(Map(
+                              ZookeeperCollie.ID_KEY -> index.toString,
+                              ZookeeperCollie.CLIENT_PORT_KEY -> clientPort.toString,
+                              ZookeeperCollie.PEER_PORT_KEY -> peerPort.toString,
+                              ZookeeperCollie.ELECTION_PORT_KEY -> electionPort.toString,
+                              ZookeeperCollie.SERVERS_KEY -> s"$zkServers-${node.name}"
+                            ))
+                            .name(hostname)
+                            .run())
+                    Await.result(creatorContainerInfo, TIMEOUT)
+                  } catch {
                     case e: Throwable =>
                       LOG.error(s"failed to start $clusterName", e)
                       None
@@ -324,32 +341,37 @@ private object K8SClusterCollieImpl {
                 .map {
                   case ((node, hostname), index) =>
                     val client = k8sClient
-                    try client
-                      .containerCreator()
-                      .imageName(imageName)
-                      .nodename(node.name)
-                      .labelName(OHARA_LABEL)
-                      .domainName(K8S_DOMAIN_NAME)
-                      .portMappings(Map(
-                        clientPort -> clientPort,
-                        exporterPort -> exporterPort,
-                        jmxPort -> jmxPort
-                      ))
-                      .hostname(hostname)
-                      .envs(Map(
-                        BrokerCollie.ID_KEY -> (maxId + index).toString,
-                        BrokerCollie.CLIENT_PORT_KEY -> clientPort.toString,
-                        BrokerCollie.ZOOKEEPERS_KEY -> zookeepers,
-                        BrokerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
-                        BrokerCollie.EXPORTER_PORT_KEY -> exporterPort.toString,
-                        BrokerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
-                        ZOOKEEPER_CLUSTER_NAME -> zookeeperClusterName,
-                        BrokerCollie.JMX_HOSTNAME_KEY -> node.name,
-                        BrokerCollie.JMX_PORT_KEY -> jmxPort.toString
-                      ))
-                      .name(hostname)
-                      .run()
-                    catch {
+                    try {
+                      val creator: Future[Option[ContainerInfo]] = client
+                        .containerCreator()
+                        .flatMap(
+                          creator =>
+                            creator
+                              .imageName(imageName)
+                              .nodename(node.name)
+                              .labelName(OHARA_LABEL)
+                              .domainName(K8S_DOMAIN_NAME)
+                              .portMappings(Map(
+                                clientPort -> clientPort,
+                                exporterPort -> exporterPort,
+                                jmxPort -> jmxPort
+                              ))
+                              .hostname(hostname)
+                              .envs(Map(
+                                BrokerCollie.ID_KEY -> (maxId + index).toString,
+                                BrokerCollie.CLIENT_PORT_KEY -> clientPort.toString,
+                                BrokerCollie.ZOOKEEPERS_KEY -> zookeepers,
+                                BrokerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
+                                BrokerCollie.EXPORTER_PORT_KEY -> exporterPort.toString,
+                                BrokerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
+                                ZOOKEEPER_CLUSTER_NAME -> zookeeperClusterName,
+                                BrokerCollie.JMX_HOSTNAME_KEY -> node.name,
+                                BrokerCollie.JMX_PORT_KEY -> jmxPort.toString
+                              ))
+                              .name(hostname)
+                              .run())
+                      Await.result(creator, TIMEOUT)
+                    } catch {
                       case e: Throwable =>
                         LOG.error(s"failed to start $imageName on ${node.name}", e)
                         None
@@ -479,36 +501,41 @@ private object K8SClusterCollieImpl {
               .map {
                 case (node, hostname) =>
                   val client = k8sClient
-                  try client
-                    .containerCreator()
-                    .imageName(imageName)
-                    .portMappings(Map(clientPort -> clientPort))
-                    .hostname(hostname)
-                    .nodename(node.name)
-                    .envs(Map(
-                      WorkerCollie.CLIENT_PORT_KEY -> clientPort.toString,
-                      WorkerCollie.BROKERS_KEY -> brokers,
-                      WorkerCollie.GROUP_ID_KEY -> groupId,
-                      WorkerCollie.OFFSET_TOPIC_KEY -> offsetTopicName,
-                      WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY -> offsetTopicPartitions.toString,
-                      WorkerCollie.OFFSET_TOPIC_REPLICATIONS_KEY -> offsetTopicReplications.toString,
-                      WorkerCollie.CONFIG_TOPIC_KEY -> configTopicName,
-                      WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY -> configTopicReplications.toString,
-                      WorkerCollie.STATUS_TOPIC_KEY -> statusTopicName,
-                      WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY -> statusTopicPartitions.toString,
-                      WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY -> statusTopicReplications.toString,
-                      WorkerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
-                      WorkerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
-                      WorkerCollie.PLUGINS_KEY -> jarUrls.mkString(","),
-                      BROKER_CLUSTER_NAME -> brokerClusterName,
-                      WorkerCollie.JMX_HOSTNAME_KEY -> node.name,
-                      WorkerCollie.JMX_PORT_KEY -> jmxPort.toString
-                    ))
-                    .labelName(OHARA_LABEL)
-                    .domainName(K8S_DOMAIN_NAME)
-                    .name(hostname)
-                    .run()
-                  catch {
+                  try {
+                    val creator: Future[Option[ContainerInfo]] = client
+                      .containerCreator()
+                      .flatMap(
+                        creator =>
+                          creator
+                            .imageName(imageName)
+                            .portMappings(Map(clientPort -> clientPort))
+                            .hostname(hostname)
+                            .nodename(node.name)
+                            .envs(Map(
+                              WorkerCollie.CLIENT_PORT_KEY -> clientPort.toString,
+                              WorkerCollie.BROKERS_KEY -> brokers,
+                              WorkerCollie.GROUP_ID_KEY -> groupId,
+                              WorkerCollie.OFFSET_TOPIC_KEY -> offsetTopicName,
+                              WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY -> offsetTopicPartitions.toString,
+                              WorkerCollie.OFFSET_TOPIC_REPLICATIONS_KEY -> offsetTopicReplications.toString,
+                              WorkerCollie.CONFIG_TOPIC_KEY -> configTopicName,
+                              WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY -> configTopicReplications.toString,
+                              WorkerCollie.STATUS_TOPIC_KEY -> statusTopicName,
+                              WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY -> statusTopicPartitions.toString,
+                              WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY -> statusTopicReplications.toString,
+                              WorkerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
+                              WorkerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
+                              WorkerCollie.PLUGINS_KEY -> jarUrls.mkString(","),
+                              BROKER_CLUSTER_NAME -> brokerClusterName,
+                              WorkerCollie.JMX_HOSTNAME_KEY -> node.name,
+                              WorkerCollie.JMX_PORT_KEY -> jmxPort.toString
+                            ))
+                            .labelName(OHARA_LABEL)
+                            .domainName(K8S_DOMAIN_NAME)
+                            .name(hostname)
+                            .run())
+                    Await.result(creator, TIMEOUT)
+                  } catch {
                     case e: Throwable =>
                       LOG.error(s"failed to start $imageName", e)
                       None
