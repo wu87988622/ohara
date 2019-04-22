@@ -447,6 +447,7 @@ public class SettingDefinition implements JsonObject {
       this.tableKeys = definition.tableKeys;
     }
 
+    @Optional("default value is false")
     Builder internal() {
       this.internal = true;
       return this;
@@ -458,6 +459,7 @@ public class SettingDefinition implements JsonObject {
      * @param tableKeys key name of table
      * @return this builder
      */
+    @Optional("default value is empty")
     Builder tableKeys(List<String> tableKeys) {
       this.tableKeys = new ArrayList<>(CommonUtils.requireNonEmpty(tableKeys));
       return this;
