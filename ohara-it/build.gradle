@@ -32,6 +32,7 @@ dependencies {
   implementation project(':ohara-agent')
   implementation project(':ohara-testing-util')
   implementation project(':ohara-metrics')
+  implementation project(':ohara-streams')
   implementation libs.kafkaConnectRuntime
   testImplementation libs.scalaLogging
   testImplementation libs.sprayJson
@@ -62,9 +63,10 @@ dependencies {
 }
 
 // Since ohara-it:TestStream need streamApp client jar, we add the jar to build folder
-task includeStreamAppJar(dependsOn: ':ohara-streams:testJar', type: Copy){
-  from tasks.getByPath(':ohara-streams:testJar')
-  into "$buildDir/resources/test"
+task streamAppJar(type: Jar, dependsOn: compileJava) {
+  from sourceSets.main.output
+  include '**/DumbStreamApp**.class'
+  archiveName "ohara-streamapp.jar"
 }
 
 /**
@@ -104,11 +106,13 @@ test {
   if(project.hasProperty(KUBERNETES_NODE_NAME)) environment KUBERNETES_NODE_NAME, project.getProperty(KUBERNETES_NODE_NAME)
 }
 
-test.dependsOn includeStreamAppJar
 /**
  * TestLoadCustomJarToWorkerCluster needs sourceJar and sinkJar to test the upload of custom connectors.
  */
 test.dependsOn sourceJar
 test.dependsOn sinkJar
+test.dependsOn streamAppJar
+
 jar.dependsOn sourceJar
 jar.dependsOn sinkJar
+jar.dependsOn streamAppJar

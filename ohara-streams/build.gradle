@@ -26,11 +26,6 @@ buildscript {
   }
 }
 
-// We include the simple streamApp client application for IT test
-testJar {
-  include '**/SimpleApplicationForOharaEnv.class'
-}
-
 dependencies {
   implementation project(':ohara-common')
   implementation project(':ohara-kafka')
