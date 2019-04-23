@@ -41,8 +41,8 @@ import org.slf4j.LoggerFactory;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class TestOStream extends With3Brokers {
-  public static final Logger LOG = LoggerFactory.getLogger(TestOStream.class);
-  private final String appid = "test-app";
+  private static final Logger LOG = LoggerFactory.getLogger(TestOStream.class);
+  private final String appId = "test-app";
   private final String fromTopic = "stream-in";
   private final String toTopic = "stream-out";
 
@@ -91,15 +91,12 @@ public class TestOStream extends With3Brokers {
     ConsumerRecords<String, String> m = consumer.poll(10000);
     consumer.commitAsync();
     Assert.assertEquals(1, m.count());
-    m.forEach(
-        record -> {
-          Assert.assertEquals(simple_string, record.value());
-        });
+    m.forEach(record -> Assert.assertEquals(simple_string, record.value()));
 
     // Ohara Streams ETL Part
     OStream<String, String> ostream =
         OStream.builder()
-            .appid(appid)
+            .appid(appId)
             .bootstrapServers(client.connectionProps())
             .fromTopicWith(fromTopic, Serdes.STRING, Serdes.STRING)
             .toTopicWith(toTopic, Serdes.STRING, Serdes.STRING)

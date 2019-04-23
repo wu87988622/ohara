@@ -16,11 +16,12 @@
 
 package com.island.ohara.streams.data;
 
+import com.island.ohara.common.data.Data;
 import java.io.Serializable;
 import java.util.HashSet;
 
-@SuppressWarnings({"rawtypes", "serial"})
-public final class Poneglyph implements Serializable {
+public final class Poneglyph extends Data implements Serializable {
+  private static final long serialVersionUID = 1L;
   private final HashSet<Stele> steles = new HashSet<>();
 
   public void addStele(Stele another) {
@@ -29,10 +30,5 @@ public final class Poneglyph implements Serializable {
 
   public HashSet<Stele> getSteles() {
     return this.steles;
-  }
-
-  @Override
-  public String toString() {
-    return String.format("steles : %s", getSteles());
   }
 }

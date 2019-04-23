@@ -20,10 +20,12 @@ import com.island.ohara.kafka.exception.CheckedExceptionUtils;
 import com.island.ohara.streams.ostream.LaunchImpl;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.AbstractMap;
+import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import org.apache.commons.io.FileUtils;
@@ -47,7 +49,7 @@ public abstract class StreamApp {
    *   }
    * </pre>
    *
-   * @param theClass the streamapp class that is constructed and extends from {@link StreamApp}
+   * @param theClass the streamApp class that is constructed and extends from {@link StreamApp}
    * @param params parameters of {@code theClass} constructor used
    */
   public static void runStreamApp(Class<? extends StreamApp> theClass, Object... params) {
@@ -90,8 +92,7 @@ public abstract class StreamApp {
       Class theClass =
           Class.forName(entryClassName, false, Thread.currentThread().getContextClassLoader());
       if (StreamApp.class.isAssignableFrom(theClass)) {
-        Class<? extends StreamApp> streamAppClass = theClass;
-        CheckedExceptionUtils.wrap(() -> LaunchImpl.launchApplication(streamAppClass));
+        CheckedExceptionUtils.wrap(() -> LaunchImpl.launchApplication(theClass));
       } else {
         throw new RuntimeException(
             "Error: " + theClass + " is not a subclass of " + StreamApp.class.getName());
@@ -126,10 +127,8 @@ public abstract class StreamApp {
    */
   public abstract void start() throws Exception;
 
-  public void stop() throws Exception {}
-
   /**
-   * for ohara container use
+   * find main entry of jar in ohara environment container
    *
    * @param args arguments
    */
@@ -139,20 +138,30 @@ public abstract class StreamApp {
           if (System.getenv(JAR_URL) == null) {
             throw new RuntimeException("It seems you are not running in Ohara Environment?");
           }
-          String entryClass = findStreamAppEntry(System.getenv(JAR_URL));
+          Map.Entry<String, URLClassLoader> entry = findStreamAppEntry(System.getenv(JAR_URL));
 
-          ClassLoader loader =
-              URLClassLoader.newInstance(
-                  new URL[] {new URL(System.getenv(JAR_URL))}, StreamApp.class.getClassLoader());
-          Class<?> clz = Class.forName(entryClass, true, loader);
-          Object obj = clz.newInstance();
-          Method method = clz.getMethod("start");
-          method.invoke(obj);
+          if (entry.getKey().isEmpty()) {
+            throw new RuntimeException("cannot find any match entry");
+          }
+          Class clz = Class.forName(entry.getKey(), true, entry.getValue());
+          if (StreamApp.class.isAssignableFrom(clz)) {
+            if (args != null && args.length > 0) {
+              CheckedExceptionUtils.wrap(
+                  () -> LaunchImpl.launchApplication(clz, Arrays.asList(args)));
+            } else {
+              CheckedExceptionUtils.wrap(() -> LaunchImpl.launchApplication(clz));
+            }
+          } else {
+            throw new RuntimeException(
+                "Error: " + clz + " is not a subclass of " + StreamApp.class.getName());
+          }
         });
   }
 
-  private static String findStreamAppEntry(String jarUrl)
+  private static Map.Entry<String, URLClassLoader> findStreamAppEntry(String jarUrl)
       throws IOException, ClassNotFoundException {
+    String entryClassName = "";
+
     String jarHeader = "jar:file:";
     String jarTail = "!/";
     File outputFile = File.createTempFile("streamApp-", ".jar");
@@ -167,18 +176,18 @@ public abstract class StreamApp {
     Enumeration<JarEntry> e = jar.entries();
 
     URL[] urls = {new URL(jarHeader + outputFile + jarTail)};
-    URLClassLoader cl = URLClassLoader.newInstance(urls);
+    URLClassLoader loader = URLClassLoader.newInstance(urls);
 
     while (e.hasMoreElements()) {
       JarEntry entry = e.nextElement();
       if (!entry.isDirectory() && entry.getName().endsWith(".class")) {
         String className = entry.getName().replace(".class", "").replaceAll("/", ".");
-        Class c = cl.loadClass(className);
+        Class c = loader.loadClass(className);
         if (StreamApp.class.isAssignableFrom(c)) {
-          return c.getName();
+          entryClassName = c.getName();
         }
       }
     }
-    return null;
+    return new AbstractMap.SimpleEntry<>(entryClassName, loader);
   }
 }

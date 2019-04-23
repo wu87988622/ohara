@@ -18,23 +18,34 @@ package com.island.ohara.streams.data;
 
 import com.island.ohara.common.data.Data;
 import java.io.Serializable;
-import java.util.List;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
-@SuppressWarnings("serial")
 public final class Stele extends Data implements Serializable {
+  private static final long serialVersionUID = 1L;
   private final String kind;
   private final String key;
   private final String name;
-  private final List<String> from;
-  private final List<String> to;
+  // We don't use "generic types" (ex: List<E> or Collection<E>) here for generate json string
+  // Since java uses type erasure, we cannot get the "actual" type during runtime
+  // for example,
+  // class Foo {
+  //   List<String> list;
+  //   public Foo(List<String> list){ this.list = list; }
+  // }
+  // String[] aa = {"a","b"};
+  // Foo foo = new Foo(Arrays.asList(aa));
+  // System.out.println(ReflectionToStringBuilder.toString(foo, ToStringStyle.JSON_STYLE));
+  //
+  // We expect value is : ["a", "b"], but will get the non-json array : [a, b]
+  private final String[] from;
+  private final String[] to;
 
   static {
     ToStringBuilder.setDefaultStyle(ToStringStyle.JSON_STYLE);
   }
 
-  public Stele(String kind, String key, String name, List<String> from, List<String> to) {
+  public Stele(String kind, String key, String name, String[] from, String[] to) {
     this.kind = kind;
     this.key = key;
     this.name = name;
@@ -54,32 +65,11 @@ public final class Stele extends Data implements Serializable {
     return name;
   }
 
-  public List<String> getFrom() {
+  public String[] getFrom() {
     return from;
   }
 
-  public List<String> getTo() {
+  public String[] getTo() {
     return to;
-  }
-
-  @Override
-  public String toString() {
-    return ToStringBuilder.reflectionToString(this);
-    //    return "{'kind' : "
-    //        + kind
-    //        + "\n"
-    //        + " 'key' : "
-    //        + key
-    //        + "\n"
-    //        + " 'name' : "
-    //        + name
-    //        + "\n"
-    //        + " 'from' : ["
-    //        + String.join(",", from)
-    //        + "]\n"
-    //        + " 'to' : ["
-    //        + String.join(",", to)
-    //        + "]\n"
-    //        + "}";
   }
 }

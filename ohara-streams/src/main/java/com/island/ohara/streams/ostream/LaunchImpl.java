@@ -68,6 +68,7 @@ public class LaunchImpl {
                 latch.countDown();
               }
             });
+    thread.setContextClassLoader(clz.getClassLoader());
     thread.setName("Island-StreamApp");
     thread.start();
 

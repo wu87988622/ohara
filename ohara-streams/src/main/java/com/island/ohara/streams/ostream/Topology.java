@@ -98,10 +98,10 @@ public class Topology implements AutoCloseable {
                                 name,
                                 node.predecessors().stream()
                                     .map(TopologyDescription.Node::name)
-                                    .collect(Collectors.toList()),
+                                    .toArray(String[]::new),
                                 node.successors().stream()
                                     .map(TopologyDescription.Node::name)
-                                    .collect(Collectors.toList()));
+                                    .toArray(String[]::new));
                           })
                       .collect(Collectors.toList());
               steles.forEach(pg::addStele);
