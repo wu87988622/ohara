@@ -37,7 +37,6 @@ class App extends React.Component {
 
   componentDidMount() {
     const key = getUserKey();
-
     if (key) {
       this.setState({ isLogin: true });
     }

@@ -22,13 +22,16 @@ import { get, debounce } from 'lodash';
 import * as connectorApi from 'api/connectorApi';
 import * as MESSAGES from 'constants/messages';
 import * as utils from './customConnectorUtils';
+import Controller from '../Controller';
 import TestConnectionBtn from './TestConnectionBtn';
+import { findByGraphId } from '../../pipelineUtils/commonUtils';
 import { fetchWorkers } from 'api/workerApi';
 import { validateConnector } from 'api/validateApi';
 import { BoxWrapper, TitleWrapper, H5Wrapper } from '../styles';
 import { StyledForm, LoaderWrap } from './styles';
 import { ListLoader } from 'common/Loader';
 import { graphPropType } from 'propTypes/pipeline';
+import { CONNECTOR_ACTIONS } from 'constants/pipelines';
 
 class CustomConnector extends React.Component {
   static propTypes = {
@@ -38,7 +41,11 @@ class CustomConnector extends React.Component {
         connectorId: PropTypes.string.isRequired,
       }).isRequired,
     }).isRequired,
+    history: PropTypes.shape({
+      push: PropTypes.func.isRequired,
+    }).isRequired,
     graph: PropTypes.arrayOf(graphPropType).isRequired,
+    refreshGraph: PropTypes.func.isRequired,
     hasChanges: PropTypes.bool.isRequired,
     updateHasChanges: PropTypes.func.isRequired,
     updateGraph: PropTypes.func.isRequired,
@@ -55,6 +62,7 @@ class CustomConnector extends React.Component {
     defs: [],
     topics: [],
     configs: null,
+    state: null,
     isTestConnectionBtnWorking: false,
   };
 
@@ -84,9 +92,7 @@ class CustomConnector extends React.Component {
 
   setTopics = () => {
     const { pipelineTopics } = this.props;
-    this.setState({
-      topics: pipelineTopics.map(topic => topic.name),
-    });
+    this.setState({ topics: pipelineTopics.map(t => t.name) });
   };
 
   fetchData = async () => {
@@ -115,13 +121,16 @@ class CustomConnector extends React.Component {
     const result = get(res, 'data.result', null);
 
     if (result) {
+      const { settings, state } = result;
+      const { topics } = settings;
+
       const topicName = utils.getCurrTopicName({
         originals: this.props.globalTopics,
-        target: result.settings.topics,
+        target: topics,
       });
 
-      const configs = { ...result.settings, topics: topicName };
-      this.setState({ configs });
+      const configs = { ...settings, topics: topicName };
+      this.setState({ configs, state });
     }
   };
 
@@ -176,6 +185,49 @@ class CustomConnector extends React.Component {
     }
   };
 
+  handleStartConnector = async () => {
+    await this.triggerConnector(CONNECTOR_ACTIONS.start);
+  };
+
+  handleStopConnector = async () => {
+    await this.triggerConnector(CONNECTOR_ACTIONS.stop);
+  };
+
+  handleDeleteConnector = async () => {
+    const { match, refreshGraph, history } = this.props;
+    const { connectorId, pipelineId } = match.params;
+    const res = await connectorApi.deleteConnector(connectorId);
+    const isSuccess = get(res, 'data.isSuccess', false);
+
+    if (isSuccess) {
+      const { name: connectorName } = this.state;
+      toastr.success(`${MESSAGES.CONNECTOR_DELETION_SUCCESS} ${connectorName}`);
+      await refreshGraph();
+
+      const path = `/pipelines/edit/${pipelineId}`;
+      history.push(path);
+    }
+  };
+
+  triggerConnector = async action => {
+    const { match, graph, updateGraph } = this.props;
+    const sourceId = get(match, 'params.connectorId', null);
+    let res;
+    if (action === CONNECTOR_ACTIONS.start) {
+      res = await connectorApi.startConnector(sourceId);
+    } else {
+      res = await connectorApi.stopConnector(sourceId);
+    }
+    const isSuccess = get(res, 'data.isSuccess', false);
+    if (isSuccess) {
+      const state = get(res, 'data.result.state');
+      this.setState({ state });
+      const currSource = findByGraphId(graph, sourceId);
+      const update = { ...currSource, state };
+      updateGraph({ update });
+    }
+  };
+
   save = debounce(async () => {
     const {
       updateHasChanges,
@@ -213,6 +265,7 @@ class CustomConnector extends React.Component {
       configs,
       isLoading,
       topics,
+      state,
       isTestConnectionBtnWorking,
     } = this.state;
 
@@ -220,6 +273,7 @@ class CustomConnector extends React.Component {
       defs,
       configs,
       topics,
+      state,
       handleChange: this.handleChange,
       handleColumnChange: this.handleColumnChange,
       handleColumnRowDelete: this.handleColumnRowDelete,
@@ -231,6 +285,12 @@ class CustomConnector extends React.Component {
       <BoxWrapper padding="25px 0 0 0">
         <TitleWrapper margin="0 25px 30px">
           <H5Wrapper>Custom connector</H5Wrapper>
+          <Controller
+            kind="connector"
+            onStart={this.handleStartConnector}
+            onStop={this.handleStopConnector}
+            onDelete={this.handleDeleteConnector}
+          />
         </TitleWrapper>
         {isLoading ? (
           <LoaderWrap>

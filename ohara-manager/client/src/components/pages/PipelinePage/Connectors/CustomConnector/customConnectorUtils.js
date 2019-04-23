@@ -22,6 +22,7 @@ import ColumnTable from './ColumnTable';
 import { isEmptyStr } from 'utils/commonUtils';
 import { findByGraphId } from '../../pipelineUtils/commonUtils';
 import { FormGroup, Input, Label } from 'common/Form';
+import { CONNECTOR_STATES } from 'constants/pipelines';
 
 export const getMetadata = (props, workers) => {
   const { workerClusterName, match } = props;
@@ -143,6 +144,7 @@ export const getUpdatedTopic = ({
 };
 
 export const renderForm = ({
+  state,
   defs,
   configs,
   topics,
@@ -152,6 +154,7 @@ export const renderForm = ({
   handleColumnRowUp,
   handleColumnRowDown,
 }) => {
+  const isRunning = state === CONNECTOR_STATES.running;
   const dataType = ['String'];
   const tableActions = ['Up', 'Down', 'Delete'];
   const sortByOrder = (a, b) => a.orderInGroup - b.orderInGroup;
@@ -206,7 +209,7 @@ export const renderForm = ({
             value={displayValue}
             name={key}
             onChange={handleChange}
-            disabled={!editable}
+            disabled={!editable || isRunning}
           />
         </FormGroup>
       );
@@ -229,6 +232,7 @@ export const renderForm = ({
             handleChange={handleChange}
             name={key}
             width="100%"
+            disabled={isRunning}
             clearable
           />
         </FormGroup>
