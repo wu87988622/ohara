@@ -35,6 +35,22 @@ is used to pull data from **topic to external system**. A complete connector con
 **SinkConnector** and **SourceTask**/**SinkTask**. Worker cluster picks up a node to host your source/sink
 connector and then distributes the source/sink tasks across cluster. 
 
+You must include ohara jars before starting to write your custom connector. Please include both of ohara-common
+and ohara-kafka in your dependencies. The ohara-common contains many helper methods and common data used in whole ohara.
+The ohara-kafka offers a lot of beautiful APIs to help you to access kafka and design custom connector.
+  
+```groovy
+repositories {
+     maven {
+         url "https://dl.bintray.com/oharastream/ohara"
+     }
+ }
+implementation "com.island.ohara:ohara-common:0.4-SNAPSHOT"
+implementation "com.island.ohara:ohara-kafka:0.4-SNAPSHOT"
+```
+
+> The [releases](https://github.com/oharastream/ohara/releases) page shows the available version of ohara
+
 ----------
 
 ### Data Model
