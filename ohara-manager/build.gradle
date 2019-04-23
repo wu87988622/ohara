@@ -54,6 +54,28 @@ task test {
   dependsOn setup
 }
 
+task lint {
+  if(!project.hasProperty('skipManager')) {
+    doLast {
+      exec {
+        commandLine 'yarn', 'lint:ci'
+      }
+    }
+  }
+  dependsOn setup
+}
+
+task format {
+  if(!project.hasProperty('skipManager')) {
+    doLast {
+      exec {
+        commandLine 'yarn', 'format:check'
+      }
+    }
+  }
+  dependsOn setup
+}
+
 task it {
   if(!project.hasProperty('skipManager')) {
     doLast {
@@ -89,6 +111,8 @@ task it {
 task build {
   dependsOn setup
   dependsOn test
+  dependsOn lint
+  dependsOn format
 }
 
 task runManager {

@@ -8,8 +8,8 @@
   "scripts": {
     "setup": "yarn && yarn build",
     "start": "react-scripts start",
-    "build": "react-scripts build",
-    "lint": "$(npm bin)/eslint src cypress",
+    "build": "CI=true react-scripts build",
+    "lint": "CI=true eslint --max-warnings 0 src cypress",
     "vet": "yarn audit",
     "test": "react-scripts test --env=jsdom",
     "test:watch": "yarn test",
