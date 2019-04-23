@@ -84,11 +84,12 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
         .numberOfTasks(sinkTasks)
         .settings(Map(flushLineCountName -> flushLineCount, tmpDirName -> tmpDirPath, hdfsURLName -> localURL))
         .columns(schema)
+        .numberOfTasks(1)
         .create)
 
     CommonUtils
       .await(() => SimpleHDFSSinkTask.taskProps.get(flushLineCountName) == flushLineCount, Duration.ofSeconds(20))
-    CommonUtils.await(() => SimpleHDFSSinkTask.taskProps.get(rotateIntervalMSName) == null, Duration.ofSeconds(20))
+    CommonUtils.await(() => SimpleHDFSSinkTask.taskProps.get(rotateIntervalMSName) != null, Duration.ofSeconds(20))
     CommonUtils.await(() => SimpleHDFSSinkTask.taskProps.get(tmpDirName) == tmpDirPath, Duration.ofSeconds(10))
     CommonUtils.await(() => SimpleHDFSSinkTask.sinkConnectorConfig.dataDir == HDFSSinkConnectorConfig.DATA_DIR_DEFAULT,
                       Duration.ofSeconds(20))
