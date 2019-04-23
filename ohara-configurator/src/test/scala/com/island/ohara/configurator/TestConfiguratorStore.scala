@@ -47,7 +47,9 @@ class TestConfiguratorStore extends MediumTest with Matchers {
     Await.result(store.add(s), timeout)
 
     Await.result(store.exist[Data](s.id), timeout) shouldBe true
+    Await.result(store.exist[Data]("12345"), timeout) shouldBe false
     Await.result(store.nonExist[Data](s.id), timeout) shouldBe false
+    Await.result(store.nonExist[Data]("12345"), timeout) shouldBe true
   }
 
   @Test
