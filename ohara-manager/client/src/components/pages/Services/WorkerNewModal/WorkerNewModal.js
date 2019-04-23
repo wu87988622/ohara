@@ -71,16 +71,11 @@ class WorkerNewModal extends React.Component {
     }
   };
 
-  /**
-   * 只允許數字、字母大小寫（最多 30 個字）
-   *
-   * @param value
-   * @returns {string}
-   */
-
-  formatName = value => {
+  validateServiceName = value => {
     if (!value) return '';
-    return truncate(value.replace(/[^0-9a-zA-Z]/g, ''), {
+
+    // validating rules: numbers, lowercase letter and up to 30 characters
+    return truncate(value.replace(/[^0-9a-z]/g, ''), {
       length: 30,
       omission: '',
     });
@@ -128,10 +123,7 @@ class WorkerNewModal extends React.Component {
                         tooltipAlignment="right"
                         tooltipRender={
                           <div>
-                            <p>
-                              1. You can use both upper and lower case letters
-                              as well as numbers
-                            </p>
+                            <p>1. You can use lower case letters and numbers</p>
                             <p>2. Must be between 1 and 30 characters long</p>
                           </div>
                         }
@@ -146,7 +138,7 @@ class WorkerNewModal extends React.Component {
                         placeholder="cluster00"
                         data-testid="name-input"
                         disabled={submitting}
-                        format={this.formatName}
+                        format={this.validateServiceName}
                       />
                     </s.FormCol>
                     <s.FormCol width="8rem">
