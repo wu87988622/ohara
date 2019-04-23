@@ -110,7 +110,9 @@ object K8SJson {
                                       image: String,
                                       env: Seq[CreatePodEnv],
                                       ports: Seq[CreatePodPortMapping],
-                                      imagePullPolicy: ImagePullPolicy)
+                                      imagePullPolicy: ImagePullPolicy,
+                                      command: Seq[String],
+                                      args: Seq[String])
 
   implicit val CREATEPOD_CONTAINER_FORMAT: RootJsonFormat[CreatePodContainer] = new RootJsonFormat[CreatePodContainer] {
     override def write(obj: CreatePodContainer): JsValue = JsObject(
@@ -118,12 +120,20 @@ object K8SJson {
       "image" -> JsString(obj.image),
       "env" -> JsArray(obj.env.map(_.toJson).toVector),
       "ports" -> JsArray(obj.ports.map(_.toJson).toVector),
-      "imagePullPolicy" -> JsString(obj.imagePullPolicy.toString())
+      "imagePullPolicy" -> JsString(obj.imagePullPolicy.toString()),
+      "command" -> JsArray(obj.command.map(_.toJson).toVector),
+      "args" -> JsArray(obj.args.map(_.toJson).toVector)
     )
 
     override def read(json: JsValue): CreatePodContainer =
-      json.asJsObject.getFields("name", "image", "env", "ports", "imagePullPolicy") match {
-        case Seq(JsString(name), JsString(image), JsArray(env), JsArray(ports), JsString(imagePullPolicy)) =>
+      json.asJsObject.getFields("name", "image", "env", "ports", "imagePullPolicy", "command") match {
+        case Seq(JsString(name),
+                 JsString(image),
+                 JsArray(env),
+                 JsArray(ports),
+                 JsString(imagePullPolicy),
+                 JsArray(command),
+                 JsArray(args)) =>
           CreatePodContainer(
             name,
             image,
@@ -138,7 +148,9 @@ object K8SJson {
                 ImagePullPolicy.IFNOTPRESENT
               case _ =>
                 throw new IllegalArgumentException(s"The ${imagePullPolicy} isn't image pull policy value")
-            }
+            },
+            command.map(_.toString()),
+            args.map(_.toString())
           )
       }
   }

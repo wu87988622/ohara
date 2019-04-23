@@ -93,6 +93,10 @@ task runConfigurator(type: JavaExec, dependsOn: 'classes') {
     inputs << "--node"
     inputs << project.getProperty('node')
   }
+  if (project.hasProperty('k8s')) {
+    inputs << "--k8s"
+    inputs << project.getProperty('k8s')
+  }
   args = inputs
 }
 

@@ -125,7 +125,7 @@ class TestStreamRoute extends SmallTest with Matchers {
   @Test
   def testStreamAppAction(): Unit = {
     val file = File.createTempFile("empty_", ".jar")
-    val instances = 5
+    val instances = 3
     val streamAppName = CommonUtils.assertOnlyNumberAndChar(CommonUtils.randomString(5))
 
     // upload jar

@@ -49,6 +49,7 @@ import spray.json.{RootJsonFormat, _}
 import com.island.ohara.client.Enum
 import com.island.ohara.common.annotations.Optional
 
+import scala.collection.JavaConverters._
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 case class K8SStatusInfo(isHealth: Boolean, message: String)
@@ -212,50 +213,64 @@ object K8SClient {
           private[this] var labelName: String = _
           private[this] var envs: Map[String, String] = Map.empty
           private[this] var ports: Map[Int, Int] = Map.empty
+          private[this] var command: Seq[String] = Seq.empty
+          private[this] var args: Seq[String] = Seq.empty
 
           override def name(name: String): ContainerCreator = {
-            this.name = name
+            this.name = CommonUtils.requireNonEmpty(name)
             this
           }
 
           override def imageName(imageName: String): ContainerCreator = {
-            this.imageName = imageName
+            this.imageName = CommonUtils.requireNonEmpty(imageName)
             this
           }
 
           override def hostname(hostname: String): ContainerCreator = {
-            this.hostname = hostname
+            this.hostname = CommonUtils.requireNonEmpty(hostname)
             this
           }
 
           override def envs(envs: Map[String, String]): ContainerCreator = {
-            this.envs = envs
+            this.envs = CommonUtils.requireNonEmpty(envs.asJava).asScala.toMap
             this
           }
 
           override def portMappings(ports: Map[Int, Int]): ContainerCreator = {
-            this.ports = ports
+            this.ports = CommonUtils.requireNonEmpty(ports.asJava).asScala.toMap
             this
           }
 
           override def nodename(nodename: String): ContainerCreator = {
-            this.nodename = nodename
+            this.nodename = CommonUtils.requireNonEmpty(nodename)
             this
           }
 
           override def domainName(domainName: String): ContainerCreator = {
-            this.domainName = domainName
+            this.domainName = CommonUtils.requireNonEmpty(domainName)
             this
           }
 
           override def labelName(labelName: String): ContainerCreator = {
-            this.labelName = labelName
+            this.labelName = CommonUtils.requireNonEmpty(labelName)
             this
           }
 
           @Optional
           override def pullImagePolicy(imagePullPolicy: ImagePullPolicy): ContainerCreator = {
             this.imagePullPolicy = Objects.requireNonNull(imagePullPolicy, "pullImagePolicy should not be null")
+            this
+          }
+
+          @Optional("default is empty")
+          override def command(command: Seq[String]): ContainerCreator = {
+            this.command = CommonUtils.requireNonEmpty(command.asJava).asScala
+            this
+          }
+
+          @Optional("default is empty")
+          override def args(args: Seq[String]): ContainerCreator = {
+            this.args = CommonUtils.requireNonEmpty(args.asJava).asScala
             this
           }
 
@@ -272,7 +287,9 @@ object K8SClient {
                                        imageName,
                                        envs.map(x => CreatePodEnv(x._1, x._2)).toSeq,
                                        ports.map(x => CreatePodPortMapping(x._1, x._2)).toSeq,
-                                       imagePullPolicy))
+                                       imagePullPolicy,
+                                       command,
+                                       args))
                 )
               }
               .map(podSpec =>
@@ -342,6 +359,10 @@ object K8SClient {
     def labelName(labelName: String): ContainerCreator
 
     def pullImagePolicy(imagePullPolicy: ImagePullPolicy): ContainerCreator
+
+    def command(command: Seq[String]): ContainerCreator
+
+    def args(args: Seq[String]): ContainerCreator
   }
 
   sealed abstract class ImagePullPolicy

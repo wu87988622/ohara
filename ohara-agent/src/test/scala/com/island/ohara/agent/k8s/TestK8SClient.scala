@@ -35,28 +35,28 @@ class TestK8SClient extends SmallTest with Matchers {
   @Test
   def testCreatePodContainerNonePolicy(): Unit = {
     val json: String =
-      CreatePodContainer("podName", "image", Seq(), Seq(), ImagePullPolicy.IFNOTPRESENT).toJson.toString
-    json shouldBe "{\"name\":\"podName\",\"image\":\"image\",\"ports\":[],\"imagePullPolicy\":\"IfNotPresent\",\"env\":[]}"
+      CreatePodContainer("podName", "image", Seq(), Seq(), ImagePullPolicy.IFNOTPRESENT, Seq("hello"), Seq("world")).toJson.toString
+    json shouldBe "{\"name\":\"podName\",\"image\":\"image\",\"ports\":[],\"command\":[\"hello\"],\"args\":[\"world\"],\"imagePullPolicy\":\"IfNotPresent\",\"env\":[]}"
   }
 
   @Test
   def testPolicyIsAlways(): Unit = {
     val json: String =
-      CreatePodContainer("podName", "image", Seq(), Seq(), ImagePullPolicy.ALWAYS).toJson.toString
-    json shouldBe "{\"name\":\"podName\",\"image\":\"image\",\"ports\":[],\"imagePullPolicy\":\"Always\",\"env\":[]}"
+      CreatePodContainer("podName", "image", Seq(), Seq(), ImagePullPolicy.ALWAYS, Seq(), Seq()).toJson.toString
+    json shouldBe "{\"name\":\"podName\",\"image\":\"image\",\"ports\":[],\"command\":[],\"args\":[],\"imagePullPolicy\":\"Always\",\"env\":[]}"
   }
 
   @Test
   def testPolicyIsNever(): Unit = {
     val json: String =
-      CreatePodContainer("podName", "image", Seq(), Seq(), ImagePullPolicy.NEVER).toJson.toString
-    json shouldBe "{\"name\":\"podName\",\"image\":\"image\",\"ports\":[],\"imagePullPolicy\":\"Never\",\"env\":[]}"
+      CreatePodContainer("podName", "image", Seq(), Seq(), ImagePullPolicy.NEVER, Seq("foo"), Seq("bar")).toJson.toString
+    json shouldBe "{\"name\":\"podName\",\"image\":\"image\",\"ports\":[],\"command\":[\"foo\"],\"args\":[\"bar\"],\"imagePullPolicy\":\"Never\",\"env\":[]}"
   }
 
   @Test
   def testPolicyIsIfNotPresent(): Unit = {
     val json: String =
-      CreatePodContainer("podName", "image", Seq(), Seq(), ImagePullPolicy.IFNOTPRESENT).toJson.toString
-    json shouldBe "{\"name\":\"podName\",\"image\":\"image\",\"ports\":[],\"imagePullPolicy\":\"IfNotPresent\",\"env\":[]}"
+      CreatePodContainer("podName", "image", Seq(), Seq(), ImagePullPolicy.IFNOTPRESENT, Seq(), Seq()).toJson.toString
+    json shouldBe "{\"name\":\"podName\",\"image\":\"image\",\"ports\":[],\"command\":[],\"args\":[],\"imagePullPolicy\":\"IfNotPresent\",\"env\":[]}"
   }
 }
