@@ -206,6 +206,7 @@ public final class Counter extends ReleaseOnce implements CounterMBean {
   }
 
   public static class Builder {
+    private String id;
     private String group;
     private String name;
     private String unit = "N/A";
@@ -214,6 +215,12 @@ public final class Counter extends ReleaseOnce implements CounterMBean {
     private long startTime = CommonUtils.current();
 
     private Builder() {}
+
+    @Optional("default is random string")
+    public Builder id(String id) {
+      this.id = CommonUtils.requireNonEmpty(id);
+      return this;
+    }
 
     @Optional("default is equal to name")
     public Builder group(String group) {
@@ -297,6 +304,10 @@ public final class Counter extends ReleaseOnce implements CounterMBean {
       properties.put(GROUP_KEY, group);
       // the metrics tools (for example, jmc) can distinguish the counter via the name.
       properties.put(NAME_KEY, name);
+      // we use a random string to avoid duplicate jmx
+      // This property is required since kafka worker may create multiple tasks on same worker node.
+      // If we don't have this id, the multiple tasks will fail since the duplicate counters.
+      properties.put(ID_KEY, CommonUtils.isEmpty(id) ? CommonUtils.randomString() : id);
       return new Counter(needClose, properties, group, name, document, unit, startTime, value);
     }
   }

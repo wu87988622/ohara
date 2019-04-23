@@ -21,7 +21,6 @@ import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.metrics.BeanChannel;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.IntStream;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -239,17 +238,35 @@ public class TestCounter extends SmallTest {
   }
 
   /**
-   * we contribute a random string to properties of java beans so it is ok to create multi counters
-   * with same name and group
+   * We generate a random id for each counter so it is ok to produce multiple counter in same jvm
    */
+  @SuppressWarnings("try")
   @Test
-  public void testDuplicateRegister() {
+  public void testDuplicateRegisterWithDiffId() {
     Counter.Builder builder =
         Counter.builder()
             .value(CommonUtils.current())
             .startTime(CommonUtils.current())
             .name(CommonUtils.randomString());
-    IntStream.range(0, 5).mapToObj(i -> builder.register()).forEach(c -> c.close());
+    try (Counter c = builder.register();
+        Counter c2 = builder.register()) {
+      // good
+    }
+  }
+
+  @SuppressWarnings("try")
+  @Test(expected = IllegalArgumentException.class)
+  public void testDuplicateRegister() {
+    Counter.Builder builder =
+        Counter.builder()
+            .value(CommonUtils.current())
+            .startTime(CommonUtils.current())
+            .name(CommonUtils.randomString())
+            .id(CommonUtils.randomString());
+    try (Counter c = builder.register();
+        Counter c2 = builder.register()) {
+      throw new AssertionError();
+    }
   }
 
   @Test

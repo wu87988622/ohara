@@ -24,6 +24,16 @@ import org.junit.Test;
 public class TestCounterBuilder extends SmallTest {
 
   @Test(expected = NullPointerException.class)
+  public void testNullId() {
+    Counter.builder().id(null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testEmptyId() {
+    Counter.builder().id("");
+  }
+
+  @Test(expected = NullPointerException.class)
   public void testNullGroup() {
     Counter.builder().group(null);
   }

@@ -33,6 +33,9 @@ public interface CounterMBean {
    */
   String NAME_KEY = "name";
 
+  /** This is a internal property used to distinguish the counter. */
+  String ID_KEY = "id";
+
   String START_TIME_KEY = "StartTime";
   String VALUE_KEY = "Value";
   String DOCUMENT_KEY = "Document";
