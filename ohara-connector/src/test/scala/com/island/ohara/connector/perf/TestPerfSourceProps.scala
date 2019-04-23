@@ -61,6 +61,30 @@ class TestPerfSourceProps extends SmallTest with Matchers {
   }
 
   @Test
+  def testEmptyBatchToDefault(): Unit = {
+    val props = PerfSourceProps(Map.empty)
+    props.batch shouldBe DEFAULT_BATCH
+  }
+
+  @Test
+  def testEmptyFrequenceToDefault(): Unit = {
+    val props = PerfSourceProps(Map.empty)
+    props.freq shouldBe DEFAULT_FREQUENCE
+  }
+
+  @Test
+  def testEmptyPropsToMap(): Unit = {
+    val props = PerfSourceProps(Map.empty).toMap
+    props.contains(PERF_BATCH) shouldBe true
+    props.contains(PERF_FREQUENCE) shouldBe true
+  }
+
+  @Test
+  def testInvalidFrequence(): Unit = {
+    an[NumberFormatException] should be thrownBy PerfSourceProps(Map(PERF_FREQUENCE -> "abc"))
+  }
+
+  @Test
   def testInvalidProps(): Unit = {
     val source = new PerfSource
 

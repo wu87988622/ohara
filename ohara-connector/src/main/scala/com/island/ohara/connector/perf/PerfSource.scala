@@ -48,7 +48,7 @@ class PerfSource extends RowSourceConnector {
       .documentation("The batch of perf")
       .valueType(SettingDefinition.Type.INT)
       .key(PERF_BATCH)
-      .optional("10")
+      .optional(DEFAULT_BATCH.toString)
       .build(),
     SettingDefinition
       .builder()
@@ -56,7 +56,7 @@ class PerfSource extends RowSourceConnector {
       .documentation("The frequence of perf")
       .valueType(SettingDefinition.Type.STRING)
       .key(PERF_FREQUENCE)
-      .optional("1 second")
+      .optional(DEFAULT_FREQUENCE.toString)
       .build(),
   ).asJava
 

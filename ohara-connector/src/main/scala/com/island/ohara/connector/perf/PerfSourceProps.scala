@@ -26,7 +26,7 @@ case class PerfSourceProps(batch: Int, freq: Duration) {
 
 object PerfSourceProps {
   def apply(props: Map[String, String]): PerfSourceProps = PerfSourceProps(
-    batch = props(PERF_BATCH).toInt,
-    freq = Duration(props(PERF_FREQUENCE))
+    batch = props.getOrElse(PERF_BATCH, DEFAULT_BATCH.toString).toInt,
+    freq = Duration(props.getOrElse(PERF_FREQUENCE, DEFAULT_FREQUENCE.toString)),
   )
 }
