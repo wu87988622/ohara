@@ -107,7 +107,7 @@ public abstract class RowSinkConnector extends SinkConnector {
 
   @Override
   public final void start(Map<String, String> props) {
-    taskConfig = TaskConfig.of(ImmutableMap.copyOf(props));
+    taskConfig = TaskConfig.of(ImmutableMap.copyOf(props), definitions());
     _start(taskConfig);
   }
 

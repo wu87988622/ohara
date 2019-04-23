@@ -105,7 +105,7 @@ public abstract class RowSourceConnector extends SourceConnector {
 
   @Override
   public final void start(Map<String, String> props) {
-    taskConfig = TaskConfig.of(ImmutableMap.copyOf(props));
+    taskConfig = TaskConfig.of(ImmutableMap.copyOf(props), definitions());
     _start(taskConfig);
   }
 

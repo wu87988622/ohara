@@ -27,7 +27,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 
 /** this class carries all required settings for row connectors. */
 public class TaskConfig {
@@ -40,6 +39,24 @@ public class TaskConfig {
    */
   static TaskConfig of(Map<String, String> options) {
     return new TaskConfig(options);
+  }
+
+  /**
+   * Create TaskConfig with default values from custom setting definitions. This method is used by
+   * connector only. The task should call {@link #of(Map)} instead
+   *
+   * @param options raw input
+   * @param settingDefinitions custom settings
+   * @return a TaskConfig
+   */
+  static TaskConfig of(Map<String, String> options, List<SettingDefinition> settingDefinitions) {
+    Map<String, String> copy = new HashMap<>(options);
+    settingDefinitions.forEach(
+        setting -> {
+          if (!copy.containsKey(setting.key()) && !CommonUtils.isEmpty(setting.defaultValue()))
+            copy.put(setting.key(), setting.defaultValue());
+        });
+    return new TaskConfig(copy);
   }
 
   private final Map<String, String> raw;
@@ -137,9 +154,7 @@ public class TaskConfig {
    * @return value
    */
   public List<String> stringList(String key) {
-    return Optional.ofNullable(raw.get(key))
-        .map(StringList::ofKafkaList)
-        .orElse(Collections.emptyList());
+    return StringList.ofKafkaList(stringValue(key));
   }
 
   /**

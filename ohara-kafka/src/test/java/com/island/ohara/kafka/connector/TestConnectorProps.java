@@ -29,27 +29,27 @@ import org.junit.Test;
 public class TestConnectorProps extends SmallTest {
 
   @Test
-  public void testNoTopicsInSourceConnector() {
+  public void emptyInStartingSource() {
     DumbSource connector = new DumbSource();
-    // lack topics string
-    assertException(IllegalArgumentException.class, () -> connector.start(Collections.emptyMap()));
+    // ohara auto-fill the keys with default values
+    connector.start(Collections.emptyMap());
   }
 
   @Test
-  public void testNoTopicsInSinkConnector() {
+  public void emptyInStartingSink() {
     DumbSink connector = new DumbSink();
-    // lack topics string
-    assertException(IllegalArgumentException.class, () -> connector.start(Collections.emptyMap()));
+    // ohara auto-fill the keys with default values
+    connector.start(Collections.emptyMap());
   }
 
   @Test
-  public void testNoTopicsInSourceTask() {
+  public void emptyInStartingSourceTask() {
     DumbSourceTask task = new DumbSourceTask();
     assertException(IllegalArgumentException.class, () -> task.start(Collections.emptyMap()));
   }
 
   @Test
-  public void testNoTopicsInSinkTask() {
+  public void emptyInStartingSinkTask() {
     DumbSinkTask task = new DumbSinkTask();
     assertException(IllegalArgumentException.class, () -> task.start(Collections.emptyMap()));
   }

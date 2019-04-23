@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.rule.SmallTest;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.connector.json.PropGroups;
+import com.island.ohara.kafka.connector.json.SettingDefinition;
 import com.island.ohara.kafka.connector.json.StringList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -135,5 +136,31 @@ public class TestTaskConfig extends SmallTest {
   public void getEmptyColumn() {
     TaskConfig config = TaskConfig.of(ImmutableMap.of("pgs", "asdasd"));
     Assert.assertTrue(config.columns().isEmpty());
+  }
+
+  @Test
+  public void testFillDefaultValue() {
+    String key = CommonUtils.randomString();
+    String defaultValue = CommonUtils.randomString();
+    SettingDefinition settingDefinition =
+        SettingDefinition.builder().key(key).optional(defaultValue).build();
+    TaskConfig config =
+        TaskConfig.of(Collections.emptyMap(), Collections.singletonList(settingDefinition));
+    Assert.assertEquals(1, config.raw().size());
+    Assert.assertEquals(defaultValue, config.stringValue(key));
+  }
+
+  @Test
+  public void skipDefaultValueIfValueExists() {
+    String key = CommonUtils.randomString();
+    String value = CommonUtils.randomString();
+    String defaultValue = CommonUtils.randomString();
+    SettingDefinition settingDefinition =
+        SettingDefinition.builder().key(key).optional(defaultValue).build();
+    TaskConfig config =
+        TaskConfig.of(
+            Collections.singletonMap(key, value), Collections.singletonList(settingDefinition));
+    Assert.assertEquals(1, config.raw().size());
+    Assert.assertEquals(value, config.stringValue(key));
   }
 }
