@@ -18,6 +18,7 @@ package com.island.ohara.metrics;
 
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.metrics.basic.CounterMBean;
+import com.island.ohara.metrics.kafka.TopicMeter;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.Collections;
@@ -91,6 +92,11 @@ public interface BeanChannel extends Iterable<BeanObject> {
   /** @return get only counter type from bean objects */
   default List<CounterMBean> counterMBeans() {
     return stream().filter(CounterMBean::is).map(CounterMBean::of).collect(Collectors.toList());
+  }
+
+  /** @return get only TopicMeter type from bean objects */
+  default List<TopicMeter> topicMeters() {
+    return stream().filter(TopicMeter::is).map(TopicMeter::of).collect(Collectors.toList());
   }
 
   default Stream<BeanObject> stream() {

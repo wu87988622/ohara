@@ -297,8 +297,6 @@ public final class Counter extends ReleaseOnce implements CounterMBean {
       properties.put(GROUP_KEY, group);
       // the metrics tools (for example, jmc) can distinguish the counter via the name.
       properties.put(NAME_KEY, name);
-      // we use a random string to avoid duplicate jmx
-      properties.put("id", CommonUtils.randomString());
       return new Counter(needClose, properties, group, name, document, unit, startTime, value);
     }
   }

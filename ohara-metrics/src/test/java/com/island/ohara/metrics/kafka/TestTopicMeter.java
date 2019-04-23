@@ -14,14 +14,20 @@
  * limitations under the License.
  */
 
-apply from: "$rootDir/gradle/dependencies.gradle"
+package com.island.ohara.metrics.kafka;
 
-dependencies {
-  implementation project(':ohara-common')
-  implementation libs.slf4jApi
-  implementation libs.slf4jlog4j
-  testImplementation project(':ohara-common').sourceSets.test.output
-  testImplementation project(':ohara-testing-util')
-  testImplementation project(":ohara-testing-util").sourceSets.test.output
-  testImplementation libs.junit
+import com.island.ohara.metrics.BeanChannel;
+import com.island.ohara.testing.WithBrokerWorker;
+import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
+
+/** Worker instance will create three topics on broker so we can use it to test our APIs. */
+public class TestTopicMeter extends WithBrokerWorker {
+
+  @Test
+  public void list() {
+    List<TopicMeter> meters = BeanChannel.local().topicMeters();
+    Assert.assertFalse(meters.isEmpty());
+  }
 }

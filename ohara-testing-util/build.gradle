@@ -30,7 +30,6 @@ buildscript {
 
 dependencies {
   implementation project(':ohara-common')
-  implementation project(':ohara-client')
   implementation(libs.sshd) {
     exclude group: 'org.apache.sshd', module: 'sshd-mina'
     exclude group: 'org.apache.sshd', module: 'sshd-netty'
