@@ -52,10 +52,12 @@ private class StreamWarehouseImpl(nodeCollie: NodeCollie,
               .map { all =>
                 if (CommonUtils.isEmpty(nodeNames.asJava)) {
                   // Check instance first
-                  // if no enough node exists, throw exception
-                  CommonUtils
-                    .requireNonEmpty(Random.shuffle(all).take(CommonUtils.requirePositiveInt(instance)).asJava)
-                    .asScala
+                  // Here we will check the following conditions:
+                  // 1. instance should be positive
+                  // 2. available nodes should be bigger than instance (one node runs one instance)
+                  if (all.size < instance)
+                    throw new IllegalArgumentException(s"cannot run streamApp. expect: $instance, actual: ${all.size}")
+                  Random.shuffle(all).take(CommonUtils.requirePositiveInt(instance))
                 } else
                   // if require node name is not in nodeCollie, do not take that node
                   CommonUtils.requireNonEmpty(all.filter(n => nodeNames.contains(n.name)).asJava).asScala

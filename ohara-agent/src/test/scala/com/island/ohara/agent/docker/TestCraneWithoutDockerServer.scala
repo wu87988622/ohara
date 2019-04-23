@@ -74,13 +74,67 @@ class TestCraneWithoutDockerServer extends SmallTest with Matchers {
 
     awaitResult(crane.list).size shouldBe 1
 
+    // we wait a period to force the "cluster cache" expired (this period equals to Cache.expiredTime)
+    Thread.sleep(3000)
     val info = awaitResult(crane.get(WAREHOUSE_NAME))
 
     info._1.name shouldBe WAREHOUSE_NAME
+    info._2.size shouldBe SIZE
 
     awaitResult(crane.remove(WAREHOUSE_NAME))
 
     awaitResult(crane.list).size shouldBe 0
+  }
+
+  @Test
+  def testDifferentInstance(): Unit = {
+    // node size should be bigger than required instance
+    an[IllegalArgumentException] should be thrownBy awaitResult(
+      crane
+        .streamWarehouse()
+        .creator()
+        .clusterName(CommonUtils.randomString(Warehouse.LIMIT_OF_NAME_LENGTH))
+        .imageName(CommonUtils.randomString())
+        .jarUrl("jar")
+        .instances(SIZE + 1)
+        .appId("app")
+        .brokerProps("broker")
+        .fromTopics(Seq("topic1"))
+        .toTopics(Seq("topic2"))
+        .create())
+
+    // instance should be positive
+    an[IllegalArgumentException] should be thrownBy awaitResult(
+      crane
+        .streamWarehouse()
+        .creator()
+        .clusterName(CommonUtils.randomString(Warehouse.LIMIT_OF_NAME_LENGTH))
+        .imageName(CommonUtils.randomString())
+        .jarUrl("jar")
+        .instances(0)
+        .appId("app")
+        .brokerProps("broker")
+        .fromTopics(Seq("topic1"))
+        .toTopics(Seq("topic2"))
+        .create())
+
+    // nodeNames will override the effect of instances
+    val res = awaitResult(
+      crane
+        .streamWarehouse()
+        .creator()
+        .clusterName(CommonUtils.randomString(Warehouse.LIMIT_OF_NAME_LENGTH))
+        .imageName(CommonUtils.randomString())
+        .jarUrl("jar")
+        .instances(SIZE + 1)
+        .nodeNames(nodeCache.take(3).map(_.name))
+        .appId("app")
+        .brokerProps("broker")
+        .fromTopics(Seq("topic1"))
+        .toTopics(Seq("topic2"))
+        .create())
+
+    res.nodeNames.size shouldBe 3
   }
 
   @Test
