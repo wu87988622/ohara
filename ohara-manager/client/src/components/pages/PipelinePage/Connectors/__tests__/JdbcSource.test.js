@@ -17,6 +17,7 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 
+import * as generate from 'utils/generate';
 import FtpSource from '../FtpSource';
 
 const props = {
@@ -50,7 +51,7 @@ const props = {
   updateHasChanges: jest.fn(),
   updateGraph: jest.fn(),
   loadGraph: jest.fn(),
-  topics: [{ name: 'a', id: '1234' }, { name: 'b', id: '5678' }],
+  pipelineTopics: generate.topics(),
   match: { params: { connectorId: '1234' } },
   schema: [],
   refreshGraph: jest.fn(),

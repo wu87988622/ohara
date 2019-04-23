@@ -192,14 +192,16 @@ export const renderForm = ({
       return (
         <FormGroup key={key}>
           <Label
-            htmlFor=""
+            htmlFor={`${displayName}`}
             required={required}
             tooltipString={documentation}
             tooltipAlignment="right"
+            width="100%"
           >
             {displayName}
           </Label>
           <Input
+            id={`${displayName}`}
             width="100%"
             value={displayValue}
             name={key}
@@ -212,14 +214,16 @@ export const renderForm = ({
       return (
         <FormGroup key={key}>
           <Label
-            htmlFor=""
+            htmlFor={`${displayName}`}
             required={required}
             tooltipString={documentation}
             tooltipAlignment="right"
+            width="100%"
           >
             {displayName}
           </Label>
           <Select
+            id={`${displayName}`}
             list={topics}
             value={displayValue}
             handleChange={handleChange}

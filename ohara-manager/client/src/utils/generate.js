@@ -20,4 +20,17 @@ const { system, random } = faker;
 const { fileName: name } = system;
 const { uuid: id } = random;
 
-export { name, id };
+const topics = () => {
+  return [
+    {
+      name: name(),
+      id: id(),
+    },
+    {
+      name: name(),
+      id: id(),
+    },
+  ];
+};
+
+export { name, id, topics };

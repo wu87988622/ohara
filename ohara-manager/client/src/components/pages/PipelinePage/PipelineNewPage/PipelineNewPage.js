@@ -317,11 +317,12 @@ class PipelineNewPage extends React.Component {
     } = PIPELINES.CONNECTOR_TYPES;
 
     const connectorProps = {
-      topics: pipelineTopics,
       loadGraph: this.loadGraph,
       updateGraph: this.updateGraph,
       refreshGraph: this.refreshGraph,
       updateHasChanges: this.updateHasChanges,
+      pipelineTopics: pipelineTopics,
+      globalTopics: topics,
       isPipelineRunning,
       pipeline,
       hasChanges,

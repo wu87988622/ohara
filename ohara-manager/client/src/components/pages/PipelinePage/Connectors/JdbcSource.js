@@ -87,7 +87,7 @@ class JdbcSource extends React.Component {
     history: PropTypes.shape({
       push: PropTypes.func.isRequired,
     }).isRequired,
-    topics: PropTypes.array.isRequired,
+    pipelineTopics: PropTypes.array.isRequired,
     isPipelineRunning: PropTypes.bool.isRequired,
   };
 
@@ -119,9 +119,9 @@ class JdbcSource extends React.Component {
   }
 
   async componentDidUpdate(prevProps) {
-    const { topics: prevTopics } = prevProps;
+    const { pipelineTopics: prevTopics } = prevProps;
     const { connectorId: prevConnectorId } = prevProps.match.params;
-    const { hasChanges, topics: currTopics } = this.props;
+    const { hasChanges, pipelineTopics: currTopics } = this.props;
     const { connectorId: currConnectorId } = this.props.match.params;
 
     if (prevTopics !== currTopics) {
@@ -152,7 +152,7 @@ class JdbcSource extends React.Component {
         table = '{}',
       } = configs;
 
-      const { topics: writeTopics } = this.props;
+      const { pipelineTopics: writeTopics } = this.props;
 
       if (!isEmpty(prevTopics)) {
         const currWriteTopic = writeTopics.find(

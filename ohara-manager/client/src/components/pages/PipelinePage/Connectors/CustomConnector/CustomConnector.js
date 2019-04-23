@@ -42,7 +42,10 @@ class CustomConnector extends React.Component {
     hasChanges: PropTypes.bool.isRequired,
     updateHasChanges: PropTypes.func.isRequired,
     updateGraph: PropTypes.func.isRequired,
-    topics: PropTypes.shape({
+    globalTopics: PropTypes.shape({
+      name: PropTypes.string.isRequired,
+    }).isRequired,
+    pipelineTopics: PropTypes.shape({
       name: PropTypes.string.isRequired,
     }).isRequired,
   };
@@ -51,7 +54,6 @@ class CustomConnector extends React.Component {
     isLoading: true,
     defs: [],
     topics: [],
-    originalTopics: [],
     configs: null,
     isTestConnectionBtnWorking: false,
   };
@@ -61,9 +63,15 @@ class CustomConnector extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    const { hasChanges } = this.props;
+    const { pipelineTopics: prevTopics } = prevProps;
+    const { hasChanges, pipelineTopics: currTopics } = this.props;
     const { connectorId: prevConnectorId } = prevProps.match.params;
     const { connectorId: currConnectorId } = this.props.match.params;
+
+    if (prevTopics !== currTopics) {
+      const topics = currTopics.map(currTopic => currTopic.name);
+      this.setState({ topics });
+    }
 
     if (prevConnectorId !== currConnectorId) {
       this.fetchData();
@@ -75,10 +83,9 @@ class CustomConnector extends React.Component {
   }
 
   setTopics = () => {
-    const { topics } = this.props;
+    const { pipelineTopics } = this.props;
     this.setState({
-      topics: topics.map(topic => topic.name),
-      originalTopics: topics,
+      topics: pipelineTopics.map(topic => topic.name),
     });
   };
 
@@ -109,7 +116,7 @@ class CustomConnector extends React.Component {
 
     if (result) {
       const topicName = utils.getCurrTopicName({
-        originals: this.state.originalTopics,
+        originals: this.props.globalTopics,
         target: result.settings.topics,
       });
 
@@ -170,12 +177,18 @@ class CustomConnector extends React.Component {
   };
 
   save = debounce(async () => {
-    const { updateHasChanges, match, graph, updateGraph } = this.props;
-    const { configs, originalTopics } = this.state;
+    const {
+      updateHasChanges,
+      match,
+      graph,
+      updateGraph,
+      globalTopics,
+    } = this.props;
+    const { configs } = this.state;
     const { connectorId } = match.params;
 
     const topicId = utils.getCurrTopicId({
-      originals: originalTopics,
+      originals: globalTopics,
       target: configs.topics,
     });
 
@@ -188,7 +201,7 @@ class CustomConnector extends React.Component {
       graph,
       connectorId,
       configs,
-      originalTopics,
+      originalTopics: globalTopics,
     });
 
     updateGraph({ update });

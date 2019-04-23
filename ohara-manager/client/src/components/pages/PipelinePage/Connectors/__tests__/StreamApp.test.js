@@ -34,7 +34,7 @@ const props = {
   updateGraph: jest.fn(),
   refreshGraph: jest.fn(),
   updateHasChanges: jest.fn(),
-  topics: [],
+  pipelineTopics: generate.topics(),
 };
 
 describe('<StreamApp />', () => {

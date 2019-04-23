@@ -90,7 +90,7 @@ class FtpSink extends React.Component {
     history: PropTypes.shape({
       push: PropTypes.func.isRequired,
     }).isRequired,
-    topics: PropTypes.array.isRequired,
+    pipelineTopics: PropTypes.array.isRequired,
     isPipelineRunning: PropTypes.bool.isRequired,
   };
 
@@ -141,13 +141,13 @@ class FtpSink extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    const { topics: prevTopics } = prevProps;
+    const { pipelineTopics: prevTopics } = prevProps;
     const { connectorId: prevConnectorId } = prevProps.match.params;
-    const { hasChanges, topics: currTopics } = this.props;
+    const { hasChanges, pipelineTopics: currTopics } = this.props;
     const { connectorId: currConnectorId } = this.props.match.params;
 
     if (prevTopics !== currTopics) {
-      this.setState({ writeTopics: currTopics });
+      this.setState({ readTopics: currTopics });
     }
 
     if (prevConnectorId !== currConnectorId) {
@@ -166,7 +166,7 @@ class FtpSink extends React.Component {
 
   fetchSink = async sinkId => {
     const res = await connectorApi.fetchConnector(sinkId);
-    const result = get(res, 'data.result', false);
+    const result = get(res, 'data.result', null);
     const { fileEncodings, tasks } = this.state;
 
     if (result) {
@@ -188,7 +188,7 @@ class FtpSink extends React.Component {
         currTask = tasks[0],
       } = configs;
 
-      const { topics: readTopics } = this.props;
+      const { pipelineTopics: readTopics } = this.props;
 
       if (!isEmpty(prevTopics)) {
         const currReadTopic = readTopics.find(

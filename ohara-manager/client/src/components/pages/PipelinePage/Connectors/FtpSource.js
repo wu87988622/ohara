@@ -67,14 +67,14 @@ class FtpSource extends React.Component {
     history: PropTypes.shape({
       push: PropTypes.func.isRequired,
     }).isRequired,
-    topics: PropTypes.array.isRequired,
+    pipelineTopics: PropTypes.array.isRequired,
     isPipelineRunning: PropTypes.bool.isRequired,
   };
 
   selectMaps = {
     tasks: 'currTask',
-    writeTopics: 'currWriteTopic',
     fileEncodings: 'currFileEncoding',
+    writeTopics: 'currWriteTopic',
     types: 'currType',
   };
 
@@ -121,9 +121,9 @@ class FtpSource extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    const { topics: prevTopics } = prevProps;
+    const { pipelineTopics: prevTopics } = prevProps;
     const { connectorId: prevConnectorId } = prevProps.match.params;
-    const { hasChanges, topics: currTopics } = this.props;
+    const { hasChanges, pipelineTopics: currTopics } = this.props;
     const { connectorId: currConnectorId } = this.props.match.params;
 
     if (prevTopics !== currTopics) {
@@ -170,7 +170,7 @@ class FtpSource extends React.Component {
         currTask = tasks[0],
       } = configs;
 
-      const { topics: writeTopics } = this.props;
+      const { pipelineTopics: writeTopics } = this.props;
 
       if (!isEmpty(prevTopics)) {
         const currWriteTopic = writeTopics.find(
@@ -448,7 +448,10 @@ class FtpSource extends React.Component {
 
     const sourceId = get(match, 'params.connectorId', null);
     const _schema = isEmpty(schema) ? [] : schema;
-    const topics = isEmpty(currWriteTopic) ? [] : [currWriteTopic.id];
+
+    const isValidTopic =
+      isEmpty(currWriteTopic) || currWriteTopic.id === 'default-option';
+    const topics = isValidTopic ? [] : [currWriteTopic.id];
 
     const params = {
       name,
@@ -474,6 +477,8 @@ class FtpSource extends React.Component {
     updateHasChanges(false);
 
     const currSource = findByGraphId(graph, sourceId);
+
+    // const currTopic = findByGraphId(graph, )
     const topicId = isEmpty(topics) ? [] : topics;
     const update = { ...currSource, name, to: topicId };
     updateGraph({ update });
@@ -769,15 +774,15 @@ class FtpSource extends React.Component {
                 <FormGroup>
                   <Label>Write topic</Label>
                   <Select
-                    isObject
                     name="writeTopics"
-                    list={writeTopics}
-                    selected={currWriteTopic}
                     width="100%"
                     data-testid="write-topic-select"
+                    selected={currWriteTopic}
+                    list={writeTopics}
                     handleChange={this.handleSelectChange}
                     disabled={isRunning}
                     placeholder="Please select a topic..."
+                    isObject
                     clearable
                   />
                 </FormGroup>

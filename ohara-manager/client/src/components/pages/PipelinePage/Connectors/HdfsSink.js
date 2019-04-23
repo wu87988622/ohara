@@ -72,7 +72,7 @@ class HdfsSink extends React.Component {
     history: PropTypes.shape({
       push: PropTypes.func.isRequired,
     }).isRequired,
-    topics: PropTypes.array.isRequired,
+    pipelineTopics: PropTypes.array.isRequired,
     isPipelineRunning: PropTypes.bool.isRequired,
   };
 
@@ -103,13 +103,13 @@ class HdfsSink extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    const { topics: prevTopics } = prevProps;
+    const { pipelineTopics: prevTopics } = prevProps;
     const { connectorId: prevConnectorId } = prevProps.match.params;
-    const { hasChanges, topics: currTopics } = this.props;
+    const { hasChanges, pipelineTopics: currTopics } = this.props;
     const { connectorId: currConnectorId } = this.props.match.params;
 
     if (prevTopics !== currTopics) {
-      this.setState({ writeTopics: currTopics });
+      this.setState({ readTopics: currTopics });
     }
 
     if (prevConnectorId !== currConnectorId) {
@@ -143,7 +143,7 @@ class HdfsSink extends React.Component {
         'data.econde': currFileEncoding = fileEncodings[0],
       } = configs;
 
-      const { topics: readTopics } = this.props;
+      const { pipelineTopics: readTopics } = this.props;
 
       if (!isEmpty(prevTopics)) {
         const currReadTopic = readTopics.find(

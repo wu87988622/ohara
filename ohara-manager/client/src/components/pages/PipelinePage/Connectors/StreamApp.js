@@ -41,7 +41,7 @@ class StreamApp extends React.Component {
     updateGraph: PropTypes.func.isRequired,
     refreshGraph: PropTypes.func.isRequired,
     updateHasChanges: PropTypes.func.isRequired,
-    topics: PropTypes.array.isRequired,
+    pipelineTopics: PropTypes.array.isRequired,
   };
 
   selectMaps = {
@@ -56,17 +56,17 @@ class StreamApp extends React.Component {
   };
 
   componentDidMount() {
-    const { match, topics } = this.props;
+    const { match, pipelineTopics } = this.props;
     const { connectorId: streamAppId } = match.params;
 
-    this.setState({ streamAppId, topics }, () => {
+    this.setState({ streamAppId, pipelineTopics }, () => {
       this.fetchStreamApp(streamAppId);
     });
   }
 
   componentDidUpdate(prevProps) {
-    const { topics: prevTopics } = prevProps;
-    const { topics: currTopics } = this.props;
+    const { pipelineTopics: prevTopics } = prevProps;
+    const { pipelineTopics: currTopics } = this.props;
     const { connectorId: prevConnectorId } = prevProps.match.params;
     const { connectorId: currConnectorId } = this.props.match.params;
 
@@ -92,12 +92,12 @@ class StreamApp extends React.Component {
     }
   };
 
-  getTopics = ({ topics, from, to }) => {
-    const fromTopic = topics.reduce((acc, { name, id }) => {
+  getTopics = ({ pipelineTopics, from, to }) => {
+    const fromTopic = pipelineTopics.reduce((acc, { name, id }) => {
       return name === from ? [...acc, id] : acc;
     }, []);
 
-    const toTopic = topics.reduce((acc, { name, id }) => {
+    const toTopic = pipelineTopics.reduce((acc, { name, id }) => {
       return name === to ? [...acc, id] : acc;
     }, []);
 
@@ -105,9 +105,9 @@ class StreamApp extends React.Component {
   };
 
   handleSave = async ({ name, instances, from, to }) => {
-    const { topics, graph, updateGraph } = this.props;
+    const { pipelineTopics, graph, updateGraph } = this.props;
     const { streamAppId } = this.state;
-    const { fromTopic, toTopic } = this.getTopics({ topics, from, to });
+    const { fromTopic, toTopic } = this.getTopics({ pipelineTopics, from, to });
 
     const params = {
       id: streamAppId,
@@ -205,15 +205,15 @@ class StreamApp extends React.Component {
   };
 
   render() {
-    const { updateHasChanges } = this.props;
-    const { topics, streamApp } = this.state;
+    const { updateHasChanges, pipelineTopics } = this.props;
+    const { streamApp } = this.state;
 
     if (!streamApp) return null;
 
     const { name, instances, jarInfo, from, to } = streamApp;
     const { name: jarName } = jarInfo;
-    const fromTopic = topics.find(({ id }) => id === from[0]);
-    const toTopic = topics.find(({ id }) => id === to[0]);
+    const fromTopic = pipelineTopics.find(({ id }) => id === from[0]);
+    const toTopic = pipelineTopics.find(({ id }) => id === to[0]);
 
     const initialValues = {
       name: isEmptyStr(name) ? 'Untitled stream app' : name,
@@ -274,7 +274,7 @@ class StreamApp extends React.Component {
                     id="select-from"
                     name="from"
                     component={SelectField}
-                    list={topics}
+                    list={pipelineTopics}
                     width="100%"
                     placeholder="select a topic ..."
                     isObject
@@ -286,7 +286,7 @@ class StreamApp extends React.Component {
                   <Field
                     name="to"
                     component={SelectField}
-                    list={topics}
+                    list={pipelineTopics}
                     width="100%"
                     placeholder="select a topic ..."
                     isObject

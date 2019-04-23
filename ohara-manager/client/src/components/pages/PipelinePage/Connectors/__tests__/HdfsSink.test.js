@@ -17,6 +17,7 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 
+import * as generate from 'utils/generate';
 import HdfsSink from '../HdfsSink';
 import { getTestById } from 'utils/testUtils';
 import { CONFIGURATION } from 'constants/urls';
@@ -27,7 +28,7 @@ const props = {
   updateGraph: jest.fn(),
   loadGraph: jest.fn(),
   graph: [],
-  topics: [{ name: 'a', id: '1234' }, { name: 'b', id: '5678' }],
+  pipelineTopics: generate.topics(),
   match: {
     params: {
       connectorId: '12345',
