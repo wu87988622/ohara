@@ -664,10 +664,9 @@ The following information are updated by ohara.
 1. error (**optional(string)**) — the error message from a failed connector. If the connector is fine or un-started, you won't get this field.
 1. [metrics](custom_connector.md#metrics) (**object**) — the metrics from a running connector
   - counters (**array(object)**) — the metrics in counter type
-    - counters[i].value (**long**) — the number stored in counter
+    - counters[i].value (**double**) — the number stored in counter
     - counters[i].unit (**string**) — unit for value
     - counters[i].document (**string**) — document of this counter
-    - counters[i].startTime (**long**) — start time of counter (Normally, it is equal to create time)
     
 The settings from request, BTW, is a individual item in response. Hence, you will observe the following response
 after you store the settings with connector.class.
@@ -832,8 +831,7 @@ This request is idempotent so it is safe to retry this command repeatedly.
       {
         "value": 1234,
         "unit": "rows",
-        "document": "number of processed rows",
-        "startTime": 111111
+        "document": "number of processed rows"
       }
     ]
   }
@@ -887,8 +885,7 @@ This request is idempotent so it is safe to send this request repeatedly.
       {
         "value": 1234,
         "unit": "rows",
-        "document": "number of processed rows",
-        "startTime": 111111
+        "document": "number of processed rows"
       }
     ]
   }
@@ -918,8 +915,7 @@ This request is idempotent so it is safe to retry this command repeatedly.
       {
         "value": 1234,
         "unit": "rows",
-        "document": "number of processed rows",
-        "startTime": 111111
+        "document": "number of processed rows"
       }
     ]
   }
@@ -975,10 +971,9 @@ Following information are written by ohara.
    - objects[i].lastModified (**long**) — the last time to update this object
    - [metrics](custom_connector.md#metrics) (**object**) — the metrics from this object. Not all objects in pipeline have metrics!
      - counters (**array(object)**) — the metrics in counter type
-       - counters[i].value (**long**) — the number stored in counter
+       - counters[i].value (**double**) — the number stored in counter
        - counters[i].unit (**string**) — unit for value
        - counters[i].document (**string**) — document of this counter
-       - counters[i].startTime (**long**) — start time of counter (Normally, it is equal to create time)
 ----------
 ### create a pipeline
 

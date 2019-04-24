@@ -16,18 +16,129 @@
 
 package com.island.ohara.metrics.kafka;
 
-import com.island.ohara.metrics.BeanChannel;
-import com.island.ohara.testing.WithBrokerWorker;
-import java.util.List;
+import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.util.CommonUtils;
+import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Worker instance will create three topics on broker so we can use it to test our APIs. */
-public class TestTopicMeter extends WithBrokerWorker {
+public class TestTopicMeter extends SmallTest {
+
+  @Test(expected = NullPointerException.class)
+  public void nullTopicName() {
+    new TopicMeter(
+        null,
+        TopicMeter.Catalog.BytesInPerSec,
+        CommonUtils.current(),
+        CommonUtils.randomString(),
+        (double) CommonUtils.current(),
+        (double) CommonUtils.current(),
+        (double) CommonUtils.current(),
+        (double) CommonUtils.current(),
+        TimeUnit.DAYS);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void emptyTopicName() {
+    new TopicMeter(
+        "",
+        TopicMeter.Catalog.BytesInPerSec,
+        CommonUtils.current(),
+        CommonUtils.randomString(),
+        (double) CommonUtils.current(),
+        (double) CommonUtils.current(),
+        (double) CommonUtils.current(),
+        (double) CommonUtils.current(),
+        TimeUnit.DAYS);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void nullName() {
+    new TopicMeter(
+        CommonUtils.randomString(),
+        null,
+        CommonUtils.current(),
+        CommonUtils.randomString(),
+        (double) CommonUtils.current(),
+        (double) CommonUtils.current(),
+        (double) CommonUtils.current(),
+        (double) CommonUtils.current(),
+        TimeUnit.DAYS);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void nullEventType() {
+    new TopicMeter(
+        CommonUtils.randomString(),
+        TopicMeter.Catalog.BytesInPerSec,
+        CommonUtils.current(),
+        null,
+        (double) CommonUtils.current(),
+        (double) CommonUtils.current(),
+        (double) CommonUtils.current(),
+        (double) CommonUtils.current(),
+        TimeUnit.DAYS);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void emptyEventType() {
+    new TopicMeter(
+        CommonUtils.randomString(),
+        TopicMeter.Catalog.BytesInPerSec,
+        CommonUtils.current(),
+        "",
+        (double) CommonUtils.current(),
+        (double) CommonUtils.current(),
+        (double) CommonUtils.current(),
+        (double) CommonUtils.current(),
+        TimeUnit.DAYS);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void nullTimeUnit() {
+    new TopicMeter(
+        CommonUtils.randomString(),
+        TopicMeter.Catalog.BytesInPerSec,
+        CommonUtils.current(),
+        CommonUtils.randomString(),
+        (double) CommonUtils.current(),
+        (double) CommonUtils.current(),
+        (double) CommonUtils.current(),
+        (double) CommonUtils.current(),
+        null);
+  }
 
   @Test
-  public void list() {
-    List<TopicMeter> meters = BeanChannel.local().topicMeters();
-    Assert.assertFalse(meters.isEmpty());
+  public void testGetter() {
+    String topicName = CommonUtils.randomString();
+    TopicMeter.Catalog catalog = TopicMeter.Catalog.BytesInPerSec;
+    long count = CommonUtils.current();
+    String eventType = CommonUtils.randomString();
+    double fifteenMinuteRate = (double) CommonUtils.current();
+    double fiveMinuteRate = (double) CommonUtils.current();
+    double meanRate = (double) CommonUtils.current();
+    double oneMinuteRate = (double) CommonUtils.current();
+    TimeUnit rateUnit = TimeUnit.HOURS;
+    TopicMeter meter =
+        new TopicMeter(
+            topicName,
+            catalog,
+            count,
+            eventType,
+            fifteenMinuteRate,
+            fiveMinuteRate,
+            meanRate,
+            oneMinuteRate,
+            rateUnit);
+
+    Assert.assertEquals(topicName, meter.topicName());
+    Assert.assertEquals(catalog, meter.catalog());
+    Assert.assertEquals(count, meter.count());
+    Assert.assertEquals(eventType, meter.eventType());
+    Assert.assertEquals(fifteenMinuteRate, meter.fifteenMinuteRate(), 0);
+    Assert.assertEquals(fiveMinuteRate, meter.fiveMinuteRate(), 0);
+    Assert.assertEquals(meanRate, meter.meanRate(), 0);
+    Assert.assertEquals(oneMinuteRate, meter.oneMinuteRate(), 0);
+    Assert.assertEquals(rateUnit, meter.rateUnit());
   }
 }

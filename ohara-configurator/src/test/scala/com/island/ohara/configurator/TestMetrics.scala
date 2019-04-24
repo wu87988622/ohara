@@ -82,7 +82,7 @@ class TestMetrics extends WithBrokerWorker with Matchers {
   @Test
   def testPipeline(): Unit = {
     val topicName = methodName
-    val topic = Await.result(
+    val topic = result(
       TopicApi
         .access()
         .hostname(configurator.hostname)
@@ -91,8 +91,7 @@ class TestMetrics extends WithBrokerWorker with Matchers {
           TopicCreationRequest(name = Some(topicName),
                                brokerClusterName = None,
                                numberOfPartitions = None,
-                               numberOfReplications = None)),
-      10 seconds
+                               numberOfReplications = None))
     )
     val request = ConnectorCreationRequest(
       workerClusterName = None,
@@ -132,6 +131,74 @@ class TestMetrics extends WithBrokerWorker with Matchers {
     CommonUtils.await(
       () => result(pipelineApi.get(pipeline.id)).objects.filter(_.id == sink.id).head.metrics.counters.isEmpty,
       java.time.Duration.ofSeconds(20))
+  }
+
+  @Test
+  def testTopicMeterInPerfSource(): Unit = {
+    val topicName = CommonUtils.randomString()
+    val topic = result(
+      TopicApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .add(
+          TopicCreationRequest(name = Some(topicName),
+                               brokerClusterName = None,
+                               numberOfPartitions = None,
+                               numberOfReplications = None))
+    )
+    val request = ConnectorCreationRequest(
+      workerClusterName = None,
+      className = Some("com.island.ohara.connector.perf.PerfSource"),
+      columns = Seq.empty,
+      topicNames = Seq(topic.id),
+      numberOfTasks = Some(1),
+      settings = Map(
+        "perf.batch" -> "1",
+        "perf.frequence" -> "1 second"
+      )
+    )
+
+    val source = result(access.add(request))
+
+    val pipelineApi = PipelineApi.access().hostname(configurator.hostname).port(configurator.port)
+
+    val pipeline = result(
+      pipelineApi.add(
+        PipelineApi.PipelineCreationRequest(
+          name = CommonUtils.randomString(),
+          workerClusterName = None,
+          flows = Seq(
+            Flow(
+              from = topic.id,
+              to = Seq(source.id)
+            ))
+        )))
+    pipeline.objects.filter(_.id == source.id).head.metrics.counters.size shouldBe 0
+    result(access.start(source.id))
+
+    // the connector is running so we should "see" the beans.
+    CommonUtils.await(
+      () => result(pipelineApi.get(pipeline.id)).objects.filter(_.id == source.id).head.metrics.counters.nonEmpty,
+      java.time.Duration.ofSeconds(20))
+
+    CommonUtils.await(
+      () => result(pipelineApi.get(pipeline.id)).objects.filter(_.id == topic.id).head.metrics.counters.nonEmpty,
+      java.time.Duration.ofSeconds(20))
+
+    result(access.stop(source.id))
+
+    // the connector is stopped so we should NOT "see" the beans.
+    CommonUtils.await(
+      () => result(pipelineApi.get(pipeline.id)).objects.filter(_.id == source.id).head.metrics.counters.isEmpty,
+      java.time.Duration.ofSeconds(20))
+
+    // remove topic
+    result(
+      TopicApi.access().hostname(configurator.hostname).port(configurator.port).delete(topic.id)
+    )
+    CommonUtils.await(() => !result(pipelineApi.get(pipeline.id)).objects.exists(_.id == topic.id),
+                      java.time.Duration.ofSeconds(30))
   }
 
   @After

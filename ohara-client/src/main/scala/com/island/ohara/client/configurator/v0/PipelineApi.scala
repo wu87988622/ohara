@@ -83,9 +83,9 @@ object PipelineApi {
       )
     }
 
-  final case class CounterInfo(value: Long, unit: String, startTime: Long, document: String)
-  implicit val COUNTER_INFO_JSON_FORMAT: RootJsonFormat[CounterInfo] = jsonFormat4(CounterInfo)
-  final case class Metrics(counters: Seq[CounterInfo])
+  final case class Meter(value: Double, unit: String, document: String)
+  implicit val METER_JSON_FORMAT: RootJsonFormat[Meter] = jsonFormat3(Meter)
+  final case class Metrics(counters: Seq[Meter])
   implicit val METRICS_JSON_FORMAT: RootJsonFormat[Metrics] = jsonFormat1(Metrics)
 
   final case class ObjectAbstract(id: String,

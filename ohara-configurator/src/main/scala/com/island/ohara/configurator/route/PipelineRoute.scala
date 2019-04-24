@@ -17,19 +17,21 @@
 package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
-import com.island.ohara.agent.{Crane, NoSuchClusterException, WorkerCollie}
+import com.island.ohara.agent.{ClusterCollie, Crane, NoSuchClusterException}
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorDescription
-import com.island.ohara.client.configurator.v0.{Data, StreamApi}
 import com.island.ohara.client.configurator.v0.PipelineApi._
 import com.island.ohara.client.configurator.v0.StreamApi.{StreamAppDescription, StreamClusterInfo}
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
+import com.island.ohara.client.configurator.v0.{Data, StreamApi}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.RouteUtils.{Id, TargetCluster}
 import com.island.ohara.configurator.store.DataStore
 import com.island.ohara.kafka.connector.json.SettingDefinitions
 import com.island.ohara.metrics.basic.CounterMBean
+import com.island.ohara.metrics.kafka.TopicMeter
 import com.typesafe.scalalogging.Logger
 
 import scala.collection.JavaConverters._
@@ -43,7 +45,7 @@ private[configurator] object PipelineRoute {
   private[this] val LOG = Logger(ConnectorRoute.getClass)
 
   private[this] def toRes(id: String, request: PipelineCreationRequest, swallow: Boolean = false)(
-    implicit workerCollie: WorkerCollie,
+    implicit clusterCollie: ClusterCollie,
     crane: Crane,
     store: DataStore,
     executionContext: ExecutionContext): Future[Pipeline] =
@@ -56,57 +58,72 @@ private[configurator] object PipelineRoute {
     * @return response
     */
   private[this] def toRes(reqs: Map[String, PipelineCreationRequest], swallow: Boolean)(
-    implicit workerCollie: WorkerCollie,
+    implicit clusterCollie: ClusterCollie,
     crane: Crane,
     store: DataStore,
     executionContext: ExecutionContext): Future[Seq[Pipeline]] =
-    workerCollie.clusters
+    clusterCollie.clusters
       .map { clusters =>
         reqs.map {
           case (id, request) =>
+            val wkClusters =
+              clusters.keys.filter(_.isInstanceOf[WorkerClusterInfo]).map(_.asInstanceOf[WorkerClusterInfo]).toSeq
             // we must find a name for pipeline even if the name is not mapped to active worker cluster
             val wkName = request.workerClusterName.getOrElse {
-              if (clusters.size == 1) clusters.head._1.name
+              if (wkClusters.size == 1) wkClusters.head.name
               else
                 throw new IllegalStateException(
                   s"can't match default worker cluster from ${clusters.map(_._1.name).mkString(",")}")
             }
-            val wkCluster = clusters.keys.find(_.name == wkName)
-            if (!swallow && wkCluster.isEmpty)
+            val wkClusterOption = wkClusters.find(_.name == wkName)
+            if (!swallow && wkClusterOption.isEmpty)
               throw new IllegalArgumentException(s"failed to find matched worker cluster. " +
                 s"${request.workerClusterName.map(n => s"request:$n").getOrElse("")} actual:${clusters.map(_._1.name).mkString(",")}")
-            Pipeline(
-              id = id,
-              name = request.name,
-              flows = request.flows,
-              objects = Seq.empty,
-              workerClusterName = wkName,
-              lastModified = CommonUtils.current()
-            ) -> wkCluster
+
+            (Pipeline(
+               id = id,
+               name = request.name,
+               flows = request.flows,
+               objects = Seq.empty,
+               workerClusterName = wkName,
+               lastModified = CommonUtils.current()
+             ),
+             wkClusterOption.flatMap { wkCluster =>
+               clusters.keys
+                 .filter(_.isInstanceOf[BrokerClusterInfo])
+                 .find(c => wkCluster.brokerClusterName == c.name)
+                 .map(_.asInstanceOf[BrokerClusterInfo])
+                 .map(bkCluster => (bkCluster, wkCluster))
+             })
         }
       }
-      .map(_.toMap)
       .flatMap(entries =>
         // if the backend worker cluster is gone, we don't do any checks for this pipeline
         Future.sequence(entries.map {
-          case (pipeline, clusterOption) =>
-            clusterOption
-              .map(cluster =>
-                verifyFlows(pipeline.id, pipeline.flows, cluster).map { flows =>
-                  pipeline.copy(flows = flows) -> Some(cluster)
-              })
-              .getOrElse(Future.successful(pipeline -> None))
+          case (pipeline, clustersOption) =>
+            clustersOption
+              .map { clusters =>
+                verifyFlows(pipeline.id, pipeline.flows, clusters._2).map { flows =>
+                  (pipeline.copy(flows = flows), Some(clusters))
+                }
+              }
+              .getOrElse(Future.successful((pipeline, None)))
         }))
       .flatMap(entries =>
         // if the backend worker cluster is gone, we don't do any checks for this pipeline
         Future.sequence(entries.map {
-          case (pipeline, clusterOption) =>
-            clusterOption
-              .map(cluster =>
+          case (pipeline, clustersOption) =>
+            clustersOption
+              .map(clusters =>
                 abstracts(
                   pipeline.rules,
-                  workerCollie.workerClient(cluster),
-                  try workerCollie.counters(cluster)
+                  clusterCollie.workerCollie().workerClient(clusters._2),
+                  try clusterCollie.brokerCollie().topicMeters(clusters._1)
+                  catch {
+                    // TODO: We can endure the lack of meters? ... by chia
+                    case _: Throwable => Seq.empty
+                  },
+                  try clusterCollie.workerCollie().counters(clusters._2)
                   catch {
                     // TODO: We can endure the lack of metrics? ... by chia
                     case _: Throwable => Seq.empty
@@ -123,7 +140,10 @@ private[configurator] object PipelineRoute {
     * @param store store
     * @return description of objects
     */
-  private[this] def abstracts(rules: Map[String, Seq[String]], workerClient: WorkerClient, counters: Seq[CounterMBean])(
+  private[this] def abstracts(rules: Map[String, Seq[String]],
+                              workerClient: WorkerClient,
+                              topicMeters: Seq[TopicMeter],
+                              counters: Seq[CounterMBean])(
     implicit store: DataStore,
     crane: Crane,
     executionContext: ExecutionContext): Future[List[ObjectAbstract]] =
@@ -136,7 +156,7 @@ private[configurator] object PipelineRoute {
           .filterNot(_ == UNKNOWN_ID)
           .toSet
           .map(id => store.value[Data](id)))
-      .flatMap(objs => workerClient.connectors.map(_ -> objs))
+      .flatMap(objs => workerClient.connectors.map(connectors => (connectors, objs)))
       .flatMap {
         case (connectors, objs) =>
           Future.traverse(objs) {
@@ -144,11 +164,10 @@ private[configurator] object PipelineRoute {
               // the group of counter is equal to connector's name (this is a part of kafka's core setting)
               // Hence, we filter the connectors having different "name" (we use id instead of name in creating connector)
               val metrics = Metrics(counters.filter(_.group() == data.id).map { counter =>
-                CounterInfo(
-                  value = counter.getValue,
-                  unit = counter.getUnit,
-                  document = counter.getDocument,
-                  startTime = counter.getStartTime
+                Meter(
+                  value = counter.valueInPerSec(),
+                  unit = s"${counter.getUnit} / second",
+                  document = counter.getDocument
                 )
               })
               workerClient
@@ -222,6 +241,25 @@ private[configurator] object PipelineRoute {
                       lastModified = data.lastModified
                     )
                 }
+
+            case data: TopicInfo =>
+              Future.successful(ObjectAbstract(
+                id = data.id,
+                name = data.name,
+                kind = data.kind,
+                className = None,
+                state = None,
+                error = None,
+                // noted we create a topic with id rather than name
+                metrics = Metrics(topicMeters.filter(_.topicName() == data.id).map { meter =>
+                  Meter(
+                    value = meter.count(),
+                    unit = s"${meter.eventType()} / ${meter.rateUnit().name()}",
+                    document = meter.catalog.name()
+                  )
+                }),
+                lastModified = data.lastModified
+              ))
             case data =>
               Future.successful(
                 ObjectAbstract(id = data.id,
@@ -312,17 +350,17 @@ private[configurator] object PipelineRoute {
   }
 
   private[this] def update(pipeline: Pipeline)(implicit store: DataStore,
-                                               workerCollie: WorkerCollie,
+                                               clusterCollie: ClusterCollie,
                                                crane: Crane,
                                                executionContext: ExecutionContext): Future[Pipeline] =
     update(Seq(pipeline)).map(_.head)
 
   /**
-    * update the response.
+    * update the response. This method is used by GET APIs which doesn't like exception :)
     * Noted: it swallows the exception since it is possible that the backed worker cluster is gone.
     */
   private[this] def update(pipelines: Seq[Pipeline])(implicit store: DataStore,
-                                                     workerCollie: WorkerCollie,
+                                                     clusterCollie: ClusterCollie,
                                                      crane: Crane,
                                                      executionContext: ExecutionContext): Future[Seq[Pipeline]] =
     toRes(
@@ -360,7 +398,7 @@ private[configurator] object PipelineRoute {
       }
 
   def apply(implicit store: DataStore,
-            workerCollie: WorkerCollie,
+            clusterCollie: ClusterCollie,
             crane: Crane,
             executionContext: ExecutionContext): server.Route =
     RouteUtils.basicRoute[PipelineCreationRequest, Pipeline](

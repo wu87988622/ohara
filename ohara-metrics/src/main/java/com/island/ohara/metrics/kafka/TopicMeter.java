@@ -16,13 +16,14 @@
 
 package com.island.ohara.metrics.kafka;
 
+import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.metrics.BeanObject;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
+/** this class represents the topic metrics recorded by kafka. */
 public class TopicMeter {
   // -------------------------[property keys]-------------------------//
   private static final String DOMAIN = "kafka.server";
@@ -40,31 +41,32 @@ public class TopicMeter {
   private static final String RATE_UNIT_KEY = "RateUnit";
 
   /** reference to kafka.server.BrokerTopicStats */
-  private static final List<String> NAME_VALUES =
-      Arrays.asList(
-          "MessagesInPerSec",
-          "BytesInPerSec",
-          "BytesOutPerSec",
-          "BytesRejectedPerSec",
-          "FailedProduceRequestsPerSec",
-          "FailedFetchRequestsPerSec",
-          "TotalProduceRequestsPerSec",
-          "TotalFetchRequestsPerSec",
-          "FetchMessageConversionsPerSec",
-          "ProduceMessageConversionsPerSec");
+  public enum Catalog {
+    MessagesInPerSec,
+    BytesInPerSec,
+    BytesOutPerSec,
+    BytesRejectedPerSec,
+    FailedProduceRequestsPerSec,
+    FailedFetchRequestsPerSec,
+    TotalProduceRequestsPerSec,
+    TotalFetchRequestsPerSec,
+    FetchMessageConversionsPerSec,
+    ProduceMessageConversionsPerSec
+  }
 
   public static boolean is(BeanObject obj) {
     return obj.domainName().equals(DOMAIN)
         && TYPE_VALUE.equals(obj.properties().get(TYPE_KEY))
         && obj.properties().containsKey(TOPIC_KEY)
         && obj.properties().containsKey(NAME_KEY)
-        && NAME_VALUES.stream().anyMatch(name -> name.equals(obj.properties().get(NAME_KEY)));
+        && Stream.of(Catalog.values())
+            .anyMatch(catalog -> catalog.name().equals(obj.properties().get(NAME_KEY)));
   }
 
   public static TopicMeter of(BeanObject obj) {
     return new TopicMeter(
         obj.properties().get(TOPIC_KEY),
-        obj.properties().get(NAME_KEY),
+        Catalog.valueOf(obj.properties().get(NAME_KEY)),
         (long) obj.attributes().get(COUNT_KEY),
         (String) obj.attributes().get(EVENT_TYPE_KEY),
         (double) obj.attributes().get(FIFTEEN_MINUTE_RATE_KEY),
@@ -75,7 +77,7 @@ public class TopicMeter {
   }
 
   private final String topicName;
-  private final String name;
+  private final Catalog catalog;
   private final long count;
   private final String eventType;
   private final double fifteenMinuteRate;
@@ -84,9 +86,10 @@ public class TopicMeter {
   private final double oneMinuteRate;
   private final TimeUnit rateUnit;
 
-  private TopicMeter(
+  @VisibleForTesting
+  TopicMeter(
       String topicName,
-      String name,
+      Catalog catalog,
       long count,
       String eventType,
       double fifteenMinuteRate,
@@ -95,7 +98,7 @@ public class TopicMeter {
       double oneMinuteRate,
       TimeUnit rateUnit) {
     this.topicName = CommonUtils.requireNonEmpty(topicName);
-    this.name = CommonUtils.requireNonEmpty(name);
+    this.catalog = Objects.requireNonNull(catalog);
     this.eventType = CommonUtils.requireNonEmpty(eventType);
     this.count = count;
     this.fifteenMinuteRate = fifteenMinuteRate;
@@ -109,8 +112,8 @@ public class TopicMeter {
     return topicName;
   }
 
-  public String name() {
-    return name;
+  public Catalog catalog() {
+    return catalog;
   }
 
   public long count() {

@@ -22,6 +22,8 @@ import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.metrics.BeanChannel
+import com.island.ohara.metrics.kafka.TopicMeter
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
@@ -45,6 +47,15 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
     * @return topic admin
     */
   def topicAdmin(cluster: BrokerClusterInfo): TopicAdmin = TopicAdmin(cluster.connectionProps)
+
+  /**
+    * Get all meter beans from specific broker cluster
+    * @param cluster cluster
+    * @return meter beans
+    */
+  def topicMeters(cluster: BrokerClusterInfo): Seq[TopicMeter] = cluster.nodeNames.flatMap { node =>
+    BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().topicMeters().asScala
+  }
 }
 
 object BrokerCollie {

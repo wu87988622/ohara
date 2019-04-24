@@ -16,6 +16,7 @@
 
 package com.island.ohara.metrics.basic;
 
+import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.metrics.BeanObject;
 
 public interface CounterMBean {
@@ -110,4 +111,13 @@ public interface CounterMBean {
    * @return description of counter
    */
   String getDocument();
+
+  /**
+   * A helper method to calculate the average in per second
+   *
+   * @return value in per sec
+   */
+  default double valueInPerSec() {
+    return (double) (getValue() / 1000) / (double) (CommonUtils.current() - getStartTime());
+  }
 }

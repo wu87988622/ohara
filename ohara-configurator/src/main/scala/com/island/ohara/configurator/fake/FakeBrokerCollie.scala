@@ -21,12 +21,18 @@ import java.util.concurrent.ConcurrentHashMap
 import com.island.ohara.agent.BrokerCollie
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.kafka.TopicAdmin
+import com.island.ohara.metrics.BeanChannel
+import com.island.ohara.metrics.kafka.TopicMeter
 
+import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
-
 private[configurator] class FakeBrokerCollie(bkConnectionProps: String)
     extends FakeCollie[BrokerClusterInfo, BrokerCollie.ClusterCreator]
     with BrokerCollie {
+
+  override def topicMeters(cluster: BrokerClusterInfo): Seq[TopicMeter] =
+    // we don't care for the fake mode since both fake mode and embedded mode are run on local jvm
+    BeanChannel.local().topicMeters().asScala
 
   /**
     * cache all topics info in-memory so we should keep instance for each fake cluster.
