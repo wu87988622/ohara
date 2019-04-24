@@ -15,9 +15,12 @@
  */
 
 package com.island.ohara.agent.ssh
+import java.util.concurrent.ConcurrentHashMap
+
 import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.agent.fake.FakeDockerClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node
+import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.common.util.{Releasable, ReleaseOnce}
 
 import scala.collection.mutable
@@ -30,15 +33,10 @@ trait DockerClientCache extends Releasable {
 object DockerClientCache {
   def apply(): DockerClientCache = new DockerClientCacheImpl()
 
-  // this is only for testing usage
+  @VisibleForTesting
   def fake(): DockerClientCache = new DockerClientCacheImpl() {
-    val cache: mutable.HashMap[Node, DockerClient] =
-      new mutable.HashMap[Node, DockerClient]()
-
-    override def getClient(node: Node): DockerClient = cache.getOrElseUpdate(
-      node,
-      new FakeDockerClient()
-    )
+    private[this] val cache = new ConcurrentHashMap[Node, DockerClient]()
+    override def getClient(node: Node): DockerClient = cache.computeIfAbsent(node, _ => new FakeDockerClient)
   }
 
   private[this] class DockerClientCacheImpl extends ReleaseOnce with DockerClientCache {

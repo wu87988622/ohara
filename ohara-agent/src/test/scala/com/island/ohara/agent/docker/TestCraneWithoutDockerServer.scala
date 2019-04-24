@@ -74,12 +74,13 @@ class TestCraneWithoutDockerServer extends SmallTest with Matchers {
 
     awaitResult(crane.list).size shouldBe 1
 
-    // we wait a period to force the "cluster cache" expired (this period equals to Cache.expiredTime)
-    Thread.sleep(3000)
-    val info = awaitResult(crane.get(WAREHOUSE_NAME))
-
-    info._1.name shouldBe WAREHOUSE_NAME
-    info._2.size shouldBe SIZE
+    CommonUtils.await(
+      () => {
+        val info = awaitResult(crane.get(WAREHOUSE_NAME))
+        info._1.name == WAREHOUSE_NAME && info._2.size == SIZE
+      },
+      java.time.Duration.ofSeconds(20)
+    )
 
     awaitResult(crane.remove(WAREHOUSE_NAME))
 

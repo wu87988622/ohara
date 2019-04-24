@@ -16,7 +16,8 @@
 
 package com.island.ohara.agent.fake
 
-import java.util.Date
+import java.util.{Date, Objects}
+import java.util.concurrent.ConcurrentHashMap
 
 import com.island.ohara.agent.docker.DockerClient.ContainerInspector
 import com.island.ohara.agent.docker.{ContainerCreator, ContainerState, DockerClient, NetworkDriver}
@@ -24,18 +25,23 @@ import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, Port
 import com.island.ohara.common.util.{CommonUtils, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 
-import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
-
+import scala.collection.JavaConverters._
 private[agent] class FakeDockerClient extends ReleaseOnce with DockerClient {
   private val LOG = Logger(classOf[FakeDockerClient])
   private[this] val FAKE_KIND_NAME: String = "FAKE"
-  private[this] val cachedContainers = new mutable.HashMap[String, ContainerInfo]()
+  private[this] val cachedContainers = new ConcurrentHashMap[String, ContainerInfo]()
 
-  override def containerNames(): Seq[String] = cachedContainers.keys.toSeq
+  override def containerNames(): Seq[String] = cachedContainers.keys.asScala.toSeq
 
   private[this] def listContainers(nameFilter: String => Boolean): Future[Seq[ContainerInfo]] =
-    Future.successful(cachedContainers.filter { case (name, _) => nameFilter(name) }.values.toSeq)
+    Future.successful(
+      cachedContainers.asScala
+        .filter {
+          case (name, _) => nameFilter(name)
+        }
+        .values
+        .toSeq)
 
   override def containers(nameFilter: String => Boolean)(
     implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] = listContainers(nameFilter)
@@ -53,7 +59,7 @@ private[agent] class FakeDockerClient extends ReleaseOnce with DockerClient {
                                                        envs: Map[String, String],
                                                        _: Map[String, String],
                                                        _: Map[String, String],
-                                                       _: NetworkDriver) =>
+                                                       _: NetworkDriver) => {
     cachedContainers.put(
       name,
       ContainerInfo(
@@ -75,10 +81,11 @@ private[agent] class FakeDockerClient extends ReleaseOnce with DockerClient {
         environments = envs,
         hostname = hostname
       )
-  )
+    )
+  }
 
   override def stop(name: String): Unit =
-    cachedContainers.update(name, cachedContainers(name).copy(state = ContainerState.EXITED.name))
+    cachedContainers.put(name, cachedContainers.get(name).copy(state = ContainerState.EXITED.name))
 
   override def remove(name: String): Unit = cachedContainers.remove(name)
 
@@ -111,11 +118,11 @@ private[agent] class FakeDockerClient extends ReleaseOnce with DockerClient {
       override def asRoot(): ContainerInspector = containerInspector(containerName, true)
     }
 
-  override def imageNames(): Seq[String] = cachedContainers.values.map(_.imageName).toSeq
+  override def imageNames(): Seq[String] = cachedContainers.values.asScala.map(_.imageName).toSeq
 
   override def toString: String = getClass.getName
 
   override protected def doClose(): Unit = LOG.info("close client")
 
-  override def container(name: String): ContainerInfo = cachedContainers(name)
+  override def container(name: String): ContainerInfo = Objects.requireNonNull(cachedContainers.get(name))
 }
