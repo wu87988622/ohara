@@ -63,7 +63,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
 
   private[this] def createTask() = {
     val task = new FtpSourceTask()
-    task.start(ConnectorFormatter.of().id(methodName()).settings(props.toMap.asJava).raw())
+    task.start(ConnectorFormatter.of().id(methodName()).topicName(methodName()).settings(props.toMap.asJava).raw())
     task
   }
 
