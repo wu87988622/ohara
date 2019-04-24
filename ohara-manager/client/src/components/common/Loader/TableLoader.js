@@ -41,13 +41,13 @@ const Loader = props => {
 };
 
 const TableLoader = () => (
-  <React.Fragment>
+  <div className="table-loader" data-testid="table-loader">
     {Array(10)
       .fill('')
       .map((e, i) => (
         <Loader key={i} style={{ opacity: Number(2 / i).toFixed(1) }} />
       ))}
-  </React.Fragment>
+  </div>
 );
 
 export default TableLoader;

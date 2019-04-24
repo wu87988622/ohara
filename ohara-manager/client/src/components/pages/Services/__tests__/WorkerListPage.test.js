@@ -15,42 +15,65 @@
  */
 
 import React from 'react';
-import { shallow } from 'enzyme';
+import { cleanup } from 'react-testing-library';
+import 'jest-dom/extend-expect';
 
 import WorkerListPage from '../WorkerListPage';
+import { renderWithRouter } from 'utils/testUtils';
 
 const props = {
-  workers: [
-    {
-      name: 'abc',
-      nodeNames: ['c', 'd'],
-      statusTopicName: 'e',
-      configTopicName: 'f',
-      offsetTopicName: 'g',
-    },
-  ],
   newWorkerSuccess: jest.fn(),
   isLoading: false,
 };
 
+afterEach(cleanup);
+
 describe('<WorkerListPage />', () => {
-  let wrapper;
-  beforeEach(() => {
-    wrapper = shallow(<WorkerListPage {...props} />);
+  it('renders the page', () => {
+    const workers = [
+      {
+        name: 'abc',
+        nodeNames: ['c', 'd'],
+        statusTopicName: 'e',
+        configTopicName: 'f',
+        offsetTopicName: 'g',
+      },
+    ];
+    renderWithRouter(<WorkerListPage {...props} workers={workers} />);
   });
 
-  it('renders the page', () => {
-    expect(wrapper.length).toBe(1);
+  it('renders a loader if data is not ready', () => {
+    const { getByTestId } = renderWithRouter(
+      <WorkerListPage {...props} isLoading={true} workers={[]} />,
+    );
+    expect(getByTestId('table-loader')).toBeInTheDocument();
   });
 
   it('disables new cluster button when there are more than one workers in the list', () => {
-    expect(wrapper.find('NewClusterBtn').props().disabled).toBe(true);
+    const workers = [
+      {
+        name: 'abc',
+        nodeNames: ['c', 'd'],
+        statusTopicName: 'e',
+        configTopicName: 'f',
+        offsetTopicName: 'g',
+      },
+    ];
+
+    const { getByText } = renderWithRouter(
+      <WorkerListPage {...props} workers={workers} />,
+    );
+
+    expect(getByText('New cluster')).toHaveClass('is-disabled');
+    expect(getByText('New cluster')).toHaveAttribute('disabled');
   });
 
   it('should enable the new cluster button so users can create workers with it', async () => {
-    const workers = [];
-    wrapper = shallow(<WorkerListPage {...props} workers={workers} />);
+    const { getByText } = renderWithRouter(
+      <WorkerListPage {...props} workers={[]} isLoading={false} />,
+    );
 
-    expect(wrapper.find('NewClusterBtn').props().disabled).toBe(false);
+    expect(getByText('New cluster')).not.toHaveClass('is-disabled');
+    expect(getByText('New cluster')).not.toHaveAttribute('disabled');
   });
 });

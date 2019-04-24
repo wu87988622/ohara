@@ -56,13 +56,15 @@ class WorkerNewModal extends React.Component {
       );
       return;
     }
+
     const res = await workerApi.createWorker({
       ...values,
-      name: this.formatName(values.name),
+      name: this.validateServiceName(values.name),
       plugins: map(values.plugins, 'id'),
     });
 
     const isSuccess = get(res, 'data.isSuccess', false);
+
     if (isSuccess) {
       form.reset();
       toastr.success(MESSAGES.SERVICE_CREATION_SUCCESS);
@@ -119,7 +121,7 @@ class WorkerNewModal extends React.Component {
                   <s.FormRow>
                     <s.FormCol width="26rem">
                       <Label
-                        htmlFor="cluster-input"
+                        htmlFor="service-input"
                         tooltipAlignment="right"
                         tooltipRender={
                           <div>
@@ -131,7 +133,7 @@ class WorkerNewModal extends React.Component {
                         Service
                       </Label>
                       <Field
-                        id="cluster-input"
+                        id="service-input"
                         name="name"
                         component={InputField}
                         width="24rem"
