@@ -103,7 +103,7 @@ task it {
       }
     }
   }
-  dependsOn(':ohara-it:build')
+  dependsOn(':ohara-it:jar')
   dependsOn setup
 }
 
