@@ -100,7 +100,7 @@ class FtpSourceTask extends RowSourceTask {
     */
   private[ftp] def toRow(path: String): Map[Int, Seq[Cell[String]]] = {
     val lineAndIndex =
-      ftpClient.readLines(path, props.encode).filter(_.nonEmpty).zipWithIndex.filter {
+      ftpClient.readLines(path, props.encode.getOrElse("UTF-8")).filter(_.nonEmpty).zipWithIndex.filter {
         // first line is "header" so it is unnecessary to skip it
         case (_, index) => if (index == 0) true else cache.predicate(path, index)
       }
@@ -135,6 +135,7 @@ class FtpSourceTask extends RowSourceTask {
     * 2) replace the name by new one
     * 3) convert the string to specified type
     *
+    * @param input input cells
     * @return map from (order, row)
     */
   import scala.collection.JavaConverters._

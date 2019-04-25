@@ -67,17 +67,17 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
     password = testUtil.ftpServer.password,
     hostname = testUtil.ftpServer.hostname,
     port = testUtil.ftpServer.port,
-    encode = "UTF-8"
+    encode = Some("UTF-8")
   )
 
   private[this] val sinkProps = FtpSinkProps(
-    outputFolder = "/output",
+    output = "/output",
     needHeader = true,
     user = testUtil.ftpServer.user,
     password = testUtil.ftpServer.password,
     hostname = testUtil.ftpServer.hostname,
     port = testUtil.ftpServer.port,
-    encode = "UTF-8"
+    encode = Some("UTF-8")
   )
 
   @Before
@@ -85,7 +85,7 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
     TestFtp2Ftp.rebuild(ftpClient, sourceProps.inputFolder)
     TestFtp2Ftp.rebuild(ftpClient, sourceProps.completedFolder.get)
     TestFtp2Ftp.rebuild(ftpClient, sourceProps.errorFolder)
-    TestFtp2Ftp.rebuild(ftpClient, sinkProps.outputFolder)
+    TestFtp2Ftp.rebuild(ftpClient, sinkProps.output)
     TestFtp2Ftp.setupInput(ftpClient, sourceProps, header, data)
   }
 
@@ -125,11 +125,11 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
         CommonUtils.await(() => ftpClient.listFileNames(sourceProps.inputFolder).isEmpty, Duration.ofSeconds(30))
         CommonUtils
           .await(() => ftpClient.listFileNames(sourceProps.completedFolder.get).size == 1, Duration.ofSeconds(30))
-        CommonUtils.await(() => ftpClient.listFileNames(sinkProps.outputFolder).size == 1, Duration.ofSeconds(30))
+        CommonUtils.await(() => ftpClient.listFileNames(sinkProps.output).size == 1, Duration.ofSeconds(30))
         val lines =
           ftpClient.readLines(
             com.island.ohara.common.util.CommonUtils
-              .path(sinkProps.outputFolder, ftpClient.listFileNames(sinkProps.outputFolder).head))
+              .path(sinkProps.output, ftpClient.listFileNames(sinkProps.output).head))
         lines.length shouldBe rows.length + 1 // header
         lines(0) shouldBe header
         lines(1) shouldBe data.head

@@ -32,13 +32,13 @@ class TestOhara741 extends SmallTest with Matchers {
   @Test
   def testAutoCreateOutput(): Unit = {
     val props = FtpSinkProps(
-      outputFolder = "/output",
+      output = "/output",
       needHeader = false,
       user = ftpServer.user,
       password = ftpServer.password,
       hostname = ftpServer.hostname,
       port = ftpServer.port,
-      encode = "UTF-8"
+      encode = Some("UTF-8")
     )
 
     val sink = new FtpSink

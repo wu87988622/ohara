@@ -37,7 +37,7 @@ class FtpSink extends RowSinkConnector {
 
     val ftpClient =
       FtpClient.builder().hostname(props.hostname).port(props.port).user(props.user).password(props.password).build()
-    try if (!ftpClient.exist(props.outputFolder)) ftpClient.mkdir(props.outputFolder)
+    try if (!ftpClient.exist(props.output)) ftpClient.mkdir(props.output)
     finally ftpClient.close()
   }
 
@@ -52,7 +52,7 @@ class FtpSink extends RowSinkConnector {
       .map(
         index =>
           config.append(FtpSinkTaskProps(
-            outputFolder = CommonUtils.path(props.outputFolder, s"${config.id}_$index"),
+            output = CommonUtils.path(props.output, s"${config.id}_$index"),
             needHeader = props.needHeader,
             encode = props.encode,
             hostname = props.hostname,
@@ -78,7 +78,7 @@ class FtpSink extends RowSinkConnector {
       .displayName("write header")
       .documentation("If true, ftp sink write the header to all output csv file.")
       .valueType(SettingDefinition.Type.BOOLEAN)
-      .key(FTP_NEED_HEADER)
+      .key(FTP_NEEDHEADER)
       .build(),
     SettingDefinition
       .builder()

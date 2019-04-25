@@ -24,30 +24,16 @@ import org.scalatest.Matchers
 class TestFtpSinkTaskProps extends SmallTest with Matchers {
 
   @Test
-  def testGetter(): Unit = {
-    val outputFolder = CommonUtils.randomString()
-    val needHeader = true
-    val encode = CommonUtils.randomString()
-    val hostname = CommonUtils.randomString()
-    val port = 12345
-    val user = CommonUtils.randomString()
-    val password = CommonUtils.randomString()
+  def emptyEncodeShouldDisappear(): Unit = {
     val props = FtpSinkTaskProps(
-      outputFolder = outputFolder,
-      needHeader = needHeader,
-      encode = encode,
-      hostname = hostname,
-      port = port,
-      user = user,
-      password = password
+      output = CommonUtils.randomString(),
+      needHeader = false,
+      encode = None,
+      hostname = CommonUtils.randomString(),
+      port = 22,
+      user = CommonUtils.randomString(),
+      password = CommonUtils.randomString()
     ).toMap
-
-    props(FTP_OUTPUT) shouldBe outputFolder
-    props(FTP_NEED_HEADER).toBoolean shouldBe needHeader
-    props(FTP_ENCODE) shouldBe encode
-    props(FTP_HOSTNAME) shouldBe hostname
-    props(FTP_PORT).toInt shouldBe port
-    props(FTP_USER_NAME) shouldBe user
-    props(FTP_PASSWORD) shouldBe password
+    props.contains(FTP_ENCODE) shouldBe false
   }
 }

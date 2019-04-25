@@ -39,7 +39,7 @@ class TestFtpSinkDefinitions extends SmallTest with Matchers {
 
   @Test
   def checkErrorFolder(): Unit = {
-    val definition = ftpSink.definitions().asScala.find(_.key() == FTP_NEED_HEADER).get
+    val definition = ftpSink.definitions().asScala.find(_.key() == FTP_NEEDHEADER).get
     definition.required() shouldBe true
     definition.defaultValue() shouldBe null
     definition.editable() shouldBe true

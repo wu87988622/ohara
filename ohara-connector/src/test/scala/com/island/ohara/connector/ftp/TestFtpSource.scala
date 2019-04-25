@@ -67,7 +67,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
     password = testUtil.ftpServer.password,
     hostname = testUtil.ftpServer.hostname,
     port = testUtil.ftpServer.port,
-    encode = "UTF-8"
+    encode = Some("UTF-8")
   )
 
   private[this] def setupInput(): Unit = {
@@ -328,7 +328,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   }
 
   @Test
-  def testNormalCaseWithoutEncode(): Unit = {
+  def testNormalCaseWithNullEncode(): Unit = {
     val topicName = methodName
     val connectorName = methodName
     result(
@@ -340,7 +340,42 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .id(connectorName)
         .columns(schema)
         // will use default UTF-8
-        .settings(props.toMap - FTP_ENCODE)
+        .settings(props.copy(encode = None).toMap)
+        .create)
+    try {
+      FtpUtils.checkConnector(testUtil, connectorName)
+      checkFileCount(0, 1, 0)
+
+      val records = pollData(topicName)
+      records.size shouldBe data.length
+      val row0 = records.head.key.get
+      row0.size shouldBe 3
+      row0.cell(0) shouldBe rows.head.cell(0)
+      row0.cell(1) shouldBe rows.head.cell(1)
+      row0.cell(2) shouldBe rows.head.cell(2)
+      val row1 = records(1).key.get
+      row1.size shouldBe 3
+      row1.cell(0) shouldBe rows(1).cell(0)
+      row1.cell(1) shouldBe rows(1).cell(1)
+      row1.cell(2) shouldBe rows(1).cell(2)
+
+    } finally result(workerClient.delete(connectorName))
+  }
+
+  @Test
+  def testNormalCaseWithEmptyEncode(): Unit = {
+    val topicName = methodName
+    val connectorName = methodName
+    result(
+      workerClient
+        .connectorCreator()
+        .topicName(topicName)
+        .connectorClass(classOf[FtpSource])
+        .numberOfTasks(1)
+        .id(connectorName)
+        .columns(schema)
+        // will use default UTF-8
+        .settings(props.copy(encode = Some("")).toMap)
         .create)
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
