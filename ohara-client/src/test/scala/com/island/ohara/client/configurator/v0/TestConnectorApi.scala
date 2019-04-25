@@ -18,7 +18,7 @@ package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorState._
 import com.island.ohara.client.configurator.v0.ConnectorApi.{ConnectorCreationRequest, _}
-import com.island.ohara.client.configurator.v0.PipelineApi.Metrics
+import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.data.{Column, DataType, Serializer}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
@@ -218,7 +218,7 @@ class TestConnectorApi extends SmallTest with Matchers {
                                                                                       | \"className\": \"$className\"
                                                                                       | },
                                                                                       | \"metrics\": {
-                                                                                      |   "counters":[]
+                                                                                      |   "meters":[]
                                                                                       | }
                                                                                       | }
      """.stripMargin.parseJson)

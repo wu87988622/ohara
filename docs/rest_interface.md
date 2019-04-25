@@ -663,10 +663,10 @@ The following information are updated by ohara.
 1. state (**optional(string)**) — the state of a started connector. If the connector is not started, you won't see this field
 1. error (**optional(string)**) — the error message from a failed connector. If the connector is fine or un-started, you won't get this field.
 1. [metrics](custom_connector.md#metrics) (**object**) — the metrics from a running connector
-  - counters (**array(object)**) — the metrics in counter type
-    - counters[i].value (**double**) — the number stored in counter
-    - counters[i].unit (**string**) — unit for value
-    - counters[i].document (**string**) — document of this counter
+  - meters (**array(object)**) — the metrics in meter type
+    - meters[i].value (**double**) — the number stored in meter
+    - meters[i].unit (**string**) — unit for value
+    - meters[i].document (**string**) — document of this meter
     
 The settings from request, BTW, is a individual item in response. Hence, you will observe the following response
 after you store the settings with connector.class.
@@ -708,7 +708,7 @@ a connector with above incomplete settings will introduce a error.
     "connector.class": "com.island.ohara.connector.ftp.FtpSource"
   },
   "metrics": {
-    "counters": []
+    "meters": []
   }
 }
 ```
@@ -737,7 +737,7 @@ a connector with above incomplete settings will introduce a error.
     "connector.class": "com.island.ohara.connector.ftp.FtpSource"
   },
   "metrics": {
-    "counters": []
+    "meters": []
   }
 }
 ```
@@ -758,7 +758,7 @@ a connector with above incomplete settings will introduce a error.
       "connector.class": "com.island.ohara.connector.ftp.FtpSource"
     },
     "metrics": {
-      "counters": []
+      "meters": []
     }
   }
 ]
@@ -781,7 +781,7 @@ Deleting the settings used by a running connector is not allowed. You should [st
     "connector.class": "com.island.ohara.connector.ftp.FtpSource"
   },
   "metrics": {
-    "counters": []
+    "meters": []
   }
 }
 ```
@@ -801,7 +801,7 @@ Deleting the settings used by a running connector is not allowed. You should [st
     "connector.class": "com.island.ohara.connector.ftp.FtpSource"
   },
   "metrics": {
-    "counters": []
+    "meters": []
   }
 }
 ```
@@ -827,7 +827,7 @@ This request is idempotent so it is safe to retry this command repeatedly.
   },
   "state": "RUNNING",
   "metrics": {
-    "counters": [
+    "meters": [
       {
         "value": 1234,
         "unit": "rows",
@@ -857,7 +857,7 @@ This request is idempotent so it is safe to send this request repeatedly.
     "connector.class": "com.island.ohara.connector.ftp.FtpSource"
   },
   "metrics": {
-    "counters": []
+    "meters": []
   }
 }
 ```
@@ -881,7 +881,7 @@ This request is idempotent so it is safe to send this request repeatedly.
   },
   "state": "PAUSED",
   "metrics": {
-    "counters": [
+    "meters": [
       {
         "value": 1234,
         "unit": "rows",
@@ -911,7 +911,7 @@ This request is idempotent so it is safe to retry this command repeatedly.
   },
   "state": "RUNNING",
   "metrics": {
-    "counters": [
+    "meters": [
       {
         "value": 1234,
         "unit": "rows",
@@ -970,10 +970,10 @@ Following information are written by ohara.
    - objects[i].error (**optional(string)**) — the error message of this object
    - objects[i].lastModified (**long**) — the last time to update this object
    - [metrics](custom_connector.md#metrics) (**object**) — the metrics from this object. Not all objects in pipeline have metrics!
-     - counters (**array(object)**) — the metrics in counter type
-       - counters[i].value (**double**) — the number stored in counter
-       - counters[i].unit (**string**) — unit for value
-       - counters[i].document (**string**) — document of this counter
+     - meters (**array(object)**) — the metrics in meter type
+       - meters[i].value (**double**) — the number stored in meter
+       - meters[i].unit (**string**) — unit for value
+       - meters[i].document (**string**) — document of this meter
 ----------
 ### create a pipeline
 
@@ -1019,7 +1019,7 @@ to find the status of the [connector](#connector). That is to say, it is ok to a
       "lastModified": 1554950034608,
       "id": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
       "metrics": {
-        "counters": []
+        "meters": []
       },
       "kind": "topic"
     },
@@ -1029,7 +1029,7 @@ to find the status of the [connector](#connector). That is to say, it is ok to a
       "id": "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd",
       "error": "Failed to get status and type of connector:81cb80a9-34a5-4e45-881a-cb87d4fbb5bd.This may be temporary since our worker cluster is too busy to sync status of connector. abc doesn't exist",
       "metrics": {
-        "counters": []
+        "meters": []
       },
       "kind": "connector"
     }
@@ -1074,7 +1074,7 @@ example creates a pipeline with only a object and leave empty in **to** field.
       "lastModified": 1554950034608,
       "id": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
       "metrics": {
-        "counters": []
+        "meters": []
       },
       "kind": "topic"
     }
@@ -1122,7 +1122,7 @@ example creates a pipeline with only a object and leave empty in **to** field.
       "lastModified": 1554950034608,
       "id": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
       "metrics": {
-        "counters": []
+        "meters": []
       },
       "kind": "topic"
     },
@@ -1132,7 +1132,7 @@ example creates a pipeline with only a object and leave empty in **to** field.
       "id": "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd",
       "error": "Failed to get status and type of connector:81cb80a9-34a5-4e45-881a-cb87d4fbb5bd.This may be temporary since our worker cluster is too busy to sync status of connector. abc doesn't exist",
       "metrics": {
-        "counters": []
+        "meters": []
       },
       "kind": "connector"
     }
@@ -1171,7 +1171,7 @@ use [GET](#get-a-pipeline) to fetch details of **single** pipeline.
         "lastModified": 1554950034608,
         "id": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
         "metrics": {
-          "counters": []
+          "meters": []
         },
         "kind": "topic"
       },
@@ -1181,7 +1181,7 @@ use [GET](#get-a-pipeline) to fetch details of **single** pipeline.
         "id": "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd",
         "error": "Failed to get status and type of connector:81cb80a9-34a5-4e45-881a-cb87d4fbb5bd.This may be temporary since our worker cluster is too busy to sync status of connector. abc doesn't exist",
         "metrics": {
-          "counters": []
+          "meters": []
         },
         "kind": "connector"
       }
@@ -1218,7 +1218,7 @@ Deleting a pipeline does not delete the objects related to the pipeline.
       "lastModified": 1554950034608,
       "id": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
       "metrics": {
-        "counters": []
+        "meters": []
       },
       "kind": "topic"
     },
@@ -1228,7 +1228,7 @@ Deleting a pipeline does not delete the objects related to the pipeline.
       "id": "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd",
       "error": "Failed to get status and type of connector:81cb80a9-34a5-4e45-881a-cb87d4fbb5bd.This may be temporary since our worker cluster is too busy to sync status of connector. abc doesn't exist",
       "metrics": {
-        "counters": []
+        "meters": []
       },
       "kind": "connector"
     }
@@ -1262,7 +1262,7 @@ Deleting a pipeline does not delete the objects related to the pipeline.
       "lastModified": 1554950034608,
       "id": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
       "metrics": {
-        "counters": []
+        "meters": []
       },
       "kind": "topic"
     },
@@ -1272,7 +1272,7 @@ Deleting a pipeline does not delete the objects related to the pipeline.
       "id": "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd",
       "error": "Failed to get status and type of connector:81cb80a9-34a5-4e45-881a-cb87d4fbb5bd.This may be temporary since our worker cluster is too busy to sync status of connector. abc doesn't exist",
       "metrics": {
-        "counters": []
+        "meters": []
       },
       "kind": "connector"
     }

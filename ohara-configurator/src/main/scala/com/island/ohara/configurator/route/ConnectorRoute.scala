@@ -21,7 +21,7 @@ import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent.{NoSuchClusterException, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ConnectorApi._
-import com.island.ohara.client.configurator.v0.PipelineApi.{Meter, Metrics}
+import com.island.ohara.client.configurator.v0.MetricsApi.{Meter, Metrics}
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.CommonUtils

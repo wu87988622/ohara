@@ -179,7 +179,7 @@ object ConnectorApi {
       }
     }
 
-  import PipelineApi._
+  import MetricsApi._
 
   /**
     * this is what we store in configurator

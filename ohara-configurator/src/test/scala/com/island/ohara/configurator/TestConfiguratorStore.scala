@@ -17,7 +17,7 @@
 package com.island.ohara.configurator
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorDescription
 import com.island.ohara.client.configurator.v0.Data
-import com.island.ohara.client.configurator.v0.PipelineApi.Metrics
+import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}

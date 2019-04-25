@@ -17,6 +17,8 @@
 package com.island.ohara.configurator.route
 import akka.http.scaladsl.server
 import com.island.ohara.agent.{BrokerCollie, NoSuchClusterException}
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.MetricsApi.{Meter, Metrics}
 import com.island.ohara.client.configurator.v0.TopicApi._
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.route.RouteUtils._
@@ -28,6 +30,35 @@ private[configurator] object TopicRoute {
   private[this] val DEFAULT_NUMBER_OF_PARTITIONS: Int = 1
   private[this] val DEFAULT_NUMBER_OF_REPLICATIONS: Short = 1
   private[this] val LOG = Logger(TopicRoute.getClass)
+
+  /**
+    * fetch the topic meters from broker cluster
+    * @param brokerCluster the broker cluster hosting the topic
+    * @param topicName topic name which used to filter the correct meter
+    * @param brokerCollie broker collie
+    * @return meters belong to the input topic
+    */
+  private[this] def metrics(brokerCluster: BrokerClusterInfo, topicName: String)(
+    implicit brokerCollie: BrokerCollie): Metrics = Metrics(
+    brokerCollie.topicMeters(brokerCluster).filter(_.topicName() == topicName).map { meter =>
+      Meter(
+        value = meter.count(),
+        unit = s"${meter.eventType()} / ${meter.rateUnit().name()}",
+        document = meter.catalog.name()
+      )
+    })
+
+  /**
+    * update the metrics for input topic
+    * @param brokerCluster the broker cluster hosting the topic
+    * @param topicInfo topic info
+    * @param brokerCollie broker collie
+    * @return updated topic info
+    */
+  private[this] def update(brokerCluster: BrokerClusterInfo, topicInfo: TopicInfo)(
+    implicit brokerCollie: BrokerCollie): TopicInfo = topicInfo.copy(
+    metrics = metrics(brokerCluster, topicInfo.id)
+  )
 
   /**
     * TODO: remove TargetCluster. see https://github.com/oharastream/ohara/issues/206
@@ -55,6 +86,7 @@ private[configurator] object TopicRoute {
                               info.numberOfPartitions,
                               info.numberOfReplications,
                               cluster.name,
+                              metrics = metrics(cluster, id),
                               CommonUtils.current())
                 finally client.close()
               }
@@ -78,12 +110,15 @@ private[configurator] object TopicRoute {
               Future.failed(new IllegalArgumentException("Non-support to change the number from replications"))
             } else if (requestNumberOfPartitions > previous.numberOfPartitions)
               client.changePartitions(id, request.numberOfPartitions.get).map { info =>
-                try TopicInfo(info.name,
-                              request.name.getOrElse(previous.name),
-                              info.numberOfPartitions,
-                              info.numberOfReplications,
-                              cluster.name,
-                              CommonUtils.current())
+                try TopicInfo(
+                  info.name,
+                  request.name.getOrElse(previous.name),
+                  info.numberOfPartitions,
+                  info.numberOfReplications,
+                  cluster.name,
+                  metrics = metrics(cluster, info.name),
+                  CommonUtils.current()
+                )
                 finally client.close()
               } else if (requestNumberOfPartitions < previous.numberOfPartitions) {
               Releasable.close(client)
@@ -118,7 +153,15 @@ private[configurator] object TopicRoute {
                 e)
               response
         },
-      hookOfGet = (response: TopicInfo) => Future.successful(response),
-      hookOfList = (responses: Seq[TopicInfo]) => Future.successful(responses)
+      hookOfGet = (response: TopicInfo) =>
+        brokerCollie.cluster(response.brokerClusterName).map {
+          case (cluster, _) => update(cluster, response)
+      },
+      hookOfList = (responses: Seq[TopicInfo]) =>
+        Future.traverse(responses) { response =>
+          brokerCollie.cluster(response.brokerClusterName).map {
+            case (cluster, _) => update(cluster, response)
+          }
+      }
     )
 }

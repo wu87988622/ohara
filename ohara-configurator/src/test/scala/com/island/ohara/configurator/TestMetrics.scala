@@ -21,6 +21,7 @@ import com.island.ohara.client.configurator.v0.PipelineApi.Flow
 import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, PipelineApi, TopicApi}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
+import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.{After, Test}
 import org.scalatest.Matchers
@@ -28,31 +29,31 @@ import org.scalatest.Matchers
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-
+import scala.collection.JavaConverters._
 class TestMetrics extends WithBrokerWorker with Matchers {
 
   private[this] val configurator =
     Configurator.builder().fake(testUtil.brokersConnProps, testUtil().workersConnProps()).build()
 
-  private[this] val access = ConnectorApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] val connectorApi = ConnectorApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] val topicApi = TopicApi.access().hostname(configurator.hostname).port(configurator.port)
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
+
+  private[this] def assertNoMetricsForTopic(topicId: String): Unit = {
+    CommonUtils.await(() => BeanChannel.local().topicMeters().asScala.count(_.topicName() == topicId) == 0,
+                      java.time.Duration.ofSeconds(60))
+  }
 
   @Test
   def testConnector(): Unit = {
     val topicName = methodName
-    val topic = Await.result(
-      TopicApi
-        .access()
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .add(
-          TopicCreationRequest(name = Some(topicName),
-                               brokerClusterName = None,
-                               numberOfPartitions = None,
-                               numberOfReplications = None)),
-      10 seconds
-    )
+    val topic = result(
+      topicApi.add(
+        TopicCreationRequest(name = Some(topicName),
+                             brokerClusterName = None,
+                             numberOfPartitions = None,
+                             numberOfReplications = None)))
     val request = ConnectorCreationRequest(
       workerClusterName = None,
       className = Some(classOf[DumbSink].getName),
@@ -62,37 +63,40 @@ class TestMetrics extends WithBrokerWorker with Matchers {
       settings = Map.empty
     )
 
-    val sink = result(access.add(request))
+    val sink = result(connectorApi.add(request))
 
-    sink.metrics.counters.size shouldBe 0
+    sink.metrics.meters.size shouldBe 0
 
-    result(access.start(sink.id))
-
-    CommonUtils.await(() => {
-      result(access.get(sink.id)).metrics.counters.nonEmpty
-    }, java.time.Duration.ofSeconds(20))
-
-    result(access.stop(sink.id))
+    result(connectorApi.start(sink.id))
 
     CommonUtils.await(() => {
-      result(access.get(sink.id)).metrics.counters.isEmpty
+      result(connectorApi.get(sink.id)).metrics.meters.nonEmpty
     }, java.time.Duration.ofSeconds(20))
+
+    CommonUtils.await(() => {
+      result(topicApi.get(topic.id)).metrics.meters.nonEmpty
+    }, java.time.Duration.ofSeconds(20))
+
+    result(connectorApi.stop(sink.id))
+
+    CommonUtils.await(() => {
+      result(connectorApi.get(sink.id)).metrics.meters.isEmpty
+    }, java.time.Duration.ofSeconds(20))
+
+    result(topicApi.delete(topic.id))
+
+    assertNoMetricsForTopic(topic.id)
   }
 
   @Test
   def testPipeline(): Unit = {
     val topicName = methodName
     val topic = result(
-      TopicApi
-        .access()
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .add(
-          TopicCreationRequest(name = Some(topicName),
-                               brokerClusterName = None,
-                               numberOfPartitions = None,
-                               numberOfReplications = None))
-    )
+      topicApi.add(
+        TopicCreationRequest(name = Some(topicName),
+                             brokerClusterName = None,
+                             numberOfPartitions = None,
+                             numberOfReplications = None)))
     val request = ConnectorCreationRequest(
       workerClusterName = None,
       className = Some(classOf[DumbSink].getName),
@@ -102,7 +106,7 @@ class TestMetrics extends WithBrokerWorker with Matchers {
       settings = Map.empty
     )
 
-    val sink = result(access.add(request))
+    val sink = result(connectorApi.add(request))
 
     val pipelineApi = PipelineApi.access().hostname(configurator.hostname).port(configurator.port)
 
@@ -117,19 +121,19 @@ class TestMetrics extends WithBrokerWorker with Matchers {
               to = Seq(sink.id)
             ))
         )))
-    pipeline.objects.filter(_.id == sink.id).head.metrics.counters.size shouldBe 0
-    result(access.start(sink.id))
+    pipeline.objects.filter(_.id == sink.id).head.metrics.meters.size shouldBe 0
+    result(connectorApi.start(sink.id))
 
     // the connector is running so we should "see" the beans.
     CommonUtils.await(
-      () => result(pipelineApi.get(pipeline.id)).objects.filter(_.id == sink.id).head.metrics.counters.nonEmpty,
+      () => result(pipelineApi.get(pipeline.id)).objects.filter(_.id == sink.id).head.metrics.meters.nonEmpty,
       java.time.Duration.ofSeconds(20))
 
-    result(access.stop(sink.id))
+    result(connectorApi.stop(sink.id))
 
     // the connector is stopped so we should NOT "see" the beans.
     CommonUtils.await(
-      () => result(pipelineApi.get(pipeline.id)).objects.filter(_.id == sink.id).head.metrics.counters.isEmpty,
+      () => result(pipelineApi.get(pipeline.id)).objects.filter(_.id == sink.id).head.metrics.meters.isEmpty,
       java.time.Duration.ofSeconds(20))
   }
 
@@ -137,16 +141,11 @@ class TestMetrics extends WithBrokerWorker with Matchers {
   def testTopicMeterInPerfSource(): Unit = {
     val topicName = CommonUtils.randomString()
     val topic = result(
-      TopicApi
-        .access()
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .add(
-          TopicCreationRequest(name = Some(topicName),
-                               brokerClusterName = None,
-                               numberOfPartitions = None,
-                               numberOfReplications = None))
-    )
+      topicApi.add(
+        TopicCreationRequest(name = Some(topicName),
+                             brokerClusterName = None,
+                             numberOfPartitions = None,
+                             numberOfReplications = None)))
     val request = ConnectorCreationRequest(
       workerClusterName = None,
       className = Some("com.island.ohara.connector.perf.PerfSource"),
@@ -159,7 +158,7 @@ class TestMetrics extends WithBrokerWorker with Matchers {
       )
     )
 
-    val source = result(access.add(request))
+    val source = result(connectorApi.add(request))
 
     val pipelineApi = PipelineApi.access().hostname(configurator.hostname).port(configurator.port)
 
@@ -174,31 +173,30 @@ class TestMetrics extends WithBrokerWorker with Matchers {
               to = Seq(source.id)
             ))
         )))
-    pipeline.objects.filter(_.id == source.id).head.metrics.counters.size shouldBe 0
-    result(access.start(source.id))
+    pipeline.objects.filter(_.id == source.id).head.metrics.meters.size shouldBe 0
+    result(connectorApi.start(source.id))
 
     // the connector is running so we should "see" the beans.
     CommonUtils.await(
-      () => result(pipelineApi.get(pipeline.id)).objects.filter(_.id == source.id).head.metrics.counters.nonEmpty,
+      () => result(pipelineApi.get(pipeline.id)).objects.filter(_.id == source.id).head.metrics.meters.nonEmpty,
       java.time.Duration.ofSeconds(20))
 
     CommonUtils.await(
-      () => result(pipelineApi.get(pipeline.id)).objects.filter(_.id == topic.id).head.metrics.counters.nonEmpty,
+      () => result(pipelineApi.get(pipeline.id)).objects.filter(_.id == topic.id).head.metrics.meters.nonEmpty,
       java.time.Duration.ofSeconds(20))
 
-    result(access.stop(source.id))
+    result(connectorApi.stop(source.id))
 
     // the connector is stopped so we should NOT "see" the beans.
     CommonUtils.await(
-      () => result(pipelineApi.get(pipeline.id)).objects.filter(_.id == source.id).head.metrics.counters.isEmpty,
+      () => result(pipelineApi.get(pipeline.id)).objects.filter(_.id == source.id).head.metrics.meters.isEmpty,
       java.time.Duration.ofSeconds(20))
 
     // remove topic
-    result(
-      TopicApi.access().hostname(configurator.hostname).port(configurator.port).delete(topic.id)
-    )
+    result(topicApi.delete(topic.id))
     CommonUtils.await(() => !result(pipelineApi.get(pipeline.id)).objects.exists(_.id == topic.id),
                       java.time.Duration.ofSeconds(30))
+    assertNoMetricsForTopic(topic.id)
   }
 
   @After

@@ -15,12 +15,12 @@
  */
 
 package com.island.ohara.configurator.route
-
 import akka.http.scaladsl.server
 import com.island.ohara.agent.{ClusterCollie, Crane, NoSuchClusterException}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorDescription
 import com.island.ohara.client.configurator.v0.PipelineApi._
+import com.island.ohara.client.configurator.v0.MetricsApi._
 import com.island.ohara.client.configurator.v0.StreamApi.{StreamAppDescription, StreamClusterInfo}
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
