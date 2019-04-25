@@ -6,9 +6,43 @@ normal users, you can manipulate ohara through UI interface even if you have no 
 For advanced users trying to build custom streaming, they are encouraged to design and write application based on ohara's
 various and powerful APIs (see [Custom Connector](custom_connector.md) and [Custom StreamApp](custom_streamapp.md)).
 
+Ohara consists of many services, such as
+1. [Configurator](#configurator) — the controller of ohara. It cooperates other services and provides the [Restful APIs](rest_interface.md) 
+1. [Manager](#manager) — the UI service of ohara. It offers a streaming flow called **pipeline** 
+1. [Zookeeper](#zookeeper) — works for Broker. It has charge of managing the configuration of topics and health of node
+1. [Broker](#broker) — It provides the access of topics, topics' data durability and balance.
+1. [Worker](#worker) — It hosts and execute [Connectors](custom_connector.md) 
+1. [Docker](#docker) — It packages the confis, dependencies and binary required by services and execute them in a isolated environments
+1. and [Kubernetes](#kubernetes) — a management tool of docker instances
+
+Ohara has a complicated software stack but most services are almost transparent to you. For example, before creating a
+topic on ohara, you ought to set up a zookeeper cluster and a broker cluster. There are , unfortunately, a bunch of configs which
+you have to design and write for both cluster. Ohara auto-generates most configs for you as best as it can, and ohara offers
+the the readable [Restful APIs](rest_interface.md) and friendly UI to you. All complicated configs are replaced by some
+simple steps showed on UI. The [Quick Start](#quick-start) section teach you to exercise ohara easily and quickly.
+
 ----------
 
-## Hello world
+## Quick Start
+
+The core component of ohara is [Configurator](#configurator). After installing [related tools](#installation), you can
+set up a Configurator via following docker command.
+
+```bash
+docker run --rm -p 12345:12345 oharastream/configurator:0.4-SNAPSHOT --port 12345
+```
+
+> click [here](#execute-configurator) to see more options for configurator
+
+And then you can also create a manager to provide a beautiful UI based on above configurator.
+
+```bash
+docker run --rm -p 5050:5050 oharastream/manager:0.4-SNAPSHOT --port 5050 --configurator http://$ip:12345/0
+```
+
+> Please replace the **ip** by your host's address
+
+Open your browser (we recommend [Google Chrome](https://www.google.com/intl/zh-TW/chrome/)) and link to http://localhost:5050.
 
 ----------
 
@@ -39,7 +73,7 @@ All images are list below.
 
 ----------
 
-### Execute Ohara Configurator
+### Execute Configurator
 
 ```sh
 docker run --rm -p ${port}:${port} --add-host ${nodeHostName}:${nodeHostIP} oharastream/configurator:0.4-SNAPSHOT --port ${port} --hostname ${host} --node ${SshUserName}:${SshPassword}@${NodeHostName}:${SshPort}
@@ -61,7 +95,7 @@ through configruator's RESTful APIs.
 
 ----------
 
-### Execute Ohara Manager
+### Execute Manager
 
 ```sh
 docker run --rm -p 5050:5050 oharastream/manager:0.4-SNAPSHOT --port 5050 --configurator http://localhost:12345/v0
@@ -93,3 +127,29 @@ docker run --rm -p 10000-10011:10000-10011 oharastream/backend:0.4-SNAPSHOT com.
 - dataPorts: bound by data transportation in FTP Server
 
 ----------
+
+## Configurator
+
+----------
+
+## Manager
+
+----------
+
+## Zookeeper
+
+----------
+
+## Broker
+
+----------
+
+## Worker
+
+----------
+
+## Docker
+
+----------
+
+## Kubernetes
