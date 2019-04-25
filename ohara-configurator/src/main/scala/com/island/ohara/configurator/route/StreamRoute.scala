@@ -80,7 +80,6 @@ private[configurator] object StreamRoute {
 
   /**
     * Update the streamApp cluster state.
-    * If there are some exceptions, we will update the state to None and return error message
     *
     * @param id the streamApp id
     * @param store data store
@@ -97,10 +96,11 @@ private[configurator] object StreamRoute {
         .get(formatClusterName(props.id))
         .filter(_._1.isInstanceOf[StreamClusterInfo])
         .map(_._1.asInstanceOf[StreamClusterInfo].state -> None)
+        // if stream cluster was not created, we do nothing
         .recover {
           case ex: Throwable =>
-            log.error(s"failed to fetch stats for $props, maybe cluster not exists?", ex)
-            None -> Some(ex.getMessage)
+            log.warn(s"stream cluster not exists yet: ", ex)
+            None -> None
         }
         .flatMap {
           case (state, error) =>
@@ -338,21 +338,29 @@ private[configurator] object StreamRoute {
                     jarStore
                       .url(data.jarInfo.id)
                       .flatMap {
-                        val streamAppId =
-                          StreamApi.formatAppId(data.id)
                         url =>
-                          crane
-                            .streamWarehouse()
-                            .creator()
-                            .clusterName(formatClusterName(data.id))
-                            .instances(data.instances)
-                            .imageName(STREAMAPP_IMAGE)
-                            .jarUrl(url.toString)
-                            .appId(streamAppId)
-                            .brokerProps(bkProps)
-                            .fromTopics(data.from)
-                            .toTopics(data.to)
-                            .create()
+                          crane.exist(formatClusterName(data.id)).flatMap {
+                            if (_) {
+                              // stream cluster exists, get current cluster
+                              crane
+                                .get(formatClusterName(data.id))
+                                .filter(_._1.isInstanceOf[StreamClusterInfo])
+                                .map(_._1.asInstanceOf[StreamClusterInfo])
+                            } else {
+                              crane
+                                .streamWarehouse()
+                                .creator()
+                                .clusterName(formatClusterName(data.id))
+                                .instances(data.instances)
+                                .imageName(STREAMAPP_IMAGE)
+                                .jarUrl(url.toString)
+                                .appId(StreamApi.formatAppId(data.id))
+                                .brokerProps(bkProps)
+                                .fromTopics(data.from)
+                                .toTopics(data.to)
+                                .create()
+                            }
+                          }
                       }
                       .map(_.state -> None)
                   }
@@ -378,22 +386,32 @@ private[configurator] object StreamRoute {
             put {
               complete(
                 store.value[StreamAppDescription](id).flatMap { data =>
-                  crane
-                  // if remove failed, we log the exception and return "EXITED" state
-                    .remove(formatClusterName(data.id))
-                    .map(_ => None -> None)
-                    .recover {
-                      case ex: Throwable =>
-                        log.error(s"failed to stop streamApp for $id.", ex)
-                        Some(ContainerState.EXITED.name) -> Some(ex.getMessage)
+                  crane.exist(formatClusterName(data.id)).flatMap {
+                    if (_) {
+                      // if remove failed, we log the exception and return "EXITED" state
+                      crane
+                        .remove(formatClusterName(data.id))
+                        .map(_ => None -> None)
+                        .recover {
+                          case ex: Throwable =>
+                            log.error(s"failed to stop streamApp for $id.", ex)
+                            Some(ContainerState.EXITED.name) -> Some(ex.getMessage)
+                        }
+                        .flatMap {
+                          case (state, error) =>
+                            store.update[StreamAppDescription](
+                              id,
+                              data => Future.successful(data.copy(state = state, error = error))
+                            )
+                        }
+                    } else {
+                      // stream cluster not exists, update store only
+                      store.update[StreamAppDescription](
+                        id,
+                        data => Future.successful(data.copy(state = None, error = None))
+                      )
                     }
-                    .flatMap {
-                      case (state, error) =>
-                        store.update[StreamAppDescription](
-                          id,
-                          data => Future.successful(data.copy(state = state, error = error))
-                        )
-                    }
+                  }
                 }
               )
             }

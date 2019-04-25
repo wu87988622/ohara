@@ -149,10 +149,12 @@ class TestStreamRoute extends SmallTest with Matchers {
     running.state.get shouldBe ContainerState.RUNNING.name
     running.error.isEmpty shouldBe true
 
-    // create the same streamApp cluster will fail
-    val failRes = awaitResult(accessStreamAction.start(streamJar.id))
-    failRes.state.get shouldBe ContainerState.EXITED.name
-    failRes.error.isDefined shouldBe true
+    // create the same streamApp cluster will get the previous stream cluster
+    val prevRes = awaitResult(accessStreamAction.start(streamJar.id))
+    prevRes.id shouldBe streamJar.id
+    prevRes.name shouldBe streamAppName
+    prevRes.state.get shouldBe ContainerState.RUNNING.name
+    prevRes.error.isDefined shouldBe false
 
     // running streamApp cannot update state
     an[RuntimeException] should be thrownBy awaitResult(
@@ -165,7 +167,7 @@ class TestStreamRoute extends SmallTest with Matchers {
     // get property will get the latest state (streamApp not exist)
     val latest = awaitResult(accessStreamProperty.get(streamJar.id))
     latest.state shouldBe None
-    latest.error.isDefined shouldBe true
+    latest.error.isDefined shouldBe false
 
     file.deleteOnExit()
   }

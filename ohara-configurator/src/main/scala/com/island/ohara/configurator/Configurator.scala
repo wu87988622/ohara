@@ -233,6 +233,8 @@ object Configurator {
         k8sClient = Option(K8SClient(value))
         configuratorBuilder.clusterCollie(
           ClusterCollie.builderOfK8s().nodeCollie(configuratorBuilder.nodeCollie()).k8sClient(k8sClient.get).build())
+        configuratorBuilder.crane(
+          Crane.builderOfK8s().nodeCollie(configuratorBuilder.nodeCollie()).k8sClient(k8sClient.get).build())
         k8sValue = value
       case Array(NODE_KEY, value) =>
         val user = value.split(":").head
@@ -311,6 +313,8 @@ object Configurator {
       throw new IllegalArgumentException(s"$node doesn't have ${ZookeeperApi.IMAGE_NAME_DEFAULT}")
     if (!images.contains(BrokerApi.IMAGE_NAME_DEFAULT))
       throw new IllegalArgumentException(s"$node doesn't have ${BrokerApi.IMAGE_NAME_DEFAULT}")
+    if (!images.contains(StreamApi.STREAMAPP_IMAGE))
+      throw new IllegalArgumentException(s"$node doesn't have ${StreamApi.STREAMAPP_IMAGE}")
   }
 
   private[this] def nodeRequestEach(nodeRequest: Option[NodeCreationRequest],

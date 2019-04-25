@@ -32,7 +32,7 @@ import scala.concurrent.{ExecutionContext, Future}
 private[agent] class DockerCraneImpl(nodeCollie: NodeCollie, dockerCache: DockerClientCache, executor: ExecutorService)
     extends ReleaseOnce
     with Crane {
-  private[this] val log = Logger("SshClusterCollie")
+  private[this] val log = Logger(classOf[DockerCraneImpl])
   private[this] val clusterCache: Cache[Map[ClusterInfo, Seq[ContainerInfo]]] = Cache
     .builder[Map[ClusterInfo, Seq[ContainerInfo]]]()
     .default(Map.empty)
@@ -131,9 +131,9 @@ private[agent] class DockerCraneImpl(nodeCollie: NodeCollie, dockerCache: Docker
                     s"${Warehouse.DIVIDER}$serviceName${Warehouse.DIVIDER}"
                   )
                 )
-                // form: PREFIX_KEY-CLUSTER_NAME-SERVICE-HASH
+                // form: PREFIX_KEY-SERVICE-CLUSTER_NAME-HASH
                 .map(
-                  container => container.name.split(Warehouse.DIVIDER)(1) -> container
+                  container => container.name.split(Warehouse.DIVIDER)(2) -> container
                 )
                 .groupBy(_._1)
                 .map {

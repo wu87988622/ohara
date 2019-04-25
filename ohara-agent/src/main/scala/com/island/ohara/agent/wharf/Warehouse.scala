@@ -57,7 +57,7 @@ trait Warehouse[T <: ClusterInfo] {
 
   /**
     * format the container name
-    * format : {prefix}-{clusterName}-{serviceName}-{randomId}
+    * format : {prefix}-{serviceName}-{clusterName}-{randomId}
     *
     * @param serviceName service name (ex : stream)
     * @param clusterName cluster name
@@ -66,8 +66,8 @@ trait Warehouse[T <: ClusterInfo] {
   protected def format(serviceName: String, clusterName: String): String = {
     Seq(
       Warehouse.PREFIX_KEY,
-      clusterName,
       serviceName,
+      clusterName,
       CommonUtils.randomString(Warehouse.LENGTH_OF_CONTAINER_NAME_ID)
     ).mkString(Warehouse.DIVIDER)
   }
@@ -78,6 +78,10 @@ object Warehouse {
   final val LENGTH_OF_CONTAINER_NAME_ID: Int = 7
   final val PREFIX_KEY: String = "osw"
   final val DIVIDER: String = "-"
+
+  // k8s default
+  val K8S_DOMAIN_NAME: String = "default"
+  val OHARA_LABEL: String = "ohara"
 
   /**
     * docker does limit the length of name (< 64). So we release only half length (32 chars) to user.

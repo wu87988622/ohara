@@ -20,6 +20,7 @@ import java.util.Objects
 import java.util.concurrent.{ExecutorService, Executors}
 
 import com.island.ohara.agent.docker.DockerCraneImpl
+import com.island.ohara.agent.k8s.{K8SClient, K8sCraneImpl}
 import com.island.ohara.agent.ssh.DockerClientCache
 import com.island.ohara.agent.wharf.StreamWarehouse
 import com.island.ohara.client.configurator.v0.ClusterInfo
@@ -44,14 +45,31 @@ trait Crane extends Releasable {
   def remove(warehouseName: String)(implicit executionContext: ExecutionContext): Future[ClusterInfo]
 
   /**
-    * List all warehouses
+    * list all warehouses
     *
     * @param executionContext execution context
     * @return container cluster list
     */
   def list(implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]]
 
+  /**
+    * get warehouse by name
+    *
+    * @param warehouseName warehouse name
+    * @param executionContext execution context
+    * @return container cluster, or throw exception if not exist
+    */
   def get(warehouseName: String)(implicit executionContext: ExecutionContext): Future[(ClusterInfo, Seq[ContainerInfo])]
+
+  /**
+    * check the warehouse exists or not
+    *
+    * @param warehouseName warehouse name
+    * @param executionContext execution context
+    * @return true if exists
+    */
+  def exist(warehouseName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
+    list.map(_.exists(_._1.name == warehouseName))
 
   def streamWarehouse(): StreamWarehouse
 }
@@ -59,6 +77,8 @@ trait Crane extends Releasable {
 object Crane {
 
   def builderOfDocker(): DockerBuilder = new DockerBuilder
+
+  def builderOfK8s(): K8sBuilder = new K8sBuilder
 
   private[agent] class DockerBuilder {
     private[this] var nodeCollie: NodeCollie = _
@@ -110,6 +130,45 @@ object Crane {
       nodeCollie = Objects.requireNonNull(nodeCollie),
       dockerCache = Objects.requireNonNull(dockerClientCache),
       executor = Objects.requireNonNull(executor)
+    )
+  }
+
+  private[agent] class K8sBuilder {
+    private[this] var nodeCollie: NodeCollie = _
+    private[this] var k8sClient: K8SClient = _
+
+    /**
+      * Set the Crane "control" nodes
+      * This implies all the warehouses that will be added to this crane
+      * should use subset of nodes
+      *
+      * @param nodeCollie nodeCollie
+      * @return this builder
+      */
+    def nodeCollie(nodeCollie: NodeCollie): K8sBuilder = {
+      this.nodeCollie = Objects.requireNonNull(nodeCollie)
+      this
+    }
+
+    /**
+      * Set the k8sClient for Crane
+      *
+      * @param k8sClient k8sClient
+      * @return this builder
+      */
+    def k8sClient(k8sClient: K8SClient): K8sBuilder = {
+      this.k8sClient = Objects.requireNonNull(k8sClient)
+      this
+    }
+
+    /**
+      * build this stream crane
+      *
+      * @return crane object
+      */
+    def build(): Crane = new K8sCraneImpl(
+      nodeCollie = Objects.requireNonNull(nodeCollie),
+      k8sClient = Objects.requireNonNull(k8sClient)
     )
   }
 }

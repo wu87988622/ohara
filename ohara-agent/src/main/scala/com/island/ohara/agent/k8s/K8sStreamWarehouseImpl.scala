@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.island.ohara.agent.docker
+package com.island.ohara.agent.k8s
 
-import com.island.ohara.agent.ssh.{Cache, DockerClientCache}
+import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.agent.wharf.StreamWarehouse
 import com.island.ohara.agent.{NoSuchClusterException, NodeCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
@@ -29,17 +29,20 @@ import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Random
 
-private class StreamWarehouseImpl(nodeCollie: NodeCollie,
-                                  dockerCache: DockerClientCache,
-                                  clusterCache: Cache[Map[ClusterInfo, Seq[ContainerInfo]]])
+private class K8sStreamWarehouseImpl(nodeCollie: NodeCollie,
+                                     k8sClient: K8SClient,
+                                     clusterMap: Future[Map[ClusterInfo, Seq[ContainerInfo]]])
     extends StreamWarehouse {
   private[this] val log = Logger(classOf[StreamWarehouse])
+  private[this] val K8S_DOMAIN_NAME: String = "default"
+  private[this] val K8S_OHARA_LABEL: String = "ohara"
 
+  //TODO: refactor after #885...by sam
   override def creator(): StreamWarehouse.StreamCreator = {
     (clusterName, nodeNames, imageName, jarUrl, instance, appId, brokerProps, fromTopics, toTopics, executionContext) =>
       {
         implicit val exec: ExecutionContext = executionContext
-        clusterCache.get.flatMap { clusters =>
+        clusterMap.flatMap { clusters =>
           if (clusters.keys.filter(_.isInstanceOf[StreamClusterInfo]).exists(_.name == clusterName))
             Future.failed(
               new IllegalArgumentException(
@@ -68,14 +71,16 @@ private class StreamWarehouseImpl(nodeCollie: NodeCollie,
                 Future
                   .sequence(nodes.map {
                     case (node, name) =>
-                      Future {
-                        try {
-                          dockerCache.exec(
-                            node,
-                            _.containerCreator()
+                      k8sClient
+                        .containerCreator()
+                        .flatMap {
+                          creator =>
+                            creator
                               .imageName(imageName)
-                              // we should set the hostname to identify container location
-                              .hostname(node.name)
+                              .nodename(node.name)
+                              .hostname(name)
+                              .labelName(K8S_OHARA_LABEL)
+                              .domainName(K8S_DOMAIN_NAME)
                               .envs(
                                 Map(
                                   StreamApi.JARURL_KEY -> jarUrl,
@@ -85,30 +90,20 @@ private class StreamWarehouseImpl(nodeCollie: NodeCollie,
                                   StreamApi.TO_TOPIC_KEY -> toTopics.mkString(",")
                                 )
                               )
-                              .name(name)
-                              .command(StreamApi.MAIN_ENTRY)
-                              .execute()
-                          )
-                          Some(node.name)
-                        } catch {
+                              .args(Seq(StreamApi.MAIN_ENTRY))
+                              .run()
+                        }
+                        .recover {
                           case e: Throwable =>
-                            try dockerCache.exec(node, _.forceRemove(name))
-                            catch {
-                              case _: Throwable =>
-                              // do nothing
-                            }
                             log.error(s"failed to start $clusterName", e)
                             None
                         }
-                      }
                   })
-                  .map(_.flatten.toSeq)
+                  .map(_.flatten.toSeq.map(_.nodeName))
                   .map { successfulNodeNames =>
-                    if (successfulNodeNames.isEmpty)
-                      throw new IllegalArgumentException(
-                        s"failed to create $clusterName"
-                      )
-                    clusterCache.requestUpdate()
+                    if (successfulNodeNames.isEmpty) {
+                      throw new IllegalArgumentException(s"failed to create $clusterName")
+                    }
                     StreamClusterInfo(
                       name = clusterName,
                       imageName = imageName,
@@ -124,7 +119,7 @@ private class StreamWarehouseImpl(nodeCollie: NodeCollie,
 
   override def containers(clusterName: String)(
     implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] = {
-    clusterCache.get.map {
+    clusterMap.map {
       _.filter(entry => entry._1.isInstanceOf[StreamClusterInfo])
         .find(_._1.name == clusterName)
         .getOrElse(throw new NoSuchClusterException(s"$clusterName doesn't exist"))
