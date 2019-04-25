@@ -16,19 +16,17 @@
 
 package com.island.ohara.connector.ftp
 
-import com.island.ohara.common.util.CommonUtils
-
-case class FtpSinkTaskProps(output: String,
+case class FtpSinkTaskProps(outputFolder: String,
                             needHeader: Boolean,
-                            encode: Option[String],
+                            encode: String,
                             hostname: String,
                             port: Int,
                             user: String,
                             password: String) {
   def toMap: Map[String, String] = Map(
-    FTP_OUTPUT -> output,
-    FTP_NEEDHEADER -> needHeader.toString,
-    FTP_ENCODE -> encode.getOrElse(""),
+    FTP_OUTPUT -> outputFolder,
+    FTP_NEED_HEADER -> needHeader.toString,
+    FTP_ENCODE -> encode,
     FTP_HOSTNAME -> hostname,
     FTP_PORT -> port.toString,
     FTP_USER_NAME -> user,
@@ -38,9 +36,9 @@ case class FtpSinkTaskProps(output: String,
 
 object FtpSinkTaskProps {
   def apply(props: Map[String, String]): FtpSinkTaskProps = FtpSinkTaskProps(
-    output = props(FTP_OUTPUT),
-    needHeader = props(FTP_NEEDHEADER).toBoolean,
-    encode = props.get(FTP_ENCODE).filterNot(CommonUtils.isEmpty),
+    outputFolder = props(FTP_OUTPUT),
+    needHeader = props(FTP_NEED_HEADER).toBoolean,
+    encode = props(FTP_ENCODE),
     hostname = props(FTP_HOSTNAME),
     port = props(FTP_PORT).toInt,
     user = props(FTP_USER_NAME),

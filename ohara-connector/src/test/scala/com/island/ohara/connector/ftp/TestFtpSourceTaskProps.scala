@@ -24,20 +24,39 @@ import org.scalatest.Matchers
 class TestFtpSourceTaskProps extends SmallTest with Matchers {
 
   @Test
-  def emptyEncodeShouldDisappear(): Unit = {
+  def testGetter(): Unit = {
+    val hash = 1
+    val total = 123
+    val inputFolder = CommonUtils.randomString()
+    val completedFolder = CommonUtils.randomString()
+    val errorFolder = CommonUtils.randomString()
+    val encode = CommonUtils.randomString()
+    val hostname = CommonUtils.randomString()
+    val port = 12345
+    val user = CommonUtils.randomString()
+    val password = CommonUtils.randomString()
     val props = FtpSourceTaskProps(
-      hash = 22,
-      total = 33,
-      inputFolder = CommonUtils.randomString(),
-      completedFolder = Some(CommonUtils.randomString()),
-      errorFolder = CommonUtils.randomString(),
-      encode = None,
-      hostname = CommonUtils.randomString(),
-      port = 22,
-      user = CommonUtils.randomString(),
-      password = CommonUtils.randomString()
+      hash = hash,
+      total = total,
+      inputFolder = inputFolder,
+      completedFolder = Some(completedFolder),
+      errorFolder = errorFolder,
+      encode = encode,
+      hostname = hostname,
+      port = port,
+      user = user,
+      password = password
     ).toMap
-    props.contains(FTP_ENCODE) shouldBe false
+    props(FTP_HASH).toInt shouldBe hash
+    props(FTP_TOTAL).toInt shouldBe total
+    props(FTP_INPUT) shouldBe inputFolder
+    props(FTP_COMPLETED_FOLDER) shouldBe completedFolder
+    props(FTP_ERROR) shouldBe errorFolder
+    props(FTP_ENCODE) shouldBe encode
+    props(FTP_HOSTNAME) shouldBe hostname
+    props(FTP_PORT).toInt shouldBe port
+    props(FTP_USER_NAME) shouldBe user
+    props(FTP_PASSWORD) shouldBe password
   }
 
   @Test
@@ -48,7 +67,7 @@ class TestFtpSourceTaskProps extends SmallTest with Matchers {
       inputFolder = CommonUtils.randomString(),
       completedFolder = None,
       errorFolder = CommonUtils.randomString(),
-      encode = None,
+      encode = CommonUtils.randomString(),
       hostname = CommonUtils.randomString(),
       port = 22,
       user = CommonUtils.randomString(),

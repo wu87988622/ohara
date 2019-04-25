@@ -21,33 +21,36 @@ import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
 
-class TestFtpSinkTaskProps extends SmallTest with Matchers {
+class TestFtpSourceProps extends SmallTest with Matchers {
 
   @Test
   def testGetter(): Unit = {
-    val outputFolder = CommonUtils.randomString()
-    val needHeader = true
+    val inputFolder = CommonUtils.randomString()
+    val completedFolder = CommonUtils.randomString()
+    val errorFolder = CommonUtils.randomString()
     val encode = CommonUtils.randomString()
     val hostname = CommonUtils.randomString()
     val port = 12345
     val user = CommonUtils.randomString()
     val password = CommonUtils.randomString()
-    val props = FtpSinkTaskProps(
-      outputFolder = outputFolder,
-      needHeader = needHeader,
+    val props = FtpSourceProps(
+      inputFolder = inputFolder,
+      completedFolder = Some(completedFolder),
+      errorFolder = errorFolder,
       encode = encode,
       hostname = hostname,
       port = port,
       user = user,
       password = password
     ).toMap
-
-    props(FTP_OUTPUT) shouldBe outputFolder
-    props(FTP_NEED_HEADER).toBoolean shouldBe needHeader
+    props(FTP_INPUT) shouldBe inputFolder
+    props(FTP_COMPLETED_FOLDER) shouldBe completedFolder
+    props(FTP_ERROR) shouldBe errorFolder
     props(FTP_ENCODE) shouldBe encode
     props(FTP_HOSTNAME) shouldBe hostname
     props(FTP_PORT).toInt shouldBe port
     props(FTP_USER_NAME) shouldBe user
     props(FTP_PASSWORD) shouldBe password
   }
+
 }

@@ -15,13 +15,12 @@
  */
 
 package com.island.ohara.connector.ftp
-
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
 
-class TestFtpSinkTaskProps extends SmallTest with Matchers {
+class TestFtpSinkProps extends SmallTest with Matchers {
 
   @Test
   def testGetter(): Unit = {
@@ -32,14 +31,14 @@ class TestFtpSinkTaskProps extends SmallTest with Matchers {
     val port = 12345
     val user = CommonUtils.randomString()
     val password = CommonUtils.randomString()
-    val props = FtpSinkTaskProps(
+    val props = FtpSinkProps(
       outputFolder = outputFolder,
       needHeader = needHeader,
-      encode = encode,
+      user = user,
+      password = password,
       hostname = hostname,
       port = port,
-      user = user,
-      password = password
+      encode = encode
     ).toMap
 
     props(FTP_OUTPUT) shouldBe outputFolder
