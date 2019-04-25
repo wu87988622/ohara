@@ -70,11 +70,11 @@ class FtpSinkTask extends RowSinkTask {
       // NOTED: we don't want to write an "empty" line
       .filter(_._2.nonEmpty)
     if (result.nonEmpty) {
-      val needHeader = props.needHeader && !ftpClient.exist(props.output)
+      val needHeader = props.needHeader && !ftpClient.exist(props.outputFolder)
       val writer = new BufferedWriter(
-        new OutputStreamWriter(if (ftpClient.exist(props.output)) ftpClient.append(props.output)
-                               else ftpClient.create(props.output),
-                               props.encode.getOrElse("UTF-8")))
+        new OutputStreamWriter(if (ftpClient.exist(props.outputFolder)) ftpClient.append(props.outputFolder)
+                               else ftpClient.create(props.outputFolder),
+                               props.encode))
       if (needHeader) {
         val header =
           if (schema.nonEmpty) schema.sortBy(_.order).map(_.newName).mkString(",")

@@ -41,7 +41,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
     password = ftpServer.password,
     hostname = ftpServer.hostname,
     port = ftpServer.port,
-    encode = Some("UTF-8")
+    encode = "UTF-8"
   )
 
   @Before
