@@ -27,6 +27,12 @@ import org.junit.Test;
 public class TestBeanChannel extends SmallTest {
 
   @Test
+  public void testLocalFlag() {
+    BeanChannel.Builder builder = BeanChannel.builder().hostname("Asdad");
+    Assert.assertFalse(builder.local);
+  }
+
+  @Test
   public void listLocal() {
     BeanChannel channel = BeanChannel.local();
     Assert.assertTrue(channel.iterator().hasNext());

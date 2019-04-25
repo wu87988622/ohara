@@ -16,6 +16,7 @@
 
 package com.island.ohara.metrics;
 
+import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.metrics.basic.CounterMBean;
 import com.island.ohara.metrics.kafka.TopicMeter;
@@ -123,33 +124,36 @@ public interface BeanChannel extends Iterable<BeanObject> {
     return beanObjects().iterator();
   }
 
-  public static Builder builder() {
+  static Builder builder() {
     return new Builder();
   }
 
-  public static <T> Register<T> register() {
+  static <T> Register<T> register() {
     return new Register<T>();
   }
 
-  static class Builder {
+  class Builder {
     private String domainName;
     private Map<String, String> properties = Collections.emptyMap();
     private String hostname = null;
     private int port = -1;
-    private boolean local = true;
+    @VisibleForTesting boolean local = true;
 
     private Builder() {}
 
     public Builder hostname(String hostname) {
       this.hostname = CommonUtils.requireNonEmpty(hostname);
+      this.local = false;
       return this;
     }
 
     public Builder port(int port) {
       this.port = CommonUtils.requirePositiveInt(port);
+      this.local = false;
       return this;
     }
 
+    @com.island.ohara.common.annotations.Optional("default value is true")
     public Builder local() {
       this.local = true;
       return this;
