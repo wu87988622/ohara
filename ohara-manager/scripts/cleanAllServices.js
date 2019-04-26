@@ -17,7 +17,7 @@
 /* eslint-disable no-process-exit, no-console */
 
 const yargs = require('yargs');
-const axios = require('axios');
+const api = require('../utils/apiHandler');
 const fs = require('fs');
 
 const { configurator, port, nodeHost } = yargs.argv;
@@ -34,42 +34,11 @@ const cleanServices = async () => {
   const file = fs.readFileSync('scripts/env/service.json');
   var bk = JSON.parse(file).bk;
   var zk = JSON.parse(file).zk;
-  await cleanBk(bk);
-  await wait('brokers');
-  await cleanZk(zk);
-  await wait('zookeepers');
-  await cleanNode();
+  await api.cleanBk(configurator, port, bk);
+  await api.waitDelete(configurator, port, 'brokers');
+  await api.cleanZk(configurator, port, zk);
+  await api.waitDelete(configurator, port, 'zookeepers');
+  await api.cleanNode(configurator, port, nodeHost);
 };
 
 cleanServices();
-
-async function cleanNode() {
-  await axios.delete(`http://${configurator}:${port}/v0/nodes/${nodeHost}`);
-}
-
-async function cleanZk(name) {
-  await axios.delete(`http://${configurator}:${port}/v0/zookeepers/${name}`);
-}
-
-async function cleanBk(name) {
-  await axios.delete(`http://${configurator}:${port}/v0/brokers/${name}`);
-}
-
-async function wait(api) {
-  const res = await axios.get(`http://${configurator}:${port}/v0/` + api);
-  if (res.data.length > 0) {
-    sleep(1000);
-    await wait(api);
-  }
-
-  return;
-}
-
-function sleep(milliseconds) {
-  var start = new Date().getTime();
-  for (var i = 0; i < 1e7; i++) {
-    if (new Date().getTime() - start > milliseconds) {
-      break;
-    }
-  }
-}
