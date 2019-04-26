@@ -189,6 +189,7 @@ private class BrokerCollieImpl(nodeCollie: NodeCollie,
     .zookeeperClusterName(previousCluster.zookeeperClusterName)
     .exporterPort(previousCluster.exporterPort)
     .clientPort(previousCluster.clientPort)
+    .jmxPort(previousCluster.jmxPort)
     .imageName(previousCluster.imageName)
     .nodeName(newNodeName)
     .create()

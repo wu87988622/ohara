@@ -508,7 +508,7 @@ private object K8SClusterCollieImpl {
                         creator =>
                           creator
                             .imageName(imageName)
-                            .portMappings(Map(clientPort -> clientPort))
+                            .portMappings(Map(clientPort -> clientPort, jmxPort -> jmxPort))
                             .hostname(hostname)
                             .nodename(node.name)
                             .envs(Map(
