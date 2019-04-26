@@ -26,6 +26,21 @@ import org.junit.Test;
 
 public class TestConnectorFormatter extends SmallTest {
 
+  @Test(expected = NullPointerException.class)
+  public void nullColumn() {
+    ConnectorFormatter.of().column(null);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void nullColumns() {
+    ConnectorFormatter.of().columns(null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void emptyColumns() {
+    ConnectorFormatter.of().columns(Collections.emptyList());
+  }
+
   @Test
   public void stringListShouldInKafkaFormat() {
     List<String> topicNames = Collections.singletonList(CommonUtils.randomString());

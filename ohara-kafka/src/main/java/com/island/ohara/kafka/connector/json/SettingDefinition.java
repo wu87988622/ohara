@@ -25,6 +25,7 @@ import com.island.ohara.common.util.CommonUtils;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.kafka.common.config.ConfigDef;
+import org.apache.kafka.common.config.ConfigException;
 import org.apache.kafka.connect.runtime.rest.entities.ConfigKeyInfo;
 
 /**
@@ -371,6 +372,29 @@ public class SettingDefinition implements JsonObject {
     return new ArrayList<>(tableKeys);
   }
 
+  private static ConfigDef.Validator validator(Type type, boolean isRequired) {
+    switch (type) {
+      case TABLE:
+        return (String name, Object value) -> {
+          if (value == null && !isRequired) return;
+          if (value == null)
+            throw new ConfigException("Must specify at least one string field to cast to string");
+          if (value instanceof String) {
+            try {
+              PropGroups groups = PropGroups.ofJson((String) value);
+              groups.toColumns();
+            } catch (Exception e) {
+              throw new ConfigException(
+                  "the value:" + value + " can't be converted to PropGroups type");
+            }
+            // It is ok to convert the value from string to list<column>, thank God!
+          } else throw new ConfigException("the configured value must be string type");
+        };
+      default:
+        return null;
+    }
+  }
+
   public ConfigDef.ConfigKey toConfigKey() {
     return new ConfigDef.ConfigKey(
         key,
@@ -395,7 +419,7 @@ public class SettingDefinition implements JsonObject {
         // retrieve a wrong
         // report from kafka if we don't follow the rule.
         required() ? ConfigDef.NO_DEFAULT_VALUE : defaultValue(),
-        null,
+        validator(valueType, required()),
         ConfigDef.Importance.MEDIUM,
         documentation,
         group,

@@ -16,10 +16,14 @@
 
 package com.island.ohara.kafka.connector.json;
 
+import com.island.ohara.common.data.Column;
+import com.island.ohara.common.data.DataType;
 import com.island.ohara.common.rule.SmallTest;
 import com.island.ohara.common.util.CommonUtils;
+import java.util.Collections;
 import java.util.List;
 import org.apache.kafka.common.config.ConfigDef;
+import org.apache.kafka.common.config.ConfigException;
 import org.apache.kafka.connect.runtime.rest.entities.ConfigKeyInfo;
 import org.junit.Assert;
 import org.junit.Test;
@@ -289,5 +293,46 @@ public class TestSettingDefinition extends SmallTest {
         d ->
             Assert.assertEquals(
                 d.toJsonString(), SettingDefinition.builder(d).build().toJsonString()));
+  }
+
+  @Test
+  public void testTableValidatorWithRequired() {
+    testTableValidator(false);
+  }
+
+  @Test
+  public void testTableValidatorWithOptional() {
+    testTableValidator(true);
+  }
+
+  private void testTableValidator(boolean optional) {
+    SettingDefinition.Builder builder =
+        SettingDefinition.builder()
+            .key(CommonUtils.randomString())
+            .valueType(SettingDefinition.Type.TABLE);
+    SettingDefinition settingDefinition = optional ? builder.optional().build() : builder.build();
+    ConfigDef.ConfigKey key = settingDefinition.toConfigKey();
+    Assert.assertNotNull(key.validator);
+    if (optional) key.validator.ensureValid(settingDefinition.key(), null);
+    else
+      assertException(
+          ConfigException.class, () -> key.validator.ensureValid(settingDefinition.key(), null));
+    assertException(
+        ConfigException.class, () -> key.validator.ensureValid(settingDefinition.key(), 123));
+    assertException(
+        ConfigException.class,
+        () ->
+            key.validator.ensureValid(
+                settingDefinition.key(), Collections.singletonList(CommonUtils.randomString())));
+
+    key.validator.ensureValid(
+        settingDefinition.key(),
+        PropGroups.ofColumns(
+                Collections.singletonList(
+                    Column.builder()
+                        .name(CommonUtils.randomString())
+                        .dataType(DataType.BOOLEAN)
+                        .build()))
+            .toJsonString());
   }
 }

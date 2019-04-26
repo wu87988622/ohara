@@ -20,10 +20,7 @@ import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.annotations.Optional;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.util.CommonUtils;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Kafka worker accept json and then unmarshal it to Map[String, String]. In most cases we can't
@@ -75,17 +72,19 @@ public final class ConnectorFormatter {
   }
 
   public ConnectorFormatter topicName(String topicName) {
-    return topicNames(Collections.singletonList(topicName));
+    return topicNames(Collections.singletonList(CommonUtils.requireNonEmpty(topicName)));
   }
 
   public ConnectorFormatter topicNames(List<String> topicNames) {
+    topicNames.forEach(CommonUtils::requireNonEmpty);
     return setting(
         SettingDefinition.TOPIC_NAMES_DEFINITION.key(), StringList.toKafkaString(topicNames));
   }
 
   public ConnectorFormatter numberOfTasks(int numberOfTasks) {
     return setting(
-        SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key(), String.valueOf(numberOfTasks));
+        SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key(),
+        String.valueOf(CommonUtils.requirePositiveInt(numberOfTasks)));
   }
 
   @Optional("default is ConverterType.NONE")
@@ -103,19 +102,21 @@ public final class ConnectorFormatter {
   }
 
   public ConnectorFormatter column(Column column) {
-    return columns(Collections.singletonList(column));
+    return columns(Collections.singletonList(Objects.requireNonNull(column)));
   }
 
   public ConnectorFormatter columns(List<Column> columns) {
-    return propGroups(SettingDefinition.COLUMNS_DEFINITION.key(), PropGroups.ofColumns(columns));
+    return propGroups(
+        SettingDefinition.COLUMNS_DEFINITION.key(),
+        PropGroups.ofColumns(CommonUtils.requireNonEmpty(columns)));
   }
 
   public Creation requestOfCreation() {
     return Creation.of(ImmutableMap.copyOf(settings));
   }
 
-  public Map<String, String> requestOfValidation() {
-    return ImmutableMap.copyOf(settings);
+  public Validation requestOfValidation() {
+    return Validation.of(settings);
   }
 
   /**

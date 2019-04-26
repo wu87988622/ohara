@@ -39,11 +39,11 @@ public class TestCreation extends SmallTest {
 
   @Test
   public void testGetter() {
-    String name = CommonUtils.randomString(5);
+    String id = CommonUtils.randomString(5);
     String key = CommonUtils.randomString(5);
     String value = CommonUtils.randomString(5);
-    Creation creation = Creation.of(name, key, value);
-    Assert.assertEquals(name, creation.name());
+    Creation creation = Creation.of(id, key, value);
+    Assert.assertEquals(id, creation.id());
     Assert.assertEquals(value, creation.configs().get(key));
   }
 

@@ -132,7 +132,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
     val settingInfo = result(
       workerClient
         .connectorValidator()
-        .connectorClassName(classOf[MyConnector].getName)
+        .className(classOf[MyConnector].getName)
         .settings(Map(
           SettingDefinition.CONNECTOR_ID_DEFINITION.key() -> name,
           SettingDefinition.TOPIC_NAMES_DEFINITION.key() -> StringList.toJsonString(
@@ -148,7 +148,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
 
   @Test
   def testValidateWithoutValue(): Unit = {
-    val settingInfo = result(workerClient.connectorValidator().connectorClassName(classOf[MyConnector].getName).run())
+    val settingInfo = result(workerClient.connectorValidator().className(classOf[MyConnector].getName).run())
     settingInfo.className.get shouldBe classOf[MyConnector].getName
     settingInfo.settings.size should not be 0
     settingInfo.topicNames.isEmpty shouldBe true
@@ -324,5 +324,26 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
       .find(_.key() == SettingDefinition.CONNECTOR_NAME_DEFINITION.key())
       .head
       .defaultValue() shouldBe null
+  }
+
+  @Test
+  def passIncorrectColumns(): Unit = {
+    val topicName = CommonUtils.randomString(10)
+    val connectorName = CommonUtils.randomString(10)
+    result(workerClient.exist(connectorName)) shouldBe false
+
+    val e = intercept[IllegalArgumentException] {
+      result(
+        workerClient
+          .connectorCreator()
+          .topicName(topicName)
+          .connectorClass(classOf[MyConnector])
+          .id(connectorName)
+          .numberOfTasks(1)
+          .settings(Map(SettingDefinition.COLUMNS_DEFINITION.key() -> "Asdasdasd"))
+          .create)
+    }
+    //see SettingDefinition.validator
+    e.getMessage.contains("can't be converted to PropGroups type") shouldBe true
   }
 }

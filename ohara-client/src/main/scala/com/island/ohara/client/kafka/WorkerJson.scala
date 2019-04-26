@@ -18,7 +18,7 @@ package com.island.ohara.client.kafka
 
 import com.island.ohara.client.HttpExecutor
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorState
-import com.island.ohara.kafka.connector.json.Creation
+import com.island.ohara.kafka.connector.json.{Creation, Validation}
 import spray.json.DefaultJsonProtocol.{jsonFormat2, jsonFormat3, jsonFormat4, _}
 import spray.json.{DeserializationException, JsArray, JsBoolean, JsNull, JsObject, JsString, JsValue, RootJsonFormat}
 
@@ -175,5 +175,11 @@ object WorkerJson {
     import spray.json._
     override def write(obj: Creation): JsValue = obj.toJsonString.parseJson
     override def read(json: JsValue): Creation = Creation.ofJson(json.toString())
+  }
+
+  implicit val VALIDATION_JSON_FORMAT: RootJsonFormat[Validation] = new RootJsonFormat[Validation] {
+    import spray.json._
+    override def write(obj: Validation): JsValue = obj.toJsonString.parseJson
+    override def read(json: JsValue): Validation = Validation.ofJson(json.toString())
   }
 }

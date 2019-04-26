@@ -46,21 +46,14 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
   private[this] val cachedConnectors = new ConcurrentHashMap[String, Map[String, String]]()
   private[this] val cachedConnectorsState = new ConcurrentHashMap[String, ConnectorState]()
 
-  override def connectorCreator(): WorkerClient.Creator = (executionContext,
-                                                           name,
-                                                           className,
-                                                           topicNames,
-                                                           numberOfTasks,
-                                                           columns,
-                                                           converterTypeOfKey,
-                                                           converterTypeOfValue,
-                                                           configs) => {
-    if (cachedConnectors.contains(name))
-      Future.failed(new IllegalStateException(s"the connector:$name exists!"))
+  override def connectorCreator(): WorkerClient.Creator = (_, creation) => {
+    if (cachedConnectors.contains(creation.id()))
+      Future.failed(new IllegalStateException(s"the connector:${creation.id()} exists!"))
     else {
-      cachedConnectors.put(name, configs)
-      cachedConnectorsState.put(name, ConnectorState.RUNNING)
-      Future.successful(ConnectorCreationResponse(name, configs, Seq.empty))
+      import scala.collection.JavaConverters._
+      cachedConnectors.put(creation.id(), creation.configs().asScala.toMap)
+      cachedConnectorsState.put(creation.id(), ConnectorState.RUNNING)
+      Future.successful(ConnectorCreationResponse(creation.id(), creation.configs().asScala.toMap, Seq.empty))
     }
   }
 
@@ -102,13 +95,13 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
 
   override def connectorValidator(): Validator =
     // TODO: this implementation use kafka private APIs ... by chia
-    (executionContext, className, settings) =>
+    (executionContext, validation) =>
       Future {
-        val instance = Class.forName(className).newInstance()
+        val instance = Class.forName(validation.className).newInstance()
         val (connectorType, configDef, values) = instance match {
-          case c: SourceConnector => ("source", c.config(), c.config().validate(settings.asJava))
-          case c: SinkConnector   => ("sink", c.config(), c.config().validate(settings.asJava))
-          case _                  => throw new IllegalArgumentException(s"who are you $className ???")
+          case c: SourceConnector => ("source", c.config(), c.config().validate(validation.settings))
+          case c: SinkConnector   => ("sink", c.config(), c.config().validate(validation.settings))
+          case _                  => throw new IllegalArgumentException(s"who are you ${validation.className} ???")
         }
         SettingInfo.of(
           AbstractHerder.generateResult(connectorType, configDef.configKeys(), values, Collections.emptyList()))

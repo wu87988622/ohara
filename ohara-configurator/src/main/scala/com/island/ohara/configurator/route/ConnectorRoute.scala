@@ -170,12 +170,9 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
                       else
                         wkClient
                           .connectorCreator()
-                          .id(connectorDesc.id)
-                          .className(connectorDesc.className)
-                          .columns(connectorDesc.columns)
                           .settings(connectorDesc.plain)
-                          .topicNames(connectorDesc.topicNames)
-                          .numberOfTasks(connectorDesc.numberOfTasks)
+                          // always override the id
+                          .id(connectorDesc.id)
                           .create
                           .flatMap(_ => Future.successful(connectorDesc.copy(state = Some(ConnectorState.RUNNING))))
                     }

@@ -16,9 +16,12 @@
 
 package com.island.ohara.client.kafka
 
+import java.util.Collections
+
 import com.island.ohara.client.kafka.WorkerJson._
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.kafka.connector.json.{Creation, Validation}
 import org.junit.Test
 import org.scalatest.Matchers
 import spray.json._
@@ -177,5 +180,17 @@ class TestWorkerJson extends SmallTest with Matchers {
     validatedValue.name shouldBe name
     validatedValue.value shouldBe None
     validatedValue.errors shouldBe Seq(error, error)
+  }
+
+  @Test
+  def testCreation(): Unit = {
+    val creation = Creation.of(CommonUtils.randomString(), CommonUtils.randomString(), CommonUtils.randomString())
+    creation shouldBe CREATION_JSON_FORMAT.read(CREATION_JSON_FORMAT.write(creation))
+  }
+
+  @Test
+  def testValidation(): Unit = {
+    val validation = Validation.of(Collections.singletonMap(CommonUtils.randomString(), CommonUtils.randomString()))
+    validation shouldBe VALIDATION_JSON_FORMAT.read(VALIDATION_JSON_FORMAT.write(validation))
   }
 }
