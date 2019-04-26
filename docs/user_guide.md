@@ -37,7 +37,7 @@ docker run --rm -p 12345:12345 oharastream/configurator:0.4-SNAPSHOT --port 1234
 And then you can also create a manager to provide a beautiful UI based on above configurator.
 
 ```bash
-docker run --rm -p 5050:5050 oharastream/manager:0.4-SNAPSHOT --port 5050 --configurator http://$ip:12345/0
+docker run --rm -p 5050:5050 oharastream/manager:0.4-SNAPSHOT --port 5050 --configurator http://$ip:12345/v0
 ```
 
 > Please replace the **ip** by your host's address
