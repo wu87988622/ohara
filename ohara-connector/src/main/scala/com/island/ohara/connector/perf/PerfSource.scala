@@ -54,9 +54,9 @@ class PerfSource extends RowSourceConnector {
       .builder()
       .displayName("Frequence")
       .documentation("The frequence of perf")
-      .valueType(SettingDefinition.Type.STRING)
+      .valueType(SettingDefinition.Type.DURATION)
       .key(PERF_FREQUENCE)
-      .optional(DEFAULT_FREQUENCE.toString)
+      .optional(toJavaDuration(DEFAULT_FREQUENCE).toString)
       .build(),
   ).asJava
 

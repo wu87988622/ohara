@@ -20,13 +20,16 @@ import scala.concurrent.duration.Duration
 case class PerfSourceProps(batch: Int, freq: Duration) {
   def toMap: Map[String, String] = Map(
     PERF_BATCH -> batch.toString,
-    PERF_FREQUENCE -> freq.toString
+    PERF_FREQUENCE -> toJavaDuration(freq).toString
   )
 }
 
 object PerfSourceProps {
   def apply(props: Map[String, String]): PerfSourceProps = PerfSourceProps(
     batch = props.getOrElse(PERF_BATCH, DEFAULT_BATCH.toString).toInt,
-    freq = Duration(props.getOrElse(PERF_FREQUENCE, DEFAULT_FREQUENCE.toString)),
+    freq = props.get(PERF_FREQUENCE) match {
+      case Some(freq) => toScalaDuration(java.time.Duration.parse(freq))
+      case None       => DEFAULT_FREQUENCE
+    }
   )
 }

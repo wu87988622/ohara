@@ -36,4 +36,8 @@ package object perf {
     Column.builder().name("b").dataType(DataType.STRING).order(1).build(),
     Column.builder().name("c").dataType(DataType.STRING).order(2).build()
   )
+
+  def toJavaDuration(d: Duration): java.time.Duration = java.time.Duration.ofMillis(d.toMillis)
+  def toScalaDuration(d: java.time.Duration): Duration =
+    Duration(d.toMillis, java.util.concurrent.TimeUnit.MILLISECONDS)
 }

@@ -15,6 +15,8 @@
  */
 
 package com.island.ohara.connector.perf
+import java.time.format.DateTimeParseException
+
 import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.kafka.connector.json.ConnectorFormatter
@@ -81,7 +83,7 @@ class TestPerfSourceProps extends SmallTest with Matchers {
 
   @Test
   def testInvalidFrequence(): Unit = {
-    an[NumberFormatException] should be thrownBy PerfSourceProps(Map(PERF_FREQUENCE -> "abc"))
+    an[DateTimeParseException] should be thrownBy PerfSourceProps(Map(PERF_FREQUENCE -> "abc"))
   }
 
   @Test

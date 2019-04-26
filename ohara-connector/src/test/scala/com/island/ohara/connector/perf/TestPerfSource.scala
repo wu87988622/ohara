@@ -125,7 +125,7 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
         .numberOfTasks(1)
         .id(connectorName)
         .columns(schema)
-        .settings(Map(PERF_FREQUENCE -> "5 seconds"))
+        .settings(Map(PERF_FREQUENCE -> "PT5S"))
         .create)
 
     try {
@@ -216,7 +216,7 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
   def testInvalidInput(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    result(
+    an[IllegalArgumentException] should be thrownBy result(
       workerClient
         .connectorCreator()
         .topicName(topicName)
@@ -226,7 +226,6 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
         .columns(schema)
         .settings(Map(PERF_FREQUENCE -> "abcd"))
         .create)
-    PerfUtils.assertFailedConnector(testUtil, connectorName)
   }
 
   @Test

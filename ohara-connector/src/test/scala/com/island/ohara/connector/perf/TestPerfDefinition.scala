@@ -47,11 +47,11 @@ class TestPerfDefinition extends WithBrokerWorker with Matchers {
   def checkFrequence(): Unit = {
     val definition = perfSource.definitions().asScala.find(_.key() == PERF_FREQUENCE).get
     definition.required shouldBe false
-    definition.defaultValue shouldBe "1 second"
+    definition.defaultValue shouldBe "PT1S"
     definition.editable() shouldBe true
     definition.internal() shouldBe false
     definition.reference() shouldBe "NONE"
-    definition.valueType() shouldBe SettingDefinition.Type.STRING.name()
+    definition.valueType() shouldBe SettingDefinition.Type.DURATION.name()
   }
 
   @Test
