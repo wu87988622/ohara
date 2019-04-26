@@ -22,7 +22,12 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.island.ohara.common.annotations.Nullable;
 import com.island.ohara.common.annotations.Optional;
 import com.island.ohara.common.util.CommonUtils;
-import java.util.*;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigException;
@@ -218,7 +223,13 @@ public class SettingDefinition implements JsonObject {
     LIST,
     CLASS,
     PASSWORD,
-    TABLE
+    TABLE,
+    /**
+     * The formats accepted are based on the ISO-8601 duration format PnDTnHnMn.nS with days
+     * considered to be exactly 24 hours. Please reference to
+     * https://docs.oracle.com/javase/8/docs/api/java/time/Duration.html#parse-java.lang.CharSequence-
+     */
+    DURATION
   }
 
   // -------------------------------[key]-------------------------------//
@@ -244,6 +255,7 @@ public class SettingDefinition implements JsonObject {
       case BOOLEAN:
         return ConfigDef.Type.BOOLEAN;
       case STRING:
+      case DURATION:
       case TABLE:
         return ConfigDef.Type.STRING;
       case SHORT:
@@ -386,6 +398,21 @@ public class SettingDefinition implements JsonObject {
             } catch (Exception e) {
               throw new ConfigException(
                   "the value:" + value + " can't be converted to PropGroups type");
+            }
+            // It is ok to convert the value from string to list<column>, thank God!
+          } else throw new ConfigException("the configured value must be string type");
+        };
+      case DURATION:
+        return (String name, Object value) -> {
+          if (value == null && !isRequired) return;
+          if (value == null)
+            throw new ConfigException("Must specify at least one string field to cast to string");
+          if (value instanceof String) {
+            try {
+              Duration.parse((String) value);
+            } catch (Exception e) {
+              throw new ConfigException(
+                  "the value:" + value + " can't be converted to Duration type");
             }
             // It is ok to convert the value from string to list<column>, thank God!
           } else throw new ConfigException("the configured value must be string type");

@@ -1889,16 +1889,17 @@ to take some time to load available connectors. If you don't see the setting def
 
 The type of value includes two processes to input value when you are trying to run a connector. For example, starting
 a connector will fail when you input a string to a setting having **int** type. The acceptable types are shown below.
-1. boolean — the value must be castable to **java.lang.Boolean**
-1. string — the value must be castable to **java.lang.String**
-1. short — the value must be castable to **java.lang.Short**
-1. int — the value must be castable to **java.lang.Integer**
-1. long — the value must be castable to **java.lang.Long**
-1. double — the value must be castable to **java.lang.Double**
-1. class — the value must be castable to **java.lang.String** and it must be equal to a class in worker's jvm
-1. password — the value must be castable to **java.lang.String**. the value is replaced by **hidden** in APIs
-1. list — the value must be castable to **java.lang.String** and it is split according to JSON array
-1. table — the value must be castable to **java.lang.String** and it has the following JSON representation.
+1. Boolean — the value must be castable to **java.lang.Boolean**
+1. String — the value must be castable to **java.lang.String**
+1. Short — the value must be castable to **java.lang.Short**
+1. Int — the value must be castable to **java.lang.Integer**
+1. Long — the value must be castable to **java.lang.Long**
+1. Double — the value must be castable to **java.lang.Double**
+1. Class — the value must be castable to **java.lang.String** and it must be equal to a class in worker's jvm
+1. Password — the value must be castable to **java.lang.String**. the value is replaced by **hidden** in APIs
+1. List — the value must be castable to **java.lang.String** and it is split according to JSON array
+1. Table — the value must be castable to **java.lang.String** and it has the following JSON representation.
+1. Duration — the value must be castable to **java.time.Duration** and it is based on the ISO-8601 duration format PnDTnHnMn.nS
 ```json
 [
   {

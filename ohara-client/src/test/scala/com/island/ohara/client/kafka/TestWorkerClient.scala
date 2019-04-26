@@ -328,22 +328,60 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
 
   @Test
   def passIncorrectColumns(): Unit = {
-    val topicName = CommonUtils.randomString(10)
-    val connectorName = CommonUtils.randomString(10)
-    result(workerClient.exist(connectorName)) shouldBe false
-
     val e = intercept[IllegalArgumentException] {
       result(
         workerClient
           .connectorCreator()
-          .topicName(topicName)
+          .topicName(CommonUtils.randomString(10))
           .connectorClass(classOf[MyConnector])
-          .id(connectorName)
+          .id(CommonUtils.randomString(10))
           .numberOfTasks(1)
           .settings(Map(SettingDefinition.COLUMNS_DEFINITION.key() -> "Asdasdasd"))
           .create)
     }
     //see SettingDefinition.validator
     e.getMessage.contains("can't be converted to PropGroups type") shouldBe true
+  }
+
+  @Test
+  def passIncorrectDuration(): Unit = {
+    val e = intercept[IllegalArgumentException] {
+      result(
+        workerClient
+          .connectorCreator()
+          .topicName(CommonUtils.randomString(10))
+          .connectorClass(classOf[MyConnector])
+          .id(CommonUtils.randomString(10))
+          .numberOfTasks(1)
+          .settings(Map(MyConnector.DURATION_KEY -> "Asdasdasd"))
+          .create)
+    }
+    //see SettingDefinition.validator
+    e.getMessage.contains("can't be converted to Duration type") shouldBe true
+  }
+
+  @Test
+  def pass1Second(): Unit = {
+    result(
+      workerClient
+        .connectorCreator()
+        .topicName(CommonUtils.randomString(10))
+        .connectorClass(classOf[MyConnector])
+        .id(CommonUtils.randomString(10))
+        .numberOfTasks(1)
+        .settings(Map(MyConnector.DURATION_KEY -> "PT1S"))
+        .create)
+  }
+  @Test
+  def pass1Minute1Second(): Unit = {
+    result(
+      workerClient
+        .connectorCreator()
+        .topicName(CommonUtils.randomString(10))
+        .connectorClass(classOf[MyConnector])
+        .id(CommonUtils.randomString(10))
+        .numberOfTasks(1)
+        .settings(Map(MyConnector.DURATION_KEY -> "PT1M1S"))
+        .create)
   }
 }
