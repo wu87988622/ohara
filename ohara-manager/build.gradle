@@ -99,7 +99,9 @@ task it {
         String nodePass = project.getProperty('ohara.manager.it.nodePass')
 
         commandLine 'yarn', 'copy:jars'
+        commandLine 'yarn', 'test:setup' , '--port', port, '--configurator', configurator, '--nodeHost', nodeHost, '--nodePort', nodePort, '--nodeUser', nodeUser, '--nodePass', nodePass
         commandLine 'yarn', 'test:e2e:ci', '--port', port, '--configurator', configurator, '--nodeHost', nodeHost, '--nodePort', nodePort, '--nodeUser', nodeUser, '--nodePass', nodePass
+        commandLine 'yarn', 'test:clean' , '--port', port, '--configurator', configurator, '--nodeHost', nodeHost
       }
     }
   }

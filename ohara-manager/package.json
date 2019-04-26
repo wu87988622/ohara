@@ -29,6 +29,8 @@
     "test:e2e": "node ./scripts/startAndTest.js",
     "test:e2e:open": "yarn --cwd client e2e",
     "test:e2e:ci": "node ./scripts/startAndTest.js --prod",
+    "test:setup": "node ./scripts/createServices.js",
+    "test:clean": "node ./scripts/cleanAllServices.js",
     "clean": "run-s clean:*",
     "clean:processes": "node ./scripts/cleanAllProcesses.js",
     "clean:server": "rm -rf ./test-reports",
