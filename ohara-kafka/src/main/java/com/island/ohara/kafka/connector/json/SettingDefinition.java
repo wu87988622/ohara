@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.island.ohara.common.annotations.Nullable;
 import com.island.ohara.common.annotations.Optional;
+import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.util.CommonUtils;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -229,7 +230,14 @@ public class SettingDefinition implements JsonObject {
      * considered to be exactly 24 hours. Please reference to
      * https://docs.oracle.com/javase/8/docs/api/java/time/Duration.html#parse-java.lang.CharSequence-
      */
-    DURATION
+    DURATION;
+  }
+
+  /** this class is used to pre-check the setting before running connector. */
+  @FunctionalInterface
+  interface Checker {
+    /** @param value value of input */
+    void check(Object value);
   }
 
   // -------------------------------[key]-------------------------------//
@@ -293,6 +301,7 @@ public class SettingDefinition implements JsonObject {
   private final Reference reference;
   private final boolean internal;
   private final List<String> tableKeys;
+  @Nullable private Checker checker = null;
 
   @JsonCreator
   private SettingDefinition(
@@ -308,6 +317,36 @@ public class SettingDefinition implements JsonObject {
       @Nullable @JsonProperty(REFERENCE_KEY) String reference,
       @JsonProperty(INTERNAL_KEY) boolean internal,
       @JsonProperty(TABLE_KEYS_KEY) List<String> tableKeys) {
+    this(
+        displayName,
+        group,
+        orderInGroup,
+        editable,
+        key,
+        valueType,
+        required,
+        defaultValue,
+        documentation,
+        reference,
+        internal,
+        tableKeys,
+        null);
+  }
+
+  private SettingDefinition(
+      String displayName,
+      String group,
+      int orderInGroup,
+      boolean editable,
+      String key,
+      String valueType,
+      boolean required,
+      @Nullable String defaultValue,
+      String documentation,
+      @Nullable String reference,
+      boolean internal,
+      List<String> tableKeys,
+      @Nullable Checker checker) {
     this.displayName = CommonUtils.requireNonEmpty(displayName);
     this.group = group;
     this.orderInGroup = orderInGroup;
@@ -320,6 +359,54 @@ public class SettingDefinition implements JsonObject {
     this.reference = Reference.valueOf(CommonUtils.requireNonEmpty(reference));
     this.internal = internal;
     this.tableKeys = Objects.requireNonNull(tableKeys);
+    this.checker = checker;
+  }
+
+  @VisibleForTesting
+  Checker checker() {
+    if (checker != null) return checker;
+    switch (valueType) {
+      case TABLE:
+        return (Object value) -> {
+          if (value instanceof String) {
+            try {
+              PropGroups propGroups = PropGroups.ofJson((String) value);
+              if (tableKeys.isEmpty()) return;
+              propGroups
+                  .raw()
+                  .forEach(
+                      row ->
+                          tableKeys.forEach(
+                              tableKey -> {
+                                if (!row.keySet().contains(tableKey))
+                                  throw new IllegalArgumentException(
+                                      "table key:"
+                                          + tableKey
+                                          + " does not exist in row:"
+                                          + String.join(",", row.keySet()));
+                              }));
+
+            } catch (Exception e) {
+              throw new IllegalArgumentException(
+                  "the value:" + value + " can't be converted to PropGroups type", e);
+            }
+            // It is ok to convert the value from string to list<column>, thank God!
+          } else throw new IllegalArgumentException("the configured value must be string type");
+        };
+      case DURATION:
+        return (Object value) -> {
+          if (value instanceof String) {
+            try {
+              Duration.parse((String) value);
+            } catch (Exception e) {
+              throw new IllegalArgumentException(e);
+            }
+            // It is ok to convert the value from string to list<column>, thank God!
+          } else throw new ConfigException("the configured value must be string type");
+        };
+      default:
+        return (Object value) -> {};
+    }
   }
 
   @JsonProperty(INTERNAL_KEY)
@@ -384,44 +471,6 @@ public class SettingDefinition implements JsonObject {
     return new ArrayList<>(tableKeys);
   }
 
-  private static ConfigDef.Validator validator(Type type, boolean isRequired) {
-    switch (type) {
-      case TABLE:
-        return (String name, Object value) -> {
-          if (value == null && !isRequired) return;
-          if (value == null)
-            throw new ConfigException("Must specify at least one string field to cast to string");
-          if (value instanceof String) {
-            try {
-              PropGroups groups = PropGroups.ofJson((String) value);
-              groups.toColumns();
-            } catch (Exception e) {
-              throw new ConfigException(
-                  "the value:" + value + " can't be converted to PropGroups type");
-            }
-            // It is ok to convert the value from string to list<column>, thank God!
-          } else throw new ConfigException("the configured value must be string type");
-        };
-      case DURATION:
-        return (String name, Object value) -> {
-          if (value == null && !isRequired) return;
-          if (value == null)
-            throw new ConfigException("Must specify at least one string field to cast to string");
-          if (value instanceof String) {
-            try {
-              Duration.parse((String) value);
-            } catch (Exception e) {
-              throw new ConfigException(
-                  "the value:" + value + " can't be converted to Duration type");
-            }
-            // It is ok to convert the value from string to list<column>, thank God!
-          } else throw new ConfigException("the configured value must be string type");
-        };
-      default:
-        return null;
-    }
-  }
-
   public ConfigDef.ConfigKey toConfigKey() {
     return new ConfigDef.ConfigKey(
         key,
@@ -446,7 +495,18 @@ public class SettingDefinition implements JsonObject {
         // retrieve a wrong
         // report from kafka if we don't follow the rule.
         required() ? ConfigDef.NO_DEFAULT_VALUE : defaultValue(),
-        validator(valueType, required()),
+        (String key, Object value) -> {
+          if (required() && value == null) throw new ConfigException(key + " is required!");
+          if (value == null) return;
+          try {
+            checker().check(value);
+          } catch (ConfigException e) {
+            throw e;
+          } catch (Throwable e) {
+            // Except for ConfigException, other exceptions are not allowed by kafka.
+            throw new ConfigException(key, value, e.getMessage());
+          }
+        },
         ConfigDef.Importance.MEDIUM,
         documentation,
         group,
@@ -498,6 +558,7 @@ public class SettingDefinition implements JsonObject {
     private Reference reference = Reference.NONE;
     private boolean internal = false;
     private List<String> tableKeys = Collections.emptyList();
+    private Checker checker = null;
 
     private Builder() {}
 
@@ -516,6 +577,12 @@ public class SettingDefinition implements JsonObject {
       this.tableKeys = definition.tableKeys;
     }
 
+    @Optional("Each type has its own checker")
+    public Builder checker(Checker checker) {
+      this.checker = Objects.requireNonNull(checker);
+      return this;
+    }
+
     @Optional("default value is false")
     Builder internal() {
       this.internal = true;
@@ -529,7 +596,7 @@ public class SettingDefinition implements JsonObject {
      * @return this builder
      */
     @Optional("default value is empty")
-    Builder tableKeys(List<String> tableKeys) {
+    public Builder tableKeys(List<String> tableKeys) {
       this.tableKeys = new ArrayList<>(CommonUtils.requireNonEmpty(tableKeys));
       return this;
     }
@@ -613,7 +680,8 @@ public class SettingDefinition implements JsonObject {
           documentation,
           reference.name(),
           internal,
-          tableKeys);
+          tableKeys,
+          checker);
     }
   }
 }

@@ -747,6 +747,69 @@ public class ExampleOfCreatingReadonlySettingDefinition {
 
 ----------
 
+### Type.Table
+
+Table type enable you to define a setting having table structure value. Apart from assigning Type.Table to your setting
+definition, you also have to define which keys are in your table. The following example show a case that declares a table having two
+columns called **c0** and **c1**. 
+
+```java
+public class ExampleOfCreatingSettingDefinitionWithTableKeys {
+  public static SettingDefinition create(String key, String defaultValue) {
+    return SettingDefinition.builder()
+            .key(key)
+            .tableKeys(Arrays.asList("c0", "c1"))
+            .valueType(Type.TABLE)
+            .build();
+  }
+}
+```
+
+The legal value for above setting definition is shown below.
+
+```json
+{
+  "key": [
+    {
+      "c0": "v0",
+      "c1": "v1"
+    },
+    {
+      "c0": "v2",
+      "c1": "v3"
+    }
+  ]
+}
+```
+
+The above example implies there is a table having two columns called **c0** and **c1**. Also, you assign two values to
+**c0** that first is **v0** and another is **v2**. Ohara offers a check for Type.Table that the input value **must**
+match all keys in 
+
+> If you ignore the table keys for Type.Table, the check to your input value is also ignored. By contrast, the table keys
+  are useless for other types.
+
+----------
+
+### Checker
+
+We all love quick failure, right? A quick failure can save our resource and time. Ohara offers many checks for your setting
+according to the **expected** type. For example, a setting declared **Duration** type has a checker which validate
+whether the input value is able to be cast to java.time.Duration type. However, you are going to design a complicated
+connector which has specific limit for input value. Or you don't like the default checkers supplied by ohara. Ohara
+allows and encourages connector developer to provide custom checker. The Checker is a functional interface.
+```java
+@FunctionalInterface
+interface Checker {
+  /** @param value value of input */
+  void check(Object value);
+}
+```
+
+All you have to do is to check the input value. Feel free to throw exception when you hate input value or type.
+
+----------
+
 ## Metrics
 
 We are live in a world filled with number, and so do connectors. While a connector is running, ohara collects many counts

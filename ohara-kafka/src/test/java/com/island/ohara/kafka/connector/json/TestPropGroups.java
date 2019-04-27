@@ -157,4 +157,12 @@ public class TestPropGroups extends SmallTest {
     PropGroups pgs = PropGroups.of(Collections.singletonList(ImmutableMap.of("a", "b")));
     pgs.raw().get(0).remove("a");
   }
+
+  @Test
+  public void testConvert() {
+    PropGroups propGroups =
+        PropGroups.of(Collections.singletonList(Collections.singletonMap("a", "b")));
+    PropGroups another = PropGroups.ofJson(propGroups.toJsonString());
+    Assert.assertEquals(propGroups, another);
+  }
 }

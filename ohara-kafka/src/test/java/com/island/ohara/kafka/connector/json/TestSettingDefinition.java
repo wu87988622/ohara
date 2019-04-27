@@ -20,8 +20,12 @@ import com.island.ohara.common.data.Column;
 import com.island.ohara.common.data.DataType;
 import com.island.ohara.common.rule.SmallTest;
 import com.island.ohara.common.util.CommonUtils;
+import java.time.Duration;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigException;
 import org.apache.kafka.connect.runtime.rest.entities.ConfigKeyInfo;
@@ -334,5 +338,95 @@ public class TestSettingDefinition extends SmallTest {
                         .dataType(DataType.BOOLEAN)
                         .build()))
             .toJsonString());
+  }
+
+  @Test
+  public void testTableChecker() {
+    SettingDefinition settingDefinition =
+        SettingDefinition.builder()
+            .key(CommonUtils.randomString())
+            .valueType(SettingDefinition.Type.TABLE)
+            .tableKeys(Arrays.asList("a", "b"))
+            .build();
+    assertException(Exception.class, () -> settingDefinition.checker().check(null));
+    assertException(Exception.class, () -> settingDefinition.checker().check(123));
+    assertException(
+        Exception.class, () -> settingDefinition.checker().check(Collections.emptyList()));
+    assertException(
+        Exception.class,
+        () ->
+            settingDefinition
+                .checker()
+                .check(Collections.singletonList(Collections.singletonMap("a", "c"))));
+    settingDefinition
+        .checker()
+        .check(
+            PropGroups.of(
+                    Collections.singletonList(
+                        settingDefinition.tableKeys().stream()
+                            .collect(Collectors.toMap(Function.identity(), Function.identity()))))
+                .toJsonString());
+  }
+
+  @Test
+  public void testDurationChecker() {
+    SettingDefinition settingDefinition =
+        SettingDefinition.builder()
+            .key(CommonUtils.randomString())
+            .valueType(SettingDefinition.Type.DURATION)
+            .build();
+    assertException(Exception.class, () -> settingDefinition.checker().check(null));
+    assertException(Exception.class, () -> settingDefinition.checker().check(123));
+    assertException(
+        Exception.class, () -> settingDefinition.checker().check(Collections.emptyList()));
+    settingDefinition.checker().check(Duration.ofHours(3).toString());
+  }
+
+  @Test
+  public void testCustomChecker() {
+    SettingDefinition settingDefinition =
+        SettingDefinition.builder()
+            .key(CommonUtils.randomString())
+            .valueType(SettingDefinition.Type.STRING)
+            .checker(
+                v -> {
+                  throw new RuntimeException();
+                })
+            .build();
+    assertException(RuntimeException.class, () -> settingDefinition.checker().check("asdasd"));
+  }
+
+  @Test
+  public void legalNullInValidator() {
+    SettingDefinition settingDefinition =
+        SettingDefinition.builder()
+            .key(CommonUtils.randomString())
+            .valueType(SettingDefinition.Type.STRING)
+            .optional()
+            .checker(
+                v -> {
+                  throw new RuntimeException();
+                })
+            .build();
+    // this setting has optional value so it accept null value
+    settingDefinition.toConfigKey().validator.ensureValid("aasd", null);
+  }
+
+  @Test
+  public void illegalNullInValidator() {
+    SettingDefinition settingDefinition =
+        SettingDefinition.builder()
+            .key(CommonUtils.randomString())
+            .valueType(SettingDefinition.Type.STRING)
+            .checker(
+                v -> {
+                  throw new RuntimeException();
+                })
+            .build();
+    // this setting requires input
+
+    assertException(
+        RuntimeException.class,
+        () -> settingDefinition.toConfigKey().validator.ensureValid("aasd", null));
   }
 }
