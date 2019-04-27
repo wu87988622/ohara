@@ -68,7 +68,7 @@ object StreamApi {
   /**
     * StreamApp Docker Image name
     */
-  final val STREAMAPP_IMAGE: String = s"oharastream/streamapp:${VersionUtils.VERSION}"
+  final val IMAGE_NAME_DEFAULT: String = s"oharastream/streamapp:${VersionUtils.VERSION}"
 
   val STREAM_PREFIX_PATH: String = "stream"
   val STREAM_LIST_PREFIX_PATH: String = "jars"

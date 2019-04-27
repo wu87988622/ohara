@@ -17,7 +17,7 @@
 package com.island.ohara.it.agent
 import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi, ZookeeperApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, StreamApi, WorkerApi, ZookeeperApi}
 private[agent] object CollieTestUtils {
 
   /**
@@ -42,7 +42,8 @@ private[agent] object CollieTestUtils {
                      "centos:7",
                      ZookeeperApi.IMAGE_NAME_DEFAULT,
                      BrokerApi.IMAGE_NAME_DEFAULT,
-                     WorkerApi.IMAGE_NAME_DEFAULT
+                     WorkerApi.IMAGE_NAME_DEFAULT,
+                     StreamApi.IMAGE_NAME_DEFAULT
                    ))
       node
     }

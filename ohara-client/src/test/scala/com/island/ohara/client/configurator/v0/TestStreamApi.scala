@@ -28,7 +28,7 @@ class TestStreamApi extends SmallTest with Matchers {
 
   @Test
   def checkVersion(): Unit = {
-    StreamApi.STREAMAPP_IMAGE shouldBe s"oharastream/streamapp:${VersionUtils.VERSION}"
+    StreamApi.IMAGE_NAME_DEFAULT shouldBe s"oharastream/streamapp:${VersionUtils.VERSION}"
   }
 
   @Test

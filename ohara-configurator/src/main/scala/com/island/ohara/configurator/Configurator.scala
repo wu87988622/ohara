@@ -313,8 +313,8 @@ object Configurator {
       throw new IllegalArgumentException(s"$node doesn't have ${ZookeeperApi.IMAGE_NAME_DEFAULT}")
     if (!images.contains(BrokerApi.IMAGE_NAME_DEFAULT))
       throw new IllegalArgumentException(s"$node doesn't have ${BrokerApi.IMAGE_NAME_DEFAULT}")
-    if (!images.contains(StreamApi.STREAMAPP_IMAGE))
-      throw new IllegalArgumentException(s"$node doesn't have ${StreamApi.STREAMAPP_IMAGE}")
+    if (!images.contains(StreamApi.IMAGE_NAME_DEFAULT))
+      throw new IllegalArgumentException(s"$node doesn't have ${StreamApi.IMAGE_NAME_DEFAULT}")
   }
 
   private[this] def nodeRequestEach(nodeRequest: Option[NodeCreationRequest],
