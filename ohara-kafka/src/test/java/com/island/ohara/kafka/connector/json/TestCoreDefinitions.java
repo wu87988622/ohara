@@ -24,7 +24,7 @@ import com.island.ohara.kafka.connector.RowSinkConnector;
 import com.island.ohara.kafka.connector.RowSinkTask;
 import com.island.ohara.kafka.connector.RowSourceConnector;
 import com.island.ohara.kafka.connector.RowSourceTask;
-import com.island.ohara.kafka.connector.TaskConfig;
+import com.island.ohara.kafka.connector.TaskSetting;
 import java.util.List;
 import org.apache.kafka.common.config.ConfigDef;
 import org.junit.Assert;
@@ -200,12 +200,12 @@ public class TestCoreDefinitions extends SmallTest {
     }
 
     @Override
-    protected List<TaskConfig> _taskConfigs(int maxTasks) {
+    protected List<TaskSetting> _taskSettings(int maxTasks) {
       return null;
     }
 
     @Override
-    protected void _start(TaskConfig config) {}
+    protected void _start(TaskSetting config) {}
 
     @Override
     protected void _stop() {}
@@ -233,12 +233,12 @@ public class TestCoreDefinitions extends SmallTest {
     }
 
     @Override
-    protected List<TaskConfig> _taskConfigs(int maxTasks) {
+    protected List<TaskSetting> _taskSettings(int maxTasks) {
       return null;
     }
 
     @Override
-    protected void _start(TaskConfig config) {}
+    protected void _start(TaskSetting config) {}
 
     @Override
     protected void _stop() {}

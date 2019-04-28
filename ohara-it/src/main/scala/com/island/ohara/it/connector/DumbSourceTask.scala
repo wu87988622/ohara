@@ -19,10 +19,10 @@ package com.island.ohara.it.connector
 import java.util
 import java.util.Collections
 
-import com.island.ohara.kafka.connector.{RowSourceRecord, RowSourceTask, TaskConfig}
+import com.island.ohara.kafka.connector.{RowSourceRecord, RowSourceTask, TaskSetting}
 
 class DumbSourceTask extends RowSourceTask {
-  override protected def _start(config: TaskConfig): Unit = {}
+  override protected def _start(settings: TaskSetting): Unit = {}
   override protected def _stop(): Unit = {}
   override protected def _poll(): util.List[RowSourceRecord] = Collections.emptyList();
 }

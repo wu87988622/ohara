@@ -52,9 +52,9 @@ class HDFSSinkTask extends RowSinkTask {
     }
   }
 
-  override protected def _start(props: TaskConfig): Unit = {
+  override protected def _start(props: TaskSetting): Unit = {
     logger.info("starting HDFS Sink Connector")
-    hdfsSinkConnectorConfig = HDFSSinkConnectorConfig(props.raw().asScala.toMap)
+    hdfsSinkConnectorConfig = HDFSSinkConnectorConfig(props)
     hdfsWriter = new DataWriter(hdfsSinkConnectorConfig, rowContext, props.columns.asScala)
   }
 

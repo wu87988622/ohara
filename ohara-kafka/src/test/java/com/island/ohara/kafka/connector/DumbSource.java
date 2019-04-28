@@ -35,14 +35,14 @@ public class DumbSource extends RowSourceConnector {
   }
 
   @Override
-  protected List<TaskConfig> _taskConfigs(int maxTasks) {
+  protected List<TaskSetting> _taskSettings(int maxTasks) {
     return Collections.singletonList(
-        TaskConfig.of(
+        TaskSetting.of(
             ConnectorFormatter.of().id("test").topicName("topic").columns(columns).raw()));
   }
 
   @Override
-  protected void _start(TaskConfig config) {}
+  protected void _start(TaskSetting config) {}
 
   @Override
   protected void _stop() {}

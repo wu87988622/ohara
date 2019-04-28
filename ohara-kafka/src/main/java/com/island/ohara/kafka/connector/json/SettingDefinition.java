@@ -387,11 +387,11 @@ public class SettingDefinition implements JsonObject {
                               }));
 
             } catch (Exception e) {
-              throw new IllegalArgumentException(
-                  "the value:" + value + " can't be converted to PropGroups type", e);
+              throw new ConfigException(
+                  "the value:" + value + " can't be converted to PropGroups type");
             }
             // It is ok to convert the value from string to list<column>, thank God!
-          } else throw new IllegalArgumentException("the configured value must be string type");
+          } else throw new ConfigException("the configured value must be string type");
         };
       case DURATION:
         return (Object value) -> {
@@ -399,7 +399,7 @@ public class SettingDefinition implements JsonObject {
             try {
               Duration.parse((String) value);
             } catch (Exception e) {
-              throw new IllegalArgumentException(e);
+              throw new ConfigException("can't be converted to Duration type");
             }
             // It is ok to convert the value from string to list<column>, thank God!
           } else throw new ConfigException("the configured value must be string type");

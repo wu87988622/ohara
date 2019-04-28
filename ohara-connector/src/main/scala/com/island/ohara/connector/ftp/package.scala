@@ -28,5 +28,6 @@ package object ftp {
   val FTP_USER_NAME = "ftp.user.name"
   val FTP_PASSWORD = "ftp.user.password"
   val FTP_ENCODE = "ftp.encode"
+  val FTP_ENCODE_DEFAULT = "UTF-8"
   val FTP_NEED_HEADER = "ftp.needHeader"
 }

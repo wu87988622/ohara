@@ -15,6 +15,8 @@
  */
 
 package com.island.ohara.connector.perf
+import com.island.ohara.kafka.connector.TaskSetting
+
 import scala.concurrent.duration.Duration
 
 case class PerfSourceProps(batch: Int, freq: Duration) {
@@ -25,11 +27,9 @@ case class PerfSourceProps(batch: Int, freq: Duration) {
 }
 
 object PerfSourceProps {
-  def apply(props: Map[String, String]): PerfSourceProps = PerfSourceProps(
-    batch = props.getOrElse(PERF_BATCH, DEFAULT_BATCH.toString).toInt,
-    freq = props.get(PERF_FREQUENCE) match {
-      case Some(freq) => toScalaDuration(java.time.Duration.parse(freq))
-      case None       => DEFAULT_FREQUENCE
-    }
+  def apply(settings: TaskSetting): PerfSourceProps = PerfSourceProps(
+    batch = settings.intOption(PERF_BATCH).orElse(DEFAULT_BATCH),
+    freq =
+      Option(settings.durationOption(PERF_FREQUENCE).orElse(null)).map(toScalaDuration).getOrElse(DEFAULT_FREQUENCE)
   )
 }

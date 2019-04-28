@@ -20,15 +20,21 @@ import com.island.ohara.common.data.{Cell, Column, DataType, Row}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.connector.hdfs.storage.{HDFSStorage, Storage}
 import com.island.ohara.connector.hdfs.{FLUSH_LINE_COUNT, HDFSSinkConnectorConfig, HDFS_URL}
+import com.island.ohara.kafka.connector.TaskSetting
 import com.island.ohara.testing.WithTestUtils
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.junit.Test
 import org.scalatest.Matchers
 
+import scala.collection.JavaConverters._
+
 class TestCSVRecordWriterOutput extends WithTestUtils with Matchers {
-  val fileSystem: FileSystem = testUtil.hdfs.fileSystem
-  val HDFS_URL_VALUE = "hdfs://test:9000"
-  val hdfsSinkConnectorConfig = HDFSSinkConnectorConfig(Map(HDFS_URL -> HDFS_URL_VALUE, FLUSH_LINE_COUNT -> "2000"))
+  private[this] val fileSystem: FileSystem = testUtil.hdfs.fileSystem
+  private[this] val HDFS_URL_VALUE = "hdfs://test:9000"
+  private[this] val hdfsSinkConnectorConfig = hdfsConfig(Map(HDFS_URL -> HDFS_URL_VALUE, FLUSH_LINE_COUNT -> "2000"))
+
+  private[this] def hdfsConfig(settings: Map[String, String]): HDFSSinkConnectorConfig =
+    HDFSSinkConnectorConfig(TaskSetting.of(settings.asJava))
 
   @Test
   def testWriteData(): Unit = {

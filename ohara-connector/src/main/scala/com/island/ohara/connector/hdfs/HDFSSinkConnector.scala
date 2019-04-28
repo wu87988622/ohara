@@ -27,10 +27,10 @@ import scala.collection.JavaConverters._
   */
 class HDFSSinkConnector extends RowSinkConnector {
 
-  var props: TaskConfig = _
+  private[this] var settings: TaskSetting = _
 
-  override protected[hdfs] def _start(config: TaskConfig): Unit = {
-    this.props = config
+  override protected[hdfs] def _start(settings: TaskSetting): Unit = {
+    this.settings = settings
   }
 
   override protected def _stop(): Unit = {
@@ -39,8 +39,8 @@ class HDFSSinkConnector extends RowSinkConnector {
 
   override protected def _taskClass(): Class[_ <: RowSinkTask] = classOf[HDFSSinkTask]
 
-  override protected[hdfs] def _taskConfigs(maxTasks: Int): util.List[TaskConfig] = {
-    Seq.fill(maxTasks) { props }.asJava
+  override protected[hdfs] def _taskSettings(maxTasks: Int): util.List[TaskSetting] = {
+    Seq.fill(maxTasks) { settings }.asJava
   }
 
   override protected def _version: ConnectorVersion = ConnectorVersion.DEFAULT
@@ -108,6 +108,22 @@ class HDFSSinkConnector extends RowSinkConnector {
       .valueType(SettingDefinition.Type.STRING)
       .optional(HDFSSinkConnectorConfig.DATAFILE_ENCODE_DEFAULT)
       .key(DATAFILE_ENCODE)
+      .build(),
+    SettingDefinition
+      .builder()
+      .displayName("Data Buffer size")
+      .documentation("the size of buffer")
+      .valueType(SettingDefinition.Type.LONG)
+      .optional(HDFSSinkConnectorConfig.DATA_BUFFER_COUNT_DEFAULT.toString)
+      .key(DATA_BUFFER_COUNT)
+      .build(),
+    SettingDefinition
+      .builder()
+      .displayName("storage class")
+      .documentation("the implementation of storage")
+      .valueType(SettingDefinition.Type.CLASS)
+      .optional(HDFSSinkConnectorConfig.HDFS_STORAGE_CREATOR_CLASS_DEFAULT)
+      .key(HDFS_STORAGE_CREATOR_CLASS)
       .build()
   ).asJava
 }

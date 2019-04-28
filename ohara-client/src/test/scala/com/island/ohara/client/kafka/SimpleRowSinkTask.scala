@@ -21,19 +21,18 @@ import java.util
 import com.island.ohara.common.data.{Row, Serializer}
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.kafka.Producer
-import com.island.ohara.kafka.connector.{RowSinkRecord, RowSinkTask, TaskConfig}
+import com.island.ohara.kafka.connector.{RowSinkRecord, RowSinkTask, TaskSetting}
+
 import scala.collection.JavaConverters._
 
 class SimpleRowSinkTask extends RowSinkTask {
-  private[this] var config: TaskConfig = _
   private[this] var outputTopic: String = _
   private[this] var producer: Producer[Row, Array[Byte]] = _
-  override protected def _start(props: TaskConfig): Unit = {
-    this.config = props
-    outputTopic = config.raw().get(OUTPUT)
+  override protected def _start(settings: TaskSetting): Unit = {
+    outputTopic = settings.stringValue(OUTPUT)
     producer = Producer
       .builder[Row, Array[Byte]]()
-      .connectionProps(config.raw().get(BROKER))
+      .connectionProps(settings.stringValue(BROKER))
       .keySerializer(Serializer.ROW)
       .valueSerializer(Serializer.BYTES)
       .build()

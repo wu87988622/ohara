@@ -18,7 +18,7 @@ package com.island.ohara.connector.perf
 import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.common.data.{Cell, Column, DataType, Row}
 import com.island.ohara.common.util.{ByteUtils, CommonUtils}
-import com.island.ohara.kafka.connector.{RowSourceRecord, RowSourceTask, TaskConfig}
+import com.island.ohara.kafka.connector.{RowSourceRecord, RowSourceTask, TaskSetting}
 
 import scala.collection.JavaConverters._
 
@@ -29,10 +29,10 @@ class PerfSourceTask extends RowSourceTask {
   private[perf] var schema: Seq[Column] = _
   private[this] var lastPoll: Long = -1
   @VisibleForTesting
-  override protected def _start(config: TaskConfig): Unit = {
-    this.props = PerfSourceProps(config.raw().asScala.toMap)
-    this.topics = config.topicNames().asScala
-    this.schema = config.columns.asScala
+  override protected def _start(settings: TaskSetting): Unit = {
+    this.props = PerfSourceProps(settings)
+    this.topics = settings.topicNames().asScala
+    this.schema = settings.columns.asScala
     if (schema.isEmpty) schema = DEFAULT_SCHEMA
   }
 

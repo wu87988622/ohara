@@ -17,26 +17,26 @@
 package com.island.ohara.connector.perf
 import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.kafka.connector.json.SettingDefinition
-import com.island.ohara.kafka.connector.{ConnectorVersion, RowSourceConnector, RowSourceTask, TaskConfig}
+import com.island.ohara.kafka.connector.{ConnectorVersion, RowSourceConnector, RowSourceTask, TaskSetting}
 
 import scala.collection.JavaConverters._
 
 class PerfSource extends RowSourceConnector {
-  private[this] var config: TaskConfig = _
+  @VisibleForTesting
+  private[perf] var settings: TaskSetting = _
 
   override protected def _taskClass(): Class[_ <: RowSourceTask] = classOf[PerfSourceTask]
 
-  override protected def _taskConfigs(maxTasks: Int): java.util.List[TaskConfig] = Seq.fill(maxTasks)(config).asJava
+  override protected def _taskSettings(maxTasks: Int): java.util.List[TaskSetting] = Seq.fill(maxTasks)(settings).asJava
 
   /**
     * this method is exposed to test scope
     */
-  @VisibleForTesting
-  override protected def _start(config: TaskConfig): Unit = {
-    if (config.topicNames().isEmpty) throw new IllegalArgumentException("topics can't be empty")
-    val props = PerfSourceProps(config.raw().asScala.toMap)
+  override protected def _start(settings: TaskSetting): Unit = {
+    if (settings.topicNames().isEmpty) throw new IllegalArgumentException("topics can't be empty")
+    val props = PerfSourceProps(settings)
     if (props.batch < 0) throw new IllegalArgumentException(s"batch:${props.batch} can't be negative")
-    this.config = config
+    this.settings = settings
   }
 
   override protected def _stop(): Unit = {}

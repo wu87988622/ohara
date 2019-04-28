@@ -17,18 +17,20 @@
 package com.island.ohara.connector.hdfs
 
 import com.island.ohara.common.data.Column
-import com.island.ohara.kafka.connector.{RowSinkContext, TopicPartition}
+import com.island.ohara.kafka.connector.{RowSinkContext, TaskSetting, TopicPartition}
 import com.island.ohara.testing.WithTestUtils
 import org.junit.Test
 import org.scalatest.Matchers
 import org.scalatest.mockito.MockitoSugar
-
+import scala.collection.JavaConverters._
 class TestDataWriter extends WithTestUtils with Matchers with MockitoSugar {
+
+  private[this] def hdfsConfig(settings: Map[String, String]): HDFSSinkConnectorConfig =
+    HDFSSinkConnectorConfig(TaskSetting.of(settings.asJava))
 
   @Test
   def testCreatePartitionDataWriters(): Unit = {
-    val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig = HDFSSinkConnectorConfig(
-      Map(HDFS_URL -> s"${testUtil.hdfs.hdfsURL}"))
+    val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig = hdfsConfig(Map(HDFS_URL -> s"${testUtil.hdfs.hdfsURL}"))
     val context: RowSinkContext = mock[RowSinkContext]
     val schema: Seq[Column] = Seq.empty
     val dataWriter: DataWriter = new DataWriter(hdfsSinkConnectorConfig, context, schema)
@@ -43,8 +45,7 @@ class TestDataWriter extends WithTestUtils with Matchers with MockitoSugar {
 
   @Test
   def testWriterEmpty(): Unit = {
-    val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig = HDFSSinkConnectorConfig(
-      Map(HDFS_URL -> s"${testUtil.hdfs.hdfsURL}"))
+    val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig = hdfsConfig(Map(HDFS_URL -> s"${testUtil.hdfs.hdfsURL}"))
     val context: RowSinkContext = mock[RowSinkContext]
     val schema: Seq[Column] = Seq.empty
     val dataWriter: DataWriter = new DataWriter(hdfsSinkConnectorConfig, context, schema)

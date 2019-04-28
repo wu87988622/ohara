@@ -16,6 +16,9 @@
 
 package com.island.ohara.connector.jdbc.source
 
+import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.kafka.connector.TaskSetting
+
 /**
   * This class is getting property value
   */
@@ -40,16 +43,16 @@ case class JDBCSourceConnectorConfig(dbURL: String,
 }
 
 object JDBCSourceConnectorConfig {
-  def apply(props: Map[String, String]): JDBCSourceConnectorConfig = {
+  def apply(settings: TaskSetting): JDBCSourceConnectorConfig = {
     JDBCSourceConnectorConfig(
-      dbURL = props(DB_URL),
-      dbUserName = props(DB_USERNAME),
-      dbPassword = props(DB_PASSWORD),
-      dbTableName = props(DB_TABLENAME),
-      dbCatalogPattern = props.get(DB_CATALOG_PATTERN).filter(_.nonEmpty),
-      dbSchemaPattern = props.get(DB_SCHEMA_PATTERN).filter(_.nonEmpty),
-      mode = props.getOrElse(MODE, MODE_DEFAULT),
-      timestampColumnName = props(TIMESTAMP_COLUMN_NAME)
+      dbURL = settings.stringValue(DB_URL),
+      dbUserName = settings.stringValue(DB_USERNAME),
+      dbPassword = settings.stringValue(DB_PASSWORD),
+      dbTableName = settings.stringValue(DB_TABLENAME),
+      dbCatalogPattern = Option(settings.stringOption(DB_CATALOG_PATTERN).orElse(null)).filterNot(CommonUtils.isEmpty),
+      dbSchemaPattern = Option(settings.stringOption(DB_SCHEMA_PATTERN).orElse(null)).filterNot(CommonUtils.isEmpty),
+      mode = settings.stringOption(MODE).orElse(MODE_DEFAULT),
+      timestampColumnName = settings.stringValue(TIMESTAMP_COLUMN_NAME)
     )
   }
 }

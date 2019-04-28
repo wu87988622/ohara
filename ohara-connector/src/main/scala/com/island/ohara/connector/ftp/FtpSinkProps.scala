@@ -16,6 +16,8 @@
 
 package com.island.ohara.connector.ftp
 
+import com.island.ohara.kafka.connector.TaskSetting
+
 case class FtpSinkProps(outputFolder: String,
                         needHeader: Boolean,
                         encode: String,
@@ -35,13 +37,13 @@ case class FtpSinkProps(outputFolder: String,
 }
 
 object FtpSinkProps {
-  def apply(props: Map[String, String]): FtpSinkProps = FtpSinkProps(
-    outputFolder = props(FTP_OUTPUT),
-    needHeader = props(FTP_NEED_HEADER).toBoolean,
-    encode = props(FTP_ENCODE),
-    hostname = props(FTP_HOSTNAME),
-    port = props(FTP_PORT).toInt,
-    user = props(FTP_USER_NAME),
-    password = props(FTP_PASSWORD)
+  def apply(settings: TaskSetting): FtpSinkProps = FtpSinkProps(
+    outputFolder = settings.stringValue(FTP_OUTPUT),
+    needHeader = settings.stringValue(FTP_NEED_HEADER).toBoolean,
+    encode = settings.stringOption(FTP_ENCODE).orElse(FTP_ENCODE_DEFAULT),
+    hostname = settings.stringValue(FTP_HOSTNAME),
+    port = settings.intValue(FTP_PORT),
+    user = settings.stringValue(FTP_USER_NAME),
+    password = settings.stringValue(FTP_PASSWORD)
   )
 }

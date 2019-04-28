@@ -18,21 +18,22 @@ package com.island.ohara.client.kafka
 
 import java.util
 
-import com.island.ohara.kafka.connector.{RowSinkConnector, RowSinkTask, TaskConfig}
+import com.island.ohara.kafka.connector.{RowSinkConnector, RowSinkTask, TaskSetting}
+
 import scala.collection.JavaConverters._
 class SimpleRowSinkConnector extends RowSinkConnector {
-  private[this] var config: TaskConfig = _
-  override protected def _start(props: TaskConfig): Unit = {
-    this.config = props
+  private[this] var settings: TaskSetting = _
+  override protected def _start(settings: TaskSetting): Unit = {
+    this.settings = settings
     // check the option
-    this.config.raw().get(OUTPUT)
-    this.config.raw().get(BROKER)
+    settings.stringValue(OUTPUT)
+    settings.stringValue(BROKER)
   }
 
   override protected def _taskClass(): Class[_ <: RowSinkTask] = classOf[SimpleRowSinkTask]
 
   override protected def _stop(): Unit = {}
 
-  override protected def _taskConfigs(maxTasks: Int): util.List[TaskConfig] =
-    new util.ArrayList[TaskConfig](Seq.fill(maxTasks)(config).asJavaCollection)
+  override protected def _taskSettings(maxTasks: Int): util.List[TaskSetting] =
+    new util.ArrayList[TaskSetting](Seq.fill(maxTasks)(settings).asJavaCollection)
 }

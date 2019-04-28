@@ -21,23 +21,23 @@ import java.util
 import com.island.ohara.client.ftp.FtpClient
 import com.island.ohara.common.data.Column
 import com.island.ohara.kafka.connector.json.SettingDefinition
-import com.island.ohara.kafka.connector.{ConnectorVersion, RowSourceConnector, RowSourceTask, TaskConfig}
+import com.island.ohara.kafka.connector.{ConnectorVersion, RowSourceConnector, RowSourceTask, TaskSetting}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
 
 class FtpSource extends RowSourceConnector {
-  private[this] var config: TaskConfig = _
+  private[this] var settings: TaskSetting = _
   private[this] var props: FtpSourceProps = _
   private[this] var schema: Seq[Column] = _
 
   override protected def _taskClass(): Class[_ <: RowSourceTask] = classOf[FtpSourceTask]
 
-  override protected def _taskConfigs(maxTasks: Int): util.List[TaskConfig] = {
+  override protected def _taskSettings(maxTasks: Int): util.List[TaskSetting] = {
     (0 until maxTasks)
       .map(
         index =>
-          config.append(
+          settings.append(
             FtpSourceTaskProps(
               total = maxTasks,
               hash = index,
@@ -54,10 +54,10 @@ class FtpSource extends RowSourceConnector {
       .asJava
   }
 
-  override protected[ftp] def _start(config: TaskConfig): Unit = {
-    this.config = config
-    this.props = FtpSourceProps(config.raw().asScala.toMap)
-    this.schema = config.columns.asScala
+  override protected[ftp] def _start(settings: TaskSetting): Unit = {
+    this.settings = settings
+    this.props = FtpSourceProps(settings)
+    this.schema = settings.columns.asScala
     if (schema.exists(_.order == 0)) throw new IllegalArgumentException("column order must be bigger than zero")
 
     val ftpClient =
@@ -106,7 +106,7 @@ class FtpSource extends RowSourceConnector {
       .documentation("The encode is used to parse input csv files")
       .valueType(SettingDefinition.Type.STRING)
       .key(FTP_ENCODE)
-      .optional("UTF-8")
+      .optional(FTP_ENCODE_DEFAULT)
       .build(),
     SettingDefinition
       .builder()

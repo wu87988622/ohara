@@ -17,6 +17,7 @@
 package com.island.ohara.connector.hdfs
 
 import com.island.ohara.connector.hdfs.creator.HDFSStorageCreator
+import com.island.ohara.kafka.connector.TaskSetting
 import org.apache.hadoop.conf.Configuration
 
 case class HDFSSinkConnectorConfig(hdfsURL: String,
@@ -52,36 +53,36 @@ object HDFSSinkConnectorConfig {
   private[hdfs] val FLUSH_LINE_COUNT_DEFAULT: Int = 1000
   private[hdfs] val ROTATE_INTERVAL_MS_DEFAULT: Long = 60000
   private[hdfs] val TMP_DIR_DEFAULT: String = "/tmp"
-  private[connector] val DATA_DIR_DEFAULT = "/data"
+  private[hdfs] val DATA_DIR_DEFAULT = "/data"
   private[hdfs] val DATAFILE_NEEDHEADER_DEFAULT: Boolean = true
   private[hdfs] val DATAFILE_PREFIX_NAME_DEFAULT: String = "part"
   private[hdfs] val DATA_BUFFER_COUNT_DEFAULT: Long = 100
   private[hdfs] val HDFS_STORAGE_CREATOR_CLASS_DEFAULT: String = classOf[HDFSStorageCreator].getName
   private[hdfs] val DATAFILE_ENCODE_DEFAULT = "UTF-8"
 
-  def apply(props: Map[String, String]): HDFSSinkConnectorConfig = {
-    val prefixFileName: String = props.getOrElse(DATAFILE_PREFIX_NAME, DATAFILE_PREFIX_NAME_DEFAULT)
+  def apply(settings: TaskSetting): HDFSSinkConnectorConfig = {
+    val prefixFileName: String = settings.stringOption(DATAFILE_PREFIX_NAME).orElse(DATAFILE_PREFIX_NAME_DEFAULT)
     if (!prefixFileName.matches(PREFIX_FILENAME_PATTERN)) {
       throw new IllegalArgumentException("The " + DATAFILE_PREFIX_NAME + " value only a-z or A-Z or 0-9")
     }
 
-    val tmpDir: String = props.getOrElse(TMP_DIR, TMP_DIR_DEFAULT)
-    val dataDir: String = props.getOrElse(DATA_DIR, DATA_DIR_DEFAULT)
-    if (tmpDir.equals(dataDir)) {
+    val tmpDir: String = settings.stringOption(TMP_DIR).orElse(TMP_DIR_DEFAULT)
+    val dataDir: String = settings.stringOption(DATA_DIR).orElse(DATA_DIR_DEFAULT)
+    if (tmpDir == dataDir)
       throw new IllegalArgumentException("The tmpDir path same as dataDir path, Please input different path.")
-    }
 
     HDFSSinkConnectorConfig(
-      hdfsURL = props(HDFS_URL),
-      flushLineCount = props.getOrElse(FLUSH_LINE_COUNT, FLUSH_LINE_COUNT_DEFAULT.toString).toInt,
-      rotateIntervalMS = props.getOrElse(ROTATE_INTERVAL_MS, ROTATE_INTERVAL_MS_DEFAULT.toString).toLong,
+      hdfsURL = settings.stringValue(HDFS_URL),
+      flushLineCount = settings.intOption(FLUSH_LINE_COUNT).orElse(FLUSH_LINE_COUNT_DEFAULT),
+      rotateIntervalMS = settings.longOption(ROTATE_INTERVAL_MS).orElse(ROTATE_INTERVAL_MS_DEFAULT),
       tmpDir = tmpDir,
       dataDir = dataDir,
       dataFilePrefixName = prefixFileName,
-      dataFileNeedHeader = props.getOrElse(DATAFILE_NEEDHEADER, DATAFILE_NEEDHEADER_DEFAULT.toString).toBoolean,
-      dataBufferCount = props.getOrElse(DATA_BUFFER_COUNT, DATA_BUFFER_COUNT_DEFAULT.toString).toLong,
-      hdfsStorageCreateClass = props.getOrElse(HDFS_STORAGE_CREATOR_CLASS, HDFS_STORAGE_CREATOR_CLASS_DEFAULT),
-      dataFileEncode = props.getOrElse(DATAFILE_ENCODE, DATAFILE_ENCODE_DEFAULT)
+      dataFileNeedHeader = settings.booleanOption(DATAFILE_NEEDHEADER).orElse(DATAFILE_NEEDHEADER_DEFAULT),
+      dataBufferCount = settings.longOption(DATA_BUFFER_COUNT).orElse(DATA_BUFFER_COUNT_DEFAULT),
+      hdfsStorageCreateClass =
+        settings.stringOption(HDFS_STORAGE_CREATOR_CLASS).orElse(HDFS_STORAGE_CREATOR_CLASS_DEFAULT),
+      dataFileEncode = settings.stringOption(DATAFILE_ENCODE).orElse(DATAFILE_ENCODE_DEFAULT)
     )
   }
 }

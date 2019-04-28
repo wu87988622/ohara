@@ -38,12 +38,11 @@ class JDBCSourceTask extends RowSourceTask {
   /**
     * Start the Task. This should handle any configuration parsing and one-time setup from the task.
     *
-    * @param config initial configuration
+    * @param settings initial configuration
     */
-  override protected[source] def _start(config: TaskConfig): Unit = {
+  override protected[source] def _start(settings: TaskSetting): Unit = {
     logger.info("starting JDBC Source Connector")
-    val props = config.raw().asScala.toMap
-    jdbcSourceConnectorConfig = JDBCSourceConnectorConfig(props)
+    jdbcSourceConnectorConfig = JDBCSourceConnectorConfig(settings)
 
     val dbURL = jdbcSourceConnectorConfig.dbURL
     val dbUserName = jdbcSourceConnectorConfig.dbUserName
@@ -51,8 +50,8 @@ class JDBCSourceTask extends RowSourceTask {
     val tableName = jdbcSourceConnectorConfig.dbTableName
     dbTableDataProvider = new DBTableDataProvider(dbURL, dbUserName, dbPassword)
 
-    schema = config.columns.asScala
-    topics = config.topicNames().asScala
+    schema = settings.columns.asScala
+    topics = settings.topicNames().asScala
     offsets = new Offsets(rowContext, tableName)
   }
 

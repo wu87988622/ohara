@@ -18,7 +18,8 @@ package com.island.ohara.it.connector
 
 import java.util
 
-import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceTask, TaskConfig}
+import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceTask, TaskSetting}
+
 import scala.collection.JavaConverters._
 
 /**
@@ -26,9 +27,9 @@ import scala.collection.JavaConverters._
   * It is not placed at test scope since we need jar when tests manually.
   */
 class DumbSourceConnector extends RowSourceConnector {
-  private[this] var config: TaskConfig = _
+  private[this] var settings: TaskSetting = _
   override protected def _taskClass(): Class[_ <: RowSourceTask] = classOf[DumbSourceTask]
-  override protected def _taskConfigs(maxTasks: Int): util.List[TaskConfig] = Seq.fill(maxTasks)(config).asJava
-  override protected def _start(config: TaskConfig): Unit = this.config = config
+  override protected def _taskSettings(maxTasks: Int): util.List[TaskSetting] = Seq.fill(maxTasks)(settings).asJava
+  override protected def _start(settings: TaskSetting): Unit = this.settings = settings
   override protected def _stop(): Unit = {}
 }

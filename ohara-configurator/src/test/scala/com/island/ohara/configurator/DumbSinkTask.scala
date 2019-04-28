@@ -16,10 +16,10 @@
 
 package com.island.ohara.configurator
 
-import com.island.ohara.kafka.connector.{RowSinkRecord, RowSinkTask, TaskConfig}
+import com.island.ohara.kafka.connector.{RowSinkRecord, RowSinkTask, TaskSetting}
 
 class DumbSinkTask extends RowSinkTask {
-  override protected def _start(config: TaskConfig): Unit = {}
+  override protected def _start(settings: TaskSetting): Unit = {}
 
   override protected def _stop(): Unit = {}
 

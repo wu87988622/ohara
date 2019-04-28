@@ -22,6 +22,7 @@ import com.island.ohara.common.rule.SmallTest;
 import com.island.ohara.common.util.CommonUtils;
 import java.util.Collections;
 import java.util.List;
+import java.util.NoSuchElementException;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.junit.Assert;
 import org.junit.Test;
@@ -45,13 +46,13 @@ public class TestConnectorProps extends SmallTest {
   @Test
   public void emptyInStartingSourceTask() {
     DumbSourceTask task = new DumbSourceTask();
-    assertException(IllegalArgumentException.class, () -> task.start(Collections.emptyMap()));
+    assertException(NoSuchElementException.class, () -> task.start(Collections.emptyMap()));
   }
 
   @Test
   public void emptyInStartingSinkTask() {
     DumbSinkTask task = new DumbSinkTask();
-    assertException(IllegalArgumentException.class, () -> task.start(Collections.emptyMap()));
+    assertException(NoSuchElementException.class, () -> task.start(Collections.emptyMap()));
   }
 
   @Test
@@ -119,37 +120,37 @@ public class TestConnectorProps extends SmallTest {
   @Test
   public void testInternalTaskConfigOfSource() {
     RowSourceConnector connector = new DumbSource();
-    Assert.assertNull(connector.taskConfig);
+    Assert.assertNull(connector.taskSetting);
 
     connector.start(Collections.singletonMap("name", CommonUtils.randomString()));
-    Assert.assertNotNull(connector.taskConfig);
+    Assert.assertNotNull(connector.taskSetting);
   }
 
   @Test
   public void testInternalTaskConfigOfSourceTask() {
     RowSourceTask task = new DumbSourceTask();
-    Assert.assertNull(task.taskConfig);
+    Assert.assertNull(task.taskSetting);
 
     task.start(Collections.singletonMap("name", CommonUtils.randomString()));
-    Assert.assertNotNull(task.taskConfig);
+    Assert.assertNotNull(task.taskSetting);
   }
 
   @Test
   public void testInternalTaskConfigOfSink() {
     RowSinkConnector connector = new DumbSink();
-    Assert.assertNull(connector.taskConfig);
+    Assert.assertNull(connector.taskSetting);
 
     connector.start(Collections.singletonMap("name", CommonUtils.randomString()));
-    Assert.assertNotNull(connector.taskConfig);
+    Assert.assertNotNull(connector.taskSetting);
   }
 
   @Test
   public void testInternalTaskConfigOfSinkTask() {
     RowSinkTask task = new DumbSinkTask();
-    Assert.assertNull(task.taskConfig);
+    Assert.assertNull(task.taskSetting);
 
     task.start(Collections.singletonMap("name", CommonUtils.randomString()));
-    Assert.assertNotNull(task.taskConfig);
+    Assert.assertNotNull(task.taskSetting);
   }
 
   @Test(expected = IllegalArgumentException.class)

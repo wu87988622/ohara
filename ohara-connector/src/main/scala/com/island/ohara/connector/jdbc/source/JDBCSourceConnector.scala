@@ -27,19 +27,18 @@ import scala.collection.JavaConverters._
   */
 class JDBCSourceConnector extends RowSourceConnector {
 
-  private[this] var taskConfig: TaskConfig = _
+  private[this] var settings: TaskSetting = _
 
   /**
     * Start this Connector. This method will only be called on a clean Connector, i.e. it has
     * either just been instantiated and initialized or _stop() has been invoked.
     *
-    * @param taskConfig configuration settings
+    * @param settings configuration settings
     */
-  override protected def _start(taskConfig: TaskConfig): Unit = {
-    this.taskConfig = taskConfig
+  override protected def _start(settings: TaskSetting): Unit = {
+    this.settings = settings
 
-    val props = taskConfig.raw().asScala.toMap
-    val jdbcSourceConnectorConfig: JDBCSourceConnectorConfig = JDBCSourceConnectorConfig(props)
+    val jdbcSourceConnectorConfig: JDBCSourceConnectorConfig = JDBCSourceConnectorConfig(settings)
 
     val dbURL = jdbcSourceConnectorConfig.dbURL
     val dbUserName = jdbcSourceConnectorConfig.dbUserName
@@ -71,9 +70,9 @@ class JDBCSourceConnector extends RowSourceConnector {
     *
     * @return a seq from settings
     */
-  override protected def _taskConfigs(maxTasks: Int): java.util.List[TaskConfig] = {
+  override protected def _taskSettings(maxTasks: Int): java.util.List[TaskSetting] = {
     //TODO
-    Seq(taskConfig).asJava
+    Seq(settings).asJava
   }
 
   /**

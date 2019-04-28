@@ -21,19 +21,19 @@ import java.util.Collections
 
 import com.island.ohara.kafka.connector.json.SettingDefinition
 import com.island.ohara.kafka.connector.json.SettingDefinition.Type
-import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceTask, TaskConfig}
+import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceTask, TaskSetting}
 
 import scala.collection.JavaConverters._
 
 class MyConnector extends RowSourceConnector {
-  private[this] var config: TaskConfig = _
+  private[this] var settings: TaskSetting = _
 
   override protected def _taskClass(): Class[_ <: RowSourceTask] = classOf[MyConnectorTask]
 
-  override protected def _taskConfigs(maxTasks: Int): util.List[TaskConfig] =
-    new util.ArrayList[TaskConfig](Seq.fill(maxTasks)(config).asJavaCollection)
+  override protected def _taskSettings(maxTasks: Int): util.List[TaskSetting] =
+    new util.ArrayList[TaskSetting](Seq.fill(maxTasks)(settings).asJavaCollection)
 
-  override protected def _start(config: TaskConfig): Unit = this.config = config
+  override protected def _start(settings: TaskSetting): Unit = this.settings = settings
 
   override protected def _stop(): Unit = {
     // do nothing

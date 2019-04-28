@@ -23,6 +23,7 @@ import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Cell, Row, Serializer}
 import com.island.ohara.kafka.Consumer
+import com.island.ohara.kafka.connector.TaskSetting
 import com.island.ohara.testing.With3Brokers3Workers
 import com.island.ohara.testing.service.Database
 import org.junit.{Before, Test}
@@ -153,11 +154,12 @@ class TestJDBCSourceConnector extends With3Brokers3Workers with Matchers {
     }
   }
 
+  import scala.collection.JavaConverters._
   private[this] val props = JDBCSourceConnectorConfig(
-    Map(DB_URL -> db.url,
-        DB_USERNAME -> db.user,
-        DB_PASSWORD -> db.password,
-        DB_TABLENAME -> tableName,
-        TIMESTAMP_COLUMN_NAME -> timestampColumnName,
-        DB_SCHEMA_PATTERN -> ""))
+    TaskSetting.of(
+      Map(DB_URL -> db.url,
+          DB_USERNAME -> db.user,
+          DB_PASSWORD -> db.password,
+          DB_TABLENAME -> tableName,
+          TIMESTAMP_COLUMN_NAME -> timestampColumnName).asJava))
 }

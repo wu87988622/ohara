@@ -27,7 +27,7 @@ import java.util.*;
  * just use string to store our configuration. Hence, we needs a unified way to serialize non-string
  * type to string value. For example, number, list, and table.
  *
- * <p>The output of this formatter includes 1) TaskConfig -- used by Connector and Task 2) Request
+ * <p>The output of this formatter includes 1) TaskSetting -- used by Connector and Task 2) Request
  * of creating connector 3) Request of validating connector
  */
 public final class ConnectorFormatter {

@@ -18,19 +18,20 @@ package com.island.ohara.client.kafka
 
 import java.util
 
-import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceTask, TaskConfig}
+import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceTask, TaskSetting}
+
 import scala.collection.JavaConverters._
 class SimpleRowSourceConnector extends RowSourceConnector {
-  private[this] var config: TaskConfig = _
+  private[this] var settings: TaskSetting = _
 
-  override protected def _start(config: TaskConfig): Unit = {
-    this.config = config
+  override protected def _start(settings: TaskSetting): Unit = {
+    this.settings = settings
   }
 
   override protected def _taskClass(): Class[_ <: RowSourceTask] = classOf[SimpleRowSourceTask]
 
-  override protected def _taskConfigs(maxTasks: Int): util.List[TaskConfig] =
-    new util.ArrayList[TaskConfig](Seq.fill(maxTasks)(config).asJavaCollection)
+  override protected def _taskSettings(maxTasks: Int): util.List[TaskSetting] =
+    new util.ArrayList[TaskSetting](Seq.fill(maxTasks)(settings).asJavaCollection)
 
   override protected def _stop(): Unit = {}
 }

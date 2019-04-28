@@ -16,10 +16,15 @@
 
 package com.island.ohara.connector.jdbc.source
 import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.kafka.connector.TaskSetting
 import org.junit.Test
 import org.scalatest.Matchers
 
+import scala.collection.JavaConverters._
 class TestJDBCSourceConnectorConfig extends SmallTest with Matchers {
+
+  private[this] def jdbcConfig(settings: Map[String, String]): JDBCSourceConnectorConfig =
+    JDBCSourceConnectorConfig(TaskSetting.of(settings.asJava))
 
   @Test
   def testSettingProperty(): Unit = {
@@ -33,7 +38,7 @@ class TestJDBCSourceConnectorConfig extends SmallTest with Matchers {
         TIMESTAMP_COLUMN_NAME -> "CDC_TIMESTAMP"
       )
 
-    val jdbcSourceConnectorConfig = JDBCSourceConnectorConfig(map1)
+    val jdbcSourceConnectorConfig = jdbcConfig(map1)
     jdbcSourceConnectorConfig.dbURL shouldBe "jdbc:mysql://localhost/test"
     jdbcSourceConnectorConfig.dbUserName shouldBe "root"
     jdbcSourceConnectorConfig.dbPassword shouldBe "123456"
@@ -46,16 +51,16 @@ class TestJDBCSourceConnectorConfig extends SmallTest with Matchers {
   @Test
   def testException(): Unit = {
     intercept[NoSuchElementException] {
-      JDBCSourceConnectorConfig(Map())
-    }.getMessage shouldBe s"key not found: $DB_URL"
+      jdbcConfig(Map())
+    }.getMessage shouldBe s"$DB_URL doesn't exist"
 
     intercept[NoSuchElementException] {
-      JDBCSourceConnectorConfig(Map(DB_URL -> "jdbc:mysql://localhost:3306"))
-    }.getMessage shouldBe s"key not found: $DB_USERNAME"
+      jdbcConfig(Map(DB_URL -> "jdbc:mysql://localhost:3306"))
+    }.getMessage shouldBe s"$DB_USERNAME doesn't exist"
 
     intercept[NoSuchElementException] {
-      JDBCSourceConnectorConfig(Map(DB_URL -> "jdbc:mysql://localhost/test", DB_USERNAME -> "root"))
-    }.getMessage shouldBe s"key not found: $DB_PASSWORD"
+      jdbcConfig(Map(DB_URL -> "jdbc:mysql://localhost/test", DB_USERNAME -> "root"))
+    }.getMessage shouldBe s"$DB_PASSWORD doesn't exist"
   }
 
   @Test
@@ -85,8 +90,8 @@ class TestJDBCSourceConnectorConfig extends SmallTest with Matchers {
       TIMESTAMP_COLUMN_NAME -> "aa"
     )
 
-    JDBCSourceConnectorConfig(configMap).dbSchemaPattern.isEmpty shouldBe false
-    JDBCSourceConnectorConfig(configMap).dbCatalogPattern.isEmpty shouldBe false
+    jdbcConfig(configMap).dbSchemaPattern.isEmpty shouldBe false
+    jdbcConfig(configMap).dbCatalogPattern.isEmpty shouldBe false
 
     val configMap2 = Map[String, String](
       DB_URL -> "aa",
@@ -97,11 +102,10 @@ class TestJDBCSourceConnectorConfig extends SmallTest with Matchers {
       TIMESTAMP_COLUMN_NAME -> "aa"
     )
 
-    JDBCSourceConnectorConfig(configMap2).dbSchemaPattern.isEmpty shouldBe true
-    JDBCSourceConnectorConfig(configMap2).dbCatalogPattern.isEmpty shouldBe true
+    jdbcConfig(configMap2).dbSchemaPattern.isEmpty shouldBe true
+    jdbcConfig(configMap2).dbCatalogPattern.isEmpty shouldBe true
 
-    JDBCSourceConnectorConfig(configMap2) shouldBe JDBCSourceConnectorConfig(configMap2)
-    JDBCSourceConnectorConfig(configMap2) shouldBe JDBCSourceConnectorConfig(
-      JDBCSourceConnectorConfig(configMap2).toMap)
+    jdbcConfig(configMap2) shouldBe jdbcConfig(configMap2)
+    jdbcConfig(configMap2) shouldBe jdbcConfig(jdbcConfig(configMap2).toMap)
   }
 }

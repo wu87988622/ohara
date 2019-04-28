@@ -200,12 +200,12 @@ class FtpSourceTask extends RowSourceTask {
     .getOrElse(Seq.empty)
     .asJava
 
-  override protected[ftp] def _start(config: TaskConfig): Unit = {
-    this.props = FtpSourceTaskProps(config.raw().asScala.toMap)
-    this.schema = config.columns.asScala
+  override protected[ftp] def _start(settings: TaskSetting): Unit = {
+    this.props = FtpSourceTaskProps(settings)
+    this.schema = settings.columns.asScala
     if (props.inputFolder.isEmpty)
       throw new IllegalArgumentException(s"invalid input:${props.inputFolder.mkString(",")}")
-    topics = config.topicNames().asScala
+    topics = settings.topicNames().asScala
     ftpClient =
       FtpClient.builder().hostname(props.hostname).port(props.port).user(props.user).password(props.password).build()
     cache = OffsetCache()

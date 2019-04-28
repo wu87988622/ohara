@@ -23,24 +23,24 @@ import java.util.concurrent.atomic.AtomicBoolean
 import com.island.ohara.common.data.{Row, Serializer}
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.kafka.Consumer
-import com.island.ohara.kafka.connector.{RowSourceRecord, RowSourceTask, TaskConfig}
+import com.island.ohara.kafka.connector.{RowSourceRecord, RowSourceTask, TaskSetting}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 class SimpleRowSourceTask extends RowSourceTask {
 
-  private[this] var config: TaskConfig = _
+  private[this] var settings: TaskSetting = _
   private[this] val queue = new LinkedBlockingQueue[RowSourceRecord]
   private[this] val closed = new AtomicBoolean(false)
   private[this] var consumer: Consumer[Row, Array[Byte]] = _
-  override protected def _start(config: TaskConfig): Unit = {
-    this.config = config
+  override protected def _start(settings: TaskSetting): Unit = {
+    this.settings = settings
     this.consumer = Consumer
       .builder[Row, Array[Byte]]()
-      .connectionProps(config.stringValue(BROKER))
-      .groupId(config.id)
-      .topicName(config.stringValue(INPUT))
+      .connectionProps(settings.stringValue(BROKER))
+      .groupId(settings.id)
+      .topicName(settings.stringValue(INPUT))
       .offsetFromBegin()
       .keySerializer(Serializer.ROW)
       .valueSerializer(Serializer.BYTES)
@@ -53,7 +53,7 @@ class SimpleRowSourceTask extends RowSourceTask {
           .filter(_.key.isPresent)
           .map(_.key.get)
           .flatMap(row =>
-            config.topicNames().asScala.map(topic => RowSourceRecord.builder().row(row).topicName(topic).build()))
+            settings.topicNames().asScala.map(topic => RowSourceRecord.builder().row(row).topicName(topic).build()))
           .foreach(r => queue.put(r))
       } finally Releasable.close(consumer)
     }

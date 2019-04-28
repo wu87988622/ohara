@@ -154,7 +154,7 @@ class TestMetrics extends WithBrokerWorker with Matchers {
       numberOfTasks = Some(1),
       settings = Map(
         "perf.batch" -> "1",
-        "perf.frequence" -> "1 second"
+        "perf.frequence" -> java.time.Duration.ofSeconds(1).toString
       )
     )
 

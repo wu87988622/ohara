@@ -20,7 +20,7 @@ import java.util.List;
 
 public class DumbSinkTask extends RowSinkTask {
   @Override
-  protected void _start(TaskConfig config) {}
+  protected void _start(TaskSetting config) {}
 
   @Override
   protected void _stop() {}

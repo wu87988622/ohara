@@ -16,16 +16,16 @@
 
 package com.island.ohara.configurator
 
-import com.island.ohara.kafka.connector.{RowSinkConnector, RowSinkTask, TaskConfig}
+import com.island.ohara.kafka.connector.{RowSinkConnector, RowSinkTask, TaskSetting}
 
 import scala.collection.JavaConverters._
 class DumbSink extends RowSinkConnector {
-  private[this] var config: TaskConfig = _
+  private[this] var settings: TaskSetting = _
   override protected def _taskClass(): Class[_ <: RowSinkTask] = classOf[DumbSinkTask]
-  override protected def _taskConfigs(maxTasks: Int): java.util.List[TaskConfig] = Seq.fill(maxTasks)(config).asJava
-  override protected def _start(config: TaskConfig): Unit = {
-    this.config = config
-    if (config.raw().containsKey("you_should_fail")) throw new IllegalArgumentException
+  override protected def _taskSettings(maxTasks: Int): java.util.List[TaskSetting] = Seq.fill(maxTasks)(settings).asJava
+  override protected def _start(settings: TaskSetting): Unit = {
+    this.settings = settings
+    if (settings.stringOption("you_should_fail").isPresent) throw new IllegalArgumentException
   }
   override protected def _stop(): Unit = {}
 }

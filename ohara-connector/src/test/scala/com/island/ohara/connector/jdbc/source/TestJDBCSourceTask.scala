@@ -23,7 +23,7 @@ import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
 import com.island.ohara.common.data.{Column, DataType, Row}
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.connector.jdbc.util.ColumnInfo
-import com.island.ohara.kafka.connector.{RowSourceRecord, TaskConfig}
+import com.island.ohara.kafka.connector.{RowSourceRecord, TaskSetting}
 import com.island.ohara.testing.service.Database
 import org.apache.kafka.connect.source.SourceTaskContext
 import org.apache.kafka.connect.storage.OffsetStorageReader
@@ -70,14 +70,15 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
     when(taskContext.offsetStorageReader()).thenReturn(offsetStorageReader)
     jdbcSourceTask.initialize(taskContext.asInstanceOf[SourceTaskContext])
 
-    val taskConfig: TaskConfig = mock[TaskConfig]
-    val maps: Map[String, String] = Map(DB_URL -> db.url,
-                                        DB_USERNAME -> db.user,
-                                        DB_PASSWORD -> db.password,
-                                        DB_TABLENAME -> tableName,
-                                        DB_SCHEMA_PATTERN -> "",
-                                        TIMESTAMP_COLUMN_NAME -> timestampColumnName)
-    when(taskConfig.raw()).thenReturn(maps.asJava)
+    val taskSetting: TaskSetting = mock[TaskSetting]
+    when(taskSetting.stringValue(DB_URL)).thenReturn(db.url)
+    when(taskSetting.stringValue(DB_USERNAME)).thenReturn(db.user)
+    when(taskSetting.stringValue(DB_PASSWORD)).thenReturn(db.password)
+    when(taskSetting.stringValue(DB_TABLENAME)).thenReturn(tableName)
+    when(taskSetting.stringOption(DB_SCHEMA_PATTERN)).thenReturn(java.util.Optional.empty[String]())
+    when(taskSetting.stringOption(DB_CATALOG_PATTERN)).thenReturn(java.util.Optional.empty[String]())
+    when(taskSetting.stringOption(MODE)).thenReturn(java.util.Optional.empty[String]())
+    when(taskSetting.stringValue(TIMESTAMP_COLUMN_NAME)).thenReturn(timestampColumnName)
 
     val columns: Seq[Column] = Seq(
       Column.builder().name("COLUMN1").dataType(DataType.OBJECT).order(0).build(),
@@ -85,9 +86,9 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
       Column.builder().name("COLUMN4").dataType(DataType.INT).order(3).build()
     )
 
-    when(taskConfig.columns).thenReturn(columns.asJava)
-    when(taskConfig.topicNames()).thenReturn(Seq("topic1").asJava)
-    jdbcSourceTask._start(taskConfig)
+    when(taskSetting.columns).thenReturn(columns.asJava)
+    when(taskSetting.topicNames()).thenReturn(Seq("topic1").asJava)
+    jdbcSourceTask._start(taskSetting)
 
     val rows: Seq[RowSourceRecord] = jdbcSourceTask._poll().asScala
     rows.head.row.cell(0).value.toString shouldBe "2018-09-01 00:00:00.0"
@@ -160,24 +161,26 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
     when(taskContext.offsetStorageReader()).thenReturn(offsetStorageReader)
     jdbcSourceTask.initialize(taskContext.asInstanceOf[SourceTaskContext])
 
-    val taskConfig: TaskConfig = mock[TaskConfig]
-    val maps: Map[String, String] = Map(DB_URL -> db.url,
-                                        DB_USERNAME -> db.user,
-                                        DB_PASSWORD -> db.password,
-                                        DB_TABLENAME -> tableName,
-                                        DB_SCHEMA_PATTERN -> "",
-                                        TIMESTAMP_COLUMN_NAME -> timestampColumnName)
-    when(taskConfig.raw()).thenReturn(maps.asJava)
+    val taskSetting: TaskSetting = mock[TaskSetting]
+    when(taskSetting.stringValue(DB_URL)).thenReturn(db.url)
+    when(taskSetting.stringValue(DB_USERNAME)).thenReturn(db.user)
+    when(taskSetting.stringValue(DB_PASSWORD)).thenReturn(db.password)
+    when(taskSetting.stringValue(DB_TABLENAME)).thenReturn(tableName)
+    when(taskSetting.stringOption(DB_SCHEMA_PATTERN)).thenReturn(java.util.Optional.empty[String]())
+    when(taskSetting.stringOption(DB_CATALOG_PATTERN)).thenReturn(java.util.Optional.empty[String]())
+    when(taskSetting.stringOption(MODE)).thenReturn(java.util.Optional.empty[String]())
+    when(taskSetting.stringValue(TIMESTAMP_COLUMN_NAME)).thenReturn(timestampColumnName)
+
     val columns: Seq[Column] = Seq(
       Column.builder().name("COLUMN1").newName("COLUMN100").dataType(DataType.OBJECT).order(0).build(),
       Column.builder().name("COLUMN2").newName("COLUMN200").dataType(DataType.STRING).order(1).build(),
       Column.builder().name("COLUMN4").newName("COLUMN400").dataType(DataType.INT).order(3).build()
     )
 
-    when(taskConfig.columns).thenReturn(columns.asJava)
-    when(taskConfig.topicNames()).thenReturn(Seq("topic1").asJava)
+    when(taskSetting.columns).thenReturn(columns.asJava)
+    when(taskSetting.topicNames()).thenReturn(Seq("topic1").asJava)
 
-    jdbcSourceTask._start(taskConfig)
+    jdbcSourceTask._start(taskSetting)
 
     val rows: Seq[RowSourceRecord] = jdbcSourceTask._poll().asScala
     rows.head.row.cell(0).value.toString shouldBe "2018-09-01 00:00:00.0"

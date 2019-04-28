@@ -26,13 +26,13 @@ import com.island.ohara.kafka.connector.json.SettingDefinition
 import scala.collection.JavaConverters._
 
 class FtpSink extends RowSinkConnector {
-  private[this] var config: TaskConfig = _
+  private[this] var settings: TaskSetting = _
   private[this] var props: FtpSinkProps = _
 
-  override protected[ftp] def _start(config: TaskConfig): Unit = {
-    this.config = config
-    this.props = FtpSinkProps(config.raw().asScala.toMap)
-    if (config.columns.asScala.exists(_.order == 0))
+  override protected[ftp] def _start(settings: TaskSetting): Unit = {
+    this.settings = settings
+    this.props = FtpSinkProps(settings)
+    if (settings.columns.asScala.exists(_.order == 0))
       throw new IllegalArgumentException("column order must be bigger than zero")
 
     val ftpClient =
@@ -47,12 +47,12 @@ class FtpSink extends RowSinkConnector {
 
   override protected def _taskClass(): Class[_ <: RowSinkTask] = classOf[FtpSinkTask]
 
-  override protected def _taskConfigs(maxTasks: Int): util.List[TaskConfig] = {
+  override protected def _taskSettings(maxTasks: Int): util.List[TaskSetting] = {
     (0 until maxTasks)
       .map(
         index =>
-          config.append(FtpSinkTaskProps(
-            outputFolder = CommonUtils.path(props.outputFolder, s"${config.id}_$index"),
+          settings.append(FtpSinkTaskProps(
+            outputFolder = CommonUtils.path(props.outputFolder, s"${settings.id}_$index"),
             needHeader = props.needHeader,
             encode = props.encode,
             hostname = props.hostname,

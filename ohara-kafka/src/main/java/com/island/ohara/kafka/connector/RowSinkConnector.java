@@ -40,7 +40,7 @@ public abstract class RowSinkConnector extends SinkConnector {
    *
    * @param config configuration settings
    */
-  protected abstract void _start(TaskConfig config);
+  protected abstract void _start(TaskSetting config);
 
   /** stop this connector */
   protected abstract void _stop();
@@ -59,7 +59,7 @@ public abstract class RowSinkConnector extends SinkConnector {
    * @param maxTasks number of tasks for this connector
    * @return the settings for each tasks
    */
-  protected abstract List<TaskConfig> _taskConfigs(int maxTasks);
+  protected abstract List<TaskSetting> _taskSettings(int maxTasks);
 
   /**
    * Define the configuration for the connector.
@@ -87,15 +87,15 @@ public abstract class RowSinkConnector extends SinkConnector {
    * @return counter
    */
   protected CounterBuilder counterBuilder() {
-    if (taskConfig == null)
+    if (taskSetting == null)
       throw new IllegalArgumentException("you can't create a counter before starting connector");
-    return new CounterBuilder(taskConfig.id());
+    return new CounterBuilder(taskSetting.id());
   }
   // -------------------------------------------------[WRAPPED]-------------------------------------------------//
   /** We take over this method to disable user to use java collection. */
   @Override
   public final List<Map<String, String>> taskConfigs(int maxTasks) {
-    return _taskConfigs(maxTasks).stream().map(TaskConfig::raw).collect(Collectors.toList());
+    return _taskSettings(maxTasks).stream().map(TaskSetting::raw).collect(Collectors.toList());
   }
 
   @Override
@@ -103,12 +103,12 @@ public abstract class RowSinkConnector extends SinkConnector {
     return _taskClass();
   }
 
-  @VisibleForTesting TaskConfig taskConfig = null;
+  @VisibleForTesting TaskSetting taskSetting = null;
 
   @Override
   public final void start(Map<String, String> props) {
-    taskConfig = TaskConfig.of(ImmutableMap.copyOf(props), definitions());
-    _start(taskConfig);
+    taskSetting = TaskSetting.of(ImmutableMap.copyOf(props), definitions());
+    _start(taskSetting);
   }
 
   @Override

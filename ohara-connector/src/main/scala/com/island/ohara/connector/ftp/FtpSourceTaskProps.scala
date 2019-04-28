@@ -17,6 +17,7 @@
 package com.island.ohara.connector.ftp
 
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.kafka.connector.TaskSetting
 
 case class FtpSourceTaskProps(hash: Int,
                               total: Int,
@@ -43,37 +44,16 @@ case class FtpSourceTaskProps(hash: Int,
 }
 
 object FtpSourceTaskProps {
-  def apply(hash: Int,
-            total: Int,
-            inputFolder: String,
-            completedFolder: String,
-            errorFolder: String,
-            encode: String,
-            hostname: String,
-            port: Int,
-            user: String,
-            password: String): FtpSourceTaskProps = FtpSourceTaskProps(
-    hash = hash,
-    total = total,
-    inputFolder = inputFolder,
-    completedFolder = Some(completedFolder),
-    errorFolder = errorFolder,
-    encode = encode,
-    hostname = hostname,
-    port = port,
-    user = user,
-    password = password
-  )
-  def apply(props: Map[String, String]): FtpSourceTaskProps = FtpSourceTaskProps(
-    hash = props(FTP_HASH).toInt,
-    total = props(FTP_TOTAL).toInt,
-    inputFolder = props(FTP_INPUT),
-    completedFolder = props.get(FTP_COMPLETED_FOLDER).filterNot(CommonUtils.isEmpty),
-    errorFolder = props(FTP_ERROR),
-    encode = props(FTP_ENCODE),
-    hostname = props(FTP_HOSTNAME),
-    port = props(FTP_PORT).toInt,
-    user = props(FTP_USER_NAME),
-    password = props(FTP_PASSWORD)
+  def apply(settings: TaskSetting): FtpSourceTaskProps = FtpSourceTaskProps(
+    hash = settings.intValue(FTP_HASH),
+    total = settings.intValue(FTP_TOTAL),
+    inputFolder = settings.stringValue(FTP_INPUT),
+    completedFolder = Option(settings.stringOption(FTP_COMPLETED_FOLDER).orElse(null)).filterNot(CommonUtils.isEmpty),
+    errorFolder = settings.stringValue(FTP_ERROR),
+    encode = settings.stringOption(FTP_ENCODE).orElse(FTP_ENCODE_DEFAULT),
+    hostname = settings.stringValue(FTP_HOSTNAME),
+    port = settings.intValue(FTP_PORT),
+    user = settings.stringValue(FTP_USER_NAME),
+    password = settings.stringValue(FTP_PASSWORD)
   )
 }

@@ -18,7 +18,7 @@ package com.island.ohara.connector.hdfs
 
 import java.io.{BufferedReader, InputStream, InputStreamReader}
 import java.time.Duration
-import java.util.concurrent.{ConcurrentHashMap, TimeUnit}
+import java.util.concurrent.TimeUnit
 
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Cell, DataType, Row, Serializer, _}
@@ -27,17 +27,17 @@ import com.island.ohara.connector.hdfs.creator.LocalHDFSStorageCreator
 import com.island.ohara.connector.hdfs.storage.HDFSStorage
 import com.island.ohara.kafka.Producer
 import com.island.ohara.kafka.connector.json.ConnectorFormatter
-import com.island.ohara.kafka.connector.{RowSinkTask, TaskConfig}
-import com.island.ohara.testing.With3Brokers3Workers
+import com.island.ohara.kafka.connector.{RowSinkTask, TaskSetting}
+import com.island.ohara.testing.WithBrokerWorker
 import org.apache.hadoop.fs.Path
 import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
-class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
+class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
   private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
   private[this] val hdfsURL: String = "hdfs://host1:9000"
   private[this] val tmpDir: String = "/tmp"
@@ -53,12 +53,12 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
 
     hdfsSinkConnector.start(
       ConnectorFormatter.of().id("test").topicName("topic").setting(HDFS_URL, hdfsURL).setting(TMP_DIR, tmpDir).raw())
-    val result = hdfsSinkConnector._taskConfigs(maxTasks)
+    val result = hdfsSinkConnector._taskSettings(maxTasks)
 
     result.size shouldBe maxTasks
     result.asScala.foreach(r => {
-      r.raw().get(HDFS_URL) shouldBe hdfsURL
-      r.raw().get(TMP_DIR) shouldBe tmpDir
+      r.stringValue(HDFS_URL) shouldBe hdfsURL
+      r.stringValue(TMP_DIR) shouldBe tmpDir
     })
   }
 
@@ -66,9 +66,8 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
   def testRunMiniClusterAndAssignConfig(): Unit = {
     val connectorName = methodName
     val topicName = methodName
-    val sinkTasks = 2
     val flushLineCountName = FLUSH_LINE_COUNT
-    val flushLineCount = "2000"
+    val flushLineCount = 2000
     val rotateIntervalMSName = ROTATE_INTERVAL_MS
     val tmpDirName = TMP_DIR
     val tmpDirPath = "/home/tmp"
@@ -81,16 +80,18 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
         .id(connectorName)
         .connectorClass(classOf[SimpleHDFSSinkConnector])
         .topicName(topicName)
-        .numberOfTasks(sinkTasks)
-        .settings(Map(flushLineCountName -> flushLineCount, tmpDirName -> tmpDirPath, hdfsURLName -> localURL))
+        .settings(Map(flushLineCountName -> flushLineCount.toString, tmpDirName -> tmpDirPath, hdfsURLName -> localURL))
         .columns(schema)
         .numberOfTasks(1)
         .create)
 
+    CommonUtils.await(() => SimpleHDFSSinkTask.taskProps != null && SimpleHDFSSinkTask.sinkConnectorConfig != null,
+                      Duration.ofSeconds(20))
     CommonUtils
-      .await(() => SimpleHDFSSinkTask.taskProps.get(flushLineCountName) == flushLineCount, Duration.ofSeconds(20))
-    CommonUtils.await(() => SimpleHDFSSinkTask.taskProps.get(rotateIntervalMSName) != null, Duration.ofSeconds(20))
-    CommonUtils.await(() => SimpleHDFSSinkTask.taskProps.get(tmpDirName) == tmpDirPath, Duration.ofSeconds(10))
+      .await(() => SimpleHDFSSinkTask.taskProps.intValue(flushLineCountName) == flushLineCount, Duration.ofSeconds(20))
+    CommonUtils
+      .await(() => SimpleHDFSSinkTask.taskProps.stringOption(rotateIntervalMSName).isPresent, Duration.ofSeconds(20))
+    CommonUtils.await(() => SimpleHDFSSinkTask.taskProps.stringValue(tmpDirName) == tmpDirPath, Duration.ofSeconds(10))
     CommonUtils.await(() => SimpleHDFSSinkTask.sinkConnectorConfig.dataDir == HDFSSinkConnectorConfig.DATA_DIR_DEFAULT,
                       Duration.ofSeconds(20))
     CommonUtils.await(() => SimpleHDFSSinkTask.sinkConnectorConfig.flushLineCount == 2000, Duration.ofSeconds(20))
@@ -98,7 +99,6 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
 
   @Test
   def testHDFSSinkConnector(): Unit = {
-    val sinkTasks = 1
     val flushLineCountName = FLUSH_LINE_COUNT
     val flushLineCount = "10"
     val tmpDirName = TMP_DIR
@@ -134,7 +134,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
         .id(connectorName)
         .connectorClass(classOf[HDFSSinkConnector])
         .topicName(topicName)
-        .numberOfTasks(sinkTasks)
+        .numberOfTasks(1)
         .settings(Map(
           flushLineCountName -> flushLineCount,
           tmpDirName -> tmpDirPath,
@@ -178,7 +178,6 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
 
   @Test
   def testFlushSizeOne(): Unit = {
-    val sinkTasks = 1
     val flushLineCountName = FLUSH_LINE_COUNT
     val flushLineCount = "1"
     val tmpDirName = TMP_DIR
@@ -214,7 +213,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
         .id(connectorName)
         .connectorClass(classOf[HDFSSinkConnector])
         .topicName(topicName)
-        .numberOfTasks(sinkTasks)
+        .numberOfTasks(1)
         .settings(Map(
           flushLineCountName -> flushLineCount,
           tmpDirName -> tmpDirPath,
@@ -267,7 +266,6 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
 
   @Test
   def testRecoverOffset(): Unit = {
-    val sinkTasks = 1
     val flushLineCountName = FLUSH_LINE_COUNT
     val flushLineCount = "100"
     val tmpDirName = TMP_DIR
@@ -307,7 +305,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
         .id(connectorName)
         .connectorClass(classOf[HDFSSinkConnector])
         .topicName(topicName)
-        .numberOfTasks(sinkTasks)
+        .numberOfTasks(1)
         .settings(Map(
           flushLineCountName -> flushLineCount,
           tmpDirName -> tmpDirPath,
@@ -350,8 +348,6 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
 
   @Test
   def testDataNotMappingSchema(): Unit = {
-
-    val sinkTasks = 1
     val flushLineCountName = FLUSH_LINE_COUNT
     val flushLineCount = "10"
     val tmpDirName = TMP_DIR
@@ -388,7 +384,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
         .id(connectorName)
         .connectorClass(classOf[HDFSSinkConnector])
         .topicName(topicName)
-        .numberOfTasks(sinkTasks)
+        .numberOfTasks(1)
         .settings(Map(
           flushLineCountName -> flushLineCount,
           tmpDirName -> tmpDirPath,
@@ -431,16 +427,14 @@ class SimpleHDFSSinkConnector extends HDFSSinkConnector {
 }
 
 class SimpleHDFSSinkTask extends HDFSSinkTask {
-  override def _start(props: TaskConfig): Unit = {
+  override def _start(props: TaskSetting): Unit = {
     super._start(props)
-    props.raw().asScala.foreach {
-      case (k, v) => SimpleHDFSSinkTask.taskProps.put(k, v)
-    }
+    SimpleHDFSSinkTask.taskProps = props
     SimpleHDFSSinkTask.sinkConnectorConfig = hdfsSinkConnectorConfig
   }
 }
 
 object SimpleHDFSSinkTask {
-  val taskProps = new ConcurrentHashMap[String, String]
-  var sinkConnectorConfig: HDFSSinkConnectorConfig = _
+  @volatile var taskProps: TaskSetting = _
+  @volatile var sinkConnectorConfig: HDFSSinkConnectorConfig = _
 }

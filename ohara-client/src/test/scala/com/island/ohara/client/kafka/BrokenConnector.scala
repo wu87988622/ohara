@@ -18,16 +18,16 @@ package com.island.ohara.client.kafka
 
 import java.util
 
-import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceTask, TaskConfig}
+import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceTask, TaskSetting}
 
 class BrokenConnector extends RowSourceConnector {
 
   override protected def _taskClass(): Class[_ <: RowSourceTask] = classOf[BrokenConnectorTask]
 
-  override protected def _taskConfigs(maxTasks: Int): util.List[TaskConfig] = throw new IllegalArgumentException(
+  override protected def _taskSettings(maxTasks: Int): util.List[TaskSetting] = throw new IllegalArgumentException(
     "This is an unrunnable connector")
 
-  override protected def _start(config: TaskConfig): Unit = throw new IllegalArgumentException(
+  override protected def _start(settings: TaskSetting): Unit = throw new IllegalArgumentException(
     "This is an unrunnable connector")
 
   override protected def _stop(): Unit = {

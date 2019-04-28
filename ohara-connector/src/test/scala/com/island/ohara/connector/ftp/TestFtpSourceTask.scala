@@ -35,7 +35,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
     hash = 0,
     total = 1,
     inputFolder = "/input",
-    completedFolder = "/completed",
+    completedFolder = Some("/completed"),
     errorFolder = "/error",
     user = ftpServer.user,
     password = ftpServer.password,

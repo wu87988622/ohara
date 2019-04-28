@@ -34,9 +34,9 @@ public abstract class RowSourceTask extends SourceTask {
   /**
    * Start the Task. This should handle any configuration parsing and one-time setup from the task.
    *
-   * @param config initial configuration
+   * @param settings initial configuration
    */
-  protected abstract void _start(TaskConfig config);
+  protected abstract void _start(TaskSetting settings);
 
   /**
    * Signal this SourceTask to stop. In SourceTasks, this method only needs to signal to the task
@@ -123,19 +123,19 @@ public abstract class RowSourceTask extends SourceTask {
    * @return counter
    */
   protected CounterBuilder counterBuilder() {
-    if (taskConfig == null)
+    if (taskSetting == null)
       throw new IllegalArgumentException("you can't create a counter before starting connector");
-    return new CounterBuilder(taskConfig.id());
+    return new CounterBuilder(taskSetting.id());
   }
 
-  @VisibleForTesting TaskConfig taskConfig = null;
+  @VisibleForTesting TaskSetting taskSetting = null;
 
   @Override
   public final void start(Map<String, String> props) {
-    taskConfig = TaskConfig.of(ImmutableMap.copyOf(props));
-    rowCounter = ConnectorUtils.rowCounter(taskConfig.id());
-    sizeCounter = ConnectorUtils.sizeCounter(taskConfig.id());
-    _start(taskConfig);
+    taskSetting = TaskSetting.of(ImmutableMap.copyOf(props));
+    rowCounter = ConnectorUtils.rowCounter(taskSetting.id());
+    sizeCounter = ConnectorUtils.sizeCounter(taskSetting.id());
+    _start(taskSetting);
   }
 
   @Override

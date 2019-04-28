@@ -61,7 +61,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
 
   private[this] val props = FtpSourceProps(
     inputFolder = "/input",
-    completedFolder = "/output",
+    completedFolder = Some("/output"),
     errorFolder = "/error",
     user = testUtil.ftpServer.user,
     password = testUtil.ftpServer.password,

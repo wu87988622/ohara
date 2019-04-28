@@ -21,7 +21,7 @@ import java.util.List;
 
 public class DumbSourceTask extends RowSourceTask {
   @Override
-  protected void _start(TaskConfig config) {}
+  protected void _start(TaskSetting config) {}
 
   @Override
   protected void _stop() {}

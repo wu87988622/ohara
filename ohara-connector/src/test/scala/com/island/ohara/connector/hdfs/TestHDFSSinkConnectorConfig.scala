@@ -16,88 +16,88 @@
 
 package com.island.ohara.connector.hdfs
 import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.kafka.connector.TaskSetting
 import org.junit.Test
 import org.scalatest.Matchers
 
+import scala.collection.JavaConverters._
 class TestHDFSSinkConnectorConfig extends SmallTest with Matchers {
-  val HDFS_URL_VALUE = "hdfs://test:9000"
+  private[this] val HDFS_URL_VALUE = "hdfs://test:9000"
+
+  private[this] def hdfsConfig(settings: Map[String, String]): HDFSSinkConnectorConfig =
+    HDFSSinkConnectorConfig(TaskSetting.of(settings.asJava))
 
   @Test
   def testGetFlushLineCount(): Unit = {
-    val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig =
-      HDFSSinkConnectorConfig(Map(HDFS_URL -> HDFS_URL_VALUE, FLUSH_LINE_COUNT -> "2000"))
+    val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig = hdfsConfig(
+      Map(HDFS_URL -> HDFS_URL_VALUE, FLUSH_LINE_COUNT -> "2000"))
 
     hdfsSinkConnectorConfig.flushLineCount shouldBe 2000
   }
 
   @Test
   def testGetFlushLineCountDefaultValue(): Unit = {
-    val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig =
-      HDFSSinkConnectorConfig(Map(HDFS_URL -> HDFS_URL_VALUE))
+    val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig = hdfsConfig(Map(HDFS_URL -> HDFS_URL_VALUE))
 
     hdfsSinkConnectorConfig.flushLineCount shouldBe 1000
   }
 
   @Test
   def testGetRotateIntervalMS(): Unit = {
-    val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig =
-      HDFSSinkConnectorConfig(Map(HDFS_URL -> HDFS_URL_VALUE, ROTATE_INTERVAL_MS -> "120000"))
+    val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig = hdfsConfig(
+      Map(HDFS_URL -> HDFS_URL_VALUE, ROTATE_INTERVAL_MS -> "120000"))
 
     hdfsSinkConnectorConfig.rotateIntervalMS shouldBe 120000
   }
 
   @Test
   def testGetRotateIntervalMSDefaultValue(): Unit = {
-    val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig =
-      HDFSSinkConnectorConfig(Map(HDFS_URL -> HDFS_URL_VALUE))
+    val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig = hdfsConfig(Map(HDFS_URL -> HDFS_URL_VALUE))
 
     hdfsSinkConnectorConfig.rotateIntervalMS shouldBe 60000
   }
 
   @Test
   def testGetTmpDir(): Unit = {
-    val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig =
-      HDFSSinkConnectorConfig(Map(HDFS_URL -> HDFS_URL_VALUE, TMP_DIR -> "/root/tmp"))
+    val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig = hdfsConfig(
+      Map(HDFS_URL -> HDFS_URL_VALUE, TMP_DIR -> "/root/tmp"))
 
     hdfsSinkConnectorConfig.tmpDir shouldBe "/root/tmp"
   }
 
   @Test
   def testGetTmpDirDefaultValue(): Unit = {
-    val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig =
-      HDFSSinkConnectorConfig(Map(HDFS_URL -> HDFS_URL_VALUE))
+    val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig = hdfsConfig(Map(HDFS_URL -> HDFS_URL_VALUE))
 
     hdfsSinkConnectorConfig.tmpDir shouldBe "/tmp"
   }
 
   @Test
   def testGetDataDir(): Unit = {
-    val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig =
-      HDFSSinkConnectorConfig(Map(HDFS_URL -> HDFS_URL_VALUE, DATA_DIR -> "/root/data"))
+    val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig = hdfsConfig(
+      Map(HDFS_URL -> HDFS_URL_VALUE, DATA_DIR -> "/root/data"))
 
     hdfsSinkConnectorConfig.dataDir shouldBe "/root/data"
   }
 
   @Test
   def testGetDataDirDefaultValue(): Unit = {
-    val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig =
-      HDFSSinkConnectorConfig(Map(HDFS_URL -> HDFS_URL_VALUE))
+    val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig = hdfsConfig(Map(HDFS_URL -> HDFS_URL_VALUE))
 
     hdfsSinkConnectorConfig.dataDir shouldBe "/data"
   }
 
   @Test
   def testGetDataFilePrefixName(): Unit = {
-    val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig =
-      HDFSSinkConnectorConfig(Map(HDFS_URL -> HDFS_URL_VALUE, DATAFILE_PREFIX_NAME -> "datapart123AAA"))
+    val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig = hdfsConfig(
+      Map(HDFS_URL -> HDFS_URL_VALUE, DATAFILE_PREFIX_NAME -> "datapart123AAA"))
 
     hdfsSinkConnectorConfig.dataFilePrefixName shouldBe "datapart123AAA"
   }
 
   @Test
   def testGetDataFilePrefixNameDefaultValue(): Unit = {
-    val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig =
-      HDFSSinkConnectorConfig(Map(HDFS_URL -> HDFS_URL_VALUE))
+    val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig = hdfsConfig(Map(HDFS_URL -> HDFS_URL_VALUE))
 
     hdfsSinkConnectorConfig.dataFilePrefixName shouldBe "part"
   }
@@ -105,29 +105,28 @@ class TestHDFSSinkConnectorConfig extends SmallTest with Matchers {
   @Test
   def testGetDataFilePrefixNameException1(): Unit = {
     intercept[IllegalArgumentException] {
-      HDFSSinkConnectorConfig(Map(HDFS_URL -> HDFS_URL_VALUE, DATAFILE_PREFIX_NAME -> "datapart123AAA-"))
+      hdfsConfig(Map(HDFS_URL -> HDFS_URL_VALUE, DATAFILE_PREFIX_NAME -> "datapart123AAA-"))
     }.getMessage shouldBe "The datafile.prefix.name value only a-z or A-Z or 0-9"
   }
 
   @Test
   def testGetDataFilePrefixNameException2(): Unit = {
     intercept[IllegalArgumentException] {
-      HDFSSinkConnectorConfig(Map(HDFS_URL -> HDFS_URL_VALUE, DATAFILE_PREFIX_NAME -> "data-part123-AAA"))
+      hdfsConfig(Map(HDFS_URL -> HDFS_URL_VALUE, DATAFILE_PREFIX_NAME -> "data-part123-AAA"))
     }.getMessage shouldBe "The datafile.prefix.name value only a-z or A-Z or 0-9"
   }
 
   @Test
   def testGetDataBufferCount(): Unit = {
-    val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig =
-      HDFSSinkConnectorConfig(Map(HDFS_URL -> HDFS_URL_VALUE, DATA_BUFFER_COUNT -> "50"))
+    val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig = hdfsConfig(
+      Map(HDFS_URL -> HDFS_URL_VALUE, DATA_BUFFER_COUNT -> "50"))
 
     hdfsSinkConnectorConfig.dataBufferCount shouldBe 50
   }
 
   @Test
   def testGetDataBufferCountDefaultValue(): Unit = {
-    val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig =
-      HDFSSinkConnectorConfig(Map(HDFS_URL -> HDFS_URL_VALUE))
+    val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig = hdfsConfig(Map(HDFS_URL -> HDFS_URL_VALUE))
 
     hdfsSinkConnectorConfig.dataBufferCount shouldBe 100
   }
@@ -135,7 +134,7 @@ class TestHDFSSinkConnectorConfig extends SmallTest with Matchers {
   @Test
   def testTmpDirSameDataDir(): Unit = {
     intercept[IllegalArgumentException] {
-      HDFSSinkConnectorConfig(Map(TMP_DIR -> "/tmp", DATA_DIR -> "/tmp"))
+      hdfsConfig(Map(TMP_DIR -> "/tmp", DATA_DIR -> "/tmp"))
     }
   }
 }

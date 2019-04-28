@@ -22,19 +22,22 @@ import com.island.ohara.common.data.{Cell, Column, Row}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.connector.hdfs.storage.{HDFSStorage, Storage}
 import com.island.ohara.connector.hdfs.text.RecordWriterOutput
-import com.island.ohara.kafka.connector.{RowSinkContext, RowSinkRecord, TopicPartition}
+import com.island.ohara.kafka.connector.{RowSinkContext, RowSinkRecord, TaskSetting, TopicPartition}
 import com.island.ohara.testing.WithTestUtils
 import org.junit.Test
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.Matchers
 import org.scalatest.mockito.MockitoSugar
-
+import scala.collection.JavaConverters._
 class TestTopicPartitionWriter extends WithTestUtils with Matchers with MockitoSugar {
+
+  private[this] def hdfsConfig(settings: Map[String, String]): HDFSSinkConnectorConfig =
+    HDFSSinkConnectorConfig(TaskSetting.of(settings.asJava))
 
   @Test
   def testOpenTempFile(): Unit = {
-    val hdfsSinkConnectorConfig = HDFSSinkConnectorConfig(Map(HDFS_URL -> "", TMP_DIR -> "/tmp"))
+    val hdfsSinkConnectorConfig = hdfsConfig(Map(HDFS_URL -> "file://tmp", TMP_DIR -> "/tmp"))
     val sinkTaskContext = mock[RowSinkContext]
     val topicPartition = new TopicPartition("topic1", 0)
     val storage = new HDFSStorage(testUtil.hdfs.fileSystem())
@@ -49,7 +52,7 @@ class TestTopicPartitionWriter extends WithTestUtils with Matchers with MockitoS
 
   @Test
   def testWriteData(): Unit = {
-    val hdfsSinkConnectorConfig = HDFSSinkConnectorConfig(Map(HDFS_URL -> "", TMP_DIR -> "/tmp"))
+    val hdfsSinkConnectorConfig = hdfsConfig(Map(HDFS_URL -> "file://tmp", TMP_DIR -> "/tmp"))
 
     val sinkTaskContext = mock[RowSinkContext]
     val topicPartition = new TopicPartition("topic1", 0)
@@ -73,7 +76,7 @@ class TestTopicPartitionWriter extends WithTestUtils with Matchers with MockitoS
 
   @Test
   def testDefaultValueCommitFile(): Unit = {
-    val hdfsSinkConnectorConfig = HDFSSinkConnectorConfig(Map(HDFS_URL -> "", TMP_DIR -> "/tmp"))
+    val hdfsSinkConnectorConfig = hdfsConfig(Map(HDFS_URL -> "file://tmp", TMP_DIR -> "/tmp"))
     val sinkTaskContext = mock[RowSinkContext]
 
     val topicPartition = new TopicPartition("topic1", 1)
@@ -104,7 +107,7 @@ class TestTopicPartitionWriter extends WithTestUtils with Matchers with MockitoS
     val topicPartition = new TopicPartition("topic1", 0)
 
     val sinkTaskContext = mock[RowSinkContext]
-    val hdfsSinkConnectorConfig = HDFSSinkConnectorConfig(Map(HDFS_URL -> "", TMP_DIR -> "/tmp"))
+    val hdfsSinkConnectorConfig = hdfsConfig(Map(HDFS_URL -> "file://tmp", TMP_DIR -> "/tmp"))
     val storage = mock[Storage]
     when(storage.list("/data/partition0"))
       .thenReturn(List("prefix-000000001-000001000.csv", "prefix-000001001-000002000.csv").toIterator)
@@ -123,7 +126,7 @@ class TestTopicPartitionWriter extends WithTestUtils with Matchers with MockitoS
     val topicPartition = new TopicPartition("topic1", 0)
 
     val sinkTaskContext = mock[RowSinkContext]
-    val hdfsSinkConnectorConfig = HDFSSinkConnectorConfig(Map(HDFS_URL -> "", TMP_DIR -> "/tmp"))
+    val hdfsSinkConnectorConfig = hdfsConfig(Map(HDFS_URL -> "file://tmp", TMP_DIR -> "/tmp"))
     val storage = mock[Storage]
     when(storage.list("/data/partition0"))
       .thenReturn(List("prefix-000000001-000001000.csv", "prefix-000001001-000002000.csv").toIterator)
@@ -141,8 +144,8 @@ class TestTopicPartitionWriter extends WithTestUtils with Matchers with MockitoS
     val topicPartition = new TopicPartition("topic1", 0)
 
     val sinkTaskContext = mock[RowSinkContext]
-    val hdfsSinkConnectorConfig = HDFSSinkConnectorConfig(
-      Map(HDFS_URL -> "", TMP_DIR -> "/tmp", ROTATE_INTERVAL_MS -> "1500"))
+    val hdfsSinkConnectorConfig = hdfsConfig(
+      Map(HDFS_URL -> "file://tmp", TMP_DIR -> "/tmp", ROTATE_INTERVAL_MS -> "1500"))
     val storage = mock[Storage]
     when(storage.open(anyString(), anyBoolean())).thenReturn(mock[OutputStream])
     when(storage.list("/data/partition0"))
@@ -167,8 +170,8 @@ class TestTopicPartitionWriter extends WithTestUtils with Matchers with MockitoS
     val topicPartition = new TopicPartition("topic1", 0)
 
     val sinkTaskContext = mock[RowSinkContext]
-    val hdfsSinkConnectorConfig = HDFSSinkConnectorConfig(
-      Map(HDFS_URL -> "", TMP_DIR -> "/tmp", ROTATE_INTERVAL_MS -> "1500"))
+    val hdfsSinkConnectorConfig = hdfsConfig(
+      Map(HDFS_URL -> "file://tmp", TMP_DIR -> "/tmp", ROTATE_INTERVAL_MS -> "1500"))
     val storage = mock[Storage]
 
     val topicPartitionWriter =
@@ -183,7 +186,7 @@ class TestTopicPartitionWriter extends WithTestUtils with Matchers with MockitoS
   def testFlushFilePath2(): Unit = {
     val topicPartition = new TopicPartition("topic1", 0)
     val sinkTaskContext = mock[RowSinkContext]
-    val hdfsSinkConnectorConfig = HDFSSinkConnectorConfig(Map(HDFS_URL -> ""))
+    val hdfsSinkConnectorConfig = hdfsConfig(Map(HDFS_URL -> "file://tmp"))
     val storage = mock[Storage]
 
     val topicPartitionWriter =
@@ -209,7 +212,7 @@ class TestTopicPartitionWriter extends WithTestUtils with Matchers with MockitoS
   def testFlushFilePath3(): Unit = {
     val topicPartition = new TopicPartition("topic1", 0)
     val sinkTaskContext = mock[RowSinkContext]
-    val hdfsSinkConnectorConfig = HDFSSinkConnectorConfig(Map(HDFS_URL -> ""))
+    val hdfsSinkConnectorConfig = hdfsConfig(Map(HDFS_URL -> "file://tmp"))
     val storage = mock[Storage]
 
     val topicPartitionWriter =

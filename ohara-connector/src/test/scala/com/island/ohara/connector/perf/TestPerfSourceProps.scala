@@ -16,9 +16,11 @@
 
 package com.island.ohara.connector.perf
 import java.time.format.DateTimeParseException
+import java.util.Collections
 
 import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.kafka.connector.TaskSetting
 import com.island.ohara.kafka.connector.json.ConnectorFormatter
 import org.junit.Test
 import org.scalatest.Matchers
@@ -34,7 +36,7 @@ class TestPerfSourceProps extends SmallTest with Matchers {
   @Test
   def testPlainMap(): Unit = {
     val props = PerfSourceProps(123, 10 seconds)
-    val copy = PerfSourceProps(props.toMap)
+    val copy = PerfSourceProps(TaskSetting.of(props.toMap.asJava))
     props shouldBe copy
   }
 
@@ -64,32 +66,23 @@ class TestPerfSourceProps extends SmallTest with Matchers {
 
   @Test
   def testEmptyBatchToDefault(): Unit = {
-    val props = PerfSourceProps(Map.empty)
-    props.batch shouldBe DEFAULT_BATCH
+    PerfSourceProps(TaskSetting.of(Collections.emptyMap())).batch shouldBe DEFAULT_BATCH
   }
 
   @Test
   def testEmptyFrequenceToDefault(): Unit = {
-    val props = PerfSourceProps(Map.empty)
-    props.freq shouldBe DEFAULT_FREQUENCE
-  }
-
-  @Test
-  def testEmptyPropsToMap(): Unit = {
-    val props = PerfSourceProps(Map.empty).toMap
-    props.contains(PERF_BATCH) shouldBe true
-    props.contains(PERF_FREQUENCE) shouldBe true
+    PerfSourceProps(TaskSetting.of(Collections.emptyMap())).freq shouldBe DEFAULT_FREQUENCE
   }
 
   @Test
   def testInvalidFrequence(): Unit = {
-    an[DateTimeParseException] should be thrownBy PerfSourceProps(Map(PERF_FREQUENCE -> "abc"))
+    an[DateTimeParseException] should be thrownBy PerfSourceProps(
+      TaskSetting.of(Map(PERF_BATCH -> "1", PERF_FREQUENCE -> "abc").asJava))
   }
 
   @Test
   def testInvalidProps(): Unit = {
     val source = new PerfSource
-
     an[IllegalArgumentException] should be thrownBy source.start(
       ConnectorFormatter
         .of()

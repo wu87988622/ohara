@@ -34,7 +34,7 @@ class TestOhara743 extends SmallTest with Matchers {
   def testAutoCreateOutput(): Unit = {
     val props = FtpSourceProps(
       inputFolder = "/input",
-      completedFolder = "/output",
+      completedFolder = Some("/output"),
       errorFolder = "/error",
       user = ftpServer.user,
       password = ftpServer.password,

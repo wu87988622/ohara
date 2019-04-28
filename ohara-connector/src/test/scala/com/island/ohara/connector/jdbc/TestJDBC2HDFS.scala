@@ -29,6 +29,7 @@ import com.island.ohara.connector.hdfs.creator.StorageCreator
 import com.island.ohara.connector.hdfs.storage.{HDFSStorage, Storage}
 import com.island.ohara.connector.hdfs.{HDFSSinkConnector, HDFSSinkConnectorConfig, _}
 import com.island.ohara.connector.jdbc.source._
+import com.island.ohara.kafka.connector.TaskSetting
 import com.island.ohara.testing.With3Brokers3Workers
 import com.island.ohara.testing.service.Hdfs
 import org.apache.hadoop.fs.{FileSystem, Path}
@@ -38,6 +39,7 @@ import org.scalatest.Matchers
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.collection.JavaConverters._
 class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
   private[this] val db = testUtil().dataBase()
   private[this] val client = DatabaseClient(db.url, db.user, db.password)
@@ -45,15 +47,20 @@ class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
   private[this] val timestampColumnName = "CREATE_DATE"
   private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
 
-  private[this] val jdbcProps = JDBCSourceConnectorConfig(
+  private[this] def jdbcConfig(settings: Map[String, String]): JDBCSourceConnectorConfig =
+    JDBCSourceConnectorConfig(TaskSetting.of(settings.asJava))
+
+  private[this] def hdfsConfig(settings: Map[String, String]): HDFSSinkConnectorConfig =
+    HDFSSinkConnectorConfig(TaskSetting.of(settings.asJava))
+
+  private[this] val jdbcProps = jdbcConfig(
     Map(DB_URL -> db.url,
         DB_USERNAME -> db.user,
         DB_PASSWORD -> db.password,
         DB_TABLENAME -> tableName,
-        TIMESTAMP_COLUMN_NAME -> timestampColumnName,
-        DB_SCHEMA_PATTERN -> ""))
+        TIMESTAMP_COLUMN_NAME -> timestampColumnName))
 
-  private[this] val hdfsProps = HDFSSinkConnectorConfig(
+  private[this] val hdfsProps = hdfsConfig(
     Map(
       FLUSH_LINE_COUNT -> "50",
       TMP_DIR -> s"${testUtil.hdfs.tmpDirectory}/tmp",

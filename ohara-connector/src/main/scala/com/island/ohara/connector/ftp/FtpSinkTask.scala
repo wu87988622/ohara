@@ -28,15 +28,15 @@ import com.typesafe.scalalogging.Logger
 import scala.collection.JavaConverters._
 
 class FtpSinkTask extends RowSinkTask {
-  private[this] var config: TaskConfig = _
+  private[this] var settings: TaskSetting = _
   private[this] var props: FtpSinkTaskProps = _
   private[this] var ftpClient: FtpClient = _
   private[this] var schema: Seq[Column] = _
 
-  override protected def _start(config: TaskConfig): Unit = {
-    this.config = config
-    this.props = FtpSinkTaskProps(config.raw().asScala.toMap)
-    this.schema = config.columns.asScala
+  override protected def _start(settings: TaskSetting): Unit = {
+    this.settings = settings
+    this.props = FtpSinkTaskProps(settings)
+    this.schema = settings.columns.asScala
     this.ftpClient =
       FtpClient.builder().hostname(props.hostname).port(props.port).user(props.user).password(props.password).build()
   }
