@@ -18,13 +18,12 @@ const axios = require('axios');
 
 async function createNode(
   configurator,
-  port,
   nodeHost,
   nodePort,
   nodeUser,
   nodePass,
 ) {
-  await axios.post(`http://${configurator}:${port}/v0/nodes`, {
+  await axios.post(`${configurator}/nodes`, {
     name: nodeHost,
     port: nodePort,
     user: nodeUser,
@@ -32,8 +31,8 @@ async function createNode(
   });
 }
 
-async function createZk(configurator, port, zkName, nodeHost) {
-  await axios.post(`http://${configurator}:${port}/v0/zookeepers`, {
+async function createZk(configurator, zkName, nodeHost) {
+  await axios.post(`${configurator}/zookeepers`, {
     clientPort: randomPort(),
     electionPort: randomPort(),
     peerPort: randomPort(),
@@ -42,8 +41,8 @@ async function createZk(configurator, port, zkName, nodeHost) {
   });
 }
 
-async function createBk(configurator, port, zkName, bkName, nodeHost) {
-  await axios.post(`http://${configurator}:${port}/v0/brokers`, {
+async function createBk(configurator, zkName, bkName, nodeHost) {
+  await axios.post(`${configurator}/brokers`, {
     clientPort: randomPort(),
     exporterPort: randomPort(),
     jmxPort: randomPort(),
@@ -53,35 +52,35 @@ async function createBk(configurator, port, zkName, bkName, nodeHost) {
   });
 }
 
-async function cleanNode(configurator, port, nodeHost) {
-  await axios.delete(`http://${configurator}:${port}/v0/nodes/${nodeHost}`);
+async function cleanNode(configurator, nodeHost) {
+  await axios.delete(`${configurator}/nodes/${nodeHost}`);
 }
 
-async function cleanZk(configurator, port, zkname) {
-  await axios.delete(`http://${configurator}:${port}/v0/zookeepers/${zkname}`);
+async function cleanZk(configurator, zkname) {
+  await axios.delete(`${configurator}/zookeepers/${zkname}`);
 }
 
-async function cleanBk(configurator, port, bkname) {
-  await axios.delete(`http://${configurator}:${port}/v0/brokers/${bkname}`);
+async function cleanBk(configurator, bkname) {
+  await axios.delete(`${configurator}/brokers/${bkname}`);
 }
 
-async function waitDelete(configurator, port, api) {
-  const res = await axios.get(`http://${configurator}:${port}/v0/` + api);
+async function waitDelete(configurator, api) {
+  const res = await axios.get(`${configurator}/` + api);
   if (res.data.length > 0) {
     sleep(1000);
-    await waitDelete(configurator, port, api);
+    await waitDelete(configurator, api);
   }
 
   return;
 }
 
-async function waitCreate(configurator, port, api, name) {
-  const res = await axios.get(`http://${configurator}:${port}/v0/` + api);
+async function waitCreate(configurator, api, name) {
+  const res = await axios.get(`${configurator}/` + api);
   var result = res.data.some(e => e.name == name);
 
   if (!result) {
     sleep(1000);
-    await waitCreate(configurator, port, api, name);
+    await waitCreate(configurator, api, name);
   }
 
   return;

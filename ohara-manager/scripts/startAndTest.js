@@ -131,11 +131,11 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
     debug(err.message);
     await mergeTestReports();
     killSubProcess();
-    process.exit(1);
+    // process.exit(1);
   } finally {
     await mergeTestReports();
     killSubProcess();
-    process.exit(0);
+    // process.exit(0);
   }
 };
 

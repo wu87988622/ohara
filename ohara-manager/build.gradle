@@ -97,11 +97,19 @@ task it {
 
         if(!project.hasProperty('ohara.manager.it.nodePass')) throw new IllegalArgumentException("ohara.manager.it.nodePass is required")
         String nodePass = project.getProperty('ohara.manager.it.nodePass')
-
-        commandLine 'yarn', 'copy:jars'
-        commandLine 'yarn', 'test:setup' , '--port', port, '--configurator', configurator, '--nodeHost', nodeHost, '--nodePort', nodePort, '--nodeUser', nodeUser, '--nodePass', nodePass
-        commandLine 'yarn', 'test:e2e:ci', '--port', port, '--configurator', configurator, '--nodeHost', nodeHost, '--nodePort', nodePort, '--nodeUser', nodeUser, '--nodePass', nodePass
-        commandLine 'yarn', 'test:clean' , '--port', port, '--configurator', configurator, '--nodeHost', nodeHost
+        
+        exec{
+          commandLine 'yarn', 'copy:jars'
+        }
+        exec{
+          commandLine 'yarn', 'test:setup' , '--port', port, '--configurator', configurator, '--nodeHost', nodeHost, '--nodePort', nodePort, '--nodeUser', nodeUser, '--nodePass', nodePass
+        }
+        exec{
+          commandLine 'yarn', 'test:e2e:ci', '--port', port, '--configurator', configurator, '--nodeHost', nodeHost, '--nodePort', nodePort, '--nodeUser', nodeUser, '--nodePass', nodePass    
+        }
+        exec{
+          commandLine 'yarn', 'test:clean' , '--port', port, '--configurator', configurator, '--nodeHost', nodeHost        
+        }
       }
     }
   }

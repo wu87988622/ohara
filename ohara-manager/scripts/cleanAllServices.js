@@ -20,10 +20,9 @@ const yargs = require('yargs');
 const api = require('../utils/apiHandler');
 const fs = require('fs');
 
-const { configurator, port, nodeHost } = yargs.argv;
+const { configurator, nodeHost } = yargs.argv;
 
 debug('configurator: ', configurator);
-debug('port: ', port);
 debug('nodeHost: ', nodeHost || 'Not input.');
 
 function debug(...message) {
@@ -34,11 +33,11 @@ const cleanServices = async () => {
   const file = fs.readFileSync('scripts/env/service.json');
   var bk = JSON.parse(file).bk;
   var zk = JSON.parse(file).zk;
-  await api.cleanBk(configurator, port, bk);
-  await api.waitDelete(configurator, port, 'brokers');
-  await api.cleanZk(configurator, port, zk);
-  await api.waitDelete(configurator, port, 'zookeepers');
-  await api.cleanNode(configurator, port, nodeHost);
+  await api.cleanBk(configurator, bk);
+  await api.waitDelete(configurator, 'brokers');
+  await api.cleanZk(configurator, zk);
+  await api.waitDelete(configurator, 'zookeepers');
+  await api.cleanNode(configurator, nodeHost);
 };
 
 cleanServices();
