@@ -16,7 +16,7 @@
 
 import { CONNECT } from '../../src/constants/urls';
 
-describe('ConnectPage', () => {
+describe.skip('ConnectPage', () => {
   it('creates a new cluster', () => {
     const nodeName = Cypress.env('node_name');
     const clusterName = 'testcluster';

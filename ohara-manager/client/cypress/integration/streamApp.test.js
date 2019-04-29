@@ -19,7 +19,7 @@ import { makeRandomStr } from '../utils';
 
 let pipelineParams;
 
-describe('StreamApp', () => {
+describe.skip('StreamApp', () => {
   beforeEach(() => {
     pipelineParams = {
       name: makeRandomStr(),

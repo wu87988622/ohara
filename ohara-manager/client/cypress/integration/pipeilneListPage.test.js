@@ -17,7 +17,7 @@
 import * as URLS from '../../src/constants/urls';
 import { makeRandomStr, makeServiceNames } from '../utils';
 
-describe('PipelineListPage', () => {
+describe.skip('PipelineListPage', () => {
   const serviceNames = makeServiceNames();
   before(() => cy.initServices(serviceNames));
   after(() => cy.clearServices(serviceNames));

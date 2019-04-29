@@ -17,7 +17,7 @@
 import * as URLS from '../../src/constants/urls';
 import { CONNECTOR_TYPES } from '../../src/constants/pipelines';
 
-describe('PipelineNewPage', () => {
+describe.skip('PipelineNewPage', () => {
   before(() => {
     cy.createTopic().as('createTopic');
   });

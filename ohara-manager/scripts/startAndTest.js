@@ -27,12 +27,8 @@ const { configurator, port } = getConfig;
 const { prod = false, nodeHost, nodePort, nodeUser, nodePass } = yargs.argv;
 
 debug('prod: ', prod);
-debug('configurator: ', configurator);
-debug('port: ', port);
-debug('nodeHost: ', nodeHost || 'Not input.');
-debug('nodePort: ', nodePort || 'Not input.');
-debug('nodeUser: ', nodeUser || 'Not input.');
-debug('nodePass: ', nodePass || 'Not input.');
+debug('ohara.manager.it.configurator: ', configurator);
+debug('ohara.manager.it.port: ', port);
 
 function debug(...message) {
   console.log(...message);

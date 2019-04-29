@@ -17,7 +17,7 @@
 import * as URLS from '../../src/constants/urls';
 import * as MESSAGES from '../../src/constants/messages';
 
-describe('NodePage', () => {
+describe.skip('NodePage', () => {
   const nodeListExpectedToEq = length => {
     cy.getByTestId('node-list')
       .get('tbody > tr')

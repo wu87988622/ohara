@@ -16,7 +16,7 @@
 
 import * as URLS from '../../src/constants/urls';
 
-describe('Header', () => {
+describe.skip('Header', () => {
   beforeEach(() => {
     cy.visit(URLS.HOME);
   });

@@ -16,7 +16,7 @@
 
 import { BROKER } from '../../src/constants/urls';
 
-describe('BrokerPage', () => {
+describe.skip('BrokerPage', () => {
   beforeEach(() => cy.visit(BROKER));
 
   it('has correct page heading', () => {
