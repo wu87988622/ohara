@@ -654,7 +654,7 @@ public class SettingDefinition implements JsonObject {
       return this;
     }
 
-    @Optional("default is true")
+    @Optional("default setting is modifiable")
     public Builder readonly() {
       this.editable = false;
       return this;
