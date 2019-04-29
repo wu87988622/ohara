@@ -27,7 +27,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 class TestFakeDockerClient extends SmallTest with Matchers {
 
-  val fake = new FakeDockerClient
+  val fake = new FakeDockerClient("fake_node")
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
   @Before
@@ -51,6 +51,8 @@ class TestFakeDockerClient extends SmallTest with Matchers {
     result(fake.containers(_ == methodName())).size shouldBe 1
     result(fake.containers(_ == methodName())).head.state shouldBe ContainerState.RUNNING.name
     result(fake.containers(_ == methodName())).head.id shouldBe methodName()
+    result(fake.containers(_ == methodName())).head.nodeName shouldBe "fake_node"
+    result(fake.containers(_ == methodName())).head.hostname shouldBe "localhost"
     result(fake.containers(_ == methodName())).head.environments shouldBe Map("bar" -> "foo")
     result(fake.containers(_ == methodName())).head.portMappings.head shouldBe PortMapping("localhost",
                                                                                            Seq(PortPair(1234, 5678)))

@@ -74,8 +74,8 @@ private class StreamWarehouseImpl(nodeCollie: NodeCollie,
                             node,
                             _.containerCreator()
                               .imageName(imageName)
-                              // we should set the hostname to identify container location
-                              .hostname(node.name)
+                              // we should set the hostname to container name
+                              .hostname(name)
                               .envs(
                                 Map(
                                   StreamApi.JARURL_KEY -> jarUrl,

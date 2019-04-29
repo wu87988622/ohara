@@ -27,7 +27,7 @@ import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.collection.JavaConverters._
-private[agent] class FakeDockerClient extends ReleaseOnce with DockerClient {
+private[agent] class FakeDockerClient(nodeName: String) extends ReleaseOnce with DockerClient {
   private val LOG = Logger(classOf[FakeDockerClient])
   private[this] val FAKE_KIND_NAME: String = "FAKE"
   private[this] val cachedContainers = new ConcurrentHashMap[String, ContainerInfo]()
@@ -63,7 +63,7 @@ private[agent] class FakeDockerClient extends ReleaseOnce with DockerClient {
     cachedContainers.put(
       name,
       ContainerInfo(
-        nodeName = hostname,
+        nodeName = nodeName,
         id = name,
         imageName = imageName,
         created = new Date(CommonUtils.current()).toString,

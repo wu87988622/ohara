@@ -36,7 +36,7 @@ object DockerClientCache {
   @VisibleForTesting
   def fake(): DockerClientCache = new DockerClientCacheImpl() {
     private[this] val cache = new ConcurrentHashMap[Node, DockerClient]()
-    override def getClient(node: Node): DockerClient = cache.computeIfAbsent(node, _ => new FakeDockerClient)
+    override def getClient(node: Node): DockerClient = cache.computeIfAbsent(node, _ => new FakeDockerClient(node.name))
   }
 
   private[this] class DockerClientCacheImpl extends ReleaseOnce with DockerClientCache {

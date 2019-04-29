@@ -126,12 +126,12 @@ private[docker] object DockerClientImpl {
     if (command == null) "" else command
   ).filter(_.nonEmpty).mkString(" ")
 }
-private[docker] class DockerClientImpl(hostname: String, port: Int, user: String, password: String)
+private[docker] class DockerClientImpl(nodeName: String, port: Int, user: String, password: String)
     extends ReleaseOnce
     with DockerClient {
   private[this] val agent = Agent
     .builder()
-    .hostname(Objects.requireNonNull(hostname))
+    .hostname(Objects.requireNonNull(nodeName))
     .port(port)
     .user(Objects.requireNonNull(user))
     .password(Objects.requireNonNull(password))
@@ -189,7 +189,7 @@ private[docker] class DockerClientImpl(hostname: String, port: Int, user: String
         Future { Some(toContainerInfo(line)) }.recover {
           case e: Throwable =>
             LOG.error(
-              s"failed to get container description from $hostname." +
+              s"failed to get container description from $nodeName." +
                 "This error may be caused by operator conflict since we can't get container information by single command.",
               e
             )
@@ -209,7 +209,7 @@ private[docker] class DockerClientImpl(hostname: String, port: Int, user: String
         s"the expected number of items in $line is ${LIST_PROCESS_FORMAT.split(DIVIDER).length} or ${LIST_PROCESS_FORMAT.split(DIVIDER).length - 1}")
     val id = items.head
     ContainerInfo(
-      nodeName = hostname,
+      nodeName = nodeName,
       id = id,
       imageName = items(1),
       created = items(2),
@@ -264,7 +264,7 @@ private[docker] class DockerClientImpl(hostname: String, port: Int, user: String
   override def log(name: String): String = agent
     .execute(s"docker container logs $name")
     .map(msg => if (msg.contains("ERROR:")) throw new IllegalArgumentException(msg) else msg)
-    .getOrElse(throw new IllegalArgumentException(s"no response from $hostname"))
+    .getOrElse(throw new IllegalArgumentException(s"no response from $nodeName"))
 
   override def containerInspector(containerName: String): ContainerInspector = containerInspector(containerName, false)
 
@@ -295,7 +295,7 @@ private[docker] class DockerClientImpl(hostname: String, port: Int, user: String
     .filter(_.nonEmpty)
     .getOrElse(Seq.empty)
 
-  override def toString: String = s"$user@$hostname:$port"
+  override def toString: String = s"$user@$nodeName:$port"
 
   override def container(name: String): ContainerInfo = toContainerInfo(
     agent
