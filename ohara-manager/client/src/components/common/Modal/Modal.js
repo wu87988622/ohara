@@ -88,6 +88,7 @@ const Modal = ({
   cancelBtnText = 'Cancel',
   isConfirmDisabled = false,
   isConfirmWorking = false,
+  testId,
 }) => {
   return (
     <ModalWrapper
@@ -96,6 +97,7 @@ const Modal = ({
       ariaHideApp={false}
       width={width}
       onRequestClose={handleCancel}
+      testId={testId}
     >
       <H2Wrapper>{title}</H2Wrapper>
       <CloseBtn onClick={handleCancel}>
@@ -133,6 +135,7 @@ Modal.propTypes = {
   isConfirmDisabled: PropTypes.bool,
   isConfirmWorking: PropTypes.bool,
   width: PropTypes.string,
+  testId: PropTypes.string,
 };
 
 export default Modal;

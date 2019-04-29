@@ -17,12 +17,17 @@
 import * as URLS from '../../src/constants/urls';
 import { CONNECTOR_TYPES } from '../../src/constants/pipelines';
 
-describe.skip('PipelineNewPage', () => {
+describe('PipelineNewPage', () => {
   before(() => {
-    cy.createTopic().as('createTopic');
+    cy.deleteWorker();
+    cy.createWorker();
   });
 
   beforeEach(() => {
+    cy.server();
+    cy.route('GET', 'api/pipelines/*').as('getPipelines');
+
+    cy.createTopic().as('createTopic');
     cy.visit(URLS.PIPELINE)
       .getByTestId('new-pipeline')
       .click()
@@ -30,9 +35,11 @@ describe.skip('PipelineNewPage', () => {
       .click();
   });
 
-  it('adds and removes a topic into/from pipeline graph', () => {
+  it('adds a topic into pipeline graph and removes it later', () => {
     // Add the topic
-    cy.getByTestId('toolbar-topics')
+
+    cy.wait('@getPipelines')
+      .getByTestId('toolbar-topics')
       .click()
       .get('@createTopic')
       .then(topic => {
@@ -144,128 +151,123 @@ describe.skip('PipelineNewPage', () => {
       .should('not.be.exist');
   });
 
-  context('Test connector graph relation', () => {
-    beforeEach(() => {
-      cy.createTopic().as('graphTopic');
-    });
-    it('ftp sink source connect to topic write to graph', () => {
-      cy.server();
-      cy.route('PUT', '/api/pipelines/*').as('graph');
-      cy.route('GET', '/api/connectors/*').as('getGraph');
+  it('ftp sink source connect to topic write to graph', () => {
+    cy.server();
+    cy.route('PUT', '/api/pipelines/*').as('graph');
+    cy.route('GET', '/api/connectors/*').as('getGraph');
 
-      cy.getByTestId('toolbar-sinks')
-        .click()
-        .getByText('Add a new sink connector')
-        .should('be.exist')
-        .getByText(CONNECTOR_TYPES.ftpSink)
-        .click()
-        .getByText('Add')
-        .click()
-        .getByTestId('toolbar-sources')
-        .click()
-        .getByText('Add a new source connector')
-        .should('be.exist')
-        .getByText(CONNECTOR_TYPES.ftpSource)
-        .click()
-        .getByText('Add')
-        .click()
-        .getByTestId('toolbar-topics')
-        .click()
-        .get('@graphTopic')
-        .then(topic => {
-          cy.getByTestId('topic-select').select(topic.name);
-        })
-        .getByText('Add')
-        .click()
-        .wait('@graph');
+    cy.getByTestId('toolbar-sinks')
+      .click()
+      .getByText('Add a new sink connector')
+      .should('be.exist')
+      .getByText(CONNECTOR_TYPES.ftpSink)
+      .click()
+      .getByText('Add')
+      .click()
+      .getByTestId('toolbar-sources')
+      .click()
+      .getByText('Add a new source connector')
+      .should('be.exist')
+      .getByText(CONNECTOR_TYPES.ftpSource)
+      .click()
+      .getByText('Add')
+      .click()
+      .getByTestId('toolbar-topics')
+      .click()
+      .get('@createTopic')
+      .then(topic => {
+        cy.getByTestId('topic-select').select(topic.name);
+      })
+      .getByText('Add')
+      .click()
+      .wait('@graph');
 
-      cy.getByText('FtpSink')
-        .click()
-        .getByText('FTP sink connector')
-        .should('have.length', '1')
-        .getByText('FTP Sink 2/2')
-        .click()
-        .wait('@getGraph')
-        .get('@graphTopic')
-        .then(topic => {
-          cy.getByTestId('read-topic-select').select(topic.name);
-        })
-        .wait('@graph')
-        .get('g.edgePath')
-        .should('have.length', 1);
+    cy.getByText('FtpSink')
+      .click()
+      .getByText('FTP sink connector')
+      .should('have.length', '1')
+      .getByText('FTP Sink 2/2')
+      .click()
+      .wait('@getGraph')
+      .get('@createTopic')
+      .then(topic => {
+        cy.getByTestId('read-topic-select').select(topic.name);
+      })
+      .wait('@graph')
+      .get('g.edgePath')
+      .should('have.length', 1);
 
-      cy.getByText('FtpSource')
-        .click()
-        .getByText('FTP source connector')
-        .should('have.length', '1')
-        .getByText('FTP Source 2/2')
-        .click()
-        .wait('@getGraph')
-        .get('@graphTopic')
-        .then(topic => {
-          cy.getByTestId('write-topic-select').select(topic.name);
-        })
-        .wait('@graph')
-        .get('g.edgePath')
-        .should('have.length', 2);
-    });
+    cy.getByText('FtpSource')
+      .click()
+      .getByText('FTP source connector')
+      .should('have.length', '1')
+      .getByText('FTP Source 2/2')
+      .click()
+      .wait('@getGraph')
+      .get('@createTopic')
+      .then(topic => {
+        cy.getByTestId('write-topic-select').select(topic.name);
+      })
+      .wait('@graph')
+      .get('g.edgePath')
+      .should('have.length', 2);
+  });
 
-    it('hdfs sink source connect to topic write to graph', () => {
-      cy.server();
-      cy.route('PUT', '/api/pipelines/*').as('graph');
-      cy.route('GET', '/api/connectors/*').as('getGraph');
+  it('hdfs sink source connect to topic write to graph', () => {
+    cy.server();
+    cy.route('PUT', '/api/pipelines/*').as('graph');
+    cy.route('GET', '/api/connectors/*').as('getGraph');
 
-      cy.getByTestId('toolbar-sinks')
-        .click()
-        .getByText('Add a new sink connector')
-        .should('be.exist')
-        .getByText(CONNECTOR_TYPES.hdfsSink)
-        .click()
-        .getByText('Add')
-        .click()
-        .getByTestId('toolbar-sources')
-        .click()
-        .getByText('Add a new source connector')
-        .should('be.exist')
-        .getByText(CONNECTOR_TYPES.jdbcSource)
-        .click()
-        .getByText('Add')
-        .click()
-        .getByTestId('toolbar-topics')
-        .click()
-        .get('@graphTopic')
-        .then(topic => {
-          cy.getByTestId('topic-select').select(topic.name);
-        })
-        .getByText('Add')
-        .click()
-        .wait('@graph');
+    cy.getByTestId('toolbar-sinks')
+      .click()
+      .getByText('Add a new sink connector')
+      .should('be.exist')
+      .getByText(CONNECTOR_TYPES.hdfsSink)
+      .click()
+      .getByText('Add')
+      .click()
+      .getByTestId('toolbar-sources')
+      .click()
+      .getByText('Add a new source connector')
+      .should('be.exist')
+      .getByText(CONNECTOR_TYPES.jdbcSource)
+      .click()
+      .getByText('Add')
+      .click()
+      .getByTestId('toolbar-topics')
+      .click()
+      .get('@createTopic')
+      .then(topic => {
+        cy.getByTestId('topic-select').select(topic.name);
+      })
+      .getByText('Add')
+      .click()
+      .wait('@graph');
 
-      cy.getByText('HDFSSinkConnector')
-        .click()
-        .wait('@getGraph')
-        .getByText('HDFS sink connector')
-        .should('have.length', '1')
-        .get('@graphTopic')
-        .then(topic => {
-          cy.getByTestId('topic-select').select(topic.name);
-        })
-        .wait('@graph')
-        .get('g.edgePath')
-        .should('have.length', 1);
+    cy.getByText('HDFSSinkConnector')
+      .click()
+      .wait('@getGraph')
+      .getByText('HDFS sink connector')
+      .should('have.length', '1')
+      .get('@createTopic')
+      .then(topic => {
+        cy.getByTestId('topic-select').select(topic.name);
+      })
+      .wait('@graph')
+      .get('g.edgePath')
+      .should('have.length', 1);
 
-      cy.getByText('JDBCSourceConnector')
-        .click()
-        .wait('@getGraph')
-        .getByText('JDBC source connector')
-        .should('have.length', '1')
-        .get('@graphTopic')
-        .then(topic => {
-          cy.getByTestId('write-topic-select').select(topic.name);
-        })
-        .wait('@graph')
-        .get('g.edgePath')
-        .should('have.length', 2);
-    });
+    cy.getByText('JDBCSourceConnector')
+      .click()
+      .wait('@getGraph')
+      .getByText('JDBC source connector')
+      .should('have.length', '1')
+      .get('@createTopic')
+      .then(topic => {
+        cy.getByTestId('write-topic-select').select(topic.name);
+      })
+      .wait('@graph')
+      .get('g.edgePath')
+      .should('have.length', 2);
   });
 });

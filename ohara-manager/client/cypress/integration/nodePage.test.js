@@ -17,6 +17,8 @@
 import * as URLS from '../../src/constants/urls';
 import * as MESSAGES from '../../src/constants/messages';
 
+// We cannot test the nodes page right now as
+// nodes are created prior to all tests and we only have one node info
 describe.skip('NodePage', () => {
   const nodeListExpectedToEq = length => {
     cy.getByTestId('node-list')
@@ -50,9 +52,7 @@ describe.skip('NodePage', () => {
   });
 
   it('creates a node and displays in the node list page', () => {
-    cy.deleteAllNodes();
     cy.visit(URLS.NODES);
-    nodeListExpectedToEq(0);
 
     const testData = getTestData();
     if (testData) {
@@ -85,11 +85,9 @@ describe.skip('NodePage', () => {
     cy.get('#toast-container > .toast-error').should('be.visible');
   });
   it('updates node', () => {
-    cy.deleteAllNodes();
     const fakeData = getFakeData();
     cy.insertNode(fakeData);
     cy.visit(URLS.NODES);
-    nodeListExpectedToEq(1);
     cy.getByTestId('edit-node-icon').click();
     cy.getByTestId('name-input').should('have.value', fakeData.name);
 

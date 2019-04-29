@@ -21,7 +21,7 @@ export const PIPELINE = '/pipelines';
 
 export const BROKER = 'services/brokers';
 export const ZOOKEEPER = 'services/zookeepers';
-export const CONNECT = 'services/workers';
+export const WORKER = 'services/workers';
 export const NODES = '/nodes';
 export const SERVICES = '/services';
 export const MONITORING = '/monitoring';

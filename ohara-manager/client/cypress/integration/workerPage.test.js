@@ -14,14 +14,20 @@
  * limitations under the License.
  */
 
-import { CONNECT } from '../../src/constants/urls';
+import { WORKER } from '../../src/constants/urls';
 
-describe.skip('ConnectPage', () => {
+describe('WorkerPage', () => {
+  before(() => {
+    cy.deleteWorker();
+  });
+
   it('creates a new cluster', () => {
     const nodeName = Cypress.env('node_name');
     const clusterName = 'testcluster';
 
-    cy.visit(CONNECT)
+    cy.registerWorker(clusterName);
+
+    cy.visit(WORKER)
       .getByText('New cluster')
       .click()
       .getByPlaceholderText('cluster00')

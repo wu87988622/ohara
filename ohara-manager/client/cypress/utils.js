@@ -39,11 +39,3 @@ export const makeRandomStr = prefix => {
 
   return prefix ? `${prefix}${random}` : random;
 };
-
-export const makeServiceNames = () => {
-  return {
-    zookeeperName: makeRandomStr('zk'),
-    brokerName: makeRandomStr('bk'),
-    workerName: makeRandomStr('wk'),
-  };
-};

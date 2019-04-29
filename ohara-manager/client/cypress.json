@@ -6,5 +6,6 @@
     "toConsole": true
   },
   "video": false,
+  "requestTimeout": 8000,
   "watchForFileChanges": false
 }

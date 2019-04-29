@@ -275,10 +275,11 @@ class PipelineListPage extends React.Component {
               <Inner>
                 <Warning text="Please select a cluster for the new pipeline" />
                 <Select
-                  isObject
+                  data-testid="cluster-select"
                   list={workers}
                   selected={currWorker}
                   handleChange={this.handleSelectChange}
+                  isObject
                 />
               </Inner>
             )}

@@ -15,64 +15,85 @@
  */
 
 import * as URLS from '../../src/constants/urls';
-import { makeRandomStr, makeServiceNames } from '../utils';
+import { makeRandomStr } from '../utils';
 
-describe.skip('PipelineListPage', () => {
-  const serviceNames = makeServiceNames();
-  before(() => cy.initServices(serviceNames));
-  after(() => cy.clearServices(serviceNames));
+describe('PipelineListPage', () => {
+  before(() => {
+    cy.deleteWorker();
+    cy.createWorker();
+  });
 
   it('should display an newly created pipeline in the list', () => {
+    cy.server();
+    cy.route('GET', 'api/pipelines').as('getPipelines');
+    cy.route('PUT', 'api/pipelines/*').as('putPipeline');
+    cy.route('POST', 'api/pipelines').as('postPipeline');
+
     const pipelineName = makeRandomStr();
 
     cy.visit(URLS.PIPELINE)
       .getByText('New pipeline')
       .click()
+      .getByTestId('cluster-select')
+      .select(Cypress.env('WORKER_NAME'))
       .getByText('Next')
       .click()
-      .wait(300) // need this so cypress can find the right dom element and act on it later
+      .wait('@postPipeline')
       .getByText('Untitled pipeline')
       .click({ force: true })
       .getByTestId('title-input')
       .clear()
       .type(pipelineName)
       .blur()
+      .wait('@putPipeline')
       .visit(URLS.PIPELINE)
+      .wait('@getPipelines')
       .getByText(pipelineName)
-      .should('have.length', 1)
-      .deletePipeline(pipelineName);
+      .should('have.length', 1);
   });
 
   it('edits a pipeline', () => {
+    cy.server();
+    cy.route('GET', 'api/pipelines').as('getPipelines');
+
     const pipelineName = makeRandomStr();
     const pipelineParams = {
       name: pipelineName,
-      workerName: serviceNames.workerName,
+      workerName: Cypress.env('WORKER_NAME'),
     };
 
     cy.createPipeline(pipelineParams)
       .visit(URLS.PIPELINE)
+      .wait('@getPipelines')
       .getByTestId('edit-pipeline')
       .click()
       .location('pathname')
-      .should('contains', `${URLS.PIPELINE}/edit`)
-      .deletePipeline(pipelineName);
+      .should('contains', `${URLS.PIPELINE}/edit`);
   });
 
   it('deletes a pipeline', () => {
+    cy.server();
+    cy.route('GET', 'api/pipelines').as('getPipelines');
+    cy.route('DELETE', 'api/pipelines/*').as('deletePipeline');
+
     const pipelineName = makeRandomStr();
     const pipelineParams = {
       name: pipelineName,
-      workerName: serviceNames.workerName,
+      workerName: Cypress.env('WORKER_NAME'),
     };
 
     cy.createPipeline(pipelineParams)
       .visit(URLS.PIPELINE)
+      .wait('@getPipelines')
       .getByText(pipelineName)
-      .getByTestId('delete-pipeline')
-      .click()
+      .then($el => {
+        cy.wrap($el.parent()).within(() => {
+          cy.getByTestId('delete-pipeline').click();
+        });
+      })
       .getByText('Yes, Delete this pipeline')
       .click()
+      .wait('@deletePipeline')
       .getByText(`Successfully deleted the pipeline: ${pipelineName}`)
       .should('have.length', 1);
   });

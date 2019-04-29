@@ -16,7 +16,7 @@
 
 import { ZOOKEEPER } from '../../src/constants/urls';
 
-describe.skip('ZookeeperPage', () => {
+describe('ZookeeperPage', () => {
   beforeEach(() => cy.visit(ZOOKEEPER));
 
   it('should have correct page heading', () => {

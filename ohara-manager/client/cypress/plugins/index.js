@@ -27,7 +27,20 @@
 // This function is called when a project is opened or re-opened (e.g. due to
 // the project's config changing)
 
+// in plugins/index.js
+const fs = require('fs');
+
 module.exports = (on, config) => {
   // `on` is used to hook into various events Cypress emits
   // `config` is the resolved Cypress config
+  on('task', {
+    readFileMaybe(filename) {
+      if (fs.existsSync(filename)) {
+        const raw = fs.readFileSync(filename, 'utf8');
+        return JSON.parse(raw);
+      }
+
+      return null;
+    },
+  });
 };

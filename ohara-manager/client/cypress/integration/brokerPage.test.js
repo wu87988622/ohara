@@ -16,7 +16,12 @@
 
 import { BROKER } from '../../src/constants/urls';
 
-describe.skip('BrokerPage', () => {
+describe('BrokerPage', () => {
+  before(() => {
+    cy.deleteWorker();
+    cy.createWorker();
+  });
+
   beforeEach(() => cy.visit(BROKER));
 
   it('has correct page heading', () => {
