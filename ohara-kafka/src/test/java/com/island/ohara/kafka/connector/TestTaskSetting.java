@@ -22,6 +22,7 @@ import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.connector.json.PropGroups;
 import com.island.ohara.kafka.connector.json.SettingDefinition;
 import com.island.ohara.kafka.connector.json.StringList;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -176,5 +177,12 @@ public class TestTaskSetting extends SmallTest {
             Collections.singletonMap(key, value), Collections.singletonList(settingDefinition));
     Assert.assertEquals(1, config.raw().size());
     Assert.assertEquals(value, config.stringValue(key));
+  }
+
+  @Test
+  public void testToDuration() {
+    Duration duration = Duration.ofSeconds(10);
+    Assert.assertEquals(duration, TaskSetting.toDuration(duration.toString()));
+    Assert.assertEquals(duration, TaskSetting.toDuration("10 seconds"));
   }
 }

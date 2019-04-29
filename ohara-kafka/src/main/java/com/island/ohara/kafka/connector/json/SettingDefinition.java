@@ -23,7 +23,7 @@ import com.island.ohara.common.annotations.Nullable;
 import com.island.ohara.common.annotations.Optional;
 import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.util.CommonUtils;
-import java.time.Duration;
+import com.island.ohara.kafka.connector.TaskSetting;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -397,11 +397,10 @@ public class SettingDefinition implements JsonObject {
         return (Object value) -> {
           if (value instanceof String) {
             try {
-              Duration.parse((String) value);
+              TaskSetting.toDuration((String) value);
             } catch (Exception e) {
               throw new ConfigException("can't be converted to Duration type");
             }
-            // It is ok to convert the value from string to list<column>, thank God!
           } else throw new ConfigException("the configured value must be string type");
         };
       default:

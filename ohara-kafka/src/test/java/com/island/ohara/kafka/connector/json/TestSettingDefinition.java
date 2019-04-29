@@ -380,6 +380,8 @@ public class TestSettingDefinition extends SmallTest {
     assertException(
         Exception.class, () -> settingDefinition.checker().check(Collections.emptyList()));
     settingDefinition.checker().check(Duration.ofHours(3).toString());
+    settingDefinition.checker().check("10 MILLISECONDS");
+    settingDefinition.checker().check("10 SECONDS");
   }
 
   @Test

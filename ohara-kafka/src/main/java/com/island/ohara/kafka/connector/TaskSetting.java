@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 /** this class carries all required settings for row connectors. */
 public class TaskSetting {
@@ -277,7 +278,7 @@ public class TaskSetting {
    * @return duration value
    */
   public Duration duration(String key) {
-    return Duration.parse(stringValue(key));
+    return toDuration(stringValue(key));
   }
 
   /**
@@ -287,7 +288,7 @@ public class TaskSetting {
    * @return duration value
    */
   public Optional<Duration> durationOption(String key) {
-    return Optional.ofNullable(raw.get(key)).map(Duration::parse);
+    return Optional.ofNullable(raw.get(key)).map(TaskSetting::toDuration);
   }
 
   // ----------------------------------[helper methods]----------------------------------//
@@ -321,5 +322,36 @@ public class TaskSetting {
     Map<String, String> raw = new HashMap<>(this.raw);
     raw.putAll(newConfig);
     return TaskSetting.of(raw);
+  }
+
+  /**
+   * convert the string to java.Duration or scala.Duration.
+   *
+   * @param value duration string
+   * @return java.time.Duration
+   */
+  public static Duration toDuration(String value) {
+    try {
+      return Duration.parse(value);
+    } catch (Exception e) {
+      // ok, it is not based on java.Duration. Let's try the scala.Duration based on
+      // <number><unit>
+      String stringValue = value.replaceAll(" ", "");
+      int indexOfUnit = -1;
+      for (int index = 0; index != stringValue.length(); ++index) {
+        if (!Character.isDigit(stringValue.charAt(index))) {
+          indexOfUnit = index;
+          break;
+        }
+      }
+      if (indexOfUnit == -1)
+        throw new IllegalArgumentException(
+            "the value:"
+                + value
+                + " can't be converted to either java.time.Duration or scala.concurrent.duration.Duration type");
+      long number = Long.valueOf(stringValue.substring(0, indexOfUnit));
+      TimeUnit unit = TimeUnit.valueOf(stringValue.substring(indexOfUnit).toUpperCase());
+      return Duration.ofMillis(unit.toMillis(number));
+    }
   }
 }

@@ -15,7 +15,6 @@
  */
 
 package com.island.ohara.connector.perf
-import java.time.format.DateTimeParseException
 import java.util.Collections
 
 import com.island.ohara.common.data.{Column, DataType}
@@ -76,7 +75,7 @@ class TestPerfSourceProps extends SmallTest with Matchers {
 
   @Test
   def testInvalidFrequence(): Unit = {
-    an[DateTimeParseException] should be thrownBy PerfSourceProps(
+    an[NumberFormatException] should be thrownBy PerfSourceProps(
       TaskSetting.of(Map(PERF_BATCH -> "1", PERF_FREQUENCE -> "abc").asJava))
   }
 
