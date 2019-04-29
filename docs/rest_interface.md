@@ -152,7 +152,7 @@ And it works only if there is only a broker cluster exists in ohara**)
 ----------
 ### update a topic
 
-*POST /v0/topics/${id}*
+*PUT /v0/topics/${id}*
 
 1. name (**string**) — topic name
 1. numberOfPartitions (**int**) — the number of partitions for this topic
@@ -297,7 +297,7 @@ The following information are tagged by ohara.
 ----------
 ### update a ftp information
 
-*POST /v0/ftp/${id}*
+*PUT /v0/ftp/${id}*
 
 1. name (**string**) — name of this ftp information
 1. hostname (**string**) — ftp server hostname
@@ -429,7 +429,7 @@ The following information are tagged by ohara.
 ----------
 ### update a hdfs information
 
-*POST /v0/hdfs/${id}*
+*PUT /v0/hdfs/${id}*
 
 1. name (**string**) — name of this hdfs information.
 1. uri (**string**) — hdfs connection information. The form looks like "hdfs://namenode:9999/"
@@ -552,7 +552,7 @@ The following information are tagged by ohara.
 ----------
 ### update a jdbc information
 
-*POST /v0/jdbc/${id}*
+*PUT /v0/jdbc/${id}*
 
 1. name (**string**) — name of this jdbc information.
 1. url (**string**) — jdbc connection information. format: jdbc:${database}://${serverName}\$instanceName:$portNumber
@@ -715,7 +715,7 @@ a connector with above incomplete settings will introduce a error.
 ----------
 ### update the settings of connector
 
-*POST /v0/connectors/${id}*
+*PUT /v0/connectors/${id}*
 
 **Example Request**
 
@@ -1084,7 +1084,7 @@ example creates a pipeline with only a object and leave empty in **to** field.
 ----------
 ### update a pipeline
 
-*POST /v0/pipelines/$id*
+*PUT /v0/pipelines/$id*
 
 **Example Request**
 
