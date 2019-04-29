@@ -157,8 +157,6 @@ class TestK8SSimple extends IntegrationTest with Matchers {
                 .nodename(nodeServerNames.head)
                 .hostname(containerName)
                 .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
-                .envs(Map())
-                .portMappings(Map())
                 .run())
       Await.result(result, TIMEOUT).get.name shouldBe containerName
     } finally {
