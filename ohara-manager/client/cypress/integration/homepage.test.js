@@ -16,7 +16,7 @@
 
 import { PIPELINE, HOME } from '../../src/constants/urls';
 
-describe('HomePage', () => {
+describe.only('HomePage', () => {
   it('loads with the correct URL', () => {
     cy.visit(HOME)
       .location('pathname')
