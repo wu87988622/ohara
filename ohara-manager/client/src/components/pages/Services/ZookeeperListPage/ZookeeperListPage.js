@@ -66,15 +66,19 @@ class ZookeeperListPage extends React.Component {
             <TableLoader />
           ) : (
             <s.Table headers={this.zookeeperHeaders}>
-              <tr>
-                <td>{zookeeper.name}</td>
-                <td>{zookeeper.clientPort}</td>
-                <td>
-                  {zookeeper.nodeNames.map(nodeName => (
-                    <div key={nodeName}>{nodeName}</div>
-                  ))}
-                </td>
-              </tr>
+              {isEmpty(zookeeper) ? (
+                <tr />
+              ) : (
+                <tr>
+                  <td>{zookeeper.name}</td>
+                  <td>{zookeeper.clientPort}</td>
+                  <td>
+                    {zookeeper.nodeNames.map(nodeName => (
+                      <div key={nodeName}>{nodeName}</div>
+                    ))}
+                  </td>
+                </tr>
+              )}
             </s.Table>
           )}
         </Box>

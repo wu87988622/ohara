@@ -79,15 +79,19 @@ class BrokerListPage extends React.Component {
             <TableLoader />
           ) : (
             <s.Table headers={this.brokerHeaders}>
-              <tr>
-                <td>{broker.name}</td>
-                <td>{broker.clientPort}</td>
-                <td>
-                  {broker.nodeNames.map(nodeName => (
-                    <div key={nodeName}>{nodeName}</div>
-                  ))}
-                </td>
-              </tr>
+              {isEmpty(broker) ? (
+                <tr />
+              ) : (
+                <tr>
+                  <td>{broker.name}</td>
+                  <td>{broker.clientPort}</td>
+                  <td>
+                    {broker.nodeNames.map(nodeName => (
+                      <div key={nodeName}>{nodeName}</div>
+                    ))}
+                  </td>
+                </tr>
+              )}
             </s.Table>
           )}
         </Box>
