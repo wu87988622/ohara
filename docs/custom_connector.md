@@ -168,7 +168,7 @@ Throwing exception is better than generating corrupt data!
 ## Source Connector
 
 Source connector is used to pull data from outside system and then push processed data to ohara topics. A basic implementation
-for a source connector only includes four methods - _start, _stop, _taskClass, and _taskConfigs
+for a source connector only includes four methods - _start, _stop, _taskClass, and _taskSetting
 
 ```java
 public abstract class RowSourceConnector extends SourceConnector {
@@ -186,15 +186,15 @@ public abstract class RowSourceConnector extends SourceConnector {
    * @param maxTasks number of tasks for this connector
    * @return a seq from settings
    */
-  protected abstract List<TaskConfig> _taskConfigs(int maxTasks);
+  protected abstract List<TaskSetting> _taskSetting(int maxTasks);
 
   /**
    * Start this Connector. This method will only be called on a clean Connector, i.e. it has either
    * just been instantiated and initialized or _stop() has been invoked.
    *
-   * @param config configuration settings
+   * @param taskSetting configuration settings
    */
-  protected abstract void _start(TaskConfig config);
+  protected abstract void _start(TaskSetting taskSetting);
 
   /** stop this connector */
   protected abstract void _stop();
@@ -207,13 +207,13 @@ public abstract class RowSourceConnector extends SourceConnector {
 
 ----------
 
-### _start(TaskConfig)
+### _start(TaskSetting)
 After instantizing a connector, the first method called by worker is **start()**. You should initialize your connector
-in **start** method, since it has a input parameter **TaskConfig** carrying all settings, such as target topics,
+in **start** method, since it has a input parameter **TaskSetting** carrying all settings, such as target topics,
 connector name and user-defined configs, from user. If you (connector developer) are a good friend of your connector user,
-you can get (and cast it to expected type) config, which is passed by connector user, from **TaskConfig**. For example,
+you can get (and cast it to expected type) config, which is passed by connector user, from **TaskSetting**. For example,
 a connector user calls [Connector API](rest_interface.md#create-the-settings-of-connector) to store a config k0-v0 
-(both of them are string type) for your connector, and then you can get v0 via TaskConfig.stringValue("k0").
+(both of them are string type) for your connector, and then you can get v0 via TaskSetting.stringValue("k0").
 
 > Don't be afraid of throwing exception when you notice that input parameters are incorrect. Throwing an exception can fail
   a connector quickly and stop worker to distribute connector task across cluster. It saves the time and resources. 
@@ -240,10 +240,10 @@ so you should NOT share any objects between them (for example, make them to acce
 
 ----------
 
-### _taskConfigs(int maxTasks)
+### _taskSetting(int maxTasks)
 
 Connector has to generate configs for each task. The value of **maxTasks** is configured by [Connector API](rest_interface.md#connector).
-If you prefer to make all tasks do identical job, you can just clone the task config passe by [start](#_starttaskconfig).
+If you prefer to make all tasks do identical job, you can just clone the task config passe by [start](#_starttasksetting).
 Or you can prepare different configs for each task. Noted that the number of configuration you return MUST be equal with
 input value - maxTasks. Otherwise, you will get a exception when running your connector.
 
@@ -262,7 +262,7 @@ public abstract class RowSourceTask extends SourceTask {
    *
    * @param config initial configuration
    */
-  protected abstract void _start(TaskConfig config);
+  protected abstract void _start(TaskSetting config);
 
   /**
    * Signal this SourceTask to stop. In SourceTasks, this method only needs to signal to the task
@@ -419,7 +419,7 @@ public abstract class RowSinkConnector extends SinkConnector {
    *
    * @param config configuration settings
    */
-  protected abstract void _start(TaskConfig config);
+  protected abstract void _start(TaskSetting config);
 
   /** stop this connector */
   protected abstract void _stop();
@@ -438,12 +438,12 @@ public abstract class RowSinkConnector extends SinkConnector {
    * @param maxTasks number of tasks for this connector
    * @return the settings for each tasks
    */
-  protected abstract List<TaskConfig> _taskConfigs(int maxTasks);
+  protected abstract List<TaskSetting> _taskSetting(int maxTasks);
 }
 ```
 
-Sink connector is similar to [source connector](#source-connector). It also have [_start(TaskConfig)](#_starttaskconfig),
-[_stop()](#_stop), [_taskClass()](#_taskclass), [_taskConfigs(int maxTasks)](#_taskconfigsint-maxtasks),
+Sink connector is similar to [source connector](#source-connector). It also have [_start(TaskSetting)](#_starttasksetting),
+[_stop()](#_stop), [_taskClass()](#_taskclass), [_taskSetting(int maxTasks)](#_tasksettingint-maxtasks),
 [partition and offsets](#partition-and-offsets-in-source). The main difference between sink connector and source connector is that
 sink connector do pull data from topic and then push processed data to outside system. Hence, it does have
 [_put](#_putlistrowsinkrecord-records) rather than [_pull](#_pull)
@@ -466,7 +466,7 @@ public abstract class RowSinkTask extends SinkTask {
    *
    * @param config initial configuration
    */
-  protected abstract void _start(TaskConfig config);
+  protected abstract void _start(TaskSetting config);
 
   /**
    * Perform any cleanup to stop this task. In SinkTasks, this method is invoked only once
@@ -718,7 +718,7 @@ will display the following information.
 }
 ```
 
-> The default value will be added to [TaskConfig](#_starttaskconfig) automatically if the specified key
+> The default value will be added to [TaskSetting](#_starttasksetting) automatically if the specified key
   is not already associated with a value.
 
 ----------
@@ -791,13 +791,27 @@ match all keys in
 
 ----------
 
+### Type.Duration
+
+The time-based amount of time is a common setting in our world. However, it is also hard to reach the consensus about
+the **string representation** for a duration. For instance, the java.time.Duration prefers ISO-8601, such as PT10S.
+The scala.concurrent.duration.Duration prefers simple format, such as 10 seconds. Ohara offers a official support to
+Duration type so as to ease the pain of using string in connector. When you declare a setting with duration type,
+ohara provides the default check which casts input value to java Duration and scala Duration. Also, your connector
+can get the **Duration** from [TaskSetting](#_starttasksetting) easily without worrying about the conversion between
+java and scala. Furthermore, connector users can input both java.Duration and scala.Duration when starting connector.
+
+----------
+
 ### Checker
 
 We all love quick failure, right? A quick failure can save our resource and time. Ohara offers many checks for your setting
 according to the **expected** type. For example, a setting declared **Duration** type has a checker which validate
-whether the input value is able to be cast to java.time.Duration type. However, you are going to design a complicated
-connector which has specific limit for input value. Or you don't like the default checkers supplied by ohara. Ohara
-allows and encourages connector developer to provide custom checker. The Checker is a functional interface.
+whether the input value is able to be cast to either java.time.Duration or scala.duration.Duration. However, you are
+going to design a complicated connector which has specific limit for input value. Or you don't like the default
+checkers supplied by ohara. Ohara allows and encourages connector developer to provide custom checker.
+The Checker is a functional interface.
+
 ```java
 @FunctionalInterface
 interface Checker {
