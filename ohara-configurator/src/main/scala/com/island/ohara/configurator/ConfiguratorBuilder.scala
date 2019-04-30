@@ -20,6 +20,7 @@ import java.util.Objects
 
 import akka.http.scaladsl.server
 import com.island.ohara.agent._
+import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.agent.ssh.DockerClientCache
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.NodeApi
@@ -46,6 +47,7 @@ class ConfiguratorBuilder {
   private[this] var clusterCollie: Option[ClusterCollie] = None
   private[this] var crane: Option[Crane] = None
   private[this] var clientCache: Option[DockerClientCache] = None
+  private[this] var k8sClient: Option[K8SClient] = None
 
   @Optional("default is none")
   def extraRoute(extraRoute: server.Route): ConfiguratorBuilder = {
@@ -285,6 +287,11 @@ class ConfiguratorBuilder {
     this
   }
 
+  def k8sClient(k8sClient: K8SClient): ConfiguratorBuilder = {
+    this.k8sClient = Some(k8sClient)
+    this
+  }
+
   private[configurator] def nodeCollie(): NodeCollie = new NodeCollie {
     override def node(name: String)(implicit executionContext: ExecutionContext): Future[Node] = store.value[Node](name)
     override def nodes()(implicit executionContext: ExecutionContext): Future[Seq[Node]] = store.values[Node]
@@ -302,7 +309,8 @@ class ConfiguratorBuilder {
           .nodeCollie(nodeCollie())
           .dockerClientCache(clientCache.getOrElse(DockerClientCache()))
           .executorDefault()
-          .build())
+          .build()),
+      k8sClient = k8sClient
     )
   }
 }

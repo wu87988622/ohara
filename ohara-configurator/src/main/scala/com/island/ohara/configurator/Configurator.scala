@@ -62,7 +62,8 @@ class Configurator private[configurator] (advertisedHostname: Option[String],
                                           extraRoute: Option[server.Route])(implicit val store: DataStore,
                                                                             nodeCollie: NodeCollie,
                                                                             val clusterCollie: ClusterCollie,
-                                                                            val crane: Crane)
+                                                                            val crane: Crane,
+                                                                            val k8sClient: Option[K8SClient])
     extends ReleaseOnce
     with SprayJsonSupport {
 
@@ -130,6 +131,7 @@ class Configurator private[configurator] (advertisedHostname: Option[String],
       ConnectorRoute.apply,
       InfoRoute.apply,
       StreamRoute.apply,
+      ShabondiRoute.apply(k8sClient),
       NodeRoute.apply,
       ZookeeperRoute.apply,
       BrokerRoute.apply,
@@ -231,6 +233,7 @@ object Configurator {
       case Array(PORT_KEY, value)     => configuratorBuilder.advertisedPort(value.toInt)
       case Array(K8S_KEY, value) =>
         k8sClient = Option(K8SClient(value))
+        configuratorBuilder.k8sClient(K8SClient(value))
         configuratorBuilder.clusterCollie(
           ClusterCollie.builderOfK8s().nodeCollie(configuratorBuilder.nodeCollie()).k8sClient(k8sClient.get).build())
         configuratorBuilder.crane(
