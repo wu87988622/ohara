@@ -23,6 +23,8 @@ const { waited } = require('./lib/waitOn');
 const mergeTestReports = require('./mergeE2eReports');
 const createServices = require('./createServices');
 const cleanAllServires = require('./cleanAllServices');
+const { getEnv } = require('../utils/apiHandler');
+const copyJars = require('./copyJars');
 
 const { configurator, port } = getConfig;
 
@@ -40,7 +42,10 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
   let server;
   let client;
   let cypress;
-
+  let envNodeHost = nodeHost ? nodeHost : getEnv().nodeHost;
+  let envNodePort = nodePort ? nodePort : getEnv().nodePort;
+  let envNodeUser = nodeUser ? nodeUser : getEnv().nodeUser;
+  let envNodePass = nodePass ? nodePass : getEnv().nodePass;
   const killSubProcess = () => {
     debug('========= Kill all subProcess =========');
     if (cypress) cypress.kill();
@@ -126,20 +131,26 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
     },
   );
   debug('cypress.pid', cypress.pid);
-
   try {
-    await createServices(configurator, nodeHost, nodePort, nodeUser, nodePass);
+    copyJars();
+    await createServices(
+      configurator,
+      envNodeHost,
+      envNodePort,
+      envNodeUser,
+      envNodePass,
+    );
     await cypress;
   } catch (err) {
     debug(err.message);
     await mergeTestReports();
     killSubProcess();
-    await cleanAllServires(configurator, nodeHost);
+    await cleanAllServires(configurator, envNodeHost);
     process.exit(1);
   } finally {
     await mergeTestReports();
     killSubProcess();
-    await cleanAllServires(configurator, nodeHost);
+    await cleanAllServires(configurator, envNodeHost);
     process.exit(0);
   }
 };
