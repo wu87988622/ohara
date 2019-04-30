@@ -81,13 +81,16 @@ private[configurator] object TopicRoute {
               .numberOfReplications(request.numberOfReplications.getOrElse(DEFAULT_NUMBER_OF_REPLICATIONS))
               .create()
               .map { info =>
-                try TopicInfo(id,
-                              name,
-                              info.numberOfPartitions,
-                              info.numberOfReplications,
-                              cluster.name,
-                              metrics = metrics(cluster, id),
-                              CommonUtils.current())
+                try TopicInfo(
+                  id,
+                  name,
+                  info.numberOfPartitions,
+                  info.numberOfReplications,
+                  cluster.name,
+                  // the topic is just created so we don't fetch the "empty" metrics actually.
+                  metrics = Metrics(Seq.empty),
+                  CommonUtils.current()
+                )
                 finally client.close()
               }
         }

@@ -96,7 +96,9 @@ following information.
   }
 }
 ```
+
 ----------
+
 ## Topic
 
 Ohara topic is based on kafka topic. It means the creation of topic on ohara will invoke a creation of kafka also.
@@ -115,6 +117,7 @@ to change "topic name" at runtime. Hence, we use a id instead of name specified 
 the name (passed from user) as a "label".
 
 ----------
+
 ### create a topic
 
 *POST /v0/topics*
@@ -146,10 +149,17 @@ And it works only if there is only a broker cluster exists in ohara**)
   "lastModified": 1553498552595,
   "numberOfReplications": 1,
   "id": "715e09c9-b4ee-41cc-8d05-cb544904ac38",
-  "numberOfPartitions": 1
+  "numberOfPartitions": 1,
+  "metrics": {
+    "meters": []
+  }
 }
 ```
+
+> The topic, which is just created, does not have any metrics 
+
 ----------
+
 ### update a topic
 
 *PUT /v0/topics/${id}*
@@ -175,10 +185,15 @@ And it works only if there is only a broker cluster exists in ohara**)
   "lastModified": 1553498552595,
   "numberOfReplications": 1,
   "id": "715e09c9-b4ee-41cc-8d05-cb544904ac38",
-  "numberOfPartitions": 1
+  "numberOfPartitions": 1,
+  "metrics": {
+   "meters": []
+  }
 }
 ```
+
 ----------
+
 ### list all topics
 
 *GET /v0/topics*
@@ -193,7 +208,10 @@ And it works only if there is only a broker cluster exists in ohara**)
     "lastModified": 1553498552595,
     "numberOfReplications": 1,
     "id": "715e09c9-b4ee-41cc-8d05-cb544904ac38",
-    "numberOfPartitions": 1
+    "numberOfPartitions": 1,
+    "metrics": {
+     "meters": []
+    }
   },
   {
     "name": "wk00",
@@ -201,11 +219,16 @@ And it works only if there is only a broker cluster exists in ohara**)
     "lastModified": 1553498375573,
     "numberOfReplications": 1,
     "id": "7903d57c-4e75-40a8-9f8f-42d59c76cfbb",
-    "numberOfPartitions": 1
+    "numberOfPartitions": 1,
+    "metrics": {
+     "meters": []
+    }
   }
 ]
 ```
+
 ----------
+
 ### delete a topic
 
 *DELETE /v0/topics/${id}*
@@ -219,10 +242,15 @@ And it works only if there is only a broker cluster exists in ohara**)
   "lastModified": 1553498552595,
   "numberOfReplications": 1,
   "id": "715e09c9-b4ee-41cc-8d05-cb544904ac38",
-  "numberOfPartitions": 1
+  "numberOfPartitions": 1,
+  "metrics": {
+   "meters": []
+  }
 }
 ```
+
 ----------
+
 ### get a topic
 
 *GET /v0/topics/${id}*
@@ -236,7 +264,10 @@ And it works only if there is only a broker cluster exists in ohara**)
   "lastModified": 1553498552595,
   "numberOfReplications": 1,
   "id": "715e09c9-b4ee-41cc-8d05-cb544904ac38",
-  "numberOfPartitions": 1
+  "numberOfPartitions": 1,
+  "metrics": {
+   "meters": []
+  }
 }
 ```
 ----------
