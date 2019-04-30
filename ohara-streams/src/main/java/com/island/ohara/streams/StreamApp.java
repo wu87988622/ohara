@@ -108,7 +108,7 @@ public abstract class StreamApp {
   public StreamApp() {}
 
   /**
-   * User defined initialize stage before running streamapp
+   * User defined initialize stage before running streamApp
    *
    * @throws Exception initial Exception
    */
@@ -118,9 +118,10 @@ public abstract class StreamApp {
    * Entry function. <b>Usage:</b>
    *
    * <pre>
-   *   OStream.builder()
-   *   .fromTopic("topic-name")
-   *   ...
+   *   OStream.builder().toOharaEnvStream();
+   *    .filter()
+   *    .map()
+   *    ...
    * </pre>
    *
    * @throws Exception start Exception
