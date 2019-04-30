@@ -9,5 +9,4 @@ target/
 build
 out
 ohara-common/src/main/java/com/island/ohara/common/util/VersionUtils.java
-ohara-manager/client/scripts/servicesApi/service.json
 ohara-manager/scripts/servicesApi/service.json

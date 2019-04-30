@@ -17,14 +17,8 @@
 const axios = require('axios');
 const fs = require('fs');
 
-async function createNode(
-  configurator,
-  nodeHost,
-  nodePort,
-  nodeUser,
-  nodePass,
-) {
-  await axios.post(`${configurator}/nodes`, {
+async function createNode(baseUrl, nodeHost, nodePort, nodeUser, nodePass) {
+  await axios.post(`${baseUrl}/nodes`, {
     name: nodeHost,
     port: nodePort,
     user: nodeUser,
@@ -32,8 +26,8 @@ async function createNode(
   });
 }
 
-async function createZk(configurator, zkName, nodeHost) {
-  await axios.post(`${configurator}/zookeepers`, {
+async function createZk(baseUrl, zkName, nodeHost) {
+  await axios.post(`${baseUrl}/zookeepers`, {
     clientPort: randomPort(),
     electionPort: randomPort(),
     peerPort: randomPort(),
@@ -42,8 +36,8 @@ async function createZk(configurator, zkName, nodeHost) {
   });
 }
 
-async function createBk(configurator, zkName, bkName, nodeHost) {
-  await axios.post(`${configurator}/brokers`, {
+async function createBk(baseUrl, zkName, bkName, nodeHost) {
+  await axios.post(`${baseUrl}/brokers`, {
     clientPort: randomPort(),
     exporterPort: randomPort(),
     jmxPort: randomPort(),
@@ -53,56 +47,56 @@ async function createBk(configurator, zkName, bkName, nodeHost) {
   });
 }
 
-async function getApi(configurator, api, name) {
-  var res = await axios.get(`${configurator}/${api}`);
-  var result = res.data.some(e => e.name == name);
+async function getApi(baseUrl, api, name) {
+  var res = await axios.get(`${baseUrl}/${api}`);
   if (res.data.length == 0) {
     return false;
   }
-  if (result) {
+  var sevices = res.data.some(e => e.name == name);
+  if (sevices) {
     return true;
   } else {
     return false;
   }
 }
 
-async function cleanNode(configurator, nodeHost) {
-  await axios.delete(`${configurator}/nodes/${nodeHost}?force=true`);
+async function cleanNode(baseUrl, nodeHost) {
+  await axios.delete(`${baseUrl}/nodes/${nodeHost}?force=true`);
 }
 
-async function cleanZk(configurator, zkname) {
-  await axios.delete(`${configurator}/zookeepers/${zkname}?force=true`);
+async function cleanZk(baseUrl, zkname) {
+  await axios.delete(`${baseUrl}/zookeepers/${zkname}?force=true`);
 }
 
-async function cleanBk(configurator, bkname) {
-  await axios.delete(`${configurator}/brokers/${bkname}?force=true`);
+async function cleanBk(baseUrl, bkname) {
+  await axios.delete(`${baseUrl}/brokers/${bkname}?force=true`);
 }
 
-async function cleanWk(configurator, wkname) {
-  await axios.delete(`${configurator}/workers/${wkname}?force=true`);
+async function cleanWk(baseUrl, wkname) {
+  await axios.delete(`${baseUrl}/workers/${wkname}?force=true`);
 }
 
-async function waitDelete(configurator, api, name) {
-  const res = await axios.get(`${configurator}/` + api);
+async function waitDelete(baseUrl, api, name) {
+  const res = await axios.get(`${baseUrl}/` + api);
   if (res.data.length > 0) {
     var result = res.data.some(e => e.name == name);
     if (!result) {
       return;
     }
     sleep(1000);
-    await waitDelete(configurator, api, name);
+    await waitDelete(baseUrl, api, name);
   }
 
   return;
 }
 
-async function waitCreate(configurator, api, name) {
-  const res = await axios.get(`${configurator}/` + api);
+async function waitCreate(baseUrl, api, name) {
+  const res = await axios.get(`${baseUrl}/` + api);
   var result = res.data.some(e => e.name == name);
 
   if (!result) {
     sleep(1000);
-    await waitCreate(configurator, api, name);
+    await waitCreate(baseUrl, api, name);
   }
 
   return;
@@ -138,29 +132,29 @@ function fileHelper(zkName, bkName) {
     if (err) {
       fs.mkdirSync('scripts/servicesApi');
     }
-    let zkjson = {
+    const zkjson = {
       name: zkName,
       serviceType: 'zookeepers',
     };
-    let bkjson = {
+    const bkjson = {
       name: bkName,
       serviceType: 'brokers',
     };
-    let data = JSON.stringify([zkjson, bkjson]);
+    const data = JSON.stringify([zkjson, bkjson]);
     fs.writeFile('scripts/servicesApi/service.json', data, error => {
       error;
     });
   });
 }
 
-async function jsonLoop(jsons, key, fun, configurator) {
+async function jsonLoop(jsons, key, fn, baseUrl) {
   for (let json of jsons) {
-    if (!(await getApi(configurator, key, json.name))) {
+    if (!(await getApi(baseUrl, key, json.name))) {
       continue;
     }
     if (json.serviceType == key) {
-      await fun(configurator, json.name);
-      await waitDelete(configurator, key, json.name);
+      await fn(baseUrl, json.name);
+      await waitDelete(baseUrl, key, json.name);
     }
   }
 }

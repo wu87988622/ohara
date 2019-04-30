@@ -21,7 +21,13 @@ const api = require('../utils/apiHandler');
 const zkName = 'zk' + api.randomName();
 const bkName = 'bk' + api.randomName();
 
-async function start(configurator, nodeHost, nodePort, nodeUser, nodePass) {
+async function createServices(
+  configurator,
+  nodeHost,
+  nodePort,
+  nodeUser,
+  nodePass,
+) {
   await api.createNode(configurator, nodeHost, nodePort, nodeUser, nodePass);
   await api.waitCreate(configurator, 'nodes', nodeHost);
   await api.createZk(configurator, zkName, nodeHost);
@@ -31,4 +37,4 @@ async function start(configurator, nodeHost, nodePort, nodeUser, nodePass) {
   await api.fileHelper(zkName, bkName);
 }
 
-module.exports = { start };
+module.exports = createServices;

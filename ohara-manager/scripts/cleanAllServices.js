@@ -19,7 +19,7 @@
 const api = require('../utils/apiHandler');
 const fs = require('fs');
 
-async function start(configurator, nodeHost) {
+async function cleanAllServices(configurator, nodeHost) {
   const file = fs.readFileSync('scripts/servicesApi/service.json');
   var jsons = JSON.parse(file);
   await api.jsonLoop(jsons, 'workers', api.cleanWk, configurator);
@@ -28,4 +28,4 @@ async function start(configurator, nodeHost) {
   await api.cleanNode(configurator, nodeHost);
 }
 
-module.exports = { start };
+module.exports = cleanAllServices;
