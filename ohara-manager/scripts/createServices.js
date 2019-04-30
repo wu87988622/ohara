@@ -16,54 +16,25 @@
 
 /* eslint-disable no-process-exit, no-console */
 
-const yargs = require('yargs');
 const api = require('../utils/apiHandler');
-const fs = require('fs');
-
-const {
-  configurator,
-  port,
-  nodeHost,
-  nodePort,
-  nodeUser,
-  nodePass,
-} = yargs.argv;
 
 const zkName = 'zk' + api.randomName();
 const bkName = 'bk' + api.randomName();
 
-debug('configurator: ', configurator);
-debug('port: ', port);
-debug('nodeHost: ', nodeHost || 'Not input.');
-debug('nodePort: ', nodePort || 'Not input.');
-debug('nodeUser: ', nodeUser || 'Not input.');
-debug('nodePass: ', nodePass || 'Not input.');
-
-function debug(...message) {
-  console.log(...message);
+async function createServices(
+  configurator,
+  nodeHost,
+  nodePort,
+  nodeUser,
+  nodePass,
+) {
+  await api.createNode(configurator, nodeHost, nodePort, nodeUser, nodePass);
+  await api.waitCreate(configurator, 'nodes', nodeHost);
+  await api.createZk(configurator, zkName, nodeHost);
+  await api.waitCreate(configurator, 'zookeepers', zkName);
+  await api.createBk(configurator, zkName, bkName, nodeHost);
+  await api.waitCreate(configurator, 'brokers', bkName);
+  await api.fileHelper(zkName, bkName);
 }
 
-const createServices = async () => {
-  await api.createNode(
-    configurator,
-    port,
-    nodeHost,
-    nodePort,
-    nodeUser,
-    nodePass,
-  );
-  await api.waitCreate(configurator, port, 'nodes', nodeHost);
-  await api.createZk(configurator, port, zkName, nodeHost);
-  await api.waitCreate(configurator, port, 'zookeepers', zkName);
-  await api.createBk(configurator, port, zkName, bkName, nodeHost);
-  await api.waitCreate(configurator, port, 'brokers', bkName);
-  await fs.writeFile(
-    'scripts/env/service.json',
-    `{"zk":"${zkName}","bk":"${bkName}"}`,
-    error => {
-      error;
-    },
-  );
-};
-
-createServices();
+module.exports = createServices;

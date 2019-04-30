@@ -44,8 +44,8 @@ Cypress.Commands.add('login', () => {
 });
 
 Cypress.Commands.add('registerWorker', workerName => {
-  const fileName = 'workerList.json';
-  const update = { name: workerName, serviceType: 'worker' };
+  const fileName = '../scripts/servicesApi/service.json';
+  const update = { name: workerName, serviceType: 'workers' };
 
   cy.task('readFileMaybe', fileName).then(data => {
     if (!data) {
@@ -63,7 +63,7 @@ Cypress.Commands.add('createWorker', () => {
   cy.log('Create a new worker');
 
   const { name: nodeName } = getFakeNode();
-  const workerName = makeRandomStr();
+  const workerName = 'wk' + makeRandomStr();
   Cypress.env('WORKER_NAME', workerName);
 
   cy.registerWorker(workerName);
