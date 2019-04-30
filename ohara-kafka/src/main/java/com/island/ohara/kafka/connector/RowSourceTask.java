@@ -125,7 +125,7 @@ public abstract class RowSourceTask extends SourceTask {
   protected CounterBuilder counterBuilder() {
     if (taskSetting == null)
       throw new IllegalArgumentException("you can't create a counter before starting connector");
-    return new CounterBuilder(taskSetting.id());
+    return CounterBuilder.of().group(taskSetting.id());
   }
 
   @VisibleForTesting TaskSetting taskSetting = null;

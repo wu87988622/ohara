@@ -18,52 +18,63 @@ package com.island.ohara.kafka.connector;
 
 import com.island.ohara.common.rule.SmallTest;
 import com.island.ohara.common.util.CommonUtils;
+import com.island.ohara.metrics.basic.Counter;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class TestCounterBuilder extends SmallTest {
 
   @Test(expected = NullPointerException.class)
   public void testNullGroup() {
-    new CounterBuilder(null);
+    CounterBuilder.of().group(null);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testEmptyGroup() {
-    new CounterBuilder("");
+    CounterBuilder.of().group("");
   }
 
   @Test(expected = NullPointerException.class)
   public void testNullName() {
-    new CounterBuilder(CommonUtils.randomString()).name(null);
+    CounterBuilder.of().name(null);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testEmptyName() {
-    new CounterBuilder(CommonUtils.randomString()).name("");
+    CounterBuilder.of().name("");
   }
 
   @Test(expected = NullPointerException.class)
   public void testNullUnit() {
-    new CounterBuilder(CommonUtils.randomString()).unit(null);
+    CounterBuilder.of().unit(null);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testEmptyUnit() {
-    new CounterBuilder(CommonUtils.randomString()).unit("");
+    CounterBuilder.of().unit("");
   }
 
   @Test(expected = NullPointerException.class)
   public void testNullDocument() {
-    new CounterBuilder(CommonUtils.randomString()).document(null);
+    CounterBuilder.of().document(null);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testEmptyDocument() {
-    new CounterBuilder(CommonUtils.randomString()).document("");
+    CounterBuilder.of().document("");
   }
 
   @Test
   public void testSimpleBuild() {
-    new CounterBuilder(CommonUtils.randomString()).name(CommonUtils.randomString()).build();
+    String group = CommonUtils.randomString();
+    String name = CommonUtils.randomString();
+    String unit = CommonUtils.randomString();
+    String document = CommonUtils.randomString();
+    Counter counter =
+        CounterBuilder.of().group(group).name(name).unit(unit).document(document).build();
+    Assert.assertEquals(group, counter.group());
+    Assert.assertEquals(name, counter.name());
+    Assert.assertEquals(unit, counter.getUnit());
+    Assert.assertEquals(document, counter.getDocument());
   }
 }

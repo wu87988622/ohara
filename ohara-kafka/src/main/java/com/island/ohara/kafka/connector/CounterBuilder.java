@@ -22,11 +22,26 @@ import com.island.ohara.metrics.basic.Counter;
  * this is a wrap of Counter.Builder. It simplify the Counter.Builder via removing some methods
  * which are unrelated to connector.
  */
-public class CounterBuilder {
+public final class CounterBuilder {
+
+  static CounterBuilder of() {
+    return new CounterBuilder();
+  }
+
   private final Counter.Builder builder = Counter.builder();
 
-  CounterBuilder(String group) {
+  private CounterBuilder() {}
+
+  /**
+   * We hind group from connector developer since the group must be the id of connector. Otherwise,
+   * Ohara Configurator can't fetch metrics for specific connectors.
+   *
+   * @param group group and it must be equal with connector's id
+   * @return this builder
+   */
+  CounterBuilder group(String group) {
     builder.group(group);
+    return this;
   }
 
   public CounterBuilder name(String name) {

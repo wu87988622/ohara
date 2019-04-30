@@ -89,7 +89,7 @@ public abstract class RowSinkConnector extends SinkConnector {
   protected CounterBuilder counterBuilder() {
     if (taskSetting == null)
       throw new IllegalArgumentException("you can't create a counter before starting connector");
-    return new CounterBuilder(taskSetting.id());
+    return CounterBuilder.of().group(taskSetting.id());
   }
   // -------------------------------------------------[WRAPPED]-------------------------------------------------//
   /** We take over this method to disable user to use java collection. */
