@@ -16,28 +16,16 @@
 
 /* eslint-disable no-process-exit, no-console */
 
-const yargs = require('yargs');
 const api = require('../utils/apiHandler');
 const fs = require('fs');
 
-const { configurator, nodeHost } = yargs.argv;
-
-debug('configurator: ', configurator);
-debug('nodeHost: ', nodeHost || 'Not input.');
-
-function debug(...message) {
-  console.log(...message);
+async function start(configurator, nodeHost) {
+  const file = fs.readFileSync('scripts/servicesApi/service.json');
+  var jsons = JSON.parse(file);
+  await api.jsonLoop(jsons, 'workers', api.cleanWk, configurator);
+  await api.jsonLoop(jsons, 'brokers', api.cleanBk, configurator);
+  await api.jsonLoop(jsons, 'zookeepers', api.cleanZk, configurator);
+  await api.cleanNode(configurator, nodeHost);
 }
 
-const cleanServices = async () => {
-  const file = fs.readFileSync('scripts/env/service.json');
-  var bk = JSON.parse(file).bk;
-  var zk = JSON.parse(file).zk;
-  await api.cleanBk(configurator, bk);
-  await api.waitDelete(configurator, 'brokers');
-  await api.cleanZk(configurator, zk);
-  await api.waitDelete(configurator, 'zookeepers');
-  await api.cleanNode(configurator, nodeHost);
-};
-
-cleanServices();
+module.exports = { start };

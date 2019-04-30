@@ -102,13 +102,7 @@ task it {
           commandLine 'yarn', 'copy:jars'
         }
         exec{
-          commandLine 'yarn', 'test:setup' , '--port', port, '--configurator', configurator, '--nodeHost', nodeHost, '--nodePort', nodePort, '--nodeUser', nodeUser, '--nodePass', nodePass
-        }
-        exec{
           commandLine 'yarn', 'test:e2e:ci', '--port', port, '--configurator', configurator, '--nodeHost', nodeHost, '--nodePort', nodePort, '--nodeUser', nodeUser, '--nodePass', nodePass    
-        }
-        exec{
-          commandLine 'yarn', 'test:clean' , '--port', port, '--configurator', configurator, '--nodeHost', nodeHost        
         }
       }
     }

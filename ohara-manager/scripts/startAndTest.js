@@ -21,6 +21,8 @@ const yargs = require('yargs');
 const { getConfig } = require('../utils/configHelpers');
 const { waited } = require('./lib/waitOn');
 const mergeTestReports = require('./mergeE2eReports');
+const createServices = require('./createServices');
+const cleanAllServires = require('./cleanAllServices');
 
 const { configurator, port } = getConfig;
 
@@ -126,16 +128,25 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
   debug('cypress.pid', cypress.pid);
 
   try {
+    await createServices.start(
+      configurator,
+      nodeHost,
+      nodePort,
+      nodeUser,
+      nodePass,
+    );
     await cypress;
   } catch (err) {
     debug(err.message);
     await mergeTestReports();
     killSubProcess();
-    // process.exit(1);
+    await cleanAllServires.start(configurator, nodeHost);
+    process.exit(1);
   } finally {
     await mergeTestReports();
     killSubProcess();
-    // process.exit(0);
+    await cleanAllServires.start(configurator, nodeHost);
+    process.exit(0);
   }
 };
 

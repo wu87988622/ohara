@@ -16,39 +16,19 @@
 
 /* eslint-disable no-process-exit, no-console */
 
-const yargs = require('yargs');
 const api = require('../utils/apiHandler');
-const fs = require('fs');
-
-const { configurator, nodeHost, nodePort, nodeUser, nodePass } = yargs.argv;
 
 const zkName = 'zk' + api.randomName();
 const bkName = 'bk' + api.randomName();
 
-debug('configurator: ', configurator);
-debug('nodeHost: ', nodeHost || 'Not input.');
-debug('nodePort: ', nodePort || 'Not input.');
-debug('nodeUser: ', nodeUser || 'Not input.');
-debug('nodePass: ', nodePass || 'Not input.');
-
-function debug(...message) {
-  console.log(...message);
-}
-
-const createServices = async () => {
+async function start(configurator, nodeHost, nodePort, nodeUser, nodePass) {
   await api.createNode(configurator, nodeHost, nodePort, nodeUser, nodePass);
   await api.waitCreate(configurator, 'nodes', nodeHost);
   await api.createZk(configurator, zkName, nodeHost);
   await api.waitCreate(configurator, 'zookeepers', zkName);
   await api.createBk(configurator, zkName, bkName, nodeHost);
   await api.waitCreate(configurator, 'brokers', bkName);
-  await fs.writeFile(
-    'scripts/env/service.json',
-    `{"zk":"${zkName}","bk":"${bkName}"}`,
-    error => {
-      error;
-    },
-  );
-};
+  await api.fileHelper(zkName, bkName);
+}
 
-createServices();
+module.exports = { start };
