@@ -24,12 +24,12 @@ import { findByGraphId } from '../../pipelineUtils/commonUtils';
 import { FormGroup, Input, Label } from 'common/Form';
 import { CONNECTOR_STATES } from 'constants/pipelines';
 
-export const getMetadata = (props, workers) => {
-  const { workerClusterName, match } = props;
-  const { page: targetConnector } = match.params;
-  const { connectors } = workers.find(({ name }) => name === workerClusterName);
+export const getMetadata = (props, worker) => {
+  const { page: targetConnector } = props.match.params;
+  const { connectors } = worker;
+
   const { className: connectorName, definitions: defs } = connectors.find(
-    ({ className }) => className === targetConnector,
+    c => c.className === targetConnector,
   );
 
   const configs = defs.reduce((acc, config) => {
@@ -155,7 +155,7 @@ export const renderForm = ({
   handleColumnRowDown,
 }) => {
   const isRunning = state === CONNECTOR_STATES.running;
-  const dataType = ['String'];
+  const dataType = ['STRING'];
   const tableActions = ['Up', 'Down', 'Delete'];
   const sortByOrder = (a, b) => a.orderInGroup - b.orderInGroup;
   const convertData = ({ configValue, valueType, defaultValue }) => {

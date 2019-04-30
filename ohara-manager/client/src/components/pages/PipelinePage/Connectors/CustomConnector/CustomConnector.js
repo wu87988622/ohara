@@ -25,7 +25,7 @@ import * as utils from './customConnectorUtils';
 import Controller from '../Controller';
 import TestConnectionBtn from './TestConnectionBtn';
 import { findByGraphId } from '../../pipelineUtils/commonUtils';
-import { fetchWorkers } from 'api/workerApi';
+import { fetchWorker } from 'api/workerApi';
 import { validateConnector } from 'api/validateApi';
 import { BoxWrapper, TitleWrapper, H5Wrapper } from '../styles';
 import { StyledForm, LoaderWrap } from './styles';
@@ -105,12 +105,12 @@ class CustomConnector extends React.Component {
   };
 
   fetchWorker = async () => {
-    const res = await fetchWorkers();
-    const workers = get(res, 'data.result', null);
+    const res = await fetchWorker(this.props.workerClusterName);
+    const worker = get(res, 'data.result', null);
     this.setState({ isLoading: false });
 
-    if (workers) {
-      const { defs, configs } = utils.getMetadata(this.props, workers);
+    if (worker) {
+      const { defs, configs } = utils.getMetadata(this.props, worker);
       this.setState({ defs, configs });
     }
   };
