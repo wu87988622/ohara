@@ -159,6 +159,10 @@ async function jsonLoop(jsons, key, fn, baseUrl) {
   }
 }
 
+function getEnv() {
+  return JSON.parse(fs.readFileSync('./client/cypress.env.json'));
+}
+
 module.exports = {
   createNode,
   createZk,
@@ -172,4 +176,5 @@ module.exports = {
   cleanNode,
   fileHelper,
   jsonLoop,
+  getEnv,
 };
