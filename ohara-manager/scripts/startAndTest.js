@@ -128,24 +128,18 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
   debug('cypress.pid', cypress.pid);
 
   try {
-    await createServices.start(
-      configurator,
-      nodeHost,
-      nodePort,
-      nodeUser,
-      nodePass,
-    );
+    await createServices(configurator, nodeHost, nodePort, nodeUser, nodePass);
     await cypress;
   } catch (err) {
     debug(err.message);
     await mergeTestReports();
     killSubProcess();
-    await cleanAllServires.start(configurator, nodeHost);
+    await cleanAllServires(configurator, nodeHost);
     process.exit(1);
   } finally {
     await mergeTestReports();
     killSubProcess();
-    await cleanAllServires.start(configurator, nodeHost);
+    await cleanAllServires(configurator, nodeHost);
     process.exit(0);
   }
 };
