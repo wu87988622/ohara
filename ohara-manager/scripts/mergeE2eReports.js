@@ -37,7 +37,7 @@ const deleteFiles = files => {
   files.forEach(file => unlinkSync(file));
 };
 
-const mergeTestReports = () =>
+const mergeE2eReports = () =>
   // Return a promise here so we can await in another file
   new Promise((resolve, reject) => {
     const files = getFiles();
@@ -47,6 +47,8 @@ const mergeTestReports = () =>
       console.log(chalk.red(`No end-to-end report found in ${reportPath}!`));
       reject();
     }
+
+    unlinkSync(reportPath);
 
     mergeFiles(reportPath, files, err => {
       if (err) reject(err);
@@ -60,4 +62,4 @@ const mergeTestReports = () =>
     });
   });
 
-module.exports = mergeTestReports;
+module.exports = mergeE2eReports;

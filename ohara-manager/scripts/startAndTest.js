@@ -20,7 +20,7 @@ const execa = require('execa');
 const yargs = require('yargs');
 const { getConfig } = require('../utils/configHelpers');
 const { waited } = require('./lib/waitOn');
-const mergeTestReports = require('./mergeE2eReports');
+const mergeE2eReports = require('./mergeE2eReports');
 const createServices = require('./createServices');
 const cleanAllServires = require('./cleanAllServices');
 const { getEnv } = require('../utils/apiHandler');
@@ -143,12 +143,12 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
     await cypress;
   } catch (err) {
     debug(err.message);
-    await mergeTestReports();
+    await mergeE2eReports();
     killSubProcess();
     await cleanAllServires(configurator, envNodeHost);
     process.exit(1);
   } finally {
-    await mergeTestReports();
+    await mergeE2eReports();
     killSubProcess();
     await cleanAllServires(configurator, envNodeHost);
     process.exit(0);
