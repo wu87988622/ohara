@@ -18,6 +18,7 @@ package com.island.ohara.kafka.connector.json;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableMap;
+import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.data.DataType;
 import com.island.ohara.common.util.CommonUtils;
@@ -109,11 +110,13 @@ public final class PropGroups implements Iterable<Map<String, String>> {
         .order(Integer.valueOf(propGroup.get(SettingDefinition.ORDER_KEY)))
         .name(propGroup.get(SettingDefinition.COLUMN_NAME_KEY))
         .newName(propGroup.get(SettingDefinition.COLUMN_NEW_NAME_KEY))
-        .dataType(DataType.valueOf(propGroup.get(SettingDefinition.COLUMN_DATA_TYPE_KEY)))
+        .dataType(
+            DataType.valueOf(propGroup.get(SettingDefinition.COLUMN_DATA_TYPE_KEY).toUpperCase()))
         .build();
   }
 
-  private static Map<String, String> toPropGroup(Column column) {
+  @VisibleForTesting
+  static Map<String, String> toPropGroup(Column column) {
     return ImmutableMap.of(
         SettingDefinition.ORDER_KEY, String.valueOf(column.order()),
         SettingDefinition.COLUMN_NAME_KEY, column.name(),

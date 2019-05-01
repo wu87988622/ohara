@@ -23,7 +23,9 @@ import com.island.ohara.common.rule.SmallTest;
 import com.island.ohara.common.util.CommonUtils;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -164,5 +166,22 @@ public class TestPropGroups extends SmallTest {
         PropGroups.of(Collections.singletonList(Collections.singletonMap("a", "b")));
     PropGroups another = PropGroups.ofJson(propGroups.toJsonString());
     Assert.assertEquals(propGroups, another);
+  }
+
+  @Test
+  public void testToColumnWithLowerCase() {
+    Column column =
+        Column.builder()
+            .name(CommonUtils.randomString())
+            .dataType(DataType.BOOLEAN)
+            .order(3)
+            .build();
+    Map<String, String> raw = new HashMap<>(PropGroups.toPropGroup(column));
+    raw.put(
+        SettingDefinition.COLUMN_DATA_TYPE_KEY,
+        raw.get(SettingDefinition.COLUMN_DATA_TYPE_KEY).toLowerCase());
+    PropGroups group = PropGroups.of(Collections.singletonList(raw));
+    Column another = group.toColumns().get(0);
+    Assert.assertEquals(column, another);
   }
 }
