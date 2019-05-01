@@ -1,242 +1,280 @@
+/*
+ * Copyright 2019 is-land
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-name := "ohara"
-
-version := "0.0.1"
-
-organizationName := "is-land Systems Inc."
-
-organizationHomepage := Some(url("https://github.com/is-land"))
-
-organization := "com.island"
-
-cancelable in Global := true
-
-val cpus = sys.runtime.availableProcessors
-
-scalacOptions ++= Seq(
-  // Scala Compiler Options
-  // https://github.com/scala/scala/blob/2.12.x/src/compiler/scala/tools/nsc/settings/StandardScalaSettings.scala
-  // https://github.com/scala/scala/blob/2.12.x/src/compiler/scala/tools/nsc/settings/ScalaSettings.scala
-  "-deprecation",
-  "-unchecked",
-  "-encoding", "utf8",
-  "-Xlog-reflective-calls",
-  "-feature",
-  "-language:postfixOps",
-  "-language:implicitConversions",
-  "-language:existentials",
-  "-Xlint:by-name-right-associative",
-  "-Xlint:delayedinit-select",
-  "-Xlint:doc-detached",
-  "-Xlint:missing-interpolator",
-  "-Xlint:nullary-override",
-  "-Xlint:nullary-unit",
-  "-Xlint:option-implicit",
-  "-Xlint:package-object-classes",
-  "-Xlint:poly-implicit-overload",
-  "-Xlint:private-shadow",
-  "-Xlint:stars-align",
-  "-Xlint:type-parameter-shadow",
-  "-Xlint:unsound-match",
-  "-target:jvm-1.8",
-  "-explaintypes",
-  "-feature",
-  "-unchecked",
-  "-Xlint",
-  "-Ywarn-dead-code",
-  "-Ywarn-unused:implicits",
-  "-Ywarn-unused:imports",
-  "-Ywarn-unused:locals",
-  "-Ywarn-unused:params",
-  "-Ywarn-unused:patvars",
-  "-Ywarn-unused:privates",
-  "-Ywarn-value-discard",
-  "-Ybackend-parallelism", cpus.toString
+lazy val modules: Seq[ProjectReference] = Seq(
+  agent, client, common, configurator, kafka,
+  metrics, shabondi, streams, `testing-util`
 )
 
 
-val formatAll = taskKey[Unit]("Format all the source code which includes src, test, and build files")
-val checkFormat = taskKey[Unit]("Check all the source code which includes src, test, and build files")
+lazy val root = project.in(file("."))
+        .aggregate(modules: _*)
+        .settings(
+          onLoadMessage :=
+                  """
+                    |** Welcome to the sbt build definition for OharaStream! **
+                  """.stripMargin
+        )
 
-lazy val commonSettings = Seq(
-  scalaVersion := "2.11.12",
-  resolvers += Resolver.bintrayRepo("cakesolutions", "maven"),
-  resolvers += "Cloudera" at "https://repository.cloudera.com/artifactory/cloudera-repos/",
-  fork in Test := true,
-  fork in run := true,
-  run / connectInput := true,
-  javaOptions ++= Seq("-Xms256m", "-Xmx4g", "-XX:MaxMetaspaceSize=512m"),
-  libraryDependencies ++= Seq(
-    libs.junit % Test,
+
+lazy val common = oharaProject("common",
+  Seq(libraryDependencies ++= Seq(
+    libs.commonsNet,
+    libs.commonsLang,
+    libs.slf4jApi,
+    libs.slf4jLog4j,
+    libs.commonsIo,
     libs.mockito % Test,
-    libs.scalatest % Test
-  ),
-  scalafmtOnCompile := true,
-  formatAll := {
-    (scalafmt in Compile).value
-    (scalafmt in Test).value
-    (scalafmtSbt in Compile).value
-  },
-  checkFormat := {
-    (scalafmtCheck in Compile).value
-    (scalafmtCheck in Test).value
-    (scalafmtSbtCheck in Compile).value
-  },
-  scalafmtOnCompile := true
+    libs.junit % Test
+  )),
+  Seq(
+    /* Run junit with sbt
+     * Reference:
+     *   https://stackoverflow.com/q/28174243/3155650
+     *   https://github.com/sbt/junit-interface
+     */
+    testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-a"),
+    libraryDependencies ++= Seq(
+      libs.scalatest % Test,
+      libs.junitInterface % Test exclude("junit", "junit-dep")
+    ))
 )
 
-concurrentRestrictions in Global := Seq(Tags.limitAll(1))
+lazy val `testing-util` = oharaProject("testing-util",
+  Seq(libraryDependencies ++= Seq(
+    libs.sshd excludeAll (libs.sshdExclusionRules: _*),
+    libs.kafkaCore,
+    libs.kafkaConnectJson,
+    libs.kafkaConnectRuntime,
+    libs.mysql,
+    libs.embeddedsql,
+    libs.ftpServer,
+    libs.scalaLogging,
+    libs.slf4jApi,
+    libs.slf4jLog4j,
+    /**
+      * The Hadoop use jersey 1.x, but the Kafka use jersey 2.x so jar conflict
+      *
+      * Solve running Kafka Connect mini cluster failed.
+      */
+    libs.hadoopCommon excludeAll (libs.hadoopExclusionRules: _*),
+    libs.hadoopHdfs excludeAll (libs.hadoopExclusionRules: _*),
 
-lazy val `common` = (project in file("ohara-common"))
-        .settings(
-          commonSettings,
-          libraryDependencies ++= Seq(
-            libs.commonsNet,
-            libs.commonsLang,
-            libs.commonsIo,
-            libs.scalaLogging,
-            libs.slf4jApi,
-            libs.slf4jLog4j,
-            libs.akkaHttp,
-            libs.akkaStream,
-            libs.akkaActor,
-            libs.akkaHttpSprayJson
-          )
-        )
-
-
-lazy val `testing-util` = (project in file("ohara-testing-util"))
-        .dependsOn(
-          `common` % "compile->compile; test->test"
-        )
-        .settings(
-          commonSettings,
-          libraryDependencies ++= Seq(
-            libs.kafkaCore,
-            libs.kafkaConnectJson,
-            libs.kafkaConnectRuntime,
-            libs.hadoopCommon excludeAll(libs.hadoopExclusionRules:_*),
-            libs.hadoopHdfs excludeAll(libs.hadoopExclusionRules:_*),
-            libs.mysql,
-            libs.embeddedsql,
-            libs.ftpServer
-          ),
-          excludeDependencies ++= libs.hadoopExclusionRules
-        )
+    libs.scalatest % Test,
+    libs.mockito % Test,
+    libs.junit % Test
+  ))
+).dependsOn(
+  common % "compile->compile; test->test"
+)
 
 
-lazy val `kafka` = (project in file("ohara-kafka"))
-        .dependsOn(
-          `common` % "compile->compile; test->test",
-          `testing-util` % "test->test"
-        )
-        .settings(
-          commonSettings,
-          libraryDependencies ++= Seq(
-            libs.kafkaClient,
-            libs.kafkaConnectFile,
-            libs.kafkaConnectRuntime,
-            libs.zookeeper,
-            libs.scalaLogging,
-            libs.slf4jApi,
-            libs.slf4jLog4j,
-            libs.akkaHttpSprayJson % Test
-          )
-        )
+lazy val metrics = oharaProject("metrics",
+  Seq(libraryDependencies ++= Seq(
+    libs.slf4jApi,
+    libs.slf4jLog4j,
+
+    libs.junit % Test
+  ))
+).dependsOn(
+  common % "compile->compile; test->test",
+  `testing-util` % "compile->test; test->test"
+)
 
 
-lazy val `hdfs-connector` = (project in file("ohara-hdfs-connector"))
-        .dependsOn(
-          `kafka` % "compile->compile",
-          `common` % "test->test",
-          `testing-util` % "test->test"
-        )
-        .settings(
-          commonSettings,
-          libraryDependencies ++= Seq(
-            libs.hadoopCommon excludeAll(libs.hadoopExclusionRules:_*),
-            libs.hadoopHdfs excludeAll(libs.hadoopExclusionRules:_*)
-          )
-        )
-
-lazy val `jdbc-connector` = (project in file("ohara-jdbc-connector"))
-        .dependsOn(
-          `kafka` % "compile->compile",
-          `common` % "test->test",
-          `testing-util` % "test->test"
-        )
-        .settings(
-          commonSettings,
-          libraryDependencies ++= Seq(
-          )
-        )
-
-lazy val `ftp-connector` = (project in file("ohara-ftp-connector"))
-        .dependsOn(
-          `kafka` % "compile->compile",
-          `common` % "test->test",
-          `testing-util` % "test->test"
-        )
-        .settings(
-          commonSettings,
-          libraryDependencies ++= Seq(
-          )
-        )
-
-lazy val `configurator` = (project in file("ohara-configurator"))
-        .dependsOn(
-          `common` % "compile->compile; test->test",
-          `kafka` % "compile->compile",
-          `testing-util` % "test->test"
-        )
-        .settings(
-          commonSettings,
-          libraryDependencies ++= Seq(
-            libs.hadoopCommon excludeAll(libs.hadoopExclusionRules:_*),
-            libs.hadoopHdfs excludeAll(libs.hadoopExclusionRules:_*),
-            libs.kafkaClient,
-            libs.kafkaConnectFile,
-            libs.kafkaConnectRuntime,
-
-            libs.zookeeper,
-            libs.scalaLogging,
-            libs.slf4jApi,
-            libs.slf4jLog4j,
-            libs.akkaHttpSprayJson
-          )
-        )
+lazy val kafka = oharaProject("kafka",
+  Seq(libraryDependencies ++= Seq(
+    libs.kafkaClient,
+    libs.kafkaConnectFile,
+    libs.kafkaConnectRuntime,
+    libs.slf4jApi,
+    libs.slf4jLog4j
+  ),
+    libraryDependencies ++= Seq(
+      libs.hadoopHdfs % Test excludeAll (libs.hadoopExclusionRules: _*),
+      libs.mockito % Test,
+      libs.junit % Test
+    )
+  )
+).dependsOn(
+  common % "compile->compile; test->test",
+  `testing-util` % "compile->test; test->test",
+  metrics % "compile->compile"
+)
 
 
-lazy val `shabondi` = (project in file("ohara-shabondi"))
-        .dependsOn(
-        )
-        .settings(
-          commonSettings,
-          libraryDependencies ++= Seq(
-            libs.akkaHttp,
-            libs.akkaStream,
-            libs.akkaHttpSprayJson,
+lazy val client = oharaProject("client",
+  Seq(
+    Test / javaOptions += "-Xmx1500M"
+  ),
+  Seq(libraryDependencies ++= Seq(
+    libs.commonsNet,
+    libs.commonsLang,
+    libs.scalaLogging,
+    libs.slf4jApi,
+    libs.slf4jLog4j,
+    libs.akkaStream,
+    libs.akkaHttpSprayJson,
+    libs.kafkaClient,
+    libs.kafkaConnectFile,
+    libs.kafkaConnectRuntime,
+    libs.scalatest % Test,
+    libs.mockito % Test,
+    libs.junit % Test
+  ))
+).dependsOn(
+  common % "compile->compile; test->test",
+  `testing-util` % "compile->test; test->test",
+  kafka % "compile->compile"
+)
 
-            libs.akkaHttpTestKit % Test
-          )
-        )
 
-lazy val `streams` = (project in file("ohara-streams"))
-        .dependsOn(
-          `common` % "compile->compile; test->test",
-          `kafka` % "compile->compile",
-          `testing-util` % "test->test"
-        )
-        .settings(
-          commonSettings,
-          libraryDependencies ++= Seq(
-            libs.scalaLogging,
-            libs.slf4jApi,
-            libs.slf4jLog4j,
-            libs.akkaHttpSprayJson,
-            libs.kafkaStreams,
+lazy val agent = oharaProject("agent",
+  Seq(libraryDependencies ++= Seq(
+    libs.scalaLogging,
+    libs.slf4jApi,
+    libs.slf4jLog4j,
+    libs.akkaStream,
+    libs.akkaHttpSprayJson,
+    libs.sshd excludeAll (libs.sshdExclusionRules: _*),
+    libs.commonsIo,
 
-            libs.hadoopCommon % Test excludeAll(libs.hadoopExclusionRules:_*),
-            libs.hadoopHdfs %Test excludeAll(libs.hadoopExclusionRules:_*),
-          )
-        )
+    libs.scalatest % Test,
+    libs.junit % Test
+  ))
+).dependsOn(
+  common % "compile->compile; test->test",
+  kafka % "compile->compile",
+  client % "compile->compile",
+  metrics % "compile->compile",
+  `testing-util` % "compile->test; test->test",
+)
+
+lazy val streams = oharaProject("streams",
+  Seq(libraryDependencies ++= Seq(
+    libs.commonsLang,
+    libs.slf4jApi,
+    libs.slf4jLog4j,
+    libs.kafkaStreams,
+    libs.commonsIo,
+
+    libs.mockito % Test,
+    libs.junit % Test,
+    libs.javassist % Test
+  ))
+).dependsOn(
+  common % "compile->compile; test->test",
+  kafka % "compile->compile",
+  `testing-util` % "compile->test; test->test",
+)
+
+
+lazy val shabondi = oharaProject("shabondi",
+  Seq(libraryDependencies ++= Seq(
+    libs.scalaLogging,
+    libs.slf4jApi,
+    libs.slf4jLog4j,
+    libs.akkaStream,
+    libs.akkaHttp,
+
+    libs.scalatest % Test,
+    libs.akkaHttpTestKit % Test,
+    libs.mockito % Test,
+    libs.junit % Test
+  ))
+).dependsOn(
+  common % "compile->compile; test->test"
+)
+
+
+lazy val connector = oharaProject("connector",
+  Seq(libraryDependencies ++= Seq(
+    libs.scalaLogging,
+    libs.slf4jApi,
+    libs.slf4jLog4j,
+    libs.akkaHttpSprayJson,
+    libs.kafkaConnectRuntime,
+    /**
+      * The Hadoop use jersey 1.x, but the Kafka use jersey 2.x so jar conflict
+      *
+      * Solve running Kafka Connect mini cluster failed.
+      */
+    libs.hadoopCommon excludeAll (libs.hadoopExclusionRules: _*),
+    libs.hadoopHdfs excludeAll (libs.hadoopExclusionRules: _*),
+
+    libs.scalatest % Test,
+    libs.mockito % Test,
+    libs.junit % Test
+  ))
+).dependsOn(
+  common % "compile->compile; test->test",
+  client % "compile->compile",
+  kafka % "compile->compile",
+  metrics % "compile->compile",
+  `testing-util` % "compile->test; test->test",
+)
+
+
+lazy val configurator = oharaProject("configurator",
+  Seq(
+    Test / javaOptions += "-Xmx1500M"
+  ),
+  Seq(libraryDependencies ++= Seq(
+    /**
+      * The Hadoop use jersey 1.x, but the Kafka use jersey 2.x so jar conflict
+      *
+      * Solve running Kafka Connect mini cluster failed.
+      */
+    libs.hadoopCommon excludeAll (libs.hadoopExclusionRules: _*),
+    libs.hadoopHdfs excludeAll (libs.hadoopExclusionRules: _*),
+
+    libs.kafkaClient,
+    libs.kafkaConnectFile,
+    libs.kafkaConnectRuntime,
+    libs.scalaLogging,
+    libs.slf4jApi,
+    libs.slf4jLog4j,
+    libs.akkaStream,
+    libs.akkaHttpSprayJson,
+
+    libs.scalatest % Test,
+    libs.mockito % Test,
+    libs.junit % Test
+  ))
+).dependsOn(
+  agent % "compile->compile",
+  client % "compile->compile",
+  common % "compile->compile; test->test",
+  kafka % "compile->compile",
+  streams % "compile->compile",
+  metrics % "compile->compile",
+  connector % "compile->test",
+  `testing-util` % "compile->test; test->test"
+)
+
+
+def oharaProject(projectId: String, additionalSettings: sbt.Def.SettingsDefinition*) =
+  Project(projectId,
+    base = file(s"ohara-$projectId")
+  ).settings(
+    name := s"ohara-$projectId",
+    scalaVersion := "2.12.8",
+    shellPrompt := { s => "sbt:" + Project.extract(s).currentProject.id + "> " },
+    cancelable in Global := true,
+    Test / fork := true,
+    Test / javaOptions += "-Xmx1G"
+  ).settings(additionalSettings: _*)
+

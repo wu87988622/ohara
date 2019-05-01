@@ -19,16 +19,17 @@ import sbt._
 object versions {
   lazy val akkaHttpV = "10.1.3"
   lazy val akkaV = "2.5.12"
-  lazy val kafkaV = "1.0.1"
+  lazy val kafkaV = "1.0.2"
   lazy val slf4jV = "1.7.25"
   lazy val hadoopV = "2.7.0"
   lazy val commonsNetV = "3.6"
   lazy val commonsLangV = "3.7"
   lazy val commonsIoV = "2.4"
-  lazy val zookeeperV = "3.4.10"
   lazy val mysqlV = "8.0.12"
   lazy val embeddedsqlV = "4.1.2"
   lazy val ftpServerV = "1.1.1"
+  lazy val sshdV = "2.2.0"
+  lazy val javassistV = "3.24.1-GA"
 }
 
 object libs {
@@ -71,21 +72,31 @@ object libs {
   lazy val scalatest = "org.scalatest" %% "scalatest" % "3.0.5"
   lazy val mockito = "org.mockito" % "mockito-all" % "1.10.19"
   lazy val junit = "junit" % "junit" % "4.12"
+  lazy val javassist = "org.javassist" % "javassist" % javassistV
+  lazy val junitInterface = "com.novocode" % "junit-interface" % "0.11"
 
   // Others
   lazy val typesafeConfig = "com.typesafe" % "config" % "1.3.3"
 
   // mini
-  lazy val zookeeper = "org.apache.zookeeper" % "zookeeper" % versions.zookeeperV
   lazy val mysql =  "mysql" % "mysql-connector-java" % mysqlV
   lazy val embeddedsql = "com.wix" % "wix-embedded-mysql" % embeddedsqlV
   lazy val ftpServer = "org.apache.ftpserver" % "ftpserver-core" % ftpServerV
+  lazy val sshd = "org.apache.sshd" % "apache-sshd" % sshdV
 
+  // exclude older libraries from Hadoop
   val hadoopExclusionRules = Seq(
     ExclusionRule("com.sun.jersey", "jersey-core"),
     ExclusionRule("com.sun.jersey", "jersey-json"),
     ExclusionRule("com.sun.jersey", "jersey-servlet"),
-    ExclusionRule("com.sun.jersey", "jersey-server")
+    ExclusionRule("com.sun.jersey", "jersey-server"),
+    ExclusionRule("com.google.guava", "guava"),
+    ExclusionRule("com.jcraft", "jsch")
+  )
+
+  val sshdExclusionRules = Seq(
+    ExclusionRule("org.apache.sshd", "sshd-mina"),
+    ExclusionRule("org.apache.sshd", "sshd-netty")
   )
 
 
