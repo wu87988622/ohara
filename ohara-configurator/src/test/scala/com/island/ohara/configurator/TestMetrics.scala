@@ -20,7 +20,9 @@ import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationReq
 import com.island.ohara.client.configurator.v0.PipelineApi.Flow
 import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, PipelineApi, TopicApi}
+import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtils, Releasable}
+import com.island.ohara.kafka.Producer
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.{After, Test}
@@ -42,18 +44,52 @@ class TestMetrics extends WithBrokerWorker with Matchers {
 
   private[this] def assertNoMetricsForTopic(topicId: String): Unit = {
     CommonUtils.await(() => BeanChannel.local().topicMeters().asScala.count(_.topicName() == topicId) == 0,
-                      java.time.Duration.ofSeconds(60))
+                      java.time.Duration.ofSeconds(20))
+  }
+
+  @Test
+  def testTopic(): Unit = {
+    val topic = result(
+      topicApi.add(
+        TopicCreationRequest(name = Some(CommonUtils.randomString()),
+                             brokerClusterName = None,
+                             numberOfPartitions = None,
+                             numberOfReplications = None)))
+
+    val producer = Producer
+      .builder[String, String]()
+      .connectionProps(testUtil().brokersConnProps())
+      .keySerializer(Serializer.STRING)
+      .valueSerializer(Serializer.STRING)
+      .build()
+    try {
+      producer
+        .sender()
+        .topicName(topic.id)
+        .key(CommonUtils.randomString())
+        .value(CommonUtils.randomString())
+        .send()
+        .get()
+    } finally producer.close()
+
+    CommonUtils.await(() => {
+      result(topicApi.get(topic.id)).metrics.meters.nonEmpty
+    }, java.time.Duration.ofSeconds(20))
+
+    result(topicApi.delete(topic.id))
+
+    assertNoMetricsForTopic(topic.id)
   }
 
   @Test
   def testConnector(): Unit = {
-    val topicName = methodName
     val topic = result(
       topicApi.add(
-        TopicCreationRequest(name = Some(topicName),
+        TopicCreationRequest(name = Some(CommonUtils.randomString()),
                              brokerClusterName = None,
                              numberOfPartitions = None,
                              numberOfReplications = None)))
+
     val request = ConnectorCreationRequest(
       workerClusterName = None,
       className = Some(classOf[DumbSink].getName),
@@ -73,19 +109,11 @@ class TestMetrics extends WithBrokerWorker with Matchers {
       result(connectorApi.get(sink.id)).metrics.meters.nonEmpty
     }, java.time.Duration.ofSeconds(20))
 
-    CommonUtils.await(() => {
-      result(topicApi.get(topic.id)).metrics.meters.nonEmpty
-    }, java.time.Duration.ofSeconds(20))
-
     result(connectorApi.stop(sink.id))
 
     CommonUtils.await(() => {
       result(connectorApi.get(sink.id)).metrics.meters.isEmpty
     }, java.time.Duration.ofSeconds(20))
-
-    result(topicApi.delete(topic.id))
-
-    assertNoMetricsForTopic(topic.id)
   }
 
   @Test
