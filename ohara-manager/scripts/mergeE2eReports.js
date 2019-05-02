@@ -17,7 +17,7 @@
 const chalk = require('chalk');
 const path = require('path');
 const { isEmpty } = require('lodash');
-const { readdirSync, unlinkSync } = require('fs');
+const { readdirSync, unlinkSync, existsSync } = require('fs');
 const { mergeFiles } = require('junit-report-merger');
 
 /* eslint-disable no-console */
@@ -37,29 +37,46 @@ const deleteFiles = files => {
   files.forEach(file => unlinkSync(file));
 };
 
+const merge = ({ reportDistPath, filesToBeMerged, reject, resolve }) => {
+  mergeFiles(reportDistPath, filesToBeMerged, err => {
+    if (err) reject(err);
+    deleteFiles(filesToBeMerged); // Delete reports that were just merged
+
+    console.log(
+      chalk.green(
+        `Merged all end-to-end test reports!\nYou can view the end-to-end test report at ${reportDistPath}`,
+      ),
+    );
+
+    resolve();
+  });
+};
+
 const mergeE2eReports = () =>
-  // Return a promise here so we can await in another file
+  // Return a promise here so we can await it later
   new Promise((resolve, reject) => {
     const files = getFiles();
-    const reportPath = path.resolve('./test-reports/clientE2e.xml');
+    const reportDistPath = path.resolve('./test-reports/clientE2e.xml');
+    const mergeParams = {
+      reportDistPath: reportDistPath,
+      filesToBeMerged: files,
+      reject,
+      resolve,
+    };
 
     if (isEmpty(files)) {
-      console.log(chalk.red(`No end-to-end report found in ${reportPath}!`));
+      console.log(
+        chalk.red(`No end-to-end report found in ${reportDistPath}!`),
+      );
       reject();
     }
 
-    unlinkSync(reportPath);
-
-    mergeFiles(reportPath, files, err => {
-      if (err) reject(err);
-      deleteFiles(files); // Delete reports that are merged
-
-      console.log(
-        chalk.green('Successfully merged all end-to-end test reports!'),
-      );
-
-      resolve();
-    });
+    if (existsSync(reportDistPath)) {
+      unlinkSync(reportDistPath);
+      merge(mergeParams);
+    } else {
+      merge(mergeParams);
+    }
   });
 
 module.exports = mergeE2eReports;

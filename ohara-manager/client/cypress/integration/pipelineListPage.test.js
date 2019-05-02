@@ -39,6 +39,7 @@ describe('PipelineListPage', () => {
       .getByText('Next')
       .click()
       .wait('@postPipeline')
+      .wait('@getPipelines')
       .getByText('Untitled pipeline')
       .click({ force: true })
       .getByTestId('title-input')

@@ -18,13 +18,13 @@
 
 const execa = require('execa');
 const yargs = require('yargs');
+
+const mergeE2eReports = require('./mergeE2eReports');
+const copyJars = require('./copyJars');
 const { getConfig } = require('../utils/configHelpers');
 const { waited } = require('./lib/waitOn');
-const mergeE2eReports = require('./mergeE2eReports');
-const createServices = require('./createServices');
-const cleanAllServires = require('./cleanAllServices');
+const { createServices, cleanServices } = require('./handleServices');
 const { getEnv } = require('../utils/apiHandler');
-const copyJars = require('./copyJars');
 
 const { configurator, port } = getConfig;
 
@@ -145,12 +145,12 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
     debug(err.message);
     await mergeE2eReports();
     killSubProcess();
-    await cleanAllServires(configurator, envNodeHost);
+    await cleanServices(configurator, envNodeHost);
     process.exit(1);
   } finally {
     await mergeE2eReports();
     killSubProcess();
-    await cleanAllServires(configurator, envNodeHost);
+    await cleanServices(configurator, envNodeHost);
     process.exit(0);
   }
 };

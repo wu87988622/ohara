@@ -46,11 +46,12 @@ Cypress.Commands.add('createWorker', () => {
   cy.get('@broker').then(broker => {
     cy.request('POST', 'api/workers', {
       name: workerName,
-      jars: [],
-      brokerClusterName: broker.name,
-      nodeNames: [nodeName],
+      imageName: 'oharastream/connect-worker:0.4-SNAPSHOT',
       clientPort: utils.makeRandomPort(),
       jmxPort: utils.makeRandomPort(),
+      brokerClusterName: broker.name,
+      jars: [],
+      nodeNames: [nodeName],
     });
   });
 

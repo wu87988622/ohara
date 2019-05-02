@@ -41,6 +41,8 @@ describe('BrokerPage', () => {
   });
 
   it('creates a new topic', () => {
+    cy.server();
+    cy.route('GET', 'api/topics').as('getTopics');
     const topicName = 'test topic';
 
     cy.visit(BROKER)
@@ -59,6 +61,7 @@ describe('BrokerPage', () => {
       .click()
       .getByText('Topic successfully created!')
       .should('have.length', 1)
+      .wait('@getTopics')
       .getByText(topicName)
       .should('have.length', 1)
       .deleteTopic(topicName);

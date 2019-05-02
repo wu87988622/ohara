@@ -25,20 +25,24 @@ describe('PipelineNewPage', () => {
 
   beforeEach(() => {
     cy.server();
-    cy.route('GET', 'api/pipelines/*').as('getPipelines');
+    cy.route('GET', 'api/pipelines/*').as('getPipeline');
+    cy.route('PUT', 'api/pipelines/*').as('putPipeline');
+    cy.route('POST', 'api/pipelines').as('postPipeline');
+    cy.route('GET', 'api/topics').as('getTopics');
 
     cy.createTopic().as('createTopic');
     cy.visit(URLS.PIPELINE)
       .getByTestId('new-pipeline')
       .click()
       .getByText('Next')
-      .click();
+      .click()
+      .wait('@postPipeline')
+      .wait('@getPipeline');
   });
 
   it('adds a topic into pipeline graph and removes it later', () => {
     // Add the topic
-
-    cy.wait('@getPipelines')
+    cy.wait('@getTopics')
       .getByTestId('toolbar-topics')
       .click()
       .get('@createTopic')
@@ -50,13 +54,11 @@ describe('PipelineNewPage', () => {
       .get('@createTopic')
       .then(topic => {
         cy.getByText(topic.name).should('be.exist');
-      });
+      })
+      .wait('@putPipeline');
 
     // Remove the topic
     cy.get('@createTopic').then(topic => {
-      cy.server();
-      cy.route('GET', '/api/pipelines/*').as('pipelines');
-
       cy.getByText(topic.name)
         .click()
         .getByTestId('delete-button')
@@ -64,7 +66,7 @@ describe('PipelineNewPage', () => {
         .getByText('Yes, Remove this topic')
         .click()
         .getByText(`Successfully deleted the topic: ${topic.name}`)
-        .wait('@pipelines')
+        .wait('@getPipeline')
         .queryByText(topic.name, { timeout: 500 })
         .should('not.be.exist');
     });
@@ -101,7 +103,7 @@ describe('PipelineNewPage', () => {
     cy.server();
     cy.route('POST', '/api/connectors').as('createConnector');
 
-    cy.wait('@getPipelines')
+    cy.wait('@getPipeline')
       .wrap(filters)
       .each(filter => {
         const { toolbarTestId, type, connectorLen, nodeType } = filter;
@@ -120,7 +122,7 @@ describe('PipelineNewPage', () => {
   });
 
   it('saves and remove a connector even after page refresh', () => {
-    cy.wait('@getPipelines')
+    cy.wait('@getPipeline')
       .getByTestId('toolbar-sources')
       .click()
       .getByText(CONNECTOR_TYPES.jdbcSource)
@@ -159,7 +161,7 @@ describe('PipelineNewPage', () => {
     cy.route('PUT', '/api/pipelines/*').as('graph');
     cy.route('GET', '/api/connectors/*').as('getGraph');
 
-    cy.wait('@getPipelines')
+    cy.wait('@getPipeline')
       .getByTestId('toolbar-sinks')
       .click()
       .getByText('Add a new sink connector')
