@@ -18,7 +18,7 @@ import { BROKER } from '../../src/constants/urls';
 
 describe('BrokerPage', () => {
   before(() => {
-    cy.deleteWorker();
+    cy.deleteAllWorkers();
     cy.createWorker();
   });
 
@@ -29,7 +29,7 @@ describe('BrokerPage', () => {
   });
 
   it('displays broker node info in the list', () => {
-    const brokerList = Cypress.env('node_name');
+    const brokerList = Cypress.env('nodeHost');
     cy.request('GET', 'api/brokers')
       .then(res => res.body[0].clientPort) // we now only have one broker cluster!
       .as('clientPort');

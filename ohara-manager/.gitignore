@@ -5,16 +5,14 @@ coverage
 yarn-error.log
 
 #Scripts
-/scripts/env/
+/scripts/servicesApi/
 
 # Client
 /client/cypress/videos
 /client/cypress/screenshots
 /client/junit.xml
-/client/workerList.json
 
 # Cypress
 /client/cypress.env.json
 /client/cypress/fixtures/plugin
 /client/cypress/fixtures/streamApp
-/client/cypress/workerList.json

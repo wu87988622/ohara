@@ -15,71 +15,58 @@
  */
 
 import * as URLS from '../../src/constants/urls';
-import { makeRandomStr } from '../utils';
 
-let pipelineParams;
+describe('StreamApp', () => {
+  before(() => {
+    cy.deleteAllWorkers();
+    cy.createWorker();
+  });
 
-describe.skip('StreamApp', () => {
   beforeEach(() => {
-    pipelineParams = {
-      name: makeRandomStr(),
-      workerName: 'cluster',
-    };
-    cy.createPipeline(pipelineParams);
-    cy.visit(URLS.PIPELINE);
+    cy.server();
+    cy.route('GET', 'api/pipelines/*').as('getPipelines');
+
+    cy.visit(URLS.PIPELINE)
+      .getByTestId('new-pipeline')
+      .click()
+      .getByText('Next')
+      .click();
   });
 
   it('adds a streamApp into pipeline graph', () => {
-    cy.getByText(pipelineParams.name)
-      .then($el => {
-        cy.wrap($el.parent()).as('targetPipeline');
-
-        cy.get('@targetPipeline')
-          .getByTestId('edit-pipeline')
-          .click();
-      })
-      .location('pathname')
-      .should('contain', '/pipelines/edit/');
-
-    cy.getByTestId('toolbar-streams')
+    cy.wait('@getPipelines')
+      .getByTestId('toolbar-streams')
       .click()
       .uploadJar(
         'input[type=file]',
-        'streamApp/streamApp.jar',
-        'streamApp.jar',
+        'streamApp/ohara-streamapp.jar',
+        'ohara-streamapp.jar',
         'application/java-archive',
       )
       .wait(500);
 
     cy.getByText('Stream app successfully uploaded!')
       .should('have.length', 1)
-      .getByText('streamApp.jar')
+      .getByText('ohara-streamapp.jar')
       .getByText('Add')
       .click()
       .getByText('Untitled streamApp')
       .should('be.exist');
   });
 
-  it('edits streamApp name', () => {
-    cy.getByText(pipelineParams.name)
-      .then($el => {
-        cy.wrap($el.parent()).as('targetPipeline');
-
-        cy.get('@targetPipeline')
-          .getByTestId('edit-pipeline')
-          .click();
-      })
+  it.skip('edits streamApp name', () => {
+    cy.wait('@getPipelines')
       .getByTestId('toolbar-streams')
       .click()
       .get('input[type=file]')
       .uploadJar(
         'input[type=file]',
-        'streamApp/streamApp.jar',
-        'streamApp.jar',
+        'streamApp/ohara-streamapp.jar',
+        'ohara-streamapp.jar',
         'application/java-archive',
       )
       .wait(500)
-      .getByText('streamApp.jar')
+      .getByText('ohara-streamapp.jar')
       .click()
       .getByTestId('title-input')
       .type('{leftarrow}{leftarrow}{leftarrow}{leftarrow}')
@@ -89,22 +76,15 @@ describe.skip('StreamApp', () => {
       .contains('streamApp_2.jar');
   });
 
-  it('deletes streamApp', () => {
-    cy.getByText(pipelineParams.name)
-      .then($el => {
-        cy.wrap($el.parent()).as('targetPipeline');
-
-        cy.get('@targetPipeline')
-          .getByTestId('edit-pipeline')
-          .click();
-      })
+  it.skip('deletes streamApp', () => {
+    cy.wait('@getPipelines')
       .getByTestId('toolbar-streams')
       .click()
       .get('input[type=file]')
       .uploadJar(
         'input[type=file]',
-        'streamApp/streamApp.jar',
-        'streamApp.jar',
+        'streamApp/ohara-streamapp.jar',
+        'ohara-streamapp.jar',
         'application/java-archive',
       )
       .wait(500)

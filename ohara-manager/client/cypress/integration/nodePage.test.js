@@ -27,10 +27,10 @@ describe.skip('NodePage', () => {
   };
 
   const getTestData = () => {
-    const name = Cypress.env('node_name');
-    const port = Cypress.env('node_port');
-    const user = Cypress.env('node_user');
-    const password = Cypress.env('node_password');
+    const name = Cypress.env('nodeHost');
+    const port = Cypress.env('nodePort');
+    const user = Cypress.env('nodeUser');
+    const password = Cypress.env('nodePass');
     if (!name) return null;
     return {
       name,
@@ -41,7 +41,7 @@ describe.skip('NodePage', () => {
   };
 
   const getFakeData = () => ({
-    name: Cypress.env('node_name') || 'node00',
+    name: Cypress.env('nodeHost') || 'node00',
     port: 21,
     user: 'user',
     password: 'password',

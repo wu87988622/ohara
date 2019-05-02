@@ -18,11 +18,11 @@ import { WORKER } from '../../src/constants/urls';
 
 describe('WorkerPage', () => {
   before(() => {
-    cy.deleteWorker();
+    cy.deleteAllWorkers();
   });
 
   it('creates a new cluster', () => {
-    const nodeName = Cypress.env('node_name');
+    const nodeName = Cypress.env('nodeHost');
     const clusterName = 'testcluster';
 
     cy.registerWorker(clusterName);

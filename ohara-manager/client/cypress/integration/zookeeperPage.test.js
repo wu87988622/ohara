@@ -24,7 +24,7 @@ describe('ZookeeperPage', () => {
   });
 
   it('displays broker node info in the list', () => {
-    const zookeeperList = Cypress.env('node_name');
+    const zookeeperList = Cypress.env('nodeHost');
     cy.request('GET', 'api/zookeepers')
       .then(res => res.body[0].clientPort) // we now only have one broker cluster!
       .as('clientPort');

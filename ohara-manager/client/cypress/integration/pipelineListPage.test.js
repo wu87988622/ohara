@@ -19,7 +19,7 @@ import { makeRandomStr } from '../utils';
 
 describe('PipelineListPage', () => {
   before(() => {
-    cy.deleteWorker();
+    cy.deleteAllWorkers();
     cy.createWorker();
   });
 

@@ -19,10 +19,10 @@ export const makeRandomPort = () => {
 };
 
 export const getFakeNode = () => {
-  const name = Cypress.env('node_name');
-  const port = Cypress.env('node_port');
-  const user = Cypress.env('node_user');
-  const password = Cypress.env('node_password');
+  const name = Cypress.env('nodeHost');
+  const port = Cypress.env('nodePort');
+  const user = Cypress.env('nodeUser');
+  const password = Cypress.env('nodePass');
   if (!name) return null;
   return {
     name,
@@ -38,4 +38,21 @@ export const makeRandomStr = prefix => {
     .substring(7);
 
   return prefix ? `${prefix}${random}` : random;
+};
+
+export const recursiveDeleteWorker = (endPoint, serviceName) => {
+  // We need to wait for specific service removed from the node
+  // then we can move on and remove another service
+  cy.request('GET', endPoint).then(res => {
+    const isServiceExit = res.body.some(
+      service => service.name === serviceName,
+    );
+
+    // Target service is not in the list anymore, break the loop
+    if (!isServiceExit) return;
+
+    // Wait and make another request
+    cy.wait(1500);
+    recursiveDeleteWorker(endPoint, serviceName);
+  });
 };

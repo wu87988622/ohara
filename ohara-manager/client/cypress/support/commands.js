@@ -16,44 +16,13 @@
 
 import 'cypress-testing-library/add-commands';
 
-import { makeRandomPort, getFakeNode, makeRandomStr } from '../utils';
-import { setUserKey } from '../../src/utils/authUtils';
-import { VALID_USER } from '../../src/constants/cypress';
-import * as _ from '../../src/utils/commonUtils';
-
-Cypress.Commands.add('loginWithUi', () => {
-  cy.get('[data-testid="username"]').type(VALID_USER.username);
-  cy.get('[data-testid="password"]').type(VALID_USER.password);
-  cy.get('[data-testid="login-form"]').submit();
-});
-
-Cypress.Commands.add('login', () => {
-  cy.request({
-    method: 'POST',
-    url: 'http://localhost:5050/api/login',
-    body: {
-      username: VALID_USER.username,
-      password: VALID_USER.password,
-    },
-  }).then(res => {
-    const token = _.get(res, 'body.token', null);
-    if (!_.isNull(token)) {
-      setUserKey(token);
-    }
-  });
-});
+import * as utils from '../utils';
 
 Cypress.Commands.add('registerWorker', workerName => {
   const fileName = '../scripts/servicesApi/service.json';
   const update = { name: workerName, serviceType: 'workers' };
 
   cy.task('readFileMaybe', fileName).then(data => {
-    if (!data) {
-      // Create a new file if there's no one
-      cy.writeFile(fileName, [update]);
-      return;
-    }
-
     // Append a new worker to the existing file
     cy.writeFile(fileName, [...data, update]);
   });
@@ -62,11 +31,14 @@ Cypress.Commands.add('registerWorker', workerName => {
 Cypress.Commands.add('createWorker', () => {
   cy.log('Create a new worker');
 
-  const { name: nodeName } = getFakeNode();
-  const workerName = 'wk' + makeRandomStr();
-  Cypress.env('WORKER_NAME', workerName);
+  const { name: nodeName } = utils.getFakeNode();
+  const workerName = 'wk' + utils.makeRandomStr();
 
+  // Store the worker names in a file as well as
+  // in the Cypress env as we'll be using them in the tests
+  Cypress.env('WORKER_NAME', workerName);
   cy.registerWorker(workerName);
+
   cy.request('GET', 'api/brokers')
     .then(res => res.body[0]) // there should only be one broker in the list
     .as('broker');
@@ -77,8 +49,8 @@ Cypress.Commands.add('createWorker', () => {
       jars: [],
       brokerClusterName: broker.name,
       nodeNames: [nodeName],
-      clientPort: makeRandomPort(),
-      jmxPort: makeRandomPort(),
+      clientPort: utils.makeRandomPort(),
+      jmxPort: utils.makeRandomPort(),
     });
   });
 
@@ -86,10 +58,10 @@ Cypress.Commands.add('createWorker', () => {
   const req = endPoint => {
     cy.request('GET', endPoint).then(res => {
       // When connectors field has the right connector info
-      // this means everything is ready to be tested
+      // this means that everything is ready to be tested
       if (res.body.connectors.length > 0) return;
 
-      // if it's not ready yet, wait a bit and make another request
+      // if worker is not ready yet, wait a 1.5 sec and make another request
       cy.wait(1500);
       req(endPoint);
     });
@@ -99,35 +71,32 @@ Cypress.Commands.add('createWorker', () => {
   cy.request('GET', endPoint).then(() => req(endPoint));
 });
 
-Cypress.Commands.add('deleteWorker', () => {
-  cy.log('Delete previous created worker if there is one ');
+Cypress.Commands.add('deleteAllWorkers', () => {
+  cy.log('Delete all previous created workers');
 
-  const req = (endPoint, serviceName) => {
-    // We need to wait for specific service removed from the node
-    // then we can move on and remove another service
-    cy.request('GET', endPoint).then(res => {
-      const isServiceExit = res.body.some(
-        service => service.name === serviceName,
+  const fileName = '../scripts/servicesApi/service.json';
+
+  cy.task('readFileMaybe', fileName).then(data => {
+    if (!data) return; // File is not there, skip the whole process
+
+    const workerNames = data
+      .filter(d => d.serviceType === 'workers')
+      .map(d => d.name);
+
+    cy.request('GET', 'api/workers').then(res => {
+      const targetWorkers = res.body.filter(worker =>
+        workerNames.includes(worker.name),
       );
 
-      // Target service is not in the list anymore, break the loop
-      if (!isServiceExit) return;
-
-      // Wait and make another request
-      cy.wait(1500);
-      req(endPoint, serviceName);
+      if (targetWorkers.length > 0) {
+        targetWorkers.forEach(targetWorker => {
+          const { name } = targetWorker;
+          cy.request('DELETE', `api/workers/${name}?force=true`).then(() =>
+            utils.recursiveDeleteWorker('api/workers', name),
+          );
+        });
+      }
     });
-  };
-
-  const workerName = Cypress.env('WORKER_NAME');
-  cy.request('GET', 'api/workers').then(res => {
-    const hasWorker = res.body.some(worker => worker.name === workerName);
-
-    if (hasWorker) {
-      cy.request('DELETE', `api/workers/${workerName}?force=true`).then(() =>
-        req('api/workers', workerName),
-      );
-    }
   });
 });
 
@@ -207,7 +176,7 @@ Cypress.Commands.add('createPipeline', pipeline => {
 
 Cypress.Commands.add('createTopic', overrides => {
   cy.request('POST', '/api/topics', {
-    name: makeRandomStr(),
+    name: utils.makeRandomStr(),
     numberOfReplications: 1,
     numberOfPartitions: 1,
     ...overrides,
