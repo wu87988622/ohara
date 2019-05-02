@@ -39,7 +39,7 @@ public interface Brokers extends Releasable {
   static Brokers local(Zookeepers zk, int[] ports) {
     List<File> tempFolders =
         IntStream.range(0, ports.length)
-            .mapToObj(i -> CommonUtils.createTempDir("local_kafka"))
+            .mapToObj(i -> CommonUtils.createTempFolder("local_kafka"))
             .collect(Collectors.toList());
     List<KafkaServer> brokers =
         IntStream.range(0, ports.length)

@@ -261,7 +261,7 @@ public class TestFtpServer extends MediumTest {
   @Test
   public void testHomeFolder() {
     String prefix = CommonUtils.randomString(5);
-    File f = CommonUtils.createTempDir(prefix);
+    File f = CommonUtils.createTempFolder(prefix);
     assertTrue(f.delete());
     assertFalse(f.exists());
     try (FtpServer ftpServer = FtpServer.builder().homeFolder(f).build()) {

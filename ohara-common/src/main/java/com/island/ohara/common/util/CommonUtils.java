@@ -20,11 +20,18 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
 import java.util.function.Supplier;
@@ -34,6 +41,12 @@ import org.slf4j.LoggerFactory;
 
 public final class CommonUtils {
   private static final Logger logger = LoggerFactory.getLogger(CommonUtils.class);
+
+  // ------------------------------------[Time Helper]------------------------------------ //
+
+  public static String timezone() {
+    return Calendar.getInstance().getTimeZone().getID();
+  }
 
   /** An interface used to represent current time. */
   @FunctionalInterface
@@ -59,115 +72,17 @@ public final class CommonUtils {
     return TIMER.current();
   }
 
-  /**
-   * create a uuid. This uuid consists of "number" and [a-zA-Z]
-   *
-   * @return uuid
-   */
-  public static String uuid() {
-    return java.util.UUID.randomUUID().toString();
-  }
-
-  /**
-   * a random string based on uuid without "-"
-   *
-   * @return random string
-   */
-  public static String randomString() {
-    return uuid().replaceAll("-", "");
-  }
-
-  /**
-   * create a random string with specified length. This uuid consists of "number" and [a-zA-Z]
-   *
-   * @param len the length of uuid
-   * @return uuid
-   */
-  public static String randomString(int len) {
-    String string = randomString();
-    if (string.length() < len)
-      throw new IllegalArgumentException(
-          "expected size:" + len + ", actual size:" + string.length());
-    return string.substring(0, len);
-  }
-
-  /**
-   * Determines the IP address of a host, given the host's name.
-   *
-   * @param hostname host's name
-   * @return the IP address string in textual presentation.
-   */
-  public static String address(String hostname) {
-    try {
-      return InetAddress.getByName(hostname).getHostAddress();
-    } catch (UnknownHostException e) {
-      throw new IllegalArgumentException(e);
-    }
-  }
-
-  public static String hostname() {
-    try {
-      return InetAddress.getLocalHost().getHostName();
-    } catch (UnknownHostException e) {
-      throw new IllegalArgumentException(e);
-    }
-  }
-
-  public static String anyLocalAddress() {
-    return "0.0.0.0";
-  }
-
-  public static String timezone() {
-    return Calendar.getInstance().getTimeZone().getID();
-  }
-
-  /**
-   * compose a full path based on parent (folder) and name (file).
-   *
-   * @param parent parent folder
-   * @param name file name
-   * @return path
-   */
-  public static String path(String parent, String name) {
-    if (parent.endsWith("/")) return parent + name;
-    else return parent + "/" + name;
-  }
-
-  /**
-   * extract the file name from the path
-   *
-   * @param path path
-   * @return name
-   */
-  public static String name(String path) {
-    if (path.equalsIgnoreCase("/")) throw new IllegalArgumentException("no file name for " + path);
-    else {
-      int last = path.lastIndexOf("/");
-      if (last == -1) return path;
-      else return path.substring(last + 1);
-    }
-  }
-
-  /**
-   * replace the path's parent path by new parent
-   *
-   * @param parent new parent
-   * @param path original path
-   * @return new path
-   */
-  public static String replaceParent(String parent, String path) {
-    return path(parent, name(path));
-  }
+  // ------------------------------------[Process Helper]------------------------------------ //
 
   /**
    * helper method. Loop the specified method until timeout or get true from method
    *
-   * @param f function
-   * @param d duration
+   * @param f function the action
+   * @param timeout duration timeout
    * @return false if timeout and (useException = true). Otherwise, the return value is true
    */
-  public static Boolean await(Supplier<Boolean> f, Duration d) {
-    return await(f, d, Duration.ofMillis(1500), true);
+  public static Boolean await(Supplier<Boolean> f, Duration timeout) {
+    return await(f, timeout, Duration.ofMillis(1500), true);
   }
 
   /**
@@ -203,6 +118,8 @@ public final class CommonUtils {
     } else return false;
   }
 
+  // ------------------------------------[Collection Helper]------------------------------------ //
+
   public static <E1> boolean equals(Set<E1> s1, Object o) {
     if (s1 == o) return true;
     if (!(o instanceof Set)) return false;
@@ -219,11 +136,6 @@ public final class CommonUtils {
     }
   }
 
-  /**
-   * @param m1 map1
-   * @param m2 map2
-   * @param condition value eqauls condition
-   */
   private static <K, V> boolean mapEquals(
       Map<K, V> m1, Map<?, ?> m2, BiPredicate<V, Object> condition) {
 
@@ -270,15 +182,6 @@ public final class CommonUtils {
     }
   }
 
-  /**
-   * List equals
-   *
-   * @param l1
-   * @param l2
-   * @param condition
-   * @see java.util.AbstractList
-   * @return
-   */
   private static <E1> boolean listEquals(
       List<E1> l1, List<?> l2, BiPredicate<E1, Object> condition) {
     Iterator<E1> e1 = l1.listIterator();
@@ -311,34 +214,32 @@ public final class CommonUtils {
     }
   }
 
+  // ------------------------------------[Network Helper]------------------------------------ //
+
   /**
-   * create a temp file with specified prefix name.
+   * Determines the IP address of a host, given the host's name.
    *
-   * @param prefix prefix name
-   * @return a temp folder
+   * @param hostname host's name
+   * @return the IP address string in textual presentation.
    */
-  public static File createTempFile(String prefix) {
+  public static String address(String hostname) {
     try {
-      Path t = Files.createTempFile(prefix, null);
-      return t.toFile();
-    } catch (IOException e) {
-      throw new IllegalStateException(e);
+      return InetAddress.getByName(hostname).getHostAddress();
+    } catch (UnknownHostException e) {
+      throw new IllegalArgumentException(e);
     }
   }
 
-  /**
-   * create a temp folder with specified prefix name.
-   *
-   * @param prefix prefix name
-   * @return a temp folder
-   */
-  public static File createTempDir(String prefix) {
+  public static String hostname() {
     try {
-      Path t = Files.createTempDirectory(prefix);
-      return t.toFile();
-    } catch (IOException e) {
-      throw new IllegalStateException(e);
+      return InetAddress.getLocalHost().getHostName();
+    } catch (UnknownHostException e) {
+      throw new IllegalArgumentException(e);
     }
+  }
+
+  public static String anyLocalAddress() {
+    return "0.0.0.0";
   }
 
   public static int resolvePort(int port) {
@@ -355,17 +256,38 @@ public final class CommonUtils {
     }
   }
 
+  // ---------------------------------[Primitive Type Helper]--------------------------------- //
+
   /**
-   * Delete the file or folder
+   * create a uuid. This uuid consists of "number" and [a-zA-Z]
    *
-   * @param path path to file or folder
+   * @return uuid
    */
-  public static void deleteFiles(File path) {
-    try {
-      FileUtils.forceDelete(path);
-    } catch (IOException e) {
-      throw new IllegalStateException(e);
-    }
+  public static String uuid() {
+    return java.util.UUID.randomUUID().toString();
+  }
+
+  /**
+   * a random string based on uuid without "-"
+   *
+   * @return random string
+   */
+  public static String randomString() {
+    return uuid().replaceAll("-", "");
+  }
+
+  /**
+   * create a random string with specified length. This uuid consists of "number" and [a-zA-Z]
+   *
+   * @param len the length of uuid
+   * @return uuid
+   */
+  public static String randomString(int len) {
+    String string = randomString();
+    if (string.length() < len)
+      throw new IllegalArgumentException(
+          "expected size:" + len + ", actual size:" + string.length());
+    return string.substring(0, len);
   }
 
   /**
@@ -440,17 +362,6 @@ public final class CommonUtils {
     return requireNonEmpty(s, () -> "");
   }
 
-  /**
-   * Check the null and existence of input file
-   *
-   * @param file file
-   * @return an non-null and existent file
-   */
-  public static File requireExist(File file) {
-    if (!Objects.requireNonNull(file).exists()) throw new IllegalArgumentException();
-    return file;
-  }
-
   public static <T extends Collection<?>> T requireNonEmpty(T s) {
     return requireNonEmpty(s, () -> "");
   }
@@ -505,25 +416,195 @@ public final class CommonUtils {
     else throw new IllegalArgumentException("Only number and char are accepted!!! actual:" + s);
   }
 
-  /**
-   * Check word has uppercase
-   *
-   * @param str
-   * @return
-   */
+  /** Check word has uppercase */
   public static boolean hasUpperCase(String str) {
     return !str.equals(str.toLowerCase());
   }
 
-  /**
-   * Require lowercase function
-   *
-   * @param str
-   * @return
-   */
+  /** Require lowercase function */
   public static String requireLowerCase(String str, String errorMessage) {
     if (hasUpperCase(str)) throw new IllegalArgumentException(errorMessage);
     return str;
+  }
+
+  // ------------------------------------[File Helper]------------------------------------ //
+
+  /**
+   * replace the path's parent path by new parent
+   *
+   * @param parent new parent
+   * @param path original path
+   * @return new path
+   */
+  public static String replaceParent(String parent, String path) {
+    return path(parent, name(path));
+  }
+
+  /**
+   * compose a full path based on parent (folder) and name (file).
+   *
+   * @param parent parent folder
+   * @param name file name
+   * @return path
+   */
+  public static String path(String parent, String name) {
+    if (parent.endsWith("/")) return parent + name;
+    else return parent + "/" + name;
+  }
+
+  /**
+   * extract the file name from the path
+   *
+   * @param path path
+   * @return name
+   */
+  public static String name(String path) {
+    if (path.equalsIgnoreCase("/")) throw new IllegalArgumentException("no file name for " + path);
+    else {
+      int last = path.lastIndexOf("/");
+      if (last == -1) return path;
+      else return path.substring(last + 1);
+    }
+  }
+
+  /**
+   * create a temp file with specified prefix name.
+   *
+   * @param prefix prefix name
+   * @return a temp folder
+   */
+  public static File createTempFile(String prefix) {
+    try {
+      Path t = Files.createTempFile(prefix, null);
+      return t.toFile();
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  /**
+   * create a temp folder with specified prefix name.
+   *
+   * @param prefix prefix name
+   * @return a temp folder
+   */
+  public static File createTempFolder(String prefix) {
+    try {
+      Path t = Files.createTempDirectory(prefix);
+      return t.toFile();
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  /**
+   * Check the null and existence of input file
+   *
+   * @param file file
+   * @return an non-null and existent file
+   */
+  public static File requireExist(File file) {
+    if (!Objects.requireNonNull(file).exists())
+      throw new IllegalArgumentException(file.getAbsolutePath() + " does not exist");
+    return file;
+  }
+
+  /**
+   * @param file input file
+   * @throws IllegalArgumentException If the input is not file
+   * @return input file
+   */
+  public static File requireFile(File file) {
+    if (!requireExist(file).isFile())
+      throw new IllegalArgumentException(file.getAbsolutePath() + " is not file");
+    return file;
+  }
+
+  /**
+   * @param file input file
+   * @throws IllegalArgumentException If the input is not folder
+   * @return input file
+   */
+  public static File requireFolder(File file) {
+    if (!requireExist(file).isDirectory())
+      throw new IllegalArgumentException(file.getAbsolutePath() + " is not folder");
+    return file;
+  }
+
+  /**
+   * Check the null and non-existence of input file
+   *
+   * @param file file
+   * @return an non-null and existent file
+   */
+  public static File requireNotExist(File file) {
+    if (Objects.requireNonNull(file).exists())
+      throw new IllegalArgumentException(file.getAbsolutePath() + " exists");
+    return file;
+  }
+
+  /**
+   * Delete the file or folder
+   *
+   * @param path path to file or folder
+   */
+  public static void deleteFiles(File path) {
+    try {
+      FileUtils.forceDelete(path);
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  /**
+   * copy total content of a file to an new file. The input file must be a existent file. And target
+   * file must be not existent.
+   *
+   * @param file src file
+   * @param newFile target file
+   */
+  public static void copyFile(File file, File newFile) {
+    try {
+      FileUtils.copyFile(requireFile(file), requireNotExist(newFile));
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  /**
+   * move a file to another location. The input file must be a existent file. And target file must
+   * be not existent.
+   *
+   * @param file src file
+   * @param newFile target file
+   */
+  public static void moveFile(File file, File newFile) {
+    try {
+      FileUtils.moveFile(requireFile(file), requireNotExist(newFile));
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  /**
+   * Download the content from remote URL to local file. The local file must be not existent.
+   *
+   * @param source remote resource
+   * @param destination local file
+   * @param connectionTimeout connection timeout
+   * @param readTimeout read timeout
+   */
+  public static void copyURLToFile(
+      URL source, File destination, int connectionTimeout, int readTimeout) {
+    try {
+      FileUtils.copyURLToFile(
+          Objects.requireNonNull(source),
+          requireNotExist(destination),
+          connectionTimeout,
+          readTimeout);
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
   }
 
   /** disable to instantiate CommonUtils. */

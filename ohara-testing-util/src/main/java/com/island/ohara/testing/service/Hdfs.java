@@ -35,7 +35,7 @@ public interface Hdfs extends Releasable {
 
   static Hdfs local() {
     return new Hdfs() {
-      private final File tempDir = CommonUtils.createTempDir("local_hdfs");
+      private final File tempDir = CommonUtils.createTempFolder("local_hdfs");
 
       @Override
       public void close() {

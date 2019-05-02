@@ -72,7 +72,7 @@ public interface FtpServer extends Releasable {
     private Builder() {}
 
     private String advertisedHostname = CommonUtils.hostname();
-    private File homeFolder = CommonUtils.createTempDir("local_ftp");
+    private File homeFolder = CommonUtils.createTempFolder("local_ftp");
     private String user = "user";
     private String password = "password";
     private int controlPort = 0;
@@ -257,7 +257,7 @@ public interface FtpServer extends Releasable {
               TTL));
 
   static void start(String[] args, Consumer<FtpServer> consumer) throws InterruptedException {
-    File homeFolder = CommonUtils.createTempDir(CommonUtils.randomString(5));
+    File homeFolder = CommonUtils.createTempFolder(CommonUtils.randomString(5));
     String advertisedHostname = CommonUtils.hostname();
     String user = "user";
     String password = "password";

@@ -92,7 +92,7 @@ public interface Database extends Releasable {
               .withTimeZone(CommonUtils.timezone())
               .withTimeout(2, TimeUnit.MINUTES)
               .withServerVariable("max_connect_errors", 666)
-              .withTempDir(CommonUtils.createTempDir("local_mysql").getAbsolutePath())
+              .withTempDir(CommonUtils.createTempFolder("local_mysql").getAbsolutePath())
               .withPort(CommonUtils.resolvePort(port))
               // make mysql use " replace '
               // see https://stackoverflow.com/questions/13884854/mysql-double-quoted-table-names

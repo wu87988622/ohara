@@ -33,8 +33,8 @@ public interface Zookeepers extends Releasable {
 
   static Zookeepers local(int port) {
     final NIOServerCnxnFactory factory;
-    File snapshotDir = CommonUtils.createTempDir("local_zk_snapshot");
-    File logDir = CommonUtils.createTempDir("local_zk_log");
+    File snapshotDir = CommonUtils.createTempFolder("local_zk_snapshot");
+    File logDir = CommonUtils.createTempFolder("local_zk_log");
 
     try {
       factory = new NIOServerCnxnFactory();

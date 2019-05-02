@@ -84,7 +84,7 @@ class Configurator private[configurator] (advertisedHostname: Option[String],
 
   private[this] val log = Logger(classOf[Configurator])
 
-  private[this] val jarLocalHome = CommonUtils.createTempDir("Configurator").getAbsolutePath
+  private[this] val jarLocalHome = CommonUtils.createTempFolder("Configurator").getAbsolutePath
 
   private[this] implicit val brokerCollie: BrokerCollie = clusterCollie.brokerCollie()
   private[this] implicit val workerCollie: WorkerCollie = clusterCollie.workerCollie()

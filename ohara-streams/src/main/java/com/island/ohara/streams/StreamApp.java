@@ -16,6 +16,7 @@
 
 package com.island.ohara.streams;
 
+import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.exception.CheckedExceptionUtils;
 import com.island.ohara.streams.ostream.LaunchImpl;
 import java.io.File;
@@ -28,7 +29,6 @@ import java.util.Enumeration;
 import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import org.apache.commons.io.FileUtils;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 public abstract class StreamApp {
@@ -170,7 +170,7 @@ public abstract class StreamApp {
     URL url = new URL(jarUrl);
 
     // Download the jar
-    FileUtils.copyURLToFile(url, outputFile, CONNECT_TIMEOUT, READ_TIMEOUT);
+    CommonUtils.copyURLToFile(url, outputFile, CONNECT_TIMEOUT, READ_TIMEOUT);
 
     // Find the StreamApp entry class name
     JarFile jar = new JarFile(outputFile);

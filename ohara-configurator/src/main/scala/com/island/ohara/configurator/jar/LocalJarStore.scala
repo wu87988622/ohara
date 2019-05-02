@@ -23,7 +23,6 @@ import com.island.ohara.client.configurator.v0.JarApi.JarInfo
 import com.island.ohara.common.util.{CommonUtils, ReleaseOnce}
 import com.island.ohara.configurator.jar.LocalJarStore._
 import com.typesafe.scalalogging.Logger
-import org.apache.commons.io.FileUtils
 
 import scala.concurrent.{ExecutionContext, Future}
 private[configurator] class LocalJarStore(val homeFolder: String,
@@ -63,7 +62,7 @@ private[configurator] class LocalJarStore(val homeFolder: String,
       val id = folder.getName
       val newFile = new File(folder, newName)
       if (newFile.exists()) throw new IllegalArgumentException(s"${newFile.getAbsolutePath} already exists")
-      FileUtils.copyFile(file, newFile)
+      CommonUtils.copyFile(file, newFile)
       LOG.debug(s"copy $file to $newFile")
       val plugin = JarInfo(
         id = id,
@@ -106,7 +105,7 @@ private[configurator] class LocalJarStore(val homeFolder: String,
       val file = toFolder(id)
       if (!file.exists()) throw new NoSuchElementException(s"$id doesn't exist")
       if (!file.isDirectory) throw new IllegalArgumentException(s"$id doesn't reference to a folder")
-      FileUtils.forceDelete(file)
+      CommonUtils.deleteFiles(file)
       jar
     }
 
@@ -121,7 +120,7 @@ private[configurator] class LocalJarStore(val homeFolder: String,
       if (!folder.mkdir()) throw new IllegalArgumentException(s"fail to create folder on $folder")
       val newFile = new File(folder, file.getName)
       if (newFile.exists()) throw new IllegalArgumentException(s"${newFile.getAbsolutePath} already exists")
-      FileUtils.copyFile(file, newFile)
+      CommonUtils.copyFile(file, newFile)
       LOG.debug(s"copy $file to $newFile")
       val plugin = JarInfo(
         id = id,
@@ -142,7 +141,7 @@ private[configurator] class LocalJarStore(val homeFolder: String,
         val previousFIle = new File(folder, jarInfo.name)
         val newFile = new File(folder, newName)
         LOG.debug(s"copy file from $previousFIle to $newFile")
-        FileUtils.moveFile(previousFIle, newFile)
+        CommonUtils.moveFile(previousFIle, newFile)
         JarInfo(
           id = id,
           name = newFile.getName,
