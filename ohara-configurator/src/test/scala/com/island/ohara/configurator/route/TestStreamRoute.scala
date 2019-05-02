@@ -119,6 +119,12 @@ class TestStreamRoute extends SmallTest with Matchers {
     res2.to.size shouldBe 1
     res2.instances shouldBe 1
 
+    // delete properties
+    awaitResult(accessStreamProperty.delete(id))
+
+    // after delete, the streamApp should not exist
+    an[IllegalArgumentException] should be thrownBy awaitResult(accessStreamProperty.get(id))
+
     file.deleteOnExit()
   }
 
@@ -160,6 +166,9 @@ class TestStreamRoute extends SmallTest with Matchers {
     an[RuntimeException] should be thrownBy awaitResult(
       accessStreamProperty.update(streamJar.id, req.copy(instances = 10)))
 
+    // running streamApp cannot delete
+    an[RuntimeException] should be thrownBy awaitResult(accessStreamProperty.delete(streamJar.id))
+
     val res2 = awaitResult(accessStreamAction.stop(streamJar.id))
     res2.state shouldBe None
     res2.error shouldBe None
@@ -168,6 +177,12 @@ class TestStreamRoute extends SmallTest with Matchers {
     val latest = awaitResult(accessStreamProperty.get(streamJar.id))
     latest.state shouldBe None
     latest.error.isDefined shouldBe false
+
+    // after stop, streamApp can be deleted
+    val deleted = awaitResult(accessStreamProperty.delete(streamJar.id))
+
+    // after delete, streamApp should not exist
+    an[IllegalArgumentException] should be thrownBy awaitResult(accessStreamProperty.get(deleted.id))
 
     file.deleteOnExit()
   }

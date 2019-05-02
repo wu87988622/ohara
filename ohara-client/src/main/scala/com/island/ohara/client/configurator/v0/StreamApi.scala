@@ -320,6 +320,7 @@ object StreamApi {
     def get(id: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription]
     def update(id: String, request: StreamPropertyRequest)(
       implicit executionContext: ExecutionContext): Future[StreamAppDescription]
+    def delete(id: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription]
   }
 
   def accessOfProperty(): PropertyAccess = new PropertyAccess {
@@ -344,5 +345,7 @@ object StreamApi {
       request: StreamPropertyRequest
     )(implicit executionContext: ExecutionContext): Future[StreamAppDescription] =
       access.update(id, request)
+    override def delete(id: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription] =
+      access.delete(id)
   }
 }

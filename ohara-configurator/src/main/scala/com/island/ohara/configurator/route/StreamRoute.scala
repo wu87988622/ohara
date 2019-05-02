@@ -281,11 +281,18 @@ private[configurator] object StreamRoute {
                     "You should upload a jar first and use PUT method to update properties."
                 )
               } ~
-                // delete property is useless, we handle this in StreamApp List -> DELETE method
+                // delete property
                 delete {
                   complete(
-                    StatusCodes.BadRequest ->
-                      "You cannot delete properties only. Please use DELETE method in StreamApp List API instead. "
+                    // get the latest status first
+                    updateState(id).flatMap { data =>
+                      if (data.state.isEmpty) {
+                        // state is not exists, could remove this streamApp
+                        store.remove[StreamAppDescription](id)
+                      } else {
+                        throw new RuntimeException(s"You cannot delete a non-stopped streamApp :$id")
+                      }
+                    }
                   )
                 } ~
                 // get property

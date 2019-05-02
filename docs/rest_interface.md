@@ -2934,7 +2934,7 @@ Currently, this api is only used for changing jar name.
 }
 ```
 ----------
-### update properties from specific streamApp
+### update properties of specific streamApp
 
 Update the properties of a non-started streamApp. 
 
@@ -2993,6 +2993,48 @@ Update the properties of a non-started streamApp.
   "lastModified": 1542102595892
 }
 ```
+
+----------
+### delete properties of specific streamApp
+
+Delete the properties of a non-started streamApp.
+This api only remove the streamApp component which is stored in pipeline. 
+
+*DELETE /v0/stream/property/${id}*
+
+**Example Response**
+
+1. workerClusterName (**string**) — worker cluster name this streamApp belong to
+1. id (**string**) — unique id of this streamApp
+1. name (**string**) — custom name of this streamApp
+1. instances ( **int**) — numbers of streamApp container
+1. jarInfo (**object**) — uploaded jar information
+1. from (**array(string)**) — topics of streamApp consume with
+1. to (**array(string)**) — topics of streamApp produce to
+1. lastModified (**long**) — last modified this jar time
+
+```json
+{
+  "workerClusterName": "wk01",
+  "id": "d312871a-4a05-488d-aae0-c8b27c5312c2",
+  "name": "my-new-app",
+  "instances": 1,
+  "jarInfo": {
+    "id": "1b022c59-93f9-452c-a062-f8e4cb6c00fe",
+    "name": "new-name.jar",
+    "size": 1234,
+    "lastModified": 1542102595892
+  },
+  "from": [
+    "topicA"
+  ],
+  "to": [
+    "topicB"
+  ],
+  "lastModified": 1542102595892
+}
+```
+
 ----------
 ### get topology tree graph from specific streamApp
 
