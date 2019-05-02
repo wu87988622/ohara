@@ -27,6 +27,21 @@ import org.junit.Test;
 
 public class TestRefreshableCache extends SmallTest {
 
+  @Test(expected = NullPointerException.class)
+  public void nullFrequency() {
+    RefreshableCache.<String, String>builder().frequency(null);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void nullSupplier() {
+    RefreshableCache.<String, String>builder().supplier(null);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void nullCache() {
+    RefreshableCache.<String, String>builder().cache(null);
+  }
+
   @Test
   public void testAutoRefresh() throws InterruptedException {
     AtomicInteger count = new AtomicInteger(0);

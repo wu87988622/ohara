@@ -63,6 +63,10 @@ public interface RefreshableCache<K, V> extends Cache<K, V>, Releasable {
       return this;
     }
 
+    /**
+     * @param frequency the time to update cache
+     * @return this builder
+     */
     @Optional("default value is 5 seconds")
     public Builder<K, V> frequency(Duration frequency) {
       this.frequency = Objects.requireNonNull(frequency);

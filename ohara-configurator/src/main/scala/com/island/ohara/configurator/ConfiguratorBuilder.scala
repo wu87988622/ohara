@@ -41,8 +41,9 @@ class ConfiguratorBuilder {
   private[this] var advertisedPort: Option[Int] = None
   private[this] val store: DataStore = DataStore(
     com.island.ohara.configurator.store.Store.inMemory(Serializer.STRING, Configurator.DATA_SERIALIZER))
-  private[this] var initializationTimeout: Option[Duration] = Some(10 seconds)
-  private[this] var terminationTimeout: Option[Duration] = Some(10 seconds)
+  private[this] var cacheTimeout: Duration = 5 seconds
+  private[this] var initializationTimeout: Duration = 10 seconds
+  private[this] var terminationTimeout: Duration = 10 seconds
   private[this] var extraRoute: Option[server.Route] = None
   private[this] var clusterCollie: Option[ClusterCollie] = None
   private[this] var crane: Option[Crane] = None
@@ -79,15 +80,21 @@ class ConfiguratorBuilder {
     this
   }
 
+  @Optional("default is 5 seconds")
+  def cacheTimeout(cacheTimeout: Duration): ConfiguratorBuilder = {
+    this.cacheTimeout = Objects.requireNonNull(cacheTimeout)
+    this
+  }
+
   @Optional("default is 10 seconds")
   def terminationTimeout(terminationTimeout: Duration): ConfiguratorBuilder = {
-    this.terminationTimeout = Some(terminationTimeout)
+    this.terminationTimeout = Objects.requireNonNull(terminationTimeout)
     this
   }
 
   @Optional("default is 10 seconds")
   def initializationTimeout(initializationTimeout: Duration): ConfiguratorBuilder = {
-    this.initializationTimeout = Some(initializationTimeout)
+    this.initializationTimeout = Objects.requireNonNull(initializationTimeout)
     this
   }
 
@@ -298,7 +305,14 @@ class ConfiguratorBuilder {
   }
 
   def build(): Configurator = {
-    new Configurator(advertisedHostname, advertisedPort, initializationTimeout.get, terminationTimeout.get, extraRoute)(
+    new Configurator(
+      advertisedHostname = advertisedHostname,
+      advertisedPort = advertisedPort,
+      cacheTimeout = cacheTimeout,
+      initializationTimeout = initializationTimeout,
+      terminationTimeout = terminationTimeout,
+      extraRoute = extraRoute
+    )(
       store = store,
       nodeCollie = nodeCollie(),
       clusterCollie =

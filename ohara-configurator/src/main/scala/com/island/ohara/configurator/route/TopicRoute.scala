@@ -18,11 +18,11 @@ package com.island.ohara.configurator.route
 import akka.http.scaladsl.server
 import com.island.ohara.agent.{BrokerCollie, NoSuchClusterException}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.MetricsApi.{Meter, Metrics}
+import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.TopicApi._
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.route.RouteUtils._
-import com.island.ohara.configurator.store.DataStore
+import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -35,28 +35,20 @@ private[configurator] object TopicRoute {
     * fetch the topic meters from broker cluster
     * @param brokerCluster the broker cluster hosting the topic
     * @param topicName topic name which used to filter the correct meter
-    * @param brokerCollie broker collie
     * @return meters belong to the input topic
     */
   private[this] def metrics(brokerCluster: BrokerClusterInfo, topicName: String)(
-    implicit brokerCollie: BrokerCollie): Metrics = Metrics(
-    brokerCollie.topicMeters(brokerCluster).filter(_.topicName() == topicName).map { meter =>
-      Meter(
-        value = meter.count(),
-        unit = s"${meter.eventType()} / ${meter.rateUnit().name()}",
-        document = meter.catalog.name()
-      )
-    })
+    implicit meterCache: MeterCache): Metrics = Metrics(
+    meterCache.meters(brokerCluster).getOrElse(topicName, Seq.empty))
 
   /**
     * update the metrics for input topic
     * @param brokerCluster the broker cluster hosting the topic
     * @param topicInfo topic info
-    * @param brokerCollie broker collie
     * @return updated topic info
     */
   private[this] def update(brokerCluster: BrokerClusterInfo, topicInfo: TopicInfo)(
-    implicit brokerCollie: BrokerCollie): TopicInfo = topicInfo.copy(
+    implicit meterCache: MeterCache): TopicInfo = topicInfo.copy(
     metrics = metrics(brokerCluster, topicInfo.id)
   )
 
@@ -97,7 +89,10 @@ private[configurator] object TopicRoute {
       }
       .getOrElse(Future.failed(new NoSuchElementException(s"name is required")))
 
-  def apply(implicit store: DataStore, brokerCollie: BrokerCollie, executionContext: ExecutionContext): server.Route =
+  def apply(implicit store: DataStore,
+            meterCache: MeterCache,
+            brokerCollie: BrokerCollie,
+            executionContext: ExecutionContext): server.Route =
     RouteUtils.basicRoute[TopicCreationRequest, TopicInfo](
       root = TOPICS_PREFIX_PATH,
       hookOfAdd = (targetCluster: TargetCluster, id: Id, request: TopicCreationRequest) =>

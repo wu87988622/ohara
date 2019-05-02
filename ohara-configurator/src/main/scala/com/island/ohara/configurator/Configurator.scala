@@ -30,7 +30,8 @@ import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.client.HttpExecutor
 import com.island.ohara.client.configurator.ConfiguratorApiInfo
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterCreationRequest
+import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterCreationRequest, BrokerClusterInfo}
+import com.island.ohara.client.configurator.v0.MetricsApi.Meter
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeCreationRequest}
 import com.island.ohara.client.configurator.v0.ValidationApi.NodeValidationRequest
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterCreationRequest
@@ -39,7 +40,7 @@ import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce}
 import com.island.ohara.configurator.jar.{JarStore, LocalJarStore}
 import com.island.ohara.configurator.route._
-import com.island.ohara.configurator.store.DataStore
+import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.typesafe.scalalogging.Logger
 import spray.json.DeserializationException
 
@@ -57,6 +58,7 @@ import scala.concurrent.duration.{Duration, _}
   */
 class Configurator private[configurator] (advertisedHostname: Option[String],
                                           advertisedPort: Option[Int],
+                                          cacheTimeout: Duration,
                                           initializationTimeout: Duration,
                                           terminationTimeout: Duration,
                                           extraRoute: Option[server.Route])(implicit val store: DataStore,
@@ -115,6 +117,41 @@ class Configurator private[configurator] (advertisedHostname: Option[String],
         case e: ExecutionException if e.getCause != null                 => throw e.getCause
       }
       .result()
+
+  private[this] implicit val meterCache: MeterCache = {
+    def brokerToMeters(brokerClusterInfo: BrokerClusterInfo): Map[String, Seq[Meter]] =
+      brokerCollie.topicMeters(brokerClusterInfo).groupBy(_.topicName()).map {
+        case (topicName, topicMeters) =>
+          topicName -> topicMeters.map { meter =>
+            Meter(
+              value = meter.count(),
+              unit = s"${meter.eventType()} / ${meter.rateUnit().name()}",
+              document = meter.catalog.name()
+            )
+          }
+      }
+    MeterCache
+      .builder()
+      .fetcher {
+        case brokerClusterInfo: BrokerClusterInfo => brokerToMeters(brokerClusterInfo)
+        case _                                    => Map.empty
+      }
+      .refresher(
+        () =>
+          // we do the sync here to simplify the interface
+          Await.result(
+            clusterCollie.clusters.map(_.keys
+              .map {
+                case brokerClusterInfo: BrokerClusterInfo => brokerClusterInfo -> brokerToMeters(brokerClusterInfo)
+                case clusterInfo: ClusterInfo             => clusterInfo -> Map.empty[String, Seq[Meter]]
+              }
+              .toSeq
+              .toMap),
+            cacheTimeout * 5
+        ))
+      .timeout(cacheTimeout)
+      .build()
+  }
 
   /**
     * the full route consists from all routes against all subclass from ohara data and a final route used to reject other requests.
@@ -186,6 +223,7 @@ class Configurator private[configurator] (advertisedHostname: Option[String],
     val start = CommonUtils.current()
     if (httpServer != null) Await.result(httpServer.unbind(), terminationTimeout.toMillis milliseconds)
     if (actorSystem != null) Await.result(actorSystem.terminate(), terminationTimeout.toMillis milliseconds)
+    Releasable.close(meterCache)
     Releasable.close(clusterCollie)
     Releasable.close(jarStore)
     Releasable.close(store)

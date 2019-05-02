@@ -30,6 +30,21 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class TestCache extends SmallTest {
+  @Test(expected = NullPointerException.class)
+  public void nullTimeout() {
+    Cache.<String, String>builder().timeout(null);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void nullFetcher() {
+    Cache.<String, String>builder().fetcher(null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void negativeSize() {
+    Cache.<String, String>builder().maxSize(-1);
+  }
+
   @Test
   public void testBuilder() throws InterruptedException {
     String value = CommonUtils.randomString();
