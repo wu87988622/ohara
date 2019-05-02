@@ -40,8 +40,10 @@ versions["mysql"] = project.hasProperty('mysql.version') ? project.properties['m
 versions["ftpServer"] = project.hasProperty('ftpServer.version') ? project.properties['ftpServer.version'] : "1.1.1"
 versions["commonNet"] = project.hasProperty('commonNet.version') ? project.properties['commonNet.version'] : "3.6"
 versions["sshd"] = project.hasProperty('sshd.version') ? project.properties['sshd.version'] : "2.2.0"
-// commonIo has included by apache hadoop so we use the identical version
+// commonIo has been included by apache hadoop so we use the identical version
 versions["commonsIo"] = project.hasProperty('commonsIo.version') ? project.properties['commonsIo.version'] : "2.4"
+// Guava has been included by apache kafka so we use the identical version
+versions["guava"] = project.hasProperty('guava.version') ? project.properties['guava.version'] : "20.0"
 
 libs += [
   postgresql         : "postgresql:postgresql:$versions.postgresql",
@@ -73,5 +75,6 @@ libs += [
   ftpServer          : "org.apache.ftpserver:ftpserver-core:$versions.ftpServer",
   commonsNet         : "commons-net:commons-net:$versions.commonNet",
   sshd               : "org.apache.sshd:apache-sshd:$versions.sshd",
-  commonsIo          : "commons-io:commons-io:$versions.commonsIo"
+  commonsIo          : "commons-io:commons-io:$versions.commonsIo",
+  guava              : "com.google.guava:guava:$versions.guava"
 ]
