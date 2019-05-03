@@ -154,7 +154,9 @@ export const renderForm = ({
   handleColumnRowUp,
   handleColumnRowDown,
 }) => {
-  const isRunning = state === CONNECTOR_STATES.running;
+  const isRunning =
+    state === CONNECTOR_STATES.running || state === CONNECTOR_STATES.failed;
+
   const dataType = ['STRING'];
   const tableActions = ['Up', 'Down', 'Delete'];
   const sortByOrder = (a, b) => a.orderInGroup - b.orderInGroup;
@@ -175,86 +177,93 @@ export const renderForm = ({
     return displayValue;
   };
 
-  return defs.sort(sortByOrder).map(def => {
-    const {
-      displayName,
-      key,
-      editable,
-      required,
-      documentation,
-      tableKeys,
-      defaultValue,
-      valueType,
-    } = def;
+  return defs
+    .sort(sortByOrder)
+    .filter(def => !def.internal) // Do not display def that has an internal === true prop
+    .map(def => {
+      const {
+        displayName,
+        key,
+        editable,
+        required,
+        documentation,
+        tableKeys,
+        defaultValue,
+        valueType,
+      } = def;
 
-    const configValue = configs[key];
-    const columnTableHeader = tableKeys.concat(tableActions);
-    const displayValue = convertData({ configValue, valueType, defaultValue });
+      const configValue = configs[key];
+      const columnTableHeader = tableKeys.concat(tableActions);
+      const displayValue = convertData({
+        configValue,
+        valueType,
+        defaultValue,
+      });
 
-    if (['STRING', 'INT', 'CLASS'].includes(valueType)) {
-      return (
-        <FormGroup key={key}>
-          <Label
-            htmlFor={`${displayName}`}
-            required={required}
-            tooltipString={documentation}
-            tooltipAlignment="right"
-            width="100%"
-          >
-            {displayName}
-          </Label>
-          <Input
-            id={`${displayName}`}
-            width="100%"
-            value={displayValue}
-            name={key}
-            onChange={handleChange}
-            disabled={!editable || isRunning}
-          />
-        </FormGroup>
-      );
-    } else if (valueType === 'LIST') {
-      return (
-        <FormGroup key={key}>
-          <Label
-            htmlFor={`${displayName}`}
-            required={required}
-            tooltipString={documentation}
-            tooltipAlignment="right"
-            width="100%"
-          >
-            {displayName}
-          </Label>
-          <Select
-            id={`${displayName}`}
-            list={topics}
-            value={displayValue}
-            handleChange={handleChange}
-            name={key}
-            width="100%"
-            disabled={isRunning}
-            clearable
-          />
-        </FormGroup>
-      );
-    } else if (valueType === 'TABLE') {
-      return (
-        <FormGroup key={key}>
-          <ColumnTable
-            headers={columnTableHeader}
-            data={displayValue}
-            dataTypes={dataType}
-            handleColumnChange={handleColumnChange}
-            handleColumnRowDelete={handleColumnRowDelete}
-            handleColumnRowUp={handleColumnRowUp}
-            handleColumnRowDown={handleColumnRowDown}
-          />
-        </FormGroup>
-      );
-    }
+      if (['STRING', 'INT', 'CLASS'].includes(valueType)) {
+        return (
+          <FormGroup key={key}>
+            <Label
+              htmlFor={`${displayName}`}
+              required={required}
+              tooltipString={documentation}
+              tooltipAlignment="right"
+              width="100%"
+            >
+              {displayName}
+            </Label>
+            <Input
+              id={`${displayName}`}
+              width="100%"
+              value={displayValue}
+              name={key}
+              onChange={handleChange}
+              disabled={!editable || isRunning}
+            />
+          </FormGroup>
+        );
+      } else if (valueType === 'LIST') {
+        return (
+          <FormGroup key={key}>
+            <Label
+              htmlFor={`${displayName}`}
+              required={required}
+              tooltipString={documentation}
+              tooltipAlignment="right"
+              width="100%"
+            >
+              {displayName}
+            </Label>
+            <Select
+              id={`${displayName}`}
+              list={topics}
+              value={displayValue}
+              handleChange={handleChange}
+              name={key}
+              width="100%"
+              disabled={isRunning}
+              clearable
+            />
+          </FormGroup>
+        );
+      } else if (valueType === 'TABLE') {
+        return (
+          <FormGroup key={key}>
+            <ColumnTable
+              headers={columnTableHeader}
+              data={displayValue}
+              dataTypes={dataType}
+              handleColumnChange={handleColumnChange}
+              handleColumnRowDelete={handleColumnRowDelete}
+              handleColumnRowUp={handleColumnRowUp}
+              handleColumnRowDown={handleColumnRowDown}
+            />
+          </FormGroup>
+        );
+      }
 
-    return null;
-  });
+      return null;
+    });
 };
 
 export const getCurrTopicId = ({ originals, target }) => {
