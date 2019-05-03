@@ -17,7 +17,7 @@
 import * as URLS from '../../src/constants/urls';
 import { CONNECTOR_TYPES } from '../../src/constants/pipelines';
 
-describe.skip('PipelineNewPage', () => {
+describe('PipelineNewPage', () => {
   before(() => {
     cy.deleteAllWorkers();
     cy.createWorker();
@@ -36,6 +36,7 @@ describe.skip('PipelineNewPage', () => {
     cy.visit(URLS.PIPELINE)
       .getByTestId('new-pipeline')
       .click()
+      .wait('@getWorkers')
       .getByText('Next')
       .click()
       .wait('@getPipeline');
@@ -46,13 +47,13 @@ describe.skip('PipelineNewPage', () => {
     cy.wait('@getTopics')
       .getByTestId('toolbar-topics')
       .click()
-      .wait('@getWorkers')
       .get('@createTopic')
       .then(topic => {
         cy.getByTestId('topic-select').select(topic.name);
       })
       .getByText('Add')
       .click()
+      .wait('@putPipeline')
       .get('@createTopic')
       .then(topic => {
         cy.getByText(topic.name).should('be.exist');
@@ -61,7 +62,7 @@ describe.skip('PipelineNewPage', () => {
     // Remove the topic
     cy.get('@createTopic').then(topic => {
       cy.getByText(topic.name)
-        .click()
+        .click({ force: true })
         .getByTestId('delete-button')
         .click()
         .getByText('Yes, Remove this topic')
