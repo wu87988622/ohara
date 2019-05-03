@@ -3118,8 +3118,8 @@ The properties stored by ohara are shown below.
 **Example Request**
 
 ```http request
-Content-Disposition: form-data
-filename="aa.jar"
+Content-Type: multipart/form-data
+jar="aa.jar"
 ```
 
 You have to specify the file name since it is a part of metadata stored by ohara.
