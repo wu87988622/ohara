@@ -34,6 +34,7 @@ import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterCreationR
 import com.island.ohara.client.configurator.v0.MetricsApi.Meter
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeCreationRequest}
 import com.island.ohara.client.configurator.v0.ValidationApi.NodeValidationRequest
+import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterCreationRequest
 import com.island.ohara.client.configurator.v0.{ZookeeperApi, _}
 import com.island.ohara.common.data.Serializer
@@ -130,10 +131,22 @@ class Configurator private[configurator] (advertisedHostname: Option[String],
             )
           }
       }
+    def workerToMeters(workerClusterInfo: WorkerClusterInfo): Map[String, Seq[Meter]] =
+      workerCollie.counters(workerClusterInfo).groupBy(_.group()).map {
+        case (connectorId, counters) =>
+          connectorId -> counters.map { counter =>
+            Meter(
+              value = counter.getValue,
+              unit = counter.getUnit,
+              document = counter.getDocument
+            )
+          }
+      }
     MeterCache
       .builder()
       .fetcher {
         case brokerClusterInfo: BrokerClusterInfo => brokerToMeters(brokerClusterInfo)
+        case workerClusterInfo: WorkerClusterInfo => workerToMeters(workerClusterInfo)
         case _                                    => Map.empty
       }
       .refresher(
@@ -143,10 +156,12 @@ class Configurator private[configurator] (advertisedHostname: Option[String],
             clusterCollie.clusters.map(_.keys
               .map {
                 case brokerClusterInfo: BrokerClusterInfo => brokerClusterInfo -> brokerToMeters(brokerClusterInfo)
+                case workerClusterInfo: WorkerClusterInfo => workerClusterInfo -> workerToMeters(workerClusterInfo)
                 case clusterInfo: ClusterInfo             => clusterInfo -> Map.empty[String, Seq[Meter]]
               }
               .toSeq
               .toMap),
+            // TODO: how to set a suitable timeout ??? by chia
             cacheTimeout * 5
         ))
       .timeout(cacheTimeout)

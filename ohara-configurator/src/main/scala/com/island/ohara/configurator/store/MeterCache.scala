@@ -23,6 +23,7 @@ import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Meter
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.cache.{Cache, RefreshableCache}
 import com.island.ohara.common.util.Releasable
@@ -100,9 +101,10 @@ object MeterCache {
       private[this] def key(clusterInfo: ClusterInfo): RequestKey = RequestKey(
         name = clusterInfo.name,
         service = clusterInfo match {
-          case _: BrokerClusterInfo => "bk"
-          case _: WorkerClusterInfo => "wk"
-          case c: ClusterInfo       => c.getClass.getSimpleName
+          case _: ZookeeperClusterInfo => "zk"
+          case _: BrokerClusterInfo    => "bk"
+          case _: WorkerClusterInfo    => "wk"
+          case c: ClusterInfo          => c.getClass.getSimpleName
         },
         clusterInfo = clusterInfo
       )
