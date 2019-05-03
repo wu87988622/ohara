@@ -16,13 +16,14 @@
 
 package com.island.ohara.configurator.fake
 
-import com.island.ohara.agent.ZookeeperCollie
+import com.island.ohara.agent.{NodeCollie, ZookeeperCollie}
+import com.island.ohara.client.configurator.v0.ContainerApi
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 
 import scala.concurrent.{ExecutionContext, Future}
 
-private[configurator] class FakeZookeeperCollie
-    extends FakeCollie[ZookeeperClusterInfo, ZookeeperCollie.ClusterCreator]
+private[configurator] class FakeZookeeperCollie(nodeCollie: NodeCollie)
+    extends FakeCollie[ZookeeperClusterInfo, ZookeeperCollie.ClusterCreator](nodeCollie)
     with ZookeeperCollie {
   override def creator(): ZookeeperCollie.ClusterCreator =
     (_, clusterName, imageName, clientPort, peerPort, electionPort, nodeNames) =>
@@ -46,4 +47,10 @@ private[configurator] class FakeZookeeperCollie
     implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
     Future.failed(
       new UnsupportedOperationException("zookeeper collie doesn't support to remove node from a running cluster"))
+
+  override protected def doAddNodeContainer(
+    previousCluster: ZookeeperClusterInfo,
+    previousContainers: Seq[ContainerApi.ContainerInfo],
+    newNodeName: String)(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
+    doAddNode
 }

@@ -16,16 +16,12 @@
 
 package com.island.ohara.agent.ssh
 
-import java.net.URL
 import java.util.concurrent.ExecutorService
 
 import com.island.ohara.agent._
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.util.{Releasable, ReleaseOnce}
 
 import scala.concurrent.duration.Duration
@@ -53,64 +49,6 @@ private[agent] class ClusterCollieImpl(expiredTime: Duration, nodeCollie: NodeCo
   override def zookeeperCollie(): ZookeeperCollie = zkCollie
   override def brokerCollie(): BrokerCollie = bkCollie
   override def workerCollie(): WorkerCollie = wkCollie
-
-  private[this] def toZkCluster(clusterName: String, containers: Seq[ContainerInfo]): Future[ClusterInfo] = {
-    val first = containers.head
-    Future.successful(
-      ZookeeperClusterInfo(
-        name = clusterName,
-        imageName = first.imageName,
-        clientPort = first.environments(ZookeeperCollie.CLIENT_PORT_KEY).toInt,
-        peerPort = first.environments(ZookeeperCollie.PEER_PORT_KEY).toInt,
-        electionPort = first.environments(ZookeeperCollie.ELECTION_PORT_KEY).toInt,
-        nodeNames = containers.map(_.nodeName)
-      ))
-  }
-
-  private[this] def toWkCluster(clusterName: String, containers: Seq[ContainerInfo])(
-    implicit executionContext: ExecutionContext): Future[ClusterInfo] = {
-    val port = containers.head.environments(WorkerCollie.CLIENT_PORT_KEY).toInt
-    connectors(containers.map(c => s"${c.nodeName}:$port").mkString(",")).map { connectors =>
-      WorkerClusterInfo(
-        name = clusterName,
-        imageName = containers.head.imageName,
-        brokerClusterName = containers.head.environments(BROKER_CLUSTER_NAME),
-        clientPort = port,
-        jmxPort = containers.head.environments(WorkerCollie.JMX_PORT_KEY).toInt,
-        groupId = containers.head.environments(WorkerCollie.GROUP_ID_KEY),
-        offsetTopicName = containers.head.environments(WorkerCollie.OFFSET_TOPIC_KEY),
-        offsetTopicPartitions = containers.head.environments(WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY).toInt,
-        offsetTopicReplications = containers.head.environments(WorkerCollie.OFFSET_TOPIC_REPLICATIONS_KEY).toShort,
-        configTopicName = containers.head.environments(WorkerCollie.CONFIG_TOPIC_KEY),
-        configTopicPartitions = 1,
-        configTopicReplications = containers.head.environments(WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY).toShort,
-        statusTopicName = containers.head.environments(WorkerCollie.STATUS_TOPIC_KEY),
-        statusTopicPartitions = containers.head.environments(WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY).toInt,
-        statusTopicReplications = containers.head.environments(WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY).toShort,
-        jarNames = containers.head
-          .environments(WorkerCollie.PLUGINS_KEY)
-          .split(",")
-          .filter(_.nonEmpty)
-          .map(u => new URL(u).getFile),
-        connectors = connectors,
-        nodeNames = containers.map(_.nodeName)
-      )
-    }
-  }
-
-  private[this] def toBkCluster(clusterName: String, containers: Seq[ContainerInfo]): Future[ClusterInfo] = {
-    val first = containers.head
-    Future.successful(
-      BrokerClusterInfo(
-        name = clusterName,
-        imageName = first.imageName,
-        zookeeperClusterName = first.environments(ZOOKEEPER_CLUSTER_NAME),
-        exporterPort = first.environments(BrokerCollie.EXPORTER_PORT_KEY).toInt,
-        clientPort = first.environments(BrokerCollie.CLIENT_PORT_KEY).toInt,
-        jmxPort = first.environments(BrokerCollie.JMX_PORT_KEY).toInt,
-        nodeNames = containers.map(_.nodeName)
-      ))
-  }
 
   override def clusters(implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] =
     clusterCache.get
@@ -145,9 +83,9 @@ private[agent] class ClusterCollieImpl(expiredTime: Duration, nodeCollie: NodeCo
               })
           .map(_.toMap)
 
-      parse(zkCollie.serviceName, toZkCluster).flatMap { zkMap =>
-        parse(bkCollie.serviceName, toBkCluster).flatMap { bkMap =>
-          parse(wkCollie.serviceName, toWkCluster).map { wkMap =>
+      parse(ContainerCollie.ZK_SERVICE_NAME, toZkCluster).flatMap { zkMap =>
+        parse(ContainerCollie.BK_SERVICE_NAME, toBkCluster).flatMap { bkMap =>
+          parse(ContainerCollie.WK_SERVICE_NAME, toWkCluster).map { wkMap =>
             zkMap ++ bkMap ++ wkMap
           }
         }

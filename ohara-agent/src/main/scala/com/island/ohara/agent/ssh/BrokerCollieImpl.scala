@@ -16,7 +16,7 @@
 
 package com.island.ohara.agent.ssh
 
-import com.island.ohara.agent.{BrokerCollie, NoSuchClusterException, NodeCollie, ZookeeperCollie}
+import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
@@ -71,12 +71,15 @@ private class BrokerCollieImpl(nodeCollie: NodeCollie,
 
               checkValue(container.imageName, imageName)
               check(BrokerCollie.CLIENT_PORT_KEY, clientPort.toString)
-              check(ZOOKEEPER_CLUSTER_NAME, zookeeperClusterName)
+              check(ClusterCollie.ZOOKEEPER_CLUSTER_NAME, zookeeperClusterName)
             }
             existNodes
           }
           .flatMap(existNodes =>
-            nodeCollie.nodes(nodeNames).map(_.map(node => node -> format(clusterName)).toMap).map((existNodes, _)))
+            nodeCollie
+              .nodes(nodeNames)
+              .map(_.map(node => node -> format(PREFIX_KEY, clusterName, serviceName)).toMap)
+              .map((existNodes, _)))
           .map {
             case (existNodes, newNodes) =>
               existNodes.keys.foreach(node =>
@@ -141,7 +144,7 @@ private class BrokerCollieImpl(nodeCollie: NodeCollie,
                               BrokerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
                               BrokerCollie.EXPORTER_PORT_KEY -> exporterPort.toString,
                               BrokerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
-                              ZOOKEEPER_CLUSTER_NAME -> zookeeperClusterName,
+                              ClusterCollie.ZOOKEEPER_CLUSTER_NAME -> zookeeperClusterName,
                               BrokerCollie.JMX_HOSTNAME_KEY -> node.name,
                               BrokerCollie.JMX_PORT_KEY -> jmxPort.toString
                             ))
@@ -181,16 +184,9 @@ private class BrokerCollieImpl(nodeCollie: NodeCollie,
       }
     }
 
-  override protected def doAddNode(
+  override protected def doAddNodeContainer(
     previousCluster: BrokerClusterInfo,
     previousContainers: Seq[ContainerInfo],
-    newNodeName: String)(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] = creator()
-    .clusterName(previousCluster.name)
-    .zookeeperClusterName(previousCluster.zookeeperClusterName)
-    .exporterPort(previousCluster.exporterPort)
-    .clientPort(previousCluster.clientPort)
-    .jmxPort(previousCluster.jmxPort)
-    .imageName(previousCluster.imageName)
-    .nodeName(newNodeName)
-    .create()
+    newNodeName: String)(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] =
+    doAddNode(previousCluster, previousContainers, newNodeName)
 }

@@ -17,17 +17,17 @@
 package com.island.ohara.configurator.fake
 
 import java.util.concurrent.ConcurrentHashMap
-
-import com.island.ohara.agent.BrokerCollie
+import com.island.ohara.agent.{BrokerCollie, NodeCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.ContainerApi
 import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.kafka.TopicMeter
-
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
-private[configurator] class FakeBrokerCollie(bkConnectionProps: String)
-    extends FakeCollie[BrokerClusterInfo, BrokerCollie.ClusterCreator]
+
+private[configurator] class FakeBrokerCollie(nodeCollie: NodeCollie, bkConnectionProps: String)
+    extends FakeCollie[BrokerClusterInfo, BrokerCollie.ClusterCreator](nodeCollie)
     with BrokerCollie {
 
   override def topicMeters(cluster: BrokerClusterInfo): Seq[TopicMeter] =
@@ -38,6 +38,7 @@ private[configurator] class FakeBrokerCollie(bkConnectionProps: String)
     * cache all topics info in-memory so we should keep instance for each fake cluster.
     */
   private[this] val fakeAdminCache = new ConcurrentHashMap[BrokerClusterInfo, FakeTopicAdmin]
+
   override def creator(): BrokerCollie.ClusterCreator =
     (executionContext, clusterName, imageName, zookeeperClusterName, clientPort, exporterPort, jmxPort, nodeNames) =>
       Future.successful(
@@ -71,29 +72,28 @@ private[configurator] class FakeBrokerCollie(bkConnectionProps: String)
           )))
   }
 
-  override def addNode(clusterName: String, nodeName: String)(
-    implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] = {
-    val previous = clusterCache.find(_._1.name == clusterName).get._1
-    if (previous.nodeNames.contains(nodeName))
-      Future.failed(new IllegalArgumentException(s"$nodeName already run on $clusterName!!!"))
-    else
-      Future.successful(
-        addCluster(
-          FakeBrokerClusterInfo(
-            name = previous.name,
-            imageName = previous.imageName,
-            zookeeperClusterName = previous.zookeeperClusterName,
-            clientPort = previous.clientPort,
-            exporterPort = previous.exporterPort,
-            jmxPort = previous.jmxPort,
-            nodeNames = previous.nodeNames :+ nodeName
-          )))
-  }
   override def topicAdmin(cluster: BrokerClusterInfo): TopicAdmin = cluster match {
     case _: FakeBrokerClusterInfo =>
       val fake = new FakeTopicAdmin
       val r = fakeAdminCache.putIfAbsent(cluster, fake)
       if (r == null) fake else r
     case _ => TopicAdmin(bkConnectionProps)
+  }
+
+  override protected def doAddNodeContainer(
+    previousCluster: BrokerClusterInfo,
+    previousContainers: Seq[ContainerApi.ContainerInfo],
+    newNodeName: String)(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] = {
+    doAddNode(previousCluster, previousContainers, newNodeName).map(
+      _ =>
+        FakeBrokerClusterInfo(
+          name = previousCluster.name,
+          imageName = previousCluster.imageName,
+          zookeeperClusterName = previousCluster.zookeeperClusterName,
+          clientPort = previousCluster.clientPort,
+          exporterPort = previousCluster.exporterPort,
+          jmxPort = previousCluster.jmxPort,
+          nodeNames = previousCluster.nodeNames :+ newNodeName
+      ))
   }
 }

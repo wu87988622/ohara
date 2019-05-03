@@ -20,15 +20,17 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import com.island.ohara.agent.Collie.ClusterCreator
 import com.island.ohara.agent.docker.ContainerState
-import com.island.ohara.agent.{Collie, NoSuchClusterException}
+import com.island.ohara.agent.{ContainerCollie, NoSuchClusterException, NodeCollie}
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.common.util.CommonUtils
 
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
-private[configurator] abstract class FakeCollie[T <: ClusterInfo, Creator <: ClusterCreator[T]]
-    extends Collie[T, Creator] {
+import scala.reflect.ClassTag
+private[configurator] abstract class FakeCollie[T <: ClusterInfo: ClassTag, Creator <: ClusterCreator[T]](
+  nodeCollie: NodeCollie)
+    extends ContainerCollie[T, Creator](nodeCollie) {
   protected val clusterCache = new mutable.HashMap[T, Seq[ContainerInfo]]()
 
   def addCluster(cluster: T): T = {
@@ -44,7 +46,7 @@ private[configurator] abstract class FakeCollie[T <: ClusterInfo, Creator <: Clu
         name = CommonUtils.randomString(10),
         size = "unknown",
         portMappings = Seq(PortMapping("fake host", cluster.ports.map(p => PortPair(p, p)).toSeq)),
-        environments = Map.empty,
+        environments = Map("WORKER_PLUGINS" -> "http://worker"),
         hostname = CommonUtils.randomString(10)
       )
     }

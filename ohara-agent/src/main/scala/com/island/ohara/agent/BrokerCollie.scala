@@ -19,6 +19,7 @@ import java.util.Objects
 
 import com.island.ohara.client.configurator.v0.BrokerApi
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
@@ -56,6 +57,19 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
   def topicMeters(cluster: BrokerClusterInfo): Seq[TopicMeter] = cluster.nodeNames.flatMap { node =>
     BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().topicMeters().asScala
   }
+
+  protected def doAddNode(previousCluster: BrokerClusterInfo,
+                          previousContainers: Seq[ContainerInfo],
+                          newNodeName: String)(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] =
+    creator()
+      .clusterName(previousCluster.name)
+      .zookeeperClusterName(previousCluster.zookeeperClusterName)
+      .exporterPort(previousCluster.exporterPort)
+      .clientPort(previousCluster.clientPort)
+      .jmxPort(previousCluster.jmxPort)
+      .imageName(previousCluster.imageName)
+      .nodeName(newNodeName)
+      .create()
 }
 
 object BrokerCollie {

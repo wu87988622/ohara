@@ -16,26 +16,22 @@
 
 package com.island.ohara.agent
 
-import com.island.ohara.agent.docker.NetworkDriver
-import com.typesafe.scalalogging.Logger
+package object k8s {
 
-package object ssh {
-  private[ssh] val LOG = Logger("SshClusterCollie")
+  /**
+    * used to distinguish the cluster name and service name
+    */
+  private[k8s] val DIVIDER: String = ContainerCollie.DIVIDER
 
   /**
     * We need this prefix in order to distinguish our containers from others.
     * DON'T change this constant string. Otherwise, it will break compatibility.
     * We don't use a complex string since docker limit the length of name...
     */
-  private[ssh] val PREFIX_KEY = "occl"
+  private[k8s] val PREFIX_KEY = "k8soccl"
 
-  /**
-    * used to distinguish the cluster name and service name
-    */
-  private[ssh] val DIVIDER: String = ContainerCollie.DIVIDER
+  private[k8s] val K8S_DOMAIN_NAME: String = "default"
 
-  /**
-    * In ssh mode we use host driver to mount /etc/hosts from container host.
-    */
-  private[ssh] val NETWORK_DRIVER: NetworkDriver = NetworkDriver.HOST
+  private[k8s] val OHARA_LABEL: String = "ohara"
+
 }

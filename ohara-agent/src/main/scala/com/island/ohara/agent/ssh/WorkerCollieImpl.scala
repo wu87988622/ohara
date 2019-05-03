@@ -16,9 +16,7 @@
 
 package com.island.ohara.agent.ssh
 
-import java.net.URL
-
-import com.island.ohara.agent.{BrokerCollie, NoSuchClusterException, NodeCollie, WorkerCollie}
+import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
@@ -76,7 +74,10 @@ private class WorkerCollieImpl(nodeCollie: NodeCollie,
             .map(_.map(node => node -> containers.find(_.nodeName == node.name).get).toMap))
         .getOrElse(Future.successful(Map.empty))
         .flatMap(existNodes =>
-          nodeCollie.nodes(nodeNames).map(_.map(node => node -> format(clusterName)).toMap).map((existNodes, _)))
+          nodeCollie
+            .nodes(nodeNames)
+            .map(_.map(node => node -> format(PREFIX_KEY, clusterName, serviceName)).toMap)
+            .map((existNodes, _)))
         .map {
           case (existNodes, newNodes) =>
             existNodes.keys.foreach(node =>
@@ -142,7 +143,7 @@ private class WorkerCollieImpl(nodeCollie: NodeCollie,
                             WorkerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
                             WorkerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
                             WorkerCollie.PLUGINS_KEY -> jarUrls.mkString(","),
-                            BROKER_CLUSTER_NAME -> brokerClusterName,
+                            ClusterCollie.BROKER_CLUSTER_NAME -> brokerClusterName,
                             WorkerCollie.JMX_HOSTNAME_KEY -> node.name,
                             WorkerCollie.JMX_PORT_KEY -> jmxPort.toString
                           ))
@@ -205,27 +206,9 @@ private class WorkerCollieImpl(nodeCollie: NodeCollie,
     }
   }
 
-  override protected def doAddNode(
+  override protected def doAddNodeContainer(
     previousCluster: WorkerClusterInfo,
     previousContainers: Seq[ContainerInfo],
-    newNodeName: String)(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] = {
-    creator()
-      .clusterName(previousCluster.name)
-      .brokerClusterName(previousCluster.brokerClusterName)
-      .clientPort(previousCluster.clientPort)
-      .groupId(previousCluster.groupId)
-      .offsetTopicName(previousCluster.offsetTopicName)
-      .statusTopicName(previousCluster.statusTopicName)
-      .configTopicName(previousCluster.configTopicName)
-      .imageName(previousCluster.imageName)
-      .jarUrls(
-        previousContainers.head
-          .environments(WorkerCollie.PLUGINS_KEY)
-          .split(",")
-          .filter(_.nonEmpty)
-          .map(s => new URL(s)))
-      .nodeName(newNodeName)
-      .jmxPort(previousCluster.jmxPort)
-      .create()
-  }
+    newNodeName: String)(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] =
+    doAddNode(previousCluster, previousContainers, newNodeName)
 }

@@ -17,14 +17,13 @@
 package com.island.ohara.agent.ssh
 
 import com.island.ohara.agent.Collie.ClusterCreator
-import com.island.ohara.agent.{Collie, NoSuchClusterException, NodeCollie}
+import com.island.ohara.agent.{ContainerCollie, NoSuchClusterException, NodeCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import com.island.ohara.common.util.CommonUtils
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
@@ -32,7 +31,7 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: Cl
   nodeCollie: NodeCollie,
   dockerCache: DockerClientCache,
   clusterCache: Cache[Map[ClusterInfo, Seq[ContainerInfo]]])
-    extends Collie[T, Creator] {
+    extends ContainerCollie[T, Creator](nodeCollie) {
 
   final override def clusters(implicit executionContext: ExecutionContext): Future[Map[T, Seq[ContainerInfo]]] =
     clusterCache.get.map {
@@ -52,12 +51,6 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: Cl
         .getOrElse(throw new NoSuchClusterException(s"$name doesn't exist"))
     }
 
-  val serviceName: String =
-    if (classTag[T].runtimeClass.isAssignableFrom(classOf[ZookeeperClusterInfo])) ZK_SERVICE_NAME
-    else if (classTag[T].runtimeClass.isAssignableFrom(classOf[BrokerClusterInfo])) BK_SERVICE_NAME
-    else if (classTag[T].runtimeClass.isAssignableFrom(classOf[WorkerClusterInfo])) WK_SERVICE_NAME
-    else throw new IllegalArgumentException(s"Who are you, ${classTag[T].runtimeClass} ???")
-
   def updateRoute(node: Node, containerName: String, route: Map[String, String]): Unit =
     dockerCache.exec(node,
                      _.containerInspector(containerName)
@@ -65,20 +58,6 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: Cl
                        .append("/etc/hosts", route.map {
                          case (hostname, ip) => s"$ip $hostname"
                        }.toSeq))
-
-  /**
-    * generate unique name for the container.
-    * It can be used in setting container's hostname and name
-    * @param clusterName cluster name
-    * @return a formatted string. form: ${clusterName}-${service}-${index}
-    */
-  def format(clusterName: String): String =
-    Seq(
-      PREFIX_KEY,
-      clusterName,
-      serviceName,
-      CommonUtils.randomString(LENGTH_OF_CONTAINER_NAME_ID)
-    ).mkString(DIVIDER)
 
   override def forceRemove(clusterName: String)(implicit executionContext: ExecutionContext): Future[T] =
     remove(clusterName, true)
@@ -124,21 +103,8 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: Cl
     }
 
   override def removeNode(clusterName: String, nodeName: String)(
-    implicit executionContext: ExecutionContext): Future[T] = cluster(clusterName)
-    .map {
-      case (cluster, runningContainers) =>
-        runningContainers.size match {
-          case 0 => throw new IllegalArgumentException(s"$clusterName doesn't exist")
-          case 1 if runningContainers.map(_.nodeName).contains(nodeName) =>
-            throw new IllegalArgumentException(
-              s"$clusterName is a single-node cluster. You can't remove the last node by removeNode(). Please use remove(clusterName) instead")
-          case _ =>
-            cluster -> runningContainers
-              .find(_.nodeName == nodeName)
-              .getOrElse(throw new IllegalArgumentException(s"$nodeName doesn't exist on cluster:$clusterName"))
-        }
-    }
-    .flatMap {
+    implicit executionContext: ExecutionContext): Future[T] =
+    checkRemoveNode(clusterName, nodeName).flatMap {
       case (cluster, container) =>
         nodeCollie.node(container.nodeName).map { node =>
           dockerCache.exec(node, _.stop(container.name))
@@ -188,14 +154,4 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: Cl
           }).asInstanceOf[T]
         }
     }
-  protected def doAddNode(previousCluster: T, previousContainers: Seq[ContainerInfo], newNodeName: String)(
-    implicit executionContext: ExecutionContext): Future[T]
-
-  override def addNode(clusterName: String, nodeName: String)(implicit executionContext: ExecutionContext): Future[T] =
-    nodeCollie
-      .node(nodeName) // make sure there is a exist node.
-      .flatMap(_ => cluster(clusterName))
-      .flatMap {
-        case (c, cs) => doAddNode(c, cs, nodeName)
-      }
 }

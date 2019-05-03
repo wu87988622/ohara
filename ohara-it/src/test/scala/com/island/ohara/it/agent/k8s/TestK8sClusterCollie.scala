@@ -22,6 +22,7 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.it.agent.BasicTests4ClusterCollie
 import org.junit.Before
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class TestK8sClusterCollie extends BasicTests4ClusterCollie {
   private[this] val K8S_API_SERVER_URL_KEY: String = "ohara.it.k8s"

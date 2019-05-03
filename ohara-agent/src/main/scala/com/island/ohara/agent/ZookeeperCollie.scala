@@ -28,7 +28,15 @@ import scala.concurrent.{ExecutionContext, Future}
   * An interface of controlling zookeeper cluster.
   * It isolates the implementation of container manager from Configurator.
   */
-trait ZookeeperCollie extends Collie[ZookeeperClusterInfo, ZookeeperCollie.ClusterCreator]
+trait ZookeeperCollie extends Collie[ZookeeperClusterInfo, ZookeeperCollie.ClusterCreator] {
+  protected def doAddNode(): Future[ZookeeperClusterInfo] =
+    Future.failed(
+      new UnsupportedOperationException("zookeeper collie doesn't support to add node from a running cluster"))
+
+  protected def removeNode(): Future[ZookeeperClusterInfo] =
+    Future.failed(
+      new UnsupportedOperationException("zookeeper collie doesn't support to remove node from a running cluster"))
+}
 
 object ZookeeperCollie {
   trait ClusterCreator extends Collie.ClusterCreator[ZookeeperClusterInfo] {

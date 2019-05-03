@@ -152,11 +152,10 @@ object K8SClient {
               })
           }
 
-      override def removeNode(clusterName: String, nodeName: String, serviceName: String)(
+      override def removeNode(clusterNamePrefix: String, nodeName: String, serviceName: String)(
         implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] = {
-        val clusterKey: String = s"$clusterName${K8SClusterCollieImpl.DIVIDER}${serviceName}"
         containers
-          .map(cs => cs.filter(c => c.name.startsWith(clusterKey) && c.nodeName.equals(nodeName)))
+          .map(cs => cs.filter(c => c.name.startsWith(clusterNamePrefix) && c.nodeName.equals(nodeName)))
           .flatMap(cs =>
             Future.sequence(
               cs.map(container => {
@@ -171,7 +170,7 @@ object K8SClient {
               while (!isRemovedContainer) {
                 if (Await
                       .result(containers, TIMEOUT)
-                      .filter(c => c.name.startsWith(clusterKey) && c.nodeName.equals(nodeName))
+                      .filter(c => c.name.startsWith(clusterNamePrefix) && c.nodeName.equals(nodeName))
                       .size == 0) {
                   isRemovedContainer = true
                 }
@@ -279,7 +278,7 @@ object K8SClient {
               .map { ipInfo =>
                 CreatePodSpec(
                   CreatePodNodeSelector(nodename),
-                  hostname,
+                  hostname, //hostname is container name
                   domainName,
                   ipInfo,
                   Seq(
@@ -292,8 +291,8 @@ object K8SClient {
                                        args))
                 )
               }
-              .map(podSpec =>
-                CreatePod("v1", "Pod", CreatePodMetadata(hostname, CreatePodLabel(labelName)), podSpec).toJson.toString)
+              .map(podSpec => //name is pod name
+                CreatePod("v1", "Pod", CreatePodMetadata(name, CreatePodLabel(labelName)), podSpec).toJson.toString)
               .flatMap(requestJson => {
                 LOG.info(s"create pod request json: ${requestJson}")
                 Http()

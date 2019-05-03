@@ -18,6 +18,7 @@ package com.island.ohara.agent
 import java.net.URL
 import java.util.Objects
 
+import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.WorkerApi
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
@@ -65,6 +66,28 @@ trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator
   def counters(cluster: WorkerClusterInfo): Seq[CounterMBean] = cluster.nodeNames.flatMap { node =>
     BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().counterMBeans().asScala
   }
+
+  protected def doAddNode(previousCluster: WorkerClusterInfo,
+                          previousContainers: Seq[ContainerInfo],
+                          newNodeName: String)(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] =
+    creator()
+      .clusterName(previousCluster.name)
+      .brokerClusterName(previousCluster.brokerClusterName)
+      .clientPort(previousCluster.clientPort)
+      .groupId(previousCluster.groupId)
+      .offsetTopicName(previousCluster.offsetTopicName)
+      .statusTopicName(previousCluster.statusTopicName)
+      .configTopicName(previousCluster.configTopicName)
+      .imageName(previousCluster.imageName)
+      .jarUrls(
+        previousContainers.head
+          .environments(WorkerCollie.PLUGINS_KEY)
+          .split(",")
+          .filter(_.nonEmpty)
+          .map(s => new URL(s)))
+      .nodeName(newNodeName)
+      .jmxPort(previousCluster.jmxPort)
+      .create()
 }
 
 object WorkerCollie {

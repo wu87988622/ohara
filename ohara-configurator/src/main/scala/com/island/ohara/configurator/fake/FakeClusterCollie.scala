@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.fake
 
-import com.island.ohara.agent.ClusterCollie
+import com.island.ohara.agent.{ClusterCollie, NodeCollie}
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeService}
 import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.util.CommonUtils
@@ -28,15 +28,18 @@ import scala.util.Try
 /**
   * It doesn't involve any running cluster but save all description in memory
   */
-private[configurator] class FakeClusterCollie(store: DataStore, bkConnectionProps: String, wkConnectionProps: String)
+private[configurator] class FakeClusterCollie(nodeCollie: NodeCollie,
+                                              store: DataStore,
+                                              bkConnectionProps: String,
+                                              wkConnectionProps: String)
     extends ClusterCollie {
 
-  def this(store: DataStore) {
-    this(store, null, null)
+  def this(nodeCollie: NodeCollie, store: DataStore) {
+    this(nodeCollie, store, null, null)
   }
-  private[this] val zkCollie: FakeZookeeperCollie = new FakeZookeeperCollie
-  private[this] val bkCollie: FakeBrokerCollie = new FakeBrokerCollie(bkConnectionProps)
-  private[this] val wkCollie: FakeWorkerCollie = new FakeWorkerCollie(wkConnectionProps)
+  private[this] val zkCollie: FakeZookeeperCollie = new FakeZookeeperCollie(nodeCollie)
+  private[this] val bkCollie: FakeBrokerCollie = new FakeBrokerCollie(nodeCollie, bkConnectionProps)
+  private[this] val wkCollie: FakeWorkerCollie = new FakeWorkerCollie(nodeCollie, wkConnectionProps)
 
   override def zookeeperCollie(): FakeZookeeperCollie = zkCollie
 
