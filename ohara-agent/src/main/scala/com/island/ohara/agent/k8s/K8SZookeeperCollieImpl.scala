@@ -49,28 +49,26 @@ private class K8SZookeeperCollieImpl(val nodeCollie: NodeCollie,
                 try {
                   val creatorContainerInfo: Future[Option[ContainerInfo]] = k8sClient
                     .containerCreator()
-                    .flatMap(
-                      creator =>
-                        creator
-                          .imageName(imageName)
-                          .portMappings(Map(
-                            clientPort -> clientPort,
-                            peerPort -> peerPort,
-                            electionPort -> electionPort
-                          ))
-                          .nodename(node.name)
-                          .hostname(hostname)
-                          .labelName(OHARA_LABEL)
-                          .domainName(K8S_DOMAIN_NAME)
-                          .envs(Map(
-                            ZookeeperCollie.ID_KEY -> index.toString,
-                            ZookeeperCollie.CLIENT_PORT_KEY -> clientPort.toString,
-                            ZookeeperCollie.PEER_PORT_KEY -> peerPort.toString,
-                            ZookeeperCollie.ELECTION_PORT_KEY -> electionPort.toString,
-                            ZookeeperCollie.SERVERS_KEY -> s"$zkServers-${node.name}"
-                          ))
-                          .name(hostname)
-                          .run())
+                    .imageName(imageName)
+                    .portMappings(
+                      Map(
+                        clientPort -> clientPort,
+                        peerPort -> peerPort,
+                        electionPort -> electionPort
+                      ))
+                    .nodename(node.name)
+                    .hostname(hostname)
+                    .labelName(OHARA_LABEL)
+                    .domainName(K8S_DOMAIN_NAME)
+                    .envs(Map(
+                      ZookeeperCollie.ID_KEY -> index.toString,
+                      ZookeeperCollie.CLIENT_PORT_KEY -> clientPort.toString,
+                      ZookeeperCollie.PEER_PORT_KEY -> peerPort.toString,
+                      ZookeeperCollie.ELECTION_PORT_KEY -> electionPort.toString,
+                      ZookeeperCollie.SERVERS_KEY -> s"$zkServers-${node.name}"
+                    ))
+                    .name(hostname)
+                    .run()
                   Await.result(creatorContainerInfo, TIMEOUT)
                 } catch {
                   case e: Throwable =>

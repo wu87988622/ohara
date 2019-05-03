@@ -148,16 +148,13 @@ class TestK8SSimple extends IntegrationTest with Matchers {
       val result: Future[Option[ContainerInfo]] =
         k8sClient
           .containerCreator()
-          .flatMap(
-            creator =>
-              creator
-                .name(containerName)
-                .domainName("default")
-                .labelName("ohara")
-                .nodename(nodeServerNames.head)
-                .hostname(containerName)
-                .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
-                .run())
+          .name(containerName)
+          .domainName("default")
+          .labelName("ohara")
+          .nodename(nodeServerNames.head)
+          .hostname(containerName)
+          .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
+          .run()
       Await.result(result, TIMEOUT).get.name shouldBe containerName
     } finally {
       // Remove a container

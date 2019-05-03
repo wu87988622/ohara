@@ -54,7 +54,7 @@ class TestShabondiK8S extends IntegrationTest with Matchers with Inside {
   @Test
   def testCreatAndRemovePod(): Unit = {
     // create pod
-    val containerCreator = awaitResult(k8sClient.containerCreator())
+    val containerCreator = k8sClient.containerCreator()
     val containerInfoOpt = awaitResult {
       containerCreator
         .imageName(ShabondiApi.IMAGE_NAME_DEFAULT)

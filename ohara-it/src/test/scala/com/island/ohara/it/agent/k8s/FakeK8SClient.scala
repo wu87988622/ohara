@@ -43,5 +43,5 @@ class FakeK8SClient(isK8SNode: Boolean, k8sStatusInfo: Option[K8SStatusInfo]) ex
 
   override def nodeNameIPInfo(implicit executionContext: ExecutionContext): Future[Seq[K8SJson.HostAliases]] = ???
 
-  override def containerCreator()(implicit executionContext: ExecutionContext): Future[K8SClient.ContainerCreator] = ???
+  override def containerCreator()(implicit executionContext: ExecutionContext): K8SClient.ContainerCreator = ???
 }

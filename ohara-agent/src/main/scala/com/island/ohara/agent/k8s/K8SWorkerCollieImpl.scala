@@ -115,36 +115,33 @@ private class K8SWorkerCollieImpl(val nodeCollie: NodeCollie,
                 try {
                   val creator: Future[Option[ContainerInfo]] = client
                     .containerCreator()
-                    .flatMap(
-                      creator =>
-                        creator
-                          .imageName(imageName)
-                          .portMappings(Map(clientPort -> clientPort, jmxPort -> jmxPort))
-                          .hostname(hostname)
-                          .nodename(node.name)
-                          .envs(Map(
-                            WorkerCollie.CLIENT_PORT_KEY -> clientPort.toString,
-                            WorkerCollie.BROKERS_KEY -> brokers,
-                            WorkerCollie.GROUP_ID_KEY -> groupId,
-                            WorkerCollie.OFFSET_TOPIC_KEY -> offsetTopicName,
-                            WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY -> offsetTopicPartitions.toString,
-                            WorkerCollie.OFFSET_TOPIC_REPLICATIONS_KEY -> offsetTopicReplications.toString,
-                            WorkerCollie.CONFIG_TOPIC_KEY -> configTopicName,
-                            WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY -> configTopicReplications.toString,
-                            WorkerCollie.STATUS_TOPIC_KEY -> statusTopicName,
-                            WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY -> statusTopicPartitions.toString,
-                            WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY -> statusTopicReplications.toString,
-                            WorkerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
-                            WorkerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
-                            WorkerCollie.PLUGINS_KEY -> jarUrls.mkString(","),
-                            BROKER_CLUSTER_NAME -> brokerClusterName,
-                            WorkerCollie.JMX_HOSTNAME_KEY -> node.name,
-                            WorkerCollie.JMX_PORT_KEY -> jmxPort.toString
-                          ))
-                          .labelName(OHARA_LABEL)
-                          .domainName(K8S_DOMAIN_NAME)
-                          .name(hostname)
-                          .run())
+                    .imageName(imageName)
+                    .portMappings(Map(clientPort -> clientPort, jmxPort -> jmxPort))
+                    .hostname(hostname)
+                    .nodename(node.name)
+                    .envs(Map(
+                      WorkerCollie.CLIENT_PORT_KEY -> clientPort.toString,
+                      WorkerCollie.BROKERS_KEY -> brokers,
+                      WorkerCollie.GROUP_ID_KEY -> groupId,
+                      WorkerCollie.OFFSET_TOPIC_KEY -> offsetTopicName,
+                      WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY -> offsetTopicPartitions.toString,
+                      WorkerCollie.OFFSET_TOPIC_REPLICATIONS_KEY -> offsetTopicReplications.toString,
+                      WorkerCollie.CONFIG_TOPIC_KEY -> configTopicName,
+                      WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY -> configTopicReplications.toString,
+                      WorkerCollie.STATUS_TOPIC_KEY -> statusTopicName,
+                      WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY -> statusTopicPartitions.toString,
+                      WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY -> statusTopicReplications.toString,
+                      WorkerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
+                      WorkerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
+                      WorkerCollie.PLUGINS_KEY -> jarUrls.mkString(","),
+                      BROKER_CLUSTER_NAME -> brokerClusterName,
+                      WorkerCollie.JMX_HOSTNAME_KEY -> node.name,
+                      WorkerCollie.JMX_PORT_KEY -> jmxPort.toString
+                    ))
+                    .labelName(OHARA_LABEL)
+                    .domainName(K8S_DOMAIN_NAME)
+                    .name(hostname)
+                    .run()
                   Await.result(creator, TIMEOUT)
                 } catch {
                   case e: Throwable =>

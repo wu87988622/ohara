@@ -150,7 +150,7 @@ object ShabondiRoute {
 
   private def createContainer(k8sClient: K8SClient, slaveNode: String, podHostname: String)(
     implicit executionContext: ExecutionContext) = {
-    val creator: K8SClient.ContainerCreator = awaitResult(k8sClient.containerCreator())
+    val creator: K8SClient.ContainerCreator = k8sClient.containerCreator()
     creator
       .imageName(IMAGE_NAME_DEFAULT)
       .portMappings(

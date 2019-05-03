@@ -94,32 +94,29 @@ private class K8SBrokerCollieImpl(val nodeCollie: NodeCollie,
                   try {
                     val creator: Future[Option[ContainerInfo]] = client
                       .containerCreator()
-                      .flatMap(
-                        creator =>
-                          creator
-                            .imageName(imageName)
-                            .nodename(node.name)
-                            .labelName(OHARA_LABEL)
-                            .domainName(K8S_DOMAIN_NAME)
-                            .portMappings(Map(
-                              clientPort -> clientPort,
-                              exporterPort -> exporterPort,
-                              jmxPort -> jmxPort
-                            ))
-                            .hostname(hostname)
-                            .envs(Map(
-                              BrokerCollie.ID_KEY -> (maxId + index).toString,
-                              BrokerCollie.CLIENT_PORT_KEY -> clientPort.toString,
-                              BrokerCollie.ZOOKEEPERS_KEY -> zookeepers,
-                              BrokerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
-                              BrokerCollie.EXPORTER_PORT_KEY -> exporterPort.toString,
-                              BrokerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
-                              ZOOKEEPER_CLUSTER_NAME -> zookeeperClusterName,
-                              BrokerCollie.JMX_HOSTNAME_KEY -> node.name,
-                              BrokerCollie.JMX_PORT_KEY -> jmxPort.toString
-                            ))
-                            .name(hostname)
-                            .run())
+                      .imageName(imageName)
+                      .nodename(node.name)
+                      .labelName(OHARA_LABEL)
+                      .domainName(K8S_DOMAIN_NAME)
+                      .portMappings(Map(
+                        clientPort -> clientPort,
+                        exporterPort -> exporterPort,
+                        jmxPort -> jmxPort
+                      ))
+                      .hostname(hostname)
+                      .envs(Map(
+                        BrokerCollie.ID_KEY -> (maxId + index).toString,
+                        BrokerCollie.CLIENT_PORT_KEY -> clientPort.toString,
+                        BrokerCollie.ZOOKEEPERS_KEY -> zookeepers,
+                        BrokerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
+                        BrokerCollie.EXPORTER_PORT_KEY -> exporterPort.toString,
+                        BrokerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
+                        ZOOKEEPER_CLUSTER_NAME -> zookeeperClusterName,
+                        BrokerCollie.JMX_HOSTNAME_KEY -> node.name,
+                        BrokerCollie.JMX_PORT_KEY -> jmxPort.toString
+                      ))
+                      .name(hostname)
+                      .run()
                     Await.result(creator, TIMEOUT)
                   } catch {
                     case e: Throwable =>

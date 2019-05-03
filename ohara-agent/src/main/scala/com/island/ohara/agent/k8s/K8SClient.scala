@@ -62,7 +62,7 @@ trait K8SClient extends ReleaseOnce {
     implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]]
   def log(name: String)(implicit executionContext: ExecutionContext): Future[String]
   def nodeNameIPInfo(implicit executionContext: ExecutionContext): Future[Seq[HostAliases]]
-  def containerCreator()(implicit executionContext: ExecutionContext): Future[ContainerCreator]
+  def containerCreator()(implicit executionContext: ExecutionContext): ContainerCreator
   def images(nodeName: String)(implicit executionContext: ExecutionContext): Future[Seq[String]]
   def checkNode(nodeName: String)(implicit executionContext: ExecutionContext): Future[Report]
 }
@@ -201,7 +201,7 @@ object K8SClient {
               HostAliases(internalIP, Seq(hostName))
             }))
 
-      override def containerCreator()(implicit executionContext: ExecutionContext): Future[ContainerCreator] = Future {
+      override def containerCreator()(implicit executionContext: ExecutionContext): ContainerCreator =
         new ContainerCreator() {
           private[this] var name: String = CommonUtils.randomString()
           private[this] var imagePullPolicy: ImagePullPolicy = ImagePullPolicy.IFNOTPRESENT
@@ -320,7 +320,6 @@ object K8SClient {
                   hostname
                 )))
         }
-      }
 
       override protected def doClose(): Unit = {
         Await.result(actorSystem.terminate(), 60 seconds)

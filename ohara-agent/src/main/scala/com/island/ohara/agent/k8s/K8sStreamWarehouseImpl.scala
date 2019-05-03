@@ -73,26 +73,22 @@ private class K8sStreamWarehouseImpl(nodeCollie: NodeCollie,
                     case (node, name) =>
                       k8sClient
                         .containerCreator()
-                        .flatMap {
-                          creator =>
-                            creator
-                              .imageName(imageName)
-                              .nodename(node.name)
-                              .hostname(name)
-                              .labelName(K8S_OHARA_LABEL)
-                              .domainName(K8S_DOMAIN_NAME)
-                              .envs(
-                                Map(
-                                  StreamApi.JARURL_KEY -> jarUrl,
-                                  StreamApi.APPID_KEY -> appId,
-                                  StreamApi.SERVERS_KEY -> brokerProps,
-                                  StreamApi.FROM_TOPIC_KEY -> fromTopics.mkString(","),
-                                  StreamApi.TO_TOPIC_KEY -> toTopics.mkString(",")
-                                )
-                              )
-                              .args(Seq(StreamApi.MAIN_ENTRY))
-                              .run()
-                        }
+                        .imageName(imageName)
+                        .nodename(node.name)
+                        .hostname(name)
+                        .labelName(K8S_OHARA_LABEL)
+                        .domainName(K8S_DOMAIN_NAME)
+                        .envs(
+                          Map(
+                            StreamApi.JARURL_KEY -> jarUrl,
+                            StreamApi.APPID_KEY -> appId,
+                            StreamApi.SERVERS_KEY -> brokerProps,
+                            StreamApi.FROM_TOPIC_KEY -> fromTopics.mkString(","),
+                            StreamApi.TO_TOPIC_KEY -> toTopics.mkString(",")
+                          )
+                        )
+                        .args(Seq(StreamApi.MAIN_ENTRY))
+                        .run()
                         .recover {
                           case e: Throwable =>
                             log.error(s"failed to start $clusterName", e)
