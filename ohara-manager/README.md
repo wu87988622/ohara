@@ -193,13 +193,13 @@ yarn format
 
 **Note that this step is only required for the Client _NOT THE SERVER_**
 
-You can get production-ready static files by using the following command:
+You can get the production-ready static files by using the following command:
 
 ```sh
-yarn build
+yarn build:client
 ```
 
-> These static files will be built and put into the **/ohara-manager/client/build** directory.
+> These static files will be build and put into the **/ohara-manager/client/build** directory.
 
 ## Ohara manager image
 
