@@ -31,6 +31,7 @@ lazy val root = project.in(file("."))
 
 
 lazy val common = oharaProject("common",
+  VersionUtilsGenerator.versionSettings,
   Seq(libraryDependencies ++= Seq(
     libs.commonsNet,
     libs.commonsLang,
