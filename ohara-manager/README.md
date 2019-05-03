@@ -1,10 +1,10 @@
 # Ohara Manager
 
-This module contains Ohara manager (an HTTP server powered by [Node.js](https://nodejs.org/en/)) and Ohara manager client (Ohara UI built with [React.js](https://reactjs.org/) ). In the following docs, we refer to **Server** as Ohara manager and **Client** as Ohara manager client.
+This module contains Ohara manager (an HTTP server powered by [Node.js](https://nodejs.org/en/)) and Ohara manager client (A web-based user interface built with [React.js](https://reactjs.org/) ). In the following docs, we refer to **Server** as Ohara manager and **Client** as Ohara manager client.
 
 ## <a name="initial-machine-setup">Initial machine setup</a>
 
-1.  Install [Node.js](https://nodejs.org/en/) 8.12.0 (we're using ^8.12.0 in the engines field of package.json. This means you can install node.js >=8.12.0 and < 9.0.0 see the [npm docs](https://docs.npmjs.com/misc/semver#caret-ranges-123-025-004) for more info.)
+1.  Install [Node.js](https://nodejs.org/en/) 8.12.0 (This means you can install node.js >=8.12.0 and < 9.0.0 see the [npm docs](https://docs.npmjs.com/misc/semver#caret-ranges-123-025-004) for more info.)
 
 2.  Install [Yarn](https://yarnpkg.com/en/docs/install#mac-stable) 1.13.0 or greater
 
@@ -300,6 +300,33 @@ We highly recommend that you use [Visual Studio Code](https://code.visualstudio.
 - [Prettier - Code formatter](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) - code formatter, it consumes the config in `.prettierrc`
 - [DotENV](https://marketplace.visualstudio.com/items?itemName=mikestead.dotenv) - `.env` file syntax highlighting support
 - [Color Highlight](https://marketplace.visualstudio.com/items?itemName=naumovs.color-highlight) - Highlight web colors in VSCode
+
+## Switch different version of Node.js
+
+Oftentimes you would need to switch between different Node.js versions for debugging. There's a handy npm package that can reduce the pain of managing different version of Node.js on your machine:
+
+First, let's install this package `n`
+
+```sh
+# install this globally so it's can be used through out all your projects
+npm install -g n # or yarn global add n
+```
+
+Second, let's use `n` to install a specific version of Node.js:
+
+```sh
+n 8.16.0
+```
+
+> After the specific version is installed, `n` will switch your active Node.js version to it
+
+You can switch between versions that you have previously installed on your machine with `n`, an interactive prompt will be displayed and you can easily choose a Node.js version form it
+
+```sh
+n # Yep, just type n in your terminal...,
+```
+
+For more info, you can read the [docs](https://github.com/tj/n) here.
 
 ## <a name="having-issues">Having issues?</a>
 
