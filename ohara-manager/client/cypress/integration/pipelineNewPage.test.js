@@ -55,8 +55,7 @@ describe.skip('PipelineNewPage', () => {
       .get('@createTopic')
       .then(topic => {
         cy.getByText(topic.name).should('be.exist');
-      })
-      .wait('@putPipeline');
+      });
 
     // Remove the topic
     cy.get('@createTopic').then(topic => {
@@ -156,8 +155,8 @@ describe.skip('PipelineNewPage', () => {
 
   it('ftp sink source connect to topic write to graph', () => {
     cy.server();
-    cy.route('PUT', '/api/pipelines/*').as('graph');
-    cy.route('GET', '/api/connectors/*').as('getGraph');
+    cy.route('PUT', 'api/pipelines/*').as('graph');
+    cy.route('GET', 'api/connectors/*').as('getGraph');
 
     cy.getByTestId('toolbar-sinks')
       .click()
@@ -167,6 +166,7 @@ describe.skip('PipelineNewPage', () => {
       .click()
       .getByText('Add')
       .click()
+      .wait('@graph')
       .getByTestId('toolbar-sources')
       .click()
       .getByText('Add a new source connector')
@@ -175,6 +175,7 @@ describe.skip('PipelineNewPage', () => {
       .click()
       .getByText('Add')
       .click()
+      .wait('@graph')
       .getByTestId('toolbar-topics')
       .click()
       .get('@createTopic')
@@ -229,6 +230,7 @@ describe.skip('PipelineNewPage', () => {
       .click()
       .getByText('Add')
       .click()
+      .wait('@graph')
       .getByTestId('toolbar-sources')
       .click()
       .getByText('Add a new source connector')
@@ -237,6 +239,7 @@ describe.skip('PipelineNewPage', () => {
       .click()
       .getByText('Add')
       .click()
+      .wait('@graph')
       .getByTestId('toolbar-topics')
       .click()
       .get('@createTopic')
