@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+const chalk = require('chalk');
 const { exec } = require('child_process');
 
 /* eslint-disable no-console */
@@ -28,10 +29,14 @@ exec('yarn -v', (err, stdout) => {
   // https://github.com/yarnpkg/yarn/issues/5808
   if (minor < 13) {
     throw new Error(
-      `Ohara Manger requires yarn 1.13.0 or greater, but you're using ${yarnVersion}`,
+      `Ohara Manager requires yarn 1.13.0 or greater, but you're using ${yarnVersion}`,
     );
   }
 
-  console.log(`👌 Yarn version check passed! You're using yarn ${yarnVersion}`);
-  console.log('📦 Installing Ohara Manager dependencies');
+  console.log(
+    chalk.green(
+      `👌 Yarn version check passed! You're using yarn ${yarnVersion}`,
+    ),
+  );
+  console.log(chalk.blue('📦 Installing Ohara Manager dependencies'));
 });
