@@ -29,15 +29,15 @@ describe.skip('PipelineNewPage', () => {
     cy.route('PUT', 'api/pipelines/*').as('putPipeline');
     cy.route('POST', 'api/pipelines').as('postPipeline');
     cy.route('GET', 'api/topics').as('getTopics');
+    cy.route('POST', 'api/topics').as('postTopics');
+    cy.route('GET', 'api/workers').as('getWorkers');
 
-    cy.deleteAllPipelines();
     cy.createTopic().as('createTopic');
     cy.visit(URLS.PIPELINE)
       .getByTestId('new-pipeline')
       .click()
       .getByText('Next')
       .click()
-      .wait('@postPipeline')
       .wait('@getPipeline');
   });
 
@@ -46,6 +46,7 @@ describe.skip('PipelineNewPage', () => {
     cy.wait('@getTopics')
       .getByTestId('toolbar-topics')
       .click()
+      .wait('@getWorkers')
       .get('@createTopic')
       .then(topic => {
         cy.getByTestId('topic-select').select(topic.name);
