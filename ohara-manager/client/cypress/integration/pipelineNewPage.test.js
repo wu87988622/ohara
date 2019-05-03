@@ -17,7 +17,7 @@
 import * as URLS from '../../src/constants/urls';
 import { CONNECTOR_TYPES } from '../../src/constants/pipelines';
 
-describe('PipelineNewPage', () => {
+describe.skip('PipelineNewPage', () => {
   before(() => {
     cy.deleteAllWorkers();
     cy.createWorker();
@@ -30,6 +30,7 @@ describe('PipelineNewPage', () => {
     cy.route('POST', 'api/pipelines').as('postPipeline');
     cy.route('GET', 'api/topics').as('getTopics');
 
+    cy.deleteAllPipelines();
     cy.createTopic().as('createTopic');
     cy.visit(URLS.PIPELINE)
       .getByTestId('new-pipeline')
