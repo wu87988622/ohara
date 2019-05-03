@@ -29,7 +29,6 @@ describe('PipelineNewPage', () => {
     cy.route('PUT', 'api/pipelines/*').as('putPipeline');
     cy.route('POST', 'api/pipelines').as('postPipeline');
     cy.route('GET', 'api/topics').as('getTopics');
-    cy.route('POST', 'api/topics').as('postTopics');
     cy.route('GET', 'api/workers').as('getWorkers');
 
     cy.createTopic().as('createTopic');
@@ -157,8 +156,8 @@ describe('PipelineNewPage', () => {
 
   it('ftp sink source connect to topic write to graph', () => {
     cy.server();
-    cy.route('PUT', 'api/pipelines/*').as('graph');
-    cy.route('GET', 'api/connectors/*').as('getGraph');
+    cy.route('PUT', 'api/pipelines/*').as('putPipeline');
+    cy.route('GET', 'api/connectors/*').as('getConnector');
 
     cy.getByTestId('toolbar-sinks')
       .click()
@@ -168,7 +167,7 @@ describe('PipelineNewPage', () => {
       .click()
       .getByText('Add')
       .click()
-      .wait('@graph')
+      .wait('@putPipeline')
       .getByTestId('toolbar-sources')
       .click()
       .getByText('Add a new source connector')
@@ -177,7 +176,7 @@ describe('PipelineNewPage', () => {
       .click()
       .getByText('Add')
       .click()
-      .wait('@graph')
+      .wait('@putPipeline')
       .getByTestId('toolbar-topics')
       .click()
       .get('@createTopic')
@@ -186,7 +185,7 @@ describe('PipelineNewPage', () => {
       })
       .getByText('Add')
       .click()
-      .wait('@graph');
+      .wait('@putPipeline');
 
     cy.getByText('FtpSink')
       .click()
@@ -194,12 +193,12 @@ describe('PipelineNewPage', () => {
       .should('have.length', '1')
       .getByText('FTP Sink 2/2')
       .click()
-      .wait('@getGraph')
+      .wait('@getConnector')
       .get('@createTopic')
       .then(topic => {
         cy.getByTestId('read-topic-select').select(topic.name);
       })
-      .wait('@graph')
+      .wait('@putPipeline')
       .get('g.edgePath')
       .should('have.length', 1);
 
@@ -209,20 +208,20 @@ describe('PipelineNewPage', () => {
       .should('have.length', '1')
       .getByText('FTP Source 2/2')
       .click()
-      .wait('@getGraph')
+      .wait('@getConnector')
       .get('@createTopic')
       .then(topic => {
         cy.getByTestId('write-topic-select').select(topic.name);
       })
-      .wait('@graph')
+      .wait('@putPipeline')
       .get('g.edgePath')
       .should('have.length', 2);
   });
 
   it('hdfs sink source connect to topic write to graph', () => {
     cy.server();
-    cy.route('PUT', '/api/pipelines/*').as('graph');
-    cy.route('GET', '/api/connectors/*').as('getGraph');
+    cy.route('PUT', '/api/pipelines/*').as('putPipeline');
+    cy.route('GET', '/api/connectors/*').as('getConnector');
 
     cy.getByTestId('toolbar-sinks')
       .click()
@@ -232,7 +231,7 @@ describe('PipelineNewPage', () => {
       .click()
       .getByText('Add')
       .click()
-      .wait('@graph')
+      .wait('@putPipeline')
       .getByTestId('toolbar-sources')
       .click()
       .getByText('Add a new source connector')
@@ -241,7 +240,7 @@ describe('PipelineNewPage', () => {
       .click()
       .getByText('Add')
       .click()
-      .wait('@graph')
+      .wait('@putPipeline')
       .getByTestId('toolbar-topics')
       .click()
       .get('@createTopic')
@@ -250,31 +249,31 @@ describe('PipelineNewPage', () => {
       })
       .getByText('Add')
       .click()
-      .wait('@graph');
+      .wait('@putPipeline');
 
     cy.getByText('HDFSSinkConnector')
       .click()
-      .wait('@getGraph')
+      .wait('@getConnector')
       .getByText('HDFS sink connector')
       .should('have.length', '1')
       .get('@createTopic')
       .then(topic => {
         cy.getByTestId('topic-select').select(topic.name);
       })
-      .wait('@graph')
+      .wait('@putPipeline')
       .get('g.edgePath')
       .should('have.length', 1);
 
     cy.getByText('JDBCSourceConnector')
       .click()
-      .wait('@getGraph')
+      .wait('@getConnector')
       .getByText('JDBC source connector')
       .should('have.length', '1')
       .get('@createTopic')
       .then(topic => {
         cy.getByTestId('write-topic-select').select(topic.name);
       })
-      .wait('@graph')
+      .wait('@putPipeline')
       .get('g.edgePath')
       .should('have.length', 2);
   });
