@@ -19,8 +19,8 @@ import akka.http.scaladsl.server
 import com.island.ohara.agent.{ClusterCollie, Crane, NoSuchClusterException}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorDescription
-import com.island.ohara.client.configurator.v0.PipelineApi._
 import com.island.ohara.client.configurator.v0.MetricsApi._
+import com.island.ohara.client.configurator.v0.PipelineApi._
 import com.island.ohara.client.configurator.v0.StreamApi.{StreamAppDescription, StreamClusterInfo}
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
@@ -28,10 +28,8 @@ import com.island.ohara.client.configurator.v0.{Data, StreamApi}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.RouteUtils.{Id, TargetCluster}
-import com.island.ohara.configurator.store.DataStore
+import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.island.ohara.kafka.connector.json.SettingDefinitions
-import com.island.ohara.metrics.basic.CounterMBean
-import com.island.ohara.metrics.kafka.TopicMeter
 import com.typesafe.scalalogging.Logger
 
 import scala.collection.JavaConverters._
@@ -48,7 +46,8 @@ private[configurator] object PipelineRoute {
     implicit clusterCollie: ClusterCollie,
     crane: Crane,
     store: DataStore,
-    executionContext: ExecutionContext): Future[Pipeline] =
+    executionContext: ExecutionContext,
+    meterCache: MeterCache): Future[Pipeline] =
     toRes(Map(id -> request), swallow).map(_.head)
 
   /**
@@ -61,7 +60,8 @@ private[configurator] object PipelineRoute {
     implicit clusterCollie: ClusterCollie,
     crane: Crane,
     store: DataStore,
-    executionContext: ExecutionContext): Future[Seq[Pipeline]] =
+    executionContext: ExecutionContext,
+    meterCache: MeterCache): Future[Seq[Pipeline]] =
     clusterCollie.clusters
       .map { clusters =>
         reqs.map {
@@ -114,21 +114,14 @@ private[configurator] object PipelineRoute {
         Future.sequence(entries.map {
           case (pipeline, clustersOption) =>
             clustersOption
-              .map(clusters =>
-                abstracts(
-                  pipeline.rules,
-                  clusterCollie.workerCollie().workerClient(clusters._2),
-                  try clusterCollie.brokerCollie().topicMeters(clusters._1)
-                  catch {
-                    // TODO: We can endure the lack of meters? ... by chia
-                    case _: Throwable => Seq.empty
-                  },
-                  try clusterCollie.workerCollie().counters(clusters._2)
-                  catch {
-                    // TODO: We can endure the lack of metrics? ... by chia
-                    case _: Throwable => Seq.empty
-                  }
-                ).map(objects => pipeline.copy(objects = objects)))
+              .map(
+                clusters =>
+                  abstracts(
+                    pipeline.rules,
+                    clusterCollie.workerCollie().workerClient(clusters._2),
+                    meterCache.meters(clusters._1),
+                    meterCache.meters(clusters._2)
+                  ).map(objects => pipeline.copy(objects = objects)))
               .getOrElse(Future.successful(pipeline))
         }))
       .map(_.toSeq)
@@ -142,8 +135,8 @@ private[configurator] object PipelineRoute {
     */
   private[this] def abstracts(rules: Map[String, Seq[String]],
                               workerClient: WorkerClient,
-                              topicMeters: Seq[TopicMeter],
-                              counters: Seq[CounterMBean])(
+                              topicMeters: Map[String, Seq[Meter]],
+                              connectorMeters: Map[String, Seq[Meter]])(
     implicit store: DataStore,
     crane: Crane,
     executionContext: ExecutionContext): Future[List[ObjectAbstract]] =
@@ -163,13 +156,7 @@ private[configurator] object PipelineRoute {
             case data: ConnectorDescription =>
               // the group of counter is equal to connector's name (this is a part of kafka's core setting)
               // Hence, we filter the connectors having different "name" (we use id instead of name in creating connector)
-              val metrics = Metrics(counters.filter(_.group() == data.id).map { counter =>
-                Meter(
-                  value = counter.valueInPerSec(),
-                  unit = s"${counter.getUnit} / second",
-                  document = counter.getDocument
-                )
-              })
+              val metrics = Metrics(connectorMeters.getOrElse(data.id, Seq.empty))
               workerClient
                 .exist(data.id)
                 .flatMap(if (_) workerClient.status(data.id).map(Some(_)) else Future.successful(None))
@@ -251,13 +238,7 @@ private[configurator] object PipelineRoute {
                 state = None,
                 error = None,
                 // noted we create a topic with id rather than name
-                metrics = Metrics(topicMeters.filter(_.topicName() == data.id).map { meter =>
-                  Meter(
-                    value = meter.count(),
-                    unit = s"${meter.eventType()} / ${meter.rateUnit().name()}",
-                    document = meter.catalog.name()
-                  )
-                }),
+                metrics = Metrics(topicMeters.getOrElse(data.id, Seq.empty)),
                 lastModified = data.lastModified
               ))
             case data =>
@@ -352,7 +333,8 @@ private[configurator] object PipelineRoute {
   private[this] def update(pipeline: Pipeline)(implicit store: DataStore,
                                                clusterCollie: ClusterCollie,
                                                crane: Crane,
-                                               executionContext: ExecutionContext): Future[Pipeline] =
+                                               executionContext: ExecutionContext,
+                                               meterCache: MeterCache): Future[Pipeline] =
     update(Seq(pipeline)).map(_.head)
 
   /**
@@ -362,7 +344,8 @@ private[configurator] object PipelineRoute {
   private[this] def update(pipelines: Seq[Pipeline])(implicit store: DataStore,
                                                      clusterCollie: ClusterCollie,
                                                      crane: Crane,
-                                                     executionContext: ExecutionContext): Future[Seq[Pipeline]] =
+                                                     executionContext: ExecutionContext,
+                                                     meterCache: MeterCache): Future[Seq[Pipeline]] =
     toRes(
       pipelines.map { pipeline =>
         pipeline.id -> PipelineCreationRequest(
@@ -400,7 +383,8 @@ private[configurator] object PipelineRoute {
   def apply(implicit store: DataStore,
             clusterCollie: ClusterCollie,
             crane: Crane,
-            executionContext: ExecutionContext): server.Route =
+            executionContext: ExecutionContext,
+            meterCache: MeterCache): server.Route =
     RouteUtils.basicRoute[PipelineCreationRequest, Pipeline](
       root = PIPELINES_PREFIX_PATH,
       hookOfAdd = (t: TargetCluster, id: Id, request: PipelineCreationRequest) =>
