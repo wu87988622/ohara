@@ -131,7 +131,7 @@ class TestMixedFakeCollie extends WithBrokerWorker with Matchers {
             statusTopicName = None,
             statusTopicPartitions = None,
             statusTopicReplications = None,
-            jars = Seq.empty,
+            jarIds = Seq.empty,
             nodeNames = nodes.map(_.name)
           )),
         10 seconds

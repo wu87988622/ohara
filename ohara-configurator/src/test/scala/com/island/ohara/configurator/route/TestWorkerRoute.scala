@@ -92,7 +92,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       offsetTopicName = Some(CommonUtils.randomString(10)),
       offsetTopicPartitions = None,
       offsetTopicReplications = None,
-      jars = Seq.empty,
+      jarIds = Seq.empty,
       nodeNames = nodeNames
     )
     assert(request0, result(workerApi.add(request0)))
@@ -112,7 +112,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       offsetTopicName = Some(CommonUtils.randomString(10)),
       offsetTopicPartitions = None,
       offsetTopicReplications = None,
-      jars = Seq.empty,
+      jarIds = Seq.empty,
       nodeNames = nodeNames
     )
     assert(request1, result(workerApi.add(request1)))
@@ -136,7 +136,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
         offsetTopicName = Some(CommonUtils.randomString(10)),
         offsetTopicPartitions = None,
         offsetTopicReplications = None,
-        jars = Seq.empty,
+        jarIds = Seq.empty,
         nodeNames = nodeNames
       )))
   }
@@ -158,7 +158,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       statusTopicName = Some(CommonUtils.randomString(10)),
       statusTopicPartitions = Some(123),
       statusTopicReplications = Some(2.asInstanceOf[Short]),
-      jars = Seq.empty,
+      jarIds = Seq.empty,
       nodeNames = nodeNames
     )
 
@@ -239,7 +239,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
           offsetTopicName = Some(CommonUtils.randomString(10)),
           offsetTopicPartitions = None,
           offsetTopicReplications = None,
-          jars = Seq.empty,
+          jarIds = Seq.empty,
           nodeNames = Seq(CommonUtils.randomString(10))
         ))
     )
@@ -263,7 +263,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
         offsetTopicName = Some(CommonUtils.randomString(10)),
         offsetTopicPartitions = None,
         offsetTopicReplications = None,
-        jars = Seq.empty,
+        jarIds = Seq.empty,
         nodeNames = Seq.empty
       )))
   }
@@ -285,7 +285,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       offsetTopicName = Some(CommonUtils.randomString(10)),
       offsetTopicPartitions = None,
       offsetTopicReplications = None,
-      jars = Seq.empty,
+      jarIds = Seq.empty,
       nodeNames = nodeNames
     )
 
@@ -316,7 +316,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       offsetTopicName = Some(CommonUtils.randomString(10)),
       offsetTopicPartitions = None,
       offsetTopicReplications = None,
-      jars = Seq.empty,
+      jarIds = Seq.empty,
       nodeNames = nodeNames
     )
     assert(request, result(workerApi.add(request)))
@@ -339,7 +339,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       offsetTopicName = Some(CommonUtils.randomString(10)),
       offsetTopicPartitions = None,
       offsetTopicReplications = None,
-      jars = Seq.empty,
+      jarIds = Seq.empty,
       nodeNames = nodeNames
     )
 
@@ -360,7 +360,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       offsetTopicName = Some(CommonUtils.randomString(10)),
       offsetTopicPartitions = None,
       offsetTopicReplications = None,
-      jars = Seq.empty,
+      jarIds = Seq.empty,
       nodeNames = nodeNames
     )
     assert(request1, result(workerApi.add(request1)))
@@ -388,7 +388,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       offsetTopicName = Some(CommonUtils.randomString(10)),
       offsetTopicPartitions = None,
       offsetTopicReplications = None,
-      jars = Seq.empty,
+      jarIds = Seq.empty,
       nodeNames = nodeNames
     )
     val cluster = result(workerApi.add(request))
@@ -414,7 +414,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       offsetTopicName = Some(CommonUtils.randomString(10)),
       offsetTopicPartitions = None,
       offsetTopicReplications = None,
-      jars = Seq.empty,
+      jarIds = Seq.empty,
       nodeNames = nodeNames
     )
     val cluster = result(workerApi.add(request))
@@ -443,7 +443,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       offsetTopicName = Some(CommonUtils.randomString(10)),
       offsetTopicPartitions = None,
       offsetTopicReplications = None,
-      jars = Seq.empty,
+      jarIds = Seq.empty,
       nodeNames = Seq(nodeNames.head)
     )
     val cluster = result(workerApi.add(request))
@@ -466,7 +466,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
         offsetTopicName = cluster.offsetTopicName,
         offsetTopicPartitions = cluster.offsetTopicPartitions,
         offsetTopicReplications = cluster.offsetTopicReplications,
-        jarNames = cluster.jarNames,
+        jarIds = cluster.jarIds,
         connectors = Seq.empty,
         nodeNames = cluster.nodeNames :+ nodeNames.last
       )
@@ -488,7 +488,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       offsetTopicName = Some(CommonUtils.randomString(10)),
       offsetTopicPartitions = None,
       offsetTopicReplications = None,
-      jars = Seq.empty,
+      jarIds = Seq.empty,
       nodeNames = nodeNames
     )
     val cluster = result(workerApi.add(request))
@@ -510,7 +510,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       offsetTopicName = cluster.offsetTopicName,
       offsetTopicPartitions = cluster.offsetTopicPartitions,
       offsetTopicReplications = cluster.offsetTopicReplications,
-      jarNames = cluster.jarNames,
+      jarIds = cluster.jarIds,
       connectors = Seq.empty,
       nodeNames = cluster.nodeNames.filter(_ != nodeNames.last)
     )
@@ -533,7 +533,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       statusTopicName = None,
       statusTopicPartitions = None,
       statusTopicReplications = None,
-      jars = Seq.empty,
+      jarIds = Seq.empty,
       nodeNames = nodeNames
     )
     an[IllegalArgumentException] should be thrownBy result(workerApi.add(request))
@@ -557,7 +557,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       offsetTopicName = Some(CommonUtils.randomString(10)),
       offsetTopicPartitions = None,
       offsetTopicReplications = None,
-      jars = Seq.empty,
+      jarIds = Seq.empty,
       nodeNames = nodeNames
     )
 
@@ -587,7 +587,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       offsetTopicName = Some(CommonUtils.randomString(10)),
       offsetTopicPartitions = None,
       offsetTopicReplications = None,
-      jars = Seq.empty,
+      jarIds = Seq.empty,
       nodeNames = nodeNames
     )
 
@@ -619,7 +619,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       offsetTopicName = Some(CommonUtils.randomString(10)),
       offsetTopicPartitions = None,
       offsetTopicReplications = None,
-      jars = Seq.empty,
+      jarIds = Seq.empty,
       nodeNames = nodeNames
     )
 
@@ -651,7 +651,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       offsetTopicName = Some(CommonUtils.randomString(10)),
       offsetTopicPartitions = None,
       offsetTopicReplications = None,
-      jars = Seq.empty,
+      jarIds = Seq.empty,
       nodeNames = nodeNames
     )
 
@@ -679,7 +679,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       offsetTopicName = Some(CommonUtils.randomString(10)),
       offsetTopicPartitions = None,
       offsetTopicReplications = None,
-      jars = Seq.empty,
+      jarIds = Seq.empty,
       nodeNames = nodeNames
     )
 
@@ -707,7 +707,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       offsetTopicName = Some(offsetTopic),
       offsetTopicPartitions = None,
       offsetTopicReplications = None,
-      jars = Seq.empty,
+      jarIds = Seq.empty,
       nodeNames = nodeNames
     )
 
@@ -735,7 +735,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       offsetTopicName = Some(CommonUtils.randomString(10)),
       offsetTopicPartitions = None,
       offsetTopicReplications = None,
-      jars = Seq.empty,
+      jarIds = Seq.empty,
       nodeNames = nodeNames
     )
 
@@ -763,7 +763,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       offsetTopicName = Some(CommonUtils.randomString(10)),
       offsetTopicPartitions = None,
       offsetTopicReplications = None,
-      jars = Seq.empty,
+      jarIds = Seq.empty,
       nodeNames = nodeNames
     )
 

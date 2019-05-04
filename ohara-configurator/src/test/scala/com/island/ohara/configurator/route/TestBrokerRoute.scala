@@ -116,7 +116,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
           offsetTopicName = Some(CommonUtils.randomString(10)),
           offsetTopicPartitions = None,
           offsetTopicReplications = None,
-          jars = Seq.empty,
+          jarIds = Seq.empty,
           nodeNames = nodeNames
         )))
 

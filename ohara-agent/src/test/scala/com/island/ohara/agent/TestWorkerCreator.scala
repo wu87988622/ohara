@@ -79,7 +79,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
         configTopicName = configTopicName,
         configTopicReplications = configTopicReplications,
         configTopicPartitions = 1,
-        jarNames = jarUrls.map(_.getFile),
+        jarIds = jarUrls.map(_.getFile),
         connectors = Seq.empty,
         nodeNames = nodeNames
       ))

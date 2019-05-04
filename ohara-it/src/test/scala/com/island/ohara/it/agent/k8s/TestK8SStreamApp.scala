@@ -168,7 +168,7 @@ class TestK8SStreamApp extends IntegrationTest with Matchers {
             statusTopicName = None,
             statusTopicPartitions = None,
             statusTopicReplications = None,
-            jars = Seq.empty,
+            jarIds = Seq.empty,
             nodeNames = nodeCache.take(instances).map(_.name)
           )
         ))

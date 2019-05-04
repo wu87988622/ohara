@@ -20,7 +20,7 @@ import com.island.ohara.client.configurator.v0.InfoApi.ConnectorVersion
 import com.island.ohara.common.util.VersionUtils
 import com.island.ohara.kafka.connector.json.SettingDefinition
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsValue, RootJsonFormat}
+import spray.json.{DeserializationException, JsArray, JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 object WorkerApi {
   val WORKER_PREFIX_PATH: String = "workers"
 
@@ -49,6 +49,32 @@ object WorkerApi {
 
   val OFFSET_TOPIC_REPLICATIONS_DEFAULT: Short = 1
 
+  private[this] val NAME_KEY = "name"
+  private[this] val IMAGE_NAME_KEY = "imageName"
+  private[this] val BROKER_CLUSTER_NAME_KEY = "brokerClusterName"
+  private[this] val CLIENT_PORT_KEY = "clientPort"
+  private[this] val JMX_PORT_KEY = "jmxPort"
+  private[this] val GROUP_ID_KEY = "groupId"
+  private[this] val STATUS_TOPIC_NAME_KEY = "statusTopicName"
+  private[this] val STATUS_TOPIC_PARTITIONS_KEY = "statusTopicPartitions"
+  private[this] val STATUS_TOPIC_REPLICATIONS_KEY = "statusTopicReplications"
+  private[this] val CONFIG_TOPIC_NAME_KEY = "configTopicName"
+  private[this] val CONFIG_TOPIC_PARTITIONS_KEY = "configTopicPartitions"
+  private[this] val CONFIG_TOPIC_REPLICATIONS_KEY = "configTopicReplications"
+  private[this] val OFFSET_TOPIC_NAME_KEY = "offsetTopicName"
+  private[this] val OFFSET_TOPIC_PARTITIONS_KEY = "offsetTopicPartitions"
+  private[this] val OFFSET_TOPIC_REPLICATIONS_KEY = "offsetTopicReplications"
+  private[this] val JAR_IDS_KEY = "jarIds"
+  // TODO: deprecated key
+  private[this] val JARS_KEY = "jars"
+  private[this] val JAR_NAMES_KEY = "jarNames"
+  private[this] val CONNECTORS_KEY = "connectors"
+  // TODO: deprecated key
+  private[this] val SOURCES_KEY = "sources"
+  // TODO: deprecated key
+  private[this] val SINKS_KEY = "sinks"
+  private[this] val NODE_NAMES_KEY = "nodeNames"
+
   /**
     * Create a basic request with default value.
     * @param name cluster name
@@ -71,7 +97,7 @@ object WorkerApi {
       offsetTopicName = None,
       offsetTopicPartitions = None,
       offsetTopicReplications = None,
-      jars = Seq.empty,
+      jarIds = Seq.empty,
       nodeNames = nodeNames
     )
 
@@ -90,14 +116,65 @@ object WorkerApi {
                                                 statusTopicName: Option[String],
                                                 statusTopicPartitions: Option[Int],
                                                 statusTopicReplications: Option[Short],
-                                                jars: Seq[String],
+                                                jarIds: Seq[String],
                                                 nodeNames: Seq[String])
       extends ClusterCreationRequest {
     override def ports: Set[Int] = Set(clientPort.getOrElse(CLIENT_PORT_DEFAULT), jmxPort.getOrElse(JMX_PORT_DEFAULT))
   }
 
   implicit val WORKER_CLUSTER_CREATION_REQUEST_JSON_FORMAT: RootJsonFormat[WorkerClusterCreationRequest] =
-    jsonFormat16(WorkerClusterCreationRequest)
+    new RootJsonFormat[WorkerClusterCreationRequest] {
+      override def write(obj: WorkerClusterCreationRequest): JsValue = JsObject(
+        noJsNull(
+          Map(
+            NAME_KEY -> JsString(obj.name),
+            IMAGE_NAME_KEY -> obj.imageName.map(JsString(_)).getOrElse(JsNull),
+            BROKER_CLUSTER_NAME_KEY -> obj.brokerClusterName.map(JsString(_)).getOrElse(JsNull),
+            CLIENT_PORT_KEY -> obj.clientPort.map(JsNumber(_)).getOrElse(JsNull),
+            JMX_PORT_KEY -> obj.jmxPort.map(JsNumber(_)).getOrElse(JsNull),
+            GROUP_ID_KEY -> obj.groupId.map(JsString(_)).getOrElse(JsNull),
+            STATUS_TOPIC_NAME_KEY -> obj.statusTopicName.map(JsString(_)).getOrElse(JsNull),
+            STATUS_TOPIC_PARTITIONS_KEY -> obj.statusTopicPartitions.map(JsNumber(_)).getOrElse(JsNull),
+            STATUS_TOPIC_REPLICATIONS_KEY -> obj.statusTopicReplications.map(JsNumber(_)).getOrElse(JsNull),
+            CONFIG_TOPIC_NAME_KEY -> obj.configTopicName.map(JsString(_)).getOrElse(JsNull),
+            CONFIG_TOPIC_REPLICATIONS_KEY -> obj.configTopicReplications.map(JsNumber(_)).getOrElse(JsNull),
+            OFFSET_TOPIC_NAME_KEY -> obj.offsetTopicName.map(JsString(_)).getOrElse(JsNull),
+            OFFSET_TOPIC_PARTITIONS_KEY -> obj.offsetTopicPartitions.map(JsNumber(_)).getOrElse(JsNull),
+            OFFSET_TOPIC_REPLICATIONS_KEY -> obj.offsetTopicReplications.map(JsNumber(_)).getOrElse(JsNull),
+            JAR_IDS_KEY -> JsArray(obj.jarIds.map(JsString(_)).toVector),
+            NODE_NAMES_KEY -> JsArray(obj.nodeNames.map(JsString(_)).toVector)
+          ))
+      )
+
+      override def read(json: JsValue): WorkerClusterCreationRequest = WorkerClusterCreationRequest(
+        name = noJsNull(json.asJsObject.fields)(NAME_KEY).convertTo[String],
+        imageName = noJsNull(json.asJsObject.fields).get(IMAGE_NAME_KEY).map(_.convertTo[String]),
+        brokerClusterName = noJsNull(json.asJsObject.fields).get(BROKER_CLUSTER_NAME_KEY).map(_.convertTo[String]),
+        clientPort = noJsNull(json.asJsObject.fields).get(CLIENT_PORT_KEY).map(_.convertTo[Int]),
+        jmxPort = noJsNull(json.asJsObject.fields).get(JMX_PORT_KEY).map(_.convertTo[Int]),
+        groupId = noJsNull(json.asJsObject.fields).get(GROUP_ID_KEY).map(_.convertTo[String]),
+        statusTopicName = noJsNull(json.asJsObject.fields).get(STATUS_TOPIC_NAME_KEY).map(_.convertTo[String]),
+        statusTopicPartitions = noJsNull(json.asJsObject.fields).get(STATUS_TOPIC_PARTITIONS_KEY).map(_.convertTo[Int]),
+        statusTopicReplications =
+          noJsNull(json.asJsObject.fields).get(STATUS_TOPIC_REPLICATIONS_KEY).map(_.convertTo[Short]),
+        configTopicName = noJsNull(json.asJsObject.fields).get(CONFIG_TOPIC_NAME_KEY).map(_.convertTo[String]),
+        configTopicReplications =
+          noJsNull(json.asJsObject.fields).get(CONFIG_TOPIC_REPLICATIONS_KEY).map(_.convertTo[Short]),
+        offsetTopicName = noJsNull(json.asJsObject.fields).get(OFFSET_TOPIC_NAME_KEY).map(_.convertTo[String]),
+        offsetTopicPartitions = noJsNull(json.asJsObject.fields).get(OFFSET_TOPIC_PARTITIONS_KEY).map(_.convertTo[Int]),
+        offsetTopicReplications =
+          noJsNull(json.asJsObject.fields).get(OFFSET_TOPIC_REPLICATIONS_KEY).map(_.convertTo[Short]),
+        jarIds = noJsNull(json.asJsObject.fields)
+          .get(JAR_IDS_KEY)
+          .map(_.convertTo[Seq[String]])
+          .getOrElse(
+            json.asJsObject.fields
+              .get(JARS_KEY)
+              .map(_.convertTo[Seq[String]])
+              .getOrElse(throw DeserializationException(s"$JAR_IDS_KEY is required!!!"))),
+        nodeNames = noJsNull(json.asJsObject.fields)(NODE_NAMES_KEY).convertTo[Seq[String]]
+      )
+    }
 
   implicit val SETTING_DEFINITION_JSON_FORMAT: RootJsonFormat[SettingDefinition] =
     new RootJsonFormat[SettingDefinition] {
@@ -128,7 +205,7 @@ object WorkerApi {
     def offsetTopicName: String
     def offsetTopicPartitions: Int
     def offsetTopicReplications: Short
-    def jarNames: Seq[String]
+    def jarIds: Seq[String]
     def connectors: Seq[ConnectorDefinitions]
     def sources: Seq[ConnectorVersion]
     def sinks: Seq[ConnectorVersion]
@@ -159,10 +236,8 @@ object WorkerApi {
         offsetTopicName = obj.offsetTopicName,
         offsetTopicPartitions = obj.offsetTopicPartitions,
         offsetTopicReplications = obj.offsetTopicReplications,
-        jarNames = obj.jarNames,
+        jarIds = obj.jarIds,
         connectors = obj.connectors,
-        sources = obj.sources,
-        sinks = obj.sinks,
         nodeNames = obj.nodeNames
       )
   }
@@ -183,7 +258,7 @@ object WorkerApi {
               offsetTopicName: String,
               offsetTopicPartitions: Int,
               offsetTopicReplications: Short,
-              jarNames: Seq[String],
+              jarIds: Seq[String],
               connectors: Seq[ConnectorDefinitions],
               nodeNames: Seq[String]): WorkerClusterInfo = WorkerClusterInfoImpl(
       name = name,
@@ -201,10 +276,8 @@ object WorkerApi {
       offsetTopicName = offsetTopicName,
       offsetTopicPartitions = offsetTopicPartitions,
       offsetTopicReplications = offsetTopicReplications,
-      jarNames = jarNames,
+      jarIds = jarIds,
       connectors = connectors,
-      sources = connectors.map(InfoApi.toConnectorVersion).filter(_.typeName == "source"),
-      sinks = connectors.map(InfoApi.toConnectorVersion).filter(_.typeName == "sink"),
       nodeNames = nodeNames
     )
   }
@@ -233,15 +306,78 @@ object WorkerApi {
                                                  offsetTopicName: String,
                                                  offsetTopicPartitions: Int,
                                                  offsetTopicReplications: Short,
-                                                 jarNames: Seq[String],
+                                                 jarIds: Seq[String],
                                                  connectors: Seq[ConnectorDefinitions],
-                                                 sources: Seq[ConnectorVersion],
-                                                 sinks: Seq[ConnectorVersion],
                                                  nodeNames: Seq[String])
-      extends WorkerClusterInfo
-  private[this] implicit val WORKER_CLUSTER_INFO_IMPL_JSON_FORMAT: RootJsonFormat[WorkerClusterInfoImpl] = jsonFormat20(
-    WorkerClusterInfoImpl)
+      extends WorkerClusterInfo {
 
+    def sources: Seq[ConnectorVersion] = connectors.map(InfoApi.toConnectorVersion).filter(_.typeName == "source")
+    def sinks: Seq[ConnectorVersion] = connectors.map(InfoApi.toConnectorVersion).filter(_.typeName == "sink")
+  }
+
+  private[this] implicit val WORKER_CLUSTER_INFO_IMPL_JSON_FORMAT: RootJsonFormat[WorkerClusterInfoImpl] =
+    new RootJsonFormat[WorkerClusterInfoImpl] {
+      override def write(obj: WorkerClusterInfoImpl): JsValue = JsObject(
+        noJsNull(
+          Map(
+            NAME_KEY -> JsString(obj.name),
+            IMAGE_NAME_KEY -> JsString(obj.imageName),
+            BROKER_CLUSTER_NAME_KEY -> JsString(obj.brokerClusterName),
+            CLIENT_PORT_KEY -> JsNumber(obj.clientPort),
+            JMX_PORT_KEY -> JsNumber(obj.jmxPort),
+            GROUP_ID_KEY -> JsString(obj.groupId),
+            STATUS_TOPIC_NAME_KEY -> JsString(obj.statusTopicName),
+            STATUS_TOPIC_PARTITIONS_KEY -> JsNumber(obj.statusTopicPartitions),
+            STATUS_TOPIC_REPLICATIONS_KEY -> JsNumber(obj.statusTopicReplications),
+            CONFIG_TOPIC_NAME_KEY -> JsString(obj.configTopicName),
+            CONFIG_TOPIC_PARTITIONS_KEY -> JsNumber(obj.configTopicPartitions),
+            CONFIG_TOPIC_REPLICATIONS_KEY -> JsNumber(obj.configTopicReplications),
+            OFFSET_TOPIC_NAME_KEY -> JsString(obj.offsetTopicName),
+            OFFSET_TOPIC_PARTITIONS_KEY -> JsNumber(obj.offsetTopicPartitions),
+            OFFSET_TOPIC_REPLICATIONS_KEY -> JsNumber(obj.offsetTopicReplications),
+            JAR_IDS_KEY -> JsArray(obj.jarIds.map(JsString(_)).toVector),
+            CONNECTORS_KEY -> JsArray(obj.connectors.map(CONNECTION_DEFINITIONS_JSON_FORMAT.write).toVector),
+            NODE_NAMES_KEY -> JsArray(obj.nodeNames.map(JsString(_)).toVector),
+            // deprecated keys
+            JAR_NAMES_KEY -> JsArray(obj.jarIds.map(JsString(_)).toVector),
+            // deprecated keys
+            SOURCES_KEY -> JsArray(
+              obj.connectors
+                .map(InfoApi.toConnectorVersion)
+                .filter(_.typeName == "source")
+                .map(InfoApi.CONNECTOR_VERSION_JSON_FORMAT.write)
+                .toVector),
+            // deprecated keys
+            SINKS_KEY -> JsArray(
+              obj.connectors
+                .map(InfoApi.toConnectorVersion)
+                .filter(_.typeName == "sink")
+                .map(InfoApi.CONNECTOR_VERSION_JSON_FORMAT.write)
+                .toVector)
+          ))
+      )
+
+      override def read(json: JsValue): WorkerClusterInfoImpl = WorkerClusterInfoImpl(
+        name = noJsNull(json.asJsObject.fields)(NAME_KEY).convertTo[String],
+        imageName = noJsNull(json.asJsObject.fields)(IMAGE_NAME_KEY).convertTo[String],
+        brokerClusterName = noJsNull(json.asJsObject.fields)(BROKER_CLUSTER_NAME_KEY).convertTo[String],
+        clientPort = noJsNull(json.asJsObject.fields)(CLIENT_PORT_KEY).convertTo[Int],
+        jmxPort = noJsNull(json.asJsObject.fields)(JMX_PORT_KEY).convertTo[Int],
+        groupId = noJsNull(json.asJsObject.fields)(GROUP_ID_KEY).convertTo[String],
+        statusTopicName = noJsNull(json.asJsObject.fields)(STATUS_TOPIC_NAME_KEY).convertTo[String],
+        statusTopicPartitions = noJsNull(json.asJsObject.fields)(STATUS_TOPIC_PARTITIONS_KEY).convertTo[Int],
+        statusTopicReplications = noJsNull(json.asJsObject.fields)(STATUS_TOPIC_REPLICATIONS_KEY).convertTo[Short],
+        configTopicName = noJsNull(json.asJsObject.fields)(CONFIG_TOPIC_NAME_KEY).convertTo[String],
+        configTopicPartitions = noJsNull(json.asJsObject.fields)(CONFIG_TOPIC_PARTITIONS_KEY).convertTo[Int],
+        configTopicReplications = noJsNull(json.asJsObject.fields)(CONFIG_TOPIC_REPLICATIONS_KEY).convertTo[Short],
+        offsetTopicName = noJsNull(json.asJsObject.fields)(OFFSET_TOPIC_NAME_KEY).convertTo[String],
+        offsetTopicPartitions = noJsNull(json.asJsObject.fields)(OFFSET_TOPIC_PARTITIONS_KEY).convertTo[Int],
+        offsetTopicReplications = noJsNull(json.asJsObject.fields)(OFFSET_TOPIC_REPLICATIONS_KEY).convertTo[Short],
+        jarIds = noJsNull(json.asJsObject.fields)(JAR_IDS_KEY).convertTo[Seq[String]],
+        connectors = noJsNull(json.asJsObject.fields)(CONNECTORS_KEY).convertTo[Seq[ConnectorDefinitions]],
+        nodeNames = noJsNull(json.asJsObject.fields)(NODE_NAMES_KEY).convertTo[Seq[String]]
+      )
+    }
   def access(): ClusterAccess[WorkerClusterCreationRequest, WorkerClusterInfo] =
     new ClusterAccess[WorkerClusterCreationRequest, WorkerClusterInfo](WORKER_PREFIX_PATH)
 }

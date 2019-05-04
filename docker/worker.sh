@@ -124,6 +124,15 @@ echo "status.storage.partitions=$WORKER_STATUS_TOPIC_PARTITIONS" >> "$CONFIG"
 WORKER_PLUGIN_FOLDER="/tmp/plugins"
 mkdir -p $WORKER_PLUGIN_FOLDER
 
+if [[ ! -z "$WORKER_JARS" ]]; then
+  IFS=','
+  read -ra ADDR <<< "$WORKER_JARS"
+  for i in "${ADDR[@]}"; do
+    wget $i -P $KAFKA_HOME/libs
+  done
+fi
+
+# this variable has not been used yet
 if [[ ! -z "$WORKER_PLUGINS" ]]; then
   IFS=','
   read -ra ADDR <<< "$WORKER_PLUGINS"

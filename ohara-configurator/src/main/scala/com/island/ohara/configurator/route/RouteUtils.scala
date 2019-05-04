@@ -216,7 +216,7 @@ private[route] object RouteUtils {
                   // check port conflict
                   Some(clusters
                     .flatMap { cluster =>
-                      val conflictPorts = cluster.ports.filter(p => req.ports.contains(p))
+                      val conflictPorts = cluster.ports.intersect(req.ports)
                       if (conflictPorts.isEmpty) None
                       else Some(cluster -> conflictPorts)
                     }

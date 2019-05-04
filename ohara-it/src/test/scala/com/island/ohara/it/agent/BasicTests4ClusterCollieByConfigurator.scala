@@ -135,7 +135,7 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
       statusTopicName = None,
       statusTopicPartitions = None,
       statusTopicReplications = None,
-      jars = Seq.empty,
+      jarIds = Seq.empty,
       nodeNames = nodeNames
     ))
 
@@ -163,7 +163,7 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
       statusTopicName = Some(statusTopicName),
       statusTopicPartitions = None,
       statusTopicReplications = None,
-      jars = Seq.empty,
+      jarIds = Seq.empty,
       nodeNames = nodeNames
     ))
 

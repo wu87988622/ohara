@@ -142,7 +142,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
           statusTopicName = None,
           statusTopicPartitions = None,
           statusTopicReplications = None,
-          jars = jars.map(_.id),
+          jarIds = jars.map(_.id),
           nodeNames = Seq(nodeCache.head.name)
         )
       ))

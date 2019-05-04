@@ -142,7 +142,7 @@ private class WorkerCollieImpl(nodeCollie: NodeCollie,
                             WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY -> statusTopicReplications.toString,
                             WorkerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
                             WorkerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
-                            WorkerCollie.PLUGINS_KEY -> jarUrls.mkString(","),
+                            WorkerCollie.JARS_KEY -> jarUrls.mkString(","),
                             ClusterCollie.BROKER_CLUSTER_NAME -> brokerClusterName,
                             WorkerCollie.JMX_HOSTNAME_KEY -> node.name,
                             WorkerCollie.JMX_PORT_KEY -> jmxPort.toString
@@ -197,7 +197,7 @@ private class WorkerCollieImpl(nodeCollie: NodeCollie,
                   statusTopicName = statusTopicName,
                   statusTopicPartitions = statusTopicPartitions,
                   statusTopicReplications = statusTopicReplications,
-                  jarNames = jarUrls.map(_.getFile),
+                  jarIds = jarUrls.map(_.getFile),
                   connectors = Seq.empty,
                   nodeNames = successfulNodeNames ++ existNodes.map(_._1.name)
                 )

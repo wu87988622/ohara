@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import com.island.ohara.agent.Collie.ClusterCreator
 import com.island.ohara.agent.docker.ContainerState
-import com.island.ohara.agent.{ContainerCollie, NoSuchClusterException, NodeCollie}
+import com.island.ohara.agent.{ContainerCollie, NoSuchClusterException, NodeCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.common.util.CommonUtils
@@ -46,7 +46,7 @@ private[configurator] abstract class FakeCollie[T <: ClusterInfo: ClassTag, Crea
         name = CommonUtils.randomString(10),
         size = "unknown",
         portMappings = Seq(PortMapping("fake host", cluster.ports.map(p => PortPair(p, p)).toSeq)),
-        environments = Map("WORKER_PLUGINS" -> "http://worker"),
+        environments = Map(WorkerCollie.JARS_KEY -> "http://worker"),
         hostname = CommonUtils.randomString(10)
       )
     }

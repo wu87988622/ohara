@@ -148,7 +148,7 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: Cl
                 offsetTopicPartitions = c.offsetTopicPartitions,
                 offsetTopicReplications = c.offsetTopicReplications,
                 connectors = c.connectors,
-                jarNames = c.jarNames,
+                jarIds = c.jarIds,
                 nodeNames = c.nodeNames.filter(_ != nodeName)
               )
           }).asInstanceOf[T]

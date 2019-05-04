@@ -22,7 +22,7 @@ import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.WorkerApi
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
-import com.island.ohara.common.annotations.Optional
+import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
@@ -80,11 +80,7 @@ trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator
       .configTopicName(previousCluster.configTopicName)
       .imageName(previousCluster.imageName)
       .jarUrls(
-        previousContainers.head
-          .environments(WorkerCollie.PLUGINS_KEY)
-          .split(",")
-          .filter(_.nonEmpty)
-          .map(s => new URL(s)))
+        previousContainers.head.environments(WorkerCollie.JARS_KEY).split(",").filter(_.nonEmpty).map(s => new URL(s)))
       .nodeName(newNodeName)
       .jmxPort(previousCluster.jmxPort)
       .create()
@@ -235,6 +231,12 @@ object WorkerCollie {
   private[agent] val ADVERTISED_HOSTNAME_KEY: String = "WORKER_ADVERTISED_HOSTNAME"
   private[agent] val ADVERTISED_CLIENT_PORT_KEY: String = "WORKER_ADVERTISED_CLIENT_PORT"
   private[agent] val CLIENT_PORT_KEY: String = "WORKER_CLIENT_PORT"
+  @VisibleForTesting
+  val JARS_KEY: String = "WORKER_JARS"
+
+  /**
+    * this key has not been used yet
+    */
   private[agent] val PLUGINS_KEY: String = "WORKER_PLUGINS"
   private[agent] val JMX_HOSTNAME_KEY: String = "JMX_HOSTNAME"
   private[agent] val JMX_PORT_KEY: String = "JMX_PORT"

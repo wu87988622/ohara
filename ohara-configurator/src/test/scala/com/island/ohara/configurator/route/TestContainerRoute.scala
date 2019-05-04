@@ -103,7 +103,7 @@ class TestContainerRoute extends MediumTest with Matchers {
         statusTopicName = None,
         statusTopicPartitions = None,
         statusTopicReplications = None,
-        jars = Seq.empty,
+        jarIds = Seq.empty,
         nodeNames = nodeNames
       )))
   }

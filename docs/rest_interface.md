@@ -1845,7 +1845,7 @@ The properties which can be set by user are shown below.
 1. clientPort (**int**) — worker client port.
 1. jmxPort (**int**) — worker jmx port.
 1. brokerClusterName (**string**) — broker cluster used to host topics for this worker cluster
-1. jars (**array(string)**) — the id of jars that will be loaded by worker cluster. You can require worker cluster to
+1. jarIds (**array(string)**) — the id of jars that will be loaded by worker cluster. You can require worker cluster to
                               load the jars stored in ohara if you want to run custom connectors on the worker cluster.
                               see [Jars APIs](#jars) for uploading jars to ohara.  
 1. nodeNames (**array(string)**) — the nodes running the worker process
@@ -1988,7 +1988,7 @@ ignore this element. However, we still list the available values here.
 1. clientPort (**int**) — worker client port.
 1. jmxPort (**int**) — worker jmx port.
 1. brokerClusterName (**string**) — broker cluster used to host topics for this worker cluster
-1. jars (**array(string)**) — the id of jars that will be loaded by worker cluster
+1. jarIds (**array(string)**) — the id of jars that will be loaded by worker cluster
 1. groupId (**string**) — the id of worker stored in broker cluster
 1. configTopicName (**string**) — a internal topic used to store connector configuration
 1. configTopicReplications (**int**) — number of replications for config topic
@@ -2018,7 +2018,7 @@ ignore this element. However, we still list the available values here.
   "statusTopicName": "statusTopic",
   "statusTopicReplications": 1,
   "statusTopicPartitions": 1,
-  "jars": [],
+  "jarIds": [],
   "nodeNames": [
     "node00"
   ]
@@ -2038,7 +2038,7 @@ ignore this element. However, we still list the available values here.
   "offsetTopicName": "offsetTopic",
   "imageName": "oharastream/connect-worker:0.4-SNAPSHOT",
   "groupId": "abcdefg",
-  "jarNames": [],
+  "jarIds": [],
   "statusTopicReplications": 1,
   "configTopicPartitions": 1,
   "offsetTopicReplications": 1,
@@ -2060,7 +2060,7 @@ As mentioned before, ohara provides default to most settings. You can just input
 ```json
 {
   "name": "wk00",
-  "jars": [],
+  "jarIds": [],
   "nodeNames": [
     "node00"
   ]
@@ -2084,7 +2084,7 @@ different purpose (a dangerous behavior, right?).
   "offsetTopicName": "offset-956c528fa5",
   "imageName": "oharastream/connect-worker:0.4-SNAPSHOT",
   "groupId": "dcafb19d0e",
-  "jarNames": [],
+  "jarIds": [],
   "statusTopicReplications": 1,
   "configTopicPartitions": 1,
   "offsetTopicReplications": 1,
@@ -2116,7 +2116,7 @@ different purpose (a dangerous behavior, right?).
     "offsetTopicName": "offset-956c528fa5",
     "imageName": "oharastream/connect-worker:0.4-SNAPSHOT",
     "groupId": "dcafb19d0e",
-    "jarNames": [],
+    "jarIds": [],
     "statusTopicReplications": 1,
     "configTopicPartitions": 1,
     "offsetTopicReplications": 1,
@@ -2151,7 +2151,7 @@ different purpose (a dangerous behavior, right?).
   "offsetTopicName": "offset-956c528fa5",
   "imageName": "oharastream/connect-worker:0.4-SNAPSHOT",
   "groupId": "dcafb19d0e",
-  "jarNames": [],
+  "jarIds": [],
   "statusTopicReplications": 1,
   "configTopicPartitions": 1,
   "offsetTopicReplications": 1,
@@ -2361,7 +2361,7 @@ different purpose (a dangerous behavior, right?).
   "offsetTopicName": "offset-2c564b55cf",
   "imageName": "oharastream/connect-worker:0.4-SNAPSHOT",
   "groupId": "a5b623d114",
-  "jarNames": [],
+  "jarIds": [],
   "statusTopicReplications": 1,
   "configTopicPartitions": 1,
   "offsetTopicReplications": 1,
@@ -2396,7 +2396,7 @@ first. Don't worry about the temporary lower throughput when balancer is running
   "offsetTopicName": "offset-956c528fa5",
   "imageName": "oharastream/connect-worker:0.4-SNAPSHOT",
   "groupId": "dcafb19d0e",
-  "jarNames": [],
+  "jarIds": [],
   "statusTopicReplications": 1,
   "configTopicPartitions": 1,
   "offsetTopicReplications": 1,
@@ -2431,7 +2431,7 @@ running worker cluster invoke a lot of task move, and it will decrease the throu
   "offsetTopicName": "offset-956c528fa5",
   "imageName": "oharastream/connect-worker:0.4-SNAPSHOT",
   "groupId": "dcafb19d0e",
-  "jarNames": [],
+  "jarIds": [],
   "statusTopicReplications": 1,
   "configTopicPartitions": 1,
   "offsetTopicReplications": 1,

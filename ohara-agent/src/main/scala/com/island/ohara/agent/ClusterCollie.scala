@@ -227,8 +227,8 @@ trait ClusterCollie extends Releasable {
         statusTopicName = containers.head.environments(WorkerCollie.STATUS_TOPIC_KEY),
         statusTopicPartitions = containers.head.environments(WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY).toInt,
         statusTopicReplications = containers.head.environments(WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY).toShort,
-        jarNames = containers.head
-          .environments(WorkerCollie.PLUGINS_KEY)
+        jarIds = containers.head
+          .environments(WorkerCollie.JARS_KEY)
           .split(",")
           .filter(_.nonEmpty)
           .map(u => new URL(u).getFile),

@@ -576,7 +576,11 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         another.electionPort shouldBe c.electionPort
         another.nodeNames.toSet shouldBe c.nodeNames.toSet
         result(zk_logs(c.name)).foreach { log =>
-          withClue(log)(log.contains("- ERROR") shouldBe false)
+          // If we start a single-node zk cluster, zk print a "error" warning to us to say that you are using a single-node,
+          // and we won't see the connection exception since there is only a node.
+          if (nodeCache.size == 1) withClue(log)(log.toLowerCase.contains("exception") shouldBe false)
+          // By contrast, if we start a true zk cluster, the exception ensues since the connections between nodes fail in beginning.
+          else withClue(log)(log.toLowerCase.contains("- ERROR") shouldBe false)
           log.isEmpty shouldBe false
         }
       }
@@ -726,7 +730,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         another.offsetTopicName shouldBe c.offsetTopicName
         another.offsetTopicPartitions shouldBe c.offsetTopicPartitions
         another.offsetTopicReplications shouldBe c.offsetTopicReplications
-        another.jarNames shouldBe c.jarNames
+        another.jarIds shouldBe c.jarIds
         another.imageName shouldBe c.imageName
         testConnectors(c)
         testJmx(c)
