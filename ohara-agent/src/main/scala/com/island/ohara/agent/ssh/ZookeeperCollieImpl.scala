@@ -16,16 +16,13 @@
 
 package com.island.ohara.agent.ssh
 
-import com.island.ohara.agent.{NodeCollie, ZookeeperCollie}
-import com.island.ohara.client.configurator.v0.ClusterInfo
+import com.island.ohara.agent.{ClusterCache, NodeCollie, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.util.CommonUtils
 
 import scala.concurrent.{ExecutionContext, Future}
-private class ZookeeperCollieImpl(nodeCollie: NodeCollie,
-                                  dockerCache: DockerClientCache,
-                                  clusterCache: Cache[Map[ClusterInfo, Seq[ContainerInfo]]])
+private class ZookeeperCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClientCache, clusterCache: ClusterCache)
     extends BasicCollieImpl[ZookeeperClusterInfo, ZookeeperCollie.ClusterCreator](nodeCollie, dockerCache, clusterCache)
     with ZookeeperCollie {
 
@@ -41,78 +38,78 @@ private class ZookeeperCollieImpl(nodeCollie: NodeCollie,
   override def creator(): ZookeeperCollie.ClusterCreator =
     (executionContext, clusterName, imageName, clientPort, peerPort, electionPort, nodeNames) => {
       implicit val exec: ExecutionContext = executionContext
-      clusterCache.get.flatMap { clusters =>
-        if (clusters.keys.filter(_.isInstanceOf[ZookeeperClusterInfo]).exists(_.name == clusterName))
-          Future.failed(new IllegalArgumentException(s"zookeeper cluster:$clusterName exists!"))
-        else
-          nodeCollie
-            .nodes(nodeNames)
-            .map(_.map(node => node -> format(PREFIX_KEY, clusterName, serviceName)).toMap)
-            .flatMap { nodes =>
-              // add route in order to make zk node can connect to each other.
-              val route: Map[String, String] = nodes.map {
-                case (node, _) =>
-                  node.name -> CommonUtils.address(node.name)
-              }
-              val zkServers: String = nodes.keys.map(_.name).mkString(" ")
-              // ssh connection is slow so we submit request by multi-thread
-              Future
-                .sequence(nodes.zipWithIndex.map {
-                  case ((node, containerName), index) =>
-                    Future {
-                      try {
-                        dockerCache.exec(
-                          node,
-                          _.containerCreator()
-                            .imageName(imageName)
-                            .portMappings(Map(
+      val clusters = clusterCache.snapshot
+      if (clusters.keys.filter(_.isInstanceOf[ZookeeperClusterInfo]).exists(_.name == clusterName))
+        Future.failed(new IllegalArgumentException(s"zookeeper cluster:$clusterName exists!"))
+      else
+        nodeCollie
+          .nodes(nodeNames)
+          .map(_.map(node => node -> format(PREFIX_KEY, clusterName, serviceName)).toMap)
+          .flatMap { nodes =>
+            // add route in order to make zk node can connect to each other.
+            val route: Map[String, String] = nodes.map {
+              case (node, _) =>
+                node.name -> CommonUtils.address(node.name)
+            }
+            val zkServers: String = nodes.keys.map(_.name).mkString(" ")
+            // ssh connection is slow so we submit request by multi-thread
+            Future
+              .sequence(nodes.zipWithIndex.map {
+                case ((node, containerName), index) =>
+                  Future {
+                    try {
+                      dockerCache.exec(
+                        node,
+                        _.containerCreator()
+                          .imageName(imageName)
+                          .portMappings(
+                            Map(
                               clientPort -> clientPort,
                               peerPort -> peerPort,
                               electionPort -> electionPort
                             ))
-                            // zookeeper doesn't have advertised hostname/port so we assign the "docker host" directly
-                            .hostname(node.name)
-                            .envs(Map(
-                              ZookeeperCollie.ID_KEY -> index.toString,
-                              ZookeeperCollie.CLIENT_PORT_KEY -> clientPort.toString,
-                              ZookeeperCollie.PEER_PORT_KEY -> peerPort.toString,
-                              ZookeeperCollie.ELECTION_PORT_KEY -> electionPort.toString,
-                              ZookeeperCollie.SERVERS_KEY -> zkServers
-                            ))
-                            .name(containerName)
-                            .route(route)
-                            .execute()
-                        )
+                          // zookeeper doesn't have advertised hostname/port so we assign the "docker host" directly
+                          .hostname(node.name)
+                          .envs(Map(
+                            ZookeeperCollie.ID_KEY -> index.toString,
+                            ZookeeperCollie.CLIENT_PORT_KEY -> clientPort.toString,
+                            ZookeeperCollie.PEER_PORT_KEY -> peerPort.toString,
+                            ZookeeperCollie.ELECTION_PORT_KEY -> electionPort.toString,
+                            ZookeeperCollie.SERVERS_KEY -> zkServers
+                          ))
+                          .name(containerName)
+                          .route(route)
+                          .execute()
+                      )
 
-                        Some(node.name)
-                      } catch {
-                        case e: Throwable =>
-                          try dockerCache.exec(node, _.forceRemove(containerName))
-                          catch {
-                            case _: Throwable =>
-                            // do nothing
-                          }
-                          LOG.error(s"failed to start $clusterName", e)
-                          None
-                      }
+                      Some(node.name)
+                    } catch {
+                      case e: Throwable =>
+                        try dockerCache.exec(node, _.forceRemove(containerName))
+                        catch {
+                          case _: Throwable =>
+                          // do nothing
+                        }
+                        LOG.error(s"failed to start $clusterName", e)
+                        None
                     }
-                })
-                .map(_.flatten.toSeq)
-                .map { successfulNodeNames =>
-                  if (successfulNodeNames.isEmpty)
-                    throw new IllegalArgumentException(s"failed to create $clusterName on $serviceName")
-                  clusterCache.requestUpdate()
-                  ZookeeperClusterInfo(
-                    name = clusterName,
-                    imageName = imageName,
-                    clientPort = clientPort,
-                    peerPort = peerPort,
-                    electionPort = electionPort,
-                    nodeNames = successfulNodeNames
-                  )
-                }
-            }
-      }
+                  }
+              })
+              .map(_.flatten.toSeq)
+              .map { successfulNodeNames =>
+                if (successfulNodeNames.isEmpty)
+                  throw new IllegalArgumentException(s"failed to create $clusterName on $serviceName")
+                clusterCache.requestUpdate()
+                ZookeeperClusterInfo(
+                  name = clusterName,
+                  imageName = imageName,
+                  clientPort = clientPort,
+                  peerPort = peerPort,
+                  electionPort = electionPort,
+                  nodeNames = successfulNodeNames
+                )
+              }
+          }
     }
 
   override def removeNode(clusterName: String, nodeName: String)(

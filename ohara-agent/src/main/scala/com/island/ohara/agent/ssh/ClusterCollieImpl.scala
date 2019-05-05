@@ -25,19 +25,25 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.util.{Releasable, ReleaseOnce}
 
 import scala.concurrent.duration.Duration
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 
-private[agent] class ClusterCollieImpl(expiredTime: Duration, nodeCollie: NodeCollie, executor: ExecutorService)
+private[agent] class ClusterCollieImpl(cacheRefresh: Duration, nodeCollie: NodeCollie, cacheThreadPool: ExecutorService)
     extends ReleaseOnce
     with ClusterCollie {
 
   private[this] val dockerCache = DockerClientCache()
-  private[this] val clusterCache: Cache[Map[ClusterInfo, Seq[ContainerInfo]]] = Cache
-    .builder[Map[ClusterInfo, Seq[ContainerInfo]]]()
-    .expiredTime(expiredTime)
-    .default(Map.empty)
-    .updater((executionContext: ExecutionContext) => doClusters(executionContext))
-    .executor(executor)
+
+  private[this] val clusterCache: ClusterCache = ClusterCache
+    .builder()
+    .frequency(cacheRefresh)
+    .supplier(() => {
+      val result = Await.result(doClusters(ExecutionContext.fromExecutor(cacheThreadPool)), cacheRefresh * 5)
+      println(s"[CHIA] result.size:${result.size}")
+      result.foreach {
+        case (clusterInfo, containers) => println(s"[CHIA] ${clusterInfo.name} has ${containers.size} containers")
+      }
+      result
+    })
     .build()
 
   private[this] val zkCollie: ZookeeperCollieImpl = new ZookeeperCollieImpl(nodeCollie, dockerCache, clusterCache)
@@ -51,7 +57,7 @@ private[agent] class ClusterCollieImpl(expiredTime: Duration, nodeCollie: NodeCo
   override def workerCollie(): WorkerCollie = wkCollie
 
   override def clusters(implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] =
-    clusterCache.get
+    Future.successful(clusterCache.snapshot)
   private[this] def doClusters(
     implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = nodeCollie
     .nodes()

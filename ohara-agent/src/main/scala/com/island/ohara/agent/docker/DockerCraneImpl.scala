@@ -33,6 +33,7 @@ private[agent] class DockerCraneImpl(nodeCollie: NodeCollie, dockerCache: Docker
     extends ReleaseOnce
     with Crane {
   private[this] val log = Logger(classOf[DockerCraneImpl])
+  // TODO: remove this stale class... by chia
   private[this] val clusterCache: Cache[Map[ClusterInfo, Seq[ContainerInfo]]] = Cache
     .builder[Map[ClusterInfo, Seq[ContainerInfo]]]()
     .default(Map.empty)

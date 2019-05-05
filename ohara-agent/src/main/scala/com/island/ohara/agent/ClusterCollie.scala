@@ -282,8 +282,8 @@ object ClusterCollie {
 
   class SshBuilder private[agent] {
     private[this] var nodeCollie: NodeCollie = _
-    private[this] var expiredTime: Duration = 7 seconds
-    private[this] var executor: ExecutorService = _
+    private[this] var cacheTimeout: Duration = 7 seconds
+    private[this] var cacheThreadPool: ExecutorService = _
 
     def nodeCollie(nodeCollie: NodeCollie): SshBuilder = {
       this.nodeCollie = Objects.requireNonNull(nodeCollie)
@@ -291,8 +291,8 @@ object ClusterCollie {
     }
 
     @Optional("default is 7 seconds")
-    def expiredTime(expiredTime: Duration): SshBuilder = {
-      this.expiredTime = Objects.requireNonNull(expiredTime)
+    def cacheTimeout(cacheTimeout: Duration): SshBuilder = {
+      this.cacheTimeout = Objects.requireNonNull(cacheTimeout)
       this
     }
 
@@ -300,10 +300,11 @@ object ClusterCollie {
       * set a thread pool that initial size is equal with number of cores
       * @return this builder
       */
-    def executorDefault(): SshBuilder = executor(Executors.newFixedThreadPool(Runtime.getRuntime.availableProcessors()))
+    def executorDefault(): SshBuilder = cacheThreadPool(
+      Executors.newFixedThreadPool(Runtime.getRuntime.availableProcessors()))
 
-    def executor(executor: ExecutorService): SshBuilder = {
-      this.executor = Objects.requireNonNull(executor)
+    def cacheThreadPool(cacheThreadPool: ExecutorService): SshBuilder = {
+      this.cacheThreadPool = Objects.requireNonNull(cacheThreadPool)
       this
     }
 
@@ -312,9 +313,9 @@ object ClusterCollie {
       * @return
       */
     def build(): ClusterCollie = new ClusterCollieImpl(
-      expiredTime = Objects.requireNonNull(expiredTime),
+      cacheRefresh = Objects.requireNonNull(cacheTimeout),
       nodeCollie = Objects.requireNonNull(nodeCollie),
-      executor = Objects.requireNonNull(executor)
+      cacheThreadPool = Objects.requireNonNull(cacheThreadPool)
     )
   }
 

@@ -59,7 +59,7 @@ import scala.concurrent.duration.{Duration, _}
   */
 class Configurator private[configurator] (advertisedHostname: Option[String],
                                           advertisedPort: Option[Int],
-                                          cacheTimeout: Duration,
+                                          cacheRefresh: Duration,
                                           initializationTimeout: Duration,
                                           terminationTimeout: Duration,
                                           extraRoute: Option[server.Route])(implicit val store: DataStore,
@@ -144,11 +144,6 @@ class Configurator private[configurator] (advertisedHostname: Option[String],
       }
     MeterCache
       .builder()
-      .fetcher {
-        case brokerClusterInfo: BrokerClusterInfo => brokerToMeters(brokerClusterInfo)
-        case workerClusterInfo: WorkerClusterInfo => workerToMeters(workerClusterInfo)
-        case _                                    => Map.empty
-      }
       .refresher(
         () =>
           // we do the sync here to simplify the interface
@@ -162,9 +157,9 @@ class Configurator private[configurator] (advertisedHostname: Option[String],
               .toSeq
               .toMap),
             // TODO: how to set a suitable timeout ??? by chia
-            cacheTimeout * 5
+            cacheRefresh * 5
         ))
-      .timeout(cacheTimeout)
+      .frequency(cacheRefresh)
       .build()
   }
 

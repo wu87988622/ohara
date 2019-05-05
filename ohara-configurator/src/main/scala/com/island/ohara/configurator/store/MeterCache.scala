@@ -25,7 +25,7 @@ import com.island.ohara.client.configurator.v0.MetricsApi.Meter
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
-import com.island.ohara.common.cache.{Cache, RefreshableCache}
+import com.island.ohara.common.cache.RefreshableCache
 import com.island.ohara.common.util.Releasable
 
 import scala.concurrent.duration._
@@ -38,6 +38,7 @@ object MeterCache {
 
   def builder(): Builder = new Builder()
 
+  // TODO: remove this workaround if google guava support the custom comparison ... by chia
   @VisibleForTesting
   private[store] case class RequestKey(name: String, service: String, clusterInfo: ClusterInfo) {
     override def equals(obj: Any): Boolean = obj match {
@@ -48,25 +49,11 @@ object MeterCache {
   }
 
   class Builder {
-    private[this] var fetcher: ClusterInfo => Map[String, Seq[Meter]] = _
     private[this] var refresher: () => Map[ClusterInfo, Map[String, Seq[Meter]]] = _
-    private[this] var timeout: Duration = 5 seconds
-    private[this] var frequency: Duration = timeout
-
-    def fetcher(fetcher: ClusterInfo => Map[String, Seq[Meter]]): Builder = {
-      this.fetcher = Objects.requireNonNull(fetcher)
-      this
-    }
+    private[this] var frequency: Duration = 5 seconds
 
     def refresher(refresher: () => Map[ClusterInfo, Map[String, Seq[Meter]]]): Builder = {
       this.refresher = Objects.requireNonNull(refresher)
-      this
-    }
-
-    @Optional("default value is 5 seconds")
-    def timeout(timeout: Duration): Builder = {
-      this.timeout = Objects.requireNonNull(timeout)
-      this.frequency = Objects.requireNonNull(timeout)
       this
     }
 
@@ -78,18 +65,10 @@ object MeterCache {
 
     def build(): MeterCache = new MeterCache {
       import scala.collection.JavaConverters._
-      private[this] val fetcher = Objects.requireNonNull(Builder.this.fetcher)
       private[this] val refresher = Objects.requireNonNull(Builder.this.refresher)
-      private[this] val timeout = Objects.requireNonNull(Builder.this.timeout)
       private[this] val closed = new AtomicBoolean(false)
       private[this] val cache = RefreshableCache
         .builder[RequestKey, Map[String, Seq[Meter]]]()
-        .cache(
-          Cache
-            .builder[RequestKey, Map[String, Seq[Meter]]]()
-            .fetcher(key => fetcher(key.clusterInfo))
-            .timeout(java.time.Duration.ofMillis(timeout.toMillis))
-            .build())
         .supplier(() =>
           refresher().map {
             case (clusterInfo, meters) =>
@@ -109,7 +88,8 @@ object MeterCache {
         clusterInfo = clusterInfo
       )
 
-      override def meters(clusterInfo: ClusterInfo): Map[String, Seq[Meter]] = cache.get(key(clusterInfo))
+      override def meters(clusterInfo: ClusterInfo): Map[String, Seq[Meter]] =
+        cache.get(key(clusterInfo)).orElse(Map.empty)
 
       override def close(): Unit = if (closed.compareAndSet(false, true)) Releasable.close(cache)
     }

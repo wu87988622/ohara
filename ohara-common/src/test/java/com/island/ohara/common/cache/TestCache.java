@@ -45,6 +45,15 @@ public class TestCache extends SmallTest {
     Cache.<String, String>builder().maxSize(-1);
   }
 
+  @Test(expected = NullPointerException.class)
+  public void getNull() {
+    Cache.<String, String>builder()
+        .timeout(Duration.ofSeconds(2))
+        .fetcher(key -> CommonUtils.randomString())
+        .build()
+        .get(null);
+  }
+
   @Test
   public void testBuilder() throws InterruptedException {
     String value = CommonUtils.randomString();
@@ -163,5 +172,36 @@ public class TestCache extends SmallTest {
       service.shutdownNow();
       Assert.assertTrue(service.awaitTermination(10, TimeUnit.SECONDS));
     }
+  }
+
+  @Test
+  public void testClear() {
+    Cache<String, String> cache =
+        Cache.<String, String>builder()
+            .timeout(Duration.ofSeconds(2))
+            .fetcher(key -> CommonUtils.randomString())
+            .build();
+
+    cache.get(CommonUtils.randomString());
+    Assert.assertEquals(1, cache.size());
+    cache.clear();
+    Assert.assertEquals(0, cache.size());
+  }
+
+  @Test
+  public void testUnmodifiableSnapshot() {
+    Cache<String, String> cache =
+        Cache.<String, String>builder()
+            .timeout(Duration.ofSeconds(2))
+            .fetcher(key -> CommonUtils.randomString())
+            .build();
+
+    String key = CommonUtils.randomString();
+    cache.get(key);
+    Assert.assertEquals(1, cache.size());
+    assertException(UnsupportedOperationException.class, () -> cache.snapshot().remove(key));
+    assertException(
+        UnsupportedOperationException.class,
+        () -> cache.snapshot().put(key, CommonUtils.randomString()));
   }
 }

@@ -16,6 +16,8 @@
 
 package com.island.ohara.configurator.store
 
+import java.util.concurrent.TimeUnit
+
 import com.island.ohara.client.configurator.v0.MetricsApi.Meter
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
@@ -23,6 +25,7 @@ import com.island.ohara.configurator.store.MeterCache.RequestKey
 import org.junit.Test
 import org.scalatest.Matchers
 
+import scala.concurrent.duration._
 class TestMeterCache extends SmallTest with Matchers {
 
   @Test
@@ -43,19 +46,11 @@ class TestMeterCache extends SmallTest with Matchers {
     an[NullPointerException] should be thrownBy MeterCache.builder().refresher(null)
 
   @Test
-  def nullFetcher(): Unit =
-    an[NullPointerException] should be thrownBy MeterCache.builder().fetcher(null)
-
-  @Test
-  def nullTimeout(): Unit =
-    an[NullPointerException] should be thrownBy MeterCache.builder().timeout(null)
-
-  @Test
   def nullFrequency(): Unit =
     an[NullPointerException] should be thrownBy MeterCache.builder().frequency(null)
 
   @Test
-  def testFetcher(): Unit = {
+  def testRefresh(): Unit = {
     val data = Map(
       "name" -> Seq(
         Meter(
@@ -66,7 +61,19 @@ class TestMeterCache extends SmallTest with Matchers {
       )
     )
     val clusterInfo = FakeClusterInfo(CommonUtils.randomString())
-    val cache = MeterCache.builder().fetcher(_ => data).refresher(() => Map(clusterInfo -> data)).build()
-    cache.meters(clusterInfo) shouldBe data
+    val cache = MeterCache.builder().refresher(() => Map(clusterInfo -> data)).frequency(2 seconds).build()
+    try {
+      cache.meters(clusterInfo) shouldBe Map.empty
+      TimeUnit.SECONDS.sleep(3)
+      cache.meters(clusterInfo) shouldBe data
+    } finally cache.close()
+  }
+
+  @Test
+  def failToOperateAfterClose(): Unit = {
+    val cache = MeterCache.builder().refresher(() => Map.empty).frequency(2 seconds).build()
+    cache.close()
+
+    an[IllegalStateException] should be thrownBy cache.meters(FakeClusterInfo(CommonUtils.randomString()))
   }
 }

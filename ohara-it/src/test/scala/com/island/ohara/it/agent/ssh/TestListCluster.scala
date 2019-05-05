@@ -26,6 +26,7 @@ import com.island.ohara.it.agent.{ClusterNameHolder, CollieTestUtils}
 import com.typesafe.scalalogging.Logger
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
+
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestListCluster extends IntegrationTest with Matchers {
   private[this] val log = Logger(classOf[TestListCluster])

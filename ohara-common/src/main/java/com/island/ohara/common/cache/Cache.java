@@ -23,6 +23,7 @@ import com.island.ohara.common.annotations.Optional;
 import com.island.ohara.common.util.CommonUtils;
 import java.time.Duration;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
@@ -53,6 +54,13 @@ public interface Cache<K, V> {
   V get(K key);
 
   /**
+   * snapshot all cached key-value pairs
+   *
+   * @return a unmodified map
+   */
+  Map<K, V> snapshot();
+
+  /**
    * update the key-value stored in this cache. the previous value will be replaced.
    *
    * @param key key
@@ -68,6 +76,12 @@ public interface Cache<K, V> {
    * @param map keys-newValues
    */
   void put(Map<? extends K, ? extends V> map);
+
+  /** @return the approximate number of this cache. */
+  long size();
+
+  /** Remove all entries in this cache. */
+  void clear();
 
   static <K, V> Builder<K, V> builder() {
     return new Builder<>();
@@ -146,7 +160,7 @@ public interface Cache<K, V> {
         @Override
         public V get(K key) {
           try {
-            return cache.get(key);
+            return cache.get(Objects.requireNonNull(key));
           } catch (ExecutionException e) {
             if (e.getCause() != null) throw new IllegalStateException(e.getCause());
             else throw new IllegalStateException(e);
@@ -154,8 +168,23 @@ public interface Cache<K, V> {
         }
 
         @Override
+        public Map<K, V> snapshot() {
+          return Collections.unmodifiableMap(new HashMap<>(cache.asMap()));
+        }
+
+        @Override
         public void put(Map<? extends K, ? extends V> map) {
           cache.putAll(map);
+        }
+
+        @Override
+        public long size() {
+          return cache.size();
+        }
+
+        @Override
+        public void clear() {
+          cache.invalidateAll();
         }
       };
     }

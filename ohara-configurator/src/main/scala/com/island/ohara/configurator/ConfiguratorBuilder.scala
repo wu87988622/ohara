@@ -308,7 +308,7 @@ class ConfiguratorBuilder {
     new Configurator(
       advertisedHostname = advertisedHostname,
       advertisedPort = advertisedPort,
-      cacheTimeout = cacheTimeout,
+      cacheRefresh = cacheTimeout,
       initializationTimeout = initializationTimeout,
       terminationTimeout = terminationTimeout,
       extraRoute = extraRoute

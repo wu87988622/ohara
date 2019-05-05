@@ -17,7 +17,7 @@
 package com.island.ohara.agent.ssh
 
 import com.island.ohara.agent.Collie.ClusterCreator
-import com.island.ohara.agent.{ContainerCollie, NoSuchClusterException, NodeCollie}
+import com.island.ohara.agent.{ClusterCache, ContainerCollie, NoSuchClusterException, NodeCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
@@ -30,26 +30,24 @@ import scala.reflect.{ClassTag, classTag}
 private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: ClusterCreator[T]](
   nodeCollie: NodeCollie,
   dockerCache: DockerClientCache,
-  clusterCache: Cache[Map[ClusterInfo, Seq[ContainerInfo]]])
+  clusterCache: ClusterCache)
     extends ContainerCollie[T, Creator](nodeCollie) {
 
   final override def clusters(implicit executionContext: ExecutionContext): Future[Map[T, Seq[ContainerInfo]]] =
-    clusterCache.get.map {
-      _.filter(entry => classTag[T].runtimeClass.isInstance(entry._1)).map {
-        case (cluster, containers) => cluster.asInstanceOf[T] -> containers
-      }
-    }
+    Future.successful(clusterCache.snapshot.filter(entry => classTag[T].runtimeClass.isInstance(entry._1)).map {
+      case (cluster, containers) => cluster.asInstanceOf[T] -> containers
+    })
 
   final override def cluster(name: String)(
     implicit executionContext: ExecutionContext): Future[(T, Seq[ContainerInfo])] =
-    clusterCache.get.map {
-      _.filter(entry => classTag[T].runtimeClass.isInstance(entry._1))
+    Future.successful(
+      clusterCache.snapshot
+        .filter(entry => classTag[T].runtimeClass.isInstance(entry._1))
         .map {
           case (cluster, containers) => cluster.asInstanceOf[T] -> containers
         }
         .find(_._1.name == name)
-        .getOrElse(throw new NoSuchClusterException(s"$name doesn't exist"))
-    }
+        .getOrElse(throw new NoSuchClusterException(s"$name doesn't exist")))
 
   def updateRoute(node: Node, containerName: String, route: Map[String, String]): Unit =
     dockerCache.exec(node,
