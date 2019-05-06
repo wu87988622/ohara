@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-const chalk = require('chalk');
 const { exec } = require('child_process');
 
 /* eslint-disable no-console */
@@ -33,10 +32,6 @@ exec('yarn -v', (err, stdout) => {
     );
   }
 
-  console.log(
-    chalk.green(
-      `👌 Yarn version check passed! You're using yarn ${yarnVersion}`,
-    ),
-  );
-  console.log(chalk.blue('📦 Installing Ohara Manager dependencies'));
+  console.log(`👌 Yarn version check passed! You're using yarn ${yarnVersion}`);
+  console.log('📦 Installing Ohara Manager dependencies');
 });
