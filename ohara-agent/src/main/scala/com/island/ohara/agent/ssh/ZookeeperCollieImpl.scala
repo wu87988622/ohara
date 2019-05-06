@@ -113,12 +113,10 @@ private class ZookeeperCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerCli
     }
 
   override def removeNode(clusterName: String, nodeName: String)(
-    implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] = Future.failed(
-    new UnsupportedOperationException("zookeeper collie doesn't support to remove node from a running cluster"))
+    implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] = removeNode
 
   override protected def doAddNodeContainer(
     previousCluster: ZookeeperClusterInfo,
     previousContainers: Seq[ContainerInfo],
-    newNodeName: String)(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] = Future.failed(
-    new UnsupportedOperationException("zookeeper collie doesn't support to add node from a running cluster"))
+    newNodeName: String)(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] = doAddNode
 }
