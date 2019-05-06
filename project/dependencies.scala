@@ -77,6 +77,7 @@ object libs {
 
   // Others
   lazy val typesafeConfig = "com.typesafe" % "config" % "1.3.3"
+  lazy val guava = "com.google.guava" % "guava" % "20.0"
 
   // mini
   lazy val mysql =  "mysql" % "mysql-connector-java" % mysqlV

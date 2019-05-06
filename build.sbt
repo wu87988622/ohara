@@ -38,6 +38,7 @@ lazy val common = oharaProject("common",
     libs.slf4jApi,
     libs.slf4jLog4j,
     libs.commonsIo,
+    libs.guava,
     libs.mockito % Test,
     libs.junit % Test
   )),
