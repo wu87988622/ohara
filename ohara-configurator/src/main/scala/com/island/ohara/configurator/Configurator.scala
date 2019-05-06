@@ -392,6 +392,17 @@ object Configurator {
                                             nodeNames = Seq(node.name))),
         30 seconds
       )
+
+      // our cache applies non-blocking action so the creation may be not in cache.
+      // Hence, we have to wait the update to cache.
+      CommonUtils.await(
+        () =>
+          Await
+            .result(ZookeeperApi.access().hostname(CommonUtils.hostname()).port(configurator.port).list, 30 seconds)
+            .exists(_.name == PRE_CREATE_ZK_NAME),
+        java.time.Duration.ofSeconds(30)
+      )
+
       LOG.info(s"succeed to create zk cluster:$zkCluster")
 
       val bkCluster = Await.result(
@@ -409,6 +420,16 @@ object Configurator {
             nodeNames = Seq(node.name)
           )),
         30 seconds
+      )
+
+      // our cache applies non-blocking action so the creation may be not in cache.
+      // Hence, we have to wait the update to cache.
+      CommonUtils.await(
+        () =>
+          Await
+            .result(BrokerApi.access().hostname(CommonUtils.hostname()).port(configurator.port).list, 30 seconds)
+            .exists(_.name == PRE_CREATE_BK_NAME),
+        java.time.Duration.ofSeconds(30)
       )
       LOG.info(s"succeed to create bk cluster:$bkCluster")
     }

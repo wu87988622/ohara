@@ -36,14 +36,7 @@ private[agent] class ClusterCollieImpl(cacheRefresh: Duration, nodeCollie: NodeC
   private[this] val clusterCache: ClusterCache = ClusterCache
     .builder()
     .frequency(cacheRefresh)
-    .supplier(() => {
-      val result = Await.result(doClusters(ExecutionContext.fromExecutor(cacheThreadPool)), cacheRefresh * 5)
-      println(s"[CHIA] result.size:${result.size}")
-      result.foreach {
-        case (clusterInfo, containers) => println(s"[CHIA] ${clusterInfo.name} has ${containers.size} containers")
-      }
-      result
-    })
+    .supplier(() => Await.result(doClusters(ExecutionContext.fromExecutor(cacheThreadPool)), cacheRefresh * 5))
     .build()
 
   private[this] val zkCollie: ZookeeperCollieImpl = new ZookeeperCollieImpl(nodeCollie, dockerCache, clusterCache)

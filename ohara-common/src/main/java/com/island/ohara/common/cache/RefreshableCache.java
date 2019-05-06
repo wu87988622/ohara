@@ -148,7 +148,7 @@ public interface RefreshableCache<K, V> extends Releasable {
                 cache.invalidateAll();
                 cache.putAll(data);
               } catch (Throwable e) {
-                LOG.error("[CHIA] failed to update cache", e);
+                LOG.error("failed to update cache", e);
               }
             }
             LOG.info("refreshable cache is gone");
