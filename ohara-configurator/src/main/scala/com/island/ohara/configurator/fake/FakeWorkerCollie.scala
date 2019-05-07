@@ -149,4 +149,10 @@ private[configurator] class FakeWorkerCollie(nodeCollie: NodeCollie, wkConnectio
         nodeNames = previousCluster.nodeNames :+ newNodeName
       )
     })
+
+  override protected def doRemoveNode(
+    previousCluster: WorkerClusterInfo,
+    previousContainer: ContainerApi.ContainerInfo,
+    removedNodeName: String)(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] =
+    throw new UnsupportedOperationException("Fake not support doRemoveNode function")
 }

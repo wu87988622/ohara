@@ -96,4 +96,10 @@ private[configurator] class FakeBrokerCollie(nodeCollie: NodeCollie, bkConnectio
           nodeNames = previousCluster.nodeNames :+ newNodeName
       ))
   }
+
+  override protected def doRemoveNode(
+    previousCluster: BrokerClusterInfo,
+    previousContainer: ContainerApi.ContainerInfo,
+    removedNodeName: String)(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] =
+    throw new UnsupportedOperationException("Fake not support doRemoveNode function")
 }

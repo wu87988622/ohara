@@ -43,15 +43,15 @@ private[this] abstract class K8SBasicCollieImpl[T <: ClusterInfo: ClassTag, Crea
       .map(clusters => clusters.head)
   }
 
-  override def removeNode(clusterName: String, nodeName: String)(
-    implicit executionContext: ExecutionContext): Future[T] =
-    checkRemoveNode(clusterName, nodeName)
-      .flatMap { _ =>
-        k8sClient.removeNode(s"$PREFIX_KEY$DIVIDER$clusterName$DIVIDER${serviceName}", nodeName, serviceName)
-      }
+  override protected def doRemoveNode(previousCluster: T, previousContainer: ContainerInfo, removedNodeName: String)(
+    implicit executionContext: ExecutionContext): Future[T] = {
+    val clusterName = previousCluster.name
+    k8sClient
+      .removeNode(s"$PREFIX_KEY$DIVIDER${clusterName}$DIVIDER${serviceName}", removedNodeName, serviceName)
       .flatMap { _ =>
         cluster(clusterName).map(_._1)
       }
+  }
 
   override def logs(clusterName: String)(
     implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
