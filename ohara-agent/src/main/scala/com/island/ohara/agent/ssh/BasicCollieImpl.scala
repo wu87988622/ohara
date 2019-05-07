@@ -100,56 +100,54 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: Cl
         .map(_.toMap)
     }
 
-  override def removeNode(clusterName: String, nodeName: String)(
-    implicit executionContext: ExecutionContext): Future[T] =
-    checkRemoveNode(clusterName, nodeName).flatMap {
-      case (cluster, container) =>
-        nodeCollie.node(container.nodeName).map { node =>
-          dockerCache.exec(node, _.stop(container.name))
-          clusterCache.requestUpdate()
-          // TODO: why we need to use match pattern? please refactor it...by chia
-          (cluster match {
-            case c: ZookeeperClusterInfo =>
-              ZookeeperClusterInfo(
-                name = c.name,
-                imageName = c.imageName,
-                clientPort = c.clientPort,
-                peerPort = c.peerPort,
-                electionPort = c.electionPort,
-                nodeNames = c.nodeNames.filter(_ != nodeName)
-              )
-            case c: BrokerClusterInfo =>
-              BrokerClusterInfo(
-                name = c.name,
-                imageName = c.imageName,
-                clientPort = c.clientPort,
-                exporterPort = c.exporterPort,
-                jmxPort = c.jmxPort,
-                zookeeperClusterName = c.zookeeperClusterName,
-                nodeNames = c.nodeNames.filter(_ != nodeName)
-              )
-            case c: WorkerClusterInfo =>
-              WorkerClusterInfo(
-                name = c.name,
-                imageName = c.imageName,
-                brokerClusterName = c.brokerClusterName,
-                clientPort = c.clientPort,
-                jmxPort = c.jmxPort,
-                groupId = c.groupId,
-                statusTopicName = c.statusTopicName,
-                statusTopicPartitions = c.statusTopicPartitions,
-                statusTopicReplications = c.statusTopicReplications,
-                configTopicName = c.configTopicName,
-                configTopicPartitions = c.configTopicPartitions,
-                configTopicReplications = c.configTopicReplications,
-                offsetTopicName = c.offsetTopicName,
-                offsetTopicPartitions = c.offsetTopicPartitions,
-                offsetTopicReplications = c.offsetTopicReplications,
-                connectors = c.connectors,
-                jarIds = c.jarIds,
-                nodeNames = c.nodeNames.filter(_ != nodeName)
-              )
-          }).asInstanceOf[T]
-        }
+  override protected def doRemoveNode(previousCluster: T, previousContainer: ContainerInfo, removedNodeName: String)(
+    implicit executionContext: ExecutionContext): Future[T] = {
+    nodeCollie.node(previousContainer.nodeName).map { node =>
+      dockerCache.exec(node, _.stop(previousContainer.name))
+      clusterCache.requestUpdate()
+      // TODO: why we need to use match pattern? please refactor it...by chia
+      (previousCluster match {
+        case c: ZookeeperClusterInfo =>
+          ZookeeperClusterInfo(
+            name = c.name,
+            imageName = c.imageName,
+            clientPort = c.clientPort,
+            peerPort = c.peerPort,
+            electionPort = c.electionPort,
+            nodeNames = c.nodeNames.filter(_ != removedNodeName)
+          )
+        case c: BrokerClusterInfo =>
+          BrokerClusterInfo(
+            name = c.name,
+            imageName = c.imageName,
+            clientPort = c.clientPort,
+            exporterPort = c.exporterPort,
+            jmxPort = c.jmxPort,
+            zookeeperClusterName = c.zookeeperClusterName,
+            nodeNames = c.nodeNames.filter(_ != removedNodeName)
+          )
+        case c: WorkerClusterInfo =>
+          WorkerClusterInfo(
+            name = c.name,
+            imageName = c.imageName,
+            brokerClusterName = c.brokerClusterName,
+            clientPort = c.clientPort,
+            jmxPort = c.jmxPort,
+            groupId = c.groupId,
+            statusTopicName = c.statusTopicName,
+            statusTopicPartitions = c.statusTopicPartitions,
+            statusTopicReplications = c.statusTopicReplications,
+            configTopicName = c.configTopicName,
+            configTopicPartitions = c.configTopicPartitions,
+            configTopicReplications = c.configTopicReplications,
+            offsetTopicName = c.offsetTopicName,
+            offsetTopicPartitions = c.offsetTopicPartitions,
+            offsetTopicReplications = c.offsetTopicReplications,
+            connectors = c.connectors,
+            jarIds = c.jarIds,
+            nodeNames = c.nodeNames.filter(_ != removedNodeName)
+          )
+      }).asInstanceOf[T]
     }
+  }
 }

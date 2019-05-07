@@ -46,7 +46,31 @@ abstract class ContainerCollie[T <: ClusterInfo: ClassTag, Creator <: ClusterCre
       CommonUtils.randomString(LENGTH_OF_CONTAINER_NAME_ID)
     ).mkString(ContainerCollie.DIVIDER)
 
-  protected def checkRemoveNode(clusterName: String, nodeName: String)(
+  protected def doAddNodeContainer(previousCluster: T, previousContainers: Seq[ContainerInfo], newNodeName: String)(
+    implicit executionContext: ExecutionContext): Future[T]
+
+  override def addNode(clusterName: String, nodeName: String)(implicit executionContext: ExecutionContext): Future[T] =
+    nodeCollie
+      .node(nodeName) // make sure there is a exist node.
+      .flatMap(_ => cluster(clusterName))
+      .flatMap {
+        case (c, cs) => doAddNodeContainer(c, cs, nodeName)
+      }
+
+  protected def doRemoveNode(previousCluster: T, previousContainer: ContainerInfo, removedNodeName: String)(
+    implicit executionContext: ExecutionContext): Future[T]
+
+  override def removeNode(clusterName: String, nodeName: String)(
+    implicit executionContext: ExecutionContext): Future[T] =
+    checkRemoveNode(clusterName, nodeName).flatMap(cluster => doRemoveNode(cluster._1, cluster._2, nodeName))
+
+  protected val serviceName: String =
+    if (classTag[T].runtimeClass.isAssignableFrom(classOf[ZookeeperClusterInfo])) ContainerCollie.ZK_SERVICE_NAME
+    else if (classTag[T].runtimeClass.isAssignableFrom(classOf[BrokerClusterInfo])) ContainerCollie.BK_SERVICE_NAME
+    else if (classTag[T].runtimeClass.isAssignableFrom(classOf[WorkerClusterInfo])) ContainerCollie.WK_SERVICE_NAME
+    else throw new IllegalArgumentException(s"Who are you, ${classTag[T].runtimeClass} ???")
+
+  private def checkRemoveNode(clusterName: String, nodeName: String)(
     implicit executionContext: ExecutionContext): Future[(T, ContainerInfo)] =
     cluster(clusterName).map {
       case (cluster, runningContainers) =>
@@ -61,23 +85,6 @@ abstract class ContainerCollie[T <: ClusterInfo: ClassTag, Creator <: ClusterCre
               .getOrElse(throw new IllegalArgumentException(s"$nodeName doesn't exist on cluster:$clusterName"))
         }
     }
-
-  protected def doAddNodeContainer(previousCluster: T, previousContainers: Seq[ContainerInfo], newNodeName: String)(
-    implicit executionContext: ExecutionContext): Future[T]
-
-  override def addNode(clusterName: String, nodeName: String)(implicit executionContext: ExecutionContext): Future[T] =
-    nodeCollie
-      .node(nodeName) // make sure there is a exist node.
-      .flatMap(_ => cluster(clusterName))
-      .flatMap {
-        case (c, cs) => doAddNodeContainer(c, cs, nodeName)
-      }
-
-  protected val serviceName: String =
-    if (classTag[T].runtimeClass.isAssignableFrom(classOf[ZookeeperClusterInfo])) ContainerCollie.ZK_SERVICE_NAME
-    else if (classTag[T].runtimeClass.isAssignableFrom(classOf[BrokerClusterInfo])) ContainerCollie.BK_SERVICE_NAME
-    else if (classTag[T].runtimeClass.isAssignableFrom(classOf[WorkerClusterInfo])) ContainerCollie.WK_SERVICE_NAME
-    else throw new IllegalArgumentException(s"Who are you, ${classTag[T].runtimeClass} ???")
 }
 
 object ContainerCollie {
