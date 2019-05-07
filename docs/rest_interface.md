@@ -2578,7 +2578,7 @@ Ohara configurator collects report from each connectors and then generate a JSON
 *PUT /v0/validate/node*
 
 The parameters of request are shown below.
-1. name (**string**) — hostname of node
+1. hostname (**string**) — hostname of node
 1. port (**int**) — ssh port of node
 1. user (**string**) — ssh account
 1. password (**string**) — ssh password
@@ -2587,7 +2587,7 @@ The parameters of request are shown below.
 
 ```json
 {
-  "name": "node00",
+  "hostname": "node00",
   "port": 22,
   "user": "abc",
   "password": "pwd"
