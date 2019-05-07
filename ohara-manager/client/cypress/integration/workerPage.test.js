@@ -16,7 +16,7 @@
 
 import { WORKER } from '../../src/constants/urls';
 
-describe('WorkerPage', () => {
+describe.ship('WorkerPage', () => {
   before(() => {
     cy.deleteAllWorkers();
   });

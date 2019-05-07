@@ -25,6 +25,7 @@ import { H2 } from 'common/Headings';
 import { primaryBtn } from 'theme/btnTheme';
 import NodeNewModal from './NodeNewModal';
 import NodeEditModal from './NodeEditModal';
+import MuiButton from 'common/Mui/Form/MuiButton';
 
 import * as s from './styles';
 
@@ -97,14 +98,7 @@ class NodeListPage extends React.Component {
           <s.Wrapper>
             <s.TopWrapper>
               <H2>Nodes</H2>
-              <s.NewNodeBtn
-                theme={primaryBtn}
-                text="New node"
-                data-testid="new-node"
-                handleClick={() => {
-                  this.setState({ activeModal: NODE_NEW_MODAL });
-                }}
-              />
+              <s.NewNodeBtn>New node</s.NewNodeBtn>
             </s.TopWrapper>
             <Box>
               <s.Table
