@@ -28,6 +28,8 @@ import org.junit.Test;
 
 public class TestCommonUtils extends SmallTest {
 
+  private String DRIVE = System.getenv("SystemDrive");
+
   @Test
   public void testTimer() throws InterruptedException {
     Assert.assertTrue(CommonUtils.current() != 0);
@@ -41,8 +43,13 @@ public class TestCommonUtils extends SmallTest {
 
   @Test
   public void testPath() {
-    Assert.assertEquals("/ccc/abc", CommonUtils.path("/ccc", "abc"));
-    Assert.assertEquals("/ccc/abc", CommonUtils.path("/ccc/", "abc"));
+    Assert.assertEquals(String.join(File.separator, "ccc"), CommonUtils.path("ccc"));
+    Assert.assertEquals(String.join(File.separator, "ccc", "abc"), CommonUtils.path("ccc", "abc"));
+    Assert.assertEquals(String.join(File.separator, "ccc", "abc"), CommonUtils.path("ccc/", "abc"));
+    Assert.assertEquals(
+        String.join(File.separator, DRIVE, "ccc", "abc"), CommonUtils.path(DRIVE, "ccc", "abc"));
+    Assert.assertEquals(
+        String.join(File.separator, DRIVE, "ccc", "abc"), CommonUtils.path(DRIVE, "ccc/", "abc"));
   }
 
   @Test
@@ -58,10 +65,14 @@ public class TestCommonUtils extends SmallTest {
 
   @Test
   public void testReplaceParentFolder() {
-    Assert.assertEquals("ccc/ddd", CommonUtils.replaceParent("ccc", "/abc/ddd"));
-    Assert.assertEquals("/a/ddd", CommonUtils.replaceParent("/a", "/abc/ddd"));
-    Assert.assertEquals("/a/ddd", CommonUtils.replaceParent("/a", "/abc/ttt/ddd"));
-    Assert.assertEquals("/a/ddd", CommonUtils.replaceParent("/a", "/abc/tt/t/ddd"));
+    Assert.assertEquals(
+        String.join(File.separator, "ccc", "ddd"), CommonUtils.replaceParent("ccc", "/abc/ddd"));
+    Assert.assertEquals(
+        String.join(File.separator, "a", "ddd"), CommonUtils.replaceParent("a", "/abc/ddd"));
+    Assert.assertEquals(
+        String.join(File.separator, "a", "ddd"), CommonUtils.replaceParent("a", "/abc/ttt/ddd"));
+    Assert.assertEquals(
+        String.join(File.separator, "a", "ddd"), CommonUtils.replaceParent("a", "/abc/tt/t/ddd"));
   }
 
   @Test

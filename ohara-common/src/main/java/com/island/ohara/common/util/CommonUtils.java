@@ -24,14 +24,9 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
 import java.util.function.Supplier;
@@ -441,30 +436,26 @@ public final class CommonUtils {
   }
 
   /**
-   * compose a full path based on parent (folder) and name (file).
+   * compose a full path based on parent (folder) and other paths string (file or more paths).
    *
    * @param parent parent folder
-   * @param name file name
+   * @param name additional strings to be added in the path string
    * @return path
    */
-  public static String path(String parent, String name) {
-    if (parent.endsWith("/")) return parent + name;
-    else return parent + "/" + name;
+  public static String path(String parent, String... name) {
+    return Paths.get(parent, name).toString();
   }
 
   /**
    * extract the file name from the path
    *
    * @param path path
-   * @return name
+   * @return the file name, throw exception if this was a root path
    */
   public static String name(String path) {
-    if (path.equalsIgnoreCase("/")) throw new IllegalArgumentException("no file name for " + path);
-    else {
-      int last = path.lastIndexOf("/");
-      if (last == -1) return path;
-      else return path.substring(last + 1);
-    }
+    if (Paths.get(path).getNameCount() == 0)
+      throw new IllegalArgumentException("no file name for " + path);
+    else return Paths.get(path).getFileName().toString();
   }
 
   /**
