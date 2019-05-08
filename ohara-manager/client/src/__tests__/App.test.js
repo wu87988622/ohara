@@ -36,7 +36,7 @@ describe('<App />', () => {
 
   it('renders self', () => {
     expect(wrapper.length).toBe(1);
-    expect(wrapper.name()).toBe('BrowserRouter');
+    expect(wrapper.name()).toBe('StylesProvider');
   });
 
   it('renders <Header />', () => {
