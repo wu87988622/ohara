@@ -18,9 +18,8 @@ import styled from 'styled-components';
 import { Link } from 'react-router-dom';
 
 import MuiButton from 'common/Mui/Form/MuiButton';
-import { DataTable } from 'common/Table';
-
-import * as ms from '@material-ui/styles';
+import Button from 'common/Form/Button';
+import MuiTable from 'common/Mui/Table/MuiTable';
 
 export const Wrapper = styled.div`
   padding-top: 75px;
@@ -35,15 +34,15 @@ export const TopWrapper = styled.div`
   align-items: center;
 `;
 
-export const NewNodeBtn = ms.styled(MuiButton)({
+export const NewNodeBtn = styled(MuiButton)({
   margin: '0 0 0 auto',
 });
 
-export const TestConnectionBtn = styled(MuiButton)`
+export const TestConnectionBtn = styled(Button)`
   margin-right: auto;
 `;
 
-export const Table = styled(DataTable)`
+export const Table = styled(MuiTable)`
   text-align: left;
 
   .is-running {

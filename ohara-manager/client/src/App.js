@@ -34,7 +34,7 @@ import { StylesProvider, jssPreset } from '@material-ui/styles';
 
 const jss = create({
   ...jssPreset(),
-  insertionPoint: document.getElementById('jss-insertion-point'),
+  insertionPoint: 'jss-insertion-point',
 });
 
 class App extends React.Component {
