@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package com.island.ohara.streams;
+package com.island.ohara.streams.ostream;
 
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.streams.OStream;
+import com.island.ohara.streams.StreamApp;
 import com.island.ohara.streams.data.Poneglyph;
 import com.island.ohara.streams.data.Stele;
-import com.island.ohara.streams.ostream.KeyValue;
-import com.island.ohara.streams.ostream.Serdes;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.Assert;
@@ -47,6 +47,7 @@ public class TestStreamAppTopology extends SmallTest {
               .fromTopicWith(from, Serdes.ROW, Serdes.STRING)
               .toTopic(to)
               .bootstrapServers("fake")
+              .appid("get-poneglyph")
               .build();
 
       List<Poneglyph> poneglyph =

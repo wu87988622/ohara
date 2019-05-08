@@ -126,9 +126,7 @@ class OStreamImpl<K, V> extends AbstractStream<K, V> implements OStream<K, V> {
           new org.apache.kafka.streams.StreamsConfig(prop);
 
       topology = new Topology(innerBuilder, config, builder.isCleanStart(), isDryRun);
-      if (builder.isOharaEnv()) {
-        log.info(String.format("poneglyph:%s", topology.getPoneglyphs().toString()));
-      }
+      log.info(String.format("poneglyph:%s", topology.getPoneglyphs().toString()));
     }
   }
 

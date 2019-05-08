@@ -20,7 +20,6 @@ import com.island.ohara.common.data.Row;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.streams.OStream;
 import java.util.Map;
-import java.util.Objects;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public final class OStreamBuilder<K, V> {
@@ -35,7 +34,6 @@ public final class OStreamBuilder<K, V> {
   private boolean cleanStart = false;
 
   // for inner use
-  private boolean isOharaEnv = false;
   private Serde<K> builderKeySerde;
   private Serde<V> builderValueSerde;
 
@@ -60,7 +58,7 @@ public final class OStreamBuilder<K, V> {
    * @param bootstrapServers broker list
    * @return this builder
    */
-  public OStreamBuilder<K, V> bootstrapServers(String bootstrapServers) {
+  OStreamBuilder<K, V> bootstrapServers(String bootstrapServers) {
     this.bootstrapServers = bootstrapServers;
     return this;
   }
@@ -69,7 +67,7 @@ public final class OStreamBuilder<K, V> {
    * @param appId the application.id you want to group streamApp for
    * @return this builder
    */
-  public OStreamBuilder<K, V> appid(String appId) {
+  OStreamBuilder<K, V> appid(String appId) {
     this.appId = appId;
     return this;
   }
@@ -81,7 +79,7 @@ public final class OStreamBuilder<K, V> {
    * @param fromTopic the topic name
    * @return this builder
    */
-  public OStreamBuilder<K, V> fromTopic(String fromTopic) {
+  OStreamBuilder<K, V> fromTopic(String fromTopic) {
     this.fromTopic = fromTopic;
     this.fromSerde = new Consumed<>(builderKeySerde, builderValueSerde);
     return this;
@@ -97,7 +95,7 @@ public final class OStreamBuilder<K, V> {
    * @param <U> the source topic value type
    * @return this builder
    */
-  public <S, U> OStreamBuilder<S, U> fromTopicWith(String fromTopic, Serde<S> key, Serde<U> value) {
+  <S, U> OStreamBuilder<S, U> fromTopicWith(String fromTopic, Serde<S> key, Serde<U> value) {
     this.fromTopic = fromTopic;
     this.fromSerde = new Consumed<>(key, value);
     return new OStreamBuilder<>(this);
@@ -110,7 +108,7 @@ public final class OStreamBuilder<K, V> {
    * @param toTopic the topic name
    * @return this builder
    */
-  public OStreamBuilder<K, V> toTopic(String toTopic) {
+  OStreamBuilder<K, V> toTopic(String toTopic) {
     return toTopicWith(toTopic, builderKeySerde, builderValueSerde);
   }
 
@@ -124,7 +122,7 @@ public final class OStreamBuilder<K, V> {
    * @param <U> the target topic value type
    * @return this builder
    */
-  public <S, U> OStreamBuilder<K, V> toTopicWith(String toTopic, Serde<S> key, Serde<U> value) {
+  <S, U> OStreamBuilder<K, V> toTopicWith(String toTopic, Serde<S> key, Serde<U> value) {
     this.toTopic = toTopic;
     this.toSerde = new Produced<>(key, value);
     return this;
@@ -135,7 +133,7 @@ public final class OStreamBuilder<K, V> {
    *
    * @return this builder
    */
-  public OStreamBuilder<K, V> cleanStart() {
+  OStreamBuilder<K, V> cleanStart() {
     this.cleanStart = true;
     return this;
   }
@@ -146,79 +144,72 @@ public final class OStreamBuilder<K, V> {
    * @param extractor class extends {@code TimestampExtractor}
    * @return this builder
    */
-  public OStreamBuilder<K, V> timestampExactor(Class<? extends TimestampExtractor> extractor) {
+  OStreamBuilder<K, V> timestampExactor(Class<? extends TimestampExtractor> extractor) {
     this.extractor = extractor;
     return this;
   }
 
-  public OStream<K, V> build() {
-    // Validation
-    Objects.requireNonNull(this.bootstrapServers, "bootstrapServers should not be null");
-    Objects.requireNonNull(this.fromTopic, "fromTopic should not be null");
-    Objects.requireNonNull(this.toTopic, "targetTopic should not be null");
-
-    // Default
-    if (this.appId == null) {
-      this.appId = CommonUtils.uuid() + "-streamApp";
-    }
-
+  // This is for testing
+  OStream<K, V> build() {
     return new OStreamImpl<>(this);
   }
 
   /**
-   * For running a standalone application inside ohara environment. This method will override ALL
-   * changes you made by this builder. note : this is for the production usage
+   * For running an application inside ohara environment. Typically, this is the <b>only</b>
+   * entrance to build an {@code OStream}.
    *
-   * @return the logic entry {@code OStream}
+   * @return the logic entry for {@code OStream}
    */
   public OStream<Row, byte[]> toOharaEnvStream() {
     Map<String, String> envs = System.getenv();
-    if (envs.isEmpty() || !envs.containsKey(StreamsConfig.DOCKER_BOOTSTRAP_SERVERS)) {
-      throw new RuntimeException("You are not running this application in ohara environment ?");
-    }
-    this.bootstrapServers = envs.get(StreamsConfig.DOCKER_BOOTSTRAP_SERVERS);
-    this.appId = envs.get(StreamsConfig.DOCKER_APPID);
-    this.fromTopicWith(envs.get(StreamsConfig.DOCKER_FROM_TOPICS), Serdes.ROW, Serdes.BYTES);
-    this.toTopicWith(envs.get(StreamsConfig.DOCKER_TO_TOPICS), Serdes.ROW, Serdes.BYTES);
-    this.isOharaEnv = true;
+    CommonUtils.requireNonEmpty(
+        envs, () -> "You should run this application in ohara environment.");
+
+    this.bootstrapServers =
+        CommonUtils.requireNonEmpty(envs.get(StreamsConfig.DOCKER_BOOTSTRAP_SERVERS));
+    this.appId = CommonUtils.requireNonEmpty(envs.get(StreamsConfig.DOCKER_APPID));
+    this.fromTopicWith(
+        CommonUtils.requireNonEmpty(envs.get(StreamsConfig.DOCKER_FROM_TOPICS)),
+        Serdes.ROW,
+        Serdes.BYTES);
+    this.toTopicWith(
+        CommonUtils.requireNonEmpty(envs.get(StreamsConfig.DOCKER_TO_TOPICS)),
+        Serdes.ROW,
+        Serdes.BYTES);
 
     return new OStreamImpl<>(this);
   }
 
   // Getters
-  public String getBootstrapServers() {
+  String getBootstrapServers() {
     return bootstrapServers;
   }
 
-  public String getAppId() {
+  String getAppId() {
     return appId;
   }
 
-  public String getFromTopic() {
+  String getFromTopic() {
     return fromTopic;
   }
 
-  public Consumed getFromSerde() {
+  Consumed getFromSerde() {
     return fromSerde;
   }
 
-  public String getToTopic() {
+  String getToTopic() {
     return toTopic;
   }
 
-  public Produced getToSerde() {
+  Produced getToSerde() {
     return toSerde;
   }
 
-  public Class<? extends TimestampExtractor> getExtractor() {
+  Class<? extends TimestampExtractor> getExtractor() {
     return extractor;
   }
 
-  public boolean isCleanStart() {
+  boolean isCleanStart() {
     return cleanStart;
-  }
-
-  boolean isOharaEnv() {
-    return isOharaEnv;
   }
 }

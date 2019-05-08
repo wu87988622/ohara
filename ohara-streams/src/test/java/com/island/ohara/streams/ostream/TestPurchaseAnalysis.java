@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.streams;
+package com.island.ohara.streams.ostream;
 
 import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Row;
@@ -23,9 +23,8 @@ import com.island.ohara.kafka.BrokerClient;
 import com.island.ohara.kafka.Consumer;
 import com.island.ohara.kafka.Consumer.Record;
 import com.island.ohara.kafka.Producer;
-import com.island.ohara.streams.ostream.KeyValue;
-import com.island.ohara.streams.ostream.Serdes;
-import com.island.ohara.streams.ostream.TimestampExtractor;
+import com.island.ohara.streams.OStream;
+import com.island.ohara.streams.StreamApp;
 import com.island.ohara.testing.WithBroker;
 import java.lang.reflect.Field;
 import java.time.Duration;
@@ -58,8 +57,7 @@ public class TestPurchaseAnalysis extends WithBroker {
           .build();
 
   @Before
-  public void prepareData() {
-
+  public void setup() {
     int partitions = 1;
     short replications = 1;
     try {
@@ -263,7 +261,7 @@ public class TestPurchaseAnalysis extends WithBroker {
 
   private void produceData(String filename, String topicName, String topicKey) {
     try {
-      List<?> dataList = DataImporter.readData(filename);
+      List<?> dataList = DataUtils.readData(filename);
       dataList.stream()
           .map(
               object -> {

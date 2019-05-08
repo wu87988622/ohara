@@ -95,25 +95,13 @@ data source to Ohara Stream and use topic data as custom streamApp data source i
 The only object you should remember in this method is **OStream** (a.k.a. ohara streamApp). You could use this object to
 construct your application and use all the powerful APIs in StreamApp.
 
-For users who want to use different environment to test their streamApp, we provide two constructors in
-OStream:
-1. For external kafka environment (for example, apache kafka cluster)
-    ```text
-    OStream.builder()
-    .appid()
-    .bootstrapServers()
-    .fromTopicWith()
-    .toTopicWith()
-    .build();
-    ```
-    This example is a **minimal constructor** for external kafka environment. You will get exception if you miss some
-  of the construct parameters as above.
-1. For Ohara Stream environment
+We only support using streamApp in ohara environment:
+
+- For Ohara Stream environment
     ```text
     OStream.builder().toOharaEnvStream();
     ```
-    In Ohara Stream environment, the required parameters are defined in Ohara Stream UI. You don't need to add other parameters
-    which will be override in runtime.
+    In Ohara Stream environment, the required parameters are defined in Ohara Stream UI.
 
 From now on, you can use the [StreamApp Java API](#streamapp-java-api) to design your own application, happy coding!
 
