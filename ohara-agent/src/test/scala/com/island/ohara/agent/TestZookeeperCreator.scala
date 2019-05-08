@@ -22,9 +22,9 @@ import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
 
-import scala.concurrent.Future
-
+import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 class TestZookeeperCreator extends SmallTest with Matchers {
 
   private[this] def zkCreator(): ZookeeperCollie.ClusterCreator =
@@ -112,4 +112,22 @@ class TestZookeeperCreator extends SmallTest with Matchers {
     .electionPort(CommonUtils.availablePort())
     .nodeNames(Seq("asdasd"))
     .create()
+
+  @Test
+  def testCopy(): Unit = {
+    val zookeeperClusterInfo = ZookeeperClusterInfo(
+      name = CommonUtils.randomString(10),
+      imageName = CommonUtils.randomString(),
+      clientPort = 10,
+      peerPort = 10,
+      electionPort = 10,
+      nodeNames = Seq(CommonUtils.randomString())
+    )
+    Await.result(zkCreator().copy(zookeeperClusterInfo).create(), 30 seconds) shouldBe zookeeperClusterInfo
+  }
+
+  @Test
+  def testPassIncorrectTypeToCopy(): Unit =
+    an[IllegalArgumentException] should be thrownBy zkCreator().copy(FakeClusterInfo(CommonUtils.randomString()))
+
 }

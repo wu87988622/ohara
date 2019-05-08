@@ -334,8 +334,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
           )
         )))
 
-    val wk = result(configurator.clusterCollie.workerCollie().remove(pipeline.workerClusterName))
-    wk.name shouldBe pipeline.workerClusterName
+    result(configurator.clusterCollie.workerCollie().remove(pipeline.workerClusterName))
 
     result(pipelineApi.delete(pipeline.id))
 
@@ -371,8 +370,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
     pipeline.rules.isEmpty shouldBe false
     pipeline.rules(topic.id).size shouldBe 0
 
-    val wk = result(configurator.clusterCollie.workerCollie().remove(pipeline.workerClusterName))
-    wk.name shouldBe pipeline.workerClusterName
+    result(configurator.clusterCollie.workerCollie().remove(pipeline.workerClusterName))
 
     val anotherPipeline = result(pipelineApi.list).find(_.id == pipeline.id).get
 
@@ -424,8 +422,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
     pipeline.rules(topic0.id).size shouldBe 1
     pipeline.rules(topic0.id).contains(topic1.id) shouldBe true
 
-    val wk = result(configurator.clusterCollie.workerCollie().remove(pipeline.workerClusterName))
-    wk.name shouldBe pipeline.workerClusterName
+    result(configurator.clusterCollie.workerCollie().remove(pipeline.workerClusterName))
 
     val anotherPipeline = result(pipelineApi.list).find(_.id == pipeline.id).get
 

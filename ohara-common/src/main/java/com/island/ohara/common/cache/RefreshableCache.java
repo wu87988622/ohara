@@ -40,6 +40,8 @@ import org.slf4j.LoggerFactory;
  * @param <V> value type
  */
 public interface RefreshableCache<K, V> extends Releasable {
+  /** remove the cached value associated to key. */
+  void remove(K key);
 
   /**
    * return the value associated to the input key.
@@ -95,7 +97,8 @@ public interface RefreshableCache<K, V> extends Releasable {
 
   class Builder<K, V> {
     private int maxSize = 1000;
-    private Duration frequency = Duration.ofSeconds(5);
+    private Duration timeout = null;
+    private Duration frequency = timeout;
     private Supplier<Map<K, V>> supplier = null;
 
     private Builder() {}
@@ -112,6 +115,19 @@ public interface RefreshableCache<K, V> extends Releasable {
     }
 
     /**
+     * The time to remove cached entry automatically. If you ignore this option, the cached data
+     * will be removed by auto-refresher only
+     *
+     * @param timeout timeout
+     * @return this builder
+     */
+    @com.island.ohara.common.annotations.Optional("default value is no timeout")
+    public Builder<K, V> timeout(Duration timeout) {
+      this.timeout = Objects.requireNonNull(timeout);
+      return this;
+    }
+
+    /**
      * @param frequency the time to update cache
      * @return this builder
      */
@@ -123,10 +139,12 @@ public interface RefreshableCache<K, V> extends Releasable {
 
     public RefreshableCache<K, V> build() {
       com.google.common.cache.Cache<K, V> cache =
-          CacheBuilder.newBuilder()
-              .maximumSize(maxSize)
-              .expireAfterWrite(frequency.toMillis(), TimeUnit.MILLISECONDS)
-              .build();
+          timeout == null
+              ? CacheBuilder.newBuilder().maximumSize(maxSize).build()
+              : CacheBuilder.newBuilder()
+                  .maximumSize(maxSize)
+                  .expireAfterWrite(timeout.toMillis(), TimeUnit.MILLISECONDS)
+                  .build();
       ExecutorService service = Executors.newSingleThreadExecutor();
       AtomicBoolean closed = new AtomicBoolean(false);
       BlockingQueue<Boolean> queue = new ArrayBlockingQueue<>(1);
@@ -174,6 +192,11 @@ public interface RefreshableCache<K, V> extends Releasable {
               throw new IllegalStateException("failed to release cache", e);
             }
           }
+        }
+
+        @Override
+        public void remove(K key) {
+          cache.invalidate(key);
         }
 
         @Override

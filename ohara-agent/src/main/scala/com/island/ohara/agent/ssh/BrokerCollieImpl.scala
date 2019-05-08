@@ -18,7 +18,7 @@ package com.island.ohara.agent.ssh
 
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.util.CommonUtils
 
@@ -124,33 +124,60 @@ private class BrokerCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClient
                 case ((node, containerName), index) =>
                   Future {
                     try {
+                      val containerInfo = ContainerInfo(
+                        nodeName = node.name,
+                        id = "unknown",
+                        imageName = imageName,
+                        created = "unknown",
+                        state = "unknown",
+                        kind = "unknown",
+                        name = containerName,
+                        size = "unknown",
+                        portMappings = Seq(PortMapping(
+                          hostIp = "unknown",
+                          portPairs = Seq(
+                            PortPair(
+                              hostPort = clientPort,
+                              containerPort = clientPort
+                            ),
+                            PortPair(
+                              hostPort = exporterPort,
+                              containerPort = exporterPort
+                            ),
+                            PortPair(
+                              hostPort = jmxPort,
+                              containerPort = jmxPort
+                            )
+                          )
+                        )),
+                        environments = Map(
+                          BrokerCollie.ID_KEY -> (maxId + index).toString,
+                          BrokerCollie.CLIENT_PORT_KEY -> clientPort.toString,
+                          BrokerCollie.ZOOKEEPERS_KEY -> zookeepers,
+                          BrokerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
+                          BrokerCollie.EXPORTER_PORT_KEY -> exporterPort.toString,
+                          BrokerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
+                          ClusterCollie.ZOOKEEPER_CLUSTER_NAME -> zookeeperClusterName,
+                          BrokerCollie.JMX_HOSTNAME_KEY -> node.name,
+                          BrokerCollie.JMX_PORT_KEY -> jmxPort.toString
+                        ),
+                        hostname = containerName
+                      )
                       dockerCache.exec(
                         node,
                         _.containerCreator()
-                          .imageName(imageName)
-                          .portMappings(
-                            Map(
-                              clientPort -> clientPort,
-                              exporterPort -> exporterPort,
-                              jmxPort -> jmxPort
-                            ))
-                          .hostname(containerName)
-                          .envs(Map(
-                            BrokerCollie.ID_KEY -> (maxId + index).toString,
-                            BrokerCollie.CLIENT_PORT_KEY -> clientPort.toString,
-                            BrokerCollie.ZOOKEEPERS_KEY -> zookeepers,
-                            BrokerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
-                            BrokerCollie.EXPORTER_PORT_KEY -> exporterPort.toString,
-                            BrokerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
-                            ClusterCollie.ZOOKEEPER_CLUSTER_NAME -> zookeeperClusterName,
-                            BrokerCollie.JMX_HOSTNAME_KEY -> node.name,
-                            BrokerCollie.JMX_PORT_KEY -> jmxPort.toString
-                          ))
-                          .name(containerName)
+                          .imageName(containerInfo.imageName)
+                          .portMappings(containerInfo.portMappings
+                            .flatMap(_.portPairs)
+                            .map(pair => pair.hostPort -> pair.containerPort)
+                            .toMap)
+                          .hostname(containerInfo.hostname)
+                          .envs(containerInfo.environments)
+                          .name(containerInfo.name)
                           .route(route ++ existRoute)
                           .execute()
                       )
-                      Some(node.name)
+                      Some(containerInfo)
                     } catch {
                       case e: Throwable =>
                         try dockerCache.exec(node, _.forceRemove(containerName))
@@ -164,26 +191,21 @@ private class BrokerCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClient
                   }
               })
               .map(_.flatten.toSeq)
-              .map { successfulNodeNames =>
-                if (successfulNodeNames.isEmpty)
+              .map { successfulContainers =>
+                if (successfulContainers.isEmpty)
                   throw new IllegalArgumentException(s"failed to create $clusterName on $serviceName")
-                clusterCache.requestUpdate()
-                BrokerClusterInfo(
+                val clusterInfo = BrokerClusterInfo(
                   name = clusterName,
                   imageName = imageName,
                   zookeeperClusterName = zookeeperClusterName,
                   exporterPort = exporterPort,
                   clientPort = clientPort,
                   jmxPort = jmxPort,
-                  nodeNames = successfulNodeNames ++ existNodes.map(_._1.name)
+                  nodeNames = successfulContainers.map(_.nodeName) ++ existNodes.map(_._1.name)
                 )
+                clusterCache.put(clusterInfo, clusterCache.get(clusterInfo) ++ successfulContainers)
+                clusterInfo
               }
         }
     }
-
-  override protected def doAddNodeContainer(
-    previousCluster: BrokerClusterInfo,
-    previousContainers: Seq[ContainerInfo],
-    newNodeName: String)(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] =
-    doAddNode(previousCluster, previousContainers, newNodeName)
 }

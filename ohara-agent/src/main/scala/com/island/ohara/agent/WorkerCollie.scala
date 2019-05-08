@@ -18,8 +18,7 @@ package com.island.ohara.agent
 import java.net.URL
 import java.util.Objects
 
-import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.WorkerApi
+import com.island.ohara.client.configurator.v0.{ClusterInfo, WorkerApi}
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
@@ -27,7 +26,7 @@ import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
 
-import collection.JavaConverters._
+import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator] {
 
@@ -66,24 +65,6 @@ trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator
   def counters(cluster: WorkerClusterInfo): Seq[CounterMBean] = cluster.nodeNames.flatMap { node =>
     BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().counterMBeans().asScala
   }
-
-  protected def doAddNode(previousCluster: WorkerClusterInfo,
-                          previousContainers: Seq[ContainerInfo],
-                          newNodeName: String)(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] =
-    creator()
-      .clusterName(previousCluster.name)
-      .brokerClusterName(previousCluster.brokerClusterName)
-      .clientPort(previousCluster.clientPort)
-      .groupId(previousCluster.groupId)
-      .offsetTopicName(previousCluster.offsetTopicName)
-      .statusTopicName(previousCluster.statusTopicName)
-      .configTopicName(previousCluster.configTopicName)
-      .imageName(previousCluster.imageName)
-      .jarUrls(
-        previousContainers.head.environments(WorkerCollie.JARS_KEY).split(",").filter(_.nonEmpty).map(s => new URL(s)))
-      .nodeName(newNodeName)
-      .jmxPort(previousCluster.jmxPort)
-      .create()
 }
 
 object WorkerCollie {
@@ -102,6 +83,28 @@ object WorkerCollie {
     private[this] var statusTopicPartitions: Int = 1
     private[this] var jarUrls: Seq[URL] = Seq.empty
     private[this] var jmxPort: Int = WorkerApi.JMX_PORT_DEFAULT
+
+    override def copy(clusterInfo: ClusterInfo): ClusterCreator.this.type = clusterInfo match {
+      case wk: WorkerClusterInfo =>
+        super.copy(clusterInfo)
+        clientPort(wk.clientPort)
+        brokerClusterName(wk.brokerClusterName)
+        groupId(wk.groupId)
+        offsetTopicName(wk.offsetTopicName)
+        offsetTopicReplications(wk.offsetTopicReplications)
+        offsetTopicPartitions(wk.offsetTopicPartitions)
+        configTopicName(wk.configTopicName)
+        configTopicReplications(wk.configTopicReplications)
+        statusTopicName(wk.statusTopicName)
+        statusTopicReplications(wk.statusTopicReplications)
+        statusTopicPartitions(wk.statusTopicPartitions)
+        jarUrls(wk.jarUrls)
+        jmxPort(wk.jmxPort)
+        this
+      case _ =>
+        throw new IllegalArgumentException(
+          s"you should pass WorkerClusterInfo rather than ${clusterInfo.getClass.getName}")
+    }
 
     def brokerClusterName(name: String): ClusterCreator = {
       this.brokerClusterName = CommonUtils.requireNonEmpty(name)

@@ -18,6 +18,8 @@ package com.island.ohara.agent
 
 import java.util.Objects
 
+import com.island.ohara.client.Enum
+import com.island.ohara.agent.ClusterCache.Service
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
@@ -48,27 +50,59 @@ trait ClusterCache extends Releasable {
     * Noted, the method doesn't block your thread since what it does is to send a request without any wait.
     */
   def requestUpdate(): Unit
+
+  def get(clusterInfo: ClusterInfo): Seq[ContainerInfo]
+
+  /**
+    * add data to cache
+    * @param clusterInfo cluster info
+    * @param containers containers
+    */
+  def put(clusterInfo: ClusterInfo, containers: Seq[ContainerInfo])
+
+  /**
+    * remove the cached cluster data
+    * @param clusterInfo cluster info
+    */
+  def remove(clusterInfo: ClusterInfo): Unit
+
+  /**
+    * remove the cached cluster data
+    * @param name cluster's name
+    * @param service cluster's type
+    */
+  def remove(name: String, service: Service): Unit
 }
 
 object ClusterCache {
+
+  sealed abstract class Service
+  object Service extends Enum[Service] {
+    case object ZOOKEEPER extends Service
+    case object BROKER extends Service
+    case object WORKER extends Service
+    case object UNKNOWN extends Service
+  }
 
   def builder(): Builder = new Builder
 
   // TODO: remove this workaround if google guava support the custom comparison ... by chia
   @VisibleForTesting
-  private[agent] case class RequestKey(name: String, service: String, clusterInfo: ClusterInfo) {
+  private[agent] case class RequestKey(name: String, service: Service, clusterInfo: ClusterInfo) {
     override def equals(obj: Any): Boolean = obj match {
       case another: RequestKey => another.name == name && another.service == service
       case _                   => false
     }
     override def hashCode(): Int = 31 * name.hashCode + service.hashCode
+
+    override def toString: String = s"name:$name, service:$service"
   }
 
   class Builder private[ClusterCache] {
-    private[this] var frequency: Duration = 3 seconds
+    private[this] var frequency: Duration = 5 seconds
     private[this] var supplier: () => Map[ClusterInfo, Seq[ContainerInfo]] = _
 
-    @Optional("default value is 3 seconds")
+    @Optional("default value is 5 seconds")
     def frequency(frequency: Duration): Builder = {
       this.frequency = Objects.requireNonNull(frequency)
       this
@@ -109,16 +143,32 @@ object ClusterCache {
 
         override def requestUpdate(): Unit = cache.requestUpdate()
 
-        private[this] def key(clusterInfo: ClusterInfo): RequestKey = RequestKey(
+        private def key(clusterInfo: ClusterInfo): RequestKey = RequestKey(
           name = clusterInfo.name,
           service = clusterInfo match {
-            case _: ZookeeperClusterInfo => "zk"
-            case _: BrokerClusterInfo    => "bk"
-            case _: WorkerClusterInfo    => "wk"
-            case c: ClusterInfo          => c.getClass.getSimpleName
+            case _: ZookeeperClusterInfo => Service.ZOOKEEPER
+            case _: BrokerClusterInfo    => Service.BROKER
+            case _: WorkerClusterInfo    => Service.WORKER
+            case _                       => Service.UNKNOWN
           },
           clusterInfo = clusterInfo
         )
+
+        private[this] def key(name: String, service: Service): RequestKey = RequestKey(
+          name = name,
+          service = service,
+          clusterInfo = null
+        )
+
+        override def get(clusterInfo: ClusterInfo): Seq[ContainerInfo] =
+          cache.get(key(clusterInfo)).orElseGet(() => Seq.empty)
+
+        override def put(clusterInfo: ClusterInfo, containers: Seq[ContainerInfo]): Unit =
+          cache.put(key(clusterInfo), containers)
+
+        override def remove(name: String, service: Service): Unit = cache.remove(key(name, service))
+
+        override def remove(clusterInfo: ClusterInfo): Unit = cache.remove(key(clusterInfo))
       }
     }
   }

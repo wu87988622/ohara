@@ -46,6 +46,7 @@ object MeterCache {
       case _                   => false
     }
     override def hashCode(): Int = 31 * name.hashCode + service.hashCode
+    override def toString: String = s"name:$name, service:$service"
   }
 
   class Builder {

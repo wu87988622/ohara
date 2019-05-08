@@ -76,6 +76,14 @@ class TestWorkerRoute extends MediumTest with Matchers {
   }
 
   @Test
+  def repeatedlyDelete(): Unit = {
+    (0 to 10).foreach { index =>
+      result(workerApi.delete(index.toString))
+      result(workerApi.removeNode(index.toString, index.toString))
+    }
+  }
+
+  @Test
   def testDefaultBk(): Unit = {
     val request0 = WorkerClusterCreationRequest(
       name = CommonUtils.randomString(10),
@@ -217,7 +225,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
             nodeNames = nodeNames
           ))
       )
-    } finally result(BrokerApi.access().hostname(configurator.hostname).port(configurator.port).delete(anotherBk)).name shouldBe anotherBk
+    } finally result(BrokerApi.access().hostname(configurator.hostname).port(configurator.port).delete(anotherBk))
   }
 
   @Test
@@ -394,7 +402,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
     val cluster = result(workerApi.add(request))
     assert(request, cluster)
 
-    result(workerApi.delete(request.name)) shouldBe cluster
+    result(workerApi.delete(request.name))
   }
 
   @Test
@@ -422,7 +430,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
 
     assert(request, result(workerApi.get(request.name)))
 
-    result(workerApi.delete(request.name)) shouldBe cluster
+    result(workerApi.delete(request.name))
     result(workerApi.list).size shouldBe 0
   }
 
@@ -467,6 +475,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
         offsetTopicPartitions = cluster.offsetTopicPartitions,
         offsetTopicReplications = cluster.offsetTopicReplications,
         jarIds = cluster.jarIds,
+        jarUrls = cluster.jarUrls,
         connectors = Seq.empty,
         nodeNames = cluster.nodeNames :+ nodeNames.last
       )
@@ -494,26 +503,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
     val cluster = result(workerApi.add(request))
     assert(request, cluster)
 
-    result(workerApi.removeNode(cluster.name, nodeNames.last)) shouldBe WorkerClusterInfo(
-      name = cluster.name,
-      imageName = cluster.imageName,
-      brokerClusterName = cluster.brokerClusterName,
-      clientPort = cluster.clientPort,
-      jmxPort = cluster.jmxPort,
-      groupId = cluster.groupId,
-      statusTopicName = cluster.statusTopicName,
-      statusTopicPartitions = cluster.statusTopicPartitions,
-      statusTopicReplications = cluster.statusTopicReplications,
-      configTopicName = cluster.configTopicName,
-      configTopicPartitions = cluster.configTopicPartitions,
-      configTopicReplications = cluster.configTopicReplications,
-      offsetTopicName = cluster.offsetTopicName,
-      offsetTopicPartitions = cluster.offsetTopicPartitions,
-      offsetTopicReplications = cluster.offsetTopicReplications,
-      jarIds = cluster.jarIds,
-      connectors = Seq.empty,
-      nodeNames = cluster.nodeNames.filter(_ != nodeNames.last)
-    )
+    result(workerApi.removeNode(cluster.name, nodeNames.last))
   }
 
   @Test

@@ -232,6 +232,7 @@ trait ClusterCollie extends Releasable {
           .split(",")
           .filter(_.nonEmpty)
           .map(u => new URL(u).getFile),
+        jarUrls = containers.head.environments(WorkerCollie.JARS_KEY).split(",").filter(_.nonEmpty).map(u => new URL(u)),
         connectors = connectors,
         nodeNames = containers.map(_.nodeName)
       )
@@ -282,7 +283,7 @@ object ClusterCollie {
 
   class SshBuilder private[agent] {
     private[this] var nodeCollie: NodeCollie = _
-    private[this] var cacheTimeout: Duration = 7 seconds
+    private[this] var cacheTimeout: Duration = 3 seconds
     private[this] var cacheThreadPool: ExecutorService = _
 
     def nodeCollie(nodeCollie: NodeCollie): SshBuilder = {
@@ -290,7 +291,7 @@ object ClusterCollie {
       this
     }
 
-    @Optional("default is 7 seconds")
+    @Optional("default is 3 seconds")
     def cacheTimeout(cacheTimeout: Duration): SshBuilder = {
       this.cacheTimeout = Objects.requireNonNull(cacheTimeout)
       this

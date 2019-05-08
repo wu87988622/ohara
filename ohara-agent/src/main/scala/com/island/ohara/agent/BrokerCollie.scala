@@ -17,9 +17,8 @@
 package com.island.ohara.agent
 import java.util.Objects
 
-import com.island.ohara.client.configurator.v0.BrokerApi
+import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterInfo}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
@@ -57,19 +56,6 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
   def topicMeters(cluster: BrokerClusterInfo): Seq[TopicMeter] = cluster.nodeNames.flatMap { node =>
     BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().topicMeters().asScala
   }
-
-  protected def doAddNode(previousCluster: BrokerClusterInfo,
-                          previousContainers: Seq[ContainerInfo],
-                          newNodeName: String)(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] =
-    creator()
-      .clusterName(previousCluster.name)
-      .zookeeperClusterName(previousCluster.zookeeperClusterName)
-      .exporterPort(previousCluster.exporterPort)
-      .clientPort(previousCluster.clientPort)
-      .jmxPort(previousCluster.jmxPort)
-      .imageName(previousCluster.imageName)
-      .nodeName(newNodeName)
-      .create()
 }
 
 object BrokerCollie {
@@ -78,6 +64,19 @@ object BrokerCollie {
     private[this] var zookeeperClusterName: String = _
     private[this] var exporterPort: Int = BrokerApi.EXPORTER_PORT_DEFAULT
     private[this] var jmxPort: Int = BrokerApi.JMX_PORT_DEFAULT
+
+    override def copy(clusterInfo: ClusterInfo): ClusterCreator.this.type = clusterInfo match {
+      case bk: BrokerClusterInfo =>
+        super.copy(clusterInfo)
+        zookeeperClusterName(bk.zookeeperClusterName)
+        clientPort(bk.clientPort)
+        exporterPort(bk.exporterPort)
+        jmxPort(bk.jmxPort)
+        this
+      case _ =>
+        throw new IllegalArgumentException(
+          s"you should pass BrokerClusterInfo rather than ${clusterInfo.getClass.getName}")
+    }
 
     def zookeeperClusterName(zookeeperClusterName: String): ClusterCreator = {
       this.zookeeperClusterName = CommonUtils.requireNonEmpty(zookeeperClusterName)

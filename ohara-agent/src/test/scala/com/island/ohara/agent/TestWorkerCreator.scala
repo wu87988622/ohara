@@ -23,7 +23,8 @@ import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
 class TestWorkerCreator extends SmallTest with Matchers {
 
   private[this] def wkCreator(): WorkerCollie.ClusterCreator = (executionContext,
@@ -80,6 +81,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
         configTopicReplications = configTopicReplications,
         configTopicPartitions = 1,
         jarIds = jarUrls.map(_.getFile),
+        jarUrls = jarUrls,
         connectors = Seq.empty,
         nodeNames = nodeNames
       ))
@@ -221,4 +223,34 @@ class TestWorkerCreator extends SmallTest with Matchers {
     .configTopicName(CommonUtils.randomString(10))
     .nodeNames(Seq("abc"))
     .create()
+
+  @Test
+  def testCopy(): Unit = {
+    val workerClusterInfo = WorkerClusterInfo(
+      name = CommonUtils.randomString(10),
+      imageName = CommonUtils.randomString(),
+      brokerClusterName = CommonUtils.randomString(),
+      clientPort = 10,
+      jmxPort = 10,
+      groupId = CommonUtils.randomString(),
+      statusTopicName = CommonUtils.randomString(),
+      statusTopicPartitions = 10,
+      statusTopicReplications = 10,
+      configTopicName = CommonUtils.randomString(),
+      configTopicPartitions = 1,
+      configTopicReplications = 10,
+      offsetTopicName = CommonUtils.randomString(),
+      offsetTopicPartitions = 10,
+      offsetTopicReplications = 10,
+      jarIds = Seq.empty,
+      jarUrls = Seq.empty,
+      connectors = Seq.empty,
+      nodeNames = Seq(CommonUtils.randomString())
+    )
+    Await.result(wkCreator().copy(workerClusterInfo).create(), 30 seconds) shouldBe workerClusterInfo
+  }
+
+  @Test
+  def testPassIncorrectTypeToCopy(): Unit =
+    an[IllegalArgumentException] should be thrownBy wkCreator().copy(FakeClusterInfo(CommonUtils.randomString()))
 }

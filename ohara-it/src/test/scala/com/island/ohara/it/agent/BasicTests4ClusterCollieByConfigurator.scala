@@ -72,8 +72,7 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
   override protected def zk_containers(clusterName: String): Future[Seq[ContainerApi.ContainerInfo]] =
     containerApi.get(clusterName).map(_.flatMap(_.containers))
 
-  override protected def zk_delete(clusterName: String): Future[ZookeeperApi.ZookeeperClusterInfo] =
-    zkApi.delete(clusterName)
+  override protected def zk_delete(clusterName: String): Future[Unit] = zkApi.delete(clusterName)
 
   //--------------------------------------------------[bk operations]--------------------------------------------------//
   override protected def bk_exist(clusterName: String): Future[Boolean] =
@@ -103,12 +102,12 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
   override protected def bk_containers(clusterName: String): Future[Seq[ContainerApi.ContainerInfo]] =
     containerApi.get(clusterName).map(_.flatMap(_.containers))
 
-  override protected def bk_delete(clusterName: String): Future[BrokerApi.BrokerClusterInfo] = bkApi.delete(clusterName)
+  override protected def bk_delete(clusterName: String): Future[Unit] = bkApi.delete(clusterName)
 
   override protected def bk_addNode(clusterName: String, nodeName: String): Future[BrokerApi.BrokerClusterInfo] =
     bkApi.addNode(clusterName, nodeName)
 
-  override protected def bk_removeNode(clusterName: String, nodeName: String): Future[BrokerApi.BrokerClusterInfo] =
+  override protected def bk_removeNode(clusterName: String, nodeName: String): Future[Unit] =
     bkApi.removeNode(clusterName, nodeName)
 
   //--------------------------------------------------[wk operations]--------------------------------------------------//
@@ -175,12 +174,12 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
   override protected def wk_containers(clusterName: String): Future[Seq[ContainerApi.ContainerInfo]] =
     containerApi.get(clusterName).map(_.flatMap(_.containers))
 
-  override protected def wk_delete(clusterName: String): Future[WorkerApi.WorkerClusterInfo] = wkApi.delete(clusterName)
+  override protected def wk_delete(clusterName: String): Future[Unit] = wkApi.delete(clusterName)
 
   override protected def wk_addNode(clusterName: String, nodeName: String): Future[WorkerApi.WorkerClusterInfo] =
     wkApi.addNode(clusterName, nodeName)
 
-  override protected def wk_removeNode(clusterName: String, nodeName: String): Future[WorkerApi.WorkerClusterInfo] =
+  override protected def wk_removeNode(clusterName: String, nodeName: String): Future[Unit] =
     wkApi.removeNode(clusterName, nodeName)
 
   @After

@@ -36,6 +36,7 @@ private[agent] class ClusterCollieImpl(cacheRefresh: Duration, nodeCollie: NodeC
   private[this] val clusterCache: ClusterCache = ClusterCache
     .builder()
     .frequency(cacheRefresh)
+    // TODO: 5 * timeout is enough ??? by chia
     .supplier(() => Await.result(doClusters(ExecutionContext.fromExecutor(cacheThreadPool)), cacheRefresh * 5))
     .build()
 
@@ -51,6 +52,7 @@ private[agent] class ClusterCollieImpl(cacheRefresh: Duration, nodeCollie: NodeC
 
   override def clusters(implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] =
     Future.successful(clusterCache.snapshot)
+
   private[this] def doClusters(
     implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = nodeCollie
     .nodes()

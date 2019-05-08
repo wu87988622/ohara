@@ -46,23 +46,42 @@ abstract class ContainerCollie[T <: ClusterInfo: ClassTag, Creator <: ClusterCre
       CommonUtils.randomString(LENGTH_OF_CONTAINER_NAME_ID)
     ).mkString(ContainerCollie.DIVIDER)
 
-  protected def doAddNodeContainer(previousCluster: T, previousContainers: Seq[ContainerInfo], newNodeName: String)(
-    implicit executionContext: ExecutionContext): Future[T]
+  protected def doRemoveNode(previousCluster: T, beRemovedContainer: ContainerInfo)(
+    implicit executionContext: ExecutionContext): Future[Boolean]
 
-  override def addNode(clusterName: String, nodeName: String)(implicit executionContext: ExecutionContext): Future[T] =
-    nodeCollie
-      .node(nodeName) // make sure there is a exist node.
-      .flatMap(_ => cluster(clusterName))
-      .flatMap {
-        case (c, cs) => doAddNodeContainer(c, cs, nodeName)
+  override final def removeNode(clusterName: String, nodeName: String)(
+    implicit executionContext: ExecutionContext): Future[Boolean] = clusters.flatMap(
+    _.find(_._1.name == clusterName)
+      .filter(_._1.nodeNames.contains(nodeName))
+      .filter(_._2.exists(_.nodeName == nodeName))
+      .map {
+        case (cluster, runningContainers) =>
+          runningContainers.size match {
+            case 1 =>
+              Future.failed(new IllegalArgumentException(
+                s"$clusterName is a single-node cluster. You can't remove the last node by removeNode(). Please use remove(clusterName) instead"))
+            case _ =>
+              doRemoveNode(
+                cluster,
+                runningContainers
+                  .find(_.nodeName == nodeName)
+                  .getOrElse(throw new IllegalArgumentException(
+                    s"This should not be happen!!! $nodeName doesn't exist on cluster:$clusterName"))
+              )
+          }
       }
+      .getOrElse(Future.successful(false)))
 
-  protected def doRemoveNode(previousCluster: T, previousContainer: ContainerInfo, removedNodeName: String)(
+  protected def doAddNode(previousCluster: T, previousContainers: Seq[ContainerInfo], newNodeName: String)(
     implicit executionContext: ExecutionContext): Future[T]
 
-  override def removeNode(clusterName: String, nodeName: String)(
-    implicit executionContext: ExecutionContext): Future[T] =
-    checkRemoveNode(clusterName, nodeName).flatMap(cluster => doRemoveNode(cluster._1, cluster._2, nodeName))
+  override final def addNode(clusterName: String, nodeName: String)(
+    implicit executionContext: ExecutionContext): Future[T] = nodeCollie
+    .node(nodeName) // make sure there is a exist node.
+    .flatMap(_ => cluster(clusterName))
+    .flatMap {
+      case (cluster, containers) => doAddNode(cluster, containers, nodeName)
+    }
 
   protected val serviceName: String =
     if (classTag[T].runtimeClass.isAssignableFrom(classOf[ZookeeperClusterInfo])) ContainerCollie.ZK_SERVICE_NAME
@@ -70,21 +89,28 @@ abstract class ContainerCollie[T <: ClusterInfo: ClassTag, Creator <: ClusterCre
     else if (classTag[T].runtimeClass.isAssignableFrom(classOf[WorkerClusterInfo])) ContainerCollie.WK_SERVICE_NAME
     else throw new IllegalArgumentException(s"Who are you, ${classTag[T].runtimeClass} ???")
 
-  private def checkRemoveNode(clusterName: String, nodeName: String)(
-    implicit executionContext: ExecutionContext): Future[(T, ContainerInfo)] =
-    cluster(clusterName).map {
-      case (cluster, runningContainers) =>
-        runningContainers.size match {
-          case 0 => throw new IllegalArgumentException(s"$clusterName doesn't exist")
-          case 1 if runningContainers.map(_.nodeName).contains(nodeName) =>
-            throw new IllegalArgumentException(
-              s"$clusterName is a single-node cluster. You can't remove the last node by removeNode(). Please use remove(clusterName) instead")
-          case _ =>
-            cluster -> runningContainers
-              .find(_.nodeName == nodeName)
-              .getOrElse(throw new IllegalArgumentException(s"$nodeName doesn't exist on cluster:$clusterName"))
+  override final def forceRemove(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
+    clusters.flatMap(
+      _.find(_._1.name == clusterName)
+        .map {
+          case (cluster, containerInfos) => doForceRemove(cluster, containerInfos)
         }
-    }
+        .getOrElse(Future.successful(false)))
+
+  override final def remove(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
+    clusters.flatMap(
+      _.find(_._1.name == clusterName)
+        .map {
+          case (cluster, containerInfos) => doRemove(cluster, containerInfos)
+        }
+        .getOrElse(Future.successful(false)))
+
+  protected def doRemove(clusterInfo: T, containerInfos: Seq[ContainerInfo])(
+    implicit executionContext: ExecutionContext): Future[Boolean]
+
+  protected def doForceRemove(clusterInfo: T, containerInfos: Seq[ContainerInfo])(
+    implicit executionContext: ExecutionContext): Future[Boolean] =
+    doRemove(clusterInfo, containerInfos)
 }
 
 object ContainerCollie {

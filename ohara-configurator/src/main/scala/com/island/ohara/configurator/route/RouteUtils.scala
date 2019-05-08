@@ -16,10 +16,11 @@
 
 package com.island.ohara.configurator.route
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent.Collie.ClusterCreator
-import com.island.ohara.agent.{ClusterCollie, Collie, NoSuchClusterException, NodeCollie}
+import com.island.ohara.agent.{ClusterCollie, Collie, NodeCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.PipelineApi.Pipeline
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
@@ -238,24 +239,26 @@ private[route] object RouteUtils {
           post {
             complete(collie.addNode(clusterName, nodeName))
           } ~ delete {
-            complete(collie.removeNode(clusterName, nodeName))
+            complete(collie.clusters.map(_.keys.toSeq).flatMap { clusters =>
+              if (clusters.exists(cluster => cluster.name == clusterName && cluster.nodeNames.contains(nodeName)))
+                collie.removeNode(clusterName, nodeName).map(_ => StatusCodes.NoContent)
+              else Future.successful(StatusCodes.NoContent)
+            })
           }
         } ~ pathEnd {
           delete {
-            parameter(Parameters.FORCE_REMOVE ?)(
-              force =>
-                complete(
-                  clusterCollie.clusters
-                    .map(_.keys.toSeq)
-                    // if cluster doesn't exist, we throw exception directly.
-                    .map(clusters =>
-                      if (clusters.exists(_.name == clusterName)) clusters
-                      else throw new NoSuchClusterException(s"$clusterName doesn't exist"))
-                    .flatMap(clusters => hookBeforeDelete(clusters, clusterName))
-                    // we don't use boolean convert since we don't want to see the convert exception
+            parameter(Parameters.FORCE_REMOVE ?)(force =>
+              // we must list ALL clusters !!!
+              complete(clusterCollie.clusters.map(_.keys.toSeq).flatMap { clusters =>
+                if (clusters.exists(_.name == clusterName))
+                  hookBeforeDelete(clusters, clusterName)
+                  // we don't use boolean convert since we don't want to see the convert exception
                     .flatMap(_ =>
                       if (force.exists(_.toLowerCase == "true")) collie.forceRemove(clusterName)
-                      else collie.remove(clusterName))))
+                      else collie.remove(clusterName))
+                    .map(_ => StatusCodes.NoContent)
+                else Future.successful(StatusCodes.NoContent)
+              }))
           } ~ get {
             complete(collie.cluster(clusterName).map(_._1))
           }

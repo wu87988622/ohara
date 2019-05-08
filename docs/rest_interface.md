@@ -1584,18 +1584,12 @@ It is disallowed to remove a zookeeper cluster used by a running [broker cluster
 
 **Example Response**
 
-```json
-{
-  "name": "zk00",
-  "electionPort": 12347,
-  "imageName": "oharastream/zookeeper:0.4-SNAPSHOT",
-  "clientPort": 12345,
-  "peerPort": 12346,
-  "nodeNames": [
-    "node00"
-  ]
-}
 ```
+402 NoContent
+```
+
+> It is ok to delete an nonexistent zookeeper cluster, and the response is 402 NoContent.
+
 ----------
 ### get a zookeeper cluster
 
@@ -1615,7 +1609,19 @@ It is disallowed to remove a zookeeper cluster used by a running [broker cluster
   ]
 }
 ```
+
+### delete a node from a running zookeeper cluster
+
+Unfortunately, it is a litter dangerous to remove a node from a running zookeeper cluster so we don't support it yet. 
+
 ----------
+
+### add a node to a running zookeeper cluster
+
+Unfortunately, it is a litter hard to add a node to a running zookeeper cluster so we don't support it yet. 
+
+----------
+
 ## Broker
 
 [Broker](https://kafka.apache.org/intro) is core of data transmission in ohara. The topic, which is a part our data lake,
@@ -1746,20 +1752,14 @@ It is disallowed to remove a broker cluster used by a running [worker cluster](#
 
 **Example Response**
 
-```json
-{
-  "name": "bk00",
-  "zookeeperClusterName": "zk00",
-  "imageName": "oharastream/broker:0.4-SNAPSHOT",
-  "exporterPort": 7071,
-  "clientPort": 9092,
-  "jmxPort": 9093,
-  "nodeNames": [
-    "node00"
-  ]
-}
 ```
+402 NoContent
+```
+
+> It is ok to delete an nonexistent broker cluster, and the response is 402 NoContent.
+
 ----------
+
 ### get a broker cluster
 
 *GET /v0/brokers/$name*
@@ -1813,19 +1813,12 @@ running broker cluster invoke a lot of data move. The loading may burn out the r
 
 **Example Response**
 
-```json
-{
-  "name": "bk00",
-  "zookeeperClusterName": "zk00",
-  "imageName": "oharastream/broker:0.4-SNAPSHOT",
-  "exporterPort": 7071,
-  "clientPort": 9092,
-  "jmxPort": 9093,
-  "nodeNames": [
-    "node00"
-  ]
-}
 ```
+402 NoContent
+```
+
+> It is ok to delete an nonexistent broker node, and the response is 402 NoContent.
+
 ----------
 ## Worker
 
@@ -2141,30 +2134,12 @@ different purpose (a dangerous behavior, right?).
 
 **Example Response**
 
-```json
-{
-  "statusTopicName": "status-89eaef1e9d",
-  "name": "wk00",
-  "offsetTopicPartitions": 1,
-  "brokerClusterName": "preCreatedBkCluster",
-  "connectors": [],
-  "offsetTopicName": "offset-956c528fa5",
-  "imageName": "oharastream/connect-worker:0.4-SNAPSHOT",
-  "groupId": "dcafb19d0e",
-  "jarIds": [],
-  "statusTopicReplications": 1,
-  "configTopicPartitions": 1,
-  "offsetTopicReplications": 1,
-  "configTopicReplications": 1,
-  "statusTopicPartitions": 1,
-  "configTopicName": "setting-67c528ca7d",
-  "jmxPort": 8084,
-  "clientPort": 8083,
-  "nodeNames": [
-    "node00"
-  ]
-}
 ```
+402 NoContent
+```
+
+> It is ok to delete an nonexistent worker cluster, and the response is 402 NoContent.
+
 ----------
 ### get a worker cluster
 
@@ -2421,30 +2396,12 @@ running worker cluster invoke a lot of task move, and it will decrease the throu
 
 **Example Response**
 
-```json
-{
-  "statusTopicName": "status-89eaef1e9d",
-  "name": "wk00",
-  "offsetTopicPartitions": 1,
-  "brokerClusterName": "preCreatedBkCluster",
-  "connectors": [],
-  "offsetTopicName": "offset-956c528fa5",
-  "imageName": "oharastream/connect-worker:0.4-SNAPSHOT",
-  "groupId": "dcafb19d0e",
-  "jarIds": [],
-  "statusTopicReplications": 1,
-  "configTopicPartitions": 1,
-  "offsetTopicReplications": 1,
-  "configTopicReplications": 1,
-  "statusTopicPartitions": 1,
-  "configTopicName": "setting-67c528ca7d",
-  "jmxPort": 8084,
-  "clientPort": 8083,
-  "nodeNames": [
-    "node01"
-  ]
-}
 ```
+402 NoContent
+```
+
+> It is ok to delete an nonexistent worker node, and the response is 402 NoContent.
+
 ----------
 ## Validation
 

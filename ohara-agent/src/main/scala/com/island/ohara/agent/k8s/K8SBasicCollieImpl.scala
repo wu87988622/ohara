@@ -34,23 +34,22 @@ private[this] abstract class K8SBasicCollieImpl[T <: ClusterInfo: ClassTag, Crea
   protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[T]
 
-  override def remove(clusterName: String)(implicit executionContext: ExecutionContext): Future[T] = {
-    cluster(clusterName)
-      .flatMap {
-        case (cluster, containers) =>
-          Future.sequence(containers.map(c => k8sClient.remove(c.name).map(_ => cluster)))
-      }
-      .map(clusters => clusters.head)
+  override protected def doAddNode(previousCluster: T, previousContainers: Seq[ContainerInfo], newNodeName: String)(
+    implicit executionContext: ExecutionContext): Future[T] =
+    creator().copy(previousCluster).nodeName(newNodeName).create()
+
+  override protected def doRemove(clusterInfo: T, containerInfos: Seq[ContainerInfo])(
+    implicit executionContext: ExecutionContext): Future[Boolean] = {
+    Future.sequence(containerInfos.map(c => k8sClient.remove(c.name))).map(_.nonEmpty)
   }
 
-  override protected def doRemoveNode(previousCluster: T, previousContainer: ContainerInfo, removedNodeName: String)(
-    implicit executionContext: ExecutionContext): Future[T] = {
-    val clusterName = previousCluster.name
+  override protected def doRemoveNode(previousCluster: T, beRemovedContainer: ContainerInfo)(
+    implicit executionContext: ExecutionContext): Future[Boolean] = {
     k8sClient
-      .removeNode(s"$PREFIX_KEY$DIVIDER${clusterName}$DIVIDER${serviceName}", removedNodeName, serviceName)
-      .flatMap { _ =>
-        cluster(clusterName).map(_._1)
-      }
+      .removeNode(s"$PREFIX_KEY$DIVIDER${previousCluster.name}$DIVIDER$serviceName",
+                  beRemovedContainer.nodeName,
+                  serviceName)
+      .map(_ => true)
   }
 
   override def logs(clusterName: String)(

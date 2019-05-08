@@ -33,6 +33,11 @@ public class TestRefreshableCache extends SmallTest {
   }
 
   @Test(expected = NullPointerException.class)
+  public void nullTimeout() {
+    RefreshableCache.<String, String>builder().timeout(null);
+  }
+
+  @Test(expected = NullPointerException.class)
   public void nullSupplier() {
     RefreshableCache.<String, String>builder().supplier(null);
   }
@@ -158,6 +163,36 @@ public class TestRefreshableCache extends SmallTest {
     RefreshableCache<String, String> cache = cache();
     cache.close();
     cache.put(CommonUtils.randomString(), CommonUtils.randomString());
+  }
+
+  @Test
+  public void testRemove() {
+    RefreshableCache<String, String> cache = cache();
+    String key = CommonUtils.randomString();
+    String value = CommonUtils.randomString();
+    cache.put(key, value);
+    Assert.assertEquals(value, cache.get(key).get());
+    cache.remove(key);
+    Assert.assertFalse(cache.get(key).isPresent());
+  }
+
+  @Test
+  public void testTimeout() throws InterruptedException {
+    RefreshableCache<String, String> cache =
+        RefreshableCache.<String, String>builder()
+            .supplier(
+                () ->
+                    Collections.singletonMap(
+                        CommonUtils.randomString(), CommonUtils.randomString()))
+            .frequency(Duration.ofSeconds(1000))
+            .frequency(Duration.ofSeconds(2))
+            .build();
+    String key = CommonUtils.randomString();
+    String value = CommonUtils.randomString();
+    cache.put(key, value);
+    Assert.assertEquals(value, cache.get(key).get());
+    TimeUnit.SECONDS.sleep(3);
+    Assert.assertFalse(cache.get(key).isPresent());
   }
 
   private static RefreshableCache<String, String> cache() {

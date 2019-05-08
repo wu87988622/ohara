@@ -72,6 +72,13 @@ class TestZookeeperRoute extends MediumTest with Matchers {
   }
 
   @Test
+  def repeatedlyDelete(): Unit = {
+    (0 to 10).foreach { index =>
+      result(zookeeperApi.delete(index.toString))
+    }
+  }
+
+  @Test
   def removeZookeeperClusterUsedByBrokerCluster(): Unit = {
     val zks = result(zookeeperApi.list)
 
@@ -197,7 +204,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     val cluster = result(zookeeperApi.add(request))
     assert(request, cluster)
 
-    result(zookeeperApi.delete(request.name)) shouldBe cluster
+    result(zookeeperApi.delete(request.name))
   }
 
   @Test
@@ -215,7 +222,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
 
     assert(request, result(zookeeperApi.get(request.name)))
 
-    result(zookeeperApi.delete(request.name)) shouldBe cluster
+    result(zookeeperApi.delete(request.name))
     result(zookeeperApi.list).size shouldBe 1
   }
 

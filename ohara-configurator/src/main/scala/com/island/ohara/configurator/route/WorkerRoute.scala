@@ -80,7 +80,7 @@ object WorkerRoute {
                 .filter(_.isInstanceOf[BrokerClusterInfo])
                 .find(_.name == bkName)
                 .map(_.name)
-                .getOrElse(throw new NoSuchClusterException(s"$bkName doesn't exist"))
+                .getOrElse(throw new NoSuchClusterException(s"broker cluster:$bkName doesn't exist"))
             }
             .getOrElse {
               val bkClusters = clusters.filter(_.isInstanceOf[BrokerClusterInfo])

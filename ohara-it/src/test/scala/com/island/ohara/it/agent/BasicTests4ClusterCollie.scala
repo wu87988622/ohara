@@ -62,8 +62,8 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
   override protected def zk_containers(clusterName: String): Future[Seq[ContainerApi.ContainerInfo]] =
     zkCollie.containers(clusterName)
 
-  override protected def zk_delete(clusterName: String): Future[ZookeeperApi.ZookeeperClusterInfo] =
-    zkCollie.forceRemove(clusterName)
+  override protected def zk_delete(clusterName: String): Future[Unit] =
+    zkCollie.forceRemove(clusterName).map(_ => Unit)
 
   //--------------------------------------------------[bk operations]--------------------------------------------------//
   override protected def bk_exist(clusterName: String): Future[Boolean] = bkCollie.exist(clusterName)
@@ -93,14 +93,14 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
   override protected def bk_containers(clusterName: String): Future[Seq[ContainerApi.ContainerInfo]] =
     bkCollie.containers(clusterName)
 
-  override protected def bk_delete(clusterName: String): Future[BrokerApi.BrokerClusterInfo] =
-    bkCollie.forceRemove(clusterName)
+  override protected def bk_delete(clusterName: String): Future[Unit] =
+    bkCollie.forceRemove(clusterName).map(_ => Unit)
 
   override protected def bk_addNode(clusterName: String, nodeName: String): Future[BrokerApi.BrokerClusterInfo] =
     bkCollie.addNode(clusterName, nodeName)
 
-  override protected def bk_removeNode(clusterName: String, nodeName: String): Future[BrokerApi.BrokerClusterInfo] =
-    bkCollie.removeNode(clusterName, nodeName)
+  override protected def bk_removeNode(clusterName: String, nodeName: String): Future[Unit] =
+    bkCollie.removeNode(clusterName, nodeName).map(_ => Unit)
 
   //--------------------------------------------------[wk operations]--------------------------------------------------//
   override protected def wk_exist(clusterName: String): Future[Boolean] = wkCollie.exist(clusterName)
@@ -155,14 +155,14 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
   override protected def wk_containers(clusterName: String): Future[Seq[ContainerApi.ContainerInfo]] =
     wkCollie.containers(clusterName)
 
-  override protected def wk_delete(clusterName: String): Future[WorkerApi.WorkerClusterInfo] =
-    wkCollie.forceRemove(clusterName)
+  override protected def wk_delete(clusterName: String): Future[Unit] =
+    wkCollie.forceRemove(clusterName).map(_ => Unit)
 
   override protected def wk_addNode(clusterName: String, nodeName: String): Future[WorkerApi.WorkerClusterInfo] =
     wkCollie.addNode(clusterName, nodeName)
 
-  override protected def wk_removeNode(clusterName: String, nodeName: String): Future[WorkerApi.WorkerClusterInfo] =
-    wkCollie.removeNode(clusterName, nodeName)
+  override protected def wk_removeNode(clusterName: String, nodeName: String): Future[Unit] =
+    wkCollie.removeNode(clusterName, nodeName).map(_ => Unit)
 
   @After
   final def tearDown(): Unit = Releasable.close(clusterCollie)
