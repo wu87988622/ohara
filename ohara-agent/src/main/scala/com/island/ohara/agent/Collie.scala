@@ -36,18 +36,19 @@ trait Collie[T <: ClusterInfo, Creator <: ClusterCreator[T]] {
     *
     * @param clusterName cluster name
     * @param executionContext thread pool
-    * @return the removed cluster
+    * @return true if it does remove a running cluster. Otherwise, false
     */
-  def remove(clusterName: String)(implicit executionContext: ExecutionContext): Future[T]
+  def remove(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean]
 
   /**
     * This method open a door to sub class to implement a force remove which kill whole cluster without graceful shutdown.
     * NOTED: The default implementation is reference to graceful remove.
     * @param clusterName cluster name
     * @param executionContext thread pool
-    * @return the removed cluster
+    * @return true if it does remove a running cluster. Otherwise, false
     */
-  def forceRemove(clusterName: String)(implicit executionContext: ExecutionContext): Future[T] = remove(clusterName)
+  def forceRemove(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean] = remove(
+    clusterName)
 
   /**
     * get logs from all containers.
@@ -109,9 +110,9 @@ trait Collie[T <: ClusterInfo, Creator <: ClusterCreator[T]] {
     * NOTED: this is a async operation since graceful downing a node from a running service may be slow.
     * @param clusterName cluster name
     * @param nodeName node name
-    * @return updated broker cluster
+    * @return true if it does remove a node from a running cluster. Otherwise, false
     */
-  def removeNode(clusterName: String, nodeName: String)(implicit executionContext: ExecutionContext): Future[T]
+  def removeNode(clusterName: String, nodeName: String)(implicit executionContext: ExecutionContext): Future[Boolean]
 }
 
 object Collie {
@@ -129,6 +130,16 @@ object Collie {
     protected var imageName: String = _
     protected var clusterName: String = _
     protected var nodeNames: Seq[String] = _
+
+    /**
+      * set the creator according to another cluster info
+      * @param clusterInfo another cluster info
+      */
+    def copy(clusterInfo: ClusterInfo): ClusterCreator.this.type = {
+      imageName(clusterInfo.imageName)
+      clusterName(clusterInfo.name)
+      nodeNames(clusterInfo.nodeNames)
+    }
 
     /**
       * set the image name used to create cluster's container.

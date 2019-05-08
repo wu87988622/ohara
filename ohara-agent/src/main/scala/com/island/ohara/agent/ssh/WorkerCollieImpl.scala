@@ -18,7 +18,7 @@ package com.island.ohara.agent.ssh
 
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.common.util.CommonUtils
 
@@ -118,33 +118,57 @@ private class WorkerCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClient
               case (node, containerName) =>
                 Future {
                   try {
+                    val containerInfo = ContainerInfo(
+                      nodeName = node.name,
+                      id = "unknown",
+                      imageName = imageName,
+                      created = "unknown",
+                      state = "unknown",
+                      kind = "unknown",
+                      name = containerName,
+                      size = "unknown",
+                      portMappings = Seq(
+                        PortMapping(
+                          hostIp = "unknown",
+                          portPairs = Seq(PortPair(
+                                            hostPort = clientPort,
+                                            containerPort = clientPort
+                                          ),
+                                          PortPair(
+                                            hostPort = jmxPort,
+                                            containerPort = jmxPort
+                                          ))
+                        )),
+                      environments = Map(
+                        WorkerCollie.CLIENT_PORT_KEY -> clientPort.toString,
+                        WorkerCollie.BROKERS_KEY -> brokers,
+                        WorkerCollie.GROUP_ID_KEY -> groupId,
+                        WorkerCollie.OFFSET_TOPIC_KEY -> offsetTopicName,
+                        WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY -> offsetTopicPartitions.toString,
+                        WorkerCollie.OFFSET_TOPIC_REPLICATIONS_KEY -> offsetTopicReplications.toString,
+                        WorkerCollie.CONFIG_TOPIC_KEY -> configTopicName,
+                        WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY -> configTopicReplications.toString,
+                        WorkerCollie.STATUS_TOPIC_KEY -> statusTopicName,
+                        WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY -> statusTopicPartitions.toString,
+                        WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY -> statusTopicReplications.toString,
+                        WorkerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
+                        WorkerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
+                        WorkerCollie.JARS_KEY -> jarUrls.mkString(","),
+                        ClusterCollie.BROKER_CLUSTER_NAME -> brokerClusterName,
+                        WorkerCollie.JMX_HOSTNAME_KEY -> node.name,
+                        WorkerCollie.JMX_PORT_KEY -> jmxPort.toString
+                      ),
+                      hostname = containerName
+                    )
                     dockerCache.exec(
                       node,
                       _.containerCreator()
-                        .imageName(imageName)
+                        .imageName(containerInfo.imageName)
                         // In --network=host mode, we don't need to export port for containers.
                         //                          .portMappings(Map(clientPort -> clientPort))
-                        .hostname(containerName)
-                        .envs(Map(
-                          WorkerCollie.CLIENT_PORT_KEY -> clientPort.toString,
-                          WorkerCollie.BROKERS_KEY -> brokers,
-                          WorkerCollie.GROUP_ID_KEY -> groupId,
-                          WorkerCollie.OFFSET_TOPIC_KEY -> offsetTopicName,
-                          WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY -> offsetTopicPartitions.toString,
-                          WorkerCollie.OFFSET_TOPIC_REPLICATIONS_KEY -> offsetTopicReplications.toString,
-                          WorkerCollie.CONFIG_TOPIC_KEY -> configTopicName,
-                          WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY -> configTopicReplications.toString,
-                          WorkerCollie.STATUS_TOPIC_KEY -> statusTopicName,
-                          WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY -> statusTopicPartitions.toString,
-                          WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY -> statusTopicReplications.toString,
-                          WorkerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
-                          WorkerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
-                          WorkerCollie.JARS_KEY -> jarUrls.mkString(","),
-                          ClusterCollie.BROKER_CLUSTER_NAME -> brokerClusterName,
-                          WorkerCollie.JMX_HOSTNAME_KEY -> node.name,
-                          WorkerCollie.JMX_PORT_KEY -> jmxPort.toString
-                        ))
-                        .name(containerName)
+                        .hostname(containerInfo.hostname)
+                        .envs(containerInfo.environments)
+                        .name(containerInfo.name)
                         .route(route ++ existRoute)
                         // [Before] we use --network=host for worker cluster since the connectors run on worker cluster may need to
                         // access external system to request data. In ssh mode, dns service "may" be not deployed.
@@ -154,13 +178,13 @@ private class WorkerCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClient
                         //.networkDriver(NETWORK_DRIVER)
                         // [AFTER] Given that we have no use case about using port in custom connectors and there is no
                         // similar case in other type (streamapp and k8s impl). Hence we change the network type from host to bridge
-                        .portMappings(Map(
-                          clientPort -> clientPort,
-                          jmxPort -> jmxPort
-                        ))
+                        .portMappings(containerInfo.portMappings
+                          .flatMap(_.portPairs)
+                          .map(pair => pair.hostPort -> pair.containerPort)
+                          .toMap)
                         .execute()
                     )
-                    Some(node.name)
+                    Some(containerInfo)
                   } catch {
                     case e: Throwable =>
                       try dockerCache.exec(node, _.forceRemove(containerName))
@@ -174,11 +198,10 @@ private class WorkerCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClient
                 }
             })
             .map(_.flatten.toSeq)
-            .map { successfulNodeNames =>
-              if (successfulNodeNames.isEmpty)
+            .map { successfulContainers =>
+              if (successfulContainers.isEmpty)
                 throw new IllegalArgumentException(s"failed to create $clusterName on $serviceName")
-              clusterCache.requestUpdate()
-              WorkerClusterInfo(
+              val clusterInfo = WorkerClusterInfo(
                 name = clusterName,
                 imageName = imageName,
                 brokerClusterName = brokerClusterName,
@@ -195,16 +218,13 @@ private class WorkerCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClient
                 statusTopicPartitions = statusTopicPartitions,
                 statusTopicReplications = statusTopicReplications,
                 jarIds = jarUrls.map(_.getFile),
+                jarUrls = jarUrls,
                 connectors = Seq.empty,
-                nodeNames = successfulNodeNames ++ existNodes.map(_._1.name)
+                nodeNames = successfulContainers.map(_.nodeName) ++ existNodes.map(_._1.name)
               )
+              clusterCache.put(clusterInfo, clusterCache.get(clusterInfo) ++ successfulContainers)
+              clusterInfo
             }
       }
   }
-
-  override protected def doAddNodeContainer(
-    previousCluster: WorkerClusterInfo,
-    previousContainers: Seq[ContainerInfo],
-    newNodeName: String)(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] =
-    doAddNode(previousCluster, previousContainers, newNodeName)
 }

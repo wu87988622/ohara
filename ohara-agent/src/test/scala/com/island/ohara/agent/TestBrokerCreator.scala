@@ -22,8 +22,10 @@ import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
 
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
+
 class TestBrokerCreator extends SmallTest with Matchers {
 
   private[this] def bkCreator(): BrokerCollie.ClusterCreator =
@@ -123,4 +125,22 @@ class TestBrokerCreator extends SmallTest with Matchers {
     .clientPort(CommonUtils.availablePort())
     .nodeNames(Seq("abc"))
     .create()
+
+  @Test
+  def testCopy(): Unit = {
+    val brokerClusterInfo = BrokerClusterInfo(
+      name = CommonUtils.randomString(10),
+      imageName = CommonUtils.randomString(),
+      zookeeperClusterName = CommonUtils.randomString(),
+      exporterPort = 10,
+      clientPort = 10,
+      jmxPort = 10,
+      nodeNames = Seq(CommonUtils.randomString())
+    )
+    Await.result(bkCreator().copy(brokerClusterInfo).create(), 30 seconds) shouldBe brokerClusterInfo
+  }
+
+  @Test
+  def testPassIncorrectTypeToCopy(): Unit =
+    an[IllegalArgumentException] should be thrownBy bkCreator().copy(FakeClusterInfo(CommonUtils.randomString()))
 }

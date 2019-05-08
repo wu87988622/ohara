@@ -29,7 +29,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class IntegrationTest extends OharaTest {
-  @Rule def globalTimeout: Timeout = new Timeout(2, TimeUnit.MINUTES)
+  @Rule def globalTimeout: Timeout = new Timeout(12, TimeUnit.MINUTES)
 
   protected def result[T](f: Future[T]): T = IntegrationTest.result(f)
 

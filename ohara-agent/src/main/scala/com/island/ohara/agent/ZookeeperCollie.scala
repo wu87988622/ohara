@@ -17,10 +17,11 @@
 package com.island.ohara.agent
 import java.util.Objects
 
-import com.island.ohara.client.configurator.v0.ZookeeperApi
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.client.configurator.v0.{ClusterInfo, ZookeeperApi}
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
+
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -35,6 +36,18 @@ object ZookeeperCollie {
     private[this] var clientPort: Int = ZookeeperApi.CLIENT_PORT_DEFAULT
     private[this] var peerPort: Int = ZookeeperApi.PEER_PORT_DEFAULT
     private[this] var electionPort: Int = ZookeeperApi.ELECTION_PORT_DEFAULT
+
+    override def copy(clusterInfo: ClusterInfo): ClusterCreator.this.type = clusterInfo match {
+      case zk: ZookeeperClusterInfo =>
+        super.copy(clusterInfo)
+        clientPort(zk.clientPort)
+        peerPort(zk.peerPort)
+        electionPort(zk.electionPort)
+        this
+      case _ =>
+        throw new IllegalArgumentException(
+          s"you should pass ZookeeperClusterInfo rather than ${clusterInfo.getClass.getName}")
+    }
 
     @Optional("default is com.island.ohara.client.configurator.v0.ZookeeperApi.CLIENT_PORT_DEFAULT")
     def clientPort(clientPort: Int): ClusterCreator = {

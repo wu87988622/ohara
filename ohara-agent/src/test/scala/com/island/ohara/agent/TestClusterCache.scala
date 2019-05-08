@@ -19,7 +19,7 @@ package com.island.ohara.agent
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
-import com.island.ohara.agent.ClusterCache.RequestKey
+import com.island.ohara.agent.ClusterCache.{RequestKey, Service}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
@@ -33,13 +33,13 @@ class TestClusterCache extends SmallTest with Matchers {
   def testRequestKey(): Unit = {
     val key = RequestKey(
       name = CommonUtils.randomString(),
-      service = CommonUtils.randomString(),
+      service = Service.WORKER,
       clusterInfo = FakeClusterInfo(CommonUtils.randomString())
     )
 
     key shouldBe key
     key should not be key.copy(name = CommonUtils.randomString())
-    key should not be key.copy(service = CommonUtils.randomString())
+    key should not be key.copy(service = Service.ZOOKEEPER)
   }
 
   @Test
@@ -104,6 +104,26 @@ class TestClusterCache extends SmallTest with Matchers {
 
     an[IllegalStateException] should be thrownBy cache.snapshot
     an[IllegalStateException] should be thrownBy cache.requestUpdate()
+  }
+
+  @Test
+  def testGet(): Unit = {
+    val clusterInfo0 = FakeClusterInfo(CommonUtils.randomString())
+    val containerInfo0 = fakeContainerInfo()
+    val cache = ClusterCache
+      .builder()
+      .supplier(() => {
+        Map(clusterInfo0 -> Seq(containerInfo0))
+      })
+      .frequency(1000 seconds)
+      .build()
+    try {
+      cache.get(clusterInfo0) shouldBe Seq.empty
+      cache.put(clusterInfo0, Seq(containerInfo0))
+      cache.get(clusterInfo0) shouldBe Seq(containerInfo0)
+      cache.remove(clusterInfo0)
+      cache.get(clusterInfo0) shouldBe Seq.empty
+    } finally cache.close()
   }
 
   private[this] def fakeContainerInfo(): ContainerInfo = ContainerInfo(

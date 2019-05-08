@@ -17,7 +17,7 @@
 package com.island.ohara.agent.ssh
 
 import com.island.ohara.agent.{ClusterCache, NodeCollie, ZookeeperCollie}
-import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.util.CommonUtils
 
@@ -58,31 +58,57 @@ private class ZookeeperCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerCli
                 case ((node, containerName), index) =>
                   Future {
                     try {
+                      val containerInfo = ContainerInfo(
+                        nodeName = node.name,
+                        id = "unknown",
+                        imageName = imageName,
+                        created = "unknown",
+                        state = "unknown",
+                        kind = "unknown",
+                        name = containerName,
+                        size = "unknown",
+                        portMappings = Seq(PortMapping(
+                          hostIp = "unknown",
+                          portPairs = Seq(
+                            PortPair(
+                              hostPort = clientPort,
+                              containerPort = clientPort
+                            ),
+                            PortPair(
+                              hostPort = peerPort,
+                              containerPort = peerPort
+                            ),
+                            PortPair(
+                              hostPort = electionPort,
+                              containerPort = electionPort
+                            )
+                          )
+                        )),
+                        environments = Map(
+                          ZookeeperCollie.ID_KEY -> index.toString,
+                          ZookeeperCollie.CLIENT_PORT_KEY -> clientPort.toString,
+                          ZookeeperCollie.PEER_PORT_KEY -> peerPort.toString,
+                          ZookeeperCollie.ELECTION_PORT_KEY -> electionPort.toString,
+                          ZookeeperCollie.SERVERS_KEY -> zkServers
+                        ),
+                        // zookeeper doesn't have advertised hostname/port so we assign the "docker host" directly
+                        hostname = node.name
+                      )
                       dockerCache.exec(
                         node,
                         _.containerCreator()
-                          .imageName(imageName)
-                          .portMappings(
-                            Map(
-                              clientPort -> clientPort,
-                              peerPort -> peerPort,
-                              electionPort -> electionPort
-                            ))
-                          // zookeeper doesn't have advertised hostname/port so we assign the "docker host" directly
-                          .hostname(node.name)
-                          .envs(Map(
-                            ZookeeperCollie.ID_KEY -> index.toString,
-                            ZookeeperCollie.CLIENT_PORT_KEY -> clientPort.toString,
-                            ZookeeperCollie.PEER_PORT_KEY -> peerPort.toString,
-                            ZookeeperCollie.ELECTION_PORT_KEY -> electionPort.toString,
-                            ZookeeperCollie.SERVERS_KEY -> zkServers
-                          ))
-                          .name(containerName)
+                          .imageName(containerInfo.imageName)
+                          .portMappings(containerInfo.portMappings
+                            .flatMap(_.portPairs)
+                            .map(pair => pair.hostPort -> pair.containerPort)
+                            .toMap)
+                          .hostname(containerInfo.hostname)
+                          .envs(containerInfo.environments)
+                          .name(containerInfo.name)
                           .route(route)
                           .execute()
                       )
-
-                      Some(node.name)
+                      Some(containerInfo)
                     } catch {
                       case e: Throwable =>
                         try dockerCache.exec(node, _.forceRemove(containerName))
@@ -96,27 +122,29 @@ private class ZookeeperCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerCli
                   }
               })
               .map(_.flatten.toSeq)
-              .map { successfulNodeNames =>
-                if (successfulNodeNames.isEmpty)
+              .map { successfulContainers =>
+                if (successfulContainers.isEmpty)
                   throw new IllegalArgumentException(s"failed to create $clusterName on $serviceName")
-                clusterCache.requestUpdate()
-                ZookeeperClusterInfo(
+                val clusterInfo = ZookeeperClusterInfo(
                   name = clusterName,
                   imageName = imageName,
                   clientPort = clientPort,
                   peerPort = peerPort,
                   electionPort = electionPort,
-                  nodeNames = successfulNodeNames
+                  nodeNames = successfulContainers.map(_.nodeName)
                 )
+                clusterCache.put(clusterInfo, clusterCache.get(clusterInfo) ++ successfulContainers)
+                clusterInfo
               }
           }
     }
 
-  override def removeNode(clusterName: String, nodeName: String)(
-    implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] = Future.failed(
-    new UnsupportedOperationException("zookeeper collie doesn't support to remove node from a running cluster"))
+  override protected def doRemoveNode(previousCluster: ZookeeperClusterInfo, beRemovedContainer: ContainerInfo)(
+    implicit executionContext: ExecutionContext): Future[Boolean] =
+    Future.failed(
+      new UnsupportedOperationException("zookeeper collie doesn't support to remove node from a running cluster"))
 
-  override protected def doAddNodeContainer(
+  override protected def doAddNode(
     previousCluster: ZookeeperClusterInfo,
     previousContainers: Seq[ContainerInfo],
     newNodeName: String)(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] = Future.failed(

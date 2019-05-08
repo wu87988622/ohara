@@ -48,7 +48,7 @@ object BrokerRoute {
               .filter(_.isInstanceOf[ZookeeperClusterInfo])
               .find(_.name == zkName)
               .map(_.name)
-              .getOrElse(throw new NoSuchClusterException(s"$zkName doesn't exist"))
+              .getOrElse(throw new NoSuchClusterException(s"zookeeper cluster:$zkName doesn't exist"))
           }
           .getOrElse {
             val zkClusters = clusters.filter(_.isInstanceOf[ZookeeperClusterInfo])

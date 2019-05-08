@@ -17,12 +17,15 @@
 package com.island.ohara.configurator.fake
 
 import java.util.concurrent.ConcurrentHashMap
+
 import com.island.ohara.agent.{NodeCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi
+import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
+
 import scala.concurrent.{ExecutionContext, Future}
 import scala.collection.JavaConverters._
 
@@ -75,58 +78,17 @@ private[configurator] class FakeWorkerCollie(nodeCollie: NodeCollie, wkConnectio
             statusTopicPartitions = statusTopicPartitions,
             statusTopicReplications = statusTopicReplications,
             jarIds = Seq.empty,
+            jarUrls = Seq.empty,
             connectors = Seq.empty,
             sources = Seq.empty,
             sinks = Seq.empty,
             nodeNames = nodeNames
           )))
 
-  override def removeNode(clusterName: String, nodeName: String)(
-    implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] = {
-    val previous = clusterCache.find(_._1.name == clusterName).get._1
-    if (!previous.nodeNames.contains(nodeName))
-      Future.failed(new IllegalArgumentException(s"$nodeName doesn't run on $clusterName!!!"))
-    else
-      Future.successful(
-        addCluster(
-          FakeWorkerClusterInfo(
-            name = previous.name,
-            imageName = previous.imageName,
-            brokerClusterName = previous.brokerClusterName,
-            clientPort = previous.clientPort,
-            jmxPort = previous.jmxPort,
-            groupId = previous.groupId,
-            statusTopicName = previous.statusTopicName,
-            statusTopicPartitions = previous.statusTopicPartitions,
-            statusTopicReplications = previous.statusTopicReplications,
-            configTopicName = previous.configTopicName,
-            configTopicPartitions = previous.configTopicPartitions,
-            configTopicReplications = previous.configTopicReplications,
-            offsetTopicName = previous.offsetTopicName,
-            offsetTopicPartitions = previous.offsetTopicPartitions,
-            offsetTopicReplications = previous.offsetTopicReplications,
-            jarIds = previous.jarIds,
-            connectors = Seq.empty,
-            sources = Seq.empty,
-            sinks = Seq.empty,
-            nodeNames = previous.nodeNames.filterNot(_ == nodeName)
-          )))
-  }
-
-  override def workerClient(cluster: WorkerClusterInfo): WorkerClient = cluster match {
-    case _: FakeWorkerClusterInfo =>
-      val fake = new FakeWorkerClient
-      val r = fakeClientCache.putIfAbsent(cluster, fake)
-      if (r == null) fake else r
-    case _ => WorkerClient(wkConnectionProps)
-  }
-
-  override protected def doAddNodeContainer(
-    previousCluster: WorkerClusterInfo,
-    previousContainers: Seq[ContainerApi.ContainerInfo],
-    newNodeName: String)(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] =
-    doAddNode(previousCluster, previousContainers, newNodeName).map(_ => {
-      FakeWorkerClusterInfo(
+  override protected def doRemoveNode(previousCluster: WorkerClusterInfo, beRemovedContainer: ContainerInfo)(
+    implicit executionContext: ExecutionContext): Future[Boolean] = Future
+    .successful(
+      addCluster(FakeWorkerClusterInfo(
         name = previousCluster.name,
         imageName = previousCluster.imageName,
         brokerClusterName = previousCluster.brokerClusterName,
@@ -143,16 +105,49 @@ private[configurator] class FakeWorkerCollie(nodeCollie: NodeCollie, wkConnectio
         offsetTopicPartitions = previousCluster.offsetTopicPartitions,
         offsetTopicReplications = previousCluster.offsetTopicReplications,
         jarIds = previousCluster.jarIds,
+        jarUrls = previousCluster.jarUrls,
         connectors = Seq.empty,
         sources = Seq.empty,
         sinks = Seq.empty,
-        nodeNames = previousCluster.nodeNames :+ newNodeName
-      )
-    })
+        nodeNames = previousCluster.nodeNames.filterNot(_ == beRemovedContainer.nodeName)
+      )))
+    .map(_ => true)
 
-  override protected def doRemoveNode(
+  override def workerClient(cluster: WorkerClusterInfo): WorkerClient = cluster match {
+    case _: FakeWorkerClusterInfo =>
+      val fake = new FakeWorkerClient
+      val r = fakeClientCache.putIfAbsent(cluster, fake)
+      if (r == null) fake else r
+    case _ => WorkerClient(wkConnectionProps)
+  }
+
+  override protected def doAddNode(
     previousCluster: WorkerClusterInfo,
-    previousContainer: ContainerApi.ContainerInfo,
-    removedNodeName: String)(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] =
-    throw new UnsupportedOperationException("Fake not support doRemoveNode function")
+    previousContainers: Seq[ContainerApi.ContainerInfo],
+    newNodeName: String)(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] =
+    Future.successful(
+      addCluster(
+        FakeWorkerClusterInfo(
+          name = previousCluster.name,
+          imageName = previousCluster.imageName,
+          brokerClusterName = previousCluster.brokerClusterName,
+          clientPort = previousCluster.clientPort,
+          jmxPort = previousCluster.jmxPort,
+          groupId = previousCluster.groupId,
+          statusTopicName = previousCluster.statusTopicName,
+          statusTopicPartitions = previousCluster.statusTopicPartitions,
+          statusTopicReplications = previousCluster.statusTopicReplications,
+          configTopicName = previousCluster.configTopicName,
+          configTopicPartitions = previousCluster.configTopicPartitions,
+          configTopicReplications = previousCluster.configTopicReplications,
+          offsetTopicName = previousCluster.offsetTopicName,
+          offsetTopicPartitions = previousCluster.offsetTopicPartitions,
+          offsetTopicReplications = previousCluster.offsetTopicReplications,
+          jarIds = previousCluster.jarIds,
+          jarUrls = previousCluster.jarUrls,
+          connectors = Seq.empty,
+          sources = Seq.empty,
+          sinks = Seq.empty,
+          nodeNames = previousCluster.nodeNames :+ newNodeName
+        )))
 }

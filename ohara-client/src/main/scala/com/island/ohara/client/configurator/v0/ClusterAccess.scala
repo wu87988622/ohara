@@ -37,10 +37,10 @@ class ClusterAccess[Req, Res <: ClusterInfo] private[v0] (prefixPath: String)(im
   def get(clusterName: String)(implicit executionContext: ExecutionContext): Future[Res] =
     exec.get[Res, ErrorApi.Error](
       s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/${_clusterName(clusterName)}")
-  def delete(clusterName: String)(implicit executionContext: ExecutionContext): Future[Res] =
-    exec.delete[Res, ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$clusterName")
-  def forceDelete(clusterName: String)(implicit executionContext: ExecutionContext): Future[Res] =
-    exec.delete[Res, ErrorApi.Error](
+  def delete(clusterName: String)(implicit executionContext: ExecutionContext): Future[Unit] =
+    exec.delete[ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$clusterName")
+  def forceDelete(clusterName: String)(implicit executionContext: ExecutionContext): Future[Unit] =
+    exec.delete[ErrorApi.Error](
       s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$clusterName?${Parameters.FORCE_REMOVE}=true")
   def list(implicit executionContext: ExecutionContext): Future[Seq[Res]] =
     exec.get[Seq[Res], ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}")
@@ -49,7 +49,7 @@ class ClusterAccess[Req, Res <: ClusterInfo] private[v0] (prefixPath: String)(im
   def addNode(clusterName: String, nodeName: String)(implicit executionContext: ExecutionContext): Future[Res] =
     exec.post[Res, ErrorApi.Error](
       s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/${_clusterName(clusterName)}/${_nodeName(nodeName)}")
-  def removeNode(clusterName: String, nodeName: String)(implicit executionContext: ExecutionContext): Future[Res] =
-    exec.delete[Res, ErrorApi.Error](
+  def removeNode(clusterName: String, nodeName: String)(implicit executionContext: ExecutionContext): Future[Unit] =
+    exec.delete[ErrorApi.Error](
       s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/${_clusterName(clusterName)}/${_nodeName(nodeName)}")
 }

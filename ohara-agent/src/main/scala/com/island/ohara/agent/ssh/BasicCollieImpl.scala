@@ -18,12 +18,9 @@ package com.island.ohara.agent.ssh
 
 import com.island.ohara.agent.Collie.ClusterCreator
 import com.island.ohara.agent.{ClusterCache, ContainerCollie, NoSuchClusterException, NodeCollie}
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
@@ -57,32 +54,34 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: Cl
                          case (hostname, ip) => s"$ip $hostname"
                        }.toSeq))
 
-  override def forceRemove(clusterName: String)(implicit executionContext: ExecutionContext): Future[T] =
-    remove(clusterName, true)
+  override protected def doForceRemove(clusterInfo: T, containerInfos: Seq[ContainerInfo])(
+    implicit executionContext: ExecutionContext): Future[Boolean] =
+    remove(clusterInfo, containerInfos, true)
 
-  override def remove(clusterName: String)(implicit executionContext: ExecutionContext): Future[T] =
-    remove(clusterName, false)
+  override protected def doRemove(clusterInfo: T, containerInfos: Seq[ContainerInfo])(
+    implicit executionContext: ExecutionContext): Future[Boolean] =
+    remove(clusterInfo, containerInfos, false)
 
-  private[this] def remove(clusterName: String, force: Boolean)(
-    implicit executionContext: ExecutionContext): Future[T] =
-    cluster(clusterName).flatMap {
-      case (cluster, containerInfos) =>
-        Future
-          .traverse(containerInfos) { containerInfo =>
-            nodeCollie
-              .node(containerInfo.nodeName)
-              .map(
-                node =>
-                  dockerCache.exec(node,
-                                   client =>
-                                     if (force) client.forceRemove(containerInfo.name)
-                                     else {
-                                       client.stop(containerInfo.name)
-                                       client.remove(containerInfo.name)
-                                   }))
-          }
-          .map(_ => cluster)
-    }
+  private[this] def remove(clusterInfo: T, containerInfos: Seq[ContainerInfo], force: Boolean)(
+    implicit executionContext: ExecutionContext): Future[Boolean] =
+    Future
+      .traverse(containerInfos) { containerInfo =>
+        nodeCollie
+          .node(containerInfo.nodeName)
+          .map(
+            node =>
+              dockerCache.exec(node,
+                               client =>
+                                 if (force) client.forceRemove(containerInfo.name)
+                                 else {
+                                   client.stop(containerInfo.name)
+                                   client.remove(containerInfo.name)
+                               }))
+      }
+      .map { _ =>
+        clusterCache.remove(clusterInfo)
+        true
+      }
 
   override def logs(clusterName: String)(
     implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] = nodeCollie
@@ -94,60 +93,27 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: Cl
       Future
         .sequence(containers.map { container =>
           nodeCollie.node(container.nodeName).map { node =>
-            container -> dockerCache.exec(node, _.log(container.name))
+            container -> dockerCache.exec(node,
+                                          client =>
+                                            try client.log(container.name)
+                                            catch {
+                                              case _: Throwable => s"failed to get log from ${container.name}"
+                                          })
           }
         })
         .map(_.toMap)
     }
 
-  override protected def doRemoveNode(previousCluster: T, previousContainer: ContainerInfo, removedNodeName: String)(
-    implicit executionContext: ExecutionContext): Future[T] = {
-    nodeCollie.node(previousContainer.nodeName).map { node =>
-      dockerCache.exec(node, _.stop(previousContainer.name))
-      clusterCache.requestUpdate()
-      // TODO: why we need to use match pattern? please refactor it...by chia
-      (previousCluster match {
-        case c: ZookeeperClusterInfo =>
-          ZookeeperClusterInfo(
-            name = c.name,
-            imageName = c.imageName,
-            clientPort = c.clientPort,
-            peerPort = c.peerPort,
-            electionPort = c.electionPort,
-            nodeNames = c.nodeNames.filter(_ != removedNodeName)
-          )
-        case c: BrokerClusterInfo =>
-          BrokerClusterInfo(
-            name = c.name,
-            imageName = c.imageName,
-            clientPort = c.clientPort,
-            exporterPort = c.exporterPort,
-            jmxPort = c.jmxPort,
-            zookeeperClusterName = c.zookeeperClusterName,
-            nodeNames = c.nodeNames.filter(_ != removedNodeName)
-          )
-        case c: WorkerClusterInfo =>
-          WorkerClusterInfo(
-            name = c.name,
-            imageName = c.imageName,
-            brokerClusterName = c.brokerClusterName,
-            clientPort = c.clientPort,
-            jmxPort = c.jmxPort,
-            groupId = c.groupId,
-            statusTopicName = c.statusTopicName,
-            statusTopicPartitions = c.statusTopicPartitions,
-            statusTopicReplications = c.statusTopicReplications,
-            configTopicName = c.configTopicName,
-            configTopicPartitions = c.configTopicPartitions,
-            configTopicReplications = c.configTopicReplications,
-            offsetTopicName = c.offsetTopicName,
-            offsetTopicPartitions = c.offsetTopicPartitions,
-            offsetTopicReplications = c.offsetTopicReplications,
-            connectors = c.connectors,
-            jarIds = c.jarIds,
-            nodeNames = c.nodeNames.filter(_ != removedNodeName)
-          )
-      }).asInstanceOf[T]
+  override protected def doRemoveNode(previousCluster: T, beRemovedContainer: ContainerInfo)(
+    implicit executionContext: ExecutionContext): Future[Boolean] = {
+    nodeCollie.node(beRemovedContainer.nodeName).map { node =>
+      dockerCache.exec(node, _.stop(beRemovedContainer.name))
+      clusterCache.put(previousCluster, clusterCache.get(previousCluster).filter(_.name != beRemovedContainer.name))
+      true
     }
   }
+
+  override protected def doAddNode(previousCluster: T, previousContainers: Seq[ContainerInfo], newNodeName: String)(
+    implicit executionContext: ExecutionContext): Future[T] =
+    creator().copy(previousCluster).nodeName(newNodeName).create()
 }

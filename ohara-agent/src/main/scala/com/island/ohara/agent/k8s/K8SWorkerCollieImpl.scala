@@ -170,17 +170,12 @@ private class K8SWorkerCollieImpl(val nodeCollie: NodeCollie,
             statusTopicPartitions = statusTopicPartitions,
             statusTopicReplications = statusTopicReplications,
             jarIds = jarUrls.map(_.getFile),
+            jarUrls = jarUrls,
             connectors = Seq.empty,
             nodeNames = successfulNodeNames ++ existNodes.map(_._1.name)
           )
       }
   }
-
-  override protected def doAddNodeContainer(
-    previousCluster: WorkerClusterInfo,
-    previousContainers: Seq[ContainerInfo],
-    newNodeName: String)(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] =
-    doAddNode(previousCluster, previousContainers, newNodeName)
 
   override protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] =

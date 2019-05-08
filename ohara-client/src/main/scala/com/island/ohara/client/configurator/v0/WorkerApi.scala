@@ -16,6 +16,8 @@
 
 package com.island.ohara.client.configurator.v0
 
+import java.net.URL
+
 import com.island.ohara.client.configurator.v0.InfoApi.ConnectorVersion
 import com.island.ohara.common.util.VersionUtils
 import com.island.ohara.kafka.connector.json.SettingDefinition
@@ -65,6 +67,7 @@ object WorkerApi {
   private[this] val OFFSET_TOPIC_PARTITIONS_KEY = "offsetTopicPartitions"
   private[this] val OFFSET_TOPIC_REPLICATIONS_KEY = "offsetTopicReplications"
   private[this] val JAR_IDS_KEY = "jarIds"
+  private[this] val JAR_URLS_KEY = "jarUrls"
   // TODO: deprecated key
   private[this] val JARS_KEY = "jars"
   private[this] val JAR_NAMES_KEY = "jarNames"
@@ -206,6 +209,7 @@ object WorkerApi {
     def offsetTopicPartitions: Int
     def offsetTopicReplications: Short
     def jarIds: Seq[String]
+    def jarUrls: Seq[URL]
     def connectors: Seq[ConnectorDefinitions]
     def sources: Seq[ConnectorVersion]
     def sinks: Seq[ConnectorVersion]
@@ -237,6 +241,7 @@ object WorkerApi {
         offsetTopicPartitions = obj.offsetTopicPartitions,
         offsetTopicReplications = obj.offsetTopicReplications,
         jarIds = obj.jarIds,
+        jarUrls = obj.jarUrls,
         connectors = obj.connectors,
         nodeNames = obj.nodeNames
       )
@@ -259,6 +264,7 @@ object WorkerApi {
               offsetTopicPartitions: Int,
               offsetTopicReplications: Short,
               jarIds: Seq[String],
+              jarUrls: Seq[URL],
               connectors: Seq[ConnectorDefinitions],
               nodeNames: Seq[String]): WorkerClusterInfo = WorkerClusterInfoImpl(
       name = name,
@@ -277,6 +283,7 @@ object WorkerApi {
       offsetTopicPartitions = offsetTopicPartitions,
       offsetTopicReplications = offsetTopicReplications,
       jarIds = jarIds,
+      jarUrls = jarUrls,
       connectors = connectors,
       nodeNames = nodeNames
     )
@@ -307,6 +314,7 @@ object WorkerApi {
                                                  offsetTopicPartitions: Int,
                                                  offsetTopicReplications: Short,
                                                  jarIds: Seq[String],
+                                                 jarUrls: Seq[URL],
                                                  connectors: Seq[ConnectorDefinitions],
                                                  nodeNames: Seq[String])
       extends WorkerClusterInfo {
@@ -336,6 +344,7 @@ object WorkerApi {
             OFFSET_TOPIC_PARTITIONS_KEY -> JsNumber(obj.offsetTopicPartitions),
             OFFSET_TOPIC_REPLICATIONS_KEY -> JsNumber(obj.offsetTopicReplications),
             JAR_IDS_KEY -> JsArray(obj.jarIds.map(JsString(_)).toVector),
+            JAR_URLS_KEY -> JsArray(obj.jarUrls.map(_.toString).map(JsString(_)).toVector),
             CONNECTORS_KEY -> JsArray(obj.connectors.map(CONNECTION_DEFINITIONS_JSON_FORMAT.write).toVector),
             NODE_NAMES_KEY -> JsArray(obj.nodeNames.map(JsString(_)).toVector),
             // deprecated keys
@@ -374,6 +383,7 @@ object WorkerApi {
         offsetTopicPartitions = noJsNull(json.asJsObject.fields)(OFFSET_TOPIC_PARTITIONS_KEY).convertTo[Int],
         offsetTopicReplications = noJsNull(json.asJsObject.fields)(OFFSET_TOPIC_REPLICATIONS_KEY).convertTo[Short],
         jarIds = noJsNull(json.asJsObject.fields)(JAR_IDS_KEY).convertTo[Seq[String]],
+        jarUrls = noJsNull(json.asJsObject.fields)(JAR_URLS_KEY).convertTo[Seq[String]].map(s => new URL(s)),
         connectors = noJsNull(json.asJsObject.fields)(CONNECTORS_KEY).convertTo[Seq[ConnectorDefinitions]],
         nodeNames = noJsNull(json.asJsObject.fields)(NODE_NAMES_KEY).convertTo[Seq[String]]
       )

@@ -171,6 +171,7 @@ class ConfiguratorBuilder {
         offsetTopicPartitions = 1,
         offsetTopicReplications = 1.asInstanceOf[Short],
         jarIds = Seq.empty,
+        jarUrls = Seq.empty,
         connectors = Await.result(WorkerClient(wkConnectionProps).connectors, 10 seconds),
         nodeNames = Seq(host)
       )
@@ -255,6 +256,7 @@ class ConfiguratorBuilder {
           offsetTopicPartitions = 1,
           offsetTopicReplications = 1.asInstanceOf[Short],
           jarIds = Seq.empty,
+          jarUrls = Seq.empty,
           connectors = Seq.empty,
           sources = Seq.empty,
           sinks = Seq.empty,

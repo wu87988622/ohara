@@ -17,7 +17,7 @@
 package com.island.ohara.it.agent
 
 import java.time.Duration
-import java.util.concurrent.ExecutionException
+import java.util.concurrent.{ExecutionException, TimeUnit}
 
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
@@ -63,7 +63,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
   protected def zk_clusters(): Future[Seq[ZookeeperClusterInfo]]
   protected def zk_logs(clusterName: String): Future[Seq[String]]
   protected def zk_containers(clusterName: String): Future[Seq[ContainerInfo]]
-  protected def zk_delete(clusterName: String): Future[ZookeeperClusterInfo]
+  protected def zk_delete(clusterName: String): Future[Unit]
 
   //--------------------------------------------------[bk operations]--------------------------------------------------//
   protected def bk_exist(clusterName: String): Future[Boolean]
@@ -78,9 +78,9 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
   protected def bk_clusters(): Future[Seq[BrokerClusterInfo]]
   protected def bk_logs(clusterName: String): Future[Seq[String]]
   protected def bk_containers(clusterName: String): Future[Seq[ContainerInfo]]
-  protected def bk_delete(clusterName: String): Future[BrokerClusterInfo]
+  protected def bk_delete(clusterName: String): Future[Unit]
   protected def bk_addNode(clusterName: String, nodeName: String): Future[BrokerClusterInfo]
-  protected def bk_removeNode(clusterName: String, nodeName: String): Future[BrokerClusterInfo]
+  protected def bk_removeNode(clusterName: String, nodeName: String): Future[Unit]
 
   //--------------------------------------------------[wk operations]--------------------------------------------------//
   protected def wk_exist(clusterName: String): Future[Boolean]
@@ -103,9 +103,9 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
   protected def wk_clusters(): Future[Seq[WorkerClusterInfo]]
   protected def wk_logs(clusterName: String): Future[Seq[String]]
   protected def wk_containers(clusterName: String): Future[Seq[ContainerInfo]]
-  protected def wk_delete(clusterName: String): Future[WorkerClusterInfo]
+  protected def wk_delete(clusterName: String): Future[Unit]
   protected def wk_addNode(clusterName: String, nodeName: String): Future[WorkerClusterInfo]
-  protected def wk_removeNode(clusterName: String, nodeName: String): Future[WorkerClusterInfo]
+  protected def wk_removeNode(clusterName: String, nodeName: String): Future[Unit]
 
   /**
     * used to debug...
@@ -220,19 +220,22 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         result(bk_exist(bkCluster.name)) shouldBe true
         // we can't assume the size since other tests may create zk cluster at the same time
         result(bk_clusters()).isEmpty shouldBe false
+        await(() => result(bk_containers(clusterName)).nonEmpty)
+        result(bk_containers(clusterName)).foreach { container =>
+          container.nodeName shouldBe nodeName
+          container.name.contains(clusterName) shouldBe true
+          container.hostname.contains(clusterName) shouldBe true
+          container.portMappings.head.portPairs.size shouldBe 3
+          container.portMappings.head.portPairs.exists(_.containerPort == clientPort) shouldBe true
+          container.environments.exists(_._2 == clientPort.toString) shouldBe true
+        }
         result(bk_logs(clusterName)).size shouldBe 1
         result(bk_logs(clusterName)).foreach(log =>
           withClue(log) {
             log.contains("exception") shouldBe false
             log.isEmpty shouldBe false
         })
-        val container = result(bk_containers(clusterName)).head
-        container.nodeName shouldBe nodeName
-        container.name.contains(clusterName) shouldBe true
-        container.hostname.contains(clusterName) shouldBe true
-        container.portMappings.head.portPairs.size shouldBe 3
-        container.portMappings.head.portPairs.exists(_.containerPort == clientPort) shouldBe true
-        container.environments.exists(_._2 == clientPort.toString) shouldBe true
+        log.info("[BROKER] verify:log done")
         var curCluster = bkCluster
         testTopic(curCluster)
         testJmx(curCluster)
@@ -250,7 +253,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
   }
 
   private[this] def testAddNodeToRunningBrokerCluster(previousCluster: BrokerClusterInfo): BrokerClusterInfo = {
-    result(bk_exist(previousCluster.name)) shouldBe true
+    await(() => result(bk_exist(previousCluster.name)))
     log.info(s"[BROKER] nodeCache:$nodeCache previous:${previousCluster.nodeNames}")
     an[IllegalArgumentException] should be thrownBy result(
       bk_removeNode(previousCluster.name, previousCluster.nodeNames.head))
@@ -364,19 +367,22 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
   }
 
   private[this] def testRemoveNodeToRunningBrokerCluster(previousCluster: BrokerClusterInfo): BrokerClusterInfo = {
-    result(bk_exist(previousCluster.name)) shouldBe true
+    await(() => result(bk_exist(previousCluster.name)))
     if (previousCluster.nodeNames.size > 1) {
       val beRemovedNode = previousCluster.nodeNames.head
-      log.info(s"[BROKER] start to remove node:$beRemovedNode from bk cluster:${previousCluster.name}")
-      val newCluster = result(bk_removeNode(previousCluster.name, beRemovedNode))
-      log.info(s"[BROKER] start to remove node:$beRemovedNode from bk cluster:${previousCluster.name} ... done")
-      newCluster.name shouldBe previousCluster.name
-      newCluster.imageName shouldBe previousCluster.imageName
-      newCluster.zookeeperClusterName shouldBe previousCluster.zookeeperClusterName
-      newCluster.clientPort shouldBe previousCluster.clientPort
-      previousCluster.nodeNames.size - newCluster.nodeNames.size shouldBe 1
-      await(() => !result(bk_cluster(newCluster.name)).nodeNames.contains(beRemovedNode))
-      newCluster
+      await(() => {
+        log.info(s"[BROKER] start to remove node:$beRemovedNode from bk cluster:${previousCluster.name}")
+        result(bk_removeNode(previousCluster.name, beRemovedNode))
+        log.info(s"[BROKER] start to remove node:$beRemovedNode from bk cluster:${previousCluster.name} ... done")
+        val newCluster = result(bk_cluster(previousCluster.name))
+        newCluster.name == previousCluster.name &&
+        newCluster.imageName == previousCluster.imageName &&
+        newCluster.zookeeperClusterName == previousCluster.zookeeperClusterName &&
+        newCluster.clientPort == previousCluster.clientPort &&
+        previousCluster.nodeNames.size - newCluster.nodeNames.size == 1 &&
+        !result(bk_cluster(newCluster.name)).nodeNames.contains(beRemovedNode)
+      })
+      result(bk_cluster(previousCluster.name))
     } else previousCluster
   }
 
@@ -424,7 +430,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
           workerCluster.offsetTopicReplications shouldBe 1
           workerCluster
         }
-
+        log.info("[WORKER] create ...")
         val wkCluster = assert(
           result(
             wk_create(
@@ -434,8 +440,9 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
               bkClusterName = bkCluster.name,
               nodeNames = Seq(nodeName)
             )))
-        assertCluster(() => result(wk_clusters()), wkCluster.name)
         log.info("[WORKER] create done")
+        assertCluster(() => result(wk_clusters()), wkCluster.name)
+        log.info("[WORKER] check existence")
         assert(result(wk_cluster(wkCluster.name)))
         log.info("[WORKER] verify:create done")
         try {
@@ -444,6 +451,18 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
           // we can't assume the size since other tests may create zk cluster at the same time
           result(wk_clusters()).isEmpty shouldBe false
           log.info("[WORKER] verify:list done")
+          await(() => result(wk_containers(clusterName)).nonEmpty)
+          result(wk_containers(clusterName)).foreach { container =>
+            container.nodeName shouldBe nodeName
+            container.name.contains(clusterName) shouldBe true
+            container.hostname.contains(clusterName) shouldBe true
+            // [BEFORE] ClusterCollieImpl applies --network=host to all worker containers so there is no port mapping.
+            // The following checks are disabled rather than deleted since it seems like a bug if we don't check the port mapping.
+            // [AFTER] ClusterCollieImpl use bridge network now
+            container.portMappings.head.portPairs.size shouldBe 2
+            container.portMappings.head.portPairs.exists(_.containerPort == clientPort) shouldBe true
+            container.environments.exists(_._2 == clientPort.toString) shouldBe true
+          }
           result(wk_logs(clusterName)).size shouldBe 1
           result(wk_logs(clusterName)).foreach(log =>
             withClue(log) {
@@ -451,16 +470,6 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
               log.isEmpty shouldBe false
           })
           log.info("[WORKER] verify:log done")
-          val container = result(wk_containers(clusterName)).head
-          container.nodeName shouldBe nodeName
-          container.name.contains(clusterName) shouldBe true
-          container.hostname.contains(clusterName) shouldBe true
-          // ClusterCollieImpl applies --network=host to all worker containers so there is no port mapping.
-          // The following checks are disabled rather than deleted since it seems like a bug if we don't check the port mapping.
-          // container.portMappings.head.portPairs.size shouldBe 1
-          // container.portMappings.head.portPairs.exists(_.containerPort == clientPort) shouldBe true
-          container.environments.exists(_._2 == clientPort.toString) shouldBe true
-
           var curCluster = wkCluster
           testConnectors(curCluster)
           testJmx(curCluster)
@@ -502,7 +511,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
   }
 
   private[this] def testAddNodeToRunningWorkerCluster(previousCluster: WorkerClusterInfo): WorkerClusterInfo = {
-    result(wk_exist(previousCluster.name)) shouldBe true
+    await(() => result(wk_exist(previousCluster.name)))
     an[IllegalArgumentException] should be thrownBy result(
       wk_removeNode(previousCluster.name, previousCluster.nodeNames.head))
     val freeNodes = nodeCache.filterNot(node => previousCluster.nodeNames.contains(node.name))
@@ -532,22 +541,26 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
   }
 
   private[this] def testRemoveNodeToRunningWorkerCluster(previousCluster: WorkerClusterInfo): WorkerClusterInfo = {
-    result(wk_exist(previousCluster.name)) shouldBe true
+    await(() => result(wk_exist(previousCluster.name)))
     if (previousCluster.nodeNames.size > 1) {
       val beRemovedNode = previousCluster.nodeNames.head
-      log.info(s"[WORKER] start to remove node:$beRemovedNode from ${previousCluster.name}")
-      val newCluster = result(wk_removeNode(previousCluster.name, beRemovedNode))
-      newCluster.name shouldBe previousCluster.name
-      newCluster.imageName shouldBe previousCluster.imageName
-      newCluster.configTopicName shouldBe previousCluster.configTopicName
-      newCluster.statusTopicName shouldBe previousCluster.statusTopicName
-      newCluster.offsetTopicName shouldBe previousCluster.offsetTopicName
-      newCluster.groupId shouldBe previousCluster.groupId
-      newCluster.brokerClusterName shouldBe previousCluster.brokerClusterName
-      newCluster.clientPort shouldBe previousCluster.clientPort
-      previousCluster.nodeNames.size - newCluster.nodeNames.size shouldBe 1
-      await(() => !result(wk_cluster(newCluster.name)).nodeNames.contains(beRemovedNode))
-      newCluster
+      await(() => {
+        log.info(s"[WORKER] start to remove node:$beRemovedNode from ${previousCluster.name}")
+        result(wk_removeNode(previousCluster.name, beRemovedNode))
+        log.info(s"[WORKER] start to remove node:$beRemovedNode from ${previousCluster.name} ... done")
+        val newCluster = result(wk_cluster(previousCluster.name))
+        newCluster.name == previousCluster.name &&
+        newCluster.imageName == previousCluster.imageName &&
+        newCluster.configTopicName == previousCluster.configTopicName &&
+        newCluster.statusTopicName == previousCluster.statusTopicName &&
+        newCluster.offsetTopicName == previousCluster.offsetTopicName &&
+        newCluster.groupId == previousCluster.groupId &&
+        newCluster.brokerClusterName == previousCluster.brokerClusterName &&
+        newCluster.clientPort == previousCluster.clientPort &&
+        previousCluster.nodeNames.size - newCluster.nodeNames.size == 1 &&
+        !result(wk_cluster(newCluster.name)).nodeNames.contains(beRemovedNode)
+      })
+      result(wk_cluster(previousCluster.name))
     } else previousCluster
   }
 
@@ -565,6 +578,8 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
             nodeNames = nodeCache.map(_.name)
           ))
       }
+      // add a bit wait to make sure the cluster is up
+      TimeUnit.SECONDS.sleep(5)
       assertClusters(() => result(zk_clusters()), clusters.map(_.name))
       val clusters2 = result(zk_clusters())
       clusters.foreach { c =>
@@ -609,6 +624,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
             nodeNames = Seq(nodeCache.head.name)
           ))
       }
+
       assertClusters(() => result(zk_clusters()), zks.map(_.name))
       val bks = zks.zipWithIndex.map {
         case (zk, index) =>
@@ -622,16 +638,9 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
               nodeNames = Seq(nodeCache.head.name)
             ))
       }
+
       assertClusters(() => result(bk_clusters()), bks.map(_.name))
-      val clusters2 = result(bk_clusters())
-      bks.foreach { c =>
-        val another = clusters2.find(_.name == c.name).get
-        another.clientPort shouldBe c.clientPort
-        another.exporterPort shouldBe c.exporterPort
-        another.zookeeperClusterName shouldBe c.zookeeperClusterName
-        another.connectionProps shouldBe c.connectionProps
-        testTopic(c)
-      }
+      result(bk_clusters()).foreach(testTopic)
     } finally if (cleanup) {
       bkNames.foreach { name =>
         try result(bk_delete(name))
@@ -701,8 +710,9 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
               nodeNames = nodeCache.map(_.name)
             ))
       }
-
       log.info(s"check multi wk clusters:$wkNames")
+      // add a bit wait to make sure the cluster is up
+      TimeUnit.SECONDS.sleep(5)
       assertClusters(() => result(wk_clusters()), clusters.map(_.name))
       wkNames.zipWithIndex.map {
         case (wkName, index) =>
@@ -714,26 +724,9 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       }
 
       log.info(s"check multi wk clusters:$wkNames by list")
-      val clusters2 = result(wk_clusters())
-      clusters.foreach { c =>
-        val another = clusters2.find(_.name == c.name).get
-        another.name shouldBe c.name
-        another.brokerClusterName shouldBe c.brokerClusterName
-        another.clientPort shouldBe c.clientPort
-        another.groupId shouldBe c.groupId
-        another.configTopicName shouldBe c.configTopicName
-        another.configTopicPartitions shouldBe c.configTopicPartitions
-        another.configTopicReplications shouldBe c.configTopicReplications
-        another.statusTopicName shouldBe c.statusTopicName
-        another.statusTopicPartitions shouldBe c.statusTopicPartitions
-        another.statusTopicReplications shouldBe c.statusTopicReplications
-        another.offsetTopicName shouldBe c.offsetTopicName
-        another.offsetTopicPartitions shouldBe c.offsetTopicPartitions
-        another.offsetTopicReplications shouldBe c.offsetTopicReplications
-        another.jarIds shouldBe c.jarIds
-        another.imageName shouldBe c.imageName
-        testConnectors(c)
-        testJmx(c)
+      result(wk_clusters()).foreach { cluster =>
+        testConnectors(cluster)
+        testJmx(cluster)
       }
     } finally if (cleanup) {
       wkNames.foreach { name =>

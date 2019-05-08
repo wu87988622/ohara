@@ -17,7 +17,7 @@
 package com.island.ohara.configurator.fake
 
 import com.island.ohara.agent.{NodeCollie, ZookeeperCollie}
-import com.island.ohara.client.configurator.v0.ContainerApi
+import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -38,20 +38,14 @@ private[configurator] class FakeZookeeperCollie(nodeCollie: NodeCollie)
             nodeNames = nodeNames
           )))
 
-  override def removeNode(clusterName: String, nodeName: String)(
-    implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
+  override protected def doRemoveNode(previousCluster: ZookeeperClusterInfo, beRemovedContainer: ContainerInfo)(
+    implicit executionContext: ExecutionContext): Future[Boolean] =
     Future.failed(
       new UnsupportedOperationException("zookeeper collie doesn't support to remove node from a running cluster"))
 
-  override protected def doAddNodeContainer(
+  override protected def doAddNode(
     previousCluster: ZookeeperClusterInfo,
-    previousContainers: Seq[ContainerApi.ContainerInfo],
+    previousContainers: Seq[ContainerInfo],
     newNodeName: String)(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] = Future.failed(
     new UnsupportedOperationException("zookeeper collie doesn't support to add node from a running cluster"))
-
-  override protected def doRemoveNode(
-    previousCluster: ZookeeperClusterInfo,
-    previousContainer: ContainerApi.ContainerInfo,
-    removedNodeName: String)(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
-    throw new UnsupportedOperationException("Fake not support doRemoveNode function")
 }

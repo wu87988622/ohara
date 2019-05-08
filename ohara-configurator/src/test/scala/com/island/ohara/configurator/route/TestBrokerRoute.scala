@@ -84,6 +84,14 @@ class TestBrokerRoute extends MediumTest with Matchers {
   }
 
   @Test
+  def repeatedlyDelete(): Unit = {
+    (0 to 10).foreach { index =>
+      result(brokerApi.delete(index.toString))
+      result(brokerApi.removeNode(index.toString, index.toString))
+    }
+  }
+
+  @Test
   def removeBrokerClusterUsedByWorkerCluster(): Unit = {
     val bk = result(
       brokerApi.add(BrokerClusterCreationRequest(
@@ -124,7 +132,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
 
     bks.isEmpty shouldBe false
 
-    // this zookeeper cluster is used by worker cluster
+    // this broker cluster is used by worker cluster
     an[IllegalArgumentException] should be thrownBy result(brokerApi.delete(bk.name))
 
     // remove wk cluster
@@ -165,7 +173,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
             nodeNames = nodeNames
           ))
       )
-    } finally result(ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port).delete(anotherZk)).name shouldBe anotherZk
+    } finally result(ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port).delete(anotherZk))
 
   }
 
@@ -315,7 +323,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
     val cluster = result(brokerApi.add(request))
     assert(request, cluster)
 
-    result(brokerApi.delete(request.name)) shouldBe cluster
+    result(brokerApi.delete(request.name))
   }
 
   @Test
@@ -334,7 +342,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
 
     assert(request, result(brokerApi.get(request.name)))
 
-    result(brokerApi.delete(request.name)) shouldBe cluster
+    result(brokerApi.delete(request.name))
     result(brokerApi.list).size shouldBe 0
   }
 
@@ -376,15 +384,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
     val cluster = result(brokerApi.add(request))
     assert(request, cluster)
 
-    result(brokerApi.removeNode(cluster.name, nodeNames.last)) shouldBe BrokerClusterInfo(
-      name = cluster.name,
-      imageName = cluster.imageName,
-      clientPort = cluster.clientPort,
-      exporterPort = cluster.exporterPort,
-      jmxPort = cluster.jmxPort,
-      zookeeperClusterName = cluster.zookeeperClusterName,
-      nodeNames = cluster.nodeNames.filter(_ != nodeNames.last)
-    )
+    result(brokerApi.removeNode(cluster.name, nodeNames.last))
   }
 
   @Test

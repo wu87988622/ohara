@@ -257,8 +257,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
         numberOfTasks = Some(1)
       )))
 
-    val wk = result(configurator.clusterCollie.workerCollie().remove(connector.workerClusterName))
-    wk.name shouldBe connector.workerClusterName
+    result(configurator.clusterCollie.workerCollie().remove(connector.workerClusterName))
 
     result(connectorApi.delete(connector.id))
 

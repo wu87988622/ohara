@@ -91,17 +91,18 @@ private class K8SZookeeperCollieImpl(val nodeCollie: NodeCollie,
         }
     }
 
-  override protected def doAddNodeContainer(
+  override protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo])(
+    implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
+    zkClusterDescription(clusterName, containers)
+
+  override protected def doRemoveNode(previousCluster: ZookeeperClusterInfo, beRemovedContainer: ContainerInfo)(
+    implicit executionContext: ExecutionContext): Future[Boolean] =
+    Future.failed(
+      new UnsupportedOperationException("zookeeper collie doesn't support to remove node from a running cluster"))
+
+  override protected def doAddNode(
     previousCluster: ZookeeperClusterInfo,
     previousContainers: Seq[ContainerInfo],
     newNodeName: String)(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] = Future.failed(
     new UnsupportedOperationException("zookeeper collie doesn't support to add node from a running cluster"))
-
-  override def removeNode(clusterName: String, nodeName: String)(
-    implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] = Future.failed(
-    new UnsupportedOperationException("zookeeper collie doesn't support to remove node from a running cluster"))
-
-  override protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo])(
-    implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
-    zkClusterDescription(clusterName, containers)
 }

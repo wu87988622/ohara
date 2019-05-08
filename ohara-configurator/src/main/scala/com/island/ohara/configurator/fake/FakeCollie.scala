@@ -16,6 +16,7 @@
 
 package com.island.ohara.configurator.fake
 
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 import com.island.ohara.agent.Collie.ClusterCreator
@@ -25,13 +26,13 @@ import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.common.util.CommonUtils
 
-import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.ClassTag
+import scala.collection.JavaConverters._
 private[configurator] abstract class FakeCollie[T <: ClusterInfo: ClassTag, Creator <: ClusterCreator[T]](
   nodeCollie: NodeCollie)
     extends ContainerCollie[T, Creator](nodeCollie) {
-  protected val clusterCache = new mutable.HashMap[T, Seq[ContainerInfo]]()
+  protected val clusterCache = new ConcurrentHashMap[T, Seq[ContainerInfo]]()
 
   def addCluster(cluster: T): T = {
     val FAKE_KIND_NAME = "FAKE"
@@ -54,33 +55,31 @@ private[configurator] abstract class FakeCollie[T <: ClusterInfo: ClassTag, Crea
     cluster
   }
   override def exist(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
-    Future.successful(clusterCache.keys.exists(_.name == clusterName))
+    Future.successful(clusterCache.keys.asScala.exists(_.name == clusterName))
 
-  override def remove(clusterName: String)(implicit executionContext: ExecutionContext): Future[T] =
-    exist(clusterName).flatMap(if (_) Future.successful {
-      val cluster = clusterCache.keys.find(_.name == clusterName).get
-      clusterCache.remove(cluster)
-      cluster
-    } else Future.failed(new NoSuchClusterException(s"$clusterName doesn't exist")))
+  override protected def doRemove(clusterInfo: T, containerInfos: Seq[ContainerInfo])(
+    implicit executionContext: ExecutionContext): Future[Boolean] =
+    Future.successful(clusterCache.remove(clusterInfo) != null)
 
   override def logs(clusterName: String)(
     implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
     exist(clusterName).flatMap(if (_) Future.successful {
-      val containers = clusterCache.find(_._1.name == clusterName).get._2
+      val containers = clusterCache.asScala.find(_._1.name == clusterName).get._2
       containers.map(_ -> "fake log").toMap
     } else Future.failed(new NoSuchClusterException(s"$clusterName doesn't exist")))
 
   override def containers(clusterName: String)(
     implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
-    exist(clusterName).map(if (_) clusterCache.find(_._1.name == clusterName).get._2 else Seq.empty)
+    exist(clusterName).map(if (_) clusterCache.asScala.find(_._1.name == clusterName).get._2 else Seq.empty)
 
   override def clusters(implicit executionContext: ExecutionContext): Future[Map[T, Seq[ContainerInfo]]] =
-    Future.successful(clusterCache.toMap)
+    Future.successful(clusterCache.asScala.toMap)
 
   private[this] val _forceRemoveCount = new AtomicInteger(0)
-  override def forceRemove(clusterName: String)(implicit executionContext: ExecutionContext): Future[T] = {
-    _forceRemoveCount.incrementAndGet()
-    remove(clusterName)
-  }
+  override protected def doForceRemove(clusterInfo: T, containerInfos: Seq[ContainerInfo])(
+    implicit executionContext: ExecutionContext): Future[Boolean] =
+    try doRemove(clusterInfo, containerInfos)
+    finally _forceRemoveCount.incrementAndGet()
+
   def forceRemoveCount: Int = _forceRemoveCount.get()
 }

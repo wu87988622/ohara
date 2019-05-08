@@ -17,12 +17,15 @@
 package com.island.ohara.configurator.fake
 
 import java.util.concurrent.ConcurrentHashMap
+
 import com.island.ohara.agent.{BrokerCollie, NodeCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi
+import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.kafka.TopicMeter
+
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -53,24 +56,19 @@ private[configurator] class FakeBrokerCollie(nodeCollie: NodeCollie, bkConnectio
             nodeNames = nodeNames
           )))
 
-  override def removeNode(clusterName: String, nodeName: String)(
-    implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] = {
-    val previous = clusterCache.find(_._1.name == clusterName).get._1
-    if (!previous.nodeNames.contains(nodeName))
-      Future.failed(new IllegalArgumentException(s"$nodeName doesn't run on $clusterName!!!"))
-    else
-      Future.successful(
-        addCluster(
-          FakeBrokerClusterInfo(
-            name = previous.name,
-            imageName = previous.imageName,
-            zookeeperClusterName = previous.zookeeperClusterName,
-            exporterPort = previous.exporterPort,
-            clientPort = previous.clientPort,
-            jmxPort = previous.jmxPort,
-            nodeNames = previous.nodeNames.filterNot(_ == nodeName)
-          )))
-  }
+  override protected def doRemoveNode(previousCluster: BrokerClusterInfo, beRemovedContainer: ContainerInfo)(
+    implicit executionContext: ExecutionContext): Future[Boolean] = Future
+    .successful(
+      addCluster(FakeBrokerClusterInfo(
+        name = previousCluster.name,
+        imageName = previousCluster.imageName,
+        zookeeperClusterName = previousCluster.zookeeperClusterName,
+        exporterPort = previousCluster.exporterPort,
+        clientPort = previousCluster.clientPort,
+        jmxPort = previousCluster.jmxPort,
+        nodeNames = previousCluster.nodeNames.filterNot(_ == beRemovedContainer.nodeName)
+      )))
+    .map(_ => true)
 
   override def topicAdmin(cluster: BrokerClusterInfo): TopicAdmin = cluster match {
     case _: FakeBrokerClusterInfo =>
@@ -80,26 +78,18 @@ private[configurator] class FakeBrokerCollie(nodeCollie: NodeCollie, bkConnectio
     case _ => TopicAdmin(bkConnectionProps)
   }
 
-  override protected def doAddNodeContainer(
+  override protected def doAddNode(
     previousCluster: BrokerClusterInfo,
     previousContainers: Seq[ContainerApi.ContainerInfo],
-    newNodeName: String)(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] = {
-    doAddNode(previousCluster, previousContainers, newNodeName).map(
-      _ =>
-        FakeBrokerClusterInfo(
-          name = previousCluster.name,
-          imageName = previousCluster.imageName,
-          zookeeperClusterName = previousCluster.zookeeperClusterName,
-          clientPort = previousCluster.clientPort,
-          exporterPort = previousCluster.exporterPort,
-          jmxPort = previousCluster.jmxPort,
-          nodeNames = previousCluster.nodeNames :+ newNodeName
-      ))
-  }
-
-  override protected def doRemoveNode(
-    previousCluster: BrokerClusterInfo,
-    previousContainer: ContainerApi.ContainerInfo,
-    removedNodeName: String)(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] =
-    throw new UnsupportedOperationException("Fake not support doRemoveNode function")
+    newNodeName: String)(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] = Future.successful(
+    addCluster(
+      FakeBrokerClusterInfo(
+        name = previousCluster.name,
+        imageName = previousCluster.imageName,
+        zookeeperClusterName = previousCluster.zookeeperClusterName,
+        clientPort = previousCluster.clientPort,
+        exporterPort = previousCluster.exporterPort,
+        jmxPort = previousCluster.jmxPort,
+        nodeNames = previousCluster.nodeNames :+ newNodeName
+      )))
 }

@@ -140,12 +140,6 @@ private class K8SBrokerCollieImpl(val nodeCollie: NodeCollie,
         }
     }
 
-  override protected def doAddNodeContainer(
-    previousCluster: BrokerClusterInfo,
-    previousContainers: Seq[ContainerInfo],
-    newNodeName: String)(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] =
-    doAddNode(previousCluster, previousContainers, newNodeName)
-
   override protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] =
     bkClusterDescription(clusterName, containers)
