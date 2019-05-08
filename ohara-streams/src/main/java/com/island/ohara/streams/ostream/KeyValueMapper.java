@@ -16,6 +16,15 @@
 
 package com.island.ohara.streams.ostream;
 
+/**
+ * The {@code KeyValueMapper} interface represents a {@link KeyValue key-value} pair function to
+ * transform the input record to new record.
+ *
+ * @param <K> input record key type
+ * @param <V> input record value type
+ * @param <VR> {@link KeyValue} type
+ * @see org.apache.kafka.streams.kstream.KeyValueMapper
+ */
 public interface KeyValueMapper<K, V, VR> {
   VR keyValueMapper(final K key, final V value);
 

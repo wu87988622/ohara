@@ -58,7 +58,6 @@ public class TestStreamAppTopology extends SmallTest {
               .leftJoin(join, Serdes.STRING, Serdes.STRING, (r1, r2) -> r1 + r2)
               .groupByKey(Serdes.STRING, Serdes.STRING)
               .count()
-              .toOStream()
               .getPoneglyph();
 
       // It should have two "steles", i.e., two process topology

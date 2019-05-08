@@ -141,8 +141,8 @@ public class TestPurchaseAnalysis extends WithBroker {
                 "the result should be contain in actualResultMap",
                 actualResultMap.containsKey(record.key().get())
                     && actualResultMap.values().stream()
-                        .flatMap(doubles -> Arrays.stream(doubles))
-                        .anyMatch((d) -> Math.abs(d - record.value().get()) < THRESHOLD));
+                        .flatMap(Arrays::stream)
+                        .anyMatch((d) -> Math.abs(d - record.value().orElse(-999.0)) < THRESHOLD));
           }
         });
 
@@ -181,18 +181,15 @@ public class TestPurchaseAnalysis extends WithBroker {
               userTopic,
               Serdes.STRING,
               Serdes.ROW,
-              (row1, row2) -> {
-                Row newRow =
-                    Row.of(
-                        row1.cell("userName"),
-                        row1.cell("itemName"),
-                        row1.cell("transactionDate"),
-                        row1.cell("quantity"),
-                        row2 == null ? Cell.of("address", "") : row2.cell("address"),
-                        row2 == null ? Cell.of("gender", "") : row2.cell("gender"),
-                        row2 == null ? Cell.of("age", "") : row2.cell("age"));
-                return newRow;
-              })
+              (row1, row2) ->
+                  Row.of(
+                      row1.cell("userName"),
+                      row1.cell("itemName"),
+                      row1.cell("transactionDate"),
+                      row1.cell("quantity"),
+                      row2 == null ? Cell.of("address", "") : row2.cell("address"),
+                      row2 == null ? Cell.of("gender", "") : row2.cell("gender"),
+                      row2 == null ? Cell.of("age", "") : row2.cell("age")))
           .filter((key, row) -> row.cell("address").value() != null)
           .map((key, row) -> new KeyValue<>(row.cell("itemName").value().toString(), row))
           .through(orderuser_repartition, Serdes.STRING, Serdes.ROW)
@@ -200,23 +197,20 @@ public class TestPurchaseAnalysis extends WithBroker {
               itemTopic,
               Serdes.STRING,
               Serdes.ROW,
-              (row1, row2) -> {
-                Row newRow =
-                    Row.of(
-                        row1.cell("userName"),
-                        row1.cell("itemName"),
-                        row1.cell("transactionDate"),
-                        row1.cell("quantity"),
-                        Cell.of("useraddress", row1.cell("address").value()),
-                        row1.cell("gender"),
-                        row1.cell("age"),
-                        row2 == null
-                            ? Cell.of("itemaddress", "")
-                            : Cell.of("itemaddress", row2.cell("address").value()),
-                        row2 == null ? Cell.of("type", "") : row2.cell("type"),
-                        row2 == null ? Cell.of("price", "") : row2.cell("price"));
-                return newRow;
-              })
+              (row1, row2) ->
+                  Row.of(
+                      row1.cell("userName"),
+                      row1.cell("itemName"),
+                      row1.cell("transactionDate"),
+                      row1.cell("quantity"),
+                      Cell.of("useraddress", row1.cell("address").value()),
+                      row1.cell("gender"),
+                      row1.cell("age"),
+                      row2 == null
+                          ? Cell.of("itemaddress", "")
+                          : Cell.of("itemaddress", row2.cell("address").value()),
+                      row2 == null ? Cell.of("type", "") : row2.cell("type"),
+                      row2 == null ? Cell.of("price", "") : row2.cell("price")))
           .filter(
               (key, row) ->
                   row.cell("useraddress")
@@ -231,7 +225,6 @@ public class TestPurchaseAnalysis extends WithBroker {
                           * Double.valueOf(row.cell("price").value().toString())))
           .groupByKey(Serdes.STRING, Serdes.DOUBLE)
           .reduce((v1, v2) -> v1 + v2)
-          .toOStream()
           .start();
     }
   }
@@ -292,14 +285,13 @@ public class TestPurchaseAnalysis extends WithBroker {
                 }
               })
           .forEach(
-              entry -> {
-                producer
-                    .sender()
-                    .key(entry.getKey().toString())
-                    .value(entry.getValue())
-                    .topicName(topicName)
-                    .send();
-              });
+              entry ->
+                  producer
+                      .sender()
+                      .key(entry.getKey().toString())
+                      .value(entry.getValue())
+                      .topicName(topicName)
+                      .send());
     } catch (Exception e) {
       LOG.debug(e.getMessage());
     }

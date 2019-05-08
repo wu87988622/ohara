@@ -16,6 +16,14 @@
 
 package com.island.ohara.streams.ostream;
 
+/**
+ * A key-value pair defined for a single record. This class extends from Apache Kafka {@code
+ * KeyValue}
+ *
+ * @param <K> record key type
+ * @param <V> record value type
+ * @see org.apache.kafka.streams.KeyValue
+ */
 public class KeyValue<K, V> extends org.apache.kafka.streams.KeyValue<K, V> {
   // TODO : could we not extends the kafka class ?...by Sam
 

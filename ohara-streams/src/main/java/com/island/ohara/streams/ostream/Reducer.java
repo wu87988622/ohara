@@ -16,6 +16,12 @@
 
 package com.island.ohara.streams.ostream;
 
+/**
+ * The {@code Reducer} interface for combining two values of the same type.
+ *
+ * @param <V> the record value type
+ * @see org.apache.kafka.streams.kstream.Reducer
+ */
 public interface Reducer<V> {
 
   V reducer(V value1, V value2);

@@ -21,10 +21,34 @@ import java.io.Serializable;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
+/**
+ * The {@code Stele} represents a operation in the streamApp. This object contains the basic
+ * information from {@code processor} of a {@code topology}.
+ *
+ * <p>The description of each fields are listed below:
+ *
+ * <ul>
+ *   <li>{@link #kind}
+ *   <li>{@link #key}
+ *   <li>{@link #name}
+ *   <li>{@link #from}
+ *   <li>{@link #to}
+ * </ul>
+ *
+ * @see org.apache.kafka.streams.Topology
+ */
 public final class Stele extends Data implements Serializable {
   private static final long serialVersionUID = 1L;
+  /**
+   * The type of this {@code stele}. Should be one of the following : <b>Source</b>, <b>Sink</b>, or
+   * <b>Processor</b>
+   */
   private final String kind;
+  /**
+   * The origin name of format <i>KSTREAM-{processor}-{incremental number}</i> in {@code topology}
+   */
   private final String key;
+  /** The topic name if {@link #kind} is "Source" or "Sink", {@code empty} otherwise. */
   private final String name;
   // We don't use "generic types" (ex: List<E> or Collection<E>) here for generate json string
   // Since java uses type erasure, we cannot get the "actual" type during runtime
@@ -38,7 +62,13 @@ public final class Stele extends Data implements Serializable {
   // System.out.println(ReflectionToStringBuilder.toString(foo, ToStringStyle.JSON_STYLE));
   //
   // We expect value is : ["a", "b"], but will get the non-json array : [a, b]
+  /**
+   * The {@link #key} of source operations. Could be {@code empty} if this is a <i>source stele</i>.
+   */
   private final String[] from;
+  /**
+   * The {@link #key} of target operations. Could be {@code empty} if this is a <i>target stele</i>.
+   */
   private final String[] to;
 
   static {

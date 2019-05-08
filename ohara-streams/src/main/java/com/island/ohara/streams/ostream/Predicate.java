@@ -16,6 +16,14 @@
 
 package com.island.ohara.streams.ostream;
 
+/**
+ * The {@code Predicate} interface represents a boolean-returned filter function. This function
+ * should use to filter a {@link KeyValue} pair data.
+ *
+ * @param <K> key type
+ * @param <V> value type
+ * @see org.apache.kafka.streams.kstream.Predicate
+ */
 public interface Predicate<K, V> {
 
   boolean predicate(final K key, final V value);

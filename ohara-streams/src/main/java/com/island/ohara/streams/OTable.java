@@ -16,7 +16,18 @@
 
 package com.island.ohara.streams;
 
+/**
+ * {@code OTable} is a <i>changelog table</i> from the {@link OStream}
+ *
+ * @param <K> Type of the key
+ * @param <V> Type of the value
+ */
 public interface OTable<K, V> {
 
+  /**
+   * Convert this {@code OTable} to {@code OStream}
+   *
+   * @return {@code OStream}
+   */
   OStream<K, V> toOStream();
 }

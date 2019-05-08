@@ -49,6 +49,8 @@ class OStreamImpl<K, V> extends AbstractStream<K, V> implements OStream<K, V> {
   public <VO> OTable<K, VO> constructTable(
       String topicName, Serde<K> topicKey, Serde<VO> topicValue) {
     Objects.requireNonNull(topicName, "topic can not be null");
+    Objects.requireNonNull(topicKey, "topic key serde can not be null");
+    Objects.requireNonNull(topicValue, "topic value serde can not be null");
     KTable<K, VO> table = innerBuilder.table(topicName, new Consumed<>(topicKey, topicValue).get());
 
     return new OTableImpl<>(builder, table, innerBuilder);
@@ -67,15 +69,15 @@ class OStreamImpl<K, V> extends AbstractStream<K, V> implements OStream<K, V> {
   }
 
   @Override
-  public <VO, VR> OStream<K, VR> leftJoin(
+  public <VT, VR> OStream<K, VR> leftJoin(
       String joinTopicName,
       Serde<K> topicKey,
-      Serde<VO> topicValue,
-      Valuejoiner<V, VO, VR> joiner) {
+      Serde<VT> topicValue,
+      Valuejoiner<V, VT, VR> joiner) {
     Objects.requireNonNull(joinTopicName, "topic can not be null");
-    KTable<K, VO> table =
+    KTable<K, VT> table =
         innerBuilder.table(joinTopicName, new Consumed<>(topicKey, topicValue).get());
-    Valuejoiner.TrueValuejoiner<V, VO, VR> trueValuejoiner =
+    Valuejoiner.TrueValuejoiner<V, VT, VR> trueValuejoiner =
         new Valuejoiner.TrueValuejoiner<>(joiner);
 
     return new OStreamImpl<>(builder, kstreams.leftJoin(table, trueValuejoiner), innerBuilder);

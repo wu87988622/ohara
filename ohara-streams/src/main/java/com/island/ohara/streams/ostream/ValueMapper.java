@@ -16,6 +16,13 @@
 
 package com.island.ohara.streams.ostream;
 
+/**
+ * The {@code ValueMapper} interface represents a function for mapping a value to a new value.
+ *
+ * @param <V> input record value type
+ * @param <VR> output record value type
+ * @see org.apache.kafka.streams.kstream.ValueMapper
+ */
 public interface ValueMapper<V, VR> {
 
   VR valueMapper(V value);

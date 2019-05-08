@@ -18,9 +18,29 @@ package com.island.ohara.streams;
 
 import com.island.ohara.streams.ostream.Reducer;
 
+/**
+ * {@code OGroupedStream} is a <i>grouped stream</i> by key.
+ *
+ * @param <K> Type of the key
+ * @param <V> Type of the value
+ */
 public interface OGroupedStream<K, V> {
 
-  OTable<K, Long> count();
+  /**
+   * Count the number of records in this {@code OStream}.
+   *
+   * @return {@code OStream}
+   * @see org.apache.kafka.streams.kstream.KGroupedStream#count()
+   */
+  OStream<K, Long> count();
 
-  OTable<K, V> reduce(final Reducer<V> reducer);
+  /**
+   * Combine the values of each record in the {@code OStream} by the grouped key.
+   *
+   * @param reducer a{@link Reducer} that computes a new aggregate result.
+   * @return {@code OStream}
+   * @see
+   *     org.apache.kafka.streams.kstream.KGroupedStream#reduce(org.apache.kafka.streams.kstream.Reducer)
+   */
+  OStream<K, V> reduce(final Reducer<V> reducer);
 }
