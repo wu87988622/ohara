@@ -16,7 +16,7 @@
 
 import { toNumber, get } from 'lodash';
 
-import { handleError, axiosInstance } from 'utils/apiUtils';
+import { handleError, axiosInstance } from './apiUtils';
 
 export const fetchNodes = async () => {
   try {

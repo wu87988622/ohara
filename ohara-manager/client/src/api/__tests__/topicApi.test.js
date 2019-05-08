@@ -17,9 +17,9 @@
 import { toNumber } from 'lodash';
 
 import { fetchTopic, fetchTopics, createTopic } from '../topicApi';
-import { handleError, axiosInstance } from 'utils/apiUtils';
+import { handleError, axiosInstance } from '../apiUtils';
 
-jest.mock('utils/apiUtils');
+jest.mock('../apiUtils');
 const url = '/api/topics';
 
 describe('fetchTopic()', () => {

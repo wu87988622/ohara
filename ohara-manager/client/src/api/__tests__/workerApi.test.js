@@ -15,9 +15,9 @@
  */
 
 import { fetchWorkers, fetchWorker, createWorker } from '../workerApi';
-import { handleError, axiosInstance } from 'utils/apiUtils';
+import { handleError, axiosInstance } from '../apiUtils';
 
-jest.mock('utils/apiUtils');
+jest.mock('../apiUtils');
 const url = '/api/workers';
 
 describe('fetchWorker()', () => {

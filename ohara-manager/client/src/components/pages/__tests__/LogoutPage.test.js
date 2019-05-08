@@ -27,7 +27,7 @@ import { logout } from 'api/authApi';
 
 window.localStorage = localStorageMock;
 
-jest.mock('utils/apiUtils');
+jest.mock('api/apiUtils');
 jest.mock('utils/authUtils');
 jest.mock('api/authApi');
 

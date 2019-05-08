@@ -15,9 +15,9 @@
  */
 
 import { fetchBrokers, createBroker } from '../brokerApi';
-import { handleError, axiosInstance } from 'utils/apiUtils';
+import { handleError, axiosInstance } from '../apiUtils';
 
-jest.mock('utils/apiUtils');
+jest.mock('../apiUtils');
 
 const url = '/api/brokers';
 

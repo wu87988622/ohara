@@ -16,25 +16,60 @@
 
 import axios from 'axios';
 import toastr from 'toastr';
-import { isString, get, has } from 'lodash';
+import { isString, get, has, isEmpty } from 'lodash';
 
 export const handleError = err => {
   const message = get(err, 'data.errorMessage.message');
+
   if (isString(message)) {
-    toastr.error(message);
-    return;
+    return toastr.error(message);
+  }
+
+  if (Array.isArray(message)) {
+    const hasFieldName = get(message, '[0][fieldName]', null);
+
+    if (hasFieldName) {
+      message.forEach(({ errors, fieldName: title }) => {
+        const fullError = errors.reduce((acc, val, idx) => {
+          acc += `${++idx}: ${val} <br />`;
+          return acc;
+        }, '');
+
+        toastr.error(fullError, title);
+      });
+      return;
+    }
+
+    // TODO: genetic error, remove this when all the connector has upgraded to the new metadata API
+    return toastr.error(
+      'Test connection failed, please check your config and try again later',
+    );
   }
 
   const errorMessage = get(err, 'data.errorMessage');
   if (isString(errorMessage)) {
-    toastr.error(errorMessage);
-    return;
+    return toastr.error(errorMessage);
   }
 
   toastr.error(err || 'Internal Server Error');
 };
 
 export const getErrors = data => {
+  const settings = get(data, 'settings', null);
+
+  // If we have settings in the error, this is probably
+  // a custom connector
+  if (settings) {
+    const hasError = def => !isEmpty(def.value.errors);
+    const errors = settings.filter(hasError).map(def => ({
+      fieldName: def.definition.displayName,
+      errors: def.value.errors,
+    }));
+
+    return errors;
+  }
+
+  // Normal connector
   const errors = data.reduce((acc, r) => {
     if (!r.pass) acc.push(r);
     return acc;
@@ -80,20 +115,12 @@ const createAxios = () => {
           return {
             data: {
               errorMessage: {
-                message:
-                  'Test failed, please check you configs and try again later!',
+                message: errors,
               },
               isSuccess: false,
             },
           };
         }
-
-        return {
-          data: {
-            result: response.data,
-            isSuccess: true,
-          },
-        };
       }
 
       return {

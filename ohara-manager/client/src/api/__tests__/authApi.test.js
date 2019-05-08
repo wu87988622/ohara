@@ -15,9 +15,9 @@
  */
 
 import { login, logout } from '../authApi';
-import { handleError, axiosInstance } from 'utils/apiUtils';
+import { handleError, axiosInstance } from '../apiUtils';
 
-jest.mock('utils/apiUtils');
+jest.mock('../apiUtils');
 
 const loginUrl = '/api/login';
 const logoutUrl = '/api/logout';

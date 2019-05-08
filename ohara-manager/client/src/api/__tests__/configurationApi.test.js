@@ -15,9 +15,9 @@
  */
 
 import * as configurationApi from '../configurationApi';
-import { handleError, axiosInstance } from 'utils/apiUtils';
+import { handleError, axiosInstance } from '../apiUtils';
 
-jest.mock('utils/apiUtils');
+jest.mock('../apiUtils');
 
 describe('fetchHdfs()', () => {
   afterEach(jest.clearAllMocks);

@@ -16,9 +16,11 @@
 
 import faker from 'faker';
 
-const { system, random } = faker;
+const { system, random, lorem, internet } = faker;
 const { fileName: name } = system;
 const { uuid: id } = random;
+const { paragraph: message } = lorem;
+const { domainName, ip, userName } = internet;
 
 const topics = () => {
   return [
@@ -33,4 +35,4 @@ const topics = () => {
   ];
 };
 
-export { name, id, topics };
+export { name, id, message, topics, domainName, ip, userName };

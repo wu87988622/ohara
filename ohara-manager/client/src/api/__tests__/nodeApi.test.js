@@ -17,9 +17,9 @@
 import { toNumber } from 'lodash';
 
 import { fetchNodes, createNode, updateNode } from '../nodeApi';
-import { handleError, axiosInstance } from 'utils/apiUtils';
+import { handleError, axiosInstance } from '../apiUtils';
 
-jest.mock('utils/apiUtils');
+jest.mock('../apiUtils');
 
 const url = '/api/nodes';
 

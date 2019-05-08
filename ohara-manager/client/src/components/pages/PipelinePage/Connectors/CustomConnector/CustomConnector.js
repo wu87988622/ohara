@@ -174,7 +174,14 @@ class CustomConnector extends React.Component {
   handleTestConnection = async e => {
     e.preventDefault();
     this.setState({ isTestConnectionBtnWorking: true });
-    const params = { ...this.state.configs, topics: [] };
+
+    // const topics = this.state.topic
+    const topicId = utils.getCurrTopicId({
+      originals: this.props.globalTopics,
+      target: this.state.topics[0],
+    });
+
+    const params = { ...this.state.configs, topics: topicId };
     const res = await validateConnector(params);
     this.setState({ isTestConnectionBtnWorking: false });
 
@@ -299,14 +306,10 @@ class CustomConnector extends React.Component {
         ) : (
           <StyledForm>
             {utils.renderForm(formProps)}
-
-            {// This feature belongs to another story...
-            false && (
-              <TestConnectionBtn
-                handleClick={this.handleTestConnection}
-                isWorking={isTestConnectionBtnWorking}
-              />
-            )}
+            <TestConnectionBtn
+              handleClick={this.handleTestConnection}
+              isWorking={isTestConnectionBtnWorking}
+            />
           </StyledForm>
         )}
       </BoxWrapper>

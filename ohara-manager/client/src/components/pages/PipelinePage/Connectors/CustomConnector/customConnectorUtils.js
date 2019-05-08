@@ -266,16 +266,13 @@ export const renderForm = ({
     });
 };
 
-export const getCurrTopicId = ({ originals, target }) => {
-  let topics = [];
+export const getCurrTopicId = ({ originals, target = '' }) => {
+  if (isEmpty(originals) || isEmptyStr(target)) return;
 
-  if (isEmpty(originals) || isEmptyStr(target)) {
-    topics.push(''); // back end API need this data structure
-  } else {
-    const findByTopicName = ({ name }) => name === target;
-    const { id } = originals.find(findByTopicName);
-    topics.push(id);
-  }
+  const topics = [];
+  const findByTopicName = ({ name }) => name === target;
+  const { id } = originals.find(findByTopicName);
+  topics.push(id);
 
   return topics;
 };
