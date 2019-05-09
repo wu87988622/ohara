@@ -131,6 +131,7 @@ class MuiNewModal extends React.Component {
 
                   <Field
                     name="port"
+                    label="Port"
                     placeholder="1021"
                     margin="normal"
                     type="number"

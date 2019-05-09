@@ -32,7 +32,7 @@ import { getUserKey } from 'utils/authUtils';
 import { create } from 'jss';
 import { StylesProvider, jssPreset } from '@material-ui/styles';
 
-//if want to add css to material need add jss Url = https://material-ui.com/customization/css-in-js/#jssprovider
+//Let's rephrase this to We need to override Mui styles with our custom styles. See Mui docs for more info:https://material-ui.com/customization/css-in-js/#other-html-element
 const jss = create({
   ...jssPreset(),
   insertionPoint: 'jss-insertion-point',
