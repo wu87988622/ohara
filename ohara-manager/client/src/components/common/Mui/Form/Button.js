@@ -16,27 +16,33 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import MuiB from '@material-ui/core/Button';
+import MuiButton from '@material-ui/core/Button';
 
-const MuiButton = ({ text, className, color, variant, onClick }) => {
+const Button = ({
+  text,
+  className,
+  color = 'primary',
+  variant = 'contained',
+  onClick,
+}) => {
   return (
-    <MuiB
+    <MuiButton
       className={className}
       color={color}
       variant={variant}
       onClick={onClick}
     >
       {text}
-    </MuiB>
+    </MuiButton>
   );
 };
 
-MuiButton.propTypes = {
-  text: PropTypes.string,
+Button.propTypes = {
+  text: PropTypes.string.isRequired,
   className: PropTypes.string,
   color: PropTypes.string,
   variant: PropTypes.string,
   onClick: PropTypes.func,
 };
 
-export default MuiButton;
+export default Button;

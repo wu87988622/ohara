@@ -34,7 +34,7 @@ import * as MESSAGES from 'constants/messages';
 
 class MuiNewModal extends React.Component {
   static propTypes = {
-    open: PropTypes.bool.isRequired,
+    isOpen: PropTypes.bool.isRequired,
     handleClose: PropTypes.func.isRequired,
     handleConfirm: PropTypes.func.isRequired,
   };
@@ -76,7 +76,7 @@ class MuiNewModal extends React.Component {
   };
 
   render() {
-    const { open, handleClose } = this.props;
+    const { isOpen, handleClose } = this.props;
     const { isValidConnection } = this.state;
     return (
       <Form
@@ -95,7 +95,7 @@ class MuiNewModal extends React.Component {
             <Dialog
               fullWidth={true}
               maxWidth="xs"
-              open={open}
+              open={isOpen}
               onClose={handleClose}
               aria-labelledby="form-dialog-title"
             >

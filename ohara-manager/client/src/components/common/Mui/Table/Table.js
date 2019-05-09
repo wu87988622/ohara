@@ -16,7 +16,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import Table from '@material-ui/core/Table';
+import MuiTable from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableHead from '@material-ui/core/TableHead';
@@ -29,25 +29,24 @@ import { TableLoader } from 'common/Loader';
 
 const styles = theme => ({
   button: {
-    margin: theme.spacing.unit,
+    margin: theme.spacing(),
   },
   input: {
     display: 'none',
   },
 });
 
-const headers = ['Host name', 'Services', 'SSH', 'Edit'];
-
-const MuiTable = ({
+const Table = ({
   nodes,
   isLoading,
   getAllClusterNames,
   getSSHLabel,
   handleEditClick,
+  headers,
 }) => {
   if (isLoading) return <TableLoader />;
   return (
-    <Table>
+    <MuiTable>
       <TableHead>
         <TableRow>
           {headers.map(header => {
@@ -85,15 +84,16 @@ const MuiTable = ({
           </TableRow>
         ))}
       </TableBody>
-    </Table>
+    </MuiTable>
   );
 };
 
-MuiTable.propTypes = {
+Table.propTypes = {
   isLoading: PropTypes.bool.isRequired,
   getAllClusterNames: PropTypes.func.isRequired,
   handleEditClick: PropTypes.func.isRequired,
   getSSHLabel: PropTypes.func.isRequired,
+  headers: PropTypes.array,
   nodes: PropTypes.arrayOf(
     PropTypes.shape({
       lastModified: PropTypes.number,
@@ -106,4 +106,4 @@ MuiTable.propTypes = {
   ),
 };
 
-export default MuiTable;
+export default Table;

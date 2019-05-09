@@ -31,6 +31,10 @@ const validate = values => {
     errors.user = REQUIRED_FIELD;
   }
 
+  if (!values.password) {
+    errors.password = REQUIRED_FIELD;
+  }
+
   return errors;
 };
 

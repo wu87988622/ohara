@@ -22,7 +22,6 @@ import * as nodeApi from 'api/nodeApi';
 import { NODES } from 'constants/documentTitles';
 import { Box } from 'common/Layout';
 import { H2 } from 'common/Headings';
-import MuiTable from 'common/Mui/Table/MuiTable';
 import MuiNewModal from './MuiNewModal';
 import MuiEditModal from './MuiEditModal';
 
@@ -38,8 +37,8 @@ class NodeListPage extends React.Component {
     nodes: [],
     activeModal: null,
     activeNode: null,
-    newOpen: false,
-    editOpen: false,
+    isNewModalOpen: false,
+    isEditModalOpen: false,
   };
 
   componentDidMount() {
@@ -59,20 +58,16 @@ class NodeListPage extends React.Component {
     this.setState({
       activeModal: NODE_EDIT_MODAL,
       activeNode: node,
-      editOpen: true,
+      isEditModalOpen: true,
     });
   };
 
-  handleNewClickOpen = () => {
-    this.setState({ newOpen: true });
+  handleNewModalOpen = () => {
+    this.setState({ isNewModalOpen: true });
   };
 
-  handleEditClickOpen = () => {
-    this.setState({ editOpen: true });
-  };
-
-  handleClose = () => {
-    this.setState({ newOpen: false, editOpen: false });
+  handleModalColse = () => {
+    this.setState({ isNewModalOpen: false, isEditModalOpen: false });
   };
 
   getAllClusterNames = node => {
@@ -115,30 +110,32 @@ class NodeListPage extends React.Component {
                 variant="contained"
                 color="primary"
                 text="New node"
+                data-testid="new-node"
                 onClick={() => {
-                  this.handleNewClickOpen();
+                  this.handleNewModalOpen();
                 }}
               />
             </s.TopWrapper>
             <Box>
-              <MuiTable
+              <s.NodeTable
                 getAllClusterNames={this.getAllClusterNames}
                 getSSHLabel={this.getSSHLabel}
                 handleEditClick={this.handleEditClick}
                 nodes={nodes}
                 isLoading={isLoading}
+                headers={this.headers}
               />
             </Box>
           </s.Wrapper>
           <MuiNewModal
-            open={this.state.newOpen}
-            handleClose={this.handleClose}
+            isOpen={this.state.isNewModalOpen}
+            handleClose={this.handleModalColse}
             handleConfirm={this.fetchData}
           />
           <MuiEditModal
             node={activeNode}
-            open={this.state.editOpen}
-            handleClose={this.handleClose}
+            isOpen={this.state.isEditModalOpen}
+            handleClose={this.handleModalColse}
             handleConfirm={this.fetchData}
           />
         </React.Fragment>

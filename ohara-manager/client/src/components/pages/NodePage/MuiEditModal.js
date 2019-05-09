@@ -40,7 +40,7 @@ class MuiNewModal extends React.Component {
       user: PropTypes.string,
       password: PropTypes.string,
     }),
-    open: PropTypes.bool.isRequired,
+    isOpen: PropTypes.bool.isRequired,
     handleClose: PropTypes.func.isRequired,
     handleConfirm: PropTypes.func.isRequired,
   };
@@ -85,7 +85,7 @@ class MuiNewModal extends React.Component {
     const { node } = this.props;
     if (!node) return null;
     const { name, port, user, password } = node;
-    const { open, handleClose } = this.props;
+    const { isOpen, handleClose } = this.props;
     return (
       <Form
         onSubmit={this.onSubmit}
@@ -103,7 +103,7 @@ class MuiNewModal extends React.Component {
             <Dialog
               fullWidth={true}
               maxWidth="xs"
-              open={open}
+              open={isOpen}
               onClose={handleClose}
               aria-labelledby="form-dialog-title"
             >
@@ -121,7 +121,6 @@ class MuiNewModal extends React.Component {
                   <Field
                     disabled
                     name="name"
-                    id="node"
                     label="Node"
                     placeholder="node-00"
                     margin="normal"
@@ -131,7 +130,6 @@ class MuiNewModal extends React.Component {
                   />
 
                   <Field
-                    id="port"
                     name="port"
                     placeholder="1021"
                     margin="normal"
@@ -141,7 +139,6 @@ class MuiNewModal extends React.Component {
                   />
 
                   <Field
-                    id="user"
                     name="user"
                     label="User"
                     placeholder="admin"
@@ -152,7 +149,6 @@ class MuiNewModal extends React.Component {
                   />
 
                   <Field
-                    id="password"
                     name="password"
                     label="Password"
                     type="password"
