@@ -49,10 +49,13 @@ export const fetchWorkers = async () => {
 };
 
 export const createWorker = async params => {
+  const brokerRes = await axiosInstance.get(`/api/brokers`);
+  const brokerName = get(brokerRes, 'data.result')[0].name;
   try {
     const url = `/api/workers`;
     const data = {
       name: params.name,
+      brokerClusterName: String(brokerName),
       clientPort: toNumber(params.clientPort),
       nodeNames: params.nodeNames || [],
       jars: params.plugins || [],
