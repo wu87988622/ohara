@@ -17,8 +17,8 @@
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
 
-import { Button } from 'common/Form';
-import { DataTable } from 'common/Table';
+import { Button } from 'common/Mui/Form';
+import { Table } from 'common/Mui/Table';
 
 export const Wrapper = styled.div`
   padding-top: 75px;
@@ -34,14 +34,14 @@ export const TopWrapper = styled.div`
 `;
 
 export const NewNodeBtn = styled(Button)`
-  margin-left: auto;
+  margin: 0 0 0 auto;
 `;
 
 export const TestConnectionBtn = styled(Button)`
   margin-right: auto;
 `;
 
-export const Table = styled(DataTable)`
+export const NodeTable = styled(Table)`
   text-align: left;
 
   .is-running {

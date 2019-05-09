@@ -14,28 +14,35 @@
  * limitations under the License.
  */
 
-const REQUIRED_FIELD = 'Required field';
+import React from 'react';
+import PropTypes from 'prop-types';
+import MuiButton from '@material-ui/core/Button';
 
-const validate = values => {
-  const errors = {};
-
-  if (!values.name) {
-    errors.name = REQUIRED_FIELD;
-  }
-
-  if (!values.port) {
-    errors.port = REQUIRED_FIELD;
-  }
-
-  if (!values.user) {
-    errors.user = REQUIRED_FIELD;
-  }
-
-  if (!values.password) {
-    errors.password = REQUIRED_FIELD;
-  }
-
-  return errors;
+const Button = ({
+  text,
+  className,
+  color = 'primary',
+  variant = 'contained',
+  onClick,
+}) => {
+  return (
+    <MuiButton
+      className={className}
+      color={color}
+      variant={variant}
+      onClick={onClick}
+    >
+      {text}
+    </MuiButton>
+  );
 };
 
-export default validate;
+Button.propTypes = {
+  text: PropTypes.string.isRequired,
+  className: PropTypes.string,
+  color: PropTypes.string,
+  variant: PropTypes.string,
+  onClick: PropTypes.func,
+};
+
+export default Button;

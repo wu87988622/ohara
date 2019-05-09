@@ -16,19 +16,17 @@
 
 import React from 'react';
 import DocumentTitle from 'react-document-title';
-import { reduce, map, join, sortBy, get, isNull } from 'lodash';
+import { reduce, map, sortBy, get, isNull } from 'lodash';
 
 import * as nodeApi from 'api/nodeApi';
 import { NODES } from 'constants/documentTitles';
 import { Box } from 'common/Layout';
 import { H2 } from 'common/Headings';
-import { primaryBtn } from 'theme/btnTheme';
-import NodeNewModal from './NodeNewModal';
-import NodeEditModal from './NodeEditModal';
+import MuiNewModal from './MuiNewModal';
+import MuiEditModal from './MuiEditModal';
 
 import * as s from './styles';
 
-const NODE_NEW_MODAL = 'nodeNewModal';
 const NODE_EDIT_MODAL = 'nodeEditModal';
 
 class NodeListPage extends React.Component {
@@ -39,6 +37,8 @@ class NodeListPage extends React.Component {
     nodes: [],
     activeModal: null,
     activeNode: null,
+    isNewModalOpen: false,
+    isEditModalOpen: false,
   };
 
   componentDidMount() {
@@ -58,7 +58,16 @@ class NodeListPage extends React.Component {
     this.setState({
       activeModal: NODE_EDIT_MODAL,
       activeNode: node,
+      isEditModalOpen: true,
     });
+  };
+
+  handleNewModalOpen = () => {
+    this.setState({ isNewModalOpen: true });
+  };
+
+  handleModalColse = () => {
+    this.setState({ isNewModalOpen: false, isEditModalOpen: false });
   };
 
   getAllClusterNames = node => {
@@ -89,7 +98,7 @@ class NodeListPage extends React.Component {
   };
 
   render() {
-    const { nodes, isLoading, activeModal, activeNode } = this.state;
+    const { nodes, isLoading, activeNode } = this.state;
 
     return (
       <DocumentTitle title={NODES}>
@@ -98,50 +107,35 @@ class NodeListPage extends React.Component {
             <s.TopWrapper>
               <H2>Nodes</H2>
               <s.NewNodeBtn
-                theme={primaryBtn}
+                variant="contained"
+                color="primary"
                 text="New node"
                 data-testid="new-node"
-                handleClick={() => {
-                  this.setState({ activeModal: NODE_NEW_MODAL });
+                onClick={() => {
+                  this.handleNewModalOpen();
                 }}
               />
             </s.TopWrapper>
             <Box>
-              <s.Table
-                headers={this.headers}
+              <s.NodeTable
+                getAllClusterNames={this.getAllClusterNames}
+                getSSHLabel={this.getSSHLabel}
+                handleEditClick={this.handleEditClick}
+                nodes={nodes}
                 isLoading={isLoading}
-                data-testid="node-list"
-              >
-                {nodes.map(node => (
-                  <tr key={node.name}>
-                    <td>{node.name || ''}</td>
-                    <td>{join(this.getAllClusterNames(node), ', ')}</td>
-                    <td>{this.getSSHLabel(node.user, node.port)}</td>
-                    <td className="has-icon">
-                      <s.Icon
-                        className="far fa-edit"
-                        data-testid="edit-node-icon"
-                        onClick={() => this.handleEditClick(node)}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </s.Table>
+                headers={this.headers}
+              />
             </Box>
           </s.Wrapper>
-          <NodeNewModal
-            isActive={activeModal === NODE_NEW_MODAL}
-            handleClose={() => {
-              this.setState({ activeModal: null });
-            }}
+          <MuiNewModal
+            isOpen={this.state.isNewModalOpen}
+            handleClose={this.handleModalColse}
             handleConfirm={this.fetchData}
           />
-          <NodeEditModal
+          <MuiEditModal
             node={activeNode}
-            isActive={activeModal === NODE_EDIT_MODAL}
-            handleClose={() => {
-              this.setState({ activeModal: null, activeNode: null });
-            }}
+            isOpen={this.state.isEditModalOpen}
+            handleClose={this.handleModalColse}
             handleConfirm={this.fetchData}
           />
         </React.Fragment>

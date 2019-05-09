@@ -29,6 +29,14 @@ import LoginPage from 'components/pages/LoginPage';
 import LogoutPage from 'components/pages/LogoutPage';
 import NotFoundPage from 'components/pages/NotFoundPage';
 import { getUserKey } from 'utils/authUtils';
+import { create } from 'jss';
+import { StylesProvider, jssPreset } from '@material-ui/styles';
+
+//Let's rephrase this to We need to override Mui styles with our custom styles. See Mui docs for more info:https://material-ui.com/customization/css-in-js/#other-html-element
+const jss = create({
+  ...jssPreset(),
+  insertionPoint: 'jss-insertion-point',
+});
 
 class App extends React.Component {
   state = {
@@ -50,75 +58,77 @@ class App extends React.Component {
     const { isLogin } = this.state;
 
     return (
-      <Router>
-        <React.Fragment>
-          <Header isLogin={isLogin} />
-          <Switch>
-            <Route
-              path="/pipelines/new/:page?/:pipelineId/:connectorId?"
-              component={PipelineNewPage}
-              data-testid="pipeline-new-page"
-            />
-            <Route
-              path="/pipelines/edit/:page?/:pipelineId/:connectorId?"
-              component={PipelineNewPage}
-              data-testid="pipeline-edit-page"
-            />
-            <Route
-              path="/pipelines"
-              component={PipelinePage}
-              data-testid="pipeline-page"
-            />
-            <Route
-              path="/nodes"
-              component={NodesPage}
-              data-testid="nodes-page"
-            />
-            <Route
-              path="/services/:serviceName?/:clusterName?"
-              component={ServicesPage}
-              data-testid="services-page"
-            />
-            <Route
-              path="/monitoring"
-              component={MonitoringPage}
-              data-testid="monitoring-page"
-            />
-            <Route
-              path="/logs/:serviceName/:clusterName"
-              component={LogsPage}
-              data-testid="logs-page"
-            />
-            <Route
-              path="/login"
-              data-testid="login-page"
-              render={props => (
-                <LoginPage
-                  updateLoginState={this.updateLoginState}
-                  {...props}
-                />
-              )}
-            />
-            <Route
-              path="/logout"
-              data-testid="logout-page"
-              render={props => (
-                <LogoutPage
-                  updateLoginState={this.updateLoginState}
-                  {...props}
-                />
-              )}
-            />
-            <Route
-              exact
-              path="/"
-              data-testid="home-page"
-              component={HomePage}
-            />
-            <Route component={NotFoundPage} data-testid="not-found-page" />
-          </Switch>
-        </React.Fragment>
-      </Router>
+      <StylesProvider jss={jss}>
+        <Router>
+          <React.Fragment>
+            <Header isLogin={isLogin} />
+            <Switch>
+              <Route
+                path="/pipelines/new/:page?/:pipelineId/:connectorId?"
+                component={PipelineNewPage}
+                data-testid="pipeline-new-page"
+              />
+              <Route
+                path="/pipelines/edit/:page?/:pipelineId/:connectorId?"
+                component={PipelineNewPage}
+                data-testid="pipeline-edit-page"
+              />
+              <Route
+                path="/pipelines"
+                component={PipelinePage}
+                data-testid="pipeline-page"
+              />
+              <Route
+                path="/nodes"
+                component={NodesPage}
+                data-testid="nodes-page"
+              />
+              <Route
+                path="/services/:serviceName?/:clusterName?"
+                component={ServicesPage}
+                data-testid="services-page"
+              />
+              <Route
+                path="/monitoring"
+                component={MonitoringPage}
+                data-testid="monitoring-page"
+              />
+              <Route
+                path="/logs/:serviceName/:clusterName"
+                component={LogsPage}
+                data-testid="logs-page"
+              />
+              <Route
+                path="/login"
+                data-testid="login-page"
+                render={props => (
+                  <LoginPage
+                    updateLoginState={this.updateLoginState}
+                    {...props}
+                  />
+                )}
+              />
+              <Route
+                path="/logout"
+                data-testid="logout-page"
+                render={props => (
+                  <LogoutPage
+                    updateLoginState={this.updateLoginState}
+                    {...props}
+                  />
+                )}
+              />
+              <Route
+                exact
+                path="/"
+                data-testid="home-page"
+                component={HomePage}
+              />
+              <Route component={NotFoundPage} data-testid="not-found-page" />
+            </Switch>
+          </React.Fragment>
+        </Router>
+      </StylesProvider>
     );
   }
 }

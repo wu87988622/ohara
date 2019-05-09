@@ -14,28 +14,7 @@
  * limitations under the License.
  */
 
-const REQUIRED_FIELD = 'Required field';
+import Button from './Button';
+import InputField from './InputField';
 
-const validate = values => {
-  const errors = {};
-
-  if (!values.name) {
-    errors.name = REQUIRED_FIELD;
-  }
-
-  if (!values.port) {
-    errors.port = REQUIRED_FIELD;
-  }
-
-  if (!values.user) {
-    errors.user = REQUIRED_FIELD;
-  }
-
-  if (!values.password) {
-    errors.password = REQUIRED_FIELD;
-  }
-
-  return errors;
-};
-
-export default validate;
+export { Button, InputField };
