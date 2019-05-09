@@ -76,6 +76,7 @@ private class K8sStreamWarehouseImpl(nodeCollie: NodeCollie,
                         .imageName(imageName)
                         .nodename(node.name)
                         .hostname(name)
+                        .name(name)
                         .labelName(K8S_OHARA_LABEL)
                         .domainName(K8S_DOMAIN_NAME)
                         .envs(
