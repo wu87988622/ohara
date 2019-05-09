@@ -165,7 +165,9 @@ public abstract class StreamApp {
 
     String jarHeader = "jar:file:";
     String jarTail = "!/";
-    File outputFile = File.createTempFile("streamApp-", ".jar");
+    // create a tempFolder and new a file instance : /tmp/streamApp-XXXXX/streamApp.jar
+    File tmpFolder = CommonUtils.createTempFolder("streamApp-");
+    File outputFile = new File(tmpFolder, "streamApp.jar");
 
     URL url = new URL(jarUrl);
 
