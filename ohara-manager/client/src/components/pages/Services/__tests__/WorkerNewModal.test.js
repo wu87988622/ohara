@@ -15,14 +15,15 @@
  */
 
 import React from 'react';
-import toastr from 'toastr';
 import { cleanup, render, fireEvent } from 'react-testing-library';
 import 'jest-dom/extend-expect';
 
 import WorkerNewModal from '../WorkerNewModal';
 import { createWorker } from 'api/workerApi';
+import { fetchBrokers } from 'api/brokerApi';
 
 jest.mock('api/workerApi');
+jest.mock('api/brokerApi');
 
 const props = {
   isActive: true,
@@ -38,8 +39,20 @@ describe('<WorkerNewModal />', () => {
   });
 
   it('submits the form', async () => {
-    const res = { data: { result: [{ name: 'abc' }], isSuccess: true } };
-    createWorker.mockImplementation(() => Promise.resolve(res));
+    const workerRes = {
+      data: {
+        result: [{ name: 'wk00' }],
+        isSuccess: true,
+      },
+    };
+    const brokerRes = {
+      data: {
+        result: [{ name: 'bk00' }],
+        isSuccess: true,
+      },
+    };
+    fetchBrokers.mockImplementation(() => Promise.resolve(brokerRes));
+    createWorker.mockImplementation(() => Promise.resolve(workerRes));
 
     const { getByPlaceholderText, getByText } = render(
       <WorkerNewModal {...props} />,
@@ -60,12 +73,11 @@ describe('<WorkerNewModal />', () => {
       name,
       clientPort: port,
       plugins: [],
+      jmxPort: expect.any(Number),
+      brokerClusterName: 'bk00',
     };
 
     expect(createWorker).toHaveBeenCalledTimes(1);
     expect(createWorker).toHaveBeenCalledWith(expected);
-    expect(toastr.success).toHaveBeenCalledTimes(1);
-    expect(props.onConfirm).toHaveBeenCalledTimes(1);
-    expect(props.onClose).toHaveBeenCalledTimes(1);
   });
 });

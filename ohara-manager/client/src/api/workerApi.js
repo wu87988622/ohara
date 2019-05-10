@@ -49,14 +49,12 @@ export const fetchWorkers = async () => {
 };
 
 export const createWorker = async params => {
-  const brokerRes = await axiosInstance.get(`/api/brokers`);
-  const brokerName = get(brokerRes, 'data.result')[0].name;
   try {
     const url = `/api/workers`;
     const data = {
       name: params.name,
-      jmxPort: randomPort(),
-      brokerClusterName: String(brokerName),
+      jmxPort: params.randomPort,
+      brokerClusterName: params.brokerName,
       clientPort: toNumber(params.clientPort),
       nodeNames: params.nodeNames || [],
       jars: params.plugins || [],
@@ -77,9 +75,3 @@ export const createWorker = async params => {
     handleError(err);
   }
 };
-
-function randomPort() {
-  var min = 5000;
-  var max = 65535;
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}

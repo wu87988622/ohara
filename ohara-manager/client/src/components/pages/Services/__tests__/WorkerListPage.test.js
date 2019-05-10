@@ -49,25 +49,6 @@ describe('<WorkerListPage />', () => {
     expect(getByTestId('table-loader')).toBeInTheDocument();
   });
 
-  it('disables new cluster button when there are more than one workers in the list', () => {
-    const workers = [
-      {
-        name: 'abc',
-        nodeNames: ['c', 'd'],
-        statusTopicName: 'e',
-        configTopicName: 'f',
-        offsetTopicName: 'g',
-      },
-    ];
-
-    const { getByText } = renderWithRouter(
-      <WorkerListPage {...props} workers={workers} />,
-    );
-
-    expect(getByText('New cluster')).toHaveClass('is-disabled');
-    expect(getByText('New cluster')).toHaveAttribute('disabled');
-  });
-
   it('should enable the new cluster button so users can create workers with it', async () => {
     const { getByText } = renderWithRouter(
       <WorkerListPage {...props} workers={[]} isLoading={false} />,
