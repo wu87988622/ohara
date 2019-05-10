@@ -28,9 +28,9 @@ import com.island.ohara.configurator.fake.FakeWorkerCollie
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
+import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
 class TestWorkerRoute extends MediumTest with Matchers {
   private[this] val numberOfCluster = 1
   private[this] val configurator = Configurator.builder().fake(numberOfCluster, 0).build()
@@ -54,7 +54,6 @@ class TestWorkerRoute extends MediumTest with Matchers {
 
   private[this] val nodeNames: Seq[String] = Seq("n0", "n1")
 
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
   @Before
   def setup(): Unit = {
     val nodeAccess = NodeApi.access().hostname(configurator.hostname).port(configurator.port)

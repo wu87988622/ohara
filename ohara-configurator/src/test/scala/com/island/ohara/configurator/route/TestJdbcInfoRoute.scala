@@ -19,20 +19,16 @@ package com.island.ohara.configurator.route
 import com.island.ohara.client.configurator.v0.DatabaseApi
 import com.island.ohara.client.configurator.v0.DatabaseApi.{JdbcInfo, JdbcInfoRequest}
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.Releasable
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Test}
 import org.scalatest.Matchers
-
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestJdbcInfoRoute extends SmallTest with Matchers {
   private[this] val configurator = Configurator.builder().fake().build()
 
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
-
+  private[this] val jdbcApi = DatabaseApi.access().hostname(configurator.hostname).port(configurator.port)
   @Test
   def test(): Unit = {
     def compareRequestAndResponse(request: JdbcInfoRequest, response: JdbcInfo): JdbcInfo = {
@@ -52,33 +48,36 @@ class TestJdbcInfoRoute extends SmallTest with Matchers {
       lhs.lastModified shouldBe rhs.lastModified
     }
 
-    val access = DatabaseApi.access().hostname(configurator.hostname).port(configurator.port)
     // test add
-    result(access.list).size shouldBe 0
+    result(jdbcApi.list).size shouldBe 0
 
     val request = JdbcInfoRequest("test", "oracle://152.22.23.12:4222", "test", "test")
-    val response = compareRequestAndResponse(request, result(access.add(request)))
+    val response = compareRequestAndResponse(request, result(jdbcApi.add(request)))
 
     // test get
-    compare2Response(response, result(access.get(response.id)))
+    compare2Response(response, result(jdbcApi.get(response.id)))
 
     // test update
     val anotherRequest = JdbcInfoRequest("test2", "msSQL://152.22.23.12:4222", "test", "test")
     val newResponse =
-      compareRequestAndResponse(anotherRequest, result(access.update(response.id, anotherRequest)))
+      compareRequestAndResponse(anotherRequest, result(jdbcApi.update(response.id, anotherRequest)))
 
     // test get
-    compare2Response(newResponse, result(access.get(newResponse.id)))
+    compare2Response(newResponse, result(jdbcApi.get(newResponse.id)))
 
     // test delete
-    result(access.list).size shouldBe 1
-    result(access.delete(response.id)) shouldBe newResponse
-    result(access.list).size shouldBe 0
+    result(jdbcApi.list).size shouldBe 1
+    result(jdbcApi.delete(response.id))
+    result(jdbcApi.list).size shouldBe 0
 
     // test nonexistent data
-    an[IllegalArgumentException] should be thrownBy result(access.get("adasd"))
-    an[IllegalArgumentException] should be thrownBy result(access.update("adasd", anotherRequest))
+    an[IllegalArgumentException] should be thrownBy result(jdbcApi.get("adasd"))
+    an[IllegalArgumentException] should be thrownBy result(jdbcApi.update("adasd", anotherRequest))
   }
+
+  @Test
+  def duplicateDeleteStreamProperty(): Unit =
+    (0 to 10).foreach(_ => result(jdbcApi.delete(CommonUtils.randomString(5))))
 
   @After
   def tearDown(): Unit = Releasable.close(configurator)

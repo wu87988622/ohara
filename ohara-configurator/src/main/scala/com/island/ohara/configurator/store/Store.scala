@@ -50,6 +50,13 @@ trait Store[K, V] extends ReleaseOnce {
   def update(key: K, value: V => Future[V]): Future[V]
 
   /**
+    * return the value associated to key or empty if key doesn't exist
+    * @param key key
+    * @return value
+    */
+  def get(key: K): Future[Option[V]]
+
+  /**
     * Retrieve the value by specified key.
     * @param key key mapped to the value
     */
@@ -74,7 +81,7 @@ trait Store[K, V] extends ReleaseOnce {
     * @param key key mapped to the value
     * @return the removed value
     */
-  def remove(key: K): Future[V]
+  def remove(key: K): Future[Boolean]
 
   def exist(key: K): Future[Boolean]
 }
@@ -129,8 +136,8 @@ object Store {
 
       override protected def doClose(): Unit = store.clear()
 
-      override def remove(key: K): Future[V] =
-        Future.successful(Option(store.remove(toKey(key))).map(fromValue).get)
+      override def remove(key: K): Future[Boolean] =
+        Future.successful(Option(store.remove(toKey(key))).nonEmpty)
 
       /**
         * Override the size to provide the efficient implementation
@@ -145,5 +152,7 @@ object Store {
         if (previous != null) throw new IllegalStateException(s"$key exists!!!")
         value
       }
+
+      override def get(key: K): Future[Option[V]] = Future.successful(Option(store.get(toKey(key))).map(fromValue))
     }
 }

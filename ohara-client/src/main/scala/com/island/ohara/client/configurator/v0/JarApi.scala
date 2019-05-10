@@ -42,7 +42,7 @@ object JarApi {
   sealed abstract class Access extends BasicAccess(JAR_PREFIX_PATH) {
     def upload(f: File)(implicit executionContext: ExecutionContext): Future[JarInfo] = upload(f, f.getName)
     def upload(f: File, newName: String)(implicit executionContext: ExecutionContext): Future[JarInfo]
-    def delete(id: String)(implicit executionContext: ExecutionContext): Future[JarInfo]
+    def delete(id: String)(implicit executionContext: ExecutionContext): Future[Unit]
     def list(implicit executionContext: ExecutionContext): Future[Seq[JarInfo]]
   }
 
@@ -63,8 +63,8 @@ object JarApi {
     override def upload(f: File, newName: String)(implicit executionContext: ExecutionContext): Future[JarInfo] =
       request(s"http://${_hostname}:${_port}/${_version}/${_prefixPath}", f, newName)
         .flatMap(exec.request[JarInfo, ErrorApi.Error])
-    override def delete(id: String)(implicit executionContext: ExecutionContext): Future[JarInfo] =
-      exec.delete[JarInfo, ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$id")
+    override def delete(id: String)(implicit executionContext: ExecutionContext): Future[Unit] =
+      exec.delete[ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$id")
     override def list(implicit executionContext: ExecutionContext): Future[Seq[JarInfo]] =
       exec.get[Seq[JarInfo], ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}")
   }

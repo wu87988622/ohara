@@ -69,10 +69,8 @@ final object ShabondiApi {
       exec.put[ShabondiProperty, ShabondiDescription, ErrorApi.Error](url, property)
     }
 
-    def delete(id: String)(implicit executionContext: ExecutionContext): Future[ShabondiDescription] = {
-      val url = basicUrl(id)
-      exec.delete[ShabondiDescription, ErrorApi.Error](url)
-    }
+    def delete(id: String)(implicit executionContext: ExecutionContext): Future[Unit] =
+      exec.delete[ErrorApi.Error](basicUrl(id))
 
     def start(id: String)(implicit executionContext: ExecutionContext): Future[ShabondiDescription] = {
       val url = basicUrl(id) + "/" + PATH_SEGMENT_START

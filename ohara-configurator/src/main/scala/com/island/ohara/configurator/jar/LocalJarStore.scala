@@ -99,14 +99,16 @@ private[configurator] class LocalJarStore(val homeFolder: String,
     else Seq.empty
   }
 
-  override def remove(id: String)(implicit executionContext: ExecutionContext): Future[JarInfo] =
-    jarInfo(id).map { jar =>
-      CommonUtils.requireNonEmpty(id)
-      val file = toFolder(id)
-      if (!file.exists()) throw new NoSuchElementException(s"$id doesn't exist")
-      if (!file.isDirectory) throw new IllegalArgumentException(s"$id doesn't reference to a folder")
-      CommonUtils.deleteFiles(file)
-      jar
+  override def remove(id: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
+    exist(id).map {
+      if (_) {
+        CommonUtils.requireNonEmpty(id)
+        val file = toFolder(id)
+        if (!file.exists()) throw new NoSuchElementException(s"$id doesn't exist")
+        if (!file.isDirectory) throw new IllegalArgumentException(s"$id doesn't reference to a folder")
+        CommonUtils.deleteFiles(file)
+        true
+      } else false
     }
 
   override def exist(id: String)(implicit executionContext: ExecutionContext): Future[Boolean] =

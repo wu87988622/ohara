@@ -40,7 +40,7 @@ private[configurator] object JarsRoute {
         case (metadata, file) =>
           complete(jarStore.add(file, metadata.fileName))
       } ~ get(complete(jarStore.jarInfos)) ~ path(Segment) { id =>
-        delete(complete(jarStore.remove(id))) ~ get(complete(jarStore.jarInfo(id)))
+        delete(complete(jarStore.remove(id).map(_ => StatusCodes.NoContent))) ~ get(complete(jarStore.jarInfo(id)))
       }
     } ~ pathPrefix(DOWNLOAD_JAR_PREFIX_PATH / Segment) { idWithExtension =>
       // We force all url end with .jar

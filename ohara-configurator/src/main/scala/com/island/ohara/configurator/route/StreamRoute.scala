@@ -217,20 +217,17 @@ private[configurator] object StreamRoute {
             path(Segment) { id =>
               //delete jar
               delete {
-                // check the jar is not used in pipeline
-                assertNotRelated2Pipeline(id)
-                complete(store.remove[StreamAppDescription](id).flatMap { data =>
-                  jarStore
-                    .remove(data.jarInfo.id)
-                    .map(
-                      _ =>
-                        StreamListResponse(
-                          data.id,
-                          data.name,
-                          data.jarInfo.name,
-                          data.lastModified
-                      )
-                    )
+                complete(store.get[StreamAppDescription](id).flatMap { dataOption =>
+                  dataOption
+                    .map { data =>
+                      // check the jar is not used in pipeline
+                      assertNotRelated2Pipeline(id)
+                      jarStore
+                        .remove(data.jarInfo.id)
+                        .flatMap(_ => store.remove[StreamAppDescription](id))
+                        .map(_ => StatusCodes.NoContent)
+                    }
+                    .getOrElse(Future.successful(StatusCodes.NoContent))
                 })
               } ~
                 //update jar name
@@ -285,13 +282,15 @@ private[configurator] object StreamRoute {
                 delete {
                   complete(
                     // get the latest status first
-                    updateState(id).flatMap { data =>
-                      if (data.state.isEmpty) {
-                        // state is not exists, could remove this streamApp
-                        store.remove[StreamAppDescription](id)
-                      } else {
-                        throw new RuntimeException(s"You cannot delete a non-stopped streamApp :$id")
-                      }
+                    store.get[StreamAppDescription](id).flatMap {
+                      _.map { desc =>
+                        updateState(desc.id).flatMap { data =>
+                          if (data.state.isEmpty) {
+                            // state is not exists, could remove this streamApp
+                            store.remove[StreamAppDescription](id).map(_ => StatusCodes.NoContent)
+                          } else Future.failed(new RuntimeException(s"You cannot delete a non-stopped streamApp :$id"))
+                        }
+                      }.getOrElse(Future.successful(StatusCodes.NoContent))
                     }
                   )
                 } ~

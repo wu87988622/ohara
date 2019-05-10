@@ -51,7 +51,7 @@ trait JarStore extends Releasable {
     * remove a existed jar file from jar store
     * @param id jar file's id
     */
-  def remove(id: String)(implicit executionContext: ExecutionContext): Future[JarInfo]
+  def remove(id: String)(implicit executionContext: ExecutionContext): Future[Boolean]
 
   /**
     * update the jar

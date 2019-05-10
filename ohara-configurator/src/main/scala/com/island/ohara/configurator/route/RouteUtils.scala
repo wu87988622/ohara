@@ -71,13 +71,10 @@ private[route] object RouteUtils {
     hook: Res => Future[Res])(implicit store: DataStore, rm: RootJsonFormat[Res], executionContext: ExecutionContext) =
     get(complete(store.value[Res](id).flatMap(value => hook(value))))
 
-  private[this] def routeOfDelete[Res <: Data: ClassTag](id: Id,
-                                                         hook: Res => Future[Res],
-                                                         hookBeforeDelete: String => Future[String])(
+  private[this] def routeOfDelete[Res <: Data: ClassTag](id: Id, hookBeforeDelete: String => Future[String])(
     implicit store: DataStore,
-    rm: RootJsonFormat[Res],
     executionContext: ExecutionContext) =
-    delete(complete(hookBeforeDelete(id).flatMap(id => store.remove[Res](id).flatMap(value => hook(value)))))
+    delete(complete(hookBeforeDelete(id).flatMap(id => store.remove[Res](id).map(_ => StatusCodes.NoContent))))
 
   private[this] def routeOfUpdate[Req, Res <: Data: ClassTag](id: Id, hook: (Id, Req, Res) => Future[Res])(
     implicit store: DataStore,
@@ -109,16 +106,14 @@ private[route] object RouteUtils {
     hookOfAdd = reqToRes,
     hookOfUpdate = (id: Id, req: Req, _: Res) => reqToRes(None, id, req),
     hookOfList = (r: Seq[Res]) => Future.traverse(r)(resToRes),
-    hookOfGet = (r: Res) => resToRes(r),
-    hookOfDelete = (r: Res) => resToRes(r)
+    hookOfGet = (r: Res) => resToRes(r)
   )
 
   def basicRoute[Req, Res <: Data: ClassTag](root: String,
                                              hookOfAdd: (TargetCluster, Id, Req) => Future[Res],
                                              hookOfUpdate: (Id, Req, Res) => Future[Res],
                                              hookOfList: Seq[Res] => Future[Seq[Res]],
-                                             hookOfGet: Res => Future[Res],
-                                             hookOfDelete: Res => Future[Res])(
+                                             hookOfGet: Res => Future[Res])(
     implicit store: DataStore,
     rm: RootJsonFormat[Req],
     rm2: RootJsonFormat[Res],
@@ -129,8 +124,7 @@ private[route] object RouteUtils {
       hookOfUpdate = hookOfUpdate,
       hookOfList = hookOfList,
       hookOfGet = hookOfGet,
-      hookBeforeDelete = id => Future.successful(id),
-      hookOfDelete = hookOfDelete
+      hookBeforeDelete = id => Future.successful(id)
     )
 
   /**
@@ -142,7 +136,6 @@ private[route] object RouteUtils {
     * @param hookOfList used to convert response for List function
     * @param hookOfGet used to convert response for Get function
     * @param hookBeforeDelete used to do something before doing delete operation. For example, validate the id.
-    * @param hookOfDelete used to convert response for Delete function
     * @tparam Req request
     * @tparam Res response
     * @return route
@@ -152,8 +145,7 @@ private[route] object RouteUtils {
                                              hookOfUpdate: (Id, Req, Res) => Future[Res],
                                              hookOfList: Seq[Res] => Future[Seq[Res]],
                                              hookOfGet: Res => Future[Res],
-                                             hookBeforeDelete: String => Future[String],
-                                             hookOfDelete: Res => Future[Res])(
+                                             hookBeforeDelete: String => Future[String])(
     implicit store: DataStore,
     rm: RootJsonFormat[Req],
     rm2: RootJsonFormat[Res],
@@ -162,7 +154,7 @@ private[route] object RouteUtils {
       pathEnd {
         routeOfAdd[Req, Res](hookOfAdd) ~ routeOfList[Res](hookOfList)
       } ~ path(Segment) { id =>
-        routeOfGet[Res](id, hookOfGet) ~ routeOfDelete[Res](id, hookOfDelete, hookBeforeDelete) ~
+        routeOfGet[Res](id, hookOfGet) ~ routeOfDelete[Res](id, hookBeforeDelete) ~
           routeOfUpdate[Req, Res](id, hookOfUpdate)
       }
     }

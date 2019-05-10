@@ -19,12 +19,11 @@ package com.island.ohara.configurator.route
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeCreationRequest}
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.Releasable
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
-import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestNodeRoute extends SmallTest with Matchers {
   private[this] val numberOfCluster = 1
@@ -36,8 +35,6 @@ class TestNodeRoute extends SmallTest with Matchers {
   private[this] val numberOfDefaultNodes = 3 * numberOfCluster
   private[this] val nodeApi = NodeApi.access().hostname(configurator.hostname).port(configurator.port)
 
-  import scala.concurrent.duration._
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
   private[this] def compare(req: NodeCreationRequest, res: Node): Unit = {
     req.name.map { name =>
       name shouldBe res.id
@@ -82,7 +79,7 @@ class TestNodeRoute extends SmallTest with Matchers {
 
     result(nodeApi.list).size shouldBe (1 + numberOfDefaultNodes)
 
-    compare(result(nodeApi.delete(res.name)), res)
+    result(nodeApi.delete(res.name))
     result(nodeApi.list).size shouldBe numberOfDefaultNodes
   }
 
@@ -90,7 +87,7 @@ class TestNodeRoute extends SmallTest with Matchers {
   def disableToDeleteNodeRunningService(): Unit = {
     val nodes = result(nodeApi.list)
     val runningNode = nodes.filter(_.services.exists(_.clusterNames.nonEmpty)).head
-
+    println(s"[CHIA] runningNode:$runningNode")
     an[IllegalArgumentException] should be thrownBy result(nodeApi.delete(runningNode.id))
   }
 
@@ -138,6 +135,10 @@ class TestNodeRoute extends SmallTest with Matchers {
     compare(req3, res3)
     result(nodeApi.list).size shouldBe (1 + numberOfDefaultNodes)
   }
+
+  @Test
+  def duplicateDeleteStreamProperty(): Unit =
+    (0 to 10).foreach(_ => result(nodeApi.delete(CommonUtils.randomString(5))))
 
   @After
   def tearDown(): Unit = Releasable.close(configurator)

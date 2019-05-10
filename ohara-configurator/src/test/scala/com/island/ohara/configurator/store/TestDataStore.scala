@@ -85,11 +85,11 @@ class TestDataStore extends MediumTest with Matchers {
     Await.result(store.add(data2), timeout)
     store.size shouldBe 2
 
-    an[NoSuchElementException] should be thrownBy Await.result(store.remove("1234"), 50 seconds)
-    an[NoSuchElementException] should be thrownBy Await.result(store.remove[SimpleData]("1234"), 50 seconds)
-    an[NoSuchElementException] should be thrownBy Await.result(store.remove[ConnectorDescription]("abcd"), 50 seconds)
+    Await.result(store.remove("1234"), 50 seconds) shouldBe false
+    Await.result(store.remove[SimpleData]("1234"), 50 seconds) shouldBe false
+    Await.result(store.remove[ConnectorDescription]("abcd"), 50 seconds) shouldBe false
 
-    Await.result(store.remove[SimpleData]("abcd"), 50 seconds) shouldBe data1
+    Await.result(store.remove[SimpleData]("abcd"), 50 seconds) shouldBe true
     store.size shouldBe 1
   }
 
@@ -100,12 +100,16 @@ class TestDataStore extends MediumTest with Matchers {
     Await.result(store.add(data1), timeout)
     store.size shouldBe 1
 
-    an[NoSuchElementException] should be thrownBy Await.result(store.remove("1234"), 50 seconds)
-    an[NoSuchElementException] should be thrownBy Await.result(store.remove[SimpleData]("1234"), 50 seconds)
-    an[NoSuchElementException] should be thrownBy Await.result(store.remove[ConnectorDescription]("abcd"), 50 seconds)
+    Await.result(store.remove("1234"), 50 seconds) shouldBe false
+    Await.result(store.remove[SimpleData]("1234"), 50 seconds) shouldBe false
+    Await.result(store.remove[ConnectorDescription]("abcd"), 50 seconds) shouldBe false
 
     Await.result(store.raw(), timeout).head.asInstanceOf[SimpleData] shouldBe data1
     Await.result(store.raw("abcd"), timeout).asInstanceOf[SimpleData] shouldBe data1
   }
+
+  @Test
+  def testGet(): Unit =
+    Await.result(store.get(CommonUtils.randomString()), timeout) shouldBe Option.empty
 
 }

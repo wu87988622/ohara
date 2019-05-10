@@ -395,30 +395,34 @@ private[configurator] object PipelineRoute {
       hookOfGet = (response: Pipeline) => update(response),
       hookOfList = (responses: Seq[Pipeline]) => update(responses),
       hookBeforeDelete = (id: String) =>
-        store
-          .value[Pipeline](id)
-          .flatMap { pipeline =>
-            update(pipeline).recover {
-              // keep working even through the wk cluster is gone.
-              case _: NoSuchClusterException => pipeline
+        store.get[Pipeline](id).flatMap { pipelineOption =>
+          pipelineOption
+            .map {
+              pipeline =>
+                update(pipeline)
+                  .recover {
+                    // keep working even through the wk cluster is gone.
+                    case _: NoSuchClusterException => pipeline
+                  }
+                  .flatMap { pipeline =>
+                    // If any object has "state", we reject to delete pipeline. We can't stop all objects at once.
+                    val running = pipeline.objects.filter(_.state.isDefined).map(_.id)
+                    if (running.nonEmpty)
+                      Future.failed(new IllegalArgumentException(s"${running.mkString(",")} are running"))
+                    else
+                      Future.sequence(pipeline.objects.map(_.id).map(store.value[Data])).flatMap { objs =>
+                        Future
+                          .sequence(
+                            objs
+                            // we only remove connectors. The streamapps and topics are still stored!
+                              .filter(_.isInstanceOf[ConnectorDescription])
+                              .map(_.id)
+                              .map(store.remove[ConnectorDescription]))
+                          .map(_ => pipeline.id)
+                      }
+                  }
             }
-          }
-          .flatMap { pipeline =>
-            // If any object has "state", we reject to delete pipeline. We can't stop all objects at once.
-            val running = pipeline.objects.filter(_.state.isDefined).map(_.id)
-            if (running.nonEmpty) Future.failed(new IllegalArgumentException(s"${running.mkString(",")} are running"))
-            else
-              Future.sequence(pipeline.objects.map(_.id).map(store.value[Data])).flatMap { objs =>
-                Future
-                  .sequence(
-                    objs
-                    // we only remove connectors. The streamapps and topics are still stored!
-                      .filter(_.isInstanceOf[ConnectorDescription])
-                      .map(_.id)
-                      .map(store.remove[ConnectorDescription]))
-                  .map(_ => pipeline.id)
-              }
-        },
-      hookOfDelete = (response: Pipeline) => Future.successful(response)
+            .getOrElse(Future.successful(id))
+      }
     )
 }

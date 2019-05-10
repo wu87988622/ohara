@@ -23,6 +23,9 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
 
 trait DataStore extends Releasable {
+
+  def get[T <: Data: ClassTag](id: String)(implicit executor: ExecutionContext): Future[Option[T]]
+
   def value[T <: Data: ClassTag](id: String)(implicit executor: ExecutionContext): Future[T]
 
   def values[T <: Data: ClassTag](implicit executor: ExecutionContext): Future[Seq[T]]
@@ -39,7 +42,7 @@ trait DataStore extends Releasable {
     * @tparam T subclass type
     * @return the removed data
     */
-  def remove[T <: Data: ClassTag](id: String)(implicit executor: ExecutionContext): Future[T]
+  def remove[T <: Data: ClassTag](id: String)(implicit executor: ExecutionContext): Future[Boolean]
 
   /**
     * update an existed object in the store. If the id doesn't  exists, an exception will be thrown.
@@ -84,8 +87,8 @@ object DataStore {
       * @tparam T subclass type
       * @return the removed data
       */
-    override def remove[T <: Data: ClassTag](id: String)(implicit executor: ExecutionContext): Future[T] =
-      value[T](id).flatMap(_ => store.remove(id)).map(_.asInstanceOf[T])
+    override def remove[T <: Data: ClassTag](id: String)(implicit executor: ExecutionContext): Future[Boolean] =
+      exist[T](id).flatMap(if (_) store.remove(id) else Future.successful(false))
 
     /**
       * update an existed object in the store. If the id doesn't  exists, an exception will be thrown.
@@ -113,6 +116,9 @@ object DataStore {
       exist[T](id).map(!_)
 
     override def size: Int = store.size
+
+    override def get[T <: Data: ClassTag](id: String)(implicit executor: ExecutionContext): Future[Option[T]] =
+      store.get(id).map(_.filter(classTag[T].runtimeClass.isInstance).map(_.asInstanceOf[T]))
   }
 
 }

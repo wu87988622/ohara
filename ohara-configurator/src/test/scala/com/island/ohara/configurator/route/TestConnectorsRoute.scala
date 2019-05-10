@@ -33,12 +33,8 @@ import org.junit.{After, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
 class TestConnectorsRoute extends SmallTest with Matchers {
   private[this] val configurator = Configurator.builder().fake(1, 1).build()
-
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
   private[this] val connectorApi = ConnectorApi.access().hostname(configurator.hostname).port(configurator.port)
 
@@ -110,7 +106,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
 
     // test delete
     result(connectorApi.list).size shouldBe 1
-    result(connectorApi.delete(response.id)) shouldBe newResponse
+    result(connectorApi.delete(response.id))
     result(connectorApi.list).size shouldBe 0
 
     // test nonexistent data
@@ -203,7 +199,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
 
     // test delete
     result(connectorApi.list).size shouldBe 1
-    result(connectorApi.delete(response.id)) shouldBe newResponse
+    result(connectorApi.delete(response.id))
     result(connectorApi.list).size shouldBe 0
 
     // test nonexistent data

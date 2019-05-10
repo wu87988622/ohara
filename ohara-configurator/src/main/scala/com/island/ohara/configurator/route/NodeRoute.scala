@@ -73,19 +73,17 @@ object NodeRoute {
       hookOfList = (responses: Seq[Node]) => update(responses),
       hookBeforeDelete = (id: String) =>
         store
-          .value[Node](id)
-          .flatMap(update)
-          .map { node =>
-            def toString(services: Seq[NodeService]): String = services
-              .filter(_.clusterNames.nonEmpty)
-              .map(s => s"${s.name}:${s.clusterNames.mkString(".")}")
-              .mkString(" ")
-            if (node.services.map(_.clusterNames.size).sum != 0)
-              throw new IllegalStateException(
-                s"${node.name} is running ${toString(node.services)}. Please stop all services before deleting")
-            node.id
-        },
-      // we don't need to update node in deleting
-      hookOfDelete = (response: Node) => Future.successful(response)
+          .get[Node](id)
+          .flatMap(_.map {
+            update(_).map { node =>
+              if (node.services.map(_.clusterNames.size).sum != 0) {
+                throw new IllegalStateException(
+                  s"${node.name} is running ${node.services.filter(_.clusterNames.nonEmpty).map(s => s"${s.name}:${s.clusterNames.mkString(".")}").mkString(" ")}. " +
+                    s"Please stop all services before deleting")
+              }
+              id
+            }
+          }.getOrElse(Future.successful(id)))
     )
+
 }

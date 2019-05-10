@@ -19,20 +19,16 @@ package com.island.ohara.configurator.route
 import com.island.ohara.client.configurator.v0.FtpApi
 import com.island.ohara.client.configurator.v0.FtpApi.{FtpInfo, FtpInfoRequest}
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.Releasable
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Test}
 import org.scalatest.Matchers
-
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestFtpInfoRoute extends SmallTest with Matchers {
   private[this] val configurator = Configurator.builder().fake().build()
 
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
-
+  private[this] val ftpApi = FtpApi.access().hostname(configurator.hostname).port(configurator.port)
   @Test
   def testValidateField(): Unit = {
     an[IllegalArgumentException] should be thrownBy FtpInfoRoute.validateField(
@@ -129,33 +125,36 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
       lhs.lastModified shouldBe rhs.lastModified
     }
 
-    val access = FtpApi.access().hostname(configurator.hostname).port(configurator.port)
     // test add
-    result(access.list).size shouldBe 0
+    result(ftpApi.list).size shouldBe 0
 
     val request = FtpInfoRequest("test", "152.22.23.12", 5, "test", "test")
-    val response = compareRequestAndResponse(request, result(access.add(request)))
+    val response = compareRequestAndResponse(request, result(ftpApi.add(request)))
 
     // test get
-    compare2Response(response, result(access.get(response.id)))
+    compare2Response(response, result(ftpApi.get(response.id)))
 
     // test update
     val anotherRequest = FtpInfoRequest("test2", "152.22.23.125", 1222, "test", "test")
     val newResponse =
-      compareRequestAndResponse(anotherRequest, result(access.update(response.id, anotherRequest)))
+      compareRequestAndResponse(anotherRequest, result(ftpApi.update(response.id, anotherRequest)))
 
     // test get
-    compare2Response(newResponse, result(access.get(newResponse.id)))
+    compare2Response(newResponse, result(ftpApi.get(newResponse.id)))
 
     // test delete
-    result(access.list).size shouldBe 1
-    result(access.delete(response.id)) shouldBe newResponse
-    result(access.list).size shouldBe 0
+    result(ftpApi.list).size shouldBe 1
+    result(ftpApi.delete(response.id))
+    result(ftpApi.list).size shouldBe 0
 
     // test nonexistent data
-    an[IllegalArgumentException] should be thrownBy result(access.get("asdadas"))
-    an[IllegalArgumentException] should be thrownBy result(access.update("asdadas", anotherRequest))
+    an[IllegalArgumentException] should be thrownBy result(ftpApi.get("asdadas"))
+    an[IllegalArgumentException] should be thrownBy result(ftpApi.update("asdadas", anotherRequest))
   }
+
+  @Test
+  def duplicateDeleteStreamProperty(): Unit =
+    (0 to 10).foreach(_ => result(ftpApi.delete(CommonUtils.randomString(5))))
 
   @After
   def tearDown(): Unit = Releasable.close(configurator)

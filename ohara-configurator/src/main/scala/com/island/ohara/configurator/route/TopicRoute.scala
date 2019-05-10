@@ -127,30 +127,34 @@ private[configurator] object TopicRoute {
               Future.successful(request.name.map(n => previous.copy(name = n)).getOrElse(previous))
             }
       },
-      hookOfDelete = (response: TopicInfo) =>
-        CollieUtils
-          .topicAdmin(Some(response.brokerClusterName))
-          .flatMap {
-            case (_, client) =>
-              client
-                .delete(response.id)
-                .map { _ =>
-                  try response
-                  finally Releasable.close(client)
-                }
-                .recover {
-                  case e: Throwable =>
-                    LOG.error(s"failed to remove topic:${response.id} from kafka", e)
-                    response
-                }
-          }
-          .recover {
-            case e: NoSuchClusterException =>
-              LOG.warn(
-                s"the cluster:${response.brokerClusterName} doesn't exist!!! just remove topic from configurator",
-                e)
-              response
-        },
+      hookBeforeDelete = (id: String) =>
+        store
+          .get[TopicInfo](id)
+          .flatMap(_.map { topicInfo =>
+            CollieUtils
+              .topicAdmin(Some(topicInfo.brokerClusterName))
+              .flatMap {
+                case (_, client) =>
+                  client
+                    .delete(topicInfo.id)
+                    .map { _ =>
+                      try id
+                      finally Releasable.close(client)
+                    }
+                    .recover {
+                      case e: Throwable =>
+                        LOG.error(s"failed to remove topic:${topicInfo.id} from kafka", e)
+                        id
+                    }
+              }
+              .recover {
+                case e: NoSuchClusterException =>
+                  LOG.warn(
+                    s"the cluster:${topicInfo.brokerClusterName} doesn't exist!!! just remove topic from configurator",
+                    e)
+                  id
+              }
+          }.getOrElse(Future.successful(id))),
       hookOfGet = (response: TopicInfo) =>
         brokerCollie.cluster(response.brokerClusterName).map {
           case (cluster, _) => update(cluster, response)

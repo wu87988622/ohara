@@ -117,26 +117,25 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
               update(response, cluster, wkClient)
           }
         }),
-      hookOfDelete = (response: ConnectorDescription) =>
-        CollieUtils
-          .workerClient(Some(response.workerClusterName))
-          .flatMap {
-            case (_, wkClient) =>
-              wkClient.exist(response.id).flatMap {
-                if (_)
-                  wkClient
-                    .delete(response.id)
-                    .recover {
-                      case e: Throwable =>
-                        LOG.info(s"Failed to remove connector:${response.id}", e)
-                    }
-                    .map(_ => response)
-                else Future.successful(response)
+      hookBeforeDelete = (id: String) =>
+        store
+          .get[ConnectorDescription](id)
+          .flatMap(_.map { connectorDescription =>
+            CollieUtils
+              .workerClient(Some(connectorDescription.workerClusterName))
+              .flatMap {
+                case (_, wkClient) =>
+                  wkClient.exist(connectorDescription.id).flatMap {
+                    if (_)
+                      wkClient.delete(connectorDescription.id).map(_ => id)
+                    else Future.successful(id)
+                  }
               }
-          }
-          .recover {
-            case _: NoSuchClusterException => response
-        }
+              .recover {
+                // Connector can't live without cluster...
+                case _: NoSuchClusterException => id
+              }
+          }.getOrElse(Future.successful(id)))
     ) ~
       pathPrefix(CONNECTORS_PREFIX_PATH / Segment) { id =>
         path(START_COMMAND) {

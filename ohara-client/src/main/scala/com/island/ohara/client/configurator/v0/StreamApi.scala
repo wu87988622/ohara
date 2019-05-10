@@ -250,7 +250,7 @@ object StreamApi {
       * @param executionContext execution context
       * @return the deleted jar
       */
-    def delete(id: String)(implicit executionContext: ExecutionContext): Future[StreamListResponse]
+    def delete(id: String)(implicit executionContext: ExecutionContext): Future[Unit]
 
     /**
       * update jar information
@@ -304,8 +304,8 @@ object StreamApi {
       request(s"http://${_hostname}:${_port}/${_version}/${_prefixPath}", inputKey, contentType, filePaths, wkName)
         .flatMap(exec.request[Seq[StreamListResponse], ErrorApi.Error])
     }
-    override def delete(id: String)(implicit executionContext: ExecutionContext): Future[StreamListResponse] =
-      exec.delete[StreamListResponse, ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$id")
+    override def delete(id: String)(implicit executionContext: ExecutionContext): Future[Unit] =
+      exec.delete[ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$id")
     override def update(id: String, request: StreamListRequest)(
       implicit executionContext: ExecutionContext): Future[StreamListResponse] =
       exec.put[StreamListRequest, StreamListResponse, ErrorApi.Error](
@@ -320,7 +320,7 @@ object StreamApi {
     def get(id: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription]
     def update(id: String, request: StreamPropertyRequest)(
       implicit executionContext: ExecutionContext): Future[StreamAppDescription]
-    def delete(id: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription]
+    def delete(id: String)(implicit executionContext: ExecutionContext): Future[Unit]
   }
 
   def accessOfProperty(): PropertyAccess = new PropertyAccess {
@@ -345,7 +345,6 @@ object StreamApi {
       request: StreamPropertyRequest
     )(implicit executionContext: ExecutionContext): Future[StreamAppDescription] =
       access.update(id, request)
-    override def delete(id: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription] =
-      access.delete(id)
+    override def delete(id: String)(implicit executionContext: ExecutionContext): Future[Unit] = access.delete(id)
   }
 }

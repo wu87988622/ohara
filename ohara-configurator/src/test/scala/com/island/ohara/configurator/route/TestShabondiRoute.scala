@@ -24,19 +24,15 @@ import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
 
 class TestShabondiRoute extends SmallTest with Matchers {
 
   private val configurator = Configurator.builder().fake().build()
   private val access = ShabondiApi.access().hostname(configurator.hostname).port(configurator.port)
 
-  private def awaitResult[T](f: Future[T]): T = Await.result(f, 20 seconds)
-
   @Test
   def testAdd(): Unit = {
-    val desc1: ShabondiApi.ShabondiDescription = awaitResult(access.add())
+    val desc1: ShabondiApi.ShabondiDescription = result(access.add())
 
     desc1.id.size should be > 0
     desc1.to should be(Seq.empty)
@@ -47,16 +43,14 @@ class TestShabondiRoute extends SmallTest with Matchers {
 
   @Test
   def testDelete(): Unit = {
-    val desc1 = awaitResult(access.add())
-    awaitResult(access.delete(desc1.id))
-
-    an[IllegalArgumentException] should be thrownBy awaitResult(access.delete("12345"))
+    val desc1 = result(access.add())
+    result(access.delete(desc1.id))
   }
 
   @Test
   def testGetProperty(): Unit = {
-    val desc1 = awaitResult(access.add())
-    val desc2 = awaitResult(access.getProperty(desc1.id))
+    val desc1 = result(access.add())
+    val desc2 = result(access.getProperty(desc1.id))
 
     desc1.id should be(desc2.id)
     desc1.name should be(desc2.name)
@@ -69,9 +63,9 @@ class TestShabondiRoute extends SmallTest with Matchers {
 
   @Test
   def tesUpdateProperty(): Unit = {
-    val desc1 = awaitResult(access.add())
+    val desc1 = result(access.add())
     val property = ShabondiProperty(Some("xyz"), Some(Seq("topic1")), Some(250))
-    val desc2 = awaitResult(access.updateProperty(desc1.id, property))
+    val desc2 = result(access.updateProperty(desc1.id, property))
 
     desc2.id should be(desc1.id)
     desc2.name should be("xyz")
@@ -79,7 +73,7 @@ class TestShabondiRoute extends SmallTest with Matchers {
     desc2.port should be(250)
     desc2.lastModified should not be (desc1.lastModified)
 
-    val desc3 = awaitResult(access.getProperty(desc1.id))
+    val desc3 = result(access.getProperty(desc1.id))
 
     desc3.id should be(desc1.id)
     desc3.name should be("xyz")

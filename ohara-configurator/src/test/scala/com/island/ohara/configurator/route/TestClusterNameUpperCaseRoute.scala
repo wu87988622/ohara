@@ -17,17 +17,15 @@
 package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0.NodeApi.NodeCreationRequest
-import com.island.ohara.client.configurator.v0.{NodeApi, ZookeeperApi}
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterCreationRequest
+import com.island.ohara.client.configurator.v0.{NodeApi, ZookeeperApi}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
-import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
 
 class TestClusterNameUpperCaseRoute extends SmallTest with Matchers {
   private[this] val numberOfCluster = 1
@@ -35,7 +33,6 @@ class TestClusterNameUpperCaseRoute extends SmallTest with Matchers {
     Configurator.builder().fake(numberOfCluster, numberOfCluster, "ZookeeperCluster").build()
   private[this] val nodeApi = NodeApi.access().hostname(configurator.hostname).port(configurator.port)
   private[this] val zookeeperApi = ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port)
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
   @Test
   def testAddZookeeper(): Unit = {

@@ -20,7 +20,7 @@ import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterCreationRe
 import com.island.ohara.client.configurator.v0.NodeApi.NodeCreationRequest
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterCreationRequest
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterCreationRequest
-import com.island.ohara.client.configurator.v0.{BrokerApi, ContainerApi, NodeApi, WorkerApi, ZookeeperApi}
+import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
@@ -28,8 +28,6 @@ import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
 
 class TestContainerRoute extends MediumTest with Matchers {
   private[this] val configurator = Configurator.builder().fake(0, 0).build()
@@ -42,8 +40,6 @@ class TestContainerRoute extends MediumTest with Matchers {
   private[this] val wkClusterName = CommonUtils.randomString(10)
 
   private[this] val nodeNames: Seq[String] = Seq("n0", "n1")
-
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
   @Before
   def setup(): Unit = {

@@ -27,15 +27,11 @@ import org.junit.{After, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
 class TestTopicRoute extends SmallTest with Matchers {
 
   private[this] val configurator = Configurator.builder().fake(1, 0).build()
 
   private[this] val topicApi = TopicApi.access().hostname(configurator.hostname).port(configurator.port)
-
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
   @Test
   def test(): Unit = {
@@ -78,7 +74,7 @@ class TestTopicRoute extends SmallTest with Matchers {
 
     // test delete
     result(topicApi.list).size shouldBe 1
-    result(topicApi.delete(response.id)) shouldBe newResponse
+    result(topicApi.delete(response.id))
     result(topicApi.list).size shouldBe 0
 
     // test nonexistent data
@@ -256,6 +252,10 @@ class TestTopicRoute extends SmallTest with Matchers {
                                            numberOfPartitions = None,
                                            numberOfReplications = Some(topic0.numberOfReplications))))
   }
+
+  @Test
+  def duplicateDeleteStreamProperty(): Unit =
+    (0 to 10).foreach(_ => result(topicApi.delete(CommonUtils.randomString(5))))
 
   @After
   def tearDown(): Unit = Releasable.close(configurator)

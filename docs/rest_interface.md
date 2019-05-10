@@ -235,19 +235,11 @@ And it works only if there is only a broker cluster exists in ohara**)
 
 **Example Response**
 
-```json
-{
-  "name": "topic0",
-  "brokerClusterName": "preCreatedBkCluster",
-  "lastModified": 1553498552595,
-  "numberOfReplications": 1,
-  "id": "715e09c9-b4ee-41cc-8d05-cb544904ac38",
-  "numberOfPartitions": 1,
-  "metrics": {
-   "meters": []
-  }
-}
 ```
+204 NoContent
+```
+
+> It is ok to delete an jar from an nonexistent topic, and the response is 204 NoContent.
 
 ----------
 
@@ -390,17 +382,12 @@ The following information are tagged by ohara.
 
 **Example Response**
 
-```json
-{
-  "name": "ftp0",
-  "hostname": "node00",
-  "port": 22,
-  "user": "abc",
-  "password": "pwd",
-  "lastModified": 1553498552595,
-  "id": "715e09c9-b4ee-41cc-8d05-cb544904ac38"
-}
 ```
+204 NoContent
+```
+
+> It is ok to delete an jar from an nonexistent ftp information, and the response is 204 NoContent.
+
 ----------
 ### get a ftp information
 
@@ -508,14 +495,12 @@ The following information are tagged by ohara.
 
 **Example Response**
 
-```json
-{
-  "name": "hdfs0",
-  "uri": "hdfs://namenode:9999",
-  "lastModified": 1553498552595,
-  "id": "715e09c9-b4ee-41cc-8d05-cb544904ac38"
-}
 ```
+204 NoContent
+```
+
+> It is ok to delete an jar from an nonexistent hdfs information, and the response is 204 NoContent.
+
 ----------
 ### get a hdfs information
 
@@ -639,16 +624,12 @@ The following information are tagged by ohara.
 
 **Example Response**
 
-```json
-{
-  "name": "jdbc_name",
-  "url": "jdbc:mysql",
-  "lastModified": 1540967970407,
-  "id": "9d128f43-8725-42b2-9377-0dad10863166",
-  "user": "user",
-  "password": "aaa"
-}
 ```
+204 NoContent
+```
+
+> It is ok to delete an jar from an nonexistent jdbc information, and the response is 204 NoContent.
+
 ----------
 ### get a jdbc information
 
@@ -803,19 +784,12 @@ Deleting the settings used by a running connector is not allowed. You should [st
 
 **Example Response**
 
-```json
-{
-  "lastModified": 1540967970407,
-  "id": "9d128f43-8725-42b2-9377-0dad10863166",
-  "settings": {
-    "connector.name": "jdbc_name",
-    "connector.class": "com.island.ohara.connector.ftp.FtpSource"
-  },
-  "metrics": {
-    "meters": []
-  }
-}
 ```
+204 NoContent
+```
+
+> It is ok to delete an jar from an nonexistent connector or a running connector, and the response is 204 NoContent.
+
 ----------
 ### get information of connector
 
@@ -1229,43 +1203,13 @@ Deleting a pipeline does not delete the objects related to the pipeline.
 
 **Example Response**
 
-```json
-{
-  "name": "pipeline0",
-  "lastModified": 1554950999668,
-  "workerClusterName": "wk00",
-  "flows": [
-    {
-      "from": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
-      "to": [
-        "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd"
-      ]
-    }
-  ],
-  "id": "e77e7c3e-1b73-4d31-ad85-ff575f0850f2",
-  "objects": [
-    {
-      "name": "topic0",
-      "lastModified": 1554950034608,
-      "id": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
-      "metrics": {
-        "meters": []
-      },
-      "kind": "topic"
-    },
-    {
-      "name": "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd",
-      "lastModified": 1554950058696,
-      "id": "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd",
-      "error": "Failed to get status and type of connector:81cb80a9-34a5-4e45-881a-cb87d4fbb5bd.This may be temporary since our worker cluster is too busy to sync status of connector. abc doesn't exist",
-      "metrics": {
-        "meters": []
-      },
-      "kind": "connector"
-    }
-  ]
-}
 ```
+204 NoContent
+```
+
+> It is ok to delete an an nonexistent pipeline, and the response is 204 NoContent. However, it is illegal to remove
+  a pipeline having any running objects
+
 ----------
 ### get a pipeline
 
@@ -1431,21 +1375,17 @@ The following information are tagged by ohara.
 
 *DELETE /v0/nodes/${id}*
 
-It is disallowed to remove a node which is running service. If you do want to delete the node from ohara, please stop all
-services from the node.
+
 
 **Example Response**
 
-```json
-{
-  "name": "node00",
-  "port": 22,
-  "user": "abc",
-  "password": "pwd",
-  "lastModified": 1553498552595,
-  "id": "715e09c9-b4ee-41cc-8d05-cb544904ac38"
-}
 ```
+204 NoContent
+```
+
+> It is ok to delete an an nonexistent pipeline, and the response is 204 NoContent. However, it is disallowed to remove
+  a node which is running service. If you do want to delete the node from ohara, please stop all services from the node.
+  
 ----------
 ### get a node
 
@@ -1585,10 +1525,10 @@ It is disallowed to remove a zookeeper cluster used by a running [broker cluster
 **Example Response**
 
 ```
-402 NoContent
+204 NoContent
 ```
 
-> It is ok to delete an nonexistent zookeeper cluster, and the response is 402 NoContent.
+> It is ok to delete an nonexistent zookeeper cluster, and the response is 204 NoContent.
 
 ----------
 ### get a zookeeper cluster
@@ -1753,10 +1693,10 @@ It is disallowed to remove a broker cluster used by a running [worker cluster](#
 **Example Response**
 
 ```
-402 NoContent
+204 NoContent
 ```
 
-> It is ok to delete an nonexistent broker cluster, and the response is 402 NoContent.
+> It is ok to delete an nonexistent broker cluster, and the response is 204 NoContent.
 
 ----------
 
@@ -1814,10 +1754,10 @@ running broker cluster invoke a lot of data move. The loading may burn out the r
 **Example Response**
 
 ```
-402 NoContent
+204 NoContent
 ```
 
-> It is ok to delete an nonexistent broker node, and the response is 402 NoContent.
+> It is ok to delete an nonexistent broker node, and the response is 204 NoContent.
 
 ----------
 ## Worker
@@ -2135,10 +2075,10 @@ different purpose (a dangerous behavior, right?).
 **Example Response**
 
 ```
-402 NoContent
+204 NoContent
 ```
 
-> It is ok to delete an nonexistent worker cluster, and the response is 402 NoContent.
+> It is ok to delete an nonexistent worker cluster, and the response is 204 NoContent.
 
 ----------
 ### get a worker cluster
@@ -2397,10 +2337,10 @@ running worker cluster invoke a lot of task move, and it will decrease the throu
 **Example Response**
 
 ```
-402 NoContent
+204 NoContent
 ```
 
-> It is ok to delete an nonexistent worker node, and the response is 402 NoContent.
+> It is ok to delete an nonexistent worker node, and the response is 204 NoContent.
 
 ----------
 ## Validation
@@ -2798,13 +2738,12 @@ This action will graceful stop and remove all docker containers belong to this s
 
 **Example Response**
 
-```json
-{
-  "id": "1b022c59-93f9-452c-a062-f8e4cb6c00fe",
-  "jarName": "ohara-streams.jar",
-  "lastModified": 1547141282866
-}
 ```
+204 NoContent
+```
+
+> It is ok to delete an jar from an nonexistent app, and the response is 204 NoContent.
+
 ----------
 ### list uploaded streamApp jars
 
@@ -2961,36 +2900,11 @@ This api only remove the streamApp component which is stored in pipeline.
 
 **Example Response**
 
-1. workerClusterName (**string**) — worker cluster name this streamApp belong to
-1. id (**string**) — unique id of this streamApp
-1. name (**string**) — custom name of this streamApp
-1. instances ( **int**) — numbers of streamApp container
-1. jarInfo (**object**) — uploaded jar information
-1. from (**array(string)**) — topics of streamApp consume with
-1. to (**array(string)**) — topics of streamApp produce to
-1. lastModified (**long**) — last modified this jar time
-
-```json
-{
-  "workerClusterName": "wk01",
-  "id": "d312871a-4a05-488d-aae0-c8b27c5312c2",
-  "name": "my-new-app",
-  "instances": 1,
-  "jarInfo": {
-    "id": "1b022c59-93f9-452c-a062-f8e4cb6c00fe",
-    "name": "new-name.jar",
-    "size": 1234,
-    "lastModified": 1542102595892
-  },
-  "from": [
-    "topicA"
-  ],
-  "to": [
-    "topicB"
-  ],
-  "lastModified": 1542102595892
-}
 ```
+204 NoContent
+```
+
+> It is ok to delete an nonexistent properties, and the response is 204 NoContent.
 
 ----------
 ### get topology tree graph from specific streamApp
@@ -3115,17 +3029,13 @@ You have to specify the file name since it is a part of metadata stored by ohara
 *DELETE /v0/jars/$id*
 
 **Example Response**
-```json
-{
-  "id": "aaa",
-  "name": "aa.jar",
-  "size": 12345,
-  "lastModified": 7777
-}
+
+```
+204 NoContent
 ```
 
-> If you delete a jar is used by other services, you also break the scalability of service as you can't run the jar
-  on any new nodes
+> It is ok to delete an nonexistent jar, and the response is 204 NoContent. If you delete a jar is used by
+  other services, you also break the scalability of service as you can't run the jar on any new nodes
   
 ----------
 

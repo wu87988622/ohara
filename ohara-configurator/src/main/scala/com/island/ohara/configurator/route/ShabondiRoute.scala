@@ -44,14 +44,8 @@ object ShabondiRoute {
     store.value[ShabondiDescription](id)
   }
 
-  private def deleteShabondi(id: String, store: DataStore)(implicit executionContext: ExecutionContext) = {
-    store.exist[ShabondiDescription](id).flatMap { isExist =>
-      if (isExist) {
-        store.remove[ShabondiDescription](id)
-      } else
-        throw new IllegalArgumentException(s"Shabondi not exist: $id")
-    }
-  }
+  private def deleteShabondi(id: String, store: DataStore)(implicit executionContext: ExecutionContext) =
+    store.remove[ShabondiDescription](id).map(_ => StatusCodes.NoContent)
 
   private def updateProperty(id: String, property: ShabondiProperty, store: DataStore)(
     implicit executionContext: ExecutionContext) = {
