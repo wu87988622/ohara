@@ -40,7 +40,7 @@ describe('BrokerPage', () => {
     });
   });
 
-  it.skip('creates a new topic', () => {
+  it('creates a new topic', () => {
     cy.server();
     cy.route('GET', 'api/topics').as('getTopics');
     const topicName = 'test topic';

@@ -53,7 +53,7 @@ export const createWorker = async params => {
     const url = `/api/workers`;
     const data = {
       name: params.name,
-      jmxPort: params.randomPort,
+      jmxPort: params.jmxPort,
       brokerClusterName: params.brokerName,
       clientPort: toNumber(params.clientPort),
       nodeNames: params.nodeNames || [],
