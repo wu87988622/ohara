@@ -39,24 +39,7 @@ class WorkerListPage extends React.Component {
 
   state = {
     isModalOpen: false,
-    isBtnDisabled: false,
   };
-
-  componentDidMount() {
-    if (this.props.workers.length >= 1) {
-      this.setState({ isBtnDisabled: true });
-    }
-  }
-
-  componentDidUpdate(prevProps) {
-    const prevWorkerLen = prevProps.workers.length;
-    const nextWorkerLen = this.props.workers.length;
-
-    const isUpdate = prevWorkerLen !== nextWorkerLen;
-    if (isUpdate && nextWorkerLen >= 1) {
-      this.setState({ isBtnDisabled: true });
-    }
-  }
 
   handleModalOpen = () => {
     this.setState({ isModalOpen: true });
@@ -68,7 +51,7 @@ class WorkerListPage extends React.Component {
 
   render() {
     const { workers, newWorkerSuccess, isLoading } = this.props;
-    const { isModalOpen, isBtnDisabled } = this.state;
+    const { isModalOpen } = this.state;
     return (
       <React.Fragment>
         <Box>
@@ -77,7 +60,7 @@ class WorkerListPage extends React.Component {
             <s.NewClusterBtn
               theme={primaryBtn}
               text="New cluster"
-              disabled={isBtnDisabled || isLoading}
+              disabled={isLoading}
               handleClick={this.handleModalOpen}
             />
 

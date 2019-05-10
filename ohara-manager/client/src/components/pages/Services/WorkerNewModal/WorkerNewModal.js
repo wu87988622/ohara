@@ -21,6 +21,7 @@ import { map, truncate, get } from 'lodash';
 import { Form, Field } from 'react-final-form';
 
 import * as workerApi from 'api/workerApi';
+import * as brokerApi from 'api/brokerApi';
 import * as MESSAGES from 'constants/messages';
 import * as s from './styles';
 import NodeSelectModal from '../NodeSelectModal';
@@ -56,11 +57,15 @@ class WorkerNewModal extends React.Component {
       );
       return;
     }
-
+    const result = get(await brokerApi.fetchBrokers(), 'data.result');
+    const brokerName = result.length > 0 ? result[0].name : '';
+    const randomPort = Math.floor(Math.random() * (65535 - 5000 + 1)) + 5000;
     const res = await workerApi.createWorker({
       ...values,
       name: this.validateServiceName(values.name),
       plugins: map(values.plugins, 'id'),
+      jmxPort: randomPort,
+      brokerClusterName: brokerName,
     });
 
     const isSuccess = get(res, 'data.isSuccess', false);

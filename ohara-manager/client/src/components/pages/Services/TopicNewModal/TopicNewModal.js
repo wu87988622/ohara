@@ -21,6 +21,7 @@ import { Form, Field } from 'react-final-form';
 import { get } from 'lodash';
 
 import * as topicApi from 'api/topicApi';
+import * as brokerApi from 'api/brokerApi';
 import * as MESSAGES from 'constants/messages';
 import { Modal } from 'common/Modal';
 import { Box } from 'common/Layout';
@@ -44,7 +45,12 @@ class TopicNewModal extends React.Component {
 
   onSubmit = async (values, form) => {
     this.setState({ isSaveBtnWorking: true });
-    const res = await topicApi.createTopic(values);
+    const result = get(await brokerApi.fetchBrokers(), 'data.result');
+    const brokerName = result.length > 0 ? result[0].name : '';
+    const res = await topicApi.createTopic({
+      ...values,
+      brokerClusterName: brokerName,
+    });
     this.setState({ isSaveBtnWorking: false });
     const isSuccess = get(res, 'data.isSuccess', false);
     if (isSuccess) {
