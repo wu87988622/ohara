@@ -29,18 +29,18 @@ object TopicApi {
 
   import MetricsApi._
 
-  case class TopicInfo(id: String,
-                       name: String,
+  case class TopicInfo(name: String,
                        numberOfPartitions: Int,
                        numberOfReplications: Short,
                        brokerClusterName: String,
                        metrics: Metrics,
                        lastModified: Long)
       extends Data {
+    override def id: String = name
     override def kind: String = "topic"
   }
 
-  implicit val TOPIC_INFO_FORMAT: RootJsonFormat[TopicInfo] = jsonFormat7(TopicInfo)
+  implicit val TOPIC_INFO_FORMAT: RootJsonFormat[TopicInfo] = jsonFormat6(TopicInfo)
 
   def access(): Access[TopicCreationRequest, TopicInfo] =
     new Access[TopicCreationRequest, TopicInfo](TOPICS_PREFIX_PATH)

@@ -62,7 +62,7 @@ class TestTopicRoute extends SmallTest with Matchers {
     compare2Response(response, result(topicApi.get(response.id)))
 
     // test update
-    val anotherRequest = TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
+    val anotherRequest = TopicCreationRequest(name = None,
                                               brokerClusterName = None,
                                               numberOfPartitions = None,
                                               numberOfReplications = None)
@@ -256,6 +256,32 @@ class TestTopicRoute extends SmallTest with Matchers {
   @Test
   def duplicateDeleteStreamProperty(): Unit =
     (0 to 10).foreach(_ => result(topicApi.delete(CommonUtils.randomString(5))))
+
+  @Test
+  def testChangeName(): Unit = {
+    val topic = result(
+      topicApi.add(
+        TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
+                             brokerClusterName = None,
+                             numberOfPartitions = None,
+                             numberOfReplications = None)))
+
+    // we can't change the name of topic
+    an[IllegalArgumentException] should be thrownBy result(
+      topicApi.update(topic.name,
+                      TopicCreationRequest(name = Some(CommonUtils.randomString()),
+                                           brokerClusterName = None,
+                                           numberOfPartitions = None,
+                                           numberOfReplications = None)))
+
+    // pass since the request carries the same name
+    result(
+      topicApi.update(topic.name,
+                      TopicCreationRequest(name = Some(topic.name),
+                                           brokerClusterName = None,
+                                           numberOfPartitions = None,
+                                           numberOfReplications = None)))
+  }
 
   @After
   def tearDown(): Unit = Releasable.close(configurator)

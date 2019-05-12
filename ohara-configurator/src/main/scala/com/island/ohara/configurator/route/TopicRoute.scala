@@ -58,23 +58,23 @@ private[configurator] object TopicRoute {
   private[this] def updateBrokerClusterName(request: TopicCreationRequest, t: TargetCluster): TopicCreationRequest =
     if (request.brokerClusterName.isEmpty) request.copy(brokerClusterName = t) else request
 
-  private[this] def hookOfAdd(id: Id, request: TopicCreationRequest)(
-    implicit brokerCollie: BrokerCollie,
-    executionContext: ExecutionContext): Future[TopicInfo] =
+  /**
+    * topic's id is equal to name :)
+    */
+  private[this] def hookOfAdd(request: TopicCreationRequest)(implicit brokerCollie: BrokerCollie,
+                                                             executionContext: ExecutionContext): Future[TopicInfo] =
     request.name
       .map { name =>
         CollieUtils.topicAdmin(request.brokerClusterName).flatMap {
           case (cluster, client) =>
             client
               .creator()
-              // NOTED: we allow user to change topic's name arbitrarily
-              .name(id)
+              .name(name)
               .numberOfPartitions(request.numberOfPartitions.getOrElse(DEFAULT_NUMBER_OF_PARTITIONS))
               .numberOfReplications(request.numberOfReplications.getOrElse(DEFAULT_NUMBER_OF_REPLICATIONS))
               .create()
               .map { info =>
                 try TopicInfo(
-                  id,
                   name,
                   info.numberOfPartitions,
                   info.numberOfReplications,
@@ -95,14 +95,20 @@ private[configurator] object TopicRoute {
             executionContext: ExecutionContext): server.Route =
     RouteUtils.basicRoute[TopicCreationRequest, TopicInfo](
       root = TOPICS_PREFIX_PATH,
-      hookOfAdd = (targetCluster: TargetCluster, id: Id, request: TopicCreationRequest) =>
-        hookOfAdd(id, updateBrokerClusterName(request, targetCluster)),
+      // we don't care for generated id since topic's id should be equal to the name passed by user.
+      hookOfAdd = (targetCluster: TargetCluster, _: Id, request: TopicCreationRequest) =>
+        hookOfAdd(updateBrokerClusterName(request, targetCluster)),
       hookOfUpdate = (id: Id, request: TopicCreationRequest, previous: TopicInfo) =>
         CollieUtils.topicAdmin(Some(previous.brokerClusterName)).flatMap {
           case (cluster, client) =>
             val requestNumberOfPartitions = request.numberOfPartitions.getOrElse(previous.numberOfPartitions)
             val requestNumberOfReplications = request.numberOfReplications.getOrElse(previous.numberOfReplications)
-            if (requestNumberOfReplications != previous.numberOfReplications) {
+            if (request.name.exists(_ != previous.name)) {
+              // we have got to release the client
+              Releasable.close(client)
+              Future.failed(
+                new IllegalArgumentException("I'm sorry. You can't change topic name since it has been built."))
+            } else if (requestNumberOfReplications != previous.numberOfReplications) {
               // we have got to release the client
               Releasable.close(client)
               Future.failed(new IllegalArgumentException("Non-support to change the number from replications"))
@@ -110,7 +116,6 @@ private[configurator] object TopicRoute {
               client.changePartitions(id, request.numberOfPartitions.get).map { info =>
                 try TopicInfo(
                   info.name,
-                  request.name.getOrElse(previous.name),
                   info.numberOfPartitions,
                   info.numberOfReplications,
                   cluster.name,

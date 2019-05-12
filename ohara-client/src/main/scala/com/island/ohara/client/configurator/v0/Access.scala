@@ -31,14 +31,14 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 class Access[Req, Res] private[v0] (prefixPath: String)(implicit rm0: RootJsonFormat[Req], rm1: RootJsonFormat[Res])
     extends BasicAccess(prefixPath) {
-  def get(id: String)(implicit executionContext: ExecutionContext): Future[Res] =
-    exec.get[Res, ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$id")
-  def delete(id: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-    exec.delete[ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$id")
+  def get(name: String)(implicit executionContext: ExecutionContext): Future[Res] =
+    exec.get[Res, ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$name")
+  def delete(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
+    exec.delete[ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$name")
   def list(implicit executionContext: ExecutionContext): Future[Seq[Res]] =
     exec.get[Seq[Res], ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}")
   def add(request: Req)(implicit executionContext: ExecutionContext): Future[Res] =
     exec.post[Req, Res, ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}", request)
-  def update(id: String, request: Req)(implicit executionContext: ExecutionContext): Future[Res] =
-    exec.put[Req, Res, ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$id", request)
+  def update(name: String, request: Req)(implicit executionContext: ExecutionContext): Future[Res] =
+    exec.put[Req, Res, ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$name", request)
 }

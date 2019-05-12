@@ -104,17 +104,13 @@ following information.
 Ohara topic is based on kafka topic. It means the creation of topic on ohara will invoke a creation of kafka also.
 Also, the delete to ohara topic also invoke a delete request to kafka. The common properties in topic are shown below.
 
-1. [id](#object-id) (**string**) — topic id
 1. name (**string**) — topic name
 1. brokerClusterName (**string**) — the broker cluster hosting this topic
 1. numberOfReplications (**int**) — the number of replications for this topic
 1. numberOfPartitions (**int**) — the number of partitions for this topic
 1. lastModified (**long**) — the last time to update this topic
 
-> Most properties are mapped to kafka. A little magic, but, is that ohara uses [id](#object-id) rather than "name" in naming kafka topic.
-The reason is that kafka disallows us to change topic name after creation, and ohara UI (ohara-manager) supports user
-to change "topic name" at runtime. Hence, we use a id instead of name specified by user to set kafka topic, and process
-the name (passed from user) as a "label".
+> The name must be unique in a broker cluster.
 
 ----------
 
@@ -140,6 +136,8 @@ And it works only if there is only a broker cluster exists in ohara**)
 }
 ```
 
+> the name you pass to ohara is used to build topic on kafka, and it is restricted by kafka ([a-zA-Z0-9\\._\\-])
+
 **Example Response**
 
 ```json
@@ -148,7 +146,6 @@ And it works only if there is only a broker cluster exists in ohara**)
   "brokerClusterName": "preCreatedBkCluster",
   "lastModified": 1553498552595,
   "numberOfReplications": 1,
-  "id": "715e09c9-b4ee-41cc-8d05-cb544904ac38",
   "numberOfPartitions": 1,
   "metrics": {
     "meters": []
@@ -156,15 +153,14 @@ And it works only if there is only a broker cluster exists in ohara**)
 }
 ```
 
-> The topic, which is just created, does not have any metrics 
+> The topic, which is just created, does not have any metrics. 
 
 ----------
 
 ### update a topic
 
-*PUT /v0/topics/${id}*
+*PUT /v0/topics/${name}*
 
-1. name (**string**) — topic name
 1. numberOfPartitions (**int**) — the number of partitions for this topic
 (**it is illegal to decrease the number**)
 
@@ -172,9 +168,11 @@ And it works only if there is only a broker cluster exists in ohara**)
 
 ```json
 {
-  "name": "topic0"
+  "numberOfPartitions": 3
 }
 ```
+
+> You wil get an exception if you try to change the unmodifiable attributes!!!
 
 **Example Response**
 
@@ -184,8 +182,7 @@ And it works only if there is only a broker cluster exists in ohara**)
   "brokerClusterName": "preCreatedBkCluster",
   "lastModified": 1553498552595,
   "numberOfReplications": 1,
-  "id": "715e09c9-b4ee-41cc-8d05-cb544904ac38",
-  "numberOfPartitions": 1,
+  "numberOfPartitions": 3,
   "metrics": {
    "meters": []
   }
@@ -207,7 +204,6 @@ And it works only if there is only a broker cluster exists in ohara**)
     "brokerClusterName": "preCreatedBkCluster",
     "lastModified": 1553498552595,
     "numberOfReplications": 1,
-    "id": "715e09c9-b4ee-41cc-8d05-cb544904ac38",
     "numberOfPartitions": 1,
     "metrics": {
      "meters": []
@@ -218,7 +214,6 @@ And it works only if there is only a broker cluster exists in ohara**)
     "brokerClusterName": "preCreatedBkCluster",
     "lastModified": 1553498375573,
     "numberOfReplications": 1,
-    "id": "7903d57c-4e75-40a8-9f8f-42d59c76cfbb",
     "numberOfPartitions": 1,
     "metrics": {
      "meters": []
@@ -231,7 +226,7 @@ And it works only if there is only a broker cluster exists in ohara**)
 
 ### delete a topic
 
-*DELETE /v0/topics/${id}*
+*DELETE /v0/topics/${name}*
 
 **Example Response**
 
@@ -255,7 +250,6 @@ And it works only if there is only a broker cluster exists in ohara**)
   "brokerClusterName": "preCreatedBkCluster",
   "lastModified": 1553498552595,
   "numberOfReplications": 1,
-  "id": "715e09c9-b4ee-41cc-8d05-cb544904ac38",
   "numberOfPartitions": 1,
   "metrics": {
    "meters": []
