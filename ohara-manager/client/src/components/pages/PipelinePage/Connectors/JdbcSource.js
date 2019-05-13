@@ -22,16 +22,11 @@ import { Redirect } from 'react-router-dom';
 import { get, isEmpty, debounce } from 'lodash';
 
 import * as URLS from 'constants/urls';
-import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
-import * as pipelineApi from 'api/pipelineApi';
 import * as connectorApi from 'api/connectorApi';
-import * as validateApi from 'api/validateApi';
 import Controller from './Controller';
 import { Box } from 'common/Layout';
-import { DataTable } from 'common/Table';
-import { primaryBtn } from 'theme/btnTheme';
-import { Input, Select, FormGroup, Label, Button } from 'common/Form';
+import { Input, Select, FormGroup, Label } from 'common/Form';
 import { updateTopic, findByGraphId } from '../pipelineUtils/commonUtils';
 import { JdbcQuicklyFillIn } from './QuicklyFillIn';
 import {
@@ -62,17 +57,6 @@ const Fieldset = styled.fieldset`
   }
 `;
 
-const TableWrapper = styled.div`
-  display: flex;
-  width: 100%;
-`;
-
-const GetTablesBtn = styled(Button)`
-  align-self: flex-start;
-  margin-left: 20px;
-  white-space: nowrap;
-`;
-
 class JdbcSource extends React.Component {
   static propTypes = {
     hasChanges: PropTypes.bool.isRequired,
@@ -92,19 +76,15 @@ class JdbcSource extends React.Component {
   };
 
   selectMaps = {
-    tables: 'currTable',
     writeTopics: 'currWriteTopic',
   };
-
   dbSchemasHeader = ['Column name', 'Column type'];
 
   state = {
     name: '',
     state: '',
-    tables: [],
-    currTable: {},
+    table: '',
     writeTopics: [],
-    currWriteTopic: {},
     username: '',
     password: '',
     url: '',
@@ -149,7 +129,7 @@ class JdbcSource extends React.Component {
         'source.db.username': username = '',
         'source.db.password': password = '',
         'source.db.url': url = '',
-        table = '{}',
+        table = '',
       } = configs;
 
       const { pipelineTopics: writeTopics } = this.props;
@@ -163,13 +143,6 @@ class JdbcSource extends React.Component {
         this.setState({ currWriteTopic });
       }
 
-      let currTable = null;
-      let tables = [];
-      if (!_.isEmptyStr(table)) {
-        currTable = JSON.parse(table);
-        tables = [currTable];
-      }
-
       const hasValidProps = [username, password, url].map(x => {
         return x.length > 0;
       });
@@ -180,25 +153,13 @@ class JdbcSource extends React.Component {
         name,
         state,
         isFormDisabled,
-        tables,
-        currTable,
+        table,
         timestamp,
         password,
         username,
         url,
         writeTopics,
       });
-    }
-  };
-
-  fetchRdbTables = async () => {
-    const { url, username, password, currTable } = this.state;
-    const res = await pipelineApi.queryRdb({ url, user: username, password });
-    const tables = get(res, 'data.result.tables', null);
-    const _currTable = isEmpty(currTable) ? tables[0] : currTable;
-
-    if (tables) {
-      this.setState({ tables, currTable: _currTable });
     }
   };
 
@@ -214,10 +175,6 @@ class JdbcSource extends React.Component {
     const { id } = options[selectedIdx].dataset;
 
     const current = this.selectMaps[name];
-    const isTable = name.toLowerCase() === 'tables';
-    const schema = isTable
-      ? this.state.tables.find(table => table.name === value).schema
-      : undefined;
 
     this.setState(
       () => {
@@ -226,7 +183,6 @@ class JdbcSource extends React.Component {
             ? {
                 name: value,
                 id,
-                schema,
               }
             : {},
         };
@@ -235,22 +191,6 @@ class JdbcSource extends React.Component {
         this.props.updateHasChanges(true);
       },
     );
-  };
-
-  handleGetTables = async e => {
-    e.preventDefault();
-    const { username: user, password, url } = this.state;
-
-    this.updateIsBtnWorking(true);
-    const res = await validateApi.validateRdb({ user, password, url });
-    this.updateIsBtnWorking(false);
-    const isSuccess = get(res, 'data.isSuccess', false);
-
-    if (isSuccess) {
-      toastr.success(MESSAGES.TEST_SUCCESS);
-      this.setState({ isFormDisabled: false });
-      this.fetchRdbTables();
-    }
   };
 
   updateIsBtnWorking = update => {
@@ -268,7 +208,7 @@ class JdbcSource extends React.Component {
     const {
       name,
       currWriteTopic,
-      currTable,
+      table,
       timestamp,
       username,
       password,
@@ -292,13 +232,12 @@ class JdbcSource extends React.Component {
       topics,
       numberOfTasks: 1,
       configs: {
-        'source.table.name': currTable.name,
+        'source.table.name': table,
         'source.db.url': url,
         'source.db.username': username,
         'source.db.password': password,
         'source.timestamp.column.name': timestamp,
-        'source.schema.pattern': '',
-        table: JSON.stringify(currTable),
+        table,
       },
     };
 
@@ -375,8 +314,7 @@ class JdbcSource extends React.Component {
       username,
       password,
       isBtnWorking,
-      tables,
-      currTable,
+      table,
       timestamp,
       writeTopics,
       currWriteTopic,
@@ -460,28 +398,15 @@ class JdbcSource extends React.Component {
           <Fieldset disabled={isBtnWorking}>
             <FormGroup>
               <Label>Table</Label>
-
-              <TableWrapper>
-                <Select
-                  isObject
-                  name="tables"
-                  list={tables}
-                  selected={currTable}
-                  width="100%"
-                  data-testid="table-select"
-                  handleChange={this.handleSelectChange}
-                  disabled={isRunning}
-                />
-
-                <GetTablesBtn
-                  theme={primaryBtn}
-                  text="Get tables"
-                  isWorking={isBtnWorking}
-                  disabled={isBtnWorking || isRunning}
-                  data-testid="get-tables-btn"
-                  handleClick={this.handleGetTables}
-                />
-              </TableWrapper>
+              <Input
+                name="table"
+                width="100%"
+                placeholder="tableName"
+                value={table}
+                data-testid="table-input"
+                handleChange={this.handleInputChange}
+                disabled={isRunning}
+              />
             </FormGroup>
 
             <FormGroup>
@@ -514,22 +439,6 @@ class JdbcSource extends React.Component {
             </FormGroup>
           </Fieldset>
         </Box>
-
-        {!isEmpty(currTable) && (
-          <Box>
-            <s.H5Wrapper>Database schemas</s.H5Wrapper>
-            <DataTable headers={this.dbSchemasHeader}>
-              {currTable.schema.map(({ name, dataType }, idx) => {
-                return (
-                  <tr key={idx}>
-                    <td>{name}</td>
-                    <td>{dataType}</td>
-                  </tr>
-                );
-              })}
-            </DataTable>
-          </Box>
-        )}
       </React.Fragment>
     );
   }
