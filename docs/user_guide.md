@@ -29,7 +29,7 @@ The core component of ohara is [Configurator](#configurator). After installing [
 set up a Configurator via following docker command.
 
 ```bash
-docker run --rm -p 12345:12345 oharastream/configurator:0.4-SNAPSHOT --port 12345
+docker run --rm -p 12345:12345 oharastream/configurator:0.4 --port 12345
 ```
 
 > click [here](#execute-configurator) to see more options for configurator
@@ -37,7 +37,7 @@ docker run --rm -p 12345:12345 oharastream/configurator:0.4-SNAPSHOT --port 1234
 And then you can also create a manager to provide a beautiful UI based on above configurator.
 
 ```bash
-docker run --rm -p 5050:5050 oharastream/manager:0.4-SNAPSHOT --port 5050 --configurator http://$ip:12345/v0
+docker run --rm -p 5050:5050 oharastream/manager:0.4 --port 5050 --configurator http://$ip:12345/v0
 ```
 
 > Please replace the **ip** by your host's address
@@ -64,19 +64,19 @@ Please click this [link](https://docs.docker.com/install/linux/docker-ce/centos/
 
 Ohara deploys docker images on [docker hub](https://hub.docker.com/u/oharastream). You can download images via `docker pull` command.
 All images are list below.
-1. oharastream/broker:0.4-SNAPSHOT
-1. oharastream/zookeeper:0.4-SNAPSHOT
-1. oharastream/connect-worker:0.4-SNAPSHOT
-1. oharastream/configurator:0.4-SNAPSHOT
-1. oharastream/manager:0.4-SNAPSHOT
-1. oharastream/streamapp:0.4-SNAPSHOT
+1. oharastream/broker:0.4
+1. oharastream/zookeeper:0.4
+1. oharastream/connect-worker:0.4
+1. oharastream/configurator:0.4
+1. oharastream/manager:0.4
+1. oharastream/streamapp:0.4
 
 ----------
 
 ### Execute Configurator
 
 ```sh
-docker run --rm -p ${port}:${port} --add-host ${nodeHostName}:${nodeHostIP} oharastream/configurator:0.4-SNAPSHOT --port ${port} --hostname ${host} --node ${SshUserName}:${SshPassword}@${NodeHostName}:${SshPort}
+docker run --rm -p ${port}:${port} --add-host ${nodeHostName}:${nodeHostIP} oharastream/configurator:0.4 --port ${port} --hostname ${host} --node ${SshUserName}:${SshPassword}@${NodeHostName}:${SshPort}
 ```
 
 - port: bound by Configurator (default is random)
@@ -98,7 +98,7 @@ through configruator's RESTful APIs.
 ### Execute Manager
 
 ```sh
-docker run --rm -p 5050:5050 oharastream/manager:0.4-SNAPSHOT --port 5050 --configurator http://localhost:12345/v0
+docker run --rm -p 5050:5050 oharastream/manager:0.4 --port 5050 --configurator http://localhost:12345/v0
 ```
 - port: bound by manager (default is 5050)
 - configurator: basic form of restful API of configurator
@@ -120,7 +120,7 @@ docker run -d --rm --name postgresql -p 5432:5432 --env POSTGRES_DB=${DB_NAME} -
 ### Execute FTP Instance
 
 ```h
-docker run --rm -p 10000-10011:10000-10011 oharastream/backend:0.4-SNAPSHOT com.island.ohara.testing.service.FtpServer --controlPort 10000 --dataPorts 10001-10011 --user ${UserName} --password ${Password} --hostname ${hostIP or hostName}
+docker run --rm -p 10000-10011:10000-10011 oharastream/backend:0.4 com.island.ohara.testing.service.FtpServer --controlPort 10000 --dataPorts 10001-10011 --user ${UserName} --password ${Password} --hostname ${hostIP or hostName}
 ```
 
 - controlPort: bound by FTP Server

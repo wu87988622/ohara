@@ -37,9 +37,9 @@ repositories {
          url "https://dl.bintray.com/oharastream/ohara"
      }
  }
-implementation "com.island.ohara:ohara-streams:0.4-SNAPSHOT"
-implementation "com.island.ohara:ohara-common:0.4-SNAPSHOT"
-implementation "com.island.ohara:ohara-kafka:0.4-SNAPSHOT"
+implementation "com.island.ohara:ohara-streams:0.4"
+implementation "com.island.ohara:ohara-common:0.4"
+implementation "com.island.ohara:ohara-kafka:0.4"
 ```
 
 > The [releases](https://github.com/oharastream/ohara/releases) page shows the available version of ohara
