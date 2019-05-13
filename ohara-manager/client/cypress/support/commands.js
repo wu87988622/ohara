@@ -46,7 +46,7 @@ Cypress.Commands.add('createWorker', () => {
   cy.get('@broker').then(broker => {
     cy.request('POST', 'api/workers', {
       name: workerName,
-      imageName: 'oharastream/connect-worker:0.4',
+      imageName: 'oharastream/connect-worker:0.4.0',
       clientPort: utils.makeRandomPort(),
       jmxPort: utils.makeRandomPort(),
       brokerClusterName: broker.name,
