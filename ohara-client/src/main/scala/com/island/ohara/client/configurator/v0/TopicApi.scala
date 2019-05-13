@@ -16,7 +16,7 @@
 
 package com.island.ohara.client.configurator.v0
 import spray.json.DefaultJsonProtocol._
-import spray.json.RootJsonFormat
+import spray.json.{JsObject, JsString, JsValue, RootJsonFormat}
 
 object TopicApi {
   val TOPICS_PREFIX_PATH: String = "topics"
@@ -40,7 +40,12 @@ object TopicApi {
     override def kind: String = "topic"
   }
 
-  implicit val TOPIC_INFO_FORMAT: RootJsonFormat[TopicInfo] = jsonFormat6(TopicInfo)
+  implicit val TOPIC_INFO_FORMAT: RootJsonFormat[TopicInfo] = new RootJsonFormat[TopicInfo] {
+    private[this] val format = jsonFormat6(TopicInfo)
+    override def read(json: JsValue): TopicInfo = format.read(json)
+    override def write(obj: TopicInfo): JsValue = JsObject(
+      format.write(obj).asJsObject.fields ++ Map("id" -> JsString(obj.id)))
+  }
 
   def access(): Access[TopicCreationRequest, TopicInfo] =
     new Access[TopicCreationRequest, TopicInfo](TOPICS_PREFIX_PATH)

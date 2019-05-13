@@ -22,6 +22,7 @@ import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
+import spray.json.JsString
 
 class TestTopicApi extends SmallTest with Matchers {
 
@@ -36,5 +37,19 @@ class TestTopicApi extends SmallTest with Matchers {
       lastModified = CommonUtils.current()
     )
     topicInfo.id shouldBe topicInfo.name
+  }
+
+  @Test
+  def testIdInJson(): Unit = {
+    val name = CommonUtils.randomString()
+    val topicInfo = TopicInfo(
+      name = name,
+      brokerClusterName = CommonUtils.randomString(),
+      numberOfPartitions = 1,
+      numberOfReplications = 1,
+      metrics = Metrics(Seq.empty),
+      lastModified = CommonUtils.current()
+    )
+    TopicApi.TOPIC_INFO_FORMAT.write(topicInfo).asJsObject.fields("id").asInstanceOf[JsString].value shouldBe name
   }
 }
