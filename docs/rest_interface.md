@@ -27,6 +27,7 @@ and add content type of the response via the HTTP Accept header:
 - [StreamApp](#streamapp)
 - [Jars](#jars)
 - [Logs](#logs)
+- [Query](#query)
 
 ----------
 ## object id
@@ -3094,3 +3095,74 @@ It collect output from all containers' of a cluster and then format them to JSON
   ]
 }
 ```
+
+----------
+
+## Query
+
+Query APIs is a collection of helper methods required by Ohara Manager so you should assume this APIs are **private**
+and we do not guarantee compatibility to this APIs. Normally, Ohara Configurator can't run the query for you since
+most queries demand specific dependencies in runtime, and we don't allow you to touch the classpath of Ohara Configurator.
+Hence, Ohara Configurator pass the queries to official specific **connectors** to execute the queries on a [worker cluster](#worker).
+It implies that you should set up a [worker cluster](#worker) before submitting query request to Ohara Configurator.
+
+----------
+
+### Query Database
+
+*POST /v0/query/rdb*
+
+This API returns the table details of a relational database. This API invokes a running connector on worker cluster to
+fetch database information and return to Ohara Configurator. You should deploy suitable jdbc driver on worker cluster
+before using this API. Otherwise, you will get a exception returned by Ohara Configurator. The query consists of following fields.
+
+1. url (**string**) — jdbc url
+1. user (**string**) — user who can access target database
+1. password (**string**) — password which can access target database
+1. workerClusterName (**string**) — used to execute connectors to fetch table information
+1. catalogPattern (**option(string)**) — filter returned tables according to catalog
+1. schemaPattern (**option(string)**) — filter returned tables according to schema
+1. tableName (**option(string)**) — filter returned tables according to name
+
+**Example Request**
+
+```json
+{
+  "url": "jdbc:sqlserver://",
+  "user": "abc",
+  "password": "abc",
+  "workerClusterName": "wk00"
+}
+```
+
+**Example Response**
+
+1. name (**string**) — database name
+1. tables (**array(object)**)
+  - tables[i].catalogPattern (**option(object)**) — table's catalog pattern
+  - tables[i].schemaPattern (**option(object)**) — table's schema pattern
+  - tables[i].name (**option(object)**) — table's name
+  - tables[i].columns (**array(object)**) — table's columns
+    - tables[i].columns[j].name (**string**) — column's columns
+    - tables[i].columns[j].dataType (**string**) — column's data type
+    - tables[i].columns[j].pk (**boolean**) — true if this column is pk. otherwise false
+  
+```json
+{
+  "name": "sqlserver",
+  "tables": [
+    {
+      "name": "t0",
+      "columns": [
+        {
+          "name": "c0",
+          "dataType": "integer",
+          "pk": true
+        }
+      ]
+    }
+  ]
+}
+```
+
+----------

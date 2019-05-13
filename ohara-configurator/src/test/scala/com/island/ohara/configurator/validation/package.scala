@@ -44,6 +44,6 @@ package object validation extends Matchers {
   def assertJdbcSuccess(f: Future[Seq[JdbcValidationReport]]): Unit = {
     assertSuccess(f)
     val reports = result(f)
-    reports.foreach(_.tableNames.isEmpty shouldBe false)
+    reports.foreach(_.rdbInfo.tables.isEmpty shouldBe false)
   }
 }

@@ -46,7 +46,7 @@ class DBTableDataProvider(url: String, userName: String, password: String) exten
 
   def columns(tableName: String): Seq[RdbColumn] = {
     val rdbTables: Seq[RdbTable] = client.tableQuery().tableName(tableName).execute()
-    rdbTables.head.schema
+    rdbTables.head.columns
   }
 
   def isTableExists(tableName: String): Boolean = client.tableQuery().tableName(tableName).execute().nonEmpty

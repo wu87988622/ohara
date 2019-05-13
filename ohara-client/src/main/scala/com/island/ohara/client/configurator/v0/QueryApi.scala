@@ -29,16 +29,17 @@ object QueryApi {
   final case class RdbTable(catalogPattern: Option[String],
                             schemaPattern: Option[String],
                             name: String,
-                            schema: Seq[RdbColumn])
+                            columns: Seq[RdbColumn])
   implicit val RDB_TABLE_JSON_FORMAT: RootJsonFormat[RdbTable] = jsonFormat4(RdbTable)
 
   final case class RdbQuery(url: String,
                             user: String,
                             password: String,
+                            workerClusterName: Option[String],
                             catalogPattern: Option[String],
                             schemaPattern: Option[String],
                             tableName: Option[String])
-  implicit val RDB_QUERY_JSON_FORMAT: RootJsonFormat[RdbQuery] = jsonFormat6(RdbQuery)
+  implicit val RDB_QUERY_JSON_FORMAT: RootJsonFormat[RdbQuery] = jsonFormat7(RdbQuery)
 
   final case class RdbInfo(name: String, tables: Seq[RdbTable])
   implicit val RDB_INFO_JSON_FORMAT: RootJsonFormat[RdbInfo] = jsonFormat2(RdbInfo)

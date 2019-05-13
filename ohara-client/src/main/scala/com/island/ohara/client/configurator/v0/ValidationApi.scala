@@ -16,6 +16,7 @@
 
 package com.island.ohara.client.configurator.v0
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
+import com.island.ohara.client.configurator.v0.QueryApi.RdbInfo
 import com.island.ohara.kafka.connector.json._
 import spray.json.DefaultJsonProtocol.{jsonFormat3, _}
 import spray.json.{JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
@@ -107,7 +108,7 @@ object ValidationApi {
     )
   }
 
-  final case class JdbcValidationReport(hostname: String, message: String, pass: Boolean, tableNames: Seq[String])
+  final case class JdbcValidationReport(hostname: String, message: String, pass: Boolean, rdbInfo: RdbInfo)
       extends ValidationReport
   implicit val JDBC_VALIDATION_REPORT_JSON_FORMAT: RootJsonFormat[JdbcValidationReport] = jsonFormat4(
     JdbcValidationReport)

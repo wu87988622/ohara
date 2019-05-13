@@ -20,6 +20,7 @@ import java.util
 import java.util.concurrent.TimeUnit
 
 import com.island.ohara.client.DatabaseClient
+import com.island.ohara.client.configurator.v0.QueryApi.RdbInfo
 import com.island.ohara.client.configurator.v0.ValidationApi
 import com.island.ohara.client.configurator.v0.ValidationApi.{
   FtpValidationRequest,
@@ -77,15 +78,16 @@ class ValidatorTask extends SourceTask {
 
   private[this] def validate(info: RdbValidationRequest): JdbcValidationReport = {
     val client = DatabaseClient(info.url, info.user, info.password)
-    try {
-      val tables = client.tables
-      JdbcValidationReport(
-        hostname = hostname,
-        message = "succeed to fetch table information from database",
-        pass = true,
-        tableNames = tables.map(_.name)
+    try JdbcValidationReport(
+      hostname = hostname,
+      message = "succeed to fetch table information from database",
+      pass = true,
+      rdbInfo = RdbInfo(
+        client.databaseType,
+        client.tables
       )
-    } finally client.close()
+    )
+    finally client.close()
   }
   private[this] def validate(info: FtpValidationRequest): String = {
     import scala.concurrent.duration._

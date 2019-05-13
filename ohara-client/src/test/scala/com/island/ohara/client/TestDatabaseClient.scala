@@ -59,7 +59,7 @@ class TestDatabaseClient extends MediumTest with Matchers {
     client.createTable(tableName, Seq(cf2, cf0, cf1))
     try {
       client.tables.size - before shouldBe increasedNumber
-      val cfs = client.tableQuery().tableName(tableName).execute().head.schema
+      val cfs = client.tableQuery().tableName(tableName).execute().head.columns
       cfs.size shouldBe 3
       cfs.filter(_.name == "cf0").head.pk shouldBe true
       cfs.filter(_.name == "cf1").head.pk shouldBe true

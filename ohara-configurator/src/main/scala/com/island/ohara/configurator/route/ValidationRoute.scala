@@ -23,6 +23,7 @@ import com.island.ohara.agent.{BrokerCollie, ClusterCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.Parameters
+import com.island.ohara.client.configurator.v0.QueryApi.{RdbColumn, RdbInfo, RdbTable}
 import com.island.ohara.client.configurator.v0.ValidationApi._
 import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.common.util.CommonUtils
@@ -59,12 +60,26 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
 
   @VisibleForTesting
   private[route] def fakeJdbcReport(): Future[Seq[JdbcValidationReport]] = Future.successful(
-    (0 until DEFAULT_NUMBER_OF_VALIDATION).map(
-      _ =>
-        JdbcValidationReport(hostname = CommonUtils.hostname,
-                             message = "a fake report",
-                             pass = true,
-                             tableNames = Seq("fake_table"))))
+    (0 until DEFAULT_NUMBER_OF_VALIDATION).map(_ =>
+      JdbcValidationReport(
+        hostname = CommonUtils.hostname,
+        message = "a fake report",
+        pass = true,
+        rdbInfo = RdbInfo(
+          name = "fake database",
+          tables = Seq(
+            RdbTable(
+              catalogPattern = None,
+              schemaPattern = None,
+              name = "fake table",
+              columns = Seq(RdbColumn(
+                name = "fake column",
+                dataType = "fake type",
+                pk = true
+              ))
+            ))
+        )
+    )))
 
   def apply(implicit brokerCollie: BrokerCollie,
             workerCollie: WorkerCollie,

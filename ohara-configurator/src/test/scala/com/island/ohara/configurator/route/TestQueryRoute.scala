@@ -45,7 +45,14 @@ class TestQueryRoute extends SmallTest with Matchers {
           .access()
           .hostname(configurator.hostname)
           .port(configurator.port)
-          .query(RdbQuery(db.url, db.user, db.password, None, None, None)))
+          .query(
+            RdbQuery(url = db.url,
+                     user = db.user,
+                     password = db.password,
+                     workerClusterName = None,
+                     catalogPattern = None,
+                     schemaPattern = None,
+                     tableName = None)))
       r.name shouldBe "mysql"
       r.tables.isEmpty shouldBe true
 
@@ -54,11 +61,11 @@ class TestQueryRoute extends SmallTest with Matchers {
       def verify(info: RdbInfo): Unit = {
         info.tables.count(_.name == tableName) shouldBe 1
         val table = info.tables.filter(_.name == tableName).head
-        table.schema.size shouldBe 2
-        table.schema.count(_.name == cf0.name) shouldBe 1
-        table.schema.filter(_.name == cf0.name).head.pk shouldBe cf0.pk
-        table.schema.count(_.name == cf1.name) shouldBe 1
-        table.schema.filter(_.name == cf1.name).head.pk shouldBe cf1.pk
+        table.columns.size shouldBe 2
+        table.columns.count(_.name == cf0.name) shouldBe 1
+        table.columns.filter(_.name == cf0.name).head.pk shouldBe cf0.pk
+        table.columns.count(_.name == cf1.name) shouldBe 1
+        table.columns.filter(_.name == cf1.name).head.pk shouldBe cf1.pk
       }
       dbClient.createTable(tableName, Seq(cf0, cf1))
 
@@ -68,14 +75,29 @@ class TestQueryRoute extends SmallTest with Matchers {
             .access()
             .hostname(configurator.hostname)
             .port(configurator.port)
-            .query(RdbQuery(db.url, db.user, db.password, None, None, None))))
+            .query(
+              RdbQuery(url = db.url,
+                       user = db.user,
+                       password = db.password,
+                       workerClusterName = None,
+                       catalogPattern = None,
+                       schemaPattern = None,
+                       tableName = None))))
+
       verify(
         result(
           QueryApi
             .access()
             .hostname(configurator.hostname)
             .port(configurator.port)
-            .query(RdbQuery(db.url, db.user, db.password, Some(db.databaseName), None, Some(tableName)))))
+            .query(
+              RdbQuery(url = db.url,
+                       user = db.user,
+                       password = db.password,
+                       workerClusterName = None,
+                       catalogPattern = Some(db.databaseName),
+                       schemaPattern = None,
+                       tableName = Some(tableName)))))
       dbClient.dropTable(tableName)
     } finally dbClient.close()
   }

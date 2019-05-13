@@ -186,7 +186,7 @@ object DatabaseClient {
               } finally rs.close()
               RdbTable(Option(c), Option(s), t, columns)
           }
-          .filterNot(_.schema.isEmpty)
+          .filterNot(_.columns.isEmpty)
       }
     }
   }
