@@ -32,8 +32,15 @@ private[configurator] object QueryRoute extends SprayJsonSupport {
         entity(as[RdbQuery]) { query =>
           val client = DatabaseClient(query.url, query.user, query.password)
           val rdb =
-            try RdbInfo(client.name,
-                        client.tables(query.catalogPattern.orNull, query.schemaPattern.orNull, query.tableName.orNull))
+            try RdbInfo(
+              client.databaseType,
+              client
+                .tableQuery()
+                .catalog(query.catalogPattern.orNull)
+                .schema(query.schemaPattern.orNull)
+                .tableName(query.tableName.orNull)
+                .execute()
+            )
             finally client.close()
           complete(rdb)
         }

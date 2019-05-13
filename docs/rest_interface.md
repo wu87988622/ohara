@@ -2404,7 +2404,10 @@ The parameters of request are shown below.
 {
   "url": "jdbc://",
   "user": "user",
-  "password": "pwd"
+  "password": "pwd",
+  "tableNames": [
+    "table0", "table1"
+  ]
 }
 ```
 
@@ -2415,6 +2418,7 @@ Ohara configurator collects report from each connectors and then generate a JSON
 1. hostname (**string**) — the node which execute this validation
 1. message (**string**) — the description about this validation
 1. pass (**boolean**) — true is pass
+1. tableNames (**array(String)**) — the table readable to passed user/password
 
 **Example Response**
 

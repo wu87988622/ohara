@@ -22,6 +22,7 @@ import com.island.ohara.client.configurator.v0.ValidationApi
 import com.island.ohara.client.configurator.v0.ValidationApi.{
   FtpValidationRequest,
   HdfsValidationRequest,
+  JdbcValidationReport,
   RdbValidationRequest,
   ValidationReport
 }
@@ -40,7 +41,7 @@ object ValidationUtils {
   private[this] val TIMEOUT = 30 seconds
 
   def run(workerClient: WorkerClient, topicAdmin: TopicAdmin, request: RdbValidationRequest, taskCount: Int)(
-    implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] = run(
+    implicit executionContext: ExecutionContext): Future[Seq[JdbcValidationReport]] = run(
     workerClient,
     topicAdmin,
     ValidationApi.VALIDATION_RDB_PREFIX_PATH,
@@ -48,7 +49,11 @@ object ValidationUtils {
       case (k, v) => (k, v.asInstanceOf[JsString].value)
     },
     taskCount
-  )
+  ).map(_.map {
+    case report: JdbcValidationReport => report
+    case report: Any =>
+      throw new IllegalArgumentException(s"what is this??? ${report.getClass.getName}")
+  })
 
   def run(workerClient: WorkerClient, topicAdmin: TopicAdmin, request: HdfsValidationRequest, taskCount: Int)(
     implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] = run(

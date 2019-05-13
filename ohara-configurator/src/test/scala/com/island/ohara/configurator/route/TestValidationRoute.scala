@@ -91,6 +91,7 @@ class TestValidationRoute extends SmallTest with Matchers {
                                workerClusterName = None)))
     report.isEmpty shouldBe false
     report.foreach(_.pass shouldBe true)
+    report.foreach(_.tableNames.isEmpty shouldBe false)
   }
 
   @Test
@@ -149,6 +150,15 @@ class TestValidationRoute extends SmallTest with Matchers {
         .verify(NodeValidationRequest("fake_server", 22, "fake_user", "fake_password")))
     report.isEmpty shouldBe false
     report.foreach(_.pass shouldBe true)
+  }
+
+  @Test
+  def testFakeReport(): Unit = result(ValidationRoute.fakeReport()).foreach(_.pass shouldBe true)
+
+  @Test
+  def testFakeJdbcReport(): Unit = result(ValidationRoute.fakeJdbcReport()).foreach { report =>
+    report.pass shouldBe true
+    report.tableNames.isEmpty shouldBe false
   }
 
   @After

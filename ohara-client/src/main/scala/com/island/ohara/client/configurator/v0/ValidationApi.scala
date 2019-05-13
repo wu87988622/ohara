@@ -50,37 +50,38 @@ object ValidationApi {
                                         workerClusterName: Option[String])
   implicit val FTP_VALIDATION_REQUEST_JSON_FORMAT: RootJsonFormat[FtpValidationRequest] =
     new RootJsonFormat[FtpValidationRequest] {
+      private[this] val hostnameKey = "hostname"
+      private[this] val userKey = "user"
+      private[this] val passwordKey = "password"
+      private[this] val portKey = "port"
+      private[this] val workerClusterNameKey = "workerClusterName"
       override def read(json: JsValue): FtpValidationRequest = {
-        val (hostname, user, password) = json.asJsObject.getFields("hostname", "user", "password") match {
-          case Seq(JsString(hostname), JsString(user), JsString(password)) => (hostname, user, password)
-          case _ =>
-            throw new UnsupportedOperationException("failed to parse request for \"hostname\", \"user\", \"password\"")
-        }
-        // we will convert a Map[String, String] to FtpValidationRequest in kafka connector so this method can save us from spray's ClassCastException
-        val port: Int = json.asJsObject.getFields("port") match {
-          case Seq(JsString(port)) => port.toInt
-          case Seq(JsNumber(port)) => port.toInt
-          case _ =>
-            throw new UnsupportedOperationException("failed to parse request for \"port\"")
-        }
+        val fields = json.asJsObject.fields.filter(_._2 match {
+          case JsNull => false
+          case _      => true
+        })
 
-        val workerClusterName: Option[String] = json.asJsObject.getFields("workerClusterName") match {
-          case Seq(JsString(workerClusterName)) => Some(workerClusterName)
-          case _                                => None
-        }
-        FtpValidationRequest(hostname = hostname,
-                             user = user,
-                             password = password,
-                             port = port,
-                             workerClusterName = workerClusterName)
+        FtpValidationRequest(
+          hostname = fields(hostnameKey).asInstanceOf[JsString].value,
+          user = fields(userKey).asInstanceOf[JsString].value,
+          password = fields(passwordKey).asInstanceOf[JsString].value,
+          // we will convert a Map[String, String] to FtpValidationRequest in kafka connector so this method can save us from spray's ClassCastException
+          port = fields(portKey) match {
+            case s: JsString => s.value.toInt
+            case s: JsNumber => s.value.toInt
+            case _ =>
+              throw new UnsupportedOperationException("failed to parse request for \"port\"")
+          },
+          workerClusterName = fields.get(workerClusterNameKey).map(_.asInstanceOf[JsString].value)
+        )
       }
 
       override def write(obj: FtpValidationRequest): JsValue = JsObject(
-        "hostname" -> JsString(obj.hostname),
-        "port" -> JsNumber(obj.port),
-        "user" -> JsString(obj.user),
-        "password" -> JsString(obj.password),
-        "workerClusterName" -> obj.workerClusterName.map(JsString(_)).getOrElse(JsNull)
+        hostnameKey -> JsString(obj.hostname),
+        portKey -> JsNumber(obj.port),
+        userKey -> JsString(obj.user),
+        passwordKey -> JsString(obj.password),
+        workerClusterNameKey -> obj.workerClusterName.map(JsString(_)).getOrElse(JsNull)
       )
     }
 
@@ -89,8 +90,46 @@ object ValidationApi {
   implicit val NODE_VALIDATION_REQUEST_JSON_FORMAT: RootJsonFormat[NodeValidationRequest] = jsonFormat4(
     NodeValidationRequest)
 
-  final case class ValidationReport(hostname: String, message: String, pass: Boolean)
-  implicit val VALIDATION_REPORT_JSON_FORMAT: RootJsonFormat[ValidationReport] = jsonFormat3(ValidationReport)
+  /**
+    * the generic report for all validation.
+    */
+  trait ValidationReport {
+    def hostname: String
+    def message: String
+    def pass: Boolean
+  }
+
+  object ValidationReport {
+    def apply(hostname: String, message: String, pass: Boolean): ValidationReport = ValidationReportImpl(
+      hostname = hostname,
+      message = message,
+      pass = pass
+    )
+  }
+
+  final case class JdbcValidationReport(hostname: String, message: String, pass: Boolean, tableNames: Seq[String])
+      extends ValidationReport
+  implicit val JDBC_VALIDATION_REPORT_JSON_FORMAT: RootJsonFormat[JdbcValidationReport] = jsonFormat4(
+    JdbcValidationReport)
+
+  private[this] def toCaseClass(report: ValidationReport): ValidationReportImpl = report match {
+    case _: ValidationReportImpl => report.asInstanceOf[ValidationReportImpl]
+    case _ =>
+      ValidationReportImpl(
+        hostname = report.hostname,
+        message = report.message,
+        pass = report.pass
+      )
+  }
+
+  private[this] case class ValidationReportImpl(hostname: String, message: String, pass: Boolean)
+      extends ValidationReport
+  private[this] val VALIDATION_IMPL_REPORT_JSON_FORMAT: RootJsonFormat[ValidationReportImpl] = jsonFormat3(
+    ValidationReportImpl)
+  implicit val VALIDATION_REPORT_JSON_FORMAT: RootJsonFormat[ValidationReport] = new RootJsonFormat[ValidationReport] {
+    override def write(obj: ValidationReport): JsValue = VALIDATION_IMPL_REPORT_JSON_FORMAT.write(toCaseClass(obj))
+    override def read(json: JsValue): ValidationReport = VALIDATION_IMPL_REPORT_JSON_FORMAT.read(json)
+  }
 
   val VALIDATION_CONNECTOR_PREFIX_PATH: String = "connector"
 
@@ -119,30 +158,12 @@ object ValidationApi {
       implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]]
 
     /**
-      * used to verify the hdfs information on specified worker cluster
-      * @param request hdfs info
-      * @param target worker cluster used to verify the request
-      * @return validation reports
-      */
-    def verify(request: HdfsValidationRequest, target: String)(
-      implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]]
-
-    /**
       * used to verify the rdb information on "default" worker cluster
       * @param request rdb info
       * @return validation reports
       */
     def verify(request: RdbValidationRequest)(
-      implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]]
-
-    /**
-      * used to verify the rdb information on specified worker cluster
-      * @param request rdb info
-      * @param target worker cluster used to verify the request
-      * @return validation reports
-      */
-    def verify(request: RdbValidationRequest, target: String)(
-      implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]]
+      implicit executionContext: ExecutionContext): Future[Seq[JdbcValidationReport]]
 
     /**
       * used to verify the ftp information on "default" worker cluster
@@ -150,15 +171,6 @@ object ValidationApi {
       * @return validation reports
       */
     def verify(request: FtpValidationRequest)(
-      implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]]
-
-    /**
-      * used to verify the ftp information on specified worker cluster
-      * @param request ftp info
-      * @param target worker cluster used to verify the request
-      * @return validation reports
-      */
-    def verify(request: FtpValidationRequest, target: String)(
       implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]]
 
     /**
@@ -172,42 +184,27 @@ object ValidationApi {
 
   def access(): Access = new Access(VALIDATION_PREFIX_PATH) {
 
-    private[this] def url(prefix: String, target: String): String = {
-      Parameters.appendTargetCluster(s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$prefix", target)
-    }
+    private[this] def url(prefix: String): String = s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$prefix"
 
-    override def verify(request: HdfsValidationRequest, target: String)(
+    override def verify(request: HdfsValidationRequest)(
       implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] =
-      exec.put[HdfsValidationRequest, Seq[ValidationReport], ErrorApi.Error](url(VALIDATION_HDFS_PREFIX_PATH, target),
-                                                                             request)
+      exec.put[HdfsValidationRequest, Seq[ValidationReport], ErrorApi.Error](url(VALIDATION_HDFS_PREFIX_PATH), request)
 
-    override def verify(request: RdbValidationRequest, target: String)(
-      implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] =
-      exec.put[RdbValidationRequest, Seq[ValidationReport], ErrorApi.Error](url(VALIDATION_RDB_PREFIX_PATH, target),
-                                                                            request)
+    override def verify(request: RdbValidationRequest)(
+      implicit executionContext: ExecutionContext): Future[Seq[JdbcValidationReport]] =
+      exec
+        .put[RdbValidationRequest, Seq[JdbcValidationReport], ErrorApi.Error](url(VALIDATION_RDB_PREFIX_PATH), request)
 
-    override def verify(request: FtpValidationRequest, target: String)(
+    override def verify(request: FtpValidationRequest)(
       implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] =
-      exec.put[FtpValidationRequest, Seq[ValidationReport], ErrorApi.Error](url(VALIDATION_FTP_PREFIX_PATH, target),
-                                                                            request)
+      exec.put[FtpValidationRequest, Seq[ValidationReport], ErrorApi.Error](url(VALIDATION_FTP_PREFIX_PATH), request)
 
     override def verify(request: NodeValidationRequest)(
       implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] =
-      exec.put[NodeValidationRequest, Seq[ValidationReport], ErrorApi.Error](url(VALIDATION_NODE_PREFIX_PATH, null),
-                                                                             request)
-
-    override def verify(request: HdfsValidationRequest)(
-      implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] = verify(request, null)
-
-    override def verify(request: RdbValidationRequest)(
-      implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] = verify(request, null)
-
-    override def verify(request: FtpValidationRequest)(
-      implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] = verify(request, null)
+      exec.put[NodeValidationRequest, Seq[ValidationReport], ErrorApi.Error](url(VALIDATION_NODE_PREFIX_PATH), request)
 
     override def verify(request: ConnectorCreationRequest)(
       implicit executionContext: ExecutionContext): Future[SettingInfo] =
-      exec.put[ConnectorCreationRequest, SettingInfo, ErrorApi.Error](url(VALIDATION_CONNECTOR_PREFIX_PATH, null),
-                                                                      request)
+      exec.put[ConnectorCreationRequest, SettingInfo, ErrorApi.Error](url(VALIDATION_CONNECTOR_PREFIX_PATH), request)
   }
 }

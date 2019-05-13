@@ -45,11 +45,11 @@ class DBTableDataProvider(url: String, userName: String, password: String) exten
   }
 
   def columns(tableName: String): Seq[RdbColumn] = {
-    val rdbTables: Seq[RdbTable] = client.tables(null, null, tableName)
+    val rdbTables: Seq[RdbTable] = client.tableQuery().tableName(tableName).execute()
     rdbTables.head.schema
   }
 
-  def isTableExists(tableName: String): Boolean = client.tables(null, null, tableName).nonEmpty
+  def isTableExists(tableName: String): Boolean = client.tableQuery().tableName(tableName).execute().nonEmpty
 
   def dbCurrentTime(cal: Calendar): Timestamp = {
     val dbProduct: String = client.connection.getMetaData.getDatabaseProductName

@@ -16,6 +16,8 @@
 
 package com.island.ohara.configurator.validation
 
+import com.island.ohara.client.DatabaseClient
+import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
 import com.island.ohara.client.configurator.v0.ValidationApi.RdbValidationRequest
 import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
 import com.island.ohara.common.util.Releasable
@@ -40,14 +42,18 @@ class TestValidationOfRdb extends With3Brokers3Workers with Matchers {
       .exists(_.className == "com.island.ohara.connector.validation.Validator") shouldBe true
 
   @Test
-  def goodCase(): Unit =
-    assertSuccess(
+  def goodCase(): Unit = {
+    val client = DatabaseClient(rdb.url(), rdb.user(), rdb.password())
+    try client.createTable("table", Seq(RdbColumn("v0", "integer", true)))
+    finally client.close()
+    assertJdbcSuccess(
       ValidationUtils.run(
         workerClient,
         topicAdmin,
         RdbValidationRequest(url = rdb.url, user = rdb.user, password = rdb.password, workerClusterName = None),
         NUMBER_OF_TASKS
       ))
+  }
   @After
   def tearDown(): Unit = Releasable.close(topicAdmin)
 }

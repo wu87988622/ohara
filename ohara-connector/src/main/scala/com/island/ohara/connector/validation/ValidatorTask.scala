@@ -16,14 +16,15 @@
 
 package com.island.ohara.connector.validation
 
-import java.sql.DriverManager
 import java.util
 import java.util.concurrent.TimeUnit
 
+import com.island.ohara.client.DatabaseClient
 import com.island.ohara.client.configurator.v0.ValidationApi
 import com.island.ohara.client.configurator.v0.ValidationApi.{
   FtpValidationRequest,
   HdfsValidationRequest,
+  JdbcValidationReport,
   RdbValidationRequest,
   ValidationReport
 }
@@ -54,7 +55,7 @@ class ValidatorTask extends SourceTask {
   } else
     try information match {
       case info: HdfsValidationRequest => toSourceRecord(ValidationReport(hostname, validate(info), true))
-      case info: RdbValidationRequest  => toSourceRecord(ValidationReport(hostname, validate(info), true))
+      case info: RdbValidationRequest  => toSourceRecord(validate(info))
       case info: FtpValidationRequest  => toSourceRecord(ValidationReport(hostname, validate(info), true))
     } catch {
       case e: Throwable => toSourceRecord(ValidationReport(hostname, e.getMessage, false))
@@ -74,10 +75,17 @@ class ValidatorTask extends SourceTask {
     s"check the hdfs:${info.uri} by getting the home:$home"
   }
 
-  private[this] def validate(info: RdbValidationRequest): String = {
-    val conn = DriverManager.getConnection(info.url, info.user, info.password)
-    try s"succeed to establish the connection:${info.url}"
-    finally conn.close()
+  private[this] def validate(info: RdbValidationRequest): JdbcValidationReport = {
+    val client = DatabaseClient(info.url, info.user, info.password)
+    try {
+      val tables = client.tables
+      JdbcValidationReport(
+        hostname = hostname,
+        message = "succeed to fetch table information from database",
+        pass = true,
+        tableNames = tables.map(_.name)
+      )
+    } finally client.close()
   }
   private[this] def validate(info: FtpValidationRequest): String = {
     import scala.concurrent.duration._

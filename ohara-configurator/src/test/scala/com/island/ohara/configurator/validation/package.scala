@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator
 
-import com.island.ohara.client.configurator.v0.ValidationApi.ValidationReport
+import com.island.ohara.client.configurator.v0.ValidationApi.{JdbcValidationReport, ValidationReport}
 import org.scalatest.Matchers
 
 import scala.concurrent.{Await, Future}
@@ -39,5 +39,11 @@ package object validation extends Matchers {
     reports.isEmpty shouldBe false
     reports.map(_.message).foreach(_.nonEmpty shouldBe true)
     reports.foreach(report => withClue(report.message)(report.pass shouldBe true))
+  }
+
+  def assertJdbcSuccess(f: Future[Seq[JdbcValidationReport]]): Unit = {
+    assertSuccess(f)
+    val reports = result(f)
+    reports.foreach(_.tableNames.isEmpty shouldBe false)
   }
 }

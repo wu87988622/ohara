@@ -17,41 +17,69 @@
 package com.island.ohara.client
 import java.sql.{Connection, DriverManager, ResultSet}
 
+import com.island.ohara.client.DatabaseClient.TableQuery
 import com.island.ohara.client.configurator.v0.QueryApi.{RdbColumn, RdbTable}
-import com.island.ohara.common.util.ReleaseOnce
+import com.island.ohara.common.annotations.{Nullable, Optional}
+import com.island.ohara.common.util.Releasable
 
 import scala.collection.mutable.ArrayBuffer
 
 /**
-  * a easy database client.
+  * A scala wrap of jdbc connection.
   */
-trait DatabaseClient extends ReleaseOnce {
+trait DatabaseClient extends Releasable {
 
   /**
-    * @param catalog catalog
-    * @param name table name
-    * @return a list from table's information
+    * a helper method to fetch all table from remote database
+    * @return all database readable to user
     */
-  def tables(catalog: String, schema: String, name: String): Seq[RdbTable]
+  def tables: Seq[RdbTable] = tableQuery().execute()
 
-  def name: String
+  /**
+    * Query the table from remote database. Please fill the related arguments to reduce the size of data sent by remote database
+    * @return query executor
+    */
+  def tableQuery(): TableQuery
+
+  /**
+    * @return user name
+    */
+  def databaseType: String
 
   def createTable(name: String, schema: Seq[RdbColumn]): Unit
 
   def dropTable(name: String): Unit
 
-  def closed: Boolean
-
   def connection: Connection
 }
 
 object DatabaseClient {
-  private[this] def tableCatalog(implicit rs: ResultSet): String = rs.getString("TABLE_CAT")
-  private[this] def tableSchema(implicit rs: ResultSet): String = rs.getString("TABLE_SCHEM")
-  private[this] def tableName(implicit rs: ResultSet): String = rs.getString("TABLE_NAME")
-  private[this] def columnName(implicit rs: ResultSet): String = rs.getString("COLUMN_NAME")
-  private[this] def columnType(implicit rs: ResultSet): String = rs.getString("TYPE_NAME")
-  private[this] def tableType(implicit rs: ResultSet): Seq[String] = {
+
+  /**
+    * a simple builder to create a suitable query by fluent pattern.
+    */
+  trait TableQuery {
+
+    @Optional("default value is null")
+    @Nullable
+    def catalog(catalog: String): TableQuery.this.type
+
+    @Optional("default value is null")
+    @Nullable
+    def schema(schema: String): TableQuery.this.type
+    @Optional("default value is null")
+    @Nullable
+    def tableName(tableName: String): TableQuery.this.type
+
+    def execute(): Seq[RdbTable]
+  }
+
+  private[this] def toTableCatalog(rs: ResultSet): String = rs.getString("TABLE_CAT")
+  private[this] def toTableSchema(rs: ResultSet): String = rs.getString("TABLE_SCHEM")
+  private[this] def toTableName(rs: ResultSet): String = rs.getString("TABLE_NAME")
+  private[this] def toColumnName(rs: ResultSet): String = rs.getString("COLUMN_NAME")
+  private[this] def toColumnType(rs: ResultSet): String = rs.getString("TYPE_NAME")
+  private[this] def toTableType(rs: ResultSet): Seq[String] = {
     val r = rs.getString("TABLE_TYPE")
     if (r == null) Seq.empty
     else r.split(" ")
@@ -65,53 +93,7 @@ object DatabaseClient {
 
     private[this] val conn = DriverManager.getConnection(url, user, password)
 
-    override def closed: Boolean = conn.isClosed
-
-    override def tables(catalog: String, schema: String, name: String): Seq[RdbTable] = {
-      val md = conn.getMetaData
-
-      // catalog, schema, tableName
-      val data: Seq[(String, String, String)] = {
-        implicit val rs: ResultSet = md.getTables(catalog, schema, name, null)
-        try {
-          val buf = new ArrayBuffer[(String, String, String)]()
-          while (rs.next()) if (!systemTable(tableType)) buf.append((tableCatalog, tableSchema, tableName))
-          buf
-        } finally rs.close()
-      }
-
-      // catalog, schema, tableName, pks
-      val data2 = data.map {
-        case (c, s, t) =>
-          (c, s, t, {
-            implicit val rs: ResultSet = md.getPrimaryKeys(c, null, t)
-            try {
-              val buf = new ArrayBuffer[String]()
-              while (rs.next()) buf += columnName
-              buf.toSet
-            } finally rs.close()
-          })
-      }
-
-      data2
-        .map {
-          case (c, s, t, pks) =>
-            implicit val rs: ResultSet = md.getColumns(c, null, t, null)
-            val columns = try {
-              val buf = new ArrayBuffer[RdbColumn]()
-              while (rs.next()) buf += RdbColumn(name = columnName,
-                                                 dataType = columnType,
-                                                 pk = pks.contains(columnName))
-              buf
-            } finally rs.close()
-            RdbTable(Option(c), Option(s), t, columns)
-        }
-        .filterNot(_.schema.isEmpty)
-    }
-
-    override protected def doClose(): Unit = conn.close()
-
-    override def name: String = {
+    override def databaseType: String = {
       val l = url.indexOf(":")
       if (l < 0) return url
       val r = url.indexOf(":", l + 1)
@@ -135,5 +117,77 @@ object DatabaseClient {
     }
 
     override def connection: Connection = conn
+
+    override def close(): Unit = conn.close()
+
+    override def tableQuery(): TableQuery = new TableQuery {
+      private[this] var catalog: String = _
+      private[this] var schema: String = _
+      private[this] var tableName: String = _
+
+      @Optional("default value is null")
+      @Nullable
+      override def catalog(catalog: String): this.type = {
+        this.catalog = catalog
+        this
+      }
+
+      @Optional("default value is null")
+      @Nullable
+      override def schema(schema: String): this.type = {
+        this.schema = schema
+        this
+      }
+
+      @Optional("default value is null")
+      @Nullable
+      override def tableName(tableName: String): this.type = {
+        this.tableName = tableName
+        this
+      }
+
+      override def execute(): Seq[RdbTable] = {
+        val md = conn.getMetaData
+
+        // catalog, schema, tableName
+        val data: Seq[(String, String, String)] = {
+          implicit val rs: ResultSet = md.getTables(catalog, schema, tableName, null)
+          try {
+            val buf = new ArrayBuffer[(String, String, String)]()
+            while (rs.next()) if (!systemTable(toTableType(rs)))
+              buf.append((toTableCatalog(rs), toTableSchema(rs), toTableName(rs)))
+            buf
+          } finally rs.close()
+        }
+
+        // catalog, schema, tableName, pks
+        val data2 = data.map {
+          case (c, s, t) =>
+            (c, s, t, {
+              implicit val rs: ResultSet = md.getPrimaryKeys(c, null, t)
+              try {
+                val buf = new ArrayBuffer[String]()
+                while (rs.next()) buf += toColumnName(rs)
+                buf.toSet
+              } finally rs.close()
+            })
+        }
+
+        data2
+          .map {
+            case (c, s, t, pks) =>
+              implicit val rs: ResultSet = md.getColumns(c, null, t, null)
+              val columns = try {
+                val buf = new ArrayBuffer[RdbColumn]()
+                while (rs.next()) buf += RdbColumn(name = toColumnName(rs),
+                                                   dataType = toColumnType(rs),
+                                                   pk = pks.contains(toColumnName(rs)))
+                buf
+              } finally rs.close()
+              RdbTable(Option(c), Option(s), t, columns)
+          }
+          .filterNot(_.schema.isEmpty)
+      }
+    }
   }
 }

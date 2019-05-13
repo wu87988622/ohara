@@ -24,6 +24,7 @@ import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationReq
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.Parameters
 import com.island.ohara.client.configurator.v0.ValidationApi._
+import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.fake.FakeWorkerClient
 import com.island.ohara.kafka.connector.json.SettingDefinition
@@ -36,8 +37,9 @@ import scala.util.{Failure, Success}
 private[configurator] object ValidationRoute extends SprayJsonSupport {
   private[this] val DEFAULT_NUMBER_OF_VALIDATION = 3
 
-  private[this] def verifyRoute[Req](root: String, verify: (Option[String], Req) => Future[Seq[ValidationReport]])(
+  private[this] def verifyRoute[Req, Report](root: String, verify: (Option[String], Req) => Future[Seq[Report]])(
     implicit rm: RootJsonFormat[Req],
+    rm2: RootJsonFormat[Report],
     executionContext: ExecutionContext): server.Route = path(root) {
     put {
       parameter(Parameters.CLUSTER_NAME.?) { clusterName =>
@@ -50,8 +52,19 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
     }
   }
 
-  private[this] def fakeReport(): Future[Seq[ValidationReport]] = Future.successful(
-    (0 until DEFAULT_NUMBER_OF_VALIDATION).map(_ => ValidationReport(CommonUtils.hostname, "a fake report", true)))
+  @VisibleForTesting
+  private[route] def fakeReport(): Future[Seq[ValidationReport]] =
+    Future.successful((0 until DEFAULT_NUMBER_OF_VALIDATION).map(_ =>
+      ValidationReport(hostname = CommonUtils.hostname, message = "a fake report", pass = true)))
+
+  @VisibleForTesting
+  private[route] def fakeJdbcReport(): Future[Seq[JdbcValidationReport]] = Future.successful(
+    (0 until DEFAULT_NUMBER_OF_VALIDATION).map(
+      _ =>
+        JdbcValidationReport(hostname = CommonUtils.hostname,
+                             message = "a fake report",
+                             pass = true,
+                             tableNames = Seq("fake_table"))))
 
   def apply(implicit brokerCollie: BrokerCollie,
             workerCollie: WorkerCollie,
@@ -74,8 +87,9 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
           CollieUtils.both(if (req.workerClusterName.isEmpty) clusterName else req.workerClusterName).flatMap {
             case (_, topicAdmin, _, workerClient) =>
               workerClient match {
-                case _: FakeWorkerClient => fakeReport()
-                case _                   => ValidationUtils.run(workerClient, topicAdmin, req, DEFAULT_NUMBER_OF_VALIDATION)
+                case _: FakeWorkerClient => fakeJdbcReport()
+                case _ =>
+                  ValidationUtils.run(workerClient, topicAdmin, req, DEFAULT_NUMBER_OF_VALIDATION)
               }
         }
       ) ~ verifyRoute(
