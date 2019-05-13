@@ -17,6 +17,7 @@
 package com.island.ohara.streams.ostream;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.producer.ProducerConfig;
 
 class StreamsConfig {
   static final String BOOTSTRAP_SERVERS =
@@ -36,6 +37,22 @@ class StreamsConfig {
   static final String THREADS = org.apache.kafka.streams.StreamsConfig.NUM_STREAM_THREADS_CONFIG;
   static final String GUARANTEE =
       org.apache.kafka.streams.StreamsConfig.PROCESSING_GUARANTEE_CONFIG;
+  static final String ACKS = ProducerConfig.ACKS_CONFIG;
+
+  enum GUARANTEES {
+    EXACTLY_ONCE(org.apache.kafka.streams.StreamsConfig.EXACTLY_ONCE),
+    AT_LEAST_ONCE(org.apache.kafka.streams.StreamsConfig.AT_LEAST_ONCE);
+
+    private String actualName;
+
+    GUARANTEES(String actualName) {
+      this.actualName = actualName;
+    }
+
+    public String getName() {
+      return this.actualName;
+    }
+  }
 
   // for docker usage
   static final String DOCKER_BOOTSTRAP_SERVERS = "STREAMAPP_SERVERS";

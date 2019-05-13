@@ -21,6 +21,14 @@ import org.apache.kafka.streams.kstream.KGroupedStream;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
 
+/**
+ * This is a abstract super class of {@code OStream}, {@code OTable} and {@code OGroupStream}. We
+ * use this class to pass kafka inner constructor objects in order to reduce the dependencies of
+ * kafka.
+ *
+ * @param <K> key type of source stream
+ * @param <V> value type of source stream
+ */
 @SuppressWarnings({"rawtypes", "unchecked"})
 abstract class AbstractStream<K, V> {
 
@@ -33,7 +41,13 @@ abstract class AbstractStream<K, V> {
   @SuppressWarnings("unchecked")
   AbstractStream(final OStreamBuilder builder) {
     StreamsBuilder newBuilder = new StreamsBuilder();
-    this.kstreams = newBuilder.stream(builder.getFromTopic(), builder.getFromSerde().get());
+    this.kstreams =
+        newBuilder.stream(builder.getFromTopic(), builder.getFromSerde().get())
+            // since the value is "byte array" of nothing, we only care the key part, i.e, the real
+            // row data
+            // here we convert the row data to both the key and value part
+            // TODO : is there any good way to avoid this ugly convert?...by Sam
+            .map(((key, value) -> KeyValue.pair(key, key)));
     this.builder = builder;
     this.innerBuilder = newBuilder;
   }

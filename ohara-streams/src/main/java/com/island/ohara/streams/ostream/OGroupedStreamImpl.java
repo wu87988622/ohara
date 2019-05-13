@@ -16,26 +16,59 @@
 
 package com.island.ohara.streams.ostream;
 
+import com.island.ohara.common.data.Cell;
+import com.island.ohara.common.data.Row;
 import com.island.ohara.streams.OGroupedStream;
 import com.island.ohara.streams.OStream;
+import java.util.stream.Stream;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.KGroupedStream;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class OGroupedStreamImpl<K, V> extends AbstractStream<K, V> implements OGroupedStream<K, V> {
+public class OGroupedStreamImpl extends AbstractStream<Row, Row> implements OGroupedStream<Row> {
 
-  OGroupedStreamImpl(OStreamBuilder ob, KGroupedStream<K, V> kgroupstream, StreamsBuilder builder) {
+  OGroupedStreamImpl(
+      OStreamBuilder ob, KGroupedStream<Row, Row> kgroupstream, StreamsBuilder builder) {
     super(ob, kgroupstream, builder);
   }
 
   @Override
-  public OStream<K, Long> count() {
-    return new OTableImpl<>(builder, kgroupstream.count(), innerBuilder).toOStream();
+  public OStream<Row> count() {
+    return new OStreamImpl(
+        builder,
+        kgroupstream
+            .count()
+            .mapValues(count -> Row.of(Cell.of("count", count)))
+            .toStream()
+            .map(
+                ((key, value) ->
+                    KeyValue.pair(
+                        key,
+                        Row.of(
+                            ArrayUtils.addAll(
+                                key.cells().toArray(new Cell[0]),
+                                value.cells().toArray(new Cell[0])))))),
+        innerBuilder);
   }
 
   @Override
-  public OStream<K, V> reduce(final Reducer<V> reducer) {
-    Reducer.TrueReducer<V> trueReducer = new Reducer.TrueReducer<>(reducer);
-    return new OTableImpl<>(builder, kgroupstream.reduce(trueReducer), innerBuilder).toOStream();
+  public OStream<Row> reduce(final Reducer reducer) {
+    Reducer.TrueReducer trueReducer = new Reducer.TrueReducer(reducer);
+    return new OStreamImpl(
+        builder,
+        kgroupstream
+            .reduce(trueReducer)
+            .toStream()
+            .map(
+                ((key, value) ->
+                    KeyValue.pair(
+                        key,
+                        Row.of(
+                            Stream.concat(key.cells().stream(), value.cells().stream())
+                                .distinct()
+                                .toArray(Cell[]::new))))),
+        innerBuilder);
   }
 }

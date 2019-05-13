@@ -32,6 +32,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -47,13 +48,12 @@ public class TestPurchaseAnalysis extends WithBroker {
   private static final String itemTopic = "items";
   private static final String orderTopic = "orders";
   private static final String userTopic = "users";
-  private static final String orderuser_repartition = "orderuser-repartition-by-item";
   private final BrokerClient client = BrokerClient.of(testUtil().brokersConnProps());
-  private final Producer<String, Row> producer =
-      Producer.<String, Row>builder()
+  private final Producer<Row, byte[]> producer =
+      Producer.<Row, byte[]>builder()
           .connectionProps(client.connectionProps())
-          .keySerializer(Serializer.STRING)
-          .valueSerializer(Serializer.ROW)
+          .keySerializer(Serializer.ROW)
+          .valueSerializer(Serializer.BYTES)
           .build();
 
   @Before
@@ -85,24 +85,18 @@ public class TestPurchaseAnalysis extends WithBroker {
           .numberOfReplications(replications)
           .topicName(resultTopic)
           .create();
-      client
-          .topicCreator()
-          .numberOfPartitions(partitions)
-          .numberOfReplications(replications)
-          .topicName(orderuser_repartition)
-          .create();
     } catch (Exception e) {
       LOG.error(e.getMessage());
     }
 
     // write users.csv to kafka broker
-    produceData("users.csv", userTopic, "name");
+    produceData("users.csv", userTopic);
 
     // write items.csv to kafka broker
-    produceData("items.csv", itemTopic, "itemName");
+    produceData("items.csv", itemTopic);
 
     // write orders.csv to kafka broker
-    produceData("orders.csv", orderTopic, "userName");
+    produceData("orders.csv", orderTopic);
   }
 
   @Test
@@ -110,17 +104,17 @@ public class TestPurchaseAnalysis extends WithBroker {
     RunStreamApp app = new RunStreamApp(client.connectionProps());
     StreamApp.runStreamApp(app.getClass(), client.connectionProps());
 
-    Consumer<String, Double> consumer =
-        Consumer.<String, Double>builder()
+    Consumer<Row, byte[]> consumer =
+        Consumer.<Row, byte[]>builder()
             .topicName(resultTopic)
             .connectionProps(client.connectionProps())
             .groupId("group-" + resultTopic)
             .offsetFromBegin()
-            .keySerializer(Serializer.STRING)
-            .valueSerializer(Serializer.DOUBLE)
+            .keySerializer(Serializer.ROW)
+            .valueSerializer(Serializer.BYTES)
             .build();
 
-    List<Record<String, Double>> records = consumer.poll(Duration.ofSeconds(10), 2);
+    List<Record<Row, byte[]>> records = consumer.poll(Duration.ofSeconds(100), 2);
     // the result will get "accumulation" ; hence we will get 2 -> 4 records
     Assert.assertTrue(
         "the result will get \"accumulation\" ; hence we will get 2 -> 4 records. actual:"
@@ -135,12 +129,17 @@ public class TestPurchaseAnalysis extends WithBroker {
     records.forEach(
         record -> {
           if (record.key().isPresent()) {
+            Optional<Double> amount =
+                record.key().get().cells().stream()
+                    .filter(cell -> cell.name().equals("amount"))
+                    .map(cell -> Double.valueOf(cell.value().toString()))
+                    .findFirst();
             Assert.assertTrue(
                 "the result should be contain in actualResultMap",
-                actualResultMap.containsKey(record.key().get())
+                actualResultMap.containsKey(record.key().get().cell("gender").value().toString())
                     && actualResultMap.values().stream()
                         .flatMap(Arrays::stream)
-                        .anyMatch((d) -> Math.abs(d - record.value().orElse(-999.0)) < THRESHOLD));
+                        .anyMatch(d -> Math.abs(d - amount.orElse(-999.0)) < THRESHOLD));
           }
         });
 
@@ -164,12 +163,12 @@ public class TestPurchaseAnalysis extends WithBroker {
 
     @Override
     public void start() {
-      OStream<String, Row> ostream =
+      OStream<Row> ostream =
           OStream.builder()
               .appid(appid)
               .bootstrapServers(brokers)
-              .fromTopicWith(orderTopic, Serdes.STRING, Serdes.ROW)
-              .toTopicWith(resultTopic, Serdes.STRING, Serdes.DOUBLE)
+              .fromTopicWith(orderTopic, Serdes.ROW, Serdes.BYTES)
+              .toTopicWith(resultTopic, Serdes.ROW, Serdes.BYTES)
               .cleanStart()
               .timestampExactor(MyExtractor.class)
               .build();
@@ -177,52 +176,52 @@ public class TestPurchaseAnalysis extends WithBroker {
       ostream
           .leftJoin(
               userTopic,
-              Serdes.STRING,
-              Serdes.ROW,
+              Conditions.add(Collections.singletonList(Pair.of("userName", "name"))),
               (row1, row2) ->
                   Row.of(
                       row1.cell("userName"),
                       row1.cell("itemName"),
-                      row1.cell("transactionDate"),
                       row1.cell("quantity"),
                       row2 == null ? Cell.of("address", "") : row2.cell("address"),
-                      row2 == null ? Cell.of("gender", "") : row2.cell("gender"),
-                      row2 == null ? Cell.of("age", "") : row2.cell("age")))
-          .filter((key, row) -> row.cell("address").value() != null)
-          .map((key, row) -> new KeyValue<>(row.cell("itemName").value().toString(), row))
-          .through(orderuser_repartition, Serdes.STRING, Serdes.ROW)
+                      row2 == null ? Cell.of("gender", "") : row2.cell("gender")))
+          .filter(row -> row.cell("address").value() != null)
           .leftJoin(
               itemTopic,
-              Serdes.STRING,
-              Serdes.ROW,
+              Conditions.add(Collections.singletonList(Pair.of("itemName", "itemName"))),
               (row1, row2) ->
                   Row.of(
                       row1.cell("userName"),
                       row1.cell("itemName"),
-                      row1.cell("transactionDate"),
                       row1.cell("quantity"),
                       Cell.of("useraddress", row1.cell("address").value()),
                       row1.cell("gender"),
-                      row1.cell("age"),
                       row2 == null
                           ? Cell.of("itemaddress", "")
                           : Cell.of("itemaddress", row2.cell("address").value()),
                       row2 == null ? Cell.of("type", "") : row2.cell("type"),
                       row2 == null ? Cell.of("price", "") : row2.cell("price")))
           .filter(
-              (key, row) ->
+              row ->
                   row.cell("useraddress")
                       .value()
                       .toString()
                       .equals(row.cell("itemaddress").value().toString()))
           .map(
-              (key, row) ->
-                  new KeyValue<>(
-                      row.cell("gender").value().toString(),
-                      Double.valueOf(row.cell("quantity").value().toString())
-                          * Double.valueOf(row.cell("price").value().toString())))
-          .groupByKey(Serdes.STRING, Serdes.DOUBLE)
-          .reduce((v1, v2) -> v1 + v2)
+              row ->
+                  Row.of(
+                      row.cell("gender"),
+                      Cell.of(
+                          "amount",
+                          Double.valueOf(row.cell("quantity").value().toString())
+                              * Double.valueOf(row.cell("price").value().toString()))))
+          .groupByKey(Collections.singletonList("gender"))
+          .reduce(
+              (r1, r2) ->
+                  Row.of(
+                      Cell.of(
+                          "amount",
+                          Double.valueOf(r1.cell("amount").value().toString())
+                              + Double.valueOf(r2.cell("amount").value().toString()))))
           .start();
     }
   }
@@ -259,7 +258,7 @@ public class TestPurchaseAnalysis extends WithBroker {
     }
   }
 
-  private void produceData(String filename, String topicName, String topicKey) {
+  private void produceData(String filename, String topicName) {
     try {
       List<?> dataList = DataUtils.readData(filename);
       dataList.stream()
@@ -268,25 +267,24 @@ public class TestPurchaseAnalysis extends WithBroker {
                 try {
                   List<Cell> cells = new ArrayList<>();
                   LOG.debug("Class Name : " + object.getClass().getName());
-                  String key = null;
                   for (Field f : object.getClass().getDeclaredFields()) {
                     f.setAccessible(true);
                     Cell cell = Cell.of(f.getName(), f.get(object));
                     cells.add(cell);
-                    if (cell.name().equals(topicKey)) key = cell.value().toString();
                     LOG.debug("--" + f.getName() + ":" + f.get(object));
                   }
-                  return new AbstractMap.SimpleEntry<>(key, Row.of(cells.toArray(new Cell[0])));
+                  return new AbstractMap.SimpleEntry<>(
+                      Row.of(cells.toArray(new Cell[0])), new byte[0]);
                 } catch (Exception e) {
                   LOG.debug(e.getMessage());
-                  return new AbstractMap.SimpleEntry<>(null, Row.EMPTY);
+                  return new AbstractMap.SimpleEntry<>(Row.EMPTY, new byte[0]);
                 }
               })
           .forEach(
               entry ->
                   producer
                       .sender()
-                      .key(entry.getKey().toString())
+                      .key(entry.getKey())
                       .value(entry.getValue())
                       .topicName(topicName)
                       .send());

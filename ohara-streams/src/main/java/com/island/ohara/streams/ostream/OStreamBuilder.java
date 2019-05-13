@@ -42,7 +42,6 @@ public final class OStreamBuilder<K, V> {
     this.builderValueSerde = value;
   }
 
-  /** For those who want to custom own serdes for from/to topic */
   private OStreamBuilder(OStreamBuilder builder) {
     this.bootstrapServers = builder.bootstrapServers;
     this.appId = builder.appId;
@@ -52,6 +51,8 @@ public final class OStreamBuilder<K, V> {
     this.toSerde = builder.toSerde;
     this.extractor = builder.extractor;
     this.cleanStart = builder.cleanStart;
+    this.builderKeySerde = builder.builderKeySerde;
+    this.builderValueSerde = builder.builderValueSerde;
   }
 
   /**
@@ -74,7 +75,7 @@ public final class OStreamBuilder<K, V> {
 
   /**
    * set the topic consumed from. note the default {@code <key, value>} is {@code <Serdes.String,
-   * Serdes.Row>}
+   * Serdes.StreamRow>}
    *
    * @param fromTopic the topic name
    * @return this builder
@@ -103,7 +104,7 @@ public final class OStreamBuilder<K, V> {
 
   /**
    * set the topic produced to. note the default {@code <key, value>} is {@code <Serdes.String,
-   * Serdes.Row>}
+   * Serdes.StreamRow>}
    *
    * @param toTopic the topic name
    * @return this builder
@@ -133,7 +134,7 @@ public final class OStreamBuilder<K, V> {
    *
    * @return this builder
    */
-  OStreamBuilder<K, V> cleanStart() {
+  public OStreamBuilder<K, V> cleanStart() {
     this.cleanStart = true;
     return this;
   }
@@ -144,14 +145,14 @@ public final class OStreamBuilder<K, V> {
    * @param extractor class extends {@code TimestampExtractor}
    * @return this builder
    */
-  OStreamBuilder<K, V> timestampExactor(Class<? extends TimestampExtractor> extractor) {
+  public OStreamBuilder<K, V> timestampExactor(Class<? extends TimestampExtractor> extractor) {
     this.extractor = extractor;
     return this;
   }
 
   // This is for testing
-  OStream<K, V> build() {
-    return new OStreamImpl<>(this);
+  OStream<Row> build() {
+    return new OStreamImpl(this);
   }
 
   /**
@@ -160,7 +161,7 @@ public final class OStreamBuilder<K, V> {
    *
    * @return the logic entry for {@code OStream}
    */
-  public OStream<Row, byte[]> toOharaEnvStream() {
+  public OStream<Row> toOharaEnvStream() {
     Map<String, String> envs = System.getenv();
     CommonUtils.requireNonEmpty(
         envs, () -> "You should run this application in ohara environment.");
@@ -177,7 +178,7 @@ public final class OStreamBuilder<K, V> {
         Serdes.ROW,
         Serdes.BYTES);
 
-    return new OStreamImpl<>(this);
+    return new OStreamImpl(this);
   }
 
   // Getters

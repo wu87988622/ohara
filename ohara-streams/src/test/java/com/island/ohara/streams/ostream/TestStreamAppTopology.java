@@ -23,7 +23,9 @@ import com.island.ohara.streams.StreamApp;
 import com.island.ohara.streams.data.Poneglyph;
 import com.island.ohara.streams.data.Stele;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -42,9 +44,9 @@ public class TestStreamAppTopology extends SmallTest {
 
     @Override
     public void start() {
-      OStream<Row, String> ostream =
+      OStream<Row> ostream =
           OStream.builder()
-              .fromTopicWith(from, Serdes.ROW, Serdes.STRING)
+              .fromTopicWith(from, Serdes.ROW, Serdes.BYTES)
               .toTopic(to)
               .bootstrapServers("fake")
               .appid("get-poneglyph")
@@ -52,12 +54,13 @@ public class TestStreamAppTopology extends SmallTest {
 
       List<Poneglyph> poneglyph =
           ostream
-              .filter((row, value) -> !row.cell(0).value().toString().isEmpty())
-              .map(
-                  (key, value) ->
-                      new KeyValue<>(key.cell(0).name(), key.cell(0).value().toString()))
-              .leftJoin(join, Serdes.STRING, Serdes.STRING, (r1, r2) -> r1 + r2)
-              .groupByKey(Serdes.STRING, Serdes.STRING)
+              .filter(row -> !row.cell(0).value().toString().isEmpty())
+              .map(row -> Row.of(row.cell(0)))
+              .leftJoin(
+                  join,
+                  Conditions.add(Collections.singletonList(Pair.of("pk", "fk"))),
+                  (r1, r2) -> r1)
+              .groupByKey(Collections.singletonList("key"))
               .count()
               .getPoneglyph();
 

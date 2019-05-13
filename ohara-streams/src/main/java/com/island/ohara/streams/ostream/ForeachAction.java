@@ -16,21 +16,25 @@
 
 package com.island.ohara.streams.ostream;
 
-public interface ForeachAction<K, V> {
+import com.island.ohara.common.data.Row;
 
-  void foreachAction(final K key, final V value);
+/** Loop all the {@code Row} data in this stream */
+public interface ForeachAction {
 
-  class TrueForeachAction<K, V> implements org.apache.kafka.streams.kstream.ForeachAction<K, V> {
+  void foreachAction(final Row key);
 
-    private final ForeachAction<K, V> trueForeachAction;
+  class TrueForeachAction implements org.apache.kafka.streams.kstream.ForeachAction<Row, byte[]> {
 
-    TrueForeachAction(ForeachAction<K, V> foreachAction) {
+    private final ForeachAction trueForeachAction;
+
+    TrueForeachAction(ForeachAction foreachAction) {
       this.trueForeachAction = foreachAction;
     }
 
     @Override
-    public void apply(K key, V value) {
-      this.trueForeachAction.foreachAction(key, value);
+    public void apply(Row key, byte[] value) {
+      // We only concern the key part
+      this.trueForeachAction.foreachAction(key);
     }
   }
 }

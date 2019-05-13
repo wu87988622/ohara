@@ -16,6 +16,7 @@
 
 package com.island.ohara.streams;
 
+import com.island.ohara.common.data.Row;
 import com.island.ohara.streams.data.Poneglyph;
 import com.island.ohara.streams.ostream.*;
 import java.util.List;
@@ -24,25 +25,25 @@ import org.apache.kafka.streams.kstream.Serialized;
 import org.apache.kafka.streams.kstream.ValueJoiner;
 
 /**
- * {@code OStream} is a <i>key-value pair</i> streaming data
+ * {@code OStream} is a <i>Row</i> streaming data in Ohara Stream. In Ohara Stream environment, all
+ * data is stored in topic ; Since we need to join streamApp in the data flow with other components
+ * (for example: connector), the data type consistency is important. Use the same data type in
+ * streamApp as same as connector which is {@code <Row, byte[]>} and we only use the <b>key</b>
+ * part, leading us to restrict {@code OStream} should only do ETL work in {@code Row} data.
  *
- * @param <K> Type of key
- * @param <V> Type of value
+ * @param <T> Type of value
  */
-public interface OStream<K, V> {
+public interface OStream<T extends Row> {
 
   /**
-   * Create a {@link OTable} from current {@code OStream}. All the configurations of the required
-   * topic will as same as {@code OStream}.
+   * Create a {@link OTable} from current {@code OStream}. All the configurations of the specify
+   * topic will be same as {@code OStream}.
    *
    * @param topicName the topic name; cannot be {@code null}
-   * @param topicKey the topic key serialization; cannot be {@code null}
-   * @param topicValue the topic value serialization; cannot be {@code null}
-   * @param <VO> the value type of the table
    * @return {@link OTable}
    * @see org.apache.kafka.streams.StreamsBuilder#table(String, org.apache.kafka.streams.Consumed)
    */
-  <VO> OTable<K, VO> constructTable(String topicName, Serde<K> topicKey, Serde<VO> topicValue);
+  OTable<T> constructTable(String topicName);
 
   /**
    * Create a new {@code OStream} that filter by the given predicate. All records that do not
@@ -53,52 +54,32 @@ public interface OStream<K, V> {
    * @see
    *     org.apache.kafka.streams.kstream.KStream#filter(org.apache.kafka.streams.kstream.Predicate)
    */
-  OStream<K, V> filter(Predicate<K, V> predicate);
+  OStream<T> filter(Predicate predicate);
 
   /**
-   * Transfer this {@code OStream} to specific topic and use the required serialization of {@link
-   * Serde key serde}, {@link Serde value serde}. This operation will do the repartition work. Note:
-   * The required topic should be manually created before it is used.
+   * Transfer this {@code OStream} to specify topic and use the required partition number. This
+   * operation will do the repartition work.
    *
    * @param topicName the transfer topic name
-   * @param key the key serialization
-   * @param value the value serialization
+   * @param partitions the partition size of topic
    * @return {@code OStream}
    * @see org.apache.kafka.streams.kstream.KStream#through(String,
    *     org.apache.kafka.streams.kstream.Produced)
    */
-  OStream<K, V> through(String topicName, Serde<K> key, Serde<V> value);
+  OStream<T> through(String topicName, int partitions);
 
   /**
    * Join this stream with required topic using non-windowed left join. The join operation will use
-   * a primary key to lookup {@code stream.key == topic.key}.
+   * the specify {@code Conditions} to lookup {@code stream.key == topic.key}.
    *
    * @param joinTopicName the topic name to be joined with this OStream
-   * @param topicKey the join topic key serialization
-   * @param topicValue the join topic value serialization
+   * @param conditions the join key pairs
    * @param joiner a {@link ValueJoiner} that computes the join result for a pair of matching
    *     records
-   * @param <VT> the value type of the require join topic
-   * @param <VR> the value type of the result OStream
    * @return {@code OStream}
    * @see org.apache.kafka.streams.kstream.KStream#leftJoin(KTable, ValueJoiner)
    */
-  <VT, VR> OStream<K, VR> leftJoin(
-      String joinTopicName, Serde<K> topicKey, Serde<VT> topicValue, Valuejoiner<V, VT, VR> joiner);
-
-  /**
-   * Transform each record of the stream to a new record in the output stream. The provided {@link
-   * KeyValueMapper} is applied to each input record and computes a new output record. This
-   * operation do not touch state store.
-   *
-   * @param mapper a {@link KeyValueMapper} that computes a new output record
-   * @param <KR> the key type of the output stream
-   * @param <VR> the value type of the output stream
-   * @return {@code OStream}
-   * @see
-   *     org.apache.kafka.streams.kstream.KStream#map(org.apache.kafka.streams.kstream.KeyValueMapper)
-   */
-  <KR, VR> OStream<KR, VR> map(KeyValueMapper<K, V, KeyValue<KR, VR>> mapper);
+  OStream<T> leftJoin(String joinTopicName, Conditions conditions, Valuejoiner joiner);
 
   /**
    * Transform the value of each record to a new value of the output record. The provided {@link
@@ -106,23 +87,20 @@ public interface OStream<K, V> {
    * operation do not touch state store.
    *
    * @param mapper a {@link ValueMapper} that computes a new output value
-   * @param <VR> the value type of the output stream
    * @return {@code OStream}
    * @see
    *     org.apache.kafka.streams.kstream.KStream#mapValues(org.apache.kafka.streams.kstream.ValueMapper)
    */
-  <VR> OStream<K, VR> mapValues(ValueMapper<V, VR> mapper);
+  OStream<T> map(ValueMapper mapper);
 
   /**
-   * Group the records by key to a {@link OGroupedStream} and using the serialization as specified
-   * {@code key} and {@code value}.
+   * Group the records by key to a {@link OGroupedStream}.
    *
-   * @param key the key type of the output stream
-   * @param value the value type of the output stream
+   * @param keys the group by key list
    * @return {@link OGroupedStream}
    * @see org.apache.kafka.streams.kstream.KStream#groupByKey(Serialized)
    */
-  OGroupedStream<K, V> groupByKey(final Serde<K> key, final Serde<V> value);
+  OGroupedStream<T> groupByKey(List<String> keys);
 
   /**
    * Perform an action on each record of {@code OStream}. This operation do not use state store.
@@ -133,7 +111,7 @@ public interface OStream<K, V> {
    * @see
    *     org.apache.kafka.streams.kstream.KStream#foreach(org.apache.kafka.streams.kstream.ForeachAction)
    */
-  void foreach(ForeachAction<K, V> action);
+  void foreach(ForeachAction action);
 
   /**
    * Run this streamApp application. This operation do not use state store. Note that this is a

@@ -16,19 +16,20 @@
 
 package com.island.ohara.streams.ostream;
 
+import com.island.ohara.common.data.Row;
 import com.island.ohara.streams.OStream;
 import com.island.ohara.streams.OTable;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.KTable;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class OTableImpl<K, V> extends AbstractStream<K, V> implements OTable<K, V> {
-  OTableImpl(OStreamBuilder ob, KTable<K, V> ktable, StreamsBuilder builder) {
+public class OTableImpl extends AbstractStream<Row, Row> implements OTable<Row> {
+  OTableImpl(OStreamBuilder ob, KTable<Row, Row> ktable, StreamsBuilder builder) {
     super(ob, ktable, builder);
   }
 
   @Override
-  public OStream<K, V> toOStream() {
-    return new OStreamImpl<>(builder, ktable.toStream(), innerBuilder);
+  public OStream<Row> toOStream() {
+    return new OStreamImpl(builder, ktable.toStream(), innerBuilder);
   }
 }

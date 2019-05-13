@@ -49,12 +49,8 @@ public class Topology implements AutoCloseable {
     // until the following JIRA fixed
     // See : https://issues.apache.org/jira/browse/KAFKA-6647
     if (isCleanStart) {
-      final File baseDir =
-          new File(config.getString(org.apache.kafka.streams.StreamsConfig.STATE_DIR_CONFIG));
-      final File stateDir =
-          new File(
-              baseDir,
-              config.getString(org.apache.kafka.streams.StreamsConfig.APPLICATION_ID_CONFIG));
+      final File baseDir = new File(config.getString(StreamsConfig.STATE_DIR));
+      final File stateDir = new File(baseDir, config.getString(StreamsConfig.APP_ID));
       try {
         Utils.delete(stateDir);
       } catch (IOException e) {

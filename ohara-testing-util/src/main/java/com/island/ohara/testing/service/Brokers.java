@@ -66,6 +66,7 @@ public interface Brokers extends Releasable {
                   // reference to KafkaConfig.ZkConnectionTimeoutMsProp
                   // increase the timeout in order to avoid ZkTimeoutException
                   config.setProperty("zookeeper.connection.timeout.ms", String.valueOf(30 * 1000));
+
                   KafkaServer broker =
                       new KafkaServer(
                           new KafkaConfig(config),

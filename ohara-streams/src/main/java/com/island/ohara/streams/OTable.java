@@ -16,18 +16,19 @@
 
 package com.island.ohara.streams;
 
+import com.island.ohara.common.data.Row;
+
 /**
- * {@code OTable} is a <i>changelog table</i> from the {@link OStream}
+ * {@code OTable} is a <i>changelog table</i> from the {@link OStream} of {@code Row} data type.
  *
- * @param <K> Type of the key
- * @param <V> Type of the value
+ * @param <T> Type of the value
  */
-public interface OTable<K, V> {
+public interface OTable<T extends Row> {
 
   /**
    * Convert this {@code OTable} to {@code OStream}
    *
    * @return {@code OStream}
    */
-  OStream<K, V> toOStream();
+  OStream<T> toOStream();
 }

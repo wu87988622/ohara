@@ -16,23 +16,28 @@
 
 package com.island.ohara.streams.ostream;
 
+import com.island.ohara.common.data.Cell;
+import com.island.ohara.common.data.Row;
+import com.island.ohara.common.util.CommonUtils;
+import com.island.ohara.kafka.BrokerClient;
 import com.island.ohara.streams.OGroupedStream;
 import com.island.ohara.streams.OStream;
 import com.island.ohara.streams.OTable;
 import com.island.ohara.streams.data.Poneglyph;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.Produced;
-import org.apache.kafka.streams.kstream.Serialized;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
-class OStreamImpl<K, V> extends AbstractStream<K, V> implements OStream<K, V> {
+class OStreamImpl extends AbstractStream<Row, Row> implements OStream<Row> {
 
   private final Logger log = LoggerFactory.getLogger(OStreamImpl.class);
   private Topology topology = null;
@@ -41,65 +46,99 @@ class OStreamImpl<K, V> extends AbstractStream<K, V> implements OStream<K, V> {
     super(ob);
   }
 
-  OStreamImpl(OStreamBuilder ob, KStream<K, V> stream, StreamsBuilder builder) {
+  OStreamImpl(OStreamBuilder ob, KStream<Row, Row> stream, StreamsBuilder builder) {
     super(ob, stream, builder);
   }
 
   @Override
-  public <VO> OTable<K, VO> constructTable(
-      String topicName, Serde<K> topicKey, Serde<VO> topicValue) {
-    Objects.requireNonNull(topicName, "topic can not be null");
-    Objects.requireNonNull(topicKey, "topic key serde can not be null");
-    Objects.requireNonNull(topicValue, "topic value serde can not be null");
-    KTable<K, VO> table = innerBuilder.table(topicName, new Consumed<>(topicKey, topicValue).get());
+  public OTable<Row> constructTable(String topicName) {
+    Objects.requireNonNull(topicName, "topicName can not be null");
+    KTable<Row, Row> table =
+        innerBuilder.table(topicName, new Consumed<>(Serdes.ROW, Serdes.ROW).get());
 
-    return new OTableImpl<>(builder, table, innerBuilder);
+    return new OTableImpl(builder, table, innerBuilder);
   }
 
   @Override
-  public OStream<K, V> filter(final Predicate<K, V> predicate) {
-    Predicate.TruePredicate<K, V> truePredicate = new Predicate.TruePredicate<>(predicate);
-    return new OStreamImpl<>(builder, kstreams.filter(truePredicate), innerBuilder);
+  public OStream<Row> filter(final Predicate predicate) {
+    Predicate.TruePredicate truePredicate = new Predicate.TruePredicate(predicate);
+    return new OStreamImpl(builder, kstreams.filter(truePredicate), innerBuilder);
   }
 
   @Override
-  public OStream<K, V> through(String topicName, Serde<K> key, Serde<V> value) {
-    Produced<K, V> produced = Produced.with(key, value);
-    return new OStreamImpl<>(builder, kstreams.through(topicName, produced), innerBuilder);
+  public OStream<Row> through(String topicName, int partitions) {
+    BrokerClient client = BrokerClient.of(builder.getBootstrapServers());
+    client.topicCreator().topicName(topicName).numberOfPartitions(partitions).create();
+    return new OStreamImpl(
+        builder, kstreams.through(topicName, Produced.with(Serdes.ROW, Serdes.ROW)), innerBuilder);
   }
 
   @Override
-  public <VT, VR> OStream<K, VR> leftJoin(
-      String joinTopicName,
-      Serde<K> topicKey,
-      Serde<VT> topicValue,
-      Valuejoiner<V, VT, VR> joiner) {
-    Objects.requireNonNull(joinTopicName, "topic can not be null");
-    KTable<K, VT> table =
-        innerBuilder.table(joinTopicName, new Consumed<>(topicKey, topicValue).get());
-    Valuejoiner.TrueValuejoiner<V, VT, VR> trueValuejoiner =
-        new Valuejoiner.TrueValuejoiner<>(joiner);
+  public OStream<Row> leftJoin(String joinTopicName, Conditions conditions, Valuejoiner joiner) {
+    CommonUtils.requireNonEmpty(joinTopicName, () -> "joinTopicName cannot be null");
+    // construct the compare key "row"
+    List<Pair<String, String>> list = conditions.getConditionList();
+    CommonUtils.requireNonEmpty(list, () -> "the conditions cannot be empty");
 
-    return new OStreamImpl<>(builder, kstreams.leftJoin(table, trueValuejoiner), innerBuilder);
+    List<String> leftHeaders = new ArrayList<>();
+    List<String> rightHeaders = new ArrayList<>();
+    for (Pair<String, String> pair : list) {
+      leftHeaders.add(pair.getLeft());
+      rightHeaders.add(pair.getRight());
+    }
+
+    Valuejoiner.TrueValuejoiner trueValuejoiner = new Valuejoiner.TrueValuejoiner(joiner);
+
+    // convert the right topic (the join topic) to <Row: key_header, Row: values>
+    KTable<Row, Row> table =
+        innerBuilder.stream(joinTopicName, new Consumed<>(Serdes.ROW, Serdes.BYTES).get())
+            .map(
+                (row, value) ->
+                    new KeyValue<>(
+                        Row.of(
+                            rightHeaders.stream()
+                                .map(
+                                    name ->
+                                        Cell.of(
+                                            list.get(rightHeaders.indexOf(name)).getLeft(),
+                                            row.cell(name).value()))
+                                .toArray(Cell[]::new)),
+                        row))
+            .groupByKey()
+            .reduce((agg, newValue) -> newValue);
+
+    // convert the left topic (this stream) to <Row: key_header_value, Row: values>
+    // do left join
+    return new OStreamImpl(
+        builder,
+        kstreams
+            .map(
+                (row, value) ->
+                    new KeyValue<>(
+                        Row.of(leftHeaders.stream().map(value::cell).toArray(Cell[]::new)), value))
+            .leftJoin(table, trueValuejoiner),
+        innerBuilder);
   }
 
   @Override
-  public <KR, VR> OStream<KR, VR> map(KeyValueMapper<K, V, KeyValue<KR, VR>> mapper) {
-    KeyValueMapper.TrueKeyValueMapper<K, V, KeyValue<KR, VR>> trueKeyValueMapper =
-        new KeyValueMapper.TrueKeyValueMapper<>(mapper);
-    return new OStreamImpl<>(builder, kstreams.map(trueKeyValueMapper), innerBuilder);
+  public OStream<Row> map(final ValueMapper mapper) {
+    ValueMapper.TrueValueMapper trueValueMapper = new ValueMapper.TrueValueMapper(mapper);
+    return new OStreamImpl(builder, kstreams.mapValues(trueValueMapper), innerBuilder);
   }
 
   @Override
-  public <VR> OStream<K, VR> mapValues(final ValueMapper<V, VR> mapper) {
-    ValueMapper.TrueValueMapper<V, VR> trueValueMapper = new ValueMapper.TrueValueMapper<>(mapper);
-    return new OStreamImpl<>(builder, kstreams.mapValues(trueValueMapper), innerBuilder);
-  }
+  public OGroupedStream<Row> groupByKey(List<String> keys) {
+    CommonUtils.requireNonEmpty(keys, () -> "the conditions cannot be empty");
 
-  @Override
-  public OGroupedStream<K, V> groupByKey(final Serde<K> key, final Serde<V> value) {
-    Serialized<K, V> serialized = Serialized.with(key, value);
-    return new OGroupedStreamImpl<>(builder, kstreams.groupByKey(serialized), innerBuilder);
+    return new OGroupedStreamImpl(
+        builder,
+        kstreams
+            .map(
+                (row, value) ->
+                    new KeyValue<>(
+                        Row.of(keys.stream().map(value::cell).toArray(Cell[]::new)), value))
+            .groupByKey(),
+        innerBuilder);
   }
 
   /**
@@ -110,11 +149,16 @@ class OStreamImpl<K, V> extends AbstractStream<K, V> implements OStream<K, V> {
   private void baseActionInitial(boolean isDryRun) {
     if (topology == null) {
       Properties prop = new Properties();
+      // TODO : enable exactly_once in #1116
+      // Enable exactly_once prop.setProperty(StreamsConfig.GUARANTEE,
+      // StreamsConfig.GUARANTEES.EXACTLY_ONCE.getName());
+
       prop.setProperty(StreamsConfig.BOOTSTRAP_SERVERS, builder.getBootstrapServers());
       prop.setProperty(StreamsConfig.APP_ID, builder.getAppId());
       prop.setProperty(StreamsConfig.CLIENT_ID, builder.getAppId());
-      prop.setProperty(StreamsConfig.DEFAULT_KEY_SERDE, Serdes.BytesSerde.class.getName());
-      prop.setProperty(StreamsConfig.DEFAULT_VALUE_SERDE, Serdes.BytesSerde.class.getName());
+      // Since we convert to <row, row> data type for internal ostream usage
+      prop.setProperty(StreamsConfig.DEFAULT_KEY_SERDE, Serdes.RowSerde.class.getName());
+      prop.setProperty(StreamsConfig.DEFAULT_VALUE_SERDE, Serdes.RowSerde.class.getName());
       if (builder.getExtractor() != null) {
         prop.setProperty(StreamsConfig.TIMESTAMP_EXTRACTOR, builder.getExtractor().getName());
       }
@@ -131,10 +175,9 @@ class OStreamImpl<K, V> extends AbstractStream<K, V> implements OStream<K, V> {
   }
 
   @Override
-  public void foreach(ForeachAction<K, V> action) {
-    ForeachAction.TrueForeachAction<K, V> trueForeachAction =
-        new ForeachAction.TrueForeachAction<>(action);
-    kstreams.foreach(trueForeachAction);
+  public void foreach(ForeachAction action) {
+    ForeachAction.TrueForeachAction trueForeachAction = new ForeachAction.TrueForeachAction(action);
+    kstreams.map(((noUse, value) -> KeyValue.pair(value, new byte[0]))).foreach(trueForeachAction);
 
     // Initial properties and topology for "actual" action
     baseActionInitial(false);
@@ -144,7 +187,9 @@ class OStreamImpl<K, V> extends AbstractStream<K, V> implements OStream<K, V> {
 
   @Override
   public void start() {
-    kstreams.to(builder.getToTopic(), builder.getToSerde().get());
+    kstreams
+        .map(((noUse, value) -> KeyValue.pair(value, new byte[0])))
+        .to(builder.getToTopic(), builder.getToSerde().get());
 
     // Initial properties and topology for "actual" action
     baseActionInitial(false);
@@ -162,7 +207,9 @@ class OStreamImpl<K, V> extends AbstractStream<K, V> implements OStream<K, V> {
 
   @Override
   public String describe() {
-    kstreams.to(builder.getToTopic(), builder.getToSerde().get());
+    kstreams
+        .map(((noUse, value) -> KeyValue.pair(value, new byte[0])))
+        .to(builder.getToTopic(), builder.getToSerde().get());
 
     // Initial properties and topology for "actual" action
     baseActionInitial(true);
@@ -172,7 +219,9 @@ class OStreamImpl<K, V> extends AbstractStream<K, V> implements OStream<K, V> {
 
   @Override
   public List<Poneglyph> getPoneglyph() {
-    kstreams.to(builder.getToTopic(), builder.getToSerde().get());
+    kstreams
+        .map(((noUse, value) -> KeyValue.pair(value, new byte[0])))
+        .to(builder.getToTopic(), builder.getToSerde().get());
 
     // Initial properties and topology for "actual" action
     baseActionInitial(true);

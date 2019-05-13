@@ -18,7 +18,6 @@ package com.island.ohara.streams;
 
 import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Row;
-import com.island.ohara.streams.ostream.KeyValue;
 
 public class SimpleApplicationForOharaEnv extends StreamApp {
 
@@ -30,7 +29,7 @@ public class SimpleApplicationForOharaEnv extends StreamApp {
    */
   @Override
   public void start() throws Exception {
-    OStream<Row, byte[]> ostream = OStream.builder().toOharaEnvStream();
+    OStream<Row> ostream = OStream.builder().cleanStart().toOharaEnvStream();
 
     // A simple sample to illustrate how to use OStream
     // for example :
@@ -50,15 +49,13 @@ public class SimpleApplicationForOharaEnv extends StreamApp {
     // Note : It will do nothing if there was no data in Topic-A
     ostream
         .map(
-            (row, value) ->
-                new KeyValue<>(
-                    row.size() > 0
-                        ? Row.of(
-                            row.cell("index"),
-                            Cell.of("name", row.cell("name").value().toString().toUpperCase()),
-                            row.cell("age"))
-                        : Row.EMPTY,
-                    value))
+            row ->
+                row.size() > 0
+                    ? Row.of(
+                        row.cell("index"),
+                        Cell.of("name", row.cell("name").value().toString().toUpperCase()),
+                        row.cell("age"))
+                    : Row.EMPTY)
         .start();
   }
 }

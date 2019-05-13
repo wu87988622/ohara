@@ -25,7 +25,7 @@ import com.island.ohara.streams.{OStream, StreamApp}
 class DumbStreamApp extends StreamApp {
 
   override def start(): Unit = {
-    val ostream: OStream[Row, Array[Byte]] = OStream.builder().toOharaEnvStream
+    val ostream: OStream[Row] = OStream.builder().toOharaEnvStream
 
     // do nothing but only start streamApp
     ostream.start()

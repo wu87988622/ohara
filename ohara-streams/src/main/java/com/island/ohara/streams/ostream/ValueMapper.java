@@ -16,27 +16,27 @@
 
 package com.island.ohara.streams.ostream;
 
+import com.island.ohara.common.data.Row;
+
 /**
- * The {@code ValueMapper} interface represents a function for mapping a value to a new value.
+ * The {@code ValueMapper} interface represents a function for mapping a row to a new row.
  *
- * @param <V> input record value type
- * @param <VR> output record value type
  * @see org.apache.kafka.streams.kstream.ValueMapper
  */
-public interface ValueMapper<V, VR> {
+public interface ValueMapper {
 
-  VR valueMapper(V value);
+  Row valueMapper(final Row value);
 
-  class TrueValueMapper<V, VR> implements org.apache.kafka.streams.kstream.ValueMapper<V, VR> {
+  class TrueValueMapper implements org.apache.kafka.streams.kstream.ValueMapper<Row, Row> {
 
-    private final ValueMapper<V, VR> trueValueMapper;
+    private final ValueMapper trueValueMapper;
 
-    TrueValueMapper(ValueMapper<V, VR> valueMapper) {
+    TrueValueMapper(ValueMapper valueMapper) {
       this.trueValueMapper = valueMapper;
     }
 
     @Override
-    public VR apply(V value) {
+    public Row apply(Row value) {
       return this.trueValueMapper.valueMapper(value);
     }
   }

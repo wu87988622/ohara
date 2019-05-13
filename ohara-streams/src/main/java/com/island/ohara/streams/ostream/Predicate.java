@@ -16,28 +16,29 @@
 
 package com.island.ohara.streams.ostream;
 
+import com.island.ohara.common.data.Row;
+
 /**
  * The {@code Predicate} interface represents a boolean-returned filter function. This function
- * should use to filter a {@link KeyValue} pair data.
+ * should use to filter a {@code Row} data.
  *
- * @param <K> key type
- * @param <V> value type
  * @see org.apache.kafka.streams.kstream.Predicate
  */
-public interface Predicate<K, V> {
+public interface Predicate {
 
-  boolean predicate(final K key, final V value);
+  boolean predicate(final Row key);
 
-  final class TruePredicate<K, V> implements org.apache.kafka.streams.kstream.Predicate<K, V> {
-    final Predicate<K, V> truePredicate;
+  final class TruePredicate implements org.apache.kafka.streams.kstream.Predicate<Row, Row> {
+    final Predicate truePredicate;
 
-    TruePredicate(Predicate<K, V> predicate) {
+    TruePredicate(Predicate predicate) {
       this.truePredicate = predicate;
     }
 
+    // Since the only concern part is the "value", we pass the predicate of key
     @Override
-    public boolean test(final K key, final V value) {
-      return this.truePredicate.predicate(key, value);
+    public boolean test(final Row key, final Row value) {
+      return this.truePredicate.predicate(value);
     }
   }
 }

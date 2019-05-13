@@ -16,26 +16,27 @@
 
 package com.island.ohara.streams.ostream;
 
+import com.island.ohara.common.data.Row;
+
 /**
- * The {@code Reducer} interface for combining two values of the same type.
+ * The {@code Reducer} interface for combining two {@code Row} values of the same type.
  *
- * @param <V> the record value type
  * @see org.apache.kafka.streams.kstream.Reducer
  */
-public interface Reducer<V> {
+public interface Reducer {
 
-  V reducer(V value1, V value2);
+  Row reducer(Row value1, Row value2);
 
-  class TrueReducer<V> implements org.apache.kafka.streams.kstream.Reducer<V> {
+  class TrueReducer implements org.apache.kafka.streams.kstream.Reducer<Row> {
 
-    private final Reducer<V> trueReducer;
+    private final Reducer trueReducer;
 
-    TrueReducer(Reducer<V> reducer) {
+    TrueReducer(Reducer reducer) {
       this.trueReducer = reducer;
     }
 
     @Override
-    public V apply(V value1, V value2) {
+    public Row apply(Row value1, Row value2) {
       return this.trueReducer.reducer(value1, value2);
     }
   }
