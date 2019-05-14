@@ -119,7 +119,7 @@ class JDBCSourceConnector extends RowSourceConnector {
       .builder()
       .displayName("table name")
       .documentation("write to topic from database table name")
-      .valueType(SettingDefinition.Type.STRING)
+      .valueType(SettingDefinition.Type.JDBC_TABLE)
       .key(DB_TABLENAME)
       .build(),
     SettingDefinition

@@ -74,7 +74,7 @@ class TestJDBCSourceConnectorDefinitions extends WithBrokerWorker with Matchers 
     definition.editable() shouldBe true
     definition.internal() shouldBe false
     definition.reference() shouldBe "NONE"
-    definition.valueType() shouldBe SettingDefinition.Type.STRING.name()
+    definition.valueType() shouldBe SettingDefinition.Type.JDBC_TABLE.name()
   }
 
   @Test
@@ -122,7 +122,7 @@ class TestJDBCSourceConnectorDefinitions extends WithBrokerWorker with Matchers 
   }
 
   @Test
-  def testSourc1(): Unit = {
+  def testSource(): Unit = {
     val url: String = "jdbc:postgresql://localhost:5432/postgres"
     val userName: String = "user1"
     val password: String = "123456"

@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigException;
 import org.apache.kafka.connect.runtime.rest.entities.ConfigKeyInfo;
@@ -430,5 +431,10 @@ public class TestSettingDefinition extends SmallTest {
     assertException(
         RuntimeException.class,
         () -> settingDefinition.toConfigKey().validator.ensureValid("aasd", null));
+  }
+
+  @Test
+  public void testTypeConversion() {
+    Stream.of(SettingDefinition.Type.values()).forEach(SettingDefinition::toType);
   }
 }

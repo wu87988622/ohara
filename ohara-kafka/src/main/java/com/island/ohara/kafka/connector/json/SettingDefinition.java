@@ -224,6 +224,14 @@ public class SettingDefinition implements JsonObject {
     LIST,
     CLASS,
     PASSWORD,
+    /**
+     * JDBC_TABLE is a specific string type used to reminder Ohara Manager that this field requires
+     * a **magic** button to show available tables of remote database via Query APIs. Except for the
+     * **magic** in UI, there is no other stuff for this JDBC_TYPE since kafka can't verify the
+     * input arguments according to other arguments. It means we can't connect to remote database to
+     * check the existence of input table.
+     */
+    JDBC_TABLE,
     TABLE,
     /**
      * The formats accepted are based on the ISO-8601 duration format PnDTnHnMn.nS with days
@@ -258,10 +266,12 @@ public class SettingDefinition implements JsonObject {
     return JsonUtils.toObject(json, new TypeReference<SettingDefinition>() {});
   }
 
-  private static ConfigDef.Type toType(Type type) {
+  @VisibleForTesting
+  static ConfigDef.Type toType(Type type) {
     switch (type) {
       case BOOLEAN:
         return ConfigDef.Type.BOOLEAN;
+      case JDBC_TABLE:
       case STRING:
       case DURATION:
       case TABLE:

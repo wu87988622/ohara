@@ -803,6 +803,18 @@ java and scala. Furthermore, connector users can input both java.Duration and sc
 
 ----------
 
+### Type.JDBC_TABLE
+
+JDBC_TABLE is a specific string type used to reminder Ohara Manager that this field requires a **magic** button to
+show available tables of remote database via Query APIs. Except for the **magic** in UI, there is no other stuff for
+this JDBC_TYPE since kafka can't verify the input arguments according to other arguments. It means we can't connect to
+remote database to check the existence of input table.
+
+It is ok to replace this field by Type.String if you don't use Ohara Manager. Nevertheless, we still encourage connector
+developer to choose the **fitting** type for your setting if you demand your user to input a database table.
+
+----------
+
 ### Checker
 
 We all love quick failure, right? A quick failure can save our resource and time. Ohara offers many checks for your setting
