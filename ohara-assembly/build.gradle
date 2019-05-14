@@ -26,8 +26,6 @@ dependencies {
   compile project(':ohara-metrics')
   compile project(':ohara-shabondi')
   compile project(':ohara-streams')
-  // the following dependencies is required in runtime
-  compile libs.postgresql
   compile libs.akkaSlf4j
   testImplementation project(path: ':ohara-agent', configuration: 'tests')
   testImplementation project(path: ':ohara-client', configuration: 'tests')
