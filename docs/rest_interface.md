@@ -2707,13 +2707,15 @@ This action will graceful stop and remove all docker containers belong to this s
 
 **Example Request**
 
+Request use form-data, which contains two field :
+1. cluster : the worker cluster name
+2. streamapp : the upload jars
+
 ```http request
-<form name="jarUpload" action="" method="post" enctype="multipart/form-data">
-  <input type="hidden" name="cluster" value="wk00"></input>
-  <input type="file" name="streamapp"></input>
-  <input type="file" name="streamapp"></input>
-  <button type="submit">Submit</button>
-</form>
+Content-Type: multipart/form-data
+cluster="wk01
+streamapp="my-streamApp.jar"
+streamapp="new-app.jar"
 ```
 
 **Example Response**
@@ -2721,19 +2723,23 @@ This action will graceful stop and remove all docker containers belong to this s
 ```json
 [
   {
+    "workerClusterName": "wk01",
     "id": "1b022c59-93f9-452c-a062-f8e4cb6c00fe",
-    "jarName": "ohara-streams.jar",
+    "name": "ohara-streams.jar",
     "lastModified": 1547141282866
   },
   {
+    "workerClusterName": "wk01",
     "id": "1a012c59-53de-3381-a062-f8e29f4c00fe",
-    "jarName": "other.jar",
+    "name": "other.jar",
     "lastModified": 1547141282889
   }
 ]
 ```
 ----------
 ### delete a streamApp jar
+
+Delete a streamApp jar by jarId which is not used in any pipeline of current worker cluster
 
 *DELETE /v0/stream/jars/${id}*
 
@@ -2755,13 +2761,15 @@ This action will graceful stop and remove all docker containers belong to this s
 ```json
 [
   {
+    "workerClusterName": "wk01",
     "id": "1b022c59-93f9-452c-a062-f8e4cb6c00fe",
-    "jarName": "ohara-streams.jar",
+    "name": "ohara-streams.jar",
     "lastModified": 1547141282866
   },
   {
+    "workerClusterName": "wk01",
     "id": "1a012c59-53de-3381-a062-f8e29f4c00fe",
-    "jarName": "other.jar",
+    "name": "other.jar",
     "lastModified": 1547141282889
   }
 ]
@@ -2788,6 +2796,68 @@ Currently, this api is only used for changing jar name.
   "id": "1b022c59-93f9-452c-a062-f8e4cb6c00fe",
   "jarName": "new-streams.jar",
   "lastModified": 1547141282866
+}
+```
+----------
+### create properties of specific streamApp
+
+Create the properties of a streamApp.
+
+*POST /v0/stream/property*
+
+**Example Request**
+
+1. jarId (**string**) — the used jar id
+1. name (**option(string)**) — new streamApp name ; default is "Untitled stream app"
+1. from (**option(array(string))**) — new source topics ; default is empty
+1. to (**option(array(string))**) — new target topics ; default is empty
+1. instances (**option(int)**) — new number of running streamApp ; default is 1
+
+```json
+{
+  "jarId": "d23e7dfa52",
+  "name": "my-new-app",
+  "from": [
+    "topic1"
+  ],
+  "to": [
+    "topic2"
+  ],
+  "instances": 3
+}
+```
+
+**Example Response**
+
+1. workerClusterName (**string**) — worker cluster name this streamApp belong to
+1. id (**string**) — unique id of this streamApp
+1. name (**string**) — custom name of this streamApp
+1. instances ( **int**) — numbers of streamApp container
+1. jarInfo (**object**) — uploaded jar information
+1. from (**array(string)**) — topics of streamApp consume with
+1. to (**array(string)**) — topics of streamApp produce to
+1. state (**option(string)**) — only started/failed streamApp has state
+1. lastModified (**long**) — last modified this jar time
+
+```json
+{
+  "workerClusterName": "wk01",
+  "id": "d312871a-4a05-488d-aae0-c8b27c5312c2",
+  "name": "my-new-app",
+  "instances": 1,
+  "jarInfo": {
+    "id": "1b022c59-93f9-452c-a062-f8e4cb6c00fe",
+    "name": "new-name.jar",
+    "size": 1234,
+    "lastModified": 1542102595892
+  },
+  "from": [
+    "topicA"
+  ],
+  "to": [
+    "topicB"
+  ],
+  "lastModified": 1542102595892
 }
 ```
 ----------
@@ -2874,7 +2944,7 @@ Update the properties of a non-started streamApp.
   "workerClusterName": "wk01",
   "id": "d312871a-4a05-488d-aae0-c8b27c5312c2",
   "name": "my-new-app",
-  "instances": 1,
+  "instances": 3,
   "jarInfo": {
     "id": "1b022c59-93f9-452c-a062-f8e4cb6c00fe",
     "name": "new-name.jar",
@@ -2882,10 +2952,10 @@ Update the properties of a non-started streamApp.
     "lastModified": 1542102595892
   },
   "from": [
-    "topicA"
+    "topic1"
   ],
   "to": [
-    "topicB"
+    "topic2"
   ],
   "lastModified": 1542102595892
 }

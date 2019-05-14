@@ -22,7 +22,6 @@ import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent.Collie.ClusterCreator
 import com.island.ohara.agent.{ClusterCollie, Collie, NodeCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.PipelineApi.Pipeline
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0._
@@ -32,24 +31,13 @@ import com.typesafe.scalalogging.Logger
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
-import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
 private[route] object RouteUtils {
   val LOG = Logger(RouteUtils.getClass)
   // This is a query parameter.
   type TargetCluster = Option[String]
   type Id = String
-
-  def assertNotRelated2Pipeline(id: String)(implicit store: DataStore, executionContext: ExecutionContext): Unit =
-    if (Await.result(
-          store
-            .values[Pipeline]
-            .map(_.exists(pipeline =>
-              pipeline.id == id || pipeline.rules.keys.toSet.contains(id) || pipeline.rules.values.toSet.contains(id))),
-          60 seconds
-        ))
-      throw new IllegalArgumentException(s"The id:$id is used by pipeline")
 
   private[this] def routeOfAdd[Req, Res <: Data](hook: (TargetCluster, Id, Req) => Future[Res])(
     implicit store: DataStore,

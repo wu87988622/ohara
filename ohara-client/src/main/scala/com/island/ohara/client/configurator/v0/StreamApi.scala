@@ -111,8 +111,22 @@ object StreamApi {
     throw new IllegalArgumentException(s"limit of length is $LIMIT_OF_DOCKER_NAME_LENGTH. actual: ${s.length}")
   else s
 
+  // --- data stored in configurator -- //
+  //TODO : We can remove this class after #1151 solved...by Sam
   /**
-    * the streamApp description that is kept in ohara Stores
+    * the jar info of the uploaded streamApp jar
+    *
+    * @param workerClusterName which cluster the jar is belong to
+    * @param id jar upload unique id
+    * @param name jar name
+    * @param lastModified the data change time
+    */
+  final case class StreamJar(workerClusterName: String, id: String, name: String, lastModified: Long) extends Data {
+    override def kind: String = "streamJar"
+  }
+
+  /**
+    * the streamApp description that is kept in ohara stores
     *
     * @param workerClusterName the worker cluster name
     * @param id the streamApp unique id
@@ -174,13 +188,15 @@ object StreamApi {
   implicit val STREAM_LIST_REQUEST_JSON_FORMAT: RootJsonFormat[StreamListRequest] = jsonFormat1(StreamListRequest)
 
   // StreamApp List Response Body
-  final case class StreamListResponse(id: String, name: String, jarName: String, lastModified: Long)
-  implicit val STREAM_JAR_JSON_FORMAT: RootJsonFormat[StreamListResponse] =
-    jsonFormat4(StreamListResponse)
+  implicit val STREAM_JAR_JSON_FORMAT: RootJsonFormat[StreamJar] = jsonFormat4(StreamJar)
 
   // StreamApp Property Request Body
-  final case class StreamPropertyRequest(name: String, from: Seq[String], to: Seq[String], instances: Int)
-  implicit val STREAM_PROPERTY_REQUEST_JSON_FORMAT: RootJsonFormat[StreamPropertyRequest] = jsonFormat4(
+  final case class StreamPropertyRequest(jarId: String,
+                                         name: Option[String],
+                                         from: Option[Seq[String]],
+                                         to: Option[Seq[String]],
+                                         instances: Option[Int])
+  implicit val STREAM_PROPERTY_REQUEST_JSON_FORMAT: RootJsonFormat[StreamPropertyRequest] = jsonFormat5(
     StreamPropertyRequest)
 
   sealed abstract class ActionAccess extends BasicAccess(s"$STREAM_PREFIX_PATH") {
@@ -221,7 +237,7 @@ object StreamApi {
       * @param executionContext execution context
       * @return jar list in the worker cluster name, or all jars if not specify
       */
-    def list(wkName: Option[String])(implicit executionContext: ExecutionContext): Future[Seq[StreamListResponse]]
+    def list(wkName: Option[String])(implicit executionContext: ExecutionContext): Future[Seq[StreamJar]]
 
     /**
       * upload streamApp jars to worker cluster,
@@ -233,7 +249,7 @@ object StreamApi {
       * @return upload jars to assigned worker cluster, or pre-defined worker cluster
       */
     def upload(filePaths: Seq[String], wkName: Option[String])(
-      implicit executionContext: ExecutionContext): Future[Seq[StreamListResponse]] =
+      implicit executionContext: ExecutionContext): Future[Seq[StreamJar]] =
       upload(
         filePaths: Seq[String],
         wkName,
@@ -241,7 +257,7 @@ object StreamApi {
         CONTENT_TYPE
       )
     def upload(filePaths: Seq[String], wkName: Option[String], inputKey: String, contentType: ContentType)(
-      implicit executionContext: ExecutionContext): Future[Seq[StreamListResponse]]
+      implicit executionContext: ExecutionContext): Future[Seq[StreamJar]]
 
     /**
       * delete streamApp jar by id
@@ -260,11 +276,10 @@ object StreamApi {
       * @param executionContext execution context
       * @return the updated jar
       */
-    def update(id: String, request: StreamListRequest)(
-      implicit executionContext: ExecutionContext): Future[StreamListResponse]
+    def update(id: String, request: StreamListRequest)(implicit executionContext: ExecutionContext): Future[StreamJar]
   }
   // To avoid different charset handle, replace the malformedInput and unMappable char
-  implicit val codec = Codec("UTF-8")
+  implicit val codec: Codec = Codec("UTF-8")
   codec.onMalformedInput(CodingErrorAction.REPLACE)
   codec.onUnmappableCharacter(CodingErrorAction.REPLACE)
   def accessOfList(): ListAccess = new ListAccess {
@@ -293,22 +308,21 @@ object StreamApi {
         )
     }
 
-    override def list(wkName: Option[String])(
-      implicit executionContext: ExecutionContext): Future[Seq[StreamListResponse]] =
-      exec.get[Seq[StreamListResponse], ErrorApi.Error](
+    override def list(wkName: Option[String])(implicit executionContext: ExecutionContext): Future[Seq[StreamJar]] =
+      exec.get[Seq[StreamJar], ErrorApi.Error](
         Parameters.appendTargetCluster(s"http://${_hostname}:${_port}/${_version}/${_prefixPath}",
                                        wkName.getOrElse("")))
 
     override def upload(filePaths: Seq[String], wkName: Option[String], inputKey: String, contentType: ContentType)(
-      implicit executionContext: ExecutionContext): Future[Seq[StreamListResponse]] = {
+      implicit executionContext: ExecutionContext): Future[Seq[StreamJar]] = {
       request(s"http://${_hostname}:${_port}/${_version}/${_prefixPath}", inputKey, contentType, filePaths, wkName)
-        .flatMap(exec.request[Seq[StreamListResponse], ErrorApi.Error])
+        .flatMap(exec.request[Seq[StreamJar], ErrorApi.Error])
     }
     override def delete(id: String)(implicit executionContext: ExecutionContext): Future[Unit] =
       exec.delete[ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$id")
     override def update(id: String, request: StreamListRequest)(
-      implicit executionContext: ExecutionContext): Future[StreamListResponse] =
-      exec.put[StreamListRequest, StreamListResponse, ErrorApi.Error](
+      implicit executionContext: ExecutionContext): Future[StreamJar] =
+      exec.put[StreamListRequest, StreamJar, ErrorApi.Error](
         s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$id",
         request
       )
@@ -317,34 +331,13 @@ object StreamApi {
   sealed trait PropertyAccess {
     def hostname(hostname: String)(implicit executionContext: ExecutionContext): PropertyAccess
     def port(port: Int)(implicit executionContext: ExecutionContext): PropertyAccess
+    def post(request: StreamPropertyRequest)(implicit executionContext: ExecutionContext): Future[StreamAppDescription]
     def get(id: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription]
     def update(id: String, request: StreamPropertyRequest)(
       implicit executionContext: ExecutionContext): Future[StreamAppDescription]
     def delete(id: String)(implicit executionContext: ExecutionContext): Future[Unit]
   }
 
-  def accessOfProperty(): PropertyAccess = new PropertyAccess {
-    private[this] val access: Access[StreamPropertyRequest, StreamAppDescription] =
-      new Access[StreamPropertyRequest, StreamAppDescription](
-        s"$STREAM_PREFIX_PATH/$STREAM_PROPERTY_PREFIX_PATH"
-      )
-
-    override def hostname(hostname: String)(implicit executionContext: ExecutionContext): PropertyAccess = {
-      access.hostname(hostname)
-      this
-    }
-    override def port(port: Int)(implicit executionContext: ExecutionContext): PropertyAccess = {
-      access.port(port)
-      this
-    }
-
-    override def get(id: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription] =
-      access.get(id)
-    override def update(
-      id: String,
-      request: StreamPropertyRequest
-    )(implicit executionContext: ExecutionContext): Future[StreamAppDescription] =
-      access.update(id, request)
-    override def delete(id: String)(implicit executionContext: ExecutionContext): Future[Unit] = access.delete(id)
-  }
+  def accessOfProperty(): Access[StreamPropertyRequest, StreamAppDescription] =
+    new Access[StreamPropertyRequest, StreamAppDescription](s"$STREAM_PREFIX_PATH/$STREAM_PROPERTY_PREFIX_PATH")
 }

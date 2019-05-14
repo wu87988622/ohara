@@ -22,6 +22,7 @@ import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationReq
 import com.island.ohara.client.configurator.v0.HadoopApi.HdfsInfoRequest
 import com.island.ohara.client.configurator.v0.NodeApi.NodeCreationRequest
 import com.island.ohara.client.configurator.v0.PipelineApi.{Flow, Pipeline, PipelineCreationRequest}
+import com.island.ohara.client.configurator.v0.StreamApi.StreamPropertyRequest
 import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.rule.SmallTest
@@ -669,9 +670,12 @@ class TestPipelineRoute extends SmallTest with Matchers {
     val source = result(connectorApi.add(sourceRequest))
 
     val filePath = File.createTempFile("empty_", ".jar").getPath
-    val streamapp = result(
+    val jarId = result(
       StreamApi.accessOfList().hostname(configurator.hostname).port(configurator.port).upload(Seq(filePath), None)
-    )
+    ).head.id
+    val streamAppRequest = StreamPropertyRequest(jarId, Some("app-id"), Some(Seq("from")), Some(Seq("to")), Some(1))
+    val streamapp = result(
+      StreamApi.accessOfProperty().hostname(configurator.hostname).port(configurator.port).add(streamAppRequest))
 
     result(
       PipelineApi
@@ -697,7 +701,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
           PipelineCreationRequest(
             name = "abc",
             workerClusterName = None,
-            rules = Map(topic.id -> Seq(streamapp.head.id))
+            rules = Map(topic.id -> Seq(streamapp.id))
           )
         )
     ).objects.size shouldBe 2

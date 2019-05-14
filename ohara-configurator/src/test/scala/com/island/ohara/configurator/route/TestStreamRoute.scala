@@ -44,20 +44,19 @@ class TestStreamRoute extends SmallTest with Matchers {
   private[this] val fileSize: Int = 5
 
   @Test
-  def testStreamAppListPage(): Unit = {
+  def testStreamAppListPageWithoutCluster(): Unit = {
     val filePaths = Seq.fill(fileSize) {
       val file = File.createTempFile("empty_", ".jar")
       file.getPath
     }
     // upload files (without assign wkName, will upload to pre-defined worker cluster)
     result(accessStreamList.upload(filePaths, None)).foreach(jar => {
-      jar.jarName.startsWith("empty_") shouldBe true
-      jar.name shouldBe "Untitled stream app"
+      jar.name.startsWith("empty_") shouldBe true
+      CommonUtils.requireNonEmpty(jar.workerClusterName)
     })
 
-    // get all files
+    // without assign worker name, will get all files
     val res = result(accessStreamList.list(None))
-    res.foreach(_.name shouldBe "Untitled stream app")
     res.size shouldBe fileSize
 
     // get files with not exists cluster
@@ -67,24 +66,41 @@ class TestStreamRoute extends SmallTest with Matchers {
     val deleteStreamJar = res.head
     result(accessStreamList.delete(deleteStreamJar.id))
     result(accessStreamList.list(None)).size shouldBe fileSize - 1
+    // Second time delete do nothing
+    result(accessStreamList.delete(deleteStreamJar.id))
 
     // update last jar name
     val originJar = res.last
     val newNameJar = StreamListRequest("new-name.jar")
     val updated = result(accessStreamList.update(originJar.id, newNameJar))
-    updated.name shouldBe "Untitled stream app"
-    updated.jarName shouldBe "new-name.jar"
+    updated.name shouldBe "new-name.jar"
 
+    filePaths.foreach(new File(_).deleteOnExit())
+  }
+
+  @Test
+  def testStreamAppListPageCluster(): Unit = {
+    val filePaths = Seq.fill(fileSize) {
+      val file = File.createTempFile("empty_", ".jar")
+      file.getPath
+    }
     val wkName = result(configurator.clusterCollie.workerCollie().clusters).keys.head.name
-    // upload same files but specific worker cluster
+
+    // upload with specific worker cluster
     result(accessStreamList.upload(filePaths, Some(wkName))).foreach(jar => {
-      jar.jarName.startsWith("empty_") shouldBe true
-      jar.name shouldBe "Untitled stream app"
+      jar.name.startsWith("empty_") shouldBe true
+      CommonUtils.requireNonEmpty(jar.workerClusterName)
     })
-    // upload twice to same cluster (fileSize * 2), and delete one jar (-1)
-    result(accessStreamList.list(Some(wkName))).size shouldBe fileSize * 2 - 1
+    // get jar list with specific worker cluster
+    val jarInfos = result(accessStreamList.list(Some(wkName)))
+    jarInfos.size shouldBe fileSize
     // without parameter, same result as previous
-    result(accessStreamList.list(None)).size shouldBe fileSize * 2 - 1
+    result(accessStreamList.list(None)).size shouldBe fileSize
+
+    result(accessStreamList.delete(jarInfos.head.id))
+    // Second time delete do nothing
+    result(accessStreamList.delete(jarInfos.head.id))
+    result(accessStreamList.list(Some(wkName))).size shouldBe fileSize - 1
 
     filePaths.foreach(new File(_).deleteOnExit())
   }
@@ -94,30 +110,53 @@ class TestStreamRoute extends SmallTest with Matchers {
     val file = File.createTempFile("empty_", ".jar")
 
     val jarData = result(accessStreamList.upload(Seq(file.getPath), None))
+    val jarId = jarData.head.id
 
-    // get properties
-    val id = jarData.head.id
-    val res1 = result(accessStreamProperty.get(id))
+    // create property
+    val props = result(accessStreamProperty.add(StreamPropertyRequest(jarId, None, None, None, None)))
+
+    // create property with some user defined properties
+    val userProps = result(
+      accessStreamProperty.add(StreamPropertyRequest(jarId, Some("bar foo"), None, Some(Seq("to")), Some(99))))
+    userProps.name shouldBe "bar foo"
+    userProps.to shouldBe Seq("to")
+    userProps.instances shouldBe 99
+
+    // get new streamApp property
+    val res1 = result(accessStreamProperty.get(props.id))
     // check initial values
-    res1.id shouldBe id
+    res1.id shouldBe props.id
+    res1.name shouldBe "Untitled stream app"
     res1.from.size shouldBe 0
     res1.to.size shouldBe 0
-    res1.instances shouldBe 0
+    res1.instances shouldBe 1
 
     // update properties
     val appId = CommonUtils.randomString(5)
-    val req = StreamPropertyRequest(appId, Seq("from"), Seq("to"), 1)
-    val res2 = result(accessStreamProperty.update(id, req))
+    val req = StreamPropertyRequest(jarId, Some(appId), Some(Seq("from")), Some(Seq("to")), Some(1))
+    val res2 = result(accessStreamProperty.update(props.id, req))
     res2.name shouldBe appId
     res2.from.size shouldBe 1
     res2.to.size shouldBe 1
     res2.instances shouldBe 1
 
+    // update partial properties
+    val req1 = StreamPropertyRequest(jarId, None, None, Some(Seq("to1", "to2")), Some(10))
+    val res3 = result(accessStreamProperty.update(props.id, req1))
+    res3.name shouldBe appId
+    res3.from.size shouldBe 1
+    res3.to.size shouldBe 2
+    res3.to shouldBe Seq("to1", "to2")
+    res3.instances shouldBe 10
+
     // delete properties
-    result(accessStreamProperty.delete(id))
+    result(accessStreamProperty.delete(props.id))
 
     // after delete, the streamApp should not exist
-    an[IllegalArgumentException] should be thrownBy result(accessStreamProperty.get(id))
+    an[IllegalArgumentException] should be thrownBy result(accessStreamProperty.get(props.id))
+
+    // delete property should not delete actual jar
+    result(accessStreamList.list(None)).size shouldBe 1
 
     file.deleteOnExit()
   }
@@ -131,51 +170,59 @@ class TestStreamRoute extends SmallTest with Matchers {
     // upload jar
     val streamJar = result(accessStreamList.upload(Seq(file.getPath), None)).head
 
-    // update properties
-    val req = StreamPropertyRequest(streamAppName, Seq("fromTopic_id"), Seq("toTopic_id"), instances)
-    result(accessStreamProperty.update(streamJar.id, req))
+    // create property
+    val props = result(accessStreamProperty.add(StreamPropertyRequest(streamJar.id, None, None, None, None)))
 
-    val res1 = result(accessStreamAction.start(streamJar.id))
-    res1.id shouldBe streamJar.id
+    // update properties
+    val req = StreamPropertyRequest(streamJar.id,
+                                    Some(streamAppName),
+                                    Some(Seq("fromTopic_id")),
+                                    Some(Seq("toTopic_id")),
+                                    Some(instances))
+    result(accessStreamProperty.update(props.id, req))
+
+    val res1 = result(accessStreamAction.start(props.id))
+    res1.id shouldBe props.id
     res1.name shouldBe streamAppName
     res1.workerClusterName should not be None
     res1.from shouldBe Seq("fromTopic_id")
     res1.to shouldBe Seq("toTopic_id")
-    res1.jarInfo.name shouldBe streamJar.jarName
+    res1.jarInfo.name shouldBe streamJar.name
     res1.instances shouldBe instances
     res1.state.get shouldBe ContainerState.RUNNING.name
 
-    val running = result(accessStreamProperty.get(streamJar.id))
+    val running = result(accessStreamProperty.get(props.id))
     running.state.get shouldBe ContainerState.RUNNING.name
     running.error.isEmpty shouldBe true
 
     // create the same streamApp cluster will get the previous stream cluster
-    val prevRes = result(accessStreamAction.start(streamJar.id))
-    prevRes.id shouldBe streamJar.id
+    val prevRes = result(accessStreamAction.start(props.id))
+    prevRes.id shouldBe props.id
     prevRes.name shouldBe streamAppName
     prevRes.state.get shouldBe ContainerState.RUNNING.name
     prevRes.error.isDefined shouldBe false
 
     // running streamApp cannot update state
-    an[RuntimeException] should be thrownBy result(accessStreamProperty.update(streamJar.id, req.copy(instances = 10)))
+    an[RuntimeException] should be thrownBy result(
+      accessStreamProperty.update(props.id, req.copy(instances = Some(10))))
 
     // running streamApp cannot delete
-    an[RuntimeException] should be thrownBy result(accessStreamProperty.delete(streamJar.id))
+    an[RuntimeException] should be thrownBy result(accessStreamProperty.delete(props.id))
 
-    val res2 = result(accessStreamAction.stop(streamJar.id))
+    val res2 = result(accessStreamAction.stop(props.id))
     res2.state shouldBe None
     res2.error shouldBe None
 
     // get property will get the latest state (streamApp not exist)
-    val latest = result(accessStreamProperty.get(streamJar.id))
+    val latest = result(accessStreamProperty.get(props.id))
     latest.state shouldBe None
     latest.error.isDefined shouldBe false
 
     // after stop, streamApp can be deleted
-    result(accessStreamProperty.delete(streamJar.id))
+    result(accessStreamProperty.delete(props.id))
 
     // after delete, streamApp should not exist
-    an[IllegalArgumentException] should be thrownBy result(accessStreamProperty.get(streamJar.id))
+    an[IllegalArgumentException] should be thrownBy result(accessStreamProperty.get(props.id))
 
     file.deleteOnExit()
   }
@@ -192,6 +239,18 @@ class TestStreamRoute extends SmallTest with Matchers {
   }
 
   @Test
+  def testStreamAppPropertyPageFailCases(): Unit = {
+    //operations on non-exists property should be fail
+    val req =
+      StreamPropertyRequest("jar_id", Some("app-id"), Some(Seq("fromTopic_id")), Some(Seq("toTopic_id")), Some(0))
+    an[IllegalArgumentException] should be thrownBy result(accessStreamProperty.update("non_exist_id", req))
+    an[IllegalArgumentException] should be thrownBy result(accessStreamProperty.get("non_exist_id"))
+
+    // delete non-exists object should do nothing
+    result(accessStreamProperty.delete("non_exist_id"))
+  }
+
+  @Test
   def testStreamAppActionPageFailCases(): Unit = {
     val file = File.createTempFile("empty_", ".jar")
     val streamAppName = CommonUtils.assertOnlyNumberAndChar(CommonUtils.randomString(5))
@@ -199,24 +258,24 @@ class TestStreamRoute extends SmallTest with Matchers {
     // upload jar
     val streamJar = result(accessStreamList.upload(Seq(file.getPath), None)).head
 
-    // update properties
-    val req = StreamPropertyRequest(streamAppName, Seq("topic1_id"), Seq("topic2_id"), 1)
+    val req =
+      StreamPropertyRequest(streamJar.id, Some(streamAppName), Some(Seq("topic1_id")), Some(Seq("topic2_id")), Some(1))
 
-    result(accessStreamProperty.update(streamJar.id, req.copy(from = Seq.empty)))
-    an[IllegalArgumentException] should be thrownBy result(accessStreamAction.start(streamJar.id))
+    // create property
+    val props = result(accessStreamProperty.add(req))
 
-    result(accessStreamProperty.update(streamJar.id, req.copy(to = Seq.empty)))
-    an[IllegalArgumentException] should be thrownBy result(accessStreamAction.start(streamJar.id))
+    // start action will check all the required parameters
+    result(accessStreamProperty.update(props.id, req.copy(from = Some(Seq.empty))))
+    an[IllegalArgumentException] should be thrownBy result(accessStreamAction.start(props.id))
 
-    an[NullPointerException] should be thrownBy result(accessStreamProperty.update(streamJar.id, req.copy(from = null)))
+    result(accessStreamProperty.update(props.id, req.copy(to = Some(Seq.empty))))
+    an[IllegalArgumentException] should be thrownBy result(accessStreamAction.start(props.id))
 
-    an[NullPointerException] should be thrownBy result(accessStreamProperty.update(streamJar.id, req.copy(to = null)))
+    result(accessStreamProperty.update(props.id, req.copy(instances = Some(0))))
+    an[IllegalArgumentException] should be thrownBy result(accessStreamAction.start(props.id))
 
-    result(accessStreamProperty.update(streamJar.id, req.copy(instances = 0)))
-    an[IllegalArgumentException] should be thrownBy result(accessStreamAction.start(streamJar.id))
-
-    result(accessStreamProperty.update(streamJar.id, req.copy(instances = -99)))
-    an[IllegalArgumentException] should be thrownBy result(accessStreamAction.start(streamJar.id))
+    result(accessStreamProperty.update(props.id, req.copy(instances = Some(-99))))
+    an[IllegalArgumentException] should be thrownBy result(accessStreamAction.start(props.id))
 
     file.deleteOnExit()
   }

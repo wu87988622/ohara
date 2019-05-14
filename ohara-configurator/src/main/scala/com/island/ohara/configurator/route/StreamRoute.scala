@@ -29,7 +29,6 @@ import com.island.ohara.client.configurator.v0.StreamApi._
 import com.island.ohara.client.configurator.v0.{Parameters, StreamApi}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.jar.JarStore
-import com.island.ohara.configurator.route.RouteUtils._
 import com.island.ohara.configurator.store.DataStore
 import org.slf4j.LoggerFactory
 import spray.json.DefaultJsonProtocol._
@@ -45,37 +44,23 @@ private[configurator] object StreamRoute {
   /**
     * save the streamApp properties
     *
-    * @param workerClusterName the pipeline id that streamApp sited in
-    * @param streamId unique uuid for streamApp
-    * @param name customize name
-    * @param instances number of streamApp running
-    * @param jarInfo jar information of streamApp running with
-    * @param from streamApp consume with
-    * @param to streamApp produce to
-    * @param lastModified last modified time for this data
+    * @param req the property request
+    * @param streamJar the list response
+    * @param jarInfo jar information of streamApp
     * @return '''StreamApp''' object
     */
-  private[this] def toStore(workerClusterName: String,
-                            streamId: String,
-                            // default streamApp component name
-                            name: String = "Untitled stream app",
-                            // default instances
-                            instances: Int = 0,
-                            jarInfo: JarInfo,
-                            from: Seq[String] = Seq.empty,
-                            to: Seq[String] = Seq.empty,
-                            lastModified: Long): StreamAppDescription =
+  private[this] def toStore(req: StreamPropertyRequest, streamJar: StreamJar, jarInfo: JarInfo): StreamAppDescription =
     StreamAppDescription(
-      workerClusterName = workerClusterName,
-      id = streamId,
-      name = name,
-      instances = instances,
+      workerClusterName = streamJar.workerClusterName,
+      id = CommonUtils.uuid(),
+      name = req.name.getOrElse("Untitled stream app"),
+      instances = req.instances.getOrElse(1),
       jarInfo = jarInfo,
-      from = from,
-      to = to,
+      from = req.from.getOrElse(Seq.empty),
+      to = req.to.getOrElse(Seq.empty),
       state = None,
       error = None,
-      lastModified = lastModified
+      lastModified = CommonUtils.current()
     )
 
   /**
@@ -157,36 +142,22 @@ private[configurator] object StreamRoute {
                                 s"the file : ${metadata.fileName} size is bigger than ${StreamApi.MAX_FILE_SIZE / 1024 / 1024} MB."
                               )
                             }
-                            jarStore.add(file, s"${metadata.fileName}")
-                        })
-                        .map {
-                          jarInfos =>
-                            val jars = Future.sequence(jarInfos.map { jarInfo =>
-                              val time = CommonUtils.current()
-                              val streamId = CommonUtils.uuid()
-                              store
-                                .add(
-                                  toStore(
-                                    workerClusterName = wkName,
-                                    streamId = streamId,
-                                    jarInfo = jarInfo,
-                                    lastModified = time
-                                  )
-                                )
-                                .map { data =>
-                                  StreamListResponse(
-                                    data.id,
-                                    data.name,
-                                    jarInfo.name,
-                                    data.lastModified
-                                  )
-                                }
-                            })
-                            //delete temp jars after success
-                            files.foreach {
-                              case (_, file) => file.deleteOnExit()
+                            jarStore.add(file, s"${metadata.fileName}").flatMap { jarInfo =>
+                              store.add(
+                                StreamJar(
+                                  wkName,
+                                  jarInfo.id,
+                                  jarInfo.name,
+                                  CommonUtils.current()
+                                ))
                             }
-                            jars
+                        })
+                        .map { reps =>
+                          //delete temp jars after success
+                          files.foreach {
+                            case (_, file) => file.deleteOnExit()
+                          }
+                          reps
                         }
                     }
                   )
@@ -199,17 +170,9 @@ private[configurator] object StreamRoute {
               parameter(Parameters.CLUSTER_NAME.?) { wkName =>
                 complete(
                   store
-                    .values[StreamAppDescription]
-                    .map(
-                      // filter specific cluster only, or return all otherwise
-                      _.filter(f => wkName.isEmpty || f.workerClusterName.equals(wkName.get)).map(
-                        data =>
-                          StreamListResponse(
-                            data.id,
-                            data.name,
-                            data.jarInfo.name,
-                            data.lastModified
-                        )))
+                    .values[StreamJar]
+                    // filter specific cluster only, or return all otherwise
+                    .map(_.filter(jarInfo => wkName.isEmpty || jarInfo.workerClusterName == wkName.get))
                 )
               }
             } ~
@@ -217,17 +180,21 @@ private[configurator] object StreamRoute {
             path(Segment) { id =>
               //delete jar
               delete {
-                complete(store.get[StreamAppDescription](id).flatMap { dataOption =>
-                  dataOption
-                    .map { data =>
-                      // check the jar is not used in pipeline
-                      assertNotRelated2Pipeline(id)
+                complete(store.values[StreamAppDescription].map { streamApps =>
+                  // check the jar is not used in any streamApp which is used in pipeline
+                  if (streamApps.exists(_.jarInfo.id == id)) {
+                    throw new IllegalArgumentException(s"The id:$id is used by pipeline")
+                  } else {
+                    store.remove[StreamJar](id).flatMap { _ =>
                       jarStore
-                        .remove(data.jarInfo.id)
-                        .flatMap(_ => store.remove[StreamAppDescription](id))
+                        .exist(id)
+                        .map(if (_) {
+                          jarStore.remove(id)
+                          true
+                        } else true)
                         .map(_ => StatusCodes.NoContent)
                     }
-                    .getOrElse(Future.successful(StatusCodes.NoContent))
+                  }
                 })
               } ~
                 //update jar name
@@ -235,32 +202,18 @@ private[configurator] object StreamRoute {
                   entity(as[StreamListRequest]) { req =>
                     if (CommonUtils.isEmpty(req.jarName))
                       throw new IllegalArgumentException(s"Require jarName")
-                    complete(
-                      store
-                        .value[StreamAppDescription](id)
-                        .flatMap(data => jarStore.rename(data.jarInfo.id, req.jarName))
-                        .flatMap { jarInfo =>
-                          store.update[StreamAppDescription](
-                            id,
-                            previous =>
-                              Future.successful(
-                                previous.copy(
-                                  jarInfo = jarInfo,
-                                  lastModified = CommonUtils.current()
-                                )
+                    complete(jarStore.rename(id, req.jarName).flatMap { jarInfo =>
+                      store.update[StreamJar](
+                        id,
+                        previous =>
+                          Future.successful(
+                            previous.copy(
+                              name = jarInfo.name,
+                              lastModified = CommonUtils.current()
                             )
-                          )
-                        }
-                        .map(
-                          data =>
-                            StreamListResponse(
-                              data.id,
-                              data.name,
-                              data.jarInfo.name,
-                              data.lastModified
-                          )
                         )
-                    )
+                      )
+                    })
                   }
                 }
             }
@@ -268,32 +221,37 @@ private[configurator] object StreamRoute {
         //StreamApp Property Page
         pathPrefix(STREAM_PROPERTY_PREFIX_PATH) {
           pathEnd {
-            complete(StatusCodes.BadRequest -> "wrong uri")
+            // create property
+            post {
+              entity(as[StreamPropertyRequest]) { req =>
+                complete(jarStore.jarInfo(req.jarId).flatMap { jarInfo =>
+                  store
+                    .value[StreamJar](req.jarId)
+                    .flatMap(streamJar =>
+                      store.add[StreamAppDescription](
+                        toStore(req, streamJar, jarInfo)
+                    ))
+                })
+              }
+            }
           } ~
             path(Segment) { id =>
-              //add property is impossible, we need streamApp id first
-              post {
+              // delete property
+              delete {
                 complete(
-                  StatusCodes.BadRequest ->
-                    "You should upload a jar first and use PUT method to update properties."
+                  // get the latest status first
+                  store.get[StreamAppDescription](id).flatMap {
+                    _.map { desc =>
+                      updateState(desc.id).flatMap { data =>
+                        if (data.state.isEmpty) {
+                          // state is not exists, could remove this streamApp
+                          store.remove[StreamAppDescription](id).map(_ => StatusCodes.NoContent)
+                        } else Future.failed(new RuntimeException(s"You cannot delete a non-stopped streamApp :$id"))
+                      }
+                    }.getOrElse(Future.successful(StatusCodes.NoContent))
+                  }
                 )
               } ~
-                // delete property
-                delete {
-                  complete(
-                    // get the latest status first
-                    store.get[StreamAppDescription](id).flatMap {
-                      _.map { desc =>
-                        updateState(desc.id).flatMap { data =>
-                          if (data.state.isEmpty) {
-                            // state is not exists, could remove this streamApp
-                            store.remove[StreamAppDescription](id).map(_ => StatusCodes.NoContent)
-                          } else Future.failed(new RuntimeException(s"You cannot delete a non-stopped streamApp :$id"))
-                        }
-                      }.getOrElse(Future.successful(StatusCodes.NoContent))
-                    }
-                  )
-                } ~
                 // get property
                 get {
                   complete(updateState(id))
@@ -310,10 +268,10 @@ private[configurator] object StreamRoute {
                           else
                             Future.successful(
                               previous.copy(
-                                name = req.name,
-                                instances = req.instances,
-                                from = req.from,
-                                to = req.to,
+                                name = req.name.getOrElse(previous.name),
+                                instances = req.instances.getOrElse(previous.instances),
+                                from = req.from.getOrElse(previous.from),
+                                to = req.to.getOrElse(previous.to),
                                 lastModified = CommonUtils.current()
                               )
                           )

@@ -167,14 +167,18 @@ class TestSshStreamApp extends IntegrationTest with Matchers {
       streamAppListAccess.upload(Seq(jarPath), Some(wkName))
     )
     jarInfo.size shouldBe 1
-    jarInfo.head.jarName shouldBe "ohara-streamapp.jar"
+    jarInfo.head.name shouldBe "ohara-streamapp.jar"
+
+    // Create streamApp properties
+    streamAppPropertyAccess.add(StreamPropertyRequest(jarInfo.head.id, None, None, None, None))
 
     // Update streamApp properties
     val req = StreamPropertyRequest(
-      CommonUtils.randomString(10),
-      Seq(topic1.id),
-      Seq(topic2.id),
-      instances
+      jarInfo.head.id,
+      Some(CommonUtils.randomString(10)),
+      Some(Seq(topic1.id)),
+      Some(Seq(topic2.id)),
+      Some(instances)
     )
     val properties = result(
       streamAppPropertyAccess.update(jarInfo.head.id, req)
