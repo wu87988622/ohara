@@ -16,12 +16,18 @@
 
 package com.island.ohara.common.cache;
 
+import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.rule.SmallTest;
 import com.island.ohara.common.util.CommonUtils;
 import java.time.Duration;
 import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -40,6 +46,20 @@ public class TestRefreshableCache extends SmallTest {
   @Test(expected = NullPointerException.class)
   public void nullSupplier() {
     RefreshableCache.<String, String>builder().supplier(null);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void nullSupplier2() {
+    RefreshableCache.<String, String>builder().build();
+  }
+
+  @Test
+  public void testDefaultBuilder() {
+    RefreshableCache.<String, String>builder()
+        .supplier(
+            () -> Collections.singletonMap(CommonUtils.randomString(), CommonUtils.randomString()))
+        .build()
+        .close();
   }
 
   @Test
@@ -193,6 +213,62 @@ public class TestRefreshableCache extends SmallTest {
     Assert.assertEquals(value, cache.get(key).get());
     TimeUnit.SECONDS.sleep(3);
     Assert.assertFalse(cache.get(key).isPresent());
+  }
+
+  @Test
+  public void testMissData() throws InterruptedException {
+    String key = CommonUtils.randomString();
+    String value = CommonUtils.randomString();
+    Map<String, String> data =
+        ImmutableMap.of(
+            key,
+            value,
+            CommonUtils.randomString(),
+            CommonUtils.randomString(),
+            CommonUtils.randomString(),
+            CommonUtils.randomString(),
+            CommonUtils.randomString(),
+            CommonUtils.randomString());
+    AtomicInteger updateCount = new AtomicInteger(0);
+    try (RefreshableCache<String, String> cache =
+        RefreshableCache.<String, String>builder()
+            .supplier(
+                () -> {
+                  updateCount.incrementAndGet();
+                  return data;
+                })
+            .frequency(Duration.ofMillis(500))
+            .build()) {
+      cache.put(data);
+      int testTime = 10; // seconds
+      int numberOfThreads = 6;
+      AtomicBoolean closed = new AtomicBoolean(false);
+      AtomicInteger missCount = new AtomicInteger(0);
+      ExecutorService service = Executors.newFixedThreadPool(numberOfThreads);
+      IntStream.range(0, numberOfThreads)
+          .forEach(
+              index ->
+                  service.execute(
+                      () -> {
+                        try {
+                          while (!closed.get()) {
+                            if (!cache.get(key).isPresent()) missCount.incrementAndGet();
+                            TimeUnit.MILLISECONDS.sleep(100);
+                          }
+                        } catch (InterruptedException e) {
+                          // nothing
+                        }
+                      }));
+      try {
+        TimeUnit.SECONDS.sleep(testTime);
+      } finally {
+        closed.set(true);
+        service.shutdownNow();
+        Assert.assertTrue(service.awaitTermination(testTime, TimeUnit.SECONDS));
+        Assert.assertTrue(updateCount.get() > 0);
+        Assert.assertEquals(0, missCount.get());
+      }
+    }
   }
 
   private static RefreshableCache<String, String> cache() {

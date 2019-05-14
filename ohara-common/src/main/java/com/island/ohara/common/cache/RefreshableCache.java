@@ -98,7 +98,7 @@ public interface RefreshableCache<K, V> extends Releasable {
   class Builder<K, V> {
     private int maxSize = 1000;
     private Duration timeout = null;
-    private Duration frequency = timeout;
+    private Duration frequency = Duration.ofSeconds(5);
     private Supplier<Map<K, V>> supplier = null;
 
     private Builder() {}
@@ -138,6 +138,8 @@ public interface RefreshableCache<K, V> extends Releasable {
     }
 
     public RefreshableCache<K, V> build() {
+      Objects.requireNonNull(supplier);
+      Objects.requireNonNull(frequency);
       com.google.common.cache.Cache<K, V> cache =
           timeout == null
               ? CacheBuilder.newBuilder().maximumSize(maxSize).build()
@@ -163,7 +165,8 @@ public interface RefreshableCache<K, V> extends Releasable {
               try {
                 // DON'T clear cache in first phase since the supplier may fail
                 Map<K, V> data = supplier.get();
-                cache.invalidateAll();
+                Set<K> oldKeys = new HashSet<>(cache.asMap().keySet());
+                oldKeys.forEach(cache::invalidate);
                 cache.putAll(data);
               } catch (Throwable e) {
                 LOG.error("failed to update cache", e);
