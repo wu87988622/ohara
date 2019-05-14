@@ -25,9 +25,7 @@ import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
 
-private class K8SBrokerCollieImpl(val nodeCollie: NodeCollie,
-                                  val k8sClient: K8SClient,
-                                  bkClusterDescription: (String, Seq[ContainerInfo]) => Future[BrokerClusterInfo])
+private class K8SBrokerCollieImpl(val nodeCollie: NodeCollie, val k8sClient: K8SClient)
     extends K8SBasicCollieImpl[BrokerClusterInfo, BrokerCollie.ClusterCreator](nodeCollie, k8sClient)
     with BrokerCollie {
 
@@ -141,6 +139,5 @@ private class K8SBrokerCollieImpl(val nodeCollie: NodeCollie,
     }
 
   override protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo])(
-    implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] =
-    bkClusterDescription(clusterName, containers)
+    implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] = toBrokerCluster(clusterName, containers)
 }

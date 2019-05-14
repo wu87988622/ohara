@@ -17,6 +17,7 @@
 package com.island.ohara.agent
 import java.util.Objects
 
+import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0.{ClusterInfo, ZookeeperApi}
 import com.island.ohara.common.annotations.Optional
@@ -29,7 +30,21 @@ import scala.concurrent.{ExecutionContext, Future}
   * An interface of controlling zookeeper cluster.
   * It isolates the implementation of container manager from Configurator.
   */
-trait ZookeeperCollie extends Collie[ZookeeperClusterInfo, ZookeeperCollie.ClusterCreator]
+trait ZookeeperCollie extends Collie[ZookeeperClusterInfo, ZookeeperCollie.ClusterCreator] {
+  private[agent] def toZookeeperCluster(clusterName: String,
+                                        containers: Seq[ContainerInfo]): Future[ZookeeperClusterInfo] = {
+    val first = containers.head
+    Future.successful(
+      ZookeeperClusterInfo(
+        name = clusterName,
+        imageName = first.imageName,
+        clientPort = first.environments(ZookeeperCollie.CLIENT_PORT_KEY).toInt,
+        peerPort = first.environments(ZookeeperCollie.PEER_PORT_KEY).toInt,
+        electionPort = first.environments(ZookeeperCollie.ELECTION_PORT_KEY).toInt,
+        nodeNames = containers.map(_.nodeName)
+      ))
+  }
+}
 
 object ZookeeperCollie {
   trait ClusterCreator extends Collie.ClusterCreator[ZookeeperClusterInfo] {

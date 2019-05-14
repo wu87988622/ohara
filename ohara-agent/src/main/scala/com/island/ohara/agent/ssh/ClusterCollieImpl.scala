@@ -84,9 +84,9 @@ private[agent] class ClusterCollieImpl(cacheRefresh: Duration, nodeCollie: NodeC
               })
           .map(_.toMap)
 
-      parse(ContainerCollie.ZK_SERVICE_NAME, toZkCluster).flatMap { zkMap =>
-        parse(ContainerCollie.BK_SERVICE_NAME, toBkCluster).flatMap { bkMap =>
-          parse(ContainerCollie.WK_SERVICE_NAME, toWkCluster).map { wkMap =>
+      parse(ContainerCollie.ZK_SERVICE_NAME, zkCollie.toZookeeperCluster).flatMap { zkMap =>
+        parse(ContainerCollie.BK_SERVICE_NAME, bkCollie.toBrokerCluster).flatMap { bkMap =>
+          parse(ContainerCollie.WK_SERVICE_NAME, wkCollie.toWorkerCluster).map { wkMap =>
             zkMap ++ bkMap ++ wkMap
           }
         }

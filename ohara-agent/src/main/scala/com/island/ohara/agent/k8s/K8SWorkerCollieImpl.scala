@@ -26,9 +26,7 @@ import scala.concurrent.duration._
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{Await, ExecutionContext, Future}
 
-private class K8SWorkerCollieImpl(val nodeCollie: NodeCollie,
-                                  val k8sClient: K8SClient,
-                                  wkClusterDescription: (String, Seq[ContainerInfo]) => Future[WorkerClusterInfo])
+private class K8SWorkerCollieImpl(val nodeCollie: NodeCollie, val k8sClient: K8SClient)
     extends K8SBasicCollieImpl[WorkerClusterInfo, WorkerCollie.ClusterCreator](nodeCollie, k8sClient)
     with WorkerCollie {
   private[this] val LOG = Logger(classOf[K8SWorkerCollieImpl])
@@ -178,6 +176,5 @@ private class K8SWorkerCollieImpl(val nodeCollie: NodeCollie,
   }
 
   override protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo])(
-    implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] =
-    wkClusterDescription(clusterName, containers)
+    implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] = toWorkerCluster(clusterName, containers)
 }

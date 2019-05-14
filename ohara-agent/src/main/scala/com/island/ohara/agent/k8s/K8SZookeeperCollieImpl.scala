@@ -25,9 +25,7 @@ import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
 
-private class K8SZookeeperCollieImpl(val nodeCollie: NodeCollie,
-                                     val k8sClient: K8SClient,
-                                     zkClusterDescription: (String, Seq[ContainerInfo]) => Future[ZookeeperClusterInfo])
+private class K8SZookeeperCollieImpl(val nodeCollie: NodeCollie, val k8sClient: K8SClient)
     extends K8SBasicCollieImpl[ZookeeperClusterInfo, ZookeeperCollie.ClusterCreator](nodeCollie, k8sClient)
     with ZookeeperCollie {
 
@@ -93,7 +91,7 @@ private class K8SZookeeperCollieImpl(val nodeCollie: NodeCollie,
 
   override protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
-    zkClusterDescription(clusterName, containers)
+    toZookeeperCluster(clusterName, containers)
 
   override protected def doRemoveNode(previousCluster: ZookeeperClusterInfo, beRemovedContainer: ContainerInfo)(
     implicit executionContext: ExecutionContext): Future[Boolean] =

@@ -15,7 +15,6 @@
  */
 
 package com.island.ohara.agent
-import java.net.URL
 import java.util.Objects
 import java.util.concurrent.{ExecutorService, Executors, TimeUnit}
 
@@ -25,10 +24,9 @@ import com.island.ohara.agent.ssh.ClusterCollieImpl
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeService}
-import com.island.ohara.client.configurator.v0.WorkerApi.{ConnectorDefinitions, WorkerClusterInfo}
+import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0.{ClusterInfo, NodeApi}
-import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.typesafe.scalalogging.Logger
@@ -44,8 +42,6 @@ import scala.util.Try
   * TODO: We are looking for k8s implementation...by chia
   */
 trait ClusterCollie extends Releasable {
-
-  protected val LOG = Logger("ClusterCollie")
 
   /**
     * create a collie for zookeeper cluster
@@ -179,83 +175,10 @@ trait ClusterCollie extends Releasable {
       finally dockerClient.close()
     }
   }
-
-  protected[this] def toZkCluster(clusterName: String, containers: Seq[ContainerInfo]): Future[ZookeeperClusterInfo] = {
-    val first = containers.head
-    Future.successful(
-      ZookeeperClusterInfo(
-        name = clusterName,
-        imageName = first.imageName,
-        clientPort = first.environments(ZookeeperCollie.CLIENT_PORT_KEY).toInt,
-        peerPort = first.environments(ZookeeperCollie.PEER_PORT_KEY).toInt,
-        electionPort = first.environments(ZookeeperCollie.ELECTION_PORT_KEY).toInt,
-        nodeNames = containers.map(_.nodeName)
-      ))
-  }
-
-  protected[this] def toBkCluster(clusterName: String, containers: Seq[ContainerInfo]): Future[BrokerClusterInfo] = {
-    val first = containers.head
-    Future.successful(
-      BrokerClusterInfo(
-        name = clusterName,
-        imageName = first.imageName,
-        zookeeperClusterName = first.environments(ClusterCollie.ZOOKEEPER_CLUSTER_NAME),
-        exporterPort = first.environments(BrokerCollie.EXPORTER_PORT_KEY).toInt,
-        clientPort = first.environments(BrokerCollie.CLIENT_PORT_KEY).toInt,
-        jmxPort = first.environments(BrokerCollie.JMX_PORT_KEY).toInt,
-        nodeNames = containers.map(_.nodeName)
-      ))
-  }
-
-  protected def toWkCluster(clusterName: String, containers: Seq[ContainerInfo])(
-    implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] = {
-    val port = containers.head.environments(WorkerCollie.CLIENT_PORT_KEY).toInt
-    connectors(containers.map(c => s"${c.nodeName}:$port").mkString(",")).map { connectors =>
-      WorkerClusterInfo(
-        name = clusterName,
-        imageName = containers.head.imageName,
-        brokerClusterName = containers.head.environments(ClusterCollie.BROKER_CLUSTER_NAME),
-        clientPort = port,
-        jmxPort = containers.head.environments(WorkerCollie.JMX_PORT_KEY).toInt,
-        groupId = containers.head.environments(WorkerCollie.GROUP_ID_KEY),
-        offsetTopicName = containers.head.environments(WorkerCollie.OFFSET_TOPIC_KEY),
-        offsetTopicPartitions = containers.head.environments(WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY).toInt,
-        offsetTopicReplications = containers.head.environments(WorkerCollie.OFFSET_TOPIC_REPLICATIONS_KEY).toShort,
-        configTopicName = containers.head.environments(WorkerCollie.CONFIG_TOPIC_KEY),
-        configTopicPartitions = 1,
-        configTopicReplications = containers.head.environments(WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY).toShort,
-        statusTopicName = containers.head.environments(WorkerCollie.STATUS_TOPIC_KEY),
-        statusTopicPartitions = containers.head.environments(WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY).toInt,
-        statusTopicReplications = containers.head.environments(WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY).toShort,
-        jarIds = containers.head
-          .environments(WorkerCollie.JARS_KEY)
-          .split(",")
-          .filter(_.nonEmpty)
-          .map(u => new URL(u).getFile),
-        jarUrls = containers.head.environments(WorkerCollie.JARS_KEY).split(",").filter(_.nonEmpty).map(u => new URL(u)),
-        connectors = connectors,
-        nodeNames = containers.map(_.nodeName)
-      )
-    }
-  }
-
-  /**
-    * It tried to fetch connector information from starting worker cluster
-    * However, it may be too slow to get latest connector information.
-    * We don't throw exception since it is a common case, and Skipping retry can make quick response
-    * @param connectionProps worker connection props
-    * @return plugin description or nothing
-    */
-  private[agent] def connectors(connectionProps: String)(
-    implicit executionContext: ExecutionContext): Future[Seq[ConnectorDefinitions]] =
-    WorkerClient(connectionProps, maxRetry = 0).connectors.recover {
-      case e: Throwable =>
-        LOG.error(s"Failed to fetch connectors information of cluster:$connectionProps. Use empty list instead", e)
-        Seq.empty
-    }
 }
 
 object ClusterCollie {
+  val LOG = Logger("ClusterCollie")
 
   /**
     * internal key used to save the broker cluster name.
@@ -345,7 +268,7 @@ object ClusterCollie {
       * We don't return ClusterCollieImpl since it is a private implementation
       * @return
       */
-    def build()(implicit executionContext: ExecutionContext): ClusterCollie = new K8SClusterCollieImpl(
+    def build(): ClusterCollie = new K8SClusterCollieImpl(
       nodeCollie = Objects.requireNonNull(nodeCollie),
       k8sClient = Objects.requireNonNull(k8sClient)
     )

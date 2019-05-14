@@ -22,16 +22,15 @@ import com.island.ohara.common.util.{Releasable, ReleaseOnce}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Try}
 
-private[agent] class K8SClusterCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)(
-  implicit executionContext: ExecutionContext)
+private[agent] class K8SClusterCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
     extends ReleaseOnce
     with ClusterCollie {
 
-  override def zookeeperCollie(): ZookeeperCollie = new K8SZookeeperCollieImpl(nodeCollie, k8sClient, toZkCluster)
+  override def zookeeperCollie(): ZookeeperCollie = new K8SZookeeperCollieImpl(nodeCollie, k8sClient)
 
-  override def brokerCollie(): BrokerCollie = new K8SBrokerCollieImpl(nodeCollie, k8sClient, toBkCluster)
+  override def brokerCollie(): BrokerCollie = new K8SBrokerCollieImpl(nodeCollie, k8sClient)
 
-  override def workerCollie(): WorkerCollie = new K8SWorkerCollieImpl(nodeCollie, k8sClient, toWkCluster)
+  override def workerCollie(): WorkerCollie = new K8SWorkerCollieImpl(nodeCollie, k8sClient)
 
   override protected def doClose(): Unit = Releasable.close(k8sClient)
 

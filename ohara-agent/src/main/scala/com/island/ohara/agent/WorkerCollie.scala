@@ -18,8 +18,9 @@ package com.island.ohara.agent
 import java.net.URL
 import java.util.Objects
 
+import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.{ClusterInfo, WorkerApi}
-import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
+import com.island.ohara.client.configurator.v0.WorkerApi.{ConnectorDefinitions, WorkerClusterInfo}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.util.CommonUtils
@@ -65,6 +66,54 @@ trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator
   def counters(cluster: WorkerClusterInfo): Seq[CounterMBean] = cluster.nodeNames.flatMap { node =>
     BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().counterMBeans().asScala
   }
+
+  private[agent] def toWorkerCluster(clusterName: String, containers: Seq[ContainerInfo])(
+    implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] = {
+    val port = containers.head.environments(WorkerCollie.CLIENT_PORT_KEY).toInt
+    connectors(containers.map(c => s"${c.nodeName}:$port").mkString(",")).map { connectors =>
+      WorkerClusterInfo(
+        name = clusterName,
+        imageName = containers.head.imageName,
+        brokerClusterName = containers.head.environments(ClusterCollie.BROKER_CLUSTER_NAME),
+        clientPort = port,
+        jmxPort = containers.head.environments(WorkerCollie.JMX_PORT_KEY).toInt,
+        groupId = containers.head.environments(WorkerCollie.GROUP_ID_KEY),
+        offsetTopicName = containers.head.environments(WorkerCollie.OFFSET_TOPIC_KEY),
+        offsetTopicPartitions = containers.head.environments(WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY).toInt,
+        offsetTopicReplications = containers.head.environments(WorkerCollie.OFFSET_TOPIC_REPLICATIONS_KEY).toShort,
+        configTopicName = containers.head.environments(WorkerCollie.CONFIG_TOPIC_KEY),
+        configTopicPartitions = 1,
+        configTopicReplications = containers.head.environments(WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY).toShort,
+        statusTopicName = containers.head.environments(WorkerCollie.STATUS_TOPIC_KEY),
+        statusTopicPartitions = containers.head.environments(WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY).toInt,
+        statusTopicReplications = containers.head.environments(WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY).toShort,
+        jarIds = containers.head
+          .environments(WorkerCollie.JARS_KEY)
+          .split(",")
+          .filter(_.nonEmpty)
+          .map(u => new URL(u).getFile),
+        jarUrls = containers.head.environments(WorkerCollie.JARS_KEY).split(",").filter(_.nonEmpty).map(u => new URL(u)),
+        connectors = connectors,
+        nodeNames = containers.map(_.nodeName)
+      )
+    }
+  }
+
+  /**
+    * It tried to fetch connector information from starting worker cluster
+    * However, it may be too slow to get latest connector information.
+    * We don't throw exception since it is a common case, and Skipping retry can make quick response
+    * @param connectionProps worker connection props
+    * @return plugin description or nothing
+    */
+  private[this] def connectors(connectionProps: String)(
+    implicit executionContext: ExecutionContext): Future[Seq[ConnectorDefinitions]] =
+    WorkerClient(connectionProps, maxRetry = 0).connectors.recover {
+      case e: Throwable =>
+        ClusterCollie.LOG
+          .error(s"Failed to fetch connectors information of cluster:$connectionProps. Use empty list instead", e)
+        Seq.empty
+    }
 }
 
 object WorkerCollie {
