@@ -243,7 +243,9 @@ class PipelineNewPage extends React.Component {
     const connectorPromises = [...sources, ...sinks].map(source =>
       connectorApi.startConnector(source),
     );
-    const streamsPromises = streams.map(stream => streamApi.start(stream));
+    const streamsPromises = streams.map(stream =>
+      streamApi.startStreamApp(stream),
+    );
 
     return Promise.all([...connectorPromises, ...streamsPromises]).then(
       result => result,
@@ -257,7 +259,9 @@ class PipelineNewPage extends React.Component {
     const connectorPromises = [...sources, ...sinks].map(sink =>
       connectorApi.stopConnector(sink),
     );
-    const streamsPromises = streams.map(stream => streamApi.stop(stream));
+    const streamsPromises = streams.map(stream =>
+      streamApi.stopStreamApp(stream),
+    );
 
     return Promise.all([...connectorPromises, ...streamsPromises]).then(
       result => result,

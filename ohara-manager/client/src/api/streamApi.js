@@ -138,7 +138,7 @@ export const updateProperty = async params => {
   }
 };
 
-export const start = async id => {
+export const startStreamApp = async id => {
   try {
     const res = await axiosInstance.put(`/api/stream/${id}/start`);
     const isSuccess = get(res, 'data.isSuccess', false);
@@ -153,9 +153,24 @@ export const start = async id => {
   }
 };
 
-export const stop = async id => {
+export const stopStreamApp = async id => {
   try {
     const res = await axiosInstance.put(`/api/stream/${id}/stop`);
+    const isSuccess = get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
+export const deleteProperty = async id => {
+  try {
+    const res = await axiosInstance.delete(`/api/stream/property/${id}`);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {

@@ -42,6 +42,9 @@ class StreamApp extends React.Component {
     refreshGraph: PropTypes.func.isRequired,
     updateHasChanges: PropTypes.func.isRequired,
     pipelineTopics: PropTypes.array.isRequired,
+    history: PropTypes.shape({
+      push: PropTypes.func.isRequired,
+    }).isRequired,
   };
 
   selectMaps = {
@@ -169,13 +172,29 @@ class StreamApp extends React.Component {
     await this.triggerStreamApp(STREAM_APP_ACTIONS.stop);
   };
 
+  handleDeleteConnector = async () => {
+    const { match, refreshGraph, history } = this.props;
+    const { connectorId: streamAppId, pipelineId } = match.params;
+    const res = await streamApi.deleteProperty(streamAppId);
+    const isSuccess = get(res, 'data.isSuccess', false);
+
+    if (isSuccess) {
+      const { name: connectorName } = this.state;
+      toastr.success(`${MESSAGES.CONNECTOR_DELETION_SUCCESS} ${connectorName}`);
+      await refreshGraph();
+
+      const path = `/pipelines/edit/${pipelineId}`;
+      history.push(path);
+    }
+  };
+
   triggerStreamApp = async action => {
     const { streamAppId } = this.state;
     let res;
     if (action === STREAM_APP_ACTIONS.start) {
-      res = await streamApi.start(streamAppId);
+      res = await streamApi.startStreamApp(streamAppId);
     } else {
-      res = await streamApi.stop(streamAppId);
+      res = await streamApi.stopStreamApp(streamAppId);
     }
     this.handleTriggerStreamAppResponse(action, res);
   };
@@ -239,7 +258,8 @@ class StreamApp extends React.Component {
                   kind="stream app"
                   onStart={this.handleStartStreamApp}
                   onStop={this.handleStopStreamApp}
-                  show={['start', 'stop']}
+                  onDelete={this.handleDeleteConnector}
+                  show={['start', 'stop', 'delete']}
                 />
               </s.TitleWrapper>
               <s.FormRow>

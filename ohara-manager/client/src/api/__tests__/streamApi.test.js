@@ -403,7 +403,7 @@ describe('updateProperty()', () => {
   });
 });
 
-describe('start()', () => {
+describe('startStreamApp()', () => {
   afterEach(jest.clearAllMocks);
 
   const id = 'abc';
@@ -417,7 +417,7 @@ describe('start()', () => {
 
     axiosInstance.put.mockImplementation(() => Promise.resolve(res));
 
-    const result = await streamApi.start(id);
+    const result = await streamApi.startStreamApp(id);
     expect(axiosInstance.put).toHaveBeenCalledTimes(1);
     expect(axiosInstance.put).toHaveBeenCalledWith(`${url}/${id}/start`);
     expect(result).toBe(res);
@@ -431,7 +431,7 @@ describe('start()', () => {
     };
     axiosInstance.put.mockImplementation(() => Promise.resolve(res));
 
-    const result = await streamApi.start(id);
+    const result = await streamApi.startStreamApp(id);
 
     expect(axiosInstance.put).toHaveBeenCalledTimes(1);
     expect(axiosInstance.put).toHaveBeenCalledWith(`${url}/${id}/start`);
@@ -450,14 +450,14 @@ describe('start()', () => {
 
     axiosInstance.put.mockImplementation(() => Promise.reject(res));
 
-    await streamApi.start(id);
+    await streamApi.startStreamApp(id);
     expect(axiosInstance.put).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(res);
   });
 });
 
-describe('stop()', () => {
+describe('stopStreamApp()', () => {
   afterEach(jest.clearAllMocks);
 
   const id = 'abc';
@@ -471,7 +471,7 @@ describe('stop()', () => {
 
     axiosInstance.put.mockImplementation(() => Promise.resolve(res));
 
-    const result = await streamApi.stop(id);
+    const result = await streamApi.stopStreamApp(id);
     expect(axiosInstance.put).toHaveBeenCalledTimes(1);
     expect(axiosInstance.put).toHaveBeenCalledWith(`${url}/${id}/stop`);
     expect(result).toBe(res);
@@ -485,7 +485,7 @@ describe('stop()', () => {
     };
     axiosInstance.put.mockImplementation(() => Promise.resolve(res));
 
-    const result = await streamApi.stop(id);
+    const result = await streamApi.stopStreamApp(id);
 
     expect(axiosInstance.put).toHaveBeenCalledTimes(1);
     expect(axiosInstance.put).toHaveBeenCalledWith(`${url}/${id}/stop`);
@@ -504,8 +504,62 @@ describe('stop()', () => {
 
     axiosInstance.put.mockImplementation(() => Promise.reject(res));
 
-    await streamApi.stop(id);
+    await streamApi.stopStreamApp(id);
     expect(axiosInstance.put).toHaveBeenCalledTimes(1);
+    expect(handleError).toHaveBeenCalledTimes(1);
+    expect(handleError).toHaveBeenCalledWith(res);
+  });
+});
+
+describe('deleteProperty()', () => {
+  afterEach(jest.clearAllMocks);
+
+  const id = 'abc';
+
+  it('handles success http call', async () => {
+    const res = {
+      data: {
+        isSuccess: true,
+      },
+    };
+
+    axiosInstance.delete.mockImplementation(() => Promise.resolve(res));
+
+    const result = await streamApi.deleteProperty(id);
+    expect(axiosInstance.delete).toHaveBeenCalledTimes(1);
+    expect(axiosInstance.delete).toHaveBeenCalledWith(`${url}/property/${id}`);
+    expect(result).toBe(res);
+  });
+
+  it('handles success http call but with server error', async () => {
+    const res = {
+      data: {
+        isSuccess: false,
+      },
+    };
+    axiosInstance.delete.mockImplementation(() => Promise.resolve(res));
+
+    const result = await streamApi.deleteProperty(id);
+
+    expect(axiosInstance.delete).toHaveBeenCalledTimes(1);
+    expect(axiosInstance.delete).toHaveBeenCalledWith(`${url}/property/${id}`);
+    expect(handleError).toHaveBeenCalledTimes(1);
+    expect(handleError).toHaveBeenCalledWith(result);
+  });
+
+  it('handles failed http call', async () => {
+    const res = {
+      data: {
+        errorMessage: {
+          message: 'error!',
+        },
+      },
+    };
+
+    axiosInstance.delete.mockImplementation(() => Promise.reject(res));
+
+    await streamApi.deleteProperty(id);
+    expect(axiosInstance.delete).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(res);
   });

@@ -24,17 +24,19 @@ describe('StreamApp', () => {
 
   beforeEach(() => {
     cy.server();
-    cy.route('GET', 'api/pipelines/*').as('getPipelines');
+    cy.route('GET', 'api/pipelines/*').as('getPipeline');
 
     cy.visit(URLS.PIPELINE)
       .getByTestId('new-pipeline')
       .click()
+      .getByTestId('cluster-select')
+      .select(Cypress.env('WORKER_NAME'))
       .getByText('Next')
       .click();
   });
 
-  it('adds a streamApp into pipeline graph', () => {
-    cy.wait('@getPipelines')
+  it('adds a streamApp into pipeline graph and removes it with the remove button', () => {
+    cy.wait('@getPipeline')
       .getByTestId('toolbar-streams')
       .click()
       .uploadJar(
@@ -51,11 +53,19 @@ describe('StreamApp', () => {
       .getByText('Add')
       .click()
       .getByText('Untitled streamApp')
-      .should('be.exist');
+      .should('be.exist')
+      .click()
+      .getByTestId('delete-button')
+      .click()
+      .getByText('Yes, Remove this stream app')
+      .click()
+      .wait('@getPipeline')
+      .queryAllByText('Untitled streamApp')
+      .should('have.length', 0);
   });
 
   it.skip('edits streamApp name', () => {
-    cy.wait('@getPipelines')
+    cy.wait('@getPipeline')
       .getByTestId('toolbar-streams')
       .click()
       .get('input[type=file]')
@@ -77,7 +87,7 @@ describe('StreamApp', () => {
   });
 
   it.skip('deletes streamApp', () => {
-    cy.wait('@getPipelines')
+    cy.wait('@getPipeline')
       .getByTestId('toolbar-streams')
       .click()
       .get('input[type=file]')
