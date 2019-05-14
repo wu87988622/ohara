@@ -77,19 +77,11 @@ object InfoApi {
       revision = revision
     )
   }
-  // TODO: remove the variables having default value since they all are deprecated!!! by chia
-  final case class ConfiguratorInfo(brokers: String = "this field is deprecated. Use Brokers APIs instead",
-                                    workers: String = "this field is deprecated. Use Workers APIs instead",
-                                    connectors: Seq[ConnectorDefinitions],
-                                    sources: Seq[ConnectorVersion] = Seq.empty,
-                                    sinks: Seq[ConnectorVersion] = Seq.empty,
-                                    supportedDatabases: Seq[String],
-                                    supportedDataTypes: Seq[DataType],
-                                    versionInfo: ConfiguratorVersion)
+  final case class ConfiguratorInfo(versionInfo: ConfiguratorVersion)
   sealed abstract class InfoAccess extends BasicAccess(INFO_PREFIX_PATH) {
     def get(implicit executionContext: ExecutionContext): Future[ConfiguratorInfo]
   }
-  implicit val CONFIGURATOR_INFO_JSON_FORMAT: RootJsonFormat[ConfiguratorInfo] = jsonFormat8(ConfiguratorInfo)
+  implicit val CONFIGURATOR_INFO_JSON_FORMAT: RootJsonFormat[ConfiguratorInfo] = jsonFormat1(ConfiguratorInfo)
 
   def access(): InfoAccess = new InfoAccess {
     override def get(implicit executionContext: ExecutionContext): Future[ConfiguratorInfo] =

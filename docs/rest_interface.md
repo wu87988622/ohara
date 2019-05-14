@@ -10,6 +10,7 @@ and add content type of the response via the HTTP Accept header:
     Accept: application/json
     
 ----------
+
 ## Quick links to APIs
 - [Version](#version)
 - [Topic](#topic)
@@ -28,6 +29,7 @@ and add content type of the response via the HTTP Accept header:
 - [Jars](#jars)
 - [Logs](#logs)
 - [Query](#query)
+- [Info](#info)
 
 ----------
 ## object id
@@ -3098,6 +3100,7 @@ It collect output from all containers' of a cluster and then format them to JSON
 
 ----------
 
+<<<<<<< HEAD
 ## Query
 
 Query APIs is a collection of helper methods required by Ohara Manager so you should assume this APIs are **private**
@@ -3162,6 +3165,30 @@ before using this API. Otherwise, you will get a exception returned by Ohara Con
       ]
     }
   ]
+}
+```
+
+----------
+
+## Info
+
+Info API returns the information of Ohara Configurator you are executing. It consists of following fields.
+1. versionInfo (**object**) — version details of Ohara Configurator
+    - version (**string**) — the release version of Ohara Configurator
+    - revision (**string**) — commit hash of Ohara Configurator. You can trace the hash code via [Github](https://github.com/oharastream/ohara/commits/master)
+    - user (**string**) — the release manager of Ohara Configurator.
+    - date (**string**) — the date of releasing Ohara Configurator.
+    
+**Example Response**
+    
+ ```json
+{
+  "versionInfo": {
+    "version": "0.5-SNAPSHOT",
+    "user": "chia",
+    "revision": "b86742ca03a0ca02cc3578f8686e38e5cf2fb461",
+    "date": "2019-05-13 09:59:38"
+  }
 }
 ```
 
