@@ -298,7 +298,7 @@ export const renderForm = ({
   const groupDefs = groupBy(defs, function(item) {
     return [item.group];
   });
-  const hasTab = groupBy.length > 1 ? true : false;
+  const hasTab = groupDefs.length > 1 ? true : false;
   if (hasTab) {
     return (
       <UtilsTabs groupDefs={groupDefs} defsToFormGroup={defsToFormGroup} />
