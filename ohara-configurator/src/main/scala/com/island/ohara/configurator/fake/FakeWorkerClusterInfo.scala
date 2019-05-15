@@ -42,4 +42,6 @@ private[configurator] case class FakeWorkerClusterInfo(name: String,
                                                        sources: Seq[ConnectorVersion],
                                                        sinks: Seq[ConnectorVersion],
                                                        nodeNames: Seq[String])
-    extends WorkerClusterInfo
+    extends WorkerClusterInfo {
+  override def clone(newNodeNames: Seq[String]): FakeWorkerClusterInfo = copy(nodeNames = newNodeNames)
+}

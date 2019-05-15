@@ -86,6 +86,7 @@ case class FakeContainerCollieClusterInfo(name: String, nodeNames: Seq[String]) 
 
   override def ports: Set[Int] = Set.empty
 
+  override def clone(newNodeNames: Seq[String]): ClusterInfo = throw new UnsupportedOperationException
 }
 
 object FakeContainerCollie {

@@ -26,8 +26,7 @@ import com.island.ohara.common.util.{Releasable, ReleaseOnce}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
-
-private[agent] class ClusterCollieImpl(cacheRefresh: Duration, nodeCollie: NodeCollie, cacheThreadPool: ExecutorService)
+private[agent] class ClusterCollieImpl(cacheTimeout: Duration, nodeCollie: NodeCollie, cacheThreadPool: ExecutorService)
     extends ReleaseOnce
     with ClusterCollie {
 
@@ -35,9 +34,11 @@ private[agent] class ClusterCollieImpl(cacheRefresh: Duration, nodeCollie: NodeC
 
   private[this] val clusterCache: ClusterCache = ClusterCache
     .builder()
-    .frequency(cacheRefresh)
+    .frequency(cacheTimeout)
     // TODO: 5 * timeout is enough ??? by chia
-    .supplier(() => Await.result(doClusters(ExecutionContext.fromExecutor(cacheThreadPool)), cacheRefresh * 5))
+    .supplier(() => Await.result(doClusters(ExecutionContext.fromExecutor(cacheThreadPool)), cacheTimeout * 5))
+    // Giving some time to process to complete the build and then we can remove it from cache safety.
+    .lazyRemove(cacheTimeout)
     .build()
 
   private[this] val zkCollie: ZookeeperCollieImpl = new ZookeeperCollieImpl(nodeCollie, dockerCache, clusterCache)

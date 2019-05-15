@@ -146,4 +146,31 @@ class TestWorkerApi extends SmallTest with Matchers {
 
     response shouldBe WORKER_CLUSTER_INFO_JSON_FORMAT.read(WORKER_CLUSTER_INFO_JSON_FORMAT.write(response))
   }
+
+  @Test
+  def testCloneNodeNames(): Unit = {
+    val newNodeNames = Seq(CommonUtils.randomString())
+    val workerClusterInfo = WorkerClusterInfo(
+      name = CommonUtils.randomString(),
+      imageName = CommonUtils.randomString(),
+      brokerClusterName = CommonUtils.randomString(),
+      clientPort = 10,
+      jmxPort = 10,
+      groupId = CommonUtils.randomString(),
+      statusTopicName = CommonUtils.randomString(),
+      statusTopicPartitions = 10,
+      statusTopicReplications = 10,
+      configTopicName = CommonUtils.randomString(),
+      configTopicPartitions = 10,
+      configTopicReplications = 10,
+      offsetTopicName = CommonUtils.randomString(),
+      offsetTopicPartitions = 10,
+      offsetTopicReplications = 10,
+      jarIds = Seq.empty,
+      jarUrls = Seq.empty,
+      connectors = Seq.empty,
+      nodeNames = Seq.empty
+    )
+    workerClusterInfo.clone(newNodeNames).nodeNames shouldBe newNodeNames
+  }
 }

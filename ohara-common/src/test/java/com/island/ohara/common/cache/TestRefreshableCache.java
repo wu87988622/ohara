@@ -44,6 +44,11 @@ public class TestRefreshableCache extends SmallTest {
   }
 
   @Test(expected = NullPointerException.class)
+  public void nullRemoveListener() {
+    RefreshableCache.<String, String>builder().removeListener(null);
+  }
+
+  @Test(expected = NullPointerException.class)
   public void nullSupplier() {
     RefreshableCache.<String, String>builder().supplier(null);
   }
@@ -268,6 +273,28 @@ public class TestRefreshableCache extends SmallTest {
         Assert.assertTrue(updateCount.get() > 0);
         Assert.assertEquals(0, missCount.get());
       }
+    }
+  }
+
+  @Test
+  public void testRemoveListener() throws InterruptedException {
+    AtomicInteger updateCount = new AtomicInteger(0);
+    String key = CommonUtils.randomString();
+    String value = CommonUtils.randomString();
+    try (RefreshableCache<String, String> cache =
+        RefreshableCache.<String, String>builder()
+            .supplier(
+                () -> {
+                  updateCount.incrementAndGet();
+                  return Collections.emptyMap();
+                })
+            .frequency(Duration.ofSeconds(1))
+            .removeListener((k, v) -> !key.equals(k))
+            .build()) {
+      cache.put(key, value);
+      TimeUnit.SECONDS.sleep(2);
+      Assert.assertTrue(updateCount.get() > 0);
+      Assert.assertEquals(cache.get(key).get(), value);
     }
   }
 

@@ -27,7 +27,7 @@ import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.cache.RefreshableCache
-import com.island.ohara.common.util.Releasable
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration.{Duration, _}
@@ -36,6 +36,9 @@ import scala.concurrent.duration.{Duration, _}
   * The cost of fetching containers via ssh is too expensive, and our ssh collie almost die for it. A quick solution
   * is a simple cache which storing the cluster information in local memory. The cache shines at getter method however
   * the side-effect is that the stuff from getter may be out-of-date. But, in most use cases we bear it well.
+  *
+  * Noted that the comparison of key (ClusterInfo) consists of only name and service type. Adding a cluster info having different node names
+  * does not create an new key-value pair.
   */
 trait ClusterCache extends Releasable {
 
@@ -54,7 +57,9 @@ trait ClusterCache extends Releasable {
   def get(clusterInfo: ClusterInfo): Seq[ContainerInfo]
 
   /**
-    * add data to cache
+    * add data to cache.
+    * Noted, the key(ClusterInfo) you added will replace the older one in calling this method..
+    *
     * @param clusterInfo cluster info
     * @param containers containers
     */
@@ -88,7 +93,7 @@ object ClusterCache {
 
   // TODO: remove this workaround if google guava support the custom comparison ... by chia
   @VisibleForTesting
-  private[agent] case class RequestKey(name: String, service: Service, clusterInfo: ClusterInfo) {
+  private[agent] case class RequestKey(name: String, service: Service, clusterInfo: ClusterInfo, createdTime: Long) {
     override def equals(obj: Any): Boolean = obj match {
       case another: RequestKey => another.name == name && another.service == service
       case _                   => false
@@ -100,11 +105,25 @@ object ClusterCache {
 
   class Builder private[ClusterCache] {
     private[this] var frequency: Duration = 5 seconds
+    private[this] var lazyRemove: Duration = 0 seconds
     private[this] var supplier: () => Map[ClusterInfo, Seq[ContainerInfo]] = _
 
     @Optional("default value is 5 seconds")
     def frequency(frequency: Duration): Builder = {
       this.frequency = Objects.requireNonNull(frequency)
+      this
+    }
+
+    /**
+      * this is a workaround to avoid cache from removing a cluster which is just added.
+      * Ssh collie mocks all cluster information when user change the cluster in order to speed up the following operations.
+      * however, the cache thread may remove the mocked cluster from cache since it doesn't see the associated containers from remote nodes.
+      * @param lazyRemove the time to do remove data from cache
+      * @return this builder
+      */
+    @Optional("default value is 0 seconds")
+    def lazyRemove(lazyRemove: Duration): Builder = {
+      this.lazyRemove = Objects.requireNonNull(lazyRemove)
       this
     }
 
@@ -133,6 +152,7 @@ object ClusterCache {
               case (clusterInfo, containers) => key(clusterInfo) -> containers
             }.asJava)
           .frequency(java.time.Duration.ofMillis(frequency.toMillis))
+          .removeListener((key, _) => CommonUtils.current() - key.createdTime > lazyRemove.toMillis)
           .build()
 
         override def close(): Unit = Releasable.close(cache)
@@ -151,20 +171,27 @@ object ClusterCache {
             case _: WorkerClusterInfo    => Service.WORKER
             case _                       => Service.UNKNOWN
           },
-          clusterInfo = clusterInfo
+          clusterInfo = clusterInfo,
+          createdTime = CommonUtils.current()
         )
 
         private[this] def key(name: String, service: Service): RequestKey = RequestKey(
           name = name,
           service = service,
-          clusterInfo = null
+          clusterInfo = null,
+          createdTime = CommonUtils.current()
         )
 
         override def get(clusterInfo: ClusterInfo): Seq[ContainerInfo] =
           cache.get(key(clusterInfo)).orElseGet(() => Seq.empty)
 
-        override def put(clusterInfo: ClusterInfo, containers: Seq[ContainerInfo]): Unit =
-          cache.put(key(clusterInfo), containers)
+        override def put(clusterInfo: ClusterInfo, containers: Seq[ContainerInfo]): Unit = {
+          val k = key(clusterInfo)
+          // we have to remove key-value first since cluster cache replace the key by a RequestKey which only compare the name and service.
+          // Hence, the new key (ClusterInfo) doesn't replace the older one.
+          cache.remove(k)
+          cache.put(k, containers)
+        }
 
         override def remove(name: String, service: Service): Unit = cache.remove(key(name, service))
 

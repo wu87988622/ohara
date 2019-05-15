@@ -321,6 +321,7 @@ object WorkerApi {
 
     def sources: Seq[ConnectorVersion] = connectors.map(InfoApi.toConnectorVersion).filter(_.typeName == "source")
     def sinks: Seq[ConnectorVersion] = connectors.map(InfoApi.toConnectorVersion).filter(_.typeName == "sink")
+    override def clone(newNodeNames: Seq[String]): WorkerClusterInfoImpl = copy(nodeNames = newNodeNames)
   }
 
   private[this] implicit val WORKER_CLUSTER_INFO_IMPL_JSON_FORMAT: RootJsonFormat[WorkerClusterInfoImpl] =

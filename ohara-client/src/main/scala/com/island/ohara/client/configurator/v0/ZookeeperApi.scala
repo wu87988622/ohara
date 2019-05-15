@@ -107,7 +107,9 @@ object ZookeeperApi {
                                                     peerPort: Int,
                                                     electionPort: Int,
                                                     nodeNames: Seq[String])
-      extends ZookeeperClusterInfo
+      extends ZookeeperClusterInfo {
+    override def clone(newNodeNames: Seq[String]): ZookeeperClusterInfoImpl = copy(nodeNames = newNodeNames)
+  }
 
   private[this] implicit val ZOOKEEPER_CLUSTER_INFO_IMPL_JSON_FORMAT: RootJsonFormat[ZookeeperClusterInfoImpl] =
     jsonFormat6(ZookeeperClusterInfoImpl)

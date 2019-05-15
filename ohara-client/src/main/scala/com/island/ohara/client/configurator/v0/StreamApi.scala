@@ -181,6 +181,8 @@ object StreamApi {
   ) extends ClusterInfo {
     // We don't care the ports since streamApp communicates by broker
     override def ports: Set[Int] = Set.empty
+
+    override def clone(newNodeNames: Seq[String]): StreamClusterInfo = copy(nodeNames = newNodeNames)
   }
 
   // StreamApp List Request Body
