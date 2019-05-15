@@ -48,35 +48,28 @@ implementation "com.island.ohara:ohara-kafka:0.5-SNAPSHOT"
 
 ## StreamApp Entry
 
-Before everything start, you should extends your custom class by **om.island.ohara.streams.StreamApp** in order to
-let Ohara Stream find all the requisite methods.
+We will automatically find your custom class which should be extended by **om.island.ohara.streams.StreamApp**.
+
+In Ohara Stream environment, the required parameters are defined in Ohara Stream UI. You only need to initial the
+```OStream``` as following :
+ ```text
+OStream<Row> ostream = OStream.builder().toOharaEnvStream();
+```
 
 A base implementation for a custom streamApp only need to include [start()]() method, but you could include other methods
 which are described below for your convenience.
 
+The following example is a simple streamApp application which can run in Ohara environment. Note that this example is
+simply start the streamApp application without doing any transformation, i.e., the source topic won't write data to the 
+target topic.
 ```java
-public class YourStreamApp extends StreamApp {
-  
-  /**
-   * User defined initialize stage before running streamApp
-   *
-   * @throws Exception initial Exception
-   */
-  public void init() throws Exception {}
-  
-  /**
-   * Entry function. <b>Usage:</b>
-   *
-   * <pre>
-   *   OStream.builder().toOharaEnvStream();
-   *    .filter()
-   *    .map()
-   *    ...
-   * </pre>
-   *
-   * @throws Exception start Exception
-   */
-  public abstract void start() throws Exception;
+public class SimpleApplicationForOharaEnv extends StreamApp {
+
+  @Override
+  public void start() {
+    OStream<Row> ostream = OStream.builder().cleanStart().toOharaEnvStream();
+    ostream.start();
+  }
 }
 ```
 
@@ -95,13 +88,18 @@ data source to Ohara Stream and use topic data as custom streamApp data source i
 The only object you should remember in this method is **OStream** (a.k.a. ohara streamApp). You could use this object to
 construct your application and use all the powerful APIs in StreamApp.
 
-We only support using streamApp in ohara environment:
-
-- For Ohara Stream environment
-    ```text
-    OStream.builder().toOharaEnvStream();
-    ```
-    In Ohara Stream environment, the required parameters are defined in Ohara Stream UI.
+For example:
+```text
+ostream
+  .map(row -> Row.of(row.cell("name"), row.cell("age")))
+  .filter(row -> row.cell("name").value() != null)
+  .map(row -> Row.of(Cell.of("name", row.cell("name").value().toString().toUpperCase())))
+  .start();
+```
+The above code does the following transformations:
+1. pick cell of the header: `name`, `age` from each <i>row</i>
+2. filter out that if `name` is null
+3. convert the cell of `name` to <b>upperCase</b>
 
 From now on, you can use the [StreamApp Java API](#streamapp-java-api) to design your own application, happy coding!
 
