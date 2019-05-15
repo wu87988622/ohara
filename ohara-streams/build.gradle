@@ -60,6 +60,16 @@ task runImportData(type: JavaExec, dependsOn: 'classes') {
 
 }
 
+/**
+ * package a simple test streamApp jar.
+ */
+task streamAppJar(type: Jar, dependsOn: compileJava) {
+  from sourceSets.test.output
+  include '**/SimpleApplicationForOharaEnv**.class'
+  archiveName "test-streamApp.jar"
+}
+test.dependsOn streamAppJar
+
 publish {
   userOrg = property("userOrg")
   repoName = property("repoName")

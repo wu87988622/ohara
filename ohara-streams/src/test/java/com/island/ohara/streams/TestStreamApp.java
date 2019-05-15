@@ -17,6 +17,12 @@
 package com.island.ohara.streams;
 
 import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.util.CommonUtils;
+import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URLClassLoader;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
 import org.junit.Test;
@@ -24,9 +30,36 @@ import org.junit.Test;
 public class TestStreamApp extends SmallTest {
 
   @Test
-  public void testCanFindCustomClassEntry() {
+  public void testCanFindCustomClassEntryFromInnerClass() {
     CustomStreamApp app = new CustomStreamApp();
     StreamApp.runStreamApp(app.getClass());
+  }
+
+  @Test
+  public void testCanDownloadJar() {
+    File file = CommonUtils.createTempFile("streamApp");
+
+    try {
+      File downloadedFile = StreamApp.downloadJarByUrl(file.toURI().toURL().toString());
+      Assert.assertEquals("streamApp.jar", downloadedFile.getName());
+    } catch (MalformedURLException e) {
+      e.printStackTrace();
+    }
+
+    file.deleteOnExit();
+  }
+
+  @Test
+  public void testCanFindJarEntry() {
+    String projectPath = System.getProperty("user.dir");
+    File file = new File(CommonUtils.path(projectPath, "build", "libs", "test-streamApp.jar"));
+
+    try {
+      Map.Entry<String, URLClassLoader> entry = StreamApp.findStreamAppEntry(file);
+      Assert.assertEquals("com.island.ohara.streams.SimpleApplicationForOharaEnv", entry.getKey());
+    } catch (IOException | ClassNotFoundException e) {
+      Assert.fail(e.getMessage());
+    }
   }
 
   public static class CustomStreamApp extends StreamApp {

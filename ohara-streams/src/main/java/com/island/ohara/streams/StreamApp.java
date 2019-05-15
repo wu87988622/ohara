@@ -16,11 +16,13 @@
 
 package com.island.ohara.streams;
 
+import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.exception.CheckedExceptionUtils;
 import com.island.ohara.streams.ostream.LaunchImpl;
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.AbstractMap;
@@ -139,7 +141,8 @@ public abstract class StreamApp {
           if (System.getenv(JAR_URL) == null) {
             throw new RuntimeException("It seems you are not running in Ohara Environment?");
           }
-          Map.Entry<String, URLClassLoader> entry = findStreamAppEntry(System.getenv(JAR_URL));
+          File jarFile = downloadJarByUrl(System.getenv(JAR_URL));
+          Map.Entry<String, URLClassLoader> entry = findStreamAppEntry(jarFile);
 
           if (entry.getKey().isEmpty()) {
             throw new RuntimeException("cannot find any match entry");
@@ -159,12 +162,8 @@ public abstract class StreamApp {
         });
   }
 
-  private static Map.Entry<String, URLClassLoader> findStreamAppEntry(String jarUrl)
-      throws IOException, ClassNotFoundException {
-    String entryClassName = "";
-
-    String jarHeader = "jar:file:";
-    String jarTail = "!/";
+  @VisibleForTesting
+  static File downloadJarByUrl(String jarUrl) throws MalformedURLException {
     // create a tempFolder and new a file instance : /tmp/streamApp-XXXXX/streamApp.jar
     File tmpFolder = CommonUtils.createTempFolder("streamApp-");
     File outputFile = new File(tmpFolder, "streamApp.jar");
@@ -173,12 +172,22 @@ public abstract class StreamApp {
 
     // Download the jar
     CommonUtils.copyURLToFile(url, outputFile, CONNECT_TIMEOUT, READ_TIMEOUT);
+    return outputFile;
+  }
+
+  @VisibleForTesting
+  static Map.Entry<String, URLClassLoader> findStreamAppEntry(File jarFile)
+      throws IOException, ClassNotFoundException {
+    String entryClassName = "";
+
+    String jarHeader = "jar:file:";
+    String jarTail = "!/";
 
     // Find the StreamApp entry class name
-    JarFile jar = new JarFile(outputFile);
+    JarFile jar = new JarFile(jarFile);
     Enumeration<JarEntry> e = jar.entries();
 
-    URL[] urls = {new URL(jarHeader + outputFile + jarTail)};
+    URL[] urls = {new URL(jarHeader + jarFile + jarTail)};
     URLClassLoader loader = URLClassLoader.newInstance(urls);
 
     while (e.hasMoreElements()) {
