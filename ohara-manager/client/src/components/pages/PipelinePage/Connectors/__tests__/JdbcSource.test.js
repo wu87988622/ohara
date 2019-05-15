@@ -61,7 +61,7 @@ const props = {
   isPipelineRunning: false,
 };
 
-describe('<FtpSource />', () => {
+describe.skip('<FtpSource />', () => {
   let wrapper;
 
   beforeEach(() => {

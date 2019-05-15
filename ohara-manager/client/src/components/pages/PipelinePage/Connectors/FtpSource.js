@@ -56,6 +56,10 @@ class FtpSource extends React.Component {
     }).isRequired,
     pipelineTopics: PropTypes.array.isRequired,
     isPipelineRunning: PropTypes.bool.isRequired,
+    globalTopics: PropTypes.shape({
+      name: PropTypes.string.isRequired,
+    }).isRequired,
+    workerClusterName: PropTypes.string.isRequired,
   };
 
   selectMaps = {
