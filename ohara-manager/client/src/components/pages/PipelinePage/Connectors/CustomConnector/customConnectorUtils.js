@@ -301,10 +301,9 @@ export const renderForm = ({
   });
 
   const hasTab = groupBy.length > 1 ? true : false;
-  var first = true;
   if (hasTab) {
     return (
-      <Tabs>
+      <Tabs selectedIndex={0} onSelect={0}>
         <TabList>
           {groupDefs.sort().map(defs => {
             return <Tab key={defs[0].group}>{defs[0].group}</Tab>;
