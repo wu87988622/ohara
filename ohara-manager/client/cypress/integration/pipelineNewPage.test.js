@@ -19,8 +19,8 @@ import { CONNECTOR_TYPES } from '../../src/constants/pipelines';
 
 describe('PipelineNewPage', () => {
   before(() => {
-    // cy.deleteAllWorkers();
-    // cy.createWorker();
+    cy.deleteAllWorkers();
+    cy.createWorker();
   });
 
   beforeEach(() => {
