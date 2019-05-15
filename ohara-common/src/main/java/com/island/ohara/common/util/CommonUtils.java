@@ -598,6 +598,26 @@ public final class CommonUtils {
     }
   }
 
+  /**
+   * download file from url
+   *
+   * @param url where the file is download from
+   * @param connectionTimeout the connection timeout
+   * @param readTimeout the read timeout
+   * @return the downloaded file
+   */
+  public static File downloadUrl(URL url, Duration connectionTimeout, Duration readTimeout) {
+
+    File tmpFolder = CommonUtils.createTempFolder("tmp-");
+    File outputFile = new File(tmpFolder, randomString(10));
+
+    int ct = Math.toIntExact(connectionTimeout.toMillis());
+    int rt = Math.toIntExact(readTimeout.toMillis());
+
+    copyURLToFile(url, outputFile, ct, rt);
+    return outputFile;
+  }
+
   /** disable to instantiate CommonUtils. */
   private CommonUtils() {}
 }

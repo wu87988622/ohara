@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.time.Duration;
 import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Enumeration;
@@ -36,8 +37,10 @@ import java.util.jar.JarFile;
 public abstract class StreamApp {
 
   private static final String JAR_URL = "STREAMAPP_JARURL";
-  private static final int CONNECT_TIMEOUT = 30 * 1000;
-  private static final int READ_TIMEOUT = 30 * 1000;
+
+  // We set timeout to 30 seconds
+  private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(30);
+  private static final Duration READ_TIMEOUT = Duration.ofSeconds(30);
 
   /**
    * Running a standalone streamApp. This method is usually called from the main(). It must not be
@@ -164,15 +167,7 @@ public abstract class StreamApp {
 
   @VisibleForTesting
   static File downloadJarByUrl(String jarUrl) throws MalformedURLException {
-    // create a tempFolder and new a file instance : /tmp/streamApp-XXXXX/streamApp.jar
-    File tmpFolder = CommonUtils.createTempFolder("streamApp-");
-    File outputFile = new File(tmpFolder, "streamApp.jar");
-
-    URL url = new URL(jarUrl);
-
-    // Download the jar
-    CommonUtils.copyURLToFile(url, outputFile, CONNECT_TIMEOUT, READ_TIMEOUT);
-    return outputFile;
+    return CommonUtils.downloadUrl(new URL(jarUrl), CONNECT_TIMEOUT, READ_TIMEOUT);
   }
 
   @VisibleForTesting

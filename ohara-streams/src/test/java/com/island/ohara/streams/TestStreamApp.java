@@ -41,7 +41,7 @@ public class TestStreamApp extends SmallTest {
 
     try {
       File downloadedFile = StreamApp.downloadJarByUrl(file.toURI().toURL().toString());
-      Assert.assertEquals("streamApp.jar", downloadedFile.getName());
+      Assert.assertTrue(downloadedFile.isFile());
     } catch (MalformedURLException e) {
       e.printStackTrace();
     }
