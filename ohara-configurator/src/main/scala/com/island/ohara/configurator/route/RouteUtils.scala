@@ -207,9 +207,6 @@ private[route] object RouteUtils {
                     }
                     .mkString(";")).filter(_.nonEmpty).foreach(s => throw new IllegalArgumentException(s))
 
-                  // check cluster name is lowercase
-                  CommonUtils.requireLowerCase(req.name, "Cluster name cannot set the uppercase string")
-
                   hookOfCreation(clusters, req)
                 })
           }

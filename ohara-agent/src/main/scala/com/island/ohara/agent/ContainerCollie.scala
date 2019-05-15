@@ -23,13 +23,11 @@ import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.util.CommonUtils
-
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
 
 abstract class ContainerCollie[T <: ClusterInfo: ClassTag, Creator <: ClusterCreator[T]](nodeCollie: NodeCollie)
     extends Collie[T, Creator] {
-
   private[agent] val LENGTH_OF_CONTAINER_NAME_ID: Int = 7
 
   /**
@@ -76,14 +74,21 @@ abstract class ContainerCollie[T <: ClusterInfo: ClassTag, Creator <: ClusterCre
     implicit executionContext: ExecutionContext): Future[T]
 
   override final def addNode(clusterName: String, nodeName: String)(
-    implicit executionContext: ExecutionContext): Future[T] = nodeCollie
-    .node(nodeName) // make sure there is a exist node.
-    .flatMap(_ => cluster(clusterName))
-    .flatMap {
-      case (cluster, containers) => doAddNode(cluster, containers, nodeName)
-    }
-
-  protected val serviceName: String =
+    implicit executionContext: ExecutionContext): Future[T] = {
+    nodeCollie
+      .node(nodeName) // make sure there is a exist node.
+      .flatMap(_ => cluster(clusterName))
+      .flatMap {
+        case (cluster, containers) => {
+          if (clusterName.isEmpty || nodeName.isEmpty)
+            Future.failed(new IllegalArgumentException("cluster and node name can't empty"))
+          else if (CommonUtils.hasUpperCase(nodeName))
+            Future.failed(new IllegalArgumentException("Your node name can't uppercase"))
+          else doAddNode(cluster, containers, nodeName)
+        }
+      }
+  }
+  protected def serviceName: String =
     if (classTag[T].runtimeClass.isAssignableFrom(classOf[ZookeeperClusterInfo])) ContainerCollie.ZK_SERVICE_NAME
     else if (classTag[T].runtimeClass.isAssignableFrom(classOf[BrokerClusterInfo])) ContainerCollie.BK_SERVICE_NAME
     else if (classTag[T].runtimeClass.isAssignableFrom(classOf[WorkerClusterInfo])) ContainerCollie.WK_SERVICE_NAME
