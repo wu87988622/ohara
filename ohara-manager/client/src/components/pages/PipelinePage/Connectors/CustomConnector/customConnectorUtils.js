@@ -23,7 +23,7 @@ import { isEmptyStr } from 'utils/commonUtils';
 import { findByGraphId } from '../../pipelineUtils/commonUtils';
 import { FormGroup, Input, Label } from 'common/Form';
 import { CONNECTOR_STATES } from 'constants/pipelines';
-import { Tab, Tabs, TabList, TabPanel } from 'common/Tabs';
+import UtilsTabs from './UtilsTabs';
 
 export const getMetadata = (props, worker) => {
   const { page: targetConnector } = props.match.params;
@@ -295,26 +295,13 @@ export const renderForm = ({
         }
       });
   }
-
   const groupDefs = groupBy(defs, function(item) {
     return [item.group];
   });
-
   const hasTab = groupBy.length > 1 ? true : false;
   if (hasTab) {
     return (
-      <Tabs selectedIndex={0} onSelect={0}>
-        <TabList>
-          {groupDefs.sort().map(defs => {
-            return <Tab key={defs[0].group}>{defs[0].group}</Tab>;
-          })}
-        </TabList>
-        {groupDefs.sort().map(defs => {
-          return (
-            <TabPanel key={defs[0].group}>{defsToFormGroup(defs)}</TabPanel>
-          );
-        })}
-      </Tabs>
+      <UtilsTabs groupDefs={groupDefs} defsToFormGroup={defsToFormGroup} />
     );
   } else {
     return groupDefs.sort().map(defs => {

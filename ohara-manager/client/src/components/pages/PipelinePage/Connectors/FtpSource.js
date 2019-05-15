@@ -571,6 +571,10 @@ class FtpSource extends React.Component {
     this.updateComponent(updatedConfigs);
   };
 
+  handleTabSelect = tabIndex => {
+    this.setState({ tabIndex });
+  };
+
   render() {
     const {
       defs,
@@ -591,7 +595,6 @@ class FtpSource extends React.Component {
       handleColumnRowUp: this.handleColumnRowUp,
       handleColumnRowDown: this.handleColumnRowDown,
     };
-
     return (
       <React.Fragment>
         <s.BoxWrapper padding="25px 0 0 0">
