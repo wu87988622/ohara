@@ -31,6 +31,9 @@ import spray.json._
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse}
+import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestK8SClient extends SmallTest with Matchers {
 
@@ -42,31 +45,114 @@ class TestK8SClient extends SmallTest with Matchers {
   }
 
   @Test
-  def testCreatePodContainerNonePolicy(): Unit = {
-    val json: String =
-      CreatePodContainer("podName", "image", Seq(), Seq(), ImagePullPolicy.IFNOTPRESENT, Seq("hello"), Seq("world")).toJson.toString
-    json shouldBe "{\"name\":\"podName\",\"image\":\"image\",\"ports\":[],\"command\":[\"hello\"],\"args\":[\"world\"],\"imagePullPolicy\":\"IfNotPresent\",\"env\":[]}"
+  def testPullPolicyIFNOTPRESENT(): Unit = {
+    val nodeName = "ohara-it-02"
+    val podName = "container1"
+    val s = imagePolicyURL(nodeName, podName, ImagePullPolicy.IFNOTPRESENT)
+    try {
+      val client = K8SClient(s.url)
+      try {
+        val result: Option[ContainerInfo] = Await.result(
+          client
+            .containerCreator()
+            .name(podName)
+            .imageName("hello world")
+            .labelName("ohara")
+            .hostname("test1")
+            .domainName("ohara")
+            .pullImagePolicy(ImagePullPolicy.IFNOTPRESENT)
+            .nodename(nodeName)
+            .run(),
+          30 seconds
+        )
+        result.get.name shouldBe podName
+        result.get.environments shouldBe Map.empty
+        result.get.nodeName shouldBe nodeName
+      } finally client.close()
+    } finally s.close()
   }
 
   @Test
-  def testPolicyIsAlways(): Unit = {
-    val json: String =
-      CreatePodContainer("podName", "image", Seq(), Seq(), ImagePullPolicy.ALWAYS, Seq(), Seq()).toJson.toString
-    json shouldBe "{\"name\":\"podName\",\"image\":\"image\",\"ports\":[],\"command\":[],\"args\":[],\"imagePullPolicy\":\"Always\",\"env\":[]}"
+  def testPullPolicyIsAlways(): Unit = {
+    val nodeName = "ohara-it-02"
+    val podName = "container1"
+    val s = imagePolicyURL(nodeName, podName, ImagePullPolicy.ALWAYS)
+    try {
+      val client = K8SClient(s.url)
+      try {
+        val result: Option[ContainerInfo] = Await.result(
+          client
+            .containerCreator()
+            .name(podName)
+            .imageName("hello world")
+            .labelName("ohara")
+            .hostname("test1")
+            .domainName("ohara")
+            .pullImagePolicy(ImagePullPolicy.ALWAYS)
+            .nodename(nodeName)
+            .run(),
+          30 seconds
+        )
+        result.get.name shouldBe podName
+        result.get.environments shouldBe Map.empty
+        result.get.nodeName shouldBe nodeName
+      } finally client.close()
+    } finally s.close()
   }
 
   @Test
-  def testPolicyIsNever(): Unit = {
-    val json: String =
-      CreatePodContainer("podName", "image", Seq(), Seq(), ImagePullPolicy.NEVER, Seq("foo"), Seq("bar")).toJson.toString
-    json shouldBe "{\"name\":\"podName\",\"image\":\"image\",\"ports\":[],\"command\":[\"foo\"],\"args\":[\"bar\"],\"imagePullPolicy\":\"Never\",\"env\":[]}"
+  def testPullPolicyIsNever(): Unit = {
+    val nodeName = "ohara-it-02"
+    val podName = "container1"
+    val s = imagePolicyURL(nodeName, podName, ImagePullPolicy.NEVER)
+    try {
+      val client = K8SClient(s.url)
+      try {
+        val result: Option[ContainerInfo] = Await.result(
+          client
+            .containerCreator()
+            .name(podName)
+            .imageName("hello world")
+            .labelName("ohara")
+            .hostname("test1")
+            .domainName("ohara")
+            .pullImagePolicy(ImagePullPolicy.NEVER)
+            .nodename(nodeName)
+            .run(),
+          30 seconds
+        )
+        result.get.name shouldBe podName
+        result.get.environments shouldBe Map.empty
+        result.get.nodeName shouldBe nodeName
+      } finally client.close()
+    } finally s.close()
   }
 
   @Test
-  def testPolicyIsIfNotPresent(): Unit = {
-    val json: String =
-      CreatePodContainer("podName", "image", Seq(), Seq(), ImagePullPolicy.IFNOTPRESENT, Seq(), Seq()).toJson.toString
-    json shouldBe "{\"name\":\"podName\",\"image\":\"image\",\"ports\":[],\"command\":[],\"args\":[],\"imagePullPolicy\":\"IfNotPresent\",\"env\":[]}"
+  def testPullPolicyNotSetting(): Unit = {
+    val nodeName = "ohara-it-02"
+    val podName = "container1"
+    val s = imagePolicyURL(nodeName, podName, ImagePullPolicy.IFNOTPRESENT)
+    try {
+      val client = K8SClient(s.url)
+      try {
+        val result: Option[ContainerInfo] = Await.result(
+          client
+            .containerCreator()
+            .name(podName)
+            .imageName("hello world")
+            .labelName("ohara")
+            .hostname("test1")
+            .domainName("ohara")
+            .nodename(nodeName)
+            .run(),
+          30 seconds
+        )
+        result.get.name shouldBe podName
+        result.get.environments shouldBe Map.empty
+        result.get.nodeName shouldBe nodeName
+      } finally client.close()
+    } finally s.close()
   }
 
   @Test
@@ -112,6 +198,87 @@ class TestK8SClient extends SmallTest with Matchers {
         imagesFromServer shouldBe images
       } finally client.close()
     } finally s.close()
+  }
+
+  private[this] def imagePolicyURL(nodeName: String,
+                                   podName: String,
+                                   expectImagePullPolicy: ImagePullPolicy): SimpleServer = {
+    val nodesResponse = s"""
+                           |{"items": [
+                           |    {
+                           |      "metadata": {
+                           |        "name": "${nodeName}"
+                           |      },
+                           |      "status": {
+                           |        "conditions": [
+                           |          {
+                           |            "type": "Ready",
+                           |            "status": "True",
+                           |            "lastHeartbeatTime": "2019-05-14T06:14:46Z",
+                           |            "lastTransitionTime": "2019-04-15T08:21:11Z",
+                           |            "reason": "KubeletReady",
+                           |            "message": "kubelet is posting ready status"
+                           |          }
+                           |        ],
+                           |        "addresses": [
+                           |          {
+                           |            "type": "InternalIP",
+                           |            "address": "10.2.0.4"
+                           |          },
+                           |          {
+                           |            "type": "Hostname",
+                           |            "address": "ohara-it-02"
+                           |          }
+                           |        ],
+                           |        "images": [
+                           |          {
+                           |            "names": [
+                           |              "quay.io/coreos/etcd@sha256:ea49a3d44a50a50770bff84eab87bac2542c7171254c4d84c609b8c66aefc211",
+                           |              "quay.io/coreos/etcd:v3.3.9"
+                           |            ],
+                           |            "sizeBytes": 39156721
+                           |          }
+                           |        ]
+                           |      }
+                           |    }
+                           |  ]
+                           |}
+                """.stripMargin
+
+    val createPodResult = s"""
+                             |{
+                             |  "metadata": {
+                             |    "name": "${podName}",
+                             |    "uid": "aaaaaaaaaaaa",
+                             |    "creationTimestamp": "2019-05-13 00:00:00"
+                             |  },
+                             |  "status": {
+                             |    "phase": "true"
+                             |  }
+                             |}
+                """.stripMargin
+
+    // test json serialization
+    val k8sNodeInfo: K8SNodeInfo = K8SNODEINFO_JSON_FORMAT.read(nodesResponse.parseJson)
+    k8sNodeInfo.items(0).metadata.name shouldBe "ohara-it-02"
+    k8sNodeInfo.items(0).status.images.size shouldBe 1
+
+    // test communication
+    toServer {
+      path("nodes") {
+        get {
+          complete(HttpResponse(entity = HttpEntity(ContentTypes.`application/json`, nodesResponse)))
+        }
+      } ~
+        path("namespaces" / "default" / "pods") {
+          post {
+            entity(as[CreatePod]) { createPod =>
+              createPod.spec.containers(0).imagePullPolicy shouldBe expectImagePullPolicy
+              complete(HttpResponse(entity = HttpEntity(ContentTypes.`application/json`, createPodResult)))
+            }
+          }
+        }
+    }
   }
 
   private[this] def toServer(route: server.Route): SimpleServer = {
