@@ -64,6 +64,10 @@ const ViewTopologyBtn = styled(Button)`
   margin-right: auto;
 `;
 
+const StyledForm = styled.div`
+  padding: 20px;
+`;
+
 export {
   BoxWrapper,
   TitleWrapper,
@@ -72,4 +76,5 @@ export {
   FormCol,
   JarNameText,
   ViewTopologyBtn,
+  StyledForm,
 };

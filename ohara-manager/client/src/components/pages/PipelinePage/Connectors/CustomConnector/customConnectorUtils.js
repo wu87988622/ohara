@@ -23,6 +23,7 @@ import { isEmptyStr } from 'utils/commonUtils';
 import { findByGraphId } from '../../pipelineUtils/commonUtils';
 import { FormGroup, Input, Label } from 'common/Form';
 import { CONNECTOR_STATES } from 'constants/pipelines';
+import { Tab, Tabs, TabList, TabPanel } from 'common/Tabs';
 
 export const getMetadata = (props, worker) => {
   const { page: targetConnector } = props.match.params;
@@ -177,93 +178,150 @@ export const renderForm = ({
     return displayValue;
   };
 
-  return defs
-    .sort(sortByOrder)
-    .filter(def => !def.internal) // Do not display def that has an internal === true prop
-    .map(def => {
-      const {
-        displayName,
-        key,
-        editable,
-        required,
-        documentation,
-        tableKeys,
-        defaultValue,
-        valueType,
-      } = def;
+  function defsToFormGroup(defs) {
+    return defs
+      .sort(sortByOrder)
+      .filter(def => !def.internal) // Do not display def that has an internal === true prop
+      .map(def => {
+        const {
+          displayName,
+          key,
+          editable,
+          required,
+          documentation,
+          tableKeys,
+          defaultValue,
+          valueType,
+        } = def;
+        const configValue = configs[key];
+        const columnTableHeader = tableKeys.concat(tableActions);
+        const displayValue = convertData({
+          configValue,
+          valueType,
+          defaultValue,
+        });
+        switch (valueType) {
+          case 'STRING':
+          case 'INT':
+          case 'CLASS':
+            return (
+              <FormGroup key={key}>
+                <Label
+                  htmlFor={`${displayName}`}
+                  required={required}
+                  tooltipString={documentation}
+                  tooltipAlignment="right"
+                  width="100%"
+                >
+                  {displayName}
+                </Label>
+                <Input
+                  id={`${displayName}`}
+                  width="100%"
+                  value={String(displayValue)}
+                  name={key}
+                  onChange={handleChange}
+                  disabled={!editable || isRunning}
+                />
+              </FormGroup>
+            );
 
-      const configValue = configs[key];
-      const columnTableHeader = tableKeys.concat(tableActions);
-      const displayValue = convertData({
-        configValue,
-        valueType,
-        defaultValue,
+          case 'PASSWORD':
+            return (
+              <FormGroup key={key}>
+                <Label
+                  htmlFor={`${displayName}`}
+                  required={required}
+                  tooltipString={documentation}
+                  tooltipAlignment="right"
+                  width="100%"
+                >
+                  {displayName}
+                </Label>
+                <Input
+                  id={`${displayName}`}
+                  width="100%"
+                  type="password"
+                  value={String(displayValue)}
+                  name={key}
+                  onChange={handleChange}
+                  disabled={!editable || isRunning}
+                />
+              </FormGroup>
+            );
+
+          case 'LIST':
+            return (
+              <FormGroup key={key}>
+                <Label
+                  htmlFor={`${displayName}`}
+                  required={required}
+                  tooltipString={documentation}
+                  tooltipAlignment="right"
+                  width="100%"
+                >
+                  {displayName}
+                </Label>
+                <Select
+                  id={`${displayName}`}
+                  list={topics}
+                  value={displayValue}
+                  handleChange={handleChange}
+                  name={key}
+                  width="100%"
+                  disabled={isRunning}
+                  clearable
+                />
+              </FormGroup>
+            );
+
+          case 'TABLE':
+            return (
+              <FormGroup key={key}>
+                <ColumnTable
+                  headers={columnTableHeader}
+                  data={displayValue}
+                  dataTypes={dataType}
+                  handleColumnChange={handleColumnChange}
+                  handleColumnRowDelete={handleColumnRowDelete}
+                  handleColumnRowUp={handleColumnRowUp}
+                  handleColumnRowDown={handleColumnRowDown}
+                />
+              </FormGroup>
+            );
+
+          default:
+            return null;
+        }
       });
+  }
 
-      if (['STRING', 'INT', 'CLASS'].includes(valueType)) {
-        return (
-          <FormGroup key={key}>
-            <Label
-              htmlFor={`${displayName}`}
-              required={required}
-              tooltipString={documentation}
-              tooltipAlignment="right"
-              width="100%"
-            >
-              {displayName}
-            </Label>
-            <Input
-              id={`${displayName}`}
-              width="100%"
-              value={displayValue}
-              name={key}
-              onChange={handleChange}
-              disabled={!editable || isRunning}
-            />
-          </FormGroup>
-        );
-      } else if (valueType === 'LIST') {
-        return (
-          <FormGroup key={key}>
-            <Label
-              htmlFor={`${displayName}`}
-              required={required}
-              tooltipString={documentation}
-              tooltipAlignment="right"
-              width="100%"
-            >
-              {displayName}
-            </Label>
-            <Select
-              id={`${displayName}`}
-              list={topics}
-              value={displayValue}
-              handleChange={handleChange}
-              name={key}
-              width="100%"
-              disabled={isRunning}
-              clearable
-            />
-          </FormGroup>
-        );
-      } else if (valueType === 'TABLE') {
-        return (
-          <FormGroup key={key}>
-            <ColumnTable
-              headers={columnTableHeader}
-              data={displayValue}
-              dataTypes={dataType}
-              handleColumnChange={handleColumnChange}
-              handleColumnRowDelete={handleColumnRowDelete}
-              handleColumnRowUp={handleColumnRowUp}
-              handleColumnRowDown={handleColumnRowDown}
-            />
-          </FormGroup>
-        );
-      }
+  const groupDefs = groupBy(defs, function(item) {
+    return [item.group];
+  });
 
-      return null;
+  const hasTab = groupBy.length > 1 ? true : false;
+  var first = true;
+  if (hasTab) {
+    return (
+      <Tabs>
+        <TabList>
+          {groupDefs.sort().map(defs => {
+            return <Tab key={defs[0].group}>{defs[0].group}</Tab>;
+          })}
+        </TabList>
+        {groupDefs.sort().map(defs => {
+          return (
+            <TabPanel key={defs[0].group}>{defsToFormGroup(defs)}</TabPanel>
+          );
+        })}
+      </Tabs>
+    );
+  } else {
+    return groupDefs.sort().map(defs => {
+      return defsToFormGroup(defs);
     });
+  }
 };
 
 export const getCurrTopicId = ({ originals, target = '' }) => {
@@ -284,3 +342,15 @@ export const getCurrTopicName = ({ originals, target }) => {
   const topicName = get(currTopic, 'name', '');
   return topicName;
 };
+
+function groupBy(array, f) {
+  let groups = {};
+  array.forEach(function(o) {
+    let group = JSON.stringify(f(o));
+    groups[group] = groups[group] || [];
+    groups[group].push(o);
+  });
+  return Object.keys(groups).map(function(group) {
+    return groups[group];
+  });
+}

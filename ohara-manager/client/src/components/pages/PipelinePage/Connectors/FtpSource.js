@@ -18,40 +18,27 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import toastr from 'toastr';
-import { includes, get, isEmpty, isNull, debounce } from 'lodash';
+import { get, isEmpty, isNull, debounce } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
 import * as connectorApi from 'api/connectorApi';
-import * as validateApi from 'api/validateApi';
+import { validateConnector } from 'api/validateApi';
 import * as s from './styles';
+import * as utils from './CustomConnector/customConnectorUtils';
 import Controller from './Controller';
-import { SchemaTable } from 'common/Table';
-import { ConfirmModal, Modal } from 'common/Modal';
-import { primaryBtn } from 'theme/btnTheme';
-import { Input, Select, FormGroup, Label, Button } from 'common/Form';
-import { Tab, Tabs, TabList, TabPanel } from 'common/Tabs';
-import { updateTopic, findByGraphId } from '../pipelineUtils/commonUtils';
-import { FtpQuicklyFillIn } from './QuicklyFillIn';
-import {
-  CONNECTOR_TYPES,
-  CONNECTOR_STATES,
-  CONNECTOR_ACTIONS,
-} from 'constants/pipelines';
-import { graphPropType } from 'propTypes/pipeline';
+import { Button } from 'common/Form';
 
-const FormGroupWrapper = styled.div`
-  display: flex;
-  justify-content: space-between;
-`;
+import { updateTopic, findByGraphId } from '../pipelineUtils/commonUtils';
+
+import { fetchWorker } from 'api/workerApi';
+import TestConnectionBtn from './CustomConnector/TestConnectionBtn';
+import { CONNECTOR_STATES, CONNECTOR_ACTIONS } from 'constants/pipelines';
+import { graphPropType } from 'propTypes/pipeline';
 
 const NewRowBtn = styled(Button)`
   margin-left: auto;
 `;
 NewRowBtn.displayName = 'NewRowBtn';
-
-const FormInner = styled.div`
-  padding: 20px;
-`;
 
 class FtpSource extends React.Component {
   static propTypes = {
@@ -91,29 +78,11 @@ class FtpSource extends React.Component {
   schemaTypes = ['string', 'int', 'boolean'];
 
   state = {
-    name: '',
-    state: '',
-    host: '',
-    port: '',
-    username: '',
-    password: '',
-    inputFolder: '',
-    completeFolder: '',
-    errorFolder: '',
-    writeTopics: [],
-    currWriteTopic: {},
-    fileEncodings: ['UTF-8'],
-    currFileEncoding: {},
-    tasks: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
-    currTask: {},
-    schema: [],
-    isDeleteRowModalActive: false,
-    isNewRowModalActive: false,
-    workingRow: null,
-    columnName: '',
-    newColumnName: '',
-    currType: '',
-    pipelines: {},
+    defs: [],
+    topics: [],
+    configs: null,
+    state: null,
+    isTestConnectionBtnWorking: false,
   };
 
   componentDidMount() {
@@ -196,6 +165,11 @@ class FtpSource extends React.Component {
         writeTopics,
       });
     }
+  };
+
+  updateComponent = updatedConfigs => {
+    this.props.updateHasChanges(true);
+    this.setState({ configs: updatedConfigs });
   };
 
   handleInputChange = ({ target: { name, value } }) => {
@@ -356,21 +330,22 @@ class FtpSource extends React.Component {
 
   handleTestConnection = async e => {
     e.preventDefault();
-    const { host: hostname, port, username: user, password } = this.state;
+    this.setState({ isTestConnectionBtnWorking: true });
 
-    this.updateIsTestConnectionBtnWorking(true);
-    const res = await validateApi.validateFtp({
-      hostname,
-      port: Number(port), // This needs to be a number!
-      user,
-      password,
+    // const topics = this.state.topic
+    const topicId = utils.getCurrTopicId({
+      originals: this.props.globalTopics,
+      target: this.state.topics[0],
     });
-    this.updateIsTestConnectionBtnWorking(false);
+
+    const params = { ...this.state.configs, topics: topicId };
+    const res = await validateConnector(params);
+    this.setState({ isTestConnectionBtnWorking: false });
+
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (isSuccess) {
       toastr.success(MESSAGES.TEST_SUCCESS);
-      this.setState({ isFormDisabled: false });
     }
   };
 
@@ -419,68 +394,32 @@ class FtpSource extends React.Component {
 
   save = debounce(async () => {
     const {
+      updateHasChanges,
       match,
       graph,
       updateGraph,
-      updateHasChanges,
-      isPipelineRunning,
+      globalTopics,
     } = this.props;
-    const {
-      name,
-      host,
-      port,
-      username,
-      password,
-      inputFolder,
-      completeFolder,
-      errorFolder,
-      currWriteTopic,
-      currFileEncoding,
-      currTask,
-      schema,
-    } = this.state;
+    const { configs } = this.state;
+    const { connectorId } = match.params;
 
-    if (isPipelineRunning) {
-      toastr.error(MESSAGES.CANNOT_UPDATE_WHILE_RUNNING_ERROR);
-      updateHasChanges(false);
-      return;
-    }
+    const topicId = utils.getCurrTopicId({
+      originals: globalTopics,
+      target: configs.topics,
+    });
 
-    const sourceId = get(match, 'params.connectorId', null);
-    const _schema = isEmpty(schema) ? [] : schema;
+    const params = { ...configs, topics: topicId };
 
-    const isValidTopic =
-      isEmpty(currWriteTopic) || currWriteTopic.id === 'default-option';
-    const topics = isValidTopic ? [] : [currWriteTopic.id];
-
-    const params = {
-      name,
-      'connector.name': name,
-      schema: _schema,
-      className: CONNECTOR_TYPES.ftpSource,
-      topics,
-      numberOfTasks: 1,
-      configs: {
-        'ftp.input.folder': inputFolder,
-        'ftp.completed.folder': completeFolder,
-        'ftp.error.folder': errorFolder,
-        'ftp.encode': currFileEncoding,
-        'ftp.hostname': host,
-        'ftp.port': port,
-        'ftp.user.name': username,
-        'ftp.user.password': password,
-        currTask,
-      },
-    };
-
-    await connectorApi.updateConnector({ id: sourceId, params });
+    await connectorApi.updateConnector({ id: connectorId, params });
     updateHasChanges(false);
 
-    const currSource = findByGraphId(graph, sourceId);
+    const update = utils.getUpdatedTopic({
+      graph,
+      connectorId,
+      configs,
+      originalTopics: globalTopics,
+    });
 
-    // const currTopic = findByGraphId(graph, )
-    const topicId = isEmpty(topics) ? [] : topics;
-    const update = { ...currSource, name, to: topicId };
     updateGraph({ update });
   }, 1000);
 
@@ -556,36 +495,102 @@ class FtpSource extends React.Component {
     );
   };
 
+  fetchData = async () => {
+    // We need to get the custom connector's meta data first
+    await this.fetchWorker();
+
+    // After the form is rendered, let's fetch connector data and override the default values from meta data
+    this.fetchConnector();
+    this.setTopics();
+  };
+
+  fetchWorker = async () => {
+    const res = await fetchWorker(this.props.workerClusterName);
+    const worker = get(res, 'data.result', null);
+    this.setState({ isLoading: false });
+
+    if (worker) {
+      const { defs, configs } = utils.getMetadata(this.props, worker);
+      this.setState({ defs, configs });
+    }
+  };
+
+  fetchConnector = async () => {
+    const { connectorId } = this.props.match.params;
+    const res = await connectorApi.fetchConnector(connectorId);
+    const result = get(res, 'data.result', null);
+
+    if (result) {
+      const { settings, state } = result;
+      const { topics } = settings;
+
+      const topicName = utils.getCurrTopicName({
+        originals: this.props.globalTopics,
+        target: topics,
+      });
+
+      const configs = { ...settings, topics: topicName };
+      this.setState({ configs, state });
+    }
+  };
+
+  setTopics = () => {
+    const { pipelineTopics } = this.props;
+    this.setState({ topics: pipelineTopics.map(t => t.name) });
+  };
+
+  handleChange = ({ target }) => {
+    const { configs } = this.state;
+    const updatedConfigs = utils.updateConfigs({ configs, target });
+    this.updateComponent(updatedConfigs);
+  };
+
+  handleColumnChange = newColumn => {
+    const { configs } = this.state;
+    const updatedConfigs = utils.addColumn({ configs, newColumn });
+    this.updateComponent(updatedConfigs);
+  };
+
+  handleColumnRowDelete = currRow => {
+    const { configs } = this.state;
+    const updatedConfigs = utils.removeColumn({ configs, currRow });
+    this.updateComponent(updatedConfigs);
+  };
+
+  handleColumnRowUp = (e, order) => {
+    e.preventDefault();
+    const { configs } = this.state;
+    const updatedConfigs = utils.moveColumnRowUp({ configs, order });
+    this.updateComponent(updatedConfigs);
+  };
+
+  handleColumnRowDown = (e, order) => {
+    e.preventDefault();
+    const { configs } = this.state;
+    const updatedConfigs = utils.moveColumnRowDown({ configs, order });
+    this.updateComponent(updatedConfigs);
+  };
+
   render() {
     const {
-      name,
+      defs,
+      configs,
+      topics,
       state,
-      host,
-      port,
-      username,
-      password,
-      inputFolder,
-      completeFolder,
-      errorFolder,
-      writeTopics,
-      currWriteTopic,
-      fileEncodings,
-      currFileEncoding,
-      tasks,
-      IsTestConnectionBtnWorking,
-      currTask,
-      schema,
-      isDeleteRowModalActive,
-      isNewRowModalActive,
-      columnName,
-      newColumnName,
-      currType,
+      isTestConnectionBtnWorking,
     } = this.state;
 
-    const isRunning = includes(
-      [CONNECTOR_STATES.running, CONNECTOR_STATES.failed],
+    const formProps = {
+      defs,
+      configs,
+      topics,
       state,
-    );
+      handleChange: this.handleChange,
+      handleColumnChange: this.handleColumnChange,
+      handleColumnRowDelete: this.handleColumnRowDelete,
+      handleColumnRowUp: this.handleColumnRowUp,
+      handleColumnRowDown: this.handleColumnRowDown,
+    };
 
     return (
       <React.Fragment>
@@ -599,253 +604,13 @@ class FtpSource extends React.Component {
               onDelete={this.handleDeleteConnector}
             />
           </s.TitleWrapper>
-          <Tabs>
-            <TabList>
-              <Tab>FTP Source 1/2</Tab>
-              <Tab>FTP Source 2/2</Tab>
-              <Tab>Output schema</Tab>
-            </TabList>
-            <ConfirmModal
-              isActive={isDeleteRowModalActive}
-              title="Delete row?"
-              confirmBtnText="Yes, Delete this row"
-              cancelBtnText="No, Keep it"
-              handleCancel={this.handleDeleteRowModalClose}
-              handleConfirm={this.handleRowDelete}
-              message="Are you sure you want to delete this row? This action cannot be undone!"
-              isDelete
+          {utils.renderForm(formProps)}
+          <s.StyledForm>
+            <TestConnectionBtn
+              handleClick={this.handleTestConnection}
+              isWorking={isTestConnectionBtnWorking}
             />
-
-            <Modal
-              isActive={isNewRowModalActive}
-              title="New row"
-              width="290px"
-              confirmBtnText="Create"
-              handleConfirm={this.handleRowCreate}
-              handleCancel={this.handleNewRowModalClose}
-            >
-              <form>
-                <FormInner>
-                  <FormGroup>
-                    <Label>Column name</Label>
-                    <Input
-                      name="columnName"
-                      width="250px"
-                      placeholder="Column name"
-                      value={columnName}
-                      data-testid="column-name-modal"
-                      handleChange={this.handleInputChange}
-                    />
-                  </FormGroup>
-                  <FormGroup>
-                    <Label>New column name</Label>
-                    <Input
-                      name="newColumnName"
-                      width="100%"
-                      placeholder="New column name"
-                      value={newColumnName}
-                      data-testid="new-column-name-modal"
-                      handleChange={this.handleInputChange}
-                    />
-                  </FormGroup>
-                  <FormGroup>
-                    <Label>Type</Label>
-                    <Select
-                      name="types"
-                      width="100%"
-                      list={this.schemaTypes}
-                      selected={currType}
-                      handleChange={this.handleSelectChange}
-                    />
-                  </FormGroup>
-                </FormInner>
-              </form>
-            </Modal>
-            <TabPanel>
-              <form>
-                <FormGroup>
-                  <Label>Name</Label>
-                  <Input
-                    name="name"
-                    width="100%"
-                    placeholder="FTP source name"
-                    value={name}
-                    data-testid="name-input"
-                    handleChange={this.handleInputChange}
-                    disabled={isRunning}
-                  />
-                </FormGroup>
-                <FormGroup>
-                  <Label>FTP host</Label>
-                  <Input
-                    name="host"
-                    width="100%"
-                    placeholder="http://localhost"
-                    value={host}
-                    data-testid="host-input"
-                    handleChange={this.handleInputChange}
-                    disabled={isRunning}
-                  />
-
-                  {/* Incomplete feature, don't display this for now */}
-                  {false && <FtpQuicklyFillIn onFillIn={this.quicklyFillIn} />}
-                </FormGroup>
-
-                <FormGroup>
-                  <Label>FTP port</Label>
-                  <Input
-                    name="port"
-                    width="100%"
-                    placeholder="21"
-                    value={port}
-                    data-testid="port-input"
-                    handleChange={this.handleInputChange}
-                    disabled={isRunning}
-                  />
-                </FormGroup>
-
-                <FormGroup>
-                  <Label>User name</Label>
-                  <Input
-                    name="username"
-                    width="100%"
-                    placeholder="admin"
-                    value={username}
-                    data-testid="username-input"
-                    handleChange={this.handleInputChange}
-                    disabled={isRunning}
-                  />
-                </FormGroup>
-
-                <FormGroup>
-                  <Label>Password</Label>
-                  <Input
-                    type="password"
-                    name="password"
-                    width="100%"
-                    placeholder="password"
-                    value={password}
-                    data-testid="password-input"
-                    handleChange={this.handleInputChange}
-                    disabled={isRunning}
-                  />
-                </FormGroup>
-
-                <FormGroup>
-                  <Button
-                    theme={primaryBtn}
-                    text="Test Connection"
-                    isWorking={IsTestConnectionBtnWorking}
-                    disabled={IsTestConnectionBtnWorking || isRunning}
-                    data-testid="test-connection-btn"
-                    handleClick={this.handleTestConnection}
-                  />
-                </FormGroup>
-              </form>
-            </TabPanel>
-
-            <TabPanel>
-              <form>
-                <FormGroupWrapper>
-                  <FormGroup css={{ width: '70%', margin: '0 20px 0 0' }}>
-                    <Label>File encoding</Label>
-                    <Select
-                      name="fileEnconding"
-                      list={fileEncodings}
-                      selected={currFileEncoding}
-                      data-testid="file-enconding-select"
-                      handleChange={this.handleSelectChange}
-                      disabled={isRunning}
-                    />
-                  </FormGroup>
-
-                  <FormGroup width="30%">
-                    <Label>Task</Label>
-                    <Select
-                      name="tasks"
-                      list={tasks}
-                      selected={currTask}
-                      data-testid="task-select"
-                      handleChange={this.handleSelectChange}
-                      disabled={isRunning}
-                    />
-                  </FormGroup>
-                </FormGroupWrapper>
-                <FormGroup>
-                  <Label>Write topic</Label>
-                  <Select
-                    name="writeTopics"
-                    width="100%"
-                    data-testid="write-topic-select"
-                    selected={currWriteTopic}
-                    list={writeTopics}
-                    handleChange={this.handleSelectChange}
-                    disabled={isRunning}
-                    placeholder="Please select a topic..."
-                    isObject
-                    clearable
-                  />
-                </FormGroup>
-
-                <FormGroup>
-                  <Label>Input folder</Label>
-                  <Input
-                    name="inputFolder"
-                    width="100%"
-                    placeholder="/path/to/the/input/folder"
-                    value={inputFolder}
-                    data-testid="input-folder-input"
-                    handleChange={this.handleInputChange}
-                    disabled={isRunning}
-                  />
-                </FormGroup>
-
-                <FormGroup>
-                  <Label>Complete folder</Label>
-                  <Input
-                    name="completeFolder"
-                    width="100%"
-                    placeholder="/path/to/the/complete/folder"
-                    value={completeFolder}
-                    data-testid="complete-folder-input"
-                    handleChange={this.handleInputChange}
-                    disabled={isRunning}
-                  />
-                </FormGroup>
-
-                <FormGroup>
-                  <Label>Error folder</Label>
-                  <Input
-                    name="errorFolder"
-                    width="100%"
-                    placeholder="/path/to/the/error/folder"
-                    value={errorFolder}
-                    data-testid="error-folder-input"
-                    handleChange={this.handleInputChange}
-                    disabled={isRunning}
-                  />
-                </FormGroup>
-              </form>
-            </TabPanel>
-            <TabPanel>
-              <NewRowBtn
-                text="New row"
-                theme={primaryBtn}
-                data-testid="new-row-btn"
-                handleClick={this.handleNewRowModalOpen}
-                disabled={isRunning}
-              />
-              <SchemaTable
-                headers={this.schemaHeader}
-                schema={schema}
-                dataTypes={this.schemaTypes}
-                handleTypeChange={this.handleTypeChange}
-                handleModalOpen={this.handleDeleteRowModalOpen}
-                handleUp={this.handleUp}
-                handleDown={this.handleDown}
-              />
-            </TabPanel>
-          </Tabs>
+          </s.StyledForm>
         </s.BoxWrapper>
       </React.Fragment>
     );
