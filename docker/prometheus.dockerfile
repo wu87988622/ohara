@@ -43,7 +43,7 @@ RUN yum install epel-release -y
 RUN yum install jq -y
 
 # change user from root to prometheus
-ARG USER=prometheus
+ARG USER=ohara
 RUN groupadd $USER
 RUN useradd -ms /bin/bash -g $USER $USER
 

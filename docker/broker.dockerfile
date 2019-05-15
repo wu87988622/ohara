@@ -56,7 +56,7 @@ RUN yum install -y \
 ENV JAVA_HOME=/usr/lib/jvm/jre
 
 # change user from root to kafka
-ARG USER=broker
+ARG USER=ohara
 RUN groupadd $USER
 RUN useradd -ms /bin/bash -g $USER $USER
 
