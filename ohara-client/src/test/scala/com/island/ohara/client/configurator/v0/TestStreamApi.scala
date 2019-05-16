@@ -16,9 +16,10 @@
 
 package com.island.ohara.client.configurator.v0
 
-import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
+import com.island.ohara.client.configurator.v0.JarApi.JarInfo
+import com.island.ohara.client.configurator.v0.StreamApi.{StreamAppDescription, StreamClusterInfo}
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.VersionUtils
+import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import org.junit.Test
 import org.scalatest.Matchers
 
@@ -32,7 +33,7 @@ class TestStreamApi extends SmallTest with Matchers {
   }
 
   @Test
-  def checkAppIdLength(): Unit = {
+  def testAppIdLength(): Unit = {
 
     val appId = Random.alphanumeric.take(StreamApi.LIMIT_OF_DOCKER_NAME_LENGTH).mkString
 
@@ -40,13 +41,33 @@ class TestStreamApi extends SmallTest with Matchers {
   }
 
   @Test
-  def checkClusterNameChar(): Unit = {
-    val appId = "this!@is#_not@@allow))string"
-    an[IllegalArgumentException] should be thrownBy StreamApi.formatClusterName(appId)
+  def testClusterNameChar(): Unit = {
+    val name = "this!@is#_not@@allow))string"
+    an[IllegalArgumentException] should be thrownBy StreamApi.formatClusterName(name)
   }
 
   @Test
-  def checkPortsShouldBeEmpty(): Unit = {
+  def testStreamAppDescriptionEquals(): Unit = {
+    val id = CommonUtils.uuid()
+    val info = StreamAppDescription(
+      workerClusterName = CommonUtils.randomString(5),
+      id = id,
+      name = "my-app",
+      instances = 1,
+      jarInfo = JarInfo("id", "name", 1L, CommonUtils.current()),
+      from = Seq.empty,
+      to = Seq.empty,
+      state = None,
+      error = None,
+      lastModified = CommonUtils.current()
+    )
+
+    info shouldBe StreamApi.STREAM_ACTION_RESPONSE_JSON_FORMAT.read(
+      StreamApi.STREAM_ACTION_RESPONSE_JSON_FORMAT.write(info))
+  }
+
+  @Test
+  def testPortsShouldBeEmpty(): Unit = {
     val info = StreamClusterInfo(
       name = "foo",
       imageName = "bar",

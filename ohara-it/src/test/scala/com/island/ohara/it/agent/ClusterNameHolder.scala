@@ -41,6 +41,11 @@ class ClusterNameHolder(nodes: Seq[Node]) extends Releasable {
     name
   }
 
+  def addClusterName(name: String): String = {
+    usedClusterNames += name
+    name
+  }
+
   override def close(): Unit = {
     nodes.foreach { node =>
       val client =

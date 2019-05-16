@@ -16,8 +16,6 @@
 
 package com.island.ohara.it.agent.ssh
 
-import java.io.File
-
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterCreationRequest
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeCreationRequest}
@@ -143,8 +141,10 @@ class TestSshStreamApp extends IntegrationTest with Matchers {
   def testRunSimpleStreamApp(): Unit = {
     val from = "fromTopic"
     val to = "toTopic"
-    val jarPath =
-      s"${System.getProperty("user.dir")}${File.separator}build${File.separator}libs${File.separator}ohara-streamapp.jar"
+    val jarPath = CommonUtils.path(System.getProperty("user.dir"), "build", "libs", "ohara-streamapp.jar")
+
+    // We make sure the broker cluster exists again (for create topic)
+    assertCluster(() => result(bkApi.list), bkName)
 
     // create topic
     val topic1 = result(
@@ -170,7 +170,7 @@ class TestSshStreamApp extends IntegrationTest with Matchers {
     jarInfo.head.name shouldBe "ohara-streamapp.jar"
 
     // Create streamApp properties
-    streamAppPropertyAccess.add(StreamPropertyRequest(jarInfo.head.id, None, None, None, None))
+    val stream = result(streamAppPropertyAccess.add(StreamPropertyRequest(jarInfo.head.id, None, None, None, None)))
 
     // Update streamApp properties
     val req = StreamPropertyRequest(
@@ -181,7 +181,7 @@ class TestSshStreamApp extends IntegrationTest with Matchers {
       Some(instances)
     )
     val properties = result(
-      streamAppPropertyAccess.update(jarInfo.head.id, req)
+      streamAppPropertyAccess.update(stream.id, req)
     )
     properties.from.size shouldBe 1
     properties.to.size shouldBe 1
@@ -192,14 +192,17 @@ class TestSshStreamApp extends IntegrationTest with Matchers {
 
     //Start streamApp
     val res1 =
-      result(streamAppActionAccess.start(jarInfo.head.id))
-    res1.id shouldBe jarInfo.head.id
+      result(streamAppActionAccess.start(stream.id))
+    res1.id shouldBe stream.id
     res1.state.get shouldBe ContainerState.RUNNING.name
     res1.error shouldBe None
 
+    // save the cluster name to cache
+    nameHolder.addClusterName(StreamApi.formatClusterName(res1.id))
+
     //Stop streamApp
     val res2 =
-      result(streamAppActionAccess.stop(jarInfo.head.id))
+      result(streamAppActionAccess.stop(stream.id))
     res2.state.isEmpty shouldBe true
     res2.error shouldBe None
   }

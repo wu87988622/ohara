@@ -213,6 +213,11 @@ class TestStreamRoute extends SmallTest with Matchers {
     res2.state shouldBe None
     res2.error shouldBe None
 
+    // stop the same streamApp cluster will only return the previous object
+    val res3 = result(accessStreamAction.stop(props.id))
+    res3.state shouldBe None
+    res3.error shouldBe None
+
     // get property will get the latest state (streamApp not exist)
     val latest = result(accessStreamProperty.get(props.id))
     latest.state shouldBe None

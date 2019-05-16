@@ -16,8 +16,6 @@
 
 package com.island.ohara.it.agent.k8s
 
-import java.io.File
-
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.agent.{ClusterCollie, Crane, NodeCollie}
@@ -55,12 +53,13 @@ class TestK8SStreamApp extends IntegrationTest with Matchers {
       val k8sClient = K8SClient(API_SERVER_URL.get)
       Await.result(
         k8sClient.containers
-          .filter(containers => {
-            usedClusterNames.forall(clusterName => {
-              containers.map(_.name).exists(_.contains(clusterName))
-              // TODO: remove this line after we implement delete api in #911...by Sam
-            }) || containers.map(_.name).exists(_.contains("osw-stream-"))
-          })
+          .map {
+            _.filter(container => {
+              usedClusterNames.forall(clusterName => {
+                container.name.contains(clusterName)
+              })
+            })
+          }
           .flatMap(Future.traverse(_) { container =>
             k8sClient.remove(container.name)
           }),
@@ -180,8 +179,10 @@ class TestK8SStreamApp extends IntegrationTest with Matchers {
   def testRunSimpleStreamApp(): Unit = {
     val from = "fromTopic"
     val to = "toTopic"
-    val jarPath =
-      s"${System.getProperty("user.dir")}${File.separator}build${File.separator}libs${File.separator}ohara-streamapp.jar"
+    val jarPath = CommonUtils.path(System.getProperty("user.dir"), "build", "libs", "ohara-streamapp.jar")
+
+    // We make sure the broker cluster exists again (for create topic)
+    assertCluster(() => result(bkApi.list), bkName)
 
     // create topic
     val topic1 = result(
@@ -207,7 +208,7 @@ class TestK8SStreamApp extends IntegrationTest with Matchers {
     jarInfo.head.name shouldBe "ohara-streamapp.jar"
 
     // Create streamApp properties
-    streamAppPropertyAccess.add(StreamPropertyRequest(jarInfo.head.id, None, None, None, None))
+    val stream = result(streamAppPropertyAccess.add(StreamPropertyRequest(jarInfo.head.id, None, None, None, None)))
 
     // Update streamApp properties
     val req = StreamPropertyRequest(
@@ -218,7 +219,7 @@ class TestK8SStreamApp extends IntegrationTest with Matchers {
       Some(instances)
     )
     val properties = result(
-      streamAppPropertyAccess.update(jarInfo.head.id, req)
+      streamAppPropertyAccess.update(stream.id, req)
     )
     properties.from.size shouldBe 1
     properties.to.size shouldBe 1
@@ -228,17 +229,32 @@ class TestK8SStreamApp extends IntegrationTest with Matchers {
     properties.workerClusterName shouldBe wkName
 
     //Start streamApp
-    val res1 =
-      result(streamAppActionAccess.start(jarInfo.head.id))
-    res1.id shouldBe jarInfo.head.id
+    val res1 = result(streamAppActionAccess.start(stream.id))
+    res1.id shouldBe stream.id
     res1.state.get shouldBe ContainerState.RUNNING.name
     res1.error shouldBe None
 
+    // save the cluster name to cache
+    nameHolder.addClusterName(StreamApi.formatClusterName(res1.id))
+
     //Stop streamApp
     val res2 =
-      result(streamAppActionAccess.stop(jarInfo.head.id))
+      result(streamAppActionAccess.stop(stream.id))
     res2.state.isEmpty shouldBe true
     res2.error shouldBe None
+
+    val k8sClient = K8SClient(API_SERVER_URL.get)
+    val res3 = result(streamAppActionAccess.start(res2.id))
+    // We try to "manual" delete the pod container without use stream API
+    result(
+      k8sClient.containers
+        .filter(_.exists(_.name.contains(StreamApi.formatClusterName(res3.id))))
+        .flatMap(Future.traverse(_) { container =>
+          k8sClient.remove(container.name)
+        }))
+
+    // since the actual container is deleted, stop stream cluster will only update the state
+    result(streamAppActionAccess.stop(res3.id)).state.isEmpty shouldBe true
   }
 
   @After
