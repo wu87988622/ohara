@@ -164,7 +164,9 @@ describe('<PipelineListPage />', () => {
     wrapper.setState({ pipelines });
     const id = pipelines[0].id;
     const pipelineName = pipelines[0].name;
-    const res = { data: { result: { id, name: pipelineName } } };
+    const res = {
+      data: { result: { id, name: pipelineName }, isSuccess: true },
+    };
     const expectedSuccessMsg = `${
       MESSAGES.PIPELINE_DELETION_SUCCESS
     } ${pipelineName}`;
