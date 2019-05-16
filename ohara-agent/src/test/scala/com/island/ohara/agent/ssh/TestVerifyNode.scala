@@ -34,14 +34,14 @@ import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
 /**
-  * the defaut implementation of verifing node consists of 4 actions.
+  * the default implementation of verifying node consists of 4 actions.
   * 1) run "hello-world" on remote node
   * 2) check the existence of hello-world image
   * 3) check the status of hello-world container
   * 4) remove hello-world container
   * this test injects command handler for above actions that return correct response or throw exception.
   */
-class TestVetifyNode extends SmallTest with Matchers {
+class TestVerifyNode extends SmallTest with Matchers {
   private[this] var messageWhenFailToRun: String = _
   private[this] var messageWhenFailToListImages: String = _
   private[this] var messageWhenFailToPs: String = _
