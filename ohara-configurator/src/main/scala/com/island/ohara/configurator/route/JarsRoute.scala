@@ -23,7 +23,9 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.FileInfo
+import com.island.ohara.client.configurator.v0.JarApi
 import com.island.ohara.client.configurator.v0.JarApi._
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.jar.JarStore
 import spray.json.DefaultJsonProtocol._
 
@@ -33,6 +35,8 @@ private[configurator] object JarsRoute {
 
   def tempDestination(fileInfo: FileInfo): File =
     File.createTempFile(fileInfo.fileName, ".tmp")
+
+  def pathToJar(id: String): String = s"${JarApi.DOWNLOAD_JAR_PREFIX_PATH}/${CommonUtils.requireNonEmpty(id)}.jar"
 
   def apply(implicit jarStore: JarStore, executionContext: ExecutionContext): server.Route =
     pathPrefix(JAR_PREFIX_PATH) {

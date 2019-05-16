@@ -100,6 +100,7 @@ All images are list below.
 docker run --rm -p ${port}:${port} --add-host ${nodeHostName}:${nodeHostIP} oharastream/configurator:0.5-SNAPSHOT --port ${port} --hostname ${host} --node ${SshUserName}:${SshPassword}@${NodeHostName}:${SshPort}
 ```
 
+- folder: the folder used to store data (default is random). Mount the volume if you want to keep your data after restarting Configurator
 - port: bound by Configurator (default is random)
 - add-host: add a host mapping to /etc/hosts in Ohara Configurator (nodeHostName:nodeHostIP)
 - hostname: hostname to run Ohara Configurator (defaults to 0.0.0.0)

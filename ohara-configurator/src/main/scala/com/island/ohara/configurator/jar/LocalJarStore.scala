@@ -17,7 +17,6 @@
 package com.island.ohara.configurator.jar
 
 import java.io.File
-import java.net.URL
 
 import com.island.ohara.client.configurator.v0.JarApi.JarInfo
 import com.island.ohara.common.util.{CommonUtils, ReleaseOnce}
@@ -25,19 +24,16 @@ import com.island.ohara.configurator.jar.LocalJarStore._
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
-private[configurator] class LocalJarStore(val homeFolder: String,
-                                          urlPrefix: String,
-                                          advertisedHostname: String,
-                                          advertisedPort: Int)
-    extends ReleaseOnce
-    with JarStore {
+private[configurator] class LocalJarStore(val folder: String) extends ReleaseOnce with JarStore {
 
-  private[this] def toFolder(id: String): File = new File(homeFolder, CommonUtils.requireNonEmpty(id))
+  private[this] val root: File = {
+    val f = new File(folder)
+    if (!f.exists() && !f.mkdirs()) throw new IllegalStateException(s"failed to mkdir on $folder")
+    if (!f.isDirectory) throw new IllegalArgumentException(s"$folder is a not a folder")
+    f
+  }
 
-  override def urls(implicit executionContext: ExecutionContext): Future[Map[String, URL]] = jarInfos.map(_.map {
-    plugin =>
-      plugin.id -> new URL(s"http://$advertisedHostname:$advertisedPort/$urlPrefix/${plugin.id}.jar")
-  }.toMap)
+  private[this] def toFolder(id: String): File = new File(root, CommonUtils.requireNonEmpty(id))
 
   override def toFile(id: String)(implicit executionContext: ExecutionContext): Future[File] =
     jarInfo(id).map(jarInfo => CommonUtils.requireExist(new File(CommonUtils.requireExist(toFolder(id)), jarInfo.name)))
@@ -76,7 +72,6 @@ private[configurator] class LocalJarStore(val homeFolder: String,
 
   override def jarInfos(implicit executionContext: ExecutionContext): Future[Seq[JarInfo]] = Future.successful {
     // TODO: We should cache the plugins. because seeking to disk is a slow operation...
-    val root = new File(homeFolder)
     val files = root.listFiles()
     if (files != null)
       files

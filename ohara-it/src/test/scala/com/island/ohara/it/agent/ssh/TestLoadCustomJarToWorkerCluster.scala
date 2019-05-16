@@ -60,7 +60,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
   private[this] val publicPort = sys.env.get(portKey).map(_.toInt).getOrElse(invalidPort)
 
   private[this] val configurator: Configurator =
-    Configurator.builder().advertisedHostname(publicHostname).advertisedPort(publicPort).build()
+    Configurator.builder().hostname(publicHostname).port(publicPort).build()
 
   private[this] val zkApi = ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port)
 
@@ -69,6 +69,12 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
   private[this] val wkApi = WorkerApi.access().hostname(configurator.hostname).port(configurator.port)
 
   private[this] val nameHolder = new ClusterNameHolder(nodeCache)
+
+  /**
+    * used to debug. setting false to disable cleanup of containers after testing.
+    */
+  private[this] val cleanup = true
+
   @Before
   def setup(): Unit = if (nodeCache.isEmpty || publicPort == invalidPort || publicHostname == invalidHostname)
     skipTest(
@@ -168,6 +174,6 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
   @After
   final def tearDown(): Unit = {
     Releasable.close(configurator)
-    Releasable.close(nameHolder)
+    if (cleanup) Releasable.close(nameHolder)
   }
 }

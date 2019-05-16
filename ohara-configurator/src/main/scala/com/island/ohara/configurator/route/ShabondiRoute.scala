@@ -69,7 +69,7 @@ object ShabondiRoute {
 
   private def randomPickNode(store: DataStore)(implicit executionContext: ExecutionContext): Node = {
     val random = new scala.util.Random
-    val nodes = awaitResult(store.values[Node])
+    val nodes = awaitResult(store.values[Node]())
     if (nodes.isEmpty)
       throw new RuntimeException("Cannot find any ohara node.")
     nodes(random.nextInt(nodes.length))
@@ -98,8 +98,9 @@ object ShabondiRoute {
     }
   }
 
-  def apply(k8sClientOpt: Option[K8SClient])(implicit store: DataStore,
-                                             executionContext: ExecutionContext): server.Route =
+  def apply(implicit k8sClientOpt: Option[K8SClient],
+            store: DataStore,
+            executionContext: ExecutionContext): server.Route =
     pathPrefix(PATH_PREFIX) {
       pathEnd {
         post { complete { addShabondi(store) } }

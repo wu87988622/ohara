@@ -85,7 +85,8 @@ private class WorkerCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClient
             .find(_._1.name == brokerClusterName)
             .map(_._2)
             .map((existNodes, newNodes, _))
-            .getOrElse(throw new NoSuchClusterException(s"broker cluster:$brokerClusterName doesn't exist"))
+            .getOrElse(throw new NoSuchClusterException(
+              s"broker cluster:$brokerClusterName doesn't exist. other broker clusters: ${clusters.filter(_._1.isInstanceOf[BrokerClusterInfo]).map(_._1.name).mkString(",")}"))
       }
       .flatMap {
         case (existNodes, newNodes, brokerContainers) =>

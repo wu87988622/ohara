@@ -17,7 +17,6 @@
 package com.island.ohara.configurator.jar
 
 import java.io.File
-import java.net.URL
 
 import com.island.ohara.client.configurator.v0.JarApi.JarInfo
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -76,27 +75,6 @@ trait JarStore extends Releasable {
       .map(_.find(_.id == id).head)
 
   def jarInfos(implicit executionContext: ExecutionContext): Future[Seq[JarInfo]]
-
-  /**
-    * generate a downloadable remote resource.
-    * @param id jar's id
-    * @return url connection
-    */
-  def url(id: String)(implicit executionContext: ExecutionContext): Future[URL] =
-    urls
-      .map { us =>
-        // check the input arguments
-        CommonUtils.requireNonEmpty(id)
-        us
-      }
-      .map(_.find(_._1 == id).head._2)
-
-  /**
-    * generate urls for all ids
-    * @param executionContext thread pool
-    * @return urls
-    */
-  def urls(implicit executionContext: ExecutionContext): Future[Map[String, URL]]
 
   /**
     * check the existence of a jar

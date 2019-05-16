@@ -16,6 +16,7 @@
 
 package com.island.ohara.configurator
 
+import java.net.URL
 import java.util.concurrent.{ExecutionException, TimeUnit}
 
 import akka.actor.ActorSystem
@@ -39,55 +40,36 @@ import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterCrea
 import com.island.ohara.client.configurator.v0.{ZookeeperApi, _}
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce}
-import com.island.ohara.configurator.jar.{JarStore, LocalJarStore}
+import com.island.ohara.configurator.jar.JarStore
 import com.island.ohara.configurator.route._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.typesafe.scalalogging.Logger
 import spray.json.DeserializationException
 
-import scala.concurrent.Await
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.{Duration, _}
+import scala.concurrent.duration._
 
 /**
   * A simple impl from Configurator. This impl maintains all subclass from ohara data in a single ohara store.
   * NOTED: there are many route requiring the implicit variables so we make them be implicit in construction.
   *
-  * @param advertisedHostname hostname from rest server
-  * @param advertisedPort    port from rest server
-  * @param store    store
   */
-class Configurator private[configurator] (advertisedHostname: Option[String],
-                                          advertisedPort: Option[Int],
-                                          cacheRefresh: Duration,
-                                          initializationTimeout: Duration,
-                                          terminationTimeout: Duration,
-                                          extraRoute: Option[server.Route])(implicit val store: DataStore,
-                                                                            nodeCollie: NodeCollie,
-                                                                            val clusterCollie: ClusterCollie,
-                                                                            val crane: Crane,
-                                                                            val k8sClient: Option[K8SClient])
+class Configurator private[configurator] (val hostname: String, val port: Int)(implicit val store: DataStore,
+                                                                               val jarStore: JarStore,
+                                                                               val nodeCollie: NodeCollie,
+                                                                               val clusterCollie: ClusterCollie,
+                                                                               val crane: Crane,
+                                                                               val k8sClient: Option[K8SClient])
     extends ReleaseOnce
     with SprayJsonSupport {
 
+  private[this] val initializationTimeout = 10 seconds
+  private[this] val cacheTimeout = 3 seconds
+
   private[configurator] def size: Int = store.size
 
-  /**
-    * If you don't assign a advertised hostname explicitly, local hostname will be chosen.
-    * @return advertised hostname of configurator.
-    */
-  val hostname: String = advertisedHostname.getOrElse(CommonUtils.hostname())
-
-  /**
-    * If you don't assign a port explicitly, a random port will be chosen.
-    * Pre-generating a random port can solve the initialization of components in configurator.
-    * @return port bound by configurator.
-    */
-  val port: Int = advertisedPort.getOrElse(CommonUtils.availablePort())
-
   private[this] val log = Logger(classOf[Configurator])
-
-  private[this] val jarLocalHome = CommonUtils.createTempFolder("Configurator").getAbsolutePath
 
   private[this] implicit val brokerCollie: BrokerCollie = clusterCollie.brokerCollie()
   private[this] implicit val workerCollie: WorkerCollie = clusterCollie.workerCollie()
@@ -157,10 +139,15 @@ class Configurator private[configurator] (advertisedHostname: Option[String],
               .toSeq
               .toMap),
             // TODO: how to set a suitable timeout ??? by chia
-            cacheRefresh * 5
+            cacheTimeout * 5
         ))
-      .frequency(cacheRefresh)
+      .frequency(cacheTimeout)
       .build()
+  }
+
+  implicit val urlGenerator: UrlGenerator = new UrlGenerator {
+    override def url(id: String)(implicit executionContext: ExecutionContext): Future[URL] =
+      Future.successful(new URL(s"http://$hostname:$port/${ConfiguratorApiInfo.V0}/${JarsRoute.pathToJar(id)}"))
   }
 
   /**
@@ -178,7 +165,7 @@ class Configurator private[configurator] (advertisedHostname: Option[String],
       ConnectorRoute.apply,
       InfoRoute.apply,
       StreamRoute.apply,
-      ShabondiRoute.apply(k8sClient),
+      ShabondiRoute.apply,
       NodeRoute.apply,
       ZookeeperRoute.apply,
       BrokerRoute.apply,
@@ -190,8 +177,8 @@ class Configurator private[configurator] (advertisedHostname: Option[String],
     ).reduce[server.Route]((a, b) => a ~ b))
 
   private[this] def privateRoute(): server.Route =
-    pathPrefix(ConfiguratorApiInfo.PRIVATE)(extraRoute.getOrElse(path(Remaining)(path =>
-      complete(StatusCodes.NotFound -> s"you have to buy the license for advanced API: $path"))))
+    pathPrefix(ConfiguratorApiInfo.PRIVATE)(path(Remaining)(path =>
+      complete(StatusCodes.NotFound -> s"you have to buy the license for advanced API: $path")))
 
   private[this] def finalRoute(): server.Route =
     path(Remaining)(path => complete(StatusCodes.NotFound -> s"Unsupported API: $path"))
@@ -216,23 +203,13 @@ class Configurator private[configurator] (advertisedHostname: Option[String],
     }
 
   /**
-    * We create an internal jar store based on http server of configurator.
-    */
-  private[configurator] implicit val jarStore: JarStore = new LocalJarStore(
-    homeFolder = jarLocalHome,
-    // the download API is in JarsRoute now.
-    urlPrefix = s"${ConfiguratorApiInfo.V0}/${JarApi.DOWNLOAD_JAR_PREFIX_PATH}",
-    advertisedHostname = hostname,
-    advertisedPort = port
-  )
-
-  /**
     * Do what you want to do when calling closing.
     */
   override protected def doClose(): Unit = {
     val start = CommonUtils.current()
-    if (httpServer != null) Await.result(httpServer.unbind(), terminationTimeout.toMillis milliseconds)
-    if (actorSystem != null) Await.result(actorSystem.terminate(), terminationTimeout.toMillis milliseconds)
+    if (httpServer != null) Await.result(httpServer.unbind(), initializationTimeout.toMillis milliseconds)
+    if (actorSystem != null) Await.result(actorSystem.terminate(), initializationTimeout.toMillis milliseconds)
+    Releasable.close(crane)
     Releasable.close(meterCache)
     Releasable.close(clusterCollie)
     Releasable.close(jarStore)
@@ -253,11 +230,13 @@ object Configurator {
   //----------------[main]----------------//
   private[this] lazy val LOG = Logger(Configurator.getClass)
   private[configurator] val HELP_KEY = "--help"
+  private[configurator] val FOLDER_KEY = "--folder"
   private[configurator] val HOSTNAME_KEY = "--hostname"
   private[configurator] val K8S_KEY = "--k8s"
   private[configurator] val PORT_KEY = "--port"
   private[configurator] val NODE_KEY = "--node"
-  private val USAGE = s"[Usage] $HOSTNAME_KEY $PORT_KEY $K8S_KEY $NODE_KEY(form: user:password@hostname:port)"
+  private val USAGE =
+    s"[Usage] $FOLDER_KEY $HOSTNAME_KEY $PORT_KEY $K8S_KEY $NODE_KEY(form: user:password@hostname:port)"
 
   /**
     * Running a standalone configurator.
@@ -274,19 +253,14 @@ object Configurator {
 
     val configuratorBuilder = Configurator.builder()
     var nodeRequest: Option[NodeCreationRequest] = None
-    var k8sClient: Option[K8SClient] = None
-    var k8sValue = ""
+    var k8sClient: K8SClient = null
     args.sliding(2, 2).foreach {
-      case Array(HOSTNAME_KEY, value) => configuratorBuilder.advertisedHostname(value)
-      case Array(PORT_KEY, value)     => configuratorBuilder.advertisedPort(value.toInt)
+      case Array(FOLDER_KEY, value)   => configuratorBuilder.homeFolder(value)
+      case Array(HOSTNAME_KEY, value) => configuratorBuilder.hostname(value)
+      case Array(PORT_KEY, value)     => configuratorBuilder.port(value.toInt)
       case Array(K8S_KEY, value) =>
-        k8sClient = Option(K8SClient(value))
-        configuratorBuilder.k8sClient(K8SClient(value))
-        configuratorBuilder.clusterCollie(
-          ClusterCollie.builderOfK8s().nodeCollie(configuratorBuilder.nodeCollie()).k8sClient(k8sClient.get).build())
-        configuratorBuilder.crane(
-          Crane.builderOfK8s().nodeCollie(configuratorBuilder.nodeCollie()).k8sClient(k8sClient.get).build())
-        k8sValue = value
+        k8sClient = K8SClient(value)
+        configuratorBuilder.k8sClient(k8sClient)
       case Array(NODE_KEY, value) =>
         val user = value.split(":").head
         val password = value.split("@").head.split(":").last
@@ -303,35 +277,37 @@ object Configurator {
     }
     val configurator = configuratorBuilder.build()
 
-    try if (k8sValue.nonEmpty) {
-      nodeRequestEach(
-        nodeRequest,
-        configurator,
-        (node: Node) => {
-          val validationResult: Seq[ValidationApi.ValidationReport] = Await.result(
-            ValidationApi
-              .access()
-              .hostname(CommonUtils.hostname)
-              .port(configurator.port)
-              .verify(NodeValidationRequest(node.name, node.port, node.user, node.password)),
-            30 seconds
-          )
-          val isValidationPass: Boolean = validationResult.map(x => x.pass).head
-          if (!isValidationPass) throw new IllegalArgumentException(s"${validationResult.map(x => x.message).head}")
-          checkImageExists(node, Await.result(k8sClient.get.images(node.name), 30 seconds))
-        }
-      )
+    try if (k8sClient != null) {
+      nodeRequest.foreach(
+        processNodeRequest(
+          _,
+          configurator,
+          (node: Node) => {
+            val validationResult: Seq[ValidationApi.ValidationReport] = Await.result(
+              ValidationApi
+                .access()
+                .hostname(CommonUtils.hostname)
+                .port(configurator.port)
+                .verify(NodeValidationRequest(node.name, node.port, node.user, node.password)),
+              30 seconds
+            )
+            val isValidationPass: Boolean = validationResult.map(x => x.pass).head
+            if (!isValidationPass) throw new IllegalArgumentException(s"${validationResult.map(x => x.message).head}")
+            checkImageExists(node, Await.result(k8sClient.images(node.name), 30 seconds))
+          }
+        ))
     } else {
-      nodeRequestEach(
-        nodeRequest,
-        configurator,
-        (node: Node) => {
-          val dockerClient =
-            DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
-          try checkImageExists(node, dockerClient.imageNames())
-          finally dockerClient.close()
-        }
-      )
+      nodeRequest.foreach(
+        processNodeRequest(
+          _,
+          configurator,
+          (node: Node) => {
+            val dockerClient =
+              DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
+            try checkImageExists(node, dockerClient.imageNames())
+            finally dockerClient.close()
+          }
+        ))
 
     } catch {
       case e: Throwable =>
@@ -368,71 +344,70 @@ object Configurator {
       throw new IllegalArgumentException(s"$node doesn't have ${StreamApi.IMAGE_NAME_DEFAULT}")
   }
 
-  private[this] def nodeRequestEach(nodeRequest: Option[NodeCreationRequest],
-                                    configurator: Configurator,
-                                    otherCheck: Node => Unit): Unit = {
-    nodeRequest.foreach { req =>
-      LOG.info(s"Find a pre-created node:$req. Will create zookeeper and broker!!")
+  private[this] def processNodeRequest(nodeRequest: NodeCreationRequest,
+                                       configurator: Configurator,
+                                       otherCheck: Node => Unit): Unit = {
+    LOG.info(s"Find a pre-created node:$nodeRequest. Will create zookeeper and broker!!")
 
-      val node =
-        Await.result(NodeApi.access().hostname(CommonUtils.hostname()).port(configurator.port).add(req), 30 seconds)
-      otherCheck(node)
+    val node =
+      Await
+        .result(NodeApi.access().hostname(CommonUtils.hostname()).port(configurator.port).add(nodeRequest), 30 seconds)
+    otherCheck(node)
 
-      val zkCluster = Await.result(
-        ZookeeperApi
-          .access()
-          .hostname(CommonUtils.hostname())
-          .port(configurator.port)
-          .add(
-            ZookeeperClusterCreationRequest(name = PRE_CREATE_ZK_NAME,
-                                            imageName = None,
-                                            clientPort = None,
-                                            electionPort = None,
-                                            peerPort = None,
-                                            nodeNames = Seq(node.name))),
-        30 seconds
-      )
+    val zkCluster = Await.result(
+      ZookeeperApi
+        .access()
+        .hostname(CommonUtils.hostname())
+        .port(configurator.port)
+        .add(
+          ZookeeperClusterCreationRequest(name = PRE_CREATE_ZK_NAME,
+                                          imageName = None,
+                                          clientPort = None,
+                                          electionPort = None,
+                                          peerPort = None,
+                                          nodeNames = Seq(node.name))),
+      30 seconds
+    )
 
-      // our cache applies non-blocking action so the creation may be not in cache.
-      // Hence, we have to wait the update to cache.
-      CommonUtils.await(
-        () =>
-          Await
-            .result(ZookeeperApi.access().hostname(CommonUtils.hostname()).port(configurator.port).list, 30 seconds)
-            .exists(_.name == PRE_CREATE_ZK_NAME),
-        java.time.Duration.ofSeconds(30)
-      )
+    // our cache applies non-blocking action so the creation may be not in cache.
+    // Hence, we have to wait the update to cache.
+    CommonUtils.await(
+      () =>
+        Await
+          .result(ZookeeperApi.access().hostname(CommonUtils.hostname()).port(configurator.port).list, 30 seconds)
+          .exists(_.name == PRE_CREATE_ZK_NAME),
+      java.time.Duration.ofSeconds(30)
+    )
 
-      LOG.info(s"succeed to create zk cluster:$zkCluster")
+    LOG.info(s"succeed to create zk cluster:$zkCluster")
 
-      val bkCluster = Await.result(
-        BrokerApi
-          .access()
-          .hostname(CommonUtils.hostname())
-          .port(configurator.port)
-          .add(BrokerClusterCreationRequest(
-            name = PRE_CREATE_BK_NAME,
-            imageName = None,
-            zookeeperClusterName = Some(PRE_CREATE_ZK_NAME),
-            exporterPort = None,
-            clientPort = None,
-            jmxPort = None,
-            nodeNames = Seq(node.name)
-          )),
-        30 seconds
-      )
+    val bkCluster = Await.result(
+      BrokerApi
+        .access()
+        .hostname(CommonUtils.hostname())
+        .port(configurator.port)
+        .add(BrokerClusterCreationRequest(
+          name = PRE_CREATE_BK_NAME,
+          imageName = None,
+          zookeeperClusterName = Some(PRE_CREATE_ZK_NAME),
+          exporterPort = None,
+          clientPort = None,
+          jmxPort = None,
+          nodeNames = Seq(node.name)
+        )),
+      30 seconds
+    )
 
-      // our cache applies non-blocking action so the creation may be not in cache.
-      // Hence, we have to wait the update to cache.
-      CommonUtils.await(
-        () =>
-          Await
-            .result(BrokerApi.access().hostname(CommonUtils.hostname()).port(configurator.port).list, 30 seconds)
-            .exists(_.name == PRE_CREATE_BK_NAME),
-        java.time.Duration.ofSeconds(30)
-      )
-      LOG.info(s"succeed to create bk cluster:$bkCluster")
-    }
+    // our cache applies non-blocking action so the creation may be not in cache.
+    // Hence, we have to wait the update to cache.
+    CommonUtils.await(
+      () =>
+        Await
+          .result(BrokerApi.access().hostname(CommonUtils.hostname()).port(configurator.port).list, 30 seconds)
+          .exists(_.name == PRE_CREATE_BK_NAME),
+      java.time.Duration.ofSeconds(30)
+    )
+    LOG.info(s"succeed to create bk cluster:$bkCluster")
   }
 
   /**

@@ -28,7 +28,7 @@ trait DataStore extends Releasable {
 
   def value[T <: Data: ClassTag](id: String)(implicit executor: ExecutionContext): Future[T]
 
-  def values[T <: Data: ClassTag](implicit executor: ExecutionContext): Future[Seq[T]]
+  def values[T <: Data: ClassTag]()(implicit executor: ExecutionContext): Future[Seq[T]]
 
   def raw()(implicit executor: ExecutionContext): Future[Seq[Data]]
 
@@ -72,7 +72,7 @@ object DataStore {
     override def value[T <: Data: ClassTag](id: String)(implicit executor: ExecutionContext): Future[T] =
       store.value(id).filter(classTag[T].runtimeClass.isInstance).map(_.asInstanceOf[T])
 
-    override def values[T <: Data: ClassTag](implicit executor: ExecutionContext): Future[Seq[T]] =
+    override def values[T <: Data: ClassTag]()(implicit executor: ExecutionContext): Future[Seq[T]] =
       store.values().map(_.values.filter(classTag[T].runtimeClass.isInstance).map(_.asInstanceOf[T]).toSeq)
 
     override def raw()(implicit executor: ExecutionContext): Future[Seq[Data]] = store.values().map(_.values.toSeq)

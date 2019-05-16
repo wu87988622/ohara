@@ -52,7 +52,7 @@ private[route] object RouteUtils {
   private[this] def routeOfList[Res <: Data: ClassTag](hook: Seq[Res] => Future[Seq[Res]])(
     implicit store: DataStore,
     rm: RootJsonFormat[Res],
-    executionContext: ExecutionContext) = get(complete(store.values[Res].flatMap(values => hook(values))))
+    executionContext: ExecutionContext) = get(complete(store.values[Res]().flatMap(values => hook(values))))
 
   private[this] def routeOfGet[Res <: Data: ClassTag](
     id: Id,

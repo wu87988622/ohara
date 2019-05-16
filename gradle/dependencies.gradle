@@ -44,6 +44,8 @@ versions["sshd"] = project.hasProperty('sshd.version') ? project.properties['ssh
 versions["commonsIo"] = project.hasProperty('commonsIo.version') ? project.properties['commonsIo.version'] : "2.4"
 // Guava has been included by apache kafka so we use the identical version
 versions["guava"] = project.hasProperty('guava.version') ? project.properties['guava.version'] : "20.0"
+// rocksdb has been included by apache kafka so we use the identical version
+versions["rocksdb"] = project.hasProperty('rocksdb.version') ? project.properties['rocksdb.version'] : "5.7.3"
 
 libs += [
   postgresql         : "postgresql:postgresql:$versions.postgresql",
@@ -76,5 +78,6 @@ libs += [
   commonsNet         : "commons-net:commons-net:$versions.commonNet",
   sshd               : "org.apache.sshd:apache-sshd:$versions.sshd",
   commonsIo          : "commons-io:commons-io:$versions.commonsIo",
-  guava              : "com.google.guava:guava:$versions.guava"
+  guava              : "com.google.guava:guava:$versions.guava",
+  rocksdb            : "org.rocksdb:rocksdbjni:$versions.rocksdb"
 ]

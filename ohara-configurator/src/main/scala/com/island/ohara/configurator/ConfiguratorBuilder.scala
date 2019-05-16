@@ -16,43 +16,51 @@
 
 package com.island.ohara.configurator
 
+import java.io.File
 import java.util.Objects
 
-import akka.http.scaladsl.server
 import com.island.ohara.agent._
 import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.agent.ssh.DockerClientCache
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeService}
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
+import com.island.ohara.client.configurator.v0.{Data, NodeApi}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.fake._
+import com.island.ohara.configurator.jar.LocalJarStore
 import com.island.ohara.configurator.store.DataStore
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 class ConfiguratorBuilder {
-  private[this] var advertisedHostname: Option[String] = None
-  private[this] var advertisedPort: Option[Int] = None
-  private[this] val store: DataStore = DataStore(
-    com.island.ohara.configurator.store.Store.inMemory(Serializer.STRING, Configurator.DATA_SERIALIZER))
-  private[this] var cacheTimeout: Duration = 5 seconds
-  private[this] var initializationTimeout: Duration = 10 seconds
-  private[this] var terminationTimeout: Duration = 10 seconds
-  private[this] var extraRoute: Option[server.Route] = None
-  private[this] var clusterCollie: Option[ClusterCollie] = None
-  private[this] var crane: Option[Crane] = None
-  private[this] var clientCache: Option[DockerClientCache] = None
-  private[this] var k8sClient: Option[K8SClient] = None
+  private[this] var hostname: String = CommonUtils.hostname()
+  private[this] var port: Int = CommonUtils.availablePort()
+  private[this] var homeFolder: String = CommonUtils.createTempFolder("configurator").getCanonicalPath
+  private[this] var inMemory: Boolean = false
+  private[this] var store: DataStore = _
+  private[this] var clusterCollie: ClusterCollie = _
+  private[this] var crane: Crane = _
+  private[this] var k8sClient: K8SClient = _
+
+  @Optional("default is random folder")
+  def homeFolder(homeFolder: String): ConfiguratorBuilder = {
+    if (store != null)
+      throw new IllegalArgumentException("you have instantiated a store so you can't change the home folder")
+    val f = new File(CommonUtils.requireNonEmpty(homeFolder))
+    if (!f.exists() && !f.mkdirs()) throw new IllegalArgumentException(s"failed to mkdir on $homeFolder")
+    this.homeFolder = CommonUtils.requireFolder(f).getCanonicalPath
+    this
+  }
 
   @Optional("default is none")
-  def extraRoute(extraRoute: server.Route): ConfiguratorBuilder = {
-    this.extraRoute = Some(extraRoute)
+  def inMemoryStore(): ConfiguratorBuilder = {
+    if (store != null) throw new IllegalArgumentException("you have instantiated a store!!!")
+    this.inMemory = true
     this
   }
 
@@ -63,8 +71,8 @@ class ConfiguratorBuilder {
     * @return this builder
     */
   @Optional("default is localhost")
-  def advertisedHostname(hostname: String): ConfiguratorBuilder = {
-    this.advertisedHostname = Some(hostname)
+  def hostname(hostname: String): ConfiguratorBuilder = {
+    this.hostname = CommonUtils.requireNonEmpty(hostname)
     this
   }
 
@@ -75,26 +83,8 @@ class ConfiguratorBuilder {
     * @return this builder
     */
   @Optional("default is random port")
-  def advertisedPort(port: Int): ConfiguratorBuilder = {
-    this.advertisedPort = Some(port)
-    this
-  }
-
-  @Optional("default is 5 seconds")
-  def cacheTimeout(cacheTimeout: Duration): ConfiguratorBuilder = {
-    this.cacheTimeout = Objects.requireNonNull(cacheTimeout)
-    this
-  }
-
-  @Optional("default is 10 seconds")
-  def terminationTimeout(terminationTimeout: Duration): ConfiguratorBuilder = {
-    this.terminationTimeout = Objects.requireNonNull(terminationTimeout)
-    this
-  }
-
-  @Optional("default is 10 seconds")
-  def initializationTimeout(initializationTimeout: Duration): ConfiguratorBuilder = {
-    this.initializationTimeout = Objects.requireNonNull(initializationTimeout)
+  def port(port: Int): ConfiguratorBuilder = {
+    if (port > 0) this.port = port
     this
   }
 
@@ -111,6 +101,9 @@ class ConfiguratorBuilder {
     * @return this builder
     */
   def fake(bkConnectionProps: String, wkConnectionProps: String): ConfiguratorBuilder = {
+    if (k8sClient != null)
+      throw new IllegalArgumentException("k8s client exists so you can't run Configurator in fake mode")
+    val store = getOrCreateStore()
     val embeddedBkName = "embedded_broker_cluster"
     val embeddedWkName = "embedded_worker_cluster"
     // we fake nodes for embedded bk and wk
@@ -134,7 +127,7 @@ class ConfiguratorBuilder {
         )
       }
       .foreach(store.add)
-    val collie = new FakeClusterCollie(nodeCollie, store, bkConnectionProps, wkConnectionProps)
+    val collie = new FakeClusterCollie(createCollie(), store, bkConnectionProps, wkConnectionProps)
     val bkCluster = {
       val pair = bkConnectionProps.split(",")
       val host = pair.map(_.split(":").head).head
@@ -178,7 +171,6 @@ class ConfiguratorBuilder {
     }
     collie.brokerCollie().addCluster(bkCluster)
     collie.workerCollie().addCluster(wkCluster)
-    this.clientCache = Some(DockerClientCache.fake())
     clusterCollie(collie)
   }
 
@@ -193,13 +185,16 @@ class ConfiguratorBuilder {
            zkClusterNamePrefix: String = "fakezkcluster",
            bkClusterNamePrefix: String = "fakebkcluster",
            wkClusterNamePrefix: String = "fakewkcluster"): ConfiguratorBuilder = {
+    if (k8sClient != null)
+      throw new IllegalArgumentException("k8s client exists so you can't run Configurator in fake mode")
     if (numberOfBrokerCluster < 0)
       throw new IllegalArgumentException(s"numberOfBrokerCluster:$numberOfBrokerCluster should be positive")
     if (numberOfWorkerCluster < 0)
       throw new IllegalArgumentException(s"numberOfWorkerCluster:$numberOfWorkerCluster should be positive")
     if (numberOfBrokerCluster <= 0 && numberOfWorkerCluster > 0)
       throw new IllegalArgumentException(s"you must initialize bk cluster before you initialize wk cluster")
-    val collie = new FakeClusterCollie(nodeCollie, store)
+    val store = getOrCreateStore()
+    val collie = new FakeClusterCollie(createCollie(), store)
 
     val zkClusters = (0 until numberOfBrokerCluster).map { index =>
       collie
@@ -279,52 +274,85 @@ class ConfiguratorBuilder {
                    services = Seq.empty,
                    lastModified = CommonUtils.current()))
       .foreach(store.add)
-    this.clientCache = Some(DockerClientCache.fake())
     clusterCollie(collie)
   }
 
   @Optional("default is implemented by ssh")
   def clusterCollie(clusterCollie: ClusterCollie): ConfiguratorBuilder = {
-    if (this.clusterCollie.isDefined) throw new IllegalArgumentException(s"cluster collie is defined!!!")
-    this.clusterCollie = Some(clusterCollie)
+    if (this.clusterCollie != null) throw new IllegalArgumentException(s"cluster collie is defined!!!")
+    this.clusterCollie = Objects.requireNonNull(clusterCollie)
     this
   }
 
-  @Optional("default is implemented by docker")
+  @Optional("default implementation is fake")
   def crane(crane: Crane): ConfiguratorBuilder = {
-    this.crane = Some(Objects.requireNonNull(crane))
+    if (this.crane != null) throw new IllegalArgumentException(s"crane is defined!!!")
+    this.crane = Objects.requireNonNull(crane)
     this
   }
 
+  @Optional("default is null")
   def k8sClient(k8sClient: K8SClient): ConfiguratorBuilder = {
-    this.k8sClient = Some(k8sClient)
+    if (this.k8sClient != null) throw new IllegalArgumentException(s"k8sClient is defined!!!")
+    this.k8sClient = Objects.requireNonNull(k8sClient)
     this
   }
 
-  private[configurator] def nodeCollie(): NodeCollie = new NodeCollie {
-    override def node(name: String)(implicit executionContext: ExecutionContext): Future[Node] = store.value[Node](name)
-    override def nodes()(implicit executionContext: ExecutionContext): Future[Seq[Node]] = store.values[Node]
+  private[configurator] def createCollie(): NodeCollie = {
+    val store = getOrCreateStore()
+    new NodeCollie {
+      override def node(name: String)(implicit executionContext: ExecutionContext): Future[Node] =
+        store.value[Node](name)
+      override def nodes()(implicit executionContext: ExecutionContext): Future[Seq[Node]] = store.values[Node]()
+    }
   }
 
-  def build(): Configurator = {
-    new Configurator(
-      advertisedHostname = advertisedHostname,
-      advertisedPort = advertisedPort,
-      cacheRefresh = cacheTimeout,
-      initializationTimeout = initializationTimeout,
-      terminationTimeout = terminationTimeout,
-      extraRoute = extraRoute
-    )(
-      store = store,
-      nodeCollie = nodeCollie(),
-      clusterCollie = clusterCollie.getOrElse(ClusterCollie.builderOfSsh().nodeCollie(nodeCollie()).build()),
-      crane = crane.getOrElse(
-        Crane
-          .builderOfDocker()
-          .nodeCollie(nodeCollie())
-          .dockerClientCache(clientCache.getOrElse(DockerClientCache()))
-          .build()),
-      k8sClient = k8sClient
+  def build(): Configurator =
+    new Configurator(hostname = hostname, port = port)(
+      store = getOrCreateStore(),
+      jarStore = new LocalJarStore(folder("jars")),
+      nodeCollie = createCollie(),
+      clusterCollie = getOrCreateCollie(),
+      crane = getOrCreateCrane(),
+      k8sClient = Option(k8sClient)
     )
-  }
+
+  private[this] def folder(prefix: String): String =
+    new File(CommonUtils.requireNonEmpty(homeFolder), prefix).getCanonicalPath
+
+  private[this] def getOrCreateStore(): DataStore = if (store == null) {
+    store =
+      if (inMemory)
+        DataStore(
+          com.island.ohara.configurator.store.Store
+            .builder[String, Data]()
+            .keySerializer(Serializer.STRING)
+            .valueSerializer(Configurator.DATA_SERIALIZER)
+            .inMemory()
+            .build())
+      else
+        DataStore(
+          com.island.ohara.configurator.store.Store
+            .builder[String, Data]()
+            .keySerializer(Serializer.STRING)
+            .valueSerializer(Configurator.DATA_SERIALIZER)
+            .persistentFolder(folder("store"))
+            .build())
+    store
+  } else store
+
+  private[this] def getOrCreateCollie(): ClusterCollie = if (clusterCollie == null) {
+    this.clusterCollie =
+      if (k8sClient == null) ClusterCollie.builderOfSsh().nodeCollie(createCollie()).build()
+      else ClusterCollie.builderOfK8s().nodeCollie(createCollie()).k8sClient(k8sClient).build()
+    clusterCollie
+  } else clusterCollie
+
+  private[this] def getOrCreateCrane(): Crane = if (crane == null) {
+    this.crane =
+      if (k8sClient == null)
+        Crane.builderOfDocker().nodeCollie(createCollie()).dockerClientCache(DockerClientCache.fake()).build()
+      else Crane.builderOfK8s().nodeCollie(createCollie()).k8sClient(k8sClient).build()
+    crane
+  } else crane
 }

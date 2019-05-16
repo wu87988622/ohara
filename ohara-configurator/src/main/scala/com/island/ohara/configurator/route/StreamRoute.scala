@@ -117,6 +117,7 @@ private[configurator] object StreamRoute {
             workerCollie: WorkerCollie,
             brokerCollie: BrokerCollie,
             jarStore: JarStore,
+            urlGenerator: UrlGenerator,
             crane: Crane,
             executionContext: ExecutionContext): server.Route =
     pathPrefix(STREAM_PREFIX_PATH) {
@@ -170,7 +171,7 @@ private[configurator] object StreamRoute {
               parameter(Parameters.CLUSTER_NAME.?) { wkName =>
                 complete(
                   store
-                    .values[StreamJar]
+                    .values[StreamJar]()
                     // filter specific cluster only, or return all otherwise
                     .map(_.filter(jarInfo => wkName.isEmpty || jarInfo.workerClusterName == wkName.get))
                 )
@@ -180,7 +181,7 @@ private[configurator] object StreamRoute {
             path(Segment) { id =>
               //delete jar
               delete {
-                complete(store.values[StreamAppDescription].map { streamApps =>
+                complete(store.values[StreamAppDescription]().map { streamApps =>
                   // check the jar is not used in any streamApp which is used in pipeline
                   if (streamApps.exists(_.jarInfo.id == id)) {
                     throw new IllegalArgumentException(s"The id:$id is used by pipeline")
@@ -299,7 +300,7 @@ private[configurator] object StreamRoute {
                   // get broker props from worker cluster
                   .map { case (_, topicAdmin, _, _) => topicAdmin.connectionProps }
                   .flatMap { bkProps =>
-                    jarStore
+                    urlGenerator
                       .url(data.jarInfo.id)
                       .flatMap {
                         url =>

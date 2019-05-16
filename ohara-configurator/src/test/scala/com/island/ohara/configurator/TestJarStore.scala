@@ -21,6 +21,7 @@ import java.nio.file.Files
 import com.island.ohara.client.configurator.v0.JarApi
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
+import com.island.ohara.configurator.jar.LocalJarStore
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
@@ -51,12 +52,6 @@ class TestJarStore extends SmallTest with Matchers {
   @Test
   def emptyIdInJarInfo(): Unit =
     an[IllegalArgumentException] should be thrownBy result(configurator.jarStore.jarInfo(""))
-
-  @Test
-  def nullIdInUrl(): Unit = an[NullPointerException] should be thrownBy result(configurator.jarStore.url(null))
-
-  @Test
-  def emptyIdInUrl(): Unit = an[IllegalArgumentException] should be thrownBy result(configurator.jarStore.url(""))
 
   @Test
   def nullFileInAdd(): Unit = an[NullPointerException] should be thrownBy result(configurator.jarStore.add(null))
@@ -107,10 +102,6 @@ class TestJarStore extends SmallTest with Matchers {
     an[NoSuchElementException] should be thrownBy result(configurator.jarStore.jarInfo("Asdasd"))
 
   @Test
-  def nonexistentIdInUrl(): Unit =
-    an[NoSuchElementException] should be thrownBy result(configurator.jarStore.url("Asdasd"))
-
-  @Test
   def nullIdInRename(): Unit =
     an[NullPointerException] should be thrownBy result(configurator.jarStore.rename(null, CommonUtils.randomString()))
 
@@ -147,6 +138,25 @@ class TestJarStore extends SmallTest with Matchers {
   }
 
   @Test
+  def testInvalidInput(): Unit =
+    an[IllegalArgumentException] should be thrownBy new LocalJarStore(CommonUtils.createTempFile("aa").getCanonicalPath)
+
+  @Test
+  def testReopen(): Unit = {
+    val folder = CommonUtils.createTempFolder(methodName())
+    val content = CommonUtils.randomString()
+    val store0 = new LocalJarStore(folder.getCanonicalPath)
+    val jarInfo = try result(store0.add(generateFile(content.getBytes)))
+    finally store0.close()
+
+    val store1 = new LocalJarStore(folder.getCanonicalPath)
+    try {
+      result(store1.jarInfos).size shouldBe 1
+      result(store1.jarInfos).head shouldBe jarInfo
+    } finally store1.close()
+  }
+
+  @Test
   def testDownload(): Unit = {
     val content = CommonUtils.randomString()
     val f = generateFile(content.getBytes)
@@ -156,7 +166,7 @@ class TestJarStore extends SmallTest with Matchers {
     plugin.size shouldBe content.length
     result(access.list).size shouldBe 1
 
-    val url = result(configurator.jarStore.url(plugin.id))
+    val url = result(configurator.urlGenerator.url(plugin.id))
     url.getProtocol shouldBe "http"
     val input = url.openStream()
     val tempFile = CommonUtils.createTempFile(methodName())

@@ -34,7 +34,12 @@ private[store] final case class SimpleData(id: String, name: String, lastModifie
 class TestDataStore extends MediumTest with Matchers {
 
   private[this] val timeout = 10 seconds
-  private[this] val store = DataStore(Store.inMemory(Serializer.STRING, Configurator.DATA_SERIALIZER))
+  private[this] val store = DataStore(
+    Store
+      .builder[String, Data]()
+      .keySerializer(Serializer.STRING)
+      .valueSerializer(Configurator.DATA_SERIALIZER)
+      .build())
 
   private def newTestData(id: String) = SimpleData(
     id = id,

@@ -146,7 +146,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
                 .flatMap {
                   case (cluster, wkClient) =>
                     store
-                      .values[TopicInfo]
+                      .values[TopicInfo]()
                       .map(topics =>
                         (cluster, wkClient, topics.filter(t => t.brokerClusterName == cluster.brokerClusterName)))
                 }

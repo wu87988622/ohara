@@ -22,14 +22,13 @@ import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.WorkerApi
 import com.island.ohara.client.configurator.v0.WorkerApi._
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.jar.JarStore
 
 import scala.concurrent.{ExecutionContext, Future}
 object WorkerRoute {
 
   def apply(implicit clusterCollie: ClusterCollie,
             nodeCollie: NodeCollie,
-            jarStore: JarStore,
+            urlGenerator: UrlGenerator,
             executionContext: ExecutionContext): server.Route =
     RouteUtils.basicRouteOfCluster(
       collie = clusterCollie.workerCollie(),
@@ -38,7 +37,7 @@ object WorkerRoute {
       hookBeforeDelete = (_, name) => Future.successful(name),
       hookOfCreation = (clusters, req: WorkerClusterCreationRequest) =>
         Future
-          .traverse(req.jarIds)(jarStore.url)
+          .traverse(req.jarIds)(urlGenerator.url)
           .map { jars =>
             val wkClusters = clusters.filter(_.isInstanceOf[WorkerClusterInfo]).map(_.asInstanceOf[WorkerClusterInfo])
 
