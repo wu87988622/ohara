@@ -49,7 +49,7 @@ RUN yum install -y \
   alsa-lib*
 
 # download gradle
-ARG GRADLE_VERSION=5.1.1
+ARG GRADLE_VERSION=5.4.1
 WORKDIR /opt/gradle
 RUN wget https://downloads.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip
 RUN unzip gradle-$GRADLE_VERSION-bin.zip
