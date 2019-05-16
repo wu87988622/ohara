@@ -69,7 +69,7 @@ class PipelineNewStream extends React.Component {
     const { match } = this.props;
     const pipelineId = get(match, 'params.pipelineId', null);
     this.setState({ pipelineId }, () => {
-      this.fetchJar();
+      this.fetchJars();
     });
   };
 
@@ -122,9 +122,9 @@ class PipelineNewStream extends React.Component {
   isDuplicateTitle = (title, excludeMyself = false) => {
     const { jars, activeId } = this.state;
     if (excludeMyself) {
-      return some(jars, jar => activeId !== jar.id && title === jar.jarName);
+      return some(jars, jar => activeId !== jar.id && title === jar.name);
     }
-    return some(jars, jar => title === jar.jarName);
+    return some(jars, jar => title === jar.name);
   };
 
   validateJarExtension = jarName => endsWith(jarName, '.jar');
@@ -147,7 +147,7 @@ class PipelineNewStream extends React.Component {
     this.setState(({ jars, activeId }) => {
       return {
         jars: jars.map(jar =>
-          jar.id === activeId ? { ...jar, jarName: newJarName } : jar,
+          jar.id === activeId ? { ...jar, name: newJarName } : jar,
         ),
       };
     });
@@ -158,24 +158,23 @@ class PipelineNewStream extends React.Component {
       const { jars, activeId } = this.state;
       const jar = find(jars, { id: activeId });
       if (jar) {
-        this.updateJar(jar.id, jar.jarName);
+        this.updateJar(jar.id, jar.name);
       }
     }
   };
 
-  fetchJar = async () => {
-    const { workerClusterName } = this.props;
-    const res = await streamApi.fetchJar(workerClusterName);
-    this.setState(() => ({ isLoading: false }));
+  fetchJars = async () => {
+    const { workerClusterName, updateAddBtnStatus } = this.props;
+    const res = await streamApi.fetchJars(workerClusterName);
+    this.setState({ isLoading: false });
 
     const jars = get(res, 'data.result', null);
     const activeId = get(jars, '[0].id', null);
+    updateAddBtnStatus(activeId);
 
     if (!isNull(jars)) {
       this.setState({ jars, activeId });
     }
-
-    this.props.updateAddBtnStatus(activeId);
   };
 
   uploadJar = async file => {
@@ -185,7 +184,7 @@ class PipelineNewStream extends React.Component {
     if (isSuccess) {
       toastr.success(MESSAGES.STREAM_APP_UPLOAD_SUCCESS);
       this.setState({ file: null });
-      this.fetchJar();
+      this.fetchJars();
     }
   };
 
@@ -206,15 +205,13 @@ class PipelineNewStream extends React.Component {
     if (isSuccess) {
       toastr.success(MESSAGES.STREAM_APP_DELETE_SUCCESS);
       this.handleDeleteRowModalClose();
-      this.fetchJar();
+      this.fetchJars();
     }
   };
 
-  update = () => {
-    const { activeId, jars } = this.state;
-    const activeJar = jars.find(jar => jar.id === activeId);
+  update = async () => {
     const connector = {
-      ...activeJar,
+      jarId: this.state.activeId,
       className: 'streamApp',
       typeName: 'streamApp',
     };
@@ -243,7 +240,7 @@ class PipelineNewStream extends React.Component {
             </FileUploadWrapper>
             <TableWrapper>
               <Table headers={['FILENAME', 'RENAME', 'DELETE']}>
-                {jars.map(({ id, jarName: title }) => {
+                {jars.map(({ id, name: title }) => {
                   const isActive = id === activeId ? 'is-active' : '';
                   return (
                     <tr

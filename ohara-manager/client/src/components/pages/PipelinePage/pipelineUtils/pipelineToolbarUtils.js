@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-import { get, isObject } from 'lodash';
+import { isObject } from 'lodash';
 
 import * as connectorApi from 'api/connectorApi';
+import { createProperty } from 'api/streamApi';
 import { CONNECTOR_TYPES } from 'constants/pipelines';
 import { isSource, isSink, isTopic, isStream } from './commonUtils';
 
@@ -38,18 +39,23 @@ export const createConnector = async ({ updateGraph, connector }) => {
 
   const className = getClassName(connector);
   let connectorName = `Untitled ${typeName}`;
-
   let id;
 
   if (isTopic(typeName)) {
-    // Topic was created beforehand, it already has an ID.
+    // Topic is created beforehand therefore, an ID is already exist.
     id = connector.id;
     connectorName = connector.name;
   } else if (isStream(typeName)) {
-    id = connector.id;
+    // stream app needs a jar id in order to create a property form
+    const res = await createProperty({ jarId: connector.jarId });
+
+    id = res.data.result.id;
   } else if (isSource(typeName) || isSink(typeName)) {
-    if (Object.values(CONNECTOR_TYPES).includes(className)) {
-      // Use the old API
+    const isOfficialConnector = Object.values(CONNECTOR_TYPES).includes(
+      className,
+    );
+    if (isOfficialConnector) {
+      // Official connectors Use the old API
       const params = {
         name: connectorName,
         'connector.name': connectorName,
@@ -61,9 +67,9 @@ export const createConnector = async ({ updateGraph, connector }) => {
       };
 
       const res = await connectorApi.createConnector(params);
-      id = get(res, 'data.result.id', null);
+      id = res.data.result.id;
     } else {
-      // Use new API
+      // Not included in the official connectors, use new meta API instead
       const params = {
         name: connectorName,
         'connector.class': className,
@@ -71,7 +77,7 @@ export const createConnector = async ({ updateGraph, connector }) => {
       };
 
       const res = await connectorApi.createConnector(params);
-      id = get(res, 'data.result.id', null);
+      id = res.data.result.id;
     }
   }
 

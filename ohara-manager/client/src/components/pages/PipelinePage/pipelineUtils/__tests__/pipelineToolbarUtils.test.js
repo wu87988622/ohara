@@ -15,34 +15,95 @@
  */
 
 import { CONNECTOR_TYPES } from 'constants/pipelines';
+import * as generate from 'utils/generate';
 import * as connectorApi from 'api/connectorApi';
+import { createProperty } from 'api/streamApi';
 
 import { createConnector, trimString } from '../pipelineToolbarUtils';
 
 jest.mock('api/connectorApi');
+jest.mock('api/streamApi');
 
 describe('createConnector()', () => {
-  it('should call updateGraph function if the given type is not exist in the current graph', async () => {
-    const graph = [{ name: 'a', type: CONNECTOR_TYPES.topic }];
-    const updateGraph = jest.fn();
+  const updateGraph = jest.fn();
+
+  afterEach(jest.clearAllMocks);
+
+  it('updates a topic', async () => {
+    const topicId = generate.id();
+    const topicName = generate.name();
+
     const connector = {
-      className: CONNECTOR_TYPES.ftpSource,
-      typeName: 'source',
+      className: CONNECTOR_TYPES.topic,
+      typeName: CONNECTOR_TYPES.topic,
+      id: topicId,
+      name: topicName,
     };
-    const res = { data: { result: { id: '1234' } } };
 
-    connectorApi.createConnector.mockImplementation(() => Promise.resolve(res));
-
-    await createConnector({ graph, updateGraph, connector });
+    await createConnector({ updateGraph, connector });
 
     expect(updateGraph).toHaveBeenCalledTimes(1);
     expect(updateGraph).toHaveBeenCalledWith({
       update: {
-        name: expect.any(String),
-        kind: 'source',
+        name: topicName,
+        kind: CONNECTOR_TYPES.topic,
         to: [],
-        className: CONNECTOR_TYPES.ftpSource,
-        id: res.data.result.id,
+        className: CONNECTOR_TYPES.topic,
+        id: topicId,
+      },
+    });
+  });
+
+  it('updates a stream app', async () => {
+    const propertyId = generate.id();
+    const typeName = CONNECTOR_TYPES.streamApp;
+    const connector = {
+      className: CONNECTOR_TYPES.streamApp,
+      jarId: generate.id(),
+      typeName,
+    };
+
+    const res = { data: { result: { id: propertyId } } };
+
+    createProperty.mockImplementation(() => Promise.resolve(res));
+
+    await createConnector({ updateGraph, connector });
+
+    expect(updateGraph).toHaveBeenCalledTimes(1);
+    expect(updateGraph).toHaveBeenCalledWith({
+      update: {
+        name: `Untitled ${typeName}`,
+        kind: CONNECTOR_TYPES.streamApp,
+        to: [],
+        className: CONNECTOR_TYPES.streamApp,
+        id: propertyId,
+      },
+    });
+  });
+
+  it('updates a custom connector', async () => {
+    const connectorId = generate.id();
+    const customConnectorClassName = generate.name();
+    const typeName = 'source';
+
+    const connector = {
+      className: customConnectorClassName,
+      typeName,
+    };
+    const res = { data: { result: { id: connectorId } } };
+
+    connectorApi.createConnector.mockImplementation(() => Promise.resolve(res));
+
+    await createConnector({ updateGraph, connector });
+
+    expect(updateGraph).toHaveBeenCalledTimes(1);
+    expect(updateGraph).toHaveBeenCalledWith({
+      update: {
+        name: `Untitled ${typeName}`,
+        kind: typeName,
+        to: [],
+        className: customConnectorClassName,
+        id: connectorId,
       },
     });
   });
@@ -50,6 +111,6 @@ describe('createConnector()', () => {
 
 describe('trimString()', () => {
   it('gets the correct string', () => {
-    expect(trimString('abcdefgfijklmnopq').length).toBe(7);
+    expect(trimString(generate.id()).length).toBe(7);
   });
 });

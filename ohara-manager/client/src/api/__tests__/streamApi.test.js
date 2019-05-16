@@ -20,7 +20,7 @@ import { handleError, axiosInstance } from '../apiUtils';
 jest.mock('../apiUtils');
 const url = '/api/stream';
 
-describe('fetchJar()', () => {
+describe('fetchJars()', () => {
   afterEach(jest.clearAllMocks);
 
   const workerClusterName = 'abc';
@@ -34,7 +34,7 @@ describe('fetchJar()', () => {
 
     axiosInstance.get.mockImplementation(() => Promise.resolve(res));
 
-    const result = await streamApi.fetchJar(workerClusterName);
+    const result = await streamApi.fetchJars(workerClusterName);
     expect(axiosInstance.get).toHaveBeenCalledTimes(1);
     expect(axiosInstance.get).toHaveBeenCalledWith(
       `${url}/jars?cluster=${workerClusterName}`,
@@ -50,7 +50,7 @@ describe('fetchJar()', () => {
     };
     axiosInstance.get.mockImplementation(() => Promise.resolve(res));
 
-    const result = await streamApi.fetchJar(workerClusterName);
+    const result = await streamApi.fetchJars(workerClusterName);
 
     expect(axiosInstance.get).toHaveBeenCalledTimes(1);
     expect(axiosInstance.get).toHaveBeenCalledWith(
@@ -71,7 +71,7 @@ describe('fetchJar()', () => {
 
     axiosInstance.get.mockImplementation(() => Promise.reject(res));
 
-    await streamApi.fetchJar(workerClusterName);
+    await streamApi.fetchJars(workerClusterName);
     expect(axiosInstance.get).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(res);
@@ -328,6 +328,62 @@ describe('fetchProperty()', () => {
   });
 });
 
+describe('createProperty()', () => {
+  afterEach(jest.clearAllMocks);
+
+  const params = {
+    jarId: 'abc',
+  };
+
+  it.only('handles success http call', async () => {
+    const res = {
+      data: {
+        isSuccess: true,
+      },
+    };
+
+    axiosInstance.post.mockImplementation(() => Promise.resolve(res));
+
+    const result = await streamApi.createProperty(params);
+    expect(axiosInstance.post).toHaveBeenCalledTimes(1);
+    expect(axiosInstance.post).toHaveBeenCalledWith(`${url}/property`, params);
+    expect(result).toBe(res);
+  });
+
+  it('handles success http call but with server error', async () => {
+    const res = {
+      data: {
+        isSuccess: false,
+      },
+    };
+    axiosInstance.post.mockImplementation(() => Promise.resolve(res));
+
+    const result = await streamApi.updateProperty(params);
+
+    expect(axiosInstance.post).toHaveBeenCalledTimes(1);
+    expect(axiosInstance.post).toHaveBeenCalledWith(`${url}/property`, params);
+    expect(handleError).toHaveBeenCalledTimes(1);
+    expect(handleError).toHaveBeenCalledWith(result);
+  });
+
+  it('handles failed http call', async () => {
+    const res = {
+      data: {
+        errorMessage: {
+          message: 'error!',
+        },
+      },
+    };
+
+    axiosInstance.post.mockImplementation(() => Promise.reject(res));
+
+    await streamApi.updateProperty(params);
+    expect(axiosInstance.post).toHaveBeenCalledTimes(1);
+    expect(handleError).toHaveBeenCalledTimes(1);
+    expect(handleError).toHaveBeenCalledWith(res);
+  });
+});
+
 describe('updateProperty()', () => {
   afterEach(jest.clearAllMocks);
 
@@ -398,6 +454,60 @@ describe('updateProperty()', () => {
 
     await streamApi.updateProperty(params);
     expect(axiosInstance.put).toHaveBeenCalledTimes(1);
+    expect(handleError).toHaveBeenCalledTimes(1);
+    expect(handleError).toHaveBeenCalledWith(res);
+  });
+});
+
+describe('deleteProperty()', () => {
+  afterEach(jest.clearAllMocks);
+
+  const id = 'abc';
+
+  it('handles success http call', async () => {
+    const res = {
+      data: {
+        isSuccess: true,
+      },
+    };
+
+    axiosInstance.delete.mockImplementation(() => Promise.resolve(res));
+
+    const result = await streamApi.deleteProperty(id);
+    expect(axiosInstance.delete).toHaveBeenCalledTimes(1);
+    expect(axiosInstance.delete).toHaveBeenCalledWith(`${url}/property/${id}`);
+    expect(result).toBe(res);
+  });
+
+  it('handles success http call but with server error', async () => {
+    const res = {
+      data: {
+        isSuccess: false,
+      },
+    };
+    axiosInstance.delete.mockImplementation(() => Promise.resolve(res));
+
+    const result = await streamApi.deleteProperty(id);
+
+    expect(axiosInstance.delete).toHaveBeenCalledTimes(1);
+    expect(axiosInstance.delete).toHaveBeenCalledWith(`${url}/property/${id}`);
+    expect(handleError).toHaveBeenCalledTimes(1);
+    expect(handleError).toHaveBeenCalledWith(result);
+  });
+
+  it('handles failed http call', async () => {
+    const res = {
+      data: {
+        errorMessage: {
+          message: 'error!',
+        },
+      },
+    };
+
+    axiosInstance.delete.mockImplementation(() => Promise.reject(res));
+
+    await streamApi.deleteProperty(id);
+    expect(axiosInstance.delete).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(res);
   });
@@ -506,60 +616,6 @@ describe('stopStreamApp()', () => {
 
     await streamApi.stopStreamApp(id);
     expect(axiosInstance.put).toHaveBeenCalledTimes(1);
-    expect(handleError).toHaveBeenCalledTimes(1);
-    expect(handleError).toHaveBeenCalledWith(res);
-  });
-});
-
-describe('deleteProperty()', () => {
-  afterEach(jest.clearAllMocks);
-
-  const id = 'abc';
-
-  it('handles success http call', async () => {
-    const res = {
-      data: {
-        isSuccess: true,
-      },
-    };
-
-    axiosInstance.delete.mockImplementation(() => Promise.resolve(res));
-
-    const result = await streamApi.deleteProperty(id);
-    expect(axiosInstance.delete).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.delete).toHaveBeenCalledWith(`${url}/property/${id}`);
-    expect(result).toBe(res);
-  });
-
-  it('handles success http call but with server error', async () => {
-    const res = {
-      data: {
-        isSuccess: false,
-      },
-    };
-    axiosInstance.delete.mockImplementation(() => Promise.resolve(res));
-
-    const result = await streamApi.deleteProperty(id);
-
-    expect(axiosInstance.delete).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.delete).toHaveBeenCalledWith(`${url}/property/${id}`);
-    expect(handleError).toHaveBeenCalledTimes(1);
-    expect(handleError).toHaveBeenCalledWith(result);
-  });
-
-  it('handles failed http call', async () => {
-    const res = {
-      data: {
-        errorMessage: {
-          message: 'error!',
-        },
-      },
-    };
-
-    axiosInstance.delete.mockImplementation(() => Promise.reject(res));
-
-    await streamApi.deleteProperty(id);
-    expect(axiosInstance.delete).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(res);
   });

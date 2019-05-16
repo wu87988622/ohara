@@ -18,7 +18,7 @@ import { get } from 'lodash';
 
 import { handleError, axiosInstance } from './apiUtils';
 
-export const fetchJar = async workerClusterName => {
+export const fetchJars = async workerClusterName => {
   try {
     const res = await axiosInstance.get(
       `/api/stream/jars?cluster=${workerClusterName}`,
@@ -115,6 +115,21 @@ export const fetchProperty = async id => {
   }
 };
 
+export const createProperty = async params => {
+  try {
+    const res = await axiosInstance.post('/api/stream/property', params);
+    const isSuccess = get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
 export const updateProperty = async params => {
   try {
     const streamAppId = params.id;
@@ -126,6 +141,21 @@ export const updateProperty = async params => {
       instances: params.instances ? Number(params.instances) : 1,
     };
     const res = await axiosInstance.put(url, data);
+    const isSuccess = get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
+export const deleteProperty = async id => {
+  try {
+    const res = await axiosInstance.delete(`/api/stream/property/${id}`);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -156,21 +186,6 @@ export const startStreamApp = async id => {
 export const stopStreamApp = async id => {
   try {
     const res = await axiosInstance.put(`/api/stream/${id}/stop`);
-    const isSuccess = get(res, 'data.isSuccess', false);
-
-    if (!isSuccess) {
-      handleError(res);
-    }
-
-    return res;
-  } catch (err) {
-    handleError(err);
-  }
-};
-
-export const deleteProperty = async id => {
-  try {
-    const res = await axiosInstance.delete(`/api/stream/property/${id}`);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
