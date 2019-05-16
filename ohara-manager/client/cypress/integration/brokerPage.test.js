@@ -43,7 +43,7 @@ describe('BrokerPage', () => {
   it('creates a new topic', () => {
     cy.server();
     cy.route('GET', 'api/topics').as('getTopics');
-    const topicName = 'test topic';
+    const topicName = 'testTopic';
 
     cy.visit(BROKER)
       .getByText('New topic')

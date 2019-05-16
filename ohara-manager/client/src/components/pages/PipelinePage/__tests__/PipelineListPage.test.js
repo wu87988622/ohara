@@ -163,7 +163,7 @@ describe('<PipelineListPage />', () => {
   it('successfully deletes the first pipeline', async () => {
     wrapper.setState({ pipelines });
     const id = pipelines[0].id;
-    const pipelineName = 'pipelineAbc';
+    const pipelineName = pipelines[0].name;
     const res = { data: { result: { id, name: pipelineName } } };
     const expectedSuccessMsg = `${
       MESSAGES.PIPELINE_DELETION_SUCCESS
