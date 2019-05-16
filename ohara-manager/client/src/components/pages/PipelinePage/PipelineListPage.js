@@ -219,10 +219,11 @@ class PipelineListPage extends React.Component {
   handleDeletePipelineConfirm = async () => {
     const { deletePipelineId: id, pipelineName: name } = this.state;
     this.setState({ isDeletePipelineWorking: true });
-    await deletePipeline(id);
+    const res = await deletePipeline(id);
+    const isSuccess = get(res, 'data.isSuccess', false);
     this.setState({ isDeletePipelineWorking: false });
 
-    if (id) {
+    if (isSuccess) {
       this.setState(({ pipelines }) => {
         const _pipelines = pipelines.filter(p => p.id !== id);
         return {
