@@ -16,6 +16,7 @@
 
 package com.island.ohara.streams.ostream;
 
+import com.island.ohara.common.data.Pair;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.rule.SmallTest;
 import com.island.ohara.streams.OStream;
@@ -25,7 +26,6 @@ import com.island.ohara.streams.data.Stele;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Assert;
 import org.junit.Test;
 

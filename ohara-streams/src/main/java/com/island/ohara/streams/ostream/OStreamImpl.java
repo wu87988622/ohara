@@ -17,6 +17,7 @@
 package com.island.ohara.streams.ostream;
 
 import com.island.ohara.common.data.Cell;
+import com.island.ohara.common.data.Pair;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.BrokerClient;
@@ -28,7 +29,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
@@ -83,8 +83,8 @@ class OStreamImpl extends AbstractStream<Row, Row> implements OStream<Row> {
     List<String> leftHeaders = new ArrayList<>();
     List<String> rightHeaders = new ArrayList<>();
     for (Pair<String, String> pair : list) {
-      leftHeaders.add(pair.getLeft());
-      rightHeaders.add(pair.getRight());
+      leftHeaders.add(pair.left());
+      rightHeaders.add(pair.right());
     }
 
     Valuejoiner.TrueValuejoiner trueValuejoiner = new Valuejoiner.TrueValuejoiner(joiner);
@@ -100,7 +100,7 @@ class OStreamImpl extends AbstractStream<Row, Row> implements OStream<Row> {
                                 .map(
                                     name ->
                                         Cell.of(
-                                            list.get(rightHeaders.indexOf(name)).getLeft(),
+                                            list.get(rightHeaders.indexOf(name)).left(),
                                             row.cell(name).value()))
                                 .toArray(Cell[]::new)),
                         row))

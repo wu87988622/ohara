@@ -17,6 +17,7 @@
 package com.island.ohara.streams.ostream;
 
 import com.island.ohara.common.data.Cell;
+import com.island.ohara.common.data.Pair;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.data.Serializer;
 import com.island.ohara.kafka.BrokerClient;
@@ -32,7 +33,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import org.apache.commons.lang3.tuple.Pair;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;

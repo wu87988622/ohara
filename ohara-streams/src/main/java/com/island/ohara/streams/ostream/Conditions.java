@@ -16,8 +16,8 @@
 
 package com.island.ohara.streams.ostream;
 
+import com.island.ohara.common.data.Pair;
 import java.util.List;
-import org.apache.commons.lang3.tuple.Pair;
 
 /** Assign a condition pair (left key and right key) list for the required operation */
 public class Conditions {
