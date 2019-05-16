@@ -16,7 +16,7 @@
 
 import * as URLS from '../../src/constants/urls';
 
-describe('StreamApp', () => {
+describe.skip('StreamApp', () => {
   before(() => {
     cy.deleteAllWorkers();
     cy.createWorker();
