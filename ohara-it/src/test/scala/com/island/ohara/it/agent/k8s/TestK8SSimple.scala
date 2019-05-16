@@ -177,7 +177,6 @@ class TestK8SSimple extends IntegrationTest with Matchers {
     val images: Seq[String] = result(k8sClient.images(nodeServerNames.last)).map(x => x.split(":").head)
     //After installed K8S, created k8s.gcr.io/kube-proxy and k8s.gcr.io/pause two docker image.
     images.size >= 2 shouldBe true
-    images.contains("k8s.gcr.io/kube-proxy") shouldBe true
   }
 
   @Test
