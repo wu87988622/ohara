@@ -244,6 +244,48 @@ you have better configs for zookeeper.
 
 ## Broker
 
+After setting up a [Zookeeper cluster](#zookeeper), you have to build a broker cluster before going on your streaming trip.
+[Broker](https://kafka.apache.org/intro) is the streaming center of ohara that all applications on ohara goes through brokers to switch data.
+There are many stories about Ohara leverages the broker to complete countless significant works. But the most important usage
+of Brokers for ohara is the [Topic](rest_interface.md#topic). Each endpoint in [Pipeline](rest_interface.md#pipeline)
+must connect to/from a topic, and each topic in ohara is mapped to a topic in broker. It means all data sent/received to/from
+topic is implemented by a true connection to a broker.
+
+As a result of addressing scalability, a topic is split to many **partitions** distributed on different brokers. It implies
+the number of brokers directly impact the performance of ohara [Pipeline](rest_interface.md#pipeline). If you are streaming
+a bunch of data and there is only a broker in your broker cluster, you will get a slow streaming since all data in the
+streaming are processed by the single broker. Hence, please be careful on deploying your broker cluster. But you don't
+worry about the incorrect settings to cluster. Ohara provides many flexible [Broker APIs](rest_interface.md#broker)
+to increase/decrease nodes of a running broker cluster. You are able to scale your cluster up/down arbitrarily via Ohara APIs.
+
+In order to simplify your life, Ohara auto-generate most configs for your broker cluster.
+
+```
+num.network.threads=3
+num.io.threads=8
+socket.send.buffer.bytes=102400
+socket.receive.buffer.bytes=102400
+socket.request.max.bytes=104857600
+num.partitions=1
+num.recovery.threads.per.data.dir=1
+offsets.topic.replication.factor=1
+transaction.state.log.replication.factor=1
+transaction.state.log.min.isr=1
+log.retention.hours=168
+log.segment.bytes=1073741824
+log.retention.check.interval.ms=300000
+zookeeper.connection.timeout.ms=6000
+group.initial.rebalance.delay.ms=0
+broker.id=0
+listeners=PLAINTEXT://:9092
+log.dirs=/tmp/broker/data
+zookeeper.connect=node00:2181
+advertised.listeners=PLAINTEXT://node00:9092
+```
+
+Except for listeners, other configs are filled by Ohara Configurator. Ohara community always welcomes user to raise
+issue about **we should give a better default configs** or **we should enable user to change xxx config**.
+
 ----------
 
 ## Worker
