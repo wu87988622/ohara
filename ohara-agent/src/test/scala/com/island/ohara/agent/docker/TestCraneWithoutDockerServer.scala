@@ -150,6 +150,6 @@ class TestCraneWithoutDockerServer extends SmallTest with Matchers {
 
   @Test
   def nullExecutor(): Unit = {
-    an[NullPointerException] should be thrownBy Crane.builderOfDocker().executor(null)
+    an[NullPointerException] should be thrownBy Crane.builderOfDocker().cacheThreadPool(null)
   }
 }

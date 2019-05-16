@@ -220,13 +220,7 @@ object ClusterCollie {
       this
     }
 
-    /**
-      * set a thread pool that initial size is equal with number of cores
-      * @return this builder
-      */
-    def executorDefault(): SshBuilder = cacheThreadPool(
-      Executors.newFixedThreadPool(Runtime.getRuntime.availableProcessors()))
-
+    @Optional("The initial size of default pool is equal with number of cores")
     def cacheThreadPool(cacheThreadPool: ExecutorService): SshBuilder = {
       this.cacheThreadPool = Objects.requireNonNull(cacheThreadPool)
       this
@@ -239,7 +233,9 @@ object ClusterCollie {
     def build(): ClusterCollie = new ClusterCollieImpl(
       cacheTimeout = Objects.requireNonNull(cacheTimeout),
       nodeCollie = Objects.requireNonNull(nodeCollie),
-      cacheThreadPool = Objects.requireNonNull(cacheThreadPool)
+      cacheThreadPool =
+        if (cacheThreadPool == null) Executors.newFixedThreadPool(Runtime.getRuntime.availableProcessors())
+        else cacheThreadPool
     )
   }
 

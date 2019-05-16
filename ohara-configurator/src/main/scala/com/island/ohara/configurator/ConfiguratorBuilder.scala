@@ -317,14 +317,12 @@ class ConfiguratorBuilder {
     )(
       store = store,
       nodeCollie = nodeCollie(),
-      clusterCollie =
-        clusterCollie.getOrElse(ClusterCollie.builderOfSsh().nodeCollie(nodeCollie()).executorDefault().build()),
+      clusterCollie = clusterCollie.getOrElse(ClusterCollie.builderOfSsh().nodeCollie(nodeCollie()).build()),
       crane = crane.getOrElse(
         Crane
           .builderOfDocker()
           .nodeCollie(nodeCollie())
           .dockerClientCache(clientCache.getOrElse(DockerClientCache()))
-          .executorDefault()
           .build()),
       k8sClient = k8sClient
     )

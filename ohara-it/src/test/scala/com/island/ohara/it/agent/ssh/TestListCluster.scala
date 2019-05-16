@@ -36,7 +36,7 @@ class TestListCluster extends IntegrationTest with Matchers {
   private[this] val nodeCollie: NodeCollie = NodeCollie(nodeCache)
 
   private[this] val clusterCollie: ClusterCollie =
-    ClusterCollie.builderOfSsh().nodeCollie(nodeCollie).executorDefault().build()
+    ClusterCollie.builderOfSsh().nodeCollie(nodeCollie).build()
 
   private[this] val cleanup: Boolean = true
 

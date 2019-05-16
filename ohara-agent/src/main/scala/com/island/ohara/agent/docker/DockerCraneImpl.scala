@@ -29,7 +29,9 @@ import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
 
-private[agent] class DockerCraneImpl(nodeCollie: NodeCollie, dockerCache: DockerClientCache, executor: ExecutorService)
+private[agent] class DockerCraneImpl(nodeCollie: NodeCollie,
+                                     dockerCache: DockerClientCache,
+                                     cacheThreadPool: ExecutorService)
     extends ReleaseOnce
     with Crane {
   private[this] val log = Logger(classOf[DockerCraneImpl])
@@ -38,7 +40,7 @@ private[agent] class DockerCraneImpl(nodeCollie: NodeCollie, dockerCache: Docker
     .builder[Map[ClusterInfo, Seq[ContainerInfo]]]()
     .default(Map.empty)
     .updater((executionContext: ExecutionContext) => doUpdate(executionContext))
-    .executor(executor)
+    .executor(cacheThreadPool)
     .build()
 
   override def streamWarehouse(): StreamWarehouse = new StreamWarehouseImpl(nodeCollie, dockerCache, clusterCache)

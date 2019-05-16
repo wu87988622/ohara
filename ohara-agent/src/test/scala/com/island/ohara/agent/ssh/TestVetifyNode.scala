@@ -95,7 +95,7 @@ class TestVetifyNode extends SmallTest with Matchers {
     password = sshServer.password()
   )
 
-  private[this] val collie = ClusterCollie.builderOfSsh().executorDefault().nodeCollie(NodeCollie(Seq(node))).build()
+  private[this] val collie = ClusterCollie.builderOfSsh().nodeCollie(NodeCollie(Seq(node))).build()
 
   @Test
   def happyCase(): Unit = {

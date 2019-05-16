@@ -25,6 +25,7 @@ import com.island.ohara.agent.ssh.DockerClientCache
 import com.island.ohara.agent.wharf.StreamWarehouse
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.Releasable
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -83,7 +84,7 @@ object Crane {
   private[agent] class DockerBuilder {
     private[this] var nodeCollie: NodeCollie = _
     private[this] var dockerClientCache: DockerClientCache = _
-    private[this] var executor: ExecutorService = _
+    private[this] var cacheThreadPool: ExecutorService = _
 
     /**
       * Set the Crane "control" nodes
@@ -109,15 +110,9 @@ object Crane {
       this
     }
 
-    /**
-      * set a thread pool that initial size is equal with number of cores
-      * @return this builder
-      */
-    def executorDefault(): DockerBuilder = executor(
-      Executors.newFixedThreadPool(Runtime.getRuntime.availableProcessors()))
-
-    def executor(executor: ExecutorService): DockerBuilder = {
-      this.executor = Objects.requireNonNull(executor)
+    @Optional("The initial size of default pool is equal with number of cores")
+    def cacheThreadPool(cacheThreadPool: ExecutorService): DockerBuilder = {
+      this.cacheThreadPool = Objects.requireNonNull(cacheThreadPool)
       this
     }
 
@@ -129,7 +124,9 @@ object Crane {
     def build(): Crane = new DockerCraneImpl(
       nodeCollie = Objects.requireNonNull(nodeCollie),
       dockerCache = Objects.requireNonNull(dockerClientCache),
-      executor = Objects.requireNonNull(executor)
+      cacheThreadPool =
+        if (cacheThreadPool == null) Executors.newFixedThreadPool(Runtime.getRuntime.availableProcessors())
+        else cacheThreadPool
     )
   }
 
