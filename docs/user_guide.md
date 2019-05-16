@@ -53,6 +53,27 @@ through [assembly file](../README.md#build-binary) if you really really really h
 
 ----------
 
+### Network Configurations
+
+We are trying to do everything for you. However, your network your problem (reference to
+Hadoop's [motto](https://wiki.apache.org/hadoop/YourNetworkYourProblem). A bad network configurations can bring any kind of
+exception in any time, and it is hard to diagnose your network problems. In order to make each container be able to find
+each other, please ensure following common problems (reference to [Hadoop](https://wiki.apache.org/hadoop/YourNetworkYourProblem)
+again) don't happen on your nodes.
+
+1. DNS and reverse DNS broken/non-existent.
+1. Host tables in the machines invalid.
+1. Firewalls in the hosts blocking connections.
+1. Routers blocking traffic.
+1. Hosts with multiple network cards listening/talking on the wrong NIC.
+1. Difference between the hadoop configuration files' definition of the cluster (especially hostnames and ports)
+  from that of the actual cluster setup.
+
+After validating your network configurations layer by layer, you could try filing issue on github if you still can't
+get Ohara to work. 
+
+----------
+
 ### Install Docker-ce on Centos
 
 Docker has provided a great docs about installing docker-ce.
