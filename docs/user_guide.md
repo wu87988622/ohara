@@ -117,6 +117,28 @@ through configruator's RESTful APIs.
 
 ----------
 
+#### Keep the data of Configurator
+
+Ohara Configurator demand a folder to store [data](rest_interface.md) and [jars](rest_interface.md#jars). As Ohara
+Configurator is running in docker container, you have to mount the volume, which is located on container host, on the
+home folder of Ohara Configurator if you want to keep all data of Ohara Configurator. The following example is to mount
+a local folder (/tmp/configurator) on /home/ohara/configurator of Ohara Configurator's container.
+
+```bash
+$ mkdir /tmp/configurator
+$ docker run -v /tmp/configurator:/home/ohara/configurator \
+         -p 12345:12345 \
+         oharastream/configurator:0.5-SNAPSHOT \
+         --port 12345 \
+         --folder /home/ohara/configurator
+```
+
+The user account in docker container is **ohara**, and hence it would be better to set the folder under the **/home/ohara**.
+Otherwise, you will encounter the permission error. Noted that you have tell Ohara Configurator to save data in the folder
+referencing to the outside folder. Otherwise, Ohara Configurator flush all data to a random folder. 
+
+----------
+
 ### Execute Manager
 
 ```sh
@@ -186,10 +208,9 @@ all services requires small bandwidth only. We don't need to care for the perfor
 ### Store of Ohara Configurator
 
 All settings you request to Ohara Configurator are saved in Store, such as connector settings, cluster information and
-pipeline description. The default implementation of Store is in-memory store which is implemented by java concurrent
-hash map. The index of data is id stored by hash code so most GET requests to Ohara Configurator is cheap and fast. A
-todo task, unfortunately, is that the in-memory store is not permanent so your Ohara Configurator instance will lose all
-data after restarting, and this issue is traced by [here](https://github.com/oharastream/ohara/issues/185).
+pipeline description. The default implementation of Store is [RocksDB](https://rocksdb.org/) which offers fast in-memory
+access and persists all data on disk. Please read this [section](#keep-the-data-of-configurator) about mounting host's
+folder on docker container.
 
 ----------
 
