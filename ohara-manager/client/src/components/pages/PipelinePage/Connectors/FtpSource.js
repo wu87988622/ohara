@@ -16,9 +16,8 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import styled from 'styled-components';
 import toastr from 'toastr';
-import { get, isEmpty, isNull, debounce } from 'lodash';
+import { get, debounce } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
 import * as connectorApi from 'api/connectorApi';
@@ -27,11 +26,9 @@ import * as s from './styles';
 import * as utils from './CustomConnector/customConnectorUtils';
 import Controller from './Controller';
 
-import { findByGraphId } from '../pipelineUtils/commonUtils';
-
 import { fetchWorker } from 'api/workerApi';
 import TestConnectionBtn from './CustomConnector/TestConnectionBtn';
-import { CONNECTOR_STATES, CONNECTOR_ACTIONS } from 'constants/pipelines';
+import { CONNECTOR_ACTIONS } from 'constants/pipelines';
 import { graphPropType } from 'propTypes/pipeline';
 
 class FtpSource extends React.Component {
