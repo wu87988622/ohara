@@ -67,7 +67,7 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
     val sink = result(access.add(request))
 
     // test idempotent start
-    (0 until 3).foreach(_ => Await.result(access.start(sink.id), 30 seconds).state.get shouldBe ConnectorState.RUNNING)
+    (0 until 3).foreach(_ => Await.result(access.start(sink.id), 30 seconds).state should not be None)
     val workerClient = WorkerClient(testUtil.workersConnProps)
     try {
       CommonUtils.await(() =>

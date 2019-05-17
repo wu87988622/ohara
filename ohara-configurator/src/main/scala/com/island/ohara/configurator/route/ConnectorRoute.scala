@@ -166,7 +166,10 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
                           // always override the id
                           .id(connectorDesc.id)
                           .create
-                          .flatMap(_ => Future.successful(connectorDesc.copy(state = Some(ConnectorState.RUNNING))))
+                          .flatMap(res =>
+                            Future.successful(connectorDesc.copy(state =
+                              if (res.tasks.isEmpty) Some(ConnectorState.UNASSIGNED)
+                              else Some(ConnectorState.RUNNING))))
                     }
                 }
             })

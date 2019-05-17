@@ -48,8 +48,10 @@ object WorkerJson {
       versionKey -> JsString(obj.version)
     )
   }
+  final case class ConnectorTaskId(connector: String, task: Int)
+  implicit val CONNECTOR_TASK_ID_JSON_FORMAT: RootJsonFormat[ConnectorTaskId] = jsonFormat2(ConnectorTaskId)
 
-  final case class ConnectorCreationResponse(name: String, config: Map[String, String], tasks: Seq[String])
+  final case class ConnectorCreationResponse(name: String, config: Map[String, String], tasks: Seq[ConnectorTaskId])
 
   implicit val CONNECTOR_CREATION_RESPONSE_JSON_FORMAT: RootJsonFormat[ConnectorCreationResponse] = jsonFormat3(
     ConnectorCreationResponse)

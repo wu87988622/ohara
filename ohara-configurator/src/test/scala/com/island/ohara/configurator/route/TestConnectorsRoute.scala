@@ -16,11 +16,7 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.ConnectorApi.{
-  ConnectorCreationRequest,
-  ConnectorDescription,
-  ConnectorState
-}
+import com.island.ohara.client.configurator.v0.ConnectorApi.{ConnectorCreationRequest, ConnectorDescription}
 import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterCreationRequest
 import com.island.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, TopicApi, WorkerApi}
@@ -349,9 +345,9 @@ class TestConnectorsRoute extends SmallTest with Matchers {
         numberOfTasks = Some(1)
       )))
 
-    result(connectorApi.start(connector.id)).state shouldBe Some(ConnectorState.RUNNING)
+    result(connectorApi.start(connector.id)).state should not be None
 
-    (0 to 10).foreach(_ => result(connectorApi.pause(connector.id)).state shouldBe Some(ConnectorState.PAUSED))
+    (0 to 10).foreach(_ => result(connectorApi.pause(connector.id)).state should not be None)
   }
 
   @Test
@@ -379,9 +375,9 @@ class TestConnectorsRoute extends SmallTest with Matchers {
         numberOfTasks = Some(1)
       )))
 
-    result(connectorApi.start(connector.id)).state shouldBe Some(ConnectorState.RUNNING)
+    result(connectorApi.start(connector.id)).state should not be None
 
-    (0 to 10).foreach(_ => result(connectorApi.resume(connector.id)).state shouldBe Some(ConnectorState.RUNNING))
+    (0 to 10).foreach(_ => result(connectorApi.resume(connector.id)).state should not be None)
   }
 
   @Test
@@ -409,7 +405,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
         numberOfTasks = Some(1)
       )))
 
-    result(connectorApi.start(connector.id)).state shouldBe Some(ConnectorState.RUNNING)
+    result(connectorApi.start(connector.id)).state should not be None
 
     (0 to 10).foreach(_ => result(connectorApi.stop(connector.id)).state shouldBe None)
   }
@@ -439,9 +435,9 @@ class TestConnectorsRoute extends SmallTest with Matchers {
         numberOfTasks = Some(1)
       )))
 
-    result(connectorApi.start(connector.id)).state shouldBe Some(ConnectorState.RUNNING)
+    result(connectorApi.start(connector.id)).state should not be None
 
-    (0 to 10).foreach(_ => result(connectorApi.start(connector.id)).state shouldBe Some(ConnectorState.RUNNING))
+    (0 to 10).foreach(_ => result(connectorApi.start(connector.id)).state should not be None)
   }
 
   @Test
