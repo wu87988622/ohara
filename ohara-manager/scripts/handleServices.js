@@ -51,7 +51,7 @@ async function createServices(
 }
 
 /* eslint-disable no-console */
-async function cleanServices(configurator, nodeHost) {
+async function cleanServices(configurator) {
   const file = fs.readFileSync('scripts/servicesApi/service.json');
   var jsons = JSON.parse(file);
   try {
@@ -64,7 +64,6 @@ async function cleanServices(configurator, nodeHost) {
     await api.jsonLoop(jsons, 'workers', api.cleanWk, configurator);
     await api.jsonLoop(jsons, 'brokers', api.cleanBk, configurator);
     await api.jsonLoop(jsons, 'zookeepers', api.cleanZk, configurator);
-    await api.cleanNode(configurator, nodeHost);
 
     console.log(chalk.green('Successfully cleaned up all the services'));
   } catch (err) {

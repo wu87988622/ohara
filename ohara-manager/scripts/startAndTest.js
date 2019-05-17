@@ -150,7 +150,7 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
   } finally {
     await mergeE2eReports();
     killSubProcess();
-    await cleanServices(configurator, envNodeHost);
+    await cleanServices(configurator);
     process.exit(0);
   }
 };
