@@ -73,7 +73,7 @@ describe('PipelineNewPage', () => {
     });
   });
 
-  it('adds all connectors', () => {
+  it.skip('adds all connectors', () => {
     const filters = [
       {
         type: CONNECTOR_TYPES.ftpSource,
@@ -120,7 +120,7 @@ describe('PipelineNewPage', () => {
     });
   });
 
-  it('saves and remove a connector even after page refresh', () => {
+  it.skip('saves and remove a connector even after page refresh', () => {
     cy.getByTestId('toolbar-sources')
       .click()
       .getByText(CONNECTOR_TYPES.jdbcSource)
@@ -154,7 +154,7 @@ describe('PipelineNewPage', () => {
       .should('not.be.exist');
   });
 
-  it('ftp sink source connect to topic write to graph', () => {
+  it.skip('ftp sink source connect to topic write to graph', () => {
     cy.server();
     cy.route('PUT', 'api/pipelines/*').as('putPipeline');
     cy.route('GET', 'api/connectors/*').as('getConnector');
@@ -218,7 +218,7 @@ describe('PipelineNewPage', () => {
       .should('have.length', 2);
   });
 
-  it('hdfs sink source connect to topic write to graph', () => {
+  it.skip('hdfs sink source connect to topic write to graph', () => {
     cy.server();
     cy.route('PUT', '/api/pipelines/*').as('putPipeline');
     cy.route('GET', '/api/connectors/*').as('getConnector');

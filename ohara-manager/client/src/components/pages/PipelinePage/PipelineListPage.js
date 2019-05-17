@@ -201,10 +201,11 @@ class PipelineListPage extends React.Component {
     }
   };
 
-  handleDeletePipelineModalOpen = id => {
+  handleDeletePipelineModalOpen = (id, name) => {
     this.setState({
       isDeletePipelineModalActive: true,
       deletePipelineId: id,
+      pipelineName: name,
     });
   };
 
@@ -216,27 +217,24 @@ class PipelineListPage extends React.Component {
   };
 
   handleDeletePipelineConfirm = async () => {
-    const { deletePipelineId: id } = this.state;
+    const { deletePipelineId: id, pipelineName: name } = this.state;
     this.setState({ isDeletePipelineWorking: true });
     const res = await deletePipeline(id);
+    const isSuccess = get(res, 'data.isSuccess', false);
     this.setState({ isDeletePipelineWorking: false });
-    const deletedId = get(res, 'data.result.id', null);
-    const deletedPipeline = get(res, 'data.result.name', null);
 
-    if (deletedId) {
+    if (isSuccess) {
       this.setState(({ pipelines }) => {
-        const _pipelines = pipelines.filter(p => p.id !== deletedId);
+        const _pipelines = pipelines.filter(p => p.id !== id);
         return {
           pipelines: _pipelines,
           isDeletePipelineModalActive: false,
           deletePipelineId: '',
         };
       });
-      toastr.success(
-        `${MESSAGES.PIPELINE_DELETION_SUCCESS} ${deletedPipeline}`,
-      );
+      toastr.success(`${MESSAGES.PIPELINE_DELETION_SUCCESS} ${name}`);
     } else {
-      toastr.error(`${MESSAGES.PIPELINE_DELETION_ERROR} ${deletedPipeline}`);
+      toastr.error(`${MESSAGES.PIPELINE_DELETION_ERROR} ${name}`);
     }
   };
 
@@ -331,7 +329,7 @@ class PipelineListPage extends React.Component {
                         <td data-testid="delete-pipeline" className="has-icon">
                           <DeleteIcon
                             onClick={() =>
-                              this.handleDeletePipelineModalOpen(id)
+                              this.handleDeletePipelineModalOpen(id, name)
                             }
                           >
                             <i className="far fa-trash-alt" />

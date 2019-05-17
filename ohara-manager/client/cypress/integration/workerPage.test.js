@@ -21,7 +21,7 @@ describe('WorkerPage', () => {
     cy.deleteAllWorkers();
   });
 
-  it('creates a new cluster', () => {
+  it.skip('creates a new cluster', () => {
     const nodeName = Cypress.env('nodeHost');
     const clusterName = 'testcluster';
 
@@ -36,14 +36,15 @@ describe('WorkerPage', () => {
       .click()
       .type('65535')
       .getByText('Add node')
-      .click()
-      .getByText(nodeName)
       .click();
 
     cy.get('.ReactModal__Content')
       .eq(1)
       .within(() => {
-        cy.getByText('Add').click();
+        cy.getByText(nodeName)
+          .click()
+          .getByText('Add')
+          .click();
       })
       .getByText(nodeName)
       .should('have.length', 1)

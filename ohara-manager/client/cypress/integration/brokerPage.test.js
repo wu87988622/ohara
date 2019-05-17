@@ -15,6 +15,7 @@
  */
 
 import { BROKER } from '../../src/constants/urls';
+import { randomName } from '../utils';
 
 describe('BrokerPage', () => {
   before(() => {
@@ -43,7 +44,7 @@ describe('BrokerPage', () => {
   it('creates a new topic', () => {
     cy.server();
     cy.route('GET', 'api/topics').as('getTopics');
-    const topicName = 'test topic';
+    const topicName = randomName();
 
     cy.visit(BROKER)
       .getByText('New topic')
