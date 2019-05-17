@@ -36,14 +36,15 @@ describe('WorkerPage', () => {
       .click()
       .type('65535')
       .getByText('Add node')
-      .click()
-      .getByText(nodeName)
       .click();
 
     cy.get('.ReactModal__Content')
       .eq(1)
       .within(() => {
-        cy.getByText('Add').click();
+        cy.getByText(nodeName)
+          .click()
+          .getByText('Add')
+          .click();
       })
       .getByText(nodeName)
       .should('have.length', 1)
