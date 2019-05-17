@@ -30,21 +30,28 @@ import com.island.ohara.configurator.jar.JarStore
 import spray.json.DefaultJsonProtocol._
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext}
-private[configurator] object JarsRoute {
+import scala.concurrent.{Await, ExecutionContext, Future}
+private[configurator] object JarRoute {
 
   def tempDestination(fileInfo: FileInfo): File =
     File.createTempFile(fileInfo.fileName, ".tmp")
 
   def pathToJar(id: String): String = s"${JarApi.DOWNLOAD_JAR_PREFIX_PATH}/${CommonUtils.requireNonEmpty(id)}.jar"
 
-  def apply(implicit jarStore: JarStore, executionContext: ExecutionContext): server.Route =
+  private[this] def withUrl(jarInfo: JarInfo)(implicit urlGenerator: UrlGenerator,
+                                              executionContext: ExecutionContext): Future[JarInfo] =
+    urlGenerator.url(jarInfo.id).map(url => jarInfo.copy(url = Some(url)))
+
+  def apply(implicit jarStore: JarStore, urlGenerator: UrlGenerator, executionContext: ExecutionContext): server.Route =
     pathPrefix(JAR_PREFIX_PATH) {
       storeUploadedFile("jar", tempDestination) {
         case (metadata, file) =>
-          complete(jarStore.add(file, metadata.fileName))
-      } ~ get(complete(jarStore.jarInfos)) ~ path(Segment) { id =>
-        delete(complete(jarStore.remove(id).map(_ => StatusCodes.NoContent))) ~ get(complete(jarStore.jarInfo(id)))
+          complete(jarStore.add(file, metadata.fileName).flatMap(withUrl))
+      } ~ path(Segment) { id =>
+        get(complete(jarStore.jarInfo(id).flatMap(withUrl))) ~ delete(
+          complete(jarStore.remove(id).map(_ => StatusCodes.NoContent)))
+      } ~ pathEnd {
+        get(complete(jarStore.jarInfos.flatMap(jarInfos => Future.sequence(jarInfos.map(withUrl)))))
       }
     } ~ pathPrefix(DOWNLOAD_JAR_PREFIX_PATH / Segment) { idWithExtension =>
       // We force all url end with .jar

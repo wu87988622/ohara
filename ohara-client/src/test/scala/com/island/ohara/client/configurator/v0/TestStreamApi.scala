@@ -54,7 +54,7 @@ class TestStreamApi extends SmallTest with Matchers {
       id = id,
       name = "my-app",
       instances = 1,
-      jarInfo = JarInfo("id", "name", 1L, CommonUtils.current()),
+      jarInfo = JarInfo("id", "name", 1L, None, CommonUtils.current()),
       from = Seq.empty,
       to = Seq.empty,
       state = None,

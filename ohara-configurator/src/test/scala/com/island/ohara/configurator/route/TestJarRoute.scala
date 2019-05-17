@@ -28,7 +28,7 @@ import org.scalatest.Matchers
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
-class TestJarsRoute extends SmallTest with Matchers {
+class TestJarRoute extends SmallTest with Matchers {
 
   private[this] val configurator = Configurator.builder().fake().build()
   private[this] val jarApi = JarApi.access().hostname(configurator.hostname).port(configurator.port)
@@ -78,10 +78,10 @@ class TestJarsRoute extends SmallTest with Matchers {
     (0 to 10).foreach(_ => result(jarApi.delete(CommonUtils.randomString(5))))
 
   @Test
-  def nullId(): Unit = an[NullPointerException] should be thrownBy JarsRoute.pathToJar(null)
+  def nullId(): Unit = an[NullPointerException] should be thrownBy JarRoute.pathToJar(null)
 
   @Test
-  def emptyId(): Unit = an[IllegalArgumentException] should be thrownBy JarsRoute.pathToJar("")
+  def emptyId(): Unit = an[IllegalArgumentException] should be thrownBy JarRoute.pathToJar("")
 
   @After
   def tearDown(): Unit = Releasable.close(configurator)

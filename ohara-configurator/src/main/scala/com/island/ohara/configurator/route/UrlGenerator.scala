@@ -18,11 +18,17 @@ package com.island.ohara.configurator.route
 
 import java.net.URL
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
   * just a interface to bridge jar store and route
   */
 trait UrlGenerator {
-  def url(id: String)(implicit executionContext: ExecutionContext): Future[URL]
+
+  /**
+    * generate available url for the input id. Note that the input id must reference to a existent jar
+    * @param id jar id
+    * @return downloadable url
+    */
+  def url(id: String): Future[URL]
 }

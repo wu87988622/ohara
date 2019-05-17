@@ -25,9 +25,9 @@ import com.island.ohara.configurator.jar.LocalJarStore
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
 class TestJarStore extends SmallTest with Matchers {
 
   private[this] val configurator = Configurator.builder().fake().build()
@@ -132,9 +132,8 @@ class TestJarStore extends SmallTest with Matchers {
     val f = generateFile(CommonUtils.randomString().getBytes)
     val plugin = result(access.upload(f))
     val jar = result(configurator.jarStore.jarInfo(plugin.id))
-    jar shouldBe plugin
-
-    result(configurator.jarStore.jarInfo(plugin.id)) shouldBe plugin
+    // the jar info from jar store does not have the url
+    jar.copy(url = plugin.url) shouldBe plugin
   }
 
   @Test
@@ -164,7 +163,9 @@ class TestJarStore extends SmallTest with Matchers {
     val plugin = result(access.upload(f))
     plugin.name shouldBe f.getName
     plugin.size shouldBe content.length
+    plugin.url should not be None
     result(access.list).size shouldBe 1
+    result(access.get(plugin.id)) shouldBe plugin
 
     val url = result(configurator.urlGenerator.url(plugin.id))
     url.getProtocol shouldBe "http"
@@ -177,6 +178,10 @@ class TestJarStore extends SmallTest with Matchers {
     tempFile.length() shouldBe plugin.size
     new String(Files.readAllBytes(tempFile.toPath)) shouldBe content
   }
+
+  @Test
+  def testNonexistentJarId(): Unit =
+    an[NoSuchElementException] should be thrownBy result(configurator.urlGenerator.url(CommonUtils.randomString()))
 
   @After
   def tearDown(): Unit = Releasable.close(configurator)

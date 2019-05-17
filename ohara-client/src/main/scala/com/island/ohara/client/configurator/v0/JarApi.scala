@@ -17,12 +17,13 @@
 package com.island.ohara.client.configurator.v0
 
 import java.io.File
+import java.net.URL
 
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model._
 import akka.stream.scaladsl.{FileIO, Source}
 import spray.json.DefaultJsonProtocol._
-import spray.json.RootJsonFormat
+import spray.json.{JsString, JsValue, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 object JarApi {
@@ -33,17 +34,29 @@ object JarApi {
     */
   val DOWNLOAD_JAR_PREFIX_PATH: String = "downloadJars"
 
-  final case class JarInfo(id: String, name: String, size: Long, lastModified: Long) extends Data {
+  implicit val URL_FORMAT: RootJsonFormat[URL] = new RootJsonFormat[URL] {
+    override def read(json: JsValue): URL = new URL(json.asInstanceOf[JsString].value)
+    override def write(obj: URL): JsValue = JsString(obj.toString)
+  }
+
+  final case class JarInfo(id: String,
+                           name: String,
+                           size: Long,
+                           //  Not all jars are downloadable.
+                           url: Option[URL],
+                           lastModified: Long)
+      extends Data {
     override def kind: String = "jar"
   }
 
-  implicit val JAR_JSON_FORMAT: RootJsonFormat[JarInfo] = jsonFormat4(JarInfo)
+  implicit val JAR_JSON_FORMAT: RootJsonFormat[JarInfo] = jsonFormat5(JarInfo)
 
   sealed abstract class Access extends BasicAccess(JAR_PREFIX_PATH) {
     def upload(f: File)(implicit executionContext: ExecutionContext): Future[JarInfo] = upload(f, f.getName)
     def upload(f: File, newName: String)(implicit executionContext: ExecutionContext): Future[JarInfo]
     def delete(id: String)(implicit executionContext: ExecutionContext): Future[Unit]
     def list(implicit executionContext: ExecutionContext): Future[Seq[JarInfo]]
+    def get(id: String)(implicit executionContext: ExecutionContext): Future[JarInfo]
   }
 
   def access(): Access = new Access {
@@ -67,5 +80,7 @@ object JarApi {
       exec.delete[ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$id")
     override def list(implicit executionContext: ExecutionContext): Future[Seq[JarInfo]] =
       exec.get[Seq[JarInfo], ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}")
+    override def get(id: String)(implicit executionContext: ExecutionContext): Future[JarInfo] =
+      exec.get[JarInfo, ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$id")
   }
 }

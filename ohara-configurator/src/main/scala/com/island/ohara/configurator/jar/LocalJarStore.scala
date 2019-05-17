@@ -64,6 +64,7 @@ private[configurator] class LocalJarStore(val folder: String) extends ReleaseOnc
         id = id,
         name = newFile.getName,
         size = newFile.length(),
+        url = None,
         lastModified = newFile.lastModified()
       )
       LOG.info(s"add $plugin")
@@ -86,6 +87,7 @@ private[configurator] class LocalJarStore(val folder: String) extends ReleaseOnc
                 id = folder.getName,
                 name = jar.getName,
                 size = jar.length(),
+                url = None,
                 lastModified = jar.lastModified()
               ))
           }
@@ -123,6 +125,7 @@ private[configurator] class LocalJarStore(val folder: String) extends ReleaseOnc
         id = id,
         name = newFile.getName,
         size = newFile.length(),
+        url = None,
         lastModified = CommonUtils.current()
       )
       LOG.info(s"update $id by $plugin")
@@ -143,6 +146,7 @@ private[configurator] class LocalJarStore(val folder: String) extends ReleaseOnc
           id = id,
           name = newFile.getName,
           size = newFile.length(),
+          url = None,
           lastModified = CommonUtils.current()
         )
       }

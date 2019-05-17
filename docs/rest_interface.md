@@ -3049,6 +3049,7 @@ The properties stored by ohara are shown below.
 1. id (**string**) — the jar id
 1. name (**string**) — the file name
 1. size (**long**) — file size
+1. url (**option(string)**) — url to download this jar from Ohara Configurator. Noted not all jars are downloadable to user.
 1. lastModified (**long**) — the time of uploading this file
 
 ----------

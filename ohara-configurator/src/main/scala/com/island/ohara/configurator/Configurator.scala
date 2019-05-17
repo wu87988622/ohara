@@ -46,7 +46,7 @@ import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.typesafe.scalalogging.Logger
 import spray.json.DeserializationException
 
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
@@ -145,10 +145,11 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
       .build()
   }
 
-  implicit val urlGenerator: UrlGenerator = new UrlGenerator {
-    override def url(id: String)(implicit executionContext: ExecutionContext): Future[URL] =
-      Future.successful(new URL(s"http://$hostname:$port/${ConfiguratorApiInfo.V0}/${JarsRoute.pathToJar(id)}"))
-  }
+  implicit val urlGenerator: UrlGenerator = (id: String) =>
+    jarStore
+      .jarInfo(id)
+      // check the existence of input id
+      .map(_ => new URL(s"http://$hostname:$port/${ConfiguratorApiInfo.V0}/${JarRoute.pathToJar(id)}"))
 
   /**
     * the full route consists from all routes against all subclass from ohara data and a final route used to reject other requests.
@@ -170,7 +171,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
       ZookeeperRoute.apply,
       BrokerRoute.apply,
       WorkerRoute.apply,
-      JarsRoute.apply,
+      JarRoute.apply,
       LogRoute.apply,
       ObjectRoute.apply,
       ContainerRoute.apply
