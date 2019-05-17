@@ -21,7 +21,7 @@ describe('WorkerPage', () => {
     cy.deleteAllWorkers();
   });
 
-  it('creates a new cluster', () => {
+  it.skip('creates a new cluster', () => {
     const nodeName = Cypress.env('nodeHost');
     const clusterName = 'testcluster';
 
