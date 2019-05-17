@@ -17,7 +17,6 @@
 package com.island.ohara.it.agent.k8s
 
 import com.island.ohara.agent.k8s.K8SClient
-import com.island.ohara.agent.{ClusterCollie, NodeCollie}
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.util.Releasable
@@ -28,8 +27,7 @@ import org.junit.{After, Before}
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.FiniteDuration
-import scala.concurrent.duration._
+import scala.concurrent.duration.{FiniteDuration, _}
 
 class TestK8SClusterCollieByConfigurator extends BasicTests4ClusterCollieByConfigurator {
   private[this] val log = Logger(classOf[TestK8SClusterCollieByConfigurator])
@@ -53,15 +51,7 @@ class TestK8SClusterCollieByConfigurator extends BasicTests4ClusterCollieByConfi
   final def setup(): Unit = {
     if (nodeCache.isEmpty) skipTest(s"You must assign nodes for collie tests")
     else {
-      _configurator = Configurator
-        .builder()
-        .clusterCollie(
-          ClusterCollie
-            .builderOfK8s()
-            .nodeCollie(NodeCollie(nodeCache))
-            .k8sClient(K8SClient(API_SERVER_URL.get))
-            .build())
-        .build()
+      _configurator = Configurator.builder().k8sClient(K8SClient(API_SERVER_URL.get)).build()
       nameHolder = new ClusterNameHolder(nodeCache) {
         override def close(): Unit = {
           val k8sClient = K8SClient(API_SERVER_URL.get)

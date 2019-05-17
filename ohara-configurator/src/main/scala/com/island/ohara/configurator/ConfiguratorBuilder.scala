@@ -27,7 +27,7 @@ import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeService}
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.{Data, NodeApi}
 import com.island.ohara.client.kafka.WorkerClient
-import com.island.ohara.common.annotations.Optional
+import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.fake._
@@ -93,14 +93,16 @@ class ConfiguratorBuilder {
     *
     * @return this builder
     */
-  def fake(): ConfiguratorBuilder = fake(1, 1)
+  @VisibleForTesting
+  private[configurator] def fake(): ConfiguratorBuilder = fake(1, 1)
 
   /**
     * set all client to fake mode but broker client and worker client is true that they are connecting to embedded cluster.
     *
     * @return this builder
     */
-  def fake(bkConnectionProps: String, wkConnectionProps: String): ConfiguratorBuilder = {
+  @VisibleForTesting
+  private[configurator] def fake(bkConnectionProps: String, wkConnectionProps: String): ConfiguratorBuilder = {
     if (k8sClient != null)
       throw new IllegalArgumentException("k8s client exists so you can't run Configurator in fake mode")
     val store = getOrCreateStore()
@@ -172,6 +174,7 @@ class ConfiguratorBuilder {
     collie.brokerCollie().addCluster(bkCluster)
     collie.workerCollie().addCluster(wkCluster)
     clusterCollie(collie)
+    crane(Crane.builderOfDocker().nodeCollie(createCollie()).dockerClientCache(DockerClientCache.fake()).build())
   }
 
   /**
@@ -180,11 +183,12 @@ class ConfiguratorBuilder {
     * @param numberOfWorkerCluster number of worker cluster
     * @return this builder
     */
-  def fake(numberOfBrokerCluster: Int,
-           numberOfWorkerCluster: Int,
-           zkClusterNamePrefix: String = "fakezkcluster",
-           bkClusterNamePrefix: String = "fakebkcluster",
-           wkClusterNamePrefix: String = "fakewkcluster"): ConfiguratorBuilder = {
+  @VisibleForTesting
+  private[configurator] def fake(numberOfBrokerCluster: Int,
+                                 numberOfWorkerCluster: Int,
+                                 zkClusterNamePrefix: String = "fakezkcluster",
+                                 bkClusterNamePrefix: String = "fakebkcluster",
+                                 wkClusterNamePrefix: String = "fakewkcluster"): ConfiguratorBuilder = {
     if (k8sClient != null)
       throw new IllegalArgumentException("k8s client exists so you can't run Configurator in fake mode")
     if (numberOfBrokerCluster < 0)
@@ -275,22 +279,31 @@ class ConfiguratorBuilder {
                    lastModified = CommonUtils.current()))
       .foreach(store.add)
     clusterCollie(collie)
+    crane(Crane.builderOfDocker().nodeCollie(createCollie()).dockerClientCache(DockerClientCache.fake()).build())
   }
 
+  @VisibleForTesting
   @Optional("default is implemented by ssh")
-  def clusterCollie(clusterCollie: ClusterCollie): ConfiguratorBuilder = {
+  private[configurator] def clusterCollie(clusterCollie: ClusterCollie): ConfiguratorBuilder = {
     if (this.clusterCollie != null) throw new IllegalArgumentException(s"cluster collie is defined!!!")
     this.clusterCollie = Objects.requireNonNull(clusterCollie)
     this
   }
 
+  @VisibleForTesting
   @Optional("default implementation is fake")
-  def crane(crane: Crane): ConfiguratorBuilder = {
+  private[configurator] def crane(crane: Crane): ConfiguratorBuilder = {
     if (this.crane != null) throw new IllegalArgumentException(s"crane is defined!!!")
     this.crane = Objects.requireNonNull(crane)
     this
   }
 
+  /**
+    * Set a k8s client to enable container collie to use k8s platform. If you don't set it, the default implementation apply the ssh connection
+    * to control containers on remote nodes.
+    * @param k8sClient k8s client
+    * @return this builder
+    */
   @Optional("default is null")
   def k8sClient(k8sClient: K8SClient): ConfiguratorBuilder = {
     if (this.k8sClient != null) throw new IllegalArgumentException(s"k8sClient is defined!!!")
@@ -351,7 +364,7 @@ class ConfiguratorBuilder {
   private[this] def getOrCreateCrane(): Crane = if (crane == null) {
     this.crane =
       if (k8sClient == null)
-        Crane.builderOfDocker().nodeCollie(createCollie()).dockerClientCache(DockerClientCache.fake()).build()
+        Crane.builderOfDocker().nodeCollie(createCollie()).dockerClientCache(DockerClientCache()).build()
       else Crane.builderOfK8s().nodeCollie(createCollie()).k8sClient(k8sClient).build()
     crane
   } else crane

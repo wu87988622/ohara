@@ -16,9 +16,11 @@
 
 package com.island.ohara.configurator
 
+import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.agent.{ClusterCollie, Crane}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
 import org.scalatest.mockito.MockitoSugar
@@ -69,23 +71,61 @@ class TestFakeConfigurator extends SmallTest with Matchers {
   }
 
   @Test
-  def reassignClusterCollie(): Unit = {
+  def reassignClusterCollieAfterFake(): Unit =
     an[IllegalArgumentException] should be thrownBy Configurator
       .builder()
       // in fake mode, a fake collie will be created
       .fake(1, 1)
       .clusterCollie(MockitoSugar.mock[ClusterCollie])
       .build()
-  }
 
   @Test
-  def assignCrane(): Unit = {
-    Configurator
+  def reassignCraneAfterFake(): Unit =
+    an[IllegalArgumentException] should be thrownBy Configurator
       .builder()
       // in fake mode, we use fake docker client
       .fake(1, 1)
-      // assign is ok, since crane is defined in build()
+      // assign is NOT ok, since crane is defined in fake mode!!!
       .crane(MockitoSugar.mock[Crane])
       .build()
-  }
+
+  @Test
+  def reassignCrane(): Unit =
+    an[IllegalArgumentException] should be thrownBy Configurator
+      .builder()
+      .crane(MockitoSugar.mock[Crane])
+      .crane(MockitoSugar.mock[Crane])
+      .build()
+
+  @Test
+  def reassignK8sClient(): Unit = an[IllegalArgumentException] should be thrownBy Configurator
+    .builder()
+    .k8sClient(MockitoSugar.mock[K8SClient])
+    .k8sClient(MockitoSugar.mock[K8SClient])
+    .build()
+
+  @Test
+  def reassignClusterCollie(): Unit = an[IllegalArgumentException] should be thrownBy Configurator
+    .builder()
+    .clusterCollie(MockitoSugar.mock[ClusterCollie])
+    .clusterCollie(MockitoSugar.mock[ClusterCollie])
+    .build()
+
+  @Test
+  def reassignStoreType(): Unit = an[IllegalArgumentException] should be thrownBy Configurator
+    .builder()
+    // in fake mode, we have created a store
+    .fake(1, 1)
+    // you can't change the store type now
+    .inMemoryStore()
+    .build()
+
+  @Test
+  def reassignHomeFolder(): Unit = an[IllegalArgumentException] should be thrownBy Configurator
+    .builder()
+    // in fake mode, we have created a store
+    .fake(1, 1)
+    // you can't change the folder of store now
+    .homeFolder(CommonUtils.createTempFolder(methodName()).getCanonicalPath)
+    .build()
 }
