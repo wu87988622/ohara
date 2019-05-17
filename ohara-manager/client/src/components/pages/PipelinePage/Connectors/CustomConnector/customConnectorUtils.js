@@ -204,29 +204,8 @@ export const renderForm = ({
           case 'STRING':
           case 'INT':
           case 'CLASS':
-            return (
-              <FormGroup key={key}>
-                <Label
-                  htmlFor={`${displayName}`}
-                  required={required}
-                  tooltipString={documentation}
-                  tooltipAlignment="right"
-                  width="100%"
-                >
-                  {displayName}
-                </Label>
-                <Input
-                  id={`${displayName}`}
-                  width="100%"
-                  value={String(displayValue)}
-                  name={key}
-                  onChange={handleChange}
-                  disabled={!editable || isRunning}
-                />
-              </FormGroup>
-            );
-
           case 'PASSWORD':
+            const type = typeSwitch(valueType);
             return (
               <FormGroup key={key}>
                 <Label
@@ -241,9 +220,9 @@ export const renderForm = ({
                 <Input
                   id={`${displayName}`}
                   width="100%"
-                  type="password"
                   value={String(displayValue)}
                   name={key}
+                  type={type}
                   onChange={handleChange}
                   disabled={!editable || isRunning}
                 />
@@ -339,4 +318,13 @@ function groupBy(array, f) {
   return Object.keys(groups).map(function(group) {
     return groups[group];
   });
+}
+
+function typeSwitch(type) {
+  switch (type) {
+    case 'PASSWORD':
+      return 'password';
+    default:
+      return null;
+  }
 }
