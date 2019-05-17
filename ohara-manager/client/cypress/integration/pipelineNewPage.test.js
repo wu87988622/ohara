@@ -120,7 +120,7 @@ describe('PipelineNewPage', () => {
     });
   });
 
-  it('saves and remove a connector even after page refresh', () => {
+  it.skip('saves and remove a connector even after page refresh', () => {
     cy.getByTestId('toolbar-sources')
       .click()
       .getByText(CONNECTOR_TYPES.jdbcSource)
