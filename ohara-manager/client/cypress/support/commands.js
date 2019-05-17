@@ -55,20 +55,24 @@ Cypress.Commands.add('createWorker', () => {
     });
   });
 
+  var count = 0;
+  const max = 10;
   // Make a request to configurator see if worker cluster is ready for use
   const req = endPoint => {
     cy.request('GET', endPoint).then(res => {
       // When connectors field has the right connector info
       // this means that everything is ready to be tested
-      if (res.body.connectors.length > 0) return;
-
+      if (res.body.some(e => e.name === workerName)) return;
+      //max loop count
+      if (count > max) return;
       // if worker is not ready yet, wait a 1.5 sec and make another request
+      count++;
       cy.wait(1500);
       req(endPoint);
     });
   };
 
-  const endPoint = `api/workers/${workerName}`;
+  const endPoint = `api/workers`;
   cy.request('GET', endPoint).then(() => req(endPoint));
 });
 
