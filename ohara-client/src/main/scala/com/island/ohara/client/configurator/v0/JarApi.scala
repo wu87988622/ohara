@@ -29,27 +29,16 @@ import scala.concurrent.{ExecutionContext, Future}
 object JarApi {
   val JAR_PREFIX_PATH: String = "jars"
 
-  /**
-    * This is a specific prefix which enables user to download binary of jar
-    */
-  val DOWNLOAD_JAR_PREFIX_PATH: String = "downloadJars"
-
   implicit val URL_FORMAT: RootJsonFormat[URL] = new RootJsonFormat[URL] {
     override def read(json: JsValue): URL = new URL(json.asInstanceOf[JsString].value)
     override def write(obj: URL): JsValue = JsString(obj.toString)
   }
 
-  final case class JarInfo(id: String,
-                           name: String,
-                           size: Long,
-                           //  Not all jars are downloadable.
-                           url: Option[URL],
-                           lastModified: Long)
-      extends Data {
+  final case class JarInfo(id: String, name: String, size: Long, url: URL, lastModified: Long) extends Data {
     override def kind: String = "jar"
   }
 
-  implicit val JAR_JSON_FORMAT: RootJsonFormat[JarInfo] = jsonFormat5(JarInfo)
+  implicit val JAR_INFO_JSON_FORMAT: RootJsonFormat[JarInfo] = jsonFormat5(JarInfo)
 
   sealed abstract class Access extends BasicAccess(JAR_PREFIX_PATH) {
     def upload(f: File)(implicit executionContext: ExecutionContext): Future[JarInfo] = upload(f, f.getName)

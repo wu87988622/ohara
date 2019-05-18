@@ -77,12 +77,6 @@ class TestJarRoute extends SmallTest with Matchers {
   def duplicateDeleteStreamProperty(): Unit =
     (0 to 10).foreach(_ => result(jarApi.delete(CommonUtils.randomString(5))))
 
-  @Test
-  def nullId(): Unit = an[NullPointerException] should be thrownBy JarRoute.pathToJar(null)
-
-  @Test
-  def emptyId(): Unit = an[IllegalArgumentException] should be thrownBy JarRoute.pathToJar("")
-
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 

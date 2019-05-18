@@ -16,6 +16,9 @@
 
 package com.island.ohara.agent
 
+import java.net.URL
+
+import com.island.ohara.client.configurator.v0.JarApi.JarInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
@@ -42,7 +45,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
                                                                 statusTopicPartitions,
                                                                 configTopicName,
                                                                 configTopicReplications,
-                                                                jarUrls,
+                                                                jarInfos,
                                                                 nodeNames) => {
     // the inputs have been checked (NullPointerException). Hence, we throw another exception here.
     if (executionContext == null) throw new AssertionError()
@@ -61,7 +64,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
     if (configTopicName == null || offsetTopicName.isEmpty) throw new AssertionError()
     if (configTopicReplications <= 0) throw new AssertionError()
     // it is ok to accept empty url
-    if (jarUrls == null) throw new AssertionError()
+    if (jarInfos == null) throw new AssertionError()
     if (nodeNames == null || nodeNames.isEmpty) throw new AssertionError()
     Future.successful(
       WorkerClusterInfo(
@@ -80,8 +83,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
         configTopicName = configTopicName,
         configTopicReplications = configTopicReplications,
         configTopicPartitions = 1,
-        jarIds = jarUrls.map(_.getFile),
-        jarUrls = jarUrls,
+        jarInfos = jarInfos,
         connectors = Seq.empty,
         nodeNames = nodeNames
       ))
@@ -242,8 +244,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
       offsetTopicName = CommonUtils.randomString(),
       offsetTopicPartitions = 10,
       offsetTopicReplications = 10,
-      jarIds = Seq.empty,
-      jarUrls = Seq.empty,
+      jarInfos = Seq.empty,
       connectors = Seq.empty,
       nodeNames = Seq(CommonUtils.randomString())
     )
@@ -253,4 +254,28 @@ class TestWorkerCreator extends SmallTest with Matchers {
   @Test
   def testPassIncorrectTypeToCopy(): Unit =
     an[IllegalArgumentException] should be thrownBy wkCreator().copy(FakeClusterInfo(CommonUtils.randomString()))
+
+  @Test
+  def testJarInfo(): Unit = WorkerCollie.toMap(Seq.empty) shouldBe Map.empty
+
+  @Test
+  def testJarInfo2(): Unit = {
+    val jarInfos = Seq(
+      JarInfo(
+        id = CommonUtils.randomString(),
+        name = CommonUtils.randomString(),
+        size = 100,
+        url = new URL("http://localhost:12345/aa.jar"),
+        lastModified = CommonUtils.current()
+      ),
+      JarInfo(
+        id = CommonUtils.randomString(),
+        name = CommonUtils.randomString(),
+        size = 100,
+        url = new URL("http://localhost:12345/aa.jar"),
+        lastModified = CommonUtils.current()
+      )
+    )
+    WorkerCollie.toJarInfos(WorkerCollie.toJsonString(jarInfos)) shouldBe jarInfos
+  }
 }

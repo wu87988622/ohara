@@ -63,8 +63,7 @@ class TestWorkerApi extends SmallTest with Matchers {
       offsetTopicName = CommonUtils.randomString(),
       offsetTopicPartitions = 10,
       offsetTopicReplications = 10,
-      jarIds = Seq.empty,
-      jarUrls = Seq.empty,
+      jarInfos = Seq.empty,
       connectors = Seq.empty,
       nodeNames = Seq.empty
     )
@@ -138,8 +137,7 @@ class TestWorkerApi extends SmallTest with Matchers {
       offsetTopicName = CommonUtils.randomString(),
       offsetTopicPartitions = 10,
       offsetTopicReplications = 10,
-      jarIds = Seq.empty,
-      jarUrls = Seq.empty,
+      jarInfos = Seq.empty,
       connectors = Seq.empty,
       nodeNames = Seq.empty
     )
@@ -166,8 +164,7 @@ class TestWorkerApi extends SmallTest with Matchers {
       offsetTopicName = CommonUtils.randomString(),
       offsetTopicPartitions = 10,
       offsetTopicReplications = 10,
-      jarIds = Seq.empty,
-      jarUrls = Seq.empty,
+      jarInfos = Seq.empty,
       connectors = Seq.empty,
       nodeNames = Seq.empty
     )

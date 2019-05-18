@@ -16,6 +16,8 @@
 
 package com.island.ohara.client.configurator.v0
 
+import java.net.URL
+
 import com.island.ohara.client.configurator.v0.JarApi.JarInfo
 import com.island.ohara.client.configurator.v0.StreamApi.{StreamAppDescription, StreamClusterInfo}
 import com.island.ohara.common.rule.SmallTest
@@ -54,7 +56,7 @@ class TestStreamApi extends SmallTest with Matchers {
       id = id,
       name = "my-app",
       instances = 1,
-      jarInfo = JarInfo("id", "name", 1L, None, CommonUtils.current()),
+      jarInfo = JarInfo("id", "name", 1L, new URL("http://localshot:12345/v0"), CommonUtils.current()),
       from = Seq.empty,
       to = Seq.empty,
       state = None,

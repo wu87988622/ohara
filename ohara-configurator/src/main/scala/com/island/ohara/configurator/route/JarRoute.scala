@@ -23,43 +23,25 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.FileInfo
-import com.island.ohara.client.configurator.v0.JarApi
 import com.island.ohara.client.configurator.v0.JarApi._
-import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.jar.JarStore
 import spray.json.DefaultJsonProtocol._
 
-import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 private[configurator] object JarRoute {
 
   def tempDestination(fileInfo: FileInfo): File =
     File.createTempFile(fileInfo.fileName, ".tmp")
 
-  def pathToJar(id: String): String = s"${JarApi.DOWNLOAD_JAR_PREFIX_PATH}/${CommonUtils.requireNonEmpty(id)}.jar"
-
-  private[this] def withUrl(jarInfo: JarInfo)(implicit urlGenerator: UrlGenerator,
-                                              executionContext: ExecutionContext): Future[JarInfo] =
-    urlGenerator.url(jarInfo.id).map(url => jarInfo.copy(url = Some(url)))
-
-  def apply(implicit jarStore: JarStore, urlGenerator: UrlGenerator, executionContext: ExecutionContext): server.Route =
+  def apply(implicit jarStore: JarStore, executionContext: ExecutionContext): server.Route =
     pathPrefix(JAR_PREFIX_PATH) {
       storeUploadedFile("jar", tempDestination) {
         case (metadata, file) =>
-          complete(jarStore.add(file, metadata.fileName).flatMap(withUrl))
+          complete(jarStore.add(file, metadata.fileName))
       } ~ path(Segment) { id =>
-        get(complete(jarStore.jarInfo(id).flatMap(withUrl))) ~ delete(
-          complete(jarStore.remove(id).map(_ => StatusCodes.NoContent)))
+        get(complete(jarStore.jarInfo(id))) ~ delete(complete(jarStore.remove(id).map(_ => StatusCodes.NoContent)))
       } ~ pathEnd {
-        get(complete(jarStore.jarInfos.flatMap(jarInfos => Future.sequence(jarInfos.map(withUrl)))))
-      }
-    } ~ pathPrefix(DOWNLOAD_JAR_PREFIX_PATH / Segment) { idWithExtension =>
-      // We force all url end with .jar
-      if (!idWithExtension.endsWith(".jar")) complete(StatusCodes.NotFound -> s"$idWithExtension doesn't exist")
-      else {
-        val id = idWithExtension.substring(0, idWithExtension.indexOf(".jar"))
-        // TODO: how to use future in getFromFile???
-        getFromFile(Await.result(jarStore.toFile(id), 30 seconds))
+        get(complete(jarStore.jarInfos()))
       }
     }
 }

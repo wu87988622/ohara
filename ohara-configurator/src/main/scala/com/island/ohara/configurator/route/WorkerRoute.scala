@@ -22,13 +22,14 @@ import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.WorkerApi
 import com.island.ohara.client.configurator.v0.WorkerApi._
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.configurator.jar.JarStore
 
 import scala.concurrent.{ExecutionContext, Future}
 object WorkerRoute {
 
   def apply(implicit clusterCollie: ClusterCollie,
             nodeCollie: NodeCollie,
-            urlGenerator: UrlGenerator,
+            jarStore: JarStore,
             executionContext: ExecutionContext): server.Route =
     RouteUtils.basicRouteOfCluster(
       collie = clusterCollie.workerCollie(),
@@ -37,8 +38,8 @@ object WorkerRoute {
       hookBeforeDelete = (_, name) => Future.successful(name),
       hookOfCreation = (clusters, req: WorkerClusterCreationRequest) =>
         Future
-          .traverse(req.jarIds)(urlGenerator.url)
-          .map { jars =>
+          .traverse(req.jarIds)(jarStore.jarInfo)
+          .map { jarInfos =>
             val wkClusters = clusters.filter(_.isInstanceOf[WorkerClusterInfo]).map(_.asInstanceOf[WorkerClusterInfo])
 
             // check group id
@@ -69,8 +70,7 @@ object WorkerRoute {
                 .find(_.statusTopicName == statusTopicName)
                 .foreach(c =>
                   throw new IllegalArgumentException(s"status topic$statusTopicName is used by wk cluster:${c.name}")))
-
-            jars
+            jarInfos
           }
           // match the broker cluster
           .map(req.brokerClusterName
@@ -95,7 +95,7 @@ object WorkerRoute {
               }
             } -> _)
           .flatMap {
-            case (bkName, urls) =>
+            case (bkName, jarInfos) =>
               clusterCollie
                 .workerCollie()
                 .creator()
@@ -116,7 +116,7 @@ object WorkerRoute {
                 .statusTopicReplications(req.statusTopicReplications.getOrElse(
                   WorkerApi.STATUS_TOPIC_REPLICATIONS_DEFAULT))
                 .imageName(req.imageName.getOrElse(WorkerApi.IMAGE_NAME_DEFAULT))
-                .jarUrls(urls)
+                .jarInfos(jarInfos)
                 .nodeNames(req.nodeNames)
                 .create()
         }

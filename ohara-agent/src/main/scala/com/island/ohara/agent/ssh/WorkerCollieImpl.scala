@@ -54,7 +54,7 @@ private class WorkerCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClient
                                                          statusTopicPartitions,
                                                          configTopicName,
                                                          configTopicReplications,
-                                                         jarUrls,
+                                                         jarInfos,
                                                          nodeNames) => {
     implicit val exec: ExecutionContext = executionContext
     val clusters = clusterCache.snapshot
@@ -154,11 +154,10 @@ private class WorkerCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClient
                         WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY -> statusTopicReplications.toString,
                         WorkerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
                         WorkerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
-                        WorkerCollie.JARS_KEY -> jarUrls.mkString(","),
-                        ClusterCollie.BROKER_CLUSTER_NAME -> brokerClusterName,
+                        WorkerCollie.BROKER_CLUSTER_NAME -> brokerClusterName,
                         WorkerCollie.JMX_HOSTNAME_KEY -> node.name,
                         WorkerCollie.JMX_PORT_KEY -> jmxPort.toString
-                      ),
+                      ) ++ WorkerCollie.toMap(jarInfos),
                       hostname = containerName
                     )
                     dockerCache.exec(
@@ -218,8 +217,7 @@ private class WorkerCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClient
                 statusTopicName = statusTopicName,
                 statusTopicPartitions = statusTopicPartitions,
                 statusTopicReplications = statusTopicReplications,
-                jarIds = jarUrls.map(_.getFile),
-                jarUrls = jarUrls,
+                jarInfos = jarInfos,
                 connectors = Seq.empty,
                 nodeNames = successfulContainers.map(_.nodeName) ++ existNodes.map(_._1.name)
               )

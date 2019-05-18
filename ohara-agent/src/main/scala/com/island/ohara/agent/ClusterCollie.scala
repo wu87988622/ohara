@@ -181,18 +181,6 @@ object ClusterCollie {
   val LOG = Logger("ClusterCollie")
 
   /**
-    * internal key used to save the broker cluster name.
-    * All nodes of worker cluster should have this environment variable.
-    */
-  val BROKER_CLUSTER_NAME: String = "CCI_BROKER_CLUSTER_NAME"
-
-  /**
-    * internal key used to save the zookeeper cluster name.
-    * All nodes of broker cluster should have this environment variable.
-    */
-  val ZOOKEEPER_CLUSTER_NAME: String = "CCI_ZOOKEEPER_CLUSTER_NAME"
-
-  /**
     * the default implementation uses ssh and docker command to manage all clusters.
     * Each node running the service has name "${clusterName}-${service}-${index}".
     * For example, there is a worker cluster called "workercluster" and it is run on 3 nodes.

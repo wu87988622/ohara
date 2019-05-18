@@ -473,8 +473,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
         offsetTopicName = cluster.offsetTopicName,
         offsetTopicPartitions = cluster.offsetTopicPartitions,
         offsetTopicReplications = cluster.offsetTopicReplications,
-        jarIds = cluster.jarIds,
-        jarUrls = cluster.jarUrls,
+        jarInfos = Seq.empty,
         connectors = Seq.empty,
         nodeNames = cluster.nodeNames :+ nodeNames.last
       )

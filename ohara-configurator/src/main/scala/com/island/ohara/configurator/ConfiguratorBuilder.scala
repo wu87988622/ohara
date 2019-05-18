@@ -31,7 +31,7 @@ import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.fake._
-import com.island.ohara.configurator.jar.LocalJarStore
+import com.island.ohara.configurator.jar.JarStore
 import com.island.ohara.configurator.store.DataStore
 
 import scala.concurrent.duration._
@@ -165,8 +165,7 @@ class ConfiguratorBuilder {
         offsetTopicName = "None",
         offsetTopicPartitions = 1,
         offsetTopicReplications = 1.asInstanceOf[Short],
-        jarIds = Seq.empty,
-        jarUrls = Seq.empty,
+        jarInfos = Seq.empty,
         connectors = Await.result(WorkerClient(wkConnectionProps).connectors, 10 seconds),
         nodeNames = Seq(host)
       )
@@ -254,8 +253,7 @@ class ConfiguratorBuilder {
           offsetTopicName = s"offsetTopicName$index",
           offsetTopicPartitions = 1,
           offsetTopicReplications = 1.asInstanceOf[Short],
-          jarIds = Seq.empty,
-          jarUrls = Seq.empty,
+          jarInfos = Seq.empty,
           connectors = Seq.empty,
           sources = Seq.empty,
           sinks = Seq.empty,
@@ -323,7 +321,7 @@ class ConfiguratorBuilder {
   def build(): Configurator =
     new Configurator(hostname = hostname, port = port)(
       store = getOrCreateStore(),
-      jarStore = new LocalJarStore(folder("jars")),
+      jarStore = JarStore.builder.homeFolder(folder("jars")).hostname(hostname).port(port).build(),
       nodeCollie = createCollie(),
       clusterCollie = getOrCreateCollie(),
       crane = getOrCreateCrane(),

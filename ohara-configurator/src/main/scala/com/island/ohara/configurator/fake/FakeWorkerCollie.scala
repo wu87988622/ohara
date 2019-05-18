@@ -26,8 +26,8 @@ import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
 
-import scala.concurrent.{ExecutionContext, Future}
 import scala.collection.JavaConverters._
+import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] class FakeWorkerCollie(nodeCollie: NodeCollie, wkConnectionProps: String)
     extends FakeCollie[WorkerClusterInfo, WorkerCollie.ClusterCreator](nodeCollie)
@@ -77,8 +77,7 @@ private[configurator] class FakeWorkerCollie(nodeCollie: NodeCollie, wkConnectio
             statusTopicName = statusTopicName,
             statusTopicPartitions = statusTopicPartitions,
             statusTopicReplications = statusTopicReplications,
-            jarIds = Seq.empty,
-            jarUrls = Seq.empty,
+            jarInfos = Seq.empty,
             connectors = Seq.empty,
             sources = Seq.empty,
             sinks = Seq.empty,
@@ -104,8 +103,7 @@ private[configurator] class FakeWorkerCollie(nodeCollie: NodeCollie, wkConnectio
         offsetTopicName = previousCluster.offsetTopicName,
         offsetTopicPartitions = previousCluster.offsetTopicPartitions,
         offsetTopicReplications = previousCluster.offsetTopicReplications,
-        jarIds = previousCluster.jarIds,
-        jarUrls = previousCluster.jarUrls,
+        jarInfos = previousCluster.jarInfos,
         connectors = Seq.empty,
         sources = Seq.empty,
         sinks = Seq.empty,
@@ -143,8 +141,7 @@ private[configurator] class FakeWorkerCollie(nodeCollie: NodeCollie, wkConnectio
           offsetTopicName = previousCluster.offsetTopicName,
           offsetTopicPartitions = previousCluster.offsetTopicPartitions,
           offsetTopicReplications = previousCluster.offsetTopicReplications,
-          jarIds = previousCluster.jarIds,
-          jarUrls = previousCluster.jarUrls,
+          jarInfos = previousCluster.jarInfos,
           connectors = Seq.empty,
           sources = Seq.empty,
           sinks = Seq.empty,

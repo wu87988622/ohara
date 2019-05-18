@@ -124,9 +124,19 @@ echo "status.storage.partitions=$WORKER_STATUS_TOPIC_PARTITIONS" >> "$CONFIG"
 WORKER_PLUGIN_FOLDER="/tmp/plugins"
 mkdir -p $WORKER_PLUGIN_FOLDER
 
-if [[ ! -z "$WORKER_JARS" ]]; then
+if [[ ! -z "$WORKER_JAR_URLS" ]] && [[ -z "$WORKER_JAR_INFOS" ]]; then
+  echo "WORKER_JAR_INFOS is required since you have set the WORKER_JAR_URLS:$WORKER_JAR_URLS"
+  exit 2
+fi
+
+if [[ -z "$WORKER_JAR_URLS" ]] && [[ ! -z "$WORKER_JAR_INFOS" ]]; then
+  echo "WORKER_JAR_URLS is required since you have set the WORKER_JAR_INFOS:$WORKER_JAR_INFOS"
+  exit 2
+fi
+
+if [[ ! -z "$WORKER_JAR_URLS" ]]; then
   IFS=','
-  read -ra ADDR <<< "$WORKER_JARS"
+  read -ra ADDR <<< "$WORKER_JAR_URLS"
   for i in "${ADDR[@]}"; do
     wget $i -P $KAFKA_HOME/libs
   done

@@ -16,9 +16,8 @@
 
 package com.island.ohara.configurator.fake
 
-import java.net.URL
-
 import com.island.ohara.client.configurator.v0.InfoApi.ConnectorVersion
+import com.island.ohara.client.configurator.v0.JarApi.JarInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.{ConnectorDefinitions, WorkerClusterInfo}
 
 private[configurator] case class FakeWorkerClusterInfo(name: String,
@@ -36,8 +35,7 @@ private[configurator] case class FakeWorkerClusterInfo(name: String,
                                                        offsetTopicName: String,
                                                        offsetTopicPartitions: Int,
                                                        offsetTopicReplications: Short,
-                                                       jarIds: Seq[String],
-                                                       jarUrls: Seq[URL],
+                                                       jarInfos: Seq[JarInfo],
                                                        connectors: Seq[ConnectorDefinitions],
                                                        sources: Seq[ConnectorVersion],
                                                        sinks: Seq[ConnectorVersion],

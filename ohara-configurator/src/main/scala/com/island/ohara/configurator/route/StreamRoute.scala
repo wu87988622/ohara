@@ -117,7 +117,6 @@ private[configurator] object StreamRoute {
             workerCollie: WorkerCollie,
             brokerCollie: BrokerCollie,
             jarStore: JarStore,
-            urlGenerator: UrlGenerator,
             crane: Crane,
             executionContext: ExecutionContext): server.Route =
     pathPrefix(STREAM_PREFIX_PATH) {
@@ -300,8 +299,9 @@ private[configurator] object StreamRoute {
                   // get broker props from worker cluster
                   .map { case (_, topicAdmin, _, _) => topicAdmin.connectionProps }
                   .flatMap { bkProps =>
-                    urlGenerator
-                      .url(data.jarInfo.id)
+                    jarStore
+                      .jarInfo(data.jarInfo.id)
+                      .map(_.url)
                       .flatMap {
                         url =>
                           crane.exist(formatClusterName(data.id)).flatMap {

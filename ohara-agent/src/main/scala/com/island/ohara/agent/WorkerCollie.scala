@@ -15,17 +15,18 @@
  */
 
 package com.island.ohara.agent
-import java.net.URL
 import java.util.Objects
 
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.{ClusterInfo, WorkerApi}
+import com.island.ohara.client.configurator.v0.JarApi.{JarInfo, _}
 import com.island.ohara.client.configurator.v0.WorkerApi.{ConnectorDefinitions, WorkerClusterInfo}
+import com.island.ohara.client.configurator.v0.{ClusterInfo, WorkerApi}
 import com.island.ohara.client.kafka.WorkerClient
-import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
+import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
+import spray.json.JsArray
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
@@ -74,7 +75,7 @@ trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator
       WorkerClusterInfo(
         name = clusterName,
         imageName = containers.head.imageName,
-        brokerClusterName = containers.head.environments(ClusterCollie.BROKER_CLUSTER_NAME),
+        brokerClusterName = containers.head.environments(WorkerCollie.BROKER_CLUSTER_NAME),
         clientPort = port,
         jmxPort = containers.head.environments(WorkerCollie.JMX_PORT_KEY).toInt,
         groupId = containers.head.environments(WorkerCollie.GROUP_ID_KEY),
@@ -87,12 +88,11 @@ trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator
         statusTopicName = containers.head.environments(WorkerCollie.STATUS_TOPIC_KEY),
         statusTopicPartitions = containers.head.environments(WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY).toInt,
         statusTopicReplications = containers.head.environments(WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY).toShort,
-        jarIds = containers.head
-          .environments(WorkerCollie.JARS_KEY)
-          .split(",")
-          .filter(_.nonEmpty)
-          .map(u => new URL(u).getFile),
-        jarUrls = containers.head.environments(WorkerCollie.JARS_KEY).split(",").filter(_.nonEmpty).map(u => new URL(u)),
+        // The JAR_INFOS_KEY does not exist if user doesn't pass any jar info in creating worker cluster
+        jarInfos = containers.head.environments
+          .get(WorkerCollie.JAR_INFOS_KEY)
+          .map(WorkerCollie.toJarInfos)
+          .getOrElse(Seq.empty),
         connectors = connectors,
         nodeNames = containers.map(_.nodeName)
       )
@@ -130,7 +130,7 @@ object WorkerCollie {
     private[this] var statusTopicName: String = s"$groupId-statusTopicName"
     private[this] var statusTopicReplications: Short = 1
     private[this] var statusTopicPartitions: Int = 1
-    private[this] var jarUrls: Seq[URL] = Seq.empty
+    private[this] var jarInfos: Seq[JarInfo] = Seq.empty
     private[this] var jmxPort: Int = WorkerApi.JMX_PORT_DEFAULT
 
     override def copy(clusterInfo: ClusterInfo): ClusterCreator.this.type = clusterInfo match {
@@ -147,7 +147,7 @@ object WorkerCollie {
         statusTopicName(wk.statusTopicName)
         statusTopicReplications(wk.statusTopicReplications)
         statusTopicPartitions(wk.statusTopicPartitions)
-        jarUrls(wk.jarUrls)
+        jarInfos(wk.jarInfos)
         jmxPort(wk.jmxPort)
         this
       case _ =>
@@ -218,11 +218,8 @@ object WorkerCollie {
     }
 
     @Optional("default is empty")
-    def jarUrl(jarUrl: URL): ClusterCreator = jarUrls(Seq(jarUrl))
-
-    @Optional("default is empty")
-    def jarUrls(jarUrls: Seq[URL]): ClusterCreator = {
-      this.jarUrls = Objects.requireNonNull(jarUrls)
+    def jarInfos(jarInfos: Seq[JarInfo]): ClusterCreator = {
+      this.jarInfos = Objects.requireNonNull(jarInfos)
       this
     }
 
@@ -248,7 +245,7 @@ object WorkerCollie {
       statusTopicPartitions = CommonUtils.requirePositiveInt(statusTopicPartitions),
       configTopicName = CommonUtils.requireNonEmpty(configTopicName),
       configTopicReplications = CommonUtils.requirePositiveShort(configTopicReplications),
-      jarUrls = Objects.requireNonNull(jarUrls),
+      jarInfos = Objects.requireNonNull(jarInfos),
       nodeNames = CommonUtils.requireNonEmpty(nodeNames.asJava).asScala
     )
 
@@ -267,7 +264,7 @@ object WorkerCollie {
                            statusTopicPartitions: Int,
                            configTopicName: String,
                            configTopicReplications: Short,
-                           jarUrls: Seq[URL],
+                           jarInfos: Seq[JarInfo],
                            nodeNames: Seq[String]): Future[WorkerClusterInfo]
   }
   private[agent] val GROUP_ID_KEY: String = "WORKER_GROUP"
@@ -283,8 +280,14 @@ object WorkerCollie {
   private[agent] val ADVERTISED_HOSTNAME_KEY: String = "WORKER_ADVERTISED_HOSTNAME"
   private[agent] val ADVERTISED_CLIENT_PORT_KEY: String = "WORKER_ADVERTISED_CLIENT_PORT"
   private[agent] val CLIENT_PORT_KEY: String = "WORKER_CLIENT_PORT"
-  @VisibleForTesting
-  val JARS_KEY: String = "WORKER_JARS"
+  private[agent] val JAR_URLS_KEY: String = "WORKER_JAR_URLS"
+  private[agent] val JAR_INFOS_KEY: String = "WORKER_JAR_INFOS"
+
+  /**
+    * internal key used to save the broker cluster name.
+    * All nodes of worker cluster should have this environment variable.
+    */
+  private[agent] val BROKER_CLUSTER_NAME: String = "CCI_BROKER_CLUSTER_NAME"
 
   /**
     * this key has not been used yet
@@ -292,4 +295,31 @@ object WorkerCollie {
   private[agent] val PLUGINS_KEY: String = "WORKER_PLUGINS"
   private[agent] val JMX_HOSTNAME_KEY: String = "JMX_HOSTNAME"
   private[agent] val JMX_PORT_KEY: String = "JMX_PORT"
+
+  /**
+    * We don't want to complicate our script used in starting worker node. For example, script has to parse the json string if we provide
+    * a empty array via the env variable. . Hence, we just remove the keys from env if user does not specify them.
+    * @param jarInfos jar information
+    * @return a map with input value or empty if input is empty.
+    */
+  private[agent] def toMap(jarInfos: Seq[JarInfo]): Map[String, String] = if (jarInfos.isEmpty) Map.empty
+  else
+    Map(
+      WorkerCollie.JAR_URLS_KEY -> jarInfos.map(_.url.toString).mkString(","),
+      WorkerCollie.JAR_INFOS_KEY -> WorkerCollie.toJsonString(jarInfos),
+    )
+
+  private[agent] def toJsonString(jarInfos: Seq[JarInfo]): String = JsArray(
+    jarInfos.map(JAR_INFO_JSON_FORMAT.write).toVector).toString
+
+  import spray.json._
+
+  /**
+    * this method is in charge of converting string, which is serialized by toMap, to scala objects. We put those helper methods since we
+    * have two kind collies that both of them requires those parser.
+    * @param jsonString json representation string
+    * @return jar information
+    */
+  private[agent] def toJarInfos(jsonString: String): Seq[JarInfo] =
+    jsonString.parseJson.asInstanceOf[JsArray].elements.map(JAR_INFO_JSON_FORMAT.read)
 }

@@ -68,7 +68,7 @@ private class BrokerCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClient
 
             checkValue(container.imageName, imageName)
             check(BrokerCollie.CLIENT_PORT_KEY, clientPort.toString)
-            check(ClusterCollie.ZOOKEEPER_CLUSTER_NAME, zookeeperClusterName)
+            check(BrokerCollie.ZOOKEEPER_CLUSTER_NAME, zookeeperClusterName)
           }
           existNodes
         }
@@ -157,7 +157,7 @@ private class BrokerCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClient
                           BrokerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
                           BrokerCollie.EXPORTER_PORT_KEY -> exporterPort.toString,
                           BrokerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
-                          ClusterCollie.ZOOKEEPER_CLUSTER_NAME -> zookeeperClusterName,
+                          BrokerCollie.ZOOKEEPER_CLUSTER_NAME -> zookeeperClusterName,
                           BrokerCollie.JMX_HOSTNAME_KEY -> node.name,
                           BrokerCollie.JMX_PORT_KEY -> jmxPort.toString
                         ),

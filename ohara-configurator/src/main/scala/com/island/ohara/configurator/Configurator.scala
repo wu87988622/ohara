@@ -16,7 +16,6 @@
 
 package com.island.ohara.configurator
 
-import java.net.URL
 import java.util.concurrent.{ExecutionException, TimeUnit}
 
 import akka.actor.ActorSystem
@@ -145,12 +144,6 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
       .build()
   }
 
-  implicit val urlGenerator: UrlGenerator = (id: String) =>
-    jarStore
-      .jarInfo(id)
-      // check the existence of input id
-      .map(_ => new URL(s"http://$hostname:$port/${ConfiguratorApiInfo.V0}/${JarRoute.pathToJar(id)}"))
-
   /**
     * the full route consists from all routes against all subclass from ohara data and a final route used to reject other requests.
     */
@@ -172,6 +165,8 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
       BrokerRoute.apply,
       WorkerRoute.apply,
       JarRoute.apply,
+      // the route of downloading jar is moved to jar store so we have to mount it manually.
+      jarStore.route,
       LogRoute.apply,
       ObjectRoute.apply,
       ContainerRoute.apply

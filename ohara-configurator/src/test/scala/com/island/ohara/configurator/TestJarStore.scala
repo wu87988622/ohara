@@ -21,7 +21,7 @@ import java.nio.file.Files
 import com.island.ohara.client.configurator.v0.JarApi
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.configurator.jar.LocalJarStore
+import com.island.ohara.configurator.jar.JarStore
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
@@ -138,17 +138,24 @@ class TestJarStore extends SmallTest with Matchers {
 
   @Test
   def testInvalidInput(): Unit =
-    an[IllegalArgumentException] should be thrownBy new LocalJarStore(CommonUtils.createTempFile("aa").getCanonicalPath)
+    an[IllegalArgumentException] should be thrownBy JarStore.builder
+      .homeFolder(CommonUtils.createTempFile("aa").getCanonicalPath)
+      .hostname(CommonUtils.anyLocalAddress())
+      .port(CommonUtils.availablePort())
+      .build()
 
   @Test
   def testReopen(): Unit = {
     val folder = CommonUtils.createTempFolder(methodName())
     val content = CommonUtils.randomString()
-    val store0 = new LocalJarStore(folder.getCanonicalPath)
+    val port = CommonUtils.availablePort()
+    val store0 =
+      JarStore.builder.homeFolder(folder.getCanonicalPath).hostname(CommonUtils.anyLocalAddress()).port(port).build()
     val jarInfo = try result(store0.add(generateFile(content.getBytes)))
     finally store0.close()
 
-    val store1 = new LocalJarStore(folder.getCanonicalPath)
+    val store1 =
+      JarStore.builder.homeFolder(folder.getCanonicalPath).hostname(CommonUtils.anyLocalAddress()).port(port).build()
     try {
       result(store1.jarInfos).size shouldBe 1
       result(store1.jarInfos).head shouldBe jarInfo
@@ -167,7 +174,7 @@ class TestJarStore extends SmallTest with Matchers {
     result(access.list).size shouldBe 1
     result(access.get(plugin.id)) shouldBe plugin
 
-    val url = result(configurator.urlGenerator.url(plugin.id))
+    val url = plugin.url
     url.getProtocol shouldBe "http"
     val input = url.openStream()
     val tempFile = CommonUtils.createTempFile(methodName())
@@ -180,8 +187,35 @@ class TestJarStore extends SmallTest with Matchers {
   }
 
   @Test
-  def testNonexistentJarId(): Unit =
-    an[NoSuchElementException] should be thrownBy result(configurator.urlGenerator.url(CommonUtils.randomString()))
+  def checkUrl(): Unit = {
+    val hostname = CommonUtils.randomString(10)
+    val port = CommonUtils.availablePort()
+    val store = JarStore.builder
+      .homeFolder(CommonUtils.createTempFolder(methodName()).getCanonicalPath)
+      .hostname(hostname)
+      .port(port)
+      .build()
+    try {
+      val jarInfo = result(store.add(generateFile(methodName().getBytes)))
+      jarInfo.url.getHost shouldBe hostname
+      jarInfo.url.getPort shouldBe port
+    } finally store.close()
+  }
+
+  @Test
+  def nullHomeFolder(): Unit = an[NullPointerException] should be thrownBy JarStore.builder.homeFolder(null)
+
+  @Test
+  def emptyHomeFolder(): Unit = an[IllegalArgumentException] should be thrownBy JarStore.builder.homeFolder("")
+
+  @Test
+  def nullHostname(): Unit = an[NullPointerException] should be thrownBy JarStore.builder.hostname(null)
+
+  @Test
+  def emptyHostname(): Unit = an[IllegalArgumentException] should be thrownBy JarStore.builder.hostname("")
+
+  @Test
+  def navigatePort(): Unit = an[IllegalArgumentException] should be thrownBy JarStore.builder.port(-1)
 
   @After
   def tearDown(): Unit = Releasable.close(configurator)

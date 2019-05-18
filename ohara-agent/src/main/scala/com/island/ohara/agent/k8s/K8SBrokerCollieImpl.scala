@@ -31,7 +31,6 @@ private class K8SBrokerCollieImpl(val nodeCollie: NodeCollie, val k8sClient: K8S
 
   private[this] val LOG = Logger(classOf[K8SBrokerCollieImpl])
   private[this] val TIMEOUT: FiniteDuration = 30 seconds
-  private[this] val ZOOKEEPER_CLUSTER_NAME = ClusterCollie.ZOOKEEPER_CLUSTER_NAME
 
   override def creator(): BrokerCollie.ClusterCreator =
     (executionContext, clusterName, imageName, zookeeperClusterName, clientPort, exporterPort, jmxPort, nodeNames) => {
@@ -57,7 +56,7 @@ private class K8SBrokerCollieImpl(val nodeCollie: NodeCollie, val k8sClient: K8S
                     }
                     checkValue(container.imageName, imageName)
                     check(BrokerCollie.CLIENT_PORT_KEY, clientPort.toString)
-                    check(ZOOKEEPER_CLUSTER_NAME, zookeeperClusterName)
+                    check(BrokerCollie.ZOOKEEPER_CLUSTER_NAME, zookeeperClusterName)
                 }
                 existNodes
             })
@@ -109,7 +108,7 @@ private class K8SBrokerCollieImpl(val nodeCollie: NodeCollie, val k8sClient: K8S
                         BrokerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
                         BrokerCollie.EXPORTER_PORT_KEY -> exporterPort.toString,
                         BrokerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
-                        ZOOKEEPER_CLUSTER_NAME -> zookeeperClusterName,
+                        BrokerCollie.ZOOKEEPER_CLUSTER_NAME -> zookeeperClusterName,
                         BrokerCollie.JMX_HOSTNAME_KEY -> node.name,
                         BrokerCollie.JMX_PORT_KEY -> jmxPort.toString
                       ))

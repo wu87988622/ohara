@@ -22,8 +22,7 @@ import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.typesafe.scalalogging.Logger
 
-import scala.concurrent.duration._
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration.{FiniteDuration, _}
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 private class K8SWorkerCollieImpl(val nodeCollie: NodeCollie, val k8sClient: K8SClient)
@@ -31,7 +30,6 @@ private class K8SWorkerCollieImpl(val nodeCollie: NodeCollie, val k8sClient: K8S
     with WorkerCollie {
   private[this] val LOG = Logger(classOf[K8SWorkerCollieImpl])
   private[this] val TIMEOUT: FiniteDuration = 30 seconds
-  private[this] val BROKER_CLUSTER_NAME = ClusterCollie.BROKER_CLUSTER_NAME
 
   override def creator(): WorkerCollie.ClusterCreator = (executionContext,
                                                          clusterName,
@@ -48,7 +46,7 @@ private class K8SWorkerCollieImpl(val nodeCollie: NodeCollie, val k8sClient: K8S
                                                          statusTopicPartitions,
                                                          configTopicName,
                                                          configTopicReplications,
-                                                         jarUrls,
+                                                         jarInfos,
                                                          nodeNames) => {
     implicit val exec: ExecutionContext = executionContext
     exist(clusterName)
@@ -81,7 +79,7 @@ private class K8SWorkerCollieImpl(val nodeCollie: NodeCollie, val k8sClient: K8S
                   check(WorkerCollie.CONFIG_TOPIC_KEY, configTopicName)
                   check(WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY, configTopicReplications.toString)
                   check(WorkerCollie.CLIENT_PORT_KEY, clientPort.toString)
-                  check(BROKER_CLUSTER_NAME, brokerClusterName)
+                  check(WorkerCollie.BROKER_CLUSTER_NAME, brokerClusterName)
               }
               existNodes
           })
@@ -131,11 +129,10 @@ private class K8SWorkerCollieImpl(val nodeCollie: NodeCollie, val k8sClient: K8S
                       WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY -> statusTopicReplications.toString,
                       WorkerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
                       WorkerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
-                      WorkerCollie.JARS_KEY -> jarUrls.mkString(","),
-                      BROKER_CLUSTER_NAME -> brokerClusterName,
+                      WorkerCollie.BROKER_CLUSTER_NAME -> brokerClusterName,
                       WorkerCollie.JMX_HOSTNAME_KEY -> node.name,
                       WorkerCollie.JMX_PORT_KEY -> jmxPort.toString
-                    ))
+                    ) ++ WorkerCollie.toMap(jarInfos))
                     .labelName(OHARA_LABEL)
                     .domainName(K8S_DOMAIN_NAME)
                     .name(hostname)
@@ -167,8 +164,7 @@ private class K8SWorkerCollieImpl(val nodeCollie: NodeCollie, val k8sClient: K8S
             statusTopicName = statusTopicName,
             statusTopicPartitions = statusTopicPartitions,
             statusTopicReplications = statusTopicReplications,
-            jarIds = jarUrls.map(_.getFile),
-            jarUrls = jarUrls,
+            jarInfos = jarInfos,
             connectors = Seq.empty,
             nodeNames = successfulNodeNames ++ existNodes.map(_._1.name)
           )

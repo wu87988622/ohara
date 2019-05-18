@@ -64,7 +64,7 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
       BrokerClusterInfo(
         name = clusterName,
         imageName = first.imageName,
-        zookeeperClusterName = first.environments(ClusterCollie.ZOOKEEPER_CLUSTER_NAME),
+        zookeeperClusterName = first.environments(BrokerCollie.ZOOKEEPER_CLUSTER_NAME),
         exporterPort = first.environments(BrokerCollie.EXPORTER_PORT_KEY).toInt,
         clientPort = first.environments(BrokerCollie.CLIENT_PORT_KEY).toInt,
         jmxPort = first.environments(BrokerCollie.JMX_PORT_KEY).toInt,
@@ -146,4 +146,10 @@ object BrokerCollie {
   private[agent] val EXPORTER_PORT_KEY: String = "PROMETHEUS_EXPORTER_PORT"
   private[agent] val JMX_HOSTNAME_KEY: String = "JMX_HOSTNAME"
   private[agent] val JMX_PORT_KEY: String = "JMX_PORT"
+
+  /**
+    * internal key used to save the zookeeper cluster name.
+    * All nodes of broker cluster should have this environment variable.
+    */
+  private[agent] val ZOOKEEPER_CLUSTER_NAME: String = "CCI_ZOOKEEPER_CLUSTER_NAME"
 }

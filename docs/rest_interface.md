@@ -1777,7 +1777,8 @@ The properties which can be set by user are shown below.
 1. brokerClusterName (**string**) — broker cluster used to host topics for this worker cluster
 1. jarIds (**array(string)**) — the id of jars that will be loaded by worker cluster. You can require worker cluster to
                               load the jars stored in ohara if you want to run custom connectors on the worker cluster.
-                              see [Jars APIs](#jars) for uploading jars to ohara.  
+                              see [Jars APIs](#jars) for uploading jars to ohara.  Noted: the response will replace 
+                              id by [JarInfo](#jars).
 1. nodeNames (**array(string)**) — the nodes running the worker process
 1. configTopicName (**string**) — a internal topic used to store connector configuration
 1. configTopicReplications (**int**) — number of replications for config topic
@@ -1968,7 +1969,7 @@ ignore this element. However, we still list the available values here.
   "offsetTopicName": "offsetTopic",
   "imageName": "oharastream/connect-worker:0.5-SNAPSHOT",
   "groupId": "abcdefg",
-  "jarIds": [],
+  "jarInfos": [],
   "statusTopicReplications": 1,
   "configTopicPartitions": 1,
   "offsetTopicReplications": 1,
@@ -2014,7 +2015,7 @@ different purpose (a dangerous behavior, right?).
   "offsetTopicName": "offset-956c528fa5",
   "imageName": "oharastream/connect-worker:0.5-SNAPSHOT",
   "groupId": "dcafb19d0e",
-  "jarIds": [],
+  "jarInfos": [],
   "statusTopicReplications": 1,
   "configTopicPartitions": 1,
   "offsetTopicReplications": 1,
@@ -2046,7 +2047,7 @@ different purpose (a dangerous behavior, right?).
     "offsetTopicName": "offset-956c528fa5",
     "imageName": "oharastream/connect-worker:0.5-SNAPSHOT",
     "groupId": "dcafb19d0e",
-    "jarIds": [],
+    "jarInfos": [],
     "statusTopicReplications": 1,
     "configTopicPartitions": 1,
     "offsetTopicReplications": 1,
@@ -2273,7 +2274,7 @@ different purpose (a dangerous behavior, right?).
   "offsetTopicName": "offset-2c564b55cf",
   "imageName": "oharastream/connect-worker:0.5-SNAPSHOT",
   "groupId": "a5b623d114",
-  "jarIds": [],
+  "jarInfos": [],
   "statusTopicReplications": 1,
   "configTopicPartitions": 1,
   "offsetTopicReplications": 1,
@@ -2308,7 +2309,7 @@ first. Don't worry about the temporary lower throughput when balancer is running
   "offsetTopicName": "offset-956c528fa5",
   "imageName": "oharastream/connect-worker:0.5-SNAPSHOT",
   "groupId": "dcafb19d0e",
-  "jarIds": [],
+  "jarInfos": [],
   "statusTopicReplications": 1,
   "configTopicPartitions": 1,
   "offsetTopicReplications": 1,
@@ -3124,15 +3125,9 @@ You have to specify the file name since it is a part of metadata stored by ohara
   "lastModified": 7777
 }
 ```
+
 ----------
 
-### download a jar
-
-*GET /v0/downloadJars/$id*
-
-> This API is used by internally, and you should not have interest in downloading jar. However, human begins are so complicated.
-  At any rate, ohara open this door to advanced user but noted that this API is not in ohara standard format.
-----------
 ## Logs
 
 This world is beautiful but not safe. Even though ohara shoulders the blame for simplifying your life, there is a
