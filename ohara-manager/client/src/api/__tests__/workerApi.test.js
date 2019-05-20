@@ -132,6 +132,7 @@ describe('createWorker()', () => {
     name: 'abc',
     clientPort: '22',
     nodeNames: ['a', 'b'],
+    brokerClusterName: 'bk00',
     plugins: [],
   };
 
@@ -139,6 +140,7 @@ describe('createWorker()', () => {
     name: params.name,
     clientPort: Number(params.clientPort),
     nodeNames: params.nodeNames,
+    brokerClusterName: params.brokerClusterName,
     jars: params.plugins,
   };
 
