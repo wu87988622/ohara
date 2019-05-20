@@ -82,6 +82,9 @@ object ConnectorApi {
       .get(SettingDefinition.COLUMNS_DEFINITION.key())
       .map(s => PropGroups.ofJson(s).toColumns.asScala)
       .getOrElse(Seq.empty)
+    def changeNumberOfTasks(newValue: Int): ConnectorCreationRequest = ConnectorCreationRequest(
+      settings = this.settings ++ Map(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key() -> JsNumber(newValue))
+    )
     def numberOfTasks: Option[Int] = plain.get(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key()).map(_.toInt)
     def workerClusterName: Option[String] = plain.get(SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key())
     def topicNames: Seq[String] =

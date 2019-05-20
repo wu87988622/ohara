@@ -29,7 +29,7 @@ import org.junit.{After, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits.global
-class TestConnectorsRoute extends SmallTest with Matchers {
+class TestConnectorRoute extends SmallTest with Matchers {
   private[this] val configurator = Configurator.builder().fake(1, 1).build()
 
   private[this] val connectorApi = ConnectorApi.access().hostname(configurator.hostname).port(configurator.port)
@@ -479,6 +479,33 @@ class TestConnectorsRoute extends SmallTest with Matchers {
       ))
   }
 
+  @Test
+  def defaultNumberOfTasksShouldExist(): Unit = {
+    val connectorDesc = result(
+      connectorApi.add(
+        ConnectorCreationRequest(
+          workerClusterName = None,
+          className = Some("jdbc"),
+          columns = Seq.empty,
+          settings = Map.empty,
+          topicNames = Seq.empty,
+          numberOfTasks = None
+        )))
+    connectorDesc.numberOfTasks shouldBe ConnectorRoute.DEFAULT_NUMBER_OF_TASKS
+
+    result(
+      connectorApi.update(
+        connectorDesc.id,
+        ConnectorCreationRequest(
+          workerClusterName = None,
+          className = Some("jdbc"),
+          columns = Seq.empty,
+          settings = Map.empty,
+          topicNames = Seq.empty,
+          numberOfTasks = None
+        )
+      )).numberOfTasks shouldBe ConnectorRoute.DEFAULT_NUMBER_OF_TASKS
+  }
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }
