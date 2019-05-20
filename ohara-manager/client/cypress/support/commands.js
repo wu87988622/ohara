@@ -88,13 +88,15 @@ Cypress.Commands.add('createPipeline', pipeline => {
 });
 
 Cypress.Commands.add('createTopic', overrides => {
-  cy.request('POST', '/api/topics', {
-    name: utils.makeRandomStr(),
-    numberOfReplications: 1,
-    numberOfPartitions: 1,
-    ...overrides,
-  }).then(({ body }) => body); // we'll need the returned data later on
-});
+  cy.get('@broker').then(broker => {
+    cy.request('POST', '/api/topics', {
+      name: utils.makeRandomStr(),
+      numberOfReplications: 1,
+      brokerClusterName: broker.name,
+      numberOfPartitions: 1,
+      ...overrides,
+    }).then(({ body }) => body); // we'll need the returned data later on
+  });
 
 Cypress.Commands.add('deleteAllWorkers', () => {
   cy.log('Delete all previous created workers');
