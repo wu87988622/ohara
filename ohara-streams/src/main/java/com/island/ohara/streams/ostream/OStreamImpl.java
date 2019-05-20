@@ -21,10 +21,12 @@ import com.island.ohara.common.data.Pair;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.BrokerClient;
+import com.island.ohara.metrics.basic.Counter;
 import com.island.ohara.streams.OGroupedStream;
 import com.island.ohara.streams.OStream;
 import com.island.ohara.streams.OTable;
 import com.island.ohara.streams.data.Poneglyph;
+import com.island.ohara.streams.metric.MetricFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -41,6 +43,7 @@ class OStreamImpl extends AbstractStream<Row, Row> implements OStream<Row> {
 
   private final Logger log = LoggerFactory.getLogger(OStreamImpl.class);
   private Topology topology = null;
+  private static final Counter counter = MetricFactory.getCounter(MetricFactory.IOType.TOPIC_OUT);
 
   OStreamImpl(OStreamBuilder ob) {
     super(ob);
@@ -188,7 +191,12 @@ class OStreamImpl extends AbstractStream<Row, Row> implements OStream<Row> {
   @Override
   public void start() {
     kstreams
-        .map(((noUse, value) -> KeyValue.pair(value, new byte[0])))
+        .map(
+            ((noUse, value) -> {
+              // we calculate the output record size
+              counter.incrementAndGet();
+              return KeyValue.pair(value, new byte[0]);
+            }))
         .to(builder.getToTopic(), builder.getToSerde().get());
 
     // Initial properties and topology for "actual" action

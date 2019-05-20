@@ -21,6 +21,13 @@ import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.streams.OStream;
 import java.util.Map;
 
+/**
+ * This class is responsible for managing all the properties that will use in {@code OStream}. Use
+ * this class to construct {@code OStream} only.
+ *
+ * @param <K> the key type
+ * @param <V> the value type
+ */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public final class OStreamBuilder<K, V> {
 

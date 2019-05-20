@@ -16,6 +16,8 @@
 
 package com.island.ohara.streams.ostream;
 
+import com.island.ohara.metrics.basic.Counter;
+import com.island.ohara.streams.metric.MetricFactory;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.KGroupedStream;
 import org.apache.kafka.streams.kstream.KStream;
@@ -37,6 +39,7 @@ abstract class AbstractStream<K, V> {
   KGroupedStream<K, V> kgroupstream;
   OStreamBuilder<K, V> builder;
   StreamsBuilder innerBuilder;
+  static final Counter counter = MetricFactory.getCounter(MetricFactory.IOType.TOPIC_IN);
 
   @SuppressWarnings("unchecked")
   AbstractStream(final OStreamBuilder builder) {
@@ -44,10 +47,15 @@ abstract class AbstractStream<K, V> {
     this.kstreams =
         newBuilder.stream(builder.getFromTopic(), builder.getFromSerde().get())
             // since the value is "byte array" of nothing, we only care the key part, i.e, the real
-            // row data
+            // row data.
             // here we convert the row data to both the key and value part
             // TODO : is there any good way to avoid this ugly convert?...by Sam
-            .map(((key, value) -> KeyValue.pair(key, key)));
+            .map(
+                (key, value) -> {
+                  // we calculate the input record size
+                  counter.incrementAndGet();
+                  return KeyValue.pair(key, key);
+                });
     this.builder = builder;
     this.innerBuilder = newBuilder;
   }
