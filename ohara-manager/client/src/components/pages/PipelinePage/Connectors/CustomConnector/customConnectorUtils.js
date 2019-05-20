@@ -144,6 +144,27 @@ export const getUpdatedTopic = ({
   return update;
 };
 
+export const typeSwitch = type => {
+  switch (type) {
+    case 'PASSWORD':
+      return 'password';
+    default:
+      return null;
+  }
+};
+
+export const groupBy = (array, fn) => {
+  let groups = {};
+  array.forEach(o => {
+    let group = JSON.stringify(fn(o));
+    groups[group] = groups[group] || [];
+    groups[group].push(o);
+  });
+  return Object.keys(groups).map(group => {
+    return groups[group];
+  });
+};
+
 export const renderForm = ({
   state,
   defs,
@@ -178,7 +199,7 @@ export const renderForm = ({
     return displayValue;
   };
 
-  function defsToFormGroup(defs) {
+  const defsToFormGroup = defs => {
     return defs
       .sort(sortByOrder)
       .filter(def => !def.internal) // Do not display def that has an internal === true prop
@@ -273,8 +294,9 @@ export const renderForm = ({
             return null;
         }
       });
-  }
-  const groupDefs = groupBy(defs, function(item) {
+  };
+
+  const groupDefs = groupBy(defs, item => {
     return [item.group];
   });
   const hasTab = groupDefs.length > 1 ? true : false;
@@ -307,24 +329,3 @@ export const getCurrTopicName = ({ originals, target }) => {
   const topicName = get(currTopic, 'name', '');
   return topicName;
 };
-
-function groupBy(array, f) {
-  let groups = {};
-  array.forEach(function(o) {
-    let group = JSON.stringify(f(o));
-    groups[group] = groups[group] || [];
-    groups[group].push(o);
-  });
-  return Object.keys(groups).map(function(group) {
-    return groups[group];
-  });
-}
-
-function typeSwitch(type) {
-  switch (type) {
-    case 'PASSWORD':
-      return 'password';
-    default:
-      return null;
-  }
-}

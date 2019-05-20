@@ -25,10 +25,11 @@ import { validateConnector } from 'api/validateApi';
 import * as s from './styles';
 import * as utils from './CustomConnector/customConnectorUtils';
 import Controller from './Controller';
+import { findByGraphId } from '../pipelineUtils/commonUtils';
 
 import { fetchWorker } from 'api/workerApi';
 import TestConnectionBtn from './CustomConnector/TestConnectionBtn';
-import { CONNECTOR_ACTIONS } from 'constants/pipelines';
+import { CONNECTOR_ACTIONS, CONNECTOR_STATES } from 'constants/pipelines';
 import { graphPropType } from 'propTypes/pipeline';
 
 class FtpSource extends React.Component {
@@ -205,6 +206,27 @@ class FtpSource extends React.Component {
 
       const path = `/pipelines/edit/${pipelineId}`;
       history.push(path);
+    }
+  };
+
+  handleTriggerConnectorResponse = (action, res) => {
+    const isSuccess = get(res, 'data.isSuccess', false);
+    if (!isSuccess) return;
+
+    const { match, graph, updateGraph } = this.props;
+    const sinkId = get(match, 'params.connectorId', null);
+    const state = get(res, 'data.result.state');
+    this.setState({ state });
+    const currSink = findByGraphId(graph, sinkId);
+    const update = { ...currSink, state };
+    updateGraph({ update });
+
+    if (action === CONNECTOR_ACTIONS.start) {
+      if (state === CONNECTOR_STATES.running) {
+        toastr.success(MESSAGES.START_CONNECTOR_SUCCESS);
+      } else {
+        toastr.error(MESSAGES.CANNOT_START_CONNECTOR_ERROR);
+      }
     }
   };
 
