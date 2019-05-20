@@ -78,8 +78,11 @@ describe('getCurrTopicName()', () => {
 });
 
 describe('typeSwitch()', () => {
-  it('switch case', () => {
+  it('should switch PASSWORD to password', () => {
     expect(typeSwitch('PASSWORD')).toBe('password');
+  });
+
+  it('returns null if no match found', () => {
     expect(typeSwitch('')).toBe(null);
   });
 });
