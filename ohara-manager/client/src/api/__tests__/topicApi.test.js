@@ -133,12 +133,14 @@ describe('createTopic()', () => {
   const params = {
     name: 'abc',
     numberOfPartitions: '1',
+    brokerClusterName: 'bk00',
     numberOfReplications: '2',
   };
 
   const expectedParams = {
     name: params.name,
     numberOfPartitions: toNumber(params.numberOfPartitions),
+    brokerClusterName: params.brokerClusterName,
     numberOfReplications: toNumber(params.numberOfReplications),
   };
 
