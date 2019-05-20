@@ -54,7 +54,7 @@ export const createWorker = async params => {
     const data = {
       name: params.name,
       jmxPort: params.jmxPort,
-      brokerClusterName: params.brokerName,
+      brokerClusterName: params.brokerClusterName,
       clientPort: toNumber(params.clientPort),
       nodeNames: params.nodeNames || [],
       jars: params.plugins || [],
