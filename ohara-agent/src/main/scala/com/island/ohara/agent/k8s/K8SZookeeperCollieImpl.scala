@@ -18,76 +18,45 @@ package com.island.ohara.agent.k8s
 
 import com.island.ohara.agent.{NodeCollie, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import com.typesafe.scalalogging.Logger
 
-import scala.concurrent.duration.FiniteDuration
-import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext, Future}
 
 private class K8SZookeeperCollieImpl(val nodeCollie: NodeCollie, val k8sClient: K8SClient)
     extends K8SBasicCollieImpl[ZookeeperClusterInfo, ZookeeperCollie.ClusterCreator](nodeCollie, k8sClient)
     with ZookeeperCollie {
-
-  private[this] val LOG = Logger(classOf[K8SZookeeperCollieImpl])
   private[this] val TIMEOUT: FiniteDuration = 30 seconds
-
   override def creator(): ZookeeperCollie.ClusterCreator =
     (executionContext, clusterName, imageName, clientPort, peerPort, electionPort, nodeNames) => {
-      implicit val exec: ExecutionContext = executionContext
-      exist(clusterName)
-        .flatMap(if (_) Future.failed(new IllegalArgumentException(s"zookeeper cluster:$clusterName exists!"))
-        else nodeCollie.nodes(nodeNames))
-        .map(_.map(node => node -> s"${format(PREFIX_KEY, clusterName, serviceName)}$DIVIDER${node.name}").toMap)
-        .map { nodes =>
-          val zkServers: String = nodes.values.mkString(" ")
-          val successfulNodeNames: Seq[String] = nodes.zipWithIndex
-            .flatMap {
-              case ((node, hostname), index) =>
-                try {
-                  val creatorContainerInfo: Future[Option[ContainerInfo]] = k8sClient
-                    .containerCreator()
-                    .imageName(imageName)
-                    .portMappings(
-                      Map(
-                        clientPort -> clientPort,
-                        peerPort -> peerPort,
-                        electionPort -> electionPort
-                      ))
-                    .nodename(node.name)
-                    .hostname(hostname)
-                    .labelName(OHARA_LABEL)
-                    .domainName(K8S_DOMAIN_NAME)
-                    .envs(Map(
-                      ZookeeperCollie.ID_KEY -> index.toString,
-                      ZookeeperCollie.CLIENT_PORT_KEY -> clientPort.toString,
-                      ZookeeperCollie.PEER_PORT_KEY -> peerPort.toString,
-                      ZookeeperCollie.ELECTION_PORT_KEY -> electionPort.toString,
-                      ZookeeperCollie.SERVERS_KEY -> s"$zkServers-${node.name}"
-                    ))
-                    .name(hostname)
-                    .run()
-                  Await.result(creatorContainerInfo, TIMEOUT)
-                } catch {
-                  case e: Throwable =>
-                    LOG.error(s"failed to start $clusterName", e)
-                    None
-                }
-            }
-            .map(_.nodeName)
-            .toSeq
-          if (successfulNodeNames.isEmpty)
-            throw new IllegalArgumentException(s"failed to create $clusterName on Zookeeper")
-          ZookeeperClusterInfo(
-            name = clusterName,
-            imageName = imageName,
-            clientPort = clientPort,
-            peerPort = peerPort,
-            electionPort = electionPort,
-            nodeNames = successfulNodeNames
-          )
-        }
+      zkCreator(PREFIX_KEY, clusterName, imageName, clientPort, peerPort, electionPort, nodeNames)(executionContext)
     }
+
+  override protected def doCreator(executionContext: ExecutionContext,
+                                   clusterName: String,
+                                   containerName: String,
+                                   containerInfo: ContainerInfo,
+                                   node: Node,
+                                   route: Map[String, String]): Unit = {
+    implicit val exec: ExecutionContext = executionContext
+    // Kubernetes create pod async to need to await container create completely.
+    Await.result(
+      k8sClient
+        .containerCreator()
+        .imageName(containerInfo.imageName)
+        .portMappings(
+          containerInfo.portMappings.flatMap(_.portPairs).map(pair => pair.hostPort -> pair.containerPort).toMap)
+        .nodename(containerInfo.nodeName)
+        .hostname(s"${containerInfo.name}$DIVIDER${node.name}")
+        .labelName(OHARA_LABEL)
+        .domainName(K8S_DOMAIN_NAME)
+        .envs(containerInfo.environments)
+        .name(s"${containerInfo.name}$DIVIDER${node.name}")
+        .run(),
+      TIMEOUT
+    )
+  }
 
   override protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =

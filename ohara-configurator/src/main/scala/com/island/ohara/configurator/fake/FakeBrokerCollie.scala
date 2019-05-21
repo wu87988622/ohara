@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 import com.island.ohara.agent.{BrokerCollie, NodeCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.ContainerApi
+import com.island.ohara.client.configurator.v0.{ContainerApi, NodeApi}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.metrics.BeanChannel
@@ -92,4 +92,12 @@ private[configurator] class FakeBrokerCollie(nodeCollie: NodeCollie, bkConnectio
         jmxPort = previousCluster.jmxPort,
         nodeNames = previousCluster.nodeNames :+ newNodeName
       )))
+
+  override protected def doCreator(executionContext: ExecutionContext,
+                                   clusterName: String,
+                                   containerName: String,
+                                   containerInfo: ContainerInfo,
+                                   node: NodeApi.Node,
+                                   route: Map[String, String]): Unit =
+    throw new UnsupportedOperationException("Fake broker not support doCreator function implement")
 }

@@ -19,6 +19,7 @@ package com.island.ohara.agent.k8s
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.agent.{NodeCollie, StreamCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.common.util.CommonUtils
 import com.typesafe.scalalogging.Logger
@@ -116,4 +117,13 @@ private class K8SStreamCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
     previousContainers: Seq[ContainerInfo],
     newNodeName: String)(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] =
     Future.failed(new UnsupportedOperationException("stream collie doesn't support to add node from a running cluster"))
+
+  override protected def doCreator(executionContext: ExecutionContext,
+                                   clusterName: String,
+                                   containerName: String,
+                                   containerInfo: ContainerInfo,
+                                   node: NodeApi.Node,
+                                   route: Map[String, String]): Unit = {
+    //TODO Wait stream collie refactor
+  }
 }

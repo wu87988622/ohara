@@ -15,15 +15,15 @@
  */
 
 package com.island.ohara.agent
-
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.rule.SmallTest
 import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class TestContainerCollie extends SmallTest with Matchers {
@@ -120,6 +120,31 @@ class TestContainerCollie extends SmallTest with Matchers {
     val fakeContainerCollie = new FakeContainerCollie(NodeCollie(Seq(node1, node2)), Seq(container1, container2))
     val removeNode: Future[Boolean] = fakeContainerCollie.removeNode(fakeClusterName, "node1")
     Await.result(removeNode, TIMEOUT) shouldBe true
+  }
+
+  @Test
+  def testZKCreator(): Unit = {
+    val node1Name = "node1"
+    val node1 = Node(node1Name, 22, "user1", "123456")
+
+    val node2Name = "node2"
+    val node2 = Node(node2Name, 22, "user1", "123456")
+
+    val containerInfo =
+      ContainerInfo(node1.name, "0", "fakeimage", "", "", "", "container1", "0", Seq(), Map(), s"xxx-${node1.name}")
+    val fakeContainerCollie = new FakeContainerCollie(NodeCollie(Seq(node1, node2)), Seq(containerInfo))
+    val zkCreator: Future[ZookeeperClusterInfo] =
+      fakeContainerCollie.zkCreator("fakeprefix", "cluster1", "image1", 2181, 2182, 2183, Seq(node1Name, node2Name))(
+        ExecutionContext.Implicits.global)
+
+    val zookeeperClusterInfo = Await.result(zkCreator, TIMEOUT)
+    zookeeperClusterInfo.clientPort shouldBe 2181
+    zookeeperClusterInfo.peerPort shouldBe 2182
+    zookeeperClusterInfo.electionPort shouldBe 2183
+    zookeeperClusterInfo.nodeNames.size shouldBe 2
+    zookeeperClusterInfo.nodeNames(0) shouldBe node1Name
+    zookeeperClusterInfo.nodeNames(1) shouldBe node2Name
+    zookeeperClusterInfo.ports.size shouldBe 3
   }
 
   private[this] def validErrorNodeName(nodeName: String, expectErrMsg: String): Unit = {
