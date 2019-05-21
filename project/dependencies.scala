@@ -17,24 +17,22 @@
 import sbt._
 
 object versions {
-  val akkaHttpV = "10.1.3"
-  val akkaV = "2.5.12"
-  val kafkaV = "1.0.2"
-  val slf4jV = "1.7.25"
-  val hadoopV = "2.7.0"
-  val commonsNetV = "3.6"
-  val commonsLangV = "3.7"
-  val commonsIoV = "2.4"
-  val mysqlV = "8.0.12"
-  val embeddedsqlV = "4.1.2"
-  val ftpServerV = "1.1.1"
-  val sshdV = "2.2.0"
-  val javassistV = "3.24.1-GA"
-  val rocksdbV = "5.7.3"
+  lazy val akkaHttpV = "10.1.3"
+  lazy val akkaV = "2.5.12"
+  lazy val kafkaV = "1.0.2"
+  lazy val slf4jV = "1.7.25"
+  lazy val hadoopV = "2.7.0"
+  lazy val commonsNetV = "3.6"
+  lazy val commonsLangV = "3.7"
+  lazy val commonsIoV = "2.4"
+  lazy val mysqlV = "8.0.12"
+  lazy val embeddedsqlV = "4.1.2"
+  lazy val ftpServerV = "1.1.1"
+  lazy val sshdV = "2.2.0"
+  lazy val javassistV = "3.24.1-GA"
 }
 
 object libs {
-
   import versions._
 
   // Hadoop
@@ -80,10 +78,9 @@ object libs {
   // Others
   lazy val typesafeConfig = "com.typesafe" % "config" % "1.3.3"
   lazy val guava = "com.google.guava" % "guava" % "20.0"
-  lazy val rocksdb = "org.rocksdb" % "rocksdbjni" % rocksdbV
 
   // mini
-  lazy val mysql = "mysql" % "mysql-connector-java" % mysqlV
+  lazy val mysql =  "mysql" % "mysql-connector-java" % mysqlV
   lazy val embeddedsql = "com.wix" % "wix-embedded-mysql" % embeddedsqlV
   lazy val ftpServer = "org.apache.ftpserver" % "ftpserver-core" % ftpServerV
   lazy val sshd = "org.apache.sshd" % "apache-sshd" % sshdV

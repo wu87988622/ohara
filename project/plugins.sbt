@@ -14,10 +14,3 @@
  * limitations under the License.
  */
 
-
-addSbtPlugin("de.heikoseeberger" % "sbt-header" % "5.2.0")
-
-addSbtPlugin("com.geirsson" % "sbt-scalafmt" % "1.5.0")
-
-addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.9.2")
-
