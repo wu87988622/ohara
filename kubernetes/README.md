@@ -70,7 +70,7 @@ kubectl create -f dns-service.yaml
            -p 5000:5000 \
            --add-host ${K8S_WORKER01_HOSTNAME}:${K8S_WORKER01_IP} \
            --add-host ${K8S_WORKER02_HOSTNAME}:${K8S_WORKER02_IP} \
-           oharastream/configurator:0.4.0 \
+           oharastream/configurator:0.4.1 \
            --port 5000 \
            --hostname ${Start Configurator Host Name} \
            --k8s http://${Your_K8S_Master_Host_IP}:8080/api/v1
@@ -99,15 +99,15 @@ curl -H "Content-Type: application/json" \
      http://${CONFIGURATOR_HOST_IP}:5000/v0/nodes
 
 # You must pre pull docker image in the ${K8S_WORKER01_HOSTNAME} and ${K8S_WORKER02_HOSTNAME} host, Below is command:
-docker pull oharastream/zookeeper:0.4.0
-docker pull oharastream/broker:0.4.0
+docker pull oharastream/zookeeper:0.4.1
+docker pull oharastream/broker:0.4.1
 
 # Create Zookeeper service example
 curl -H "Content-Type: application/json" \
      -X POST \
      -d '{"name": "zk", \
           "clientPort": 2181, \
-          "imageName": "oharastream/zookeeper:0.4.0", \
+          "imageName": "oharastream/zookeeper:0.4.1", \
           "peerPort": 2000, \
           "electionPort": 2001, \
           "nodeNames": ["${K8S_WORKER01_HOSTNAME}"]}' \
