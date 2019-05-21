@@ -43,6 +43,9 @@ RUN useradd -ms /bin/bash -g $USER $USER
 # clone ohara binary
 COPY --from=deps /opt/ohara /home/$USER
 RUN ln -s $(find "/home/$USER/" -maxdepth 1 -type d -name "ohara-*") /home/$USER/default
+COPY --from=deps /testpatch/ohara/docker/configurator.sh /home/$USER/default/bin/
+RUN chown -R $USER:$USER /home/$USER
+RUN chmod +x /home/$USER/default/bin/configurator.sh
 ENV OHARA_HOME=/home/$USER/default
 ENV PATH=$PATH:$OHARA_HOME/bin
 
@@ -53,4 +56,4 @@ RUN chmod +x /tini
 # change to user
 USER $USER
 
-ENTRYPOINT ["/tini", "--", "ohara.sh", "start", "configurator"]
+ENTRYPOINT ["/tini", "--", "configurator.sh"]
