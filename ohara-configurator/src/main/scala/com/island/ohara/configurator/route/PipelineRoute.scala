@@ -16,15 +16,15 @@
 
 package com.island.ohara.configurator.route
 import akka.http.scaladsl.server
-import com.island.ohara.agent.{ClusterCollie, Crane, NoSuchClusterException}
+import com.island.ohara.agent.{ClusterCollie, NoSuchClusterException, StreamCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorDescription
+import com.island.ohara.client.configurator.v0.Data
 import com.island.ohara.client.configurator.v0.MetricsApi._
 import com.island.ohara.client.configurator.v0.PipelineApi._
 import com.island.ohara.client.configurator.v0.StreamApi.{StreamAppDescription, StreamClusterInfo}
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import com.island.ohara.client.configurator.v0.{Data, StreamApi}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.RouteUtils.{Id, TargetCluster}
@@ -44,7 +44,6 @@ private[configurator] object PipelineRoute {
 
   private[this] def toRes(id: String, request: PipelineCreationRequest, swallow: Boolean = false)(
     implicit clusterCollie: ClusterCollie,
-    crane: Crane,
     store: DataStore,
     executionContext: ExecutionContext,
     meterCache: MeterCache): Future[Pipeline] =
@@ -58,7 +57,6 @@ private[configurator] object PipelineRoute {
     */
   private[this] def toRes(reqs: Map[String, PipelineCreationRequest], swallow: Boolean)(
     implicit clusterCollie: ClusterCollie,
-    crane: Crane,
     store: DataStore,
     executionContext: ExecutionContext,
     meterCache: MeterCache): Future[Seq[Pipeline]] =
@@ -138,7 +136,7 @@ private[configurator] object PipelineRoute {
                               topicMeters: Map[String, Seq[Meter]],
                               connectorMeters: Map[String, Seq[Meter]])(
     implicit store: DataStore,
-    crane: Crane,
+    clusterCollie: ClusterCollie,
     executionContext: ExecutionContext): Future[List[ObjectAbstract]] =
     Future
       .sequence(
@@ -198,8 +196,9 @@ private[configurator] object PipelineRoute {
                 }
 
             case data: StreamAppDescription =>
-              crane
-                .get(StreamApi.formatClusterName(data.id))
+              clusterCollie
+                .streamCollie()
+                .cluster(StreamCollie.formatUniqueName(data.id))
                 .map(_._1.asInstanceOf[StreamClusterInfo])
                 .map { info =>
                   ObjectAbstract(
@@ -332,7 +331,6 @@ private[configurator] object PipelineRoute {
 
   private[this] def update(pipeline: Pipeline)(implicit store: DataStore,
                                                clusterCollie: ClusterCollie,
-                                               crane: Crane,
                                                executionContext: ExecutionContext,
                                                meterCache: MeterCache): Future[Pipeline] =
     update(Seq(pipeline)).map(_.head)
@@ -343,7 +341,6 @@ private[configurator] object PipelineRoute {
     */
   private[this] def update(pipelines: Seq[Pipeline])(implicit store: DataStore,
                                                      clusterCollie: ClusterCollie,
-                                                     crane: Crane,
                                                      executionContext: ExecutionContext,
                                                      meterCache: MeterCache): Future[Seq[Pipeline]] =
     toRes(
@@ -382,7 +379,6 @@ private[configurator] object PipelineRoute {
 
   def apply(implicit store: DataStore,
             clusterCollie: ClusterCollie,
-            crane: Crane,
             executionContext: ExecutionContext,
             meterCache: MeterCache): server.Route =
     RouteUtils.basicRoute[PipelineCreationRequest, Pipeline](

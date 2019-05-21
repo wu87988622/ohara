@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.agent.wharf
+package com.island.ohara.agent
 
 import java.util.Objects
 
@@ -25,13 +25,13 @@ import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
 
-class TestStreamWarehouse extends SmallTest with Matchers {
+class TestStreamCreator extends SmallTest with Matchers {
 
-  private[this] def streamCreator(): StreamWarehouse.StreamCreator =
+  private[this] def streamCreator(): StreamCollie.ClusterCreator =
     (clusterName,
      nodeNames,
      imageName,
@@ -151,7 +151,7 @@ class TestStreamWarehouse extends SmallTest with Matchers {
     // 0 instances is not allowed
     an[IllegalArgumentException] should be thrownBy awaitResult(
       streamCreator()
-        .clusterName(CommonUtils.randomString(Warehouse.LIMIT_OF_NAME_LENGTH))
+        .clusterName(CommonUtils.randomString(Collie.LIMIT_OF_NAME_LENGTH))
         .imageName(CommonUtils.randomString())
         .jarUrl("jar")
         .instances(0)
@@ -164,7 +164,7 @@ class TestStreamWarehouse extends SmallTest with Matchers {
     // negative instances is not allowed
     an[IllegalArgumentException] should be thrownBy awaitResult(
       streamCreator()
-        .clusterName(CommonUtils.randomString(Warehouse.LIMIT_OF_NAME_LENGTH))
+        .clusterName(CommonUtils.randomString(Collie.LIMIT_OF_NAME_LENGTH))
         .imageName(CommonUtils.randomString())
         .jarUrl("jar")
         .instances(-5)
@@ -177,7 +177,7 @@ class TestStreamWarehouse extends SmallTest with Matchers {
     // could set nodeNames only
     awaitResult(
       streamCreator()
-        .clusterName(CommonUtils.randomString(Warehouse.LIMIT_OF_NAME_LENGTH))
+        .clusterName(CommonUtils.randomString(Collie.LIMIT_OF_NAME_LENGTH))
         .imageName(CommonUtils.randomString())
         .jarUrl("jar")
         .nodeNames(Seq("bar", "foo", "bez"))
@@ -190,7 +190,7 @@ class TestStreamWarehouse extends SmallTest with Matchers {
     // nodeNames will override the effect of instances
     awaitResult(
       streamCreator()
-        .clusterName(CommonUtils.randomString(Warehouse.LIMIT_OF_NAME_LENGTH))
+        .clusterName(CommonUtils.randomString(Collie.LIMIT_OF_NAME_LENGTH))
         .imageName(CommonUtils.randomString())
         .jarUrl("jar")
         .instances(10)
@@ -206,7 +206,7 @@ class TestStreamWarehouse extends SmallTest with Matchers {
   def testNameLength(): Unit = {
     awaitResult(
       streamCreator()
-        .clusterName(CommonUtils.randomString(Warehouse.LIMIT_OF_NAME_LENGTH))
+        .clusterName(CommonUtils.randomString(Collie.LIMIT_OF_NAME_LENGTH))
         .imageName(CommonUtils.randomString())
         .jarUrl("jar")
         .instances(10)
@@ -220,7 +220,7 @@ class TestStreamWarehouse extends SmallTest with Matchers {
   @Test
   def testInvalidName(): Unit = {
     an[IllegalArgumentException] should be thrownBy streamCreator()
-      .clusterName(CommonUtils.randomString(Warehouse.LIMIT_OF_NAME_LENGTH + 1))
+      .clusterName(CommonUtils.randomString(Collie.LIMIT_OF_NAME_LENGTH + 1))
       .imageName(CommonUtils.randomString())
       .jarUrl("jar")
       .instances(10)

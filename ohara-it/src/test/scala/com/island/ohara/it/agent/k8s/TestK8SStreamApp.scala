@@ -38,7 +38,7 @@ class TestK8SStreamApp extends BasicTests4StreamApp {
         k8sClient.containers
           .map {
             _.filter(container => {
-              usedClusterNames.forall(clusterName => {
+              usedClusterNames.exists(clusterName => {
                 container.name.contains(clusterName)
               })
             })

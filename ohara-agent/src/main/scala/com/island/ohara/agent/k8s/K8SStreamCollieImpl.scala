@@ -17,11 +17,9 @@
 package com.island.ohara.agent.k8s
 
 import com.island.ohara.agent.docker.ContainerState
-import com.island.ohara.agent.wharf.StreamWarehouse
-import com.island.ohara.agent.{NoSuchClusterException, NodeCollie}
+import com.island.ohara.agent.{NodeCollie, StreamCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import com.island.ohara.client.configurator.v0.{ClusterInfo, StreamApi}
 import com.island.ohara.common.util.CommonUtils
 import com.typesafe.scalalogging.Logger
 
@@ -29,26 +27,17 @@ import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Random
 
-private class K8sStreamWarehouseImpl(nodeCollie: NodeCollie,
-                                     k8sClient: K8SClient,
-                                     clusterMap: Future[Map[ClusterInfo, Seq[ContainerInfo]]])
-    extends StreamWarehouse {
-  private[this] val log = Logger(classOf[StreamWarehouse])
-  private[this] val K8S_DOMAIN_NAME: String = "default"
-  private[this] val K8S_OHARA_LABEL: String = "ohara"
+private class K8SStreamCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
+    extends K8SBasicCollieImpl[StreamClusterInfo, StreamCollie.ClusterCreator](nodeCollie, k8sClient)
+    with StreamCollie {
+  private[this] val log = Logger(classOf[K8SStreamCollieImpl])
 
-  //TODO: refactor after #885...by sam
-  override def creator(): StreamWarehouse.StreamCreator = {
+  override def creator(): StreamCollie.ClusterCreator = {
     (clusterName, nodeNames, imageName, jarUrl, instance, appId, brokerProps, fromTopics, toTopics, executionContext) =>
       {
         implicit val exec: ExecutionContext = executionContext
-        clusterMap.flatMap { clusters =>
-          if (clusters.keys.filter(_.isInstanceOf[StreamClusterInfo]).exists(_.name == clusterName))
-            Future.failed(
-              new IllegalArgumentException(
-                s"stream cluster:$clusterName exists!"
-              )
-            )
+        exist(clusterName).flatMap {
+          if (_) Future.failed(new IllegalArgumentException(s"stream cluster:$clusterName exists!"))
           else
             nodeCollie
               .nodes()
@@ -65,30 +54,29 @@ private class K8sStreamWarehouseImpl(nodeCollie: NodeCollie,
                   // if require node name is not in nodeCollie, do not take that node
                   CommonUtils.requireNonEmpty(all.filter(n => nodeNames.contains(n.name)).asJava).asScala
               }
-              .map(_.map(node => node -> format(StreamWarehouse.STREAM_SERVICE_NAME, clusterName)).toMap)
+              .map(_.map(node => node -> String.join(DIVIDER, format(PREFIX_KEY, clusterName, serviceName), node.name)).toMap)
               .flatMap { nodes =>
-                // ssh connection is slow so we submit request by multi-thread
                 Future
                   .sequence(nodes.map {
-                    case (node, name) =>
+                    case (node, podName) =>
                       k8sClient
                         .containerCreator()
                         .imageName(imageName)
                         .nodename(node.name)
-                        .hostname(name)
-                        .name(name)
-                        .labelName(K8S_OHARA_LABEL)
+                        .hostname(podName)
+                        .name(podName)
+                        .labelName(OHARA_LABEL)
                         .domainName(K8S_DOMAIN_NAME)
                         .envs(
                           Map(
-                            StreamApi.JARURL_KEY -> jarUrl,
-                            StreamApi.APPID_KEY -> appId,
-                            StreamApi.SERVERS_KEY -> brokerProps,
-                            StreamApi.FROM_TOPIC_KEY -> fromTopics.mkString(","),
-                            StreamApi.TO_TOPIC_KEY -> toTopics.mkString(",")
+                            StreamCollie.JARURL_KEY -> jarUrl,
+                            StreamCollie.APPID_KEY -> appId,
+                            StreamCollie.SERVERS_KEY -> brokerProps,
+                            StreamCollie.FROM_TOPIC_KEY -> fromTopics.mkString(","),
+                            StreamCollie.TO_TOPIC_KEY -> toTopics.mkString(",")
                           )
                         )
-                        .args(Seq(StreamApi.MAIN_ENTRY))
+                        .args(Seq(StreamCollie.MAIN_ENTRY))
                         .run()
                         .recover {
                           case e: Throwable =>
@@ -105,7 +93,7 @@ private class K8sStreamWarehouseImpl(nodeCollie: NodeCollie,
                       name = clusterName,
                       imageName = imageName,
                       nodeNames = successfulNodeNames,
-                      // creating warehouse success could be applied containers are "running"
+                      // creating cluster success could be applied containers are "running"
                       state = Some(ContainerState.RUNNING.name)
                     )
                   }
@@ -114,13 +102,18 @@ private class K8sStreamWarehouseImpl(nodeCollie: NodeCollie,
       }
   }
 
-  override def containers(clusterName: String)(
-    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] = {
-    clusterMap.map {
-      _.filter(entry => entry._1.isInstanceOf[StreamClusterInfo])
-        .find(_._1.name == clusterName)
-        .getOrElse(throw new NoSuchClusterException(s"$clusterName doesn't exist"))
-        ._2
-    }
-  }
+  override protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo])(
+    implicit executionContext: ExecutionContext): Future[StreamClusterInfo] =
+    toStreamCluster(clusterName, containers)
+
+  override protected def doRemoveNode(previousCluster: StreamClusterInfo, beRemovedContainer: ContainerInfo)(
+    implicit executionContext: ExecutionContext): Future[Boolean] =
+    Future.failed(
+      new UnsupportedOperationException("stream collie doesn't support to remove node from a running cluster"))
+
+  override protected def doAddNode(
+    previousCluster: StreamClusterInfo,
+    previousContainers: Seq[ContainerInfo],
+    newNodeName: String)(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] =
+    Future.failed(new UnsupportedOperationException("stream collie doesn't support to add node from a running cluster"))
 }

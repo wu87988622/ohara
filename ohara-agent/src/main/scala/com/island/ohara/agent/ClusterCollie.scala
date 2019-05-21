@@ -39,7 +39,6 @@ import scala.util.Try
   * Each getter should return new instance of collie since each collie has close() method.
   * However, it is ok to keep global instance of collie if they have dump close().
   * Currently, default implementation is based on ssh and docker command. It is simple but slow.
-  * TODO: We are looking for k8s implementation...by chia
   */
 trait ClusterCollie extends Releasable {
 
@@ -62,23 +61,22 @@ trait ClusterCollie extends Releasable {
   def workerCollie(): WorkerCollie
 
   /**
+    * create a collie for stream cluster
+    * @return stream collie
+    */
+  def streamCollie(): StreamCollie
+
+  /**
     * the default implementation is expensive!!! Please override this method if you are a good programmer.
     * @return a collection of zk, bk and wk clusters
     */
   def clusters(implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] =
-    zookeeperCollie().clusters.flatMap { zkMap =>
-      brokerCollie().clusters.flatMap { bkMap =>
-        workerCollie().clusters.map { wkMap =>
-          wkMap.map {
-            case (wk, wkContainers) => (wk.asInstanceOf[ClusterInfo], wkContainers)
-          } ++ bkMap.map {
-            case (bk, bkContainers) => (bk.asInstanceOf[ClusterInfo], bkContainers)
-          } ++ zkMap.map {
-            case (zk, zkContainers) => (zk.asInstanceOf[ClusterInfo], zkContainers)
-          }
-        }
-      }
-    }
+    for {
+      zkMap <- zookeeperCollie().clusters
+      bkMap <- brokerCollie().clusters
+      wkMap <- workerCollie().clusters
+      streamMap <- streamCollie().clusters
+    } yield zkMap ++ bkMap ++ wkMap ++ streamMap
 
   /**
     * list the docker images hosted by input nodes

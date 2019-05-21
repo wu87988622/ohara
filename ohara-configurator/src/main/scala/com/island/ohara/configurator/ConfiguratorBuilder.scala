@@ -21,7 +21,6 @@ import java.util.Objects
 
 import com.island.ohara.agent._
 import com.island.ohara.agent.k8s.K8SClient
-import com.island.ohara.agent.ssh.DockerClientCache
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeService}
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
@@ -44,7 +43,6 @@ class ConfiguratorBuilder {
   private[this] var inMemory: Boolean = false
   private[this] var store: DataStore = _
   private[this] var clusterCollie: ClusterCollie = _
-  private[this] var crane: Crane = _
   private[this] var k8sClient: K8SClient = _
 
   @Optional("default is random folder")
@@ -173,7 +171,6 @@ class ConfiguratorBuilder {
     collie.brokerCollie().addCluster(bkCluster)
     collie.workerCollie().addCluster(wkCluster)
     clusterCollie(collie)
-    crane(Crane.builderOfDocker().nodeCollie(createCollie()).dockerClientCache(DockerClientCache.fake()).build())
   }
 
   /**
@@ -277,7 +274,6 @@ class ConfiguratorBuilder {
                    lastModified = CommonUtils.current()))
       .foreach(store.add)
     clusterCollie(collie)
-    crane(Crane.builderOfDocker().nodeCollie(createCollie()).dockerClientCache(DockerClientCache.fake()).build())
   }
 
   @VisibleForTesting
@@ -285,14 +281,6 @@ class ConfiguratorBuilder {
   private[configurator] def clusterCollie(clusterCollie: ClusterCollie): ConfiguratorBuilder = {
     if (this.clusterCollie != null) throw new IllegalArgumentException(s"cluster collie is defined!!!")
     this.clusterCollie = Objects.requireNonNull(clusterCollie)
-    this
-  }
-
-  @VisibleForTesting
-  @Optional("default implementation is fake")
-  private[configurator] def crane(crane: Crane): ConfiguratorBuilder = {
-    if (this.crane != null) throw new IllegalArgumentException(s"crane is defined!!!")
-    this.crane = Objects.requireNonNull(crane)
     this
   }
 
@@ -324,7 +312,6 @@ class ConfiguratorBuilder {
       jarStore = JarStore.builder.homeFolder(folder("jars")).hostname(hostname).port(port).build(),
       nodeCollie = createCollie(),
       clusterCollie = getOrCreateCollie(),
-      crane = getOrCreateCrane(),
       k8sClient = Option(k8sClient)
     )
 
@@ -358,12 +345,4 @@ class ConfiguratorBuilder {
       else ClusterCollie.builderOfK8s().nodeCollie(createCollie()).k8sClient(k8sClient).build()
     clusterCollie
   } else clusterCollie
-
-  private[this] def getOrCreateCrane(): Crane = if (crane == null) {
-    this.crane =
-      if (k8sClient == null)
-        Crane.builderOfDocker().nodeCollie(createCollie()).dockerClientCache(DockerClientCache()).build()
-      else Crane.builderOfK8s().nodeCollie(createCollie()).k8sClient(k8sClient).build()
-    crane
-  } else crane
 }

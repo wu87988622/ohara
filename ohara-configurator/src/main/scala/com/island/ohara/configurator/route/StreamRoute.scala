@@ -23,7 +23,8 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent.docker.ContainerState
-import com.island.ohara.agent.{BrokerCollie, Crane, WorkerCollie}
+import com.island.ohara.agent.StreamCollie._
+import com.island.ohara.agent.{BrokerCollie, ClusterCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.JarApi.JarInfo
 import com.island.ohara.client.configurator.v0.StreamApi._
 import com.island.ohara.client.configurator.v0.{Parameters, StreamApi}
@@ -68,17 +69,18 @@ private[configurator] object StreamRoute {
     *
     * @param id the streamApp id
     * @param store data store
-    * @param crane manager of container clusters
+    * @param clusterCollie the management of cluster
     * @param executionContext execution context
     * @return updated streamApp data
     */
   private[this] def updateState(id: String)(implicit
                                             store: DataStore,
-                                            crane: Crane,
+                                            clusterCollie: ClusterCollie,
                                             executionContext: ExecutionContext): Future[StreamAppDescription] = {
     store.value[StreamAppDescription](id).flatMap { props =>
-      crane
-        .get(formatClusterName(props.id))
+      clusterCollie
+        .streamCollie()
+        .cluster(formatUniqueName(props.id))
         .filter(_._1.isInstanceOf[StreamClusterInfo])
         .map(_._1.asInstanceOf[StreamClusterInfo].state -> None)
         // if stream cluster was not created, we do nothing
@@ -114,10 +116,10 @@ private[configurator] object StreamRoute {
   }
 
   def apply(implicit store: DataStore,
+            clusterCollie: ClusterCollie,
             workerCollie: WorkerCollie,
             brokerCollie: BrokerCollie,
             jarStore: JarStore,
-            crane: Crane,
             executionContext: ExecutionContext): server.Route =
     pathPrefix(STREAM_PREFIX_PATH) {
       pathEnd {
@@ -129,7 +131,7 @@ private[configurator] object StreamRoute {
             //see https://github.com/akka/akka-http/issues/1216#issuecomment-311973943
             toStrictEntity(1.seconds) {
               formFields(Parameters.CLUSTER_NAME.?) { reqName =>
-                storeUploadedFiles(StreamApi.INPUT_KEY, StreamApi.saveTmpFile) { files =>
+                storeUploadedFiles(StreamApi.INPUT_KEY, info => CommonUtils.createTempFile(info.fileName)) { files =>
                   complete(
                     // here we try to find the pre-defined wk if not assigned by request
                     CollieUtils.workerClient(reqName).map(_._1.name).map { wkName =>
@@ -183,7 +185,8 @@ private[configurator] object StreamRoute {
                 complete(store.values[StreamAppDescription]().map { streamApps =>
                   // check the jar is not used in any streamApp which is used in pipeline
                   if (streamApps.exists(_.jarInfo.id == id)) {
-                    throw new IllegalArgumentException(s"The id:$id is used by pipeline")
+                    val jar = streamApps.filter(_.jarInfo.id == id).map(_.jarInfo.name)
+                    throw new IllegalArgumentException(s"Jar is used in pipeline : $jar")
                   } else {
                     store.remove[StreamJar](id).flatMap { _ =>
                       jarStore
@@ -304,22 +307,23 @@ private[configurator] object StreamRoute {
                       .map(_.url)
                       .flatMap {
                         url =>
-                          crane.exist(formatClusterName(data.id)).flatMap {
+                          clusterCollie.streamCollie().exist(formatUniqueName(data.id)).flatMap {
                             if (_) {
                               // stream cluster exists, get current cluster
-                              crane
-                                .get(formatClusterName(data.id))
+                              clusterCollie
+                                .streamCollie()
+                                .cluster(formatUniqueName(data.id))
                                 .filter(_._1.isInstanceOf[StreamClusterInfo])
                                 .map(_._1.asInstanceOf[StreamClusterInfo])
                             } else {
-                              crane
-                                .streamWarehouse()
+                              clusterCollie
+                                .streamCollie()
                                 .creator()
-                                .clusterName(formatClusterName(data.id))
+                                .clusterName(formatUniqueName(data.id))
                                 .instances(data.instances)
                                 .imageName(IMAGE_NAME_DEFAULT)
                                 .jarUrl(url.toString)
-                                .appId(formatAppId(data.id))
+                                .appId(formatUniqueName(data.id))
                                 .brokerProps(bkProps)
                                 .fromTopics(data.from)
                                 .toTopics(data.to)
@@ -351,11 +355,12 @@ private[configurator] object StreamRoute {
             put {
               complete(
                 store.value[StreamAppDescription](id).flatMap { data =>
-                  crane.exist(formatClusterName(data.id)).flatMap {
+                  clusterCollie.streamCollie().exist(formatUniqueName(data.id)).flatMap {
                     if (_) {
                       // if remove failed, we log the exception and return "EXITED" state
-                      crane
-                        .remove(formatClusterName(data.id))
+                      clusterCollie
+                        .streamCollie()
+                        .remove(formatUniqueName(data.id))
                         .map(_ => None -> None)
                         .recover {
                           case ex: Throwable =>

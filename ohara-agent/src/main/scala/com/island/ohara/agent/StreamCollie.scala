@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-package com.island.ohara.agent.wharf
+package com.island.ohara.agent
 
 import java.util.Objects
 
+import com.island.ohara.agent.docker.ContainerState
+import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
@@ -25,14 +27,32 @@ import com.island.ohara.common.util.CommonUtils
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
-trait StreamWarehouse extends Warehouse[StreamClusterInfo] {
-  override def creator(): StreamWarehouse.StreamCreator
+/**
+  * An interface of controlling stream cluster.
+  * It isolates the implementation of container manager from Configurator.
+  */
+trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator] {
+  private[agent] def toStreamCluster(clusterName: String, containers: Seq[ContainerInfo]): Future[StreamClusterInfo] = {
+    val first = containers.head
+    Future.successful(
+      StreamClusterInfo(
+        name = clusterName,
+        imageName = first.imageName,
+        nodeNames = containers.map(_.nodeName),
+        state = {
+          // we only have two possible results here:
+          // 1. only assume cluster is "running" if and only if all containers was running
+          // 2. the cluster state is always "dead" if one of containers state was not running
+          val alive = containers.forall(_.state == ContainerState.RUNNING.name)
+          if (alive) Some(ContainerState.RUNNING.name) else Some(ContainerState.DEAD.name)
+        }
+      )
+    )
+  }
 }
 
-private[agent] object StreamWarehouse {
-  final val STREAM_SERVICE_NAME: String = "stream"
-
-  trait StreamCreator extends Warehouse.WarehouseCreator[StreamClusterInfo] {
+object StreamCollie {
+  trait ClusterCreator extends Collie.ClusterCreator[StreamClusterInfo] {
 
     private[this] var jarUrl: String = _
     private[this] var instances: Int = 0
@@ -40,7 +60,6 @@ private[agent] object StreamWarehouse {
     private[this] var brokerProps: String = _
     private[this] var fromTopics: Seq[String] = Seq.empty
     private[this] var toTopics: Seq[String] = Seq.empty
-    private[this] var nodeNames: Seq[String] = _
 
     /**
       * set the jar url for the streamApp running
@@ -48,7 +67,7 @@ private[agent] object StreamWarehouse {
       * @param jarUrl jar url
       * @return this creator
       */
-    def jarUrl(jarUrl: String): StreamCreator = {
+    def jarUrl(jarUrl: String): ClusterCreator = {
       this.jarUrl = CommonUtils.requireNonEmpty(jarUrl)
       this
     }
@@ -61,21 +80,8 @@ private[agent] object StreamWarehouse {
       * @return the creator
       */
     @Optional("you can ignore this parameter if set nodeNames")
-    def instances(instances: Int): StreamCreator = {
+    def instances(instances: Int): ClusterCreator = {
       this.instances = instances
-      this
-    }
-
-    /**
-      *  set nodes for cluster
-      *  NOTED: this is a async method since starting a cluster is always gradual.
-      *  ANOTHER NOTED: this value will override the effects of `instances`
-      *
-      * @param nodeNames nodes' name
-      * @return this creator
-      */
-    def nodeNames(nodeNames: Seq[String]): StreamCreator = {
-      this.nodeNames = CommonUtils.requireNonEmpty(nodeNames.asJava).asScala
       this
     }
 
@@ -86,7 +92,7 @@ private[agent] object StreamWarehouse {
       * @param appId app id
       * @return this creator
       */
-    def appId(appId: String): StreamCreator = {
+    def appId(appId: String): ClusterCreator = {
       this.appId = CommonUtils.requireNonEmpty(appId)
       this
     }
@@ -97,7 +103,7 @@ private[agent] object StreamWarehouse {
       * @param brokerProps broker props
       * @return this creator
       */
-    def brokerProps(brokerProps: String): StreamCreator = {
+    def brokerProps(brokerProps: String): ClusterCreator = {
       this.brokerProps = CommonUtils.requireNonEmpty(brokerProps)
       this
     }
@@ -108,7 +114,7 @@ private[agent] object StreamWarehouse {
       * @param fromTopics from topics
       * @return this creator
       */
-    def fromTopics(fromTopics: Seq[String]): StreamCreator = {
+    def fromTopics(fromTopics: Seq[String]): ClusterCreator = {
       this.fromTopics = CommonUtils.requireNonEmpty(fromTopics.asJava).asScala
       this
     }
@@ -119,18 +125,18 @@ private[agent] object StreamWarehouse {
       * @param toTopics to topics
       * @return this creator
       */
-    def toTopics(toTopics: Seq[String]): StreamCreator = {
+    def toTopics(toTopics: Seq[String]): ClusterCreator = {
       this.toTopics = CommonUtils.requireNonEmpty(toTopics.asJava).asScala
       this
     }
 
     override def create()(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] = doCreate(
       CommonUtils.requireNonEmpty(clusterName),
-      // we check nodeNames in StreamWarehouseImpl
+      // we check nodeNames in StreamCollie
       nodeNames,
       CommonUtils.requireNonEmpty(imageName),
       CommonUtils.requireNonEmpty(jarUrl),
-      // we check instances in StreamWarehouseImpl
+      // we check instances in StreamCollie
       instances,
       CommonUtils.requireNonEmpty(appId),
       CommonUtils.requireNonEmpty(brokerProps),
@@ -150,4 +156,25 @@ private[agent] object StreamWarehouse {
                            toTopics: Seq[String],
                            executionContext: ExecutionContext): Future[StreamClusterInfo]
   }
+
+  private[agent] val JARURL_KEY: String = "STREAMAPP_JARURL"
+  private[agent] val APPID_KEY: String = "STREAMAPP_APPID"
+  private[agent] val SERVERS_KEY: String = "STREAMAPP_SERVERS"
+  private[agent] val FROM_TOPIC_KEY: String = "STREAMAPP_FROMTOPIC"
+  private[agent] val TO_TOPIC_KEY: String = "STREAMAPP_TOTOPIC"
+
+  /**
+    * the only entry for ohara streamApp
+    */
+  private[agent] val MAIN_ENTRY = "com.island.ohara.streams.StreamApp"
+
+  /**
+    * Format unique name by unique id.
+    * This name used in cluster name and appId
+    *
+    * @param id the streamApp unique id
+    * @return formatted string. form: ${streamId_with_only_char}.substring(30)
+    */
+  def formatUniqueName(id: String): String =
+    CommonUtils.assertOnlyNumberAndChar(id.replaceAll("-", "")).substring(0, Collie.LIMIT_OF_NAME_LENGTH)
 }

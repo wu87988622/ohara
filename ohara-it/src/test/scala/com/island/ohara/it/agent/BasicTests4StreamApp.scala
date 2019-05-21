@@ -16,6 +16,7 @@
 
 package com.island.ohara.it.agent
 
+import com.island.ohara.agent.StreamCollie
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterCreationRequest, BrokerClusterInfo}
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeCreationRequest}
@@ -212,7 +213,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     res1.error shouldBe None
 
     // save the cluster name to cache
-    nameHolder.addClusterName(StreamApi.formatClusterName(res1.id))
+    nameHolder.addClusterName(StreamCollie.formatUniqueName(res1.id))
 
     //Stop streamApp
     val res2 =

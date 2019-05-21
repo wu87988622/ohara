@@ -23,6 +23,7 @@ import com.island.ohara.agent.ClusterCache.Service
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
@@ -86,6 +87,7 @@ object ClusterCache {
     case object ZOOKEEPER extends Service
     case object BROKER extends Service
     case object WORKER extends Service
+    case object STREAM extends Service
     case object UNKNOWN extends Service
   }
 
@@ -169,6 +171,7 @@ object ClusterCache {
             case _: ZookeeperClusterInfo => Service.ZOOKEEPER
             case _: BrokerClusterInfo    => Service.BROKER
             case _: WorkerClusterInfo    => Service.WORKER
+            case _: StreamClusterInfo    => Service.STREAM
             case _                       => Service.UNKNOWN
           },
           clusterInfo = clusterInfo,

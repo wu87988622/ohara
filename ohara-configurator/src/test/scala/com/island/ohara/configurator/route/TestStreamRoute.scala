@@ -174,7 +174,7 @@ class TestStreamRoute extends SmallTest with Matchers {
     val props = result(accessStreamProperty.add(StreamPropertyRequest(streamJar.id, None, None, None, None)))
 
     // update properties
-    val req = StreamPropertyRequest(streamJar.id,
+    val req = StreamPropertyRequest(props.id,
                                     Some(streamAppName),
                                     Some(Seq("fromTopic_id")),
                                     Some(Seq("toTopic_id")),

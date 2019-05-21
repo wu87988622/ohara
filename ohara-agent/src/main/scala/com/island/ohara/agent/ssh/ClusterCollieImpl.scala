@@ -47,9 +47,12 @@ private[agent] class ClusterCollieImpl(cacheTimeout: Duration, nodeCollie: NodeC
 
   private[this] val wkCollie: WorkerCollieImpl = new WorkerCollieImpl(nodeCollie, dockerCache, clusterCache)
 
+  private[this] val _streamCollie: StreamCollieImpl = new StreamCollieImpl(nodeCollie, dockerCache, clusterCache)
+
   override def zookeeperCollie(): ZookeeperCollie = zkCollie
   override def brokerCollie(): BrokerCollie = bkCollie
   override def workerCollie(): WorkerCollie = wkCollie
+  override def streamCollie(): StreamCollie = _streamCollie
 
   override def clusters(implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] =
     Future.successful(clusterCache.snapshot)

@@ -20,9 +20,8 @@ import java.nio.charset.CodingErrorAction
 
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.server.directives.FileInfo
 import akka.util.ByteString
-import com.island.ohara.common.util.{CommonUtils, VersionUtils}
+import com.island.ohara.common.util.VersionUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
@@ -46,24 +45,9 @@ object StreamApi {
   final val TMP_ROOT = System.getProperty("java.io.tmpdir")
 
   /**
-    * the only entry for ohara streamApp
-    */
-  final val MAIN_ENTRY = "com.island.ohara.streams.StreamApp"
-
-  /**
     *  limit the length of docker container name (&lt; 60).
     */
   final val LIMIT_OF_DOCKER_NAME_LENGTH: Int = 60
-
-  final val PREFIX_KEY = "ost"
-
-  final val DIVIDER: String = "-"
-
-  final val JARURL_KEY: String = "STREAMAPP_JARURL"
-  final val APPID_KEY: String = "STREAMAPP_APPID"
-  final val SERVERS_KEY: String = "STREAMAPP_SERVERS"
-  final val FROM_TOPIC_KEY: String = "STREAMAPP_FROMTOPIC"
-  final val TO_TOPIC_KEY: String = "STREAMAPP_TOTOPIC"
 
   /**
     * StreamApp Docker Image name
@@ -76,40 +60,6 @@ object StreamApi {
   val START_COMMAND: String = "start"
   val STOP_COMMAND: String = "stop"
   val STATUS_COMMAND: String = "status"
-
-  /**
-    * format unique applicationId for the streamApp.
-    * It can be used in setting container's hostname and name
-    * @param streamId the streamApp id
-    * @return a formatted string. form: ${prefix}-${streamId}
-    */
-  def formatAppId(streamId: String): String =
-    assertLength(
-      Seq(
-        PREFIX_KEY,
-        streamId
-      ).mkString(DIVIDER))
-
-  /**
-    * format the cluster name by unique id
-    *
-    * @param id the streamApp unique id
-    * @return cluster name
-    */
-  def formatClusterName(id: String): String =
-    CommonUtils.assertOnlyNumberAndChar(id.replaceAll("-", ""))
-
-  /**
-    * create temp file(with suffix .tmp) inside temp folder
-    *
-    * @param fileInfo the request file
-    * @return the tmp file
-    */
-  def saveTmpFile(fileInfo: FileInfo): File = CommonUtils.createTempFile(fileInfo.fileName)
-
-  private[this] def assertLength(s: String): String = if (s.length > LIMIT_OF_DOCKER_NAME_LENGTH)
-    throw new IllegalArgumentException(s"limit of length is $LIMIT_OF_DOCKER_NAME_LENGTH. actual: ${s.length}")
-  else s
 
   // --- data stored in configurator -- //
   //TODO : We can remove this class after #1151 solved...by Sam
@@ -171,7 +121,7 @@ object StreamApi {
     * @param name cluster name
     * @param imageName image name
     * @param nodeNames actual running nodes
-    * @param state the state of this warehouse (see '''ContainerState''')
+    * @param state the state of this cluster (see '''ContainerState''')
     */
   final case class StreamClusterInfo(
     name: String,

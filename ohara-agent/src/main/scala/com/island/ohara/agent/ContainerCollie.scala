@@ -20,6 +20,7 @@ import com.island.ohara.agent.Collie.ClusterCreator
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.util.CommonUtils
@@ -92,6 +93,7 @@ abstract class ContainerCollie[T <: ClusterInfo: ClassTag, Creator <: ClusterCre
     if (classTag[T].runtimeClass.isAssignableFrom(classOf[ZookeeperClusterInfo])) ContainerCollie.ZK_SERVICE_NAME
     else if (classTag[T].runtimeClass.isAssignableFrom(classOf[BrokerClusterInfo])) ContainerCollie.BK_SERVICE_NAME
     else if (classTag[T].runtimeClass.isAssignableFrom(classOf[WorkerClusterInfo])) ContainerCollie.WK_SERVICE_NAME
+    else if (classTag[T].runtimeClass.isAssignableFrom(classOf[StreamClusterInfo])) ContainerCollie.STREAM_SERVICE_NAME
     else throw new IllegalArgumentException(s"Who are you, ${classTag[T].runtimeClass} ???")
 
   override final def forceRemove(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
@@ -122,6 +124,11 @@ object ContainerCollie {
   val ZK_SERVICE_NAME: String = "zk"
   val BK_SERVICE_NAME: String = "bk"
   val WK_SERVICE_NAME: String = "wk"
+
+  /**
+    * container name is controlled by streamRoute, the service name here use five words was ok.
+    */
+  val STREAM_SERVICE_NAME: String = "stream"
 
   /**
     * used to distinguish the cluster name and service name

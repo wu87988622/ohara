@@ -58,7 +58,6 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
                                                                                val jarStore: JarStore,
                                                                                val nodeCollie: NodeCollie,
                                                                                val clusterCollie: ClusterCollie,
-                                                                               val crane: Crane,
                                                                                val k8sClient: Option[K8SClient])
     extends ReleaseOnce
     with SprayJsonSupport {
@@ -205,7 +204,6 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
     val start = CommonUtils.current()
     if (httpServer != null) Await.result(httpServer.unbind(), initializationTimeout.toMillis milliseconds)
     if (actorSystem != null) Await.result(actorSystem.terminate(), initializationTimeout.toMillis milliseconds)
-    Releasable.close(crane)
     Releasable.close(meterCache)
     Releasable.close(clusterCollie)
     Releasable.close(jarStore)

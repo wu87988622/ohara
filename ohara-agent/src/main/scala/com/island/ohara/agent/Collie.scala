@@ -60,7 +60,7 @@ trait Collie[T <: ClusterInfo, Creator <: ClusterCreator[T]] {
 
   /**
     * create a cluster creator
-    * @return creator of broker cluster
+    * @return creator of cluster
     */
   def creator(): Creator
 
@@ -75,7 +75,7 @@ trait Collie[T <: ClusterInfo, Creator <: ClusterCreator[T]] {
   def clusters(implicit executionContext: ExecutionContext): Future[Map[T, Seq[ContainerInfo]]]
 
   /**
-    * get the cluster information from a broker cluster
+    * get the cluster information from a cluster
     * @param name cluster name
     * @return cluster information
     */
@@ -84,29 +84,29 @@ trait Collie[T <: ClusterInfo, Creator <: ClusterCreator[T]] {
 
   /**
     * @param clusterName cluster name
-    * @return true if the broker cluster exists
+    * @return true if the cluster exists
     */
   def exist(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
     clusters.map(_.exists(_._1.name == clusterName))
 
   /**
     * @param clusterName cluster name
-    * @return true if the broker cluster doesn't exist
+    * @return true if the cluster doesn't exist
     */
   def nonExist(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
     exist(clusterName).map(!_)
 
   /**
-    * add a node to a running broker cluster
+    * add a node to a running cluster
     * NOTED: this is a async operation since graceful adding a node to a running service may be slow.
     * @param clusterName cluster name
     * @param nodeName node name
-    * @return updated broker cluster
+    * @return updated cluster
     */
   def addNode(clusterName: String, nodeName: String)(implicit executionContext: ExecutionContext): Future[T]
 
   /**
-    * remove a node from a running broker cluster.
+    * remove a node from a running cluster.
     * NOTED: this is a async operation since graceful downing a node from a running service may be slow.
     * @param clusterName cluster name
     * @param nodeName node name
@@ -118,9 +118,10 @@ trait Collie[T <: ClusterInfo, Creator <: ClusterCreator[T]] {
 object Collie {
 
   /**
-    * docker does limit the length of name (< 64). And we "may" salt the name so we release only 30 chars to user.
+    * docker does limit the length of name (< 64). Since we format container name with some part of prefix,
+    * limit the name length to one-third of 64 chars should be suitable for most cases.
     */
-  private[agent] val LIMIT_OF_NAME_LENGTH: Int = 30
+  private[agent] val LIMIT_OF_NAME_LENGTH: Int = 20
 
   private[this] def assertLength(s: String): String = if (s.length > LIMIT_OF_NAME_LENGTH)
     throw new IllegalArgumentException(s"limit of length is $LIMIT_OF_NAME_LENGTH. actual: ${s.length}")

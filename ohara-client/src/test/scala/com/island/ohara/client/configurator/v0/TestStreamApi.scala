@@ -25,27 +25,11 @@ import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import org.junit.Test
 import org.scalatest.Matchers
 
-import scala.util.Random
-
 class TestStreamApi extends SmallTest with Matchers {
 
   @Test
   def checkVersion(): Unit = {
     StreamApi.IMAGE_NAME_DEFAULT shouldBe s"oharastream/streamapp:${VersionUtils.VERSION}"
-  }
-
-  @Test
-  def testAppIdLength(): Unit = {
-
-    val appId = Random.alphanumeric.take(StreamApi.LIMIT_OF_DOCKER_NAME_LENGTH).mkString
-
-    an[IllegalArgumentException] should be thrownBy StreamApi.formatAppId(appId)
-  }
-
-  @Test
-  def testClusterNameChar(): Unit = {
-    val name = "this!@is#_not@@allow))string"
-    an[IllegalArgumentException] should be thrownBy StreamApi.formatClusterName(name)
   }
 
   @Test

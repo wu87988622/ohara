@@ -17,7 +17,7 @@
 package com.island.ohara.configurator
 
 import com.island.ohara.agent.k8s.K8SClient
-import com.island.ohara.agent.{ClusterCollie, Crane}
+import com.island.ohara.agent.ClusterCollie
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
@@ -26,8 +26,8 @@ import org.scalatest.Matchers
 import org.scalatest.mockito.MockitoSugar
 
 import scala.concurrent.Await
-import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 class TestFakeConfigurator extends SmallTest with Matchers {
 
   @Test
@@ -53,7 +53,6 @@ class TestFakeConfigurator extends SmallTest with Matchers {
             .result(configurator.clusterCollie.clusters, 10 seconds)
             .flatMap(_._1.nodeNames)
             .foreach(name => nodes.exists(_.name == name) shouldBe true)
-          Await.result(configurator.crane.list, 10 seconds)
         } finally configurator.close()
     }
   }
@@ -77,24 +76,6 @@ class TestFakeConfigurator extends SmallTest with Matchers {
       // in fake mode, a fake collie will be created
       .fake(1, 1)
       .clusterCollie(MockitoSugar.mock[ClusterCollie])
-      .build()
-
-  @Test
-  def reassignCraneAfterFake(): Unit =
-    an[IllegalArgumentException] should be thrownBy Configurator
-      .builder()
-      // in fake mode, we use fake docker client
-      .fake(1, 1)
-      // assign is NOT ok, since crane is defined in fake mode!!!
-      .crane(MockitoSugar.mock[Crane])
-      .build()
-
-  @Test
-  def reassignCrane(): Unit =
-    an[IllegalArgumentException] should be thrownBy Configurator
-      .builder()
-      .crane(MockitoSugar.mock[Crane])
-      .crane(MockitoSugar.mock[Crane])
       .build()
 
   @Test

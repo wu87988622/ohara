@@ -32,6 +32,8 @@ private[agent] class K8SClusterCollieImpl(nodeCollie: NodeCollie, k8sClient: K8S
 
   override def workerCollie(): WorkerCollie = new K8SWorkerCollieImpl(nodeCollie, k8sClient)
 
+  override def streamCollie(): StreamCollie = new K8SStreamCollieImpl(nodeCollie, k8sClient)
+
   override protected def doClose(): Unit = Releasable.close(k8sClient)
 
   override def images(nodes: Seq[Node])(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[String]]] =

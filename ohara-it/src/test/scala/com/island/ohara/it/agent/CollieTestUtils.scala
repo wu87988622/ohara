@@ -37,14 +37,16 @@ private[agent] object CollieTestUtils {
     }.toSeq)
     .getOrElse(Seq.empty)
     .map { node =>
-      assertImages(node,
-                   Seq(
-                     "centos:7",
-                     ZookeeperApi.IMAGE_NAME_DEFAULT,
-                     BrokerApi.IMAGE_NAME_DEFAULT,
-                     WorkerApi.IMAGE_NAME_DEFAULT,
-                     StreamApi.IMAGE_NAME_DEFAULT
-                   ))
+      assertImages(
+        node,
+        Seq(
+          "centos:7",
+          ZookeeperApi.IMAGE_NAME_DEFAULT,
+          BrokerApi.IMAGE_NAME_DEFAULT,
+          WorkerApi.IMAGE_NAME_DEFAULT,
+          StreamApi.IMAGE_NAME_DEFAULT
+        )
+      )
       node
     }
 
