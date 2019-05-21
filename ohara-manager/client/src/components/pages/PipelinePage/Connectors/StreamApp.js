@@ -109,11 +109,13 @@ class StreamApp extends React.Component {
 
   handleSave = async ({ name, instances, from, to }) => {
     const { pipelineTopics, graph, updateGraph } = this.props;
-    const { streamAppId } = this.state;
     const { fromTopic, toTopic } = this.getTopics({ pipelineTopics, from, to });
+    const { streamAppId, streamApp } = this.state;
+    const { id: jarId } = streamApp.jarInfo;
 
     const params = {
       id: streamAppId,
+      jarId,
       name,
       instances,
       from: fromTopic,
@@ -135,24 +137,30 @@ class StreamApp extends React.Component {
         updateGraph({ update: toUpdate });
       } else {
         // From topic update
-        let currTopic = findByGraphId(graph, fromTopic[0]);
+        let currFromTopic = findByGraphId(graph, fromTopic[0]);
         let fromUpdate;
 
-        if (currTopic) {
-          fromUpdate = [...new Set([...currTopic.to, streamAppId])];
+        if (currFromTopic) {
+          fromUpdate = [...new Set([...currFromTopic.to, streamAppId])];
         } else {
           if (prevFromTopic) {
             fromUpdate = prevFromTopic.to.filter(t => t !== streamAppId);
           } else {
             fromUpdate = [];
           }
-          currTopic = prevFromTopic;
+
+          currFromTopic = prevFromTopic;
         }
 
-        const update = {
-          ...currTopic,
-          to: fromUpdate,
-        };
+        let update;
+        if (!currFromTopic) {
+          update = { ...currFromTopic };
+        } else {
+          update = {
+            ...currFromTopic,
+            to: fromUpdate,
+          };
+        }
 
         updateGraph({
           update,
@@ -242,7 +250,7 @@ class StreamApp extends React.Component {
     };
 
     return (
-      <React.Fragment>
+      <>
         <Form
           onSubmit={this.handleSave}
           initialValues={initialValues}
@@ -296,7 +304,7 @@ class StreamApp extends React.Component {
                     component={SelectField}
                     list={pipelineTopics}
                     width="100%"
-                    placeholder="select a topic ..."
+                    placeholder="select a from topic..."
                     isObject
                     clearable
                   />
@@ -308,7 +316,7 @@ class StreamApp extends React.Component {
                     component={SelectField}
                     list={pipelineTopics}
                     width="100%"
-                    placeholder="select a topic ..."
+                    placeholder="select a to topic..."
                     isObject
                     clearable
                   />
@@ -328,7 +336,7 @@ class StreamApp extends React.Component {
             </Box>
           )}
         />
-      </React.Fragment>
+      </>
     );
   }
 }

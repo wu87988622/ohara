@@ -57,6 +57,7 @@ export const createTopic = async params => {
       brokerClusterName: params.brokerClusterName,
       numberOfReplications: toNumber(numberOfReplications),
     };
+
     const res = await axiosInstance.post('/api/topics', data);
     const isSuccess = get(res, 'data.isSuccess', false);
 

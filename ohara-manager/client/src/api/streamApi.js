@@ -135,6 +135,7 @@ export const updateProperty = async params => {
     const streamAppId = params.id;
     const url = `/api/stream/property/${streamAppId}`;
     const data = {
+      jarId: params.jarId,
       name: params.name,
       from: params.from || [],
       to: params.to || [],

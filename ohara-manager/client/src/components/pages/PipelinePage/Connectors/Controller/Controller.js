@@ -111,7 +111,7 @@ class Controller extends React.Component {
           cancelBtnText="No, Keep it"
           handleCancel={this.handleDeleteModalClose}
           handleConfirm={this.handleDeleteClick}
-          message={`Are you sure you want to remove this ${kind} from the pipeline graph? This action cannot be undo!`}
+          message={`Are you sure you want to remove this ${kind} from the pipeline graph? This action cannot be undone!`}
           isDelete
         />
       </s.Controller>

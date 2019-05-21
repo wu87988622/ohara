@@ -31,7 +31,7 @@ class AutoSave extends React.Component {
     values: this.props.values,
   };
 
-  componentDidUpdate(nextProps, prevState) {
+  componentDidUpdate() {
     this.save();
   }
 

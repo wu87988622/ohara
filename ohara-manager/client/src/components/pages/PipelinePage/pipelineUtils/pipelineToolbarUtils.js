@@ -47,7 +47,10 @@ export const createConnector = async ({ updateGraph, connector }) => {
     connectorName = connector.name;
   } else if (isStream(typeName)) {
     // stream app needs a jar id in order to create a property form
-    const res = await createProperty({ jarId: connector.jarId });
+    const res = await createProperty({
+      jarId: connector.jarId,
+      name: connectorName,
+    });
 
     id = res.data.result.id;
   } else if (isSource(typeName) || isSink(typeName)) {

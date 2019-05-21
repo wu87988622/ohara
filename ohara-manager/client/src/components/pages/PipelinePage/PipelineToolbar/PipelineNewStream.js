@@ -280,11 +280,11 @@ class PipelineNewStream extends React.Component {
         <ConfirmModal
           isActive={this.state.isDeleteRowModalActive}
           title="Delete row?"
-          confirmBtnText="Yes, Delete this row"
+          confirmBtnText="Yes, Delete this jar"
           cancelBtnText="No, Keep it"
           handleCancel={this.handleDeleteRowModalClose}
           handleConfirm={this.handleDeleteClick}
-          message="Are you sure you want to delete this row? This action cannot be undo!"
+          message="Are you sure you want to delete this row? This action cannot be undone!"
           isDelete
         />
       </div>

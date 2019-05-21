@@ -47,10 +47,12 @@ class TopicNewModal extends React.Component {
     this.setState({ isSaveBtnWorking: true });
     const result = get(await brokerApi.fetchBrokers(), 'data.result');
     const brokerName = result.length > 0 ? result[0].name : '';
+
     const res = await topicApi.createTopic({
       ...values,
       brokerClusterName: brokerName,
     });
+
     this.setState({ isSaveBtnWorking: false });
     const isSuccess = get(res, 'data.isSuccess', false);
     if (isSuccess) {

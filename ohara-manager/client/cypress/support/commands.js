@@ -63,8 +63,10 @@ Cypress.Commands.add('createWorker', () => {
       // When connectors field has the right connector info
       // this means that everything is ready to be tested
       if (res.body.some(worker => worker.name === workerName)) return;
+
       // Add a maximum loop time to prevent from running into an infinite loop
       if (count > max) return;
+
       // if worker is not ready yet, wait a 1.5 sec and make another request
       count++;
       cy.wait(1500);
@@ -74,6 +76,24 @@ Cypress.Commands.add('createWorker', () => {
 
   const endPoint = `api/workers`;
   cy.request('GET', endPoint).then(() => req(endPoint));
+});
+
+Cypress.Commands.add('createPipeline', pipeline => {
+  cy.request('POST', `/api/pipelines`, {
+    name: pipeline.name || 'Untitled pipeline',
+    rules: pipeline.rules || {},
+    workerClusterName: pipeline.workerName,
+    ...pipeline,
+  }).then(({ body }) => body);
+});
+
+Cypress.Commands.add('createTopic', overrides => {
+  cy.request('POST', '/api/topics', {
+    name: utils.makeRandomStr(),
+    numberOfReplications: 1,
+    numberOfPartitions: 1,
+    ...overrides,
+  }).then(({ body }) => body); // we'll need the returned data later on
 });
 
 Cypress.Commands.add('deleteAllWorkers', () => {
@@ -105,6 +125,19 @@ Cypress.Commands.add('deleteAllWorkers', () => {
   });
 });
 
+Cypress.Commands.add('insertNode', node => {
+  Cypress.log({
+    name: 'INSERT_NODE',
+  });
+
+  cy.request('POST', 'api/nodes', {
+    name: node.name,
+    port: node.port,
+    user: node.user,
+    password: node.password,
+  });
+});
+
 Cypress.Commands.add('deleteAllNodes', () => {
   Cypress.log({
     name: 'DELETE_ALL_NODES',
@@ -123,33 +156,6 @@ Cypress.Commands.add('deleteAllNodes', () => {
     });
 });
 
-Cypress.Commands.add('insertNode', node => {
-  Cypress.log({
-    name: 'INSERT_NODE',
-  });
-
-  cy.request('POST', 'api/nodes', {
-    name: node.name,
-    port: node.port,
-    user: node.user,
-    password: node.password,
-  });
-});
-
-Cypress.Commands.add('deleteAllPipelines', () => {
-  const _ = Cypress._;
-
-  cy.request('GET', 'api/pipelines')
-    .then(res => res.body)
-    .then(pipelines => {
-      if (!_.isEmpty(pipelines)) {
-        _.forEach(pipelines, pipeline => {
-          cy.request('DELETE', `api/pipelines/${pipeline.id}`);
-        });
-      }
-    });
-});
-
 Cypress.Commands.add('deleteTopic', topicName => {
   cy.request('GET', 'api/topics').then(res => {
     res.body.forEach(({ name, id }) => {
@@ -162,30 +168,42 @@ Cypress.Commands.add('deleteTopic', topicName => {
 
 Cypress.Commands.add('deletePipeline', pipelineName => {
   cy.request('GET', 'api/pipelines').then(res => {
-    res.body.forEach(pipeline => {
-      if (pipeline.name === pipelineName) {
-        cy.request('DELETE', `api/pipelines/${pipeline.id}`);
+    res.body.forEach(({ name, id }) => {
+      if (name === pipelineName) {
+        cy.request('DELETE', `api/pipelines/${id}`);
       }
     });
   });
 });
 
-Cypress.Commands.add('createPipeline', pipeline => {
-  cy.request('POST', `/api/pipelines`, {
-    name: pipeline.name || 'Untitled pipeline',
-    rules: pipeline.rules || {},
-    workerClusterName: pipeline.workerName,
-    ...pipeline,
-  }).then(({ body }) => body);
-});
+Cypress.Commands.add(
+  'deleteStreamApp',
+  (
+    streamAppName = 'ohara-streamapp.jar',
+    workerName = Cypress.env('WORKER_NAME'),
+  ) => {
+    cy.request('GET', 'api/stream/jars').then(res => {
+      res.body.forEach(({ name, workerClusterName, id }) => {
+        const isTarget =
+          name === streamAppName && workerName === workerClusterName;
+        if (isTarget) {
+          cy.request('DELETE', `api/stream/jars/${id}`);
+        }
+      });
+    });
+  },
+);
 
-Cypress.Commands.add('createTopic', overrides => {
-  cy.request('POST', '/api/topics', {
-    name: utils.makeRandomStr(),
-    numberOfReplications: 1,
-    numberOfPartitions: 1,
-    ...overrides,
-  }).then(({ body }) => body); // we'll need the returned data later on
+Cypress.Commands.add('uploadStreamAppJar', () => {
+  cy.getByTestId('toolbar-streams')
+    .click()
+    .uploadJar(
+      'input[type=file]',
+      'streamApp/ohara-streamapp.jar',
+      'ohara-streamapp.jar',
+      'application/java-archive',
+    )
+    .wait(500);
 });
 
 Cypress.Commands.add('uploadJar', (selector, fixturePath, name, type) => {
