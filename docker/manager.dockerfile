@@ -25,6 +25,7 @@ RUN git checkout $COMMIT
 RUN gradle clean build -x test
 RUN mkdir /opt/ohara
 RUN tar -xvf $(find "/testpatch/ohara/ohara-assembly/build/distributions" -maxdepth 1 -type f -name "*.tar") -C /opt/ohara/
+RUN $(find "/opt/ohara/" -maxdepth 1 -type d -name "ohara-*")/bin/ohara.sh -v > $(find "/opt/ohara/" -maxdepth 1 -type d -name "ohara-*")/bin/ohara_version
 
 FROM centos:7.6.1810
 
@@ -44,6 +45,11 @@ RUN useradd -ms /bin/bash -g $USER $USER
 # clone ohara binary
 COPY --from=deps /opt/ohara /home/$USER
 RUN ln -s $(find "/home/$USER/" -maxdepth 1 -type d -name "ohara-*") /home/$USER/default
+COPY --from=deps /testpatch/ohara/docker/manager.sh /home/$USER/default/bin/
+# There are too many files in ohara-manager and the chmod is slow in docker (see https://github.com/docker/for-linux/issues/388)
+# Hence, we keep the root owner for those files.
+# RUN chown -R $USER:$USER /home/$USER
+RUN chmod +x /home/$USER/default/bin/manager.sh
 ENV OHARA_HOME=/home/$USER/default
 ENV PATH=$PATH:$OHARA_HOME/bin
 
@@ -54,4 +60,4 @@ RUN chmod +x /tini
 # change to user
 USER $USER
 
-ENTRYPOINT ["/tini", "--", "ohara.sh", "start", "manager"]
+ENTRYPOINT ["/tini", "--", "manager.sh"]

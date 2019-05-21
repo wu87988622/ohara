@@ -35,7 +35,7 @@ elif [ "$1" == "stop" ]; then
   shift 1
 elif [ "$1" == "-v" ] || [ "$1" == "version" ] || [ "$1" == "-version" ]; then
   "$BIN_DIR/run_java.sh" com.island.ohara.common.util.VersionUtils
-  exit 1
+  exit 0
 else
   echo "Usage: (start|stop) {service name}"
   exit 1

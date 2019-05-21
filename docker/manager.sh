@@ -16,7 +16,12 @@
 #
 
 if [[ "$1" == "-v" ]] || [[ "$1" == "version" ]] || [[ "$1" == "-version" ]]; then
-  exec ohara.sh -v
-else
-  exec ohara.sh start configurator "$@"
+  if [[ -f "$OHARA_HOME/bin/ohara_version" ]]; then
+    cat $OHARA_HOME/bin/ohara_version
+  else
+    echo "ohara manager: unknown"
+  fi
+  exit
 fi
+
+exec ohara.sh start manager "$@"
