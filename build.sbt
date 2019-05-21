@@ -14,6 +14,17 @@
  * limitations under the License.
  */
 
+import sbt.Keys._
+import sbt.io.IO
+
+ThisBuild / scalaVersion := "2.12.8"
+ThisBuild / cancelable in Global := true
+ThisBuild / shellPrompt := { s => "sbt:" + Project.extract(s).currentProject.id + "> " }
+ThisBuild / scalafmtConfig := Option(file("checkstyle/.scalafmt.conf"))
+ThisBuild / Test / fork := true
+ThisBuild / Test / javaOptions += "-Xmx1G"
+
+
 lazy val modules: Seq[ProjectReference] = Seq(
   agent, client, common, configurator, kafka,
   metrics, shabondi, streams, `testing-util`
@@ -23,6 +34,7 @@ lazy val modules: Seq[ProjectReference] = Seq(
 lazy val root = project.in(file("."))
         .aggregate(modules: _*)
         .settings(
+          commonSettings,
           onLoadMessage :=
                   """
                     |** Welcome to the sbt build definition for OharaStream! **
@@ -31,7 +43,12 @@ lazy val root = project.in(file("."))
 
 
 lazy val common = oharaProject("common",
-  VersionUtilsGenerator.versionSettings,
+  inConfig(Compile)(Seq(
+    compile := compile.dependsOn(Def.sequential(
+      VersionUtilsGenerator.generate(thisProject, javaSource, sLog),
+      headerCreate
+    )).value
+  )),
   Seq(libraryDependencies ++= Seq(
     libs.commonsNet,
     libs.commonsLang,
@@ -41,18 +58,7 @@ lazy val common = oharaProject("common",
     libs.guava,
     libs.mockito % Test,
     libs.junit % Test
-  )),
-  Seq(
-    /* Run junit with sbt
-     * Reference:
-     *   https://stackoverflow.com/q/28174243/3155650
-     *   https://github.com/sbt/junit-interface
-     */
-    testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-a"),
-    libraryDependencies ++= Seq(
-      libs.scalatest % Test,
-      libs.junitInterface % Test exclude("junit", "junit-dep")
-    ))
+  ))
 )
 
 lazy val `testing-util` = oharaProject("testing-util",
@@ -67,6 +73,7 @@ lazy val `testing-util` = oharaProject("testing-util",
     libs.scalaLogging,
     libs.slf4jApi,
     libs.slf4jLog4j,
+
     /**
       * The Hadoop use jersey 1.x, but the Kafka use jersey 2.x so jar conflict
       *
@@ -209,6 +216,7 @@ lazy val connector = oharaProject("connector",
     libs.slf4jLog4j,
     libs.akkaHttpSprayJson,
     libs.kafkaConnectRuntime,
+
     /**
       * The Hadoop use jersey 1.x, but the Kafka use jersey 2.x so jar conflict
       *
@@ -251,6 +259,7 @@ lazy val configurator = oharaProject("configurator",
     libs.slf4jLog4j,
     libs.akkaStream,
     libs.akkaHttpSprayJson,
+    libs.rocksdb,
 
     libs.scalatest % Test,
     libs.mockito % Test,
@@ -267,16 +276,52 @@ lazy val configurator = oharaProject("configurator",
   `testing-util` % "compile->test; test->test"
 )
 
+val checkFormat = taskKey[Unit]("Check all the source code which includes src, test, and build files")
 
 def oharaProject(projectId: String, additionalSettings: sbt.Def.SettingsDefinition*) =
   Project(projectId,
     base = file(s"ohara-$projectId")
   ).settings(
     name := s"ohara-$projectId",
-    scalaVersion := "2.12.8",
-    shellPrompt := { s => "sbt:" + Project.extract(s).currentProject.id + "> " },
-    cancelable in Global := true,
-    Test / fork := true,
-    Test / javaOptions += "-Xmx1G"
+  ).settings(
+    commonSettings
+  ).settings(
+    /*
+     * Generate copyright header
+     */
+    Seq(Compile, Test).flatMap { conf =>
+      inConfig(conf)(Seq(
+        headerLicense := Some(copyrightLicense(baseDirectory.value / "..")),
+        compile := compile.dependsOn(headerCreate, checkFormat).value
+      ))
+    }
   ).settings(additionalSettings: _*)
 
+
+lazy val commonSettings =
+  Seq(
+    /* Run junit with sbt
+     * Reference:
+     *   https://stackoverflow.com/q/28174243/3155650
+     *   https://github.com/sbt/junit-interface
+     */
+    testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-a"),
+    libraryDependencies ++= Seq(
+      libs.scalatest % Test,
+      libs.junitInterface % Test exclude("junit", "junit-dep")
+    )) ++ Seq(
+    /*
+     * Checkstyle
+     */
+    checkFormat := {
+      (scalafmtCheck in Compile).value
+      (scalafmtCheck in Test).value
+      (scalafmtSbtCheck in Compile).value
+    }
+  )
+
+
+def copyrightLicense(rootDir: File): HeaderLicense.Custom = {
+  val file = new File(rootDir, "checkstyle/apacheV2.header")
+  HeaderLicense.Custom(IO.read(file))
+}

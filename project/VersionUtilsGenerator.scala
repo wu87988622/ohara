@@ -18,15 +18,10 @@ import java.text.SimpleDateFormat
 import java.util.{Date, Properties}
 
 import sbt._
-import sbt.Keys._
 
 object VersionUtilsGenerator {
 
-  def versionSettings: Seq[Setting[_]] = inConfig(Compile)(Seq(
-    sourceGenerators += generateVersionUtils(thisProject, javaSource, sLog)
-  ))
-
-  private def generateVersionUtils(project: SettingKey[ResolvedProject], javaDir: SettingKey[File], log: SettingKey[Logger]) = Def.task[Seq[File]] {
+  def generate(project: SettingKey[ResolvedProject], javaDir: SettingKey[File], log: SettingKey[Logger]) = Def.task[Seq[File]] {
     val outputFile = new File(javaDir.value, "com/island/ohara/common/util/VersionUtils.java")
     val version = readProperty(project.value.base / ".." / "gradle.properties", "version")
     val content = fileContent(version, user(), revision(), datetime())
