@@ -147,48 +147,48 @@ private[configurator] object StreamRoute {
                 storeUploadedFiles(StreamApi.INPUT_KEY, StreamApi.saveTmpFile) { files =>
                   complete(
                     // here we try to find the pre-defined wk if not assigned by request
-                    CollieUtils.workerClient(reqName).map(_._1.name).map { wkName =>
-                      log.debug(s"worker: $wkName, files: ${files.map(_._1.fileName)}")
-                      Future
-                        .sequence(files.map {
-                          case (metadata, file) =>
-                            if (file.length() > StreamApi.MAX_FILE_SIZE) {
-                              throw new RuntimeException(
-                                s"the file : ${metadata.fileName} size is bigger than ${StreamApi.MAX_FILE_SIZE / 1024 / 1024} MB."
-                              )
-                            }
-                            jarStore.add(file, s"${metadata.fileName}")
-                        })
-                        .map {
-                          jarInfos =>
-                            val jars = Future.sequence(jarInfos.map { jarInfo =>
-                              val time = CommonUtils.current()
-                              val streamId = CommonUtils.uuid()
-                              store
-                                .add(
-                                  toStore(
-                                    workerClusterName = wkName,
-                                    streamId = streamId,
-                                    jarInfo = jarInfo,
-                                    lastModified = time
-                                  )
-                                )
-                                .map { data =>
-                                  StreamListResponse(
-                                    data.id,
-                                    data.name,
-                                    jarInfo.name,
-                                    data.lastModified
-                                  )
-                                }
+                    CollieUtils
+                      .workerClient(reqName)
+                      .map(_._1.name)
+                      .map {
+                        wkName =>
+                          log.debug(s"worker: $wkName, files: ${files.map(_._1.fileName)}")
+                          Future
+                            .sequence(files.map {
+                              case (metadata, file) =>
+                                //TODO : we don't limit the jar size until we got another solution for #1234....by Sam
+                                jarStore.add(file, s"${metadata.fileName}")
                             })
-                            //delete temp jars after success
-                            files.foreach {
-                              case (_, file) => file.deleteOnExit()
+                            .map {
+                              jarInfos =>
+                                val jars = Future.sequence(jarInfos.map { jarInfo =>
+                                  val time = CommonUtils.current()
+                                  val streamId = CommonUtils.uuid()
+                                  store
+                                    .add(
+                                      toStore(
+                                        workerClusterName = wkName,
+                                        streamId = streamId,
+                                        jarInfo = jarInfo,
+                                        lastModified = time
+                                      )
+                                    )
+                                    .map { data =>
+                                      StreamListResponse(
+                                        data.id,
+                                        data.name,
+                                        jarInfo.name,
+                                        data.lastModified
+                                      )
+                                    }
+                                })
+                                //delete temp jars after success
+                                files.foreach {
+                                  case (_, file) => file.deleteOnExit()
+                                }
+                                jars
                             }
-                            jars
-                        }
-                    }
+                      }
                   )
                 }
               }
