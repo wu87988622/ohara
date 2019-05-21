@@ -134,34 +134,33 @@ private[configurator] object StreamRoute {
                 storeUploadedFiles(StreamApi.INPUT_KEY, info => CommonUtils.createTempFile(info.fileName)) { files =>
                   complete(
                     // here we try to find the pre-defined wk if not assigned by request
-                    CollieUtils.workerClient(reqName).map(_._1.name).map { wkName =>
-                      log.debug(s"worker: $wkName, files: ${files.map(_._1.fileName)}")
-                      Future
-                        .sequence(files.map {
-                          case (metadata, file) =>
-                            if (file.length() > StreamApi.MAX_FILE_SIZE) {
-                              throw new RuntimeException(
-                                s"the file : ${metadata.fileName} size is bigger than ${StreamApi.MAX_FILE_SIZE / 1024 / 1024} MB."
-                              )
+                    CollieUtils
+                      .workerClient(reqName)
+                      .map(_._1.name)
+                      .map { wkName =>
+                        log.debug(s"worker: $wkName, files: ${files.map(_._1.fileName)}")
+                        Future
+                          .sequence(files.map {
+                            case (metadata, file) =>
+                              //TODO : we don't limit the jar size until we got another solution for #1234....by Sam
+                              jarStore.add(file, s"${metadata.fileName}").flatMap { jarInfo =>
+                                store.add(
+                                  StreamJar(
+                                    wkName,
+                                    jarInfo.id,
+                                    jarInfo.name,
+                                    CommonUtils.current()
+                                  ))
+                              }
+                          })
+                          .map { reps =>
+                            //delete temp jars after success
+                            files.foreach {
+                              case (_, file) => file.deleteOnExit()
                             }
-                            jarStore.add(file, s"${metadata.fileName}").flatMap { jarInfo =>
-                              store.add(
-                                StreamJar(
-                                  wkName,
-                                  jarInfo.id,
-                                  jarInfo.name,
-                                  CommonUtils.current()
-                                ))
-                            }
-                        })
-                        .map { reps =>
-                          //delete temp jars after success
-                          files.foreach {
-                            case (_, file) => file.deleteOnExit()
+                            reps
                           }
-                          reps
-                        }
-                    }
+                      }
                   )
                 }
               }

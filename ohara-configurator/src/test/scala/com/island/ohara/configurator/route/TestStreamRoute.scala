@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.route
 
-import java.io.File
+import java.io.{File, RandomAccessFile}
 
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.StreamApi.{StreamListRequest, StreamPropertyRequest}
@@ -103,6 +103,22 @@ class TestStreamRoute extends SmallTest with Matchers {
     result(accessStreamList.list(Some(wkName))).size shouldBe fileSize - 1
 
     filePaths.foreach(new File(_).deleteOnExit())
+  }
+
+  @Test
+  def testStreamAppListPageFileLimit(): Unit = {
+    val tmpFolder = CommonUtils.createTempFolder("fat")
+    val outputFile = new File(tmpFolder, "fat.jar")
+    val file = new RandomAccessFile(outputFile.getPath, "rw")
+    // set out-of-bound size for file
+    file.setLength(StreamApi.MAX_FILE_SIZE + 1)
+    file.close()
+
+    // upload file should be OK
+    val res = result(accessStreamList.upload(Seq(outputFile.getPath), None))
+    res.head.name shouldBe "fat.jar"
+
+    outputFile.deleteOnExit()
   }
 
   @Test
