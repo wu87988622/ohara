@@ -20,13 +20,13 @@ import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorState
 import com.island.ohara.common.data._
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.kafka.{BrokerClient, Consumer, Producer}
-import com.island.ohara.testing.With3Brokers3Workers
+import com.island.ohara.testing.WithBrokerWorker
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
-class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
+class TestDataTransmissionOnCluster extends WithBrokerWorker with Matchers {
 
   private[this] val brokerClient = BrokerClient.of(testUtil().brokersConnProps)
   private[this] val workerClient = WorkerClient(testUtil().workersConnProps())
@@ -148,7 +148,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
         .id(connectorName)
         .connectorClass(classOf[SimpleRowSinkConnector])
         .topicName(topicName)
-        .numberOfTasks(2)
+        .numberOfTasks(1)
         .columns(schema)
         .settings(Map(BROKER -> testUtil.brokersConnProps, OUTPUT -> topicName2))
         .create)
@@ -188,7 +188,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
         .id(connectorName)
         .connectorClass(classOf[SimpleRowSourceConnector])
         .topicName(topicName2)
-        .numberOfTasks(2)
+        .numberOfTasks(1)
         .columns(schema)
         .settings(Map(BROKER -> testUtil.brokersConnProps, INPUT -> topicName))
         .create)
@@ -258,7 +258,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
         .id(connectorName)
         .connectorClass(classOf[SimpleRowSinkConnector])
         .topicNames(topics)
-        .numberOfTasks(2)
+        .numberOfTasks(1)
         .columns(schema)
         .settings(Map(BROKER -> testUtil.brokersConnProps, OUTPUT -> outputTopic))
         .create)
