@@ -115,6 +115,10 @@ through configruator's RESTful APIs.
 - "JMX_HOSTNAME" should be same as the host running Ohara Configurator container so as to access the jmx service in docker from outside.
 - "JMX_PORT" should be opened by docker (for example, add "-p $JMX_PORT:JMX_PORT")
 
+> All services host by Ohara Configurator are based on docker technique. By default Ohara Configurator use ssh to control the docker containers from remote
+  nodes (see [Docker](#docker) section). In this mode, please make sure the ssh account added by [Node APIs](rest_interface.md#node) should have sudo
+  permission to run docker command (see [here](https://docs.docker.com/install/linux/linux-postinstall/) for related steps). 
+
 ----------
 
 #### Keep the data of Configurator
@@ -382,6 +386,17 @@ the configurable settings to user. Welcome you to file a issue to request more c
 ----------
 
 ## Docker
+
+All services host by Ohara are based on docker containers, such as [Configurator](#ohara-configurator), [Manager](#ohara-manager),
+[Zookeeper](#zookeeper), [Broker](#broker) and [Worker](#worker). You should install suggested version of Docker before
+enjoying Ohara service (see [Readme](../README.md) for prerequisite).
+
+The post-installation for all docker nodes are listed below.
+1. [Install the supported version of docker](../README.md) — Ohara community does not support the legacy docker.
+1. [download all ohara images](#download-ohara-images) —
+  Ohara Configurator expect all images are available from local disk rather than network.
+1. [create a user account which can access docker without sudo](https://docs.docker.com/install/linux/linux-postinstall/) —
+  Ohara Configurator may use ssh to control docker of remote node.
 
 ----------
 
