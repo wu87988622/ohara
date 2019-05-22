@@ -17,7 +17,8 @@
 package com.island.ohara.agent
 import java.util.Objects
 
-import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
+import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0.{ClusterInfo, ZookeeperApi}
 import com.island.ohara.common.annotations.Optional
@@ -44,6 +45,122 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo, ZookeeperCollie.Clust
         nodeNames = containers.map(_.nodeName)
       ))
   }
+
+  /**
+    * This is a complicated process. We must address following issues.
+    * 1) check the existence of cluster
+    * 2) check the existence of nodes
+    * 3) Each zookeeper container has got to export peer port, election port, and client port
+    * 4) Each zookeeper container should use "docker host name" to replace "container host name".
+    * 4) Add routes to all zookeeper containers
+    * @return creator of broker cluster
+    */
+  protected[agent] def zkCreator(
+    nodeCollie: NodeCollie,
+    prefixKey: String,
+    clusterName: String,
+    serviceName: String,
+    imageName: String,
+    clientPort: Int,
+    peerPort: Int,
+    electionPort: Int,
+    nodeNames: Seq[String])(executionContext: ExecutionContext): Future[ZookeeperClusterInfo] = {
+    implicit val exec: ExecutionContext = executionContext
+    clusters.flatMap(clusters => {
+      if (clusters.keys.filter(_.isInstanceOf[ZookeeperClusterInfo]).exists(_.name == clusterName))
+        Future.failed(new IllegalArgumentException(s"zookeeper cluster:$clusterName exists!"))
+      else
+        nodeCollie
+          .nodes(nodeNames)
+          .map(_.map(node => node -> ContainerCollie.format(prefixKey, clusterName, serviceName)).toMap)
+          .flatMap {
+            nodes =>
+              // add route in order to make zk node can connect to each other.
+              val route: Map[String, String] = routeInfo(nodes)
+
+              val zkServers: String = nodes.keys.map(_.name).mkString(" ")
+              // ssh connection is slow so we submit request by multi-thread
+              Future
+                .sequence(nodes.zipWithIndex.map {
+                  case ((node, containerName), index) =>
+                    Future {
+                      val containerInfo = ContainerInfo(
+                        nodeName = node.name,
+                        id = ContainerCollie.UNKNOWN,
+                        imageName = imageName,
+                        created = ContainerCollie.UNKNOWN,
+                        state = ContainerCollie.UNKNOWN,
+                        kind = ContainerCollie.UNKNOWN,
+                        name = containerName,
+                        size = ContainerCollie.UNKNOWN,
+                        portMappings = Seq(PortMapping(
+                          hostIp = ContainerCollie.UNKNOWN,
+                          portPairs = Seq(
+                            PortPair(
+                              hostPort = clientPort,
+                              containerPort = clientPort
+                            ),
+                            PortPair(
+                              hostPort = peerPort,
+                              containerPort = peerPort
+                            ),
+                            PortPair(
+                              hostPort = electionPort,
+                              containerPort = electionPort
+                            )
+                          )
+                        )),
+                        environments = Map(
+                          ZookeeperCollie.ID_KEY -> index.toString,
+                          ZookeeperCollie.CLIENT_PORT_KEY -> clientPort.toString,
+                          ZookeeperCollie.PEER_PORT_KEY -> peerPort.toString,
+                          ZookeeperCollie.ELECTION_PORT_KEY -> electionPort.toString,
+                          ZookeeperCollie.SERVERS_KEY -> zkServers
+                        ),
+                        // zookeeper doesn't have advertised hostname/port so we assign the "docker host" directly
+                        hostname = node.name
+                      )
+                      doCreator(executionContext, clusterName, containerName, containerInfo, node, route)
+                      Some(containerInfo)
+                    }
+                })
+                .map(_.flatten.toSeq)
+                .map {
+                  successfulContainers =>
+                    if (successfulContainers.isEmpty)
+                      throw new IllegalArgumentException(s"failed to create $clusterName on $serviceName")
+                    val clusterInfo = ZookeeperClusterInfo(
+                      name = clusterName,
+                      imageName = imageName,
+                      clientPort = clientPort,
+                      peerPort = peerPort,
+                      electionPort = electionPort,
+                      nodeNames = successfulContainers.map(_.nodeName)
+                    )
+                    postCreateZookeeperCluster(clusterInfo, successfulContainers)
+                    clusterInfo
+                }
+          }
+    })
+
+  }
+
+  protected def doCreator(executionContext: ExecutionContext,
+                          clusterName: String,
+                          containerName: String,
+                          containerInfo: ContainerInfo,
+                          node: Node,
+                          route: Map[String, String]): Unit
+
+  protected def postCreateZookeeperCluster(clusterInfo: ClusterInfo, successfulContainers: Seq[ContainerInfo]): Unit = {
+    //Default Nothing
+  }
+
+  protected def routeInfo(nodes: Map[Node, String]): Map[String, String] =
+    nodes.map {
+      case (node, _) =>
+        node.name -> CommonUtils.address(node.name)
+    }
 }
 
 object ZookeeperCollie {

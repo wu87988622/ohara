@@ -24,13 +24,21 @@ import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 
-private class K8SZookeeperCollieImpl(val nodeCollie: NodeCollie, val k8sClient: K8SClient)
+private class K8SZookeeperCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
     extends K8SBasicCollieImpl[ZookeeperClusterInfo, ZookeeperCollie.ClusterCreator](nodeCollie, k8sClient)
     with ZookeeperCollie {
   private[this] val TIMEOUT: FiniteDuration = 30 seconds
   override def creator(): ZookeeperCollie.ClusterCreator =
     (executionContext, clusterName, imageName, clientPort, peerPort, electionPort, nodeNames) => {
-      zkCreator(PREFIX_KEY, clusterName, imageName, clientPort, peerPort, electionPort, nodeNames)(executionContext)
+      zkCreator(nodeCollie,
+                PREFIX_KEY,
+                clusterName,
+                serviceName,
+                imageName,
+                clientPort,
+                peerPort,
+                electionPort,
+                nodeNames)(executionContext)
     }
 
   override protected def doCreator(executionContext: ExecutionContext,

@@ -28,7 +28,15 @@ private class ZookeeperCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerCli
 
   override def creator(): ZookeeperCollie.ClusterCreator =
     (executionContext, clusterName, imageName, clientPort, peerPort, electionPort, nodeNames) => {
-      zkCreator(PREFIX_KEY, clusterName, imageName, clientPort, peerPort, electionPort, nodeNames)(executionContext)
+      zkCreator(nodeCollie,
+                PREFIX_KEY,
+                clusterName,
+                serviceName,
+                imageName,
+                clientPort,
+                peerPort,
+                electionPort,
+                nodeNames)(executionContext)
     }
 
   override protected def doCreator(executionContext: ExecutionContext,

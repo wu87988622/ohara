@@ -19,7 +19,6 @@ package com.island.ohara.agent.ssh
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
-import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.common.util.CommonUtils
 
@@ -74,7 +73,7 @@ private class WorkerCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClient
       .flatMap(existNodes =>
         nodeCollie
           .nodes(nodeNames)
-          .map(_.map(node => node -> format(PREFIX_KEY, clusterName, serviceName)).toMap)
+          .map(_.map(node => node -> ContainerCollie.format(PREFIX_KEY, clusterName, serviceName)).toMap)
           .map((existNodes, _)))
       .map {
         case (existNodes, newNodes) =>
@@ -226,14 +225,5 @@ private class WorkerCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClient
               clusterInfo
             }
       }
-  }
-
-  override protected def doCreator(executionContext: ExecutionContext,
-                                   clusterName: String,
-                                   containerName: String,
-                                   containerInfo: ContainerInfo,
-                                   node: NodeApi.Node,
-                                   route: Map[String, String]): Unit = {
-    //TODO Wait worker refactor
   }
 }
