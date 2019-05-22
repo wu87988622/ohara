@@ -32,8 +32,7 @@ class TestMeterCache extends SmallTest with Matchers {
   def testRequestKey(): Unit = {
     val key = RequestKey(
       name = CommonUtils.randomString(),
-      service = CommonUtils.randomString(),
-      clusterInfo = FakeClusterInfo(CommonUtils.randomString())
+      service = CommonUtils.randomString()
     )
 
     key shouldBe key
