@@ -24,6 +24,7 @@ import { findByGraphId } from '../../pipelineUtils/commonUtils';
 import { FormGroup, Input, Label } from 'common/Form';
 import { CONNECTOR_STATES } from 'constants/pipelines';
 import UtilsTabs from './UtilsTabs';
+import { Field } from 'react-final-form';
 
 export const getMetadata = (props, worker) => {
   const { page: targetConnector } = props.match.params;
@@ -170,6 +171,8 @@ export const renderForm = ({
   defs,
   configs,
   topics,
+  form,
+  handleSubmit,
   handleChange,
   handleColumnChange,
   handleColumnRowDelete,
@@ -238,7 +241,7 @@ export const renderForm = ({
                 >
                   {displayName}
                 </Label>
-                <Input
+                <Field
                   id={`${displayName}`}
                   width="100%"
                   value={String(displayValue)}
@@ -246,6 +249,7 @@ export const renderForm = ({
                   type={type}
                   onChange={handleChange}
                   disabled={!editable || isRunning}
+                  component={Input}
                 />
               </FormGroup>
             );
@@ -262,7 +266,7 @@ export const renderForm = ({
                 >
                   {displayName}
                 </Label>
-                <Select
+                <Field
                   id={`${displayName}`}
                   list={topics}
                   value={displayValue}
@@ -271,6 +275,7 @@ export const renderForm = ({
                   width="100%"
                   disabled={isRunning}
                   clearable
+                  component={Select}
                 />
               </FormGroup>
             );
@@ -302,7 +307,9 @@ export const renderForm = ({
   const hasTab = groupDefs.length > 1 ? true : false;
   if (hasTab) {
     return (
-      <UtilsTabs groupDefs={groupDefs} defsToFormGroup={defsToFormGroup} />
+      <form onSubmit={handleSubmit}>
+        <UtilsTabs groupDefs={groupDefs} defsToFormGroup={defsToFormGroup} />
+      </form>
     );
   } else {
     return groupDefs.sort().map(defs => {

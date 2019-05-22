@@ -30,7 +30,7 @@ import { CONNECTOR_STATES, CONNECTOR_ACTIONS } from 'constants/pipelines';
 import { graph as graphPropType } from 'propTypes/pipeline';
 
 import { fetchWorker } from 'api/workerApi';
-import TestConnectionBtn from './TestConnectionBtn';
+import CustomFinalForm from './CustomConnector/CustomFinalForm';
 
 class FtpSource extends React.Component {
   static propTypes = {
@@ -306,13 +306,10 @@ class FtpSource extends React.Component {
               onDelete={this.handleDeleteConnector}
             />
           </s.TitleWrapper>
-          {utils.renderForm(formProps)}
-          <s.StyledForm>
-            <TestConnectionBtn
-              handleClick={this.handleTestConnection}
-              isWorking={isTestConnectionBtnWorking}
-            />
-          </s.StyledForm>
+          <CustomFinalForm
+            workerClusterName={this.workerClusterName}
+            {...this.props}
+          />
         </s.BoxWrapper>
       </React.Fragment>
     );
