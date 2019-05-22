@@ -17,17 +17,6 @@
 apply from: "$rootDir/gradle/dependencies.gradle"
 apply plugin: 'java-library-distribution'
 
-apply plugin: 'com.novoda.bintray-release'
-
-buildscript {
-  repositories {
-    jcenter()
-  }
-  dependencies {
-    classpath 'com.novoda:bintray-release:0.9'
-  }
-}
-
 dependencies {
   implementation project(':ohara-common')
   implementation(libs.sshd) {
@@ -124,14 +113,4 @@ task runFtp(type: JavaExec, dependsOn: 'classes') {
     inputs << project.getProperty("ttl")
   }
   args = inputs
-}
-
-publish {
-  userOrg = property("userOrg")
-  repoName = property("repoName")
-  groupId = property("group")
-  artifactId = 'ohara-testing-util'
-  publishVersion = project.version
-  desc = property("desc")
-  website = property("website")
 }

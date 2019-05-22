@@ -17,17 +17,6 @@
 apply from: "$rootDir/gradle/dependencies.gradle"
 apply plugin: 'java-library-distribution'
 
-apply plugin: 'com.novoda.bintray-release'
-
-buildscript {
-  repositories {
-    jcenter()
-  }
-  dependencies {
-    classpath 'com.novoda:bintray-release:0.9'
-  }
-}
-
 // TODO: Why we set the time zone in testing??? We can get the system timezone through Calendar.getInstance().getTimeZone... by chia
 test.systemProperty("user.timezone", "Asia/Taipei")
 
@@ -85,14 +74,4 @@ distributions {
       }
     }
   }
-}
-
-publish {
-  userOrg = property("userOrg")
-  repoName = property("repoName")
-  groupId = property("group")
-  artifactId = 'ohara-connector'
-  publishVersion = project.version
-  desc = property("desc")
-  website = property("website")
 }
