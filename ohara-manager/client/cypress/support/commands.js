@@ -97,6 +97,7 @@ Cypress.Commands.add('createTopic', overrides => {
       ...overrides,
     }).then(({ body }) => body); // we'll need the returned data later on
   });
+});
 
 Cypress.Commands.add('deleteAllWorkers', () => {
   cy.log('Delete all previous created workers');
