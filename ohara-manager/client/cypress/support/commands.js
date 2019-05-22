@@ -88,6 +88,10 @@ Cypress.Commands.add('createPipeline', pipeline => {
 });
 
 Cypress.Commands.add('createTopic', overrides => {
+  cy.request('GET', 'api/brokers')
+    .then(res => res.body[0]) // there should only be one broker in the list
+    .as('broker');
+
   cy.get('@broker').then(broker => {
     cy.request('POST', '/api/topics', {
       name: utils.makeRandomStr(),
