@@ -39,7 +39,8 @@ import scala.concurrent.duration.{Duration, _}
   * the side-effect is that the stuff from getter may be out-of-date. But, in most use cases we bear it well.
   *
   * Noted that the comparison of key (ClusterInfo) consists of only name and service type. Adding a cluster info having different node names
-  * does not create an new key-value pair.
+  * does not create an new key-value pair. Also, the latter key will replace the older one. For example, adding a cluster info having different
+  * port. will replace the older cluster info, and then you will get the new cluster info when calling snapshot method.
   */
 trait ClusterCache extends Releasable {
 
@@ -95,7 +96,7 @@ object ClusterCache {
 
   // TODO: remove this workaround if google guava support the custom comparison ... by chia
   @VisibleForTesting
-  private[agent] case class RequestKey(name: String, service: Service, clusterInfo: ClusterInfo, createdTime: Long) {
+  private[agent] case class RequestKey(name: String, service: Service, createdTime: Long) {
     override def equals(obj: Any): Boolean = obj match {
       case another: RequestKey => another.name == name && another.service == service
       case _                   => false
@@ -148,10 +149,10 @@ object ClusterCache {
       checkArguments()
       new ClusterCache {
         private[this] val cache = RefreshableCache
-          .builder[RequestKey, Seq[ContainerInfo]]()
+          .builder[RequestKey, (ClusterInfo, Seq[ContainerInfo])]()
           .supplier(() =>
             supplier().map {
-              case (clusterInfo, containers) => key(clusterInfo) -> containers
+              case (clusterInfo, containers) => key(clusterInfo) -> (clusterInfo -> containers)
             }.asJava)
           .frequency(java.time.Duration.ofMillis(frequency.toMillis))
           .removeListener((key, _) => CommonUtils.current() - key.createdTime > lazyRemove.toMillis)
@@ -159,9 +160,7 @@ object ClusterCache {
 
         override def close(): Unit = Releasable.close(cache)
 
-        override def snapshot: Map[ClusterInfo, Seq[ContainerInfo]] = cache.snapshot().asScala.toMap.map {
-          case (key, containers) => key.clusterInfo -> containers
-        }
+        override def snapshot: Map[ClusterInfo, Seq[ContainerInfo]] = cache.snapshot().asScala.toMap.values.toMap
 
         override def requestUpdate(): Unit = cache.requestUpdate()
 
@@ -174,26 +173,27 @@ object ClusterCache {
             case _: StreamClusterInfo    => Service.STREAM
             case _                       => Service.UNKNOWN
           },
-          clusterInfo = clusterInfo,
           createdTime = CommonUtils.current()
         )
 
         private[this] def key(name: String, service: Service): RequestKey = RequestKey(
           name = name,
           service = service,
-          clusterInfo = null,
           createdTime = CommonUtils.current()
         )
 
-        override def get(clusterInfo: ClusterInfo): Seq[ContainerInfo] =
-          cache.get(key(clusterInfo)).orElseGet(() => Seq.empty)
+        override def get(clusterInfo: ClusterInfo): Seq[ContainerInfo] = {
+          val containers = cache.get(key(clusterInfo))
+          if (containers.isPresent) cache.get(key(clusterInfo)).get()._2
+          else Seq.empty
+        }
 
         override def put(clusterInfo: ClusterInfo, containers: Seq[ContainerInfo]): Unit = {
           val k = key(clusterInfo)
           // we have to remove key-value first since cluster cache replace the key by a RequestKey which only compare the name and service.
           // Hence, the new key (ClusterInfo) doesn't replace the older one.
           cache.remove(k)
-          cache.put(k, containers)
+          cache.put(k, (clusterInfo, containers))
         }
 
         override def remove(name: String, service: Service): Unit = cache.remove(key(name, service))

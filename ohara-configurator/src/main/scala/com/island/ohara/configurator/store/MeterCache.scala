@@ -40,7 +40,7 @@ object MeterCache {
 
   // TODO: remove this workaround if google guava support the custom comparison ... by chia
   @VisibleForTesting
-  private[store] case class RequestKey(name: String, service: String, clusterInfo: ClusterInfo) {
+  private[store] case class RequestKey(name: String, service: String) {
     override def equals(obj: Any): Boolean = obj match {
       case another: RequestKey => another.name == name && another.service == service
       case _                   => false
@@ -85,8 +85,7 @@ object MeterCache {
           case _: BrokerClusterInfo    => "bk"
           case _: WorkerClusterInfo    => "wk"
           case c: ClusterInfo          => c.getClass.getSimpleName
-        },
-        clusterInfo = clusterInfo
+        }
       )
 
       override def meters(clusterInfo: ClusterInfo): Map[String, Seq[Meter]] =

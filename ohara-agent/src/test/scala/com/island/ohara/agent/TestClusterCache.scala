@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 import com.island.ohara.agent.ClusterCache.{RequestKey, Service}
+import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
@@ -34,7 +35,6 @@ class TestClusterCache extends SmallTest with Matchers {
     val key = RequestKey(
       name = CommonUtils.randomString(),
       service = Service.WORKER,
-      clusterInfo = FakeClusterInfo(CommonUtils.randomString()),
       createdTime = CommonUtils.current()
     )
 
@@ -150,6 +150,38 @@ class TestClusterCache extends SmallTest with Matchers {
       TimeUnit.SECONDS.sleep(4)
       count.get() should not be currentCount
       cache.get(clusterInfo) shouldBe Seq.empty
+    } finally cache.close()
+  }
+
+  @Test
+  def testUpdateClusterInfo(): Unit = {
+    val count = new AtomicInteger(0)
+    val firstClusterInfo = FakeClusterInfo(CommonUtils.randomString())
+    val cachedClusterInfo = new ClusterInfo {
+      override def name: String = firstClusterInfo.name
+      override def imageName: String = "123"
+      override def ports: Set[Int] = Set.empty
+      override def nodeNames: Seq[String] = Seq.empty
+      override def clone(newNodeNames: Seq[String]): ClusterInfo = throw new UnsupportedOperationException(
+        "what are you doing!!!")
+    }
+    val cache = ClusterCache
+      .builder()
+      .supplier(() => {
+        count.incrementAndGet()
+        Map(cachedClusterInfo -> Seq.empty)
+      })
+      .frequency(2 seconds)
+      .lazyRemove(2 seconds)
+      .build()
+    try {
+      cache.snapshot.size shouldBe 0
+      cache.put(firstClusterInfo, Seq.empty)
+      cache.snapshot.size shouldBe 1
+      TimeUnit.SECONDS.sleep(3)
+      cache.snapshot.size shouldBe 1
+      cache.get(cachedClusterInfo) shouldBe Seq.empty
+      cache.snapshot.head._1 shouldBe cachedClusterInfo
     } finally cache.close()
   }
 
