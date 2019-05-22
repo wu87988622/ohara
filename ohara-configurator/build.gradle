@@ -16,16 +16,6 @@
 
 apply from: "$rootDir/gradle/dependencies.gradle"
 
-apply plugin: 'com.novoda.bintray-release'
-buildscript {
-  repositories {
-    jcenter()
-  }
-  dependencies {
-    classpath 'com.novoda:bintray-release:0.9'
-  }
-}
-
 dependencies {
   implementation project(':ohara-agent')
   implementation project(':ohara-client')
@@ -81,15 +71,5 @@ task runConfigurator(type: JavaExec, dependsOn: 'classes') {
     inputs << project.getProperty('k8s')
   }
   args = inputs
-}
-
-publish {
-  userOrg = property("userOrg")
-  repoName = property("repoName")
-  groupId = property("group")
-  artifactId = 'ohara-configurator'
-  publishVersion = project.version
-  desc = property("desc")
-  website = property("website")
 }
 

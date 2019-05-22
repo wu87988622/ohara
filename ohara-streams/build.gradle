@@ -16,16 +16,6 @@
 
 apply from: "$rootDir/gradle/dependencies.gradle"
 
-apply plugin: 'com.novoda.bintray-release'
-buildscript {
-  repositories {
-    jcenter()
-  }
-  dependencies {
-    classpath 'com.novoda:bintray-release:0.9'
-  }
-}
-
 dependencies {
   implementation project(':ohara-common')
   implementation project(':ohara-kafka')
@@ -58,14 +48,4 @@ task runImportData(type: JavaExec, dependsOn: 'classes') {
 
   args = Arrays.asList("--bootstrapServers", servers, "--useOharaAPI", useOharaAPI)
 
-}
-
-publish {
-  userOrg = property("userOrg")
-  repoName = property("repoName")
-  groupId = property("group")
-  artifactId = 'ohara-streams'
-  publishVersion = project.version
-  desc = property("desc")
-  website = property("website")
 }

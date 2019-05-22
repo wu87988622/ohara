@@ -14,16 +14,23 @@
  * limitations under the License.
  */
 
-plugins {
-  id "com.diffplug.gradle.spotless" version "3.20.0"
-  id "com.github.hierynomus.license" version"0.15.0"
-}
-
-allprojects {
+buildscript {
   repositories {
     mavenCentral()
+    jcenter()
+    maven {
+      url "https://plugins.gradle.org/m2/"
+    }
+  }
+  dependencies {
+    classpath "com.diffplug.spotless:spotless-plugin-gradle:3.20.0"
+    classpath "gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:0.15.0"
+    classpath 'com.novoda:bintray-release:0.9.1'
   }
 }
+
+apply plugin: "com.diffplug.gradle.spotless"
+apply plugin: "com.github.hierynomus.license"
 
 def needHeaders() {
   return [
@@ -47,7 +54,6 @@ task licenseApply(type: com.hierynomus.gradle.license.tasks.LicenseFormat) {
 task licenseTest(type: com.hierynomus.gradle.license.tasks.LicenseCheck) {
   source(needHeaders())
 }
-
 
 license {
   header = file("$rootDir/checkstyle/apacheV2.header")
@@ -91,19 +97,34 @@ check {
   dependsOn licenseTest
 }
 
+static def isJavaModule(String moduleName) {
+  return moduleName == 'ohara-common' ||
+          moduleName == 'ohara-metrics' ||
+          moduleName == 'ohara-kafka' ||
+          moduleName == 'ohara-testing-util' ||
+          moduleName == 'ohara-streams'
+}
+
 subprojects {
+  // -------------------------------------------------[repositories]-------------------------------------------------//
   if (it.name != 'ohara-manager') {
-    if (it.name == 'ohara-common'
-      || it.name == 'ohara-metrics'
-      || it.name == 'ohara-kafka'
-      || it.name == 'ohara-testing-util'
-      || it.name == 'ohara-streams') {
+    repositories {
+      mavenCentral()
+    }
+  }
+
+  // -------------------------------------------------[java/scala plugin]-------------------------------------------------//
+  if (it.name != 'ohara-manager') {
+    if (isJavaModule(it.name)) {
       apply plugin: 'java'
       sourceCompatibility = 1.8
       targetCompatibility = 1.8
     }
     else apply plugin: 'scala'
+  }
 
+  // -------------------------------------------------[jUnit configs]-------------------------------------------------//
+  if (it.name != 'ohara-manager') {
     /**
      * The tests in ohara-it are fucking heavy so it would be better to verify them one by one.
      * TODO: Increase the number of forks if we buy a fucking super machine for QA
@@ -121,34 +142,66 @@ subprojects {
         events "PASSED", "STARTED", "FAILED", "SKIPPED"
       }
     }
-    tasks.withType(JavaCompile) {
-      options.encoding = 'UTF-8'
-      options.compilerArgs += ["-Xlint:all", "-Werror"]
-    }
   }
 
-  // ohara-manager doesn't generate test.jar
+  // -------------------------------------------------[docs/tests/sources jar]-------------------------------------------------//
   if (it.name != 'ohara-manager') {
     configurations {
       tests.extendsFrom archives
     }
+
     task testJar(type: Jar, dependsOn: testClasses) {
-      archiveClassifier.set('tests')
+      classifier 'tests'
       from sourceSets.test.output
     }
+
     artifacts {
       archives testJar
     }
   }
 
-  // All sub-projects have been applied the java or scala checkstyle.
+  // -------------------------------------------------[publication]-------------------------------------------------//
+  if (it.name != 'ohara-manager' && it.name != 'ohara-it' && it.name != 'ohara-assembly') {
+    String moduleName = it.name
+    apply plugin: 'com.novoda.bintray-release'
+
+    publish {
+      userOrg = property("userOrg")
+      repoName = property("repoName")
+      groupId = property("group")
+      artifactId = moduleName
+      publishVersion = project.version
+      desc = property("desc")
+      website = property("website")
+    }
+
+    // this is a hacky workaround that we have to override the internal variables in order to deploy the sources/tests jar ... by chia
+    // see https://github.com/novoda/bintray-release/blob/master/plugin/core/src/main/groovy/com/novoda/gradle/release/MavenPublicationAttachments.groovy
+    // for the internal variables
+    tasks.whenTaskAdded { Task task ->
+      if (name == "generateSourcesJarForMavenPublication") {
+        from sourceSets.main.allSource
+      }
+      if (name == "generateJavadocsJarForMavenPublication") {
+        from "$rootDir/LICENSE"
+        if (isJavaModule(moduleName)) from javadoc.destinationDir
+        else {
+          dependsOn scaladoc
+          from scaladoc.destinationDir
+          // This plugin make hardcode on postfix of docs jar...
+          // this is a workaround of changing the final name of uploaded docs jar
+          doLast {
+            ((Jar) task).classifier = 'scaladoc'
+          }
+        }
+      }
+    }
+  }
+
+  // -------------------------------------------------[java/scala code formatter]-------------------------------------------------//
   if (it.name != 'ohara-manager') {
     apply plugin: "com.diffplug.gradle.spotless"
-    if (it.name == 'ohara-common'
-      || it.name == 'ohara-metrics'
-      || it.name == 'ohara-testing-util'
-      || it.name == 'ohara-kafka'
-      || it.name == 'ohara-streams') {
+    if (isJavaModule(it.name)) {
       spotless {
         java {
           googleJavaFormat()
@@ -165,6 +218,13 @@ subprojects {
     }
   }
 
+  // -------------------------------------------------[java compiler configs]-------------------------------------------------//
+  tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+    options.compilerArgs += ["-Xlint:all", "-Werror"]
+  }
+
+  // -------------------------------------------------[scala compiler configs]-------------------------------------------------//
   // we put some test case in ohara-assembly so those compiler options should be added to ohara-assembly also.
   tasks.withType(ScalaCompile) {
     scalaCompileOptions.additionalParameters = [
@@ -191,6 +251,7 @@ subprojects {
       "-Xfatal-warnings"
     ]
 
+    // -------------------------------------------------[gradle configs]-------------------------------------------------//
     configure(scalaCompileOptions.forkOptions) {
       memoryMaximumSize = '1g'
       jvmArgs = ['-XX:MaxMetaspaceSize=512m']
