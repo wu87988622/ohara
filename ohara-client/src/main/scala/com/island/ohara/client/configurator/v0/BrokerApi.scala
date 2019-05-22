@@ -120,7 +120,9 @@ object BrokerApi {
                                                  exporterPort: Int,
                                                  jmxPort: Int,
                                                  nodeNames: Seq[String])
-      extends BrokerClusterInfo
+      extends BrokerClusterInfo {
+    override def clone(newNodeNames: Seq[String]): BrokerClusterInfoImpl = copy(nodeNames = newNodeNames)
+  }
   private[this] implicit val BROKER_CLUSTER_INFO_IMPL_JSON_FORMAT: RootJsonFormat[BrokerClusterInfoImpl] = jsonFormat7(
     BrokerClusterInfoImpl)
 

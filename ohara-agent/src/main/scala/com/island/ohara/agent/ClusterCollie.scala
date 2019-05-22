@@ -314,7 +314,7 @@ object ClusterCollie {
       * @return
       */
     def build(): ClusterCollie = new ClusterCollieImpl(
-      cacheRefresh = Objects.requireNonNull(cacheTimeout),
+      cacheTimeout = Objects.requireNonNull(cacheTimeout),
       nodeCollie = Objects.requireNonNull(nodeCollie),
       cacheThreadPool = Objects.requireNonNull(cacheThreadPool)
     )

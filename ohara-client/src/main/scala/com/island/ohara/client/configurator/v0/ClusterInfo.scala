@@ -43,4 +43,11 @@ trait ClusterInfo {
     * @return nodes running this cluster
     */
   def nodeNames: Seq[String]
+
+  /**
+    * Create an new instance with new node names.
+    * @param newNodeNames new node names
+    * @return an new instance
+    */
+  def clone(newNodeNames: Seq[String]): ClusterInfo
 }

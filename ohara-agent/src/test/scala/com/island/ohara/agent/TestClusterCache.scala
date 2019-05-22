@@ -34,7 +34,8 @@ class TestClusterCache extends SmallTest with Matchers {
     val key = RequestKey(
       name = CommonUtils.randomString(),
       service = Service.WORKER,
-      clusterInfo = FakeClusterInfo(CommonUtils.randomString())
+      clusterInfo = FakeClusterInfo(CommonUtils.randomString()),
+      createdTime = CommonUtils.current()
     )
 
     key shouldBe key
@@ -123,6 +124,32 @@ class TestClusterCache extends SmallTest with Matchers {
       cache.get(clusterInfo0) shouldBe Seq(containerInfo0)
       cache.remove(clusterInfo0)
       cache.get(clusterInfo0) shouldBe Seq.empty
+    } finally cache.close()
+  }
+
+  @Test
+  def testLazyRemove(): Unit = {
+    val count = new AtomicInteger(0)
+    val cache = ClusterCache
+      .builder()
+      .supplier(() => {
+        count.incrementAndGet()
+        Map.empty
+      })
+      .frequency(1 seconds)
+      .lazyRemove(5 seconds)
+      .build()
+    try {
+      val clusterInfo = FakeClusterInfo(CommonUtils.randomString())
+      val containerInfo = fakeContainerInfo()
+      cache.put(clusterInfo, Seq(containerInfo))
+      TimeUnit.SECONDS.sleep(2)
+      val currentCount = count.get()
+      currentCount should not be 0
+      cache.get(clusterInfo) shouldBe Seq(containerInfo)
+      TimeUnit.SECONDS.sleep(4)
+      count.get() should not be currentCount
+      cache.get(clusterInfo) shouldBe Seq.empty
     } finally cache.close()
   }
 

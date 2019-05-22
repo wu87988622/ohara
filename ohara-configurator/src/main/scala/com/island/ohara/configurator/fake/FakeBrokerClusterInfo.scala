@@ -25,4 +25,6 @@ private[configurator] case class FakeBrokerClusterInfo(name: String,
                                                        clientPort: Int,
                                                        jmxPort: Int,
                                                        nodeNames: Seq[String])
-    extends BrokerClusterInfo
+    extends BrokerClusterInfo {
+  override def clone(newNodeNames: Seq[String]): FakeBrokerClusterInfo = copy(nodeNames = newNodeNames)
+}

@@ -83,7 +83,7 @@ abstract class ContainerCollie[T <: ClusterInfo: ClassTag, Creator <: ClusterCre
       case (cluster, containers) => doAddNode(cluster, containers, nodeName)
     }
 
-  protected val serviceName: String =
+  protected def serviceName: String =
     if (classTag[T].runtimeClass.isAssignableFrom(classOf[ZookeeperClusterInfo])) ContainerCollie.ZK_SERVICE_NAME
     else if (classTag[T].runtimeClass.isAssignableFrom(classOf[BrokerClusterInfo])) ContainerCollie.BK_SERVICE_NAME
     else if (classTag[T].runtimeClass.isAssignableFrom(classOf[WorkerClusterInfo])) ContainerCollie.WK_SERVICE_NAME

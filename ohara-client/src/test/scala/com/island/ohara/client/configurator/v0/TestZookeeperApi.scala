@@ -14,16 +14,27 @@
  * limitations under the License.
  */
 
-package com.island.ohara.configurator.fake
+package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.util.CommonUtils
+import org.junit.Test
+import org.scalatest.Matchers
 
-private[configurator] case class FakeZookeeperClusterInfo(name: String,
-                                                          imageName: String,
-                                                          clientPort: Int,
-                                                          peerPort: Int,
-                                                          electionPort: Int,
-                                                          nodeNames: Seq[String])
-    extends ZookeeperClusterInfo {
-  override def clone(newNodeNames: Seq[String]): FakeZookeeperClusterInfo = copy(nodeNames = newNodeNames)
+class TestZookeeperApi extends SmallTest with Matchers {
+
+  @Test
+  def testCloneNodeNames(): Unit = {
+    val newNodeNames = Seq(CommonUtils.randomString())
+    val zookeeperClusterInfo = ZookeeperClusterInfo(
+      name = CommonUtils.randomString(),
+      imageName = CommonUtils.randomString(),
+      clientPort = 10,
+      peerPort = 10,
+      electionPort = 10,
+      nodeNames = Seq.empty
+    )
+    zookeeperClusterInfo.clone(newNodeNames).nodeNames shouldBe newNodeNames
+  }
 }

@@ -23,6 +23,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,6 +101,8 @@ public interface RefreshableCache<K, V> extends Releasable {
     private Duration timeout = null;
     private Duration frequency = timeout;
     private Supplier<Map<K, V>> supplier = null;
+    /** the default value accept all remove request. */
+    private BiFunction<K, V, Boolean> removeListener = (k, v) -> true;
 
     private Builder() {}
 
@@ -111,6 +114,21 @@ public interface RefreshableCache<K, V> extends Releasable {
 
     public Builder<K, V> supplier(Supplier<Map<K, V>> supplier) {
       this.supplier = Objects.requireNonNull(supplier);
+      return this;
+    }
+
+    /**
+     * This function is invoked when cache prepare to remove the data. Through this function, you
+     * can save your data from the update process.
+     *
+     * @param removeListener remove listener. The data is kept in cache if the function return
+     *     false. Otherwise, the data may be removed from cache in updating.
+     * @return this builder
+     */
+    @com.island.ohara.common.annotations.Optional(
+        "default is a function which always say yes to remove data from cache")
+    public Builder<K, V> removeListener(BiFunction<K, V, Boolean> removeListener) {
+      this.removeListener = Objects.requireNonNull(removeListener);
       return this;
     }
 
@@ -138,6 +156,9 @@ public interface RefreshableCache<K, V> extends Releasable {
     }
 
     public RefreshableCache<K, V> build() {
+      Objects.requireNonNull(supplier);
+      Objects.requireNonNull(frequency);
+      Objects.requireNonNull(removeListener);
       com.google.common.cache.Cache<K, V> cache =
           timeout == null
               ? CacheBuilder.newBuilder().maximumSize(maxSize).build()
@@ -163,7 +184,12 @@ public interface RefreshableCache<K, V> extends Releasable {
               try {
                 // DON'T clear cache in first phase since the supplier may fail
                 Map<K, V> data = supplier.get();
-                cache.invalidateAll();
+                Map<K, V> oldData = new HashMap<>(cache.asMap());
+                oldData.forEach(
+                    (key, value) -> {
+                      if (!data.containsKey(key) && removeListener.apply(key, value))
+                        cache.invalidate(key);
+                    });
                 cache.putAll(data);
               } catch (Throwable e) {
                 LOG.error("failed to update cache", e);

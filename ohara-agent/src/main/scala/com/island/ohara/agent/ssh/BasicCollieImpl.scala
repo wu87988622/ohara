@@ -108,7 +108,12 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: Cl
     implicit executionContext: ExecutionContext): Future[Boolean] = {
     nodeCollie.node(beRemovedContainer.nodeName).map { node =>
       dockerCache.exec(node, _.stop(beRemovedContainer.name))
-      clusterCache.put(previousCluster, clusterCache.get(previousCluster).filter(_.name != beRemovedContainer.name))
+      clusterCache.put(
+        previousCluster.clone(
+          newNodeNames = previousCluster.nodeNames.filter(_ != beRemovedContainer.nodeName)
+        ),
+        clusterCache.get(previousCluster).filter(_.name != beRemovedContainer.name)
+      )
       true
     }
   }
