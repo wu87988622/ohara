@@ -32,12 +32,6 @@ import org.scalatest.Matchers
   */
 class TestDockerClient extends IntegrationTest with Matchers {
 
-  /**
-    * form: user:password@hostname:port.
-    * NOTED: this key need to be matched with another key value in ohara-it/build.gradle
-    */
-  private[this] val key = "ohara.it.docker"
-
   private[this] var client: DockerClient = _
 
   private[this] val webHost = "www.google.com.tw"
@@ -47,22 +41,19 @@ class TestDockerClient extends IntegrationTest with Matchers {
   private[this] val imageName = "centos:7"
 
   @Before
-  def setup(): Unit = sys.env.get(key).foreach { info =>
-    val user = info.split(":").head
-    val password = info.split("@").head.split(":").last
-    val hostname = info.split("@").last.split(":").head
-    val port = info.split("@").last.split(":").last.toInt
-    client = DockerClient.builder().hostname(hostname).port(port).user(user).password(password).build()
-    remoteHostname = hostname
-    client.imageNames().contains(imageName) shouldBe true
-  }
+  def setup(): Unit =
+    CollieTestUtils.nodeCache().headOption.foreach { node =>
+      client =
+        DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
+      remoteHostname = node.name
+    }
 
   /**
     * make sure all test cases here are executed only if we have defined the docker server.
     * @param f test case
     */
   private[this] def runTest(f: DockerClient => Unit): Unit = if (client == null)
-    skipTest(s"$key doesn't exist so all tests in TestDockerClient are ignored")
+    skipTest(s"no available nodes are passed from env variables")
   else f(client)
 
   @Test

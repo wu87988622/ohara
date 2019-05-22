@@ -29,6 +29,7 @@ import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0.{BrokerApi, ZookeeperApi}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.it.IntegrationTest
+import com.island.ohara.it.agent.CollieTestUtils
 import com.island.ohara.it.prometheus.PrometheusJson.{Health, Targets}
 import org.junit.Assume._
 import org.junit.{Before, Ignore, Test}
@@ -39,42 +40,23 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.ExecutionContextExecutor
 class TestPrometheus extends IntegrationTest with Matchers {
 
-  private val nodes_key = "ohara.it.docker"
+  private[this] val nodes: Seq[Node] = CollieTestUtils.nodeCache()
+  private[this] var node: Node = _
+  private[this] var nodeCollie: NodeCollie = _
+  private[this] var clusterCollie: ClusterCollie = _
 
-  private val nodes: Option[Seq[Node]] = sys.env
-    .get(nodes_key)
-    .map(info => {
-      info
-        .split(",")
-        .map(
-          nodeInfo => {
-            val user = nodeInfo.split(":").head
-            val password = nodeInfo.split("@").head.split(":").last
-            val hostname = nodeInfo.split("@").last.split(":").head
-            val port = nodeInfo.split("@").last.split(":").last.toInt
-            Node(hostname, port, user, password)
-          }
-        )
-        .toList
-    })
-
-  private val node = nodes.map(_.head).orNull
-
-  //If this check method is in BeforeClass , gradle --test will build failed that gradle can't find any tests
-  //But run in junit is fine
   @Before
-  def check(): Unit = {
-    assumeNotNull(s"$nodes_key can't be null", node)
+  def check(): Unit = if (nodes.isEmpty) skipTest(s"no available nodes are passed from env variables")
+  else {
+    node = nodes.head
+    nodeCollie = NodeCollie(Seq(node))
+    clusterCollie = ClusterCollie.builderOfSsh().nodeCollie(nodeCollie).build()
     val client =
       DockerClient.builder().user(node.user).password(node.password).hostname(node.name).port(node.port).build()
     try {
       assumeTrue(client.imageNames().contains(PrometheusServer.IMAGE_NAME_DEFAULT))
     } finally client.close()
   }
-
-  protected val nodeCollie: NodeCollie = NodeCollie(Seq(node))
-  protected val clusterCollie: ClusterCollie =
-    ClusterCollie.builderOfSsh().nodeCollie(nodeCollie).build()
 
   /**
     * test kafka can export metric
