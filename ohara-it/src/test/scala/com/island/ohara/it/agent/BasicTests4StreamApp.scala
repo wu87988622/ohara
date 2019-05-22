@@ -205,6 +205,15 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     properties.error shouldBe None
     properties.workerClusterName shouldBe wkName
 
+    // Get streamApp property (cluster not create yet, hence no state)
+    val getProperties = result(streamAppPropertyAccess.get(stream.id))
+    getProperties.from.size shouldBe 1
+    getProperties.to.size shouldBe 1
+    getProperties.instances shouldBe instances
+    getProperties.state shouldBe None
+    getProperties.error shouldBe None
+    getProperties.workerClusterName shouldBe wkName
+
     //Start streamApp
     val res1 =
       result(streamAppActionAccess.start(stream.id))
@@ -220,6 +229,9 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
       result(streamAppActionAccess.stop(stream.id))
     res2.state.isEmpty shouldBe true
     res2.error shouldBe None
+
+    // After stop streamApp, property still exist
+    result(streamAppPropertyAccess.get(stream.id)).id shouldBe stream.id
   }
 
   @After

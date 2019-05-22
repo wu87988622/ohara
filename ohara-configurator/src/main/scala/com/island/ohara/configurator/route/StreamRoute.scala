@@ -80,14 +80,18 @@ private[configurator] object StreamRoute {
     store.value[StreamAppDescription](id).flatMap { props =>
       clusterCollie
         .streamCollie()
-        .cluster(formatUniqueName(props.id))
-        .filter(_._1.isInstanceOf[StreamClusterInfo])
-        .map(_._1.asInstanceOf[StreamClusterInfo].state -> None)
-        // if stream cluster was not created, we do nothing
-        .recover {
-          case ex: Throwable =>
-            log.warn(s"stream cluster not exists yet: ", ex)
-            None -> None
+        .exist(formatUniqueName(props.id))
+        .flatMap {
+          if (_) {
+            clusterCollie
+              .streamCollie()
+              .cluster(formatUniqueName(props.id))
+              .filter(_._1.isInstanceOf[StreamClusterInfo])
+              .map(_._1.asInstanceOf[StreamClusterInfo].state -> None)
+          } else {
+            // if stream cluster was not created, we do nothing
+            Future.successful(None -> None)
+          }
         }
         .flatMap {
           case (state, error) =>

@@ -68,7 +68,7 @@ trait ClusterCollie extends Releasable {
 
   /**
     * the default implementation is expensive!!! Please override this method if you are a good programmer.
-    * @return a collection of zk, bk and wk clusters
+    * @return a collection of all clusters
     */
   def clusters(implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] =
     for {

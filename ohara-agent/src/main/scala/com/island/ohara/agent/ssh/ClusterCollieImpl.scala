@@ -88,13 +88,12 @@ private[agent] class ClusterCollieImpl(cacheTimeout: Duration, nodeCollie: NodeC
               })
           .map(_.toMap)
 
-      parse(ContainerCollie.ZK_SERVICE_NAME, zkCollie.toZookeeperCluster).flatMap { zkMap =>
-        parse(ContainerCollie.BK_SERVICE_NAME, bkCollie.toBrokerCluster).flatMap { bkMap =>
-          parse(ContainerCollie.WK_SERVICE_NAME, wkCollie.toWorkerCluster).map { wkMap =>
-            zkMap ++ bkMap ++ wkMap
-          }
-        }
-      }
+      for {
+        zkMap <- parse(ContainerCollie.ZK_SERVICE_NAME, zkCollie.toZookeeperCluster)
+        bkMap <- parse(ContainerCollie.BK_SERVICE_NAME, bkCollie.toBrokerCluster)
+        wkMap <- parse(ContainerCollie.WK_SERVICE_NAME, wkCollie.toWorkerCluster)
+        streamMap <- parse(ContainerCollie.STREAM_SERVICE_NAME, _streamCollie.toStreamCluster)
+      } yield zkMap ++ bkMap ++ wkMap ++ streamMap
     }
 
   override protected def doClose(): Unit = {

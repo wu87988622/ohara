@@ -211,6 +211,9 @@ class TestStreamRoute extends SmallTest with Matchers {
     running.state.get shouldBe ContainerState.RUNNING.name
     running.error.isEmpty shouldBe true
 
+    // get the stream clusters information by clusterCache
+    result(configurator.clusterCollie.streamCollie().clusters).size shouldBe 1
+
     // create the same streamApp cluster will get the previous stream cluster
     val prevRes = result(accessStreamAction.start(props.id))
     prevRes.id shouldBe props.id
@@ -228,6 +231,9 @@ class TestStreamRoute extends SmallTest with Matchers {
     val res2 = result(accessStreamAction.stop(props.id))
     res2.state shouldBe None
     res2.error shouldBe None
+
+    // get the stream clusters information again, should be zero
+    result(configurator.clusterCollie.streamCollie().clusters).size shouldBe 0
 
     // stop the same streamApp cluster will only return the previous object
     val res3 = result(accessStreamAction.stop(props.id))
