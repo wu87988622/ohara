@@ -23,6 +23,7 @@ import { isEmptyStr } from 'utils/commonUtils';
 import { findByGraphId } from '../../pipelineUtils/commonUtils';
 import { FormGroup, Input, Label } from 'common/Form';
 import { CONNECTOR_STATES } from 'constants/pipelines';
+import UtilsTabs from './UtilsTabs';
 
 export const getMetadata = (props, worker) => {
   const { page: targetConnector } = props.match.params;
@@ -143,6 +144,27 @@ export const getUpdatedTopic = ({
   return update;
 };
 
+export const typeSwitch = type => {
+  switch (type) {
+    case 'PASSWORD':
+      return 'password';
+    default:
+      return null;
+  }
+};
+
+export const groupBy = (array, fn) => {
+  let groups = {};
+  array.forEach(o => {
+    let group = JSON.stringify(fn(o));
+    groups[group] = groups[group] || [];
+    groups[group].push(o);
+  });
+  return Object.keys(groups).map(group => {
+    return groups[group];
+  });
+};
+
 export const renderForm = ({
   state,
   defs,
@@ -177,93 +199,116 @@ export const renderForm = ({
     return displayValue;
   };
 
-  return defs
-    .sort(sortByOrder)
-    .filter(def => !def.internal) // Do not display def that has an internal === true prop
-    .map(def => {
-      const {
-        displayName,
-        key,
-        editable,
-        required,
-        documentation,
-        tableKeys,
-        defaultValue,
-        valueType,
-      } = def;
+  const defsToFormGroup = defs => {
+    return defs
+      .sort(sortByOrder)
+      .filter(def => !def.internal) // Do not display def that has an internal === true prop
+      .map(def => {
+        const {
+          displayName,
+          key,
+          editable,
+          required,
+          documentation,
+          tableKeys,
+          defaultValue,
+          valueType,
+        } = def;
+        const configValue = configs[key];
+        const columnTableHeader = tableKeys.concat(tableActions);
+        const displayValue = convertData({
+          configValue,
+          valueType,
+          defaultValue,
+        });
+        switch (valueType) {
+          case 'STRING':
+          case 'INT':
+          case 'CLASS':
+          case 'PASSWORD':
+            const type = typeSwitch(valueType);
+            return (
+              <FormGroup key={key}>
+                <Label
+                  htmlFor={`${displayName}`}
+                  required={required}
+                  tooltipString={documentation}
+                  tooltipAlignment="right"
+                  width="100%"
+                >
+                  {displayName}
+                </Label>
+                <Input
+                  id={`${displayName}`}
+                  width="100%"
+                  value={String(displayValue)}
+                  name={key}
+                  type={type}
+                  onChange={handleChange}
+                  disabled={!editable || isRunning}
+                />
+              </FormGroup>
+            );
 
-      const configValue = configs[key];
-      const columnTableHeader = tableKeys.concat(tableActions);
-      const displayValue = convertData({
-        configValue,
-        valueType,
-        defaultValue,
+          case 'LIST':
+            return (
+              <FormGroup key={key}>
+                <Label
+                  htmlFor={`${displayName}`}
+                  required={required}
+                  tooltipString={documentation}
+                  tooltipAlignment="right"
+                  width="100%"
+                >
+                  {displayName}
+                </Label>
+                <Select
+                  id={`${displayName}`}
+                  list={topics}
+                  value={displayValue}
+                  handleChange={handleChange}
+                  name={key}
+                  width="100%"
+                  disabled={isRunning}
+                  clearable
+                />
+              </FormGroup>
+            );
+
+          case 'TABLE':
+            return (
+              <FormGroup key={key}>
+                <ColumnTable
+                  headers={columnTableHeader}
+                  data={displayValue}
+                  dataTypes={dataType}
+                  handleColumnChange={handleColumnChange}
+                  handleColumnRowDelete={handleColumnRowDelete}
+                  handleColumnRowUp={handleColumnRowUp}
+                  handleColumnRowDown={handleColumnRowDown}
+                />
+              </FormGroup>
+            );
+
+          default:
+            return null;
+        }
       });
+  };
 
-      if (['STRING', 'INT', 'CLASS'].includes(valueType)) {
-        return (
-          <FormGroup key={key}>
-            <Label
-              htmlFor={`${displayName}`}
-              required={required}
-              tooltipString={documentation}
-              tooltipAlignment="right"
-              width="100%"
-            >
-              {displayName}
-            </Label>
-            <Input
-              id={`${displayName}`}
-              width="100%"
-              value={displayValue}
-              name={key}
-              onChange={handleChange}
-              disabled={!editable || isRunning}
-            />
-          </FormGroup>
-        );
-      } else if (valueType === 'LIST') {
-        return (
-          <FormGroup key={key}>
-            <Label
-              htmlFor={`${displayName}`}
-              required={required}
-              tooltipString={documentation}
-              tooltipAlignment="right"
-              width="100%"
-            >
-              {displayName}
-            </Label>
-            <Select
-              id={`${displayName}`}
-              list={topics}
-              value={displayValue}
-              handleChange={handleChange}
-              name={key}
-              width="100%"
-              disabled={isRunning}
-              clearable
-            />
-          </FormGroup>
-        );
-      } else if (valueType === 'TABLE') {
-        return (
-          <FormGroup key={key}>
-            <ColumnTable
-              headers={columnTableHeader}
-              data={displayValue}
-              dataTypes={dataType}
-              handleColumnChange={handleColumnChange}
-              handleColumnRowDelete={handleColumnRowDelete}
-              handleColumnRowUp={handleColumnRowUp}
-              handleColumnRowDown={handleColumnRowDown}
-            />
-          </FormGroup>
-        );
-      }
-
-      return null;
+  const groupDefs = groupBy(defs, item => {
+    return [item.group];
+  });
+  const hasTab = groupDefs.length > 1 ? true : false;
+  if (hasTab) {
+    return (
+      <UtilsTabs groupDefs={groupDefs} defsToFormGroup={defsToFormGroup} />
+    );
+  } else {
+    return groupDefs.sort().map(defs => {
+      return defsToFormGroup(defs);
     });
+  }
 };
 
 export const getCurrTopicId = ({ originals, target = '' }) => {

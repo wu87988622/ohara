@@ -15,7 +15,12 @@
  */
 
 import * as generate from 'utils/generate';
-import { getCurrTopicId, getCurrTopicName } from '../customConnectorUtils';
+import {
+  getCurrTopicId,
+  getCurrTopicName,
+  typeSwitch,
+  groupBy,
+} from '../customConnectorUtils';
 
 describe('getCurrTopicId()', () => {
   it(`doesn't do anything if either originals or target are negative values`, () => {
@@ -69,5 +74,47 @@ describe('getCurrTopicName()', () => {
     expect(getCurrTopicName({ originals, target: [topicId] })).toEqual(
       topicName,
     );
+  });
+});
+
+describe('typeSwitch()', () => {
+  it('should switch PASSWORD to password', () => {
+    expect(typeSwitch('PASSWORD')).toBe('password');
+  });
+
+  it('returns null if no match found', () => {
+    expect(typeSwitch('')).toBe(null);
+  });
+});
+
+describe('groupBy()', () => {
+  it('json groupBy key', () => {
+    const json = [
+      { key: 'a', name: 'Name1' },
+      { key: 'a', name: 'Name2' },
+      { key: 'a', name: 'Name3' },
+      { key: 'b', name: 'Name4' },
+      { key: 'b', name: 'Name5' },
+      { key: 'b', name: 'Name6' },
+    ];
+
+    const groupJson = [
+      [
+        { key: 'a', name: 'Name1' },
+        { key: 'a', name: 'Name2' },
+        { key: 'a', name: 'Name3' },
+      ],
+      [
+        { key: 'b', name: 'Name4' },
+        { key: 'b', name: 'Name5' },
+        { key: 'b', name: 'Name6' },
+      ],
+    ];
+
+    const group = groupBy(json, item => {
+      return [item.key];
+    });
+
+    expect(group).toEqual(groupJson);
   });
 });

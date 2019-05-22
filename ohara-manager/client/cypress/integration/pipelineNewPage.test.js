@@ -158,6 +158,7 @@ describe('PipelineNewPage', () => {
     cy.server();
     cy.route('PUT', 'api/pipelines/*').as('putPipeline');
     cy.route('GET', 'api/connectors/*').as('getConnector');
+    cy.route('GET', 'api/workers').as('getWorkers');
 
     cy.getByTestId('toolbar-sinks')
       .click()
@@ -206,12 +207,15 @@ describe('PipelineNewPage', () => {
       .click()
       .getByText('FTP source connector')
       .should('have.length', '1')
-      .getByText('FTP Source 2/2')
-      .click()
       .wait('@getConnector')
+      .getByText('core')
+      .click({ force: true })
       .get('@createTopic')
       .then(topic => {
-        cy.getByTestId('write-topic-select').select(topic.name);
+        cy.getByText('topics')
+          .click()
+          .get('select')
+          .select(topic.name);
       })
       .wait('@putPipeline')
       .get('g.edgePath')

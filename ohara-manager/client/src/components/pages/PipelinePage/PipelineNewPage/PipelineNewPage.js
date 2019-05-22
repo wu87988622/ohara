@@ -420,7 +420,11 @@ class PipelineNewPage extends React.Component {
                 <Route
                   path={`${routeBaseUrl}/${ftpSource}`}
                   render={() => (
-                    <FtpSource {...this.props} {...connectorProps} />
+                    <FtpSource
+                      {...this.props}
+                      {...connectorProps}
+                      workerClusterName={workerClusterName}
+                    />
                   )}
                 />
 
