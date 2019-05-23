@@ -24,6 +24,7 @@ ARG COMMON_LANG_VERSION=3.7
 ARG ROCKDB_VERSION=5.7.3
 ARG COMMONS_IO=2.4
 
+# download all dependency jars
 RUN apk --no-cache add git curl && rm -rf /tmp/* /var/cache/apk/* && \
  mkdir -p /opt/lib/streamapp && \
  curl -L http://central.maven.org/maven2/org/apache/kafka/kafka-streams/${KAFKA_VERSION}/kafka-streams-${KAFKA_VERSION}.jar -o /opt/lib/kafka-streams.jar && \
@@ -53,8 +54,10 @@ ARG REPO="https://github.com/oharastream/ohara.git"
 WORKDIR /testpatch/ohara
 RUN git clone $REPO /testpatch/ohara
 RUN git checkout $COMMIT
+
+# copy required jars except test jar
 RUN gradle jar -x test && \
- cp /testpatch/ohara/ohara-common/build/libs/*.jar /testpatch/ohara/ohara-kafka/build/libs/*.jar /testpatch/ohara/ohara-streams/build/libs/*.jar /opt/lib
+ cp `ls /testpatch/ohara/*/build/libs/*.jar | grep -v tests.jar | grep -E 'common|kafka|metrics|streams'` /opt/lib
 
 FROM centos:7.6.1810
 
@@ -63,14 +66,30 @@ RUN yum -y update && \
  yum clean all && \
  rm -rf /var/cache/yum
 
-# Add Tini
-ARG TINI_VERSION=v0.18.0
-RUN wget https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -O /tini
+# add user from root to kafka
+ARG USER=ohara
+RUN groupadd $USER
+RUN useradd -ms /bin/bash -g $USER $USER
 
-RUN chmod +x /tini
-
-WORKDIR /opt/ohara
-
+# copy required library
 COPY --from=deps /opt/lib/* /opt/ohara/
 
-ENTRYPOINT ["/tini", "--", "/usr/bin/java", "-cp", "/opt/ohara/*"]
+# clone ohara binary
+COPY --from=deps /testpatch/ohara/bin/* /home/$USER/default/
+COPY --from=deps /testpatch/ohara/docker/streamapp.sh /home/$USER/default/
+RUN mkdir /home/$USER/lib && \
+ ln -s /opt/ohara/*.jar /home/$USER/lib && \
+ chown -R $USER:$USER /home/$USER/default && \
+ chmod +x /home/$USER/default/*.sh
+ENV OHARA_HOME=/home/$USER/default
+ENV PATH=$PATH:$OHARA_HOME
+
+# add Tini
+ARG TINI_VERSION=v0.18.0
+RUN wget https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -O /tini
+RUN chmod +x /tini
+
+# change user
+USER $USER
+
+ENTRYPOINT ["/tini", "--", "streamapp.sh"]

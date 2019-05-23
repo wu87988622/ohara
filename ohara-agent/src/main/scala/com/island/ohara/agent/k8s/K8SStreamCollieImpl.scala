@@ -33,7 +33,17 @@ private class K8SStreamCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
   private[this] val log = Logger(classOf[K8SStreamCollieImpl])
 
   override def creator(): StreamCollie.ClusterCreator = {
-    (clusterName, nodeNames, imageName, jarUrl, instance, appId, brokerProps, fromTopics, toTopics, executionContext) =>
+    (clusterName,
+     nodeNames,
+     imageName,
+     jarUrl,
+     instance,
+     appId,
+     brokerProps,
+     fromTopics,
+     toTopics,
+     jmxPort,
+     executionContext) =>
       {
         implicit val exec: ExecutionContext = executionContext
         exist(clusterName).flatMap {
@@ -69,6 +79,9 @@ private class K8SStreamCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
                         .name(podName)
                         .labelName(OHARA_LABEL)
                         .domainName(K8S_DOMAIN_NAME)
+                        .portMappings(Map(
+                          jmxPort -> jmxPort
+                        ))
                         .envs(
                           Map(
                             StreamCollie.JARURL_KEY -> jarUrl,
@@ -78,7 +91,7 @@ private class K8SStreamCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
                             StreamCollie.TO_TOPIC_KEY -> toTopics.mkString(",")
                           )
                         )
-                        .args(Seq(StreamCollie.MAIN_ENTRY))
+                        .args(Seq(StreamCollie.formatJMXProperties(node.name, jmxPort), StreamCollie.MAIN_ENTRY))
                         .run()
                         .recover {
                           case e: Throwable =>
@@ -95,6 +108,7 @@ private class K8SStreamCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
                       name = clusterName,
                       imageName = imageName,
                       nodeNames = successfulNodeNames,
+                      jmxPort = jmxPort,
                       // creating cluster success could be applied containers are "running"
                       state = Some(ContainerState.RUNNING.name)
                     )

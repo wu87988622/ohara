@@ -58,6 +58,7 @@ class TestStreamApi extends SmallTest with Matchers {
       name = "foo",
       imageName = "bar",
       nodeNames = Seq("fake"),
+      jmxPort = 999,
       state = Some("RUNNING")
     )
 
@@ -65,6 +66,7 @@ class TestStreamApi extends SmallTest with Matchers {
     info.imageName shouldBe "bar"
     info.nodeNames.size shouldBe 1
     info.nodeNames.head shouldBe "fake"
+    info.jmxPort shouldBe 999
     info.state.get shouldBe "RUNNING"
     info.ports shouldBe Set.empty
   }

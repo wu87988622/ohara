@@ -41,6 +41,7 @@ class TestStreamCreator extends SmallTest with Matchers {
      brokerProps,
      fromTopics,
      toTopics,
+     jmxPort,
      executionContext) => {
       // We only check required variables
       CommonUtils.requireNonEmpty(clusterName)
@@ -55,6 +56,7 @@ class TestStreamCreator extends SmallTest with Matchers {
         StreamClusterInfo(
           name = clusterName,
           imageName = imageName,
+          jmxPort = jmxPort,
           nodeNames = {
             if (CommonUtils.isEmpty(nodeNames.asJava))
               CommonUtils.requireNonEmpty(Seq.fill(CommonUtils.requirePositiveInt(instances))("fake").asJava).asScala
@@ -200,6 +202,21 @@ class TestStreamCreator extends SmallTest with Matchers {
         .fromTopics(Seq("topic1"))
         .toTopics(Seq("topic2"))
         .create()).nodeNames.size shouldBe 2
+
+    // could set jmx port
+    awaitResult(
+      streamCreator()
+        .clusterName(CommonUtils.randomString(Collie.LIMIT_OF_NAME_LENGTH))
+        .imageName(CommonUtils.randomString())
+        .jarUrl("jar")
+        .instances(10)
+        .nodeNames(Seq("bar", "foo"))
+        .appId("app")
+        .brokerProps("broker")
+        .fromTopics(Seq("topic1"))
+        .toTopics(Seq("topic2"))
+        .jmxPort(1000)
+        .create()).jmxPort shouldBe 1000
   }
 
   @Test

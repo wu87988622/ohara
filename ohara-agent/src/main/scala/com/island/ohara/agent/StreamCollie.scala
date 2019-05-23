@@ -39,6 +39,8 @@ trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator
         name = clusterName,
         imageName = first.imageName,
         nodeNames = containers.map(_.nodeName),
+        // In StreamApp, we only use jmx port for exposing
+        jmxPort = first.portMappings.head.portPairs.head.containerPort,
         state = {
           // we only have two possible results here:
           // 1. only assume cluster is "running" if and only if all containers was running
@@ -60,6 +62,7 @@ object StreamCollie {
     private[this] var brokerProps: String = _
     private[this] var fromTopics: Seq[String] = Seq.empty
     private[this] var toTopics: Seq[String] = Seq.empty
+    private[this] var jmxPort: Int = CommonUtils.availablePort()
 
     /**
       * set the jar url for the streamApp running
@@ -130,6 +133,18 @@ object StreamCollie {
       this
     }
 
+    /**
+      * set the jmx port
+      *
+      * @param jmxPort jmx port
+      * @return this creator
+      */
+    @Optional("default is local random port")
+    def jmxPort(jmxPort: Int): ClusterCreator = {
+      this.jmxPort = CommonUtils.requirePositiveInt(jmxPort)
+      this
+    }
+
     override def create()(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] = doCreate(
       CommonUtils.requireNonEmpty(clusterName),
       // we check nodeNames in StreamCollie
@@ -142,6 +157,7 @@ object StreamCollie {
       CommonUtils.requireNonEmpty(brokerProps),
       CommonUtils.requireNonEmpty(fromTopics.asJava).asScala,
       CommonUtils.requireNonEmpty(toTopics.asJava).asScala,
+      CommonUtils.requirePositiveInt(jmxPort),
       Objects.requireNonNull(executionContext)
     )
 
@@ -154,6 +170,7 @@ object StreamCollie {
                            brokerProps: String,
                            fromTopics: Seq[String],
                            toTopics: Seq[String],
+                           jmxPort: Int,
                            executionContext: ExecutionContext): Future[StreamClusterInfo]
   }
 
@@ -167,6 +184,24 @@ object StreamCollie {
     * the only entry for ohara streamApp
     */
   private[agent] val MAIN_ENTRY = "com.island.ohara.streams.StreamApp"
+
+  /**
+    * generate the jmx required properties
+    *
+    * @param hostname the hostname used by jmx remote
+    * @param port the port used by jmx remote
+    * @return jmx properties
+    */
+  private[agent] def formatJMXProperties(hostname: String, port: Int): String = {
+    Seq(
+      "-Dcom.sun.management.jmxremote",
+      "-Dcom.sun.management.jmxremote.authenticate=false",
+      "-Dcom.sun.management.jmxremote.ssl=false",
+      s"-Dcom.sun.management.jmxremote.port=$port",
+      s"-Dcom.sun.management.jmxremote.rmi.port=$port",
+      s"-Djava.rmi.server.hostname=$hostname"
+    ).mkString(" ")
+  }
 
   /**
     * Format unique name by unique id.

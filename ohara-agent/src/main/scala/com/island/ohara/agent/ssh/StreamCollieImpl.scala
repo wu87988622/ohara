@@ -18,7 +18,7 @@ package com.island.ohara.agent.ssh
 
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.agent.{ClusterCache, ContainerCollie, NodeCollie, StreamCollie}
-import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.common.util.CommonUtils
 
@@ -39,6 +39,7 @@ private class StreamCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClient
      brokerProps,
      fromTopics,
      toTopics,
+     jmxPort,
      executionContext) => {
       implicit val exec: ExecutionContext = executionContext
       val clusters = clusterCache.snapshot
@@ -77,7 +78,16 @@ private class StreamCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClient
                         kind = "unknown",
                         name = containerName,
                         size = "unknown",
-                        portMappings = Seq.empty,
+                        portMappings = Seq(
+                          PortMapping(
+                            hostIp = "unknown",
+                            portPairs = Seq(
+                              PortPair(
+                                hostPort = jmxPort,
+                                containerPort = jmxPort
+                              )
+                            )
+                          )),
                         environments = Map(
                           StreamCollie.JARURL_KEY -> jarUrl,
                           StreamCollie.APPID_KEY -> appId,
@@ -95,7 +105,12 @@ private class StreamCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClient
                           .hostname(containerInfo.name)
                           .envs(containerInfo.environments)
                           .name(containerInfo.name)
-                          .command(StreamCollie.MAIN_ENTRY)
+                          .portMappings(containerInfo.portMappings
+                            .flatMap(_.portPairs)
+                            .map(pair => pair.hostPort -> pair.containerPort)
+                            .toMap)
+                          .command(String
+                            .join(" ", StreamCollie.formatJMXProperties(node.name, jmxPort), StreamCollie.MAIN_ENTRY))
                           .execute()
                       )
                       Some(containerInfo)
@@ -119,6 +134,7 @@ private class StreamCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClient
                   name = clusterName,
                   imageName = imageName,
                   nodeNames = successfulContainers.map(_.nodeName),
+                  jmxPort = jmxPort,
                   // creating cluster success could be applied containers are "running"
                   state = Some(ContainerState.RUNNING.name)
                 )

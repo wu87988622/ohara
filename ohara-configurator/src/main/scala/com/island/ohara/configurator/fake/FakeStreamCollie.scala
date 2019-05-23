@@ -31,7 +31,7 @@ private[configurator] class FakeStreamCollie(nodeCollie: NodeCollie)
     extends FakeCollie[StreamClusterInfo, StreamCollie.ClusterCreator](nodeCollie)
     with StreamCollie {
   override def creator(): StreamCollie.ClusterCreator =
-    (clusterName, nodeNames, imageName, _, instance, _, _, _, _, executionContext) => {
+    (clusterName, nodeNames, imageName, _, instance, _, _, _, _, jmxPort, executionContext) => {
       implicit val exec: ExecutionContext = executionContext
       nodeCollie
         .nodes()
@@ -51,6 +51,7 @@ private[configurator] class FakeStreamCollie(nodeCollie: NodeCollie)
               name = clusterName,
               imageName = imageName,
               nodeNames = nodes.map(_.name),
+              jmxPort = jmxPort,
               state = Some(ContainerState.RUNNING.name)
             )
           )

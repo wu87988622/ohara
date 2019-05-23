@@ -121,12 +121,14 @@ object StreamApi {
     * @param name cluster name
     * @param imageName image name
     * @param nodeNames actual running nodes
+    * @param jmxPort  jmx port
     * @param state the state of this cluster (see '''ContainerState''')
     */
   final case class StreamClusterInfo(
     name: String,
     imageName: String,
     nodeNames: Seq[String] = Seq.empty,
+    jmxPort: Int,
     state: Option[String] = None
   ) extends ClusterInfo {
     // We don't care the ports since streamApp communicates by broker
