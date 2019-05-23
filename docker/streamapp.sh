@@ -15,4 +15,9 @@
 # limitations under the License.
 #
 
+if [[ "$1" == "-v" ]] || [[ "$1" == "version" ]] || [[ "$1" == "-version" ]]; then
+  exec ohara.sh -v
+  exit 0
+fi
+
 exec /usr/bin/java -cp "/opt/ohara/*" "$@"
