@@ -19,16 +19,32 @@ package com.island.ohara.agent
 import com.island.ohara.agent.Collie.ClusterCreator
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ClusterInfo
-import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.client.configurator.v0.NodeApi.Node
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
 
 abstract class ContainerCollie[T <: ClusterInfo: ClassTag, Creator <: ClusterCreator[T]](nodeCollie: NodeCollie)
     extends Collie[T, Creator] {
+  private[agent] val LENGTH_OF_CONTAINER_NAME_ID: Int = 7
+
+  /**
+    * generate unique name for the container.
+    * It can be used in setting container's hostname and name
+    * @param clusterName cluster name
+    * @return a formatted string. form: ${clusterName}-${service}-${index}
+    */
+  protected def format(prefixKey: String, clusterName: String, serviceName: String): String =
+    Seq(
+      prefixKey,
+      clusterName,
+      serviceName,
+      CommonUtils.randomString(LENGTH_OF_CONTAINER_NAME_ID)
+    ).mkString(ContainerCollie.DIVIDER)
 
   protected def doRemoveNode(previousCluster: T, beRemovedContainer: ContainerInfo)(
     implicit executionContext: ExecutionContext): Future[Boolean]
@@ -74,7 +90,6 @@ abstract class ContainerCollie[T <: ClusterInfo: ClassTag, Creator <: ClusterCre
         }
       }
   }
-
   protected def serviceName: String =
     if (classTag[T].runtimeClass.isAssignableFrom(classOf[ZookeeperClusterInfo])) ContainerCollie.ZK_SERVICE_NAME
     else if (classTag[T].runtimeClass.isAssignableFrom(classOf[BrokerClusterInfo])) ContainerCollie.BK_SERVICE_NAME
@@ -105,10 +120,123 @@ abstract class ContainerCollie[T <: ClusterInfo: ClassTag, Creator <: ClusterCre
     implicit executionContext: ExecutionContext): Future[Boolean] =
     doRemove(clusterInfo, containerInfos)
 
+  /**
+    * This is a complicated process. We must address following issues.
+    * 1) check the existence of cluster
+    * 2) check the existence of nodes
+    * 3) Each zookeeper container has got to export peer port, election port, and client port
+    * 4) Each zookeeper container should use "docker host name" to replace "container host name".
+    * 4) Add routes to all zookeeper containers
+    * @return creator of broker cluster
+    */
+  protected[agent] def zkCreator(
+    prefixKey: String,
+    clusterName: String,
+    imageName: String,
+    clientPort: Int,
+    peerPort: Int,
+    electionPort: Int,
+    nodeNames: Seq[String])(executionContext: ExecutionContext): Future[ZookeeperClusterInfo] = {
+    implicit val exec: ExecutionContext = executionContext
+    clusters.flatMap(clusters => {
+      if (clusters.keys.filter(_.isInstanceOf[ZookeeperClusterInfo]).exists(_.name == clusterName))
+        Future.failed(new IllegalArgumentException(s"zookeeper cluster:$clusterName exists!"))
+      else
+        nodeCollie
+          .nodes(nodeNames)
+          .map(_.map(node => node -> format(prefixKey, clusterName, serviceName)).toMap)
+          .flatMap {
+            nodes =>
+              // add route in order to make zk node can connect to each other.
+              val route: Map[String, String] = routeInfo(nodes)
+
+              val zkServers: String = nodes.keys.map(_.name).mkString(" ")
+              // ssh connection is slow so we submit request by multi-thread
+              Future
+                .sequence(nodes.zipWithIndex.map {
+                  case ((node, containerName), index) =>
+                    Future {
+                      val containerInfo = ContainerInfo(
+                        nodeName = node.name,
+                        id = ContainerCollie.UNKNOWN,
+                        imageName = imageName,
+                        created = ContainerCollie.UNKNOWN,
+                        state = ContainerCollie.UNKNOWN,
+                        kind = ContainerCollie.UNKNOWN,
+                        name = containerName,
+                        size = ContainerCollie.UNKNOWN,
+                        portMappings = Seq(PortMapping(
+                          hostIp = ContainerCollie.UNKNOWN,
+                          portPairs = Seq(
+                            PortPair(
+                              hostPort = clientPort,
+                              containerPort = clientPort
+                            ),
+                            PortPair(
+                              hostPort = peerPort,
+                              containerPort = peerPort
+                            ),
+                            PortPair(
+                              hostPort = electionPort,
+                              containerPort = electionPort
+                            )
+                          )
+                        )),
+                        environments = Map(
+                          ZookeeperCollie.ID_KEY -> index.toString,
+                          ZookeeperCollie.CLIENT_PORT_KEY -> clientPort.toString,
+                          ZookeeperCollie.PEER_PORT_KEY -> peerPort.toString,
+                          ZookeeperCollie.ELECTION_PORT_KEY -> electionPort.toString,
+                          ZookeeperCollie.SERVERS_KEY -> zkServers
+                        ),
+                        // zookeeper doesn't have advertised hostname/port so we assign the "docker host" directly
+                        hostname = node.name
+                      )
+                      doCreator(executionContext, clusterName, containerName, containerInfo, node, route)
+                      Some(containerInfo)
+                    }
+                })
+                .map(_.flatten.toSeq)
+                .map {
+                  successfulContainers =>
+                    if (successfulContainers.isEmpty)
+                      throw new IllegalArgumentException(s"failed to create $clusterName on $serviceName")
+                    val clusterInfo = ZookeeperClusterInfo(
+                      name = clusterName,
+                      imageName = imageName,
+                      clientPort = clientPort,
+                      peerPort = peerPort,
+                      electionPort = electionPort,
+                      nodeNames = successfulContainers.map(_.nodeName)
+                    )
+                    postCreateZookeeperCluster(clusterInfo, successfulContainers)
+                    clusterInfo
+                }
+          }
+    })
+
+  }
+
+  protected def doCreator(executionContext: ExecutionContext,
+                          clusterName: String,
+                          containerName: String,
+                          containerInfo: ContainerInfo,
+                          node: Node,
+                          route: Map[String, String]): Unit
+
+  protected def postCreateZookeeperCluster(clusterInfo: ClusterInfo, successfulContainers: Seq[ContainerInfo]): Unit = {
+    //Default Nothing
+  }
+
+  protected def routeInfo(nodes: Map[Node, String]): Map[String, String] =
+    nodes.map {
+      case (node, _) =>
+        node.name -> CommonUtils.address(node.name)
+    }
+
 }
 
 object ContainerCollie {
-
   val ZK_SERVICE_NAME: String = "zk"
   val BK_SERVICE_NAME: String = "bk"
   val WK_SERVICE_NAME: String = "wk"
@@ -123,20 +251,4 @@ object ContainerCollie {
     */
   val DIVIDER: String = "-"
   val UNKNOWN: String = "unknown"
-
-  private[agent] val LENGTH_OF_CONTAINER_NAME_ID: Int = 7
-
-  /**
-    * generate unique name for the container.
-    * It can be used in setting container's hostname and name
-    * @param clusterName cluster name
-    * @return a formatted string. form: ${clusterName}-${service}-${index}
-    */
-  def format(prefixKey: String, clusterName: String, serviceName: String): String =
-    Seq(
-      prefixKey,
-      clusterName,
-      serviceName,
-      CommonUtils.randomString(LENGTH_OF_CONTAINER_NAME_ID)
-    ).mkString(ContainerCollie.DIVIDER)
 }

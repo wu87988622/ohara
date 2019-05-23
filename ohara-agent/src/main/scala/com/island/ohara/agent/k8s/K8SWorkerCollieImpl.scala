@@ -17,7 +17,7 @@
 package com.island.ohara.agent.k8s
 
 import com.island.ohara.agent._
-import com.island.ohara.client.configurator.v0.BrokerApi
+import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.typesafe.scalalogging.Logger
@@ -25,7 +25,7 @@ import com.typesafe.scalalogging.Logger
 import scala.concurrent.duration.{FiniteDuration, _}
 import scala.concurrent.{Await, ExecutionContext, Future}
 
-private class K8SWorkerCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
+private class K8SWorkerCollieImpl(val nodeCollie: NodeCollie, val k8sClient: K8SClient)
     extends K8SBasicCollieImpl[WorkerClusterInfo, WorkerCollie.ClusterCreator](nodeCollie, k8sClient)
     with WorkerCollie {
   private[this] val LOG = Logger(classOf[K8SWorkerCollieImpl])
@@ -86,8 +86,7 @@ private class K8SWorkerCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
       .flatMap(existNodes =>
         nodeCollie
           .nodes(nodeNames)
-          .map(_.map(node =>
-            node -> s"${ContainerCollie.format(PREFIX_KEY, clusterName, serviceName)}$DIVIDER${node.name}").toMap)
+          .map(_.map(node => node -> s"${format(PREFIX_KEY, clusterName, serviceName)}$DIVIDER${node.name}").toMap)
           .map((existNodes, _)))
       .flatMap {
         case (existNodes, newNodes) =>
@@ -174,4 +173,13 @@ private class K8SWorkerCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
 
   override protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] = toWorkerCluster(clusterName, containers)
+
+  override protected def doCreator(executionContext: ExecutionContext,
+                                   clusterName: String,
+                                   containerName: String,
+                                   containerInfo: ContainerInfo,
+                                   node: NodeApi.Node,
+                                   route: Map[String, String]): Unit = {
+    //TODO Wait worker refactor
+  }
 }

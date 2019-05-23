@@ -19,6 +19,7 @@ package com.island.ohara.agent
 import com.island.ohara.agent.Collie.ClusterCreator
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.NodeApi.Node
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.ClassTag
@@ -77,6 +78,20 @@ class FakeContainerCollie[T <: FakeContainerCollieClusterInfo: ClassTag, Creator
   }
 
   override protected def serviceName: String = "fakeservice"
+
+  override protected def doCreator(executionContext: ExecutionContext,
+                                   clusterName: String,
+                                   containerName: String,
+                                   containerInfo: ContainerInfo,
+                                   node: Node,
+                                   route: Map[String, String]): Unit = {
+    // No implement this function
+  }
+
+  override protected def routeInfo(nodes: Map[Node, String]): Map[String, String] = {
+    // Test doesn't implement route info function
+    Map.empty
+  }
 }
 
 case class FakeContainerCollieClusterInfo(name: String, nodeNames: Seq[String]) extends ClusterInfo {
