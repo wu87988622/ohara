@@ -17,7 +17,7 @@
 package com.island.ohara.agent.ssh
 
 import com.island.ohara.agent.docker.ContainerState
-import com.island.ohara.agent.{ClusterCache, NodeCollie, StreamCollie}
+import com.island.ohara.agent.{ClusterCache, ContainerCollie, NodeCollie, StreamCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.common.util.CommonUtils
@@ -60,7 +60,7 @@ private class StreamCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClient
               // if require node name is not in nodeCollie, do not take that node
               CommonUtils.requireNonEmpty(all.filter(n => nodeNames.contains(n.name)).asJava).asScala
           }
-          .map(_.map(node => node -> format(PREFIX_KEY, clusterName, serviceName)).toMap)
+          .map(_.map(node => node -> ContainerCollie.format(PREFIX_KEY, clusterName, serviceName)).toMap)
           .flatMap { nodes =>
             // ssh connection is slow so we submit request by multi-thread
             Future

@@ -17,7 +17,7 @@
 package com.island.ohara.agent.k8s
 
 import com.island.ohara.agent.docker.ContainerState
-import com.island.ohara.agent.{NodeCollie, StreamCollie}
+import com.island.ohara.agent.{ContainerCollie, NodeCollie, StreamCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.common.util.CommonUtils
@@ -54,7 +54,9 @@ private class K8SStreamCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
                   // if require node name is not in nodeCollie, do not take that node
                   CommonUtils.requireNonEmpty(all.filter(n => nodeNames.contains(n.name)).asJava).asScala
               }
-              .map(_.map(node => node -> String.join(DIVIDER, format(PREFIX_KEY, clusterName, serviceName), node.name)).toMap)
+              .map(_.map(node =>
+                node -> String
+                  .join(DIVIDER, ContainerCollie.format(PREFIX_KEY, clusterName, serviceName), node.name)).toMap)
               .flatMap { nodes =>
                 Future
                   .sequence(nodes.map {

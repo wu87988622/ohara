@@ -29,21 +29,6 @@ import scala.reflect.{ClassTag, classTag}
 
 abstract class ContainerCollie[T <: ClusterInfo: ClassTag, Creator <: ClusterCreator[T]](nodeCollie: NodeCollie)
     extends Collie[T, Creator] {
-  private[agent] val LENGTH_OF_CONTAINER_NAME_ID: Int = 7
-
-  /**
-    * generate unique name for the container.
-    * It can be used in setting container's hostname and name
-    * @param clusterName cluster name
-    * @return a formatted string. form: ${clusterName}-${service}-${index}
-    */
-  protected def format(prefixKey: String, clusterName: String, serviceName: String): String =
-    Seq(
-      prefixKey,
-      clusterName,
-      serviceName,
-      CommonUtils.randomString(LENGTH_OF_CONTAINER_NAME_ID)
-    ).mkString(ContainerCollie.DIVIDER)
 
   protected def doRemoveNode(previousCluster: T, beRemovedContainer: ContainerInfo)(
     implicit executionContext: ExecutionContext): Future[Boolean]
@@ -89,6 +74,7 @@ abstract class ContainerCollie[T <: ClusterInfo: ClassTag, Creator <: ClusterCre
         }
       }
   }
+
   protected def serviceName: String =
     if (classTag[T].runtimeClass.isAssignableFrom(classOf[ZookeeperClusterInfo])) ContainerCollie.ZK_SERVICE_NAME
     else if (classTag[T].runtimeClass.isAssignableFrom(classOf[BrokerClusterInfo])) ContainerCollie.BK_SERVICE_NAME
@@ -118,9 +104,11 @@ abstract class ContainerCollie[T <: ClusterInfo: ClassTag, Creator <: ClusterCre
   protected def doForceRemove(clusterInfo: T, containerInfos: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[Boolean] =
     doRemove(clusterInfo, containerInfos)
+
 }
 
 object ContainerCollie {
+
   val ZK_SERVICE_NAME: String = "zk"
   val BK_SERVICE_NAME: String = "bk"
   val WK_SERVICE_NAME: String = "wk"
@@ -134,4 +122,21 @@ object ContainerCollie {
     * used to distinguish the cluster name and service name
     */
   val DIVIDER: String = "-"
+  val UNKNOWN: String = "unknown"
+
+  private[agent] val LENGTH_OF_CONTAINER_NAME_ID: Int = 7
+
+  /**
+    * generate unique name for the container.
+    * It can be used in setting container's hostname and name
+    * @param clusterName cluster name
+    * @return a formatted string. form: ${clusterName}-${service}-${index}
+    */
+  def format(prefixKey: String, clusterName: String, serviceName: String): String =
+    Seq(
+      prefixKey,
+      clusterName,
+      serviceName,
+      CommonUtils.randomString(LENGTH_OF_CONTAINER_NAME_ID)
+    ).mkString(ContainerCollie.DIVIDER)
 }

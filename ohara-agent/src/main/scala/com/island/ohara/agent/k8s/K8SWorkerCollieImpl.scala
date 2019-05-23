@@ -25,7 +25,7 @@ import com.typesafe.scalalogging.Logger
 import scala.concurrent.duration.{FiniteDuration, _}
 import scala.concurrent.{Await, ExecutionContext, Future}
 
-private class K8SWorkerCollieImpl(val nodeCollie: NodeCollie, val k8sClient: K8SClient)
+private class K8SWorkerCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
     extends K8SBasicCollieImpl[WorkerClusterInfo, WorkerCollie.ClusterCreator](nodeCollie, k8sClient)
     with WorkerCollie {
   private[this] val LOG = Logger(classOf[K8SWorkerCollieImpl])
@@ -86,7 +86,8 @@ private class K8SWorkerCollieImpl(val nodeCollie: NodeCollie, val k8sClient: K8S
       .flatMap(existNodes =>
         nodeCollie
           .nodes(nodeNames)
-          .map(_.map(node => node -> s"${format(PREFIX_KEY, clusterName, serviceName)}$DIVIDER${node.name}").toMap)
+          .map(_.map(node =>
+            node -> s"${ContainerCollie.format(PREFIX_KEY, clusterName, serviceName)}$DIVIDER${node.name}").toMap)
           .map((existNodes, _)))
       .flatMap {
         case (existNodes, newNodes) =>

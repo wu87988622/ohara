@@ -73,7 +73,7 @@ private class WorkerCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClient
       .flatMap(existNodes =>
         nodeCollie
           .nodes(nodeNames)
-          .map(_.map(node => node -> format(PREFIX_KEY, clusterName, serviceName)).toMap)
+          .map(_.map(node => node -> ContainerCollie.format(PREFIX_KEY, clusterName, serviceName)).toMap)
           .map((existNodes, _)))
       .map {
         case (existNodes, newNodes) =>

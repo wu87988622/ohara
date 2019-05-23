@@ -21,7 +21,7 @@ import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.reflect.{ClassTag, classTag}
+import scala.reflect.ClassTag
 
 /**
   * This class only support ContainerCollie abstract class logic test.
@@ -76,9 +76,7 @@ class FakeContainerCollie[T <: FakeContainerCollieClusterInfo: ClassTag, Creator
     }
   }
 
-  override protected def serviceName: String =
-    if (classTag[T].runtimeClass.isAssignableFrom(classOf[FakeContainerCollieClusterInfo])) FakeCollie.FAKE_SERVICE_NAME
-    else throw new IllegalArgumentException(s"Who are you, ${classTag[T].runtimeClass} ???")
+  override protected def serviceName: String = "fakeservice"
 }
 
 case class FakeContainerCollieClusterInfo(name: String, nodeNames: Seq[String]) extends ClusterInfo {

@@ -25,7 +25,7 @@ import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
 
-private class K8SBrokerCollieImpl(val nodeCollie: NodeCollie, val k8sClient: K8SClient)
+private class K8SBrokerCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
     extends K8SBasicCollieImpl[BrokerClusterInfo, BrokerCollie.ClusterCreator](nodeCollie, k8sClient)
     with BrokerCollie {
 
@@ -63,7 +63,8 @@ private class K8SBrokerCollieImpl(val nodeCollie: NodeCollie, val k8sClient: K8S
         .flatMap(existNodes =>
           nodeCollie
             .nodes(nodeNames)
-            .map(_.map(node => node -> s"${format(PREFIX_KEY, clusterName, serviceName)}$DIVIDER${node.name}").toMap)
+            .map(_.map(node =>
+              node -> s"${ContainerCollie.format(PREFIX_KEY, clusterName, serviceName)}$DIVIDER${node.name}").toMap)
             .map((existNodes, _)))
         .flatMap {
           case (existNodes, newNodes) =>

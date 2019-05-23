@@ -15,7 +15,6 @@
  */
 
 package com.island.ohara.agent
-
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.rule.SmallTest
