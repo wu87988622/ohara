@@ -53,12 +53,6 @@ private[configurator] object TopicRoute {
   )
 
   /**
-    * TODO: remove TargetCluster. see https://github.com/oharastream/ohara/issues/206
-    */
-  private[this] def updateBrokerClusterName(request: TopicCreationRequest, t: TargetCluster): TopicCreationRequest =
-    if (request.brokerClusterName.isEmpty) request.copy(brokerClusterName = t) else request
-
-  /**
     * topic's id is equal to name :)
     */
   private[this] def hookOfAdd(request: TopicCreationRequest)(implicit brokerCollie: BrokerCollie,
@@ -96,8 +90,7 @@ private[configurator] object TopicRoute {
     RouteUtils.basicRoute[TopicCreationRequest, TopicInfo](
       root = TOPICS_PREFIX_PATH,
       // we don't care for generated id since topic's id should be equal to the name passed by user.
-      hookOfAdd = (targetCluster: TargetCluster, _: Id, request: TopicCreationRequest) =>
-        hookOfAdd(updateBrokerClusterName(request, targetCluster)),
+      hookOfAdd = (_: Id, request: TopicCreationRequest) => hookOfAdd(request),
       hookOfUpdate = (id: Id, request: TopicCreationRequest, previous: TopicInfo) =>
         CollieUtils.topicAdmin(Some(previous.brokerClusterName)).flatMap {
           case (cluster, client) =>

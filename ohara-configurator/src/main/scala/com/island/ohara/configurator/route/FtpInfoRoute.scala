@@ -19,7 +19,7 @@ package com.island.ohara.configurator.route
 import akka.http.scaladsl.server
 import com.island.ohara.client.configurator.v0.FtpApi._
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.route.RouteUtils.{Id, TargetCluster}
+import com.island.ohara.configurator.route.RouteUtils.Id
 import com.island.ohara.configurator.store.DataStore
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -29,7 +29,7 @@ private[configurator] object FtpInfoRoute {
   def apply(implicit store: DataStore, executionContext: ExecutionContext): server.Route =
     RouteUtils.basicRoute[FtpInfoRequest, FtpInfo](
       root = FTP_PREFIX_PATH,
-      reqToRes = (_: TargetCluster, id: Id, request: FtpInfoRequest) => {
+      reqToRes = (id: Id, request: FtpInfoRequest) => {
         validateField(request)
         Future.successful(
           FtpInfo(id,

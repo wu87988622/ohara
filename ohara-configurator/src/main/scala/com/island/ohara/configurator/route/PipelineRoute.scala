@@ -27,7 +27,7 @@ import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.route.RouteUtils.{Id, TargetCluster}
+import com.island.ohara.configurator.route.RouteUtils.Id
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.island.ohara.kafka.connector.json.SettingDefinitions
 import com.typesafe.scalalogging.Logger
@@ -355,13 +355,6 @@ private[configurator] object PipelineRoute {
     )
 
   /**
-    * TODO: remove TargetCluster. see https://github.com/oharastream/ohara/issues/206
-    */
-  private[this] def updateWorkerClusterName(request: PipelineCreationRequest,
-                                            t: TargetCluster): PipelineCreationRequest =
-    if (request.workerClusterName.isEmpty) request.copy(workerClusterName = t) else request
-
-  /**
     * throw exception if request has invalid ids
     */
   private[this] def assertNoUnknown(req: PipelineCreationRequest)(
@@ -383,8 +376,7 @@ private[configurator] object PipelineRoute {
             meterCache: MeterCache): server.Route =
     RouteUtils.basicRoute[PipelineCreationRequest, Pipeline](
       root = PIPELINES_PREFIX_PATH,
-      hookOfAdd = (t: TargetCluster, id: Id, request: PipelineCreationRequest) =>
-        assertNoUnknown(request).flatMap(checkedRequest => toRes(id, updateWorkerClusterName(checkedRequest, t))),
+      hookOfAdd = (id: Id, request: PipelineCreationRequest) => assertNoUnknown(request).flatMap(toRes(id, _)),
       hookOfUpdate = (id: Id, request: PipelineCreationRequest, previous: Pipeline) =>
         assertNoUnknown(request).flatMap(checkedRequest =>
           toRes(id, checkedRequest.copy(workerClusterName = Some(previous.workerClusterName)))),

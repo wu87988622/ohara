@@ -35,19 +35,15 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
 private[route] object RouteUtils {
   val LOG = Logger(RouteUtils.getClass)
-  // This is a query parameter.
-  type TargetCluster = Option[String]
   type Id = String
 
-  private[this] def routeOfAdd[Req, Res <: Data](hook: (TargetCluster, Id, Req) => Future[Res])(
-    implicit store: DataStore,
-    rm: RootJsonFormat[Req],
-    rm2: RootJsonFormat[Res],
-    executionContext: ExecutionContext) = post {
-    entity(as[Req]) { req =>
-      parameter(Parameters.CLUSTER_NAME.?)(name => complete(hook(name, CommonUtils.uuid(), req).flatMap(store.add)))
+  private[this] def routeOfAdd[Req, Res <: Data](hook: (Id, Req) => Future[Res])(implicit store: DataStore,
+                                                                                 rm: RootJsonFormat[Req],
+                                                                                 rm2: RootJsonFormat[Res],
+                                                                                 executionContext: ExecutionContext) =
+    post {
+      entity(as[Req])(req => complete(hook(CommonUtils.uuid(), req).flatMap(store.add)))
     }
-  }
 
   private[this] def routeOfList[Res <: Data: ClassTag](hook: Seq[Res] => Future[Seq[Res]])(
     implicit store: DataStore,
@@ -84,7 +80,7 @@ private[route] object RouteUtils {
     * @return route
     */
   def basicRoute[Req, Res <: Data: ClassTag](root: String,
-                                             reqToRes: (TargetCluster, Id, Req) => Future[Res],
+                                             reqToRes: (Id, Req) => Future[Res],
                                              resToRes: Res => Future[Res] = (r: Res) => Future.successful(r))(
     implicit store: DataStore,
     rm: RootJsonFormat[Req],
@@ -92,13 +88,13 @@ private[route] object RouteUtils {
     executionContext: ExecutionContext): server.Route = basicRoute(
     root = root,
     hookOfAdd = reqToRes,
-    hookOfUpdate = (id: Id, req: Req, _: Res) => reqToRes(None, id, req),
+    hookOfUpdate = (id: Id, req: Req, _: Res) => reqToRes(id, req),
     hookOfList = (r: Seq[Res]) => Future.traverse(r)(resToRes),
     hookOfGet = (r: Res) => resToRes(r)
   )
 
   def basicRoute[Req, Res <: Data: ClassTag](root: String,
-                                             hookOfAdd: (TargetCluster, Id, Req) => Future[Res],
+                                             hookOfAdd: (Id, Req) => Future[Res],
                                              hookOfUpdate: (Id, Req, Res) => Future[Res],
                                              hookOfList: Seq[Res] => Future[Seq[Res]],
                                              hookOfGet: Res => Future[Res])(
@@ -129,7 +125,7 @@ private[route] object RouteUtils {
     * @return route
     */
   def basicRoute[Req, Res <: Data: ClassTag](root: String,
-                                             hookOfAdd: (TargetCluster, Id, Req) => Future[Res],
+                                             hookOfAdd: (Id, Req) => Future[Res],
                                              hookOfUpdate: (Id, Req, Res) => Future[Res],
                                              hookOfList: Seq[Res] => Future[Seq[Res]],
                                              hookOfGet: Res => Future[Res],

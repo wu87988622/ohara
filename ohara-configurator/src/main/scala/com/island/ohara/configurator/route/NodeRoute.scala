@@ -20,7 +20,7 @@ import akka.http.scaladsl.server
 import com.island.ohara.agent.ClusterCollie
 import com.island.ohara.client.configurator.v0.NodeApi._
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.route.RouteUtils.{Id, TargetCluster}
+import com.island.ohara.configurator.route.RouteUtils.Id
 import com.island.ohara.configurator.store.DataStore
 import com.typesafe.scalalogging.Logger
 
@@ -43,7 +43,7 @@ object NodeRoute {
   def apply(implicit store: DataStore, clusterCollie: ClusterCollie, executionContext: ExecutionContext): server.Route =
     RouteUtils.basicRoute[NodeCreationRequest, Node](
       root = NODES_PREFIX_PATH,
-      hookOfAdd = (_: TargetCluster, _: Id, request: NodeCreationRequest) => {
+      hookOfAdd = (_: Id, request: NodeCreationRequest) => {
         if (request.name.isEmpty) Future.failed(new IllegalArgumentException(s"name is required"))
         else if (CommonUtils.hasUpperCase(request.name.get))
           Future.failed(new IllegalArgumentException(s"${request.name.get} node name cannot set the uppercase string"))
