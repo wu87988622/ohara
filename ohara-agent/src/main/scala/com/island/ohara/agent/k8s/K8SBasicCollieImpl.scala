@@ -20,6 +20,7 @@ import com.island.ohara.agent.Collie.ClusterCreator
 import com.island.ohara.agent.{ContainerCollie, NodeCollie}
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.util.Releasable
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -78,20 +79,17 @@ private[this] abstract class K8SBasicCollieImpl[T <: ClusterInfo: ClassTag, Crea
   override def clusters(implicit executionContext: ExecutionContext): Future[Map[T, Seq[ContainerInfo]]] = nodeCollie
     .nodes()
     .flatMap(
-      nodes =>
-        Future.sequence(
-          nodes.map(node => {
-            k8sClient.containers.map(cs =>
-              cs.filter(x => x.nodeName.equals(node.name) && x.name.contains(s"$DIVIDER${serviceName}$DIVIDER")))
-          })
-      )
+      nodes => filterContainerService(nodes)
     )
-    .map(_.flatten)
     .map(f => {
-      f.map(container => container.name.split(s"$DIVIDER${serviceName}$DIVIDER").head -> container)
+      f.map(container => {
+          if (container.name.split(DIVIDER).length < 3)
+            throw new IllegalArgumentException(s"Your container name is ${container.name}, format error")
+          container.name.split(DIVIDER)(1) -> container
+        })
         .groupBy(_._1)
         .map {
-          case (clusterName, value) => clusterName.split(DIVIDER).last -> value.map(_._2)
+          case (clusterName, value) => clusterName -> value.map(_._2)
         }
         .map {
           case (clusterName, containers) => toClusterDescription(clusterName, containers).map(_ -> containers)
@@ -100,6 +98,20 @@ private[this] abstract class K8SBasicCollieImpl[T <: ClusterInfo: ClassTag, Crea
     })
     .flatMap(Future.sequence(_))
     .map(_.toMap)
+
+  protected[k8s] def filterContainerService(nodes: Seq[Node])(
+    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] = {
+    Future
+      .sequence(
+        nodes.map(node => {
+          k8sClient.containers.map(cs =>
+            cs.filter(x =>
+              x.nodeName.equals(node.name) && x.name
+                .startsWith(PREFIX_KEY) && x.name.split(DIVIDER)(2).equals(serviceName)))
+        })
+      )
+      .map(_.flatten)
+  }
 
   override def close(): Unit = {
     Releasable.close(k8sClient)
