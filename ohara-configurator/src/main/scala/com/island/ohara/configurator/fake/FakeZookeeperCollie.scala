@@ -18,7 +18,6 @@ package com.island.ohara.configurator.fake
 
 import com.island.ohara.agent.{NodeCollie, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -49,12 +48,4 @@ private[configurator] class FakeZookeeperCollie(nodeCollie: NodeCollie)
     previousContainers: Seq[ContainerInfo],
     newNodeName: String)(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] = Future.failed(
     new UnsupportedOperationException("zookeeper collie doesn't support to add node from a running cluster"))
-
-  override protected def doCreator(executionContext: ExecutionContext,
-                                   clusterName: String,
-                                   containerName: String,
-                                   containerInfo: ContainerInfo,
-                                   node: NodeApi.Node,
-                                   route: Map[String, String]): Unit =
-    new UnsupportedOperationException("zookeeper collie doesn't support to doCreator function")
 }

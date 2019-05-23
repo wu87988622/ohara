@@ -19,7 +19,7 @@ package com.island.ohara.configurator.fake
 import java.util.concurrent.ConcurrentHashMap
 
 import com.island.ohara.agent.{NodeCollie, WorkerCollie}
-import com.island.ohara.client.configurator.v0.{ContainerApi, NodeApi}
+import com.island.ohara.client.configurator.v0.ContainerApi
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
@@ -147,12 +147,4 @@ private[configurator] class FakeWorkerCollie(nodeCollie: NodeCollie, wkConnectio
           sinks = Seq.empty,
           nodeNames = previousCluster.nodeNames :+ newNodeName
         )))
-
-  override protected def doCreator(executionContext: ExecutionContext,
-                                   clusterName: String,
-                                   containerName: String,
-                                   containerInfo: ContainerInfo,
-                                   node: NodeApi.Node,
-                                   route: Map[String, String]): Unit =
-    throw new UnsupportedOperationException("Fake worker not support doCreator function implement")
 }

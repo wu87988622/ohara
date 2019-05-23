@@ -19,7 +19,7 @@ package com.island.ohara.configurator.fake
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.agent.{NodeCollie, StreamCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.{NodeApi, StreamApi}
+import com.island.ohara.client.configurator.v0.StreamApi
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.common.util.CommonUtils
 
@@ -67,12 +67,4 @@ private[configurator] class FakeStreamCollie(nodeCollie: NodeCollie)
     previousContainers: Seq[ContainerInfo],
     newNodeName: String)(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] =
     Future.failed(new UnsupportedOperationException("stream collie doesn't support to add node from a running cluster"))
-
-  override protected def doCreator(executionContext: ExecutionContext,
-                                   clusterName: String,
-                                   containerName: String,
-                                   containerInfo: ContainerInfo,
-                                   node: NodeApi.Node,
-                                   route: Map[String, String]): Unit =
-    throw new UnsupportedOperationException("Fake stream collie not support doCreator function implement")
 }

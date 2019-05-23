@@ -19,7 +19,6 @@ package com.island.ohara.agent.k8s
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.NodeApi
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.duration.FiniteDuration
@@ -140,13 +139,4 @@ private class K8SBrokerCollieImpl(val nodeCollie: NodeCollie, val k8sClient: K8S
 
   override protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] = toBrokerCluster(clusterName, containers)
-
-  override protected def doCreator(executionContext: ExecutionContext,
-                                   clusterName: String,
-                                   containerName: String,
-                                   containerInfo: ContainerInfo,
-                                   node: NodeApi.Node,
-                                   route: Map[String, String]): Unit = {
-    //TODO Wait broker refactor
-  }
 }
