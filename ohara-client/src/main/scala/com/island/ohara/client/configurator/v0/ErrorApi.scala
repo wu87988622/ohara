@@ -28,10 +28,14 @@ object ErrorApi {
     * @param message error message
     * @param stack error stack
     */
-  final case class Error(code: String, message: String, stack: String) extends HttpExecutor.Error
+  final case class Error(code: String, message: String, stack: String, apiUrl: Option[String])
+      extends HttpExecutor.Error
 
   def of(e: Throwable): Error =
-    Error(e.getClass.getName, if (e.getMessage == null) "unknown" else e.getMessage, ExceptionUtils.getStackTrace(e))
+    Error(code = e.getClass.getName,
+          message = if (e.getMessage == null) "unknown" else e.getMessage,
+          stack = ExceptionUtils.getStackTrace(e),
+          apiUrl = None)
 
-  implicit val ERROR_FORMAT: RootJsonFormat[Error] = jsonFormat3(Error)
+  implicit val ERROR_FORMAT: RootJsonFormat[Error] = jsonFormat4(Error)
 }
