@@ -72,6 +72,13 @@ again) don't happen on your nodes.
 After validating your network configurations layer by layer, you could try filing issue on github if you still can't
 get Ohara to work. 
 
+###  We often encounter problems with network problems.
+After install Docker-ce package in CentOS,the network default policy is block docker's bridge to host network,
+You **must** add a rule on the firewall:
+
+```bash
+sudo firewall-cmd --zone=trusted --permanent --add-interface=docker0
+```
 ----------
 
 ### Install Docker-ce on Centos
