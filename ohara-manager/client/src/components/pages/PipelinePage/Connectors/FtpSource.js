@@ -275,25 +275,6 @@ class FtpSource extends React.Component {
   }, 1000);
 
   render() {
-    const {
-      defs,
-      configs,
-      topics,
-      state,
-      isTestConnectionBtnWorking,
-    } = this.state;
-
-    const formProps = {
-      defs,
-      configs,
-      topics,
-      state,
-      handleChange: this.handleChange,
-      handleColumnChange: this.handleColumnChange,
-      handleColumnRowDelete: this.handleColumnRowDelete,
-      handleColumnRowUp: this.handleColumnRowUp,
-      handleColumnRowDown: this.handleColumnRowDown,
-    };
     return (
       <React.Fragment>
         <s.BoxWrapper padding="25px 0 0 0">

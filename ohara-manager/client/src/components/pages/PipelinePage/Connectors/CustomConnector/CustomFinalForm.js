@@ -1,7 +1,23 @@
+/*
+ * Copyright 2019 is-land
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import React from 'react';
 import * as utils from './customConnectorUtils';
 import { validateConnector } from 'api/validateApi';
-import { get } from 'lodash';
+import { get, debounce } from 'lodash';
 import toastr from 'toastr';
 import * as MESSAGES from 'constants/messages';
 import * as s from './styles';
@@ -9,14 +25,63 @@ import TestConnectionBtn from './TestConnectionBtn';
 import { Form } from 'react-final-form';
 import { fetchWorker } from 'api/workerApi';
 import * as connectorApi from 'api/connectorApi';
+import PropTypes from 'prop-types';
+import { graphPropType } from 'propTypes/pipeline';
 
 class CustomFinalForm extends React.Component {
+  static propTypes = {
+    hasChanges: PropTypes.bool.isRequired,
+    updateHasChanges: PropTypes.func.isRequired,
+    updateGraph: PropTypes.func.isRequired,
+    loadGraph: PropTypes.func.isRequired,
+    refreshGraph: PropTypes.func.isRequired,
+    match: PropTypes.shape({
+      params: PropTypes.object,
+    }).isRequired,
+    graph: PropTypes.arrayOf(graphPropType).isRequired,
+    history: PropTypes.shape({
+      push: PropTypes.func.isRequired,
+    }).isRequired,
+    pipelineTopics: PropTypes.array.isRequired,
+    isPipelineRunning: PropTypes.bool.isRequired,
+    globalTopics: PropTypes.array.isRequired,
+    workerClusterName: PropTypes.string.isRequired,
+  };
+
   state = {
     defs: [],
     topics: [],
     configs: null,
     state: null,
     isTestConnectionBtnWorking: false,
+  };
+
+  componentDidMount() {
+    this.fetchData();
+  }
+
+  componentDidUpdate(prevProps) {
+    const { pipelineTopics: prevTopics } = prevProps;
+    const { connectorId: prevConnectorId } = prevProps.match.params;
+    const { hasChanges, pipelineTopics: currTopics } = this.props;
+    const { connectorId: currConnectorId } = this.props.match.params;
+
+    if (prevTopics !== currTopics) {
+      this.setState({ writeTopics: currTopics });
+    }
+
+    if (prevConnectorId !== currConnectorId) {
+      this.fetchData();
+    }
+
+    if (hasChanges) {
+      this.save();
+    }
+  }
+
+  setTopics = () => {
+    const { pipelineTopics } = this.props;
+    this.setState({ topics: pipelineTopics.map(t => t.name) });
   };
 
   fetchData = async () => {
@@ -39,31 +104,6 @@ class CustomFinalForm extends React.Component {
     }
   };
 
-  componentDidMount() {
-    this.fetchData();
-  }
-
-  handleTestConnection = async e => {
-    e.preventDefault();
-    this.setState({ isTestConnectionBtnWorking: true });
-
-    // const topics = this.state.topic
-    const topicId = utils.getCurrTopicId({
-      originals: this.props.globalTopics,
-      target: this.state.topics[0],
-    });
-
-    const params = { ...this.state.configs, topics: topicId };
-    const res = await validateConnector(params);
-    this.setState({ isTestConnectionBtnWorking: false });
-
-    const isSuccess = get(res, 'data.isSuccess', false);
-
-    if (isSuccess) {
-      toastr.success(MESSAGES.TEST_SUCCESS);
-    }
-  };
-
   fetchConnector = async () => {
     const { connectorId } = this.props.match.params;
     const res = await connectorApi.fetchConnector(connectorId);
@@ -83,51 +123,146 @@ class CustomFinalForm extends React.Component {
     }
   };
 
-  setTopics = () => {
-    const { pipelineTopics } = this.props;
-    this.setState({ topics: pipelineTopics.map(t => t.name) });
+  updateComponent = updatedConfigs => {
+    this.props.updateHasChanges(true);
+    this.setState({ configs: updatedConfigs });
   };
 
-  render() {
+  handleChange = ({ target }) => {
+    const { configs } = this.state;
+    const updatedConfigs = utils.updateConfigs({ configs, target });
+    this.updateComponent(updatedConfigs);
+  };
+
+  handleColumnChange = newColumn => {
+    const { configs } = this.state;
+    const updatedConfigs = utils.addColumn({ configs, newColumn });
+
+    this.updateComponent(updatedConfigs);
+  };
+
+  handleColumnRowDelete = currRow => {
+    const { configs } = this.state;
+    const updatedConfigs = utils.removeColumn({ configs, currRow });
+    this.updateComponent(updatedConfigs);
+  };
+
+  handleColumnRowUp = (e, order) => {
+    e.preventDefault();
+    const { configs } = this.state;
+    const updatedConfigs = utils.moveColumnRowUp({ configs, order });
+    this.updateComponent(updatedConfigs);
+  };
+
+  handleColumnRowDown = (e, order) => {
+    e.preventDefault();
+    const { configs } = this.state;
+    const updatedConfigs = utils.moveColumnRowDown({ configs, order });
+    this.updateComponent(updatedConfigs);
+  };
+
+  handleTestConnection = async e => {
+    this.setState({ isTestConnectionBtnWorking: true });
+
+    // const topics = this.state.topic
+    const topicId = utils.getCurrTopicId({
+      originals: this.props.globalTopics,
+      target: this.state.topics[0],
+    });
+
+    const params = { ...this.state.configs, topics: topicId };
+    const res = await validateConnector(params);
+    this.setState({ isTestConnectionBtnWorking: false });
+
+    const isSuccess = get(res, 'data.isSuccess', false);
+
+    if (isSuccess) {
+      toastr.success(MESSAGES.TEST_SUCCESS);
+    }
+  };
+
+  handleDeleteConnector = async () => {
+    const { match, refreshGraph, history } = this.props;
+    const { connectorId, pipelineId } = match.params;
+    const res = await connectorApi.deleteConnector(connectorId);
+    const isSuccess = get(res, 'data.isSuccess', false);
+
+    if (isSuccess) {
+      const { name: connectorName } = this.state;
+      toastr.success(`${MESSAGES.CONNECTOR_DELETION_SUCCESS} ${connectorName}`);
+      await refreshGraph();
+
+      const path = `/pipelines/edit/${pipelineId}`;
+      history.push(path);
+    }
+  };
+
+  save = debounce(async () => {
     const {
-      defs,
+      updateHasChanges,
+      match,
+      graph,
+      updateGraph,
+      globalTopics,
+    } = this.props;
+    const { configs } = this.state;
+    const { connectorId } = match.params;
+
+    const topicId = utils.getCurrTopicId({
+      originals: globalTopics,
+      target: configs.topics,
+    });
+
+    const params = { ...configs, topics: topicId };
+
+    await connectorApi.updateConnector({ id: connectorId, params });
+    updateHasChanges(false);
+
+    const update = utils.getUpdatedTopic({
+      graph,
+      connectorId,
       configs,
-      topics,
-      state,
-      isTestConnectionBtnWorking,
-    } = this.state;
-    const formProps = {
-      defs,
-      configs,
-      topics,
-      state,
-      handleChange: this.handleChange,
-      handleColumnChange: this.handleColumnChange,
-      handleColumnRowDelete: this.handleColumnRowDelete,
-      handleColumnRowUp: this.handleColumnRowUp,
-      handleColumnRowDown: this.handleColumnRowDown,
-    };
+      originalTopics: globalTopics,
+    });
+
+    updateGraph({ update });
+  }, 1000);
+
+  render() {
+    const replaceConfigs = utils.replaceKeys(this.state.configs);
     return (
       <Form
         onSubmit={this.handleTestConnection}
+        initialValues={replaceConfigs}
+        isTestConnectionBtnWorking={this.state.isTestConnectionBtnWorking}
+        formProps={{
+          defs: this.state.defs,
+          configs: this.state.configs,
+          topics: this.state.topics,
+          state: this.state.state,
+          handleChange: this.handleChange,
+          handleColumnChange: this.handleColumnChange,
+          handleColumnRowDelete: this.handleColumnRowDelete,
+          handleColumnRowUp: this.handleColumnRowUp,
+          handleColumnRowDown: this.handleColumnRowDown,
+        }}
         render={({
           handleSubmit,
           form,
-          submitting,
-          pristine,
-          invalid,
+          formProps,
+          isTestConnectionBtnWorking,
           values,
         }) => {
           return (
-            <div>
-              {utils.renderForm(formProps, form, handleSubmit)}
+            <>
+              {utils.renderForm(formProps, form)}
               <s.StyledForm>
                 <TestConnectionBtn
-                  handleClick={this.handleTestConnection}
+                  handleClick={handleSubmit}
                   isWorking={isTestConnectionBtnWorking}
                 />
               </s.StyledForm>
-            </div>
+            </>
           );
         }}
       />

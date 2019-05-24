@@ -17,11 +17,11 @@
 import React from 'react';
 import { get, isEmpty } from 'lodash';
 
-import Select from './Select';
 import ColumnTable from './ColumnTable';
 import { isEmptyStr } from 'utils/commonUtils';
 import { findByGraphId } from '../../pipelineUtils/commonUtils';
-import { FormGroup, Input, Label } from 'common/Form';
+import { FormGroup, Label } from 'common/Form';
+import { InputField, SelectField } from 'common/FormFields';
 import { CONNECTOR_STATES } from 'constants/pipelines';
 import UtilsTabs from './UtilsTabs';
 import { Field } from 'react-final-form';
@@ -166,13 +166,27 @@ export const groupBy = (array, fn) => {
   });
 };
 
+export const replaceKeys = obj => {
+  if (obj == null) {
+    return null;
+  }
+  return Object.keys(obj).reduce((acc, key) => {
+    const renamedObject = {
+      [key.replace(/\./g, '_')]: obj[key],
+    };
+
+    return {
+      ...acc,
+      ...renamedObject,
+    };
+  }, {});
+};
+
 export const renderForm = ({
   state,
   defs,
   configs,
   topics,
-  form,
-  handleSubmit,
   handleChange,
   handleColumnChange,
   handleColumnRowDelete,
@@ -219,6 +233,7 @@ export const renderForm = ({
         } = def;
         const configValue = configs[key];
         const columnTableHeader = tableKeys.concat(tableActions);
+        const replaceKey = key.replace(/\./g, '_');
         const displayValue = convertData({
           configValue,
           valueType,
@@ -244,12 +259,11 @@ export const renderForm = ({
                 <Field
                   id={`${displayName}`}
                   width="100%"
-                  value={String(displayValue)}
-                  name={key}
+                  name={replaceKey}
                   type={type}
                   onChange={handleChange}
                   disabled={!editable || isRunning}
-                  component={Input}
+                  component={InputField}
                 />
               </FormGroup>
             );
@@ -269,13 +283,12 @@ export const renderForm = ({
                 <Field
                   id={`${displayName}`}
                   list={topics}
-                  value={displayValue}
-                  handleChange={handleChange}
-                  name={key}
+                  onChange={handleChange}
+                  name={replaceKey}
                   width="100%"
                   disabled={isRunning}
                   clearable
-                  component={Select}
+                  component={SelectField}
                 />
               </FormGroup>
             );
@@ -307,7 +320,7 @@ export const renderForm = ({
   const hasTab = groupDefs.length > 1 ? true : false;
   if (hasTab) {
     return (
-      <form onSubmit={handleSubmit}>
+      <form>
         <UtilsTabs groupDefs={groupDefs} defsToFormGroup={defsToFormGroup} />
       </form>
     );
