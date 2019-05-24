@@ -19,7 +19,7 @@ import sbt._
 object versions {
   val akkaHttpV = "10.1.3"
   val akkaV = "2.5.12"
-  val kafkaV = "1.0.2"
+  val kafkaV = "2.2.0"
   val slf4jV = "1.7.25"
   val hadoopV = "2.7.0"
   val commonsNetV = "3.6"

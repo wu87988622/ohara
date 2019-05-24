@@ -88,19 +88,19 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .verify(
-          ConnectorCreationRequest(
-            className = Some(classOf[DumbSink].getName),
-            topicNames = Seq.empty,
-            numberOfTasks = None,
-            workerClusterName = None,
-            columns = Seq.empty,
-            settings = Map.empty
-          )))
+        .verify(ConnectorCreationRequest(
+          className = Some(classOf[DumbSink].getName),
+          // After kafka 1.1.0, each sink connector must set `topics` or `topics.regex`
+          topicNames = Seq(CommonUtils.randomString(5)),
+          numberOfTasks = None,
+          workerClusterName = None,
+          columns = Seq.empty,
+          settings = Map.empty
+        )))
     response.className.get() shouldBe classOf[DumbSink].getName
     response.settings().size() should not be 0
     response.numberOfTasks().isPresent shouldBe false
-    response.topicNames().size() shouldBe 0
+    response.topicNames().size() shouldBe 1
     response.author().isPresent shouldBe true
     response.version().isPresent shouldBe true
     response.revision().isPresent shouldBe true

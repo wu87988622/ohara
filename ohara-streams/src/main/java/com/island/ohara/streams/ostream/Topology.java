@@ -22,6 +22,7 @@ import com.island.ohara.streams.data.Stele;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Properties;
 import java.util.stream.Collectors;
 import org.apache.kafka.common.utils.Utils;
 import org.apache.kafka.streams.TopologyDescription;
@@ -38,10 +39,19 @@ public class Topology implements AutoCloseable {
 
   Topology(
       org.apache.kafka.streams.StreamsBuilder builder,
-      org.apache.kafka.streams.StreamsConfig config,
+      Properties config,
       boolean isCleanStart,
       boolean describeOnly) {
     this.topology = builder.build();
+
+    // Temporary solution to set default `state.dir` value
+    String defaultStateDir =
+        (String)
+            org.apache.kafka.streams.StreamsConfig.configDef()
+                .configKeys()
+                .get(StreamsConfig.STATE_DIR)
+                .defaultValue;
+    config.setProperty(StreamsConfig.STATE_DIR, defaultStateDir);
 
     // For now, windows handle cleanUp() -> DeleteFile(lock) with different behavior as Linux and
     // MacOS
@@ -49,8 +59,8 @@ public class Topology implements AutoCloseable {
     // until the following JIRA fixed
     // See : https://issues.apache.org/jira/browse/KAFKA-6647
     if (isCleanStart) {
-      final File baseDir = new File(config.getString(StreamsConfig.STATE_DIR));
-      final File stateDir = new File(baseDir, config.getString(StreamsConfig.APP_ID));
+      final File baseDir = new File(config.getProperty(StreamsConfig.STATE_DIR));
+      final File stateDir = new File(baseDir, config.getProperty(StreamsConfig.APP_ID));
       try {
         Utils.delete(stateDir);
       } catch (IOException e) {
@@ -84,7 +94,7 @@ public class Topology implements AutoCloseable {
                           node -> {
                             String name =
                                 (node instanceof InternalTopologyBuilder.Source)
-                                    ? ((InternalTopologyBuilder.Source) node).topics()
+                                    ? ((InternalTopologyBuilder.Source) node).topicSet().toString()
                                     : ((node instanceof InternalTopologyBuilder.Sink)
                                         ? ((InternalTopologyBuilder.Sink) node).topic()
                                         : "");

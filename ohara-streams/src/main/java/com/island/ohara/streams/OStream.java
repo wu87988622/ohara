@@ -20,8 +20,8 @@ import com.island.ohara.common.data.Row;
 import com.island.ohara.streams.data.Poneglyph;
 import com.island.ohara.streams.ostream.*;
 import java.util.List;
+import org.apache.kafka.streams.kstream.Grouped;
 import org.apache.kafka.streams.kstream.KTable;
-import org.apache.kafka.streams.kstream.Serialized;
 import org.apache.kafka.streams.kstream.ValueJoiner;
 
 /**
@@ -41,7 +41,8 @@ public interface OStream<T extends Row> {
    *
    * @param topicName the topic name; cannot be {@code null}
    * @return {@link OTable}
-   * @see org.apache.kafka.streams.StreamsBuilder#table(String, org.apache.kafka.streams.Consumed)
+   * @see org.apache.kafka.streams.StreamsBuilder#table(String,
+   *     org.apache.kafka.streams.kstream.Consumed)
    */
   OTable<T> constructTable(String topicName);
 
@@ -98,7 +99,7 @@ public interface OStream<T extends Row> {
    *
    * @param keys the group by key list
    * @return {@link OGroupedStream}
-   * @see org.apache.kafka.streams.kstream.KStream#groupByKey(Serialized)
+   * @see org.apache.kafka.streams.kstream.KStream#groupByKey(Grouped)
    */
   OGroupedStream<T> groupByKey(List<String> keys);
 

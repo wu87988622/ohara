@@ -169,10 +169,7 @@ class OStreamImpl extends AbstractStream<Row, Row> implements OStream<Row> {
       // Reference : https://docs.confluent.io/current/streams/developer-guide/memory-mgmt.html
       prop.setProperty(StreamsConfig.CACHE_BUFFER, "0");
 
-      org.apache.kafka.streams.StreamsConfig config =
-          new org.apache.kafka.streams.StreamsConfig(prop);
-
-      topology = new Topology(innerBuilder, config, builder.isCleanStart(), isDryRun);
+      topology = new Topology(innerBuilder, prop, builder.isCleanStart(), isDryRun);
       log.info(String.format("poneglyph:%s", topology.getPoneglyphs().toString()));
     }
   }

@@ -37,6 +37,8 @@ public interface Zookeepers extends Releasable {
     File logDir = CommonUtils.createTempFolder("local_zk_log");
 
     try {
+      // disable zookeeper.forceSync to avoid timeout
+      System.setProperty("zookeeper.forceSync", "no");
       factory = new NIOServerCnxnFactory();
       factory.configure(
           new InetSocketAddress(CommonUtils.anyLocalAddress(), Math.max(0, port)), 1024);

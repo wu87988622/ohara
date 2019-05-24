@@ -142,7 +142,11 @@ trait WorkerClient {
     */
   def definitions(connectorClassName: String)(
     implicit executionContext: ExecutionContext): Future[Seq[SettingDefinition]] =
-    connectorValidator().className(connectorClassName).run().map(_.settings().asScala.map(_.definition()))
+    connectorValidator()
+      .className(connectorClassName)
+      .topicName(CommonUtils.randomString(5))
+      .run()
+      .map(_.settings().asScala.map(_.definition()))
 
 }
 

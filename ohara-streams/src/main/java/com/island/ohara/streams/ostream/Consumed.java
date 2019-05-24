@@ -27,7 +27,7 @@ public class Consumed<K, V> {
     this.value = value;
   }
 
-  org.apache.kafka.streams.Consumed<K, V> get() {
-    return org.apache.kafka.streams.Consumed.with(this.key, this.value);
+  org.apache.kafka.streams.kstream.Consumed<K, V> get() {
+    return org.apache.kafka.streams.kstream.Consumed.with(this.key, this.value);
   }
 }

@@ -21,20 +21,13 @@ import com.island.ohara.common.util.Releasable;
 import java.net.BindException;
 import java.util.*;
 import java.util.stream.Collectors;
-import org.apache.kafka.clients.CommonClientConfigs;
-import org.apache.kafka.common.utils.Time;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.connect.cli.ConnectDistributed;
 import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.runtime.Connect;
-import org.apache.kafka.connect.runtime.Worker;
+import org.apache.kafka.connect.runtime.ConnectorConfig;
 import org.apache.kafka.connect.runtime.WorkerConfig;
 import org.apache.kafka.connect.runtime.distributed.DistributedConfig;
-import org.apache.kafka.connect.runtime.distributed.DistributedHerder;
-import org.apache.kafka.connect.runtime.isolation.Plugins;
-import org.apache.kafka.connect.runtime.rest.RestServer;
-import org.apache.kafka.connect.storage.Converter;
-import org.apache.kafka.connect.storage.KafkaConfigBackingStore;
-import org.apache.kafka.connect.storage.KafkaOffsetBackingStore;
-import org.apache.kafka.connect.storage.KafkaStatusBackingStore;
 
 public interface Workers extends Releasable {
   /** @return workers information. the form is "host_a:port_a,host_b:port_b" */
@@ -69,64 +62,22 @@ public interface Workers extends Releasable {
                       config.put(DistributedConfig.STATUS_STORAGE_PARTITIONS_CONFIG, "1");
                       config.put(DistributedConfig.STATUS_STORAGE_REPLICATION_FACTOR_CONFIG, "1");
                       // set the brokers info
-                      config.put(
-                          CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokers.connectionProps());
-                      config.put(DistributedConfig.GROUP_ID_CONFIG, "connect");
+                      config.put(WorkerConfig.BOOTSTRAP_SERVERS_CONFIG, brokers.connectionProps());
+                      config.put(ConsumerConfig.GROUP_ID_CONFIG, "connect");
                       // set the normal converter
                       config.put(
-                          WorkerConfig.KEY_CONVERTER_CLASS_CONFIG,
+                          ConnectorConfig.KEY_CONVERTER_CLASS_CONFIG,
                           "org.apache.kafka.connect.json.JsonConverter");
                       config.put("key.converter.schemas.enable", "true");
                       config.put(
-                          WorkerConfig.VALUE_CONVERTER_CLASS_CONFIG,
+                          ConnectorConfig.VALUE_CONVERTER_CLASS_CONFIG,
                           "org.apache.kafka.connect.json.JsonConverter");
                       config.put("value.converter.schemas.enable", "true");
-                      // set the internal converter. NOTED: kafka connector doesn't support to use
-                      // schema in internal topics.
+                      config.put(WorkerConfig.LISTENERS_CONFIG, "http://0.0.0.0:" + availablePort);
                       config.put(
-                          WorkerConfig.INTERNAL_KEY_CONVERTER_CLASS_CONFIG,
-                          "org.apache.kafka.connect.json.JsonConverter");
-                      config.put("internal.key.converter.schemas.enable", "false");
-                      config.put(
-                          WorkerConfig.INTERNAL_VALUE_CONVERTER_CLASS_CONFIG,
-                          "org.apache.kafka.connect.json.JsonConverter");
-                      config.put("internal.value.converter.schemas.enable", "false");
-                      // TODO: REST_PORT_CONFIG is deprecated in kafka-1.1.0. Use LISTENERS_CONFIG
-                      // instead. by chia
-                      config.put(WorkerConfig.REST_PORT_CONFIG, String.valueOf(availablePort));
+                          WorkerConfig.OFFSET_COMMIT_INTERVAL_MS_CONFIG, String.valueOf(500));
 
-                      DistributedConfig distConfig = new DistributedConfig(config);
-                      RestServer rest = new RestServer(distConfig);
-                      String workerId =
-                          CommonUtils.hostname() + ":" + rest.advertisedUrl().getPort();
-                      KafkaOffsetBackingStore offsetBackingStore = new KafkaOffsetBackingStore();
-                      offsetBackingStore.configure(distConfig);
-                      Time time = Time.SYSTEM;
-                      Worker worker =
-                          new Worker(
-                              workerId,
-                              time,
-                              new Plugins(Collections.emptyMap()),
-                              distConfig,
-                              offsetBackingStore);
-                      Converter internalValueConverter = worker.getInternalValueConverter();
-                      KafkaStatusBackingStore statusBackingStore =
-                          new KafkaStatusBackingStore(time, internalValueConverter);
-                      statusBackingStore.configure(distConfig);
-                      KafkaConfigBackingStore configBackingStore =
-                          new KafkaConfigBackingStore(internalValueConverter, distConfig);
-                      // TODO: DistributedHerder is a private class so its constructor is changed in
-                      // kafka-1.1.0. by chia
-                      DistributedHerder herder =
-                          new DistributedHerder(
-                              distConfig,
-                              time,
-                              worker,
-                              statusBackingStore,
-                              configBackingStore,
-                              rest.advertisedUrl().toString());
-                      Connect connect = new Connect(herder, rest);
-                      connect.start();
+                      Connect connect = new ConnectDistributed().startConnect(config);
                       availablePorts.add(availablePort);
                       return connect;
                     } catch (ConnectException e) {

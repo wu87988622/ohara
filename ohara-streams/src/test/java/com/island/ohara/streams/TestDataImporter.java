@@ -21,6 +21,7 @@ import static com.island.ohara.streams.DataImporter.createKafkaConsumer;
 import com.island.ohara.kafka.BrokerClient;
 import com.island.ohara.kafka.TopicDescription;
 import com.island.ohara.testing.With3Brokers;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -68,7 +69,7 @@ public class TestDataImporter extends With3Brokers {
           consumer.subscribe(Collections.singletonList(topic));
 
           try {
-            ConsumerRecords<String, String> messages = consumer.poll(10000);
+            ConsumerRecords<String, String> messages = consumer.poll(Duration.ofMillis(10000));
             consumer.commitAsync();
             Assert.assertTrue(messages.count() > 0);
           } finally {

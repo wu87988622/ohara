@@ -250,7 +250,7 @@ public interface Consumer<K, V> extends Releasable {
       kafkaConsumer.subscribe(topicNames);
 
       return new Consumer<Key, Value>() {
-        private ConsumerRecords<Key, Value> firstPoll = kafkaConsumer.poll(0);
+        private ConsumerRecords<Key, Value> firstPoll = kafkaConsumer.poll(Duration.ofMillis(0));
 
         @Override
         public void close() {
@@ -261,7 +261,7 @@ public interface Consumer<K, V> extends Releasable {
         public List<Record<Key, Value>> poll(Duration timeout) {
 
           ConsumerRecords<Key, Value> r;
-          if (firstPoll == null || firstPoll.isEmpty()) r = kafkaConsumer.poll(timeout.toMillis());
+          if (firstPoll == null || firstPoll.isEmpty()) r = kafkaConsumer.poll(timeout);
           else {
             r = firstPoll;
             firstPoll = null;

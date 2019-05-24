@@ -25,6 +25,7 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import kafka.server.KafkaConfig;
+import kafka.server.KafkaConfig$;
 import kafka.server.KafkaServer;
 import org.apache.kafka.common.network.ListenerName;
 import org.apache.kafka.common.utils.SystemTime;
@@ -49,30 +50,27 @@ public interface Brokers extends Releasable {
                   File logDir = tempFolders.get(index);
                   Properties config = new Properties();
                   // reduce the number from partitions and replicas to speedup the mini cluster
-                  // It is too hard to access scala's object member from java so we use "string"
-                  // instead
-                  // reference to KafkaConfig.OffsetsTopicPartitionsProp
-                  config.setProperty("offsets.topic.num.partitions", String.valueOf(1));
-                  // reference to KafkaConfig.OffsetsTopicReplicationFactorProp
-                  config.setProperty("offsets.topic.replication.factor", String.valueOf(1));
-                  // reference to KafkaConfig.ZkConnectProp
-                  config.setProperty("zookeeper.connect", zk.connectionProps());
-                  // reference to KafkaConfig.BrokerIdProp
-                  config.setProperty("broker.id", String.valueOf(index));
-                  // reference to KafkaConfig.ListenersProp
-                  config.setProperty("listeners", "PLAINTEXT://:" + (port <= 0 ? 0 : port));
-                  // reference to KafkaConfig.LogDirProp
-                  config.setProperty("log.dir", logDir.getAbsolutePath());
-                  // reference to KafkaConfig.ZkConnectionTimeoutMsProp
+                  config.setProperty(
+                      KafkaConfig$.MODULE$.OffsetsTopicPartitionsProp(), String.valueOf(1));
+                  config.setProperty(
+                      KafkaConfig$.MODULE$.OffsetsTopicReplicationFactorProp(), String.valueOf(1));
+                  config.setProperty(KafkaConfig$.MODULE$.ZkConnectProp(), zk.connectionProps());
+                  config.setProperty(KafkaConfig$.MODULE$.BrokerIdProp(), String.valueOf(index));
+                  config.setProperty(
+                      KafkaConfig$.MODULE$.ListenersProp(),
+                      "PLAINTEXT://:" + (port <= 0 ? 0 : port));
+                  config.setProperty(KafkaConfig$.MODULE$.LogDirProp(), logDir.getAbsolutePath());
                   // increase the timeout in order to avoid ZkTimeoutException
-                  config.setProperty("zookeeper.connection.timeout.ms", String.valueOf(30 * 1000));
+                  config.setProperty(
+                      KafkaConfig$.MODULE$.ZkSessionTimeoutMsProp(), String.valueOf(30 * 1000));
 
                   KafkaServer broker =
                       new KafkaServer(
                           new KafkaConfig(config),
                           SystemTime.SYSTEM,
-                          scala.Option.apply(null),
-                          scala.collection.JavaConversions.asScalaBuffer(Collections.emptyList()));
+                          scala.Option.empty(),
+                          scala.collection.JavaConverters.asScalaBuffer(Collections.emptyList()));
+
                   broker.startup();
                   return broker;
                 })
