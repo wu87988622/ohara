@@ -21,12 +21,12 @@ import { get, debounce } from 'lodash';
 import toastr from 'toastr';
 import * as MESSAGES from 'constants/messages';
 import * as s from './styles';
-import TestConnectionBtn from './TestConnectionBtn';
+import TestConnectionBtn from '../TestConnectionBtn';
 import { Form } from 'react-final-form';
 import { fetchWorker } from 'api/workerApi';
 import * as connectorApi from 'api/connectorApi';
 import PropTypes from 'prop-types';
-import { graphPropType } from 'propTypes/pipeline';
+import { graph as graphPropType } from 'propTypes/pipeline';
 
 class CustomFinalForm extends React.Component {
   static propTypes = {
