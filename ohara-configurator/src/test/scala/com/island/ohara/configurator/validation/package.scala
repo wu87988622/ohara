@@ -27,7 +27,7 @@ package object validation extends Matchers {
 
   def assertFailure(f: Future[Seq[ValidationReport]]): Unit = {
     val reports = result(f)
-    reports.size shouldBe NUMBER_OF_TASKS
+    reports.size >= NUMBER_OF_TASKS shouldBe true
     reports.isEmpty shouldBe false
     reports.map(_.message).foreach(_.nonEmpty shouldBe true)
     reports.foreach(report => withClue(report.message)(report.pass shouldBe false))
@@ -35,7 +35,7 @@ package object validation extends Matchers {
 
   def assertSuccess(f: Future[Seq[ValidationReport]]): Unit = {
     val reports = result(f)
-    reports.size shouldBe NUMBER_OF_TASKS
+    reports.size >= NUMBER_OF_TASKS shouldBe true
     reports.isEmpty shouldBe false
     reports.map(_.message).foreach(_.nonEmpty shouldBe true)
     reports.foreach(report => withClue(report.message)(report.pass shouldBe true))
