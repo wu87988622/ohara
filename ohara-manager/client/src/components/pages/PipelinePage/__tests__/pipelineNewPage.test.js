@@ -17,15 +17,18 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 
+import * as generate from 'utils/generate';
 import PipelineNewPage from '../PipelineNewPage';
 import { CONNECTOR_TYPES } from 'constants/pipelines';
 import { PIPELINE_NEW, PIPELINE_EDIT } from 'constants/documentTitles';
 import { getTestById } from 'utils/testUtils';
 import * as pipelineApi from 'api/pipelineApi';
 import * as connectorApi from 'api/connectorApi';
+import * as workerApi from 'api/workerApi';
 
 jest.mock('api/pipelineApi');
 jest.mock('api/connectorApi');
+jest.mock('api/workerApi');
 
 const props = {
   match: {
@@ -35,6 +38,14 @@ const props = {
     },
   },
 };
+
+const res = {
+  result: {
+    connectors: generate.connectors(),
+  },
+};
+
+workerApi.fetchWorker.mockImplementation(() => Promise.resolve({ data: res }));
 
 describe('<PipelineNewPage />', () => {
   let wrapper;

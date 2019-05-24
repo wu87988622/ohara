@@ -28,6 +28,7 @@ import * as pipelineApi from 'api/pipelineApi';
 import * as connectorApi from 'api/connectorApi';
 import * as streamApi from 'api/streamApi';
 import * as topicApi from 'api/topicApi';
+import * as workerApi from 'api/workerApi';
 import PipelineToolbar from '../PipelineToolbar';
 import PipelineGraph from '../PipelineGraph';
 import Editable from '../Editable';
@@ -69,6 +70,7 @@ class PipelineNewPage extends React.Component {
     runningConnectors: 0,
     pipeline: {},
     pipelineTopics: [],
+    connectors: [],
   };
 
   componentDidMount() {
@@ -76,8 +78,9 @@ class PipelineNewPage extends React.Component {
   }
 
   fetchData = async () => {
+    await this.fetchPipeline(); // we need workerClusterName from this request for the following fetchWorker() request
     this.fetchTopics();
-    this.fetchPipeline();
+    this.fetchWorker();
   };
 
   fetchTopics = async () => {
@@ -108,6 +111,16 @@ class PipelineNewPage extends React.Component {
           this.loadGraph(this.state.pipeline);
         });
       }
+    }
+  };
+
+  fetchWorker = async () => {
+    const { workerClusterName: name } = this.state.pipeline;
+    const worker = await workerApi.fetchWorker(name);
+    const connectors = get(worker, 'data.result.connectors', null);
+
+    if (connectors) {
+      this.setState({ connectors });
     }
   };
 
@@ -290,6 +303,13 @@ class PipelineNewPage extends React.Component {
     }
   };
 
+  getConnectorDefs = ({ connectors, type }) => {
+    const getByClassName = connector => connector.className === type;
+    const connector = connectors.find(getByClassName);
+
+    return connector.definitions;
+  };
+
   render() {
     const {
       isLoading,
@@ -300,9 +320,10 @@ class PipelineNewPage extends React.Component {
       currentTopic,
       hasChanges,
       pipeline,
+      connectors,
     } = this.state;
 
-    if (isEmpty(pipeline)) return null;
+    if (isEmpty(pipeline) || isEmpty(connectors)) return null;
 
     const pipelineId = get(this, 'props.match.params.pipelineId', null);
     const {
@@ -441,7 +462,14 @@ class PipelineNewPage extends React.Component {
                 <Route
                   path={`${routeBaseUrl}/${hdfsSink}`}
                   render={() => (
-                    <HdfsSink {...this.props} {...connectorProps} />
+                    <HdfsSink
+                      {...this.props}
+                      {...connectorProps}
+                      defs={this.getConnectorDefs({
+                        connectors,
+                        type: hdfsSink,
+                      })}
+                    />
                   )}
                 />
 

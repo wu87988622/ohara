@@ -38,7 +38,7 @@ import {
   CONNECTOR_STATES,
   CONNECTOR_ACTIONS,
 } from 'constants/pipelines';
-import { graphPropType } from 'propTypes/pipeline';
+import { graph as graphPropType } from 'propTypes/pipeline';
 
 const FormGroupWrapper = styled.div`
   display: flex;

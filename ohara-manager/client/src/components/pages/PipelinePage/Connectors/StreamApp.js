@@ -29,7 +29,7 @@ import { Box } from 'common/Layout';
 import { Label } from 'common/Form';
 import { InputField, SelectField, AutoSave } from 'common/FormFields';
 import { findByGraphId } from '../pipelineUtils/commonUtils';
-import { graphPropType } from 'propTypes/pipeline';
+import { graph as graphPropType } from 'propTypes/pipeline';
 import * as s from './styles';
 
 class StreamApp extends React.Component {

@@ -16,23 +16,100 @@
 
 import faker from 'faker';
 
+import { CONNECTOR_TYPES } from 'constants/pipelines';
+
 const { system, random, lorem, internet } = faker;
 const { fileName: name } = system;
-const { uuid: id } = random;
+const { uuid: id, number } = random;
 const { paragraph: message } = lorem;
 const { domainName, ip, userName } = internet;
 
-const topics = () => {
-  return [
-    {
-      name: name(),
-      id: id(),
-    },
-    {
-      name: name(),
-      id: id(),
-    },
-  ];
+export const connectors = () => {
+  const connectors = Object.values(CONNECTOR_TYPES).map(type => {
+    return {
+      className: type,
+
+      // empty array for now as I don't really see the need for these valus
+      definitions: [],
+    };
+  });
+
+  return connectors;
 };
 
-export { name, id, message, topics, domainName, ip, userName };
+export const topics = (count = 1) => {
+  let topics = [];
+
+  while (count > 0) {
+    count--;
+
+    const topic = {
+      name: name(),
+      id: id(),
+      lastModified: number(),
+      metrics: {},
+      numberOfPartitions: number(),
+      numberOfReplications: number(),
+    };
+
+    topics.push(topic);
+  }
+
+  return topics;
+};
+
+export const columnRows = (rowCount = 1) => {
+  let columnRows = [];
+
+  while (rowCount > 0) {
+    const columnRow = {
+      columnName: name(),
+      newColumnName: name(),
+      currType: 'String',
+      order: rowCount,
+    };
+
+    rowCount--;
+    columnRows.push(columnRow);
+  }
+
+  return columnRows;
+};
+
+export const singleGraph = (overrides = {}) => {
+  let kind;
+  let className;
+
+  const getKindByClass = className => {
+    const includes = str => className.includes(str);
+
+    if (includes('source')) {
+      return 'source';
+    } else if (includes('sink')) {
+      return 'sink';
+    } else if (includes('streamApp')) {
+      return 'streamApp';
+    } else if (includes('topic')) {
+      return 'topic';
+    }
+  };
+
+  if (!overrides.className) {
+    const availClass = Object.values(CONNECTOR_TYPES);
+    className = availClass[Math.floor(Math.random() * availClass.length)];
+    kind = getKindByClass(className);
+  }
+
+  return {
+    className,
+    kind,
+    id: id(),
+    lastModified: number(),
+    metrics: {},
+    name: `Untitled ${kind}`,
+    to: [],
+    ...overrides,
+  };
+};
+
+export { name, id, message, domainName, ip, userName, number };

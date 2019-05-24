@@ -43,7 +43,9 @@ const props = {
   isPipelineRunning: false,
 };
 
-describe('<HdfsSink />', () => {
+// skip the tests for now as we will wrap this component
+// with Mui and final form
+describe.skip('<HdfsSink />', () => {
   let wrapper;
 
   beforeEach(() => {

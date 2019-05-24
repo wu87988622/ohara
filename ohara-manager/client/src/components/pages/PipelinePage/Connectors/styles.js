@@ -19,18 +19,18 @@ import { Box } from 'common/Layout';
 import { H5 } from 'common/Headings';
 import { FormGroup, Button, Label } from 'common/Form';
 
-const BoxWrapper = styled(Box)`
+export const BoxWrapper = styled(Box)`
   padding: ${props => props.padding || '25px'};
 `;
 
-const TitleWrapper = styled(FormGroup).attrs({
+export const TitleWrapper = styled(FormGroup).attrs({
   isInline: true,
 })`
   position: relative;
   margin: ${props => props.margin || '0 0 30px'};
 `;
 
-const H5Wrapper = styled(H5)`
+export const H5Wrapper = styled(H5)`
   margin: 0;
   font-weight: normal;
   color: ${props => props.theme.lightBlue};
@@ -38,7 +38,7 @@ const H5Wrapper = styled(H5)`
 
 H5Wrapper.displayName = 'H5';
 
-const FormRow = styled(FormGroup).attrs({
+export const FormRow = styled(FormGroup).attrs({
   isInline: true,
 })`
   & > div:first-child {
@@ -49,32 +49,25 @@ const FormRow = styled(FormGroup).attrs({
   }
 `;
 
-const FormCol = styled(FormGroup)`
+export const FormCol = styled(FormGroup)`
   width: ${props => props.width || '100%'};
   margin: 0;
 `;
 
-const JarNameText = styled(Label)`
+export const JarNameText = styled(Label)`
   font-size: 12px;
   color: ${props => props.theme.lighterBlue};
 `;
 
-const ViewTopologyBtn = styled(Button)`
+export const ViewTopologyBtn = styled(Button)`
   display: none;
   margin-right: auto;
 `;
 
-const StyledForm = styled.div`
+export const StyledForm = styled.div`
   padding: 20px;
 `;
 
-export {
-  BoxWrapper,
-  TitleWrapper,
-  H5Wrapper,
-  FormRow,
-  FormCol,
-  JarNameText,
-  ViewTopologyBtn,
-  StyledForm,
-};
+export const LoaderWrap = styled.div`
+  margin: 20px;
+`;

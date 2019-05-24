@@ -23,7 +23,7 @@ import { Box } from 'common/Layout';
 import { Select } from 'common/Form';
 import { createConnector } from '../pipelineUtils/pipelineToolbarUtils';
 import { findByGraphId } from '../pipelineUtils/commonUtils';
-import { graphPropType } from 'propTypes/pipeline';
+import { graph as graphPropType } from 'propTypes/pipeline';
 
 class PipelineNewTopic extends React.Component {
   static propTypes = {

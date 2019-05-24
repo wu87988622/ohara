@@ -14,12 +14,31 @@
  * limitations under the License.
  */
 
-import { string, arrayOf, shape } from 'prop-types';
+import { string, arrayOf, shape, bool, number } from 'prop-types';
 
-export const graphPropType = shape({
+export const graph = shape({
   id: string.isRequired,
   className: string.isRequired,
   name: string.isRequired,
   kind: string.isRequired,
   to: arrayOf(string).isRequired,
+});
+
+export const topic = shape({
+  name: string.isRequired,
+});
+
+export const definition = shape({
+  defaultValue: string,
+  displayName: string.isRequired,
+  documentation: string.isRequired,
+  editable: bool.isRequired,
+  group: string.isRequired,
+  internal: bool.isRequired,
+  key: string.isRequired,
+  orderInGroup: number.isRequired,
+  reference: string.isRequired,
+  required: bool.isRequired,
+  tableKeys: arrayOf(string),
+  valueType: string.isRequired,
 });

@@ -16,47 +16,21 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import styled from 'styled-components';
 import toastr from 'toastr';
-import { Redirect } from 'react-router-dom';
-import { get, isEmpty, debounce, includes } from 'lodash';
+import { get, debounce, isUndefined } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
 import * as connectorApi from 'api/connectorApi';
-import * as validateApi from 'api/validateApi';
+import * as utils from './connectorUtils';
 import * as s from './styles';
-import { Box } from 'common/Layout';
-import { primaryBtn } from 'theme/btnTheme';
-import { Input, Select, FormGroup, Label, Button } from 'common/Form';
-import { CONFIGURATION } from 'constants/urls';
-import { updateTopic, findByGraphId } from '../pipelineUtils/commonUtils';
-import { handleInputChange } from '../pipelineUtils/hdfsSinkUtils';
+import * as types from 'propTypes/pipeline';
 import Controller from './Controller';
-import { HdfsQuicklyFillIn } from './QuicklyFillIn';
-import {
-  CONNECTOR_TYPES,
-  CONNECTOR_STATES,
-  CONNECTOR_ACTIONS,
-} from 'constants/pipelines';
-import { graphPropType } from 'propTypes/pipeline';
-
-const FormGroupCheckbox = styled(FormGroup)`
-  flex-direction: row;
-  align-items: center;
-  color: ${props => props.theme.lightBlue};
-`;
-
-const CheckBoxLabel = styled(Label)`
-  margin-bottom: 0;
-`;
-
-const Checkbox = styled(Input)`
-  height: auto;
-  width: auto;
-  margin-right: 8px;
-`;
-
-Checkbox.displayName = 'Checkbox';
+import TestConnectionBtn from './TestConnectionBtn';
+import { validateConnector } from 'api/validateApi';
+import { ListLoader } from 'common/Loader';
+import { Box } from 'common/Layout';
+import { findByGraphId } from '../pipelineUtils/commonUtils';
+import { CONNECTOR_STATES, CONNECTOR_ACTIONS } from 'constants/pipelines';
 
 class HdfsSink extends React.Component {
   static propTypes = {
@@ -65,55 +39,45 @@ class HdfsSink extends React.Component {
     updateGraph: PropTypes.func.isRequired,
     loadGraph: PropTypes.func.isRequired,
     refreshGraph: PropTypes.func.isRequired,
+    pipelineTopics: PropTypes.array.isRequired,
+    isPipelineRunning: PropTypes.bool.isRequired,
+    globalTopics: PropTypes.arrayOf(types.topic).isRequired,
+    defs: PropTypes.arrayOf(types.definition),
+    graph: PropTypes.arrayOf(types.graph).isRequired,
     match: PropTypes.shape({
       params: PropTypes.object.isRequired,
     }).isRequired,
-    graph: PropTypes.arrayOf(graphPropType).isRequired,
     history: PropTypes.shape({
       push: PropTypes.func.isRequired,
     }).isRequired,
-    pipelineTopics: PropTypes.array.isRequired,
-    isPipelineRunning: PropTypes.bool.isRequired,
-  };
-
-  selectMaps = {
-    topics: 'currReadTopic',
   };
 
   state = {
-    name: '',
-    state: '',
-    readTopics: [],
-    currReadTopic: {},
-    hdfsConnectionUrl: '',
-    writePath: '',
-    pipelines: {},
-    fileEncodings: ['UTF-8'],
-    currFileEncoding: {},
-    flushLineCount: '',
-    rotateInterval: '',
-    tempDirectory: '',
-    needHeader: true,
-    isRedirect: false,
-    IsTestConnectionBtnWorking: false,
+    isLoading: true,
+    topics: [],
+    configs: null,
+    state: null,
+    isTestConnectionBtnWorking: false,
   };
 
   componentDidMount() {
-    this.fetchData();
+    this.fetchConnector();
+    this.setTopics();
   }
 
   componentDidUpdate(prevProps) {
     const { pipelineTopics: prevTopics } = prevProps;
-    const { connectorId: prevConnectorId } = prevProps.match.params;
     const { hasChanges, pipelineTopics: currTopics } = this.props;
+    const { connectorId: prevConnectorId } = prevProps.match.params;
     const { connectorId: currConnectorId } = this.props.match.params;
 
     if (prevTopics !== currTopics) {
-      this.setState({ readTopics: currTopics });
+      const topics = currTopics.map(currTopic => currTopic.name);
+      this.setState({ topics });
     }
 
     if (prevConnectorId !== currConnectorId) {
-      this.fetchData();
+      this.fetchConnector();
     }
 
     if (hasChanges) {
@@ -121,154 +85,67 @@ class HdfsSink extends React.Component {
     }
   }
 
-  fetchData = () => {
-    const sinkId = get(this.props.match, 'params.connectorId', null);
-    this.fetchSink(sinkId);
+  setTopics = () => {
+    const { pipelineTopics } = this.props;
+    this.setState({ topics: pipelineTopics.map(t => t.name) });
   };
 
-  fetchSink = async sinkId => {
-    const res = await connectorApi.fetchConnector(sinkId);
+  fetchConnector = async () => {
+    const { connectorId } = this.props.match.params;
+    const res = await connectorApi.fetchConnector(connectorId);
+    this.setState({ isLoading: false });
     const result = get(res, 'data.result', null);
-    const { fileEncodings } = this.state;
 
     if (result) {
-      const { name, state, topics: prevTopics, configs } = result;
-      const {
-        writePath = '',
-        needHeader = false,
-        'hdfs.url': hdfsConnectionUrl = '',
-        'tmp.dir': tempDirectory = '',
-        'flush.line.count': flushLineCount = '',
-        'rotate.interval.ms': rotateInterval = '',
-        'data.econde': currFileEncoding = fileEncodings[0],
-      } = configs;
+      const { settings, state } = result;
+      const { topics } = settings;
 
-      const { pipelineTopics: readTopics } = this.props;
-
-      if (!isEmpty(prevTopics)) {
-        const currReadTopic = readTopics.find(
-          topic => topic.id === prevTopics[0],
-        );
-
-        updateTopic(this.props, currReadTopic, 'sink');
-        this.setState({ currReadTopic });
-      }
-
-      const _needHeader = needHeader === 'true' ? true : false;
-
-      this.setState({
-        name,
-        state,
-        writePath,
-        hdfsConnectionUrl,
-        needHeader: _needHeader,
-        tempDirectory,
-        flushLineCount,
-        rotateInterval,
-        currFileEncoding,
-        readTopics,
+      const topicName = utils.getCurrTopicName({
+        originals: this.props.globalTopics,
+        target: topics,
       });
+
+      const configs = { ...settings, topics: topicName };
+      this.setState({ configs, state });
     }
   };
 
-  handleInputChange = ({ target: { name, value } }) => {
-    this.setState(handleInputChange({ name, value }));
+  updateComponent = updatedConfigs => {
+    this.props.updateHasChanges(true);
+    this.setState({ configs: updatedConfigs });
   };
 
-  handleCheckboxChange = ({ target: { name, checked } }) => {
-    this.setState(handleInputChange({ name, checked }));
+  handleChange = ({ target }) => {
+    const { configs } = this.state;
+    const updatedConfigs = utils.updateConfigs({ configs, target });
+    this.updateComponent(updatedConfigs);
   };
 
-  handleSelectChange = ({ target }) => {
-    const { name, options, value } = target;
-    const selectedIdx = options.selectedIndex;
-    const { id } = options[selectedIdx].dataset;
-
-    const current = this.selectMaps[name];
-
-    this.setState(
-      () => {
-        return {
-          [current]: {
-            name: value,
-            id,
-          },
-        };
-      },
-      () => {
-        this.props.updateHasChanges(true);
-      },
-    );
+  handleColumnChange = newColumn => {
+    const { configs } = this.state;
+    const updatedConfigs = utils.addColumn({ configs, newColumn });
+    this.updateComponent(updatedConfigs);
   };
 
-  save = debounce(async () => {
-    const {
-      match,
-      graph,
-      updateHasChanges,
-      updateGraph,
-      isPipelineRunning,
-    } = this.props;
-    const {
-      name,
-      hdfsConnectionUrl,
-      currReadTopic,
-      writePath,
-      needHeader,
-      tempDirectory,
-      flushLineCount,
-      rotateInterval,
-      currFileEncoding,
-    } = this.state;
+  handleColumnRowDelete = currRow => {
+    const { configs } = this.state;
+    const updatedConfigs = utils.deleteColumnRow({ configs, currRow });
+    this.updateComponent(updatedConfigs);
+  };
 
-    if (isPipelineRunning) {
-      toastr.error(MESSAGES.CANNOT_UPDATE_WHILE_RUNNING_ERROR);
-      updateHasChanges(false);
-      return;
-    }
+  handleColumnRowUp = (e, order) => {
+    e.preventDefault();
+    const { configs } = this.state;
+    const updatedConfigs = utils.moveColumnRowUp({ configs, order });
+    this.updateComponent(updatedConfigs);
+  };
 
-    const sinkId = get(match, 'params.connectorId', null);
-    const topics = isEmpty(currReadTopic) ? [] : [currReadTopic.id];
-
-    const params = {
-      name,
-      'connector.name': name,
-      schema: [],
-      className: CONNECTOR_TYPES.hdfsSink,
-      topics,
-      numberOfTasks: 1,
-      configs: {
-        topic: JSON.stringify(currReadTopic),
-        needHeader: String(needHeader),
-        writePath,
-        'datafile.needheader': String(needHeader),
-        'datafile.prefix.name': 'part',
-        'data.dir': writePath,
-        'hdfs.url': hdfsConnectionUrl,
-        'tmp.dir': tempDirectory,
-        'flush.line.count': flushLineCount,
-        'rotate.interval.ms': rotateInterval,
-        'data.econde': currFileEncoding,
-      },
-    };
-
-    await connectorApi.updateConnector({ id: sinkId, params });
-    updateHasChanges(false);
-
-    const currTopicId = isEmpty(currReadTopic) ? [] : currReadTopic.id;
-    const currSink = findByGraphId(graph, sinkId);
-    const topic = findByGraphId(graph, currTopicId);
-
-    let update;
-    if (topic) {
-      const to = [...new Set([...topic.to, sinkId])];
-      update = { ...topic, to };
-    } else {
-      update = { ...currSink };
-    }
-
-    updateGraph({ update, isFromTopic: true, updatedName: name, sinkId });
-  }, 1000);
+  handleColumnRowDown = (e, order) => {
+    e.preventDefault();
+    const { configs } = this.state;
+    const updatedConfigs = utils.moveColumnRowDown({ configs, order });
+    this.updateComponent(updatedConfigs);
+  };
 
   handleStartConnector = async () => {
     await this.triggerConnector(CONNECTOR_ACTIONS.start);
@@ -309,21 +186,27 @@ class HdfsSink extends React.Component {
 
   handleTestConnection = async e => {
     e.preventDefault();
-    const { hdfsConnectionUrl: uri } = this.state;
+    this.setState({ isTestConnectionBtnWorking: true });
 
-    this.updateIsTestConnectionBtnWorking(true);
-    const res = await validateApi.validateHdfs({ uri });
-    this.updateIsTestConnectionBtnWorking(false);
+    // const topics = this.state.topic
+    const topicId = utils.getCurrTopicId({
+      originals: this.props.globalTopics,
+      target: this.state.topics[0],
+    });
 
-    const _res = get(res, 'data.isSuccess', false);
+    const params = { ...this.state.configs, topics: [topicId] };
+    const res = await validateConnector(params);
+    this.setState({ isTestConnectionBtnWorking: false });
 
-    if (_res) {
+    const isSuccess = get(res, 'data.isSuccess', false);
+
+    if (isSuccess) {
       toastr.success(MESSAGES.TEST_SUCCESS);
     }
   };
 
   updateIsTestConnectionBtnWorking = update => {
-    this.setState({ IsTestConnectionBtnWorking: update });
+    this.setState({ isTestConnectionBtnWorking: update });
   };
 
   handleTriggerConnectorResponse = (action, res) => {
@@ -347,47 +230,62 @@ class HdfsSink extends React.Component {
     }
   };
 
-  quicklyFillIn = values => {
-    this.setState(
-      {
-        hdfsConnectionUrl: values.url,
-      },
-      () => {
-        this.props.updateHasChanges(true);
-      },
-    );
-  };
+  save = debounce(async () => {
+    const {
+      updateHasChanges,
+      match,
+      graph,
+      updateGraph,
+      globalTopics,
+    } = this.props;
+    const { configs } = this.state;
+    const { connectorId } = match.params;
+
+    const topicId = utils.getCurrTopicId({
+      originals: globalTopics,
+      target: configs.topics,
+    });
+
+    const topics = isUndefined(topicId) ? [] : [topicId];
+    const params = { ...configs, topics };
+
+    await connectorApi.updateConnector({ id: connectorId, params });
+    updateHasChanges(false);
+
+    const { sinkProps, update } = utils.getUpdatedTopic({
+      currTopicId: topicId,
+      graph,
+      configs,
+      connectorId,
+      originalTopics: globalTopics,
+    });
+
+    updateGraph({ update, ...sinkProps });
+  }, 1000);
 
   render() {
     const {
-      name,
       state,
-      readTopics,
-      currReadTopic,
-      hdfsConnectionUrl,
-      writePath,
-      needHeader,
-      isRedirect,
-      fileEncodings,
-      currFileEncoding,
-      tempDirectory,
-      rotateInterval,
-      flushLineCount,
-      IsTestConnectionBtnWorking,
+      configs,
+      isLoading,
+      topics,
+      isTestConnectionBtnWorking,
     } = this.state;
+    const { defs } = this.props;
 
-    if (isRedirect) {
-      return <Redirect to={CONFIGURATION} />;
-    }
+    if (!configs) return null;
 
-    const isRunning = includes(
-      [
-        CONNECTOR_STATES.running,
-        CONNECTOR_STATES.paused,
-        CONNECTOR_STATES.failed,
-      ],
+    const formProps = {
+      defs,
+      topics,
+      configs,
       state,
-    );
+      handleChange: this.handleChange,
+      handleColumnChange: this.handleColumnChange,
+      handleColumnRowDelete: this.handleColumnRowDelete,
+      handleColumnRowUp: this.handleColumnRowUp,
+      handleColumnRowDown: this.handleColumnRowDown,
+    };
 
     return (
       <Box>
@@ -400,141 +298,20 @@ class HdfsSink extends React.Component {
             onDelete={this.handleDeleteConnector}
           />
         </s.TitleWrapper>
-        <form>
-          <FormGroup data-testid="name">
-            <Label>Name</Label>
-            <Input
-              name="name"
-              width="100%"
-              placeholder="HDFS sink name"
-              value={name}
-              data-testid="name-input"
-              handleChange={this.handleInputChange}
-              disabled={isRunning}
-            />
-          </FormGroup>
-          <FormGroup data-testid="read-from-topic">
-            <Label>Read topic</Label>
-            <Select
-              isObject
-              name="topics"
-              list={readTopics}
-              selected={currReadTopic}
-              width="100%"
-              data-testid="topic-select"
-              handleChange={this.handleSelectChange}
-              disabled={isRunning}
-              placeholder="Please select a topic..."
-              clearable
-            />
-          </FormGroup>
 
-          <FormGroup data-testid="hdfsConnectionUrl">
-            <Label>Connection URL</Label>
-            <Input
-              name="hdfsConnectionUrl"
-              width="100%"
-              placeholder="file://"
-              value={hdfsConnectionUrl}
-              data-testid="hdfs-connection-url-input"
-              handleChange={this.handleInputChange}
-              disabled={isRunning}
-            />
-
-            {/* Incomplete feature, don't display this for now */}
-            {false && <HdfsQuicklyFillIn onFillIn={this.quicklyFillIn} />}
-          </FormGroup>
-
-          <FormGroup data-testid="write-path">
-            <Label>Write path</Label>
-            <Input
-              name="writePath"
-              width="100%"
-              placeholder="file://"
-              value={writePath}
-              data-testid="write-path-input"
-              handleChange={this.handleInputChange}
-              disabled={isRunning}
-            />
-          </FormGroup>
-
-          <FormGroup data-testid="temp-directory">
-            <Label>Temp directory</Label>
-            <Input
-              name="tempDirectory"
-              width="100%"
-              placeholder="/tmp"
-              value={tempDirectory}
-              data-testid="temp-directory"
-              handleChange={this.handleInputChange}
-              disabled={isRunning}
-            />
-          </FormGroup>
-
-          <FormGroup data-testid="file-encoding">
-            <Label>File encoding</Label>
-            <Select
-              name="fileEncoding"
-              width="100%"
-              data-testid="file-enconding-select"
-              selected={currFileEncoding}
-              list={fileEncodings}
-              handleChange={this.handleSelectChange}
-              disabled={isRunning}
-            />
-          </FormGroup>
-
-          <FormGroup data-testid="rotate-interval">
-            <Label>Rotate interval (ms)</Label>
-            <Input
-              name="rotateInterval"
-              width="100%"
-              placeholder="60000"
-              value={rotateInterval}
-              data-testid="rotate-interval"
-              handleChange={this.handleInputChange}
-              disabled={isRunning}
-            />
-          </FormGroup>
-
-          <FormGroup data-testid="flush-line-count">
-            <Label>Flush line count</Label>
-            <Input
-              name="flushLineCount"
-              width="100%"
-              placeholder="10"
-              value={flushLineCount}
-              data-testid="flush-line-count"
-              handleChange={this.handleInputChange}
-              disabled={isRunning}
-            />
-          </FormGroup>
-
-          <FormGroupCheckbox data-testid="need-header">
-            <Checkbox
-              type="checkbox"
-              name="needHeader"
-              width="25px"
-              value=""
-              checked={needHeader}
-              data-testid="needheader-input"
-              handleChange={this.handleCheckboxChange}
-              disabled={isRunning}
-            />
-            <CheckBoxLabel>Include header</CheckBoxLabel>
-          </FormGroupCheckbox>
-
-          <FormGroup>
-            <Button
-              theme={primaryBtn}
-              text="Test connection"
-              isWorking={IsTestConnectionBtnWorking}
-              disabled={IsTestConnectionBtnWorking || isRunning}
-              data-testid="test-connection-btn"
+        {isLoading ? (
+          <s.LoaderWrap>
+            <ListLoader />
+          </s.LoaderWrap>
+        ) : (
+          <>
+            {utils.renderForm(formProps)}
+            <TestConnectionBtn
               handleClick={this.handleTestConnection}
+              isWorking={isTestConnectionBtnWorking}
             />
-          </FormGroup>
-        </form>
+          </>
+        )}
       </Box>
     );
   }

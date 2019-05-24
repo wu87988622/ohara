@@ -34,7 +34,7 @@ import {
   CONNECTOR_STATES,
   CONNECTOR_ACTIONS,
 } from 'constants/pipelines';
-import { graphPropType } from 'propTypes/pipeline';
+import { graph as graphPropType } from 'propTypes/pipeline';
 
 import * as s from './styles';
 

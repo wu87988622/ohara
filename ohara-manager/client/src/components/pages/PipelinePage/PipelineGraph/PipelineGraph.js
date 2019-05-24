@@ -22,7 +22,7 @@ import * as d3 from 'd3v4';
 import * as _ from 'utils/commonUtils';
 import { Wrapper, H5Wrapper, Svg } from './styles';
 import { getIcon, getStatusIcon } from '../pipelineUtils/pipelineGraphUtils';
-import { graphPropType } from 'propTypes/pipeline';
+import { graph as graphPropType } from 'propTypes/pipeline';
 
 class PipelineGraph extends React.Component {
   static propTypes = {

@@ -23,14 +23,14 @@ import * as connectorApi from 'api/connectorApi';
 import * as MESSAGES from 'constants/messages';
 import * as utils from './customConnectorUtils';
 import Controller from '../Controller';
-import TestConnectionBtn from './TestConnectionBtn';
+import TestConnectionBtn from '../TestConnectionBtn';
 import { findByGraphId } from '../../pipelineUtils/commonUtils';
 import { fetchWorker } from 'api/workerApi';
 import { validateConnector } from 'api/validateApi';
 import { BoxWrapper, TitleWrapper, H5Wrapper } from '../styles';
 import { StyledForm, LoaderWrap } from './styles';
 import { ListLoader } from 'common/Loader';
-import { graphPropType } from 'propTypes/pipeline';
+import { graph as graphPropType } from 'propTypes/pipeline';
 import { CONNECTOR_ACTIONS } from 'constants/pipelines';
 
 class CustomConnector extends React.Component {

@@ -28,7 +28,7 @@ import { Modal } from 'common/Modal';
 import { fetchWorkers } from 'api/workerApi';
 import { isEmptyStr } from 'utils/commonUtils';
 import { Icon } from './styles.js';
-import { graphPropType } from 'propTypes/pipeline';
+import { graph as graphPropType } from 'propTypes/pipeline';
 
 const ToolbarWrapper = styled.div`
   margin-bottom: 15px;

@@ -26,11 +26,11 @@ import * as s from './styles';
 import * as utils from './CustomConnector/customConnectorUtils';
 import Controller from './Controller';
 import { findByGraphId } from '../pipelineUtils/commonUtils';
+import { CONNECTOR_STATES, CONNECTOR_ACTIONS } from 'constants/pipelines';
+import { graph as graphPropType } from 'propTypes/pipeline';
 
 import { fetchWorker } from 'api/workerApi';
-import TestConnectionBtn from './CustomConnector/TestConnectionBtn';
-import { CONNECTOR_ACTIONS, CONNECTOR_STATES } from 'constants/pipelines';
-import { graphPropType } from 'propTypes/pipeline';
+import TestConnectionBtn from './TestConnectionBtn';
 
 class FtpSource extends React.Component {
   static propTypes = {
@@ -174,7 +174,7 @@ class FtpSource extends React.Component {
       target: this.state.topics[0],
     });
 
-    const params = { ...this.state.configs, topics: topicId };
+    const params = { ...this.state.configs, topics: [topicId] };
     const res = await validateConnector(params);
     this.setState({ isTestConnectionBtnWorking: false });
 

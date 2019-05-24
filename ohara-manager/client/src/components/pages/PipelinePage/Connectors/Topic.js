@@ -27,7 +27,7 @@ import { ListLoader } from 'common/Loader';
 import { Box } from 'common/Layout';
 import { FormGroup, Label, Input } from 'common/Form';
 import { fetchTopic } from 'api/topicApi';
-import { graphPropType } from 'propTypes/pipeline';
+import { graph as graphPropType } from 'propTypes/pipeline';
 
 class Topic extends React.Component {
   static propTypes = {
