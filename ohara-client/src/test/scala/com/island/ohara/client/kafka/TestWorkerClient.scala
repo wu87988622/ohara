@@ -125,7 +125,6 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
 
   @Test
   def testValidate(): Unit = {
-    Map.empty
     val name = CommonUtils.randomString(10)
     val topicName = CommonUtils.randomString(10)
     val numberOfTasks = 1
@@ -147,11 +146,24 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
   }
 
   @Test
+  def ignoreTopicNames(): Unit = an[NoSuchElementException] should be thrownBy result(
+    workerClient.connectorValidator().className(classOf[MyConnector].getName).run())
+
+  @Test
+  def ignoreClassName(): Unit =
+    an[NoSuchElementException] should be thrownBy result(workerClient.connectorValidator().run())
+
+  @Test
   def testValidateWithoutValue(): Unit = {
-    val settingInfo = result(workerClient.connectorValidator().className(classOf[MyConnector].getName).run())
+    val settingInfo = result(
+      workerClient
+        .connectorValidator()
+        .className(classOf[MyConnector].getName)
+        .topicName(CommonUtils.randomString())
+        .run())
     settingInfo.className.get shouldBe classOf[MyConnector].getName
     settingInfo.settings.size should not be 0
-    settingInfo.topicNames.isEmpty shouldBe true
+    settingInfo.topicNames.isEmpty shouldBe false
     settingInfo.numberOfTasks.isPresent shouldBe false
   }
 

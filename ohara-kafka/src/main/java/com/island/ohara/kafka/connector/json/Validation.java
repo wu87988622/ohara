@@ -17,9 +17,11 @@
 package com.island.ohara.kafka.connector.json;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.util.CommonUtils;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
@@ -28,6 +30,21 @@ public class Validation implements JsonObject {
 
   public static Validation ofJson(String json) {
     return of(JsonUtils.toObject(json, new TypeReference<Map<String, String>>() {}));
+  }
+
+  /**
+   * Construct a Validation with basic required arguments only.
+   *
+   * @param className class name
+   * @param topicsName topic names
+   * @return validation
+   */
+  public static Validation of(String className, List<String> topicsName) {
+    return new Validation(
+        ImmutableMap.of(
+            SettingDefinition.CONNECTOR_CLASS_DEFINITION.key(),
+                CommonUtils.requireNonEmpty(className),
+            SettingDefinition.TOPIC_NAMES_DEFINITION.key(), StringList.toKafkaString(topicsName)));
   }
 
   public static Validation of(Map<String, String> settings) {
@@ -64,16 +81,28 @@ public class Validation implements JsonObject {
     return toJsonString().hashCode();
   }
 
+  // ------------------------------------------[helper
+  // methods]------------------------------------------//
   private String value(SettingDefinition settingDefinition) {
     if (settings.containsKey(settingDefinition.key())) return settings.get(settingDefinition.key());
     else throw new NoSuchElementException(settingDefinition.key() + " doesn't exist");
   }
 
+  /**
+   * Kafka validation requires the class name so this class offers this helper method.
+   *
+   * @return class name
+   */
   public String className() {
     return value(SettingDefinition.CONNECTOR_CLASS_DEFINITION);
   }
 
-  public String id() {
-    return value(SettingDefinition.CONNECTOR_ID_DEFINITION);
+  /**
+   * Kafka-2.x validation requires the topics so this class offers this helper method.
+   *
+   * @return topics name
+   */
+  public List<String> topicNames() {
+    return StringList.ofKafkaList(value(SettingDefinition.TOPIC_NAMES_DEFINITION));
   }
 }

@@ -19,10 +19,33 @@ package com.island.ohara.kafka.connector.json;
 import com.island.ohara.common.rule.SmallTest;
 import com.island.ohara.common.util.CommonUtils;
 import java.util.Collections;
+import java.util.List;
+import java.util.NoSuchElementException;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class TestValidation extends SmallTest {
+
+  @Test(expected = NoSuchElementException.class)
+  public void ignoreClassName() {
+    Validation.of(Collections.singletonMap(CommonUtils.randomString(), CommonUtils.randomString()))
+        .className();
+  }
+
+  @Test(expected = NoSuchElementException.class)
+  public void ignoreTopicNames() {
+    Validation.of(Collections.singletonMap(CommonUtils.randomString(), CommonUtils.randomString()))
+        .topicNames();
+  }
+
+  @Test
+  public void testRequiredSettings() {
+    String className = CommonUtils.randomString();
+    List<String> topicNames = Collections.singletonList(CommonUtils.randomString());
+    Validation validation = Validation.of(className, topicNames);
+    Assert.assertEquals(className, validation.className());
+    Assert.assertEquals(topicNames, validation.topicNames());
+  }
 
   @Test
   public void testEqual() {

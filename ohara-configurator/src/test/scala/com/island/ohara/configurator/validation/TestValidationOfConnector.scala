@@ -73,6 +73,22 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
       .port(configurator.port)
       .verify(
         ConnectorCreationRequest(
+          className = Some(classOf[DumbSink].getName),
+          topicNames = Seq.empty,
+          numberOfTasks = None,
+          workerClusterName = None,
+          columns = Seq.empty,
+          settings = Map.empty
+        )))
+
+  @Test
+  def ignoreTopicName(): Unit = an[IllegalArgumentException] should be thrownBy result(
+    ValidationApi
+      .access()
+      .hostname(configurator.hostname)
+      .port(configurator.port)
+      .verify(
+        ConnectorCreationRequest(
           className = None,
           topicNames = Seq.empty,
           numberOfTasks = None,

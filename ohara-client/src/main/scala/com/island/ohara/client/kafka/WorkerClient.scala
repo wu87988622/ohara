@@ -144,6 +144,7 @@ trait WorkerClient {
     implicit executionContext: ExecutionContext): Future[Seq[SettingDefinition]] =
     connectorValidator()
       .className(connectorClassName)
+      // kafka 2.x requires topic names for all sink connectors so we add a random topic for this request.
       .topicName(CommonUtils.randomString(5))
       .run()
       .map(_.settings().asScala.map(_.definition()))
@@ -262,12 +263,17 @@ object WorkerClient {
         (executionContext, validation) => {
           implicit val exec: ExecutionContext = executionContext
           retry(
-            () =>
+            () => {
+              if (validation.topicNames().isEmpty)
+                throw new IllegalArgumentException(
+                  "I'm sorry for this error. However, please fill the topics" +
+                    "for your validation request in order to test other settings. This prerequisite is introduced by kafka 2.x")
               HttpExecutor.SINGLETON
                 .put[Validation, ConfigInfos, Error](
                   s"http://$workerAddress/connector-plugins/${validation.className()}/config/validate",
                   validation)
-                .map(SettingInfo.of),
+                .map(SettingInfo.of)
+            },
             "connectorValidator"
           )
         }
