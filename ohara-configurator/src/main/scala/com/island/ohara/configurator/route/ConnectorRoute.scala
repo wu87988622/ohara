@@ -92,7 +92,6 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
     RouteUtils.basicRoute[ConnectorCreationRequest, ConnectorDescription](
       root = CONNECTORS_PREFIX_PATH,
       hookOfAdd = (id: Id, request: ConnectorCreationRequest) =>
-        // TODO: remove TargetCluster. see https://github.com/oharastream/ohara/issues/206
         CollieUtils.workerClient(request.workerClusterName).map {
           case (cluster, _) =>
             toRes(cluster.name, id, verify(request))

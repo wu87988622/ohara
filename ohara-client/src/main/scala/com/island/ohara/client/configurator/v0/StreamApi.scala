@@ -21,7 +21,7 @@ import java.nio.charset.CodingErrorAction
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model._
 import akka.util.ByteString
-import com.island.ohara.common.util.VersionUtils
+import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
@@ -53,6 +53,12 @@ object StreamApi {
     * StreamApp Docker Image name
     */
   final val IMAGE_NAME_DEFAULT: String = s"oharastream/streamapp:${VersionUtils.VERSION}"
+
+  /**
+    * streamApp use same port to do jmx expose: {host_port}:{container_port}. Using random port to avoid possible port conflict
+    * from other clusters (zk, bk and wk)
+    */
+  final val JMX_PORT_DEFAULT: Int = CommonUtils.availablePort()
 
   val STREAM_PREFIX_PATH: String = "stream"
   val STREAM_LIST_PREFIX_PATH: String = "jars"
@@ -112,8 +118,20 @@ object StreamApi {
           toTopics: $to
       """.stripMargin
   }
-  implicit val STREAM_ACTION_RESPONSE_JSON_FORMAT: RootJsonFormat[StreamAppDescription] = jsonFormat10(
+  implicit val STREAMAPP_DESCRIPTION_JSON_FORMAT: RootJsonFormat[StreamAppDescription] = jsonFormat10(
     StreamAppDescription)
+
+  final case class StreamClusterCreationRequest(id: String,
+                                                name: String,
+                                                imageName: Option[String],
+                                                from: Seq[String],
+                                                to: Seq[String],
+                                                jmxPort: Option[Int],
+                                                instances: Int,
+                                                nodeNames: Seq[String])
+      extends ClusterCreationRequest {
+    override def ports: Set[Int] = Set(jmxPort.getOrElse(JMX_PORT_DEFAULT))
+  }
 
   /**
     * The Stream Cluster Information

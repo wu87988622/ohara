@@ -19,7 +19,13 @@ package com.island.ohara.client.configurator.v0
 import java.net.URL
 
 import com.island.ohara.client.configurator.v0.JarApi.JarInfo
-import com.island.ohara.client.configurator.v0.StreamApi.{StreamAppDescription, StreamClusterInfo}
+import com.island.ohara.client.configurator.v0.StreamApi.{
+  StreamAppDescription,
+  StreamClusterInfo,
+  StreamJar,
+  StreamListRequest,
+  StreamPropertyRequest
+}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import org.junit.Test
@@ -30,6 +36,41 @@ class TestStreamApi extends SmallTest with Matchers {
   @Test
   def checkVersion(): Unit = {
     StreamApi.IMAGE_NAME_DEFAULT shouldBe s"oharastream/streamapp:${VersionUtils.VERSION}"
+  }
+
+  @Test
+  def testStreamJarEquals(): Unit = {
+    val info = StreamJar(
+      workerClusterName = CommonUtils.randomString(5),
+      id = CommonUtils.uuid(),
+      name = "test.jar",
+      lastModified = CommonUtils.current()
+    )
+
+    info shouldBe StreamApi.STREAM_JAR_JSON_FORMAT.read(StreamApi.STREAM_JAR_JSON_FORMAT.write(info))
+  }
+
+  @Test
+  def testStreamListRequestEquals(): Unit = {
+    val info = StreamListRequest(
+      jarName = "new-jar.jar"
+    )
+
+    info shouldBe StreamApi.STREAM_LIST_REQUEST_JSON_FORMAT.read(StreamApi.STREAM_LIST_REQUEST_JSON_FORMAT.write(info))
+  }
+
+  @Test
+  def testStreamPropertyRequestEquals(): Unit = {
+    val info = StreamPropertyRequest(
+      jarId = CommonUtils.randomString(5),
+      name = Some("app-id"),
+      from = Some(Seq("from")),
+      to = Some(Seq("to")),
+      instances = Some(5)
+    )
+
+    info shouldBe StreamApi.STREAM_PROPERTY_REQUEST_JSON_FORMAT.read(
+      StreamApi.STREAM_PROPERTY_REQUEST_JSON_FORMAT.write(info))
   }
 
   @Test
@@ -48,8 +89,8 @@ class TestStreamApi extends SmallTest with Matchers {
       lastModified = CommonUtils.current()
     )
 
-    info shouldBe StreamApi.STREAM_ACTION_RESPONSE_JSON_FORMAT.read(
-      StreamApi.STREAM_ACTION_RESPONSE_JSON_FORMAT.write(info))
+    info shouldBe StreamApi.STREAMAPP_DESCRIPTION_JSON_FORMAT.read(
+      StreamApi.STREAMAPP_DESCRIPTION_JSON_FORMAT.write(info))
   }
 
   @Test

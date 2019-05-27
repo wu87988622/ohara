@@ -147,6 +147,9 @@ class TestStreamRoute extends SmallTest with Matchers {
     res1.to.size shouldBe 0
     res1.instances shouldBe 1
 
+    // we create two properties, the list size should be 2
+    result(accessStreamProperty.list).size shouldBe 2
+
     // update properties
     val appId = CommonUtils.randomString(5)
     val req = StreamPropertyRequest(jarId, Some(appId), Some(Seq("from")), Some(Seq("to")), Some(1))

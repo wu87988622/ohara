@@ -22,6 +22,7 @@ import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent.Collie.ClusterCreator
 import com.island.ohara.agent.{ClusterCollie, Collie, NodeCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0._
@@ -159,52 +160,8 @@ private[route] object RouteUtils {
         post {
           entity(as[Req]) { req =>
             if (req.nodeNames.isEmpty) throw new IllegalArgumentException(s"You are too poor to buy any server?")
-            // nodeCollie.nodes(req.nodeNames) is used to check the existence of node names of request
-            complete(
-              nodeCollie
-                .nodes(req.nodeNames)
-                .flatMap(clusterCollie.images)
-                // check the docker images
-                .map { nodesImages =>
-                  val image = req.imageName.getOrElse(defaultImage)
-                  nodesImages
-                    .filterNot(_._2.contains(image))
-                    .keys
-                    .map(_.name)
-                    .foreach(n => throw new IllegalArgumentException(s"$n doesn't have docker image:$image"))
-                  nodesImages
-                }
-                .flatMap(_ => clusterCollie.clusters.map(_.keys.toSeq))
-                .flatMap { clusters =>
-                  def serviceName(cluster: ClusterInfo): String = cluster match {
-                    case _: ZookeeperClusterInfo => s"zookeeper cluster:${cluster.name}"
-                    case _: BrokerClusterInfo    => s"broker cluster:${cluster.name}"
-                    case _: WorkerClusterInfo    => s"worker cluster:${cluster.name}"
-                    case _                       => s"cluster:${cluster.name}"
-                  }
-                  // check name conflict
-                  clusters
-                    .filter(c => classTag[Res].runtimeClass.isInstance(c))
-                    .map(_.asInstanceOf[Res])
-                    .find(_.name == req.name)
-                    .foreach(conflictCluster =>
-                      throw new IllegalArgumentException(s"${serviceName(conflictCluster)} is running"))
-
-                  // check port conflict
-                  Some(clusters
-                    .flatMap { cluster =>
-                      val conflictPorts = cluster.ports.intersect(req.ports)
-                      if (conflictPorts.isEmpty) None
-                      else Some(cluster -> conflictPorts)
-                    }
-                    .map {
-                      case (cluster, conflictPorts) =>
-                        s"ports:${conflictPorts.mkString(",")} are used by ${serviceName(cluster)}"
-                    }
-                    .mkString(";")).filter(_.nonEmpty).foreach(s => throw new IllegalArgumentException(s))
-
-                  hookOfCreation(clusters, req)
-                })
+            complete(basicCheckOfCluster[Req, Res](nodeCollie, clusterCollie, defaultImage, req).map(clusters =>
+              hookOfCreation(clusters, req)))
           }
         } ~ get(complete(collie.clusters.map(_.keys)))
       } ~ pathPrefix(Segment) { clusterName =>
@@ -238,4 +195,72 @@ private[route] object RouteUtils {
         }
       }
     }
+
+  //-------------------- helper methods -------------------------//
+  /**
+    * Test whether this cluster satisfied the following rules:
+    * <p>
+    * 1) cluster image in all nodes
+    * 2) name should not conflict
+    * 3) port should not conflict
+    *
+    * @param nodeCollie nodeCollie instance
+    * @param clusterCollie clusterCollie instance
+    * @param defaultImage the default image for this cluster
+    * @param req cluster creation request
+    * @param executionContext execution context
+    * @tparam Req type of request
+    * @return clusters that fitted the requires
+    */
+  private[route] def basicCheckOfCluster[Req <: ClusterCreationRequest, Res <: ClusterInfo: ClassTag](
+    nodeCollie: NodeCollie,
+    clusterCollie: ClusterCollie,
+    defaultImage: String,
+    req: Req)(implicit executionContext: ExecutionContext): Future[Seq[ClusterInfo]] = {
+    // nodeCollie.nodes(req.nodeNames) is used to check the existence of node names of request
+    nodeCollie
+      .nodes(req.nodeNames)
+      .flatMap(clusterCollie.images)
+      // check the docker images
+      .map { nodesImages =>
+        val image = req.imageName.getOrElse(defaultImage)
+        nodesImages
+          .filterNot(_._2.contains(image))
+          .keys
+          .map(_.name)
+          .foreach(n => throw new IllegalArgumentException(s"$n doesn't have docker image:$image"))
+        nodesImages
+      }
+      .flatMap(_ => clusterCollie.clusters.map(_.keys.toSeq))
+      .map { clusters =>
+        def serviceName(cluster: ClusterInfo): String = cluster match {
+          case _: ZookeeperClusterInfo => s"zookeeper cluster:${cluster.name}"
+          case _: BrokerClusterInfo    => s"broker cluster:${cluster.name}"
+          case _: WorkerClusterInfo    => s"worker cluster:${cluster.name}"
+          case _: StreamClusterInfo    => s"stream cluster:${cluster.name}"
+          case _                       => s"cluster:${cluster.name}"
+        }
+        // check name conflict
+        clusters
+          .filter(c => classTag[Res].runtimeClass.isInstance(c))
+          .map(_.asInstanceOf[Res])
+          .find(_.name == req.name)
+          .foreach(conflictCluster => throw new IllegalArgumentException(s"${serviceName(conflictCluster)} is running"))
+
+        // check port conflict
+        Some(
+          clusters
+            .flatMap { cluster =>
+              val conflictPorts = cluster.ports.intersect(req.ports)
+              if (conflictPorts.isEmpty) None
+              else Some(cluster -> conflictPorts)
+            }
+            .map {
+              case (cluster, conflictPorts) =>
+                s"ports:${conflictPorts.mkString(",")} are used by ${serviceName(cluster)}"
+            }
+            .mkString(";")).filter(_.nonEmpty).foreach(s => throw new IllegalArgumentException(s))
+        clusters
+      }
+  }
 }
