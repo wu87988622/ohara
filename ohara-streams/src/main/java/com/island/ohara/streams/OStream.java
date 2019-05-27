@@ -75,7 +75,7 @@ public interface OStream<T extends Row> {
    *
    * @param joinTopicName the topic name to be joined with this OStream
    * @param conditions the join key pairs
-   * @param joiner a {@link ValueJoiner} that computes the join result for a pair of matching
+   * @param joiner a {@link Valuejoiner} that computes the join result for a pair of matching
    *     records
    * @return {@code OStream}
    * @see org.apache.kafka.streams.kstream.KStream#leftJoin(KTable, ValueJoiner)

@@ -37,13 +37,15 @@ public interface OGroupedStream<T extends Row> {
 
   /**
    * Combine the values of each record in the {@code OStream} by the grouped key. This operation
-   * will return the reduce value in a new {@code Row} with the {@code Cell} format of combination
-   * {key_row} + {result_row}
+   * will return the reduce value of specific column, and result a new {@code Row} with the group
+   * {@code Cell} and the reduce column {@code Cell}
    *
-   * @param reducer a{@link Reducer} that computes a new aggregate result.
+   * @param reducer a {@link Reducer} that computes a new aggregate result.
+   * @param reduceColumn the column that computing reduce function
+   * @param <V> the type of value of reducer
    * @return {@code OStream}
    * @see
    *     org.apache.kafka.streams.kstream.KGroupedStream#reduce(org.apache.kafka.streams.kstream.Reducer)
    */
-  OStream<T> reduce(final Reducer reducer);
+  <V> OStream<T> reduce(final Reducer<V> reducer, final String reduceColumn);
 }

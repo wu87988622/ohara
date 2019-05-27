@@ -16,28 +16,40 @@
 
 package com.island.ohara.streams.ostream;
 
+import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Row;
 
 /**
- * The {@code Reducer} interface for combining two {@code Row} values of the same type.
+ * The {@code Reducer} interface for combining two values of the {@code OStream}, and return the
+ * result of same type. The values of {@code OStream} is the value of a {@code Cell}, the data type
+ * is stored in the {@code Cell} which in here is {@code Object}. You should convert the data type
+ * before you compute it.
  *
  * @see org.apache.kafka.streams.kstream.Reducer
  */
-public interface Reducer {
+@SuppressWarnings("unchecked")
+public interface Reducer<T> {
 
-  Row reducer(Row value1, Row value2);
+  T reducer(T value1, T value2);
 
-  class TrueReducer implements org.apache.kafka.streams.kstream.Reducer<Row> {
+  @SuppressWarnings("unchecked")
+  class TrueReducer<V> implements org.apache.kafka.streams.kstream.Reducer<Row> {
 
-    private final Reducer trueReducer;
+    private final Reducer<V> trueReducer;
+    private final String col;
 
-    TrueReducer(Reducer reducer) {
+    TrueReducer(Reducer<V> reducer, String col) {
       this.trueReducer = reducer;
+      this.col = col;
     }
 
     @Override
     public Row apply(Row value1, Row value2) {
-      return this.trueReducer.reducer(value1, value2);
+      return Row.of(
+          Cell.of(
+              col,
+              this.trueReducer.reducer(
+                  (V) value1.cell(col).value(), (V) value2.cell(col).value())));
     }
   }
 }

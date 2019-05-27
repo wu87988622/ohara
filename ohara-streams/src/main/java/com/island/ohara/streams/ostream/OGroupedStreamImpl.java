@@ -54,8 +54,8 @@ public class OGroupedStreamImpl extends AbstractStream<Row, Row> implements OGro
   }
 
   @Override
-  public OStream<Row> reduce(final Reducer reducer) {
-    Reducer.TrueReducer trueReducer = new Reducer.TrueReducer(reducer);
+  public <T> OStream<Row> reduce(final Reducer<T> reducer, String reduceColumn) {
+    Reducer.TrueReducer<T> trueReducer = new Reducer.TrueReducer(reducer, reduceColumn);
     return new OStreamImpl(
         builder,
         kgroupstream

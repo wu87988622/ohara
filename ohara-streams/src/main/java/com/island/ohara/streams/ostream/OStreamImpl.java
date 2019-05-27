@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 import org.apache.kafka.streams.StreamsBuilder;
+import org.apache.kafka.streams.kstream.Grouped;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.Produced;
@@ -107,7 +108,7 @@ class OStreamImpl extends AbstractStream<Row, Row> implements OStream<Row> {
                                             row.cell(name).value()))
                                 .toArray(Cell[]::new)),
                         row))
-            .groupByKey()
+            .groupByKey(Grouped.with(Serdes.ROW, Serdes.ROW))
             .reduce((agg, newValue) -> newValue);
 
     // convert the left topic (this stream) to <Row: key_header_value, Row: values>

@@ -114,7 +114,7 @@ public class TestPurchaseAnalysis extends WithBroker {
             .valueSerializer(Serializer.BYTES)
             .build();
 
-    List<Record<Row, byte[]>> records = consumer.poll(Duration.ofSeconds(100), 2);
+    List<Record<Row, byte[]>> records = consumer.poll(Duration.ofSeconds(100));
     // the result will get "accumulation" ; hence we will get 2 -> 4 records
     Assert.assertTrue(
         "the result will get \"accumulation\" ; hence we will get 2 -> 4 records. actual:"
@@ -215,13 +215,7 @@ public class TestPurchaseAnalysis extends WithBroker {
                           Double.valueOf(row.cell("quantity").value().toString())
                               * Double.valueOf(row.cell("price").value().toString()))))
           .groupByKey(Collections.singletonList("gender"))
-          .reduce(
-              (r1, r2) ->
-                  Row.of(
-                      Cell.of(
-                          "amount",
-                          Double.valueOf(r1.cell("amount").value().toString())
-                              + Double.valueOf(r2.cell("amount").value().toString()))))
+          .reduce((Double r1, Double r2) -> r1 + r2, "amount")
           .start();
     }
   }
