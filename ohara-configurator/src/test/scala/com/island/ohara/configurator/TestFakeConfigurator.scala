@@ -93,15 +93,6 @@ class TestFakeConfigurator extends SmallTest with Matchers {
     .build()
 
   @Test
-  def reassignStoreType(): Unit = an[IllegalArgumentException] should be thrownBy Configurator
-    .builder()
-    // in fake mode, we have created a store
-    .fake(1, 1)
-    // you can't change the store type now
-    .inMemoryStore()
-    .build()
-
-  @Test
   def reassignHomeFolder(): Unit = an[IllegalArgumentException] should be thrownBy Configurator
     .builder()
     // in fake mode, we have created a store

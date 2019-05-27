@@ -40,7 +40,6 @@ class ConfiguratorBuilder {
   private[this] var hostname: String = CommonUtils.hostname()
   private[this] var port: Int = CommonUtils.availablePort()
   private[this] var homeFolder: String = CommonUtils.createTempFolder("configurator").getCanonicalPath
-  private[this] var inMemory: Boolean = false
   private[this] var store: DataStore = _
   private[this] var clusterCollie: ClusterCollie = _
   private[this] var k8sClient: K8SClient = _
@@ -52,13 +51,6 @@ class ConfiguratorBuilder {
     val f = new File(CommonUtils.requireNonEmpty(homeFolder))
     if (!f.exists() && !f.mkdirs()) throw new IllegalArgumentException(s"failed to mkdir on $homeFolder")
     this.homeFolder = CommonUtils.requireFolder(f).getCanonicalPath
-    this
-  }
-
-  @Optional("default is none")
-  def inMemoryStore(): ConfiguratorBuilder = {
-    if (store != null) throw new IllegalArgumentException("you have instantiated a store!!!")
-    this.inMemory = true
     this
   }
 
@@ -319,23 +311,13 @@ class ConfiguratorBuilder {
     new File(CommonUtils.requireNonEmpty(homeFolder), prefix).getCanonicalPath
 
   private[this] def getOrCreateStore(): DataStore = if (store == null) {
-    store =
-      if (inMemory)
-        DataStore(
-          com.island.ohara.configurator.store.Store
-            .builder[String, Data]()
-            .keySerializer(Serializer.STRING)
-            .valueSerializer(Configurator.DATA_SERIALIZER)
-            .inMemory()
-            .build())
-      else
-        DataStore(
-          com.island.ohara.configurator.store.Store
-            .builder[String, Data]()
-            .keySerializer(Serializer.STRING)
-            .valueSerializer(Configurator.DATA_SERIALIZER)
-            .persistentFolder(folder("store"))
-            .build())
+    store = DataStore(
+      com.island.ohara.configurator.store.Store
+        .builder[String, Data]()
+        .keySerializer(Serializer.STRING)
+        .valueSerializer(Configurator.DATA_SERIALIZER)
+        .persistentFolder(folder("store"))
+        .build())
     store
   } else store
 

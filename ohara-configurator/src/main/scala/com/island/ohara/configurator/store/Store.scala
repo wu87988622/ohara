@@ -92,8 +92,7 @@ object Store {
   class Builder[K, V] private[Store] {
     private[this] var keySerializer: Serializer[K] = _
     private[this] var valueSerializer: Serializer[V] = _
-    private[this] var _inMemory = true
-    private[this] var persistentFolder: String = _
+    private[this] var persistentFolder: String = CommonUtils.createTempFolder("store").getCanonicalPath
 
     def keySerializer(keySerializer: Serializer[K]): Builder[K, V] = {
       this.keySerializer = Objects.requireNonNull(keySerializer)
@@ -105,30 +104,15 @@ object Store {
       this
     }
 
-    @Optional("Default value is empty")
+    @Optional("Default value is a random folder")
     def persistentFolder(persistentFolder: String): Builder[K, V] = {
       this.persistentFolder = CommonUtils.requireNonEmpty(persistentFolder)
-      this._inMemory = false
       this
     }
 
-    /**
-      * All data are stored in memory. If user have set the comparator to properties, In-memory store will use the
-      * ConcurrentSkipListMap to store the data.
-      * NOTED: DON'T use in-memory store in your production since in-memory store doesn't support to persist data.
-      */
-    @Optional("Default value is true")
-    def inMemory(): Builder[K, V] = {
-      this.persistentFolder = null
-      this._inMemory = true
-      this
-    }
-
-    def build(): Store[K, V] = {
-      Objects.requireNonNull(keySerializer)
-      Objects.requireNonNull(valueSerializer)
-      if (_inMemory) new MemoryStore(keySerializer, valueSerializer)
-      else new RocksStore(CommonUtils.requireNonEmpty(persistentFolder), keySerializer, valueSerializer)
-    }
+    def build(): Store[K, V] =
+      new RocksStore(CommonUtils.requireNonEmpty(persistentFolder),
+                     Objects.requireNonNull(keySerializer),
+                     Objects.requireNonNull(valueSerializer))
   }
 }
