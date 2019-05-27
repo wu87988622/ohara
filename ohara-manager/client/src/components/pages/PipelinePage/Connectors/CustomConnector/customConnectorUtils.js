@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-import { get, isEmpty } from 'lodash';
+import { get, isEmpty, isNull } from 'lodash';
 
 import ColumnTable from './ColumnTable';
 import { isEmptyStr } from 'utils/commonUtils';
@@ -167,7 +167,7 @@ export const groupBy = (array, fn) => {
 };
 
 export const replaceKeys = obj => {
-  if (obj == null) {
+  if (isNull(obj)) {
     return null;
   }
   return Object.keys(obj).reduce((acc, key) => {

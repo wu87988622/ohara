@@ -15,18 +15,19 @@
  */
 
 import React from 'react';
-import * as utils from './customConnectorUtils';
-import { validateConnector } from 'api/validateApi';
-import { get, debounce } from 'lodash';
 import toastr from 'toastr';
+import PropTypes from 'prop-types';
+import { get, debounce } from 'lodash';
+import { Form } from 'react-final-form';
+
+import * as connectorApi from 'api/connectorApi';
+import * as utils from './customConnectorUtils';
 import * as MESSAGES from 'constants/messages';
 import * as s from './styles';
 import TestConnectionBtn from '../TestConnectionBtn';
-import { Form } from 'react-final-form';
-import { fetchWorker } from 'api/workerApi';
-import * as connectorApi from 'api/connectorApi';
-import PropTypes from 'prop-types';
 import { graph as graphPropType } from 'propTypes/pipeline';
+import { validateConnector } from 'api/validateApi';
+import { fetchWorker } from 'api/workerApi';
 
 class CustomFinalForm extends React.Component {
   static propTypes = {
@@ -164,7 +165,6 @@ class CustomFinalForm extends React.Component {
   handleTestConnection = async e => {
     this.setState({ isTestConnectionBtnWorking: true });
 
-    // const topics = this.state.topic
     const topicId = utils.getCurrTopicId({
       originals: this.props.globalTopics,
       target: this.state.topics[0],
@@ -251,7 +251,6 @@ class CustomFinalForm extends React.Component {
           form,
           formProps,
           isTestConnectionBtnWorking,
-          values,
         }) => {
           return (
             <>
