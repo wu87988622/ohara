@@ -17,7 +17,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import toastr from 'toastr';
-import { get, debounce, isUndefined } from 'lodash';
+import { Form } from 'react-final-form';
+import { get, isUndefined } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
 import * as connectorApi from 'api/connectorApi';
@@ -26,6 +27,7 @@ import * as s from './styles';
 import * as types from 'propTypes/pipeline';
 import Controller from './Controller';
 import TestConnectionBtn from './TestConnectionBtn';
+import AutoSave from './AutoSave';
 import { validateConnector } from 'api/validateApi';
 import { ListLoader } from 'common/Loader';
 import { Box } from 'common/Layout';
@@ -67,7 +69,7 @@ class HdfsSink extends React.Component {
 
   componentDidUpdate(prevProps) {
     const { pipelineTopics: prevTopics } = prevProps;
-    const { hasChanges, pipelineTopics: currTopics } = this.props;
+    const { pipelineTopics: currTopics } = this.props;
     const { connectorId: prevConnectorId } = prevProps.match.params;
     const { connectorId: currConnectorId } = this.props.match.params;
 
@@ -78,10 +80,6 @@ class HdfsSink extends React.Component {
 
     if (prevConnectorId !== currConnectorId) {
       this.fetchConnector();
-    }
-
-    if (hasChanges) {
-      this.save();
     }
   }
 
@@ -105,7 +103,13 @@ class HdfsSink extends React.Component {
         target: topics,
       });
 
-      const configs = { ...settings, topics: topicName };
+      const _settings = utils.changeToken({
+        values: settings,
+        targetToken: '.',
+        replaceToken: '_',
+      });
+
+      const configs = { ..._settings, topics: topicName };
       this.setState({ configs, state });
     }
   };
@@ -230,38 +234,34 @@ class HdfsSink extends React.Component {
     }
   };
 
-  save = debounce(async () => {
-    const {
-      updateHasChanges,
-      match,
-      graph,
-      updateGraph,
-      globalTopics,
-    } = this.props;
-    const { configs } = this.state;
+  handleSave = async values => {
+    const { match, globalTopics, graph, updateGraph } = this.props;
     const { connectorId } = match.params;
 
     const topicId = utils.getCurrTopicId({
       originals: globalTopics,
-      target: configs.topics,
+      target: values.topics,
+    });
+    const topics = isUndefined(topicId) ? [] : [topicId];
+    const _values = utils.changeToken({
+      values,
+      targetToken: '_',
+      replaceToken: '.',
     });
 
-    const topics = isUndefined(topicId) ? [] : [topicId];
-    const params = { ...configs, topics };
-
+    const params = { ..._values, topics };
     await connectorApi.updateConnector({ id: connectorId, params });
-    updateHasChanges(false);
 
     const { sinkProps, update } = utils.getUpdatedTopic({
       currTopicId: topicId,
-      graph,
-      configs,
-      connectorId,
+      configs: values,
       originalTopics: globalTopics,
+      graph,
+      connectorId,
     });
 
     updateGraph({ update, ...sinkProps });
-  }, 1000);
+  };
 
   render() {
     const {
@@ -271,15 +271,25 @@ class HdfsSink extends React.Component {
       topics,
       isTestConnectionBtnWorking,
     } = this.state;
-    const { defs } = this.props;
+    const { defs, updateHasChanges } = this.props;
 
     if (!configs) return null;
 
-    const formProps = {
+    const data = utils.getRenderData({
       defs,
       topics,
       configs,
       state,
+    });
+
+    const initialValues = data.reduce((acc, cur) => {
+      acc[cur.key] = cur.displayValue;
+      return acc;
+    }, {});
+
+    const formProps = {
+      data,
+      topics,
       handleChange: this.handleChange,
       handleColumnChange: this.handleColumnChange,
       handleColumnRowDelete: this.handleColumnRowDelete,
@@ -304,13 +314,27 @@ class HdfsSink extends React.Component {
             <ListLoader />
           </s.LoaderWrap>
         ) : (
-          <>
-            {utils.renderForm(formProps)}
-            <TestConnectionBtn
-              handleClick={this.handleTestConnection}
-              isWorking={isTestConnectionBtnWorking}
-            />
-          </>
+          <Form
+            onSubmit={this.handleSave}
+            initialValues={initialValues}
+            render={() => {
+              return (
+                <form>
+                  <AutoSave
+                    save={this.handleSave}
+                    updateHasChanges={updateHasChanges}
+                    hasToken
+                  />
+
+                  {utils.renderForm(formProps)}
+                  <TestConnectionBtn
+                    handleClick={this.handleTestConnection}
+                    isWorking={isTestConnectionBtnWorking}
+                  />
+                </form>
+              );
+            }}
+          />
         )}
       </Box>
     );

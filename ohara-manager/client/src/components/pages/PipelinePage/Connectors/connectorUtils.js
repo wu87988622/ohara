@@ -16,10 +16,11 @@
 
 import React from 'react';
 import { get, isEmpty } from 'lodash';
+import { Field } from 'react-final-form';
 
-import Select from './CustomConnector/Select';
 import ColumnTable from './CustomConnector/ColumnTable';
-import { FormGroup, Input, Label } from 'common/Form';
+import { FormGroup, Label } from 'common/Form';
+import { InputField, SelectField } from 'common/FormFields';
 import { CONNECTOR_STATES } from 'constants/pipelines';
 import { isEmptyStr } from 'utils/commonUtils';
 import { findByGraphId } from '../pipelineUtils/commonUtils';
@@ -163,7 +164,7 @@ export const moveColumnRowDown = ({ configs, order }) => {
   return updatedConfigs;
 };
 
-const convertValueTypeToInputType = type => {
+export const switchType = type => {
   switch (type) {
     case 'STRING':
       return 'text';
@@ -174,10 +175,80 @@ const convertValueTypeToInputType = type => {
   }
 };
 
+export const convertData = ({ configValue, valueType, defaultValue }) => {
+  let displayValue;
+  if (!configValue) {
+    // react complains null values
+    if (valueType === 'TABLE') {
+      displayValue = [];
+    } else {
+      displayValue = defaultValue || '';
+    }
+  } else {
+    // If we have values returned from connector API, let's use them
+    displayValue = configValue;
+  }
+
+  return displayValue;
+};
+
+export const changeToken = ({ values, targetToken, replaceToken }) => {
+  return Object.keys(values).reduce((acc, key) => {
+    // Two tokens we use to separate words: `.` and `_`
+    const pattern = targetToken === '.' ? /\./g : /_/g;
+    const renamedObject = {
+      [key.replace(pattern, replaceToken)]: values[key],
+    };
+
+    return {
+      ...acc,
+      ...renamedObject,
+    };
+  }, {});
+};
+
+export const getRenderData = ({ state, defs, configs }) => {
+  const isRunning =
+    state === CONNECTOR_STATES.running || state === CONNECTOR_STATES.failed;
+  const sortByOrder = (a, b) => a.orderInGroup - b.orderInGroup;
+
+  const data = defs
+    .sort(sortByOrder)
+    .filter(def => !def.internal) // Don't display these defs
+    .map(def => {
+      const { key, defaultValue, valueType } = def;
+
+      let _key;
+      let arr;
+      if (key.includes('.')) {
+        arr = key.split('.');
+        _key = arr.join('_');
+      } else {
+        arr = key.split('_');
+        _key = arr.join('.');
+      }
+
+      const configValue = configs[_key];
+      const displayValue = convertData({
+        configValue,
+        valueType,
+        defaultValue,
+      });
+
+      return {
+        ...def,
+        configValue,
+        displayValue,
+        isRunning,
+        key: _key,
+      };
+    });
+
+  return data;
+};
+
 export const renderForm = ({
-  state,
-  defs,
-  configs,
+  data,
   topics,
   handleChange,
   handleColumnChange,
@@ -185,117 +256,90 @@ export const renderForm = ({
   handleColumnRowUp,
   handleColumnRowDown,
 }) => {
-  const isRunning =
-    state === CONNECTOR_STATES.running || state === CONNECTOR_STATES.failed;
-
   const dataType = ['STRING'];
   const tableActions = ['Up', 'Down', 'Delete'];
-  const sortByOrder = (a, b) => a.orderInGroup - b.orderInGroup;
-  const convertData = ({ configValue, valueType, defaultValue }) => {
-    let displayValue;
-    if (!configValue) {
-      // react complains null values
-      if (valueType === 'TABLE') {
-        displayValue = [];
-      } else {
-        displayValue = defaultValue || '';
-      }
-    } else {
-      // If we have values returned from connector API, let's use them
-      displayValue = configValue;
+
+  return data.map(d => {
+    const {
+      valueType,
+      key,
+      displayName,
+      required,
+      documentation,
+      editable,
+      isRunning,
+      displayValue,
+      tableKeys,
+    } = d;
+
+    const columnTableHeader = tableKeys.concat(tableActions);
+
+    if (['STRING', 'INT', 'CLASS'].includes(valueType)) {
+      const inputType = switchType(valueType);
+
+      return (
+        <FormGroup key={key}>
+          <Label
+            htmlFor={`${displayName}`}
+            required={required}
+            tooltipString={documentation}
+            tooltipAlignment="right"
+            width="100%"
+          >
+            {displayName}
+          </Label>
+          <Field
+            type={inputType}
+            component={InputField}
+            id={`${displayName}`}
+            width="100%"
+            parse={value => String(value)}
+            name={key}
+            onChange={handleChange}
+            disabled={!editable || isRunning}
+          />
+        </FormGroup>
+      );
+    } else if (valueType === 'LIST') {
+      return (
+        <FormGroup key={key}>
+          <Label
+            htmlFor={`${displayName}`}
+            required={required}
+            tooltipString={documentation}
+            tooltipAlignment="right"
+            width="100%"
+          >
+            {displayName}
+          </Label>
+          <Field
+            id={`${displayName}`}
+            list={topics}
+            onChange={handleChange}
+            component={SelectField}
+            name={key}
+            width="100%"
+            disabled={isRunning}
+            clearable
+          />
+        </FormGroup>
+      );
+    } else if (valueType === 'TABLE') {
+      return (
+        <FormGroup key={key}>
+          <ColumnTable
+            headers={columnTableHeader}
+            data={displayValue}
+            dataTypes={dataType}
+            handleColumnChange={handleColumnChange}
+            handleColumnRowDelete={handleColumnRowDelete}
+            handleColumnRowUp={handleColumnRowUp}
+            handleColumnRowDown={handleColumnRowDown}
+          />
+        </FormGroup>
+      );
     }
 
-    return displayValue;
-  };
-
-  return defs
-    .sort(sortByOrder)
-    .filter(def => !def.internal) // Do not display def that has an internal === true prop
-    .map(def => {
-      const {
-        displayName,
-        key,
-        editable,
-        required,
-        documentation,
-        defaultValue,
-        valueType,
-        tableKeys,
-      } = def;
-
-      const configValue = configs[key];
-      const columnTableHeader = tableKeys.concat(tableActions);
-      const displayValue = convertData({
-        configValue,
-        valueType,
-        defaultValue,
-      });
-
-      if (['STRING', 'INT', 'CLASS'].includes(valueType)) {
-        const inputType = convertValueTypeToInputType(valueType);
-
-        return (
-          <FormGroup key={key}>
-            <Label
-              htmlFor={`${displayName}`}
-              required={required}
-              tooltipString={documentation}
-              tooltipAlignment="right"
-              width="100%"
-            >
-              {displayName}
-            </Label>
-            <Input
-              type={inputType}
-              id={`${displayName}`}
-              width="100%"
-              value={String(displayValue)}
-              name={key}
-              onChange={handleChange}
-              disabled={!editable || isRunning}
-            />
-          </FormGroup>
-        );
-      } else if (valueType === 'LIST') {
-        return (
-          <FormGroup key={key}>
-            <Label
-              htmlFor={`${displayName}`}
-              required={required}
-              tooltipString={documentation}
-              tooltipAlignment="right"
-              width="100%"
-            >
-              {displayName}
-            </Label>
-            <Select
-              id={`${displayName}`}
-              list={topics}
-              value={displayValue}
-              handleChange={handleChange}
-              name={key}
-              width="100%"
-              disabled={isRunning}
-              clearable
-            />
-          </FormGroup>
-        );
-      } else if (valueType === 'TABLE') {
-        return (
-          <FormGroup key={key}>
-            <ColumnTable
-              headers={columnTableHeader}
-              data={displayValue}
-              dataTypes={dataType}
-              handleColumnChange={handleColumnChange}
-              handleColumnRowDelete={handleColumnRowDelete}
-              handleColumnRowUp={handleColumnRowUp}
-              handleColumnRowDown={handleColumnRowDown}
-            />
-          </FormGroup>
-        );
-      }
-
-      return null;
-    });
+    return null;
+  });
 };

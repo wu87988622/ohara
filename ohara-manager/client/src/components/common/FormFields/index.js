@@ -16,6 +16,5 @@
 
 import InputField from './InputField';
 import SelectField from './SelectField';
-import AutoSave from './AutoSave';
 
-export { InputField, SelectField, AutoSave };
+export { InputField, SelectField };

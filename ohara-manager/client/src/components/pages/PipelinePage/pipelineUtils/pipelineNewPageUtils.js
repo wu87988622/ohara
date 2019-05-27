@@ -162,7 +162,6 @@ export const loadGraph = pipeline => {
 
   const updatedGraph = Object.keys(rules).map(x => {
     const target = objects.find(object => object.id === x);
-
     // Add a to prop in local state so we can create graph with this prop
     const { kind } = target;
 

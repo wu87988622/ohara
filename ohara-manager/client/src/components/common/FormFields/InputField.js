@@ -18,11 +18,13 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Input } from 'common/Form';
 
-const InputField = ({
-  input: { name, onChange, value, ...restInput },
-  meta,
-  ...rest
-}) => {
+const InputField = props => {
+  const {
+    input: { name, onChange, value, ...restInput },
+    meta,
+    ...rest
+  } = props;
+
   return (
     <Input
       {...rest}

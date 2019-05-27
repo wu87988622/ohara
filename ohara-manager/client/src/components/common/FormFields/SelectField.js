@@ -18,12 +18,14 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Select } from 'common/Form';
 
-const SelectField = ({
-  input: { name, onChange, value, ...restInput },
-  meta,
-  list,
-  ...rest
-}) => {
+const SelectField = props => {
+  const {
+    input: { name, onChange, value, ...restInput },
+    meta,
+    list,
+    ...rest
+  } = props;
+
   return (
     <Select
       {...rest}

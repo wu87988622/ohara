@@ -44,12 +44,7 @@ import {
   StreamApp,
   CustomConnector,
 } from '../Connectors';
-import {
-  addPipelineStatus,
-  updatePipelineParams,
-  updateGraph,
-  loadGraph,
-} from '../pipelineUtils/pipelineNewPageUtils';
+import * as utils from '../pipelineUtils/pipelineNewPageUtils';
 
 import { Wrapper, Main, Sidebar, Heading2, Heading3, Operate } from './styles';
 
@@ -102,7 +97,7 @@ class PipelineNewPage extends React.Component {
       const pipeline = get(res, 'data.result', null);
 
       if (pipeline) {
-        const updatedPipeline = addPipelineStatus(pipeline);
+        const updatedPipeline = utils.addPipelineStatus(pipeline);
         const { topics: pipelineTopics = [] } = getConnectors(
           updatedPipeline.objects,
         );
@@ -127,7 +122,7 @@ class PipelineNewPage extends React.Component {
   updateGraph = async params => {
     this.setState(({ graph }) => {
       return {
-        graph: updateGraph({
+        graph: utils.updateGraph({
           graph,
           ...params,
         }),
@@ -139,7 +134,7 @@ class PipelineNewPage extends React.Component {
 
   loadGraph = pipeline => {
     this.setState(() => {
-      return { graph: loadGraph(pipeline) };
+      return { graph: utils.loadGraph(pipeline) };
     });
   };
 
@@ -190,7 +185,7 @@ class PipelineNewPage extends React.Component {
   updatePipeline = async (update = {}) => {
     const { pipeline } = this.state;
     const { id, status } = pipeline;
-    const params = updatePipelineParams({ pipeline, ...update });
+    const params = utils.updatePipelineParams({ pipeline, ...update });
 
     this.setState({ isUpdating: true }, async () => {
       const res = await pipelineApi.updatePipeline({ id, params });

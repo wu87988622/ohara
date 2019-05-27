@@ -261,7 +261,6 @@ export const renderForm = ({
                   width="100%"
                   name={replaceKey}
                   type={type}
-                  onChange={handleChange}
                   disabled={!editable || isRunning}
                   component={InputField}
                 />

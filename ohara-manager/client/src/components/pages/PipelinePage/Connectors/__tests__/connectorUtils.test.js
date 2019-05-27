@@ -117,3 +117,52 @@ describe('addColumn()', () => {
     expect(update).toEqual(expected);
   });
 });
+
+describe('switchType()', () => {
+  it('returns `text` if the given type is `STRING`', () => {
+    expect(utils.switchType('STRING')).toBe('text');
+  });
+
+  it('returns `number` if the given type is `INT`', () => {
+    expect(utils.switchType('INT')).toBe('number');
+  });
+
+  it('returns a default type of `text`', () => {
+    expect(utils.switchType('oops')).toBe('text');
+    expect(utils.switchType('nope')).toBe('text');
+  });
+});
+
+describe('changeToken()', () => {
+  it('replace token `.` with `_`', () => {
+    const values = {
+      'abc.efg.dfx.dfs': 'abcefg',
+      'nope.nah.sdkl.ljdsf': 'nopenah',
+    };
+
+    const expected = {
+      abc_efg_dfx_dfs: 'abcefg',
+      nope_nah_sdkl_ljdsf: 'nopenah',
+    };
+
+    expect(
+      utils.changeToken({ values, targetToken: '.', replaceToken: '_' }),
+    ).toEqual(expected);
+  });
+
+  it('replace token `` with `.`', () => {
+    const values = {
+      qwe_kjlksd_kjlsjf_dfs: 'sdfxdf',
+      nope_nah: 'sdf',
+    };
+
+    const expected = {
+      'qwe.kjlksd.kjlsjf.dfs': 'sdfxdf',
+      'nope.nah': 'sdf',
+    };
+
+    expect(
+      utils.changeToken({ values, targetToken: '_', replaceToken: '.' }),
+    ).toEqual(expected);
+  });
+});
