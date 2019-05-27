@@ -15,15 +15,16 @@
  */
 
 import React from 'react';
-import { get, isEmpty } from 'lodash';
+import { get, isEmpty, isNull } from 'lodash';
 
-import Select from './Select';
 import ColumnTable from './ColumnTable';
 import { isEmptyStr } from 'utils/commonUtils';
 import { findByGraphId } from '../../pipelineUtils/commonUtils';
-import { FormGroup, Input, Label } from 'common/Form';
+import { FormGroup, Label } from 'common/Form';
+import { InputField, SelectField } from 'common/FormFields';
 import { CONNECTOR_STATES } from 'constants/pipelines';
 import UtilsTabs from './UtilsTabs';
+import { Field } from 'react-final-form';
 
 export const getMetadata = (props, worker) => {
   const { page: targetConnector } = props.match.params;
@@ -165,6 +166,22 @@ export const groupBy = (array, fn) => {
   });
 };
 
+export const replaceKeys = obj => {
+  if (isNull(obj)) {
+    return null;
+  }
+  return Object.keys(obj).reduce((acc, key) => {
+    const renamedObject = {
+      [key.replace(/\./g, '_')]: obj[key],
+    };
+
+    return {
+      ...acc,
+      ...renamedObject,
+    };
+  }, {});
+};
+
 export const renderForm = ({
   state,
   defs,
@@ -216,6 +233,7 @@ export const renderForm = ({
         } = def;
         const configValue = configs[key];
         const columnTableHeader = tableKeys.concat(tableActions);
+        const replaceKey = key.replace(/\./g, '_');
         const displayValue = convertData({
           configValue,
           valueType,
@@ -238,14 +256,14 @@ export const renderForm = ({
                 >
                   {displayName}
                 </Label>
-                <Input
+                <Field
                   id={`${displayName}`}
                   width="100%"
-                  value={String(displayValue)}
-                  name={key}
+                  name={replaceKey}
                   type={type}
                   onChange={handleChange}
                   disabled={!editable || isRunning}
+                  component={InputField}
                 />
               </FormGroup>
             );
@@ -262,15 +280,15 @@ export const renderForm = ({
                 >
                   {displayName}
                 </Label>
-                <Select
+                <Field
                   id={`${displayName}`}
                   list={topics}
-                  value={displayValue}
-                  handleChange={handleChange}
-                  name={key}
+                  onChange={handleChange}
+                  name={replaceKey}
                   width="100%"
                   disabled={isRunning}
                   clearable
+                  component={SelectField}
                 />
               </FormGroup>
             );
@@ -302,7 +320,9 @@ export const renderForm = ({
   const hasTab = groupDefs.length > 1 ? true : false;
   if (hasTab) {
     return (
-      <UtilsTabs groupDefs={groupDefs} defsToFormGroup={defsToFormGroup} />
+      <form>
+        <UtilsTabs groupDefs={groupDefs} defsToFormGroup={defsToFormGroup} />
+      </form>
     );
   } else {
     return groupDefs.sort().map(defs => {

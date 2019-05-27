@@ -15,24 +15,21 @@
  */
 
 import React from 'react';
-import PropTypes from 'prop-types';
 import toastr from 'toastr';
+import PropTypes from 'prop-types';
 import { get, debounce } from 'lodash';
+import { Form } from 'react-final-form';
 
-import * as MESSAGES from 'constants/messages';
 import * as connectorApi from 'api/connectorApi';
-import { validateConnector } from 'api/validateApi';
+import * as utils from './customConnectorUtils';
+import * as MESSAGES from 'constants/messages';
 import * as s from './styles';
-import * as utils from './CustomConnector/customConnectorUtils';
-import Controller from './Controller';
-import { findByGraphId } from '../pipelineUtils/commonUtils';
-import { CONNECTOR_STATES, CONNECTOR_ACTIONS } from 'constants/pipelines';
+import TestConnectionBtn from '../TestConnectionBtn';
 import { graph as graphPropType } from 'propTypes/pipeline';
-
+import { validateConnector } from 'api/validateApi';
 import { fetchWorker } from 'api/workerApi';
-import CustomFinalForm from './CustomConnector/CustomFinalForm';
 
-class FtpSource extends React.Component {
+class CustomFinalForm extends React.Component {
   static propTypes = {
     hasChanges: PropTypes.bool.isRequired,
     updateHasChanges: PropTypes.func.isRequired,
@@ -141,6 +138,7 @@ class FtpSource extends React.Component {
   handleColumnChange = newColumn => {
     const { configs } = this.state;
     const updatedConfigs = utils.addColumn({ configs, newColumn });
+
     this.updateComponent(updatedConfigs);
   };
 
@@ -165,16 +163,14 @@ class FtpSource extends React.Component {
   };
 
   handleTestConnection = async e => {
-    e.preventDefault();
     this.setState({ isTestConnectionBtnWorking: true });
 
-    // const topics = this.state.topic
     const topicId = utils.getCurrTopicId({
       originals: this.props.globalTopics,
       target: this.state.topics[0],
     });
 
-    const params = { ...this.state.configs, topics: [topicId] };
+    const params = { ...this.state.configs, topics: topicId };
     const res = await validateConnector(params);
     this.setState({ isTestConnectionBtnWorking: false });
 
@@ -183,14 +179,6 @@ class FtpSource extends React.Component {
     if (isSuccess) {
       toastr.success(MESSAGES.TEST_SUCCESS);
     }
-  };
-
-  handleStartConnector = async () => {
-    await this.triggerConnector(CONNECTOR_ACTIONS.start);
-  };
-
-  handleStopConnector = async () => {
-    await this.triggerConnector(CONNECTOR_ACTIONS.stop);
   };
 
   handleDeleteConnector = async () => {
@@ -207,40 +195,6 @@ class FtpSource extends React.Component {
       const path = `/pipelines/edit/${pipelineId}`;
       history.push(path);
     }
-  };
-
-  handleTriggerConnectorResponse = (action, res) => {
-    const isSuccess = get(res, 'data.isSuccess', false);
-    if (!isSuccess) return;
-
-    const { match, graph, updateGraph } = this.props;
-    const sinkId = get(match, 'params.connectorId', null);
-    const state = get(res, 'data.result.state');
-    this.setState({ state });
-    const currSink = findByGraphId(graph, sinkId);
-    const update = { ...currSink, state };
-    updateGraph({ update });
-
-    if (action === CONNECTOR_ACTIONS.start) {
-      if (state === CONNECTOR_STATES.running) {
-        toastr.success(MESSAGES.START_CONNECTOR_SUCCESS);
-      } else {
-        toastr.error(MESSAGES.CANNOT_START_CONNECTOR_ERROR);
-      }
-    }
-  };
-
-  triggerConnector = async action => {
-    const { match } = this.props;
-    const sourceId = get(match, 'params.connectorId', null);
-    let res;
-    if (action === CONNECTOR_ACTIONS.start) {
-      res = await connectorApi.startConnector(sourceId);
-    } else {
-      res = await connectorApi.stopConnector(sourceId);
-    }
-
-    this.handleTriggerConnectorResponse(action, res);
   };
 
   save = debounce(async () => {
@@ -275,26 +229,44 @@ class FtpSource extends React.Component {
   }, 1000);
 
   render() {
+    const replaceConfigs = utils.replaceKeys(this.state.configs);
     return (
-      <React.Fragment>
-        <s.BoxWrapper padding="25px 0 0 0">
-          <s.TitleWrapper margin="0 25px 30px">
-            <s.H5Wrapper>FTP source connector</s.H5Wrapper>
-            <Controller
-              kind="connector"
-              onStart={this.handleStartConnector}
-              onStop={this.handleStopConnector}
-              onDelete={this.handleDeleteConnector}
-            />
-          </s.TitleWrapper>
-          <CustomFinalForm
-            workerClusterName={this.workerClusterName}
-            {...this.props}
-          />
-        </s.BoxWrapper>
-      </React.Fragment>
+      <Form
+        onSubmit={this.handleTestConnection}
+        initialValues={replaceConfigs}
+        isTestConnectionBtnWorking={this.state.isTestConnectionBtnWorking}
+        formProps={{
+          defs: this.state.defs,
+          configs: this.state.configs,
+          topics: this.state.topics,
+          state: this.state.state,
+          handleChange: this.handleChange,
+          handleColumnChange: this.handleColumnChange,
+          handleColumnRowDelete: this.handleColumnRowDelete,
+          handleColumnRowUp: this.handleColumnRowUp,
+          handleColumnRowDown: this.handleColumnRowDown,
+        }}
+        render={({
+          handleSubmit,
+          form,
+          formProps,
+          isTestConnectionBtnWorking,
+        }) => {
+          return (
+            <>
+              {utils.renderForm(formProps, form)}
+              <s.StyledForm>
+                <TestConnectionBtn
+                  handleClick={handleSubmit}
+                  isWorking={isTestConnectionBtnWorking}
+                />
+              </s.StyledForm>
+            </>
+          );
+        }}
+      />
     );
   }
 }
 
-export default FtpSource;
+export default CustomFinalForm;

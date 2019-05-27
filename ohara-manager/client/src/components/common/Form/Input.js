@@ -57,7 +57,6 @@ const Input = ({
   ...rest
 }) => {
   const disableCls = disabled ? 'is-disabled' : '';
-
   return (
     <InputWrapper
       type={type}
@@ -75,7 +74,7 @@ const Input = ({
 
 Input.propTypes = {
   type: PropTypes.string,
-  value: PropTypes.string.isRequired,
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   handleChange: PropTypes.func,
   placeholder: PropTypes.string,
   width: PropTypes.string,
