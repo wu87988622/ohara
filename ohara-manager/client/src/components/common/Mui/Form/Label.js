@@ -16,30 +16,15 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import InputLabel from '@material-ui/core/InputLabel';
 
-import { FormGroup, Button } from 'common/Form';
-import { primaryBtn } from 'theme/btnTheme';
-
-const TestConnectionBtn = props => {
-  const { handleClick, isWorking } = props;
-
-  return (
-    <FormGroup>
-      <Button
-        theme={primaryBtn}
-        text="Validate configs"
-        isWorking={isWorking}
-        disabled={isWorking}
-        data-testid="validate-configs-btn"
-        handleClick={handleClick}
-      />
-    </FormGroup>
-  );
+const Label = ({ children, htmlFor }) => {
+  return <InputLabel htmlFor={htmlFor}>{children}</InputLabel>;
 };
 
-TestConnectionBtn.propTypes = {
-  handleClick: PropTypes.func.isRequired,
-  isWorking: PropTypes.bool.isRequired,
+Label.propTypes = {
+  children: PropTypes.any.isRequired,
+  htmlFor: PropTypes.string.isRequired,
 };
 
-export default TestConnectionBtn;
+export default Label;

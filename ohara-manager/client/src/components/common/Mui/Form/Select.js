@@ -16,62 +16,60 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import TextField from '@material-ui/core/TextField';
 import styled from 'styled-components';
-import Tooltip from './Tooltip';
+import TextField from '@material-ui/core/TextField';
+import MenuItem from '@material-ui/core/MenuItem';
 
-const InputWrap = styled.div`
-  position: relative;
-  width: 100%;
-`;
-
-const StyledTextField = styled(TextField)`
+// Mui TextField also supports native select, that's why
+// we're not using Mui's <Select /> component directly here
+const StyledSelect = styled(TextField)`
   width: ${props => props.width};
 `;
 
-const TooltipWrap = styled.div`
-  position: absolute;
-  top: 0;
-  right: 0;
-`;
+const Select = props => {
+  const {
+    input: { name, onChange, value, ...restInput },
+    meta,
+    list = [],
+    ...rest
+  } = props;
 
-const InputField = ({
-  input: { name, onChange, value, ...restInput },
-  width = '100%',
-  helperText,
-  meta,
-  ...rest
-}) => {
+  const placeholder = 'Please select...';
+  const _list = [placeholder, ...list];
+  const _value = value ? value : placeholder;
+
   return (
-    <InputWrap>
-      <StyledTextField
-        {...rest}
-        name={name}
-        error={meta.error && meta.touched}
-        onChange={onChange}
-        InputProps={restInput}
-        value={value}
-        width={width}
-      />
-      <TooltipWrap>
-        <Tooltip text={helperText} />
-      </TooltipWrap>
-    </InputWrap>
+    <StyledSelect
+      {...rest}
+      select
+      name={name}
+      error={meta.error && meta.touched}
+      inputProps={restInput}
+      onChange={onChange}
+      value={_value}
+    >
+      {_list.map(item => {
+        return (
+          <MenuItem key={item} value={item}>
+            {item}
+          </MenuItem>
+        );
+      })}
+    </StyledSelect>
   );
 };
 
-InputField.propTypes = {
+Select.propTypes = {
   input: PropTypes.shape({
     name: PropTypes.string.isRequired,
     onChange: PropTypes.func.isRequired,
-    value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    value: PropTypes.string.isRequired,
   }).isRequired,
   meta: PropTypes.shape({
     touched: PropTypes.bool,
     error: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   }).isRequired,
-  width: PropTypes.string,
-  helperText: PropTypes.string,
+  list: PropTypes.array.isRequired,
 };
 
-export default InputField;
+export default Select;

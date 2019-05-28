@@ -16,30 +16,33 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import styled from 'styled-components';
+import Info from '@material-ui/icons/Info';
+import { Tooltip as MuiTooltip } from '@material-ui/core';
 
-import { FormGroup, Button } from 'common/Form';
-import { primaryBtn } from 'theme/btnTheme';
+const InfoIcon = React.forwardRef((props, ref) => (
+  <span {...props} ref={ref}>
+    <Info />
+  </span>
+));
 
-const TestConnectionBtn = props => {
-  const { handleClick, isWorking } = props;
+const StyledIcon = styled(InfoIcon)`
+  cursor: pointer;
+  svg {
+    font-size: 15px;
+  }
+`;
 
+const Tooltip = ({ text }) => {
   return (
-    <FormGroup>
-      <Button
-        theme={primaryBtn}
-        text="Validate configs"
-        isWorking={isWorking}
-        disabled={isWorking}
-        data-testid="validate-configs-btn"
-        handleClick={handleClick}
-      />
-    </FormGroup>
+    <MuiTooltip title={text}>
+      <StyledIcon />
+    </MuiTooltip>
   );
 };
 
-TestConnectionBtn.propTypes = {
-  handleClick: PropTypes.func.isRequired,
-  isWorking: PropTypes.bool.isRequired,
+Tooltip.propTypes = {
+  text: PropTypes.string.isRequired,
 };
 
-export default TestConnectionBtn;
+export default Tooltip;

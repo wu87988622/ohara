@@ -19,8 +19,8 @@ import { get, isEmpty } from 'lodash';
 import { Field } from 'react-final-form';
 
 import ColumnTable from './CustomConnector/ColumnTable';
-import { FormGroup, Label } from 'common/Form';
-import { InputField, SelectField } from 'common/FormFields';
+import { FormGroup } from 'common/Form';
+import { InputField, Select } from 'common/Mui/Form';
 import { CONNECTOR_STATES } from 'constants/pipelines';
 import { isEmptyStr } from 'utils/commonUtils';
 import { findByGraphId } from '../pipelineUtils/commonUtils';
@@ -35,9 +35,12 @@ export const updateConfigs = ({ configs, target }) => {
 };
 
 export const getCurrTopicId = ({ originals, target = '' }) => {
-  if (isEmpty(originals) || isEmptyStr(target)) return;
+  if (isEmpty(originals) || isEmptyStr(target) || target === 'Please select...')
+    return [];
+
   const findByTopicName = ({ name }) => name === target;
   const { id } = originals.find(findByTopicName);
+
   return id;
 };
 
@@ -248,7 +251,7 @@ export const getRenderData = ({ state, defs, configs }) => {
 };
 
 export const renderForm = ({
-  data,
+  formData,
   topics,
   handleChange,
   handleColumnChange,
@@ -259,18 +262,17 @@ export const renderForm = ({
   const dataType = ['STRING'];
   const tableActions = ['Up', 'Down', 'Delete'];
 
-  return data.map(d => {
+  return formData.map(data => {
     const {
       valueType,
       key,
       displayName,
-      required,
       documentation,
       editable,
       isRunning,
       displayValue,
       tableKeys,
-    } = d;
+    } = data;
 
     const columnTableHeader = tableKeys.concat(tableActions);
 
@@ -279,21 +281,13 @@ export const renderForm = ({
 
       return (
         <FormGroup key={key}>
-          <Label
-            htmlFor={`${displayName}`}
-            required={required}
-            tooltipString={documentation}
-            tooltipAlignment="right"
-            width="100%"
-          >
-            {displayName}
-          </Label>
           <Field
             type={inputType}
             component={InputField}
-            id={`${displayName}`}
+            label={displayName}
+            id={displayName}
+            helperText={documentation}
             width="100%"
-            parse={value => String(value)}
             name={key}
             onChange={handleChange}
             disabled={!editable || isRunning}
@@ -303,24 +297,15 @@ export const renderForm = ({
     } else if (valueType === 'LIST') {
       return (
         <FormGroup key={key}>
-          <Label
-            htmlFor={`${displayName}`}
-            required={required}
-            tooltipString={documentation}
-            tooltipAlignment="right"
-            width="100%"
-          >
-            {displayName}
-          </Label>
           <Field
-            id={`${displayName}`}
+            label={displayName}
+            id={displayName}
             list={topics}
             onChange={handleChange}
-            component={SelectField}
+            component={Select}
             name={key}
             width="100%"
             disabled={isRunning}
-            clearable
           />
         </FormGroup>
       );

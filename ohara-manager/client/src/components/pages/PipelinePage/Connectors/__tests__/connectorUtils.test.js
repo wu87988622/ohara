@@ -43,20 +43,28 @@ describe('getCurrTopicId()', () => {
     expect(id).toBe(target.id);
   });
 
-  it(`return undefined if param originals is empty`, () => {
+  it('returns an empty array if param originals is empty', () => {
     const originals = [];
     const target = generate.name();
 
-    const id = utils.getCurrTopicId({ originals, target });
-    expect(id).toBeUndefined();
+    const result = utils.getCurrTopicId({ originals, target });
+    expect(Array.isArray(result)).toBe(true);
   });
 
-  it(`return undefined if param target is empty`, () => {
+  it('returns any empty array if param target is empty', () => {
     const originals = generate.topics(2);
     const target = '';
 
-    const id = utils.getCurrTopicId({ originals, target });
-    expect(id).toBeUndefined();
+    const result = utils.getCurrTopicId({ originals, target });
+    expect(Array.isArray(result)).toBe(true);
+  });
+
+  it('returns an empty array if the given target is == `Please select...`', () => {
+    const originals = generate.topics(2);
+    const target = 'Please select...';
+
+    const result = utils.getCurrTopicId({ originals, target });
+    expect(Array.isArray(result)).toBe(true);
   });
 });
 

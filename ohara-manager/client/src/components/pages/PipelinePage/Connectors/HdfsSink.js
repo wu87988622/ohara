@@ -18,7 +18,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import toastr from 'toastr';
 import { Form } from 'react-final-form';
-import { get, isUndefined } from 'lodash';
+import { get } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
 import * as connectorApi from 'api/connectorApi';
@@ -188,20 +188,25 @@ class HdfsSink extends React.Component {
     this.handleTriggerConnectorResponse(action, res);
   };
 
-  handleTestConnection = async e => {
+  handleTestConnection = async (e, values) => {
     e.preventDefault();
-    this.setState({ isTestConnectionBtnWorking: true });
 
-    // const topics = this.state.topic
-    const topicId = utils.getCurrTopicId({
+    const topic = utils.getCurrTopicId({
       originals: this.props.globalTopics,
-      target: this.state.topics[0],
+      target: values.topics,
     });
 
-    const params = { ...this.state.configs, topics: [topicId] };
+    const topics = Array.isArray(topic) ? topic : [topic];
+    const _values = utils.changeToken({
+      values,
+      targetToken: '_',
+      replaceToken: '.',
+    });
+
+    const params = { ..._values, topics };
+    this.setState({ isTestConnectionBtnWorking: true });
     const res = await validateConnector(params);
     this.setState({ isTestConnectionBtnWorking: false });
-
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (isSuccess) {
@@ -238,11 +243,12 @@ class HdfsSink extends React.Component {
     const { match, globalTopics, graph, updateGraph } = this.props;
     const { connectorId } = match.params;
 
-    const topicId = utils.getCurrTopicId({
+    const topic = utils.getCurrTopicId({
       originals: globalTopics,
       target: values.topics,
     });
-    const topics = isUndefined(topicId) ? [] : [topicId];
+
+    const topics = Array.isArray(topic) ? topic : [topic];
     const _values = utils.changeToken({
       values,
       targetToken: '_',
@@ -253,7 +259,7 @@ class HdfsSink extends React.Component {
     await connectorApi.updateConnector({ id: connectorId, params });
 
     const { sinkProps, update } = utils.getUpdatedTopic({
-      currTopicId: topicId,
+      currTopicId: topic,
       configs: values,
       originalTopics: globalTopics,
       graph,
@@ -275,20 +281,20 @@ class HdfsSink extends React.Component {
 
     if (!configs) return null;
 
-    const data = utils.getRenderData({
+    const formData = utils.getRenderData({
       defs,
       topics,
       configs,
       state,
     });
 
-    const initialValues = data.reduce((acc, cur) => {
+    const initialValues = formData.reduce((acc, cur) => {
       acc[cur.key] = cur.displayValue;
       return acc;
     }, {});
 
     const formProps = {
-      data,
+      formData,
       topics,
       handleChange: this.handleChange,
       handleColumnChange: this.handleColumnChange,
@@ -317,7 +323,7 @@ class HdfsSink extends React.Component {
           <Form
             onSubmit={this.handleSave}
             initialValues={initialValues}
-            render={() => {
+            render={({ values }) => {
               return (
                 <form>
                   <AutoSave
@@ -328,7 +334,7 @@ class HdfsSink extends React.Component {
 
                   {utils.renderForm(formProps)}
                   <TestConnectionBtn
-                    handleClick={this.handleTestConnection}
+                    handleClick={e => this.handleTestConnection(e, values)}
                     isWorking={isTestConnectionBtnWorking}
                   />
                 </form>
