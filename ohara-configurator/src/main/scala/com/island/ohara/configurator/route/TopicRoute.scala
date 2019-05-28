@@ -56,6 +56,7 @@ private[configurator] object TopicRoute {
     * topic's id is equal to name :)
     */
   private[this] def hookOfAdd(request: TopicCreationRequest)(implicit brokerCollie: BrokerCollie,
+                                                             adminCleaner: AdminCleaner,
                                                              executionContext: ExecutionContext): Future[TopicInfo] =
     request.name
       .map { name =>
@@ -84,6 +85,7 @@ private[configurator] object TopicRoute {
       .getOrElse(Future.failed(new NoSuchElementException(s"name is required")))
 
   def apply(implicit store: DataStore,
+            adminCleaner: AdminCleaner,
             meterCache: MeterCache,
             brokerCollie: BrokerCollie,
             executionContext: ExecutionContext): server.Route =

@@ -24,20 +24,20 @@ import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.mockito.Mockito._
 import org.scalatest.Matchers
-
+import scala.concurrent.duration._
 class TestAdminCleaner extends SmallTest with Matchers {
 
   @Test
   def testTimeout(): Unit = {
-    val timeout = 2000
-    val cleaner = new CollieUtils.AdminCleaner(timeout)
+    val timeout = 2 seconds
+    val cleaner = new AdminCleaner(timeout)
     val fakeAdmin2 = mock(classOf[TopicAdmin])
     val _closed = new AtomicBoolean(false)
     when(fakeAdmin2.closed()).thenReturn(false)
     when(fakeAdmin2.close()).thenAnswer(_ => _closed.set(true))
     try {
       cleaner.add(fakeAdmin2)
-      CommonUtils.await(() => _closed.get(), java.time.Duration.ofMillis(timeout * 5))
+      CommonUtils.await(() => _closed.get(), java.time.Duration.ofMillis(timeout.toMillis * 5))
     } finally {
       cleaner.close()
       cleaner.executor.isTerminated shouldBe true
@@ -46,7 +46,7 @@ class TestAdminCleaner extends SmallTest with Matchers {
 
   @Test
   def testClose(): Unit = {
-    val cleaner = new CollieUtils.AdminCleaner(2000)
+    val cleaner = new AdminCleaner(2 seconds)
     cleaner.close()
     an[IllegalArgumentException] should be thrownBy cleaner.add(mock(classOf[TopicAdmin]))
   }
@@ -57,7 +57,7 @@ class TestAdminCleaner extends SmallTest with Matchers {
     val _closed = new AtomicBoolean(false)
     when(fakeAdmin2.closed()).thenReturn(false)
     when(fakeAdmin2.close()).thenAnswer(_ => _closed.set(true))
-    val cleaner = new CollieUtils.AdminCleaner(2000)
+    val cleaner = new AdminCleaner(2 seconds)
     try cleaner.add(fakeAdmin2)
     finally cleaner.close()
     _closed.get() shouldBe true

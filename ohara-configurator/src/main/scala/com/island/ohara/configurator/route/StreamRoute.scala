@@ -124,6 +124,7 @@ private[configurator] object StreamRoute {
   }
 
   def apply(implicit store: DataStore,
+            adminCleaner: AdminCleaner,
             nodeCollie: NodeCollie,
             clusterCollie: ClusterCollie,
             workerCollie: WorkerCollie,

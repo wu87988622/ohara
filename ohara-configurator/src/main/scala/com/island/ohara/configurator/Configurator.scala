@@ -64,6 +64,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
 
   private[this] val initializationTimeout = 10 seconds
   private[this] val cacheTimeout = 3 seconds
+  private[this] val cleanupTimeout = 30 seconds
 
   private[configurator] def size: Int = store.size
 
@@ -143,6 +144,8 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
       .build()
   }
 
+  private[this] implicit val adminCleaner: AdminCleaner = new AdminCleaner(cleanupTimeout)
+
   /**
     * the full route consists from all routes against all subclass from ohara data and a final route used to reject other requests.
     */
@@ -212,6 +215,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
     val start = CommonUtils.current()
     if (httpServer != null) Await.result(httpServer.unbind(), initializationTimeout.toMillis milliseconds)
     if (actorSystem != null) Await.result(actorSystem.terminate(), initializationTimeout.toMillis milliseconds)
+    Releasable.close(adminCleaner)
     Releasable.close(meterCache)
     Releasable.close(clusterCollie)
     Releasable.close(jarStore)
@@ -316,7 +320,6 @@ object Configurator {
         LOG.error("failed to initialize cluster. Will close configurator", e)
         Releasable.close(configurator)
         HttpExecutor.close()
-        CollieUtils.close()
         throw e
     }
     hasRunningConfigurator = true
@@ -333,7 +336,6 @@ object Configurator {
       hasRunningConfigurator = false
       Releasable.close(configurator)
       HttpExecutor.close()
-      CollieUtils.close()
     }
   }
 

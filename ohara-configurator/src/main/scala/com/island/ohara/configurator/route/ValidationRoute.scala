@@ -82,6 +82,7 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
     )))
 
   def apply(implicit brokerCollie: BrokerCollie,
+            adminCleaner: AdminCleaner,
             workerCollie: WorkerCollie,
             clusterCollie: ClusterCollie,
             executionContext: ExecutionContext): server.Route =

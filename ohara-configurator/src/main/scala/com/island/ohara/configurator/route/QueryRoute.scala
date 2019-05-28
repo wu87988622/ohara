@@ -32,6 +32,7 @@ import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object QueryRoute extends SprayJsonSupport {
 
   def apply(implicit brokerCollie: BrokerCollie,
+            adminCleaner: AdminCleaner,
             workerCollie: WorkerCollie,
             executionContext: ExecutionContext): server.Route = pathPrefix(QUERY_PREFIX_PATH) {
     path(RDB_PREFIX_PATH) {
