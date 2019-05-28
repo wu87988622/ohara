@@ -17,19 +17,15 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import toastr from 'toastr';
-import { get, debounce } from 'lodash';
+import { get } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
 import * as connectorApi from 'api/connectorApi';
-import { validateConnector } from 'api/validateApi';
 import * as s from './styles';
-import * as utils from './CustomConnector/customConnectorUtils';
 import Controller from './Controller';
-import { findByGraphId } from '../pipelineUtils/commonUtils';
-import { CONNECTOR_STATES, CONNECTOR_ACTIONS } from 'constants/pipelines';
+import { CONNECTOR_ACTIONS } from 'constants/pipelines';
 import { graph as graphPropType } from 'propTypes/pipeline';
 
-import { fetchWorker } from 'api/workerApi';
 import CustomFinalForm from './CustomConnector/CustomFinalForm';
 
 class FtpSource extends React.Component {
@@ -60,131 +56,6 @@ class FtpSource extends React.Component {
     isTestConnectionBtnWorking: false,
   };
 
-  componentDidMount() {
-    this.fetchData();
-  }
-
-  componentDidUpdate(prevProps) {
-    const { pipelineTopics: prevTopics } = prevProps;
-    const { connectorId: prevConnectorId } = prevProps.match.params;
-    const { hasChanges, pipelineTopics: currTopics } = this.props;
-    const { connectorId: currConnectorId } = this.props.match.params;
-
-    if (prevTopics !== currTopics) {
-      this.setState({ writeTopics: currTopics });
-    }
-
-    if (prevConnectorId !== currConnectorId) {
-      this.fetchData();
-    }
-
-    if (hasChanges) {
-      this.save();
-    }
-  }
-
-  setTopics = () => {
-    const { pipelineTopics } = this.props;
-    this.setState({ topics: pipelineTopics.map(t => t.name) });
-  };
-
-  fetchData = async () => {
-    // We need to get the custom connector's meta data first
-    await this.fetchWorker();
-
-    // After the form is rendered, let's fetch connector data and override the default values from meta data
-    this.fetchConnector();
-    this.setTopics();
-  };
-
-  fetchWorker = async () => {
-    const res = await fetchWorker(this.props.workerClusterName);
-    const worker = get(res, 'data.result', null);
-    this.setState({ isLoading: false });
-
-    if (worker) {
-      const { defs, configs } = utils.getMetadata(this.props, worker);
-      this.setState({ defs, configs });
-    }
-  };
-
-  fetchConnector = async () => {
-    const { connectorId } = this.props.match.params;
-    const res = await connectorApi.fetchConnector(connectorId);
-    const result = get(res, 'data.result', null);
-
-    if (result) {
-      const { settings, state } = result;
-      const { topics } = settings;
-
-      const topicName = utils.getCurrTopicName({
-        originals: this.props.globalTopics,
-        target: topics,
-      });
-
-      const configs = { ...settings, topics: topicName };
-      this.setState({ configs, state });
-    }
-  };
-
-  updateComponent = updatedConfigs => {
-    this.props.updateHasChanges(true);
-    this.setState({ configs: updatedConfigs });
-  };
-
-  handleChange = ({ target }) => {
-    const { configs } = this.state;
-    const updatedConfigs = utils.updateConfigs({ configs, target });
-    this.updateComponent(updatedConfigs);
-  };
-
-  handleColumnChange = newColumn => {
-    const { configs } = this.state;
-    const updatedConfigs = utils.addColumn({ configs, newColumn });
-    this.updateComponent(updatedConfigs);
-  };
-
-  handleColumnRowDelete = currRow => {
-    const { configs } = this.state;
-    const updatedConfigs = utils.removeColumn({ configs, currRow });
-    this.updateComponent(updatedConfigs);
-  };
-
-  handleColumnRowUp = (e, order) => {
-    e.preventDefault();
-    const { configs } = this.state;
-    const updatedConfigs = utils.moveColumnRowUp({ configs, order });
-    this.updateComponent(updatedConfigs);
-  };
-
-  handleColumnRowDown = (e, order) => {
-    e.preventDefault();
-    const { configs } = this.state;
-    const updatedConfigs = utils.moveColumnRowDown({ configs, order });
-    this.updateComponent(updatedConfigs);
-  };
-
-  handleTestConnection = async e => {
-    e.preventDefault();
-    this.setState({ isTestConnectionBtnWorking: true });
-
-    // const topics = this.state.topic
-    const topicId = utils.getCurrTopicId({
-      originals: this.props.globalTopics,
-      target: this.state.topics[0],
-    });
-
-    const params = { ...this.state.configs, topics: [topicId] };
-    const res = await validateConnector(params);
-    this.setState({ isTestConnectionBtnWorking: false });
-
-    const isSuccess = get(res, 'data.isSuccess', false);
-
-    if (isSuccess) {
-      toastr.success(MESSAGES.TEST_SUCCESS);
-    }
-  };
-
   handleStartConnector = async () => {
     await this.triggerConnector(CONNECTOR_ACTIONS.start);
   };
@@ -208,71 +79,6 @@ class FtpSource extends React.Component {
       history.push(path);
     }
   };
-
-  handleTriggerConnectorResponse = (action, res) => {
-    const isSuccess = get(res, 'data.isSuccess', false);
-    if (!isSuccess) return;
-
-    const { match, graph, updateGraph } = this.props;
-    const sinkId = get(match, 'params.connectorId', null);
-    const state = get(res, 'data.result.state');
-    this.setState({ state });
-    const currSink = findByGraphId(graph, sinkId);
-    const update = { ...currSink, state };
-    updateGraph({ update });
-
-    if (action === CONNECTOR_ACTIONS.start) {
-      if (state === CONNECTOR_STATES.running) {
-        toastr.success(MESSAGES.START_CONNECTOR_SUCCESS);
-      } else {
-        toastr.error(MESSAGES.CANNOT_START_CONNECTOR_ERROR);
-      }
-    }
-  };
-
-  triggerConnector = async action => {
-    const { match } = this.props;
-    const sourceId = get(match, 'params.connectorId', null);
-    let res;
-    if (action === CONNECTOR_ACTIONS.start) {
-      res = await connectorApi.startConnector(sourceId);
-    } else {
-      res = await connectorApi.stopConnector(sourceId);
-    }
-
-    this.handleTriggerConnectorResponse(action, res);
-  };
-
-  save = debounce(async () => {
-    const {
-      updateHasChanges,
-      match,
-      graph,
-      updateGraph,
-      globalTopics,
-    } = this.props;
-    const { configs } = this.state;
-    const { connectorId } = match.params;
-
-    const topicId = utils.getCurrTopicId({
-      originals: globalTopics,
-      target: configs.topics,
-    });
-
-    const params = { ...configs, topics: topicId };
-
-    await connectorApi.updateConnector({ id: connectorId, params });
-    updateHasChanges(false);
-
-    const update = utils.getUpdatedTopic({
-      graph,
-      connectorId,
-      configs,
-      originalTopics: globalTopics,
-    });
-
-    updateGraph({ update });
-  }, 1000);
 
   render() {
     return (

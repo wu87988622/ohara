@@ -16,67 +16,71 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import { Form, Field } from 'react-final-form';
 
 import { Modal } from 'common/Modal';
-import { Input, Select, FormGroup, Label } from 'common/Form';
+import { FormGroup, Label } from 'common/Form';
 import { FormInner } from './styles';
+import { InputField, SelectField } from 'common/FormFields';
 
 const NewRowModal = props => {
   const {
     isActive,
-    columnName,
-    newColumnName,
+
     dataTypes,
-    currDataType,
-    handleChange,
+
     handleConfirmClick,
     handleModalClose,
   } = props;
-
   return (
-    <Modal
-      isActive={isActive}
-      title="New row"
-      width="290px"
-      confirmBtnText="Create"
-      handleConfirm={handleConfirmClick}
-      handleCancel={handleModalClose}
-    >
-      <form>
-        <FormInner>
-          <FormGroup>
-            <Label>Column name</Label>
-            <Input
-              name="columnName"
-              width="100%"
-              placeholder="Column name"
-              value={columnName}
-              handleChange={handleChange}
-            />
-          </FormGroup>
-          <FormGroup>
-            <Label>New column name</Label>
-            <Input
-              name="newColumnName"
-              width="100%"
-              placeholder="New column name"
-              value={newColumnName}
-              handleChange={handleChange}
-            />
-          </FormGroup>
-          <FormGroup>
-            <Label>Type</Label>
-            <Select
-              name="types"
-              width="100%"
-              list={dataTypes}
-              selected={currDataType}
-              handleChange={handleChange}
-            />
-          </FormGroup>
-        </FormInner>
-      </form>
-    </Modal>
+    <Form
+      onSubmit={handleConfirmClick}
+      initialValues={{ types: 'STRING' }}
+      render={({ handleSubmit }) => {
+        return (
+          <Modal
+            isActive={isActive}
+            title="New row"
+            width="290px"
+            confirmBtnText="Create"
+            handleConfirm={handleSubmit}
+            handleCancel={handleModalClose}
+          >
+            <form>
+              <FormInner>
+                <FormGroup>
+                  <Label>Column name</Label>
+                  <Field
+                    name="columnName"
+                    width="100%"
+                    placeholder="Column name"
+                    component={InputField}
+                  />
+                </FormGroup>
+                <FormGroup>
+                  <Label>New column name</Label>
+                  <Field
+                    name="newColumnName"
+                    width="100%"
+                    placeholder="New column name"
+                    component={InputField}
+                  />
+                </FormGroup>
+                <FormGroup>
+                  <Label>Type</Label>
+                  <Field
+                    name="types"
+                    width="100%"
+                    list={dataTypes}
+                    component={SelectField}
+                  />
+                </FormGroup>
+              </FormInner>
+            </form>
+          </Modal>
+        );
+      }}
+    />
   );
 };
 

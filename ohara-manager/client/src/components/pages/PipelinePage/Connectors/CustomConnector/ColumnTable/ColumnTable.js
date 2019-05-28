@@ -73,9 +73,10 @@ class ColumnTable extends React.Component {
     this.setState(this.initialState);
   };
 
-  handleNewRow = () => {
+  handleNewRow = values => {
     const { handleColumnChange } = this.props;
-    const { columnName, newColumnName, currType } = this.state;
+    const { columnName, newColumnName, types: currType } = values;
+    this.setState({ columnName, newColumnName, currType });
     handleColumnChange({ columnName, newColumnName, currType });
     this.handleNewRowModalClose();
   };
