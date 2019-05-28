@@ -17,7 +17,7 @@
 import React from 'react';
 import toastr from 'toastr';
 import PropTypes from 'prop-types';
-import { get, debounce } from 'lodash';
+import { get, debounce, isUndefined } from 'lodash';
 import { Form } from 'react-final-form';
 
 import * as connectorApi from 'api/connectorApi';
@@ -152,6 +152,9 @@ class CustomFinalForm extends React.Component {
     e.preventDefault();
     const { configs } = this.state;
     const updatedConfigs = utils.moveColumnRowUp({ configs, order });
+    if (isUndefined(updatedConfigs)) {
+      return;
+    }
     this.updateComponent(updatedConfigs);
   };
 
@@ -159,6 +162,9 @@ class CustomFinalForm extends React.Component {
     e.preventDefault();
     const { configs } = this.state;
     const updatedConfigs = utils.moveColumnRowDown({ configs, order });
+    if (isUndefined(updatedConfigs)) {
+      return;
+    }
     this.updateComponent(updatedConfigs);
   };
 
