@@ -111,12 +111,13 @@ class TestStreamRoute extends SmallTest with Matchers {
     val outputFile = new File(tmpFolder, "fat.jar")
     val file = new RandomAccessFile(outputFile.getPath, "rw")
     // set out-of-bound size for file
-    file.setLength(StreamApi.MAX_FILE_SIZE + 1)
+    file.setLength(RouteUtils.DEFAULT_JAR_SIZE_BYTES + 1)
     file.close()
 
-    // upload file should be OK
-    val res = result(accessStreamList.upload(Seq(outputFile.getPath), None))
-    res.head.name shouldBe "fat.jar"
+    // upload file should throw exception that the file size in out of limit (50MB)
+    val expectedMessage = "actual entity size (Some(52428971)) exceeded content length limit (52428800 bytes)"
+    val thrown = the[IllegalArgumentException] thrownBy result(accessStreamList.upload(Seq(outputFile.getPath), None))
+    thrown.getMessage should include(expectedMessage)
 
     outputFile.deleteOnExit()
   }

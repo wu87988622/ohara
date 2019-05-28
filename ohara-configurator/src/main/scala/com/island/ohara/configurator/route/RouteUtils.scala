@@ -35,9 +35,15 @@ import spray.json.RootJsonFormat
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
 private[route] object RouteUtils {
+
+  //-------------------- global parameter for route -------------------------//
   val LOG = Logger(RouteUtils.getClass)
   type Id = String
 
+  /** default we restrict the jar size to 50MB */
+  final val DEFAULT_JAR_SIZE_BYTES = 50 * 1024 * 1024L
+
+  //-------------------- default route directives ---------------------------//
   private[this] def routeOfAdd[Req, Res <: Data](hook: (Id, Req) => Future[Res])(implicit store: DataStore,
                                                                                  rm: RootJsonFormat[Req],
                                                                                  rm2: RootJsonFormat[Res],
@@ -196,7 +202,7 @@ private[route] object RouteUtils {
       }
     }
 
-  //-------------------- helper methods -------------------------//
+  //------------------------------ helper methods ---------------------------//
   /**
     * Test whether this cluster satisfied the following rules:
     * <p>

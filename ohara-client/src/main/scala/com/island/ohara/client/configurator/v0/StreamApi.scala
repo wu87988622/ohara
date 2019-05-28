@@ -31,11 +31,6 @@ import scala.io.{Codec, Source}
 object StreamApi {
 
   /**
-    * StreamApp List Page max acceptable upload file size (1 MB currently)
-    */
-  final val MAX_FILE_SIZE = 1 * 1024 * 1024L
-
-  /**
     * StreamApp List Page file "key name" for form-data
     */
   final val INPUT_KEY = "streamapp"

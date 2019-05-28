@@ -35,13 +35,17 @@ private[configurator] object JarRoute {
 
   def apply(implicit jarStore: JarStore, executionContext: ExecutionContext): server.Route =
     pathPrefix(JAR_PREFIX_PATH) {
-      storeUploadedFile("jar", tempDestination) {
-        case (metadata, file) =>
-          complete(jarStore.add(file, metadata.fileName))
-      } ~ path(Segment) { id =>
-        get(complete(jarStore.jarInfo(id))) ~ delete(complete(jarStore.remove(id).map(_ => StatusCodes.NoContent)))
-      } ~ pathEnd {
-        get(complete(jarStore.jarInfos()))
+      withSizeLimit(RouteUtils.DEFAULT_JAR_SIZE_BYTES) {
+        storeUploadedFile("jar", tempDestination) {
+          case (metadata, file) =>
+            complete(jarStore.add(file, metadata.fileName))
+        } ~ path(Segment) { id =>
+          get(complete(jarStore.jarInfo(id))) ~ delete(
+            complete(jarStore.remove(id).map(_ => StatusCodes.NoContent))
+          )
+        } ~ pathEnd {
+          get(complete(jarStore.jarInfos()))
+        }
       }
     }
 }

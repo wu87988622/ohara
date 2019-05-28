@@ -25,8 +25,6 @@ import com.island.ohara.configurator.Configurator
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
-import scala.concurrent.Await
-import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestJarRoute extends SmallTest with Matchers {
 
@@ -44,33 +42,47 @@ class TestJarRoute extends SmallTest with Matchers {
   def testUpload(): Unit = {
     val data = methodName().getBytes
     val f = tmpFile(data)
-    val jar = Await.result(jarApi.upload(f), 30 seconds)
+    val jar = result(jarApi.upload(f))
     jar.size shouldBe f.length()
     jar.name shouldBe f.getName
-    Await.result(jarApi.list, 30 seconds).size shouldBe 1
+    result(jarApi.list).size shouldBe 1
+
+    f.deleteOnExit()
+  }
+
+  @Test
+  def testUploadOutOfLimitFile(): Unit = {
+    val bytes = new Array[Byte](RouteUtils.DEFAULT_JAR_SIZE_BYTES.toInt + 1)
+    val f = tmpFile(bytes)
+
+    an[IllegalArgumentException] should be thrownBy result(jarApi.upload(f))
+
+    f.deleteOnExit()
   }
 
   @Test
   def testUploadWithNewName(): Unit = {
     val data = methodName().getBytes
     val f = tmpFile(data)
-    val jar = Await.result(jarApi.upload(f, "xxxx"), 30 seconds)
+    val jar = result(jarApi.upload(f, "xxxx"))
     jar.size shouldBe f.length()
     jar.name shouldBe "xxxx"
-    Await.result(jarApi.list, 30 seconds).size shouldBe 1
+    result(jarApi.list).size shouldBe 1
   }
 
   @Test
   def testDelete(): Unit = {
     val data = methodName().getBytes
     val f = tmpFile(data)
-    val jar = Await.result(jarApi.upload(f), 30 seconds)
+    val jar = result(jarApi.upload(f))
     jar.size shouldBe f.length()
     jar.name shouldBe f.getName
-    Await.result(jarApi.list, 30 seconds).size shouldBe 1
+    result(jarApi.list).size shouldBe 1
 
-    Await.result(jarApi.delete(jar.id), 30 seconds)
-    Await.result(jarApi.list, 30 seconds).size shouldBe 0
+    result(jarApi.delete(jar.id))
+    result(jarApi.list).size shouldBe 0
+
+    f.deleteOnExit()
   }
 
   @Test
