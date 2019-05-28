@@ -1,10 +1,10 @@
 # Custom StreamApp Guideline
 
-Ohara streamApp is a unparalleled wrap of [kafka streams](https://kafka.apache.org/documentation/streams) which gives
-a way to design your streaming flow.
+Ohara streamApp is an unparalleled wrap of [kafka streams](https://kafka.apache.org/documentation/streams) which gives
+you a straightforward thought to design your streaming flow.
 It offers a simple way to implement and define actions to process data between topics.
 You only have to write your logic in [start()](#start-method) method and compile your code to a jar file.
-After jar file is compiled successfully, you can **deploy** your jar file to Ohara Stream and monitor your streamApp by
+After jar file is compiled successfully, you can **deploy** your jar file to Ohara Stream, run it, and monitor your streamApp by
  [logs](#logs) and [metrics](#metrics). 
 
 The following sections will describe how to write a streamApp application in Ohara Stream.
@@ -59,8 +59,8 @@ OStream<Row> ostream = OStream.builder().toOharaEnvStream();
 A base implementation for a custom streamApp only need to include [start()]() method, but you could include other methods
 which are described below for your convenience.
 
-The following example is a simple streamApp application which can run in Ohara environment. Note that this example is
-simply start the streamApp application without doing any transformation, i.e., the source topic won't write data to the 
+The following example is a simple streamApp application which can run in Ohara Stream. Note that this example
+simply starts the streamApp application without doing any transformation, i.e., the source topic won't write data to the 
 target topic.
 ```java
 public class SimpleApplicationForOharaEnv extends StreamApp {
@@ -76,11 +76,11 @@ public class SimpleApplicationForOharaEnv extends StreamApp {
 > The methods we provide here belong to Ohara StreamApp, which have many powerful and friendly features. 
 Native Kafka Streams API does not have these methods.
 
-#### init() method
+### init() method
 After we find the user custom class, the first method will be called by StreamApp is **init()**. This is an optional method that
 can be used for user to initialize some external data source connections or input parameters.
 
-#### start() method
+### start() method
 This method will be called after [init()](#init-method). Normally, you could only define start() method for most cases in
 Ohara Stream. We encourage user to use [source connector](custom_connector.md#source-connector) for importing external
 data source to Ohara Stream and use topic data as custom streamApp data source in start() method.
@@ -107,7 +107,93 @@ From now on, you can use the [StreamApp Java API](#streamapp-java-api) to design
 
 ## StreamApp Java API
 
-See the java doc in source code.
+In StreamApp, we provide three different classes for developers:
+- OStream: define the functions for operating streaming data (each row record one-by-one)
+- OGroupedStream: define the functions for operating <b>grouped</b> streaming data
+- OTable: define the functions for operating table data (changelog for same key of row record)
+
+The above classes will be auto converted when you use the correspond functions; You should not worried about the usage 
+of which class is right to use. All the starting point of development is just **OStream**.
+
+Below we list the available functions in each classes (See more information in <i>javadoc</i>):
+
+### OStream
+
+- constructTable(String topicName)
+  ```text
+  Create a OTable with specified topicName from current OStream.
+  ```
+- filter(Predicate predicate)
+  ```text
+  Create a new OStream that filter by the given predicate.
+  ```
+- through(String topicName, int partitions)
+  ```text
+  Transfer this OStream to specify topic and use the required partition number.
+  ```
+- leftJoin(String joinTopicName, Conditions conditions, Valuejoiner joiner)
+  ```text
+  Join this OStream with required joinTopicName and conditions.
+  ```
+- map(ValueMapper mapper)
+  ```text
+  Transform the value of each record to a new value of the output record.
+  ```
+- groupByKey(List<String> keys)
+  ```text
+  Group the records by key to a OGroupedStream.
+  ```
+- foreach(ForeachAction action)
+  ```text
+  Perform an action on each record of OStream.
+  ```
+- start()
+  ```text
+  Run this streamApp application.
+  ```
+- stop()
+  ```text
+  Stop this streamApp application.
+  ```
+- describe()
+  ```text
+  Describe the topology of this streamApp.
+  ```
+- getPoneglyph()
+  ```text
+  Get the Ohara format Poneglyph from topology.
+  ```
+
+### OGroupedStream
+
+- count()
+  ```text
+  Count the number of records in this OGroupedStream and return the count value.
+  ```
+- reduce(final Reducer reducer)
+  ```text
+  Combine the values of each record in this OGroupedStream by the grouped key.
+  ```
+
+### OTable
+
+- toOStream()
+  ```text
+  Convert this OTable to OStream
+  ```
+
+----------
+
+## StreamApp Examples
+
+Below we provide some examples that demonstrate how to develop your own streamApp applications.
+More description of each example could be found in <i>javadoc</i>.
+
+| Example Name    | Description                        | Source Code (Java)                                                                                   |
+| --------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| WordCount       | count the words in "word" column   | [example](/ohara-streams/src/test/java/com/island/ohara/streams/examples/WordCountExample.java)      |
+| PageViewRegion  | count the views by each region     | [example](/ohara-streams/src/test/java/com/island/ohara/streams/examples/PageViewRegionExample.java) |
+| Sum             | sum odd numbers in "number" column | [example](/ohara-streams/src/test/java/com/island/ohara/streams/examples/SumExample.java)            |
 
 ----------
 

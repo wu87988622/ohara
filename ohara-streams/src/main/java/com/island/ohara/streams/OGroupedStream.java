@@ -27,8 +27,8 @@ import com.island.ohara.streams.ostream.Reducer;
 public interface OGroupedStream<T extends Row> {
 
   /**
-   * Count the number of records in this {@code OStream} and return the count value in a new {@code
-   * Row} with the {@code Cell} format of combination {key_row} + ("count", count_value)
+   * Count the number of records in this {@code OGroupedStream} and return the count value in a new
+   * {@code Row} with the {@code Cell} format of combination {key_row} + ("count", count_value)
    *
    * @return {@code OStream}
    * @see org.apache.kafka.streams.kstream.KGroupedStream#count()
@@ -36,9 +36,9 @@ public interface OGroupedStream<T extends Row> {
   OStream<T> count();
 
   /**
-   * Combine the values of each record in the {@code OStream} by the grouped key. This operation
-   * will return the reduce value of specific column, and result a new {@code Row} with the group
-   * {@code Cell} and the reduce column {@code Cell}
+   * Combine the values of each record in this {@code OGroupedStream} by the grouped key. This
+   * operation will return the reduce value of specific column, and result a new {@code Row} with
+   * the group {@code Cell} and the reduce column {@code Cell}
    *
    * @param reducer a {@link Reducer} that computes a new aggregate result.
    * @param reduceColumn the column that computing reduce function
