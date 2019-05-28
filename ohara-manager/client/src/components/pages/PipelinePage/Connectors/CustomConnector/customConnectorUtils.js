@@ -16,6 +16,7 @@
 
 import React from 'react';
 import { get, isEmpty, isNull } from 'lodash';
+import { Field } from 'react-final-form';
 
 import ColumnTable from './ColumnTable';
 import { isEmptyStr } from 'utils/commonUtils';
@@ -24,7 +25,6 @@ import { FormGroup, Label } from 'common/Form';
 import { InputField, SelectField } from 'common/FormFields';
 import { CONNECTOR_STATES } from 'constants/pipelines';
 import UtilsTabs from './UtilsTabs';
-import { Field } from 'react-final-form';
 
 export const getMetadata = (props, worker) => {
   const { page: targetConnector } = props.match.params;
@@ -173,6 +173,22 @@ export const replaceKeys = obj => {
   return Object.keys(obj).reduce((acc, key) => {
     const renamedObject = {
       [key.replace(/\./g, '_')]: obj[key],
+    };
+
+    return {
+      ...acc,
+      ...renamedObject,
+    };
+  }, {});
+};
+
+export const rebackKeys = obj => {
+  if (isNull(obj)) {
+    return null;
+  }
+  return Object.keys(obj).reduce((acc, key) => {
+    const renamedObject = {
+      [key.replace(/_/g, '.')]: obj[key],
     };
 
     return {

@@ -126,7 +126,8 @@ class CustomFinalForm extends React.Component {
 
   updateComponent = updatedConfigs => {
     this.props.updateHasChanges(true);
-    this.setState({ configs: updatedConfigs });
+    const reback = utils.rebackKeys(updatedConfigs);
+    this.setState({ configs: reback });
   };
 
   handleChange = ({ target }) => {
@@ -138,7 +139,6 @@ class CustomFinalForm extends React.Component {
   handleColumnChange = newColumn => {
     const { configs } = this.state;
     const updatedConfigs = utils.addColumn({ configs, newColumn });
-
     this.updateComponent(updatedConfigs);
   };
 
@@ -226,7 +226,7 @@ class CustomFinalForm extends React.Component {
     });
 
     updateGraph({ update });
-  }, 1000);
+  }, 500);
 
   render() {
     const replaceConfigs = utils.replaceKeys(this.state.configs);
