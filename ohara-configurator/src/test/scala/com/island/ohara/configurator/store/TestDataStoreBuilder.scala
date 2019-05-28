@@ -20,21 +20,24 @@ import com.island.ohara.common.rule.SmallTest
 import org.junit.Test
 import org.scalatest.Matchers
 
-class TestStoreBuilder extends SmallTest with Matchers {
+class TestDataStoreBuilder extends SmallTest with Matchers {
 
   @Test
   def testNullKeySerializer(): Unit =
-    an[NullPointerException] should be thrownBy Store.builder[String, String]().keySerializer(null)
+    an[NullPointerException] should be thrownBy DataStore.builder.keySerializer(null)
 
   @Test
   def testNullValueSerializer(): Unit =
-    an[NullPointerException] should be thrownBy Store.builder[String, String]().valueSerializer(null)
+    an[NullPointerException] should be thrownBy DataStore.builder.valueSerializer(null)
 
   @Test
   def testNullFolder(): Unit =
-    an[NullPointerException] should be thrownBy Store.builder[String, String]().persistentFolder(null)
+    an[NullPointerException] should be thrownBy DataStore.builder.persistentFolder(null)
 
   @Test
   def testEmptyFolder(): Unit =
-    an[IllegalArgumentException] should be thrownBy Store.builder[String, String]().persistentFolder("")
+    an[IllegalArgumentException] should be thrownBy DataStore.builder.persistentFolder("")
+
+  @Test
+  def allDefault(): Unit = DataStore.builder.build().close()
 }

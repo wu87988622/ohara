@@ -32,7 +32,7 @@ class TestK8sClusterCollie extends BasicTests4ClusterCollie {
 
   override protected val nodeCache: Seq[Node] =
     if (API_SERVER_URL.isEmpty || NODE_SERVER_NAME.isEmpty) Seq.empty
-    else NODE_SERVER_NAME.get.split(",").map(node => Node(node, 0, "", ""))
+    else NODE_SERVER_NAME.get.split(",").map(node => Node(node, 0, "", "", Seq.empty, CommonUtils.current()))
 
   override protected def clusterCollie: ClusterCollie = _clusterCollie
   private[this] var _clusterCollie: ClusterCollie = _

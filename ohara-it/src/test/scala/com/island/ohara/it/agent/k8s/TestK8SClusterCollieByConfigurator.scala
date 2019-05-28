@@ -19,7 +19,7 @@ package com.island.ohara.it.agent.k8s
 import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.common.util.Releasable
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.agent.{BasicTests4ClusterCollieByConfigurator, ClusterNameHolder}
 import com.typesafe.scalalogging.Logger
@@ -41,7 +41,17 @@ class TestK8SClusterCollieByConfigurator extends BasicTests4ClusterCollieByConfi
 
   override protected val nodeCache: Seq[Node] =
     if (API_SERVER_URL.isEmpty || NODE_SERVER_NAME.isEmpty) Seq.empty
-    else NODE_SERVER_NAME.get.split(",").map(node => Node(node, 0, "", ""))
+    else
+      NODE_SERVER_NAME.get
+        .split(",")
+        .map(
+          node =>
+            Node(name = node,
+                 port = 0,
+                 user = "",
+                 password = "",
+                 services = Seq.empty,
+                 lastModified = CommonUtils.current()))
 
   override def configurator: Configurator = _configurator
   private[this] var _configurator: Configurator = _

@@ -73,7 +73,7 @@ private[route] object RouteUtils {
     rm2: RootJsonFormat[Res],
     executionContext: ExecutionContext) =
     put {
-      entity(as[Req])(req => complete(store.update(id, (previous: Res) => hook(id, req, previous))))
+      entity(as[Req])(req => complete(store.addIfPresent(id, (previous: Res) => hook(id, req, previous))))
     }
 
   /**

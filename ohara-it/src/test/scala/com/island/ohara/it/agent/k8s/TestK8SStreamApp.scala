@@ -18,6 +18,7 @@ package com.island.ohara.it.agent.k8s
 
 import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.agent.{BasicTests4StreamApp, ClusterNameHolder}
 
@@ -30,7 +31,7 @@ class TestK8SStreamApp extends BasicTests4StreamApp {
   private[this] val NODE_SERVER_NAME: Option[String] = sys.env.get("ohara.it.k8s.nodename")
 
   override protected def createNodes(): Seq[Node] = if (API_SERVER_URL.isEmpty || NODE_SERVER_NAME.isEmpty) Seq.empty
-  else NODE_SERVER_NAME.get.split(",").map(node => Node(node, 0, "", ""))
+  else NODE_SERVER_NAME.get.split(",").map(node => Node(node, 0, "", "", Seq.empty, CommonUtils.current()))
   override protected def createNameHolder(nodeCache: Seq[Node]): ClusterNameHolder = new ClusterNameHolder(nodeCache) {
     override def close(): Unit = {
       val k8sClient = K8SClient(API_SERVER_URL.get)

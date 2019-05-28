@@ -14,17 +14,8 @@
  * limitations under the License.
  */
 
-package com.island.ohara.configurator.fake
+package com.island.ohara.configurator.store
 
-import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeService}
+import com.island.ohara.client.configurator.v0.Data
 
-private[configurator] case class FakeNode(name: String,
-                                          port: Int,
-                                          user: String,
-                                          password: String,
-                                          services: Seq[NodeService],
-                                          lastModified: Long)
-    extends Node {
-  override def id: String = name
-  override def kind: String = "node"
-}
+case class SimpleData(id: String, name: String, lastModified: Long, kind: String) extends Data

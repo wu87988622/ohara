@@ -22,12 +22,11 @@ import java.util.Objects
 import com.island.ohara.agent._
 import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeService}
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import com.island.ohara.client.configurator.v0.{Data, NodeApi}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
-import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.fake._
 import com.island.ohara.configurator.jar.JarStore
@@ -35,7 +34,6 @@ import com.island.ohara.configurator.store.DataStore
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
-
 class ConfiguratorBuilder {
   private[this] var hostname: String = CommonUtils.hostname()
   private[this] var port: Int = CommonUtils.availablePort()
@@ -105,7 +103,7 @@ class ConfiguratorBuilder {
     // DON'T add duplicate nodes!!!
       .toSet[String]
       .map { nodeName =>
-        FakeNode(
+        Node(
           name = nodeName,
           services = (if (bkConnectionProps.contains(nodeName))
                         Seq(NodeService(NodeApi.BROKER_SERVICE_NAME, Seq(embeddedBkName)))
@@ -248,8 +246,8 @@ class ConfiguratorBuilder {
           sinks = Seq.empty,
           nodeNames = bkCluster.nodeNames
         ))
-
     }
+
     import scala.concurrent.ExecutionContext.Implicits.global
     // fake nodes
     zkClusters
@@ -258,13 +256,13 @@ class ConfiguratorBuilder {
       .toSet[String]
       .map(
         name =>
-          FakeNode(name = name,
-                   port = -1,
-                   user = "fake user",
-                   password = "fake password",
-                   services = Seq.empty,
-                   lastModified = CommonUtils.current()))
-      .foreach(store.add)
+          Node(name = name,
+               port = -1,
+               user = "fake user",
+               password = "fake password",
+               services = Seq.empty,
+               lastModified = CommonUtils.current()))
+      .foreach(store.add[Node])
     clusterCollie(collie)
   }
 
@@ -311,13 +309,7 @@ class ConfiguratorBuilder {
     new File(CommonUtils.requireNonEmpty(homeFolder), prefix).getCanonicalPath
 
   private[this] def getOrCreateStore(): DataStore = if (store == null) {
-    store = DataStore(
-      com.island.ohara.configurator.store.Store
-        .builder[String, Data]()
-        .keySerializer(Serializer.STRING)
-        .valueSerializer(Configurator.DATA_SERIALIZER)
-        .persistentFolder(folder("store"))
-        .build())
+    store = DataStore.builder.persistentFolder(folder("store")).build()
     store
   } else store
 

@@ -19,7 +19,6 @@ import akka.http.scaladsl.server
 import com.island.ohara.agent.{ClusterCollie, NoSuchClusterException, StreamCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorDescription
-import com.island.ohara.client.configurator.v0.Data
 import com.island.ohara.client.configurator.v0.MetricsApi._
 import com.island.ohara.client.configurator.v0.PipelineApi._
 import com.island.ohara.client.configurator.v0.StreamApi.{StreamAppDescription, StreamClusterInfo}
@@ -28,7 +27,7 @@ import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.RouteUtils.Id
-import com.island.ohara.configurator.store.{DataStore, MeterCache}
+import com.island.ohara.configurator.store.{MeterCache, DataStore}
 import com.island.ohara.kafka.connector.json.SettingDefinitions
 import com.typesafe.scalalogging.Logger
 
@@ -146,7 +145,7 @@ private[configurator] object PipelineRoute {
           }
           .filterNot(_ == UNKNOWN_ID)
           .toSet
-          .map(id => store.value[Data](id)))
+          .map(id => store.raw(id)))
       .flatMap(objs => workerClient.connectors.map(connectors => (connectors, objs)))
       .flatMap {
         case (connectors, objs) =>
@@ -362,7 +361,7 @@ private[configurator] object PipelineRoute {
     executionContext: ExecutionContext): Future[PipelineCreationRequest] =
     Future
       .traverse(req.flows.flatMap(f => Seq(f.from) ++ f.to).toSet) { id =>
-        store.exist[Data](id).map(if (_) None else Some(id))
+        store.raws(id).map(_.nonEmpty).map(if (_) None else Some(id))
       }
       .map(_.flatten.toSeq)
       .map { invalidIds =>
@@ -398,7 +397,7 @@ private[configurator] object PipelineRoute {
                     if (running.nonEmpty)
                       Future.failed(new IllegalArgumentException(s"${running.mkString(",")} are running"))
                     else
-                      Future.sequence(pipeline.objects.map(_.id).map(store.value[Data])).flatMap { objs =>
+                      Future.sequence(pipeline.objects.map(_.id).map(store.raw)).flatMap { objs =>
                         Future
                           .sequence(
                             objs

@@ -16,109 +16,163 @@
 
 package com.island.ohara.configurator.store
 
+import java.util.Objects
+
 import com.island.ohara.client.configurator.v0.Data
-import com.island.ohara.common.util.{Releasable, ReleaseOnce}
+import com.island.ohara.common.annotations.Optional
+import com.island.ohara.common.data.Serializer
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.reflect.{ClassTag, classTag}
+import scala.reflect.ClassTag
 
+/**
+  * A key-value store. It is used to save the component information
+  * NOTED: All implementation from Store should be thread-safe.
+  */
 trait DataStore extends Releasable {
 
-  def get[T <: Data: ClassTag](id: String)(implicit executor: ExecutionContext): Future[Option[T]]
+  /**
+    * Noted, the type of stored data must be equal to input type.
+    * @param name data name
+    * @param executor thread pool
+    * @return data associated to type and name
+    */
+  def get[T <: Data: ClassTag](name: String)(implicit executor: ExecutionContext): Future[Option[T]]
 
-  def value[T <: Data: ClassTag](id: String)(implicit executor: ExecutionContext): Future[T]
+  /**
+    * Noted, the type of stored data must be equal to input type.
+    * @param name data name
+    * @param executor thread pool
+    * @return data associated to type and name
+    */
+  def value[T <: Data: ClassTag](name: String)(implicit executor: ExecutionContext): Future[T]
 
+  /**
+    * Noted, the type of stored data must be equal to input type.
+    * @param executor thread pool
+    * @return all data associated to type
+    */
   def values[T <: Data: ClassTag]()(implicit executor: ExecutionContext): Future[Seq[T]]
 
-  def raw()(implicit executor: ExecutionContext): Future[Seq[Data]]
+  /**
+    * @param executor thread pool
+    * @return all data
+    */
+  def raws()(implicit executor: ExecutionContext): Future[Seq[Data]]
 
-  def raw(id: String)(implicit executor: ExecutionContext): Future[Data]
+  /**
+    * @param name data name
+    * @param executor thread pool
+    * @return all data associated to input name
+    */
+  def raw(name: String)(implicit executor: ExecutionContext): Future[Data] = raws(name).map { raws =>
+    if (raws.isEmpty) throw new NoSuchElementException(s"$name does not exist")
+    if (raws.size != 1) throw new IllegalStateException(s"$name exists on multiples types")
+    raws.head
+  }
+
+  /**
+    * @param name data name
+    * @param executor thread pool
+    * @return all data associated to input name
+    */
+  def raws(name: String)(implicit executor: ExecutionContext): Future[Seq[Data]]
 
   /**
     * Remove a "specified" sublcass from ohara data mapping the id. If the data mapping to the id is not the specified
     * type, an exception will be thrown.
     *
-    * @param id from ohara data
+    * @param name from ohara data
     * @tparam T subclass type
     * @return the removed data
     */
-  def remove[T <: Data: ClassTag](id: String)(implicit executor: ExecutionContext): Future[Boolean]
+  def remove[T <: Data: ClassTag](name: String)(implicit executor: ExecutionContext): Future[Boolean]
 
   /**
-    * update an existed object in the store. If the id doesn't  exists, an exception will be thrown.
-    *
-    * @param data data
+    * add an object in the store. If the id doesn't  exists, an exception will be thrown.
+    * Noted, the new one replaces the previous stuff if the data returned by updater has the same id.
+    * @param updater used to update data
     * @tparam T type from data
     * @return the removed data
     */
-  def update[T <: Data: ClassTag](id: String, data: T => Future[T])(implicit executor: ExecutionContext): Future[T]
+  def addIfPresent[T <: Data: ClassTag](name: String, updater: T => Future[T])(
+    implicit executor: ExecutionContext): Future[T]
 
+  /**
+    * add a data associated to name to store
+    * @param data data
+    * @param executor thread pool
+    * @tparam T data type
+    * @return the input data
+    */
   def add[T <: Data](data: T)(implicit executor: ExecutionContext): Future[T]
 
-  def exist[T <: Data: ClassTag](id: String)(implicit executor: ExecutionContext): Future[Boolean]
+  /**
+    * Noted, the type of stored data must be equal to input type.
+    * @param name data's name
+    * @param executor thread pool
+    * @tparam T data type
+    * @return true if there is an existed data matching type. Otherwise, false
+    */
+  def exist[T <: Data: ClassTag](name: String)(implicit executor: ExecutionContext): Future[Boolean]
 
-  def nonExist[T <: Data: ClassTag](id: String)(implicit executor: ExecutionContext): Future[Boolean]
+  /**
+    * Noted, the type of stored data must be equal to input type.
+    * @param name data's name
+    * @param executor thread pool
+    * @tparam T data type
+    * @return false if there is an existed data matching type. Otherwise, true
+    */
+  def nonExist[T <: Data: ClassTag](name: String)(implicit executor: ExecutionContext): Future[Boolean]
 
-  def size: Int
+  /**
+    * @return the number of stored data
+    */
+  def size(): Int
+
+  /**
+    * @return number of stored data types.
+    */
+  def numberOfTypes(): Int
 }
 
 object DataStore {
-  def apply(store: Store[String, Data]): DataStore = new DataStoreImpl(store)
 
-  private[this] class DataStoreImpl(store: Store[String, Data]) extends ReleaseOnce with DataStore {
+  def builder: Builder = new Builder
 
-    override protected def doClose(): Unit = store.close()
+  def apply(): DataStore = builder.build()
 
-    override def value[T <: Data: ClassTag](id: String)(implicit executor: ExecutionContext): Future[T] =
-      store.value(id).filter(classTag[T].runtimeClass.isInstance).map(_.asInstanceOf[T])
+  class Builder private[DataStore] {
+    private[this] var keySerializer: Serializer[String] = Serializer.STRING
+    private[this] var valueSerializer: Serializer[Data] = new Serializer[Data] {
+      override def to(obj: Data): Array[Byte] = Serializer.OBJECT.to(obj)
+      override def from(bytes: Array[Byte]): Data =
+        Serializer.OBJECT.from(bytes).asInstanceOf[Data]
+    }
+    private[this] var persistentFolder: String = CommonUtils.createTempFolder("store").getCanonicalPath
 
-    override def values[T <: Data: ClassTag]()(implicit executor: ExecutionContext): Future[Seq[T]] =
-      store.values().map(_.values.filter(classTag[T].runtimeClass.isInstance).map(_.asInstanceOf[T]).toSeq)
+    @Optional("default implementation is Serializer.STRING")
+    def keySerializer(keySerializer: Serializer[String]): Builder = {
+      this.keySerializer = Objects.requireNonNull(keySerializer)
+      this
+    }
 
-    override def raw()(implicit executor: ExecutionContext): Future[Seq[Data]] = store.values().map(_.values.toSeq)
+    @Optional("default implementation is Serializer.OBJECT")
+    def valueSerializer(valueSerializer: Serializer[Data]): Builder = {
+      this.valueSerializer = Objects.requireNonNull(valueSerializer)
+      this
+    }
 
-    override def raw(id: String)(implicit executor: ExecutionContext): Future[Data] = store.value(id)
+    @Optional("Default value is a random folder")
+    def persistentFolder(persistentFolder: String): Builder = {
+      this.persistentFolder = CommonUtils.requireNonEmpty(persistentFolder)
+      this
+    }
 
-    /**
-      * Remove a "specified" sublcass from ohara data mapping the id. If the data mapping to the id is not the specified
-      * type, an exception will be thrown.
-      *
-      * @param id from ohara data
-      * @tparam T subclass type
-      * @return the removed data
-      */
-    override def remove[T <: Data: ClassTag](id: String)(implicit executor: ExecutionContext): Future[Boolean] =
-      exist[T](id).flatMap(if (_) store.remove(id) else Future.successful(false))
-
-    /**
-      * update an existed object in the store. If the id doesn't  exists, an exception will be thrown.
-      *
-      * @param data data
-      * @tparam T type from data
-      * @return the removed data
-      */
-    override def update[T <: Data: ClassTag](id: String, data: T => Future[T])(
-      implicit executor: ExecutionContext): Future[T] =
-      value[T](id).flatMap(_ => store.update(id, v => data(v.asInstanceOf[T]))).map(_.asInstanceOf[T])
-
-    override def add[T <: Data](data: T)(implicit executor: ExecutionContext): Future[T] =
-      store.add(data.id, data).map(_.asInstanceOf[T])
-
-    override def exist[T <: Data: ClassTag](id: String)(implicit executor: ExecutionContext): Future[Boolean] =
-      store.exist(id).flatMap { isExist =>
-        if (isExist)
-          store.value(id).map(classTag[T].runtimeClass.isInstance)
-        else
-          Future.successful(false)
-      }
-
-    override def nonExist[T <: Data: ClassTag](id: String)(implicit executor: ExecutionContext): Future[Boolean] =
-      exist[T](id).map(!_)
-
-    override def size: Int = store.size
-
-    override def get[T <: Data: ClassTag](id: String)(implicit executor: ExecutionContext): Future[Option[T]] =
-      store.get(id).map(_.filter(classTag[T].runtimeClass.isInstance).map(_.asInstanceOf[T]))
+    def build(): DataStore =
+      new RocksDataStore(CommonUtils.requireNonEmpty(persistentFolder),
+                         Objects.requireNonNull(keySerializer),
+                         Objects.requireNonNull(valueSerializer))
   }
-
 }

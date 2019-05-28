@@ -94,8 +94,7 @@ trait ClusterCollie extends Releasable {
   def fetchServices(nodes: Seq[Node])(implicit executionContext: ExecutionContext): Future[Seq[Node]] =
     clusters.map(_.keys.toSeq).map { clusters =>
       nodes.map { node =>
-        update(
-          node = node,
+        node.copy(
           services = Seq(
             NodeService(
               name = NodeApi.ZOOKEEPER_SERVICE_NAME,
@@ -125,15 +124,6 @@ trait ClusterCollie extends Releasable {
         )
       }
     }
-
-  /**
-    * In fake mode we use FakeNode instead of NodeImpl. Hence, we open a door to let fake CC override this method to
-    * keep the fake implementation
-    * @param node previous node
-    * @param services new servies
-    * @return update node
-    */
-  protected def update(node: Node, services: Seq[NodeService]): Node = NodeApi.copy(node, services)
 
   /**
     * Verify the node are available to be used in collie.

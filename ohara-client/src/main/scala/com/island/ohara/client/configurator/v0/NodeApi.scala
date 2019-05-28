@@ -15,10 +15,8 @@
  */
 
 package com.island.ohara.client.configurator.v0
-import com.island.ohara.common.util.CommonUtils
-import spray.json.DefaultJsonProtocol._
-import spray.json.{JsValue, RootJsonFormat}
-
+import spray.json.DefaultJsonProtocol.{jsonFormat6, _}
+import spray.json.RootJsonFormat
 object NodeApi {
   val NODES_PREFIX_PATH: String = "nodes"
 
@@ -32,68 +30,22 @@ object NodeApi {
   case class NodeService(name: String, clusterNames: Seq[String])
   implicit val NODE_SERVICE_JSON_FORMAT: RootJsonFormat[NodeService] = jsonFormat2(NodeService)
 
-  trait Node extends Data {
-    def port: Int
-    def user: String
-    def password: String
-    def services: Seq[NodeService]
-  }
-
-  object Node {
-    def apply(name: String, port: Int, user: String, password: String): Node = NodeImpl(
-      name = name,
-      port = port,
-      user = user,
-      password = password,
-      services = Seq.empty,
-      lastModified = CommonUtils.current()
-    )
-  }
-
-  implicit val NODE_JSON_FORMAT: RootJsonFormat[Node] = new RootJsonFormat[Node] {
-    override def read(json: JsValue): Node = NODE_IMPL_JSON_FORMAT.read(json)
-
-    override def write(obj: Node): JsValue = NODE_IMPL_JSON_FORMAT.write(toCaseClass(obj))
-  }
-
-  private[this] def toCaseClass(obj: Node): NodeImpl = obj match {
-    case _: NodeImpl => obj.asInstanceOf[NodeImpl]
-    case _ =>
-      NodeImpl(
-        name = obj.name,
-        port = obj.port,
-        user = obj.user,
-        password = obj.password,
-        services = obj.services,
-        lastModified = obj.lastModified
-      )
-  }
-
-  def copy(node: Node, services: Seq[NodeService]): Node = node match {
-    case n: NodeImpl => n.copy(services = services)
-    case _           => copy(toCaseClass(node), services)
-  }
-
   /**
     * NOTED: the field "services" is filled at runtime. If you are in testing, it is ok to assign empty to it.
     */
-  private[this] case class NodeImpl(name: String,
-                                    port: Int,
-                                    user: String,
-                                    password: String,
-                                    services: Seq[NodeService],
-                                    lastModified: Long)
-      extends Node {
-
-    /**
-      *  node's name should be unique in ohara so we make id same to name.
-      * @return name
-      */
+  case class Node(name: String,
+                  port: Int,
+                  user: String,
+                  password: String,
+                  services: Seq[NodeService],
+                  lastModified: Long)
+      extends Data {
     override def id: String = name
+
     override def kind: String = "node"
   }
 
-  private[this] implicit val NODE_IMPL_JSON_FORMAT: RootJsonFormat[NodeImpl] = jsonFormat6(NodeImpl)
+  implicit val NODE_JSON_FORMAT: RootJsonFormat[Node] = jsonFormat6(Node)
 
   def access(): Access[NodeCreationRequest, Node] =
     new Access[NodeCreationRequest, Node](NODES_PREFIX_PATH)

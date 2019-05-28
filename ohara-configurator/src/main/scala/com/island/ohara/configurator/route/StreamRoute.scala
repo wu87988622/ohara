@@ -99,7 +99,7 @@ private[configurator] object StreamRoute {
         }
         .flatMap {
           case (state, error) =>
-            store.update[StreamAppDescription](
+            store.addIfPresent[StreamAppDescription](
               props.id,
               previous => Future.successful(previous.copy(state = state, error = error)))
         }
@@ -221,7 +221,7 @@ private[configurator] object StreamRoute {
                     if (CommonUtils.isEmpty(req.jarName))
                       throw new IllegalArgumentException(s"Require jarName")
                     complete(jarStore.rename(id, req.jarName).flatMap { jarInfo =>
-                      store.update[StreamJar](
+                      store.addIfPresent[StreamJar](
                         id,
                         previous =>
                           Future.successful(
@@ -348,7 +348,7 @@ private[configurator] object StreamRoute {
                         }
                         .flatMap {
                           case (state, error) =>
-                            store.update[StreamAppDescription](
+                            store.addIfPresent[StreamAppDescription](
                               id,
                               data => Future.successful(data.copy(state = state, error = error))
                             )
@@ -375,14 +375,14 @@ private[configurator] object StreamRoute {
                         }
                         .flatMap {
                           case (state, error) =>
-                            store.update[StreamAppDescription](
+                            store.addIfPresent[StreamAppDescription](
                               id,
                               data => Future.successful(data.copy(state = state, error = error))
                             )
                         }
                     } else {
                       // stream cluster not exists, update store only
-                      store.update[StreamAppDescription](
+                      store.addIfPresent[StreamAppDescription](
                         id,
                         data => Future.successful(data.copy(state = None, error = None))
                       )

@@ -53,7 +53,9 @@ object NodeRoute {
               name = request.name.get,
               port = request.port,
               user = request.user,
-              password = request.password
+              password = request.password,
+              services = Seq.empty,
+              lastModified = CommonUtils.current()
             ))
       },
       hookOfUpdate = (name: Id, request: NodeCreationRequest, previous: Node) => {
@@ -66,7 +68,9 @@ object NodeRoute {
               name = name,
               port = request.port,
               user = request.user,
-              password = request.password
+              password = request.password,
+              services = Seq.empty,
+              lastModified = CommonUtils.current()
             ))
       },
       hookOfGet = (response: Node) => update(response),

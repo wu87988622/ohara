@@ -54,7 +54,7 @@ object ShabondiRoute {
       Future.successful(
         duplicateShabondiDescription(data, property).copy(lastModified = CommonUtils.current())
     )
-    store.update[ShabondiDescription](id, updateValue)
+    store.addIfPresent[ShabondiDescription](id, updateValue)
   }
 
   private def updateShabondiState(id: String, state: String, store: DataStore)(
@@ -64,7 +64,7 @@ object ShabondiRoute {
       Future.successful(
         data.copy(state = Some(state), lastModified = CommonUtils.current())
     )
-    store.update[ShabondiDescription](id, updateValue)
+    store.addIfPresent[ShabondiDescription](id, updateValue)
   }
 
   private def randomPickNode(store: DataStore)(implicit executionContext: ExecutionContext): Node = {

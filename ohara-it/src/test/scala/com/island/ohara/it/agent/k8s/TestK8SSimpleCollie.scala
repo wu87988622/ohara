@@ -79,7 +79,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val clusterName: String = s"cluster${CommonUtils.randomString(RANDOM_LEN)}"
     val firstNode: String = nodeNames.head
     nodeCache.clear()
-    nodeCache.append(Node(firstNode, 22, "", ""))
+    nodeCache.append(Node(firstNode, 22, "", "", Seq.empty, CommonUtils.current()))
 
     val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie()
 
@@ -111,7 +111,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   def testBrokerCollie(): Unit = {
     val firstNode: String = nodeNames.head
     nodeCache.clear()
-    nodeCache.append(Node(firstNode, 22, "", ""))
+    nodeCache.append(Node(firstNode, 22, "", "", Seq.empty, CommonUtils.current()))
 
     //Create zookeeper cluster for start broker service
     val zkClusterName: String = s"zkcluster${CommonUtils.randomString(RANDOM_LEN)}"
@@ -151,7 +151,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   def testWorkerCollie(): Unit = {
     val firstNode: String = nodeNames.head
     nodeCache.clear()
-    nodeCache.append(Node(firstNode, 22, "", ""))
+    nodeCache.append(Node(firstNode, 22, "", "", Seq.empty, CommonUtils.current()))
 
     //Create zookeeper cluster for start broker service
     val zkClusterName: String = s"zkcluster${CommonUtils.randomString(RANDOM_LEN)}"
@@ -201,8 +201,8 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val secondNode: String = nodeNames(1)
 
     nodeCache.clear()
-    nodeCache.append(Node(firstNode, 22, "", ""))
-    nodeCache.append(Node(secondNode, 22, "", ""))
+    nodeCache.append(Node(firstNode, 22, "", "", Seq.empty, CommonUtils.current()))
+    nodeCache.append(Node(secondNode, 22, "", "", Seq.empty, CommonUtils.current()))
 
     //Create zookeeper cluster for start broker service
     val zkClusterName: String = s"zkcluster${CommonUtils.randomString(RANDOM_LEN)}"
@@ -252,8 +252,8 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val secondNode: String = nodeNames(1)
 
     nodeCache.clear()
-    nodeCache.append(Node(firstNode, 22, "", ""))
-    nodeCache.append(Node(secondNode, 22, "", ""))
+    nodeCache.append(Node(firstNode, 22, "", "", Seq.empty, CommonUtils.current()))
+    nodeCache.append(Node(secondNode, 22, "", "", Seq.empty, CommonUtils.current()))
 
     //Create zookeeper cluster for start broker service
     val zkClusterName: String = s"zkcluster${CommonUtils.randomString(RANDOM_LEN)}"
@@ -307,8 +307,8 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val secondNode: String = nodeNames(1)
 
     nodeCache.clear()
-    nodeCache.append(Node(firstNode, 22, "", ""))
-    nodeCache.append(Node(secondNode, 22, "", ""))
+    nodeCache.append(Node(firstNode, 22, "", "", Seq.empty, CommonUtils.current()))
+    nodeCache.append(Node(secondNode, 22, "", "", Seq.empty, CommonUtils.current()))
 
     //Create zookeeper cluster for start broker service
     val zkClusterName: String = s"zkcluster${CommonUtils.randomString(RANDOM_LEN)}"
@@ -351,8 +351,8 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val secondNode: String = nodeNames(1)
 
     nodeCache.clear()
-    nodeCache.append(Node(firstNode, 22, "", ""))
-    nodeCache.append(Node(secondNode, 22, "", ""))
+    nodeCache.append(Node(firstNode, 22, "", "", Seq.empty, CommonUtils.current()))
+    nodeCache.append(Node(secondNode, 22, "", "", Seq.empty, CommonUtils.current()))
 
     //Create zookeeper cluster for start broker service
     val zkClusterName: String = s"zkcluster${CommonUtils.randomString(RANDOM_LEN)}"
@@ -402,7 +402,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   def testClusters(): Unit = {
     val firstNode: String = nodeNames.head
     nodeCache.clear()
-    nodeCache.append(Node(firstNode, 22, "", ""))
+    nodeCache.append(Node(firstNode, 22, "", "", Seq.empty, CommonUtils.current()))
 
     //Create zookeeper cluster for start broker service
     val zkClusterName1: String = s"zk${CommonUtils.randomString(RANDOM_LEN)}"
@@ -423,7 +423,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   def testLog(): Unit = {
     val firstNode: String = nodeNames.head
     nodeCache.clear()
-    nodeCache.append(Node(firstNode, 22, "", ""))
+    nodeCache.append(Node(firstNode, 22, "", "", Seq.empty, CommonUtils.current()))
 
     //Create zookeeper cluster for start broker service
     val zkClusterName: String = s"zkcluster${CommonUtils.randomString(RANDOM_LEN)}"
@@ -483,10 +483,12 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   @Test
   def testVerifyNode(): Unit = {
     val firstNode: String = nodeNames.head
-    val verifyNode: Try[String] = Await.result(clusterCollie.verifyNode(Node(firstNode, 22, "", "")), 30 seconds)
+    val verifyNode: Try[String] =
+      Await.result(clusterCollie.verifyNode(Node(firstNode, 22, "", "", Seq.empty, CommonUtils.current())), 30 seconds)
     verifyNode.get.contains("node is running.") shouldBe true
 
-    val unknowNode: Try[String] = Await.result(clusterCollie.verifyNode(Node("unknow-node", 22, "", "")), 30 seconds)
+    val unknowNode: Try[String] = Await
+      .result(clusterCollie.verifyNode(Node("unknow-node", 22, "", "", Seq.empty, CommonUtils.current())), 30 seconds)
     unknowNode.isFailure shouldBe true
   }
 
@@ -495,7 +497,8 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val fakeK8SClient = new FakeK8SClient(true, Option(K8SStatusInfo(true, "")))
     val clusterCollie: ClusterCollie =
       ClusterCollie.builderOfK8s().nodeCollie(nodeCollie).k8sClient(fakeK8SClient).build()
-    val runningNode = Await.result(clusterCollie.verifyNode(Node("ohara", 22, "", "")), 30 seconds)
+    val runningNode =
+      Await.result(clusterCollie.verifyNode(Node("ohara", 22, "", "", Seq.empty, CommonUtils.current())), 30 seconds)
     runningNode match {
       case Success(value) => value shouldBe "ohara node is running."
       case Failure(e)     => throw new AssertionError()
@@ -507,7 +510,8 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val fakeK8SClient = new FakeK8SClient(true, Option(K8SStatusInfo(false, "node failed.")))
     val clusterCollie: ClusterCollie =
       ClusterCollie.builderOfK8s().nodeCollie(nodeCollie).k8sClient(fakeK8SClient).build()
-    val runningNode = Await.result(clusterCollie.verifyNode(Node("ohara", 22, "", "")), 30 seconds)
+    val runningNode =
+      Await.result(clusterCollie.verifyNode(Node("ohara", 22, "", "", Seq.empty, CommonUtils.current())), 30 seconds)
     runningNode match {
       case Success(value) => throw new AssertionError()
       case Failure(e)     => e.getMessage shouldBe "ohara node doesn't running container. cause: node failed."
@@ -519,7 +523,8 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val fakeK8SClient = new FakeK8SClient(false, Option(K8SStatusInfo(false, "failed")))
     val clusterCollie: ClusterCollie =
       ClusterCollie.builderOfK8s().nodeCollie(nodeCollie).k8sClient(fakeK8SClient).build()
-    val runningNode = Await.result(clusterCollie.verifyNode(Node("ohara", 22, "", "")), 30 seconds)
+    val runningNode =
+      Await.result(clusterCollie.verifyNode(Node("ohara", 22, "", "", Seq.empty, CommonUtils.current())), 30 seconds)
     runningNode match {
       case Success(value) => throw new AssertionError()
       case Failure(e)     => e.getMessage() shouldBe "ohara node doesn't running container. cause: failed"
@@ -531,7 +536,8 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val fakeK8SClient = new FakeK8SClient(false, None)
     val clusterCollie: ClusterCollie =
       ClusterCollie.builderOfK8s().nodeCollie(nodeCollie).k8sClient(fakeK8SClient).build()
-    val runningNode = Await.result(clusterCollie.verifyNode(Node("ohara", 22, "", "")), 30 seconds)
+    val runningNode =
+      Await.result(clusterCollie.verifyNode(Node("ohara", 22, "", "", Seq.empty, CommonUtils.current())), 30 seconds)
     runningNode match {
       case Success(value) => throw new AssertionError()
       case Failure(e) =>

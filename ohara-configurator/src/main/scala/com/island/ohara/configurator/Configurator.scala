@@ -41,7 +41,7 @@ import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce}
 import com.island.ohara.configurator.jar.JarStore
 import com.island.ohara.configurator.route._
-import com.island.ohara.configurator.store.{DataStore, MeterCache}
+import com.island.ohara.configurator.store.{MeterCache, DataStore}
 import com.typesafe.scalalogging.Logger
 import spray.json.DeserializationException
 

@@ -18,6 +18,7 @@ package com.island.ohara.it.agent
 import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.{BrokerApi, StreamApi, WorkerApi, ZookeeperApi}
+import com.island.ohara.common.util.CommonUtils
 private[it] object CollieTestUtils {
 
   /**
@@ -33,7 +34,12 @@ private[it] object CollieTestUtils {
       val password = nodeInfo.split("@").head.split(":").last
       val hostname = nodeInfo.split("@").last.split(":").head
       val port = nodeInfo.split("@").last.split(":").last.toInt
-      Node(hostname, port, user, password)
+      Node(name = hostname,
+           port = port,
+           user = user,
+           password = password,
+           services = Seq.empty,
+           lastModified = CommonUtils.current())
     }.toSeq)
     .getOrElse(Seq.empty)
     .map { node =>

@@ -17,9 +17,8 @@
 package com.island.ohara.configurator.fake
 
 import com.island.ohara.agent.{ClusterCollie, NodeCollie}
-import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeService}
+import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi, ZookeeperApi}
-import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.store.DataStore
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -53,15 +52,6 @@ private[configurator] class FakeClusterCollie(nodeCollie: NodeCollie,
   override def close(): Unit = {
     // do nothing
   }
-
-  override protected def update(node: Node, services: Seq[NodeService]): Node = FakeNode(
-    name = node.name,
-    port = node.port,
-    user = node.user,
-    password = node.password,
-    services = services,
-    lastModified = CommonUtils.current()
-  )
 
   override def images(nodes: Seq[Node])(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[String]]] =
     Future.successful(

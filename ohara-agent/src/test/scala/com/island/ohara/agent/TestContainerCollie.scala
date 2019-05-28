@@ -18,6 +18,7 @@ package com.island.ohara.agent
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
 
@@ -44,8 +45,13 @@ class TestContainerCollie extends SmallTest with Matchers {
     val nodeName1 = "node1"
     val nodeName2 = "node2"
 
-    val node1 = Node(nodeName1, 22, "user1", "123456")
-    val node2 = Node(nodeName2, 22, "user1", "123456")
+    val node1 = Node(name = nodeName1,
+                     port = 22,
+                     user = "user1",
+                     password = "123456",
+                     services = Seq.empty,
+                     lastModified = CommonUtils.current())
+    val node2 = node1.copy(name = nodeName2)
 
     val container1 =
       ContainerInfo(nodeName1, "0", "fakeimage", "", "", "", "container1", "0", Seq(), Map(), s"xxx")
@@ -71,7 +77,12 @@ class TestContainerCollie extends SmallTest with Matchers {
   @Test
   def testRemoveContainerNodeNameNotExists(): Unit = {
     val node1Name = "node1"
-    val node1 = Node(node1Name, 22, "user1", "123456")
+    val node1 = Node(name = node1Name,
+                     port = 22,
+                     user = "user1",
+                     password = "123456",
+                     services = Seq.empty,
+                     lastModified = CommonUtils.current())
     val containerInfo =
       ContainerInfo("node2", "0", "fakeimage", "", "", "", "container1", "0", Seq.empty, Map.empty, s"xxx")
     val fakeContainerCollie = new FakeContainerCollie(NodeCollie(Seq(node1)), Seq(containerInfo))
@@ -82,7 +93,12 @@ class TestContainerCollie extends SmallTest with Matchers {
   @Test
   def testRemoveSingleNode(): Unit = {
     val node1Name = "node1"
-    val node1 = Node(node1Name, 22, "user1", "123456")
+    val node1 = Node(name = node1Name,
+                     port = 22,
+                     user = "user1",
+                     password = "123456",
+                     services = Seq.empty,
+                     lastModified = CommonUtils.current())
     val containerInfo =
       ContainerInfo(node1Name, "0", "fakeimage", "", "", "", "container1", "0", Seq(), Map(), s"xxx-${node1Name}")
     val fakeContainerCollie = new FakeContainerCollie(NodeCollie(Seq(node1)), Seq(containerInfo))
@@ -95,7 +111,12 @@ class TestContainerCollie extends SmallTest with Matchers {
   @Test
   def testRemoveNotExistsNode(): Unit = {
     val node1Name = "node1"
-    val node1 = Node(node1Name, 22, "user1", "123456")
+    val node1 = Node(name = node1Name,
+                     port = 22,
+                     user = "user1",
+                     password = "123456",
+                     services = Seq.empty,
+                     lastModified = CommonUtils.current())
     val containerInfo =
       ContainerInfo(node1Name, "0", "fakeimage", "", "", "", "container1", "0", Seq(), Map(), s"xxx-${node1Name}")
     val fakeContainerCollie = new FakeContainerCollie(NodeCollie(Seq(node1)), Seq(containerInfo))
@@ -108,8 +129,13 @@ class TestContainerCollie extends SmallTest with Matchers {
     val node1Name = "node1"
     val node2Name = "node2"
 
-    val node1 = Node(node1Name, 22, "user1", "123456")
-    val node2 = Node(node2Name, 22, "user1", "123456")
+    val node1 = Node(name = node1Name,
+                     port = 22,
+                     user = "user1",
+                     password = "123456",
+                     services = Seq.empty,
+                     lastModified = CommonUtils.current())
+    val node2 = node1.copy(name = node2Name)
     val container1 =
       ContainerInfo(node1Name, "0", "fakeimage", "", "", "", "container1", "0", Seq(), Map(), s"xxx-${node1Name}")
 
@@ -122,7 +148,12 @@ class TestContainerCollie extends SmallTest with Matchers {
   }
 
   private[this] def validErrorNodeName(nodeName: String, expectErrMsg: String): Unit = {
-    val node1 = Node(nodeName, 22, "user1", "123456")
+    val node1 = Node(name = nodeName,
+                     port = 22,
+                     user = "user1",
+                     password = "123456",
+                     services = Seq.empty,
+                     lastModified = CommonUtils.current())
     val containerInfo =
       ContainerInfo(node1.name, "0", "fakeimage", "", "", "", "container1", "0", Seq(), Map(), s"xxx-${node1.name}")
     val fakeContainerCollie = new FakeContainerCollie(NodeCollie(Seq(node1)), Seq(containerInfo))
