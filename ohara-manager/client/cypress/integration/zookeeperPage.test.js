@@ -17,6 +17,9 @@
 import { ZOOKEEPER } from '../../src/constants/urls';
 
 describe('ZookeeperPage', () => {
+  before(() => {
+    cy.deleteAllPipeline();
+  });
   beforeEach(() => cy.visit(ZOOKEEPER));
 
   it('should have correct page heading', () => {

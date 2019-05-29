@@ -113,7 +113,7 @@ describe('StreamApp', () => {
       // TODO: these two topics can be added via API which should be faster than
       // adding from the UI
       cy.getByTestId('toolbar-topics')
-        .click()
+        .click({ force: true })
         .get('@fromTopic')
         .then(from => {
           cy.getByTestId('topic-select').select(from.name);
@@ -123,7 +123,7 @@ describe('StreamApp', () => {
         .wait('@putPipeline');
 
       cy.getByTestId('toolbar-topics')
-        .click()
+        .click({ force: true })
         .get('@toTopic')
         .then(to => {
           cy.getByTestId('topic-select').select(to.name);
@@ -159,7 +159,9 @@ describe('StreamApp', () => {
           cy.wrap($el.parent()).within(() => {
             cy.getByText('Status: running').should('be.exist');
           });
-        });
+        })
+        .getByTestId('stop-button')
+        .click();
     });
   });
 });
