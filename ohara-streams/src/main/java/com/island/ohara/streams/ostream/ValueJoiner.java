@@ -19,26 +19,11 @@ package com.island.ohara.streams.ostream;
 import com.island.ohara.common.data.Row;
 
 /**
- * The {@code Valuejoiner} interface represents a row-returned joiner function. This function should
+ * The {@code ValueJoiner} interface represents a row-returned joiner function. This function should
  * use to join two different row data into one.
  *
  * @see org.apache.kafka.streams.kstream.ValueJoiner
  */
-public interface Valuejoiner {
-
-  Row valuejoiner(final Row value1, final Row value2);
-
-  class TrueValuejoiner implements org.apache.kafka.streams.kstream.ValueJoiner<Row, Row, Row> {
-
-    private final Valuejoiner trueValuejoiner;
-
-    TrueValuejoiner(Valuejoiner valuejoiner) {
-      this.trueValuejoiner = valuejoiner;
-    }
-
-    @Override
-    public Row apply(Row value1, Row value2) {
-      return this.trueValuejoiner.valuejoiner(value1, value2);
-    }
-  }
+public interface ValueJoiner {
+  Row apply(final Row value1, final Row value2);
 }

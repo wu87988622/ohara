@@ -22,7 +22,6 @@ import com.island.ohara.streams.ostream.*;
 import java.util.List;
 import org.apache.kafka.streams.kstream.Grouped;
 import org.apache.kafka.streams.kstream.KTable;
-import org.apache.kafka.streams.kstream.ValueJoiner;
 
 /**
  * {@code OStream} is a <i>Row</i> streaming data in Ohara Stream. In Ohara Stream environment, all
@@ -75,12 +74,13 @@ public interface OStream<T extends Row> {
    *
    * @param joinTopicName the topic name to be joined with this OStream
    * @param conditions the join key pairs
-   * @param joiner a {@link Valuejoiner} that computes the join result for a pair of matching
+   * @param joiner a {@link ValueJoiner} that computes the join result for a pair of matching
    *     records
    * @return {@code OStream}
-   * @see org.apache.kafka.streams.kstream.KStream#leftJoin(KTable, ValueJoiner)
+   * @see org.apache.kafka.streams.kstream.KStream#leftJoin(KTable,
+   *     org.apache.kafka.streams.kstream.ValueJoiner)
    */
-  OStream<T> leftJoin(String joinTopicName, Conditions conditions, Valuejoiner joiner);
+  OStream<T> leftJoin(String joinTopicName, Conditions conditions, ValueJoiner joiner);
 
   /**
    * Transform the value of each record to a new value of the output record. The provided {@link

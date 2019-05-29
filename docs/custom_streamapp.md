@@ -131,7 +131,7 @@ Below we list the available functions in each classes (See more information in <
   ```text
   Transfer this OStream to specify topic and use the required partition number.
   ```
-- leftJoin(String joinTopicName, Conditions conditions, Valuejoiner joiner)
+- leftJoin(String joinTopicName, Conditions conditions, ValueJoiner joiner)
   ```text
   Join this OStream with required joinTopicName and conditions.
   ```

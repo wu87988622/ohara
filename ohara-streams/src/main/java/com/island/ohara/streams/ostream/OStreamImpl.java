@@ -78,7 +78,8 @@ class OStreamImpl extends AbstractStream<Row, Row> implements OStream<Row> {
   }
 
   @Override
-  public OStream<Row> leftJoin(String joinTopicName, Conditions conditions, Valuejoiner joiner) {
+  public OStream<Row> leftJoin(
+      String joinTopicName, Conditions conditions, ValueJoiner valueJoiner) {
     CommonUtils.requireNonEmpty(joinTopicName, () -> "joinTopicName cannot be null");
     // construct the compare key "row"
     List<Pair<String, String>> list = conditions.getConditionList();
@@ -90,8 +91,6 @@ class OStreamImpl extends AbstractStream<Row, Row> implements OStream<Row> {
       leftHeaders.add(pair.left());
       rightHeaders.add(pair.right());
     }
-
-    Valuejoiner.TrueValuejoiner trueValuejoiner = new Valuejoiner.TrueValuejoiner(joiner);
 
     // convert the right topic (the join topic) to <Row: key_header, Row: values>
     KTable<Row, Row> table =
@@ -120,7 +119,7 @@ class OStreamImpl extends AbstractStream<Row, Row> implements OStream<Row> {
                 (row, value) ->
                     new KeyValue<>(
                         Row.of(leftHeaders.stream().map(value::cell).toArray(Cell[]::new)), value))
-            .leftJoin(table, trueValuejoiner),
+            .leftJoin(table, valueJoiner::apply),
         innerBuilder);
   }
 
