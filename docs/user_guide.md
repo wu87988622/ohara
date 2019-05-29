@@ -408,77 +408,94 @@ The post-installation for all docker nodes are listed below.
 ----------
 
 ## Kubernetes
-### Kubernetes install guide
+Kubernetes is a managed container platform. It can across different container communication of a node. solve more deploy multiple a node container problems, below is Kubernetes advantage:
+* Automatically deploy Docker container
+* Docker container resource manage and scaling
+* Orcherstrate docker container on multiple hosts
 
-#### How to install distribute mode for Kubernetes?
-##### 0.Prerequisites
-  * CPU core number more than 1
+About details please refer: https://kubernetes.io/docs/concepts/overview/what-is-kubernetes/
 
-##### 1.Install Kubernetes master
+OharaStream builds multiple docker images. This includes zookeeper, broker, and connect-worker. These services can be run and controlled through Kubernets and making container management a lot easier. Before running any OharaStream containers, you need to install Kubernets first. We'll walk you through this process with a few k8s commands:
+### How to install distribute mode for Kubernetes?
+#### 0.Kubernetes hardware requirement
+  * OharaStream support install Kubernetes shell script OS only CentOS7
+
+  * 2 CPUs or more
+
+  * 2 GB or more of RAM per machine
+
+  * Full network connectivity between all machines in the cluster
+
+  * Swap disabled
+
+More details [here](https://kubernetes.io/docs/setup/independent/install-kubeadm/#before-you-begin)
+
+
+#### 1.Install Kubernetes master
   * Switch to root user
-```
+```sh
 $ su root
 ```
 
   * Change directory to ```--> kubernetes/distribute```
-```
+```sh
 # cd $OHARA_HOME/kubernetes/distribute
 ```
 
   * Run ```bash k8s-master-install.sh ${Your_K8S_Master_Host_IP}``` to install Kubernetes master
-```
+```sh
 # bash k8s-master-install.sh ${Your_K8S_Master_Host_IP}
 ```
 
   * Token and hash will be used in worker installation later on
-```
+```sh
 # cat /tmp/k8s-install-info.txt
 ```
 
 The token and hash should look like the following:
-```
+```sh
 # kubeadm join 10.100.0.178:6443 --token 14aoza.xpgpa26br32sxwl8 \
     --discovery-token-ca-cert-hash sha256:f5614e6b6376f7559910e66bc014df63398feb7411fe6d0e7057531d7143d47b
 ```
-**Token:** 14aoza.xpgpa26br32sxwl8
+> **Token:** 14aoza.xpgpa26br32sxwl8
 
-**Hash:** sha256:f5614e6b6376f7559910e66bc014df63398feb7411fe6d0e7057531d7143d47b
+> **Hash:** sha256:f5614e6b6376f7559910e66bc014df63398feb7411fe6d0e7057531d7143d47b
   
-##### 2.Install Kubernetes worker
+#### 2.Install Kubernetes worker
   * Switch to root
 ```
 $ su root
 ```
   * Change directory to ```--> kubernetes/distribute```
-```
+```sh
 # cd $OHARA_HOME/kubernetes/distribute 
 ```
 
   * Run ```bash k8s-worker-install.sh ${Your_K8S_Master_Host_IP} ${TOKEN} ${HASH_CODE}``` command in your terminal. (TOKEN and HASH_CODE can be found in the /tmp/k8s-install-info.txt file of Kubernetes master, the one we mention in the previous steps)
     
     Below is example command:
-```
+```sh
 # bash k8s-worker-install.sh 10.100.0.178 14aoza.xpgpa26br32sxwl8 sha256:f5614e6b6376f7559910e66bc014df63398feb7411fe6d0e7057531d7143d47b
 ```  
 
 **3.Ensure the K8S API server is running properly**
   * Log into Kubernetes master and use the following command to see if these Kubernetes nodes are running properly
 
-```
+```sh
 # kubectl get nodes
 ```
   * You can check Kubernetes node status like the following:
-```
+```sh
 # curl -X GET http://${Your_K8S_Master_Host_IP}:8080/api/v1/nodes
 ```
-#### How to use Kubernetes in OharaStream?
+### How to use Kubernetes in OharaStream?
   * You must create the service to Kubernetes for DNS use in kubernetes master host, Below is the command:
-```
+```sh
 cd $OHARA_HOME/kubernetes
 kubectl create -f dns-service.yaml
 ```
-  * Below is an example command:
-```
+  * Below is an example command to run OharaStream configurator service for K8S mode:
+```sh
 # docker run --rm \
            -p 5000:5000 \
            --add-host ${K8S_WORKER01_HOSTNAME}:${K8S_WORKER01_IP} \
@@ -488,12 +505,12 @@ kubectl create -f dns-service.yaml
            --hostname ${Start Configurator Host Name} \
            --k8s http://${Your_K8S_Master_Host_IP}:8080/api/v1
 ```
-*--add-host: Add all k8s worker hostname and ip information to configurator container /etc/hosts file
+> --add-host: Add all k8s worker hostname and ip information to configurator container /etc/hosts file
 
-*--k8s: Assignment your K8S API server HTTP URL
+> --k8s: Assignment your K8S API server HTTP URL
 
-  * Use Ohara configurator to create zookeeper and broker in Kubernetes pod for the test:
-```
+  * Use Ohara configurator to create a zookeeper and broker in Kubernetes pod for the test:
+```sh
 # Add Ohara Node example
 curl -H "Content-Type: application/json" \
      -X POST \
@@ -535,20 +552,32 @@ curl -H "Content-Type: application/json" \
           "nodeNames": ["${K8S_WORKER02_HOSTNAME}"]}' \
      http://${CONFIGURATOR_HOST_IP}:5000/v0/brokers
 ```
-  * You can use the kubectl command to confirm zookeeper and broker pod status:
-```
+
+  * You can use the kubectl command to get zookeeper and broker pod status with the following command:
+```sh
 # kubectl get pods
 ```
 
-#### How to reverts K8S environment setting?
-  * You must stop the K8S API server and input ```kubeadm reset``` command
+### How to revert K8S environment setting?
+  * You must stop the K8S API server with this command: ```kubeadm reset``` command
   
-  * More details please refer: https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-reset/
-   
-#### Other
+  * More details [here](https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-reset)
+
+### How to get the log info in container for debug?
+  * First, log into Kubernetes' master server
+  
+  * List all Kubernetes pod name to query
+```sh
+# kubectl get pods
+```
+  * Get log info in container
+```sh
+# kubectl logs ${Your_K8S_Pod_Name}
+```  
+### Other
 * OharaStream K8SClient ImagePullPolicy default is IfNotPresent.
 
 * Please remember to start K8S API server after you reboot the K8S master server:
-```
+```sh
 # nohup kubectl proxy --accept-hosts=^*$ --address=$Your_master_host_IP --port=8080 > /dev/null 2>&1 &
 ```
