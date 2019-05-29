@@ -135,9 +135,14 @@ describe('switchType()', () => {
     expect(utils.switchType('INT')).toBe('number');
   });
 
-  it('returns a default type of `text`', () => {
-    expect(utils.switchType('oops')).toBe('text');
-    expect(utils.switchType('nope')).toBe('text');
+  it('returns `PASSWORD` if the given type is `password`', () => {
+    expect(utils.switchType('PASSWORD')).toBe('password');
+  });
+
+  it(`returns null if there's no match`, () => {
+    expect(utils.switchType('')).toBe(null);
+    expect(utils.switchType(null)).toBe(null);
+    expect(utils.switchType(undefined)).toBe(null);
   });
 });
 
@@ -172,5 +177,37 @@ describe('changeToken()', () => {
     expect(
       utils.changeToken({ values, targetToken: '_', replaceToken: '.' }),
     ).toEqual(expected);
+  });
+});
+
+describe('groupBy()', () => {
+  it('returns grouped items', () => {
+    const json = [
+      { key: 'a', name: 'Name1' },
+      { key: 'a', name: 'Name2' },
+      { key: 'a', name: 'Name3' },
+      { key: 'b', name: 'Name4' },
+      { key: 'b', name: 'Name5' },
+      { key: 'b', name: 'Name6' },
+    ];
+
+    const groupJson = [
+      [
+        { key: 'a', name: 'Name1' },
+        { key: 'a', name: 'Name2' },
+        { key: 'a', name: 'Name3' },
+      ],
+      [
+        { key: 'b', name: 'Name4' },
+        { key: 'b', name: 'Name5' },
+        { key: 'b', name: 'Name6' },
+      ],
+    ];
+
+    const group = utils.groupBy(json, item => {
+      return [item.key];
+    });
+
+    expect(group).toEqual(groupJson);
   });
 });

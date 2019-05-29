@@ -21,7 +21,6 @@ import {
   isStream,
   findByGraphId,
   getConnectors,
-  updateTopic,
 } from '../commonUtils';
 
 describe('isSource()', () => {
@@ -126,94 +125,5 @@ describe('getConnectors()', () => {
     expect(sinks.length).toBe(0);
     expect(topics.length).toBe(0);
     expect(streams.length).toBe(0);
-  });
-});
-
-describe('updateTopic()', () => {
-  it('updates sources', () => {
-    const props = {
-      graph: [
-        {
-          id: '1',
-          kind: 'topic',
-          name: 'a',
-          to: [],
-        },
-        {
-          id: '2',
-          kind: 'source',
-          name: 'b',
-          to: [],
-        },
-      ],
-      match: {
-        params: {
-          connectorId: '2',
-        },
-      },
-      updateGraph: jest.fn(),
-    };
-
-    const currTopic = { id: '1', name: 't', to: ['1'] };
-    const connectorType = 'source';
-
-    updateTopic(props, currTopic, connectorType);
-
-    const update = { ...props.graph[1], to: currTopic.to };
-
-    expect(props.updateGraph).toHaveBeenCalledTimes(1);
-    expect(props.updateGraph).toHaveBeenCalledWith({ update });
-  });
-
-  it('updates sinks', () => {
-    const props = {
-      graph: [
-        {
-          id: '1',
-          kind: 'topic',
-          name: 'a',
-          to: [],
-        },
-        {
-          id: '2',
-          kind: 'source',
-          name: 'b',
-          to: [],
-        },
-      ],
-      match: {
-        params: {
-          connectorId: '2',
-        },
-      },
-      updateGraph: jest.fn(),
-    };
-
-    const currTopic = { id: '1', name: 't', to: ['1'] };
-    const connectorType = 'sink';
-
-    updateTopic(props, currTopic, connectorType);
-
-    const update = {
-      ...props.graph[0],
-      to: [props.match.params.connectorId],
-    };
-
-    expect(props.updateGraph).toHaveBeenCalledTimes(1);
-    expect(props.updateGraph).toHaveBeenCalledWith({
-      update,
-      isSinkUpdate: true,
-    });
-  });
-
-  it(`returns undefined if currTopic is not defined`, () => {
-    expect(updateTopic()).toBeUndefined();
-  });
-
-  it('returns undefined if currTopic is an empty object', () => {
-    const props = {};
-    const currTopic = {};
-    const connectorType = 'sink';
-    expect(updateTopic(props, currTopic, connectorType)).toBeUndefined();
   });
 });

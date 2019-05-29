@@ -17,49 +17,45 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import toastr from 'toastr';
-import { get, debounce } from 'lodash';
+import { Form } from 'react-final-form';
+import { get } from 'lodash';
 
 import * as connectorApi from 'api/connectorApi';
 import * as MESSAGES from 'constants/messages';
-import * as utils from './customConnectorUtils';
+import * as utils from '../connectorUtils';
+import * as types from 'propTypes/pipeline';
 import Controller from '../Controller';
+import AutoSave from '../AutoSave';
 import TestConnectionBtn from '../TestConnectionBtn';
 import { findByGraphId } from '../../pipelineUtils/commonUtils';
-import { fetchWorker } from 'api/workerApi';
 import { validateConnector } from 'api/validateApi';
-import { BoxWrapper, TitleWrapper, H5Wrapper } from '../styles';
-import { StyledForm, LoaderWrap } from './styles';
+import { TitleWrapper, H5Wrapper, LoaderWrap } from '../styles';
+import { Box } from 'common/Layout';
 import { ListLoader } from 'common/Loader';
-import { graph as graphPropType } from 'propTypes/pipeline';
 import { CONNECTOR_ACTIONS } from 'constants/pipelines';
 
 class CustomConnector extends React.Component {
   static propTypes = {
-    match: PropTypes.shape({
-      params: PropTypes.shape({
-        page: PropTypes.string.isRequired,
-        connectorId: PropTypes.string.isRequired,
-      }).isRequired,
-    }).isRequired,
-    history: PropTypes.shape({
-      push: PropTypes.func.isRequired,
-    }).isRequired,
-    graph: PropTypes.arrayOf(graphPropType).isRequired,
-    refreshGraph: PropTypes.func.isRequired,
     hasChanges: PropTypes.bool.isRequired,
     updateHasChanges: PropTypes.func.isRequired,
     updateGraph: PropTypes.func.isRequired,
-    globalTopics: PropTypes.shape({
-      name: PropTypes.string.isRequired,
+    loadGraph: PropTypes.func.isRequired,
+    refreshGraph: PropTypes.func.isRequired,
+    pipelineTopics: PropTypes.array.isRequired,
+    isPipelineRunning: PropTypes.bool.isRequired,
+    globalTopics: PropTypes.arrayOf(types.topic).isRequired,
+    defs: PropTypes.arrayOf(types.definition),
+    graph: PropTypes.arrayOf(types.graph).isRequired,
+    match: PropTypes.shape({
+      params: PropTypes.object.isRequired,
     }).isRequired,
-    pipelineTopics: PropTypes.shape({
-      name: PropTypes.string.isRequired,
+    history: PropTypes.shape({
+      push: PropTypes.func.isRequired,
     }).isRequired,
   };
 
   state = {
     isLoading: true,
-    defs: [],
     topics: [],
     configs: null,
     state: null,
@@ -67,12 +63,13 @@ class CustomConnector extends React.Component {
   };
 
   componentDidMount() {
-    this.fetchData();
+    this.fetchConnector();
+    this.setTopics();
   }
 
   componentDidUpdate(prevProps) {
     const { pipelineTopics: prevTopics } = prevProps;
-    const { hasChanges, pipelineTopics: currTopics } = this.props;
+    const { pipelineTopics: currTopics } = this.props;
     const { connectorId: prevConnectorId } = prevProps.match.params;
     const { connectorId: currConnectorId } = this.props.match.params;
 
@@ -82,11 +79,7 @@ class CustomConnector extends React.Component {
     }
 
     if (prevConnectorId !== currConnectorId) {
-      this.fetchData();
-    }
-
-    if (hasChanges) {
-      this.save();
+      this.fetchConnector();
     }
   }
 
@@ -95,29 +88,10 @@ class CustomConnector extends React.Component {
     this.setState({ topics: pipelineTopics.map(t => t.name) });
   };
 
-  fetchData = async () => {
-    // We need to get the custom connector's meta data first
-    await this.fetchWorker();
-
-    // After the form is rendered, let's fetch connector data and override the default values from meta data
-    this.fetchConnector();
-    this.setTopics();
-  };
-
-  fetchWorker = async () => {
-    const res = await fetchWorker(this.props.workerClusterName);
-    const worker = get(res, 'data.result', null);
-    this.setState({ isLoading: false });
-
-    if (worker) {
-      const { defs, configs } = utils.getMetadata(this.props, worker);
-      this.setState({ defs, configs });
-    }
-  };
-
   fetchConnector = async () => {
     const { connectorId } = this.props.match.params;
     const res = await connectorApi.fetchConnector(connectorId);
+    this.setState({ isLoading: false });
     const result = get(res, 'data.result', null);
 
     if (result) {
@@ -153,7 +127,7 @@ class CustomConnector extends React.Component {
 
   handleColumnRowDelete = currRow => {
     const { configs } = this.state;
-    const updatedConfigs = utils.removeColumn({ configs, currRow });
+    const updatedConfigs = utils.deleteColumnRow({ configs, currRow });
     this.updateComponent(updatedConfigs);
   };
 
@@ -171,20 +145,25 @@ class CustomConnector extends React.Component {
     this.updateComponent(updatedConfigs);
   };
 
-  handleTestConnection = async e => {
+  handleTestConnection = async (e, values) => {
     e.preventDefault();
-    this.setState({ isTestConnectionBtnWorking: true });
 
-    // const topics = this.state.topic
-    const topicId = utils.getCurrTopicId({
+    const topic = utils.getCurrTopicId({
       originals: this.props.globalTopics,
-      target: this.state.topics[0],
+      target: values.topics,
     });
 
-    const params = { ...this.state.configs, topics: topicId };
+    const topics = Array.isArray(topic) ? topic : [topic];
+    const _values = utils.changeToken({
+      values,
+      targetToken: '_',
+      replaceToken: '.',
+    });
+
+    const params = { ..._values, topics };
+    this.setState({ isTestConnectionBtnWorking: true });
     const res = await validateConnector(params);
     this.setState({ isTestConnectionBtnWorking: false });
-
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (isSuccess) {
@@ -235,40 +214,38 @@ class CustomConnector extends React.Component {
     }
   };
 
-  save = debounce(async () => {
-    const {
-      updateHasChanges,
-      match,
-      graph,
-      updateGraph,
-      globalTopics,
-    } = this.props;
-    const { configs } = this.state;
+  handleSave = async values => {
+    const { match, globalTopics, graph, updateGraph } = this.props;
     const { connectorId } = match.params;
 
-    const topicId = utils.getCurrTopicId({
+    const topic = utils.getCurrTopicId({
       originals: globalTopics,
-      target: configs.topics,
+      target: values.topics,
     });
 
-    const params = { ...configs, topics: topicId };
+    const topics = Array.isArray(topic) ? topic : [topic];
+    const _values = utils.changeToken({
+      values,
+      targetToken: '_',
+      replaceToken: '.',
+    });
 
+    const params = { ..._values, topics };
     await connectorApi.updateConnector({ id: connectorId, params });
-    updateHasChanges(false);
 
-    const update = utils.getUpdatedTopic({
+    const { sinkProps, update } = utils.getUpdatedTopic({
+      currTopicId: topic,
+      configs: values,
+      originalTopics: globalTopics,
       graph,
       connectorId,
-      configs,
-      originalTopics: globalTopics,
     });
 
-    updateGraph({ update });
-  }, 1000);
+    updateGraph({ update, ...sinkProps });
+  };
 
   render() {
     const {
-      defs,
       configs,
       isLoading,
       topics,
@@ -276,11 +253,25 @@ class CustomConnector extends React.Component {
       isTestConnectionBtnWorking,
     } = this.state;
 
-    const formProps = {
+    if (!configs) return null;
+
+    const { defs, updateHasChanges } = this.props;
+
+    const formData = utils.getRenderData({
       defs,
-      configs,
       topics,
+      configs,
       state,
+    });
+
+    const initialValues = formData.reduce((acc, cur) => {
+      acc[cur.key] = cur.displayValue;
+      return acc;
+    }, {});
+
+    const formProps = {
+      formData,
+      topics,
       handleChange: this.handleChange,
       handleColumnChange: this.handleColumnChange,
       handleColumnRowDelete: this.handleColumnRowDelete,
@@ -289,8 +280,8 @@ class CustomConnector extends React.Component {
     };
 
     return (
-      <BoxWrapper padding="25px 0 0 0">
-        <TitleWrapper margin="0 25px 30px">
+      <Box>
+        <TitleWrapper>
           <H5Wrapper>Custom connector</H5Wrapper>
           <Controller
             kind="connector"
@@ -304,21 +295,31 @@ class CustomConnector extends React.Component {
             <ListLoader />
           </LoaderWrap>
         ) : (
-          <StyledForm>
-            {utils.renderForm(formProps)}
-            <TestConnectionBtn
-              handleClick={this.handleTestConnection}
-              isWorking={isTestConnectionBtnWorking}
-            />
-          </StyledForm>
+          <Form
+            onSubmit={this.handleSave}
+            initialValues={initialValues}
+            render={({ values }) => {
+              return (
+                <form>
+                  <AutoSave
+                    save={this.handleSave}
+                    updateHasChanges={updateHasChanges}
+                    hasToken
+                  />
+
+                  {utils.renderForm(formProps)}
+                  <TestConnectionBtn
+                    handleClick={e => this.handleTestConnection(e, values)}
+                    isWorking={isTestConnectionBtnWorking}
+                  />
+                </form>
+              );
+            }}
+          />
         )}
-      </BoxWrapper>
+      </Box>
     );
   }
 }
-
-CustomConnector.propTypes = {
-  workerClusterName: PropTypes.string.isRequired,
-};
 
 export default CustomConnector;

@@ -31,7 +31,6 @@ class PipelineGraph extends React.Component {
       workerClusterName: PropTypes.string,
     }).isRequired,
     resetGraph: PropTypes.func.isRequired,
-    updateGraph: PropTypes.func.isRequired,
     match: PropTypes.shape({
       params: PropTypes.object.isRequired,
     }).isRequired,

@@ -334,6 +334,7 @@ class PipelineNewPage extends React.Component {
       ftpSource,
       hdfsSink,
       ftpSink,
+      customSource,
     } = PIPELINES.CONNECTOR_TYPES;
 
     const connectorProps = {
@@ -429,7 +430,14 @@ class PipelineNewPage extends React.Component {
                 <Route
                   path={`${routeBaseUrl}/${jdbcSource}`}
                   render={() => (
-                    <JdbcSource {...this.props} {...connectorProps} />
+                    <JdbcSource
+                      {...this.props}
+                      {...connectorProps}
+                      defs={this.getConnectorDefs({
+                        connectors,
+                        type: jdbcSource,
+                      })}
+                    />
                   )}
                 />
 
@@ -439,14 +447,26 @@ class PipelineNewPage extends React.Component {
                     <FtpSource
                       {...this.props}
                       {...connectorProps}
-                      workerClusterName={workerClusterName}
+                      defs={this.getConnectorDefs({
+                        connectors,
+                        type: ftpSource,
+                      })}
                     />
                   )}
                 />
 
                 <Route
                   path={`${routeBaseUrl}/${ftpSink}`}
-                  render={() => <FtpSink {...this.props} {...connectorProps} />}
+                  render={() => (
+                    <FtpSink
+                      {...this.props}
+                      {...connectorProps}
+                      defs={this.getConnectorDefs({
+                        connectors,
+                        type: ftpSink,
+                      })}
+                    />
+                  )}
                 />
 
                 <Route
@@ -481,7 +501,10 @@ class PipelineNewPage extends React.Component {
                     <CustomConnector
                       {...this.props}
                       {...connectorProps}
-                      workerClusterName={workerClusterName}
+                      defs={this.getConnectorDefs({
+                        connectors,
+                        type: customSource,
+                      })}
                     />
                   )}
                 />

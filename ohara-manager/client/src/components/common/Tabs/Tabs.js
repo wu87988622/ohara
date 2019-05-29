@@ -22,19 +22,14 @@ import {
   TabPanel as UnstyledTabPanel,
 } from 'react-tabs';
 
-const Tabs = styled(UnstyledTabs)`
-  background-color: ${props => props.theme.white};
-  box-shadow: ${props => props.theme.shadowNormal};
-  border-radius: ${props => props.theme.radiusNormal};
-  margin-bottom: 20px;
-`;
+const Tabs = styled(UnstyledTabs)``;
 
 const TabList = styled(UnstyledTabList)`
   display: flex;
   justify-content: space-between;
   flex-wrap: wrap;
   padding: 0;
-  margin: 0;
+  margin-bottom: 20px;
 `;
 
 const Tab = styled(UnstyledTab).attrs({
@@ -75,7 +70,6 @@ const TabPanel = styled(UnstyledTabPanel).attrs({
   selectedClassName: 'selected',
 })`
   display: none;
-  padding: 20px 25px;
   overflow-x: auto;
 
   &.selected {

@@ -16,46 +16,23 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import styled from 'styled-components';
 import toastr from 'toastr';
-import { Redirect } from 'react-router-dom';
-import { get, isEmpty, debounce } from 'lodash';
+import { Form } from 'react-final-form';
+import { get } from 'lodash';
 
-import * as URLS from 'constants/urls';
 import * as MESSAGES from 'constants/messages';
 import * as connectorApi from 'api/connectorApi';
+import * as utils from './connectorUtils';
+import * as types from 'propTypes/pipeline';
 import Controller from './Controller';
+import TestConnectionBtn from './TestConnectionBtn';
+import AutoSave from './AutoSave';
+import { TitleWrapper, H5Wrapper, LoaderWrap } from './styles';
+import { validateConnector } from 'api/validateApi';
+import { ListLoader } from 'common/Loader';
 import { Box } from 'common/Layout';
-import { Input, Select, FormGroup, Label } from 'common/Form';
-import { updateTopic, findByGraphId } from '../pipelineUtils/commonUtils';
-import { JdbcQuicklyFillIn } from './QuicklyFillIn';
-import {
-  CONNECTOR_TYPES,
-  CONNECTOR_STATES,
-  CONNECTOR_ACTIONS,
-} from 'constants/pipelines';
-import { graph as graphPropType } from 'propTypes/pipeline';
-
-import * as s from './styles';
-
-const Fieldset = styled.fieldset`
-  border: none;
-  position: relative;
-  padding: 0;
-
-  &:after {
-    content: '';
-    background-color: red;
-    width: 100%;
-    height: 100%;
-    display: ${props => (props.disabled ? 'block' : 'none')};
-    position: absolute;
-    top: 0;
-    left: 0;
-    background: rgba(255, 255, 255, 0.5);
-    cursor: not-allowed;
-  }
-`;
+import { findByGraphId } from '../pipelineUtils/commonUtils';
+import { CONNECTOR_STATES, CONNECTOR_ACTIONS } from 'constants/pipelines';
 
 class JdbcSource extends React.Component {
   static propTypes = {
@@ -64,191 +41,114 @@ class JdbcSource extends React.Component {
     updateGraph: PropTypes.func.isRequired,
     loadGraph: PropTypes.func.isRequired,
     refreshGraph: PropTypes.func.isRequired,
+    pipelineTopics: PropTypes.array.isRequired,
+    isPipelineRunning: PropTypes.bool.isRequired,
+    globalTopics: PropTypes.arrayOf(types.topic).isRequired,
+    defs: PropTypes.arrayOf(types.definition),
+    graph: PropTypes.arrayOf(types.graph).isRequired,
     match: PropTypes.shape({
-      params: PropTypes.object,
+      params: PropTypes.object.isRequired,
     }).isRequired,
-    graph: PropTypes.arrayOf(graphPropType).isRequired,
     history: PropTypes.shape({
       push: PropTypes.func.isRequired,
     }).isRequired,
-    pipelineTopics: PropTypes.array.isRequired,
-    isPipelineRunning: PropTypes.bool.isRequired,
   };
-
-  selectMaps = {
-    writeTopics: 'currWriteTopic',
-  };
-  dbSchemasHeader = ['Column name', 'Column type'];
-
   state = {
-    name: '',
-    state: '',
-    table: '',
-    writeTopics: [],
-    username: '',
-    password: '',
-    url: '',
-    timestamp: '',
-    isBtnWorking: false,
-    isFormDisabled: false,
-    isRedirect: false,
+    isLoading: true,
+    topics: [],
+    configs: null,
+    state: null,
+    isTestConnectionBtnWorking: false,
   };
 
   componentDidMount() {
-    this.fetchSource();
+    this.fetchConnector();
+    this.setTopics();
   }
 
-  async componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps) {
     const { pipelineTopics: prevTopics } = prevProps;
+    const { pipelineTopics: currTopics } = this.props;
     const { connectorId: prevConnectorId } = prevProps.match.params;
-    const { hasChanges, pipelineTopics: currTopics } = this.props;
     const { connectorId: currConnectorId } = this.props.match.params;
 
     if (prevTopics !== currTopics) {
-      this.setState({ writeTopics: currTopics });
+      const topics = currTopics.map(currTopic => currTopic.name);
+      this.setState({ topics });
     }
 
     if (prevConnectorId !== currConnectorId) {
-      this.fetchSource();
-    }
-
-    if (hasChanges) {
-      this.save();
+      this.fetchConnector();
     }
   }
 
-  fetchSource = async () => {
-    const sourceId = get(this.props.match, 'params.connectorId', null);
-    const res = await connectorApi.fetchConnector(sourceId);
+  setTopics = () => {
+    const { pipelineTopics } = this.props;
+    this.setState({ topics: pipelineTopics.map(t => t.name) });
+  };
+
+  fetchConnector = async () => {
+    const { connectorId } = this.props.match.params;
+    const res = await connectorApi.fetchConnector(connectorId);
+    this.setState({ isLoading: false });
     const result = get(res, 'data.result', null);
 
     if (result) {
-      const { name, state, topics: prevTopics, configs } = result;
-      const {
-        'source.timestamp.column.name': timestamp = '',
-        'source.db.username': username = '',
-        'source.db.password': password = '',
-        'source.db.url': url = '',
-        table = '',
-      } = configs;
+      const { settings, state } = result;
+      const { topics } = settings;
 
-      const { pipelineTopics: writeTopics } = this.props;
-
-      if (!isEmpty(prevTopics)) {
-        const currWriteTopic = writeTopics.find(
-          topic => topic.id === prevTopics[0],
-        );
-
-        updateTopic(this.props, currWriteTopic, 'source');
-        this.setState({ currWriteTopic });
-      }
-
-      const hasValidProps = [username, password, url].map(x => {
-        return x.length > 0;
+      const topicName = utils.getCurrTopicName({
+        originals: this.props.globalTopics,
+        target: topics,
       });
 
-      const isFormDisabled = !hasValidProps.every(x => x === true);
-
-      this.setState({
-        name,
-        state,
-        isFormDisabled,
-        table,
-        timestamp,
-        password,
-        username,
-        url,
-        writeTopics,
+      const _settings = utils.changeToken({
+        values: settings,
+        targetToken: '.',
+        replaceToken: '_',
       });
+
+      const configs = { ..._settings, topics: topicName };
+      this.setState({ configs, state });
     }
   };
 
-  handleInputChange = ({ target: { name, value } }) => {
-    this.setState({ [name]: value }, () => {
-      this.props.updateHasChanges(true);
-    });
+  updateComponent = updatedConfigs => {
+    this.props.updateHasChanges(true);
+    this.setState({ configs: updatedConfigs });
   };
 
-  handleSelectChange = ({ target }) => {
-    const { name, options, value } = target;
-    const selectedIdx = options.selectedIndex;
-    const { id } = options[selectedIdx].dataset;
-
-    const current = this.selectMaps[name];
-
-    this.setState(
-      () => {
-        return {
-          [current]: value
-            ? {
-                name: value,
-                id,
-              }
-            : {},
-        };
-      },
-      () => {
-        this.props.updateHasChanges(true);
-      },
-    );
+  handleChange = ({ target }) => {
+    const { configs } = this.state;
+    const updatedConfigs = utils.updateConfigs({ configs, target });
+    this.updateComponent(updatedConfigs);
   };
 
-  updateIsBtnWorking = update => {
-    this.setState({ isBtnWorking: update });
+  handleColumnChange = newColumn => {
+    const { configs } = this.state;
+    const updatedConfigs = utils.addColumn({ configs, newColumn });
+    this.updateComponent(updatedConfigs);
   };
 
-  save = debounce(async () => {
-    const {
-      match,
-      updateHasChanges,
-      isPipelineRunning,
-      graph,
-      updateGraph,
-    } = this.props;
-    const {
-      name,
-      currWriteTopic,
-      table,
-      timestamp,
-      username,
-      password,
-      url,
-    } = this.state;
+  handleColumnRowDelete = currRow => {
+    const { configs } = this.state;
+    const updatedConfigs = utils.deleteColumnRow({ configs, currRow });
+    this.updateComponent(updatedConfigs);
+  };
 
-    if (isPipelineRunning) {
-      toastr.error(MESSAGES.CANNOT_UPDATE_WHILE_RUNNING_ERROR);
-      updateHasChanges(false);
-      return;
-    }
+  handleColumnRowUp = (e, order) => {
+    e.preventDefault();
+    const { configs } = this.state;
+    const updatedConfigs = utils.moveColumnRowUp({ configs, order });
+    this.updateComponent(updatedConfigs);
+  };
 
-    const sourceId = get(match, 'params.connectorId', null);
-    const topics = isEmpty(currWriteTopic) ? [] : [currWriteTopic.id];
-
-    const params = {
-      name,
-      'connector.name': name,
-      schema: [],
-      className: CONNECTOR_TYPES.jdbcSource,
-      topics,
-      numberOfTasks: 1,
-      configs: {
-        'source.table.name': table,
-        'source.db.url': url,
-        'source.db.username': username,
-        'source.db.password': password,
-        'source.timestamp.column.name': timestamp,
-        table,
-      },
-    };
-
-    await connectorApi.updateConnector({ id: sourceId, params });
-    updateHasChanges(false);
-
-    const currSource = findByGraphId(graph, sourceId);
-    const topicId = isEmpty(topics) ? [] : topics;
-    const update = { ...currSource, name, to: topicId };
-    updateGraph({ update });
-  }, 1000);
+  handleColumnRowDown = (e, order) => {
+    e.preventDefault();
+    const { configs } = this.state;
+    const updatedConfigs = utils.moveColumnRowDown({ configs, order });
+    this.updateComponent(updatedConfigs);
+  };
 
   handleStartConnector = async () => {
     await this.triggerConnector(CONNECTOR_ACTIONS.start);
@@ -275,171 +175,174 @@ class JdbcSource extends React.Component {
   };
 
   triggerConnector = async action => {
-    const { match, graph, updateGraph } = this.props;
-    const sourceId = get(match, 'params.connectorId', null);
+    const { match } = this.props;
+    const sinkId = get(match, 'params.connectorId', null);
     let res;
     if (action === CONNECTOR_ACTIONS.start) {
-      res = await connectorApi.startConnector(sourceId);
+      res = await connectorApi.startConnector(sinkId);
     } else {
-      res = await connectorApi.stopConnector(sourceId);
+      res = await connectorApi.stopConnector(sinkId);
     }
+
+    this.handleTriggerConnectorResponse(action, res);
+  };
+
+  handleTestConnection = async (e, values) => {
+    e.preventDefault();
+
+    const topic = utils.getCurrTopicId({
+      originals: this.props.globalTopics,
+      target: values.topics,
+    });
+
+    const topics = Array.isArray(topic) ? topic : [topic];
+    const _values = utils.changeToken({
+      values,
+      targetToken: '_',
+      replaceToken: '.',
+    });
+
+    const params = { ..._values, topics };
+    this.setState({ isTestConnectionBtnWorking: true });
+    const res = await validateConnector(params);
+    this.setState({ isTestConnectionBtnWorking: false });
     const isSuccess = get(res, 'data.isSuccess', false);
+
     if (isSuccess) {
-      const state = get(res, 'data.result.state');
-      this.setState({ state });
-      const currSource = findByGraphId(graph, sourceId);
-      const update = { ...currSource, state };
-      updateGraph({ update });
+      toastr.success(MESSAGES.TEST_SUCCESS);
     }
   };
 
-  quicklyFillIn = values => {
-    this.setState(
-      {
-        url: values.url,
-        username: values.user,
-        password: values.password,
-      },
-      () => {
-        this.props.updateHasChanges(true);
-      },
-    );
+  updateIsTestConnectionBtnWorking = update => {
+    this.setState({ isTestConnectionBtnWorking: update });
   };
 
+  handleTriggerConnectorResponse = (action, res) => {
+    const isSuccess = get(res, 'data.isSuccess', false);
+    if (!isSuccess) return;
+
+    const { match, graph, updateGraph } = this.props;
+    const sinkId = get(match, 'params.connectorId', null);
+    const state = get(res, 'data.result.state');
+    this.setState({ state });
+    const currSink = findByGraphId(graph, sinkId);
+    const update = { ...currSink, state };
+    updateGraph({ update });
+
+    if (action === CONNECTOR_ACTIONS.start) {
+      if (state === CONNECTOR_STATES.running) {
+        toastr.success(MESSAGES.START_CONNECTOR_SUCCESS);
+      } else {
+        toastr.error(MESSAGES.CANNOT_START_CONNECTOR_ERROR);
+      }
+    }
+  };
+
+  handleSave = async values => {
+    const { match, globalTopics, graph, updateGraph } = this.props;
+    const { connectorId } = match.params;
+
+    const topic = utils.getCurrTopicId({
+      originals: globalTopics,
+      target: values.topics,
+    });
+
+    const topics = Array.isArray(topic) ? topic : [topic];
+    const _values = utils.changeToken({
+      values,
+      targetToken: '_',
+      replaceToken: '.',
+    });
+
+    const params = { ..._values, topics };
+    await connectorApi.updateConnector({ id: connectorId, params });
+
+    const { sinkProps, update } = utils.getUpdatedTopic({
+      currTopicId: topic,
+      configs: values,
+      originalTopics: globalTopics,
+      graph,
+      connectorId,
+    });
+
+    const _sinkProps = sinkProps ? sinkProps : {};
+
+    updateGraph({ update, ..._sinkProps });
+  };
   render() {
     const {
-      name,
       state,
-      url,
-      username,
-      password,
-      isBtnWorking,
-      table,
-      timestamp,
-      writeTopics,
-      currWriteTopic,
-      isRedirect,
+      configs,
+      isLoading,
+      topics,
+      isTestConnectionBtnWorking,
     } = this.state;
 
-    if (isRedirect) {
-      return <Redirect to={URLS.PIPELINE} />;
-    }
+    const { defs, updateHasChanges } = this.props;
 
-    const isRunning = state === CONNECTOR_STATES.running;
+    if (!configs) return null;
 
+    const formData = utils.getRenderData({
+      defs,
+      topics,
+      configs,
+      state,
+    });
+
+    const initialValues = formData.reduce((acc, cur) => {
+      acc[cur.key] = cur.displayValue;
+      return acc;
+    }, {});
+
+    const formProps = {
+      formData,
+      topics,
+      handleChange: this.handleChange,
+      handleColumnChange: this.handleColumnChange,
+      handleColumnRowDelete: this.handleColumnRowDelete,
+      handleColumnRowUp: this.handleColumnRowUp,
+      handleColumnRowDown: this.handleColumnRowDown,
+    };
     return (
-      <React.Fragment>
-        <Box>
-          <s.TitleWrapper>
-            <s.H5Wrapper>JDBC source connector</s.H5Wrapper>
-            <Controller
-              kind="connector"
-              onStart={this.handleStartConnector}
-              onStop={this.handleStopConnector}
-              onDelete={this.handleDeleteConnector}
-            />
-          </s.TitleWrapper>
-          <Fieldset disabled={isBtnWorking}>
-            <FormGroup data-testid="name">
-              <Label>Name</Label>
-              <Input
-                name="name"
-                width="100%"
-                placeholder="JDBC source name"
-                value={name}
-                data-testid="name-input"
-                handleChange={this.handleInputChange}
-                disabled={isRunning}
-              />
-            </FormGroup>
+      <Box>
+        <TitleWrapper>
+          <H5Wrapper>JDBC source connector</H5Wrapper>
+          <Controller
+            kind="connector"
+            onStart={this.handleStartConnector}
+            onStop={this.handleStopConnector}
+            onDelete={this.handleDeleteConnector}
+          />
+        </TitleWrapper>
 
-            <FormGroup>
-              <Label>URL</Label>
-              <Input
-                name="url"
-                width="100%"
-                placeholder="jdbc:postgresql://localhost:5432/db"
-                value={url}
-                data-testid="url-input"
-                handleChange={this.handleInputChange}
-                disabled={isRunning}
-              />
-              {/* Incomplete feature, don't display this for now */}
-              {false && <JdbcQuicklyFillIn onFillIn={this.quicklyFillIn} />}
-            </FormGroup>
+        {isLoading ? (
+          <LoaderWrap>
+            <ListLoader />
+          </LoaderWrap>
+        ) : (
+          <Form
+            onSubmit={this.handleSave}
+            initialValues={initialValues}
+            render={({ values }) => {
+              return (
+                <form>
+                  <AutoSave
+                    save={this.handleSave}
+                    updateHasChanges={updateHasChanges}
+                    hasToken
+                  />
 
-            <FormGroup>
-              <Label>User name</Label>
-              <Input
-                name="username"
-                width="100%"
-                placeholder="admin"
-                value={username}
-                data-testid="username-input"
-                handleChange={this.handleInputChange}
-                disabled={isRunning}
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <Label>Password</Label>
-              <Input
-                type="password"
-                name="password"
-                width="100%"
-                placeholder="password"
-                value={password}
-                data-testid="password-input"
-                handleChange={this.handleInputChange}
-                disabled={isRunning}
-              />
-            </FormGroup>
-          </Fieldset>
-          <Fieldset disabled={isBtnWorking}>
-            <FormGroup>
-              <Label>Table</Label>
-              <Input
-                name="table"
-                width="100%"
-                placeholder="tableName"
-                value={table}
-                data-testid="table-input"
-                handleChange={this.handleInputChange}
-                disabled={isRunning}
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <Label>Timestamp column</Label>
-              <Input
-                name="timestamp"
-                width="100%"
-                placeholder="column1"
-                value={timestamp}
-                data-testid="timestamp-input"
-                handleChange={this.handleInputChange}
-                disabled={isRunning}
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <Label>Write topic</Label>
-              <Select
-                isObject
-                name="writeTopics"
-                list={writeTopics}
-                selected={currWriteTopic}
-                width="100%"
-                data-testid="write-topic-select"
-                handleChange={this.handleSelectChange}
-                disabled={isRunning}
-                placeholder="Please select a topic..."
-                clearable
-              />
-            </FormGroup>
-          </Fieldset>
-        </Box>
-      </React.Fragment>
+                  {utils.renderForm(formProps)}
+                  <TestConnectionBtn
+                    handleClick={e => this.handleTestConnection(e, values)}
+                    isWorking={isTestConnectionBtnWorking}
+                  />
+                </form>
+              );
+            }}
+          />
+        )}
+      </Box>
     );
   }
 }

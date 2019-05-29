@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { isEmpty } from 'lodash';
-
 export const isSource = type => {
   return type === 'source';
 };
@@ -56,29 +54,4 @@ export const getConnectors = connectors => {
   }, init);
 
   return result;
-};
-
-export const updateTopic = (props, currTopic, connectorType) => {
-  if (!currTopic || isEmpty(currTopic)) return;
-
-  const { graph, match, updateGraph } = props;
-  const { connectorId } = match.params;
-
-  let update = null;
-
-  if (connectorType === 'source') {
-    const currConnector = findByGraphId(graph, connectorId);
-    const topicId = isEmpty(currTopic) ? [] : currTopic.id;
-    const to = [...new Set([...currConnector.to, topicId])];
-    update = { ...currConnector, to };
-
-    updateGraph({ update });
-  } else {
-    const currTopicId = isEmpty(currTopic) ? [] : currTopic.id;
-    const topic = findByGraphId(graph, currTopicId);
-    const to = [...new Set([...topic.to, connectorId])];
-    update = { ...topic, to };
-
-    updateGraph({ update, isSinkUpdate: true });
-  }
 };

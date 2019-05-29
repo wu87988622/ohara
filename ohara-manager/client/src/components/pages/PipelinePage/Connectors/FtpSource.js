@@ -17,16 +17,22 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import toastr from 'toastr';
+import { Form } from 'react-final-form';
 import { get } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
 import * as connectorApi from 'api/connectorApi';
-import * as s from './styles';
+import * as utils from './connectorUtils';
+import * as types from 'propTypes/pipeline';
 import Controller from './Controller';
-import { CONNECTOR_ACTIONS } from 'constants/pipelines';
-import { graph as graphPropType } from 'propTypes/pipeline';
-
-import CustomFinalForm from './CustomConnector/CustomFinalForm';
+import TestConnectionBtn from './TestConnectionBtn';
+import AutoSave from './AutoSave';
+import { TitleWrapper, H5Wrapper, LoaderWrap } from './styles';
+import { validateConnector } from 'api/validateApi';
+import { ListLoader } from 'common/Loader';
+import { Box } from 'common/Layout';
+import { findByGraphId } from '../pipelineUtils/commonUtils';
+import { CONNECTOR_STATES, CONNECTOR_ACTIONS } from 'constants/pipelines';
 
 class FtpSource extends React.Component {
   static propTypes = {
@@ -35,17 +41,17 @@ class FtpSource extends React.Component {
     updateGraph: PropTypes.func.isRequired,
     loadGraph: PropTypes.func.isRequired,
     refreshGraph: PropTypes.func.isRequired,
+    pipelineTopics: PropTypes.array.isRequired,
+    isPipelineRunning: PropTypes.bool.isRequired,
+    globalTopics: PropTypes.arrayOf(types.topic).isRequired,
+    defs: PropTypes.arrayOf(types.definition),
+    graph: PropTypes.arrayOf(types.graph).isRequired,
     match: PropTypes.shape({
-      params: PropTypes.object,
+      params: PropTypes.object.isRequired,
     }).isRequired,
-    graph: PropTypes.arrayOf(graphPropType).isRequired,
     history: PropTypes.shape({
       push: PropTypes.func.isRequired,
     }).isRequired,
-    pipelineTopics: PropTypes.array.isRequired,
-    isPipelineRunning: PropTypes.bool.isRequired,
-    globalTopics: PropTypes.array.isRequired,
-    workerClusterName: PropTypes.string.isRequired,
   };
 
   state = {
@@ -54,6 +60,95 @@ class FtpSource extends React.Component {
     configs: null,
     state: null,
     isTestConnectionBtnWorking: false,
+  };
+
+  componentDidMount() {
+    this.fetchConnector();
+    this.setTopics();
+  }
+
+  componentDidUpdate(prevProps) {
+    const { pipelineTopics: prevTopics } = prevProps;
+    const { pipelineTopics: currTopics } = this.props;
+    const { connectorId: prevConnectorId } = prevProps.match.params;
+    const { connectorId: currConnectorId } = this.props.match.params;
+
+    if (prevTopics !== currTopics) {
+      const topics = currTopics.map(currTopic => currTopic.name);
+      this.setState({ topics });
+    }
+
+    if (prevConnectorId !== currConnectorId) {
+      this.fetchConnector();
+    }
+  }
+
+  setTopics = () => {
+    const { pipelineTopics } = this.props;
+    this.setState({ topics: pipelineTopics.map(t => t.name) });
+  };
+
+  fetchConnector = async () => {
+    const { connectorId } = this.props.match.params;
+    const res = await connectorApi.fetchConnector(connectorId);
+    this.setState({ isLoading: false });
+    const result = get(res, 'data.result', null);
+
+    if (result) {
+      const { settings, state } = result;
+      const { topics } = settings;
+
+      const topicName = utils.getCurrTopicName({
+        originals: this.props.globalTopics,
+        target: topics,
+      });
+
+      const _settings = utils.changeToken({
+        values: settings,
+        targetToken: '.',
+        replaceToken: '_',
+      });
+
+      const configs = { ..._settings, topics: topicName };
+      this.setState({ configs, state });
+    }
+  };
+
+  updateComponent = updatedConfigs => {
+    this.props.updateHasChanges(true);
+    this.setState({ configs: updatedConfigs });
+  };
+
+  handleChange = ({ target }) => {
+    const { configs } = this.state;
+    const updatedConfigs = utils.updateConfigs({ configs, target });
+    this.updateComponent(updatedConfigs);
+  };
+
+  handleColumnChange = newColumn => {
+    const { configs } = this.state;
+    const updatedConfigs = utils.addColumn({ configs, newColumn });
+    this.updateComponent(updatedConfigs);
+  };
+
+  handleColumnRowDelete = currRow => {
+    const { configs } = this.state;
+    const updatedConfigs = utils.deleteColumnRow({ configs, currRow });
+    this.updateComponent(updatedConfigs);
+  };
+
+  handleColumnRowUp = (e, order) => {
+    e.preventDefault();
+    const { configs } = this.state;
+    const updatedConfigs = utils.moveColumnRowUp({ configs, order });
+    this.updateComponent(updatedConfigs);
+  };
+
+  handleColumnRowDown = (e, order) => {
+    e.preventDefault();
+    const { configs } = this.state;
+    const updatedConfigs = utils.moveColumnRowDown({ configs, order });
+    this.updateComponent(updatedConfigs);
   };
 
   handleStartConnector = async () => {
@@ -80,25 +175,173 @@ class FtpSource extends React.Component {
     }
   };
 
+  triggerConnector = async action => {
+    const { match } = this.props;
+    const sinkId = get(match, 'params.connectorId', null);
+    let res;
+    if (action === CONNECTOR_ACTIONS.start) {
+      res = await connectorApi.startConnector(sinkId);
+    } else {
+      res = await connectorApi.stopConnector(sinkId);
+    }
+
+    this.handleTriggerConnectorResponse(action, res);
+  };
+
+  handleTestConnection = async (e, values) => {
+    e.preventDefault();
+
+    const topic = utils.getCurrTopicId({
+      originals: this.props.globalTopics,
+      target: values.topics,
+    });
+
+    const topics = Array.isArray(topic) ? topic : [topic];
+    const _values = utils.changeToken({
+      values,
+      targetToken: '_',
+      replaceToken: '.',
+    });
+
+    const params = { ..._values, topics };
+    this.setState({ isTestConnectionBtnWorking: true });
+    const res = await validateConnector(params);
+    this.setState({ isTestConnectionBtnWorking: false });
+    const isSuccess = get(res, 'data.isSuccess', false);
+
+    if (isSuccess) {
+      toastr.success(MESSAGES.TEST_SUCCESS);
+    }
+  };
+
+  updateIsTestConnectionBtnWorking = update => {
+    this.setState({ isTestConnectionBtnWorking: update });
+  };
+
+  handleTriggerConnectorResponse = (action, res) => {
+    const isSuccess = get(res, 'data.isSuccess', false);
+    if (!isSuccess) return;
+
+    const { match, graph, updateGraph } = this.props;
+    const sinkId = get(match, 'params.connectorId', null);
+    const state = get(res, 'data.result.state');
+    this.setState({ state });
+    const currSink = findByGraphId(graph, sinkId);
+    const update = { ...currSink, state };
+    updateGraph({ update });
+
+    if (action === CONNECTOR_ACTIONS.start) {
+      if (state === CONNECTOR_STATES.running) {
+        toastr.success(MESSAGES.START_CONNECTOR_SUCCESS);
+      } else {
+        toastr.error(MESSAGES.CANNOT_START_CONNECTOR_ERROR);
+      }
+    }
+  };
+
+  handleSave = async values => {
+    const { match, globalTopics, graph, updateGraph } = this.props;
+    const { connectorId } = match.params;
+
+    const topic = utils.getCurrTopicId({
+      originals: globalTopics,
+      target: values.topics,
+    });
+
+    const topics = Array.isArray(topic) ? topic : [topic];
+    const _values = utils.changeToken({
+      values,
+      targetToken: '_',
+      replaceToken: '.',
+    });
+
+    const params = { ..._values, topics };
+    await connectorApi.updateConnector({ id: connectorId, params });
+
+    const { sinkProps, update } = utils.getUpdatedTopic({
+      currTopicId: topic,
+      configs: values,
+      originalTopics: globalTopics,
+      graph,
+      connectorId,
+    });
+
+    updateGraph({ update, ...sinkProps });
+  };
+
   render() {
+    const {
+      state,
+      configs,
+      isLoading,
+      topics,
+      isTestConnectionBtnWorking,
+    } = this.state;
+
+    const { defs, updateHasChanges } = this.props;
+
+    if (!configs) return null;
+
+    const formData = utils.getRenderData({
+      defs,
+      topics,
+      configs,
+      state,
+    });
+
+    const initialValues = formData.reduce((acc, cur) => {
+      acc[cur.key] = cur.displayValue;
+      return acc;
+    }, {});
+
+    const formProps = {
+      formData,
+      topics,
+      handleChange: this.handleChange,
+      handleColumnChange: this.handleColumnChange,
+      handleColumnRowDelete: this.handleColumnRowDelete,
+      handleColumnRowUp: this.handleColumnRowUp,
+      handleColumnRowDown: this.handleColumnRowDown,
+    };
     return (
-      <React.Fragment>
-        <s.BoxWrapper padding="25px 0 0 0">
-          <s.TitleWrapper margin="0 25px 30px">
-            <s.H5Wrapper>FTP source connector</s.H5Wrapper>
-            <Controller
-              kind="connector"
-              onStart={this.handleStartConnector}
-              onStop={this.handleStopConnector}
-              onDelete={this.handleDeleteConnector}
-            />
-          </s.TitleWrapper>
-          <CustomFinalForm
-            workerClusterName={this.workerClusterName}
-            {...this.props}
+      <Box>
+        <TitleWrapper>
+          <H5Wrapper>FTP source connector</H5Wrapper>
+          <Controller
+            kind="connector"
+            onStart={this.handleStartConnector}
+            onStop={this.handleStopConnector}
+            onDelete={this.handleDeleteConnector}
           />
-        </s.BoxWrapper>
-      </React.Fragment>
+        </TitleWrapper>
+        {isLoading ? (
+          <LoaderWrap>
+            <ListLoader />
+          </LoaderWrap>
+        ) : (
+          <Form
+            onSubmit={this.handleSave}
+            initialValues={initialValues}
+            render={({ values }) => {
+              return (
+                <form>
+                  <AutoSave
+                    save={this.handleSave}
+                    updateHasChanges={updateHasChanges}
+                    hasToken
+                  />
+
+                  {utils.renderForm(formProps)}
+                  <TestConnectionBtn
+                    handleClick={e => this.handleTestConnection(e, values)}
+                    isWorking={isTestConnectionBtnWorking}
+                  />
+                </form>
+              );
+            }}
+          />
+        )}
+      </Box>
     );
   }
 }

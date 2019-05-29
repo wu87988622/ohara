@@ -19,6 +19,7 @@ import { get, isEmpty } from 'lodash';
 import { Field } from 'react-final-form';
 
 import ColumnTable from './CustomConnector/ColumnTable';
+import Tabs from './Tabs';
 import { FormGroup } from 'common/Form';
 import { InputField, Select } from 'common/Mui/Form';
 import { CONNECTOR_STATES } from 'constants/pipelines';
@@ -67,7 +68,7 @@ export const getUpdatedTopic = ({
     const findByTopicName = topic => topic.name === configs.topics;
     const currTopic = originalTopics.find(findByTopicName);
     const topicId = isEmpty(configs.topics) ? [] : [currTopic.id];
-    update = { ...connector, name: connectorName, to: topicId };
+    update = { update: { ...connector, name: connectorName, to: topicId } };
   } else {
     const currSink = findByGraphId(graph, connectorId);
     const findByCurrTopicId = g => g.id === currTopicId;
@@ -173,22 +174,26 @@ export const switchType = type => {
       return 'text';
     case 'INT':
       return 'number';
+    case 'PASSWORD':
+      return 'password';
     default:
-      return 'text';
+      // Don't render the field since we can't recognize the type
+      return null;
   }
 };
 
 export const convertData = ({ configValue, valueType, defaultValue }) => {
   let displayValue;
   if (!configValue) {
-    // react complains null values
+    // react complains about null values
     if (valueType === 'TABLE') {
       displayValue = [];
     } else {
       displayValue = defaultValue || '';
     }
   } else {
-    // If we have values returned from connector API, let's use them
+    // If we have values returned from the connector API, let's use them
+    // instead of the default values
     displayValue = configValue;
   }
 
@@ -198,6 +203,10 @@ export const convertData = ({ configValue, valueType, defaultValue }) => {
 export const changeToken = ({ values, targetToken, replaceToken }) => {
   return Object.keys(values).reduce((acc, key) => {
     // Two tokens we use to separate words: `.` and `_`
+    // we are doing this here because final form treats `foo.bar`
+    // as nested object and expands `foo.bar` to `{ foo: { bar } }`
+    // and due to the API restriction, we will need to work on this
+    // in the frontend 😅
     const pattern = targetToken === '.' ? /\./g : /_/g;
     const renamedObject = {
       [key.replace(pattern, replaceToken)]: values[key],
@@ -250,16 +259,30 @@ export const getRenderData = ({ state, defs, configs }) => {
   return data;
 };
 
-export const renderForm = ({
-  formData,
-  topics,
-  handleChange,
-  handleColumnChange,
-  handleColumnRowDelete,
-  handleColumnRowUp,
-  handleColumnRowDown,
-}) => {
-  const dataType = ['STRING'];
+export const groupBy = (array, fn) => {
+  let groups = {};
+  array.forEach(o => {
+    let group = JSON.stringify(fn(o));
+    groups[group] = groups[group] || [];
+    groups[group].push(o);
+  });
+  return Object.keys(groups).map(group => {
+    return groups[group];
+  });
+};
+
+export const renderer = props => {
+  const {
+    formData,
+    topics,
+    handleChange,
+    handleColumnChange,
+    handleColumnRowDelete,
+    handleColumnRowUp,
+    handleColumnRowDown,
+  } = props;
+
+  const dataType = ['String'];
   const tableActions = ['Up', 'Down', 'Delete'];
 
   return formData.map(data => {
@@ -276,55 +299,77 @@ export const renderForm = ({
 
     const columnTableHeader = tableKeys.concat(tableActions);
 
-    if (['STRING', 'INT', 'CLASS'].includes(valueType)) {
-      const inputType = switchType(valueType);
+    switch (valueType) {
+      case 'STRING':
+      case 'INT':
+      case 'CLASS':
+      case 'PASSWORD':
+        const inputType = switchType(valueType);
 
-      return (
-        <FormGroup key={key}>
-          <Field
-            type={inputType}
-            component={InputField}
-            label={displayName}
-            id={displayName}
-            helperText={documentation}
-            width="100%"
-            name={key}
-            onChange={handleChange}
-            disabled={!editable || isRunning}
-          />
-        </FormGroup>
-      );
-    } else if (valueType === 'LIST') {
-      return (
-        <FormGroup key={key}>
-          <Field
-            label={displayName}
-            id={displayName}
-            list={topics}
-            onChange={handleChange}
-            component={Select}
-            name={key}
-            width="100%"
-            disabled={isRunning}
-          />
-        </FormGroup>
-      );
-    } else if (valueType === 'TABLE') {
-      return (
-        <FormGroup key={key}>
-          <ColumnTable
-            headers={columnTableHeader}
-            data={displayValue}
-            dataTypes={dataType}
-            handleColumnChange={handleColumnChange}
-            handleColumnRowDelete={handleColumnRowDelete}
-            handleColumnRowUp={handleColumnRowUp}
-            handleColumnRowDown={handleColumnRowDown}
-          />
-        </FormGroup>
-      );
+        return (
+          <FormGroup key={key}>
+            <Field
+              type={inputType}
+              component={InputField}
+              label={displayName}
+              id={displayName}
+              helperText={documentation}
+              width="100%"
+              name={key}
+              onChange={handleChange}
+              disabled={!editable || isRunning}
+            />
+          </FormGroup>
+        );
+
+      case 'LIST':
+        return (
+          <FormGroup key={key}>
+            <Field
+              label={displayName}
+              id={displayName}
+              list={topics}
+              onChange={handleChange}
+              component={Select}
+              name={key}
+              width="100%"
+              disabled={isRunning}
+            />
+          </FormGroup>
+        );
+
+      case 'TABLE':
+        return (
+          <FormGroup key={key}>
+            <ColumnTable
+              headers={columnTableHeader}
+              data={displayValue}
+              dataTypes={dataType}
+              handleColumnChange={handleColumnChange}
+              handleColumnRowDelete={handleColumnRowDelete}
+              handleColumnRowUp={handleColumnRowUp}
+              handleColumnRowDown={handleColumnRowDown}
+            />
+          </FormGroup>
+        );
+      default:
+        return null;
     }
-
-    return null;
   });
+};
+
+export const renderForm = props => {
+  const groupedDefs = groupBy(props.formData, item => {
+    return [item.group];
+  });
+
+  const hasTab = groupedDefs.length > 1;
+
+  if (hasTab) {
+    return <Tabs {...props} groupedDefs={groupedDefs} renderer={renderer} />;
+  } else {
+    return groupedDefs.sort().map(def => {
+      return renderer(def);
+    });
+  }
 };

@@ -23,11 +23,11 @@ import { get } from 'lodash';
 import * as MESSAGES from 'constants/messages';
 import * as connectorApi from 'api/connectorApi';
 import * as utils from './connectorUtils';
-import * as s from './styles';
 import * as types from 'propTypes/pipeline';
 import Controller from './Controller';
 import TestConnectionBtn from './TestConnectionBtn';
 import AutoSave from './AutoSave';
+import { TitleWrapper, H5Wrapper, LoaderWrap } from './styles';
 import { validateConnector } from 'api/validateApi';
 import { ListLoader } from 'common/Loader';
 import { Box } from 'common/Layout';
@@ -277,6 +277,7 @@ class HdfsSink extends React.Component {
       topics,
       isTestConnectionBtnWorking,
     } = this.state;
+
     const { defs, updateHasChanges } = this.props;
 
     if (!configs) return null;
@@ -305,20 +306,20 @@ class HdfsSink extends React.Component {
 
     return (
       <Box>
-        <s.TitleWrapper>
-          <s.H5Wrapper>HDFS sink connector</s.H5Wrapper>
+        <TitleWrapper>
+          <H5Wrapper>HDFS sink connector</H5Wrapper>
           <Controller
             kind="connector"
             onStart={this.handleStartConnector}
             onStop={this.handleStopConnector}
             onDelete={this.handleDeleteConnector}
           />
-        </s.TitleWrapper>
+        </TitleWrapper>
 
         {isLoading ? (
-          <s.LoaderWrap>
+          <LoaderWrap>
             <ListLoader />
-          </s.LoaderWrap>
+          </LoaderWrap>
         ) : (
           <Form
             onSubmit={this.handleSave}

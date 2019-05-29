@@ -19,6 +19,8 @@ export const CONNECTOR_TYPES = {
   ftpSource: 'com.island.ohara.connector.ftp.FtpSource',
   hdfsSink: 'com.island.ohara.connector.hdfs.HDFSSinkConnector',
   ftpSink: 'com.island.ohara.connector.ftp.FtpSink',
+  customSource: 'com.island.ohara.it.connector.DumbSourceConnector',
+  customSink: 'com.island.ohara.it.connector.DumbSinkConnector',
   streamApp: 'streamApp',
   topic: 'topic',
 };
