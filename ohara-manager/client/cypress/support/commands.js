@@ -183,6 +183,18 @@ Cypress.Commands.add('deletePipeline', pipelineName => {
   });
 });
 
+Cypress.Commands.add('deleteAllPipeline', pipelineName => {
+  cy.request('GET', 'api/pipelines').then(res => {
+    res.body.forEach(({ name, id }) => {
+      cy.request({
+        method: 'DELETE',
+        url: `api/pipelines/${id}`,
+        retryOnStatusCodeFailure: true,
+      });
+    });
+  });
+});
+
 Cypress.Commands.add(
   'deleteStreamApp',
   (
