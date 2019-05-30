@@ -41,13 +41,13 @@ RUN npm install -g yarn@1.15.0
 
 # install dependencies for cypress
 RUN yum install -y \
-  xorg-x11-server-Xvfb \
-  gtk2-2.24* \
-  libXtst* \
-  libXScrnSaver* \
-  GConf2* \
-  alsa-lib* \
-  libgtk-3.so.0
+  xvfb \
+  libgtk2.0-0 \
+  libnotify-dev \
+  libgconf-2-4 \
+  libnss3 \
+  libxss1 \
+  libasound2 \
 
 # download gradle
 ARG GRADLE_VERSION=5.4.1
