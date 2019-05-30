@@ -18,8 +18,9 @@ package com.island.ohara.streams;
 
 import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Row;
-import com.island.ohara.common.util.CommonUtils;
+import com.island.ohara.common.data.Serializer;
 import com.island.ohara.kafka.BrokerClient;
+import com.island.ohara.kafka.Producer;
 import com.island.ohara.streams.examples.PageViewRegionExample;
 import com.island.ohara.testing.WithBroker;
 import java.util.List;
@@ -32,6 +33,12 @@ import org.junit.Test;
 public class TestPageViewRegionExample extends WithBroker {
 
   private final BrokerClient client = BrokerClient.of(testUtil().brokersConnProps());
+  private final Producer<Row, byte[]> producer =
+      Producer.<Row, byte[]>builder()
+          .connectionProps(client.connectionProps())
+          .keySerializer(Serializer.ROW)
+          .valueSerializer(Serializer.BYTES)
+          .build();
   private final String fromTopic = "page-views";
   private final String joinTableTopic = "user-profiles";
   private final String toTopic = "view-by-region";
@@ -40,7 +47,9 @@ public class TestPageViewRegionExample extends WithBroker {
   public void setup() {
     final int partitions = 1;
     final short replications = 1;
-    String appId = CommonUtils.randomString();
+    // This specified appId is more stable than random string.
+    // It is really weird I had to say...by sam
+    String appId = "test-page-view-example";
 
     // prepare ohara environment
     StreamTestUtils.setOharaEnv(client.connectionProps(), appId, fromTopic, toTopic);
@@ -110,8 +119,8 @@ public class TestPageViewRegionExample extends WithBroker {
                 Row.of(Cell.of("user", "elsa"), Cell.of("region", "Cuba")))
             .collect(Collectors.toList());
 
-    StreamTestUtils.produceData(client, profiles, joinTableTopic);
-    StreamTestUtils.produceData(client, views, fromTopic);
+    StreamTestUtils.produceData(producer, profiles, joinTableTopic);
+    StreamTestUtils.produceData(producer, views, fromTopic);
   }
 
   @Test
@@ -133,6 +142,7 @@ public class TestPageViewRegionExample extends WithBroker {
 
   @After
   public void cleanUp() {
+    producer.close();
     client.close();
   }
 }

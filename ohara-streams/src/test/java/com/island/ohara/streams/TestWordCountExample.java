@@ -18,7 +18,9 @@ package com.island.ohara.streams;
 
 import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Row;
+import com.island.ohara.common.data.Serializer;
 import com.island.ohara.kafka.BrokerClient;
+import com.island.ohara.kafka.Producer;
 import com.island.ohara.streams.examples.WordCountExample;
 import com.island.ohara.testing.WithBroker;
 import java.util.List;
@@ -31,6 +33,12 @@ public class TestWordCountExample extends WithBroker {
   @Test
   public void testCase() {
     final BrokerClient client = BrokerClient.of(testUtil().brokersConnProps());
+    final Producer<Row, byte[]> producer =
+        Producer.<Row, byte[]>builder()
+            .connectionProps(client.connectionProps())
+            .keySerializer(Serializer.ROW)
+            .valueSerializer(Serializer.BYTES)
+            .build();
     final int partitions = 1;
     final short replications = 1;
     String fromTopic = "text-input";
@@ -45,7 +53,7 @@ public class TestWordCountExample extends WithBroker {
         Stream.of("hello", "ohara", "stream", "world", "of", "stream")
             .map(str -> Row.of(Cell.of("word", str)))
             .collect(Collectors.toList());
-    StreamTestUtils.produceData(client, rows, fromTopic);
+    StreamTestUtils.produceData(producer, rows, fromTopic);
 
     // run example
     WordCountExample app = new WordCountExample();

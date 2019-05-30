@@ -16,6 +16,7 @@
 
 package com.island.ohara.streams.ostream;
 
+import com.island.ohara.common.util.Releasable;
 import com.island.ohara.kafka.exception.CheckedExceptionUtils;
 import com.island.ohara.streams.data.Poneglyph;
 import com.island.ohara.streams.data.Stele;
@@ -30,7 +31,7 @@ import org.apache.kafka.streams.processor.internals.InternalTopologyBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Topology implements AutoCloseable {
+public class Topology implements Releasable {
 
   private org.apache.kafka.streams.Topology topology;
   private org.apache.kafka.streams.KafkaStreams streams;

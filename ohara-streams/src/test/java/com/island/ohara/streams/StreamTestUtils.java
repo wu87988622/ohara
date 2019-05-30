@@ -60,13 +60,7 @@ class StreamTestUtils {
     }
   }
 
-  static void produceData(BrokerClient client, List<Row> rows, String topic) {
-    Producer<Row, byte[]> producer =
-        Producer.<Row, byte[]>builder()
-            .connectionProps(client.connectionProps())
-            .keySerializer(Serializer.ROW)
-            .valueSerializer(Serializer.BYTES)
-            .build();
+  static void produceData(Producer<Row, byte[]> producer, List<Row> rows, String topic) {
     rows.forEach(
         row -> {
           try {
@@ -75,8 +69,6 @@ class StreamTestUtils {
             Assert.fail(e.getMessage());
           }
         });
-
-    producer.close();
   }
 
   static void assertResult(
