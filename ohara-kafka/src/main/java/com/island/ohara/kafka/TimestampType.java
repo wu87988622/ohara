@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.kafka.connector;
+package com.island.ohara.kafka;
 
 /**
  * The timestamp type of the records. NOTED: those names MUST be same with
@@ -25,7 +25,7 @@ public enum TimestampType {
   CREATE_TIME,
   LOG_APPEND_TIME;
 
-  static TimestampType to(org.apache.kafka.common.record.TimestampType type) {
+  public static TimestampType of(org.apache.kafka.common.record.TimestampType type) {
     if (type == org.apache.kafka.common.record.TimestampType.NO_TIMESTAMP_TYPE)
       return NO_TIMESTAMP_TYPE;
     if (type == org.apache.kafka.common.record.TimestampType.CREATE_TIME) return CREATE_TIME;

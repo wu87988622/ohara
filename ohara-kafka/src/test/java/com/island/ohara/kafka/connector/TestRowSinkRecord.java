@@ -22,6 +22,7 @@ import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.rule.SmallTest;
 import com.island.ohara.common.util.CommonUtils;
+import com.island.ohara.kafka.TimestampType;
 import org.junit.Test;
 
 public class TestRowSinkRecord extends SmallTest {

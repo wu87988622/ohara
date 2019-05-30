@@ -275,6 +275,8 @@ public interface Consumer<K, V> extends Releasable {
                     cr ->
                         new Record<>(
                             cr.topic(),
+                            cr.timestamp(),
+                            TimestampType.of(cr.timestampType()),
                             Optional.ofNullable(cr.headers())
                                 .map(
                                     headers ->
@@ -307,25 +309,44 @@ public interface Consumer<K, V> extends Releasable {
    * @param <V> V value type
    */
   class Record<K, V> {
-    private final String topic;
+    private final String topicName;
+    private final long timestamp;
+    private final TimestampType timestampType;
     private final List<Header> headers;
     private final K key;
     private final V value;
 
     /**
-     * @param topic topic name
+     * @param topicName topic name
+     * @param timestamp time to create this record or time to append this record.
      * @param key key (nullable)
      * @param value value
      */
-    private Record(String topic, List<Header> headers, K key, V value) {
-      this.topic = topic;
+    private Record(
+        String topicName,
+        long timestamp,
+        TimestampType timestampType,
+        List<Header> headers,
+        K key,
+        V value) {
+      this.topicName = topicName;
+      this.timestamp = timestamp;
+      this.timestampType = timestampType;
       this.headers = Collections.unmodifiableList(headers);
       this.key = key;
       this.value = value;
     }
 
-    public String topic() {
-      return topic;
+    public String topicName() {
+      return topicName;
+    }
+
+    public long timestamp() {
+      return timestamp;
+    }
+
+    public TimestampType timestampType() {
+      return timestampType;
     }
 
     public List<Header> headers() {
@@ -345,7 +366,9 @@ public interface Consumer<K, V> extends Releasable {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
       Record<?, ?> that = (Record<?, ?>) o;
-      return Objects.equals(topic, that.topic)
+      return Objects.equals(topicName, that.topicName)
+          && Objects.equals(timestamp, that.timestamp)
+          && Objects.equals(timestampType, that.timestampType)
           && CommonUtils.equals(headers, that.headers)
           && Objects.equals(key, that.key)
           && Objects.equals(value, that.value);
@@ -353,13 +376,14 @@ public interface Consumer<K, V> extends Releasable {
 
     @Override
     public int hashCode() {
-      return Objects.hash(topic, headers, key, value);
+      return Objects.hash(topicName, headers, key, value);
     }
 
     @Override
     public String toString() {
       return new ToStringBuilder(this)
-          .append("topic", topic)
+          .append("topicName", topicName)
+          .append("timestamp", timestamp)
           .append("headers", headers)
           .append("key", key)
           .append("value", value)

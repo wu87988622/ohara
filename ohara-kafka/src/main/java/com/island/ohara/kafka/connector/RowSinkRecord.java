@@ -19,6 +19,7 @@ package com.island.ohara.kafka.connector;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.data.Serializer;
 import com.island.ohara.common.util.CommonUtils;
+import com.island.ohara.kafka.TimestampType;
 import java.util.Objects;
 import org.apache.kafka.connect.sink.SinkRecord;
 
@@ -90,7 +91,7 @@ public class RowSinkRecord {
         .offset(record.kafkaOffset())
         // constructing a record without timeout is legal in kafka ...
         .timestamp(record.timestamp() == null ? 0 : record.timestamp())
-        .timestampType(TimestampType.to(record.timestampType()))
+        .timestampType(TimestampType.of(record.timestampType()))
         .build();
   }
 

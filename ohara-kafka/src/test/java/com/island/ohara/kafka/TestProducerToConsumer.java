@@ -47,6 +47,32 @@ public class TestProducerToConsumer extends WithBroker {
   }
 
   @Test
+  public void testTimestamp() {
+    long timestamp = CommonUtils.current();
+    try (Producer<String, String> producer =
+        Producer.<String, String>builder()
+            .keySerializer(Serializer.STRING)
+            .valueSerializer(Serializer.STRING)
+            .connectionProps(testUtil().brokersConnProps())
+            .build()) {
+      producer.sender().key("a").value("b").topicName(topicName).timestamp(timestamp).send();
+    }
+    try (Consumer<String, String> consumer =
+        Consumer.<String, String>builder()
+            .keySerializer(Serializer.STRING)
+            .valueSerializer(Serializer.STRING)
+            .offsetFromBegin()
+            .topicName(topicName)
+            .connectionProps(testUtil().brokersConnProps())
+            .build()) {
+      List<Consumer.Record<String, String>> records = consumer.poll(Duration.ofSeconds(30), 1);
+      Assert.assertEquals(1, records.size());
+      Assert.assertEquals(timestamp, records.get(0).timestamp());
+      Assert.assertEquals(TimestampType.CREATE_TIME, records.get(0).timestampType());
+    }
+  }
+
+  @Test
   public void normalCase() throws ExecutionException, InterruptedException {
     try (Producer<String, String> producer =
         Producer.<String, String>builder()
