@@ -434,6 +434,18 @@ public class TestSettingDefinition extends SmallTest {
   }
 
   @Test
+  public void testSetDisplayName() {
+    String displayName = CommonUtils.randomString();
+    SettingDefinition settingDefinition =
+        SettingDefinition.builder()
+            .displayName(displayName)
+            .key(CommonUtils.randomString())
+            .valueType(SettingDefinition.Type.STRING)
+            .build();
+    Assert.assertEquals(displayName, settingDefinition.displayName());
+  }
+
+  @Test
   public void testTypeConversion() {
     Stream.of(SettingDefinition.Type.values()).forEach(SettingDefinition::toType);
   }

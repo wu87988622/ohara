@@ -357,8 +357,7 @@ public class SettingDefinition implements JsonObject {
       boolean internal,
       List<String> tableKeys,
       @Nullable Checker checker) {
-    this.displayName = CommonUtils.requireNonEmpty(displayName);
-    this.group = group;
+    this.group = CommonUtils.requireNonEmpty(group);
     this.orderInGroup = orderInGroup;
     this.editable = editable;
     this.key = CommonUtils.requireNonEmpty(key);
@@ -370,6 +369,9 @@ public class SettingDefinition implements JsonObject {
     this.internal = internal;
     this.tableKeys = Objects.requireNonNull(tableKeys);
     this.checker = checker;
+    // It is legal to ignore the display name.
+    // However, we all hate null so we set the default value equal to key.
+    this.displayName = CommonUtils.isEmpty(displayName) ? this.key : displayName;
   }
 
   @VisibleForTesting
@@ -612,7 +614,6 @@ public class SettingDefinition implements JsonObject {
 
     public Builder key(String key) {
       this.key = CommonUtils.requireNonEmpty(key);
-      this.displayName = this.key;
       return this;
     }
 
@@ -670,7 +671,7 @@ public class SettingDefinition implements JsonObject {
       return this;
     }
 
-    @Optional("default is key")
+    @Optional("default value is equal to key")
     public Builder displayName(String displayName) {
       this.displayName = CommonUtils.requireNonEmpty(displayName);
       return this;
