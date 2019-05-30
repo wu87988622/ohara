@@ -47,7 +47,7 @@ RUN yum install -y \
   libXScrnSaver* \
   GConf2* \
   alsa-lib* \
-  libgtk-3.so.0
+  libgtk-3*
 
 # download gradle
 ARG GRADLE_VERSION=5.4.1
