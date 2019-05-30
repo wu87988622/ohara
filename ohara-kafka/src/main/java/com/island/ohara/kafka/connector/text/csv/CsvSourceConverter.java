@@ -22,8 +22,11 @@ import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.connector.RowSourceRecord;
 import com.island.ohara.kafka.connector.text.TextSourceConverter;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UncheckedIOException;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -44,13 +47,17 @@ public class CsvSourceConverter implements TextSourceConverter {
   private final OffsetCache cache;
 
   @Override
-  public List<RowSourceRecord> convert(InputStreamReader input) {
-    Map<Integer, List<Cell<String>>> cellsAndIndex = toCells(input);
-    Map<Integer, Row> rowsAndIndex = transform(cellsAndIndex);
-    List<RowSourceRecord> records = toRecords(rowsAndIndex);
-    // ok. all data are prepared. let update the cache
-    rowsAndIndex.keySet().forEach(index -> cache.update(path, index));
-    return records;
+  public List<RowSourceRecord> convert(Supplier<InputStreamReader> supplier) {
+    try (InputStreamReader reader = supplier.get()) {
+      Map<Integer, List<Cell<String>>> cellsAndIndex = toCells(reader);
+      Map<Integer, Row> rowsAndIndex = transform(cellsAndIndex);
+      List<RowSourceRecord> records = toRecords(rowsAndIndex);
+      // ok. all data are prepared. let's update the cache
+      rowsAndIndex.keySet().forEach(index -> cache.update(path, index));
+      return records;
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 
   /** read all lines from a reader, and then convert them to cells. */

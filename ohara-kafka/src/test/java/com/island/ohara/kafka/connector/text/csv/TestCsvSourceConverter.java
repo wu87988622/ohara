@@ -25,6 +25,7 @@ import com.island.ohara.kafka.connector.RowSourceContext;
 import com.island.ohara.kafka.connector.RowSourceRecord;
 import java.io.*;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.commons.lang.StringUtils;
@@ -67,6 +68,15 @@ public class TestCsvSourceConverter extends SmallTest {
         .schema(schema)
         .build();
   }
+
+  private Supplier<InputStreamReader> createReaderSupplier =
+      () -> {
+        try {
+          return new InputStreamReader(new FileInputStream(tempFile));
+        } catch (IOException e) {
+          throw new UncheckedIOException(e);
+        }
+      };
 
   private Map<Integer, List<Cell<String>>> setupInputData() {
     String[] header = new String[] {"cf1", "cf2", "cf3"};
@@ -219,16 +229,15 @@ public class TestCsvSourceConverter extends SmallTest {
   public void testToCells() throws IOException {
     converter = createConverter();
     data = setupInputData();
-    InputStreamReader reader = new InputStreamReader(new FileInputStream(tempFile));
+    InputStreamReader reader = createReaderSupplier.get();
     Assert.assertEquals(data, converter.toCells(reader));
   }
 
   @Test
-  public void testConvert() throws IOException {
+  public void testConvert() {
     converter = createConverter();
     data = setupInputData();
-    InputStreamReader reader = new InputStreamReader(new FileInputStream(tempFile));
-    List<RowSourceRecord> records = converter.convert(reader);
+    List<RowSourceRecord> records = converter.convert(createReaderSupplier);
 
     Assert.assertEquals(topicNames.size() * data.size(), records.size());
   }
@@ -254,9 +263,8 @@ public class TestCsvSourceConverter extends SmallTest {
                 })
             .schema(schema)
             .build();
-    data = setupInputData();
-    InputStreamReader reader = new InputStreamReader(new FileInputStream(tempFile));
-    List<RowSourceRecord> records = converter.convert(reader);
+    setupInputData();
+    List<RowSourceRecord> records = converter.convert(createReaderSupplier);
 
     Assert.assertEquals(0, records.size());
   }

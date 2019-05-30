@@ -20,7 +20,6 @@ import com.island.ohara.common.util.Releasable;
 import com.island.ohara.kafka.connector.RowSourceRecord;
 import com.island.ohara.kafka.connector.RowSourceTask;
 import com.island.ohara.kafka.connector.TaskSetting;
-import java.io.InputStreamReader;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -68,10 +67,7 @@ public abstract class TextSourceTask extends RowSourceTask {
       String path = inputFile.get();
       try {
         TextSourceConverter converter = converterFactory.newConverter(rowContext, path);
-        List<RowSourceRecord> records;
-        try (InputStreamReader reader = fileSystem.createReader(path)) {
-          records = converter.convert(reader);
-        }
+        List<RowSourceRecord> records = converter.convert(() -> fileSystem.createReader(path));
         if (records.isEmpty()) fileSystem.handleCompletedFile(path);
         return records;
       } catch (Exception e) {

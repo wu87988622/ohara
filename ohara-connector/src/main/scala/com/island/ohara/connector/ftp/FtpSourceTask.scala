@@ -19,7 +19,7 @@ package com.island.ohara.connector.ftp
 import java.io.InputStreamReader
 import java.nio.charset.Charset
 import java.util.Collections
-import java.{io, util}
+import java.util
 
 import com.island.ohara.client.ftp.FtpClient
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -59,7 +59,7 @@ class FtpSourceTask extends TextSourceTask {
         Collections.emptyList()
     }
 
-    override def createReader(path: String): io.InputStreamReader =
+    override def createReader(path: String): InputStreamReader =
       new InputStreamReader(ftpClient.open(path), Charset.forName(props.encode))
 
     override def handleErrorFile(path: String): Unit = try {

@@ -19,6 +19,7 @@ package com.island.ohara.kafka.connector.text;
 import com.island.ohara.kafka.connector.RowSourceRecord;
 import java.io.InputStreamReader;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * A converter to be used to read data from a reader, and convert to records of Kafka Connect format
@@ -27,11 +28,14 @@ import java.util.List;
 public interface TextSourceConverter {
 
   /**
-   * Convert to records. NOTE: this resource will be automatically closed after the conversion is
-   * complete, you don't have to deal with it specially.
+   * Read lines from text file and convert to records. Note: remember to release resources after
+   * using InputStreamReader.
    *
-   * @param reader an InputStreamReader
+   * <p>Depending on the situation, you can choose to handle IOException or throw an unchecked
+   * exception.
+   *
+   * @param supplier a supplier of InputStreamReader
    * @return a array from RowSourceRecord
    */
-  List<RowSourceRecord> convert(InputStreamReader reader);
+  List<RowSourceRecord> convert(Supplier<InputStreamReader> supplier);
 }
