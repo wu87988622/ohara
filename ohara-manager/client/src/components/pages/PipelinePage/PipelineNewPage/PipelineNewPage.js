@@ -29,22 +29,14 @@ import * as connectorApi from 'api/connectorApi';
 import * as streamApi from 'api/streamApi';
 import * as topicApi from 'api/topicApi';
 import * as workerApi from 'api/workerApi';
+import * as Connectors from '../Connectors';
+import * as utils from './pipelineNewPageUtils';
 import PipelineToolbar from '../PipelineToolbar';
 import PipelineGraph from '../PipelineGraph';
 import Editable from '../Editable';
 import { Box } from 'common/Layout';
 import { getConnectors } from '../pipelineUtils/commonUtils';
 import { PIPELINE_NEW, PIPELINE_EDIT } from 'constants/documentTitles';
-import {
-  JdbcSource,
-  FtpSource,
-  Topic,
-  HdfsSink,
-  FtpSink,
-  StreamApp,
-  CustomConnector,
-} from '../Connectors';
-import * as utils from '../pipelineUtils/pipelineNewPageUtils';
 
 import { Wrapper, Main, Sidebar, Heading2, Heading3, Operate } from './styles';
 
@@ -430,7 +422,7 @@ class PipelineNewPage extends React.Component {
                 <Route
                   path={`${routeBaseUrl}/${jdbcSource}`}
                   render={() => (
-                    <JdbcSource
+                    <Connectors.JdbcSource
                       {...this.props}
                       {...connectorProps}
                       defs={this.getConnectorDefs({
@@ -444,7 +436,7 @@ class PipelineNewPage extends React.Component {
                 <Route
                   path={`${routeBaseUrl}/${ftpSource}`}
                   render={() => (
-                    <FtpSource
+                    <Connectors.FtpSource
                       {...this.props}
                       {...connectorProps}
                       defs={this.getConnectorDefs({
@@ -458,7 +450,7 @@ class PipelineNewPage extends React.Component {
                 <Route
                   path={`${routeBaseUrl}/${ftpSink}`}
                   render={() => (
-                    <FtpSink
+                    <Connectors.FtpSink
                       {...this.props}
                       {...connectorProps}
                       defs={this.getConnectorDefs({
@@ -471,13 +463,15 @@ class PipelineNewPage extends React.Component {
 
                 <Route
                   path={`${routeBaseUrl}/topic`}
-                  render={() => <Topic {...this.props} {...connectorProps} />}
+                  render={() => (
+                    <Connectors.Topic {...this.props} {...connectorProps} />
+                  )}
                 />
 
                 <Route
                   path={`${routeBaseUrl}/${hdfsSink}`}
                   render={() => (
-                    <HdfsSink
+                    <Connectors.HdfsSink
                       {...this.props}
                       {...connectorProps}
                       defs={this.getConnectorDefs({
@@ -491,14 +485,14 @@ class PipelineNewPage extends React.Component {
                 <Route
                   path={`${routeBaseUrl}/streamApp`}
                   render={() => (
-                    <StreamApp {...this.props} {...connectorProps} />
+                    <Connectors.StreamApp {...this.props} {...connectorProps} />
                   )}
                 />
 
                 <Route
                   path={`${routeBaseUrl}/com.island.ohara.it.connector.(DumbSourceConnector|DumbSinkConnector)`}
                   render={() => (
-                    <CustomConnector
+                    <Connectors.CustomConnector
                       {...this.props}
                       {...connectorProps}
                       defs={this.getConnectorDefs({

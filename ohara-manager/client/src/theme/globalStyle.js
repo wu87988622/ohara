@@ -30,7 +30,6 @@ import {
 } from './variables';
 
 import '../../node_modules/toastr/build/toastr.css';
-import 'react-tabs/style/react-tabs.css';
 
 // Global styles for ReactModal
 // TODO: use styled-component to style ReactModal

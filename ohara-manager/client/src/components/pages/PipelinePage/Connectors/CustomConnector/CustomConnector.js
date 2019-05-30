@@ -20,19 +20,19 @@ import toastr from 'toastr';
 import { Form } from 'react-final-form';
 import { get } from 'lodash';
 
-import * as connectorApi from 'api/connectorApi';
 import * as MESSAGES from 'constants/messages';
+import * as connectorApi from 'api/connectorApi';
 import * as utils from '../connectorUtils';
 import * as types from 'propTypes/pipeline';
 import Controller from '../Controller';
+import TestConfigBtn from '../TestConfigBtn';
 import AutoSave from '../AutoSave';
-import TestConnectionBtn from '../TestConnectionBtn';
-import { findByGraphId } from '../../pipelineUtils/commonUtils';
-import { validateConnector } from 'api/validateApi';
 import { TitleWrapper, H5Wrapper, LoaderWrap } from '../styles';
-import { Box } from 'common/Layout';
+import { validateConnector } from 'api/validateApi';
 import { ListLoader } from 'common/Loader';
-import { CONNECTOR_ACTIONS } from 'constants/pipelines';
+import { Box } from 'common/Layout';
+import { findByGraphId } from '../../pipelineUtils/commonUtils';
+import { CONNECTOR_STATES, CONNECTOR_ACTIONS } from 'constants/pipelines';
 
 class CustomConnector extends React.Component {
   static propTypes = {
@@ -53,15 +53,13 @@ class CustomConnector extends React.Component {
       push: PropTypes.func.isRequired,
     }).isRequired,
   };
-
   state = {
     isLoading: true,
     topics: [],
     configs: null,
     state: null,
-    isTestConnectionBtnWorking: false,
+    isTestingConfig: false,
   };
-
   componentDidMount() {
     this.fetchConnector();
     this.setTopics();
@@ -103,7 +101,13 @@ class CustomConnector extends React.Component {
         target: topics,
       });
 
-      const configs = { ...settings, topics: topicName };
+      const _settings = utils.changeToken({
+        values: settings,
+        targetToken: '.',
+        replaceToken: '_',
+      });
+
+      const configs = { ..._settings, topics: topicName };
       this.setState({ configs, state });
     }
   };
@@ -145,32 +149,6 @@ class CustomConnector extends React.Component {
     this.updateComponent(updatedConfigs);
   };
 
-  handleTestConnection = async (e, values) => {
-    e.preventDefault();
-
-    const topic = utils.getCurrTopicId({
-      originals: this.props.globalTopics,
-      target: values.topics,
-    });
-
-    const topics = Array.isArray(topic) ? topic : [topic];
-    const _values = utils.changeToken({
-      values,
-      targetToken: '_',
-      replaceToken: '.',
-    });
-
-    const params = { ..._values, topics };
-    this.setState({ isTestConnectionBtnWorking: true });
-    const res = await validateConnector(params);
-    this.setState({ isTestConnectionBtnWorking: false });
-    const isSuccess = get(res, 'data.isSuccess', false);
-
-    if (isSuccess) {
-      toastr.success(MESSAGES.TEST_SUCCESS);
-    }
-  };
-
   handleStartConnector = async () => {
     await this.triggerConnector(CONNECTOR_ACTIONS.start);
   };
@@ -196,21 +174,62 @@ class CustomConnector extends React.Component {
   };
 
   triggerConnector = async action => {
-    const { match, graph, updateGraph } = this.props;
-    const sourceId = get(match, 'params.connectorId', null);
+    const { match } = this.props;
+    const sinkId = get(match, 'params.connectorId', null);
     let res;
     if (action === CONNECTOR_ACTIONS.start) {
-      res = await connectorApi.startConnector(sourceId);
+      res = await connectorApi.startConnector(sinkId);
     } else {
-      res = await connectorApi.stopConnector(sourceId);
+      res = await connectorApi.stopConnector(sinkId);
     }
+
+    this.handleTriggerConnectorResponse(action, res);
+  };
+
+  handleTestConnection = async (e, values) => {
+    e.preventDefault();
+
+    const topic = utils.getCurrTopicId({
+      originals: this.props.globalTopics,
+      target: values.topics,
+    });
+
+    const topics = Array.isArray(topic) ? topic : [topic];
+    const _values = utils.changeToken({
+      values,
+      targetToken: '_',
+      replaceToken: '.',
+    });
+
+    const params = { ..._values, topics };
+    this.setState({ isTestingConfig: true });
+    const res = await validateConnector(params);
+    this.setState({ isTestingConfig: false });
     const isSuccess = get(res, 'data.isSuccess', false);
+
     if (isSuccess) {
-      const state = get(res, 'data.result.state');
-      this.setState({ state });
-      const currSource = findByGraphId(graph, sourceId);
-      const update = { ...currSource, state };
-      updateGraph({ update });
+      toastr.success(MESSAGES.TEST_SUCCESS);
+    }
+  };
+
+  handleTriggerConnectorResponse = (action, res) => {
+    const isSuccess = get(res, 'data.isSuccess', false);
+    if (!isSuccess) return;
+
+    const { match, graph, updateGraph } = this.props;
+    const sinkId = get(match, 'params.connectorId', null);
+    const state = get(res, 'data.result.state');
+    this.setState({ state });
+    const currSink = findByGraphId(graph, sinkId);
+    const update = { ...currSink, state };
+    updateGraph({ update });
+
+    if (action === CONNECTOR_ACTIONS.start) {
+      if (state === CONNECTOR_STATES.running) {
+        toastr.success(MESSAGES.START_CONNECTOR_SUCCESS);
+      } else {
+        toastr.error(MESSAGES.CANNOT_START_CONNECTOR_ERROR);
+      }
     }
   };
 
@@ -245,13 +264,7 @@ class CustomConnector extends React.Component {
   };
 
   render() {
-    const {
-      configs,
-      isLoading,
-      topics,
-      state,
-      isTestConnectionBtnWorking,
-    } = this.state;
+    const { configs, isLoading, topics, state, isTestingConfig } = this.state;
 
     if (!configs) return null;
 
@@ -308,9 +321,9 @@ class CustomConnector extends React.Component {
                   />
 
                   {utils.renderForm(formProps)}
-                  <TestConnectionBtn
+                  <TestConfigBtn
                     handleClick={e => this.handleTestConnection(e, values)}
-                    isWorking={isTestConnectionBtnWorking}
+                    isWorking={isTestingConfig}
                   />
                 </form>
               );

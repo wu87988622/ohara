@@ -25,7 +25,7 @@ import * as connectorApi from 'api/connectorApi';
 import * as utils from './connectorUtils';
 import * as types from 'propTypes/pipeline';
 import Controller from './Controller';
-import TestConnectionBtn from './TestConnectionBtn';
+import TestConfigBtn from './TestConfigBtn';
 import AutoSave from './AutoSave';
 import { TitleWrapper, H5Wrapper, LoaderWrap } from './styles';
 import { validateConnector } from 'api/validateApi';
@@ -58,7 +58,7 @@ class JdbcSource extends React.Component {
     topics: [],
     configs: null,
     state: null,
-    isTestConnectionBtnWorking: false,
+    isTestingConfig: false,
   };
 
   componentDidMount() {
@@ -203,18 +203,14 @@ class JdbcSource extends React.Component {
     });
 
     const params = { ..._values, topics };
-    this.setState({ isTestConnectionBtnWorking: true });
+    this.setState({ isTestingConfig: true });
     const res = await validateConnector(params);
-    this.setState({ isTestConnectionBtnWorking: false });
+    this.setState({ isTestingConfig: false });
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (isSuccess) {
       toastr.success(MESSAGES.TEST_SUCCESS);
     }
-  };
-
-  updateIsTestConnectionBtnWorking = update => {
-    this.setState({ isTestConnectionBtnWorking: update });
   };
 
   handleTriggerConnectorResponse = (action, res) => {
@@ -270,13 +266,7 @@ class JdbcSource extends React.Component {
     updateGraph({ update, ..._sinkProps });
   };
   render() {
-    const {
-      state,
-      configs,
-      isLoading,
-      topics,
-      isTestConnectionBtnWorking,
-    } = this.state;
+    const { state, configs, isLoading, topics, isTestingConfig } = this.state;
 
     const { defs, updateHasChanges } = this.props;
 
@@ -333,9 +323,9 @@ class JdbcSource extends React.Component {
                   />
 
                   {utils.renderForm(formProps)}
-                  <TestConnectionBtn
+                  <TestConfigBtn
                     handleClick={e => this.handleTestConnection(e, values)}
-                    isWorking={isTestConnectionBtnWorking}
+                    isWorking={isTestingConfig}
                   />
                 </form>
               );

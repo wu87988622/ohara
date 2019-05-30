@@ -16,7 +16,7 @@
 
 import { isNull, isEmpty } from 'lodash';
 
-import { isTopic, isStream } from './commonUtils';
+import { isTopic, isStream } from '../pipelineUtils/commonUtils';
 
 export const addPipelineStatus = pipeline => {
   const status = pipeline.objects.filter(p => p.state === 'RUNNING');

@@ -23,6 +23,7 @@ const Button = ({
   className,
   color = 'primary',
   variant = 'contained',
+  size = 'medium',
   onClick,
 }) => {
   return (
@@ -31,6 +32,7 @@ const Button = ({
       color={color}
       variant={variant}
       onClick={onClick}
+      size={size}
     >
       {text}
     </MuiButton>
@@ -39,6 +41,7 @@ const Button = ({
 
 Button.propTypes = {
   text: PropTypes.string.isRequired,
+  size: PropTypes.string,
   className: PropTypes.string,
   color: PropTypes.string,
   variant: PropTypes.string,

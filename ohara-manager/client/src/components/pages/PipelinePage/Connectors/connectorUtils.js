@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-import { get, isEmpty } from 'lodash';
+import { get, isEmpty, isUndefined } from 'lodash';
 import { Field } from 'react-final-form';
 
 import ColumnTable from './CustomConnector/ColumnTable';
@@ -67,7 +67,7 @@ export const getUpdatedTopic = ({
   if (connector.kind === 'source') {
     const findByTopicName = topic => topic.name === configs.topics;
     const currTopic = originalTopics.find(findByTopicName);
-    const topicId = isEmpty(configs.topics) ? [] : [currTopic.id];
+    const topicId = isUndefined(currTopic) ? [] : [currTopic.id];
     update = { update: { ...connector, name: connectorName, to: topicId } };
   } else {
     const currSink = findByGraphId(graph, connectorId);
@@ -369,7 +369,8 @@ export const renderForm = props => {
     return <Tabs {...props} groupedDefs={groupedDefs} renderer={renderer} />;
   } else {
     return groupedDefs.sort().map(def => {
-      return renderer(def);
+      const renderData = { def, ...props };
+      return renderer(renderData);
     });
   }
 };

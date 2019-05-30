@@ -14,6 +14,27 @@
  * limitations under the License.
  */
 
-import { Tab, TabList, Tabs, TabPanel } from './Tabs.js';
+import React from 'react';
+import PropTypes from 'prop-types';
 
-export { Tab, TabList, Tabs, TabPanel };
+import { Button } from 'common/Mui/Form';
+
+const TestConfigBtn = props => {
+  const { handleClick, isWorking } = props;
+
+  return (
+    <Button
+      text="Test your configs"
+      disabled={isWorking}
+      data-testid="validate-configs-btn"
+      onClick={handleClick}
+    />
+  );
+};
+
+TestConfigBtn.propTypes = {
+  handleClick: PropTypes.func.isRequired,
+  isWorking: PropTypes.bool.isRequired,
+};
+
+export default TestConfigBtn;

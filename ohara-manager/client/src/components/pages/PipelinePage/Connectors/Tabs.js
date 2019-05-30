@@ -14,11 +14,18 @@
  * limitations under the License.
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
-import { Tab, Tabs, TabList, TabPanel } from 'common/Tabs';
+import styled from 'styled-components';
+import AppBar from '@material-ui/core/AppBar';
+import Tabs from '@material-ui/core/Tabs';
+import Tab from '@material-ui/core/Tab';
 
-const UtilsTabs = ({
+const StyledAppBar = styled(AppBar)`
+  margin-bottom: 20px;
+`;
+
+const MuiTab = ({
   topics,
   handleChange,
   handleColumnChange,
@@ -28,10 +35,13 @@ const UtilsTabs = ({
   groupedDefs,
   renderer,
 }) => {
-  const [tabIdx, setTabIdx] = useState(0);
-  const handleSelect = tabIdx => setTabIdx(tabIdx);
+  const [activeIdx, setActiveIdx] = React.useState(0);
 
-  const renderData = {
+  const handleIdxChange = (e, idx) => {
+    setActiveIdx(idx);
+  };
+
+  const formProps = {
     topics,
     handleChange,
     handleColumnChange,
@@ -41,21 +51,26 @@ const UtilsTabs = ({
   };
 
   return (
-    <Tabs selectedIndex={tabIdx} onSelect={handleSelect}>
-      <TabList>
-        {groupedDefs.sort().map(defs => {
-          return <Tab key={defs[0].group}>{defs[0].group}</Tab>;
-        })}
-      </TabList>
-      {groupedDefs.sort().map(defs => {
-        const props = { ...renderData, formData: defs };
-        return <TabPanel key={defs[0].group}>{renderer(props)}</TabPanel>;
+    <>
+      <StyledAppBar position="static">
+        <Tabs value={activeIdx} onChange={handleIdxChange}>
+          {groupedDefs.sort().map(defs => {
+            return <Tab key={defs[0].group} label={defs[0].group} />;
+          })}
+        </Tabs>
+      </StyledAppBar>
+
+      {groupedDefs.sort().map((defs, idx) => {
+        if (idx !== activeIdx) return null; // We just want to render the active tab content
+
+        const renderData = { ...formProps, formData: defs };
+        return <div key={defs[0].group}>{renderer(renderData)}</div>;
       })}
-    </Tabs>
+    </>
   );
 };
 
-UtilsTabs.propTypes = {
+MuiTab.propTypes = {
   groupedDefs: PropTypes.array.isRequired,
   renderer: PropTypes.func.isRequired,
   topics: PropTypes.array,
@@ -66,4 +81,4 @@ UtilsTabs.propTypes = {
   handleColumnRowDown: PropTypes.func,
 };
 
-export default UtilsTabs;
+export default MuiTab;

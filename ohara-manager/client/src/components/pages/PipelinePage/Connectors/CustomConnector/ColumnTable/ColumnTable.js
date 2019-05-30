@@ -19,7 +19,6 @@ import PropTypes from 'prop-types';
 
 import NewRowModal from './NewRowModal';
 import Table from './Table';
-import { primaryBtn } from 'theme/btnTheme';
 import { ConfirmModal } from 'common/Modal';
 import { NewRowBtn } from './styles';
 
@@ -119,9 +118,9 @@ class ColumnTable extends React.Component {
       <>
         <NewRowBtn
           text="New row"
-          theme={primaryBtn}
+          size="small"
           data-testid="new-row-btn"
-          handleClick={this.handleNewRowModalOpen}
+          onClick={this.handleNewRowModalOpen}
         />
 
         <NewRowModal
