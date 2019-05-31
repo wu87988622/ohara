@@ -26,7 +26,7 @@ import com.island.ohara.common.data.Row;
  */
 public interface Predicate {
 
-  boolean predicate(final Row key);
+  boolean test(final Row value);
 
   final class TruePredicate implements org.apache.kafka.streams.kstream.Predicate<Row, Row> {
     final Predicate truePredicate;
@@ -38,7 +38,7 @@ public interface Predicate {
     // Since the only concern part is the "value", we pass the predicate of key
     @Override
     public boolean test(final Row key, final Row value) {
-      return this.truePredicate.predicate(value);
+      return this.truePredicate.test(value);
     }
   }
 }

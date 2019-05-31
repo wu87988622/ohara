@@ -26,18 +26,4 @@ import com.island.ohara.common.data.Row;
 public interface ValueMapper {
 
   Row valueMapper(final Row value);
-
-  class TrueValueMapper implements org.apache.kafka.streams.kstream.ValueMapper<Row, Row> {
-
-    private final ValueMapper trueValueMapper;
-
-    TrueValueMapper(ValueMapper valueMapper) {
-      this.trueValueMapper = valueMapper;
-    }
-
-    @Override
-    public Row apply(Row value) {
-      return this.trueValueMapper.valueMapper(value);
-    }
-  }
 }

@@ -125,8 +125,7 @@ class OStreamImpl extends AbstractStream<Row, Row> implements OStream<Row> {
 
   @Override
   public OStream<Row> map(final ValueMapper mapper) {
-    ValueMapper.TrueValueMapper trueValueMapper = new ValueMapper.TrueValueMapper(mapper);
-    return new OStreamImpl(builder, kstreams.mapValues(trueValueMapper), innerBuilder);
+    return new OStreamImpl(builder, kstreams.mapValues(mapper::valueMapper), innerBuilder);
   }
 
   @Override

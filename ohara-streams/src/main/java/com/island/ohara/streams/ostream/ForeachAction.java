@@ -21,7 +21,7 @@ import com.island.ohara.common.data.Row;
 /** Loop all the {@code Row} data in this stream */
 public interface ForeachAction {
 
-  void foreachAction(final Row key);
+  void foreachAction(final Row row);
 
   class TrueForeachAction implements org.apache.kafka.streams.kstream.ForeachAction<Row, byte[]> {
 
