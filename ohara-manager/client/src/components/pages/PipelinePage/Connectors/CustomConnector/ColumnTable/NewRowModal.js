@@ -24,14 +24,7 @@ import { FormInner } from './styles';
 import { InputField, SelectField } from 'common/FormFields';
 
 const NewRowModal = props => {
-  const {
-    isActive,
-
-    dataTypes,
-
-    handleConfirmClick,
-    handleModalClose,
-  } = props;
+  const { isActive, dataTypes, handleConfirmClick, handleModalClose } = props;
   return (
     <Form
       onSubmit={handleConfirmClick}

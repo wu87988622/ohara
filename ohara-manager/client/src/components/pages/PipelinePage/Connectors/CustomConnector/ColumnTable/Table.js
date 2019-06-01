@@ -16,6 +16,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import { isNull } from 'lodash';
 
 import { LinkButton } from 'common/Form';
 import { StyledTable } from './styles';
@@ -29,7 +30,10 @@ const Table = props => {
     handleDeleteRowModalOpen,
     handleColumnRowUp,
     handleColumnRowDown,
+    parentValues,
   } = props;
+
+  const _data = isNull(data) ? [] : data;
 
   return (
     <StyledTable>
@@ -41,7 +45,7 @@ const Table = props => {
         </tr>
       </thead>
       <tbody>
-        {data.map(({ order, name, newName, dataType: currType }) => {
+        {_data.map(({ order, name, newName, dataType: currType }) => {
           return (
             <tr key={order}>
               <td>{order}</td>
@@ -58,12 +62,20 @@ const Table = props => {
               <td>{name}</td>
               <td>{newName}</td>
               <td>
-                <LinkButton handleClick={e => handleColumnRowUp(e, order)}>
+                <LinkButton
+                  handleClick={e =>
+                    handleColumnRowUp(e, { order, parentValues })
+                  }
+                >
                   <i className="fas fa-arrow-up" />
                 </LinkButton>
               </td>
               <td>
-                <LinkButton handleClick={e => handleColumnRowDown(e, order)}>
+                <LinkButton
+                  handleClick={e =>
+                    handleColumnRowDown(e, { order, parentValues })
+                  }
+                >
                   <i className="fas fa-arrow-down" />
                 </LinkButton>
               </td>
@@ -97,6 +109,7 @@ Table.propTypes = {
   handleColumnRowUp: PropTypes.func.isRequired,
   handleColumnRowDown: PropTypes.func.isRequired,
   handleDeleteRowModalOpen: PropTypes.func.isRequired,
+  parentValues: PropTypes.object,
 };
 
 export default Table;

@@ -31,6 +31,7 @@ const Select = props => {
     input: { name, onChange, value, ...restInput },
     meta,
     list = [],
+    width = '100%',
     ...rest
   } = props;
 
@@ -41,12 +42,13 @@ const Select = props => {
   return (
     <StyledSelect
       {...rest}
-      select
       name={name}
       error={meta.error && meta.touched}
-      inputProps={restInput}
+      InputProps={restInput}
       onChange={onChange}
       value={_value}
+      width={width}
+      select={true}
     >
       {_list.map(item => {
         return (
@@ -69,6 +71,7 @@ Select.propTypes = {
     touched: PropTypes.bool,
     error: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   }).isRequired,
+  width: PropTypes.string,
   list: PropTypes.array.isRequired,
 };
 

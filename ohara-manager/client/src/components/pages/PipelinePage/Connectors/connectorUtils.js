@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-import { get, isEmpty, isUndefined } from 'lodash';
+import { get, isEmpty, isUndefined, isNull } from 'lodash';
 import { Field } from 'react-final-form';
 
 import ColumnTable from './CustomConnector/ColumnTable';
@@ -23,20 +23,10 @@ import Tabs from './Tabs';
 import { FormGroup } from 'common/Form';
 import { InputField, Select } from 'common/Mui/Form';
 import { CONNECTOR_STATES } from 'constants/pipelines';
-import { isEmptyStr } from 'utils/commonUtils';
 import { findByGraphId } from '../pipelineUtils/commonUtils';
 
-export const updateConfigs = ({ configs, target }) => {
-  const { value, name } = target;
-  const update = {
-    ...configs,
-    [name]: value,
-  };
-  return update;
-};
-
 export const getCurrTopicId = ({ originals, target = '' }) => {
-  if (isEmpty(originals) || isEmptyStr(target) || target === 'Please select...')
+  if (isEmpty(originals) || isNull(target) || target === 'Please select...')
     return [];
 
   const findByTopicName = ({ name }) => name === target;
@@ -61,7 +51,7 @@ export const getUpdatedTopic = ({
   originalTopics,
 }) => {
   const connector = findByGraphId(graph, connectorId);
-  const connectorName = configs['connector.name'];
+  const connectorName = configs['connector_name'];
   let update;
 
   if (connector.kind === 'source') {
@@ -92,13 +82,14 @@ export const getUpdatedTopic = ({
   return update;
 };
 
-export const addColumn = ({ configs, newColumn }) => {
+export const addColumn = ({ configs, update }) => {
   const { columns = [] } = configs;
   const {
     columnName: name,
     newColumnName: newName,
     currType: dataType,
-  } = newColumn;
+    parentValues,
+  } = update;
 
   let order = 0;
   if (isEmpty(columns)) {
@@ -107,7 +98,7 @@ export const addColumn = ({ configs, newColumn }) => {
     order = columns[columns.length - 1].order + 1;
   }
 
-  const update = {
+  const newColumn = {
     order,
     name,
     newName,
@@ -115,25 +106,28 @@ export const addColumn = ({ configs, newColumn }) => {
   };
 
   const updatedConfigs = {
-    ...configs,
-    columns: [...columns, update],
+    ...parentValues,
+    columns: [...columns, newColumn],
   };
 
   return updatedConfigs;
 };
 
-export const deleteColumnRow = ({ configs, currRow }) => {
+export const deleteColumnRow = ({ configs, update }) => {
+  const { parentValues, currRow } = update;
+
   const { columns } = configs;
   const updatedColumns = columns
     .filter(column => column.order !== currRow)
     .map((column, idx) => ({ ...column, order: ++idx }));
 
-  const updatedConfigs = { ...configs, columns: [...updatedColumns] };
+  const updatedConfigs = { ...parentValues, columns: [...updatedColumns] };
   return updatedConfigs;
 };
 
-export const moveColumnRowUp = ({ configs, order }) => {
+export const moveColumnRowUp = ({ configs, update }) => {
   const { columns } = configs;
+  const { order, parentValues } = update;
 
   if (order === 1) return;
 
@@ -145,13 +139,14 @@ export const moveColumnRowUp = ({ configs, order }) => {
     columns[idx - 1],
     ...columns.slice(idx + 1),
   ].map((columns, idx) => ({ ...columns, order: ++idx }));
-  const updatedConfigs = { ...configs, columns: [...updatedColumns] };
+  const updatedConfigs = { ...parentValues, columns: [...updatedColumns] };
 
   return updatedConfigs;
 };
 
-export const moveColumnRowDown = ({ configs, order }) => {
+export const moveColumnRowDown = ({ configs, update }) => {
   const { columns } = configs;
+  const { order, parentValues } = update;
 
   if (order === columns.length) return;
 
@@ -163,7 +158,7 @@ export const moveColumnRowDown = ({ configs, order }) => {
     columns[idx],
     ...columns.slice(idx + 2),
   ].map((columns, idx) => ({ ...columns, order: ++idx }));
-  const updatedConfigs = { ...configs, columns: [...updatedColumns] };
+  const updatedConfigs = { ...parentValues, columns: [...updatedColumns] };
 
   return updatedConfigs;
 };
@@ -186,11 +181,7 @@ export const convertData = ({ configValue, valueType, defaultValue }) => {
   let displayValue;
   if (!configValue) {
     // react complains about null values
-    if (valueType === 'TABLE') {
-      displayValue = [];
-    } else {
-      displayValue = defaultValue || '';
-    }
+    displayValue = defaultValue;
   } else {
     // If we have values returned from the connector API, let's use them
     // instead of the default values
@@ -275,11 +266,11 @@ export const renderer = props => {
   const {
     formData,
     topics,
-    handleChange,
     handleColumnChange,
     handleColumnRowDelete,
     handleColumnRowUp,
     handleColumnRowDown,
+    parentValues,
   } = props;
 
   const dataType = ['String'];
@@ -316,7 +307,6 @@ export const renderer = props => {
               helperText={documentation}
               width="100%"
               name={key}
-              onChange={handleChange}
               disabled={!editable || isRunning}
             />
           </FormGroup>
@@ -329,7 +319,6 @@ export const renderer = props => {
               label={displayName}
               id={displayName}
               list={topics}
-              onChange={handleChange}
               component={Select}
               name={key}
               width="100%"
@@ -342,6 +331,7 @@ export const renderer = props => {
         return (
           <FormGroup key={key}>
             <ColumnTable
+              parentValues={parentValues}
               headers={columnTableHeader}
               data={displayValue}
               dataTypes={dataType}

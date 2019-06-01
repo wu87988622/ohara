@@ -16,22 +16,6 @@
 
 import * as generate from 'utils/generate';
 import * as utils from '../connectorUtils';
-
-describe('updateConfigs()', () => {
-  it('updates configs', () => {
-    const configs = {};
-    const name = generate.name();
-    const value = generate.message();
-    const target = {
-      name,
-      value,
-    };
-
-    const update = utils.updateConfigs({ configs, target });
-    expect(update).toEqual({ [name]: value });
-  });
-});
-
 describe('getCurrTopicId()', () => {
   it('gets the right topic id', () => {
     const originals = generate.topics(3);
@@ -51,9 +35,9 @@ describe('getCurrTopicId()', () => {
     expect(Array.isArray(result)).toBe(true);
   });
 
-  it('returns any empty array if param target is empty', () => {
+  it('returns any empty array if param target is null', () => {
     const originals = generate.topics(2);
-    const target = '';
+    const target = null;
 
     const result = utils.getCurrTopicId({ originals, target });
     expect(Array.isArray(result)).toBe(true);
@@ -82,10 +66,14 @@ describe('getCurrTopicName()', () => {
 describe('addColumn()', () => {
   it('adds a new column to empty column array', () => {
     const configs = { columns: [] };
-
+    const parentValues = { name: generate.name() };
     const newColumn = generate.columnRows(1);
 
-    const update = utils.addColumn({ configs, newColumn: newColumn[0] });
+    const update = utils.addColumn({
+      configs,
+      update: { ...newColumn[0], parentValues },
+    });
+
     const expected = {
       columns: [
         {
@@ -95,19 +83,22 @@ describe('addColumn()', () => {
           dataType: newColumn[0].currType,
         },
       ],
+      ...parentValues,
     };
     expect(update).toEqual(expected);
   });
 
   it('adds a new column to an existing column array', () => {
     const columns = generate.columnRows(2);
-
     const otherKey = generate.number();
-
     const configs = { columns, otherKey };
+    const parentValues = { name: generate.name() };
 
     const newColumn = generate.columnRows(1);
-    const update = utils.addColumn({ configs, newColumn: newColumn[0] });
+    const update = utils.addColumn({
+      configs,
+      update: { ...newColumn[0], parentValues },
+    });
 
     const expected = {
       columns: [
@@ -119,7 +110,7 @@ describe('addColumn()', () => {
           dataType: newColumn[0].currType,
         },
       ],
-      otherKey,
+      ...parentValues,
     };
 
     expect(update).toEqual(expected);

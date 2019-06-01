@@ -34,6 +34,8 @@ const StyledIcon = styled(InfoIcon)`
 `;
 
 const Tooltip = ({ text }) => {
+  if (!text) return null;
+
   return (
     <MuiTooltip title={text}>
       <StyledIcon />
@@ -42,7 +44,7 @@ const Tooltip = ({ text }) => {
 };
 
 Tooltip.propTypes = {
-  text: PropTypes.string.isRequired,
+  text: PropTypes.string,
 };
 
 export default Tooltip;

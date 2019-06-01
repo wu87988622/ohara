@@ -18,6 +18,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import TextField from '@material-ui/core/TextField';
 import styled from 'styled-components';
+
 import Tooltip from './Tooltip';
 
 const InputWrap = styled.div`
@@ -37,18 +38,17 @@ const TooltipWrap = styled.div`
 
 const InputField = ({
   input: { name, onChange, value, ...restInput },
+  meta,
   width = '100%',
   helperText,
-  meta,
   ...rest
 }) => {
   return (
     <InputWrap>
       <StyledTextField
         {...rest}
-        name={name}
-        error={meta.error && meta.touched}
         onChange={onChange}
+        name={name}
         InputProps={restInput}
         value={value}
         width={width}

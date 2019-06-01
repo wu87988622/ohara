@@ -111,12 +111,6 @@ class FinalFormWrapper extends React.Component {
     this.setState({ configs: updatedConfigs });
   };
 
-  handleChange = ({ target }) => {
-    const { configs } = this.state;
-    const updatedConfigs = utils.updateConfigs({ configs, target });
-    this.updateComponent(updatedConfigs);
-  };
-
   handleColumnChange = newColumn => {
     const { configs } = this.state;
     const updatedConfigs = utils.addColumn({ configs, newColumn });
@@ -244,7 +238,6 @@ class FinalFormWrapper extends React.Component {
       formData,
       topics,
       handleChange: this.handleChange,
-      handleColumnChange: this.handleColumnChange,
       handleColumnRowDelete: this.handleColumnRowDelete,
       handleColumnRowUp: this.handleColumnRowUp,
       handleColumnRowDown: this.handleColumnRowDown,

@@ -20,14 +20,11 @@ import diff from 'deep-diff';
 import { FormSpy } from 'react-final-form';
 import { debounce } from 'lodash';
 
-import { changeToken } from './connectorUtils';
-
 class AutoSave extends React.Component {
   static propTypes = {
     values: PropTypes.object.isRequired,
     save: PropTypes.func.isRequired,
     updateHasChanges: PropTypes.func.isRequired,
-    hasToken: PropTypes.bool,
   };
 
   state = {
@@ -39,7 +36,7 @@ class AutoSave extends React.Component {
   }
 
   save = debounce(async () => {
-    const { values, save, updateHasChanges, hasToken } = this.props;
+    const { values, save, updateHasChanges } = this.props;
     const difference = diff(this.state.values, values);
 
     if (difference && difference.length) {
@@ -47,18 +44,7 @@ class AutoSave extends React.Component {
       updateHasChanges(true);
       this.setState({ values });
 
-      let _values;
-      if (hasToken) {
-        _values = changeToken({
-          values,
-          targetToken: '_',
-          replaceToken: '.',
-        });
-      } else {
-        _values = values;
-      }
-
-      await save(_values);
+      await save(values);
       updateHasChanges(false);
     }
   }, 1000);

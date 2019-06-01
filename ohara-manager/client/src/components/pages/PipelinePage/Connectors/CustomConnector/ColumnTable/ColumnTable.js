@@ -32,7 +32,7 @@ class ColumnTable extends React.Component {
         name: PropTypes.string.isRequired,
         newName: PropTypes.string.isRequired,
       }),
-    ).isRequired,
+    ),
     dataTypes: PropTypes.array.isRequired,
     handleTypeChange: PropTypes.func,
     handleUp: PropTypes.func,
@@ -41,6 +41,7 @@ class ColumnTable extends React.Component {
     handleColumnRowDelete: PropTypes.func.isRequired,
     handleColumnRowUp: PropTypes.func.isRequired,
     handleColumnRowDown: PropTypes.func.isRequired,
+    parentValues: PropTypes.object,
   };
 
   initialState = {
@@ -73,15 +74,18 @@ class ColumnTable extends React.Component {
   };
 
   handleNewRow = values => {
-    const { handleColumnChange } = this.props;
+    const { handleColumnChange, parentValues } = this.props;
     const { columnName, newColumnName, types: currType } = values;
     this.setState({ columnName, newColumnName, currType });
-    handleColumnChange({ columnName, newColumnName, currType });
+    handleColumnChange({ parentValues, columnName, newColumnName, currType });
     this.handleNewRowModalClose();
   };
 
   handleDeleteRow = () => {
-    this.props.handleColumnRowDelete(this.state.currRow);
+    this.props.handleColumnRowDelete({
+      currRow: this.state.currRow,
+      parentValues: this.props.parentValues,
+    });
     this.handleDeleteRowModalClose();
   };
 
@@ -103,6 +107,7 @@ class ColumnTable extends React.Component {
       dataTypes,
       handleColumnRowUp,
       handleColumnRowDown,
+      parentValues,
     } = this.props;
 
     const {
@@ -155,6 +160,7 @@ class ColumnTable extends React.Component {
           handleDeleteRowModalOpen={this.handleDeleteRowModalOpen}
           handleColumnRowUp={handleColumnRowUp}
           handleColumnRowDown={handleColumnRowDown}
+          parentValues={parentValues}
         />
       </>
     );

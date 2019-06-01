@@ -33,6 +33,7 @@ const MuiTab = ({
   handleColumnRowUp,
   handleColumnRowDown,
   groupedDefs,
+  parentValues,
   renderer,
 }) => {
   const [activeIdx, setActiveIdx] = React.useState(0);
@@ -48,6 +49,7 @@ const MuiTab = ({
     handleColumnRowDelete,
     handleColumnRowUp,
     handleColumnRowDown,
+    parentValues,
   };
 
   return (
@@ -79,6 +81,7 @@ MuiTab.propTypes = {
   handleColumnRowDelete: PropTypes.func,
   handleColumnRowUp: PropTypes.func,
   handleColumnRowDown: PropTypes.func,
+  parentValues: PropTypes.object,
 };
 
 export default MuiTab;

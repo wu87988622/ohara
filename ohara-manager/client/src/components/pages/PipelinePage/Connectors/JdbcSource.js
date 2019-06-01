@@ -53,6 +53,7 @@ class JdbcSource extends React.Component {
       push: PropTypes.func.isRequired,
     }).isRequired,
   };
+
   state = {
     isLoading: true,
     topics: [],
@@ -118,36 +119,32 @@ class JdbcSource extends React.Component {
     this.setState({ configs: updatedConfigs });
   };
 
-  handleChange = ({ target }) => {
+  handleColumnChange = update => {
     const { configs } = this.state;
-    const updatedConfigs = utils.updateConfigs({ configs, target });
+    const updatedConfigs = utils.addColumn({ configs, update });
     this.updateComponent(updatedConfigs);
   };
 
-  handleColumnChange = newColumn => {
+  handleColumnRowDelete = update => {
     const { configs } = this.state;
-    const updatedConfigs = utils.addColumn({ configs, newColumn });
+    const updatedConfigs = utils.deleteColumnRow({ configs, update });
     this.updateComponent(updatedConfigs);
   };
 
-  handleColumnRowDelete = currRow => {
-    const { configs } = this.state;
-    const updatedConfigs = utils.deleteColumnRow({ configs, currRow });
-    this.updateComponent(updatedConfigs);
-  };
-
-  handleColumnRowUp = (e, order) => {
+  handleColumnRowUp = (e, update) => {
     e.preventDefault();
     const { configs } = this.state;
-    const updatedConfigs = utils.moveColumnRowUp({ configs, order });
-    this.updateComponent(updatedConfigs);
+    const updatedConfigs = utils.moveColumnRowUp({ configs, update });
+
+    if (updatedConfigs) this.updateComponent(updatedConfigs);
   };
 
-  handleColumnRowDown = (e, order) => {
+  handleColumnRowDown = (e, update) => {
     e.preventDefault();
     const { configs } = this.state;
-    const updatedConfigs = utils.moveColumnRowDown({ configs, order });
-    this.updateComponent(updatedConfigs);
+    const updatedConfigs = utils.moveColumnRowDown({ configs, update });
+
+    if (updatedConfigs) this.updateComponent(updatedConfigs);
   };
 
   handleStartConnector = async () => {
@@ -261,13 +258,11 @@ class JdbcSource extends React.Component {
       connectorId,
     });
 
-    const _sinkProps = sinkProps ? sinkProps : {};
-
-    updateGraph({ update, ..._sinkProps });
+    updateGraph({ update, ...sinkProps });
   };
+
   render() {
     const { state, configs, isLoading, topics, isTestingConfig } = this.state;
-
     const { defs, updateHasChanges } = this.props;
 
     if (!configs) return null;
@@ -287,12 +282,12 @@ class JdbcSource extends React.Component {
     const formProps = {
       formData,
       topics,
-      handleChange: this.handleChange,
       handleColumnChange: this.handleColumnChange,
       handleColumnRowDelete: this.handleColumnRowDelete,
       handleColumnRowUp: this.handleColumnRowUp,
       handleColumnRowDown: this.handleColumnRowDown,
     };
+
     return (
       <Box>
         <TitleWrapper>
@@ -319,10 +314,9 @@ class JdbcSource extends React.Component {
                   <AutoSave
                     save={this.handleSave}
                     updateHasChanges={updateHasChanges}
-                    hasToken
                   />
 
-                  {utils.renderForm(formProps)}
+                  {utils.renderForm({ parentValues: values, ...formProps })}
                   <TestConfigBtn
                     handleClick={e => this.handleTestConnection(e, values)}
                     isWorking={isTestingConfig}
