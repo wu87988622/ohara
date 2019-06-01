@@ -169,6 +169,11 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
         }
       )
     }
+    await(() => {
+      val connectors = result(wkApi.get(wkCluster.name)).connectors
+      connectors.map(_.className).contains(classOf[DumbSinkConnector].getName) &&
+      connectors.map(_.className).contains(classOf[DumbSourceConnector].getName)
+    })
   }
 
   @After

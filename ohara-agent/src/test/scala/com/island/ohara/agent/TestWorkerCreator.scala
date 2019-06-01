@@ -18,12 +18,13 @@ package com.island.ohara.agent
 
 import java.net.URL
 
-import com.island.ohara.client.configurator.v0.JarApi.JarInfo
+import com.island.ohara.client.configurator.v0.JarApi.{JAR_INFO_JSON_FORMAT, JarInfo}
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
+import spray.json.JsArray
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
@@ -276,6 +277,32 @@ class TestWorkerCreator extends SmallTest with Matchers {
         lastModified = CommonUtils.current()
       )
     )
-    WorkerCollie.toJarInfos(WorkerCollie.toJsonString(jarInfos)) shouldBe jarInfos
+    WorkerCollie.toJarInfos(WorkerCollie.toString(jarInfos)) shouldBe jarInfos
+  }
+
+  @Test
+  def testJarInfo3(): Unit = {
+    val jarInfos = Seq(
+      JarInfo(
+        id = CommonUtils.randomString(),
+        name = CommonUtils.randomString(),
+        size = 100,
+        url = new URL("http://localhost:12345/aa.jar"),
+        lastModified = CommonUtils.current()
+      ),
+      JarInfo(
+        id = CommonUtils.randomString(),
+        name = CommonUtils.randomString(),
+        size = 100,
+        url = new URL("http://localhost:12345/aa.jar"),
+        lastModified = CommonUtils.current()
+      )
+    )
+    WorkerCollie.toString(jarInfos).contains("\\\"") shouldBe true
+
+    WorkerCollie.toJarInfos(WorkerCollie.toString(jarInfos)) shouldBe jarInfos
+
+    WorkerCollie.toJarInfos(JsArray(jarInfos.map(JAR_INFO_JSON_FORMAT.write).toVector).toString) shouldBe jarInfos
+
   }
 }

@@ -306,20 +306,26 @@ object WorkerCollie {
   else
     Map(
       WorkerCollie.JAR_URLS_KEY -> jarInfos.map(_.url.toString).mkString(","),
-      WorkerCollie.JAR_INFOS_KEY -> WorkerCollie.toJsonString(jarInfos),
+      WorkerCollie.JAR_INFOS_KEY -> WorkerCollie.toString(jarInfos),
     )
 
-  private[agent] def toJsonString(jarInfos: Seq[JarInfo]): String = JsArray(
-    jarInfos.map(JAR_INFO_JSON_FORMAT.write).toVector).toString
+  /**
+    * convert the scala object to json string with backslash.
+    * this string is written to linux env and the env does not accept the double quote. Hence, we add backslash with
+    * double quotes to keep the origin form in env.
+    */
+  private[agent] def toString(jarInfos: Seq[JarInfo]): String =
+    JsArray(jarInfos.map(JAR_INFO_JSON_FORMAT.write).toVector).toString.replaceAll("\"", "\\\\\"")
 
   import spray.json._
 
   /**
     * this method is in charge of converting string, which is serialized by toMap, to scala objects. We put those helper methods since we
     * have two kind collies that both of them requires those parser.
-    * @param jsonString json representation string
+    * @param string json representation string with specific backslash and quote
     * @return jar information
     */
-  private[agent] def toJarInfos(jsonString: String): Seq[JarInfo] =
-    jsonString.parseJson.asInstanceOf[JsArray].elements.map(JAR_INFO_JSON_FORMAT.read)
+  private[agent] def toJarInfos(string: String): Seq[JarInfo] =
+    // replace the backslash to nothing
+    string.replaceAll("\\\\\"", "\"").parseJson.asInstanceOf[JsArray].elements.map(JAR_INFO_JSON_FORMAT.read)
 }
