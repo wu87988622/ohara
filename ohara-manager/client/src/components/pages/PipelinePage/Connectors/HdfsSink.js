@@ -162,8 +162,10 @@ class HdfsSink extends React.Component {
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (isSuccess) {
-      const { name: connectorName } = this.state;
-      toastr.success(`${MESSAGES.CONNECTOR_DELETION_SUCCESS} ${connectorName}`);
+      const { configs } = this.state;
+      toastr.success(
+        `${MESSAGES.CONNECTOR_DELETION_SUCCESS} ${configs.connector_name}`,
+      );
       await refreshGraph();
 
       const path = `/pipelines/edit/${pipelineId}`;

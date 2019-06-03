@@ -30,3 +30,5 @@
 // ***********************************************************
 
 import './commands';
+require('cypress-plugin-retries');
+Cypress.env('RETRIES', 5);

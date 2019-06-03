@@ -3418,16 +3418,21 @@ cyclist@~0.2.2:
   version "0.2.2"
   resolved "https://registry.yarnpkg.com/cyclist/-/cyclist-0.2.2.tgz#1b33792e11e914a2fd6d6ed6447464444e5fa640"
 
+cypress-plugin-retries@1.2.2:
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/cypress-plugin-retries/-/cypress-plugin-retries-1.2.2.tgz#7235371ca575ad9e16f883169e7f1588379f80f2"
+  integrity sha512-+bVAqJAIwpFQbgM1mAdTgCXXhowEK0pF5DqhId2h0Wq+HQ+QQ2w3hspisVUPTY+HGvncMkddUQQGF5fATuaTvQ==
+
 cypress-testing-library@2.3.4:
   version "2.3.4"
   resolved "https://registry.yarnpkg.com/cypress-testing-library/-/cypress-testing-library-2.3.4.tgz#1cd1567191fd863257cf6bfcf83cfd058e3c7b17"
   dependencies:
     dom-testing-library "^3.12.4"
 
-cypress@3.3.0:
-  version "3.3.0"
-  resolved "https://registry.yarnpkg.com/cypress/-/cypress-3.3.0.tgz#d8bc261a8ae2444bde7c9a70e077236f91b897bc"
-  integrity sha512-v/zMPfGe8NdMUUQRx3QyfYbZoIBxJMAFvRzwpTtctq0L01YRFSGQ4exAUbjGvUyhSJk4j6kR29HetIb29TMxXw==
+cypress@3.3.1:
+  version "3.3.1"
+  resolved "https://registry.yarnpkg.com/cypress/-/cypress-3.3.1.tgz#8a127b1d9fa74bff21f111705abfef58d595fdef"
+  integrity sha512-JIo47ZD9P3jAw7oaK7YKUoODzszJbNw41JmBrlMMiupHOlhmXvZz75htuo7mfRFPC9/1MDQktO4lX/V2+a6lGQ==
   dependencies:
     "@cypress/listr-verbose-renderer" "0.4.1"
     "@cypress/xvfb" "1.2.4"
@@ -6195,6 +6200,7 @@ is-root@2.0.0:
 is-stream@^1.0.1, is-stream@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/is-stream/-/is-stream-1.1.0.tgz#12d4a3dd4e68e0b79ceb8dbc84173ae80d91ca44"
+  integrity sha1-EtSj3U5o4Lec6428hBc66A2RykQ=
 
 is-string@^1.0.4:
   version "1.0.4"
