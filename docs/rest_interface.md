@@ -1433,7 +1433,7 @@ all configs but open a room to enable you to overwrite somethings you do care.
 ```json
 {
   "name": "zk00",
-  "imageName": "oharastream/zookeeper:0.5-SNAPSHOT",
+  "imageName": "oharastream/zookeeper:0.6-SNAPSHOT",
   "clientPort": 12345,
   "peerPort": 12346,
   "electionPort": 12347,
@@ -1449,7 +1449,7 @@ all configs but open a room to enable you to overwrite somethings you do care.
 {
   "name": "zk00",
   "electionPort": 12347,
-  "imageName": "oharastream/zookeeper:0.5-SNAPSHOT",
+  "imageName": "oharastream/zookeeper:0.6-SNAPSHOT",
   "clientPort": 12345,
   "peerPort": 12346,
   "nodeNames": [
@@ -1480,7 +1480,7 @@ does not allow you to reuse port on different purpose (a dangerous behavior, rig
 {
   "name": "zk00",
   "electionPort": 3888,
-  "imageName": "oharastream/zookeeper:0.5-SNAPSHOT",
+  "imageName": "oharastream/zookeeper:0.6-SNAPSHOT",
   "clientPort": 2181,
   "peerPort": 2888,
   "nodeNames": [
@@ -1500,7 +1500,7 @@ does not allow you to reuse port on different purpose (a dangerous behavior, rig
   {
     "name": "zk00",
     "electionPort": 12347,
-    "imageName": "oharastream/zookeeper:0.5-SNAPSHOT",
+    "imageName": "oharastream/zookeeper:0.6-SNAPSHOT",
     "clientPort": 12345,
     "peerPort": 12346,
     "nodeNames": [
@@ -1538,7 +1538,7 @@ It is disallowed to remove a zookeeper cluster used by a running [broker cluster
 {
   "name": "zk00",
   "electionPort": 12347,
-  "imageName": "oharastream/zookeeper:0.5-SNAPSHOT",
+  "imageName": "oharastream/zookeeper:0.6-SNAPSHOT",
   "clientPort": 12345,
   "peerPort": 12346,
   "nodeNames": [
@@ -1595,7 +1595,7 @@ The properties which can be set by user are shown below.
 ```json
 {
   "name": "bk00",
-  "imageName": "oharastream/broker:0.5-SNAPSHOT",
+  "imageName": "oharastream/broker:0.6-SNAPSHOT",
   "zookeeperClusterName": "zk00",
   "clientPort": 12345,
   "exporterPort": 12346,
@@ -1612,7 +1612,7 @@ The properties which can be set by user are shown below.
 {
   "name": "bk00",
   "zookeeperClusterName": "zk00",
-  "imageName": "oharastream/broker:0.5-SNAPSHOT",
+  "imageName": "oharastream/broker:0.6-SNAPSHOT",
   "exporterPort": 12346,
   "clientPort": 12345,
   "jmxPort": 12347,
@@ -1646,7 +1646,7 @@ different purpose (a dangerous behavior, right?).
 {
   "name": "bk00",
   "zookeeperClusterName": "zk00",
-  "imageName": "oharastream/broker:0.5-SNAPSHOT",
+  "imageName": "oharastream/broker:0.6-SNAPSHOT",
   "exporterPort": 7071,
   "clientPort": 9092,
   "jmxPort": 9093,
@@ -1667,7 +1667,7 @@ different purpose (a dangerous behavior, right?).
   {
     "name": "bk00",
     "zookeeperClusterName": "zk00",
-    "imageName": "oharastream/broker:0.5-SNAPSHOT",
+    "imageName": "oharastream/broker:0.6-SNAPSHOT",
     "exporterPort": 7071,
     "clientPort": 9092,
     "jmxPort": 9093,
@@ -1707,7 +1707,7 @@ It is disallowed to remove a broker cluster used by a running [worker cluster](#
 {
   "name": "bk00",
   "zookeeperClusterName": "zk00",
-  "imageName": "oharastream/broker:0.5-SNAPSHOT",
+  "imageName": "oharastream/broker:0.6-SNAPSHOT",
   "exporterPort": 7071,
   "clientPort": 9092,
   "jmxPort": 9093,
@@ -1730,7 +1730,7 @@ However, the balance is not triggered at once.
 {
   "name": "bk00",
   "zookeeperClusterName": "zk00",
-  "imageName": "oharastream/broker:0.5-SNAPSHOT",
+  "imageName": "oharastream/broker:0.6-SNAPSHOT",
   "exporterPort": 7071,
   "clientPort": 9092,
   "jmxPort": 9093,
@@ -1936,7 +1936,7 @@ ignore this element. However, we still list the available values here.
 ```json
 {
   "name": "wk00",
-  "imageName": "oharastream/connect-worker:0.5-SNAPSHOT",
+  "imageName": "oharastream/connect-worker:0.6-SNAPSHOT",
   "clientPort": 12345,
   "jmxPort": 12346,
   "brokerClusterName": "preCreatedBkCluster",
@@ -1967,7 +1967,7 @@ ignore this element. However, we still list the available values here.
   "connectors": [],
   "sinks": [],
   "offsetTopicName": "offsetTopic",
-  "imageName": "oharastream/connect-worker:0.5-SNAPSHOT",
+  "imageName": "oharastream/connect-worker:0.6-SNAPSHOT",
   "groupId": "abcdefg",
   "jarInfos": [],
   "statusTopicReplications": 1,
@@ -2013,7 +2013,7 @@ different purpose (a dangerous behavior, right?).
   "brokerClusterName": "preCreatedBkCluster",
   "connectors": [],
   "offsetTopicName": "offset-956c528fa5",
-  "imageName": "oharastream/connect-worker:0.5-SNAPSHOT",
+  "imageName": "oharastream/connect-worker:0.6-SNAPSHOT",
   "groupId": "dcafb19d0e",
   "jarInfos": [],
   "statusTopicReplications": 1,
@@ -2045,7 +2045,7 @@ different purpose (a dangerous behavior, right?).
     "brokerClusterName": "preCreatedBkCluster",
     "connectors": [],
     "offsetTopicName": "offset-956c528fa5",
-    "imageName": "oharastream/connect-worker:0.5-SNAPSHOT",
+    "imageName": "oharastream/connect-worker:0.6-SNAPSHOT",
     "groupId": "dcafb19d0e",
     "jarInfos": [],
     "statusTopicReplications": 1,
@@ -2236,7 +2236,7 @@ different purpose (a dangerous behavior, right?).
           "orderInGroup": 8,
           "key": "version",
           "required": false,
-          "defaultValue": "0.5-SNAPSHOT",
+          "defaultValue": "0.6-SNAPSHOT",
           "group": "core",
           "editable": false
         },
@@ -2272,7 +2272,7 @@ different purpose (a dangerous behavior, right?).
     }
   ],
   "offsetTopicName": "offset-2c564b55cf",
-  "imageName": "oharastream/connect-worker:0.5-SNAPSHOT",
+  "imageName": "oharastream/connect-worker:0.6-SNAPSHOT",
   "groupId": "a5b623d114",
   "jarInfos": [],
   "statusTopicReplications": 1,
@@ -2307,7 +2307,7 @@ first. Don't worry about the temporary lower throughput when balancer is running
   "brokerClusterName": "preCreatedBkCluster",
   "connectors": [],
   "offsetTopicName": "offset-956c528fa5",
-  "imageName": "oharastream/connect-worker:0.5-SNAPSHOT",
+  "imageName": "oharastream/connect-worker:0.6-SNAPSHOT",
   "groupId": "dcafb19d0e",
   "jarInfos": [],
   "statusTopicReplications": 1,
@@ -2639,7 +2639,7 @@ hence, the returned JSON is in array type. The details of elements are shown bel
           }
         ],
         "nodeName": "node00",
-        "imageName": "oharastream/zookeeper:0.5-SNAPSHOT",
+        "imageName": "oharastream/zookeeper:0.6-SNAPSHOT",
         "id": "22169c48646c",
         "kind": "SSH",
         "created": "2019-04-12 03:30:56 -0400 EDT"
@@ -3250,7 +3250,7 @@ Info API returns the information of Ohara Configurator you are executing. It con
  ```json
 {
   "versionInfo": {
-    "version": "0.5-SNAPSHOT",
+    "version": "0.6-SNAPSHOT",
     "user": "chia",
     "revision": "b86742ca03a0ca02cc3578f8686e38e5cf2fb461",
     "date": "2019-05-13 09:59:38"
