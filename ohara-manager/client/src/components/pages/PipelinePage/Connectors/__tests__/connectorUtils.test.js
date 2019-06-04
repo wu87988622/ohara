@@ -16,6 +16,8 @@
 
 import * as generate from 'utils/generate';
 import * as utils from '../connectorUtils';
+import { CONNECTOR_STATES } from 'constants/pipelines';
+
 describe('getCurrTopicId()', () => {
   it('gets the right topic id', () => {
     const originals = generate.topics(3);
@@ -114,6 +116,140 @@ describe('addColumn()', () => {
     };
 
     expect(update).toEqual(expected);
+  });
+});
+
+describe('getDisplayValue()', () => {
+  it('uses defaultValue if configValue is not given', () => {
+    const defaultValue = generate.id();
+    expect(utils.getDisplayValue({ defaultValue })).toBe(defaultValue);
+  });
+
+  it(`uses configValue instead of defaultValue if these is one`, () => {
+    const configValue = generate.id();
+    const defaultValue = generate.id();
+    expect(utils.getDisplayValue({ configValue, defaultValue })).toBe(
+      configValue,
+    );
+  });
+});
+
+describe('changeKeySeparator()', () => {
+  it('change key separator from `.` to `_`', () => {
+    const key = 'abc.efg';
+    expect(utils.changeKeySeparator(key)).toBe('abc_efg');
+  });
+
+  it('change key separator from `_` to `.`', () => {
+    const key = 'abc_efg_no_oh';
+    expect(utils.changeKeySeparator(key)).toBe('abc.efg.no.oh');
+  });
+});
+
+describe('getConnectorState()', () => {
+  it('returns true if the connector has a running state', () => {
+    const state = CONNECTOR_STATES.running;
+    expect(utils.getConnectorState(state)).toBe(true);
+  });
+
+  it('returns true if the connector has a failed state', () => {
+    const state = CONNECTOR_STATES.failed;
+    expect(utils.getConnectorState(state)).toBe(true);
+  });
+
+  it(`returns false if the connector doesn't have either running or failed state`, () => {
+    const state = 'unknown state';
+    expect(utils.getConnectorState(state)).toBe(false);
+  });
+});
+
+describe('sortByOrder', () => {
+  it('sorts out the definition by the property: `orderInGroup`', () => {
+    const defs = [
+      {
+        name: 'b',
+        orderInGroup: 2,
+      },
+      {
+        name: 'c',
+        orderInGroup: 3,
+      },
+      {
+        name: 'a',
+        orderInGroup: 1,
+      },
+    ];
+
+    const expected = [
+      {
+        name: 'a',
+        orderInGroup: 1,
+      },
+      {
+        name: 'b',
+        orderInGroup: 2,
+      },
+      {
+        name: 'c',
+        orderInGroup: 3,
+      },
+    ];
+
+    expect(defs.sort(utils.sortByOrder)).toEqual(expected);
+  });
+});
+
+describe('getRenderData()', () => {
+  it('gets the correct format of render data', () => {
+    const state = CONNECTOR_STATES.running;
+    const configs = {
+      name: generate.name(),
+    };
+
+    const defs = [
+      {
+        key: 'abc.123',
+        orderInGroup: 2,
+        defaultValue: 123,
+      },
+      {
+        key: 'abc.456',
+        orderInGroup: 3,
+        defaultValue: 456,
+      },
+      {
+        key: 'abc.876',
+        orderInGroup: 1,
+        defaultValue: 876,
+      },
+    ];
+
+    const expected = [
+      {
+        orderInGroup: 1,
+        key: 'abc_876',
+        displayValue: 876,
+        defaultValue: 876,
+        isRunning: true,
+      },
+      {
+        orderInGroup: 2,
+        key: 'abc_123',
+        displayValue: 123,
+        defaultValue: 123,
+        isRunning: true,
+      },
+      {
+        orderInGroup: 3,
+        key: 'abc_456',
+        displayValue: 456,
+        defaultValue: 456,
+        isRunning: true,
+      },
+    ];
+
+    const result = utils.getRenderData({ state, defs, configs });
+    expect(result).toEqual(expected);
   });
 });
 

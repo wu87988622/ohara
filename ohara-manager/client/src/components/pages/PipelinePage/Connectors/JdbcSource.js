@@ -271,7 +271,6 @@ class JdbcSource extends React.Component {
 
     const formData = utils.getRenderData({
       defs,
-      topics,
       configs,
       state,
     });

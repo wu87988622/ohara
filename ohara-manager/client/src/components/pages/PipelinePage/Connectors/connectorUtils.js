@@ -177,17 +177,8 @@ export const switchType = type => {
   }
 };
 
-export const convertData = ({ configValue, valueType, defaultValue }) => {
-  let displayValue;
-  if (!configValue) {
-    // react complains about null values
-    displayValue = defaultValue;
-  } else {
-    // If we have values returned from the connector API, let's use them
-    // instead of the default values
-    displayValue = configValue;
-  }
-
+export const getDisplayValue = ({ configValue, defaultValue }) => {
+  const displayValue = configValue ? configValue : defaultValue;
   return displayValue;
 };
 
@@ -210,40 +201,49 @@ export const changeToken = ({ values, targetToken, replaceToken }) => {
   }, {});
 };
 
-export const getRenderData = ({ state, defs, configs }) => {
+export const changeKeySeparator = key => {
+  let result;
+  let arr;
+  if (key.includes('.')) {
+    arr = key.split('.');
+    result = arr.join('_');
+  } else {
+    arr = key.split('_');
+    result = arr.join('.');
+  }
+
+  return result;
+};
+
+export const getConnectorState = state => {
   const isRunning =
     state === CONNECTOR_STATES.running || state === CONNECTOR_STATES.failed;
-  const sortByOrder = (a, b) => a.orderInGroup - b.orderInGroup;
+
+  return isRunning;
+};
+
+export const sortByOrder = (a, b) => a.orderInGroup - b.orderInGroup;
+
+export const getRenderData = ({ state, defs, configs }) => {
+  const isRunning = getConnectorState(state);
 
   const data = defs
     .sort(sortByOrder)
-    .filter(def => !def.internal) // Don't display these defs
+    .filter(def => !def.internal) // internal defs are not meant to be seen by users
     .map(def => {
-      const { key, defaultValue, valueType } = def;
-
-      let _key;
-      let arr;
-      if (key.includes('.')) {
-        arr = key.split('.');
-        _key = arr.join('_');
-      } else {
-        arr = key.split('_');
-        _key = arr.join('.');
-      }
-
-      const configValue = configs[_key];
-      const displayValue = convertData({
+      const { key, defaultValue } = def;
+      const newKey = changeKeySeparator(key);
+      const configValue = configs[newKey];
+      const displayValue = getDisplayValue({
         configValue,
-        valueType,
         defaultValue,
       });
 
       return {
         ...def,
-        configValue,
         displayValue,
         isRunning,
-        key: _key,
+        key: newKey,
       };
     });
 
@@ -252,11 +252,13 @@ export const getRenderData = ({ state, defs, configs }) => {
 
 export const groupBy = (array, fn) => {
   let groups = {};
+
   array.forEach(o => {
     let group = JSON.stringify(fn(o));
     groups[group] = groups[group] || [];
     groups[group].push(o);
   });
+
   return Object.keys(groups).map(group => {
     return groups[group];
   });
