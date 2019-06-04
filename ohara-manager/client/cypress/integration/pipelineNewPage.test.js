@@ -73,7 +73,7 @@ describe('PipelineNewPage', () => {
     });
   });
 
-  it.skip('adds all connectors', () => {
+  it('adds all connectors', () => {
     const filters = [
       {
         type: CONNECTOR_TYPES.ftpSource,
@@ -120,7 +120,7 @@ describe('PipelineNewPage', () => {
     });
   });
 
-  it.skip('saves and remove a connector even after page refresh', () => {
+  it('saves and removes a connector even after page refresh', () => {
     cy.getByTestId('toolbar-sources')
       .click()
       .getByText(CONNECTOR_TYPES.jdbcSource)
@@ -154,7 +154,7 @@ describe('PipelineNewPage', () => {
       .should('not.be.exist');
   });
 
-  it.skip('ftp sink source connect to topic write to graph', () => {
+  it('connects Ftp soure -> Topic -> Ftp sink', () => {
     cy.server();
     cy.route('PUT', 'api/pipelines/*').as('putPipeline');
     cy.route('GET', 'api/connectors/*').as('getConnector');
@@ -192,12 +192,15 @@ describe('PipelineNewPage', () => {
       .click()
       .getByText('FTP sink connector')
       .should('have.length', '1')
-      .getByText('FTP Sink 2/2')
+      .getByText('core')
       .click()
       .wait('@getConnector')
       .get('@createTopic')
       .then(topic => {
-        cy.getByTestId('read-topic-select').select(topic.name);
+        cy.getByText('Please select...')
+          .click()
+          .get(`li[data-value=${topic.name}]`)
+          .click();
       })
       .wait('@putPipeline')
       .get('g.edgePath')
@@ -212,17 +215,17 @@ describe('PipelineNewPage', () => {
       .click({ force: true })
       .get('@createTopic')
       .then(topic => {
-        cy.getByText('topics')
+        cy.getByText('Please select...')
           .click()
-          .get('select')
-          .select(topic.name);
+          .get(`li[data-value=${topic.name}]`)
+          .click();
       })
       .wait('@putPipeline')
       .get('g.edgePath')
       .should('have.length', 2);
   });
 
-  it.skip('hdfs sink source connect to topic write to graph', () => {
+  it('connects Jdbc source -> Topic -> Hdfs sink together', () => {
     cy.server();
     cy.route('PUT', '/api/pipelines/*').as('putPipeline');
     cy.route('GET', '/api/connectors/*').as('getConnector');
@@ -260,9 +263,14 @@ describe('PipelineNewPage', () => {
       .wait('@getConnector')
       .getByText('HDFS sink connector')
       .should('have.length', '1')
+      .getByText('core')
+      .click()
       .get('@createTopic')
       .then(topic => {
-        cy.getByTestId('topic-select').select(topic.name);
+        cy.getByText('Please select...')
+          .click()
+          .get(`li[data-value=${topic.name}]`)
+          .click();
       })
       .wait('@putPipeline')
       .get('g.edgePath')
@@ -273,9 +281,14 @@ describe('PipelineNewPage', () => {
       .wait('@getConnector')
       .getByText('JDBC source connector')
       .should('have.length', '1')
+      .getByText('core')
+      .click()
       .get('@createTopic')
       .then(topic => {
-        cy.getByTestId('write-topic-select').select(topic.name);
+        cy.getByText('Please select...')
+          .click()
+          .get(`li[data-value=${topic.name}]`)
+          .click();
       })
       .wait('@putPipeline')
       .get('g.edgePath')

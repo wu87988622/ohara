@@ -207,6 +207,7 @@ class PipelineToolbar extends React.Component {
       currentTopic,
       updateCurrentTopic,
       isLoading,
+      workerClusterName,
     } = this.props;
 
     const {
@@ -284,6 +285,7 @@ class PipelineToolbar extends React.Component {
               graph={graph}
               updateAddBtnStatus={this.updateAddBtnStatus}
               isLoading={isFetchWorkerWorking}
+              workerClusterName={workerClusterName}
             />
           )}
         </Modal>
