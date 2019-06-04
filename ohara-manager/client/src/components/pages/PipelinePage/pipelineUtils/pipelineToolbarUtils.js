@@ -34,7 +34,11 @@ const getClassName = connector => {
   return className;
 };
 
-export const createConnector = async ({ updateGraph, connector }) => {
+export const createConnector = async ({
+  updateGraph,
+  connector,
+  workerClusterName,
+}) => {
   const { typeName } = connector;
 
   const className = getClassName(connector);
@@ -67,6 +71,7 @@ export const createConnector = async ({ updateGraph, connector }) => {
         topics: [],
         numberOfTasks: 1,
         configs: {},
+        workerClusterName: workerClusterName,
       };
 
       const res = await connectorApi.createConnector(params);
@@ -77,6 +82,7 @@ export const createConnector = async ({ updateGraph, connector }) => {
         name: connectorName,
         'connector.class': className,
         'connector.name': connectorName,
+        workerClusterName: workerClusterName,
       };
 
       const res = await connectorApi.createConnector(params);

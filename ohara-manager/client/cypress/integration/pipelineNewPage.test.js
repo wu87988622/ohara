@@ -120,7 +120,7 @@ describe('PipelineNewPage', () => {
     });
   });
 
-  it('saves and remove a connector even after page refresh', () => {
+  it('saves and removes a connector even after page refresh', () => {
     cy.getByTestId('toolbar-sources')
       .click()
       .getByText(CONNECTOR_TYPES.jdbcSource)
@@ -154,7 +154,7 @@ describe('PipelineNewPage', () => {
       .should('not.be.exist');
   });
 
-  it('ftp sink source connect to topic write to graph', () => {
+  it('connects Ftp soure -> Topic -> Ftp sink', () => {
     cy.server();
     cy.route('PUT', 'api/pipelines/*').as('putPipeline');
     cy.route('GET', 'api/connectors/*').as('getConnector');
@@ -225,7 +225,7 @@ describe('PipelineNewPage', () => {
       .should('have.length', 2);
   });
 
-  it('hdfs sink source connect to topic write to graph', () => {
+  it('connects Jdbc source -> Topic -> Hdfs sink together', () => {
     cy.server();
     cy.route('PUT', '/api/pipelines/*').as('putPipeline');
     cy.route('GET', '/api/connectors/*').as('getConnector');
