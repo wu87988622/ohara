@@ -17,6 +17,18 @@
 import 'cypress-testing-library/add-commands';
 
 import * as utils from '../utils';
+import { fetchZookeepers } from '../../src/api/zookeeperApi';
+import { fetchBrokers } from '../../src/api/brokerApi';
+
+Cypress.Commands.add('fetchBrokers', () => {
+  const res = fetchBrokers();
+  return res;
+});
+
+Cypress.Commands.add('fetchZookeepers', () => {
+  const res = fetchZookeepers();
+  return res;
+});
 
 Cypress.Commands.add('registerWorker', workerName => {
   const fileName = '../scripts/servicesApi/service.json';
