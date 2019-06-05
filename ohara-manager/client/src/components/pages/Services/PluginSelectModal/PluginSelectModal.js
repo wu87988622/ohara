@@ -136,6 +136,7 @@ class PluginSelectModal extends React.Component {
   };
 
   handleFileSelect = e => {
+    console.log(e.target);
     const file = e.target.files[0];
     if (file) {
       const filename = file.name;
@@ -143,7 +144,7 @@ class PluginSelectModal extends React.Component {
         toastr.error(`This file name is duplicate. '${filename}'`);
         return;
       }
-
+      console.log(file);
       this.uploadJar(file);
     }
   };

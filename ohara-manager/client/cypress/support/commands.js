@@ -17,18 +17,32 @@
 import 'cypress-testing-library/add-commands';
 
 import * as utils from '../utils';
+import { axiosInstance } from '../../src/api/apiUtils';
 import { fetchZookeepers } from '../../src/api/zookeeperApi';
 import { fetchBrokers } from '../../src/api/brokerApi';
+import { createWorker } from '../../src/api/workerApi';
+import { createJar } from '../../src/api/jarApi';
 
-Cypress.Commands.add('fetchBrokers', () => {
-  const res = fetchBrokers();
-  return res;
+Cypress.Commands.add('createJar', () => {
+  const url = `/api/jars`;
+  const formData = new FormData();
+  var content = '<a id="a"><b id="b">hey!</b></a>'; // the body of the new file...
+  var blob = new Blob([content], { type: 'application/java-archive' });
+  const file = cy.readFile('../fixtures/plugin/ohara-it-sink.jar');
+  formData.append(file);
+  const config = {
+    headers: {
+      'content-type': 'multipart/form-data',
+    },
+  };
+  return axiosInstance.post(url, formData, config);
 });
 
-Cypress.Commands.add('fetchZookeepers', () => {
-  const res = fetchZookeepers();
-  return res;
-});
+Cypress.Commands.add('testCreateWorker', params => createWorker(params));
+
+Cypress.Commands.add('fetchBrokers', () => fetchBrokers());
+
+Cypress.Commands.add('fetchZookeepers', () => fetchZookeepers());
 
 Cypress.Commands.add('registerWorker', workerName => {
   const fileName = '../scripts/servicesApi/service.json';
