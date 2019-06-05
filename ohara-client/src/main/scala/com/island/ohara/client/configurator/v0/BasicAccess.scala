@@ -46,4 +46,10 @@ abstract class BasicAccess private[v0] (prefixPath: String) {
   protected def _port: Int = CommonUtils.requirePositiveInt(port, () => "port can't be empty")
   protected def _version: String = CommonUtils.requireNonEmpty(version, () => "version can't be empty")
   protected def _prefixPath: String = CommonUtils.requireNonEmpty(prefixPath, () => "prefixPath can't be empty")
+
+  /**
+    * Compose the url with hostname, port, version and prefix
+    * @return url string
+    */
+  protected def url: String = s"http://${_hostname}:${_port}/${_version}/${_prefixPath}"
 }

@@ -49,7 +49,7 @@ private[route] object RouteUtils {
                                                                                  rm2: RootJsonFormat[Res],
                                                                                  executionContext: ExecutionContext) =
     post {
-      entity(as[Req])(req => complete(hook(CommonUtils.uuid(), req).flatMap(store.add)))
+      entity(as[Req])(req => complete(hook(CommonUtils.uuid(), req).flatMap(r => store.addIfAbsent(r))))
     }
 
   private[this] def routeOfList[Res <: Data: ClassTag](hook: Seq[Res] => Future[Seq[Res]])(
@@ -99,6 +99,59 @@ private[route] object RouteUtils {
     hookOfList = (r: Seq[Res]) => Future.traverse(r)(resToRes),
     hookOfGet = (r: Res) => resToRes(r)
   )
+
+  /**
+    * The name is replacing id so we have to add limit to it.
+    * @param name name
+    * @return valid name
+    */
+  private[this] def checkName(name: String): String =
+    if (CommonUtils.onlyNumberAndChar(CommonUtils.requireNonEmpty(name)))
+      name
+    else throw new IllegalArgumentException(s"the legal character is [a-zA-Z0-9], but actual:$name")
+
+  /**
+    * a route to custom CREATION and UPDATE resource. It offers default implementation to GET, LIST and DELETE.
+    * The CREATION is routed to "POST  /$root"
+    * The UPDATE is routed to "PUT /$root/$name"
+    * The GET is routed to "GET /$root/$name"
+    * The LIST is routed to "GET /$root"
+    * The DELETE is routed to "DELETE /$root/$name"
+    * @param root the prefix of URL
+    * @param hookOfCreate custom action for CREATION. the name is either user-defined request or random string
+    * @param hookOfUpdate custom action for UPDATE. the name from URL is must equal to name in payload
+    * @param store data store
+    * @param rm used to marshal request
+    * @param rm2 used to marshal response
+    * @param executionContext thread pool
+    * @tparam Creation request type
+    * @tparam Res response type
+    * @return route
+    */
+  def basicRoute2[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
+    root: String,
+    hookOfCreate: Creation => Future[Res],
+    hookOfUpdate: (String, Update) => Future[Res])(implicit store: DataStore,
+                                                   rm: RootJsonFormat[Creation],
+                                                   rm1: RootJsonFormat[Update],
+                                                   rm2: RootJsonFormat[Res],
+                                                   executionContext: ExecutionContext): server.Route =
+    pathPrefix(root) {
+      pathEnd {
+        post(entity(as[Creation]) { req =>
+          checkName(req.name)
+          complete(hookOfCreate(req).flatMap(res => store.addIfAbsent(res.name, res)))
+        }) ~ get(complete(store.values[Res]()))
+      } ~ path(Segment) { name =>
+        get(complete(store.value[Res](name))) ~ delete(
+          complete(store.remove[Res](name).map(_ => StatusCodes.NoContent))) ~
+          put {
+            entity(as[Update]) { req =>
+              complete(hookOfUpdate(checkName(name), req).map(res => store.add(name, res)))
+            }
+          }
+      }
+    }
 
   def basicRoute[Req, Res <: Data: ClassTag](root: String,
                                              hookOfAdd: (Id, Req) => Future[Res],

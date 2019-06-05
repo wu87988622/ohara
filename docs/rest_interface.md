@@ -412,7 +412,6 @@ Ohara supports to store the simple hdfs information which is running on single n
 
 The following information are tagged by ohara.
 
-1. [id](#object-id) (**string**) — hdfs information id
 1. lastModified (**long**) — the last time to update this hdfs information
 ----------
 ### store a hdfs information
@@ -437,8 +436,7 @@ The following information are tagged by ohara.
 {
   "name": "hdfs0",
   "uri": "hdfs://namenode:9999",
-  "lastModified": 1553498552595,
-  "id": "715e09c9-b4ee-41cc-8d05-cb544904ac38"
+  "lastModified": 1553498552595
 }
 ```
 ----------
@@ -458,6 +456,8 @@ The following information are tagged by ohara.
 }
 ```
 
+> Noted, this API creates an new object if input name does not exist.
+
 **Example Response**
 
 ```json
@@ -465,7 +465,6 @@ The following information are tagged by ohara.
   "name": "hdfs0",
   "uri": "hdfs://namenode:9999",
   "lastModified": 1553498552595,
-  "id": "715e09c9-b4ee-41cc-8d05-cb544904ac38"
 }
 ```
 ----------
@@ -481,7 +480,6 @@ The following information are tagged by ohara.
     "name": "hdfs0",
     "uri": "hdfs://namenode:9999",
     "lastModified": 1553498552595,
-    "id": "715e09c9-b4ee-41cc-8d05-cb544904ac38"
   }
 ]
 ```
@@ -510,7 +508,6 @@ The following information are tagged by ohara.
   "name": "hdfs0",
   "uri": "hdfs://namenode:9999",
   "lastModified": 1553498552595,
-  "id": "715e09c9-b4ee-41cc-8d05-cb544904ac38"
 }
 ```
 ----------

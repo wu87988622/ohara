@@ -16,8 +16,7 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.HadoopApi.{HdfsInfo, HdfsInfoRequest}
-import com.island.ohara.client.configurator.v0.{HadoopApi, TopicApi}
+import com.island.ohara.client.configurator.v0.HadoopApi
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
@@ -30,68 +29,61 @@ class TestHdfsInfoRoute extends SmallTest with Matchers {
   private[this] val configurator = Configurator.builder().fake().build()
 
   private[this] val hdfsApi = HadoopApi.access().hostname(configurator.hostname).port(configurator.port)
+
   @Test
   def test(): Unit = {
-    def compareRequestAndResponse(request: HdfsInfoRequest, response: HdfsInfo): HdfsInfo = {
-      request.name shouldBe response.name
-      request.uri shouldBe response.uri
-      response
-    }
-
-    def compare2Response(lhs: HdfsInfo, rhs: HdfsInfo): Unit = {
-      lhs.id shouldBe rhs.id
-      lhs.name shouldBe rhs.name
-      lhs.uri shouldBe rhs.uri
-      lhs.lastModified shouldBe rhs.lastModified
-    }
-
     // test add
     result(hdfsApi.list).size shouldBe 0
-    val request = HdfsInfoRequest(methodName, "file:///")
-    val response = result(hdfsApi.add(request))
+    val response = result(hdfsApi.request().name(CommonUtils.randomString()).uri("file:////").create())
+    result(hdfsApi.list).size shouldBe 1
 
     // test get
-    compare2Response(response, result(hdfsApi.get(response.id)))
+    response shouldBe result(hdfsApi.get(response.name))
 
     // test update
-    val anotherRequest = HdfsInfoRequest(s"$methodName-2", "file:///")
-    val newResponse =
-      compareRequestAndResponse(anotherRequest, result(hdfsApi.update(response.id, anotherRequest)))
-
-    // test get
-    compare2Response(newResponse, result(hdfsApi.get(newResponse.id)))
-
-    // test delete
+    val uri = CommonUtils.randomString()
+    val newResponse = result(hdfsApi.request().name(response.name).uri(uri).update())
     result(hdfsApi.list).size shouldBe 1
-    result(hdfsApi.delete(response.id))
+    newResponse.uri shouldBe uri
+    newResponse shouldBe result(hdfsApi.get(response.name))
+
+    result(hdfsApi.delete(response.name))
     result(hdfsApi.list).size shouldBe 0
 
     // test nonexistent data
     an[IllegalArgumentException] should be thrownBy result(hdfsApi.get("123"))
-    an[IllegalArgumentException] should be thrownBy result(hdfsApi.update("777", anotherRequest))
   }
 
   @Test
-  def testGet2UnmatchedType(): Unit = {
-    val access = HadoopApi.access().hostname(configurator.hostname).port(configurator.port)
-    result(access.list).size shouldBe 0
-    val request = HdfsInfoRequest(methodName, "file:///")
-    var response: HdfsInfo = result(access.add(request))
-    request.name shouldBe response.name
-    request.uri shouldBe response.uri
-
-    response = result(access.get(response.id))
-    request.name shouldBe response.name
-    request.uri shouldBe response.uri
-
-    an[IllegalArgumentException] should be thrownBy result(
-      TopicApi.access().hostname(configurator.hostname).port(configurator.port).get(response.id))
-    result(access.delete(response.id))
+  def duplicateUpdate(): Unit = {
+    val count = 10
+    (0 until 10).foreach { index =>
+      result(hdfsApi.request().name(index.toString).uri(index.toString).update())
+    }
+    result(hdfsApi.list).size shouldBe count
   }
 
   @Test
-  def duplicateDeleteStreamProperty(): Unit =
+  def duplicateDelete(): Unit =
     (0 to 10).foreach(_ => result(hdfsApi.delete(CommonUtils.randomString(5))))
+
+  @Test
+  def testInvalidNameOnUpdate(): Unit = {
+    val invalidStrings = Seq("a_", "a-", "a.", "a~")
+    invalidStrings.foreach { invalidString =>
+      an[IllegalArgumentException] should be thrownBy result(
+        hdfsApi.request().name(invalidString).uri(CommonUtils.randomString()).update())
+    }
+  }
+
+  @Test
+  def testInvalidNameOnCreation(): Unit = {
+    val invalidStrings = Seq("a_", "a-", "a.", "a~")
+    invalidStrings.foreach { invalidString =>
+      an[IllegalArgumentException] should be thrownBy result(
+        hdfsApi.request().name(invalidString).uri(CommonUtils.randomString()).create())
+    }
+  }
 
   @After
   def tearDown(): Unit = Releasable.close(configurator)

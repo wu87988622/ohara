@@ -100,13 +100,35 @@ trait DataStore extends Releasable {
     implicit executor: ExecutionContext): Future[T]
 
   /**
-    * add a data associated to name to store
+    * add a data associated to name to store. Noted, it throw exception if the input data is already associated to
+    * a value.
     * @param data data
     * @param executor thread pool
     * @tparam T data type
     * @return the input data
     */
-  def add[T <: Data](data: T)(implicit executor: ExecutionContext): Future[T]
+  def addIfAbsent[T <: Data](data: T)(implicit executor: ExecutionContext): Future[T] = addIfAbsent(data.id, data)
+
+  /**
+    * add a data associated to name to store. Noted, it throw exception if the input key is already associated to
+    * a value.
+    * @param key data key
+    * @param data data
+    * @param executor thread pool
+    * @tparam T data type
+    * @return the input data
+    */
+  def addIfAbsent[T <: Data](key: String, data: T)(implicit executor: ExecutionContext): Future[T]
+
+  /**
+    * add the key-value even if there is already an existent key-value.
+    * @param key key
+    * @param data data
+    * @param executor thread pool
+    * @tparam T data type
+    * @return the input data
+    */
+  def add[T <: Data](key: String, data: T)(implicit executor: ExecutionContext): Future[T]
 
   /**
     * Noted, the type of stored data must be equal to input type.

@@ -126,14 +126,20 @@ private[store] class RocksDataStore(folder: String,
         newValue
       })
 
-  override def add[T <: Data](data: T)(implicit executor: ExecutionContext): Future[T] =
+  override def addIfAbsent[T <: Data](key: String, data: T)(implicit executor: ExecutionContext): Future[T] =
     Future.successful {
       if (_get(getOrCreateHandler(data.getClass), data.id).isDefined)
-        throw new IllegalStateException(s"${data.id} exists on ${data.getClass.getName}")
+        throw new IllegalStateException(s"$key exists on ${data.getClass.getName}")
       else {
-        db.put(getOrCreateHandler(data.getClass), toKey(data.id), toValue(data))
+        db.put(getOrCreateHandler(data.getClass), toKey(key), toValue(data))
         data
       }
+    }
+
+  override def add[T <: Data](key: String, data: T)(implicit executor: ExecutionContext): Future[T] =
+    Future.successful {
+      db.put(getOrCreateHandler(data.getClass), toKey(key), toValue(data))
+      data
     }
 
   override def exist[T <: Data: ClassTag](name: String)(implicit executor: ExecutionContext): Future[Boolean] =

@@ -52,8 +52,8 @@ class TestRocksDataStore extends SmallTest with Matchers {
     val s0 = DataStore.builder.persistentFolder(folder.getCanonicalPath).build()
     try {
       s0.numberOfTypes() shouldBe 0
-      result(s0.add(value0))
-      result(s0.add(value1))
+      result(s0.addIfAbsent(value0))
+      result(s0.addIfAbsent(value1))
       s0.size() shouldBe 2
       s0.numberOfTypes() shouldBe 1
     } finally s0.close()
@@ -71,7 +71,7 @@ class TestRocksDataStore extends SmallTest with Matchers {
   def testGetter(): Unit = {
     val key = CommonUtils.randomString()
     val value = createData(key)
-    result(store.add(value)) shouldBe value
+    result(store.addIfAbsent(value)) shouldBe value
     result(store.get[SimpleData](key)) shouldBe Some(value)
   }
 
@@ -80,18 +80,18 @@ class TestRocksDataStore extends SmallTest with Matchers {
     val key = CommonUtils.randomString()
     val value = createData(key)
     an[NoSuchElementException] should be thrownBy result(store.value(key))
-    result(store.add(value)) shouldBe value
+    result(store.addIfAbsent(value)) shouldBe value
     result(store.value[SimpleData](key)) shouldBe value
   }
 
   @Test
   def testMultiPut(): Unit = {
     store.size shouldBe 0
-    result(store.add(createData()))
+    result(store.addIfAbsent(createData()))
     store.size shouldBe 1
-    result(store.add(createData()))
+    result(store.addIfAbsent(createData()))
     store.size shouldBe 2
-    result(store.add(createData()))
+    result(store.addIfAbsent(createData()))
     store.size shouldBe 3
   }
 
@@ -99,23 +99,29 @@ class TestRocksDataStore extends SmallTest with Matchers {
   def testDelete(): Unit = {
     val key = CommonUtils.randomString()
     val value = createData(key)
-    result(store.add(value)) shouldBe value
+    result(store.addIfAbsent(value)) shouldBe value
     result(store.get[SimpleData](key)) shouldBe Some(value)
     result(store.remove[SimpleData](key)) shouldBe true
     store.size shouldBe 0
   }
 
   @Test
-  def testDuplicateAdd(): Unit = {
+  def testDuplicateAddIfAbsent(): Unit = {
     val value0 = createData()
     val value1 = createData(value0.id)
-    result(store.add(value0)) shouldBe value0
+    result(store.addIfAbsent(value0)) shouldBe value0
     store.size shouldBe 1
-    an[IllegalStateException] should be thrownBy result(store.add(value1))
+    an[IllegalStateException] should be thrownBy result(store.addIfAbsent(value1))
     store.size shouldBe 1
-    result(store.add(createData()))
+    result(store.addIfAbsent(createData()))
     store.size shouldBe 2
     result(store.raws()).size shouldBe store.size
+  }
+
+  @Test
+  def testDuplicateAdd(): Unit = {
+    val value0 = createData()
+    (0 until 10).foreach(_ => result(store.add(value0.id, value0)))
   }
 
   @Test
@@ -125,7 +131,7 @@ class TestRocksDataStore extends SmallTest with Matchers {
     val key = CommonUtils.randomString()
     val value0 = createData(key)
     val value1 = createData(value0.id)
-    result(store.add(value0)) shouldBe value0
+    result(store.addIfAbsent(value0)) shouldBe value0
     store.size shouldBe 1
     result(store.addIfPresent[SimpleData](key, v => {
       v shouldBe value0
@@ -145,8 +151,8 @@ class TestRocksDataStore extends SmallTest with Matchers {
   def testValues(): Unit = {
     val value0 = createData()
     val value1 = createData()
-    result(store.add(value0)) shouldBe value0
-    result(store.add(value1)) shouldBe value1
+    result(store.addIfAbsent(value0)) shouldBe value0
+    result(store.addIfAbsent(value1)) shouldBe value1
     result(store.values[SimpleData]()).size shouldBe 2
     result(store.values[SimpleData]()).contains(value0) shouldBe true
     result(store.values[SimpleData]()).contains(value1) shouldBe true
@@ -157,7 +163,7 @@ class TestRocksDataStore extends SmallTest with Matchers {
     val key = CommonUtils.randomString()
     val value = createData(key)
     result(store.exist(key)) shouldBe false
-    result(store.add(value)) shouldBe value
+    result(store.addIfAbsent(value)) shouldBe value
     result(store.exist(key)) shouldBe false
     result(store.exist[SimpleData](key)) shouldBe true
   }
@@ -165,7 +171,7 @@ class TestRocksDataStore extends SmallTest with Matchers {
   @Test
   def testAdd(): Unit = {
     val data = createData("abcd")
-    result(store.add(data))
+    result(store.addIfAbsent(data))
 
     result(store.exist[SimpleData](data.id)) shouldBe true
     result(store.exist[SimpleData]("12345")) shouldBe false
@@ -176,7 +182,7 @@ class TestRocksDataStore extends SmallTest with Matchers {
   @Test
   def testUpdate(): Unit = {
     val data = createData("abcd")
-    result(store.add(data))
+    result(store.addIfAbsent(data))
 
     val data2 = (data: SimpleData) => Future.successful(data.copy(name = "name2"))
 
@@ -186,8 +192,8 @@ class TestRocksDataStore extends SmallTest with Matchers {
 
   @Test
   def testList(): Unit = {
-    result(store.add(createData("abcd")))
-    result(store.add(createData("xyz")))
+    result(store.addIfAbsent(createData("abcd")))
+    result(store.addIfAbsent(createData("xyz")))
 
     store.size shouldBe 2
   }
@@ -197,8 +203,8 @@ class TestRocksDataStore extends SmallTest with Matchers {
     val data1 = createData("abcd")
     val data2 = createData("xyz")
 
-    result(store.add(data1))
-    result(store.add(data2))
+    result(store.addIfAbsent(data1))
+    result(store.addIfAbsent(data2))
     store.size shouldBe 2
 
     result(store.remove("1234")) shouldBe false
@@ -213,7 +219,7 @@ class TestRocksDataStore extends SmallTest with Matchers {
   def testRaw(): Unit = {
     val data1 = createData("abcd")
 
-    result(store.add(data1))
+    result(store.addIfAbsent(data1))
     store.size shouldBe 1
 
     result(store.remove("1234")) shouldBe false

@@ -19,7 +19,6 @@ package com.island.ohara.configurator.route
 import java.io.File
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
-import com.island.ohara.client.configurator.v0.HadoopApi.HdfsInfoRequest
 import com.island.ohara.client.configurator.v0.NodeApi.NodeCreationRequest
 import com.island.ohara.client.configurator.v0.PipelineApi.{Flow, Pipeline, PipelineCreationRequest}
 import com.island.ohara.client.configurator.v0.StreamApi.StreamPropertyRequest
@@ -221,8 +220,8 @@ class TestPipelineRoute extends SmallTest with Matchers {
                              brokerClusterName = None,
                              numberOfPartitions = None,
                              numberOfReplications = None))).id
-    val uuid_1 = result(hdfsAccess.add(HdfsInfoRequest(methodName, "file:///"))).id
-    val uuid_2 = result(hdfsAccess.add(HdfsInfoRequest(methodName, "file:///"))).id
+    val uuid_1 = result(hdfsAccess.request().name(CommonUtils.randomString()).uri("file:///").create()).id
+    val uuid_2 = result(hdfsAccess.request().name(CommonUtils.randomString()).uri("file:///").create()).id
     val uuid_3 = result(
       topicAccess.add(
         TopicCreationRequest(name = Some(CommonUtils.randomString(10)),

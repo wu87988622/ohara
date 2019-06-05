@@ -37,7 +37,7 @@ object ShabondiRoute {
     val newShabondi =
       ShabondiDescription(CommonUtils.uuid(), "shabondi name", CommonUtils.current(), None, Seq.empty, -1, 1)
 
-    store.add[ShabondiDescription](newShabondi)
+    store.addIfAbsent[ShabondiDescription](newShabondi)
   }
 
   private def getProperty(id: String, store: DataStore)(implicit executionContext: ExecutionContext) = {

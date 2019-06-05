@@ -116,7 +116,7 @@ class ConfiguratorBuilder {
           lastModified = CommonUtils.current()
         )
       }
-      .foreach(store.add)
+      .foreach(r => store.addIfAbsent(r))
     val collie = new FakeClusterCollie(createCollie(), store, bkConnectionProps, wkConnectionProps)
     val bkCluster = {
       val pair = bkConnectionProps.split(",")
@@ -262,7 +262,7 @@ class ConfiguratorBuilder {
                password = "fake password",
                services = Seq.empty,
                lastModified = CommonUtils.current()))
-      .foreach(store.add[Node])
+      .foreach(store.addIfAbsent[Node])
     clusterCollie(collie)
   }
 

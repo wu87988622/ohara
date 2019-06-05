@@ -39,6 +39,9 @@ class Access[Req, Res] private[v0] (prefixPath: String)(implicit rm0: RootJsonFo
     exec.get[Seq[Res], ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}")
   def add(request: Req)(implicit executionContext: ExecutionContext): Future[Res] =
     exec.post[Req, Res, ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}", request)
+  // TODO: remove this one after we update all Restful APIs by chia
   def update(name: String, request: Req)(implicit executionContext: ExecutionContext): Future[Res] =
     exec.put[Req, Res, ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$name", request)
+  def update[Req2](request: Req2)(implicit rm: RootJsonFormat[Req2], executionContext: ExecutionContext): Future[Res] =
+    exec.put[Req2, Res, ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}", request)
 }
