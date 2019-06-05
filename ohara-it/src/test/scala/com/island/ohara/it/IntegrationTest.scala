@@ -54,7 +54,7 @@ class IntegrationTest extends OharaTest {
 }
 
 object IntegrationTest {
-  def result[T](f: Future[T]): T = Await.result(f, 300 seconds)
+  def result[T](f: Future[T]): T = Await.result(f, 800 seconds)
 
-  def await(f: () => Boolean): Unit = CommonUtils.await(() => f(), Duration.ofSeconds(300))
+  def await(f: () => Boolean): Unit = CommonUtils.await(() => f(), Duration.ofSeconds(800))
 }

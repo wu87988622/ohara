@@ -295,6 +295,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         }
       )
       log.info(s"[BROKER] start to check the sync information. active broker nodes:${cluster.nodeNames} ... done")
+      log.info(s"[BROKER] number of replications:${cluster.nodeNames.size}")
       await(
         () => {
           try {

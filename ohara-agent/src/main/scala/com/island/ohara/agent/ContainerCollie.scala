@@ -20,10 +20,12 @@ import com.island.ohara.agent.Collie.ClusterCreator
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.util.CommonUtils
+
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
 
@@ -139,4 +141,28 @@ object ContainerCollie {
       serviceName,
       CommonUtils.randomString(LENGTH_OF_CONTAINER_NAME_ID)
     ).mkString(ContainerCollie.DIVIDER)
+
+  protected[agent] def preSettingEnvironment(
+    existNodes: Map[Node, ContainerInfo],
+    newNodes: Map[Node, String],
+    zkContainers: Seq[ContainerInfo],
+    resolveHostName: String => String,
+    hookUpdate: (Node, ContainerInfo, Map[String, String]) => Unit): Map[String, String] = {
+    val existRoute: Map[String, String] = existNodes.map {
+      case (node, container) => container.nodeName -> CommonUtils.address(node.name)
+    }
+    // add route in order to make broker node can connect to each other (and zk node).
+    val route: Map[String, String] = newNodes.map {
+      case (node, _) =>
+        node.name -> resolveHostName(node.name)
+    } ++ zkContainers.map(zkContainer => zkContainer.nodeName -> resolveHostName(zkContainer.nodeName)).toMap
+
+    // update the route since we are adding new node to a running broker cluster
+    // we don't need to update startup broker list since kafka do the update for us.
+    existNodes.foreach {
+      case (node, container) => hookUpdate(node, container, route)
+    }
+    existRoute ++ route
+  }
+
 }

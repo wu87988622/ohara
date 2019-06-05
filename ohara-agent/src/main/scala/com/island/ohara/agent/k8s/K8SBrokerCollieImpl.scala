@@ -19,13 +19,14 @@ package com.island.ohara.agent.k8s
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.{ClusterInfo, NodeApi}
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
 
-private class K8SBrokerCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
+private class K8SBrokerCollieImpl(nodeCollie: NodeCollie, zkCollie: ZookeeperCollie, k8sClient: K8SClient)
     extends K8SBasicCollieImpl[BrokerClusterInfo, BrokerCollie.ClusterCreator](nodeCollie, k8sClient)
     with BrokerCollie {
 
@@ -34,110 +35,51 @@ private class K8SBrokerCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
 
   override def creator(): BrokerCollie.ClusterCreator =
     (executionContext, clusterName, imageName, zookeeperClusterName, clientPort, exporterPort, jmxPort, nodeNames) => {
-      implicit val exec: ExecutionContext = executionContext
-      exist(clusterName)
-        .flatMap(if (_) containers(clusterName) else Future.successful(Seq.empty))
-        .flatMap(
-          existContainers =>
-            nodeCollie
-              .nodes(existContainers.map(_.nodeName))
-              .map(_.zipWithIndex.map {
-                case (node, index) => node -> existContainers(index)
-              }.toMap)
-              .map { existNodes =>
-                // if there is a running cluster already, we should check the consistency of configuration
-                existNodes.values.foreach {
-                  container =>
-                    def checkValue(previous: String, newValue: String): Unit =
-                      if (previous != newValue) throw new IllegalArgumentException(s"previous:$previous new:$newValue")
-                    def check(key: String, newValue: String): Unit = {
-                      val previous = container.environments(key)
-                      if (previous != newValue) throw new IllegalArgumentException(s"previous:$previous new:$newValue")
-                    }
-                    checkValue(container.imageName, imageName)
-                    check(BrokerCollie.CLIENT_PORT_KEY, clientPort.toString)
-                    check(BrokerCollie.ZOOKEEPER_CLUSTER_NAME, zookeeperClusterName)
-                }
-                existNodes
-            })
-        .flatMap(existNodes =>
-          nodeCollie
-            .nodes(nodeNames)
-            .map(_.map(node =>
-              node -> s"${ContainerCollie.format(PREFIX_KEY, clusterName, serviceName)}$DIVIDER${node.name}").toMap)
-            .map((existNodes, _)))
-        .flatMap {
-          case (existNodes, newNodes) =>
-            existNodes.keys.foreach(node =>
-              if (newNodes.keys.exists(_.name == node.name))
-                throw new IllegalArgumentException(s"${node.name} has run the broker service for $clusterName"))
-
-            query(zookeeperClusterName, ContainerCollie.ZK_SERVICE_NAME).map((existNodes, newNodes, _))
-        }
-        .map {
-          case (existNodes, newNodes, zkContainers) =>
-            if (zkContainers.isEmpty) throw new IllegalArgumentException(s"$clusterName doesn't exist")
-            val zookeepers = zkContainers
-              .map(c => s"${c.hostname}.$K8S_DOMAIN_NAME:${c.environments(ZookeeperCollie.CLIENT_PORT_KEY).toInt}")
-              .mkString(",")
-
-            val maxId: Int =
-              if (existNodes.isEmpty) 0
-              else existNodes.values.map(_.environments(BrokerCollie.ID_KEY).toInt).toSet.max + 1
-
-            val successfulNodeNames = newNodes.zipWithIndex
-              .map {
-                case ((node, hostname), index) =>
-                  val client = k8sClient
-                  try {
-                    val creator: Future[Option[ContainerInfo]] = client
-                      .containerCreator()
-                      .imageName(imageName)
-                      .nodename(node.name)
-                      .labelName(OHARA_LABEL)
-                      .domainName(K8S_DOMAIN_NAME)
-                      .portMappings(Map(
-                        clientPort -> clientPort,
-                        exporterPort -> exporterPort,
-                        jmxPort -> jmxPort
-                      ))
-                      .hostname(hostname)
-                      .envs(Map(
-                        BrokerCollie.ID_KEY -> (maxId + index).toString,
-                        BrokerCollie.CLIENT_PORT_KEY -> clientPort.toString,
-                        BrokerCollie.ZOOKEEPERS_KEY -> zookeepers,
-                        BrokerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
-                        BrokerCollie.EXPORTER_PORT_KEY -> exporterPort.toString,
-                        BrokerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
-                        BrokerCollie.ZOOKEEPER_CLUSTER_NAME -> zookeeperClusterName,
-                        BrokerCollie.JMX_HOSTNAME_KEY -> node.name,
-                        BrokerCollie.JMX_PORT_KEY -> jmxPort.toString
-                      ))
-                      .name(hostname)
-                      .run()
-                    Await.result(creator, TIMEOUT)
-                  } catch {
-                    case e: Throwable =>
-                      LOG.error(s"failed to start $imageName on ${node.name}", e)
-                      None
-                  }
-              }
-              .map(_.get.nodeName)
-              .toSeq
-            if (successfulNodeNames.isEmpty)
-              throw new IllegalArgumentException(s"failed to create $clusterName on Broker")
-            BrokerClusterInfo(
-              name = clusterName,
-              imageName = imageName,
-              zookeeperClusterName = zookeeperClusterName,
-              exporterPort = exporterPort,
-              clientPort = clientPort,
-              jmxPort = jmxPort,
-              nodeNames = successfulNodeNames ++ existNodes.map(_._1.name)
-            )
-        }
+      bkCreator(nodeCollie,
+                PREFIX_KEY,
+                clusterName,
+                serviceName,
+                imageName,
+                zookeeperClusterName,
+                clientPort,
+                exporterPort,
+                jmxPort,
+                nodeNames)(executionContext)
     }
+
+  override protected def doCreator(executionContext: ExecutionContext,
+                                   clusterName: String,
+                                   containerName: String,
+                                   containerInfo: ContainerInfo,
+                                   node: NodeApi.Node,
+                                   route: Map[String, String]): Unit = {
+    implicit val exec: ExecutionContext = executionContext
+    try {
+      val creator: Future[Option[ContainerInfo]] = k8sClient
+        .containerCreator()
+        .imageName(containerInfo.imageName)
+        .nodename(node.name)
+        .labelName(OHARA_LABEL)
+        .domainName(K8S_DOMAIN_NAME)
+        .portMappings(
+          containerInfo.portMappings.flatMap(_.portPairs).map(pair => pair.hostPort -> pair.containerPort).toMap)
+        .hostname(s"${containerInfo.name}$DIVIDER${node.name}")
+        .envs(containerInfo.environments)
+        .name(s"${containerInfo.name}$DIVIDER${node.name}")
+        .run()
+      Await.result(creator, TIMEOUT)
+    } catch {
+      case e: Throwable =>
+        LOG.error(s"failed to start ${containerInfo.imageName} on ${node.name}", e)
+        None
+    }
+  }
 
   override protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] = toBrokerCluster(clusterName, containers)
+
+  override protected def zookeeperClusters(
+    implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = {
+    zkCollie.clusters.asInstanceOf[Future[Map[ClusterInfo, Seq[ContainerInfo]]]]
+  }
 }
