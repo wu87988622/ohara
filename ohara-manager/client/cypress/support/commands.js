@@ -24,17 +24,24 @@ import { createWorker } from '../../src/api/workerApi';
 import { createJar } from '../../src/api/jarApi';
 
 Cypress.Commands.add('createJar', () => {
-  const url = `/api/jars`;
-  const formData = new FormData();
-  var content = '<a id="a"><b id="b">hey!</b></a>'; // the body of the new file...
-  var blob = new Blob([content], { type: 'application/java-archive' });
-  const file = cy.readFile('../fixtures/plugin/ohara-it-sink.jar');
-  formData.append(file);
+  const url = 'api/jars';
+  const type = 'application/java-archive';
   const config = {
     headers: {
       'content-type': 'multipart/form-data',
     },
   };
+  const file = cy.fixture('plugin/ohara-it-sink.jar');
+  const blob = Cypress.Blob.base64StringToBlob(file, type).then(blob => {
+    return new File([blob], 'testfile.png', { type: type });
+  });
+  console.log(blob);
+  let formData = new FormData();
+  formData.append('id', 'id12345');
+  formData.append('name', 'sink.jar');
+  formData.append('size', 123);
+  formData.append('lastModified', 12345);
+  formData.append('file', blob);
   return axiosInstance.post(url, formData, config);
 });
 
