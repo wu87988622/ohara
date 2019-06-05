@@ -32,27 +32,30 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 /**
-  * Plugin store used to keep the custom plugin (connector or streamapp) and provide a way to remote node to get the plugin.
+  * Plugin store used to keep the custom plugin (connector or streamApp) and provide a way to remote node to get the plugin.
   * In order to simplify the plugin store, the "way" used to get the plugin are format to URL. Also, the default implementation is based
   * on ftp, which can be load by java dynamical call.
   */
 trait JarStore extends Releasable {
 
   /**
-    * add a jar into store. This is a async method so you need to check the result of future.
+    * add a jar into store. This is an async method so you need to check the result of future.
     * @param file jar file
+    * @param group group name. default is random string
     * @return a async thread which is doing the upload
     */
-  def add(file: File)(implicit executionContext: ExecutionContext): Future[JarInfo] =
-    add(CommonUtils.requireExist(file), file.getName)
+  def add(file: File, group: Option[String])(implicit executionContext: ExecutionContext): Future[JarInfo] =
+    add(CommonUtils.requireExist(file), file.getName, group)
 
   /**
-    * add a jar into store. This is a async method so you need to check the result of future.
+    * add a jar into store with specified file name. This is an async method so you need to check the result of future.
     * @param file jar file
     * @param newName new name of jar file
+    * @param group group name. default is random string
     * @return a async thread which is doing the upload
     */
-  def add(file: File, newName: String)(implicit executionContext: ExecutionContext): Future[JarInfo]
+  def add(file: File, newName: String, group: Option[String])(
+    implicit executionContext: ExecutionContext): Future[JarInfo]
 
   /**
     * remove a existed jar file from jar store
@@ -73,14 +76,12 @@ trait JarStore extends Releasable {
     * @param id jar's id
     * @return jar description
     */
-  def jarInfo(id: String)(implicit executionContext: ExecutionContext): Future[JarInfo] =
-    jarInfos
-      .map { jarInfos =>
-        // check the input arguments
-        CommonUtils.requireNonEmpty(id)
-        jarInfos
-      }
-      .map(_.find(_.id == id).head)
+  def jarInfo(id: String)(implicit executionContext: ExecutionContext): Future[JarInfo] = {
+    CommonUtils.requireNonEmpty(id)
+    jarInfos.map(infos => {
+      infos.find(_.id == id).getOrElse(throw new NoSuchElementException(s"$id not found"))
+    })
+  }
 
   def jarInfos()(implicit executionContext: ExecutionContext): Future[Seq[JarInfo]]
 
@@ -189,23 +190,36 @@ object JarStore {
       f
     }
 
-    private[this] def toFolder(id: String): File = new File(root, CommonUtils.requireNonEmpty(id))
+    /**
+      * Create a folder base on the format : {root}/{group}/{id}
+      *
+      * @param group the group name
+      * @param id the unique id
+      * @return the folder file
+      */
+    private[this] def toFolder(group: String, id: String): File =
+      new File(
+        CommonUtils.path(root.getAbsolutePath, CommonUtils.requireNonEmpty(group), CommonUtils.requireNonEmpty(id)))
 
     override def toFile(id: String)(implicit executionContext: ExecutionContext): Future[File] =
       jarInfo(id).map(jarInfo =>
-        CommonUtils.requireExist(new File(CommonUtils.requireExist(toFolder(id)), jarInfo.name)))
+        CommonUtils.requireExist(new File(CommonUtils.requireExist(toFolder(jarInfo.group, id)), jarInfo.name)))
 
-    override def add(file: File, newName: String)(implicit executionContext: ExecutionContext): Future[JarInfo] =
+    override def add(file: File, newName: String, group: Option[String])(
+      implicit executionContext: ExecutionContext): Future[JarInfo] =
       Future {
+        val actualGroup = group.getOrElse(CommonUtils.randomString(ID_LENGTH))
         CommonUtils.requireNonEmpty(newName)
         CommonUtils.requireExist(file)
         def generateFolder(): File = {
           var rval: File = null
           while (rval == null) {
             val id = CommonUtils.randomString(ID_LENGTH)
-            val f = toFolder(id)
+            val f = toFolder(actualGroup, id)
             if (!f.exists()) {
-              if (!f.mkdir()) throw new IllegalArgumentException(s"fail to create folder on ${f.getAbsolutePath}")
+              if (!f.mkdirs()) throw new IllegalArgumentException(s"fail to create folder on ${f.getAbsolutePath}")
+              rval = f
+            } else {
               rval = f
             }
           }
@@ -220,6 +234,7 @@ object JarStore {
         val plugin = JarInfo(
           id = id,
           name = newFile.getName,
+          group = actualGroup,
           size = newFile.length(),
           url = toUrl(id),
           lastModified = newFile.lastModified()
@@ -230,48 +245,58 @@ object JarStore {
 
     override def jarInfos()(implicit executionContext: ExecutionContext): Future[Seq[JarInfo]] = Future.successful {
       // TODO: We should cache the plugins. because seeking to disk is a slow operation...
-      val files = root.listFiles()
-      if (files != null)
-        files
-          .filter(_.isDirectory)
-          .flatMap { folder =>
-            val jars = folder.listFiles()
-            if (jars == null || jars.isEmpty) None
-            else {
-              val jar = jars.maxBy(_.lastModified())
-              Some(
-                JarInfo(
-                  id = folder.getName,
-                  name = jar.getName,
-                  size = jar.length(),
-                  url = toUrl(folder.getName),
-                  lastModified = jar.lastModified()
-                ))
+      root
+        .listFiles()
+        .filter(_.isDirectory)
+        // we use the "group name" to group files
+        .groupBy(_.getName)
+        .flatMap {
+          case (group, files) =>
+            // for group folder, we list all actual jars
+            files.map(file => file.listFiles().flatMap(_.listFiles())).flatMap { jars =>
+              // for the same name of jar, get the latest modified jar
+              jars
+                .groupBy(_.getName)
+                .map { case (_, sameJars) => sameJars.maxBy(_.lastModified()) }
+                .map(
+                  jar =>
+                    JarInfo(
+                      id = jar.getParentFile.getName,
+                      name = jar.getName,
+                      group = group,
+                      size = jar.length(),
+                      url = toUrl(jar.getParentFile.getName),
+                      lastModified = jar.lastModified()
+                  ))
             }
-          }
-          .toSeq
-      else Seq.empty
+        }
+        .toSeq
     }
 
     override def remove(id: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
-      exist(id).map {
+      exist(id).flatMap {
         if (_) {
           CommonUtils.requireNonEmpty(id)
-          val file = toFolder(id)
-          if (!file.exists()) throw new NoSuchElementException(s"$id doesn't exist")
-          if (!file.isDirectory) throw new IllegalArgumentException(s"$id doesn't reference to a folder")
-          CommonUtils.deleteFiles(file)
-          true
-        } else false
+          jarInfo(id).map { info =>
+            val file = toFolder(info.group, id)
+            if (!file.exists()) throw new NoSuchElementException(s"$id doesn't exist")
+            if (!file.isDirectory) throw new IllegalArgumentException(s"$id doesn't reference to a folder")
+            CommonUtils.deleteFiles(file)
+            true
+          }
+        } else Future.successful(false)
       }
 
     override def exist(id: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
-      Future.successful(toFolder(CommonUtils.requireNonEmpty(id)).exists())
+      jarInfo(id).map(_ => true).recover {
+        case _: Throwable =>
+          false
+      }
 
     override def update(id: String, file: File)(implicit executionContext: ExecutionContext): Future[JarInfo] =
-      jarInfo(id).map { _ =>
+      jarInfo(id).map { info =>
         CommonUtils.requireExist(file)
-        val folder = toFolder(id)
+        val folder = toFolder(info.group, id)
         CommonUtils.deleteFiles(folder)
         if (!folder.mkdir()) throw new IllegalArgumentException(s"fail to create folder on $folder")
         val newFile = new File(folder, file.getName)
@@ -281,6 +306,7 @@ object JarStore {
         val plugin = JarInfo(
           id = id,
           name = newFile.getName,
+          group = info.group,
           size = newFile.length(),
           url = toUrl(id),
           lastModified = CommonUtils.current()
@@ -294,7 +320,7 @@ object JarStore {
         CommonUtils.requireNonEmpty(newName)
         if (jarInfo.name == newName) jarInfo
         else {
-          val folder = toFolder(id)
+          val folder = toFolder(jarInfo.group, id)
           val previousFIle = new File(folder, jarInfo.name)
           val newFile = new File(folder, newName)
           LOG.debug(s"copy file from $previousFIle to $newFile")
@@ -302,6 +328,7 @@ object JarStore {
           JarInfo(
             id = id,
             name = newFile.getName,
+            group = jarInfo.group,
             size = newFile.length(),
             url = toUrl(id),
             lastModified = CommonUtils.current()
@@ -309,6 +336,8 @@ object JarStore {
         }
       }
 
-    override protected def close(): Unit = {}
+    override protected def close(): Unit = {
+      // we clean nothing since the jars need to be available after configurator reopen
+    }
   }
 }

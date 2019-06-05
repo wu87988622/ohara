@@ -265,6 +265,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
       JarInfo(
         id = CommonUtils.randomString(),
         name = CommonUtils.randomString(),
+        group = CommonUtils.randomString(),
         size = 100,
         url = new URL("http://localhost:12345/aa.jar"),
         lastModified = CommonUtils.current()
@@ -272,6 +273,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
       JarInfo(
         id = CommonUtils.randomString(),
         name = CommonUtils.randomString(),
+        group = CommonUtils.randomString(),
         size = 100,
         url = new URL("http://localhost:12345/aa.jar"),
         lastModified = CommonUtils.current()
@@ -286,6 +288,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
       JarInfo(
         id = CommonUtils.randomString(),
         name = CommonUtils.randomString(),
+        group = CommonUtils.randomString(),
         size = 100,
         url = new URL("http://localhost:12345/aa.jar"),
         lastModified = CommonUtils.current()
@@ -293,6 +296,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
       JarInfo(
         id = CommonUtils.randomString(),
         name = CommonUtils.randomString(),
+        group = CommonUtils.randomString(),
         size = 100,
         url = new URL("http://localhost:12345/aa.jar"),
         lastModified = CommonUtils.current()

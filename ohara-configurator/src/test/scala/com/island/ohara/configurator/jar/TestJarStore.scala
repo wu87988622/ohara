@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-package com.island.ohara.configurator
+package com.island.ohara.configurator.jar
+
 import java.io.{File, FileOutputStream}
 import java.nio.file.Files
+import java.util.concurrent.TimeUnit
 
 import com.island.ohara.client.configurator.v0.JarApi
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.configurator.jar.JarStore
+import com.island.ohara.configurator.Configurator
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
@@ -40,11 +42,46 @@ class TestJarStore extends SmallTest with Matchers {
     val output = new FileOutputStream(tempFile)
     try output.write(bytes)
     finally output.close()
+    tempFile.deleteOnExit()
     tempFile
   }
   private[this] def generateFile(): File = generateFile(CommonUtils.randomString().getBytes)
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
+
+  @Test
+  def testGroupLabel(): Unit = {
+    val group = "foobar"
+
+    // add a random group folder file
+    result(configurator.jarStore.add(generateFile(), None))
+    // add two files in specific group
+    val f1 = generateFile()
+    val info1 = result(configurator.jarStore.add(f1, "newfile", Some(group)))
+    // make sure the second file has different modified time
+    TimeUnit.SECONDS.sleep(2)
+    val f2 = generateFile()
+    val info2 = result(configurator.jarStore.add(f2, "newfile", Some(group)))
+
+    // use same group and same file, but request different newName means different file
+    result(configurator.jarStore.add(f2, "farboo", Some(group)))
+
+    val jars = result(configurator.jarStore.jarInfos())
+    // we only get the "latest" file in same group, so we have
+    // 1. file with random group
+    // 2. file of "newfile" name with specific group (upload two files but get last modified time)
+    // 3. file of "farboo" name with specific group
+    jars.size shouldBe 3
+
+    // same group but the old file cannot be get
+    an[NoSuchElementException] should be thrownBy result(configurator.jarStore.jarInfo(info1.id))
+
+    // same group newer file can be get
+    val res = result(configurator.jarStore.jarInfo(info2.id))
+    res.group shouldBe group
+    res.size shouldBe f2.length()
+    res.name shouldBe "newfile"
+  }
 
   @Test
   def nullIdInJarInfo(): Unit = an[NullPointerException] should be thrownBy result(configurator.jarStore.jarInfo(null))
@@ -54,27 +91,28 @@ class TestJarStore extends SmallTest with Matchers {
     an[IllegalArgumentException] should be thrownBy result(configurator.jarStore.jarInfo(""))
 
   @Test
-  def nullFileInAdd(): Unit = an[NullPointerException] should be thrownBy result(configurator.jarStore.add(null))
+  def nullFileInAdd(): Unit = an[NullPointerException] should be thrownBy result(configurator.jarStore.add(null, None))
 
   @Test
   def nonexistentFileInAdd(): Unit =
     an[IllegalArgumentException] should be thrownBy result(
-      configurator.jarStore.add(new File(CommonUtils.randomString())))
+      configurator.jarStore.add(new File(CommonUtils.randomString()), "", None))
 
   @Test
-  def nullFileInAdd2(): Unit = an[NullPointerException] should be thrownBy result(configurator.jarStore.add(null, "aa"))
+  def nullFileInAdd2(): Unit =
+    an[NullPointerException] should be thrownBy result(configurator.jarStore.add(null, "aa", None))
 
   @Test
   def nonexistentFileInAdd2(): Unit = an[IllegalArgumentException] should be thrownBy result(
-    configurator.jarStore.add(new File(CommonUtils.randomString(), "aa")))
+    configurator.jarStore.add(new File(CommonUtils.randomString()), "aa", None))
 
   @Test
   def nullNewNameInAdd(): Unit =
-    an[NullPointerException] should be thrownBy result(configurator.jarStore.add(generateFile(), null))
+    an[NullPointerException] should be thrownBy result(configurator.jarStore.add(generateFile(), null, None))
 
   @Test
   def emptyNameInAdd(): Unit =
-    an[IllegalArgumentException] should be thrownBy result(configurator.jarStore.add(generateFile(), ""))
+    an[IllegalArgumentException] should be thrownBy result(configurator.jarStore.add(generateFile(), "", None))
 
   @Test
   def nullIdInUpdate(): Unit =
@@ -86,13 +124,13 @@ class TestJarStore extends SmallTest with Matchers {
 
   @Test
   def nullFileInUpdate(): Unit = {
-    val jarInfo = result(configurator.jarStore.add(generateFile()))
+    val jarInfo = result(configurator.jarStore.add(generateFile(), None))
     an[NullPointerException] should be thrownBy result(configurator.jarStore.update(jarInfo.id, null))
   }
 
   @Test
   def nonexistentFileInUpdate(): Unit = {
-    val jarInfo = result(configurator.jarStore.add(generateFile()))
+    val jarInfo = result(configurator.jarStore.add(generateFile(), None))
     an[IllegalArgumentException] should be thrownBy result(
       configurator.jarStore.update(jarInfo.id, new File(CommonUtils.randomString())))
   }
@@ -111,13 +149,13 @@ class TestJarStore extends SmallTest with Matchers {
 
   @Test
   def nullNewNameInRename(): Unit = {
-    val jarInfo = result(configurator.jarStore.add(generateFile()))
+    val jarInfo = result(configurator.jarStore.add(generateFile(), None))
     an[NullPointerException] should be thrownBy result(configurator.jarStore.rename(jarInfo.id, null))
   }
 
   @Test
   def emptyNewNameInRename(): Unit = {
-    val jarInfo = result(configurator.jarStore.add(generateFile()))
+    val jarInfo = result(configurator.jarStore.add(generateFile(), None))
     an[IllegalArgumentException] should be thrownBy result(configurator.jarStore.rename(jarInfo.id, ""))
   }
 
@@ -151,7 +189,7 @@ class TestJarStore extends SmallTest with Matchers {
     val port = CommonUtils.availablePort()
     val store0 =
       JarStore.builder.homeFolder(folder.getCanonicalPath).hostname(CommonUtils.anyLocalAddress()).port(port).build()
-    val jarInfo = try result(store0.add(generateFile(content.getBytes)))
+    val jarInfo = try result(store0.add(generateFile(content.getBytes), None))
     finally store0.close()
 
     val store1 =
@@ -196,7 +234,7 @@ class TestJarStore extends SmallTest with Matchers {
       .port(port)
       .build()
     try {
-      val jarInfo = result(store.add(generateFile(methodName().getBytes)))
+      val jarInfo = result(store.add(generateFile(methodName().getBytes), None))
       jarInfo.url.getHost shouldBe hostname
       jarInfo.url.getPort shouldBe port
     } finally store.close()

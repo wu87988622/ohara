@@ -107,7 +107,7 @@ public interface Cache<K, V> {
       return this;
     }
 
-    @Optional("Default value is true")
+    @Optional("Default value is false")
     public Builder<K, V> blockingOnGet() {
       this.blockingOnGet = true;
       return this;
@@ -120,7 +120,7 @@ public interface Cache<K, V> {
      * @param blockingOnGet blockingOnGet
      * @return this builder
      */
-    @Optional("Default value is true")
+    @Optional("Default value is false")
     public Builder<K, V> blockingOnGet(boolean blockingOnGet) {
       this.blockingOnGet = blockingOnGet;
       return this;

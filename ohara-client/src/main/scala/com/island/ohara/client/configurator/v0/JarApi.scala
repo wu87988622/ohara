@@ -34,11 +34,21 @@ object JarApi {
     override def write(obj: URL): JsValue = JsString(obj.toString)
   }
 
-  final case class JarInfo(id: String, name: String, size: Long, url: URL, lastModified: Long) extends Data {
+  /**
+    * jar information
+    * @param id unique id
+    * @param name jar file name
+    * @param group group name
+    * @param size file size
+    * @param url download url
+    * @param lastModified last modified time
+    */
+  final case class JarInfo(id: String, name: String, group: String, size: Long, url: URL, lastModified: Long)
+      extends Data {
     override def kind: String = "jar"
   }
 
-  implicit val JAR_INFO_JSON_FORMAT: RootJsonFormat[JarInfo] = jsonFormat5(JarInfo)
+  implicit val JAR_INFO_JSON_FORMAT: RootJsonFormat[JarInfo] = jsonFormat6(JarInfo)
 
   sealed abstract class Access extends BasicAccess(JAR_PREFIX_PATH) {
     def upload(f: File)(implicit executionContext: ExecutionContext): Future[JarInfo] = upload(f, f.getName)

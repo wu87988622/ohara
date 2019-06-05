@@ -38,7 +38,7 @@ private[configurator] object JarRoute {
       withSizeLimit(RouteUtils.DEFAULT_JAR_SIZE_BYTES) {
         storeUploadedFile("jar", tempDestination) {
           case (metadata, file) =>
-            complete(jarStore.add(file, metadata.fileName))
+            complete(jarStore.add(file, metadata.fileName, None))
         } ~ path(Segment) { id =>
           get(complete(jarStore.jarInfo(id))) ~ delete(
             complete(jarStore.remove(id).map(_ => StatusCodes.NoContent))

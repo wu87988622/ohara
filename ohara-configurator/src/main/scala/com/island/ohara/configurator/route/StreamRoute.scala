@@ -157,7 +157,7 @@ private[configurator] object StreamRoute {
                             .sequence(files.map {
                               case (metadata, file) =>
                                 //TODO : we don't limit the jar size until we got another solution for #1234....by Sam
-                                jarStore.add(file, s"${metadata.fileName}").flatMap { jarInfo =>
+                                jarStore.add(file, metadata.fileName, Some(wkName)).flatMap { jarInfo =>
                                   store.add(
                                     StreamJar(
                                       wkName,
