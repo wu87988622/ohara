@@ -293,6 +293,7 @@ export const renderer = props => {
       case 'INT':
       case 'CLASS':
       case 'PASSWORD':
+      case 'JDBC_TABLE':
         const inputType = switchType(valueType);
 
         return (
