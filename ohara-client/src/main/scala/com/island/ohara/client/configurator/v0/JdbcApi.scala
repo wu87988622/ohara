@@ -21,33 +21,23 @@ import spray.json.RootJsonFormat
 
 import scala.concurrent.{ExecutionContext, Future}
 
-object FtpApi {
-  val FTP_PREFIX_PATH: String = "ftp"
-  final case class Update(hostname: String, port: Int, user: String, password: String)
-  implicit val FTP_UPDATE_JSON_FORMAT: RootJsonFormat[Update] = jsonFormat4(Update)
-  final case class Creation(name: String, hostname: String, port: Int, user: String, password: String)
-      extends CreationRequest
-  implicit val FTP_CREATION_JSON_FORMAT: RootJsonFormat[Creation] = jsonFormat5(Creation)
+object JdbcApi {
+  val JDBC_PREFIX_PATH: String = "jdbc"
+  final case class Update(url: String, user: String, password: String)
+  implicit val JDBC_UPDATE_JSON_FORMAT: RootJsonFormat[Update] = jsonFormat3(Update)
+  final case class Creation(name: String, url: String, user: String, password: String) extends CreationRequest
+  implicit val JDBC_CREATION_JSON_FORMAT: RootJsonFormat[Creation] = jsonFormat4(Creation)
 
-  final case class FtpInfo(name: String,
-                           hostname: String,
-                           port: Int,
-                           user: String,
-                           password: String,
-                           lastModified: Long)
+  final case class JdbcInfo(name: String, url: String, user: String, password: String, lastModified: Long)
       extends Data {
     override def id: String = name
-    override def kind: String = "ftp"
+    override def kind: String = "jdbc"
   }
-  implicit val FTP_INFO_JSON_FORMAT: RootJsonFormat[FtpInfo] = jsonFormat6(FtpInfo)
+  implicit val JDBC_INFO_JSON_FORMAT: RootJsonFormat[JdbcInfo] = jsonFormat5(JdbcInfo)
 
-  /**
-    * used to generate the payload and url for POST/PUT request.
-    */
   trait Request {
     def name(name: String): Request
-    def hostname(hostname: String): Request
-    def port(port: Int): Request
+    def url(url: String): Request
     def user(user: String): Request
     def password(password: String): Request
 
@@ -56,21 +46,20 @@ object FtpApi {
       * @param executionContext thread pool
       * @return created data
       */
-    def create()(implicit executionContext: ExecutionContext): Future[FtpInfo]
+    def create()(implicit executionContext: ExecutionContext): Future[JdbcInfo]
 
     /**
       * generate the PUT request
       * @param executionContext thread pool
       * @return updated/created data
       */
-    def update()(implicit executionContext: ExecutionContext): Future[FtpInfo]
+    def update()(implicit executionContext: ExecutionContext): Future[JdbcInfo]
   }
 
-  class Access private[v0] extends Access2[FtpInfo](FTP_PREFIX_PATH) {
+  class Access private[v0] extends Access2[JdbcInfo](JDBC_PREFIX_PATH) {
     def request(): Request = new Request {
       private[this] var name: String = _
-      private[this] var port: Int = -1
-      private[this] var hostname: String = _
+      private[this] var url: String = _
       private[this] var user: String = _
       private[this] var password: String = _
 
@@ -79,13 +68,8 @@ object FtpApi {
         this
       }
 
-      override def port(port: Int): Request = {
-        this.port = CommonUtils.requirePositiveInt(port)
-        this
-      }
-
-      override def hostname(hostname: String): Request = {
-        this.hostname = CommonUtils.requireNonEmpty(hostname)
+      override def url(url: String): Request = {
+        this.url = CommonUtils.requireNonEmpty(url)
         this
       }
 
@@ -99,23 +83,21 @@ object FtpApi {
         this
       }
 
-      override def create()(implicit executionContext: ExecutionContext): Future[FtpInfo] =
-        exec.post[Creation, FtpInfo, ErrorApi.Error](
+      override def create()(implicit executionContext: ExecutionContext): Future[JdbcInfo] =
+        exec.post[Creation, JdbcInfo, ErrorApi.Error](
           _url,
           Creation(
             name = CommonUtils.requireNonEmpty(name),
-            hostname = CommonUtils.requireNonEmpty(hostname),
-            port = CommonUtils.requirePositiveInt(port),
+            url = CommonUtils.requireNonEmpty(url),
             user = CommonUtils.requireNonEmpty(user),
             password = CommonUtils.requireNonEmpty(password)
           )
         )
-      override def update()(implicit executionContext: ExecutionContext): Future[FtpInfo] =
-        exec.put[Update, FtpInfo, ErrorApi.Error](
+      override def update()(implicit executionContext: ExecutionContext): Future[JdbcInfo] =
+        exec.put[Update, JdbcInfo, ErrorApi.Error](
           s"${_url}/${CommonUtils.requireNonEmpty(name)}",
           Update(
-            hostname = CommonUtils.requireNonEmpty(hostname),
-            port = CommonUtils.requirePositiveInt(port),
+            url = CommonUtils.requireNonEmpty(url),
             user = CommonUtils.requireNonEmpty(user),
             password = CommonUtils.requireNonEmpty(password)
           )

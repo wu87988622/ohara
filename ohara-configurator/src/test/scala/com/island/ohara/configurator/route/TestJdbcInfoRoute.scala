@@ -16,8 +16,7 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.DatabaseApi
-import com.island.ohara.client.configurator.v0.DatabaseApi.{JdbcInfo, JdbcInfoRequest}
+import com.island.ohara.client.configurator.v0.JdbcApi
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
@@ -28,42 +27,38 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class TestJdbcInfoRoute extends SmallTest with Matchers {
   private[this] val configurator = Configurator.builder().fake().build()
 
-  private[this] val jdbcApi = DatabaseApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] val jdbcApi = JdbcApi.access().hostname(configurator.hostname).port(configurator.port)
+
   @Test
   def test(): Unit = {
-    def compareRequestAndResponse(request: JdbcInfoRequest, response: JdbcInfo): JdbcInfo = {
-      request.name shouldBe response.name
-      request.url shouldBe response.url
-      request.user shouldBe response.user
-      request.password shouldBe response.password
-      response
-    }
-
-    def compare2Response(lhs: JdbcInfo, rhs: JdbcInfo): Unit = {
-      lhs.id shouldBe rhs.id
-      lhs.name shouldBe lhs.name
-      lhs.url shouldBe lhs.url
-      lhs.user shouldBe lhs.user
-      lhs.password shouldBe lhs.password
-      lhs.lastModified shouldBe rhs.lastModified
-    }
-
     // test add
     result(jdbcApi.list).size shouldBe 0
 
-    val request = JdbcInfoRequest("test", "oracle://152.22.23.12:4222", "test", "test")
-    val response = compareRequestAndResponse(request, result(jdbcApi.add(request)))
+    val name = CommonUtils.randomString()
+    val url = CommonUtils.randomString()
+    val user = CommonUtils.randomString()
+    val password = CommonUtils.randomString()
+    val response = result(jdbcApi.request().name(name).url(url).user(user).password(password).create())
+    response.name shouldBe name
+    response.url shouldBe url
+    response.user shouldBe user
+    response.password shouldBe password
 
     // test get
-    compare2Response(response, result(jdbcApi.get(response.id)))
+    response shouldBe result(jdbcApi.get(response.name))
 
     // test update
-    val anotherRequest = JdbcInfoRequest("test2", "msSQL://152.22.23.12:4222", "test", "test")
-    val newResponse =
-      compareRequestAndResponse(anotherRequest, result(jdbcApi.update(response.id, anotherRequest)))
+    val url2 = CommonUtils.randomString()
+    val user2 = CommonUtils.randomString()
+    val password2 = CommonUtils.randomString()
+    val response2 = result(jdbcApi.request().name(name).url(url2).user(user2).password(password2).update())
+    response2.name shouldBe name
+    response2.url shouldBe url2
+    response2.user shouldBe user2
+    response2.password shouldBe password2
 
     // test get
-    compare2Response(newResponse, result(jdbcApi.get(newResponse.id)))
+    response2 shouldBe result(jdbcApi.get(response2.name))
 
     // test delete
     result(jdbcApi.list).size shouldBe 1
@@ -71,13 +66,58 @@ class TestJdbcInfoRoute extends SmallTest with Matchers {
     result(jdbcApi.list).size shouldBe 0
 
     // test nonexistent data
-    an[IllegalArgumentException] should be thrownBy result(jdbcApi.get("adasd"))
-    an[IllegalArgumentException] should be thrownBy result(jdbcApi.update("adasd", anotherRequest))
+    an[IllegalArgumentException] should be thrownBy result(jdbcApi.get("asdadas"))
   }
 
   @Test
-  def duplicateDeleteStreamProperty(): Unit =
+  def duplicateDelete(): Unit =
     (0 to 10).foreach(_ => result(jdbcApi.delete(CommonUtils.randomString(5))))
+
+  @Test
+  def duplicateUpdate(): Unit = {
+    val count = 10
+    (0 until count).foreach(
+      _ =>
+        result(
+          jdbcApi
+            .request()
+            .name(CommonUtils.randomString())
+            .url(CommonUtils.randomString())
+            .user(CommonUtils.randomString())
+            .password(CommonUtils.randomString())
+            .update()))
+    result(jdbcApi.list).size shouldBe count
+  }
+
+  @Test
+  def testInvalidNameOnUpdate(): Unit = {
+    val invalidStrings = Seq("a_", "a-", "a.", "a~")
+    invalidStrings.foreach { invalidString =>
+      an[IllegalArgumentException] should be thrownBy result(
+        jdbcApi
+          .request()
+          .name(invalidString)
+          .url(CommonUtils.randomString())
+          .user(CommonUtils.randomString())
+          .password(CommonUtils.randomString())
+          .update())
+    }
+  }
+
+  @Test
+  def testInvalidNameOnCreation(): Unit = {
+    val invalidStrings = Seq("a_", "a-", "a.", "a~")
+    invalidStrings.foreach { invalidString =>
+      an[IllegalArgumentException] should be thrownBy result(
+        jdbcApi
+          .request()
+          .name(invalidString)
+          .url(CommonUtils.randomString())
+          .user(CommonUtils.randomString())
+          .password(CommonUtils.randomString())
+          .create())
+    }
+  }
 
   @After
   def tearDown(): Unit = Releasable.close(configurator)

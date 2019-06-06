@@ -318,7 +318,7 @@ The following information are tagged by ohara.
 
 ### update a ftp information
 
-*PUT /v0/ftp/${id}*
+*PUT /v0/ftp/${name}*
 
 1. name (**string**) — name of this ftp information
 1. hostname (**string**) — ftp server hostname
@@ -380,7 +380,7 @@ The following information are tagged by ohara.
 
 ### delete a ftp information
 
-*DELETE /v0/ftp/${id}*
+*DELETE /v0/ftp/${name}*
 
 **Example Response**
 
@@ -393,7 +393,7 @@ The following information are tagged by ohara.
 ----------
 ### get a ftp information
 
-*GET /v0/ftp/${id}*
+*GET /v0/ftp/${name}*
 
 **Example Response**
 
@@ -531,9 +531,10 @@ the jdbc is only supported now. The storable information is shown below.
 
 The following information are tagged by ohara.
 
-1. [id](#object-id) (**string**) — jdbc information id
 1. lastModified (**long**) — the last time to update this jdbc information
+
 ----------
+
 ### store a jdbc information
 
 *POST /v0/jdbc*
@@ -561,15 +562,16 @@ The following information are tagged by ohara.
   "name": "jdbc_name",
   "url": "jdbc:mysql",
   "lastModified": 1540967970407,
-  "id": "9d128f43-8725-42b2-9377-0dad10863166",
   "user": "user",
   "password": "aaa"
 }
 ```
+
 ----------
+
 ### update a jdbc information
 
-*PUT /v0/jdbc/${id}*
+*PUT /v0/jdbc/${name}*
 
 1. name (**string**) — name of this jdbc information.
 1. url (**string**) — jdbc connection information. format: jdbc:${database}://${serverName}\$instanceName:$portNumber
@@ -587,6 +589,8 @@ The following information are tagged by ohara.
 }
 ```
 
+> Noted, an new object will be created if the input name is not associated to an existent object.
+
 **Example Response**
 
 ```json
@@ -594,7 +598,6 @@ The following information are tagged by ohara.
   "name": "jdbc_name",
   "url": "jdbc:mysql",
   "lastModified": 1540967970407,
-  "id": "9d128f43-8725-42b2-9377-0dad10863166",
   "user": "user",
   "password": "aaa"
 }
@@ -612,16 +615,17 @@ The following information are tagged by ohara.
     "name": "jdbc_name",
     "url": "jdbc:mysql",
     "lastModified": 1540967970407,
-    "id": "9d128f43-8725-42b2-9377-0dad10863166",
     "user": "user",
     "password": "aaa"
   }
 ]
 ```
+
 ----------
+
 ### delete a jdbc information
 
-*DELETE /v0/jdbc/${id}*
+*DELETE /v0/jdbc/${name}*
 
 **Example Response**
 
@@ -634,7 +638,7 @@ The following information are tagged by ohara.
 ----------
 ### get a jdbc information
 
-*GET /v0/jdbc/${id}*
+*GET /v0/jdbc/${name}*
 
 **Example Response**
 
@@ -643,12 +647,13 @@ The following information are tagged by ohara.
   "name": "jdbc_name",
   "url": "jdbc:mysql",
   "lastModified": 1540967970407,
-  "id": "9d128f43-8725-42b2-9377-0dad10863166",
   "user": "user",
   "password": "aaa"
 }
 ```
+
 ----------
+
 ## Connector
 
 Connector is core of application in ohara [pipeline](#pipeline). Connector has two type - source and sink. Source connector

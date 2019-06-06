@@ -69,13 +69,13 @@ object HadoopApi {
         this
       }
       override def create()(implicit executionContext: ExecutionContext): Future[HdfsInfo] =
-        exec.post[Creation, HdfsInfo, ErrorApi.Error](url,
+        exec.post[Creation, HdfsInfo, ErrorApi.Error](_url,
                                                       Creation(
                                                         name = CommonUtils.requireNonEmpty(name),
                                                         uri = CommonUtils.requireNonEmpty(uri)
                                                       ))
       override def update()(implicit executionContext: ExecutionContext): Future[HdfsInfo] =
-        exec.put[Update, HdfsInfo, ErrorApi.Error](s"$url/${CommonUtils.requireNonEmpty(name)}",
+        exec.put[Update, HdfsInfo, ErrorApi.Error](s"${_url}/${CommonUtils.requireNonEmpty(name)}",
                                                    Update(
                                                      uri = CommonUtils.requireNonEmpty(uri)
                                                    ))

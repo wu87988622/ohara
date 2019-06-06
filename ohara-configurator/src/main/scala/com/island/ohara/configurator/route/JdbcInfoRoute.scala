@@ -17,19 +17,19 @@
 package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
-import com.island.ohara.client.configurator.v0.DatabaseApi._
+import com.island.ohara.client.configurator.v0.JdbcApi._
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.route.RouteUtils.Id
 import com.island.ohara.configurator.store.DataStore
 
 import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] object JdbcInfoRoute {
   def apply(implicit store: DataStore, executionContext: ExecutionContext): server.Route =
-    RouteUtils.basicRoute[JdbcInfoRequest, JdbcInfo](
+    RouteUtils.basicRoute2[Creation, Update, JdbcInfo](
       root = JDBC_PREFIX_PATH,
-      reqToRes = (id: Id, request: JdbcInfoRequest) =>
-        Future.successful(
-          JdbcInfo(id, request.name, request.url, request.user, request.password, CommonUtils.current()))
+      hookOfCreate = (request: Creation) =>
+        Future.successful(JdbcInfo(request.name, request.url, request.user, request.password, CommonUtils.current())),
+      hookOfUpdate = (name: String, request: Update) =>
+        Future.successful(JdbcInfo(name, request.url, request.user, request.password, CommonUtils.current())),
     )
 }

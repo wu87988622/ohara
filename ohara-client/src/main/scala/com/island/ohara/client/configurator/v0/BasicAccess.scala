@@ -51,5 +51,5 @@ abstract class BasicAccess private[v0] (prefixPath: String) {
     * Compose the url with hostname, port, version and prefix
     * @return url string
     */
-  protected def url: String = s"http://${_hostname}:${_port}/${_version}/${_prefixPath}"
+  protected def _url: String = s"http://${_hostname}:${_port}/${_version}/${_prefixPath}"
 }
