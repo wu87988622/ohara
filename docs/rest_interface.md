@@ -3170,7 +3170,6 @@ It collect output from all containers' of a cluster and then format them to JSON
 
 ----------
 
-<<<<<<< HEAD
 ## Query
 
 Query APIs is a collection of helper methods required by Ohara Manager so you should assume this APIs are **private**
