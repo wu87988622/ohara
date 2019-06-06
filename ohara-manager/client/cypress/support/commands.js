@@ -20,30 +20,46 @@ import * as utils from '../utils';
 import { axiosInstance } from '../../src/api/apiUtils';
 import { fetchZookeepers } from '../../src/api/zookeeperApi';
 import { fetchBrokers } from '../../src/api/brokerApi';
-import { createWorker } from '../../src/api/workerApi';
-import { createJar } from '../../src/api/jarApi';
+import {
+  createWorker,
+  fetchWorkers,
+  fetchWorker,
+} from '../../src/api/workerApi';
+import { fetchJars } from '../../src/api/jarApi';
+import { createTopic, fetchTopic, fetchTopics } from '../../src/api/topicApi';
 
-Cypress.Commands.add('createJar', () => {
-  const url = 'api/jars';
-  const type = 'application/java-archive';
-  const config = {
-    headers: {
-      'content-type': 'multipart/form-data',
-    },
-  };
-  const file = cy.fixture('plugin/ohara-it-sink.jar');
-  const blob = Cypress.Blob.base64StringToBlob(file, type).then(blob => {
-    return new File([blob], 'testfile.png', { type: type });
-  });
-  console.log(blob);
-  let formData = new FormData();
-  formData.append('id', 'id12345');
-  formData.append('name', 'sink.jar');
-  formData.append('size', 123);
-  formData.append('lastModified', 12345);
-  formData.append('file', blob);
-  return axiosInstance.post(url, formData, config);
+Cypress.Commands.add('fetchTopics', () => fetchTopics());
+
+Cypress.Commands.add('fetchTopic', name => fetchTopic(name));
+
+Cypress.Commands.add('testCreateTopic', params => createTopic(params));
+
+Cypress.Commands.add('fetchJars', () => fetchJars());
+
+Cypress.Commands.add('createJar', jarName => {
+  cy.fixture(`plugin/${jarName}`, 'base64')
+    .then(Cypress.Blob.base64StringToBlob)
+    .then(blob => {
+      const type = 'application/java-archive';
+      const url = '/api/jars';
+      const config = {
+        headers: {
+          'content-type': 'multipart/form-data',
+        },
+      };
+      const testFile = new File([blob], jarName, { type: type });
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(testFile);
+      blob = dataTransfer.files;
+      let formData = new FormData();
+      formData.append('jar', blob[0]);
+      return axiosInstance.post(url, formData, config);
+    });
 });
+
+Cypress.Commands.add('fetchWorker', name => fetchWorker(name));
+
+Cypress.Commands.add('fetchWorkers', () => fetchWorkers());
 
 Cypress.Commands.add('testCreateWorker', params => createWorker(params));
 

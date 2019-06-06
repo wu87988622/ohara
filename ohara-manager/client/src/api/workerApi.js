@@ -59,7 +59,6 @@ export const createWorker = async params => {
       nodeNames: params.nodeNames || [],
       jars: params.plugins || [],
     };
-    console.log(data);
     const config = {
       timeout: 3 * 60 * 1000, // set timeout to 3 minutes.
     };
