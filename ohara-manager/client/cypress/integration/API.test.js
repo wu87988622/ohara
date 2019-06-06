@@ -52,6 +52,9 @@ describe('Jar Api test', () => {
     cy.createJar(testJarName).then(res => {
       const data = res.data;
       expect(data.isSuccess).to.eq(true);
+      expect(data.result).to.include.keys('name', 'id');
+      expect(data.result.name).to.be.a('string');
+      expect(data.result.id).to.be.a('string');
     });
   });
   it('fetchJars', () => {
@@ -59,6 +62,7 @@ describe('Jar Api test', () => {
       const data = res.data;
       jarID = data.result[0].id;
       expect(data.isSuccess).to.eq(true);
+      expect(data.result).to.be.a('array');
       expect(data.result[0]).to.include.keys('name', 'id');
       expect(data.result[0].name).to.be.a('string');
       expect(data.result[0].id).to.be.a('string');
