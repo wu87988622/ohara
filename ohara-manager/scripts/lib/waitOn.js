@@ -20,12 +20,10 @@ const waitOn = require('wait-on');
 
 const waited = url =>
   new Promise((resolve, reject) => {
-    console.log('starting waitOn %s', url);
     waitOn(
       {
         resources: Array.isArray(url) ? url : [url],
-        // delay: 10000, // 10s
-        interval: 2000, // 2s
+        interval: 2000, // 2 sec
         window: 1000,
         log: true,
       },
@@ -35,8 +33,7 @@ const waited = url =>
           console.error(err.message);
           return reject(err);
         }
-        console.log('waitOn finished successfully');
-        resolve();
+        resolve(); // success!
       },
     );
   });
