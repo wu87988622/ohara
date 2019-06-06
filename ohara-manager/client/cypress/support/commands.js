@@ -27,6 +27,13 @@ import {
 } from '../../src/api/workerApi';
 import { fetchJars } from '../../src/api/jarApi';
 import { createTopic, fetchTopic, fetchTopics } from '../../src/api/topicApi';
+import { createNode, updateNode, fetchNodes } from '../../src/api/nodeApi';
+
+Cypress.Commands.add('fetchNodes', () => fetchNodes());
+
+Cypress.Commands.add('updateNode', params => updateNode(params));
+
+Cypress.Commands.add('createNode', params => createNode(params));
 
 Cypress.Commands.add('fetchTopics', () => fetchTopics());
 

@@ -191,3 +191,122 @@ describe('Topic Api test', () => {
     });
   });
 });
+
+describe('Node Api test', () => {
+  const nodeName = `node${makeRandomPort()}`;
+  it('createNode', () => {
+    const data = {
+      name: nodeName,
+      port: 22,
+      user: 'ohara',
+      password: '123',
+    };
+    cy.createNode(data).then(res => {
+      const data = res.data;
+      expect(data.isSuccess).to.eq(true);
+      expect(data.result).to.include.keys(
+        'name',
+        'password',
+        'port',
+        'user',
+        'services',
+      );
+      expect(data.result.services).to.be.a('array');
+      expect(data.result.services[0]).to.include.keys('name', 'clusterNames');
+      expect(data.result.services[1]).to.include.keys('name', 'clusterNames');
+      expect(data.result.services[2]).to.include.keys('name', 'clusterNames');
+      expect(data.result.services[0].name).to.eq('zookeeper');
+      expect(data.result.services[1].name).to.eq('broker');
+      expect(data.result.services[2].name).to.eq('connect-worker');
+      expect(data.result.name).to.be.a('string');
+      expect(data.result.password).to.be.a('string');
+      expect(data.result.port).to.be.a('number');
+      expect(data.result.user).to.be.a('string');
+      expect(data.result.services[0].name).to.be.a('string');
+      expect(data.result.services[0].clusterNames).to.be.a('array');
+      expect(data.result.services[1].name).to.be.a('string');
+      expect(data.result.services[1].clusterNames).to.be.a('array');
+      expect(data.result.services[2].name).to.be.a('string');
+      expect(data.result.services[2].clusterNames).to.be.a('array');
+    });
+  });
+  it('updateNode', () => {
+    const data = {
+      name: nodeName,
+      port: 23,
+      user: 'ohara123',
+      password: '1234',
+    };
+    cy.updateNode(data).then(res => {
+      const data = res.data;
+      expect(data.isSuccess).to.eq(true);
+      expect(data.result).to.include.keys(
+        'name',
+        'password',
+        'port',
+        'user',
+        'services',
+      );
+      expect(data.result.port).to.eq(23);
+      expect(data.result.user).to.eq('ohara123');
+      expect(data.result.password).to.eq('1234');
+      expect(data.result.services).to.be.a('array');
+      expect(data.result.services[0]).to.include.keys('name', 'clusterNames');
+      expect(data.result.services[1]).to.include.keys('name', 'clusterNames');
+      expect(data.result.services[2]).to.include.keys('name', 'clusterNames');
+      expect(data.result.services[0].name).to.eq('zookeeper');
+      expect(data.result.services[1].name).to.eq('broker');
+      expect(data.result.services[2].name).to.eq('connect-worker');
+      expect(data.result.name).to.be.a('string');
+      expect(data.result.password).to.be.a('string');
+      expect(data.result.port).to.be.a('number');
+      expect(data.result.user).to.be.a('string');
+      expect(data.result.services[0].name).to.be.a('string');
+      expect(data.result.services[0].clusterNames).to.be.a('array');
+      expect(data.result.services[1].name).to.be.a('string');
+      expect(data.result.services[1].clusterNames).to.be.a('array');
+      expect(data.result.services[2].name).to.be.a('string');
+      expect(data.result.services[2].clusterNames).to.be.a('array');
+    });
+  });
+  it('fetchNodes', () => {
+    cy.fetchNodes().then(res => {
+      const data = res.data;
+      expect(data.isSuccess).to.eq(true);
+      expect(data.result).to.be.a('array');
+      expect(data.result[0]).to.include.keys(
+        'name',
+        'password',
+        'port',
+        'user',
+        'services',
+      );
+      expect(data.result[0].services).to.be.a('array');
+      expect(data.result[0].services[0]).to.include.keys(
+        'name',
+        'clusterNames',
+      );
+      expect(data.result[0].services[1]).to.include.keys(
+        'name',
+        'clusterNames',
+      );
+      expect(data.result[0].services[2]).to.include.keys(
+        'name',
+        'clusterNames',
+      );
+      expect(data.result[0].services[0].name).to.eq('zookeeper');
+      expect(data.result[0].services[1].name).to.eq('broker');
+      expect(data.result[0].services[2].name).to.eq('connect-worker');
+      expect(data.result[0].name).to.be.a('string');
+      expect(data.result[0].password).to.be.a('string');
+      expect(data.result[0].port).to.be.a('number');
+      expect(data.result[0].user).to.be.a('string');
+      expect(data.result[0].services[0].name).to.be.a('string');
+      expect(data.result[0].services[0].clusterNames).to.be.a('array');
+      expect(data.result[0].services[1].name).to.be.a('string');
+      expect(data.result[0].services[1].clusterNames).to.be.a('array');
+      expect(data.result[0].services[2].name).to.be.a('string');
+      expect(data.result[0].services[2].clusterNames).to.be.a('array');
+    });
+  });
+});
