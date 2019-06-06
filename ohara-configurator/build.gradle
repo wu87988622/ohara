@@ -71,6 +71,10 @@ task runConfigurator(type: JavaExec, dependsOn: 'classes') {
     inputs << "--k8s"
     inputs << project.getProperty('k8s')
   }
+  if (project.hasProperty('folder')) {
+    inputs << "--folder"
+    inputs << project.getProperty("folder")
+  }
   args = inputs
 }
 
