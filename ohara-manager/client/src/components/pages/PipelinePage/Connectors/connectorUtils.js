@@ -21,8 +21,7 @@ import { Field } from 'react-final-form';
 import ColumnTable from './CustomConnector/ColumnTable';
 import Tabs from './Tabs';
 import { FormGroup } from 'common/Form';
-import { InputField, Select } from 'common/Mui/Form';
-import { CONNECTOR_STATES } from 'constants/pipelines';
+import { InputField, Select, Checkbox } from 'common/Mui/Form';
 import { findByGraphId } from '../pipelineUtils/commonUtils';
 
 export const getCurrTopicId = ({ originals, target = '' }) => {
@@ -216,10 +215,7 @@ export const changeKeySeparator = key => {
 };
 
 export const getConnectorState = state => {
-  const isRunning =
-    state === CONNECTOR_STATES.running || state === CONNECTOR_STATES.failed;
-
-  return isRunning;
+  return !isNull(state);
 };
 
 export const sortByOrder = (a, b) => a.orderInGroup - b.orderInGroup;
@@ -309,6 +305,20 @@ export const renderer = props => {
               helperText={documentation}
               width="100%"
               name={key}
+              disabled={!editable || isRunning}
+            />
+          </FormGroup>
+        );
+
+      case 'BOOLEAN':
+        return (
+          <FormGroup key={key}>
+            <Field
+              label={displayName}
+              name={key}
+              type="checkbox"
+              helperText={documentation}
+              component={Checkbox}
               disabled={!editable || isRunning}
             />
           </FormGroup>

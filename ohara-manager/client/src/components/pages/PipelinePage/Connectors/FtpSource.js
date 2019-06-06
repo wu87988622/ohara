@@ -18,7 +18,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import toastr from 'toastr';
 import { Form } from 'react-final-form';
-import { get } from 'lodash';
+import { get, isNull } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
 import * as connectorApi from 'api/connectorApi';
@@ -32,7 +32,7 @@ import { validateConnector } from 'api/validateApi';
 import { ListLoader } from 'common/Loader';
 import { Box } from 'common/Layout';
 import { findByGraphId } from '../pipelineUtils/commonUtils';
-import { CONNECTOR_STATES, CONNECTOR_ACTIONS } from 'constants/pipelines';
+import { CONNECTOR_ACTIONS } from 'constants/pipelines';
 
 class FtpSource extends React.Component {
   static propTypes = {
@@ -225,11 +225,7 @@ class FtpSource extends React.Component {
     updateGraph({ update });
 
     if (action === CONNECTOR_ACTIONS.start) {
-      if (state === CONNECTOR_STATES.running) {
-        toastr.success(MESSAGES.START_CONNECTOR_SUCCESS);
-      } else {
-        toastr.error(MESSAGES.CANNOT_START_CONNECTOR_ERROR);
-      }
+      if (!isNull(state)) toastr.success(MESSAGES.START_CONNECTOR_SUCCESS);
     }
   };
 

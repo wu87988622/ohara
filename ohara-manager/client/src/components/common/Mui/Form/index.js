@@ -18,5 +18,6 @@ import Button from './Button';
 import InputField from './InputField';
 import Select from './Select';
 import Label from './Label';
+import Checkbox from './Checkbox';
 
-export { Button, InputField, Select, Label };
+export { Button, InputField, Select, Label, Checkbox };

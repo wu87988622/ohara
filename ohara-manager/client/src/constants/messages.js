@@ -89,9 +89,6 @@ export const NO_WORKER_CLUSTER_FOUND_ERROR =
 export const NO_TOPIC_IS_SUPPLIED = 'Please select a topic!';
 
 // Connectors
-export const CANNOT_START_CONNECTOR_ERROR =
-  'Cannot complete your action, please check your settings';
-
 export const CANNOT_START_STREAM_APP_ERROR =
   'Cannot complete your action, please check your stream app settings';
 
