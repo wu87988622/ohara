@@ -22,6 +22,8 @@ import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.StreamApi
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.metrics.BeanChannel
+import com.island.ohara.metrics.basic.CounterMBean
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Random
@@ -30,6 +32,11 @@ import scala.collection.JavaConverters._
 private[configurator] class FakeStreamCollie(nodeCollie: NodeCollie)
     extends FakeCollie[StreamClusterInfo, StreamCollie.ClusterCreator](nodeCollie)
     with StreamCollie {
+
+  override def counters(cluster: StreamClusterInfo): Seq[CounterMBean] =
+    // we don't care for the fake mode since both fake mode and embedded mode are running on local jvm
+    BeanChannel.local().counterMBeans().asScala
+
   override def creator(): StreamCollie.ClusterCreator =
     (clusterName, nodeNames, imageName, _, instance, _, _, _, _, jmxPort, executionContext) => {
       implicit val exec: ExecutionContext = executionContext

@@ -16,6 +16,8 @@
 
 package com.island.ohara.agent.k8s
 
+import java.net.URI
+
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.agent.{ContainerCollie, NodeCollie, StreamCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
@@ -68,6 +70,13 @@ private class K8SStreamCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
                 node -> String
                   .join(DIVIDER, ContainerCollie.format(PREFIX_KEY, clusterName, serviceName), node.name)).toMap)
               .flatMap { nodes =>
+                def urlToHost(url: String): String = new URI(url).getHost
+
+                val route: Map[String, String] = nodes.keys.map { node =>
+                  node.name -> CommonUtils.address(node.name)
+                }.toMap +
+                  // make sure the streamApp can connect to configurator
+                  (urlToHost(jarUrl).toLowerCase -> CommonUtils.address(urlToHost(jarUrl)))
                 Future
                   .sequence(nodes.map {
                     case (node, podName) =>
@@ -82,6 +91,7 @@ private class K8SStreamCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
                         .portMappings(Map(
                           jmxPort -> jmxPort
                         ))
+                        .routes(route)
                         .envs(
                           Map(
                             StreamCollie.JARURL_KEY -> jarUrl,
@@ -91,7 +101,7 @@ private class K8SStreamCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
                             StreamCollie.TO_TOPIC_KEY -> toTopics.mkString(",")
                           )
                         )
-                        .args(Seq(StreamCollie.formatJMXProperties(node.name, jmxPort), StreamCollie.MAIN_ENTRY))
+                        .args(StreamCollie.formatJMXProperties(node.name, jmxPort) :+ StreamCollie.MAIN_ENTRY)
                         .run()
                         .recover {
                           case e: Throwable =>

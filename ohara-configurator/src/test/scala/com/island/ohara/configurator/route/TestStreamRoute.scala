@@ -115,7 +115,7 @@ class TestStreamRoute extends SmallTest with Matchers {
     file.close()
 
     // upload file should throw exception that the file size in out of limit (50MB)
-    val expectedMessage = "actual entity size (Some(52428971)) exceeded content length limit (52428800 bytes)"
+    val expectedMessage = "exceeded content length limit (52428800 bytes)"
     val thrown = the[IllegalArgumentException] thrownBy result(accessStreamList.upload(Seq(outputFile.getPath), None))
     thrown.getMessage should include(expectedMessage)
 

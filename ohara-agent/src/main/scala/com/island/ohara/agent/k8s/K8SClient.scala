@@ -212,6 +212,7 @@ object K8SClient {
           private[this] var labelName: String = _
           private[this] var envs: Map[String, String] = Map.empty
           private[this] var ports: Map[Int, Int] = Map.empty
+          private[this] var routes: Map[String, String] = Map.empty
           private[this] var command: Seq[String] = Seq.empty
           private[this] var args: Seq[String] = Seq.empty
 
@@ -237,6 +238,11 @@ object K8SClient {
 
           override def portMappings(ports: Map[Int, Int]): ContainerCreator = {
             this.ports = CommonUtils.requireNonEmpty(ports.asJava).asScala.toMap
+            this
+          }
+
+          override def routes(routes: Map[String, String]): ContainerCreator = {
+            this.routes = CommonUtils.requireNonEmpty(routes.asJava).asScala.toMap
             this
           }
 
@@ -280,7 +286,7 @@ object K8SClient {
                   CreatePodNodeSelector(nodename),
                   hostname, //hostname is container name
                   domainName,
-                  ipInfo,
+                  ipInfo ++ routes.map { case (host, ip) => HostAliases(ip, Seq(host)) },
                   Seq(
                     CreatePodContainer(labelName,
                                        imageName,
@@ -347,6 +353,8 @@ object K8SClient {
     def envs(envs: Map[String, String]): ContainerCreator
 
     def portMappings(ports: Map[Int, Int]): ContainerCreator
+
+    def routes(routes: Map[String, String]): ContainerCreator
 
     def nodename(nodename: String): ContainerCreator
 

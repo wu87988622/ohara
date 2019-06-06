@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Meter
+import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
@@ -84,6 +85,7 @@ object MeterCache {
           case _: ZookeeperClusterInfo => "zk"
           case _: BrokerClusterInfo    => "bk"
           case _: WorkerClusterInfo    => "wk"
+          case _: StreamClusterInfo    => "stream"
           case c: ClusterInfo          => c.getClass.getSimpleName
         }
       )

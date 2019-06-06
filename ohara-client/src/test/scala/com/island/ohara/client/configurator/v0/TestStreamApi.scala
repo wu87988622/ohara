@@ -19,6 +19,7 @@ package com.island.ohara.client.configurator.v0
 import java.net.URL
 
 import com.island.ohara.client.configurator.v0.JarApi.JarInfo
+import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.StreamApi.{
   StreamAppDescription,
   StreamClusterInfo,
@@ -85,6 +86,7 @@ class TestStreamApi extends SmallTest with Matchers {
       from = Seq.empty,
       to = Seq.empty,
       state = None,
+      metrics = Metrics(Seq.empty),
       error = None,
       lastModified = CommonUtils.current()
     )

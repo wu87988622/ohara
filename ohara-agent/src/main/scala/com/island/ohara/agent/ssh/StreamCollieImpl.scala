@@ -16,6 +16,8 @@
 
 package com.island.ohara.agent.ssh
 
+import java.net.URI
+
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.agent.{ClusterCache, ContainerCollie, NodeCollie, StreamCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
@@ -63,6 +65,13 @@ private class StreamCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClient
           }
           .map(_.map(node => node -> ContainerCollie.format(PREFIX_KEY, clusterName, serviceName)).toMap)
           .flatMap { nodes =>
+            def urlToHost(url: String): String = new URI(url).getHost
+
+            val route: Map[String, String] = nodes.keys.map { node =>
+              node.name -> CommonUtils.address(node.name)
+            }.toMap +
+              // make sure the streamApp can connect to configurator
+              (urlToHost(jarUrl) -> CommonUtils.address(urlToHost(jarUrl)))
             // ssh connection is slow so we submit request by multi-thread
             Future
               .sequence(nodes.map {
@@ -109,8 +118,10 @@ private class StreamCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClient
                             .flatMap(_.portPairs)
                             .map(pair => pair.hostPort -> pair.containerPort)
                             .toMap)
-                          .command(String
-                            .join(" ", StreamCollie.formatJMXProperties(node.name, jmxPort), StreamCollie.MAIN_ENTRY))
+                          .route(route)
+                          .command(String.join(" ",
+                                               StreamCollie.formatJMXProperties(node.name, jmxPort).mkString(" "),
+                                               StreamCollie.MAIN_ENTRY))
                           .execute()
                       )
                       Some(containerInfo)

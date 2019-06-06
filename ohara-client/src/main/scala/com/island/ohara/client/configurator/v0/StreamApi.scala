@@ -20,13 +20,13 @@ import java.nio.charset.CodingErrorAction
 
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model._
-import akka.util.ByteString
+import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.io.{Codec, Source}
+import scala.io.Codec
 
 object StreamApi {
 
@@ -88,6 +88,7 @@ object StreamApi {
     * @param to the candidate topics for streamApp produce to
     * @param state the state of streamApp (stopped streamApp does not have this field)
     * @param error the error message if the state was failed to fetch
+    * @param metrics the metrics bean
     * @param lastModified this data change time
     */
   final case class StreamAppDescription(workerClusterName: String,
@@ -99,6 +100,7 @@ object StreamApi {
                                         to: Seq[String],
                                         state: Option[String],
                                         error: Option[String],
+                                        metrics: Metrics,
                                         lastModified: Long)
       extends Data {
     override def kind: String = "streamApp"
@@ -113,7 +115,7 @@ object StreamApi {
           toTopics: $to
       """.stripMargin
   }
-  implicit val STREAMAPP_DESCRIPTION_JSON_FORMAT: RootJsonFormat[StreamAppDescription] = jsonFormat10(
+  implicit val STREAMAPP_DESCRIPTION_JSON_FORMAT: RootJsonFormat[StreamAppDescription] = jsonFormat11(
     StreamAppDescription)
 
   final case class StreamClusterCreationRequest(id: String,
@@ -256,19 +258,16 @@ object StreamApi {
       contentType: ContentType,
       filePaths: Seq[String],
       wkName: Option[String])(implicit executionContext: ExecutionContext): Future[HttpRequest] = {
-      var stricts = filePaths.map(filePath => {
-        Multipart.FormData.BodyPart.Strict(
+      var parts = filePaths.map(filePath => {
+        Multipart.FormData.BodyPart(
           inputKey,
-          HttpEntity(
-            contentType,
-            ByteString(Source.fromFile(filePath).mkString)
-          ),
+          HttpEntity.fromFile(contentType, new File(filePath)),
           Map("filename" -> new File(filePath).getName)
         )
       })
-      if (wkName.isDefined) stricts :+= Multipart.FormData.BodyPart.Strict(Parameters.CLUSTER_NAME, wkName.get)
+      if (wkName.isDefined) parts :+= Multipart.FormData.BodyPart(Parameters.CLUSTER_NAME, wkName.get)
 
-      Marshal(Multipart.FormData(stricts: _*))
+      Marshal(Multipart.FormData(parts: _*))
         .to[RequestEntity]
         .map(
           entity => HttpRequest(HttpMethods.POST, uri = target, entity = entity)

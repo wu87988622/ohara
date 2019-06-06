@@ -33,6 +33,7 @@ import com.island.ohara.client.configurator.ConfiguratorApiInfo
 import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterCreationRequest, BrokerClusterInfo}
 import com.island.ohara.client.configurator.v0.MetricsApi.Meter
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeCreationRequest}
+import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.ValidationApi.NodeValidationRequest
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterCreationRequest
@@ -72,6 +73,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
 
   private[this] implicit val brokerCollie: BrokerCollie = clusterCollie.brokerCollie()
   private[this] implicit val workerCollie: WorkerCollie = clusterCollie.workerCollie()
+  private[this] implicit val streamCollie: StreamCollie = clusterCollie.streamCollie()
 
   private[this] def exceptionHandler(): ExceptionHandler = ExceptionHandler {
     case e @ (_: DeserializationException | _: ParsingException | _: IllegalArgumentException |
@@ -123,6 +125,17 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
             )
           }
       }
+    def streamAppToMeters(streamClusterInfo: StreamClusterInfo): Map[String, Seq[Meter]] =
+      streamCollie.counters(streamClusterInfo).groupBy(_.group()).map {
+        case (group, counters) =>
+          group -> counters.map { counter =>
+            Meter(
+              value = counter.getValue,
+              unit = counter.getUnit,
+              document = counter.getDocument
+            )
+          }
+      }
     MeterCache
       .builder()
       .refresher(
@@ -133,6 +146,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
               .map {
                 case brokerClusterInfo: BrokerClusterInfo => brokerClusterInfo -> brokerToMeters(brokerClusterInfo)
                 case workerClusterInfo: WorkerClusterInfo => workerClusterInfo -> workerToMeters(workerClusterInfo)
+                case streamClusterInfo: StreamClusterInfo => streamClusterInfo -> streamAppToMeters(streamClusterInfo)
                 case clusterInfo: ClusterInfo             => clusterInfo -> Map.empty[String, Seq[Meter]]
               }
               .toSeq

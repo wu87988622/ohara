@@ -22,7 +22,9 @@ import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.agent.{BasicTests4StreamApp, ClusterNameHolder, CollieTestUtils}
 
 class TestSshStreamApp extends BasicTests4StreamApp {
-  override protected def createConfigurator(nodeCache: Seq[Node]): Configurator = Configurator.builder().build()
+
   override protected def createNodes(): Seq[NodeApi.Node] = CollieTestUtils.nodeCache()
+  override protected def createConfigurator(nodeCache: Seq[Node], hostname: String, port: Int): Configurator =
+    Configurator.builder().hostname(hostname).port(port).build()
   override protected def createNameHolder(nodeCache: Seq[Node]): ClusterNameHolder = new ClusterNameHolder(nodeCache)
 }

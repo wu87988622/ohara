@@ -21,13 +21,20 @@ import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.common.util.ReleaseOnce;
 import com.island.ohara.metrics.BeanChannel;
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
-public final class Counter extends ReleaseOnce implements CounterMBean {
+/**
+ * This class is an implementation of JMX Bean. We need to implement serializable since we write
+ * metrics data to rocksDB.
+ */
+public final class Counter extends ReleaseOnce implements CounterMBean, Serializable {
+
+  private static final long serialVersionUID = 1L;
 
   public static Builder builder() {
     return new Builder();

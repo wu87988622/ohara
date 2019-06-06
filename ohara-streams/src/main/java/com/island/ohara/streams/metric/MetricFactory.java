@@ -23,7 +23,7 @@ import com.island.ohara.metrics.basic.Counter;
 public final class MetricFactory {
 
   /**
-   * Get counter bean be specific {@link IOType}
+   * Get counter beans.
    *
    * @param type the {@code IOType}
    * @return counter bean
@@ -32,8 +32,8 @@ public final class MetricFactory {
     return Counter.builder()
         .group("streamapp")
         .name(type.name())
-        .unit("rows")
-        .document("the number of rows")
+        .unit("row")
+        .document(type.name() + ": the number of rows")
         .startTime(CommonUtils.current())
         .value(0)
         .register();

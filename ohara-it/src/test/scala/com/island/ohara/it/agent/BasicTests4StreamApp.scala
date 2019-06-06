@@ -16,8 +16,10 @@
 
 package com.island.ohara.it.agent
 
+import java.util.concurrent.ExecutionException
+
 import com.island.ohara.agent.StreamCollie
-import com.island.ohara.agent.docker.ContainerState
+import com.island.ohara.agent.docker.{ContainerState, DockerClient}
 import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterCreationRequest, BrokerClusterInfo}
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeCreationRequest}
 import com.island.ohara.client.configurator.v0.StreamApi.{
@@ -30,15 +32,36 @@ import com.island.ohara.client.configurator.v0.TopicApi.{TopicCreationRequest, T
 import com.island.ohara.client.configurator.v0.WorkerApi.{WorkerClusterCreationRequest, WorkerClusterInfo}
 import com.island.ohara.client.configurator.v0.ZookeeperApi.{ZookeeperClusterCreationRequest, ZookeeperClusterInfo}
 import com.island.ohara.client.configurator.v0._
+import com.island.ohara.common.data.{Row, Serializer}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.IntegrationTest
+import com.island.ohara.kafka.Producer
+import com.typesafe.scalalogging.Logger
+import org.apache.kafka.common.errors.UnknownTopicOrPartitionException
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
+
+  private[this] val log = Logger(classOf[BasicTests4StreamApp])
+
+  /**
+    * we need to export port to enable remote node download jar from this node
+    */
+  private[this] val portKey = "ohara.it.port"
+
+  /**
+    * we need to export hostname to enable remote node download jar from this node
+    */
+  private[this] val hostnameKey: String = "ohara.it.hostname"
+
+  private[this] val invalidHostname = "unknown"
+  private[this] val invalidPort = 0
+  private[this] val publicHostname: String = sys.env.getOrElse(hostnameKey, invalidHostname)
+  private[this] val publicPort = sys.env.get(portKey).map(_.toInt).getOrElse(invalidPort)
 
   private[this] var nodeCache: Seq[Node] = _
   private[this] var nameHolder: ClusterNameHolder = _
@@ -47,7 +70,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
 
   protected def createNameHolder(nodeCache: Seq[Node]): ClusterNameHolder
 
-  protected def createConfigurator(nodeCache: Seq[Node]): Configurator
+  protected def createConfigurator(nodeCache: Seq[Node], hostname: String, port: Int): Configurator
 
   private[this] var configurator: Configurator = _
 
@@ -61,17 +84,21 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
   private[this] var streamAppPropertyAccess: Access[StreamPropertyRequest, StreamAppDescription] = _
   private[this] var bkName: String = _
   private[this] var wkName: String = _
+  private[this] var brokerConnProps: String = _
   private[this] val instances = 1
 
   @Before
   def setup(): Unit = {
     nodeCache = createNodes()
-    if (nodeCache.isEmpty) skipTest(s"You must assign nodes for stream tests")
-    else {
+    if (nodeCache.isEmpty || publicPort == invalidPort || publicHostname == invalidHostname) {
+      skipTest(
+        s"${CollieTestUtils.key}, $portKey and $hostnameKey don't exist so all tests in BasicTests4StreamApp are ignored"
+      )
+    } else {
       nameHolder = createNameHolder(nodeCache)
       bkName = nameHolder.generateClusterName()
       wkName = nameHolder.generateClusterName()
-      configurator = createConfigurator(nodeCache)
+      configurator = createConfigurator(nodeCache, publicHostname, publicPort)
       zkApi = ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port)
       bkApi = BrokerApi.access().hostname(configurator.hostname).port(configurator.port)
       wkApi = WorkerApi.access().hostname(configurator.hostname).port(configurator.port)
@@ -125,6 +152,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
           )
         ))
       assertCluster(() => result(bkApi.list), bkCluster.name)
+      brokerConnProps = bkCluster.connectionProps
 
       // create worker cluster
       val wkCluster = result(
@@ -158,7 +186,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     val to = "toTopic"
     val jarPath = CommonUtils.path(System.getProperty("user.dir"), "build", "libs", "ohara-streamapp.jar")
 
-    // We make sure the broker cluster exists again (for create topic)
+    // we make sure the broker cluster exists again (for create topic)
     assertCluster(() => result(bkApi.list), bkName)
 
     // create topic
@@ -177,17 +205,17 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
                              numberOfReplications = None)
       ))
 
-    // Upload streamApp jar
+    // upload streamApp jar
     val jarInfo = result(
       streamAppListAccess.upload(Seq(jarPath), Some(wkName))
     )
     jarInfo.size shouldBe 1
     jarInfo.head.name shouldBe "ohara-streamapp.jar"
 
-    // Create streamApp properties
+    // create streamApp properties
     val stream = result(streamAppPropertyAccess.add(StreamPropertyRequest(jarInfo.head.id, None, None, None, None)))
 
-    // Update streamApp properties
+    // update streamApp properties
     val req = StreamPropertyRequest(
       jarInfo.head.id,
       Some(CommonUtils.randomString(10)),
@@ -205,7 +233,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     properties.error shouldBe None
     properties.workerClusterName shouldBe wkName
 
-    // Get streamApp property (cluster not create yet, hence no state)
+    // get streamApp property (cluster not create yet, hence no state)
     val getProperties = result(streamAppPropertyAccess.get(stream.id))
     getProperties.from.size shouldBe 1
     getProperties.to.size shouldBe 1
@@ -214,23 +242,94 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     getProperties.error shouldBe None
     getProperties.workerClusterName shouldBe wkName
 
-    //Start streamApp
+    // start streamApp
     val res1 =
       result(streamAppActionAccess.start(stream.id))
     res1.id shouldBe stream.id
     res1.state.get shouldBe ContainerState.RUNNING.name
     res1.error shouldBe None
-
     // save the cluster name to cache
     nameHolder.addClusterName(StreamCollie.formatUniqueName(res1.id))
 
-    //Stop streamApp
+    // check the cluster has the metrics data (each stream cluster has two metrics : IN_TOPIC and OUT_TOPIC)
+    await(() => {
+      // TODO: Since failed container could not be get from clusterCache, we directly use dockerClient to get logs
+      // TODO: remove this after #1350 fixed...by Sam
+      nodeCache.foreach {
+        node =>
+          if (node.user.isEmpty && node.password.isEmpty) {
+            // k8s env
+            val client = configurator.k8sClient.get
+            result(client.containers)
+              .filter(info => info.name.contains(StreamCollie.formatUniqueName(res1.id)))
+              .foreach { container =>
+                log.debug(s"container [${container.name}] log: ${result(client.log(container.name))}")
+              }
+          } else {
+            // docker env
+            val client =
+              DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
+            try client.containerNames().filter(name => name.contains(StreamCollie.formatUniqueName(res1.id))).foreach {
+              containerName =>
+                try {
+                  log.debug(s"container [$containerName] log: ${client.log(containerName)}")
+                } catch {
+                  case e: Throwable =>
+                    log.error(s"failed to retrieve container log $containerName", e)
+                }
+            } finally client.close()
+          }
+      }
+      result(streamAppPropertyAccess.get(stream.id)).metrics.meters.nonEmpty
+    })
+    result(streamAppPropertyAccess.get(stream.id)).metrics.meters.size shouldBe 2
+
+    // write some data into topic
+    val producer = Producer
+      .builder[Row, Array[Byte]]()
+      .connectionProps(brokerConnProps)
+      .allAcks()
+      .keySerializer(Serializer.ROW)
+      .valueSerializer(Serializer.BYTES)
+      .build()
+    try {
+      await(
+        () => {
+          try producer
+            .sender()
+            .key(Row.EMPTY)
+            .value(Array.emptyByteArray)
+            .topicName(topic1.name)
+            .send()
+            .get()
+            .topicName() == topic1.name
+          catch {
+            case e: ExecutionException =>
+              e.getCause match {
+                case _: UnknownTopicOrPartitionException => false
+              }
+          }
+        }
+      )
+    } finally producer.close()
+
+    // wait until the metrics cache data update
+    await(() => result(streamAppPropertyAccess.get(stream.id)).metrics.meters.forall(_.value > 0))
+
+    // check the metrics data again
+    val metrics = result(streamAppPropertyAccess.get(stream.id)).metrics.meters
+    metrics.foreach { metric =>
+      metric.document should include("the number of rows")
+      metric.value shouldBe 1D
+    }
+
+    //stop streamApp
     val res2 =
       result(streamAppActionAccess.stop(stream.id))
     res2.state.isEmpty shouldBe true
     res2.error shouldBe None
 
-    // After stop streamApp, property still exist
+    // after stop streamApp, property should still exist
     result(streamAppPropertyAccess.get(stream.id)).id shouldBe stream.id
   }
 

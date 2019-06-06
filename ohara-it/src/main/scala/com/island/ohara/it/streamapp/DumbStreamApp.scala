@@ -19,7 +19,7 @@ import com.island.ohara.common.data.Row
 import com.island.ohara.streams.{OStream, StreamApp}
 
 /**
-  * This is a sample streamApp that will do nothing
+  * This is a sample streamApp that will do nothing but write data to output topic
   * It is not placed at test scope since we need jar when tests manually.
   */
 class DumbStreamApp extends StreamApp {
@@ -27,7 +27,7 @@ class DumbStreamApp extends StreamApp {
   override def start(): Unit = {
     val ostream: OStream[Row] = OStream.builder().toOharaEnvStream
 
-    // do nothing but only start streamApp
+    // do nothing but only start streamApp and write exactly data to output topic
     ostream.start()
   }
 }

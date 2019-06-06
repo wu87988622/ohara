@@ -26,12 +26,13 @@ import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.agent.StreamCollie._
 import com.island.ohara.agent.{BrokerCollie, ClusterCollie, NodeCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.JarApi.JarInfo
+import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.StreamApi._
 import com.island.ohara.client.configurator.v0.{Parameters, StreamApi}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.RouteUtils._
 import com.island.ohara.configurator.jar.JarStore
-import com.island.ohara.configurator.store.DataStore
+import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import org.slf4j.LoggerFactory
 import spray.json.DefaultJsonProtocol._
 
@@ -64,6 +65,7 @@ private[configurator] object StreamRoute {
       from = req.from.getOrElse(Seq.empty),
       to = req.to.getOrElse(Seq.empty),
       state = None,
+      metrics = Metrics(Seq.empty),
       error = None,
       lastModified = CommonUtils.current()
     )
@@ -80,6 +82,7 @@ private[configurator] object StreamRoute {
   private[this] def updateState(id: String)(implicit
                                             store: DataStore,
                                             clusterCollie: ClusterCollie,
+                                            meterCache: MeterCache,
                                             executionContext: ExecutionContext): Future[StreamAppDescription] = {
     store.value[StreamAppDescription](id).flatMap { props =>
       clusterCollie
@@ -91,17 +94,25 @@ private[configurator] object StreamRoute {
               .streamCollie()
               .cluster(formatUniqueName(props.id))
               .filter(_._1.isInstanceOf[StreamClusterInfo])
-              .map(_._1.asInstanceOf[StreamClusterInfo].state -> None)
+              .map(_._1.asInstanceOf[StreamClusterInfo] -> None)
           } else {
-            // if stream cluster was not created, we do nothing
-            Future.successful(None -> None)
+            // if stream cluster was not created, we initial an empty class
+            Future.successful(StreamClusterInfo(name = "", imageName = "", jmxPort = 0, state = None) -> None)
           }
         }
         .flatMap {
-          case (state, error) =>
+          case (info, error) =>
             store.addIfPresent[StreamAppDescription](
               props.id,
-              previous => Future.successful(previous.copy(state = state, error = error)))
+              previous =>
+                Future.successful(
+                  previous.copy(
+                    state = info.state,
+                    error = error,
+                    metrics = Metrics(meterCache.meters(info).getOrElse("streamapp", Seq.empty))
+                  )
+              )
+            )
         }
     }
   }
@@ -130,6 +141,7 @@ private[configurator] object StreamRoute {
             workerCollie: WorkerCollie,
             brokerCollie: BrokerCollie,
             jarStore: JarStore,
+            meterCache: MeterCache,
             executionContext: ExecutionContext): server.Route =
     pathPrefix(STREAM_PREFIX_PATH) {
       pathEnd {

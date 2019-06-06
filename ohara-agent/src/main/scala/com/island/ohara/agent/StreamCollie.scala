@@ -23,6 +23,8 @@ import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.metrics.BeanChannel
+import com.island.ohara.metrics.basic.CounterMBean
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
@@ -32,6 +34,16 @@ import scala.concurrent.{ExecutionContext, Future}
   * It isolates the implementation of container manager from Configurator.
   */
 trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator] {
+
+  /**
+    * Get all counter beans from cluster
+    * @param cluster cluster
+    * @return counter beans
+    */
+  def counters(cluster: StreamClusterInfo): Seq[CounterMBean] = cluster.nodeNames.flatMap { node =>
+    BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().counterMBeans().asScala
+  }
+
   private[agent] def toStreamCluster(clusterName: String, containers: Seq[ContainerInfo]): Future[StreamClusterInfo] = {
     val first = containers.head
     Future.successful(
@@ -192,7 +204,7 @@ object StreamCollie {
     * @param port the port used by jmx remote
     * @return jmx properties
     */
-  private[agent] def formatJMXProperties(hostname: String, port: Int): String = {
+  private[agent] def formatJMXProperties(hostname: String, port: Int): Seq[String] = {
     Seq(
       "-Dcom.sun.management.jmxremote",
       "-Dcom.sun.management.jmxremote.authenticate=false",
@@ -200,7 +212,7 @@ object StreamCollie {
       s"-Dcom.sun.management.jmxremote.port=$port",
       s"-Dcom.sun.management.jmxremote.rmi.port=$port",
       s"-Djava.rmi.server.hostname=$hostname"
-    ).mkString(" ")
+    )
   }
 
   /**
