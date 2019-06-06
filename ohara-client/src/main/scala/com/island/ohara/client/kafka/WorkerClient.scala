@@ -110,6 +110,16 @@ trait WorkerClient {
   def status(name: String)(implicit executionContext: ExecutionContext): Future[ConnectorInfo]
 
   /**
+    * a helper method which is composed by exist and status. It is useful when you want to fetch a may-be-nonexistent
+    * connector but you hate to write future-chain code.
+    * @param name connector's name
+    * @param executionContext thread pool
+    * @return status of nothing
+    */
+  def statusOrNone(name: String)(implicit executionContext: ExecutionContext): Future[Option[ConnectorInfo]] =
+    exist(name).flatMap(if (_) status(name).map(Some(_)) else Future.successful(None))
+
+  /**
     * @param name connector's name
     * @return configuration of connector
     */
