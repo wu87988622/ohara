@@ -19,7 +19,7 @@ FROM oharastream/ohara:deps as deps
 # download kafka
 # WARN: Please don't change the value of KAFKA_DIR
 ARG KAFKA_DIR=/opt/kafka
-ARG KAFKA_VERSION=2.2.0
+ARG KAFKA_VERSION=2.2.1
 ARG SCALA_VERSION=2.12
 RUN wget https://archive.apache.org/dist/kafka/${KAFKA_VERSION}/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
 RUN mkdir ${KAFKA_DIR}
