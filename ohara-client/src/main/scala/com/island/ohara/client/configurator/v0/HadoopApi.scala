@@ -56,14 +56,7 @@ object HadoopApi {
     def update()(implicit executionContext: ExecutionContext): Future[HdfsInfo]
   }
 
-  class Access private[v0] extends BasicAccess(HDFS_PREFIX_PATH) {
-    def get(name: String)(implicit executionContext: ExecutionContext): Future[HdfsInfo] =
-      exec.get[HdfsInfo, ErrorApi.Error](s"$url/$name")
-    def delete(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-      exec.delete[ErrorApi.Error](s"$url/$name")
-    def list(implicit executionContext: ExecutionContext): Future[Seq[HdfsInfo]] =
-      exec.get[Seq[HdfsInfo], ErrorApi.Error](url)
-
+  class Access private[v0] extends Access2[HdfsInfo](HDFS_PREFIX_PATH) {
     def request(): Request = new Request {
       private[this] var name: String = _
       private[this] var uri: String = _

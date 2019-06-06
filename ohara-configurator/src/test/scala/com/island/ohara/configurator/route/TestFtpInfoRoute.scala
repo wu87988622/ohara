@@ -17,7 +17,7 @@
 package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0.FtpApi
-import com.island.ohara.client.configurator.v0.FtpApi.{FtpInfo, FtpInfoRequest}
+import com.island.ohara.client.configurator.v0.FtpApi.Creation
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
@@ -32,7 +32,7 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
   @Test
   def testValidateField(): Unit = {
     an[IllegalArgumentException] should be thrownBy FtpInfoRoute.validateField(
-      FtpInfoRequest(
+      Creation(
         name = "",
         hostname = "hostname",
         port = 1234,
@@ -41,7 +41,7 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
       ))
 
     an[IllegalArgumentException] should be thrownBy FtpInfoRoute.validateField(
-      FtpInfoRequest(
+      Creation(
         name = "aa",
         hostname = "",
         port = 1234,
@@ -50,7 +50,7 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
       ))
 
     an[IllegalArgumentException] should be thrownBy FtpInfoRoute.validateField(
-      FtpInfoRequest(
+      Creation(
         name = "aa",
         hostname = "hostname",
         port = -1,
@@ -59,7 +59,7 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
       ))
 
     an[IllegalArgumentException] should be thrownBy FtpInfoRoute.validateField(
-      FtpInfoRequest(
+      Creation(
         name = "aa",
         hostname = "hostname",
         port = 0,
@@ -68,7 +68,7 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
       ))
 
     an[IllegalArgumentException] should be thrownBy FtpInfoRoute.validateField(
-      FtpInfoRequest(
+      Creation(
         name = "aaa",
         hostname = "hostname",
         port = 99999,
@@ -77,7 +77,7 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
       ))
 
     an[IllegalArgumentException] should be thrownBy FtpInfoRoute.validateField(
-      FtpInfoRequest(
+      Creation(
         name = "aaa",
         hostname = "hostname",
         port = 12345,
@@ -86,7 +86,7 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
       ))
 
     an[IllegalArgumentException] should be thrownBy FtpInfoRoute.validateField(
-      FtpInfoRequest(
+      Creation(
         name = "aaa",
         hostname = "hostname",
         port = 12345,
@@ -95,7 +95,7 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
       ))
 
     FtpInfoRoute.validateField(
-      FtpInfoRequest(
+      Creation(
         name = "aaa",
         hostname = "hostname",
         port = 12345,
@@ -106,41 +106,40 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
 
   @Test
   def test(): Unit = {
-    def compareRequestAndResponse(request: FtpInfoRequest, response: FtpInfo): FtpInfo = {
-      request.name shouldBe response.name
-      request.hostname shouldBe response.hostname
-      request.port shouldBe response.port
-      request.user shouldBe response.user
-      request.password shouldBe response.password
-      response
-    }
-
-    def compare2Response(lhs: FtpInfo, rhs: FtpInfo): Unit = {
-      lhs.id shouldBe rhs.id
-      lhs.name shouldBe lhs.name
-      lhs.hostname shouldBe lhs.hostname
-      lhs.port shouldBe lhs.port
-      lhs.user shouldBe lhs.user
-      lhs.password shouldBe lhs.password
-      lhs.lastModified shouldBe rhs.lastModified
-    }
-
     // test add
     result(ftpApi.list).size shouldBe 0
 
-    val request = FtpInfoRequest("test", "152.22.23.12", 5, "test", "test")
-    val response = compareRequestAndResponse(request, result(ftpApi.add(request)))
+    val name = CommonUtils.randomString()
+    val port = CommonUtils.availablePort()
+    val hostname = CommonUtils.randomString()
+    val user = CommonUtils.randomString()
+    val password = CommonUtils.randomString()
+    val response = result(
+      ftpApi.request().name(name).hostname(hostname).port(port).user(user).password(password).create())
+    response.name shouldBe name
+    response.port shouldBe port
+    response.hostname shouldBe hostname
+    response.user shouldBe user
+    response.password shouldBe password
 
     // test get
-    compare2Response(response, result(ftpApi.get(response.id)))
+    response shouldBe result(ftpApi.get(response.name))
 
     // test update
-    val anotherRequest = FtpInfoRequest("test2", "152.22.23.125", 1222, "test", "test")
-    val newResponse =
-      compareRequestAndResponse(anotherRequest, result(ftpApi.update(response.id, anotherRequest)))
+    val port2 = CommonUtils.availablePort()
+    val hostname2 = CommonUtils.randomString()
+    val user2 = CommonUtils.randomString()
+    val password2 = CommonUtils.randomString()
+    val response2 = result(
+      ftpApi.request().name(name).hostname(hostname2).port(port2).user(user2).password(password2).update())
+    response2.name shouldBe name
+    response2.port shouldBe port2
+    response2.hostname shouldBe hostname2
+    response2.user shouldBe user2
+    response2.password shouldBe password2
 
     // test get
-    compare2Response(newResponse, result(ftpApi.get(newResponse.id)))
+    response2 shouldBe result(ftpApi.get(response2.name))
 
     // test delete
     result(ftpApi.list).size shouldBe 1
@@ -149,12 +148,60 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
 
     // test nonexistent data
     an[IllegalArgumentException] should be thrownBy result(ftpApi.get("asdadas"))
-    an[IllegalArgumentException] should be thrownBy result(ftpApi.update("asdadas", anotherRequest))
   }
 
   @Test
-  def duplicateDeleteStreamProperty(): Unit =
+  def duplicateDelete(): Unit =
     (0 to 10).foreach(_ => result(ftpApi.delete(CommonUtils.randomString(5))))
+
+  @Test
+  def duplicateUpdate(): Unit = {
+    val count = 10
+    (0 until count).foreach(
+      _ =>
+        result(
+          ftpApi
+            .request()
+            .name(CommonUtils.randomString())
+            .hostname(CommonUtils.randomString())
+            .port(CommonUtils.availablePort())
+            .user(CommonUtils.randomString())
+            .password(CommonUtils.randomString())
+            .update()))
+    result(ftpApi.list).size shouldBe count
+  }
+
+  @Test
+  def testInvalidNameOnUpdate(): Unit = {
+    val invalidStrings = Seq("a_", "a-", "a.", "a~")
+    invalidStrings.foreach { invalidString =>
+      an[IllegalArgumentException] should be thrownBy result(
+        ftpApi
+          .request()
+          .name(invalidString)
+          .hostname(CommonUtils.randomString())
+          .port(CommonUtils.availablePort())
+          .user(CommonUtils.randomString())
+          .password(CommonUtils.randomString())
+          .update())
+    }
+  }
+
+  @Test
+  def testInvalidNameOnCreation(): Unit = {
+    val invalidStrings = Seq("a_", "a-", "a.", "a~")
+    invalidStrings.foreach { invalidString =>
+      an[IllegalArgumentException] should be thrownBy result(
+        ftpApi
+          .request()
+          .name(invalidString)
+          .hostname(CommonUtils.randomString())
+          .port(CommonUtils.availablePort())
+          .user(CommonUtils.randomString())
+          .password(CommonUtils.randomString())
+          .create())
+    }
+  }
 
   @After
   def tearDown(): Unit = Releasable.close(configurator)

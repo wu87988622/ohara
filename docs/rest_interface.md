@@ -273,10 +273,10 @@ storable information is shown below.
 
 The following information are tagged by ohara.
 
-1. [id](#object-id) (**string**) — ftp information id
 1. lastModified (**long**) — the last time to update this ftp information
   
 ----------
+
 ### store a ftp information
 
 *POST /v0/ftp*
@@ -311,10 +311,11 @@ The following information are tagged by ohara.
   "user": "abc",
   "password": "pwd",
   "lastModified": 1553498552595,
-  "id": "715e09c9-b4ee-41cc-8d05-cb544904ac38"
 }
 ```
+
 ----------
+
 ### update a ftp information
 
 *PUT /v0/ftp/${id}*
@@ -339,6 +340,8 @@ The following information are tagged by ohara.
 }
 ```
 
+> Noted, this APIs will create an new ftp object if the input name is not associated to an existent object.
+
 **Example Response**
 
 ```json
@@ -349,10 +352,11 @@ The following information are tagged by ohara.
   "user": "abc",
   "password": "pwd",
   "lastModified": 1553498552595,
-  "id": "715e09c9-b4ee-41cc-8d05-cb544904ac38"
 }
 ```
+
 ----------
+
 ### list all ftp information stored in ohara
 
 *GET /v0/ftp*
@@ -368,11 +372,12 @@ The following information are tagged by ohara.
     "user": "abc",
     "password": "pwd",
     "lastModified": 1553498552595,
-    "id": "715e09c9-b4ee-41cc-8d05-cb544904ac38"
   }
 ]
 ```
+
 ----------
+
 ### delete a ftp information
 
 *DELETE /v0/ftp/${id}*
@@ -400,9 +405,11 @@ The following information are tagged by ohara.
   "user": "abc",
   "password": "pwd",
   "lastModified": 1553498552595,
-  "id": "715e09c9-b4ee-41cc-8d05-cb544904ac38"
 }
 ```
+
+----------
+
 ## HDFS Connection Information
 
 Ohara supports to store the simple hdfs information which is running on single namenode without security configuration.

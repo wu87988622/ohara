@@ -18,8 +18,8 @@ package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
 import com.island.ohara.client.configurator.v0.FtpApi._
+import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.route.RouteUtils.Id
 import com.island.ohara.configurator.store.DataStore
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -27,30 +27,35 @@ import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object FtpInfoRoute {
 
   def apply(implicit store: DataStore, executionContext: ExecutionContext): server.Route =
-    RouteUtils.basicRoute[FtpInfoRequest, FtpInfo](
+    RouteUtils.basicRoute2[Creation, Update, FtpInfo](
       root = FTP_PREFIX_PATH,
-      reqToRes = (id: Id, request: FtpInfoRequest) => {
+      hookOfCreate = (request: Creation) => {
         validateField(request)
         Future.successful(
-          FtpInfo(id,
-                  request.name,
-                  request.hostname,
-                  request.port,
-                  request.user,
-                  request.password,
-                  CommonUtils.current()))
+          FtpInfo(request.name, request.hostname, request.port, request.user, request.password, CommonUtils.current()))
+      },
+      hookOfUpdate = (name: String, request: Update) => {
+        validateField(request)
+        Future.successful(
+          FtpInfo(name, request.hostname, request.port, request.user, request.password, CommonUtils.current()))
       }
     )
 
-  private[route] def validateField(ftpInfo: FtpInfoRequest): Unit = {
-    val FtpInfoRequest(name, hostname, port, user, password) = ftpInfo
-    val msg =
-      if (name.isEmpty) "empty name is illegal"
-      else if (port <= 0 || port > 65535) s"illegal port:$port"
-      else if (hostname.isEmpty) "empty hostname is illegal"
-      else if (user.isEmpty) "empty user is illegal"
-      else if (password.isEmpty) "empty password is illegal"
-      else ""
-    if (msg.nonEmpty) throw new IllegalArgumentException(s"validate error - $msg")
+  @VisibleForTesting
+  private[route] def validateField(request: Creation): Unit = {
+    CommonUtils.requireNonEmpty(request.name)
+    CommonUtils.requireNonEmpty(request.hostname)
+    CommonUtils.requireNonEmpty(request.user)
+    CommonUtils.requireNonEmpty(request.password)
+    CommonUtils.requireConnectionPort(request.port)
   }
+
+  @VisibleForTesting
+  private[route] def validateField(request: Update): Unit = {
+    CommonUtils.requireNonEmpty(request.hostname)
+    CommonUtils.requireNonEmpty(request.user)
+    CommonUtils.requireNonEmpty(request.password)
+    CommonUtils.requirePositiveInt(request.port)
+  }
+
 }

@@ -33,18 +33,21 @@ class TestHdfsInfoRoute extends SmallTest with Matchers {
   @Test
   def test(): Unit = {
     // test add
-    result(hdfsApi.list).size shouldBe 0
-    val response = result(hdfsApi.request().name(CommonUtils.randomString()).uri("file:////").create())
-    result(hdfsApi.list).size shouldBe 1
+    val name = CommonUtils.randomString()
+    val uri = CommonUtils.randomString()
+    val response = result(hdfsApi.request().name(name).uri(uri).create())
+    response.name shouldBe name
+    response.uri shouldBe uri
 
     // test get
     response shouldBe result(hdfsApi.get(response.name))
 
     // test update
-    val uri = CommonUtils.randomString()
-    val newResponse = result(hdfsApi.request().name(response.name).uri(uri).update())
+    val uri2 = CommonUtils.randomString()
+    val newResponse = result(hdfsApi.request().name(response.name).uri(uri2).update())
     result(hdfsApi.list).size shouldBe 1
-    newResponse.uri shouldBe uri
+    newResponse.name shouldBe name
+    newResponse.uri shouldBe uri2
     newResponse shouldBe result(hdfsApi.get(response.name))
 
     result(hdfsApi.delete(response.name))

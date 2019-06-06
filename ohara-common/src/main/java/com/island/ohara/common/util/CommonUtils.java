@@ -365,6 +365,19 @@ public final class CommonUtils {
     return requireNonEmpty(s, () -> "");
   }
 
+  /**
+   * check the port to which you prepare to connect. The port must be bigger than zero and small
+   * than 65536. The zero is illegal since you can't raise a connection to a zero port.
+   *
+   * @param value port number
+   * @return legal port
+   */
+  public static int requireConnectionPort(int value) {
+    if (value <= 0 || value > 65535)
+      throw new IllegalArgumentException("the legal port range is 1 - 65535, actual:" + value);
+    return value;
+  }
+
   public static int requirePositiveInt(int value) {
     return (int) requirePositiveLong(value);
   }

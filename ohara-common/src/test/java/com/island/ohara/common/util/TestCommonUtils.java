@@ -451,4 +451,19 @@ public class TestCommonUtils extends SmallTest {
     }
     Assert.assertFalse(file.exists());
   }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testNegativeNumberOnRequireConnectionPort() {
+    CommonUtils.requireConnectionPort(-1);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testLargeNumberOnRequireConnectionPort() {
+    CommonUtils.requireConnectionPort(65535 + 10);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testZeroOnRequireConnectionPort() {
+    CommonUtils.requireConnectionPort(0);
+  }
 }
