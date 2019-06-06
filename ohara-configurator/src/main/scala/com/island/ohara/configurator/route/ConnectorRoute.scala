@@ -68,8 +68,10 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
                            workerClient: WorkerClient)(implicit executionContext: ExecutionContext,
                                                        meterCache: MeterCache): Future[ConnectorDescription] =
     workerClient
-      .status(connectorConfig.id)
-      .map(s => Some(s.connector.state) -> s.connector.trace)
+      .statusOrNone(connectorConfig.id)
+      .map(statusOption => statusOption.map(_.connector))
+      .map(connectorOption =>
+        connectorOption.map(connector => Some(connector.state) -> connector.trace).getOrElse(None -> None))
       .recover {
         case e: Throwable =>
           val message = s"failed to fetch stats for $connectorConfig"

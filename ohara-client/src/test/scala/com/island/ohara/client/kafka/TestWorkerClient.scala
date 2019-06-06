@@ -396,4 +396,20 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
         .settings(Map(MyConnector.DURATION_KEY -> "PT1M1S"))
         .create)
   }
+
+  @Test
+  def testStatusOrNone(): Unit = {
+    result(workerClient.statusOrNone(CommonUtils.randomString())) shouldBe None
+    val response = result(
+      workerClient
+        .connectorCreator()
+        .topicName(CommonUtils.randomString(10))
+        .connectorClass(classOf[MyConnector])
+        .id(CommonUtils.randomString(10))
+        .numberOfTasks(1)
+        .settings(Map(MyConnector.DURATION_KEY -> "PT1M1S"))
+        .create)
+    result(workerClient.statusOrNone(response.name)) should not be None
+    result(workerClient.delete(response.name))
+  }
 }
