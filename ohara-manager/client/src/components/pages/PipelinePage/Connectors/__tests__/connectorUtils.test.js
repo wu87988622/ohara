@@ -147,19 +147,13 @@ describe('changeKeySeparator()', () => {
 });
 
 describe('getConnectorState()', () => {
-  it('returns true if the connector has a running state', () => {
-    const state = CONNECTOR_STATES.running;
-    expect(utils.getConnectorState(state)).toBe(true);
+  it('returns true if the connector has a state other than `null`', () => {
+    expect(utils.getConnectorState(CONNECTOR_STATES.running)).toBe(true);
+    expect(utils.getConnectorState(CONNECTOR_STATES.failed)).toBe(true);
   });
 
-  it('returns true if the connector has a failed state', () => {
-    const state = CONNECTOR_STATES.failed;
-    expect(utils.getConnectorState(state)).toBe(true);
-  });
-
-  it(`returns false if the connector doesn't have either running or failed state`, () => {
-    const state = 'unknown state';
-    expect(utils.getConnectorState(state)).toBe(false);
+  it(`returns false if the connector have a state with \`null\``, () => {
+    expect(utils.getConnectorState(null)).toBe(false);
   });
 });
 

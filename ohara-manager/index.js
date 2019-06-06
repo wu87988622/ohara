@@ -28,11 +28,13 @@ const { API_ROOT, PORT } = require('./config');
 const app = express();
 
 app.use(bodyParser.json());
-// gzip static assets
+// Gzip static assets
 app.use(compression());
 
+// Server logs
 app.use(morgan('combined'));
 
+// Serve client build dir
 app.use(express.static(path.resolve(__dirname, 'client', 'build')));
 
 // API routes
