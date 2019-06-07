@@ -32,10 +32,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 import org.apache.kafka.streams.StreamsBuilder;
-import org.apache.kafka.streams.kstream.Grouped;
-import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KTable;
-import org.apache.kafka.streams.kstream.Produced;
+import org.apache.kafka.streams.kstream.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,7 +71,10 @@ class OStreamImpl extends AbstractStream<Row, Row> implements OStream<Row> {
     BrokerClient client = BrokerClient.of(builder.getBootstrapServers());
     client.topicCreator().topicName(topicName).numberOfPartitions(partitions).create();
     return new OStreamImpl(
-        builder, kstreams.through(topicName, Produced.with(Serdes.ROW, Serdes.ROW)), innerBuilder);
+        builder,
+        kstreams.through(
+            topicName, org.apache.kafka.streams.kstream.Produced.with(Serdes.ROW, Serdes.ROW)),
+        innerBuilder);
   }
 
   @Override
@@ -107,6 +107,9 @@ class OStreamImpl extends AbstractStream<Row, Row> implements OStream<Row> {
                                             row.cell(name).value()))
                                 .toArray(Cell[]::new)),
                         row))
+            // construct the KStream to KTable
+            // reference :
+            // https://docs.confluent.io/current/streams/faq.html#option-2-perform-a-dummy-aggregation
             .groupByKey(Grouped.with(Serdes.ROW, Serdes.ROW))
             .reduce((agg, newValue) -> newValue);
 
