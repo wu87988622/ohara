@@ -112,7 +112,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
               unit = s"${meter.eventType()} / ${meter.rateUnit().name()}",
               document = meter.catalog.name()
             )
-          }
+          }.toList // convert to serializable collection
       }
     def workerToMeters(workerClusterInfo: WorkerClusterInfo): Map[String, Seq[Meter]] =
       workerCollie.counters(workerClusterInfo).groupBy(_.group()).map {
@@ -123,7 +123,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
               unit = counter.getUnit,
               document = counter.getDocument
             )
-          }
+          }.toList // convert to serializable collection
       }
     def streamAppToMeters(streamClusterInfo: StreamClusterInfo): Map[String, Seq[Meter]] =
       streamCollie.counters(streamClusterInfo).groupBy(_.group()).map {
@@ -134,7 +134,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
               unit = counter.getUnit,
               document = counter.getDocument
             )
-          }
+          }.toList // convert to serializable collection
       }
     MeterCache
       .builder()
