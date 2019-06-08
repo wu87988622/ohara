@@ -19,34 +19,32 @@ package com.island.ohara.configurator
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
 import com.island.ohara.client.configurator.v0.PipelineApi.{Flow, PipelineCreationRequest}
 import com.island.ohara.client.configurator.v0.{ConnectorApi, PipelineApi, TopicApi}
-import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
-import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 class TestListManyPipelines extends WithBrokerWorker with Matchers {
 
   private[this] val configurator =
     Configurator.builder().fake(testUtil().brokersConnProps(), testUtil().workersConnProps()).build()
 
+  private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
+
   private[this] val numberOfPipelines = 30
   @Test
   def test(): Unit = {
-    val topic = Await.result(
+    val topic = result(
       TopicApi
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(
-          TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
-                               brokerClusterName = None,
-                               numberOfPartitions = None,
-                               numberOfReplications = None)),
-      10 seconds
+        .request()
+        .name(CommonUtils.randomString(10))
+        .create()
     )
     val connector = Await.result(
       ConnectorApi

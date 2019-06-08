@@ -17,6 +17,7 @@
 package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0.HadoopApi
+import com.island.ohara.client.configurator.v0.HadoopApi.{HdfsInfo, Request}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
@@ -86,6 +87,20 @@ class TestHdfsInfoRoute extends SmallTest with Matchers {
       an[IllegalArgumentException] should be thrownBy result(
         hdfsApi.request().name(invalidString).uri(CommonUtils.randomString()).create())
     }
+  }
+
+  @Test
+  def testUpdateUri(): Unit = {
+    val uri = CommonUtils.randomString()
+    updatePartOfField(_.uri(uri), _.copy(uri = uri))
+  }
+
+  private[this] def updatePartOfField(req: Request => Request, _expected: HdfsInfo => HdfsInfo): Unit = {
+    val previous = result(hdfsApi.request().name(CommonUtils.randomString()).uri(CommonUtils.randomString()).update())
+    val updated = result(req(hdfsApi.request().name(previous.name)).update())
+    val expected = _expected(previous)
+    updated.name shouldBe expected.name
+    updated.uri shouldBe expected.uri
   }
 
   @After

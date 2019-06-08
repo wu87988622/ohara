@@ -44,7 +44,7 @@ private[configurator] class FakeTopicAdmin extends TopicAdmin {
       .getOrElse(Future.failed(new NoSuchElementException(
         s"the topic:$name doesn't exist. actual:${cachedTopics.keys().asScala.mkString(",")}")))
 
-  override def list(implicit executionContext: ExecutionContext): Future[Seq[TopicAdmin.TopicInfo]] =
+  override def list()(implicit executionContext: ExecutionContext): Future[Seq[TopicAdmin.TopicInfo]] =
     Future.successful {
       cachedTopics.values().asScala.toSeq
     }

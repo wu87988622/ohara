@@ -22,7 +22,6 @@ import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationReq
 import com.island.ohara.client.configurator.v0.NodeApi.NodeCreationRequest
 import com.island.ohara.client.configurator.v0.PipelineApi.{Flow, Pipeline, PipelineCreationRequest}
 import com.island.ohara.client.configurator.v0.StreamApi.StreamPropertyRequest
-import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -110,11 +109,9 @@ class TestPipelineRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(
-          TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
-                               brokerClusterName = None,
-                               numberOfPartitions = None,
-                               numberOfReplications = None))
+        .request()
+        .name(CommonUtils.randomString(10))
+        .create()
     )
 
     val pipeline = result(
@@ -160,24 +157,9 @@ class TestPipelineRoute extends SmallTest with Matchers {
 
     // test add
     val topicAccess = TopicApi.access().hostname(configurator.hostname).port(configurator.port)
-    val uuid_0 = result(
-      topicAccess.add(
-        TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
-                             brokerClusterName = None,
-                             numberOfPartitions = None,
-                             numberOfReplications = None))).id
-    val uuid_1 = result(
-      topicAccess.add(
-        TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
-                             brokerClusterName = None,
-                             numberOfPartitions = None,
-                             numberOfReplications = None))).id
-    val uuid_2 = result(
-      topicAccess.add(
-        TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
-                             brokerClusterName = None,
-                             numberOfPartitions = None,
-                             numberOfReplications = None))).id
+    val uuid_0 = result(topicAccess.request().name(CommonUtils.randomString(10)).create()).id
+    val uuid_1 = result(topicAccess.request().name(CommonUtils.randomString(10)).create()).id
+    val uuid_2 = result(topicAccess.request().name(CommonUtils.randomString(10)).create()).id
 
     result(pipelineApi.list).size shouldBe 0
 
@@ -214,20 +196,10 @@ class TestPipelineRoute extends SmallTest with Matchers {
   def testBindInvalidObjects2Pipeline(): Unit = {
     val topicAccess = TopicApi.access().hostname(configurator.hostname).port(configurator.port)
     val hdfsAccess = HadoopApi.access().hostname(configurator.hostname).port(configurator.port)
-    val uuid_0 = result(
-      topicAccess.add(
-        TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
-                             brokerClusterName = None,
-                             numberOfPartitions = None,
-                             numberOfReplications = None))).id
+    val uuid_0 = result(topicAccess.request().name(CommonUtils.randomString(10)).create()).id
     val uuid_1 = result(hdfsAccess.request().name(CommonUtils.randomString()).uri("file:///").create()).id
     val uuid_2 = result(hdfsAccess.request().name(CommonUtils.randomString()).uri("file:///").create()).id
-    val uuid_3 = result(
-      topicAccess.add(
-        TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
-                             brokerClusterName = None,
-                             numberOfPartitions = None,
-                             numberOfReplications = None))).id
+    val uuid_3 = result(topicAccess.request().name(CommonUtils.randomString(10)).create()).id
     result(topicAccess.list).size shouldBe 2
     result(hdfsAccess.list).size shouldBe 2
 
@@ -278,11 +250,9 @@ class TestPipelineRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(
-          TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
-                               brokerClusterName = None,
-                               numberOfPartitions = None,
-                               numberOfReplications = None))
+        .request()
+        .name(CommonUtils.randomString(10))
+        .create()
     )
 
     val pipeline = result(
@@ -310,11 +280,9 @@ class TestPipelineRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(
-          TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
-                               brokerClusterName = None,
-                               numberOfPartitions = None,
-                               numberOfReplications = None))
+        .request()
+        .name(CommonUtils.randomString(10))
+        .create()
     )
 
     val pipeline = result(
@@ -344,11 +312,9 @@ class TestPipelineRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(
-          TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
-                               brokerClusterName = None,
-                               numberOfPartitions = None,
-                               numberOfReplications = None))
+        .request()
+        .name(CommonUtils.randomString(10))
+        .create()
     )
 
     val pipeline = result(
@@ -383,11 +349,9 @@ class TestPipelineRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(
-          TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
-                               brokerClusterName = None,
-                               numberOfPartitions = None,
-                               numberOfReplications = None))
+        .request()
+        .name(CommonUtils.randomString(10))
+        .create()
     )
 
     val topic1 = result(
@@ -395,11 +359,9 @@ class TestPipelineRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(
-          TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
-                               brokerClusterName = None,
-                               numberOfPartitions = None,
-                               numberOfReplications = None))
+        .request()
+        .name(CommonUtils.randomString(10))
+        .create()
     )
 
     val pipeline = result(
@@ -445,11 +407,9 @@ class TestPipelineRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(
-          TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
-                               brokerClusterName = None,
-                               numberOfPartitions = None,
-                               numberOfReplications = None))
+        .request()
+        .name(CommonUtils.randomString(10))
+        .create()
     )
 
     val topic1 = result(
@@ -457,11 +417,9 @@ class TestPipelineRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(
-          TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
-                               brokerClusterName = None,
-                               numberOfPartitions = None,
-                               numberOfReplications = None))
+        .request()
+        .name(CommonUtils.randomString(10))
+        .create()
     )
 
     val pipeline0 = result(
@@ -503,11 +461,9 @@ class TestPipelineRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(
-          TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
-                               brokerClusterName = None,
-                               numberOfPartitions = None,
-                               numberOfReplications = None))
+        .request()
+        .name(CommonUtils.randomString(10))
+        .create()
     )
 
     val connector = result(
@@ -543,11 +499,9 @@ class TestPipelineRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(
-          TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
-                               brokerClusterName = None,
-                               numberOfPartitions = None,
-                               numberOfReplications = None))
+        .request()
+        .name(CommonUtils.randomString(10))
+        .create()
     )
 
     val connector = result(
@@ -583,11 +537,9 @@ class TestPipelineRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(
-          TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
-                               brokerClusterName = None,
-                               numberOfPartitions = None,
-                               numberOfReplications = None))
+        .request()
+        .name(CommonUtils.randomString(10))
+        .create()
     )
     val sourceRequest = ConnectorCreationRequest(
       workerClusterName = None,
@@ -651,11 +603,9 @@ class TestPipelineRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(
-          TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
-                               brokerClusterName = None,
-                               numberOfPartitions = None,
-                               numberOfReplications = None))
+        .request()
+        .name(CommonUtils.randomString(10))
+        .create()
     )
 
     val sourceRequest = ConnectorCreationRequest(

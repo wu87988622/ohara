@@ -17,13 +17,13 @@
 package com.island.ohara.client.configurator.v0
 import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
-import spray.json.RootJsonFormat
+import spray.json.{JsObject, JsString, JsValue, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 object JdbcApi {
   val JDBC_PREFIX_PATH: String = "jdbc"
-  final case class Update(url: String, user: String, password: String)
+  final case class Update(url: Option[String], user: Option[String], password: Option[String])
   implicit val JDBC_UPDATE_JSON_FORMAT: RootJsonFormat[Update] = jsonFormat3(Update)
   final case class Creation(name: String, url: String, user: String, password: String) extends CreationRequest
   implicit val JDBC_CREATION_JSON_FORMAT: RootJsonFormat[Creation] = jsonFormat4(Creation)
@@ -33,7 +33,13 @@ object JdbcApi {
     override def id: String = name
     override def kind: String = "jdbc"
   }
-  implicit val JDBC_INFO_JSON_FORMAT: RootJsonFormat[JdbcInfo] = jsonFormat5(JdbcInfo)
+  implicit val JDBC_INFO_JSON_FORMAT: RootJsonFormat[JdbcInfo] = new RootJsonFormat[JdbcInfo] {
+    private[this] val format = jsonFormat5(JdbcInfo)
+    override def read(json: JsValue): JdbcInfo = format.read(json)
+    override def write(obj: JdbcInfo): JsValue = JsObject(
+      // TODO: remove the id
+      format.write(obj).asJsObject.fields ++ Map("id" -> JsString(obj.id)))
+  }
 
   trait Request {
     def name(name: String): Request
@@ -97,9 +103,9 @@ object JdbcApi {
         exec.put[Update, JdbcInfo, ErrorApi.Error](
           s"${_url}/${CommonUtils.requireNonEmpty(name)}",
           Update(
-            url = CommonUtils.requireNonEmpty(url),
-            user = CommonUtils.requireNonEmpty(user),
-            password = CommonUtils.requireNonEmpty(password)
+            url = Option(url).map(CommonUtils.requireNonEmpty),
+            user = Option(user).map(CommonUtils.requireNonEmpty),
+            password = Option(password).map(CommonUtils.requireNonEmpty),
           )
         )
     }

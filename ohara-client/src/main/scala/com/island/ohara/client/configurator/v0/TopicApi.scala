@@ -15,17 +15,29 @@
  */
 
 package com.island.ohara.client.configurator.v0
+import com.island.ohara.common.annotations.Optional
+import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsObject, JsString, JsValue, RootJsonFormat}
 
-object TopicApi {
-  val TOPICS_PREFIX_PATH: String = "topics"
-  case class TopicCreationRequest(name: Option[String],
-                                  brokerClusterName: Option[String],
-                                  numberOfPartitions: Option[Int],
-                                  numberOfReplications: Option[Short])
+import scala.concurrent.{ExecutionContext, Future}
 
-  implicit val TOPIC_CREATION_REQUEST_FORMAT: RootJsonFormat[TopicCreationRequest] = jsonFormat4(TopicCreationRequest)
+object TopicApi {
+
+  val DEFAULT_NUMBER_OF_PARTITIONS: Int = 1
+  val DEFAULT_NUMBER_OF_REPLICATIONS: Short = 1
+  val TOPICS_PREFIX_PATH: String = "topics"
+  case class Update(brokerClusterName: Option[String],
+                    numberOfPartitions: Option[Int],
+                    numberOfReplications: Option[Short])
+  implicit val TOPIC_UPDATE_REQUEST_FORMAT: RootJsonFormat[Update] = jsonFormat3(Update)
+  case class Creation(name: String,
+                      brokerClusterName: Option[String],
+                      numberOfPartitions: Option[Int],
+                      numberOfReplications: Option[Short])
+      extends CreationRequest
+
+  implicit val TOPIC_CREATION_REQUEST_FORMAT: RootJsonFormat[Creation] = jsonFormat4(Creation)
 
   import MetricsApi._
 
@@ -44,9 +56,84 @@ object TopicApi {
     private[this] val format = jsonFormat6(TopicInfo)
     override def read(json: JsValue): TopicInfo = format.read(json)
     override def write(obj: TopicInfo): JsValue = JsObject(
+      // TODO: remove the id
       format.write(obj).asJsObject.fields ++ Map("id" -> JsString(obj.id)))
   }
 
-  def access(): Access[TopicCreationRequest, TopicInfo] =
-    new Access[TopicCreationRequest, TopicInfo](TOPICS_PREFIX_PATH)
+  /**
+    * used to generate the payload and url for POST/PUT request.
+    */
+  trait Request {
+    def name(name: String): Request
+    @Optional("server will match a broker cluster for you if the bk name is ignored")
+    def brokerClusterName(brokerClusterName: String): Request
+    @Optional("default value is DEFAULT_NUMBER_OF_PARTITIONS")
+    def numberOfPartitions(numberOfPartitions: Int): Request
+    @Optional("default value is DEFAULT_NUMBER_OF_REPLICATIONS")
+    def numberOfReplications(numberOfReplications: Short): Request
+
+    /**
+      * generate the POST request
+      * @param executionContext thread pool
+      * @return created data
+      */
+    def create()(implicit executionContext: ExecutionContext): Future[TopicInfo]
+
+    /**
+      * generate the PUT request
+      * @param executionContext thread pool
+      * @return updated/created data
+      */
+    def update()(implicit executionContext: ExecutionContext): Future[TopicInfo]
+  }
+
+  class Access private[v0] extends Access2[TopicInfo](TOPICS_PREFIX_PATH) {
+    def request(): Request = new Request {
+      private[this] var name: String = _
+      private[this] var brokerClusterName: Option[String] = None
+      private[this] var numberOfPartitions: Option[Int] = None
+      private[this] var numberOfReplications: Option[Short] = None
+      override def name(name: String): Request = {
+        this.name = CommonUtils.requireNonEmpty(name)
+        this
+      }
+
+      override def brokerClusterName(brokerClusterName: String): Request = {
+        this.brokerClusterName = Some(CommonUtils.requireNonEmpty(brokerClusterName))
+        this
+      }
+
+      override def numberOfPartitions(numberOfPartitions: Int): Request = {
+        this.numberOfPartitions = Some(CommonUtils.requirePositiveInt(numberOfPartitions))
+        this
+      }
+
+      override def numberOfReplications(numberOfReplications: Short): Request = {
+        this.numberOfReplications = Some(CommonUtils.requirePositiveShort(numberOfReplications))
+        this
+      }
+
+      override def create()(implicit executionContext: ExecutionContext): Future[TopicInfo] =
+        exec.post[Creation, TopicInfo, ErrorApi.Error](
+          _url,
+          Creation(
+            name = CommonUtils.requireNonEmpty(name),
+            brokerClusterName = brokerClusterName,
+            numberOfPartitions = numberOfPartitions,
+            numberOfReplications = numberOfReplications
+          )
+        )
+      override def update()(implicit executionContext: ExecutionContext): Future[TopicInfo] =
+        exec.put[Update, TopicInfo, ErrorApi.Error](
+          s"${_url}/${CommonUtils.requireNonEmpty(name)}",
+          Update(
+            brokerClusterName = brokerClusterName,
+            numberOfPartitions = numberOfPartitions,
+            numberOfReplications = numberOfReplications
+          )
+        )
+    }
+  }
+
+  def access(): Access = new Access
 }

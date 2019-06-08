@@ -28,7 +28,6 @@ import com.island.ohara.client.configurator.v0.StreamApi.{
   StreamAppDescription,
   StreamPropertyRequest
 }
-import com.island.ohara.client.configurator.v0.TopicApi.{TopicCreationRequest, TopicInfo}
 import com.island.ohara.client.configurator.v0.WorkerApi.{WorkerClusterCreationRequest, WorkerClusterInfo}
 import com.island.ohara.client.configurator.v0.ZookeeperApi.{ZookeeperClusterCreationRequest, ZookeeperClusterInfo}
 import com.island.ohara.client.configurator.v0._
@@ -77,7 +76,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
   private[this] var zkApi: ClusterAccess[ZookeeperClusterCreationRequest, ZookeeperClusterInfo] = _
   private[this] var bkApi: ClusterAccess[BrokerClusterCreationRequest, BrokerClusterInfo] = _
   private[this] var wkApi: ClusterAccess[WorkerClusterCreationRequest, WorkerClusterInfo] = _
-  private[this] var topicApi: Access[TopicCreationRequest, TopicInfo] = _
+  private[this] var topicApi: com.island.ohara.client.configurator.v0.TopicApi.Access = _
 
   private[this] var streamAppActionAccess: ActionAccess = _
   private[this] var streamAppListAccess: ListAccess = _
@@ -190,20 +189,8 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     assertCluster(() => result(bkApi.list), bkName)
 
     // create topic
-    val topic1 = result(
-      topicApi.add(
-        TopicCreationRequest(name = Some(from),
-                             brokerClusterName = Some(bkName),
-                             numberOfPartitions = None,
-                             numberOfReplications = None)
-      ))
-    val topic2 = result(
-      topicApi.add(
-        TopicCreationRequest(name = Some(to),
-                             brokerClusterName = Some(bkName),
-                             numberOfPartitions = None,
-                             numberOfReplications = None)
-      ))
+    val topic1 = result(topicApi.request().name(from).brokerClusterName(bkName).create())
+    val topic2 = result(topicApi.request().name(to).brokerClusterName(bkName).create())
 
     // upload streamApp jar
     val jarInfo = result(

@@ -17,7 +17,6 @@
 package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
-import com.island.ohara.client.configurator.v0.TopicApi._
 import com.island.ohara.client.configurator.v0.{ConnectorApi, ObjectApi, TopicApi}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -25,9 +24,9 @@ import com.island.ohara.configurator.Configurator
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
 class TestObjectRoute extends SmallTest with Matchers {
 
   private[this] val configurator = Configurator.builder().fake(1, 1).build()
@@ -45,11 +44,9 @@ class TestObjectRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(
-          TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
-                               brokerClusterName = None,
-                               numberOfPartitions = None,
-                               numberOfReplications = None)))
+        .request()
+        .name(CommonUtils.randomString(10))
+        .create())
 
     var objs = result(objectApi.list)
     objs.size shouldBe (1 + initialSize)
@@ -63,11 +60,9 @@ class TestObjectRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(
-          TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
-                               brokerClusterName = None,
-                               numberOfPartitions = None,
-                               numberOfReplications = None)))
+        .request()
+        .name(CommonUtils.randomString(10))
+        .create())
 
     objs = result(objectApi.list)
 
@@ -145,11 +140,9 @@ class TestObjectRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(
-          TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
-                               brokerClusterName = None,
-                               numberOfPartitions = None,
-                               numberOfReplications = None)))
+        .request()
+        .name(CommonUtils.randomString(10))
+        .create())
 
     val objs = result(objectApi.list)
 

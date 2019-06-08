@@ -321,10 +321,10 @@ The following information are tagged by ohara.
 *PUT /v0/ftp/${name}*
 
 1. name (**string**) — name of this ftp information
-1. hostname (**string**) — ftp server hostname
-1. port (**int**) — ftp server port
-1. user (**string**) — account of ftp server
-1. password (**string**) — password of ftp server
+1. hostname (**option(string)**) — ftp server hostname
+1. port (**option(int)**) — ftp server port
+1. user (**option(string)**) — account of ftp server
+1. password (**option(string)**) — password of ftp server
 
 > the string value can't be empty or null. the port should be small than 65535 and larger than zero.
 
@@ -452,7 +452,7 @@ The following information are tagged by ohara.
 *PUT /v0/hdfs/${id}*
 
 1. name (**string**) — name of this hdfs information.
-1. uri (**string**) — hdfs connection information. The form looks like "hdfs://namenode:9999/"
+1. uri (**option(string)**) — hdfs connection information. The form looks like "hdfs://namenode:9999/"
 
 **Example Request**
 
@@ -574,9 +574,9 @@ The following information are tagged by ohara.
 *PUT /v0/jdbc/${name}*
 
 1. name (**string**) — name of this jdbc information.
-1. url (**string**) — jdbc connection information. format: jdbc:${database}://${serverName}\$instanceName:$portNumber
-1. user (**string**) — the account which has permission to access database
-1. password (**string**) — password of account. It is stored as text in ohara
+1. url (**option(string)**) — jdbc connection information. format: jdbc:${database}://${serverName}\$instanceName:$portNumber
+1. user (**option(string)**) — the account which has permission to access database
+1. password (**option(string)**) — password of account. It is stored as text in ohara
 
 **Example Request**
 

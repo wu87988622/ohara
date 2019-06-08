@@ -36,6 +36,15 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
 private[route] object RouteUtils {
 
+  /**
+    * generate the error message used to indicate that some fields are miss in the update request.
+    * @param name name
+    * @param fieldName name of field
+    * @return error message
+    */
+  def errorMessage(name: String, fieldName: String): String =
+    s"$name does not exist so there is an new object will be created. Hence, you can ignore $fieldName"
+
   //-------------------- global parameter for route -------------------------//
   val LOG = Logger(RouteUtils.getClass)
   type Id = String
@@ -131,11 +140,11 @@ private[route] object RouteUtils {
   def basicRoute2[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
     root: String,
     hookOfCreate: Creation => Future[Res],
-    hookOfUpdate: (String, Update) => Future[Res])(implicit store: DataStore,
-                                                   rm: RootJsonFormat[Creation],
-                                                   rm1: RootJsonFormat[Update],
-                                                   rm2: RootJsonFormat[Res],
-                                                   executionContext: ExecutionContext): server.Route =
+    hookOfUpdate: (String, Update, Option[Res]) => Future[Res])(implicit store: DataStore,
+                                                                rm: RootJsonFormat[Creation],
+                                                                rm1: RootJsonFormat[Update],
+                                                                rm2: RootJsonFormat[Res],
+                                                                executionContext: ExecutionContext): server.Route =
     pathPrefix(root) {
       pathEnd {
         post(entity(as[Creation]) { req =>
@@ -147,7 +156,10 @@ private[route] object RouteUtils {
           complete(store.remove[Res](name).map(_ => StatusCodes.NoContent))) ~
           put {
             entity(as[Update]) { req =>
-              complete(hookOfUpdate(checkName(name), req).map(res => store.add(name, res)))
+              complete(
+                store
+                  .get[Res](checkName(name))
+                  .flatMap(hookOfUpdate(name, req, _).flatMap(res => store.add(name, res))))
             }
           }
       }
@@ -184,6 +196,7 @@ private[route] object RouteUtils {
     * @tparam Res response
     * @return route
     */
+  // deprecated
   def basicRoute[Req, Res <: Data: ClassTag](root: String,
                                              hookOfAdd: (Id, Req) => Future[Res],
                                              hookOfUpdate: (Id, Req, Res) => Future[Res],
@@ -200,6 +213,34 @@ private[route] object RouteUtils {
       } ~ path(Segment) { id =>
         routeOfGet[Res](id, hookOfGet) ~ routeOfDelete[Res](id, hookBeforeDelete) ~
           routeOfUpdate[Req, Res](id, hookOfUpdate)
+      }
+    }
+
+  def basicRoute2[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
+    root: String,
+    hookOfAdd: Creation => Future[Res],
+    hookOfUpdate: (String, Update, Option[Res]) => Future[Res],
+    hookOfList: Seq[Res] => Future[Seq[Res]],
+    hookOfGet: Res => Future[Res],
+    hookBeforeDelete: String => Future[String])(implicit store: DataStore,
+                                                rm: RootJsonFormat[Creation],
+                                                rm1: RootJsonFormat[Update],
+                                                rm2: RootJsonFormat[Res],
+                                                executionContext: ExecutionContext): server.Route =
+    pathPrefix(root) {
+      pathEnd {
+        post(entity(as[Creation]) { creation =>
+          checkName(creation.name)
+          complete(hookOfAdd(creation).flatMap(res => store.addIfAbsent(res)))
+        }) ~
+          get(complete(store.values[Res]().flatMap(hookOfList)))
+      } ~ path(Segment) { name =>
+        get(complete(store.value[Res](name).flatMap(hookOfGet))) ~
+          delete(complete(hookBeforeDelete(name).flatMap(id => store.remove[Res](id).map(_ => StatusCodes.NoContent)))) ~
+          put(entity(as[Update])(update =>
+            complete(store.get[Res](name).flatMap { previous =>
+              hookOfUpdate(checkName(name), update, previous).flatMap(res => store.add(name, res))
+            })))
       }
     }
 

@@ -71,17 +71,6 @@ class TestJdbcApi extends SmallTest with Matchers {
     .create()
 
   @Test
-  def ignoreUrlOnUpdate(): Unit = an[NullPointerException] should be thrownBy JdbcApi
-    .access()
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request()
-    .name(CommonUtils.randomString())
-    .user(CommonUtils.randomString())
-    .password(CommonUtils.randomString())
-    .update()
-
-  @Test
   def ignoreUserOnCreation(): Unit = an[NullPointerException] should be thrownBy JdbcApi
     .access()
     .hostname(CommonUtils.randomString())
@@ -91,17 +80,6 @@ class TestJdbcApi extends SmallTest with Matchers {
     .url(CommonUtils.randomString())
     .password(CommonUtils.randomString())
     .create()
-
-  @Test
-  def ignoreUserOnUpdate(): Unit = an[NullPointerException] should be thrownBy JdbcApi
-    .access()
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request()
-    .name(CommonUtils.randomString())
-    .url(CommonUtils.randomString())
-    .password(CommonUtils.randomString())
-    .update()
 
   @Test
   def emptyUser(): Unit = an[IllegalArgumentException] should be thrownBy JdbcApi.access().request().user("")
@@ -119,17 +97,6 @@ class TestJdbcApi extends SmallTest with Matchers {
     .url(CommonUtils.randomString())
     .user(CommonUtils.randomString())
     .create()
-
-  @Test
-  def ignorePasswordOnUpdate(): Unit = an[NullPointerException] should be thrownBy JdbcApi
-    .access()
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request()
-    .name(CommonUtils.randomString())
-    .url(CommonUtils.randomString())
-    .user(CommonUtils.randomString())
-    .update()
 
   @Test
   def emptyPassword(): Unit =

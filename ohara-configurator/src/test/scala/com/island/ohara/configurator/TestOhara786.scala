@@ -17,15 +17,14 @@
 package com.island.ohara.configurator
 
 import com.island.ohara.client.configurator.v0.TopicApi
-import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.kafka.BrokerClient
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.concurrent.Await
-import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 class TestOhara786 extends WithBrokerWorker with Matchers {
 
   private[this] val configurator =
@@ -36,15 +35,7 @@ class TestOhara786 extends WithBrokerWorker with Matchers {
     val topicName = methodName
 
     val topic = Await.result(
-      TopicApi
-        .access()
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .add(
-          TopicCreationRequest(name = Some(topicName),
-                               brokerClusterName = None,
-                               numberOfPartitions = None,
-                               numberOfReplications = None)),
+      TopicApi.access().hostname(configurator.hostname).port(configurator.port).request().name(topicName).create(),
       10 seconds
     )
     val brokerClient = BrokerClient.of(testUtil().brokersConnProps())

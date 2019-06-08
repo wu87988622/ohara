@@ -18,7 +18,6 @@ package com.island.ohara.configurator
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
 import com.island.ohara.client.configurator.v0.PipelineApi.Flow
-import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, PipelineApi, TopicApi}
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -28,10 +27,10 @@ import com.island.ohara.testing.WithBrokerWorker
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
+import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.collection.JavaConverters._
 class TestMetrics extends WithBrokerWorker with Matchers {
 
   private[this] val configurator =
@@ -49,13 +48,7 @@ class TestMetrics extends WithBrokerWorker with Matchers {
 
   @Test
   def testTopic(): Unit = {
-    val topic = result(
-      topicApi.add(
-        TopicCreationRequest(name = Some(CommonUtils.randomString()),
-                             brokerClusterName = None,
-                             numberOfPartitions = None,
-                             numberOfReplications = None)))
-
+    val topic = result(topicApi.request().name(CommonUtils.randomString()).create())
     val producer = Producer
       .builder[String, String]()
       .connectionProps(testUtil().brokersConnProps())
@@ -83,12 +76,7 @@ class TestMetrics extends WithBrokerWorker with Matchers {
 
   @Test
   def testConnector(): Unit = {
-    val topic = result(
-      topicApi.add(
-        TopicCreationRequest(name = Some(CommonUtils.randomString()),
-                             brokerClusterName = None,
-                             numberOfPartitions = None,
-                             numberOfReplications = None)))
+    val topic = result(topicApi.request().name(CommonUtils.randomString()).create())
 
     val request = ConnectorCreationRequest(
       workerClusterName = None,
@@ -119,12 +107,7 @@ class TestMetrics extends WithBrokerWorker with Matchers {
   @Test
   def testPipeline(): Unit = {
     val topicName = methodName
-    val topic = result(
-      topicApi.add(
-        TopicCreationRequest(name = Some(topicName),
-                             brokerClusterName = None,
-                             numberOfPartitions = None,
-                             numberOfReplications = None)))
+    val topic = result(topicApi.request().name(topicName).create())
     val request = ConnectorCreationRequest(
       workerClusterName = None,
       className = Some(classOf[DumbSink].getName),
@@ -168,12 +151,7 @@ class TestMetrics extends WithBrokerWorker with Matchers {
   @Test
   def testTopicMeterInPerfSource(): Unit = {
     val topicName = CommonUtils.randomString()
-    val topic = result(
-      topicApi.add(
-        TopicCreationRequest(name = Some(topicName),
-                             brokerClusterName = None,
-                             numberOfPartitions = None,
-                             numberOfReplications = None)))
+    val topic = result(topicApi.request().name(topicName).create())
     val request = ConnectorCreationRequest(
       workerClusterName = None,
       className = Some("com.island.ohara.connector.perf.PerfSource"),

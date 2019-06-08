@@ -17,7 +17,7 @@
 package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0.FtpApi
-import com.island.ohara.client.configurator.v0.FtpApi.Creation
+import com.island.ohara.client.configurator.v0.FtpApi.{Creation, FtpInfo, Request}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
@@ -201,6 +201,49 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
           .password(CommonUtils.randomString())
           .create())
     }
+  }
+
+  @Test
+  def testUpdateHostname(): Unit = {
+    val hostname = CommonUtils.randomString()
+    updatePartOfField(_.hostname(hostname), _.copy(hostname = hostname))
+  }
+
+  @Test
+  def testUpdatePort(): Unit = {
+    val port = CommonUtils.availablePort()
+    updatePartOfField(_.port(port), _.copy(port = port))
+  }
+
+  @Test
+  def testUpdateUser(): Unit = {
+    val user = CommonUtils.randomString()
+    updatePartOfField(_.user(user), _.copy(user = user))
+  }
+
+  @Test
+  def testUpdatePassword(): Unit = {
+    val password = CommonUtils.randomString()
+    updatePartOfField(_.password(password), _.copy(password = password))
+  }
+
+  private[this] def updatePartOfField(req: Request => Request, _expected: FtpInfo => FtpInfo): Unit = {
+    val previous = result(
+      ftpApi
+        .request()
+        .name(CommonUtils.randomString())
+        .hostname(CommonUtils.randomString())
+        .port(CommonUtils.availablePort())
+        .user(CommonUtils.randomString())
+        .password(CommonUtils.randomString())
+        .update())
+    val updated = result(req(ftpApi.request().name(previous.name)).update())
+    val expected = _expected(previous)
+    updated.name shouldBe expected.name
+    updated.hostname shouldBe expected.hostname
+    updated.port shouldBe expected.port
+    updated.user shouldBe expected.user
+    updated.password shouldBe expected.password
   }
 
   @After

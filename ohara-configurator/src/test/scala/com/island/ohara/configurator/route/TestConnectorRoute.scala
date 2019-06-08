@@ -17,7 +17,6 @@
 package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.{ConnectorCreationRequest, ConnectorDescription}
-import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterCreationRequest
 import com.island.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, TopicApi, WorkerApi}
 import com.island.ohara.common.data.{Column, DataType}
@@ -327,13 +326,9 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(
-          TopicCreationRequest(
-            name = Some(CommonUtils.randomString(10)),
-            brokerClusterName = None,
-            numberOfPartitions = None,
-            numberOfReplications = None
-          )))
+        .request()
+        .name(CommonUtils.randomString(10))
+        .create())
 
     val connector = result(
       connectorApi.add(ConnectorCreationRequest(
@@ -357,13 +352,9 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(
-          TopicCreationRequest(
-            name = Some(CommonUtils.randomString(10)),
-            brokerClusterName = None,
-            numberOfPartitions = None,
-            numberOfReplications = None
-          )))
+        .request()
+        .name(CommonUtils.randomString(10))
+        .create())
 
     val connector = result(
       connectorApi.add(ConnectorCreationRequest(
@@ -387,13 +378,9 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(
-          TopicCreationRequest(
-            name = Some(CommonUtils.randomString(10)),
-            brokerClusterName = None,
-            numberOfPartitions = None,
-            numberOfReplications = None
-          )))
+        .request()
+        .name(CommonUtils.randomString(10))
+        .create())
 
     val connector = result(
       connectorApi.add(ConnectorCreationRequest(
@@ -417,13 +404,9 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(
-          TopicCreationRequest(
-            name = Some(CommonUtils.randomString(10)),
-            brokerClusterName = None,
-            numberOfPartitions = None,
-            numberOfReplications = None
-          )))
+        .request()
+        .name(CommonUtils.randomString(10))
+        .create())
 
     val connector = result(
       connectorApi.add(ConnectorCreationRequest(
@@ -447,13 +430,9 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(
-          TopicCreationRequest(
-            name = Some(CommonUtils.randomString(10)),
-            brokerClusterName = None,
-            numberOfPartitions = None,
-            numberOfReplications = None
-          )))
+        .request()
+        .name(CommonUtils.randomString(10))
+        .create())
 
     val connector = result(
       connectorApi.add(ConnectorCreationRequest(

@@ -28,8 +28,36 @@ private[configurator] object JdbcInfoRoute {
     RouteUtils.basicRoute2[Creation, Update, JdbcInfo](
       root = JDBC_PREFIX_PATH,
       hookOfCreate = (request: Creation) =>
-        Future.successful(JdbcInfo(request.name, request.url, request.user, request.password, CommonUtils.current())),
-      hookOfUpdate = (name: String, request: Update) =>
-        Future.successful(JdbcInfo(name, request.url, request.user, request.password, CommonUtils.current())),
+        Future.successful(
+          JdbcInfo(name = request.name,
+                   url = request.url,
+                   user = request.user,
+                   password = request.password,
+                   lastModified = CommonUtils.current())),
+      hookOfUpdate = (name: String, request: Update, previousOption: Option[JdbcInfo]) =>
+        Future.successful {
+          previousOption
+            .map { previous =>
+              JdbcInfo(
+                name = name,
+                url = request.url.getOrElse(previous.url),
+                user = request.user.getOrElse(previous.user),
+                password = request.password.getOrElse(previous.password),
+                CommonUtils.current()
+              )
+            }
+            .getOrElse {
+              if (request.url.isEmpty) throw new IllegalArgumentException(RouteUtils.errorMessage(name, "url"))
+              if (request.user.isEmpty) throw new IllegalArgumentException(RouteUtils.errorMessage(name, "user"))
+              if (request.password.isEmpty)
+                throw new IllegalArgumentException(RouteUtils.errorMessage(name, "password"))
+              JdbcInfo(name = name,
+                       url = request.url.get,
+                       user = request.user.get,
+                       password = request.password.get,
+                       CommonUtils.current())
+            }
+
+      },
     )
 }

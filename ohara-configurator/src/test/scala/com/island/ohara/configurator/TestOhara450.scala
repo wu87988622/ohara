@@ -17,7 +17,6 @@
 package com.island.ohara.configurator
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
 import com.island.ohara.client.configurator.v0.PipelineApi.PipelineCreationRequest
-import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, PipelineApi, TopicApi}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -25,7 +24,6 @@ import org.junit.{After, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.Await
-
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestOhara450 extends SmallTest with Matchers {
 
@@ -55,11 +53,9 @@ class TestOhara450 extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(
-          TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
-                               brokerClusterName = None,
-                               numberOfPartitions = None,
-                               numberOfReplications = None)),
+        .request()
+        .name(CommonUtils.randomString(10))
+        .create(),
       30 seconds
     )
     val sink = Await.result(

@@ -68,25 +68,13 @@ class TestFtpApi extends SmallTest with Matchers {
     .create()
 
   @Test
-  def ignoreHostnameOnUpdate(): Unit = an[NullPointerException] should be thrownBy FtpApi
-    .access()
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request()
-    .name(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .user(CommonUtils.randomString())
-    .password(CommonUtils.randomString())
-    .update()
-
-  @Test
   def emptyHostname(): Unit = an[IllegalArgumentException] should be thrownBy FtpApi.access().request().hostname("")
 
   @Test
   def nullHostname(): Unit = an[NullPointerException] should be thrownBy FtpApi.access().request().hostname(null)
 
   @Test
-  def ignorePortOnCreation(): Unit = an[IllegalArgumentException] should be thrownBy FtpApi
+  def ignorePortOnCreation(): Unit = an[NullPointerException] should be thrownBy FtpApi
     .access()
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
@@ -96,18 +84,6 @@ class TestFtpApi extends SmallTest with Matchers {
     .user(CommonUtils.randomString())
     .password(CommonUtils.randomString())
     .create()
-
-  @Test
-  def ignorePortOnUpdate(): Unit = an[IllegalArgumentException] should be thrownBy FtpApi
-    .access()
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request()
-    .name(CommonUtils.randomString())
-    .hostname(CommonUtils.randomString())
-    .user(CommonUtils.randomString())
-    .password(CommonUtils.randomString())
-    .update()
 
   @Test
   def negativePort(): Unit = an[IllegalArgumentException] should be thrownBy FtpApi.access().request().port(-1)
@@ -123,18 +99,6 @@ class TestFtpApi extends SmallTest with Matchers {
     .port(CommonUtils.availablePort())
     .password(CommonUtils.randomString())
     .create()
-
-  @Test
-  def ignoreUserOnUpdate(): Unit = an[NullPointerException] should be thrownBy FtpApi
-    .access()
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request()
-    .name(CommonUtils.randomString())
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .password(CommonUtils.randomString())
-    .update()
 
   @Test
   def emptyUser(): Unit = an[IllegalArgumentException] should be thrownBy FtpApi.access().request().user("")
@@ -153,18 +117,6 @@ class TestFtpApi extends SmallTest with Matchers {
     .port(CommonUtils.availablePort())
     .user(CommonUtils.randomString())
     .create()
-
-  @Test
-  def ignorePasswordOnUpdate(): Unit = an[NullPointerException] should be thrownBy FtpApi
-    .access()
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request()
-    .name(CommonUtils.randomString())
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .user(CommonUtils.randomString())
-    .update()
 
   @Test
   def emptyPassword(): Unit = an[IllegalArgumentException] should be thrownBy FtpApi.access().request().password("")

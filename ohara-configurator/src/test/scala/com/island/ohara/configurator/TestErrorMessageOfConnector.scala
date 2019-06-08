@@ -16,18 +16,17 @@
 
 package com.island.ohara.configurator
 
-import com.island.ohara.client.configurator.v0.{ConnectorApi, PipelineApi, TopicApi}
 import com.island.ohara.client.configurator.v0.ConnectorApi.{ConnectorCreationRequest, ConnectorState}
 import com.island.ohara.client.configurator.v0.PipelineApi.{Flow, PipelineCreationRequest}
-import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
+import com.island.ohara.client.configurator.v0.{ConnectorApi, PipelineApi, TopicApi}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
-import scala.concurrent.{Await, Future}
-import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
   private[this] val configurator =
     Configurator.builder().fake(testUtil.brokersConnProps, testUtil().workersConnProps()).build()
@@ -38,17 +37,14 @@ class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
 
   @Test
   def failToRun(): Unit = {
-    val topic = Await.result(
+    val topic = result(
       TopicApi
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(
-          TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
-                               brokerClusterName = None,
-                               numberOfPartitions = None,
-                               numberOfReplications = None)),
-      10 seconds
+        .request()
+        .name(CommonUtils.randomString(10))
+        .create()
     )
     val connector = result(
       connectorApi.add(ConnectorCreationRequest(
@@ -99,17 +95,14 @@ class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
 
   @Test
   def succeedToRun(): Unit = {
-    val topic = Await.result(
+    val topic = result(
       TopicApi
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(
-          TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
-                               brokerClusterName = None,
-                               numberOfPartitions = None,
-                               numberOfReplications = None)),
-      10 seconds
+        .request()
+        .name(CommonUtils.randomString(10))
+        .create()
     )
     val connector = result(
       connectorApi.add(

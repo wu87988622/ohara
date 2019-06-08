@@ -58,15 +58,6 @@ class TestHadoopApi extends SmallTest with Matchers {
     .create()
 
   @Test
-  def ignoreUriOnUpdate(): Unit = an[NullPointerException] should be thrownBy HadoopApi
-    .access()
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request()
-    .name(CommonUtils.randomString())
-    .update()
-
-  @Test
   def emptyUri(): Unit = an[IllegalArgumentException] should be thrownBy HadoopApi.access().request().uri("")
 
   @Test

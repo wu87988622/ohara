@@ -26,9 +26,26 @@ private[configurator] object HdfsInfoRoute {
   def apply(implicit store: DataStore, executionContext: ExecutionContext): server.Route =
     RouteUtils.basicRoute2[Creation, Update, HdfsInfo](
       root = HDFS_PREFIX_PATH,
-      hookOfCreate =
-        (request: Creation) => Future.successful(HdfsInfo(request.name, request.uri, CommonUtils.current())),
-      hookOfUpdate =
-        (name: String, request: Update) => Future.successful(HdfsInfo(name, request.uri, CommonUtils.current()))
+      hookOfCreate = (request: Creation) =>
+        Future.successful(HdfsInfo(name = request.name, uri = request.uri, lastModified = CommonUtils.current())),
+      hookOfUpdate = (name: String, request: Update, previousOption: Option[HdfsInfo]) =>
+        Future.successful {
+          previousOption
+            .map { previous =>
+              HdfsInfo(
+                name = name,
+                uri = request.uri.getOrElse(previous.uri),
+                lastModified = CommonUtils.current()
+              )
+            }
+            .getOrElse {
+              if (request.uri.isEmpty) throw new IllegalArgumentException(RouteUtils.errorMessage(name, "uri"))
+              HdfsInfo(
+                name = name,
+                uri = request.uri.get,
+                lastModified = CommonUtils.current()
+              )
+            }
+      }
     )
 }

@@ -17,7 +17,6 @@
 package com.island.ohara.configurator
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
-import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, TopicApi}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -54,11 +53,9 @@ class TestOhara764 extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(
-          TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
-                               brokerClusterName = None,
-                               numberOfPartitions = None,
-                               numberOfReplications = None)),
+        .request()
+        .name(CommonUtils.randomString(10))
+        .create(),
       10 seconds
     )
     val source2 = Await.result(

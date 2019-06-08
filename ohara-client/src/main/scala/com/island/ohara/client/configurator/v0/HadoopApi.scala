@@ -15,15 +15,16 @@
  */
 
 package com.island.ohara.client.configurator.v0
+import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
-import spray.json.RootJsonFormat
+import spray.json.{JsObject, JsString, JsValue, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 object HadoopApi {
   val HDFS_PREFIX_PATH: String = "hdfs"
-  final case class Update(uri: String)
+  final case class Update(uri: Option[String])
   implicit val HDFS_UPDATE_JSON_FORMAT: RootJsonFormat[Update] = jsonFormat1(Update)
   final case class Creation(name: String, uri: String) extends CreationRequest
   implicit val HDFS_CREATION_JSON_FORMAT: RootJsonFormat[Creation] = jsonFormat2(Creation)
@@ -32,13 +33,20 @@ object HadoopApi {
     override def id: String = name
     override def kind: String = "hdfs"
   }
-  implicit val HDFS_INFO_JSON_FORMAT: RootJsonFormat[HdfsInfo] = jsonFormat3(HdfsInfo)
+  implicit val HDFS_INFO_JSON_FORMAT: RootJsonFormat[HdfsInfo] = new RootJsonFormat[HdfsInfo] {
+    private[this] val format = jsonFormat3(HdfsInfo)
+    override def read(json: JsValue): HdfsInfo = format.read(json)
+    override def write(obj: HdfsInfo): JsValue = JsObject(
+      // TODO: remove the id
+      format.write(obj).asJsObject.fields ++ Map("id" -> JsString(obj.id)))
+  }
 
   /**
     * used to generate the payload and url for POST/PUT request.
     */
   trait Request {
     def name(name: String): Request
+    @Optional("it is ignorable if you are going to send update request")
     def uri(uri: String): Request
 
     /**
@@ -77,7 +85,7 @@ object HadoopApi {
       override def update()(implicit executionContext: ExecutionContext): Future[HdfsInfo] =
         exec.put[Update, HdfsInfo, ErrorApi.Error](s"${_url}/${CommonUtils.requireNonEmpty(name)}",
                                                    Update(
-                                                     uri = CommonUtils.requireNonEmpty(uri)
+                                                     uri = Option(uri).map(CommonUtils.requireNonEmpty)
                                                    ))
     }
   }

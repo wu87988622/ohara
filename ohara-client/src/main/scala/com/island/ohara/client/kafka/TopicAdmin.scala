@@ -50,7 +50,7 @@ trait TopicAdmin extends Releasable {
     * list all topics
     * @return topics information
     */
-  def list(implicit executionContext: ExecutionContext): Future[Seq[TopicAdmin.TopicInfo]]
+  def list()(implicit executionContext: ExecutionContext): Future[Seq[TopicAdmin.TopicInfo]]
 
   /**
     * start a process to create topic
@@ -150,7 +150,7 @@ object TopicAdmin {
               .toSeq)
       }
 
-    override def list(implicit executionContext: ExecutionContext): Future[Seq[TopicInfo]] = listNames.flatMap(list)
+    override def list()(implicit executionContext: ExecutionContext): Future[Seq[TopicInfo]] = listNames.flatMap(list)
 
     override def changePartitions(name: String, numberOfPartitions: Int)(
       implicit executionContext: ExecutionContext): Future[TopicInfo] = list.flatMap(

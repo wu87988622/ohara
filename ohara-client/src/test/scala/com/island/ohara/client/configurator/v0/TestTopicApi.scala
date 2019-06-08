@@ -24,6 +24,7 @@ import org.junit.Test
 import org.scalatest.Matchers
 import spray.json.JsString
 
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestTopicApi extends SmallTest with Matchers {
 
   @Test
@@ -52,4 +53,42 @@ class TestTopicApi extends SmallTest with Matchers {
     )
     TopicApi.TOPIC_INFO_FORMAT.write(topicInfo).asJsObject.fields("id").asInstanceOf[JsString].value shouldBe name
   }
+
+  @Test
+  def ignoreNameOnCreation(): Unit = an[NullPointerException] should be thrownBy TopicApi
+    .access()
+    .hostname(CommonUtils.randomString())
+    .port(CommonUtils.availablePort())
+    .request()
+    .create()
+
+  @Test
+  def ignoreNameOnUpdate(): Unit = an[NullPointerException] should be thrownBy TopicApi
+    .access()
+    .hostname(CommonUtils.randomString())
+    .port(CommonUtils.availablePort())
+    .request()
+    .update()
+
+  @Test
+  def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy TopicApi.access().request().name("")
+
+  @Test
+  def nullName(): Unit = an[NullPointerException] should be thrownBy TopicApi.access().request().name(null)
+
+  @Test
+  def emptyBrokerClusterName(): Unit =
+    an[IllegalArgumentException] should be thrownBy TopicApi.access().request().brokerClusterName("")
+
+  @Test
+  def nullBrokerClusterName(): Unit =
+    an[NullPointerException] should be thrownBy TopicApi.access().request().brokerClusterName(null)
+
+  @Test
+  def negativeNumberOfPartitions(): Unit =
+    an[IllegalArgumentException] should be thrownBy TopicApi.access().request().numberOfPartitions(-1)
+
+  @Test
+  def negativeNumberOfReplications(): Unit =
+    an[IllegalArgumentException] should be thrownBy TopicApi.access().request().numberOfReplications(-1)
 }
