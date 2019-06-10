@@ -198,10 +198,14 @@ private[configurator] object StreamRoute {
             get {
               parameter(Parameters.CLUSTER_NAME.?) { wkName =>
                 complete(
-                  store
-                    .values[StreamJar]()
-                    // filter specific cluster only, or return all otherwise
-                    .map(_.filter(jarInfo => wkName.isEmpty || jarInfo.workerClusterName == wkName.get))
+                  jarStore.jarInfos().flatMap { jarInfos =>
+                    store
+                      .values[StreamJar]()
+                      // filter specific cluster only, or return all otherwise
+                      .map(_.filter(jar => wkName.isEmpty || jar.workerClusterName == wkName.get)
+                      // filter jars that exist in jarStore
+                        .filter(jar => jarInfos.exists(_.id == jar.id)))
+                  }
                 )
               }
             } ~

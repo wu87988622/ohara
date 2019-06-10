@@ -17,6 +17,7 @@
 package com.island.ohara.configurator.route
 
 import java.io.{File, RandomAccessFile}
+import java.util.concurrent.TimeUnit
 
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.StreamApi.{StreamListRequest, StreamPropertyRequest}
@@ -120,6 +121,27 @@ class TestStreamRoute extends SmallTest with Matchers {
     thrown.getMessage should include(expectedMessage)
 
     outputFile.deleteOnExit()
+  }
+
+  @Test
+  def testStreamAppListPageCanUploadSameNameFiles(): Unit = {
+    val file = File.createTempFile("empty_", ".jar")
+    val wkName = result(configurator.clusterCollie.workerCollie().clusters).keys.head.name
+
+    // upload file
+    val res1 = result(accessStreamList.upload(Seq(file.getPath), Some(wkName)))
+    // upload same file to same worker cluster is ok
+    TimeUnit.SECONDS.sleep(5)
+    file.setLastModified(System.currentTimeMillis())
+    val res2 = result(accessStreamList.upload(Seq(file.getPath), Some(wkName)))
+
+    // list jars should only show last modified jar
+    val jars = result(accessStreamList.list(Some(wkName)))
+    jars.size shouldBe 1
+    jars.head.id should not be res1.head.id
+    jars.head.id shouldBe res2.head.id
+
+    file.deleteOnExit()
   }
 
   @Test
