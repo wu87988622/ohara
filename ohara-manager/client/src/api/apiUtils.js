@@ -39,11 +39,6 @@ export const handleError = err => {
       });
       return;
     }
-
-    // TODO: genetic error, remove this when all the connector has upgraded to the new metadata API
-    return toastr.error(
-      'Test connection failed, please check your config and try again later',
-    );
   }
 
   const errorMessage = get(err, 'data.errorMessage');

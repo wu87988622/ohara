@@ -58,22 +58,6 @@ describe('handleError()', () => {
     expect(toastr.error).toHaveBeenCalledWith(expectedMsg, expectedTitle);
   });
 
-  it(`returns a genetic error if there's no fieldName key in the error message`, () => {
-    const err = {
-      data: {
-        errorMessage: {
-          message: [],
-        },
-      },
-    };
-    handleError(err);
-
-    expect(toastr.error).toHaveBeenCalledTimes(1);
-    expect(toastr.error).toHaveBeenCalledWith(
-      'Test connection failed, please check your config and try again later',
-    );
-  });
-
   it('handles error with errorMessage key', () => {
     const errorMessage = 'Nah';
     const err = {
