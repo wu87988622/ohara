@@ -310,7 +310,7 @@ The following information are tagged by ohara.
   "port": 22,
   "user": "abc",
   "password": "pwd",
-  "lastModified": 1553498552595,
+  "lastModified": 1553498552595
 }
 ```
 
@@ -351,7 +351,7 @@ The following information are tagged by ohara.
   "port": 22,
   "user": "abc",
   "password": "pwd",
-  "lastModified": 1553498552595,
+  "lastModified": 1553498552595
 }
 ```
 
@@ -371,7 +371,7 @@ The following information are tagged by ohara.
     "port": 22,
     "user": "abc",
     "password": "pwd",
-    "lastModified": 1553498552595,
+    "lastModified": 1553498552595
   }
 ]
 ```
@@ -404,7 +404,7 @@ The following information are tagged by ohara.
   "port": 22,
   "user": "abc",
   "password": "pwd",
-  "lastModified": 1553498552595,
+  "lastModified": 1553498552595
 }
 ```
 
@@ -471,7 +471,7 @@ The following information are tagged by ohara.
 {
   "name": "hdfs0",
   "uri": "hdfs://namenode:9999",
-  "lastModified": 1553498552595,
+  "lastModified": 1553498552595
 }
 ```
 ----------
@@ -486,7 +486,7 @@ The following information are tagged by ohara.
   {
     "name": "hdfs0",
     "uri": "hdfs://namenode:9999",
-    "lastModified": 1553498552595,
+    "lastModified": 1553498552595
   }
 ]
 ```
@@ -514,7 +514,7 @@ The following information are tagged by ohara.
 {
   "name": "hdfs0",
   "uri": "hdfs://namenode:9999",
-  "lastModified": 1553498552595,
+  "lastModified": 1553498552595
 }
 ```
 ----------
@@ -2867,11 +2867,15 @@ Create the properties of a streamApp.
   "to": [
     "topicB"
   ],
+  "metrics": [],
   "lastModified": 1542102595892
 }
 ```
+
+> The streamApp, which is just created, does not have any metrics. 
+
 ----------
-### get properties from specific streamApp
+### get information from a specific streamApp cluster
 
 *GET /v0/stream/property/${id}*
 
@@ -2884,6 +2888,11 @@ Create the properties of a streamApp.
 1. jarInfo (**object**) — uploaded jar information
 1. from (**array(string)**) — topics of streamApp consume with
 1. to (**array(string)**) — topics of streamApp produce to
+1. metrics (**object**) — the metrics from a running streamApp
+  - meters (**array(object)**) — the metrics in meter type
+    - meters[i].value (**double**) — the number stored in meter
+    - meters[i].unit (**string**) — unit for value
+    - meters[i].document (**string**) — document of this meter
 1. state (**option(string)**) — only started/failed streamApp has state
 1. lastModified (**long**) — last modified this jar time
 
@@ -2905,7 +2914,20 @@ Create the properties of a streamApp.
   "to": [
     "topic2"
   ],
- 
+  "metrics": {
+    "meters": [
+      {
+        "value": 16,
+        "unit": "rows",
+        "document": "TOPIC_IN: the number of rows"
+      },
+      {
+        "value": 4,
+        "unit": "rows",
+        "document": "TOPIC_OUT: the number of rows"
+      }
+    ]
+  },
   "state": "RUNNING",
   "lastModified": 1542102595892
 }

@@ -206,8 +206,30 @@ https://github.com/oharastream/ohara/issues/962
 
 ## Metrics
 
-Will be implemented in the near future. Also see:
-https://github.com/oharastream/ohara/issues/962
+When a streamApp application is running, Ohara Stream automatically collects some metrics data from the streamApp in the background.
+The metrics data here means [official metrics](#official-metrics) which contains [Counters](custom_connector.md#counter)
+for now (other type of metrics will be introduced in the future).
+The metrics data could be fetched by [StreamApp APIs](rest_interface.md#streamapp). Developers will be able to implement
+their own custom metrics in the foreseeable future.
+
+Ohara Stream leverages JMX to offer the metrics data to streamApp. It means that all metrics you have created are stored as Java beans and 
+accessible through JMX service. The streamApp will expose a port via [StreamApp APIs](rest_interface.md#streamapp)
+for other JMX client tool used, such as JMC, but we still encourage you to use [StreamApp APIs](rest_interface.md#streamapp)
+as it offers a more readable format of metrics.
+
+----------
+
+### Official Metrics
+
+There are two type of official metrics for streamApp:
+- consumed topic records (counter)
+- produced topic records (counter)
+
+A normal streamApp will connect to two topics, one is the source topic that streamApp will consume from, and the other is
+the target topic that streamApp will produce to. We use prefix words (**TOPIC_IN**, **TOPIC_OUT**) in the response
+data ([StreamApp APIs](rest_interface.md#streamapp)) in order to improve readabilities of those types.
+You don't need to worry about the implementation of these official metrics, but you can still read the [source code](/ohara-streams/src/main/java/com/island/ohara/streams/metric/MetricFactory.java)
+to see how Ohara Stream creates official metrics.
 
 ----------
 
