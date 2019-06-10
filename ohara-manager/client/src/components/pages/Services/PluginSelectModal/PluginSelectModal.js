@@ -143,7 +143,6 @@ class PluginSelectModal extends React.Component {
         toastr.error(`This file name is duplicate. '${filename}'`);
         return;
       }
-
       this.uploadJar(file);
     }
   };

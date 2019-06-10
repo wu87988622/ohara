@@ -17,6 +17,62 @@
 import 'cypress-testing-library/add-commands';
 
 import * as utils from '../utils';
+import { axiosInstance } from '../../src/api/apiUtils';
+import { fetchZookeepers } from '../../src/api/zookeeperApi';
+import { fetchBrokers } from '../../src/api/brokerApi';
+import {
+  createWorker,
+  fetchWorkers,
+  fetchWorker,
+} from '../../src/api/workerApi';
+import { fetchJars } from '../../src/api/jarApi';
+import { createTopic, fetchTopic, fetchTopics } from '../../src/api/topicApi';
+import { createNode, updateNode, fetchNodes } from '../../src/api/nodeApi';
+
+Cypress.Commands.add('fetchNodes', () => fetchNodes());
+
+Cypress.Commands.add('updateNode', params => updateNode(params));
+
+Cypress.Commands.add('createNode', params => createNode(params));
+
+Cypress.Commands.add('fetchTopics', () => fetchTopics());
+
+Cypress.Commands.add('fetchTopic', name => fetchTopic(name));
+
+Cypress.Commands.add('testCreateTopic', params => createTopic(params));
+
+Cypress.Commands.add('fetchJars', () => fetchJars());
+
+Cypress.Commands.add('createJar', jarName => {
+  cy.fixture(`plugin/${jarName}`, 'base64')
+    .then(Cypress.Blob.base64StringToBlob)
+    .then(blob => {
+      const type = 'application/java-archive';
+      const url = '/api/jars';
+      const config = {
+        headers: {
+          'content-type': 'multipart/form-data',
+        },
+      };
+      const testFile = new File([blob], jarName, { type: type });
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(testFile);
+      blob = dataTransfer.files;
+      let formData = new FormData();
+      formData.append('jar', blob[0]);
+      return axiosInstance.post(url, formData, config);
+    });
+});
+
+Cypress.Commands.add('fetchWorker', name => fetchWorker(name));
+
+Cypress.Commands.add('fetchWorkers', () => fetchWorkers());
+
+Cypress.Commands.add('testCreateWorker', params => createWorker(params));
+
+Cypress.Commands.add('fetchBrokers', () => fetchBrokers());
+
+Cypress.Commands.add('fetchZookeepers', () => fetchZookeepers());
 
 Cypress.Commands.add('registerWorker', workerName => {
   const fileName = '../scripts/servicesApi/service.json';
