@@ -18,6 +18,8 @@ import { makeRandomPort } from '../utils';
 
 let brokerClusterName = '';
 let jarID = '';
+let pipelineID = '';
+const wkName = `wk${makeRandomPort()}`;
 
 describe('Zookeeper Api test', () => {
   it('fetchZookeepers', () => {
@@ -71,7 +73,6 @@ describe('Jar Api test', () => {
 });
 
 describe('Worker Api test', () => {
-  const wkName = `wk${makeRandomPort()}`;
   it('createWorker', () => {
     const data = {
       name: wkName,

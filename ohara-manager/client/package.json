@@ -16,7 +16,9 @@
     "test:report": "CI=true yarn test --reporters=default --reporters=jest-junit",
     "test:coverage": "yarn test --coverage",
     "e2e": "cypress open",
-    "e2e:run": "cypress run"
+    "e2e:run": "cypress run",
+    "e2e:api": "cypress open --config integrationFolder=cypress/API",
+    "e2e:api:run": "cypress run --config integrationFolder=cypress/API"
   },
   "dependencies": {
     "@material-ui/core": "4.0.1",
