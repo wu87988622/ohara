@@ -24,9 +24,11 @@ import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.FileInfo
 import com.island.ohara.client.configurator.v0.JarApi._
+import com.island.ohara.client.configurator.v0.Parameters
 import com.island.ohara.configurator.jar.JarStore
 import spray.json.DefaultJsonProtocol._
 
+import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
 private[configurator] object JarRoute {
 
@@ -36,9 +38,14 @@ private[configurator] object JarRoute {
   def apply(implicit jarStore: JarStore, executionContext: ExecutionContext): server.Route =
     pathPrefix(JAR_PREFIX_PATH) {
       withSizeLimit(RouteUtils.DEFAULT_JAR_SIZE_BYTES) {
-        storeUploadedFile("jar", tempDestination) {
-          case (metadata, file) =>
-            complete(jarStore.add(file, metadata.fileName, None))
+        //see https://github.com/akka/akka-http/issues/1216#issuecomment-311973943
+        toStrictEntity(1.seconds) {
+          formFields(Parameters.CLUSTER_NAME.?) { wkName =>
+            storeUploadedFile("jar", tempDestination) {
+              case (metadata, file) =>
+                complete(jarStore.add(file, metadata.fileName, wkName))
+            }
+          }
         } ~ path(Segment) { id =>
           get(complete(jarStore.jarInfo(id))) ~ delete(
             complete(jarStore.remove(id).map(_ => StatusCodes.NoContent))

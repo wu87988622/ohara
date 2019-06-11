@@ -101,8 +101,8 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
 
     val jars = result(
       Future.traverse(Seq(new File(currentPath, "build/libs/ohara-it-source.jar"),
-                          new File(currentPath, "build/libs/ohara-it-sink.jar")))(
-        JarApi.access().hostname(configurator.hostname).port(configurator.port).upload))
+                          new File(currentPath, "build/libs/ohara-it-sink.jar")))(file =>
+        JarApi.access().hostname(configurator.hostname).port(configurator.port).upload(file, None)))
 
     val zkCluster = result(
       zkApi.add(

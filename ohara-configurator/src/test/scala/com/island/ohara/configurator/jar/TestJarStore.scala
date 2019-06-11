@@ -168,7 +168,7 @@ class TestJarStore extends SmallTest with Matchers {
   @Test
   def listNonexistentIdWithExistOne(): Unit = {
     val f = generateFile(CommonUtils.randomString().getBytes)
-    val plugin = result(access.upload(f))
+    val plugin = result(access.upload(f, None))
     val jar = result(configurator.jarStore.jarInfo(plugin.id))
     // the jar info from jar store does not have the url
     jar.copy(url = plugin.url) shouldBe plugin
@@ -205,7 +205,7 @@ class TestJarStore extends SmallTest with Matchers {
     val content = CommonUtils.randomString()
     val f = generateFile(content.getBytes)
 
-    val plugin = result(access.upload(f))
+    val plugin = result(access.upload(f, None))
     plugin.name shouldBe f.getName
     plugin.size shouldBe content.length
     plugin.url should not be None
