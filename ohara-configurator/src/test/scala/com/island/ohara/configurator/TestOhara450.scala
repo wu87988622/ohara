@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
-import com.island.ohara.client.configurator.v0.PipelineApi.PipelineCreationRequest
+import com.island.ohara.client.configurator.v0.PipelineApi.Flow
 import com.island.ohara.client.configurator.v0.{ConnectorApi, PipelineApi, TopicApi}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -80,12 +80,14 @@ class TestOhara450 extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(
-          PipelineCreationRequest(
-            name = "abc",
-            workerClusterName = None,
-            rules = Map(source.id -> Seq(topic.id), topic.id -> Seq(sink.id))
-          )),
+        .request()
+        .name(CommonUtils.randomString())
+        .flows(
+          Seq(
+            Flow(source.id, Set(topic.name)),
+            Flow(topic.name, Set(sink.id))
+          ))
+        .create(),
       30 seconds
     )
     Await

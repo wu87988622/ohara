@@ -17,7 +17,7 @@
 package com.island.ohara.configurator
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.{ConnectorCreationRequest, ConnectorState}
-import com.island.ohara.client.configurator.v0.PipelineApi.{Flow, PipelineCreationRequest}
+import com.island.ohara.client.configurator.v0.PipelineApi.Flow
 import com.island.ohara.client.configurator.v0.{ConnectorApi, PipelineApi, TopicApi}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.testing.WithBrokerWorker
@@ -69,16 +69,15 @@ class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(
-          PipelineCreationRequest(
-            name = CommonUtils.randomString(),
-            workerClusterName = None,
-            flows = Seq(
-              Flow(
-                from = topic.id,
-                to = Seq(connector.id)
-              ))
-          )))
+        .request()
+        .name(CommonUtils.randomString())
+        .flows(
+          Seq(
+            Flow(
+              from = topic.id,
+              to = Set(connector.id)
+            )))
+        .create())
 
     result(PipelineApi.access().hostname(configurator.hostname).port(configurator.port).get(pipeline.id)).objects
       .filter(_.id == connector.id)
@@ -128,16 +127,15 @@ class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(
-          PipelineCreationRequest(
-            name = CommonUtils.randomString(),
-            workerClusterName = None,
-            flows = Seq(
-              Flow(
-                from = topic.id,
-                to = Seq(connector.id)
-              ))
-          )))
+        .request()
+        .name(CommonUtils.randomString())
+        .flows(
+          Seq(
+            Flow(
+              from = topic.id,
+              to = Set(connector.id)
+            )))
+        .create())
 
     result(PipelineApi.access().hostname(configurator.hostname).port(configurator.port).get(pipeline.id)).objects
       .filter(_.id == connector.id)

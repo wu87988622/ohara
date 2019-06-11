@@ -17,7 +17,6 @@
 package com.island.ohara.configurator
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
-import com.island.ohara.client.configurator.v0.PipelineApi.{Flow, PipelineCreationRequest}
 import com.island.ohara.client.configurator.v0.{ConnectorApi, PipelineApi, TopicApi}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.testing.WithBrokerWorker
@@ -32,7 +31,7 @@ class TestListManyPipelines extends WithBrokerWorker with Matchers {
   private[this] val configurator =
     Configurator.builder().fake(testUtil().brokersConnProps(), testUtil().workersConnProps()).build()
 
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
+  private[this] def result[T](f: Future[T]): T = Await.result(f, 20 seconds)
 
   private[this] val numberOfPipelines = 30
   @Test
@@ -46,7 +45,7 @@ class TestListManyPipelines extends WithBrokerWorker with Matchers {
         .name(CommonUtils.randomString(10))
         .create()
     )
-    val connector = Await.result(
+    val connector = result(
       ConnectorApi
         .access()
         .hostname(configurator.hostname)
@@ -58,27 +57,19 @@ class TestListManyPipelines extends WithBrokerWorker with Matchers {
           numberOfTasks = Some(1),
           settings = Map.empty,
           workerClusterName = None
-        )),
-      10 seconds
+        ))
     )
 
     val pipelines = (0 until numberOfPipelines).map { index =>
-      Await.result(
+      result(
         PipelineApi
           .access()
           .hostname(configurator.hostname)
           .port(configurator.port)
-          .add(
-            PipelineCreationRequest(
-              name = s"pipeline-$index",
-              flows = Seq(
-                Flow(
-                  from = connector.id,
-                  to = Seq(topic.id)
-                )),
-              workerClusterName = None
-            )),
-        10 seconds
+          .request()
+          .name(CommonUtils.randomString())
+          .flow(connector.id, topic.name)
+          .create()
       )
     }
 

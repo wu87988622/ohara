@@ -20,5 +20,5 @@ import scala.concurrent.{Await, Future}
 
 import scala.concurrent.duration._
 package object route {
-  def result[T](f: Future[T]): T = Await.result(f, 20 seconds)
+  def result[T](f: Future[T]): T = Await.result(f, 30 seconds)
 }

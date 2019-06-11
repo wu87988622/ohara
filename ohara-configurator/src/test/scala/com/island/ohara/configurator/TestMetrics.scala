@@ -17,7 +17,6 @@
 package com.island.ohara.configurator
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
-import com.island.ohara.client.configurator.v0.PipelineApi.Flow
 import com.island.ohara.client.configurator.v0.{ConnectorApi, PipelineApi, TopicApi}
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -121,17 +120,8 @@ class TestMetrics extends WithBrokerWorker with Matchers {
 
     val pipelineApi = PipelineApi.access().hostname(configurator.hostname).port(configurator.port)
 
-    val pipeline = result(
-      pipelineApi.add(
-        PipelineApi.PipelineCreationRequest(
-          name = CommonUtils.randomString(),
-          workerClusterName = None,
-          flows = Seq(
-            Flow(
-              from = topic.id,
-              to = Seq(sink.id)
-            ))
-        )))
+    val pipeline = result(pipelineApi.request().name(CommonUtils.randomString()).flow(topic.name, sink.id).create())
+
     pipeline.objects.filter(_.id == sink.id).head.metrics.meters.size shouldBe 0
     result(connectorApi.start(sink.id))
 
@@ -168,17 +158,8 @@ class TestMetrics extends WithBrokerWorker with Matchers {
 
     val pipelineApi = PipelineApi.access().hostname(configurator.hostname).port(configurator.port)
 
-    val pipeline = result(
-      pipelineApi.add(
-        PipelineApi.PipelineCreationRequest(
-          name = CommonUtils.randomString(),
-          workerClusterName = None,
-          flows = Seq(
-            Flow(
-              from = topic.id,
-              to = Seq(source.id)
-            ))
-        )))
+    val pipeline = result(pipelineApi.request().name(CommonUtils.randomString()).flow(topic.name, source.id).create())
+
     pipeline.objects.filter(_.id == source.id).head.metrics.meters.size shouldBe 0
     result(connectorApi.start(source.id))
 

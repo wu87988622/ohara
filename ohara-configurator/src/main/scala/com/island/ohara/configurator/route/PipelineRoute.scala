@@ -26,8 +26,7 @@ import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.route.RouteUtils.Id
-import com.island.ohara.configurator.store.{MeterCache, DataStore}
+import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.island.ohara.kafka.connector.json.SettingDefinitions
 import com.typesafe.scalalogging.Logger
 
@@ -41,28 +40,32 @@ private[configurator] object PipelineRoute {
   private[this] val UNKNOWN_ID: String = "?"
   private[this] val LOG = Logger(ConnectorRoute.getClass)
 
-  private[this] def toRes(id: String, request: PipelineCreationRequest, swallow: Boolean = false)(
-    implicit clusterCollie: ClusterCollie,
-    store: DataStore,
-    executionContext: ExecutionContext,
-    meterCache: MeterCache): Future[Pipeline] =
-    toRes(Map(id -> request), swallow).map(_.head)
+  private[this] def toRes(request: Creation, swallow: Boolean = false)(implicit clusterCollie: ClusterCollie,
+                                                                       store: DataStore,
+                                                                       executionContext: ExecutionContext,
+                                                                       meterCache: MeterCache): Future[Pipeline] =
+    toRes(Map(
+            request.name -> Update(
+              workerClusterName = request.workerClusterName,
+              flows = Some(request.flows)
+            )),
+          swallow).map(_.head)
 
   /**
     * convert the request to response.
     * NOTED: it includes all checks to request.
+    * @param reqs the input update (or creation but converted to update). Noted that the flows must not be None!!!
     * @param swallow true if you don't want to see the exception in checking.
     * @return response
     */
-  private[this] def toRes(reqs: Map[String, PipelineCreationRequest], swallow: Boolean)(
-    implicit clusterCollie: ClusterCollie,
-    store: DataStore,
-    executionContext: ExecutionContext,
-    meterCache: MeterCache): Future[Seq[Pipeline]] =
+  private[this] def toRes(reqs: Map[String, Update], swallow: Boolean)(implicit clusterCollie: ClusterCollie,
+                                                                       store: DataStore,
+                                                                       executionContext: ExecutionContext,
+                                                                       meterCache: MeterCache): Future[Seq[Pipeline]] =
     clusterCollie.clusters
       .map { clusters =>
         reqs.map {
-          case (id, request) =>
+          case (name, request) =>
             val wkClusters =
               clusters.keys.filter(_.isInstanceOf[WorkerClusterInfo]).map(_.asInstanceOf[WorkerClusterInfo]).toSeq
             // we must find a name for pipeline even if the name is not mapped to active worker cluster
@@ -78,9 +81,11 @@ private[configurator] object PipelineRoute {
                 s"${request.workerClusterName.map(n => s"request:$n").getOrElse("")} actual:${clusters.map(_._1.name).mkString(",")}")
 
             (Pipeline(
-               id = id,
-               name = request.name,
-               flows = request.flows,
+               name = name,
+               flows = request.flows.getOrElse(
+                 throw new NoSuchElementException(
+                   "We produced a bug here since we must fill the flows for all input updates before processing it " +
+                     "... please file a issue to fix this ... by chia")),
                objects = Seq.empty,
                workerClusterName = wkName,
                lastModified = CommonUtils.current()
@@ -114,7 +119,7 @@ private[configurator] object PipelineRoute {
               .map(
                 clusters =>
                   abstracts(
-                    pipeline.rules,
+                    pipeline.flows,
                     clusterCollie.workerCollie().workerClient(clusters._2),
                     meterCache.meters(clusters._1),
                     meterCache.meters(clusters._2)
@@ -125,12 +130,12 @@ private[configurator] object PipelineRoute {
 
   /**
     * generate the description of all objects hosted by pipeline
-    * @param rules pipeline's rules
+    * @param flows pipeline's flows
     * @param workerClient used to communicate to the worker cluster running the pipeline
     * @param store store
     * @return description of objects
     */
-  private[this] def abstracts(rules: Map[String, Seq[String]],
+  private[this] def abstracts(flows: Seq[Flow],
                               workerClient: WorkerClient,
                               topicMeters: Map[String, Seq[Meter]],
                               connectorMeters: Map[String, Seq[Meter]])(
@@ -139,9 +144,9 @@ private[configurator] object PipelineRoute {
     executionContext: ExecutionContext): Future[List[ObjectAbstract]] =
     Future
       .sequence(
-        rules
-          .flatMap {
-            case (k, v) => Seq(k) ++ v
+        flows
+          .flatMap { flow =>
+            Set(flow.from) ++ flow.to
           }
           .filterNot(_ == UNKNOWN_ID)
           .toSet
@@ -293,11 +298,11 @@ private[configurator] object PipelineRoute {
         }
     } else Future.successful(id)
 
-    // filter out illegal rules. the following rules are illegal.
+    // filter out illegal flow. the following flow are illegal.
     // 1) "a": ["a"] => this case will cause a exception
     // 2) unknown -> others => this will be removed
     // 3) unknown -> ["unknown", others] => the "unknown" in value will be removed
-    def verify2(ids: Seq[String]): Future[Seq[String]] = Future.traverse(ids)(verify)
+    def verify2(ids: Set[String]): Future[Set[String]] = Future.traverse(ids)(verify)
     Future
       .sequence(
         flows
@@ -310,7 +315,7 @@ private[configurator] object PipelineRoute {
                 Future.successful(
                   Flow(
                     from = from,
-                    to = Seq.empty
+                    to = Set.empty
                   ))
               else
                 verify2(flow.to).map { to =>
@@ -344,10 +349,9 @@ private[configurator] object PipelineRoute {
                                                      meterCache: MeterCache): Future[Seq[Pipeline]] =
     toRes(
       pipelines.map { pipeline =>
-        pipeline.id -> PipelineCreationRequest(
-          name = pipeline.name,
+        pipeline.name -> Update(
           workerClusterName = Some(pipeline.workerClusterName),
-          rules = pipeline.rules
+          flows = Some(pipeline.flows)
         )
       }.toMap,
       true
@@ -356,29 +360,62 @@ private[configurator] object PipelineRoute {
   /**
     * throw exception if request has invalid ids
     */
-  private[this] def assertNoUnknown(req: PipelineCreationRequest)(
-    implicit store: DataStore,
-    executionContext: ExecutionContext): Future[PipelineCreationRequest] =
+  private[this] def assertNoUnknown(flows: Seq[Flow])(implicit store: DataStore,
+                                                      executionContext: ExecutionContext): Future[Seq[String]] =
     Future
-      .traverse(req.flows.flatMap(f => Seq(f.from) ++ f.to).toSet) { id =>
+      .traverse(flows.flatMap(f => Seq(f.from) ++ f.to).toSet) { id =>
         store.raws(id).map(_.nonEmpty).map(if (_) None else Some(id))
       }
       .map(_.flatten.toSeq)
-      .map { invalidIds =>
-        if (invalidIds.isEmpty) req
-        else throw new IllegalArgumentException(s"$invalidIds don't exist!!!")
-      }
+
+  private[this] def assertNoUnknown(req: Creation)(implicit store: DataStore,
+                                                   executionContext: ExecutionContext): Future[Creation] =
+    assertNoUnknown(req.flows).map { invalidIds =>
+      if (invalidIds.isEmpty) req
+      else throw new IllegalArgumentException(s"$invalidIds don't exist!!!")
+    }
+
+  private[this] def assertNoUnknown(req: Update)(implicit store: DataStore,
+                                                 executionContext: ExecutionContext): Future[Update] =
+    req.flows
+      .map(flows =>
+        assertNoUnknown(flows).map { invalidIds =>
+          if (invalidIds.isEmpty) req
+          else throw new IllegalArgumentException(s"$invalidIds don't exist!!!")
+      })
+      .getOrElse(Future.successful(req))
 
   def apply(implicit store: DataStore,
             clusterCollie: ClusterCollie,
             executionContext: ExecutionContext,
             meterCache: MeterCache): server.Route =
-    RouteUtils.basicRoute[PipelineCreationRequest, Pipeline](
+    RouteUtils.basicRoute2[Creation, Update, Pipeline](
       root = PIPELINES_PREFIX_PATH,
-      hookOfAdd = (id: Id, request: PipelineCreationRequest) => assertNoUnknown(request).flatMap(toRes(id, _)),
-      hookOfUpdate = (id: Id, request: PipelineCreationRequest, previous: Pipeline) =>
-        assertNoUnknown(request).flatMap(checkedRequest =>
-          toRes(id, checkedRequest.copy(workerClusterName = Some(previous.workerClusterName)))),
+      hookOfAdd = (creation: Creation) => assertNoUnknown(creation).flatMap(toRes(_)),
+      hookOfUpdate = (name: String, update: Update, previousOption: Option[Pipeline]) =>
+        if (previousOption.map(_.workerClusterName).exists(wkName => update.workerClusterName.exists(_ != wkName)))
+          Future.failed(new IllegalArgumentException("It is illegal to move pipeline to another worker cluster"))
+        else
+          assertNoUnknown(update).flatMap(
+            checkedRequest =>
+              previousOption
+                .map { previous =>
+                  toRes(
+                    Map(
+                      name -> checkedRequest.copy(flows =
+                                                    if (checkedRequest.flows.isEmpty) Some(previous.flows)
+                                                    else checkedRequest.flows,
+                                                  workerClusterName = Some(previous.workerClusterName))),
+                    false
+                  ).map(_.head)
+                }
+                .getOrElse {
+                  if (checkedRequest.flows.isEmpty)
+                    throw new IllegalArgumentException(
+                      s"the input name:$name does not exist "
+                        + " and hence you are triggering a creation process so you can't ignore the 'flows'")
+                  toRes(Map(name -> checkedRequest), false).map(_.head)
+              }),
       hookOfGet = (response: Pipeline) => update(response),
       hookOfList = (responses: Seq[Pipeline]) => update(responses),
       hookBeforeDelete = (id: String) =>

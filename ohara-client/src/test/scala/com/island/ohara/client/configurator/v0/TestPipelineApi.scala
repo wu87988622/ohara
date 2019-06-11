@@ -22,16 +22,17 @@ import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
 
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestPipelineApi extends SmallTest with Matchers {
 
   @Test
   def testDeprecatedRules(): Unit = {
     val rules = Map(
-      CommonUtils.randomString() -> Seq(CommonUtils.randomString()),
-      CommonUtils.randomString() -> Seq(CommonUtils.randomString(), CommonUtils.randomString())
+      CommonUtils.randomString() -> Set(CommonUtils.randomString()),
+      CommonUtils.randomString() -> Set(CommonUtils.randomString(), CommonUtils.randomString())
     )
 
-    val req = PipelineCreationRequest(
+    val req = Creation(
       name = CommonUtils.randomString(),
       workerClusterName = None,
       rules = rules
@@ -45,7 +46,7 @@ class TestPipelineApi extends SmallTest with Matchers {
     val from = CommonUtils.randomString()
     val to0 = CommonUtils.randomString()
     val to1 = CommonUtils.randomString()
-    val req = PIPELINE_REQUEST_JSON_FORMAT.read(s"""
+    val req = PIPELINE_CREATION_JSON_FORMAT.read(s"""
                                                |{
                                                |  "name":"${CommonUtils.randomString()}",
                                                |  "rules": {
@@ -58,13 +59,11 @@ class TestPipelineApi extends SmallTest with Matchers {
     req.flows.size shouldBe 1
     req.flows.head.from shouldBe from
     req.flows.head.to.size shouldBe 2
-    req.flows.head.to(0) shouldBe to0
-    req.flows.head.to(1) shouldBe to1
+    req.flows.head.to shouldBe Set(to0, to1)
   }
   @Test
   def parseDeprecatedJsonOfPipeline(): Unit = {
     val pipeline = Pipeline(
-      id = CommonUtils.randomString(),
       name = CommonUtils.randomString(),
       workerClusterName = CommonUtils.randomString(),
       objects = Seq.empty,
@@ -80,14 +79,13 @@ class TestPipelineApi extends SmallTest with Matchers {
     val from = CommonUtils.randomString()
     val to = CommonUtils.randomString()
     val pipeline = Pipeline(
-      id = CommonUtils.randomString(),
       name = CommonUtils.randomString(),
       workerClusterName = CommonUtils.randomString(),
       objects = Seq.empty,
       flows = Seq(
         Flow(
           from = from,
-          to = Seq(to)
+          to = Set(to)
         )
       ),
       lastModified = CommonUtils.current()
@@ -95,4 +93,43 @@ class TestPipelineApi extends SmallTest with Matchers {
     val json = PIPELINE_JSON_FORMAT.write(pipeline).toString
     withClue(json)(json.contains(s"""\"rules\":{\"$from\":[\"$to\"]""") shouldBe true)
   }
+
+  @Test
+  def ignoreNameOnCreation(): Unit = an[NullPointerException] should be thrownBy PipelineApi
+    .access()
+    .hostname(CommonUtils.randomString())
+    .port(CommonUtils.availablePort())
+    .request()
+    .create()
+
+  @Test
+  def ignoreNameOnUpdate(): Unit = an[NullPointerException] should be thrownBy PipelineApi
+    .access()
+    .hostname(CommonUtils.randomString())
+    .port(CommonUtils.availablePort())
+    .request()
+    .update()
+
+  @Test
+  def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy PipelineApi.access().request().name("")
+
+  @Test
+  def nullName(): Unit = an[NullPointerException] should be thrownBy PipelineApi.access().request().name(null)
+
+  @Test
+  def emptyWorkerClusterName(): Unit =
+    an[IllegalArgumentException] should be thrownBy PipelineApi.access().request().workerClusterName("")
+
+  @Test
+  def nullWorkerClusterName(): Unit =
+    an[NullPointerException] should be thrownBy PipelineApi.access().request().workerClusterName(null)
+
+  @Test
+  def emptyFlows(): Unit = {
+    // pass since the update request requires the empty list
+    PipelineApi.access().request().flows(Seq.empty)
+  }
+
+  @Test
+  def nullFlows(): Unit = an[NullPointerException] should be thrownBy PipelineApi.access().request().flows(null)
 }

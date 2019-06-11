@@ -970,7 +970,6 @@ The properties used in generating pipeline are shown below.
 1. workerClusterName (**string**) — target worker cluster
   
 Following information are written by ohara.
- 1. [id](#object-id) (**string**) — pipeline's id
  1. lastModified (**long**) — the last time to update this pipeline
  1. objects(**array(object)**) — the abstract of all objects mentioned by pipeline
    - objects[i].[id](#object-id) (**string**) — object's id
@@ -1023,7 +1022,6 @@ to find the status of the [connector](#connector). That is to say, it is ok to a
       ]
     }
   ],
-  "id": "e77e7c3e-1b73-4d31-ad85-ff575f0850f2",
   "objects": [
     {
       "name": "topic0",
@@ -1078,7 +1076,6 @@ example creates a pipeline with only a object and leave empty in **to** field.
       "to": []
     }
   ],
-  "id": "8105c8cd-7e75-46a6-9142-65afde430b2d",
   "objects": [
     {
       "name": "topic0",
@@ -1095,7 +1092,7 @@ example creates a pipeline with only a object and leave empty in **to** field.
 ----------
 ### update a pipeline
 
-*PUT /v0/pipelines/$id*
+*PUT /v0/pipelines/$name*
 
 **Example Request**
 
@@ -1110,6 +1107,8 @@ example creates a pipeline with only a object and leave empty in **to** field.
   ]
 }
 ```
+
+> Noted, this API creates an new pipeline for you if the input name does not exist!
 
 **Example Response**
 
@@ -1126,7 +1125,6 @@ example creates a pipeline with only a object and leave empty in **to** field.
       ]
     }
   ],
-  "id": "e77e7c3e-1b73-4d31-ad85-ff575f0850f2",
   "objects": [
     {
       "name": "topic0",
@@ -1175,7 +1173,6 @@ use [GET](#get-a-pipeline) to fetch details of **single** pipeline.
         ]
       }
     ],
-    "id": "e77e7c3e-1b73-4d31-ad85-ff575f0850f2",
     "objects": [
       {
         "name": "topic0",
@@ -1203,7 +1200,7 @@ use [GET](#get-a-pipeline) to fetch details of **single** pipeline.
 ----------
 ### delete a pipeline
 
-*DELETE /v0/pipelines/$id*
+*DELETE /v0/pipelines/$name*
 
 Deleting a pipeline does not delete the objects related to the pipeline.
 
@@ -1219,7 +1216,7 @@ Deleting a pipeline does not delete the objects related to the pipeline.
 ----------
 ### get a pipeline
 
-*GET /v0/pipelines/$id*
+*GET /v0/pipelines/$name*
 
 **Example Response**
 
@@ -1236,7 +1233,6 @@ Deleting a pipeline does not delete the objects related to the pipeline.
       ]
     }
   ],
-  "id": "e77e7c3e-1b73-4d31-ad85-ff575f0850f2",
   "objects": [
     {
       "name": "topic0",

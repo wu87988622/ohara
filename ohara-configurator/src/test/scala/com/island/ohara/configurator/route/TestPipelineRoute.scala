@@ -20,17 +20,19 @@ import java.io.File
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
 import com.island.ohara.client.configurator.v0.NodeApi.NodeCreationRequest
-import com.island.ohara.client.configurator.v0.PipelineApi.{Flow, Pipeline, PipelineCreationRequest}
+import com.island.ohara.client.configurator.v0.PipelineApi.Flow
 import com.island.ohara.client.configurator.v0.StreamApi.StreamPropertyRequest
 import com.island.ohara.client.configurator.v0._
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.{Configurator, DumbSink}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits.global
-class TestPipelineRoute extends SmallTest with Matchers {
+
+// there are too many test cases in this file so we promote  it from small test to medium test
+class TestPipelineRoute extends MediumTest with Matchers {
   private[this] val configurator = Configurator.builder().fake(1, 1).build()
 
   private[this] val pipelineApi = PipelineApi.access().hostname(configurator.hostname).port(configurator.port)
@@ -40,12 +42,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
   def testMultiWorkerCluster(): Unit = {
 
     val pipeline0 = result(
-      pipelineApi.add(
-        PipelineCreationRequest(
-          name = CommonUtils.randomString(10),
-          workerClusterName = None,
-          rules = Map.empty
-        ))
+      pipelineApi.request().name(CommonUtils.randomString(10)).create()
     )
     pipeline0.workerClusterName shouldBe result(
       configurator.clusterCollie.workerCollie().cluster(pipeline0.workerClusterName))._1.name
@@ -74,12 +71,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
     )
 
     val pipeline1 = result(
-      pipelineApi.add(
-        PipelineCreationRequest(
-          name = CommonUtils.randomString(10),
-          workerClusterName = Some(wkCluster.name),
-          rules = Map.empty
-        ))
+      pipelineApi.request().name(CommonUtils.randomString(10)).workerClusterName(wkCluster.name).create()
     )
 
     pipeline1.workerClusterName shouldBe wkCluster.name
@@ -115,16 +107,12 @@ class TestPipelineRoute extends SmallTest with Matchers {
     )
 
     val pipeline = result(
-      pipelineApi.add(
-        PipelineCreationRequest(
-          name = CommonUtils.randomString(10),
-          workerClusterName = None,
-          rules = Map(connector.id -> Seq(topic.id))
-        ))
+      pipelineApi.request().name(CommonUtils.randomString(10)).flow(Flow(connector.id, Set(topic.name))).create()
     )
 
-    pipeline.rules.size shouldBe 1
-    pipeline.rules(connector.id) shouldBe Seq(topic.id)
+    pipeline.flows.size shouldBe 1
+    pipeline.flows.head.from shouldBe connector.id
+    pipeline.flows.head.to shouldBe Set(topic.name)
     pipeline.objects.size should not be 0
 
     // remove connector
@@ -132,145 +120,90 @@ class TestPipelineRoute extends SmallTest with Matchers {
 
     val pipeline2 = result(pipelineApi.get(pipeline.id))
 
-    pipeline2.rules.size shouldBe 0
+    pipeline2.flows.size shouldBe 0
 
     val pipelines = result(pipelineApi.list)
 
     pipelines.size shouldBe 1
-    pipelines.head.rules.size shouldBe 0
+    pipelines.head.flows.size shouldBe 0
   }
 
   @Test
   def testPipeline(): Unit = {
-    def compareRequestAndResponse(request: PipelineCreationRequest, response: Pipeline): Pipeline = {
-      request.name shouldBe response.name
-      request.rules shouldBe response.rules
-      response
-    }
-
-    def compare2Response(lhs: Pipeline, rhs: Pipeline): Unit = {
-      lhs.id shouldBe rhs.id
-      lhs.name shouldBe rhs.name
-      lhs.rules shouldBe rhs.rules
-      lhs.objects shouldBe rhs.objects
-    }
-
     // test add
     val topicAccess = TopicApi.access().hostname(configurator.hostname).port(configurator.port)
-    val uuid_0 = result(topicAccess.request().name(CommonUtils.randomString(10)).create()).id
-    val uuid_1 = result(topicAccess.request().name(CommonUtils.randomString(10)).create()).id
-    val uuid_2 = result(topicAccess.request().name(CommonUtils.randomString(10)).create()).id
+    val topic0 = result(topicAccess.request().name(CommonUtils.randomString(10)).create())
+    val topic1 = result(topicAccess.request().name(CommonUtils.randomString(10)).create())
+    val topic2 = result(topicAccess.request().name(CommonUtils.randomString(10)).create())
 
     result(pipelineApi.list).size shouldBe 0
 
-    val request =
-      PipelineCreationRequest(name = methodName, workerClusterName = None, rules = Map(uuid_0 -> Seq(uuid_1)))
-    val response = compareRequestAndResponse(request, result(pipelineApi.add(request)))
+    val name = CommonUtils.randomString()
+    val flow = Flow(from = topic0.name, to = Set(topic1.name, topic2.name))
+    val pipeline = result(pipelineApi.request().name(name).flow(flow).create())
+
+    result(pipelineApi.list).size shouldBe 1
+    pipeline.name shouldBe name
+    pipeline.flows.size shouldBe 1
+    pipeline.flows.head shouldBe flow
 
     // test get
-    compare2Response(response, result(pipelineApi.get(response.id)))
+    val pipeline2 = result(pipelineApi.get(pipeline.name))
+    pipeline.name shouldBe pipeline2.name
+    pipeline.workerClusterName shouldBe pipeline2.workerClusterName
+    pipeline.flows shouldBe pipeline2.flows
+
+    val flow3 = Flow(from = topic0.name, to = Set.empty)
 
     // test update
-    val anotherRequest =
-      PipelineCreationRequest(name = methodName, workerClusterName = None, rules = Map(uuid_0 -> Seq(uuid_2)))
-    val newResponse =
-      compareRequestAndResponse(anotherRequest, result(pipelineApi.update(response.id, anotherRequest)))
+    val pipeline3 = result(pipelineApi.request().name(pipeline.name).flow(flow3).update())
 
-    // topics should have no state
-    newResponse.objects.foreach(_.state shouldBe None)
-
-    // test get
-    compare2Response(newResponse, result(pipelineApi.get(newResponse.id)))
+    pipeline3.flows.size shouldBe 1
+    pipeline3.flows.head shouldBe flow3
 
     // test delete
     result(pipelineApi.list).size shouldBe 1
-    result(pipelineApi.delete(response.id))
+    result(pipelineApi.delete(pipeline3.id))
     result(pipelineApi.list).size shouldBe 0
 
     // test nonexistent data
-    an[IllegalArgumentException] should be thrownBy result(pipelineApi.get("asdasdsad"))
-    an[IllegalArgumentException] should be thrownBy result(pipelineApi.update("asdasdsad", anotherRequest))
+    an[IllegalArgumentException] should be thrownBy result(pipelineApi.get(CommonUtils.randomString()))
   }
 
   @Test
   def testBindInvalidObjects2Pipeline(): Unit = {
     val topicAccess = TopicApi.access().hostname(configurator.hostname).port(configurator.port)
     val hdfsAccess = HadoopApi.access().hostname(configurator.hostname).port(configurator.port)
-    val uuid_0 = result(topicAccess.request().name(CommonUtils.randomString(10)).create()).id
-    val uuid_1 = result(hdfsAccess.request().name(CommonUtils.randomString()).uri("file:///").create()).id
-    val uuid_2 = result(hdfsAccess.request().name(CommonUtils.randomString()).uri("file:///").create()).id
-    val uuid_3 = result(topicAccess.request().name(CommonUtils.randomString(10)).create()).id
+    val topic0 = result(topicAccess.request().name(CommonUtils.randomString(10)).create())
+    val topic1 = result(topicAccess.request().name(CommonUtils.randomString(10)).create())
+    val hdfs = result(hdfsAccess.request().name(CommonUtils.randomString()).uri("file:///").create())
     result(topicAccess.list).size shouldBe 2
-    result(hdfsAccess.list).size shouldBe 2
+    result(hdfsAccess.list).size shouldBe 1
 
-    // uuid_0 -> uuid_0: self-bound
+    // topic0 -> topic0: self-bound
     an[IllegalArgumentException] should be thrownBy result(
-      pipelineApi.add(
-        PipelineCreationRequest(name = methodName, workerClusterName = None, rules = Map(uuid_0 -> Seq(uuid_0)))))
-    // uuid_1 can't be applied to pipeline
-    an[IllegalArgumentException] should be thrownBy result(
-      pipelineApi.add(
-        PipelineCreationRequest(name = methodName, workerClusterName = None, rules = Map(uuid_0 -> Seq(uuid_1)))))
-    // uuid_2 can't be applied to pipeline
-    an[IllegalArgumentException] should be thrownBy result(
-      pipelineApi.add(
-        PipelineCreationRequest(name = methodName, workerClusterName = None, rules = Map(uuid_0 -> Seq(uuid_2)))))
+      pipelineApi.request().name(CommonUtils.randomString()).flow(topic0.name, topic0.name).create())
 
-    val res = result(
-      pipelineApi.add(
-        PipelineCreationRequest(name = methodName, workerClusterName = None, rules = Map(uuid_0 -> Seq(uuid_3)))))
-    // uuid_0 -> uuid_0: self-bound
+    // hdfs0 is hdfs info so it can't be applied to pipeline
     an[IllegalArgumentException] should be thrownBy result(
-      pipelineApi.update(
-        res.id,
-        PipelineCreationRequest(name = methodName, workerClusterName = None, rules = Map(uuid_0 -> Seq(uuid_0)))))
-    // uuid_1 can't be applied to pipeline
-    an[IllegalArgumentException] should be thrownBy result(
-      pipelineApi.update(
-        res.id,
-        PipelineCreationRequest(name = methodName, workerClusterName = None, rules = Map(uuid_0 -> Seq(uuid_1)))))
-    // uuid_2 can't be applied to pipeline
-    an[IllegalArgumentException] should be thrownBy result(
-      pipelineApi.update(
-        res.id,
-        PipelineCreationRequest(name = methodName, workerClusterName = None, rules = Map(uuid_0 -> Seq(uuid_2)))))
-
-    // good case
-    result(
-      pipelineApi.update(res.id,
-                         PipelineCreationRequest(name = methodName,
-                                                 workerClusterName = None,
-                                                 rules = Map(uuid_0 -> Seq(uuid_3))))).name shouldBe methodName
-  }
-
-  @Test
-  def unknownValueShouldBeFiltered(): Unit = {
-    val topic = result(
-      TopicApi
-        .access()
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .request()
-        .name(CommonUtils.randomString(10))
-        .create()
-    )
+      pipelineApi.request().name(CommonUtils.randomString()).flow(topic0.name, hdfs.name).create())
 
     val pipeline = result(
-      pipelineApi.add(
-        PipelineCreationRequest(
-          name = CommonUtils.randomString(10),
-          workerClusterName = None,
-          flows = Seq(
-            Flow(
-              from = topic.id,
-              to = Seq.empty
-            )
-          )
-        ))
-    )
+      pipelineApi.request().name(CommonUtils.randomString()).flow(topic0.name, topic1.name).create())
 
-    pipeline.rules.size shouldBe 1
-    pipeline.rules(topic.id).size shouldBe 0
+    result(pipelineApi.list).size shouldBe 1
+
+    // topic0 -> topic0: self-bound
+    an[IllegalArgumentException] should be thrownBy result(
+      pipelineApi.request().name(pipeline.name).flow(topic0.name, topic0.name).update())
+
+    // hdfs0 is hdfs info so it can't be applied to pipeline
+    an[IllegalArgumentException] should be thrownBy result(
+      pipelineApi.request().name(pipeline.name).flow(topic0.name, hdfs.name).update())
+
+    // good case
+    result(pipelineApi.request().name(pipeline.name).flow(topic0.name, Set.empty[String]).update())
+    result(pipelineApi.list).size shouldBe 1
   }
 
   @Test
@@ -286,17 +219,9 @@ class TestPipelineRoute extends SmallTest with Matchers {
     )
 
     val pipeline = result(
-      pipelineApi.add(
-        PipelineCreationRequest(
-          name = CommonUtils.randomString(10),
-          workerClusterName = None,
-          flows = Seq(
-            Flow(
-              from = topic.id,
-              to = Seq.empty
-            )
-          )
-        )))
+      pipelineApi.request().name(CommonUtils.randomString()).flow(topic.name, Set.empty[String]).create())
+
+    pipeline.workerClusterName shouldBe result(configurator.clusterCollie.workerCollie().clusters).head._1.name
 
     result(configurator.clusterCollie.workerCollie().remove(pipeline.workerClusterName))
 
@@ -318,26 +243,18 @@ class TestPipelineRoute extends SmallTest with Matchers {
     )
 
     val pipeline = result(
-      pipelineApi.add(
-        PipelineCreationRequest(
-          name = CommonUtils.randomString(10),
-          workerClusterName = None,
-          flows = Seq(
-            Flow(
-              from = topic.id,
-              to = Seq.empty
-            )
-          )
-        )))
-    pipeline.rules.isEmpty shouldBe false
-    pipeline.rules(topic.id).size shouldBe 0
+      pipelineApi.request().name(CommonUtils.randomString()).flow(topic.name, Set.empty[String]).create())
+
+    pipeline.flows.size shouldBe 1
+    pipeline.flows.head.from shouldBe topic.name
+    pipeline.flows.head.to shouldBe Set.empty[String]
 
     result(configurator.clusterCollie.workerCollie().remove(pipeline.workerClusterName))
 
     val anotherPipeline = result(pipelineApi.list).find(_.id == pipeline.id).get
 
     anotherPipeline.id shouldBe pipeline.id
-    anotherPipeline.rules shouldBe pipeline.rules
+    anotherPipeline.flows shouldBe pipeline.flows
     // worker cluster is gone so it fails to fetch objects status
     anotherPipeline.objects.size shouldBe 0
   }
@@ -365,40 +282,27 @@ class TestPipelineRoute extends SmallTest with Matchers {
     )
 
     val pipeline = result(
-      pipelineApi.add(
-        PipelineCreationRequest(
-          name = CommonUtils.randomString(10),
-          workerClusterName = None,
-          flows = Seq(
-            Flow(
-              from = topic0.id,
-              to = Seq(topic1.id)
-            )
-          )
-        )))
-    pipeline.rules.isEmpty shouldBe false
-    pipeline.rules(topic0.id).size shouldBe 1
-    pipeline.rules(topic0.id).contains(topic1.id) shouldBe true
+      pipelineApi.request().name(CommonUtils.randomString()).flow(topic0.name, topic1.name).create())
+
+    pipeline.flows.size shouldBe 1
+    pipeline.flows.head.from shouldBe topic0.name
+    pipeline.flows.head.to shouldBe Set(topic1.name)
 
     result(configurator.clusterCollie.workerCollie().remove(pipeline.workerClusterName))
 
     val anotherPipeline = result(pipelineApi.list).find(_.id == pipeline.id).get
 
     anotherPipeline.id shouldBe pipeline.id
-    anotherPipeline.rules shouldBe pipeline.rules
+    anotherPipeline.flows shouldBe pipeline.flows
     // worker cluster is gone so it fails to fetch objects status
     anotherPipeline.objects.size shouldBe 0
   }
 
   @Test
-  def addPipelineWithoutCluster(): Unit = {
+  def addPipelineWithUnknownCluster(): Unit =
     an[IllegalArgumentException] should be thrownBy result(
-      pipelineApi.add(
-        PipelineCreationRequest(name = CommonUtils.randomString(10),
-                                workerClusterName = Some(CommonUtils.randomString(10)),
-                                rules = Map.empty)
-      ))
-  }
+      pipelineApi.request().name(CommonUtils.randomString()).workerClusterName(CommonUtils.randomString()).create()
+    )
 
   @Test
   def addMultiPipelines(): Unit = {
@@ -423,30 +327,10 @@ class TestPipelineRoute extends SmallTest with Matchers {
     )
 
     val pipeline0 = result(
-      pipelineApi.add(
-        PipelineCreationRequest(
-          name = CommonUtils.randomString(10),
-          workerClusterName = None,
-          flows = Seq(
-            Flow(
-              from = topic0.id,
-              to = Seq(topic1.id)
-            )
-          )
-        )))
+      pipelineApi.request().name(CommonUtils.randomString()).flow(topic0.name, topic1.name).create())
 
     val pipeline1 = result(
-      pipelineApi.add(
-        PipelineCreationRequest(
-          name = CommonUtils.randomString(10),
-          workerClusterName = None,
-          flows = Seq(
-            Flow(
-              from = topic0.id,
-              to = Seq(topic1.id)
-            )
-          )
-        )))
+      pipelineApi.request().name(CommonUtils.randomString()).flow(topic0.name, topic1.name).create())
 
     val pipelines = result(pipelineApi.list)
     pipelines.size shouldBe 2
@@ -479,12 +363,8 @@ class TestPipelineRoute extends SmallTest with Matchers {
     )
 
     val pipeline = result(
-      pipelineApi.add(
-        PipelineCreationRequest(
-          name = CommonUtils.randomString(10),
-          workerClusterName = None,
-          rules = Map(topic.id -> Seq(connector.id))
-        )))
+      pipelineApi.request().name(CommonUtils.randomString()).flow(topic.name, connector.id).create())
+
     pipeline.objects.size shouldBe 2
     pipeline.objects.foreach { obj =>
       obj.error shouldBe None
@@ -517,12 +397,8 @@ class TestPipelineRoute extends SmallTest with Matchers {
     )
 
     val pipeline = result(
-      pipelineApi.add(
-        PipelineCreationRequest(
-          name = CommonUtils.randomString(10),
-          workerClusterName = None,
-          rules = Map(topic.id -> Seq(connector.id))
-        )))
+      pipelineApi.request().name(CommonUtils.randomString()).flow(topic.name, connector.id).create())
+
     pipeline.objects.size shouldBe 2
     pipeline.objects.filter(_.id == connector.id).foreach { obj =>
       obj.error.isEmpty shouldBe false
@@ -552,23 +428,8 @@ class TestPipelineRoute extends SmallTest with Matchers {
 
     val source = result(connectorApi.add(sourceRequest))
     val pipeline = result(
-      PipelineApi
-        .access()
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .add(
-          PipelineCreationRequest(
-            name = "abc",
-            workerClusterName = None,
-            flows = Seq(
-              Flow(
-                from = source.id,
-                to = Seq.empty
-              )
-            )
-          )
-        )
-    )
+      pipelineApi.request().name(CommonUtils.randomString()).flow(source.id, Set.empty[String]).create())
+
     pipeline.objects.foreach(obj => obj.state shouldBe None)
 
     // start source and pipeline should "see" what happen in source
@@ -584,20 +445,6 @@ class TestPipelineRoute extends SmallTest with Matchers {
 
   @Test
   def testPipelineAllowObject(): Unit = {
-    val pipeline = result(
-      PipelineApi
-        .access()
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .add(
-          PipelineCreationRequest(
-            name = "testPipelineAllowData",
-            workerClusterName = None,
-            rules = Map.empty
-          )
-        )
-    )
-
     val topic = result(
       TopicApi
         .access()
@@ -626,34 +473,9 @@ class TestPipelineRoute extends SmallTest with Matchers {
     val streamapp = result(
       StreamApi.accessOfProperty().hostname(configurator.hostname).port(configurator.port).add(streamAppRequest))
 
-    result(
-      PipelineApi
-        .access()
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .update(
-          pipeline.id,
-          PipelineCreationRequest(
-            name = "abc",
-            workerClusterName = None,
-            rules = Map(source.id -> Seq(topic.id))
-          )
-        )
-    ).objects.size shouldBe 2
-    result(
-      PipelineApi
-        .access()
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .update(
-          pipeline.id,
-          PipelineCreationRequest(
-            name = "abc",
-            workerClusterName = None,
-            rules = Map(topic.id -> Seq(streamapp.id))
-          )
-        )
-    ).objects.size shouldBe 2
+    result(pipelineApi.request().name(CommonUtils.randomString()).flow(source.id, topic.name).create()).objects.size shouldBe 2
+
+    result(pipelineApi.request().name(CommonUtils.randomString()).flow(source.id, streamapp.id).create()).objects.size shouldBe 2
   }
 
   @Test
@@ -670,43 +492,15 @@ class TestPipelineRoute extends SmallTest with Matchers {
     val source = result(connectorApi.add(sourceRequest))
 
     an[IllegalArgumentException] should be thrownBy result(
-      PipelineApi
-        .access()
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .add(
-          PipelineCreationRequest(
-            name = "abc",
-            workerClusterName = None,
-            flows = Seq(
-              Flow(
-                from = source.id,
-                to = Seq(CommonUtils.randomString())
-              )
-            )
-          )
-        )
-    )
+      pipelineApi.request().name(CommonUtils.randomString()).flow(source.id, CommonUtils.randomString()).create())
 
     val source2 = result(connectorApi.add(sourceRequest))
     an[IllegalArgumentException] should be thrownBy result(
-      PipelineApi
-        .access()
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .add(
-          PipelineCreationRequest(
-            name = "abc",
-            workerClusterName = None,
-            flows = Seq(
-              Flow(
-                from = source.id,
-                to = Seq(source2.id, CommonUtils.randomString())
-              )
-            )
-          )
-        )
-    )
+      pipelineApi
+        .request()
+        .name(CommonUtils.randomString())
+        .flow(source.id, Set(source2.id, CommonUtils.randomString()))
+        .create())
   }
 
   @Test
@@ -722,30 +516,74 @@ class TestPipelineRoute extends SmallTest with Matchers {
 
     val source = result(connectorApi.add(sourceRequest))
 
-    an[IllegalArgumentException] should be thrownBy result(
-      PipelineApi
-        .access()
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .add(
-          PipelineCreationRequest(
-            name = "abc",
-            workerClusterName = None,
-            flows = Seq(
-              Flow(
-                from = CommonUtils.randomString(),
-                to = Seq(source.id)
-              )
-            )
-          )
-        )
-    )
+    an[IllegalArgumentException] should be thrownBy
+      result(
+        pipelineApi.request().name(CommonUtils.randomString()).flow(CommonUtils.randomString(), source.id).create())
   }
 
   @Test
-  def duplicateDeleteStreamProperty(): Unit =
+  def duplicateDelete(): Unit =
     (0 to 10).foreach(_ => result(pipelineApi.delete(CommonUtils.randomString(5))))
 
+  @Test
+  def duplicateUpdate(): Unit = {
+    val count = 10
+    (0 until count).foreach(_ =>
+      result(pipelineApi.request().name(CommonUtils.randomString()).flows(Seq.empty).update()))
+    result(pipelineApi.list).size shouldBe count
+  }
+
+  @Test
+  def updatingNonexistentNameCanNotIgnoreFlows(): Unit = {
+    an[IllegalArgumentException] should be thrownBy result(
+      pipelineApi.request().name(CommonUtils.randomString()).update())
+    val name = CommonUtils.randomString()
+    val flows: Seq[Flow] = Seq.empty
+    val pipeline = result(pipelineApi.request().name(name).flows(flows).update())
+    result(pipelineApi.list).size shouldBe 1
+    pipeline.name shouldBe name
+    pipeline.flows shouldBe flows
+  }
+
+  @Test
+  def updateOnlyFlow(): Unit = {
+    val topic = result(
+      TopicApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .request()
+        .name(CommonUtils.randomString(10))
+        .create()
+    )
+    val pipeline = result(
+      pipelineApi.request().name(CommonUtils.randomString()).flow(topic.name, Set.empty[String]).update())
+    pipeline.flows.size shouldBe 1
+    pipeline.flows.head.from shouldBe topic.name
+    pipeline.flows.head.to.size shouldBe 0
+
+    val pipeline2 = result(pipelineApi.request().name(pipeline.name).flows(Seq.empty).update())
+    result(pipelineApi.list).size shouldBe 1
+    pipeline2.name shouldBe pipeline.name
+    pipeline2.flows shouldBe Seq.empty
+  }
+
+  @Test
+  def updateOnlyWorkerClusterName(): Unit = {
+    val topic = result(
+      TopicApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .request()
+        .name(CommonUtils.randomString(10))
+        .create()
+    )
+    val pipeline = result(
+      pipelineApi.request().name(CommonUtils.randomString()).flow(topic.name, Set.empty[String]).update())
+    an[IllegalArgumentException] should be thrownBy result(
+      pipelineApi.request().name(pipeline.name).workerClusterName(CommonUtils.randomString()).update())
+  }
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }

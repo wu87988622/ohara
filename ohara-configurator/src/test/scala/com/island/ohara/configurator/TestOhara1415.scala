@@ -17,7 +17,6 @@
 package com.island.ohara.configurator
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.{ConnectorCreationRequest, ConnectorState}
-import com.island.ohara.client.configurator.v0.PipelineApi.PipelineCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, PipelineApi, TopicApi}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.testing.WithBrokerWorker
@@ -99,9 +98,11 @@ class TestOhara1415 extends WithBrokerWorker with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(PipelineCreationRequest(name = methodName(),
-                                     workerClusterName = None,
-                                     rules = Map(topic.id -> Seq(connector.id)))))
+        .request()
+        .name(CommonUtils.randomString())
+        .flow(topic.name, connector.id)
+        .create())
+
     pipeline.objects.find(_.id == connector.id).get.state shouldBe Some("FAILED")
   }
 
