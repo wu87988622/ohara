@@ -25,7 +25,7 @@ import {
   fetchWorkers,
   fetchWorker,
 } from '../../src/api/workerApi';
-import { fetchJars, deleteJar } from '../../src/api/jarApi';
+import { fetchJars } from '../../src/api/jarApi';
 import { createTopic, fetchTopic, fetchTopics } from '../../src/api/topicApi';
 import { createNode, updateNode, fetchNodes } from '../../src/api/nodeApi';
 import {
