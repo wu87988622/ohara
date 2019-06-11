@@ -499,7 +499,6 @@ describe('Connector Api test', () => {
     };
     cy.updateConnector(data).then(res => {
       const data = res.data;
-      cy.log(data);
       expect(data.isSuccess).to.eq(true);
       expect(data.result).to.include.keys('id', 'settings', 'state');
       expect(data.result.id).to.be.a('string');
