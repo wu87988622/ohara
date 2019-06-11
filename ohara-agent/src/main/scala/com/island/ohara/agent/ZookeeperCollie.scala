@@ -32,19 +32,6 @@ import scala.concurrent.{ExecutionContext, Future}
   * It isolates the implementation of container manager from Configurator.
   */
 trait ZookeeperCollie extends Collie[ZookeeperClusterInfo, ZookeeperCollie.ClusterCreator] {
-  private[agent] def toZookeeperCluster(clusterName: String,
-                                        containers: Seq[ContainerInfo]): Future[ZookeeperClusterInfo] = {
-    val first = containers.head
-    Future.successful(
-      ZookeeperClusterInfo(
-        name = clusterName,
-        imageName = first.imageName,
-        clientPort = first.environments(ZookeeperCollie.CLIENT_PORT_KEY).toInt,
-        peerPort = first.environments(ZookeeperCollie.PEER_PORT_KEY).toInt,
-        electionPort = first.environments(ZookeeperCollie.ELECTION_PORT_KEY).toInt,
-        nodeNames = containers.map(_.nodeName)
-      ))
-  }
 
   /**
     * This is a complicated process. We must address following issues.
@@ -55,95 +42,104 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo, ZookeeperCollie.Clust
     * 4) Add routes to all zookeeper containers
     * @return creator of broker cluster
     */
-  protected[agent] def zkCreator(
-    nodeCollie: NodeCollie,
-    prefixKey: String,
-    clusterName: String,
-    serviceName: String,
-    imageName: String,
-    clientPort: Int,
-    peerPort: Int,
-    electionPort: Int,
-    nodeNames: Seq[String])(executionContext: ExecutionContext): Future[ZookeeperClusterInfo] = {
-    implicit val exec: ExecutionContext = executionContext
-    clusters.flatMap(clusters => {
-      if (clusters.keys.filter(_.isInstanceOf[ZookeeperClusterInfo]).exists(_.name == clusterName))
-        Future.failed(new IllegalArgumentException(s"zookeeper cluster:$clusterName exists!"))
-      else
-        nodeCollie
-          .nodes(nodeNames)
-          .map(_.map(node => node -> ContainerCollie.format(prefixKey, clusterName, serviceName)).toMap)
-          .flatMap {
-            nodes =>
-              // add route in order to make zk node can connect to each other.
-              val route: Map[String, String] = routeInfo(nodes)
+  override def creator(): ZookeeperCollie.ClusterCreator =
+    (executionContext, clusterName, imageName, clientPort, peerPort, electionPort, nodeNames) => {
+      implicit val exec: ExecutionContext = executionContext
+      clusters.flatMap(clusters => {
+        if (clusters.keys.filter(_.isInstanceOf[ZookeeperClusterInfo]).exists(_.name == clusterName))
+          Future.failed(new IllegalArgumentException(s"zookeeper cluster:$clusterName exists!"))
+        else
+          nodeCollie
+            .nodes(nodeNames)
+            .map(_.map(node => node -> ContainerCollie.format(prefixKey, clusterName, serviceName)).toMap)
+            .flatMap {
+              nodes =>
+                // add route in order to make zk node can connect to each other.
+                val route: Map[String, String] = routeInfo(nodes)
 
-              val zkServers: String = nodes.keys.map(_.name).mkString(" ")
-              // ssh connection is slow so we submit request by multi-thread
-              Future
-                .sequence(nodes.zipWithIndex.map {
-                  case ((node, containerName), index) =>
-                    Future {
-                      val containerInfo = ContainerInfo(
-                        nodeName = node.name,
-                        id = ContainerCollie.UNKNOWN,
-                        imageName = imageName,
-                        created = ContainerCollie.UNKNOWN,
-                        state = ContainerCollie.UNKNOWN,
-                        kind = ContainerCollie.UNKNOWN,
-                        name = containerName,
-                        size = ContainerCollie.UNKNOWN,
-                        portMappings = Seq(PortMapping(
-                          hostIp = ContainerCollie.UNKNOWN,
-                          portPairs = Seq(
-                            PortPair(
-                              hostPort = clientPort,
-                              containerPort = clientPort
-                            ),
-                            PortPair(
-                              hostPort = peerPort,
-                              containerPort = peerPort
-                            ),
-                            PortPair(
-                              hostPort = electionPort,
-                              containerPort = electionPort
+                val zkServers: String = nodes.keys.map(_.name).mkString(" ")
+                // ssh connection is slow so we submit request by multi-thread
+                Future
+                  .sequence(nodes.zipWithIndex.map {
+                    case ((node, containerName), index) =>
+                      Future {
+                        val containerInfo = ContainerInfo(
+                          nodeName = node.name,
+                          id = ContainerCollie.UNKNOWN,
+                          imageName = imageName,
+                          created = ContainerCollie.UNKNOWN,
+                          state = ContainerCollie.UNKNOWN,
+                          kind = ContainerCollie.UNKNOWN,
+                          name = containerName,
+                          size = ContainerCollie.UNKNOWN,
+                          portMappings = Seq(PortMapping(
+                            hostIp = ContainerCollie.UNKNOWN,
+                            portPairs = Seq(
+                              PortPair(
+                                hostPort = clientPort,
+                                containerPort = clientPort
+                              ),
+                              PortPair(
+                                hostPort = peerPort,
+                                containerPort = peerPort
+                              ),
+                              PortPair(
+                                hostPort = electionPort,
+                                containerPort = electionPort
+                              )
                             )
-                          )
-                        )),
-                        environments = Map(
-                          ZookeeperCollie.ID_KEY -> index.toString,
-                          ZookeeperCollie.CLIENT_PORT_KEY -> clientPort.toString,
-                          ZookeeperCollie.PEER_PORT_KEY -> peerPort.toString,
-                          ZookeeperCollie.ELECTION_PORT_KEY -> electionPort.toString,
-                          ZookeeperCollie.SERVERS_KEY -> zkServers
-                        ),
-                        // zookeeper doesn't have advertised hostname/port so we assign the "docker host" directly
-                        hostname = node.name
+                          )),
+                          environments = Map(
+                            ZookeeperCollie.ID_KEY -> index.toString,
+                            ZookeeperCollie.CLIENT_PORT_KEY -> clientPort.toString,
+                            ZookeeperCollie.PEER_PORT_KEY -> peerPort.toString,
+                            ZookeeperCollie.ELECTION_PORT_KEY -> electionPort.toString,
+                            ZookeeperCollie.SERVERS_KEY -> zkServers
+                          ),
+                          // zookeeper doesn't have advertised hostname/port so we assign the "docker host" directly
+                          hostname = node.name
+                        )
+                        doCreator(executionContext, clusterName, containerName, containerInfo, node, route)
+                        Some(containerInfo)
+                      }
+                  })
+                  .map(_.flatten.toSeq)
+                  .map {
+                    successfulContainers =>
+                      if (successfulContainers.isEmpty)
+                        throw new IllegalArgumentException(s"failed to create $clusterName on $serviceName")
+                      val clusterInfo = ZookeeperClusterInfo(
+                        name = clusterName,
+                        imageName = imageName,
+                        clientPort = clientPort,
+                        peerPort = peerPort,
+                        electionPort = electionPort,
+                        nodeNames = successfulContainers.map(_.nodeName)
                       )
-                      doCreator(executionContext, clusterName, containerName, containerInfo, node, route)
-                      Some(containerInfo)
-                    }
-                })
-                .map(_.flatten.toSeq)
-                .map {
-                  successfulContainers =>
-                    if (successfulContainers.isEmpty)
-                      throw new IllegalArgumentException(s"failed to create $clusterName on $serviceName")
-                    val clusterInfo = ZookeeperClusterInfo(
-                      name = clusterName,
-                      imageName = imageName,
-                      clientPort = clientPort,
-                      peerPort = peerPort,
-                      electionPort = electionPort,
-                      nodeNames = successfulContainers.map(_.nodeName)
-                    )
-                    postCreateZookeeperCluster(clusterInfo, successfulContainers)
-                    clusterInfo
-                }
-          }
-    })
+                      postCreateZookeeperCluster(clusterInfo, successfulContainers)
+                      clusterInfo
+                  }
+            }
+      })
+    }
 
-  }
+  /**
+    * Please implement nodeCollie
+    * @return
+    */
+  protected def nodeCollie(): NodeCollie
+
+  /**
+    * The prefix name for paltform
+    * @return
+    */
+  protected def prefixKey(): String
+
+  /**
+    * return service name
+    * @return
+    */
+  protected def serviceName(): String
 
   protected def doCreator(executionContext: ExecutionContext,
                           clusterName: String,
@@ -161,6 +157,20 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo, ZookeeperCollie.Clust
       case (node, _) =>
         node.name -> CommonUtils.address(node.name)
     }
+
+  private[agent] def toZookeeperCluster(clusterName: String,
+                                        containers: Seq[ContainerInfo]): Future[ZookeeperClusterInfo] = {
+    val first = containers.head
+    Future.successful(
+      ZookeeperClusterInfo(
+        name = clusterName,
+        imageName = first.imageName,
+        clientPort = first.environments(ZookeeperCollie.CLIENT_PORT_KEY).toInt,
+        peerPort = first.environments(ZookeeperCollie.PEER_PORT_KEY).toInt,
+        electionPort = first.environments(ZookeeperCollie.ELECTION_PORT_KEY).toInt,
+        nodeNames = containers.map(_.nodeName)
+      ))
+  }
 }
 
 object ZookeeperCollie {

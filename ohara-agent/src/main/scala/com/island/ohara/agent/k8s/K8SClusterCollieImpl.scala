@@ -30,7 +30,7 @@ private[agent] class K8SClusterCollieImpl(nodeCollie: NodeCollie, k8sClient: K8S
 
   override def brokerCollie(): BrokerCollie = new K8SBrokerCollieImpl(nodeCollie, zookeeperCollie, k8sClient)
 
-  override def workerCollie(): WorkerCollie = new K8SWorkerCollieImpl(nodeCollie, k8sClient)
+  override def workerCollie(): WorkerCollie = new K8SWorkerCollieImpl(nodeCollie, brokerCollie, k8sClient)
 
   override def streamCollie(): StreamCollie = new K8SStreamCollieImpl(nodeCollie, k8sClient)
 

@@ -149,7 +149,7 @@ object ContainerCollie {
     resolveHostName: String => String,
     hookUpdate: (Node, ContainerInfo, Map[String, String]) => Unit): Map[String, String] = {
     val existRoute: Map[String, String] = existNodes.map {
-      case (node, container) => container.nodeName -> CommonUtils.address(node.name)
+      case (node, container) => container.nodeName -> resolveHostName(node.name)
     }
     // add route in order to make broker node can connect to each other (and zk node).
     val route: Map[String, String] = newNodes.map {

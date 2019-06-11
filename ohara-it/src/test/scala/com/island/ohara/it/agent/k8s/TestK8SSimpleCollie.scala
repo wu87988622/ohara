@@ -127,7 +127,6 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
       val brokerClusterName: String = s"brokercluster${CommonUtils.randomString(RANDOM_LEN)}"
       val brokerClientPort = CommonUtils.availablePort()
       val brokerExporterPort = CommonUtils.availablePort()
-
       val brokerCollie: BrokerCollie = clusterCollie.brokerCollie()
       val brokerClusterInfo: BrokerClusterInfo =
         createBrokerCollie(brokerCollie,
@@ -167,7 +166,6 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
       val brokerClusterName: String = s"brokercluster${CommonUtils.randomString(RANDOM_LEN)}"
       val brokerClientPort = CommonUtils.availablePort()
       val brokerExporterPort = CommonUtils.availablePort()
-
       val brokerCollie: BrokerCollie = clusterCollie.brokerCollie()
 
       createBrokerCollie(brokerCollie,
@@ -198,7 +196,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   @Test
   def testAddBrokerNode(): Unit = {
     val firstNode: String = nodeNames.head
-    val secondNode: String = nodeNames(1)
+    val secondNode: String = nodeNames.last
 
     nodeCache.clear()
     nodeCache.append(Node(firstNode, 22, "", "", Seq.empty, CommonUtils.current()))
@@ -269,7 +267,6 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
       val brokerClusterName: String = s"brokercluster${CommonUtils.randomString(RANDOM_LEN)}"
       val brokerClientPort = CommonUtils.availablePort()
       val brokerExporterPort = CommonUtils.availablePort()
-
       val brokerCollie: BrokerCollie = clusterCollie.brokerCollie()
 
       val brokerClusterInfo1: BrokerClusterInfo =
@@ -323,7 +320,6 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
       //Create broker cluster service
       val brokerClientPort = CommonUtils.availablePort()
       val brokerExporterPort = CommonUtils.availablePort()
-
       createBrokerCollie(brokerCollie,
                          brokerClusterName,
                          Seq(firstNode),
@@ -369,7 +365,6 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
       //Create broker cluster service
       val brokerClientPort = CommonUtils.availablePort()
       val brokerExporterPort = CommonUtils.availablePort()
-
       createBrokerCollie(brokerCollie,
                          brokerClusterName,
                          Seq(firstNode),
@@ -439,7 +434,6 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
       val brokerClusterName: String = s"brokercluster${CommonUtils.randomString(RANDOM_LEN)}"
       val brokerClientPort = CommonUtils.availablePort()
       val brokerExporterPort = CommonUtils.availablePort()
-
       val brokerCollie: BrokerCollie = clusterCollie.brokerCollie()
 
       createBrokerCollie(brokerCollie,
@@ -578,6 +572,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
         .exporterPort(exporterPort)
         .zookeeperClusterName(zookeeperClusterName)
         .nodeNames(nodeName)
+        .jmxPort(CommonUtils.availablePort())
         .create())
   }
 
@@ -597,6 +592,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
         .configTopicName(CommonUtils.randomString(RANDOM_LEN))
         .statusTopicName(CommonUtils.randomString(RANDOM_LEN))
         .offsetTopicName(CommonUtils.randomString(RANDOM_LEN))
+        .jmxPort(CommonUtils.availablePort())
         .nodeName(nodeName)
         .create()
     )

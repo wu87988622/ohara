@@ -44,171 +44,164 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
     * 7) update existed containers (if we are adding new node into a running cluster)
     * @return creator of broker cluster
     */
-  protected[agent] def bkCreator(
-    nodeCollie: NodeCollie,
-    prefixKey: String,
-    clusterName: String,
-    serviceName: String,
-    imageName: String,
-    zookeeperClusterName: String,
-    clientPort: Int,
-    exporterPort: Int,
-    jmxPort: Int,
-    nodeNames: Seq[String])(executionContext: ExecutionContext): Future[BrokerClusterInfo] = {
-    implicit val exec: ExecutionContext = executionContext
-    clusters.flatMap(clusters => {
-      clusters
-        .filter(_._1.isInstanceOf[BrokerClusterInfo])
-        .map {
-          case (cluster, containers) => cluster.asInstanceOf[BrokerClusterInfo] -> containers
-        }
-        .find(_._1.name == clusterName)
-        .map(_._2)
-        .map(containers =>
-          nodeCollie
-            .nodes(containers.map(_.nodeName))
-            .map(_.map(node => node -> containers.find(_.nodeName == node.name).get).toMap))
-        .getOrElse(Future.successful(Map.empty))
-        .map {
-          existNodes =>
-            // if there is a running cluster already, we should check the consistency of configuration
-            existNodes.values.foreach {
-              container =>
-                def checkValue(previous: String, newValue: String): Unit =
-                  if (previous != newValue) throw new IllegalArgumentException(s"previous:$previous new:$newValue")
+  override def creator(): BrokerCollie.ClusterCreator =
+    (executionContext, clusterName, imageName, zookeeperClusterName, clientPort, exporterPort, jmxPort, nodeNames) => {
+      implicit val exec: ExecutionContext = executionContext
+      clusters.flatMap(clusters => {
+        clusters
+          .filter(_._1.isInstanceOf[BrokerClusterInfo])
+          .map {
+            case (cluster, containers) => cluster.asInstanceOf[BrokerClusterInfo] -> containers
+          }
+          .find(_._1.name == clusterName)
+          .map(_._2)
+          .map(containers =>
+            nodeCollie
+              .nodes(containers.map(_.nodeName))
+              .map(_.map(node => node -> containers.find(_.nodeName == node.name).get).toMap))
+          .getOrElse(Future.successful(Map.empty))
+          .map {
+            existNodes =>
+              // if there is a running cluster already, we should check the consistency of configuration
+              existNodes.values.foreach {
+                container =>
+                  def checkValue(previous: String, newValue: String): Unit =
+                    if (previous != newValue) throw new IllegalArgumentException(s"previous:$previous new:$newValue")
 
-                def check(key: String, newValue: String): Unit = {
-                  val previous = container.environments(key)
-                  if (previous != newValue) throw new IllegalArgumentException(s"previous:$previous new:$newValue")
-                }
+                  def check(key: String, newValue: String): Unit = {
+                    val previous = container.environments(key)
+                    if (previous != newValue) throw new IllegalArgumentException(s"previous:$previous new:$newValue")
+                  }
 
-                checkValue(container.imageName, imageName)
-                check(BrokerCollie.CLIENT_PORT_KEY, clientPort.toString)
-                check(BrokerCollie.ZOOKEEPER_CLUSTER_NAME, zookeeperClusterName)
-            }
-            existNodes
-        }
-        .flatMap(existNodes =>
-          nodeCollie
-            .nodes(nodeNames)
-            .map(_.map(node => node -> ContainerCollie.format(prefixKey, clusterName, serviceName)).toMap)
-            .map((existNodes, _)))
-        .map {
-          case (existNodes, newNodes) =>
-            existNodes.keys.foreach(node =>
-              if (newNodes.keys.exists(_.name == node.name))
-                throw new IllegalArgumentException(s"${node.name} is running on a $clusterName"))
-
-            (existNodes, newNodes, existZookeeperCluster(zookeeperClusterName))
-        }
-        .flatMap {
-          case (existNodes, newNodes, zkContainers) =>
-            zkContainers
-              .flatMap(zkContainers => {
-                if (zkContainers.isEmpty) throw new IllegalArgumentException(s"$clusterName container doesn't exist")
-                val zookeepers = zkContainers
-                  .map(c => s"${c.nodeName}:${c.environments(ZookeeperCollie.CLIENT_PORT_KEY).toInt}")
-                  .mkString(",")
-
-                //Use asInstanceOf function to solve compiler data type error
-                val route = ContainerCollie.preSettingEnvironment(existNodes.asInstanceOf[Map[Node, ContainerInfo]],
-                                                                  newNodes.asInstanceOf[Map[Node, String]],
-                                                                  zkContainers,
-                                                                  resolveHostName,
-                                                                  hookUpdate)
-
-                // the new broker node can't take used id so we find out the max id which is used by current cluster
-                val maxId: Int =
-                  if (existNodes.isEmpty) 0
-                  else existNodes.values.map(_.environments(BrokerCollie.ID_KEY).toInt).toSet.max + 1
-
-                // ssh connection is slow so we submit request by multi-thread
-                Future.sequence(newNodes.zipWithIndex.map {
-                  case ((node, containerName), index) =>
-                    Future {
-                      val containerInfo = ContainerInfo(
-                        nodeName = node.name,
-                        id = ContainerCollie.UNKNOWN,
-                        imageName = imageName,
-                        created = ContainerCollie.UNKNOWN,
-                        state = ContainerCollie.UNKNOWN,
-                        kind = ContainerCollie.UNKNOWN,
-                        name = containerName,
-                        size = ContainerCollie.UNKNOWN,
-                        portMappings = Seq(PortMapping(
-                          hostIp = ContainerCollie.UNKNOWN,
-                          portPairs = Seq(
-                            PortPair(
-                              hostPort = clientPort,
-                              containerPort = clientPort
-                            ),
-                            PortPair(
-                              hostPort = exporterPort,
-                              containerPort = exporterPort
-                            ),
-                            PortPair(
-                              hostPort = jmxPort,
-                              containerPort = jmxPort
-                            )
-                          )
-                        )),
-                        environments = Map(
-                          BrokerCollie.ID_KEY -> (maxId + index).toString,
-                          BrokerCollie.CLIENT_PORT_KEY -> clientPort.toString,
-                          BrokerCollie.ZOOKEEPERS_KEY -> zookeepers,
-                          BrokerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
-                          BrokerCollie.EXPORTER_PORT_KEY -> exporterPort.toString,
-                          BrokerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
-                          BrokerCollie.ZOOKEEPER_CLUSTER_NAME -> zookeeperClusterName,
-                          BrokerCollie.JMX_HOSTNAME_KEY -> node.name,
-                          BrokerCollie.JMX_PORT_KEY -> jmxPort.toString
-                        ),
-                        hostname = containerName
-                      )
-                      doCreator(executionContext, clusterName, containerName, containerInfo, node, route)
-                      Some(containerInfo)
-                    }
-                })
-              })
-              .map(_.flatten.toSeq)
-              .map {
-                successfulContainers =>
-                  if (successfulContainers.isEmpty)
-                    throw new IllegalArgumentException(s"failed to create $clusterName on $serviceName")
-                  val clusterInfo = BrokerClusterInfo(
-                    name = clusterName,
-                    imageName = imageName,
-                    zookeeperClusterName = zookeeperClusterName,
-                    exporterPort = exporterPort,
-                    clientPort = clientPort,
-                    jmxPort = jmxPort,
-                    nodeNames = successfulContainers.map(_.nodeName) ++ existNodes.map(_._1.name)
-                  )
-                  postCreateBrokerCluster(clusterInfo, successfulContainers)
-                  clusterInfo
+                  checkValue(container.imageName, imageName)
+                  check(BrokerCollie.CLIENT_PORT_KEY, clientPort.toString)
+                  check(BrokerCollie.ZOOKEEPER_CLUSTER_NAME, zookeeperClusterName)
               }
-        }
-    })
-  }
+              existNodes
+          }
+          .flatMap(existNodes =>
+            nodeCollie
+              .nodes(nodeNames)
+              .map(_.map(node => node -> ContainerCollie.format(prefixKey, clusterName, serviceName)).toMap)
+              .map((existNodes, _)))
+          .map {
+            case (existNodes, newNodes) =>
+              existNodes.keys.foreach(node =>
+                if (newNodes.keys.exists(_.name == node.name))
+                  throw new IllegalArgumentException(s"${node.name} is running on a $clusterName"))
+
+              (existNodes, newNodes, zookeeperContainers(zookeeperClusterName))
+          }
+          .flatMap {
+            case (existNodes, newNodes, zkContainers) =>
+              zkContainers
+                .flatMap(zkContainers => {
+                  if (zkContainers.isEmpty)
+                    throw new IllegalArgumentException(s"$clusterName zookeeper container doesn't exist")
+                  val zookeepers = zkContainers
+                    .map(c => s"${c.nodeName}:${c.environments(ZookeeperCollie.CLIENT_PORT_KEY).toInt}")
+                    .mkString(",")
+
+                  //Use asInstanceOf function to solve compiler data type error
+                  val route = ContainerCollie.preSettingEnvironment(existNodes.asInstanceOf[Map[Node, ContainerInfo]],
+                                                                    newNodes.asInstanceOf[Map[Node, String]],
+                                                                    zkContainers,
+                                                                    resolveHostName,
+                                                                    hookUpdate)
+                  // the new broker node can't take used id so we find out the max id which is used by current cluster
+                  val maxId: Int =
+                    if (existNodes.isEmpty) 0
+                    else existNodes.values.map(_.environments(BrokerCollie.ID_KEY).toInt).toSet.max + 1
+
+                  // ssh connection is slow so we submit request by multi-thread
+                  Future.sequence(newNodes.zipWithIndex.map {
+                    case ((node, containerName), index) =>
+                      Future {
+                        val containerInfo = ContainerInfo(
+                          nodeName = node.name,
+                          id = ContainerCollie.UNKNOWN,
+                          imageName = imageName,
+                          created = ContainerCollie.UNKNOWN,
+                          state = ContainerCollie.UNKNOWN,
+                          kind = ContainerCollie.UNKNOWN,
+                          name = containerName,
+                          size = ContainerCollie.UNKNOWN,
+                          portMappings = Seq(PortMapping(
+                            hostIp = ContainerCollie.UNKNOWN,
+                            portPairs = Seq(
+                              PortPair(
+                                hostPort = clientPort,
+                                containerPort = clientPort
+                              ),
+                              PortPair(
+                                hostPort = exporterPort,
+                                containerPort = exporterPort
+                              ),
+                              PortPair(
+                                hostPort = jmxPort,
+                                containerPort = jmxPort
+                              )
+                            )
+                          )),
+                          environments = Map(
+                            BrokerCollie.ID_KEY -> (maxId + index).toString,
+                            BrokerCollie.CLIENT_PORT_KEY -> clientPort.toString,
+                            BrokerCollie.ZOOKEEPERS_KEY -> zookeepers,
+                            BrokerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
+                            BrokerCollie.EXPORTER_PORT_KEY -> exporterPort.toString,
+                            BrokerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
+                            BrokerCollie.ZOOKEEPER_CLUSTER_NAME -> zookeeperClusterName,
+                            BrokerCollie.JMX_HOSTNAME_KEY -> node.name,
+                            BrokerCollie.JMX_PORT_KEY -> jmxPort.toString
+                          ),
+                          hostname = containerName
+                        )
+                        doCreator(executionContext, clusterName, containerName, containerInfo, node, route)
+                        Some(containerInfo)
+                      }
+                  })
+                })
+                .map(_.flatten.toSeq)
+                .map {
+                  successfulContainers =>
+                    if (successfulContainers.isEmpty)
+                      throw new IllegalArgumentException(s"failed to create $clusterName on $serviceName")
+                    val clusterInfo = BrokerClusterInfo(
+                      name = clusterName,
+                      imageName = imageName,
+                      zookeeperClusterName = zookeeperClusterName,
+                      exporterPort = exporterPort,
+                      clientPort = clientPort,
+                      jmxPort = jmxPort,
+                      nodeNames = successfulContainers.map(_.nodeName) ++ existNodes.map(_._1.name)
+                    )
+                    postCreateBrokerCluster(clusterInfo, successfulContainers)
+                    clusterInfo
+                }
+          }
+      })
+    }
 
   /**
-    * For check, zookeeper cluster exist. You can override this function to check zookeeper cluster info
-    * @param zkClusterName
-    * @param executionContext
+    * Please setting nodeCollie to implement class
     * @return
     */
-  protected def existZookeeperCluster(zkClusterName: String)(
-    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] = {
-    zookeeperClusters.map(
-      _.filter(_._1.isInstanceOf[ZookeeperClusterInfo])
-        .find(_._1.name == zkClusterName)
-        .map(_._2)
-        .getOrElse(throw new NoSuchClusterException(s"zookeeper cluster:$zkClusterName doesn't exist"))
-    )
-  }
+  protected def nodeCollie(): NodeCollie
 
   /**
-    * Please implement this function for Zookeeper cluster information
+    *  Implement prefix name for the platform
+    * @return
+    */
+  protected def prefixKey(): String
+
+  /**
+    * Setting service name
+    * @return
+    */
+  protected def serviceName(): String
+
+  /**
+    * Please implement this function to get Zookeeper cluster information
     * @param executionContext
     * @return
     */
@@ -234,6 +227,15 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
     CommonUtils.address(nodeName)
   }
 
+  /**
+    * Please implement this function to create the container to a different platform
+    * @param executionContext
+    * @param clusterName
+    * @param containerName
+    * @param containerInfo
+    * @param node
+    * @param route
+    */
   protected def doCreator(executionContext: ExecutionContext,
                           clusterName: String,
                           containerName: String,
@@ -289,6 +291,22 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
         jmxPort = first.environments(BrokerCollie.JMX_PORT_KEY).toInt,
         nodeNames = containers.map(_.nodeName)
       ))
+  }
+
+  /**
+    * For check, zookeeper cluster exist. You can override this function to check zookeeper cluster info
+    * @param zkClusterName
+    * @param executionContext
+    * @return
+    */
+  private def zookeeperContainers(zkClusterName: String)(
+    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] = {
+    zookeeperClusters.map(
+      _.filter(_._1.isInstanceOf[ZookeeperClusterInfo])
+        .find(_._1.name == zkClusterName)
+        .map(_._2)
+        .getOrElse(throw new NoSuchClusterException(s"zookeeper cluster:$zkClusterName doesn't exist"))
+    )
   }
 }
 

@@ -16,6 +16,7 @@
 
 package com.island.ohara.agent
 
+import com.island.ohara.client.configurator.v0.BrokerApi
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
@@ -26,7 +27,7 @@ import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{Await, Future}
 
 class TestBrokerCreator extends SmallTest with Matchers {
   private[this] val TIMEOUT: FiniteDuration = 30 seconds
@@ -151,19 +152,19 @@ class TestBrokerCreator extends SmallTest with Matchers {
   def testBkCreatorZKNotExists(): Unit = {
     val node1Name = "node1"
     val node1 = Node(node1Name, 22, "user1", "123456", services = Seq.empty, lastModified = CommonUtils.current())
-    val brokerCollie = new FakeBrokerCollie(Seq.empty, Seq.empty)
+    val brokerCollie = new FakeBrokerCollie(NodeCollie(Seq(node1)), Seq.empty, Seq.empty)
 
-    val bkCreator: Future[BrokerClusterInfo] =
-      brokerCollie.bkCreator(NodeCollie(Seq(node1)),
-                             "fakebk",
-                             "cluster123",
-                             "bk",
-                             "broker",
-                             "zk123456",
-                             9092,
-                             9093,
-                             9094,
-                             Seq(node1Name))(ExecutionContext.Implicits.global)
+    val bkCreator: Future[BrokerClusterInfo] = brokerCollie
+      .creator()
+      .clusterName("cluster123")
+      .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
+      .zookeeperClusterName("zk123456")
+      .clientPort(9092)
+      .exporterPort(9093)
+      .jmxPort(9094)
+      .nodeNames(Seq(node1Name))
+      .create()
+
     an[NoSuchClusterException] should be thrownBy {
       Await.result(bkCreator, TIMEOUT)
     }
@@ -174,19 +175,18 @@ class TestBrokerCreator extends SmallTest with Matchers {
     val node1Name = "node1"
     val node1 = Node(node1Name, 22, "user1", "123456", services = Seq.empty, lastModified = CommonUtils.current())
 
-    val brokerCollie = new FakeBrokerCollie(Seq.empty, Seq.empty)
+    val brokerCollie = new FakeBrokerCollie(NodeCollie(Seq(node1)), Seq.empty, Seq.empty) //Zk container set empty
+    val bkCreator: Future[BrokerClusterInfo] = brokerCollie
+      .creator()
+      .clusterName("cluster123")
+      .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
+      .zookeeperClusterName(FakeBrokerCollie.zookeeperClusterName)
+      .clientPort(9092)
+      .exporterPort(9093)
+      .jmxPort(9094)
+      .nodeNames(Seq(node1Name))
+      .create()
 
-    val bkCreator: Future[BrokerClusterInfo] =
-      brokerCollie.bkCreator(NodeCollie(Seq(node1)),
-                             "fakebk",
-                             "cluster123",
-                             "bk",
-                             "broker",
-                             "zk1",
-                             9092,
-                             9093,
-                             9094,
-                             Seq(node1Name))(ExecutionContext.Implicits.global)
     an[IllegalArgumentException] should be thrownBy {
       Await.result(bkCreator, TIMEOUT)
     }
@@ -196,7 +196,6 @@ class TestBrokerCreator extends SmallTest with Matchers {
   def testNodeIsRunningBroker(): Unit = {
     val node1Name = "node1"
     val node1 = Node(node1Name, 22, "user1", "123456", services = Seq.empty, lastModified = CommonUtils.current())
-
     val zkContainers = Seq(
       ContainerInfo(
         "node1",
@@ -216,22 +215,30 @@ class TestBrokerCreator extends SmallTest with Matchers {
       ContainerInfo(
         "node1",
         "00000",
-        "broker",
+        BrokerApi.IMAGE_NAME_DEFAULT,
         "2018-05-24 00:00:00",
         "running",
         "unknown",
         "containername",
         "",
         Seq.empty,
-        Map(BrokerCollie.CLIENT_PORT_KEY -> "9092", BrokerCollie.ZOOKEEPER_CLUSTER_NAME -> "zk1"),
+        Map(BrokerCollie.CLIENT_PORT_KEY -> "9092",
+            BrokerCollie.ZOOKEEPER_CLUSTER_NAME -> FakeBrokerCollie.zookeeperClusterName),
         "host"
       ))
 
-    val brokerCollie = new FakeBrokerCollie(zkContainers, bkContainers)
-    val bkCreator: Future[BrokerClusterInfo] =
-      brokerCollie
-        .bkCreator(NodeCollie(Seq(node1)), "fakebk", "bk1", "bk", "broker", "zk1", 9092, 9093, 9094, Seq(node1Name))(
-          ExecutionContext.Implicits.global)
+    val brokerCollie = new FakeBrokerCollie(NodeCollie(Seq(node1)), zkContainers, bkContainers)
+    val bkCreator: Future[BrokerClusterInfo] = brokerCollie
+      .creator()
+      .clusterName("bk1")
+      .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
+      .zookeeperClusterName(FakeBrokerCollie.zookeeperClusterName)
+      .clientPort(9092)
+      .exporterPort(9093)
+      .jmxPort(9094)
+      .nodeNames(Seq(node1Name)) //node1 is running on a bk1
+      .create()
+
     an[IllegalArgumentException] shouldBe thrownBy {
       Await.result(bkCreator, TIMEOUT)
     }
@@ -242,6 +249,9 @@ class TestBrokerCreator extends SmallTest with Matchers {
     val node1Name = "node1"
     val node1 = Node(node1Name, 22, "user1", "123456", services = Seq.empty, lastModified = CommonUtils.current())
 
+    val node2Name = "node2"
+    val node2 = Node(node2Name, 22, "user1", "123456", services = Seq.empty, lastModified = CommonUtils.current())
+
     val zkContainers = Seq(
       ContainerInfo(
         "node1",
@@ -261,22 +271,32 @@ class TestBrokerCreator extends SmallTest with Matchers {
       ContainerInfo(
         "node1",
         "00000",
-        "broker1",
+        BrokerApi.IMAGE_NAME_DEFAULT,
         "2018-05-24 00:00:00",
         "running",
         "unknown",
         "containername",
         "",
         Seq.empty,
-        Map(BrokerCollie.CLIENT_PORT_KEY -> "9092", BrokerCollie.ZOOKEEPER_CLUSTER_NAME -> "zk1"),
+        Map(BrokerCollie.ID_KEY -> "0",
+            BrokerCollie.CLIENT_PORT_KEY -> "9092",
+            BrokerCollie.ZOOKEEPER_CLUSTER_NAME -> FakeBrokerCollie.zookeeperClusterName),
         "host"
       ))
 
-    val brokerCollie = new FakeBrokerCollie(zkContainers, bkContainers)
-    val bkCreator: Future[BrokerClusterInfo] =
-      brokerCollie
-        .bkCreator(NodeCollie(Seq(node1)), "fakebk", "bk1", "bk", "broker", "zk1", 9092, 9093, 9094, Seq(node1Name))(
-          ExecutionContext.Implicits.global)
+    val brokerCollie = new FakeBrokerCollie(NodeCollie(Seq(node1, node2)), zkContainers, bkContainers)
+
+    val bkCreator: Future[BrokerClusterInfo] = brokerCollie
+      .creator()
+      .clusterName("bk1")
+      .zookeeperClusterName(FakeBrokerCollie.zookeeperClusterName)
+      .clientPort(9092)
+      .jmxPort(9093)
+      .exporterPort(9094)
+      .imageName("brokerimage") //Docker image setting error
+      .nodeNames(Seq(node2Name))
+      .create()
+
     an[IllegalArgumentException] shouldBe thrownBy {
       Await.result(bkCreator, TIMEOUT)
     }
@@ -303,21 +323,21 @@ class TestBrokerCreator extends SmallTest with Matchers {
         Map(ZookeeperCollie.CLIENT_PORT_KEY -> "2181"),
         "host"
       ))
-    val brokerCollie = new FakeBrokerCollie(containers, Seq.empty)
+    val brokerCollie = new FakeBrokerCollie(NodeCollie(Seq(node1, node2)), containers, Seq.empty)
 
-    val bkCreator: Future[BrokerClusterInfo] =
-      brokerCollie.bkCreator(NodeCollie(Seq(node1, node2)),
-                             "fakebk",
-                             "cluster123",
-                             "bk",
-                             "broker",
-                             "zk1",
-                             9092,
-                             9093,
-                             9094,
-                             Seq(node1Name, node2Name))(ExecutionContext.Implicits.global)
+    val bkCreator: Future[BrokerClusterInfo] = brokerCollie
+      .creator()
+      .clusterName("cluster123")
+      .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
+      .zookeeperClusterName(FakeBrokerCollie.zookeeperClusterName)
+      .clientPort(9092)
+      .exporterPort(9093)
+      .jmxPort(9094)
+      .nodeNames(Seq(node1Name, node2Name))
+      .create()
+
     val result: BrokerClusterInfo = Await.result(bkCreator, TIMEOUT)
-    result.zookeeperClusterName shouldBe "zk1"
+    result.zookeeperClusterName shouldBe FakeBrokerCollie.zookeeperClusterName
     result.nodeNames.size shouldBe 2
     result.clientPort shouldBe 9092
     result.exporterPort shouldBe 9093

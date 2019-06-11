@@ -17,7 +17,7 @@
 package com.island.ohara.agent.k8s
 
 import com.island.ohara.agent._
-import com.island.ohara.client.configurator.v0.BrokerApi
+import com.island.ohara.client.configurator.v0.{ClusterInfo, NodeApi}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.typesafe.scalalogging.Logger
@@ -25,153 +25,59 @@ import com.typesafe.scalalogging.Logger
 import scala.concurrent.duration.{FiniteDuration, _}
 import scala.concurrent.{Await, ExecutionContext, Future}
 
-private class K8SWorkerCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
-    extends K8SBasicCollieImpl[WorkerClusterInfo, WorkerCollie.ClusterCreator](nodeCollie, k8sClient)
+private class K8SWorkerCollieImpl(node: NodeCollie, bkCollie: BrokerCollie, k8sClient: K8SClient)
+    extends K8SBasicCollieImpl[WorkerClusterInfo, WorkerCollie.ClusterCreator](node, k8sClient)
     with WorkerCollie {
   private[this] val LOG = Logger(classOf[K8SWorkerCollieImpl])
   private[this] val TIMEOUT: FiniteDuration = 30 seconds
 
-  override def creator(): WorkerCollie.ClusterCreator = (executionContext,
-                                                         clusterName,
-                                                         imageName,
-                                                         brokerClusterName,
-                                                         clientPort,
-                                                         jmxPort,
-                                                         groupId,
-                                                         offsetTopicName,
-                                                         offsetTopicReplications,
-                                                         offsetTopicPartitions,
-                                                         statusTopicName,
-                                                         statusTopicReplications,
-                                                         statusTopicPartitions,
-                                                         configTopicName,
-                                                         configTopicReplications,
-                                                         jarInfos,
-                                                         nodeNames) => {
-    implicit val exec: ExecutionContext = executionContext
-    exist(clusterName)
-      .flatMap(if (_) containers(clusterName) else Future.successful(Seq.empty))
-      .flatMap(
-        existContainers =>
-          nodeCollie
-            .nodes(existContainers.map(_.nodeName))
-            .map(_.zipWithIndex.map {
-              case (node, index) => node -> existContainers(index)
-            }.toMap)
-            .map { existNodes =>
-              // if there is a running cluster already, we should check the consistency of configuration
-              existNodes.values.foreach {
-                container =>
-                  def checkValue(previous: String, newValue: String): Unit =
-                    if (previous != newValue) throw new IllegalArgumentException(s"previous:$previous new:$newValue")
-                  def check(key: String, newValue: String): Unit = {
-                    val previous = container.environments(key)
-                    if (previous != newValue) throw new IllegalArgumentException(s"previous:$previous new:$newValue")
-                  }
-                  checkValue(container.imageName, imageName)
-                  check(WorkerCollie.GROUP_ID_KEY, groupId)
-                  check(WorkerCollie.OFFSET_TOPIC_KEY, offsetTopicName)
-                  check(WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY, offsetTopicPartitions.toString)
-                  check(WorkerCollie.OFFSET_TOPIC_REPLICATIONS_KEY, offsetTopicReplications.toString)
-                  check(WorkerCollie.STATUS_TOPIC_KEY, statusTopicName)
-                  check(WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY, statusTopicPartitions.toString)
-                  check(WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY, statusTopicReplications.toString)
-                  check(WorkerCollie.CONFIG_TOPIC_KEY, configTopicName)
-                  check(WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY, configTopicReplications.toString)
-                  check(WorkerCollie.CLIENT_PORT_KEY, clientPort.toString)
-                  check(WorkerCollie.BROKER_CLUSTER_NAME, brokerClusterName)
-              }
-              existNodes
-          })
-      .flatMap(existNodes =>
-        nodeCollie
-          .nodes(nodeNames)
-          .map(_.map(node =>
-            node -> s"${ContainerCollie.format(PREFIX_KEY, clusterName, serviceName)}$DIVIDER${node.name}").toMap)
-          .map((existNodes, _)))
-      .flatMap {
-        case (existNodes, newNodes) =>
-          existNodes.keys.foreach(node =>
-            if (newNodes.keys.exists(_.name == node.name))
-              throw new IllegalArgumentException(s"${node.name} has run the worker service for $clusterName"))
-          query(brokerClusterName, ContainerCollie.BK_SERVICE_NAME).map((existNodes, newNodes, _))
-      }
-      .map {
-        case (existNodes, newNodes, brokerContainers) =>
-          if (brokerContainers.isEmpty)
-            throw new IllegalArgumentException(s"broker cluster:$brokerClusterName doesn't exist")
-          val brokers = brokerContainers
-            .map(c =>
-              s"${c.hostname}.$K8S_DOMAIN_NAME:${c.environments.getOrElse(BrokerCollie.CLIENT_PORT_KEY, BrokerApi.CLIENT_PORT_DEFAULT)}")
-            .mkString(",")
-
-          val successfulNodeNames = newNodes
-            .map {
-              case (node, hostname) =>
-                val client = k8sClient
-                try {
-                  val creator: Future[Option[ContainerInfo]] = client
-                    .containerCreator()
-                    .imageName(imageName)
-                    .portMappings(Map(clientPort -> clientPort, jmxPort -> jmxPort))
-                    .hostname(hostname)
-                    .nodename(node.name)
-                    .envs(Map(
-                      WorkerCollie.CLIENT_PORT_KEY -> clientPort.toString,
-                      WorkerCollie.BROKERS_KEY -> brokers,
-                      WorkerCollie.GROUP_ID_KEY -> groupId,
-                      WorkerCollie.OFFSET_TOPIC_KEY -> offsetTopicName,
-                      WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY -> offsetTopicPartitions.toString,
-                      WorkerCollie.OFFSET_TOPIC_REPLICATIONS_KEY -> offsetTopicReplications.toString,
-                      WorkerCollie.CONFIG_TOPIC_KEY -> configTopicName,
-                      WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY -> configTopicReplications.toString,
-                      WorkerCollie.STATUS_TOPIC_KEY -> statusTopicName,
-                      WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY -> statusTopicPartitions.toString,
-                      WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY -> statusTopicReplications.toString,
-                      WorkerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
-                      WorkerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
-                      WorkerCollie.BROKER_CLUSTER_NAME -> brokerClusterName,
-                      WorkerCollie.JMX_HOSTNAME_KEY -> node.name,
-                      WorkerCollie.JMX_PORT_KEY -> jmxPort.toString
-                    ) ++ WorkerCollie.toMap(jarInfos))
-                    .labelName(OHARA_LABEL)
-                    .domainName(K8S_DOMAIN_NAME)
-                    .name(hostname)
-                    .run()
-                  Await.result(creator, TIMEOUT)
-                } catch {
-                  case e: Throwable =>
-                    LOG.error(s"failed to start $imageName", e)
-                    None
-                }
-            }
-            .map(_.get.nodeName)
-            .toSeq
-          if (successfulNodeNames.isEmpty)
-            throw new IllegalArgumentException(s"failed to create $clusterName on Worker")
-          WorkerClusterInfo(
-            name = clusterName,
-            imageName = imageName,
-            brokerClusterName = brokerClusterName,
-            clientPort = clientPort,
-            jmxPort = jmxPort,
-            groupId = groupId,
-            offsetTopicName = offsetTopicName,
-            offsetTopicPartitions = offsetTopicPartitions,
-            offsetTopicReplications = offsetTopicReplications,
-            configTopicName = configTopicName,
-            configTopicPartitions = 1,
-            configTopicReplications = configTopicReplications,
-            statusTopicName = statusTopicName,
-            statusTopicPartitions = statusTopicPartitions,
-            statusTopicReplications = statusTopicReplications,
-            jarInfos = jarInfos,
-            connectors = Seq.empty,
-            nodeNames = successfulNodeNames ++ existNodes.map(_._1.name)
-          )
-      }
-  }
-
   override protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] = toWorkerCluster(clusterName, containers)
+
+  override protected def doCreator(executionContext: ExecutionContext,
+                                   clusterName: String,
+                                   containerName: String,
+                                   containerInfo: ContainerInfo,
+                                   node: NodeApi.Node,
+                                   route: Map[String, String]): Unit = {
+    implicit val exec: ExecutionContext = executionContext
+    try {
+      val creator: Future[Option[ContainerInfo]] = k8sClient
+        .containerCreator()
+        .imageName(containerInfo.imageName)
+        .portMappings(
+          containerInfo.portMappings.flatMap(_.portPairs).map(pair => pair.hostPort -> pair.containerPort).toMap)
+        .hostname(s"${containerInfo.name}$DIVIDER${node.name}")
+        .nodename(node.name)
+        .envs(containerInfo.environments)
+        .labelName(OHARA_LABEL)
+        .domainName(K8S_DOMAIN_NAME)
+        .name(s"${containerInfo.name}$DIVIDER${node.name}")
+        .run()
+      Await.result(creator, TIMEOUT)
+    } catch {
+      case e: Throwable =>
+        LOG.error(s"failed to start ${containerInfo.imageName}", e)
+        None
+    }
+  }
+
+  override protected def brokerClusters(
+    implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = {
+    bkCollie.clusters.asInstanceOf[Future[Map[ClusterInfo, Seq[ContainerInfo]]]]
+  }
+
+  /**
+    * Please implement nodeCollie
+    *
+    * @return
+    */
+  override protected def nodeCollie(): NodeCollie = node
+
+  /**
+    * Implement prefix name for paltform
+    *
+    * @return
+    */
+  override protected def prefixKey(): String = PREFIX_KEY
 }

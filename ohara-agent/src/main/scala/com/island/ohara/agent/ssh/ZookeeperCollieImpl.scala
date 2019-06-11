@@ -22,22 +22,9 @@ import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import scala.concurrent.{ExecutionContext, Future}
-private class ZookeeperCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClientCache, clusterCache: ClusterCache)
-    extends BasicCollieImpl[ZookeeperClusterInfo, ZookeeperCollie.ClusterCreator](nodeCollie, dockerCache, clusterCache)
+private class ZookeeperCollieImpl(node: NodeCollie, dockerCache: DockerClientCache, clusterCache: ClusterCache)
+    extends BasicCollieImpl[ZookeeperClusterInfo, ZookeeperCollie.ClusterCreator](node, dockerCache, clusterCache)
     with ZookeeperCollie {
-
-  override def creator(): ZookeeperCollie.ClusterCreator =
-    (executionContext, clusterName, imageName, clientPort, peerPort, electionPort, nodeNames) => {
-      zkCreator(nodeCollie,
-                PREFIX_KEY,
-                clusterName,
-                serviceName,
-                imageName,
-                clientPort,
-                peerPort,
-                electionPort,
-                nodeNames)(executionContext)
-    }
 
   override protected def doCreator(executionContext: ExecutionContext,
                                    clusterName: String,
@@ -85,4 +72,8 @@ private class ZookeeperCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerCli
     previousContainers: Seq[ContainerInfo],
     newNodeName: String)(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] = Future.failed(
     new UnsupportedOperationException("zookeeper collie doesn't support to add node from a running cluster"))
+
+  override protected def nodeCollie(): NodeCollie = node
+
+  override protected def prefixKey(): String = PREFIX_KEY
 }

@@ -26,26 +26,12 @@ import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
 
-private class K8SBrokerCollieImpl(nodeCollie: NodeCollie, zkCollie: ZookeeperCollie, k8sClient: K8SClient)
-    extends K8SBasicCollieImpl[BrokerClusterInfo, BrokerCollie.ClusterCreator](nodeCollie, k8sClient)
+private class K8SBrokerCollieImpl(node: NodeCollie, zkCollie: ZookeeperCollie, k8sClient: K8SClient)
+    extends K8SBasicCollieImpl[BrokerClusterInfo, BrokerCollie.ClusterCreator](node, k8sClient)
     with BrokerCollie {
 
   private[this] val LOG = Logger(classOf[K8SBrokerCollieImpl])
   private[this] val TIMEOUT: FiniteDuration = 30 seconds
-
-  override def creator(): BrokerCollie.ClusterCreator =
-    (executionContext, clusterName, imageName, zookeeperClusterName, clientPort, exporterPort, jmxPort, nodeNames) => {
-      bkCreator(nodeCollie,
-                PREFIX_KEY,
-                clusterName,
-                serviceName,
-                imageName,
-                zookeeperClusterName,
-                clientPort,
-                exporterPort,
-                jmxPort,
-                nodeNames)(executionContext)
-    }
 
   override protected def doCreator(executionContext: ExecutionContext,
                                    clusterName: String,
@@ -77,9 +63,22 @@ private class K8SBrokerCollieImpl(nodeCollie: NodeCollie, zkCollie: ZookeeperCol
 
   override protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] = toBrokerCluster(clusterName, containers)
-
   override protected def zookeeperClusters(
     implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = {
     zkCollie.clusters.asInstanceOf[Future[Map[ClusterInfo, Seq[ContainerInfo]]]]
   }
+
+  /**
+    * Please setting nodeCollie to implement class
+    *
+    * @return
+    */
+  override protected def nodeCollie(): NodeCollie = node
+
+  /**
+    * Implement prefix name for the platform
+    *
+    * @return
+    */
+  override protected def prefixKey(): String = PREFIX_KEY
 }

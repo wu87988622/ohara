@@ -16,9 +16,10 @@
 
 package com.island.ohara.agent
 import java.util.Objects
-
-import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.client.configurator.v0.JarApi.{JarInfo, _}
+import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.{ConnectorDefinitions, WorkerClusterInfo}
 import com.island.ohara.client.configurator.v0.{ClusterInfo, WorkerApi}
 import com.island.ohara.client.kafka.WorkerClient
@@ -31,6 +32,230 @@ import spray.json.JsArray
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator] {
+
+  /**
+    * This is a complicated process. We must address following issues.
+    * 1) check the existence of cluster
+    * 2) check the existence of nodes
+    * 3) Each worker container has got to export exporter port and client port
+    * 4) Each worker container should assign "docker host name/port" to advertised name/port
+    * 5) add broker routes to all worker containers (worker needs to connect to broker cluster)
+    * 6) Add worker routes to all worker containers
+    * 7) update existed containers (if we are adding new node into a running cluster)
+    * @return description of worker cluster
+    */
+  override def creator(): WorkerCollie.ClusterCreator = (executionContext,
+                                                         clusterName,
+                                                         imageName,
+                                                         brokerClusterName,
+                                                         clientPort,
+                                                         jmxPort,
+                                                         groupId,
+                                                         offsetTopicName,
+                                                         offsetTopicReplications,
+                                                         offsetTopicPartitions,
+                                                         statusTopicName,
+                                                         statusTopicReplications,
+                                                         statusTopicPartitions,
+                                                         configTopicName,
+                                                         configTopicReplications,
+                                                         jarInfos,
+                                                         nodeNames) => {
+    implicit val exec: ExecutionContext = executionContext
+    clusters.flatMap(clusters => {
+      clusters
+        .filter(_._1.isInstanceOf[WorkerClusterInfo])
+        .map {
+          case (cluster, containers) => cluster.asInstanceOf[WorkerClusterInfo] -> containers
+        }
+        .find(_._1.name == clusterName)
+        .map(_._2)
+        .map(containers =>
+          nodeCollie
+            .nodes(containers.map(_.nodeName))
+            .map(_.map(node => node -> containers.find(_.nodeName == node.name).get).toMap))
+        .getOrElse(Future.successful(Map.empty))
+        .flatMap(existNodes =>
+          nodeCollie
+            .nodes(nodeNames)
+            .map(_.map(node => node -> ContainerCollie.format(prefixKey, clusterName, serviceName)).toMap)
+            .map((existNodes, _)))
+        .map {
+          case (existNodes, newNodes) =>
+            existNodes.keys.foreach(node =>
+              if (newNodes.keys.exists(_.name == node.name))
+                throw new IllegalArgumentException(s"${node.name} has run the worker service for $clusterName"))
+
+            (existNodes, newNodes, brokerContainers(brokerClusterName))
+        }
+        .flatMap {
+          case (existNodes, newNodes, brokerContainers) =>
+            brokerContainers.flatMap(brokerContainers => {
+
+              if (brokerContainers.isEmpty)
+                throw new IllegalArgumentException(s"broker cluster:$brokerClusterName doesn't exist")
+              val brokers = brokerContainers
+                .map(c => s"${c.nodeName}:${c.environments(BrokerCollie.CLIENT_PORT_KEY).toInt}")
+                .mkString(",")
+
+              val route = ContainerCollie.preSettingEnvironment(existNodes.asInstanceOf[Map[Node, ContainerInfo]],
+                                                                newNodes.asInstanceOf[Map[Node, String]],
+                                                                brokerContainers,
+                                                                resolveHostName,
+                                                                hookUpdate)
+
+              // ssh connection is slow so we submit request by multi-thread
+              Future
+                .sequence(newNodes.map {
+                  case (node, containerName) =>
+                    Future {
+                      val containerInfo = ContainerInfo(
+                        nodeName = node.name,
+                        id = ContainerCollie.UNKNOWN,
+                        imageName = imageName,
+                        created = ContainerCollie.UNKNOWN,
+                        state = ContainerCollie.UNKNOWN,
+                        kind = ContainerCollie.UNKNOWN,
+                        name = containerName,
+                        size = ContainerCollie.UNKNOWN,
+                        portMappings = Seq(
+                          PortMapping(
+                            hostIp = ContainerCollie.UNKNOWN,
+                            portPairs = Seq(PortPair(
+                                              hostPort = clientPort,
+                                              containerPort = clientPort
+                                            ),
+                                            PortPair(
+                                              hostPort = jmxPort,
+                                              containerPort = jmxPort
+                                            ))
+                          )),
+                        environments = Map(
+                          WorkerCollie.CLIENT_PORT_KEY -> clientPort.toString,
+                          WorkerCollie.BROKERS_KEY -> brokers,
+                          WorkerCollie.GROUP_ID_KEY -> groupId,
+                          WorkerCollie.OFFSET_TOPIC_KEY -> offsetTopicName,
+                          WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY -> offsetTopicPartitions.toString,
+                          WorkerCollie.OFFSET_TOPIC_REPLICATIONS_KEY -> offsetTopicReplications.toString,
+                          WorkerCollie.CONFIG_TOPIC_KEY -> configTopicName,
+                          WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY -> configTopicReplications.toString,
+                          WorkerCollie.STATUS_TOPIC_KEY -> statusTopicName,
+                          WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY -> statusTopicPartitions.toString,
+                          WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY -> statusTopicReplications.toString,
+                          WorkerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
+                          WorkerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
+                          WorkerCollie.BROKER_CLUSTER_NAME -> brokerClusterName,
+                          WorkerCollie.JMX_HOSTNAME_KEY -> node.name,
+                          WorkerCollie.JMX_PORT_KEY -> jmxPort.toString
+                        ) ++ WorkerCollie.toMap(jarInfos),
+                        hostname = containerName
+                      )
+                      doCreator(executionContext, clusterName, containerName, containerInfo, node, route)
+                      Some(containerInfo)
+                    }
+                })
+                .map(_.flatten.toSeq)
+                .map {
+                  successfulContainers =>
+                    if (successfulContainers.isEmpty)
+                      throw new IllegalArgumentException(s"failed to create $clusterName on $serviceName")
+                    val clusterInfo = WorkerClusterInfo(
+                      name = clusterName,
+                      imageName = imageName,
+                      brokerClusterName = brokerClusterName,
+                      clientPort = clientPort,
+                      jmxPort = jmxPort,
+                      groupId = groupId,
+                      offsetTopicName = offsetTopicName,
+                      offsetTopicPartitions = offsetTopicPartitions,
+                      offsetTopicReplications = offsetTopicReplications,
+                      configTopicName = configTopicName,
+                      configTopicPartitions = 1,
+                      configTopicReplications = configTopicReplications,
+                      statusTopicName = statusTopicName,
+                      statusTopicPartitions = statusTopicPartitions,
+                      statusTopicReplications = statusTopicReplications,
+                      jarInfos = jarInfos,
+                      connectors = Seq.empty,
+                      nodeNames = successfulContainers.map(_.nodeName) ++ existNodes.map(_._1.name)
+                    )
+                    postCreateWorkerCluster(clusterInfo, successfulContainers)
+                    clusterInfo
+                }
+            })
+        }
+    })
+  }
+
+  /**
+    * Please implement nodeCollie
+    * @return
+    */
+  protected def nodeCollie(): NodeCollie
+
+  /**
+    * Implement prefix name for paltform
+    * @return
+    */
+  protected def prefixKey(): String
+
+  /**
+    * return service name
+    * @return
+    */
+  protected def serviceName(): String
+
+  /**
+    * Please implement this function to get Broker cluster information
+    * @param executionContext
+    * @return
+    */
+  protected def brokerClusters(
+    implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]]
+
+  /**
+    * Update exist node info
+    * @param node
+    * @param container
+    * @param route
+    */
+  protected def hookUpdate(node: Node, container: ContainerInfo, route: Map[String, String]): Unit = {
+    //Nothing
+  }
+
+  /**
+    * Hostname resolve to IP address
+    * @param nodeName
+    * @return
+    */
+  protected def resolveHostName(nodeName: String): String = {
+    CommonUtils.address(nodeName)
+  }
+
+  /**
+    * Please implement this function to create the container to a different platform
+    * @param executionContext
+    * @param clusterName
+    * @param containerName
+    * @param containerInfo
+    * @param node
+    * @param route
+    */
+  protected def doCreator(executionContext: ExecutionContext,
+                          clusterName: String,
+                          containerName: String,
+                          containerInfo: ContainerInfo,
+                          node: Node,
+                          route: Map[String, String]): Unit
+
+  /**
+    * After the worker container creates complete, you maybe need to do other things.
+    * @param clusterInfo
+    * @param successfulContainers
+    */
+  protected def postCreateWorkerCluster(clusterInfo: ClusterInfo, successfulContainers: Seq[ContainerInfo]): Unit = {
+    //Default Nothing
+  }
 
   /**
     * Create a worker client according to passed cluster name.
@@ -114,6 +339,18 @@ trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator
           .error(s"Failed to fetch connectors information of cluster:$connectionProps. Use empty list instead", e)
         Seq.empty
     }
+
+  private[this] def brokerContainers(bkClusterName: String)(
+    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] = {
+    brokerClusters.map(
+      _.filter(_._1.isInstanceOf[BrokerClusterInfo])
+        .find(_._1.name == bkClusterName)
+        .map(_._2)
+        .getOrElse(
+          throw new NoSuchClusterException(s"broker cluster:$bkClusterName doesn't exist. other broker clusters: " +
+            s"${brokerClusters.map(_.filter(_._1.isInstanceOf[BrokerClusterInfo]).map(_._1.name).mkString(","))}"))
+    )
+  }
 }
 
 object WorkerCollie {

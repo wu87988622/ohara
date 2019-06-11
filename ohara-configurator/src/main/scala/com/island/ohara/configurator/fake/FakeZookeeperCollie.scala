@@ -23,8 +23,8 @@ import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 
 import scala.concurrent.{ExecutionContext, Future}
 
-private[configurator] class FakeZookeeperCollie(nodeCollie: NodeCollie)
-    extends FakeCollie[ZookeeperClusterInfo, ZookeeperCollie.ClusterCreator](nodeCollie)
+private[configurator] class FakeZookeeperCollie(node: NodeCollie)
+    extends FakeCollie[ZookeeperClusterInfo, ZookeeperCollie.ClusterCreator](node)
     with ZookeeperCollie {
   override def creator(): ZookeeperCollie.ClusterCreator =
     (_, clusterName, imageName, clientPort, peerPort, electionPort, nodeNames) =>
@@ -57,4 +57,8 @@ private[configurator] class FakeZookeeperCollie(nodeCollie: NodeCollie)
                                    node: NodeApi.Node,
                                    route: Map[String, String]): Unit =
     new UnsupportedOperationException("zookeeper collie doesn't support to doCreator function")
+
+  override protected def nodeCollie(): NodeCollie = node
+
+  override protected def prefixKey(): String = "fakezookeeper"
 }

@@ -18,18 +18,24 @@ package com.island.ohara.agent
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterInfo, ContainerApi, NodeApi}
+import com.island.ohara.client.configurator.v0._
 
 import scala.concurrent.{ExecutionContext, Future}
-
-class FakeBrokerCollie(zkContainers: Seq[ContainerInfo], bkExistContainers: Seq[ContainerInfo]) extends BrokerCollie {
+private class FakeBrokerCollie(node: NodeCollie,
+                               zkContainers: Seq[ContainerInfo],
+                               bkExistContainers: Seq[ContainerInfo])
+    extends BrokerCollie {
   override protected def zookeeperClusters(
     implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = {
     Future {
       Map(
-        ZookeeperClusterInfo("zk1", "zookeeper", 2181, 2182, 2183, Seq("node1")) -> zkContainers,
+        ZookeeperClusterInfo(FakeBrokerCollie.zookeeperClusterName,
+                             ZookeeperApi.IMAGE_NAME_DEFAULT,
+                             2181,
+                             2182,
+                             2183,
+                             Seq("node1")) -> zkContainers,
       )
-
     }
   }
 
@@ -48,9 +54,6 @@ class FakeBrokerCollie(zkContainers: Seq[ContainerInfo], bkExistContainers: Seq[
   override def logs(clusterName: String)(
     implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
     throw new UnsupportedOperationException("Not support logs function")
-
-  override def creator(): BrokerCollie.ClusterCreator =
-    throw new UnsupportedOperationException("Not support creator function")
 
   override def clusters(
     implicit executionContext: ExecutionContext): Future[Map[BrokerClusterInfo, Seq[ContainerInfo]]] = {
@@ -71,4 +74,29 @@ class FakeBrokerCollie(zkContainers: Seq[ContainerInfo], bkExistContainers: Seq[
   override def removeNode(clusterName: String, nodeName: String)(
     implicit executionContext: ExecutionContext): Future[Boolean] =
     throw new UnsupportedOperationException("Not support removeNode function")
+
+  /**
+    * Please setting nodeCollie to implement class
+    *
+    * @return
+    */
+  override protected def nodeCollie(): NodeCollie = node
+
+  /**
+    * Implement prefix name for the platform
+    *
+    * @return
+    */
+  override protected def prefixKey(): String = "fakebroker"
+
+  /**
+    * Setting service name
+    *
+    * @return
+    */
+  override protected def serviceName(): String = "bk"
+}
+
+object FakeBrokerCollie {
+  val zookeeperClusterName: String = "zk1"
 }

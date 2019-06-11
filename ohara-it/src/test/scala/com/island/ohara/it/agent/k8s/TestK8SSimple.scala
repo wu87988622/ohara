@@ -17,7 +17,6 @@
 package com.island.ohara.it.agent.k8s
 
 import java.util.UUID
-
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
@@ -86,8 +85,8 @@ class TestK8SSimple extends IntegrationTest with Matchers {
     containerSize shouldBe 1
     val container: ContainerInfo = containers.head
     container.portMappings.size shouldBe 1
-    container.environments.size shouldBe 1
-    container.environments.get("key1") shouldBe Some("value1")
+    container.environments.size shouldBe 4
+    container.environments.get("ZK_ID") shouldBe Some("0")
     container.hostname shouldBe TestK8SSimple.uuid
     container.imageName shouldBe ZookeeperApi.IMAGE_NAME_DEFAULT
     container.name shouldBe TestK8SSimple.uuid
@@ -154,6 +153,11 @@ class TestK8SSimple extends IntegrationTest with Matchers {
           .nodename(nodeServerNames.head)
           .hostname(containerName)
           .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
+          .envs(Map(
+            "ZK_CLIENT_PORT" -> s"${CommonUtils.availablePort()}",
+            "ZK_PEER_PORT" -> s"${CommonUtils.availablePort()}",
+            "ZK_ELECTION_PORT" -> s"${CommonUtils.availablePort()}"
+          ))
           .run()
       Await.result(result, TIMEOUT).get.name shouldBe containerName
     } finally {
@@ -231,8 +235,59 @@ object TestK8SSimple {
   }
 
   def createZookeeperPod(k8sApiServerURL: String, podName: String): Unit = {
-    val podJSON = "{\"apiVersion\": \"v1\", \"kind\": \"Pod\", \"metadata\": { \"name\": \"" + podName + "\" },\"spec\": {\"hostname\": \"" + podName + "\", \"containers\": [{\"name\": \"" + podName + "\", \"image\": \"" + ZookeeperApi.IMAGE_NAME_DEFAULT + "\", \"env\": [{\"name\": \"key1\", \"value\": \"value1\"}],\"ports\": [{\"containerPort\": 2181}]}]}}"
-
+    val ZK_CLIENT_PORT = CommonUtils.availablePort()
+    val ZK_ELECTION_PORT = CommonUtils.availablePort()
+    val ZK_PEER_PORT = CommonUtils.availablePort()
+    val podJSON = s"""
+                     |{
+                     |  "apiVersion": "v1",
+                     |  "kind": "Pod",
+                     |  "metadata": {
+                     |    "name": "${podName}"
+                     |  },
+                     |  "spec": {
+                     |    "hostname": "${podName}",
+                     |    "containers": [
+                     |      {
+                     |        "name": "${podName}",
+                     |        "image": "${ZookeeperApi.IMAGE_NAME_DEFAULT}",
+                     |        "ports": [
+                     |          {
+                     |            "containerPort": ${ZK_CLIENT_PORT},
+                     |            "hostPort": ${ZK_CLIENT_PORT}
+                     |          },
+                     |          {
+                     |            "containerPort": ${ZK_ELECTION_PORT},
+                     |            "hostPort": ${ZK_ELECTION_PORT}
+                     |          },
+                     |          {
+                     |            "containerPort": ${ZK_PEER_PORT},
+                     |            "hostPort": ${ZK_PEER_PORT}
+                     |          }
+                     |        ],
+                     |        "env": [
+                     |          {
+                     |            "name": "ZK_ID",
+                     |            "value": "0"
+                     |          },
+                     |          {
+                     |            "name": "ZK_ELECTION_PORT",
+                     |            "value": "${ZK_ELECTION_PORT}"
+                     |          },
+                     |          {
+                     |            "name": "ZK_CLIENT_PORT",
+                     |            "value": "${ZK_CLIENT_PORT}"
+                     |          },
+                     |          {
+                     |            "name": "ZK_PEER_PORT",
+                     |            "value": "${ZK_PEER_PORT}"
+                     |          }
+                     |        ]
+                     |      }
+                     |    ]
+                     |  }
+                     |}
+                """.stripMargin
     IntegrationTest.result(
       Http().singleRequest(
         HttpRequest(HttpMethods.POST,

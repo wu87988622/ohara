@@ -17,13 +17,14 @@
 package com.island.ohara.agent
 
 import com.island.ohara.client.configurator.v0.NodeApi.Node
+import com.island.ohara.client.configurator.v0.ZookeeperApi
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
 
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 class TestZookeeperCreator extends SmallTest with Matchers {
@@ -144,17 +145,17 @@ class TestZookeeperCreator extends SmallTest with Matchers {
     val node2Name = "node2"
     val node2 = node1.copy(name = node2Name)
 
-    val zookeeperCollie = new FakeZookeeperCollie()
-    val zkCreator: Future[ZookeeperClusterInfo] =
-      zookeeperCollie.zkCreator(NodeCollie(Seq(node1, node2)),
-                                "fakeprefix",
-                                "cluster1",
-                                "fake",
-                                "image1",
-                                2181,
-                                2182,
-                                2183,
-                                Seq(node1Name, node2Name))(ExecutionContext.Implicits.global)
+    val zookeeperCollie = new FakeZookeeperCollie(NodeCollie(Seq(node1, node2)))
+
+    val zkCreator: Future[ZookeeperClusterInfo] = zookeeperCollie
+      .creator()
+      .clusterName("cluster1")
+      .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
+      .clientPort(2181)
+      .peerPort(2182)
+      .electionPort(2183)
+      .nodeNames(Seq(node1Name, node2Name))
+      .create()
 
     val zookeeperClusterInfo = Await.result(zkCreator, TIMEOUT)
     zookeeperClusterInfo.name shouldBe "cluster1"

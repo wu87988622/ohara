@@ -19,6 +19,8 @@ package com.island.ohara.agent
 import java.net.URL
 
 import com.island.ohara.client.configurator.v0.JarApi.{JAR_INFO_JSON_FORMAT, JarInfo}
+import com.island.ohara.client.configurator.v0.NodeApi.Node
+import com.island.ohara.client.configurator.v0.WorkerApi
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
@@ -30,6 +32,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 class TestWorkerCreator extends SmallTest with Matchers {
+
+  private[this] val TIMEOUT: FiniteDuration = 30 seconds
 
   private[this] def wkCreator(): WorkerCollie.ClusterCreator = (executionContext,
                                                                 clusterName,
@@ -308,5 +312,87 @@ class TestWorkerCreator extends SmallTest with Matchers {
 
     WorkerCollie.toJarInfos(JsArray(jarInfos.map(JAR_INFO_JSON_FORMAT.write).toVector).toString) shouldBe jarInfos
 
+  }
+
+  @Test
+  def testWkCreator(): Unit = {
+    val node1Name = "node1"
+    val node1 = Node(node1Name, 22, "", "", services = Seq.empty, lastModified = CommonUtils.current())
+    val node2Name = "node2"
+    val node2 = Node(node2Name, 22, "", "", services = Seq.empty, lastModified = CommonUtils.current())
+
+    val fakeWorkerCollie = new FakeWorkerCollie(NodeCollie(Seq(node1, node2)))
+    val workerClusterInfo: Future[WorkerClusterInfo] = fakeWorkerCollie
+      .creator()
+      .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
+      .clusterName("wk1")
+      .clientPort(8083)
+      .jmxPort(8084)
+      .brokerClusterName("bk1")
+      .groupId(CommonUtils.randomString(10))
+      .configTopicName(CommonUtils.randomString(10))
+      .statusTopicName(CommonUtils.randomString(10))
+      .offsetTopicName(CommonUtils.randomString(10))
+      .nodeNames(Seq(node2Name))
+      .create()
+
+    val result: WorkerClusterInfo = Await.result(workerClusterInfo, TIMEOUT)
+    result.brokerClusterName shouldBe "bk1"
+    result.clientPort shouldBe 8083
+    result.nodeNames.size shouldBe 2
+    result.connectionProps shouldBe "node2:8083,node1:8083"
+  }
+
+  @Test
+  def testExistWorkerNode(): Unit = {
+    val node1Name = "node1" // node1 has running worker for fake
+    val node1 = Node(node1Name, 22, "", "", services = Seq.empty, lastModified = CommonUtils.current())
+
+    val fakeWorkerCollie = new FakeWorkerCollie(NodeCollie(Seq(node1)))
+
+    val workerClusterInfo: Future[WorkerClusterInfo] = fakeWorkerCollie
+      .creator()
+      .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
+      .clusterName("wk1")
+      .clientPort(8083)
+      .jmxPort(8084)
+      .brokerClusterName("bk1")
+      .groupId(CommonUtils.randomString(10))
+      .configTopicName(CommonUtils.randomString(10))
+      .statusTopicName(CommonUtils.randomString(10))
+      .offsetTopicName(CommonUtils.randomString(10))
+      .nodeNames(Seq(node1Name))
+      .create()
+
+    an[IllegalArgumentException] shouldBe thrownBy {
+      Await.result(workerClusterInfo, TIMEOUT)
+    }
+  }
+
+  @Test
+  def testBrokerClusterNotExists(): Unit = {
+    val node1Name = "node1"
+    val node1 = Node(node1Name, 22, "", "", services = Seq.empty, lastModified = CommonUtils.current())
+    val node2Name = "node2"
+    val node2 = Node(node2Name, 22, "", "", services = Seq.empty, lastModified = CommonUtils.current())
+
+    val fakeWorkerCollie = new FakeWorkerCollie(NodeCollie(Seq(node1, node2)))
+    val workerClusterInfo: Future[WorkerClusterInfo] = fakeWorkerCollie
+      .creator()
+      .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
+      .clusterName("wk1")
+      .clientPort(8083)
+      .jmxPort(8084)
+      .brokerClusterName("bk2") // bk2 not exists
+      .groupId(CommonUtils.randomString(10))
+      .configTopicName(CommonUtils.randomString(10))
+      .statusTopicName(CommonUtils.randomString(10))
+      .offsetTopicName(CommonUtils.randomString(10))
+      .nodeNames(Seq(node2Name))
+      .create()
+
+    an[NoSuchClusterException] shouldBe thrownBy {
+      Await.result(workerClusterInfo, TIMEOUT)
+    }
   }
 }

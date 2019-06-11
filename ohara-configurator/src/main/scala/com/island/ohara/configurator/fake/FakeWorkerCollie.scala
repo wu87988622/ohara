@@ -19,7 +19,7 @@ package com.island.ohara.configurator.fake
 import java.util.concurrent.ConcurrentHashMap
 
 import com.island.ohara.agent.{NodeCollie, WorkerCollie}
-import com.island.ohara.client.configurator.v0.ContainerApi
+import com.island.ohara.client.configurator.v0.{ClusterInfo, ContainerApi, NodeApi}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
@@ -29,8 +29,8 @@ import com.island.ohara.metrics.basic.CounterMBean
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
-private[configurator] class FakeWorkerCollie(nodeCollie: NodeCollie, wkConnectionProps: String)
-    extends FakeCollie[WorkerClusterInfo, WorkerCollie.ClusterCreator](nodeCollie)
+private[configurator] class FakeWorkerCollie(node: NodeCollie, wkConnectionProps: String)
+    extends FakeCollie[WorkerClusterInfo, WorkerCollie.ClusterCreator](node)
     with WorkerCollie {
 
   override def counters(cluster: WorkerClusterInfo): Seq[CounterMBean] =
@@ -147,4 +147,30 @@ private[configurator] class FakeWorkerCollie(nodeCollie: NodeCollie, wkConnectio
           sinks = Seq.empty,
           nodeNames = previousCluster.nodeNames :+ newNodeName
         )))
+
+  override protected def doCreator(executionContext: ExecutionContext,
+                                   clusterName: String,
+                                   containerName: String,
+                                   containerInfo: ContainerInfo,
+                                   node: NodeApi.Node,
+                                   route: Map[String, String]): Unit =
+    throw new UnsupportedOperationException("FakeWorkerCollie doesn't support doCreator function")
+
+  override protected def brokerClusters(
+    implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] =
+    throw new UnsupportedOperationException("FakeWorkerCollie doesn't support brokerClusters function")
+
+  /**
+    * Please implement nodeCollie
+    *
+    * @return
+    */
+  override protected def nodeCollie(): NodeCollie = node
+
+  /**
+    * Implement prefix name for paltform
+    *
+    * @return
+    */
+  override protected def prefixKey(): String = "fakeworker"
 }

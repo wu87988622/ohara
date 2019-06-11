@@ -29,8 +29,8 @@ import com.island.ohara.metrics.kafka.TopicMeter
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
-private[configurator] class FakeBrokerCollie(nodeCollie: NodeCollie, bkConnectionProps: String)
-    extends FakeCollie[BrokerClusterInfo, BrokerCollie.ClusterCreator](nodeCollie)
+private[configurator] class FakeBrokerCollie(node: NodeCollie, bkConnectionProps: String)
+    extends FakeCollie[BrokerClusterInfo, BrokerCollie.ClusterCreator](node)
     with BrokerCollie {
 
   override def topicMeters(cluster: BrokerClusterInfo): Seq[TopicMeter] =
@@ -104,4 +104,18 @@ private[configurator] class FakeBrokerCollie(nodeCollie: NodeCollie, bkConnectio
   override protected def zookeeperClusters(
     implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] =
     throw new UnsupportedOperationException("Fake broker doesn't support zookeeperCluster function")
+
+  /**
+    * Please setting nodeCollie to implement class
+    *
+    * @return
+    */
+  override protected def nodeCollie(): NodeCollie = node
+
+  /**
+    * Implement prefix name for the platform
+    *
+    * @return
+    */
+  override protected def prefixKey(): String = "fakebroker"
 }

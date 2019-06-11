@@ -23,34 +23,9 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.{ClusterInfo, NodeApi}
 import scala.concurrent.{ExecutionContext, Future}
 
-private class BrokerCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClientCache, clusterCache: ClusterCache)
-    extends BasicCollieImpl[BrokerClusterInfo, BrokerCollie.ClusterCreator](nodeCollie, dockerCache, clusterCache)
+private class BrokerCollieImpl(node: NodeCollie, dockerCache: DockerClientCache, clusterCache: ClusterCache)
+    extends BasicCollieImpl[BrokerClusterInfo, BrokerCollie.ClusterCreator](node, dockerCache, clusterCache)
     with BrokerCollie {
-
-  /**
-    * This is a complicated process. We must address following issues.
-    * 1) check the existence of cluster
-    * 2) check the existence of nodes
-    * 3) Each broker container has got to export exporter port and client port
-    * 4) Each broker container should assign "docker host name/port" to advertised name/port
-    * 5) add zookeeper routes to all broker containers (broker needs to connect to zookeeper cluster)
-    * 6) Add broker routes to all broker containers
-    * 7) update existed containers (if we are adding new node into a running cluster)
-    * @return creator of broker cluster
-    */
-  override def creator(): BrokerCollie.ClusterCreator =
-    (executionContext, clusterName, imageName, zookeeperClusterName, clientPort, exporterPort, jmxPort, nodeNames) => {
-      bkCreator(nodeCollie,
-                PREFIX_KEY,
-                clusterName,
-                serviceName,
-                imageName,
-                zookeeperClusterName,
-                clientPort,
-                exporterPort,
-                jmxPort,
-                nodeNames)(executionContext)
-    }
 
   override protected def doCreator(executionContext: ExecutionContext,
                                    clusterName: String,
@@ -81,8 +56,8 @@ private class BrokerCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClient
         LOG.error(s"failed to start ${containerInfo.imageName} on ${node.name}", e)
         None
     }
-
   }
+
   override protected def hookUpdate(node: Node, container: ContainerInfo, route: Map[String, String]): Unit = {
     updateRoute(node, container.name, route)
   }
@@ -91,11 +66,14 @@ private class BrokerCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClient
                                                  successfulContainers: Seq[ContainerInfo]): Unit = {
     clusterCache.put(clusterInfo, clusterCache.get(clusterInfo) ++ successfulContainers)
   }
-
   override protected def zookeeperClusters(
     implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = {
     Future {
       clusterCache.snapshot
     }
   }
+
+  override protected def nodeCollie(): NodeCollie = node
+
+  override protected def prefixKey(): String = PREFIX_KEY
 }
