@@ -18,8 +18,8 @@ package com.island.ohara.client.configurator.v0
 import com.island.ohara.client.Enum
 import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.kafka.connector.json.{PropGroups, SettingDefinition, StringList}
-import spray.json.{JsArray, JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
-
+import spray.json.{JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json.DefaultJsonProtocol._
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -72,12 +72,7 @@ object ConnectorApi {
           case _               => v.toString()
         })
     }
-    def className: String = plain.getOrElse(
-      SettingDefinition.CONNECTOR_CLASS_DEFINITION.key(),
-      plain.getOrElse("className",
-                      throw new NoSuchElementException(
-                        s"Can't find either ${SettingDefinition.CONNECTOR_CLASS_DEFINITION.key()} or className"))
-    )
+    def className: String = plain(SettingDefinition.CONNECTOR_CLASS_DEFINITION.key())
     def columns: Seq[Column] = plain
       .get(SettingDefinition.COLUMNS_DEFINITION.key())
       .map(s => PropGroups.ofJson(s).toColumns.asScala)
@@ -125,49 +120,9 @@ object ConnectorApi {
 
   implicit val CONNECTOR_CREATION_REQUEST_JSON_FORMAT: RootJsonFormat[ConnectorCreationRequest] =
     new RootJsonFormat[ConnectorCreationRequest] {
-      import spray.json._
       override def write(obj: ConnectorCreationRequest): JsValue = JsObject(noJsNull(obj.settings))
-
-      /**
-        * we write custom unmarshal to support old api
-        * This is a ugly but required process since we cn't betray ohara manager after we adopt the new APIs.
-        * We do the following process.
-        * 1) remove all known keyword from a copy of input. (since we will re-assign it later)
-        * 2) convert the fileds by old way
-        * 3) re-assign the value by new APIs
-        * 4) merge remaining arguments from input
-        * TODO: remove this ugly convert after ohara manager starts to use new APIs
-        */
-      override def read(json: JsValue): ConnectorCreationRequest = {
-        val fields: Map[String, JsValue] = noJsNull(json.asJsObject.fields)
-        val setting: collection.mutable.Map[String, JsValue] = collection.mutable.Map(fields.toSeq: _*)
-        setting.remove("className")
-        setting.remove("schema")
-        setting.remove("topics")
-        setting.remove("numberOfTasks")
-        setting.remove("workerClusterName")
-        setting.remove("configs")
-        val request = ConnectorCreationRequest(
-          className = fields.get("className").map(_.asInstanceOf[JsString].value),
-          columns = fields
-            .get("schema")
-            .map(_.asInstanceOf[JsArray].elements.map(COLUMN_JSON_FORMAT.read))
-            .getOrElse(Seq.empty),
-          topicNames = fields
-            .get("topics")
-            .map(_.asInstanceOf[JsArray].elements.map(_.asInstanceOf[JsString].value))
-            .getOrElse(Vector.empty),
-          numberOfTasks = fields.get("numberOfTasks").map(_.asInstanceOf[JsNumber].value.toInt),
-          settings = fields
-            .get("configs")
-            .map(_.asInstanceOf[JsObject].fields.map {
-              case (k, v) => k -> v.asInstanceOf[JsString].value
-            })
-            .getOrElse(Map.empty),
-          workerClusterName = fields.get("workerClusterName").map(_.asInstanceOf[JsString].value)
-        )
-        request.copy(settings = request.settings ++ setting)
-      }
+      override def read(json: JsValue): ConnectorCreationRequest = ConnectorCreationRequest(
+        noJsNull(json.asJsObject.fields))
     }
 
   import MetricsApi._
@@ -202,12 +157,8 @@ object ConnectorApi {
       */
     override def name: String = plain.getOrElse(SettingDefinition.CONNECTOR_NAME_DEFINITION.key(), id)
     override def kind: String = "connector"
-    def className: String = plain.getOrElse(
-      SettingDefinition.CONNECTOR_CLASS_DEFINITION.key(),
-      plain.getOrElse("className",
-                      throw new NoSuchElementException(
-                        s"Can't find either ${SettingDefinition.CONNECTOR_CLASS_DEFINITION.key()} or className"))
-    )
+    def className: String = plain(SettingDefinition.CONNECTOR_CLASS_DEFINITION.key())
+
     def columns: Seq[Column] = plain
       .get(SettingDefinition.COLUMNS_DEFINITION.key())
       .map(s => PropGroups.ofJson(s).toColumns.asScala)
@@ -232,38 +183,8 @@ object ConnectorApi {
     * we write custom unmarshal to support old api
     * TODO: remove this ugly convert after ohara manager starts to use new APIs
     */
-  implicit val CONNECTOR_DESCRIPTION_JSON_FORMAT: RootJsonFormat[ConnectorDescription] =
-    new RootJsonFormat[ConnectorDescription] {
-      import spray.json.DefaultJsonProtocol._
-      private[this] val format = jsonFormat6(ConnectorDescription)
-      override def read(json: JsValue): ConnectorDescription = format.read(json)
-
-      override def write(obj: ConnectorDescription): JsValue = JsObject(
-        "id" -> JsString(obj.id),
-        "settings" -> JsObject(obj.settings),
-        "state" -> obj.state.map(CONNECTOR_STATE_JSON_FORMAT.write).getOrElse(JsNull),
-        "error" -> obj.error.map(JsString(_)).getOrElse(JsNull),
-        "metrics" -> METRICS_JSON_FORMAT.write(obj.metrics),
-        "lastModified" -> JsNumber(obj.lastModified),
-        // TODO: remove this (https://github.com/oharastream/ohara/issues/518) by chia
-        "name" -> obj.plain.get(SettingDefinition.CONNECTOR_NAME_DEFINITION.key()).map(JsString(_)).getOrElse(JsNull),
-        "schema" -> JsArray(obj.columns.map(COLUMN_JSON_FORMAT.write).toVector),
-        "className" -> obj.plain
-          .get(SettingDefinition.CONNECTOR_CLASS_DEFINITION.key())
-          .map(JsString(_))
-          .getOrElse(JsNull),
-        "topics" -> JsArray(obj.topicNames.map(JsString(_)).toVector),
-        "numberOfTasks" -> obj.plain
-          .get(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key())
-          .map(JsNumber(_))
-          .getOrElse(JsNull),
-        "workerClusterName" -> obj.plain
-          .get(SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key())
-          .map(JsString(_))
-          .getOrElse(JsNull),
-        "configs" -> JsObject(obj.settings.filter(_._2.isInstanceOf[JsString]))
-      )
-    }
+  implicit val CONNECTOR_DESCRIPTION_JSON_FORMAT: RootJsonFormat[ConnectorDescription] = jsonFormat6(
+    ConnectorDescription)
   class Access private[v0]
       extends com.island.ohara.client.configurator.v0.Access[ConnectorCreationRequest, ConnectorDescription](
         CONNECTORS_PREFIX_PATH) {

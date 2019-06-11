@@ -67,14 +67,12 @@ class TestOhara734 extends SmallTest with Matchers {
         """
                                                             |{
                                                             |  "name":"perf",
-                                                            |  "className":"com.island.ohara.connector.perf.PerfSource",
+                                                            |  "connector.class":"com.island.ohara.connector.perf.PerfSource",
                                                             |  "topics":["59e9010c-fd9c-4a41-918a-dacc9b84aa2b"],
-                                                            |  "numberOfTasks":1,
-                                                            |  "configs":{
-                                                            |    "perf.batch":"1",
-                                                            |    "perf.frequence":"2 seconds"
-                                                            |  },
-                                                            |  "schema":[{
+                                                            |  "tasks.max":1,
+                                                            |  "perf.batch":"1",
+                                                            |  "perf.frequence":"2 seconds",
+                                                            |  "columns":[{
                                                             |    "name": "cf0",
                                                             |    "newName": "cf0",
                                                             |    "dataType": "int",
@@ -94,33 +92,6 @@ class TestOhara734 extends SmallTest with Matchers {
     request.columns.size shouldBe 2
     request.columns.head shouldBe Column.builder().name("cf0").newName("cf0").dataType(DataType.INT).order(1).build()
     request.columns.last shouldBe Column.builder().name("cf1").newName("cf1").dataType(DataType.BYTES).order(2).build()
-
-    val request2 =
-      ConnectorApi.CONNECTOR_CREATION_REQUEST_JSON_FORMAT.read(
-        """
-                                                         |{
-                                                         |  "name":"perf",
-                                                         |  "className":"com.island.ohara.connector.perf.PerfSource",
-                                                         |  "topics":["59e9010c-fd9c-4a41-918a-dacc9b84aa2b"],
-                                                         |  "numberOfTasks":1,
-                                                         |  "configs":{
-                                                         |    "perf.batch":"1",
-                                                         |    "perf.frequence":"2 seconds"
-                                                         |  },
-                                                         |  "schema":[{
-                                                         |    "name": "cf0",
-                                                         |    "newName": "cf0",
-                                                         |    "dataType": "int",
-                                                         |    "order": 1
-                                                         |  },{
-                                                         |    "name": "cf1",
-                                                         |    "newName": "cf1",
-                                                         |    "dataType": "bytes",
-                                                         |    "order": 2
-                                                         |  }]
-                                                         |}
-                                                       """.stripMargin.parseJson)
-    request2 shouldBe request
   }
 
   @Test
@@ -131,14 +102,12 @@ class TestOhara734 extends SmallTest with Matchers {
         """
                                                                |{
                                                                |  "name":"perf",
-                                                               |  "className":"com.island.ohara.connector.perf.PerfSource",
+                                                               |  "connector.class":"com.island.ohara.connector.perf.PerfSource",
                                                                |  "topics":["59e9010c-fd9c-4a41-918a-dacc9b84aa2b"],
-                                                               |  "numberOfTasks":1,
-                                                               |  "configs":{
-                                                               |    "perf.batch":"1",
-                                                               |    "perf.frequence":"2 seconds"
-                                                               |  },
-                                                               |  "schema":[{
+                                                               |  "tasks.max":1,
+                                                               |  "perf.batch":"1",
+                                                               |  "perf.frequence":"2 seconds",
+                                                               |  "columns":[{
                                                                |    "name": "cf0",
                                                                |    "newName": "cf0",
                                                                |    "dataType": "INT",
@@ -158,32 +127,5 @@ class TestOhara734 extends SmallTest with Matchers {
     request.columns.size shouldBe 2
     request.columns.head shouldBe Column.builder().name("cf0").newName("cf0").dataType(DataType.INT).order(1).build()
     request.columns.last shouldBe Column.builder().name("cf1").newName("cf1").dataType(DataType.BYTES).order(2).build()
-
-    val request2 =
-      ConnectorApi.CONNECTOR_CREATION_REQUEST_JSON_FORMAT.read(
-        """
-                                                       |{
-                                                       |  "name":"perf",
-                                                       |  "className":"com.island.ohara.connector.perf.PerfSource",
-                                                       |  "topics":["59e9010c-fd9c-4a41-918a-dacc9b84aa2b"],
-                                                       |  "numberOfTasks":1,
-                                                       |  "configs":{
-                                                       |    "perf.batch":"1",
-                                                       |    "perf.frequence":"2 seconds"
-                                                       |  },
-                                                       |  "schema":[{
-                                                       |    "name": "cf0",
-                                                       |    "newName": "cf0",
-                                                       |    "dataType": "INT",
-                                                       |    "order": 1
-                                                       |  },{
-                                                       |    "name": "cf1",
-                                                       |    "newName": "cf1",
-                                                       |    "dataType": "bytes",
-                                                       |    "order": 2
-                                                       |  }]
-                                                       |}
-                                                     """.stripMargin.parseJson)
-    request2 shouldBe request
   }
 }

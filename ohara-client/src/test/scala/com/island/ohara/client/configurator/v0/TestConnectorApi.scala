@@ -76,7 +76,7 @@ class TestConnectorApi extends SmallTest with Matchers {
                                                |{
                                                |  "name": ${JsString(name).toString()},
                                                |  "workerClusterName": ${JsString(workerClusterName).toString()},
-                                               |  "className": ${JsString(className).toString()},
+                                               |  "connector.class": ${JsString(className).toString()},
                                                |  "schema": ${JsArray(COLUMN_JSON_FORMAT.write(column)).toString()},
                                                |  "topics": ${JsArray(topicNames.map(v => JsString(v)).toVector)
                                                        .toString()},
@@ -88,12 +88,12 @@ class TestConnectorApi extends SmallTest with Matchers {
                                             """.stripMargin.parseJson)
     request.workerClusterName.get shouldBe workerClusterName
     request.className shouldBe className
-    request.columns.head shouldBe column
+    request.columns shouldBe Seq.empty
     request.topicNames shouldBe topicNames
-    request.numberOfTasks.get shouldBe numberOfTasks
+    request.numberOfTasks shouldBe None
     // this key is deprecated so json converter will replace it by new one
     request.settings.contains("className") shouldBe false
-    request.settings("aaa").asInstanceOf[JsString].value shouldBe "cccc"
+    request.settings.contains("aaa") shouldBe false
     request.settings(anotherKey).asInstanceOf[JsString].value shouldBe anotherValue
     CONNECTOR_CREATION_REQUEST_JSON_FORMAT.read(CONNECTOR_CREATION_REQUEST_JSON_FORMAT.write(request)) shouldBe request
   }
@@ -129,17 +129,20 @@ class TestConnectorApi extends SmallTest with Matchers {
     )
     val jsonString = CONNECTOR_DESCRIPTION_JSON_FORMAT.write(desc).toString()
     jsonString.contains("id") shouldBe true
-    jsonString.contains("name") shouldBe true
-    jsonString.contains("className") shouldBe true
-    jsonString.contains("schema") shouldBe true
+    jsonString.contains("name") shouldBe false
+    jsonString.contains(SettingDefinition.CONNECTOR_CLASS_DEFINITION.key()) shouldBe true
+    jsonString.contains("className") shouldBe false
+    jsonString.contains(SettingDefinition.COLUMNS_DEFINITION.key()) shouldBe true
+    jsonString.contains("schema") shouldBe false
     jsonString.contains("topics") shouldBe true
-    jsonString.contains("numberOfTasks") shouldBe true
+    jsonString.contains(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key()) shouldBe true
+    jsonString.contains("numberOfTasks") shouldBe false
     jsonString.contains("settings") shouldBe true
-    jsonString.contains("workerClusterName") shouldBe true
-    jsonString.contains("state") shouldBe true
-    jsonString.contains("error") shouldBe true
+    jsonString.contains(SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key()) shouldBe true
+    jsonString.contains("state") shouldBe false
+    jsonString.contains("error") shouldBe false
     jsonString.contains("lastModified") shouldBe true
-    jsonString.contains("configs") shouldBe true
+    jsonString.contains("configs") shouldBe false
   }
   @Test
   def testState(): Unit = {
@@ -189,9 +192,8 @@ class TestConnectorApi extends SmallTest with Matchers {
       .write(response)
       .asInstanceOf[JsObject]
       // previous name
-      .fields("className")
-      .asInstanceOf[JsString]
-      .value shouldBe className
+      .fields
+      .contains("className") shouldBe false
   }
 
   @Test
@@ -203,7 +205,7 @@ class TestConnectorApi extends SmallTest with Matchers {
                                                                                                | \"className\": \"$className\"
                                                                                                | }
      """.stripMargin.parseJson)
-    connectorCreationRequest.className shouldBe className
+    an[NoSuchElementException] should be thrownBy connectorCreationRequest.className
   }
 
   @Test
@@ -222,7 +224,7 @@ class TestConnectorApi extends SmallTest with Matchers {
                                                                                       | }
                                                                                       | }
      """.stripMargin.parseJson)
-    connectorDescription.className shouldBe className
+    an[NoSuchElementException] should be thrownBy connectorDescription.className
   }
 
   @Test
@@ -289,12 +291,12 @@ class TestConnectorApi extends SmallTest with Matchers {
                                                                                       |  }
                                                                                       |}
                                                                                       |     """.stripMargin.parseJson)
-
-    creationRequest.settings("ftp.input.folder") shouldBe JsString("/demo_folder/input")
-    creationRequest.settings("ftp.completed.folder") shouldBe JsString("/demo_folder/complete")
-    creationRequest.settings("ftp.error.folder") shouldBe JsString("/demo_folder/error")
-    creationRequest.settings("ftp.encode") shouldBe JsString("UTF-8")
-    creationRequest.settings("ftp.hostname") shouldBe JsString("10.2.0.28")
-    creationRequest.settings("ftp.port") shouldBe JsString("21")
+    // the deprecated APIs should not be supported now!!!
+    creationRequest.settings.contains("ftp.input.folder") shouldBe false
+    creationRequest.settings.contains("ftp.completed.folder") shouldBe false
+    creationRequest.settings.contains("ftp.error.folder") shouldBe false
+    creationRequest.settings.contains("ftp.encode") shouldBe false
+    creationRequest.settings.contains("ftp.hostname") shouldBe false
+    creationRequest.settings.contains("ftp.port") shouldBe false
   }
 }
