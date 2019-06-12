@@ -17,7 +17,6 @@
 package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterCreationRequest, BrokerClusterInfo}
-import com.island.ohara.client.configurator.v0.NodeApi.NodeCreationRequest
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterCreationRequest
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterCreationRequest
 import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, ZookeeperApi}
@@ -53,13 +52,8 @@ class TestBrokerRoute extends MediumTest with Matchers {
 
     nodeNames.foreach { n =>
       result(
-        nodeAccess.add(
-          NodeCreationRequest(
-            name = Some(n),
-            port = 22,
-            user = "user",
-            password = "pwd"
-          )))
+        nodeAccess.request().name(n).port(22).user("user").password("password").create()
+      )
     }
 
     result(nodeAccess.list).size shouldBe nodeNames.size

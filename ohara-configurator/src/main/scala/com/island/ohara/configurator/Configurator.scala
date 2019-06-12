@@ -32,7 +32,7 @@ import com.island.ohara.client.HttpExecutor
 import com.island.ohara.client.configurator.ConfiguratorApiInfo
 import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterCreationRequest, BrokerClusterInfo}
 import com.island.ohara.client.configurator.v0.MetricsApi.Meter
-import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeCreationRequest}
+import com.island.ohara.client.configurator.v0.NodeApi.{Node, Creation}
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.ValidationApi.NodeValidationRequest
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
@@ -272,7 +272,7 @@ object Configurator {
     }
 
     val configuratorBuilder = Configurator.builder()
-    var nodeRequest: Option[NodeCreationRequest] = None
+    var nodeRequest: Option[Creation] = None
     var k8sClient: K8SClient = null
     args.sliding(2, 2).foreach {
       case Array(FOLDER_KEY, value)   => configuratorBuilder.homeFolder(value)
@@ -287,8 +287,8 @@ object Configurator {
         val hostname = value.split("@").last.split(":").head
         val port = value.split("@").last.split(":").last.toInt
         nodeRequest = Some(
-          NodeCreationRequest(
-            name = Some(hostname),
+          Creation(
+            name = hostname,
             password = password,
             user = user,
             port = port
@@ -364,14 +364,25 @@ object Configurator {
       throw new IllegalArgumentException(s"$node doesn't have ${StreamApi.IMAGE_NAME_DEFAULT}")
   }
 
-  private[this] def processNodeRequest(nodeRequest: NodeCreationRequest,
+  private[this] def processNodeRequest(nodeRequest: Creation,
                                        configurator: Configurator,
                                        otherCheck: Node => Unit): Unit = {
     LOG.info(s"Find a pre-created node:$nodeRequest. Will create zookeeper and broker!!")
 
     val node =
-      Await
-        .result(NodeApi.access().hostname(CommonUtils.hostname()).port(configurator.port).add(nodeRequest), 30 seconds)
+      Await.result(
+        NodeApi
+          .access()
+          .hostname(CommonUtils.hostname())
+          .port(configurator.port)
+          .request()
+          .name(nodeRequest.name)
+          .port(nodeRequest.port)
+          .user(nodeRequest.user)
+          .password(nodeRequest.password)
+          .create(),
+        30 seconds
+      )
     otherCheck(node)
 
     val zkCluster = Await.result(

@@ -21,7 +21,7 @@ import java.util.concurrent.ExecutionException
 import com.island.ohara.agent.StreamCollie
 import com.island.ohara.agent.docker.{ContainerState, DockerClient}
 import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterCreationRequest, BrokerClusterInfo}
-import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeCreationRequest}
+import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.{
   ActionAccess,
   ListAccess,
@@ -109,14 +109,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
       // add all available nodes
       nodeCache.foreach { node =>
         result(
-          nodeApi.add(
-            NodeCreationRequest(
-              name = Some(node.name),
-              port = node.port,
-              user = node.user,
-              password = node.password
-            )
-          )
+          nodeApi.request().name(node.name).port(node.port).user(node.user).password(node.password).create()
         )
       }
       val nodes = result(nodeApi.list)

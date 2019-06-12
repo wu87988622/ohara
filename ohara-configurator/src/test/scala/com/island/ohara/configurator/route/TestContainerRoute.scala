@@ -17,7 +17,6 @@
 package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterCreationRequest
-import com.island.ohara.client.configurator.v0.NodeApi.NodeCreationRequest
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterCreationRequest
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterCreationRequest
 import com.island.ohara.client.configurator.v0._
@@ -43,18 +42,11 @@ class TestContainerRoute extends MediumTest with Matchers {
 
   @Before
   def setup(): Unit = {
-    val nodeAccess = NodeApi.access().hostname(configurator.hostname).port(configurator.port)
+    val nodeApi = NodeApi.access().hostname(configurator.hostname).port(configurator.port)
 
     nodeNames.isEmpty shouldBe false
     nodeNames.foreach { n =>
-      result(
-        nodeAccess.add(
-          NodeCreationRequest(
-            name = Some(n),
-            port = 22,
-            user = "user",
-            password = "pwd"
-          )))
+      result(nodeApi.request().name(n).port(22).user("user").password("pwd").create())
     }
 
     result(

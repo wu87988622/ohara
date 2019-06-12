@@ -35,14 +35,7 @@ class TestSshClusterCollieByConfigurator extends BasicTests4ClusterCollieByConfi
     _configurator = Configurator.builder().build()
     val nodeApi = NodeApi.access().hostname(configurator.hostname).port(configurator.port)
     nodeCache.foreach { node =>
-      result(
-        nodeApi.add(
-          NodeApi.NodeCreationRequest(
-            name = Some(node.name),
-            port = node.port,
-            user = node.user,
-            password = node.password
-          )))
+      result(nodeApi.request().name(node.name).port(node.port).user(node.user).password(node.password).create())
     }
 
     val nodes = result(nodeApi.list)

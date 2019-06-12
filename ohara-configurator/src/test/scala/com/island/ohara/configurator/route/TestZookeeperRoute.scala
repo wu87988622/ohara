@@ -16,7 +16,6 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.NodeApi.NodeCreationRequest
 import com.island.ohara.client.configurator.v0.ZookeeperApi.{ZookeeperClusterCreationRequest, ZookeeperClusterInfo}
 import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, ZookeeperApi}
 import com.island.ohara.common.rule.MediumTest
@@ -54,14 +53,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
 
     nodeNames.isEmpty shouldBe false
     nodeNames.foreach { n =>
-      result(
-        nodeAccess.add(
-          NodeCreationRequest(
-            name = Some(n),
-            port = 22,
-            user = "user",
-            password = "pwd"
-          )))
+      result(nodeAccess.request().name(n).port(22).user("user").password("pwd").create())
     }
 
     result(nodeAccess.list).size shouldBe (nodeNames.size + numberOfDefaultNodes)

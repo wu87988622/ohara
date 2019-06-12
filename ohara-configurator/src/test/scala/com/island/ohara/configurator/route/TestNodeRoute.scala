@@ -17,7 +17,7 @@
 package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0.NodeApi
-import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeCreationRequest}
+import com.island.ohara.client.configurator.v0.NodeApi.{Node, Request}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
@@ -35,18 +35,6 @@ class TestNodeRoute extends SmallTest with Matchers {
   private[this] val numberOfDefaultNodes = 3 * numberOfCluster
   private[this] val nodeApi = NodeApi.access().hostname(configurator.hostname).port(configurator.port)
 
-  private[this] def compare(req: NodeCreationRequest, res: Node): Unit = {
-    req.name.map { name =>
-      name shouldBe res.id
-      name shouldBe res.name
-    }
-    req.port shouldBe res.port
-    req.user shouldBe res.user
-    req.password shouldBe res.password
-    res.services.isEmpty shouldBe false
-    res.services.foreach(_.clusterNames.isEmpty shouldBe true)
-  }
-
   private[this] def compare(lhs: Node, rhs: Node): Unit = {
     lhs.name shouldBe rhs.name
     lhs.port shouldBe rhs.port
@@ -63,19 +51,33 @@ class TestNodeRoute extends SmallTest with Matchers {
 
   @Test
   def testAdd(): Unit = {
-    val req = NodeCreationRequest(Some("a"), 22, "b", "c")
-    val res = result(nodeApi.add(req))
-    compare(req, res)
+    val name = CommonUtils.randomString()
+    val port = CommonUtils.availablePort()
+    val user = CommonUtils.randomString()
+    val password = CommonUtils.randomString()
+    val res = result(nodeApi.request().name(name).port(port).user(user).password(password).create())
+    res.name shouldBe name
+    res.port shouldBe port
+    res.user shouldBe user
+    res.password shouldBe password
 
     result(nodeApi.list).size shouldBe (1 + numberOfDefaultNodes)
-    compare(result(nodeApi.list).find(_.name == req.name.get).get, res)
+    compare(result(nodeApi.list).find(_.name == name).get, res)
+
+    an[IllegalArgumentException] should be thrownBy result(
+      nodeApi.request().name(res.name).port(port).user(user).password(password).create())
   }
 
   @Test
   def testDelete(): Unit = {
-    val req = NodeCreationRequest(Some("a"), 22, "b", "c")
-    val res = result(nodeApi.add(req))
-    compare(req, res)
+    val res = result(
+      nodeApi
+        .request()
+        .name(CommonUtils.randomString())
+        .port(CommonUtils.availablePort())
+        .user(CommonUtils.randomString())
+        .password(CommonUtils.randomString())
+        .create())
 
     result(nodeApi.list).size shouldBe (1 + numberOfDefaultNodes)
 
@@ -92,52 +94,129 @@ class TestNodeRoute extends SmallTest with Matchers {
 
   @Test
   def testUpdate(): Unit = {
-    val req = NodeCreationRequest(Some("a"), 22, "b", "c")
-    val res = result(nodeApi.add(req))
-    compare(req, res)
+    val res = result(
+      nodeApi
+        .request()
+        .name(CommonUtils.randomString())
+        .port(CommonUtils.availablePort())
+        .user(CommonUtils.randomString())
+        .password(CommonUtils.randomString())
+        .create())
 
     result(nodeApi.list).size shouldBe (1 + numberOfDefaultNodes)
 
-    val req2 = NodeCreationRequest(Some("a"), 22, "b", "d")
-    val res2 = result(nodeApi.update(res.name, req2))
-    compare(req2, res2)
+    result(
+      nodeApi
+        .request()
+        .name(res.name)
+        .port(CommonUtils.availablePort())
+        .user(CommonUtils.randomString())
+        .password(CommonUtils.randomString())
+        .update())
 
-    result(nodeApi.list).size shouldBe (1 + numberOfDefaultNodes)
-
-    an[IllegalArgumentException] should be thrownBy result(
-      nodeApi.update(res.id, NodeCreationRequest(Some("a2"), 22, "b", "d")))
-  }
-
-  @Test
-  def testInvalidNameOfUpdate(): Unit = {
-    val req = NodeCreationRequest(Some("a"), 22, "b", "c")
-    val res = result(nodeApi.add(req))
-    compare(req, res)
-
-    result(nodeApi.list).size shouldBe (1 + numberOfDefaultNodes)
-
-    // we can't update an non-existent node
-    an[IllegalArgumentException] should be thrownBy result(
-      nodeApi.update("xxxxxx", NodeCreationRequest(Some("a"), 22, "b", "d")))
-    // we can't update an existent node by unmatched name
-    an[IllegalArgumentException] should be thrownBy result(
-      nodeApi.update(res.id, NodeCreationRequest(Some("xxxxxx"), 22, "b", "d")))
-
-    val req2 = NodeCreationRequest(Some(res.id), 22, "b", "d")
-    val res2 = result(nodeApi.update(res.id, req2))
-    compare(req2, res2)
-
-    result(nodeApi.list).size shouldBe (1 + numberOfDefaultNodes)
-
-    val req3 = NodeCreationRequest(None, 22, "b", "zz")
-    val res3 = result(nodeApi.update(res.id, req3))
-    compare(req3, res3)
     result(nodeApi.list).size shouldBe (1 + numberOfDefaultNodes)
   }
 
   @Test
-  def duplicateDeleteStreamProperty(): Unit =
+  def duplicateDelete(): Unit =
     (0 to 10).foreach(_ => result(nodeApi.delete(CommonUtils.randomString(5))))
+
+  @Test
+  def duplicateUpdate(): Unit = {
+    val init = result(nodeApi.list).size
+    val count = 10
+    (0 until count).foreach { _ =>
+      result(
+        nodeApi
+          .request()
+          .name(CommonUtils.randomString())
+          .port(CommonUtils.availablePort())
+          .user(CommonUtils.randomString())
+          .password(CommonUtils.randomString())
+          .create())
+    }
+    result(nodeApi.list).size shouldBe count + init
+  }
+
+  @Test
+  def testInvalidNameOnCreation(): Unit = {
+    val invalidStrings = Seq("a@", "a=", "a\\", "a~", "a//")
+    invalidStrings.foreach { invalidString =>
+      an[IllegalArgumentException] should be thrownBy result(
+        nodeApi
+          .request()
+          .name(invalidString)
+          .port(CommonUtils.availablePort())
+          .user(CommonUtils.randomString())
+          .password(CommonUtils.randomString())
+          .create())
+    }
+  }
+
+  @Test
+  def testUpdatePort(): Unit = {
+    val port = CommonUtils.availablePort()
+    updatePartOfField(_.port(port), _.copy(port = port))
+  }
+
+  @Test
+  def testUpdateUser(): Unit = {
+    val user = CommonUtils.randomString()
+    updatePartOfField(_.user(user), _.copy(user = user))
+  }
+
+  @Test
+  def testUpdatePassword(): Unit = {
+    val password = CommonUtils.randomString()
+    updatePartOfField(_.password(password), _.copy(password = password))
+  }
+
+  private[this] def updatePartOfField(req: Request => Request, _expected: Node => Node): Unit = {
+    val previous = result(
+      nodeApi
+        .request()
+        .name(CommonUtils.randomString())
+        .port(CommonUtils.availablePort())
+        .user(CommonUtils.randomString())
+        .password(CommonUtils.randomString())
+        .update())
+    val updated = result(req(nodeApi.request().name(previous.name)).update())
+    val expected = _expected(previous)
+    updated.name shouldBe expected.name
+    updated.port shouldBe expected.port
+    updated.user shouldBe expected.user
+    updated.password shouldBe expected.password
+  }
+
+  @Test
+  def failToCreateNodeWithoutPort(): Unit =
+    an[IllegalArgumentException] should be thrownBy result(
+      nodeApi
+        .request()
+        .name(CommonUtils.randomString())
+        .user(CommonUtils.randomString())
+        .password(CommonUtils.randomString())
+        .update())
+
+  @Test
+  def failToCreateNodeWithoutUser(): Unit =
+    an[IllegalArgumentException] should be thrownBy result(
+      nodeApi
+        .request()
+        .name(CommonUtils.randomString())
+        .port(CommonUtils.availablePort())
+        .password(CommonUtils.randomString())
+        .update())
+
+  @Test
+  def failToCreateNodeWithoutPassword(): Unit =
+    an[IllegalArgumentException] should be thrownBy result(
+      nodeApi
+        .request()
+        .name(CommonUtils.randomString())
+        .port(CommonUtils.availablePort())
+        .user(CommonUtils.randomString())
+        .update())
 
   @After
   def tearDown(): Unit = Releasable.close(configurator)

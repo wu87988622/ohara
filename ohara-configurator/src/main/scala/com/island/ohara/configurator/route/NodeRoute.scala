@@ -20,7 +20,6 @@ import akka.http.scaladsl.server
 import com.island.ohara.agent.ClusterCollie
 import com.island.ohara.client.configurator.v0.NodeApi._
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.route.RouteUtils.Id
 import com.island.ohara.configurator.store.DataStore
 import com.typesafe.scalalogging.Logger
 
@@ -41,16 +40,16 @@ object NodeRoute {
     }
 
   def apply(implicit store: DataStore, clusterCollie: ClusterCollie, executionContext: ExecutionContext): server.Route =
-    RouteUtils.basicRoute[NodeCreationRequest, Node](
+    RouteUtils.basicRoute2[Creation, Update, Node](
       root = NODES_PREFIX_PATH,
-      hookOfAdd = (_: Id, request: NodeCreationRequest) => {
+      hookOfAdd = (request: Creation) => {
         if (request.name.isEmpty) Future.failed(new IllegalArgumentException(s"name is required"))
-        else if (CommonUtils.hasUpperCase(request.name.get))
-          Future.failed(new IllegalArgumentException(s"${request.name.get} node name cannot set the uppercase string"))
+        else if (CommonUtils.hasUpperCase(request.name))
+          Future.failed(new IllegalArgumentException(s"${request.name} node name cannot set the uppercase string"))
         else
           update(
             Node(
-              name = request.name.get,
+              name = request.name,
               port = request.port,
               user = request.user,
               password = request.password,
@@ -58,20 +57,21 @@ object NodeRoute {
               lastModified = CommonUtils.current()
             ))
       },
-      hookOfUpdate = (name: Id, request: NodeCreationRequest, previous: Node) => {
-        if (request.name.exists(_ != name))
-          Future.failed(
-            new IllegalArgumentException(s"the name from request is conflict with previous setting:${previous.name}"))
-        else
-          update(
-            Node(
-              name = name,
-              port = request.port,
-              user = request.user,
-              password = request.password,
-              services = Seq.empty,
-              lastModified = CommonUtils.current()
-            ))
+      hookOfUpdate = (name: String, request: Update, previous: Option[Node]) => {
+        update(
+          Node(
+            name = name,
+            port = request.port.getOrElse(
+              previous.map(_.port).getOrElse(throw new NoSuchElementException(RouteUtils.errorMessage(name, "port")))),
+            user = request.user.getOrElse(
+              previous.map(_.user).getOrElse(throw new NoSuchElementException(RouteUtils.errorMessage(name, "user")))),
+            password = request.password.getOrElse(
+              previous
+                .map(_.password)
+                .getOrElse(throw new NoSuchElementException(RouteUtils.errorMessage(name, "password")))),
+            services = Seq.empty,
+            lastModified = CommonUtils.current()
+          ))
       },
       hookOfGet = (response: Node) => update(response),
       hookOfList = (responses: Seq[Node]) => update(responses),

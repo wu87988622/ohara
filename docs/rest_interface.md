@@ -1341,6 +1341,8 @@ The following information are tagged by ohara.
 }
 ```
 
+> An new node will be created if your input name does not exist
+
 **Example Response**
 
 ```json

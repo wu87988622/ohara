@@ -19,7 +19,6 @@ package com.island.ohara.configurator.route
 import java.io.File
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
-import com.island.ohara.client.configurator.v0.NodeApi.NodeCreationRequest
 import com.island.ohara.client.configurator.v0.PipelineApi.Flow
 import com.island.ohara.client.configurator.v0.StreamApi.StreamPropertyRequest
 import com.island.ohara.client.configurator.v0._
@@ -54,13 +53,12 @@ class TestPipelineRoute extends MediumTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(
-          NodeCreationRequest(
-            name = Some(addNodeName),
-            port = 22,
-            user = CommonUtils.randomString(10),
-            password = CommonUtils.randomString(10)
-          ))
+        .request()
+        .name(addNodeName)
+        .port(22)
+        .user(CommonUtils.randomString())
+        .password(CommonUtils.randomString())
+        .create()
     )
     val wkCluster = result(
       WorkerApi

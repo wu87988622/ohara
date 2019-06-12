@@ -173,7 +173,7 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
 
   @Test
   def testInvalidNameOnUpdate(): Unit = {
-    val invalidStrings = Seq("a_", "a-", "a.", "a~")
+    val invalidStrings = Seq("a@", "a=", "a\\", "a~", "a//")
     invalidStrings.foreach { invalidString =>
       an[IllegalArgumentException] should be thrownBy result(
         ftpApi
@@ -189,7 +189,7 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
 
   @Test
   def testInvalidNameOnCreation(): Unit = {
-    val invalidStrings = Seq("a_", "a-", "a.", "a~")
+    val invalidStrings = Seq("a@", "a=", "a\\", "a~", "a//")
     invalidStrings.foreach { invalidString =>
       an[IllegalArgumentException] should be thrownBy result(
         ftpApi

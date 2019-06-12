@@ -16,17 +16,16 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.NodeApi.NodeCreationRequest
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.Releasable
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
-import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
 class TestNodeNameUpperCaseRoute extends SmallTest with Matchers {
   private[this] val numberOfCluster = 1
@@ -37,32 +36,15 @@ class TestNodeNameUpperCaseRoute extends SmallTest with Matchers {
 
   @Test
   def testAddNodeNameLowerCase(): Unit = {
-    val req = NodeCreationRequest(Some("host1"), 22, "b", "c")
-    result(nodeApi.add(req)).name shouldBe "host1"
+    val name = CommonUtils.randomString().toLowerCase
+    result(nodeApi.request().name(name).port(22).user("b").password("c").create()).name shouldBe name
   }
 
   @Test
   def testAddNodeNameUpperCase1(): Unit = {
-    val req = NodeCreationRequest(Some("Host1"), 22, "b", "c")
-    an[IllegalArgumentException] should be thrownBy {
-      result(nodeApi.add(req))
-    }
-  }
-
-  @Test
-  def testAddNodeNameUpperCase2(): Unit = {
-    val req = NodeCreationRequest(Some("hostName"), 22, "b", "c")
-    an[IllegalArgumentException] should be thrownBy {
-      result(nodeApi.add(req))
-    }
-  }
-
-  @Test
-  def testAddNodeNameUpperCase3(): Unit = {
-    val req = NodeCreationRequest(Some("HOST1"), 22, "b", "c")
-    an[IllegalArgumentException] should be thrownBy {
-      result(nodeApi.add(req))
-    }
+    val name = CommonUtils.randomString().toUpperCase
+    an[IllegalArgumentException] should be thrownBy result(
+      nodeApi.request().name(name).port(22).user("b").password("c").create())
   }
 
   @After

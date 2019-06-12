@@ -26,6 +26,7 @@ import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0._
+import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.store.DataStore
 import com.typesafe.scalalogging.Logger
@@ -86,38 +87,15 @@ private[route] object RouteUtils {
     }
 
   /**
-    *  this is the basic route of all APIs to access ohara's data.
-    *  It implements 1) get, 2) list, 3) delete, 4) add and 5) update function.
-    * @param root root path of APIs
-    * @param reqToRes used in updating and adding. You have to convert the request to response
-    * @param resToRes used in getting, listing and deleting. You can change the response by this function
-    * @tparam Req Request
-    * @tparam Res Response
-    * @return route
-    */
-  def basicRoute[Req, Res <: Data: ClassTag](root: String,
-                                             reqToRes: (Id, Req) => Future[Res],
-                                             resToRes: Res => Future[Res] = (r: Res) => Future.successful(r))(
-    implicit store: DataStore,
-    rm: RootJsonFormat[Req],
-    rm2: RootJsonFormat[Res],
-    executionContext: ExecutionContext): server.Route = basicRoute(
-    root = root,
-    hookOfAdd = reqToRes,
-    hookOfUpdate = (id: Id, req: Req, _: Res) => reqToRes(id, req),
-    hookOfList = (r: Seq[Res]) => Future.traverse(r)(resToRes),
-    hookOfGet = (r: Res) => resToRes(r)
-  )
-
-  /**
     * The name is replacing id so we have to add limit to it.
     * @param name name
     * @return valid name
     */
-  private[this] def checkName(name: String): String =
-    if (CommonUtils.onlyNumberAndChar(CommonUtils.requireNonEmpty(name)))
+  @VisibleForTesting
+  private[configurator] def checkName(name: String): String =
+    if (name.matches("^[a-zA-Z0-9._-]*$"))
       name
-    else throw new IllegalArgumentException(s"the legal character is [a-zA-Z0-9], but actual:$name")
+    else throw new IllegalArgumentException(s"the legal character is [a-zA-Z0-9._-], but actual:$name")
 
   /**
     * a route to custom CREATION and UPDATE resource. It offers default implementation to GET, LIST and DELETE.
@@ -165,24 +143,6 @@ private[route] object RouteUtils {
       }
     }
 
-  def basicRoute[Req, Res <: Data: ClassTag](root: String,
-                                             hookOfAdd: (Id, Req) => Future[Res],
-                                             hookOfUpdate: (Id, Req, Res) => Future[Res],
-                                             hookOfList: Seq[Res] => Future[Seq[Res]],
-                                             hookOfGet: Res => Future[Res])(
-    implicit store: DataStore,
-    rm: RootJsonFormat[Req],
-    rm2: RootJsonFormat[Res],
-    executionContext: ExecutionContext): server.Route =
-    basicRoute(
-      root = root,
-      hookOfAdd = hookOfAdd,
-      hookOfUpdate = hookOfUpdate,
-      hookOfList = hookOfList,
-      hookOfGet = hookOfGet,
-      hookBeforeDelete = id => Future.successful(id)
-    )
-
   /**
     *  this is the basic route of all APIs to access ohara's data.
     *  It implements 1) get, 2) list, 3) delete, 4) add and 5) update function.
@@ -216,6 +176,19 @@ private[route] object RouteUtils {
       }
     }
 
+  /**
+    *  this is the basic route of all APIs to access ohara's data.
+    *  It implements 1) get, 2) list, 3) delete, 4) add and 5) update function.
+    * @param root path to root
+    * @param hookOfAdd used to convert request to response for Add function
+    * @param hookOfUpdate used to convert request to response for Update function
+    * @param hookOfList used to convert response for List function
+    * @param hookOfGet used to convert response for Get function
+    * @param hookBeforeDelete used to do something before doing delete operation. For example, validate the id.
+    * @tparam Req request
+    * @tparam Res response
+    * @return route
+    */
   def basicRoute2[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
     root: String,
     hookOfAdd: Creation => Future[Res],
