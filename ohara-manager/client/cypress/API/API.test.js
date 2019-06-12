@@ -17,19 +17,19 @@
 import { makeRandomPort } from '../utils';
 
 let brokerClusterName = '';
-let jarID = '';
-let pipelineID = '';
+let jarId = '';
+let pipelineId = '';
 let pipelineName = '';
-let topicID = '';
-let streamAppID = '';
-let connectorID = '';
-let propertyID = '';
+let topicId = '';
+let streamAppId = '';
+let connectorId = '';
+let propertyId = '';
 const wkName = `wk${makeRandomPort()}`;
 
 describe('Zookeeper Api test', () => {
   it('fetchZookeepers', () => {
     cy.fetchZookeepers().then(res => {
-      const data = res.data;
+      const { data } = res;
       expect(data.isSuccess).to.eq(true);
       expect(data.result[0]).to.include.keys('clientPort', 'name', 'nodeNames');
       expect(data.result[0].clientPort).to.be.a('number');
@@ -42,7 +42,7 @@ describe('Zookeeper Api test', () => {
 describe('Broker Api test', () => {
   it('fetchBrokers', () => {
     cy.fetchBrokers().then(res => {
-      const data = res.data;
+      const { data } = res;
       brokerClusterName = data.result[0].name;
       expect(data.isSuccess).to.eq(true);
       expect(data.result[0]).to.include.keys('clientPort', 'name', 'nodeNames');
@@ -57,7 +57,7 @@ describe('Jar Api test', () => {
   const testJarName = 'ohara-it-source.jar';
   it('createJar', () => {
     cy.createJar(testJarName).then(res => {
-      const data = res.data;
+      const { data } = res;
       expect(data.isSuccess).to.eq(true);
       expect(data.result).to.include.keys('name', 'id');
       expect(data.result.name).to.be.a('string');
@@ -66,8 +66,8 @@ describe('Jar Api test', () => {
   });
   it('fetchJars', () => {
     cy.fetchJars().then(res => {
-      const data = res.data;
-      jarID = data.result[0].id;
+      const { data } = res;
+      jarId = data.result[0].id;
       expect(data.isSuccess).to.eq(true);
       expect(data.result).to.be.a('array');
       expect(data.result[0]).to.include.keys('name', 'id');
@@ -85,10 +85,10 @@ describe('Worker Api test', () => {
       brokerClusterName: brokerClusterName,
       clientPort: makeRandomPort(),
       nodeNames: [Cypress.env('nodeHost')],
-      plugins: [jarID],
+      plugins: [jarId],
     };
     cy.testCreateWorker(data).then(res => {
-      const data = res.data;
+      const { data } = res;
       expect(data.isSuccess).to.eq(true);
       expect(data.result).to.include.keys(
         'name',
@@ -114,7 +114,7 @@ describe('Worker Api test', () => {
   });
   it('fetchWorker', () => {
     cy.fetchWorker(wkName).then(res => {
-      const data = res.data;
+      const { data } = res;
       expect(data.isSuccess).to.eq(true);
       expect(data.result.name).to.be.a('string');
       expect(data.result.clientPort).to.be.a('number');
@@ -126,7 +126,7 @@ describe('Worker Api test', () => {
   });
   it('fetchWorkers', () => {
     cy.fetchWorkers().then(res => {
-      const data = res.data;
+      const { data } = res;
       expect(data.isSuccess).to.eq(true);
       expect(data.result).to.be.a('array');
       expect(data.result[0]).to.include.keys(
@@ -155,8 +155,8 @@ describe('Topic Api test', () => {
       numberOfReplications: 1,
     };
     cy.testCreateTopic(data).then(res => {
-      const data = res.data;
-      topicID = data.result.id;
+      const { data } = res;
+      topicId = data.result.id;
       expect(data.isSuccess).to.eq(true);
       expect(data.result).to.include.keys(
         'id',
@@ -170,7 +170,7 @@ describe('Topic Api test', () => {
   });
   it('fetchTopic', () => {
     cy.fetchTopic(tpName).then(res => {
-      const data = res.data;
+      const { data } = res;
       expect(data.isSuccess).to.eq(true);
       expect(data.result).to.include.keys(
         'id',
@@ -184,7 +184,7 @@ describe('Topic Api test', () => {
   });
   it('fetchTopics', () => {
     cy.fetchTopics().then(res => {
-      const data = res.data;
+      const { data } = res;
       expect(data.isSuccess).to.eq(true);
       expect(data.result).to.be.a('array');
       expect(data.result[0]).to.include.keys(
@@ -209,7 +209,7 @@ describe('Node Api test', () => {
       password: '123',
     };
     cy.createNode(data).then(res => {
-      const data = res.data;
+      const { data } = res;
       expect(data.isSuccess).to.eq(true);
       expect(data.result).to.include.keys(
         'name',
@@ -245,7 +245,7 @@ describe('Node Api test', () => {
       password: '1234',
     };
     cy.updateNode(data).then(res => {
-      const data = res.data;
+      const { data } = res;
       expect(data.isSuccess).to.eq(true);
       expect(data.result).to.include.keys(
         'name',
@@ -278,7 +278,7 @@ describe('Node Api test', () => {
   });
   it('fetchNodes', () => {
     cy.fetchNodes().then(res => {
-      const data = res.data;
+      const { data } = res;
       expect(data.isSuccess).to.eq(true);
       expect(data.result).to.be.a('array');
       expect(data.result[0]).to.include.keys(
@@ -326,8 +326,8 @@ describe('Pipelines Api test', () => {
       workerClusterName: wkName,
     };
     cy.testCreatePipeline(data).then(res => {
-      const data = res.data;
-      pipelineID = data.result.id;
+      const { data } = res;
+      pipelineId = data.result.id;
       pipelineName = data.result.name;
       expect(data.isSuccess).to.eq(true);
       expect(data.result).to.include.keys(
@@ -343,8 +343,8 @@ describe('Pipelines Api test', () => {
     });
   });
   it('fetchPipeline', () => {
-    cy.fetchPipeline(pipelineID).then(res => {
-      const data = res.data;
+    cy.fetchPipeline(pipelineId).then(res => {
+      const { data } = res;
       expect(data.isSuccess).to.eq(true);
       expect(data.result).to.include.keys(
         'id',
@@ -360,7 +360,7 @@ describe('Pipelines Api test', () => {
   });
   it('fetchPipelines', () => {
     cy.fetchPipelines().then(res => {
-      const data = res.data;
+      const { data } = res;
       expect(data.isSuccess).to.eq(true);
       expect(data.result).to.be.a('array');
       expect(data.result[0]).to.include.keys(
@@ -377,17 +377,17 @@ describe('Pipelines Api test', () => {
   });
   it('updatePipeline', () => {
     const data = {
-      id: pipelineID,
+      id: pipelineId,
       params: {
         name: pipelineName,
         rules: {
-          [topicID]: [],
+          [topicId]: [],
         },
         workerClusterName: wkName,
       },
     };
     cy.updatePipeline(data).then(res => {
-      const data = res.data;
+      const { data } = res;
       expect(data.isSuccess).to.eq(true);
       expect(data.result).to.include.keys(
         'id',
@@ -401,14 +401,14 @@ describe('Pipelines Api test', () => {
       expect(data.result.workerClusterName).to.be.a('string');
       expect(data.result.objects).to.be.a('array');
       expect(data.result.rules).to.be.a('object');
-      expect(data.result.objects[0].id).to.eq(topicID);
+      expect(data.result.objects[0].id).to.eq(topicId);
       expect(data.result.objects[0].kind).to.eq('topic');
-      expect(data.result.objects[0].name).to.eq(topicID);
+      expect(data.result.objects[0].name).to.eq(topicId);
     });
   });
   it('deletePipeline', () => {
-    cy.testDeletePipeline(pipelineID).then(res => {
-      const data = res.data;
+    cy.testDeletePipeline(pipelineId).then(res => {
+      const { data } = res;
       expect(data.isSuccess).to.eq(true);
     });
   });
@@ -427,8 +427,8 @@ describe('Connector Api test', () => {
       workerClusterName: wkName,
     };
     cy.createConnector(data).then(res => {
-      const data = res.data;
-      connectorID = data.result.id;
+      const { data } = res;
+      connectorId = data.result.id;
       expect(data.isSuccess).to.eq(true);
       expect(data.result).to.include.keys('id', 'settings', 'state');
       expect(data.result.id).to.be.a('string');
@@ -449,9 +449,9 @@ describe('Connector Api test', () => {
     });
   });
   it('fetchConnector', () => {
-    cy.fetchConnector(connectorID).then(res => {
-      const data = res.data;
-      connectorID = data.result.id;
+    cy.fetchConnector(connectorId).then(res => {
+      const { data } = res;
+      connectorId = data.result.id;
       expect(data.isSuccess).to.eq(true);
       expect(data.result).to.include.keys('id', 'settings', 'state');
       expect(data.result.id).to.be.a('string');
@@ -473,7 +473,7 @@ describe('Connector Api test', () => {
   });
   it('updateConnector', () => {
     const data = {
-      id: connectorID,
+      id: connectorId,
       params: {
         author: 'root',
         columns: [
@@ -492,13 +492,13 @@ describe('Connector Api test', () => {
         kind: 'source',
         revision: '1e7da9544e6aa7ad2f9f2792ed8daf5380783727',
         'tasks.max': 1,
-        topics: [topicID],
+        topics: [topicId],
         version: '0.6-SNAPSHOT',
         workerClusterName: wkName,
       },
     };
     cy.updateConnector(data).then(res => {
-      const data = res.data;
+      const { data } = res;
       expect(data.isSuccess).to.eq(true);
       expect(data.result).to.include.keys('id', 'settings', 'state');
       expect(data.result.id).to.be.a('string');
@@ -546,24 +546,24 @@ describe('Connector Api test', () => {
     });
   });
   it('startConnector', () => {
-    cy.startConnector(connectorID).then(res => {
-      const data = res.data;
+    cy.startConnector(connectorId).then(res => {
+      const { data } = res;
       expect(data.isSuccess).to.eq(true);
       expect(data.result).to.include.keys('id', 'settings', 'state');
       expect(data.result.state).to.be.a('string');
     });
   });
   it('stopConnector', () => {
-    cy.stopConnector(connectorID).then(res => {
-      const data = res.data;
+    cy.stopConnector(connectorId).then(res => {
+      const { data } = res;
       expect(data.isSuccess).to.eq(true);
       expect(data.result).to.include.keys('id', 'settings', 'state');
       expect(data.result.state).to.be.a('null');
     });
   });
   it('deleteConnector', () => {
-    cy.deleteConnector(connectorID).then(res => {
-      const data = res.data;
+    cy.deleteConnector(connectorId).then(res => {
+      const { data } = res;
       expect(data.isSuccess).to.eq(true);
     });
   });
@@ -576,8 +576,8 @@ describe('Streamapp Api test', () => {
       jarName: 'ohara-streamapp.jar',
     };
     cy.testUploadStreamAppJar(params).then(res => {
-      const data = res.data;
-      streamAppID = data.result[0].id;
+      const { data } = res;
+      streamAppId = data.result[0].id;
       expect(data.isSuccess).to.eq(true);
       expect(data.result[0]).to.include.keys('id', 'name', 'workerClusterName');
       expect(data.result[0].id).to.be.a('string');
@@ -587,7 +587,7 @@ describe('Streamapp Api test', () => {
   });
   it('fetchStreamAppJars', () => {
     cy.fetchStreamAppJars(wkName).then(res => {
-      const data = res.data;
+      const { data } = res;
       expect(data.isSuccess).to.eq(true);
       expect(data.result[0]).to.include.keys('id', 'name', 'workerClusterName');
       expect(data.result[0].id).to.be.a('string');
@@ -597,12 +597,12 @@ describe('Streamapp Api test', () => {
   });
   it('createProperty', () => {
     const params = {
-      jarId: streamAppID,
+      jarId: streamAppId,
       name: 'Untitled streamApp',
     };
     cy.createProperty(params).then(res => {
-      const data = res.data;
-      propertyID = data.result.id;
+      const { data } = res;
+      propertyId = data.result.id;
       expect(data.isSuccess).to.eq(true);
       expect(data.result).to.include.keys(
         'id',
@@ -624,8 +624,8 @@ describe('Streamapp Api test', () => {
     });
   });
   it('fetchProperty', () => {
-    cy.fetchProperty(propertyID).then(res => {
-      const data = res.data;
+    cy.fetchProperty(propertyId).then(res => {
+      const { data } = res;
       expect(data.isSuccess).to.eq(true);
       expect(data.result).to.include.keys(
         'id',
@@ -648,15 +648,15 @@ describe('Streamapp Api test', () => {
   });
   it('updateProperty', () => {
     const params = {
-      id: propertyID,
-      jarId: streamAppID,
+      id: propertyId,
+      jarId: streamAppId,
       name: 'test',
-      from: [topicID],
+      from: [topicId],
       to: [],
       instances: 1,
     };
     cy.updateProperty(params).then(res => {
-      const data = res.data;
+      const { data } = res;
       expect(data.isSuccess).to.eq(true);
       expect(data.result).to.include.keys(
         'id',
@@ -676,24 +676,24 @@ describe('Streamapp Api test', () => {
       expect(data.result.jarInfo).to.be.a('object');
       expect(data.result.jarInfo).to.include.keys('name', 'id');
       expect(data.result.name).to.eq('test');
-      expect(data.result.from[0]).to.eq(topicID);
+      expect(data.result.from[0]).to.eq(topicId);
     });
   });
   it('stopStreamApp', () => {
-    cy.stopStreamApp(propertyID).then(res => {
-      const data = res.data;
+    cy.stopStreamApp(propertyId).then(res => {
+      const { data } = res;
       expect(data.isSuccess).to.eq(true);
     });
   });
   it('deleteProperty', () => {
-    cy.stopStreamApp(propertyID).then(res => {
-      const data = res.data;
+    cy.stopStreamApp(propertyId).then(res => {
+      const { data } = res;
       expect(data.isSuccess).to.eq(true);
     });
   });
   it('deleteStreamAppJar', () => {
-    cy.deleteStreamAppJar(streamAppID).then(res => {
-      const data = res.data;
+    cy.deleteStreamAppJar(streamAppId).then(res => {
+      const { data } = res;
       expect(data.isSuccess).to.eq(true);
     });
   });
@@ -702,7 +702,7 @@ describe('Streamapp Api test', () => {
 describe('Log Api test', () => {
   it('fetchLogs', () => {
     cy.fetchLogs('workers', wkName).then(res => {
-      const data = res.data;
+      const { data } = res;
       expect(data.isSuccess).to.eq(true);
       expect(data.result).to.include.keys('name', 'logs');
       expect(data.result.name).to.be.a('string');
@@ -734,12 +734,12 @@ describe('Validate Api test', () => {
       kind: 'source',
       revision: '1e7da9544e6aa7ad2f9f2792ed8daf5380783727',
       'tasks.max': 1,
-      topics: [topicID],
+      topics: [topicId],
       version: '0.6-SNAPSHOT',
       workerClusterName: wkName,
     };
     cy.validateConnector(params).then(res => {
-      const data = res.data;
+      const { data } = res;
       expect(data.isSuccess).to.eq(true);
       expect(data.result.errorCount).to.eq(0);
       expect(data.result).to.include.keys('errorCount', 'settings');
