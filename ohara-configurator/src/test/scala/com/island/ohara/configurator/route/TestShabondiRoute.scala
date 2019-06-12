@@ -19,8 +19,9 @@ package com.island.ohara.configurator.route
 import com.island.ohara.client.configurator.v0.ShabondiApi
 import com.island.ohara.client.configurator.v0.ShabondiApi.ShabondiProperty
 import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.util.Releasable
 import com.island.ohara.configurator.Configurator
-import org.junit.Test
+import org.junit.{After, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -81,4 +82,7 @@ class TestShabondiRoute extends SmallTest with Matchers {
     desc3.port should be(250)
     desc3.lastModified should not be (desc1.lastModified)
   }
+
+  @After
+  def tearDown(): Unit = Releasable.close(configurator)
 }

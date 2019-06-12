@@ -29,7 +29,7 @@ class FakeK8SClient(isK8SNode: Boolean, k8sStatusInfo: Option[K8SStatusInfo]) ex
     Report(nodeName, isK8SNode, k8sStatusInfo)
   }
 
-  override protected def doClose(): Unit = ???
+  override def close(): Unit = ???
 
   override def containers(implicit executionContext: ExecutionContext): Future[Seq[ContainerApi.ContainerInfo]] = ???
 

@@ -27,7 +27,7 @@ import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeService}
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
-import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.fake._
 import com.island.ohara.configurator.jar.JarStore
 import com.island.ohara.configurator.store.DataStore
@@ -39,11 +39,12 @@ class ConfiguratorBuilder {
   private[this] var port: Int = CommonUtils.availablePort()
   private[this] var homeFolder: String = CommonUtils.createTempFolder("configurator").getCanonicalPath
   private[this] var store: DataStore = _
+  private[this] var jarStore: JarStore = _
   private[this] var clusterCollie: ClusterCollie = _
   private[this] var k8sClient: K8SClient = _
 
   @Optional("default is random folder")
-  def homeFolder(homeFolder: String): ConfiguratorBuilder = {
+  def homeFolder(homeFolder: String): ConfiguratorBuilder = doOrReleaseObjects {
     if (store != null)
       throw new IllegalArgumentException("you have instantiated a store so you can't change the home folder")
     val f = new File(CommonUtils.requireNonEmpty(homeFolder))
@@ -59,7 +60,7 @@ class ConfiguratorBuilder {
     * @return this builder
     */
   @Optional("default is localhost")
-  def hostname(hostname: String): ConfiguratorBuilder = {
+  def hostname(hostname: String): ConfiguratorBuilder = doOrReleaseObjects {
     this.hostname = CommonUtils.requireNonEmpty(hostname)
     this
   }
@@ -71,7 +72,7 @@ class ConfiguratorBuilder {
     * @return this builder
     */
   @Optional("default is random port")
-  def port(port: Int): ConfiguratorBuilder = {
+  def port(port: Int): ConfiguratorBuilder = doOrReleaseObjects {
     if (port > 0) this.port = port
     this
   }
@@ -90,78 +91,79 @@ class ConfiguratorBuilder {
     * @return this builder
     */
   @VisibleForTesting
-  private[configurator] def fake(bkConnectionProps: String, wkConnectionProps: String): ConfiguratorBuilder = {
-    if (k8sClient != null)
-      throw new IllegalArgumentException("k8s client exists so you can't run Configurator in fake mode")
-    val store = getOrCreateStore()
-    val embeddedBkName = "embedded_broker_cluster"
-    val embeddedWkName = "embedded_worker_cluster"
-    // we fake nodes for embedded bk and wk
-    def nodes(s: String): Seq[String] = s.split(",").map(_.split(":").head)
-    import scala.concurrent.ExecutionContext.Implicits.global
-    (nodes(bkConnectionProps) ++ nodes(wkConnectionProps))
-    // DON'T add duplicate nodes!!!
-      .toSet[String]
-      .map { nodeName =>
-        Node(
-          name = nodeName,
-          services = (if (bkConnectionProps.contains(nodeName))
-                        Seq(NodeService(NodeApi.BROKER_SERVICE_NAME, Seq(embeddedBkName)))
-                      else Seq.empty) ++ (if (wkConnectionProps.contains(nodeName))
-                                            Seq(NodeService(NodeApi.WORKER_SERVICE_NAME, Seq(embeddedWkName)))
-                                          else Seq.empty),
-          port = -1,
-          user = "fake user",
-          password = "fake password",
-          lastModified = CommonUtils.current()
+  private[configurator] def fake(bkConnectionProps: String, wkConnectionProps: String): ConfiguratorBuilder =
+    doOrReleaseObjects {
+      if (k8sClient != null)
+        throw new IllegalArgumentException("k8s client exists so you can't run Configurator in fake mode")
+      val store = getOrCreateStore()
+      val embeddedBkName = "embedded_broker_cluster"
+      val embeddedWkName = "embedded_worker_cluster"
+      // we fake nodes for embedded bk and wk
+      def nodes(s: String): Seq[String] = s.split(",").map(_.split(":").head)
+      import scala.concurrent.ExecutionContext.Implicits.global
+      (nodes(bkConnectionProps) ++ nodes(wkConnectionProps))
+      // DON'T add duplicate nodes!!!
+        .toSet[String]
+        .map { nodeName =>
+          Node(
+            name = nodeName,
+            services = (if (bkConnectionProps.contains(nodeName))
+                          Seq(NodeService(NodeApi.BROKER_SERVICE_NAME, Seq(embeddedBkName)))
+                        else Seq.empty) ++ (if (wkConnectionProps.contains(nodeName))
+                                              Seq(NodeService(NodeApi.WORKER_SERVICE_NAME, Seq(embeddedWkName)))
+                                            else Seq.empty),
+            port = -1,
+            user = "fake user",
+            password = "fake password",
+            lastModified = CommonUtils.current()
+          )
+        }
+        .foreach(r => store.addIfAbsent(r))
+      val collie = new FakeClusterCollie(createCollie(), store, bkConnectionProps, wkConnectionProps)
+      val bkCluster = {
+        val pair = bkConnectionProps.split(",")
+        val host = pair.map(_.split(":").head).head
+        val port = pair.map(_.split(":").last).head.toInt
+        BrokerClusterInfo(
+          name = embeddedBkName,
+          imageName = "None",
+          zookeeperClusterName = "None",
+          exporterPort = -1,
+          jmxPort = -1,
+          clientPort = port,
+          nodeNames = Seq(host)
         )
       }
-      .foreach(r => store.addIfAbsent(r))
-    val collie = new FakeClusterCollie(createCollie(), store, bkConnectionProps, wkConnectionProps)
-    val bkCluster = {
-      val pair = bkConnectionProps.split(",")
-      val host = pair.map(_.split(":").head).head
-      val port = pair.map(_.split(":").last).head.toInt
-      BrokerClusterInfo(
-        name = embeddedBkName,
-        imageName = "None",
-        zookeeperClusterName = "None",
-        exporterPort = -1,
-        jmxPort = -1,
-        clientPort = port,
-        nodeNames = Seq(host)
-      )
+      val wkCluster = {
+        val pair = wkConnectionProps.split(",")
+        val host = pair.map(_.split(":").head).head
+        val port = pair.map(_.split(":").last).head.toInt
+        WorkerClusterInfo(
+          name = embeddedWkName,
+          imageName = "None",
+          brokerClusterName = bkCluster.name,
+          clientPort = port,
+          // Assigning a negative value can make test fail quickly.
+          jmxPort = -1,
+          groupId = "None",
+          statusTopicName = "None",
+          statusTopicPartitions = 1,
+          statusTopicReplications = 1.asInstanceOf[Short],
+          configTopicName = "None",
+          configTopicPartitions = 1,
+          configTopicReplications = 1.asInstanceOf[Short],
+          offsetTopicName = "None",
+          offsetTopicPartitions = 1,
+          offsetTopicReplications = 1.asInstanceOf[Short],
+          jarInfos = Seq.empty,
+          connectors = Await.result(WorkerClient(wkConnectionProps).connectors, 10 seconds),
+          nodeNames = Seq(host)
+        )
+      }
+      collie.brokerCollie().addCluster(bkCluster)
+      collie.workerCollie().addCluster(wkCluster)
+      clusterCollie(collie)
     }
-    val wkCluster = {
-      val pair = wkConnectionProps.split(",")
-      val host = pair.map(_.split(":").head).head
-      val port = pair.map(_.split(":").last).head.toInt
-      WorkerClusterInfo(
-        name = embeddedWkName,
-        imageName = "None",
-        brokerClusterName = bkCluster.name,
-        clientPort = port,
-        // Assigning a negative value can make test fail quickly.
-        jmxPort = -1,
-        groupId = "None",
-        statusTopicName = "None",
-        statusTopicPartitions = 1,
-        statusTopicReplications = 1.asInstanceOf[Short],
-        configTopicName = "None",
-        configTopicPartitions = 1,
-        configTopicReplications = 1.asInstanceOf[Short],
-        offsetTopicName = "None",
-        offsetTopicPartitions = 1,
-        offsetTopicReplications = 1.asInstanceOf[Short],
-        jarInfos = Seq.empty,
-        connectors = Await.result(WorkerClient(wkConnectionProps).connectors, 10 seconds),
-        nodeNames = Seq(host)
-      )
-    }
-    collie.brokerCollie().addCluster(bkCluster)
-    collie.workerCollie().addCluster(wkCluster)
-    clusterCollie(collie)
-  }
 
   /**
     * Create a fake collie with specified number of broker/worker cluster.
@@ -174,101 +176,102 @@ class ConfiguratorBuilder {
                                  numberOfWorkerCluster: Int,
                                  zkClusterNamePrefix: String = "fakezkcluster",
                                  bkClusterNamePrefix: String = "fakebkcluster",
-                                 wkClusterNamePrefix: String = "fakewkcluster"): ConfiguratorBuilder = {
-    if (k8sClient != null)
-      throw new IllegalArgumentException("k8s client exists so you can't run Configurator in fake mode")
-    if (numberOfBrokerCluster < 0)
-      throw new IllegalArgumentException(s"numberOfBrokerCluster:$numberOfBrokerCluster should be positive")
-    if (numberOfWorkerCluster < 0)
-      throw new IllegalArgumentException(s"numberOfWorkerCluster:$numberOfWorkerCluster should be positive")
-    if (numberOfBrokerCluster <= 0 && numberOfWorkerCluster > 0)
-      throw new IllegalArgumentException(s"you must initialize bk cluster before you initialize wk cluster")
-    val store = getOrCreateStore()
-    val collie = new FakeClusterCollie(createCollie(), store)
+                                 wkClusterNamePrefix: String = "fakewkcluster"): ConfiguratorBuilder =
+    doOrReleaseObjects {
+      if (k8sClient != null)
+        throw new IllegalArgumentException("k8s client exists so you can't run Configurator in fake mode")
+      if (numberOfBrokerCluster < 0)
+        throw new IllegalArgumentException(s"numberOfBrokerCluster:$numberOfBrokerCluster should be positive")
+      if (numberOfWorkerCluster < 0)
+        throw new IllegalArgumentException(s"numberOfWorkerCluster:$numberOfWorkerCluster should be positive")
+      if (numberOfBrokerCluster <= 0 && numberOfWorkerCluster > 0)
+        throw new IllegalArgumentException(s"you must initialize bk cluster before you initialize wk cluster")
+      val store = getOrCreateStore()
+      val collie = new FakeClusterCollie(createCollie(), store)
 
-    val zkClusters = (0 until numberOfBrokerCluster).map { index =>
-      collie
-        .zookeeperCollie()
-        .addCluster(FakeZookeeperClusterInfo(
-          name = s"$zkClusterNamePrefix$index",
-          imageName = s"fakeImage$index",
-          // Assigning a negative value can make test fail quickly.
-          clientPort = -1,
-          electionPort = -1,
-          peerPort = -1,
-          nodeNames = (0 to 2).map(_ => CommonUtils.randomString(5))
-        ))
-    }
-
-    // add broker cluster
-    val bkClusters = zkClusters.zipWithIndex.map {
-      case (zkCluster, index) =>
+      val zkClusters = (0 until numberOfBrokerCluster).map { index =>
         collie
-          .brokerCollie()
-          .addCluster(FakeBrokerClusterInfo(
-            name = s"$bkClusterNamePrefix$index",
+          .zookeeperCollie()
+          .addCluster(FakeZookeeperClusterInfo(
+            name = s"$zkClusterNamePrefix$index",
             imageName = s"fakeImage$index",
-            zookeeperClusterName = zkCluster.name,
             // Assigning a negative value can make test fail quickly.
             clientPort = -1,
-            exporterPort = -1,
-            jmxPort = -1,
-            nodeNames = zkCluster.nodeNames
+            electionPort = -1,
+            peerPort = -1,
+            nodeNames = (0 to 2).map(_ => CommonUtils.randomString(5))
           ))
-    }
+      }
 
-    // we don't need to collect wk clusters
-    (0 until numberOfWorkerCluster).foreach { index =>
-      val bkCluster = bkClusters((Math.random() % bkClusters.size).asInstanceOf[Int])
-      collie
-        .workerCollie()
-        .addCluster(FakeWorkerClusterInfo(
-          name = s"$wkClusterNamePrefix$index",
-          imageName = s"fakeImage$index",
-          brokerClusterName = bkCluster.name,
-          // Assigning a negative value can make test fail quickly.
-          clientPort = -1,
-          // Assigning a negative value can make test fail quickly.
-          jmxPort = -1,
-          groupId = s"groupId$index",
-          statusTopicName = s"statusTopicName$index",
-          statusTopicPartitions = 1,
-          statusTopicReplications = 1.asInstanceOf[Short],
-          configTopicName = s"configTopicName$index",
-          configTopicPartitions = 1,
-          configTopicReplications = 1.asInstanceOf[Short],
-          offsetTopicName = s"offsetTopicName$index",
-          offsetTopicPartitions = 1,
-          offsetTopicReplications = 1.asInstanceOf[Short],
-          jarInfos = Seq.empty,
-          connectors = Seq.empty,
-          sources = Seq.empty,
-          sinks = Seq.empty,
-          nodeNames = bkCluster.nodeNames
-        ))
-    }
+      // add broker cluster
+      val bkClusters = zkClusters.zipWithIndex.map {
+        case (zkCluster, index) =>
+          collie
+            .brokerCollie()
+            .addCluster(FakeBrokerClusterInfo(
+              name = s"$bkClusterNamePrefix$index",
+              imageName = s"fakeImage$index",
+              zookeeperClusterName = zkCluster.name,
+              // Assigning a negative value can make test fail quickly.
+              clientPort = -1,
+              exporterPort = -1,
+              jmxPort = -1,
+              nodeNames = zkCluster.nodeNames
+            ))
+      }
 
-    import scala.concurrent.ExecutionContext.Implicits.global
-    // fake nodes
-    zkClusters
-      .flatMap(_.nodeNames)
-      // DON'T add duplicate nodes!!!
-      .toSet[String]
-      .map(
-        name =>
-          Node(name = name,
-               port = -1,
-               user = "fake user",
-               password = "fake password",
-               services = Seq.empty,
-               lastModified = CommonUtils.current()))
-      .foreach(store.addIfAbsent[Node])
-    clusterCollie(collie)
-  }
+      // we don't need to collect wk clusters
+      (0 until numberOfWorkerCluster).foreach { index =>
+        val bkCluster = bkClusters((Math.random() % bkClusters.size).asInstanceOf[Int])
+        collie
+          .workerCollie()
+          .addCluster(FakeWorkerClusterInfo(
+            name = s"$wkClusterNamePrefix$index",
+            imageName = s"fakeImage$index",
+            brokerClusterName = bkCluster.name,
+            // Assigning a negative value can make test fail quickly.
+            clientPort = -1,
+            // Assigning a negative value can make test fail quickly.
+            jmxPort = -1,
+            groupId = s"groupId$index",
+            statusTopicName = s"statusTopicName$index",
+            statusTopicPartitions = 1,
+            statusTopicReplications = 1.asInstanceOf[Short],
+            configTopicName = s"configTopicName$index",
+            configTopicPartitions = 1,
+            configTopicReplications = 1.asInstanceOf[Short],
+            offsetTopicName = s"offsetTopicName$index",
+            offsetTopicPartitions = 1,
+            offsetTopicReplications = 1.asInstanceOf[Short],
+            jarInfos = Seq.empty,
+            connectors = Seq.empty,
+            sources = Seq.empty,
+            sinks = Seq.empty,
+            nodeNames = bkCluster.nodeNames
+          ))
+      }
+
+      import scala.concurrent.ExecutionContext.Implicits.global
+      // fake nodes
+      zkClusters
+        .flatMap(_.nodeNames)
+        // DON'T add duplicate nodes!!!
+        .toSet[String]
+        .map(
+          name =>
+            Node(name = name,
+                 port = -1,
+                 user = "fake user",
+                 password = "fake password",
+                 services = Seq.empty,
+                 lastModified = CommonUtils.current()))
+        .foreach(store.addIfAbsent[Node])
+      clusterCollie(collie)
+    }
 
   @VisibleForTesting
   @Optional("default is implemented by ssh")
-  private[configurator] def clusterCollie(clusterCollie: ClusterCollie): ConfiguratorBuilder = {
+  private[configurator] def clusterCollie(clusterCollie: ClusterCollie): ConfiguratorBuilder = doOrReleaseObjects {
     if (this.clusterCollie != null) throw new IllegalArgumentException(s"cluster collie is defined!!!")
     this.clusterCollie = Objects.requireNonNull(clusterCollie)
     this
@@ -281,7 +284,7 @@ class ConfiguratorBuilder {
     * @return this builder
     */
   @Optional("default is null")
-  def k8sClient(k8sClient: K8SClient): ConfiguratorBuilder = {
+  def k8sClient(k8sClient: K8SClient): ConfiguratorBuilder = doOrReleaseObjects {
     if (this.k8sClient != null) throw new IllegalArgumentException(s"k8sClient is defined!!!")
     this.k8sClient = Objects.requireNonNull(k8sClient)
     this
@@ -296,14 +299,12 @@ class ConfiguratorBuilder {
     }
   }
 
-  def build(): Configurator =
-    new Configurator(hostname = hostname, port = port)(
-      store = getOrCreateStore(),
-      jarStore = JarStore.builder.homeFolder(folder("jars")).hostname(hostname).port(port).build(),
-      nodeCollie = createCollie(),
-      clusterCollie = getOrCreateCollie(),
-      k8sClient = Option(k8sClient)
-    )
+  def build(): Configurator = doOrReleaseObjects(
+    new Configurator(hostname = hostname, port = port)(store = getOrCreateStore(),
+                                                       jarStore = getOrCreateJarStore(),
+                                                       nodeCollie = createCollie(),
+                                                       clusterCollie = getOrCreateCollie(),
+                                                       k8sClient = Option(k8sClient)))
 
   private[this] def folder(prefix: String): String =
     new File(CommonUtils.requireNonEmpty(homeFolder), prefix).getCanonicalPath
@@ -313,10 +314,44 @@ class ConfiguratorBuilder {
     store
   } else store
 
+  private[this] def getOrCreateJarStore(): JarStore = if (jarStore == null) {
+    jarStore = JarStore.builder.homeFolder(folder("jars")).hostname(hostname).port(port).build()
+    jarStore
+  } else jarStore
+
   private[this] def getOrCreateCollie(): ClusterCollie = if (clusterCollie == null) {
     this.clusterCollie =
       if (k8sClient == null) ClusterCollie.builderOfSsh().nodeCollie(createCollie()).build()
       else ClusterCollie.builderOfK8s().nodeCollie(createCollie()).k8sClient(k8sClient).build()
     clusterCollie
   } else clusterCollie
+
+  /**
+    * do the action and auto-release all internal objects if the action fails.
+    * @param f action
+    * @tparam T return type
+    * @return object created by action
+    */
+  private[this] def doOrReleaseObjects[T](f: => T): T = try f
+  catch {
+    case t: Throwable =>
+      cleanup()
+      throw t
+  }
+
+  /**
+    * Configurator Builder take many resources so as to create a Configurator. However, in testing we may fail in assigning a part of resources
+    * and the others are leak. It does hurt production since we can't do anything if we fail to start up a configurator. However, in testing we
+    * have to keep running the testing...
+    */
+  private[configurator] def cleanup(): Unit = {
+    Releasable.close(store)
+    store = null
+    Releasable.close(jarStore)
+    jarStore = null
+    Releasable.close(clusterCollie)
+    clusterCollie = null
+    Releasable.close(k8sClient)
+    k8sClient = null
+  }
 }

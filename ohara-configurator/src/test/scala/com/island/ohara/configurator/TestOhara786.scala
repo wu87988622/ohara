@@ -17,9 +17,10 @@
 package com.island.ohara.configurator
 
 import com.island.ohara.client.configurator.v0.TopicApi
+import com.island.ohara.common.util.Releasable
 import com.island.ohara.kafka.BrokerClient
 import com.island.ohara.testing.WithBrokerWorker
-import org.junit.Test
+import org.junit.{After, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.Await
@@ -46,4 +47,7 @@ class TestOhara786 extends WithBrokerWorker with Matchers {
         .result(TopicApi.access().hostname(configurator.hostname).port(configurator.port).delete(topic.id), 10 seconds)
     } finally brokerClient.close()
   }
+
+  @After
+  def tearDown(): Unit = Releasable.close(configurator)
 }

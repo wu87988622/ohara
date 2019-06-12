@@ -59,7 +59,7 @@ class TestFakeConfigurator extends SmallTest with Matchers {
 
   @Test
   def createWorkerClusterWithoutBrokerCluster(): Unit = {
-    an[IllegalArgumentException] should be thrownBy Configurator.builder().fake(0, 1).build()
+    an[IllegalArgumentException] should be thrownBy Configurator.builder().fake(0, 1)
   }
 
   @Test

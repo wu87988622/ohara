@@ -42,12 +42,12 @@ import com.island.ohara.agent.k8s.K8SJson.{
   K8SPodInfo,
   NodeItems
 }
+import com.island.ohara.client.Enum
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
-import com.island.ohara.common.util.{CommonUtils, ReleaseOnce}
+import com.island.ohara.common.annotations.Optional
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.typesafe.scalalogging.Logger
 import spray.json.{RootJsonFormat, _}
-import com.island.ohara.client.Enum
-import com.island.ohara.common.annotations.Optional
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -55,7 +55,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 case class K8SStatusInfo(isHealth: Boolean, message: String)
 case class Report(nodeName: String, isK8SNode: Boolean, statusInfo: Option[K8SStatusInfo])
 
-trait K8SClient extends ReleaseOnce {
+trait K8SClient extends Releasable {
   def containers(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]]
   def remove(name: String)(implicit executionContext: ExecutionContext): Future[ContainerInfo]
   def removeNode(clusterName: String, nodeName: String, serviceName: String)(
@@ -327,7 +327,7 @@ object K8SClient {
                 )))
         }
 
-      override protected def doClose(): Unit = {
+      override def close(): Unit = {
         Await.result(actorSystem.terminate(), 60 seconds)
       }
 

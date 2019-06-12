@@ -293,7 +293,9 @@ object Configurator {
             user = user,
             port = port
           ))
-      case _ => throw new IllegalArgumentException(s"input:${args.mkString(" ")}. $USAGE")
+      case _ =>
+        configuratorBuilder.cleanup()
+        throw new IllegalArgumentException(s"input:${args.mkString(" ")}. $USAGE")
     }
     val configurator = configuratorBuilder.build()
 
