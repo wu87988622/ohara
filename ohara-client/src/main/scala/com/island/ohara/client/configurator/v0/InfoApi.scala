@@ -77,11 +77,12 @@ object InfoApi {
       revision = revision
     )
   }
-  final case class ConfiguratorInfo(versionInfo: ConfiguratorVersion)
+
+  final case class ConfiguratorInfo(versionInfo: ConfiguratorVersion, mode: String)
   sealed abstract class InfoAccess extends BasicAccess(INFO_PREFIX_PATH) {
     def get(implicit executionContext: ExecutionContext): Future[ConfiguratorInfo]
   }
-  implicit val CONFIGURATOR_INFO_JSON_FORMAT: RootJsonFormat[ConfiguratorInfo] = jsonFormat1(ConfiguratorInfo)
+  implicit val CONFIGURATOR_INFO_JSON_FORMAT: RootJsonFormat[ConfiguratorInfo] = jsonFormat2(ConfiguratorInfo)
 
   def access(): InfoAccess = new InfoAccess {
     override def get(implicit executionContext: ExecutionContext): Future[ConfiguratorInfo] =

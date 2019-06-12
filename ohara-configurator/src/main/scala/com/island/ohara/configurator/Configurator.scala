@@ -40,9 +40,10 @@ import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterCrea
 import com.island.ohara.client.configurator.v0.{ZookeeperApi, _}
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce}
+import com.island.ohara.configurator.Configurator.Mode
 import com.island.ohara.configurator.jar.JarStore
 import com.island.ohara.configurator.route._
-import com.island.ohara.configurator.store.{MeterCache, DataStore}
+import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.typesafe.scalalogging.Logger
 import spray.json.DeserializationException
 
@@ -74,6 +75,13 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
   private[this] implicit val brokerCollie: BrokerCollie = clusterCollie.brokerCollie()
   private[this] implicit val workerCollie: WorkerCollie = clusterCollie.workerCollie()
   private[this] implicit val streamCollie: StreamCollie = clusterCollie.streamCollie()
+
+  def mode: Mode = clusterCollie match {
+    case _: com.island.ohara.agent.ssh.ClusterCollieImpl         => Mode.SSH
+    case _: com.island.ohara.agent.k8s.K8SClusterCollieImpl      => Mode.K8S
+    case _: com.island.ohara.configurator.fake.FakeClusterCollie => Mode.FAKE
+    case _                                                       => throw new IllegalArgumentException(s"unknown cluster collie: ${clusterCollie.getClass.getName}")
+  }
 
   private[this] def exceptionHandler(): ExceptionHandler = ExceptionHandler {
     case e @ (_: DeserializationException | _: ParsingException | _: IllegalArgumentException |
@@ -173,7 +181,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
       ValidationRoute.apply,
       QueryRoute.apply,
       ConnectorRoute.apply,
-      InfoRoute.apply,
+      InfoRoute.apply(mode),
       StreamRoute.apply,
       ShabondiRoute.apply,
       NodeRoute.apply,
@@ -253,10 +261,11 @@ object Configurator {
   private[configurator] val FOLDER_KEY = "--folder"
   private[configurator] val HOSTNAME_KEY = "--hostname"
   private[configurator] val K8S_KEY = "--k8s"
+  private[configurator] val FAKE_KEY = "--fake"
   private[configurator] val PORT_KEY = "--port"
   private[configurator] val NODE_KEY = "--node"
   private val USAGE =
-    s"[Usage] $FOLDER_KEY $HOSTNAME_KEY $PORT_KEY $K8S_KEY $NODE_KEY(form: user:password@hostname:port)"
+    s"[Usage] $FOLDER_KEY $HOSTNAME_KEY $PORT_KEY $K8S_KEY $FAKE_KEY $NODE_KEY(form: user:password@hostname:port)"
 
   /**
     * Running a standalone configurator.
@@ -274,6 +283,7 @@ object Configurator {
     val configuratorBuilder = Configurator.builder()
     var nodeRequest: Option[Creation] = None
     var k8sClient: K8SClient = null
+    var fake: Boolean = false
     args.sliding(2, 2).foreach {
       case Array(FOLDER_KEY, value)   => configuratorBuilder.homeFolder(value)
       case Array(HOSTNAME_KEY, value) => configuratorBuilder.hostname(value)
@@ -281,6 +291,8 @@ object Configurator {
       case Array(K8S_KEY, value) =>
         k8sClient = K8SClient(value)
         configuratorBuilder.k8sClient(k8sClient)
+      case Array(FAKE_KEY, value) =>
+        fake = value.toBoolean
       case Array(NODE_KEY, value) =>
         val user = value.split(":").head
         val password = value.split("@").head.split(":").last
@@ -297,19 +309,36 @@ object Configurator {
         configuratorBuilder.cleanup()
         throw new IllegalArgumentException(s"input:${args.mkString(" ")}. $USAGE")
     }
-    val configurator = configuratorBuilder.build()
+
+    if (fake) {
+      if (k8sClient != null) {
+        // release all pre-created objects
+        configuratorBuilder.cleanup()
+        throw new IllegalArgumentException(
+          s"It is illegal to run fake mode on k8s. Please remove either $FAKE_KEY or $K8S_KEY")
+      }
+      if (nodeRequest.isDefined) {
+        // release all pre-created objects
+        configuratorBuilder.cleanup()
+        throw new IllegalArgumentException(
+          s"It is illegal to pre-create node for fake mode. Please remove either $FAKE_KEY or $NODE_KEY")
+      }
+      configuratorBuilder.fake()
+    }
+
+    GLOBAL_CONFIGURATOR = configuratorBuilder.build()
 
     try if (k8sClient != null) {
       nodeRequest.foreach(
         processNodeRequest(
           _,
-          configurator,
+          GLOBAL_CONFIGURATOR,
           (node: Node) => {
             val validationResult: Seq[ValidationApi.ValidationReport] = Await.result(
               ValidationApi
                 .access()
                 .hostname(CommonUtils.hostname)
-                .port(configurator.port)
+                .port(GLOBAL_CONFIGURATOR.port)
                 .verify(NodeValidationRequest(node.name, node.port, node.user, node.password)),
               30 seconds
             )
@@ -322,7 +351,7 @@ object Configurator {
       nodeRequest.foreach(
         processNodeRequest(
           _,
-          configurator,
+          GLOBAL_CONFIGURATOR,
           (node: Node) => {
             val dockerClient =
               DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
@@ -330,27 +359,27 @@ object Configurator {
             finally dockerClient.close()
           }
         ))
-
     } catch {
       case e: Throwable =>
         LOG.error("failed to initialize cluster. Will close configurator", e)
-        Releasable.close(configurator)
+        Releasable.close(GLOBAL_CONFIGURATOR)
+        GLOBAL_CONFIGURATOR = null
         HttpExecutor.close()
         throw e
     }
-    hasRunningConfigurator = true
     try {
-      LOG.info(s"start a configurator built on hostname:${configurator.hostname} and port:${configurator.port}")
+      LOG.info(
+        s"start a configurator built on hostname:${GLOBAL_CONFIGURATOR.hostname} and port:${GLOBAL_CONFIGURATOR.port}")
       LOG.info("enter ctrl+c to terminate the configurator")
-      while (!closeRunningConfigurator) {
+      while (!GLOBAL_CONFIGURATOR_SHOULD_CLOSE) {
         TimeUnit.SECONDS.sleep(2)
-        LOG.info(s"Current data size:${configurator.size}")
+        LOG.info(s"Current data size:${GLOBAL_CONFIGURATOR.size}")
       }
     } catch {
       case _: InterruptedException => LOG.info("prepare to die")
     } finally {
-      hasRunningConfigurator = false
-      Releasable.close(configurator)
+      Releasable.close(GLOBAL_CONFIGURATOR)
+      GLOBAL_CONFIGURATOR = null
       HttpExecutor.close()
     }
   }
@@ -454,10 +483,30 @@ object Configurator {
   /**
     * visible for testing.
     */
-  @volatile private[configurator] var hasRunningConfigurator = false
+  @volatile private[configurator] var GLOBAL_CONFIGURATOR: Configurator = _
 
   /**
     * visible for testing.
     */
-  @volatile private[configurator] var closeRunningConfigurator = false
+  @volatile private[configurator] def GLOBAL_CONFIGURATOR_RUNNING: Boolean = GLOBAL_CONFIGURATOR != null
+
+  /**
+    * visible for testing.
+    */
+  @volatile private[configurator] var GLOBAL_CONFIGURATOR_SHOULD_CLOSE = false
+
+  abstract sealed class Mode
+
+  /**
+    * show the mode of running configurator.
+    */
+  object Mode extends com.island.ohara.client.Enum[Mode] {
+
+    /**
+      * No extra services are running. Configurator fake all content of response for all requests. This mode is useful to test only the APIs
+      */
+    case object FAKE extends Mode
+    case object SSH extends Mode
+    case object K8S extends Mode
+  }
 }

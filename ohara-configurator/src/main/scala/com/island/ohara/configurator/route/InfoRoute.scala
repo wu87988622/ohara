@@ -20,9 +20,10 @@ import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives.{complete, get, path, _}
 import com.island.ohara.client.configurator.v0.InfoApi._
 import com.island.ohara.common.util.VersionUtils
+import com.island.ohara.configurator.Configurator.Mode
 object InfoRoute extends SprayJsonSupport {
 
-  def apply: server.Route =
+  def apply(mode: Mode): server.Route =
     path(INFO_PREFIX_PATH) {
       get {
         complete(
@@ -32,7 +33,9 @@ object InfoRoute extends SprayJsonSupport {
               user = VersionUtils.USER,
               revision = VersionUtils.REVISION,
               date = VersionUtils.DATE
-            )))
+            ),
+            mode = mode.toString
+          ))
       }
     }
 }

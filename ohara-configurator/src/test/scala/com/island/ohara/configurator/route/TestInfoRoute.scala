@@ -20,6 +20,7 @@ import com.island.ohara.client.configurator.v0.InfoApi
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{Releasable, VersionUtils}
 import com.island.ohara.configurator.Configurator
+import com.island.ohara.configurator.Configurator.Mode
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
@@ -35,6 +36,8 @@ class TestInfoRoute extends SmallTest with Matchers {
     clusterInformation.versionInfo.user shouldBe VersionUtils.USER
     clusterInformation.versionInfo.revision shouldBe VersionUtils.REVISION
     clusterInformation.versionInfo.date shouldBe VersionUtils.DATE
+    println(s"[CHIA] ${Mode.FAKE.toString}")
+    clusterInformation.mode shouldBe Mode.FAKE.toString
   }
 
   @After

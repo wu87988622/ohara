@@ -22,7 +22,8 @@ import com.island.ohara.common.util.{Releasable, ReleaseOnce}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Try}
 
-private[agent] class K8SClusterCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
+// accessible to configurator
+private[ohara] class K8SClusterCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
     extends ReleaseOnce
     with ClusterCollie {
 

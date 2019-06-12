@@ -26,7 +26,9 @@ import com.island.ohara.common.util.{Releasable, ReleaseOnce}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
-private[agent] class ClusterCollieImpl(cacheTimeout: Duration, nodeCollie: NodeCollie, cacheThreadPool: ExecutorService)
+
+// accessible to configurator
+private[ohara] class ClusterCollieImpl(cacheTimeout: Duration, nodeCollie: NodeCollie, cacheThreadPool: ExecutorService)
     extends ReleaseOnce
     with ClusterCollie {
 

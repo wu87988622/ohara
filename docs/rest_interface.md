@@ -3276,6 +3276,8 @@ Info API returns the information of Ohara Configurator you are executing. It con
     - revision (**string**) — commit hash of Ohara Configurator. You can trace the hash code via [Github](https://github.com/oharastream/ohara/commits/master)
     - user (**string**) — the release manager of Ohara Configurator.
     - date (**string**) — the date of releasing Ohara Configurator.
+1. mode (**string**) — the mode of this configurator. There are three modes now. First, k8s mode is for the production.
+                     Second, ssh is useful to simple env. Third, fake mode is used to test APIs.
     
 **Example Response**
     
@@ -3286,7 +3288,8 @@ Info API returns the information of Ohara Configurator you are executing. It con
     "user": "chia",
     "revision": "b86742ca03a0ca02cc3578f8686e38e5cf2fb461",
     "date": "2019-05-13 09:59:38"
-  }
+  },
+  "mode": "ssh"
 }
 ```
 
