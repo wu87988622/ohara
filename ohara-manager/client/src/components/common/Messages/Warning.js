@@ -47,7 +47,7 @@ const Warning = ({ text }) => {
 };
 
 Warning.propTypes = {
-  text: PropTypes.string.isRequired,
+  text: PropTypes.any.isRequired,
 };
 
 export default Warning;

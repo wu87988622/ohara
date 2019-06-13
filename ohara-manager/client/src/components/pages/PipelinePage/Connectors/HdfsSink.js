@@ -95,8 +95,9 @@ class HdfsSink extends React.Component {
     const result = get(res, 'data.result', null);
 
     if (result) {
-      const { settings, state } = result;
+      const { settings } = result;
       const { topics } = settings;
+      const state = get(result, 'state', null);
 
       const topicName = utils.getCurrTopicName({
         originals: this.props.globalTopics,

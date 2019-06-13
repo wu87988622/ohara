@@ -33,7 +33,6 @@ import * as Connectors from '../Connectors';
 import * as utils from './pipelineNewPageUtils';
 import PipelineToolbar from '../PipelineToolbar';
 import PipelineGraph from '../PipelineGraph';
-import Editable from '../Editable';
 import { Box } from 'common/Layout';
 import { getConnectors } from '../pipelineUtils/commonUtils';
 import { PIPELINE_NEW, PIPELINE_EDIT } from 'constants/documentTitles';
@@ -149,13 +148,6 @@ class PipelineNewPage extends React.Component {
     }
   };
 
-  handlePipelineTitleChange = ({ target: { value: title } }) => {
-    this.setState(({ pipeline }) => {
-      const updatedPipeline = { ...pipeline, name: title };
-      return { pipeline: updatedPipeline };
-    });
-  };
-
   updateHasChanges = update => {
     this.setState({ hasChanges: update });
   };
@@ -166,12 +158,6 @@ class PipelineNewPage extends React.Component {
 
   resetCurrentTopic = () => {
     this.setState(({ topics }) => ({ currentTopic: topics[0] }));
-  };
-
-  handleFocusOut = async isUpdate => {
-    if (isUpdate) {
-      return this.updatePipeline();
-    }
   };
 
   updatePipeline = async (update = {}) => {
@@ -380,13 +366,7 @@ class PipelineNewPage extends React.Component {
               />
 
               <Sidebar>
-                <Heading2>
-                  <Editable
-                    title={pipelineTitle}
-                    handleFocusOut={this.handleFocusOut}
-                    handleChange={this.handlePipelineTitleChange}
-                  />
-                </Heading2>
+                <Heading2>{pipelineTitle}</Heading2>
 
                 <Box>
                   <Operate>

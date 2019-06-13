@@ -70,7 +70,6 @@ class PipelineGraph extends React.Component {
 
     graph.forEach(g => {
       const { name, className, kind, to, id, state } = g;
-
       const updateState = state ? state : '';
       const isTopic = kind === 'topic';
 

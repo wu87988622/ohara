@@ -16,6 +16,7 @@
 
 import * as URLS from '../../src/constants/urls';
 import { CONNECTOR_TYPES } from '../../src/constants/pipelines';
+import { makeRandomStr } from '../utils';
 
 describe('PipelineNewPage', () => {
   before(() => {
@@ -31,12 +32,17 @@ describe('PipelineNewPage', () => {
     cy.route('GET', 'api/topics').as('getTopics');
     cy.route('GET', 'api/workers').as('getWorkers');
 
+    const pipelineName = makeRandomStr();
+
     cy.createTopic().as('createTopic');
     cy.visit(URLS.PIPELINE)
       .getByTestId('new-pipeline')
       .click()
+      .getByLabelText('Pipeline name')
+      .click()
+      .type(pipelineName)
       .wait('@getWorkers')
-      .getByText('Next')
+      .getByText('Add')
       .click()
       .wait('@getPipeline');
   });
