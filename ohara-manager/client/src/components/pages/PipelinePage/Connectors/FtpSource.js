@@ -97,7 +97,7 @@ class FtpSource extends React.Component {
     if (result) {
       const { settings } = result;
       const { topics } = settings;
-      const state = get(result, 'result.settings.state', null);
+      const state = get(result, 'state', null);
 
       const topicName = utils.getCurrTopicName({
         originals: this.props.globalTopics,

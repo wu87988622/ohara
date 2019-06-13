@@ -27,6 +27,7 @@ import { TableLoader, ListLoader } from 'common/Loader';
 import { Modal, ConfirmModal } from 'common/Modal';
 import { DataTable } from 'common/Table';
 import { Box } from 'common/Layout';
+import { Warning } from 'common/Messages';
 import { H2 } from 'common/Headings';
 import { Button, Select } from 'common/Form';
 import { primaryBtn } from 'theme/btnTheme';
@@ -256,7 +257,6 @@ class PipelineListPage extends React.Component {
       workers,
       currWorker,
     } = this.state;
-
     return (
       <DocumentTitle title={PIPELINE}>
         <React.Fragment>
@@ -276,29 +276,45 @@ class PipelineListPage extends React.Component {
               </LoaderWrapper>
             ) : (
               <Inner>
-                <FormGroup data-testid="name">
-                  <Label htmlFor="pipelineInput">Pipeline name</Label>
-                  <Input
-                    id="pipelineInput"
-                    name="name"
-                    width="100%"
-                    placeholder="Pipeline name"
-                    data-testid="name-input"
-                    value={newPipelineName}
-                    handleChange={this.handleChange}
-                  />
-                </FormGroup>
-                <FormGroup data-testid="name">
-                  <Label htmlFor="workerSelect">Worker cluster name</Label>
-                  <Select
-                    id="workerSelect"
-                    data-testid="cluster-select"
-                    list={workers}
-                    selected={currWorker}
-                    handleChange={this.handleSelectChange}
-                    isObject
-                  />
-                </FormGroup>
+                {workers.length === 0 ? (
+                  <>
+                    <Warning
+                      text={
+                        <span>
+                          It seems like you haven't created any worker clusters
+                          yet. You can create one from
+                          <Link to="/services/workers"> here</Link>
+                        </span>
+                      }
+                    />
+                  </>
+                ) : (
+                  <>
+                    <FormGroup data-testid="name">
+                      <Label htmlFor="pipelineInput">Pipeline name</Label>
+                      <Input
+                        id="pipelineInput"
+                        name="name"
+                        width="100%"
+                        placeholder="Pipeline name"
+                        data-testid="name-input"
+                        value={newPipelineName}
+                        handleChange={this.handleChange}
+                      />
+                    </FormGroup>
+                    <FormGroup data-testid="workerSelect">
+                      <Label htmlFor="workerSelect">Worker cluster name</Label>
+                      <Select
+                        id="workerSelect"
+                        data-testid="cluster-select"
+                        list={workers}
+                        selected={currWorker}
+                        handleChange={this.handleSelectChange}
+                        isObject
+                      />
+                    </FormGroup>
+                  </>
+                )}
               </Inner>
             )}
           </Modal>

@@ -57,7 +57,6 @@ export const createConnector = async ({
 
     id = res.data.result.id;
   } else if (isSource(typeName) || isSink(typeName)) {
-    // Not included in the official connectors, use new meta API instead
     const params = {
       name: connectorName,
       'connector.class': className,
