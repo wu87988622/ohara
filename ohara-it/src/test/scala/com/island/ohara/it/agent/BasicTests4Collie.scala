@@ -19,6 +19,7 @@ package com.island.ohara.it.agent
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 
+import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
@@ -157,6 +158,13 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
           log.isEmpty shouldBe false
       })
       log.info(s"verify log of zk clusters... done")
+      // since we only get "active" containers, all containers belong to the cluster should be running.
+      // Currently, both k8s and pure docker have the same context of "RUNNING".
+      // It is ok to filter container via RUNNING state.
+      await(() => {
+        val containers = result(zk_containers(clusterName))
+        containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
+      })
       val container = result(zk_containers(clusterName)).head
       log.info(s"get containers from zk:$clusterName... done")
       container.nodeName shouldBe nodeName
@@ -183,6 +191,13 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         nodeNames = Seq(nodeCache.head.name)
       ))
     assertCluster(() => result(zk_clusters()), zkCluster.name)
+    // since we only get "active" containers, all containers belong to the cluster should be running.
+    // Currently, both k8s and pure docker have the same context of "RUNNING".
+    // It is ok to filter container via RUNNING state.
+    await(() => {
+      val containers = result(zk_containers(zkCluster.name))
+      containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
+    })
     try {
       log.info("[BROKER] start to run broker cluster")
       val clusterName = generateClusterName()
@@ -220,7 +235,13 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         result(bk_exist(bkCluster.name)) shouldBe true
         // we can't assume the size since other tests may create zk cluster at the same time
         result(bk_clusters()).isEmpty shouldBe false
-        await(() => result(bk_containers(clusterName)).nonEmpty)
+        // since we only get "active" containers, all containers belong to the cluster should be running.
+        // Currently, both k8s and pure docker have the same context of "RUNNING".
+        // It is ok to filter container via RUNNING state.
+        await(() => {
+          val containers = result(bk_containers(clusterName))
+          containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
+        })
         result(bk_containers(clusterName)).foreach { container =>
           container.nodeName shouldBe nodeName
           container.name.contains(clusterName) shouldBe true
@@ -399,6 +420,13 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       ))
     try {
       assertCluster(() => result(zk_clusters()), zkCluster.name)
+      // since we only get "active" containers, all containers belong to the cluster should be running.
+      // Currently, both k8s and pure docker have the same context of "RUNNING".
+      // It is ok to filter container via RUNNING state.
+      await(() => {
+        val containers = result(zk_containers(zkCluster.name))
+        containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
+      })
       val bkCluster = result(
         bk_create(
           clusterName = generateClusterName(),
@@ -410,6 +438,13 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         ))
       try {
         assertCluster(() => result(bk_clusters()), bkCluster.name)
+        // since we only get "active" containers, all containers belong to the cluster should be running.
+        // Currently, both k8s and pure docker have the same context of "RUNNING".
+        // It is ok to filter container via RUNNING state.
+        await(() => {
+          val containers = result(bk_containers(bkCluster.name))
+          containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
+        })
         log.info("[WORKER] start to test worker")
         val nodeName = nodeCache.head.name
         val clusterName = generateClusterName()
@@ -452,7 +487,13 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
           // we can't assume the size since other tests may create zk cluster at the same time
           result(wk_clusters()).isEmpty shouldBe false
           log.info("[WORKER] verify:list done")
-          await(() => result(wk_containers(clusterName)).nonEmpty)
+          // since we only get "active" containers, all containers belong to the cluster should be running.
+          // Currently, both k8s and pure docker have the same context of "RUNNING".
+          // It is ok to filter container via RUNNING state.
+          await(() => {
+            val containers = result(wk_containers(clusterName))
+            containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
+          })
           result(wk_containers(clusterName)).foreach { container =>
             container.nodeName shouldBe nodeName
             container.name.contains(clusterName) shouldBe true
@@ -464,11 +505,14 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
             container.portMappings.head.portPairs.exists(_.containerPort == clientPort) shouldBe true
             container.environments.exists(_._2 == clientPort.toString) shouldBe true
           }
-          result(wk_logs(clusterName)).size shouldBe 1
-          result(wk_logs(clusterName)).foreach(log =>
+          val logs = result(wk_logs(clusterName))
+          logs.size shouldBe 1
+          logs.foreach(log =>
             withClue(log) {
               log.contains("- ERROR") shouldBe false
-              log.isEmpty shouldBe false
+              // we cannot assume "k8s get logs" are complete since log may rotate
+              // so log could be empty in k8s environment
+              // also see : https://github.com/kubernetes/kubernetes/issues/11046#issuecomment-121140315
           })
           log.info("[WORKER] verify:log done")
           var curCluster = wkCluster
@@ -629,6 +673,14 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       }
 
       assertClusters(() => result(zk_clusters()), zks.map(_.name))
+      // since we only get "active" containers, all containers belong to the cluster should be running.
+      // Currently, both k8s and pure docker have the same context of "RUNNING".
+      // It is ok to filter container via RUNNING state.
+      await(() =>
+        zkNames.forall(name => {
+          val containers = result(zk_containers(name))
+          containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
+        }))
       zks.zipWithIndex.map {
         case (zk, index) =>
           val bkCluster = result(
@@ -688,6 +740,13 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         )
       )
       assertCluster(() => result(zk_clusters()), zk.name)
+      // since we only get "active" containers, all containers belong to the cluster should be running.
+      // Currently, both k8s and pure docker have the same context of "RUNNING".
+      // It is ok to filter container via RUNNING state.
+      await(() => {
+        val containers = result(zk_containers(zkName))
+        containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
+      })
 
       log.info(s"start to run bk cluster:$bkName")
       val bk = result(
@@ -700,6 +759,13 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
           nodeNames = Seq(nodeCache.head.name)
         ))
       assertCluster(() => result(bk_clusters()), bk.name)
+      // since we only get "active" containers, all containers belong to the cluster should be running.
+      // Currently, both k8s and pure docker have the same context of "RUNNING".
+      // It is ok to filter container via RUNNING state.
+      await(() => {
+        val containers = result(bk_containers(bkName))
+        containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
+      })
 
       log.info(s"start to run multi wk clusters:$wkNames")
       val clusters = wkNames.zipWithIndex.map {

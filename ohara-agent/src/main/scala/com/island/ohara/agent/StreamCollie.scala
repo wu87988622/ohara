@@ -45,19 +45,21 @@ trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator
   }
 
   private[agent] def toStreamCluster(clusterName: String, containers: Seq[ContainerInfo]): Future[StreamClusterInfo] = {
-    val first = containers.head
+    // get the first running container, or first non-running container if not found
+    val first = containers.find(_.state == ContainerState.RUNNING.name).getOrElse(containers.head)
     Future.successful(
       StreamClusterInfo(
         name = clusterName,
         imageName = first.imageName,
         nodeNames = containers.map(_.nodeName),
-        // In StreamApp, we only use jmx port for exposing
-        jmxPort = first.portMappings.head.portPairs.head.containerPort,
+        // Currently, streamApp use expose portMappings for jmx port only.
+        // Since dead container would not expose the port, we directly get it from environment for consistency.
+        jmxPort = first.environments(StreamCollie.JMX_PORT_KEY).toInt,
         state = {
           // we only have two possible results here:
-          // 1. only assume cluster is "running" if and only if all containers was running
-          // 2. the cluster state is always "dead" if one of containers state was not running
-          val alive = containers.forall(_.state == ContainerState.RUNNING.name)
+          // 1. only assume cluster is "running" if at least one container is running
+          // 2. the cluster state is always "dead" if all containers were not running
+          val alive = containers.exists(_.state == ContainerState.RUNNING.name)
           if (alive) Some(ContainerState.RUNNING.name) else Some(ContainerState.DEAD.name)
         }
       )
@@ -191,6 +193,7 @@ object StreamCollie {
   private[agent] val SERVERS_KEY: String = "STREAMAPP_SERVERS"
   private[agent] val FROM_TOPIC_KEY: String = "STREAMAPP_FROMTOPIC"
   private[agent] val TO_TOPIC_KEY: String = "STREAMAPP_TOTOPIC"
+  private[agent] val JMX_PORT_KEY: String = "STREAMAPP_JMX_PORT"
 
   /**
     * the only entry for ohara streamApp

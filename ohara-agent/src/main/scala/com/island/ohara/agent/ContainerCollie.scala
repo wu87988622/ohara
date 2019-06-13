@@ -67,13 +67,12 @@ abstract class ContainerCollie[T <: ClusterInfo: ClassTag, Creator <: ClusterCre
       .node(nodeName) // make sure there is a exist node.
       .flatMap(_ => cluster(clusterName))
       .flatMap {
-        case (cluster, containers) => {
+        case (cluster, containers) =>
           if (clusterName.isEmpty || nodeName.isEmpty)
             Future.failed(new IllegalArgumentException("cluster and node name can't empty"))
           else if (CommonUtils.hasUpperCase(nodeName))
             Future.failed(new IllegalArgumentException("Your node name can't uppercase"))
           else doAddNode(cluster, containers, nodeName)
-        }
       }
   }
 
@@ -85,7 +84,7 @@ abstract class ContainerCollie[T <: ClusterInfo: ClassTag, Creator <: ClusterCre
     else throw new IllegalArgumentException(s"Who are you, ${classTag[T].runtimeClass} ???")
 
   override final def forceRemove(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
-    clusters.flatMap(
+    clusterWithAllContainers.flatMap(
       _.find(_._1.name == clusterName)
         .map {
           case (cluster, containerInfos) => doForceRemove(cluster, containerInfos)
@@ -93,7 +92,7 @@ abstract class ContainerCollie[T <: ClusterInfo: ClassTag, Creator <: ClusterCre
         .getOrElse(Future.successful(false)))
 
   override final def remove(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
-    clusters.flatMap(
+    clusterWithAllContainers.flatMap(
       _.find(_._1.name == clusterName)
         .map {
           case (cluster, containerInfos) => doRemove(cluster, containerInfos)
@@ -103,6 +102,7 @@ abstract class ContainerCollie[T <: ClusterInfo: ClassTag, Creator <: ClusterCre
   protected def doRemove(clusterInfo: T, containerInfos: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[Boolean]
 
+  // default implementation of "force" remove is "gracefully" remove
   protected def doForceRemove(clusterInfo: T, containerInfos: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[Boolean] =
     doRemove(clusterInfo, containerInfos)

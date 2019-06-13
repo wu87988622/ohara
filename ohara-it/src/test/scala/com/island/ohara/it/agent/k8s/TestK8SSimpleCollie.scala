@@ -16,7 +16,10 @@
 
 package com.island.ohara.it.agent.k8s
 
+import java.util.concurrent.TimeUnit
+
 import com.island.ohara.agent._
+import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.agent.k8s.{K8SClient, K8SStatusInfo, K8sContainerState}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
@@ -66,12 +69,37 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     nodeNames = NODE_SERVER_NAME.get.split(",").toSeq
   }
 
+  private[this] def waitZookeeperCluster(clusterName: String): Unit = {
+    await(() => result(clusterCollie.zookeeperCollie().clusters).exists(_._1.name == clusterName))
+    // since we only get "active" containers, all containers belong to the cluster should be running.
+    // Currently, both k8s and pure docker have the same context of "RUNNING".
+    // It is ok to filter container via RUNNING state.
+    await(() => {
+      val containers = result(clusterCollie.zookeeperCollie().containers(clusterName))
+      containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
+    })
+  }
+
   private[this] def waitBrokerCluster(clusterName: String): Unit = {
     await(() => result(clusterCollie.brokerCollie().clusters).exists(_._1.name == clusterName))
+    // since we only get "active" containers, all containers belong to the cluster should be running.
+    // Currently, both k8s and pure docker have the same context of "RUNNING".
+    // It is ok to filter container via RUNNING state.
+    await(() => {
+      val containers = result(clusterCollie.brokerCollie().containers(clusterName))
+      containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
+    })
   }
 
   private[this] def waitWorkerCluster(clusterName: String): Unit = {
     await(() => result(clusterCollie.workerCollie().clusters).exists(_._1.name == clusterName))
+    // since we only get "active" containers, all containers belong to the cluster should be running.
+    // Currently, both k8s and pure docker have the same context of "RUNNING".
+    // It is ok to filter container via RUNNING state.
+    await(() => {
+      val containers = result(clusterCollie.workerCollie().containers(clusterName))
+      containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
+    })
   }
 
   @Test
@@ -331,8 +359,11 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
         val firstContainerName: String = result(brokerCollie.cluster(brokerClusterName))._2.head.hostname
 
         result(brokerCollie.addNode(brokerClusterName, secondNode))
+        // wait a period for k8s get latest pods information
+        TimeUnit.SECONDS.sleep(10)
         result(brokerCollie.cluster(brokerClusterName))._2.size shouldBe 2
         result(brokerCollie.removeNode(brokerClusterName, firstNode))
+        waitBrokerCluster(brokerClusterName)
 
         val k8sClient: K8SClient = K8SClient(API_SERVER_URL.get)
         await(() => !Await.result(k8sClient.containers, TIMEOUT).exists(c => c.hostname.contains(firstContainerName)))
@@ -382,8 +413,11 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
           val firstContainerName: String = result(workerCollie.cluster(workerClusterName))._2.head.hostname
 
           result(workerCollie.addNode(workerClusterName, secondNode))
+          // wait a period for k8s get latest pods information
+          TimeUnit.SECONDS.sleep(10)
           result(workerCollie.cluster(workerClusterName))._2.size shouldBe 2
           result(workerCollie.removeNode(workerClusterName, firstNode))
+          waitWorkerCluster(workerClusterName)
 
           val k8sClient: K8SClient = K8SClient(API_SERVER_URL.get)
           await(() => !Await.result(k8sClient.containers, TIMEOUT).exists(c => c.hostname.contains(firstContainerName)))
@@ -551,7 +585,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
                                           clientPort: Int,
                                           peerPort: Int,
                                           electionPort: Int): ZookeeperClusterInfo = {
-    result(
+    val info = result(
       zookeeperCollie
         .creator()
         .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
@@ -561,6 +595,8 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
         .electionPort(electionPort)
         .nodeName(nodeName)
         .create())
+    waitZookeeperCluster(clusterName)
+    info
   }
 
   private[this] def createBrokerCollie(brokerCollie: BrokerCollie,

@@ -55,7 +55,7 @@ private class FakeBrokerCollie(node: NodeCollie,
     implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
     throw new UnsupportedOperationException("Not support logs function")
 
-  override def clusters(
+  override def clusterWithAllContainers(
     implicit executionContext: ExecutionContext): Future[Map[BrokerClusterInfo, Seq[ContainerInfo]]] = {
     Future {
       //Pre create broker container for test

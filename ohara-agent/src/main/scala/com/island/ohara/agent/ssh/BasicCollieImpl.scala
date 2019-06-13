@@ -30,10 +30,15 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: Cl
   clusterCache: ClusterCache)
     extends ContainerCollie[T, Creator](nodeCollie) {
 
-  final override def clusters(implicit executionContext: ExecutionContext): Future[Map[T, Seq[ContainerInfo]]] =
-    Future.successful(clusterCache.snapshot.filter(entry => classTag[T].runtimeClass.isInstance(entry._1)).map {
-      case (cluster, containers) => cluster.asInstanceOf[T] -> containers
-    })
+  final override def clusterWithAllContainers(
+    implicit executionContext: ExecutionContext): Future[Map[T, Seq[ContainerInfo]]] = {
+
+    Future.successful(
+      clusterCache.snapshot.filter(entry => classTag[T].runtimeClass.isInstance(entry._1)).map {
+        case (cluster, containers) => cluster.asInstanceOf[T] -> containers
+      }
+    )
+  }
 
   final override def cluster(name: String)(
     implicit executionContext: ExecutionContext): Future[(T, Seq[ContainerInfo])] =
@@ -68,15 +73,18 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: Cl
       .traverse(containerInfos) { containerInfo =>
         nodeCollie
           .node(containerInfo.nodeName)
-          .map(
-            node =>
-              dockerCache.exec(node,
-                               client =>
-                                 if (force) client.forceRemove(containerInfo.name)
-                                 else {
-                                   client.stop(containerInfo.name)
-                                   client.remove(containerInfo.name)
-                               }))
+          .map(node =>
+            dockerCache.exec(
+              node,
+              client =>
+                if (force) client.forceRemove(containerInfo.name)
+                else {
+                  // by default, docker will try to stop container for 10 seconds
+                  // after that, docker will issue a kill signal to the container
+                  client.stop(containerInfo.name)
+                  client.remove(containerInfo.name)
+              }
+          ))
       }
       .map { _ =>
         clusterCache.remove(clusterInfo)

@@ -54,7 +54,7 @@ class TestContainerCollie extends SmallTest with Matchers {
     val node2 = node1.copy(name = nodeName2)
 
     val container1 =
-      ContainerInfo(nodeName1, "0", "fakeimage", "", "", "", "container1", "0", Seq(), Map(), s"xxx")
+      ContainerInfo(nodeName1, "0", "fakeimage", "", "RUNNING", "", "container1", "0", Seq(), Map(), s"xxx")
 
     val fakeContainerCollie = new FakeContainerCollie(NodeCollie(Seq(node1, node2)), Seq(container1))
     val cluster = Await.result(fakeContainerCollie.cluster(FakeContainerCollie.clusterName), TIMEOUT)
@@ -84,7 +84,7 @@ class TestContainerCollie extends SmallTest with Matchers {
                      services = Seq.empty,
                      lastModified = CommonUtils.current())
     val containerInfo =
-      ContainerInfo("node2", "0", "fakeimage", "", "", "", "container1", "0", Seq.empty, Map.empty, s"xxx")
+      ContainerInfo("node2", "0", "fakeimage", "", "RUNNING", "", "container1", "0", Seq.empty, Map.empty, s"xxx")
     val fakeContainerCollie = new FakeContainerCollie(NodeCollie(Seq(node1)), Seq(containerInfo))
     val removeNode: Future[Boolean] = fakeContainerCollie.removeNode(fakeClusterName, node1Name)
     Await.result(removeNode, TIMEOUT) shouldBe false
@@ -100,7 +100,17 @@ class TestContainerCollie extends SmallTest with Matchers {
                      services = Seq.empty,
                      lastModified = CommonUtils.current())
     val containerInfo =
-      ContainerInfo(node1Name, "0", "fakeimage", "", "", "", "container1", "0", Seq(), Map(), s"xxx-${node1Name}")
+      ContainerInfo(node1Name,
+                    "0",
+                    "fakeimage",
+                    "",
+                    "RUNNING",
+                    "",
+                    "container1",
+                    "0",
+                    Seq(),
+                    Map(),
+                    s"xxx-${node1Name}")
     val fakeContainerCollie = new FakeContainerCollie(NodeCollie(Seq(node1)), Seq(containerInfo))
     val removeNode: Future[Boolean] = fakeContainerCollie.removeNode(fakeClusterName, node1Name)
     intercept[IllegalArgumentException] {
@@ -118,7 +128,17 @@ class TestContainerCollie extends SmallTest with Matchers {
                      services = Seq.empty,
                      lastModified = CommonUtils.current())
     val containerInfo =
-      ContainerInfo(node1Name, "0", "fakeimage", "", "", "", "container1", "0", Seq(), Map(), s"xxx-${node1Name}")
+      ContainerInfo(node1Name,
+                    "0",
+                    "fakeimage",
+                    "",
+                    "RUNNING",
+                    "",
+                    "container1",
+                    "0",
+                    Seq(),
+                    Map(),
+                    s"xxx-${node1Name}")
     val fakeContainerCollie = new FakeContainerCollie(NodeCollie(Seq(node1)), Seq(containerInfo))
     val removeNode: Future[Boolean] = fakeContainerCollie.removeNode(fakeClusterName, "node3")
     Await.result(removeNode, TIMEOUT) shouldBe false
@@ -137,10 +157,30 @@ class TestContainerCollie extends SmallTest with Matchers {
                      lastModified = CommonUtils.current())
     val node2 = node1.copy(name = node2Name)
     val container1 =
-      ContainerInfo(node1Name, "0", "fakeimage", "", "", "", "container1", "0", Seq(), Map(), s"xxx-${node1Name}")
+      ContainerInfo(node1Name,
+                    "0",
+                    "fakeimage",
+                    "",
+                    "RUNNING",
+                    "",
+                    "container1",
+                    "0",
+                    Seq(),
+                    Map(),
+                    s"xxx-${node1Name}")
 
     val container2 =
-      ContainerInfo(node2Name, "0", "fakeimage", "", "", "", "container1", "0", Seq(), Map(), s"xxx-${node1Name}")
+      ContainerInfo(node2Name,
+                    "0",
+                    "fakeimage",
+                    "",
+                    "RUNNING",
+                    "",
+                    "container1",
+                    "0",
+                    Seq(),
+                    Map(),
+                    s"xxx-${node1Name}")
 
     val fakeContainerCollie = new FakeContainerCollie(NodeCollie(Seq(node1, node2)), Seq(container1, container2))
     val removeNode: Future[Boolean] = fakeContainerCollie.removeNode(fakeClusterName, "node1")
@@ -155,7 +195,17 @@ class TestContainerCollie extends SmallTest with Matchers {
                      services = Seq.empty,
                      lastModified = CommonUtils.current())
     val containerInfo =
-      ContainerInfo(node1.name, "0", "fakeimage", "", "", "", "container1", "0", Seq(), Map(), s"xxx-${node1.name}")
+      ContainerInfo(node1.name,
+                    "0",
+                    "fakeimage",
+                    "",
+                    "RUNNING",
+                    "",
+                    "container1",
+                    "0",
+                    Seq(),
+                    Map(),
+                    s"xxx-${node1.name}")
     val fakeContainerCollie = new FakeContainerCollie(NodeCollie(Seq(node1)), Seq(containerInfo))
     val addNode: Future[FakeContainerCollieClusterInfo] = fakeContainerCollie.addNode(fakeClusterName, nodeName)
     intercept[IllegalArgumentException] {

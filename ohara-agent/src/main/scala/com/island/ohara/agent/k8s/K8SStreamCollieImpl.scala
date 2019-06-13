@@ -98,7 +98,8 @@ private class K8SStreamCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
                             StreamCollie.APPID_KEY -> appId,
                             StreamCollie.SERVERS_KEY -> brokerProps,
                             StreamCollie.FROM_TOPIC_KEY -> fromTopics.mkString(","),
-                            StreamCollie.TO_TOPIC_KEY -> toTopics.mkString(",")
+                            StreamCollie.TO_TOPIC_KEY -> toTopics.mkString(","),
+                            StreamCollie.JMX_PORT_KEY -> jmxPort.toString
                           )
                         )
                         .args(StreamCollie.formatJMXProperties(node.name, jmxPort) :+ StreamCollie.MAIN_ENTRY)

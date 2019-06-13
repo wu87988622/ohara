@@ -17,6 +17,7 @@
 package com.island.ohara.agent
 
 import com.island.ohara.agent.Collie.ClusterCreator
+import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.common.util.CommonUtils
@@ -72,7 +73,25 @@ trait Collie[T <: ClusterInfo, Creator <: ClusterCreator[T]] {
   def containers(clusterName: String)(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
     cluster(clusterName).map(_._2)
 
-  def clusters(implicit executionContext: ExecutionContext): Future[Map[T, Seq[ContainerInfo]]]
+  /**
+    * fetch all clusters and belonging containers from cache.
+    * Note: this function will only get running containers
+    *
+    * @param executionContext execution context
+    * @return cluster and containers information
+    */
+  def clusters(implicit executionContext: ExecutionContext): Future[Map[T, Seq[ContainerInfo]]] =
+    clusterWithAllContainers.map(
+      entry =>
+        // Currently, both k8s and pure docker have the same context of "RUNNING".
+        // It is ok to filter container via RUNNING state.
+        // Note: even if all containers are dead, the cluster information should be fetch also.
+        entry.map { case (info, containers) => info -> containers.filter(_.state == ContainerState.RUNNING.name) })
+
+  // Collie only care about active containers, but we need to trace the exited "orphan" containers for deleting them.
+  // This method intend to fetch all containers of each cluster and we filter out needed containers in other methods.
+  protected def clusterWithAllContainers(
+    implicit executionContext: ExecutionContext): Future[Map[T, Seq[ContainerInfo]]]
 
   /**
     * get the cluster information from a cluster

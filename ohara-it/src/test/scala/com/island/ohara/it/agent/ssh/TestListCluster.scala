@@ -17,7 +17,7 @@
 package com.island.ohara.it.agent.ssh
 
 import com.island.ohara.agent._
-import com.island.ohara.agent.docker.DockerClient
+import com.island.ohara.agent.docker.{ContainerState, DockerClient}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -59,7 +59,7 @@ class TestListCluster extends IntegrationTest with Matchers {
     }
 
   @Test
-  def deadZookeeperClusterShouldDisappear(): Unit = {
+  def deadZookeeperClusterShouldNotDisappear(): Unit = {
 
     val name = nameHolder.generateClusterName()
     log.info(s"[TestListCluster] before create zk cluster:$name")
@@ -89,12 +89,12 @@ class TestListCluster extends IntegrationTest with Matchers {
       finally dockerClient.close()
     }
 
-    log.info("[TestListCluster] before check zk clusters")
-    await(() => !result(clusterCollie.zookeeperCollie().clusters).exists(_._1.name == name))
+    log.info("[TestListCluster] before check zk clusters still can be fetch")
+    await(() => result(clusterCollie.zookeeperCollie().clusters).exists(_._1.name == name))
   }
 
   @Test
-  def deadBrokerClusterShouldDisappear(): Unit = {
+  def deadBrokerClusterShouldNotDisappear(): Unit = {
     log.info("[TestListCluster] before create zk cluster")
     val zkCluster = result(
       clusterCollie
@@ -112,6 +112,13 @@ class TestListCluster extends IntegrationTest with Matchers {
     log.info("[TestListCluster] before create bk cluster")
     try {
       assertCluster(() => result(clusterCollie.zookeeperCollie().clusters).keys.toSeq, zkCluster.name)
+      // since we only get "active" containers, all containers belong to the cluster should be running.
+      // Currently, both k8s and pure docker have the same context of "RUNNING".
+      // It is ok to filter container via RUNNING state.
+      await(() => {
+        val containers = result(clusterCollie.zookeeperCollie().containers(zkCluster.name))
+        containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
+      })
       val name = nameHolder.generateClusterName()
       try result(
         clusterCollie
@@ -139,8 +146,8 @@ class TestListCluster extends IntegrationTest with Matchers {
         finally dockerClient.close()
       }
 
-      log.info("[TestListCluster] before check bk clusters")
-      await(() => !result(clusterCollie.brokerCollie().clusters).exists(_._1.name == name))
+      log.info("[TestListCluster] before check bk clusters still can be fetch")
+      await(() => result(clusterCollie.brokerCollie().clusters).exists(_._1.name == name))
     } finally if (cleanup) result(clusterCollie.zookeeperCollie().remove(zkCluster.name))
   }
 

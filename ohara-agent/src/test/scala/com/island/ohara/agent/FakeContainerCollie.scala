@@ -60,7 +60,7 @@ class FakeContainerCollie[T <: FakeContainerCollieClusterInfo: ClassTag, Creator
     }
   }
 
-  override def clusters(
+  override def clusterWithAllContainers(
     implicit executionContext: ExecutionContext): Future[Map[FakeContainerCollieClusterInfo, Seq[ContainerInfo]]] =
     Future {
       val nodeNames = containers.map(c => c.nodeName)

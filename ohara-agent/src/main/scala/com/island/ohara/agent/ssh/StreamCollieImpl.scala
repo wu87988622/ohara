@@ -102,7 +102,8 @@ private class StreamCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClient
                           StreamCollie.APPID_KEY -> appId,
                           StreamCollie.SERVERS_KEY -> brokerProps,
                           StreamCollie.FROM_TOPIC_KEY -> fromTopics.mkString(","),
-                          StreamCollie.TO_TOPIC_KEY -> toTopics.mkString(",")
+                          StreamCollie.TO_TOPIC_KEY -> toTopics.mkString(","),
+                          StreamCollie.JMX_PORT_KEY -> jmxPort.toString
                         ),
                         // we should set the hostname to container name in order to avoid duplicate name with other containers
                         hostname = containerName

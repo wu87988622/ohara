@@ -173,6 +173,70 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
   }
 
   @Test
+  def testFailedClusterRemoveGracefully(): Unit = {
+
+    // create fake jar
+    val jarPath = CommonUtils.createTempFile("fake").getAbsolutePath
+
+    // upload streamApp jar
+    val jarInfo = result(
+      streamAppListAccess.upload(Seq(jarPath), Some(wkName))
+    )
+
+    // create streamApp properties
+    val stream = result(streamAppPropertyAccess.add(StreamPropertyRequest(jarInfo.head.id, None, None, None, None)))
+
+    // update streamApp properties (use non-existed topics to make sure cluster failed)
+    val req = StreamPropertyRequest(
+      jarInfo.head.id,
+      Some(CommonUtils.randomString(10)),
+      Some(Seq("bar-fake")),
+      Some(Seq("foo-fake")),
+      Some(instances)
+    )
+    val properties = result(
+      streamAppPropertyAccess.update(stream.id, req)
+    )
+    properties.from.size shouldBe 1
+    properties.to.size shouldBe 1
+    properties.instances shouldBe instances
+    properties.state shouldBe None
+    properties.error shouldBe None
+    properties.workerClusterName shouldBe wkName
+
+    // start streamApp
+    result(streamAppActionAccess.start(stream.id))
+
+    // get the actually container names
+    val map = nodeCache.map { node =>
+      val client =
+        DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
+      try {
+        node -> client.containerNames().filter(name => name.contains(StreamCollie.formatUniqueName(properties.id)))
+      } finally client.close()
+    }
+
+    // we only have one instance, container exited means cluster dead (the state here uses container state is ok
+    // since we use the same name for cluster state
+    await(() => {
+      val res = result(streamAppPropertyAccess.get(stream.id))
+      res.state.isDefined && res.state.get == ContainerState.DEAD.name
+    })
+
+    // stop and remove failed cluster gracefully
+    result(streamAppActionAccess.stop(stream.id))
+
+    // check the containers are all removed
+    map.foreach {
+      case (node, containers) =>
+        val client =
+          DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
+        try containers.foreach(container => client.nonExist(container) shouldBe true)
+        finally client.close()
+    }
+  }
+
+  @Test
   def testRunSimpleStreamApp(): Unit = {
     val from = "fromTopic"
     val to = "toTopic"

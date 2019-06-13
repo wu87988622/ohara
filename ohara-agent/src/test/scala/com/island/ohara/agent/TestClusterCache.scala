@@ -147,7 +147,7 @@ class TestClusterCache extends SmallTest with Matchers {
       val currentCount = count.get()
       currentCount should not be 0
       cache.get(clusterInfo) shouldBe Seq(containerInfo)
-      TimeUnit.SECONDS.sleep(4)
+      TimeUnit.SECONDS.sleep(5)
       count.get() should not be currentCount
       cache.get(clusterInfo) shouldBe Seq.empty
     } finally cache.close()

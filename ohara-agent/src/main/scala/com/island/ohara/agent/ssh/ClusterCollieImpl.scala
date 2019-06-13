@@ -56,16 +56,14 @@ private[ohara] class ClusterCollieImpl(cacheTimeout: Duration, nodeCollie: NodeC
   override def workerCollie(): WorkerCollie = wkCollie
   override def streamCollie(): StreamCollie = _streamCollie
 
-  override def clusters(implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] =
-    Future.successful(clusterCache.snapshot)
-
   private[this] def doClusters(
     implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = nodeCollie
     .nodes()
     .flatMap(Future
       .traverse(_) { node =>
         // multi-thread to seek all containers from multi-nodes
-        dockerCache.exec(node, _.activeContainers(containerName => containerName.startsWith(PREFIX_KEY))).recover {
+        // Note: we fetch all containers (include exited and running) here
+        dockerCache.exec(node, _.containers(containerName => containerName.startsWith(PREFIX_KEY))).recover {
           case e: Throwable =>
             LOG.error(s"failed to get active containers from $node", e)
             Seq.empty

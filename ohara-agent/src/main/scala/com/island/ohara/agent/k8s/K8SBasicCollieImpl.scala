@@ -75,7 +75,8 @@ private[this] abstract class K8SBasicCollieImpl[T <: ClusterInfo: ClassTag, Crea
     }
   }
 
-  override def clusters(implicit executionContext: ExecutionContext): Future[Map[T, Seq[ContainerInfo]]] = nodeCollie
+  override def clusterWithAllContainers(
+    implicit executionContext: ExecutionContext): Future[Map[T, Seq[ContainerInfo]]] = nodeCollie
     .nodes()
     .flatMap(
       nodes =>

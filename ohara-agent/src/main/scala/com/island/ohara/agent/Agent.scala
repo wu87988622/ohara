@@ -110,7 +110,8 @@ object Agent {
       private[this] val charset: Charset = Objects.requireNonNull(Builder.this.charset)
       private[this] val client = SshClient.setUpDefaultSimpleClient()
       override def execute(command: String): Option[String] = {
-        // TODO: This method can't set the timeout...It is not ok in production I'd say...by chia
+        // The default timeout for sshClient is Long.MAX_VALUE (see SimpleClientConfigurator.java in apache.sshd.client)
+        // Should we set a smaller timeout for session ?...by Sam
         val session = client.sessionLogin(hostname, port, user, password)
         try {
           val stdOut = new ByteArrayOutputStream
