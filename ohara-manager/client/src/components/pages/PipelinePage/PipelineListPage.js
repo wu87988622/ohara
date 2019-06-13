@@ -277,17 +277,15 @@ class PipelineListPage extends React.Component {
             ) : (
               <Inner>
                 {workers.length === 0 ? (
-                  <>
-                    <Warning
-                      text={
-                        <span>
-                          It seems like you haven't created any worker clusters
-                          yet. You can create one from
-                          <Link to="/services/workers"> here</Link>
-                        </span>
-                      }
-                    />
-                  </>
+                  <Warning
+                    text={
+                      <span>
+                        It seems like you haven't created any worker clusters
+                        yet. You can create one from
+                        <Link to="/services/workers"> here</Link>
+                      </span>
+                    }
+                  />
                 ) : (
                   <>
                     <FormGroup data-testid="name">
