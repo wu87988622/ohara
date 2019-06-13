@@ -35,7 +35,7 @@ class TestK8SStreamApp extends BasicTests4StreamApp {
   }
 
   override protected def createNodes(): Seq[Node] = if (API_SERVER_URL.isEmpty || NODE_SERVER_NAME.isEmpty) Seq.empty
-  else NODE_SERVER_NAME.get.split(",").map(node => Node(node, 0, "", "", Seq.empty, CommonUtils.current()))
+  else NODE_SERVER_NAME.get.split(",").map(node => Node(node, 0, "fake", "fake", Seq.empty, CommonUtils.current()))
   override protected def createNameHolder(nodeCache: Seq[Node]): ClusterNameHolder = new ClusterNameHolder(nodeCache) {
     override def close(): Unit = {
       val k8sClient = K8SClient(API_SERVER_URL.get)

@@ -48,8 +48,8 @@ class TestK8SClusterCollieByConfigurator extends BasicTests4ClusterCollieByConfi
           node =>
             Node(name = node,
                  port = 22,
-                 user = "",
-                 password = "",
+                 user = "fake",
+                 password = "fake",
                  services = Seq.empty,
                  lastModified = CommonUtils.current()))
 
