@@ -292,8 +292,8 @@ public class TaskSetting {
   }
 
   // ----------------------------------[helper methods]----------------------------------//
-  public String id() {
-    return stringValue(SettingDefinition.CONNECTOR_ID_DEFINITION.key());
+  public String name() {
+    return stringValue(SettingDefinition.CONNECTOR_NAME_DEFINITION.key());
   }
 
   public List<String> topicNames() {

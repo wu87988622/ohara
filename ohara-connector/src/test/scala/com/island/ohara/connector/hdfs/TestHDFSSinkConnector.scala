@@ -52,7 +52,7 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
     val hdfsSinkConnector = new HDFSSinkConnector()
 
     hdfsSinkConnector.start(
-      ConnectorFormatter.of().id("test").topicName("topic").setting(HDFS_URL, hdfsURL).setting(TMP_DIR, tmpDir).raw())
+      ConnectorFormatter.of().name("test").topicName("topic").setting(HDFS_URL, hdfsURL).setting(TMP_DIR, tmpDir).raw())
     val result = hdfsSinkConnector._taskSettings(maxTasks)
 
     result.size shouldBe maxTasks
@@ -77,7 +77,7 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .id(connectorName)
+        .name(connectorName)
         .connectorClass(classOf[SimpleHDFSSinkConnector])
         .topicName(topicName)
         .settings(Map(flushLineCountName -> flushLineCount.toString, tmpDirName -> tmpDirPath, hdfsURLName -> localURL))
@@ -131,7 +131,7 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .id(connectorName)
+        .name(connectorName)
         .connectorClass(classOf[HDFSSinkConnector])
         .topicName(topicName)
         .numberOfTasks(1)
@@ -210,7 +210,7 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .id(connectorName)
+        .name(connectorName)
         .connectorClass(classOf[HDFSSinkConnector])
         .topicName(topicName)
         .numberOfTasks(1)
@@ -302,7 +302,7 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .id(connectorName)
+        .name(connectorName)
         .connectorClass(classOf[HDFSSinkConnector])
         .topicName(topicName)
         .numberOfTasks(1)
@@ -381,7 +381,7 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .id(connectorName)
+        .name(connectorName)
         .connectorClass(classOf[HDFSSinkConnector])
         .topicName(topicName)
         .numberOfTasks(1)

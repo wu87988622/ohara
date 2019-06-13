@@ -43,7 +43,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
         .connectorCreator()
         .topicName(topicName)
         .connectorClass(classOf[MyConnector])
-        .id(connectorName)
+        .name(connectorName)
         .numberOfTasks(1)
         .create)
 
@@ -62,7 +62,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
         .connectorCreator()
         .topicName(topicName)
         .connectorClass(classOf[BrokenConnector])
-        .id(connectorName)
+        .name(connectorName)
         .numberOfTasks(1)
         .create)
 
@@ -79,7 +79,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
         .connectorCreator()
         .topicName(topicName)
         .connectorClass(classOf[MyConnector])
-        .id(connectorName)
+        .name(connectorName)
         .numberOfTasks(1)
         .create)
     try {
@@ -133,7 +133,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
         .connectorValidator()
         .className(classOf[MyConnector].getName)
         .settings(Map(
-          SettingDefinition.CONNECTOR_ID_DEFINITION.key() -> name,
+          SettingDefinition.CONNECTOR_NAME_DEFINITION.key() -> name,
           SettingDefinition.TOPIC_NAMES_DEFINITION.key() -> StringList.toJsonString(
             Collections.singletonList(topicName)),
           SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key() -> numberOfTasks.toString
@@ -324,18 +324,6 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
       .find(_.key() == SettingDefinition.VALUE_CONVERTER_DEFINITION.key())
       .head
       .defaultValue() shouldBe ConverterType.NONE.className()
-
-    settingDefinitionS.exists(_.key() == SettingDefinition.CONNECTOR_NAME_DEFINITION.key()) shouldBe true
-    settingDefinitionS
-      .find(_.key() == SettingDefinition.CONNECTOR_NAME_DEFINITION.key())
-      .head
-      .group() shouldBe SettingDefinition.CORE_GROUP
-    settingDefinitionS.find(_.key() == SettingDefinition.CONNECTOR_NAME_DEFINITION.key()).head.internal() shouldBe false
-    settingDefinitionS.find(_.key() == SettingDefinition.CONNECTOR_NAME_DEFINITION.key()).head.editable() shouldBe true
-    settingDefinitionS
-      .find(_.key() == SettingDefinition.CONNECTOR_NAME_DEFINITION.key())
-      .head
-      .defaultValue() shouldBe null
   }
 
   @Test
@@ -346,7 +334,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
           .connectorCreator()
           .topicName(CommonUtils.randomString(10))
           .connectorClass(classOf[MyConnector])
-          .id(CommonUtils.randomString(10))
+          .name(CommonUtils.randomString(10))
           .numberOfTasks(1)
           .settings(Map(SettingDefinition.COLUMNS_DEFINITION.key() -> "Asdasdasd"))
           .create)
@@ -363,7 +351,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
           .connectorCreator()
           .topicName(CommonUtils.randomString(10))
           .connectorClass(classOf[MyConnector])
-          .id(CommonUtils.randomString(10))
+          .name(CommonUtils.randomString(10))
           .numberOfTasks(1)
           .settings(Map(MyConnector.DURATION_KEY -> "Asdasdasd"))
           .create)
@@ -379,7 +367,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
         .connectorCreator()
         .topicName(CommonUtils.randomString(10))
         .connectorClass(classOf[MyConnector])
-        .id(CommonUtils.randomString(10))
+        .name(CommonUtils.randomString(10))
         .numberOfTasks(1)
         .settings(Map(MyConnector.DURATION_KEY -> "PT1S"))
         .create)
@@ -391,7 +379,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
         .connectorCreator()
         .topicName(CommonUtils.randomString(10))
         .connectorClass(classOf[MyConnector])
-        .id(CommonUtils.randomString(10))
+        .name(CommonUtils.randomString(10))
         .numberOfTasks(1)
         .settings(Map(MyConnector.DURATION_KEY -> "PT1M1S"))
         .create)
@@ -405,7 +393,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
         .connectorCreator()
         .topicName(CommonUtils.randomString(10))
         .connectorClass(classOf[MyConnector])
-        .id(CommonUtils.randomString(10))
+        .name(CommonUtils.randomString(10))
         .numberOfTasks(1)
         .settings(Map(MyConnector.DURATION_KEY -> "PT1M1S"))
         .create)

@@ -17,7 +17,7 @@
 package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorState._
-import com.island.ohara.client.configurator.v0.ConnectorApi.{ConnectorCreationRequest, _}
+import com.island.ohara.client.configurator.v0.ConnectorApi.{Creation, _}
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.data.{Column, DataType, Serializer}
 import com.island.ohara.common.rule.SmallTest
@@ -26,33 +26,8 @@ import com.island.ohara.kafka.connector.json.{PropGroups, SettingDefinition}
 import org.junit.Test
 import org.scalatest.Matchers
 import spray.json.{JsArray, JsString, _}
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestConnectorApi extends SmallTest with Matchers {
-
-  @Test
-  def testPlain(): Unit = {
-    val className = CommonUtils.randomString()
-    val workerClusterName = CommonUtils.randomString()
-    val topicName = CommonUtils.randomString()
-    val numberOfTasks = 10
-    val (key, value) = ("aaa", "ccc")
-    val column = Column.builder().name("aa").newName("cc").dataType(DataType.FLOAT).order(10).build()
-    val request = ConnectorCreationRequest(
-      className = Some(className),
-      columns = Seq(column),
-      topicNames = Seq(topicName),
-      numberOfTasks = Some(numberOfTasks),
-      settings = Map(key -> value),
-      workerClusterName = Some(workerClusterName)
-    )
-    request.className shouldBe className
-    request.workerClusterName.get shouldBe workerClusterName
-    request.topicNames.size shouldBe 1
-    request.topicNames.head shouldBe topicName
-    request.numberOfTasks.get shouldBe numberOfTasks
-    request.columns.size shouldBe 1
-    request.columns.head shouldBe column
-    request.plain(key) shouldBe value
-  }
 
   // TODO: remove this test after ohara manager starts to use new APIs
   @Test
@@ -100,22 +75,22 @@ class TestConnectorApi extends SmallTest with Matchers {
 
   @Test
   def testSerialization(): Unit = {
-    val request = ConnectorCreationRequest(
+    val request = Creation(
       settings = Map(
         "abc" -> JsString("Asdasdasd"),
         "ccc" -> JsNumber(312313),
         "bbb" -> JsArray(JsString("Asdasdasd"), JsString("aaa")),
         "ddd" -> JsObject("asdasd" -> JsString("Asdasdasd"))
       ))
-    request shouldBe Serializer.OBJECT.from(Serializer.OBJECT.to(request)).asInstanceOf[ConnectorCreationRequest]
+    request shouldBe Serializer.OBJECT.from(Serializer.OBJECT.to(request)).asInstanceOf[Creation]
   }
 
   // TODO: remove this test after ohara manager starts to use new APIs
   @Test
   def testStaleCreationResponseApis(): Unit = {
     val desc = ConnectorDescription(
-      id = CommonUtils.randomString(),
       settings = Map(
+        SettingDefinition.CONNECTOR_NAME_DEFINITION.key() -> JsString(CommonUtils.randomString()),
         SettingDefinition.CONNECTOR_CLASS_DEFINITION.key() -> JsString(CommonUtils.randomString()),
         SettingDefinition.COLUMNS_DEFINITION.key() -> JsNull,
         SettingDefinition.TOPIC_NAMES_DEFINITION.key() -> JsArray(JsString(CommonUtils.randomString())),
@@ -129,7 +104,7 @@ class TestConnectorApi extends SmallTest with Matchers {
     )
     val jsonString = CONNECTOR_DESCRIPTION_JSON_FORMAT.write(desc).toString()
     jsonString.contains("id") shouldBe true
-    jsonString.contains("name") shouldBe false
+    jsonString.contains(SettingDefinition.CONNECTOR_NAME_DEFINITION.key()) shouldBe true
     jsonString.contains(SettingDefinition.CONNECTOR_CLASS_DEFINITION.key()) shouldBe true
     jsonString.contains("className") shouldBe false
     jsonString.contains(SettingDefinition.COLUMNS_DEFINITION.key()) shouldBe true
@@ -166,8 +141,10 @@ class TestConnectorApi extends SmallTest with Matchers {
   @Test
   def renderJsonWithoutAnyRequiredFields(): Unit = {
     val response = ConnectorDescription(
-      id = CommonUtils.randomString(),
-      settings = Map(CommonUtils.randomString() -> JsString(CommonUtils.randomString())),
+      settings = Map(
+        CommonUtils.randomString() -> JsString(CommonUtils.randomString()),
+        SettingDefinition.CONNECTOR_NAME_DEFINITION.key() -> JsString(CommonUtils.randomString())
+      ),
       state = None,
       error = None,
       metrics = Metrics(Seq.empty),
@@ -181,8 +158,10 @@ class TestConnectorApi extends SmallTest with Matchers {
   def renderJsonWithConnectorClass(): Unit = {
     val className = CommonUtils.randomString()
     val response = ConnectorDescription(
-      id = CommonUtils.randomString(),
-      settings = Map(SettingDefinition.CONNECTOR_CLASS_DEFINITION.key() -> JsString(className)),
+      settings = Map(
+        SettingDefinition.CONNECTOR_CLASS_DEFINITION.key() -> JsString(className),
+        SettingDefinition.CONNECTOR_NAME_DEFINITION.key() -> JsString(CommonUtils.randomString())
+      ),
       state = None,
       error = None,
       metrics = Metrics(Seq.empty),
@@ -299,4 +278,64 @@ class TestConnectorApi extends SmallTest with Matchers {
     creationRequest.settings.contains("ftp.hostname") shouldBe false
     creationRequest.settings.contains("ftp.port") shouldBe false
   }
+
+  @Test
+  def ignoreNameOnCreation(): Unit = an[NullPointerException] should be thrownBy ConnectorApi
+    .access()
+    .hostname(CommonUtils.randomString())
+    .port(CommonUtils.availablePort())
+    .request()
+    .create()
+
+  @Test
+  def ignoreNameOnUpdate(): Unit = an[NullPointerException] should be thrownBy ConnectorApi
+    .access()
+    .hostname(CommonUtils.randomString())
+    .port(CommonUtils.availablePort())
+    .request()
+    .update()
+
+  @Test
+  def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy ConnectorApi.access().request().name("")
+
+  @Test
+  def nullName(): Unit = an[NullPointerException] should be thrownBy ConnectorApi.access().request().name(null)
+
+  @Test
+  def emptyClassName(): Unit =
+    an[IllegalArgumentException] should be thrownBy ConnectorApi.access().request().className("")
+
+  @Test
+  def nullClassName(): Unit =
+    an[NullPointerException] should be thrownBy ConnectorApi.access().request().className(null)
+
+  @Test
+  def emptyColumns(): Unit =
+    an[IllegalArgumentException] should be thrownBy ConnectorApi.access().request().columns(Seq.empty)
+
+  @Test
+  def nullColumns(): Unit = an[NullPointerException] should be thrownBy ConnectorApi.access().request().columns(null)
+
+  @Test
+  def emptyWorkerClusterName(): Unit =
+    an[IllegalArgumentException] should be thrownBy ConnectorApi.access().request().workerClusterName("")
+
+  @Test
+  def nullWorkerClusterName(): Unit =
+    an[NullPointerException] should be thrownBy ConnectorApi.access().request().workerClusterName(null)
+
+  @Test
+  def emptyTopicNames(): Unit =
+    an[IllegalArgumentException] should be thrownBy ConnectorApi.access().request().topicNames(Seq.empty)
+
+  @Test
+  def nullTopicNames(): Unit =
+    an[NullPointerException] should be thrownBy ConnectorApi.access().request().topicName(null)
+
+  @Test
+  def emptySettings(): Unit =
+    an[IllegalArgumentException] should be thrownBy ConnectorApi.access().request().settings(Map.empty)
+
+  @Test
+  def nullSettings(): Unit = an[NullPointerException] should be thrownBy ConnectorApi.access().request().settings(null)
 }

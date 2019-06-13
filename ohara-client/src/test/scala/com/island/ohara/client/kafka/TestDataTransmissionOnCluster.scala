@@ -145,7 +145,7 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .id(connectorName)
+        .name(connectorName)
         .connectorClass(classOf[SimpleRowSinkConnector])
         .topicName(topicName)
         .numberOfTasks(1)
@@ -185,7 +185,7 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .id(connectorName)
+        .name(connectorName)
         .connectorClass(classOf[SimpleRowSourceConnector])
         .topicName(topicName2)
         .numberOfTasks(1)
@@ -255,7 +255,7 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .id(connectorName)
+        .name(connectorName)
         .connectorClass(classOf[SimpleRowSinkConnector])
         .topicNames(topics)
         .numberOfTasks(1)

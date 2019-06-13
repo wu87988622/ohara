@@ -22,6 +22,7 @@ import com.island.ohara.client.ftp.FtpClient
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Cell, DataType, Row, Serializer, _}
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.kafka.connector.json.ConnectorFormatter
 import com.island.ohara.kafka.{BrokerClient, Consumer, Producer}
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.{Before, BeforeClass, Test}
@@ -142,7 +143,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
-        .id(connectorName)
+        .name(connectorName)
         .columns(newSchema)
         .settings(props.toMap)
         .create)
@@ -173,7 +174,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
-        .id(connectorName)
+        .name(connectorName)
         .columns(schema)
         .settings(props.copy(needHeader = true).toMap)
         .create)
@@ -205,7 +206,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
-        .id(connectorName)
+        .name(connectorName)
         .settings(props.copy(needHeader = true).toMap)
         .create)
 
@@ -241,7 +242,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
-        .id(connectorName)
+        .name(connectorName)
         .columns(schema)
         .settings(props.copy(needHeader = true).toMap)
         .create)
@@ -273,7 +274,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
-        .id(connectorName)
+        .name(connectorName)
         .columns(schema)
         .settings(props.toMap)
         .create)
@@ -304,7 +305,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
-        .id(connectorName)
+        .name(connectorName)
         .settings(props.toMap)
         .create)
 
@@ -334,7 +335,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
-        .id(connectorName)
+        .name(connectorName)
         .columns(schema)
         //will use default UTF-8
         .settings(props.toMap - FTP_ENCODE)
@@ -366,7 +367,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
-        .id(connectorName)
+        .name(connectorName)
         // skip last column
         .columns(schema.slice(0, schema.length - 1))
         .settings(props.toMap)
@@ -397,7 +398,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
-        .id(connectorName)
+        .name(connectorName)
         // the name can't be casted to int
         .columns(Seq(Column.builder().name("name").dataType(DataType.INT).order(1).build()))
         .settings(props.toMap)
@@ -409,5 +410,23 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       ftpClient.listFileNames(props.outputFolder).size shouldBe 0
       ftpClient.close()
     } finally result(workerClient.delete(connectorName))
+  }
+
+  @Test
+  def testAutoCreateOutput(): Unit = {
+    val props = FtpSinkProps(
+      outputFolder = "/output",
+      needHeader = false,
+      user = testUtil.ftpServer.user,
+      password = testUtil.ftpServer.password,
+      hostname = testUtil.ftpServer.hostname,
+      port = testUtil.ftpServer.port,
+      encode = "UTF-8"
+    )
+
+    val sink = new FtpSink
+    sink.start(ConnectorFormatter.of().name("aa").settings(props.toMap.asJava).raw())
+
+    ftpClient.exist("/output") shouldBe true
   }
 }

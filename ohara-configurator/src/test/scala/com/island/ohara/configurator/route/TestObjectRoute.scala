@@ -16,7 +16,6 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, ObjectApi, TopicApi}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -36,6 +35,8 @@ class TestObjectRoute extends SmallTest with Matchers {
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
   private[this] val initialSize = result(objectApi.list).size
+
+  private[this] val connectorApi = ConnectorApi.access().hostname(configurator.hostname).port(configurator.port)
 
   @Test
   def testTopic(): Unit = {
@@ -76,18 +77,12 @@ class TestObjectRoute extends SmallTest with Matchers {
   @Test
   def testConnector(): Unit = {
     val connector0 = result(
-      ConnectorApi
-        .access()
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .add(ConnectorCreationRequest(
-          workerClusterName = None,
-          className = Some("com.island.ohara.connector.ftp.FtpSink"),
-          columns = Seq.empty,
-          topicNames = Seq.empty,
-          numberOfTasks = Some(1),
-          settings = Map.empty
-        )))
+      connectorApi
+        .request()
+        .name(CommonUtils.randomString(10))
+        .className("com.island.ohara.connector.ftp.FtpSink")
+        .numberOfTasks(1)
+        .create())
 
     var objs = result(objectApi.list)
     objs.size shouldBe (1 + initialSize)
@@ -97,18 +92,12 @@ class TestObjectRoute extends SmallTest with Matchers {
     objs.find(_.id == connector0.id).get.lastModified shouldBe connector0.lastModified
 
     val connector1 = result(
-      ConnectorApi
-        .access()
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .add(ConnectorCreationRequest(
-          workerClusterName = None,
-          className = Some("com.island.ohara.connector.ftp.FtpSink"),
-          columns = Seq.empty,
-          topicNames = Seq.empty,
-          numberOfTasks = Some(1),
-          settings = Map.empty
-        )))
+      connectorApi
+        .request()
+        .name(CommonUtils.randomString(10))
+        .className("com.island.ohara.connector.ftp.FtpSink")
+        .numberOfTasks(1)
+        .create())
 
     objs = result(objectApi.list)
 
@@ -122,18 +111,12 @@ class TestObjectRoute extends SmallTest with Matchers {
   @Test
   def listTopicAndConnector(): Unit = {
     val connector = result(
-      ConnectorApi
-        .access()
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .add(ConnectorCreationRequest(
-          workerClusterName = None,
-          className = Some("com.island.ohara.connector.ftp.FtpSink"),
-          columns = Seq.empty,
-          topicNames = Seq.empty,
-          numberOfTasks = Some(1),
-          settings = Map.empty
-        )))
+      connectorApi
+        .request()
+        .name(CommonUtils.randomString(10))
+        .className("com.island.ohara.connector.ftp.FtpSink")
+        .numberOfTasks(1)
+        .create())
 
     val topic = result(
       TopicApi

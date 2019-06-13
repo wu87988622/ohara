@@ -16,7 +16,6 @@
 
 package com.island.ohara.configurator
 
-import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, PipelineApi, TopicApi}
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -77,16 +76,14 @@ class TestMetrics extends WithBrokerWorker with Matchers {
   def testConnector(): Unit = {
     val topic = result(topicApi.request().name(CommonUtils.randomString()).create())
 
-    val request = ConnectorCreationRequest(
-      workerClusterName = None,
-      className = Some(classOf[DumbSink].getName),
-      columns = Seq.empty,
-      topicNames = Seq(topic.id),
-      numberOfTasks = Some(1),
-      settings = Map.empty
-    )
-
-    val sink = result(connectorApi.add(request))
+    val sink = result(
+      connectorApi
+        .request()
+        .name(CommonUtils.randomString(10))
+        .className(classOf[DumbSink].getName)
+        .topicName(topic.name)
+        .numberOfTasks(1)
+        .create())
 
     sink.metrics.meters.size shouldBe 0
 
@@ -107,16 +104,15 @@ class TestMetrics extends WithBrokerWorker with Matchers {
   def testPipeline(): Unit = {
     val topicName = methodName
     val topic = result(topicApi.request().name(topicName).create())
-    val request = ConnectorCreationRequest(
-      workerClusterName = None,
-      className = Some(classOf[DumbSink].getName),
-      columns = Seq.empty,
-      topicNames = Seq(topic.id),
-      numberOfTasks = Some(1),
-      settings = Map.empty
-    )
 
-    val sink = result(connectorApi.add(request))
+    val sink = result(
+      connectorApi
+        .request()
+        .name(CommonUtils.randomString(10))
+        .className(classOf[DumbSink].getName)
+        .topicName(topic.name)
+        .numberOfTasks(1)
+        .create())
 
     val pipelineApi = PipelineApi.access().hostname(configurator.hostname).port(configurator.port)
 
@@ -142,19 +138,16 @@ class TestMetrics extends WithBrokerWorker with Matchers {
   def testTopicMeterInPerfSource(): Unit = {
     val topicName = CommonUtils.randomString()
     val topic = result(topicApi.request().name(topicName).create())
-    val request = ConnectorCreationRequest(
-      workerClusterName = None,
-      className = Some("com.island.ohara.connector.perf.PerfSource"),
-      columns = Seq.empty,
-      topicNames = Seq(topic.id),
-      numberOfTasks = Some(1),
-      settings = Map(
-        "perf.batch" -> "1",
-        "perf.frequence" -> java.time.Duration.ofSeconds(1).toString
-      )
-    )
 
-    val source = result(connectorApi.add(request))
+    val source = result(
+      connectorApi
+        .request()
+        .name(CommonUtils.randomString(10))
+        .className("com.island.ohara.connector.perf.PerfSource")
+        .topicName(topic.name)
+        .numberOfTasks(1)
+        .settings(Map("perf.batch" -> "1", "perf.frequence" -> java.time.Duration.ofSeconds(1).toString))
+        .create())
 
     val pipelineApi = PipelineApi.access().hostname(configurator.hostname).port(configurator.port)
 

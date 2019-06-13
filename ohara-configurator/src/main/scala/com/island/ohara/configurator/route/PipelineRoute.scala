@@ -105,7 +105,7 @@ private[configurator] object PipelineRoute {
           case (pipeline, clustersOption) =>
             clustersOption
               .map { clusters =>
-                verifyFlows(pipeline.id, pipeline.flows, clusters._2).map { flows =>
+                verifyFlows(pipeline.name, pipeline.flows, clusters._2).map { flows =>
                   (pipeline.copy(flows = flows), Some(clusters))
                 }
               }
@@ -158,22 +158,22 @@ private[configurator] object PipelineRoute {
             case data: ConnectorDescription =>
               // the group of counter is equal to connector's name (this is a part of kafka's core setting)
               // Hence, we filter the connectors having different "name" (we use id instead of name in creating connector)
-              val metrics = Metrics(connectorMeters.getOrElse(data.id, Seq.empty))
+              val metrics = Metrics(connectorMeters.getOrElse(data.name, Seq.empty))
               workerClient
-                .exist(data.id)
-                .flatMap(if (_) workerClient.status(data.id).map(Some(_)) else Future.successful(None))
+                .exist(data.name)
+                .flatMap(if (_) workerClient.status(data.name).map(Some(_)) else Future.successful(None))
                 .map { connectorInfo =>
                   connectorInfo -> SettingDefinitions.kind(
                     connectors
                       .find(_.className == data.className)
-                      .getOrElse(throw new NoSuchElementException(s"${data.className} doesn't exist"))
+                      .getOrElse(throw new ClassNotFoundException(s"connector class:${data.className} doesn't exist"))
                       .definitions
                       .asJava)
                 }
                 .map {
                   case (connectorInfo, kind) =>
                     ObjectAbstract(
-                      id = data.id,
+                      id = data.name,
                       name = data.name,
                       kind = kind,
                       className = Some(data.className),
@@ -185,14 +185,14 @@ private[configurator] object PipelineRoute {
                 }
                 .recover {
                   case e: Throwable =>
-                    LOG.error(s"Failed to get status of connector:${data.id}", e)
+                    LOG.error(s"Failed to get status of connector:${data.name}", e)
                     ObjectAbstract(
-                      id = data.id,
+                      id = data.name,
                       name = data.name,
                       kind = data.kind,
                       className = None,
                       state = None,
-                      error = Some(s"Failed to get status and type of connector:${data.id}." +
+                      error = Some(s"Failed to get status and type of connector:${data.name}." +
                         s"This may be temporary since our worker cluster is too busy to sync status of connector. ${e.getMessage}"),
                       metrics = metrics,
                       lastModified = data.lastModified
@@ -234,19 +234,19 @@ private[configurator] object PipelineRoute {
 
             case data: TopicInfo =>
               Future.successful(ObjectAbstract(
-                id = data.id,
+                id = data.name,
                 name = data.name,
                 kind = data.kind,
                 className = None,
                 state = None,
                 error = None,
                 // noted we create a topic with id rather than name
-                metrics = Metrics(topicMeters.getOrElse(data.id, Seq.empty)),
+                metrics = Metrics(topicMeters.getOrElse(data.name, Seq.empty)),
                 lastModified = data.lastModified
               ))
             case data =>
               Future.successful(
-                ObjectAbstract(id = data.id,
+                ObjectAbstract(id = data.name,
                                name = data.name,
                                kind = data.kind,
                                className = None,
@@ -440,9 +440,9 @@ private[configurator] object PipelineRoute {
                             objs
                             // we only remove connectors. The streamapps and topics are still stored!
                               .filter(_.isInstanceOf[ConnectorDescription])
-                              .map(_.id)
+                              .map(_.name)
                               .map(store.remove[ConnectorDescription]))
-                          .map(_ => pipeline.id)
+                          .map(_ => pipeline.name)
                       }
                   }
             }

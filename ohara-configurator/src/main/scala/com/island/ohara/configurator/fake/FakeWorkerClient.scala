@@ -70,7 +70,8 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
     Future.successful(cachedConnectors.keys.asScala.toSeq)
   override def connectionProps: String = "Unknown"
   override def status(name: String)(implicit executionContext: ExecutionContext): Future[ConnectorInfo] =
-    if (!cachedConnectors.containsKey(name)) Future.failed(new IllegalArgumentException(s"$name doesn't exist"))
+    if (!cachedConnectors.containsKey(name))
+      Future.failed(new IllegalArgumentException(s"connector:$name doesn't exist"))
     else
       Future.successful(
         ConnectorInfo(name, ConnectorStatus(cachedConnectorsState.get(name), "fake id", None), Seq.empty))

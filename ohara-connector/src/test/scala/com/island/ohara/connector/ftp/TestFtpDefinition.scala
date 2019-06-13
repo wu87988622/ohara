@@ -38,6 +38,7 @@ class TestFtpDefinition extends WithBrokerWorker with Matchers {
     val response = result(
       workerClient
         .connectorValidator()
+        .name(CommonUtils.randomString())
         .numberOfTasks(1)
         .topicName(CommonUtils.randomString(5))
         .connectorClass(classOf[FtpSource])
@@ -88,6 +89,7 @@ class TestFtpDefinition extends WithBrokerWorker with Matchers {
     val response = result(
       workerClient
         .connectorValidator()
+        .name(CommonUtils.randomString())
         .numberOfTasks(1)
         .topicName(CommonUtils.randomString(5))
         .connectorClass(classOf[FtpSink])

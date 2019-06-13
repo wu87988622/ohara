@@ -73,7 +73,7 @@ class TestJDBCSourceConnector extends With3Brokers3Workers with Matchers {
     Await.result(
       workerClient
         .connectorCreator()
-        .id(connectorName)
+        .name(connectorName)
         .connectorClass(classOf[JDBCSourceConnector])
         .topicName(topicName)
         .numberOfTasks(1)

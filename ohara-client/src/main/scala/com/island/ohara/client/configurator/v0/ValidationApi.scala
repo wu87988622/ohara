@@ -15,7 +15,7 @@
  */
 
 package com.island.ohara.client.configurator.v0
-import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
+import com.island.ohara.client.configurator.v0.ConnectorApi.Creation
 import com.island.ohara.client.configurator.v0.QueryApi.RdbInfo
 import com.island.ohara.kafka.connector.json._
 import spray.json.DefaultJsonProtocol.{jsonFormat3, _}
@@ -141,14 +141,21 @@ object ValidationApi {
     override def read(json: JsValue): SettingInfo = SettingInfo.ofJson(json.toString())
   }
 
-  sealed abstract class Access(prefix: String) extends BasicAccess(prefix) {
+  /**
+    * used to send the validation request to Configurator.
+    */
+  abstract class ConnectorRequest extends com.island.ohara.client.configurator.v0.ConnectorApi.BasicRequest {
 
     /**
       * used to verify the setting of connector on specific worker cluster
-      * @param request hdfs info
       * @return validation reports
       */
-    def verify(request: ConnectorCreationRequest)(implicit executionContext: ExecutionContext): Future[SettingInfo]
+    def verify()(implicit executionContext: ExecutionContext): Future[SettingInfo]
+  }
+
+  sealed abstract class Access(prefix: String) extends BasicAccess(prefix) {
+
+    def connectorRequest(): ConnectorRequest
 
     /**
       * used to verify the hdfs information on "default" worker cluster
@@ -204,8 +211,9 @@ object ValidationApi {
       implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] =
       exec.put[NodeValidationRequest, Seq[ValidationReport], ErrorApi.Error](url(VALIDATION_NODE_PREFIX_PATH), request)
 
-    override def verify(request: ConnectorCreationRequest)(
-      implicit executionContext: ExecutionContext): Future[SettingInfo] =
-      exec.put[ConnectorCreationRequest, SettingInfo, ErrorApi.Error](url(VALIDATION_CONNECTOR_PREFIX_PATH), request)
+    override def connectorRequest(): ConnectorRequest = new ConnectorRequest {
+      override def verify()(implicit executionContext: ExecutionContext): Future[SettingInfo] =
+        exec.put[Creation, SettingInfo, ErrorApi.Error](url(VALIDATION_CONNECTOR_PREFIX_PATH), creation())
+    }
   }
 }

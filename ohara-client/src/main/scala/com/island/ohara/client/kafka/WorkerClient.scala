@@ -299,11 +299,11 @@ object WorkerClient {
     /**
       * set the connector id. It should be a unique id.
       *
-      * @param id connector id
+      * @param name connector name
       * @return this one
       */
-    def id(id: String): Creator = {
-      connectorFormatter.id(id)
+    def name(name: String): Creator = {
+      connectorFormatter.name(name)
       this
     }
 
@@ -429,13 +429,7 @@ object WorkerClient {
   }
 
   trait Validator {
-    private[this] val formatter: ConnectorFormatter = {
-      val tmp = ConnectorFormatter.of()
-      // id is required now but it is always assigned by configurator.
-      // We generate the name for it to avoid error
-      tmp.id(CommonUtils.randomString())
-      tmp
-    }
+    private[this] val formatter: ConnectorFormatter = ConnectorFormatter.of()
 
     def className(className: String): Validator = {
       this.formatter.className(CommonUtils.requireNonEmpty(className))
@@ -495,6 +489,11 @@ object WorkerClient {
     @Optional("Default is none")
     def columns(columns: Seq[Column]): Validator = {
       this.formatter.columns(CommonUtils.requireNonEmpty(columns.asJava))
+      this
+    }
+
+    def name(name: String): Validator = {
+      this.formatter.name(name)
       this
     }
 

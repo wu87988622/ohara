@@ -16,7 +16,6 @@
 
 package com.island.ohara.configurator.validation
 
-import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
 import com.island.ohara.client.configurator.v0.{ValidationApi, WorkerApi}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.{Configurator, DumbSink}
@@ -44,14 +43,13 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .verify(ConnectorCreationRequest(
-          className = Some(classOf[DumbSink].getName),
-          topicNames = topicNames,
-          numberOfTasks = Some(1),
-          workerClusterName = Some(wkCluster.name),
-          columns = Seq.empty,
-          settings = Map.empty
-        )))
+        .connectorRequest()
+        .name(CommonUtils.randomString(10))
+        .className(classOf[DumbSink].getName)
+        .numberOfTasks(1)
+        .workerClusterName(wkCluster.name)
+        .topicNames(topicNames)
+        .verify())
     response.className.get() shouldBe classOf[DumbSink].getName
     response.settings().size() should not be 0
     response.numberOfTasks().get() shouldBe 1
@@ -71,15 +69,12 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
       .access()
       .hostname(configurator.hostname)
       .port(configurator.port)
-      .verify(
-        ConnectorCreationRequest(
-          className = Some(classOf[DumbSink].getName),
-          topicNames = Seq.empty,
-          numberOfTasks = None,
-          workerClusterName = None,
-          columns = Seq.empty,
-          settings = Map.empty
-        )))
+      .connectorRequest()
+      .name(CommonUtils.randomString(10))
+      .numberOfTasks(1)
+      .workerClusterName(wkCluster.name)
+      .topicName(CommonUtils.randomString())
+      .verify())
 
   @Test
   def ignoreTopicName(): Unit = an[IllegalArgumentException] should be thrownBy result(
@@ -87,15 +82,12 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
       .access()
       .hostname(configurator.hostname)
       .port(configurator.port)
-      .verify(
-        ConnectorCreationRequest(
-          className = None,
-          topicNames = Seq.empty,
-          numberOfTasks = None,
-          workerClusterName = None,
-          columns = Seq.empty,
-          settings = Map.empty
-        )))
+      .connectorRequest()
+      .name(CommonUtils.randomString(10))
+      .className(classOf[DumbSink].getName)
+      .numberOfTasks(1)
+      .workerClusterName(wkCluster.name)
+      .verify())
 
   @Test
   def ignoreWorkerCluster(): Unit = {
@@ -104,15 +96,38 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .verify(ConnectorCreationRequest(
-          className = Some(classOf[DumbSink].getName),
-          // After kafka 1.1.0, each sink connector must set `topics` or `topics.regex`
-          topicNames = Seq(CommonUtils.randomString(5)),
-          numberOfTasks = None,
-          workerClusterName = None,
-          columns = Seq.empty,
-          settings = Map.empty
-        )))
+        .connectorRequest()
+        .name(CommonUtils.randomString(10))
+        .className(classOf[DumbSink].getName)
+        .numberOfTasks(2)
+        .topicName(CommonUtils.randomString())
+        .verify())
+    response.className.get() shouldBe classOf[DumbSink].getName
+    response.settings().size() should not be 0
+    response.numberOfTasks().get shouldBe 2
+    response.topicNames().size() shouldBe 1
+    response.author().isPresent shouldBe true
+    response.version().isPresent shouldBe true
+    response.revision().isPresent shouldBe true
+    // configurator auto-match a worker cluster for this validation.
+    response.workerClusterName().get shouldBe wkCluster.name
+    response.connectorType().isPresent shouldBe true
+    response.errorCount() shouldBe 0
+  }
+
+  @Test
+  def ignoreNumberOfTasks(): Unit = {
+    val response = result(
+      ValidationApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .connectorRequest()
+        .name(CommonUtils.randomString(10))
+        .className(classOf[DumbSink].getName)
+        .topicName(CommonUtils.randomString())
+        .workerClusterName(wkCluster.name)
+        .verify())
     response.className.get() shouldBe classOf[DumbSink].getName
     response.settings().size() should not be 0
     response.numberOfTasks().isPresent shouldBe false
@@ -120,7 +135,7 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
     response.author().isPresent shouldBe true
     response.version().isPresent shouldBe true
     response.revision().isPresent shouldBe true
-    response.workerClusterName().isPresent shouldBe true
+    response.workerClusterName().get shouldBe wkCluster.name
     response.connectorType().isPresent shouldBe true
     response.errorCount() should not be 0
   }

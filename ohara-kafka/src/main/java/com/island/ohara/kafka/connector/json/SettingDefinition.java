@@ -48,16 +48,13 @@ public class SettingDefinition implements JsonObject {
   static final String COLUMN_DATA_TYPE_KEY = "dataType";
   // -------------------------------[default setting]-------------------------------//
   private static final AtomicInteger ORDER_COUNTER = new AtomicInteger(0);
-  /**
-   * this setting is mapped to kafka's name. In starting connector, ohara assign id to connector
-   * rather than the name specified by user.
-   */
-  public static final SettingDefinition CONNECTOR_ID_DEFINITION =
+  /** this setting is mapped to kafka's name. */
+  public static final SettingDefinition CONNECTOR_NAME_DEFINITION =
       SettingDefinition.builder()
-          .displayName("Connector id")
+          .displayName("Connector name")
           .key("name")
           .valueType(Type.STRING)
-          .documentation("the id of this connector")
+          .documentation("the name of this connector")
           .group(CORE_GROUP)
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .internal()
@@ -71,16 +68,6 @@ public class SettingDefinition implements JsonObject {
           .documentation("the class name of connector")
           .group(CORE_GROUP)
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
-          .build();
-  public static final SettingDefinition CONNECTOR_NAME_DEFINITION =
-      SettingDefinition.builder()
-          .displayName("Connector name")
-          .key("connector.name")
-          .valueType(Type.STRING)
-          .documentation("the name of connector")
-          .group(CORE_GROUP)
-          .orderInGroup(ORDER_COUNTER.getAndIncrement())
-          .optional()
           .build();
   public static final SettingDefinition TOPIC_NAMES_DEFINITION =
       SettingDefinition.builder()

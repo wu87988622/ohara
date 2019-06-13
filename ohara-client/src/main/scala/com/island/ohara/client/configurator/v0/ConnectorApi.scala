@@ -16,10 +16,13 @@
 
 package com.island.ohara.client.configurator.v0
 import com.island.ohara.client.Enum
+import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.data.{Column, DataType}
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json.{PropGroups, SettingDefinition, StringList}
-import spray.json.{JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 import spray.json.DefaultJsonProtocol._
+import spray.json.{JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
+
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -60,7 +63,7 @@ object ConnectorApi {
     )
   }
 
-  final case class ConnectorCreationRequest(settings: Map[String, JsValue]) {
+  final case class Creation(settings: Map[String, JsValue]) extends CreationRequest {
 
     /**
       * Convert all json value to plain string. It keeps the json format but all stuff are in string.
@@ -77,7 +80,7 @@ object ConnectorApi {
       .get(SettingDefinition.COLUMNS_DEFINITION.key())
       .map(s => PropGroups.ofJson(s).toColumns.asScala)
       .getOrElse(Seq.empty)
-    def changeNumberOfTasks(newValue: Int): ConnectorCreationRequest = ConnectorCreationRequest(
+    def changeNumberOfTasks(newValue: Int): Creation = Creation(
       settings = this.settings ++ Map(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key() -> JsNumber(newValue))
     )
     def numberOfTasks: Option[Int] = plain.get(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key()).map(_.toInt)
@@ -87,42 +90,13 @@ object ConnectorApi {
         .get(SettingDefinition.TOPIC_NAMES_DEFINITION.key())
         .map(s => StringList.ofJson(s).asScala)
         .getOrElse(Seq.empty)
+    override def name: String = plain(SettingDefinition.CONNECTOR_NAME_DEFINITION.key())
   }
 
-  object ConnectorCreationRequest {
-    import spray.json._
-
-    /**
-      * this is a helper method to initialize ConnectorCreationRequest with common settings.
-      */
-    def apply(className: Option[String],
-              columns: Seq[Column],
-              topicNames: Seq[String],
-              numberOfTasks: Option[Int],
-              settings: Map[String, String],
-              workerClusterName: Option[String]): ConnectorCreationRequest = ConnectorCreationRequest(
-      settings = settings.map {
-        case (k, v) => k -> JsString(v)
-      } ++ Map(
-        SettingDefinition.CONNECTOR_CLASS_DEFINITION.key() -> className.map(JsString(_)),
-        SettingDefinition.COLUMNS_DEFINITION
-          .key() -> (if (columns.isEmpty) None
-                     else Some(PropGroups.ofColumns(columns.asJava).toJsonString.parseJson)),
-        SettingDefinition.TOPIC_NAMES_DEFINITION.key() -> (if (topicNames.isEmpty) None
-                                                           else
-                                                             Some(
-                                                               StringList.toJsonString(topicNames.asJava).parseJson)),
-        SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key() -> numberOfTasks.map(JsNumber(_)),
-        SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key() -> workerClusterName.map(JsString(_))
-      ).filter(_._2.nonEmpty).map(e => e._1 -> e._2.get)
-    )
-  }
-
-  implicit val CONNECTOR_CREATION_REQUEST_JSON_FORMAT: RootJsonFormat[ConnectorCreationRequest] =
-    new RootJsonFormat[ConnectorCreationRequest] {
-      override def write(obj: ConnectorCreationRequest): JsValue = JsObject(noJsNull(obj.settings))
-      override def read(json: JsValue): ConnectorCreationRequest = ConnectorCreationRequest(
-        noJsNull(json.asJsObject.fields))
+  implicit val CONNECTOR_CREATION_REQUEST_JSON_FORMAT: RootJsonFormat[Creation] =
+    new RootJsonFormat[Creation] {
+      override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
+      override def read(json: JsValue): Creation = Creation(noJsNull(json.asJsObject.fields))
     }
 
   import MetricsApi._
@@ -130,8 +104,7 @@ object ConnectorApi {
   /**
     * this is what we store in configurator
     */
-  final case class ConnectorDescription(id: String,
-                                        settings: Map[String, JsValue],
+  final case class ConnectorDescription(settings: Map[String, JsValue],
                                         state: Option[ConnectorState],
                                         error: Option[String],
                                         metrics: Metrics,
@@ -149,13 +122,8 @@ object ConnectorApi {
         })
     }
 
-    /**
-      * In starting connector, the name of connector is replaced by connector id.
-      * That is to say, the name should be same with id. However, user may "set" their custom name and we should
-      * display the custom name by default.
-      * @return name
-      */
-    override def name: String = plain.getOrElse(SettingDefinition.CONNECTOR_NAME_DEFINITION.key(), id)
+    override def id: String = name
+    override def name: String = plain(SettingDefinition.CONNECTOR_NAME_DEFINITION.key())
     override def kind: String = "connector"
     def className: String = plain(SettingDefinition.CONNECTOR_CLASS_DEFINITION.key())
 
@@ -179,15 +147,131 @@ object ConnectorApi {
         ConnectorState.forName(json.asInstanceOf[JsString].value)
     }
 
+  implicit val CONNECTOR_DESCRIPTION_JSON_FORMAT: RootJsonFormat[ConnectorDescription] =
+    new RootJsonFormat[ConnectorDescription] {
+      private[this] val format = jsonFormat5(ConnectorDescription)
+      override def read(json: JsValue): ConnectorDescription = format.read(json)
+      override def write(obj: ConnectorDescription): JsValue = JsObject(
+        // TODO: remove the id
+        format.write(obj).asJsObject.fields ++ Map("id" -> JsString(obj.name)))
+    }
+
   /**
-    * we write custom unmarshal to support old api
-    * TODO: remove this ugly convert after ohara manager starts to use new APIs
+    * used to generate the payload and url for POST/PUT request.
+    * This basic class is used to collect settings of connector. It is also used by validation so we extract the same behavior from Request
     */
-  implicit val CONNECTOR_DESCRIPTION_JSON_FORMAT: RootJsonFormat[ConnectorDescription] = jsonFormat6(
-    ConnectorDescription)
+  abstract class BasicRequest {
+    protected[this] var name: String = _
+    protected[this] var className: String = _
+    protected[this] var columns: Seq[Column] = _
+    protected[this] var topicNames: Seq[String] = _
+    protected[this] var numberOfTasks: Option[Int] = None
+    protected[this] var settings: Map[String, String] = Map.empty
+    protected[this] var workerClusterName: String = _
+    def name(name: String): BasicRequest.this.type = {
+      this.name = CommonUtils.requireNonEmpty(name)
+      this
+    }
+    @Optional(
+      "You don't need to fill this field when update/create connector. But this filed is required in starting connector")
+    def className(className: String): BasicRequest.this.type = {
+      this.className = CommonUtils.requireNonEmpty(className)
+      this
+    }
+    @Optional("Not all connectors demand this field. See connectors document for more details")
+    def columns(columns: Seq[Column]): BasicRequest.this.type = {
+      import scala.collection.JavaConverters._
+      this.columns = CommonUtils.requireNonEmpty(columns.asJava).asScala
+      this
+    }
+    @Optional(
+      "You don't need to fill this field when update/create connector. But this filed is required in starting connector")
+    def topicName(topicName: String): BasicRequest.this.type = topicNames(Seq(CommonUtils.requireNonEmpty(topicName)))
+    @Optional(
+      "You don't need to fill this field when update/create connector. But this filed is required in starting connector")
+    def topicNames(topicNames: Seq[String]): BasicRequest.this.type = {
+      import scala.collection.JavaConverters._
+      this.topicNames = CommonUtils.requireNonEmpty(topicNames.asJava).asScala
+      this
+    }
+    @Optional(
+      "You don't need to fill this field when update/create connector. But this filed is required in starting connector")
+    def numberOfTasks(numberOfTasks: Int): BasicRequest.this.type = {
+      this.numberOfTasks = Some(CommonUtils.requirePositiveInt(numberOfTasks))
+      this
+    }
+    @Optional("server will match a worker cluster for you if the wk name is ignored")
+    def workerClusterName(workerClusterName: String): BasicRequest.this.type = {
+      this.workerClusterName = CommonUtils.requireNonEmpty(workerClusterName)
+      this
+    }
+    @Optional("extra settings for this connectors")
+    def setting(key: String, value: String): BasicRequest.this.type = settings(
+      Map(CommonUtils.requireNonEmpty(key) -> CommonUtils.requireNonEmpty(value)))
+    @Optional("extra settings for this connectors")
+    def settings(settings: Map[String, String]): BasicRequest.this.type = {
+      import scala.collection.JavaConverters._
+      this.settings = CommonUtils.requireNonEmpty(settings.asJava).asScala.toMap
+      this
+    }
+
+    import spray.json._
+
+    /**
+      * generate the payload for request. It removes the ignored fields and keeping all value in json representation.
+      * This method is exposed to sub classes since this generation is not friendly and hence we should reuse it as much as possible.
+      * @return creation object
+      */
+    protected def creation(): Creation = Creation(
+      settings = (settings.map {
+        case (k, v) => k -> JsString(v)
+      } ++ Map(
+        SettingDefinition.CONNECTOR_NAME_DEFINITION.key() -> JsString(CommonUtils.requireNonEmpty(name)),
+        SettingDefinition.CONNECTOR_CLASS_DEFINITION.key() -> (if (className == null) JsNull
+                                                               else JsString(CommonUtils.requireNonEmpty(className))),
+        SettingDefinition.COLUMNS_DEFINITION.key() -> (if (columns == null) JsNull
+                                                       else if (columns.isEmpty) JsArray()
+                                                       else
+                                                         PropGroups.ofColumns(columns.asJava).toJsonString.parseJson),
+        SettingDefinition.TOPIC_NAMES_DEFINITION.key() -> (if (topicNames == null) JsNull
+                                                           else if (topicNames.isEmpty) JsArray()
+                                                           else StringList.toJsonString(topicNames.asJava).parseJson),
+        SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key() -> numberOfTasks.map(JsNumber(_)).getOrElse(JsNull),
+        SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION
+          .key() -> (if (workerClusterName == null) JsNull
+                     else JsString(CommonUtils.requireNonEmpty(workerClusterName)))
+      )).filter {
+        case (_, value) =>
+          value match {
+            case JsNull => false
+            case _      => true
+          }
+      }
+    )
+  }
+
+  /**
+    * The do-action methods are moved from BasicRequest to this one. Hence, ValidationApi ConnectorRequest does not have those weired methods
+    */
+  abstract class Request extends BasicRequest {
+
+    /**
+      * generate the POST request
+      * @param executionContext thread pool
+      * @return created data
+      */
+    def create()(implicit executionContext: ExecutionContext): Future[ConnectorDescription]
+
+    /**
+      * generate the PUT request
+      * @param executionContext thread pool
+      * @return updated/created data
+      */
+    def update()(implicit executionContext: ExecutionContext): Future[ConnectorDescription]
+  }
+
   class Access private[v0]
-      extends com.island.ohara.client.configurator.v0.Access[ConnectorCreationRequest, ConnectorDescription](
-        CONNECTORS_PREFIX_PATH) {
+      extends com.island.ohara.client.configurator.v0.Access2[ConnectorDescription](CONNECTORS_PREFIX_PATH) {
 
     private[this] def actionUrl(id: String, action: String): String =
       s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$id/$action"
@@ -227,6 +311,15 @@ object ConnectorApi {
       */
     def resume(id: String)(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
       exec.put[ConnectorDescription, ErrorApi.Error](actionUrl(id, RESUME_COMMAND))
+
+    def request(): Request = new Request {
+      override def create()(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
+        exec.post[Creation, ConnectorDescription, ErrorApi.Error](_url, creation())
+
+      override def update()(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
+        exec.put[Creation, ConnectorDescription, ErrorApi.Error](s"${_url}/${CommonUtils.requireNonEmpty(name)}",
+                                                                 creation())
+    }
   }
 
   def access(): Access = new Access

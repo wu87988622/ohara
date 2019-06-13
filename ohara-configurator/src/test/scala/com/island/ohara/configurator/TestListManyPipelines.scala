@@ -16,7 +16,6 @@
 
 package com.island.ohara.configurator
 
-import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, PipelineApi, TopicApi}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.testing.WithBrokerWorker
@@ -45,20 +44,18 @@ class TestListManyPipelines extends WithBrokerWorker with Matchers {
         .name(CommonUtils.randomString(10))
         .create()
     )
+
     val connector = result(
       ConnectorApi
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(ConnectorCreationRequest(
-          className = Some("com.island.ohara.connector.perf.PerfSource"),
-          columns = Seq.empty,
-          topicNames = Seq(topic.name),
-          numberOfTasks = Some(1),
-          settings = Map.empty,
-          workerClusterName = None
-        ))
-    )
+        .request()
+        .name(CommonUtils.randomString(10))
+        .className("com.island.ohara.connector.perf.PerfSource")
+        .topicName(topic.name)
+        .numberOfTasks(1)
+        .create())
 
     val pipelines = (0 until numberOfPipelines).map { index =>
       result(
@@ -68,7 +65,7 @@ class TestListManyPipelines extends WithBrokerWorker with Matchers {
           .port(configurator.port)
           .request()
           .name(CommonUtils.randomString())
-          .flow(connector.id, topic.name)
+          .flow(connector.name, topic.name)
           .create()
       )
     }
@@ -77,7 +74,7 @@ class TestListManyPipelines extends WithBrokerWorker with Matchers {
       Await.result(PipelineApi.access().hostname(configurator.hostname).port(configurator.port).list, 10 seconds)
     pipelines.size shouldBe listPipeline.size
     pipelines.foreach { p =>
-      listPipeline.exists(_.id == p.id) shouldBe true
+      listPipeline.exists(_.name == p.name) shouldBe true
     }
   }
 

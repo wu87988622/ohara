@@ -676,7 +676,7 @@ Apart from custom settings, common settings are required by all connectors. The 
 1. workerClusterName (**string**) — target worker cluster
 
 The following information are updated by ohara.
-1. [id](#object-id) (**string**) — connector's id
+1. name (**string**) — connector's name
 1. lastModified (**long**) — the last time to update this connector
 1. state (**optional(string)**) — the state of a started connector. If the connector is not started, you won't see this field
 1. error (**optional(string)**) — the error message from a failed connector. If the connector is fine or un-started, you won't get this field.
@@ -710,7 +710,7 @@ a connector with above incomplete settings will introduce a error.
 
 ```json
 {
-  "connector.name": "jdbc_name",
+  "name": "jdbc_name",
   "connector.class": "com.island.ohara.connector.ftp.FtpSource"
 }
 ```
@@ -720,7 +720,7 @@ a connector with above incomplete settings will introduce a error.
 ```json
 {
   "lastModified": 1540967970407,
-  "id": "9d128f43-8725-42b2-9377-0dad10863166",
+  "name": "jdbc_name",
   "settings": {
     "connector.name": "jdbc_name",
     "connector.class": "com.island.ohara.connector.ftp.FtpSource"
@@ -733,13 +733,13 @@ a connector with above incomplete settings will introduce a error.
 ----------
 ### update the settings of connector
 
-*PUT /v0/connectors/${id}*
+*PUT /v0/connectors/${name}*
 
 **Example Request**
 
 ```json
 {
-  "connector.name": "jdbc_name",
+  "name": "jdbc_name",
   "connector.class": "com.island.ohara.connector.ftp.FtpSource"
 }
 ```
@@ -749,7 +749,7 @@ a connector with above incomplete settings will introduce a error.
 ```json
 {
   "lastModified": 1540967970407,
-  "id": "9d128f43-8725-42b2-9377-0dad10863166",
+  "name": "jdbc_name",
   "settings": {
     "connector.name": "jdbc_name",
     "connector.class": "com.island.ohara.connector.ftp.FtpSource"
@@ -770,7 +770,7 @@ a connector with above incomplete settings will introduce a error.
 [
   {
     "lastModified": 1540967970407,
-    "id": "9d128f43-8725-42b2-9377-0dad10863166",
+    "name": "jdbc_name",
     "settings": {
       "connector.name": "jdbc_name",
       "connector.class": "com.island.ohara.connector.ftp.FtpSource"
@@ -806,7 +806,7 @@ Deleting the settings used by a running connector is not allowed. You should [st
 ```json
 {
   "lastModified": 1540967970407,
-  "id": "9d128f43-8725-42b2-9377-0dad10863166",
+  "name": "jdbc_name",
   "settings": {
     "connector.name": "jdbc_name",
     "connector.class": "com.island.ohara.connector.ftp.FtpSource"
@@ -819,7 +819,7 @@ Deleting the settings used by a running connector is not allowed. You should [st
 ----------
 ### start a connector
 
-*PUT /v0/connectors/${id}/start*
+*PUT /v0/connectors/${name}/start*
 
 Ohara will send a start request to specific worker cluster to start the connector with stored settings, and then make
 a response to called. The connector is executed async so the connector may be still in starting after you retrieve
@@ -831,7 +831,7 @@ This request is idempotent so it is safe to retry this command repeatedly.
 ```json
 {
   "lastModified": 1540967970407,
-  "id": "9d128f43-8725-42b2-9377-0dad10863166",
+  "name": "jdbc_name",
   "settings": {
     "connector.name": "jdbc_name",
     "connector.class": "com.island.ohara.connector.ftp.FtpSource"
@@ -850,7 +850,7 @@ This request is idempotent so it is safe to retry this command repeatedly.
 ```
 ### stop a connector
 
-*PUT /v0/connectors/${id}/stop*
+*PUT /v0/connectors/${name}/stop*
 
 Ohara will send a stop request to specific worker cluster to stop the connector. The stopped connector will be removed from
 worker cluster. The settings of connector is still kept by ohara so you can start the connector with same settings again
@@ -862,7 +862,7 @@ This request is idempotent so it is safe to send this request repeatedly.
 ```json
 {
   "lastModified": 1540967970407,
-  "id": "9d128f43-8725-42b2-9377-0dad10863166",
+  "name": "jdbc_name",
   "settings": {
     "connector.name": "jdbc_name",
     "connector.class": "com.island.ohara.connector.ftp.FtpSource"
@@ -875,7 +875,7 @@ This request is idempotent so it is safe to send this request repeatedly.
 ----------
 ### pause a connector
 
-*PUT /v0/connectors/${id}/pause*
+*PUT /v0/connectors/${name}/pause*
 
 Pausing a connector is to disable connector to pull/push data from/to source/sink. The connector is still alive in kafka.
 This request is idempotent so it is safe to send this request repeatedly.
@@ -885,7 +885,7 @@ This request is idempotent so it is safe to send this request repeatedly.
 ```json
 {
   "lastModified": 1540967970407,
-  "id": "9d128f43-8725-42b2-9377-0dad10863166",
+  "name": "jdbc_name",
   "settings": {
     "connector.name": "jdbc_name",
     "connector.class": "com.island.ohara.connector.ftp.FtpSource"
@@ -905,7 +905,7 @@ This request is idempotent so it is safe to send this request repeatedly.
 ----------
 ### resume a connector
 
-*PUT /v0/connectors/${id}/resume*
+*PUT /v0/connectors/${name}/resume*
 
 Resuming a connector is to enable connector to pull/push data from/to source/sink.
 This request is idempotent so it is safe to retry this command repeatedly.
@@ -915,7 +915,7 @@ This request is idempotent so it is safe to retry this command repeatedly.
 ```json
 {
   "lastModified": 1540967970407,
-  "id": "9d128f43-8725-42b2-9377-0dad10863166",
+  "name": "jdbc_name",
   "settings": {
     "connector.name": "jdbc_name",
     "connector.class": "com.island.ohara.connector.ftp.FtpSource"

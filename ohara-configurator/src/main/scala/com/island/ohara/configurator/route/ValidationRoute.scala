@@ -20,7 +20,7 @@ import akka.http.scaladsl.model.{ContentTypes, _}
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives.{as, complete, entity, path, pathPrefix, put, _}
 import com.island.ohara.agent.{BrokerCollie, ClusterCollie, WorkerCollie}
-import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
+import com.island.ohara.client.configurator.v0.ConnectorApi.Creation
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.Parameters
 import com.island.ohara.client.configurator.v0.QueryApi.{RdbColumn, RdbInfo, RdbTable}
@@ -148,7 +148,7 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
             .map(Seq(_))
       ) ~ path(VALIDATION_CONNECTOR_PREFIX_PATH) {
         put {
-          entity(as[ConnectorCreationRequest])(
+          entity(as[Creation])(
             req =>
               complete(
                 CollieUtils

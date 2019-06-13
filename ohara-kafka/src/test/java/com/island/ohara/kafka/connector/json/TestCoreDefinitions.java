@@ -129,11 +129,12 @@ public class TestCoreDefinitions extends SmallTest {
   public void testIdSetting() {
     DumbSink sink = new DumbSink();
     ConfigDef.ConfigKey key =
-        sink.config().configKeys().get(SettingDefinition.CONNECTOR_ID_DEFINITION.key());
-    Assert.assertEquals(SettingDefinition.CONNECTOR_ID_DEFINITION.key(), key.name);
-    Assert.assertEquals(SettingDefinition.CONNECTOR_ID_DEFINITION.orderInGroup(), key.orderInGroup);
-    Assert.assertEquals(SettingDefinition.CONNECTOR_ID_DEFINITION.group(), key.group);
-    Assert.assertEquals(SettingDefinition.CONNECTOR_ID_DEFINITION.valueType(), key.type.name());
+        sink.config().configKeys().get(SettingDefinition.CONNECTOR_NAME_DEFINITION.key());
+    Assert.assertEquals(SettingDefinition.CONNECTOR_NAME_DEFINITION.key(), key.name);
+    Assert.assertEquals(
+        SettingDefinition.CONNECTOR_NAME_DEFINITION.orderInGroup(), key.orderInGroup);
+    Assert.assertEquals(SettingDefinition.CONNECTOR_NAME_DEFINITION.group(), key.group);
+    Assert.assertEquals(SettingDefinition.CONNECTOR_NAME_DEFINITION.valueType(), key.type.name());
   }
 
   @Test

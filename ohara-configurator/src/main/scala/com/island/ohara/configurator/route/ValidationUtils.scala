@@ -109,7 +109,7 @@ object ValidationUtils {
     val validationName = s"Validator-${CommonUtils.randomString()}"
     workerClient
       .connectorCreator()
-      .id(validationName)
+      .name(validationName)
       .className("com.island.ohara.connector.validation.Validator")
       .numberOfTasks(taskCount)
       .topicName(ValidationApi.INTERNAL_TOPIC)

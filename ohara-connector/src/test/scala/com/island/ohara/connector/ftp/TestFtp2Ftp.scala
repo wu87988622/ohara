@@ -101,7 +101,7 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
-        .id(sinkName)
+        .name(sinkName)
         .columns(schema)
         .settings(sinkProps.toMap)
         .create,
@@ -116,7 +116,7 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
             .topicName(topicName)
             .connectorClass(classOf[FtpSource])
             .numberOfTasks(1)
-            .id(sourceName)
+            .name(sourceName)
             .columns(schema)
             .settings(sourceProps.toMap)
             .create,

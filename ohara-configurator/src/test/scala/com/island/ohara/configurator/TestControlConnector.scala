@@ -18,14 +18,13 @@ package com.island.ohara.configurator
 
 import java.time.Duration
 
-import com.island.ohara.client.configurator.v0.ConnectorApi.{ConnectorCreationRequest, ConnectorState}
+import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorState
 import com.island.ohara.client.configurator.v0.{ConnectorApi, TopicApi}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.{After, Test}
 import org.scalatest.Matchers
-import spray.json.JsString
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -35,7 +34,7 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
   private[this] val configurator =
     Configurator.builder().fake(testUtil.brokersConnProps, testUtil().workersConnProps()).build()
 
-  private[this] val access = ConnectorApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] val connectorApi = ConnectorApi.access().hostname(configurator.hostname).port(configurator.port)
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
@@ -44,50 +43,50 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
     val topicName = methodName
     val topic = result(
       TopicApi.access().hostname(configurator.hostname).port(configurator.port).request().name(topicName).create())
-    val request = ConnectorCreationRequest(
-      workerClusterName = None,
-      className = Some(classOf[DumbSink].getName),
-      columns = Seq.empty,
-      topicNames = Seq(topic.id),
-      numberOfTasks = Some(1),
-      settings = Map.empty
-    )
 
-    val sink = result(access.add(request))
+    val sink = result(
+      connectorApi
+        .request()
+        .name(CommonUtils.randomString(10))
+        .className(classOf[DumbSink].getName)
+        .numberOfTasks(1)
+        .topicName(topic.name)
+        .create())
 
     // test idempotent start
-    (0 until 3).foreach(_ => Await.result(access.start(sink.id), 30 seconds).state should not be None)
+    (0 until 3).foreach(_ => Await.result(connectorApi.start(sink.name), 30 seconds).state should not be None)
     val workerClient = WorkerClient(testUtil.workersConnProps)
     try {
       CommonUtils.await(() =>
-                          try if (result(workerClient.exist(sink.id))) true else false
+                          try if (result(workerClient.exist(sink.name))) true else false
                           catch {
                             case _: Throwable => false
                         },
                         Duration.ofSeconds(30))
-      CommonUtils.await(() => result(workerClient.status(sink.id)).connector.state == ConnectorState.RUNNING,
+      CommonUtils.await(() => result(workerClient.status(sink.name)).connector.state == ConnectorState.RUNNING,
                         Duration.ofSeconds(20))
-      result(access.get(sink.id)).state.get shouldBe ConnectorState.RUNNING
+      result(connectorApi.get(sink.name)).state.get shouldBe ConnectorState.RUNNING
 
       // test idempotent pause
-      (0 until 3).foreach(_ => Await.result(access.pause(sink.id), 10 seconds).state.get shouldBe ConnectorState.PAUSED)
-      CommonUtils.await(() => result(workerClient.status(sink.id)).connector.state == ConnectorState.PAUSED,
+      (0 until 3).foreach(_ =>
+        Await.result(connectorApi.pause(sink.name), 10 seconds).state.get shouldBe ConnectorState.PAUSED)
+      CommonUtils.await(() => result(workerClient.status(sink.name)).connector.state == ConnectorState.PAUSED,
                         Duration.ofSeconds(20))
-      result(access.get(sink.id)).state.get shouldBe ConnectorState.PAUSED
+      result(connectorApi.get(sink.name)).state.get shouldBe ConnectorState.PAUSED
 
       // test idempotent resume
       (0 until 3).foreach(_ =>
-        Await.result(access.resume(sink.id), 10 seconds).state.get shouldBe ConnectorState.RUNNING)
-      CommonUtils.await(() => result(workerClient.status(sink.id)).connector.state == ConnectorState.RUNNING,
+        Await.result(connectorApi.resume(sink.name), 10 seconds).state.get shouldBe ConnectorState.RUNNING)
+      CommonUtils.await(() => result(workerClient.status(sink.name)).connector.state == ConnectorState.RUNNING,
                         Duration.ofSeconds(20))
-      result(access.get(sink.id)).state.get shouldBe ConnectorState.RUNNING
+      result(connectorApi.get(sink.name)).state.get shouldBe ConnectorState.RUNNING
 
       // test idempotent stop. the connector should be removed
-      (0 until 3).foreach(_ => Await.result(access.stop(sink.id), 10 seconds))
-      CommonUtils.await(() => if (result(workerClient.nonExist(sink.id))) true else false, Duration.ofSeconds(20))
-      result(access.get(sink.id)).state shouldBe None
+      (0 until 3).foreach(_ => Await.result(connectorApi.stop(sink.name), 10 seconds))
+      CommonUtils.await(() => if (result(workerClient.nonExist(sink.name))) true else false, Duration.ofSeconds(20))
+      result(connectorApi.get(sink.name)).state shouldBe None
     } finally {
-      if (result(workerClient.exist(sink.id))) result(workerClient.delete(sink.id))
+      if (result(workerClient.exist(sink.name))) result(workerClient.delete(sink.name))
     }
   }
 
@@ -97,37 +96,35 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
     val topic = result(
       TopicApi.access().hostname(configurator.hostname).port(configurator.port).request().name(topicName).create()
     )
-    val request = ConnectorCreationRequest(
-      workerClusterName = None,
-      className = Some(classOf[DumbSink].getName),
-      columns = Seq.empty,
-      topicNames = Seq(topic.id),
-      numberOfTasks = Some(1),
-      settings = Map.empty
-    )
-
-    val sink = result(access.add(request))
+    val sink = result(
+      connectorApi
+        .request()
+        .name(CommonUtils.randomString(10))
+        .className(classOf[DumbSink].getName)
+        .topicName(topic.name)
+        .numberOfTasks(1)
+        .create())
     // test start
-    Await.result(access.start(sink.id), 10 seconds)
+    Await.result(connectorApi.start(sink.name), 10 seconds)
     val workerClient = WorkerClient(testUtil.workersConnProps)
     try {
       CommonUtils.await(() =>
-                          try if (result(workerClient.exist(sink.id))) true else false
+                          try if (result(workerClient.exist(sink.name))) true else false
                           catch {
                             case _: Throwable => false
                         },
                         Duration.ofSeconds(30))
-      CommonUtils.await(() => result(workerClient.status(sink.id)).connector.state == ConnectorState.RUNNING,
+      CommonUtils.await(() => result(workerClient.status(sink.name)).connector.state == ConnectorState.RUNNING,
                         Duration.ofSeconds(20))
 
       an[IllegalArgumentException] should be thrownBy result(
-        access.update(sink.id, request.copy(settings = Map("a" -> JsString("b")))))
+        connectorApi.request().name(sink.name).className(classOf[DumbSink].getName).numberOfTasks(1).create())
 
       // test stop. the connector should be removed
-      Await.result(access.stop(sink.id), 10 seconds)
-      CommonUtils.await(() => if (result(workerClient.nonExist(sink.id))) true else false, Duration.ofSeconds(20))
-      result(access.get(sink.id)).state shouldBe None
-    } finally if (result(workerClient.exist(sink.id))) result(workerClient.delete(sink.id))
+      Await.result(connectorApi.stop(sink.name), 10 seconds)
+      CommonUtils.await(() => if (result(workerClient.nonExist(sink.name))) true else false, Duration.ofSeconds(20))
+      result(connectorApi.get(sink.name)).state shouldBe None
+    } finally if (result(workerClient.exist(sink.name))) result(workerClient.delete(sink.name))
   }
 
   @Test
@@ -136,29 +133,27 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
     val topic = result(
       TopicApi.access().hostname(configurator.hostname).port(configurator.port).request().name(topicName).create()
     )
-    val request = ConnectorCreationRequest(
-      workerClusterName = None,
-      className = Some(classOf[DumbSink].getName),
-      columns = Seq.empty,
-      topicNames = Seq(topic.id),
-      numberOfTasks = Some(1),
-      settings = Map.empty
-    )
-
-    val sink = result(access.add(request))
+    val sink = result(
+      connectorApi
+        .request()
+        .name(CommonUtils.randomString(10))
+        .className(classOf[DumbSink].getName)
+        .topicName(topic.name)
+        .numberOfTasks(1)
+        .create())
     // test start
-    Await.result(access.start(sink.id), 10 seconds)
+    Await.result(connectorApi.start(sink.name), 10 seconds)
     val workerClient = WorkerClient(testUtil.workersConnProps)
     try {
       CommonUtils.await(() =>
-                          try if (result(workerClient.exist(sink.id))) true else false
+                          try if (result(workerClient.exist(sink.name))) true else false
                           catch {
                             case _: Throwable => false
                         },
                         Duration.ofSeconds(30))
-      result(workerClient.delete(sink.id))
-      result(workerClient.exist(sink.id)) shouldBe false
-    } finally if (result(workerClient.exist(sink.id))) result(workerClient.delete(sink.id))
+      result(workerClient.delete(sink.name))
+      result(workerClient.exist(sink.name)) shouldBe false
+    } finally if (result(workerClient.exist(sink.name))) result(workerClient.delete(sink.name))
   }
   @After
   def tearDown(): Unit = Releasable.close(configurator)

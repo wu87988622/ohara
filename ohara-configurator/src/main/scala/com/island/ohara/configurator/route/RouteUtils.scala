@@ -185,7 +185,8 @@ private[route] object RouteUtils {
     * @param hookOfList used to convert response for List function
     * @param hookOfGet used to convert response for Get function
     * @param hookBeforeDelete used to do something before doing delete operation. For example, validate the id.
-    * @tparam Req request
+    * @tparam Creation creation request
+    * @tparam Update creation request
     * @tparam Res response
     * @return route
     */

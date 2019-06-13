@@ -87,7 +87,7 @@ public abstract class RowSourceConnector extends SourceConnector {
   protected CounterBuilder counterBuilder() {
     if (taskSetting == null)
       throw new IllegalArgumentException("you can't create a counter before starting connector");
-    return CounterBuilder.of().group(taskSetting.id());
+    return CounterBuilder.of().group(taskSetting.name());
   }
   // -------------------------------------------------[WRAPPED]-------------------------------------------------//
 

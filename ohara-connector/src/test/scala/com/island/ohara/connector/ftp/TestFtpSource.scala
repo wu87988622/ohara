@@ -23,6 +23,7 @@ import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Cell, DataType, Row, Serializer, _}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.kafka.Consumer.Record
+import com.island.ohara.kafka.connector.json.ConnectorFormatter
 import com.island.ohara.kafka.{BrokerClient, Consumer}
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.{After, Before, Test}
@@ -146,7 +147,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
-        .id(connectorName)
+        .name(connectorName)
         .columns(schema)
         .settings(props.toMap)
         .create)
@@ -186,7 +187,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
-        .id(connectorName)
+        .name(connectorName)
         .columns(Seq(
           Column.builder().name("name").newName("newName").dataType(DataType.STRING).order(1).build(),
           Column.builder().name("ranking").newName("newRanking").dataType(DataType.INT).order(2).build(),
@@ -230,7 +231,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
-        .id(connectorName)
+        .name(connectorName)
         .columns(Seq(
           Column.builder().name("name").dataType(DataType.OBJECT).order(1).build(),
           Column.builder().name("ranking").dataType(DataType.INT).order(2).build(),
@@ -268,7 +269,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
-        .id(connectorName)
+        .name(connectorName)
         .columns(schema)
         .settings(props.toMap)
         .create)
@@ -303,7 +304,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
-        .id(connectorName)
+        .name(connectorName)
         .settings(props.toMap)
         .create)
     try {
@@ -337,7 +338,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
-        .id(connectorName)
+        .name(connectorName)
         .columns(schema)
         // will use default UTF-8
         .settings(props.toMap - FTP_ENCODE)
@@ -372,7 +373,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
-        .id(connectorName)
+        .name(connectorName)
         // skip last column
         .columns(schema.slice(0, schema.length - 1))
         .settings(props.toMap)
@@ -404,7 +405,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
-        .id(connectorName)
+        .name(connectorName)
         // the name can't be casted to int
         .columns(Seq(Column.builder().name("name").dataType(DataType.INT).order(1).build()))
         .settings(props.toMap)
@@ -432,7 +433,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
-        .id(connectorName)
+        .name(connectorName)
         .columns(schema)
         .settings(props.copy(inputFolder = "/abc").toMap)
         .create)
@@ -449,7 +450,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
-        .id(connectorName)
+        .name(connectorName)
         .columns(Seq(
           // 0 is invalid
           Column.builder().name("name").dataType(DataType.STRING).order(0).build(),
@@ -471,7 +472,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
-        .id(connectorName)
+        .name(connectorName)
         .columns(schema)
         .settings(props.copy(completedFolder = None).toMap)
         .create)
@@ -494,6 +495,26 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
 
     } finally result(workerClient.delete(connectorName))
 
+  }
+
+  @Test
+  def testAutoCreateOutput(): Unit = {
+    val props = FtpSourceProps(
+      inputFolder = "/input",
+      completedFolder = Some("/output"),
+      errorFolder = "/error",
+      user = testUtil.ftpServer.user,
+      password = testUtil.ftpServer.password,
+      hostname = testUtil.ftpServer.hostname,
+      port = testUtil.ftpServer.port,
+      encode = "UTF-8"
+    )
+
+    ftpClient.mkdir(props.inputFolder)
+    val source = new FtpSource
+    source.start(ConnectorFormatter.of().name("aa").settings(props.toMap.asJava).raw())
+    ftpClient.exist(props.errorFolder) shouldBe true
+    ftpClient.exist(props.completedFolder.get) shouldBe true
   }
 
   @After

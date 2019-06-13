@@ -43,8 +43,8 @@ public final class ConnectorFormatter {
     converterTypeOfValue(ConverterType.NONE);
   }
 
-  public ConnectorFormatter id(String id) {
-    return setting(SettingDefinition.CONNECTOR_ID_DEFINITION.key(), id);
+  public ConnectorFormatter name(String name) {
+    return setting(SettingDefinition.CONNECTOR_NAME_DEFINITION.key(), name);
   }
 
   public ConnectorFormatter setting(String key, String value) {

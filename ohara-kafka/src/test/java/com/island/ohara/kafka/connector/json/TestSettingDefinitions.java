@@ -128,27 +128,6 @@ public class TestSettingDefinitions extends SmallTest {
   }
 
   @Test
-  public void mustHaveConnectorName() {
-    Assert.assertEquals(
-        1,
-        SettingDefinitions.DEFINITIONS_DEFAULT.stream()
-            .filter(
-                definition ->
-                    definition.key().equals(SettingDefinition.CONNECTOR_NAME_DEFINITION.key()))
-            .count());
-
-    SettingDefinition nameDefinition =
-        SettingDefinitions.DEFINITIONS_DEFAULT.stream()
-            .filter(
-                definition ->
-                    definition.key().equals(SettingDefinition.CONNECTOR_NAME_DEFINITION.key()))
-            .findFirst()
-            .get();
-    Assert.assertNull(nameDefinition.defaultValue());
-    Assert.assertFalse(nameDefinition.required());
-  }
-
-  @Test
   public void checkDuplicate() {
     Assert.assertEquals(
         SettingDefinitions.DEFINITIONS_DEFAULT.size(),
@@ -162,7 +141,7 @@ public class TestSettingDefinitions extends SmallTest {
   public void testIdSetting() {
     SettingDefinition setting =
         SettingDefinitions.DEFINITIONS_DEFAULT.stream()
-            .filter(s -> s.key().equals(SettingDefinition.CONNECTOR_ID_DEFINITION.key()))
+            .filter(s -> s.key().equals(SettingDefinition.CONNECTOR_NAME_DEFINITION.key()))
             .findFirst()
             .get();
     Assert.assertTrue(setting.required());

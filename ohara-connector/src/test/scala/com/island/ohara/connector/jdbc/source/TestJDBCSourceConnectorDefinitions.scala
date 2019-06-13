@@ -132,6 +132,7 @@ class TestJDBCSourceConnectorDefinitions extends WithBrokerWorker with Matchers 
     val response = result(
       workerClient
         .connectorValidator()
+        .name(CommonUtils.randomString(10))
         .numberOfTasks(1)
         .topicName(CommonUtils.randomString(5))
         .settings(

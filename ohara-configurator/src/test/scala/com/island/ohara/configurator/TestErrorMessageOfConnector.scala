@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator
 
-import com.island.ohara.client.configurator.v0.ConnectorApi.{ConnectorCreationRequest, ConnectorState}
+import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorState
 import com.island.ohara.client.configurator.v0.PipelineApi.Flow
 import com.island.ohara.client.configurator.v0.{ConnectorApi, PipelineApi, TopicApi}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -47,21 +47,21 @@ class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
         .create()
     )
     val connector = result(
-      connectorApi.add(ConnectorCreationRequest(
-        workerClusterName = None,
-        className = Some(classOf[DumbSink].getName),
-        columns = Seq.empty,
-        topicNames = Seq(topic.id),
-        numberOfTasks = Some(1),
-        settings = Map("you_should_fail" -> "true")
-      )))
+      connectorApi
+        .request()
+        .name(CommonUtils.randomString(10))
+        .className(classOf[DumbSink].getName)
+        .topicName(topic.name)
+        .numberOfTasks(1)
+        .setting("you_should_fail", "true")
+        .create())
 
-    result(connectorApi.start(connector.id))
+    result(connectorApi.start(connector.name))
 
-    CommonUtils.await(() => result(connectorApi.get(connector.id)).state.isDefined, java.time.Duration.ofSeconds(10))
+    CommonUtils.await(() => result(connectorApi.get(connector.name)).state.isDefined, java.time.Duration.ofSeconds(10))
 
-    result(connectorApi.get(connector.id)).state.get shouldBe ConnectorState.FAILED
-    result(connectorApi.get(connector.id)).error.isDefined shouldBe true
+    result(connectorApi.get(connector.name)).state.get shouldBe ConnectorState.FAILED
+    result(connectorApi.get(connector.name)).error.isDefined shouldBe true
 
     // test state in pipeline
     val pipeline = result(
@@ -74,19 +74,19 @@ class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
         .flows(
           Seq(
             Flow(
-              from = topic.id,
-              to = Set(connector.id)
+              from = topic.name,
+              to = Set(connector.name)
             )))
         .create())
 
-    result(PipelineApi.access().hostname(configurator.hostname).port(configurator.port).get(pipeline.id)).objects
-      .filter(_.id == connector.id)
+    result(PipelineApi.access().hostname(configurator.hostname).port(configurator.port).get(pipeline.name)).objects
+      .filter(_.name == connector.name)
       .head
       .state
       .get shouldBe ConnectorState.FAILED.name
 
-    result(PipelineApi.access().hostname(configurator.hostname).port(configurator.port).get(pipeline.id)).objects
-      .filter(_.id == connector.id)
+    result(PipelineApi.access().hostname(configurator.hostname).port(configurator.port).get(pipeline.name)).objects
+      .filter(_.name == connector.name)
       .head
       .error
       .isDefined shouldBe true
@@ -103,23 +103,22 @@ class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
         .name(CommonUtils.randomString(10))
         .create()
     )
+
     val connector = result(
-      connectorApi.add(
-        ConnectorCreationRequest(
-          workerClusterName = None,
-          className = Some(classOf[DumbSink].getName),
-          columns = Seq.empty,
-          topicNames = Seq(topic.id),
-          numberOfTasks = Some(1),
-          settings = Map.empty
-        )))
+      connectorApi
+        .request()
+        .name(CommonUtils.randomString(10))
+        .className(classOf[DumbSink].getName)
+        .topicName(topic.name)
+        .numberOfTasks(1)
+        .create())
 
-    result(connectorApi.start(connector.id))
+    result(connectorApi.start(connector.name))
 
-    CommonUtils.await(() => result(connectorApi.get(connector.id)).state.isDefined, java.time.Duration.ofSeconds(10))
+    CommonUtils.await(() => result(connectorApi.get(connector.name)).state.isDefined, java.time.Duration.ofSeconds(10))
 
-    result(connectorApi.get(connector.id)).state.get shouldBe ConnectorState.RUNNING
-    result(connectorApi.get(connector.id)).error.isEmpty shouldBe true
+    result(connectorApi.get(connector.name)).state.get shouldBe ConnectorState.RUNNING
+    result(connectorApi.get(connector.name)).error.isEmpty shouldBe true
 
     // test state in pipeline
     val pipeline = result(
@@ -132,19 +131,19 @@ class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
         .flows(
           Seq(
             Flow(
-              from = topic.id,
-              to = Set(connector.id)
+              from = topic.name,
+              to = Set(connector.name)
             )))
         .create())
 
-    result(PipelineApi.access().hostname(configurator.hostname).port(configurator.port).get(pipeline.id)).objects
-      .filter(_.id == connector.id)
+    result(PipelineApi.access().hostname(configurator.hostname).port(configurator.port).get(pipeline.name)).objects
+      .filter(_.name == connector.name)
       .head
       .state
       .get shouldBe ConnectorState.RUNNING.name
 
-    result(PipelineApi.access().hostname(configurator.hostname).port(configurator.port).get(pipeline.id)).objects
-      .filter(_.id == connector.id)
+    result(PipelineApi.access().hostname(configurator.hostname).port(configurator.port).get(pipeline.name)).objects
+      .filter(_.name == connector.name)
       .head
       .error
       .isEmpty shouldBe true

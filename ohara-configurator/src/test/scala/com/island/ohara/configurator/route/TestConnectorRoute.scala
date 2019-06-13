@@ -16,14 +16,12 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.ConnectorApi.{ConnectorCreationRequest, ConnectorDescription}
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterCreationRequest
 import com.island.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, TopicApi, WorkerApi}
 import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.kafka.connector.json.SettingDefinition
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
@@ -36,236 +34,122 @@ class TestConnectorRoute extends SmallTest with Matchers {
   @Test
   def runConnectorWithoutTopic(): Unit = {
     val connector = result(
-      connectorApi.add(
-        ConnectorCreationRequest(
-          workerClusterName = None,
-          className = Some("jdbc"),
-          columns = Seq.empty,
-          settings = Map("c0" -> "v0", "c1" -> "v1"),
-          topicNames = Seq.empty,
-          numberOfTasks = Some(1)
-        )))
+      connectorApi.request().name(CommonUtils.randomString(10)).className(CommonUtils.randomString(10)).create())
 
-    an[IllegalArgumentException] should be thrownBy result(connectorApi.start(connector.id))
+    an[IllegalArgumentException] should be thrownBy result(connectorApi.start(connector.name))
   }
 
   @Test
-  def testSource(): Unit = {
-    def compareRequestAndResponse(request: ConnectorCreationRequest,
-                                  response: ConnectorDescription): ConnectorDescription = {
-      request.columns shouldBe response.columns
-      request.settings shouldBe response.settings.filter(_._1 != SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key())
-      response
-    }
-
-    def compare2Response(lhs: ConnectorDescription, rhs: ConnectorDescription): Unit = {
-      lhs.id shouldBe rhs.id
-      lhs.name shouldBe rhs.name
-      lhs.columns shouldBe rhs.columns
-      lhs.settings shouldBe rhs.settings
-      lhs.lastModified shouldBe rhs.lastModified
-    }
+  def test(): Unit = {
+    // test add
+    result(connectorApi.list).size shouldBe 0
 
     val columns = Seq(Column.builder().name("cf").dataType(DataType.BOOLEAN).order(1).build(),
                       Column.builder().name("cf").dataType(DataType.BOOLEAN).order(2).build())
-    // test add
-    result(connectorApi.list).size shouldBe 0
-    val request = ConnectorCreationRequest(
-      workerClusterName = None,
-      className = Some("jdbc"),
-      columns = columns,
-      settings = Map("c0" -> "v0", "c1" -> "v1"),
-      topicNames = Seq.empty,
-      numberOfTasks = Some(1)
-    )
-    val response =
-      compareRequestAndResponse(request, result(connectorApi.add(request)))
-
-    // test get
-    compare2Response(response, result(connectorApi.get(response.id)))
+    val name = CommonUtils.randomString()
+    val className = CommonUtils.randomString()
+    val numberOfTasks = 3
+    val response = result(
+      connectorApi.request().name(name).className(className).columns(columns).numberOfTasks(numberOfTasks).create())
+    response.name shouldBe name
+    response.className shouldBe className
+    response.columns shouldBe columns
+    response.numberOfTasks shouldBe numberOfTasks
 
     // test update
-    val anotherRequest = ConnectorCreationRequest(
-      workerClusterName = None,
-      className = Some("jdbc"),
-      columns = columns,
-      settings = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
-      topicNames = Seq.empty,
-      numberOfTasks = Some(1)
-    )
-    val newResponse =
-      compareRequestAndResponse(anotherRequest, result(connectorApi.update(response.id, anotherRequest)))
-
-    // test get
-    compare2Response(newResponse, result(connectorApi.get(newResponse.id)))
+    val className2 = CommonUtils.randomString()
+    val numberOfTasks2 = 5
+    val columns2 = Seq(Column.builder().name("cf").dataType(DataType.BOOLEAN).order(1).build())
+    val response2 = result(
+      connectorApi
+        .request()
+        .name(response.name)
+        .className(className2)
+        .columns(columns2)
+        .numberOfTasks(numberOfTasks2)
+        .update())
+    response2.name shouldBe name
+    response2.className shouldBe className2
+    response2.columns shouldBe columns2
+    response2.numberOfTasks shouldBe numberOfTasks2
 
     // test delete
     result(connectorApi.list).size shouldBe 1
-    result(connectorApi.delete(response.id))
+    result(connectorApi.delete(response.name))
     result(connectorApi.list).size shouldBe 0
 
     // test nonexistent data
-    an[IllegalArgumentException] should be thrownBy result(connectorApi.get("asdasdasd"))
-    an[IllegalArgumentException] should be thrownBy result(connectorApi.update("Asdasd", anotherRequest))
+    an[IllegalArgumentException] should be thrownBy result(connectorApi.get(CommonUtils.randomString()))
   }
 
   @Test
-  def testInvalidSource(): Unit = {
+  def testInvalidColumns(): Unit = {
     result(connectorApi.list).size shouldBe 0
 
     val illegalOrder = Seq(Column.builder().name("cf").dataType(DataType.BOOLEAN).order(0).build(),
                            Column.builder().name("cf").dataType(DataType.BOOLEAN).order(2).build())
+
     an[IllegalArgumentException] should be thrownBy result(
-      connectorApi.add(
-        ConnectorCreationRequest(
-          workerClusterName = None,
-          className = Some("jdbc"),
-          columns = illegalOrder,
-          settings = Map("c0" -> "v0", "c1" -> "v1"),
-          topicNames = Seq.empty,
-          numberOfTasks = Some(1)
-        )))
+      ConnectorApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .request()
+        .name(CommonUtils.randomString(10))
+        .className(CommonUtils.randomString(10))
+        .columns(illegalOrder)
+        .create())
+
     result(connectorApi.list).size shouldBe 0
 
     val duplicateOrder = Seq(Column.builder().name("cf").dataType(DataType.BOOLEAN).order(1).build(),
                              Column.builder().name("cf").dataType(DataType.BOOLEAN).order(1).build())
+
     an[IllegalArgumentException] should be thrownBy result(
-      connectorApi.add(
-        ConnectorCreationRequest(
-          workerClusterName = None,
-          className = Some("jdbc"),
-          columns = duplicateOrder,
-          settings = Map("c0" -> "v0", "c1" -> "v1"),
-          topicNames = Seq.empty,
-          numberOfTasks = Some(1)
-        )))
-    result(connectorApi.list).size shouldBe 0
-  }
+      ConnectorApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .request()
+        .name(CommonUtils.randomString(10))
+        .className(CommonUtils.randomString(10))
+        .columns(duplicateOrder)
+        .create())
 
-  @Test
-  def testSink(): Unit = {
-    def compareRequestAndResponse(request: ConnectorCreationRequest,
-                                  response: ConnectorDescription): ConnectorDescription = {
-      request.settings shouldBe response.settings.filter(_._1 != SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key())
-      response
-    }
-
-    def compare2Response(lhs: ConnectorDescription, rhs: ConnectorDescription): Unit = {
-      lhs.id shouldBe rhs.id
-      lhs.name shouldBe rhs.name
-      lhs.columns shouldBe rhs.columns
-      lhs.settings shouldBe rhs.settings
-      lhs.lastModified shouldBe rhs.lastModified
-    }
-
-    val columns = Seq(Column.builder().name("cf").dataType(DataType.BOOLEAN).order(1).build(),
-                      Column.builder().name("cf").dataType(DataType.BOOLEAN).order(2).build())
-
-    // test add
-    result(connectorApi.list).size shouldBe 0
-    val request = ConnectorCreationRequest(
-      workerClusterName = None,
-      className = Some("jdbc"),
-      columns = columns,
-      settings = Map("c0" -> "v0", "c1" -> "v1"),
-      topicNames = Seq.empty,
-      numberOfTasks = Some(3)
-    )
-    val response =
-      compareRequestAndResponse(request, result(connectorApi.add(request)))
-
-    // test get
-    compare2Response(response, result(connectorApi.get(response.id)))
-
-    // test update
-    val anotherRequest = ConnectorCreationRequest(
-      workerClusterName = None,
-      className = Some("jdbc"),
-      columns = columns,
-      settings = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
-      topicNames = Seq.empty,
-      numberOfTasks = Some(1)
-    )
-    val newResponse =
-      compareRequestAndResponse(anotherRequest, result(connectorApi.update(response.id, anotherRequest)))
-
-    // test get
-    compare2Response(newResponse, result(connectorApi.get(newResponse.id)))
-
-    // test delete
-    result(connectorApi.list).size shouldBe 1
-    result(connectorApi.delete(response.id))
-    result(connectorApi.list).size shouldBe 0
-
-    // test nonexistent data
-    an[IllegalArgumentException] should be thrownBy result(connectorApi.get("asdasdasd"))
-    an[IllegalArgumentException] should be thrownBy result(connectorApi.update("Asdasd", anotherRequest))
-  }
-
-  @Test
-  def testInvalidSink(): Unit = {
-
-    result(connectorApi.list).size shouldBe 0
-
-    val illegalOrder = Seq(Column.builder().name("cf").dataType(DataType.BOOLEAN).order(0).build(),
-                           Column.builder().name("cf").dataType(DataType.BOOLEAN).order(2).build())
-    an[IllegalArgumentException] should be thrownBy result(
-      connectorApi.add(
-        ConnectorCreationRequest(
-          workerClusterName = None,
-          className = Some("jdbc"),
-          columns = illegalOrder,
-          settings = Map("c0" -> "v0", "c1" -> "v1"),
-          topicNames = Seq.empty,
-          numberOfTasks = Some(1)
-        )))
-    result(connectorApi.list).size shouldBe 0
-
-    val duplicateOrder = Seq(Column.builder().name("cf").dataType(DataType.BOOLEAN).order(1).build(),
-                             Column.builder().name("cf").dataType(DataType.BOOLEAN).order(1).build())
-    an[IllegalArgumentException] should be thrownBy result(
-      connectorApi.add(
-        ConnectorCreationRequest(
-          workerClusterName = None,
-          className = Some("jdbc"),
-          columns = duplicateOrder,
-          settings = Map("c0" -> "v0", "c1" -> "v1"),
-          topicNames = Seq.empty,
-          numberOfTasks = Some(1)
-        )))
     result(connectorApi.list).size shouldBe 0
   }
 
   @Test
   def removeConnectorFromDeletedCluster(): Unit = {
     val connector = result(
-      connectorApi.add(ConnectorCreationRequest(
-        workerClusterName = None,
-        className = Some("jdbc"),
-        columns = Seq.empty,
-        settings = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
-        topicNames = Seq.empty,
-        numberOfTasks = Some(1)
-      )))
+      ConnectorApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .request()
+        .name(CommonUtils.randomString(10))
+        .className(CommonUtils.randomString(10))
+        .create())
 
     result(configurator.clusterCollie.workerCollie().remove(connector.workerClusterName))
 
-    result(connectorApi.delete(connector.id))
+    result(connectorApi.delete(connector.name))
 
-    result(connectorApi.list).exists(_.id == connector.id) shouldBe false
+    result(connectorApi.list).exists(_.name == connector.name) shouldBe false
   }
 
   @Test
   def runConnectorOnNonexistentCluster(): Unit = {
     an[IllegalArgumentException] should be thrownBy result(
-      connectorApi.add(ConnectorCreationRequest(
-        workerClusterName = Some(CommonUtils.randomString(10)),
-        className = Some("jdbc"),
-        columns = Seq.empty,
-        settings = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
-        topicNames = Seq.empty,
-        numberOfTasks = Some(1)
-      )))
+      ConnectorApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .request()
+        .name(CommonUtils.randomString(10))
+        .className(CommonUtils.randomString(10))
+        .workerClusterName(CommonUtils.randomString())
+        .create())
   }
 
   @Test
@@ -298,24 +182,26 @@ class TestConnectorRoute extends SmallTest with Matchers {
 
     // there are two worker cluster so it fails to match worker cluster
     an[IllegalArgumentException] should be thrownBy result(
-      connectorApi.add(ConnectorCreationRequest(
-        workerClusterName = None,
-        className = Some("jdbc"),
-        columns = Seq.empty,
-        settings = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
-        topicNames = Seq.empty,
-        numberOfTasks = Some(1)
-      )))
+      ConnectorApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .request()
+        .name(CommonUtils.randomString(10))
+        .className(CommonUtils.randomString(10))
+        .create())
 
+    //pass since we have assigned a worker cluster
     result(
-      connectorApi.add(ConnectorCreationRequest(
-        workerClusterName = Some(wk.name),
-        className = Some("jdbc"),
-        columns = Seq.empty,
-        settings = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
-        topicNames = Seq.empty,
-        numberOfTasks = Some(1)
-      ))).workerClusterName shouldBe wk.name
+      ConnectorApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .request()
+        .name(CommonUtils.randomString(10))
+        .className(CommonUtils.randomString(10))
+        .workerClusterName(wk.name)
+        .create())
 
   }
 
@@ -331,18 +217,19 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .create())
 
     val connector = result(
-      connectorApi.add(ConnectorCreationRequest(
-        workerClusterName = None,
-        className = Some("jdbc"),
-        columns = Seq.empty,
-        settings = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
-        topicNames = Seq(topic.id),
-        numberOfTasks = Some(1)
-      )))
+      ConnectorApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .request()
+        .name(CommonUtils.randomString(10))
+        .className(CommonUtils.randomString(10))
+        .topicName(topic.name)
+        .create())
 
-    result(connectorApi.start(connector.id)).state should not be None
+    result(connectorApi.start(connector.name)).state should not be None
 
-    (0 to 10).foreach(_ => result(connectorApi.pause(connector.id)).state should not be None)
+    (0 to 10).foreach(_ => result(connectorApi.pause(connector.name)).state should not be None)
   }
 
   @Test
@@ -357,18 +244,19 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .create())
 
     val connector = result(
-      connectorApi.add(ConnectorCreationRequest(
-        workerClusterName = None,
-        className = Some("jdbc"),
-        columns = Seq.empty,
-        settings = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
-        topicNames = Seq(topic.id),
-        numberOfTasks = Some(1)
-      )))
+      ConnectorApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .request()
+        .name(CommonUtils.randomString(10))
+        .className(CommonUtils.randomString(10))
+        .topicName(topic.name)
+        .create())
 
-    result(connectorApi.start(connector.id)).state should not be None
+    result(connectorApi.start(connector.name)).state should not be None
 
-    (0 to 10).foreach(_ => result(connectorApi.resume(connector.id)).state should not be None)
+    (0 to 10).foreach(_ => result(connectorApi.resume(connector.name)).state should not be None)
   }
 
   @Test
@@ -383,18 +271,19 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .create())
 
     val connector = result(
-      connectorApi.add(ConnectorCreationRequest(
-        workerClusterName = None,
-        className = Some("jdbc"),
-        columns = Seq.empty,
-        settings = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
-        topicNames = Seq(topic.id),
-        numberOfTasks = Some(1)
-      )))
+      ConnectorApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .request()
+        .name(CommonUtils.randomString(10))
+        .className(CommonUtils.randomString(10))
+        .topicName(topic.name)
+        .create())
 
-    result(connectorApi.start(connector.id)).state should not be None
+    result(connectorApi.start(connector.name)).state should not be None
 
-    (0 to 10).foreach(_ => result(connectorApi.stop(connector.id)).state shouldBe None)
+    (0 to 10).foreach(_ => result(connectorApi.stop(connector.name)).state shouldBe None)
   }
 
   @Test
@@ -409,22 +298,50 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .create())
 
     val connector = result(
-      connectorApi.add(ConnectorCreationRequest(
-        workerClusterName = None,
-        className = Some("jdbc"),
-        columns = Seq.empty,
-        settings = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
-        topicNames = Seq(topic.id),
-        numberOfTasks = Some(1)
-      )))
+      ConnectorApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .request()
+        .name(CommonUtils.randomString(10))
+        .className(CommonUtils.randomString(10))
+        .topicName(topic.name)
+        .create())
 
-    result(connectorApi.start(connector.id)).state should not be None
+    result(connectorApi.start(connector.name)).state should not be None
 
-    (0 to 10).foreach(_ => result(connectorApi.start(connector.id)).state should not be None)
+    (0 to 10).foreach(_ => result(connectorApi.start(connector.name)).state should not be None)
   }
 
   @Test
   def failToChangeWorkerCluster(): Unit = {
+    val originWkName = result(WorkerApi.access().hostname(configurator.hostname).port(configurator.port).list).head.name
+
+    val bk = result(BrokerApi.access().hostname(configurator.hostname).port(configurator.port).list).head
+
+    val wk = result(
+      WorkerApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .add(WorkerClusterCreationRequest(
+          name = CommonUtils.randomString(10),
+          imageName = None,
+          brokerClusterName = Some(bk.name),
+          clientPort = Some(CommonUtils.availablePort()),
+          jmxPort = Some(CommonUtils.availablePort()),
+          groupId = Some(CommonUtils.randomString(10)),
+          statusTopicName = Some(CommonUtils.randomString(10)),
+          statusTopicPartitions = None,
+          statusTopicReplications = None,
+          configTopicName = Some(CommonUtils.randomString(10)),
+          configTopicReplications = None,
+          offsetTopicName = Some(CommonUtils.randomString(10)),
+          offsetTopicPartitions = None,
+          offsetTopicReplications = None,
+          jarIds = Seq.empty,
+          nodeNames = bk.nodeNames
+        )))
     val topic = result(
       TopicApi
         .access()
@@ -434,57 +351,123 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .name(CommonUtils.randomString(10))
         .create())
 
-    val connector = result(
-      connectorApi.add(ConnectorCreationRequest(
-        workerClusterName = None,
-        className = Some("jdbc"),
-        columns = Seq.empty,
-        settings = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
-        topicNames = Seq(topic.id),
-        numberOfTasks = Some(1)
-      )))
+    val response = result(
+      connectorApi
+        .request()
+        .name(CommonUtils.randomString(10))
+        .className(CommonUtils.randomString(10))
+        .workerClusterName(originWkName)
+        .topicName(topic.name)
+        .create())
 
     an[IllegalArgumentException] should be thrownBy result(
-      connectorApi.update(
-        connector.id,
-        ConnectorCreationRequest(
-          workerClusterName = Some("adadasd"),
-          className = Some("jdbc"),
-          columns = Seq.empty,
-          settings = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
-          topicNames = Seq(topic.id),
-          numberOfTasks = Some(1)
-        )
-      ))
+      connectorApi
+        .request()
+        .name(response.name)
+        .className(CommonUtils.randomString(10))
+        .workerClusterName(wk.name)
+        .update())
   }
 
   @Test
   def defaultNumberOfTasksShouldExist(): Unit = {
     val connectorDesc = result(
-      connectorApi.add(
-        ConnectorCreationRequest(
-          workerClusterName = None,
-          className = Some("jdbc"),
-          columns = Seq.empty,
-          settings = Map.empty,
-          topicNames = Seq.empty,
-          numberOfTasks = None
-        )))
+      connectorApi.request().name(CommonUtils.randomString(10)).className(CommonUtils.randomString(10)).create())
     connectorDesc.numberOfTasks shouldBe ConnectorRoute.DEFAULT_NUMBER_OF_TASKS
 
-    result(
-      connectorApi.update(
-        connectorDesc.id,
-        ConnectorCreationRequest(
-          workerClusterName = None,
-          className = Some("jdbc"),
-          columns = Seq.empty,
-          settings = Map.empty,
-          topicNames = Seq.empty,
-          numberOfTasks = None
-        )
-      )).numberOfTasks shouldBe ConnectorRoute.DEFAULT_NUMBER_OF_TASKS
+    result(connectorApi.request().name(CommonUtils.randomString(10)).className(CommonUtils.randomString(10)).update()).numberOfTasks shouldBe ConnectorRoute.DEFAULT_NUMBER_OF_TASKS
   }
+
+  @Test
+  def testStartAnNonexistentConnector(): Unit = {
+    an[IllegalArgumentException] should be thrownBy result(connectorApi.start(methodName()))
+  }
+
+  @Test
+  def testStopAnNonexistentConnector(): Unit = {
+    an[IllegalArgumentException] should be thrownBy result(connectorApi.stop(methodName()))
+  }
+  @Test
+  def testPauseAnNonexistentConnector(): Unit = {
+    an[IllegalArgumentException] should be thrownBy result(connectorApi.pause(methodName()))
+  }
+
+  @Test
+  def testResumeAnNonexistentConnector(): Unit = {
+    an[IllegalArgumentException] should be thrownBy result(connectorApi.resume(methodName()))
+  }
+
+  @Test
+  def testParseColumnJson(): Unit = {
+    import spray.json._
+    val request = ConnectorApi.COLUMN_JSON_FORMAT.read("""
+                                                         |{
+                                                         |  "name":"cf",
+                                                         |  "dataType":"boolean",
+                                                         |  "order":1
+                                                         |}
+                                                       """.stripMargin.parseJson)
+    request.name shouldBe "cf"
+    request.newName shouldBe "cf"
+    request.dataType shouldBe DataType.BOOLEAN
+    request.order shouldBe 1
+
+    val request2 = ConnectorApi.COLUMN_JSON_FORMAT.read("""
+                                                          |{
+                                                          |  "name":"cf",
+                                                          |  "newName":null,
+                                                          |  "dataType":"boolean",
+                                                          |  "order":1
+                                                          |}
+                                                        """.stripMargin.parseJson)
+    request2 shouldBe request
+
+    val request3 = ConnectorApi.COLUMN_JSON_FORMAT.read("""
+                                                          |{
+                                                          |  "name":"cf",
+                                                          |  "newName":"cf",
+                                                          |  "dataType":"boolean",
+                                                          |  "order":1
+                                                          |}
+                                                        """.stripMargin.parseJson)
+    request3 shouldBe request
+  }
+
+  @Test
+  def testParseCreationJson(): Unit = {
+    import spray.json._
+    val request =
+      ConnectorApi.CONNECTOR_CREATION_REQUEST_JSON_FORMAT.read(
+        """
+          |{
+          |  "name":"perf",
+          |  "connector.class":"com.island.ohara.connector.perf.PerfSource",
+          |  "topics":["59e9010c-fd9c-4a41-918a-dacc9b84aa2b"],
+          |  "tasks.max":1,
+          |  "perf.batch":"1",
+          |  "perf.frequence":"2 seconds",
+          |  "columns":[{
+          |    "name": "cf0",
+          |    "newName": "cf0",
+          |    "dataType": "int",
+          |    "order": 1
+          |  },{
+          |    "name": "cf1",
+          |    "newName": "cf1",
+          |    "dataType": "bytes",
+          |    "order": 2
+          |  }]
+          |}
+        """.stripMargin.parseJson)
+    request.className shouldBe "com.island.ohara.connector.perf.PerfSource"
+    request.topicNames.head shouldBe "59e9010c-fd9c-4a41-918a-dacc9b84aa2b"
+    request.numberOfTasks.get shouldBe 1
+    request.plain("perf.batch") shouldBe "1"
+    request.columns.size shouldBe 2
+    request.columns.head shouldBe Column.builder().name("cf0").newName("cf0").dataType(DataType.INT).order(1).build()
+    request.columns.last shouldBe Column.builder().name("cf1").newName("cf1").dataType(DataType.BYTES).order(2).build()
+  }
+
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }

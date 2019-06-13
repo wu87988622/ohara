@@ -68,7 +68,7 @@ class Test873 extends SmallTest with Matchers {
     try {
       val client = WorkerClient(s"${server.hostname}:${server.port}")
       val response = result(
-        client.connectorCreator().id(CommonUtils.randomString()).settings(settings).className(className).create())
+        client.connectorCreator().name(CommonUtils.randomString()).settings(settings).className(className).create())
       response.tasks shouldBe tasks
       settings.foreach {
         case (k, v) =>

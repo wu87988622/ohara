@@ -125,7 +125,7 @@ public abstract class RowSourceTask extends SourceTask {
   protected CounterBuilder counterBuilder() {
     if (taskSetting == null)
       throw new IllegalArgumentException("you can't create a counter before starting connector");
-    return CounterBuilder.of().group(taskSetting.id());
+    return CounterBuilder.of().group(taskSetting.name());
   }
 
   @VisibleForTesting TaskSetting taskSetting = null;
@@ -133,8 +133,8 @@ public abstract class RowSourceTask extends SourceTask {
   @Override
   public final void start(Map<String, String> props) {
     taskSetting = TaskSetting.of(ImmutableMap.copyOf(props));
-    rowCounter = ConnectorUtils.rowCounter(taskSetting.id());
-    sizeCounter = ConnectorUtils.sizeCounter(taskSetting.id());
+    rowCounter = ConnectorUtils.rowCounter(taskSetting.name());
+    sizeCounter = ConnectorUtils.sizeCounter(taskSetting.name());
     _start(taskSetting);
   }
 

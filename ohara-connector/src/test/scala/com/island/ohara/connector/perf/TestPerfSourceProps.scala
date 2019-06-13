@@ -44,21 +44,22 @@ class TestPerfSourceProps extends SmallTest with Matchers {
     val source = new PerfSource
 
     an[NoSuchElementException] should be thrownBy source.start(
-      ConnectorFormatter.of().id(methodName()).columns(schema.asJava).settings(props.toMap.asJava).raw())
+      ConnectorFormatter.of().name(methodName()).columns(schema.asJava).settings(props.toMap.asJava).raw())
   }
 
   @Test
   def testEmptySchemaOnSource(): Unit = {
     val source = new PerfSource
 
-    source.start(ConnectorFormatter.of().id(methodName()).topicNames(topics.asJava).settings(props.toMap.asJava).raw())
+    source.start(
+      ConnectorFormatter.of().name(methodName()).topicNames(topics.asJava).settings(props.toMap.asJava).raw())
   }
 
   @Test
   def testEmptySchemaOnSourceTask(): Unit = {
     val task = new PerfSourceTask
 
-    task.start(ConnectorFormatter.of().id(methodName()).topicNames(topics.asJava).settings(props.toMap.asJava).raw())
+    task.start(ConnectorFormatter.of().name(methodName()).topicNames(topics.asJava).settings(props.toMap.asJava).raw())
 
     task.schema shouldBe DEFAULT_SCHEMA
   }
@@ -85,7 +86,7 @@ class TestPerfSourceProps extends SmallTest with Matchers {
     an[IllegalArgumentException] should be thrownBy source.start(
       ConnectorFormatter
         .of()
-        .id(methodName())
+        .name(methodName())
         .topicNames(topics.asJava)
         .columns(schema.asJava)
         .settings(props.copy(batch = -1).toMap.asJava)

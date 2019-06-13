@@ -65,7 +65,7 @@ class TestTopicRoute extends SmallTest with Matchers {
 
     // test delete
     result(topicApi.list).size shouldBe 1
-    result(topicApi.delete(response.id))
+    result(topicApi.delete(response.name))
     result(topicApi.list).size shouldBe 0
 
     // test nonexistent data
@@ -86,7 +86,7 @@ class TestTopicRoute extends SmallTest with Matchers {
             .hostname(configurator.hostname)
             .port(configurator.port)
             .delete(topicInfo.brokerClusterName)
-            .flatMap(_ => topicApi.delete(topicInfo.id))
+            .flatMap(_ => topicApi.delete(topicInfo.name))
         }
         .flatMap(_ => topicApi.list)
         .map(topics => topics.exists(_.name == name))) shouldBe false
@@ -190,7 +190,7 @@ class TestTopicRoute extends SmallTest with Matchers {
 
     val topic1 = result(topicApi.request().name(topic0.name).numberOfPartitions(topic0.numberOfPartitions + 1).update())
 
-    topic0.id shouldBe topic1.id
+    topic0.name shouldBe topic1.name
     topic0.name shouldBe topic1.name
     topic0.numberOfPartitions + 1 shouldBe topic1.numberOfPartitions
     topic0.numberOfReplications shouldBe topic1.numberOfReplications
@@ -255,6 +255,22 @@ class TestTopicRoute extends SmallTest with Matchers {
     updated.brokerClusterName shouldBe expected.brokerClusterName
     updated.numberOfReplications shouldBe expected.numberOfReplications
     updated.numberOfPartitions shouldBe expected.numberOfPartitions
+  }
+
+  @Test
+  def deleteAnTopicRemovedFromKafka(): Unit = {
+    val topicName = methodName
+
+    val topic = result(topicApi.request().name(topicName).create())
+
+    val topicAdmin = configurator.clusterCollie
+      .brokerCollie()
+      .topicAdmin(result(configurator.clusterCollie.brokerCollie().clusters).head._1)
+    try {
+      topicAdmin.delete(topic.name)
+      // the topic is removed but we don't throw exception.
+      result(topicApi.delete(topic.name))
+    } finally topicAdmin.close()
   }
 
   @After
