@@ -191,9 +191,9 @@ More description of each example could be found in <i>javadoc</i>.
 
 | Example Name    | Description                        | Source Code (Java)                                                                                   |
 | --------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| WordCount       | count the words in "word" column   | [example](/ohara-streams/src/test/java/com/island/ohara/streams/examples/WordCountExample.java)      |
-| PageViewRegion  | count the views by each region     | [example](/ohara-streams/src/test/java/com/island/ohara/streams/examples/PageViewRegionExample.java) |
-| Sum             | sum odd numbers in "number" column | [example](/ohara-streams/src/test/java/com/island/ohara/streams/examples/SumExample.java)            |
+| WordCount       | count the words in "word" column   | [example](https://github.com/oharastream/ohara/blob/master/ohara-streams/src/test/java/com/island/ohara/streams/examples/WordCountExample.java)      |
+| PageViewRegion  | count the views by each region     | [example](https://github.com/oharastream/ohara/blob/master/ohara-streams/src/test/java/com/island/ohara/streams/examples/PageViewRegionExample.java) |
+| Sum             | sum odd numbers in "number" column | [example](https://github.com/oharastream/ohara/blob/master/ohara-streams/src/test/java/com/island/ohara/streams/examples/SumExample.java)            |
 
 ----------
 
@@ -228,7 +228,7 @@ There are two type of official metrics for streamApp:
 A normal streamApp will connect to two topics, one is the source topic that streamApp will consume from, and the other is
 the target topic that streamApp will produce to. We use prefix words (**TOPIC_IN**, **TOPIC_OUT**) in the response
 data ([StreamApp APIs](rest_interface.md#streamapp)) in order to improve readabilities of those types.
-You don't need to worry about the implementation of these official metrics, but you can still read the [source code](/ohara-streams/src/main/java/com/island/ohara/streams/metric/MetricFactory.java)
+You don't need to worry about the implementation of these official metrics, but you can still read the [source code](https://github.com/oharastream/ohara/blob/master/ohara-streams/src/main/java/com/island/ohara/streams/metric/MetricFactory.java)
 to see how Ohara Stream creates official metrics.
 
 ----------

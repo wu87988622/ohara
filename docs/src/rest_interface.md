@@ -2719,7 +2719,7 @@ Request use form-data, which contains two field :
 1. cluster : the worker cluster name
 2. streamapp : the upload jars
 
-```http request
+```http
 Content-Type: multipart/form-data
 cluster="wk01
 streamapp="my-streamApp.jar"
@@ -3091,7 +3091,7 @@ The properties stored by ohara are shown below.
 
 **Example Request**
 
-```http request
+```http
 Content-Type: multipart/form-data
 jar="aa.jar"
 ```

@@ -8,6 +8,15 @@ Easy to deploy the streaming application
 
 ----------
 
+## Documentation
+
+We use [Read the Docs](https://readthedocs.org/) for automating building and hosting.
+Please goto following link to read document:
+
+* [Latest](https://oharastream.readthedocs.io/en/latest/index.html) document
+* Stable document(not available now)
+
+
 ## Prerequisites
 
 - OpenJDK 1.8
@@ -96,7 +105,7 @@ gradle clean build -PskipManager -x test bintrayUpload -PbintrayUser=$user -Pbin
 
 ## Installation
 
-see [User Guide](docs/user_guide.md#installation)
+see [User Guide](https://oharastream.readthedocs.io/en/latest/user_guide.html#installation)
 
 ----------
 

@@ -174,7 +174,7 @@ docker run -d --rm --name postgresql -p 5432:5432 --env POSTGRES_DB=${DB_NAME} -
 
 ### Execute FTP Instance
 
-```h
+```bash
 docker run --rm -p 10000-10011:10000-10011 oharastream/backend:0.6-SNAPSHOT com.island.ohara.testing.service.FtpServer --controlPort 10000 --dataPorts 10001-10011 --user ${UserName} --password ${Password} --hostname ${hostIP or hostName}
 ```
 
@@ -188,7 +188,7 @@ docker run --rm -p 10000-10011:10000-10011 oharastream/backend:0.6-SNAPSHOT com.
 Ohara consists of many services, and Ohara Configurator plays the most important rule which coordinates all services and
 offers a bunch of restful APIs to user to get all under control. The brief architecture of Ohara Configurator is shown below.
 
-![Configurator architecture](https://raw.githubusercontent.com/oharastream/images/master/docs/configurator_arch.jpg)
+![Configurator architecture](images/configurator_arch.jpg)
 
 The introduction of each components are shown below. Feel free to trace the component in which you have interest.
 - [Route of Ohara Configurator](#route-of-ohara-configurator)
@@ -266,19 +266,19 @@ Ohara Manager is the user interface (UI) of Ohara. It's built with the standard 
 
 Ohara Manager was built and designed with the user's needs in mind. We aimed to reduce the pain of complex operations that often required in a big data system. With Ohara Manager, you can create your own services, pipelines and working with data streaming without touching a single line of code.
 
-### __Following is a quick walk through of Ohara Manager's user interface:__
+__Following is a quick walk through of Ohara Manager's user interface:__
 
 #### Pipelines
 Pipeline list page is where you can see, create, edit and delete pipelines.
-![Ohara Manager Pipeline list page](https://raw.githubusercontent.com/oharastream/images/master/docs/pipeline_list.png)
+![Ohara Manager Pipeline list page](images/pipeline_list.png)
 
 Inside the new/edit pipeline page, you can create and play around with your pipelines here. This is also where you can run and stop your pipelines. The pipeline graph helps you to visualize the pipeline that you're working on. Also, you can edit a connector's config by clicking on the graph and edit the config form which will be displayed in the sidebar. We know it's sometimes tedious and time consuming to edit these config and it's frustrating when you lose all of your config without saving them! That's why we made these config forms automatically save changes for you. Whenever you type in a text field, choose a new topic form a dropdown, the changes will be saved immediately. 
-![Ohara Manager Pipeline new/edit page](https://raw.githubusercontent.com/oharastream/images/master/docs/pipeline_new.png)
+![Ohara Manager Pipeline new/edit page](images/pipeline_new.png)
 
 #### Nodes
 This is where you create and edit Ohara Nodes. These nodes are usually your VMs. When you're starting a new Ohara Configurator. You can optionally supply some node information with the CLI command. The node you supplied to the CLI will then be listed in this page.
 
-![Ohara Manager Nodes page](https://raw.githubusercontent.com/oharastream/images/master/docs/nodes.png)
+![Ohara Manager Nodes page](images/nodes.png)
 
 #### Services
 We have a couple of sub pages here, you can navigate between these pages by clicking on the sub menu on the left hand side sidebar:
@@ -287,26 +287,26 @@ We have a couple of sub pages here, you can navigate between these pages by clic
 
   You can view your running brokers here as well as adding new topics in an existing broker. Please note that as of Ohara v0.5.0, we doesn't support creating broker with the UI yet. You can do so via the [RESTful APIs](rest_interface.md).
 
-  ![Ohara Manager broker page](https://raw.githubusercontent.com/oharastream/images/master/docs/broker.png)
+  ![Ohara Manager broker page](images/broker.png)
 
 - __Zookeeper__:
 
   This is similar to broker page. The zookeeper page shows your zookeeper info. As mentioned above, our UI doesn't support creating zookeepers yet. But you can definitely do so with the RESTful APIs
 
-  ![Ohara Manager zookeeper page](https://raw.githubusercontent.com/oharastream/images/master/docs/zookeeper.png)
+  ![Ohara Manager zookeeper page](images/zookeeper.png)
 
 - __Connect__:
 
   In this page, you can create a new connect worker and view its details info here. 
 
-  ![Ohara Manager connect worker page](https://raw.githubusercontent.com/oharastream/images/master/docs/connect_worker.png)
+  ![Ohara Manager connect worker page](images/connect_worker.png)
 
   When creating a new connect worker. You're also able to upload custom connector jars as well as database drivers like MySQL or PostgreSQL. Note that once a worker is created there's no way to edit or delete directly from UI.
 
-    ![Ohara Manager connect worker new page](https://raw.githubusercontent.com/oharastream/images/master/docs/connect_worker_new.png)
+    ![Ohara Manager connect worker new page](images/connect_worker_new.png)
 
 
-If you'd like to learn more about the development setup or have issue starting/working with it. Please see the [docs](../ohara-manager/README.md) here
+If you'd like to learn more about the development setup or have issue starting/working with it. Please see the [docs](https://github.com/oharastream/ohara/tree/master/ohara-manager/README.md) here
 
 ----------
 
@@ -442,10 +442,10 @@ the configurable settings to user. Welcome you to file a issue to request more c
 
 All services host by Ohara are based on docker containers, such as [Configurator](#ohara-configurator), [Manager](#ohara-manager),
 [Zookeeper](#zookeeper), [Broker](#broker) and [Worker](#worker). You should install suggested version of Docker before
-enjoying Ohara service (see [Readme](../README.md) for prerequisite).
+enjoying Ohara service (see [Readme](https://github.com/oharastream/ohara/blob/master/README.md) for prerequisite).
 
 The post-installation for all docker nodes are listed below.
-1. [Install the supported version of docker](../README.md) — Ohara community does not support the legacy docker.
+1. [Install the supported version of docker](https://github.com/oharastream/ohara/blob/master/README.md) — Ohara community does not support the legacy docker.
 1. [download all ohara images](#download-ohara-images) —
   Ohara Configurator expect all images are available from local disk rather than network.
 1. [create a user account which can access docker without sudo](https://docs.docker.com/install/linux/linux-postinstall/) —
