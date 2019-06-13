@@ -54,24 +54,27 @@ class TestJarStore extends SmallTest with Matchers {
     val group = "foobar"
 
     // add a random group folder file
-    result(configurator.jarStore.add(generateFile(), None))
+    result(configurator.jarStore.add(generateFile()))
     // add two files in specific group
     val f1 = generateFile()
-    val info1 = result(configurator.jarStore.add(f1, "newfile", Some(group)))
+    val info1 = result(configurator.jarStore.add(f1, "newfile", group))
     // make sure the second file has different modified time
     TimeUnit.SECONDS.sleep(2)
     val f2 = generateFile()
-    val info2 = result(configurator.jarStore.add(f2, "newfile", Some(group)))
+    val info2 = result(configurator.jarStore.add(f2, "newfile", group))
 
     // use same group and same file, but request different newName means different file
-    result(configurator.jarStore.add(f2, "farboo", Some(group)))
+    result(configurator.jarStore.add(f2, "farboo", group))
 
     val jars = result(configurator.jarStore.jarInfos())
-    // we only get the "latest" file in same group, so we have
+    // we only get the "latest modified" file in same group, so we have
     // 1. file with random group
-    // 2. file of "newfile" name with specific group (upload two files but get last modified time)
-    // 3. file of "farboo" name with specific group
+    // 2. "newfile" file with specific group (upload two files but get last modified time)
+    // 3. "farboo" file with specific group
     jars.size shouldBe 3
+
+    // filter jars by group
+    result(configurator.jarStore.jarInfos(group)).size shouldBe 2
 
     // same group but the old file cannot be get
     an[NoSuchElementException] should be thrownBy result(configurator.jarStore.jarInfo(info1.id))
@@ -91,28 +94,28 @@ class TestJarStore extends SmallTest with Matchers {
     an[IllegalArgumentException] should be thrownBy result(configurator.jarStore.jarInfo(""))
 
   @Test
-  def nullFileInAdd(): Unit = an[NullPointerException] should be thrownBy result(configurator.jarStore.add(null, None))
+  def nullFileInAdd(): Unit = an[NullPointerException] should be thrownBy result(configurator.jarStore.add(null))
 
   @Test
   def nonexistentFileInAdd(): Unit =
     an[IllegalArgumentException] should be thrownBy result(
-      configurator.jarStore.add(new File(CommonUtils.randomString()), "", None))
+      configurator.jarStore.add(new File(CommonUtils.randomString()), ""))
 
   @Test
   def nullFileInAdd2(): Unit =
-    an[NullPointerException] should be thrownBy result(configurator.jarStore.add(null, "aa", None))
+    an[NullPointerException] should be thrownBy result(configurator.jarStore.add(null, "aa"))
 
   @Test
   def nonexistentFileInAdd2(): Unit = an[IllegalArgumentException] should be thrownBy result(
-    configurator.jarStore.add(new File(CommonUtils.randomString()), "aa", None))
+    configurator.jarStore.add(new File(CommonUtils.randomString()), "aa"))
 
   @Test
   def nullNewNameInAdd(): Unit =
-    an[NullPointerException] should be thrownBy result(configurator.jarStore.add(generateFile(), null, None))
+    an[NullPointerException] should be thrownBy result(configurator.jarStore.add(generateFile(), null))
 
   @Test
   def emptyNameInAdd(): Unit =
-    an[IllegalArgumentException] should be thrownBy result(configurator.jarStore.add(generateFile(), "", None))
+    an[IllegalArgumentException] should be thrownBy result(configurator.jarStore.add(generateFile(), ""))
 
   @Test
   def nullIdInUpdate(): Unit =
@@ -124,13 +127,13 @@ class TestJarStore extends SmallTest with Matchers {
 
   @Test
   def nullFileInUpdate(): Unit = {
-    val jarInfo = result(configurator.jarStore.add(generateFile(), None))
+    val jarInfo = result(configurator.jarStore.add(generateFile()))
     an[NullPointerException] should be thrownBy result(configurator.jarStore.update(jarInfo.id, null))
   }
 
   @Test
   def nonexistentFileInUpdate(): Unit = {
-    val jarInfo = result(configurator.jarStore.add(generateFile(), None))
+    val jarInfo = result(configurator.jarStore.add(generateFile()))
     an[IllegalArgumentException] should be thrownBy result(
       configurator.jarStore.update(jarInfo.id, new File(CommonUtils.randomString())))
   }
@@ -149,13 +152,13 @@ class TestJarStore extends SmallTest with Matchers {
 
   @Test
   def nullNewNameInRename(): Unit = {
-    val jarInfo = result(configurator.jarStore.add(generateFile(), None))
+    val jarInfo = result(configurator.jarStore.add(generateFile()))
     an[NullPointerException] should be thrownBy result(configurator.jarStore.rename(jarInfo.id, null))
   }
 
   @Test
   def emptyNewNameInRename(): Unit = {
-    val jarInfo = result(configurator.jarStore.add(generateFile(), None))
+    val jarInfo = result(configurator.jarStore.add(generateFile()))
     an[IllegalArgumentException] should be thrownBy result(configurator.jarStore.rename(jarInfo.id, ""))
   }
 
@@ -189,14 +192,14 @@ class TestJarStore extends SmallTest with Matchers {
     val port = CommonUtils.availablePort()
     val store0 =
       JarStore.builder.homeFolder(folder.getCanonicalPath).hostname(CommonUtils.anyLocalAddress()).port(port).build()
-    val jarInfo = try result(store0.add(generateFile(content.getBytes), None))
+    val jarInfo = try result(store0.add(generateFile(content.getBytes)))
     finally store0.close()
 
     val store1 =
       JarStore.builder.homeFolder(folder.getCanonicalPath).hostname(CommonUtils.anyLocalAddress()).port(port).build()
     try {
-      result(store1.jarInfos).size shouldBe 1
-      result(store1.jarInfos).head shouldBe jarInfo
+      result(store1.jarInfos()).size shouldBe 1
+      result(store1.jarInfos()).head shouldBe jarInfo
     } finally store1.close()
   }
 
@@ -234,7 +237,7 @@ class TestJarStore extends SmallTest with Matchers {
       .port(port)
       .build()
     try {
-      val jarInfo = result(store.add(generateFile(methodName().getBytes), None))
+      val jarInfo = result(store.add(generateFile(methodName().getBytes)))
       jarInfo.url.getHost shouldBe hostname
       jarInfo.url.getPort shouldBe port
     } finally store.close()

@@ -19,7 +19,8 @@ package com.island.ohara.configurator.route
 import java.io.{File, FileOutputStream}
 import java.util.concurrent.TimeUnit
 
-import com.island.ohara.client.configurator.v0.JarApi
+import com.island.ohara.client.configurator.v0.{JarApi, StreamApi}
+import com.island.ohara.client.configurator.v0.StreamApi.StreamPropertyRequest
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
@@ -30,6 +31,10 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class TestJarRoute extends SmallTest with Matchers {
 
   private[this] val configurator = Configurator.builder().fake().build()
+  private[this] val accessStreamList =
+    StreamApi.accessOfList().hostname(configurator.hostname).port(configurator.port)
+  private[this] val accessStreamProperty =
+    StreamApi.accessOfProperty().hostname(configurator.hostname).port(configurator.port)
   private[this] val jarApi = JarApi.access().hostname(configurator.hostname).port(configurator.port)
   private[this] val GROUP = s"group-${this.getClass.getSimpleName}"
 
@@ -132,6 +137,20 @@ class TestJarRoute extends SmallTest with Matchers {
 
     result(jarApi.delete(jar.id))
     result(jarApi.list).size shouldBe 0
+
+    f.deleteOnExit()
+  }
+
+  @Test
+  def testCannotDeleteJarUsedInStreamApp(): Unit = {
+    val data = methodName().getBytes
+    val f = tmpFile(data)
+    // upload jar
+    val streamJar = result(accessStreamList.upload(Seq(f.getPath), None)).head
+    // create streamApp property
+    result(accessStreamProperty.add(StreamPropertyRequest(streamJar.id, None, None, None, None)))
+    // cannot delete a used jar
+    an[RuntimeException] should be thrownBy result(jarApi.delete(streamJar.id))
 
     f.deleteOnExit()
   }

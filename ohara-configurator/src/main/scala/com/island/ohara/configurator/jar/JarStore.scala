@@ -39,22 +39,39 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 trait JarStore extends Releasable {
 
   /**
-    * add a jar into store. This is an async method so you need to check the result of future.
+    * Simple method to add a jar into store.
+    * This is an async method so you need to check the result of future.
+    * The uploaded jar name will be as same as original file.
     * @param file jar file
-    * @param group group name. default is random string
-    * @return a async thread which is doing the upload
+    * @param executionContext execution context
+    * @return jar information
     */
-  def add(file: File, group: Option[String])(implicit executionContext: ExecutionContext): Future[JarInfo] =
-    add(CommonUtils.requireExist(file), file.getName, group)
+  def add(file: File)(implicit executionContext: ExecutionContext): Future[JarInfo] =
+    add(CommonUtils.requireExist(file), file.getName, None)
 
   /**
-    * add a jar into store with specified file name. This is an async method so you need to check the result of future.
+    * Add a jar into store using new name.
+    * This is an async method so you need to check the result of future.
     * @param file jar file
-    * @param newName new name of jar file
-    * @param group group name. default is random string
-    * @return a async thread which is doing the upload
+    * @param newName new jar name
+    * @return jar information
     */
-  def add(file: File, newName: String, group: Option[String])(
+  def add(file: File, newName: String)(implicit executionContext: ExecutionContext): Future[JarInfo] =
+    add(CommonUtils.requireExist(file), newName, None)
+
+  /**
+    * Add a jar into store using new name and stored in specific group name.
+    * This is an async method so you need to check the result of future.
+    * @param file jar file
+    * @param newName new jar name
+    * @param group group name
+    * @param executionContext execution context
+    * @return jar information
+    */
+  def add(file: File, newName: String, group: String)(implicit executionContext: ExecutionContext): Future[JarInfo] =
+    add(CommonUtils.requireExist(file), newName, Some(group))
+
+  protected def add(file: File, newName: String, group: Option[String])(
     implicit executionContext: ExecutionContext): Future[JarInfo]
 
   /**
@@ -78,12 +95,26 @@ trait JarStore extends Releasable {
     */
   def jarInfo(id: String)(implicit executionContext: ExecutionContext): Future[JarInfo] = {
     CommonUtils.requireNonEmpty(id)
-    jarInfos.map(infos => {
+    jarInfos().map(infos => {
       infos.find(_.id == id).getOrElse(throw new NoSuchElementException(s"$id not found"))
     })
   }
 
+  /**
+    * retrieve all jars from jar store
+    * @param executionContext execution context
+    * @return jars description
+    */
   def jarInfos()(implicit executionContext: ExecutionContext): Future[Seq[JarInfo]]
+
+  /**
+    * retrieve all jars with filter group from jar store
+    * @param group the filter group name
+    * @param executionContext execution context
+    * @return jars description
+    */
+  def jarInfos(group: String)(implicit executionContext: ExecutionContext): Future[Seq[JarInfo]] =
+    jarInfos().map(infos => infos.filter(info => info.group.equals(group)))
 
   /**
     * check the existence of a jar
@@ -243,35 +274,36 @@ object JarStore {
         plugin
       }
 
-    override def jarInfos()(implicit executionContext: ExecutionContext): Future[Seq[JarInfo]] = Future.successful {
-      // TODO: We should cache the plugins. because seeking to disk is a slow operation...
-      root
-        .listFiles()
-        .filter(_.isDirectory)
-        // we use the "group name" to group files
-        .groupBy(_.getName)
-        .flatMap {
-          case (group, files) =>
-            // for group folder, we list all actual jars
-            files.map(file => file.listFiles().flatMap(_.listFiles())).flatMap { jars =>
-              // for the same name of jar, get the latest modified jar
-              jars
-                .groupBy(_.getName)
-                .map { case (_, sameJars) => sameJars.maxBy(_.lastModified()) }
-                .map(
-                  jar =>
-                    JarInfo(
-                      id = jar.getParentFile.getName,
-                      name = jar.getName,
-                      group = group,
-                      size = jar.length(),
-                      url = toUrl(jar.getParentFile.getName),
-                      lastModified = jar.lastModified()
-                  ))
-            }
-        }
-        .toSeq
-    }
+    override def jarInfos()(implicit executionContext: ExecutionContext): Future[Seq[JarInfo]] =
+      Future.successful {
+        // TODO: We should cache the plugins. because seeking to disk is a slow operation...
+        root
+          .listFiles()
+          .filter(_.isDirectory)
+          // we use the "group name" to group files
+          .groupBy(_.getName)
+          .flatMap {
+            case (g, files) =>
+              // for group folder, we list all actual jars
+              files.map(file => file.listFiles().flatMap(_.listFiles())).flatMap { jars =>
+                // for the same name of jar, get the latest modified jar
+                jars
+                  .groupBy(_.getName)
+                  .map { case (_, sameJars) => sameJars.maxBy(_.lastModified()) }
+                  .map(
+                    jar =>
+                      JarInfo(
+                        id = jar.getParentFile.getName,
+                        name = jar.getName,
+                        group = g,
+                        size = jar.length(),
+                        url = toUrl(jar.getParentFile.getName),
+                        lastModified = jar.lastModified()
+                    ))
+              }
+          }
+          .toSeq
+      }
 
     override def remove(id: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
       exist(id).flatMap {
