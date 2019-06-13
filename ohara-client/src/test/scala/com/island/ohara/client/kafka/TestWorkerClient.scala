@@ -409,7 +409,15 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
         .numberOfTasks(1)
         .settings(Map(MyConnector.DURATION_KEY -> "PT1M1S"))
         .create)
-    result(workerClient.statusOrNone(response.name)) should not be None
+    await(
+      () =>
+        try result(workerClient.statusOrNone(response.name)).isDefined
+        catch {
+          case e: Throwable =>
+            // keep looping if kafka slowly sync the status ...
+            if (e.getMessage.contains("No status found for connector")) false
+            else throw e
+      })
     result(workerClient.delete(response.name))
   }
 }
