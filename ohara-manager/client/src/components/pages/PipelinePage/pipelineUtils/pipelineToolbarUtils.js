@@ -18,7 +18,6 @@ import { isObject } from 'lodash';
 
 import * as connectorApi from 'api/connectorApi';
 import { createProperty } from 'api/streamApi';
-import { CONNECTOR_TYPES } from 'constants/pipelines';
 import { isSource, isSink, isTopic, isStream } from './commonUtils';
 
 const getClassName = connector => {
@@ -58,36 +57,16 @@ export const createConnector = async ({
 
     id = res.data.result.id;
   } else if (isSource(typeName) || isSink(typeName)) {
-    const isOfficialConnector = Object.values(CONNECTOR_TYPES).includes(
-      className,
-    );
-    if (isOfficialConnector) {
-      // Official connectors Use the old API
-      const params = {
-        name: connectorName,
-        'connector.name': connectorName,
-        className: className,
-        schema: [],
-        topics: [],
-        numberOfTasks: 1,
-        configs: {},
-        workerClusterName: workerClusterName,
-      };
+    // Not included in the official connectors, use new meta API instead
+    const params = {
+      name: connectorName,
+      'connector.class': className,
+      'connector.name': connectorName,
+      workerClusterName: workerClusterName,
+    };
 
-      const res = await connectorApi.createConnector(params);
-      id = res.data.result.id;
-    } else {
-      // Not included in the official connectors, use new meta API instead
-      const params = {
-        name: connectorName,
-        'connector.class': className,
-        'connector.name': connectorName,
-        workerClusterName: workerClusterName,
-      };
-
-      const res = await connectorApi.createConnector(params);
-      id = res.data.result.id;
-    }
+    const res = await connectorApi.createConnector(params);
+    id = res.data.result.id;
   }
 
   const update = {

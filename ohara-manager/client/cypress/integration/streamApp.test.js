@@ -15,6 +15,7 @@
  */
 
 import * as URLS from '../../src/constants/urls';
+import { makeRandomStr } from '../utils';
 
 describe('StreamApp', () => {
   before(() => {
@@ -28,12 +29,17 @@ describe('StreamApp', () => {
       cy.route('GET', 'api/pipelines/*').as('getPipeline');
       cy.route('PUT', 'api/pipelines/*').as('putPipeline');
 
+      const pipelineName = makeRandomStr();
+
       cy.visit(URLS.PIPELINE)
         .getByTestId('new-pipeline')
         .click()
+        .getByLabelText('Pipeline name')
+        .click()
+        .type(pipelineName)
         .getByTestId('cluster-select')
         .select(Cypress.env('WORKER_NAME'))
-        .getByText('Next')
+        .getByText('Add')
         .click();
     });
 
@@ -94,12 +100,17 @@ describe('StreamApp', () => {
       cy.createTopic().as('fromTopic');
       cy.createTopic().as('toTopic');
 
+      const pipelineName = makeRandomStr();
+
       cy.visit(URLS.PIPELINE)
         .getByTestId('new-pipeline')
         .click()
+        .getByLabelText('Pipeline name')
+        .click()
+        .type(pipelineName)
         .getByTestId('cluster-select')
         .select(Cypress.env('WORKER_NAME'))
-        .getByText('Next')
+        .getByText('Add')
         .click();
     });
 

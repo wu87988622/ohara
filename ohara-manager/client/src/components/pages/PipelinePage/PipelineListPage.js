@@ -27,7 +27,6 @@ import { TableLoader, ListLoader } from 'common/Loader';
 import { Modal, ConfirmModal } from 'common/Modal';
 import { DataTable } from 'common/Table';
 import { Box } from 'common/Layout';
-import { Warning } from 'common/Messages';
 import { H2 } from 'common/Headings';
 import { Button, Select } from 'common/Form';
 import { primaryBtn } from 'theme/btnTheme';
@@ -42,6 +41,7 @@ import {
   createPipeline,
   deletePipeline,
 } from 'api/pipelineApi';
+import { Input, Label, FormGroup } from 'common/Form';
 
 const Wrapper = styled.div`
   padding-top: 75px;
@@ -125,6 +125,7 @@ class PipelineListPage extends React.Component {
     currWorker: {},
     isNewPipelineWorking: false,
     isDeletePipelineWorking: false,
+    newPipelineName: '',
   };
 
   componentDidMount() {
@@ -181,10 +182,10 @@ class PipelineListPage extends React.Component {
 
   handleSelectClusterModalConfirm = async () => {
     const { history, match } = this.props;
-    const { currWorker } = this.state;
+    const { currWorker, newPipelineName } = this.state;
 
     const params = {
-      name: 'Untitled pipeline',
+      name: newPipelineName,
       rules: {},
       workerClusterName: currWorker.name,
     };
@@ -193,7 +194,6 @@ class PipelineListPage extends React.Component {
     const res = await createPipeline(params);
     this.setState({ isNewPipelineWorking: false });
     const pipelineId = get(res, 'data.result.id', null);
-
     if (pipelineId) {
       this.handleSelectClusterModalClose();
       toastr.success(MESSAGES.PIPELINE_CREATION_SUCCESS);
@@ -214,6 +214,10 @@ class PipelineListPage extends React.Component {
       isDeletePipelineModalActive: false,
       deletePipelineId: '',
     });
+  };
+
+  handleChange = ({ target: { value } }) => {
+    this.setState({ newPipelineName: value });
   };
 
   handleDeletePipelineConfirm = async () => {
@@ -248,6 +252,7 @@ class PipelineListPage extends React.Component {
       isNewPipelineWorking,
       isDeletePipelineWorking,
       pipelines,
+      newPipelineName,
       workers,
       currWorker,
     } = this.state;
@@ -257,9 +262,9 @@ class PipelineListPage extends React.Component {
         <React.Fragment>
           <Modal
             isActive={isSelectClusterModalActive}
-            title="Select cluster"
+            title="New pipeline"
             width="370px"
-            confirmBtnText="Next"
+            confirmBtnText="Add"
             handleConfirm={this.handleSelectClusterModalConfirm}
             handleCancel={this.handleSelectClusterModalClose}
             isConfirmDisabled={isEmpty(workers) ? true : false}
@@ -271,14 +276,29 @@ class PipelineListPage extends React.Component {
               </LoaderWrapper>
             ) : (
               <Inner>
-                <Warning text="Please select a cluster for the new pipeline" />
-                <Select
-                  data-testid="cluster-select"
-                  list={workers}
-                  selected={currWorker}
-                  handleChange={this.handleSelectChange}
-                  isObject
-                />
+                <FormGroup data-testid="name">
+                  <Label htmlFor="pipelineInput">Pipeline name</Label>
+                  <Input
+                    id="pipelineInput"
+                    name="name"
+                    width="100%"
+                    placeholder="Pipeline name"
+                    data-testid="name-input"
+                    value={newPipelineName}
+                    handleChange={this.handleChange}
+                  />
+                </FormGroup>
+                <FormGroup data-testid="name">
+                  <Label htmlFor="workerSelect">Worker cluster name</Label>
+                  <Select
+                    id="workerSelect"
+                    data-testid="cluster-select"
+                    list={workers}
+                    selected={currWorker}
+                    handleChange={this.handleSelectChange}
+                    isObject
+                  />
+                </FormGroup>
               </Inner>
             )}
           </Modal>
