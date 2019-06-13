@@ -1,3 +1,5 @@
+# Docker and Docker-compose
+
 ## Why we need docker-compose
 
 ohara is good at connecting to various systems to collect, transform, aggregate (and other operations you can imagine)
@@ -81,12 +83,15 @@ That does simplify your work and life.
 ```
 $ sudo vi /usr/lib/sysctl.d/00-system.conf
 ```
-Add the following line.
+
+Add the following line:
+
 ```
 net.ipv4.ip_forward=1
 ```
+
 Save and exit the file. Restart network:
+
 ```
 $ sudo systemctl restart network
 ```
-see https://github.com/docker/compose/releases for more details

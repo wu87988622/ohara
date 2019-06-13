@@ -1,4 +1,4 @@
-# Ohara Manager
+# Ohara Manager Development Guideline
 
 This module contains Ohara manager (an HTTP server powered by [Node.js](https://nodejs.org/en/)) and Ohara manager client (A web-based user interface built with [React.js](https://reactjs.org/) ). In the following docs, we refer to **Server** as Ohara manager and **Client** as Ohara manager client.
 

@@ -49,7 +49,7 @@ Open your browser (we recommend [Google Chrome](https://www.google.com/intl/zh-T
 ## Installation
 
 We all love docker, right? All ohara services are executed by docker container. However, it is ok to run ohara services
-through [assembly file](../README.md#build-binary) if you really really really hate docker.
+through [assembly file](how_to_build.md#build-binary) if you really really really hate docker.
 
 ----------
 

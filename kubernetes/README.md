@@ -1,2 +1,3 @@
 # Kubernetes
-About Kubernetes install user guide please refer: https://github.com/oharastream/ohara/blob/master/docs/user_guide.md
+
+About Kubernetes installation, please refer: https://oharastream.readthedocs.io/en/latest/user_guide.html#kubernetes

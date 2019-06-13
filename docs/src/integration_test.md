@@ -1,5 +1,9 @@
+# Integration Test
+
 ## How to deploy ohara integration test to QA environment?
+
 ### Node 裡需要安裝以下的工具
+
 * 安裝 JDK 1.8, 需要設定以下的 link
 ```
 $ sudo yum install -y java-1.8.0-openjdk-devel
@@ -23,29 +27,35 @@ https://docs.docker.com/install/linux/docker-ce/centos/
 
 
 * 防火牆設定允許 docker container 的 port, 並且重新 reload 防火牆的服務
+
 ```
 # sudo firewall-cmd --permanent --zone=trusted --add-interface={docker network}
 # sudo firewall-cmd --reload
 ```
 
 ### Jenkins 需要做以下的設定
+
 1.確認 jenkins 是否加入了登入的帳號密碼設定
+
 ```
 Credentials -> global -> Add Credentials -> 輸入 Username, Password, Description. ID 不用輸入 -> OK
 ```
 
 2.把 Node 加入到 Jenkins 裡
+
 ```
 管理 Jenkins -> 管理節點 -> 新增節點 -> 輸入節點名稱的 hostname -> 選複製既有節點 
 -> 複製來源選一台現有的 slave 來輸入, 例如：ohara-it01 -> OK
 ```
 
-3.把 Node 加入到 ssh remote hosts 
+3.把 Node 加入到 ssh remote hosts
+
 ```
 管理 Jenkins -> 設定系統 -> SSH remote hosts -> 往下拉會看到新增按鈕 -> 之後輸入 Hostname, port, 選 Credentials -> 新增
 ```
 
 4.設定 PreTest 和 PreCommit
+
 ```
     (1) 修改標籤表示式, 避免 IT 的 node 跑到 UT 上面
     

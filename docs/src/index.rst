@@ -21,9 +21,12 @@ and then follow the advice of `installation section`_.
 For Developer
 =============
 
+If you want to know how to build ohara, please read: `how to build`_
+
 Apart from contributing code to ohara, you can also leverage ohara to design your `custom connector`_,
 `custom streamapp` or build your UI interface via `Ohara REST interface`_.
 
+.. _how to build: how_to_build.md
 .. _custom connector: custom_connector.md
 .. _custom streamapp: custom_streamapp.md
 .. _Ohara REST interface: rest_interface.md
@@ -31,12 +34,17 @@ Apart from contributing code to ohara, you can also leverage ohara to design you
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Table of Contents
 
    user_guide
    rest_interface
    custom_connector
    custom_streamapp
+   how_to_build
+   ohara_manager_development_guideline
+   docker
+   integration_test
+   contributing
 
 Indices and tables
 ==================
