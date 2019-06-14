@@ -34,8 +34,8 @@ object K8SJson {
   final case class Spec(nodeName: Option[String], containers: Seq[Container], hostname: Option[String])
   implicit val SPEC_JSON_FORMAT: RootJsonFormat[Spec] = jsonFormat3(Spec)
 
-  final case class Metadata(uid: String, creationTimestamp: String)
-  implicit val METADATA_JSON_FORMAT: RootJsonFormat[Metadata] = jsonFormat2(Metadata)
+  final case class Metadata(uid: String, name: String, creationTimestamp: String)
+  implicit val METADATA_JSON_FORMAT: RootJsonFormat[Metadata] = jsonFormat3(Metadata)
 
   final case class Status(phase: String, hostIP: Option[String])
   implicit val STATUS_JSON_FORMAT: RootJsonFormat[Status] = jsonFormat2(Status)

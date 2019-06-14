@@ -48,7 +48,7 @@ private class K8SZookeeperCollieImpl(node: NodeCollie, k8sClient: K8SClient)
         .labelName(OHARA_LABEL)
         .domainName(K8S_DOMAIN_NAME)
         .envs(containerInfo.environments)
-        .name(s"${containerInfo.name}$DIVIDER${node.name}")
+        .name(containerInfo.name)
         .run(),
       TIMEOUT
     )

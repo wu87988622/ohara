@@ -216,6 +216,13 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
           workerClusterInfo.brokerClusterName shouldBe brokerClusterName
           workerClusterInfo.clientPort shouldBe workerClientPort
           workerClusterInfo.connectionProps shouldBe s"$firstNode:$workerClientPort"
+
+          // Confirm pod name is a common format
+          val wkPodName = Await.result(workerCollie.cluster(workerClusterName), TIMEOUT)._2.head.name
+          val wkPodNameFieldSize = wkPodName.split("-").size
+          val expectWKPodNameField = ContainerCollie.format("k8soccl", workerClusterName, "wk").split("-")
+          wkPodNameFieldSize shouldBe expectWKPodNameField.size
+
         } finally result(workerCollie.remove(workerClusterName))
       } finally result(brokerCollie.remove(brokerClusterName))
     } finally result(zookeeperCollie.remove(zkClusterName))

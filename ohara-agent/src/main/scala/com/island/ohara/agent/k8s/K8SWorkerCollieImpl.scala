@@ -52,7 +52,7 @@ private class K8SWorkerCollieImpl(node: NodeCollie, bkCollie: BrokerCollie, k8sC
         .envs(containerInfo.environments)
         .labelName(OHARA_LABEL)
         .domainName(K8S_DOMAIN_NAME)
-        .name(s"${containerInfo.name}$DIVIDER${node.name}")
+        .name(containerInfo.name)
         .run()
       Await.result(creator, TIMEOUT)
     } catch {

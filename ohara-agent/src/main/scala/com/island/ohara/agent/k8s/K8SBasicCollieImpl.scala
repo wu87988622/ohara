@@ -59,7 +59,7 @@ private[this] abstract class K8SBasicCollieImpl[T <: ClusterInfo: ClassTag, Crea
         cs =>
           Future.sequence(
             cs.filter(_.name.startsWith(s"$PREFIX_KEY$DIVIDER$clusterName"))
-              .map(container => k8sClient.log(container.hostname).map(container -> _))
+              .map(container => k8sClient.log(container.name).map(container -> _))
         ))
       .map(_.toMap)
 

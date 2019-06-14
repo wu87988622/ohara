@@ -51,7 +51,7 @@ private class K8SBrokerCollieImpl(node: NodeCollie, zkCollie: ZookeeperCollie, k
           containerInfo.portMappings.flatMap(_.portPairs).map(pair => pair.hostPort -> pair.containerPort).toMap)
         .hostname(s"${containerInfo.name}$DIVIDER${node.name}")
         .envs(containerInfo.environments)
-        .name(s"${containerInfo.name}$DIVIDER${node.name}")
+        .name(containerInfo.name)
         .run()
       Await.result(creator, TIMEOUT)
     } catch {

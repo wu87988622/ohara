@@ -44,8 +44,6 @@ object NodeRoute {
       root = NODES_PREFIX_PATH,
       hookOfAdd = (request: Creation) => {
         if (request.name.isEmpty) Future.failed(new IllegalArgumentException(s"name is required"))
-        else if (CommonUtils.hasUpperCase(request.name))
-          Future.failed(new IllegalArgumentException(s"${request.name} node name cannot set the uppercase string"))
         else
           update(
             Node(

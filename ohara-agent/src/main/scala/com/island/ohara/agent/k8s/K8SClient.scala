@@ -102,7 +102,7 @@ object K8SClient {
                   .getOrElse(K8sContainerState.UNKNOWN)
                   .name,
                 K8S_KIND_NAME,
-                item.spec.hostname.getOrElse("Unknown"),
+                item.metadata.name,
                 "Unknown",
                 Seq(
                   PortMapping(
