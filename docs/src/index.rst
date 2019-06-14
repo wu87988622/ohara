@@ -18,8 +18,8 @@ This section is for the ohara users who are going to install and then test offic
 you don't need to compile, build or write anything for ohara. All you have to read the `User Guide`_
 and then follow the advice of `installation section`_.
 
-.. _User Guide: user_guide.md
-.. _installation section: user_guide.md#installation
+.. _User Guide: user_guide.html
+.. _installation section: user_guide.html#installation
 
 
 For Developer
@@ -30,10 +30,10 @@ If you want to know how to build ohara, please read: `how to build`_
 Apart from contributing code to ohara, you can also leverage ohara to design your `custom connector`_,
 `custom streamapp` or build your UI interface via `Ohara REST interface`_.
 
-.. _how to build: how_to_build.md
-.. _custom connector: custom_connector.md
-.. _custom streamapp: custom_streamapp.md
-.. _Ohara REST interface: rest_interface.md
+.. _how to build: how_to_build.html
+.. _custom connector: custom_connector.html
+.. _custom streamapp: custom_streamapp.html
+.. _Ohara REST interface: rest_interface.html
 
 
 .. toctree::
