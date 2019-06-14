@@ -42,7 +42,10 @@ describe('Header', () => {
 
   it('shows ohara version info', () => {
     cy.request('GET', 'api/info')
-      .then(({ body: { versionInfo } }) => versionInfo)
+      .then(({ body: { versionInfo: { date, revision, version }, mode } }) => {
+        // we only need these four properties
+        return { date, revision, version, mode };
+      })
       .as('info');
 
     cy.getByTestId('version-btn')
@@ -54,13 +57,18 @@ describe('Header', () => {
           .getByText('Ohara version')
           .should('be.visible');
 
-        cy.get('@info').then(({ version, revision, date }) => {
+        cy.get('@info').then(info => {
+          const { version, revision, date, mode } = info;
+
           cy.getByText(version)
-            .should('exist')
+            .getByText(mode)
             .getByText(revision)
-            .should('exist')
-            .getByText(date)
-            .should('exist');
+            .getByText(date);
+
+          // Ensure we only render these element in the screen
+          cy.getByTestId('info-list')
+            .find('li')
+            .should('have.length', Object.keys(info).length);
         });
       })
       .getByTestId('close-btn')

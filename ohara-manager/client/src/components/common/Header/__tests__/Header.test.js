@@ -25,7 +25,9 @@ import { fetchInfo } from 'api/infoApi';
 jest.mock('api/infoApi');
 
 fetchInfo.mockImplementation(() =>
-  Promise.resolve({ data: { result: { versionInfo: {} }, isSuccess: true } }),
+  Promise.resolve({
+    data: { result: { versionInfo: {}, mode: 'K8S' }, isSuccess: true },
+  }),
 );
 
 const props = {

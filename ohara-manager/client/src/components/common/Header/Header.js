@@ -169,9 +169,10 @@ class Header extends React.Component {
   fetchInfo = async () => {
     const res = await fetchInfo();
     this.setState({ isLoading: false });
-    const versionInfo = get(res, 'data.result.versionInfo', null);
-    if (versionInfo) {
-      this.setState({ versionInfo });
+    const result = get(res, 'data.result', null);
+
+    if (result) {
+      this.setState({ info: result });
     }
   };
 
@@ -196,11 +197,12 @@ class Header extends React.Component {
     const {
       isConfigModalActive,
       isVersionModalActive,
-      versionInfo = {},
+      info = {},
       isLoading,
     } = this.state;
 
-    const { version = '', revision = '', date = '' } = versionInfo;
+    const { versionInfo = {}, mode = '' } = info;
+    const { version, revision, date } = versionInfo;
 
     return (
       <StyledHeader>
@@ -224,7 +226,11 @@ class Header extends React.Component {
               <ListLoader />
             </LoaderWrapper>
           ) : (
-            <Ul>
+            <Ul data-testid="info-list">
+              <li>
+                <span className="item">Mode:</span>
+                <span className="content">{mode}</span>
+              </li>
               <li>
                 <span className="item">Version:</span>
                 <span className="content">{version}</span>
