@@ -56,7 +56,7 @@ In Ohara Stream environment, the required parameters are defined in Ohara Stream
 OStream<Row> ostream = OStream.builder().toOharaEnvStream();
 ```
 
-A base implementation for a custom streamApp only need to include [start()]() method, but you could include other methods
+A base implementation for a custom streamApp only need to include [start()](#start-method) method, but you could include other methods
 which are described below for your convenience.
 
 The following example is a simple streamApp application which can run in Ohara Stream. Note that this example

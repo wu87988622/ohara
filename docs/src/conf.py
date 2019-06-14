@@ -82,7 +82,9 @@ pygments_style = 'sphinx'
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-#html_theme = 'alabaster'
+# Use Read the Docs Sphinx Theme: https://sphinx-rtd-theme.readthedocs.io/en/latest
+html_theme = "sphinx_rtd_theme"
+html_theme_path = ["_themes", ]
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -104,12 +106,6 @@ html_static_path = ['_static']
 # 'searchbox.html']``.
 #
 # html_sidebars = {}
-
-#---sphinx-themes-----
-# https://jupyter-sphinx-theme.readthedocs.io/en/latest/
-#
-from jupyter_sphinx_theme import *
-init_theme()
 
 
 

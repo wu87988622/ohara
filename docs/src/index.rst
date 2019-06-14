@@ -1,14 +1,18 @@
 .. OharaStream documentation master file
 
-Welcome to OharaStream's documentation!
-=======================================
+.. image:: images/ohara-logo.png
+   :width: 150pt
+   :align: right
 
-Ohara is open to users, developers and man living in earth. Hence, we prepare a bunch of docs to help you to
+Documentation
+=============
+
+OharaStream is open to users, developers and man living in earth. Hence, we prepare a bunch of docs to help you to
 understand ohara comprehensively but quickly.
 
 
 For user
-========
+--------
 
 This section is for the ohara users who are going to install and then test official streaming application. For this case,
 you don't need to compile, build or write anything for ohara. All you have to read the `User Guide`_
@@ -19,7 +23,7 @@ and then follow the advice of `installation section`_.
 
 
 For Developer
-=============
+-------------
 
 If you want to know how to build ohara, please read: `how to build`_
 
