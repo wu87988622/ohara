@@ -16,10 +16,29 @@
 #
 
 yum install -y yum-utils device-mapper-persistent-data lvm2
-yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-yum install -y docker-ce
-systemctl enable docker
-systemctl start docker
+
+# Is it exist docker command
+if ! hash docker 2>/dev/null; then
+  echo "Command 'docker' cannot be found on your system, install it."
+  rm -rf /var/lib/docker/network/file/local-ky.db
+  yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+  yum install -y docker-ce
+  systemctl enable docker
+  systemctl start docker
+else
+  dockerVersion=$(docker version --format '{{.Server.Version}}')
+  echo "You have installed docker ${dockerVersion}"
+  dockerMajorVersion="$(cut -d'.' -f1 <<<"$dockerVersion")"
+  major=$((dockerMajorVersion))
+
+  //Check docer version
+  if [[ $major < 17 ]]
+  then
+    echo "Your docker version is too old, please upgrade your docker version to 17+"
+    exit 1
+  fi
+fi
+
 systemctl disable firewalld
 systemctl stop firewalld # You can only open the 6443 and 8080 port
 sed -i s/^SELINUX=.*$/SELINUX=disabled/ /etc/selinux/config
