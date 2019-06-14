@@ -87,8 +87,9 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
     [
       'e2e:run',
       '--config',
-      `baseUrl=http://localhost:${prod ? serverPort : clientPort},`,
-      'integrationFolder=cypress/api',
+      `baseUrl=http://localhost:${
+        prod ? serverPort : clientPort
+      },integrationFolder=cypress/api`,
     ],
     {
       cwd: 'client',
