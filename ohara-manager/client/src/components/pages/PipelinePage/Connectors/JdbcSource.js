@@ -246,7 +246,7 @@ class JdbcSource extends React.Component {
       replaceToken: '.',
     });
 
-    const params = { ..._values, topics };
+    const params = { ..._values, topics, name: connectorId };
     await connectorApi.updateConnector({ id: connectorId, params });
 
     const { sinkProps, update } = utils.getUpdatedTopic({

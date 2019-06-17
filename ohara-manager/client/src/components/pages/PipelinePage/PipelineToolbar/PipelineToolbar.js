@@ -82,6 +82,7 @@ class PipelineToolbar extends React.Component {
     isAddBtnDisabled: false,
     isFetchWorkerWorking: true,
     currWorker: null,
+    connectorName: '',
   };
 
   componentDidMount() {
@@ -179,7 +180,12 @@ class PipelineToolbar extends React.Component {
 
   handleConfirm = () => {
     this.modalChild.current.update();
-    this.handleModalClose();
+    if (
+      this.state.modalName !== 'sources' &&
+      this.state.modalName !== 'sinks'
+    ) {
+      this.handleModalClose();
+    }
   };
 
   handleTrSelect = name => {
@@ -196,6 +202,10 @@ class PipelineToolbar extends React.Component {
 
   updateAddBtnStatus = currConnector => {
     this.setState({ isAddBtnDisabled: !currConnector });
+  };
+
+  handleConnectrNameModel = name => {
+    this.setState({ connectorName: name });
   };
 
   render() {
@@ -286,6 +296,7 @@ class PipelineToolbar extends React.Component {
               updateAddBtnStatus={this.updateAddBtnStatus}
               isLoading={isFetchWorkerWorking}
               workerClusterName={workerClusterName}
+              handleClose={this.handleModalClose}
             />
           )}
         </Modal>
