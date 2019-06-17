@@ -439,6 +439,24 @@ object Configurator {
       java.time.Duration.ofSeconds(30)
     )
 
+    // Wait the zookeeper container creating complete
+    try {
+      CommonUtils.await(
+        () =>
+          Await
+            .result(ContainerApi.access().hostname(CommonUtils.hostname()).port(configurator.port).get(zkCluster.name),
+                    30 seconds)
+            .head
+            .containers
+            .size == 1,
+        java.time.Duration.ofSeconds(30),
+      )
+    } catch {
+      case ex: Throwable =>
+        LOG.error(s"failed to create zk cluster:$zkCluster. exception: ${ex}")
+        throw ex
+    }
+
     LOG.info(s"succeed to create zk cluster:$zkCluster")
 
     val bkCluster = Await.result(
