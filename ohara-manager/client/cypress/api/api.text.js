@@ -27,6 +27,7 @@ let propertyId = '';
 let fakeWk = '';
 const nodeName = `node${makeRandomPort()}`;
 const wkName = `wk${makeRandomPort()}`;
+const connectorName = `source${makeRandomPort()}`;
 
 describe('Node Api test', () => {
   it('createNode', () => {
@@ -107,43 +108,41 @@ describe('Node Api test', () => {
   it('fetchNodes', () => {
     cy.fetchNodes().then(res => {
       const { data } = res;
-      cy.log(data);
-      // fakeNodeName = res.result[0].name;
-      // expect(data.isSuccess).to.eq(true);
-      // expect(data.result).to.be.a('array');
-      // expect(data.result[0]).to.include.keys(
-      //   'name',
-      //   'password',
-      //   'port',
-      //   'user',
-      //   'services',
-      // );
-      // expect(data.result[0].services).to.be.a('array');
-      // expect(data.result[0].services[0]).to.include.keys(
-      //   'name',
-      //   'clusterNames',
-      // );
-      // expect(data.result[0].services[1]).to.include.keys(
-      //   'name',
-      //   'clusterNames',
-      // );
-      // expect(data.result[0].services[2]).to.include.keys(
-      //   'name',
-      //   'clusterNames',
-      // );
-      // expect(data.result[0].services[0].name).to.eq('zookeeper');
-      // expect(data.result[0].services[1].name).to.eq('broker');
-      // expect(data.result[0].services[2].name).to.eq('connect-worker');
-      // expect(data.result[0].name).to.be.a('string');
-      // expect(data.result[0].password).to.be.a('string');
-      // expect(data.result[0].port).to.be.a('number');
-      // expect(data.result[0].user).to.be.a('string');
-      // expect(data.result[0].services[0].name).to.be.a('string');
-      // expect(data.result[0].services[0].clusterNames).to.be.a('array');
-      // expect(data.result[0].services[1].name).to.be.a('string');
-      // expect(data.result[0].services[1].clusterNames).to.be.a('array');
-      // expect(data.result[0].services[2].name).to.be.a('string');
-      // expect(data.result[0].services[2].clusterNames).to.be.a('array');
+      expect(data.isSuccess).to.eq(true);
+      expect(data.result).to.be.a('array');
+      expect(data.result[0]).to.include.keys(
+        'name',
+        'password',
+        'port',
+        'user',
+        'services',
+      );
+      expect(data.result[0].services).to.be.a('array');
+      expect(data.result[0].services[0]).to.include.keys(
+        'name',
+        'clusterNames',
+      );
+      expect(data.result[0].services[1]).to.include.keys(
+        'name',
+        'clusterNames',
+      );
+      expect(data.result[0].services[2]).to.include.keys(
+        'name',
+        'clusterNames',
+      );
+      expect(data.result[0].services[0].name).to.eq('zookeeper');
+      expect(data.result[0].services[1].name).to.eq('broker');
+      expect(data.result[0].services[2].name).to.eq('connect-worker');
+      expect(data.result[0].name).to.be.a('string');
+      expect(data.result[0].password).to.be.a('string');
+      expect(data.result[0].port).to.be.a('number');
+      expect(data.result[0].user).to.be.a('string');
+      expect(data.result[0].services[0].name).to.be.a('string');
+      expect(data.result[0].services[0].clusterNames).to.be.a('array');
+      expect(data.result[0].services[1].name).to.be.a('string');
+      expect(data.result[0].services[1].clusterNames).to.be.a('array');
+      expect(data.result[0].services[2].name).to.be.a('string');
+      expect(data.result[0].services[2].clusterNames).to.be.a('array');
     });
   });
 });
@@ -424,8 +423,8 @@ describe('Connector Api test', () => {
     const data = {
       className: 'com.island.ohara.connector.ftp.FtpSource',
       configs: {},
-      'connector.name': 'Untitled source',
-      name: 'Untitled source',
+      'connector.name': connectorName,
+      name: connectorName,
       numberOfTasks: 1,
       schema: [],
       topics: [],
@@ -433,20 +432,17 @@ describe('Connector Api test', () => {
     };
     cy.createConnector(data).then(res => {
       const { data } = res;
-      connectorId = data.result.id;
       expect(data.isSuccess).to.eq(true);
-      expect(data.result).to.include.keys('id', 'settings', 'state');
-      expect(data.result.id).to.be.a('string');
-      expect(data.result.state).to.be.a('null');
+      expect(data.result).to.include.keys('settings');
       expect(data.result.settings).to.include.keys(
-        'connector.class',
+        'className',
         'connector.name',
         'name',
         'tasks.max',
         'workerClusterName',
       );
       expect(data.result.settings).to.be.a('object');
-      expect(data.result.settings['connector.class']).to.be.a('string');
+      expect(data.result.settings.className).to.be.a('string');
       expect(data.result.settings['connector.name']).to.be.a('string');
       expect(data.result.settings['tasks.max']).to.be.a('number');
       expect(data.result.settings.name).to.be.a('string');
@@ -454,22 +450,19 @@ describe('Connector Api test', () => {
     });
   });
   it('fetchConnector', () => {
-    cy.fetchConnector(connectorId).then(res => {
+    cy.fetchConnector(connectorName).then(res => {
       const { data } = res;
-      connectorId = data.result.id;
       expect(data.isSuccess).to.eq(true);
-      expect(data.result).to.include.keys('id', 'settings', 'state');
-      expect(data.result.id).to.be.a('string');
-      expect(data.result.state).to.be.a('null');
+      expect(data.result).to.include.keys('settings');
       expect(data.result.settings).to.include.keys(
-        'connector.class',
+        'className',
         'connector.name',
         'name',
         'tasks.max',
         'workerClusterName',
       );
       expect(data.result.settings).to.be.a('object');
-      expect(data.result.settings['connector.class']).to.be.a('string');
+      expect(data.result.settings['className']).to.be.a('string');
       expect(data.result.settings['connector.name']).to.be.a('string');
       expect(data.result.settings['tasks.max']).to.be.a('number');
       expect(data.result.settings.name).to.be.a('string');
@@ -478,13 +471,13 @@ describe('Connector Api test', () => {
   });
   it('updateConnector', () => {
     const data = {
-      id: connectorId,
+      id: connectorName,
       params: {
         author: 'root',
         columns: [
           { dataType: 'STRING', name: 'test', newName: 'test', order: 1 },
         ],
-        'connector.class': 'com.island.ohara.connector.ftp.FtpSource',
+        className: 'com.island.ohara.connector.ftp.FtpSource',
         'connector.name': 'Untitled source',
         'ftp.completed.folder': 'test',
         'ftp.encode': 'UTF-8',
