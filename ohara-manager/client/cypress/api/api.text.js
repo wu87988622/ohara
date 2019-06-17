@@ -22,7 +22,6 @@ let pipelineId = '';
 let pipelineName = '';
 let topicId = '';
 let streamAppId = '';
-let connectorId = '';
 let propertyId = '';
 let fakeWk = '';
 const nodeName = `node${makeRandomPort()}`;
@@ -473,6 +472,7 @@ describe('Connector Api test', () => {
     const data = {
       id: connectorName,
       params: {
+        name: connectorName,
         author: 'root',
         columns: [
           { dataType: 'STRING', name: 'test', newName: 'test', order: 1 },
@@ -492,20 +492,18 @@ describe('Connector Api test', () => {
         'tasks.max': 1,
         topics: [topicId],
         version: '0.6-SNAPSHOT',
-        workerClusterName: wkName,
+        workerClusterName: fakeWk,
       },
     };
     cy.updateConnector(data).then(res => {
       const { data } = res;
       expect(data.isSuccess).to.eq(true);
-      expect(data.result).to.include.keys('id', 'settings', 'state');
-      expect(data.result.id).to.be.a('string');
-      expect(data.result.state).to.be.a('null');
+      expect(data.result).to.include.keys('settings');
       expect(data.result.settings).to.be.a('object');
       expect(data.result.settings).to.include.keys(
         'author',
         'columns',
-        'connector.class',
+        'className',
         'connector.name',
         'ftp.completed.folder',
         'ftp.encode',
@@ -524,9 +522,9 @@ describe('Connector Api test', () => {
       );
       expect(data.result.settings.author).to.be.a('string');
       expect(data.result.settings.columns).to.be.a('array');
-      expect(data.result.settings['connector.class']).to.be.a('string');
+      expect(data.result.settings.className).to.be.a('string');
+      expect(data.result.settings.name).to.be.a('string');
       expect(data.result.settings['connector.name']).to.be.a('string');
-      expect(data.result.settings['connector.class']).to.be.a('string');
       expect(data.result.settings['ftp.completed.folder']).to.be.a('string');
       expect(data.result.settings['ftp.encode']).to.be.a('string');
       expect(data.result.settings['ftp.error.folder']).to.be.a('string');
@@ -544,7 +542,7 @@ describe('Connector Api test', () => {
     });
   });
   it('startConnector', () => {
-    cy.startConnector(connectorId).then(res => {
+    cy.startConnector(connectorName).then(res => {
       const { data } = res;
       expect(data.isSuccess).to.eq(true);
       expect(data.result).to.include.keys('id', 'settings', 'state');
@@ -552,15 +550,14 @@ describe('Connector Api test', () => {
     });
   });
   it('stopConnector', () => {
-    cy.stopConnector(connectorId).then(res => {
+    cy.stopConnector(connectorName).then(res => {
       const { data } = res;
       expect(data.isSuccess).to.eq(true);
-      expect(data.result).to.include.keys('id', 'settings', 'state');
-      expect(data.result.state).to.be.a('null');
+      expect(data.result).to.include.keys('id', 'settings');
     });
   });
   it('deleteConnector', () => {
-    cy.deleteConnector(connectorId).then(res => {
+    cy.deleteConnector(connectorName).then(res => {
       const { data } = res;
       expect(data.isSuccess).to.eq(true);
     });
@@ -719,8 +716,9 @@ describe('Validate Api test', () => {
       columns: [
         { dataType: 'STRING', name: 'test', newName: 'test', order: 1 },
       ],
+      name: 'source',
       'connector.class': 'com.island.ohara.connector.ftp.FtpSource',
-      'connector.name': 'Untitled source',
+      'connector.name': 'source',
       'ftp.completed.folder': 'test',
       'ftp.encode': 'UTF-8',
       'ftp.error.folder': 'test',
@@ -734,7 +732,7 @@ describe('Validate Api test', () => {
       'tasks.max': 1,
       topics: [topicId],
       version: '0.6-SNAPSHOT',
-      workerClusterName: wkName,
+      workerClusterName: fakeWk,
     };
     cy.validateConnector(params).then(res => {
       const { data } = res;
