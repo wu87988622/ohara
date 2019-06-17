@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-const { exec } = require('child_process');
+const cp = require('child_process');
 
 /* eslint-disable no-console */
-exec('yarn -v', (err, stdout) => {
-  if (err) throw err;
-
-  const yarnVersion = stdout.trim();
+try {
+  const yarnVersion = cp
+    .execSync('yarn -v')
+    .toString()
+    .trim();
   const minor = parseFloat(yarnVersion.slice(2));
 
-  // Since we're using yarn audit in one of our npm scripts. We need to
+  // Since we're using yarn audit in our npm scripts. We need to
   // use yarn 1.13.x or greater as yarn audit was added in yarn 1.12.3
   // https://github.com/yarnpkg/yarn/issues/5808
   if (minor < 13) {
@@ -34,4 +35,6 @@ exec('yarn -v', (err, stdout) => {
 
   console.log(`👌 Yarn version check passed! You're using yarn ${yarnVersion}`);
   console.log('📦 Installing Ohara Manager dependencies');
-});
+} catch (error) {
+  throw new Error(error);
+}

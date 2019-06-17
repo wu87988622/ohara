@@ -14,25 +14,6 @@
  * limitations under the License.
  */
 
-const cp = require('child_process');
-
-/* eslint-disable no-console, no-process-exit */
-
-// Kill both server and client processes
-try {
-  cp.execSync('./node_modules/.bin/forever stopall', { stdio: 'inherit' });
-} catch (error) {
-  throw new Error(error);
-}
-
-try {
-  cp.execSync('pkill -f index.js start.js', { stdio: 'inherit' });
-} catch (error) {
-  if (error.status === 1) {
-    // Couldn't find any processes, exit with success status
-    process.exit(0);
-  }
-
-  // Real error, throw it out
-  throw new Error(error);
-}
+exports.sleep = ms => {
+  return new Promise(resolve => setTimeout(resolve, ms));
+};

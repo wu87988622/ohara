@@ -16,7 +16,7 @@
 
 const { getConfig } = require('./utils/configHelpers');
 
-const { configurator, port } = getConfig;
+const { configurator, port } = getConfig();
 
 module.exports = {
   API_ROOT: configurator,

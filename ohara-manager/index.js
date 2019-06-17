@@ -72,5 +72,4 @@ app.get('*', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(chalk.green(`Ohara manager is running at port: ${PORT}`));
-  console.log(chalk.blue(`Configurator API: ${API_ROOT}`));
 });

@@ -16,8 +16,8 @@
 
 const fs = require('fs');
 
-function copyJars() {
-  fs.access('./client/cypress/fixtures/plugin/', function(err) {
+const copyJars = () => {
+  fs.access('./client/cypress/fixtures/plugin/', err => {
     if (err) {
       fs.mkdirSync('./client/cypress/fixtures/plugin');
     }
@@ -37,7 +37,7 @@ function copyJars() {
     );
   });
 
-  fs.access('./client/cypress/fixtures/streamApp', function(err) {
+  fs.access('./client/cypress/fixtures/streamApp', err => {
     if (err) {
       fs.mkdirSync('./client/cypress/fixtures/streamApp');
     }
@@ -49,6 +49,6 @@ function copyJars() {
       },
     );
   });
-}
+};
 
 module.exports = copyJars;
