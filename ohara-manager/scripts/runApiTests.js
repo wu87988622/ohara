@@ -25,7 +25,7 @@ const copyJars = require('./copyJars');
 const { getConfig } = require('../utils/configHelpers');
 const { waited } = require('./lib/waitOn');
 
-const { configurator, port } = getConfig;
+const { configurator, port } = getConfig();
 const { prod = false } = yargs.argv;
 
 const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {

@@ -30,7 +30,7 @@ const {
   getDefaultEnv,
 } = require('./handleE2eServices');
 
-const { configurator, port } = getConfig;
+const { configurator, port } = getConfig();
 const { prod = false, nodeHost, nodePort, nodeUser, nodePass } = yargs.argv;
 
 const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
