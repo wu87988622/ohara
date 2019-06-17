@@ -16,12 +16,13 @@
 
 package com.island.ohara.agent
 import java.util.Objects
+
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.client.configurator.v0.JarApi.{JarInfo, _}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.{ConnectorDefinitions, WorkerClusterInfo}
-import com.island.ohara.client.configurator.v0.{ClusterInfo, WorkerApi}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
@@ -72,7 +73,7 @@ trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator
         .map(_._2)
         .map(containers =>
           nodeCollie
-            .nodes(containers.map(_.nodeName))
+            .nodes(containers.map(_.nodeName).toSet)
             .map(_.map(node => node -> containers.find(_.nodeName == node.name).get).toMap))
         .getOrElse(Future.successful(Map.empty))
         .flatMap(existNodes =>
@@ -177,7 +178,7 @@ trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator
                       statusTopicReplications = statusTopicReplications,
                       jarInfos = jarInfos,
                       connectors = Seq.empty,
-                      nodeNames = successfulContainers.map(_.nodeName) ++ existNodes.map(_._1.name)
+                      nodeNames = (successfulContainers.map(_.nodeName) ++ existNodes.map(_._1.name)).toSet
                     )
                     postCreateWorkerCluster(clusterInfo, successfulContainers)
                     clusterInfo
@@ -189,35 +190,27 @@ trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator
 
   /**
     * Please implement nodeCollie
-    * @return
     */
-  protected def nodeCollie(): NodeCollie
+  protected def nodeCollie: NodeCollie
 
   /**
     * Implement prefix name for paltform
-    * @return
     */
-  protected def prefixKey(): String
+  protected def prefixKey: String
 
   /**
     * return service name
-    * @return
     */
-  protected def serviceName(): String
+  protected def serviceName: String
 
   /**
     * Please implement this function to get Broker cluster information
-    * @param executionContext
-    * @return
     */
   protected def brokerClusters(
     implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]]
 
   /**
     * Update exist node info
-    * @param node
-    * @param container
-    * @param route
     */
   protected def hookUpdate(node: Node, container: ContainerInfo, route: Map[String, String]): Unit = {
     //Nothing
@@ -225,8 +218,6 @@ trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator
 
   /**
     * Hostname resolve to IP address
-    * @param nodeName
-    * @return
     */
   protected def resolveHostName(nodeName: String): String = {
     CommonUtils.address(nodeName)
@@ -234,12 +225,6 @@ trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator
 
   /**
     * Please implement this function to create the container to a different platform
-    * @param executionContext
-    * @param clusterName
-    * @param containerName
-    * @param containerInfo
-    * @param node
-    * @param route
     */
   protected def doCreator(executionContext: ExecutionContext,
                           clusterName: String,
@@ -250,8 +235,6 @@ trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator
 
   /**
     * After the worker container creates complete, you maybe need to do other things.
-    * @param clusterInfo
-    * @param successfulContainers
     */
   protected def postCreateWorkerCluster(clusterInfo: ClusterInfo, successfulContainers: Seq[ContainerInfo]): Unit = {
     //Default Nothing
@@ -291,7 +274,7 @@ trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator
     */
   def counters(cluster: WorkerClusterInfo): Seq[CounterMBean] = cluster.nodeNames.flatMap { node =>
     BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().counterMBeans().asScala
-  }
+  }.toSeq
 
   private[agent] def toWorkerCluster(clusterName: String, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] = {
@@ -319,7 +302,7 @@ trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator
           .map(WorkerCollie.toJarInfos)
           .getOrElse(Seq.empty),
         connectors = connectors,
-        nodeNames = containers.map(_.nodeName)
+        nodeNames = containers.map(_.nodeName).toSet
       )
     }
   }
@@ -355,41 +338,34 @@ trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator
 
 object WorkerCollie {
   trait ClusterCreator extends Collie.ClusterCreator[WorkerClusterInfo] {
-    private[this] var clientPort: Int = WorkerApi.CLIENT_PORT_DEFAULT
+    private[this] var clientPort: Int = CommonUtils.availablePort()
     private[this] var brokerClusterName: String = _
     private[this] var groupId: String = CommonUtils.randomString(10)
-    private[this] var offsetTopicName: String = s"$groupId-offsetTopicName"
+    private[this] var offsetTopicName: String = s"$groupId-offset-${CommonUtils.randomString(10)}"
     private[this] var offsetTopicReplications: Short = 1
     private[this] var offsetTopicPartitions: Int = 1
-    private[this] var configTopicName: String = s"$groupId-configTopicName"
+    private[this] var configTopicName: String = s"$groupId-config-${CommonUtils.randomString(10)}"
     private[this] var configTopicReplications: Short = 1
-    // configTopicPartitions must be 1
-    private[this] var statusTopicName: String = s"$groupId-statusTopicName"
+    private[this] var statusTopicName: String = s"$groupId-status-${CommonUtils.randomString(10)}"
     private[this] var statusTopicReplications: Short = 1
     private[this] var statusTopicPartitions: Int = 1
     private[this] var jarInfos: Seq[JarInfo] = Seq.empty
-    private[this] var jmxPort: Int = WorkerApi.JMX_PORT_DEFAULT
+    private[this] var jmxPort: Int = CommonUtils.availablePort()
 
-    override def copy(clusterInfo: ClusterInfo): ClusterCreator.this.type = clusterInfo match {
-      case wk: WorkerClusterInfo =>
-        super.copy(clusterInfo)
-        clientPort(wk.clientPort)
-        brokerClusterName(wk.brokerClusterName)
-        groupId(wk.groupId)
-        offsetTopicName(wk.offsetTopicName)
-        offsetTopicReplications(wk.offsetTopicReplications)
-        offsetTopicPartitions(wk.offsetTopicPartitions)
-        configTopicName(wk.configTopicName)
-        configTopicReplications(wk.configTopicReplications)
-        statusTopicName(wk.statusTopicName)
-        statusTopicReplications(wk.statusTopicReplications)
-        statusTopicPartitions(wk.statusTopicPartitions)
-        jarInfos(wk.jarInfos)
-        jmxPort(wk.jmxPort)
-        this
-      case _ =>
-        throw new IllegalArgumentException(
-          s"you should pass WorkerClusterInfo rather than ${clusterInfo.getClass.getName}")
+    override protected def doCopy(clusterInfo: WorkerClusterInfo): Unit = {
+      clientPort(clusterInfo.clientPort)
+      brokerClusterName(clusterInfo.brokerClusterName)
+      groupId(clusterInfo.groupId)
+      offsetTopicName(clusterInfo.offsetTopicName)
+      offsetTopicReplications(clusterInfo.offsetTopicReplications)
+      offsetTopicPartitions(clusterInfo.offsetTopicPartitions)
+      configTopicName(clusterInfo.configTopicName)
+      configTopicReplications(clusterInfo.configTopicReplications)
+      statusTopicName(clusterInfo.statusTopicName)
+      statusTopicReplications(clusterInfo.statusTopicReplications)
+      statusTopicPartitions(clusterInfo.statusTopicPartitions)
+      jarInfos(clusterInfo.jarInfos)
+      jmxPort(clusterInfo.jmxPort)
     }
 
     def brokerClusterName(name: String): ClusterCreator = {
@@ -397,9 +373,9 @@ object WorkerCollie {
       this
     }
 
-    @Optional("default is WorkerApi.CLIENT_PORT_DEFAULT.WorkerApi.CLIENT_PORT_DEFAULT")
+    @Optional("default is random port")
     def clientPort(clientPort: Int): ClusterCreator = {
-      this.clientPort = CommonUtils.requirePositiveInt(clientPort)
+      this.clientPort = CommonUtils.requireConnectionPort(clientPort)
       this
     }
 
@@ -439,10 +415,11 @@ object WorkerCollie {
     }
     @Optional("default number is 1")
     def statusTopicPartitions(statusTopicPartitions: Int): ClusterCreator = {
-      this.statusTopicPartitions = CommonUtils.requirePositiveInt(statusTopicPartitions)
+      this.statusTopicPartitions = CommonUtils.requireConnectionPort(statusTopicPartitions)
       this
     }
 
+    @Optional("default is random string")
     def configTopicName(configTopicName: String): ClusterCreator = {
       this.configTopicName = CommonUtils.requireNonEmpty(configTopicName)
       this
@@ -460,9 +437,9 @@ object WorkerCollie {
       this
     }
 
-    @Optional("default is WorkerApi.CLIENT_PORT_DEFAULT")
+    @Optional("default is random port")
     def jmxPort(jmxPort: Int): ClusterCreator = {
-      this.jmxPort = CommonUtils.requirePositiveInt(jmxPort)
+      this.jmxPort = CommonUtils.requireConnectionPort(jmxPort)
       this
     }
 
@@ -471,8 +448,8 @@ object WorkerCollie {
       clusterName = CommonUtils.requireNonEmpty(clusterName),
       imageName = CommonUtils.requireNonEmpty(imageName),
       brokerClusterName = CommonUtils.requireNonEmpty(brokerClusterName),
-      clientPort = CommonUtils.requirePositiveInt(clientPort),
-      jmxPort = CommonUtils.requirePositiveInt(jmxPort),
+      clientPort = CommonUtils.requireConnectionPort(clientPort),
+      jmxPort = CommonUtils.requireConnectionPort(jmxPort),
       groupId = CommonUtils.requireNonEmpty(groupId),
       offsetTopicName = CommonUtils.requireNonEmpty(offsetTopicName),
       offsetTopicReplications = CommonUtils.requirePositiveShort(offsetTopicReplications),
@@ -483,7 +460,7 @@ object WorkerCollie {
       configTopicName = CommonUtils.requireNonEmpty(configTopicName),
       configTopicReplications = CommonUtils.requirePositiveShort(configTopicReplications),
       jarInfos = Objects.requireNonNull(jarInfos),
-      nodeNames = CommonUtils.requireNonEmpty(nodeNames.asJava).asScala
+      nodeNames = CommonUtils.requireNonEmpty(nodeNames.asJava).asScala.toSet
     )
 
     protected def doCreate(executionContext: ExecutionContext,
@@ -502,7 +479,7 @@ object WorkerCollie {
                            configTopicName: String,
                            configTopicReplications: Short,
                            jarInfos: Seq[JarInfo],
-                           nodeNames: Seq[String]): Future[WorkerClusterInfo]
+                           nodeNames: Set[String]): Future[WorkerClusterInfo]
   }
   private[agent] val GROUP_ID_KEY: String = "WORKER_GROUP"
   private[agent] val OFFSET_TOPIC_KEY: String = "WORKER_OFFSET_TOPIC"

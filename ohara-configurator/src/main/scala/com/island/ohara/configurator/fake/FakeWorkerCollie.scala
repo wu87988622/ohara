@@ -61,7 +61,7 @@ private[configurator] class FakeWorkerCollie(node: NodeCollie, wkConnectionProps
      nodeNames) =>
       Future.successful(
         addCluster(
-          FakeWorkerClusterInfo(
+          WorkerClusterInfo(
             name = clusterName,
             imageName = imageName,
             brokerClusterName = brokerClusterName,
@@ -79,15 +79,13 @@ private[configurator] class FakeWorkerCollie(node: NodeCollie, wkConnectionProps
             statusTopicReplications = statusTopicReplications,
             jarInfos = Seq.empty,
             connectors = Seq.empty,
-            sources = Seq.empty,
-            sinks = Seq.empty,
             nodeNames = nodeNames
           )))
 
   override protected def doRemoveNode(previousCluster: WorkerClusterInfo, beRemovedContainer: ContainerInfo)(
     implicit executionContext: ExecutionContext): Future[Boolean] = Future
     .successful(
-      addCluster(FakeWorkerClusterInfo(
+      addCluster(WorkerClusterInfo(
         name = previousCluster.name,
         imageName = previousCluster.imageName,
         brokerClusterName = previousCluster.brokerClusterName,
@@ -105,19 +103,16 @@ private[configurator] class FakeWorkerCollie(node: NodeCollie, wkConnectionProps
         offsetTopicReplications = previousCluster.offsetTopicReplications,
         jarInfos = previousCluster.jarInfos,
         connectors = Seq.empty,
-        sources = Seq.empty,
-        sinks = Seq.empty,
         nodeNames = previousCluster.nodeNames.filterNot(_ == beRemovedContainer.nodeName)
       )))
     .map(_ => true)
 
-  override def workerClient(cluster: WorkerClusterInfo): WorkerClient = cluster match {
-    case _: FakeWorkerClusterInfo =>
+  override def workerClient(cluster: WorkerClusterInfo): WorkerClient =
+    if (wkConnectionProps == null) {
       val fake = new FakeWorkerClient
       val r = fakeClientCache.putIfAbsent(cluster, fake)
       if (r == null) fake else r
-    case _ => WorkerClient(wkConnectionProps)
-  }
+    } else WorkerClient(wkConnectionProps)
 
   override protected def doAddNode(
     previousCluster: WorkerClusterInfo,
@@ -125,7 +120,7 @@ private[configurator] class FakeWorkerCollie(node: NodeCollie, wkConnectionProps
     newNodeName: String)(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] =
     Future.successful(
       addCluster(
-        FakeWorkerClusterInfo(
+        WorkerClusterInfo(
           name = previousCluster.name,
           imageName = previousCluster.imageName,
           brokerClusterName = previousCluster.brokerClusterName,
@@ -143,9 +138,7 @@ private[configurator] class FakeWorkerCollie(node: NodeCollie, wkConnectionProps
           offsetTopicReplications = previousCluster.offsetTopicReplications,
           jarInfos = previousCluster.jarInfos,
           connectors = Seq.empty,
-          sources = Seq.empty,
-          sinks = Seq.empty,
-          nodeNames = previousCluster.nodeNames :+ newNodeName
+          nodeNames = previousCluster.nodeNames ++ Set(newNodeName)
         )))
 
   override protected def doCreator(executionContext: ExecutionContext,
@@ -165,12 +158,12 @@ private[configurator] class FakeWorkerCollie(node: NodeCollie, wkConnectionProps
     *
     * @return
     */
-  override protected def nodeCollie(): NodeCollie = node
+  override protected def nodeCollie: NodeCollie = node
 
   /**
     * Implement prefix name for paltform
     *
     * @return
     */
-  override protected def prefixKey(): String = "fakeworker"
+  override protected def prefixKey: String = "fakeworker"
 }

@@ -57,7 +57,7 @@ private[configurator] class FakeStreamCollie(nodeCollie: NodeCollie)
             StreamApi.StreamClusterInfo(
               name = clusterName,
               imageName = imageName,
-              nodeNames = nodes.map(_.name),
+              nodeNames = nodes.map(_.name).toSet,
               jmxPort = jmxPort,
               state = Some(ContainerState.RUNNING.name)
             )

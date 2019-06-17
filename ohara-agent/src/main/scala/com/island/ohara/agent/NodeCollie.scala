@@ -27,13 +27,13 @@ import scala.concurrent.{ExecutionContext, Future}
 trait NodeCollie {
   def nodes()(implicit executionContext: ExecutionContext): Future[Seq[Node]]
   def node(name: String)(implicit executionContext: ExecutionContext): Future[Node]
-  def nodes(names: Seq[String])(implicit executionContext: ExecutionContext): Future[Seq[Node]] =
-    Future.traverse(names)(node)
+  def nodes(names: Set[String])(implicit executionContext: ExecutionContext): Future[Seq[Node]] =
+    Future.traverse(names)(node).map(_.toSeq)
   def exist(name: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
     node(name).map(_ => true).recover {
       case _: Throwable => false
     }
-  def exist(names: Seq[String])(implicit executionContext: ExecutionContext): Future[Boolean] =
+  def exist(names: Set[String])(implicit executionContext: ExecutionContext): Future[Boolean] =
     nodes(names).map(_ => true).recover {
       case _: Throwable => false
     }

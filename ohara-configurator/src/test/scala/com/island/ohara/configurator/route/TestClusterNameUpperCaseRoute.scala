@@ -16,7 +16,6 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterCreationRequest
 import com.island.ohara.client.configurator.v0.{NodeApi, ZookeeperApi}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -37,17 +36,8 @@ class TestClusterNameUpperCaseRoute extends SmallTest with Matchers {
   def testAddZookeeper(): Unit = {
     result(nodeApi.request().name("host1").port(22).user("b").password("c").create())
 
-    an[IllegalArgumentException] should be thrownBy {
-      val zkCreateRequest = ZookeeperClusterCreationRequest(
-        name = s"ZK-${CommonUtils.randomString(10)}",
-        imageName = None,
-        clientPort = Some(123),
-        electionPort = Some(456),
-        peerPort = Some(1345),
-        nodeNames = Seq("host1")
-      )
-      result(zookeeperApi.add(zkCreateRequest))
-    }
+    an[IllegalArgumentException] should be thrownBy result(
+      zookeeperApi.request().name(s"ZK-${CommonUtils.randomString(10)}").nodeName("host1").create())
   }
 
   @After

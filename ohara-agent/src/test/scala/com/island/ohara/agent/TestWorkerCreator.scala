@@ -202,7 +202,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
 
   @Test
   def emptyNodes(): Unit = {
-    an[IllegalArgumentException] should be thrownBy wkCreator().nodeNames(Seq.empty)
+    an[IllegalArgumentException] should be thrownBy wkCreator().nodeNames(Set.empty)
   }
 
   @Test
@@ -215,7 +215,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
     .offsetTopicName(CommonUtils.randomString(10))
     .statusTopicName(CommonUtils.randomString(10))
     .configTopicName(CommonUtils.randomString(10))
-    .nodeNames(Seq("abc"))
+    .nodeName(CommonUtils.randomString())
     .create()
 
   @Test
@@ -228,7 +228,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
     .offsetTopicName(CommonUtils.randomString(10))
     .statusTopicName(CommonUtils.randomString(10))
     .configTopicName(CommonUtils.randomString(10))
-    .nodeNames(Seq("abc"))
+    .nodeName(CommonUtils.randomString())
     .create()
 
   @Test
@@ -251,14 +251,10 @@ class TestWorkerCreator extends SmallTest with Matchers {
       offsetTopicReplications = 10,
       jarInfos = Seq.empty,
       connectors = Seq.empty,
-      nodeNames = Seq(CommonUtils.randomString())
+      nodeNames = Set(CommonUtils.randomString())
     )
     Await.result(wkCreator().copy(workerClusterInfo).create(), 30 seconds) shouldBe workerClusterInfo
   }
-
-  @Test
-  def testPassIncorrectTypeToCopy(): Unit =
-    an[IllegalArgumentException] should be thrownBy wkCreator().copy(FakeClusterInfo(CommonUtils.randomString()))
 
   @Test
   def testJarInfo(): Unit = WorkerCollie.toMap(Seq.empty) shouldBe Map.empty
@@ -333,7 +329,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
       .configTopicName(CommonUtils.randomString(10))
       .statusTopicName(CommonUtils.randomString(10))
       .offsetTopicName(CommonUtils.randomString(10))
-      .nodeNames(Seq(node2Name))
+      .nodeName(node2Name)
       .create()
 
     val result: WorkerClusterInfo = Await.result(workerClusterInfo, TIMEOUT)
@@ -361,7 +357,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
       .configTopicName(CommonUtils.randomString(10))
       .statusTopicName(CommonUtils.randomString(10))
       .offsetTopicName(CommonUtils.randomString(10))
-      .nodeNames(Seq(node1Name))
+      .nodeName(node1Name)
       .create()
 
     an[IllegalArgumentException] shouldBe thrownBy {
@@ -388,7 +384,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
       .configTopicName(CommonUtils.randomString(10))
       .statusTopicName(CommonUtils.randomString(10))
       .offsetTopicName(CommonUtils.randomString(10))
-      .nodeNames(Seq(node2Name))
+      .nodeName(node2Name)
       .create()
 
     an[NoSuchClusterException] shouldBe thrownBy {

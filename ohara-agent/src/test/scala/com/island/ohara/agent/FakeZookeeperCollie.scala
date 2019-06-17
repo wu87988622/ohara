@@ -57,9 +57,9 @@ class FakeZookeeperCollie(node: NodeCollie) extends ZookeeperCollie {
     Map.empty
   }
 
-  override protected def nodeCollie(): NodeCollie = node
+  override protected def nodeCollie: NodeCollie = node
 
-  override protected def prefixKey(): String = "fakezookeeper"
+  override protected def prefixKey: String = "fakezookeeper"
 
-  override protected def serviceName(): String = "zk"
+  override protected def serviceName: String = "zk"
 }

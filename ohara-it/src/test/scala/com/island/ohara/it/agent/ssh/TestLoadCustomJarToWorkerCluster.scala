@@ -18,13 +18,10 @@ package com.island.ohara.it.agent.ssh
 
 import java.io.File
 
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterCreationRequest
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterCreationRequest
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterCreationRequest
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.client.kafka.WorkerClient
-import com.island.ohara.common.util.{CommonUtils, Releasable}
+import com.island.ohara.common.util.Releasable
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.IntegrationTest
 import com.island.ohara.it.agent.{ClusterNameHolder, CollieTestUtils}
@@ -98,53 +95,26 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
         JarApi.access().hostname(configurator.hostname).port(configurator.port).upload(file, None)))
 
     val zkCluster = result(
-      zkApi.add(
-        ZookeeperClusterCreationRequest(
-          name = nameHolder.generateClusterName(),
-          imageName = None,
-          clientPort = Some(CommonUtils.availablePort()),
-          electionPort = Some(CommonUtils.availablePort()),
-          peerPort = Some(CommonUtils.availablePort()),
-          nodeNames = nodeCache.map(_.name)
-        )
-      ))
+      zkApi.request().name(nameHolder.generateClusterName()).nodeNames(nodeCache.map(_.name).toSet).create())
     assertCluster(() => result(zkApi.list), zkCluster.name)
     log.info(s"zkCluster:$zkCluster")
     val bkCluster = result(
-      bkApi.add(
-        BrokerClusterCreationRequest(
-          name = nameHolder.generateClusterName(),
-          imageName = None,
-          clientPort = Some(CommonUtils.availablePort()),
-          exporterPort = Some(CommonUtils.availablePort()),
-          jmxPort = Some(CommonUtils.availablePort()),
-          zookeeperClusterName = Some(zkCluster.name),
-          nodeNames = nodeCache.map(_.name)
-        )
-      ))
+      bkApi
+        .request()
+        .name(nameHolder.generateClusterName())
+        .zookeeperClusterName(zkCluster.name)
+        .nodeNames(nodeCache.map(_.name).toSet)
+        .create())
     assertCluster(() => result(bkApi.list), bkCluster.name)
     log.info(s"bkCluster:$bkCluster")
     val wkCluster = result(
-      wkApi.add(
-        WorkerClusterCreationRequest(
-          name = nameHolder.generateClusterName(),
-          imageName = None,
-          clientPort = Some(CommonUtils.availablePort()),
-          jmxPort = Some(CommonUtils.availablePort()),
-          brokerClusterName = Some(bkCluster.name),
-          groupId = None,
-          configTopicName = None,
-          configTopicReplications = None,
-          offsetTopicName = None,
-          offsetTopicPartitions = None,
-          offsetTopicReplications = None,
-          statusTopicName = None,
-          statusTopicPartitions = None,
-          statusTopicReplications = None,
-          jarIds = jars.map(_.id),
-          nodeNames = Seq(nodeCache.head.name)
-        )
-      ))
+      wkApi
+        .request()
+        .name(nameHolder.generateClusterName())
+        .brokerClusterName(bkCluster.name)
+        .jarIds(jars.map(_.id).toSet)
+        .nodeName(nodeCache.head.name)
+        .create())
     assertCluster(() => result(wkApi.list), wkCluster.name)
     // add all remaining node to the running worker cluster
     nodeCache.filterNot(n => wkCluster.nodeNames.contains(n.name)).foreach { n =>

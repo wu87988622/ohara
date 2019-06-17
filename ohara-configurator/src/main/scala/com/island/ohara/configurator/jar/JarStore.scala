@@ -180,14 +180,14 @@ object JarStore {
       * @return this builder
       */
     def port(port: Int): Builder = {
-      this.port = CommonUtils.requirePositiveInt(port)
+      this.port = CommonUtils.requireConnectionPort(port)
       this
     }
 
     def build(): JarStore = new JarStoreImpl(
       homeFolder = CommonUtils.requireNonEmpty(homeFolder),
       hostname = CommonUtils.requireNonEmpty(hostname),
-      port = CommonUtils.requirePositiveInt(port)
+      port = CommonUtils.requireConnectionPort(port)
     )
   }
 

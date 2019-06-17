@@ -26,11 +26,6 @@ import scala.reflect.ClassTag
 /**
   * This class only support ContainerCollie abstract class logic test.
   * No real to implement
-  * @param nodeCollie
-  * @param containers
-  * @param classTag$T
-  * @tparam T
-  * @tparam Creator
   */
 class FakeContainerCollie[T <: FakeContainerCollieClusterInfo: ClassTag, Creator <: ClusterCreator[T]](
   nodeCollie: NodeCollie,
@@ -63,7 +58,7 @@ class FakeContainerCollie[T <: FakeContainerCollieClusterInfo: ClassTag, Creator
   override def clusterWithAllContainers(
     implicit executionContext: ExecutionContext): Future[Map[FakeContainerCollieClusterInfo, Seq[ContainerInfo]]] =
     Future {
-      val nodeNames = containers.map(c => c.nodeName)
+      val nodeNames = containers.map(c => c.nodeName).toSet
       Map(FakeContainerCollieClusterInfo(FakeContainerCollie.clusterName, nodeNames) -> containers)
     }
 
@@ -71,7 +66,7 @@ class FakeContainerCollie[T <: FakeContainerCollieClusterInfo: ClassTag, Creator
     new FakeCollie.ClusterCreator {
       override def create()(implicit executionContext: ExecutionContext): Future[FakeContainerCollieClusterInfo] =
         Future {
-          FakeContainerCollieClusterInfo(FakeContainerCollie.clusterName, Seq.empty)
+          FakeContainerCollieClusterInfo(FakeContainerCollie.clusterName, Set.empty)
         }
     }
   }
@@ -79,12 +74,12 @@ class FakeContainerCollie[T <: FakeContainerCollieClusterInfo: ClassTag, Creator
   override protected def serviceName: String = "fakeservice"
 }
 
-case class FakeContainerCollieClusterInfo(name: String, nodeNames: Seq[String]) extends ClusterInfo {
+case class FakeContainerCollieClusterInfo(name: String, nodeNames: Set[String]) extends ClusterInfo {
   override def imageName: String = "I DON'T CARE"
 
   override def ports: Set[Int] = Set.empty
 
-  override def clone(newNodeNames: Seq[String]): ClusterInfo = throw new UnsupportedOperationException
+  override def clone(newNodeNames: Set[String]): ClusterInfo = throw new UnsupportedOperationException
 }
 
 object FakeContainerCollie {
@@ -93,5 +88,9 @@ object FakeContainerCollie {
 
 object FakeCollie {
   val FAKE_SERVICE_NAME: String = "fake"
-  trait ClusterCreator extends Collie.ClusterCreator[FakeContainerCollieClusterInfo] {}
+  trait ClusterCreator extends Collie.ClusterCreator[FakeContainerCollieClusterInfo] {
+    override protected def doCopy(clusterInfo: FakeContainerCollieClusterInfo): Unit = {
+      // do nothing
+    }
+  }
 }

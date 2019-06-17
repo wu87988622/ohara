@@ -46,7 +46,7 @@ private[configurator] class FakeBrokerCollie(node: NodeCollie, bkConnectionProps
     (executionContext, clusterName, imageName, zookeeperClusterName, clientPort, exporterPort, jmxPort, nodeNames) =>
       Future.successful(
         addCluster(
-          FakeBrokerClusterInfo(
+          BrokerClusterInfo(
             name = clusterName,
             imageName = imageName,
             clientPort = clientPort,
@@ -59,7 +59,7 @@ private[configurator] class FakeBrokerCollie(node: NodeCollie, bkConnectionProps
   override protected def doRemoveNode(previousCluster: BrokerClusterInfo, beRemovedContainer: ContainerInfo)(
     implicit executionContext: ExecutionContext): Future[Boolean] = Future
     .successful(
-      addCluster(FakeBrokerClusterInfo(
+      addCluster(BrokerClusterInfo(
         name = previousCluster.name,
         imageName = previousCluster.imageName,
         zookeeperClusterName = previousCluster.zookeeperClusterName,
@@ -70,27 +70,26 @@ private[configurator] class FakeBrokerCollie(node: NodeCollie, bkConnectionProps
       )))
     .map(_ => true)
 
-  override def topicAdmin(cluster: BrokerClusterInfo): TopicAdmin = cluster match {
-    case _: FakeBrokerClusterInfo =>
+  override def topicAdmin(cluster: BrokerClusterInfo): TopicAdmin =
+    if (bkConnectionProps == null) {
       val fake = new FakeTopicAdmin
       val r = fakeAdminCache.putIfAbsent(cluster, fake)
       if (r == null) fake else r
-    case _ => TopicAdmin(bkConnectionProps)
-  }
+    } else TopicAdmin(bkConnectionProps)
 
   override protected def doAddNode(
     previousCluster: BrokerClusterInfo,
     previousContainers: Seq[ContainerApi.ContainerInfo],
     newNodeName: String)(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] = Future.successful(
     addCluster(
-      FakeBrokerClusterInfo(
+      BrokerClusterInfo(
         name = previousCluster.name,
         imageName = previousCluster.imageName,
         zookeeperClusterName = previousCluster.zookeeperClusterName,
         clientPort = previousCluster.clientPort,
         exporterPort = previousCluster.exporterPort,
         jmxPort = previousCluster.jmxPort,
-        nodeNames = previousCluster.nodeNames :+ newNodeName
+        nodeNames = previousCluster.nodeNames ++ Set(newNodeName)
       )))
 
   override protected def doCreator(executionContext: ExecutionContext,
@@ -110,12 +109,12 @@ private[configurator] class FakeBrokerCollie(node: NodeCollie, bkConnectionProps
     *
     * @return
     */
-  override protected def nodeCollie(): NodeCollie = node
+  override protected def nodeCollie: NodeCollie = node
 
   /**
     * Implement prefix name for the platform
     *
     * @return
     */
-  override protected def prefixKey(): String = "fakebroker"
+  override protected def prefixKey: String = "fakebroker"
 }

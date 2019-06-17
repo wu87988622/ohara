@@ -220,7 +220,6 @@ private[route] object RouteUtils {
 
   def basicRouteOfCluster[Req <: ClusterCreationRequest, Res <: ClusterInfo: ClassTag, Creator <: ClusterCreator[Res]](
     collie: Collie[Res, Creator],
-    defaultImage: String,
     root: String,
     hookBeforeDelete: (Seq[ClusterInfo], String) => Future[String],
     hookOfCreation: (Seq[ClusterInfo], Req) => Future[Res])(implicit clusterCollie: ClusterCollie,
@@ -234,14 +233,17 @@ private[route] object RouteUtils {
         post {
           entity(as[Req]) { req =>
             if (req.nodeNames.isEmpty) throw new IllegalArgumentException(s"You are too poor to buy any server?")
-            complete(basicCheckOfCluster[Req, Res](nodeCollie, clusterCollie, defaultImage, req).map(clusters =>
+            complete(basicCheckOfCluster[Req, Res](nodeCollie, clusterCollie, req).map(clusters =>
               hookOfCreation(clusters, req)))
           }
         } ~ get(complete(collie.clusters.map(_.keys)))
       } ~ pathPrefix(Segment) { clusterName =>
         path(Segment) { nodeName =>
           post {
-            complete(collie.addNode(clusterName, nodeName))
+            complete(collie.cluster(clusterName).map(_._1).flatMap { cluster =>
+              if (cluster.nodeNames.contains(nodeName)) Future.successful(cluster)
+              else collie.addNode(clusterName, nodeName)
+            })
           } ~ delete {
             complete(collie.clusters.map(_.keys.toSeq).flatMap { clusters =>
               if (clusters.exists(cluster => cluster.name == clusterName && cluster.nodeNames.contains(nodeName)))
@@ -280,7 +282,6 @@ private[route] object RouteUtils {
     *
     * @param nodeCollie nodeCollie instance
     * @param clusterCollie clusterCollie instance
-    * @param defaultImage the default image for this cluster
     * @param req cluster creation request
     * @param executionContext execution context
     * @tparam Req type of request
@@ -289,7 +290,6 @@ private[route] object RouteUtils {
   private[route] def basicCheckOfCluster[Req <: ClusterCreationRequest, Res <: ClusterInfo: ClassTag](
     nodeCollie: NodeCollie,
     clusterCollie: ClusterCollie,
-    defaultImage: String,
     req: Req)(implicit executionContext: ExecutionContext): Future[Seq[ClusterInfo]] = {
     // nodeCollie.nodes(req.nodeNames) is used to check the existence of node names of request
     nodeCollie
@@ -297,7 +297,7 @@ private[route] object RouteUtils {
       .flatMap(clusterCollie.images)
       // check the docker images
       .map { nodesImages =>
-        val image = req.imageName.getOrElse(defaultImage)
+        val image = req.imageName
         nodesImages
           .filterNot(_._2.contains(image))
           .keys
@@ -322,18 +322,17 @@ private[route] object RouteUtils {
           .foreach(conflictCluster => throw new IllegalArgumentException(s"${serviceName(conflictCluster)} is running"))
 
         // check port conflict
-        Some(
-          clusters
-            .flatMap { cluster =>
-              val conflictPorts = cluster.ports.intersect(req.ports)
-              if (conflictPorts.isEmpty) None
-              else Some(cluster -> conflictPorts)
-            }
-            .map {
-              case (cluster, conflictPorts) =>
-                s"ports:${conflictPorts.mkString(",")} are used by ${serviceName(cluster)}"
-            }
-            .mkString(";")).filter(_.nonEmpty).foreach(s => throw new IllegalArgumentException(s))
+        Some(clusters
+          .flatMap { cluster =>
+            val conflictPorts = cluster.ports.intersect(req.ports)
+            if (conflictPorts.isEmpty) None
+            else Some(cluster -> conflictPorts)
+          }
+          .map {
+            case (cluster, conflictPorts) =>
+              s"ports:${conflictPorts.mkString(",")} are used by ${serviceName(cluster)} (the port is generated randomly if it is ignored from request)"
+          }
+          .mkString(";")).filter(_.nonEmpty).foreach(s => throw new IllegalArgumentException(s))
         clusters
       }
   }

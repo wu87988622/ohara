@@ -42,10 +42,10 @@ abstract class BasicAccess private[v0] (prefixPath: String) {
     this
   }
 
-  protected def _hostname: String = CommonUtils.requireNonEmpty(hostname, () => "hostname can't be empty")
-  protected def _port: Int = CommonUtils.requirePositiveInt(port, () => "port can't be empty")
-  protected def _version: String = CommonUtils.requireNonEmpty(version, () => "version can't be empty")
-  protected def _prefixPath: String = CommonUtils.requireNonEmpty(prefixPath, () => "prefixPath can't be empty")
+  protected def _hostname: String = CommonUtils.requireNonEmpty(hostname)
+  protected def _port: Int = CommonUtils.requireConnectionPort(port)
+  protected def _version: String = CommonUtils.requireNonEmpty(version)
+  protected def _prefixPath: String = CommonUtils.requireNonEmpty(prefixPath)
 
   /**
     * Compose the url with hostname, port, version and prefix

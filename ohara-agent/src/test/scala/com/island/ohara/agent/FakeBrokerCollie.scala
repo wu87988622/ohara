@@ -34,7 +34,7 @@ private class FakeBrokerCollie(node: NodeCollie,
                              2181,
                              2182,
                              2183,
-                             Seq("node1")) -> zkContainers,
+                             Set("node1")) -> zkContainers,
       )
     }
   }
@@ -59,7 +59,7 @@ private class FakeBrokerCollie(node: NodeCollie,
     implicit executionContext: ExecutionContext): Future[Map[BrokerClusterInfo, Seq[ContainerInfo]]] = {
     Future {
       //Pre create broker container for test
-      Map(BrokerClusterInfo("bk1", "broker", "zk1", 2181, 2182, 2183, Seq("node1")) -> bkExistContainers)
+      Map(BrokerClusterInfo("bk1", "broker", "zk1", 2181, 2182, 2183, Set("node1")) -> bkExistContainers)
     }
   }
 
@@ -80,21 +80,21 @@ private class FakeBrokerCollie(node: NodeCollie,
     *
     * @return
     */
-  override protected def nodeCollie(): NodeCollie = node
+  override protected def nodeCollie: NodeCollie = node
 
   /**
     * Implement prefix name for the platform
     *
     * @return
     */
-  override protected def prefixKey(): String = "fakebroker"
+  override protected def prefixKey: String = "fakebroker"
 
   /**
     * Setting service name
     *
     * @return
     */
-  override protected def serviceName(): String = "bk"
+  override protected def serviceName: String = "bk"
 }
 
 object FakeBrokerCollie {

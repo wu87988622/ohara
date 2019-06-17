@@ -42,7 +42,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
                                    clientPort: Int,
                                    electionPort: Int,
                                    peerPort: Int,
-                                   nodeNames: Seq[String]): Future[ZookeeperApi.ZookeeperClusterInfo] =
+                                   nodeNames: Set[String]): Future[ZookeeperApi.ZookeeperClusterInfo] =
     zkCollie
       .creator()
       .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
@@ -73,7 +73,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
                                    exporterPort: Int,
                                    jmxPort: Int,
                                    zkClusterName: String,
-                                   nodeNames: Seq[String]): Future[BrokerApi.BrokerClusterInfo] =
+                                   nodeNames: Set[String]): Future[BrokerApi.BrokerClusterInfo] =
     bkCollie
       .creator()
       .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
@@ -109,7 +109,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
                                    clientPort: Int,
                                    jmxPort: Int,
                                    bkClusterName: String,
-                                   nodeNames: Seq[String]): Future[WorkerApi.WorkerClusterInfo] =
+                                   nodeNames: Set[String]): Future[WorkerApi.WorkerClusterInfo] =
     wkCollie
       .creator()
       .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
@@ -132,7 +132,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
                                    statusTopicName: String,
                                    offsetTopicName: String,
                                    bkClusterName: String,
-                                   nodeNames: Seq[String]): Future[WorkerApi.WorkerClusterInfo] =
+                                   nodeNames: Set[String]): Future[WorkerApi.WorkerClusterInfo] =
     wkCollie
       .creator()
       .imageName(WorkerApi.IMAGE_NAME_DEFAULT)

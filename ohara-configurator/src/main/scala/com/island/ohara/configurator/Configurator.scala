@@ -30,13 +30,12 @@ import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.client.HttpExecutor
 import com.island.ohara.client.configurator.ConfiguratorApiInfo
-import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterCreationRequest, BrokerClusterInfo}
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Meter
-import com.island.ohara.client.configurator.v0.NodeApi.{Node, Creation}
+import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.ValidationApi.NodeValidationRequest
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterCreationRequest
 import com.island.ohara.client.configurator.v0.{ZookeeperApi, _}
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce}
@@ -68,7 +67,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
   private[this] val cacheTimeout = 3 seconds
   private[this] val cleanupTimeout = 30 seconds
 
-  private[configurator] def size: Int = store.size
+  private[configurator] def size: Int = store.size()
 
   private[this] val log = Logger(classOf[Configurator])
 
@@ -281,7 +280,7 @@ object Configurator {
     }
 
     val configuratorBuilder = Configurator.builder()
-    var nodeRequest: Option[Creation] = None
+    var nodeRequest: Option[NodeApi.Creation] = None
     var k8sClient: K8SClient = null
     var fake: Boolean = false
     args.sliding(2, 2).foreach {
@@ -299,7 +298,7 @@ object Configurator {
         val hostname = value.split("@").last.split(":").head
         val port = value.split("@").last.split(":").last.toInt
         nodeRequest = Some(
-          Creation(
+          NodeApi.Creation(
             name = hostname,
             password = password,
             user = user,
@@ -393,7 +392,7 @@ object Configurator {
       throw new IllegalArgumentException(s"$node doesn't have ${StreamApi.IMAGE_NAME_DEFAULT}")
   }
 
-  private[this] def processNodeRequest(nodeRequest: Creation,
+  private[this] def processNodeRequest(nodeRequest: NodeApi.Creation,
                                        configurator: Configurator,
                                        otherCheck: Node => Unit): Unit = {
     LOG.info(s"Find a pre-created node:$nodeRequest. Will create zookeeper and broker!!")
@@ -419,13 +418,10 @@ object Configurator {
         .access()
         .hostname(CommonUtils.hostname())
         .port(configurator.port)
-        .add(
-          ZookeeperClusterCreationRequest(name = PRE_CREATE_ZK_NAME,
-                                          imageName = None,
-                                          clientPort = None,
-                                          electionPort = None,
-                                          peerPort = None,
-                                          nodeNames = Seq(node.name))),
+        .request()
+        .name(PRE_CREATE_ZK_NAME)
+        .nodeName(node.name)
+        .create(),
       30 seconds
     )
 
@@ -464,15 +460,11 @@ object Configurator {
         .access()
         .hostname(CommonUtils.hostname())
         .port(configurator.port)
-        .add(BrokerClusterCreationRequest(
-          name = PRE_CREATE_BK_NAME,
-          imageName = None,
-          zookeeperClusterName = Some(PRE_CREATE_ZK_NAME),
-          exporterPort = None,
-          clientPort = None,
-          jmxPort = None,
-          nodeNames = Seq(node.name)
-        )),
+        .request()
+        .name(PRE_CREATE_BK_NAME)
+        .zookeeperClusterName(PRE_CREATE_ZK_NAME)
+        .nodeName(node.name)
+        .create(),
       30 seconds
     )
 

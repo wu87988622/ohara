@@ -148,7 +148,7 @@ public interface BeanChannel extends Iterable<BeanObject> {
     }
 
     public Builder port(int port) {
-      this.port = CommonUtils.requirePositiveInt(port);
+      this.port = CommonUtils.requireConnectionPort(port);
       this.local = false;
       return this;
     }
@@ -274,7 +274,7 @@ public interface BeanChannel extends Iterable<BeanObject> {
                     "service:jmx:rmi:///jndi/rmi://"
                         + CommonUtils.requireNonEmpty(hostname)
                         + ":"
-                        + CommonUtils.requirePositiveInt(port)
+                        + CommonUtils.requireConnectionPort(port)
                         + "/jmxrmi"),
                 null)) {
           MBeanServerConnection connection = connector.getMBeanServerConnection();

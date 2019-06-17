@@ -16,9 +16,6 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterCreationRequest
-import com.island.ohara.client.configurator.v0.WorkerApi.{WorkerClusterCreationRequest, WorkerClusterInfo}
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterCreationRequest
 import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -40,18 +37,10 @@ class TestWorkerRoute extends MediumTest with Matchers {
   private[this] val numberOfDefaultNodes = 3 * numberOfCluster
   private[this] val workerApi = WorkerApi.access().hostname(configurator.hostname).port(configurator.port)
 
-  private[this] def assert(request: WorkerClusterCreationRequest, cluster: WorkerClusterInfo): Unit = {
-    cluster.name shouldBe request.name
-    request.imageName.foreach(_ shouldBe cluster.imageName)
-    request.clientPort.foreach(_ shouldBe cluster.clientPort)
-    request.brokerClusterName.foreach(_ shouldBe cluster.brokerClusterName)
-    request.nodeNames shouldBe cluster.nodeNames
-  }
-
   private[this] val bkClusterName =
     Await.result(BrokerApi.access().hostname(configurator.hostname).port(configurator.port).list, 10 seconds).head.name
 
-  private[this] val nodeNames: Seq[String] = Seq("n0", "n1")
+  private[this] val nodeNames: Set[String] = Set("n0", "n1")
 
   @Before
   def setup(): Unit = {
@@ -75,103 +64,66 @@ class TestWorkerRoute extends MediumTest with Matchers {
   }
 
   @Test
-  def testDefaultBk(): Unit = {
-    val request0 = WorkerClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      brokerClusterName = None,
-      clientPort = Some(CommonUtils.availablePort()),
-      groupId = Some(CommonUtils.randomString(10)),
-      jmxPort = Some(CommonUtils.availablePort()),
-      statusTopicName = Some(CommonUtils.randomString(10)),
-      statusTopicPartitions = None,
-      statusTopicReplications = None,
-      configTopicName = Some(CommonUtils.randomString(10)),
-      configTopicReplications = None,
-      offsetTopicName = Some(CommonUtils.randomString(10)),
-      offsetTopicPartitions = None,
-      offsetTopicReplications = None,
-      jarIds = Seq.empty,
-      nodeNames = nodeNames
-    )
-    assert(request0, result(workerApi.add(request0)))
-
-    val request1 = WorkerClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      brokerClusterName = Some(bkClusterName),
-      clientPort = Some(CommonUtils.availablePort()),
-      jmxPort = Some(CommonUtils.availablePort()),
-      groupId = Some(CommonUtils.randomString(10)),
-      statusTopicName = Some(CommonUtils.randomString(10)),
-      statusTopicPartitions = None,
-      statusTopicReplications = None,
-      configTopicName = Some(CommonUtils.randomString(10)),
-      configTopicReplications = None,
-      offsetTopicName = Some(CommonUtils.randomString(10)),
-      offsetTopicPartitions = None,
-      offsetTopicReplications = None,
-      jarIds = Seq.empty,
-      nodeNames = nodeNames
-    )
-    assert(request1, result(workerApi.add(request1)))
-  }
+  def testDefaultBk(): Unit = result(
+    workerApi
+      .request()
+      .name(CommonUtils.randomString(10))
+      .nodeNames(nodeNames)
+      .create()).brokerClusterName shouldBe bkClusterName
 
   @Test
-  def runOnIncorrectBk(): Unit = {
+  def runOnIncorrectBk(): Unit =
     an[IllegalArgumentException] should be thrownBy result(
-      workerApi.add(WorkerClusterCreationRequest(
-        name = CommonUtils.randomString(10),
-        imageName = None,
-        brokerClusterName = Some(CommonUtils.randomString(10)),
-        clientPort = Some(CommonUtils.availablePort()),
-        jmxPort = Some(CommonUtils.availablePort()),
-        groupId = Some(CommonUtils.randomString(10)),
-        statusTopicName = Some(CommonUtils.randomString(10)),
-        statusTopicPartitions = None,
-        statusTopicReplications = None,
-        configTopicName = Some(CommonUtils.randomString(10)),
-        configTopicReplications = None,
-        offsetTopicName = Some(CommonUtils.randomString(10)),
-        offsetTopicPartitions = None,
-        offsetTopicReplications = None,
-        jarIds = Seq.empty,
-        nodeNames = nodeNames
-      )))
-  }
+      workerApi
+        .request()
+        .name(CommonUtils.randomString(10))
+        .nodeNames(nodeNames)
+        .brokerClusterName(CommonUtils.randomString())
+        .create())
 
   @Test
   def testAllSetting(): Unit = {
-    val request = WorkerClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      brokerClusterName = Some(bkClusterName),
-      clientPort = Some(CommonUtils.availablePort()),
-      jmxPort = Some(CommonUtils.availablePort()),
-      groupId = Some(CommonUtils.randomString(10)),
-      configTopicName = Some(CommonUtils.randomString(10)),
-      configTopicReplications = Some(2.asInstanceOf[Short]),
-      offsetTopicName = Some(CommonUtils.randomString(10)),
-      offsetTopicPartitions = Some(123),
-      offsetTopicReplications = Some(2.asInstanceOf[Short]),
-      statusTopicName = Some(CommonUtils.randomString(10)),
-      statusTopicPartitions = Some(123),
-      statusTopicReplications = Some(2.asInstanceOf[Short]),
-      jarIds = Seq.empty,
-      nodeNames = nodeNames
-    )
+    val name = CommonUtils.randomString(10)
+    val clientPort = CommonUtils.availablePort()
+    val jmxPort = CommonUtils.availablePort()
+    val groupId = CommonUtils.randomString(10)
+    val configTopicName = CommonUtils.randomString(10)
+    val configTopicReplications: Short = 2
+    val offsetTopicName = CommonUtils.randomString(10)
+    val offsetTopicPartitions = 2
+    val offsetTopicReplications: Short = 2
+    val statusTopicName = CommonUtils.randomString(10)
+    val statusTopicPartitions = 2
+    val statusTopicReplications: Short = 2
 
-    val wkCluster = result(workerApi.add(request))
-    wkCluster.clientPort shouldBe request.clientPort.get
-    wkCluster.groupId shouldBe request.groupId.get
-    wkCluster.configTopicName shouldBe request.configTopicName.get
-    wkCluster.configTopicReplications shouldBe request.configTopicReplications.get
-    wkCluster.offsetTopicName shouldBe request.offsetTopicName.get
-    wkCluster.offsetTopicPartitions shouldBe request.offsetTopicPartitions.get
-    wkCluster.offsetTopicReplications shouldBe request.offsetTopicReplications.get
-    wkCluster.statusTopicName shouldBe request.statusTopicName.get
-    wkCluster.statusTopicPartitions shouldBe request.statusTopicPartitions.get
-    wkCluster.statusTopicReplications shouldBe request.statusTopicReplications.get
+    val wkCluster = result(
+      workerApi
+        .request()
+        .name(name)
+        .clientPort(clientPort)
+        .jmxPort(jmxPort)
+        .groupId(groupId)
+        .configTopicName(configTopicName)
+        .configTopicReplications(configTopicReplications)
+        .offsetTopicName(offsetTopicName)
+        .offsetTopicPartitions(offsetTopicPartitions)
+        .offsetTopicReplications(offsetTopicReplications)
+        .statusTopicName(statusTopicName)
+        .statusTopicPartitions(statusTopicPartitions)
+        .statusTopicReplications(statusTopicReplications)
+        .nodeNames(nodeNames)
+        .create())
+    wkCluster.jmxPort shouldBe jmxPort
+    wkCluster.clientPort shouldBe clientPort
+    wkCluster.groupId shouldBe groupId
+    wkCluster.configTopicName shouldBe configTopicName
+    wkCluster.configTopicReplications shouldBe configTopicReplications
+    wkCluster.offsetTopicName shouldBe offsetTopicName
+    wkCluster.offsetTopicPartitions shouldBe offsetTopicPartitions
+    wkCluster.offsetTopicReplications shouldBe offsetTopicReplications
+    wkCluster.statusTopicName shouldBe statusTopicName
+    wkCluster.statusTopicPartitions shouldBe statusTopicPartitions
+    wkCluster.statusTopicReplications shouldBe statusTopicReplications
   }
 
   @Test
@@ -182,579 +134,244 @@ class TestWorkerRoute extends MediumTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(ZookeeperClusterCreationRequest(
-          name = zkClusterName,
-          imageName = None,
-          clientPort = Some(CommonUtils.availablePort()),
-          electionPort = Some(CommonUtils.availablePort()),
-          peerPort = Some(CommonUtils.availablePort()),
-          nodeNames = nodeNames
-        ))).name shouldBe zkClusterName
-    val anotherBk = CommonUtils.randomString(10)
-    result(
+        .request()
+        .name(zkClusterName)
+        .nodeNames(nodeNames)
+        .create()).name shouldBe zkClusterName
+    val anotherBk = result(
       BrokerApi
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(BrokerClusterCreationRequest(
-          name = anotherBk,
-          imageName = None,
-          zookeeperClusterName = Some(zkClusterName),
-          clientPort = Some(CommonUtils.availablePort()),
-          exporterPort = Some(CommonUtils.availablePort()),
-          jmxPort = Some(CommonUtils.availablePort()),
-          nodeNames = nodeNames
-        ))).name shouldBe anotherBk
-    try {
-      result(BrokerApi.access().hostname(configurator.hostname).port(configurator.port).list).size shouldBe 2
+        .request()
+        .name(CommonUtils.randomString(10))
+        .zookeeperClusterName(zkClusterName)
+        .nodeNames(nodeNames)
+        .create())
+    result(BrokerApi.access().hostname(configurator.hostname).port(configurator.port).list).size shouldBe 2
 
-      // there are two bk cluster so we have to assign the bk cluster...
-      an[IllegalArgumentException] should be thrownBy result(
-        workerApi.add(
-          WorkerApi.creationRequest(
-            name = CommonUtils.randomString(10),
-            nodeNames = nodeNames
-          ))
-      )
-    } finally result(BrokerApi.access().hostname(configurator.hostname).port(configurator.port).delete(anotherBk))
-  }
-
-  @Test
-  def testCreateOnNonexistentNode(): Unit = {
+    // there are two bk cluster so we have to assign the bk cluster...
     an[IllegalArgumentException] should be thrownBy result(
-      workerApi.add(
-        WorkerClusterCreationRequest(
-          name = CommonUtils.randomString(10),
-          imageName = None,
-          brokerClusterName = Some(bkClusterName),
-          clientPort = Some(CommonUtils.availablePort()),
-          jmxPort = Some(CommonUtils.availablePort()),
-          groupId = Some(CommonUtils.randomString(10)),
-          statusTopicName = Some(CommonUtils.randomString(10)),
-          statusTopicPartitions = None,
-          statusTopicReplications = None,
-          configTopicName = Some(CommonUtils.randomString(10)),
-          configTopicReplications = None,
-          offsetTopicName = Some(CommonUtils.randomString(10)),
-          offsetTopicPartitions = None,
-          offsetTopicReplications = None,
-          jarIds = Seq.empty,
-          nodeNames = Seq(CommonUtils.randomString(10))
-        ))
+      workerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
+    )
+    // pass
+    result(
+      workerApi
+        .request()
+        .name(CommonUtils.randomString(10))
+        .nodeNames(nodeNames)
+        .brokerClusterName(anotherBk.name)
+        .create()
     )
   }
 
   @Test
-  def testEmptyNodes(): Unit = {
+  def testCreateOnNonexistentNode(): Unit =
     an[IllegalArgumentException] should be thrownBy result(
-      workerApi.add(WorkerClusterCreationRequest(
-        name = CommonUtils.randomString(10),
-        imageName = None,
-        brokerClusterName = Some(bkClusterName),
-        clientPort = Some(CommonUtils.availablePort()),
-        jmxPort = Some(CommonUtils.availablePort()),
-        groupId = Some(CommonUtils.randomString(10)),
-        statusTopicName = Some(CommonUtils.randomString(10)),
-        statusTopicPartitions = None,
-        statusTopicReplications = None,
-        configTopicName = Some(CommonUtils.randomString(10)),
-        configTopicReplications = None,
-        offsetTopicName = Some(CommonUtils.randomString(10)),
-        offsetTopicPartitions = None,
-        offsetTopicReplications = None,
-        jarIds = Seq.empty,
-        nodeNames = Seq.empty
-      )))
-  }
+      workerApi.request().name(CommonUtils.randomString(10)).nodeName(CommonUtils.randomString()).create()
+    )
 
   @Test
   def testImageName(): Unit = {
-    def request() = WorkerClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      brokerClusterName = Some(bkClusterName),
-      clientPort = Some(CommonUtils.availablePort()),
-      jmxPort = Some(CommonUtils.availablePort()),
-      groupId = Some(CommonUtils.randomString(10)),
-      statusTopicName = Some(CommonUtils.randomString(10)),
-      statusTopicPartitions = None,
-      statusTopicReplications = None,
-      configTopicName = Some(CommonUtils.randomString(10)),
-      configTopicReplications = None,
-      offsetTopicName = Some(CommonUtils.randomString(10)),
-      offsetTopicPartitions = None,
-      offsetTopicReplications = None,
-      jarIds = Seq.empty,
-      nodeNames = nodeNames
-    )
+    result(
+      workerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
+    ).imageName shouldBe WorkerApi.IMAGE_NAME_DEFAULT
 
-    // pass by default image
-    result(workerApi.add(request()))
-
-    // pass by latest image (since it is default image)
-    result(workerApi.add(request().copy(imageName = Some(WorkerApi.IMAGE_NAME_DEFAULT))))
-
+    //  the available images in fake mode is only IMAGE_NAME_DEFAULT
     an[IllegalArgumentException] should be thrownBy result(
-      workerApi.add(request().copy(imageName = Some(CommonUtils.randomString()))))
-  }
-
-  @Test
-  def testCreate(): Unit = {
-    val request = WorkerClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      brokerClusterName = Some(bkClusterName),
-      clientPort = Some(CommonUtils.availablePort()),
-      jmxPort = Some(CommonUtils.availablePort()),
-      groupId = Some(CommonUtils.randomString(10)),
-      statusTopicName = Some(CommonUtils.randomString(10)),
-      statusTopicPartitions = None,
-      statusTopicReplications = None,
-      configTopicName = Some(CommonUtils.randomString(10)),
-      configTopicReplications = None,
-      offsetTopicName = Some(CommonUtils.randomString(10)),
-      offsetTopicPartitions = None,
-      offsetTopicReplications = None,
-      jarIds = Seq.empty,
-      nodeNames = nodeNames
+      workerApi
+        .request()
+        .name(CommonUtils.randomString(10))
+        .nodeNames(nodeNames)
+        .imageName(CommonUtils.randomString(10))
+        .create()
     )
-    assert(request, result(workerApi.add(request)))
   }
-
   @Test
   def testList(): Unit = {
-    val request0 = WorkerClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      brokerClusterName = Some(bkClusterName),
-      clientPort = Some(CommonUtils.availablePort()),
-      jmxPort = Some(CommonUtils.availablePort()),
-      groupId = Some(CommonUtils.randomString(10)),
-      statusTopicName = Some(CommonUtils.randomString(10)),
-      statusTopicPartitions = None,
-      statusTopicReplications = None,
-      configTopicName = Some(CommonUtils.randomString(10)),
-      configTopicReplications = None,
-      offsetTopicName = Some(CommonUtils.randomString(10)),
-      offsetTopicPartitions = None,
-      offsetTopicReplications = None,
-      jarIds = Seq.empty,
-      nodeNames = nodeNames
-    )
-
-    assert(request0, result(workerApi.add(request0)))
-
-    val request1 = WorkerClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      brokerClusterName = Some(bkClusterName),
-      clientPort = Some(CommonUtils.availablePort()),
-      jmxPort = Some(CommonUtils.availablePort()),
-      groupId = Some(CommonUtils.randomString(10)),
-      statusTopicName = Some(CommonUtils.randomString(10)),
-      statusTopicPartitions = None,
-      statusTopicReplications = None,
-      configTopicName = Some(CommonUtils.randomString(10)),
-      configTopicReplications = None,
-      offsetTopicName = Some(CommonUtils.randomString(10)),
-      offsetTopicPartitions = None,
-      offsetTopicReplications = None,
-      jarIds = Seq.empty,
-      nodeNames = nodeNames
-    )
-    assert(request1, result(workerApi.add(request1)))
-
-    val clusters = result(workerApi.list)
-    clusters.size shouldBe 2
-    assert(request0, clusters.find(_.name == request0.name).get)
-    assert(request1, clusters.find(_.name == request1.name).get)
+    val count = 5
+    (0 until count).foreach { _ =>
+      result(
+        workerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
+      )
+    }
+    result(workerApi.list).size shouldBe count
   }
 
   @Test
   def testRemove(): Unit = {
-    val request = WorkerClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      brokerClusterName = Some(bkClusterName),
-      clientPort = Some(CommonUtils.availablePort()),
-      jmxPort = Some(CommonUtils.availablePort()),
-      groupId = Some(CommonUtils.randomString(10)),
-      statusTopicName = Some(CommonUtils.randomString(10)),
-      statusTopicPartitions = None,
-      statusTopicReplications = None,
-      configTopicName = Some(CommonUtils.randomString(10)),
-      configTopicReplications = None,
-      offsetTopicName = Some(CommonUtils.randomString(10)),
-      offsetTopicPartitions = None,
-      offsetTopicReplications = None,
-      jarIds = Seq.empty,
-      nodeNames = nodeNames
+    val cluster = result(
+      workerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
     )
-    val cluster = result(workerApi.add(request))
-    assert(request, cluster)
-
-    result(workerApi.delete(request.name))
-  }
-
-  @Test
-  def testGetContainers(): Unit = {
-    val request = WorkerClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      brokerClusterName = Some(bkClusterName),
-      clientPort = Some(CommonUtils.availablePort()),
-      jmxPort = Some(CommonUtils.availablePort()),
-      groupId = Some(CommonUtils.randomString(10)),
-      statusTopicName = Some(CommonUtils.randomString(10)),
-      statusTopicPartitions = None,
-      statusTopicReplications = None,
-      configTopicName = Some(CommonUtils.randomString(10)),
-      configTopicReplications = None,
-      offsetTopicName = Some(CommonUtils.randomString(10)),
-      offsetTopicPartitions = None,
-      offsetTopicReplications = None,
-      jarIds = Seq.empty,
-      nodeNames = nodeNames
-    )
-    val cluster = result(workerApi.add(request))
-    assert(request, cluster)
-
-    assert(request, result(workerApi.get(request.name)))
-
-    result(workerApi.delete(request.name))
+    result(workerApi.list).size shouldBe 1
+    result(workerApi.delete(cluster.name))
     result(workerApi.list).size shouldBe 0
   }
 
   @Test
   def testAddNode(): Unit = {
-    val request = WorkerClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      brokerClusterName = Some(bkClusterName),
-      clientPort = Some(CommonUtils.availablePort()),
-      jmxPort = Some(CommonUtils.availablePort()),
-      groupId = Some(CommonUtils.randomString(10)),
-      statusTopicName = Some(CommonUtils.randomString(10)),
-      statusTopicPartitions = None,
-      statusTopicReplications = None,
-      configTopicName = Some(CommonUtils.randomString(10)),
-      configTopicReplications = None,
-      offsetTopicName = Some(CommonUtils.randomString(10)),
-      offsetTopicPartitions = None,
-      offsetTopicReplications = None,
-      jarIds = Seq.empty,
-      nodeNames = Seq(nodeNames.head)
+    val cluster = result(
+      workerApi.request().name(CommonUtils.randomString(10)).nodeName(nodeNames.head).create()
     )
-    val cluster = result(workerApi.add(request))
-    assert(request, cluster)
-
-    result(workerApi.addNode(cluster.name, nodeNames.last)) shouldBe
-      WorkerClusterInfo(
-        name = cluster.name,
-        imageName = cluster.imageName,
-        brokerClusterName = cluster.brokerClusterName,
-        clientPort = cluster.clientPort,
-        jmxPort = cluster.jmxPort,
-        groupId = cluster.groupId,
-        statusTopicName = cluster.statusTopicName,
-        statusTopicPartitions = cluster.statusTopicPartitions,
-        statusTopicReplications = cluster.statusTopicReplications,
-        configTopicName = cluster.configTopicName,
-        configTopicPartitions = cluster.configTopicPartitions,
-        configTopicReplications = cluster.configTopicReplications,
-        offsetTopicName = cluster.offsetTopicName,
-        offsetTopicPartitions = cluster.offsetTopicPartitions,
-        offsetTopicReplications = cluster.offsetTopicReplications,
-        jarInfos = Seq.empty,
-        connectors = Seq.empty,
-        nodeNames = cluster.nodeNames :+ nodeNames.last
-      )
+    val cluster2 = result(workerApi.addNode(cluster.name, nodeNames.last))
+    cluster2 shouldBe cluster.copy(nodeNames = cluster2.nodeNames)
   }
+
   @Test
   def testRemoveNode(): Unit = {
-    val request = WorkerClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      brokerClusterName = Some(bkClusterName),
-      clientPort = Some(CommonUtils.availablePort()),
-      jmxPort = Some(CommonUtils.availablePort()),
-      groupId = Some(CommonUtils.randomString(10)),
-      statusTopicName = Some(CommonUtils.randomString(10)),
-      statusTopicPartitions = None,
-      statusTopicReplications = None,
-      configTopicName = Some(CommonUtils.randomString(10)),
-      configTopicReplications = None,
-      offsetTopicName = Some(CommonUtils.randomString(10)),
-      offsetTopicPartitions = None,
-      offsetTopicReplications = None,
-      jarIds = Seq.empty,
-      nodeNames = nodeNames
+    val cluster = result(
+      workerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
     )
-    val cluster = result(workerApi.add(request))
-    assert(request, cluster)
-
+    cluster.nodeNames shouldBe nodeNames
     result(workerApi.removeNode(cluster.name, nodeNames.last))
+    result(workerApi.get(cluster.name)).nodeNames shouldBe nodeNames - nodeNames.last
   }
 
   @Test
-  def testInvalidClusterName(): Unit = {
-    val request = WorkerClusterCreationRequest(
-      name = "123123.",
-      imageName = None,
-      brokerClusterName = Some(bkClusterName),
-      clientPort = None,
-      jmxPort = None,
-      groupId = None,
-      configTopicName = None,
-      configTopicReplications = None,
-      offsetTopicName = None,
-      offsetTopicPartitions = None,
-      offsetTopicReplications = None,
-      statusTopicName = None,
-      statusTopicPartitions = None,
-      statusTopicReplications = None,
-      jarIds = Seq.empty,
-      nodeNames = nodeNames
-    )
-    an[IllegalArgumentException] should be thrownBy result(workerApi.add(request))
-  }
+  def testInvalidClusterName(): Unit = an[IllegalArgumentException] should be thrownBy result(
+    workerApi.request().name("123123.").nodeNames(nodeNames).create()
+  )
 
   @Test
   def createWkClusterWithSameName(): Unit = {
     val name = CommonUtils.randomString(10)
-    def request() = WorkerClusterCreationRequest(
-      name = name,
-      imageName = None,
-      brokerClusterName = Some(bkClusterName),
-      clientPort = Some(CommonUtils.availablePort()),
-      jmxPort = Some(CommonUtils.availablePort()),
-      groupId = Some(CommonUtils.randomString(10)),
-      statusTopicName = Some(CommonUtils.randomString(10)),
-      statusTopicPartitions = None,
-      statusTopicReplications = None,
-      configTopicName = Some(CommonUtils.randomString(10)),
-      configTopicReplications = None,
-      offsetTopicName = Some(CommonUtils.randomString(10)),
-      offsetTopicPartitions = None,
-      offsetTopicReplications = None,
-      jarIds = Seq.empty,
-      nodeNames = nodeNames
-    )
 
     // pass
-    result(workerApi.add(request()))
+    result(
+      workerApi.request().name(name).nodeNames(nodeNames).create()
+    )
 
     // we don't need to create another bk cluster since it is feasible to create multi wk cluster on same broker cluster
-    an[IllegalArgumentException] should be thrownBy result(workerApi.add(request()))
+    an[IllegalArgumentException] should be thrownBy result(
+      workerApi.request().name(name).nodeNames(nodeNames).create()
+    )
   }
 
   @Test
   def clientPortConflict(): Unit = {
     val clientPort = CommonUtils.availablePort()
-
-    def createReq() = WorkerClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      brokerClusterName = Some(bkClusterName),
-      clientPort = Some(clientPort),
-      jmxPort = Some(CommonUtils.availablePort()),
-      groupId = Some(CommonUtils.randomString(10)),
-      statusTopicName = Some(CommonUtils.randomString(10)),
-      statusTopicPartitions = None,
-      statusTopicReplications = None,
-      configTopicName = Some(CommonUtils.randomString(10)),
-      configTopicReplications = None,
-      offsetTopicName = Some(CommonUtils.randomString(10)),
-      offsetTopicPartitions = None,
-      offsetTopicReplications = None,
-      jarIds = Seq.empty,
-      nodeNames = nodeNames
+    // pass
+    result(
+      workerApi.request().name(CommonUtils.randomString(10)).clientPort(clientPort).nodeNames(nodeNames).create()
     )
 
-    // pass
-    result(workerApi.add(createReq()))
-
-    an[IllegalArgumentException] should be thrownBy result(workerApi.add(createReq()))
-
-    // pass by different port
-    result(workerApi.add(createReq().copy(clientPort = Some(CommonUtils.availablePort()))))
+    an[IllegalArgumentException] should be thrownBy result(
+      workerApi.request().name(CommonUtils.randomString(10)).clientPort(clientPort).nodeNames(nodeNames).create()
+    )
   }
 
   @Test
   def jmxPortConflict(): Unit = {
     val jmxPort = CommonUtils.availablePort()
-
-    def createReq() = WorkerClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      brokerClusterName = Some(bkClusterName),
-      clientPort = Some(CommonUtils.availablePort()),
-      jmxPort = Some(jmxPort),
-      groupId = Some(CommonUtils.randomString(10)),
-      statusTopicName = Some(CommonUtils.randomString(10)),
-      statusTopicPartitions = None,
-      statusTopicReplications = None,
-      configTopicName = Some(CommonUtils.randomString(10)),
-      configTopicReplications = None,
-      offsetTopicName = Some(CommonUtils.randomString(10)),
-      offsetTopicPartitions = None,
-      offsetTopicReplications = None,
-      jarIds = Seq.empty,
-      nodeNames = nodeNames
+    // pass
+    result(
+      workerApi.request().name(CommonUtils.randomString(10)).jmxPort(jmxPort).nodeNames(nodeNames).create()
     )
 
-    // pass
-    result(workerApi.add(createReq()))
-
-    an[IllegalArgumentException] should be thrownBy result(workerApi.add(createReq()))
-
-    // pass by different port
-    result(workerApi.add(createReq().copy(jmxPort = Some(CommonUtils.availablePort()))))
+    an[IllegalArgumentException] should be thrownBy result(
+      workerApi.request().name(CommonUtils.randomString(10)).jmxPort(jmxPort).nodeNames(nodeNames).create()
+    )
   }
 
   @Test
   def duplicateGroupId(): Unit = {
     val groupId = CommonUtils.randomString(10)
-
-    def createReq() = WorkerClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      brokerClusterName = Some(bkClusterName),
-      clientPort = Some(CommonUtils.availablePort()),
-      jmxPort = Some(CommonUtils.availablePort()),
-      groupId = Some(groupId),
-      statusTopicName = Some(CommonUtils.randomString(10)),
-      statusTopicPartitions = None,
-      statusTopicReplications = None,
-      configTopicName = Some(CommonUtils.randomString(10)),
-      configTopicReplications = None,
-      offsetTopicName = Some(CommonUtils.randomString(10)),
-      offsetTopicPartitions = None,
-      offsetTopicReplications = None,
-      jarIds = Seq.empty,
-      nodeNames = nodeNames
+    // pass
+    result(
+      workerApi.request().name(CommonUtils.randomString(10)).groupId(groupId).nodeNames(nodeNames).create()
     )
 
-    // pass
-    result(workerApi.add(createReq()))
-
-    an[IllegalArgumentException] should be thrownBy result(workerApi.add(createReq()))
+    an[IllegalArgumentException] should be thrownBy result(
+      workerApi.request().name(CommonUtils.randomString(10)).groupId(groupId).nodeNames(nodeNames).create()
+    )
   }
 
   @Test
   def duplicateConfigTopic(): Unit = {
-    val configTopic = CommonUtils.randomString(10)
-    def createReq() = WorkerClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      brokerClusterName = Some(bkClusterName),
-      clientPort = Some(CommonUtils.availablePort()),
-      jmxPort = Some(CommonUtils.availablePort()),
-      groupId = Some(CommonUtils.randomString(10)),
-      statusTopicName = Some(CommonUtils.randomString(10)),
-      statusTopicPartitions = None,
-      statusTopicReplications = None,
-      configTopicName = Some(configTopic),
-      configTopicReplications = None,
-      offsetTopicName = Some(CommonUtils.randomString(10)),
-      offsetTopicPartitions = None,
-      offsetTopicReplications = None,
-      jarIds = Seq.empty,
-      nodeNames = nodeNames
+    val configTopicName = CommonUtils.randomString(10)
+    // pass
+    result(
+      workerApi
+        .request()
+        .name(CommonUtils.randomString(10))
+        .configTopicName(configTopicName)
+        .nodeNames(nodeNames)
+        .create()
     )
 
-    // pass
-    result(workerApi.add(createReq()))
-
-    an[IllegalArgumentException] should be thrownBy result(workerApi.add(createReq()))
+    an[IllegalArgumentException] should be thrownBy result(
+      workerApi
+        .request()
+        .name(CommonUtils.randomString(10))
+        .configTopicName(configTopicName)
+        .nodeNames(nodeNames)
+        .create()
+    )
   }
 
   @Test
   def duplicateOffsetTopic(): Unit = {
-    val offsetTopic = CommonUtils.randomString(10)
-    def createReq() = WorkerClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      brokerClusterName = Some(bkClusterName),
-      clientPort = Some(CommonUtils.availablePort()),
-      jmxPort = Some(CommonUtils.availablePort()),
-      groupId = Some(CommonUtils.randomString(10)),
-      statusTopicName = Some(CommonUtils.randomString(10)),
-      statusTopicPartitions = None,
-      statusTopicReplications = None,
-      configTopicName = Some(CommonUtils.randomString(10)),
-      configTopicReplications = None,
-      offsetTopicName = Some(offsetTopic),
-      offsetTopicPartitions = None,
-      offsetTopicReplications = None,
-      jarIds = Seq.empty,
-      nodeNames = nodeNames
+    val offsetTopicName = CommonUtils.randomString(10)
+    // pass
+    result(
+      workerApi
+        .request()
+        .name(CommonUtils.randomString(10))
+        .offsetTopicName(offsetTopicName)
+        .nodeNames(nodeNames)
+        .create()
     )
 
-    // pass
-    result(workerApi.add(createReq()))
-
-    an[IllegalArgumentException] should be thrownBy result(workerApi.add(createReq()))
+    an[IllegalArgumentException] should be thrownBy result(
+      workerApi
+        .request()
+        .name(CommonUtils.randomString(10))
+        .offsetTopicName(offsetTopicName)
+        .nodeNames(nodeNames)
+        .create()
+    )
   }
 
   @Test
   def duplicateStatusTopic(): Unit = {
-    val statusTopic = CommonUtils.randomString(10)
-    def createReq() = WorkerClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      brokerClusterName = Some(bkClusterName),
-      clientPort = Some(CommonUtils.availablePort()),
-      jmxPort = Some(CommonUtils.availablePort()),
-      groupId = Some(CommonUtils.randomString(10)),
-      statusTopicName = Some(statusTopic),
-      statusTopicPartitions = None,
-      statusTopicReplications = None,
-      configTopicName = Some(CommonUtils.randomString(10)),
-      configTopicReplications = None,
-      offsetTopicName = Some(CommonUtils.randomString(10)),
-      offsetTopicPartitions = None,
-      offsetTopicReplications = None,
-      jarIds = Seq.empty,
-      nodeNames = nodeNames
+    val statusTopicName = CommonUtils.randomString(10)
+    // pass
+    result(
+      workerApi
+        .request()
+        .name(CommonUtils.randomString(10))
+        .statusTopicName(statusTopicName)
+        .nodeNames(nodeNames)
+        .create()
     )
 
-    // pass
-    result(workerApi.add(createReq()))
-
-    an[IllegalArgumentException] should be thrownBy result(workerApi.add(createReq()))
+    an[IllegalArgumentException] should be thrownBy result(
+      workerApi
+        .request()
+        .name(CommonUtils.randomString(10))
+        .statusTopicName(statusTopicName)
+        .nodeNames(nodeNames)
+        .create()
+    )
   }
 
   @Test
   def testForceDelete(): Unit = {
     val initialCount = configurator.clusterCollie.workerCollie().asInstanceOf[FakeWorkerCollie].forceRemoveCount
-    val request = WorkerClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      brokerClusterName = Some(bkClusterName),
-      clientPort = Some(CommonUtils.availablePort()),
-      jmxPort = Some(CommonUtils.availablePort()),
-      groupId = Some(CommonUtils.randomString(10)),
-      statusTopicName = Some(CommonUtils.randomString(10)),
-      statusTopicPartitions = None,
-      statusTopicReplications = None,
-      configTopicName = Some(CommonUtils.randomString(10)),
-      configTopicReplications = None,
-      offsetTopicName = Some(CommonUtils.randomString(10)),
-      offsetTopicPartitions = None,
-      offsetTopicReplications = None,
-      jarIds = Seq.empty,
-      nodeNames = nodeNames
-    )
 
     // graceful delete
-    result(workerApi.delete(result(workerApi.add(request)).name))
+    val wk0 = result(
+      workerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
+    )
+    result(workerApi.delete(wk0.name))
     configurator.clusterCollie.workerCollie().asInstanceOf[FakeWorkerCollie].forceRemoveCount shouldBe initialCount
 
     // force delete
-    result(workerApi.forceDelete(result(workerApi.add(request)).name))
+    val wk1 = result(
+      workerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
+    )
+    result(workerApi.forceDelete(wk1.name))
     configurator.clusterCollie.workerCollie().asInstanceOf[FakeWorkerCollie].forceRemoveCount shouldBe initialCount + 1
-
   }
 
   @After

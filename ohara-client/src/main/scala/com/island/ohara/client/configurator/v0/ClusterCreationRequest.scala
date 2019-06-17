@@ -26,12 +26,12 @@ trait ClusterCreationRequest {
   /**
     * @return nodes to run this cluster
     */
-  def nodeNames: Seq[String]
+  def nodeNames: Set[String]
 
   /**
     * @return image used to build cluster
     */
-  def imageName: Option[String]
+  def imageName: String
 
   /**
     * @return ports used by this cluster

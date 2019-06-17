@@ -16,9 +16,6 @@
 
 package com.island.ohara.it.agent
 
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterCreationRequest
-import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterCreationRequest
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterCreationRequest
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.configurator.Configurator
@@ -26,7 +23,6 @@ import org.junit.After
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * this test is similar to Test*Collie. However, all operations about collie are executed by configurator.
@@ -53,16 +49,15 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
                                    clientPort: Int,
                                    electionPort: Int,
                                    peerPort: Int,
-                                   nodeNames: Seq[String]): Future[ZookeeperApi.ZookeeperClusterInfo] =
-    zkApi.add(
-      ZookeeperClusterCreationRequest(
-        name = clusterName,
-        imageName = None,
-        clientPort = Some(clientPort),
-        electionPort = Some(electionPort),
-        peerPort = Some(peerPort),
-        nodeNames = nodeNames
-      ))
+                                   nodeNames: Set[String]): Future[ZookeeperApi.ZookeeperClusterInfo] =
+    zkApi
+      .request()
+      .name(clusterName)
+      .clientPort(clientPort)
+      .electionPort(electionPort)
+      .peerPort(peerPort)
+      .nodeNames(nodeNames)
+      .create()
 
   override protected def zk_clusters(): Future[Seq[ZookeeperApi.ZookeeperClusterInfo]] = zkApi.list
 
@@ -83,16 +78,15 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
                                    exporterPort: Int,
                                    jmxPort: Int,
                                    zkClusterName: String,
-                                   nodeNames: Seq[String]): Future[BrokerApi.BrokerClusterInfo] = bkApi.add(
-    BrokerClusterCreationRequest(
-      name = clusterName,
-      imageName = None,
-      zookeeperClusterName = Some(zkClusterName),
-      clientPort = Some(clientPort),
-      jmxPort = Some(jmxPort),
-      exporterPort = Some(exporterPort),
-      nodeNames = nodeNames
-    ))
+                                   nodeNames: Set[String]): Future[BrokerApi.BrokerClusterInfo] = bkApi
+    .request()
+    .name(clusterName)
+    .clientPort(clientPort)
+    .exporterPort(exporterPort)
+    .jmxPort(jmxPort)
+    .zookeeperClusterName(zkClusterName)
+    .nodeNames(nodeNames)
+    .create()
 
   override protected def bk_clusters(): Future[Seq[BrokerApi.BrokerClusterInfo]] = bkApi.list
 
@@ -116,27 +110,17 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
 
   override protected def wk_create(clusterName: String,
                                    clientPort: Int,
-                                   jxmPort: Int,
+                                   jmxPort: Int,
                                    bkClusterName: String,
-                                   nodeNames: Seq[String]): Future[WorkerApi.WorkerClusterInfo] = wkApi.add(
-    WorkerClusterCreationRequest(
-      name = clusterName,
-      imageName = None,
-      brokerClusterName = Some(bkClusterName),
-      clientPort = Some(clientPort),
-      jmxPort = Some(jxmPort),
-      groupId = None,
-      configTopicName = None,
-      configTopicReplications = None,
-      offsetTopicName = None,
-      offsetTopicPartitions = None,
-      offsetTopicReplications = None,
-      statusTopicName = None,
-      statusTopicPartitions = None,
-      statusTopicReplications = None,
-      jarIds = Seq.empty,
-      nodeNames = nodeNames
-    ))
+                                   nodeNames: Set[String]): Future[WorkerApi.WorkerClusterInfo] =
+    wkApi
+      .request()
+      .name(clusterName)
+      .clientPort(clientPort)
+      .jmxPort(jmxPort)
+      .brokerClusterName(bkClusterName)
+      .nodeNames(nodeNames)
+      .create()
 
   override protected def wk_create(clusterName: String,
                                    clientPort: Int,
@@ -146,25 +130,19 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
                                    statusTopicName: String,
                                    offsetTopicName: String,
                                    bkClusterName: String,
-                                   nodeNames: Seq[String]): Future[WorkerApi.WorkerClusterInfo] = wkApi.add(
-    WorkerClusterCreationRequest(
-      name = clusterName,
-      imageName = None,
-      brokerClusterName = Some(bkClusterName),
-      clientPort = Some(clientPort),
-      jmxPort = Some(jmxPort),
-      groupId = Some(groupId),
-      configTopicName = Some(configTopicName),
-      configTopicReplications = None,
-      offsetTopicName = Some(offsetTopicName),
-      offsetTopicPartitions = None,
-      offsetTopicReplications = None,
-      statusTopicName = Some(statusTopicName),
-      statusTopicPartitions = None,
-      statusTopicReplications = None,
-      jarIds = Seq.empty,
-      nodeNames = nodeNames
-    ))
+                                   nodeNames: Set[String]): Future[WorkerApi.WorkerClusterInfo] =
+    wkApi
+      .request()
+      .name(clusterName)
+      .clientPort(clientPort)
+      .jmxPort(jmxPort)
+      .brokerClusterName(bkClusterName)
+      .nodeNames(nodeNames)
+      .groupId(groupId)
+      .configTopicName(configTopicName)
+      .statusTopicName(statusTopicName)
+      .offsetTopicName(offsetTopicName)
+      .create()
 
   override protected def wk_clusters(): Future[Seq[WorkerApi.WorkerClusterInfo]] = wkApi.list
 

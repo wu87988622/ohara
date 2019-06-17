@@ -17,8 +17,8 @@
 package com.island.ohara.agent
 import java.util.Objects
 
-import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterInfo}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
@@ -57,7 +57,7 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
           .map(_._2)
           .map(containers =>
             nodeCollie
-              .nodes(containers.map(_.nodeName))
+              .nodes(containers.map(_.nodeName).toSet)
               .map(_.map(node => node -> containers.find(_.nodeName == node.name).get).toMap))
           .getOrElse(Future.successful(Map.empty))
           .map {
@@ -173,7 +173,7 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
                       exporterPort = exporterPort,
                       clientPort = clientPort,
                       jmxPort = jmxPort,
-                      nodeNames = successfulContainers.map(_.nodeName) ++ existNodes.map(_._1.name)
+                      nodeNames = (successfulContainers.map(_.nodeName) ++ existNodes.map(_._1.name)).toSet
                     )
                     postCreateBrokerCluster(clusterInfo, successfulContainers)
                     clusterInfo
@@ -186,19 +186,19 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
     * Please setting nodeCollie to implement class
     * @return
     */
-  protected def nodeCollie(): NodeCollie
+  protected def nodeCollie: NodeCollie
 
   /**
     *  Implement prefix name for the platform
     * @return
     */
-  protected def prefixKey(): String
+  protected def prefixKey: String
 
   /**
     * Setting service name
     * @return
     */
-  protected def serviceName(): String
+  protected def serviceName: String
 
   /**
     * Please implement this function to get Zookeeper cluster information
@@ -277,7 +277,7 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
     */
   def topicMeters(cluster: BrokerClusterInfo): Seq[TopicMeter] = cluster.nodeNames.flatMap { node =>
     BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().topicMeters().asScala
-  }
+  }.toSeq
 
   private[agent] def toBrokerCluster(clusterName: String, containers: Seq[ContainerInfo]): Future[BrokerClusterInfo] = {
     val first = containers.head
@@ -289,7 +289,7 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
         exporterPort = first.environments(BrokerCollie.EXPORTER_PORT_KEY).toInt,
         clientPort = first.environments(BrokerCollie.CLIENT_PORT_KEY).toInt,
         jmxPort = first.environments(BrokerCollie.JMX_PORT_KEY).toInt,
-        nodeNames = containers.map(_.nodeName)
+        nodeNames = containers.map(_.nodeName).toSet
       ))
   }
 
@@ -312,22 +312,16 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
 
 object BrokerCollie {
   trait ClusterCreator extends Collie.ClusterCreator[BrokerClusterInfo] {
-    private[this] var clientPort: Int = BrokerApi.CLIENT_PORT_DEFAULT
+    private[this] var clientPort: Int = CommonUtils.availablePort()
     private[this] var zookeeperClusterName: String = _
-    private[this] var exporterPort: Int = BrokerApi.EXPORTER_PORT_DEFAULT
-    private[this] var jmxPort: Int = BrokerApi.JMX_PORT_DEFAULT
+    private[this] var exporterPort: Int = CommonUtils.availablePort()
+    private[this] var jmxPort: Int = CommonUtils.availablePort()
 
-    override def copy(clusterInfo: ClusterInfo): ClusterCreator.this.type = clusterInfo match {
-      case bk: BrokerClusterInfo =>
-        super.copy(clusterInfo)
-        zookeeperClusterName(bk.zookeeperClusterName)
-        clientPort(bk.clientPort)
-        exporterPort(bk.exporterPort)
-        jmxPort(bk.jmxPort)
-        this
-      case _ =>
-        throw new IllegalArgumentException(
-          s"you should pass BrokerClusterInfo rather than ${clusterInfo.getClass.getName}")
+    override protected def doCopy(clusterInfo: BrokerClusterInfo): Unit = {
+      zookeeperClusterName(clusterInfo.zookeeperClusterName)
+      clientPort(clusterInfo.clientPort)
+      exporterPort(clusterInfo.exporterPort)
+      jmxPort(clusterInfo.jmxPort)
     }
 
     def zookeeperClusterName(zookeeperClusterName: String): ClusterCreator = {
@@ -335,21 +329,21 @@ object BrokerCollie {
       this
     }
 
-    @Optional("default is com.island.ohara.client.configurator.v0.BrokerApi.CLIENT_PORT_DEFAULT")
+    @Optional("default is random port")
     def clientPort(clientPort: Int): ClusterCreator = {
-      this.clientPort = CommonUtils.requirePositiveInt(clientPort)
+      this.clientPort = CommonUtils.requireConnectionPort(clientPort)
       this
     }
 
-    @Optional("default is com.island.ohara.client.configurator.v0.BrokerApi.EXPORTER_PORT_DEFAULT")
+    @Optional("default is random port")
     def exporterPort(exporterPort: Int): ClusterCreator = {
-      this.exporterPort = CommonUtils.requirePositiveInt(exporterPort)
+      this.exporterPort = CommonUtils.requireConnectionPort(exporterPort)
       this
     }
 
-    @Optional("default is BrokerApi.CLIENT_PORT_DEFAULT")
+    @Optional("default is random port")
     def jmxPort(jmxPort: Int): ClusterCreator = {
-      this.jmxPort = CommonUtils.requirePositiveInt(jmxPort)
+      this.jmxPort = CommonUtils.requireConnectionPort(jmxPort)
       this
     }
 
@@ -358,10 +352,10 @@ object BrokerCollie {
       clusterName = CommonUtils.requireNonEmpty(clusterName),
       imageName = CommonUtils.requireNonEmpty(imageName),
       zookeeperClusterName = CommonUtils.requireNonEmpty(zookeeperClusterName),
-      clientPort = CommonUtils.requirePositiveInt(clientPort),
-      exporterPort = CommonUtils.requirePositiveInt(exporterPort),
-      jmxPort = CommonUtils.requirePositiveInt(jmxPort),
-      nodeNames = CommonUtils.requireNonEmpty(nodeNames.asJava).asScala
+      clientPort = CommonUtils.requireConnectionPort(clientPort),
+      exporterPort = CommonUtils.requireConnectionPort(exporterPort),
+      jmxPort = CommonUtils.requireConnectionPort(jmxPort),
+      nodeNames = CommonUtils.requireNonEmpty(nodeNames.asJava).asScala.toSet
     )
 
     protected def doCreate(executionContext: ExecutionContext,
@@ -371,7 +365,7 @@ object BrokerCollie {
                            clientPort: Int,
                            exporterPort: Int,
                            jmxPort: Int,
-                           nodeNames: Seq[String]): Future[BrokerClusterInfo]
+                           nodeNames: Set[String]): Future[BrokerClusterInfo]
   }
 
   private[agent] val ID_KEY: String = "BROKER_ID"

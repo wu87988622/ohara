@@ -67,7 +67,10 @@ class TestPipelineRoute extends MediumTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(WorkerApi.creationRequest(CommonUtils.randomString(10), Seq(addNodeName)))
+        .request()
+        .name(CommonUtils.randomString(10))
+        .nodeName(addNodeName)
+        .create()
     )
 
     val pipeline1 = result(

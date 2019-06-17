@@ -42,7 +42,7 @@ trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator
     */
   def counters(cluster: StreamClusterInfo): Seq[CounterMBean] = cluster.nodeNames.flatMap { node =>
     BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().counterMBeans().asScala
-  }
+  }.toSeq
 
   private[agent] def toStreamCluster(clusterName: String, containers: Seq[ContainerInfo]): Future[StreamClusterInfo] = {
     // get the first running container, or first non-running container if not found
@@ -51,7 +51,7 @@ trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator
       StreamClusterInfo(
         name = clusterName,
         imageName = first.imageName,
-        nodeNames = containers.map(_.nodeName),
+        nodeNames = containers.map(_.nodeName).toSet,
         // Currently, streamApp use expose portMappings for jmx port only.
         // Since dead container would not expose the port, we directly get it from environment for consistency.
         jmxPort = first.environments(StreamCollie.JMX_PORT_KEY).toInt,
@@ -69,7 +69,6 @@ trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator
 
 object StreamCollie {
   trait ClusterCreator extends Collie.ClusterCreator[StreamClusterInfo] {
-
     private[this] var jarUrl: String = _
     private[this] var instances: Int = 0
     private[this] var appId: String = _
@@ -77,6 +76,13 @@ object StreamCollie {
     private[this] var fromTopics: Seq[String] = Seq.empty
     private[this] var toTopics: Seq[String] = Seq.empty
     private[this] var jmxPort: Int = CommonUtils.availablePort()
+
+    override protected def doCopy(clusterInfo: StreamClusterInfo): Unit = {
+      // doCopy is used to add node for a running cluster.
+      // Currently, StreamClusterInfo does not carry enough information to be copied and it is unsupported to add a node to a running streamapp cluster
+      // Hence, it is fine to do nothing here
+      // TODO: fill the correct implementation if we support to add node to a running streamapp cluster.
+    }
 
     /**
       * set the jar url for the streamApp running
@@ -155,7 +161,7 @@ object StreamCollie {
       */
     @Optional("default is local random port")
     def jmxPort(jmxPort: Int): ClusterCreator = {
-      this.jmxPort = CommonUtils.requirePositiveInt(jmxPort)
+      this.jmxPort = CommonUtils.requireConnectionPort(jmxPort)
       this
     }
 
@@ -171,12 +177,12 @@ object StreamCollie {
       CommonUtils.requireNonEmpty(brokerProps),
       CommonUtils.requireNonEmpty(fromTopics.asJava).asScala,
       CommonUtils.requireNonEmpty(toTopics.asJava).asScala,
-      CommonUtils.requirePositiveInt(jmxPort),
+      CommonUtils.requireConnectionPort(jmxPort),
       Objects.requireNonNull(executionContext)
     )
 
     protected def doCreate(clusterName: String,
-                           nodeNames: Seq[String],
+                           nodeNames: Set[String],
                            imageName: String,
                            jarUrl: String,
                            instances: Int,

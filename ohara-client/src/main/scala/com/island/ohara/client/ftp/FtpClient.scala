@@ -198,7 +198,7 @@ object FtpClient {
       */
     @Optional("default value is 21")
     def port(port: Int): Builder = {
-      this.port = CommonUtils.requirePositiveInt(port)
+      this.port = CommonUtils.requireConnectionPort(port)
       this
     }
 
@@ -253,7 +253,7 @@ object FtpClient {
       new FtpClient {
         private[this] val hostname =
           CommonUtils.requireNonEmpty(Builder.this.hostname, () => "hostname can't be null or empty")
-        private[this] val port = CommonUtils.requirePositiveInt(Builder.this.port)
+        private[this] val port = CommonUtils.requireConnectionPort(Builder.this.port)
         private[this] val user =
           CommonUtils.requireNonEmpty(Builder.this.user, () => "user can't be null or empty")
         private[this] val password =

@@ -100,7 +100,7 @@ class TestStreamApi extends SmallTest with Matchers {
     val info = StreamClusterInfo(
       name = "foo",
       imageName = "bar",
-      nodeNames = Seq("fake"),
+      nodeNames = Set("fake"),
       jmxPort = 999,
       state = Some("RUNNING")
     )

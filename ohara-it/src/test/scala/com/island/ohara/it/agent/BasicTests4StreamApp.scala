@@ -20,7 +20,6 @@ import java.util.concurrent.ExecutionException
 
 import com.island.ohara.agent.StreamCollie
 import com.island.ohara.agent.docker.{ContainerState, DockerClient}
-import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterCreationRequest, BrokerClusterInfo}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.{
   ActionAccess,
@@ -28,9 +27,7 @@ import com.island.ohara.client.configurator.v0.StreamApi.{
   StreamAppDescription,
   StreamPropertyRequest
 }
-import com.island.ohara.client.configurator.v0.WorkerApi.{WorkerClusterCreationRequest, WorkerClusterInfo}
-import com.island.ohara.client.configurator.v0.ZookeeperApi.{ZookeeperClusterCreationRequest, ZookeeperClusterInfo}
-import com.island.ohara.client.configurator.v0._
+import com.island.ohara.client.configurator.v0.{ZookeeperApi, _}
 import com.island.ohara.common.data.{Row, Serializer}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
@@ -73,9 +70,9 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
 
   private[this] var configurator: Configurator = _
 
-  private[this] var zkApi: ClusterAccess[ZookeeperClusterCreationRequest, ZookeeperClusterInfo] = _
-  private[this] var bkApi: ClusterAccess[BrokerClusterCreationRequest, BrokerClusterInfo] = _
-  private[this] var wkApi: ClusterAccess[WorkerClusterCreationRequest, WorkerClusterInfo] = _
+  private[this] var zkApi: ZookeeperApi.Access = _
+  private[this] var bkApi: BrokerApi.Access = _
+  private[this] var wkApi: WorkerApi.Access = _
   private[this] var topicApi: com.island.ohara.client.configurator.v0.TopicApi.Access = _
 
   private[this] var streamAppActionAccess: ActionAccess = _
@@ -118,56 +115,29 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
 
       // create zookeeper cluster
       val zkCluster = result(
-        zkApi.add(
-          ZookeeperClusterCreationRequest(
-            name = nameHolder.generateClusterName(),
-            clientPort = Some(CommonUtils.availablePort()),
-            electionPort = Some(CommonUtils.availablePort()),
-            peerPort = Some(CommonUtils.availablePort()),
-            imageName = None,
-            nodeNames = nodeCache.take(1).map(_.name)
-          )
-        ))
+        zkApi.request().name(nameHolder.generateClusterName()).nodeNames(nodeCache.take(1).map(_.name).toSet).create()
+      )
       assertCluster(() => result(zkApi.list), zkCluster.name)
 
       // create broker cluster
       val bkCluster = result(
-        bkApi.add(
-          BrokerClusterCreationRequest(
-            name = bkName,
-            clientPort = Some(CommonUtils.availablePort()),
-            exporterPort = Some(CommonUtils.availablePort()),
-            jmxPort = Some(CommonUtils.availablePort()),
-            imageName = None,
-            zookeeperClusterName = Some(zkCluster.name),
-            nodeNames = nodeCache.take(1).map(_.name)
-          )
-        ))
+        bkApi
+          .request()
+          .name(bkName)
+          .zookeeperClusterName(zkCluster.name)
+          .nodeNames(nodeCache.take(1).map(_.name).toSet)
+          .create())
       assertCluster(() => result(bkApi.list), bkCluster.name)
       brokerConnProps = bkCluster.connectionProps
 
       // create worker cluster
       val wkCluster = result(
-        wkApi.add(
-          WorkerClusterCreationRequest(
-            name = wkName,
-            imageName = None,
-            brokerClusterName = Some(bkCluster.name),
-            clientPort = Some(CommonUtils.availablePort()),
-            jmxPort = Some(CommonUtils.availablePort()),
-            groupId = None,
-            configTopicName = None,
-            configTopicReplications = None,
-            offsetTopicName = None,
-            offsetTopicPartitions = None,
-            offsetTopicReplications = None,
-            statusTopicName = None,
-            statusTopicPartitions = None,
-            statusTopicReplications = None,
-            jarIds = Seq.empty,
-            nodeNames = nodeCache.take(instances).map(_.name)
-          )
-        ))
+        wkApi
+          .request()
+          .name(wkName)
+          .brokerClusterName(bkCluster.name)
+          .nodeNames(nodeCache.take(instances).map(_.name).toSet)
+          .create())
       assertCluster(() => result(wkApi.list), wkCluster.name)
     }
   }

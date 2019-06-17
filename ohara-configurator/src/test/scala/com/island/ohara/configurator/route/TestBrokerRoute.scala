@@ -16,9 +16,6 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterCreationRequest, BrokerClusterInfo}
-import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterCreationRequest
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterCreationRequest
 import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -32,17 +29,9 @@ class TestBrokerRoute extends MediumTest with Matchers {
   private[this] val configurator = Configurator.builder().fake(0, 0).build()
   private[this] val brokerApi = BrokerApi.access().hostname(configurator.hostname).port(configurator.port)
 
-  private[this] def assert(request: BrokerClusterCreationRequest, cluster: BrokerClusterInfo): Unit = {
-    cluster.name shouldBe request.name
-    request.imageName.foreach(_ shouldBe cluster.imageName)
-    request.clientPort.foreach(_ shouldBe cluster.clientPort)
-    request.zookeeperClusterName.foreach(_ shouldBe cluster.zookeeperClusterName)
-    request.nodeNames shouldBe cluster.nodeNames
-  }
-
   private[this] val zkClusterName = CommonUtils.randomString(10)
 
-  private[this] val nodeNames: Seq[String] = Seq("n0", "n1")
+  private[this] val nodeNames: Set[String] = Set("n0", "n1")
 
   @Before
   def setup(): Unit = {
@@ -63,14 +52,11 @@ class TestBrokerRoute extends MediumTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(ZookeeperClusterCreationRequest(
-          name = zkClusterName,
-          imageName = None,
-          clientPort = Some(CommonUtils.availablePort()),
-          electionPort = Some(CommonUtils.availablePort()),
-          peerPort = Some(CommonUtils.availablePort()),
-          nodeNames = nodeNames
-        ))).name shouldBe zkClusterName
+        .request()
+        .name(zkClusterName)
+        .nodeNames(nodeNames)
+        .create()
+    ).name shouldBe zkClusterName
   }
 
   @Test
@@ -84,40 +70,22 @@ class TestBrokerRoute extends MediumTest with Matchers {
   @Test
   def removeBrokerClusterUsedByWorkerCluster(): Unit = {
     val bk = result(
-      brokerApi.add(BrokerClusterCreationRequest(
-        name = CommonUtils.randomString(10),
-        imageName = None,
-        zookeeperClusterName = Some(zkClusterName),
-        exporterPort = None,
-        clientPort = Some(123),
-        jmxPort = None,
-        nodeNames = nodeNames
-      )))
+      brokerApi
+        .request()
+        .name(CommonUtils.randomString(10))
+        .zookeeperClusterName(zkClusterName)
+        .nodeNames(nodeNames)
+        .create())
 
     val wk = result(
       WorkerApi
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(WorkerClusterCreationRequest(
-          name = CommonUtils.randomString(10),
-          imageName = None,
-          brokerClusterName = Some(bk.name),
-          clientPort = Some(CommonUtils.availablePort()),
-          jmxPort = Some(CommonUtils.availablePort()),
-          groupId = Some(CommonUtils.randomString(10)),
-          statusTopicName = Some(CommonUtils.randomString(10)),
-          statusTopicPartitions = None,
-          statusTopicReplications = None,
-          configTopicName = Some(CommonUtils.randomString(10)),
-          configTopicReplications = None,
-          offsetTopicName = Some(CommonUtils.randomString(10)),
-          offsetTopicPartitions = None,
-          offsetTopicReplications = None,
-          jarIds = Seq.empty,
-          nodeNames = nodeNames
-        )))
-
+        .request()
+        .name(CommonUtils.randomString(10))
+        .nodeNames(nodeNames)
+        .create())
     val bks = result(brokerApi.list)
 
     bks.isEmpty shouldBe false
@@ -140,480 +108,256 @@ class TestBrokerRoute extends MediumTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(
-          ZookeeperClusterCreationRequest(name = anotherZk,
-                                          imageName = None,
-                                          clientPort = None,
-                                          electionPort = None,
-                                          peerPort = None,
-                                          nodeNames = nodeNames))).name shouldBe anotherZk
+        .request()
+        .name(anotherZk)
+        .nodeNames(nodeNames)
+        .create()).name shouldBe anotherZk
     try {
       result(ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port).list).size shouldBe 2
 
       // there are two zk cluster so we have to assign the zk cluster...
       an[IllegalArgumentException] should be thrownBy result(
-        brokerApi.add(
-          BrokerClusterCreationRequest(
-            name = CommonUtils.randomString(10),
-            imageName = None,
-            zookeeperClusterName = None,
-            exporterPort = Some(CommonUtils.availablePort()),
-            clientPort = Some(CommonUtils.availablePort()),
-            jmxPort = Some(CommonUtils.availablePort()),
-            nodeNames = nodeNames
-          ))
+        brokerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
       )
     } finally result(ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port).delete(anotherZk))
 
   }
 
   @Test
-  def testCreateOnNonexistentNode(): Unit = {
-
+  def testCreateOnNonexistentNode(): Unit =
     an[IllegalArgumentException] should be thrownBy result(
-      brokerApi.add(
-        BrokerClusterCreationRequest(
-          name = CommonUtils.randomString(10),
-          imageName = None,
-          zookeeperClusterName = None,
-          exporterPort = Some(CommonUtils.availablePort()),
-          clientPort = Some(CommonUtils.availablePort()),
-          jmxPort = Some(CommonUtils.availablePort()),
-          nodeNames = Seq("asdasdasd")
-        ))
+      brokerApi.request().name(CommonUtils.randomString(10)).nodeName(CommonUtils.randomString(10)).create()
     )
-  }
-
-  @Test
-  def testEmptyNodes(): Unit = {
-    an[IllegalArgumentException] should be thrownBy result(
-      brokerApi.add(
-        BrokerClusterCreationRequest(
-          name = CommonUtils.randomString(10),
-          imageName = None,
-          zookeeperClusterName = None,
-          exporterPort = None,
-          clientPort = Some(123),
-          jmxPort = None,
-          nodeNames = Seq.empty
-        ))
-    )
-  }
 
   @Test
   def testDefaultZk(): Unit = {
-    val request = BrokerClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      zookeeperClusterName = Some("Asdasdasd"),
-      exporterPort = None,
-      clientPort = Some(123),
-      jmxPort = None,
-      nodeNames = nodeNames
-    )
-    an[IllegalArgumentException] should be thrownBy assert(request, result(brokerApi.add(request)))
-    val anotherRequest = request.copy(zookeeperClusterName = None)
-    assert(anotherRequest, result(brokerApi.add(anotherRequest)))
+    result(brokerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()).zookeeperClusterName shouldBe zkClusterName
   }
 
   @Test
   def testImageName(): Unit = {
+    result(brokerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()).imageName shouldBe BrokerApi.IMAGE_NAME_DEFAULT
 
-    def request() = BrokerClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      zookeeperClusterName = Some(zkClusterName),
-      exporterPort = None,
-      clientPort = Some(CommonUtils.availablePort()),
-      jmxPort = None,
-      nodeNames = nodeNames
-    )
-
-    // pass by default image
-    var bk = result(brokerApi.add(request()))
-    result(brokerApi.delete(bk.name))
-
-    // pass by latest image (since it is default image)
-    bk = result(brokerApi.add(request().copy(imageName = Some(BrokerApi.IMAGE_NAME_DEFAULT))))
-    result(brokerApi.delete(bk.name))
-
+    // the available images of fake mode is only BrokerApi.IMAGE_NAME_DEFAULT
     an[IllegalArgumentException] should be thrownBy result(
-      brokerApi.add(request().copy(imageName = Some(CommonUtils.randomString()))))
-  }
-
-  @Test
-  def testCreate(): Unit = {
-    val request = BrokerClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      zookeeperClusterName = Some(zkClusterName),
-      exporterPort = None,
-      clientPort = Some(123),
-      jmxPort = None,
-      nodeNames = nodeNames
-    )
-    assert(request, result(brokerApi.add(request)))
+      brokerApi
+        .request()
+        .name(CommonUtils.randomString(10))
+        .imageName(CommonUtils.randomString(10))
+        .nodeNames(nodeNames)
+        .create())
   }
 
   @Test
   def testList(): Unit = {
-    val request0 = BrokerClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      exporterPort = Some(CommonUtils.availablePort()),
-      clientPort = Some(CommonUtils.availablePort()),
-      jmxPort = Some(CommonUtils.availablePort()),
-      zookeeperClusterName = Some(zkClusterName),
-      nodeNames = nodeNames
-    )
-    assert(request0, result(brokerApi.add(request0)))
+    val init = result(brokerApi.list).size
+    val bk = result(brokerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
 
     val zk2 = result(
       ZookeeperApi
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(ZookeeperClusterCreationRequest(
-          name = CommonUtils.randomString(10),
-          imageName = None,
-          clientPort = Some(CommonUtils.availablePort()),
-          electionPort = Some(CommonUtils.availablePort()),
-          peerPort = Some(CommonUtils.availablePort()),
-          nodeNames = nodeNames
-        )))
-
-    val request1 = BrokerClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      exporterPort = Some(CommonUtils.availablePort()),
-      clientPort = Some(CommonUtils.availablePort()),
-      jmxPort = Some(CommonUtils.availablePort()),
-      zookeeperClusterName = Some(zk2.name),
-      nodeNames = nodeNames
+        .request()
+        .name(CommonUtils.randomString(10))
+        .nodeNames(nodeNames)
+        .create()
     )
-    assert(request1, result(brokerApi.add(request1)))
+
+    val bk2 = result(
+      brokerApi
+        .request()
+        .name(CommonUtils.randomString(10))
+        .nodeNames(nodeNames)
+        .zookeeperClusterName(zk2.name)
+        .create())
 
     val clusters = result(brokerApi.list)
-    clusters.size shouldBe 2
-    assert(request0, clusters.find(_.name == request0.name).get)
-    assert(request1, clusters.find(_.name == request1.name).get)
+    clusters.size shouldBe 2 + init
+    clusters.exists(_.name == bk.name) shouldBe true
+    clusters.exists(_.name == bk2.name) shouldBe true
   }
 
   @Test
   def testRemove(): Unit = {
-    val request = BrokerClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      clientPort = Some(123),
-      jmxPort = None,
-      exporterPort = None,
-      zookeeperClusterName = Some(zkClusterName),
-      nodeNames = nodeNames
-    )
-    val cluster = result(brokerApi.add(request))
-    assert(request, cluster)
-
-    result(brokerApi.delete(request.name))
-  }
-
-  @Test
-  def testGetContainers(): Unit = {
-    val request = BrokerClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      clientPort = Some(123),
-      exporterPort = None,
-      jmxPort = None,
-      zookeeperClusterName = Some(zkClusterName),
-      nodeNames = nodeNames
-    )
-    val cluster = result(brokerApi.add(request))
-    assert(request, cluster)
-
-    assert(request, result(brokerApi.get(request.name)))
-
-    result(brokerApi.delete(request.name))
-    result(brokerApi.list).size shouldBe 0
+    val init = result(brokerApi.list).size
+    val cluster = result(brokerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
+    result(brokerApi.list).size shouldBe init + 1
+    result(brokerApi.delete(cluster.name))
+    result(brokerApi.list).size shouldBe init
   }
 
   @Test
   def testAddNode(): Unit = {
-    val request = BrokerClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      clientPort = Some(123),
-      exporterPort = None,
-      jmxPort = None,
-      zookeeperClusterName = Some(zkClusterName),
-      nodeNames = Seq(nodeNames.head)
-    )
-    val cluster = result(brokerApi.add(request))
-    assert(request, cluster)
+    val cluster = result(brokerApi.request().name(CommonUtils.randomString(10)).nodeName(nodeNames.head).create())
 
-    result(brokerApi.addNode(cluster.name, nodeNames.last)) shouldBe BrokerClusterInfo(
-      name = cluster.name,
-      imageName = cluster.imageName,
-      clientPort = cluster.clientPort,
-      exporterPort = cluster.exporterPort,
-      jmxPort = cluster.jmxPort,
-      zookeeperClusterName = cluster.zookeeperClusterName,
-      nodeNames = cluster.nodeNames :+ nodeNames.last
-    )
+    result(brokerApi.addNode(cluster.name, nodeNames.last)) shouldBe cluster.copy(
+      nodeNames = cluster.nodeNames ++ Set(nodeNames.last))
   }
+
   @Test
   def testRemoveNode(): Unit = {
-    val request = BrokerClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      clientPort = Some(123),
-      exporterPort = None,
-      jmxPort = None,
-      zookeeperClusterName = Some(zkClusterName),
-      nodeNames = nodeNames
-    )
-    val cluster = result(brokerApi.add(request))
-    assert(request, cluster)
+    val cluster = result(brokerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
 
     result(brokerApi.removeNode(cluster.name, nodeNames.last))
+
+    result(brokerApi.get(cluster.name)).nodeNames shouldBe cluster.nodeNames - nodeNames.last
   }
 
   @Test
-  def testInvalidClusterName(): Unit = {
-    val request = BrokerClusterCreationRequest(
-      name = "--1",
-      imageName = None,
-      clientPort = Some(123),
-      exporterPort = None,
-      jmxPort = None,
-      zookeeperClusterName = Some(zkClusterName),
-      nodeNames = nodeNames
-    )
-    an[IllegalArgumentException] should be thrownBy result(brokerApi.add(request))
-  }
+  def testInvalidClusterName(): Unit =
+    an[IllegalArgumentException] should be thrownBy result(
+      brokerApi.request().name("--]").nodeNames(nodeNames).create())
 
   @Test
   def runMultiBkClustersOnSameZkCluster(): Unit = {
-    val request = BrokerClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      exporterPort = None,
-      clientPort = Some(123),
-      jmxPort = None,
-      zookeeperClusterName = Some(zkClusterName),
-      nodeNames = nodeNames
-    )
-
     // pass
-    result(brokerApi.add(request))
+    result(brokerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
 
     // we can't create multi broker clusters on same zk cluster
     an[IllegalArgumentException] should be thrownBy result(
-      brokerApi.add(request.copy(name = CommonUtils.randomString(10))))
+      brokerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
   }
 
   @Test
   def createBkClusterWithSameName(): Unit = {
     val name = CommonUtils.randomString(10)
-    def request() = BrokerClusterCreationRequest(
-      name = name,
-      imageName = None,
-      exporterPort = None,
-      clientPort = Some(123),
-      jmxPort = None,
-      zookeeperClusterName = Some(zkClusterName),
-      nodeNames = nodeNames
-    )
-
     // pass
-    result(brokerApi.add(request()))
+    result(brokerApi.request().name(name).nodeNames(nodeNames).create())
 
     val zk2 = result(
       ZookeeperApi
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(ZookeeperClusterCreationRequest(
-          name = CommonUtils.randomString(10),
-          imageName = None,
-          clientPort = Some(CommonUtils.availablePort()),
-          electionPort = Some(CommonUtils.availablePort()),
-          peerPort = Some(CommonUtils.availablePort()),
-          nodeNames = nodeNames
-        )))
+        .request()
+        .name(CommonUtils.randomString(10))
+        .nodeNames(nodeNames)
+        .create()
+    )
 
     an[IllegalArgumentException] should be thrownBy result(
-      brokerApi.add(
-        request().copy(
-          zookeeperClusterName = Some(zk2.name)
-        )))
+      brokerApi.request().name(name).zookeeperClusterName(zk2.name).nodeNames(nodeNames).create())
   }
 
   @Test
   def clientPortConflict(): Unit = {
     val clientPort = CommonUtils.availablePort()
-    val request = BrokerClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      zookeeperClusterName = None,
-      jmxPort = Some(CommonUtils.availablePort()),
-      clientPort = Some(clientPort),
-      exporterPort = Some(CommonUtils.availablePort()),
-      nodeNames = nodeNames
-    )
-
-    // pass
-    result(brokerApi.add(request))
+    result(brokerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).clientPort(clientPort).create())
 
     val zk2 = result(
       ZookeeperApi
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(ZookeeperClusterCreationRequest(
-          name = CommonUtils.randomString(10),
-          imageName = None,
-          clientPort = Some(CommonUtils.availablePort()),
-          electionPort = Some(CommonUtils.availablePort()),
-          peerPort = Some(CommonUtils.availablePort()),
-          nodeNames = nodeNames
-        )))
+        .request()
+        .name(CommonUtils.randomString(10))
+        .nodeNames(nodeNames)
+        .create()
+    )
 
     an[IllegalArgumentException] should be thrownBy result(
-      brokerApi.add(request.copy(
-        name = CommonUtils.randomString(10),
-        zookeeperClusterName = Some(zk2.name),
-        exporterPort = Some(CommonUtils.availablePort()),
-        jmxPort = Some(CommonUtils.availablePort())
-      )))
+      brokerApi
+        .request()
+        .name(CommonUtils.randomString(10))
+        .nodeNames(nodeNames)
+        .clientPort(clientPort)
+        .zookeeperClusterName(zk2.name)
+        .create())
 
     // pass
     result(
-      brokerApi.add(request.copy(
-        name = CommonUtils.randomString(10),
-        zookeeperClusterName = Some(zk2.name),
-        jmxPort = Some(CommonUtils.availablePort()),
-        clientPort = Some(CommonUtils.availablePort()),
-        exporterPort = Some(CommonUtils.availablePort())
-      )))
+      brokerApi
+        .request()
+        .name(CommonUtils.randomString(10))
+        .nodeNames(nodeNames)
+        .zookeeperClusterName(zk2.name)
+        .create())
   }
 
   @Test
   def exporterPortConflict(): Unit = {
     val exporterPort = CommonUtils.availablePort()
-    val request = BrokerClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      jmxPort = Some(CommonUtils.availablePort()),
-      zookeeperClusterName = None,
-      clientPort = Some(CommonUtils.availablePort()),
-      exporterPort = Some(exporterPort),
-      nodeNames = nodeNames
-    )
-
-    // pass
-    result(brokerApi.add(request))
+    result(
+      brokerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).exporterPort(exporterPort).create())
 
     val zk2 = result(
       ZookeeperApi
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(ZookeeperClusterCreationRequest(
-          name = CommonUtils.randomString(10),
-          imageName = None,
-          clientPort = Some(CommonUtils.availablePort()),
-          electionPort = Some(CommonUtils.availablePort()),
-          peerPort = Some(CommonUtils.availablePort()),
-          nodeNames = nodeNames
-        )))
+        .request()
+        .name(CommonUtils.randomString(10))
+        .nodeNames(nodeNames)
+        .create()
+    )
 
     an[IllegalArgumentException] should be thrownBy result(
-      brokerApi.add(request.copy(
-        name = CommonUtils.randomString(10),
-        zookeeperClusterName = Some(zk2.name),
-        clientPort = Some(CommonUtils.availablePort()),
-        jmxPort = Some(CommonUtils.availablePort())
-      )))
+      brokerApi
+        .request()
+        .name(CommonUtils.randomString(10))
+        .nodeNames(nodeNames)
+        .exporterPort(exporterPort)
+        .zookeeperClusterName(zk2.name)
+        .create())
 
     // pass
     result(
-      brokerApi.add(request.copy(
-        name = CommonUtils.randomString(10),
-        zookeeperClusterName = Some(zk2.name),
-        jmxPort = Some(CommonUtils.availablePort()),
-        clientPort = Some(CommonUtils.availablePort()),
-        exporterPort = Some(CommonUtils.availablePort())
-      )))
+      brokerApi
+        .request()
+        .name(CommonUtils.randomString(10))
+        .nodeNames(nodeNames)
+        .zookeeperClusterName(zk2.name)
+        .create())
   }
 
   @Test
   def jmxPortConflict(): Unit = {
     val jmxPort = CommonUtils.availablePort()
-    val request = BrokerClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      jmxPort = Some(jmxPort),
-      zookeeperClusterName = None,
-      clientPort = Some(CommonUtils.availablePort()),
-      exporterPort = Some(CommonUtils.availablePort()),
-      nodeNames = nodeNames
-    )
-
-    // pass
-    result(brokerApi.add(request))
+    result(brokerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).jmxPort(jmxPort).create())
 
     val zk2 = result(
       ZookeeperApi
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(ZookeeperClusterCreationRequest(
-          name = CommonUtils.randomString(10),
-          imageName = None,
-          clientPort = Some(CommonUtils.availablePort()),
-          electionPort = Some(CommonUtils.availablePort()),
-          peerPort = Some(CommonUtils.availablePort()),
-          nodeNames = nodeNames
-        )))
+        .request()
+        .name(CommonUtils.randomString(10))
+        .nodeNames(nodeNames)
+        .create()
+    )
 
     an[IllegalArgumentException] should be thrownBy result(
-      brokerApi.add(request.copy(
-        name = CommonUtils.randomString(10),
-        zookeeperClusterName = Some(zk2.name),
-        clientPort = Some(CommonUtils.availablePort()),
-        exporterPort = Some(CommonUtils.availablePort())
-      )))
+      brokerApi
+        .request()
+        .name(CommonUtils.randomString(10))
+        .nodeNames(nodeNames)
+        .jmxPort(jmxPort)
+        .zookeeperClusterName(zk2.name)
+        .create())
 
     // pass
     result(
-      brokerApi.add(request.copy(
-        name = CommonUtils.randomString(10),
-        zookeeperClusterName = Some(zk2.name),
-        jmxPort = Some(CommonUtils.availablePort()),
-        clientPort = Some(CommonUtils.availablePort()),
-        exporterPort = Some(CommonUtils.availablePort())
-      )))
+      brokerApi
+        .request()
+        .name(CommonUtils.randomString(10))
+        .nodeNames(nodeNames)
+        .zookeeperClusterName(zk2.name)
+        .create())
   }
 
   @Test
   def testForceDelete(): Unit = {
     val initialCount = configurator.clusterCollie.brokerCollie().asInstanceOf[FakeBrokerCollie].forceRemoveCount
-    val request = BrokerClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      jmxPort = None,
-      zookeeperClusterName = None,
-      clientPort = Some(CommonUtils.availablePort()),
-      exporterPort = Some(CommonUtils.availablePort()),
-      nodeNames = nodeNames
-    )
 
     // graceful delete
-    result(brokerApi.delete(result(brokerApi.add(request)).name))
+    val bk0 = result(brokerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
+    result(brokerApi.delete(bk0.name))
     configurator.clusterCollie.brokerCollie().asInstanceOf[FakeBrokerCollie].forceRemoveCount shouldBe initialCount
 
     // force delete
-    result(brokerApi.forceDelete(result(brokerApi.add(request)).name))
+    val bk1 = result(brokerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
+    result(brokerApi.forceDelete(bk1.name))
     configurator.clusterCollie.brokerCollie().asInstanceOf[FakeBrokerCollie].forceRemoveCount shouldBe initialCount + 1
   }
 

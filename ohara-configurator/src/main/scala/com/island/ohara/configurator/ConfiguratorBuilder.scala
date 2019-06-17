@@ -25,6 +25,7 @@ import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeService}
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -131,7 +132,7 @@ class ConfiguratorBuilder {
           exporterPort = -1,
           jmxPort = -1,
           clientPort = port,
-          nodeNames = Seq(host)
+          nodeNames = Set(host)
         )
       }
       val wkCluster = {
@@ -157,7 +158,7 @@ class ConfiguratorBuilder {
           offsetTopicReplications = 1.asInstanceOf[Short],
           jarInfos = Seq.empty,
           connectors = Await.result(WorkerClient(wkConnectionProps).connectors, 10 seconds),
-          nodeNames = Seq(host)
+          nodeNames = Set(host)
         )
       }
       collie.brokerCollie().addCluster(bkCluster)
@@ -192,14 +193,14 @@ class ConfiguratorBuilder {
       val zkClusters = (0 until numberOfBrokerCluster).map { index =>
         collie
           .zookeeperCollie()
-          .addCluster(FakeZookeeperClusterInfo(
+          .addCluster(ZookeeperClusterInfo(
             name = s"$zkClusterNamePrefix$index",
             imageName = s"fakeImage$index",
             // Assigning a negative value can make test fail quickly.
             clientPort = -1,
             electionPort = -1,
             peerPort = -1,
-            nodeNames = (0 to 2).map(_ => CommonUtils.randomString(5))
+            nodeNames = (0 to 2).map(_ => CommonUtils.randomString(5)).toSet
           ))
       }
 
@@ -208,7 +209,7 @@ class ConfiguratorBuilder {
         case (zkCluster, index) =>
           collie
             .brokerCollie()
-            .addCluster(FakeBrokerClusterInfo(
+            .addCluster(BrokerClusterInfo(
               name = s"$bkClusterNamePrefix$index",
               imageName = s"fakeImage$index",
               zookeeperClusterName = zkCluster.name,
@@ -225,7 +226,7 @@ class ConfiguratorBuilder {
         val bkCluster = bkClusters((Math.random() % bkClusters.size).asInstanceOf[Int])
         collie
           .workerCollie()
-          .addCluster(FakeWorkerClusterInfo(
+          .addCluster(WorkerClusterInfo(
             name = s"$wkClusterNamePrefix$index",
             imageName = s"fakeImage$index",
             brokerClusterName = bkCluster.name,
@@ -245,8 +246,6 @@ class ConfiguratorBuilder {
             offsetTopicReplications = 1.asInstanceOf[Short],
             jarInfos = Seq.empty,
             connectors = Seq.empty,
-            sources = Seq.empty,
-            sinks = Seq.empty,
             nodeNames = bkCluster.nodeNames
           ))
       }

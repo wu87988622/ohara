@@ -16,7 +16,6 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.ZookeeperApi.{ZookeeperClusterCreationRequest, ZookeeperClusterInfo}
 import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, ZookeeperApi}
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -36,16 +35,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
   private[this] val numberOfDefaultNodes = 3 * numberOfCluster
   private[this] val zookeeperApi = ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port)
 
-  private[this] def assert(request: ZookeeperClusterCreationRequest, cluster: ZookeeperClusterInfo): Unit = {
-    cluster.name shouldBe request.name
-    request.imageName.foreach(_ shouldBe cluster.imageName)
-    request.clientPort.foreach(_ shouldBe cluster.clientPort)
-    request.peerPort.foreach(_ shouldBe cluster.peerPort)
-    request.electionPort.foreach(_ shouldBe cluster.electionPort)
-    request.nodeNames shouldBe cluster.nodeNames
-  }
-
-  private[this] val nodeNames: Seq[String] = Seq("n0", "n1")
+  private[this] val nodeNames: Set[String] = Set("n0", "n1")
 
   @Before
   def setup(): Unit = {
@@ -88,318 +78,145 @@ class TestZookeeperRoute extends MediumTest with Matchers {
   }
 
   @Test
-  def testEmptyNodes(): Unit = {
-    an[IllegalArgumentException] should be thrownBy result(
-      zookeeperApi.add(
-        ZookeeperClusterCreationRequest(
-          name = CommonUtils.randomString(10),
-          imageName = None,
-          clientPort = Some(123),
-          electionPort = Some(456),
-          peerPort = Some(1345),
-          nodeNames = Seq.empty
-        ))
-    )
-  }
-
-  @Test
   def testCreateOnNonexistentNode(): Unit = {
     an[IllegalArgumentException] should be thrownBy result(
-      zookeeperApi.add(
-        ZookeeperClusterCreationRequest(
-          name = CommonUtils.randomString(10),
-          imageName = None,
-          clientPort = Some(123),
-          electionPort = Some(456),
-          peerPort = Some(1345),
-          nodeNames = Seq("asdasdasd")
-        ))
+      zookeeperApi.request().name(CommonUtils.randomString(10)).nodeName(CommonUtils.randomString(10)).create()
     )
   }
 
   @Test
   def testImageName(): Unit = {
-
-    def request() = ZookeeperClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      clientPort = Some(CommonUtils.availablePort()),
-      electionPort = Some(CommonUtils.availablePort()),
-      peerPort = Some(CommonUtils.availablePort()),
-      nodeNames = nodeNames
-    )
-
     // pass by default image
-    result(zookeeperApi.add(request()))
+    result(
+      zookeeperApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
+    ).imageName shouldBe ZookeeperApi.IMAGE_NAME_DEFAULT
 
-    // pass by latest image (since it is default image)
-    result(zookeeperApi.add(request().copy(imageName = Some(ZookeeperApi.IMAGE_NAME_DEFAULT))))
-
+    // in fake mode only IMAGE_NAME_DEFAULT is supported
     an[IllegalArgumentException] should be thrownBy result(
-      zookeeperApi.add(request().copy(imageName = Some(CommonUtils.randomString()))))
-  }
-
-  @Test
-  def testCreate(): Unit = {
-    val request = ZookeeperClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      clientPort = Some(123),
-      electionPort = Some(456),
-      peerPort = Some(1345),
-      nodeNames = nodeNames
+      zookeeperApi
+        .request()
+        .name(CommonUtils.randomString(10))
+        .imageName(CommonUtils.randomString(10))
+        .nodeNames(nodeNames)
+        .create()
     )
-    assert(request, result(zookeeperApi.add(request)))
   }
 
   @Test
   def testList(): Unit = {
-    val request0 = ZookeeperClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      clientPort = Some(CommonUtils.availablePort()),
-      electionPort = Some(CommonUtils.availablePort()),
-      peerPort = Some(CommonUtils.availablePort()),
-      nodeNames = nodeNames
-    )
-    assert(request0, result(zookeeperApi.add(request0)))
-    val request1 = ZookeeperClusterCreationRequest(
-      name = CommonUtils.randomString(10) + "2",
-      imageName = None,
-      clientPort = Some(CommonUtils.availablePort()),
-      electionPort = Some(CommonUtils.availablePort()),
-      peerPort = Some(CommonUtils.availablePort()),
-      nodeNames = nodeNames
-    )
-    assert(request1, result(zookeeperApi.add(request1)))
-
-    val clusters = result(zookeeperApi.list)
-    clusters.size shouldBe 3
-    assert(request0, clusters.find(_.name == request0.name).get)
-    assert(request1, clusters.find(_.name == request1.name).get)
+    val init = result(zookeeperApi.list).size
+    val count = 3
+    (0 until count).foreach { _ =>
+      result(
+        zookeeperApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
+      )
+    }
+    result(zookeeperApi.list).size shouldBe count + init
   }
 
   @Test
   def testRemove(): Unit = {
-    val request = ZookeeperClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      clientPort = Some(123),
-      electionPort = Some(456),
-      peerPort = Some(1345),
-      nodeNames = nodeNames
-    )
-    val cluster = result(zookeeperApi.add(request))
-    assert(request, cluster)
-
-    result(zookeeperApi.delete(request.name))
-  }
-
-  @Test
-  def testGetContainers(): Unit = {
-    val request = ZookeeperClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      clientPort = Some(123),
-      electionPort = Some(456),
-      peerPort = Some(1345),
-      nodeNames = nodeNames
-    )
-    val cluster = result(zookeeperApi.add(request))
-    assert(request, cluster)
-
-    assert(request, result(zookeeperApi.get(request.name)))
-
-    result(zookeeperApi.delete(request.name))
-    result(zookeeperApi.list).size shouldBe 1
+    val init = result(zookeeperApi.list).size
+    val cluster = result(zookeeperApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
+    result(zookeeperApi.list).size shouldBe init + 1
+    result(zookeeperApi.delete(cluster.name))
+    result(zookeeperApi.list).size shouldBe init
   }
 
   @Test
   def testAddNode(): Unit = {
-    val request = ZookeeperClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      clientPort = Some(123),
-      electionPort = Some(456),
-      peerPort = Some(1345),
-      nodeNames = Seq(nodeNames.head)
+    val zk = result(
+      zookeeperApi.request().name(CommonUtils.randomString(10)).nodeName(nodeNames.head).create()
     )
-    val cluster = result(zookeeperApi.add(request))
-    assert(request, cluster)
-
+    zk.nodeNames.size shouldBe 1
+    zk.nodeNames.head shouldBe nodeNames.head
     // we don't support to add zk node at runtime
-    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.addNode(cluster.name, nodeNames.last))
+    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.addNode(zk.name, nodeNames.last))
   }
+
   @Test
   def testRemoveNode(): Unit = {
-    val request = ZookeeperClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      clientPort = Some(123),
-      electionPort = Some(456),
-      peerPort = Some(1345),
-      nodeNames = nodeNames
+    val zk = result(
+      zookeeperApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
     )
-    val cluster = result(zookeeperApi.add(request))
-    assert(request, cluster)
 
     // we don't support to remove zk node at runtime
-    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.removeNode(cluster.name, nodeNames.head))
+    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.removeNode(zk.name, nodeNames.head))
   }
 
   @Test
-  def testInvalidClusterName(): Unit = {
-    val request = ZookeeperClusterCreationRequest(
-      name = "abc def",
-      imageName = None,
-      clientPort = Some(123),
-      electionPort = Some(456),
-      peerPort = Some(1345),
-      nodeNames = nodeNames
+  def testInvalidClusterName(): Unit =
+    an[IllegalArgumentException] should be thrownBy result(
+      zookeeperApi.request().name("abc def").nodeNames(nodeNames).create()
     )
-    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.add(request))
-  }
 
   @Test
   def createZkClusterWithSameName(): Unit = {
     val name = CommonUtils.randomString(10)
-    def request() = ZookeeperClusterCreationRequest(
-      name = name,
-      imageName = None,
-      clientPort = Some(CommonUtils.availablePort()),
-      electionPort = Some(CommonUtils.availablePort()),
-      peerPort = Some(CommonUtils.availablePort()),
-      nodeNames = nodeNames
+    result(
+      zookeeperApi.request().name(name).nodeNames(nodeNames).create()
     )
 
-    // pass
-    result(zookeeperApi.add(request()))
-
-    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.add(request()))
+    an[IllegalArgumentException] should be thrownBy result(
+      zookeeperApi.request().name(name).nodeNames(nodeNames).create()
+    )
   }
 
   @Test
   def clientPortConflict(): Unit = {
     val clientPort = CommonUtils.availablePort()
-    val request = ZookeeperClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      clientPort = Some(clientPort),
-      electionPort = Some(CommonUtils.availablePort()),
-      peerPort = Some(CommonUtils.availablePort()),
-      nodeNames = nodeNames
+    result(
+      zookeeperApi.request().name(CommonUtils.randomString(10)).clientPort(clientPort).nodeNames(nodeNames).create()
     )
 
-    // pass
-    result(zookeeperApi.add(request))
-
     an[IllegalArgumentException] should be thrownBy result(
-      zookeeperApi.add(request.copy(name = CommonUtils.randomString(10))))
-
-    an[IllegalArgumentException] should be thrownBy result(
-      zookeeperApi.add(
-        request.copy(name = CommonUtils.randomString(10),
-                     electionPort = Some(CommonUtils.availablePort()),
-                     peerPort = Some(CommonUtils.availablePort()))))
-
-    // pass
-    result(
-      zookeeperApi.add(request.copy(
-        name = CommonUtils.randomString(10),
-        clientPort = Some(CommonUtils.availablePort()),
-        electionPort = Some(CommonUtils.availablePort()),
-        peerPort = Some(CommonUtils.availablePort())
-      )))
+      zookeeperApi.request().name(CommonUtils.randomString(10)).clientPort(clientPort).nodeNames(nodeNames).create()
+    )
   }
 
   @Test
   def peerPortConflict(): Unit = {
     val peerPort = CommonUtils.availablePort()
-    val request = ZookeeperClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      clientPort = Some(CommonUtils.availablePort()),
-      electionPort = Some(CommonUtils.availablePort()),
-      peerPort = Some(peerPort),
-      nodeNames = nodeNames
+    result(
+      zookeeperApi.request().name(CommonUtils.randomString(10)).peerPort(peerPort).nodeNames(nodeNames).create()
     )
 
-    // pass
-    result(zookeeperApi.add(request))
-
     an[IllegalArgumentException] should be thrownBy result(
-      zookeeperApi.add(request.copy(name = CommonUtils.randomString(10))))
-
-    an[IllegalArgumentException] should be thrownBy result(
-      zookeeperApi.add(
-        request.copy(name = CommonUtils.randomString(10),
-                     electionPort = Some(CommonUtils.availablePort()),
-                     clientPort = Some(CommonUtils.availablePort()))))
-
-    // pass
-    result(
-      zookeeperApi.add(request.copy(
-        name = CommonUtils.randomString(10),
-        clientPort = Some(CommonUtils.availablePort()),
-        electionPort = Some(CommonUtils.availablePort()),
-        peerPort = Some(CommonUtils.availablePort())
-      )))
+      zookeeperApi.request().name(CommonUtils.randomString(10)).peerPort(peerPort).nodeNames(nodeNames).create()
+    )
   }
 
   @Test
   def electionPortConflict(): Unit = {
     val electionPort = CommonUtils.availablePort()
-    val request = ZookeeperClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      clientPort = Some(CommonUtils.availablePort()),
-      electionPort = Some(electionPort),
-      peerPort = Some(CommonUtils.availablePort()),
-      nodeNames = nodeNames
+    result(
+      zookeeperApi.request().name(CommonUtils.randomString(10)).electionPort(electionPort).nodeNames(nodeNames).create()
     )
 
-    // pass
-    result(zookeeperApi.add(request))
-
     an[IllegalArgumentException] should be thrownBy result(
-      zookeeperApi.add(request.copy(name = CommonUtils.randomString(10))))
-
-    an[IllegalArgumentException] should be thrownBy result(
-      zookeeperApi.add(
-        request.copy(name = CommonUtils.randomString(10),
-                     peerPort = Some(CommonUtils.availablePort()),
-                     clientPort = Some(CommonUtils.availablePort()))))
-
-    // pass
-    result(
-      zookeeperApi.add(request.copy(
-        name = CommonUtils.randomString(10),
-        clientPort = Some(CommonUtils.availablePort()),
-        electionPort = Some(CommonUtils.availablePort()),
-        peerPort = Some(CommonUtils.availablePort())
-      )))
+      zookeeperApi.request().name(CommonUtils.randomString(10)).electionPort(electionPort).nodeNames(nodeNames).create()
+    )
   }
 
   @Test
   def testForceDelete(): Unit = {
     val initialCount = configurator.clusterCollie.zookeeperCollie().asInstanceOf[FakeZookeeperCollie].forceRemoveCount
-    val request = ZookeeperClusterCreationRequest(
-      name = CommonUtils.randomString(10),
-      imageName = None,
-      clientPort = Some(CommonUtils.availablePort()),
-      electionPort = Some(CommonUtils.availablePort()),
-      peerPort = Some(CommonUtils.availablePort()),
-      nodeNames = nodeNames
-    )
+    val name = CommonUtils.randomString(10)
     // graceful delete
-    result(zookeeperApi.delete(result(zookeeperApi.add(request)).name))
+    result(
+      zookeeperApi.request().name(name).nodeNames(nodeNames).create()
+    )
+    result(zookeeperApi.delete(name))
     configurator.clusterCollie
       .zookeeperCollie()
       .asInstanceOf[FakeZookeeperCollie]
       .forceRemoveCount shouldBe initialCount
 
     // force delete
-    result(zookeeperApi.forceDelete(result(zookeeperApi.add(request)).name))
+    result(
+      zookeeperApi.request().name(name).nodeNames(nodeNames).create()
+    )
+    result(zookeeperApi.forceDelete(name))
     configurator.clusterCollie
       .zookeeperCollie()
       .asInstanceOf[FakeZookeeperCollie]

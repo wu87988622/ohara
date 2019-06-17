@@ -378,28 +378,81 @@ public final class CommonUtils {
     return value;
   }
 
-  public static int requirePositiveInt(int value) {
-    return (int) requirePositiveLong(value);
+  /**
+   * check the port to which you prepare to bind. The port must be bigger than or equal with zero
+   * and small than 65536. The zero is legal since OS will assign a random port to you.
+   *
+   * @param value port number
+   * @return legal port
+   */
+  public static int requireBindPort(int value) {
+    if (value < 0 || value > 65535)
+      throw new IllegalArgumentException("the legal port range is 0 - 65535, actual:" + value);
+    return value;
   }
 
-  public static int requirePositiveInt(int value, Supplier<String> msg) {
-    return (int) requirePositiveLong(value, msg);
-  }
-
+  /**
+   * throw exception if the input value is not larger than zero.
+   *
+   * @param value be validated value
+   * @return passed value
+   */
   public static short requirePositiveShort(short value) {
     return (short) requirePositiveLong(value);
   }
 
-  public static short requirePositiveShort(short value, Supplier<String> msg) {
-    return (short) requirePositiveLong(value, msg);
+  /**
+   * throw exception if the input value is not larger than zero.
+   *
+   * @param value be validated value
+   * @return passed value
+   */
+  public static int requirePositiveInt(int value) {
+    return (int) requirePositiveLong(value);
   }
 
+  /**
+   * throw exception if the input value is not larger than zero.
+   *
+   * @param value be validated value
+   * @return passed value
+   */
   public static long requirePositiveLong(long value) {
-    return requirePositiveLong(value, () -> value + " can't be negative");
+    if (value <= 0)
+      throw new IllegalArgumentException("the value:" + value + " must be bigger than zero");
+    return value;
   }
 
-  public static long requirePositiveLong(long value, Supplier<String> msg) {
-    if (value < 0) throw new IllegalArgumentException(msg.get());
+  /**
+   * throw exception if the input value is small than zero.
+   *
+   * @param value be validated value
+   * @return passed value
+   */
+  public static short requireNonNegativeShort(short value) {
+    return (short) requireNonNegativeLong(value);
+  }
+
+  /**
+   * throw exception if the input value is small than zero.
+   *
+   * @param value be validated value
+   * @return passed value
+   */
+  public static int requireNonNegativeInt(int value) {
+    return (int) requireNonNegativeLong(value);
+  }
+
+  /**
+   * throw exception if the input value is small than zero.
+   *
+   * @param value be validated value
+   * @return passed value
+   */
+  public static long requireNonNegativeLong(long value) {
+    if (value < 0)
+      throw new IllegalArgumentException(
+          "the value:" + value + " must be bigger than or equal with zero");
     return value;
   }
 

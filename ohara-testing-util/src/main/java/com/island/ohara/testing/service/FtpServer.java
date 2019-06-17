@@ -104,7 +104,7 @@ public interface FtpServer extends Releasable {
 
     @com.island.ohara.common.annotations.Optional("default is random port")
     public Builder controlPort(int controlPort) {
-      this.controlPort = CommonUtils.requirePositiveInt(controlPort);
+      this.controlPort = CommonUtils.requireBindPort(controlPort);
       return this;
     }
 
@@ -119,7 +119,7 @@ public interface FtpServer extends Releasable {
     public Builder dataPorts(List<Integer> dataPorts) {
       CommonUtils.requireNonEmpty(
               Objects.requireNonNull(dataPorts), () -> "dataPorts can't be empty")
-          .forEach(CommonUtils::requirePositiveInt);
+          .forEach(CommonUtils::requireBindPort);
       this.dataPorts = dataPorts;
       return this;
     }

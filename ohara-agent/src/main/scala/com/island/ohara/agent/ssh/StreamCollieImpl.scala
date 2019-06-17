@@ -145,7 +145,7 @@ private class StreamCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClient
                 val clusterInfo = StreamClusterInfo(
                   name = clusterName,
                   imageName = imageName,
-                  nodeNames = successfulContainers.map(_.nodeName),
+                  nodeNames = successfulContainers.map(_.nodeName).toSet,
                   jmxPort = jmxPort,
                   // creating cluster success could be applied containers are "running"
                   state = Some(ContainerState.RUNNING.name)

@@ -122,17 +122,17 @@ public class RowSinkRecord {
     }
 
     public Builder partition(int partition) {
-      this.partition = CommonUtils.requirePositiveInt(partition);
+      this.partition = CommonUtils.requireNonNegativeInt(partition);
       return this;
     }
 
     public Builder offset(long offset) {
-      this.offset = CommonUtils.requirePositiveLong(offset);
+      this.offset = CommonUtils.requireNonNegativeLong(offset);
       return this;
     }
 
     public Builder timestamp(long timestamp) {
-      this.timestamp = CommonUtils.requirePositiveLong(timestamp);
+      this.timestamp = CommonUtils.requireNonNegativeLong(timestamp);
       return this;
     }
 

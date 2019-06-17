@@ -17,10 +17,10 @@
 package com.island.ohara.agent
 import java.util.Objects
 
+import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import com.island.ohara.client.configurator.v0.{ClusterInfo, ZookeeperApi}
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
 
@@ -114,7 +114,7 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo, ZookeeperCollie.Clust
                         clientPort = clientPort,
                         peerPort = peerPort,
                         electionPort = electionPort,
-                        nodeNames = successfulContainers.map(_.nodeName)
+                        nodeNames = successfulContainers.map(_.nodeName).toSet
                       )
                       postCreateZookeeperCluster(clusterInfo, successfulContainers)
                       clusterInfo
@@ -127,19 +127,19 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo, ZookeeperCollie.Clust
     * Please implement nodeCollie
     * @return
     */
-  protected def nodeCollie(): NodeCollie
+  protected def nodeCollie: NodeCollie
 
   /**
     * The prefix name for paltform
     * @return
     */
-  protected def prefixKey(): String
+  protected def prefixKey: String
 
   /**
     * return service name
     * @return
     */
-  protected def serviceName(): String
+  protected def serviceName: String
 
   protected def doCreator(executionContext: ExecutionContext,
                           clusterName: String,
@@ -168,44 +168,38 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo, ZookeeperCollie.Clust
         clientPort = first.environments(ZookeeperCollie.CLIENT_PORT_KEY).toInt,
         peerPort = first.environments(ZookeeperCollie.PEER_PORT_KEY).toInt,
         electionPort = first.environments(ZookeeperCollie.ELECTION_PORT_KEY).toInt,
-        nodeNames = containers.map(_.nodeName)
+        nodeNames = containers.map(_.nodeName).toSet
       ))
   }
 }
 
 object ZookeeperCollie {
   trait ClusterCreator extends Collie.ClusterCreator[ZookeeperClusterInfo] {
-    private[this] var clientPort: Int = ZookeeperApi.CLIENT_PORT_DEFAULT
-    private[this] var peerPort: Int = ZookeeperApi.PEER_PORT_DEFAULT
-    private[this] var electionPort: Int = ZookeeperApi.ELECTION_PORT_DEFAULT
+    private[this] var clientPort: Int = CommonUtils.availablePort()
+    private[this] var peerPort: Int = CommonUtils.availablePort()
+    private[this] var electionPort: Int = CommonUtils.availablePort()
 
-    override def copy(clusterInfo: ClusterInfo): ClusterCreator.this.type = clusterInfo match {
-      case zk: ZookeeperClusterInfo =>
-        super.copy(clusterInfo)
-        clientPort(zk.clientPort)
-        peerPort(zk.peerPort)
-        electionPort(zk.electionPort)
-        this
-      case _ =>
-        throw new IllegalArgumentException(
-          s"you should pass ZookeeperClusterInfo rather than ${clusterInfo.getClass.getName}")
+    override protected def doCopy(clusterInfo: ZookeeperClusterInfo): Unit = {
+      clientPort(clusterInfo.clientPort)
+      peerPort(clusterInfo.peerPort)
+      electionPort(clusterInfo.electionPort)
     }
 
-    @Optional("default is com.island.ohara.client.configurator.v0.ZookeeperApi.CLIENT_PORT_DEFAULT")
+    @Optional("default is random port")
     def clientPort(clientPort: Int): ClusterCreator = {
-      this.clientPort = CommonUtils.requirePositiveInt(clientPort)
+      this.clientPort = CommonUtils.requireConnectionPort(clientPort)
       this
     }
 
-    @Optional("default is com.island.ohara.client.configurator.v0.ZookeeperApi.PEER_PORT_DEFAULT")
+    @Optional("default is random port")
     def peerPort(peerPort: Int): ClusterCreator = {
-      this.peerPort = CommonUtils.requirePositiveInt(peerPort)
+      this.peerPort = CommonUtils.requireConnectionPort(peerPort)
       this
     }
 
-    @Optional("default is com.island.ohara.client.configurator.v0.ZookeeperApi.ELECTION_PORT_DEFAULT")
+    @Optional("default is random port")
     def electionPort(electionPort: Int): ClusterCreator = {
-      this.electionPort = CommonUtils.requirePositiveInt(electionPort)
+      this.electionPort = CommonUtils.requireConnectionPort(electionPort)
       this
     }
 
@@ -213,10 +207,10 @@ object ZookeeperCollie {
       executionContext = Objects.requireNonNull(executionContext),
       clusterName = CommonUtils.requireNonEmpty(clusterName),
       imageName = CommonUtils.requireNonEmpty(imageName),
-      clientPort = CommonUtils.requirePositiveInt(clientPort),
-      peerPort = CommonUtils.requirePositiveInt(peerPort),
-      electionPort = CommonUtils.requirePositiveInt(electionPort),
-      nodeNames = CommonUtils.requireNonEmpty(nodeNames.asJava).asScala
+      clientPort = CommonUtils.requireConnectionPort(clientPort),
+      peerPort = CommonUtils.requireConnectionPort(peerPort),
+      electionPort = CommonUtils.requireConnectionPort(electionPort),
+      nodeNames = CommonUtils.requireNonEmpty(nodeNames.asJava).asScala.toSet
     )
 
     protected def doCreate(executionContext: ExecutionContext,
@@ -225,7 +219,7 @@ object ZookeeperCollie {
                            clientPort: Int,
                            peerPort: Int,
                            electionPort: Int,
-                           nodeNames: Seq[String]): Future[ZookeeperClusterInfo]
+                           nodeNames: Set[String]): Future[ZookeeperClusterInfo]
   }
 
   private[agent] val CLIENT_PORT_KEY: String = "ZK_CLIENT_PORT"

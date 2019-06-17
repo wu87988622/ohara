@@ -73,7 +73,7 @@ private class ZookeeperCollieImpl(node: NodeCollie, dockerCache: DockerClientCac
     newNodeName: String)(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] = Future.failed(
     new UnsupportedOperationException("zookeeper collie doesn't support to add node from a running cluster"))
 
-  override protected def nodeCollie(): NodeCollie = node
+  override protected def nodeCollie: NodeCollie = node
 
-  override protected def prefixKey(): String = PREFIX_KEY
+  override protected def prefixKey: String = PREFIX_KEY
 }

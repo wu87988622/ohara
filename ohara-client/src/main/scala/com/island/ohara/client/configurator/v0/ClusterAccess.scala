@@ -25,8 +25,7 @@ import scala.concurrent.{ExecutionContext, Future}
   * the cluster-related data is different from normal data so we need another type of access.
   * @param prefixPath path to remote resource
   */
-class ClusterAccess[Req, Res <: ClusterInfo] private[v0] (prefixPath: String)(implicit rm0: RootJsonFormat[Req],
-                                                                              rm1: RootJsonFormat[Res])
+abstract class ClusterAccess[Res <: ClusterInfo] private[v0] (prefixPath: String)(implicit rm: RootJsonFormat[Res])
     extends BasicAccess(prefixPath) {
 
   private[this] def _clusterName(name: String): String =
@@ -35,21 +34,15 @@ class ClusterAccess[Req, Res <: ClusterInfo] private[v0] (prefixPath: String)(im
     CommonUtils.requireNonEmpty(name, () => "node name can't be empty")
 
   def get(clusterName: String)(implicit executionContext: ExecutionContext): Future[Res] =
-    exec.get[Res, ErrorApi.Error](
-      s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/${_clusterName(clusterName)}")
+    exec.get[Res, ErrorApi.Error](s"${_url}/${_clusterName(clusterName)}")
   def delete(clusterName: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-    exec.delete[ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$clusterName")
+    exec.delete[ErrorApi.Error](s"${_url}/$clusterName")
   def forceDelete(clusterName: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-    exec.delete[ErrorApi.Error](
-      s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$clusterName?${Parameters.FORCE_REMOVE}=true")
+    exec.delete[ErrorApi.Error](s"${_url}/$clusterName?${Parameters.FORCE_REMOVE}=true")
   def list(implicit executionContext: ExecutionContext): Future[Seq[Res]] =
-    exec.get[Seq[Res], ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}")
-  def add(request: Req)(implicit executionContext: ExecutionContext): Future[Res] =
-    exec.post[Req, Res, ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}", request)
+    exec.get[Seq[Res], ErrorApi.Error](s"${_url}")
   def addNode(clusterName: String, nodeName: String)(implicit executionContext: ExecutionContext): Future[Res] =
-    exec.post[Res, ErrorApi.Error](
-      s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/${_clusterName(clusterName)}/${_nodeName(nodeName)}")
+    exec.post[Res, ErrorApi.Error](s"${_url}/${_clusterName(clusterName)}/${_nodeName(nodeName)}")
   def removeNode(clusterName: String, nodeName: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-    exec.delete[ErrorApi.Error](
-      s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/${_clusterName(clusterName)}/${_nodeName(nodeName)}")
+    exec.delete[ErrorApi.Error](s"${_url}/${_clusterName(clusterName)}/${_nodeName(nodeName)}")
 }

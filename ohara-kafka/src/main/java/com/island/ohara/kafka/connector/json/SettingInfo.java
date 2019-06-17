@@ -85,7 +85,7 @@ public final class SettingInfo implements JsonObject {
   private SettingInfo(
       @JsonProperty(ERROR_COUNT_KEY) int errorCount,
       @JsonProperty(SETTINGS_KEY) List<Setting> settings) {
-    this.errorCount = CommonUtils.requirePositiveInt(errorCount);
+    this.errorCount = errorCount;
     this.settings = new ArrayList<>(CommonUtils.requireNonEmpty(settings));
   }
 

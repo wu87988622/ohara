@@ -93,7 +93,7 @@ class TestZookeeperCreator extends SmallTest with Matchers {
 
   @Test
   def emptyNodes(): Unit = {
-    an[IllegalArgumentException] should be thrownBy zkCreator().nodeNames(Seq.empty)
+    an[IllegalArgumentException] should be thrownBy zkCreator().nodeNames(Set.empty)
   }
 
   @Test
@@ -103,7 +103,7 @@ class TestZookeeperCreator extends SmallTest with Matchers {
     .peerPort(CommonUtils.availablePort())
     .clientPort(CommonUtils.availablePort())
     .electionPort(CommonUtils.availablePort())
-    .nodeNames(Seq("asdasd"))
+    .nodeName(CommonUtils.randomString())
     .create()
 
   @Test
@@ -113,7 +113,7 @@ class TestZookeeperCreator extends SmallTest with Matchers {
     .peerPort(CommonUtils.availablePort())
     .clientPort(CommonUtils.availablePort())
     .electionPort(CommonUtils.availablePort())
-    .nodeNames(Seq("asdasd"))
+    .nodeName(CommonUtils.randomString())
     .create()
 
   @Test
@@ -124,14 +124,10 @@ class TestZookeeperCreator extends SmallTest with Matchers {
       clientPort = 10,
       peerPort = 10,
       electionPort = 10,
-      nodeNames = Seq(CommonUtils.randomString())
+      nodeNames = Set(CommonUtils.randomString())
     )
     Await.result(zkCreator().copy(zookeeperClusterInfo).create(), 30 seconds) shouldBe zookeeperClusterInfo
   }
-
-  @Test
-  def testPassIncorrectTypeToCopy(): Unit =
-    an[IllegalArgumentException] should be thrownBy zkCreator().copy(FakeClusterInfo(CommonUtils.randomString()))
 
   @Test
   def testZKCreator(): Unit = {
@@ -154,7 +150,7 @@ class TestZookeeperCreator extends SmallTest with Matchers {
       .clientPort(2181)
       .peerPort(2182)
       .electionPort(2183)
-      .nodeNames(Seq(node1Name, node2Name))
+      .nodeNames(Set(node1Name, node2Name))
       .create()
 
     val zookeeperClusterInfo = Await.result(zkCreator, TIMEOUT)
@@ -163,8 +159,8 @@ class TestZookeeperCreator extends SmallTest with Matchers {
     zookeeperClusterInfo.peerPort shouldBe 2182
     zookeeperClusterInfo.electionPort shouldBe 2183
     zookeeperClusterInfo.nodeNames.size shouldBe 2
-    zookeeperClusterInfo.nodeNames(0) shouldBe node1Name
-    zookeeperClusterInfo.nodeNames(1) shouldBe node2Name
+    zookeeperClusterInfo.nodeNames.contains(node1Name) shouldBe true
+    zookeeperClusterInfo.nodeNames.contains(node2Name) shouldBe true
     zookeeperClusterInfo.ports.size shouldBe 3
   }
 }

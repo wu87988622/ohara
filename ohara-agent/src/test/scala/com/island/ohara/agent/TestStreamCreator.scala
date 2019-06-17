@@ -61,7 +61,7 @@ class TestStreamCreator extends SmallTest with Matchers {
             if (CommonUtils.isEmpty(nodeNames.asJava))
               CommonUtils.requireNonEmpty(Seq.fill(CommonUtils.requirePositiveInt(instances))("fake").asJava).asScala
             else CommonUtils.requireNonEmpty(nodeNames.asJava).asScala
-          }
+          }.toSet
         ))
     }
 
@@ -84,7 +84,7 @@ class TestStreamCreator extends SmallTest with Matchers {
 
   @Test
   def emptyNodeName(): Unit = {
-    an[IllegalArgumentException] should be thrownBy streamCreator().nodeNames(Seq.empty)
+    an[IllegalArgumentException] should be thrownBy streamCreator().nodeNames(Set.empty)
   }
 
   @Test
@@ -182,7 +182,7 @@ class TestStreamCreator extends SmallTest with Matchers {
         .clusterName(CommonUtils.randomString(Collie.LIMIT_OF_NAME_LENGTH))
         .imageName(CommonUtils.randomString())
         .jarUrl("jar")
-        .nodeNames(Seq("bar", "foo", "bez"))
+        .nodeNames(Set("bar", "foo", "bez"))
         .appId("app")
         .brokerProps("broker")
         .fromTopics(Seq("topic1"))
@@ -196,7 +196,7 @@ class TestStreamCreator extends SmallTest with Matchers {
         .imageName(CommonUtils.randomString())
         .jarUrl("jar")
         .instances(10)
-        .nodeNames(Seq("bar", "foo"))
+        .nodeNames(Set("bar", "foo"))
         .appId("app")
         .brokerProps("broker")
         .fromTopics(Seq("topic1"))
@@ -210,7 +210,7 @@ class TestStreamCreator extends SmallTest with Matchers {
         .imageName(CommonUtils.randomString())
         .jarUrl("jar")
         .instances(10)
-        .nodeNames(Seq("bar", "foo"))
+        .nodeNames(Set("bar", "foo"))
         .appId("app")
         .brokerProps("broker")
         .fromTopics(Seq("topic1"))

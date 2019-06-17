@@ -16,9 +16,6 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterCreationRequest
-import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterCreationRequest
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterCreationRequest
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -38,7 +35,7 @@ class TestContainerRoute extends MediumTest with Matchers {
   private[this] val bkClusterName = CommonUtils.randomString(10)
   private[this] val wkClusterName = CommonUtils.randomString(10)
 
-  private[this] val nodeNames: Seq[String] = Seq("n0", "n1")
+  private[this] val nodeNames: Set[String] = Set("n0", "n1")
 
   @Before
   def setup(): Unit = {
@@ -54,46 +51,14 @@ class TestContainerRoute extends MediumTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(ZookeeperClusterCreationRequest(
-          name = zkClusterName,
-          imageName = None,
-          clientPort = Some(CommonUtils.availablePort()),
-          electionPort = Some(CommonUtils.availablePort()),
-          peerPort = Some(CommonUtils.availablePort()),
-          nodeNames = nodeNames
-        ))).name shouldBe zkClusterName
+        .request()
+        .name(zkClusterName)
+        .nodeNames(nodeNames)
+        .create()).name shouldBe zkClusterName
 
-    result(
-      brokerApi.add(
-        BrokerClusterCreationRequest(
-          name = bkClusterName,
-          imageName = None,
-          zookeeperClusterName = Some(zkClusterName),
-          exporterPort = None,
-          clientPort = None,
-          jmxPort = None,
-          nodeNames = nodeNames
-        )))
+    result(brokerApi.request().name(bkClusterName).zookeeperClusterName(zkClusterName).nodeNames(nodeNames).create())
 
-    result(
-      workerApi.add(WorkerClusterCreationRequest(
-        name = wkClusterName,
-        imageName = None,
-        brokerClusterName = Some(bkClusterName),
-        jmxPort = None,
-        clientPort = None,
-        groupId = None,
-        configTopicName = None,
-        configTopicReplications = None,
-        offsetTopicName = None,
-        offsetTopicPartitions = None,
-        offsetTopicReplications = None,
-        statusTopicName = None,
-        statusTopicPartitions = None,
-        statusTopicReplications = None,
-        jarIds = Seq.empty,
-        nodeNames = nodeNames
-      )))
+    result(workerApi.request().name(wkClusterName).brokerClusterName(bkClusterName).nodeNames(nodeNames).create())
   }
 
   @Test

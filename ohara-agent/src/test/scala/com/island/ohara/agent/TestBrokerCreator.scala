@@ -107,7 +107,7 @@ class TestBrokerCreator extends SmallTest with Matchers {
 
   @Test
   def emptyNodes(): Unit = {
-    an[IllegalArgumentException] should be thrownBy bkCreator().nodeNames(Seq.empty)
+    an[IllegalArgumentException] should be thrownBy bkCreator().nodeNames(Set.empty)
   }
 
   @Test
@@ -117,7 +117,7 @@ class TestBrokerCreator extends SmallTest with Matchers {
     .zookeeperClusterName("zk")
     .exporterPort(CommonUtils.availablePort())
     .clientPort(CommonUtils.availablePort())
-    .nodeNames(Seq("abc"))
+    .nodeNames(Set("abc"))
     .create()
 
   @Test
@@ -127,7 +127,7 @@ class TestBrokerCreator extends SmallTest with Matchers {
     .zookeeperClusterName("zk")
     .exporterPort(CommonUtils.availablePort())
     .clientPort(CommonUtils.availablePort())
-    .nodeNames(Seq("abc"))
+    .nodeNames(Set("abc"))
     .create()
 
   @Test
@@ -139,14 +139,10 @@ class TestBrokerCreator extends SmallTest with Matchers {
       exporterPort = 10,
       clientPort = 10,
       jmxPort = 10,
-      nodeNames = Seq(CommonUtils.randomString())
+      nodeNames = Set(CommonUtils.randomString())
     )
     Await.result(bkCreator().copy(brokerClusterInfo).create(), 30 seconds) shouldBe brokerClusterInfo
   }
-
-  @Test
-  def testPassIncorrectTypeToCopy(): Unit =
-    an[IllegalArgumentException] should be thrownBy bkCreator().copy(FakeClusterInfo(CommonUtils.randomString()))
 
   @Test
   def testBkCreatorZKNotExists(): Unit = {
@@ -162,7 +158,7 @@ class TestBrokerCreator extends SmallTest with Matchers {
       .clientPort(9092)
       .exporterPort(9093)
       .jmxPort(9094)
-      .nodeNames(Seq(node1Name))
+      .nodeName(node1Name)
       .create()
 
     an[NoSuchClusterException] should be thrownBy {
@@ -184,7 +180,7 @@ class TestBrokerCreator extends SmallTest with Matchers {
       .clientPort(9092)
       .exporterPort(9093)
       .jmxPort(9094)
-      .nodeNames(Seq(node1Name))
+      .nodeName(node1Name)
       .create()
 
     an[IllegalArgumentException] should be thrownBy {
@@ -236,7 +232,7 @@ class TestBrokerCreator extends SmallTest with Matchers {
       .clientPort(9092)
       .exporterPort(9093)
       .jmxPort(9094)
-      .nodeNames(Seq(node1Name)) //node1 is running on a bk1
+      .nodeName(node1Name) //node1 is running on a bk1
       .create()
 
     an[IllegalArgumentException] shouldBe thrownBy {
@@ -294,7 +290,7 @@ class TestBrokerCreator extends SmallTest with Matchers {
       .jmxPort(9093)
       .exporterPort(9094)
       .imageName("brokerimage") //Docker image setting error
-      .nodeNames(Seq(node2Name))
+      .nodeName(node2Name)
       .create()
 
     an[IllegalArgumentException] shouldBe thrownBy {
@@ -333,7 +329,7 @@ class TestBrokerCreator extends SmallTest with Matchers {
       .clientPort(9092)
       .exporterPort(9093)
       .jmxPort(9094)
-      .nodeNames(Seq(node1Name, node2Name))
+      .nodeNames(Set(node1Name, node2Name))
       .create()
 
     val result: BrokerClusterInfo = Await.result(bkCreator, TIMEOUT)

@@ -72,12 +72,12 @@ private class K8SWorkerCollieImpl(node: NodeCollie, bkCollie: BrokerCollie, k8sC
     *
     * @return
     */
-  override protected def nodeCollie(): NodeCollie = node
+  override protected def nodeCollie: NodeCollie = node
 
   /**
     * Implement prefix name for paltform
     *
     * @return
     */
-  override protected def prefixKey(): String = PREFIX_KEY
+  override protected def prefixKey: String = PREFIX_KEY
 }

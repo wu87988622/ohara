@@ -63,8 +63,8 @@ class TestContainerCollie extends SmallTest with Matchers {
     val result: FakeContainerCollieClusterInfo =
       Await.result(fakeContainerCollie.addNode(FakeContainerCollie.clusterName, nodeName2), TIMEOUT)
     result.nodeNames.size shouldBe 2
-    result.nodeNames(0) shouldBe "node1"
-    result.nodeNames(1) shouldBe "node2"
+    result.nodeNames.contains("node1") shouldBe true
+    result.nodeNames.contains("node2") shouldBe true
   }
 
   @Test

@@ -73,7 +73,7 @@ private class BrokerCollieImpl(node: NodeCollie, dockerCache: DockerClientCache,
     }
   }
 
-  override protected def nodeCollie(): NodeCollie = node
+  override protected def nodeCollie: NodeCollie = node
 
-  override protected def prefixKey(): String = PREFIX_KEY
+  override protected def prefixKey: String = PREFIX_KEY
 }

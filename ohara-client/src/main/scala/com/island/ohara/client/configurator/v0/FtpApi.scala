@@ -91,7 +91,7 @@ object FtpApi {
       }
 
       override def port(port: Int): Request = {
-        this.port = Some(CommonUtils.requirePositiveInt(port))
+        this.port = Some(CommonUtils.requireConnectionPort(port))
         this
       }
 
@@ -116,7 +116,7 @@ object FtpApi {
           Creation(
             name = CommonUtils.requireNonEmpty(name),
             hostname = CommonUtils.requireNonEmpty(hostname),
-            port = port.map(CommonUtils.requirePositiveInt).getOrElse(throw new NullPointerException),
+            port = port.map(CommonUtils.requireConnectionPort).getOrElse(throw new NullPointerException),
             user = CommonUtils.requireNonEmpty(user),
             password = CommonUtils.requireNonEmpty(password)
           )
@@ -126,7 +126,7 @@ object FtpApi {
           s"${_url}/${CommonUtils.requireNonEmpty(name)}",
           Update(
             hostname = Option(hostname).map(CommonUtils.requireNonEmpty),
-            port = port.map(CommonUtils.requirePositiveInt),
+            port = port.map(CommonUtils.requireConnectionPort),
             user = Option(user).map(CommonUtils.requireNonEmpty),
             password = Option(password).map(CommonUtils.requireNonEmpty),
           )

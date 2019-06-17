@@ -120,12 +120,12 @@ object StreamApi {
 
   final case class StreamClusterCreationRequest(id: String,
                                                 name: String,
-                                                imageName: Option[String],
+                                                imageName: String,
                                                 from: Seq[String],
                                                 to: Seq[String],
                                                 jmxPort: Option[Int],
                                                 instances: Int,
-                                                nodeNames: Seq[String])
+                                                nodeNames: Set[String])
       extends ClusterCreationRequest {
     override def ports: Set[Int] = Set(jmxPort.getOrElse(JMX_PORT_DEFAULT))
   }
@@ -142,14 +142,14 @@ object StreamApi {
   final case class StreamClusterInfo(
     name: String,
     imageName: String,
-    nodeNames: Seq[String] = Seq.empty,
+    nodeNames: Set[String] = Set.empty,
     jmxPort: Int,
     state: Option[String] = None
   ) extends ClusterInfo {
     // We don't care the ports since streamApp communicates by broker
     override def ports: Set[Int] = Set.empty
 
-    override def clone(newNodeNames: Seq[String]): StreamClusterInfo = copy(nodeNames = newNodeNames)
+    override def clone(newNodeNames: Set[String]): StreamClusterInfo = copy(nodeNames = newNodeNames)
   }
 
   // StreamApp List Request Body

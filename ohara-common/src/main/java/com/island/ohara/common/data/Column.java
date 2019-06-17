@@ -35,7 +35,7 @@ public final class Column extends Data implements Serializable {
     this.name = CommonUtils.requireNonEmpty(name);
     this.newName = CommonUtils.requireNonEmpty(newName);
     this.dataType = Objects.requireNonNull(dataType);
-    this.order = CommonUtils.requirePositiveInt(order);
+    this.order = CommonUtils.requireNonNegativeInt(order);
   }
 
   public String name() {
@@ -85,7 +85,7 @@ public final class Column extends Data implements Serializable {
     }
 
     public Builder order(int order) {
-      this.order = CommonUtils.requirePositiveInt(order);
+      this.order = CommonUtils.requireNonNegativeInt(order);
       return this;
     }
 

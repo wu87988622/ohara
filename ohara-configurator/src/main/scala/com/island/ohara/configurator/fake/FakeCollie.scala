@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.fake
 
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentSkipListMap
 import java.util.concurrent.atomic.AtomicInteger
 
 import com.island.ohara.agent.Collie.ClusterCreator
@@ -32,8 +32,8 @@ import scala.reflect.ClassTag
 private[configurator] abstract class FakeCollie[T <: ClusterInfo: ClassTag, Creator <: ClusterCreator[T]](
   nodeCollie: NodeCollie)
     extends ContainerCollie[T, Creator](nodeCollie) {
-  protected val clusterCache = new ConcurrentHashMap[T, Seq[ContainerInfo]]()
-
+  protected val clusterCache =
+    new ConcurrentSkipListMap[T, Seq[ContainerInfo]]((o1: T, o2: T) => o1.name.compare(o2.name))
   def addCluster(cluster: T): T = {
     val FAKE_KIND_NAME = "FAKE"
     def genContainers(cluster: T): Seq[ContainerInfo] = cluster.nodeNames.map { nodeName =>
@@ -50,12 +50,14 @@ private[configurator] abstract class FakeCollie[T <: ClusterInfo: ClassTag, Crea
         environments = Map.empty,
         hostname = CommonUtils.randomString(10)
       )
-    }
+    }.toSeq
+    clusterCache.remove(cluster)
     clusterCache.put(cluster, genContainers(cluster))
+    println(s"[CHIA] add cluster:${cluster.name} nodeNames:${cluster.nodeNames.mkString(",")}")
     cluster
   }
   override def exist(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
-    Future.successful(clusterCache.keys.asScala.exists(_.name == clusterName))
+    Future.successful(clusterCache.keySet.asScala.exists(_.name == clusterName))
 
   override protected def doRemove(clusterInfo: T, containerInfos: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[Boolean] =

@@ -72,6 +72,9 @@ abstract class ContainerCollie[T <: ClusterInfo: ClassTag, Creator <: ClusterCre
             Future.failed(new IllegalArgumentException("cluster and node name can't empty"))
           else if (CommonUtils.hasUpperCase(nodeName))
             Future.failed(new IllegalArgumentException("Your node name can't uppercase"))
+          else if (cluster.nodeNames.contains(nodeName))
+            // the new node is running so we don't need to do anything for this method
+            Future.successful(cluster)
           else doAddNode(cluster, containers, nodeName)
       }
   }

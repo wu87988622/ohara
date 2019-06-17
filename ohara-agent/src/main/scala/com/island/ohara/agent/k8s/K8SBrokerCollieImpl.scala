@@ -73,12 +73,12 @@ private class K8SBrokerCollieImpl(node: NodeCollie, zkCollie: ZookeeperCollie, k
     *
     * @return
     */
-  override protected def nodeCollie(): NodeCollie = node
+  override protected def nodeCollie: NodeCollie = node
 
   /**
     * Implement prefix name for the platform
     *
     * @return
     */
-  override protected def prefixKey(): String = PREFIX_KEY
+  override protected def prefixKey: String = PREFIX_KEY
 }

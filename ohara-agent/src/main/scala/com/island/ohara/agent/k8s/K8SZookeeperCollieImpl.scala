@@ -69,7 +69,7 @@ private class K8SZookeeperCollieImpl(node: NodeCollie, k8sClient: K8SClient)
     newNodeName: String)(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] = Future.failed(
     new UnsupportedOperationException("zookeeper collie doesn't support to add node from a running cluster"))
 
-  override protected def nodeCollie(): NodeCollie = node
+  override protected def nodeCollie: NodeCollie = node
 
-  override protected def prefixKey(): String = PREFIX_KEY
+  override protected def prefixKey: String = PREFIX_KEY
 }

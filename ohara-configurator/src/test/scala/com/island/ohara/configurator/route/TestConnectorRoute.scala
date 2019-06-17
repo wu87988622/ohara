@@ -16,7 +16,6 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterCreationRequest
 import com.island.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, TopicApi, WorkerApi}
 import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.common.rule.SmallTest
@@ -161,24 +160,11 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(WorkerClusterCreationRequest(
-          name = CommonUtils.randomString(10),
-          imageName = None,
-          brokerClusterName = Some(bk.name),
-          clientPort = Some(CommonUtils.availablePort()),
-          jmxPort = Some(CommonUtils.availablePort()),
-          groupId = Some(CommonUtils.randomString(10)),
-          statusTopicName = Some(CommonUtils.randomString(10)),
-          statusTopicPartitions = None,
-          statusTopicReplications = None,
-          configTopicName = Some(CommonUtils.randomString(10)),
-          configTopicReplications = None,
-          offsetTopicName = Some(CommonUtils.randomString(10)),
-          offsetTopicPartitions = None,
-          offsetTopicReplications = None,
-          jarIds = Seq.empty,
-          nodeNames = bk.nodeNames
-        )))
+        .request()
+        .name(CommonUtils.randomString(10))
+        .brokerClusterName(bk.name)
+        .nodeNames(bk.nodeNames)
+        .create())
 
     // there are two worker cluster so it fails to match worker cluster
     an[IllegalArgumentException] should be thrownBy result(
@@ -324,24 +310,11 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(WorkerClusterCreationRequest(
-          name = CommonUtils.randomString(10),
-          imageName = None,
-          brokerClusterName = Some(bk.name),
-          clientPort = Some(CommonUtils.availablePort()),
-          jmxPort = Some(CommonUtils.availablePort()),
-          groupId = Some(CommonUtils.randomString(10)),
-          statusTopicName = Some(CommonUtils.randomString(10)),
-          statusTopicPartitions = None,
-          statusTopicReplications = None,
-          configTopicName = Some(CommonUtils.randomString(10)),
-          configTopicReplications = None,
-          offsetTopicName = Some(CommonUtils.randomString(10)),
-          offsetTopicPartitions = None,
-          offsetTopicReplications = None,
-          jarIds = Seq.empty,
-          nodeNames = bk.nodeNames
-        )))
+        .request()
+        .name(CommonUtils.randomString(10))
+        .brokerClusterName(bk.name)
+        .nodeNames(bk.nodeNames)
+        .create())
     val topic = result(
       TopicApi
         .access()

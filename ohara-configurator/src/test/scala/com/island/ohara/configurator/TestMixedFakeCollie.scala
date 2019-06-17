@@ -16,17 +16,15 @@
 
 package com.island.ohara.configurator
 
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterCreationRequest
-import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterCreationRequest
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterCreationRequest
 import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, ZookeeperApi}
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.concurrent.Await
-import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 
 /**
   * Embedded mode with fake cluster.
@@ -59,16 +57,10 @@ class TestMixedFakeCollie extends WithBrokerWorker with Matchers {
           .access()
           .hostname(configurator.hostname)
           .port(configurator.port)
-          .add(
-            BrokerClusterCreationRequest(
-              name = methodName(),
-              zookeeperClusterName = None,
-              imageName = None,
-              exporterPort = None,
-              clientPort = None,
-              jmxPort = None,
-              nodeNames = nodes.map(_.name)
-            )),
+          .request()
+          .name(CommonUtils.randomString(10))
+          .nodeNames(nodes.map(_.name).toSet)
+          .create(),
         10 seconds
       )
 
@@ -77,15 +69,10 @@ class TestMixedFakeCollie extends WithBrokerWorker with Matchers {
           .access()
           .hostname(configurator.hostname)
           .port(configurator.port)
-          .add(
-            ZookeeperClusterCreationRequest(
-              name = methodName(),
-              imageName = None,
-              clientPort = None,
-              peerPort = None,
-              electionPort = None,
-              nodeNames = nodes.map(_.name)
-            )),
+          .request()
+          .name(CommonUtils.randomString(10))
+          .nodeNames(nodes.map(_.name).toSet)
+          .create(),
         10 seconds
       )
 
@@ -94,16 +81,11 @@ class TestMixedFakeCollie extends WithBrokerWorker with Matchers {
           .access()
           .hostname(configurator.hostname)
           .port(configurator.port)
-          .add(
-            BrokerClusterCreationRequest(
-              name = methodName(),
-              zookeeperClusterName = Some(zk.name),
-              imageName = None,
-              exporterPort = None,
-              clientPort = None,
-              jmxPort = None,
-              nodeNames = nodes.map(_.name)
-            )),
+          .request()
+          .name(CommonUtils.randomString(10))
+          .zookeeperClusterName(zk.name)
+          .nodeNames(nodes.map(_.name).toSet)
+          .create(),
         10 seconds
       )
 
@@ -116,24 +98,11 @@ class TestMixedFakeCollie extends WithBrokerWorker with Matchers {
           .access()
           .hostname(configurator.hostname)
           .port(configurator.port)
-          .add(WorkerClusterCreationRequest(
-            name = methodName(),
-            imageName = None,
-            brokerClusterName = Some(bk.name),
-            clientPort = None,
-            jmxPort = None,
-            groupId = None,
-            configTopicName = None,
-            configTopicReplications = None,
-            offsetTopicName = None,
-            offsetTopicPartitions = None,
-            offsetTopicReplications = None,
-            statusTopicName = None,
-            statusTopicPartitions = None,
-            statusTopicReplications = None,
-            jarIds = Seq.empty,
-            nodeNames = nodes.map(_.name)
-          )),
+          .request()
+          .name(CommonUtils.randomString(10))
+          .brokerClusterName(bk.name)
+          .nodeNames(nodes.map(_.name).toSet)
+          .create(),
         10 seconds
       )
 

@@ -58,7 +58,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
                           clientPort: Int,
                           electionPort: Int,
                           peerPort: Int,
-                          nodeNames: Seq[String]): Future[ZookeeperClusterInfo]
+                          nodeNames: Set[String]): Future[ZookeeperClusterInfo]
   protected def zk_cluster(clusterName: String): Future[ZookeeperClusterInfo] =
     zk_clusters().map(_.find(_.name == clusterName).get)
   protected def zk_clusters(): Future[Seq[ZookeeperClusterInfo]]
@@ -73,7 +73,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
                           exporterPort: Int,
                           jmxPort: Int,
                           zkClusterName: String,
-                          nodeNames: Seq[String]): Future[BrokerClusterInfo]
+                          nodeNames: Set[String]): Future[BrokerClusterInfo]
   protected def bk_cluster(clusterName: String): Future[BrokerClusterInfo] =
     bk_clusters().map(_.find(_.name == clusterName).get)
   protected def bk_clusters(): Future[Seq[BrokerClusterInfo]]
@@ -89,7 +89,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
                           clientPort: Int,
                           jmxPort: Int,
                           bkClusterName: String,
-                          nodeNames: Seq[String]): Future[WorkerClusterInfo]
+                          nodeNames: Set[String]): Future[WorkerClusterInfo]
   protected def wk_create(clusterName: String,
                           clientPort: Int,
                           jmxPort: Int,
@@ -98,7 +98,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
                           statusTopicName: String,
                           offsetTopicName: String,
                           bkClusterName: String,
-                          nodeNames: Seq[String]): Future[WorkerClusterInfo]
+                          nodeNames: Set[String]): Future[WorkerClusterInfo]
   protected def wk_cluster(clusterName: String): Future[WorkerClusterInfo] =
     wk_clusters().map(_.find(_.name == clusterName).get)
   protected def wk_clusters(): Future[Seq[WorkerClusterInfo]]
@@ -140,7 +140,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
           clientPort = clientPort,
           electionPort = electionPort,
           peerPort = peerPort,
-          nodeNames = Seq(nodeName)
+          nodeNames = Set(nodeName)
         )))
     try {
       assertCluster(() => result(zk_clusters()), zkCluster.name)
@@ -188,7 +188,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         clientPort = CommonUtils.availablePort(),
         electionPort = CommonUtils.availablePort(),
         peerPort = CommonUtils.availablePort(),
-        nodeNames = Seq(nodeCache.head.name)
+        nodeNames = Set(nodeCache.head.name)
       ))
     assertCluster(() => result(zk_clusters()), zkCluster.name)
     // since we only get "active" containers, all containers belong to the cluster should be running.
@@ -225,7 +225,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
             exporterPort = exporterPort,
             jmxPort = jmxPort,
             zkClusterName = zkCluster.name,
-            nodeNames = Seq(nodeName)
+            nodeNames = Set(nodeName)
           )))
       log.info("[BROKER] start to run broker cluster...done")
       assertCluster(() => result(bk_clusters()), bkCluster.name)
@@ -280,9 +280,8 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       bk_removeNode(previousCluster.name, previousCluster.nodeNames.head))
     val freeNodes = nodeCache.filterNot(node => previousCluster.nodeNames.contains(node.name))
     if (freeNodes.nonEmpty) {
-      // we can't add duplicate node
-      an[IllegalArgumentException] should be thrownBy result(
-        bk_addNode(previousCluster.name, previousCluster.nodeNames.head))
+      // nothing happens if we add duplicate nodes
+      result(bk_addNode(previousCluster.name, previousCluster.nodeNames.head))
       // we can't add a nonexistent node
       // we always get IllegalArgumentException if we sent request by restful api
       // However, if we use collie impl, an NoSuchElementException will be thrown...
@@ -416,7 +415,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         clientPort = CommonUtils.availablePort(),
         electionPort = CommonUtils.availablePort(),
         peerPort = CommonUtils.availablePort(),
-        nodeNames = Seq(nodeCache.head.name)
+        nodeNames = Set(nodeCache.head.name)
       ))
     try {
       assertCluster(() => result(zk_clusters()), zkCluster.name)
@@ -434,7 +433,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
           exporterPort = CommonUtils.availablePort(),
           jmxPort = CommonUtils.availablePort(),
           zkClusterName = zkCluster.name,
-          nodeNames = Seq(nodeCache.head.name)
+          nodeNames = Set(nodeCache.head.name)
         ))
       try {
         assertCluster(() => result(bk_clusters()), bkCluster.name)
@@ -474,7 +473,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
               clientPort = clientPort,
               jmxPort = jmxPort,
               bkClusterName = bkCluster.name,
-              nodeNames = Seq(nodeName)
+              nodeNames = Set(nodeName)
             )))
         log.info("[WORKER] create done")
         assertCluster(() => result(wk_clusters()), wkCluster.name)
@@ -564,9 +563,8 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     val freeNodes = nodeCache.filterNot(node => previousCluster.nodeNames.contains(node.name))
     if (freeNodes.nonEmpty) {
       val newNode = freeNodes.head.name
-      // we can't add duplicate node
-      an[IllegalArgumentException] should be thrownBy result(
-        wk_addNode(previousCluster.name, previousCluster.nodeNames.head))
+      // it is ok to add duplicate nodes
+      result(wk_addNode(previousCluster.name, previousCluster.nodeNames.head))
       // we can't add a nonexistent node
       // we always get IllegalArgumentException if we sent request by restful api
       // However, if we use collie impl, an NoSuchElementException will be thrown...
@@ -622,7 +620,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
             clientPort = CommonUtils.availablePort(),
             electionPort = CommonUtils.availablePort(),
             peerPort = CommonUtils.availablePort(),
-            nodeNames = nodeCache.map(_.name)
+            nodeNames = nodeCache.map(_.name).toSet
           ))
       }
       // add a bit wait to make sure the cluster is up
@@ -668,7 +666,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
             clientPort = CommonUtils.availablePort(),
             electionPort = CommonUtils.availablePort(),
             peerPort = CommonUtils.availablePort(),
-            nodeNames = Seq(nodeCache.head.name)
+            nodeNames = Set(nodeCache.head.name)
           ))
       }
 
@@ -690,7 +688,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
               exporterPort = CommonUtils.availablePort(),
               jmxPort = CommonUtils.availablePort(),
               zkClusterName = zk.name,
-              nodeNames = Seq(nodeCache.head.name)
+              nodeNames = Set(nodeCache.head.name)
             ))
           testTopic(bkCluster)
       }
@@ -736,7 +734,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
           clientPort = CommonUtils.availablePort(),
           electionPort = CommonUtils.availablePort(),
           peerPort = CommonUtils.availablePort(),
-          nodeNames = Seq(nodeCache.head.name)
+          nodeNames = Set(nodeCache.head.name)
         )
       )
       assertCluster(() => result(zk_clusters()), zk.name)
@@ -756,7 +754,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
           exporterPort = CommonUtils.availablePort(),
           jmxPort = CommonUtils.availablePort(),
           zkClusterName = zk.name,
-          nodeNames = Seq(nodeCache.head.name)
+          nodeNames = Set(nodeCache.head.name)
         ))
       assertCluster(() => result(bk_clusters()), bk.name)
       // since we only get "active" containers, all containers belong to the cluster should be running.
@@ -780,7 +778,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
               configTopicName = configTopicNames(index),
               offsetTopicName = offsetTopicNames(index),
               statusTopicName = statusTopicNames(index),
-              nodeNames = nodeCache.map(_.name)
+              nodeNames = nodeCache.map(_.name).toSet
             ))
       }
       log.info(s"check multi wk clusters:$wkNames")

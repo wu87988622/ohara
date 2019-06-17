@@ -53,7 +53,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   private[this] val nodeCollie: NodeCollie = NodeCollie(nodeCache)
 
   private[this] var clusterCollie: ClusterCollie = _
-  private[this] var nodeNames: Seq[String] = _
+  private[this] var nodeNames: Set[String] = _
   private[this] val TIMEOUT: FiniteDuration = 30 seconds
 
   @Before
@@ -66,7 +66,8 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     log.info(s"Test K8S API Server is: ${API_SERVER_URL.get}, NodeName is: ${NODE_SERVER_NAME.get}")
 
     clusterCollie = ClusterCollie.builderOfK8s().nodeCollie(nodeCollie).k8sClient(K8SClient(API_SERVER_URL.get)).build()
-    nodeNames = NODE_SERVER_NAME.get.split(",").toSeq
+    nodeNames = NODE_SERVER_NAME.get.split(",").toSet
+    if (nodeNames.size < 2) skipTest("TestK8SSimpleCollie requires two nodes at least")
   }
 
   private[this] def waitZookeeperCluster(clusterName: String): Unit = {
@@ -106,8 +107,11 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   def testZookeeperCollie(): Unit = {
     val clusterName: String = s"cluster${CommonUtils.randomString(RANDOM_LEN)}"
     val firstNode: String = nodeNames.head
+    val secondNode: String = nodeNames.last
+    firstNode should not be secondNode
     nodeCache.clear()
     nodeCache.append(Node(firstNode, 22, "fake", "fake", Seq.empty, CommonUtils.current()))
+    nodeCache.append(Node(secondNode, 22, "fake", "fake", Seq.empty, CommonUtils.current()))
 
     val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie()
 
@@ -120,7 +124,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
 
     try {
       intercept[UnsupportedOperationException] {
-        result(zookeeperCollie.addNode(clusterName, firstNode))
+        result(zookeeperCollie.addNode(clusterName, secondNode))
       }.getMessage shouldBe "zookeeper collie doesn't support to add node from a running cluster"
 
       zookeeperClusterInfo.name shouldBe clusterName
@@ -159,7 +163,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
       val brokerClusterInfo: BrokerClusterInfo =
         createBrokerCollie(brokerCollie,
                            brokerClusterName,
-                           Seq(firstNode),
+                           Set(firstNode),
                            brokerClientPort,
                            brokerExporterPort,
                            zkClusterName)
@@ -198,7 +202,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
 
       createBrokerCollie(brokerCollie,
                          brokerClusterName,
-                         Seq(firstNode),
+                         Set(firstNode),
                          brokerClientPort,
                          brokerExporterPort,
                          zkClusterName)
@@ -257,7 +261,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
       val brokerClusterInfo1: BrokerClusterInfo =
         createBrokerCollie(brokerCollie,
                            brokerClusterName,
-                           Seq(firstNode),
+                           Set(firstNode),
                            brokerClientPort,
                            brokerExporterPort,
                            zkClusterName)
@@ -282,7 +286,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   @Test
   def testAddWorkerNode(): Unit = {
     val firstNode: String = nodeNames.head
-    val secondNode: String = nodeNames(1)
+    val secondNode: String = nodeNames.last
 
     nodeCache.clear()
     nodeCache.append(Node(firstNode, 22, "fake", "fake", Seq.empty, CommonUtils.current()))
@@ -307,7 +311,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
       val brokerClusterInfo1: BrokerClusterInfo =
         createBrokerCollie(brokerCollie,
                            brokerClusterName,
-                           Seq(firstNode),
+                           Set(firstNode),
                            brokerClientPort,
                            brokerExporterPort,
                            zkClusterName)
@@ -336,7 +340,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   @Test
   def testRemoveBrokerNode(): Unit = {
     val firstNode: String = nodeNames.head
-    val secondNode: String = nodeNames(1)
+    val secondNode: String = nodeNames.last
 
     nodeCache.clear()
     nodeCache.append(Node(firstNode, 22, "fake", "fake", Seq.empty, CommonUtils.current()))
@@ -357,7 +361,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
       val brokerExporterPort = CommonUtils.availablePort()
       createBrokerCollie(brokerCollie,
                          brokerClusterName,
-                         Seq(firstNode),
+                         Set(firstNode),
                          brokerClientPort,
                          brokerExporterPort,
                          zkClusterName)
@@ -382,7 +386,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   @Test
   def testRemoveWorkerNode(): Unit = {
     val firstNode: String = nodeNames.head
-    val secondNode: String = nodeNames(1)
+    val secondNode: String = nodeNames.last
 
     nodeCache.clear()
     nodeCache.append(Node(firstNode, 22, "fake", "fake", Seq.empty, CommonUtils.current()))
@@ -405,7 +409,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
       val brokerExporterPort = CommonUtils.availablePort()
       createBrokerCollie(brokerCollie,
                          brokerClusterName,
-                         Seq(firstNode),
+                         Set(firstNode),
                          brokerClientPort,
                          brokerExporterPort,
                          zkClusterName)
@@ -479,7 +483,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
 
       createBrokerCollie(brokerCollie,
                          brokerClusterName,
-                         Seq(firstNode),
+                         Set(firstNode),
                          brokerClientPort,
                          brokerExporterPort,
                          zkClusterName)
@@ -608,7 +612,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
 
   private[this] def createBrokerCollie(brokerCollie: BrokerCollie,
                                        cluseterName: String,
-                                       nodeName: Seq[String],
+                                       nodeNames: Set[String],
                                        clientPort: Int,
                                        exporterPort: Int,
                                        zookeeperClusterName: String): BrokerClusterInfo = {
@@ -620,7 +624,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
         .clientPort(clientPort)
         .exporterPort(exporterPort)
         .zookeeperClusterName(zookeeperClusterName)
-        .nodeNames(nodeName)
+        .nodeNames(nodeNames)
         .jmxPort(CommonUtils.availablePort())
         .create())
   }

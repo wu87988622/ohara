@@ -24,9 +24,9 @@ case class FakeClusterInfo(name: String) extends ClusterInfo {
 
   override def ports: Set[Int] = Set.empty
 
-  override def nodeNames: Seq[String] = Seq.empty
+  override def nodeNames: Set[String] = Set.empty
 
   // we should NOT use this method in testing
-  override def clone(newNodeNames: Seq[String]): FakeClusterInfo = throw new UnsupportedOperationException(
+  override def clone(newNodeNames: Set[String]): FakeClusterInfo = throw new UnsupportedOperationException(
     "what are you doing!!!")
 }

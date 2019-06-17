@@ -108,7 +108,7 @@ object NodeApi {
           _url,
           Creation(
             name = CommonUtils.requireNonEmpty(name),
-            port = port.map(CommonUtils.requirePositiveInt).getOrElse(throw new NullPointerException),
+            port = port.map(CommonUtils.requireConnectionPort).getOrElse(throw new NullPointerException),
             user = CommonUtils.requireNonEmpty(user),
             password = CommonUtils.requireNonEmpty(password)
           )

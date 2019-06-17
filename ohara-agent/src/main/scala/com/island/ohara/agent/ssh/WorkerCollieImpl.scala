@@ -91,12 +91,12 @@ private class WorkerCollieImpl(node: NodeCollie, dockerCache: DockerClientCache,
     *
     * @return
     */
-  override protected def nodeCollie(): NodeCollie = node
+  override protected def nodeCollie: NodeCollie = node
 
   /**
     * Implement prefix name for paltform
     *
     * @return
     */
-  override protected def prefixKey(): String = PREFIX_KEY
+  override protected def prefixKey: String = PREFIX_KEY
 }

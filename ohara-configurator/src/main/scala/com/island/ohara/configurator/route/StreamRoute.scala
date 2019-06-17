@@ -303,19 +303,16 @@ private[configurator] object StreamRoute {
                 val req = StreamClusterCreationRequest(
                   id = data.id,
                   name = data.name,
-                  imageName = None,
+                  imageName = IMAGE_NAME_DEFAULT,
                   from = data.from,
                   to = data.to,
                   jmxPort = None,
                   instances = data.instances,
-                  nodeNames = Seq.empty
+                  nodeNames = Set.empty
                 )
                 // check cluster creation rules
                 RouteUtils
-                  .basicCheckOfCluster[StreamClusterCreationRequest, StreamClusterInfo](nodeCollie,
-                                                                                        clusterCollie,
-                                                                                        IMAGE_NAME_DEFAULT,
-                                                                                        req)
+                  .basicCheckOfCluster[StreamClusterCreationRequest, StreamClusterInfo](nodeCollie, clusterCollie, req)
                   .flatMap(
                     _ =>
                       // get the broker info and topic info from worker cluster name

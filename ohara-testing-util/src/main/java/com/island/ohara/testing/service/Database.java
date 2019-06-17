@@ -80,7 +80,7 @@ public interface Database extends Releasable {
 
     @com.island.ohara.common.annotations.Optional("default is random port")
     public Builder port(int port) {
-      this.port = CommonUtils.requirePositiveInt(port);
+      this.port = CommonUtils.requireBindPort(port);
       return this;
     }
 

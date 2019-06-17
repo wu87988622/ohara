@@ -143,23 +143,27 @@ object Collie {
   private[agent] val LIMIT_OF_NAME_LENGTH: Int = 20
 
   private[this] def assertLength(s: String): String = if (s.length > LIMIT_OF_NAME_LENGTH)
-    throw new IllegalArgumentException(s"limit of length is $LIMIT_OF_NAME_LENGTH. actual: ${s.length}")
+    throw new IllegalArgumentException(s"limit of name length is $LIMIT_OF_NAME_LENGTH. actual $s: ${s.length}")
   else s
 
   trait ClusterCreator[T <: ClusterInfo] {
     protected var imageName: String = _
     protected var clusterName: String = _
-    protected var nodeNames: Seq[String] = _
+    protected var nodeNames: Set[String] = Set.empty
 
     /**
       * set the creator according to another cluster info
       * @param clusterInfo another cluster info
       */
-    def copy(clusterInfo: ClusterInfo): ClusterCreator.this.type = {
+    final def copy(clusterInfo: T): ClusterCreator.this.type = {
       imageName(clusterInfo.imageName)
       clusterName(clusterInfo.name)
       nodeNames(clusterInfo.nodeNames)
+      doCopy(clusterInfo)
+      this
     }
+
+    protected def doCopy(clusterInfo: T): Unit
 
     /**
       * set the image name used to create cluster's container.
@@ -188,7 +192,7 @@ object Collie {
       * @param nodeName node name
       * @return cluster description
       */
-    def nodeName(nodeName: String): ClusterCreator.this.type = nodeNames(Seq(nodeName))
+    def nodeName(nodeName: String): ClusterCreator.this.type = nodeNames(Set(nodeName))
 
     /**
       *  create a cluster.
@@ -196,8 +200,8 @@ object Collie {
       * @param nodeNames nodes' name
       * @return cluster description
       */
-    def nodeNames(nodeNames: Seq[String]): ClusterCreator.this.type = {
-      this.nodeNames = CommonUtils.requireNonEmpty(nodeNames.asJava).asScala
+    def nodeNames(nodeNames: Set[String]): ClusterCreator.this.type = {
+      this.nodeNames = CommonUtils.requireNonEmpty(nodeNames.asJava).asScala.toSet
       this
     }
 

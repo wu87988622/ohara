@@ -16,9 +16,7 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterCreationRequest
 import com.island.ohara.client.configurator.v0.TopicApi.{Request, TopicInfo}
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterCreationRequest
 import com.island.ohara.client.configurator.v0.{BrokerApi, TopicApi, ZookeeperApi}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -107,29 +105,22 @@ class TestTopicRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(ZookeeperClusterCreationRequest(
-          name = CommonUtils.randomString(10),
-          imageName = None,
-          clientPort = Some(CommonUtils.availablePort()),
-          electionPort = Some(CommonUtils.availablePort()),
-          peerPort = Some(CommonUtils.availablePort()),
-          nodeNames = zk.nodeNames
-        )))
+        .request()
+        .name(CommonUtils.randomString(10))
+        .nodeNames(zk.nodeNames)
+        .create()
+    )
 
     val bk2 = result(
       BrokerApi
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(BrokerClusterCreationRequest(
-          name = CommonUtils.randomString(10),
-          imageName = None,
-          zookeeperClusterName = Some(zk2.name),
-          exporterPort = None,
-          jmxPort = None,
-          clientPort = Some(123),
-          nodeNames = zk2.nodeNames
-        )))
+        .request()
+        .name(CommonUtils.randomString(10))
+        .zookeeperClusterName(zk2.name)
+        .nodeNames(zk2.nodeNames)
+        .create())
 
     an[IllegalArgumentException] should be thrownBy result(
       topicApi.request().name(CommonUtils.randomString(10)).create())
@@ -146,29 +137,22 @@ class TestTopicRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(ZookeeperClusterCreationRequest(
-          name = CommonUtils.randomString(10),
-          imageName = None,
-          clientPort = Some(CommonUtils.availablePort()),
-          electionPort = Some(CommonUtils.availablePort()),
-          peerPort = Some(CommonUtils.availablePort()),
-          nodeNames = zk.nodeNames
-        )))
+        .request()
+        .name(CommonUtils.randomString(10))
+        .nodeNames(zk.nodeNames)
+        .create()
+    )
 
     result(
       BrokerApi
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(BrokerClusterCreationRequest(
-          name = CommonUtils.randomString(10),
-          imageName = None,
-          zookeeperClusterName = Some(zk2.name),
-          exporterPort = None,
-          jmxPort = None,
-          clientPort = Some(123),
-          nodeNames = zk2.nodeNames
-        )))
+        .request()
+        .name(CommonUtils.randomString(10))
+        .zookeeperClusterName(zk2.name)
+        .nodeNames(zk2.nodeNames)
+        .create())
 
     val bks = result(BrokerApi.access().hostname(configurator.hostname).port(configurator.port).list)
     bks.size shouldBe 2

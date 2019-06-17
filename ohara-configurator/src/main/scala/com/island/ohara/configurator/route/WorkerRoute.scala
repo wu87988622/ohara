@@ -19,9 +19,7 @@ package com.island.ohara.configurator.route
 import akka.http.scaladsl.server
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.WorkerApi
 import com.island.ohara.client.configurator.v0.WorkerApi._
-import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.jar.JarStore
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -34,42 +32,35 @@ object WorkerRoute {
     RouteUtils.basicRouteOfCluster(
       collie = clusterCollie.workerCollie(),
       root = WORKER_PREFIX_PATH,
-      defaultImage = WorkerApi.IMAGE_NAME_DEFAULT,
       hookBeforeDelete = (_, name) => Future.successful(name),
-      hookOfCreation = (clusters, req: WorkerClusterCreationRequest) =>
+      hookOfCreation = (clusters, req: Creation) =>
         Future
           .traverse(req.jarIds)(jarStore.jarInfo)
           .map { jarInfos =>
             val wkClusters = clusters.filter(_.isInstanceOf[WorkerClusterInfo]).map(_.asInstanceOf[WorkerClusterInfo])
 
             // check group id
-            req.groupId.foreach(groupId =>
-              wkClusters
-                .find(_.groupId == groupId)
-                .foreach(c => throw new IllegalArgumentException(s"group id:$groupId is used by wk cluster:${c.name}")))
+            wkClusters.find(_.groupId == req.groupId).foreach { cluster =>
+              throw new IllegalArgumentException(s"group id:${req.groupId} is used by wk cluster:${cluster.name}")
+            }
 
             // check setting topic
-            req.configTopicName.foreach(
-              configTopicName =>
-                wkClusters
-                  .find(_.configTopicName == configTopicName)
-                  .foreach(c =>
-                    throw new IllegalArgumentException(
-                      s"setting topic:$configTopicName is used by wk cluster:${c.name}")))
+            wkClusters.find(_.configTopicName == req.configTopicName).foreach { cluster =>
+              throw new IllegalArgumentException(
+                s"configTopicName:${req.configTopicName} is used by wk cluster:${cluster.name}")
+            }
 
             // check offset topic
-            req.offsetTopicName.foreach(offsetTopicName =>
-              wkClusters
-                .find(_.offsetTopicName == offsetTopicName)
-                .foreach(c =>
-                  throw new IllegalArgumentException(s"offset topic:$offsetTopicName is used by wk cluster:${c.name}")))
+            wkClusters.find(_.offsetTopicName == req.offsetTopicName).foreach { cluster =>
+              throw new IllegalArgumentException(
+                s"offsetTopicName:${req.offsetTopicName} is used by wk cluster:${cluster.name}")
+            }
 
             // check status topic
-            req.statusTopicName.foreach(statusTopicName =>
-              wkClusters
-                .find(_.statusTopicName == statusTopicName)
-                .foreach(c =>
-                  throw new IllegalArgumentException(s"status topic$statusTopicName is used by wk cluster:${c.name}")))
+            wkClusters.find(_.statusTopicName == req.statusTopicName).foreach { cluster =>
+              throw new IllegalArgumentException(
+                s"statusTopicName:${req.statusTopicName} is used by wk cluster:${cluster.name}")
+            }
             jarInfos
           }
           // match the broker cluster
@@ -100,23 +91,20 @@ object WorkerRoute {
                 .workerCollie()
                 .creator()
                 .clusterName(req.name)
-                .clientPort(req.clientPort.getOrElse(WorkerApi.CLIENT_PORT_DEFAULT))
-                .jmxPort(req.jmxPort.getOrElse(WorkerApi.JMX_PORT_DEFAULT))
+                .clientPort(req.clientPort)
+                .jmxPort(req.jmxPort)
                 .brokerClusterName(bkName)
-                .groupId(req.groupId.getOrElse(CommonUtils.randomString(10)))
-                .configTopicName(req.configTopicName.getOrElse(s"setting-${CommonUtils.randomString(10)}"))
-                .configTopicReplications(req.configTopicReplications.getOrElse(
-                  WorkerApi.CONFIG_TOPIC_REPLICATIONS_DEFAULT))
-                .offsetTopicName(req.offsetTopicName.getOrElse(s"offset-${CommonUtils.randomString(10)}"))
-                .offsetTopicPartitions(req.offsetTopicPartitions.getOrElse(WorkerApi.OFFSET_TOPIC_PARTITIONS_DEFAULT))
-                .offsetTopicReplications(req.offsetTopicReplications.getOrElse(
-                  WorkerApi.OFFSET_TOPIC_REPLICATIONS_DEFAULT))
-                .statusTopicName(req.statusTopicName.getOrElse(s"status-${CommonUtils.randomString(10)}"))
-                .statusTopicPartitions(req.statusTopicPartitions.getOrElse(WorkerApi.STATUS_TOPIC_PARTITIONS_DEFAULT))
-                .statusTopicReplications(req.statusTopicReplications.getOrElse(
-                  WorkerApi.STATUS_TOPIC_REPLICATIONS_DEFAULT))
-                .imageName(req.imageName.getOrElse(WorkerApi.IMAGE_NAME_DEFAULT))
-                .jarInfos(jarInfos)
+                .groupId(req.groupId)
+                .configTopicName(req.configTopicName)
+                .configTopicReplications(req.configTopicReplications)
+                .offsetTopicName(req.offsetTopicName)
+                .offsetTopicPartitions(req.offsetTopicPartitions)
+                .offsetTopicReplications(req.offsetTopicReplications)
+                .statusTopicName(req.statusTopicName)
+                .statusTopicPartitions(req.statusTopicPartitions)
+                .statusTopicReplications(req.statusTopicReplications)
+                .imageName(req.imageName)
+                .jarInfos(jarInfos.toSeq)
                 .nodeNames(req.nodeNames)
                 .create()
         }

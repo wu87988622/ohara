@@ -82,7 +82,7 @@ private[configurator] object FtpInfoRoute {
   @VisibleForTesting
   private[route] def validateField(request: Update): Unit = {
     request.hostname.foreach(CommonUtils.requireNonEmpty)
-    request.port.foreach(CommonUtils.requirePositiveInt)
+    request.port.foreach(CommonUtils.requireConnectionPort)
     request.user.foreach(CommonUtils.requireNonEmpty)
     request.password.foreach(CommonUtils.requireNonEmpty)
   }

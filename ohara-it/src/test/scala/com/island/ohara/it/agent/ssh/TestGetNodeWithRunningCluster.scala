@@ -18,7 +18,6 @@ package com.island.ohara.it.agent.ssh
 
 import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterCreationRequest
 import com.island.ohara.client.configurator.v0.{NodeApi, ZookeeperApi}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
@@ -67,15 +66,10 @@ class TestGetNodeWithRunningCluster extends IntegrationTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(ZookeeperClusterCreationRequest(
-          name = CommonUtils.randomString(10),
-          imageName = None,
-          clientPort = Some(CommonUtils.availablePort()),
-          electionPort = Some(CommonUtils.availablePort()),
-          peerPort = Some(CommonUtils.availablePort()),
-          nodeNames = nodeCache.map(_.name)
-        )))
-
+        .request()
+        .name(CommonUtils.randomString(10))
+        .nodeNames(nodeCache.map(_.name).toSet)
+        .create())
     try {
       assertCluster(() => result(ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port).list),
                     cluster.name)

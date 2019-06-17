@@ -19,7 +19,6 @@ package com.island.ohara.configurator.route
 import akka.http.scaladsl.server
 import com.island.ohara.agent.{ClusterCollie, NodeCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.ZookeeperApi
 import com.island.ohara.client.configurator.v0.ZookeeperApi._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -32,7 +31,6 @@ object ZookeeperRoute {
     RouteUtils.basicRouteOfCluster(
       collie = clusterCollie.zookeeperCollie(),
       root = ZOOKEEPER_PREFIX_PATH,
-      defaultImage = ZookeeperApi.IMAGE_NAME_DEFAULT,
       hookBeforeDelete = (clusters, name) =>
         CollieUtils
           .as[BrokerClusterInfo](clusters)
@@ -41,15 +39,15 @@ object ZookeeperRoute {
             Future.failed(new IllegalArgumentException(
               s"you can't remove zookeeper cluster:$name since it is used by broker cluster:${c.name}")))
           .getOrElse(Future.successful(name)),
-      hookOfCreation = (_, req: ZookeeperClusterCreationRequest) =>
+      hookOfCreation = (_, req: Creation) =>
         clusterCollie
           .zookeeperCollie()
           .creator()
           .clusterName(req.name)
-          .clientPort(req.clientPort.getOrElse(ZookeeperApi.CLIENT_PORT_DEFAULT))
-          .electionPort(req.electionPort.getOrElse(ZookeeperApi.ELECTION_PORT_DEFAULT))
-          .peerPort(req.peerPort.getOrElse(ZookeeperApi.PEER_PORT_DEFAULT))
-          .imageName(req.imageName.getOrElse(ZookeeperApi.IMAGE_NAME_DEFAULT))
+          .clientPort(req.clientPort)
+          .electionPort(req.electionPort)
+          .peerPort(req.peerPort)
+          .imageName(req.imageName)
           .nodeNames(req.nodeNames)
           .create()
     )

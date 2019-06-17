@@ -18,8 +18,7 @@ package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
 import com.island.ohara.agent.{ClusterCollie, NoSuchClusterException, NodeCollie}
-import com.island.ohara.client.configurator.v0.BrokerApi
-import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterCreationRequest, _}
+import com.island.ohara.client.configurator.v0.BrokerApi.{Creation, _}
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 
@@ -32,7 +31,6 @@ object BrokerRoute {
     RouteUtils.basicRouteOfCluster(
       collie = clusterCollie.brokerCollie(),
       root = BROKER_PREFIX_PATH,
-      defaultImage = BrokerApi.IMAGE_NAME_DEFAULT,
       hookBeforeDelete = (clusters, name) =>
         CollieUtils
           .as[WorkerClusterInfo](clusters)
@@ -41,7 +39,7 @@ object BrokerRoute {
             Future.failed(new IllegalArgumentException(
               s"you can't remove broker cluster:$name since it is used by worker cluster:${c.name}")))
           .getOrElse(Future.successful(name)),
-      hookOfCreation = (clusters, req: BrokerClusterCreationRequest) => {
+      hookOfCreation = (clusters, req: Creation) => {
         val zkName = req.zookeeperClusterName
           .map { zkName =>
             clusters
@@ -74,11 +72,11 @@ object BrokerRoute {
           .brokerCollie()
           .creator()
           .clusterName(req.name)
-          .clientPort(req.clientPort.getOrElse(BrokerApi.CLIENT_PORT_DEFAULT))
-          .exporterPort(req.exporterPort.getOrElse(BrokerApi.EXPORTER_PORT_DEFAULT))
-          .jmxPort(req.jmxPort.getOrElse(BrokerApi.JMX_PORT_DEFAULT))
+          .clientPort(req.clientPort)
+          .exporterPort(req.exporterPort)
+          .jmxPort(req.jmxPort)
           .zookeeperClusterName(zkName)
-          .imageName(req.imageName.getOrElse(BrokerApi.IMAGE_NAME_DEFAULT))
+          .imageName(req.imageName)
           .nodeNames(req.nodeNames)
           .create()
       }

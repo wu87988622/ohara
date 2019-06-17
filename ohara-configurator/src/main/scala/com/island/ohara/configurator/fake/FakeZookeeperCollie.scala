@@ -30,7 +30,7 @@ private[configurator] class FakeZookeeperCollie(node: NodeCollie)
     (_, clusterName, imageName, clientPort, peerPort, electionPort, nodeNames) =>
       Future.successful(
         addCluster(
-          FakeZookeeperClusterInfo(
+          ZookeeperClusterInfo(
             name = clusterName,
             imageName = imageName,
             clientPort = clientPort,
@@ -58,7 +58,7 @@ private[configurator] class FakeZookeeperCollie(node: NodeCollie)
                                    route: Map[String, String]): Unit =
     new UnsupportedOperationException("zookeeper collie doesn't support to doCreator function")
 
-  override protected def nodeCollie(): NodeCollie = node
+  override protected def nodeCollie: NodeCollie = node
 
-  override protected def prefixKey(): String = "fakezookeeper"
+  override protected def prefixKey: String = "fakezookeeper"
 }

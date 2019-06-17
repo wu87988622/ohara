@@ -31,4 +31,6 @@ package object v0 {
       case _      => true
     }
   }
+
+  private[v0] def noJsNull(jsValue: JsValue): Map[String, JsValue] = noJsNull(jsValue.asJsObject.fields)
 }
