@@ -45,7 +45,7 @@ class PipelineNewConnector extends React.Component {
   };
 
   state = {
-    isOpen: false,
+    isModalOpen: false,
     newConnectorName: '',
   };
 
@@ -54,7 +54,7 @@ class PipelineNewConnector extends React.Component {
   }
 
   update = () => {
-    this.setState({ isOpen: true });
+    this.setState({ isModalOpen: true });
   };
 
   handleChange = ({ target: { value } }) => {
@@ -78,12 +78,12 @@ class PipelineNewConnector extends React.Component {
   };
 
   handleClose = () => {
-    this.setState({ isOpen: false });
+    this.setState({ isModalOpen: false });
   };
 
   render() {
     const { connectors, activeConnector, onSelect, isLoading } = this.props;
-    const { isOpen, newConnectorName } = this.state;
+    const { isModalOpen, newConnectorName } = this.state;
 
     return (
       <TableWrapper>
@@ -109,7 +109,7 @@ class PipelineNewConnector extends React.Component {
           </Table>
         )}
         <Modal
-          isActive={isOpen}
+          isActive={isModalOpen}
           title="New Connector Name"
           width="370px"
           confirmBtnText="Add"

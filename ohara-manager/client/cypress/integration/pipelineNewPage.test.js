@@ -260,7 +260,7 @@ describe('PipelineNewPage', () => {
       .should('have.length', 2);
   });
 
-  it.only('connects Jdbc source -> Topic -> Hdfs sink together', () => {
+  it('connects Jdbc source -> Topic -> Hdfs sink together', () => {
     cy.server();
     cy.route('PUT', '/api/pipelines/*').as('putPipeline');
     cy.route('GET', '/api/connectors/*').as('getConnector');

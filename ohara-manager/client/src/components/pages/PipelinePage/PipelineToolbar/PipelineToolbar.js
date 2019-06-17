@@ -82,7 +82,6 @@ class PipelineToolbar extends React.Component {
     isAddBtnDisabled: false,
     isFetchWorkerWorking: true,
     currWorker: null,
-    connectorName: '',
   };
 
   componentDidMount() {
@@ -202,10 +201,6 @@ class PipelineToolbar extends React.Component {
 
   updateAddBtnStatus = currConnector => {
     this.setState({ isAddBtnDisabled: !currConnector });
-  };
-
-  handleConnectrNameModel = name => {
-    this.setState({ connectorName: name });
   };
 
   render() {
