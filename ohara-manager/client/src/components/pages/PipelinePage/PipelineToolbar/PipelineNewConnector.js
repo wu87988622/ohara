@@ -17,13 +17,20 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+import styled from 'styled-components';
 import * as PIPELINES from 'constants/pipelines';
 import { ListLoader } from 'common/Loader';
+import { Modal } from 'common/Modal';
 import {
   createConnector,
   trimString,
 } from '../pipelineUtils/pipelineToolbarUtils';
 import { TableWrapper, Table } from './styles';
+import { Input, FormGroup } from 'common/Form';
+
+const Inner = styled.div`
+  padding: 30px 20px;
+`;
 
 class PipelineNewConnector extends React.Component {
   static propTypes = {
@@ -34,6 +41,12 @@ class PipelineNewConnector extends React.Component {
     updateAddBtnStatus: PropTypes.func.isRequired,
     isLoading: PropTypes.bool.isRequired,
     workerClusterName: PropTypes.string.isRequired,
+    handleClose: PropTypes.func.isRequired,
+  };
+
+  state = {
+    isModalOpen: false,
+    newConnectorName: '',
   };
 
   componentDidMount() {
@@ -41,16 +54,36 @@ class PipelineNewConnector extends React.Component {
   }
 
   update = () => {
+    this.setState({ isModalOpen: true });
+  };
+
+  handleChange = ({ target: { value } }) => {
+    this.setState({ newConnectorName: value });
+  };
+
+  handleConfirm = () => {
     const {
       updateGraph,
       activeConnector: connector,
       workerClusterName,
     } = this.props;
-    createConnector({ updateGraph, connector, workerClusterName });
+    const { newConnectorName } = this.state;
+    createConnector({
+      updateGraph,
+      connector,
+      workerClusterName,
+      newConnectorName,
+    });
+    this.props.handleClose();
+  };
+
+  handleClose = () => {
+    this.setState({ isModalOpen: false });
   };
 
   render() {
     const { connectors, activeConnector, onSelect, isLoading } = this.props;
+    const { isModalOpen, newConnectorName } = this.state;
 
     return (
       <TableWrapper>
@@ -75,6 +108,27 @@ class PipelineNewConnector extends React.Component {
             })}
           </Table>
         )}
+        <Modal
+          isActive={isModalOpen}
+          title="New Connector Name"
+          width="370px"
+          confirmBtnText="Add"
+          handleConfirm={this.handleConfirm}
+          handleCancel={this.handleClose}
+        >
+          <Inner>
+            <FormGroup data-testid="name">
+              <Input
+                name="name"
+                width="100%"
+                placeholder="Connector name"
+                data-testid="name-input"
+                value={newConnectorName}
+                handleChange={this.handleChange}
+              />
+            </FormGroup>
+          </Inner>
+        </Modal>
       </TableWrapper>
     );
   }

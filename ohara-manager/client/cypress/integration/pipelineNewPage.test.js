@@ -84,26 +84,26 @@ describe('PipelineNewPage', () => {
       {
         type: CONNECTOR_TYPES.ftpSource,
         nodeType: 'FtpSource',
-        connectorLen: 1,
         toolbarTestId: 'toolbar-sources',
+        connectorName: makeRandomStr(),
       },
       {
         type: CONNECTOR_TYPES.jdbcSource,
         nodeType: 'JDBCSourceConnector',
-        connectorLen: 2,
         toolbarTestId: 'toolbar-sources',
+        connectorName: makeRandomStr(),
       },
       {
         type: CONNECTOR_TYPES.ftpSink,
         nodeType: 'FtpSink',
-        connectorLen: 3,
         toolbarTestId: 'toolbar-sinks',
+        connectorName: makeRandomStr(),
       },
       {
         type: CONNECTOR_TYPES.hdfsSink,
         nodeType: 'HDFSSinkConnector',
-        connectorLen: 4,
         toolbarTestId: 'toolbar-sinks',
+        connectorName: makeRandomStr(),
       },
     ];
 
@@ -111,50 +111,65 @@ describe('PipelineNewPage', () => {
     cy.route('POST', '/api/connectors').as('createConnector');
 
     cy.wrap(filters).each(filter => {
-      const { toolbarTestId, type, connectorLen, nodeType } = filter;
+      const { toolbarTestId, type, nodeType, connectorName } = filter;
       cy.getByTestId(toolbarTestId).click();
       cy.getByText(type)
         .click()
         .getByText('Add')
-        .click();
+        .click()
+        .getByPlaceholderText('Connector name')
+        .type(connectorName)
+        .get('.ReactModal__Content')
+        .eq(1)
+        .within(() => {
+          cy.getByText('Add').click();
+        });
 
       cy.wait('@createConnector')
-        .getAllByText(/Untitled (source|sink)/)
-        .should('have.length', connectorLen)
+        .getAllByText(connectorName)
+        .should('have.length', 1)
         .get('.node-type')
         .should('contain', nodeType);
     });
   });
 
   it('saves and removes a connector even after page refresh', () => {
+    const connectorName = makeRandomStr();
     cy.getByTestId('toolbar-sources')
       .click()
       .getByText(CONNECTOR_TYPES.jdbcSource)
       .click()
       .getByText('Add')
       .click()
-      .getByText('Untitled source')
+      .getByPlaceholderText('Connector name')
+      .type(connectorName)
+      .get('.ReactModal__Content')
+      .eq(1)
+      .within(() => {
+        cy.getByText('Add').click();
+      })
+      .getByText(connectorName)
       .should('have.length', '1')
       .get('.node-type')
       .should('contain', 'JDBCSourceConnector')
       .wait(3000)
       .reload()
-      .getByText('Untitled source')
+      .getByText(connectorName)
       .should('have.length', '1')
       .get('.node-type')
       .should('contain', 'JDBCSourceConnector');
 
-    cy.getByText('Untitled source')
+    cy.getByText(connectorName)
       .click()
       .getByTestId('delete-button')
       .click()
       .getByText('Yes, Remove this connector')
       .click()
-      .getByText('Successfully deleted the connector: Untitled source')
+      .getByText(`Successfully deleted the connector: ${connectorName}`)
       .should('be.exist')
       .wait(3000)
       .reload()
-      .queryByText('Untitled source', { timeout: 500 })
+      .queryByText(connectorName, { timeout: 500 })
       .should('not.be.exist')
       .get('.node-type')
       .should('not.be.exist');
@@ -174,6 +189,13 @@ describe('PipelineNewPage', () => {
       .click()
       .getByText('Add')
       .click()
+      .getByPlaceholderText('Connector name')
+      .type(makeRandomStr())
+      .get('.ReactModal__Content')
+      .eq(1)
+      .within(() => {
+        cy.getByText('Add').click();
+      })
       .wait('@putPipeline')
       .getByTestId('toolbar-sources')
       .click()
@@ -183,6 +205,13 @@ describe('PipelineNewPage', () => {
       .click()
       .getByText('Add')
       .click()
+      .getByPlaceholderText('Connector name')
+      .type(makeRandomStr())
+      .get('.ReactModal__Content')
+      .eq(1)
+      .within(() => {
+        cy.getByText('Add').click();
+      })
       .wait('@putPipeline')
       .getByTestId('toolbar-topics')
       .click()
@@ -244,6 +273,13 @@ describe('PipelineNewPage', () => {
       .click()
       .getByText('Add')
       .click()
+      .getByPlaceholderText('Connector name')
+      .type(makeRandomStr())
+      .get('.ReactModal__Content')
+      .eq(1)
+      .within(() => {
+        cy.getByText('Add').click();
+      })
       .wait('@putPipeline')
       .getByTestId('toolbar-sources')
       .click()
@@ -253,6 +289,13 @@ describe('PipelineNewPage', () => {
       .click()
       .getByText('Add')
       .click()
+      .getByPlaceholderText('Connector name')
+      .type(makeRandomStr())
+      .get('.ReactModal__Content')
+      .eq(1)
+      .within(() => {
+        cy.getByText('Add').click();
+      })
       .wait('@putPipeline')
       .getByTestId('toolbar-topics')
       .click()

@@ -82,24 +82,28 @@ describe('createConnector()', () => {
   });
 
   it('updates a custom connector', async () => {
-    const connectorId = generate.id();
+    const connectorId = 'testConnector';
     const customConnectorClassName = generate.name();
     const typeName = 'source';
+    const connectorName = 'testConnector';
 
     const connector = {
       className: customConnectorClassName,
       typeName,
     };
-    const res = { data: { result: { id: connectorId } } };
+    const newConnectorName = connectorName;
+    const res = {
+      data: { result: { id: connectorId, settings: { name: connectorName } } },
+    };
 
     connectorApi.createConnector.mockImplementation(() => Promise.resolve(res));
 
-    await createConnector({ updateGraph, connector });
+    await createConnector({ updateGraph, connector, newConnectorName });
 
     expect(updateGraph).toHaveBeenCalledTimes(1);
     expect(updateGraph).toHaveBeenCalledWith({
       update: {
-        name: `Untitled ${typeName}`,
+        name: connectorName,
         kind: typeName,
         to: [],
         className: customConnectorClassName,

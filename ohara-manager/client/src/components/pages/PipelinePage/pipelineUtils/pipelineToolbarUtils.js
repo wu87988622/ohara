@@ -37,6 +37,7 @@ export const createConnector = async ({
   updateGraph,
   connector,
   workerClusterName,
+  newConnectorName,
 }) => {
   const { typeName } = connector;
 
@@ -58,12 +59,12 @@ export const createConnector = async ({
     id = res.data.result.id;
   } else if (isSource(typeName) || isSink(typeName)) {
     const params = {
-      name: connectorName,
+      name: newConnectorName,
       'connector.class': className,
-      'connector.name': connectorName,
+      'connector.name': newConnectorName,
       workerClusterName: workerClusterName,
     };
-
+    connectorName = newConnectorName;
     const res = await connectorApi.createConnector(params);
     id = res.data.result.id;
   }
