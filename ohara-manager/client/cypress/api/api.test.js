@@ -185,7 +185,7 @@ describe('Jar Api test', () => {
       expect(data.result.id).to.be.a('string');
     });
   });
-  it.skip('fetchJars', () => {
+  it('fetchJars', () => {
     cy.fetchJars().then(res => {
       const { data } = res;
       expect(data.isSuccess).to.eq(true);
