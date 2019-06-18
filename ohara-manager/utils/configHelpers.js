@@ -109,7 +109,7 @@ const validateUrl = async url => {
 };
 
 const validatePort = port => {
-  const isValidPort = port >= 1 && port <= 65535;
+  const isValidPort = port >= 0 && port <= 65535;
 
   if (!isNumber(port)) {
     console.log();

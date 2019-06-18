@@ -26,16 +26,19 @@ const { waited } = require('./lib/waitOn');
 
 const { configurator, port } = getConfig();
 
-const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
+const { randomPort } = require('./handleE2eServices');
+
+const run = async (apiRoot, serverPort = 5050) => {
   let server;
   let client;
   let cypress;
+  serverPort = serverPort == 0 ? randomPort() : serverPort;
 
   // Start ohara manager server
   console.log(chalk.blue('Starting ohara manager server'));
   server = execa(
     'forever',
-    ['start', 'index.js', '--configurator', apiRoot, '--port', port],
+    ['start', 'index.js', '--configurator', apiRoot, '--port', serverPort],
     {
       stdio: 'inherit',
     },
@@ -60,9 +63,7 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
     [
       'e2e:run',
       '--config',
-      `baseUrl=http://localhost:${
-        prod ? serverPort : clientPort
-      },integrationFolder=cypress/api`,
+      `baseUrl=http://localhost:${serverPort},integrationFolder=cypress/api`,
     ],
     {
       cwd: 'client',

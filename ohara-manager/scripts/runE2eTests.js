@@ -28,6 +28,7 @@ const {
   createServices,
   cleanServices,
   getDefaultEnv,
+  randomPort,
 } = require('./handleE2eServices');
 
 const { configurator, port } = getConfig();
@@ -37,6 +38,7 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
   let server;
   let client;
   let cypress;
+  serverPort = serverPort == 0 ? randomPort() : serverPort;
 
   const defaultEnv = getDefaultEnv();
   const envNodeHost = nodeHost ? nodeHost : defaultEnv.nodeHost;
@@ -70,7 +72,7 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
   console.log(chalk.blue('Starting ohara manager server'));
   server = execa(
     'forever',
-    ['start', 'start.js', '--configurator', apiRoot, '--port', port],
+    ['start', 'start.js', '--configurator', apiRoot, '--port', serverPort],
     {
       stdio: 'inherit',
     },
