@@ -167,6 +167,7 @@ export const switchType = type => {
     case 'STRING':
       return 'text';
     case 'INT':
+    case 'LONG':
       return 'number';
     case 'PASSWORD':
       return 'password';
@@ -295,7 +296,6 @@ export const renderer = props => {
       case 'PASSWORD':
       case 'JDBC_TABLE':
       case 'LONG':
-      case 'Double':
         const inputType = switchType(valueType);
 
         return (
