@@ -127,6 +127,19 @@ const waitCreate = async (baseUrl, api, name) => {
   return;
 };
 
+const waitContainersCreate = async (baseUrl, name) => {
+  const res = await axios.get(`${baseUrl}/containers/${name}`);
+  if (
+    typeof res === 'undefined' ||
+    res.data[0].containers.length == 0 ||
+    res.data[0].containers[0].state !== 'RUNNING'
+  ) {
+    sleep(1000);
+    await waitContainersCreate(baseUrl, name);
+  }
+  return;
+};
+
 const fileHelper = (zkName, bkName) => {
   const filePath = 'scripts/servicesApi/service.json';
 
@@ -186,9 +199,9 @@ async function createServices({
   await createNode(configurator, nodeHost, nodePort, nodeUser, nodePass);
   await waitCreate(configurator, 'nodes', nodeHost);
   await createZk(configurator, zkName, nodeHost);
-  await waitCreate(configurator, 'zookeepers', zkName);
+  await waitContainersCreate(configurator, zkName);
   await createBk(configurator, zkName, bkName, nodeHost);
-  await waitCreate(configurator, 'brokers', bkName);
+  await waitContainersCreate(configurator, bkName);
   await fileHelper(zkName, bkName);
 }
 

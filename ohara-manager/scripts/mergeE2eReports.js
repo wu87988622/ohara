@@ -52,11 +52,11 @@ const merge = ({ reportDistPath, filesToBeMerged, reject, resolve }) => {
   });
 };
 
-const mergeE2eReports = () =>
+const mergeE2eReports = fileName =>
   // Return a promise here so we can await it later
   new Promise((resolve, reject) => {
     const files = getFiles();
-    const reportDistPath = path.resolve('./test-reports/clientE2e.xml');
+    const reportDistPath = path.resolve(`./test-reports/${fileName}.xml`);
     const mergeParams = {
       reportDistPath: reportDistPath,
       filesToBeMerged: files,

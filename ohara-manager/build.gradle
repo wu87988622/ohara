@@ -76,6 +76,23 @@ task format {
   dependsOn setup
 }
 
+task api {
+  if(!project.hasProperty('skipManager')) {
+    doLast {
+      exec {
+        if(!project.hasProperty('ohara.manager.it.port')) throw new IllegalArgumentException("ohara.manager.it.port is required")
+        String port = project.getProperty('ohara.manager.it.port')
+
+        if(!project.hasProperty('ohara.manager.it.configurator')) throw new IllegalArgumentException("ohara.manager.it.configurator is required")
+        String configurator = project.getProperty('ohara.manager.it.configurator')
+
+        commandLine 'yarn', 'test:api', '--port', port, '--configurator', configurator    
+      }
+    }
+  }
+  dependsOn setup
+}
+
 task it {
   if(!project.hasProperty('skipManager')) {
     doLast {

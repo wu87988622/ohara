@@ -17,60 +17,25 @@
 /* eslint-disable no-process-exit, no-console */
 
 const execa = require('execa');
-const yargs = require('yargs');
 const chalk = require('chalk');
 
 const mergeE2eReports = require('./mergeE2eReports');
 const copyJars = require('./copyJars');
 const { getConfig } = require('../utils/configHelpers');
 const { waited } = require('./lib/waitOn');
-const {
-  createServices,
-  cleanServices,
-  getDefaultEnv,
-} = require('./handleE2eServices');
 
 const { configurator, port } = getConfig();
-const { prod = false, nodeHost, nodePort, nodeUser, nodePass } = yargs.argv;
 
 const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
   let server;
   let client;
   let cypress;
 
-  const defaultEnv = getDefaultEnv();
-  const envNodeHost = nodeHost ? nodeHost : defaultEnv.nodeHost;
-  const envNodePort = nodePort ? nodePort : defaultEnv.nodePort;
-  const envNodeUser = nodeUser ? nodeUser : defaultEnv.nodeUser;
-  const envNodePass = nodePass ? nodePass : defaultEnv.nodePass;
-
-  try {
-    console.log(chalk.blue('Creating services for this test run'));
-    await createServices({
-      configurator,
-      nodeHost: envNodeHost,
-      nodePort: envNodePort,
-      nodeUser: envNodeUser,
-      nodePass: envNodePass,
-    });
-
-    console.log(chalk.green('Services created!'));
-  } catch (error) {
-    console.log(
-      chalk.red('Failed to create services, see the detailed error below:'),
-    );
-    console.log(error);
-
-    // Since starting services failed, don't run the
-    // end to end tests at all
-    process.exit(1);
-  }
-
   // Start ohara manager server
   console.log(chalk.blue('Starting ohara manager server'));
   server = execa(
     'forever',
-    ['start', 'start.js', '--configurator', apiRoot, '--port', port],
+    ['start', 'index.js', '--configurator', apiRoot, '--port', port],
     {
       stdio: 'inherit',
     },
@@ -88,61 +53,16 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
   // Wait until the server is ready
   await waited(`http://localhost:${serverPort}`);
 
-  // Start client server, this server only starts on local env not
-  // on jenkins
-  if (!prod) {
-    console.log(chalk.blue('Starting ohara manager server'));
-    client = execa(
-      'forever',
-      ['start', 'node_modules/react-scripts/scripts/start.js'],
-      {
-        cwd: 'client',
-        stdio: 'inherit',
-      },
-    );
-    console.log('client.pid', client.pid);
-
-    try {
-      await client;
-    } catch (err) {
-      console.log(err.message);
-      process.exit(1);
-    }
-
-    // Wait until the client dev server is ready
-    await waited(`http://localhost:${clientPort}`);
-  }
-
-  const buildCypressEnv = () => {
-    const env = [];
-    env.push(`port=${prod ? serverPort : clientPort}`);
-
-    if (nodeHost) {
-      env.push(`nodeHost=${nodeHost}`);
-    }
-    if (nodePort) {
-      env.push(`nodePort=${nodePort}`);
-    }
-    if (nodeUser) {
-      env.push(`nodeUser=${nodeUser}`);
-    }
-    if (nodePass) {
-      env.push(`nodePass=${nodePass}`);
-    }
-
-    return env.join(',');
-  };
-
-  // Run e2e test
+  // Run Api test
   console.log(chalk.blue('Running end to end tests with Cypress'));
   cypress = execa(
     'yarn',
     [
       'e2e:run',
       '--config',
-      `baseUrl=http://localhost:${prod ? serverPort : clientPort}`,
-      '--env',
-      buildCypressEnv(),
+      `baseUrl=http://localhost:${
+        prod ? serverPort : clientPort
+      },integrationFolder=cypress/api`,
     ],
     {
       cwd: 'client',
@@ -163,7 +83,7 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
   } catch (err) {
     console.log(chalk.red(err.message));
   } finally {
-    await mergeE2eReports('clientE2e');
+    await mergeE2eReports('clientApi');
   }
 
   try {
@@ -172,7 +92,6 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
     );
 
     killSubProcess();
-    await cleanServices(configurator);
 
     console.log(chalk.green('Successfully cleaned up all the services!'));
     process.exit(0);
@@ -185,4 +104,4 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
   process.exit(1);
 };
 
-run(prod, configurator, port);
+run(configurator, port);

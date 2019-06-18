@@ -28,6 +28,92 @@ import {
 import { fetchJars } from '../../src/api/jarApi';
 import { createTopic, fetchTopic, fetchTopics } from '../../src/api/topicApi';
 import { createNode, updateNode, fetchNodes } from '../../src/api/nodeApi';
+import {
+  createPipeline,
+  fetchPipeline,
+  fetchPipelines,
+  updatePipeline,
+  deletePipeline,
+} from '../../src/api/pipelineApi';
+import {
+  createConnector,
+  fetchConnector,
+  updateConnector,
+  startConnector,
+  stopConnector,
+  deleteConnector,
+} from '../../src/api/connectorApi';
+import * as streamApp from '../../src/api/streamApi';
+import { fetchLogs } from '../../src/api/logApi';
+import { validateConnector } from '../../src/api/validateApi';
+
+Cypress.Commands.add('validateConnector', params => validateConnector(params));
+
+Cypress.Commands.add('deleteProperty', id => streamApp.deleteProperty(id));
+
+Cypress.Commands.add('stopStreamApp', id => streamApp.stopStreamApp(id));
+
+Cypress.Commands.add('updateProperty', params =>
+  streamApp.updateProperty(params),
+);
+
+Cypress.Commands.add('fetchProperty', id => streamApp.fetchProperty(id));
+
+Cypress.Commands.add('createProperty', params =>
+  streamApp.createProperty(params),
+);
+
+Cypress.Commands.add('deleteConnector', id => deleteConnector(id));
+
+Cypress.Commands.add('stopConnector', id => stopConnector(id));
+
+Cypress.Commands.add('startConnector', id => startConnector(id));
+
+Cypress.Commands.add('updateConnector', params => updateConnector(params));
+
+Cypress.Commands.add('fetchConnector', id => fetchConnector(id));
+
+Cypress.Commands.add('createConnector', params => createConnector(params));
+
+Cypress.Commands.add('fetchLogs', (serviceName, clusterName) =>
+  fetchLogs(serviceName, clusterName),
+);
+
+Cypress.Commands.add('deleteStreamAppJar', id => streamApp.deleteJar(id));
+
+Cypress.Commands.add('fetchStreamAppJars', wk => streamApp.fetchJars(wk));
+
+Cypress.Commands.add('testUploadStreamAppJar', params => {
+  const { jarName, wk } = params;
+  cy.fixture(`streamApp/${jarName}`, 'base64')
+    .then(Cypress.Blob.base64StringToBlob)
+    .then(blob => {
+      const type = 'application/java-archive';
+      const url = '/api/stream/jars';
+      const config = {
+        headers: {
+          'content-type': 'multipart/form-data',
+        },
+      };
+      const testFile = new File([blob], jarName, { type: type });
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(testFile);
+      blob = dataTransfer.files;
+      let formData = new FormData();
+      formData.append('streamapp', blob[0]);
+      formData.append('cluster', wk);
+      return axiosInstance.post(url, formData, config);
+    });
+});
+Cypress.Commands.add('testDeletePipeline', id => deletePipeline(id));
+
+Cypress.Commands.add('updatePipeline', params => updatePipeline(params));
+
+Cypress.Commands.add('fetchPipelines', () => fetchPipelines());
+
+Cypress.Commands.add('fetchPipeline', id => fetchPipeline(id));
+
+Cypress.Commands.add('testCreatePipeline', params => createPipeline(params));
 
 Cypress.Commands.add('fetchNodes', () => fetchNodes());
 
