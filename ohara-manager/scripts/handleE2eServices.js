@@ -130,7 +130,7 @@ const waitCreate = async (baseUrl, api, name) => {
 const waitContainersCreate = async (baseUrl, name) => {
   const res = await axios.get(`${baseUrl}/containers/${name}`);
   if (
-    res == undefined ||
+    typeof res === 'undefined' ||
     res.data[0].containers.length == 0 ||
     res.data[0].containers[0].state !== 'RUNNING'
   ) {
