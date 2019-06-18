@@ -17,7 +17,6 @@
 /* eslint-disable no-process-exit, no-console */
 
 const execa = require('execa');
-const yargs = require('yargs');
 const chalk = require('chalk');
 
 const mergeE2eReports = require('./mergeE2eReports');
@@ -26,7 +25,6 @@ const { getConfig } = require('../utils/configHelpers');
 const { waited } = require('./lib/waitOn');
 
 const { configurator, port } = getConfig();
-const { prod = false } = yargs.argv;
 
 const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
   let server;
@@ -55,32 +53,7 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
   // Wait until the server is ready
   await waited(`http://localhost:${serverPort}`);
 
-  // Start client server, this server only starts on local env not
-  // on jenkins
-  if (!prod) {
-    console.log(chalk.blue('Starting ohara manager server'));
-    client = execa(
-      'forever',
-      ['start', 'node_modules/react-scripts/scripts/start.js'],
-      {
-        cwd: 'client',
-        stdio: 'inherit',
-      },
-    );
-    console.log('client.pid', client.pid);
-
-    try {
-      await client;
-    } catch (err) {
-      console.log(err.message);
-      process.exit(1);
-    }
-
-    // Wait until the client dev server is ready
-    await waited(`http://localhost:${clientPort}`);
-  }
-
-  // Run e2e test
+  // Run Api test
   console.log(chalk.blue('Running end to end tests with Cypress'));
   cypress = execa(
     'yarn',
@@ -131,4 +104,4 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
   process.exit(1);
 };
 
-run(prod, configurator, port);
+run(configurator, port);
