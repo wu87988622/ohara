@@ -23,14 +23,12 @@ const mergeE2eReports = require('./mergeE2eReports');
 const copyJars = require('./copyJars');
 const { getConfig } = require('../utils/configHelpers');
 const { waited } = require('./lib/waitOn');
+const { randomPort } = require('./handleE2eServices');
 
 const { configurator, port } = getConfig();
 
-const { randomPort } = require('./handleE2eServices');
-
 const run = async (apiRoot, serverPort = 5050) => {
   let server;
-  let client;
   let cypress;
   serverPort = serverPort == 0 ? randomPort() : serverPort;
 
@@ -38,7 +36,7 @@ const run = async (apiRoot, serverPort = 5050) => {
   console.log(chalk.blue('Starting ohara manager server'));
   server = execa(
     'forever',
-    ['start', 'index.js', '--configurator', apiRoot, '--port', serverPort],
+    ['start', 'start.js', '--configurator', apiRoot, '--port', serverPort],
     {
       stdio: 'inherit',
     },
@@ -56,7 +54,7 @@ const run = async (apiRoot, serverPort = 5050) => {
   // Wait until the server is ready
   await waited(`http://localhost:${serverPort}`);
 
-  // Run Api test
+  // Run api test
   console.log(chalk.blue('Running end to end tests with Cypress'));
   cypress = execa(
     'yarn',
@@ -74,7 +72,6 @@ const run = async (apiRoot, serverPort = 5050) => {
 
   const killSubProcess = () => {
     if (cypress) cypress.kill();
-    if (client) client.kill();
     if (server) server.kill();
   };
 
@@ -88,10 +85,6 @@ const run = async (apiRoot, serverPort = 5050) => {
   }
 
   try {
-    console.log(
-      chalk.blue('Cleaning up all services. This might take a while...'),
-    );
-
     killSubProcess();
 
     console.log(chalk.green('Successfully cleaned up all the services!'));
