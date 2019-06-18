@@ -346,9 +346,9 @@ class TestConnectorRoute extends SmallTest with Matchers {
   def defaultNumberOfTasksShouldExist(): Unit = {
     val connectorDesc = result(
       connectorApi.request().name(CommonUtils.randomString(10)).className(CommonUtils.randomString(10)).create())
-    connectorDesc.numberOfTasks shouldBe ConnectorRoute.DEFAULT_NUMBER_OF_TASKS
+    connectorDesc.numberOfTasks shouldBe ConnectorApi.DEFAULT_NUMBER_OF_TASKS
 
-    result(connectorApi.request().name(CommonUtils.randomString(10)).className(CommonUtils.randomString(10)).update()).numberOfTasks shouldBe ConnectorRoute.DEFAULT_NUMBER_OF_TASKS
+    result(connectorApi.request().name(CommonUtils.randomString(10)).className(CommonUtils.randomString(10)).update()).numberOfTasks shouldBe ConnectorApi.DEFAULT_NUMBER_OF_TASKS
   }
 
   @Test
@@ -434,7 +434,7 @@ class TestConnectorRoute extends SmallTest with Matchers {
         """.stripMargin.parseJson)
     request.className shouldBe "com.island.ohara.connector.perf.PerfSource"
     request.topicNames.head shouldBe "59e9010c-fd9c-4a41-918a-dacc9b84aa2b"
-    request.numberOfTasks.get shouldBe 1
+    request.numberOfTasks shouldBe 1
     request.plain("perf.batch") shouldBe "1"
     request.columns.size shouldBe 2
     request.columns.head shouldBe Column.builder().name("cf0").newName("cf0").dataType(DataType.INT).order(1).build()

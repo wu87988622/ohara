@@ -28,7 +28,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class TestFtpInfoRoute extends SmallTest with Matchers {
   private[this] val configurator = Configurator.builder().fake().build()
 
-  private[this] val ftpApi = FtpApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] val ftpApi = FtpApi.access.hostname(configurator.hostname).port(configurator.port)
   @Test
   def testValidateField(): Unit = {
     an[IllegalArgumentException] should be thrownBy FtpInfoRoute.validateField(
@@ -115,7 +115,7 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
     val user = CommonUtils.randomString()
     val password = CommonUtils.randomString()
     val response = result(
-      ftpApi.request().name(name).hostname(hostname).port(port).user(user).password(password).create())
+      ftpApi.request.name(name).hostname(hostname).port(port).user(user).password(password).create())
     response.name shouldBe name
     response.port shouldBe port
     response.hostname shouldBe hostname
@@ -131,7 +131,7 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
     val user2 = CommonUtils.randomString()
     val password2 = CommonUtils.randomString()
     val response2 = result(
-      ftpApi.request().name(name).hostname(hostname2).port(port2).user(user2).password(password2).update())
+      ftpApi.request.name(name).hostname(hostname2).port(port2).user(user2).password(password2).update())
     response2.name shouldBe name
     response2.port shouldBe port2
     response2.hostname shouldBe hostname2
@@ -160,8 +160,7 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
     (0 until count).foreach(
       _ =>
         result(
-          ftpApi
-            .request()
+          ftpApi.request
             .name(CommonUtils.randomString())
             .hostname(CommonUtils.randomString())
             .port(CommonUtils.availablePort())
@@ -176,8 +175,7 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
     val invalidStrings = Seq("a@", "a=", "a\\", "a~", "a//")
     invalidStrings.foreach { invalidString =>
       an[IllegalArgumentException] should be thrownBy result(
-        ftpApi
-          .request()
+        ftpApi.request
           .name(invalidString)
           .hostname(CommonUtils.randomString())
           .port(CommonUtils.availablePort())
@@ -192,8 +190,7 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
     val invalidStrings = Seq("a@", "a=", "a\\", "a~", "a//")
     invalidStrings.foreach { invalidString =>
       an[IllegalArgumentException] should be thrownBy result(
-        ftpApi
-          .request()
+        ftpApi.request
           .name(invalidString)
           .hostname(CommonUtils.randomString())
           .port(CommonUtils.availablePort())
@@ -229,15 +226,14 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
 
   private[this] def updatePartOfField(req: Request => Request, _expected: FtpInfo => FtpInfo): Unit = {
     val previous = result(
-      ftpApi
-        .request()
+      ftpApi.request
         .name(CommonUtils.randomString())
         .hostname(CommonUtils.randomString())
         .port(CommonUtils.availablePort())
         .user(CommonUtils.randomString())
         .password(CommonUtils.randomString())
         .update())
-    val updated = result(req(ftpApi.request().name(previous.name)).update())
+    val updated = result(req(ftpApi.request.name(previous.name)).update())
     val expected = _expected(previous)
     updated.name shouldBe expected.name
     updated.hostname shouldBe expected.hostname

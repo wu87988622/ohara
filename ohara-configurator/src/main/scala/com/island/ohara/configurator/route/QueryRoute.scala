@@ -21,7 +21,7 @@ import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent.{BrokerCollie, WorkerCollie}
 import com.island.ohara.client.DatabaseClient
 import com.island.ohara.client.configurator.v0.QueryApi._
-import com.island.ohara.client.configurator.v0.ValidationApi.RdbValidationRequest
+import com.island.ohara.client.configurator.v0.ValidationApi.RdbValidation
 import com.island.ohara.configurator.fake.FakeWorkerClient
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -57,7 +57,7 @@ private[configurator] object QueryRoute extends SprayJsonSupport {
                   ValidationUtils
                     .run(workerClient,
                          topicAdmin,
-                         RdbValidationRequest(
+                         RdbValidation(
                            url = query.url,
                            user = query.user,
                            password = query.password,

@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.validation
 
-import com.island.ohara.client.configurator.v0.ValidationApi.FtpValidationRequest
+import com.island.ohara.client.configurator.v0.ValidationApi.FtpValidation
 import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.route.ValidationUtils
@@ -44,11 +44,11 @@ class TestValidationOfFtp extends With3Brokers3Workers with Matchers {
       ValidationUtils.run(
         workerClient,
         topicAdmin,
-        FtpValidationRequest(hostname = ftpServer.hostname,
-                             port = ftpServer.port,
-                             user = ftpServer.user,
-                             password = ftpServer.password,
-                             workerClusterName = None),
+        FtpValidation(hostname = ftpServer.hostname,
+                      port = ftpServer.port,
+                      user = ftpServer.user,
+                      password = ftpServer.password,
+                      workerClusterName = None),
         NUMBER_OF_TASKS
       ))
   @Test
@@ -57,11 +57,11 @@ class TestValidationOfFtp extends With3Brokers3Workers with Matchers {
       ValidationUtils.run(
         workerClient,
         topicAdmin,
-        FtpValidationRequest(hostname = ftpServer.hostname,
-                             port = ftpServer.port,
-                             user = CommonUtils.randomString(10),
-                             password = ftpServer.password,
-                             workerClusterName = None),
+        FtpValidation(hostname = ftpServer.hostname,
+                      port = ftpServer.port,
+                      user = CommonUtils.randomString(10),
+                      password = ftpServer.password,
+                      workerClusterName = None),
         NUMBER_OF_TASKS
       ))
   @After

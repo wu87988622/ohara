@@ -18,7 +18,7 @@ package com.island.ohara.configurator.validation
 
 import com.island.ohara.client.DatabaseClient
 import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
-import com.island.ohara.client.configurator.v0.ValidationApi.RdbValidationRequest
+import com.island.ohara.client.configurator.v0.ValidationApi.RdbValidation
 import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.configurator.route.ValidationUtils
@@ -50,7 +50,7 @@ class TestValidationOfRdb extends With3Brokers3Workers with Matchers {
       ValidationUtils.run(
         workerClient,
         topicAdmin,
-        RdbValidationRequest(url = rdb.url, user = rdb.user, password = rdb.password, workerClusterName = None),
+        RdbValidation(url = rdb.url, user = rdb.user, password = rdb.password, workerClusterName = None),
         NUMBER_OF_TASKS
       ))
   }

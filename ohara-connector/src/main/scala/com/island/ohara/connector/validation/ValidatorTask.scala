@@ -23,10 +23,10 @@ import com.island.ohara.client.DatabaseClient
 import com.island.ohara.client.configurator.v0.QueryApi.RdbInfo
 import com.island.ohara.client.configurator.v0.ValidationApi
 import com.island.ohara.client.configurator.v0.ValidationApi.{
-  FtpValidationRequest,
-  HdfsValidationRequest,
-  JdbcValidationReport,
-  RdbValidationRequest,
+  FtpValidation,
+  HdfsValidation,
+  RdbValidationReport,
+  RdbValidation,
   ValidationReport
 }
 import com.island.ohara.client.ftp.FtpClient
@@ -55,9 +55,9 @@ class ValidatorTask extends SourceTask {
     null
   } else
     try information match {
-      case info: HdfsValidationRequest => toSourceRecord(ValidationReport(hostname, validate(info), true))
-      case info: RdbValidationRequest  => toSourceRecord(validate(info))
-      case info: FtpValidationRequest  => toSourceRecord(ValidationReport(hostname, validate(info), true))
+      case info: HdfsValidation => toSourceRecord(ValidationReport(hostname, validate(info), true))
+      case info: RdbValidation  => toSourceRecord(validate(info))
+      case info: FtpValidation  => toSourceRecord(ValidationReport(hostname, validate(info), true))
     } catch {
       case e: Throwable => toSourceRecord(ValidationReport(hostname, e.getMessage, false))
     } finally done = true
@@ -68,7 +68,7 @@ class ValidatorTask extends SourceTask {
 
   override def version(): String = VersionUtils.VERSION
 
-  private[this] def validate(info: HdfsValidationRequest): String = {
+  private[this] def validate(info: HdfsValidation): String = {
     val config = new Configuration()
     config.set("fs.defaultFS", info.uri)
     val fs = FileSystem.get(config)
@@ -76,9 +76,9 @@ class ValidatorTask extends SourceTask {
     s"check the hdfs:${info.uri} by getting the home:$home"
   }
 
-  private[this] def validate(info: RdbValidationRequest): JdbcValidationReport = {
+  private[this] def validate(info: RdbValidation): RdbValidationReport = {
     val client = DatabaseClient(info.url, info.user, info.password)
-    try JdbcValidationReport(
+    try RdbValidationReport(
       hostname = hostname,
       message = "succeed to fetch table information from database",
       pass = true,
@@ -89,7 +89,7 @@ class ValidatorTask extends SourceTask {
     )
     finally client.close()
   }
-  private[this] def validate(info: FtpValidationRequest): String = {
+  private[this] def validate(info: FtpValidation): String = {
     import scala.concurrent.duration._
     val client =
       FtpClient
@@ -108,14 +108,14 @@ class ValidatorTask extends SourceTask {
   private[this] def toJsObject: JsObject = JsObject(props.map { case (k, v) => (k, JsString(v)) })
   private[this] def information = require(ValidationApi.TARGET) match {
     case ValidationApi.VALIDATION_HDFS_PREFIX_PATH => ValidationApi.HDFS_VALIDATION_REQUEST_JSON_FORMAT.read(toJsObject)
-    case ValidationApi.VALIDATION_RDB_PREFIX_PATH  => ValidationApi.RDB_VALIDATION_REQUEST_JSON_FORMAT.read(toJsObject)
-    case ValidationApi.VALIDATION_FTP_PREFIX_PATH  => ValidationApi.FTP_VALIDATION_REQUEST_JSON_FORMAT.read(toJsObject)
+    case ValidationApi.VALIDATION_RDB_PREFIX_PATH  => ValidationApi.RDB_VALIDATION_JSON_FORMAT.read(toJsObject)
+    case ValidationApi.VALIDATION_FTP_PREFIX_PATH  => ValidationApi.FTP_VALIDATION_JSON_FORMAT.read(toJsObject)
     case other: String =>
       throw new IllegalArgumentException(s"valid targets are ${ValidationApi.VALIDATION_HDFS_PREFIX_PATH}," +
         s"${ValidationApi.VALIDATION_FTP_PREFIX_PATH} and ${ValidationApi.VALIDATION_HDFS_PREFIX_PATH}. current is $other")
   }
 
-  private[this] def toSourceRecord(data: ValidationReport): util.List[SourceRecord] =
+  private[this] def toSourceRecord(data: Object): util.List[SourceRecord] =
     util.Arrays.asList(
       new SourceRecord(null,
                        null,

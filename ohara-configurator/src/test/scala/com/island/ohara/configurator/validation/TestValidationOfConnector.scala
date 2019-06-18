@@ -39,11 +39,10 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
   def goodCase(): Unit = {
     val topicNames = Seq(CommonUtils.randomString(10), CommonUtils.randomString(10))
     val response = result(
-      ValidationApi
-        .access()
+      ValidationApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .connectorRequest()
+        .connectorRequest
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
         .numberOfTasks(1)
@@ -65,11 +64,10 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
 
   @Test
   def ignoreClassName(): Unit = an[IllegalArgumentException] should be thrownBy result(
-    ValidationApi
-      .access()
+    ValidationApi.access
       .hostname(configurator.hostname)
       .port(configurator.port)
-      .connectorRequest()
+      .connectorRequest
       .name(CommonUtils.randomString(10))
       .numberOfTasks(1)
       .workerClusterName(wkCluster.name)
@@ -78,11 +76,10 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
 
   @Test
   def ignoreTopicName(): Unit = an[IllegalArgumentException] should be thrownBy result(
-    ValidationApi
-      .access()
+    ValidationApi.access
       .hostname(configurator.hostname)
       .port(configurator.port)
-      .connectorRequest()
+      .connectorRequest
       .name(CommonUtils.randomString(10))
       .className(classOf[DumbSink].getName)
       .numberOfTasks(1)
@@ -92,11 +89,10 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
   @Test
   def ignoreWorkerCluster(): Unit = {
     val response = result(
-      ValidationApi
-        .access()
+      ValidationApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .connectorRequest()
+        .connectorRequest
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
         .numberOfTasks(2)
@@ -118,11 +114,10 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
   @Test
   def ignoreNumberOfTasks(): Unit = {
     val response = result(
-      ValidationApi
-        .access()
+      ValidationApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .connectorRequest()
+        .connectorRequest
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
         .topicName(CommonUtils.randomString())
@@ -130,14 +125,14 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
         .verify())
     response.className.get() shouldBe classOf[DumbSink].getName
     response.settings().size() should not be 0
-    response.numberOfTasks().isPresent shouldBe false
+    response.numberOfTasks().get shouldBe 1
     response.topicNames().size() shouldBe 1
     response.author().isPresent shouldBe true
     response.version().isPresent shouldBe true
     response.revision().isPresent shouldBe true
     response.workerClusterName().get shouldBe wkCluster.name
     response.connectorType().isPresent shouldBe true
-    response.errorCount() should not be 0
+    response.errorCount() shouldBe 0
   }
 
   @After

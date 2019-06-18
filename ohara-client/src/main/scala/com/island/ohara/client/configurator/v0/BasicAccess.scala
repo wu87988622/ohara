@@ -34,11 +34,11 @@ abstract class BasicAccess private[v0] (prefixPath: String) {
   private[this] var port: Int = -1
 
   def hostname(hostname: String): BasicAccess.this.type = {
-    this.hostname = hostname
+    this.hostname = CommonUtils.requireNonEmpty(hostname)
     this
   }
   def port(port: Int): BasicAccess.this.type = {
-    this.port = port
+    this.port = CommonUtils.requireConnectionPort(port)
     this
   }
 

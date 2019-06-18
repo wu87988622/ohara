@@ -20,10 +20,10 @@ import java.util
 
 import com.island.ohara.client.configurator.v0.ValidationApi
 import com.island.ohara.client.configurator.v0.ValidationApi.{
-  FtpValidationRequest,
-  HdfsValidationRequest,
-  JdbcValidationReport,
-  RdbValidationRequest,
+  FtpValidation,
+  HdfsValidation,
+  RdbValidation,
+  RdbValidationReport,
   ValidationReport
 }
 import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
@@ -40,22 +40,20 @@ import scala.concurrent.{ExecutionContext, Future}
 object ValidationUtils {
   private[this] val TIMEOUT = 30 seconds
 
-  def run(workerClient: WorkerClient, topicAdmin: TopicAdmin, request: RdbValidationRequest, taskCount: Int)(
-    implicit executionContext: ExecutionContext): Future[Seq[JdbcValidationReport]] = run(
+  def run(workerClient: WorkerClient, topicAdmin: TopicAdmin, request: RdbValidation, taskCount: Int)(
+    implicit executionContext: ExecutionContext): Future[Seq[RdbValidationReport]] = run(
     workerClient,
     topicAdmin,
     ValidationApi.VALIDATION_RDB_PREFIX_PATH,
-    ValidationApi.RDB_VALIDATION_REQUEST_JSON_FORMAT.write(request).asJsObject.fields.map {
+    ValidationApi.RDB_VALIDATION_JSON_FORMAT.write(request).asJsObject.fields.map {
       case (k, v) => (k, v.asInstanceOf[JsString].value)
     },
     taskCount
-  ).map(_.map {
-    case report: JdbcValidationReport => report
-    case report: Any =>
-      throw new IllegalArgumentException(s"what is this??? ${report.getClass.getName}")
-  })
+  ).map {
+    _.filter(_.isInstanceOf[RdbValidationReport]).map(_.asInstanceOf[RdbValidationReport])
+  }
 
-  def run(workerClient: WorkerClient, topicAdmin: TopicAdmin, request: HdfsValidationRequest, taskCount: Int)(
+  def run(workerClient: WorkerClient, topicAdmin: TopicAdmin, request: HdfsValidation, taskCount: Int)(
     implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] = run(
     workerClient,
     topicAdmin,
@@ -64,14 +62,16 @@ object ValidationUtils {
       case (k, v) => (k, v.asInstanceOf[JsString].value)
     },
     taskCount
-  )
+  ).map {
+    _.filter(_.isInstanceOf[ValidationReport]).map(_.asInstanceOf[ValidationReport])
+  }
 
-  def run(workerClient: WorkerClient, topicAdmin: TopicAdmin, request: FtpValidationRequest, taskCount: Int)(
+  def run(workerClient: WorkerClient, topicAdmin: TopicAdmin, request: FtpValidation, taskCount: Int)(
     implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] = run(
     workerClient,
     topicAdmin,
     ValidationApi.VALIDATION_FTP_PREFIX_PATH,
-    ValidationApi.FTP_VALIDATION_REQUEST_JSON_FORMAT
+    ValidationApi.FTP_VALIDATION_JSON_FORMAT
       .write(request)
       .asJsObject
       .fields
@@ -89,7 +89,9 @@ object ValidationUtils {
       .flatten
       .toMap,
     taskCount
-  )
+  ).map {
+    _.filter(_.isInstanceOf[ValidationReport]).map(_.asInstanceOf[ValidationReport])
+  }
 
   /**
     * a helper method to run the validation process quickly.
@@ -104,7 +106,7 @@ object ValidationUtils {
                         topicAdmin: TopicAdmin,
                         target: String,
                         settings: Map[String, String],
-                        taskCount: Int)(implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] = {
+                        taskCount: Int)(implicit executionContext: ExecutionContext): Future[Seq[Object]] = {
     val requestId: String = CommonUtils.uuid()
     val validationName = s"Validator-${CommonUtils.randomString()}"
     workerClient
@@ -140,10 +142,8 @@ object ValidationUtils {
             }
           )
           .asScala
-          .map(_.value.get match {
-            case report: ValidationReport => report
-            case _                        => throw new IllegalStateException(s"Unknown report")
-          })
+          .filter(_.value().isPresent)
+          .map(_.value.get)
         finally workerClient.delete(validationName)
       }
   }

@@ -25,7 +25,6 @@ import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
-import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.island.ohara.kafka.connector.json.SettingDefinition
@@ -35,8 +34,6 @@ import spray.json.JsString
 import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object ConnectorRoute extends SprayJsonSupport {
   private[this] lazy val LOG = Logger(ConnectorRoute.getClass)
-  @VisibleForTesting
-  private[route] val DEFAULT_NUMBER_OF_TASKS = 1
 
   private[this] def toRes(wkClusterName: String, request: Creation) = {
     ConnectorDescription(
@@ -55,7 +52,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
       throw new IllegalArgumentException(s"invalid order from column:${request.columns.map(_.order)}")
     if (request.columns.map(_.order).toSet.size != request.columns.size)
       throw new IllegalArgumentException(s"duplicate order:${request.columns.map(_.order)}")
-    request.changeNumberOfTasks(request.numberOfTasks.getOrElse(DEFAULT_NUMBER_OF_TASKS))
+    request
   }
 
   private[this] def update(connectorConfig: ConnectorDescription,

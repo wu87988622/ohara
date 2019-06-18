@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.validation
 
-import com.island.ohara.client.configurator.v0.ValidationApi.HdfsValidationRequest
+import com.island.ohara.client.configurator.v0.ValidationApi.HdfsValidation
 import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.configurator.route.ValidationUtils
@@ -41,29 +41,23 @@ class TestValidationOfHdfs extends With3Brokers3Workers with Matchers {
   @Test
   def goodCase(): Unit =
     assertSuccess(
-      ValidationUtils.run(workerClient,
-                          topicAdmin,
-                          HdfsValidationRequest(uri = "file:///tmp", workerClusterName = None),
-                          NUMBER_OF_TASKS))
+      ValidationUtils
+        .run(workerClient, topicAdmin, HdfsValidation(uri = "file:///tmp", workerClusterName = None), NUMBER_OF_TASKS))
   @Test
   def badCase(): Unit = assertFailure(
-    ValidationUtils.run(workerClient,
-                        topicAdmin,
-                        HdfsValidationRequest(uri = "hdfs:///tmp", workerClusterName = None),
-                        NUMBER_OF_TASKS))
+    ValidationUtils
+      .run(workerClient, topicAdmin, HdfsValidation(uri = "hdfs:///tmp", workerClusterName = None), NUMBER_OF_TASKS))
 
   @Test
   def emptyUri(): Unit = an[IllegalArgumentException] should be thrownBy
-    ValidationUtils
-      .run(workerClient, topicAdmin, HdfsValidationRequest(uri = "", workerClusterName = None), NUMBER_OF_TASKS)
+    ValidationUtils.run(workerClient, topicAdmin, HdfsValidation(uri = "", workerClusterName = None), NUMBER_OF_TASKS)
 
   /**
     * the failure is produced by spray json rather than our check. It chooses IllegalArgumentException.
     */
   @Test
   def nullUri(): Unit = an[IllegalArgumentException] should be thrownBy
-    ValidationUtils
-      .run(workerClient, topicAdmin, HdfsValidationRequest(uri = null, workerClusterName = None), NUMBER_OF_TASKS)
+    ValidationUtils.run(workerClient, topicAdmin, HdfsValidation(uri = null, workerClusterName = None), NUMBER_OF_TASKS)
   @After
   def tearDown(): Unit = Releasable.close(topicAdmin)
 }

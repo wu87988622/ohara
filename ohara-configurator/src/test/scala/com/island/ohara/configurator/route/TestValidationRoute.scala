@@ -16,12 +16,6 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.ValidationApi.{
-  FtpValidationRequest,
-  HdfsValidationRequest,
-  NodeValidationRequest,
-  RdbValidationRequest
-}
 import com.island.ohara.client.configurator.v0.{ValidationApi, WorkerApi}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -39,11 +33,10 @@ class TestValidationRoute extends SmallTest with Matchers {
   def validateConnector(): Unit = {
     val className = classOf[DumbSink].getName
     val response = result(
-      ValidationApi
-        .access()
+      ValidationApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .connectorRequest()
+        .connectorRequest
         .name(CommonUtils.randomString(10))
         .className(className)
         .topicName(CommonUtils.randomString(10))
@@ -56,11 +49,12 @@ class TestValidationRoute extends SmallTest with Matchers {
   @Test
   def validateHdfs(): Unit = {
     val report = result(
-      ValidationApi
-        .access()
+      ValidationApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .verify(HdfsValidationRequest(uri = "file:///tmp", workerClusterName = None)))
+        .hdfsRequest
+        .uri("file:///tmp")
+        .verify())
     report.isEmpty shouldBe false
     report.foreach(_.pass shouldBe true)
   }
@@ -68,25 +62,26 @@ class TestValidationRoute extends SmallTest with Matchers {
   @Test
   def validateHdfsOnNonexistentWorkerCluster(): Unit = {
     an[IllegalArgumentException] should be thrownBy result(
-      ValidationApi
-        .access()
+      ValidationApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .verify(HdfsValidationRequest(uri = "file:///tmp", workerClusterName = Some(CommonUtils.randomString(10)))))
+        .hdfsRequest
+        .uri("file:///tmp")
+        .workerClusterName(CommonUtils.randomString(10))
+        .verify())
   }
 
   @Test
   def validateRdb(): Unit = {
     val report = result(
-      ValidationApi
-        .access()
+      ValidationApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .verify(
-          RdbValidationRequest(url = "fake_url",
-                               user = "fake_user",
-                               password = "fake_password",
-                               workerClusterName = None)))
+        .rdbRequest
+        .url("fake_url")
+        .user("fake_user")
+        .password("fake_password")
+        .verify())
     report.isEmpty shouldBe false
     report.foreach(_.pass shouldBe true)
     report.foreach(_.rdbInfo.tables.isEmpty shouldBe false)
@@ -95,30 +90,29 @@ class TestValidationRoute extends SmallTest with Matchers {
   @Test
   def validateRbdOnNonexistentWorkerCluster(): Unit = {
     an[IllegalArgumentException] should be thrownBy result(
-      ValidationApi
-        .access()
+      ValidationApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .verify(
-          RdbValidationRequest(url = "fake_url",
-                               user = "fake_user",
-                               password = "fake_password",
-                               workerClusterName = Some(CommonUtils.randomString(10)))))
+        .rdbRequest
+        .url("fake_url")
+        .user("fake_user")
+        .password("fake_password")
+        .workerClusterName(CommonUtils.randomString(10))
+        .verify())
   }
 
   @Test
   def validateFtp(): Unit = {
     val report = result(
-      ValidationApi
-        .access()
+      ValidationApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .verify(
-          FtpValidationRequest(hostname = "fake_server",
-                               port = 22,
-                               user = "fake_user",
-                               password = "fake_password",
-                               workerClusterName = None)))
+        .ftpRequest
+        .hostname("fake_server")
+        .port(22)
+        .user("fake_user")
+        .password("fake_password")
+        .verify())
     report.isEmpty shouldBe false
     report.foreach(_.pass shouldBe true)
   }
@@ -126,26 +120,30 @@ class TestValidationRoute extends SmallTest with Matchers {
   @Test
   def validateFtpOnNonexistentWorkerCluster(): Unit = {
     an[IllegalArgumentException] should be thrownBy result(
-      ValidationApi
-        .access()
+      ValidationApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .verify(
-          FtpValidationRequest(hostname = "fake_server",
-                               port = 22,
-                               user = "fake_user",
-                               password = "fake_password",
-                               workerClusterName = Some(CommonUtils.randomString(10)))))
+        .ftpRequest
+        .hostname("fake_server")
+        .port(22)
+        .user("fake_user")
+        .password("fake_password")
+        .workerClusterName(CommonUtils.randomString(10))
+        .verify())
   }
 
   @Test
   def validateNode(): Unit = {
     val report = result(
-      ValidationApi
-        .access()
+      ValidationApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .verify(NodeValidationRequest("fake_server", 22, "fake_user", "fake_password")))
+        .nodeRequest
+        .hostname("fake_server")
+        .port(22)
+        .user("fake_user")
+        .password("fake_password")
+        .verify())
     report.isEmpty shouldBe false
     report.foreach(_.pass shouldBe true)
   }

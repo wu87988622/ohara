@@ -16,7 +16,6 @@
 
 package com.island.ohara.configurator
 import com.island.ohara.client.configurator.v0.ValidationApi
-import com.island.ohara.client.configurator.v0.ValidationApi.NodeValidationRequest
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.testing.service.SshdServer
@@ -24,9 +23,8 @@ import org.junit.{After, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.Await
-import scala.concurrent.duration._
-
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 class TestNodeValidation extends SmallTest with Matchers {
 
   private[this] val configurator = Configurator.builder().fake().build()
@@ -35,17 +33,15 @@ class TestNodeValidation extends SmallTest with Matchers {
   @Test
   def test(): Unit = {
     val reports = Await.result(
-      ValidationApi
-        .access()
+      ValidationApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .verify(
-          NodeValidationRequest(
-            hostname = sshd.hostname(),
-            port = sshd.port(),
-            user = sshd.user(),
-            password = sshd.password()
-          )),
+        .nodeRequest
+        .hostname(sshd.hostname())
+        .port(sshd.port())
+        .user(sshd.user())
+        .password(sshd.password())
+        .verify(),
       10 seconds
     )
     reports.isEmpty shouldBe false

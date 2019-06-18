@@ -26,11 +26,10 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class TestFtpApi extends SmallTest with Matchers {
 
   @Test
-  def ignoreNameOnCreation(): Unit = an[NullPointerException] should be thrownBy FtpApi
-    .access()
+  def ignoreNameOnCreation(): Unit = an[NullPointerException] should be thrownBy FtpApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .user(CommonUtils.randomString())
@@ -38,11 +37,10 @@ class TestFtpApi extends SmallTest with Matchers {
     .create()
 
   @Test
-  def ignoreNameOnUpdate(): Unit = an[NullPointerException] should be thrownBy FtpApi
-    .access()
+  def ignoreNameOnUpdate(): Unit = an[NullPointerException] should be thrownBy FtpApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .user(CommonUtils.randomString())
@@ -50,17 +48,16 @@ class TestFtpApi extends SmallTest with Matchers {
     .update()
 
   @Test
-  def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy FtpApi.access().request().name("")
+  def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy FtpApi.access.request.name("")
 
   @Test
-  def nullName(): Unit = an[NullPointerException] should be thrownBy FtpApi.access().request().name(null)
+  def nullName(): Unit = an[NullPointerException] should be thrownBy FtpApi.access.request.name(null)
 
   @Test
-  def ignoreHostnameOnCreation(): Unit = an[NullPointerException] should be thrownBy FtpApi
-    .access()
+  def ignoreHostnameOnCreation(): Unit = an[NullPointerException] should be thrownBy FtpApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .name(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .user(CommonUtils.randomString())
@@ -68,17 +65,16 @@ class TestFtpApi extends SmallTest with Matchers {
     .create()
 
   @Test
-  def emptyHostname(): Unit = an[IllegalArgumentException] should be thrownBy FtpApi.access().request().hostname("")
+  def emptyHostname(): Unit = an[IllegalArgumentException] should be thrownBy FtpApi.access.request.hostname("")
 
   @Test
-  def nullHostname(): Unit = an[NullPointerException] should be thrownBy FtpApi.access().request().hostname(null)
+  def nullHostname(): Unit = an[NullPointerException] should be thrownBy FtpApi.access.request.hostname(null)
 
   @Test
-  def ignorePortOnCreation(): Unit = an[NullPointerException] should be thrownBy FtpApi
-    .access()
+  def ignorePortOnCreation(): Unit = an[NullPointerException] should be thrownBy FtpApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .name(CommonUtils.randomString())
     .hostname(CommonUtils.randomString())
     .user(CommonUtils.randomString())
@@ -86,14 +82,13 @@ class TestFtpApi extends SmallTest with Matchers {
     .create()
 
   @Test
-  def negativePort(): Unit = an[IllegalArgumentException] should be thrownBy FtpApi.access().request().port(-1)
+  def negativePort(): Unit = an[IllegalArgumentException] should be thrownBy FtpApi.access.request.port(-1)
 
   @Test
-  def ignoreUserOnCreation(): Unit = an[NullPointerException] should be thrownBy FtpApi
-    .access()
+  def ignoreUserOnCreation(): Unit = an[NullPointerException] should be thrownBy FtpApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .name(CommonUtils.randomString())
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
@@ -101,17 +96,16 @@ class TestFtpApi extends SmallTest with Matchers {
     .create()
 
   @Test
-  def emptyUser(): Unit = an[IllegalArgumentException] should be thrownBy FtpApi.access().request().user("")
+  def emptyUser(): Unit = an[IllegalArgumentException] should be thrownBy FtpApi.access.request.user("")
 
   @Test
-  def nullUser(): Unit = an[NullPointerException] should be thrownBy FtpApi.access().request().user(null)
+  def nullUser(): Unit = an[NullPointerException] should be thrownBy FtpApi.access.request.user(null)
 
   @Test
-  def ignorePasswordOnCreation(): Unit = an[NullPointerException] should be thrownBy FtpApi
-    .access()
+  def ignorePasswordOnCreation(): Unit = an[NullPointerException] should be thrownBy FtpApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .name(CommonUtils.randomString())
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
@@ -119,8 +113,45 @@ class TestFtpApi extends SmallTest with Matchers {
     .create()
 
   @Test
-  def emptyPassword(): Unit = an[IllegalArgumentException] should be thrownBy FtpApi.access().request().password("")
+  def emptyPassword(): Unit = an[IllegalArgumentException] should be thrownBy FtpApi.access.request.password("")
 
   @Test
-  def nullPassword(): Unit = an[NullPointerException] should be thrownBy FtpApi.access().request().password(null)
+  def nullPassword(): Unit = an[NullPointerException] should be thrownBy FtpApi.access.request.password(null)
+
+  @Test
+  def testCreation(): Unit = {
+    val name = CommonUtils.randomString(10)
+    val hostname = CommonUtils.randomString(10)
+    val port = CommonUtils.availablePort()
+    val user = CommonUtils.randomString(10)
+    val password = CommonUtils.randomString(10)
+
+    val creation =
+      FtpApi.access.request.name(name).hostname(hostname).port(port).user(user).password(password).creation
+    creation.name shouldBe name
+    creation.hostname shouldBe hostname
+    creation.port shouldBe port
+    creation.user shouldBe user
+    creation.password shouldBe password
+  }
+
+  @Test
+  def testUpdate(): Unit = {
+    val name = CommonUtils.randomString(10)
+    val hostname = CommonUtils.randomString(10)
+    val port = CommonUtils.availablePort()
+    val user = CommonUtils.randomString(10)
+    val password = CommonUtils.randomString(10)
+
+    val update = FtpApi.access.request.name(name).hostname(hostname).port(port).user(user).password(password).update
+    update.hostname.get shouldBe hostname
+    update.port.get shouldBe port
+    update.user.get shouldBe user
+    update.password.get shouldBe password
+
+    FtpApi.access.request.update.hostname shouldBe None
+    FtpApi.access.request.update.port shouldBe None
+    FtpApi.access.request.update.user shouldBe None
+    FtpApi.access.request.update.password shouldBe None
+  }
 }

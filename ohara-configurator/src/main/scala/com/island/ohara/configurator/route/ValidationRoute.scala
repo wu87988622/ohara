@@ -59,9 +59,9 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
       ValidationReport(hostname = CommonUtils.hostname, message = "a fake report", pass = true)))
 
   @VisibleForTesting
-  private[route] def fakeJdbcReport(): Future[Seq[JdbcValidationReport]] = Future.successful(
+  private[route] def fakeJdbcReport(): Future[Seq[RdbValidationReport]] = Future.successful(
     (0 until DEFAULT_NUMBER_OF_VALIDATION).map(_ =>
-      JdbcValidationReport(
+      RdbValidationReport(
         hostname = CommonUtils.hostname,
         message = "a fake report",
         pass = true,
@@ -89,7 +89,7 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
     pathPrefix(VALIDATION_PREFIX_PATH) {
       verifyRoute(
         root = VALIDATION_HDFS_PREFIX_PATH,
-        verify = (clusterName, req: HdfsValidationRequest) =>
+        verify = (clusterName, req: HdfsValidation) =>
           CollieUtils.both(if (req.workerClusterName.isEmpty) clusterName else req.workerClusterName).flatMap {
             case (_, topicAdmin, _, workerClient) =>
               workerClient match {
@@ -99,7 +99,7 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
         }
       ) ~ verifyRoute(
         root = VALIDATION_RDB_PREFIX_PATH,
-        verify = (clusterName, req: RdbValidationRequest) =>
+        verify = (clusterName, req: RdbValidation) =>
           CollieUtils.both(if (req.workerClusterName.isEmpty) clusterName else req.workerClusterName).flatMap {
             case (_, topicAdmin, _, workerClient) =>
               workerClient match {
@@ -110,7 +110,7 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
         }
       ) ~ verifyRoute(
         root = VALIDATION_FTP_PREFIX_PATH,
-        verify = (clusterName, req: FtpValidationRequest) =>
+        verify = (clusterName, req: FtpValidation) =>
           CollieUtils.both(if (req.workerClusterName.isEmpty) clusterName else req.workerClusterName).flatMap {
             case (_, topicAdmin, _, workerClient) =>
               workerClient match {
@@ -120,7 +120,7 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
         }
       ) ~ verifyRoute(
         root = VALIDATION_NODE_PREFIX_PATH,
-        verify = (_, req: NodeValidationRequest) =>
+        verify = (_, req: NodeValidation) =>
           clusterCollie
             .verifyNode(
               Node(

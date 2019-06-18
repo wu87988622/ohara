@@ -65,7 +65,7 @@ class TestConnectorApi extends SmallTest with Matchers {
     request.className shouldBe className
     request.columns shouldBe Seq.empty
     request.topicNames shouldBe topicNames
-    request.numberOfTasks shouldBe None
+    request.numberOfTasks shouldBe 1
     // this key is deprecated so json converter will replace it by new one
     request.settings.contains("className") shouldBe false
     request.settings.contains("aaa") shouldBe false
@@ -338,4 +338,24 @@ class TestConnectorApi extends SmallTest with Matchers {
 
   @Test
   def nullSettings(): Unit = an[NullPointerException] should be thrownBy ConnectorApi.access().request().settings(null)
+
+  @Test
+  def testCreation(): Unit = {
+    val name = CommonUtils.randomString(10)
+    val className = CommonUtils.randomString(10)
+    val topicNames = Seq(CommonUtils.randomString(10))
+    val map = Map(
+      CommonUtils.randomString(10) -> CommonUtils.randomString(10),
+      CommonUtils.randomString(10) -> CommonUtils.randomString(10),
+      CommonUtils.randomString(10) -> CommonUtils.randomString(10)
+    )
+    val creation =
+      ConnectorApi.access().request().name(name).className(className).topicNames(topicNames).settings(map).creation
+    creation.name shouldBe name
+    creation.className shouldBe className
+    creation.topicNames shouldBe topicNames
+    map.foreach {
+      case (k, v) => creation.plain(k) shouldBe v
+    }
+  }
 }

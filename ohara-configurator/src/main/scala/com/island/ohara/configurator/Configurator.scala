@@ -34,7 +34,6 @@ import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Meter
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import com.island.ohara.client.configurator.v0.ValidationApi.NodeValidationRequest
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.{ZookeeperApi, _}
 import com.island.ohara.common.data.Serializer
@@ -345,11 +344,15 @@ object Configurator {
           GLOBAL_CONFIGURATOR,
           (node: Node) => {
             val validationResult: Seq[ValidationApi.ValidationReport] = Await.result(
-              ValidationApi
-                .access()
+              ValidationApi.access
                 .hostname(CommonUtils.hostname)
                 .port(GLOBAL_CONFIGURATOR.port)
-                .verify(NodeValidationRequest(node.name, node.port, node.user, node.password)),
+                .nodeRequest
+                .hostname(node.name)
+                .port(node.port)
+                .user(node.user)
+                .password(node.password)
+                .verify(),
               30 seconds
             )
             val isValidationPass: Boolean = validationResult.map(x => x.pass).head

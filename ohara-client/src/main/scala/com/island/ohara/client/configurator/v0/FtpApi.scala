@@ -15,7 +15,7 @@
  */
 
 package com.island.ohara.client.configurator.v0
-import com.island.ohara.common.annotations.Optional
+import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsObject, JsString, JsValue, RootJsonFormat}
@@ -63,6 +63,20 @@ object FtpApi {
     def password(password: String): Request
 
     /**
+      * Retrieve the inner object of request payload. Noted, it throw unchecked exception if you haven't filled all required fields
+      * @return the payload of creation
+      */
+    @VisibleForTesting
+    private[v0] def creation: Creation
+
+    /**
+      * Retrieve the inner object of request payload. Noted, it throw unchecked exception if you haven't filled all required fields
+      * @return the payload of creation
+      */
+    @VisibleForTesting
+    private[v0] def update: Update
+
+    /**
       * generate the POST request
       * @param executionContext thread pool
       * @return created data
@@ -78,7 +92,7 @@ object FtpApi {
   }
 
   class Access private[v0] extends Access2[FtpInfo](FTP_PREFIX_PATH) {
-    def request(): Request = new Request {
+    def request: Request = new Request {
       private[this] var name: String = _
       private[this] var port: Option[Int] = None
       private[this] var hostname: String = _
@@ -110,29 +124,33 @@ object FtpApi {
         this
       }
 
+      override private[v0] def creation: Creation = Creation(
+        name = CommonUtils.requireNonEmpty(name),
+        hostname = CommonUtils.requireNonEmpty(hostname),
+        port = port.map(CommonUtils.requireConnectionPort).getOrElse(throw new NullPointerException),
+        user = CommonUtils.requireNonEmpty(user),
+        password = CommonUtils.requireNonEmpty(password)
+      )
+
+      override private[v0] def update: Update = Update(
+        hostname = Option(hostname).map(CommonUtils.requireNonEmpty),
+        port = port.map(CommonUtils.requireConnectionPort),
+        user = Option(user).map(CommonUtils.requireNonEmpty),
+        password = Option(password).map(CommonUtils.requireNonEmpty),
+      )
+
       override def create()(implicit executionContext: ExecutionContext): Future[FtpInfo] =
         exec.post[Creation, FtpInfo, ErrorApi.Error](
           _url,
-          Creation(
-            name = CommonUtils.requireNonEmpty(name),
-            hostname = CommonUtils.requireNonEmpty(hostname),
-            port = port.map(CommonUtils.requireConnectionPort).getOrElse(throw new NullPointerException),
-            user = CommonUtils.requireNonEmpty(user),
-            password = CommonUtils.requireNonEmpty(password)
-          )
+          creation
         )
       override def update()(implicit executionContext: ExecutionContext): Future[FtpInfo] =
         exec.put[Update, FtpInfo, ErrorApi.Error](
           s"${_url}/${CommonUtils.requireNonEmpty(name)}",
-          Update(
-            hostname = Option(hostname).map(CommonUtils.requireNonEmpty),
-            port = port.map(CommonUtils.requireConnectionPort),
-            user = Option(user).map(CommonUtils.requireNonEmpty),
-            password = Option(password).map(CommonUtils.requireNonEmpty),
-          )
+          update
         )
     }
   }
 
-  def access(): Access = new Access
+  def access: Access = new Access
 }

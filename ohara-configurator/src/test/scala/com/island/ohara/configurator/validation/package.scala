@@ -16,11 +16,11 @@
 
 package com.island.ohara.configurator
 
-import com.island.ohara.client.configurator.v0.ValidationApi.{JdbcValidationReport, ValidationReport}
+import com.island.ohara.client.configurator.v0.ValidationApi.{RdbValidationReport, ValidationReport}
 import org.scalatest.Matchers
 
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 package object validation extends Matchers {
   val NUMBER_OF_TASKS = 3
   private[this] def result[T](f: Future[T]): T = Await.result(f, 60 seconds)
@@ -41,9 +41,12 @@ package object validation extends Matchers {
     reports.foreach(report => withClue(report.message)(report.pass shouldBe true))
   }
 
-  def assertJdbcSuccess(f: Future[Seq[JdbcValidationReport]]): Unit = {
-    assertSuccess(f)
+  def assertJdbcSuccess(f: Future[Seq[RdbValidationReport]]): Unit = {
     val reports = result(f)
+    reports.size >= NUMBER_OF_TASKS shouldBe true
+    reports.isEmpty shouldBe false
+    reports.map(_.message).foreach(_.nonEmpty shouldBe true)
+    reports.foreach(report => withClue(report.message)(report.pass shouldBe true))
     reports.foreach(_.rdbInfo.tables.isEmpty shouldBe false)
   }
 }

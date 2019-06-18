@@ -32,6 +32,7 @@ object ConnectorApi {
   val STOP_COMMAND: String = "stop"
   val PAUSE_COMMAND: String = "pause"
   val RESUME_COMMAND: String = "resume"
+  val DEFAULT_NUMBER_OF_TASKS = 1
 
   /**
     * The name is a part of "Restful APIs" so "DON'T" change it arbitrarily
@@ -80,10 +81,7 @@ object ConnectorApi {
       .get(SettingDefinition.COLUMNS_DEFINITION.key())
       .map(s => PropGroups.ofJson(s).toColumns.asScala)
       .getOrElse(Seq.empty)
-    def changeNumberOfTasks(newValue: Int): Creation = Creation(
-      settings = this.settings ++ Map(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key() -> JsNumber(newValue))
-    )
-    def numberOfTasks: Option[Int] = plain.get(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key()).map(_.toInt)
+    def numberOfTasks: Int = plain(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key()).toInt
     def workerClusterName: Option[String] = plain.get(SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key())
     def topicNames: Seq[String] =
       plain
@@ -96,7 +94,14 @@ object ConnectorApi {
   implicit val CONNECTOR_CREATION_REQUEST_JSON_FORMAT: RootJsonFormat[Creation] =
     new RootJsonFormat[Creation] {
       override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
-      override def read(json: JsValue): Creation = Creation(noJsNull(json.asJsObject.fields))
+      override def read(json: JsValue): Creation = {
+        var fields = noJsNull(json.asJsObject.fields)
+        // in request, we mark the "numberOfTasks" as optional.
+        if (!fields.contains(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key()))
+          fields = fields ++ Map(
+            SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key() -> JsNumber(DEFAULT_NUMBER_OF_TASKS))
+        Creation(fields)
+      }
     }
 
   import MetricsApi._
@@ -158,14 +163,15 @@ object ConnectorApi {
 
   /**
     * used to generate the payload and url for POST/PUT request.
-    * This basic class is used to collect settings of connector. It is also used by validation so we extract the same behavior from Request
+    * This basic class is used to collect settings of connector. It is also used by validation so we extract the same behavior from Request.
+    * We use private[v0] instead of "sealed" since it is extendable to ValidationApi.
     */
-  abstract class BasicRequest {
+  abstract class BasicRequest private[v0] {
     protected[this] var name: String = _
     protected[this] var className: String = _
     protected[this] var columns: Seq[Column] = _
     protected[this] var topicNames: Seq[String] = _
-    protected[this] var numberOfTasks: Option[Int] = None
+    protected[this] var numberOfTasks: Int = DEFAULT_NUMBER_OF_TASKS
     protected[this] var settings: Map[String, String] = Map.empty
     protected[this] var workerClusterName: String = _
     def name(name: String): BasicRequest.this.type = {
@@ -194,10 +200,9 @@ object ConnectorApi {
       this.topicNames = CommonUtils.requireNonEmpty(topicNames.asJava).asScala
       this
     }
-    @Optional(
-      "You don't need to fill this field when update/create connector. But this filed is required in starting connector")
+    @Optional("default value is 1")
     def numberOfTasks(numberOfTasks: Int): BasicRequest.this.type = {
-      this.numberOfTasks = Some(CommonUtils.requirePositiveInt(numberOfTasks))
+      this.numberOfTasks = CommonUtils.requirePositiveInt(numberOfTasks)
       this
     }
     @Optional("server will match a worker cluster for you if the wk name is ignored")
@@ -220,9 +225,10 @@ object ConnectorApi {
     /**
       * generate the payload for request. It removes the ignored fields and keeping all value in json representation.
       * This method is exposed to sub classes since this generation is not friendly and hence we should reuse it as much as possible.
+      * Noted, it throw unchecked exception if you haven't filled all required fields
       * @return creation object
       */
-    protected def creation(): Creation = Creation(
+    private[v0] def creation: Creation = Creation(
       settings = (settings.map {
         case (k, v) => k -> JsString(v)
       } ++ Map(
@@ -236,7 +242,7 @@ object ConnectorApi {
         SettingDefinition.TOPIC_NAMES_DEFINITION.key() -> (if (topicNames == null) JsNull
                                                            else if (topicNames.isEmpty) JsArray()
                                                            else StringList.toJsonString(topicNames.asJava).parseJson),
-        SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key() -> numberOfTasks.map(JsNumber(_)).getOrElse(JsNull),
+        SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key() -> JsNumber(CommonUtils.requirePositiveInt(numberOfTasks)),
         SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION
           .key() -> (if (workerClusterName == null) JsNull
                      else JsString(CommonUtils.requireNonEmpty(workerClusterName)))
@@ -253,7 +259,7 @@ object ConnectorApi {
   /**
     * The do-action methods are moved from BasicRequest to this one. Hence, ValidationApi ConnectorRequest does not have those weired methods
     */
-  abstract class Request extends BasicRequest {
+  sealed abstract class Request extends BasicRequest {
 
     /**
       * generate the POST request
@@ -314,11 +320,20 @@ object ConnectorApi {
 
     def request(): Request = new Request {
       override def create()(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
-        exec.post[Creation, ConnectorDescription, ErrorApi.Error](_url, creation())
+        exec.post[Creation, ConnectorDescription, ErrorApi.Error](_url, creation)
 
+      /**
+        *  There is no "Update" class here since all settings in request is converted to Map[String, JsValue], and we use many helper methods to
+        *  take specific arguments from the map. Hence, we don't create another case class to represent a object which carries the related arguments.
+        *  This is a workaround to accept "unknown" settings from custom connector. There are two disadvantages caused by this way.
+        *  1. we have to define the marshaller/unmarshaller manually
+        *  2. we can't verify the existence in receiving the request. By contrast, the arguments in request is validated in route.
+        * @param executionContext thread pool
+        * @return updated/created data
+        */
       override def update()(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
         exec.put[Creation, ConnectorDescription, ErrorApi.Error](s"${_url}/${CommonUtils.requireNonEmpty(name)}",
-                                                                 creation())
+                                                                 creation)
     }
   }
 
