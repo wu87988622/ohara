@@ -2,15 +2,15 @@
   "name": "ohara-manager",
   "version": "0.1.0",
   "private": true,
-  "main": "index.js",
+  "main": "start.js",
   "engines": {
     "node": "^8.12.0"
   },
   "scripts": {
     "preinstall": "node ./scripts/checkYarnVersion.js",
     "setup": "yarn && yarn --cwd client setup",
-    "start": "nodemon index.js --exec 'yarn lint:server && node'",
-    "start:prod": "node index.js",
+    "start": "nodemon start.js --exec 'yarn lint:server && node'",
+    "start:prod": "node start.js",
     "start:client": "yarn --cwd client start",
     "dev:client": "run-p start:client test:client",
     "lint": "run-s lint:*",

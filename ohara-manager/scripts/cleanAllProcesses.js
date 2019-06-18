@@ -26,7 +26,7 @@ try {
 }
 
 try {
-  cp.execSync('pkill -f index.js start.js', { stdio: 'inherit' });
+  cp.execSync('pkill -f start.js', { stdio: 'inherit' });
 } catch (error) {
   if (error.status === 1) {
     // Couldn't find any processes, exit with success status

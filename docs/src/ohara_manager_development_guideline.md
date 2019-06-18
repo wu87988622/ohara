@@ -212,7 +212,7 @@ yarn setup
 
 After the build, copy/use these files and directories to the destination directory (Note this step is automatically done by Ohara-assembly module):
 
-- index.js
+- start.js
 - config.js
 - client -- only build directory is needed
   - build

@@ -127,7 +127,7 @@ task runManager {
       if(!project.hasProperty('configurator')) throw new IllegalArgumentException("configurator is required")
       String configurator = project.getProperty('configurator')
 
-      commandLine 'node', './index.js', '--port', port, "--configurator", configurator
+      commandLine 'node', './start.js', '--port', port, "--configurator", configurator
     }
   }
 }

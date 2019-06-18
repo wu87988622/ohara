@@ -70,7 +70,7 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
   console.log(chalk.blue('Starting ohara manager server'));
   server = execa(
     'forever',
-    ['start', 'index.js', '--configurator', apiRoot, '--port', port],
+    ['start', 'start.js', '--configurator', apiRoot, '--port', port],
     {
       stdio: 'inherit',
     },

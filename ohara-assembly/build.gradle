@@ -110,7 +110,7 @@ distributions {
         from { "$projectDir/../ohara-manager/config.js" }
       }
       into("manager") {
-        from { "$projectDir/../ohara-manager/index.js" }
+        from { "$projectDir/../ohara-manager/start.js" }
       }
       into("manager") {
         from { "$projectDir/../gradle.properties" }
