@@ -20,8 +20,8 @@ import { map, includes, get, isNull } from 'lodash';
 
 import * as nodeApi from 'api/nodeApi';
 import { Table, Checkbox } from './styles';
-import { Modal } from 'common/Modal';
-import { Box } from 'common/Layout';
+import { Modal } from 'components/common/Modal';
+import { Box } from 'components/common/Layout';
 
 class NodeSelectModal extends React.Component {
   static propTypes = {

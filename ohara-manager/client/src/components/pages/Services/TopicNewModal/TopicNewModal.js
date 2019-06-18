@@ -23,10 +23,10 @@ import { get } from 'lodash';
 import * as topicApi from 'api/topicApi';
 import * as brokerApi from 'api/brokerApi';
 import * as MESSAGES from 'constants/messages';
-import { Modal } from 'common/Modal';
-import { Box } from 'common/Layout';
-import { FormGroup, Label } from 'common/Form';
-import { InputField } from 'common/FormFields';
+import { Modal } from 'components/common/Modal';
+import { Box } from 'components/common/Layout';
+import { FormGroup, Label } from 'components/common/Form';
+import { InputField } from 'components/common/FormFields';
 
 class TopicNewModal extends React.Component {
   static propTypes = {

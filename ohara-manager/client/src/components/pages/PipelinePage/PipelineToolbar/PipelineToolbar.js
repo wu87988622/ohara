@@ -24,7 +24,7 @@ import * as PIPELINES from 'constants/pipelines';
 import PipelineNewStream from './PipelineNewStream';
 import PipelineNewConnector from './PipelineNewConnector';
 import PipelineNewTopic from './PipelineNewTopic';
-import { Modal } from 'common/Modal';
+import { Modal } from 'components/common/Modal';
 import { fetchWorkers } from 'api/workerApi';
 import { isEmptyStr } from 'utils/commonUtils';
 import { Icon } from './styles.js';

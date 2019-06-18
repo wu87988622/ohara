@@ -15,7 +15,7 @@
  */
 
 import styled from 'styled-components';
-import { DataTable } from 'common/Table';
+import { DataTable } from 'components/common/Table';
 
 const Table = styled(DataTable)`
   text-align: left;

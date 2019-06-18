@@ -19,8 +19,8 @@ import PropTypes from 'prop-types';
 import toastr from 'toastr';
 
 import * as MESSAGES from 'constants/messages';
-import { Box } from 'common/Layout';
-import { Select } from 'common/Form';
+import { Box } from 'components/common/Layout';
+import { Select } from 'components/common/Form';
 import { createConnector } from '../pipelineUtils/pipelineToolbarUtils';
 import { findByGraphId } from '../pipelineUtils/commonUtils';
 import { graph as graphPropType } from 'propTypes/pipeline';

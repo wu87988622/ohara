@@ -18,10 +18,10 @@ import React from 'react';
 import { isEmpty, map, get } from 'lodash';
 
 import * as zookeeperApi from 'api/zookeeperApi';
-import { Box } from 'common/Layout';
-import { H2 } from 'common/Headings';
-import { TableLoader } from 'common/Loader';
-import { FormGroup } from 'common/Form';
+import { Box } from 'components/common/Layout';
+import { H2 } from 'components/common/Headings';
+import { TableLoader } from 'components/common/Loader';
+import { FormGroup } from 'components/common/Form';
 
 import * as s from './styles';
 

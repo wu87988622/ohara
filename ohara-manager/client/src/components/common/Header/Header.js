@@ -23,8 +23,7 @@ import { get } from 'lodash';
 
 import * as URLS from 'constants/urls';
 import NAVS from 'constants/navs';
-import ConfigurationModal from 'pages/ConfigurationModal';
-import { ListLoader } from 'common/Loader';
+import { ListLoader } from 'components/common/Loader';
 import { fetchInfo } from 'api/infoApi';
 import { InfoModal } from '../Modal';
 
@@ -194,23 +193,13 @@ class Header extends React.Component {
 
   render() {
     const { isLogin } = this.props;
-    const {
-      isConfigModalActive,
-      isVersionModalActive,
-      info = {},
-      isLoading,
-    } = this.state;
+    const { isVersionModalActive, info = {}, isLoading } = this.state;
 
     const { versionInfo = {}, mode = '' } = info;
     const { version, revision, date } = versionInfo;
 
     return (
       <StyledHeader>
-        <ConfigurationModal
-          isActive={isConfigModalActive}
-          handleClose={this.handleConfigModalClose}
-        />
-
         <InfoModal
           title="Ohara version"
           isActive={isVersionModalActive}

@@ -20,8 +20,8 @@ import { Field } from 'react-final-form';
 
 import ColumnTable from './CustomConnector/ColumnTable';
 import Tabs from './Tabs';
-import { FormGroup } from 'common/Form';
-import { InputField, Select, Checkbox } from 'common/Mui/Form';
+import { FormGroup } from 'components/common/Form';
+import { InputField, Select, Checkbox } from 'components/common/Mui/Form';
 import { findByGraphId } from '../pipelineUtils/commonUtils';
 
 export const getCurrTopicId = ({ originals, target = '' }) => {

@@ -19,8 +19,8 @@ import PropTypes from 'prop-types';
 import ReactModal from 'react-modal';
 import styled from 'styled-components';
 
-import { Button } from 'common/Form';
-import { H2 } from 'common/Headings';
+import { Button } from 'components/common/Form';
+import { H2 } from 'components/common/Headings';
 import { cancelBtn, primaryBtn } from 'theme/btnTheme';
 
 const ModalWrapper = styled(ReactModal)`

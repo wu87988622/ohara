@@ -33,7 +33,7 @@ import * as Connectors from '../Connectors';
 import * as utils from './pipelineNewPageUtils';
 import PipelineToolbar from '../PipelineToolbar';
 import PipelineGraph from '../PipelineGraph';
-import { Box } from 'common/Layout';
+import { Box } from 'components/common/Layout';
 import { getConnectors } from '../pipelineUtils/commonUtils';
 import { PIPELINE_NEW, PIPELINE_EDIT } from 'constants/documentTitles';
 

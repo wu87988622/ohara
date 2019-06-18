@@ -23,8 +23,8 @@ import { find, some, endsWith, get, isNull } from 'lodash';
 import * as streamApi from 'api/streamApi';
 import * as MESSAGES from 'constants/messages';
 import Editable from '../Editable';
-import { ListLoader } from 'common/Loader';
-import { ConfirmModal } from 'common/Modal';
+import { ListLoader } from 'components/common/Loader';
+import { ConfirmModal } from 'components/common/Modal';
 import { createConnector } from '../pipelineUtils/pipelineToolbarUtils';
 import { Icon, TableWrapper, Table } from './styles';
 

@@ -18,7 +18,7 @@ import React from 'react';
 
 import DocumentTitle from 'react-document-title';
 
-import { AppWrapper } from 'common/Layout';
+import { AppWrapper } from 'components/common/Layout';
 import { MONITORING } from 'constants/documentTitles';
 
 class MonitoringPage extends React.Component {

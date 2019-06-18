@@ -24,7 +24,7 @@ import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
 import * as configurationApi from 'api/configurationApi';
 import * as validateApi from 'api/validateApi';
-import { Input, Button, FormGroup, Label } from 'common/Form';
+import { Input, Button, FormGroup, Label } from 'components/common/Form';
 import { cancelBtn, primaryBtn, defaultBtn } from 'theme/btnTheme';
 import { toNumber } from 'lodash';
 

@@ -18,10 +18,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Form, Field } from 'react-final-form';
 
-import { Modal } from 'common/Modal';
-import { FormGroup, Label } from 'common/Form';
+import { Modal } from 'components/common/Modal';
+import { FormGroup, Label } from 'components/common/Form';
 import { FormInner } from './styles';
-import { InputField, SelectField } from 'common/FormFields';
+import { InputField, SelectField } from 'components/common/FormFields';
 
 const NewRowModal = props => {
   const { isActive, dataTypes, handleConfirmClick, handleModalClose } = props;

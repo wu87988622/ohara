@@ -25,7 +25,7 @@ import { get } from 'lodash';
 import * as URL from 'constants/urls';
 import * as LOGIN_PAGE from 'constants/login';
 import * as MESSAGES from 'constants/messages';
-import { Input, Button } from 'common/Form';
+import { Input, Button } from 'components/common/Form';
 import { setUserKey } from 'utils/authUtils';
 import { login } from 'api/authApi';
 import { LOGIN } from 'constants/documentTitles';

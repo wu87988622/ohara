@@ -17,8 +17,8 @@
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
 
-import { Button } from 'common/Mui/Form';
-import { Table } from 'common/Mui/Table';
+import { Button } from 'components/common/Mui/Form';
+import { Table } from 'components/common/Mui/Table';
 
 export const Wrapper = styled.div`
   padding-top: 75px;

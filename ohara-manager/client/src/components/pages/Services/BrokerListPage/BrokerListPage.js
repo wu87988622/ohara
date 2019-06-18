@@ -19,10 +19,10 @@ import { isEmpty, get, orderBy } from 'lodash';
 
 import * as brokerApi from 'api/brokerApi';
 import * as topicApi from 'api/topicApi';
-import { Box } from 'common/Layout';
-import { H2 } from 'common/Headings';
-import { TableLoader } from 'common/Loader';
-import { FormGroup } from 'common/Form';
+import { Box } from 'components/common/Layout';
+import { H2 } from 'components/common/Headings';
+import { TableLoader } from 'components/common/Loader';
+import { FormGroup } from 'components/common/Form';
 import { primaryBtn } from 'theme/btnTheme';
 
 import TopicNewModal from '../TopicNewModal';

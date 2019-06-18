@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import ReactTooltip from 'react-tooltip';
 import { noop, includes } from 'lodash';
 
-import { ConfirmModal } from 'common/Modal';
+import { ConfirmModal } from 'components/common/Modal';
 import * as s from './styles';
 
 const START = 'start';

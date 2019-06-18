@@ -22,8 +22,8 @@ import { includes, map, some, sortBy, get, isNull } from 'lodash';
 import * as jarApi from 'api/jarApi';
 import * as MESSAGES from 'constants/messages';
 import { Table, Checkbox, FileUploadInput } from './styles';
-import { Modal } from 'common/Modal';
-import { Box } from 'common/Layout';
+import { Modal } from 'components/common/Modal';
+import { Box } from 'components/common/Layout';
 
 class PluginSelectModal extends React.Component {
   headers = ['#', 'PLUGIN'];

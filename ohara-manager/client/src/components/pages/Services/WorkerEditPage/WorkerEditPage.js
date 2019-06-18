@@ -18,9 +18,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { find } from 'lodash';
 
-import { Box } from 'common/Layout';
-import { FormGroup, Label } from 'common/Form';
-import { H2 } from 'common/Headings';
+import { Box } from 'components/common/Layout';
+import { FormGroup, Label } from 'components/common/Form';
+import { H2 } from 'components/common/Headings';
 import { workersPropType } from 'propTypes/services';
 import * as s from './styles';
 

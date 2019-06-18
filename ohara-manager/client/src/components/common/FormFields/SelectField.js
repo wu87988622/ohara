@@ -16,7 +16,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Select } from 'common/Form';
+import { Select } from 'components/common/Form';
 
 const SelectField = props => {
   const {

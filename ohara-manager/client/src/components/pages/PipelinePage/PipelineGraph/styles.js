@@ -16,8 +16,8 @@
 
 import styled from 'styled-components';
 
-import { Box } from 'common/Layout';
-import { H5 } from 'common/Headings';
+import { Box } from 'components/common/Layout';
+import { H5 } from 'components/common/Headings';
 
 const Wrapper = styled(Box)`
   width: 65%;

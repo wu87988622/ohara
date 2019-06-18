@@ -23,9 +23,9 @@ import * as pipelineApi from 'api/pipelineApi';
 import * as MESSAGES from 'constants/messages';
 import * as s from './styles';
 import Controller from './Controller';
-import { ListLoader } from 'common/Loader';
-import { Box } from 'common/Layout';
-import { FormGroup, Label, Input } from 'common/Form';
+import { ListLoader } from 'components/common/Loader';
+import { Box } from 'components/common/Layout';
+import { FormGroup, Label, Input } from 'components/common/Form';
 import { fetchTopic } from 'api/topicApi';
 import { graph as graphPropType } from 'propTypes/pipeline';
 

@@ -15,7 +15,7 @@
  */
 
 import styled from 'styled-components';
-import { FormGroup } from 'common/Form';
+import { FormGroup } from 'components/common/Form';
 
 const TopWrapper = styled.div`
   margin-bottom: 20px;

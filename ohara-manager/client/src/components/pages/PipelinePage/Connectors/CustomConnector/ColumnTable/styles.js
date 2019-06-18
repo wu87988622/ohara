@@ -16,7 +16,7 @@
 
 import styled from 'styled-components';
 
-import { Button } from 'common/Mui/Form';
+import { Button } from 'components/common/Mui/Form';
 
 export const FormInner = styled.div`
   padding: 20px;

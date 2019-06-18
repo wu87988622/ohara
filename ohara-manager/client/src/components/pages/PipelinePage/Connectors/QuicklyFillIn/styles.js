@@ -15,7 +15,7 @@
  */
 
 import styled from 'styled-components';
-import { Label } from 'common/Form';
+import { Label } from 'components/common/Form';
 
 const PreviewWrapper = styled.div`
   margin-top: 16px;

@@ -15,7 +15,7 @@
  */
 
 import styled from 'styled-components';
-import { H2, H3 } from 'common/Headings';
+import { H2, H3 } from 'components/common/Headings';
 
 const Wrapper = styled.div`
   padding-top: 75px;

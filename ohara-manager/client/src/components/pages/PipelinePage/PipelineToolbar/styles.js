@@ -15,7 +15,7 @@
  */
 
 import styled from 'styled-components';
-import { DataTable } from 'common/Table';
+import { DataTable } from 'components/common/Table';
 
 const Icon = styled.i`
   color: ${props => props.theme.lighterBlue};

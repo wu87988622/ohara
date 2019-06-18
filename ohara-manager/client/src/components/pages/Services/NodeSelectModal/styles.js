@@ -16,8 +16,8 @@
 
 import styled from 'styled-components';
 
-import { DataTable } from 'common/Table';
-import { Input } from 'common/Form';
+import { DataTable } from 'components/common/Table';
+import { Input } from 'components/common/Form';
 
 const Table = styled(DataTable)`
   text-align: left;

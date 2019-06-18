@@ -21,7 +21,7 @@ import styled from 'styled-components';
 import { isEmpty } from 'lodash';
 
 import { EMPTY_PIPELINE_TITLE_ERROR } from 'constants/messages';
-import { Input } from 'common/Form';
+import { Input } from 'components/common/Form';
 
 const EditInput = styled(Input)`
   display: block;

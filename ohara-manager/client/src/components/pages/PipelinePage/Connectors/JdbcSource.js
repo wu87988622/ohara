@@ -29,8 +29,8 @@ import TestConfigBtn from './TestConfigBtn';
 import AutoSave from './AutoSave';
 import { TitleWrapper, H5Wrapper, LoaderWrap } from './styles';
 import { validateConnector } from 'api/validateApi';
-import { ListLoader } from 'common/Loader';
-import { Box } from 'common/Layout';
+import { ListLoader } from 'components/common/Loader';
+import { Box } from 'components/common/Layout';
 import { findByGraphId } from '../pipelineUtils/commonUtils';
 import { CONNECTOR_ACTIONS } from 'constants/pipelines';
 

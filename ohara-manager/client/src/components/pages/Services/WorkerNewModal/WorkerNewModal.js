@@ -26,10 +26,10 @@ import * as MESSAGES from 'constants/messages';
 import * as s from './styles';
 import NodeSelectModal from '../NodeSelectModal';
 import PluginSelectModal from '../PluginSelectModal';
-import { Modal } from 'common/Modal';
-import { Box } from 'common/Layout';
-import { Label } from 'common/Form';
-import { InputField } from 'common/FormFields';
+import { Modal } from 'components/common/Modal';
+import { Box } from 'components/common/Layout';
+import { Label } from 'components/common/Form';
+import { InputField } from 'components/common/FormFields';
 
 const SELECT_NODE_MODAL = 'selectNodeModal';
 const SELECT_PLUGIN_MODAL = 'selectPluginModal';

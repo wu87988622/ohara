@@ -18,7 +18,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
-import { H2 } from 'common/Headings';
+import { H2 } from 'components/common/Headings';
 import HdfsConfiguration from 'components/pages/Configuration/HdfsConfiguration';
 import DbConfiguration from 'components/pages/Configuration/DbConfiguration';
 import FtpConfiguration from 'components/pages/Configuration/FtpConfiguration';

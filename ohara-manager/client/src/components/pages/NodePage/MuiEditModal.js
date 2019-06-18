@@ -19,8 +19,8 @@ import PropTypes from 'prop-types';
 import { get } from 'lodash';
 import toastr from 'toastr';
 import { Form, Field, FormSpy } from 'react-final-form';
-import InputField from 'common/Mui/Form/InputField';
-import DialogTitle from 'common/Mui/Dialog/DialogTitle';
+import InputField from 'components/common/Mui/Form/InputField';
+import DialogTitle from 'components/common/Mui/Dialog/DialogTitle';
 
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';

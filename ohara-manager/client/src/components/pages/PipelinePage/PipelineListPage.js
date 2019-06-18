@@ -23,13 +23,13 @@ import { Link } from 'react-router-dom';
 import { get, isEmpty } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
-import { TableLoader, ListLoader } from 'common/Loader';
-import { Modal, ConfirmModal } from 'common/Modal';
-import { DataTable } from 'common/Table';
-import { Box } from 'common/Layout';
-import { Warning } from 'common/Messages';
-import { H2 } from 'common/Headings';
-import { Button, Select } from 'common/Form';
+import { TableLoader, ListLoader } from 'components/common/Loader';
+import { Modal, ConfirmModal } from 'components/common/Modal';
+import { DataTable } from 'components/common/Table';
+import { Box } from 'components/common/Layout';
+import { Warning } from 'components/common/Messages';
+import { H2 } from 'components/common/Headings';
+import { Button, Select } from 'components/common/Form';
 import { primaryBtn } from 'theme/btnTheme';
 import { PIPELINE } from 'constants/documentTitles';
 import {
@@ -42,7 +42,7 @@ import {
   createPipeline,
   deletePipeline,
 } from 'api/pipelineApi';
-import { Input, Label, FormGroup } from 'common/Form';
+import { Input, Label, FormGroup } from 'components/common/Form';
 
 const Wrapper = styled.div`
   padding-top: 75px;

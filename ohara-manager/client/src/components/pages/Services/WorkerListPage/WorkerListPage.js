@@ -20,11 +20,11 @@ import ReactTooltip from 'react-tooltip';
 import { join } from 'lodash';
 
 import WorkerNewModal from '../WorkerNewModal';
-import { Box } from 'common/Layout';
-import { H2 } from 'common/Headings';
-import { FormGroup } from 'common/Form';
+import { Box } from 'components/common/Layout';
+import { H2 } from 'components/common/Headings';
+import { FormGroup } from 'components/common/Form';
 import { primaryBtn } from 'theme/btnTheme';
-import { TableLoader } from 'common/Loader';
+import { TableLoader } from 'components/common/Loader';
 import { workersPropType } from 'propTypes/services';
 import * as s from './styles';
 

@@ -16,7 +16,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Input } from 'common/Form';
+import { Input } from 'components/common/Form';
 
 const InputField = props => {
   const {

@@ -17,7 +17,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { Button } from 'common/Mui/Form';
+import { Button } from 'components/common/Mui/Form';
 
 const TestConfigBtn = props => {
   const { handleClick, isWorking } = props;

@@ -19,10 +19,10 @@ import PropTypes from 'prop-types';
 import { noop, get, isEmpty, sortBy, map, find } from 'lodash';
 
 import * as configurationApi from 'api/configurationApi';
-import { Modal } from 'common/Modal';
-import { FormGroup, Label, Select } from 'common/Form';
-import { Box } from 'common/Layout';
-import { LinkButton } from 'common/Form';
+import { Modal } from 'components/common/Modal';
+import { FormGroup, Label, Select } from 'components/common/Form';
+import { Box } from 'components/common/Layout';
+import { LinkButton } from 'components/common/Form';
 import { PreviewWrapper, QuicklyFillInWrapper, Text } from './styles';
 
 class HdfsQuicklyFillIn extends React.Component {

@@ -25,7 +25,7 @@ import EditIcon from '@material-ui/icons/Edit';
 import IconButton from '@material-ui/core/IconButton';
 import { join } from 'lodash';
 
-import { TableLoader } from 'common/Loader';
+import { TableLoader } from 'components/common/Loader';
 
 const styles = theme => ({
   button: {

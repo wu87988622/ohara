@@ -20,8 +20,8 @@ import { reduce, map, sortBy, get, isNull } from 'lodash';
 
 import * as nodeApi from 'api/nodeApi';
 import { NODES } from 'constants/documentTitles';
-import { Box } from 'common/Layout';
-import { H2 } from 'common/Headings';
+import { Box } from 'components/common/Layout';
+import { H2 } from 'components/common/Headings';
 import MuiNewModal from './MuiNewModal';
 import MuiEditModal from './MuiEditModal';
 

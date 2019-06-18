@@ -19,14 +19,14 @@ import PropTypes from 'prop-types';
 
 import styled from 'styled-components';
 import * as PIPELINES from 'constants/pipelines';
-import { ListLoader } from 'common/Loader';
-import { Modal } from 'common/Modal';
+import { Modal } from 'components/common/Modal';
+import { ListLoader } from 'components/common/Loader';
 import {
   createConnector,
   trimString,
 } from '../pipelineUtils/pipelineToolbarUtils';
 import { TableWrapper, Table } from './styles';
-import { Input, FormGroup } from 'common/Form';
+import { Input, FormGroup } from 'components/common/Form';
 
 const Inner = styled.div`
   padding: 30px 20px;

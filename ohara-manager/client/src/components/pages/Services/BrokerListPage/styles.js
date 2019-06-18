@@ -17,8 +17,8 @@
 import styled from 'styled-components';
 import { NavLink } from 'react-router-dom';
 
-import { Button } from 'common/Form';
-import { DataTable } from 'common/Table';
+import { Button } from 'components/common/Form';
+import { DataTable } from 'components/common/Table';
 
 const Wrapper = styled.div`
   padding-top: 75px;

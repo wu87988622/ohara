@@ -18,7 +18,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
-import { LinkButton } from 'common/Form';
+import { LinkButton } from 'components/common/Form';
 
 const Table = styled.table`
   width: 100%;

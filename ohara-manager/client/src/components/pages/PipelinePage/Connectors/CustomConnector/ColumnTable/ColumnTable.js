@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 
 import NewRowModal from './NewRowModal';
 import Table from './Table';
-import { ConfirmModal } from 'common/Modal';
+import { ConfirmModal } from 'components/common/Modal';
 import { NewRowBtn } from './styles';
 
 class ColumnTable extends React.Component {

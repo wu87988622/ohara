@@ -15,7 +15,7 @@
  */
 
 import styled from 'styled-components';
-import { FormGroup, Button } from 'common/Form';
+import { FormGroup, Button } from 'components/common/Form';
 import { primaryBtn } from 'theme/btnTheme';
 
 const List = styled.div`

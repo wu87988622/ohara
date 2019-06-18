@@ -18,7 +18,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { isNull } from 'lodash';
 
-import { LinkButton } from 'common/Form';
+import { LinkButton } from 'components/common/Form';
 import { StyledTable } from './styles';
 
 const Table = props => {

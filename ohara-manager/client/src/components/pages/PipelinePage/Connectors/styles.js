@@ -15,9 +15,9 @@
  */
 
 import styled from 'styled-components';
-import { Box } from 'common/Layout';
-import { H5 } from 'common/Headings';
-import { FormGroup, Button, Label } from 'common/Form';
+import { Box } from 'components/common/Layout';
+import { H5 } from 'components/common/Headings';
+import { FormGroup, Button, Label } from 'components/common/Form';
 
 export const BoxWrapper = styled(Box)`
   padding: ${props => props.padding || '25px'};
