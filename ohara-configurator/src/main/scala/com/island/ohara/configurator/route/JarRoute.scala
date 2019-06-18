@@ -95,7 +95,7 @@ private[configurator] object JarRoute {
           )
         } ~ pathEnd {
           get {
-            formFields(Parameters.CLUSTER_NAME.?) { wkName =>
+            parameter(Parameters.CLUSTER_NAME.?) { wkName =>
               complete(if (wkName.isDefined) jarStore.jarInfos(wkName.get)
               else jarStore.jarInfos())
             }
