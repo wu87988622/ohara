@@ -19,6 +19,7 @@ package com.island.ohara.configurator.store
 import java.util
 import java.util.Objects
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 
 import com.island.ohara.client.configurator.v0.Data
 import com.island.ohara.common.data.Serializer
@@ -39,7 +40,7 @@ private[store] class RocksDataStore(folder: String,
                                     keySerializer: Serializer[String],
                                     valueSerializer: Serializer[Data])
     extends DataStore {
-
+  private[this] val closed = new AtomicBoolean(false)
   private[this] val handlers = new ConcurrentHashMap[String, ColumnFamilyHandle]()
 
   private[this] val db = {
@@ -68,8 +69,9 @@ private[store] class RocksDataStore(folder: String,
   private[this] def getOrCreateHandler[T <: Data: ClassTag]: ColumnFamilyHandle = getOrCreateHandler(
     classTag[T].runtimeClass)
 
-  private[this] def getOrCreateHandler(clz: Class[_]): ColumnFamilyHandle =
-    handlers.computeIfAbsent(clz.getName, name => db.createColumnFamily(new ColumnFamilyDescriptor(name.getBytes)))
+  private[this] def getOrCreateHandler(clz: Class[_]): ColumnFamilyHandle = if (closed.get())
+    throw new RuntimeException("RocksDataStore is closed!!!")
+  else handlers.computeIfAbsent(clz.getName, name => db.createColumnFamily(new ColumnFamilyDescriptor(name.getBytes)))
 
   private[this] def toMap(iter: RocksIterator, firstKey: String, endKey: String): Map[String, Data] =
     try {
@@ -169,7 +171,7 @@ private[store] class RocksDataStore(folder: String,
       }
       .sum
 
-  override def close(): Unit = {
+  override def close(): Unit = if (closed.compareAndSet(false, true)) {
     handlers.values().forEach(h => Releasable.close(h))
     Releasable.close(db)
   }

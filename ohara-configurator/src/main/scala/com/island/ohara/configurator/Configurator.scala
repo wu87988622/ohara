@@ -63,7 +63,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
     extends ReleaseOnce
     with SprayJsonSupport {
 
-  private[this] val initializationTimeout = 10 seconds
+  private[this] val initializationTimeout = 30 seconds
   private[this] val cacheTimeout = 3 seconds
   private[this] val cleanupTimeout = 30 seconds
 
@@ -234,8 +234,18 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
     */
   override protected def doClose(): Unit = {
     val start = CommonUtils.current()
-    if (httpServer != null) Await.result(httpServer.unbind(), initializationTimeout.toMillis milliseconds)
-    if (actorSystem != null) Await.result(actorSystem.terminate(), initializationTimeout.toMillis milliseconds)
+    if (httpServer != null)
+      try Await.result(httpServer.terminate(initializationTimeout), initializationTimeout.toMillis milliseconds)
+      catch {
+        case e: Throwable =>
+          log.error("failed to close http server", e)
+      }
+    if (actorSystem != null)
+      try Await.result(actorSystem.terminate(), initializationTimeout.toMillis milliseconds)
+      catch {
+        case e: Throwable =>
+          log.error("failed to close actor system", e)
+      }
     Releasable.close(adminCleaner)
     Releasable.close(meterCache)
     Releasable.close(clusterCollie)
