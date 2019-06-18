@@ -39,7 +39,7 @@ done
 
 if [ "$service" == "manager" ]; then
   cd "$PROJECT_HOME/manager"
-  exec node ./index.js $ARGS
+  exec node ./start.js $ARGS
 else
   if [ "$service" == "configurator" ]; then
     CLASS="com.island.ohara.configurator.Configurator"
