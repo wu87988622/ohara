@@ -35,7 +35,4 @@ masterHostIP=$1
 token=$2
 hashCode=$3
 
-yum install -y kubelet kubeadm kubectl
-systemctl enable kubelet
-systemctl start kubelet
 kubeadm join $masterHostIP:6443 --token $token --discovery-token-ca-cert-hash $hashCode

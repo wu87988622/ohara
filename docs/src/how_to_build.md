@@ -8,7 +8,7 @@
 - Node.js 8.12.0
 - Yarn 1.13.0 or greater
 - Docker 18.09 or greater (Official QA is on docker 18.09. Also, docker multi-stage, which is supported by Docker 17.05 or higher, is required in building ohara images. see https://docs.docker.com/develop/develop-images/multistage-build/ for more details)
-
+- Kubernetes 1.14.1 (Official QA uses the Kubernetes version is 1.14.1)
 ----------
 
 ## Gradle Commands

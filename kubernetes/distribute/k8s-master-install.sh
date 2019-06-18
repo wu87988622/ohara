@@ -33,9 +33,7 @@ hostIP=$1
 
 # The following command must be executed by root or sudo account
 bash $BIN_DIR/k8s-pre-install.sh
-yum install -y kubelet kubeadm kubectl
-systemctl enable kubelet
-systemctl start kubelet
+
 kubeadm init --apiserver-advertise-address=$hostIP --pod-network-cidr=10.244.0.0/16 > /tmp/k8s-install-info.txt # pod network is hard code
 HOME_DIR=$HOME
 mkdir -p $HOME_DIR/.kube
