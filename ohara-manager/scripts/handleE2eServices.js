@@ -218,4 +218,5 @@ module.exports = {
   cleanServices,
   createServices,
   getDefaultEnv,
+  randomPort,
 };
