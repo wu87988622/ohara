@@ -241,6 +241,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
     Releasable.close(clusterCollie)
     Releasable.close(jarStore)
     Releasable.close(store)
+    k8sClient.foreach(Releasable.close)
     log.info(s"succeed to close configurator. elapsed:${CommonUtils.current() - start} ms")
   }
 }
