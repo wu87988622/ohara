@@ -68,7 +68,7 @@ see section [zookeeper](#zookeeper), [broker](#broker) and [worker](#worker) to 
 
 In order to provide a great experience in exercising containers, ohara pre-builds a lot of docker images with custom
 scripts. Of course, Ohara APIs allow you to choose other image instead of ohara official images. However, it works only if
-the images you pick up are compatible to ohara command. see [here](https://github.com/oharastream/ohara/tree/master/docker) for more details.
+the images you pick up are compatible to ohara command. see [here](docker.md) for more details.
 Also, all official images are hosted by [docker hub](https://cloud.docker.com/u/oharastream/repository/list)
 
 ----------

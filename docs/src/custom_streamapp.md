@@ -189,18 +189,15 @@ Below we list the available functions in each classes (See more information in <
 Below we provide some examples that demonstrate how to develop your own streamApp applications.
 More description of each example could be found in <i>javadoc</i>.
 
-| Example Name    | Description                        | Source Code (Java)                                                                                   |
-| --------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| WordCount       | count the words in "word" column   | [example](https://github.com/oharastream/ohara/blob/master/ohara-streams/src/test/java/com/island/ohara/streams/examples/WordCountExample.java)      |
-| PageViewRegion  | count the views by each region     | [example](https://github.com/oharastream/ohara/blob/master/ohara-streams/src/test/java/com/island/ohara/streams/examples/PageViewRegionExample.java) |
-| Sum             | sum odd numbers in "number" column | [example](https://github.com/oharastream/ohara/blob/master/ohara-streams/src/test/java/com/island/ohara/streams/examples/SumExample.java)            |
+* [WordCount](https://github.com/oharastream/ohara/blob/master/ohara-streams/src/test/java/com/island/ohara/streams/examples/WordCountExample.java): count the words in "word" column 
+* [PageViewRegion](https://github.com/oharastream/ohara/blob/master/ohara-streams/src/test/java/com/island/ohara/streams/examples/PageViewRegionExample.java): count the views by each region
+* [Sum](https://github.com/oharastream/ohara/blob/master/ohara-streams/src/test/java/com/island/ohara/streams/examples/SumExample.java): sum odd numbers in "number" column
 
 ----------
 
 ## Setting Definitions
 
-Will be implemented in the near future. Also see:
-https://github.com/oharastream/ohara/issues/962
+Will be implemented in the near future. Also see: [issue #962](https://github.com/oharastream/ohara/issues/962)
 
 ----------
 

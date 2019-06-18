@@ -306,7 +306,7 @@ We have a couple of sub pages here, you can navigate between these pages by clic
     ![Ohara Manager connect worker new page](images/connect_worker_new.png)
 
 
-If you'd like to learn more about the development setup or have issue starting/working with it. Please see the [docs](https://github.com/oharastream/ohara/tree/master/ohara-manager/README.md) here
+If you'd like to learn more about the development setup or have issue starting/working with it. Please see the [docs](ohara_manager_development_guideline.md) here
 
 ----------
 
@@ -442,10 +442,10 @@ the configurable settings to user. Welcome you to file a issue to request more c
 
 All services host by Ohara are based on docker containers, such as [Configurator](#ohara-configurator), [Manager](#ohara-manager),
 [Zookeeper](#zookeeper), [Broker](#broker) and [Worker](#worker). You should install suggested version of Docker before
-enjoying Ohara service (see [Readme](https://github.com/oharastream/ohara/blob/master/README.md) for prerequisite).
+enjoying Ohara service (see [how to build](how_to_build.md) for prerequisite).
 
 The post-installation for all docker nodes are listed below.
-1. [Install the supported version of docker](https://github.com/oharastream/ohara/blob/master/README.md) — Ohara community does not support the legacy docker.
+1. [Install the supported version of docker](how_to_build.md#prerequisites) — Ohara community does not support the legacy docker.
 1. [download all ohara images](#download-ohara-images) —
   Ohara Configurator expect all images are available from local disk rather than network.
 1. [create a user account which can access docker without sudo](https://docs.docker.com/install/linux/linux-postinstall/) —
