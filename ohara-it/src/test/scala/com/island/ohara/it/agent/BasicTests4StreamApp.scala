@@ -73,6 +73,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
   private[this] var zkApi: ZookeeperApi.Access = _
   private[this] var bkApi: BrokerApi.Access = _
   private[this] var wkApi: WorkerApi.Access = _
+  private[this] var containerApi: ContainerApi.Access = _
   private[this] var topicApi: com.island.ohara.client.configurator.v0.TopicApi.Access = _
 
   private[this] var streamAppActionAccess: ActionAccess = _
@@ -98,6 +99,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
       zkApi = ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port)
       bkApi = BrokerApi.access().hostname(configurator.hostname).port(configurator.port)
       wkApi = WorkerApi.access().hostname(configurator.hostname).port(configurator.port)
+      containerApi = ContainerApi.access().hostname(configurator.hostname).port(configurator.port)
       topicApi = TopicApi.access().hostname(configurator.hostname).port(configurator.port)
       streamAppActionAccess = StreamApi.accessOfAction().hostname(configurator.hostname).port(configurator.port)
       streamAppListAccess = StreamApi.accessOfList().hostname(configurator.hostname).port(configurator.port)
@@ -114,12 +116,20 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
       nodeCache.forall(node => nodes.map(_.name).contains(node.name)) shouldBe true
 
       // create zookeeper cluster
+      log.info("create zkCluster...start")
       val zkCluster = result(
         zkApi.request().name(nameHolder.generateClusterName()).nodeNames(nodeCache.take(1).map(_.name).toSet).create()
       )
       assertCluster(() => result(zkApi.list), zkCluster.name)
+      await(() => {
+        val containers = result(containerApi.get(zkCluster.name).map(_.flatMap(_.containers)))
+        containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
+      })
+
+      log.info("create zkCluster...done")
 
       // create broker cluster
+      log.info("create bkCluster...start")
       val bkCluster = result(
         bkApi
           .request()
@@ -128,9 +138,15 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
           .nodeNames(nodeCache.take(1).map(_.name).toSet)
           .create())
       assertCluster(() => result(bkApi.list), bkCluster.name)
+      await(() => {
+        val containers = result(containerApi.get(bkCluster.name).map(_.flatMap(_.containers)))
+        containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
+      })
+      log.info("create bkCluster...done")
       brokerConnProps = bkCluster.connectionProps
 
       // create worker cluster
+      log.info("create wkCluster...start")
       val wkCluster = result(
         wkApi
           .request()
@@ -139,6 +155,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
           .nodeNames(nodeCache.take(instances).map(_.name).toSet)
           .create())
       assertCluster(() => result(wkApi.list), wkCluster.name)
+      log.info("create wkCluster...done")
     }
   }
 
@@ -179,11 +196,17 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
 
     // get the actually container names
     val map = nodeCache.map { node =>
-      val client =
-        DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
-      try {
-        node -> client.containerNames().filter(name => name.contains(StreamCollie.formatUniqueName(properties.id)))
-      } finally client.close()
+      if (configurator.k8sClient.isDefined) {
+        val client = configurator.k8sClient.get
+        node -> result(client.containers)
+          .map(_.name)
+          .filter(name => name.contains(StreamCollie.formatUniqueName(properties.id)))
+      } else {
+        val client =
+          DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
+        try node -> client.containerNames().filter(name => name.contains(StreamCollie.formatUniqueName(properties.id)))
+        finally client.close()
+      }
     }
 
     // we only have one instance, container exited means cluster dead (the state here uses container state is ok
@@ -196,13 +219,24 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     // stop and remove failed cluster gracefully
     result(streamAppActionAccess.stop(stream.id))
 
+    // wait streamApp until removed actually
+    await(() => {
+      val res = result(streamAppPropertyAccess.get(stream.id))
+      res.state.isEmpty
+    })
+
     // check the containers are all removed
     map.foreach {
       case (node, containers) =>
-        val client =
-          DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
-        try containers.foreach(container => client.nonExist(container) shouldBe true)
-        finally client.close()
+        if (configurator.k8sClient.isDefined) {
+          val client = configurator.k8sClient.get
+          containers.foreach(container => !result(client.containers).map(_.name).contains(container) shouldBe true)
+        } else {
+          val client =
+            DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
+          try containers.foreach(container => client.nonExist(container) shouldBe true)
+          finally client.close()
+        }
     }
   }
 
@@ -266,36 +300,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     nameHolder.addClusterName(StreamCollie.formatUniqueName(res1.id))
 
     // check the cluster has the metrics data (each stream cluster has two metrics : IN_TOPIC and OUT_TOPIC)
-    await(() => {
-      // TODO: Since failed container could not be get from clusterCache, we directly use dockerClient to get logs
-      // TODO: remove this after #1350 fixed...by Sam
-      nodeCache.foreach {
-        node =>
-          if (node.user.isEmpty && node.password.isEmpty) {
-            // k8s env
-            val client = configurator.k8sClient.get
-            result(client.containers)
-              .filter(info => info.name.contains(StreamCollie.formatUniqueName(res1.id)))
-              .foreach { container =>
-                log.debug(s"container [${container.name}] log: ${result(client.log(container.name))}")
-              }
-          } else {
-            // docker env
-            val client =
-              DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
-            try client.containerNames().filter(name => name.contains(StreamCollie.formatUniqueName(res1.id))).foreach {
-              containerName =>
-                try {
-                  log.debug(s"container [$containerName] log: ${client.log(containerName)}")
-                } catch {
-                  case e: Throwable =>
-                    log.error(s"failed to retrieve container log $containerName", e)
-                }
-            } finally client.close()
-          }
-      }
-      result(streamAppPropertyAccess.get(stream.id)).metrics.meters.nonEmpty
-    })
+    await(() => result(streamAppPropertyAccess.get(stream.id)).metrics.meters.nonEmpty)
     result(streamAppPropertyAccess.get(stream.id)).metrics.meters.size shouldBe 2
 
     // write some data into topic
@@ -349,7 +354,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
 
   @After
   def cleanUp(): Unit = {
-    Releasable.close(configurator)
     Releasable.close(nameHolder)
+    Releasable.close(configurator)
   }
 }

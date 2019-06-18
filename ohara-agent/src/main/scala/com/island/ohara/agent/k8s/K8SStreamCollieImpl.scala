@@ -65,9 +65,7 @@ private class K8SStreamCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
                 // if require node name is not in nodeCollie, do not take that node
                 CommonUtils.requireNonEmpty(all.filter(n => nodeNames.contains(n.name)).asJava).asScala
             }
-            .map(_.map(node =>
-              node -> String
-                .join(DIVIDER, ContainerCollie.format(PREFIX_KEY, clusterName, serviceName), node.name)).toMap)
+            .map(_.map(node => node -> ContainerCollie.format(PREFIX_KEY, clusterName, serviceName)).toMap)
             .flatMap { nodes =>
               def urlToHost(url: String): String = new URI(url).getHost
 

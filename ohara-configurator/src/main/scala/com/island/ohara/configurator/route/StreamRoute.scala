@@ -352,12 +352,12 @@ private[configurator] object StreamRoute {
                             }
                             .map(_.state -> None)
                         }
-                        // if start failed (no matter why), we change the status to "EXITED"
-                        // in order to identify "fail started"(status: EXITED) and "successful stopped"(status = None)
+                        // if start failed (no matter why), we change the status to "DEAD"
+                        // in order to identify "fail started"(status: DEAD) and "successful stopped"(status = None)
                         .recover {
                           case ex: Throwable =>
                             log.error(s"start streamApp failed: ", ex)
-                            Some(ContainerState.EXITED.name) -> Some(ex.getMessage)
+                            Some(ContainerState.DEAD.name) -> Some(ex.getMessage)
                         }
                         .flatMap {
                           case (state, error) =>
@@ -376,7 +376,7 @@ private[configurator] object StreamRoute {
                 store.value[StreamAppDescription](id).flatMap { data =>
                   clusterCollie.streamCollie().exist(formatUniqueName(data.id)).flatMap {
                     if (_) {
-                      // if remove failed, we log the exception and return "EXITED" state
+                      // if remove failed, we log the exception and return "DEAD" state
                       clusterCollie
                         .streamCollie()
                         .remove(formatUniqueName(data.id))
@@ -384,7 +384,7 @@ private[configurator] object StreamRoute {
                         .recover {
                           case ex: Throwable =>
                             log.error(s"failed to stop streamApp for $id.", ex)
-                            Some(ContainerState.EXITED.name) -> Some(ex.getMessage)
+                            Some(ContainerState.DEAD.name) -> Some(ex.getMessage)
                         }
                         .flatMap {
                           case (state, error) =>
