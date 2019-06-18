@@ -207,7 +207,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
             code = s"Unsupported API: $path",
             message = "please see link to find the available APIs",
             stack = "N/A",
-            apiUrl = Some("https://github.com/oharastream/ohara/blob/master/docs/rest_interface.md")
+            apiUrl = Some("https://oharastream.readthedocs.io/en/latest/rest_interface.html")
           )))
 
   private[this] implicit val actorSystem: ActorSystem = ActorSystem(s"${classOf[Configurator].getSimpleName}-system")
