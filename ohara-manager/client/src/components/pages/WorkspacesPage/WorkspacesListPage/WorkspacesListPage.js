@@ -36,7 +36,7 @@ const WorkspacesListPage = props => {
   const actionTab = data => {
     const { name } = data;
     return (
-      <Tooltip title={`Link to ${name} page`}>
+      <Tooltip title={`Link to ${name} page`} enterDelay={1000}>
         <IconButton
           color="primary"
           data-testid="edit-node-icon"
