@@ -42,11 +42,11 @@ class TestMeterCache extends SmallTest with Matchers {
 
   @Test
   def nullRefresher(): Unit =
-    an[NullPointerException] should be thrownBy MeterCache.builder().refresher(null)
+    an[NullPointerException] should be thrownBy MeterCache.builder.refresher(null)
 
   @Test
   def nullFrequency(): Unit =
-    an[NullPointerException] should be thrownBy MeterCache.builder().frequency(null)
+    an[NullPointerException] should be thrownBy MeterCache.builder.frequency(null)
 
   @Test
   def testRefresh(): Unit = {
@@ -60,7 +60,7 @@ class TestMeterCache extends SmallTest with Matchers {
       )
     )
     val clusterInfo = FakeClusterInfo(CommonUtils.randomString())
-    val cache = MeterCache.builder().refresher(() => Map(clusterInfo -> data)).frequency(2 seconds).build()
+    val cache = MeterCache.builder.refresher(() => Map(clusterInfo -> data)).frequency(2 seconds).build
     try {
       cache.meters(clusterInfo) shouldBe Map.empty
       TimeUnit.SECONDS.sleep(3)
@@ -70,7 +70,7 @@ class TestMeterCache extends SmallTest with Matchers {
 
   @Test
   def failToOperateAfterClose(): Unit = {
-    val cache = MeterCache.builder().refresher(() => Map.empty).frequency(2 seconds).build()
+    val cache = MeterCache.builder.refresher(() => Map.empty).frequency(2 seconds).build
     cache.close()
 
     an[IllegalStateException] should be thrownBy cache.meters(FakeClusterInfo(CommonUtils.randomString()))

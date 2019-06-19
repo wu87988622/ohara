@@ -68,7 +68,7 @@ public class BeanObject {
     return Collections.unmodifiableMap(attributes);
   }
 
-  static class Builder {
+  static class Builder implements com.island.ohara.common.Builder<BeanObject> {
     private String domainName;
     private Map<String, String> properties;
     private Map<String, Object> attributes;
@@ -100,6 +100,7 @@ public class BeanObject {
       return this;
     }
 
+    @Override
     public BeanObject build() {
       // in BeanObject constructor we do check for arguments.
       return new BeanObject(domainName, properties, attributes);

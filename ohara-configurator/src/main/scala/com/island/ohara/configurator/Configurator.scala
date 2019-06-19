@@ -142,26 +142,26 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
             )
           }.toList // convert to serializable collection
       }
-    MeterCache
-      .builder()
+    MeterCache.builder
       .refresher(
         () =>
           // we do the sync here to simplify the interface
           Await.result(
-            clusterCollie.clusters.map(_.keys
-              .map {
-                case brokerClusterInfo: BrokerClusterInfo => brokerClusterInfo -> brokerToMeters(brokerClusterInfo)
-                case workerClusterInfo: WorkerClusterInfo => workerClusterInfo -> workerToMeters(workerClusterInfo)
-                case streamClusterInfo: StreamClusterInfo => streamClusterInfo -> streamAppToMeters(streamClusterInfo)
-                case clusterInfo: ClusterInfo             => clusterInfo -> Map.empty[String, Seq[Meter]]
-              }
-              .toSeq
-              .toMap),
+            clusterCollie.clusters.map(
+              _.keys
+                .map {
+                  case brokerClusterInfo: BrokerClusterInfo => brokerClusterInfo -> brokerToMeters(brokerClusterInfo)
+                  case workerClusterInfo: WorkerClusterInfo => workerClusterInfo -> workerToMeters(workerClusterInfo)
+                  case streamClusterInfo: StreamClusterInfo => streamClusterInfo -> streamAppToMeters(streamClusterInfo)
+                  case clusterInfo: ClusterInfo             => clusterInfo -> Map.empty[String, Seq[Meter]]
+                }
+                .toSeq
+                .toMap),
             // TODO: how to set a suitable timeout ??? by chia
             cacheTimeout * 5
         ))
       .frequency(cacheTimeout)
-      .build()
+      .build
   }
 
   private[this] implicit val adminCleaner: AdminCleaner = new AdminCleaner(cleanupTimeout)

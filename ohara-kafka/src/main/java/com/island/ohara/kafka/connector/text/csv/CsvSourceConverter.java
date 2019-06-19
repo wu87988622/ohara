@@ -183,7 +183,7 @@ public class CsvSourceConverter implements TextSourceConverter {
         .collect(Collectors.toList());
   }
 
-  public static class Builder {
+  public static class Builder implements com.island.ohara.common.Builder<CsvSourceConverter> {
     // Required parameters
     private String path;
     private List<String> topics;
@@ -213,6 +213,7 @@ public class CsvSourceConverter implements TextSourceConverter {
       return this;
     }
 
+    @Override
     public CsvSourceConverter build() {
       Objects.requireNonNull(path);
       CommonUtils.requireNonEmpty(topics);

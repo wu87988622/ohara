@@ -125,7 +125,7 @@ public class RowSourceRecord {
     return new Builder();
   }
 
-  public static class Builder {
+  public static class Builder implements com.island.ohara.common.Builder<RowSourceRecord> {
     private Builder() {
       // do nothing
     }
@@ -172,6 +172,7 @@ public class RowSourceRecord {
       return this;
     }
 
+    @Override
     public RowSourceRecord build() {
       return new RowSourceRecord(
           Objects.requireNonNull(sourcePartition),

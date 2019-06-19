@@ -35,7 +35,7 @@ import com.island.ohara.configurator.store.DataStore
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
-class ConfiguratorBuilder {
+class ConfiguratorBuilder private[configurator] extends com.island.ohara.common.Builder[Configurator] {
   private[this] var hostname: String = CommonUtils.hostname()
   private[this] var port: Int = CommonUtils.availablePort()
   private[this] var homeFolder: String = CommonUtils.createTempFolder("configurator").getCanonicalPath
@@ -298,7 +298,7 @@ class ConfiguratorBuilder {
     }
   }
 
-  def build(): Configurator = doOrReleaseObjects(
+  override def build(): Configurator = doOrReleaseObjects(
     new Configurator(hostname = hostname, port = port)(store = getOrCreateStore(),
                                                        jarStore = getOrCreateJarStore(),
                                                        nodeCollie = createCollie(),
@@ -320,7 +320,7 @@ class ConfiguratorBuilder {
 
   private[this] def getOrCreateCollie(): ClusterCollie = if (clusterCollie == null) {
     this.clusterCollie =
-      if (k8sClient == null) ClusterCollie.builderOfSsh().nodeCollie(createCollie()).build()
+      if (k8sClient == null) ClusterCollie.builderOfSsh.nodeCollie(createCollie()).build
       else ClusterCollie.builderOfK8s().nodeCollie(createCollie()).k8sClient(k8sClient).build()
     clusterCollie
   } else clusterCollie

@@ -34,8 +34,7 @@ private[ohara] class ClusterCollieImpl(cacheTimeout: Duration, nodeCollie: NodeC
 
   private[this] val dockerCache = DockerClientCache()
 
-  private[this] val clusterCache: ClusterCache = ClusterCache
-    .builder()
+  private[this] val clusterCache: ClusterCache = ClusterCache.builder
     .frequency(cacheTimeout)
     // TODO: 5 * timeout is enough ??? by chia
     .supplier(() => Await.result(doClusters(ExecutionContext.fromExecutor(cacheThreadPool)), cacheTimeout * 5))

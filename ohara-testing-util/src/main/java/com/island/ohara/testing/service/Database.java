@@ -52,7 +52,7 @@ public interface Database extends Releasable {
     return new Builder();
   }
 
-  class Builder {
+  class Builder implements com.island.ohara.common.Builder<Database> {
     private Builder() {}
 
     private String databaseName = "ohara";
@@ -84,6 +84,7 @@ public interface Database extends Releasable {
       return this;
     }
 
+    @Override
     public Database build() {
       MysqldConfig config =
           aMysqldConfig(v5_7_latest)

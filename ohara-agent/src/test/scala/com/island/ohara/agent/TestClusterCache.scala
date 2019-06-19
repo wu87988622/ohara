@@ -51,14 +51,13 @@ class TestClusterCache extends SmallTest with Matchers {
     val containerInfo1 = fakeContainerInfo()
     val fetchCount = new AtomicInteger(0)
     val refreshCount = new AtomicInteger(0)
-    val cache = ClusterCache
-      .builder()
+    val cache = ClusterCache.builder
       .supplier(() => {
         refreshCount.incrementAndGet()
         Map(clusterInfo0 -> Seq(containerInfo0), clusterInfo1 -> Seq(containerInfo1))
       })
       .frequency(2 seconds)
-      .build()
+      .build
     try {
       refreshCount.get() shouldBe 0
       fetchCount.get() shouldBe 0
@@ -78,14 +77,13 @@ class TestClusterCache extends SmallTest with Matchers {
     val containerInfo1 = fakeContainerInfo()
     val fetchCount = new AtomicInteger(0)
     val refreshCount = new AtomicInteger(0)
-    val cache = ClusterCache
-      .builder()
+    val cache = ClusterCache.builder
       .supplier(() => {
         refreshCount.incrementAndGet()
         Map(clusterInfo0 -> Seq(containerInfo0), clusterInfo1 -> Seq(containerInfo1))
       })
       .frequency(1000 seconds)
-      .build()
+      .build
     try {
       refreshCount.get() shouldBe 0
       cache.requestUpdate()
@@ -100,7 +98,7 @@ class TestClusterCache extends SmallTest with Matchers {
 
   @Test
   def failToOperateAfterClose(): Unit = {
-    val cache = ClusterCache.builder().supplier(() => Map.empty).frequency(1000 seconds).build()
+    val cache = ClusterCache.builder.supplier(() => Map.empty).frequency(1000 seconds).build
     cache.close()
 
     an[IllegalStateException] should be thrownBy cache.snapshot
@@ -111,13 +109,12 @@ class TestClusterCache extends SmallTest with Matchers {
   def testGet(): Unit = {
     val clusterInfo0 = FakeClusterInfo(CommonUtils.randomString())
     val containerInfo0 = fakeContainerInfo()
-    val cache = ClusterCache
-      .builder()
+    val cache = ClusterCache.builder
       .supplier(() => {
         Map(clusterInfo0 -> Seq(containerInfo0))
       })
       .frequency(1000 seconds)
-      .build()
+      .build
     try {
       cache.get(clusterInfo0) shouldBe Seq.empty
       cache.put(clusterInfo0, Seq(containerInfo0))
@@ -130,15 +127,14 @@ class TestClusterCache extends SmallTest with Matchers {
   @Test
   def testLazyRemove(): Unit = {
     val count = new AtomicInteger(0)
-    val cache = ClusterCache
-      .builder()
+    val cache = ClusterCache.builder
       .supplier(() => {
         count.incrementAndGet()
         Map.empty
       })
       .frequency(1 seconds)
       .lazyRemove(5 seconds)
-      .build()
+      .build
     try {
       val clusterInfo = FakeClusterInfo(CommonUtils.randomString())
       val containerInfo = fakeContainerInfo()
@@ -165,15 +161,14 @@ class TestClusterCache extends SmallTest with Matchers {
       override def clone(newNodeNames: Set[String]): ClusterInfo = throw new UnsupportedOperationException(
         "what are you doing!!!")
     }
-    val cache = ClusterCache
-      .builder()
+    val cache = ClusterCache.builder
       .supplier(() => {
         count.incrementAndGet()
         Map(cachedClusterInfo -> Seq.empty)
       })
       .frequency(2 seconds)
       .lazyRemove(2 seconds)
-      .build()
+      .build
     try {
       cache.snapshot.size shouldBe 0
       cache.put(firstClusterInfo, Seq.empty)

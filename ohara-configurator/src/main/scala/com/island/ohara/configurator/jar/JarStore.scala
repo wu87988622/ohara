@@ -154,7 +154,7 @@ object JarStore {
 
   def builder: Builder = new Builder
 
-  class Builder private[jar] {
+  class Builder private[JarStore] extends com.island.ohara.common.Builder[JarStore] {
     private[this] var homeFolder: String = _
     private[this] var hostname: String = _
     private[this] var port: Int = -1
@@ -184,7 +184,7 @@ object JarStore {
       this
     }
 
-    def build(): JarStore = new JarStoreImpl(
+    override def build: JarStore = new JarStoreImpl(
       homeFolder = CommonUtils.requireNonEmpty(homeFolder),
       hostname = CommonUtils.requireNonEmpty(hostname),
       port = CommonUtils.requireConnectionPort(port)

@@ -97,7 +97,7 @@ class TestVerifyNode extends SmallTest with Matchers {
     lastModified = CommonUtils.current()
   )
 
-  private[this] val collie = ClusterCollie.builderOfSsh().nodeCollie(NodeCollie(Seq(node))).build()
+  private[this] val collie = ClusterCollie.builderOfSsh.nodeCollie(NodeCollie(Seq(node))).build
 
   @Test
   def happyCase(): Unit = {

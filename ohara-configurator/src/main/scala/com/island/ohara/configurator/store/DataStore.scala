@@ -165,7 +165,7 @@ object DataStore {
 
   def apply(): DataStore = builder.build()
 
-  class Builder private[DataStore] {
+  class Builder private[DataStore] extends com.island.ohara.common.Builder[DataStore] {
     private[this] var keySerializer: Serializer[String] = Serializer.STRING
     private[this] var valueSerializer: Serializer[Data] = new Serializer[Data] {
       override def to(obj: Data): Array[Byte] = Serializer.OBJECT.to(obj)
@@ -192,7 +192,7 @@ object DataStore {
       this
     }
 
-    def build(): DataStore =
+    override def build(): DataStore =
       new RocksDataStore(CommonUtils.requireNonEmpty(persistentFolder),
                          Objects.requireNonNull(keySerializer),
                          Objects.requireNonNull(valueSerializer))

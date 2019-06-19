@@ -22,7 +22,7 @@ import com.island.ohara.metrics.basic.Counter;
  * this is a wrap of Counter.Builder. It simplify the Counter.Builder via removing some methods
  * which are unrelated to connector.
  */
-public final class CounterBuilder {
+public final class CounterBuilder implements com.island.ohara.common.Builder<Counter> {
 
   static CounterBuilder of() {
     return new CounterBuilder();
@@ -64,6 +64,7 @@ public final class CounterBuilder {
    *
    * @return an new counter
    */
+  @Override
   public Counter build() {
     return builder.register();
   }

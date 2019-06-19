@@ -82,7 +82,7 @@ public final class ConnectorVersion {
     return "version:" + version + "revision:" + revision + "author:" + author;
   }
 
-  public static class Builder {
+  public static class Builder implements com.island.ohara.common.Builder<ConnectorVersion> {
     private String version = "unknown";
     private String revision = "unknown";
     private String author = "unknown";
@@ -107,6 +107,7 @@ public final class ConnectorVersion {
       return this;
     }
 
+    @Override
     public ConnectorVersion build() {
       return new ConnectorVersion(version, revision, author);
     }

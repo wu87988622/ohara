@@ -68,7 +68,7 @@ public interface FtpServer extends Releasable {
     return new Builder();
   }
 
-  class Builder {
+  class Builder implements com.island.ohara.common.Builder<FtpServer> {
     private Builder() {}
 
     private String advertisedHostname = CommonUtils.hostname();
@@ -131,6 +131,7 @@ public interface FtpServer extends Releasable {
         throw new IllegalArgumentException(homeFolder.getAbsolutePath() + " is not folder");
     }
 
+    @Override
     public FtpServer build() {
       checkArguments();
       PropertiesUserManagerFactory userManagerFactory = new PropertiesUserManagerFactory();

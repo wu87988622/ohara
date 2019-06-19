@@ -176,11 +176,11 @@ object ClusterCollie {
     * node-1 => workercluster-worker-1
     * node-2 => workercluster-worker-2
     */
-  def builderOfSsh(): SshBuilder = new SshBuilder
+  def builderOfSsh: SshBuilder = new SshBuilder
 
   import scala.concurrent.duration._
 
-  class SshBuilder private[agent] {
+  class SshBuilder private[ClusterCollie] extends com.island.ohara.common.Builder[ClusterCollie] {
     private[this] var nodeCollie: NodeCollie = _
     private[this] var cacheTimeout: Duration = 3 seconds
     private[this] var cacheThreadPool: ExecutorService = _
@@ -206,7 +206,7 @@ object ClusterCollie {
       * We don't return ClusterCollieImpl since it is a private implementation
       * @return
       */
-    def build(): ClusterCollie = new ClusterCollieImpl(
+    override def build: ClusterCollie = new ClusterCollieImpl(
       cacheTimeout = Objects.requireNonNull(cacheTimeout),
       nodeCollie = Objects.requireNonNull(nodeCollie),
       cacheThreadPool =
@@ -222,7 +222,7 @@ object ClusterCollie {
     */
   def builderOfK8s(): K8shBuilder = new K8shBuilder
 
-  class K8shBuilder private[agent] {
+  class K8shBuilder private[ClusterCollie] extends com.island.ohara.common.Builder[ClusterCollie] {
     private[this] var nodeCollie: NodeCollie = _
     private[this] var k8sClient: K8SClient = _
 
@@ -240,7 +240,7 @@ object ClusterCollie {
       * We don't return ClusterCollieImpl since it is a private implementation
       * @return
       */
-    def build(): ClusterCollie = new K8SClusterCollieImpl(
+    override def build: ClusterCollie = new K8SClusterCollieImpl(
       nodeCollie = Objects.requireNonNull(nodeCollie),
       k8sClient = Objects.requireNonNull(k8sClient)
     )

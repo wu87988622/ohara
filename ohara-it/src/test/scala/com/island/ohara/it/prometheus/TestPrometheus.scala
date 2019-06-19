@@ -50,7 +50,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
   else {
     node = nodes.head
     nodeCollie = NodeCollie(Seq(node))
-    clusterCollie = ClusterCollie.builderOfSsh().nodeCollie(nodeCollie).build()
+    clusterCollie = ClusterCollie.builderOfSsh.nodeCollie(nodeCollie).build()
     val client =
       DockerClient.builder.user(node.user).password(node.password).hostname(node.name).port(node.port).build
     try {

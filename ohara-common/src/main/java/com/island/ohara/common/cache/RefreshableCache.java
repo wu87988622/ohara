@@ -96,7 +96,7 @@ public interface RefreshableCache<K, V> extends Releasable {
     return new Builder<>();
   }
 
-  class Builder<K, V> {
+  class Builder<K, V> implements com.island.ohara.common.Builder<RefreshableCache<K, V>> {
     private int maxSize = 1000;
     private Duration timeout = null;
     private Duration frequency = Duration.ofSeconds(5);
@@ -155,6 +155,7 @@ public interface RefreshableCache<K, V> extends Releasable {
       return this;
     }
 
+    @Override
     public RefreshableCache<K, V> build() {
       Objects.requireNonNull(supplier);
       Objects.requireNonNull(frequency);

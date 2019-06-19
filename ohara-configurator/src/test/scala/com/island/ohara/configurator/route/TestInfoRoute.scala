@@ -36,7 +36,6 @@ class TestInfoRoute extends SmallTest with Matchers {
     clusterInformation.versionInfo.user shouldBe VersionUtils.USER
     clusterInformation.versionInfo.revision shouldBe VersionUtils.REVISION
     clusterInformation.versionInfo.date shouldBe VersionUtils.DATE
-    println(s"[CHIA] ${Mode.FAKE.toString}")
     clusterInformation.mode shouldBe Mode.FAKE.toString
   }
 

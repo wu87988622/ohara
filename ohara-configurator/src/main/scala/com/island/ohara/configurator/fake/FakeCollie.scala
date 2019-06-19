@@ -53,7 +53,6 @@ private[configurator] abstract class FakeCollie[T <: ClusterInfo: ClassTag, Crea
     }.toSeq
     clusterCache.remove(cluster)
     clusterCache.put(cluster, genContainers(cluster))
-    println(s"[CHIA] add cluster:${cluster.name} nodeNames:${cluster.nodeNames.mkString(",")}")
     cluster
   }
   override def exist(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =

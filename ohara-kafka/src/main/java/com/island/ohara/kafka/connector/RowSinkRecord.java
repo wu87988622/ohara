@@ -99,7 +99,7 @@ public class RowSinkRecord {
     return new Builder();
   }
 
-  public static class Builder {
+  public static class Builder implements com.island.ohara.common.Builder<RowSinkRecord> {
     private Builder() {
       // do nothing
     }
@@ -141,6 +141,7 @@ public class RowSinkRecord {
       return this;
     }
 
+    @Override
     public RowSinkRecord build() {
       return new RowSinkRecord(
           CommonUtils.requireNonEmpty(topicName),

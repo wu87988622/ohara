@@ -92,7 +92,7 @@ object ClusterCache {
     case object UNKNOWN extends Service
   }
 
-  def builder(): Builder = new Builder
+  def builder: Builder = new Builder
 
   // TODO: remove this workaround if google guava support the custom comparison ... by chia
   @VisibleForTesting
@@ -106,7 +106,7 @@ object ClusterCache {
     override def toString: String = s"name:$name, service:$service"
   }
 
-  class Builder private[ClusterCache] {
+  class Builder private[ClusterCache] extends com.island.ohara.common.Builder[ClusterCache] {
     private[this] var frequency: Duration = 5 seconds
     private[this] var lazyRemove: Duration = 0 seconds
     private[this] var supplier: () => Map[ClusterInfo, Seq[ContainerInfo]] = _
@@ -145,7 +145,7 @@ object ClusterCache {
       Objects.requireNonNull(supplier)
     }
 
-    def build(): ClusterCache = {
+    override def build: ClusterCache = {
       checkArguments()
       new ClusterCache {
         private[this] val cache = RefreshableCache

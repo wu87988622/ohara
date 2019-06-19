@@ -52,7 +52,7 @@ public interface Producer<Key, Value> extends Releasable {
     return new Builder<>();
   }
 
-  class Builder<Key, Value> {
+  class Builder<Key, Value> implements com.island.ohara.common.Builder<Producer<Key, Value>> {
     private Map<String, String> options = Collections.emptyMap();
     private String connectionProps;
     // default noAcks
@@ -133,6 +133,7 @@ public interface Producer<Key, Value> extends Releasable {
       Objects.requireNonNull(valueSerializer);
     }
 
+    @Override
     public Producer<Key, Value> build() {
       checkArguments();
       return new Producer<Key, Value>() {

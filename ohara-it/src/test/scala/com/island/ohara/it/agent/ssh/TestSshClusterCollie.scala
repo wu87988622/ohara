@@ -30,7 +30,7 @@ class TestSshClusterCollie extends BasicTests4ClusterCollie {
   private[this] var _clusterCollie: ClusterCollie = _
   @Before
   final def setup(): Unit = if (nodeCache.isEmpty) skipTest(s"You must assign nodes for collie tests")
-  else _clusterCollie = ClusterCollie.builderOfSsh().nodeCollie(NodeCollie(nodeCache)).build()
+  else _clusterCollie = ClusterCollie.builderOfSsh.nodeCollie(NodeCollie(nodeCache)).build()
 
   override protected def generateClusterName(): String = nameHolder.generateClusterName()
 

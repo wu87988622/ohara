@@ -543,7 +543,7 @@ public class SettingDefinition implements JsonObject {
     return new Builder(definition);
   }
 
-  public static class Builder {
+  public static class Builder implements com.island.ohara.common.Builder<SettingDefinition> {
     private String displayName;
     private String group = COMMON_GROUP;
     private int orderInGroup = -1;
@@ -664,6 +664,7 @@ public class SettingDefinition implements JsonObject {
       return this;
     }
 
+    @Override
     public SettingDefinition build() {
       return new SettingDefinition(
           displayName,

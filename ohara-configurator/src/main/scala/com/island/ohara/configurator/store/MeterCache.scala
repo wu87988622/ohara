@@ -37,7 +37,7 @@ trait MeterCache extends Releasable {
 
 object MeterCache {
 
-  def builder(): Builder = new Builder()
+  def builder: Builder = new Builder()
 
   // TODO: remove this workaround if google guava support the custom comparison ... by chia
   @VisibleForTesting
@@ -50,7 +50,7 @@ object MeterCache {
     override def toString: String = s"name:$name, service:$service"
   }
 
-  class Builder {
+  class Builder private[MeterCache] extends com.island.ohara.common.Builder[MeterCache] {
     private[this] var refresher: () => Map[ClusterInfo, Map[String, Seq[Meter]]] = _
     private[this] var frequency: Duration = 5 seconds
 
@@ -65,7 +65,7 @@ object MeterCache {
       this
     }
 
-    def build(): MeterCache = new MeterCache {
+    override def build: MeterCache = new MeterCache {
       import scala.collection.JavaConverters._
       private[this] val refresher = Objects.requireNonNull(Builder.this.refresher)
       private[this] val closed = new AtomicBoolean(false)
