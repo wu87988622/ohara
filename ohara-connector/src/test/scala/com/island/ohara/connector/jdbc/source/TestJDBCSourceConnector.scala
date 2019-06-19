@@ -18,8 +18,8 @@ package com.island.ohara.connector.jdbc.source
 
 import java.sql.Statement
 
-import com.island.ohara.client.DatabaseClient
 import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
+import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Cell, Row, Serializer}
 import com.island.ohara.kafka.Consumer
@@ -39,7 +39,7 @@ import scala.concurrent.duration._
   */
 class TestJDBCSourceConnector extends With3Brokers3Workers with Matchers {
   private[this] val db = Database.local()
-  private[this] val client = DatabaseClient(db.url, db.user, db.password)
+  private[this] val client = DatabaseClient.builder.url(db.url()).user(db.user()).password(db.password()).build
   private[this] val tableName = "table1"
   private[this] val timestampColumnName = "column1"
   private[this] val workerClient = WorkerClient(testUtil.workersConnProps)

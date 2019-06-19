@@ -19,9 +19,9 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent.{BrokerCollie, WorkerCollie}
-import com.island.ohara.client.DatabaseClient
 import com.island.ohara.client.configurator.v0.QueryApi._
 import com.island.ohara.client.configurator.v0.ValidationApi.RdbValidation
+import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.configurator.fake.FakeWorkerClient
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -42,11 +42,10 @@ private[configurator] object QueryRoute extends SprayJsonSupport {
             case (_, topicAdmin, _, workerClient) =>
               workerClient match {
                 case _: FakeWorkerClient =>
-                  val client = DatabaseClient(query.url, query.user, query.password)
+                  val client = DatabaseClient.builder.url(query.url).user(query.user).password(query.password).build
                   try Future.successful(RdbInfo(
                     client.databaseType,
-                    client
-                      .tableQuery()
+                    client.tableQuery
                       .catalog(query.catalogPattern.orNull)
                       .schema(query.schemaPattern.orNull)
                       .tableName(query.tableName.orNull)

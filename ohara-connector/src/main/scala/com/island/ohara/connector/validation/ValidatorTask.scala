@@ -19,16 +19,16 @@ package com.island.ohara.connector.validation
 import java.util
 import java.util.concurrent.TimeUnit
 
-import com.island.ohara.client.DatabaseClient
 import com.island.ohara.client.configurator.v0.QueryApi.RdbInfo
 import com.island.ohara.client.configurator.v0.ValidationApi
 import com.island.ohara.client.configurator.v0.ValidationApi.{
   FtpValidation,
   HdfsValidation,
-  RdbValidationReport,
   RdbValidation,
+  RdbValidationReport,
   ValidationReport
 }
+import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.client.ftp.FtpClient
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
@@ -77,14 +77,14 @@ class ValidatorTask extends SourceTask {
   }
 
   private[this] def validate(info: RdbValidation): RdbValidationReport = {
-    val client = DatabaseClient(info.url, info.user, info.password)
+    val client = DatabaseClient.builder.url(info.url).user(info.user).password(info.password).build
     try RdbValidationReport(
       hostname = hostname,
       message = "succeed to fetch table information from database",
       pass = true,
       rdbInfo = RdbInfo(
         client.databaseType,
-        client.tables
+        client.tables()
       )
     )
     finally client.close()

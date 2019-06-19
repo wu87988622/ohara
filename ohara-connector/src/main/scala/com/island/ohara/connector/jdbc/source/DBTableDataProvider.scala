@@ -19,8 +19,8 @@ package com.island.ohara.connector.jdbc.source
 import java.sql._
 import java.util.Calendar
 
-import com.island.ohara.client.DatabaseClient
 import com.island.ohara.client.configurator.v0.QueryApi.{RdbColumn, RdbTable}
+import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.common.util.{Releasable, ReleaseOnce}
 import com.island.ohara.connector.jdbc.util.DateTimeUtils
 
@@ -29,7 +29,7 @@ import com.island.ohara.connector.jdbc.util.DateTimeUtils
   *
   */
 class DBTableDataProvider(url: String, userName: String, password: String) extends ReleaseOnce {
-  private[this] val client: DatabaseClient = DatabaseClient(url, userName, password)
+  private[this] val client: DatabaseClient = DatabaseClient.builder.url(url).user(userName).password(password).build
 
   def executeQuery(tableName: String, timeStampColumnName: String, tsOffset: Timestamp): QueryResultIterator = {
     val columnNames = columns(tableName)
@@ -45,11 +45,11 @@ class DBTableDataProvider(url: String, userName: String, password: String) exten
   }
 
   def columns(tableName: String): Seq[RdbColumn] = {
-    val rdbTables: Seq[RdbTable] = client.tableQuery().tableName(tableName).execute()
+    val rdbTables: Seq[RdbTable] = client.tableQuery.tableName(tableName).execute()
     rdbTables.head.columns
   }
 
-  def isTableExists(tableName: String): Boolean = client.tableQuery().tableName(tableName).execute().nonEmpty
+  def isTableExists(tableName: String): Boolean = client.tableQuery.tableName(tableName).execute().nonEmpty
 
   def dbCurrentTime(cal: Calendar): Timestamp = {
     val dbProduct: String = client.connection.getMetaData.getDatabaseProductName

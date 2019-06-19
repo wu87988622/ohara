@@ -21,8 +21,8 @@ import java.sql.Timestamp
 import java.text.SimpleDateFormat
 import java.util.{Calendar, TimeZone}
 
-import com.island.ohara.client.DatabaseClient
 import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
+import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.connector.hdfs.creator.StorageCreator
@@ -42,7 +42,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.collection.JavaConverters._
 class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
   private[this] val db = testUtil().dataBase()
-  private[this] val client = DatabaseClient(db.url, db.user, db.password)
+  private[this] val client = DatabaseClient.builder.url(db.url()).user(db.user()).password(db.password()).build
   private[this] val tableName = CommonUtils.randomString(10)
   private[this] val timestampColumnName = "CREATE_DATE"
   private[this] val workerClient = WorkerClient(testUtil.workersConnProps)

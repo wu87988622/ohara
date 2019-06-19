@@ -17,6 +17,7 @@
 package com.island.ohara.client
 
 import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
+import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.testing.service.Database
@@ -27,7 +28,7 @@ class TestDatabaseClient extends MediumTest with Matchers {
 
   private[this] val db = Database.local()
 
-  private[this] val client = DatabaseClient(db.url, db.user, db.password)
+  private[this] val client = DatabaseClient.builder.url(db.url()).user(db.user()).password(db.password()).build
 
   private[this] val increasedNumber = client.databaseType match {
     // postgresql generate one table called "xxx_pkey"
@@ -36,14 +37,14 @@ class TestDatabaseClient extends MediumTest with Matchers {
   }
   @Test
   def testList(): Unit = {
-    val before = client.tables.size
+    val before = client.tables().size
     val tableName = methodName
     val cf0 = RdbColumn("cf0", "INTEGER", true)
     val cf1 = RdbColumn("cf1", "INTEGER", false)
     val cf2 = RdbColumn("cf2", "INTEGER", false)
     client.createTable(tableName, Seq(cf2, cf0, cf1))
     try {
-      val after = client.tables.size
+      val after = client.tables().size
       after - before shouldBe increasedNumber
     } finally client.dropTable(tableName)
   }
@@ -55,11 +56,11 @@ class TestDatabaseClient extends MediumTest with Matchers {
     val cf0 = RdbColumn("cf0", "INTEGER", true)
     val cf1 = RdbColumn("cf1", "INTEGER", true)
     val cf2 = RdbColumn("cf2", "INTEGER", false)
-    val before = client.tables.size
+    val before = client.tables().size
     client.createTable(tableName, Seq(cf2, cf0, cf1))
     try {
-      client.tables.size - before shouldBe increasedNumber
-      val cfs = client.tableQuery().tableName(tableName).execute().head.columns
+      client.tables().size - before shouldBe increasedNumber
+      val cfs = client.tableQuery.tableName(tableName).execute().head.columns
       cfs.size shouldBe 3
       cfs.filter(_.name == "cf0").head.pk shouldBe true
       cfs.filter(_.name == "cf1").head.pk shouldBe true
@@ -73,9 +74,29 @@ class TestDatabaseClient extends MediumTest with Matchers {
     val cf0 = RdbColumn("cf0", "INTEGER", true)
     val cf1 = RdbColumn("cf1", "INTEGER", false)
     client.createTable(tableName, Seq(cf0, cf1))
-    val before = client.tables.size
+    val before = client.tables().size
     client.dropTable(tableName)
-    before - client.tables.size shouldBe increasedNumber
+    before - client.tables().size shouldBe increasedNumber
+  }
+
+  @Test
+  def nullUrl(): Unit = an[NullPointerException] should be thrownBy DatabaseClient.builder.url(null)
+
+  @Test
+  def emptyUrl(): Unit = an[IllegalArgumentException] should be thrownBy DatabaseClient.builder.url("")
+
+  @Test
+  def testUser(): Unit = {
+    // USER is optional to jdbc so null and empty string are legal
+    DatabaseClient.builder.user(null)
+    DatabaseClient.builder.user("")
+  }
+
+  @Test
+  def testPassword(): Unit = {
+    // PASSWORD is optional to jdbc so null and empty string are legal
+    DatabaseClient.builder.password(null)
+    DatabaseClient.builder.password("")
   }
 
   @After

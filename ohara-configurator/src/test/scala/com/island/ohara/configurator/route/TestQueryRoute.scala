@@ -16,9 +16,9 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.DatabaseClient
 import com.island.ohara.client.configurator.v0.QueryApi
 import com.island.ohara.client.configurator.v0.QueryApi.{RdbColumn, RdbInfo, RdbQuery}
+import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.configurator.Configurator
@@ -38,7 +38,7 @@ class TestQueryRoute extends SmallTest with Matchers {
   @Test
   def testQueryDb(): Unit = {
     val tableName = methodName
-    val dbClient = DatabaseClient(db.url, db.user, db.password)
+    val dbClient = DatabaseClient.builder.url(db.url()).user(db.user()).password(db.password()).build
     try {
       val r = result(
         QueryApi
