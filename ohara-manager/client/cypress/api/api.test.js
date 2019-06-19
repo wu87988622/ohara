@@ -28,6 +28,7 @@ const nodeName = `node${makeRandomPort()}`;
 const wkName = `wk${makeRandomPort()}`;
 const connectorName = `source${makeRandomPort()}`;
 
+//test api
 describe('Node Api test', () => {
   it('createNode', () => {
     const data = {
