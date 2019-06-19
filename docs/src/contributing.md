@@ -2,7 +2,7 @@
 
 All we love is only pull request so we have some rules used to make your PR looks good for reviewers.
 
-> Note that you should file a new issue in our jira board to discuss the PR detail before submitting a PR.
+> Note that you should file a new issue to discuss the PR detail with us before submitting a PR.
 
 ## Quick start
 
@@ -10,7 +10,7 @@ All we love is only pull request so we have some rules used to make your PR look
 - Install dependencies. See our [how_to_build](how_to_build.md#gradle-commands) for development machine setup
 - Create a branch with your PR with `git checkout -b ${your-branch-name}`
 - Push your PR to remote: `git push origin ${your-branch-name}`
-- Create the PR with GitHub web UI and wait for reviews
+- Create the PR with GitHub web UI and wait for reviews from our committers
 
 ## Pull request commands:
 
@@ -20,12 +20,16 @@ To start a QA run, you can simply leave a comment with one of the following comm
 
 > Note that the comment should contain the exact command as listed below, comments like **Please retry my PR** or **Bot, retry -fae** won't work:
 
-- **retry**: execute a full QA
-- **retry -fae**: execute a full QA even when some fail
-- **retry \${moduleName}**: execute a QA for a specific module. If a module is named **ohara-awesome**, you can enter **retry awesome** to run the QA against this specific module. Note that module prefix **ohara-** is not needed.
-- **run**: execute both the Configurator and the Manager on jenkins server. If the PR makes some changes to UI, you can run this command to see the changes
+- **retry**: trigger a full QA run
+- **retry -fae**: trigger a full QA run even if there's fail test during the run
+- **retry \${moduleName}**: trigger a QA run for a specific module. If a module is named **ohara-awesome**, you can enter **retry awesome** to run the QA against this specific module. Note that the module prefix **ohara-** is not needed.
+  - Ohara manager has a couple of different tests and can be run separately by using the above-mentioned `retry` command.  
+    - retry manager-api: run manager's API tests
+    - retry manager-ut: run manager's unit tests
+    - retry manager-it: run manager's end-to-end tests 
+- **run**: start both Configurator and Manager on jenkins server. If the specified PR makes some changes to UI, you can run this command to see the changes
 
-The build status can be seen at the bottom of your PR.
+The QA build status can be seen at the bottom of your PR.
 
 ## A pull request must:
 
