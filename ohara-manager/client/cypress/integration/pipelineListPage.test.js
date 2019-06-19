@@ -31,7 +31,7 @@ describe('PipelineListPage', () => {
 
     const pipelineName = makeRandomStr();
 
-    cy.visit(URLS.PIPELINE)
+    cy.visit(URLS.PIPELINES)
       .getByText('New pipeline')
       .click()
       .getByLabelText('Pipeline name')
@@ -58,12 +58,12 @@ describe('PipelineListPage', () => {
     };
 
     cy.createPipeline(pipelineParams)
-      .visit(URLS.PIPELINE)
+      .visit(URLS.PIPELINES)
       .wait('@getPipelines')
       .getByTestId('edit-pipeline')
       .click()
       .location('pathname')
-      .should('contains', `${URLS.PIPELINE}/edit`);
+      .should('contains', `${URLS.PIPELINES}/edit`);
   });
 
   it('deletes a pipeline', () => {
@@ -78,7 +78,7 @@ describe('PipelineListPage', () => {
     };
 
     cy.createPipeline(pipelineParams)
-      .visit(URLS.PIPELINE)
+      .visit(URLS.PIPELINES)
       .wait('@getPipelines')
       .getByText(pipelineName)
       .then($el => {

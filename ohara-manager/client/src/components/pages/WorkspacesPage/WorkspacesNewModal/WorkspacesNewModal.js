@@ -17,13 +17,17 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import toastr from 'toastr';
-import { map, truncate, get } from 'lodash';
+import { map, isEmpty, truncate, get } from 'lodash';
 import { Form, Field } from 'react-final-form';
 
+import * as zookeeperApi from 'api/zookeeperApi';
 import * as workerApi from 'api/workerApi';
 import * as brokerApi from 'api/brokerApi';
+import * as containerApi from 'api/containerApi';
 import * as MESSAGES from 'constants/messages';
+import * as generate from 'utils/generate';
 import * as s from './styles';
+import * as commonUtils from 'utils/commonUtils';
 import NodeSelectModal from '../NodeSelectModal';
 import PluginSelectModal from '../PluginSelectModal';
 import { Modal } from 'components/common/Modal';
@@ -49,33 +53,97 @@ class WorkerNewModal extends React.Component {
     this.props.onClose();
   };
 
-  onSubmit = async (values, form) => {
-    const { clientPort } = values;
-    if (clientPort < 5000 || clientPort > 65535) {
-      toastr.error(
-        'Invalid port. The port has to be a value from 5000 to 65535.',
-      );
-      return;
-    }
-    const result = get(await brokerApi.fetchBrokers(), 'data.result');
-    const brokerName = result.length > 0 ? result[0].name : '';
-    const randomPort = Math.floor(Math.random() * (65535 - 5000 + 1)) + 5000;
-    const res = await workerApi.createWorker({
+  createServices = async values => {
+    const { clientPort, nodeNames } = values;
+
+    const maxRetry = 5;
+    let retryCount = 0;
+    const waitForServiceCreation = async clusterName => {
+      const res = await containerApi.fetchContainers(clusterName);
+      const state = get(res, 'data.result[0].containers[0].state', null);
+
+      if (state === 'RUNNING' || retryCount > maxRetry) return;
+
+      retryCount++;
+      await commonUtils.sleep(2000);
+      await waitForServiceCreation(clusterName);
+    };
+
+    const zookeeper = await zookeeperApi.createZookeeper({
+      name: generate.serviceName(),
+      clientPort: clientPort,
+      peerPort: generate.port(),
+      electionPort: generate.port(),
+      nodeNames,
+    });
+
+    const zookeeperClusterName = get(zookeeper, 'data.result.name');
+    await waitForServiceCreation(zookeeperClusterName);
+
+    const broker = await brokerApi.createBroker({
+      name: generate.serviceName(),
+      zookeeperClusterName,
+      clientPort: clientPort,
+      exporterPort: generate.port(),
+      jmxPort: generate.port(),
+      nodeNames,
+    });
+
+    const brokerClusterName = get(broker, 'data.result.name');
+    await waitForServiceCreation(brokerClusterName);
+
+    const worker = await workerApi.createWorker({
       ...values,
       name: this.validateServiceName(values.name),
       plugins: map(values.plugins, 'id'),
-      jmxPort: randomPort,
-      brokerClusterName: brokerName,
+      jmxPort: generate.port(),
+      brokerClusterName,
     });
 
-    const isSuccess = get(res, 'data.isSuccess', false);
+    const workerClusterName = get(worker, 'data.result.name');
+    await waitForServiceCreation(workerClusterName);
+  };
 
-    if (isSuccess) {
-      form.reset();
-      toastr.success(MESSAGES.SERVICE_CREATION_SUCCESS);
-      this.props.onConfirm();
-      this.handleModalClose();
+  onSubmit = async (values, form) => {
+    if (!this.validateClientPort(values.clientPort)) return;
+    if (!this.validateNodeNames(values.nodeNames)) return;
+
+    await this.createServices(values);
+
+    form.reset();
+    toastr.success(MESSAGES.SERVICE_CREATION_SUCCESS);
+    this.props.onConfirm();
+    this.handleModalClose();
+  };
+
+  validateNodeNames = nodes => {
+    if (isEmpty(nodes)) {
+      toastr.error('You should at least supply a node name');
+      return false;
     }
+
+    return true;
+  };
+
+  validateClientPort = port => {
+    if (port < 5000 || port > 65535) {
+      toastr.error(
+        'Invalid port. The port has to be a value from 5000 to 65535.',
+      );
+      return false;
+    }
+
+    if (typeof port === 'undefined') {
+      toastr.error('Port is required');
+      return false;
+    }
+
+    if (isNaN(port)) {
+      toastr.error('Port only accepts number');
+      return false;
+    }
+
+    return true;
   };
 
   validateServiceName = value => {
@@ -106,7 +174,7 @@ class WorkerNewModal extends React.Component {
 
           return (
             <Modal
-              title="New connect service"
+              title="New workspace"
               isActive={this.props.isActive}
               width="600px"
               handleCancel={() => {
@@ -202,7 +270,9 @@ class WorkerNewModal extends React.Component {
                           text="Add plugin"
                           handleClick={e => {
                             e.preventDefault();
-                            this.setState({ activeModal: SELECT_PLUGIN_MODAL });
+                            this.setState({
+                              activeModal: SELECT_PLUGIN_MODAL,
+                            });
                           }}
                           disabled={submitting}
                         />
@@ -223,6 +293,7 @@ class WorkerNewModal extends React.Component {
                 }}
                 initNodeNames={values.nodeNames}
               />
+
               <PluginSelectModal
                 isActive={activeModal === SELECT_PLUGIN_MODAL}
                 onClose={() => {

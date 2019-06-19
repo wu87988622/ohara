@@ -14,18 +14,6 @@
  * limitations under the License.
  */
 
-export const HOME = '/';
+import WorkspacesPage from './WorkspacesPage';
 
-// Pipelines
-export const PIPELINES = '/pipelines';
-
-export const NODES = '/nodes';
-export const WORKSPACES = '/workspaces';
-export const MONITORING = '/monitoring';
-export const CONFIGURATION = '/configuration';
-
-// Auth
-export const LOGIN = '/login';
-export const LOGOUT = '/logout';
-
-export const TOPICS = '/topics';
+export default WorkspacesPage;

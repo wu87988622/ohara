@@ -18,7 +18,6 @@ import styled from 'styled-components';
 import { NavLink } from 'react-router-dom';
 
 import { Button } from 'components/common/Form';
-import { DataTable } from 'components/common/Table';
 
 const Wrapper = styled.div`
   padding-top: 75px;
@@ -32,14 +31,6 @@ const NewClusterBtn = styled(Button)`
 `;
 
 NewClusterBtn.displayName = 'NewClusterBtn';
-
-const Table = styled(DataTable)`
-  text-align: left;
-
-  .is-running {
-    background: ${props => props.theme.trBgColor};
-  }
-`;
 
 const Link = styled(NavLink)`
   color: ${props => props.theme.lightBlue};
@@ -68,4 +59,4 @@ const Icon = styled.i`
   }
 `;
 
-export { Wrapper, NewClusterBtn, Table, Link, Icon };
+export { Wrapper, NewClusterBtn, Link, Icon };

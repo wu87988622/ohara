@@ -14,6 +14,21 @@
  * limitations under the License.
  */
 
-import WorkerNewModal from './WorkerNewModal';
+import React from 'react';
+import PropTypes from 'prop-types';
+import Typography from '@material-ui/core/Typography';
 
-export default WorkerNewModal;
+const MuiTypography = ({ variant, children, ...rest }) => {
+  return (
+    <Typography {...rest} variant={variant}>
+      {children}
+    </Typography>
+  );
+};
+
+MuiTypography.propTypes = {
+  variant: PropTypes.string.isRequired,
+  children: PropTypes.any.isRequired,
+};
+
+export default MuiTypography;

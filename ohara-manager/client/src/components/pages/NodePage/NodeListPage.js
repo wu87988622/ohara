@@ -16,14 +16,17 @@
 
 import React from 'react';
 import DocumentTitle from 'react-document-title';
-import { reduce, map, sortBy, get, isNull } from 'lodash';
+import { reduce, map, sortBy, get, isNull, join } from 'lodash';
+import TableRow from '@material-ui/core/TableRow';
+import TableCell from '@material-ui/core/TableCell';
 
 import * as nodeApi from 'api/nodeApi';
 import { NODES } from 'constants/documentTitles';
-import { Box } from 'components/common/Layout';
 import { H2 } from 'components/common/Headings';
 import MuiNewModal from './MuiNewModal';
 import MuiEditModal from './MuiEditModal';
+import EditIcon from '@material-ui/icons/Edit';
+import IconButton from '@material-ui/core/IconButton';
 
 import * as s from './styles';
 
@@ -102,7 +105,7 @@ class NodeListPage extends React.Component {
 
     return (
       <DocumentTitle title={NODES}>
-        <React.Fragment>
+        <>
           <s.Wrapper>
             <s.TopWrapper>
               <H2>Nodes</H2>
@@ -116,16 +119,33 @@ class NodeListPage extends React.Component {
                 }}
               />
             </s.TopWrapper>
-            <Box>
-              <s.NodeTable
-                getAllClusterNames={this.getAllClusterNames}
-                getSSHLabel={this.getSSHLabel}
-                handleEditClick={this.handleEditClick}
-                nodes={nodes}
-                isLoading={isLoading}
-                headers={this.headers}
-              />
-            </Box>
+            <s.NodeTable isLoading={isLoading} headers={this.headers}>
+              {() => {
+                return nodes.map(node => (
+                  <TableRow key={node.name}>
+                    <TableCell component="th" scope="row">
+                      {node.name || ''}
+                    </TableCell>
+                    <TableCell align="left">
+                      {join(this.getAllClusterNames(node), ', ')}
+                    </TableCell>
+                    <TableCell align="left">
+                      {this.getSSHLabel(node.user, node.port)}
+                    </TableCell>
+                    <TableCell className="has-icon" align="left">
+                      <IconButton
+                        color="primary"
+                        aria-label="Edit"
+                        data-testid="edit-node-icon"
+                        onClick={() => this.handleEditClick(node)}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ));
+              }}
+            </s.NodeTable>
           </s.Wrapper>
           <MuiNewModal
             isOpen={this.state.isNewModalOpen}
@@ -138,7 +158,7 @@ class NodeListPage extends React.Component {
             handleClose={this.handleModalColse}
             handleConfirm={this.fetchData}
           />
-        </React.Fragment>
+        </>
       </DocumentTitle>
     );
   }

@@ -112,4 +112,18 @@ export const singleGraph = (overrides = {}) => {
   };
 };
 
+export const port = ({ min = 5000, max = 65535 } = {}) => {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+};
+
+export const serviceName = (length = 10) => {
+  let name = '';
+  const possible = 'abcdefghijklmnopqrstuvwxyz0123456789';
+
+  for (let i = 0; i < length; i++)
+    name += possible.charAt(Math.floor(Math.random() * possible.length));
+
+  return name;
+};
+
 export { name, id, message, domainName, ip, userName, number };

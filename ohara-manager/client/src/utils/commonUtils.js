@@ -14,20 +14,10 @@
  * limitations under the License.
  */
 
-const isEmptyStr = val => val.length === 0;
+export const isEmptyStr = val => val.length === 0;
 
-const isEmptyArr = arr => arr.length === 0;
+export const isEmptyArr = arr => arr.length === 0;
 
-const isDefined = val => typeof val !== 'undefined';
-
-const isNumber = val => typeof val === 'number';
-
-const reduceByProp = (data, prop) => {
-  const result = data.reduce((prev, curr) =>
-    prev[prop] > curr[prop] ? prev : curr,
-  );
-
-  return result;
+export const sleep = ms => {
+  return new Promise(resolve => setTimeout(resolve, ms));
 };
-
-export { reduceByProp, isEmptyStr, isEmptyArr, isDefined, isNumber };

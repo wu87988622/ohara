@@ -31,7 +31,7 @@ describe('StreamApp', () => {
 
       const pipelineName = makeRandomStr();
 
-      cy.visit(URLS.PIPELINE)
+      cy.visit(URLS.PIPELINES)
         .getByTestId('new-pipeline')
         .click()
         .getByLabelText('Pipeline name')
@@ -102,7 +102,7 @@ describe('StreamApp', () => {
 
       const pipelineName = makeRandomStr();
 
-      cy.visit(URLS.PIPELINE)
+      cy.visit(URLS.PIPELINES)
         .getByTestId('new-pipeline')
         .click()
         .getByLabelText('Pipeline name')

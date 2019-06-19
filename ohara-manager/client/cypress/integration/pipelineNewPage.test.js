@@ -35,7 +35,7 @@ describe('PipelineNewPage', () => {
     const pipelineName = makeRandomStr();
 
     cy.createTopic().as('createTopic');
-    cy.visit(URLS.PIPELINE)
+    cy.visit(URLS.PIPELINES)
       .getByTestId('new-pipeline')
       .click()
       .getByLabelText('Pipeline name')

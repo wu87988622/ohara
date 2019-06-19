@@ -19,7 +19,6 @@ import { shallow } from 'enzyme';
 
 import * as URLS from 'constants/urls';
 import Header from '../Header';
-import NAVS from 'constants/navs';
 import { fetchInfo } from 'api/infoApi';
 
 jest.mock('api/infoApi');
@@ -92,18 +91,36 @@ describe('<Header />', () => {
   it('renders Navigation <Link />', () => {
     const links = wrapper.find('Link');
 
+    const expected = [
+      {
+        to: URLS.PIPELINES,
+        text: 'Pipelines',
+        iconCls: 'fa-code-branch',
+      },
+      {
+        to: URLS.NODES,
+        text: 'Nodes',
+        iconCls: 'fa-sitemap',
+      },
+      {
+        to: URLS.WORKSPACES,
+        text: 'Workspaces',
+        iconCls: 'fa-project-diagram',
+      },
+    ];
+
     links.forEach((link, idx) => {
       const linkProps = link.props();
       const icon = link.find('Icon');
       const span = link.find('span');
       const iconProps = icon.props();
 
-      expect(span.children().text()).toBe(NAVS[idx].text);
+      expect(span.children().text()).toBe(expected[idx].text);
       expect(linkProps.activeClassName).toBe('active');
-      expect(linkProps.to).toBe(NAVS[idx].to);
+      expect(linkProps.to).toBe(expected[idx].to);
 
       // TODO: change this to regex, this is prone to error
-      expect(iconProps.className).toBe(`fas ${NAVS[idx].iconCls}`);
+      expect(iconProps.className).toBe(`fas ${expected[idx].iconCls}`);
     });
   });
 });

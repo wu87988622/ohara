@@ -20,7 +20,7 @@ import * as URLS from 'constants/urls';
 
 class HomePage extends React.Component {
   render() {
-    return <Redirect to={URLS.PIPELINE} />;
+    return <Redirect to={URLS.PIPELINES} />;
   }
 }
 export default HomePage;

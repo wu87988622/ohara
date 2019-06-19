@@ -14,27 +14,29 @@
  * limitations under the License.
  */
 
-import { WORKER } from '../../src/constants/urls';
+import { WORKSPACES } from '../../src/constants/urls';
+import * as utils from '../utils';
 
-describe('WorkerPage', () => {
+describe('WorkspacesPage', () => {
   before(() => {
     cy.deleteAllWorkers();
   });
 
   it('creates a new connect worker cluster', () => {
     const nodeName = Cypress.env('nodeHost');
-    const clusterName = 'testcluster';
+    const clusterName = utils.makeRandomStr();
+    const port = utils.makeRandomPort();
 
     cy.registerWorker(clusterName);
 
-    cy.visit(WORKER)
-      .getByText('New cluster')
+    cy.visit(WORKSPACES)
+      .getByText('New workspace')
       .click()
       .getByPlaceholderText('cluster00')
       .type(clusterName)
       .getByLabelText('Port')
       .click()
-      .type('65535')
+      .type(port)
       .getByText('Add node')
       .click();
 
@@ -71,8 +73,7 @@ describe('WorkerPage', () => {
       .within(() => {
         cy.getByText('Add').click();
       });
-    cy.get('td').within(() => {
-      cy.getByText(clusterName).should('have.length', 1);
-    });
+
+    cy.getByText(clusterName).should('have.length', 1);
   });
 });

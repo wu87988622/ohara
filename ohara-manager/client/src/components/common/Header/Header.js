@@ -17,12 +17,10 @@
 import React from 'react';
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
-import ReactTooltip from 'react-tooltip';
 import { NavLink } from 'react-router-dom';
 import { get } from 'lodash';
 
 import * as URLS from 'constants/urls';
-import NAVS from 'constants/navs';
 import { ListLoader } from 'components/common/Loader';
 import { fetchInfo } from 'api/infoApi';
 import { InfoModal } from '../Modal';
@@ -238,19 +236,32 @@ class Header extends React.Component {
         <HeaderWrapper>
           <Brand to={URLS.HOME}>Ohara Stream</Brand>
           <Nav>
-            {NAVS.map(({ testId, to, iconCls, text }) => {
-              return (
-                <Link
-                  activeClassName="active"
-                  key={testId}
-                  data-testid={testId}
-                  to={to}
-                >
-                  <Icon className={`fas ${iconCls}`} />
-                  <span>{text}</span>
-                </Link>
-              );
-            })}
+            <Link
+              activeClassName="active"
+              data-testid="pipelines-link"
+              to={URLS.PIPELINES}
+            >
+              <Icon className="fas fa-code-branch" />
+              <span>Pipelines</span>
+            </Link>
+
+            <Link
+              activeClassName="active"
+              data-testid="nodes-link"
+              to={URLS.NODES}
+            >
+              <Icon className="fas fa-sitemap" />
+              <span>Nodes</span>
+            </Link>
+
+            <Link
+              activeClassName="active"
+              data-testid="workspaces-link"
+              to={URLS.WORKSPACES}
+            >
+              <Icon className="fas fa-project-diagram" />
+              <span>Workspaces</span>
+            </Link>
           </Nav>
 
           <RightCol>
@@ -264,22 +275,12 @@ class Header extends React.Component {
 
             {/* Features not yet finished, don't display them in the UI */}
             {false && (
-              <>
-                <Btn
-                  data-tip="Add a new configuration"
-                  data-testid="config-btn"
-                  onClick={this.handleConfigModalOpen}
-                >
-                  <i className="fas fa-cog" />
-                </Btn>
-                <ReactTooltip />
-                <Login
-                  data-testid="login-state"
-                  to={isLogin ? URLS.LOGOUT : URLS.LOGIN}
-                >
-                  {isLogin ? 'Log out' : 'Log in'}
-                </Login>
-              </>
+              <Login
+                data-testid="login-state"
+                to={isLogin ? URLS.LOGOUT : URLS.LOGIN}
+              >
+                {isLogin ? 'Log out' : 'Log in'}
+              </Login>
             )}
           </RightCol>
         </HeaderWrapper>

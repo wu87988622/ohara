@@ -26,17 +26,17 @@ describe('Header', () => {
       cy.getByText('Pipelines')
         .click()
         .location('pathname')
-        .should('eq', URLS.PIPELINE);
+        .should('eq', URLS.PIPELINES);
 
       cy.getByText('Nodes')
         .click()
         .location('pathname')
         .should('eq', URLS.NODES);
 
-      cy.getByText('Services')
+      cy.getByText('Workspaces')
         .click()
         .location('pathname')
-        .should('contains', URLS.SERVICES);
+        .should('contains', URLS.WORKSPACES);
     });
   });
 

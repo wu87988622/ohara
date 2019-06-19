@@ -17,15 +17,29 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import App from 'App';
+import pink from '@material-ui/core/colors/pink';
 import { ThemeProvider } from 'styled-components';
+import { ThemeProvider as MuiThemeProvider } from '@material-ui/styles';
+import { createMuiTheme } from '@material-ui/core/styles';
 
 import * as CSS_VARS from './theme/variables';
 import 'theme/globalStyle';
 import 'toastrConfigs';
 
+const MuiTheme = createMuiTheme({
+  palette: {
+    primary: {
+      main: '#4c84ff',
+    },
+    secondary: pink,
+  },
+});
+
 ReactDOM.render(
-  <ThemeProvider theme={CSS_VARS}>
-    <App />
-  </ThemeProvider>,
+  <MuiThemeProvider theme={MuiTheme}>
+    <ThemeProvider theme={CSS_VARS}>
+      <App />
+    </ThemeProvider>
+  </MuiThemeProvider>,
   document.getElementById('root'),
 );

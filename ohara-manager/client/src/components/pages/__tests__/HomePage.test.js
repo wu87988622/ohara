@@ -18,7 +18,7 @@ import React from 'react';
 import { shallow } from 'enzyme';
 
 import HomePage from '../HomePage';
-import { PIPELINE } from '../../../constants/urls';
+import { PIPELINES } from '../../../constants/urls';
 
 const props = { match: {} };
 
@@ -36,6 +36,6 @@ describe('<HomePage />', () => {
     const match = {};
     wrapper = shallow(<HomePage match={match} />);
     expect(wrapper.name()).toBe('Redirect');
-    expect(wrapper.props().to).toBe(PIPELINE);
+    expect(wrapper.props().to).toBe(PIPELINES);
   });
 });

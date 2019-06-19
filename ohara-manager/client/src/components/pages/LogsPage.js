@@ -21,10 +21,10 @@ import { get, isEmpty, split, map, includes } from 'lodash';
 import styled from 'styled-components';
 
 import * as logApi from 'api/logApi';
-import { SERVICES } from 'constants/documentTitles';
 import { TableLoader } from 'components/common/Loader';
 import { Box } from 'components/common/Layout';
 import { H2 } from 'components/common/Headings';
+import { WORKSPACES } from 'constants/documentTitles';
 import NotFoundPage from 'components/pages/NotFoundPage';
 
 const Wrapper = styled.div`
@@ -95,7 +95,7 @@ class LogsPage extends React.Component {
     const logContext = get(logs, '[0].value', '');
     const logLines = split(logContext, `\n`);
     return (
-      <DocumentTitle title={SERVICES}>
+      <DocumentTitle title={WORKSPACES}>
         <>
           <Wrapper>
             <TopWrapper>

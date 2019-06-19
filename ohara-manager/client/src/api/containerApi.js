@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
-export const HOME = '/';
+import { get } from 'lodash';
 
-// Pipelines
-export const PIPELINES = '/pipelines';
+import { handleError, axiosInstance } from './apiUtils';
 
-export const NODES = '/nodes';
-export const WORKSPACES = '/workspaces';
-export const MONITORING = '/monitoring';
-export const CONFIGURATION = '/configuration';
+export const fetchContainers = async clusterName => {
+  try {
+    const res = await axiosInstance.get(`/api/containers/${clusterName}`);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
-// Auth
-export const LOGIN = '/login';
-export const LOGOUT = '/logout';
+    if (!isSuccess) {
+      handleError(res);
+    }
 
-export const TOPICS = '/topics';
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};

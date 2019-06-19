@@ -22,7 +22,7 @@ import HomePage from 'components/pages/HomePage';
 import PipelinePage from 'components/pages/PipelinePage';
 import PipelineNewPage from 'components/pages/PipelinePage/PipelineNewPage';
 import NodesPage from 'components/pages/NodePage/NodeListPage';
-import ServicesPage from 'components/pages/Services';
+import WorkspacesPage from 'components/pages/WorkspacesPage';
 import MonitoringPage from 'components/pages/MonitoringPage';
 import LogsPage from 'components/pages/LogsPage';
 import LoginPage from 'components/pages/LoginPage';
@@ -84,9 +84,9 @@ class App extends React.Component {
                 data-testid="nodes-page"
               />
               <Route
-                path="/services/:serviceName?/:clusterName?"
-                component={ServicesPage}
-                data-testid="services-page"
+                path="/workspaces/:serviceName?/:clusterName?"
+                component={WorkspacesPage}
+                data-testid="workspaces-page"
               />
               <Route
                 path="/monitoring"

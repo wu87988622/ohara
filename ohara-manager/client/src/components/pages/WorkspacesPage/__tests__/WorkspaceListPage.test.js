@@ -18,7 +18,7 @@ import React from 'react';
 import { cleanup } from 'react-testing-library';
 import 'jest-dom/extend-expect';
 
-import WorkerListPage from '../WorkerListPage';
+import WorkspacesListPage from '../WorkspacesListPage';
 import { renderWithRouter } from 'utils/testUtils';
 
 const props = {
@@ -28,7 +28,7 @@ const props = {
 
 afterEach(cleanup);
 
-describe('<WorkerListPage />', () => {
+describe('<WorkspacesListPage />', () => {
   it('renders the page', () => {
     const workers = [
       {
@@ -39,22 +39,13 @@ describe('<WorkerListPage />', () => {
         offsetTopicName: 'g',
       },
     ];
-    renderWithRouter(<WorkerListPage {...props} workers={workers} />);
+    renderWithRouter(<WorkspacesListPage {...props} workers={workers} />);
   });
 
   it('renders a loader if data is not ready', () => {
     const { getByTestId } = renderWithRouter(
-      <WorkerListPage {...props} isLoading={true} workers={[]} />,
+      <WorkspacesListPage {...props} isLoading={true} workers={[]} />,
     );
     expect(getByTestId('table-loader')).toBeInTheDocument();
-  });
-
-  it('should enable the new cluster button so users can create workers with it', async () => {
-    const { getByText } = renderWithRouter(
-      <WorkerListPage {...props} workers={[]} isLoading={false} />,
-    );
-
-    expect(getByText('New cluster')).not.toHaveClass('is-disabled');
-    expect(getByText('New cluster')).not.toHaveAttribute('disabled');
   });
 });

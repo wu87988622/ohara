@@ -36,13 +36,15 @@ const TooltipWrap = styled.div`
   right: 0;
 `;
 
-const InputField = ({
-  input: { name, onChange, value, ...restInput },
-  meta,
-  width = '100%',
-  helperText,
-  ...rest
-}) => {
+const InputField = props => {
+  const {
+    input: { name, onChange, value, ...restInput },
+    meta,
+    width = '100%',
+    helperText,
+    ...rest
+  } = props;
+
   return (
     <InputWrap>
       <StyledTextField

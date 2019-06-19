@@ -43,10 +43,6 @@ export const TestConnectionBtn = styled(Button)`
 
 export const NodeTable = styled(Table)`
   text-align: left;
-
-  .is-running {
-    background: ${props => props.theme.trBgColor};
-  }
 `;
 
 export const LinkIcon = styled(Link)`

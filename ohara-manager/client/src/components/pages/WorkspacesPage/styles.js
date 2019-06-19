@@ -14,18 +14,22 @@
  * limitations under the License.
  */
 
-export const HOME = '/';
+import styled from 'styled-components';
+import Typography from 'components/common/Mui/Typography';
+import { Button } from 'components/common/Mui/Form';
 
-// Pipelines
-export const PIPELINES = '/pipelines';
+export const H2 = styled(Typography).attrs({
+  variant: 'h2',
+})`
+  font-size: 24px;
+  margin: 20px 0 40px;
+`;
 
-export const NODES = '/nodes';
-export const WORKSPACES = '/workspaces';
-export const MONITORING = '/monitoring';
-export const CONFIGURATION = '/configuration';
+export const PageHeader = styled.div`
+  display: flex;
+`;
 
-// Auth
-export const LOGIN = '/login';
-export const LOGOUT = '/logout';
-
-export const TOPICS = '/topics';
+export const StyledButton = styled(Button)`
+  margin-left: auto;
+  align-self: center;
+`;

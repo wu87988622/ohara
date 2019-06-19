@@ -14,6 +14,23 @@
  * limitations under the License.
  */
 
-import WorkerListPage from './WorkerListPage';
+import React from 'react';
+import PropTypes from 'prop-types';
+import styled from 'styled-components';
 
-export default WorkerListPage;
+const StyledContainer = styled.div`
+  padding-top: 75px;
+  max-width: 1200px;
+  width: calc(100% - 100px);
+  margin: auto;
+`;
+
+const Container = ({ children }) => {
+  return <StyledContainer>{children}</StyledContainer>;
+};
+
+Container.propTypes = {
+  children: PropTypes.any.isRequired,
+};
+
+export default Container;

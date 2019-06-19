@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 
-import ServicesPage from './ServicesPage';
+import Typography from './Typography';
 
-export default ServicesPage;
+export default Typography;

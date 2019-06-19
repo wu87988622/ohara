@@ -71,8 +71,6 @@ export const EMPTY_USER_ERROR = 'User is a required field!';
 export const EMPTY_PASSWORD_ERROR = 'Password is a required field!';
 export const EMPTY_COLUMN_NAME_ERROR = 'Column Name is a required field!';
 export const EMPTY_SCHEMA_NAME_ERROR = 'Schema name is a required field!';
-export const EMPTY_SCHEMAS_COLUMNS_ERROR =
-  'Please supply at least a Schema column name!';
 export const DUPLICATED_COLUMN_NAME_ERROR = 'Column Name cannot be repeated';
 export const ONLY_NUMBER_ALLOW_ERROR =
   'partition or replication only accept numeric values';

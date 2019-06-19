@@ -18,14 +18,16 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import MuiButton from '@material-ui/core/Button';
 
-const Button = ({
-  text,
-  className,
-  color = 'primary',
-  variant = 'contained',
-  size = 'medium',
-  onClick,
-}) => {
+const Button = props => {
+  const {
+    text,
+    className,
+    color = 'primary',
+    variant = 'contained',
+    size = 'medium',
+    onClick,
+  } = props;
+
   return (
     <MuiButton
       className={className}

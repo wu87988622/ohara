@@ -14,18 +14,26 @@
  * limitations under the License.
  */
 
-export const HOME = '/';
+import React from 'react';
+import { cleanup, render } from 'react-testing-library';
+import 'jest-dom/extend-expect';
 
-// Pipelines
-export const PIPELINES = '/pipelines';
+import WorkspacesNewModal from '../WorkspacesNewModal';
 
-export const NODES = '/nodes';
-export const WORKSPACES = '/workspaces';
-export const MONITORING = '/monitoring';
-export const CONFIGURATION = '/configuration';
+jest.mock('api/workerApi');
+jest.mock('api/brokerApi');
+jest.mock('api/zookeeperApi');
 
-// Auth
-export const LOGIN = '/login';
-export const LOGOUT = '/logout';
+const props = {
+  isActive: true,
+  onClose: jest.fn(),
+  onConfirm: jest.fn(),
+};
 
-export const TOPICS = '/topics';
+afterEach(cleanup);
+
+describe('<WorkspacesNewModal />', () => {
+  it('renders the page', () => {
+    render(<WorkspacesNewModal {...props} />);
+  });
+});
