@@ -16,45 +16,62 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import TableRow from '@material-ui/core/TableRow';
-import TableCell from '@material-ui/core/TableCell';
 import IconButton from '@material-ui/core/IconButton';
 
-import { Table } from 'components/common/Mui/Table';
+import { SortTable } from 'components/common/Mui/Table';
 import { workersPropType } from 'propTypes/services';
 import { StyledIcon } from './styles';
 
 const WorkspacesListPage = props => {
   const { workers, isLoading } = props;
-  const headers = ['Name', 'Nodes', 'Action'];
+  const headRows = [
+    { id: 'name', label: 'Name' },
+    { id: 'nodes', label: 'Nodes' },
+    { id: 'action', label: 'Action', sort: false },
+  ];
+  const [order, setOrder] = React.useState('asc');
+  const [orderBy, setOrderBy] = React.useState('name');
+
+  const actionTab = data => {
+    const { name } = data;
+    return (
+      <IconButton
+        color="primary"
+        data-testid="edit-node-icon"
+        onClick={() => handleRedirect(name)}
+      >
+        <StyledIcon className="fas fa-external-link-square-alt" />
+      </IconButton>
+    );
+  };
+
+  const createData = (name, nodes, action) => {
+    return { name, nodes, action };
+  };
+
+  const rows = workers.map(d => {
+    return createData(d.name, d.nodeNames.join(','), actionTab(d));
+  });
+
+  const handleRequestSort = (event, property) => {
+    const isDesc = orderBy === property && order === 'desc';
+    setOrder(isDesc ? 'asc' : 'desc');
+    setOrderBy(property);
+  };
 
   const handleRedirect = workspaceName => {
     props.history.push(`/workspaces/${workspaceName}/overview`);
   };
 
   return (
-    <Table headers={headers} isLoading={isLoading}>
-      {() => {
-        return workers.map(d => {
-          const { name: workspaceName, nodeNames } = d;
-          return (
-            <TableRow key={workspaceName}>
-              <TableCell scope="row">{workspaceName}</TableCell>
-              <TableCell align="left">{nodeNames.join(',')}</TableCell>
-              <TableCell align="left">
-                <IconButton
-                  color="primary"
-                  data-testid="edit-node-icon"
-                  onClick={() => handleRedirect(workspaceName)}
-                >
-                  <StyledIcon className="fas fa-external-link-square-alt" />
-                </IconButton>
-              </TableCell>
-            </TableRow>
-          );
-        });
-      }}
-    </Table>
+    <SortTable
+      isLoading={isLoading}
+      headRows={headRows}
+      rows={rows}
+      onRequestSort={handleRequestSort}
+      order={order}
+      orderBy={orderBy}
+    />
   );
 };
 
