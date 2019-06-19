@@ -27,7 +27,7 @@ const WorkspacesListPage = props => {
   const headRows = [
     { id: 'name', label: 'Name' },
     { id: 'nodes', label: 'Nodes' },
-    { id: 'action', label: 'Action', sort: false },
+    { id: 'action', label: 'Action', sortable: false },
   ];
   const [order, setOrder] = React.useState('asc');
   const [orderBy, setOrderBy] = React.useState('name');

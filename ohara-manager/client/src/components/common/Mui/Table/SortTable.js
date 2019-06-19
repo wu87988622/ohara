@@ -42,10 +42,10 @@ const SortTable = props => {
     return 0;
   };
 
-  const stableSort = (array, cmp) => {
+  const stableSort = (array, component) => {
     const stabilizedThis = array.map((el, index) => [el, index]);
     stabilizedThis.sort((a, b) => {
-      const order = cmp(a[0], b[0]);
+      const order = component(a[0], b[0]);
       if (order !== 0) return order;
       return a[1] - b[1];
     });
@@ -66,11 +66,11 @@ const SortTable = props => {
         <TableHead>
           <TableRow>
             {headRows.map(row => {
-              const { id, label, sort = true } = row;
+              const { id, label, sortable = true } = row;
               const align = id === headRows[0].id ? 'left' : 'right';
               return (
                 <React.Fragment key={id}>
-                  {sort ? (
+                  {sortable ? (
                     <TableCell
                       align={align}
                       sortDirection={orderBy === id ? order : false}
@@ -119,7 +119,12 @@ SortTable.propTypes = {
   order: PropTypes.string.isRequired,
   orderBy: PropTypes.string.isRequired,
   onRequestSort: PropTypes.func.isRequired,
-  headRows: PropTypes.array.isRequired,
+  headRows: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string,
+      label: PropTypes.string,
+    }),
+  ),
   rows: PropTypes.array.isRequired,
   isLoading: PropTypes.bool.isRequired,
 };
