@@ -33,10 +33,10 @@ import { getUserKey } from 'utils/authUtils';
 import { create } from 'jss';
 import { StylesProvider, jssPreset } from '@material-ui/styles';
 
-//Let's rephrase this to We need to override Mui styles with our custom styles. See Mui docs for more info:https://material-ui.com/customization/css-in-js/#other-html-element
+//We need to override Mui styles with our custom styles. See Mui docs for more info:https://material-ui.com/customization/css-in-js/#other-html-element
 const jss = create({
   ...jssPreset(),
-  insertionPoint: 'jss-insertion-point',
+  insertionPoint: document.getElementById('jss-insertion-point'),
 });
 
 class App extends React.Component {
