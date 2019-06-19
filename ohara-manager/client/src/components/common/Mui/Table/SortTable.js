@@ -53,10 +53,9 @@ const SortTable = props => {
               const { id, label, sort = true } = row;
               const align = id === headRows[0].id ? 'left' : 'right';
               return (
-                <>
+                <React.Fragment key={id}>
                   {sort ? (
                     <TableCell
-                      key={id}
                       align={align}
                       sortDirection={orderBy === id ? order : false}
                     >
@@ -69,11 +68,9 @@ const SortTable = props => {
                       </TableSortLabel>
                     </TableCell>
                   ) : (
-                    <TableCell key={id} align={align}>
-                      {label}
-                    </TableCell>
+                    <TableCell align={align}>{label}</TableCell>
                   )}
-                </>
+                </React.Fragment>
               );
             })}
           </TableRow>
@@ -85,7 +82,10 @@ const SortTable = props => {
               <TableRow key={row[keys[0]]}>
                 {keys.map(key => {
                   return (
-                    <TableCell align={key === keys[0] ? 'left' : 'right'}>
+                    <TableCell
+                      key={row[key]}
+                      align={key === keys[0] ? 'left' : 'right'}
+                    >
                       {row[key]}
                     </TableCell>
                   );
