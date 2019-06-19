@@ -43,8 +43,7 @@ class TestDockerClient extends IntegrationTest with Matchers {
   @Before
   def setup(): Unit =
     CollieTestUtils.nodeCache().headOption.foreach { node =>
-      client =
-        DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
+      client = DockerClient.builder.hostname(node.name).port(node.port).user(node.user).password(node.password).build
       remoteHostname = node.name
     }
 
@@ -225,6 +224,30 @@ class TestDockerClient extends IntegrationTest with Matchers {
       client.containerInspector(container.name).append("/tmp/ttt", Seq("t", "z")) shouldBe "abc\nabc\nt\nz\n"
     } finally client.forceRemove(name)
   }
+
+  @Test
+  def nullHostname(): Unit = an[NullPointerException] should be thrownBy DockerClient.builder.hostname(null)
+
+  @Test
+  def emptyHostname(): Unit = an[IllegalArgumentException] should be thrownBy DockerClient.builder.hostname("")
+
+  @Test
+  def negativePort(): Unit = {
+    an[IllegalArgumentException] should be thrownBy DockerClient.builder.port(0)
+    an[IllegalArgumentException] should be thrownBy DockerClient.builder.port(-1)
+  }
+
+  @Test
+  def nullUser(): Unit = an[NullPointerException] should be thrownBy DockerClient.builder.user(null)
+
+  @Test
+  def emptyUser(): Unit = an[IllegalArgumentException] should be thrownBy DockerClient.builder.user("")
+
+  @Test
+  def nullPassword(): Unit = an[NullPointerException] should be thrownBy DockerClient.builder.password(null)
+
+  @Test
+  def emptyPassword(): Unit = an[IllegalArgumentException] should be thrownBy DockerClient.builder.password("")
 
   @After
   def tearDown(): Unit = Releasable.close(client)

@@ -59,7 +59,7 @@ object DockerClientCache {
       lock.synchronized {
         cache.getOrElseUpdate(
           node,
-          DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
+          DockerClient.builder.hostname(node.name).port(node.port).user(node.user).password(node.password).build
         )
       }
     }

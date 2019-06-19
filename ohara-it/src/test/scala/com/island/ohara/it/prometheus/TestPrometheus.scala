@@ -52,7 +52,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
     nodeCollie = NodeCollie(Seq(node))
     clusterCollie = ClusterCollie.builderOfSsh().nodeCollie(nodeCollie).build()
     val client =
-      DockerClient.builder().user(node.user).password(node.password).hostname(node.name).port(node.port).build()
+      DockerClient.builder.user(node.user).password(node.password).hostname(node.name).port(node.port).build
     try {
       assumeTrue(client.imageNames().contains(PrometheusServer.IMAGE_NAME_DEFAULT))
     } finally client.close()
@@ -148,7 +148,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
         desc => {
 
           val client =
-            DockerClient.builder().user(node.user).password(node.password).hostname(node.name).port(node.port).build()
+            DockerClient.builder.user(node.user).password(node.password).hostname(node.name).port(node.port).build
           try {
             val util = PrometheusConfigUtils(client.containerInspector(desc.name))
             val pclient = PrometheusClient(node.name + ":" + desc.clientPort)

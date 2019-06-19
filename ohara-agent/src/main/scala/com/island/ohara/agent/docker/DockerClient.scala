@@ -16,12 +16,10 @@
 
 package com.island.ohara.agent.docker
 
-import java.util.Objects
-
 import com.island.ohara.agent.docker.DockerClient.ContainerInspector
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.common.annotations.Optional
-import com.island.ohara.common.util.Releasable
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -124,7 +122,7 @@ trait DockerClient extends Releasable {
 }
 
 object DockerClient {
-  def builder(): Builder = new Builder
+  def builder: Builder = new Builder
 
   /**
     * used to "touch" a running container. For example, you can cat a file from a running container
@@ -175,36 +173,36 @@ object DockerClient {
     def write(path: String, content: Seq[String]): String
   }
 
-  class Builder private[agent] {
+  class Builder private[agent] extends com.island.ohara.common.Builder[DockerClient] {
     private[this] var hostname: String = _
     private[this] var port: Int = 22
     private[this] var user: String = _
     private[this] var password: String = _
 
     def hostname(hostname: String): Builder = {
-      this.hostname = hostname
+      this.hostname = CommonUtils.requireNonEmpty(hostname)
       this
     }
 
     @Optional("default port is 22")
     def port(port: Int): Builder = {
-      this.port = port
+      this.port = CommonUtils.requireConnectionPort(port)
       this
     }
 
     def user(user: String): Builder = {
-      this.user = user
+      this.user = CommonUtils.requireNonEmpty(user)
       this
     }
 
     def password(password: String): Builder = {
-      this.password = password
+      this.password = CommonUtils.requireNonEmpty(password)
       this
     }
 
-    def build(): DockerClient = new DockerClientImpl(Objects.requireNonNull(hostname),
-                                                     port,
-                                                     Objects.requireNonNull(user),
-                                                     Objects.requireNonNull(password))
+    override def build: DockerClient = new DockerClientImpl(CommonUtils.requireNonEmpty(hostname),
+                                                            CommonUtils.requireConnectionPort(port),
+                                                            CommonUtils.requireNonEmpty(user),
+                                                            CommonUtils.requireNonEmpty(password))
   }
 }

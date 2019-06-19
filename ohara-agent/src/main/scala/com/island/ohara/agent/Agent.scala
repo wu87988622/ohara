@@ -21,13 +21,13 @@ import java.nio.charset.{Charset, StandardCharsets}
 import java.rmi.RemoteException
 import java.util.Objects
 
-import com.island.ohara.common.util.{Releasable, ReleaseOnce}
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import org.apache.sshd.client.SshClient
 
 /**
   * represent a remote node. Default implementation is based on ssh.
   */
-trait Agent extends ReleaseOnce {
+trait Agent extends Releasable {
 
   /**
     * execute the command by ssh
@@ -43,9 +43,9 @@ trait Agent extends ReleaseOnce {
   */
 object Agent {
 
-  def builder(): Builder = new Builder()
+  def builder: Builder = new Builder()
 
-  class Builder private[agent] {
+  class Builder private[agent] extends com.island.ohara.common.Builder[Agent] {
     private[this] var hostname: String = _
     private[this] var port: Int = 22
     private[this] var user: String = _
@@ -58,7 +58,7 @@ object Agent {
       * @return this builder
       */
     def hostname(hostname: String): Builder = {
-      this.hostname = Objects.requireNonNull(hostname)
+      this.hostname = CommonUtils.requireNonEmpty(hostname)
       this
     }
 
@@ -68,7 +68,7 @@ object Agent {
       * @return this builder
       */
     def port(port: Int): Builder = {
-      this.port = port
+      this.port = CommonUtils.requireConnectionPort(port)
       this
     }
 
@@ -78,7 +78,7 @@ object Agent {
       * @return this builder
       */
     def user(user: String): Builder = {
-      this.user = Objects.requireNonNull(user)
+      this.user = CommonUtils.requireNonEmpty(user)
       this
     }
 
@@ -88,7 +88,7 @@ object Agent {
       * @return this builder
       */
     def password(password: String): Builder = {
-      this.password = Objects.requireNonNull(password)
+      this.password = CommonUtils.requireNonEmpty(password)
       this
     }
 
@@ -102,11 +102,11 @@ object Agent {
       this
     }
 
-    def build(): Agent = new Agent {
-      private[this] val hostname: String = Objects.requireNonNull(Builder.this.hostname)
-      private[this] val port: Int = Builder.this.port
-      private[this] val user: String = Objects.requireNonNull(Builder.this.user)
-      private[this] val password: String = Objects.requireNonNull(Builder.this.password)
+    override def build: Agent = new Agent {
+      private[this] val hostname: String = CommonUtils.requireNonEmpty(Builder.this.hostname)
+      private[this] val port: Int = CommonUtils.requireConnectionPort(Builder.this.port)
+      private[this] val user: String = CommonUtils.requireNonEmpty(Builder.this.user)
+      private[this] val password: String = CommonUtils.requireNonEmpty(Builder.this.password)
       private[this] val charset: Charset = Objects.requireNonNull(Builder.this.charset)
       private[this] val client = SshClient.setUpDefaultSimpleClient()
       override def execute(command: String): Option[String] = {
@@ -132,7 +132,7 @@ object Agent {
           } finally stdOut.close()
         } finally session.close()
       }
-      override protected def doClose(): Unit = Releasable.close(client)
+      override def close(): Unit = Releasable.close(client)
 
       override def toString: String = s"$user@$hostname:$port"
     }

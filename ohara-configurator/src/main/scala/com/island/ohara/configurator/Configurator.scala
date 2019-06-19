@@ -367,7 +367,7 @@ object Configurator {
           GLOBAL_CONFIGURATOR,
           (node: Node) => {
             val dockerClient =
-              DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
+              DockerClient.builder.hostname(node.name).port(node.port).user(node.user).password(node.password).build
             try checkImageExists(node, dockerClient.imageNames())
             finally dockerClient.close()
           }

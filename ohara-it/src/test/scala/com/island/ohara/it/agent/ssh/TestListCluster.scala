@@ -47,7 +47,7 @@ class TestListCluster extends IntegrationTest with Matchers {
   else
     nodeCache.foreach { node =>
       val dockerClient =
-        DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
+        DockerClient.builder.hostname(node.name).port(node.port).user(node.user).password(node.password).build
       try {
         withClue(s"failed to find ${ZookeeperApi.IMAGE_NAME_DEFAULT}")(
           dockerClient.imageNames().contains(ZookeeperApi.IMAGE_NAME_DEFAULT) shouldBe true)
@@ -84,7 +84,7 @@ class TestListCluster extends IntegrationTest with Matchers {
     log.info("[TestListCluster] before check zk containers")
     nodeCache.foreach { node =>
       val dockerClient =
-        DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
+        DockerClient.builder.hostname(node.name).port(node.port).user(node.user).password(node.password).build
       try await(() => result(dockerClient.activeContainers(_.contains(name))).isEmpty)
       finally dockerClient.close()
     }
@@ -141,7 +141,7 @@ class TestListCluster extends IntegrationTest with Matchers {
       log.info("[TestListCluster] before check bk containers")
       nodeCache.foreach { node =>
         val dockerClient =
-          DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
+          DockerClient.builder.hostname(node.name).port(node.port).user(node.user).password(node.password).build
         try await(() => result(dockerClient.activeContainers(_.contains(name))).isEmpty)
         finally dockerClient.close()
       }

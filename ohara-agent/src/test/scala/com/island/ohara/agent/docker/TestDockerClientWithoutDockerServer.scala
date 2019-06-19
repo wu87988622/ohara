@@ -280,13 +280,7 @@ object TestDockerClientWithoutDockerServer {
   )
 
   private val CLIENT =
-    DockerClient
-      .builder()
-      .hostname(SERVER.hostname)
-      .port(SERVER.port)
-      .user(SERVER.user)
-      .password(SERVER.password)
-      .build()
+    DockerClient.builder.hostname(SERVER.hostname).port(SERVER.port).user(SERVER.user).password(SERVER.password).build
 
   @AfterClass
   def afterAll(): Unit = {

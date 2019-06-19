@@ -44,7 +44,7 @@ class TestAgent extends SmallTest with Matchers {
   @Test
   def testJaveVersion(): Unit = {
     val agent =
-      Agent.builder().hostname(server.hostname).port(server.port).user(server.user).password(server.password).build()
+      Agent.builder.hostname(server.hostname).port(server.port).user(server.user).password(server.password).build
     try {
       val result = agent.execute("java -version").get
       // You must have jdk 1.8+ if you want to run ohara...
@@ -56,17 +56,40 @@ class TestAgent extends SmallTest with Matchers {
   def testCustomCommand(): Unit = {
     customCommands.foreach {
       case (command, response) =>
-        val agent = Agent
-          .builder()
-          .hostname(server.hostname)
-          .port(server.port)
-          .user(server.user)
-          .password(server.password)
-          .build()
+        val agent =
+          Agent.builder.hostname(server.hostname).port(server.port).user(server.user).password(server.password).build
         try agent.execute(command).get.split("\n") shouldBe response
         finally agent.close()
     }
   }
+
+  @Test
+  def nullHostname(): Unit = an[NullPointerException] should be thrownBy Agent.builder.hostname(null)
+
+  @Test
+  def emptyHostname(): Unit = an[IllegalArgumentException] should be thrownBy Agent.builder.hostname("")
+
+  @Test
+  def negativePort(): Unit = {
+    an[IllegalArgumentException] should be thrownBy Agent.builder.port(0)
+    an[IllegalArgumentException] should be thrownBy Agent.builder.port(-1)
+  }
+
+  @Test
+  def nullUser(): Unit = an[NullPointerException] should be thrownBy Agent.builder.user(null)
+
+  @Test
+  def emptyUser(): Unit = an[IllegalArgumentException] should be thrownBy Agent.builder.user("")
+
+  @Test
+  def nullPassword(): Unit = an[NullPointerException] should be thrownBy Agent.builder.password(null)
+
+  @Test
+  def emptyPassword(): Unit = an[IllegalArgumentException] should be thrownBy Agent.builder.password("")
+
+  @Test
+  def nullCharset(): Unit = an[NullPointerException] should be thrownBy Agent.builder.charset(null)
+
   @After
   def tearDown(): Unit = Releasable.close(server)
 }

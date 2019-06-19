@@ -203,7 +203,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
           .filter(name => name.contains(StreamCollie.formatUniqueName(properties.id)))
       } else {
         val client =
-          DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
+          DockerClient.builder.hostname(node.name).port(node.port).user(node.user).password(node.password).build
         try node -> client.containerNames().filter(name => name.contains(StreamCollie.formatUniqueName(properties.id)))
         finally client.close()
       }
@@ -233,7 +233,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
           containers.foreach(container => !result(client.containers).map(_.name).contains(container) shouldBe true)
         } else {
           val client =
-            DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
+            DockerClient.builder.hostname(node.name).port(node.port).user(node.user).password(node.password).build
           try containers.foreach(container => client.nonExist(container) shouldBe true)
           finally client.close()
         }

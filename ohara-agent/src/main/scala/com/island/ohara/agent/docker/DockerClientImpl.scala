@@ -129,13 +129,12 @@ private[docker] object DockerClientImpl {
 private[docker] class DockerClientImpl(nodeName: String, port: Int, user: String, password: String)
     extends ReleaseOnce
     with DockerClient {
-  private[this] val agent = Agent
-    .builder()
+  private[this] val agent = Agent.builder
     .hostname(Objects.requireNonNull(nodeName))
     .port(port)
     .user(Objects.requireNonNull(user))
     .password(Objects.requireNonNull(password))
-    .build()
+    .build
 
   override protected def doClose(): Unit = Releasable.close(agent)
 

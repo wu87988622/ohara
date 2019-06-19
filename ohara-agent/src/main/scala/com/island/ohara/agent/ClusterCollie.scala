@@ -138,7 +138,7 @@ trait ClusterCollie extends Releasable {
     Try {
       val name = CommonUtils.randomString(10)
       val dockerClient =
-        DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
+        DockerClient.builder.hostname(node.name).port(node.port).user(node.user).password(node.password).build
       try {
         val helloWorldImage = "hello-world"
         dockerClient.containerCreator().name(name).imageName(helloWorldImage).execute()

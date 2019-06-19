@@ -58,7 +58,7 @@ private[it] object CollieTestUtils {
 
   private[this] def assertImages(node: Node, imageNames: Seq[String]): Unit = {
     val client =
-      DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
+      DockerClient.builder.hostname(node.name).port(node.port).user(node.user).password(node.password).build
     try {
       imageNames.foreach { image =>
         import org.scalatest.Matchers._
