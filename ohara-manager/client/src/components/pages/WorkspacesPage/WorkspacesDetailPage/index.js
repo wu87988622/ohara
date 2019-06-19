@@ -14,35 +14,6 @@
  * limitations under the License.
  */
 
-import React from 'react';
-import PropTypes from 'prop-types';
-import styled from 'styled-components';
+import WorkspacesDetailPage from './WorkspacesDetailPage';
 
-const Ul = styled.ul`
-  align-self: center;
-
-  li {
-    font-size: 13px;
-    margin: 5px 0;
-    color: ${props => props.theme.lightBlue};
-    align-self: center;
-  }
-`;
-
-const List = ({ list }) => {
-  return (
-    <Ul>
-      {list.map(item => (
-        <li className="item" key={item}>
-          {item}
-        </li>
-      ))}
-    </Ul>
-  );
-};
-
-List.propTypes = {
-  list: PropTypes.arrayOf(PropTypes.string.isRequired).isRequired,
-};
-
-export default List;
+export default WorkspacesDetailPage;

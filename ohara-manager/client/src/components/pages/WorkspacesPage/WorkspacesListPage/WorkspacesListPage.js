@@ -16,25 +16,20 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import styled from 'styled-components';
 import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
 import IconButton from '@material-ui/core/IconButton';
-import Icon from '@material-ui/core/Icon';
 
 import { Table } from 'components/common/Mui/Table';
 import { workersPropType } from 'propTypes/services';
-
-const StyledIcon = styled(Icon)`
-  font-size: 20px;
-`;
+import { StyledIcon } from './styles';
 
 const WorkspacesListPage = props => {
   const { workers, isLoading } = props;
   const headers = ['Name', 'Nodes', 'Action'];
 
   const handleRedirect = workspaceName => {
-    // TODO: redirect to the workspace
+    props.history.push(`/workspaces/${workspaceName}/overview`);
   };
 
   return (
@@ -66,5 +61,9 @@ const WorkspacesListPage = props => {
 WorkspacesListPage.propTypes = {
   workers: PropTypes.arrayOf(workersPropType).isRequired,
   isLoading: PropTypes.bool,
+  history: PropTypes.shape({
+    push: PropTypes.func.isRequired,
+  }).isRequired,
 };
+
 export default WorkspacesListPage;

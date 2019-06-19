@@ -23,6 +23,7 @@ export const PIPELINE_NEW = `${brandName} - New Pipeline`;
 export const PIPELINE_EDIT = `${brandName} - Edit Pipeline`;
 export const NODES = `${brandName} - Nodes`;
 export const WORKSPACES = `${brandName} - Workspaces`;
+export const WORKSPACES_DETAIL = `${brandName} - Workspaces detail`;
 export const MONITORING = `${brandName} - Monitoring`;
 export const LOGS = `${brandName} - Logs`;
 export const CONFIGURATION = `${brandName} - Configuration`;

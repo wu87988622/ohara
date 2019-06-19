@@ -15,48 +15,8 @@
  */
 
 import styled from 'styled-components';
-import { NavLink } from 'react-router-dom';
+import Icon from '@material-ui/core/Icon';
 
-import { Button } from 'components/common/Form';
-
-const Wrapper = styled.div`
-  padding-top: 75px;
-  max-width: 1200px;
-  width: calc(100% - 100px);
-  margin: auto;
-`;
-
-const NewClusterBtn = styled(Button)`
-  margin-left: auto;
-`;
-
-NewClusterBtn.displayName = 'NewClusterBtn';
-
-const Link = styled(NavLink)`
-  color: ${props => props.theme.lightBlue};
-
-  &:hover {
-    color: ${props => props.theme.blue};
-  }
-`;
-
-const Icon = styled.i`
-  color: ${props => props.theme.lighterBlue};
+export const StyledIcon = styled(Icon)`
   font-size: 20px;
-  margin-right: 20px;
-  transition: ${props => props.theme.durationNormal} all;
-  cursor: pointer;
-
-  &:hover,
-  &.is-active {
-    transition: ${props => props.theme.durationNormal} all;
-    color: ${props => props.theme.blue};
-  }
-
-  &:last-child {
-    border-right: none;
-    margin-right: 0;
-  }
 `;
-
-export { Wrapper, NewClusterBtn, Link, Icon };

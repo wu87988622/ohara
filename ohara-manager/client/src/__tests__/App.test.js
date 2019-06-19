@@ -72,7 +72,11 @@ describe('<App />', () => {
         testId: 'nodes-page',
       },
       {
-        path: '/workspaces/:serviceName?/:clusterName?',
+        path: '/workspaces/:workspaceName',
+        testId: 'workspace-page',
+      },
+      {
+        path: '/workspaces',
         testId: 'workspaces-page',
       },
       {

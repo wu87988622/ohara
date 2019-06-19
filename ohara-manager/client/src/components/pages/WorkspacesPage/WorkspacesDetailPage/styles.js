@@ -15,25 +15,9 @@
  */
 
 import styled from 'styled-components';
+import Icon from '@material-ui/core/Icon';
 
-const Item = styled.div`
-  display: flex;
-  margin-bottom: 25px;
-
-  h5 {
-    white-space: nowrap;
-    margin: 0 10px 0 0;
-    padding: 13px 15px;
-    color: ${props => props.theme.darkerBlue};
-    background-color: ${props => props.theme.whiteSmoke};
-    align-self: start;
-  }
-
-  .content {
-    font-size: 13px;
-    color: ${props => props.theme.lightBlue};
-    align-self: center;
-  }
+export const StyledIcon = styled(Icon)`
+  font-size: 12px;
+  margin: 0 12px;
 `;
-
-export { Item };

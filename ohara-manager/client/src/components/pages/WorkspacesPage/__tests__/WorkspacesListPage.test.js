@@ -24,6 +24,9 @@ import { renderWithRouter } from 'utils/testUtils';
 const props = {
   newWorkerSuccess: jest.fn(),
   isLoading: false,
+  history: {
+    push: jest.fn(),
+  },
 };
 
 afterEach(cleanup);

@@ -15,5 +15,6 @@
  */
 
 import Typography from './Typography';
+import PageTitle from './PageTitle';
 
-export default Typography;
+export { PageTitle, Typography };

@@ -15,6 +15,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import DocumentTitle from 'react-document-title';
 import { isEmpty, get } from 'lodash';
 
@@ -23,9 +24,10 @@ import Container from 'components/common/Mui/Layout';
 import WorkspacesNewModal from './WorkspacesNewModal';
 import WorkspacesListPage from './WorkspacesListPage';
 import { WORKSPACES } from 'constants/documentTitles';
-import { H2, PageHeader, StyledButton } from './styles';
+import { PageTitle } from 'components/common/Mui/Typography';
+import { PageHeader, StyledButton } from './styles';
 
-const WorkspacesPage = () => {
+const WorkspacesPage = props => {
   const [workers, setWorkers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -54,7 +56,7 @@ const WorkspacesPage = () => {
         />
 
         <PageHeader>
-          <H2>Workspaces</H2>
+          <PageTitle>Workspaces</PageTitle>
 
           <StyledButton
             onClick={() => setIsModalOpen(true)}
@@ -64,10 +66,20 @@ const WorkspacesPage = () => {
           </StyledButton>
         </PageHeader>
 
-        <WorkspacesListPage workers={workers} isLoading={isLoading} />
+        <WorkspacesListPage
+          {...props}
+          workers={workers}
+          isLoading={isLoading}
+        />
       </Container>
     </DocumentTitle>
   );
+};
+
+WorkspacesPage.propTypes = {
+  history: PropTypes.shape({
+    push: PropTypes.func.isRequired,
+  }).isRequired,
 };
 
 export default WorkspacesPage;

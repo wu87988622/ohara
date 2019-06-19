@@ -15,15 +15,7 @@
  */
 
 import styled from 'styled-components';
-import Typography from 'components/common/Mui/Typography';
 import { Button } from 'components/common/Mui/Form';
-
-export const H2 = styled(Typography).attrs({
-  variant: 'h2',
-})`
-  font-size: 24px;
-  margin: 20px 0 40px;
-`;
 
 export const PageHeader = styled.div`
   display: flex;

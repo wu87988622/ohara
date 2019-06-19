@@ -14,6 +14,14 @@
  * limitations under the License.
  */
 
-import ZookeeperListPage from './ZookeeperListPage';
+import styled from 'styled-components';
+import Typography from './Typography';
 
-export default ZookeeperListPage;
+const PageTitle = styled(Typography).attrs({
+  variant: 'h2',
+})`
+  font-size: 24px;
+  margin: 20px 0 40px;
+`;
+
+export default PageTitle;
