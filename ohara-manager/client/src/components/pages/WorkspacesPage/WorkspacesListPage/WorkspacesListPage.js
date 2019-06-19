@@ -16,6 +16,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import Tooltip from '@material-ui/core/Tooltip';
 import IconButton from '@material-ui/core/IconButton';
 
 import { SortTable } from 'components/common/Mui/Table';
@@ -35,13 +36,15 @@ const WorkspacesListPage = props => {
   const actionTab = data => {
     const { name } = data;
     return (
-      <IconButton
-        color="primary"
-        data-testid="edit-node-icon"
-        onClick={() => handleRedirect(name)}
-      >
-        <StyledIcon className="fas fa-external-link-square-alt" />
-      </IconButton>
+      <Tooltip title={`Link to ${name} page`}>
+        <IconButton
+          color="primary"
+          data-testid="edit-node-icon"
+          onClick={() => handleRedirect(name)}
+        >
+          <StyledIcon className="fas fa-external-link-square-alt" />
+        </IconButton>
+      </Tooltip>
     );
   };
 
