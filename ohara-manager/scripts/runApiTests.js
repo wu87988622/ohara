@@ -21,16 +21,16 @@ const chalk = require('chalk');
 
 const mergeE2eReports = require('./mergeE2eReports');
 const copyJars = require('./copyJars');
+const utils = require('./scriptsUtils');
+const commonUtils = require('../utils/commonUtils');
 const { getConfig } = require('../utils/configHelpers');
-const { waited } = require('./lib/waitOn');
-const { randomPort } = require('./handleE2eServices');
 
 const { configurator, port } = getConfig();
 
 const run = async (apiRoot, serverPort = 5050) => {
   let server;
   let cypress;
-  serverPort = serverPort == 0 ? randomPort() : serverPort;
+  serverPort = serverPort === 0 ? commonUtils.randomPort() : serverPort;
 
   // Start ohara manager server
   console.log(chalk.blue('Starting ohara manager server'));
@@ -52,7 +52,7 @@ const run = async (apiRoot, serverPort = 5050) => {
   }
 
   // Wait until the server is ready
-  await waited(`http://localhost:${serverPort}`);
+  await utils.waitOnService(`http://localhost:${serverPort}`);
 
   // Run api test
   console.log(chalk.blue('Running end to end tests with Cypress'));
@@ -97,5 +97,11 @@ const run = async (apiRoot, serverPort = 5050) => {
   }
   process.exit(1);
 };
+
+// Do not run the test if the build dir is not present
+// as this will cause the script to fail silently
+if (!utils.checkClientBuildDir()) {
+  process.exit(1);
+}
 
 run(configurator, port);

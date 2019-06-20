@@ -14,33 +14,28 @@
  * limitations under the License.
  */
 
-/* eslint-disable no-process-exit, no-console */
-
 const execa = require('execa');
 const yargs = require('yargs');
 const chalk = require('chalk');
 
 const mergeE2eReports = require('./mergeE2eReports');
 const copyJars = require('./copyJars');
+const services = require('./handleE2eServices');
+const utils = require('./scriptsUtils');
+const commonUtils = require('../utils/commonUtils');
 const { getConfig } = require('../utils/configHelpers');
-const { waited } = require('./lib/waitOn');
-const {
-  createServices,
-  cleanServices,
-  getDefaultEnv,
-  randomPort,
-} = require('./handleE2eServices');
 
 const { configurator, port } = getConfig();
 const { prod = false, nodeHost, nodePort, nodeUser, nodePass } = yargs.argv;
 
+/* eslint-disable no-process-exit, no-console */
 const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
   let server;
   let client;
   let cypress;
-  serverPort = serverPort == 0 ? randomPort() : serverPort;
+  serverPort = serverPort === 0 ? commonUtils.randomPort() : serverPort;
 
-  const defaultEnv = getDefaultEnv();
+  const defaultEnv = services.getDefaultEnv();
   const envNodeHost = nodeHost ? nodeHost : defaultEnv.nodeHost;
   const envNodePort = nodePort ? nodePort : defaultEnv.nodePort;
   const envNodeUser = nodeUser ? nodeUser : defaultEnv.nodeUser;
@@ -48,7 +43,7 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
 
   try {
     console.log(chalk.blue('Creating services for this test run'));
-    await createServices({
+    await services.createServices({
       configurator,
       nodeHost: envNodeHost,
       nodePort: envNodePort,
@@ -88,12 +83,12 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
   }
 
   // Wait until the server is ready
-  await waited(`http://localhost:${serverPort}`);
+  await utils.waitOnService(`http://localhost:${serverPort}`);
 
   // Start client server, this server only starts on local env not
   // on jenkins
   if (!prod) {
-    console.log(chalk.blue('Starting ohara manager server'));
+    console.log(chalk.blue(`Starting client server`));
     client = execa(
       'forever',
       ['start', 'node_modules/react-scripts/scripts/start.js'],
@@ -112,7 +107,7 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
     }
 
     // Wait until the client dev server is ready
-    await waited(`http://localhost:${clientPort}`);
+    await utils.waitOnService(`http://localhost:${clientPort}`);
   }
 
   const buildCypressEnv = () => {
@@ -174,7 +169,7 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
     );
 
     killSubProcess();
-    await cleanServices(configurator);
+    await services.cleanServices(configurator);
 
     console.log(chalk.green('Successfully cleaned up all the services!'));
     process.exit(0);
@@ -186,5 +181,11 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
   }
   process.exit(1);
 };
+
+// Do not run the test if the build dir is not present
+// as this will cause the script to fail silently
+if (!utils.checkClientBuildDir()) {
+  process.exit(1);
+}
 
 run(prod, configurator, port);

@@ -16,6 +16,7 @@
 
 const fs = require('fs');
 const axios = require('axios');
+const commonUtils = require('../utils/commonUtils');
 
 /* eslint-disable no-console */
 const randomName = () => {
@@ -29,21 +30,6 @@ const randomName = () => {
   return text;
 };
 
-const randomPort = () => {
-  const min = 5000;
-  const max = 65535;
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-};
-
-const sleep = ms => {
-  const start = new Date().getTime();
-  for (let i = 0; i < 1e7; i++) {
-    if (new Date().getTime() - start > ms) {
-      break;
-    }
-  }
-};
-
 const createNode = async (baseUrl, nodeHost, nodePort, nodeUser, nodePass) => {
   await axios.post(`${baseUrl}/nodes`, {
     name: nodeHost,
@@ -55,9 +41,9 @@ const createNode = async (baseUrl, nodeHost, nodePort, nodeUser, nodePass) => {
 
 const createZk = async (baseUrl, zkName, nodeHost) => {
   await axios.post(`${baseUrl}/zookeepers`, {
-    clientPort: randomPort(),
-    electionPort: randomPort(),
-    peerPort: randomPort(),
+    clientPort: commonUtils.randomPort(),
+    electionPort: commonUtils.randomPort(),
+    peerPort: commonUtils.randomPort(),
     name: zkName,
     nodeNames: [nodeHost],
   });
@@ -65,9 +51,9 @@ const createZk = async (baseUrl, zkName, nodeHost) => {
 
 const createBk = async (baseUrl, zkName, bkName, nodeHost) => {
   await axios.post(`${baseUrl}/brokers`, {
-    clientPort: randomPort(),
-    exporterPort: randomPort(),
-    jmxPort: randomPort(),
+    clientPort: commonUtils.randomPort(),
+    exporterPort: commonUtils.randomPort(),
+    jmxPort: commonUtils.randomPort(),
     zookeeperClusterName: zkName,
     name: bkName,
     nodeNames: [nodeHost],
@@ -108,7 +94,7 @@ const waitDelete = async (baseUrl, api, name) => {
 
     if (!result) return;
 
-    sleep(1000);
+    await commonUtils.sleep(1000);
     await waitDelete(baseUrl, api, name);
   }
 
@@ -120,7 +106,7 @@ const waitCreate = async (baseUrl, api, name) => {
   const result = res.data.some(e => e.name == name);
 
   if (!result) {
-    sleep(1000);
+    await commonUtils.sleep(1000);
     await waitCreate(baseUrl, api, name);
   }
 
@@ -134,7 +120,7 @@ const waitContainersCreate = async (baseUrl, name) => {
     res.data[0].containers.length == 0 ||
     res.data[0].containers[0].state !== 'RUNNING'
   ) {
-    sleep(1000);
+    await commonUtils.sleep(1000);
     await waitContainersCreate(baseUrl, name);
   }
   return;
@@ -218,5 +204,4 @@ module.exports = {
   cleanServices,
   createServices,
   getDefaultEnv,
-  randomPort,
 };

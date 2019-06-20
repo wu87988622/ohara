@@ -14,11 +14,29 @@
  * limitations under the License.
  */
 
-/* eslint-disable no-process-exit, no-console */
-
+const fs = require('fs');
+const chalk = require('chalk');
 const waitOn = require('wait-on');
 
-const waited = url =>
+/* eslint-disable no-console */
+
+exports.checkClientBuildDir = () => {
+  if (!fs.existsSync('./client/build')) {
+    console.log(
+      chalk.red(
+        `Couldn't find the build directory, please run ${chalk.blue(
+          'yarn setup',
+        )} to build the static files that are needed in the end-to-tend test run`,
+      ),
+    );
+
+    return false;
+  }
+
+  return true;
+};
+
+exports.waitOnService = url =>
   new Promise((resolve, reject) => {
     waitOn(
       {
@@ -37,5 +55,3 @@ const waited = url =>
       },
     );
   });
-
-module.exports.waited = waited;
