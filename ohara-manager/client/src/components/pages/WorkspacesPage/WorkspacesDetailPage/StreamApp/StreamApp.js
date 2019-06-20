@@ -1,32 +1,50 @@
 import React from 'react';
 import toastr from 'toastr';
+import * as streamApi from 'api/streamApi';
+import { get, endsWith } from 'lodash';
 import { PageHeader, PageBody, StyledLabel } from './styles';
 import { SortTable } from 'components/common/Mui/Table';
 import { Button } from 'components/common/Mui/Form';
+import * as MESSAGES from 'constants/messages';
 
-const StreamApp = () => {
-  const { file, setFile } = React.useState(null);
+const StreamApp = props => {
+  const { workspaceName } = props;
+
+  const fetchJars = async () => {
+    const res = await streamApi.fetchJars(workspaceName);
+    return get(res, 'data.result', null);
+  };
+  const uploadJar = async file => {
+    const res = await streamApi.uploadJar({
+      workerClusterName: workspaceName,
+      file,
+    });
+    const isSuccess = get(res, 'data.isSuccess', false);
+    if (isSuccess) {
+      toastr.success(MESSAGES.STREAM_APP_UPLOAD_SUCCESS);
+    }
+  };
+
+  const validateJarExtension = jarName => endsWith(jarName, '.jar');
 
   const handleFileSelect = e => {
-    setFile({ file: e.target.files[0] }, () => {
-      const { file } = this.state;
-      if (file) {
-        const filename = file.name;
-        if (!this.validateJarExtension(filename)) {
-          toastr.error(
-            `This file type is not supported.\n Please select your '.jar' file.`,
-          );
-          return;
-        }
-
-        if (this.isDuplicateTitle(filename)) {
-          toastr.error(`This file name is duplicate. '${filename}'`);
-          return;
-        }
-
-        this.uploadJar(file);
+    const file = e.target.files[0];
+    if (e.target.files[0]) {
+      const filename = file.name;
+      if (!validateJarExtension(filename)) {
+        toastr.error(
+          `This file type is not supported.\n Please select your '.jar' file.`,
+        );
+        return;
       }
-    });
+
+      // if (this.isDuplicateTitle(filename)) {
+      //   toastr.error(`This file name is duplicate. '${filename}'`);
+      //   return;
+      // }
+
+      uploadJar(file);
+    }
   };
 
   const headRows = [
@@ -43,11 +61,9 @@ const StreamApp = () => {
     return { name, fileSize, lastModified, action };
   };
 
-  const rows = [
-    createData('test', 'test', 'test', 'test'),
-    createData('test2', 'test2', 'test2', 'test2'),
-  ];
-
+  const rows = fetchJars.map(jar => {
+    return createData(jar.name);
+  });
   const handleRequestSort = (event, property) => {
     const isDesc = orderBy === property && order === 'desc';
     setOrder(isDesc ? 'asc' : 'desc');
@@ -63,6 +79,7 @@ const StreamApp = () => {
           id="contained-button-file"
           multiple
           type="file"
+          onChange={handleFileSelect}
         />
         <StyledLabel htmlFor="contained-button-file">
           <Button component="span" text="new jar" />

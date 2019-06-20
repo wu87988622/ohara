@@ -66,10 +66,8 @@ const MuiTabs = props => {
       <Route path={`${baseUrl}/topics`} component={Topics} />
       <Route
         path={`${baseUrl}/streamapps`}
-        render={() => <h5>Stream apps</h5>}
+        render={() => <StreamApp workspaceName={workspaceName} />}
       />
-      <Route path={`${baseUrl}/topics`} render={() => <h5>Topics</h5>} />
-      <Route path={`${baseUrl}/streamapps`} component={StreamApp} />
     </Paper>
   );
 };
