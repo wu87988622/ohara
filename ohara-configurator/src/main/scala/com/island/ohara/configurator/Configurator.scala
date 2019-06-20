@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator
 
-import java.util.concurrent.{ExecutionException, TimeUnit}
+import java.util.concurrent.{ExecutionException, Executors, TimeUnit}
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
@@ -45,8 +45,7 @@ import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.typesafe.scalalogging.Logger
 import spray.json.DeserializationException
 
-import scala.concurrent.Await
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration._
 
 /**
@@ -62,7 +61,33 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
     extends ReleaseOnce
     with SprayJsonSupport {
 
-  private[this] val initializationTimeout = 30 seconds
+  private[this] val threadMax = {
+    val value = Runtime.getRuntime.availableProcessors()
+    if (value <= 1)
+      throw new IllegalArgumentException(
+        s"I'm sorry that your machine is too weak to run Ohara Configurator." +
+          s" The required number of core must be bigger than 2, but actual number is $value")
+    value
+  }
+
+  private[this] val threadPool = Executors.newFixedThreadPool(threadMax)
+
+  private[this] implicit val executionContext: ExecutionContext = ExecutionContext.fromExecutor(threadPool)
+
+  /**
+    * this timeout is used to wait the socket server to be ready to accept connection.
+    */
+  private[this] val initializationTimeout = 10 seconds
+
+  /**
+    * this timeout is used to
+    * 1) unbind the socket server
+    * 2) reject all incoming requests
+    * 3) wait and then terminate in-flight requests
+    * A small timeout can reduce the time to close configurator, and it is useful for testing. Perhaps we should expose this timeout to production
+    * purpose. However, we have not met related use cases or bugs and hence we leave a constant timeout here.
+    */
+  private[this] val terminateTimeout = 3 seconds
   private[this] val cacheTimeout = 3 seconds
   private[this] val cleanupTimeout = 30 seconds
 
@@ -232,30 +257,41 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
     * Do what you want to do when calling closing.
     */
   override protected def doClose(): Unit = {
+    log.info("start to close Ohara Configurator")
     val start = CommonUtils.current()
-    if (httpServer != null)
-      try Await.result(httpServer.terminate(initializationTimeout), initializationTimeout.toMillis milliseconds)
+    val onceHttpTerminated =
+      if (httpServer != null)
+        Some(httpServer.terminate(terminateTimeout).flatMap(_ => actorSystem.terminate()))
+      else if (actorSystem == null) None
+      else Some(actorSystem.terminate())
+    onceHttpTerminated.foreach { f =>
+      try Await.result(f, terminateTimeout)
       catch {
         case e: Throwable =>
-          log.error("failed to close http server", e)
+          log.error("failed to close http server and actor system", e)
       }
-    if (actorSystem != null)
-      try Await.result(actorSystem.terminate(), initializationTimeout.toMillis milliseconds)
-      catch {
-        case e: Throwable =>
-          log.error("failed to close actor system", e)
-      }
+    }
+    if (threadPool != null) {
+      threadPool.shutdownNow()
+      if (!threadPool.awaitTermination(terminateTimeout.toMillis, TimeUnit.MILLISECONDS))
+        log.error("failed to terminate all running threads!!!")
+    }
     Releasable.close(adminCleaner)
     Releasable.close(meterCache)
     Releasable.close(clusterCollie)
     Releasable.close(jarStore)
     Releasable.close(store)
     k8sClient.foreach(Releasable.close)
-    log.info(s"succeed to close configurator. elapsed:${CommonUtils.current() - start} ms")
+    log.info(s"succeed to close Ohara Configurator. elapsed:${CommonUtils.current() - start} ms")
   }
 }
 
 object Configurator {
+
+  /**
+    * There are some async functions used in main function.
+    */
+  import scala.concurrent.ExecutionContext.Implicits.global
   private[configurator] val DATA_SERIALIZER: Serializer[Data] = new Serializer[Data] {
     override def to(obj: Data): Array[Byte] = Serializer.OBJECT.to(obj)
     override def from(bytes: Array[Byte]): Data =
@@ -463,7 +499,7 @@ object Configurator {
       )
     } catch {
       case ex: Throwable =>
-        LOG.error(s"failed to create zk cluster:$zkCluster. exception: ${ex}")
+        LOG.error(s"failed to create zk cluster:$zkCluster. exception: $ex")
         throw ex
     }
 
