@@ -259,11 +259,15 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
   override protected def doClose(): Unit = {
     log.info("start to close Ohara Configurator")
     val start = CommonUtils.current()
+    // close the cache thread in order to avoid cache error in log
+    Releasable.close(meterCache)
     val onceHttpTerminated =
       if (httpServer != null)
         Some(httpServer.terminate(terminateTimeout).flatMap(_ => actorSystem.terminate()))
       else if (actorSystem == null) None
       else Some(actorSystem.terminate())
+    // manually close materializer in order to speedup the release of http server and actor system
+    if (actorMaterializer != null) actorMaterializer.shutdown()
     onceHttpTerminated.foreach { f =>
       try Await.result(f, terminateTimeout)
       catch {
@@ -276,12 +280,11 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
       if (!threadPool.awaitTermination(terminateTimeout.toMillis, TimeUnit.MILLISECONDS))
         log.error("failed to terminate all running threads!!!")
     }
-    Releasable.close(adminCleaner)
-    Releasable.close(meterCache)
     Releasable.close(clusterCollie)
     Releasable.close(jarStore)
     Releasable.close(store)
     k8sClient.foreach(Releasable.close)
+    Releasable.close(adminCleaner)
     log.info(s"succeed to close Ohara Configurator. elapsed:${CommonUtils.current() - start} ms")
   }
 }

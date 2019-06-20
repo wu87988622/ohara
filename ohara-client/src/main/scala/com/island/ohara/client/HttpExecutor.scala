@@ -214,6 +214,9 @@ private[ohara] object HttpExecutor {
     /**
       * I hate hard code but this method is used only when terminating configurator. Hence, it should be ok... by chia
       */
-    override def close(): Unit = Await.result(actorSystem.terminate(), 30 seconds)
+    override def close(): Unit = {
+      actorMaterializer.shutdown()
+      Await.result(actorSystem.terminate(), 30 seconds)
+    }
   }
 }

@@ -328,6 +328,7 @@ object K8SClient {
         }
 
       override def close(): Unit = {
+        actorMaterializer.shutdown()
         Await.result(actorSystem.terminate(), 60 seconds)
       }
 
