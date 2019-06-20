@@ -38,7 +38,7 @@ class TestRocksDataStore extends SmallTest with Matchers {
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 20 seconds)
 
-  private[this] def createData(): SimpleData = createData(CommonUtils.randomString())
+  private[this] def createData: SimpleData = createData(CommonUtils.randomString())
 
   @Test
   def testReopen(): Unit = {
@@ -60,7 +60,7 @@ class TestRocksDataStore extends SmallTest with Matchers {
 
     val s1 = DataStore.builder.persistentFolder(folder.getCanonicalPath).build()
     try {
-      s0.numberOfTypes() shouldBe 1
+      s1.numberOfTypes() shouldBe 1
       s1.size() shouldBe 2
       result(s1.value[SimpleData](key0)) shouldBe value0
       result(s1.value[SimpleData](key1)) shouldBe value1
@@ -87,11 +87,11 @@ class TestRocksDataStore extends SmallTest with Matchers {
   @Test
   def testMultiPut(): Unit = {
     store.size shouldBe 0
-    result(store.addIfAbsent(createData()))
+    result(store.addIfAbsent(createData))
     store.size shouldBe 1
-    result(store.addIfAbsent(createData()))
+    result(store.addIfAbsent(createData))
     store.size shouldBe 2
-    result(store.addIfAbsent(createData()))
+    result(store.addIfAbsent(createData))
     store.size shouldBe 3
   }
 
@@ -107,27 +107,27 @@ class TestRocksDataStore extends SmallTest with Matchers {
 
   @Test
   def testDuplicateAddIfAbsent(): Unit = {
-    val value0 = createData()
+    val value0 = createData
     val value1 = createData(value0.id)
     result(store.addIfAbsent(value0)) shouldBe value0
     store.size shouldBe 1
     an[IllegalStateException] should be thrownBy result(store.addIfAbsent(value1))
     store.size shouldBe 1
-    result(store.addIfAbsent(createData()))
+    result(store.addIfAbsent(createData))
     store.size shouldBe 2
     result(store.raws()).size shouldBe store.size
   }
 
   @Test
   def testDuplicateAdd(): Unit = {
-    val value0 = createData()
+    val value0 = createData
     (0 until 10).foreach(_ => result(store.add(value0.id, value0)))
   }
 
   @Test
   def testUpdate0(): Unit = {
     an[NoSuchElementException] should be thrownBy result(
-      store.addIfPresent[SimpleData](CommonUtils.randomString(), _ => Future.successful(createData())))
+      store.addIfPresent[SimpleData](CommonUtils.randomString(), _ => Future.successful(createData)))
     val key = CommonUtils.randomString()
     val value0 = createData(key)
     val value1 = createData(value0.id)
@@ -139,7 +139,7 @@ class TestRocksDataStore extends SmallTest with Matchers {
     })) shouldBe value1
     store.size shouldBe 1
 
-    val value2 = createData()
+    val value2 = createData
     result(store.addIfPresent[SimpleData](key, v => {
       v shouldBe value1
       Future.successful(value2)
@@ -149,8 +149,8 @@ class TestRocksDataStore extends SmallTest with Matchers {
 
   @Test
   def testValues(): Unit = {
-    val value0 = createData()
-    val value1 = createData()
+    val value0 = createData
+    val value1 = createData
     result(store.addIfAbsent(value0)) shouldBe value0
     result(store.addIfAbsent(value1)) shouldBe value1
     result(store.values[SimpleData]()).size shouldBe 2
@@ -228,6 +228,27 @@ class TestRocksDataStore extends SmallTest with Matchers {
 
     result(store.raws()).head.asInstanceOf[SimpleData] shouldBe data1
     result(store.raws("abcd")).head.asInstanceOf[SimpleData] shouldBe data1
+  }
+
+  @Test
+  def testAccessClosedStore(): Unit = {
+    val store2: DataStore = DataStore()
+    store2.close()
+    an[RuntimeException] should be thrownBy store2.size()
+    an[RuntimeException] should be thrownBy store2.numberOfTypes()
+    an[RuntimeException] should be thrownBy result(store2.get[SimpleData](CommonUtils.randomString(10)))
+    an[RuntimeException] should be thrownBy result(store2.add[SimpleData](CommonUtils.randomString(10), createData))
+    an[RuntimeException] should be thrownBy result(store2.exist[SimpleData](CommonUtils.randomString(10)))
+    an[RuntimeException] should be thrownBy result(
+      store2.addIfAbsent[SimpleData](CommonUtils.randomString(10), createData))
+    an[RuntimeException] should be thrownBy result(
+      store2.addIfPresent[SimpleData](CommonUtils.randomString(10), _ => Future.successful(createData)))
+    an[RuntimeException] should be thrownBy result(store2.raw(CommonUtils.randomString(10)))
+    an[RuntimeException] should be thrownBy result(store2.raws(CommonUtils.randomString(10)))
+    an[RuntimeException] should be thrownBy result(store2.raws())
+    an[RuntimeException] should be thrownBy result(store2.value[SimpleData](CommonUtils.randomString(10)))
+    an[RuntimeException] should be thrownBy result(store2.values[SimpleData]())
+    an[RuntimeException] should be thrownBy result(store2.remove[SimpleData](CommonUtils.randomString(10)))
   }
 
   @After

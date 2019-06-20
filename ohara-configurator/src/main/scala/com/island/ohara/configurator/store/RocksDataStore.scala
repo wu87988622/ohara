@@ -41,7 +41,7 @@ private[store] class RocksDataStore(folder: String,
                                     valueSerializer: Serializer[Data])
     extends DataStore {
   private[this] val closed = new AtomicBoolean(false)
-  private[this] val handlers = new ConcurrentHashMap[String, ColumnFamilyHandle]()
+  private[this] val classesAndHandles = new ConcurrentHashMap[String, ColumnFamilyHandle]()
 
   private[this] val db = {
     RocksDB.loadLibrary()
@@ -62,16 +62,31 @@ private[store] class RocksDataStore(folder: String,
     )
     finally {
       options.close()
-      lists.asScala.foreach(handler => handlers.put(new String(handler.getName), handler))
+      lists.asScala.foreach(handler => classesAndHandles.put(new String(handler.getName), handler))
     }
   }
+
+  private[this] def doIfNotClosed[T](action: => T): T = if (closed.get())
+    throw new RuntimeException("RocksDataStore is closed!!!")
+  else action
 
   private[this] def getOrCreateHandler[T <: Data: ClassTag]: ColumnFamilyHandle = getOrCreateHandler(
     classTag[T].runtimeClass)
 
-  private[this] def getOrCreateHandler(clz: Class[_]): ColumnFamilyHandle = if (closed.get())
-    throw new RuntimeException("RocksDataStore is closed!!!")
-  else handlers.computeIfAbsent(clz.getName, name => db.createColumnFamily(new ColumnFamilyDescriptor(name.getBytes)))
+  /**
+    * get a existent handles or create an new one if the input class is not associated to a existtent handles.
+    * Noted: it throws exception if this RocksDB is closed!!!
+    * @return handles
+    */
+  private[this] def getOrCreateHandler(clz: Class[_]): ColumnFamilyHandle = doIfNotClosed(
+    classesAndHandles.computeIfAbsent(clz.getName,
+                                      name => db.createColumnFamily(new ColumnFamilyDescriptor(name.getBytes))))
+
+  /**
+    * collect all handles if RocksDB is not closed.
+    * @return collection of handles
+    */
+  private[this] def handlers(): Seq[ColumnFamilyHandle] = doIfNotClosed(classesAndHandles.values().asScala.toList)
 
   private[this] def toMap(iter: RocksIterator, firstKey: String, endKey: String): Map[String, Data] =
     try {
@@ -111,7 +126,7 @@ private[store] class RocksDataStore(folder: String,
           case (k, v) => k -> v.asInstanceOf[T]
         }
         .values
-        .toSeq)
+        .toList)
 
   override def remove[T <: Data: ClassTag](name: String)(implicit executor: ExecutionContext): Future[Boolean] =
     get[T](name).map { obj =>
@@ -151,42 +166,36 @@ private[store] class RocksDataStore(folder: String,
     get[T](name).map(_.isEmpty)
 
   override def size(): Int =
-    handlers
-      .values()
-      .asScala
-      .toSeq
-      .map { handler =>
-        // TODO: is there a counter for rocksdb ???  by chia
-        val iter = db.newIterator(handler)
-        iter.seekToFirst()
-        try {
-          var count = 0
-          while (iter.isValid) {
-            count = count + 1
-            iter.next()
-          }
-          count
-        } finally iter.close()
+    handlers().map { handler =>
+      // TODO: is there a counter for rocksdb ???  by chia
+      val iter = db.newIterator(handler)
+      iter.seekToFirst()
+      try {
+        var count = 0
+        while (iter.isValid) {
+          count = count + 1
+          iter.next()
+        }
+        count
+      } finally iter.close()
 
-      }
-      .sum
+    }.sum
 
   override def close(): Unit = if (closed.compareAndSet(false, true)) {
-    handlers.values().forEach(h => Releasable.close(h))
+    classesAndHandles.values().asScala.foreach(Releasable.close)
     Releasable.close(db)
+    classesAndHandles.clear()
   }
 
   override def raws()(implicit executor: ExecutionContext): Future[Seq[Data]] =
-    Future.successful(
-      handlers.values().asScala.toSeq.flatMap(handler => toMap(db.newIterator(handler), null, null).values.toSeq))
+    Future.successful(handlers().flatMap(handler => toMap(db.newIterator(handler), null, null).values.toList))
 
   override def raws(name: String)(implicit executor: ExecutionContext): Future[Seq[Data]] =
-    Future.successful(
-      handlers.values().asScala.toSeq.flatMap(handler => toMap(db.newIterator(handler), name, name).values.toSeq))
+    Future.successful(handlers().flatMap(handler => toMap(db.newIterator(handler), name, name).values.toList))
 
   /**
     * RocksDB has a default cf in creating, and the cf is useless to us so we should not count it.
     * @return number of stored data types.
     */
-  override def numberOfTypes(): Int = handlers.size() - 1
+  override def numberOfTypes(): Int = doIfNotClosed(classesAndHandles.size() - 1)
 }
