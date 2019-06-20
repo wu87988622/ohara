@@ -243,7 +243,7 @@ And it works only if there is only a broker cluster exists in ohara**)
 
 ### get a topic
 
-*GET /v0/topics/${id}*
+*GET /v0/topics/${name}*
 
 **Example Response**
 
