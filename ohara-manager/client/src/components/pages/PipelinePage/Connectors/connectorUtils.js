@@ -50,7 +50,7 @@ export const getUpdatedTopic = ({
   originalTopics,
 }) => {
   const connector = findByGraphId(graph, connectorId);
-  const connectorName = configs['connector_name'];
+  const connectorName = connector.name;
   let update;
 
   if (connector.kind === 'source') {
@@ -77,7 +77,6 @@ export const getUpdatedTopic = ({
       update = { sinkProps, update: { ...currSink } };
     }
   }
-
   return update;
 };
 
