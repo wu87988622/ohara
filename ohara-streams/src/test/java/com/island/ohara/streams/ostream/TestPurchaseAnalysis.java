@@ -20,19 +20,19 @@ import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Pair;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.data.Serializer;
+import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.BrokerClient;
 import com.island.ohara.kafka.Consumer;
-import com.island.ohara.kafka.Consumer.Record;
 import com.island.ohara.kafka.Producer;
 import com.island.ohara.streams.OStream;
 import com.island.ohara.streams.StreamApp;
-import com.island.ohara.testing.WithBroker;
+import com.island.ohara.testing.With3Brokers;
 import java.lang.reflect.Field;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -41,7 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @SuppressWarnings({"rawtypes"})
-public class TestPurchaseAnalysis extends WithBroker {
+public class TestPurchaseAnalysis extends With3Brokers {
   private static final Logger LOG = LoggerFactory.getLogger(TestPurchaseAnalysis.class);
   private static final String appid = "test-purchase-analysis";
   private static final String resultTopic = "gender-amount";
@@ -58,7 +58,7 @@ public class TestPurchaseAnalysis extends WithBroker {
 
   @Before
   public void setup() {
-    int partitions = 1;
+    int partitions = 3;
     short replications = 1;
     try {
       client
@@ -88,62 +88,26 @@ public class TestPurchaseAnalysis extends WithBroker {
     } catch (Exception e) {
       LOG.error(e.getMessage());
     }
+  }
+
+  @Test
+  public void testStreamApp() throws InterruptedException {
+    // write items.csv to kafka broker
+    produceData("items.csv", itemTopic);
 
     // write users.csv to kafka broker
     produceData("users.csv", userTopic);
 
-    // write items.csv to kafka broker
-    produceData("items.csv", itemTopic);
-
+    // we make sure the join topic has data already
+    assertResult(client, itemTopic, 4);
+    assertResult(client, userTopic, 4);
+    TimeUnit.SECONDS.sleep(1);
     // write orders.csv to kafka broker
     produceData("orders.csv", orderTopic);
-  }
+    assertResult(client, orderTopic, 16);
 
-  @Test
-  public void testStreamApp() {
     RunStreamApp app = new RunStreamApp(client.connectionProps());
     StreamApp.runStreamApp(app.getClass(), client.connectionProps());
-
-    Consumer<Row, byte[]> consumer =
-        Consumer.<Row, byte[]>builder()
-            .topicName(resultTopic)
-            .connectionProps(client.connectionProps())
-            .groupId("group-" + resultTopic)
-            .offsetFromBegin()
-            .keySerializer(Serializer.ROW)
-            .valueSerializer(Serializer.BYTES)
-            .build();
-
-    List<Record<Row, byte[]>> records = consumer.poll(Duration.ofSeconds(100));
-    // the result will get "accumulation" ; hence we will get 2 -> 4 records
-    Assert.assertTrue(
-        "the result will get \"accumulation\" ; hence we will get 2 -> 4 records. actual:"
-            + records.size(),
-        records.size() >= 2 && records.size() <= 4);
-
-    Map<String, Double[]> actualResultMap = new HashMap<>();
-    actualResultMap.put("male", new Double[] {60000D, 69000D});
-    actualResultMap.put("female", new Double[] {15000D, 45000D});
-    final double THRESHOLD = 0.0001;
-
-    records.forEach(
-        record -> {
-          if (record.key().isPresent()) {
-            Optional<Double> amount =
-                record.key().get().cells().stream()
-                    .filter(cell -> cell.name().equals("amount"))
-                    .map(cell -> Double.valueOf(cell.value().toString()))
-                    .findFirst();
-            Assert.assertTrue(
-                "the result should be contain in actualResultMap",
-                actualResultMap.containsKey(record.key().get().cell("gender").value().toString())
-                    && actualResultMap.values().stream()
-                        .flatMap(Arrays::stream)
-                        .anyMatch(d -> Math.abs(d - amount.orElse(-999.0)) < THRESHOLD));
-          }
-        });
-
-    consumer.close();
   }
 
   @After
@@ -170,7 +134,8 @@ public class TestPurchaseAnalysis extends WithBroker {
               .fromTopicWith(orderTopic, Serdes.ROW, Serdes.BYTES)
               .toTopicWith(resultTopic, Serdes.ROW, Serdes.BYTES)
               .cleanStart()
-              .timestampExactor(MyExtractor.class)
+              .timestampExtractor(MyExtractor.class)
+              .enableExactlyOnce()
               .build();
 
       ostream
@@ -217,37 +182,80 @@ public class TestPurchaseAnalysis extends WithBroker {
           .groupByKey(Collections.singletonList("gender"))
           .reduce((Double r1, Double r2) -> r1 + r2, "amount")
           .start();
+
+      Consumer<Row, byte[]> consumer =
+          Consumer.<Row, byte[]>builder()
+              .topicName(resultTopic)
+              .connectionProps(brokers)
+              .groupId("group-" + resultTopic)
+              .offsetFromBegin()
+              .keySerializer(Serializer.ROW)
+              .valueSerializer(Serializer.BYTES)
+              .build();
+
+      List<Consumer.Record<Row, byte[]>> records = consumer.poll(Duration.ofSeconds(30), 4);
+      records.forEach(
+          row ->
+              LOG.debug(
+                  "final result : " + (row.key().isPresent() ? row.key().get().toString() : null)));
+      Assert.assertEquals(
+          "the result will get \"accumulation\" ; hence we will get 4 records.", 4, records.size());
+
+      Map<String, Double[]> actualResultMap = new HashMap<>();
+      actualResultMap.put("male", new Double[] {9000D, 60000D, 69000D});
+      actualResultMap.put("female", new Double[] {15000D, 30000D, 45000D});
+      final double THRESHOLD = 0.0001;
+
+      records.forEach(
+          record -> {
+            if (record.key().isPresent()) {
+              Optional<Double> amount =
+                  record.key().get().cells().stream()
+                      .filter(cell -> cell.name().equals("amount"))
+                      .map(cell -> Double.valueOf(cell.value().toString()))
+                      .findFirst();
+              Assert.assertTrue(
+                  "the result should be contain in actualResultMap",
+                  actualResultMap.containsKey(record.key().get().cell("gender").value().toString())
+                      && actualResultMap.values().stream()
+                          .flatMap(Arrays::stream)
+                          .anyMatch(d -> Math.abs(d - amount.orElse(-999.0)) < THRESHOLD));
+            }
+          });
+
+      consumer.close();
+      ostream.stop();
     }
   }
 
   public static class MyExtractor implements TimestampExtractor {
 
-    private final DateTimeFormatter dataTimeFormatter =
-        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
     @Override
     public long extract(
         org.apache.kafka.clients.consumer.ConsumerRecord<Object, Object> record,
         long previousTimestamp) {
-      Object value = record.value();
+      LOG.debug(
+          String.format(
+              "timeExtract : topic[%s], value[%s], partition[%s], time[%s]",
+              record.topic(), record.key().toString(), record.partition(), record.timestamp()));
+      Object value = record.key();
       if (value instanceof Row) {
         Row row = (Row) value;
         // orders
         if (row.names().contains("transactionDate"))
-          return LocalDateTime.parse(
-                      row.cell("transactionDate").value().toString(), dataTimeFormatter)
-                  .toEpochSecond(ZoneOffset.UTC)
-              * 1000;
+          return LocalDateTime.of(2019, 2, 2, 2, 2, 2).toEpochSecond(ZoneOffset.UTC) * 1000;
         // items
-        if (row.names().contains("price"))
-          return LocalDateTime.of(2015, 12, 11, 1, 0, 10).toEpochSecond(ZoneOffset.UTC) * 1000;
+        else if (row.names().contains("price"))
+          return LocalDateTime.of(2019, 1, 1, 1, 1, 1).toEpochSecond(ZoneOffset.UTC) * 1000;
         // users
         else if (row.names().contains("gender"))
-          return LocalDateTime.of(2015, 12, 11, 0, 0, 10).toEpochSecond(ZoneOffset.UTC) * 1000;
+          return LocalDateTime.of(2019, 1, 1, 1, 1, 1).toEpochSecond(ZoneOffset.UTC) * 1000;
         // other
-        else return LocalDateTime.of(2015, 12, 11, 2, 0, 10).toEpochSecond(ZoneOffset.UTC) * 1000;
+        else
+          throw new RuntimeException(
+              "the headers of this row are not expected :" + String.join(",", row.names()));
       } else {
-        return LocalDateTime.of(2015, 11, 10, 0, 0, 10).toEpochSecond(ZoneOffset.UTC) * 1000;
+        throw new RuntimeException("who are you? :" + value.getClass().getName());
       }
     }
   }
@@ -285,5 +293,22 @@ public class TestPurchaseAnalysis extends WithBroker {
     } catch (Exception e) {
       LOG.debug(e.getMessage());
     }
+  }
+
+  private void assertResult(BrokerClient client, String topic, int expectedSize) {
+    Consumer<Row, byte[]> consumer =
+        Consumer.<Row, byte[]>builder()
+            .topicName(topic)
+            .connectionProps(client.connectionProps())
+            .groupId("group-" + CommonUtils.randomString(5))
+            .offsetFromBegin()
+            .keySerializer(Serializer.ROW)
+            .valueSerializer(Serializer.BYTES)
+            .build();
+
+    List<Consumer.Record<Row, byte[]>> records =
+        consumer.poll(Duration.ofSeconds(30), expectedSize);
+    Assert.assertEquals(expectedSize, records.size());
+    consumer.close();
   }
 }

@@ -76,6 +76,7 @@ object StreamCollie {
     private[this] var fromTopics: Seq[String] = Seq.empty
     private[this] var toTopics: Seq[String] = Seq.empty
     private[this] var jmxPort: Int = CommonUtils.availablePort()
+    private[this] var exactlyOnce: Boolean = false
 
     override protected def doCopy(clusterInfo: StreamClusterInfo): Unit = {
       // doCopy is used to add node for a running cluster.
@@ -165,6 +166,18 @@ object StreamCollie {
       this
     }
 
+    /**
+      * set whether enable exactly once
+      *
+      * @param exactlyOnce exactlyOnce
+      * @return this creator
+      */
+    @Optional("default is false")
+    def enableExactlyOnce(exactlyOnce: Boolean): ClusterCreator = {
+      this exactlyOnce = exactlyOnce
+      this
+    }
+
     override def create()(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] = doCreate(
       CommonUtils.requireNonEmpty(clusterName),
       // we check nodeNames in StreamCollie
@@ -178,6 +191,7 @@ object StreamCollie {
       CommonUtils.requireNonEmpty(fromTopics.asJava).asScala,
       CommonUtils.requireNonEmpty(toTopics.asJava).asScala,
       CommonUtils.requireConnectionPort(jmxPort),
+      exactlyOnce,
       Objects.requireNonNull(executionContext)
     )
 
@@ -191,6 +205,7 @@ object StreamCollie {
                            fromTopics: Seq[String],
                            toTopics: Seq[String],
                            jmxPort: Int,
+                           enableExactlyOnce: Boolean,
                            executionContext: ExecutionContext): Future[StreamClusterInfo]
   }
 
@@ -200,6 +215,7 @@ object StreamCollie {
   private[agent] val FROM_TOPIC_KEY: String = "STREAMAPP_FROMTOPIC"
   private[agent] val TO_TOPIC_KEY: String = "STREAMAPP_TOTOPIC"
   private[agent] val JMX_PORT_KEY: String = "STREAMAPP_JMX_PORT"
+  private[agent] val EXACTLY_ONCE: String = "STREAMAPP_EXACTLY_ONCE"
 
   /**
     * the only entry for ohara streamApp

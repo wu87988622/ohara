@@ -42,6 +42,7 @@ private class StreamCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClient
      fromTopics,
      toTopics,
      jmxPort,
+     enableExactlyOnce,
      executionContext) => {
       implicit val exec: ExecutionContext = executionContext
       val clusters = clusterCache.snapshot
@@ -103,7 +104,8 @@ private class StreamCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClient
                           StreamCollie.SERVERS_KEY -> brokerProps,
                           StreamCollie.FROM_TOPIC_KEY -> fromTopics.mkString(","),
                           StreamCollie.TO_TOPIC_KEY -> toTopics.mkString(","),
-                          StreamCollie.JMX_PORT_KEY -> jmxPort.toString
+                          StreamCollie.JMX_PORT_KEY -> jmxPort.toString,
+                          StreamCollie.EXACTLY_ONCE -> enableExactlyOnce.toString
                         ),
                         // we should set the hostname to container name in order to avoid duplicate name with other containers
                         hostname = containerName

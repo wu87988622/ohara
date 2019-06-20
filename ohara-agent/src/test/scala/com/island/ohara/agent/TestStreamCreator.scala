@@ -42,6 +42,7 @@ class TestStreamCreator extends SmallTest with Matchers {
      fromTopics,
      toTopics,
      jmxPort,
+     _,
      executionContext) => {
       // We only check required variables
       CommonUtils.requireNonEmpty(clusterName)

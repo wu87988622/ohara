@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
 class OStreamImpl extends AbstractStream<Row, Row> implements OStream<Row> {
 
   private final Logger log = LoggerFactory.getLogger(OStreamImpl.class);
-  private Topology topology = null;
+  private static Topology topology = null;
   private static final Counter counter = MetricFactory.getCounter(MetricFactory.IOType.TOPIC_OUT);
 
   OStreamImpl(OStreamBuilder ob) {
@@ -154,22 +154,24 @@ class OStreamImpl extends AbstractStream<Row, Row> implements OStream<Row> {
   private void baseActionInitial(boolean isDryRun) {
     if (topology == null) {
       Properties prop = new Properties();
-      // TODO : enable exactly_once in #1116
-      // Enable exactly_once prop.setProperty(StreamsConfig.GUARANTEE,
-      // StreamsConfig.GUARANTEES.EXACTLY_ONCE.getName());
 
-      prop.setProperty(StreamsConfig.BOOTSTRAP_SERVERS, builder.getBootstrapServers());
-      prop.setProperty(StreamsConfig.APP_ID, builder.getAppId());
-      prop.setProperty(StreamsConfig.CLIENT_ID, builder.getAppId());
+      if (builder.getExactlyOnce()) {
+        prop.put(StreamsConfig.GUARANTEE, StreamsConfig.GUARANTEES.EXACTLY_ONCE.getName());
+      }
+
+      prop.put(StreamsConfig.BOOTSTRAP_SERVERS, builder.getBootstrapServers());
+      prop.put(StreamsConfig.APP_ID, builder.getAppId());
+      prop.put(StreamsConfig.CLIENT_ID, builder.getAppId());
       // Since we convert to <row, row> data type for internal ostream usage
-      prop.setProperty(StreamsConfig.DEFAULT_KEY_SERDE, Serdes.RowSerde.class.getName());
-      prop.setProperty(StreamsConfig.DEFAULT_VALUE_SERDE, Serdes.RowSerde.class.getName());
+      prop.put(StreamsConfig.DEFAULT_KEY_SERDE, Serdes.RowSerde.class.getName());
+      prop.put(StreamsConfig.DEFAULT_VALUE_SERDE, Serdes.RowSerde.class.getName());
       if (builder.getExtractor() != null) {
-        prop.setProperty(StreamsConfig.TIMESTAMP_EXTRACTOR, builder.getExtractor().getName());
+        prop.put(StreamsConfig.TIMESTAMP_EXTRACTOR, builder.getExtractor().getName());
       }
       // We need to disable cache to get the aggregation result "immediately" ?...by Sam
       // Reference : https://docs.confluent.io/current/streams/developer-guide/memory-mgmt.html
-      prop.setProperty(StreamsConfig.CACHE_BUFFER, "0");
+      prop.put(StreamsConfig.CACHE_BUFFER, 0);
+      prop.put(StreamsConfig.TASK_IDLE_MS, 3 * 1000);
 
       topology = new Topology(innerBuilder, prop, builder.isCleanStart(), isDryRun);
       log.info(String.format("poneglyph:%s", topology.getPoneglyphs().toString()));

@@ -346,6 +346,7 @@ private[configurator] object StreamRoute {
                                       .brokerProps(bkProps)
                                       .fromTopics(data.from)
                                       .toTopics(data.to)
+                                      .enableExactlyOnce(data.exactlyOnce)
                                       .create()
                                   }
                                 }

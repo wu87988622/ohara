@@ -39,6 +39,7 @@ public final class OStreamBuilder<K, V> {
   private Produced toSerde = null;
   private Class<? extends TimestampExtractor> extractor = null;
   private boolean cleanStart = false;
+  private boolean exactlyOnce = false;
 
   // for inner use
   private Serde<K> builderKeySerde;
@@ -60,6 +61,7 @@ public final class OStreamBuilder<K, V> {
     this.cleanStart = builder.cleanStart;
     this.builderKeySerde = builder.builderKeySerde;
     this.builderValueSerde = builder.builderValueSerde;
+    this.exactlyOnce = builder.exactlyOnce;
   }
 
   /**
@@ -137,6 +139,16 @@ public final class OStreamBuilder<K, V> {
   }
 
   /**
+   * enable exactly once
+   *
+   * @return this builder
+   */
+  public OStreamBuilder<K, V> enableExactlyOnce() {
+    this.exactlyOnce = true;
+    return this;
+  }
+
+  /**
    * control this stream application should clean all state data before start.
    *
    * @return this builder
@@ -152,7 +164,7 @@ public final class OStreamBuilder<K, V> {
    * @param extractor class extends {@code TimestampExtractor}
    * @return this builder
    */
-  public OStreamBuilder<K, V> timestampExactor(Class<? extends TimestampExtractor> extractor) {
+  public OStreamBuilder<K, V> timestampExtractor(Class<? extends TimestampExtractor> extractor) {
     this.extractor = extractor;
     return this;
   }
@@ -174,16 +186,20 @@ public final class OStreamBuilder<K, V> {
         envs, () -> "You should run this application in ohara environment.");
 
     this.bootstrapServers =
-        CommonUtils.requireNonEmpty(envs.get(StreamsConfig.DOCKER_BOOTSTRAP_SERVERS));
-    this.appId = CommonUtils.requireNonEmpty(envs.get(StreamsConfig.DOCKER_APPID));
+        CommonUtils.requireNonEmpty(envs.get(StreamsConfig.STREAMAPP_BOOTSTRAP_SERVERS));
+    this.appId = CommonUtils.requireNonEmpty(envs.get(StreamsConfig.STREAMAPP_APPID));
     this.fromTopicWith(
-        CommonUtils.requireNonEmpty(envs.get(StreamsConfig.DOCKER_FROM_TOPICS)),
+        CommonUtils.requireNonEmpty(envs.get(StreamsConfig.STREAMAPP_FROM_TOPICS)),
         Serdes.ROW,
         Serdes.BYTES);
     this.toTopicWith(
-        CommonUtils.requireNonEmpty(envs.get(StreamsConfig.DOCKER_TO_TOPICS)),
+        CommonUtils.requireNonEmpty(envs.get(StreamsConfig.STREAMAPP_TO_TOPICS)),
         Serdes.ROW,
         Serdes.BYTES);
+    this.exactlyOnce =
+        Boolean.valueOf(
+            CommonUtils.requireNonEmpty(
+                envs.getOrDefault(StreamsConfig.STREAMAPP_EXACTLY_ONCE, "false")));
 
     return new OStreamImpl(this);
   }
@@ -219,5 +235,9 @@ public final class OStreamBuilder<K, V> {
 
   boolean isCleanStart() {
     return cleanStart;
+  }
+
+  boolean getExactlyOnce() {
+    return exactlyOnce;
   }
 }

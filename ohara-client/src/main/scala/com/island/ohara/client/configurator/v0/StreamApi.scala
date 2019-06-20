@@ -101,6 +101,8 @@ object StreamApi {
                                         state: Option[String],
                                         error: Option[String],
                                         metrics: Metrics,
+                                        // TODO remove this default value after we could handle from UI
+                                        exactlyOnce: Boolean = false,
                                         lastModified: Long)
       extends Data {
     override def kind: String = "streamApp"
@@ -115,7 +117,7 @@ object StreamApi {
           toTopics: $to
       """.stripMargin
   }
-  implicit val STREAMAPP_DESCRIPTION_JSON_FORMAT: RootJsonFormat[StreamAppDescription] = jsonFormat11(
+  implicit val STREAMAPP_DESCRIPTION_JSON_FORMAT: RootJsonFormat[StreamAppDescription] = jsonFormat12(
     StreamAppDescription)
 
   final case class StreamClusterCreationRequest(id: String,

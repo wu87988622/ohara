@@ -45,6 +45,7 @@ private class K8SStreamCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
      fromTopics,
      toTopics,
      jmxPort,
+     enableExactlyOnce,
      executionContext) => {
       implicit val exec: ExecutionContext = executionContext
       exist(clusterName).flatMap {
@@ -96,7 +97,8 @@ private class K8SStreamCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
                           StreamCollie.SERVERS_KEY -> brokerProps,
                           StreamCollie.FROM_TOPIC_KEY -> fromTopics.mkString(","),
                           StreamCollie.TO_TOPIC_KEY -> toTopics.mkString(","),
-                          StreamCollie.JMX_PORT_KEY -> jmxPort.toString
+                          StreamCollie.JMX_PORT_KEY -> jmxPort.toString,
+                          StreamCollie.EXACTLY_ONCE -> enableExactlyOnce.toString
                         )
                       )
                       .args(StreamCollie.formatJMXProperties(node.name, jmxPort) :+ StreamCollie.MAIN_ENTRY)

@@ -18,6 +18,7 @@ package com.island.ohara.streams.ostream;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.config.TopicConfig;
 
 class StreamsConfig {
   static final String BOOTSTRAP_SERVERS =
@@ -34,10 +35,13 @@ class StreamsConfig {
   static final String AUTO_OFFSET = ConsumerConfig.AUTO_OFFSET_RESET_CONFIG;
   static final String CACHE_BUFFER =
       org.apache.kafka.streams.StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG;
+  static final String COMMIT_INTERVAL =
+      org.apache.kafka.streams.StreamsConfig.COMMIT_INTERVAL_MS_CONFIG;
   static final String THREADS = org.apache.kafka.streams.StreamsConfig.NUM_STREAM_THREADS_CONFIG;
   static final String GUARANTEE =
       org.apache.kafka.streams.StreamsConfig.PROCESSING_GUARANTEE_CONFIG;
   static final String ACKS = ProducerConfig.ACKS_CONFIG;
+  static final String TASK_IDLE_MS = org.apache.kafka.streams.StreamsConfig.MAX_TASK_IDLE_MS_CONFIG;
 
   enum GUARANTEES {
     EXACTLY_ONCE(org.apache.kafka.streams.StreamsConfig.EXACTLY_ONCE),
@@ -54,9 +58,23 @@ class StreamsConfig {
     }
   }
 
+  // Internal topic settings
+  static final String INTERNAL_RETENTION_BYTES =
+      org.apache.kafka.streams.StreamsConfig.TOPIC_PREFIX + TopicConfig.RETENTION_BYTES_CONFIG;
+  static final String INTERNAL_INDEX_BYTES =
+      org.apache.kafka.streams.StreamsConfig.TOPIC_PREFIX + TopicConfig.SEGMENT_INDEX_BYTES_CONFIG;
+  static final String INTERNAL_INDEX_INTERVAL_BYTES =
+      org.apache.kafka.streams.StreamsConfig.TOPIC_PREFIX + TopicConfig.INDEX_INTERVAL_BYTES_CONFIG;
+  static final String INTERNAL_CLEANUP_POLICY =
+      org.apache.kafka.streams.StreamsConfig.TOPIC_PREFIX + TopicConfig.CLEANUP_POLICY_CONFIG;
+  static final String INTERNAL_CLEANABLE_RATIO =
+      org.apache.kafka.streams.StreamsConfig.TOPIC_PREFIX
+          + TopicConfig.MIN_CLEANABLE_DIRTY_RATIO_CONFIG;
+
   // for docker usage
-  static final String DOCKER_BOOTSTRAP_SERVERS = "STREAMAPP_SERVERS";
-  static final String DOCKER_APPID = "STREAMAPP_APPID";
-  static final String DOCKER_FROM_TOPICS = "STREAMAPP_FROMTOPIC";
-  static final String DOCKER_TO_TOPICS = "STREAMAPP_TOTOPIC";
+  static final String STREAMAPP_BOOTSTRAP_SERVERS = "STREAMAPP_SERVERS";
+  static final String STREAMAPP_APPID = "STREAMAPP_APPID";
+  static final String STREAMAPP_FROM_TOPICS = "STREAMAPP_FROMTOPIC";
+  static final String STREAMAPP_TO_TOPICS = "STREAMAPP_TOTOPIC";
+  static final String STREAMAPP_EXACTLY_ONCE = "STREAMAPP_EXACTLY_ONCE";
 }

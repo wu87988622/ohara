@@ -38,7 +38,7 @@ private[configurator] class FakeStreamCollie(nodeCollie: NodeCollie)
     BeanChannel.local().counterMBeans().asScala
 
   override def creator(): StreamCollie.ClusterCreator =
-    (clusterName, nodeNames, imageName, _, instance, _, _, _, _, jmxPort, executionContext) => {
+    (clusterName, nodeNames, imageName, _, instance, _, _, _, _, jmxPort, _, executionContext) => {
       implicit val exec: ExecutionContext = executionContext
       nodeCollie
         .nodes()
