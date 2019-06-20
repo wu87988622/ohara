@@ -22,6 +22,7 @@ const Button = props => {
   const {
     text,
     className,
+    component,
     color = 'primary',
     variant = 'contained',
     size = 'medium',
@@ -30,6 +31,7 @@ const Button = props => {
 
   return (
     <MuiButton
+      component={component}
       className={className}
       color={color}
       variant={variant}
@@ -48,6 +50,7 @@ Button.propTypes = {
   color: PropTypes.string,
   variant: PropTypes.string,
   onClick: PropTypes.func,
+  component: PropTypes.string,
 };
 
 export default Button;
