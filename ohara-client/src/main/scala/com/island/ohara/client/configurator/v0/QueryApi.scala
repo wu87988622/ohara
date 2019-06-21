@@ -16,6 +16,8 @@
 
 package com.island.ohara.client.configurator.v0
 
+import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
+import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
@@ -32,26 +34,112 @@ object QueryApi {
                             columns: Seq[RdbColumn])
   implicit val RDB_TABLE_JSON_FORMAT: RootJsonFormat[RdbTable] = jsonFormat4(RdbTable)
 
-  final case class RdbQuery(url: String,
-                            user: String,
-                            password: String,
-                            workerClusterName: Option[String],
-                            catalogPattern: Option[String],
-                            schemaPattern: Option[String],
-                            tableName: Option[String])
+  final case class RdbQuery private[QueryApi] (url: String,
+                                               user: String,
+                                               password: String,
+                                               workerClusterName: Option[String],
+                                               catalogPattern: Option[String],
+                                               schemaPattern: Option[String],
+                                               tableName: Option[String])
   implicit val RDB_QUERY_JSON_FORMAT: RootJsonFormat[RdbQuery] = jsonFormat7(RdbQuery)
 
   final case class RdbInfo(name: String, tables: Seq[RdbTable])
   implicit val RDB_INFO_JSON_FORMAT: RootJsonFormat[RdbInfo] = jsonFormat2(RdbInfo)
 
-  sealed abstract class Access extends BasicAccess(QUERY_PREFIX_PATH) {
-    def query(q: RdbQuery)(implicit executionContext: ExecutionContext): Future[RdbInfo]
+  /**
+    * used to generate the payload and url for POST/PUT request.
+    */
+  trait Request {
+    def url(url: String): Request
+
+    @Optional("server will match a broker cluster for you if the wk name is ignored")
+    def workerClusterName(workerClusterName: String): Request
+
+    def user(user: String): Request
+
+    def password(password: String): Request
+
+    @Optional("default is null")
+    def catalogPattern(catalogPattern: String): Request
+
+    @Optional("default is null")
+    def schemaPattern(schemaPattern: String): Request
+
+    @Optional("default is null")
+    def tableName(tableName: String): Request
+
+    @VisibleForTesting
+    private[v0] def query: RdbQuery
+
+    /**
+      * generate the POST request
+      * @param executionContext thread pool
+      * @return created data
+      */
+    def query()(implicit executionContext: ExecutionContext): Future[RdbInfo]
   }
 
-  def access(): Access = new Access {
-    override def query(q: RdbQuery)(implicit executionContext: ExecutionContext): Future[RdbInfo] =
-      exec.post[RdbQuery, RdbInfo, ErrorApi.Error](
-        s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$RDB_PREFIX_PATH",
-        q)
+  final class Access private[QueryApi] extends BasicAccess(QUERY_PREFIX_PATH) {
+    def request: Request = new Request {
+      private[this] var url: String = _
+      private[this] var user: String = _
+      private[this] var password: String = _
+      private[this] var workerClusterName: String = _
+      private[this] var catalogPattern: String = _
+      private[this] var schemaPattern: String = _
+      private[this] var tableName: String = _
+
+      override def url(url: String): Request = {
+        this.url = CommonUtils.requireNonEmpty(url)
+        this
+      }
+
+      override def workerClusterName(workerClusterName: String): Request = {
+        this.workerClusterName = CommonUtils.requireNonEmpty(workerClusterName)
+        this
+      }
+
+      override def user(user: String): Request = {
+        this.user = CommonUtils.requireNonEmpty(user)
+        this
+      }
+
+      override def password(password: String): Request = {
+        this.password = CommonUtils.requireNonEmpty(password)
+        this
+      }
+
+      override def catalogPattern(catalogPattern: String): Request = {
+        this.catalogPattern = CommonUtils.requireNonEmpty(catalogPattern)
+        this
+      }
+
+      override def schemaPattern(schemaPattern: String): Request = {
+        this.schemaPattern = CommonUtils.requireNonEmpty(schemaPattern)
+        this
+      }
+
+      override def tableName(tableName: String): Request = {
+        this.tableName = CommonUtils.requireNonEmpty(tableName)
+        this
+      }
+
+      override private[v0] def query: RdbQuery = RdbQuery(
+        url = CommonUtils.requireNonEmpty(url),
+        user = CommonUtils.requireNonEmpty(user),
+        password = CommonUtils.requireNonEmpty(password),
+        workerClusterName = Option(workerClusterName).map(CommonUtils.requireNonEmpty),
+        catalogPattern = Option(catalogPattern).map(CommonUtils.requireNonEmpty),
+        schemaPattern = Option(schemaPattern).map(CommonUtils.requireNonEmpty),
+        tableName = Option(tableName).map(CommonUtils.requireNonEmpty)
+      )
+
+      override def query()(implicit executionContext: ExecutionContext): Future[RdbInfo] =
+        exec.post[RdbQuery, RdbInfo, ErrorApi.Error](
+          s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$RDB_PREFIX_PATH",
+          query)
+    }
   }
+
+  def access: Access = new Access
 }

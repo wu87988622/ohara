@@ -17,7 +17,7 @@
 package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0.QueryApi
-import com.island.ohara.client.configurator.v0.QueryApi.{RdbColumn, RdbInfo, RdbQuery}
+import com.island.ohara.client.configurator.v0.QueryApi.{RdbColumn, RdbInfo}
 import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.Releasable
@@ -26,9 +26,9 @@ import com.island.ohara.testing.service.Database
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
 class TestQueryRoute extends SmallTest with Matchers {
   private[this] val db = Database.local()
   private[this] val configurator = Configurator.builder().fake().build()
@@ -41,18 +41,14 @@ class TestQueryRoute extends SmallTest with Matchers {
     val dbClient = DatabaseClient.builder.url(db.url()).user(db.user()).password(db.password()).build
     try {
       val r = result(
-        QueryApi
-          .access()
+        QueryApi.access
           .hostname(configurator.hostname)
           .port(configurator.port)
-          .query(
-            RdbQuery(url = db.url,
-                     user = db.user,
-                     password = db.password,
-                     workerClusterName = None,
-                     catalogPattern = None,
-                     schemaPattern = None,
-                     tableName = None)))
+          .request
+          .url(db.url())
+          .user(db.user())
+          .password(db.password())
+          .query())
       r.name shouldBe "mysql"
       r.tables.isEmpty shouldBe true
 
@@ -71,33 +67,27 @@ class TestQueryRoute extends SmallTest with Matchers {
 
       verify(
         result(
-          QueryApi
-            .access()
+          QueryApi.access
             .hostname(configurator.hostname)
             .port(configurator.port)
-            .query(
-              RdbQuery(url = db.url,
-                       user = db.user,
-                       password = db.password,
-                       workerClusterName = None,
-                       catalogPattern = None,
-                       schemaPattern = None,
-                       tableName = None))))
+            .request
+            .url(db.url())
+            .user(db.user())
+            .password(db.password())
+            .query()))
 
       verify(
         result(
-          QueryApi
-            .access()
+          QueryApi.access
             .hostname(configurator.hostname)
             .port(configurator.port)
-            .query(
-              RdbQuery(url = db.url,
-                       user = db.user,
-                       password = db.password,
-                       workerClusterName = None,
-                       catalogPattern = Some(db.databaseName),
-                       schemaPattern = None,
-                       tableName = Some(tableName)))))
+            .request
+            .url(db.url())
+            .user(db.user())
+            .password(db.password())
+            .catalogPattern(db.databaseName)
+            .tableName(tableName)
+            .query()))
       dbClient.dropTable(tableName)
     } finally dbClient.close()
   }
