@@ -20,9 +20,10 @@ import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
+import spray.json.DeserializationException
 
 import scala.concurrent.ExecutionContext.Implicits.global
-
+import spray.json._
 class TestFtpApi extends SmallTest with Matchers {
 
   @Test
@@ -153,5 +154,149 @@ class TestFtpApi extends SmallTest with Matchers {
     FtpApi.access.request.update.port shouldBe None
     FtpApi.access.request.update.user shouldBe None
     FtpApi.access.request.update.password shouldBe None
+  }
+
+  @Test
+  def testEmptyHostnameInUpdate(): Unit =
+    an[DeserializationException] should be thrownBy FtpApi.FTP_UPDATE_JSON_FORMAT.read("""
+         |{
+         | "hostname": ""
+         |}
+       """.stripMargin.parseJson)
+
+  @Test
+  def testEmptyUserInUpdate(): Unit =
+    an[DeserializationException] should be thrownBy FtpApi.FTP_UPDATE_JSON_FORMAT.read("""
+             |{
+             | "user": ""
+             |}
+           """.stripMargin.parseJson)
+
+  @Test
+  def testNegativePortInUpdate(): Unit =
+    an[DeserializationException] should be thrownBy FtpApi.FTP_UPDATE_JSON_FORMAT.read("""
+                                                                                         |{
+                                                                                         | "port": -1
+                                                                                         |}
+                                                                                       """.stripMargin.parseJson)
+
+  @Test
+  def testEmptyPasswordInUpdate(): Unit =
+    an[DeserializationException] should be thrownBy FtpApi.FTP_UPDATE_JSON_FORMAT.read("""
+                               |{
+                               | "password": ""
+                               |}
+                             """.stripMargin.parseJson)
+
+  @Test
+  def testParseUpdate(): Unit = {
+    val hostname = CommonUtils.randomString()
+    val port = CommonUtils.availablePort()
+    val user = CommonUtils.randomString()
+    val password = CommonUtils.randomString()
+    val update = FtpApi.FTP_UPDATE_JSON_FORMAT.read(s"""
+                                         |{
+                                         | "hostname": "$hostname",
+                                         | "port": $port,
+                                         | "user": "$user",
+                                         | "password": "$password"
+                                         |}
+                                       """.stripMargin.parseJson)
+    update.hostname.get shouldBe hostname
+    update.port.get shouldBe port
+    update.user.get shouldBe user
+    update.password.get shouldBe password
+  }
+
+  @Test
+  def testEmptyNameInCreation(): Unit =
+    an[DeserializationException] should be thrownBy FtpApi.FTP_CREATION_JSON_FORMAT.read("""
+                                                                                           |{
+                                                                                           | "name": "",
+                                                                                           | "hostname": "hostname",
+                                                                                           | "port": 123,
+                                                                                           | "user": "user",
+                                                                                           | "password": "password"
+                                                                                           |}
+                                                                                         """.stripMargin.parseJson)
+
+  @Test
+  def testEmptyHostnameInCreation(): Unit =
+    an[DeserializationException] should be thrownBy FtpApi.FTP_CREATION_JSON_FORMAT.read("""
+                                                                                           |{
+                                                                                           | "name": "name",
+                                                                                           | "hostname": "",
+                                                                                           | "port": 123,
+                                                                                           | "user": "user",
+                                                                                           | "password": "password"
+                                                                                           |}
+                                                                                         """.stripMargin.parseJson)
+  @Test
+  def testNegativePortInCreation(): Unit =
+    an[DeserializationException] should be thrownBy FtpApi.FTP_CREATION_JSON_FORMAT.read("""
+                                                                                           |{
+                                                                                           | "name": "name",
+                                                                                           | "hostname": "123",
+                                                                                           | "port": -1,
+                                                                                           | "user": "user",
+                                                                                           | "password": "password"
+                                                                                           |}
+                                                                                         """.stripMargin.parseJson)
+
+  @Test
+  def testZeroPortInCreation(): Unit =
+    an[DeserializationException] should be thrownBy FtpApi.FTP_CREATION_JSON_FORMAT.read("""
+                                                                                           |{
+                                                                                           | "name": "name",
+                                                                                           | "hostname": "123",
+                                                                                           | "port": 0,
+                                                                                           | "user": "user",
+                                                                                           | "password": "password"
+                                                                                           |}
+                                                                                         """.stripMargin.parseJson)
+
+  @Test
+  def testEmptyUserInCreation(): Unit =
+    an[DeserializationException] should be thrownBy FtpApi.FTP_CREATION_JSON_FORMAT.read("""
+                                                                                           |{
+                                                                                           | "name": "name",
+                                                                                           | "hostname": "hostname",
+                                                                                           | "port": 123,
+                                                                                           | "user": "",
+                                                                                           | "password": "password"
+                                                                                           |}
+                                                                                         """.stripMargin.parseJson)
+  @Test
+  def testEmptyPasswordInCreation(): Unit =
+    an[DeserializationException] should be thrownBy FtpApi.FTP_CREATION_JSON_FORMAT.read("""
+                                                                                           |{
+                                                                                           | "name": "name",
+                                                                                           | "hostname": "hostname",
+                                                                                           | "port": 123,
+                                                                                           | "user": "user",
+                                                                                           | "password": ""
+                                                                                           |}
+                                                                                         """.stripMargin.parseJson)
+
+  @Test
+  def testParseCreation(): Unit = {
+    val name = CommonUtils.randomString()
+    val hostname = CommonUtils.randomString()
+    val port = CommonUtils.availablePort()
+    val user = CommonUtils.randomString()
+    val password = CommonUtils.randomString()
+    val creation = FtpApi.FTP_CREATION_JSON_FORMAT.read(s"""
+                                                       |{
+                                                       | "name": "$name",
+                                                       | "hostname": "$hostname",
+                                                       | "port": $port,
+                                                       | "user": "$user",
+                                                       | "password": "$password"
+                                                       |}
+                                       """.stripMargin.parseJson)
+    creation.hostname shouldBe hostname
+    creation.port shouldBe port
+    creation.user shouldBe user
+    creation.password shouldBe password
   }
 }
