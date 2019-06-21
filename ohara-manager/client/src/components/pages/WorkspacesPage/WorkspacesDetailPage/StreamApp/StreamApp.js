@@ -27,7 +27,13 @@ import * as MESSAGES from 'constants/messages';
 import { Button } from 'components/common/Mui/Form';
 import { ConfirmModal } from 'components/common/Modal';
 import { SortTable } from 'components/common/Mui/Table';
-import { PageHeader, PageBody, StyledLabel, StyledIcon } from './styles';
+import {
+  PageHeader,
+  PageBody,
+  StyledLabel,
+  StyledIcon,
+  StyledInputFile,
+} from './styles';
 
 const StreamApp = props => {
   const { workspaceName } = props;
@@ -60,19 +66,9 @@ const StreamApp = props => {
     fetchJars();
   };
 
-  const validateJarExtension = jarName => endsWith(jarName, '.jar');
-
   const handleFileSelect = e => {
     const file = e.target.files[0];
     if (e.target.files[0]) {
-      const filename = file.name;
-      if (!validateJarExtension(filename)) {
-        toastr.error(
-          `This file type is not supported.\n Please select your '.jar' file.`,
-        );
-        return;
-      }
-
       uploadJar(file);
     }
   };
@@ -145,10 +141,9 @@ const StreamApp = props => {
   return (
     <>
       <PageHeader>
-        <input
-          accept=".jar"
-          style={{ display: 'none' }}
+        <StyledInputFile
           id="fileInput"
+          accept=".jar"
           type="file"
           onChange={handleFileSelect}
         />

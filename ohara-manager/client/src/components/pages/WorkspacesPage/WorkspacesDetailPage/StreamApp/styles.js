@@ -41,3 +41,7 @@ export const StyledLabel = styled(Label)`
 export const StyledIcon = styled(Icon)`
   font-size: 20px;
 `;
+
+export const StyledInputFile = styled.input`
+  display: none;
+`;
