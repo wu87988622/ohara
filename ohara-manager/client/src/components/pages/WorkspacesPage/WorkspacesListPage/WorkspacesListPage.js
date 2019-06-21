@@ -35,7 +35,7 @@ const WorkspacesListPage = props => {
     { id: 'action', label: 'Action', sortable: false },
   ];
 
-  const actionTab = data => {
+  const actionButton = data => {
     const { name } = data;
     return (
       <Tooltip title={`Link to ${name} page`} enterDelay={1000}>
@@ -54,7 +54,7 @@ const WorkspacesListPage = props => {
   };
 
   const rows = workers.map(d => {
-    return createData(d.name, d.nodeNames.join(','), actionTab(d));
+    return createData(d.name, d.nodeNames.join(','), actionButton(d));
   });
 
   const handleRequestSort = (event, property) => {

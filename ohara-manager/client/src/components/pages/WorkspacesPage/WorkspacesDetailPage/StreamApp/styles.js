@@ -16,6 +16,7 @@
 
 import styled from 'styled-components';
 import { Label } from 'components/common/Form';
+import Icon from '@material-ui/core/Icon';
 
 export const PageHeader = styled.div`
   margin-top: 30px;
@@ -35,4 +36,8 @@ export const StyledLabel = styled(Label)`
   margin-left: auto;
   margin-bottom: auto;
   align-self: center;
+`;
+
+export const StyledIcon = styled(Icon)`
+  font-size: 20px;
 `;

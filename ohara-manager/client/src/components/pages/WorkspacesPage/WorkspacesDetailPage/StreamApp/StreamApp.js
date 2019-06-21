@@ -1,19 +1,37 @@
-import React from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
+import PropTypes from 'prop-types';
 import toastr from 'toastr';
-import * as streamApi from 'api/streamApi';
+import moment from 'moment';
 import { get, endsWith } from 'lodash';
-import { PageHeader, PageBody, StyledLabel } from './styles';
-import { SortTable } from 'components/common/Mui/Table';
-import { Button } from 'components/common/Mui/Form';
+import Tooltip from '@material-ui/core/Tooltip';
+import IconButton from '@material-ui/core/IconButton';
+
+import * as streamApi from 'api/streamApi';
 import * as MESSAGES from 'constants/messages';
+import { Button } from 'components/common/Mui/Form';
+import { ConfirmModal } from 'components/common/Modal';
+import { SortTable } from 'components/common/Mui/Table';
+import { PageHeader, PageBody, StyledLabel, StyledIcon } from './styles';
 
 const StreamApp = props => {
   const { workspaceName } = props;
+  const [jarId, setJarId] = useState(null);
+  const [jars, setJars] = useState([]);
+  const [order, setOrder] = useState('asc');
+  const [orderBy, setOrderBy] = useState('id');
+  const [loading, setLoading] = useState(true);
+  const [DeleteRowModalActive, setDeleteRowModalActive] = useState(false);
 
-  const fetchJars = async () => {
+  const fetchJars = useCallback(async () => {
     const res = await streamApi.fetchJars(workspaceName);
-    return get(res, 'data.result', null);
-  };
+    setJars(get(res, 'data.result', []));
+    setLoading(false);
+  }, [workspaceName]);
+
+  useEffect(() => {
+    fetchJars();
+  }, [fetchJars]);
+
   const uploadJar = async file => {
     const res = await streamApi.uploadJar({
       workerClusterName: workspaceName,
@@ -23,6 +41,7 @@ const StreamApp = props => {
     if (isSuccess) {
       toastr.success(MESSAGES.STREAM_APP_UPLOAD_SUCCESS);
     }
+    fetchJars();
   };
 
   const validateJarExtension = jarName => endsWith(jarName, '.jar');
@@ -38,36 +57,73 @@ const StreamApp = props => {
         return;
       }
 
-      // if (this.isDuplicateTitle(filename)) {
-      //   toastr.error(`This file name is duplicate. '${filename}'`);
-      //   return;
-      // }
-
       uploadJar(file);
     }
   };
 
   const headRows = [
+    { id: 'id', label: 'Jar id' },
     { id: 'name', label: 'Jar name' },
-    { id: 'fileSize', label: 'File size (KB)' },
     { id: 'lastModified', label: 'Last modified' },
     { id: 'action', label: 'Action', sortable: false },
   ];
 
-  const [order, setOrder] = React.useState('asc');
-  const [orderBy, setOrderBy] = React.useState('name');
-
-  const createData = (name, fileSize, lastModified, action) => {
-    return { name, fileSize, lastModified, action };
+  const handleDeleteRowModalOpen = id => {
+    setJarId(id);
+    setDeleteRowModalActive(true);
   };
 
-  const rows = fetchJars.map(jar => {
-    return createData(jar.name);
+  const actionButton = data => {
+    const { name, id } = data;
+    return (
+      <Tooltip title={`Delete ${name}`} enterDelay={1000}>
+        <IconButton
+          data-testid="edit-node-icon"
+          onClick={() => handleDeleteRowModalOpen(id)}
+        >
+          <StyledIcon className="fas fa-trash-alt" />
+        </IconButton>
+      </Tooltip>
+    );
+  };
+
+  const createData = (id, name, lastModified, action) => {
+    return { id, name, lastModified, action };
+  };
+
+  const rows = jars.map(jar => {
+    return createData(
+      jar.id,
+      jar.name,
+      moment.unix(jar.lastModified / 1000).format('YYYY-MM-DD HH:mm:ss'),
+      actionButton(jar),
+    );
   });
   const handleRequestSort = (event, property) => {
     const isDesc = orderBy === property && order === 'desc';
     setOrder(isDesc ? 'asc' : 'desc');
     setOrderBy(property);
+  };
+
+  const handleDeleteRowModalClose = () => {
+    setDeleteRowModalActive(false);
+    setJarId(null);
+  };
+
+  const deleteJar = async id => {
+    const res = await streamApi.deleteJar({ id: id });
+    const isSuccess = get(res, 'data.isSuccess', false);
+    if (isSuccess) {
+      toastr.success(MESSAGES.STREAM_APP_DELETE_SUCCESS);
+      handleDeleteRowModalClose();
+      fetchJars();
+    }
+  };
+
+  const handleDeleteClick = e => {
+    if (jarId) {
+      deleteJar(jarId);
+    }
   };
 
   return (
@@ -76,18 +132,17 @@ const StreamApp = props => {
         <input
           accept=".jar"
           style={{ display: 'none' }}
-          id="contained-button-file"
-          multiple
+          id="fileInput"
           type="file"
           onChange={handleFileSelect}
         />
-        <StyledLabel htmlFor="contained-button-file">
+        <StyledLabel htmlFor="fileInput">
           <Button component="span" text="new jar" />
         </StyledLabel>
       </PageHeader>
       <PageBody>
         <SortTable
-          isLoading={false}
+          isLoading={loading}
           headRows={headRows}
           rows={rows}
           onRequestSort={handleRequestSort}
@@ -95,8 +150,22 @@ const StreamApp = props => {
           orderBy={orderBy}
         />
       </PageBody>
+      <ConfirmModal
+        isActive={DeleteRowModalActive}
+        title="Delete Jar?"
+        confirmBtnText="Yes, Delete this jar"
+        cancelBtnText="No, Keep it"
+        handleCancel={handleDeleteRowModalClose}
+        handleConfirm={handleDeleteClick}
+        message="Are you sure you want to delete this jar? This action cannot be undone!"
+        isDelete
+      />
     </>
   );
+};
+
+StreamApp.propTypes = {
+  workspaceName: PropTypes.string.isRequired,
 };
 
 export default StreamApp;
