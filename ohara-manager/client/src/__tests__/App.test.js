@@ -52,7 +52,7 @@ describe('<App />', () => {
     expect(wrapper.find('Switch').length).toBe(1);
   });
 
-  it('renders pipeline new page route', () => {
+  it('renders route', () => {
     // TODO: reuse routes config in App.js
     const routes = [
       {
@@ -72,7 +72,7 @@ describe('<App />', () => {
         testId: 'nodes-page',
       },
       {
-        path: '/workspaces/:workspaceName',
+        path: '/workspaces/:workspaceName/:serviceName?',
         testId: 'workspace-page',
       },
       {

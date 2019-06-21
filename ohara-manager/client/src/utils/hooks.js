@@ -14,24 +14,16 @@
  * limitations under the License.
  */
 
-import styled from 'styled-components';
-import { Label } from 'components/common/Form';
+import { useReducer } from 'react';
 
-const PreviewWrapper = styled.div`
-  margin-top: 16px;
-  padding: 16px;
-  background-color: ${props => props.theme.whiteSmoke};
-`;
+// Mimic class component's setState call. Do remember
+// This setState call doesn't support a function as updater
+// And no callback like `this.setState({}, () => {})`
+export const useSetState = (initialState = {}) => {
+  const [state, setState] = useReducer(
+    (state, newState) => ({ ...state, ...newState }),
+    initialState,
+  );
 
-const Text = styled(Label)`
-  margin-left: 0.5rem;
-`;
-
-const QuicklyFillInWrapper = styled.div`
-  width: 100%;
-  text-align: right;
-  margin-top: 4px;
-  font-size: 11px;
-`;
-
-export { PreviewWrapper, Text, QuicklyFillInWrapper };
+  return [state, setState];
+};

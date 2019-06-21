@@ -132,7 +132,7 @@ class NodeListPage extends React.Component {
                     <TableCell align="left">
                       {this.getSSHLabel(node.user, node.port)}
                     </TableCell>
-                    <TableCell className="has-icon" align="left">
+                    <TableCell className="has-icon" align="right">
                       <IconButton
                         color="primary"
                         aria-label="Edit"

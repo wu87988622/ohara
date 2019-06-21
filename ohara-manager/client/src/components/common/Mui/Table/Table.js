@@ -28,6 +28,8 @@ import { TableLoader } from 'components/common/Mui/Loader';
 const MuiTable = props => {
   const { headers, isLoading, children } = props;
 
+  const lastIdx = headers.length - 1;
+
   if (isLoading) return <TableLoader />;
 
   return (
@@ -35,9 +37,10 @@ const MuiTable = props => {
       <Table>
         <TableHead>
           <TableRow>
-            {headers.map(header => {
+            {headers.map((header, idx) => {
+              const align = idx === lastIdx ? 'right' : 'left';
               return (
-                <TableCell align="left" key={header}>
+                <TableCell align={align} key={header}>
                   {header}
                 </TableCell>
               );

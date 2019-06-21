@@ -25,20 +25,21 @@ import { StyledIcon } from './styles';
 
 const WorkspacesListPage = props => {
   const { workers, isLoading } = props;
+
+  const [order, setOrder] = React.useState('asc');
+  const [orderBy, setOrderBy] = React.useState('name');
+
   const headRows = [
     { id: 'name', label: 'Name' },
     { id: 'nodes', label: 'Nodes' },
     { id: 'action', label: 'Action', sortable: false },
   ];
-  const [order, setOrder] = React.useState('asc');
-  const [orderBy, setOrderBy] = React.useState('name');
 
   const actionTab = data => {
     const { name } = data;
     return (
       <Tooltip title={`Link to ${name} page`} enterDelay={1000}>
         <IconButton
-          color="primary"
           data-testid="edit-node-icon"
           onClick={() => handleRedirect(name)}
         >

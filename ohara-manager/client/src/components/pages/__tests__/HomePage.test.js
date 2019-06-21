@@ -18,7 +18,7 @@ import React from 'react';
 import { shallow } from 'enzyme';
 
 import HomePage from '../HomePage';
-import { PIPELINES } from '../../../constants/urls';
+import { PIPELINES } from 'constants/urls';
 
 const props = { match: {} };
 

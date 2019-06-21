@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import Paper from '@material-ui/core/Paper';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import { Route } from 'react-router-dom';
+
+import Topics from './Topics';
 
 const StyledTabs = styled(Tabs)`
   border-bottom: 1px solid #eee;
@@ -29,7 +31,8 @@ const StyledTabs = styled(Tabs)`
 const MuiTabs = props => {
   const [value, setValue] = React.useState(0);
   const tabArray = ['overview', 'nodes', 'topics', 'streamapps'];
-  const baseUrl = props.match.url;
+  const { workspaceName } = props.match.params;
+  const baseUrl = `/workspaces/${workspaceName}`;
 
   const handleChange = (e, newValue) => {
     // map newValue to different path: e.g. 0 = overview, 1 = nodes
@@ -37,6 +40,12 @@ const MuiTabs = props => {
     setValue(newValue);
     props.history.push(`${baseUrl}/${activeTab}`);
   };
+
+  useEffect(() => {
+    const { serviceName } = props.match.params;
+    const activeTabIdx = tabArray.findIndex(t => t === serviceName);
+    setValue(activeTabIdx);
+  }, [props.match.params, tabArray]);
 
   return (
     <Paper square>
@@ -53,7 +62,7 @@ const MuiTabs = props => {
       </StyledTabs>
       <Route path={`${baseUrl}/overview`} render={() => <h5>Overview</h5>} />
       <Route path={`${baseUrl}/nodes`} render={() => <h5>Nodes</h5>} />
-      <Route path={`${baseUrl}/topics`} render={() => <h5>Topics</h5>} />
+      <Route path={`${baseUrl}/topics`} component={Topics} />
       <Route
         path={`${baseUrl}/streamapps`}
         render={() => <h5>Stream apps</h5>}
@@ -65,6 +74,9 @@ const MuiTabs = props => {
 MuiTabs.propTypes = {
   match: PropTypes.shape({
     url: PropTypes.string.isRequired,
+    params: PropTypes.shape({
+      workspaceName: PropTypes.string.isRequired,
+    }),
   }).isRequired,
   history: PropTypes.shape({
     push: PropTypes.func.isRequired,

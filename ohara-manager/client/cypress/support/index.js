@@ -30,5 +30,8 @@
 // ***********************************************************
 
 import './commands';
+import './apiTest';
+
+// Enable cypress to retry fail tests
 require('cypress-plugin-retries');
 Cypress.env('RETRIES', 5);

@@ -14,8 +14,20 @@
  * limitations under the License.
  */
 
-import FtpQuicklyFillIn from './FtpQuicklyFillIn';
-import HdfsQuicklyFillIn from './HdfsQuicklyFillIn';
-import JdbcQuicklyFillIn from './JdbcQuicklyFillIn';
+import styled from 'styled-components';
+import Icon from '@material-ui/core/Icon';
+import { Table as MuiTable } from 'components/common/Mui/Table';
+import { Button } from 'components/common/Mui/Form';
 
-export { FtpQuicklyFillIn, HdfsQuicklyFillIn, JdbcQuicklyFillIn };
+export const StyledIcon = styled(Icon)`
+  font-size: 20px;
+`;
+
+export const StyledButton = styled(Button)`
+  margin: 20px;
+  float: right;
+`;
+
+export const StyledTable = styled(MuiTable)`
+  width: 80%;
+`;

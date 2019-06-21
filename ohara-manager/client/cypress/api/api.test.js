@@ -23,13 +23,12 @@ let pipelineName = '';
 let topicId = '';
 let streamAppId = '';
 let propertyId = '';
-let fakeWk = '';
+let fakeWorkerName = '';
 const nodeName = `node${makeRandomPort()}`;
 const wkName = `wk${makeRandomPort()}`;
 const connectorName = `source${makeRandomPort()}`;
 
-//test api
-describe('Node Api test', () => {
+describe('Nodes', () => {
   it('createNode', () => {
     const data = {
       name: nodeName,
@@ -147,7 +146,7 @@ describe('Node Api test', () => {
   });
 });
 
-describe('Zookeeper Api test', () => {
+describe('Zookeepers', () => {
   it('fetchZookeepers', () => {
     cy.fetchZookeepers().then(res => {
       const { data } = res;
@@ -160,7 +159,7 @@ describe('Zookeeper Api test', () => {
   });
 });
 
-describe('Broker Api test', () => {
+describe('Brokers', () => {
   it('fetchBrokers', () => {
     cy.fetchBrokers().then(res => {
       const { data } = res;
@@ -174,7 +173,7 @@ describe('Broker Api test', () => {
   });
 });
 
-describe('Jar Api test', () => {
+describe('Jars', () => {
   const testJarName = 'ohara-it-source.jar';
   it('createJar', () => {
     cy.createJar(testJarName).then(res => {
@@ -198,7 +197,7 @@ describe('Jar Api test', () => {
   });
 });
 
-describe('Worker Api test', () => {
+describe('Workers', () => {
   it('createWorker', () => {
     const data = {
       name: wkName,
@@ -234,6 +233,7 @@ describe('Worker Api test', () => {
       expect(data.result.statusTopicName).to.be.a('string');
     });
   });
+
   it('fetchWorker', () => {
     cy.fetchWorker(wkName).then(res => {
       const { data } = res;
@@ -246,10 +246,11 @@ describe('Worker Api test', () => {
       expect(data.result.jarNames).to.be.a('array');
     });
   });
+
   it('fetchWorkers', () => {
     cy.fetchWorkers().then(res => {
       const { data } = res;
-      fakeWk = data.result[0].name;
+      fakeWorkerName = data.result[0].name;
       expect(data.isSuccess).to.eq(true);
       expect(data.result).to.be.a('array');
       expect(data.result[0]).to.include.keys(
@@ -268,8 +269,9 @@ describe('Worker Api test', () => {
   });
 });
 
-describe('Topic Api test', () => {
+describe('Topics', () => {
   const tpName = `tp${makeRandomPort()}`;
+
   it('CreateTopic', () => {
     const data = {
       name: tpName,
@@ -291,6 +293,7 @@ describe('Topic Api test', () => {
       expect(data.result.numberOfReplications).to.be.a('number');
     });
   });
+
   it('fetchTopic', () => {
     cy.fetchTopic(tpName).then(res => {
       const { data } = res;
@@ -305,6 +308,7 @@ describe('Topic Api test', () => {
       expect(data.result.numberOfReplications).to.be.a('number');
     });
   });
+
   it('fetchTopics', () => {
     cy.fetchTopics().then(res => {
       const { data } = res;
@@ -322,8 +326,8 @@ describe('Topic Api test', () => {
   });
 });
 
-describe('Pipelines Api test', () => {
-  it.skip('createPipeline', () => {
+describe.skip('Pipelines', () => {
+  it('createPipeline', () => {
     const data = {
       name: 'fakePipeline',
       rules: {},
@@ -346,7 +350,8 @@ describe('Pipelines Api test', () => {
       expect(data.result.objects).to.be.a('array');
     });
   });
-  it.skip('fetchPipeline', () => {
+
+  it('fetchPipeline', () => {
     cy.fetchPipeline(pipelineId).then(res => {
       const { data } = res;
       expect(data.isSuccess).to.eq(true);
@@ -362,7 +367,8 @@ describe('Pipelines Api test', () => {
       expect(data.result.objects).to.be.a('array');
     });
   });
-  it.skip('fetchPipelines', () => {
+
+  it('fetchPipelines', () => {
     cy.fetchPipelines().then(res => {
       const { data } = res;
       expect(data.isSuccess).to.eq(true);
@@ -379,7 +385,8 @@ describe('Pipelines Api test', () => {
       expect(data.result[0].objects).to.be.a('array');
     });
   });
-  it.skip('updatePipeline', () => {
+
+  it('updatePipeline', () => {
     const data = {
       id: pipelineId,
       params: {
@@ -410,7 +417,8 @@ describe('Pipelines Api test', () => {
       expect(data.result.objects[0].name).to.eq(topicId);
     });
   });
-  it.skip('deletePipeline', () => {
+
+  it('deletePipeline', () => {
     cy.testDeletePipeline(pipelineId).then(res => {
       const { data } = res;
       expect(data.isSuccess).to.eq(true);
@@ -418,7 +426,7 @@ describe('Pipelines Api test', () => {
   });
 });
 
-describe('Connector Api test', () => {
+describe('Connectors', () => {
   it('createConnector', () => {
     const data = {
       className: 'com.island.ohara.connector.ftp.FtpSource',
@@ -428,7 +436,7 @@ describe('Connector Api test', () => {
       numberOfTasks: 1,
       schema: [],
       topics: [],
-      workerClusterName: fakeWk,
+      workerClusterName: fakeWorkerName,
     };
     cy.createConnector(data).then(res => {
       const { data } = res;
@@ -449,6 +457,7 @@ describe('Connector Api test', () => {
       expect(data.result.settings.workerClusterName).to.be.a('string');
     });
   });
+
   it('fetchConnector', () => {
     cy.fetchConnector(connectorName).then(res => {
       const { data } = res;
@@ -469,6 +478,7 @@ describe('Connector Api test', () => {
       expect(data.result.settings.workerClusterName).to.be.a('string');
     });
   });
+
   it('updateConnector', () => {
     const data = {
       id: connectorName,
@@ -493,7 +503,7 @@ describe('Connector Api test', () => {
         'tasks.max': 1,
         topics: [topicId],
         version: '0.6.0-SNAPSHOT',
-        workerClusterName: fakeWk,
+        workerClusterName: fakeWorkerName,
       },
     };
     cy.updateConnector(data).then(res => {
@@ -542,6 +552,7 @@ describe('Connector Api test', () => {
       expect(data.result.settings.workerClusterName).to.be.a('string');
     });
   });
+
   it('startConnector', () => {
     cy.startConnector(connectorName).then(res => {
       const { data } = res;
@@ -550,6 +561,7 @@ describe('Connector Api test', () => {
       expect(data.result.state).to.be.a('string');
     });
   });
+
   it('stopConnector', () => {
     cy.stopConnector(connectorName).then(res => {
       const { data } = res;
@@ -557,6 +569,7 @@ describe('Connector Api test', () => {
       expect(data.result).to.include.keys('id', 'settings');
     });
   });
+
   it('deleteConnector', () => {
     cy.deleteConnector(connectorName).then(res => {
       const { data } = res;
@@ -565,7 +578,7 @@ describe('Connector Api test', () => {
   });
 });
 
-describe('Streamapp Api test', () => {
+describe('Streamapps', () => {
   it('uploadStreamAppJar', () => {
     const params = {
       wk: wkName,
@@ -581,6 +594,7 @@ describe('Streamapp Api test', () => {
       expect(data.result[0].workerClusterName).to.be.a('string');
     });
   });
+
   it('fetchStreamAppJars', () => {
     cy.fetchStreamAppJars(wkName).then(res => {
       const { data } = res;
@@ -591,6 +605,7 @@ describe('Streamapp Api test', () => {
       expect(data.result[0].workerClusterName).to.be.a('string');
     });
   });
+
   it('createProperty', () => {
     const params = {
       jarId: streamAppId,
@@ -619,6 +634,7 @@ describe('Streamapp Api test', () => {
       expect(data.result.jarInfo).to.include.keys('name', 'id');
     });
   });
+
   it('fetchProperty', () => {
     cy.fetchProperty(propertyId).then(res => {
       const { data } = res;
@@ -642,6 +658,7 @@ describe('Streamapp Api test', () => {
       expect(data.result.jarInfo).to.include.keys('name', 'id');
     });
   });
+
   it('updateProperty', () => {
     const params = {
       id: propertyId,
@@ -675,18 +692,21 @@ describe('Streamapp Api test', () => {
       expect(data.result.from[0]).to.eq(topicId);
     });
   });
+
   it('stopStreamApp', () => {
     cy.stopStreamApp(propertyId).then(res => {
       const { data } = res;
       expect(data.isSuccess).to.eq(true);
     });
   });
+
   it('deleteProperty', () => {
     cy.stopStreamApp(propertyId).then(res => {
       const { data } = res;
       expect(data.isSuccess).to.eq(true);
     });
   });
+
   it('deleteStreamAppJar', () => {
     cy.deleteStreamAppJar(streamAppId).then(res => {
       const { data } = res;
@@ -695,7 +715,7 @@ describe('Streamapp Api test', () => {
   });
 });
 
-describe('Log Api test', () => {
+describe('Logs', () => {
   it('fetchLogs', () => {
     cy.fetchLogs('workers', wkName).then(res => {
       const { data } = res;
@@ -710,7 +730,7 @@ describe('Log Api test', () => {
   });
 });
 
-describe('Validate Api test', () => {
+describe('Validates', () => {
   it('validateConnector', () => {
     const params = {
       author: 'root',
@@ -733,7 +753,7 @@ describe('Validate Api test', () => {
       'tasks.max': 1,
       topics: [topicId],
       version: '0.6.0-SNAPSHOT',
-      workerClusterName: fakeWk,
+      workerClusterName: fakeWorkerName,
     };
     cy.validateConnector(params).then(res => {
       const { data } = res;
@@ -743,4 +763,8 @@ describe('Validate Api test', () => {
       expect(data.result.settings).to.be.a('array');
     });
   });
+});
+
+describe('containers', () => {
+  it('fetchContainers', () => {});
 });

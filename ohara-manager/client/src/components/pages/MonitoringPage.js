@@ -21,14 +21,12 @@ import DocumentTitle from 'react-document-title';
 import { AppWrapper } from 'components/common/Layout';
 import { MONITORING } from 'constants/documentTitles';
 
-class MonitoringPage extends React.Component {
-  render() {
-    return (
-      <DocumentTitle title={MONITORING}>
-        <AppWrapper title="Monitoring" />
-      </DocumentTitle>
-    );
-  }
-}
+const MonitoringPage = () => {
+  return (
+    <DocumentTitle title={MONITORING}>
+      <AppWrapper title="Monitoring" />
+    </DocumentTitle>
+  );
+};
 
 export default MonitoringPage;

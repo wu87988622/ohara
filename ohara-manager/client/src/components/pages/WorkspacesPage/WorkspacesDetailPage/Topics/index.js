@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 
-import BrokerListPage from './BrokerListPage';
+import Topics from './Topics';
 
-export default BrokerListPage;
+export default Topics;

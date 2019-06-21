@@ -70,3 +70,18 @@ export const createTopic = async params => {
     handleError(err);
   }
 };
+
+export const deleteTopic = async name => {
+  try {
+    const res = await axiosInstance.delete(`/api/topics/${name}`);
+    const isSuccess = get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};

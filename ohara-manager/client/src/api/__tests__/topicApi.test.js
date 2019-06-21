@@ -16,7 +16,7 @@
 
 import { toNumber } from 'lodash';
 
-import { fetchTopic, fetchTopics, createTopic } from '../topicApi';
+import { fetchTopic, fetchTopics, createTopic, deleteTopic } from '../topicApi';
 import { handleError, axiosInstance } from '../apiUtils';
 
 jest.mock('../apiUtils');
@@ -188,6 +188,59 @@ describe('createTopic()', () => {
 
     await createTopic(params);
     expect(axiosInstance.post).toHaveBeenCalledTimes(1);
+    expect(handleError).toHaveBeenCalledTimes(1);
+    expect(handleError).toHaveBeenCalledWith(res);
+  });
+});
+
+describe('deleteTopic()', () => {
+  afterEach(jest.clearAllMocks);
+  const topicName = 'abc';
+
+  it('handles success http call', async () => {
+    const res = {
+      data: {
+        isSuccess: true,
+      },
+    };
+
+    axiosInstance.delete.mockImplementation(() => Promise.resolve(res));
+
+    const result = await deleteTopic(topicName);
+    expect(axiosInstance.delete).toHaveBeenCalledTimes(1);
+    expect(axiosInstance.delete).toHaveBeenCalledWith(`${url}/${topicName}`);
+    expect(result).toBe(res);
+  });
+
+  it('handles success http call but with server error', async () => {
+    const res = {
+      data: {
+        isSuccess: false,
+      },
+    };
+    axiosInstance.delete.mockImplementation(() => Promise.resolve(res));
+
+    const result = await deleteTopic(topicName);
+
+    expect(axiosInstance.delete).toHaveBeenCalledTimes(1);
+    expect(axiosInstance.delete).toHaveBeenCalledWith(`${url}/${topicName}`);
+    expect(handleError).toHaveBeenCalledTimes(1);
+    expect(handleError).toHaveBeenCalledWith(result);
+  });
+
+  it('handles failed http call', async () => {
+    const res = {
+      data: {
+        errorMessage: {
+          message: 'error!',
+        },
+      },
+    };
+
+    axiosInstance.delete.mockImplementation(() => Promise.reject(res));
+
+    await deleteTopic();
+    expect(axiosInstance.delete).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(res);
   });

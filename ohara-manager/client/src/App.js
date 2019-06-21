@@ -85,7 +85,7 @@ class App extends React.Component {
                 data-testid="nodes-page"
               />
               <Route
-                path="/workspaces/:workspaceName"
+                path="/workspaces/:workspaceName/:serviceName?"
                 component={WorkspacesDetailPage}
                 data-testid="workspace-page"
               />
