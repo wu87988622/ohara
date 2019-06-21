@@ -23,6 +23,7 @@ import Tab from '@material-ui/core/Tab';
 import { Route } from 'react-router-dom';
 
 import Topics from './Topics';
+import StreamApp from './StreamApp';
 
 const StyledTabs = styled(Tabs)`
   border-bottom: 1px solid #eee;
@@ -65,7 +66,7 @@ const MuiTabs = props => {
       <Route path={`${baseUrl}/topics`} component={Topics} />
       <Route
         path={`${baseUrl}/streamapps`}
-        render={() => <h5>Stream apps</h5>}
+        render={() => <StreamApp workspaceName={workspaceName} />}
       />
     </Paper>
   );

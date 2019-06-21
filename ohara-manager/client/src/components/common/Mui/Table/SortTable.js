@@ -67,7 +67,8 @@ const SortTable = props => {
           <TableRow>
             {headRows.map(row => {
               const { id, label, sortable = true } = row;
-              const align = id === headRows[0].id ? 'left' : 'right';
+              const align =
+                id === headRows[headRows.length - 1].id ? 'right' : 'left';
               return (
                 <React.Fragment key={id}>
                   {sortable ? (
@@ -100,7 +101,7 @@ const SortTable = props => {
                   return (
                     <TableCell
                       key={row[key]}
-                      align={key === keys[0] ? 'left' : 'right'}
+                      align={key === keys[keys.length - 1] ? 'right' : 'left'}
                     >
                       {row[key]}
                     </TableCell>
