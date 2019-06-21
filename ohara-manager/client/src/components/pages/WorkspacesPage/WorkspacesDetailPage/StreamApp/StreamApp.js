@@ -18,7 +18,7 @@ import React, { useEffect, useCallback, useState } from 'react';
 import PropTypes from 'prop-types';
 import toastr from 'toastr';
 import moment from 'moment';
-import { get, endsWith } from 'lodash';
+import { get } from 'lodash';
 import Tooltip from '@material-ui/core/Tooltip';
 import IconButton from '@material-ui/core/IconButton';
 
