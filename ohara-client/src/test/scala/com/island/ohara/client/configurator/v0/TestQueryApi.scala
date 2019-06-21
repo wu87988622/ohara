@@ -20,7 +20,7 @@ import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
-
+import spray.json._
 class TestQueryApi extends SmallTest with Matchers {
 
   @Test
@@ -151,4 +151,122 @@ class TestQueryApi extends SmallTest with Matchers {
 
   @Test
   def emptyTableName(): Unit = an[IllegalArgumentException] should be thrownBy QueryApi.access.request.tableName("")
+
+  @Test
+  def testParseJson(): Unit = {
+    val url = CommonUtils.randomString()
+    val user = CommonUtils.randomString()
+    val password = CommonUtils.randomString()
+    val workerClusterName = CommonUtils.randomString()
+    val catalogPattern = CommonUtils.randomString()
+    val schemaPattern = CommonUtils.randomString()
+    val tableName = CommonUtils.randomString()
+
+    val query = QueryApi.RDB_QUERY_JSON_FORMAT.read(s"""
+         |{
+         |  "url": "$url",
+         |  "user": "$user",
+         |  "password": "$password",
+         |  "workerClusterName": "$workerClusterName",
+         |  "catalogPattern": "$catalogPattern",
+         |  "schemaPattern": "$schemaPattern",
+         |  "tableName": "$tableName"
+         |}
+     """.stripMargin.parseJson)
+
+    query.url shouldBe url
+    query.user shouldBe user
+    query.password shouldBe password
+    query.workerClusterName.get shouldBe workerClusterName
+    query.catalogPattern.get shouldBe catalogPattern
+    query.schemaPattern.get shouldBe schemaPattern
+    query.tableName.get shouldBe tableName
+
+    val query2 = QueryApi.RDB_QUERY_JSON_FORMAT.read(s"""
+                                                       |{
+                                                       |  "url": "$url",
+                                                       |  "user": "$user",
+                                                       |  "password": "$password"
+                                                       |}
+     """.stripMargin.parseJson)
+
+    query2.url shouldBe url
+    query2.user shouldBe user
+    query2.password shouldBe password
+    query2.workerClusterName shouldBe None
+    query2.catalogPattern shouldBe None
+    query2.schemaPattern shouldBe None
+    query2.tableName shouldBe None
+  }
+
+  @Test
+  def testParseEmptyUrl(): Unit =
+    parseInvalidJson(s"""
+       |{
+       |  "url": "",
+       |  "user": "user",
+       |  "password": "password"
+       |}
+     """.stripMargin.parseJson)
+
+  @Test
+  def testParseEmptyUser(): Unit = parseInvalidJson(s"""
+         |{
+         |  "url": "url",
+         |  "user": "",
+         |  "password": "password"
+         |}
+     """.stripMargin.parseJson)
+
+  @Test
+  def testParseEmptyPassword(): Unit = parseInvalidJson(s"""
+     |{
+     |  "url": "url",
+     |  "user": "user",
+     |  "password": ""
+     |}
+     """.stripMargin.parseJson)
+
+  @Test
+  def testParseEmptyWorkerClusterName(): Unit = parseInvalidJson(s"""
+     |{
+     |  "url": "url",
+     |  "user": "user",
+     |  "password": "password",
+     |  "workerClusterName": ""
+     |}
+     """.stripMargin.parseJson)
+
+  @Test
+  def testParseEmptyCatalogPattern(): Unit = parseInvalidJson(s"""
+                                                                    |{
+                                                                    |  "url": "url",
+                                                                    |  "user": "user",
+                                                                    |  "password": "password",
+                                                                    |  "catalogPattern": ""
+                                                                    |}
+     """.stripMargin.parseJson)
+
+  @Test
+  def testParseEmptySchemaPattern(): Unit = parseInvalidJson(s"""
+                                                                 |{
+                                                                 |  "url": "url",
+                                                                 |  "user": "user",
+                                                                 |  "password": "password",
+                                                                 |  "schemaPattern": ""
+                                                                 |}
+     """.stripMargin.parseJson)
+
+  @Test
+  def testParseEmptyTableName(): Unit = parseInvalidJson(s"""
+                                                                |{
+                                                                |  "url": "url",
+                                                                |  "user": "user",
+                                                                |  "password": "password",
+                                                                |  "tableName": ""
+                                                                |}
+     """.stripMargin.parseJson)
+
+  private[this] def parseInvalidJson(json: JsValue): Unit =
+    an[DeserializationException] should be thrownBy QueryApi.RDB_QUERY_JSON_FORMAT.read(json)
 }
