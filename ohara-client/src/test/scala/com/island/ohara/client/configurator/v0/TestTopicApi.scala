@@ -25,6 +25,7 @@ import org.scalatest.Matchers
 import spray.json.JsString
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import spray.json._
 class TestTopicApi extends SmallTest with Matchers {
 
   @Test
@@ -91,4 +92,65 @@ class TestTopicApi extends SmallTest with Matchers {
   @Test
   def negativeNumberOfReplications(): Unit =
     an[IllegalArgumentException] should be thrownBy TopicApi.access().request().numberOfReplications(-1)
+
+  @Test
+  def parseJsonForCreation(): Unit = {
+    val name = CommonUtils.randomString()
+    val brokerClusterName = CommonUtils.randomString()
+    val numberOfPartitions = 100
+    val numberOfReplications = 10
+    val creation = TopicApi.TOPIC_CREATION_FORMAT.read(s"""
+         |{
+         | "name": "$name",
+         | "brokerClusterName": "$brokerClusterName",
+         | "numberOfPartitions": $numberOfPartitions,
+         | "numberOfReplications": $numberOfReplications
+         |}
+       """.stripMargin.parseJson)
+
+    creation.name shouldBe name
+    creation.brokerClusterName.get shouldBe brokerClusterName
+    creation.numberOfPartitions shouldBe numberOfPartitions
+    creation.numberOfReplications shouldBe numberOfReplications
+
+    val creation2 = TopicApi.TOPIC_CREATION_FORMAT.read(s"""
+        |{
+        | "name": "$name"
+        |}
+       """.stripMargin.parseJson)
+
+    creation2.name shouldBe name
+    creation2.brokerClusterName shouldBe None
+    creation2.numberOfPartitions shouldBe TopicApi.DEFAULT_NUMBER_OF_PARTITIONS
+    creation2.numberOfReplications shouldBe TopicApi.DEFAULT_NUMBER_OF_REPLICATIONS
+  }
+
+  @Test
+  def parseJsonForUpdate(): Unit = {
+    val name = CommonUtils.randomString()
+    val brokerClusterName = CommonUtils.randomString()
+    val numberOfPartitions = 100
+    val numberOfReplications = 10
+    val update = TopicApi.TOPIC_UPDATE_FORMAT.read(s"""
+                                                                  |{
+                                                                  | "name": "$name",
+                                                                  | "brokerClusterName": "$brokerClusterName",
+                                                                  | "numberOfPartitions": $numberOfPartitions,
+                                                                  | "numberOfReplications": $numberOfReplications
+                                                                  |}
+       """.stripMargin.parseJson)
+
+    update.brokerClusterName.get shouldBe brokerClusterName
+    update.numberOfPartitions.get shouldBe numberOfPartitions
+    update.numberOfReplications.get shouldBe numberOfReplications
+
+    val update2 = TopicApi.TOPIC_UPDATE_FORMAT.read(s"""
+         |{
+         |}
+       """.stripMargin.parseJson)
+
+    update2.brokerClusterName shouldBe None
+    update2.numberOfPartitions shouldBe None
+    update2.numberOfReplications shouldBe None
+  }
 }

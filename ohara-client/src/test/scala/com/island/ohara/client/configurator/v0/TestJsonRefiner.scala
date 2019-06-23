@@ -287,4 +287,14 @@ class TestJsonRefiner extends SmallTest with Matchers {
              | "connectionPort": 123
              |}
            """.stripMargin.parseJson).stringArray shouldBe Seq.empty
+
+  @Test
+  def defaultInt(): Unit =
+    JsonRefiner[SimpleData].format(format).defaultInt("bindPort", 777).refine.read("""
+         |{
+         | "stringValue": "abc",
+         | "connectionPort": 123,
+         | "stringArray": []
+         |}
+       """.stripMargin.parseJson).bindPort shouldBe 777
 }

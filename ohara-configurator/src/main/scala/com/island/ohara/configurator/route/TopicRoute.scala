@@ -85,17 +85,16 @@ private[configurator] object TopicRoute {
       hookOfAdd = (creation: Creation) =>
         CollieUtils.topicAdmin(creation.brokerClusterName).flatMap {
           case (cluster, client) =>
-            client.list().map(_.find(_.name == creation.name)).flatMap {
-              previous =>
-                if (previous.isDefined) Future.failed(new IllegalArgumentException(s"${creation.name} already exists"))
-                else
-                  createTopic(
-                    client = client,
-                    clusterName = cluster.name,
-                    name = creation.name,
-                    numberOfPartitions = creation.numberOfPartitions.getOrElse(DEFAULT_NUMBER_OF_PARTITIONS),
-                    numberOfReplications = creation.numberOfReplications.getOrElse(DEFAULT_NUMBER_OF_REPLICATIONS)
-                  )
+            client.list().map(_.find(_.name == creation.name)).flatMap { previous =>
+              if (previous.isDefined) Future.failed(new IllegalArgumentException(s"${creation.name} already exists"))
+              else
+                createTopic(
+                  client = client,
+                  clusterName = cluster.name,
+                  name = creation.name,
+                  numberOfPartitions = creation.numberOfPartitions,
+                  numberOfReplications = creation.numberOfReplications
+                )
             }
       },
       hookOfUpdate = (name: String, update: Update, previous: Option[TopicInfo]) =>

@@ -27,17 +27,24 @@ object TopicApi {
   val DEFAULT_NUMBER_OF_PARTITIONS: Int = 1
   val DEFAULT_NUMBER_OF_REPLICATIONS: Short = 1
   val TOPICS_PREFIX_PATH: String = "topics"
-  case class Update(brokerClusterName: Option[String],
-                    numberOfPartitions: Option[Int],
-                    numberOfReplications: Option[Short])
-  implicit val TOPIC_UPDATE_REQUEST_FORMAT: RootJsonFormat[Update] = jsonFormat3(Update)
-  case class Creation(name: String,
-                      brokerClusterName: Option[String],
-                      numberOfPartitions: Option[Int],
-                      numberOfReplications: Option[Short])
+  case class Update private[TopicApi] (brokerClusterName: Option[String],
+                                       numberOfPartitions: Option[Int],
+                                       numberOfReplications: Option[Short])
+  implicit val TOPIC_UPDATE_FORMAT: RootJsonFormat[Update] =
+    JsonRefiner[Update].format(jsonFormat3(Update)).rejectEmptyString().refine
+
+  case class Creation private[TopicApi] (name: String,
+                                         brokerClusterName: Option[String],
+                                         numberOfPartitions: Int,
+                                         numberOfReplications: Short)
       extends CreationRequest
 
-  implicit val TOPIC_CREATION_REQUEST_FORMAT: RootJsonFormat[Creation] = jsonFormat4(Creation)
+  implicit val TOPIC_CREATION_FORMAT: RootJsonFormat[Creation] = JsonRefiner[Creation]
+    .format(jsonFormat4(Creation))
+    .defaultInt("numberOfPartitions", DEFAULT_NUMBER_OF_REPLICATIONS)
+    .defaultInt("numberOfReplications", DEFAULT_NUMBER_OF_REPLICATIONS)
+    .rejectEmptyString()
+    .refine
 
   import MetricsApi._
 
@@ -119,8 +126,8 @@ object TopicApi {
           Creation(
             name = CommonUtils.requireNonEmpty(name),
             brokerClusterName = brokerClusterName,
-            numberOfPartitions = numberOfPartitions,
-            numberOfReplications = numberOfReplications
+            numberOfPartitions = numberOfPartitions.getOrElse(DEFAULT_NUMBER_OF_PARTITIONS),
+            numberOfReplications = numberOfReplications.getOrElse(DEFAULT_NUMBER_OF_REPLICATIONS)
           )
         )
       override def update()(implicit executionContext: ExecutionContext): Future[TopicInfo] =

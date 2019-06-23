@@ -70,6 +70,45 @@ trait JsonRefiner[T] {
     */
   def rejectEmptyString(): JsonRefiner[T]
 
+  def defaultShort(key: String, value: Short): JsonRefiner[T] = defaultShorts(Map(key -> value))
+
+  def defaultShorts(keysAndDefaults: Map[String, Short]): JsonRefiner[T] =
+    defaultNumbers(keysAndDefaults.map {
+      case (key, value) => key -> JsNumber(value)
+    })
+
+  def defaultInt(key: String, value: Int): JsonRefiner[T] = defaultInts(Map(key -> value))
+
+  def defaultInts(keysAndDefaults: Map[String, Int]): JsonRefiner[T] =
+    defaultNumbers(keysAndDefaults.map {
+      case (key, value) => key -> JsNumber(value)
+    })
+
+  def defaultLong(key: String, value: Long): JsonRefiner[T] = defaultLongs(Map(key -> value))
+
+  def defaultLongs(keysAndDefaults: Map[String, Long]): JsonRefiner[T] =
+    defaultNumbers(keysAndDefaults.map {
+      case (key, value) => key -> JsNumber(value)
+    })
+
+  def defaultDouble(key: String, value: Double): JsonRefiner[T] = defaultDoubles(Map(key -> value))
+
+  def defaultDoubles(keysAndDefaults: Map[String, Double]): JsonRefiner[T] =
+    defaultNumbers(keysAndDefaults.map {
+      case (key, value) =>
+        key -> (JsNumber(value) match {
+          case s: JsNumber => s
+          case _           => throw new IllegalArgumentException(s"illegal double value:$value")
+        })
+    })
+
+  /**
+    * set the default number for input keys. The default value will be added into json request if the associated key is nonexistent.
+    * @param keyAndDefaultNumber keys and their default value
+    * @return this refiner
+    */
+  def defaultNumbers(keyAndDefaultNumber: Map[String, JsNumber]): JsonRefiner[T]
+
   def refine: RootJsonFormat[T]
 }
 
@@ -80,6 +119,7 @@ object JsonRefiner {
     private[this] var connectionPort: Seq[String] = Seq.empty
     private[this] var nullToRandomBindPort: Seq[String] = Seq.empty
     private[this] var nullToRandomString: Seq[String] = Seq.empty
+    private[this] var keyAndDefaultNumber: Map[String, JsNumber] = Map.empty
     private[this] var _rejectEmptyString: Boolean = false
 
     override def format(format: RootJsonFormat[T]): JsonRefiner[T] = {
@@ -88,22 +128,22 @@ object JsonRefiner {
     }
 
     override def nullToEmptyArray(keys: Seq[String]): JsonRefiner[T] = {
-      this.nullToEmptyArray = Objects.requireNonNull(keys).map(CommonUtils.requireNonEmpty)
+      this.nullToEmptyArray = nullToEmptyArray ++ Objects.requireNonNull(keys).map(CommonUtils.requireNonEmpty)
       this
     }
 
     override def connectionPort(keys: Seq[String]): JsonRefiner[T] = {
-      this.connectionPort = Objects.requireNonNull(keys).map(CommonUtils.requireNonEmpty)
+      this.connectionPort = connectionPort ++ Objects.requireNonNull(keys).map(CommonUtils.requireNonEmpty)
       this
     }
 
     override def nullToRandomPort(keys: Seq[String]): JsonRefiner[T] = {
-      this.nullToRandomBindPort = Objects.requireNonNull(keys).map(CommonUtils.requireNonEmpty)
+      this.nullToRandomBindPort = nullToRandomBindPort ++ Objects.requireNonNull(keys).map(CommonUtils.requireNonEmpty)
       this
     }
 
     override def nullToRandomString(keys: Seq[String]): JsonRefiner[T] = {
-      this.nullToRandomString = Objects.requireNonNull(keys).map(CommonUtils.requireNonEmpty)
+      this.nullToRandomString = nullToRandomString ++ Objects.requireNonNull(keys).map(CommonUtils.requireNonEmpty)
       this
     }
 
@@ -112,21 +152,28 @@ object JsonRefiner {
       this
     }
 
+    override def defaultNumbers(keyAndDefaultNumber: Map[String, JsNumber]): JsonRefiner[T] = {
+      this.keyAndDefaultNumber = this.keyAndDefaultNumber ++ keyAndDefaultNumber
+      this
+    }
+
     override def refine: RootJsonFormat[T] = {
       Objects.requireNonNull(format)
       // check the duplicate keys in different groups
-      if (nullToEmptyArray.size + connectionPort.size + nullToRandomBindPort.size + nullToRandomString.size
-            != (nullToEmptyArray ++ connectionPort ++ nullToRandomBindPort ++ nullToRandomString).toSet.size)
+      if (nullToEmptyArray.size + connectionPort.size + nullToRandomBindPort.size + nullToRandomString.size + keyAndDefaultNumber.size
+            != (nullToEmptyArray ++ connectionPort ++ nullToRandomBindPort ++ nullToRandomString ++ keyAndDefaultNumber.keys).toSet.size)
         throw new IllegalArgumentException(
           s"duplicate key in different groups is illegal."
             + s", nullToEmptyArray:${nullToEmptyArray.mkString(",")}"
             + s", connectionPort:${connectionPort.mkString(",")}"
             + s", nullToRandomPort:${nullToRandomBindPort.mkString(",")}"
-            + s", nullToRandomString:${nullToRandomString.mkString(",")}")
+            + s", nullToRandomString:${nullToRandomString.mkString(",")}"
+            + s", keyAndDefaultNumber.keys:${keyAndDefaultNumber.keys.mkString(",")}")
       nullToEmptyArray.foreach(CommonUtils.requireNonEmpty)
       connectionPort.foreach(CommonUtils.requireNonEmpty)
       nullToRandomBindPort.foreach(CommonUtils.requireNonEmpty)
       nullToRandomString.foreach(CommonUtils.requireNonEmpty)
+      keyAndDefaultNumber.keys.foreach(CommonUtils.requireNonEmpty)
 
       new RootJsonFormat[T] {
         override def read(json: JsValue): T = {
@@ -183,6 +230,20 @@ object JsonRefiner {
               }
               .getOrElse(JsString(CommonUtils.randomString(10)))
           }.toMap
+
+          // convert null to JsNumber
+          fields = fields ++ keyAndDefaultNumber.map {
+            case (key, value) =>
+              key -> fields
+                .get(key)
+                .map {
+                  case s: JsNumber => s
+                  case _ =>
+                    throw DeserializationException(
+                      s"$key should be associated Number type, but actual type is ${fields(key)}")
+                }
+                .getOrElse(value)
+          }
 
           // check the connection port
           connectionPort.foreach { key =>
