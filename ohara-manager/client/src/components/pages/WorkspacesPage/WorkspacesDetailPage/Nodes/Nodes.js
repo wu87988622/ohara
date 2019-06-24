@@ -36,7 +36,7 @@ const Nodes = props => {
   const { workspaceName } = props;
   const [useNodes, setUesNodes] = useState([]);
   const [broker, setBroker] = useState(null);
-  const [unUseNodes, setUnUseNodes] = useState([]);
+  const [unuseNodes, setUnuseNodes] = useState([]);
   const [selectNodes, setSelectNodes] = useState([]);
   const [order, setOrder] = useState('asc');
   const [orderBy, setOrderBy] = useState('name');
@@ -49,11 +49,11 @@ const Nodes = props => {
     const nodeRes = await nodeApi.fetchNodes();
     const wkNodes = get(wkRes, 'data.result.nodeNames', []);
     const nodes = get(nodeRes, 'data.result', []);
-    const nodeNames = nodes.map(x => x.name);
+    const nodeNames = nodes.map(node => node.name);
     const wkNodeNames = nodeNames.filter(x => wkNodes.includes(x));
     setBroker(wkRes.data.result.brokerClusterName);
-    setUesNodes(nodes.filter(x => wkNodeNames.includes(x.name)));
-    setUnUseNodes(nodes.filter(x => !wkNodeNames.includes(x.name)));
+    setUesNodes(nodes.filter(node => wkNodeNames.includes(node.name)));
+    setUnuseNodes(nodes.filter(node => !wkNodeNames.includes(node.name)));
     setLoading(false);
   }, [workspaceName]);
 
@@ -89,7 +89,7 @@ const Nodes = props => {
     setNodeSelectOpen(false);
   };
 
-  const handelNodeSelect = e => {
+  const handleNodeSelect = e => {
     const { id, checked } = e.target;
     if (checked) {
       if (!selectNodes.some(node => node === id)) {
@@ -168,14 +168,14 @@ const Nodes = props => {
       >
         <StyledTable headers={headers} isLoading={false}>
           {() => {
-            return unUseNodes.map(node => {
+            return unuseNodes.map(node => {
               return (
                 <TableRow key={node.name}>
                   <TableCell>
                     <Checkbox
                       id={node.name}
                       color="primary"
-                      onChange={handelNodeSelect}
+                      onChange={handleNodeSelect}
                     />
                   </TableCell>
                   <TableCell>{node.name}</TableCell>
