@@ -15,31 +15,8 @@
  */
 
 import styled from 'styled-components';
-import Icon from '@material-ui/core/Icon';
 import Button from 'components/common/Mui/Form/Button';
-import { DataTable } from 'components/common/Table';
-import { Input } from 'components/common/Form';
 import { Table as MuiTable } from 'components/common/Mui/Table';
-
-export const Table = styled(DataTable)`
-  text-align: left;
-
-  tbody {
-    tr {
-      cursor: pointer;
-    }
-  }
-
-  .is-running {
-    background: ${props => props.theme.trBgColor};
-  }
-`;
-
-export const Checkbox = styled(Input).attrs({
-  type: 'checkbox',
-})`
-  width: auto;
-`;
 
 export const PageHeader = styled.div`
   margin-top: 30px;
@@ -59,10 +36,6 @@ export const StyledButton = styled(Button)`
   margin-left: auto;
   margin-bottom: auto;
   align-self: center;
-`;
-
-export const StyledIcon = styled(Icon)`
-  font-size: 20px;
 `;
 
 export const StyledTable = styled(MuiTable)`
