@@ -167,9 +167,7 @@ describe('<PipelineListPage />', () => {
     const res = {
       data: { result: { id, name: pipelineName }, isSuccess: true },
     };
-    const expectedSuccessMsg = `${
-      MESSAGES.PIPELINE_DELETION_SUCCESS
-    } ${pipelineName}`;
+    const expectedSuccessMsg = `${MESSAGES.PIPELINE_DELETION_SUCCESS} ${pipelineName}`;
 
     deletePipeline.mockImplementation(() => Promise.resolve(res));
 
