@@ -24,9 +24,12 @@ import scala.concurrent.{ExecutionContext, Future}
 object JdbcApi {
   val JDBC_PREFIX_PATH: String = "jdbc"
   final case class Update(url: Option[String], user: Option[String], password: Option[String])
-  implicit val JDBC_UPDATE_JSON_FORMAT: RootJsonFormat[Update] = jsonFormat3(Update)
+  implicit val JDBC_UPDATE_JSON_FORMAT: RootJsonFormat[Update] =
+    JsonRefiner[Update].format(jsonFormat3(Update)).rejectEmptyString().refine
+
   final case class Creation(name: String, url: String, user: String, password: String) extends CreationRequest
-  implicit val JDBC_CREATION_JSON_FORMAT: RootJsonFormat[Creation] = jsonFormat4(Creation)
+  implicit val JDBC_CREATION_JSON_FORMAT: RootJsonFormat[Creation] =
+    JsonRefiner[Creation].format(jsonFormat4(Creation)).rejectEmptyString().refine
 
   final case class JdbcInfo(name: String, url: String, user: String, password: String, lastModified: Long)
       extends Data {
