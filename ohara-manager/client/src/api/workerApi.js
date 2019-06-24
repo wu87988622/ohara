@@ -75,3 +75,20 @@ export const createWorker = async params => {
     handleError(err);
   }
 };
+
+export const addNodeToWorker = async params => {
+  try {
+    const { name, nodeName } = params;
+    const url = `/api/workers/${name}/${nodeName}`;
+    const res = await axiosInstance.post(url);
+    const isSuccess = get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};
