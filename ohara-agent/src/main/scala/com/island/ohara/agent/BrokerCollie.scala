@@ -17,7 +17,6 @@
 package com.island.ohara.agent
 import java.util.Objects
 
-import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
@@ -174,8 +173,7 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
                       exporterPort = exporterPort,
                       clientPort = clientPort,
                       jmxPort = jmxPort,
-                      nodeNames = (successfulContainers.map(_.nodeName) ++ existNodes.map(_._1.name)).toSet,
-                      deadNodes = Set.empty
+                      nodeNames = (successfulContainers.map(_.nodeName) ++ existNodes.map(_._1.name)).toSet
                     )
                     postCreateBrokerCluster(clusterInfo, successfulContainers)
                     clusterInfo
@@ -204,17 +202,17 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
 
   /**
     * Please implement this function to get Zookeeper cluster information
-    * @param executionContext execution context
-    * @return zookeeper cluster information
+    * @param executionContext
+    * @return
     */
   protected def zookeeperClusters(
     implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]]
 
   /**
     * Update exist node info
-    * @param node node object
-    * @param container container information
-    * @param route ip-host mapping list
+    * @param node
+    * @param container
+    * @param route
     */
   protected def hookUpdate(node: Node, container: ContainerInfo, route: Map[String, String]): Unit = {
     //Nothing
@@ -222,8 +220,8 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
 
   /**
     * Hostname resolve to IP address
-    * @param nodeName node name
-    * @return ip
+    * @param nodeName
+    * @return
     */
   protected def resolveHostName(nodeName: String): String = {
     CommonUtils.address(nodeName)
@@ -231,12 +229,12 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
 
   /**
     * Please implement this function to create the container to a different platform
-    * @param executionContext execution context
-    * @param clusterName cluster name
-    * @param containerName container name
-    * @param containerInfo container information
-    * @param node node object
-    * @param route ip-host mapping
+    * @param executionContext
+    * @param clusterName
+    * @param containerName
+    * @param containerInfo
+    * @param node
+    * @param route
     */
   protected def doCreator(executionContext: ExecutionContext,
                           clusterName: String,
@@ -246,9 +244,9 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
                           route: Map[String, String]): Unit
 
   /**
-    * After creating the broker, need to processor other things
-    * @param clusterInfo broker cluster information
-    * @param successfulContainers successful created containers
+    * After creating  the Broker, need to processor other things
+    * @param clusterInfo
+    * @param successfulContainers
     */
   protected def postCreateBrokerCluster(clusterInfo: ClusterInfo, successfulContainers: Seq[ContainerInfo]): Unit = {
     //Default Nothing
@@ -291,17 +289,14 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
         exporterPort = first.environments(BrokerCollie.EXPORTER_PORT_KEY).toInt,
         clientPort = first.environments(BrokerCollie.CLIENT_PORT_KEY).toInt,
         jmxPort = first.environments(BrokerCollie.JMX_PORT_KEY).toInt,
-        nodeNames = containers.map(_.nodeName).toSet,
-        // Currently, docker and k8s has same naming rule for "Running",
-        // it is ok that we use the containerState.RUNNING here.
-        deadNodes = containers.filterNot(_.state == ContainerState.RUNNING.name).map(_.nodeName).toSet
+        nodeNames = containers.map(_.nodeName).toSet
       ))
   }
 
   /**
     * For check, zookeeper cluster exist. You can override this function to check zookeeper cluster info
-    * @param zkClusterName zookeeper cluster name
-    * @param executionContext execution context
+    * @param zkClusterName
+    * @param executionContext
     * @return
     */
   private def zookeeperContainers(zkClusterName: String)(

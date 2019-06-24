@@ -34,8 +34,7 @@ private class FakeBrokerCollie(node: NodeCollie,
                              2181,
                              2182,
                              2183,
-                             Set("node1"),
-                             Set.empty) -> zkContainers,
+                             Set("node1")) -> zkContainers,
       )
     }
   }
@@ -60,7 +59,7 @@ private class FakeBrokerCollie(node: NodeCollie,
     implicit executionContext: ExecutionContext): Future[Map[BrokerClusterInfo, Seq[ContainerInfo]]] = {
     Future {
       //Pre create broker container for test
-      Map(BrokerClusterInfo("bk1", "broker", "zk1", 2181, 2182, 2183, Set("node1"), Set.empty) -> bkExistContainers)
+      Map(BrokerClusterInfo("bk1", "broker", "zk1", 2181, 2182, 2183, Set("node1")) -> bkExistContainers)
     }
   }
 

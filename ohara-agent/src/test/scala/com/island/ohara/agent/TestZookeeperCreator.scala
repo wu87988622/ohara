@@ -47,8 +47,7 @@ class TestZookeeperCreator extends SmallTest with Matchers {
           clientPort = clientPort,
           peerPort = peerPort,
           electionPort = electionPort,
-          nodeNames = nodeNames,
-          deadNodes = Set.empty
+          nodeNames = nodeNames
         ))
     }
 
@@ -125,8 +124,7 @@ class TestZookeeperCreator extends SmallTest with Matchers {
       clientPort = 10,
       peerPort = 10,
       electionPort = 10,
-      nodeNames = Set(CommonUtils.randomString()),
-      deadNodes = Set.empty
+      nodeNames = Set(CommonUtils.randomString())
     )
     Await.result(zkCreator().copy(zookeeperClusterInfo).create(), 30 seconds) shouldBe zookeeperClusterInfo
   }

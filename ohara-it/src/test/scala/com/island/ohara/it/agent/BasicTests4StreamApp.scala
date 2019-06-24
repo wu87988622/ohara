@@ -213,10 +213,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     // since we use the same name for cluster state
     await(() => {
       val res = result(streamAppPropertyAccess.get(stream.id))
-      res.state.isDefined && res.state.get == ContainerState.DEAD.name &&
-      // only 1 instance, dead nodes are equal to all nodes
-      res.deadNodes == res.nodeNames &&
-      res.nodeNames.size == 1
+      res.state.isDefined && res.state.get == ContainerState.DEAD.name
     })
 
     // stop and remove failed cluster gracefully

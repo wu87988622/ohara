@@ -65,8 +65,7 @@ class TestWorkerApi extends SmallTest with Matchers {
       offsetTopicReplications = 10,
       jarInfos = Seq.empty,
       connectors = Seq.empty,
-      nodeNames = Set.empty,
-      deadNodes = Set.empty
+      nodeNames = Set.empty
     )
     WORKER_CLUSTER_INFO_JSON_FORMAT.write(workerClusterInfo).toString().contains("jarNames") shouldBe true
   }
@@ -91,8 +90,7 @@ class TestWorkerApi extends SmallTest with Matchers {
       offsetTopicReplications = 10,
       jarInfos = Seq.empty,
       connectors = Seq.empty,
-      nodeNames = Set.empty,
-      deadNodes = Set.empty
+      nodeNames = Set.empty
     )
 
     response shouldBe WORKER_CLUSTER_INFO_JSON_FORMAT.read(WORKER_CLUSTER_INFO_JSON_FORMAT.write(response))
@@ -119,8 +117,7 @@ class TestWorkerApi extends SmallTest with Matchers {
       offsetTopicReplications = 10,
       jarInfos = Seq.empty,
       connectors = Seq.empty,
-      nodeNames = Set.empty,
-      deadNodes = Set.empty
+      nodeNames = Set.empty
     )
     workerClusterInfo.clone(newNodeNames).nodeNames shouldBe newNodeNames
   }

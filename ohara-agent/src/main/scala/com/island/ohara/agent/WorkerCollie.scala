@@ -17,7 +17,6 @@
 package com.island.ohara.agent
 import java.util.Objects
 
-import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
@@ -179,8 +178,7 @@ trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator
                       statusTopicReplications = statusTopicReplications,
                       jarInfos = jarInfos,
                       connectors = Seq.empty,
-                      nodeNames = (successfulContainers.map(_.nodeName) ++ existNodes.map(_._1.name)).toSet,
-                      deadNodes = Set.empty
+                      nodeNames = (successfulContainers.map(_.nodeName) ++ existNodes.map(_._1.name)).toSet
                     )
                     postCreateWorkerCluster(clusterInfo, successfulContainers)
                     clusterInfo
@@ -304,10 +302,7 @@ trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator
           .map(WorkerCollie.toJarInfos)
           .getOrElse(Seq.empty),
         connectors = connectors,
-        nodeNames = containers.map(_.nodeName).toSet,
-        // Currently, docker and k8s has same naming rule for "Running",
-        // it is ok that we use the containerState.RUNNING here.
-        deadNodes = containers.filterNot(_.state == ContainerState.RUNNING.name).map(_.nodeName).toSet
+        nodeNames = containers.map(_.nodeName).toSet
       )
     }
   }

@@ -118,7 +118,6 @@ private class K8SStreamCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
                     name = clusterName,
                     imageName = imageName,
                     nodeNames = successfulNodeNames.toSet,
-                    deadNodes = Set.empty,
                     jmxPort = jmxPort,
                     // creating cluster success could be applied containers are "running"
                     state = Some(ContainerState.RUNNING.name)

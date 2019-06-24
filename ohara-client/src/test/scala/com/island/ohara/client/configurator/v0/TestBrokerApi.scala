@@ -33,8 +33,7 @@ class TestBrokerApi extends SmallTest with Matchers {
       clientPort = 10,
       exporterPort = 10,
       jmxPort = 10,
-      nodeNames = Set.empty,
-      deadNodes = Set.empty
+      nodeNames = Set.empty
     )
     brokerClusterInfo.clone(newNodeNames).nodeNames shouldBe newNodeNames
   }

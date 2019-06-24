@@ -32,8 +32,7 @@ class TestZookeeperApi extends SmallTest with Matchers {
       clientPort = 10,
       peerPort = 10,
       electionPort = 10,
-      nodeNames = Set.empty,
-      deadNodes = Set.empty
+      nodeNames = Set.empty
     )
     zookeeperClusterInfo.clone(newNodeNames).nodeNames shouldBe newNodeNames
   }

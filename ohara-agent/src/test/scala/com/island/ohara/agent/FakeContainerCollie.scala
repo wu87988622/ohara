@@ -77,8 +77,6 @@ class FakeContainerCollie[T <: FakeContainerCollieClusterInfo: ClassTag, Creator
 case class FakeContainerCollieClusterInfo(name: String, nodeNames: Set[String]) extends ClusterInfo {
   override def imageName: String = "I DON'T CARE"
 
-  override def deadNodes: Set[String] = Set.empty
-
   override def ports: Set[Int] = Set.empty
 
   override def clone(newNodeNames: Set[String]): ClusterInfo = throw new UnsupportedOperationException

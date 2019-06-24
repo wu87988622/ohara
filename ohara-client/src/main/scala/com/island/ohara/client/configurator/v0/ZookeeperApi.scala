@@ -98,8 +98,7 @@ object ZookeeperApi {
                                                                clientPort: Int,
                                                                peerPort: Int,
                                                                electionPort: Int,
-                                                               nodeNames: Set[String],
-                                                               deadNodes: Set[String])
+                                                               nodeNames: Set[String])
       extends ClusterInfo {
     override def ports: Set[Int] = Set(clientPort, peerPort, electionPort)
     override def clone(newNodeNames: Set[String]): ClusterInfo = copy(nodeNames = newNodeNames)
@@ -108,7 +107,7 @@ object ZookeeperApi {
   /**
     * exposed to configurator
     */
-  private[ohara] implicit val ZOOKEEPER_CLUSTER_INFO_JSON_FORMAT: RootJsonFormat[ZookeeperClusterInfo] = jsonFormat7(
+  private[ohara] implicit val ZOOKEEPER_CLUSTER_INFO_JSON_FORMAT: RootJsonFormat[ZookeeperClusterInfo] = jsonFormat6(
     ZookeeperClusterInfo)
 
   /**

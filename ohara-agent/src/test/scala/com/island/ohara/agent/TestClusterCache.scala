@@ -158,7 +158,6 @@ class TestClusterCache extends SmallTest with Matchers {
       override def imageName: String = "123"
       override def ports: Set[Int] = Set.empty
       override def nodeNames: Set[String] = Set.empty
-      override def deadNodes: Set[String] = Set.empty
       override def clone(newNodeNames: Set[String]): ClusterInfo = throw new UnsupportedOperationException(
         "what are you doing!!!")
     }

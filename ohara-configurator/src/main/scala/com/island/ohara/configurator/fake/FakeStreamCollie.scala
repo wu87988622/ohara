@@ -59,8 +59,7 @@ private[configurator] class FakeStreamCollie(nodeCollie: NodeCollie)
               imageName = imageName,
               nodeNames = nodes.map(_.name).toSet,
               jmxPort = jmxPort,
-              state = Some(ContainerState.RUNNING.name),
-              deadNodes = Set.empty
+              state = Some(ContainerState.RUNNING.name)
             )
           )
         }

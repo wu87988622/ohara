@@ -79,8 +79,7 @@ private[configurator] class FakeWorkerCollie(node: NodeCollie, wkConnectionProps
             statusTopicReplications = statusTopicReplications,
             jarInfos = Seq.empty,
             connectors = Seq.empty,
-            nodeNames = nodeNames,
-            deadNodes = Set.empty
+            nodeNames = nodeNames
           )))
 
   override protected def doRemoveNode(previousCluster: WorkerClusterInfo, beRemovedContainer: ContainerInfo)(
@@ -104,8 +103,7 @@ private[configurator] class FakeWorkerCollie(node: NodeCollie, wkConnectionProps
         offsetTopicReplications = previousCluster.offsetTopicReplications,
         jarInfos = previousCluster.jarInfos,
         connectors = Seq.empty,
-        nodeNames = previousCluster.nodeNames.filterNot(_ == beRemovedContainer.nodeName),
-        deadNodes = Set.empty
+        nodeNames = previousCluster.nodeNames.filterNot(_ == beRemovedContainer.nodeName)
       )))
     .map(_ => true)
 
@@ -140,8 +138,7 @@ private[configurator] class FakeWorkerCollie(node: NodeCollie, wkConnectionProps
           offsetTopicReplications = previousCluster.offsetTopicReplications,
           jarInfos = previousCluster.jarInfos,
           connectors = Seq.empty,
-          nodeNames = previousCluster.nodeNames ++ Set(newNodeName),
-          deadNodes = Set.empty
+          nodeNames = previousCluster.nodeNames ++ Set(newNodeName)
         )))
 
   override protected def doCreator(executionContext: ExecutionContext,
