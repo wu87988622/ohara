@@ -36,16 +36,15 @@ class TestObjectRoute extends SmallTest with Matchers {
 
   private[this] val initialSize = result(objectApi.list).size
 
-  private[this] val connectorApi = ConnectorApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] val connectorApi = ConnectorApi.access.hostname(configurator.hostname).port(configurator.port)
 
   @Test
   def testTopic(): Unit = {
     val topic0 = result(
-      TopicApi
-        .access()
+      TopicApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .request()
+        .request
         .name(CommonUtils.randomString(10))
         .create())
 
@@ -57,11 +56,10 @@ class TestObjectRoute extends SmallTest with Matchers {
     objs.find(_.id == topic0.id).get.lastModified shouldBe topic0.lastModified
 
     val topic1 = result(
-      TopicApi
-        .access()
+      TopicApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .request()
+        .request
         .name(CommonUtils.randomString(10))
         .create())
 
@@ -77,8 +75,7 @@ class TestObjectRoute extends SmallTest with Matchers {
   @Test
   def testConnector(): Unit = {
     val connector0 = result(
-      connectorApi
-        .request()
+      connectorApi.request
         .name(CommonUtils.randomString(10))
         .className("com.island.ohara.connector.ftp.FtpSink")
         .numberOfTasks(1)
@@ -92,8 +89,7 @@ class TestObjectRoute extends SmallTest with Matchers {
     objs.find(_.id == connector0.id).get.lastModified shouldBe connector0.lastModified
 
     val connector1 = result(
-      connectorApi
-        .request()
+      connectorApi.request
         .name(CommonUtils.randomString(10))
         .className("com.island.ohara.connector.ftp.FtpSink")
         .numberOfTasks(1)
@@ -111,19 +107,17 @@ class TestObjectRoute extends SmallTest with Matchers {
   @Test
   def listTopicAndConnector(): Unit = {
     val connector = result(
-      connectorApi
-        .request()
+      connectorApi.request
         .name(CommonUtils.randomString(10))
         .className("com.island.ohara.connector.ftp.FtpSink")
         .numberOfTasks(1)
         .create())
 
     val topic = result(
-      TopicApi
-        .access()
+      TopicApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .request()
+        .request
         .name(CommonUtils.randomString(10))
         .create())
 

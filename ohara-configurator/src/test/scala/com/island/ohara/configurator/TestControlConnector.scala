@@ -34,7 +34,7 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
   private[this] val configurator =
     Configurator.builder().fake(testUtil.brokersConnProps, testUtil().workersConnProps()).build()
 
-  private[this] val connectorApi = ConnectorApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] val connectorApi = ConnectorApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
@@ -42,11 +42,10 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
   def testNormalCase(): Unit = {
     val topicName = methodName
     val topic = result(
-      TopicApi.access().hostname(configurator.hostname).port(configurator.port).request().name(topicName).create())
+      TopicApi.access.hostname(configurator.hostname).port(configurator.port).request.name(topicName).create())
 
     val sink = result(
-      connectorApi
-        .request()
+      connectorApi.request
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
         .numberOfTasks(1)
@@ -94,11 +93,10 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
   def testUpdateRunningConnector(): Unit = {
     val topicName = methodName
     val topic = result(
-      TopicApi.access().hostname(configurator.hostname).port(configurator.port).request().name(topicName).create()
+      TopicApi.access.hostname(configurator.hostname).port(configurator.port).request.name(topicName).create()
     )
     val sink = result(
-      connectorApi
-        .request()
+      connectorApi.request
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
         .topicName(topic.name)
@@ -118,7 +116,7 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
                         Duration.ofSeconds(20))
 
       an[IllegalArgumentException] should be thrownBy result(
-        connectorApi.request().name(sink.name).className(classOf[DumbSink].getName).numberOfTasks(1).create())
+        connectorApi.request.name(sink.name).className(classOf[DumbSink].getName).numberOfTasks(1).create())
 
       // test stop. the connector should be removed
       Await.result(connectorApi.stop(sink.name), 10 seconds)
@@ -131,11 +129,10 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
   def deleteRunningConnector(): Unit = {
     val topicName = methodName
     val topic = result(
-      TopicApi.access().hostname(configurator.hostname).port(configurator.port).request().name(topicName).create()
+      TopicApi.access.hostname(configurator.hostname).port(configurator.port).request.name(topicName).create()
     )
     val sink = result(
-      connectorApi
-        .request()
+      connectorApi.request
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
         .topicName(topic.name)

@@ -17,6 +17,7 @@
 package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
 import spray.json.DefaultJsonProtocol._
@@ -297,4 +298,82 @@ class TestJsonRefiner extends SmallTest with Matchers {
          | "stringArray": []
          |}
        """.stripMargin.parseJson).bindPort shouldBe 777
+
+  @Test
+  def testNullStringInDefaultToAnother(): Unit = {
+    an[NullPointerException] should be thrownBy JsonRefiner[SimpleData]
+      .defaultToAnother(null, CommonUtils.randomString())
+    an[NullPointerException] should be thrownBy JsonRefiner[SimpleData]
+      .defaultToAnother(CommonUtils.randomString(), null)
+  }
+
+  @Test
+  def testEmptyStringInDefaultToAnother(): Unit = {
+    an[IllegalArgumentException] should be thrownBy JsonRefiner[SimpleData]
+      .defaultToAnother("", CommonUtils.randomString())
+    an[IllegalArgumentException] should be thrownBy JsonRefiner[SimpleData]
+      .defaultToAnother(CommonUtils.randomString(), "")
+  }
+
+  @Test
+  def testDefaultToAnother(): Unit =
+    JsonRefiner[SimpleData]
+      .format(format)
+      .defaultToAnother("bindPort", "connectionPort")
+      .refine
+      .read("""
+        |{
+        | "stringValue": "abc",
+        | "connectionPort": 123,
+        | "stringArray": []
+        |}
+      """.stripMargin.parseJson)
+      .bindPort shouldBe 123
+
+  @Test
+  def testNonexistentAnotherKeyForDefaultToAnother(): Unit =
+    an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
+      .format(format)
+      .defaultToAnother("bindPort", CommonUtils.randomString())
+      .refine
+      .read("""
+      |{
+      | "stringValue": "abc",
+      | "connectionPort": 123,
+      | "stringArray": []
+      |}
+    """.stripMargin.parseJson)
+
+  /**
+    * JsonRefiner doesn't another key if the origin key exists!!!
+    */
+  @Test
+  def testNonexistentAnotherKeyButOriginKeyExistForDefaultToAnother(): Unit =
+    JsonRefiner[SimpleData]
+      .format(format)
+      .defaultToAnother("bindPort", CommonUtils.randomString())
+      .refine
+      .read("""
+              |{
+              | "stringValue": "abc",
+              | "bindPort": 9999,
+              | "connectionPort": 123,
+              | "stringArray": []
+              |}
+            """.stripMargin.parseJson)
+      .bindPort shouldBe 9999
+
+  @Test
+  def testNegativeNumber(): Unit = an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
+    .format(format)
+    .rejectNegativeNumber()
+    .refine
+    .read("""
+            |{
+            | "stringValue": "abc",
+            | "bindPort": -1,
+            | "connectionPort": 123,
+            | "stringArray": []
+            |}
+          """.stripMargin.parseJson)
 }

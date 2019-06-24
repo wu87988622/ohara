@@ -56,42 +56,40 @@ class TestTopicApi extends SmallTest with Matchers {
   }
 
   @Test
-  def ignoreNameOnCreation(): Unit = an[NullPointerException] should be thrownBy TopicApi
-    .access()
+  def ignoreNameOnCreation(): Unit = an[NullPointerException] should be thrownBy TopicApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .create()
 
   @Test
-  def ignoreNameOnUpdate(): Unit = an[NullPointerException] should be thrownBy TopicApi
-    .access()
+  def ignoreNameOnUpdate(): Unit = an[NullPointerException] should be thrownBy TopicApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .update()
 
   @Test
-  def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy TopicApi.access().request().name("")
+  def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy TopicApi.access.request.name("")
 
   @Test
-  def nullName(): Unit = an[NullPointerException] should be thrownBy TopicApi.access().request().name(null)
+  def nullName(): Unit = an[NullPointerException] should be thrownBy TopicApi.access.request.name(null)
 
   @Test
   def emptyBrokerClusterName(): Unit =
-    an[IllegalArgumentException] should be thrownBy TopicApi.access().request().brokerClusterName("")
+    an[IllegalArgumentException] should be thrownBy TopicApi.access.request.brokerClusterName("")
 
   @Test
   def nullBrokerClusterName(): Unit =
-    an[NullPointerException] should be thrownBy TopicApi.access().request().brokerClusterName(null)
+    an[NullPointerException] should be thrownBy TopicApi.access.request.brokerClusterName(null)
 
   @Test
   def negativeNumberOfPartitions(): Unit =
-    an[IllegalArgumentException] should be thrownBy TopicApi.access().request().numberOfPartitions(-1)
+    an[IllegalArgumentException] should be thrownBy TopicApi.access.request.numberOfPartitions(-1)
 
   @Test
   def negativeNumberOfReplications(): Unit =
-    an[IllegalArgumentException] should be thrownBy TopicApi.access().request().numberOfReplications(-1)
+    an[IllegalArgumentException] should be thrownBy TopicApi.access.request.numberOfReplications(-1)
 
   @Test
   def parseJsonForCreation(): Unit = {

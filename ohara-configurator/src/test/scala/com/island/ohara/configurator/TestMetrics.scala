@@ -34,8 +34,8 @@ class TestMetrics extends WithBrokerWorker with Matchers {
   private[this] val configurator =
     Configurator.builder().fake(testUtil.brokersConnProps, testUtil().workersConnProps()).build()
 
-  private[this] val connectorApi = ConnectorApi.access().hostname(configurator.hostname).port(configurator.port)
-  private[this] val topicApi = TopicApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] val connectorApi = ConnectorApi.access.hostname(configurator.hostname).port(configurator.port)
+  private[this] val topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
@@ -46,7 +46,7 @@ class TestMetrics extends WithBrokerWorker with Matchers {
 
   @Test
   def testTopic(): Unit = {
-    val topic = result(topicApi.request().name(CommonUtils.randomString()).create())
+    val topic = result(topicApi.request.name(CommonUtils.randomString()).create())
     val producer = Producer
       .builder[String, String]()
       .connectionProps(testUtil().brokersConnProps())
@@ -74,11 +74,10 @@ class TestMetrics extends WithBrokerWorker with Matchers {
 
   @Test
   def testConnector(): Unit = {
-    val topic = result(topicApi.request().name(CommonUtils.randomString()).create())
+    val topic = result(topicApi.request.name(CommonUtils.randomString()).create())
 
     val sink = result(
-      connectorApi
-        .request()
+      connectorApi.request
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
         .topicName(topic.name)
@@ -103,11 +102,10 @@ class TestMetrics extends WithBrokerWorker with Matchers {
   @Test
   def testPipeline(): Unit = {
     val topicName = methodName
-    val topic = result(topicApi.request().name(topicName).create())
+    val topic = result(topicApi.request.name(topicName).create())
 
     val sink = result(
-      connectorApi
-        .request()
+      connectorApi.request
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
         .topicName(topic.name)
@@ -137,11 +135,10 @@ class TestMetrics extends WithBrokerWorker with Matchers {
   @Test
   def testTopicMeterInPerfSource(): Unit = {
     val topicName = CommonUtils.randomString()
-    val topic = result(topicApi.request().name(topicName).create())
+    val topic = result(topicApi.request.name(topicName).create())
 
     val source = result(
-      connectorApi
-        .request()
+      connectorApi.request
         .name(CommonUtils.randomString(10))
         .className("com.island.ohara.connector.perf.PerfSource")
         .topicName(topic.name)

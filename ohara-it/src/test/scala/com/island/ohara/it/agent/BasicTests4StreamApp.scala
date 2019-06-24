@@ -100,7 +100,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
       bkApi = BrokerApi.access().hostname(configurator.hostname).port(configurator.port)
       wkApi = WorkerApi.access().hostname(configurator.hostname).port(configurator.port)
       containerApi = ContainerApi.access().hostname(configurator.hostname).port(configurator.port)
-      topicApi = TopicApi.access().hostname(configurator.hostname).port(configurator.port)
+      topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
       streamAppActionAccess = StreamApi.accessOfAction().hostname(configurator.hostname).port(configurator.port)
       streamAppListAccess = StreamApi.accessOfList().hostname(configurator.hostname).port(configurator.port)
       streamAppPropertyAccess = StreamApi.accessOfProperty().hostname(configurator.hostname).port(configurator.port)
@@ -250,8 +250,8 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     assertCluster(() => result(bkApi.list), bkName)
 
     // create topic
-    val topic1 = result(topicApi.request().name(from).brokerClusterName(bkName).create())
-    val topic2 = result(topicApi.request().name(to).brokerClusterName(bkName).create())
+    val topic1 = result(topicApi.request.name(from).brokerClusterName(bkName).create())
+    val topic2 = result(topicApi.request.name(to).brokerClusterName(bkName).create())
 
     // upload streamApp jar
     val jarInfo = result(

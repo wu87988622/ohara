@@ -95,7 +95,7 @@ object TopicApi {
   }
 
   class Access private[v0] extends Access2[TopicInfo](TOPICS_PREFIX_PATH) {
-    def request(): Request = new Request {
+    def request: Request = new Request {
       private[this] var name: String = _
       private[this] var brokerClusterName: Option[String] = None
       private[this] var numberOfPartitions: Option[Int] = None
@@ -142,5 +142,5 @@ object TopicApi {
     }
   }
 
-  def access(): Access = new Access
+  def access: Access = new Access
 }

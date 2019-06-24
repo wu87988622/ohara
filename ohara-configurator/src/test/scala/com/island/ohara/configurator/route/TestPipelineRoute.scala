@@ -35,9 +35,9 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
   private[this] val pipelineApi = PipelineApi.access().hostname(configurator.hostname).port(configurator.port)
 
-  private[this] val connectorApi = ConnectorApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] val connectorApi = ConnectorApi.access.hostname(configurator.hostname).port(configurator.port)
 
-  private[this] val topicApi = TopicApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] val topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
 
   @Test
   def testMultiWorkerCluster(): Unit = {
@@ -88,14 +88,13 @@ class TestPipelineRoute extends MediumTest with Matchers {
   @Test
   def testNormalCase(): Unit = {
     val connector = result(
-      connectorApi
-        .request()
+      connectorApi.request
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
         .numberOfTasks(1)
         .create())
 
-    val topic = result(topicApi.request().name(CommonUtils.randomString(10)).create())
+    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
 
     val pipeline = result(
       pipelineApi.request().name(CommonUtils.randomString(10)).flow(Flow(connector.id, Set(topic.name))).create()
@@ -122,9 +121,9 @@ class TestPipelineRoute extends MediumTest with Matchers {
   @Test
   def testPipeline(): Unit = {
     // test add
-    val topic0 = result(topicApi.request().name(CommonUtils.randomString(10)).create())
-    val topic1 = result(topicApi.request().name(CommonUtils.randomString(10)).create())
-    val topic2 = result(topicApi.request().name(CommonUtils.randomString(10)).create())
+    val topic0 = result(topicApi.request.name(CommonUtils.randomString(10)).create())
+    val topic1 = result(topicApi.request.name(CommonUtils.randomString(10)).create())
+    val topic2 = result(topicApi.request.name(CommonUtils.randomString(10)).create())
 
     result(pipelineApi.list).size shouldBe 0
 
@@ -163,8 +162,8 @@ class TestPipelineRoute extends MediumTest with Matchers {
   @Test
   def testBindInvalidObjects2Pipeline(): Unit = {
     val hdfsAccess = HadoopApi.access().hostname(configurator.hostname).port(configurator.port)
-    val topic0 = result(topicApi.request().name(CommonUtils.randomString(10)).create())
-    val topic1 = result(topicApi.request().name(CommonUtils.randomString(10)).create())
+    val topic0 = result(topicApi.request.name(CommonUtils.randomString(10)).create())
+    val topic1 = result(topicApi.request.name(CommonUtils.randomString(10)).create())
     val hdfs = result(hdfsAccess.request().name(CommonUtils.randomString()).uri("file:///").create())
     result(topicApi.list).size shouldBe 2
     result(hdfsAccess.list).size shouldBe 1
@@ -197,7 +196,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
   @Test
   def removeConnectorFromDeletedCluster(): Unit = {
-    val topic = result(topicApi.request().name(CommonUtils.randomString(10)).create())
+    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
 
     val pipeline = result(
       pipelineApi.request().name(CommonUtils.randomString()).flow(topic.name, Set.empty[String]).create())
@@ -213,7 +212,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
   @Test
   def listPipelineWithoutWorkerCluster(): Unit = {
-    val topic = result(topicApi.request().name(CommonUtils.randomString(10)).create())
+    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
 
     val pipeline = result(
       pipelineApi.request().name(CommonUtils.randomString()).flow(topic.name, Set.empty[String]).create())
@@ -234,9 +233,9 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
   @Test
   def listPipelineWithoutWorkerCluster2(): Unit = {
-    val topic0 = result(topicApi.request().name(CommonUtils.randomString(10)).create())
+    val topic0 = result(topicApi.request.name(CommonUtils.randomString(10)).create())
 
-    val topic1 = result(topicApi.request().name(CommonUtils.randomString(10)).create())
+    val topic1 = result(topicApi.request.name(CommonUtils.randomString(10)).create())
 
     val pipeline = result(
       pipelineApi.request().name(CommonUtils.randomString()).flow(topic0.name, topic1.name).create())
@@ -263,9 +262,9 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
   @Test
   def addMultiPipelines(): Unit = {
-    val topic0 = result(topicApi.request().name(CommonUtils.randomString(10)).create())
+    val topic0 = result(topicApi.request.name(CommonUtils.randomString(10)).create())
 
-    val topic1 = result(topicApi.request().name(CommonUtils.randomString(10)).create())
+    val topic1 = result(topicApi.request.name(CommonUtils.randomString(10)).create())
 
     val pipeline0 = result(
       pipelineApi.request().name(CommonUtils.randomString()).flow(topic0.name, topic1.name).create())
@@ -281,11 +280,10 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
   @Test
   def listConnectorWhichIsNotRunning(): Unit = {
-    val topic = result(topicApi.request().name(CommonUtils.randomString(10)).create())
+    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
 
     val connector = result(
-      connectorApi
-        .request()
+      connectorApi.request
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
         .numberOfTasks(1)
@@ -303,11 +301,10 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
   @Test
   def useWrongConnector(): Unit = {
-    val topic = result(topicApi.request().name(CommonUtils.randomString(10)).create())
+    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
 
     val connector = result(
-      connectorApi
-        .request()
+      connectorApi.request
         .name(CommonUtils.randomString(10))
         .className(CommonUtils.randomString(10))
         .numberOfTasks(1)
@@ -325,11 +322,10 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
   @Test
   def testPipelineStateAfterStartingSource(): Unit = {
-    val topic = result(topicApi.request().name(CommonUtils.randomString(10)).create())
+    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
 
     val source = result(
-      connectorApi
-        .request()
+      connectorApi.request
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
         .numberOfTasks(1)
@@ -354,10 +350,9 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
   @Test
   def testPipelineAllowObject(): Unit = {
-    val topic = result(topicApi.request().name(CommonUtils.randomString(10)).create())
+    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
     val source = result(
-      connectorApi
-        .request()
+      connectorApi.request
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
         .numberOfTasks(1)
@@ -379,8 +374,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
   @Test
   def testToUnknownObject(): Unit = {
     val source = result(
-      connectorApi
-        .request()
+      connectorApi.request
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
         .numberOfTasks(1)
@@ -390,8 +384,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
       pipelineApi.request().name(CommonUtils.randomString()).flow(source.id, CommonUtils.randomString()).create())
 
     val source2 = result(
-      connectorApi
-        .request()
+      connectorApi.request
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
         .numberOfTasks(1)
@@ -407,8 +400,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
   @Test
   def testFromUnknownObject(): Unit = {
     val source = result(
-      connectorApi
-        .request()
+      connectorApi.request
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
         .numberOfTasks(1)
@@ -445,7 +437,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
   @Test
   def updateOnlyFlow(): Unit = {
-    val topic = result(topicApi.request().name(CommonUtils.randomString(10)).create())
+    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
     val pipeline = result(
       pipelineApi.request().name(CommonUtils.randomString()).flow(topic.name, Set.empty[String]).update())
     pipeline.flows.size shouldBe 1
@@ -460,7 +452,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
   @Test
   def updateOnlyWorkerClusterName(): Unit = {
-    val topic = result(topicApi.request().name(CommonUtils.randomString(10)).create())
+    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
     val pipeline = result(
       pipelineApi.request().name(CommonUtils.randomString()).flow(topic.name, Set.empty[String]).update())
     an[IllegalArgumentException] should be thrownBy result(
@@ -469,11 +461,10 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
   @Test
   def testRemovePipelineHavingRunningConnector(): Unit = {
-    val topic = result(topicApi.request().name(CommonUtils.randomString(10)).create())
+    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
 
     val connector = result(
-      connectorApi
-        .request()
+      connectorApi.request
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
         .topicName(topic.name)

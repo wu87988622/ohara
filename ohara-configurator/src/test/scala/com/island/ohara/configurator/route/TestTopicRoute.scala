@@ -29,7 +29,7 @@ class TestTopicRoute extends SmallTest with Matchers {
 
   private[this] val configurator = Configurator.builder().fake(1, 0).build()
 
-  private[this] val topicApi = TopicApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] val topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
 
   @Test
   def test(): Unit = {
@@ -39,8 +39,7 @@ class TestTopicRoute extends SmallTest with Matchers {
     val numberOfPartitions: Int = 3
     val numberOfReplications: Short = 3
     val response = result(
-      topicApi
-        .request()
+      topicApi.request
         .name(name)
         .numberOfPartitions(numberOfPartitions)
         .numberOfReplications(numberOfReplications)
@@ -58,7 +57,7 @@ class TestTopicRoute extends SmallTest with Matchers {
 
     // test update
     val numberOfPartitions3: Int = 5
-    val response3 = result(topicApi.request().name(name).numberOfPartitions(numberOfPartitions3).update())
+    val response3 = result(topicApi.request.name(name).numberOfPartitions(numberOfPartitions3).update())
     response3.numberOfPartitions shouldBe numberOfPartitions3
 
     // test delete
@@ -74,8 +73,7 @@ class TestTopicRoute extends SmallTest with Matchers {
   def removeTopicFromNonexistentBrokerCluster(): Unit = {
     val name = methodName()
     result(
-      topicApi
-        .request()
+      topicApi.request
         .name(name)
         .create()
         .flatMap { topicInfo =>
@@ -93,7 +91,7 @@ class TestTopicRoute extends SmallTest with Matchers {
   @Test
   def createTopicOnNonexistentCluster(): Unit = {
     an[IllegalArgumentException] should be thrownBy result(
-      topicApi.request().name(CommonUtils.randomString(10)).brokerClusterName(CommonUtils.randomString()).create())
+      topicApi.request.name(CommonUtils.randomString(10)).brokerClusterName(CommonUtils.randomString()).create())
   }
 
   @Test
@@ -122,10 +120,9 @@ class TestTopicRoute extends SmallTest with Matchers {
         .nodeNames(zk2.nodeNames)
         .create())
 
-    an[IllegalArgumentException] should be thrownBy result(
-      topicApi.request().name(CommonUtils.randomString(10)).create())
+    an[IllegalArgumentException] should be thrownBy result(topicApi.request.name(CommonUtils.randomString(10)).create())
 
-    result(topicApi.request().name(CommonUtils.randomString(10)).brokerClusterName(bk2.name).create())
+    result(topicApi.request.name(CommonUtils.randomString(10)).brokerClusterName(bk2.name).create())
   }
 
   @Test
@@ -158,21 +155,21 @@ class TestTopicRoute extends SmallTest with Matchers {
     bks.size shouldBe 2
 
     val topicInfo = result(
-      topicApi.request().name(CommonUtils.randomString(10)).brokerClusterName(bks.head.name).create())
+      topicApi.request.name(CommonUtils.randomString(10)).brokerClusterName(bks.head.name).create())
 
     an[IllegalArgumentException] should be thrownBy result(
-      topicApi.request().name(topicInfo.name).brokerClusterName(bks.last.name).update())
+      topicApi.request.name(topicInfo.name).brokerClusterName(bks.last.name).update())
   }
 
   @Test
   def testPartitions(): Unit = {
-    val topic0 = result(topicApi.request().name(CommonUtils.randomString(10)).create())
+    val topic0 = result(topicApi.request.name(CommonUtils.randomString(10)).create())
 
     // we can't reduce number of partitions
     an[IllegalArgumentException] should be thrownBy result(
-      topicApi.request().name(topic0.name).numberOfPartitions(topic0.numberOfPartitions - 1).update())
+      topicApi.request.name(topic0.name).numberOfPartitions(topic0.numberOfPartitions - 1).update())
 
-    val topic1 = result(topicApi.request().name(topic0.name).numberOfPartitions(topic0.numberOfPartitions + 1).update())
+    val topic1 = result(topicApi.request.name(topic0.name).numberOfPartitions(topic0.numberOfPartitions + 1).update())
 
     topic0.name shouldBe topic1.name
     topic0.name shouldBe topic1.name
@@ -182,31 +179,25 @@ class TestTopicRoute extends SmallTest with Matchers {
 
   @Test
   def testReplications(): Unit = {
-    val topicInfo = result(topicApi.request().name(CommonUtils.randomString(10)).create())
+    val topicInfo = result(topicApi.request.name(CommonUtils.randomString(10)).create())
 
     // we can't reduce number of replications
     an[IllegalArgumentException] should be thrownBy result(
-      topicApi
-        .request()
+      topicApi.request
         .name(topicInfo.name)
         .numberOfReplications((topicInfo.numberOfReplications - 1).asInstanceOf[Short])
         .update())
 
     // we can't add number of replications
     an[IllegalArgumentException] should be thrownBy result(
-      topicApi
-        .request()
+      topicApi.request
         .name(topicInfo.name)
         .numberOfReplications((topicInfo.numberOfReplications + 1).asInstanceOf[Short])
         .update())
 
     // pass since we don't make changes on number of replications
     result(
-      topicApi
-        .request()
-        .name(CommonUtils.randomString(10))
-        .numberOfReplications(topicInfo.numberOfReplications)
-        .create())
+      topicApi.request.name(CommonUtils.randomString(10)).numberOfReplications(topicInfo.numberOfReplications).create())
   }
 
   @Test
@@ -215,13 +206,13 @@ class TestTopicRoute extends SmallTest with Matchers {
 
   @Test
   def duplicateUpdate(): Unit =
-    (0 to 10).foreach(_ => result(topicApi.request().name(CommonUtils.randomString()).update()))
+    (0 to 10).foreach(_ => result(topicApi.request.name(CommonUtils.randomString()).update()))
 
   @Test
   def testBrokerClusterName(): Unit = {
-    val topicInfo = result(topicApi.request().name(CommonUtils.randomString(10)).create())
+    val topicInfo = result(topicApi.request.name(CommonUtils.randomString(10)).create())
     an[IllegalArgumentException] should be thrownBy result(
-      topicApi.request().name(topicInfo.name).brokerClusterName(CommonUtils.randomString()).update())
+      topicApi.request.name(topicInfo.name).brokerClusterName(CommonUtils.randomString()).update())
   }
 
   @Test
@@ -232,8 +223,8 @@ class TestTopicRoute extends SmallTest with Matchers {
 
   private[this] def updatePartOfField(req: Request => Request, _expected: TopicInfo => TopicInfo): Unit = {
     val previous = result(
-      topicApi.request().name(CommonUtils.randomString()).numberOfReplications(1).numberOfPartitions(1).update())
-    val updated = result(req(topicApi.request().name(previous.name)).update())
+      topicApi.request.name(CommonUtils.randomString()).numberOfReplications(1).numberOfPartitions(1).update())
+    val updated = result(req(topicApi.request.name(previous.name)).update())
     val expected = _expected(previous)
     updated.name shouldBe expected.name
     updated.brokerClusterName shouldBe expected.brokerClusterName
@@ -245,7 +236,7 @@ class TestTopicRoute extends SmallTest with Matchers {
   def deleteAnTopicRemovedFromKafka(): Unit = {
     val topicName = methodName
 
-    val topic = result(topicApi.request().name(topicName).create())
+    val topic = result(topicApi.request.name(topicName).create())
 
     val topicAdmin = configurator.clusterCollie
       .brokerCollie()

@@ -47,17 +47,17 @@ class TestConnectorApi extends SmallTest with Matchers {
     val anotherKey = CommonUtils.randomString()
     val anotherValue = CommonUtils.randomString()
     val request =
-      CONNECTOR_CREATION_REQUEST_JSON_FORMAT.read(s"""
+      CONNECTOR_CREATION_JSON_FORMAT.read(s"""
                                                |{
                                                |  "name": ${JsString(name).toString()},
                                                |  "workerClusterName": ${JsString(workerClusterName).toString()},
                                                |  "connector.class": ${JsString(className).toString()},
                                                |  "schema": ${JsArray(COLUMN_JSON_FORMAT.write(column)).toString()},
                                                |  "topics": ${JsArray(topicNames.map(v => JsString(v)).toVector)
-                                                       .toString()},
+                                               .toString()},
                                                |  "numberOfTasks": ${JsNumber(numberOfTasks).toString()},
                                                |  "configs": ${JsObject(configs.map { case (k, v) => k -> JsString(v) })
-                                                       .toString()},
+                                               .toString()},
                                                   "$anotherKey": "$anotherValue"
                                                |}
                                             """.stripMargin.parseJson)
@@ -70,7 +70,7 @@ class TestConnectorApi extends SmallTest with Matchers {
     request.settings.contains("className") shouldBe false
     request.settings.contains("aaa") shouldBe false
     request.settings(anotherKey).asInstanceOf[JsString].value shouldBe anotherValue
-    CONNECTOR_CREATION_REQUEST_JSON_FORMAT.read(CONNECTOR_CREATION_REQUEST_JSON_FORMAT.write(request)) shouldBe request
+    CONNECTOR_CREATION_JSON_FORMAT.read(CONNECTOR_CREATION_JSON_FORMAT.write(request)) shouldBe request
   }
 
   @Test
@@ -179,7 +179,7 @@ class TestConnectorApi extends SmallTest with Matchers {
   def parsePreviousKeyOfClassNameFromConnectorCreationRequest(): Unit = {
     import spray.json._
     val className = CommonUtils.randomString()
-    val connectorCreationRequest = ConnectorApi.CONNECTOR_CREATION_REQUEST_JSON_FORMAT.read(s"""
+    val connectorCreationRequest = ConnectorApi.CONNECTOR_CREATION_JSON_FORMAT.read(s"""
                                                                                                | {
                                                                                                | \"className\": \"$className\"
                                                                                                | }
@@ -208,7 +208,7 @@ class TestConnectorApi extends SmallTest with Matchers {
 
   @Test
   def parsePropGroups(): Unit = {
-    val creationRequest = ConnectorApi.CONNECTOR_CREATION_REQUEST_JSON_FORMAT.read(s"""
+    val creationRequest = ConnectorApi.CONNECTOR_CREATION_JSON_FORMAT.read(s"""
                                                                                       | {
                                                                                       | \"columns\": [
                                                                                       |   {
@@ -229,7 +229,7 @@ class TestConnectorApi extends SmallTest with Matchers {
 
   @Test
   def parseStaleConfigs(): Unit = {
-    val creationRequest = ConnectorApi.CONNECTOR_CREATION_REQUEST_JSON_FORMAT.read(s"""
+    val creationRequest = ConnectorApi.CONNECTOR_CREATION_JSON_FORMAT.read(s"""
                                                                                       | {
                                                                                       |  "name": "ftp source",
                                                                                       |  "schema": [
@@ -280,64 +280,62 @@ class TestConnectorApi extends SmallTest with Matchers {
   }
 
   @Test
-  def ignoreNameOnCreation(): Unit = an[NullPointerException] should be thrownBy ConnectorApi
-    .access()
+  def ignoreNameOnCreation(): Unit = an[NullPointerException] should be thrownBy ConnectorApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .create()
 
   @Test
-  def ignoreNameOnUpdate(): Unit = an[NullPointerException] should be thrownBy ConnectorApi
-    .access()
+  def ignoreNameOnUpdate(): Unit = an[NullPointerException] should be thrownBy ConnectorApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .update()
 
   @Test
-  def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy ConnectorApi.access().request().name("")
+  def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy ConnectorApi.access.request.name("")
 
   @Test
-  def nullName(): Unit = an[NullPointerException] should be thrownBy ConnectorApi.access().request().name(null)
+  def nullName(): Unit = an[NullPointerException] should be thrownBy ConnectorApi.access.request.name(null)
 
   @Test
   def emptyClassName(): Unit =
-    an[IllegalArgumentException] should be thrownBy ConnectorApi.access().request().className("")
+    an[IllegalArgumentException] should be thrownBy ConnectorApi.access.request.className("")
 
   @Test
   def nullClassName(): Unit =
-    an[NullPointerException] should be thrownBy ConnectorApi.access().request().className(null)
+    an[NullPointerException] should be thrownBy ConnectorApi.access.request.className(null)
 
   @Test
   def emptyColumns(): Unit =
-    an[IllegalArgumentException] should be thrownBy ConnectorApi.access().request().columns(Seq.empty)
+    an[IllegalArgumentException] should be thrownBy ConnectorApi.access.request.columns(Seq.empty)
 
   @Test
-  def nullColumns(): Unit = an[NullPointerException] should be thrownBy ConnectorApi.access().request().columns(null)
+  def nullColumns(): Unit = an[NullPointerException] should be thrownBy ConnectorApi.access.request.columns(null)
 
   @Test
   def emptyWorkerClusterName(): Unit =
-    an[IllegalArgumentException] should be thrownBy ConnectorApi.access().request().workerClusterName("")
+    an[IllegalArgumentException] should be thrownBy ConnectorApi.access.request.workerClusterName("")
 
   @Test
   def nullWorkerClusterName(): Unit =
-    an[NullPointerException] should be thrownBy ConnectorApi.access().request().workerClusterName(null)
+    an[NullPointerException] should be thrownBy ConnectorApi.access.request.workerClusterName(null)
 
   @Test
   def emptyTopicNames(): Unit =
-    an[IllegalArgumentException] should be thrownBy ConnectorApi.access().request().topicNames(Seq.empty)
+    an[IllegalArgumentException] should be thrownBy ConnectorApi.access.request.topicNames(Seq.empty)
 
   @Test
   def nullTopicNames(): Unit =
-    an[NullPointerException] should be thrownBy ConnectorApi.access().request().topicName(null)
+    an[NullPointerException] should be thrownBy ConnectorApi.access.request.topicName(null)
 
   @Test
   def emptySettings(): Unit =
-    an[IllegalArgumentException] should be thrownBy ConnectorApi.access().request().settings(Map.empty)
+    an[IllegalArgumentException] should be thrownBy ConnectorApi.access.request.settings(Map.empty)
 
   @Test
-  def nullSettings(): Unit = an[NullPointerException] should be thrownBy ConnectorApi.access().request().settings(null)
+  def nullSettings(): Unit = an[NullPointerException] should be thrownBy ConnectorApi.access.request.settings(null)
 
   @Test
   def testCreation(): Unit = {
@@ -350,7 +348,7 @@ class TestConnectorApi extends SmallTest with Matchers {
       CommonUtils.randomString(10) -> CommonUtils.randomString(10)
     )
     val creation =
-      ConnectorApi.access().request().name(name).className(className).topicNames(topicNames).settings(map).creation
+      ConnectorApi.access.request.name(name).className(className).topicNames(topicNames).settings(map).creation
     creation.name shouldBe name
     creation.className shouldBe className
     creation.topicNames shouldBe topicNames
@@ -358,4 +356,66 @@ class TestConnectorApi extends SmallTest with Matchers {
       case (k, v) => creation.plain(k) shouldBe v
     }
   }
+
+  @Test
+  def testDefaultNumberOfTasks(): Unit =
+    ConnectorApi.CONNECTOR_CREATION_JSON_FORMAT
+      .read(s"""
+                                                                | {
+                                                                |  "name": "ftp source"
+                                                                |}
+                                                                |     """.stripMargin.parseJson)
+      .numberOfTasks shouldBe 1
+
+  @Test
+  def parseColumn(): Unit = {
+    val name = CommonUtils.randomString()
+    val newName = CommonUtils.randomString()
+    val dataType = DataType.BOOLEAN
+    val order = 1
+    val column = ConnectorApi.COLUMN_JSON_FORMAT.read(s"""
+                                            | {
+                                            |  "name": "$name",
+                                            |  "newName": "$newName",
+                                            |  "dataType": "${dataType.name}",
+                                            |  "order": $order
+                                            |}
+                                            |     """.stripMargin.parseJson)
+    column.name shouldBe name
+    column.newName shouldBe newName
+    column.dataType shouldBe dataType
+    column.order shouldBe order
+
+    val column2 = ConnectorApi.COLUMN_JSON_FORMAT.read(s"""
+                                                         | {
+                                                         |  "name": "$name",
+                                                         |  "dataType": "${dataType.name}",
+                                                         |  "order": $order
+                                                         |}
+                                                         |     """.stripMargin.parseJson)
+    column2.name shouldBe name
+    column2.newName shouldBe name
+    column2.dataType shouldBe dataType
+    column2.order shouldBe order
+  }
+
+  @Test
+  def emptyStringForColumn(): Unit =
+    an[DeserializationException] should be thrownBy ConnectorApi.COLUMN_JSON_FORMAT.read(s"""
+                                                                              | {
+                                                                              |  "name": "",
+                                                                              |  "dataType": "Boolean",
+                                                                              |  "order": 1
+                                                                              |}
+                                                                              |     """.stripMargin.parseJson)
+
+  @Test
+  def negativeOrderForColumn(): Unit =
+    an[DeserializationException] should be thrownBy ConnectorApi.COLUMN_JSON_FORMAT.read(s"""
+       | {
+       |  "name": "aaa",
+       |  "dataType": "Boolean",
+       |  "order": -1
+       |}
+       |     """.stripMargin.parseJson)
 }

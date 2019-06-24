@@ -21,7 +21,7 @@ import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json.{PropGroups, SettingDefinition, StringList}
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json.{DeserializationException, JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
@@ -46,23 +46,36 @@ object ConnectorApi {
     case object DESTROYED extends ConnectorState("DESTROYED")
   }
   // TODO: remove this format after ohara manager starts to use new APIs
-  implicit val COLUMN_JSON_FORMAT: RootJsonFormat[Column] = new RootJsonFormat[Column] {
-    override def read(json: JsValue): Column = json.asJsObject.getFields("name", "newName", "dataType", "order") match {
-      case Seq(JsString(n), JsString(nn), JsString(t), JsNumber(o)) =>
-        Column.builder().name(n).newName(nn).dataType(DataType.valueOf(t.toUpperCase())).order(o.toInt).build()
-      case Seq(JsString(n), JsNull, JsString(t), JsNumber(o)) =>
-        Column.builder().name(n).newName(n).dataType(DataType.valueOf(t.toUpperCase())).order(o.toInt).build()
-      case Seq(JsString(n), JsString(t), JsNumber(o)) =>
-        Column.builder().name(n).newName(n).dataType(DataType.valueOf(t.toUpperCase)).order(o.toInt).build()
-      case _ => throw new UnsupportedOperationException(s"invalid format from ${classOf[Column].getSimpleName}")
-    }
-    override def write(obj: Column): JsValue = JsObject(
-      "name" -> JsString(obj.name),
-      "newName" -> JsString(obj.newName),
-      "dataType" -> JsString(obj.dataType.name),
-      "order" -> JsNumber(obj.order)
-    )
-  }
+
+  implicit val COLUMN_JSON_FORMAT: RootJsonFormat[Column] = JsonRefiner[Column]
+    .format(new RootJsonFormat[Column] {
+      private[this] val nameKey: String = "name"
+      private[this] val newNameKey: String = "newName"
+      private[this] val dataTypeKey: String = "dataType"
+      private[this] val orderKey: String = "order"
+      override def read(json: JsValue): Column = try Column
+        .builder()
+        .name(json.asJsObject.fields(nameKey).convertTo[String])
+        .newName(json.asJsObject.fields(newNameKey).convertTo[String])
+        .dataType(DataType.valueOf(json.asJsObject.fields(dataTypeKey).convertTo[String].toUpperCase))
+        .order(json.asJsObject.fields(orderKey).convertTo[Int])
+        .build()
+      catch {
+        case e: Throwable => throw DeserializationException("failed to parse input string", e)
+      }
+      override def write(obj: Column): JsValue = JsObject(
+        nameKey -> JsString(obj.name),
+        newNameKey -> JsString(obj.newName),
+        dataTypeKey -> JsString(obj.dataType.name),
+        orderKey -> JsNumber(obj.order)
+      )
+    })
+    // the default value of new name is equal to origin name
+    .defaultToAnother("newName", "name")
+    // the order can't be negative!!
+    .rejectNegativeNumber()
+    .rejectEmptyString()
+    .refine
 
   final case class Creation(settings: Map[String, JsValue]) extends CreationRequest {
 
@@ -91,18 +104,15 @@ object ConnectorApi {
     override def name: String = plain(SettingDefinition.CONNECTOR_NAME_DEFINITION.key())
   }
 
-  implicit val CONNECTOR_CREATION_REQUEST_JSON_FORMAT: RootJsonFormat[Creation] =
-    new RootJsonFormat[Creation] {
+  implicit val CONNECTOR_CREATION_JSON_FORMAT: RootJsonFormat[Creation] = JsonRefiner[Creation]
+    .format(new RootJsonFormat[Creation] {
       override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
-      override def read(json: JsValue): Creation = {
-        var fields = noJsNull(json.asJsObject.fields)
-        // in request, we mark the "numberOfTasks" as optional.
-        if (!fields.contains(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key()))
-          fields = fields ++ Map(
-            SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key() -> JsNumber(DEFAULT_NUMBER_OF_TASKS))
-        Creation(fields)
-      }
-    }
+      override def read(json: JsValue): Creation = Creation(json.asJsObject.fields)
+    })
+    // set the default number of tasks
+    .defaultInt(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key(), DEFAULT_NUMBER_OF_TASKS)
+    .rejectEmptyString()
+    .refine
 
   import MetricsApi._
 
@@ -318,7 +328,7 @@ object ConnectorApi {
     def resume(id: String)(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
       exec.put[ConnectorDescription, ErrorApi.Error](actionUrl(id, RESUME_COMMAND))
 
-    def request(): Request = new Request {
+    def request: Request = new Request {
       override def create()(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
         exec.post[Creation, ConnectorDescription, ErrorApi.Error](_url, creation)
 
@@ -337,5 +347,5 @@ object ConnectorApi {
     }
   }
 
-  def access(): Access = new Access
+  def access: Access = new Access
 }

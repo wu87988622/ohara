@@ -36,21 +36,19 @@ class TestListManyPipelines extends WithBrokerWorker with Matchers {
   @Test
   def test(): Unit = {
     val topic = result(
-      TopicApi
-        .access()
+      TopicApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .request()
+        .request
         .name(CommonUtils.randomString(10))
         .create()
     )
 
     val connector = result(
-      ConnectorApi
-        .access()
+      ConnectorApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .request()
+        .request
         .name(CommonUtils.randomString(10))
         .className("com.island.ohara.connector.perf.PerfSource")
         .topicName(topic.name)

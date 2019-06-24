@@ -31,24 +31,22 @@ class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
   private[this] val configurator =
     Configurator.builder().fake(testUtil.brokersConnProps, testUtil().workersConnProps()).build()
 
-  private[this] val connectorApi = ConnectorApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] val connectorApi = ConnectorApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
   @Test
   def failToRun(): Unit = {
     val topic = result(
-      TopicApi
-        .access()
+      TopicApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .request()
+        .request
         .name(CommonUtils.randomString(10))
         .create()
     )
     val connector = result(
-      connectorApi
-        .request()
+      connectorApi.request
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
         .topicName(topic.name)
@@ -69,7 +67,7 @@ class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .request()
+        .request
         .name(CommonUtils.randomString())
         .flows(
           Seq(
@@ -95,18 +93,16 @@ class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
   @Test
   def succeedToRun(): Unit = {
     val topic = result(
-      TopicApi
-        .access()
+      TopicApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .request()
+        .request
         .name(CommonUtils.randomString(10))
         .create()
     )
 
     val connector = result(
-      connectorApi
-        .request()
+      connectorApi.request
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
         .topicName(topic.name)
@@ -126,7 +122,7 @@ class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .request()
+        .request
         .name(CommonUtils.randomString())
         .flows(
           Seq(

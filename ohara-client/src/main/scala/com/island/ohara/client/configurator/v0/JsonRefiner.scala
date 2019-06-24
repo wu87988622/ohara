@@ -65,10 +65,19 @@ trait JsonRefiner[T] {
   def connectionPort(keys: Seq[String]): JsonRefiner[T]
 
   /**
-    * reject thr request having a key which is associated to empty string
+    * reject the request having a key which is associated to empty string
     * @return this refiner
     */
   def rejectEmptyString(): JsonRefiner[T]
+
+  /**
+    * reject the value having negative number. For instance, the following request will be rejected.
+    * {
+    *   "a": -1
+    * }
+    * @return this refiner
+    */
+  def rejectNegativeNumber(): JsonRefiner[T]
 
   def defaultShort(key: String, value: Short): JsonRefiner[T] = defaultShorts(Map(key -> value))
 
@@ -107,7 +116,29 @@ trait JsonRefiner[T] {
     * @param keyAndDefaultNumber keys and their default value
     * @return this refiner
     */
-  def defaultNumbers(keyAndDefaultNumber: Map[String, JsNumber]): JsonRefiner[T]
+  protected def defaultNumbers(keyAndDefaultNumber: Map[String, JsNumber]): JsonRefiner[T]
+
+  def defaultToAnother(key: String, anotherKey: String): JsonRefiner[T] = defaultToAnother(
+    Map(CommonUtils.requireNonEmpty(key) -> CommonUtils.requireNonEmpty(anotherKey)))
+
+  /**
+    * auto-fill the value of key by another key's value. For example
+    * defaultToAnother(Map("k0", "k1"))
+    * input:
+    * {
+    *   "k1": "abc"
+    * }
+    * output:
+    * {
+    *   "k0": "abc",
+    *   "k1": "abc"
+    * }
+    * Noted: another key must be exist. Otherwise, DeserializationException will be thrown.
+    *
+    * @param keyPairs the fist key mapped to input json that it can be ignored or null. the second key mapped to input json that it must exists!!!
+    * @return this refiner
+    */
+  def defaultToAnother(keyPairs: Map[String, String]): JsonRefiner[T]
 
   def refine: RootJsonFormat[T]
 }
@@ -120,7 +151,9 @@ object JsonRefiner {
     private[this] var nullToRandomBindPort: Seq[String] = Seq.empty
     private[this] var nullToRandomString: Seq[String] = Seq.empty
     private[this] var keyAndDefaultNumber: Map[String, JsNumber] = Map.empty
+    private[this] var defaultToAnother: Map[String, String] = Map.empty
     private[this] var _rejectEmptyString: Boolean = false
+    private[this] var _rejectNegativeNumber: Boolean = false
 
     override def format(format: RootJsonFormat[T]): JsonRefiner[T] = {
       this.format = Objects.requireNonNull(format)
@@ -152,28 +185,43 @@ object JsonRefiner {
       this
     }
 
-    override def defaultNumbers(keyAndDefaultNumber: Map[String, JsNumber]): JsonRefiner[T] = {
+    override def rejectNegativeNumber(): JsonRefiner[T] = {
+      this._rejectNegativeNumber = true
+      this
+    }
+
+    override protected def defaultNumbers(keyAndDefaultNumber: Map[String, JsNumber]): JsonRefiner[T] = {
       this.keyAndDefaultNumber = this.keyAndDefaultNumber ++ keyAndDefaultNumber
+      this
+    }
+
+    override def defaultToAnother(keyPairs: Map[String, String]): JsonRefiner[T] = {
+      this.defaultToAnother = this.defaultToAnother ++ keyPairs
       this
     }
 
     override def refine: RootJsonFormat[T] = {
       Objects.requireNonNull(format)
       // check the duplicate keys in different groups
-      if (nullToEmptyArray.size + connectionPort.size + nullToRandomBindPort.size + nullToRandomString.size + keyAndDefaultNumber.size
-            != (nullToEmptyArray ++ connectionPort ++ nullToRandomBindPort ++ nullToRandomString ++ keyAndDefaultNumber.keys).toSet.size)
+      // those rules are used to auto-fill a value to nonexistent key. Hence, we disallow to set multiple rules on the same key.
+      if (nullToEmptyArray.size + connectionPort.size + nullToRandomBindPort.size + nullToRandomString.size + keyAndDefaultNumber.size + defaultToAnother.size
+            != (nullToEmptyArray ++ connectionPort ++ nullToRandomBindPort ++ nullToRandomString ++ keyAndDefaultNumber.keys ++ defaultToAnother.keys).toSet.size)
         throw new IllegalArgumentException(
           s"duplicate key in different groups is illegal."
             + s", nullToEmptyArray:${nullToEmptyArray.mkString(",")}"
             + s", connectionPort:${connectionPort.mkString(",")}"
             + s", nullToRandomPort:${nullToRandomBindPort.mkString(",")}"
             + s", nullToRandomString:${nullToRandomString.mkString(",")}"
-            + s", keyAndDefaultNumber.keys:${keyAndDefaultNumber.keys.mkString(",")}")
+            + s", keyAndDefaultNumber.keys:${keyAndDefaultNumber.keys.mkString(",")}"
+            + s", defaultToAnother.keys:${defaultToAnother.keys.mkString(",")}"
+        )
       nullToEmptyArray.foreach(CommonUtils.requireNonEmpty)
       connectionPort.foreach(CommonUtils.requireNonEmpty)
       nullToRandomBindPort.foreach(CommonUtils.requireNonEmpty)
       nullToRandomString.foreach(CommonUtils.requireNonEmpty)
       keyAndDefaultNumber.keys.foreach(CommonUtils.requireNonEmpty)
+      defaultToAnother.keys.foreach(CommonUtils.requireNonEmpty)
+      defaultToAnother.values.foreach(CommonUtils.requireNonEmpty)
 
       new RootJsonFormat[T] {
         override def read(json: JsValue): T = {
@@ -245,6 +293,13 @@ object JsonRefiner {
                 .getOrElse(value)
           }
 
+          // convert the null to the value of another key
+          fields = fields ++ defaultToAnother.filterNot(pair => fields.contains(pair._1)).map {
+            case (key, anotherKye) =>
+              if (!fields.contains(anotherKye)) throw DeserializationException(s"$anotherKye is required!!!")
+              key -> fields(anotherKye)
+          }
+
           // check the connection port
           connectionPort.foreach { key =>
             fields.get(key).foreach {
@@ -260,6 +315,7 @@ object JsonRefiner {
             }
           }
 
+          // check empty string
           if (_rejectEmptyString) fields.foreach {
             case (key, value) =>
               value match {
@@ -269,11 +325,21 @@ object JsonRefiner {
               }
           }
 
+          // check negative number
+          if (_rejectNegativeNumber) fields.foreach {
+            case (key, value) =>
+              value match {
+                case s: JsNumber =>
+                  if (s.value < 0)
+                    throw DeserializationException(s"the value of $key MUST be bigger than or equal to zero!!!")
+                case _ => // nothing
+              }
+          }
+
           format.read(JsObject(fields))
         }
         override def write(obj: T): JsValue = format.write(obj)
       }
     }
-
   }
 }
