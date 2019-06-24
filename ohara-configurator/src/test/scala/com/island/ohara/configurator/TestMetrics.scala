@@ -112,9 +112,9 @@ class TestMetrics extends WithBrokerWorker with Matchers {
         .numberOfTasks(1)
         .create())
 
-    val pipelineApi = PipelineApi.access().hostname(configurator.hostname).port(configurator.port)
+    val pipelineApi = PipelineApi.access.hostname(configurator.hostname).port(configurator.port)
 
-    val pipeline = result(pipelineApi.request().name(CommonUtils.randomString()).flow(topic.name, sink.id).create())
+    val pipeline = result(pipelineApi.request.name(CommonUtils.randomString()).flow(topic.name, sink.id).create())
 
     pipeline.objects.filter(_.id == sink.id).head.metrics.meters.size shouldBe 0
     result(connectorApi.start(sink.id))
@@ -146,9 +146,9 @@ class TestMetrics extends WithBrokerWorker with Matchers {
         .settings(Map("perf.batch" -> "1", "perf.frequence" -> java.time.Duration.ofSeconds(1).toString))
         .create())
 
-    val pipelineApi = PipelineApi.access().hostname(configurator.hostname).port(configurator.port)
+    val pipelineApi = PipelineApi.access.hostname(configurator.hostname).port(configurator.port)
 
-    val pipeline = result(pipelineApi.request().name(CommonUtils.randomString()).flow(topic.name, source.id).create())
+    val pipeline = result(pipelineApi.request.name(CommonUtils.randomString()).flow(topic.name, source.id).create())
 
     pipeline.objects.filter(_.id == source.id).head.metrics.meters.size shouldBe 0
     result(connectorApi.start(source.id))

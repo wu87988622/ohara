@@ -24,7 +24,8 @@ import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 import spray.json._
 class TestJsonRefiner extends SmallTest with Matchers {
-  private[this] val format: RootJsonFormat[SimpleData] = jsonFormat4(SimpleData)
+  private[this] implicit val format: RootJsonFormat[SimpleData] = jsonFormat4(SimpleData)
+  private[this] val format2: RootJsonFormat[SimpleData2] = jsonFormat2(SimpleData2)
 
   @Test
   def nullFormat(): Unit = an[NullPointerException] should be thrownBy JsonRefiner[SimpleData].format(null)
@@ -376,4 +377,130 @@ class TestJsonRefiner extends SmallTest with Matchers {
             | "stringArray": []
             |}
           """.stripMargin.parseJson)
+
+  @Test
+  def testNestedObjectForEmptyString(): Unit =
+    JsonRefiner[SimpleData2].format(format2).rejectEmptyString().refine.read("""
+            |{
+            |  "data": {
+            |    "stringValue": "abc",
+            |    "bindPort": 22,
+            |    "connectionPort": 123,
+            |    "stringArray": []
+            |  },
+            |  "data2": [
+            |    {
+            |      "stringValue": "abc",
+            |      "bindPort": 22,
+            |      "connectionPort": 123,
+            |      "stringArray": []
+            |    }
+            |  ]
+            |
+            |}
+          """.stripMargin.parseJson)
+
+  @Test
+  def testNestedObjectForEmptyStringWithEmptyInFirstElement(): Unit =
+    an[DeserializationException] should be thrownBy JsonRefiner[SimpleData2]
+      .format(format2)
+      .rejectEmptyString()
+      .refine
+      .read("""
+            |{
+            |  "data": {
+            |    "stringValue": "",
+            |    "bindPort": 22,
+            |    "connectionPort": 123,
+            |    "stringArray": []
+            |  },
+            |  "data2": [
+            |    {
+            |      "stringValue": "abc",
+            |      "bindPort": 22,
+            |      "connectionPort": 123,
+            |      "stringArray": []
+            |    }
+            |  ]
+            |
+            |}
+          """.stripMargin.parseJson)
+
+  @Test
+  def testNestedObjectForEmptyStringWithEmptyInSecondElement(): Unit =
+    an[DeserializationException] should be thrownBy JsonRefiner[SimpleData2]
+      .format(format2)
+      .rejectEmptyString()
+      .refine
+      .read("""
+            |{
+            |  "data": {
+            |    "stringValue": "aaa",
+            |    "bindPort": 22,
+            |    "connectionPort": 123,
+            |    "stringArray": []
+            |  },
+            |  "data2": [
+            |    {
+            |      "stringValue": "",
+            |      "bindPort": 22,
+            |      "connectionPort": 123,
+            |      "stringArray": []
+            |    }
+            |  ]
+            |
+            |}
+          """.stripMargin.parseJson)
+
+  @Test
+  def testNestedObjectForNegativeNumberWithEmptyInFirstElement(): Unit =
+    an[DeserializationException] should be thrownBy JsonRefiner[SimpleData2]
+      .format(format2)
+      .rejectNegativeNumber()
+      .refine
+      .read("""
+              |{
+              |  "data": {
+              |    "stringValue": "aaa",
+              |    "bindPort": -1,
+              |    "connectionPort": 123,
+              |    "stringArray": []
+              |  },
+              |  "data2": [
+              |    {
+              |      "stringValue": "abc",
+              |      "bindPort": 22,
+              |      "connectionPort": 123,
+              |      "stringArray": []
+              |    }
+              |  ]
+              |
+              |}
+            """.stripMargin.parseJson)
+
+  @Test
+  def testNestedObjectForNegativeNumberWithEmptyInSecondElement(): Unit =
+    an[DeserializationException] should be thrownBy JsonRefiner[SimpleData2]
+      .format(format2)
+      .rejectNegativeNumber()
+      .refine
+      .read("""
+              |{
+              |  "data": {
+              |    "stringValue": "aaa",
+              |    "bindPort": 22,
+              |    "connectionPort": 123,
+              |    "stringArray": []
+              |  },
+              |  "data2": [
+              |    {
+              |      "stringValue": "aaa",
+              |      "bindPort": -1,
+              |      "connectionPort": 123,
+              |      "stringArray": []
+              |    }
+              |  ]
+              |
+              |}
+            """.stripMargin.parseJson)
 }

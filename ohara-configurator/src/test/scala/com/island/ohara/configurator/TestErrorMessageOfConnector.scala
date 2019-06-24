@@ -63,8 +63,7 @@ class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
 
     // test state in pipeline
     val pipeline = result(
-      PipelineApi
-        .access()
+      PipelineApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
         .request
@@ -77,13 +76,13 @@ class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
             )))
         .create())
 
-    result(PipelineApi.access().hostname(configurator.hostname).port(configurator.port).get(pipeline.name)).objects
+    result(PipelineApi.access.hostname(configurator.hostname).port(configurator.port).get(pipeline.name)).objects
       .filter(_.name == connector.name)
       .head
       .state
       .get shouldBe ConnectorState.FAILED.name
 
-    result(PipelineApi.access().hostname(configurator.hostname).port(configurator.port).get(pipeline.name)).objects
+    result(PipelineApi.access.hostname(configurator.hostname).port(configurator.port).get(pipeline.name)).objects
       .filter(_.name == connector.name)
       .head
       .error
@@ -118,8 +117,7 @@ class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
 
     // test state in pipeline
     val pipeline = result(
-      PipelineApi
-        .access()
+      PipelineApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
         .request
@@ -132,13 +130,13 @@ class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
             )))
         .create())
 
-    result(PipelineApi.access().hostname(configurator.hostname).port(configurator.port).get(pipeline.name)).objects
+    result(PipelineApi.access.hostname(configurator.hostname).port(configurator.port).get(pipeline.name)).objects
       .filter(_.name == connector.name)
       .head
       .state
       .get shouldBe ConnectorState.RUNNING.name
 
-    result(PipelineApi.access().hostname(configurator.hostname).port(configurator.port).get(pipeline.name)).objects
+    result(PipelineApi.access.hostname(configurator.hostname).port(configurator.port).get(pipeline.name)).objects
       .filter(_.name == connector.name)
       .head
       .error

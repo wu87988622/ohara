@@ -55,13 +55,12 @@ class TestListManyPipelines extends WithBrokerWorker with Matchers {
         .numberOfTasks(1)
         .create())
 
-    val pipelines = (0 until numberOfPipelines).map { index =>
+    val pipelines = (0 until numberOfPipelines).map { _ =>
       result(
-        PipelineApi
-          .access()
+        PipelineApi.access
           .hostname(configurator.hostname)
           .port(configurator.port)
-          .request()
+          .request
           .name(CommonUtils.randomString())
           .flow(connector.name, topic.name)
           .create()
@@ -69,7 +68,7 @@ class TestListManyPipelines extends WithBrokerWorker with Matchers {
     }
 
     val listPipeline =
-      Await.result(PipelineApi.access().hostname(configurator.hostname).port(configurator.port).list, 10 seconds)
+      Await.result(PipelineApi.access.hostname(configurator.hostname).port(configurator.port).list, 10 seconds)
     pipelines.size shouldBe listPipeline.size
     pipelines.foreach { p =>
       listPipeline.exists(_.name == p.name) shouldBe true

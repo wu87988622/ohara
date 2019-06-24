@@ -21,8 +21,10 @@ import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
+import spray.json.DeserializationException
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import spray.json._
 class TestPipelineApi extends SmallTest with Matchers {
 
   @Test
@@ -42,7 +44,6 @@ class TestPipelineApi extends SmallTest with Matchers {
 
   @Test
   def parseDeprecatedJsonOfPipelineCreationRequest(): Unit = {
-    import spray.json._
     val from = CommonUtils.randomString()
     val to0 = CommonUtils.randomString()
     val to1 = CommonUtils.randomString()
@@ -95,41 +96,114 @@ class TestPipelineApi extends SmallTest with Matchers {
   }
 
   @Test
-  def ignoreNameOnCreation(): Unit = an[NullPointerException] should be thrownBy PipelineApi
-    .access()
+  def ignoreNameOnCreation(): Unit = an[NullPointerException] should be thrownBy PipelineApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .create()
 
   @Test
-  def ignoreNameOnUpdate(): Unit = an[NullPointerException] should be thrownBy PipelineApi
-    .access()
+  def ignoreNameOnUpdate(): Unit = an[NullPointerException] should be thrownBy PipelineApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .update()
 
   @Test
-  def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy PipelineApi.access().request().name("")
+  def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy PipelineApi.access.request.name("")
 
   @Test
-  def nullName(): Unit = an[NullPointerException] should be thrownBy PipelineApi.access().request().name(null)
+  def nullName(): Unit = an[NullPointerException] should be thrownBy PipelineApi.access.request.name(null)
 
   @Test
   def emptyWorkerClusterName(): Unit =
-    an[IllegalArgumentException] should be thrownBy PipelineApi.access().request().workerClusterName("")
+    an[IllegalArgumentException] should be thrownBy PipelineApi.access.request.workerClusterName("")
 
   @Test
   def nullWorkerClusterName(): Unit =
-    an[NullPointerException] should be thrownBy PipelineApi.access().request().workerClusterName(null)
+    an[NullPointerException] should be thrownBy PipelineApi.access.request.workerClusterName(null)
 
   @Test
   def emptyFlows(): Unit = {
     // pass since the update request requires the empty list
-    PipelineApi.access().request().flows(Seq.empty)
+    PipelineApi.access.request.flows(Seq.empty)
   }
 
   @Test
-  def nullFlows(): Unit = an[NullPointerException] should be thrownBy PipelineApi.access().request().flows(null)
+  def nullFlows(): Unit = an[NullPointerException] should be thrownBy PipelineApi.access.request.flows(null)
+
+  @Test
+  def parseFlow(): Unit = {
+    val from = CommonUtils.randomString()
+    val to = CommonUtils.randomString()
+    val flow = FLOW_JSON_FORMAT.read(s"""
+        |  {
+        |    "from": "$from",
+        |    "to": ["$to"]
+        |  }
+        |
+    """.stripMargin.parseJson)
+    flow.from shouldBe from
+    flow.to.size shouldBe 1
+    flow.to.head shouldBe to
+  }
+
+  @Test
+  def emptyFromInFlow(): Unit = an[DeserializationException] should be thrownBy FLOW_JSON_FORMAT.read("""
+      |  {
+      |    "from": "",
+      |    "to": ["to"]
+      |  }
+      |
+    """.stripMargin.parseJson)
+
+  @Test
+  def emptyToInFlow(): Unit = an[DeserializationException] should be thrownBy FLOW_JSON_FORMAT.read("""
+      |  {
+      |    "from": "aaa",
+      |    "to": [""]
+      |  }
+      |
+    """.stripMargin.parseJson)
+
+  @Test
+  def parseCreation(): Unit = {
+    val name = CommonUtils.randomString()
+    val creation = PIPELINE_CREATION_JSON_FORMAT.read(s"""
+        |  {
+        |    "name": "$name"
+        |  }
+        |
+    """.stripMargin.parseJson)
+    creation.name shouldBe name
+    creation.workerClusterName shouldBe None
+    creation.flows shouldBe Seq.empty
+  }
+
+  @Test
+  def emptyNameInCreation(): Unit =
+    an[DeserializationException] should be thrownBy PIPELINE_CREATION_JSON_FORMAT.read("""
+      |  {
+      |    "name": ""
+      |  }
+      |
+    """.stripMargin.parseJson)
+  @Test
+  def emptyWorkerClusterNameInCreation(): Unit =
+    an[DeserializationException] should be thrownBy PIPELINE_CREATION_JSON_FORMAT.read("""
+      |  {
+      |    "name": "aaa",
+      |    "workerClusterName": ""
+      |  }
+      |
+    """.stripMargin.parseJson)
+
+  @Test
+  def emptyWorkerClusterNameInUpdate(): Unit =
+    an[DeserializationException] should be thrownBy PIPELINE_UPDATE_JSON_FORMAT.read("""
+      |  {
+      |    "workerClusterName": ""
+      |  }
+      |
+    """.stripMargin.parseJson)
 }

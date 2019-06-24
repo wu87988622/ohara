@@ -28,7 +28,8 @@ object PipelineApi {
   val PIPELINES_PREFIX_PATH: String = "pipelines"
 
   final case class Flow(from: String, to: Set[String])
-  implicit val FLOW_JSON_FORMAT: RootJsonFormat[Flow] = jsonFormat2(Flow)
+  implicit val FLOW_JSON_FORMAT: RootJsonFormat[Flow] =
+    JsonRefiner[Flow].format(jsonFormat2(Flow)).rejectEmptyString().refine
 
   /**
     * @param flows  this filed is declared as option type since ohara supports partial update. Empty array means you want to **cleanup** this
@@ -36,8 +37,8 @@ object PipelineApi {
     */
   final case class Update(workerClusterName: Option[String], flows: Option[Seq[Flow]])
 
-  implicit val PIPELINE_UPDATE_JSON_FORMAT: RootJsonFormat[Update] =
-    new RootJsonFormat[Update] {
+  implicit val PIPELINE_UPDATE_JSON_FORMAT: RootJsonFormat[Update] = JsonRefiner[Update]
+    .format(new RootJsonFormat[Update] {
       private[this] val workerClusterNameKey = "workerClusterName"
       private[this] val flowsKey = "flows"
       private[this] val rulesKey = "rules"
@@ -80,7 +81,9 @@ object PipelineApi {
             }
         }
       )
-    }
+    })
+    .rejectEmptyString()
+    .refine
 
   final case class Creation(name: String, workerClusterName: Option[String], flows: Seq[Flow]) extends CreationRequest {
     def rules: Map[String, Set[String]] = flows.map { flow =>
@@ -88,7 +91,7 @@ object PipelineApi {
     }.toMap
   }
 
-  def toFlows(rules: Map[String, Set[String]]): Seq[Flow] = rules.map { e =>
+  private[this] def toFlows(rules: Map[String, Set[String]]): Seq[Flow] = rules.map { e =>
     Flow(
       from = e._1,
       to = e._2
@@ -103,8 +106,8 @@ object PipelineApi {
       flows = toFlows(rules)
     )
   }
-  implicit val PIPELINE_CREATION_JSON_FORMAT: RootJsonFormat[Creation] =
-    new RootJsonFormat[Creation] {
+  implicit val PIPELINE_CREATION_JSON_FORMAT: RootJsonFormat[Creation] = JsonRefiner[Creation]
+    .format(new RootJsonFormat[Creation] {
       private[this] val nameKey = "name"
       private[this] val workerClusterNameKey = "workerClusterName"
       private[this] val flowsKey = "flows"
@@ -115,8 +118,8 @@ object PipelineApi {
         Creation(
           name = json.asJsObject.fields(nameKey).asInstanceOf[JsString].value,
           workerClusterName = update.workerClusterName,
-          flows =
-            update.flows.getOrElse(throw DeserializationException(s"Object is missing required member '$flowsKey'"))
+          // TODO: we should reuse the JsonRefiner#nullToEmptyArray. However, we have to support the stale key "rules" ...
+          flows = update.flows.getOrElse(Seq.empty)
         )
       }
 
@@ -128,7 +131,10 @@ object PipelineApi {
           e._1 -> JsArray(e._2.map(JsString(_)).toVector)
         })
       )
-    }
+    })
+    .rejectEmptyString()
+    .refine
+
   import MetricsApi._
 
   final case class ObjectAbstract(id: String,
@@ -217,10 +223,10 @@ object PipelineApi {
   }
 
   class Access private[v0] extends Access2[Pipeline](PIPELINES_PREFIX_PATH) {
-    def request(): Request = new Request {
+    def request: Request = new Request {
       private[this] var name: String = _
       private[this] var workerClusterName: Option[String] = None
-      private[this] var flows: Seq[Flow] = null
+      private[this] var flows: Seq[Flow] = _
       override def name(name: String): Request = {
         this.name = CommonUtils.requireNonEmpty(name)
         this
@@ -256,5 +262,5 @@ object PipelineApi {
     }
   }
 
-  def access(): Access = new Access
+  def access: Access = new Access
 }

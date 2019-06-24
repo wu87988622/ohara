@@ -33,7 +33,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class TestPipelineRoute extends MediumTest with Matchers {
   private[this] val configurator = Configurator.builder().fake(1, 1).build()
 
-  private[this] val pipelineApi = PipelineApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] val pipelineApi = PipelineApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] val connectorApi = ConnectorApi.access.hostname(configurator.hostname).port(configurator.port)
 
@@ -43,7 +43,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
   def testMultiWorkerCluster(): Unit = {
 
     val pipeline0 = result(
-      pipelineApi.request().name(CommonUtils.randomString(10)).create()
+      pipelineApi.request.name(CommonUtils.randomString(10)).create()
     )
     pipeline0.workerClusterName shouldBe result(
       configurator.clusterCollie.workerCollie().cluster(pipeline0.workerClusterName))._1.name
@@ -74,7 +74,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
     )
 
     val pipeline1 = result(
-      pipelineApi.request().name(CommonUtils.randomString(10)).workerClusterName(wkCluster.name).create()
+      pipelineApi.request.name(CommonUtils.randomString(10)).workerClusterName(wkCluster.name).create()
     )
 
     pipeline1.workerClusterName shouldBe wkCluster.name
@@ -97,7 +97,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
     val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
 
     val pipeline = result(
-      pipelineApi.request().name(CommonUtils.randomString(10)).flow(Flow(connector.id, Set(topic.name))).create()
+      pipelineApi.request.name(CommonUtils.randomString(10)).flow(Flow(connector.id, Set(topic.name))).create()
     )
 
     pipeline.flows.size shouldBe 1
@@ -129,7 +129,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
     val name = CommonUtils.randomString()
     val flow = Flow(from = topic0.name, to = Set(topic1.name, topic2.name))
-    val pipeline = result(pipelineApi.request().name(name).flow(flow).create())
+    val pipeline = result(pipelineApi.request.name(name).flow(flow).create())
 
     result(pipelineApi.list).size shouldBe 1
     pipeline.name shouldBe name
@@ -145,7 +145,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
     val flow3 = Flow(from = topic0.name, to = Set.empty)
 
     // test update
-    val pipeline3 = result(pipelineApi.request().name(pipeline.name).flow(flow3).update())
+    val pipeline3 = result(pipelineApi.request.name(pipeline.name).flow(flow3).update())
 
     pipeline3.flows.size shouldBe 1
     pipeline3.flows.head shouldBe flow3
@@ -170,27 +170,26 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
     // topic0 -> topic0: self-bound
     an[IllegalArgumentException] should be thrownBy result(
-      pipelineApi.request().name(CommonUtils.randomString()).flow(topic0.name, topic0.name).create())
+      pipelineApi.request.name(CommonUtils.randomString()).flow(topic0.name, topic0.name).create())
 
     // hdfs0 is hdfs info so it can't be applied to pipeline
     an[IllegalArgumentException] should be thrownBy result(
-      pipelineApi.request().name(CommonUtils.randomString()).flow(topic0.name, hdfs.name).create())
+      pipelineApi.request.name(CommonUtils.randomString()).flow(topic0.name, hdfs.name).create())
 
-    val pipeline = result(
-      pipelineApi.request().name(CommonUtils.randomString()).flow(topic0.name, topic1.name).create())
+    val pipeline = result(pipelineApi.request.name(CommonUtils.randomString()).flow(topic0.name, topic1.name).create())
 
     result(pipelineApi.list).size shouldBe 1
 
     // topic0 -> topic0: self-bound
     an[IllegalArgumentException] should be thrownBy result(
-      pipelineApi.request().name(pipeline.name).flow(topic0.name, topic0.name).update())
+      pipelineApi.request.name(pipeline.name).flow(topic0.name, topic0.name).update())
 
     // hdfs0 is hdfs info so it can't be applied to pipeline
     an[IllegalArgumentException] should be thrownBy result(
-      pipelineApi.request().name(pipeline.name).flow(topic0.name, hdfs.name).update())
+      pipelineApi.request.name(pipeline.name).flow(topic0.name, hdfs.name).update())
 
     // good case
-    result(pipelineApi.request().name(pipeline.name).flow(topic0.name, Set.empty[String]).update())
+    result(pipelineApi.request.name(pipeline.name).flow(topic0.name, Set.empty[String]).update())
     result(pipelineApi.list).size shouldBe 1
   }
 
@@ -199,7 +198,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
     val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
 
     val pipeline = result(
-      pipelineApi.request().name(CommonUtils.randomString()).flow(topic.name, Set.empty[String]).create())
+      pipelineApi.request.name(CommonUtils.randomString()).flow(topic.name, Set.empty[String]).create())
 
     pipeline.workerClusterName shouldBe result(configurator.clusterCollie.workerCollie().clusters).head._1.name
 
@@ -215,7 +214,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
     val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
 
     val pipeline = result(
-      pipelineApi.request().name(CommonUtils.randomString()).flow(topic.name, Set.empty[String]).create())
+      pipelineApi.request.name(CommonUtils.randomString()).flow(topic.name, Set.empty[String]).create())
 
     pipeline.flows.size shouldBe 1
     pipeline.flows.head.from shouldBe topic.name
@@ -237,8 +236,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
     val topic1 = result(topicApi.request.name(CommonUtils.randomString(10)).create())
 
-    val pipeline = result(
-      pipelineApi.request().name(CommonUtils.randomString()).flow(topic0.name, topic1.name).create())
+    val pipeline = result(pipelineApi.request.name(CommonUtils.randomString()).flow(topic0.name, topic1.name).create())
 
     pipeline.flows.size shouldBe 1
     pipeline.flows.head.from shouldBe topic0.name
@@ -257,7 +255,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
   @Test
   def addPipelineWithUnknownCluster(): Unit =
     an[IllegalArgumentException] should be thrownBy result(
-      pipelineApi.request().name(CommonUtils.randomString()).workerClusterName(CommonUtils.randomString()).create()
+      pipelineApi.request.name(CommonUtils.randomString()).workerClusterName(CommonUtils.randomString()).create()
     )
 
   @Test
@@ -266,11 +264,9 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
     val topic1 = result(topicApi.request.name(CommonUtils.randomString(10)).create())
 
-    val pipeline0 = result(
-      pipelineApi.request().name(CommonUtils.randomString()).flow(topic0.name, topic1.name).create())
+    val pipeline0 = result(pipelineApi.request.name(CommonUtils.randomString()).flow(topic0.name, topic1.name).create())
 
-    val pipeline1 = result(
-      pipelineApi.request().name(CommonUtils.randomString()).flow(topic0.name, topic1.name).create())
+    val pipeline1 = result(pipelineApi.request.name(CommonUtils.randomString()).flow(topic0.name, topic1.name).create())
 
     val pipelines = result(pipelineApi.list)
     pipelines.size shouldBe 2
@@ -289,8 +285,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
         .numberOfTasks(1)
         .create())
 
-    val pipeline = result(
-      pipelineApi.request().name(CommonUtils.randomString()).flow(topic.name, connector.id).create())
+    val pipeline = result(pipelineApi.request.name(CommonUtils.randomString()).flow(topic.name, connector.id).create())
 
     pipeline.objects.size shouldBe 2
     pipeline.objects.foreach { obj =>
@@ -310,8 +305,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
         .numberOfTasks(1)
         .create())
 
-    val pipeline = result(
-      pipelineApi.request().name(CommonUtils.randomString()).flow(topic.name, connector.id).create())
+    val pipeline = result(pipelineApi.request.name(CommonUtils.randomString()).flow(topic.name, connector.id).create())
 
     pipeline.objects.size shouldBe 2
     pipeline.objects.filter(_.id == connector.id).foreach { obj =>
@@ -333,7 +327,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
         .create())
 
     val pipeline = result(
-      pipelineApi.request().name(CommonUtils.randomString()).flow(source.id, Set.empty[String]).create())
+      pipelineApi.request.name(CommonUtils.randomString()).flow(source.id, Set.empty[String]).create())
 
     pipeline.objects.foreach(obj => obj.state shouldBe None)
 
@@ -341,7 +335,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
     // we don't want to compare state since the state may be changed
     result(connectorApi.start(source.id)).copy(state = None) shouldBe source.copy(state = None)
     val pipeline2 = result(
-      PipelineApi.access().hostname(configurator.hostname).port(configurator.port).get(pipeline.id)
+      PipelineApi.access.hostname(configurator.hostname).port(configurator.port).get(pipeline.id)
     )
     pipeline2.objects.foreach(
       obj => obj.state.get shouldBe "RUNNING"
@@ -366,9 +360,9 @@ class TestPipelineRoute extends MediumTest with Matchers {
     val streamapp = result(
       StreamApi.accessOfProperty().hostname(configurator.hostname).port(configurator.port).add(streamAppRequest))
 
-    result(pipelineApi.request().name(CommonUtils.randomString()).flow(source.id, topic.name).create()).objects.size shouldBe 2
+    result(pipelineApi.request.name(CommonUtils.randomString()).flow(source.id, topic.name).create()).objects.size shouldBe 2
 
-    result(pipelineApi.request().name(CommonUtils.randomString()).flow(source.id, streamapp.id).create()).objects.size shouldBe 2
+    result(pipelineApi.request.name(CommonUtils.randomString()).flow(source.id, streamapp.id).create()).objects.size shouldBe 2
   }
 
   @Test
@@ -381,7 +375,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
         .create())
 
     an[IllegalArgumentException] should be thrownBy result(
-      pipelineApi.request().name(CommonUtils.randomString()).flow(source.id, CommonUtils.randomString()).create())
+      pipelineApi.request.name(CommonUtils.randomString()).flow(source.id, CommonUtils.randomString()).create())
 
     val source2 = result(
       connectorApi.request
@@ -390,8 +384,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
         .numberOfTasks(1)
         .create())
     an[IllegalArgumentException] should be thrownBy result(
-      pipelineApi
-        .request()
+      pipelineApi.request
         .name(CommonUtils.randomString())
         .flow(source.id, Set(source2.id, CommonUtils.randomString()))
         .create())
@@ -407,8 +400,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
         .create())
 
     an[IllegalArgumentException] should be thrownBy
-      result(
-        pipelineApi.request().name(CommonUtils.randomString()).flow(CommonUtils.randomString(), source.id).create())
+      result(pipelineApi.request.name(CommonUtils.randomString()).flow(CommonUtils.randomString(), source.id).create())
   }
 
   @Test
@@ -418,18 +410,17 @@ class TestPipelineRoute extends MediumTest with Matchers {
   @Test
   def duplicateUpdate(): Unit = {
     val count = 10
-    (0 until count).foreach(_ =>
-      result(pipelineApi.request().name(CommonUtils.randomString()).flows(Seq.empty).update()))
+    (0 until count).foreach(_ => result(pipelineApi.request.name(CommonUtils.randomString()).flows(Seq.empty).update()))
     result(pipelineApi.list).size shouldBe count
   }
 
   @Test
   def updatingNonexistentNameCanNotIgnoreFlows(): Unit = {
     an[IllegalArgumentException] should be thrownBy result(
-      pipelineApi.request().name(CommonUtils.randomString()).update())
+      pipelineApi.request.name(CommonUtils.randomString()).update())
     val name = CommonUtils.randomString()
     val flows: Seq[Flow] = Seq.empty
-    val pipeline = result(pipelineApi.request().name(name).flows(flows).update())
+    val pipeline = result(pipelineApi.request.name(name).flows(flows).update())
     result(pipelineApi.list).size shouldBe 1
     pipeline.name shouldBe name
     pipeline.flows shouldBe flows
@@ -439,12 +430,12 @@ class TestPipelineRoute extends MediumTest with Matchers {
   def updateOnlyFlow(): Unit = {
     val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
     val pipeline = result(
-      pipelineApi.request().name(CommonUtils.randomString()).flow(topic.name, Set.empty[String]).update())
+      pipelineApi.request.name(CommonUtils.randomString()).flow(topic.name, Set.empty[String]).update())
     pipeline.flows.size shouldBe 1
     pipeline.flows.head.from shouldBe topic.name
     pipeline.flows.head.to.size shouldBe 0
 
-    val pipeline2 = result(pipelineApi.request().name(pipeline.name).flows(Seq.empty).update())
+    val pipeline2 = result(pipelineApi.request.name(pipeline.name).flows(Seq.empty).update())
     result(pipelineApi.list).size shouldBe 1
     pipeline2.name shouldBe pipeline.name
     pipeline2.flows shouldBe Seq.empty
@@ -454,9 +445,9 @@ class TestPipelineRoute extends MediumTest with Matchers {
   def updateOnlyWorkerClusterName(): Unit = {
     val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
     val pipeline = result(
-      pipelineApi.request().name(CommonUtils.randomString()).flow(topic.name, Set.empty[String]).update())
+      pipelineApi.request.name(CommonUtils.randomString()).flow(topic.name, Set.empty[String]).update())
     an[IllegalArgumentException] should be thrownBy result(
-      pipelineApi.request().name(pipeline.name).workerClusterName(CommonUtils.randomString()).update())
+      pipelineApi.request.name(pipeline.name).workerClusterName(CommonUtils.randomString()).update())
   }
 
   @Test
@@ -471,7 +462,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
         .numberOfTasks(1)
         .create())
 
-    val pipeline = result(pipelineApi.request().name(methodName()).flow(topic.name, connector.name).create())
+    val pipeline = result(pipelineApi.request.name(methodName()).flow(topic.name, connector.name).create())
 
     // start the connector
     result(connectorApi.start(connector.name)).state should not be None

@@ -65,7 +65,8 @@ trait JsonRefiner[T] {
   def connectionPort(keys: Seq[String]): JsonRefiner[T]
 
   /**
-    * reject the request having a key which is associated to empty string
+    * reject the request having a key which is associated to empty string.
+    * Noted: this rule is applied to all key-value even if the pair is in nested object.
     * @return this refiner
     */
   def rejectEmptyString(): JsonRefiner[T]
@@ -75,6 +76,7 @@ trait JsonRefiner[T] {
     * {
     *   "a": -1
     * }
+    * Noted: this rule is applied to all key-value even if the pair is in nested object.
     * @return this refiner
     */
   def rejectNegativeNumber(): JsonRefiner[T]
@@ -150,7 +152,7 @@ object JsonRefiner {
     private[this] var connectionPort: Seq[String] = Seq.empty
     private[this] var nullToRandomBindPort: Seq[String] = Seq.empty
     private[this] var nullToRandomString: Seq[String] = Seq.empty
-    private[this] var keyAndDefaultNumber: Map[String, JsNumber] = Map.empty
+    private[this] var defaultNumbers: Map[String, JsNumber] = Map.empty
     private[this] var defaultToAnother: Map[String, String] = Map.empty
     private[this] var _rejectEmptyString: Boolean = false
     private[this] var _rejectNegativeNumber: Boolean = false
@@ -190,8 +192,8 @@ object JsonRefiner {
       this
     }
 
-    override protected def defaultNumbers(keyAndDefaultNumber: Map[String, JsNumber]): JsonRefiner[T] = {
-      this.keyAndDefaultNumber = this.keyAndDefaultNumber ++ keyAndDefaultNumber
+    override protected def defaultNumbers(defaultNumbers: Map[String, JsNumber]): JsonRefiner[T] = {
+      this.defaultNumbers = this.defaultNumbers ++ defaultNumbers
       this
     }
 
@@ -204,22 +206,22 @@ object JsonRefiner {
       Objects.requireNonNull(format)
       // check the duplicate keys in different groups
       // those rules are used to auto-fill a value to nonexistent key. Hence, we disallow to set multiple rules on the same key.
-      if (nullToEmptyArray.size + connectionPort.size + nullToRandomBindPort.size + nullToRandomString.size + keyAndDefaultNumber.size + defaultToAnother.size
-            != (nullToEmptyArray ++ connectionPort ++ nullToRandomBindPort ++ nullToRandomString ++ keyAndDefaultNumber.keys ++ defaultToAnother.keys).toSet.size)
+      if (nullToEmptyArray.size + connectionPort.size + nullToRandomBindPort.size + nullToRandomString.size + defaultNumbers.size + defaultToAnother.size
+            != (nullToEmptyArray ++ connectionPort ++ nullToRandomBindPort ++ nullToRandomString ++ defaultNumbers.keys ++ defaultToAnother.keys).toSet.size)
         throw new IllegalArgumentException(
           s"duplicate key in different groups is illegal."
             + s", nullToEmptyArray:${nullToEmptyArray.mkString(",")}"
             + s", connectionPort:${connectionPort.mkString(",")}"
             + s", nullToRandomPort:${nullToRandomBindPort.mkString(",")}"
             + s", nullToRandomString:${nullToRandomString.mkString(",")}"
-            + s", keyAndDefaultNumber.keys:${keyAndDefaultNumber.keys.mkString(",")}"
+            + s", keyAndDefaultNumber.keys:${defaultNumbers.keys.mkString(",")}"
             + s", defaultToAnother.keys:${defaultToAnother.keys.mkString(",")}"
         )
       nullToEmptyArray.foreach(CommonUtils.requireNonEmpty)
       connectionPort.foreach(CommonUtils.requireNonEmpty)
       nullToRandomBindPort.foreach(CommonUtils.requireNonEmpty)
       nullToRandomString.foreach(CommonUtils.requireNonEmpty)
-      keyAndDefaultNumber.keys.foreach(CommonUtils.requireNonEmpty)
+      defaultNumbers.keys.foreach(CommonUtils.requireNonEmpty)
       defaultToAnother.keys.foreach(CommonUtils.requireNonEmpty)
       defaultToAnother.values.foreach(CommonUtils.requireNonEmpty)
 
@@ -280,7 +282,7 @@ object JsonRefiner {
           }.toMap
 
           // convert null to JsNumber
-          fields = fields ++ keyAndDefaultNumber.map {
+          fields = fields ++ defaultNumbers.map {
             case (key, value) =>
               key -> fields
                 .get(key)
@@ -316,24 +318,35 @@ object JsonRefiner {
           }
 
           // check empty string
-          if (_rejectEmptyString) fields.foreach {
-            case (key, value) =>
-              value match {
-                case s: JsString =>
-                  if (s.value.isEmpty) throw DeserializationException(s"the value of $key can't be empty string!!!")
-                case _ => // nothing
+          def checkEmptyString(key: String, s: JsString): Unit =
+            if (s.value.isEmpty) throw DeserializationException(s"the value of $key can't be empty string!!!")
+          def checkJsValueForEmptyString(k: String, v: JsValue): Unit = v match {
+            case s: JsString => checkEmptyString(k, s)
+            case s: JsArray  => s.elements.foreach(v => checkJsValueForEmptyString(k, v))
+            case s: JsObject =>
+              s.fields.foreach {
+                case (key, value) => checkJsValueForEmptyString(key, value)
               }
+            case _ => // nothing
+          }
+          if (_rejectEmptyString) fields.foreach {
+            case (key, value) => checkJsValueForEmptyString(key, value)
           }
 
           // check negative number
-          if (_rejectNegativeNumber) fields.foreach {
-            case (key, value) =>
-              value match {
-                case s: JsNumber =>
-                  if (s.value < 0)
-                    throw DeserializationException(s"the value of $key MUST be bigger than or equal to zero!!!")
-                case _ => // nothing
+          def checkNegativeNumber(key: String, s: JsNumber): Unit = if (s.value < 0)
+            throw DeserializationException(s"the value of $key MUST be bigger than or equal to zero!!!")
+          def checkJsValueForNegativeNumber(k: String, v: JsValue): Unit = v match {
+            case s: JsNumber => checkNegativeNumber(k, s)
+            case s: JsArray  => s.elements.foreach(v => checkJsValueForNegativeNumber(k, v))
+            case s: JsObject =>
+              s.fields.foreach {
+                case (key, value) => checkJsValueForNegativeNumber(key, value)
               }
+            case _ => // nothing
+          }
+          if (_rejectNegativeNumber) fields.foreach {
+            case (key, value) => checkJsValueForNegativeNumber(key, value)
           }
 
           format.read(JsObject(fields))
