@@ -57,3 +57,20 @@ export const createBroker = async params => {
     handleError(err);
   }
 };
+
+export const addNodeToBroker = async params => {
+  try {
+    const { name, nodeName } = params;
+    const url = `/api/brokers/${name}/${nodeName}`;
+    const res = await axiosInstance.post(url);
+    const isSuccess = get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};
