@@ -134,9 +134,9 @@ const Nodes = props => {
         await waitForServiceCreation(0);
         setConfirmWorking(false);
         setNodeSelectOpen(false);
-        setSelectNodes([]);
         fetchWorker();
       });
+      setSelectNodes([]);
     }
   };
 
