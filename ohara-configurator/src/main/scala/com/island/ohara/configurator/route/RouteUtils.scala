@@ -239,7 +239,7 @@ private[route] object RouteUtils {
         } ~ get(complete(collie.clusters.map(_.keys)))
       } ~ pathPrefix(Segment) { clusterName =>
         path(Segment) { nodeName =>
-          post {
+          put {
             complete(collie.cluster(clusterName).map(_._1).flatMap { cluster =>
               if (cluster.nodeNames.contains(nodeName)) Future.successful(cluster)
               else collie.addNode(clusterName, nodeName)

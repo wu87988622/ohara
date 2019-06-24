@@ -42,7 +42,7 @@ abstract class ClusterAccess[Res <: ClusterInfo] private[v0] (prefixPath: String
   def list(implicit executionContext: ExecutionContext): Future[Seq[Res]] =
     exec.get[Seq[Res], ErrorApi.Error](s"${_url}")
   def addNode(clusterName: String, nodeName: String)(implicit executionContext: ExecutionContext): Future[Res] =
-    exec.post[Res, ErrorApi.Error](s"${_url}/${_clusterName(clusterName)}/${_nodeName(nodeName)}")
+    exec.put[Res, ErrorApi.Error](s"${_url}/${_clusterName(clusterName)}/${_nodeName(nodeName)}")
   def removeNode(clusterName: String, nodeName: String)(implicit executionContext: ExecutionContext): Future[Unit] =
     exec.delete[ErrorApi.Error](s"${_url}/${_clusterName(clusterName)}/${_nodeName(nodeName)}")
 }

@@ -1726,7 +1726,7 @@ It is disallowed to remove a broker cluster used by a running [worker cluster](#
 ----------
 ### add a new node to a running broker cluster
 
-*POST /v0/brokers/$name/$nodeName*
+*PUT /v0/brokers/$name/$nodeName*
 
 If you want to extend a running broker cluster, you can add a node to share the heavy loading of a running broker cluster.
 However, the balance is not triggered at once.
@@ -2298,7 +2298,7 @@ different purpose (a dangerous behavior, right?).
 ----------
 ### add a new node to a running worker cluster
 
-*POST /v0/workers/$name/$nodeName*
+*PUT /v0/workers/$name/$nodeName*
 
 If you want to extend a running worker cluster, you can add a node to share the heavy loading of a running worker cluster.
 However, the balance is not triggered at once. By the way, moving a task to another idle node needs to **stop** task
