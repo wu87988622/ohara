@@ -164,8 +164,6 @@ const Nodes = props => {
         handleCancel={handleNodeSelectClose}
         handleConfirm={handelAddNode}
         confirmBtnText="Add"
-        isConfirmDisabled={false}
-        showActions={false}
         isConfirmWorking={confirmWorking}
       >
         <StyledTable headers={headers} isLoading={false}>
