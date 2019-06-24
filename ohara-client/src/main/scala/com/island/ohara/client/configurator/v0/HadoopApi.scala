@@ -25,14 +25,19 @@ import scala.concurrent.{ExecutionContext, Future}
 object HadoopApi {
   val HDFS_PREFIX_PATH: String = "hdfs"
   final case class Update(uri: Option[String])
-  implicit val HDFS_UPDATE_JSON_FORMAT: RootJsonFormat[Update] = jsonFormat1(Update)
+
+  implicit val HDFS_UPDATE_JSON_FORMAT: RootJsonFormat[Update] =
+    JsonRefiner[Update].format(jsonFormat1(Update)).rejectEmptyString().refine
+
   final case class Creation(name: String, uri: String) extends CreationRequest
-  implicit val HDFS_CREATION_JSON_FORMAT: RootJsonFormat[Creation] = jsonFormat2(Creation)
+  implicit val HDFS_CREATION_JSON_FORMAT: RootJsonFormat[Creation] =
+    JsonRefiner[Creation].format(jsonFormat2(Creation)).rejectEmptyString().refine
 
   final case class HdfsInfo(name: String, uri: String, lastModified: Long) extends Data {
     override def id: String = name
     override def kind: String = "hdfs"
   }
+
   implicit val HDFS_INFO_JSON_FORMAT: RootJsonFormat[HdfsInfo] = new RootJsonFormat[HdfsInfo] {
     private[this] val format = jsonFormat3(HdfsInfo)
     override def read(json: JsValue): HdfsInfo = format.read(json)

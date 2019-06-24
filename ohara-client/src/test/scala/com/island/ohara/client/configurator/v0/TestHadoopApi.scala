@@ -20,9 +20,95 @@ import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
+import spray.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestHadoopApi extends SmallTest with Matchers {
+
+  @Test
+  def testNullUriInUpdate(): Unit = {
+    val update = HadoopApi.HDFS_UPDATE_JSON_FORMAT.read("""
+        |{
+        | "uri": null
+        |}
+      """.stripMargin.parseJson)
+    update.uri shouldBe None
+  }
+
+  @Test
+  def testEmptyUriInUpdate(): Unit = {
+    an[DeserializationException] should be thrownBy HadoopApi.HDFS_UPDATE_JSON_FORMAT.read("""
+        |{
+        | "uri": ""
+        |}
+      """.stripMargin.parseJson)
+  }
+
+  @Test
+  def testEmptyNameInCreation(): Unit = {
+    an[DeserializationException] should be thrownBy HadoopApi.HDFS_CREATION_JSON_FORMAT.read("""
+        |{
+        | "name": "",
+        | "uri": "file:///tmp"
+        |}
+      """.stripMargin.parseJson)
+  }
+
+  @Test
+  def testEmptyUriInCreation(): Unit = {
+    an[DeserializationException] should be thrownBy HadoopApi.HDFS_CREATION_JSON_FORMAT.read("""
+        |{
+        | "name": "hdfs_name1",
+        | "uri": ""
+        |}
+      """.stripMargin.parseJson)
+
+  }
+
+  @Test
+  def testNullUriInCreation(): Unit = {
+    an[DeserializationException] should be thrownBy HadoopApi.HDFS_CREATION_JSON_FORMAT.read("""
+        |{
+        | "name": "hdfs_name1",
+        | "uri": null
+        |}
+        |""".stripMargin.parseJson)
+  }
+
+  @Test
+  def testNullNameInCreation(): Unit = {
+    an[DeserializationException] should be thrownBy HadoopApi.HDFS_CREATION_JSON_FORMAT.read("""
+        |{
+        | "name": null,
+        | "uri": "file:///tmp"
+        |}
+        |""".stripMargin.parseJson)
+  }
+
+  @Test
+  def testParserUpdate(): Unit = {
+    val uri = s"file:///tmp/${CommonUtils.randomString()}"
+    val update = HadoopApi.HDFS_UPDATE_JSON_FORMAT.read(s"""
+         |{
+         | "uri": "${uri}"
+         |}
+       """.stripMargin.parseJson)
+    update.uri.get shouldBe uri
+  }
+
+  @Test
+  def testParseCreation(): Unit = {
+    val name = CommonUtils.randomString()
+    val uri = s"file:///tmp/${CommonUtils.randomString()}"
+    val creation = HadoopApi.HDFS_CREATION_JSON_FORMAT.read(s"""
+         |{
+         | "name": "${name}",
+         | "uri": "${uri}"
+         |}
+       """.stripMargin.parseJson)
+    creation.name shouldBe name
+    creation.uri shouldBe uri
+  }
 
   @Test
   def ignoreNameOnCreation(): Unit = an[NullPointerException] should be thrownBy HadoopApi
