@@ -52,6 +52,9 @@ trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator
         name = clusterName,
         imageName = first.imageName,
         nodeNames = containers.map(_.nodeName).toSet,
+        // Currently, docker and k8s has same naming rule for "Running",
+        // it is ok that we use the containerState.RUNNING here.
+        deadNodes = containers.filterNot(_.state == ContainerState.RUNNING.name).map(_.nodeName).toSet,
         // Currently, streamApp use expose portMappings for jmx port only.
         // Since dead container would not expose the port, we directly get it from environment for consistency.
         jmxPort = first.environments(StreamCollie.JMX_PORT_KEY).toInt,

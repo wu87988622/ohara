@@ -53,7 +53,8 @@ private[configurator] class FakeBrokerCollie(node: NodeCollie, bkConnectionProps
             exporterPort = exporterPort,
             jmxPort = jmxPort,
             zookeeperClusterName = zookeeperClusterName,
-            nodeNames = nodeNames
+            nodeNames = nodeNames,
+            deadNodes = Set.empty
           )))
 
   override protected def doRemoveNode(previousCluster: BrokerClusterInfo, beRemovedContainer: ContainerInfo)(
@@ -66,7 +67,8 @@ private[configurator] class FakeBrokerCollie(node: NodeCollie, bkConnectionProps
         exporterPort = previousCluster.exporterPort,
         clientPort = previousCluster.clientPort,
         jmxPort = previousCluster.jmxPort,
-        nodeNames = previousCluster.nodeNames.filterNot(_ == beRemovedContainer.nodeName)
+        nodeNames = previousCluster.nodeNames.filterNot(_ == beRemovedContainer.nodeName),
+        deadNodes = Set.empty
       )))
     .map(_ => true)
 
@@ -89,7 +91,8 @@ private[configurator] class FakeBrokerCollie(node: NodeCollie, bkConnectionProps
         clientPort = previousCluster.clientPort,
         exporterPort = previousCluster.exporterPort,
         jmxPort = previousCluster.jmxPort,
-        nodeNames = previousCluster.nodeNames ++ Set(newNodeName)
+        nodeNames = previousCluster.nodeNames ++ Set(newNodeName),
+        deadNodes = Set.empty
       )))
 
   override protected def doCreator(executionContext: ExecutionContext,

@@ -85,6 +85,8 @@ class TestStreamApi extends SmallTest with Matchers {
       jarInfo = JarInfo("id", "name", "group", 1L, new URL("http://localshot:12345/v0"), CommonUtils.current()),
       from = Seq.empty,
       to = Seq.empty,
+      nodeNames = Set.empty,
+      deadNodes = Set.empty,
       state = None,
       metrics = Metrics(Seq.empty),
       error = None,
@@ -101,6 +103,7 @@ class TestStreamApi extends SmallTest with Matchers {
       name = "foo",
       imageName = "bar",
       nodeNames = Set("fake"),
+      deadNodes = Set.empty,
       jmxPort = 999,
       state = Some("RUNNING")
     )

@@ -104,7 +104,8 @@ object BrokerApi {
                                                          clientPort: Int,
                                                          exporterPort: Int,
                                                          jmxPort: Int,
-                                                         nodeNames: Set[String])
+                                                         nodeNames: Set[String],
+                                                         deadNodes: Set[String])
       extends ClusterInfo {
     override def ports: Set[Int] = Set(clientPort, exporterPort, jmxPort)
 
@@ -116,7 +117,7 @@ object BrokerApi {
   /**
     * exposed to configurator
     */
-  private[ohara] implicit val BROKER_CLUSTER_INFO_JSON_FORMAT: RootJsonFormat[BrokerClusterInfo] = jsonFormat7(
+  private[ohara] implicit val BROKER_CLUSTER_INFO_JSON_FORMAT: RootJsonFormat[BrokerClusterInfo] = jsonFormat8(
     BrokerClusterInfo)
 
   /**

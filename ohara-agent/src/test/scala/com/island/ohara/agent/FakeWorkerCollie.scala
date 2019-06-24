@@ -28,7 +28,7 @@ class FakeWorkerCollie(node: NodeCollie) extends WorkerCollie {
     implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = {
     Future {
       Map(
-        BrokerClusterInfo("bk1", "broker", "zk1", 9092, 9093, 9094, Set("node1")) -> Seq(ContainerInfo(
+        BrokerClusterInfo("bk1", "broker", "zk1", 9092, 9093, 9094, Set("node1"), Set.empty) -> Seq(ContainerInfo(
           "node1",
           "aaaa",
           "broker",
@@ -81,7 +81,8 @@ class FakeWorkerCollie(node: NodeCollie) extends WorkerCollie {
                           1,
                           Seq.empty,
                           Seq.empty,
-                          Set("node1")) -> Seq(
+                          Set("node1"),
+                          Set.empty) -> Seq(
           ContainerInfo("node1",
                         "aaaa",
                         "connect-worker",

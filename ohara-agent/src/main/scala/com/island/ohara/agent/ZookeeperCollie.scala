@@ -17,6 +17,7 @@
 package com.island.ohara.agent
 import java.util.Objects
 
+import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
@@ -114,7 +115,8 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo, ZookeeperCollie.Clust
                         clientPort = clientPort,
                         peerPort = peerPort,
                         electionPort = electionPort,
-                        nodeNames = successfulContainers.map(_.nodeName).toSet
+                        nodeNames = successfulContainers.map(_.nodeName).toSet,
+                        deadNodes = Set.empty
                       )
                       postCreateZookeeperCluster(clusterInfo, successfulContainers)
                       clusterInfo
@@ -168,7 +170,10 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo, ZookeeperCollie.Clust
         clientPort = first.environments(ZookeeperCollie.CLIENT_PORT_KEY).toInt,
         peerPort = first.environments(ZookeeperCollie.PEER_PORT_KEY).toInt,
         electionPort = first.environments(ZookeeperCollie.ELECTION_PORT_KEY).toInt,
-        nodeNames = containers.map(_.nodeName).toSet
+        nodeNames = containers.map(_.nodeName).toSet,
+        // Currently, docker and k8s has same naming rule for "Running",
+        // it is ok that we use the containerState.RUNNING here.
+        deadNodes = containers.filterNot(_.state == ContainerState.RUNNING.name).map(_.nodeName).toSet
       ))
   }
 }

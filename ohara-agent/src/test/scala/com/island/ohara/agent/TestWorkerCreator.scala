@@ -90,7 +90,8 @@ class TestWorkerCreator extends SmallTest with Matchers {
         configTopicPartitions = 1,
         jarInfos = jarInfos,
         connectors = Seq.empty,
-        nodeNames = nodeNames
+        nodeNames = nodeNames,
+        deadNodes = Set.empty
       ))
   }
 
@@ -251,7 +252,8 @@ class TestWorkerCreator extends SmallTest with Matchers {
       offsetTopicReplications = 10,
       jarInfos = Seq.empty,
       connectors = Seq.empty,
-      nodeNames = Set(CommonUtils.randomString())
+      nodeNames = Set(CommonUtils.randomString()),
+      deadNodes = Set.empty
     )
     Await.result(wkCreator().copy(workerClusterInfo).create(), 30 seconds) shouldBe workerClusterInfo
   }

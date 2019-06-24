@@ -36,7 +36,8 @@ private[configurator] class FakeZookeeperCollie(node: NodeCollie)
             clientPort = clientPort,
             peerPort = peerPort,
             electionPort = electionPort,
-            nodeNames = nodeNames
+            nodeNames = nodeNames,
+            deadNodes = Set.empty
           )))
 
   override protected def doRemoveNode(previousCluster: ZookeeperClusterInfo, beRemovedContainer: ContainerInfo)(

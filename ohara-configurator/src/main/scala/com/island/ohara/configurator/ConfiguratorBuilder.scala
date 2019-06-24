@@ -132,7 +132,8 @@ class ConfiguratorBuilder private[configurator] extends com.island.ohara.common.
           exporterPort = -1,
           jmxPort = -1,
           clientPort = port,
-          nodeNames = Set(host)
+          nodeNames = Set(host),
+          deadNodes = Set.empty
         )
       }
       val wkCluster = {
@@ -158,7 +159,8 @@ class ConfiguratorBuilder private[configurator] extends com.island.ohara.common.
           offsetTopicReplications = 1.asInstanceOf[Short],
           jarInfos = Seq.empty,
           connectors = Await.result(WorkerClient(wkConnectionProps).connectors, 10 seconds),
-          nodeNames = Set(host)
+          nodeNames = Set(host),
+          deadNodes = Set.empty
         )
       }
       collie.brokerCollie().addCluster(bkCluster)
@@ -200,7 +202,8 @@ class ConfiguratorBuilder private[configurator] extends com.island.ohara.common.
             clientPort = -1,
             electionPort = -1,
             peerPort = -1,
-            nodeNames = (0 to 2).map(_ => CommonUtils.randomString(5)).toSet
+            nodeNames = (0 to 2).map(_ => CommonUtils.randomString(5)).toSet,
+            deadNodes = Set.empty
           ))
       }
 
@@ -217,7 +220,8 @@ class ConfiguratorBuilder private[configurator] extends com.island.ohara.common.
               clientPort = -1,
               exporterPort = -1,
               jmxPort = -1,
-              nodeNames = zkCluster.nodeNames
+              nodeNames = zkCluster.nodeNames,
+              deadNodes = Set.empty
             ))
       }
 
@@ -246,7 +250,8 @@ class ConfiguratorBuilder private[configurator] extends com.island.ohara.common.
             offsetTopicReplications = 1.asInstanceOf[Short],
             jarInfos = Seq.empty,
             connectors = Seq.empty,
-            nodeNames = bkCluster.nodeNames
+            nodeNames = bkCluster.nodeNames,
+            deadNodes = Set.empty
           ))
       }
 

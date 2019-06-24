@@ -62,7 +62,9 @@ class TestStreamCreator extends SmallTest with Matchers {
             if (CommonUtils.isEmpty(nodeNames.asJava))
               CommonUtils.requireNonEmpty(Seq.fill(CommonUtils.requirePositiveInt(instances))("fake").asJava).asScala
             else CommonUtils.requireNonEmpty(nodeNames.asJava).asScala
-          }.toSet
+          }.toSet,
+          deadNodes = Set.empty,
+          state = None
         ))
     }
 

@@ -1422,6 +1422,7 @@ all configs but open a room to enable you to overwrite somethings you do care.
 1. electionPort (**int**) — used to select the zk node leader
 1. peerPort (**int**) — port used by internal communication
 1. nodeNames (**array(string)**) — the nodes running the zookeeper process
+1. deadNodes (**array(string)**) — the nodes that have failed containers of zookeeper
   
 ----------
 ### create a zookeeper cluster
@@ -1461,7 +1462,8 @@ all configs but open a room to enable you to overwrite somethings you do care.
   "peerPort": 12346,
   "nodeNames": [
     "node00"
-  ]
+  ],
+  "deadNodes": []
 }
 ```
 
@@ -1492,7 +1494,8 @@ does not allow you to reuse port on different purpose (a dangerous behavior, rig
   "peerPort": 2888,
   "nodeNames": [
     "node00"
-  ]
+  ],
+  "deadNodes": []
 }
 ```
 ----------
@@ -1512,7 +1515,8 @@ does not allow you to reuse port on different purpose (a dangerous behavior, rig
     "peerPort": 12346,
     "nodeNames": [
       "node00"
-    ]
+    ],
+    "deadNodes": []
   }
 ]
 ```
@@ -1550,7 +1554,8 @@ It is disallowed to remove a zookeeper cluster used by a running [broker cluster
   "peerPort": 12346,
   "nodeNames": [
     "node00"
-  ]
+  ],
+  "deadNodes": []
 }
 ```
 
@@ -1584,6 +1589,8 @@ The properties which can be set by user are shown below.
 1. jmxPort (**int**) — port used by jmx service
 1. zookeeperClusterName (**String**) — name of zookeeper cluster used to store metadata of broker cluster
 1. nodeNames (**array(string)**) — the nodes running the broker process
+1. deadNodes (**array(string)**) — the nodes that have failed containers of broker
+
 ----------
 ### create a broker cluster
 
@@ -1625,7 +1632,8 @@ The properties which can be set by user are shown below.
   "jmxPort": 12347,
   "nodeNames": [
     "node00"
-  ]
+  ],
+  "deadNodes": []
 }
 ```
 
@@ -1659,7 +1667,8 @@ different purpose (a dangerous behavior, right?).
   "jmxPort": 9093,
   "nodeNames": [
     "node00"
-  ]
+  ],
+  "deadNodes": []
 }
 ```
 ----------
@@ -1680,7 +1689,8 @@ different purpose (a dangerous behavior, right?).
     "jmxPort": 9093,
     "nodeNames": [
       "node00"
-    ]
+    ],
+    "deadNodes": []
   }
 ]
 ```
@@ -1720,7 +1730,8 @@ It is disallowed to remove a broker cluster used by a running [worker cluster](#
   "jmxPort": 9093,
   "nodeNames": [
     "node00"
-  ]
+  ],
+  "deadNodes": []
 }
 ```
 ----------
@@ -1744,7 +1755,8 @@ However, the balance is not triggered at once.
   "nodeNames": [
     "node01",
     "node00"
-  ]
+  ],
+  "deadNodes": []
 }
 ```
 ----------
@@ -1798,6 +1810,7 @@ The properties which can be set by user are shown below.
 1. statusTopicPartitions (**int**) — number of partitions for status topic
 1. groupId (**string**) — the id of worker stored in broker cluster
 1. nodeNames (**array(string)**) — the nodes running the worker process
+1. deadNodes (**array(string)**) — the nodes that have failed containers of worker
 
 > The groupId, configTopicName, offsetTopicName and statusTopicName must be unique in broker cluster. Don't reuse them
 in same broker cluster. Dispatching above unique resources to two worker cluster will pollute the data. Of course,
@@ -1987,7 +2000,8 @@ ignore this element. However, we still list the available values here.
   "clientPort": 12345,
   "nodeNames": [
     "node00"
-  ]
+  ],
+  "deadNodes": []
 }
 ```
 
@@ -2033,7 +2047,8 @@ different purpose (a dangerous behavior, right?).
   "clientPort": 8083,
   "nodeNames": [
     "node00"
-  ]
+  ],
+  "deadNodes": []
 }
 ```
 ----------
@@ -2065,7 +2080,8 @@ different purpose (a dangerous behavior, right?).
     "clientPort": 8083,
     "nodeNames": [
       "node00"
-    ]
+    ],
+    "deadNodes": []
   }
 ]
 ```
@@ -2292,7 +2308,8 @@ different purpose (a dangerous behavior, right?).
   "clientPort": 8083,
   "nodeNames": [
     "node00"
-  ]
+  ],
+  "deadNodes": []
 }
 ```
 ----------
@@ -2328,7 +2345,8 @@ first. Don't worry about the temporary lower throughput when balancer is running
   "nodeNames": [
     "node01",
     "node00"
-  ]
+  ],
+  "deadNodes": []
 }
 ```
 ----------

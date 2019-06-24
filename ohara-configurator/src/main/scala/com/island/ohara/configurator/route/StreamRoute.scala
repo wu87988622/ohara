@@ -64,6 +64,8 @@ private[configurator] object StreamRoute {
       jarInfo = jarInfo,
       from = req.from.getOrElse(Seq.empty),
       to = req.to.getOrElse(Seq.empty),
+      nodeNames = Set.empty,
+      deadNodes = Set.empty,
       state = None,
       metrics = Metrics(Seq.empty),
       error = None,
@@ -97,7 +99,13 @@ private[configurator] object StreamRoute {
               .map(_._1.asInstanceOf[StreamClusterInfo] -> None)
           } else {
             // if stream cluster was not created, we initial an empty class
-            Future.successful(StreamClusterInfo(name = "", imageName = "", jmxPort = 0, state = None) -> None)
+            Future.successful(
+              StreamClusterInfo(name = "",
+                                imageName = "",
+                                jmxPort = 0,
+                                state = None,
+                                nodeNames = Set.empty,
+                                deadNodes = Set.empty) -> None)
           }
         }
         .flatMap {
@@ -107,6 +115,8 @@ private[configurator] object StreamRoute {
               previous =>
                 Future.successful(
                   previous.copy(
+                    nodeNames = info.nodeNames,
+                    deadNodes = info.deadNodes,
                     state = info.state,
                     error = error,
                     metrics = Metrics(meterCache.meters(info).getOrElse("streamapp", Seq.empty))
