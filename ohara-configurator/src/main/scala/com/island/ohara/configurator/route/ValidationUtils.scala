@@ -28,7 +28,7 @@ import com.island.ohara.client.configurator.v0.ValidationApi.{
 }
 import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.kafka.Consumer
 import com.island.ohara.kafka.Consumer.Record
 import spray.json.{JsNull, JsNumber, JsString}
@@ -144,7 +144,10 @@ object ValidationUtils {
           .asScala
           .filter(_.value().isPresent)
           .map(_.value.get)
-        finally workerClient.delete(validationName)
+        finally {
+          Releasable.close(client)
+          workerClient.delete(validationName)
+        }
       }
   }
 }
