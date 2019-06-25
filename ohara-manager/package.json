@@ -38,7 +38,7 @@
     "format:check": "prettier --check \"**/*.*(js|json|html|md)\"",
     "license:test": "cd .. && gradle licenseTest",
     "license:apply": "cd .. && gradle licenseApply",
-    "prepush": "run-s lint test license:apply format"
+    "prepush": "run-s setup lint test license:apply format"
   },
   "dependencies": {
     "axios": "0.19.0",
