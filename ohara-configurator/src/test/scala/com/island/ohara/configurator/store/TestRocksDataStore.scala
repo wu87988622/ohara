@@ -30,7 +30,6 @@ class TestRocksDataStore extends SmallTest with Matchers {
   private[this] val store: DataStore = DataStore()
 
   private[this] def createData(_name: String) = SimpleData(
-    id = _name,
     name = _name,
     lastModified = CommonUtils.current(),
     kind = _name
