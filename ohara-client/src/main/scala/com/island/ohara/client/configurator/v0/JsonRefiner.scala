@@ -28,6 +28,8 @@ import spray.json.{DeserializationException, JsArray, JsNull, JsNumber, JsObject
 trait JsonRefiner[T] {
   def format(format: RootJsonFormat[T]): JsonRefiner[T]
 
+  //-------------------------[null to default]-------------------------//
+
   /**
     * convert the null value to random string
     * @param key  key
@@ -45,61 +47,6 @@ trait JsonRefiner[T] {
     * @return this refiner
     */
   def nullToRandomPort(key: String): JsonRefiner[T] = nullToJsValue(key, JsNumber(CommonUtils.availablePort()))
-
-  /**
-    * check whether target port is legal to connect. The legal range is (0, 65535].
-    * @param key key
-    * @return this refiner
-    */
-  def requireConnectionPort(key: String): JsonRefiner[T] = keyChecker(
-    key, {
-      case s: JsNumber if s.value.toInt > 0 && s.value <= 65535 => s
-      case s: JsNumber =>
-        throw DeserializationException(
-          s"the connection port must be bigger than zero and small than 65536, but actual port is ${s.value}")
-      case value =>
-        throw DeserializationException(s"$key should be associated number type, but actual type is $value")
-    }
-  )
-
-  /**
-    * check whether target port is legal to bind. The legal range is (1024, 65535]
-    * @param key key
-    * @return this refiner
-    */
-  def requireBindPort(key: String): JsonRefiner[T] = keyChecker(
-    key, {
-      case s: JsNumber if s.value.toInt > 1024 && s.value <= 65535 => s
-      case s: JsNumber =>
-        throw DeserializationException(s"the connection port must be [1024, 65535), but actual port is ${s.value}")
-      case value =>
-        throw DeserializationException(s"$key should be associated number type, but actual type is $value")
-    }
-  )
-
-  /**
-    * reject the request having a key which is associated to empty string.
-    * Noted: this rule is applied to all key-value even if the pair is in nested object.
-    * @return this refiner
-    */
-  def rejectEmptyString(): JsonRefiner[T]
-
-  /**
-    * reject the value having negative number. For instance, the following request will be rejected.
-    * {
-    *   "a": -1
-    * }
-    * Noted: this rule is applied to all key-value even if the pair is in nested object.
-    * @return this refiner
-    */
-  def rejectNegativeNumber(): JsonRefiner[T]
-
-  /**
-    * throw exception if the input json has empty array.
-    * Noted: this rule is applied to all key-value even if the pair is in nested object.
-    * @return this refiner
-    */
-  def rejectEmptyArray(): JsonRefiner[T]
 
   def nullToShort(key: String, value: Short): JsonRefiner[T] = nullToJsValue(key, JsNumber(value))
 
@@ -137,7 +84,87 @@ trait JsonRefiner[T] {
     */
   protected def nullToJsValue(key: String, defaultValue: JsValue): JsonRefiner[T]
 
-  protected def keyChecker(key: String, checker: JsValue => JsValue): JsonRefiner[T]
+  //-------------------------[more checks]-------------------------//
+
+  /**
+    * check whether target port is legal to connect. The legal range is (0, 65535].
+    * @param key key
+    * @return this refiner
+    */
+  def requireConnectionPort(key: String): JsonRefiner[T] = valueChecker(
+    key, {
+      case s: JsNumber if s.value.toInt > 0 && s.value <= 65535 => // pass
+      case s: JsNumber =>
+        throw DeserializationException(
+          s"the connection port must be bigger than zero and small than 65536, but actual port is ${s.value}")
+      case _ => // we don't care for other types
+    }
+  )
+
+  /**
+    * check whether target port is legal to bind. The legal range is (1024, 65535]
+    * @param key key
+    * @return this refiner
+    */
+  def requireBindPort(key: String): JsonRefiner[T] = valueChecker(
+    key, {
+      case s: JsNumber if s.value.toInt > 1024 && s.value <= 65535 => // pass
+      case s: JsNumber =>
+        throw DeserializationException(s"the connection port must be [1024, 65535), but actual port is ${s.value}")
+      case _ => // we don't care for other types
+    }
+  )
+
+  /**
+    * reject the request having a key which is associated to empty string.
+    * Noted: this rule is applied to all key-value even if the pair is in nested object.
+    * @return this refiner
+    */
+  def rejectEmptyString(): JsonRefiner[T]
+
+  /**
+    * reject the value having negative number. For instance, the following request will be rejected.
+    * {
+    *   "a": -1
+    * }
+    * Noted: this rule is applied to all key-value even if the pair is in nested object.
+    * @return this refiner
+    */
+  def rejectNegativeNumber(): JsonRefiner[T]
+
+  /**
+    * throw exception if the input json has empty array.
+    * Noted: this rule is applied to all key-value even if the pair is in nested object.
+    * @return this refiner
+    */
+  def rejectEmptyArray(): JsonRefiner[T]
+
+  protected def valueChecker(key: String, checker: JsValue => Unit): JsonRefiner[T]
+
+  //-------------------------[more conversion]-------------------------//
+
+  /**
+    * Set the auto-conversion to key that the string value wiil be converted to number. Hence, the key is able to accept
+    * both string type and number type. By contrast, akka json will produce DeserializationException in parsing string to number.
+    * @param key key
+    * @return this refiner
+    */
+  def acceptStringToNumber(key: String): JsonRefiner[T] = valueConverter(
+    key, {
+      case n: JsNumber => n
+      case s: JsString =>
+        try JsNumber(s.value)
+        catch {
+          case e: NumberFormatException =>
+            throw DeserializationException(s"the input string:${s.value} can't be converted to number", e)
+        }
+      case o: JsValue =>
+        throw DeserializationException(
+          s"the value type of key:$key must be either Number or String, but actual type is $o")
+    }
+  )
+
+  protected def valueConverter(key: String, converter: JsValue => JsValue): JsonRefiner[T]
 
   def refine: RootJsonFormat[T]
 }
@@ -145,7 +172,8 @@ trait JsonRefiner[T] {
 object JsonRefiner {
   def apply[T]: JsonRefiner[T] = new JsonRefiner[T] {
     private[this] var format: RootJsonFormat[T] = _
-    private[this] var keyChecker: Map[String, JsValue => JsValue] = Map.empty
+    private[this] var valueConverter: Map[String, JsValue => JsValue] = Map.empty
+    private[this] var valueChecker: Map[String, JsValue => Unit] = Map.empty
     private[this] var nullToJsValue: Map[String, JsValue] = Map.empty
     private[this] var nullToAnotherValueOfKey: Map[String, String] = Map.empty
     private[this] var _rejectEmptyString: Boolean = false
@@ -157,10 +185,17 @@ object JsonRefiner {
       this
     }
 
-    override protected def keyChecker(key: String, checker: JsValue => JsValue): JsonRefiner[T] = {
-      if (keyChecker.contains(CommonUtils.requireNonEmpty(key)))
+    override protected def valueChecker(key: String, checker: JsValue => Unit): JsonRefiner[T] = {
+      if (valueChecker.contains(CommonUtils.requireNonEmpty(key)))
         throw new IllegalArgumentException(s"the $key already has checker")
-      this.keyChecker = this.keyChecker ++ Map(key -> Objects.requireNonNull(checker))
+      this.valueChecker = this.valueChecker ++ Map(key -> Objects.requireNonNull(checker))
+      this
+    }
+
+    override protected def valueConverter(key: String, converter: JsValue => JsValue): JsonRefiner[T] = {
+      if (valueConverter.contains(CommonUtils.requireNonEmpty(key)))
+        throw new IllegalArgumentException(s"the $key already has converter")
+      this.valueConverter = this.valueConverter ++ Map(key -> Objects.requireNonNull(converter))
       this
     }
 
@@ -230,11 +265,18 @@ object JsonRefiner {
               key -> fields(anotherKye)
           }
 
-          // check the connection port
-          keyChecker.foreach {
-            case (key, checker) =>
-              fields.get(key).foreach(checker)
-          }
+          // convert the value
+          fields = fields ++ valueConverter
+            .map {
+              case (key, converter) => key -> converter(fields.getOrElse(key, JsNull))
+            }
+            .filter {
+              case (_, jsValue) =>
+                jsValue match {
+                  case JsNull => false
+                  case _      => true
+                }
+            }
 
           // check empty string
           def checkEmptyString(key: String, s: JsString): Unit =
@@ -281,6 +323,11 @@ object JsonRefiner {
           }
           if (_rejectEmptyArray) fields.foreach {
             case (key, value) => checkJsValueForEmptyArray(key, value)
+          }
+
+          // custom check
+          valueChecker.foreach {
+            case (key, checker) => checker(fields.getOrElse(key, JsNull))
           }
 
           format.read(JsObject(fields))

@@ -107,7 +107,7 @@ class ValidatorTask extends SourceTask {
 
   private[this] def toJsObject: JsObject = JsObject(props.map { case (k, v) => (k, JsString(v)) })
   private[this] def information = require(ValidationApi.TARGET) match {
-    case ValidationApi.VALIDATION_HDFS_PREFIX_PATH => ValidationApi.HDFS_VALIDATION_REQUEST_JSON_FORMAT.read(toJsObject)
+    case ValidationApi.VALIDATION_HDFS_PREFIX_PATH => ValidationApi.HDFS_VALIDATION_JSON_FORMAT.read(toJsObject)
     case ValidationApi.VALIDATION_RDB_PREFIX_PATH  => ValidationApi.RDB_VALIDATION_JSON_FORMAT.read(toJsObject)
     case ValidationApi.VALIDATION_FTP_PREFIX_PATH  => ValidationApi.FTP_VALIDATION_JSON_FORMAT.read(toJsObject)
     case other: String =>

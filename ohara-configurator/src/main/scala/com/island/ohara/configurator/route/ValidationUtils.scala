@@ -58,7 +58,7 @@ object ValidationUtils {
     workerClient,
     topicAdmin,
     ValidationApi.VALIDATION_HDFS_PREFIX_PATH,
-    ValidationApi.HDFS_VALIDATION_REQUEST_JSON_FORMAT.write(request).asJsObject.fields.map {
+    ValidationApi.HDFS_VALIDATION_JSON_FORMAT.write(request).asJsObject.fields.map {
       case (k, v) => (k, v.asInstanceOf[JsString].value)
     },
     taskCount

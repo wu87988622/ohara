@@ -269,4 +269,314 @@ class TestValidationApi extends SmallTest with Matchers {
     validation.user shouldBe user
     validation.password shouldBe password
   }
+
+  @Test
+  def testParseHdfsValidation(): Unit = {
+    val uri = CommonUtils.randomString()
+    ValidationApi.HDFS_VALIDATION_JSON_FORMAT.read(s"""
+         |  {
+         |    "uri": "$uri"
+         |  }
+      """.stripMargin.parseJson).uri shouldBe uri
+
+    val workerClusterName = CommonUtils.randomString()
+    ValidationApi.HDFS_VALIDATION_JSON_FORMAT.read(s"""
+         |  {
+         |    "uri": "$uri",
+         |    "workerClusterName": "$workerClusterName"
+         |  }
+      """.stripMargin.parseJson).workerClusterName.get shouldBe workerClusterName
+  }
+
+  @Test
+  def testEmptyStringForHdfsValidation(): Unit = {
+    an[DeserializationException] should be thrownBy ValidationApi.HDFS_VALIDATION_JSON_FORMAT.read("""
+        |  {
+        |    "uri": ""
+        |  }
+      """.stripMargin.parseJson)
+
+    an[DeserializationException] should be thrownBy ValidationApi.HDFS_VALIDATION_JSON_FORMAT.read(
+      """
+        |  {
+        |    "uri": "asdad",
+        |    "workerClusterName": ""
+        |  }
+      """.stripMargin.parseJson)
+  }
+
+  @Test
+  def testParseRdbValidation(): Unit = {
+    val url = CommonUtils.randomString()
+    val user = CommonUtils.randomString()
+    val password = CommonUtils.randomString()
+    val rdbValidation = ValidationApi.RDB_VALIDATION_JSON_FORMAT.read(s"""
+         |  {
+         |    "url": "$url",
+         |    "user": "$user",
+         |    "password": "$password"
+         |  }
+      """.stripMargin.parseJson)
+
+    rdbValidation.url shouldBe url
+    rdbValidation.user shouldBe user
+    rdbValidation.password shouldBe password
+
+    val workerClusterName = CommonUtils.randomString()
+    ValidationApi.RDB_VALIDATION_JSON_FORMAT.read(s"""
+         |  {
+         |    "url": "$url",
+         |    "user": "$user",
+         |    "password": "$password",
+         |    "workerClusterName": "$workerClusterName"
+         |  }
+      """.stripMargin.parseJson).workerClusterName.get shouldBe workerClusterName
+  }
+
+  @Test
+  def testEmptyStringForRdbValidation(): Unit = {
+    an[DeserializationException] should be thrownBy ValidationApi.RDB_VALIDATION_JSON_FORMAT.read(
+      """
+        |  {
+        |    "url": "",
+        |    "user": "user",
+        |    "password": "password"
+        |  }
+      """.stripMargin.parseJson)
+
+    an[DeserializationException] should be thrownBy ValidationApi.RDB_VALIDATION_JSON_FORMAT.read(
+      """
+        |  {
+        |    "url": "url",
+        |    "user": "",
+        |    "password": "password"
+        |  }
+      """.stripMargin.parseJson)
+
+    an[DeserializationException] should be thrownBy ValidationApi.RDB_VALIDATION_JSON_FORMAT.read("""
+        |  {
+        |    "url": "url",
+        |    "user": "user",
+        |    "password": ""
+        |  }
+      """.stripMargin.parseJson)
+
+    an[DeserializationException] should be thrownBy ValidationApi.RDB_VALIDATION_JSON_FORMAT.read(
+      """
+        |  {
+        |    "url": "url",
+        |    "user": "user",
+        |    "password": "password",
+        |    "workerClusterName": ""
+        |  }
+      """.stripMargin.parseJson)
+  }
+
+  @Test
+  def testParseFtpValidation(): Unit = {
+    val hostname = CommonUtils.randomString()
+    val port = CommonUtils.availablePort()
+    val user = CommonUtils.randomString()
+    val password = CommonUtils.randomString()
+    val ftpValidation = ValidationApi.FTP_VALIDATION_JSON_FORMAT.read(s"""
+         |  {
+         |    "hostname": "$hostname",
+         |    "port": $port,
+         |    "user": "$user",
+         |    "password": "$password"
+         |  }
+      """.stripMargin.parseJson)
+
+    ftpValidation.hostname shouldBe hostname
+    ftpValidation.port shouldBe port
+    ftpValidation.user shouldBe user
+    ftpValidation.password shouldBe password
+
+    val workerClusterName = CommonUtils.randomString()
+    ValidationApi.FTP_VALIDATION_JSON_FORMAT.read(s"""
+         |  {
+         |    "hostname": "$hostname",
+         |    "port": $port,
+         |    "user": "$user",
+         |    "password": "$password",
+         |    "workerClusterName": "$workerClusterName"
+         |  }
+      """.stripMargin.parseJson).workerClusterName.get shouldBe workerClusterName
+  }
+
+  @Test
+  def testParseStringToNumberForFtpValidation(): Unit = {
+    val hostname = CommonUtils.randomString()
+    val port = CommonUtils.availablePort()
+    val user = CommonUtils.randomString()
+    val password = CommonUtils.randomString()
+    val ftpValidation = ValidationApi.FTP_VALIDATION_JSON_FORMAT.read(s"""
+         |  {
+         |    "hostname": "$hostname",
+         |    "port": "$port",
+         |    "user": "$user",
+         |    "password": "$password"
+         |  }
+      """.stripMargin.parseJson)
+
+    ftpValidation.hostname shouldBe hostname
+    ftpValidation.port shouldBe port
+    ftpValidation.user shouldBe user
+    ftpValidation.password shouldBe password
+  }
+
+  @Test
+  def testNegativeConnectionPortForFtpValidation(): Unit =
+    an[DeserializationException] should be thrownBy ValidationApi.FTP_VALIDATION_JSON_FORMAT.read(
+      """
+        |  {
+        |    "hostname": "hostname",
+        |    "port": -1,
+        |    "user": "user",
+        |    "password": "password"
+        |  }
+      """.stripMargin.parseJson)
+
+  @Test
+  def testZeroConnectionPortForFtpValidation(): Unit =
+    an[DeserializationException] should be thrownBy ValidationApi.FTP_VALIDATION_JSON_FORMAT.read(
+      """
+        |  {
+        |    "hostname": "hostname",
+        |    "port": 0,
+        |    "user": "user",
+        |    "password": "password"
+        |  }
+      """.stripMargin.parseJson)
+
+  @Test
+  def testEmptyStringForFtpValidation(): Unit = {
+    an[DeserializationException] should be thrownBy ValidationApi.FTP_VALIDATION_JSON_FORMAT.read(
+      """
+         |  {
+         |    "hostname": "",
+         |    "port": 123,
+         |    "user": "user",
+         |    "password": "password"
+         |  }
+      """.stripMargin.parseJson)
+
+    an[DeserializationException] should be thrownBy ValidationApi.FTP_VALIDATION_JSON_FORMAT.read(
+      """
+        |  {
+        |    "hostname": "hostname",
+        |    "port": "",
+        |    "user": "user",
+        |    "password": "password"
+        |  }
+      """.stripMargin.parseJson)
+
+    an[DeserializationException] should be thrownBy ValidationApi.FTP_VALIDATION_JSON_FORMAT.read(
+      """
+        |  {
+        |    "hostname": "hostname",
+        |    "port": 123,
+        |    "user": "",
+        |    "password": "password"
+        |  }
+      """.stripMargin.parseJson)
+
+    an[DeserializationException] should be thrownBy ValidationApi.FTP_VALIDATION_JSON_FORMAT.read(
+      """
+        |  {
+        |    "hostname": "hostname",
+        |    "port": 123,
+        |    "user": "user",
+        |    "password": ""
+        |  }
+      """.stripMargin.parseJson)
+  }
+
+  @Test
+  def testParseNodeValidation(): Unit = {
+    val hostname = CommonUtils.randomString()
+    val port = CommonUtils.availablePort()
+    val user = CommonUtils.randomString()
+    val password = CommonUtils.randomString()
+    val nodeValidation = ValidationApi.NODE_VALIDATION_JSON_FORMAT.read(s"""
+         |  {
+         |    "hostname": "$hostname",
+         |    "port": $port,
+         |    "user": "$user",
+         |    "password": "$password"
+         |  }
+      """.stripMargin.parseJson)
+
+    nodeValidation.hostname shouldBe hostname
+    nodeValidation.port shouldBe port
+    nodeValidation.user shouldBe user
+    nodeValidation.password shouldBe password
+  }
+
+  @Test
+  def testNegativeConnectionPortForNodeValidation(): Unit =
+    an[DeserializationException] should be thrownBy ValidationApi.NODE_VALIDATION_JSON_FORMAT.read(
+      """
+        |  {
+        |    "hostname": "hostname",
+        |    "port": -1,
+        |    "user": "user",
+        |    "password": "password"
+        |  }
+      """.stripMargin.parseJson)
+
+  @Test
+  def testZeroConnectionPortForNodeValidation(): Unit =
+    an[DeserializationException] should be thrownBy ValidationApi.NODE_VALIDATION_JSON_FORMAT.read(
+      """
+        |  {
+        |    "hostname": "hostname",
+        |    "port": 0,
+        |    "user": "user",
+        |    "password": "password"
+        |  }
+      """.stripMargin.parseJson)
+
+  @Test
+  def testEmptyStringForNodeValidation(): Unit = {
+    an[DeserializationException] should be thrownBy ValidationApi.NODE_VALIDATION_JSON_FORMAT.read(
+      """
+        |  {
+        |    "hostname": "",
+        |    "port": 123,
+        |    "user": "user",
+        |    "password": "password"
+        |  }
+      """.stripMargin.parseJson)
+
+    an[DeserializationException] should be thrownBy ValidationApi.NODE_VALIDATION_JSON_FORMAT.read(
+      """
+        |  {
+        |    "hostname": "hostname",
+        |    "port": "",
+        |    "user": "user",
+        |    "password": "password"
+        |  }
+      """.stripMargin.parseJson)
+
+    an[DeserializationException] should be thrownBy ValidationApi.NODE_VALIDATION_JSON_FORMAT.read(
+      """
+        |  {
+        |    "hostname": "hostname",
+        |    "port": 123,
+        |    "user": "",
+        |    "password": "password"
+        |  }
+      """.stripMargin.parseJson)
+
+    an[DeserializationException] should be thrownBy ValidationApi.NODE_VALIDATION_JSON_FORMAT.read(
+      """
+        |  {
+        |    "hostname": "hostname",
+        |    "port": 123,
+        |    "user": "user",
+        |    "password": ""
+        |  }
+      """.stripMargin.parseJson)
+  }
 }

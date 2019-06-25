@@ -20,7 +20,7 @@ import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json._
 import spray.json.DefaultJsonProtocol.{jsonFormat3, _}
-import spray.json.{JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json.RootJsonFormat
 
 import scala.concurrent.{ExecutionContext, Future}
 object ValidationApi {
@@ -36,7 +36,8 @@ object ValidationApi {
 
   val VALIDATION_HDFS_PREFIX_PATH: String = "hdfs"
   final case class HdfsValidation private[ValidationApi] (uri: String, workerClusterName: Option[String])
-  implicit val HDFS_VALIDATION_REQUEST_JSON_FORMAT: RootJsonFormat[HdfsValidation] = jsonFormat2(HdfsValidation)
+  implicit val HDFS_VALIDATION_JSON_FORMAT: RootJsonFormat[HdfsValidation] =
+    JsonRefiner[HdfsValidation].format(jsonFormat2(HdfsValidation)).rejectEmptyString().refine
 
   val VALIDATION_RDB_PREFIX_PATH: String = "rdb"
 
@@ -47,7 +48,8 @@ object ValidationApi {
                                                  user: String,
                                                  password: String,
                                                  workerClusterName: Option[String])
-  implicit val RDB_VALIDATION_JSON_FORMAT: RootJsonFormat[RdbValidation] = jsonFormat4(RdbValidation)
+  implicit val RDB_VALIDATION_JSON_FORMAT: RootJsonFormat[RdbValidation] =
+    JsonRefiner[RdbValidation].format(jsonFormat4(RdbValidation)).rejectEmptyString().refine
 
   val VALIDATION_FTP_PREFIX_PATH: String = "ftp"
   final case class FtpValidation private[ValidationApi] (hostname: String,
@@ -55,46 +57,23 @@ object ValidationApi {
                                                          user: String,
                                                          password: String,
                                                          workerClusterName: Option[String])
-  implicit val FTP_VALIDATION_JSON_FORMAT: RootJsonFormat[FtpValidation] =
-    new RootJsonFormat[FtpValidation] {
-      private[this] val hostnameKey = "hostname"
-      private[this] val userKey = "user"
-      private[this] val passwordKey = "password"
-      private[this] val portKey = "port"
-      private[this] val workerClusterNameKey = "workerClusterName"
-      override def read(json: JsValue): FtpValidation = {
-        val fields = json.asJsObject.fields.filter(_._2 match {
-          case JsNull => false
-          case _      => true
-        })
 
-        FtpValidation(
-          hostname = fields(hostnameKey).asInstanceOf[JsString].value,
-          user = fields(userKey).asInstanceOf[JsString].value,
-          password = fields(passwordKey).asInstanceOf[JsString].value,
-          // we will convert a Map[String, String] to FtpValidationRequest in kafka connector so this method can save us from spray's ClassCastException
-          port = fields(portKey) match {
-            case s: JsString => s.value.toInt
-            case s: JsNumber => s.value.toInt
-            case _ =>
-              throw new UnsupportedOperationException("failed to parse request for \"port\"")
-          },
-          workerClusterName = fields.get(workerClusterNameKey).map(_.asInstanceOf[JsString].value)
-        )
-      }
-
-      override def write(obj: FtpValidation): JsValue = JsObject(
-        hostnameKey -> JsString(obj.hostname),
-        portKey -> JsNumber(obj.port),
-        userKey -> JsString(obj.user),
-        passwordKey -> JsString(obj.password),
-        workerClusterNameKey -> obj.workerClusterName.map(JsString(_)).getOrElse(JsNull)
-      )
-    }
+  implicit val FTP_VALIDATION_JSON_FORMAT: RootJsonFormat[FtpValidation] = JsonRefiner[FtpValidation]
+    .format(jsonFormat5(FtpValidation))
+    .rejectEmptyString()
+    .requireConnectionPort("port")
+    // this marshalling must be able to parse string for number since ValidationUtils use Map[String, String] to carry
+    // this validation...I do hate this workaround but kafka supports only the Map[String, String]... by chia
+    .acceptStringToNumber("port")
+    .refine
 
   val VALIDATION_NODE_PREFIX_PATH: String = "node"
   final case class NodeValidation private[ValidationApi] (hostname: String, port: Int, user: String, password: String)
-  implicit val NODE_VALIDATION_JSON_FORMAT: RootJsonFormat[NodeValidation] = jsonFormat4(NodeValidation)
+  implicit val NODE_VALIDATION_JSON_FORMAT: RootJsonFormat[NodeValidation] = JsonRefiner[NodeValidation]
+    .format(jsonFormat4(NodeValidation))
+    .rejectEmptyString()
+    .requireConnectionPort("port")
+    .refine
 
   final case class ValidationReport(hostname: String, message: String, pass: Boolean)
   implicit val VALIDATION_REPORT_JSON_FORMAT: RootJsonFormat[ValidationReport] = jsonFormat3(ValidationReport)

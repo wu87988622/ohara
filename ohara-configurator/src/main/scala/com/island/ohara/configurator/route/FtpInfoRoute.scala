@@ -18,7 +18,6 @@ package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
 import com.island.ohara.client.configurator.v0.FtpApi._
-import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.store.DataStore
 
@@ -29,18 +28,15 @@ private[configurator] object FtpInfoRoute {
   def apply(implicit store: DataStore, executionContext: ExecutionContext): server.Route =
     RouteUtils.basicRoute2[Creation, Update, FtpInfo](
       root = FTP_PREFIX_PATH,
-      hookOfCreate = (request: Creation) => {
-        validateField(request)
+      hookOfCreate = (request: Creation) =>
         Future.successful(
           FtpInfo(name = request.name,
                   hostname = request.hostname,
                   port = request.port,
                   user = request.user,
                   password = request.password,
-                  lastModified = CommonUtils.current()))
-      },
-      hookOfUpdate = (name: String, request: Update, previousOption: Option[FtpInfo]) => {
-        validateField(request)
+                  lastModified = CommonUtils.current())),
+      hookOfUpdate = (name: String, request: Update, previousOption: Option[FtpInfo]) =>
         Future.successful(
           previousOption
             .map { previous =>
@@ -67,23 +63,5 @@ private[configurator] object FtpInfoRoute {
                       password = request.password.get,
                       lastModified = CommonUtils.current())
             })
-      }
     )
-
-  @VisibleForTesting
-  private[route] def validateField(request: Creation): Unit = {
-    CommonUtils.requireNonEmpty(request.name)
-    CommonUtils.requireNonEmpty(request.hostname)
-    CommonUtils.requireNonEmpty(request.user)
-    CommonUtils.requireNonEmpty(request.password)
-    CommonUtils.requireConnectionPort(request.port)
-  }
-
-  @VisibleForTesting
-  private[route] def validateField(request: Update): Unit = {
-    request.hostname.foreach(CommonUtils.requireNonEmpty)
-    request.port.foreach(CommonUtils.requireConnectionPort)
-    request.user.foreach(CommonUtils.requireNonEmpty)
-    request.password.foreach(CommonUtils.requireNonEmpty)
-  }
 }

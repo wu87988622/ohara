@@ -493,4 +493,68 @@ class TestJsonRefiner extends SmallTest with Matchers {
             | "stringArray": []
             |}
           """.stripMargin.parseJson)
+
+  @Test
+  def testAcceptStringToNumber(): Unit = {
+    val bindPort = CommonUtils.availablePort()
+    val connectionPort = CommonUtils.availablePort()
+    val data = JsonRefiner[SimpleData]
+      .format(format)
+      .acceptStringToNumber("bindPort")
+      .acceptStringToNumber("connectionPort")
+      .refine
+      .read(s"""
+              |{
+              | "stringValue": "abc",
+              | "bindPort": "$bindPort",
+              | "connectionPort": "$connectionPort",
+              | "stringArray": []
+              |}
+            """.stripMargin.parseJson)
+
+    data.bindPort shouldBe bindPort
+    data.connectionPort shouldBe connectionPort
+  }
+
+  @Test
+  def testParseStringForBindPOrt(): Unit = an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
+    .format(format)
+    .refine
+    .read("""
+            |{
+            | "stringValue": "abc",
+            | "bindPort": "123",
+            | "connectionPort": 123,
+            | "stringArray": []
+            |}
+          """.stripMargin.parseJson)
+
+  @Test
+  def testParseStringForConnectionPOrt(): Unit = an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
+    .format(format)
+    .refine
+    .read("""
+            |{
+            | "stringValue": "abc",
+            | "bindPort": 123,
+            | "connectionPort": "123",
+            | "stringArray": []
+            |}
+          """.stripMargin.parseJson)
+
+  @Test
+  def testRejectNegativeNumberInParsingString(): Unit =
+    an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
+      .format(format)
+      .acceptStringToNumber("connectionPort")
+      .rejectNegativeNumber()
+      .refine
+      .read("""
+            |{
+            | "stringValue": "abc",
+            | "bindPort": 123,
+            | "connectionPort": "-1",
+            | "stringArray": []
+            |}
+          """.stripMargin.parseJson)
 }

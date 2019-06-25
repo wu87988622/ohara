@@ -17,7 +17,7 @@
 package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0.FtpApi
-import com.island.ohara.client.configurator.v0.FtpApi.{Creation, FtpInfo, Request}
+import com.island.ohara.client.configurator.v0.FtpApi.{FtpInfo, Request}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
@@ -29,80 +29,6 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
   private[this] val configurator = Configurator.builder().fake().build()
 
   private[this] val ftpApi = FtpApi.access.hostname(configurator.hostname).port(configurator.port)
-  @Test
-  def testValidateField(): Unit = {
-    an[IllegalArgumentException] should be thrownBy FtpInfoRoute.validateField(
-      Creation(
-        name = "",
-        hostname = "hostname",
-        port = 1234,
-        user = "ab",
-        password = "aaa"
-      ))
-
-    an[IllegalArgumentException] should be thrownBy FtpInfoRoute.validateField(
-      Creation(
-        name = "aa",
-        hostname = "",
-        port = 1234,
-        user = "ab",
-        password = "aaa"
-      ))
-
-    an[IllegalArgumentException] should be thrownBy FtpInfoRoute.validateField(
-      Creation(
-        name = "aa",
-        hostname = "hostname",
-        port = -1,
-        user = "ab",
-        password = "aaa"
-      ))
-
-    an[IllegalArgumentException] should be thrownBy FtpInfoRoute.validateField(
-      Creation(
-        name = "aa",
-        hostname = "hostname",
-        port = 0,
-        user = "ab",
-        password = "aaa"
-      ))
-
-    an[IllegalArgumentException] should be thrownBy FtpInfoRoute.validateField(
-      Creation(
-        name = "aaa",
-        hostname = "hostname",
-        port = 99999,
-        user = "ab",
-        password = "aaa"
-      ))
-
-    an[IllegalArgumentException] should be thrownBy FtpInfoRoute.validateField(
-      Creation(
-        name = "aaa",
-        hostname = "hostname",
-        port = 12345,
-        user = "",
-        password = "aaa"
-      ))
-
-    an[IllegalArgumentException] should be thrownBy FtpInfoRoute.validateField(
-      Creation(
-        name = "aaa",
-        hostname = "hostname",
-        port = 12345,
-        user = "aa",
-        password = ""
-      ))
-
-    FtpInfoRoute.validateField(
-      Creation(
-        name = "aaa",
-        hostname = "hostname",
-        port = 12345,
-        user = "aa",
-        password = "aaa"
-      ))
-  }
 
   @Test
   def test(): Unit = {
