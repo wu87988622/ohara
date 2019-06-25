@@ -14,14 +14,68 @@
  * limitations under the License.
  */
 
-import { fetchBrokers, createBroker } from '../brokerApi';
+import * as generate from 'utils/generate';
+import { fetchBrokers, createBroker, fetchBroker } from '../brokerApi';
 import { handleError, axiosInstance } from '../apiUtils';
 
 jest.mock('../apiUtils');
 
 const url = '/api/brokers';
 
-describe('fetchZookeeper()', () => {
+describe('fetchBroker()', () => {
+  afterEach(jest.clearAllMocks);
+  const brokerName = generate.serviceName();
+
+  it('handles success http call', async () => {
+    const res = {
+      data: {
+        isSuccess: true,
+      },
+    };
+
+    axiosInstance.get.mockImplementation(() => Promise.resolve(res));
+
+    const result = await fetchBroker(brokerName);
+    expect(axiosInstance.get).toHaveBeenCalledTimes(1);
+    expect(axiosInstance.get).toHaveBeenCalledWith(`${url}/${brokerName}`);
+    expect(result).toBe(res);
+  });
+
+  it('handles success http call but with server error', async () => {
+    const res = {
+      data: {
+        isSuccess: false,
+      },
+    };
+    axiosInstance.get.mockImplementation(() => Promise.resolve(res));
+
+    const result = await fetchBroker(brokerName);
+
+    expect(axiosInstance.get).toHaveBeenCalledTimes(1);
+    expect(axiosInstance.get).toHaveBeenCalledWith(`${url}/${brokerName}`);
+    expect(handleError).toHaveBeenCalledTimes(1);
+    expect(handleError).toHaveBeenCalledWith(result);
+  });
+
+  it('handles failed http call', async () => {
+    const res = {
+      data: {
+        errorMessage: {
+          message: 'error!',
+        },
+      },
+    };
+
+    axiosInstance.get.mockImplementation(() => Promise.reject(res));
+
+    await fetchBroker(brokerName);
+    expect(axiosInstance.get).toHaveBeenCalledTimes(1);
+    expect(handleError).toHaveBeenCalledTimes(1);
+    expect(handleError).toHaveBeenCalledWith(res);
+  });
+});
+
+describe('fetchBrokers()', () => {
   afterEach(jest.clearAllMocks);
 
   it('handles success http call', async () => {
@@ -73,7 +127,7 @@ describe('fetchZookeeper()', () => {
   });
 });
 
-describe('createZookeeper()', () => {
+describe('createBroker()', () => {
   afterEach(jest.clearAllMocks);
 
   const params = {

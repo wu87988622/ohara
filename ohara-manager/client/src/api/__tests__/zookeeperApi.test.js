@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 
-import { fetchZookeepers, createZookeeper } from '../zookeeperApi';
+import * as generate from 'utils/generate';
+import {
+  fetchZookeepers,
+  createZookeeper,
+  fetchZookeeper,
+} from '../zookeeperApi';
 import { handleError, axiosInstance } from '../apiUtils';
 
 jest.mock('../apiUtils');
@@ -22,6 +27,59 @@ jest.mock('../apiUtils');
 const url = '/api/zookeepers';
 
 describe('fetchZookeeper()', () => {
+  afterEach(jest.clearAllMocks);
+  const zookeeperName = generate.serviceName();
+
+  it('handles success http call', async () => {
+    const res = {
+      data: {
+        isSuccess: true,
+      },
+    };
+
+    axiosInstance.get.mockImplementation(() => Promise.resolve(res));
+
+    const result = await fetchZookeeper(zookeeperName);
+    expect(axiosInstance.get).toHaveBeenCalledTimes(1);
+    expect(axiosInstance.get).toHaveBeenCalledWith(`${url}/${zookeeperName}`);
+    expect(result).toBe(res);
+  });
+
+  it('handles success http call but with server error', async () => {
+    const res = {
+      data: {
+        isSuccess: false,
+      },
+    };
+    axiosInstance.get.mockImplementation(() => Promise.resolve(res));
+
+    const result = await fetchZookeeper(zookeeperName);
+
+    expect(axiosInstance.get).toHaveBeenCalledTimes(1);
+    expect(axiosInstance.get).toHaveBeenCalledWith(`${url}/${zookeeperName}`);
+    expect(handleError).toHaveBeenCalledTimes(1);
+    expect(handleError).toHaveBeenCalledWith(result);
+  });
+
+  it('handles failed http call', async () => {
+    const res = {
+      data: {
+        errorMessage: {
+          message: 'error!',
+        },
+      },
+    };
+
+    axiosInstance.get.mockImplementation(() => Promise.reject(res));
+
+    await fetchZookeeper(zookeeperName);
+    expect(axiosInstance.get).toHaveBeenCalledTimes(1);
+    expect(handleError).toHaveBeenCalledTimes(1);
+    expect(handleError).toHaveBeenCalledWith(res);
+  });
+});
+
+describe('fetchZookeepers()', () => {
   afterEach(jest.clearAllMocks);
   it('handles success http call', async () => {
     const res = {
@@ -76,10 +134,13 @@ describe('createZookeeper()', () => {
   afterEach(jest.clearAllMocks);
 
   const params = {
-    name: 'abc',
-    nodeNames: ['a', 'b'],
+    name: generate.serviceName(),
+    clientPort: generate.port(),
+    peerPort: generate.port(),
+    electionPort: generate.port(),
+    nodeNames: [generate.name(), generate.name()],
   };
-  const config = { timeout: 180000 };
+  const config = { timeout: 3 * 60 * 1000 };
 
   it('handles success http call', async () => {
     const res = {

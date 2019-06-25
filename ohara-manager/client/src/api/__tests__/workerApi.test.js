@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import * as generate from 'utils/generate';
 import { fetchWorkers, fetchWorker, createWorker } from '../workerApi';
 import { handleError, axiosInstance } from '../apiUtils';
 
@@ -22,7 +23,7 @@ const url = '/api/workers';
 
 describe('fetchWorker()', () => {
   afterEach(jest.clearAllMocks);
-  const workerName = 'abc';
+  const workerName = generate.serviceName();
 
   it('handles success http call', async () => {
     const res = {

@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import Typography from './Typography';
-import PageTitle from './PageTitle';
-import H3 from './H3';
+import Overview from './Overview';
 
-export { PageTitle, Typography, H3 };
+export default Overview;

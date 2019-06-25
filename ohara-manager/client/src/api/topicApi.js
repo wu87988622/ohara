@@ -50,6 +50,7 @@ export const fetchTopics = async () => {
 
 export const createTopic = async params => {
   const { name, numberOfPartitions, numberOfReplications } = params;
+
   try {
     const data = {
       name,

@@ -14,8 +14,14 @@
  * limitations under the License.
  */
 
+import styled from 'styled-components';
 import Typography from './Typography';
-import PageTitle from './PageTitle';
-import H3 from './H3';
 
-export { PageTitle, Typography, H3 };
+const PageTitle = styled(Typography).attrs({
+  variant: 'h3',
+})`
+  font-size: 20px;
+  margin: 15px 0;
+`;
+
+export default PageTitle;

@@ -21,7 +21,6 @@ import { Form, Field } from 'react-final-form';
 import { get } from 'lodash';
 
 import * as topicApi from 'api/topicApi';
-import * as brokerApi from 'api/brokerApi';
 import * as MESSAGES from 'constants/messages';
 import { Modal } from 'components/common/Modal';
 import { Box } from 'components/common/Layout';
@@ -33,10 +32,11 @@ class TopicNewModal extends React.Component {
     isActive: PropTypes.bool.isRequired,
     onClose: PropTypes.func.isRequired,
     onConfirm: PropTypes.func.isRequired,
+    brokerClusterName: PropTypes.string.isRequired,
   };
 
   state = {
-    isSaveBtnWorking: false,
+    isSaving: false,
   };
 
   handleClose = () => {
@@ -44,16 +44,14 @@ class TopicNewModal extends React.Component {
   };
 
   onSubmit = async (values, form) => {
-    this.setState({ isSaveBtnWorking: true });
-    const result = get(await brokerApi.fetchBrokers(), 'data.result');
-    const brokerName = result.length > 0 ? result[0].name : '';
+    this.setState({ isSaving: true });
 
     const res = await topicApi.createTopic({
       ...values,
-      brokerClusterName: brokerName,
+      brokerClusterName: this.props.brokerClusterName,
     });
 
-    this.setState({ isSaveBtnWorking: false });
+    this.setState({ isSaving: false });
     const isSuccess = get(res, 'data.isSuccess', false);
     if (isSuccess) {
       form.reset();
@@ -81,7 +79,7 @@ class TopicNewModal extends React.Component {
               handleConfirm={handleSubmit}
               confirmBtnText="Save"
               isConfirmDisabled={submitting || pristine || invalid}
-              isConfirmWorking={this.state.isSaveBtnWorking}
+              isConfirmWorking={this.state.isSaving}
               showActions={true}
             >
               <form onSubmit={handleSubmit}>

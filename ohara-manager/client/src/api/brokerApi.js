@@ -33,6 +33,21 @@ export const fetchBrokers = async () => {
   }
 };
 
+export const fetchBroker = async brokerName => {
+  try {
+    const res = await axiosInstance.get(`/api/brokers/${brokerName}`);
+    const isSuccess = get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
 export const createBroker = async params => {
   try {
     const url = `/api/brokers`;

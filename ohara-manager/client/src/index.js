@@ -37,7 +37,7 @@ const MuiTheme = createMuiTheme({
 
 ReactDOM.render(
   <MuiThemeProvider theme={MuiTheme}>
-    <ThemeProvider theme={CSS_VARS}>
+    <ThemeProvider theme={{ ...CSS_VARS, ...MuiTheme }}>
       <App />
     </ThemeProvider>
   </MuiThemeProvider>,

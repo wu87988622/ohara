@@ -16,47 +16,50 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import styled from 'styled-components';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
-import Paper from '@material-ui/core/Paper';
 
 import { TableLoader } from 'components/common/Mui/Loader';
 
+const StyledTableCell = styled(TableCell)`
+  padding: ${props => props.theme.spacing(1)}px;
+  border-bottom: none;
+`;
+
 const MuiTable = props => {
-  const { headers, isLoading, children } = props;
+  const { headers, isLoading = false, children } = props;
   const lastIdx = headers.length - 1; // Make sure we have the same length as idx
 
   if (isLoading) return <TableLoader />;
 
   return (
-    <Paper>
-      <Table>
-        <TableHead>
-          <TableRow>
-            {headers.map((header, idx) => {
-              // The last table cell should be aligned to right
-              const align = idx === lastIdx ? 'right' : 'left';
-              return (
-                <TableCell align={align} key={header}>
-                  {header}
-                </TableCell>
-              );
-            })}
-          </TableRow>
-        </TableHead>
-        <TableBody>{children()}</TableBody>
-      </Table>
-    </Paper>
+    <Table>
+      <TableHead>
+        <TableRow>
+          {headers.map((header, idx) => {
+            // The last table cell should be aligned to right
+            const align = idx === lastIdx ? 'right' : 'left';
+            return (
+              <StyledTableCell align={align} key={header}>
+                {header}
+              </StyledTableCell>
+            );
+          })}
+        </TableRow>
+      </TableHead>
+      <TableBody>{children()}</TableBody>
+    </Table>
   );
 };
 
 MuiTable.propTypes = {
   headers: PropTypes.arrayOf(PropTypes.string).isRequired,
-  isLoading: PropTypes.bool.isRequired,
   children: PropTypes.func.isRequired,
+  isLoading: PropTypes.bool,
 };
 
 export default MuiTable;

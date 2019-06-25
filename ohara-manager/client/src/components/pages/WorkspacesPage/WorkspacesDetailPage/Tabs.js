@@ -25,6 +25,7 @@ import { Route } from 'react-router-dom';
 import Topics from './Topics';
 import StreamApp from './StreamApp';
 import Nodes from './Nodes';
+import Overview from './Overview';
 
 const StyledTabs = styled(Tabs)`
   border-bottom: 1px solid #eee;
@@ -32,6 +33,7 @@ const StyledTabs = styled(Tabs)`
 
 const MuiTabs = props => {
   const [value, setValue] = React.useState(0);
+
   const tabArray = ['overview', 'nodes', 'topics', 'streamapps'];
   const { workspaceName } = props.match.params;
   const baseUrl = `/workspaces/${workspaceName}`;
@@ -62,12 +64,15 @@ const MuiTabs = props => {
         <Tab label="Topics" />
         <Tab label="Stream apps" />
       </StyledTabs>
-      <Route path={`${baseUrl}/overview`} render={() => <h5>Overview</h5>} />
+      <Route
+        path={`${baseUrl}/overview`}
+        render={() => <Overview {...props} />}
+      />
       <Route
         path={`${baseUrl}/nodes`}
         render={() => <Nodes workspaceName={workspaceName} />}
       />
-      <Route path={`${baseUrl}/topics`} component={Topics} />
+      <Route path={`${baseUrl}/topics`} render={() => <Topics {...props} />} />
       <Route
         path={`${baseUrl}/streamapps`}
         render={() => <StreamApp workspaceName={workspaceName} />}

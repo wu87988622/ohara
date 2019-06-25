@@ -14,24 +14,26 @@
  * limitations under the License.
  */
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
-import IconButton from '@material-ui/core/IconButton';
 import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
+import IconButton from '@material-ui/core/IconButton';
 import moment from 'moment';
 import toastr from 'toastr';
-import { isEmpty, get, orderBy } from 'lodash';
+import { get } from 'lodash';
 import { ConfirmModal } from 'components/common/Modal';
 
 import * as topicApi from 'api/topicApi';
-import * as workerApi from 'api/workerApi';
 import * as MESSAGES from 'constants/messages';
 import TopicNewModal from '../../TopicNewModal';
 import { StyledTable, StyledIcon, StyledButton } from './styles';
 import { useSetState } from 'utils/hooks';
+import { useFetchTopics } from '../WorkspacesDetailPageUtils';
 
 const Topics = props => {
+  const { worker } = props;
+
   const headers = [
     'Topic name',
     'Partitions',
@@ -42,60 +44,19 @@ const Topics = props => {
   ];
 
   const [state, setState] = useSetState({
-    isLoading: true,
     isDeleting: false,
     isNewModalOpen: false,
     isDeleteModalOpen: false,
-    topics: [],
     topicToBeDeleted: '',
-    brokerClusterName: '',
   });
 
-  const fetchWorker = async () => {
-    const workerName = props.match.url.split('/')[2]; // use params instead of manually splitting the url name
-    const worker = await workerApi.fetchWorker(workerName);
-    const brokerClusterName = get(
-      worker,
-      'data.result.brokerClusterName',
-      null,
-    );
-
-    if (brokerClusterName) {
-      setState({ brokerClusterName });
-    }
-  };
-
-  const fetchTopics = async () => {
-    const res = await topicApi.fetchTopics();
-    const topics = get(res, 'data.result', []);
-
-    if (!isEmpty(topics)) {
-      const topicsUnderBrokerCluster = topics.filter(
-        topic => topic.brokerClusterName === state.brokerClusterName,
-      );
-
-      setState({
-        topics: orderBy(topics, 'name'),
-        brokerClusterName: topicsUnderBrokerCluster,
-      });
-    }
-  };
-
-  useEffect(() => {
-    const fetchData = async () => {
-      await fetchWorker();
-      await fetchTopics();
-      setState({ isLoading: false });
-    };
-    fetchData();
-
-    // Disable the eslint warning for now. As it's very default to
-    // understand what's really going on here.
-  }, []); // eslint-disable-line
+  const [topics, setTopics, isLoading, fetchTopics] = useFetchTopics(
+    worker.brokerClusterName,
+  );
 
   const handleDelete = async () => {
     setState({ isDeleting: true });
-    const { topicToBeDeleted, topics } = state;
+    const { topicToBeDeleted } = state;
     const res = await topicApi.deleteTopic(topicToBeDeleted);
     const isSuccess = get(res, 'data.isSuccess', false);
     setState({ isDeleting: false });
@@ -107,9 +68,10 @@ const Topics = props => {
       );
       setState({
         isDeleteModalOpen: false,
-        topics: updatedTopics,
         topicToBeDeleted: '',
       });
+
+      setTopics(updatedTopics);
     }
   };
 
@@ -117,13 +79,7 @@ const Topics = props => {
     return moment.unix(timestamp / 1000).format('YYYY-MM-DD HH:mm:ss');
   };
 
-  const {
-    isLoading,
-    topics,
-    isNewModalOpen,
-    isDeleteModalOpen,
-    isDeleting,
-  } = state;
+  const { isNewModalOpen, isDeleteModalOpen, isDeleting } = state;
 
   return (
     <>
@@ -175,6 +131,7 @@ const Topics = props => {
           setState({ isNewModalOpen: false });
         }}
         onConfirm={fetchTopics}
+        brokerClusterName={worker.brokerClusterName}
       />
 
       <ConfirmModal
@@ -195,6 +152,9 @@ const Topics = props => {
 Topics.propTypes = {
   match: PropTypes.shape({
     url: PropTypes.string.isRequired,
+  }).isRequired,
+  worker: PropTypes.shape({
+    brokerClusterName: PropTypes.string.isRequired,
   }).isRequired,
 };
 

@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import DocumentTitle from 'react-document-title';
+import { get } from 'lodash';
 
+import * as workerApi from 'api/workerApi';
 import Container from 'components/common/Mui/Layout';
 import Tabs from './Tabs';
 import { WORKSPACES_DETAIL } from 'constants/documentTitles';
@@ -26,6 +28,22 @@ import { StyledIcon } from './styles';
 
 const WorkspacesDetailPage = props => {
   const { workspaceName } = props.match.params;
+  const [worker, setWorker] = useState(null);
+
+  useEffect(() => {
+    const fetchWorker = async () => {
+      const res = await workerApi.fetchWorker(workspaceName);
+      const worker = get(res, 'data.result', null);
+
+      if (worker) {
+        setWorker(worker);
+      }
+    };
+
+    fetchWorker();
+  }, [workspaceName]);
+
+  if (!worker) return null;
 
   return (
     <DocumentTitle title={WORKSPACES_DETAIL}>
@@ -35,7 +53,7 @@ const WorkspacesDetailPage = props => {
           {workspaceName}
         </PageTitle>
 
-        <Tabs {...props} />
+        <Tabs {...props} worker={worker} />
       </Container>
     </DocumentTitle>
   );
