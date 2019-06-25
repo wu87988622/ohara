@@ -24,7 +24,6 @@ import { TabHeading, StyledTableCell, StyledIcon, TooltipBody } from './styles';
 
 const OverviewConnectors = props => {
   const { connectors } = props;
-
   const _connectors = connectors.map(connector => {
     const { className, definitions: defs } = connector;
     const targetKeys = ['kind', 'version', 'author'];
@@ -89,18 +88,8 @@ OverviewConnectors.propTypes = {
       className: PropTypes.string.isRequired,
       definitions: PropTypes.arrayOf(
         PropTypes.shape({
-          kind: PropTypes.shape({
-            key: PropTypes.string.isRequired,
-            defaultValue: PropTypes.oneOfType[PropTypes.string],
-          }).isRequired,
-          version: PropTypes.shape({
-            key: PropTypes.string.isRequired,
-            defaultValue: PropTypes.oneOfType[PropTypes.string],
-          }).isRequired,
-          author: PropTypes.shape({
-            key: PropTypes.string.isRequired,
-            defaultValue: PropTypes.oneOfType[PropTypes.string],
-          }).isRequired,
+          key: PropTypes.string.isRequired,
+          defaultValue: PropTypes.string,
         }),
       ).isRequired,
     }),

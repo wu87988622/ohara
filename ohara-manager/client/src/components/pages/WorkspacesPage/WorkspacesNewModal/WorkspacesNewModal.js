@@ -54,8 +54,7 @@ class WorkerNewModal extends React.Component {
   };
 
   createServices = async values => {
-    const { clientPort, nodeNames } = values;
-
+    const { nodeNames } = values;
     const maxRetry = 5;
     let retryCount = 0;
     const waitForServiceCreation = async clusterName => {
@@ -71,7 +70,7 @@ class WorkerNewModal extends React.Component {
 
     const zookeeper = await zookeeperApi.createZookeeper({
       name: generate.serviceName(),
-      clientPort: clientPort,
+      clientPort: generate.port(),
       peerPort: generate.port(),
       electionPort: generate.port(),
       nodeNames,
@@ -83,7 +82,7 @@ class WorkerNewModal extends React.Component {
     const broker = await brokerApi.createBroker({
       name: generate.serviceName(),
       zookeeperClusterName,
-      clientPort: clientPort,
+      clientPort: generate.port(),
       exporterPort: generate.port(),
       jmxPort: generate.port(),
       nodeNames,

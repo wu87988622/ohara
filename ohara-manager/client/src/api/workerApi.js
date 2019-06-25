@@ -80,7 +80,7 @@ export const addNodeToWorker = async params => {
   try {
     const { name, nodeName } = params;
     const url = `/api/workers/${name}/${nodeName}`;
-    const res = await axiosInstance.post(url);
+    const res = await axiosInstance.put(url);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {

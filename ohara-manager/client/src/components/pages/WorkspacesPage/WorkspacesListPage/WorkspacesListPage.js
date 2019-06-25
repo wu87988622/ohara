@@ -39,10 +39,7 @@ const WorkspacesListPage = props => {
     const { name } = data;
     return (
       <Tooltip title={`Link to ${name} page`} enterDelay={1000}>
-        <IconButton
-          data-testid="edit-node-icon"
-          onClick={() => handleRedirect(name)}
-        >
+        <IconButton data-testid={name} onClick={() => handleRedirect(name)}>
           <StyledIcon className="fas fa-external-link-square-alt" />
         </IconButton>
       </Tooltip>
