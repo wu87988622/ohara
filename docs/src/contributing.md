@@ -27,7 +27,6 @@ To start a QA run, you can simply leave a comment with one of the following comm
     - retry manager-api: run manager's API tests
     - retry manager-ut: run manager's unit tests
     - retry manager-it: run manager's end-to-end tests 
-- **run**: start both Configurator and Manager on jenkins server. If the specified PR makes some changes to UI, you can run this command to see the changes
 
 The QA build status can be seen at the bottom of your PR.
 
