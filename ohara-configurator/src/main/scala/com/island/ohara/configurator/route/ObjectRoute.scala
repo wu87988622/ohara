@@ -28,7 +28,6 @@ import scala.concurrent.ExecutionContext
 private[configurator] object ObjectRoute {
   private[this] def toObject(data: Data): Object = Object(
     name = data.name,
-    id = data.id,
     lastModified = data.lastModified,
     kind = data.kind
   )

@@ -24,8 +24,10 @@ import scala.concurrent.{ExecutionContext, Future}
 object ObjectApi {
   val OBJECT_PREFIX_PATH: String = "objects"
 
-  final case class Object(id: String, name: String, lastModified: Long, kind: String) extends Data
-  implicit val OBJECT_JSON_FORMAT: RootJsonFormat[Object] = jsonFormat4(Object)
+  final case class Object(name: String, lastModified: Long, kind: String) extends Data {
+    override def id: String = name
+  }
+  implicit val OBJECT_JSON_FORMAT: RootJsonFormat[Object] = jsonFormat3(Object)
 
   class Access private[v0] extends BasicAccess(OBJECT_PREFIX_PATH) {
     def get(id: String)(implicit executionContext: ExecutionContext): Future[Object] =
