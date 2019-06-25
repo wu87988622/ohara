@@ -1,3 +1,6 @@
+import java.util.stream.Collectors
+import java.util.stream.StreamSupport
+
 /*
  * Copyright 2019 is-land
  *
@@ -54,27 +57,21 @@ task runConfigurator(type: JavaExec, dependsOn: 'classes') {
   classpath = sourceSets.main.runtimeClasspath
   main = "com.island.ohara.configurator.Configurator"
 
-  def inputs = []
-  if (project.hasProperty('hostname')) {
-    inputs << "--hostname"
-    inputs << project.getProperty("hostname")
-  }
-  if (project.hasProperty('port')) {
-    inputs << "--port"
-    inputs << project.getProperty("port")
-  }
-  if (project.hasProperty('node')) {
-    inputs << "--node"
-    inputs << project.getProperty('node')
-  }
-  if (project.hasProperty('k8s')) {
-    inputs << "--k8s"
-    inputs << project.getProperty('k8s')
-  }
-  if (project.hasProperty('folder')) {
-    inputs << "--folder"
-    inputs << project.getProperty("folder")
-  }
-  args = inputs
+  def keywords = [
+    "hostname",
+    "port",
+    "node",
+    "k8s",
+    "folder",
+    "fake"
+  ]
+  args = keywords.stream()
+    .filter {
+      word -> project.hasProperty(word)
+    }
+    .flatMap {
+      word -> Arrays.asList("--$word", project.getProperty(word)).stream()
+    }
+    .collect(Collectors.toList())
 }
 
