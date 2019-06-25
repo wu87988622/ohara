@@ -90,12 +90,9 @@ const run = async (apiRoot, serverPort = 5050) => {
     console.log(chalk.green('Successfully cleaned up all the services!'));
     process.exit(0);
   } catch (error) {
-    console.log(
-      chalk.red('Failed to clean services, see the detailed error below:'),
-    );
-    console.log(error);
+    // Ignore the error message, and exit with a fail status
+    process.exit(1);
   }
-  process.exit(1);
 };
 
 // Do not run the test if the build dir is not present

@@ -16,22 +16,24 @@
 
 const fs = require('fs');
 const axios = require('axios');
+const chalk = require('chalk');
+
 const commonUtils = require('../utils/commonUtils');
 
 /* eslint-disable no-console */
-const randomName = () => {
+const randomServiceName = () => {
   const possible = 'abcdefghijklmnopqrstuvwxyz0123456789';
-  let text = '';
+  let name = '';
 
   for (let i = 0; i < 5; i++) {
-    text += possible.charAt(Math.floor(Math.random() * possible.length));
+    name += possible.charAt(Math.floor(Math.random() * possible.length));
   }
 
-  return text;
+  return name;
 };
 
-const createNode = async (baseUrl, nodeHost, nodePort, nodeUser, nodePass) => {
-  await axios.post(`${baseUrl}/nodes`, {
+const createNode = (baseUrl, nodeHost, nodePort, nodeUser, nodePass) => {
+  return axios.post(`${baseUrl}/nodes`, {
     name: nodeHost,
     port: nodePort,
     user: nodeUser,
@@ -39,8 +41,8 @@ const createNode = async (baseUrl, nodeHost, nodePort, nodeUser, nodePass) => {
   });
 };
 
-const createZk = async (baseUrl, zkName, nodeHost) => {
-  await axios.post(`${baseUrl}/zookeepers`, {
+const createZk = (baseUrl, zkName, nodeHost) => {
+  return axios.post(`${baseUrl}/zookeepers`, {
     clientPort: commonUtils.randomPort(),
     electionPort: commonUtils.randomPort(),
     peerPort: commonUtils.randomPort(),
@@ -49,8 +51,8 @@ const createZk = async (baseUrl, zkName, nodeHost) => {
   });
 };
 
-const createBk = async (baseUrl, zkName, bkName, nodeHost) => {
-  await axios.post(`${baseUrl}/brokers`, {
+const createBk = (baseUrl, zkName, bkName, nodeHost) => {
+  return axios.post(`${baseUrl}/brokers`, {
     clientPort: commonUtils.randomPort(),
     exporterPort: commonUtils.randomPort(),
     jmxPort: commonUtils.randomPort(),
@@ -60,16 +62,16 @@ const createBk = async (baseUrl, zkName, bkName, nodeHost) => {
   });
 };
 
-const cleanZk = async (baseUrl, zkname) => {
-  await axios.delete(`${baseUrl}/zookeepers/${zkname}?force=true`);
+const cleanZk = (baseUrl, zkName) => {
+  return axios.delete(`${baseUrl}/zookeepers/${zkName}?force=true`);
 };
 
-const cleanBk = async (baseUrl, bkname) => {
-  await axios.delete(`${baseUrl}/brokers/${bkname}?force=true`);
+const cleanBk = (baseUrl, bkName) => {
+  return axios.delete(`${baseUrl}/brokers/${bkName}?force=true`);
 };
 
-const cleanWk = async (baseUrl, wkname) => {
-  await axios.delete(`${baseUrl}/workers/${wkname}?force=true`);
+const cleanWk = (baseUrl, wkName) => {
+  return axios.delete(`${baseUrl}/workers/${wkName}?force=true`);
 };
 
 const getApi = async (baseUrl, api, name) => {
@@ -87,7 +89,7 @@ const getApi = async (baseUrl, api, name) => {
   }
 };
 
-const waitDelete = async (baseUrl, api, name) => {
+const waitForDeleteService = async (baseUrl, api, name) => {
   const res = await axios.get(`${baseUrl}/${api}`);
   if (res.data.length > 0) {
     const result = res.data.some(e => e.name == name);
@@ -95,19 +97,19 @@ const waitDelete = async (baseUrl, api, name) => {
     if (!result) return;
 
     await commonUtils.sleep(1000);
-    await waitDelete(baseUrl, api, name);
+    await waitForDeleteService(baseUrl, api, name);
   }
 
   return;
 };
 
-const waitCreate = async (baseUrl, api, name) => {
+const waitForCreateService = async (baseUrl, api, name) => {
   const res = await axios.get(`${baseUrl}/${api}`);
   const result = res.data.some(e => e.name == name);
 
   if (!result) {
     await commonUtils.sleep(1000);
-    await waitCreate(baseUrl, api, name);
+    await waitForCreateService(baseUrl, api, name);
   }
 
   return;
@@ -134,17 +136,17 @@ const fileHelper = (zkName, bkName) => {
       fs.mkdirSync('scripts/servicesApi');
     }
 
-    const zkjson = {
+    const zk = {
       name: zkName,
       serviceType: 'zookeepers',
     };
 
-    const bkjson = {
+    const bk = {
       name: bkName,
       serviceType: 'brokers',
     };
 
-    const data = JSON.stringify([zkjson, bkjson]);
+    const data = JSON.stringify([zk, bk]);
     fs.writeFile(filePath, data, error => {
       error;
     });
@@ -158,12 +160,12 @@ const jsonLoop = async (jsons, key, fn, baseUrl) => {
     }
     if (json.serviceType == key) {
       await fn(baseUrl, json.name);
-      await waitDelete(baseUrl, key, json.name);
+      await waitForDeleteService(baseUrl, key, json.name);
     }
   }
 };
 
-const getDefaultEnv = () => {
+exports.getDefaultEnv = () => {
   const filePath = './client/cypress.env.json';
   if (fs.existsSync(filePath)) {
     return JSON.parse(fs.readFileSync(filePath));
@@ -172,36 +174,52 @@ const getDefaultEnv = () => {
   return {};
 };
 
-async function createServices({
+exports.createServices = async ({
   configurator,
   nodeHost,
   nodePort,
   nodeUser,
   nodePass,
-}) {
-  const zkName = 'zk' + randomName();
-  const bkName = 'bk' + randomName();
+}) => {
+  console.log(chalk.blue('Creating services for this test run'));
 
-  await createNode(configurator, nodeHost, nodePort, nodeUser, nodePass);
-  await waitCreate(configurator, 'nodes', nodeHost);
-  await createZk(configurator, zkName, nodeHost);
-  await waitContainersCreate(configurator, zkName);
-  await createBk(configurator, zkName, bkName, nodeHost);
-  await waitContainersCreate(configurator, bkName);
-  await fileHelper(zkName, bkName);
-}
+  const zkName = 'zk' + randomServiceName();
+  const bkName = 'bk' + randomServiceName();
 
-async function cleanServices(configurator) {
-  const file = fs.readFileSync('scripts/servicesApi/service.json');
-  const jsons = JSON.parse(file);
+  try {
+    await createNode(configurator, nodeHost, nodePort, nodeUser, nodePass);
+    await waitForCreateService(configurator, 'nodes', nodeHost);
 
-  await jsonLoop(jsons, 'workers', cleanWk, configurator);
-  await jsonLoop(jsons, 'brokers', cleanBk, configurator);
-  await jsonLoop(jsons, 'zookeepers', cleanZk, configurator);
-}
+    await createZk(configurator, zkName, nodeHost);
+    await waitContainersCreate(configurator, zkName);
 
-module.exports = {
-  cleanServices,
-  createServices,
-  getDefaultEnv,
+    await createBk(configurator, zkName, bkName, nodeHost);
+    await waitContainersCreate(configurator, bkName);
+    await fileHelper(zkName, bkName);
+
+    console.log(chalk.green('Services created!'));
+  } catch (error) {
+    console.log(
+      chalk.red('Failed to create services, see the detailed error below:'),
+    );
+    console.log(error);
+    throw new Error();
+  }
+};
+
+exports.cleanServices = async configurator => {
+  try {
+    const file = fs.readFileSync('scripts/servicesApi/service.json');
+    const json = JSON.parse(file);
+
+    await jsonLoop(json, 'workers', cleanWk, configurator);
+    await jsonLoop(json, 'brokers', cleanBk, configurator);
+    await jsonLoop(json, 'zookeepers', cleanZk, configurator);
+  } catch (error) {
+    console.log(
+      chalk.red('Failed to clean services, see the detailed error below:'),
+    );
+    console.log(error);
+    throw new Error();
+  }
 };

@@ -42,7 +42,6 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
   const envNodePass = nodePass ? nodePass : defaultEnv.nodePass;
 
   try {
-    console.log(chalk.blue('Creating services for this test run'));
     await services.createServices({
       configurator,
       nodeHost: envNodeHost,
@@ -50,13 +49,8 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
       nodeUser: envNodeUser,
       nodePass: envNodePass,
     });
-
-    console.log(chalk.green('Services created!'));
   } catch (error) {
-    console.log(
-      chalk.red('Failed to create services, see the detailed error below:'),
-    );
-    console.log(error);
+    // Ignore the error, it's handle in the createServices function
 
     // Since starting services failed, don't run the
     // end to end tests at all
@@ -174,12 +168,9 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
     console.log(chalk.green('Successfully cleaned up all the services!'));
     process.exit(0);
   } catch (error) {
-    console.log(
-      chalk.red('Failed to clean services, see the detailed error below:'),
-    );
-    console.log(error);
+    // Ignore the error message, and exit with a fail status
+    process.exit(1);
   }
-  process.exit(1);
 };
 
 // Do not run the test if the build dir is not present
