@@ -31,7 +31,7 @@ import scala.concurrent.Future
 abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie {
   protected def configurator: Configurator
 
-  private[this] def zkApi = ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] def zkApi = ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] def bkApi = BrokerApi.access().hostname(configurator.hostname).port(configurator.port)
 
@@ -50,8 +50,7 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
                                    electionPort: Int,
                                    peerPort: Int,
                                    nodeNames: Set[String]): Future[ZookeeperApi.ZookeeperClusterInfo] =
-    zkApi
-      .request()
+    zkApi.request
       .name(clusterName)
       .clientPort(clientPort)
       .electionPort(electionPort)

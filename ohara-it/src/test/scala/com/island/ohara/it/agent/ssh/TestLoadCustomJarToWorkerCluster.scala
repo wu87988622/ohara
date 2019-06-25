@@ -59,7 +59,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
   private[this] val configurator: Configurator =
     Configurator.builder().hostname(publicHostname).port(publicPort).build()
 
-  private[this] val zkApi = ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] val zkApi = ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] val bkApi = BrokerApi.access().hostname(configurator.hostname).port(configurator.port)
 
@@ -95,7 +95,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
         JarApi.access().hostname(configurator.hostname).port(configurator.port).upload(file, None)))
 
     val zkCluster = result(
-      zkApi.request().name(nameHolder.generateClusterName()).nodeNames(nodeCache.map(_.name).toSet).create())
+      zkApi.request.name(nameHolder.generateClusterName()).nodeNames(nodeCache.map(_.name).toSet).create())
     assertCluster(() => result(zkApi.list), zkCluster.name)
     log.info(s"zkCluster:$zkCluster")
     val bkCluster = result(

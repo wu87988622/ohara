@@ -33,7 +33,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     * a fake cluster has 3 fake node.
     */
   private[this] val numberOfDefaultNodes = 3 * numberOfCluster
-  private[this] val zookeeperApi = ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] val zookeeperApi = ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] val nodeNames: Set[String] = Set("n0", "n1")
 
@@ -80,7 +80,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
   @Test
   def testCreateOnNonexistentNode(): Unit = {
     an[IllegalArgumentException] should be thrownBy result(
-      zookeeperApi.request().name(CommonUtils.randomString(10)).nodeName(CommonUtils.randomString(10)).create()
+      zookeeperApi.request.name(CommonUtils.randomString(10)).nodeName(CommonUtils.randomString(10)).create()
     )
   }
 
@@ -88,13 +88,12 @@ class TestZookeeperRoute extends MediumTest with Matchers {
   def testImageName(): Unit = {
     // pass by default image
     result(
-      zookeeperApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
+      zookeeperApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
     ).imageName shouldBe ZookeeperApi.IMAGE_NAME_DEFAULT
 
     // in fake mode only IMAGE_NAME_DEFAULT is supported
     an[IllegalArgumentException] should be thrownBy result(
-      zookeeperApi
-        .request()
+      zookeeperApi.request
         .name(CommonUtils.randomString(10))
         .imageName(CommonUtils.randomString(10))
         .nodeNames(nodeNames)
@@ -108,7 +107,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     val count = 3
     (0 until count).foreach { _ =>
       result(
-        zookeeperApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
+        zookeeperApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
       )
     }
     result(zookeeperApi.list).size shouldBe count + init
@@ -117,7 +116,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
   @Test
   def testRemove(): Unit = {
     val init = result(zookeeperApi.list).size
-    val cluster = result(zookeeperApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
+    val cluster = result(zookeeperApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
     result(zookeeperApi.list).size shouldBe init + 1
     result(zookeeperApi.delete(cluster.name))
     result(zookeeperApi.list).size shouldBe init
@@ -126,7 +125,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
   @Test
   def testAddNode(): Unit = {
     val zk = result(
-      zookeeperApi.request().name(CommonUtils.randomString(10)).nodeName(nodeNames.head).create()
+      zookeeperApi.request.name(CommonUtils.randomString(10)).nodeName(nodeNames.head).create()
     )
     zk.nodeNames.size shouldBe 1
     zk.nodeNames.head shouldBe nodeNames.head
@@ -137,7 +136,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
   @Test
   def testRemoveNode(): Unit = {
     val zk = result(
-      zookeeperApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
+      zookeeperApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
     )
 
     // we don't support to remove zk node at runtime
@@ -147,18 +146,18 @@ class TestZookeeperRoute extends MediumTest with Matchers {
   @Test
   def testInvalidClusterName(): Unit =
     an[IllegalArgumentException] should be thrownBy result(
-      zookeeperApi.request().name("abc def").nodeNames(nodeNames).create()
+      zookeeperApi.request.name("abc def").nodeNames(nodeNames).create()
     )
 
   @Test
   def createZkClusterWithSameName(): Unit = {
     val name = CommonUtils.randomString(10)
     result(
-      zookeeperApi.request().name(name).nodeNames(nodeNames).create()
+      zookeeperApi.request.name(name).nodeNames(nodeNames).create()
     )
 
     an[IllegalArgumentException] should be thrownBy result(
-      zookeeperApi.request().name(name).nodeNames(nodeNames).create()
+      zookeeperApi.request.name(name).nodeNames(nodeNames).create()
     )
   }
 
@@ -166,11 +165,11 @@ class TestZookeeperRoute extends MediumTest with Matchers {
   def clientPortConflict(): Unit = {
     val clientPort = CommonUtils.availablePort()
     result(
-      zookeeperApi.request().name(CommonUtils.randomString(10)).clientPort(clientPort).nodeNames(nodeNames).create()
+      zookeeperApi.request.name(CommonUtils.randomString(10)).clientPort(clientPort).nodeNames(nodeNames).create()
     )
 
     an[IllegalArgumentException] should be thrownBy result(
-      zookeeperApi.request().name(CommonUtils.randomString(10)).clientPort(clientPort).nodeNames(nodeNames).create()
+      zookeeperApi.request.name(CommonUtils.randomString(10)).clientPort(clientPort).nodeNames(nodeNames).create()
     )
   }
 
@@ -178,11 +177,11 @@ class TestZookeeperRoute extends MediumTest with Matchers {
   def peerPortConflict(): Unit = {
     val peerPort = CommonUtils.availablePort()
     result(
-      zookeeperApi.request().name(CommonUtils.randomString(10)).peerPort(peerPort).nodeNames(nodeNames).create()
+      zookeeperApi.request.name(CommonUtils.randomString(10)).peerPort(peerPort).nodeNames(nodeNames).create()
     )
 
     an[IllegalArgumentException] should be thrownBy result(
-      zookeeperApi.request().name(CommonUtils.randomString(10)).peerPort(peerPort).nodeNames(nodeNames).create()
+      zookeeperApi.request.name(CommonUtils.randomString(10)).peerPort(peerPort).nodeNames(nodeNames).create()
     )
   }
 
@@ -190,11 +189,11 @@ class TestZookeeperRoute extends MediumTest with Matchers {
   def electionPortConflict(): Unit = {
     val electionPort = CommonUtils.availablePort()
     result(
-      zookeeperApi.request().name(CommonUtils.randomString(10)).electionPort(electionPort).nodeNames(nodeNames).create()
+      zookeeperApi.request.name(CommonUtils.randomString(10)).electionPort(electionPort).nodeNames(nodeNames).create()
     )
 
     an[IllegalArgumentException] should be thrownBy result(
-      zookeeperApi.request().name(CommonUtils.randomString(10)).electionPort(electionPort).nodeNames(nodeNames).create()
+      zookeeperApi.request.name(CommonUtils.randomString(10)).electionPort(electionPort).nodeNames(nodeNames).create()
     )
   }
 
@@ -204,7 +203,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     val name = CommonUtils.randomString(10)
     // graceful delete
     result(
-      zookeeperApi.request().name(name).nodeNames(nodeNames).create()
+      zookeeperApi.request.name(name).nodeNames(nodeNames).create()
     )
     result(zookeeperApi.delete(name))
     configurator.clusterCollie
@@ -214,7 +213,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
 
     // force delete
     result(
-      zookeeperApi.request().name(name).nodeNames(nodeNames).create()
+      zookeeperApi.request.name(name).nodeNames(nodeNames).create()
     )
     result(zookeeperApi.forceDelete(name))
     configurator.clusterCollie

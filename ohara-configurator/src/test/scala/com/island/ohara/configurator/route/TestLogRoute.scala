@@ -31,7 +31,7 @@ class TestLogRoute extends SmallTest with Matchers {
 
   private[this] val logApi = LogApi.access().hostname(configurator.hostname).port(configurator.port)
 
-  private[this] val zkApi = ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] val zkApi = ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] val bkApi = BrokerApi.access().hostname(configurator.hostname).port(configurator.port)
 

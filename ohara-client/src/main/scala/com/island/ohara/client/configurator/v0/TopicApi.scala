@@ -41,8 +41,8 @@ object TopicApi {
 
   implicit val TOPIC_CREATION_FORMAT: RootJsonFormat[Creation] = JsonRefiner[Creation]
     .format(jsonFormat4(Creation))
-    .defaultInt("numberOfPartitions", DEFAULT_NUMBER_OF_REPLICATIONS)
-    .defaultInt("numberOfReplications", DEFAULT_NUMBER_OF_REPLICATIONS)
+    .nullToInt("numberOfPartitions", DEFAULT_NUMBER_OF_REPLICATIONS)
+    .nullToInt("numberOfReplications", DEFAULT_NUMBER_OF_REPLICATIONS)
     .rejectEmptyString()
     .refine
 

@@ -21,6 +21,7 @@ import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
+import spray.json._
 class TestZookeeperApi extends SmallTest with Matchers {
 
   @Test
@@ -38,93 +39,82 @@ class TestZookeeperApi extends SmallTest with Matchers {
   }
 
   @Test
-  def ignoreNameOnCreation(): Unit = an[NullPointerException] should be thrownBy ZookeeperApi
-    .access()
+  def ignoreNameOnCreation(): Unit = an[NullPointerException] should be thrownBy ZookeeperApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .nodeName(CommonUtils.randomString(10))
     .creation()
 
   @Test
-  def ignoreNodeNamesOnCreation(): Unit = an[IllegalArgumentException] should be thrownBy ZookeeperApi
-    .access()
+  def ignoreNodeNamesOnCreation(): Unit = an[IllegalArgumentException] should be thrownBy ZookeeperApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .name(CommonUtils.randomString())
     .creation()
 
   @Test
-  def nullName(): Unit = an[NullPointerException] should be thrownBy ZookeeperApi
-    .access()
+  def nullName(): Unit = an[NullPointerException] should be thrownBy ZookeeperApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .name(null)
 
   @Test
-  def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy ZookeeperApi
-    .access()
+  def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy ZookeeperApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .name("")
 
   @Test
-  def nullImageName(): Unit = an[NullPointerException] should be thrownBy ZookeeperApi
-    .access()
+  def nullImageName(): Unit = an[NullPointerException] should be thrownBy ZookeeperApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .imageName(null)
 
   @Test
-  def emptyImageName(): Unit = an[IllegalArgumentException] should be thrownBy ZookeeperApi
-    .access()
+  def emptyImageName(): Unit = an[IllegalArgumentException] should be thrownBy ZookeeperApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .imageName("")
 
   @Test
-  def nullNodeNames(): Unit = an[NullPointerException] should be thrownBy ZookeeperApi
-    .access()
+  def nullNodeNames(): Unit = an[NullPointerException] should be thrownBy ZookeeperApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .nodeNames(null)
 
   @Test
-  def emptyNodeNames(): Unit = an[IllegalArgumentException] should be thrownBy ZookeeperApi
-    .access()
+  def emptyNodeNames(): Unit = an[IllegalArgumentException] should be thrownBy ZookeeperApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .nodeNames(Set.empty)
 
   @Test
-  def negativeClientPort(): Unit = an[IllegalArgumentException] should be thrownBy ZookeeperApi
-    .access()
+  def negativeClientPort(): Unit = an[IllegalArgumentException] should be thrownBy ZookeeperApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .clientPort(-1)
 
   @Test
-  def negativeElectionPort(): Unit = an[IllegalArgumentException] should be thrownBy ZookeeperApi
-    .access()
+  def negativeElectionPort(): Unit = an[IllegalArgumentException] should be thrownBy ZookeeperApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .electionPort(-1)
 
   @Test
-  def negativePeerPort(): Unit = an[IllegalArgumentException] should be thrownBy ZookeeperApi
-    .access()
+  def negativePeerPort(): Unit = an[IllegalArgumentException] should be thrownBy ZookeeperApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .peerPort(-1)
 
   @Test
@@ -135,11 +125,10 @@ class TestZookeeperApi extends SmallTest with Matchers {
     val peerPort = CommonUtils.availablePort()
     val electionPort = CommonUtils.availablePort()
     val nodeName = CommonUtils.randomString()
-    val creation = ZookeeperApi
-      .access()
+    val creation = ZookeeperApi.access
       .hostname(CommonUtils.randomString())
       .port(CommonUtils.availablePort())
-      .request()
+      .request
       .name(name)
       .imageName(imageName)
       .clientPort(clientPort)
@@ -156,19 +145,130 @@ class TestZookeeperApi extends SmallTest with Matchers {
   }
 
   @Test
-  def testJson(): Unit = {
-    import spray.json._
-    val name = CommonUtils.randomString(10)
+  def parseMinimumJson(): Unit = {
+    val name = CommonUtils.randomString()
     val nodeName = CommonUtils.randomString()
     val creation = ZookeeperApi.ZOOKEEPER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(s"""
-                                                                       |  {
-                                                                       |    "name": "$name",
-                                                                       |    "nodeNames": ["$nodeName"]
-                                                                       |  }
-                                                                     """.stripMargin.parseJson)
+         |  {
+         |    "name": "$name",
+         |    "nodeNames": ["$nodeName"]
+         |  }
+           """.stripMargin.parseJson)
+
     creation.name shouldBe name
-    creation.imageName shouldBe ZookeeperApi.IMAGE_NAME_DEFAULT
     creation.nodeNames.size shouldBe 1
     creation.nodeNames.head shouldBe nodeName
+    creation.imageName shouldBe ZookeeperApi.IMAGE_NAME_DEFAULT
+    creation.clientPort should not be 0
+    creation.electionPort should not be 0
+    creation.peerPort should not be 0
   }
+
+  @Test
+  def parseEmptyNodeNames(): Unit =
+    an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(
+      s"""
+         |  {
+         |    "name": "name"
+         |  }
+           """.stripMargin.parseJson)
+
+  @Test
+  def parseZeroClientPort(): Unit =
+    an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(
+      s"""
+         |  {
+         |    "name": "name",
+         |    "clientPort": 0,
+         |    "nodeNames": ["n"]
+         |  }
+           """.stripMargin.parseJson)
+
+  @Test
+  def parseNegativeClientPort(): Unit =
+    an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(
+      s"""
+         |  {
+         |    "name": "name",
+         |    "clientPort": -1,
+         |    "nodeNames": ["n"]
+         |  }
+           """.stripMargin.parseJson)
+
+  @Test
+  def parseLargeClientPort(): Unit =
+    an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(
+      s"""
+         |  {
+         |    "name": "name",
+         |    "clientPort": 999999,
+         |    "nodeNames": ["n"]
+         |  }
+           """.stripMargin.parseJson)
+
+  @Test
+  def parseZeroElectionPort(): Unit =
+    an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(
+      s"""
+         |  {
+         |    "name": "name",
+         |    "electionPort": 0,
+         |    "nodeNames": ["n"]
+         |  }
+           """.stripMargin.parseJson)
+
+  @Test
+  def parseNegativeElectionPort(): Unit =
+    an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(
+      s"""
+         |  {
+         |    "name": "name",
+         |    "electionPort": -1,
+         |    "nodeNames": ["n"]
+         |  }
+           """.stripMargin.parseJson)
+
+  @Test
+  def parseLargeElectionPort(): Unit =
+    an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(
+      s"""
+         |  {
+         |    "name": "name",
+         |    "electionPort": 999999,
+         |    "nodeNames": ["n"]
+         |  }
+           """.stripMargin.parseJson)
+
+  @Test
+  def parseZeroPeerPort(): Unit =
+    an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(
+      s"""
+         |  {
+         |    "name": "name",
+         |    "peerPort": 0,
+         |    "nodeNames": ["n"]
+         |  }
+           """.stripMargin.parseJson)
+
+  @Test
+  def parseNegativePeerPort(): Unit =
+    an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(
+      s"""
+         |  {
+         |    "name": "name",
+         |    "peerPort": -1,
+         |    "nodeNames": ["n"]
+         |  }
+           """.stripMargin.parseJson)
+
+  @Test
+  def parseLargePeerPort(): Unit =
+    an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(
+      s"""
+         |  {
+         |    "name": "name",
+         |    "peerPort": 999999,
+         |    "nodeNames": ["n"]
+         |  }
+           """.stripMargin.parseJson)
 }

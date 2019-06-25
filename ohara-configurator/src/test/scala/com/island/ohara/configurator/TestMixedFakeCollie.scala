@@ -65,11 +65,10 @@ class TestMixedFakeCollie extends WithBrokerWorker with Matchers {
       )
 
       val zk = Await.result(
-        ZookeeperApi
-          .access()
+        ZookeeperApi.access
           .hostname(configurator.hostname)
           .port(configurator.port)
-          .request()
+          .request
           .name(CommonUtils.randomString(10))
           .nodeNames(nodes.map(_.name).toSet)
           .create(),

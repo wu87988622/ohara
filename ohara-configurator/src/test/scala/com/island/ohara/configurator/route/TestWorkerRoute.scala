@@ -130,11 +130,10 @@ class TestWorkerRoute extends MediumTest with Matchers {
   def testDefaultBrokerInMultiBrokerCluster(): Unit = {
     val zkClusterName = CommonUtils.randomString(10)
     result(
-      ZookeeperApi
-        .access()
+      ZookeeperApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .request()
+        .request
         .name(zkClusterName)
         .nodeNames(nodeNames)
         .create()).name shouldBe zkClusterName

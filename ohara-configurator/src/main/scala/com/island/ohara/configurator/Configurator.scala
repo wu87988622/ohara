@@ -467,11 +467,10 @@ object Configurator {
     otherCheck(node)
 
     val zkCluster = Await.result(
-      ZookeeperApi
-        .access()
+      ZookeeperApi.access
         .hostname(CommonUtils.hostname())
         .port(configurator.port)
-        .request()
+        .request
         .name(PRE_CREATE_ZK_NAME)
         .nodeName(node.name)
         .create(),
@@ -483,7 +482,7 @@ object Configurator {
     CommonUtils.await(
       () =>
         Await
-          .result(ZookeeperApi.access().hostname(CommonUtils.hostname()).port(configurator.port).list, 30 seconds)
+          .result(ZookeeperApi.access.hostname(CommonUtils.hostname()).port(configurator.port).list, 30 seconds)
           .exists(_.name == PRE_CREATE_ZK_NAME),
       java.time.Duration.ofSeconds(30)
     )

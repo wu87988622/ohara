@@ -62,16 +62,15 @@ class TestGetNodeWithRunningCluster extends IntegrationTest with Matchers {
   @Test
   def test(): Unit = {
     val cluster = result(
-      ZookeeperApi
-        .access()
+      ZookeeperApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .request()
+        .request
         .name(CommonUtils.randomString(10))
         .nodeNames(nodeCache.map(_.name).toSet)
         .create())
     try {
-      assertCluster(() => result(ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port).list),
+      assertCluster(() => result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).list),
                     cluster.name)
       val nodes = result(NodeApi.access().hostname(configurator.hostname).port(configurator.port).list)
       nodes.isEmpty shouldBe false
@@ -79,7 +78,7 @@ class TestGetNodeWithRunningCluster extends IntegrationTest with Matchers {
         node.services.isEmpty shouldBe false
         withClue(s"${node.services}")(node.services.map(_.clusterNames.size).sum > 0 shouldBe true)
       }
-    } finally result(ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port).delete(cluster.name))
+    } finally result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).delete(cluster.name))
   }
 
   @After

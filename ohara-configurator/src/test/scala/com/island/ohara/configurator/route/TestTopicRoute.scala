@@ -96,14 +96,13 @@ class TestTopicRoute extends SmallTest with Matchers {
 
   @Test
   def createTopicWithoutBrokerClusterName(): Unit = {
-    val zk = result(ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port).list).head
+    val zk = result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).list).head
 
     val zk2 = result(
-      ZookeeperApi
-        .access()
+      ZookeeperApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .request()
+        .request
         .name(CommonUtils.randomString(10))
         .nodeNames(zk.nodeNames)
         .create()
@@ -127,14 +126,13 @@ class TestTopicRoute extends SmallTest with Matchers {
 
   @Test
   def testUpdateBrokerClusterName(): Unit = {
-    val zk = result(ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port).list).head
+    val zk = result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).list).head
 
     val zk2 = result(
-      ZookeeperApi
-        .access()
+      ZookeeperApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .request()
+        .request
         .name(CommonUtils.randomString(10))
         .nodeNames(zk.nodeNames)
         .create()

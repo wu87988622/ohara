@@ -48,11 +48,10 @@ class TestBrokerRoute extends MediumTest with Matchers {
     result(nodeAccess.list).size shouldBe nodeNames.size
 
     result(
-      ZookeeperApi
-        .access()
+      ZookeeperApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .request()
+        .request
         .name(zkClusterName)
         .nodeNames(nodeNames)
         .create()
@@ -104,22 +103,21 @@ class TestBrokerRoute extends MediumTest with Matchers {
   def testDefaultZkInMultiZkCluster(): Unit = {
     val anotherZk = CommonUtils.randomString(10)
     result(
-      ZookeeperApi
-        .access()
+      ZookeeperApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .request()
+        .request
         .name(anotherZk)
         .nodeNames(nodeNames)
         .create()).name shouldBe anotherZk
     try {
-      result(ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port).list).size shouldBe 2
+      result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).list).size shouldBe 2
 
       // there are two zk cluster so we have to assign the zk cluster...
       an[IllegalArgumentException] should be thrownBy result(
         brokerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
       )
-    } finally result(ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port).delete(anotherZk))
+    } finally result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).delete(anotherZk))
 
   }
 
@@ -154,11 +152,10 @@ class TestBrokerRoute extends MediumTest with Matchers {
     val bk = result(brokerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
 
     val zk2 = result(
-      ZookeeperApi
-        .access()
+      ZookeeperApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .request()
+        .request
         .name(CommonUtils.randomString(10))
         .nodeNames(nodeNames)
         .create()
@@ -226,11 +223,10 @@ class TestBrokerRoute extends MediumTest with Matchers {
     result(brokerApi.request().name(name).nodeNames(nodeNames).create())
 
     val zk2 = result(
-      ZookeeperApi
-        .access()
+      ZookeeperApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .request()
+        .request
         .name(CommonUtils.randomString(10))
         .nodeNames(nodeNames)
         .create()
@@ -246,11 +242,10 @@ class TestBrokerRoute extends MediumTest with Matchers {
     result(brokerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).clientPort(clientPort).create())
 
     val zk2 = result(
-      ZookeeperApi
-        .access()
+      ZookeeperApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .request()
+        .request
         .name(CommonUtils.randomString(10))
         .nodeNames(nodeNames)
         .create()
@@ -282,11 +277,10 @@ class TestBrokerRoute extends MediumTest with Matchers {
       brokerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).exporterPort(exporterPort).create())
 
     val zk2 = result(
-      ZookeeperApi
-        .access()
+      ZookeeperApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .request()
+        .request
         .name(CommonUtils.randomString(10))
         .nodeNames(nodeNames)
         .create()
@@ -317,11 +311,10 @@ class TestBrokerRoute extends MediumTest with Matchers {
     result(brokerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).jmxPort(jmxPort).create())
 
     val zk2 = result(
-      ZookeeperApi
-        .access()
+      ZookeeperApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .request()
+        .request
         .name(CommonUtils.randomString(10))
         .nodeNames(nodeNames)
         .create()

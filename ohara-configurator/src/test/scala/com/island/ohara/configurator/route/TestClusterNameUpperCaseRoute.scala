@@ -30,14 +30,14 @@ class TestClusterNameUpperCaseRoute extends SmallTest with Matchers {
   private[this] val configurator =
     Configurator.builder().fake(numberOfCluster, numberOfCluster, "ZookeeperCluster").build()
   private[this] val nodeApi = NodeApi.access().hostname(configurator.hostname).port(configurator.port)
-  private[this] val zookeeperApi = ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] val zookeeperApi = ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port)
 
   @Test
   def testAddZookeeper(): Unit = {
     result(nodeApi.request().name("host1").port(22).user("b").password("c").create())
 
     an[IllegalArgumentException] should be thrownBy result(
-      zookeeperApi.request().name(s"ZK-${CommonUtils.randomString(10)}").nodeName("host1").create())
+      zookeeperApi.request.name(s"ZK-${CommonUtils.randomString(10)}").nodeName("host1").create())
   }
 
   @After

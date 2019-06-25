@@ -71,7 +71,7 @@ object ConnectorApi {
       )
     })
     // the default value of new name is equal to origin name
-    .defaultToAnother("newName", "name")
+    .nullToAnotherValueOfKey("newName", "name")
     // the order can't be negative!!
     .rejectNegativeNumber()
     .rejectEmptyString()
@@ -110,7 +110,7 @@ object ConnectorApi {
       override def read(json: JsValue): Creation = Creation(json.asJsObject.fields)
     })
     // set the default number of tasks
-    .defaultInt(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key(), DEFAULT_NUMBER_OF_TASKS)
+    .nullToInt(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key(), DEFAULT_NUMBER_OF_TASKS)
     .rejectEmptyString()
     .refine
 

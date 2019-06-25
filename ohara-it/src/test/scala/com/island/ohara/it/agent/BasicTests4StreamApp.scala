@@ -96,7 +96,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
       bkName = nameHolder.generateClusterName()
       wkName = nameHolder.generateClusterName()
       configurator = createConfigurator(nodeCache, publicHostname, publicPort)
-      zkApi = ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port)
+      zkApi = ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port)
       bkApi = BrokerApi.access().hostname(configurator.hostname).port(configurator.port)
       wkApi = WorkerApi.access().hostname(configurator.hostname).port(configurator.port)
       containerApi = ContainerApi.access().hostname(configurator.hostname).port(configurator.port)
@@ -118,7 +118,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
       // create zookeeper cluster
       log.info("create zkCluster...start")
       val zkCluster = result(
-        zkApi.request().name(nameHolder.generateClusterName()).nodeNames(nodeCache.take(1).map(_.name).toSet).create()
+        zkApi.request.name(nameHolder.generateClusterName()).nodeNames(nodeCache.take(1).map(_.name).toSet).create()
       )
       assertCluster(() => result(zkApi.list), zkCluster.name)
       await(() => {

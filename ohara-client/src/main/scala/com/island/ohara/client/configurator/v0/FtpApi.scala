@@ -27,12 +27,12 @@ object FtpApi {
   val FTP_PREFIX_PATH: String = "ftp"
   final case class Update(hostname: Option[String], port: Option[Int], user: Option[String], password: Option[String])
   implicit val FTP_UPDATE_JSON_FORMAT: RootJsonFormat[Update] =
-    JsonRefiner[Update].format(jsonFormat4(Update)).connectionPort("port").rejectEmptyString().refine
+    JsonRefiner[Update].format(jsonFormat4(Update)).requireConnectionPort("port").rejectEmptyString().refine
 
   final case class Creation(name: String, hostname: String, port: Int, user: String, password: String)
       extends CreationRequest
   implicit val FTP_CREATION_JSON_FORMAT: RootJsonFormat[Creation] =
-    JsonRefiner[Creation].format(jsonFormat5(Creation)).connectionPort("port").rejectEmptyString().refine
+    JsonRefiner[Creation].format(jsonFormat5(Creation)).requireConnectionPort("port").rejectEmptyString().refine
 
   final case class FtpInfo(name: String,
                            hostname: String,

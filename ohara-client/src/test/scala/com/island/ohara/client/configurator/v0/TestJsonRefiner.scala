@@ -31,69 +31,56 @@ class TestJsonRefiner extends SmallTest with Matchers {
   def nullFormat(): Unit = an[NullPointerException] should be thrownBy JsonRefiner[SimpleData].format(null)
 
   @Test
-  def nullConnectionPort(): Unit =
-    an[NullPointerException] should be thrownBy JsonRefiner[SimpleData].connectionPort(null.asInstanceOf[Seq[String]])
-
-  @Test
   def emptyConnectionPort(): Unit =
-    an[IllegalArgumentException] should be thrownBy JsonRefiner[SimpleData].connectionPort("")
-
-  @Test
-  def nullToNullToEmptyArray(): Unit =
-    an[NullPointerException] should be thrownBy JsonRefiner[SimpleData].nullToEmptyArray(null.asInstanceOf[Seq[String]])
+    an[IllegalArgumentException] should be thrownBy JsonRefiner[SimpleData].requireConnectionPort("")
 
   @Test
   def emptyToNullToEmptyArray(): Unit =
     an[IllegalArgumentException] should be thrownBy JsonRefiner[SimpleData].nullToEmptyArray("")
 
   @Test
-  def nullToNullToRandomPort(): Unit =
-    an[NullPointerException] should be thrownBy JsonRefiner[SimpleData].nullToRandomPort(null.asInstanceOf[Seq[String]])
-
-  @Test
   def emptyToNullToRandomPort(): Unit =
-    an[IllegalArgumentException] should be thrownBy JsonRefiner[SimpleData].nullToRandomBindPort("")
-
-  @Test
-  def nullToNullToRandomString(): Unit =
-    an[NullPointerException] should be thrownBy JsonRefiner[SimpleData].nullToRandomString(
-      null.asInstanceOf[Seq[String]])
+    an[IllegalArgumentException] should be thrownBy JsonRefiner[SimpleData].nullToRandomPort("")
 
   @Test
   def emptyToNullToRandomString(): Unit =
     an[IllegalArgumentException] should be thrownBy JsonRefiner[SimpleData].nullToRandomString("")
 
   @Test
-  def testDuplicateKey(): Unit = {
-    an[IllegalArgumentException] should be thrownBy JsonRefiner[SimpleData]
-      .format(format)
-      .connectionPort(Seq("a"))
-      .nullToEmptyArray(Seq("a"))
-      .refine
+  def testDuplicateKeyForDefaultValue(): Unit = {
+    val actions: Seq[JsonRefiner[SimpleData] => Unit] = Seq(
+      _.nullToRandomPort("a"),
+      _.nullToShort("a", 1),
+      _.nullToInt("a", 1),
+      _.nullToLong("a", 1),
+      _.nullToDouble("a", 1),
+      _.nullToEmptyArray("a"),
+      _.nullToRandomString("a"),
+      _.nullToAnotherValueOfKey("a", "b"),
+      _.nullToString("a", "ccc")
+    )
+    actions.foreach { action0 =>
+      actions.foreach { action1 =>
+        val refiner = JsonRefiner[SimpleData].format(format)
+        action0(refiner)
+        an[IllegalArgumentException] should be thrownBy action1(refiner)
+      }
+    }
+  }
 
-    an[IllegalArgumentException] should be thrownBy JsonRefiner[SimpleData]
-      .format(format)
-      .connectionPort(Seq("a"))
-      .nullToRandomPort(Seq("a"))
-      .refine
-
-    an[IllegalArgumentException] should be thrownBy JsonRefiner[SimpleData]
-      .format(format)
-      .connectionPort(Seq("a"))
-      .nullToRandomString(Seq("a"))
-      .refine
-
-    an[IllegalArgumentException] should be thrownBy JsonRefiner[SimpleData]
-      .format(format)
-      .nullToEmptyArray(Seq("a"))
-      .nullToRandomPort(Seq("a"))
-      .refine
-
-    an[IllegalArgumentException] should be thrownBy JsonRefiner[SimpleData]
-      .format(format)
-      .nullToEmptyArray(Seq("a"))
-      .nullToRandomString(Seq("a"))
-      .refine
+  @Test
+  def testDuplicateKeyForChecker(): Unit = {
+    val actions: Seq[JsonRefiner[SimpleData] => Unit] = Seq(
+      _.requireBindPort("a"),
+      _.requireConnectionPort("a")
+    )
+    actions.foreach { action0 =>
+      actions.foreach { action1 =>
+        val refiner = JsonRefiner[SimpleData].format(format)
+        action0(refiner)
+        an[IllegalArgumentException] should be thrownBy action1(refiner)
+      }
+    }
   }
 
   @Test
@@ -123,7 +110,7 @@ class TestJsonRefiner extends SmallTest with Matchers {
 
   @Test
   def testConnectionPort(): Unit =
-    JsonRefiner[SimpleData].format(format).connectionPort("connectionPort").refine.read("""
+    JsonRefiner[SimpleData].format(format).requireConnectionPort("connectionPort").refine.read("""
               |{
               | "stringValue": "abc",
               | "bindPort": 123,
@@ -135,7 +122,7 @@ class TestJsonRefiner extends SmallTest with Matchers {
   @Test
   def testNullConnectionPort(): Unit = an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
     .format(format)
-    .connectionPort("connectionPort")
+    .requireConnectionPort("connectionPort")
     .refine
     .read("""
             |{
@@ -149,7 +136,7 @@ class TestJsonRefiner extends SmallTest with Matchers {
   @Test
   def testIgnoreConnectionPort(): Unit = an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
     .format(format)
-    .connectionPort("connectionPort")
+    .requireConnectionPort("connectionPort")
     .refine
     .read("""
             |{
@@ -171,7 +158,7 @@ class TestJsonRefiner extends SmallTest with Matchers {
   private[this] def testIllegalConnectionPort(port: Int): Unit =
     an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
       .format(format)
-      .connectionPort("connectionPort")
+      .requireConnectionPort("connectionPort")
       .refine
       .read(s"""
               |{
@@ -195,7 +182,7 @@ class TestJsonRefiner extends SmallTest with Matchers {
 
   @Test
   def testBindPort(): Unit =
-    JsonRefiner[SimpleData].format(format).nullToRandomBindPort("bindPort").refine.read("""
+    JsonRefiner[SimpleData].format(format).nullToRandomPort("bindPort").refine.read("""
           |{
           | "stringValue": "abc",
           | "bindPort": 11111,
@@ -205,19 +192,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
         """.stripMargin.parseJson).bindPort shouldBe 11111
 
   @Test
-  def testZeroBindPort(): Unit =
-    JsonRefiner[SimpleData].format(format).nullToRandomBindPort("bindPort").refine.read("""
-        |{
-        | "stringValue": "abc",
-        | "bindPort": 0,
-        | "connectionPort": 77,
-        | "stringArray": ["aa"]
-        |}
-      """.stripMargin.parseJson).bindPort should not be 0
-
-  @Test
   def testNullBindPort(): Unit =
-    JsonRefiner[SimpleData].format(format).nullToRandomBindPort("bindPort").refine.read("""
+    JsonRefiner[SimpleData].format(format).nullToRandomPort("bindPort").refine.read("""
         |{
         | "stringValue": "abc",
         | "bindPort": null,
@@ -228,7 +204,7 @@ class TestJsonRefiner extends SmallTest with Matchers {
 
   @Test
   def testIgnoreBindPort(): Unit =
-    JsonRefiner[SimpleData].format(format).nullToRandomBindPort("bindPort").refine.read("""
+    JsonRefiner[SimpleData].format(format).nullToRandomPort("bindPort").refine.read("""
       |{
       | "stringValue": "abc",
       | "connectionPort": 77,
@@ -248,7 +224,7 @@ class TestJsonRefiner extends SmallTest with Matchers {
   private[this] def testIllegalBindPort(port: Int): Unit =
     an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
       .format(format)
-      .nullToRandomBindPort("bindPort")
+      .requireBindPort("bindPort")
       .refine
       .read(s"""
                |{
@@ -292,7 +268,7 @@ class TestJsonRefiner extends SmallTest with Matchers {
 
   @Test
   def defaultInt(): Unit =
-    JsonRefiner[SimpleData].format(format).defaultInt("bindPort", 777).refine.read("""
+    JsonRefiner[SimpleData].format(format).nullToInt("bindPort", 777).refine.read("""
          |{
          | "stringValue": "abc",
          | "connectionPort": 123,
@@ -303,24 +279,24 @@ class TestJsonRefiner extends SmallTest with Matchers {
   @Test
   def testNullStringInDefaultToAnother(): Unit = {
     an[NullPointerException] should be thrownBy JsonRefiner[SimpleData]
-      .defaultToAnother(null, CommonUtils.randomString())
+      .nullToAnotherValueOfKey(null, CommonUtils.randomString())
     an[NullPointerException] should be thrownBy JsonRefiner[SimpleData]
-      .defaultToAnother(CommonUtils.randomString(), null)
+      .nullToAnotherValueOfKey(CommonUtils.randomString(), null)
   }
 
   @Test
   def testEmptyStringInDefaultToAnother(): Unit = {
     an[IllegalArgumentException] should be thrownBy JsonRefiner[SimpleData]
-      .defaultToAnother("", CommonUtils.randomString())
+      .nullToAnotherValueOfKey("", CommonUtils.randomString())
     an[IllegalArgumentException] should be thrownBy JsonRefiner[SimpleData]
-      .defaultToAnother(CommonUtils.randomString(), "")
+      .nullToAnotherValueOfKey(CommonUtils.randomString(), "")
   }
 
   @Test
   def testDefaultToAnother(): Unit =
     JsonRefiner[SimpleData]
       .format(format)
-      .defaultToAnother("bindPort", "connectionPort")
+      .nullToAnotherValueOfKey("bindPort", "connectionPort")
       .refine
       .read("""
         |{
@@ -335,7 +311,7 @@ class TestJsonRefiner extends SmallTest with Matchers {
   def testNonexistentAnotherKeyForDefaultToAnother(): Unit =
     an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
       .format(format)
-      .defaultToAnother("bindPort", CommonUtils.randomString())
+      .nullToAnotherValueOfKey("bindPort", CommonUtils.randomString())
       .refine
       .read("""
       |{
@@ -352,7 +328,7 @@ class TestJsonRefiner extends SmallTest with Matchers {
   def testNonexistentAnotherKeyButOriginKeyExistForDefaultToAnother(): Unit =
     JsonRefiner[SimpleData]
       .format(format)
-      .defaultToAnother("bindPort", CommonUtils.randomString())
+      .nullToAnotherValueOfKey("bindPort", CommonUtils.randomString())
       .refine
       .read("""
               |{
@@ -503,4 +479,18 @@ class TestJsonRefiner extends SmallTest with Matchers {
               |
               |}
             """.stripMargin.parseJson)
+
+  @Test
+  def testRejectEmptyArray(): Unit = an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
+    .format(format)
+    .rejectEmptyArray()
+    .refine
+    .read("""
+            |{
+            | "stringValue": "abc",
+            | "bindPort": 9999,
+            | "connectionPort": 123,
+            | "stringArray": []
+            |}
+          """.stripMargin.parseJson)
 }

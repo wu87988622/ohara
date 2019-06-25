@@ -47,11 +47,10 @@ class TestContainerRoute extends MediumTest with Matchers {
     }
 
     result(
-      ZookeeperApi
-        .access()
+      ZookeeperApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .request()
+        .request
         .name(zkClusterName)
         .nodeNames(nodeNames)
         .create()).name shouldBe zkClusterName
