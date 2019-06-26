@@ -41,6 +41,7 @@ class TestValidationOfFtp extends With3Brokers3Workers with Matchers {
   @Test
   def goodCase(): Unit =
     assertSuccess(
+      workerClient,
       ValidationUtils.run(
         workerClient,
         topicAdmin,
@@ -50,10 +51,13 @@ class TestValidationOfFtp extends With3Brokers3Workers with Matchers {
                       password = ftpServer.password,
                       workerClusterName = None),
         NUMBER_OF_TASKS
-      ))
+      )
+    )
+
   @Test
   def basCase(): Unit =
     assertFailure(
+      workerClient,
       ValidationUtils.run(
         workerClient,
         topicAdmin,
@@ -63,7 +67,8 @@ class TestValidationOfFtp extends With3Brokers3Workers with Matchers {
                       password = ftpServer.password,
                       workerClusterName = None),
         NUMBER_OF_TASKS
-      ))
+      )
+    )
   @After
   def tearDown(): Unit = Releasable.close(topicAdmin)
 }

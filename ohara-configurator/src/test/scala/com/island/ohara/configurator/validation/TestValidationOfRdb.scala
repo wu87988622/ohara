@@ -47,12 +47,14 @@ class TestValidationOfRdb extends With3Brokers3Workers with Matchers {
     try client.createTable("table", Seq(RdbColumn("v0", "integer", true)))
     finally client.close()
     assertJdbcSuccess(
+      workerClient,
       ValidationUtils.run(
         workerClient,
         topicAdmin,
         RdbValidation(url = rdb.url, user = rdb.user, password = rdb.password, workerClusterName = None),
         NUMBER_OF_TASKS
-      ))
+      )
+    )
   }
   @After
   def tearDown(): Unit = Releasable.close(topicAdmin)

@@ -17,36 +17,44 @@
 package com.island.ohara.configurator
 
 import com.island.ohara.client.configurator.v0.ValidationApi.{RdbValidationReport, ValidationReport}
+import com.island.ohara.client.kafka.WorkerClient
 import org.scalatest.Matchers
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 package object validation extends Matchers {
   val NUMBER_OF_TASKS = 3
   private[this] def result[T](f: Future[T]): T = Await.result(f, 60 seconds)
 
-  def assertFailure(f: Future[Seq[ValidationReport]]): Unit = {
+  def assertFailure(workerClient: WorkerClient, f: Future[Seq[ValidationReport]])(
+    implicit executionContext: ExecutionContext): Unit = try {
     val reports = result(f)
     reports.size >= NUMBER_OF_TASKS shouldBe true
     reports.isEmpty shouldBe false
     reports.map(_.message).foreach(_.nonEmpty shouldBe true)
     reports.foreach(report => withClue(report.message)(report.pass shouldBe false))
-  }
+  } finally checkActiveConnectors(workerClient)
 
-  def assertSuccess(f: Future[Seq[ValidationReport]]): Unit = {
+  def assertSuccess(workerClient: WorkerClient, f: Future[Seq[ValidationReport]])(
+    implicit executionContext: ExecutionContext): Unit = try {
     val reports = result(f)
     reports.size >= NUMBER_OF_TASKS shouldBe true
     reports.isEmpty shouldBe false
     reports.map(_.message).foreach(_.nonEmpty shouldBe true)
     reports.foreach(report => withClue(report.message)(report.pass shouldBe true))
-  }
+  } finally checkActiveConnectors(workerClient)
 
-  def assertJdbcSuccess(f: Future[Seq[RdbValidationReport]]): Unit = {
+  def assertJdbcSuccess(workerClient: WorkerClient, f: Future[Seq[RdbValidationReport]])(
+    implicit executionContext: ExecutionContext): Unit = try {
     val reports = result(f)
     reports.size >= NUMBER_OF_TASKS shouldBe true
     reports.isEmpty shouldBe false
     reports.map(_.message).foreach(_.nonEmpty shouldBe true)
     reports.foreach(report => withClue(report.message)(report.pass shouldBe true))
     reports.foreach(_.rdbInfo.tables.isEmpty shouldBe false)
-  }
+  } finally checkActiveConnectors(workerClient)
+
+  private[this] def checkActiveConnectors(workerClient: WorkerClient)(
+    implicit executionContext: ExecutionContext): Unit =
+    Await.result(workerClient.activeConnectors, 10 seconds).size shouldBe 0
 }

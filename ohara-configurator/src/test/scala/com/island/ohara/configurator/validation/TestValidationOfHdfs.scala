@@ -41,10 +41,13 @@ class TestValidationOfHdfs extends With3Brokers3Workers with Matchers {
   @Test
   def goodCase(): Unit =
     assertSuccess(
+      workerClient,
       ValidationUtils
         .run(workerClient, topicAdmin, HdfsValidation(uri = "file:///tmp", workerClusterName = None), NUMBER_OF_TASKS))
+
   @Test
   def badCase(): Unit = assertFailure(
+    workerClient,
     ValidationUtils
       .run(workerClient, topicAdmin, HdfsValidation(uri = "hdfs:///tmp", workerClusterName = None), NUMBER_OF_TASKS))
 

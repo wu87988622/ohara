@@ -144,10 +144,10 @@ object ValidationUtils {
           .asScala
           .filter(_.value().isPresent)
           .map(_.value.get)
-        finally {
-          Releasable.close(client)
-          workerClient.delete(validationName)
-        }
+        finally Releasable.close(client)
+      }
+      .flatMap { r =>
+        workerClient.delete(validationName).map(_ => r)
       }
   }
 }
