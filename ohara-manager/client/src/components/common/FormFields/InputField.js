@@ -20,7 +20,7 @@ import { Input } from 'components/common/Form';
 
 const InputField = props => {
   const {
-    input: { name, onChange, value, ...restInput },
+    input: { name, onChange, value, type, ...restInput },
     meta,
     ...rest
   } = props;
@@ -29,6 +29,7 @@ const InputField = props => {
     <Input
       {...rest}
       name={name}
+      type={type}
       helperText={meta.touched ? meta.error : undefined}
       error={meta.error && meta.touched}
       inputProps={restInput}
@@ -48,6 +49,7 @@ InputField.propTypes = {
     touched: PropTypes.bool,
     error: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   }).isRequired,
+  type: PropTypes.string,
 };
 
 export default InputField;

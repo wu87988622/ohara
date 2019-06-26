@@ -20,6 +20,13 @@ import * as utils from '../utils';
 describe('WorkspacesPage', () => {
   before(() => {
     cy.deleteAllWorkers();
+    cy.createWorker();
+  });
+
+  beforeEach(() => {
+    cy.server();
+    cy.route('GET', 'api/workers').as('getWorkers');
+    cy.route('GET', 'api/topics').as('getTopics');
   });
 
   it('creates a new connect worker cluster', () => {
@@ -75,5 +82,49 @@ describe('WorkspacesPage', () => {
       });
 
     cy.getByText(clusterName).should('have.length', 1);
+  });
+
+  it('adds a new topic', () => {
+    const topicName = utils.makeRandomStr();
+
+    cy.visit(WORKSPACES)
+      .wait('@getWorkers')
+      .getByTestId(Cypress.env('WORKER_NAME'))
+      .click()
+      .getByText('Topics')
+      .click()
+      .getByText('New topic')
+      .click()
+      .getByPlaceholderText('Kafka Topic')
+      .type(topicName)
+      .getByPlaceholderText('1')
+      .type(1)
+      .getByPlaceholderText('3')
+      .type(1)
+      .getByText('Save')
+      .click()
+      .wait('@getTopics')
+      .getByText(topicName)
+      .should('have.length', 1);
+  });
+
+  it('deletes a topic', () => {
+    cy.createTopic().as('topic');
+    cy.visit(WORKSPACES)
+      .wait('@getWorkers')
+      .getByTestId(Cypress.env('WORKER_NAME'))
+      .click()
+      .getByText('Topics')
+      .click()
+      .wait('@getTopics')
+      .get('@topic')
+      .then(topic => {
+        cy.getByTestId(topic.name)
+          .click()
+          .getByText('Yes, Delete this topic')
+          .click()
+          .getByText(`Successfully deleted the topic: ${topic.name}`)
+          .should('have.length', 1);
+      });
   });
 });

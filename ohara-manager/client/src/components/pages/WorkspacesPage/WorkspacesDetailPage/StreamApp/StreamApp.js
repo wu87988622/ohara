@@ -40,7 +40,7 @@ const StreamApp = props => {
   const [jarId, setJarId] = useState(null);
   const [jars, setJars] = useState([]);
   const [order, setOrder] = useState('asc');
-  const [orderBy, setOrderBy] = useState('id');
+  const [orderBy, setOrderBy] = useState('name');
   const [loading, setLoading] = useState(true);
   const [DeleteRowModalActive, setDeleteRowModalActive] = useState(false);
 
@@ -74,8 +74,8 @@ const StreamApp = props => {
   };
 
   const headRows = [
-    { id: 'id', label: 'Jar id' },
     { id: 'name', label: 'Jar name' },
+    { id: 'size', label: 'File size(KB)' },
     { id: 'lastModified', label: 'Last modified' },
     { id: 'action', label: 'Action', sortable: false },
   ];
@@ -99,14 +99,14 @@ const StreamApp = props => {
     );
   };
 
-  const createData = (id, name, lastModified, action) => {
-    return { id, name, lastModified, action };
+  const createData = (name, size, lastModified, action) => {
+    return { name, size, lastModified, action };
   };
 
   const rows = jars.map(jar => {
     return createData(
-      jar.id,
       jar.name,
+      999,
       moment.unix(jar.lastModified / 1000).format('YYYY-MM-DD HH:mm:ss'),
       actionButton(jar),
     );
