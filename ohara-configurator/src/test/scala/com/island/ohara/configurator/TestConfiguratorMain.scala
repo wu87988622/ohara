@@ -45,7 +45,7 @@ class TestConfiguratorMain extends LargeTest with Matchers {
     Future[Unit](Configurator.main(args))(service)
     import java.time.Duration
     try {
-      CommonUtils.await(() => Configurator.GLOBAL_CONFIGURATOR_RUNNING, Duration.ofSeconds(20))
+      CommonUtils.await(() => Configurator.GLOBAL_CONFIGURATOR_RUNNING, Duration.ofSeconds(30))
       action(Configurator.GLOBAL_CONFIGURATOR)
     } finally {
       Configurator.GLOBAL_CONFIGURATOR_SHOULD_CLOSE = true

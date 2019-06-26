@@ -78,7 +78,7 @@ private[configurator] class FakeWorkerCollie(node: NodeCollie, wkConnectionProps
             statusTopicPartitions = statusTopicPartitions,
             statusTopicReplications = statusTopicReplications,
             jarInfos = Seq.empty,
-            connectors = Seq.empty,
+            connectors = FakeWorkerClient.localConnectorDefinitions,
             nodeNames = nodeNames
           )))
 
@@ -102,14 +102,14 @@ private[configurator] class FakeWorkerCollie(node: NodeCollie, wkConnectionProps
         offsetTopicPartitions = previousCluster.offsetTopicPartitions,
         offsetTopicReplications = previousCluster.offsetTopicReplications,
         jarInfos = previousCluster.jarInfos,
-        connectors = Seq.empty,
+        connectors = FakeWorkerClient.localConnectorDefinitions,
         nodeNames = previousCluster.nodeNames.filterNot(_ == beRemovedContainer.nodeName)
       )))
     .map(_ => true)
 
   override def workerClient(cluster: WorkerClusterInfo): WorkerClient =
     if (wkConnectionProps == null) {
-      val fake = new FakeWorkerClient
+      val fake = FakeWorkerClient()
       val r = fakeClientCache.putIfAbsent(cluster, fake)
       if (r == null) fake else r
     } else WorkerClient(wkConnectionProps)
@@ -137,7 +137,7 @@ private[configurator] class FakeWorkerCollie(node: NodeCollie, wkConnectionProps
           offsetTopicPartitions = previousCluster.offsetTopicPartitions,
           offsetTopicReplications = previousCluster.offsetTopicReplications,
           jarInfos = previousCluster.jarInfos,
-          connectors = Seq.empty,
+          connectors = FakeWorkerClient.localConnectorDefinitions,
           nodeNames = previousCluster.nodeNames ++ Set(newNodeName)
         )))
 

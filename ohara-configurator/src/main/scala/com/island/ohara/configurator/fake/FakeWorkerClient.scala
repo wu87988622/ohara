@@ -19,8 +19,8 @@ package com.island.ohara.configurator.fake
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 
-import com.island.ohara.client.configurator.v0.WorkerApi.ConnectorDefinitions
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorState
+import com.island.ohara.client.configurator.v0.WorkerApi.ConnectorDefinitions
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.client.kafka.WorkerClient.Validator
 import com.island.ohara.client.kafka.WorkerJson.{
@@ -33,6 +33,7 @@ import com.island.ohara.client.kafka.WorkerJson.{
 }
 import com.island.ohara.kafka.connector.json._
 import com.island.ohara.kafka.connector.{RowSinkConnector, RowSourceConnector}
+import com.typesafe.scalalogging.Logger
 import org.apache.kafka.connect.runtime.AbstractHerder
 import org.apache.kafka.connect.sink.SinkConnector
 import org.apache.kafka.connect.source.SourceConnector
@@ -40,6 +41,7 @@ import org.reflections.Reflections
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
+import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] class FakeWorkerClient extends WorkerClient {
@@ -62,7 +64,6 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
       Future.failed(new IllegalStateException(s"the connector:$name doesn't exist!"))
     else Future.successful(())
     finally cachedConnectorsState.remove(name)
-  import scala.collection.JavaConverters._
   // TODO; does this work? by chia
   override def plugins(implicit executionContext: ExecutionContext): Future[Seq[Plugin]] =
     Future.successful(cachedConnectors.keys.asScala.map(Plugin(_, "unknown", "unknown")).toSeq)
@@ -109,18 +110,38 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
       }(executionContext)
 
   override def connectors(implicit executionContext: ExecutionContext): Future[Seq[ConnectorDefinitions]] =
-    Future.successful {
-      val reflections = new Reflections()
-      (reflections.getSubTypesOf(classOf[RowSourceConnector]).asScala.map { clz =>
+    Future.successful(FakeWorkerClient.localConnectorDefinitions)
+}
+
+object FakeWorkerClient {
+  private[this] val LOG = Logger(FakeWorkerClient.getClass)
+  def apply(): FakeWorkerClient = new FakeWorkerClient
+
+  /**
+    * Dynamically instantiate local connector classes and then fetch the definitions from them.
+    * @return local connector definitions
+    */
+  private[configurator] lazy val localConnectorDefinitions: Seq[ConnectorDefinitions] = {
+    Seq.empty
+    val reflections = new Reflections()
+    val classes = reflections.getSubTypesOf(classOf[RowSourceConnector]).asScala ++ reflections
+      .getSubTypesOf(classOf[RowSinkConnector])
+      .asScala
+    classes
+      .flatMap { clz =>
+        try Some((clz.getName, clz.newInstance().definitions().asScala))
+        catch {
+          case e: Throwable =>
+            LOG.error(s"failed to instantiate ${clz.getName} for RowSourceConnector", e)
+            None
+        }
+      }
+      .map { entry =>
         ConnectorDefinitions(
-          className = clz.getName,
-          definitions = clz.newInstance().definitions().asScala
+          className = entry._1,
+          definitions = entry._2
         )
-      } ++ reflections.getSubTypesOf(classOf[RowSinkConnector]).asScala.map { clz =>
-        ConnectorDefinitions(
-          className = clz.getName,
-          definitions = clz.newInstance().definitions().asScala
-        )
-      }).toSeq
-    }
+      }
+      .toSeq
+  }
 }

@@ -245,7 +245,7 @@ class ConfiguratorBuilder private[configurator] extends com.island.ohara.common.
             offsetTopicPartitions = 1,
             offsetTopicReplications = 1.asInstanceOf[Short],
             jarInfos = Seq.empty,
-            connectors = Seq.empty,
+            connectors = FakeWorkerClient.localConnectorDefinitions,
             nodeNames = bkCluster.nodeNames
           ))
       }

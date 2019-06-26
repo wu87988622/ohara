@@ -32,7 +32,7 @@ import org.apache.kafka.connect.connector.Task;
 import org.apache.kafka.connect.source.SourceConnector;
 
 /** A wrap to SourceConnector. Currently, only Task is replaced by ohara object - RowSourceTask */
-public abstract class RowSourceConnector extends SourceConnector {
+public abstract class RowSourceConnector extends SourceConnector implements WithDefinitions {
 
   /**
    * Returns the RowSourceTask implementation for this Connector.
@@ -115,6 +115,7 @@ public abstract class RowSourceConnector extends SourceConnector {
   }
 
   /** @return custom definitions + core definitions */
+  @Override
   public final List<SettingDefinition> definitions() {
     return ConnectorUtils.toSettingDefinitions(
         Stream.of(

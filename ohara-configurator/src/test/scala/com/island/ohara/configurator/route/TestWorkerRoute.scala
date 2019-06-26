@@ -20,7 +20,7 @@ import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, Z
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.configurator.fake.FakeWorkerCollie
+import com.island.ohara.configurator.fake.{FakeWorkerClient, FakeWorkerCollie}
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
@@ -370,6 +370,20 @@ class TestWorkerRoute extends MediumTest with Matchers {
     )
     result(workerApi.forceDelete(wk1.name))
     configurator.clusterCollie.workerCollie().asInstanceOf[FakeWorkerCollie].forceRemoveCount shouldBe initialCount + 1
+  }
+
+  @Test
+  def testConnectorDefinitions(): Unit = {
+    FakeWorkerClient.localConnectorDefinitions.size should not be 0
+    result(workerApi.list).foreach(_.connectors shouldBe FakeWorkerClient.localConnectorDefinitions)
+  }
+
+  @Test
+  def testConnectorDefinitionsFromPreCreatedWorkerCluster(): Unit = {
+    val configurator = Configurator.builder().fake(numberOfCluster, 1).build()
+    try result(configurator.clusterCollie.workerCollie().clusters).keys
+      .foreach(_.connectors shouldBe FakeWorkerClient.localConnectorDefinitions)
+    finally configurator.close()
   }
 
   @After

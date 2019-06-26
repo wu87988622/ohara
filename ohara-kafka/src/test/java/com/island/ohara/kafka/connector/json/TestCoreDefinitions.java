@@ -189,6 +189,10 @@ public class TestCoreDefinitions extends SmallTest {
     private final String revision;
     private final String author;
 
+    SourceWithNullableSetting() {
+      this(CommonUtils.randomString(), CommonUtils.randomString(), CommonUtils.randomString());
+    }
+
     SourceWithNullableSetting(String version, String revision, String author) {
       this.version = version;
       this.revision = revision;

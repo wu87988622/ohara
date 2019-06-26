@@ -32,7 +32,7 @@ import org.apache.kafka.connect.connector.Task;
 import org.apache.kafka.connect.sink.SinkConnector;
 
 /** A wrap to SinkConnector. Currently, only Task is replaced by ohara object - RowSinkTask */
-public abstract class RowSinkConnector extends SinkConnector {
+public abstract class RowSinkConnector extends SinkConnector implements WithDefinitions {
 
   /**
    * Start this Connector. This method will only be called on a clean Connector, i.e. it has either
@@ -117,6 +117,7 @@ public abstract class RowSinkConnector extends SinkConnector {
   }
 
   /** @return custom definitions + core definitions */
+  @Override
   public final List<SettingDefinition> definitions() {
     return ConnectorUtils.toSettingDefinitions(
         Stream.of(
