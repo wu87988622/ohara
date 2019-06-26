@@ -138,14 +138,14 @@ public class TestSettingDefinitions extends SmallTest {
   }
 
   @Test
-  public void testIdSetting() {
+  public void testNameSetting() {
     SettingDefinition setting =
         SettingDefinitions.DEFINITIONS_DEFAULT.stream()
             .filter(s -> s.key().equals(SettingDefinition.CONNECTOR_NAME_DEFINITION.key()))
             .findFirst()
             .get();
     Assert.assertTrue(setting.required());
-    Assert.assertTrue(setting.internal());
+    Assert.assertFalse(setting.internal());
     Assert.assertNull(setting.defaultValue());
     Assert.assertEquals(SettingDefinition.Reference.NONE.name(), setting.reference());
     Assert.assertTrue(setting.tableKeys().isEmpty());

@@ -57,7 +57,6 @@ public class SettingDefinition implements JsonObject {
           .documentation("the name of this connector")
           .group(CORE_GROUP)
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
-          .internal()
           .build();
 
   public static final SettingDefinition CONNECTOR_CLASS_DEFINITION =
