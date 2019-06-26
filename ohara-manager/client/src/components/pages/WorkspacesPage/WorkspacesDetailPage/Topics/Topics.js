@@ -26,8 +26,8 @@ import { ConfirmModal } from 'components/common/Modal';
 
 import * as topicApi from 'api/topicApi';
 import * as MESSAGES from 'constants/messages';
-import TopicNewModal from '../../TopicNewModal';
-import { StyledTable, StyledIcon, StyledButton } from './styles';
+import TopicNewModal from './TopicNewModal';
+import { Main, NewButton, StyledTable, ActionIcon } from '../styles';
 import { useSetState } from 'utils/hooks';
 import { useFetchTopics } from '../WorkspacesDetailPageUtils';
 
@@ -83,7 +83,7 @@ const Topics = props => {
 
   return (
     <>
-      <StyledButton
+      <NewButton
         text="New topic"
         data-testid="new-topic"
         onClick={() => {
@@ -91,39 +91,43 @@ const Topics = props => {
         }}
       />
 
-      <StyledTable headers={headers} isLoading={isLoading}>
-        {() => {
-          return topics.map(topic => {
-            return (
-              <TableRow key={topic.name}>
-                <TableCell component="th" scope="row">
-                  {topic.name}
-                </TableCell>
-                <TableCell align="left">{topic.numberOfPartitions}</TableCell>
-                <TableCell align="left">{topic.numberOfReplications}</TableCell>
-                <TableCell align="left">451 bytes / secondes</TableCell>
-                <TableCell align="left">
-                  {getDateFromTimestamp(topic.lastModified)}
-                </TableCell>
-                <TableCell align="right">
-                  <IconButton
-                    aria-label="Edit"
-                    data-testid={topic.name}
-                    onClick={() =>
-                      setState({
-                        isDeleteModalOpen: true,
-                        topicToBeDeleted: topic.name,
-                      })
-                    }
-                  >
-                    <StyledIcon className="fas fa-trash-alt" />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            );
-          });
-        }}
-      </StyledTable>
+      <Main>
+        <StyledTable headers={headers} isLoading={isLoading}>
+          {() => {
+            return topics.map(topic => {
+              return (
+                <TableRow key={topic.name}>
+                  <TableCell component="th" scope="row">
+                    {topic.name}
+                  </TableCell>
+                  <TableCell align="left">{topic.numberOfPartitions}</TableCell>
+                  <TableCell align="left">
+                    {topic.numberOfReplications}
+                  </TableCell>
+                  <TableCell align="left">451 bytes / secondes</TableCell>
+                  <TableCell align="left">
+                    {getDateFromTimestamp(topic.lastModified)}
+                  </TableCell>
+                  <TableCell align="right">
+                    <IconButton
+                      aria-label="Edit"
+                      data-testid="edit-node-icon"
+                      onClick={() =>
+                        setState({
+                          isDeleteModalOpen: true,
+                          topicToBeDeleted: topic.name,
+                        })
+                      }
+                    >
+                      <ActionIcon className="fas fa-trash-alt" />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              );
+            });
+          }}
+        </StyledTable>
+      </Main>
 
       <TopicNewModal
         isActive={isNewModalOpen}

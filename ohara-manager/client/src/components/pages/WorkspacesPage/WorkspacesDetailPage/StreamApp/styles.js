@@ -16,30 +16,10 @@
 
 import styled from 'styled-components';
 import { Label } from 'components/common/Form';
-import Icon from '@material-ui/core/Icon';
-
-export const PageHeader = styled.div`
-  margin-top: 30px;
-  margin-right: 30px;
-  display: flex;
-`;
-
-export const PageBody = styled.div`
-  padding-top: 30px;
-  padding-bottom: 35px;
-  max-width: 1200px;
-  width: calc(100% - 60px);
-  margin: auto;
-`;
 
 export const StyledLabel = styled(Label)`
-  margin-left: auto;
-  margin-bottom: auto;
-  align-self: center;
-`;
-
-export const StyledIcon = styled(Icon)`
-  font-size: 20px;
+  margin: 30px 30px 0;
+  float: right;
 `;
 
 export const StyledInputFile = styled.input`

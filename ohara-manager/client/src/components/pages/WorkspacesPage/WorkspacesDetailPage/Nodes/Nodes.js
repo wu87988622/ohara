@@ -30,13 +30,13 @@ import { Modal } from 'components/common/Modal';
 import * as commonUtils from 'utils/commonUtils';
 import Checkbox from '@material-ui/core/Checkbox';
 import { SortTable } from 'components/common/Mui/Table';
-import { PageHeader, PageBody, StyledButton, StyledTable } from './styles';
+import { Main, NewButton, StyledTable } from '../styles';
 
 const Nodes = props => {
   const { workspaceName } = props;
   const [useNodes, setUesNodes] = useState([]);
   const [broker, setBroker] = useState(null);
-  const [unuseNodes, setUnuseNodes] = useState([]);
+  const [unusedNodes, setUnusedNodes] = useState([]);
   const [selectNodes, setSelectNodes] = useState([]);
   const [order, setOrder] = useState('asc');
   const [orderBy, setOrderBy] = useState('name');
@@ -53,7 +53,7 @@ const Nodes = props => {
     const wkNodeNames = nodeNames.filter(x => wkNodes.includes(x));
     setBroker(wkRes.data.result.brokerClusterName);
     setUesNodes(nodes.filter(node => wkNodeNames.includes(node.name)));
-    setUnuseNodes(nodes.filter(node => !wkNodeNames.includes(node.name)));
+    setUnusedNodes(nodes.filter(node => !wkNodeNames.includes(node.name)));
     setLoading(false);
   }, [workspaceName]);
 
@@ -144,10 +144,8 @@ const Nodes = props => {
 
   return (
     <>
-      <PageHeader>
-        <StyledButton text="new node" onClick={() => setNodeSelectOpen(true)} />
-      </PageHeader>
-      <PageBody>
+      <NewButton text="new node" onClick={() => setNodeSelectOpen(true)} />
+      <Main>
         <SortTable
           isLoading={loading}
           headRows={headRows}
@@ -156,7 +154,7 @@ const Nodes = props => {
           order={order}
           orderBy={orderBy}
         />
-      </PageBody>
+      </Main>
       <Modal
         title="Add node"
         isActive={nodeSelectOpen}
@@ -168,7 +166,7 @@ const Nodes = props => {
       >
         <StyledTable headers={headers} isLoading={false}>
           {() => {
-            return unuseNodes.map(node => {
+            return unusedNodes.map(node => {
               return (
                 <TableRow key={node.name}>
                   <TableCell>

@@ -27,13 +27,8 @@ import * as MESSAGES from 'constants/messages';
 import { Button } from 'components/common/Mui/Form';
 import { ConfirmModal } from 'components/common/Modal';
 import { SortTable } from 'components/common/Mui/Table';
-import {
-  PageHeader,
-  PageBody,
-  StyledLabel,
-  StyledIcon,
-  StyledInputFile,
-} from './styles';
+import { Main, ActionIcon } from '../styles';
+import { StyledLabel, StyledInputFile } from './styles';
 
 const StreamApp = props => {
   const { workspaceName } = props;
@@ -93,7 +88,7 @@ const StreamApp = props => {
           data-testid="edit-node-icon"
           onClick={() => handleDeleteRowModalOpen(id)}
         >
-          <StyledIcon className="fas fa-trash-alt" />
+          <ActionIcon className="fas fa-trash-alt" />
         </IconButton>
       </Tooltip>
     );
@@ -140,18 +135,16 @@ const StreamApp = props => {
 
   return (
     <>
-      <PageHeader>
-        <StyledInputFile
-          id="fileInput"
-          accept=".jar"
-          type="file"
-          onChange={handleFileSelect}
-        />
-        <StyledLabel htmlFor="fileInput">
-          <Button component="span" text="new jar" />
-        </StyledLabel>
-      </PageHeader>
-      <PageBody>
+      <StyledInputFile
+        id="fileInput"
+        accept=".jar"
+        type="file"
+        onChange={handleFileSelect}
+      />
+      <StyledLabel htmlFor="fileInput">
+        <Button component="span" text="new jar" />
+      </StyledLabel>
+      <Main>
         <SortTable
           isLoading={loading}
           headRows={headRows}
@@ -160,7 +153,7 @@ const StreamApp = props => {
           order={order}
           orderBy={orderBy}
         />
-      </PageBody>
+      </Main>
       <ConfirmModal
         isActive={DeleteRowModalActive}
         title="Delete Jar?"

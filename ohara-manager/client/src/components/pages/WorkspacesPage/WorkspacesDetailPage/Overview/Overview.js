@@ -87,7 +87,7 @@ Overview.propTypes = {
   worker: PropTypes.shape({
     imageName: PropTypes.string.isRequired,
     brokerClusterName: PropTypes.string.isRequired,
-    workerName: PropTypes.string.isRequired,
+    name: PropTypes.string.isRequired,
     connectors: PropTypes.array.isRequired,
   }).isRequired,
 };
