@@ -28,21 +28,21 @@ final object ShabondiApi {
   val PATH_SEGMENT_START = "start"
   val PATH_SEGMENT_STOP = "stop"
 
-  final case class ShabondiDescription(id: String,
-                                       name: String,
+  final case class ShabondiDescription(name: String,
                                        lastModified: Long,
                                        state: Option[String] = None,
                                        to: Seq[String] = Seq.empty,
                                        port: Int,
                                        instances: Int)
       extends Data {
+    override def id: String = name
     override def kind: String = "shabondi"
   }
 
-  final case class ShabondiProperty(name: Option[String], to: Option[Seq[String]], port: Option[Int])
+  final case class ShabondiProperty(to: Option[Seq[String]], port: Option[Int])
 
-  implicit val SHABONDI_DESCRIPTION_JSON_FORMAT: RootJsonFormat[ShabondiDescription] = jsonFormat7(ShabondiDescription)
-  implicit val SHABONDI_PROPERTY_JSON_FORMAT: RootJsonFormat[ShabondiProperty] = jsonFormat3(ShabondiProperty)
+  implicit val SHABONDI_DESCRIPTION_JSON_FORMAT: RootJsonFormat[ShabondiDescription] = jsonFormat6(ShabondiDescription)
+  implicit val SHABONDI_PROPERTY_JSON_FORMAT: RootJsonFormat[ShabondiProperty] = jsonFormat2(ShabondiProperty)
 
   def access(): ShabondiAccess = new ShabondiAccess()
 

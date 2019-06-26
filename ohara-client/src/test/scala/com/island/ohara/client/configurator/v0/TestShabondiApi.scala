@@ -27,19 +27,17 @@ class TestShabondiApi extends SmallTest with Matchers {
   def testJsonConversion(): Unit = {
     import spray.json._
 
-    val desc = ShabondiDescription("id1", "name1", 123, Some("RUNNING"), Seq.empty, 129, 1)
+    val desc = ShabondiDescription("name1", 123, Some("RUNNING"), Seq.empty, 129, 1)
     val json1 = SHABONDI_DESCRIPTION_JSON_FORMAT.write(desc).toString()
-    json1 should be(
-      """{"name":"name1","state":"RUNNING","lastModified":123,"instances":1,"to":[],"id":"id1","port":129}""")
+    json1 should be("""{"name":"name1","state":"RUNNING","lastModified":123,"instances":1,"to":[],"port":129}""")
 
-    val desc2 = ShabondiDescription("id1", "name1", 123, None, Seq("topic1"), 129, 1)
+    val desc2 = ShabondiDescription("name1", 123, None, Seq("topic1"), 129, 1)
     val json2 = SHABONDI_DESCRIPTION_JSON_FORMAT.write(desc2).toString()
-    json2 should be("""{"name":"name1","lastModified":123,"instances":1,"to":["topic1"],"id":"id1","port":129}""")
+    json2 should be("""{"name":"name1","lastModified":123,"instances":1,"to":["topic1"],"port":129}""")
 
     val jsonValue =
       """
         |{
-        |  "id":"eeee-ffff-gggg-hhhh",
         |  "name": "name2",
         |  "state": "RUNNING",
         |  "to": ["topic1"],
@@ -50,7 +48,7 @@ class TestShabondiApi extends SmallTest with Matchers {
       """.stripMargin.parseJson
     val desc3: ShabondiDescription = SHABONDI_DESCRIPTION_JSON_FORMAT.read(jsonValue)
 
-    desc3.id should be("eeee-ffff-gggg-hhhh")
+    desc3.id shouldBe "name2"
     desc3.name should be("name2")
     desc3.state should be(Some("RUNNING"))
     desc3.to should be(Seq("topic1"))

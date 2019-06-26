@@ -35,7 +35,7 @@ object ShabondiRoute {
 
   private def addShabondi(store: DataStore)(implicit executionContext: ExecutionContext) = {
     val newShabondi =
-      ShabondiDescription(CommonUtils.uuid(), "shabondi name", CommonUtils.current(), None, Seq.empty, -1, 1)
+      ShabondiDescription(CommonUtils.uuid(), CommonUtils.current(), None, Seq.empty, -1, 1)
 
     store.addIfAbsent[ShabondiDescription](newShabondi)
   }
@@ -163,7 +163,6 @@ object ShabondiRoute {
   // TODO: we need a general function to copy object with different type of object or another function...
   private def duplicateShabondiDescription(origin: ShabondiDescription, prop: ShabondiProperty): ShabondiDescription = {
     var duplicate = origin
-    if (prop.name.isDefined) duplicate = duplicate.copy(name = prop.name.get)
     if (prop.to.isDefined) duplicate = duplicate.copy(to = prop.to.get)
     if (prop.port.isDefined) duplicate = duplicate.copy(port = prop.port.get)
     duplicate

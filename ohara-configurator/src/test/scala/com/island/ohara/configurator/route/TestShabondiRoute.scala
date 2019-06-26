@@ -65,19 +65,15 @@ class TestShabondiRoute extends SmallTest with Matchers {
   @Test
   def tesUpdateProperty(): Unit = {
     val desc1 = result(access.add())
-    val property = ShabondiProperty(Some("xyz"), Some(Seq("topic1")), Some(250))
+    val property = ShabondiProperty(Some(Seq("topic1")), Some(250))
     val desc2 = result(access.updateProperty(desc1.id, property))
 
-    desc2.id should be(desc1.id)
-    desc2.name should be("xyz")
     desc2.to should be(Seq("topic1"))
     desc2.port should be(250)
     desc2.lastModified should not be (desc1.lastModified)
 
     val desc3 = result(access.getProperty(desc1.id))
 
-    desc3.id should be(desc1.id)
-    desc3.name should be("xyz")
     desc3.to should be(Seq("topic1"))
     desc3.port should be(250)
     desc3.lastModified should not be (desc1.lastModified)
