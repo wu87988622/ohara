@@ -77,8 +77,7 @@ class TestTopicRoute extends SmallTest with Matchers {
         .name(name)
         .create()
         .flatMap { topicInfo =>
-          BrokerApi
-            .access()
+          BrokerApi.access
             .hostname(configurator.hostname)
             .port(configurator.port)
             .delete(topicInfo.brokerClusterName)
@@ -109,11 +108,10 @@ class TestTopicRoute extends SmallTest with Matchers {
     )
 
     val bk2 = result(
-      BrokerApi
-        .access()
+      BrokerApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .request()
+        .request
         .name(CommonUtils.randomString(10))
         .zookeeperClusterName(zk2.name)
         .nodeNames(zk2.nodeNames)
@@ -139,17 +137,16 @@ class TestTopicRoute extends SmallTest with Matchers {
     )
 
     result(
-      BrokerApi
-        .access()
+      BrokerApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .request()
+        .request
         .name(CommonUtils.randomString(10))
         .zookeeperClusterName(zk2.name)
         .nodeNames(zk2.nodeNames)
         .create())
 
-    val bks = result(BrokerApi.access().hostname(configurator.hostname).port(configurator.port).list)
+    val bks = result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list)
     bks.size shouldBe 2
 
     val topicInfo = result(

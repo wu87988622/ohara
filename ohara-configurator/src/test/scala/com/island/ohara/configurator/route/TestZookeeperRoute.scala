@@ -69,9 +69,9 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     an[IllegalArgumentException] should be thrownBy result(zookeeperApi.delete(zk.name))
 
     // remove all broker clusters
-    result(BrokerApi.access().hostname(configurator.hostname).port(configurator.port).list)
+    result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list)
       .map(_.name)
-      .foreach(name => result(BrokerApi.access().hostname(configurator.hostname).port(configurator.port).delete(name)))
+      .foreach(name => result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).delete(name)))
 
     // pass
     result(zookeeperApi.delete(zk.name))

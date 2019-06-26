@@ -508,11 +508,10 @@ object Configurator {
     LOG.info(s"succeed to create zk cluster:$zkCluster")
 
     val bkCluster = Await.result(
-      BrokerApi
-        .access()
+      BrokerApi.access
         .hostname(CommonUtils.hostname())
         .port(configurator.port)
-        .request()
+        .request
         .name(PRE_CREATE_BK_NAME)
         .zookeeperClusterName(PRE_CREATE_ZK_NAME)
         .nodeName(node.name)
@@ -525,7 +524,7 @@ object Configurator {
     CommonUtils.await(
       () =>
         Await
-          .result(BrokerApi.access().hostname(CommonUtils.hostname()).port(configurator.port).list, 30 seconds)
+          .result(BrokerApi.access.hostname(CommonUtils.hostname()).port(configurator.port).list, 30 seconds)
           .exists(_.name == PRE_CREATE_BK_NAME),
       java.time.Duration.ofSeconds(30)
     )

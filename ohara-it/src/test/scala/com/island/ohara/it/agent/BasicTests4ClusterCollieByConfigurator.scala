@@ -33,7 +33,7 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
 
   private[this] def zkApi = ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port)
 
-  private[this] def bkApi = BrokerApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] def bkApi = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] def wkApi = WorkerApi.access().hostname(configurator.hostname).port(configurator.port)
 
@@ -77,8 +77,7 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
                                    exporterPort: Int,
                                    jmxPort: Int,
                                    zkClusterName: String,
-                                   nodeNames: Set[String]): Future[BrokerApi.BrokerClusterInfo] = bkApi
-    .request()
+                                   nodeNames: Set[String]): Future[BrokerApi.BrokerClusterInfo] = bkApi.request
     .name(clusterName)
     .clientPort(clientPort)
     .exporterPort(exporterPort)

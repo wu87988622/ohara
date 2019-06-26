@@ -37,7 +37,7 @@ class TestMixedFakeCollie extends WithBrokerWorker with Matchers {
 
     try {
       Await
-        .result(BrokerApi.access().hostname(configurator.hostname).port(configurator.port).list, 10 seconds)
+        .result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list, 10 seconds)
         .size shouldBe 1
 
       Await
@@ -53,11 +53,10 @@ class TestMixedFakeCollie extends WithBrokerWorker with Matchers {
 
       // there is no zk cluster so we can't add bk cluster
       an[IllegalArgumentException] should be thrownBy Await.result(
-        BrokerApi
-          .access()
+        BrokerApi.access
           .hostname(configurator.hostname)
           .port(configurator.port)
-          .request()
+          .request
           .name(CommonUtils.randomString(10))
           .nodeNames(nodes.map(_.name).toSet)
           .create(),
@@ -76,11 +75,10 @@ class TestMixedFakeCollie extends WithBrokerWorker with Matchers {
       )
 
       val bk = Await.result(
-        BrokerApi
-          .access()
+        BrokerApi.access
           .hostname(configurator.hostname)
           .port(configurator.port)
-          .request()
+          .request
           .name(CommonUtils.randomString(10))
           .zookeeperClusterName(zk.name)
           .nodeNames(nodes.map(_.name).toSet)
@@ -89,7 +87,7 @@ class TestMixedFakeCollie extends WithBrokerWorker with Matchers {
       )
 
       Await
-        .result(BrokerApi.access().hostname(configurator.hostname).port(configurator.port).list, 10 seconds)
+        .result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list, 10 seconds)
         .size shouldBe 2
 
       Await.result(

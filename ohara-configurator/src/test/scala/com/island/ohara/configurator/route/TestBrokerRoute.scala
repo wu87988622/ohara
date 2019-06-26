@@ -27,7 +27,7 @@ import org.scalatest.Matchers
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestBrokerRoute extends MediumTest with Matchers {
   private[this] val configurator = Configurator.builder().fake(0, 0).build()
-  private[this] val brokerApi = BrokerApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] val brokerApi = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] val zkClusterName = CommonUtils.randomString(10)
 
@@ -69,8 +69,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
   @Test
   def removeBrokerClusterUsedByWorkerCluster(): Unit = {
     val bk = result(
-      brokerApi
-        .request()
+      brokerApi.request
         .name(CommonUtils.randomString(10))
         .zookeeperClusterName(zkClusterName)
         .nodeNames(nodeNames)
@@ -115,7 +114,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
 
       // there are two zk cluster so we have to assign the zk cluster...
       an[IllegalArgumentException] should be thrownBy result(
-        brokerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
+        brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
       )
     } finally result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).delete(anotherZk))
 
@@ -124,22 +123,21 @@ class TestBrokerRoute extends MediumTest with Matchers {
   @Test
   def testCreateOnNonexistentNode(): Unit =
     an[IllegalArgumentException] should be thrownBy result(
-      brokerApi.request().name(CommonUtils.randomString(10)).nodeName(CommonUtils.randomString(10)).create()
+      brokerApi.request.name(CommonUtils.randomString(10)).nodeName(CommonUtils.randomString(10)).create()
     )
 
   @Test
   def testDefaultZk(): Unit = {
-    result(brokerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()).zookeeperClusterName shouldBe zkClusterName
+    result(brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()).zookeeperClusterName shouldBe zkClusterName
   }
 
   @Test
   def testImageName(): Unit = {
-    result(brokerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()).imageName shouldBe BrokerApi.IMAGE_NAME_DEFAULT
+    result(brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()).imageName shouldBe BrokerApi.IMAGE_NAME_DEFAULT
 
     // the available images of fake mode is only BrokerApi.IMAGE_NAME_DEFAULT
     an[IllegalArgumentException] should be thrownBy result(
-      brokerApi
-        .request()
+      brokerApi.request
         .name(CommonUtils.randomString(10))
         .imageName(CommonUtils.randomString(10))
         .nodeNames(nodeNames)
@@ -149,7 +147,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
   @Test
   def testList(): Unit = {
     val init = result(brokerApi.list).size
-    val bk = result(brokerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
+    val bk = result(brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
 
     val zk2 = result(
       ZookeeperApi.access
@@ -162,12 +160,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
     )
 
     val bk2 = result(
-      brokerApi
-        .request()
-        .name(CommonUtils.randomString(10))
-        .nodeNames(nodeNames)
-        .zookeeperClusterName(zk2.name)
-        .create())
+      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterName(zk2.name).create())
 
     val clusters = result(brokerApi.list)
     clusters.size shouldBe 2 + init
@@ -178,7 +171,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
   @Test
   def testRemove(): Unit = {
     val init = result(brokerApi.list).size
-    val cluster = result(brokerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
+    val cluster = result(brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
     result(brokerApi.list).size shouldBe init + 1
     result(brokerApi.delete(cluster.name))
     result(brokerApi.list).size shouldBe init
@@ -186,7 +179,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
 
   @Test
   def testAddNode(): Unit = {
-    val cluster = result(brokerApi.request().name(CommonUtils.randomString(10)).nodeName(nodeNames.head).create())
+    val cluster = result(brokerApi.request.name(CommonUtils.randomString(10)).nodeName(nodeNames.head).create())
 
     result(brokerApi.addNode(cluster.name, nodeNames.last)) shouldBe cluster.copy(
       nodeNames = cluster.nodeNames ++ Set(nodeNames.last))
@@ -194,7 +187,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
 
   @Test
   def testRemoveNode(): Unit = {
-    val cluster = result(brokerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
+    val cluster = result(brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
 
     result(brokerApi.removeNode(cluster.name, nodeNames.last))
 
@@ -203,24 +196,23 @@ class TestBrokerRoute extends MediumTest with Matchers {
 
   @Test
   def testInvalidClusterName(): Unit =
-    an[IllegalArgumentException] should be thrownBy result(
-      brokerApi.request().name("--]").nodeNames(nodeNames).create())
+    an[IllegalArgumentException] should be thrownBy result(brokerApi.request.name("--]").nodeNames(nodeNames).create())
 
   @Test
   def runMultiBkClustersOnSameZkCluster(): Unit = {
     // pass
-    result(brokerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
+    result(brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
 
     // we can't create multi broker clusters on same zk cluster
     an[IllegalArgumentException] should be thrownBy result(
-      brokerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
+      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
   }
 
   @Test
   def createBkClusterWithSameName(): Unit = {
     val name = CommonUtils.randomString(10)
     // pass
-    result(brokerApi.request().name(name).nodeNames(nodeNames).create())
+    result(brokerApi.request.name(name).nodeNames(nodeNames).create())
 
     val zk2 = result(
       ZookeeperApi.access
@@ -233,13 +225,13 @@ class TestBrokerRoute extends MediumTest with Matchers {
     )
 
     an[IllegalArgumentException] should be thrownBy result(
-      brokerApi.request().name(name).zookeeperClusterName(zk2.name).nodeNames(nodeNames).create())
+      brokerApi.request.name(name).zookeeperClusterName(zk2.name).nodeNames(nodeNames).create())
   }
 
   @Test
   def clientPortConflict(): Unit = {
     val clientPort = CommonUtils.availablePort()
-    result(brokerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).clientPort(clientPort).create())
+    result(brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).clientPort(clientPort).create())
 
     val zk2 = result(
       ZookeeperApi.access
@@ -252,8 +244,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
     )
 
     an[IllegalArgumentException] should be thrownBy result(
-      brokerApi
-        .request()
+      brokerApi.request
         .name(CommonUtils.randomString(10))
         .nodeNames(nodeNames)
         .clientPort(clientPort)
@@ -262,19 +253,14 @@ class TestBrokerRoute extends MediumTest with Matchers {
 
     // pass
     result(
-      brokerApi
-        .request()
-        .name(CommonUtils.randomString(10))
-        .nodeNames(nodeNames)
-        .zookeeperClusterName(zk2.name)
-        .create())
+      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterName(zk2.name).create())
   }
 
   @Test
   def exporterPortConflict(): Unit = {
     val exporterPort = CommonUtils.availablePort()
     result(
-      brokerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).exporterPort(exporterPort).create())
+      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).exporterPort(exporterPort).create())
 
     val zk2 = result(
       ZookeeperApi.access
@@ -287,8 +273,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
     )
 
     an[IllegalArgumentException] should be thrownBy result(
-      brokerApi
-        .request()
+      brokerApi.request
         .name(CommonUtils.randomString(10))
         .nodeNames(nodeNames)
         .exporterPort(exporterPort)
@@ -297,18 +282,13 @@ class TestBrokerRoute extends MediumTest with Matchers {
 
     // pass
     result(
-      brokerApi
-        .request()
-        .name(CommonUtils.randomString(10))
-        .nodeNames(nodeNames)
-        .zookeeperClusterName(zk2.name)
-        .create())
+      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterName(zk2.name).create())
   }
 
   @Test
   def jmxPortConflict(): Unit = {
     val jmxPort = CommonUtils.availablePort()
-    result(brokerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).jmxPort(jmxPort).create())
+    result(brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).jmxPort(jmxPort).create())
 
     val zk2 = result(
       ZookeeperApi.access
@@ -321,8 +301,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
     )
 
     an[IllegalArgumentException] should be thrownBy result(
-      brokerApi
-        .request()
+      brokerApi.request
         .name(CommonUtils.randomString(10))
         .nodeNames(nodeNames)
         .jmxPort(jmxPort)
@@ -331,12 +310,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
 
     // pass
     result(
-      brokerApi
-        .request()
-        .name(CommonUtils.randomString(10))
-        .nodeNames(nodeNames)
-        .zookeeperClusterName(zk2.name)
-        .create())
+      brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterName(zk2.name).create())
   }
 
   @Test
@@ -344,12 +318,12 @@ class TestBrokerRoute extends MediumTest with Matchers {
     val initialCount = configurator.clusterCollie.brokerCollie().asInstanceOf[FakeBrokerCollie].forceRemoveCount
 
     // graceful delete
-    val bk0 = result(brokerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
+    val bk0 = result(brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
     result(brokerApi.delete(bk0.name))
     configurator.clusterCollie.brokerCollie().asInstanceOf[FakeBrokerCollie].forceRemoveCount shouldBe initialCount
 
     // force delete
-    val bk1 = result(brokerApi.request().name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
+    val bk1 = result(brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
     result(brokerApi.forceDelete(bk1.name))
     configurator.clusterCollie.brokerCollie().asInstanceOf[FakeBrokerCollie].forceRemoveCount shouldBe initialCount + 1
   }

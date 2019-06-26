@@ -21,6 +21,9 @@ import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
+import spray.json.DeserializationException
+import spray.json._
+
 class TestBrokerApi extends SmallTest with Matchers {
 
   @Test
@@ -39,109 +42,96 @@ class TestBrokerApi extends SmallTest with Matchers {
   }
 
   @Test
-  def ignoreNameOnCreation(): Unit = an[NullPointerException] should be thrownBy BrokerApi
-    .access()
+  def ignoreNameOnCreation(): Unit = an[NullPointerException] should be thrownBy BrokerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .nodeName(CommonUtils.randomString(10))
-    .creation()
+    .creation
 
   @Test
-  def ignoreNodeNamesOnCreation(): Unit = an[IllegalArgumentException] should be thrownBy BrokerApi
-    .access()
+  def ignoreNodeNamesOnCreation(): Unit = an[IllegalArgumentException] should be thrownBy BrokerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .name(CommonUtils.randomString())
-    .creation()
+    .creation
 
   @Test
-  def nullName(): Unit = an[NullPointerException] should be thrownBy BrokerApi
-    .access()
+  def nullName(): Unit = an[NullPointerException] should be thrownBy BrokerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .name(null)
 
   @Test
-  def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy BrokerApi
-    .access()
+  def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy BrokerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .name("")
 
   @Test
-  def nullZookeeperClusterName(): Unit = an[NullPointerException] should be thrownBy BrokerApi
-    .access()
+  def nullZookeeperClusterName(): Unit = an[NullPointerException] should be thrownBy BrokerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .zookeeperClusterName(null)
 
   @Test
-  def emptyZookeeperClusterName(): Unit = an[IllegalArgumentException] should be thrownBy BrokerApi
-    .access()
+  def emptyZookeeperClusterName(): Unit = an[IllegalArgumentException] should be thrownBy BrokerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .zookeeperClusterName("")
 
   @Test
-  def nullImageName(): Unit = an[NullPointerException] should be thrownBy BrokerApi
-    .access()
+  def nullImageName(): Unit = an[NullPointerException] should be thrownBy BrokerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .imageName(null)
 
   @Test
-  def emptyImageName(): Unit = an[IllegalArgumentException] should be thrownBy BrokerApi
-    .access()
+  def emptyImageName(): Unit = an[IllegalArgumentException] should be thrownBy BrokerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .imageName("")
 
   @Test
-  def nullNodeNames(): Unit = an[NullPointerException] should be thrownBy BrokerApi
-    .access()
+  def nullNodeNames(): Unit = an[NullPointerException] should be thrownBy BrokerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .nodeNames(null)
 
   @Test
-  def emptyNodeNames(): Unit = an[IllegalArgumentException] should be thrownBy BrokerApi
-    .access()
+  def emptyNodeNames(): Unit = an[IllegalArgumentException] should be thrownBy BrokerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .nodeNames(Set.empty)
 
   @Test
-  def negativeClientPort(): Unit = an[IllegalArgumentException] should be thrownBy BrokerApi
-    .access()
+  def negativeClientPort(): Unit = an[IllegalArgumentException] should be thrownBy BrokerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .clientPort(-1)
 
   @Test
-  def negativeJmxPort(): Unit = an[IllegalArgumentException] should be thrownBy BrokerApi
-    .access()
+  def negativeJmxPort(): Unit = an[IllegalArgumentException] should be thrownBy BrokerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .jmxPort(-1)
 
   @Test
-  def negativeExporterPort(): Unit = an[IllegalArgumentException] should be thrownBy BrokerApi
-    .access()
+  def negativeExporterPort(): Unit = an[IllegalArgumentException] should be thrownBy BrokerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .exporterPort(-1)
 
   @Test
@@ -153,11 +143,10 @@ class TestBrokerApi extends SmallTest with Matchers {
     val exporterPort = CommonUtils.availablePort()
     val zookeeperClusterName = CommonUtils.randomString()
     val nodeName = CommonUtils.randomString()
-    val creation = BrokerApi
-      .access()
+    val creation = BrokerApi.access
       .hostname(CommonUtils.randomString())
       .port(CommonUtils.availablePort())
-      .request()
+      .request
       .name(name)
       .zookeeperClusterName(zookeeperClusterName)
       .imageName(imageName)
@@ -165,7 +154,7 @@ class TestBrokerApi extends SmallTest with Matchers {
       .jmxPort(jmxPort)
       .exporterPort(exporterPort)
       .nodeName(nodeName)
-      .creation()
+      .creation
     creation.name shouldBe name
     creation.imageName shouldBe imageName
     creation.clientPort shouldBe clientPort
@@ -177,7 +166,6 @@ class TestBrokerApi extends SmallTest with Matchers {
 
   @Test
   def testJson(): Unit = {
-    import spray.json._
     val name = CommonUtils.randomString(10)
     val nodeName = CommonUtils.randomString()
     val creation = BrokerApi.BROKER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(s"""
@@ -191,5 +179,67 @@ class TestBrokerApi extends SmallTest with Matchers {
     creation.zookeeperClusterName shouldBe None
     creation.nodeNames.size shouldBe 1
     creation.nodeNames.head shouldBe nodeName
+    creation.clientPort should not be 0
+    creation.jmxPort should not be 0
+    creation.exporterPort should not be 0
+    creation.ports.size shouldBe 3
+
+    val zookeeperClusterName = CommonUtils.randomString()
+    val clientPort = CommonUtils.availablePort()
+    val exporterPort = CommonUtils.availablePort()
+    val jmxPort = CommonUtils.availablePort()
+    val creation2 = BrokerApi.BROKER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(s"""
+                                                                                 |  {
+                                                                                 |    "name": "$name",
+                                                                                 |    "clientPort": $clientPort,
+                                                                                 |    "exporterPort": $exporterPort,
+                                                                                 |    "jmxPort": $jmxPort,
+                                                                                 |    "zookeeperClusterName": "$zookeeperClusterName",
+                                                                                 |    "nodeNames": ["$nodeName"]
+                                                                                 |  }
+                                                                     """.stripMargin.parseJson)
+    creation2.name shouldBe name
+    creation2.imageName shouldBe BrokerApi.IMAGE_NAME_DEFAULT
+    creation2.nodeNames.size shouldBe 1
+    creation2.nodeNames.head shouldBe nodeName
+    creation2.zookeeperClusterName.get shouldBe zookeeperClusterName
+    creation2.clientPort shouldBe clientPort
+    creation2.exporterPort shouldBe exporterPort
+    creation2.jmxPort shouldBe jmxPort
+  }
+
+  @Test
+  def testEmptyNodeNames(): Unit =
+    an[DeserializationException] should be thrownBy BrokerApi.BROKER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(s"""
+     |  {
+     |    "name": "name",
+     |    "nodeNames": []
+     |  }
+      """.stripMargin.parseJson)
+
+  @Test
+  def testEmptyString(): Unit = {
+    an[DeserializationException] should be thrownBy BrokerApi.BROKER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(s"""
+                                                                                                                  |  {
+                                                                                                                  |    "name": "",
+                                                                                                                  |    "nodeNames": ["a0"]
+                                                                                                                  |  }
+      """.stripMargin.parseJson)
+
+    an[DeserializationException] should be thrownBy BrokerApi.BROKER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(s"""
+                                                                                                                  |  {
+                                                                                                                  |    "name": "name",
+                                                                                                                  |    "zookeeperClusterName": "",
+                                                                                                                  |    "nodeNames": ["a0"]
+                                                                                                                  |  }
+      """.stripMargin.parseJson)
+
+    an[DeserializationException] should be thrownBy BrokerApi.BROKER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(s"""
+                                                                                                                  |  {
+                                                                                                                  |    "name": "name",
+                                                                                                                  |    "imageName": "",
+                                                                                                                  |    "nodeNames": ["a0"]
+                                                                                                                  |  }
+      """.stripMargin.parseJson)
   }
 }

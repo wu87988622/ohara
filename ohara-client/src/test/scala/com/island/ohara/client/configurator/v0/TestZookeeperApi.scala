@@ -44,7 +44,7 @@ class TestZookeeperApi extends SmallTest with Matchers {
     .port(CommonUtils.availablePort())
     .request
     .nodeName(CommonUtils.randomString(10))
-    .creation()
+    .creation
 
   @Test
   def ignoreNodeNamesOnCreation(): Unit = an[IllegalArgumentException] should be thrownBy ZookeeperApi.access
@@ -52,7 +52,7 @@ class TestZookeeperApi extends SmallTest with Matchers {
     .port(CommonUtils.availablePort())
     .request
     .name(CommonUtils.randomString())
-    .creation()
+    .creation
 
   @Test
   def nullName(): Unit = an[NullPointerException] should be thrownBy ZookeeperApi.access
@@ -135,7 +135,7 @@ class TestZookeeperApi extends SmallTest with Matchers {
       .peerPort(peerPort)
       .electionPort(electionPort)
       .nodeName(nodeName)
-      .creation()
+      .creation
     creation.name shouldBe name
     creation.imageName shouldBe imageName
     creation.clientPort shouldBe clientPort

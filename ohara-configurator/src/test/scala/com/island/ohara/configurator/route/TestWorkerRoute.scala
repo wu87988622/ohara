@@ -38,7 +38,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
   private[this] val workerApi = WorkerApi.access().hostname(configurator.hostname).port(configurator.port)
 
   private[this] val bkClusterName =
-    Await.result(BrokerApi.access().hostname(configurator.hostname).port(configurator.port).list, 10 seconds).head.name
+    Await.result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list, 10 seconds).head.name
 
   private[this] val nodeNames: Set[String] = Set("n0", "n1")
 
@@ -138,16 +138,15 @@ class TestWorkerRoute extends MediumTest with Matchers {
         .nodeNames(nodeNames)
         .create()).name shouldBe zkClusterName
     val anotherBk = result(
-      BrokerApi
-        .access()
+      BrokerApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .request()
+        .request
         .name(CommonUtils.randomString(10))
         .zookeeperClusterName(zkClusterName)
         .nodeNames(nodeNames)
         .create())
-    result(BrokerApi.access().hostname(configurator.hostname).port(configurator.port).list).size shouldBe 2
+    result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list).size shouldBe 2
 
     // there are two bk cluster so we have to assign the bk cluster...
     an[IllegalArgumentException] should be thrownBy result(

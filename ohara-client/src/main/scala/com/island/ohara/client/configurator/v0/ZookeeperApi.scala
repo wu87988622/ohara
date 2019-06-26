@@ -101,7 +101,7 @@ object ZookeeperApi {
     /**
       * @return the payload of creation
       */
-    private[v0] def creation(): Creation
+    private[v0] def creation: Creation
   }
 
   final class Access private[ZookeeperApi] extends ClusterAccess[ZookeeperClusterInfo](ZOOKEEPER_PREFIX_PATH) {
@@ -143,7 +143,7 @@ object ZookeeperApi {
         this
       }
 
-      override private[v0] def creation(): Creation = Creation(
+      override private[v0] def creation: Creation = Creation(
         name = CommonUtils.requireNonEmpty(name),
         imageName = CommonUtils.requireNonEmpty(imageName),
         clientPort = CommonUtils.requireConnectionPort(clientPort),
@@ -155,7 +155,7 @@ object ZookeeperApi {
       override def create()(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
         exec.post[Creation, ZookeeperClusterInfo, ErrorApi.Error](
           _url,
-          creation()
+          creation
         )
     }
   }
