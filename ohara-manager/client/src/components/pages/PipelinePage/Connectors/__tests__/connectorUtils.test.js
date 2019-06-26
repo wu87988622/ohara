@@ -146,17 +146,6 @@ describe('changeKeySeparator()', () => {
   });
 });
 
-describe('getConnectorState()', () => {
-  it('returns true if the connector has a state other than `null`', () => {
-    expect(utils.getConnectorState(CONNECTOR_STATES.running)).toBe(true);
-    expect(utils.getConnectorState(CONNECTOR_STATES.failed)).toBe(true);
-  });
-
-  it(`returns false if the connector have a state with \`null\``, () => {
-    expect(utils.getConnectorState(null)).toBe(false);
-  });
-});
-
 describe('sortByOrder', () => {
   it('sorts out the definition by the property: `orderInGroup`', () => {
     const defs = [

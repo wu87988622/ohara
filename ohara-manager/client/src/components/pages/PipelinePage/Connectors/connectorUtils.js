@@ -214,14 +214,10 @@ export const changeKeySeparator = key => {
   return result;
 };
 
-export const getConnectorState = state => {
-  return !isNull(state);
-};
-
 export const sortByOrder = (a, b) => a.orderInGroup - b.orderInGroup;
 
 export const getRenderData = ({ state, defs, configs }) => {
-  const isRunning = getConnectorState(state);
+  const isRunning = !!state; // Any state indicates the connector is running
 
   const data = defs
     .sort(sortByOrder)
