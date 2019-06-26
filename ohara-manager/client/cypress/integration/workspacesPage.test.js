@@ -84,7 +84,7 @@ describe('WorkspacesPage', () => {
     cy.getByText(clusterName).should('have.length', 1);
   });
 
-  it('add new topic', () => {
+  it('adds a new topic', () => {
     const topicName = utils.makeRandomStr();
 
     cy.visit(WORKSPACES)
@@ -108,11 +108,8 @@ describe('WorkspacesPage', () => {
       .should('have.length', 1);
   });
 
-  it('delete topic', () => {
-    beforeEach(() => {
-      cy.createTopic().as('topic');
-    });
-
+  it('deletes a topic', () => {
+    cy.createTopic().as('topic');
     cy.visit(WORKSPACES)
       .wait('@getWorkers')
       .getByTestId(Cypress.env('WORKER_NAME'))
