@@ -56,10 +56,6 @@ object WorkerApi {
   private[this] val JARS_KEY = "jars"
   private[this] val JAR_NAMES_KEY = "jarNames"
   private[this] val CONNECTORS_KEY = "connectors"
-  // TODO: deprecated key
-  private[this] val SOURCES_KEY = "sources"
-  // TODO: deprecated key
-  private[this] val SINKS_KEY = "sinks"
   private[this] val NODE_NAMES_KEY = "nodeNames"
 
   final case class Creation private[WorkerApi] (name: String,
@@ -233,20 +229,6 @@ object WorkerApi {
             NODE_NAMES_KEY -> JsArray(obj.nodeNames.map(JsString(_)).toVector),
             // deprecated keys
             JAR_NAMES_KEY -> JsArray(obj.jarInfos.map(_.id).map(JsString(_)).toVector),
-            // deprecated keys
-            SOURCES_KEY -> JsArray(
-              obj.connectors
-                .map(InfoApi.toConnectorVersion)
-                .filter(_.typeName == "source")
-                .map(InfoApi.CONNECTOR_VERSION_JSON_FORMAT.write)
-                .toVector),
-            // deprecated keys
-            SINKS_KEY -> JsArray(
-              obj.connectors
-                .map(InfoApi.toConnectorVersion)
-                .filter(_.typeName == "sink")
-                .map(InfoApi.CONNECTOR_VERSION_JSON_FORMAT.write)
-                .toVector)
           ))
       )
 
