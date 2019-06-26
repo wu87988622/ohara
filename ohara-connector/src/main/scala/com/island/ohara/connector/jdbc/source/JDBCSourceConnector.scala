@@ -39,14 +39,10 @@ class JDBCSourceConnector extends RowSourceConnector {
     this.settings = settings
 
     val jdbcSourceConnectorConfig: JDBCSourceConnectorConfig = JDBCSourceConnectorConfig(settings)
-
-    val dbURL = jdbcSourceConnectorConfig.dbURL
-    val dbUserName = jdbcSourceConnectorConfig.dbUserName
-    val dbPassword = jdbcSourceConnectorConfig.dbPassword
     val tableName = jdbcSourceConnectorConfig.dbTableName
     val timestampColumnName = jdbcSourceConnectorConfig.timestampColumnName
 
-    val dbTableDataProvider: DBTableDataProvider = new DBTableDataProvider(dbURL, dbUserName, dbPassword)
+    val dbTableDataProvider: DBTableDataProvider = new DBTableDataProvider(jdbcSourceConnectorConfig)
     try {
       checkTimestampColumnName(timestampColumnName)
 
@@ -152,6 +148,14 @@ class JDBCSourceConnector extends RowSourceConnector {
       .documentation("Use a timestamp column to detect new and modified rows")
       .valueType(SettingDefinition.Type.STRING)
       .key(TIMESTAMP_COLUMN_NAME)
+      .build(),
+    SettingDefinition
+      .builder()
+      .displayName("JDBC fetch size")
+      .documentation("Setting JDBC fetch data size for ResultSet")
+      .valueType(SettingDefinition.Type.INT)
+      .key(JDBC_FETCHDATA_SIZE)
+      .optional(String.valueOf(JDBC_FETCHDATA_SIZE_DEFAULT))
       .build()
   ).asJava
 

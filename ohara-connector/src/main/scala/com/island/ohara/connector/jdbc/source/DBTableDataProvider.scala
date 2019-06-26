@@ -28,15 +28,23 @@ import com.island.ohara.connector.jdbc.util.DateTimeUtils
   * Connection to database and query data
   *
   */
-class DBTableDataProvider(url: String, userName: String, password: String) extends ReleaseOnce {
-  private[this] val client: DatabaseClient = DatabaseClient.builder.url(url).user(userName).password(password).build
+class DBTableDataProvider(jdbcSourceConnectorConfig: JDBCSourceConnectorConfig) extends ReleaseOnce {
+  private[this] val client: DatabaseClient = DatabaseClient.builder
+    .url(jdbcSourceConnectorConfig.dbURL)
+    .user(jdbcSourceConnectorConfig.dbUserName)
+    .password(jdbcSourceConnectorConfig.dbPassword)
+    .build
 
   def executeQuery(tableName: String, timeStampColumnName: String, tsOffset: Timestamp): QueryResultIterator = {
     val columnNames = columns(tableName)
     val sql =
       s"""SELECT * FROM \"$tableName\" WHERE \"$timeStampColumnName\" > ? and \"$timeStampColumnName\" < ? ORDER BY \"$timeStampColumnName\""""
 
-    val preparedStatement: PreparedStatement = client.connection.prepareStatement(sql)
+    val connection: Connection = client.connection
+    connection.setAutoCommit(false) //setAutoCommit must be set to false when setting the fetch size
+
+    val preparedStatement: PreparedStatement = connection.prepareStatement(sql)
+    preparedStatement.setFetchSize(jdbcSourceConnectorConfig.jdbcFetchDataSize)
 
     val currentTimestamp: Timestamp = dbCurrentTime(DateTimeUtils.CALENDAR)
     preparedStatement.setTimestamp(1, tsOffset, DateTimeUtils.CALENDAR)

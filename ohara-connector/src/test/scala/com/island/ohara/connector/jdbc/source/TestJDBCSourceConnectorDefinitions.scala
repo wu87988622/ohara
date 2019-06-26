@@ -67,6 +67,17 @@ class TestJDBCSourceConnectorDefinitions extends WithBrokerWorker with Matchers 
   }
 
   @Test
+  def checkFetchDataSize(): Unit = {
+    val definition = jdbcSource.definitions().asScala.find(_.key() == JDBC_FETCHDATA_SIZE).get
+    definition.required shouldBe false
+    definition.defaultValue shouldBe String.valueOf(JDBC_FETCHDATA_SIZE_DEFAULT)
+    definition.editable() shouldBe true
+    definition.internal() shouldBe false
+    definition.reference() shouldBe "NONE"
+    definition.valueType() shouldBe SettingDefinition.Type.INT.name()
+  }
+
+  @Test
   def checkTableName(): Unit = {
     val definition = jdbcSource.definitions().asScala.find(_.key() == DB_TABLENAME).get
     definition.required shouldBe true
@@ -135,12 +146,14 @@ class TestJDBCSourceConnectorDefinitions extends WithBrokerWorker with Matchers 
         .name(CommonUtils.randomString(10))
         .numberOfTasks(1)
         .topicName(CommonUtils.randomString(5))
-        .settings(
-          Map(DB_URL -> url,
-              DB_USERNAME -> userName,
-              DB_PASSWORD -> password,
-              DB_TABLENAME -> tableName,
-              TIMESTAMP_COLUMN_NAME -> timeStampColumnName))
+        .settings(Map(
+          DB_URL -> url,
+          DB_USERNAME -> userName,
+          DB_PASSWORD -> password,
+          DB_TABLENAME -> tableName,
+          TIMESTAMP_COLUMN_NAME -> timeStampColumnName,
+          JDBC_FETCHDATA_SIZE -> "1000"
+        ))
         .connectorClass(classOf[JDBCSourceConnector])
         .run())
     response.settings().size should not be 0

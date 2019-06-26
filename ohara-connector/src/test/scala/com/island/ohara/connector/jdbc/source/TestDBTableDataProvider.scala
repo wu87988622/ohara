@@ -23,11 +23,12 @@ import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.connector.jdbc.util.{ColumnInfo, DateTimeUtils}
+import com.island.ohara.kafka.connector.TaskSetting
 import com.island.ohara.testing.service.Database
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
-
 import scala.collection.mutable.ListBuffer
+import scala.collection.JavaConverters._
 
 class TestDBTableDataProvider extends MediumTest with Matchers {
 
@@ -59,7 +60,8 @@ class TestDBTableDataProvider extends MediumTest with Matchers {
 
   @Test
   def testRowListResultSet(): Unit = {
-    val dbTableDataProvider = new DBTableDataProvider(db.url, db.user, db.password)
+
+    val dbTableDataProvider = new DBTableDataProvider(jdbcConfig)
     val results: QueryResultIterator = dbTableDataProvider.executeQuery(tableName, "column1", new Timestamp(0)) //0 is 1970-01-01 00:00:00
 
     var count = 0
@@ -77,7 +79,7 @@ class TestDBTableDataProvider extends MediumTest with Matchers {
 
   @Test
   def testDbCurrentTime(): Unit = {
-    val dbTableDataProvider = new DBTableDataProvider(db.url, db.user, db.password)
+    val dbTableDataProvider = new DBTableDataProvider(jdbcConfig)
     val dbCurrentTime = dbTableDataProvider.dbCurrentTime(DateTimeUtils.CALENDAR)
     val dbCurrentTimestamp = dbCurrentTime.getTime
     val systemCurrentTimestamp = CommonUtils.current()
@@ -86,7 +88,7 @@ class TestDBTableDataProvider extends MediumTest with Matchers {
 
   @Test
   def testColumnList(): Unit = {
-    val dbTableDataProvider = new DBTableDataProvider(db.url, db.user, db.password)
+    val dbTableDataProvider = new DBTableDataProvider(jdbcConfig)
     val columns: Seq[RdbColumn] = dbTableDataProvider.columns(tableName)
     columns.head.name shouldBe "column1"
     columns(1).name shouldBe "column2"
@@ -96,18 +98,32 @@ class TestDBTableDataProvider extends MediumTest with Matchers {
 
   @Test
   def testTableISNotExists(): Unit = {
-    val dbTableDataProvider = new DBTableDataProvider(db.url, db.user, db.password)
+    val dbTableDataProvider = new DBTableDataProvider(jdbcConfig)
     dbTableDataProvider.isTableExists("table100") shouldBe false
   }
 
   @Test
   def testColumnHaveTable(): Unit = {
-    val dbTableDataProvider = new DBTableDataProvider(db.url, db.user, db.password)
+    val dbTableDataProvider = new DBTableDataProvider(jdbcConfig)
     dbTableDataProvider.isTableExists(tableName) shouldBe true
   }
+
   @After
   def tearDown(): Unit = {
     Releasable.close(client)
     Releasable.close(db)
+  }
+
+  private[this] def jdbcConfig(): JDBCSourceConnectorConfig = {
+    val map: Map[String, String] =
+      Map(
+        DB_URL -> db.url,
+        DB_USERNAME -> db.user,
+        DB_PASSWORD -> db.password,
+        DB_TABLENAME -> tableName,
+        DB_SCHEMA_PATTERN -> "schema1",
+        TIMESTAMP_COLUMN_NAME -> "CDC_TIMESTAMP"
+      )
+    JDBCSourceConnectorConfig(TaskSetting.of(map.asJava))
   }
 }

@@ -44,14 +44,12 @@ class JDBCSourceTask extends RowSourceTask {
     logger.info("starting JDBC Source Connector")
     jdbcSourceConnectorConfig = JDBCSourceConnectorConfig(settings)
 
-    val dbURL = jdbcSourceConnectorConfig.dbURL
-    val dbUserName = jdbcSourceConnectorConfig.dbUserName
-    val dbPassword = jdbcSourceConnectorConfig.dbPassword
-    val tableName = jdbcSourceConnectorConfig.dbTableName
-    dbTableDataProvider = new DBTableDataProvider(dbURL, dbUserName, dbPassword)
+    dbTableDataProvider = new DBTableDataProvider(jdbcSourceConnectorConfig)
 
     schema = settings.columns.asScala
     topics = settings.topicNames().asScala
+
+    val tableName = jdbcSourceConnectorConfig.dbTableName
     offsets = new Offsets(rowContext, tableName)
   }
 

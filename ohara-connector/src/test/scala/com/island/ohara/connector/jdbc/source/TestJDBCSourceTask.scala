@@ -22,12 +22,13 @@ import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
 import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.common.data.{Column, DataType, Row}
 import com.island.ohara.common.rule.MediumTest
+import com.island.ohara.common.util.Releasable
 import com.island.ohara.connector.jdbc.util.ColumnInfo
 import com.island.ohara.kafka.connector.{RowSourceRecord, TaskSetting}
 import com.island.ohara.testing.service.Database
 import org.apache.kafka.connect.source.SourceTaskContext
 import org.apache.kafka.connect.storage.OffsetStorageReader
-import org.junit.{Before, Test}
+import org.junit.{After, Before, Test}
 import org.mockito.Mockito._
 import org.scalatest.Matchers
 import org.scalatest.mockito.MockitoSugar
@@ -79,6 +80,7 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
     when(taskSetting.stringOption(DB_CATALOG_PATTERN)).thenReturn(java.util.Optional.empty[String]())
     when(taskSetting.stringOption(MODE)).thenReturn(java.util.Optional.empty[String]())
     when(taskSetting.stringValue(TIMESTAMP_COLUMN_NAME)).thenReturn(timestampColumnName)
+    when(taskSetting.intOption(JDBC_FETCHDATA_SIZE)).thenReturn(java.util.Optional.of(java.lang.Integer.valueOf(2000)))
 
     val columns: Seq[Column] = Seq(
       Column.builder().name("COLUMN1").dataType(DataType.OBJECT).order(0).build(),
@@ -170,6 +172,7 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
     when(taskSetting.stringOption(DB_CATALOG_PATTERN)).thenReturn(java.util.Optional.empty[String]())
     when(taskSetting.stringOption(MODE)).thenReturn(java.util.Optional.empty[String]())
     when(taskSetting.stringValue(TIMESTAMP_COLUMN_NAME)).thenReturn(timestampColumnName)
+    when(taskSetting.intOption(JDBC_FETCHDATA_SIZE)).thenReturn(java.util.Optional.of(java.lang.Integer.valueOf(500)))
 
     val columns: Seq[Column] = Seq(
       Column.builder().name("COLUMN1").newName("COLUMN100").dataType(DataType.OBJECT).order(0).build(),
@@ -201,4 +204,7 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
     val timestamp: Long = jdbcSourceTask.dbTimestampColumnValue(dbColumnInfo, "column2")
     timestamp shouldBe 1537510900000L
   }
+
+  @After
+  def afterTest(): Unit = Releasable.close(client)
 }

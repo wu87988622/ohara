@@ -29,6 +29,7 @@ case class JDBCSourceConnectorConfig(dbURL: String,
                                      dbCatalogPattern: Option[String],
                                      dbSchemaPattern: Option[String],
                                      mode: String,
+                                     jdbcFetchDataSize: Int,
                                      timestampColumnName: String) {
   def toMap: Map[String, String] = Map(
     DB_URL -> dbURL,
@@ -36,6 +37,7 @@ case class JDBCSourceConnectorConfig(dbURL: String,
     DB_PASSWORD -> dbPassword,
     DB_TABLENAME -> dbTableName,
     MODE -> mode,
+    JDBC_FETCHDATA_SIZE -> jdbcFetchDataSize.toString,
     TIMESTAMP_COLUMN_NAME -> timestampColumnName
   ) ++ dbCatalogPattern.map(s => Map(DB_CATALOG_PATTERN -> s)).getOrElse(Map.empty) ++ dbSchemaPattern
     .map(s => Map(DB_SCHEMA_PATTERN -> s))
@@ -52,6 +54,7 @@ object JDBCSourceConnectorConfig {
       dbCatalogPattern = Option(settings.stringOption(DB_CATALOG_PATTERN).orElse(null)).filterNot(CommonUtils.isEmpty),
       dbSchemaPattern = Option(settings.stringOption(DB_SCHEMA_PATTERN).orElse(null)).filterNot(CommonUtils.isEmpty),
       mode = settings.stringOption(MODE).orElse(MODE_DEFAULT),
+      jdbcFetchDataSize = settings.intOption(JDBC_FETCHDATA_SIZE).orElse(JDBC_FETCHDATA_SIZE_DEFAULT),
       timestampColumnName = settings.stringValue(TIMESTAMP_COLUMN_NAME)
     )
   }

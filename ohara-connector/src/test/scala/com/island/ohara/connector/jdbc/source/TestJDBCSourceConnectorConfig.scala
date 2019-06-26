@@ -46,6 +46,24 @@ class TestJDBCSourceConnectorConfig extends SmallTest with Matchers {
     jdbcSourceConnectorConfig.mode shouldBe "timestamp"
     jdbcSourceConnectorConfig.dbSchemaPattern.get shouldBe "schema1"
     jdbcSourceConnectorConfig.timestampColumnName shouldBe "CDC_TIMESTAMP"
+    jdbcSourceConnectorConfig.jdbcFetchDataSize shouldBe JDBC_FETCHDATA_SIZE_DEFAULT
+  }
+
+  @Test
+  def testFetchDataSize(): Unit = {
+    val map1: Map[String, String] =
+      Map(
+        DB_URL -> "jdbc:mysql://localhost/test",
+        DB_USERNAME -> "root",
+        DB_PASSWORD -> "123456",
+        DB_TABLENAME -> "TABLE1",
+        DB_SCHEMA_PATTERN -> "schema1",
+        JDBC_FETCHDATA_SIZE -> "500",
+        TIMESTAMP_COLUMN_NAME -> "CDC_TIMESTAMP"
+      )
+
+    val jdbcSourceConnectorConfig = jdbcConfig(map1)
+    jdbcSourceConnectorConfig.jdbcFetchDataSize shouldBe 500
   }
 
   @Test
@@ -73,6 +91,7 @@ class TestJDBCSourceConnectorConfig extends SmallTest with Matchers {
       dbCatalogPattern = None,
       dbSchemaPattern = None,
       mode = "123",
+      jdbcFetchDataSize = 1000,
       timestampColumnName = "123"
     )
 

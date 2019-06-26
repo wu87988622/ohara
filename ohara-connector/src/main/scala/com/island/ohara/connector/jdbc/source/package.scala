@@ -23,7 +23,9 @@ package object source {
   val DB_TABLENAME: String = "source.table.name"
   val DB_CATALOG_PATTERN: String = "source.schema.catalog"
   val DB_SCHEMA_PATTERN: String = "source.schema.pattern"
+  val JDBC_FETCHDATA_SIZE: String = "source.jdbc.fetch.size"
   val MODE: String = "mode"
   val MODE_DEFAULT = "timestamp"
+  val JDBC_FETCHDATA_SIZE_DEFAULT: Int = 1000
   val TIMESTAMP_COLUMN_NAME: String = "source.timestamp.column.name"
 }
