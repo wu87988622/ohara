@@ -16,82 +16,67 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import Paper from '@material-ui/core/Paper';
-import Grid from '@material-ui/core/Grid';
-import { makeStyles } from '@material-ui/core/styles';
 
 import OverviewTopics from './OverviewTopics';
 import OverviewConnectors from './OverviewConnectors';
 import OverviewStreamApps from './OverviewStreamApps';
 import OverviewNodes from './OverviewNodes';
-import { TabHeading, List, StyledIcon } from './styles';
-
-const useStyles = makeStyles(theme => ({
-  root: {
-    flexGrow: 1,
-    margin: theme.spacing(2),
-  },
-  paper: {
-    color: theme.palette.text.secondary,
-  },
-}));
+import {
+  TabHeading,
+  List,
+  StyledIcon,
+  Wrapper,
+  LeftColumn,
+  RightColumn,
+  Box,
+} from './styles';
 
 const Overview = props => {
   const { worker } = props;
   const { imageName, brokerClusterName, name: workerName, connectors } = worker;
-
-  const classes = useStyles();
 
   const handleRedirect = service => {
     props.history.push(service);
   };
 
   return (
-    <div className={classes.root}>
-      <Grid container spacing={3}>
-        <Grid item sm={6}>
-          <Paper className={classes.paper}>
-            <TabHeading>
-              <StyledIcon className="fas fa-info-circle" />
-              <span className="title">Basic info</span>
-            </TabHeading>
-            <List>
-              <li>Image: {imageName}</li>
-            </List>
-          </Paper>
-        </Grid>
+    <Wrapper>
+      <LeftColumn>
+        <Box>
+          <TabHeading>
+            <StyledIcon className="fas fa-info-circle" />
+            <span className="title">Basic info</span>
+          </TabHeading>
+          <List>
+            <li>Image: {imageName}</li>
+          </List>
+        </Box>
 
-        <Grid item sm={6}>
-          <Paper className={classes.paper}>
-            <OverviewConnectors connectors={connectors} />
-          </Paper>
-        </Grid>
+        <Box>
+          <OverviewNodes worker={worker} handleRedirect={handleRedirect} />
+        </Box>
 
-        <Grid item sm={6}>
-          <Paper className={classes.paper}>
-            <OverviewNodes worker={worker} handleRedirect={handleRedirect} />
-          </Paper>
-        </Grid>
+        <Box>
+          <OverviewTopics
+            handleRedirect={handleRedirect}
+            brokerClusterName={brokerClusterName}
+          />
+        </Box>
+      </LeftColumn>
 
-        <Grid item sm={6}>
-          <Paper className={classes.paper}>
-            <OverviewStreamApps
-              workerName={workerName}
-              handleRedirect={handleRedirect}
-            />
-          </Paper>
-        </Grid>
+      <RightColumn>
+        <Box>
+          <OverviewConnectors connectors={connectors} />
+        </Box>
 
-        <Grid item sm={6}>
-          <Paper className={classes.paper}>
-            <OverviewTopics
-              handleRedirect={handleRedirect}
-              brokerClusterName={brokerClusterName}
-            />
-          </Paper>
-        </Grid>
-      </Grid>
-    </div>
+        <Box>
+          <OverviewStreamApps
+            workerName={workerName}
+            handleRedirect={handleRedirect}
+          />
+        </Box>
+      </RightColumn>
+    </Wrapper>
   );
 };
 
@@ -99,7 +84,12 @@ Overview.propTypes = {
   history: PropTypes.shape({
     push: PropTypes.func.isRequired,
   }).isRequired,
-  worker: PropTypes.object.isRequired,
+  worker: PropTypes.shape({
+    imageName: PropTypes.string.isRequired,
+    brokerClusterName: PropTypes.string.isRequired,
+    workerName: PropTypes.string.isRequired,
+    connectors: PropTypes.array.isRequired,
+  }).isRequired,
 };
 
 export default Overview;

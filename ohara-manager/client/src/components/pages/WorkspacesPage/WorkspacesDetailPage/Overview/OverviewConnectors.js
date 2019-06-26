@@ -63,10 +63,18 @@ const OverviewConnectors = props => {
                     placement="right"
                     title={
                       <TooltipBody>
-                        <li>Author: {author}</li>
-                        <li>Kind: {kind}</li>
-                        <li>Version: {version}</li>
-                        <li>Class: {className}</li>
+                        <li>
+                          <b>Author:</b> {author}
+                        </li>
+                        <li>
+                          <b>Kind:</b> {kind}
+                        </li>
+                        <li>
+                          <b>Version:</b> {version}
+                        </li>
+                        <li>
+                          <b>Class:</b> {className}
+                        </li>
                       </TooltipBody>
                     }
                   >

@@ -16,9 +16,35 @@
 
 import styled from 'styled-components';
 import TableCell from '@material-ui/core/TableCell';
+import Paper from '@material-ui/core/Paper';
 import Icon from '@material-ui/core/Icon';
 
 import { Typography } from 'components/common/Mui/Typography';
+
+export const Wrapper = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+`;
+
+export const LeftColumn = styled.div`
+  margin: ${props => props.theme.spacing(3)}px;
+  margin-right: ${props => props.theme.spacing(2)}px;
+  width: ${props => `calc(50% - ${props.theme.spacing(5)}px)`};
+`;
+
+export const RightColumn = styled.div`
+  margin: ${props => props.theme.spacing(3)}px;
+  margin-left: ${props => props.theme.spacing(2)}px;
+  width: ${props => `calc(50% - ${props.theme.spacing(5)}px)`};
+`;
+
+export const Box = styled(Paper)`
+  margin-bottom: ${props => props.theme.spacing(3)}px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
 
 export const TabHeading = styled(Typography).attrs({
   variant: 'h3',
@@ -53,6 +79,10 @@ export const StyledTableCell = styled(TableCell)`
 
 export const TooltipBody = styled.ul`
   max-width: 250px;
+
+  li {
+    word-break: break-all;
+  }
 `;
 
 export const StyledIconLink = styled(Icon)`

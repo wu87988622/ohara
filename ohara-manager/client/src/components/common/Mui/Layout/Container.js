@@ -22,7 +22,7 @@ const StyledContainer = styled.div`
   padding-top: 75px;
   max-width: 1200px;
   width: calc(100% - 100px);
-  margin: auto;
+  margin: 0 auto 50px;
 `;
 
 const Container = ({ children }) => {
