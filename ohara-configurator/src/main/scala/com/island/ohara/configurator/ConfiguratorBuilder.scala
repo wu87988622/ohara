@@ -158,7 +158,7 @@ class ConfiguratorBuilder private[configurator] extends com.island.ohara.common.
           offsetTopicPartitions = 1,
           offsetTopicReplications = 1.asInstanceOf[Short],
           jarInfos = Seq.empty,
-          connectors = Await.result(WorkerClient(wkConnectionProps).connectors, 10 seconds),
+          connectors = Await.result(WorkerClient(wkConnectionProps).connectors(), 10 seconds),
           nodeNames = Set(host),
           deadNodes = Set.empty
         )

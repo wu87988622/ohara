@@ -65,9 +65,9 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
     else Future.successful(())
     finally cachedConnectorsState.remove(name)
   // TODO; does this work? by chia
-  override def plugins(implicit executionContext: ExecutionContext): Future[Seq[Plugin]] =
+  override def plugins()(implicit executionContext: ExecutionContext): Future[Seq[Plugin]] =
     Future.successful(cachedConnectors.keys.asScala.map(Plugin(_, "unknown", "unknown")).toSeq)
-  override def activeConnectors(implicit executionContext: ExecutionContext): Future[Seq[String]] =
+  override def activeConnectors()(implicit executionContext: ExecutionContext): Future[Seq[String]] =
     Future.successful(cachedConnectors.keys.asScala.toSeq)
   override def connectionProps: String = "Unknown"
   override def status(name: String)(implicit executionContext: ExecutionContext): Future[ConnectorInfo] =
@@ -109,7 +109,7 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
           AbstractHerder.generateResult(connectorType, configDef.configKeys(), values, Collections.emptyList()))
       }(executionContext)
 
-  override def connectors(implicit executionContext: ExecutionContext): Future[Seq[ConnectorDefinitions]] =
+  override def connectors()(implicit executionContext: ExecutionContext): Future[Seq[ConnectorDefinitions]] =
     Future.successful(FakeWorkerClient.localConnectorDefinitions)
 }
 

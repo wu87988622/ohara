@@ -42,7 +42,7 @@ object FtpUtils {
     CommonUtils.await(
       () => {
         val workerClient = WorkerClient(testUtil.workersConnProps)
-        Await.result(workerClient.activeConnectors, 10 seconds).contains(name)
+        Await.result(workerClient.activeConnectors(), 10 seconds).contains(name)
       },
       TIMEOUT
     )

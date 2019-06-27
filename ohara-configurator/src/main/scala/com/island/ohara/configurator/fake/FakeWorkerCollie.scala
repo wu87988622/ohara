@@ -114,7 +114,7 @@ private[configurator] class FakeWorkerCollie(node: NodeCollie, wkConnectionProps
       val fake = FakeWorkerClient()
       val r = fakeClientCache.putIfAbsent(cluster, fake)
       if (r == null) fake else r
-    } else WorkerClient(wkConnectionProps)
+    } else WorkerClient.builder.connectionProps(wkConnectionProps).build
 
   override protected def doAddNode(
     previousCluster: WorkerClusterInfo,

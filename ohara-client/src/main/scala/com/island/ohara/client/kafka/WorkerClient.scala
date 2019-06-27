@@ -20,7 +20,6 @@ import java.net.HttpRetryException
 import java.util.Objects
 import java.util.concurrent.TimeUnit
 
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.stream.StreamTcpException
 import com.island.ohara.client.HttpExecutor
 import com.island.ohara.client.configurator.v0.WorkerApi.ConnectorDefinitions
@@ -35,6 +34,7 @@ import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
 import scala.collection.JavaConverters._
+import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Random
 
@@ -83,20 +83,20 @@ trait WorkerClient {
     * remote server. Furthermore, connectors list only sub class from ohara's connectors
     * @return async future containing connector details
     */
-  def plugins(implicit executionContext: ExecutionContext): Future[Seq[Plugin]]
+  def plugins()(implicit executionContext: ExecutionContext): Future[Seq[Plugin]]
 
   /**
     * list ohara's connector.
     * NOTED: the plugins which are not sub class of ohara connector are not included.
     * @return async future containing connector details
     */
-  def connectors(implicit executionContext: ExecutionContext): Future[Seq[ConnectorDefinitions]]
+  def connectors()(implicit executionContext: ExecutionContext): Future[Seq[ConnectorDefinitions]]
 
   /**
     * list available plugin's names
     * @return async future containing connector's names
     */
-  def activeConnectors(implicit executionContext: ExecutionContext): Future[Seq[String]]
+  def activeConnectors()(implicit executionContext: ExecutionContext): Future[Seq[String]]
 
   /**
     * @return worker's connection props
@@ -139,7 +139,7 @@ trait WorkerClient {
     * @return true if connector exists
     */
   def exist(name: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
-    activeConnectors.map(_.contains(name))
+    activeConnectors().map(_.contains(name))
 
   def nonExist(name: String)(implicit executionContext: ExecutionContext): Future[Boolean] = exist(name).map(!_)
 
@@ -162,32 +162,48 @@ trait WorkerClient {
 }
 
 object WorkerClient {
+
+  def apply(connectionProps: String): WorkerClient = builder.connectionProps(connectionProps).build
+
+  def builder: Builder = new Builder
+
   private[this] val LOG = Logger(WorkerClient.getClass)
 
-  /**
-    * This is a bridge between java and scala.
-    * ConfigInfos is serialized to json by jackson so we can implement the RootJsonFormat easily.
-    */
-  private[this] implicit val CONFIG_INFOS_JSON_FORMAT: RootJsonFormat[ConfigInfos] = new RootJsonFormat[ConfigInfos] {
-    import spray.json._
-    override def write(obj: ConfigInfos): JsValue = KafkaJsonUtils.toString(obj).parseJson
+  class Builder private[WorkerClient] extends com.island.ohara.common.Builder[WorkerClient] {
+    private[this] var _workerAddress: Seq[String] = Seq.empty
+    private[this] var retryLimit: Int = 3
+    private[this] var retryInternal: Duration = 3 seconds
 
-    override def read(json: JsValue): ConfigInfos = KafkaJsonUtils.toConfigInfos(json.toString())
-  }
+    def connectionProps(connectionProps: String): Builder = {
+      this._workerAddress = CommonUtils.requireNonEmpty(connectionProps).split(",")
+      this
+    }
 
-  /**
-    * Create a default implementation of worker client.
-    * NOTED: default implementation use a global akka system to handle http request/response. It means the connection
-    * sent by this worker client may be influenced by other instances.
-    * @param _connectionProps connection props
-    * @param maxRetry times to retry
-    * @return worker client
-    */
-  def apply(_connectionProps: String, maxRetry: Int = 3): WorkerClient = {
-    val workerList = _connectionProps.split(",")
-    if (workerList.isEmpty) throw new IllegalArgumentException(s"Invalid workers:${_connectionProps}")
-    new WorkerClient() with SprayJsonSupport {
-      private[this] def workerAddress: String = workerList(Random.nextInt(workerList.size))
+    @Optional("default value is 3")
+    def retryLimit(retryLimit: Int): Builder = {
+      this.retryLimit = CommonUtils.requirePositiveInt(retryLimit)
+      this
+    }
+
+    def disableRetry(): Builder = {
+      this.retryLimit = 0
+      this
+    }
+
+    @Optional("default value is 3 seconds")
+    def retryInternal(retryInternal: Duration): Builder = {
+      this.retryInternal = Objects.requireNonNull(retryInternal)
+      this
+    }
+
+    /**
+      * Create a default implementation of worker client.
+      * NOTED: default implementation use a global akka system to handle http request/response. It means the connection
+      * sent by this worker client may be influenced by other instances.
+      * @return worker client
+      */
+    override def build: WorkerClient = new WorkerClient() {
+      private[this] def workerAddress: String = _workerAddress(Random.nextInt(_workerAddress.size))
 
       /**
         * kafka worker has weakness of doing consistent operation so it is easy to encounter conflict error. Wrapping all operations with
@@ -200,9 +216,9 @@ object WorkerClient {
         implicit executionContext: ExecutionContext): Future[T] =
         exec().recoverWith {
           case e @ (_: HttpRetryException | _: StreamTcpException) =>
-            LOG.info(s"$msg $retryCount/$maxRetry", e)
-            if (retryCount < maxRetry) {
-              TimeUnit.SECONDS.sleep(3)
+            LOG.info(s"$msg $retryCount/$retryLimit", e)
+            if (retryCount < retryLimit) {
+              TimeUnit.MILLISECONDS.sleep(retryInternal.toMillis)
               retry(exec, msg, retryCount + 1)
             } else throw e
         }
@@ -222,12 +238,12 @@ object WorkerClient {
       override def delete(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
         retry(() => HttpExecutor.SINGLETON.delete[Error](s"http://$workerAddress/connectors/$name"), s"delete $name")
 
-      override def plugins(implicit executionContext: ExecutionContext): Future[Seq[Plugin]] = retry(
+      override def plugins()(implicit executionContext: ExecutionContext): Future[Seq[Plugin]] = retry(
         () => HttpExecutor.SINGLETON.get[Seq[Plugin], Error](s"http://$workerAddress/connector-plugins"),
         s"fetch plugins $workerAddress")
 
-      override def connectors(implicit executionContext: ExecutionContext): Future[Seq[ConnectorDefinitions]] =
-        plugins
+      override def connectors()(implicit executionContext: ExecutionContext): Future[Seq[ConnectorDefinitions]] =
+        plugins()
           .flatMap(Future.traverse(_) { p =>
             definitions(p.className)
               .map(
@@ -243,11 +259,11 @@ object WorkerClient {
           })
           .map(_.filter(_.definitions.nonEmpty))
 
-      override def activeConnectors(implicit executionContext: ExecutionContext): Future[Seq[String]] = retry(
+      override def activeConnectors()(implicit executionContext: ExecutionContext): Future[Seq[String]] = retry(
         () => HttpExecutor.SINGLETON.get[Seq[String], Error](s"http://$workerAddress/connectors"),
         "fetch active connectors")
 
-      override def connectionProps: String = _connectionProps
+      override def connectionProps: String = _workerAddress.mkString(",")
 
       override def status(name: String)(implicit executionContext: ExecutionContext): Future[ConnectorInfo] = retry(
         () => HttpExecutor.SINGLETON.get[ConnectorInfo, Error](s"http://$workerAddress/connectors/$name/status"),
@@ -288,6 +304,17 @@ object WorkerClient {
           )
         }
     }
+  }
+
+  /**
+    * This is a bridge between java and scala.
+    * ConfigInfos is serialized to json by jackson so we can implement the RootJsonFormat easily.
+    */
+  private[this] implicit val CONFIG_INFOS_JSON_FORMAT: RootJsonFormat[ConfigInfos] = new RootJsonFormat[ConfigInfos] {
+    import spray.json._
+    override def write(obj: ConfigInfos): JsValue = KafkaJsonUtils.toString(obj).parseJson
+
+    override def read(json: JsValue): ConfigInfos = KafkaJsonUtils.toConfigInfos(json.toString())
   }
 
   /**

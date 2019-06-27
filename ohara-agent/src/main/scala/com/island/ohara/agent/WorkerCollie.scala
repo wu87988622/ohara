@@ -321,7 +321,7 @@ trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator
     */
   private[this] def connectors(connectionProps: String)(
     implicit executionContext: ExecutionContext): Future[Seq[ConnectorDefinitions]] =
-    WorkerClient(connectionProps, maxRetry = 0).connectors.recover {
+    WorkerClient.builder.connectionProps(connectionProps).disableRetry().build.connectors().recover {
       case e: Throwable =>
         ClusterCollie.LOG
           .error(s"Failed to fetch connectors information of cluster:$connectionProps. Use empty list instead", e)

@@ -151,7 +151,7 @@ private[configurator] object PipelineRoute {
           .filterNot(_ == UNKNOWN_ID)
           .toSet
           .map(id => store.raw(id)))
-      .flatMap(objs => workerClient.connectors.map(connectors => (connectors, objs)))
+      .flatMap(objs => workerClient.connectors().map(connectors => (connectors, objs)))
       .flatMap {
         case (connectors, objs) =>
           Future.traverse(objs) {

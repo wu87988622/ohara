@@ -77,7 +77,7 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker with Matchers {
   }
 
   private[this] def checkConnector(name: String): Unit = {
-    await(() => result(workerClient.activeConnectors).contains(name))
+    await(() => result(workerClient.activeConnectors()).contains(name))
     await(() => result(workerClient.config(name)).topicNames.nonEmpty)
     await(
       () =>
@@ -263,7 +263,7 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker with Matchers {
         .settings(Map(BROKER -> testUtil.brokersConnProps, OUTPUT -> outputTopic))
         .create)
 
-    val activeConnectors = result(workerClient.activeConnectors)
+    val activeConnectors = result(workerClient.activeConnectors())
     activeConnectors.contains(connectorName) shouldBe true
 
     val config = result(workerClient.config(connectorName))
@@ -284,6 +284,6 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker with Matchers {
     task.worker_id.isEmpty shouldBe false
 
     result(workerClient.delete(connectorName))
-    result(workerClient.activeConnectors).contains(connectorName) shouldBe false
+    result(workerClient.activeConnectors()).contains(connectorName) shouldBe false
   }
 }

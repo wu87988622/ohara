@@ -38,7 +38,7 @@ class TestValidationOfRdb extends With3Brokers3Workers with Matchers {
   @Before
   def setup(): Unit =
     Await
-      .result(workerClient.plugins, 10 seconds)
+      .result(workerClient.plugins(), 10 seconds)
       .exists(_.className == "com.island.ohara.connector.validation.Validator") shouldBe true
 
   @Test

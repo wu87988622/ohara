@@ -169,7 +169,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
 
   @Test
   def testColumnsDefinition(): Unit =
-    result(workerClient.connectors)
+    result(workerClient.connectors())
       .map(_.definitions.filter(_.key() == SettingDefinition.COLUMNS_DEFINITION.key()).head)
       .foreach { definition =>
         definition.tableKeys().size() should not be 0
@@ -177,7 +177,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
 
   @Test
   def testAllPluginDefinitions(): Unit = {
-    val plugins = result(workerClient.connectors)
+    val plugins = result(workerClient.connectors())
     plugins.size should not be 0
     plugins.foreach(plugin => check(plugin.definitions))
   }
@@ -408,4 +408,21 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
       })
     result(workerClient.delete(response.name))
   }
+
+  @Test
+  def nullConnectionProps(): Unit =
+    an[NullPointerException] should be thrownBy WorkerClient.builder.connectionProps(null)
+
+  @Test
+  def emptyConnectionProps(): Unit =
+    an[IllegalArgumentException] should be thrownBy WorkerClient.builder.connectionProps("")
+
+  @Test
+  def nullRetryLimit(): Unit = {
+    an[IllegalArgumentException] should be thrownBy WorkerClient.builder.retryLimit(0)
+    an[IllegalArgumentException] should be thrownBy WorkerClient.builder.retryLimit(-1)
+  }
+
+  @Test
+  def nullRetryInterval(): Unit = an[NullPointerException] should be thrownBy WorkerClient.builder.retryInternal(null)
 }

@@ -124,8 +124,8 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
       val workerClient = WorkerClient(s"$name:${wkCluster.clientPort}")
       await(
         () =>
-          try result(workerClient.plugins).exists(_.className == classOf[DumbSinkConnector].getName)
-            && result(workerClient.plugins).exists(_.className == classOf[DumbSourceConnector].getName)
+          try result(workerClient.plugins()).exists(_.className == classOf[DumbSinkConnector].getName)
+            && result(workerClient.plugins()).exists(_.className == classOf[DumbSourceConnector].getName)
           catch {
             case _: Throwable => false
         }
