@@ -15,6 +15,9 @@
 # limitations under the License.
 #
 
+# change the working path from root to ohara folder
+cd $OHARA_HOME/bin
+
 if [[ "$1" == "-v" ]] || [[ "$1" == "version" ]] || [[ "$1" == "-version" ]]; then
   if [[ -f "$OHARA_HOME/bin/ohara_version" ]]; then
     cat $OHARA_HOME/bin/ohara_version
@@ -24,4 +27,4 @@ if [[ "$1" == "-v" ]] || [[ "$1" == "version" ]] || [[ "$1" == "-version" ]]; th
   exit
 fi
 
-exec ohara.sh start manager "$@"
+exec $OHARA_HOME/bin/ohara.sh start manager "$@"

@@ -34,7 +34,7 @@ else
 fi
 
 #----------[CLASSPATH]----------#
-CLASSPATH="${PROJECT_HOME}/lib/*:${PROJECT_HOME}/conf/:"
+CLASSPATH="${PROJECT_HOME}/lib/*:${PROJECT_HOME}/conf"
 
 #----------[LOG4J]----------#
 LOG4J=-Dlog4j.configuration=file:$PROJECT_HOME'/conf/log4j.properties'
