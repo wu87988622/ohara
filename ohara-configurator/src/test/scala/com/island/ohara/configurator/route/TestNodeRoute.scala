@@ -33,7 +33,7 @@ class TestNodeRoute extends SmallTest with Matchers {
     * a fake cluster has 3 fake node.
     */
   private[this] val numberOfDefaultNodes = 3 * numberOfCluster
-  private[this] val nodeApi = NodeApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] def compare(lhs: Node, rhs: Node): Unit = {
     lhs.name shouldBe rhs.name
@@ -55,7 +55,7 @@ class TestNodeRoute extends SmallTest with Matchers {
     val port = CommonUtils.availablePort()
     val user = CommonUtils.randomString()
     val password = CommonUtils.randomString()
-    val res = result(nodeApi.request().name(name).port(port).user(user).password(password).create())
+    val res = result(nodeApi.request.name(name).port(port).user(user).password(password).create())
     res.name shouldBe name
     res.port shouldBe port
     res.user shouldBe user
@@ -65,14 +65,13 @@ class TestNodeRoute extends SmallTest with Matchers {
     compare(result(nodeApi.list).find(_.name == name).get, res)
 
     an[IllegalArgumentException] should be thrownBy result(
-      nodeApi.request().name(res.name).port(port).user(user).password(password).create())
+      nodeApi.request.name(res.name).port(port).user(user).password(password).create())
   }
 
   @Test
   def testDelete(): Unit = {
     val res = result(
-      nodeApi
-        .request()
+      nodeApi.request
         .name(CommonUtils.randomString())
         .port(CommonUtils.availablePort())
         .user(CommonUtils.randomString())
@@ -95,8 +94,7 @@ class TestNodeRoute extends SmallTest with Matchers {
   @Test
   def testUpdate(): Unit = {
     val res = result(
-      nodeApi
-        .request()
+      nodeApi.request
         .name(CommonUtils.randomString())
         .port(CommonUtils.availablePort())
         .user(CommonUtils.randomString())
@@ -106,8 +104,7 @@ class TestNodeRoute extends SmallTest with Matchers {
     result(nodeApi.list).size shouldBe (1 + numberOfDefaultNodes)
 
     result(
-      nodeApi
-        .request()
+      nodeApi.request
         .name(res.name)
         .port(CommonUtils.availablePort())
         .user(CommonUtils.randomString())
@@ -127,8 +124,7 @@ class TestNodeRoute extends SmallTest with Matchers {
     val count = 10
     (0 until count).foreach { _ =>
       result(
-        nodeApi
-          .request()
+        nodeApi.request
           .name(CommonUtils.randomString())
           .port(CommonUtils.availablePort())
           .user(CommonUtils.randomString())
@@ -143,8 +139,7 @@ class TestNodeRoute extends SmallTest with Matchers {
     val invalidStrings = Seq("a@", "a=", "a\\", "a~", "a//")
     invalidStrings.foreach { invalidString =>
       an[IllegalArgumentException] should be thrownBy result(
-        nodeApi
-          .request()
+        nodeApi.request
           .name(invalidString)
           .port(CommonUtils.availablePort())
           .user(CommonUtils.randomString())
@@ -173,14 +168,13 @@ class TestNodeRoute extends SmallTest with Matchers {
 
   private[this] def updatePartOfField(req: Request => Request, _expected: Node => Node): Unit = {
     val previous = result(
-      nodeApi
-        .request()
+      nodeApi.request
         .name(CommonUtils.randomString())
         .port(CommonUtils.availablePort())
         .user(CommonUtils.randomString())
         .password(CommonUtils.randomString())
         .update())
-    val updated = result(req(nodeApi.request().name(previous.name)).update())
+    val updated = result(req(nodeApi.request.name(previous.name)).update())
     val expected = _expected(previous)
     updated.name shouldBe expected.name
     updated.port shouldBe expected.port
@@ -191,8 +185,7 @@ class TestNodeRoute extends SmallTest with Matchers {
   @Test
   def failToCreateNodeWithoutPort(): Unit =
     an[IllegalArgumentException] should be thrownBy result(
-      nodeApi
-        .request()
+      nodeApi.request
         .name(CommonUtils.randomString())
         .user(CommonUtils.randomString())
         .password(CommonUtils.randomString())
@@ -201,8 +194,7 @@ class TestNodeRoute extends SmallTest with Matchers {
   @Test
   def failToCreateNodeWithoutUser(): Unit =
     an[IllegalArgumentException] should be thrownBy result(
-      nodeApi
-        .request()
+      nodeApi.request
         .name(CommonUtils.randomString())
         .port(CommonUtils.availablePort())
         .password(CommonUtils.randomString())
@@ -211,8 +203,7 @@ class TestNodeRoute extends SmallTest with Matchers {
   @Test
   def failToCreateNodeWithoutPassword(): Unit =
     an[IllegalArgumentException] should be thrownBy result(
-      nodeApi
-        .request()
+      nodeApi.request
         .name(CommonUtils.randomString())
         .port(CommonUtils.availablePort())
         .user(CommonUtils.randomString())

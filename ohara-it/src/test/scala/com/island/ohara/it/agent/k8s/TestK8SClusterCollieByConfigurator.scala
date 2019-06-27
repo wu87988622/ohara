@@ -83,9 +83,9 @@ class TestK8SClusterCollieByConfigurator extends BasicTests4ClusterCollieByConfi
           } finally k8sClient.close()
         }
       }
-      val nodeApi = NodeApi.access().hostname(configurator.hostname).port(configurator.port)
+      val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
       nodeCache.foreach { node =>
-        result(nodeApi.request().name(node.name).port(node.port).user(node.user).password(node.password).create())
+        result(nodeApi.request.name(node.name).port(node.port).user(node.user).password(node.password).create())
       }
       val nodes = result(nodeApi.list)
       nodes.size shouldBe nodeCache.size

@@ -44,12 +44,12 @@ class TestWorkerRoute extends MediumTest with Matchers {
 
   @Before
   def setup(): Unit = {
-    val nodeAccess = NodeApi.access().hostname(configurator.hostname).port(configurator.port)
+    val nodeAccess = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
 
     nodeNames.isEmpty shouldBe false
 
     nodeNames.foreach { n =>
-      result(nodeAccess.request().name(n).port(22).user("user").password("pwd").create())
+      result(nodeAccess.request.name(n).port(22).user("user").password("pwd").create())
     }
 
     result(nodeAccess.list).size shouldBe (nodeNames.size + numberOfDefaultNodes)

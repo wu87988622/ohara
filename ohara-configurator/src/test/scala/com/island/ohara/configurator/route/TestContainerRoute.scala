@@ -39,11 +39,11 @@ class TestContainerRoute extends MediumTest with Matchers {
 
   @Before
   def setup(): Unit = {
-    val nodeApi = NodeApi.access().hostname(configurator.hostname).port(configurator.port)
+    val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
 
     nodeNames.isEmpty shouldBe false
     nodeNames.foreach { n =>
-      result(nodeApi.request().name(n).port(22).user("user").password("pwd").create())
+      result(nodeApi.request.name(n).port(22).user("user").password("pwd").create())
     }
 
     result(

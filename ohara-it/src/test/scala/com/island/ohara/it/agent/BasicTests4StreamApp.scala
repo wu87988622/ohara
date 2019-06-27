@@ -104,11 +104,11 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
       streamAppActionAccess = StreamApi.accessOfAction().hostname(configurator.hostname).port(configurator.port)
       streamAppListAccess = StreamApi.accessOfList().hostname(configurator.hostname).port(configurator.port)
       streamAppPropertyAccess = StreamApi.accessOfProperty().hostname(configurator.hostname).port(configurator.port)
-      val nodeApi = NodeApi.access().hostname(configurator.hostname).port(configurator.port)
+      val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
       // add all available nodes
       nodeCache.foreach { node =>
         result(
-          nodeApi.request().name(node.name).port(node.port).user(node.user).password(node.password).create()
+          nodeApi.request.name(node.name).port(node.port).user(node.user).password(node.password).create()
         )
       }
       val nodes = result(nodeApi.list)

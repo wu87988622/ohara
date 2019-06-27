@@ -46,11 +46,10 @@ class TestGetNodeWithRunningCluster extends IntegrationTest with Matchers {
     }
     nodeCache.foreach { node =>
       result(
-        NodeApi
-          .access()
+        NodeApi.access
           .hostname(configurator.hostname)
           .port(configurator.port)
-          .request()
+          .request
           .name(node.name)
           .port(node.port)
           .user(node.user)
@@ -72,7 +71,7 @@ class TestGetNodeWithRunningCluster extends IntegrationTest with Matchers {
     try {
       assertCluster(() => result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).list),
                     cluster.name)
-      val nodes = result(NodeApi.access().hostname(configurator.hostname).port(configurator.port).list)
+      val nodes = result(NodeApi.access.hostname(configurator.hostname).port(configurator.port).list)
       nodes.isEmpty shouldBe false
       nodes.foreach { node =>
         node.services.isEmpty shouldBe false

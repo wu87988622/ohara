@@ -452,11 +452,10 @@ object Configurator {
 
     val node =
       Await.result(
-        NodeApi
-          .access()
+        NodeApi.access
           .hostname(CommonUtils.hostname())
           .port(configurator.port)
-          .request()
+          .request
           .name(nodeRequest.name)
           .port(nodeRequest.port)
           .user(nodeRequest.user)

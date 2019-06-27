@@ -51,11 +51,10 @@ class TestPipelineRoute extends MediumTest with Matchers {
     // add node
     val addNodeName: String = methodName().toLowerCase
     result(
-      NodeApi
-        .access()
+      NodeApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .request()
+        .request
         .name(addNodeName)
         .port(22)
         .user(CommonUtils.randomString())

@@ -15,7 +15,7 @@
  */
 
 package com.island.ohara.client.configurator.v0
-import com.island.ohara.common.annotations.Optional
+import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol.{jsonFormat6, _}
 import spray.json.RootJsonFormat
@@ -29,10 +29,18 @@ object NodeApi {
   val WORKER_SERVICE_NAME: String = "connect-worker"
 
   case class Update(port: Option[Int], user: Option[String], password: Option[String])
-  implicit val NODE_UPDATE_JSON_FORMAT: RootJsonFormat[Update] = jsonFormat3(Update)
+  implicit val NODE_UPDATE_JSON_FORMAT: RootJsonFormat[Update] =
+    JsonRefiner[Update].format(jsonFormat3(Update)).requireConnectionPort("port").rejectEmptyString().refine
 
   case class Creation(name: String, port: Int, user: String, password: String) extends CreationRequest
-  implicit val NODE_CREATION_JSON_FORMAT: RootJsonFormat[Creation] = jsonFormat4(Creation)
+  implicit val NODE_CREATION_JSON_FORMAT: RootJsonFormat[Creation] =
+    JsonRefiner[Creation]
+      .format(jsonFormat4(Creation))
+      // default implementation of node is ssh, we use "default ssh port" here
+      .nullToInt("port", 22)
+      .requireConnectionPort("port")
+      .rejectEmptyString()
+      .refine
 
   case class NodeService(name: String, clusterNames: Seq[String])
   implicit val NODE_SERVICE_JSON_FORMAT: RootJsonFormat[NodeService] = jsonFormat2(NodeService)
@@ -67,6 +75,20 @@ object NodeApi {
     def password(password: String): Request
 
     /**
+      * Retrieve the inner object of request payload. Noted, it throw unchecked exception if you haven't filled all required fields
+      * @return the payload of creation
+      */
+    @VisibleForTesting
+    private[v0] def creation: Creation
+
+    /**
+      * Retrieve the inner object of request payload. Noted, it throw unchecked exception if you haven't filled all required fields
+      * @return the payload of creation
+      */
+    @VisibleForTesting
+    private[v0] def update: Update
+
+    /**
       * generate the POST request
       * @param executionContext thread pool
       * @return created data
@@ -82,7 +104,7 @@ object NodeApi {
   }
 
   class Access private[v0] extends Access2[Node](NODES_PREFIX_PATH) {
-    def request(): Request = new Request {
+    def request: Request = new Request {
       private[this] var name: String = _
       private[this] var port: Option[Int] = None
       private[this] var user: String = _
@@ -103,27 +125,32 @@ object NodeApi {
         this.password = CommonUtils.requireNonEmpty(password)
         this
       }
+
+      override private[v0] def creation: Creation = Creation(
+        name = CommonUtils.requireNonEmpty(name),
+        user = CommonUtils.requireNonEmpty(user),
+        password = CommonUtils.requireNonEmpty(password),
+        port = port.map(CommonUtils.requireConnectionPort).getOrElse(throw new NullPointerException)
+      )
+
+      override private[v0] def update: Update = Update(
+        port = port.map(CommonUtils.requireConnectionPort),
+        user = Option(user).map(CommonUtils.requireNonEmpty),
+        password = Option(password).map(CommonUtils.requireNonEmpty),
+      )
+
       override def create()(implicit executionContext: ExecutionContext): Future[Node] =
         exec.post[Creation, Node, ErrorApi.Error](
           _url,
-          Creation(
-            name = CommonUtils.requireNonEmpty(name),
-            port = port.map(CommonUtils.requireConnectionPort).getOrElse(throw new NullPointerException),
-            user = CommonUtils.requireNonEmpty(user),
-            password = CommonUtils.requireNonEmpty(password)
-          )
+          creation
         )
       override def update()(implicit executionContext: ExecutionContext): Future[Node] =
         exec.put[Update, Node, ErrorApi.Error](
           s"${_url}/${CommonUtils.requireNonEmpty(name)}",
-          Update(
-            port = port.map(CommonUtils.requireConnectionPort),
-            user = Option(user).map(CommonUtils.requireNonEmpty),
-            password = Option(password).map(CommonUtils.requireNonEmpty)
-          )
+          update
         )
     }
   }
 
-  def access(): Access = new Access
+  def access: Access = new Access
 }

@@ -45,7 +45,7 @@ class TestMixedFakeCollie extends WithBrokerWorker with Matchers {
         .size shouldBe 1
 
       val nodes =
-        Await.result(NodeApi.access().hostname(configurator.hostname).port(configurator.port).list, 20 seconds)
+        Await.result(NodeApi.access.hostname(configurator.hostname).port(configurator.port).list, 10 seconds)
 
       // embedded mode always add single node since embedded mode assign different client port to each thread and
       // our collie demands that all "processes" should use same port.

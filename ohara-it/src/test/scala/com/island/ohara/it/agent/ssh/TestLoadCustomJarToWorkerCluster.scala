@@ -78,9 +78,9 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
       s"${CollieTestUtils.key}, $portKey and $hostnameKey don't exist so all tests in TestLoadCustomJarToWorkerCluster are ignored")
   else {
 
-    val nodeApi = NodeApi.access().hostname(configurator.hostname).port(configurator.port)
+    val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
     nodeCache.foreach { node =>
-      result(nodeApi.request().name(node.name).port(node.port).user(node.user).password(node.password).create())
+      result(nodeApi.request.name(node.name).port(node.port).user(node.user).password(node.password).create())
     }
   }
 

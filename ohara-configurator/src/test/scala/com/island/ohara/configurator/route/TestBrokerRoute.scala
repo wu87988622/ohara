@@ -35,13 +35,13 @@ class TestBrokerRoute extends MediumTest with Matchers {
 
   @Before
   def setup(): Unit = {
-    val nodeAccess = NodeApi.access().hostname(configurator.hostname).port(configurator.port)
+    val nodeAccess = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
 
     nodeNames.isEmpty shouldBe false
 
     nodeNames.foreach { n =>
       result(
-        nodeAccess.request().name(n).port(22).user("user").password("password").create()
+        nodeAccess.request.name(n).port(22).user("user").password("password").create()
       )
     }
 

@@ -31,31 +31,31 @@ class TestNodeNameUpperCaseRoute extends SmallTest with Matchers {
   private[this] val numberOfCluster = 1
   private[this] val configurator =
     Configurator.builder().fake(numberOfCluster, numberOfCluster, "zookeepercluster").build()
-  private[this] val nodeApi = NodeApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
   @Test
   def testAddNodeNameLowerCase(): Unit = {
     val name = CommonUtils.randomString().toLowerCase
-    result(nodeApi.request().name(name).port(22).user("b").password("c").create()).name shouldBe name
+    result(nodeApi.request.name(name).port(22).user("b").password("c").create()).name shouldBe name
   }
 
   @Test
   def testAddNodeNameUpperCase1(): Unit = {
     val name = CommonUtils.randomString().toUpperCase
-    result(nodeApi.request().name(name).port(22).user("b").password("c").create())
+    result(nodeApi.request.name(name).port(22).user("b").password("c").create())
   }
 
   @Test
   def testAddNodeNameUpperCase2(): Unit = {
     val name = "HOST1.test"
-    result(nodeApi.request().name(name).port(22).user("b").password("c").create())
+    result(nodeApi.request.name(name).port(22).user("b").password("c").create())
   }
 
   @Test
   def testAddNodeNameUpperCase3(): Unit = {
     val name = "aaa-Node1.test"
-    result(nodeApi.request().name(name).port(22).user("b").password("c").create())
+    result(nodeApi.request.name(name).port(22).user("b").password("c").create())
   }
 
   @After
