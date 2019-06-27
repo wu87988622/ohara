@@ -55,8 +55,8 @@ public class Validation implements JsonObject {
     CommonUtils.requireNonEmpty(settings)
         .forEach(
             (k, v) -> {
-              CommonUtils.requireNonEmpty(k);
-              CommonUtils.requireNonEmpty(v);
+              CommonUtils.requireNonEmpty(k, () -> "empty key is illegal");
+              CommonUtils.requireNonEmpty(v, () -> "the value of " + k + " can't be empty");
             });
     this.settings = Collections.unmodifiableMap(new HashMap<>(settings));
   }
