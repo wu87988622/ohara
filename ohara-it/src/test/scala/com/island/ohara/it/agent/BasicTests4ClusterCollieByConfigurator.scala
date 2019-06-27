@@ -35,7 +35,7 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
 
   private[this] def bkApi = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)
 
-  private[this] def wkApi = WorkerApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] def wkApi = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] def logApi = LogApi.access().hostname(configurator.hostname).port(configurator.port)
 
@@ -111,8 +111,7 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
                                    jmxPort: Int,
                                    bkClusterName: String,
                                    nodeNames: Set[String]): Future[WorkerApi.WorkerClusterInfo] =
-    wkApi
-      .request()
+    wkApi.request
       .name(clusterName)
       .clientPort(clientPort)
       .jmxPort(jmxPort)
@@ -129,8 +128,7 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
                                    offsetTopicName: String,
                                    bkClusterName: String,
                                    nodeNames: Set[String]): Future[WorkerApi.WorkerClusterInfo] =
-    wkApi
-      .request()
+    wkApi.request
       .name(clusterName)
       .clientPort(clientPort)
       .jmxPort(jmxPort)

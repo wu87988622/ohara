@@ -126,189 +126,166 @@ class TestWorkerApi extends SmallTest with Matchers {
   }
 
   @Test
-  def ignoreNameOnCreation(): Unit = an[NullPointerException] should be thrownBy WorkerApi
-    .access()
+  def ignoreNameOnCreation(): Unit = an[NullPointerException] should be thrownBy WorkerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .nodeName(CommonUtils.randomString(10))
-    .creation()
+    .creation
 
   @Test
-  def ignoreNodeNamesOnCreation(): Unit = an[IllegalArgumentException] should be thrownBy WorkerApi
-    .access()
+  def ignoreNodeNamesOnCreation(): Unit = an[IllegalArgumentException] should be thrownBy WorkerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .name(CommonUtils.randomString())
-    .creation()
+    .creation
 
   @Test
-  def nullName(): Unit = an[NullPointerException] should be thrownBy WorkerApi
-    .access()
+  def nullName(): Unit = an[NullPointerException] should be thrownBy WorkerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .name(null)
 
   @Test
-  def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy WorkerApi
-    .access()
+  def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy WorkerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .name("")
 
   @Test
-  def nullBrokerClusterName(): Unit = an[NullPointerException] should be thrownBy WorkerApi
-    .access()
+  def nullBrokerClusterName(): Unit = an[NullPointerException] should be thrownBy WorkerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .brokerClusterName(null)
 
   @Test
-  def emptyBrokerClusterName(): Unit = an[IllegalArgumentException] should be thrownBy WorkerApi
-    .access()
+  def emptyBrokerClusterName(): Unit = an[IllegalArgumentException] should be thrownBy WorkerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .brokerClusterName("")
 
   @Test
-  def nullImageName(): Unit = an[NullPointerException] should be thrownBy WorkerApi
-    .access()
+  def nullImageName(): Unit = an[NullPointerException] should be thrownBy WorkerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .imageName(null)
 
   @Test
-  def emptyImageName(): Unit = an[IllegalArgumentException] should be thrownBy WorkerApi
-    .access()
+  def emptyImageName(): Unit = an[IllegalArgumentException] should be thrownBy WorkerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .imageName("")
 
   @Test
-  def nullNodeNames(): Unit = an[NullPointerException] should be thrownBy WorkerApi
-    .access()
+  def nullNodeNames(): Unit = an[NullPointerException] should be thrownBy WorkerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .nodeNames(null)
 
   @Test
-  def emptyNodeNames(): Unit = an[IllegalArgumentException] should be thrownBy WorkerApi
-    .access()
+  def emptyNodeNames(): Unit = an[IllegalArgumentException] should be thrownBy WorkerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .nodeNames(Set.empty)
 
   @Test
-  def negativeClientPort(): Unit = an[IllegalArgumentException] should be thrownBy WorkerApi
-    .access()
+  def negativeClientPort(): Unit = an[IllegalArgumentException] should be thrownBy WorkerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .clientPort(-1)
 
   @Test
-  def negativeJmxPort(): Unit = an[IllegalArgumentException] should be thrownBy WorkerApi
-    .access()
+  def negativeJmxPort(): Unit = an[IllegalArgumentException] should be thrownBy WorkerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .jmxPort(-1)
 
   @Test
-  def nullConfigTopicName(): Unit = an[NullPointerException] should be thrownBy WorkerApi
-    .access()
+  def nullConfigTopicName(): Unit = an[NullPointerException] should be thrownBy WorkerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .configTopicName(null)
 
   @Test
-  def emptyConfigTopicName(): Unit = an[IllegalArgumentException] should be thrownBy WorkerApi
-    .access()
+  def emptyConfigTopicName(): Unit = an[IllegalArgumentException] should be thrownBy WorkerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .configTopicName("")
 
   @Test
-  def negativeNumberOfConfigTopicReplication(): Unit = an[IllegalArgumentException] should be thrownBy WorkerApi
-    .access()
+  def negativeNumberOfConfigTopicReplication(): Unit = an[IllegalArgumentException] should be thrownBy WorkerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .configTopicReplications(-1)
 
   @Test
-  def nullOffsetTopicName(): Unit = an[NullPointerException] should be thrownBy WorkerApi
-    .access()
+  def nullOffsetTopicName(): Unit = an[NullPointerException] should be thrownBy WorkerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .offsetTopicName(null)
 
   @Test
-  def emptyOffsetTopicName(): Unit = an[IllegalArgumentException] should be thrownBy WorkerApi
-    .access()
+  def emptyOffsetTopicName(): Unit = an[IllegalArgumentException] should be thrownBy WorkerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .offsetTopicName("")
 
   @Test
-  def negativeNumberOfOffsetTopicPartitions(): Unit = an[IllegalArgumentException] should be thrownBy WorkerApi
-    .access()
+  def negativeNumberOfOffsetTopicPartitions(): Unit = an[IllegalArgumentException] should be thrownBy WorkerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .offsetTopicPartitions(-1)
 
   @Test
-  def negativeNumberOfOffsetTopicReplication(): Unit = an[IllegalArgumentException] should be thrownBy WorkerApi
-    .access()
+  def negativeNumberOfOffsetTopicReplication(): Unit = an[IllegalArgumentException] should be thrownBy WorkerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .offsetTopicReplications(-1)
 
   @Test
-  def nullStatusTopicName(): Unit = an[NullPointerException] should be thrownBy WorkerApi
-    .access()
+  def nullStatusTopicName(): Unit = an[NullPointerException] should be thrownBy WorkerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .statusTopicName(null)
 
   @Test
-  def emptyStatusTopicName(): Unit = an[IllegalArgumentException] should be thrownBy WorkerApi
-    .access()
+  def emptyStatusTopicName(): Unit = an[IllegalArgumentException] should be thrownBy WorkerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .statusTopicName("")
 
   @Test
-  def negativeNumberOfStatusTopicPartitions(): Unit = an[IllegalArgumentException] should be thrownBy WorkerApi
-    .access()
+  def negativeNumberOfStatusTopicPartitions(): Unit = an[IllegalArgumentException] should be thrownBy WorkerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .statusTopicPartitions(-1)
 
   @Test
-  def negativeNumberOfStatusTopicReplication(): Unit = an[IllegalArgumentException] should be thrownBy WorkerApi
-    .access()
+  def negativeNumberOfStatusTopicReplication(): Unit = an[IllegalArgumentException] should be thrownBy WorkerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .statusTopicReplications(-1)
 
   @Test
@@ -327,11 +304,10 @@ class TestWorkerApi extends SmallTest with Matchers {
     val statusTopicPartitions: Int = 2
     val statusTopicReplications: Short = 2
     val nodeName = CommonUtils.randomString()
-    val creation = WorkerApi
-      .access()
+    val creation = WorkerApi.access
       .hostname(CommonUtils.randomString())
       .port(CommonUtils.availablePort())
-      .request()
+      .request
       .name(name)
       .brokerClusterName(brokerClusterName)
       .configTopicName(configTopicName)
@@ -346,7 +322,7 @@ class TestWorkerApi extends SmallTest with Matchers {
       .clientPort(clientPort)
       .jmxPort(jmxPort)
       .nodeName(nodeName)
-      .creation()
+      .creation
     creation.name shouldBe name
     creation.imageName shouldBe imageName
     creation.clientPort shouldBe clientPort
@@ -386,4 +362,13 @@ class TestWorkerApi extends SmallTest with Matchers {
     creation.nodeNames.head shouldBe nodeName
     creation.jarIds.size shouldBe 0
   }
+
+  @Test
+  def parseEmptyNodeNames(): Unit =
+    an[DeserializationException] should be thrownBy WorkerApi.WORKER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(s"""
+                                                                                   |  {
+                                                                                   |    "name": "asdasd",
+                                                                                   |    "nodeNames": []
+                                                                                   |  }
+                                                                     """.stripMargin.parseJson)
 }

@@ -41,7 +41,7 @@ class TestMixedFakeCollie extends WithBrokerWorker with Matchers {
         .size shouldBe 1
 
       Await
-        .result(WorkerApi.access().hostname(configurator.hostname).port(configurator.port).list, 20 seconds)
+        .result(WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list, 20 seconds)
         .size shouldBe 1
 
       val nodes =
@@ -91,11 +91,10 @@ class TestMixedFakeCollie extends WithBrokerWorker with Matchers {
         .size shouldBe 2
 
       Await.result(
-        WorkerApi
-          .access()
+        WorkerApi.access
           .hostname(configurator.hostname)
           .port(configurator.port)
-          .request()
+          .request
           .name(CommonUtils.randomString(10))
           .brokerClusterName(bk.name)
           .nodeNames(nodes.map(_.name).toSet)
@@ -104,7 +103,7 @@ class TestMixedFakeCollie extends WithBrokerWorker with Matchers {
       )
 
       Await
-        .result(WorkerApi.access().hostname(configurator.hostname).port(configurator.port).list, 20 seconds)
+        .result(WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list, 20 seconds)
         .size shouldBe 2
 
     } finally configurator.close()

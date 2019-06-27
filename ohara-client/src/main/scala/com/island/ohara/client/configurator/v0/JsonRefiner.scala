@@ -23,6 +23,11 @@ import spray.json.{DeserializationException, JsArray, JsNull, JsNumber, JsObject
 
 /**
   * this is a akka-json representation++ which offers many useful sugar conversion of input json.
+  * The order of applying rules is shown below.
+  * 1) convert the value to another type
+  * 2) convert the null to the value of another key
+  * 3) convert the null to default value
+  * 4) value check
   * @tparam T scala object type
   */
 trait JsonRefiner[T] {
@@ -68,7 +73,12 @@ trait JsonRefiner[T] {
     *   "k0": "abc",
     *   "k1": "abc"
     * }
-    * Noted: another key must be exist. Otherwise, DeserializationException will be thrown.
+    *
+    * This method is useful in working with deprecated key. For example, you plant to change the key from "k0" to "k1".
+    * To avoid breaking the APIs, you can refine the parser with this method - nullToAnotherValueOfKey("k1", "k0") -
+    * the json parser will seek the "k1" first and then find the "k0" if "k1" does not exist.
+    *
+    * Noted: it does nothing if both key and another key are nonexistent
     *
     * @param key the fist key mapped to input json that it can be ignored or null.
     *  @param anotherKey the second key mapped to input json that it must exists!!!
@@ -139,6 +149,19 @@ trait JsonRefiner[T] {
     */
   def rejectEmptyArray(): JsonRefiner[T]
 
+  /**
+    * throw exception if the specific key of input json is associated to empty array.
+    * @param key key
+    * @return this refiner
+    */
+  def rejectEmptyArray(key: String): JsonRefiner[T] = valueChecker(
+    key, {
+      case s: JsArray if s.elements.isEmpty =>
+        throw DeserializationException(s"the value array of $key can't be empty!!!")
+      case _ => // we don't care for other types
+    }
+  )
+
   protected def valueChecker(key: String, checker: JsValue => Unit): JsonRefiner[T]
 
   //-------------------------[more conversion]-------------------------//
@@ -151,16 +174,13 @@ trait JsonRefiner[T] {
     */
   def acceptStringToNumber(key: String): JsonRefiner[T] = valueConverter(
     key, {
-      case n: JsNumber => n
       case s: JsString =>
         try JsNumber(s.value)
         catch {
           case e: NumberFormatException =>
             throw DeserializationException(s"the input string:${s.value} can't be converted to number", e)
         }
-      case o: JsValue =>
-        throw DeserializationException(
-          s"the value type of key:$key must be either Number or String, but actual type is $o")
+      case s: JsValue => s
     }
   )
 
@@ -215,32 +235,23 @@ object JsonRefiner {
     }
 
     override def nullToAnotherValueOfKey(key: String, anotherKey: String): JsonRefiner[T] = {
-      checkDuplicateRulesOnSameKey(CommonUtils.requireNonEmpty(key))
+      if (nullToAnotherValueOfKey.contains(CommonUtils.requireNonEmpty(key)))
+        throw new IllegalArgumentException(s"the $key have been associated to another key:$anotherKey")
       this.nullToAnotherValueOfKey = this.nullToAnotherValueOfKey ++ Map(key -> CommonUtils.requireNonEmpty(anotherKey))
       this
     }
 
-    override protected def nullToJsValue(key: String, defaultValues: JsValue): JsonRefiner[T] = {
-      checkDuplicateRulesOnSameKey(CommonUtils.requireNonEmpty(key))
-      this.nullToJsValue = this.nullToJsValue ++ Map(key -> Objects.requireNonNull(defaultValues))
+    override protected def nullToJsValue(key: String, defaultValue: JsValue): JsonRefiner[T] = {
+      if (nullToJsValue.contains(CommonUtils.requireNonEmpty(key)))
+        throw new IllegalArgumentException(s"the $key have been associated to default value:$defaultValue")
+      this.nullToJsValue = this.nullToJsValue ++ Map(key -> Objects.requireNonNull(defaultValue))
       this
     }
 
-    private[this] def checkDuplicateRulesOnSameKey(inComingKey: String): Unit =
-      if ((nullToJsValue.keySet ++ nullToAnotherValueOfKey.keySet).contains(inComingKey))
-        throw new IllegalArgumentException(s"$inComingKey already exists!!!")
-
     override def refine: RootJsonFormat[T] = {
       Objects.requireNonNull(format)
-      // check the duplicate keys in different groups
-      // those rules are used to auto-fill a value to nonexistent key. Hence, we disallow to set multiple rules on the same key.
-      if (nullToJsValue.size + nullToAnotherValueOfKey.size != (nullToJsValue.keys ++ nullToAnotherValueOfKey.keys).toSet.size)
-        throw new IllegalArgumentException(
-          s"duplicate key in different groups is illegal."
-            + s", nullToJsValue:${nullToJsValue.keys.mkString(",")}"
-            + s", defaultToAnother.keys:${nullToAnotherValueOfKey.keys.mkString(",")}"
-        )
       nullToJsValue.keys.foreach(CommonUtils.requireNonEmpty)
+      valueConverter.keys.foreach(CommonUtils.requireNonEmpty)
       nullToAnotherValueOfKey.keys.foreach(CommonUtils.requireNonEmpty)
       nullToAnotherValueOfKey.values.foreach(CommonUtils.requireNonEmpty)
       new RootJsonFormat[T] {
@@ -252,23 +263,14 @@ object JsonRefiner {
                 case _      => true
               }
           }
-          // convert the null to default value
-          fields = fields ++ nullToJsValue.map {
-            case (key, defaultValue) =>
-              key -> fields.getOrElse(key, defaultValue)
-          }
 
-          // convert the null to the value of another key
-          fields = fields ++ nullToAnotherValueOfKey.filterNot(pair => fields.contains(pair._1)).map {
-            case (key, anotherKye) =>
-              if (!fields.contains(anotherKye)) throw DeserializationException(s"$anotherKye is required!!!")
-              key -> fields(anotherKye)
-          }
-
-          // convert the value
+          // 1) convert the value to another type
           fields = fields ++ valueConverter
+            .filter {
+              case (key, _) => fields.contains(key)
+            }
             .map {
-              case (key, converter) => key -> converter(fields.getOrElse(key, JsNull))
+              case (key, converter) => key -> converter(fields(key))
             }
             .filter {
               case (_, jsValue) =>
@@ -278,7 +280,21 @@ object JsonRefiner {
                 }
             }
 
-          // check empty string
+          // 2) convert the null to the value of another key
+          fields = fields ++ nullToAnotherValueOfKey
+            .filterNot(pair => fields.contains(pair._1))
+            .filter(pair => fields.contains(pair._2))
+            .map {
+              case (key, anotherKye) => key -> fields(anotherKye)
+            }
+
+          // 3) convert the null to default value
+          fields = fields ++ nullToJsValue.map {
+            case (key, defaultValue) =>
+              key -> fields.getOrElse(key, defaultValue)
+          }
+
+          // 4) check empty string
           def checkEmptyString(key: String, s: JsString): Unit =
             if (s.value.isEmpty) throw DeserializationException(s"the value of $key can't be empty string!!!")
           def checkJsValueForEmptyString(k: String, v: JsValue): Unit = v match {
@@ -294,7 +310,7 @@ object JsonRefiner {
             case (key, value) => checkJsValueForEmptyString(key, value)
           }
 
-          // check negative number
+          // 5) check negative number
           def checkNegativeNumber(key: String, s: JsNumber): Unit = if (s.value < 0)
             throw DeserializationException(s"the value of $key MUST be bigger than or equal to zero!!!")
           def checkJsValueForNegativeNumber(k: String, v: JsValue): Unit = v match {
@@ -310,7 +326,7 @@ object JsonRefiner {
             case (key, value) => checkJsValueForNegativeNumber(key, value)
           }
 
-          // check empty array
+          // 6) check empty array
           def checkEmptyArray(key: String, s: JsArray): Unit = if (s.elements.isEmpty)
             throw DeserializationException(s"the value of $key MUST be NOT empty array!!!")
           def checkJsValueForEmptyArray(k: String, v: JsValue): Unit = v match {
@@ -325,7 +341,7 @@ object JsonRefiner {
             case (key, value) => checkJsValueForEmptyArray(key, value)
           }
 
-          // custom check
+          // 7) custom check
           valueChecker.foreach {
             case (key, checker) => checker(fields.getOrElse(key, JsNull))
           }

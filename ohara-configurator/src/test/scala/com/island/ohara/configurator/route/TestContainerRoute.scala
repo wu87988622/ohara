@@ -29,7 +29,7 @@ class TestContainerRoute extends MediumTest with Matchers {
   private[this] val configurator = Configurator.builder().fake(0, 0).build()
   private[this] val containerApi = ContainerApi.access().hostname(configurator.hostname).port(configurator.port)
   private[this] val brokerApi = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)
-  private[this] val workerApi = WorkerApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] val workerApi = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] val zkClusterName = CommonUtils.randomString(10)
   private[this] val bkClusterName = CommonUtils.randomString(10)
@@ -57,7 +57,7 @@ class TestContainerRoute extends MediumTest with Matchers {
 
     result(brokerApi.request.name(bkClusterName).zookeeperClusterName(zkClusterName).nodeNames(nodeNames).create())
 
-    result(workerApi.request().name(wkClusterName).brokerClusterName(bkClusterName).nodeNames(nodeNames).create())
+    result(workerApi.request.name(wkClusterName).brokerClusterName(bkClusterName).nodeNames(nodeNames).create())
   }
 
   @Test

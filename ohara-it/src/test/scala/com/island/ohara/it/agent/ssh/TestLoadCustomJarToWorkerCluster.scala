@@ -63,7 +63,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
 
   private[this] val bkApi = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)
 
-  private[this] val wkApi = WorkerApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] val wkApi = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] val nameHolder = new ClusterNameHolder(nodeCache)
 
@@ -107,8 +107,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
     assertCluster(() => result(bkApi.list), bkCluster.name)
     log.info(s"bkCluster:$bkCluster")
     val wkCluster = result(
-      wkApi
-        .request()
+      wkApi.request
         .name(nameHolder.generateClusterName())
         .brokerClusterName(bkCluster.name)
         .jarIds(jars.map(_.id).toSet)

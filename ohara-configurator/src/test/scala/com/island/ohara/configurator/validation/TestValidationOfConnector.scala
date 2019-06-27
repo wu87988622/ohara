@@ -31,7 +31,7 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
   private[this] val configurator =
     Configurator.builder().fake(testUtil().brokersConnProps(), testUtil().workersConnProps()).build()
 
-  private[this] val wkCluster = result(WorkerApi.access().hostname(configurator.hostname).port(configurator.port).list).head
+  private[this] val wkCluster = result(WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list).head
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 

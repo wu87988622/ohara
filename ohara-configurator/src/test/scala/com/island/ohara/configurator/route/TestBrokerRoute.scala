@@ -76,11 +76,10 @@ class TestBrokerRoute extends MediumTest with Matchers {
         .create())
 
     val wk = result(
-      WorkerApi
-        .access()
+      WorkerApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .request()
+        .request
         .name(CommonUtils.randomString(10))
         .nodeNames(nodeNames)
         .create())
@@ -92,7 +91,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
     an[IllegalArgumentException] should be thrownBy result(brokerApi.delete(bk.name))
 
     // remove wk cluster
-    result(WorkerApi.access().hostname(configurator.hostname).port(configurator.port).delete(wk.name))
+    result(WorkerApi.access.hostname(configurator.hostname).port(configurator.port).delete(wk.name))
 
     // pass
     result(brokerApi.delete(bk.name))

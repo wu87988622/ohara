@@ -35,7 +35,7 @@ class TestLogRoute extends SmallTest with Matchers {
 
   private[this] val bkApi = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)
 
-  private[this] val wkApi = WorkerApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] val wkApi = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 

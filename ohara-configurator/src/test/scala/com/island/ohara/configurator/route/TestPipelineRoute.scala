@@ -62,11 +62,10 @@ class TestPipelineRoute extends MediumTest with Matchers {
         .create()
     )
     val wkCluster = result(
-      WorkerApi
-        .access()
+      WorkerApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .request()
+        .request
         .name(CommonUtils.randomString(10))
         .nodeName(addNodeName)
         .create()

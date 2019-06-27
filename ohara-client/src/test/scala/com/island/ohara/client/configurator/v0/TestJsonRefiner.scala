@@ -47,6 +47,20 @@ class TestJsonRefiner extends SmallTest with Matchers {
     an[IllegalArgumentException] should be thrownBy JsonRefiner[SimpleData].nullToRandomString("")
 
   @Test
+  def testDuplicateKeyForFromAnotherKey(): Unit = {
+    val actions: Seq[JsonRefiner[SimpleData] => Unit] = Seq(
+      _.nullToAnotherValueOfKey("a", "b")
+    )
+    actions.foreach { action0 =>
+      actions.foreach { action1 =>
+        val refiner = JsonRefiner[SimpleData].format(format)
+        action0(refiner)
+        an[IllegalArgumentException] should be thrownBy action1(refiner)
+      }
+    }
+  }
+
+  @Test
   def testDuplicateKeyForDefaultValue(): Unit = {
     val actions: Seq[JsonRefiner[SimpleData] => Unit] = Seq(
       _.nullToRandomPort("a"),
@@ -56,7 +70,6 @@ class TestJsonRefiner extends SmallTest with Matchers {
       _.nullToDouble("a", 1),
       _.nullToEmptyArray("a"),
       _.nullToRandomString("a"),
-      _.nullToAnotherValueOfKey("a", "b"),
       _.nullToString("a", "ccc")
     )
     actions.foreach { action0 =>
@@ -495,6 +508,37 @@ class TestJsonRefiner extends SmallTest with Matchers {
           """.stripMargin.parseJson)
 
   @Test
+  def testRejectEmptyArrayForSpecificKey(): Unit = {
+    JsonRefiner[SimpleData]
+      .format(format)
+      // the key "stringArray" is not in rejection list so it pass
+      .rejectEmptyArray("connectionPort")
+      .refine
+      .read("""
+              |{
+              | "stringValue": "abc",
+              | "bindPort": 9999,
+              | "connectionPort": 123,
+              | "stringArray": []
+              |}
+            """.stripMargin.parseJson)
+      .stringArray shouldBe Seq.empty
+
+    an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
+      .format(format)
+      .rejectEmptyArray("stringArray")
+      .refine
+      .read("""
+              |{
+              | "stringValue": "abc",
+              | "bindPort": 9999,
+              | "connectionPort": 123,
+              | "stringArray": []
+              |}
+            """.stripMargin.parseJson)
+  }
+
+  @Test
   def testAcceptStringToNumber(): Unit = {
     val bindPort = CommonUtils.availablePort()
     val connectionPort = CommonUtils.availablePort()
@@ -557,4 +601,37 @@ class TestJsonRefiner extends SmallTest with Matchers {
             | "stringArray": []
             |}
           """.stripMargin.parseJson)
+
+  @Test
+  def nullToAnotherValueOfKeyShouldBeBeforeNullToEmptyArray(): Unit =
+    JsonRefiner[SimpleData]
+      .format(format)
+      .nullToAnotherValueOfKey("stringArray", "ttt")
+      .nullToEmptyArray("stringArray")
+      .refine
+      .read("""
+              |{
+              | "stringValue": "abc",
+              | "bindPort": 123,
+              | "connectionPort": 111,
+              | "ttt": ["abc"]
+              |}
+            """.stripMargin.parseJson)
+      .stringArray shouldBe Seq("abc")
+
+  @Test
+  def emptyArrayInMappingToAnotherNonexistentKey(): Unit =
+    JsonRefiner[SimpleData]
+      .format(format)
+      .nullToAnotherValueOfKey("stringArray", "ttt")
+      .nullToEmptyArray("stringArray")
+      .refine
+      .read("""
+              |{
+              | "stringValue": "abc",
+              | "bindPort": 123,
+              | "connectionPort": 111
+              |}
+            """.stripMargin.parseJson)
+      .stringArray shouldBe Seq.empty
 }

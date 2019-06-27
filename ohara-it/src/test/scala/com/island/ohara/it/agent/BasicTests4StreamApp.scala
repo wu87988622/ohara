@@ -98,7 +98,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
       configurator = createConfigurator(nodeCache, publicHostname, publicPort)
       zkApi = ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port)
       bkApi = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)
-      wkApi = WorkerApi.access().hostname(configurator.hostname).port(configurator.port)
+      wkApi = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)
       containerApi = ContainerApi.access().hostname(configurator.hostname).port(configurator.port)
       topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
       streamAppActionAccess = StreamApi.accessOfAction().hostname(configurator.hostname).port(configurator.port)
@@ -147,8 +147,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
       // create worker cluster
       log.info("create wkCluster...start")
       val wkCluster = result(
-        wkApi
-          .request()
+        wkApi.request
           .name(wkName)
           .brokerClusterName(bkCluster.name)
           .nodeNames(nodeCache.take(instances).map(_.name).toSet)
