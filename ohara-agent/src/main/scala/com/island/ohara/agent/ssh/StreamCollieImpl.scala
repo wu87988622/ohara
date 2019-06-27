@@ -148,6 +148,7 @@ private class StreamCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClient
                   name = clusterName,
                   imageName = imageName,
                   nodeNames = successfulContainers.map(_.nodeName).toSet,
+                  deadNodes = Set.empty,
                   jmxPort = jmxPort,
                   // creating cluster success could be applied containers are "running"
                   state = Some(ContainerState.RUNNING.name)

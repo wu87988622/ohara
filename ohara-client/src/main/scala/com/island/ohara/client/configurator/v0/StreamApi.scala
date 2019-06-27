@@ -88,6 +88,8 @@ object StreamApi {
     * @param to the candidate topics for streamApp produce to
     * @param state the state of streamApp (stopped streamApp does not have this field)
     * @param error the error message if the state was failed to fetch
+    * @param nodeNames actual running nodes
+    * @param deadNodes dead nodes of dead containers from this cluster
     * @param metrics the metrics bean
     * @param lastModified this data change time
     */
@@ -100,6 +102,8 @@ object StreamApi {
                                         to: Seq[String],
                                         state: Option[String],
                                         error: Option[String],
+                                        nodeNames: Set[String],
+                                        deadNodes: Set[String],
                                         metrics: Metrics,
                                         // TODO remove this default value after we could handle from UI
                                         exactlyOnce: Boolean = false,
@@ -117,7 +121,7 @@ object StreamApi {
           toTopics: $to
       """.stripMargin
   }
-  implicit val STREAMAPP_DESCRIPTION_JSON_FORMAT: RootJsonFormat[StreamAppDescription] = jsonFormat12(
+  implicit val STREAMAPP_DESCRIPTION_JSON_FORMAT: RootJsonFormat[StreamAppDescription] = jsonFormat14(
     StreamAppDescription)
 
   final case class StreamClusterCreationRequest(id: String,
@@ -138,13 +142,15 @@ object StreamApi {
     * @param name cluster name
     * @param imageName image name
     * @param nodeNames actual running nodes
+    * @param deadNodes dead nodes of dead containers from this cluster
     * @param jmxPort  jmx port
     * @param state the state of this cluster (see '''ContainerState''')
     */
   final case class StreamClusterInfo(
     name: String,
     imageName: String,
-    nodeNames: Set[String] = Set.empty,
+    nodeNames: Set[String],
+    deadNodes: Set[String],
     jmxPort: Int,
     state: Option[String] = None
   ) extends ClusterInfo {
@@ -177,7 +183,7 @@ object StreamApi {
       *
       * @param id streamApp component id
       * @param executionContext execution context
-      * @return status of streamApp ("RUNNING" if success, "EXITED" if fail)
+      * @return information of streamApp (status "RUNNING" if success, "EXITED" if fail)
       */
     def start(id: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription]
 
@@ -186,7 +192,7 @@ object StreamApi {
       *
       * @param id streamApp component id
       * @param executionContext execution context
-      * @return status of streamApp (None if stop successful, or throw exception)
+      * @return information of streamApp (status None if stop successful, or throw exception)
       */
     def stop(id: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription]
   }

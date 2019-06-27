@@ -61,7 +61,7 @@ class TestK8SBasicCollieImpl extends SmallTest with Matchers {
         override protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo])(
           implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] = {
           Future {
-            ZookeeperClusterInfo(clusterName, containers(0).imageName, 2181, 2182, 2183, Set.empty)
+            ZookeeperClusterInfo(clusterName, containers.head.imageName, 2181, 2182, 2183, Set.empty, Set.empty)
           }
         }
         override def creator(): ZookeeperCollie.ClusterCreator =

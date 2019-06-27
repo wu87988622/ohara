@@ -57,6 +57,7 @@ object WorkerApi {
   private[this] val JAR_NAMES_KEY = "jarNames"
   private[this] val CONNECTORS_KEY = "connectors"
   private[this] val NODE_NAMES_KEY = "nodeNames"
+  private[this] val DEAD_NODES_KEY = "deadNodes"
 
   final case class Creation private[WorkerApi] (name: String,
                                                 imageName: String,
@@ -186,7 +187,8 @@ object WorkerApi {
                                                      offsetTopicReplications: Short,
                                                      jarInfos: Seq[JarInfo],
                                                      connectors: Seq[ConnectorDefinitions],
-                                                     nodeNames: Set[String])
+                                                     nodeNames: Set[String],
+                                                     deadNodes: Set[String])
       extends ClusterInfo {
 
     /**
@@ -227,6 +229,7 @@ object WorkerApi {
             JAR_INFOS_KEY -> JsArray(obj.jarInfos.map(JAR_INFO_JSON_FORMAT.write).toVector),
             CONNECTORS_KEY -> JsArray(obj.connectors.map(CONNECTION_DEFINITIONS_JSON_FORMAT.write).toVector),
             NODE_NAMES_KEY -> JsArray(obj.nodeNames.map(JsString(_)).toVector),
+            DEAD_NODES_KEY -> JsArray(obj.deadNodes.map(JsString(_)).toVector),
             // deprecated keys
             JAR_NAMES_KEY -> JsArray(obj.jarInfos.map(_.id).map(JsString(_)).toVector),
           ))
@@ -250,7 +253,8 @@ object WorkerApi {
         offsetTopicReplications = noJsNull(json)(OFFSET_TOPIC_REPLICATIONS_KEY).convertTo[Short],
         jarInfos = noJsNull(json)(JAR_INFOS_KEY).convertTo[Seq[JarInfo]],
         connectors = noJsNull(json)(CONNECTORS_KEY).convertTo[Seq[ConnectorDefinitions]],
-        nodeNames = noJsNull(json)(NODE_NAMES_KEY).convertTo[Seq[String]].toSet
+        nodeNames = noJsNull(json)(NODE_NAMES_KEY).convertTo[Seq[String]].toSet,
+        deadNodes = noJsNull(json)(DEAD_NODES_KEY).convertTo[Seq[String]].toSet
       )
     }
 

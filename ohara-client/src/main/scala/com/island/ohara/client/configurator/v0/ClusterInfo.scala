@@ -45,6 +45,14 @@ trait ClusterInfo {
   def nodeNames: Set[String]
 
   /**
+    * List the dead nodes.
+    * This is the counting "unit" for this cluster ; dead nodes have no relation with other clusters.
+    *
+    * @return nodes which the rely container was dead
+    */
+  def deadNodes: Set[String]
+
+  /**
     * Create an new instance with new node names.
     * @param newNodeNames new node names
     * @return an new instance

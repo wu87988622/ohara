@@ -51,7 +51,8 @@ class TestBrokerCreator extends SmallTest with Matchers {
           clientPort = clientPort,
           exporterPort = exporterPort,
           jmxPort = jmxPort,
-          nodeNames = nodeNames
+          nodeNames = nodeNames,
+          deadNodes = Set.empty
         ))
     }
 
@@ -139,7 +140,8 @@ class TestBrokerCreator extends SmallTest with Matchers {
       exporterPort = 10,
       clientPort = 10,
       jmxPort = 10,
-      nodeNames = Set(CommonUtils.randomString())
+      nodeNames = Set(CommonUtils.randomString()),
+      deadNodes = Set.empty
     )
     Await.result(bkCreator().copy(brokerClusterInfo).create(), 30 seconds) shouldBe brokerClusterInfo
   }
