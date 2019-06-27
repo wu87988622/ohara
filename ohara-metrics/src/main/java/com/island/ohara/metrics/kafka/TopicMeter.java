@@ -67,13 +67,16 @@ public class TopicMeter {
     return new TopicMeter(
         obj.properties().get(TOPIC_KEY),
         Catalog.valueOf(obj.properties().get(NAME_KEY)),
-        (long) obj.attributes().get(COUNT_KEY),
-        (String) obj.attributes().get(EVENT_TYPE_KEY),
-        (double) obj.attributes().get(FIFTEEN_MINUTE_RATE_KEY),
-        (double) obj.attributes().get(FIVE_MINUTE_RATE_KEY),
-        (double) obj.attributes().get(MEAN_RATE_KEY),
-        (double) obj.attributes().get(ONE_MINUTE_RATE_KEY),
-        (TimeUnit) obj.attributes().get(RATE_UNIT_KEY));
+        // the metrics of kafka topic may be not ready and we all hate null. Hence, we fill some
+        // "default value" to it.
+        // the default value will be replaced by true value later.
+        (long) obj.attributes().getOrDefault(COUNT_KEY, 0),
+        (String) obj.attributes().getOrDefault(EVENT_TYPE_KEY, "unknown event"),
+        (double) obj.attributes().getOrDefault(FIFTEEN_MINUTE_RATE_KEY, 0),
+        (double) obj.attributes().getOrDefault(FIVE_MINUTE_RATE_KEY, 0),
+        (double) obj.attributes().getOrDefault(MEAN_RATE_KEY, 0),
+        (double) obj.attributes().getOrDefault(ONE_MINUTE_RATE_KEY, 0),
+        (TimeUnit) obj.attributes().getOrDefault(RATE_UNIT_KEY, TimeUnit.SECONDS));
   }
 
   private final String topicName;
