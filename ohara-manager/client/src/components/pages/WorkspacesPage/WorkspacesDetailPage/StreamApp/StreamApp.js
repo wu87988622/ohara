@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-import React, { useEffect, useCallback, useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import toastr from 'toastr';
-import moment from 'moment';
-import { get } from 'lodash';
 import Tooltip from '@material-ui/core/Tooltip';
 import IconButton from '@material-ui/core/IconButton';
+import { get } from 'lodash';
 
 import * as streamApi from 'api/streamApi';
 import * as MESSAGES from 'constants/messages';
+import * as utils from '../WorkspacesDetailPageUtils';
 import { Button } from 'components/common/Mui/Form';
-import { ConfirmModal } from 'components/common/Modal';
+import { AlertDialog } from 'components/common/Mui/Dialog';
 import { SortTable } from 'components/common/Mui/Table';
 import { Main, ActionIcon } from '../styles';
 import { StyledLabel, StyledInputFile } from './styles';
@@ -33,27 +33,18 @@ import { StyledLabel, StyledInputFile } from './styles';
 const StreamApp = props => {
   const { workspaceName } = props;
   const [jarName, setJarName] = useState(null);
-  const [jars, setJars] = useState([]);
   const [order, setOrder] = useState('asc');
   const [orderBy, setOrderBy] = useState('name');
-  const [loading, setLoading] = useState(true);
-  const [DeleteRowModalActive, setDeleteRowModalActive] = useState(false);
-
-  const fetchJars = useCallback(async () => {
-    const res = await streamApi.fetchJars(workspaceName);
-    setJars(get(res, 'data.result', []));
-    setLoading(false);
-  }, [workspaceName]);
-
-  useEffect(() => {
-    fetchJars();
-  }, [fetchJars]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const { jars, fetchJars, loading } = utils.useFetchJars(workspaceName);
 
   const uploadJar = async file => {
     const res = await streamApi.uploadJar({
       workerClusterName: workspaceName,
       file,
     });
+
     const isSuccess = get(res, 'data.isSuccess', false);
     if (isSuccess) {
       toastr.success(MESSAGES.STREAM_APP_UPLOAD_SUCCESS);
@@ -75,9 +66,10 @@ const StreamApp = props => {
     { id: 'action', label: 'Action', sortable: false },
   ];
 
-  const handleDeleteRowModalOpen = name => {
+  const handleModalOpen = name => {
     setJarName(name);
-    setDeleteRowModalActive(true);
+    setIsModalOpen(true);
+    // setDeleteRowModalActive(true);
   };
 
   const actionButton = data => {
@@ -86,7 +78,7 @@ const StreamApp = props => {
       <Tooltip title={`Delete ${name}`} enterDelay={1000}>
         <IconButton
           data-testid="edit-node-icon"
-          onClick={() => handleDeleteRowModalOpen(name)}
+          onClick={() => handleModalOpen(name)}
         >
           <ActionIcon className="fas fa-trash-alt" />
         </IconButton>
@@ -102,32 +94,33 @@ const StreamApp = props => {
     return createData(
       jar.name,
       999,
-      moment.unix(jar.lastModified / 1000).format('YYYY-MM-DD HH:mm:ss'),
+      utils.getDateFromTimestamp(jar.lastModified),
       actionButton(jar),
     );
   });
-  const handleRequestSort = (event, property) => {
+  const handleRequestSort = (e, property) => {
     const isDesc = orderBy === property && order === 'desc';
     setOrder(isDesc ? 'asc' : 'desc');
     setOrderBy(property);
   };
 
-  const handleDeleteRowModalClose = () => {
-    setDeleteRowModalActive(false);
-    setJarName(null);
+  const handleModalClose = () => {
+    setIsModalOpen(false);
   };
 
   const deleteJar = async params => {
     const res = await streamApi.deleteJar(params);
     const isSuccess = get(res, 'data.isSuccess', false);
+    setDeleting(false);
+
     if (isSuccess) {
       toastr.success(MESSAGES.STREAM_APP_DELETE_SUCCESS);
-      handleDeleteRowModalClose();
+      handleModalClose();
       fetchJars();
     }
   };
 
-  const handleDeleteClick = e => {
+  const handleDelete = e => {
     if (jarName) {
       const params = {
         name: jarName,
@@ -158,15 +151,14 @@ const StreamApp = props => {
           orderBy={orderBy}
         />
       </Main>
-      <ConfirmModal
-        isActive={DeleteRowModalActive}
+
+      <AlertDialog
         title="Delete Jar?"
-        confirmBtnText="Yes, Delete this jar"
-        cancelBtnText="No, Keep it"
-        handleCancel={handleDeleteRowModalClose}
-        handleConfirm={handleDeleteClick}
-        message="Are you sure you want to delete this jar? This action cannot be undone!"
-        isDelete
+        content="Are you sure you want to delete this jar? This action cannot be undone!"
+        open={isModalOpen}
+        handleClose={handleModalClose}
+        handleConfirm={handleDelete}
+        working={deleting}
       />
     </>
   );

@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import TableRow from '@material-ui/core/TableRow';
-import { get, isEmpty } from 'lodash';
 
-import * as streamApi from 'api/streamApi';
 import OverviewTable from './OverviewTable';
+import { useFetchJars } from '../WorkspacesDetailPageUtils';
 import {
   TabHeading,
   StyledTableCell,
@@ -30,23 +29,7 @@ import {
 
 const OverviewStreamApps = props => {
   const { handleRedirect, workerName } = props;
-
-  const [jars, setJars] = useState([]);
-  const [isFetchingJars, setIsFetchingJars] = useState(true);
-
-  useEffect(() => {
-    const fetchJars = async () => {
-      const res = await streamApi.fetchJars(workerName);
-      const jars = get(res, 'data.result', []);
-      setIsFetchingJars(false);
-
-      if (!isEmpty(jars)) {
-        setJars(jars);
-      }
-    };
-
-    fetchJars();
-  }, [workerName]);
+  const { jars, loading: fetchingJars } = useFetchJars(workerName);
 
   return (
     <>
@@ -60,7 +43,7 @@ const OverviewStreamApps = props => {
 
       <OverviewTable
         headers={['Jar name', 'File size(KB)']}
-        isLoading={isFetchingJars}
+        isLoading={fetchingJars}
       >
         {() => {
           return jars.map(jar => {

@@ -19,15 +19,16 @@ import { useEffect, useCallback, useState } from 'react';
 import { isEmpty, get, orderBy } from 'lodash';
 
 import * as topicApi from 'api/topicApi';
+import * as streamApi from 'api/streamApi';
 
 export const useFetchTopics = brokerClusterName => {
   const [topics, setTopics] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   const fetchTopics = useCallback(async () => {
     const res = await topicApi.fetchTopics();
     const topics = get(res, 'data.result', []);
-    setIsLoading(false);
+    setLoading(false);
 
     if (!isEmpty(topics)) {
       const topicsUnderBrokerCluster = topics.filter(
@@ -41,7 +42,33 @@ export const useFetchTopics = brokerClusterName => {
     fetchTopics();
   }, [fetchTopics]);
 
-  return [topics, setTopics, isLoading, fetchTopics];
+  return { topics, setTopics, loading, fetchTopics };
+};
+
+export const useFetchJars = workspaceName => {
+  const [jars, setJars] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchJars = useCallback(async () => {
+    const res = await streamApi.fetchJars(workspaceName);
+    const isSuccess = get(res, 'data.isSuccess', false);
+    setLoading(false);
+
+    if (isSuccess) {
+      setJars(res.data.result);
+    }
+  }, [workspaceName]);
+
+  useEffect(() => {
+    fetchJars();
+  }, [fetchJars]);
+
+  return {
+    jars,
+    setJars,
+    loading,
+    fetchJars,
+  };
 };
 
 export const getDateFromTimestamp = timestamp => {

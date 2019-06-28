@@ -15,5 +15,6 @@
  */
 
 import DialogTitle from './DialogTitle';
+import AlertDialog from './AlertDialog';
 
-export { DialogTitle };
+export { DialogTitle, AlertDialog };

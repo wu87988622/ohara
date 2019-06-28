@@ -21,12 +21,12 @@ import TableCell from '@material-ui/core/TableCell';
 import IconButton from '@material-ui/core/IconButton';
 import toastr from 'toastr';
 import { get } from 'lodash';
-import { ConfirmModal } from 'components/common/Modal';
 
 import * as topicApi from 'api/topicApi';
 import * as MESSAGES from 'constants/messages';
 import * as utils from '../WorkspacesDetailPageUtils';
 import TopicNewModal from './TopicNewModal';
+import { AlertDialog } from 'components/common/Mui/Dialog';
 import { Main, NewButton, StyledTable, ActionIcon } from '../styles';
 import { useSetState } from 'utils/hooks';
 
@@ -43,22 +43,25 @@ const Topics = props => {
   ];
 
   const [state, setState] = useSetState({
-    isDeleting: false,
+    deleting: false,
     isNewModalOpen: false,
     isDeleteModalOpen: false,
     topicToBeDeleted: '',
   });
 
-  const [topics, setTopics, isLoading, fetchTopics] = utils.useFetchTopics(
-    worker.brokerClusterName,
-  );
+  const {
+    topics,
+    setTopics,
+    loading: fetchingTopics,
+    fetchTopics,
+  } = utils.useFetchTopics(worker.brokerClusterName);
 
   const handleDelete = async () => {
-    setState({ isDeleting: true });
+    setState({ deleting: true });
     const { topicToBeDeleted } = state;
     const res = await topicApi.deleteTopic(topicToBeDeleted);
     const isSuccess = get(res, 'data.isSuccess', false);
-    setState({ isDeleting: false });
+    setState({ deleting: false });
 
     if (isSuccess) {
       toastr.success(`${MESSAGES.TOPIC_DELETION_SUCCESS} ${topicToBeDeleted}`);
@@ -75,7 +78,7 @@ const Topics = props => {
     }
   };
 
-  const { isNewModalOpen, isDeleteModalOpen, isDeleting } = state;
+  const { isNewModalOpen, isDeleteModalOpen, deleting } = state;
 
   return (
     <>
@@ -88,7 +91,7 @@ const Topics = props => {
       />
 
       <Main>
-        <StyledTable headers={headers} isLoading={isLoading}>
+        <StyledTable headers={headers} isLoading={fetchingTopics}>
           {() => {
             return topics.map(topic => {
               const {
@@ -141,16 +144,13 @@ const Topics = props => {
         brokerClusterName={worker.brokerClusterName}
       />
 
-      <ConfirmModal
-        isActive={isDeleteModalOpen}
+      <AlertDialog
         title="Delete topic?"
-        confirmBtnText="Yes, Delete this topic"
-        cancelBtnText="No, Keep it"
-        handleCancel={() => setState({ isDeleteModalOpen: false })}
+        content="Are you sure you want to delete this topic? This action cannot be undone!"
+        open={isDeleteModalOpen}
+        handleClose={() => setState({ isDeleteModalOpen: false })}
         handleConfirm={handleDelete}
-        isConfirmWorking={isDeleting}
-        message="Are you sure you want to delete this topic? This action cannot be undone!"
-        isDelete
+        working={deleting}
       />
     </>
   );

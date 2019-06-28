@@ -29,7 +29,7 @@ import {
 
 const OverviewTopics = props => {
   const { handleRedirect, brokerClusterName } = props;
-  const [topics, , isFetchingTopics] = useFetchTopics(brokerClusterName);
+  const { topics, loading: fetchingTopics } = useFetchTopics(brokerClusterName);
   return (
     <>
       <TabHeading>
@@ -41,7 +41,7 @@ const OverviewTopics = props => {
       </TabHeading>
       <OverviewTable
         headers={['Name', 'Partitions', 'Replication factor']}
-        isLoading={isFetchingTopics}
+        isLoading={fetchingTopics}
       >
         {() => {
           return topics.map(topic => {
