@@ -287,7 +287,7 @@ object ConnectorApi {
   }
 
   class Access private[v0]
-      extends com.island.ohara.client.configurator.v0.Access2[ConnectorDescription](CONNECTORS_PREFIX_PATH) {
+      extends com.island.ohara.client.configurator.v0.Access[ConnectorDescription](CONNECTORS_PREFIX_PATH) {
 
     private[this] def actionUrl(id: String, action: String): String =
       s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$id/$action"

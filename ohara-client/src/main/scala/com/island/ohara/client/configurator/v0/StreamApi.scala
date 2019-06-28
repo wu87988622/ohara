@@ -223,7 +223,8 @@ object StreamApi {
   }
 
   final class AccessOfProperty
-      extends Access2[StreamAppDescription](s"$STREAM_PREFIX_PATH/$STREAM_PROPERTY_PREFIX_PATH") {
+      extends com.island.ohara.client.configurator.v0.Access[StreamAppDescription](
+        s"$STREAM_PREFIX_PATH/$STREAM_PROPERTY_PREFIX_PATH") {
     def request: Request = new Request {
       private[this] var name: String = _
       private[this] var _imageName: Option[String] = None

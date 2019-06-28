@@ -222,7 +222,7 @@ object PipelineApi {
     def update()(implicit executionContext: ExecutionContext): Future[Pipeline]
   }
 
-  class Access private[v0] extends Access2[Pipeline](PIPELINES_PREFIX_PATH) {
+  class Access private[v0] extends com.island.ohara.client.configurator.v0.Access[Pipeline](PIPELINES_PREFIX_PATH) {
     def request: Request = new Request {
       private[this] var name: String = _
       private[this] var workerClusterName: Option[String] = None

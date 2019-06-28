@@ -69,7 +69,7 @@ object HadoopApi {
     def update()(implicit executionContext: ExecutionContext): Future[HdfsInfo]
   }
 
-  class Access private[v0] extends Access2[HdfsInfo](HDFS_PREFIX_PATH) {
+  class Access private[v0] extends com.island.ohara.client.configurator.v0.Access[HdfsInfo](HDFS_PREFIX_PATH) {
     def request: Request = new Request {
       private[this] var name: String = _
       private[this] var uri: String = _
