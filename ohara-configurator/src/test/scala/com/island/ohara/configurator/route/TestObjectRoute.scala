@@ -30,11 +30,11 @@ class TestObjectRoute extends SmallTest with Matchers {
 
   private[this] val configurator = Configurator.builder().fake(1, 1).build()
 
-  private[this] val objectApi = ObjectApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] val objectApi = ObjectApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
-  private[this] val initialSize = result(objectApi.list).size
+  private[this] val initialSize = result(objectApi.list()).size
 
   private[this] val connectorApi = ConnectorApi.access.hostname(configurator.hostname).port(configurator.port)
 
@@ -48,7 +48,7 @@ class TestObjectRoute extends SmallTest with Matchers {
         .name(CommonUtils.randomString(10))
         .create())
 
-    var objs = result(objectApi.list)
+    var objs = result(objectApi.list())
     objs.size shouldBe (1 + initialSize)
 
     objs.find(_.id == topic0.id).get.name shouldBe topic0.name
@@ -63,7 +63,7 @@ class TestObjectRoute extends SmallTest with Matchers {
         .name(CommonUtils.randomString(10))
         .create())
 
-    objs = result(objectApi.list)
+    objs = result(objectApi.list())
 
     objs.size shouldBe (2 + initialSize)
 
@@ -81,7 +81,7 @@ class TestObjectRoute extends SmallTest with Matchers {
         .numberOfTasks(1)
         .create())
 
-    var objs = result(objectApi.list)
+    var objs = result(objectApi.list())
     objs.size shouldBe (1 + initialSize)
 
     objs.find(_.id == connector0.id).get.name shouldBe connector0.name
@@ -95,7 +95,7 @@ class TestObjectRoute extends SmallTest with Matchers {
         .numberOfTasks(1)
         .create())
 
-    objs = result(objectApi.list)
+    objs = result(objectApi.list())
 
     objs.size shouldBe (2 + initialSize)
 
@@ -121,7 +121,7 @@ class TestObjectRoute extends SmallTest with Matchers {
         .name(CommonUtils.randomString(10))
         .create())
 
-    val objs = result(objectApi.list)
+    val objs = result(objectApi.list())
 
     objs.size shouldBe (2 + initialSize)
 

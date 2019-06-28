@@ -29,14 +29,14 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class TestHdfsInfoRoute extends SmallTest with Matchers {
   private[this] val configurator = Configurator.builder().fake().build()
 
-  private[this] val hdfsApi = HadoopApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] val hdfsApi = HadoopApi.access.hostname(configurator.hostname).port(configurator.port)
 
   @Test
   def test(): Unit = {
     // test add
     val name = CommonUtils.randomString()
     val uri = CommonUtils.randomString()
-    val response = result(hdfsApi.request().name(name).uri(uri).create())
+    val response = result(hdfsApi.request.name(name).uri(uri).create())
     response.name shouldBe name
     response.uri shouldBe uri
 
@@ -45,14 +45,14 @@ class TestHdfsInfoRoute extends SmallTest with Matchers {
 
     // test update
     val uri2 = CommonUtils.randomString()
-    val newResponse = result(hdfsApi.request().name(response.name).uri(uri2).update())
-    result(hdfsApi.list).size shouldBe 1
+    val newResponse = result(hdfsApi.request.name(response.name).uri(uri2).update())
+    result(hdfsApi.list()).size shouldBe 1
     newResponse.name shouldBe name
     newResponse.uri shouldBe uri2
     newResponse shouldBe result(hdfsApi.get(response.name))
 
     result(hdfsApi.delete(response.name))
-    result(hdfsApi.list).size shouldBe 0
+    result(hdfsApi.list()).size shouldBe 0
 
     // test nonexistent data
     an[IllegalArgumentException] should be thrownBy result(hdfsApi.get("123"))
@@ -62,9 +62,9 @@ class TestHdfsInfoRoute extends SmallTest with Matchers {
   def duplicateUpdate(): Unit = {
     val count = 10
     (0 until 10).foreach { index =>
-      result(hdfsApi.request().name(index.toString).uri(index.toString).update())
+      result(hdfsApi.request.name(index.toString).uri(index.toString).update())
     }
-    result(hdfsApi.list).size shouldBe count
+    result(hdfsApi.list()).size shouldBe count
   }
 
   @Test
@@ -76,7 +76,7 @@ class TestHdfsInfoRoute extends SmallTest with Matchers {
     val invalidStrings = Seq("a@", "a=", "a\\", "a~", "a//")
     invalidStrings.foreach { invalidString =>
       an[IllegalArgumentException] should be thrownBy result(
-        hdfsApi.request().name(invalidString).uri(CommonUtils.randomString()).update())
+        hdfsApi.request.name(invalidString).uri(CommonUtils.randomString()).update())
     }
   }
 
@@ -85,7 +85,7 @@ class TestHdfsInfoRoute extends SmallTest with Matchers {
     val invalidStrings = Seq("a@", "a=", "a\\", "a~", "a//")
     invalidStrings.foreach { invalidString =>
       an[IllegalArgumentException] should be thrownBy result(
-        hdfsApi.request().name(invalidString).uri(CommonUtils.randomString()).create())
+        hdfsApi.request.name(invalidString).uri(CommonUtils.randomString()).create())
     }
   }
 
@@ -96,8 +96,8 @@ class TestHdfsInfoRoute extends SmallTest with Matchers {
   }
 
   private[this] def updatePartOfField(req: Request => Request, _expected: HdfsInfo => HdfsInfo): Unit = {
-    val previous = result(hdfsApi.request().name(CommonUtils.randomString()).uri(CommonUtils.randomString()).update())
-    val updated = result(req(hdfsApi.request().name(previous.name)).update())
+    val previous = result(hdfsApi.request.name(CommonUtils.randomString()).uri(CommonUtils.randomString()).update())
+    val updated = result(req(hdfsApi.request.name(previous.name)).update())
     val expected = _expected(previous)
     updated.name shouldBe expected.name
     updated.uri shouldBe expected.uri

@@ -96,7 +96,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
 
     val zkCluster = result(
       zkApi.request.name(nameHolder.generateClusterName()).nodeNames(nodeCache.map(_.name).toSet).create())
-    assertCluster(() => result(zkApi.list), zkCluster.name)
+    assertCluster(() => result(zkApi.list()), zkCluster.name)
     log.info(s"zkCluster:$zkCluster")
     val bkCluster = result(
       bkApi.request
@@ -104,7 +104,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
         .zookeeperClusterName(zkCluster.name)
         .nodeNames(nodeCache.map(_.name).toSet)
         .create())
-    assertCluster(() => result(bkApi.list), bkCluster.name)
+    assertCluster(() => result(bkApi.list()), bkCluster.name)
     log.info(s"bkCluster:$bkCluster")
     val wkCluster = result(
       wkApi.request
@@ -113,13 +113,13 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
         .jarIds(jars.map(_.id).toSet)
         .nodeName(nodeCache.head.name)
         .create())
-    assertCluster(() => result(wkApi.list), wkCluster.name)
+    assertCluster(() => result(wkApi.list()), wkCluster.name)
     // add all remaining node to the running worker cluster
     nodeCache.filterNot(n => wkCluster.nodeNames.contains(n.name)).foreach { n =>
       result(wkApi.addNode(wkCluster.name, n.name))
     }
     // make sure all workers have loaded the test-purposed connector.
-    result(wkApi.list).find(_.name == wkCluster.name).get.nodeNames.foreach { name =>
+    result(wkApi.list()).find(_.name == wkCluster.name).get.nodeNames.foreach { name =>
       val workerClient = WorkerClient(s"$name:${wkCluster.clientPort}")
       await(
         () =>

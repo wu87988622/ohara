@@ -35,6 +35,6 @@ abstract class Access2[Res] private[v0] (prefixPath: String)(implicit rm: RootJs
     exec.get[Res, ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$name")
   def delete(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
     exec.delete[ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$name")
-  def list(implicit executionContext: ExecutionContext): Future[Seq[Res]] =
+  def list()(implicit executionContext: ExecutionContext): Future[Seq[Res]] =
     exec.get[Seq[Res], ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}")
 }

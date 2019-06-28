@@ -99,7 +99,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
       zkApi = ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port)
       bkApi = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)
       wkApi = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)
-      containerApi = ContainerApi.access().hostname(configurator.hostname).port(configurator.port)
+      containerApi = ContainerApi.access.hostname(configurator.hostname).port(configurator.port)
       topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
       streamAppActionAccess = StreamApi.accessOfAction().hostname(configurator.hostname).port(configurator.port)
       streamAppListAccess = StreamApi.accessOfList().hostname(configurator.hostname).port(configurator.port)
@@ -111,7 +111,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
           nodeApi.request.name(node.name).port(node.port).user(node.user).password(node.password).create()
         )
       }
-      val nodes = result(nodeApi.list)
+      val nodes = result(nodeApi.list())
       nodes.size shouldBe nodeCache.size
       nodeCache.forall(node => nodes.map(_.name).contains(node.name)) shouldBe true
 
@@ -120,7 +120,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
       val zkCluster = result(
         zkApi.request.name(nameHolder.generateClusterName()).nodeNames(nodeCache.take(1).map(_.name).toSet).create()
       )
-      assertCluster(() => result(zkApi.list), zkCluster.name)
+      assertCluster(() => result(zkApi.list()), zkCluster.name)
       await(() => {
         val containers = result(containerApi.get(zkCluster.name).map(_.flatMap(_.containers)))
         containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
@@ -136,7 +136,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
           .zookeeperClusterName(zkCluster.name)
           .nodeNames(nodeCache.take(1).map(_.name).toSet)
           .create())
-      assertCluster(() => result(bkApi.list), bkCluster.name)
+      assertCluster(() => result(bkApi.list()), bkCluster.name)
       await(() => {
         val containers = result(containerApi.get(bkCluster.name).map(_.flatMap(_.containers)))
         containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
@@ -152,7 +152,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
           .brokerClusterName(bkCluster.name)
           .nodeNames(nodeCache.take(instances).map(_.name).toSet)
           .create())
-      assertCluster(() => result(wkApi.list), wkCluster.name)
+      assertCluster(() => result(wkApi.list()), wkCluster.name)
       log.info("create wkCluster...done")
     }
   }
@@ -248,7 +248,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     val jarPath = CommonUtils.path(System.getProperty("user.dir"), "build", "libs", "ohara-streamapp.jar")
 
     // we make sure the broker cluster exists again (for create topic)
-    assertCluster(() => result(bkApi.list), bkName)
+    assertCluster(() => result(bkApi.list()), bkName)
 
     // create topic
     val topic1 = result(topicApi.request.name(from).brokerClusterName(bkName).create())

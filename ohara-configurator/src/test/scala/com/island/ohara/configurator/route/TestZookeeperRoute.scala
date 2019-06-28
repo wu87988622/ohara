@@ -46,7 +46,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
       result(nodeAccess.request.name(n).port(22).user("user").password("pwd").create())
     }
 
-    result(nodeAccess.list).size shouldBe (nodeNames.size + numberOfDefaultNodes)
+    result(nodeAccess.list()).size shouldBe (nodeNames.size + numberOfDefaultNodes)
   }
 
   @Test
@@ -58,7 +58,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
 
   @Test
   def removeZookeeperClusterUsedByBrokerCluster(): Unit = {
-    val zks = result(zookeeperApi.list)
+    val zks = result(zookeeperApi.list())
 
     // we have a default zk cluster
     zks.isEmpty shouldBe false
@@ -69,7 +69,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     an[IllegalArgumentException] should be thrownBy result(zookeeperApi.delete(zk.name))
 
     // remove all broker clusters
-    result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list)
+    result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list())
       .map(_.name)
       .foreach(name => result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).delete(name)))
 
@@ -103,23 +103,23 @@ class TestZookeeperRoute extends MediumTest with Matchers {
 
   @Test
   def testList(): Unit = {
-    val init = result(zookeeperApi.list).size
+    val init = result(zookeeperApi.list()).size
     val count = 3
     (0 until count).foreach { _ =>
       result(
         zookeeperApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
       )
     }
-    result(zookeeperApi.list).size shouldBe count + init
+    result(zookeeperApi.list()).size shouldBe count + init
   }
 
   @Test
   def testRemove(): Unit = {
-    val init = result(zookeeperApi.list).size
+    val init = result(zookeeperApi.list()).size
     val cluster = result(zookeeperApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
-    result(zookeeperApi.list).size shouldBe init + 1
+    result(zookeeperApi.list()).size shouldBe init + 1
     result(zookeeperApi.delete(cluster.name))
-    result(zookeeperApi.list).size shouldBe init
+    result(zookeeperApi.list()).size shouldBe init
   }
 
   @Test

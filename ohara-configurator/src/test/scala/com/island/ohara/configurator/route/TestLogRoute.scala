@@ -29,7 +29,7 @@ import scala.concurrent.{Await, Future}
 class TestLogRoute extends SmallTest with Matchers {
   private[this] val configurator = Configurator.builder().fake().build()
 
-  private[this] val logApi = LogApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] val logApi = LogApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] val zkApi = ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port)
 
@@ -41,7 +41,7 @@ class TestLogRoute extends SmallTest with Matchers {
 
   @Test
   def fetchLogFromZookeeper(): Unit = {
-    val cluster = result(zkApi.list).head
+    val cluster = result(zkApi.list()).head
     val clusterLogs = result(logApi.log4ZookeeperCluster(cluster.name))
     clusterLogs.name shouldBe cluster.name
     clusterLogs.logs.isEmpty shouldBe false
@@ -49,7 +49,7 @@ class TestLogRoute extends SmallTest with Matchers {
 
   @Test
   def fetchLogFromBroker(): Unit = {
-    val cluster = result(bkApi.list).head
+    val cluster = result(bkApi.list()).head
     val clusterLogs = result(logApi.log4BrokerCluster(cluster.name))
     clusterLogs.name shouldBe cluster.name
     clusterLogs.logs.isEmpty shouldBe false
@@ -57,7 +57,7 @@ class TestLogRoute extends SmallTest with Matchers {
 
   @Test
   def fetchLogFromWorker(): Unit = {
-    val cluster = result(wkApi.list).head
+    val cluster = result(wkApi.list()).head
     val clusterLogs = result(logApi.log4WorkerCluster(cluster.name))
     clusterLogs.name shouldBe cluster.name
     clusterLogs.logs.isEmpty shouldBe false

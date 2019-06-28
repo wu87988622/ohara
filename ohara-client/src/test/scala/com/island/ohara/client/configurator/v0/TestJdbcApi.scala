@@ -176,73 +176,68 @@ class TestJdbcApi extends SmallTest with Matchers {
   }
 
   @Test
-  def ignoreNameOnCreation(): Unit = an[NullPointerException] should be thrownBy JdbcApi
-    .access()
+  def ignoreNameOnCreation(): Unit = an[NullPointerException] should be thrownBy JdbcApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .url(CommonUtils.randomString())
     .user(CommonUtils.randomString())
     .password(CommonUtils.randomString())
     .create()
 
   @Test
-  def ignoreNameOnUpdate(): Unit = an[NullPointerException] should be thrownBy JdbcApi
-    .access()
+  def ignoreNameOnUpdate(): Unit = an[NullPointerException] should be thrownBy JdbcApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .url(CommonUtils.randomString())
     .user(CommonUtils.randomString())
     .password(CommonUtils.randomString())
     .update()
 
   @Test
-  def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy JdbcApi.access().request().name("")
+  def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy JdbcApi.access.request.name("")
 
   @Test
-  def nullName(): Unit = an[NullPointerException] should be thrownBy JdbcApi.access().request().name(null)
+  def nullName(): Unit = an[NullPointerException] should be thrownBy JdbcApi.access.request.name(null)
 
   @Test
-  def emptyUrl(): Unit = an[IllegalArgumentException] should be thrownBy JdbcApi.access().request().url("")
+  def emptyUrl(): Unit = an[IllegalArgumentException] should be thrownBy JdbcApi.access.request.url("")
 
   @Test
-  def nullUrl(): Unit = an[NullPointerException] should be thrownBy JdbcApi.access().request().url(null)
+  def nullUrl(): Unit = an[NullPointerException] should be thrownBy JdbcApi.access.request.url(null)
 
   @Test
-  def ignoreUrlOnCreation(): Unit = an[NullPointerException] should be thrownBy JdbcApi
-    .access()
+  def ignoreUrlOnCreation(): Unit = an[NullPointerException] should be thrownBy JdbcApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .name(CommonUtils.randomString())
     .user(CommonUtils.randomString())
     .password(CommonUtils.randomString())
     .create()
 
   @Test
-  def ignoreUserOnCreation(): Unit = an[NullPointerException] should be thrownBy JdbcApi
-    .access()
+  def ignoreUserOnCreation(): Unit = an[NullPointerException] should be thrownBy JdbcApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .name(CommonUtils.randomString())
     .url(CommonUtils.randomString())
     .password(CommonUtils.randomString())
     .create()
 
   @Test
-  def emptyUser(): Unit = an[IllegalArgumentException] should be thrownBy JdbcApi.access().request().user("")
+  def emptyUser(): Unit = an[IllegalArgumentException] should be thrownBy JdbcApi.access.request.user("")
 
   @Test
-  def nullUser(): Unit = an[NullPointerException] should be thrownBy JdbcApi.access().request().user(null)
+  def nullUser(): Unit = an[NullPointerException] should be thrownBy JdbcApi.access.request.user(null)
 
   @Test
-  def ignorePasswordOnCreation(): Unit = an[NullPointerException] should be thrownBy JdbcApi
-    .access()
+  def ignorePasswordOnCreation(): Unit = an[NullPointerException] should be thrownBy JdbcApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .name(CommonUtils.randomString())
     .url(CommonUtils.randomString())
     .user(CommonUtils.randomString())
@@ -250,8 +245,8 @@ class TestJdbcApi extends SmallTest with Matchers {
 
   @Test
   def emptyPassword(): Unit =
-    an[IllegalArgumentException] should be thrownBy JdbcApi.access().request().password("")
+    an[IllegalArgumentException] should be thrownBy JdbcApi.access.request.password("")
 
   @Test
-  def nullPassword(): Unit = an[NullPointerException] should be thrownBy JdbcApi.access().request().password(null)
+  def nullPassword(): Unit = an[NullPointerException] should be thrownBy JdbcApi.access.request.password(null)
 }

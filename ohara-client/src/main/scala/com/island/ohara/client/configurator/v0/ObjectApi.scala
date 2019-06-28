@@ -32,9 +32,9 @@ object ObjectApi {
   class Access private[v0] extends BasicAccess(OBJECT_PREFIX_PATH) {
     def get(id: String)(implicit executionContext: ExecutionContext): Future[Object] =
       exec.get[Object, ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$id")
-    def list(implicit executionContext: ExecutionContext): Future[Seq[Object]] =
+    def list()(implicit executionContext: ExecutionContext): Future[Seq[Object]] =
       exec.get[Seq[Object], ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}")
   }
 
-  def access(): Access = new Access
+  def access: Access = new Access
 }

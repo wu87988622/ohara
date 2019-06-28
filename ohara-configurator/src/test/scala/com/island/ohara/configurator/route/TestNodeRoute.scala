@@ -44,7 +44,7 @@ class TestNodeRoute extends SmallTest with Matchers {
 
   @Test
   def testServices(): Unit = {
-    val nodes = result(nodeApi.list)
+    val nodes = result(nodeApi.list())
     nodes.isEmpty shouldBe false
     nodes.foreach(_.services.isEmpty shouldBe false)
   }
@@ -61,8 +61,8 @@ class TestNodeRoute extends SmallTest with Matchers {
     res.user shouldBe user
     res.password shouldBe password
 
-    result(nodeApi.list).size shouldBe (1 + numberOfDefaultNodes)
-    compare(result(nodeApi.list).find(_.name == name).get, res)
+    result(nodeApi.list()).size shouldBe (1 + numberOfDefaultNodes)
+    compare(result(nodeApi.list()).find(_.name == name).get, res)
 
     an[IllegalArgumentException] should be thrownBy result(
       nodeApi.request.name(res.name).port(port).user(user).password(password).create())
@@ -78,15 +78,15 @@ class TestNodeRoute extends SmallTest with Matchers {
         .password(CommonUtils.randomString())
         .create())
 
-    result(nodeApi.list).size shouldBe (1 + numberOfDefaultNodes)
+    result(nodeApi.list()).size shouldBe (1 + numberOfDefaultNodes)
 
     result(nodeApi.delete(res.name))
-    result(nodeApi.list).size shouldBe numberOfDefaultNodes
+    result(nodeApi.list()).size shouldBe numberOfDefaultNodes
   }
 
   @Test
   def disableToDeleteNodeRunningService(): Unit = {
-    val nodes = result(nodeApi.list)
+    val nodes = result(nodeApi.list())
     val runningNode = nodes.filter(_.services.exists(_.clusterNames.nonEmpty)).head
     an[IllegalArgumentException] should be thrownBy result(nodeApi.delete(runningNode.id))
   }
@@ -101,7 +101,7 @@ class TestNodeRoute extends SmallTest with Matchers {
         .password(CommonUtils.randomString())
         .create())
 
-    result(nodeApi.list).size shouldBe (1 + numberOfDefaultNodes)
+    result(nodeApi.list()).size shouldBe (1 + numberOfDefaultNodes)
 
     result(
       nodeApi.request
@@ -111,7 +111,7 @@ class TestNodeRoute extends SmallTest with Matchers {
         .password(CommonUtils.randomString())
         .update())
 
-    result(nodeApi.list).size shouldBe (1 + numberOfDefaultNodes)
+    result(nodeApi.list()).size shouldBe (1 + numberOfDefaultNodes)
   }
 
   @Test
@@ -120,7 +120,7 @@ class TestNodeRoute extends SmallTest with Matchers {
 
   @Test
   def duplicateUpdate(): Unit = {
-    val init = result(nodeApi.list).size
+    val init = result(nodeApi.list()).size
     val count = 10
     (0 until count).foreach { _ =>
       result(
@@ -131,7 +131,7 @@ class TestNodeRoute extends SmallTest with Matchers {
           .password(CommonUtils.randomString())
           .create())
     }
-    result(nodeApi.list).size shouldBe count + init
+    result(nodeApi.list()).size shouldBe count + init
   }
 
   @Test

@@ -77,7 +77,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
     pipeline1.workerClusterName shouldBe wkCluster.name
 
-    val pipelines = result(pipelineApi.list)
+    val pipelines = result(pipelineApi.list())
     pipelines.size shouldBe 2
     pipelines.find(_.id == pipeline0.id).get.workerClusterName shouldBe pipeline0.workerClusterName
     pipelines.find(_.id == pipeline1.id).get.workerClusterName shouldBe pipeline1.workerClusterName
@@ -110,7 +110,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
     pipeline2.flows.size shouldBe 0
 
-    val pipelines = result(pipelineApi.list)
+    val pipelines = result(pipelineApi.list())
 
     pipelines.size shouldBe 1
     pipelines.head.flows.size shouldBe 0
@@ -123,13 +123,13 @@ class TestPipelineRoute extends MediumTest with Matchers {
     val topic1 = result(topicApi.request.name(CommonUtils.randomString(10)).create())
     val topic2 = result(topicApi.request.name(CommonUtils.randomString(10)).create())
 
-    result(pipelineApi.list).size shouldBe 0
+    result(pipelineApi.list()).size shouldBe 0
 
     val name = CommonUtils.randomString()
     val flow = Flow(from = topic0.name, to = Set(topic1.name, topic2.name))
     val pipeline = result(pipelineApi.request.name(name).flow(flow).create())
 
-    result(pipelineApi.list).size shouldBe 1
+    result(pipelineApi.list()).size shouldBe 1
     pipeline.name shouldBe name
     pipeline.flows.size shouldBe 1
     pipeline.flows.head shouldBe flow
@@ -149,9 +149,9 @@ class TestPipelineRoute extends MediumTest with Matchers {
     pipeline3.flows.head shouldBe flow3
 
     // test delete
-    result(pipelineApi.list).size shouldBe 1
+    result(pipelineApi.list()).size shouldBe 1
     result(pipelineApi.delete(pipeline3.id))
-    result(pipelineApi.list).size shouldBe 0
+    result(pipelineApi.list()).size shouldBe 0
 
     // test nonexistent data
     an[IllegalArgumentException] should be thrownBy result(pipelineApi.get(CommonUtils.randomString()))
@@ -159,12 +159,12 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
   @Test
   def testBindInvalidObjects2Pipeline(): Unit = {
-    val hdfsAccess = HadoopApi.access().hostname(configurator.hostname).port(configurator.port)
+    val hdfsAccess = HadoopApi.access.hostname(configurator.hostname).port(configurator.port)
     val topic0 = result(topicApi.request.name(CommonUtils.randomString(10)).create())
     val topic1 = result(topicApi.request.name(CommonUtils.randomString(10)).create())
-    val hdfs = result(hdfsAccess.request().name(CommonUtils.randomString()).uri("file:///").create())
-    result(topicApi.list).size shouldBe 2
-    result(hdfsAccess.list).size shouldBe 1
+    val hdfs = result(hdfsAccess.request.name(CommonUtils.randomString()).uri("file:///").create())
+    result(topicApi.list()).size shouldBe 2
+    result(hdfsAccess.list()).size shouldBe 1
 
     // topic0 -> topic0: self-bound
     an[IllegalArgumentException] should be thrownBy result(
@@ -176,7 +176,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
     val pipeline = result(pipelineApi.request.name(CommonUtils.randomString()).flow(topic0.name, topic1.name).create())
 
-    result(pipelineApi.list).size shouldBe 1
+    result(pipelineApi.list()).size shouldBe 1
 
     // topic0 -> topic0: self-bound
     an[IllegalArgumentException] should be thrownBy result(
@@ -188,7 +188,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
     // good case
     result(pipelineApi.request.name(pipeline.name).flow(topic0.name, Set.empty[String]).update())
-    result(pipelineApi.list).size shouldBe 1
+    result(pipelineApi.list()).size shouldBe 1
   }
 
   @Test
@@ -204,7 +204,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
     result(pipelineApi.delete(pipeline.id))
 
-    result(pipelineApi.list).exists(_.id == pipeline.id) shouldBe false
+    result(pipelineApi.list()).exists(_.id == pipeline.id) shouldBe false
   }
 
   @Test
@@ -220,7 +220,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
     result(configurator.clusterCollie.workerCollie().remove(pipeline.workerClusterName))
 
-    val anotherPipeline = result(pipelineApi.list).find(_.id == pipeline.id).get
+    val anotherPipeline = result(pipelineApi.list()).find(_.id == pipeline.id).get
 
     anotherPipeline.id shouldBe pipeline.id
     anotherPipeline.flows shouldBe pipeline.flows
@@ -242,7 +242,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
     result(configurator.clusterCollie.workerCollie().remove(pipeline.workerClusterName))
 
-    val anotherPipeline = result(pipelineApi.list).find(_.id == pipeline.id).get
+    val anotherPipeline = result(pipelineApi.list()).find(_.id == pipeline.id).get
 
     anotherPipeline.id shouldBe pipeline.id
     anotherPipeline.flows shouldBe pipeline.flows
@@ -266,7 +266,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
     val pipeline1 = result(pipelineApi.request.name(CommonUtils.randomString()).flow(topic0.name, topic1.name).create())
 
-    val pipelines = result(pipelineApi.list)
+    val pipelines = result(pipelineApi.list())
     pipelines.size shouldBe 2
     pipelines.exists(_.id == pipeline0.id) shouldBe true
     pipelines.exists(_.id == pipeline1.id) shouldBe true
@@ -409,7 +409,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
   def duplicateUpdate(): Unit = {
     val count = 10
     (0 until count).foreach(_ => result(pipelineApi.request.name(CommonUtils.randomString()).flows(Seq.empty).update()))
-    result(pipelineApi.list).size shouldBe count
+    result(pipelineApi.list()).size shouldBe count
   }
 
   @Test
@@ -419,7 +419,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
     val name = CommonUtils.randomString()
     val flows: Seq[Flow] = Seq.empty
     val pipeline = result(pipelineApi.request.name(name).flows(flows).update())
-    result(pipelineApi.list).size shouldBe 1
+    result(pipelineApi.list()).size shouldBe 1
     pipeline.name shouldBe name
     pipeline.flows shouldBe flows
   }
@@ -434,7 +434,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
     pipeline.flows.head.to.size shouldBe 0
 
     val pipeline2 = result(pipelineApi.request.name(pipeline.name).flows(Seq.empty).update())
-    result(pipelineApi.list).size shouldBe 1
+    result(pipelineApi.list()).size shouldBe 1
     pipeline2.name shouldBe pipeline.name
     pipeline2.flows shouldBe Seq.empty
   }
@@ -476,10 +476,10 @@ class TestPipelineRoute extends MediumTest with Matchers {
     result(pipelineApi.delete(pipeline.name))
 
     // let check the existence of topic
-    result(topicApi.list).size shouldBe 1
+    result(topicApi.list()).size shouldBe 1
 
     // let check the existence of connector
-    result(connectorApi.list).size shouldBe 0
+    result(connectorApi.list()).size shouldBe 0
   }
   @After
   def tearDown(): Unit = Releasable.close(configurator)

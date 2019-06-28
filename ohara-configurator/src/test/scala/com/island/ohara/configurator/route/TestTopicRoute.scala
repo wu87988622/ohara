@@ -34,7 +34,7 @@ class TestTopicRoute extends SmallTest with Matchers {
   @Test
   def test(): Unit = {
     // test add
-    result(topicApi.list).size shouldBe 0
+    result(topicApi.list()).size shouldBe 0
     val name = CommonUtils.randomString(10)
     val numberOfPartitions: Int = 3
     val numberOfReplications: Short = 3
@@ -61,9 +61,9 @@ class TestTopicRoute extends SmallTest with Matchers {
     response3.numberOfPartitions shouldBe numberOfPartitions3
 
     // test delete
-    result(topicApi.list).size shouldBe 1
+    result(topicApi.list()).size shouldBe 1
     result(topicApi.delete(response.name))
-    result(topicApi.list).size shouldBe 0
+    result(topicApi.list()).size shouldBe 0
 
     // test nonexistent data
     an[IllegalArgumentException] should be thrownBy result(topicApi.get("123"))
@@ -83,7 +83,7 @@ class TestTopicRoute extends SmallTest with Matchers {
             .delete(topicInfo.brokerClusterName)
             .flatMap(_ => topicApi.delete(topicInfo.name))
         }
-        .flatMap(_ => topicApi.list)
+        .flatMap(_ => topicApi.list())
         .map(topics => topics.exists(_.name == name))) shouldBe false
   }
 
@@ -95,7 +95,7 @@ class TestTopicRoute extends SmallTest with Matchers {
 
   @Test
   def createTopicWithoutBrokerClusterName(): Unit = {
-    val zk = result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).list).head
+    val zk = result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
 
     val zk2 = result(
       ZookeeperApi.access
@@ -124,7 +124,7 @@ class TestTopicRoute extends SmallTest with Matchers {
 
   @Test
   def testUpdateBrokerClusterName(): Unit = {
-    val zk = result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).list).head
+    val zk = result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
 
     val zk2 = result(
       ZookeeperApi.access
@@ -146,7 +146,7 @@ class TestTopicRoute extends SmallTest with Matchers {
         .nodeNames(zk2.nodeNames)
         .create())
 
-    val bks = result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list)
+    val bks = result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list())
     bks.size shouldBe 2
 
     val topicInfo = result(

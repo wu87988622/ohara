@@ -51,5 +51,5 @@ object ContainerApi {
         s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/${CommonUtils.requireNonEmpty(clusterName)}")
   }
 
-  def access(): Access = new Access
+  def access: Access = new Access
 }

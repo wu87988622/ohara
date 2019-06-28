@@ -45,7 +45,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
       )
     }
 
-    result(nodeAccess.list).size shouldBe nodeNames.size
+    result(nodeAccess.list()).size shouldBe nodeNames.size
 
     result(
       ZookeeperApi.access
@@ -83,7 +83,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
         .name(CommonUtils.randomString(10))
         .nodeNames(nodeNames)
         .create())
-    val bks = result(brokerApi.list)
+    val bks = result(brokerApi.list())
 
     bks.isEmpty shouldBe false
 
@@ -109,7 +109,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
         .nodeNames(nodeNames)
         .create()).name shouldBe anotherZk
     try {
-      result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).list).size shouldBe 2
+      result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).list()).size shouldBe 2
 
       // there are two zk cluster so we have to assign the zk cluster...
       an[IllegalArgumentException] should be thrownBy result(
@@ -145,7 +145,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
 
   @Test
   def testList(): Unit = {
-    val init = result(brokerApi.list).size
+    val init = result(brokerApi.list()).size
     val bk = result(brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
 
     val zk2 = result(
@@ -161,7 +161,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
     val bk2 = result(
       brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterName(zk2.name).create())
 
-    val clusters = result(brokerApi.list)
+    val clusters = result(brokerApi.list())
     clusters.size shouldBe 2 + init
     clusters.exists(_.name == bk.name) shouldBe true
     clusters.exists(_.name == bk2.name) shouldBe true
@@ -169,11 +169,11 @@ class TestBrokerRoute extends MediumTest with Matchers {
 
   @Test
   def testRemove(): Unit = {
-    val init = result(brokerApi.list).size
+    val init = result(brokerApi.list()).size
     val cluster = result(brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
-    result(brokerApi.list).size shouldBe init + 1
+    result(brokerApi.list()).size shouldBe init + 1
     result(brokerApi.delete(cluster.name))
-    result(brokerApi.list).size shouldBe init
+    result(brokerApi.list()).size shouldBe init
   }
 
   @Test

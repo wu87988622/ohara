@@ -481,7 +481,7 @@ object Configurator {
     CommonUtils.await(
       () =>
         Await
-          .result(ZookeeperApi.access.hostname(CommonUtils.hostname()).port(configurator.port).list, 30 seconds)
+          .result(ZookeeperApi.access.hostname(CommonUtils.hostname()).port(configurator.port).list(), 30 seconds)
           .exists(_.name == PRE_CREATE_ZK_NAME),
       java.time.Duration.ofSeconds(30)
     )
@@ -491,7 +491,7 @@ object Configurator {
       CommonUtils.await(
         () =>
           Await
-            .result(ContainerApi.access().hostname(CommonUtils.hostname()).port(configurator.port).get(zkCluster.name),
+            .result(ContainerApi.access.hostname(CommonUtils.hostname()).port(configurator.port).get(zkCluster.name),
                     30 seconds)
             .head
             .containers
@@ -523,7 +523,7 @@ object Configurator {
     CommonUtils.await(
       () =>
         Await
-          .result(BrokerApi.access.hostname(CommonUtils.hostname()).port(configurator.port).list, 30 seconds)
+          .result(BrokerApi.access.hostname(CommonUtils.hostname()).port(configurator.port).list(), 30 seconds)
           .exists(_.name == PRE_CREATE_BK_NAME),
       java.time.Duration.ofSeconds(30)
     )

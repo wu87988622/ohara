@@ -68,7 +68,7 @@ class TestListManyPipelines extends WithBrokerWorker with Matchers {
     }
 
     val listPipeline =
-      Await.result(PipelineApi.access.hostname(configurator.hostname).port(configurator.port).list, 20 seconds)
+      Await.result(PipelineApi.access.hostname(configurator.hostname).port(configurator.port).list(), 20 seconds)
     pipelines.size shouldBe listPipeline.size
     pipelines.foreach { p =>
       listPipeline.exists(_.name == p.name) shouldBe true

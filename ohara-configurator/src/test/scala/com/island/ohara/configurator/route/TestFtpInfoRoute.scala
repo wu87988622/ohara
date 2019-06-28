@@ -33,7 +33,7 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
   @Test
   def test(): Unit = {
     // test add
-    result(ftpApi.list).size shouldBe 0
+    result(ftpApi.list()).size shouldBe 0
 
     val name = CommonUtils.randomString()
     val port = CommonUtils.availablePort()
@@ -68,9 +68,9 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
     response2 shouldBe result(ftpApi.get(response2.name))
 
     // test delete
-    result(ftpApi.list).size shouldBe 1
+    result(ftpApi.list()).size shouldBe 1
     result(ftpApi.delete(response.id))
-    result(ftpApi.list).size shouldBe 0
+    result(ftpApi.list()).size shouldBe 0
 
     // test nonexistent data
     an[IllegalArgumentException] should be thrownBy result(ftpApi.get("asdadas"))
@@ -93,7 +93,7 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
             .user(CommonUtils.randomString())
             .password(CommonUtils.randomString())
             .update()))
-    result(ftpApi.list).size shouldBe count
+    result(ftpApi.list()).size shouldBe count
   }
 
   @Test

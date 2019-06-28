@@ -44,7 +44,7 @@ final object ShabondiApi {
   implicit val SHABONDI_DESCRIPTION_JSON_FORMAT: RootJsonFormat[ShabondiDescription] = jsonFormat6(ShabondiDescription)
   implicit val SHABONDI_PROPERTY_JSON_FORMAT: RootJsonFormat[ShabondiProperty] = jsonFormat2(ShabondiProperty)
 
-  def access(): ShabondiAccess = new ShabondiAccess()
+  def access: ShabondiAccess = new ShabondiAccess()
 
   class ShabondiAccess extends BasicAccess(PATH_PREFIX) {
 

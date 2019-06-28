@@ -29,13 +29,13 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class TestShabondiRoute extends SmallTest with Matchers {
 
   private val configurator = Configurator.builder().fake().build()
-  private val access = ShabondiApi.access().hostname(configurator.hostname).port(configurator.port)
+  private val access = ShabondiApi.access.hostname(configurator.hostname).port(configurator.port)
 
   @Test
   def testAdd(): Unit = {
     val desc1: ShabondiApi.ShabondiDescription = result(access.add())
 
-    desc1.id.size should be > 0
+    desc1.id.length should be > 0
     desc1.to should be(Seq.empty)
     desc1.state should be(None)
     desc1.port should be(-1)
@@ -70,13 +70,13 @@ class TestShabondiRoute extends SmallTest with Matchers {
 
     desc2.to should be(Seq("topic1"))
     desc2.port should be(250)
-    desc2.lastModified should not be (desc1.lastModified)
+    desc2.lastModified should not be desc1.lastModified
 
     val desc3 = result(access.getProperty(desc1.id))
 
     desc3.to should be(Seq("topic1"))
     desc3.port should be(250)
-    desc3.lastModified should not be (desc1.lastModified)
+    desc3.lastModified should not be desc1.lastModified
   }
 
   @After

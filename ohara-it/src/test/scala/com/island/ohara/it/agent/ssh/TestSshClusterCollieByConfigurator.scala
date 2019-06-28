@@ -38,7 +38,7 @@ class TestSshClusterCollieByConfigurator extends BasicTests4ClusterCollieByConfi
       result(nodeApi.request.name(node.name).port(node.port).user(node.user).password(node.password).create())
     }
 
-    val nodes = result(nodeApi.list)
+    val nodes = result(nodeApi.list())
     nodes.size shouldBe nodeCache.size
     nodeCache.foreach(node => nodes.exists(_.name == node.name) shouldBe true)
 

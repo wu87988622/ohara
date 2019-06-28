@@ -31,7 +31,7 @@ class TestInfoRoute extends SmallTest with Matchers {
   @Test
   def test(): Unit = {
     // only test the configurator based on mini cluster
-    val clusterInformation = result(InfoApi.access().hostname(configurator.hostname).port(configurator.port).get)
+    val clusterInformation = result(InfoApi.access.hostname(configurator.hostname).port(configurator.port).get)
     clusterInformation.versionInfo.version shouldBe VersionUtils.VERSION
     clusterInformation.versionInfo.user shouldBe VersionUtils.USER
     clusterInformation.versionInfo.revision shouldBe VersionUtils.REVISION

@@ -66,7 +66,7 @@ object JdbcApi {
   }
 
   class Access private[v0] extends Access2[JdbcInfo](JDBC_PREFIX_PATH) {
-    def request(): Request = new Request {
+    def request: Request = new Request {
       private[this] var name: String = _
       private[this] var url: String = _
       private[this] var user: String = _
@@ -114,5 +114,5 @@ object JdbcApi {
     }
   }
 
-  def access(): Access = new Access
+  def access: Access = new Access
 }

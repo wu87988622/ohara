@@ -45,5 +45,5 @@ object LogApi {
       exec.get[ClusterLog, ErrorApi.Error](url(WorkerApi.WORKER_PREFIX_PATH, clusterName))
   }
 
-  def access(): Access = new Access
+  def access: Access = new Access
 }

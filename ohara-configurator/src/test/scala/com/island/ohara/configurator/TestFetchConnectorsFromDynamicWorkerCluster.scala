@@ -32,7 +32,7 @@ class TestFetchConnectorsFromDynamicWorkerCluster extends WithBrokerWorker with 
 
     try {
       val clusters =
-        Await.result(WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list, 10 seconds)
+        Await.result(WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list(), 10 seconds)
       clusters.isEmpty shouldBe false
 
       clusters.foreach { cluster =>

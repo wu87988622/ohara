@@ -37,13 +37,13 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
 
   private[this] def wkApi = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)
 
-  private[this] def logApi = LogApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] def logApi = LogApi.access.hostname(configurator.hostname).port(configurator.port)
 
-  private[this] def containerApi = ContainerApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] def containerApi = ContainerApi.access.hostname(configurator.hostname).port(configurator.port)
 
   //--------------------------------------------------[zk operations]--------------------------------------------------//
   override protected def zk_exist(clusterName: String): Future[Boolean] =
-    zkApi.list.map(_.exists(_.name == clusterName))
+    zkApi.list().map(_.exists(_.name == clusterName))
 
   override protected def zk_create(clusterName: String,
                                    clientPort: Int,
@@ -58,7 +58,7 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
       .nodeNames(nodeNames)
       .create()
 
-  override protected def zk_clusters(): Future[Seq[ZookeeperApi.ZookeeperClusterInfo]] = zkApi.list
+  override protected def zk_clusters(): Future[Seq[ZookeeperApi.ZookeeperClusterInfo]] = zkApi.list()
 
   override protected def zk_logs(clusterName: String): Future[Seq[String]] =
     logApi.log4ZookeeperCluster(clusterName).map(_.logs.map(_.value))
@@ -70,7 +70,7 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
 
   //--------------------------------------------------[bk operations]--------------------------------------------------//
   override protected def bk_exist(clusterName: String): Future[Boolean] =
-    bkApi.list.map(_.exists(_.name == clusterName))
+    bkApi.list().map(_.exists(_.name == clusterName))
 
   override protected def bk_create(clusterName: String,
                                    clientPort: Int,
@@ -86,7 +86,7 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
     .nodeNames(nodeNames)
     .create()
 
-  override protected def bk_clusters(): Future[Seq[BrokerApi.BrokerClusterInfo]] = bkApi.list
+  override protected def bk_clusters(): Future[Seq[BrokerApi.BrokerClusterInfo]] = bkApi.list()
 
   override protected def bk_logs(clusterName: String): Future[Seq[String]] =
     logApi.log4BrokerCluster(clusterName).map(_.logs.map(_.value))
@@ -104,7 +104,7 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
 
   //--------------------------------------------------[wk operations]--------------------------------------------------//
   override protected def wk_exist(clusterName: String): Future[Boolean] =
-    wkApi.list.map(_.exists(_.name == clusterName))
+    wkApi.list().map(_.exists(_.name == clusterName))
 
   override protected def wk_create(clusterName: String,
                                    clientPort: Int,
@@ -140,7 +140,7 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
       .offsetTopicName(offsetTopicName)
       .create()
 
-  override protected def wk_clusters(): Future[Seq[WorkerApi.WorkerClusterInfo]] = wkApi.list
+  override protected def wk_clusters(): Future[Seq[WorkerApi.WorkerClusterInfo]] = wkApi.list()
 
   override protected def wk_logs(clusterName: String): Future[Seq[String]] =
     logApi.log4WorkerCluster(clusterName).map(_.logs.map(_.value))

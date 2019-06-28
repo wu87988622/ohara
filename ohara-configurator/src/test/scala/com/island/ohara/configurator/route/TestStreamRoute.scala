@@ -171,7 +171,7 @@ class TestStreamRoute extends SmallTest with Matchers {
     res1.instances shouldBe 1
 
     // we create two properties, the list size should be 2
-    result(accessStreamProperty.list).size shouldBe 2
+    result(accessStreamProperty.list()).size shouldBe 2
 
     // update properties
     val appId = CommonUtils.randomString(5)

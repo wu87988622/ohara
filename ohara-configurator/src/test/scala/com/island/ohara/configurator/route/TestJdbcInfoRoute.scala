@@ -28,18 +28,18 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class TestJdbcInfoRoute extends SmallTest with Matchers {
   private[this] val configurator = Configurator.builder().fake().build()
 
-  private[this] val jdbcApi = JdbcApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] val jdbcApi = JdbcApi.access.hostname(configurator.hostname).port(configurator.port)
 
   @Test
   def test(): Unit = {
     // test add
-    result(jdbcApi.list).size shouldBe 0
+    result(jdbcApi.list()).size shouldBe 0
 
     val name = CommonUtils.randomString()
     val url = CommonUtils.randomString()
     val user = CommonUtils.randomString()
     val password = CommonUtils.randomString()
-    val response = result(jdbcApi.request().name(name).url(url).user(user).password(password).create())
+    val response = result(jdbcApi.request.name(name).url(url).user(user).password(password).create())
     response.name shouldBe name
     response.url shouldBe url
     response.user shouldBe user
@@ -52,7 +52,7 @@ class TestJdbcInfoRoute extends SmallTest with Matchers {
     val url2 = CommonUtils.randomString()
     val user2 = CommonUtils.randomString()
     val password2 = CommonUtils.randomString()
-    val response2 = result(jdbcApi.request().name(name).url(url2).user(user2).password(password2).update())
+    val response2 = result(jdbcApi.request.name(name).url(url2).user(user2).password(password2).update())
     response2.name shouldBe name
     response2.url shouldBe url2
     response2.user shouldBe user2
@@ -62,9 +62,9 @@ class TestJdbcInfoRoute extends SmallTest with Matchers {
     response2 shouldBe result(jdbcApi.get(response2.name))
 
     // test delete
-    result(jdbcApi.list).size shouldBe 1
+    result(jdbcApi.list()).size shouldBe 1
     result(jdbcApi.delete(response.id))
-    result(jdbcApi.list).size shouldBe 0
+    result(jdbcApi.list()).size shouldBe 0
 
     // test nonexistent data
     an[IllegalArgumentException] should be thrownBy result(jdbcApi.get("asdadas"))
@@ -80,14 +80,13 @@ class TestJdbcInfoRoute extends SmallTest with Matchers {
     (0 until count).foreach(
       _ =>
         result(
-          jdbcApi
-            .request()
+          jdbcApi.request
             .name(CommonUtils.randomString())
             .url(CommonUtils.randomString())
             .user(CommonUtils.randomString())
             .password(CommonUtils.randomString())
             .update()))
-    result(jdbcApi.list).size shouldBe count
+    result(jdbcApi.list()).size shouldBe count
   }
 
   @Test
@@ -95,8 +94,7 @@ class TestJdbcInfoRoute extends SmallTest with Matchers {
     val invalidStrings = Seq("a@", "a=", "a\\", "a~", "a//")
     invalidStrings.foreach { invalidString =>
       an[IllegalArgumentException] should be thrownBy result(
-        jdbcApi
-          .request()
+        jdbcApi.request
           .name(invalidString)
           .url(CommonUtils.randomString())
           .user(CommonUtils.randomString())
@@ -110,8 +108,7 @@ class TestJdbcInfoRoute extends SmallTest with Matchers {
     val invalidStrings = Seq("a@", "a=", "a\\", "a~", "a//")
     invalidStrings.foreach { invalidString =>
       an[IllegalArgumentException] should be thrownBy result(
-        jdbcApi
-          .request()
+        jdbcApi.request
           .name(invalidString)
           .url(CommonUtils.randomString())
           .user(CommonUtils.randomString())
@@ -140,14 +137,13 @@ class TestJdbcInfoRoute extends SmallTest with Matchers {
 
   private[this] def updatePartOfField(req: Request => Request, _expected: JdbcInfo => JdbcInfo): Unit = {
     val previous = result(
-      jdbcApi
-        .request()
+      jdbcApi.request
         .name(CommonUtils.randomString())
         .url(CommonUtils.randomString())
         .user(CommonUtils.randomString())
         .password(CommonUtils.randomString())
         .update())
-    val updated = result(req(jdbcApi.request().name(previous.name)).update())
+    val updated = result(req(jdbcApi.request.name(previous.name)).update())
     val expected = _expected(previous)
     updated.name shouldBe expected.name
     updated.url shouldBe expected.url

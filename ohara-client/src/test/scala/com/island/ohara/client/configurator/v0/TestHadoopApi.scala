@@ -111,41 +111,38 @@ class TestHadoopApi extends SmallTest with Matchers {
   }
 
   @Test
-  def ignoreNameOnCreation(): Unit = an[NullPointerException] should be thrownBy HadoopApi
-    .access()
+  def ignoreNameOnCreation(): Unit = an[NullPointerException] should be thrownBy HadoopApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .uri(CommonUtils.randomString())
     .create()
 
   @Test
-  def ignoreNameOnUpdate(): Unit = an[NullPointerException] should be thrownBy HadoopApi
-    .access()
+  def ignoreNameOnUpdate(): Unit = an[NullPointerException] should be thrownBy HadoopApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .uri(CommonUtils.randomString())
     .update()
 
   @Test
-  def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy HadoopApi.access().request().name("")
+  def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy HadoopApi.access.request.name("")
 
   @Test
-  def nullName(): Unit = an[NullPointerException] should be thrownBy HadoopApi.access().request().name(null)
+  def nullName(): Unit = an[NullPointerException] should be thrownBy HadoopApi.access.request.name(null)
 
   @Test
-  def ignoreUriOnCreation(): Unit = an[NullPointerException] should be thrownBy HadoopApi
-    .access()
+  def ignoreUriOnCreation(): Unit = an[NullPointerException] should be thrownBy HadoopApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
-    .request()
+    .request
     .name(CommonUtils.randomString())
     .create()
 
   @Test
-  def emptyUri(): Unit = an[IllegalArgumentException] should be thrownBy HadoopApi.access().request().uri("")
+  def emptyUri(): Unit = an[IllegalArgumentException] should be thrownBy HadoopApi.access.request.uri("")
 
   @Test
-  def nullUri(): Unit = an[NullPointerException] should be thrownBy HadoopApi.access().request().uri(null)
+  def nullUri(): Unit = an[NullPointerException] should be thrownBy HadoopApi.access.request.uri(null)
 }

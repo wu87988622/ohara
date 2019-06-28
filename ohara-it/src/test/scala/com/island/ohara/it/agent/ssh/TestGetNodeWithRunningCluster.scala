@@ -69,9 +69,9 @@ class TestGetNodeWithRunningCluster extends IntegrationTest with Matchers {
         .nodeNames(nodeCache.map(_.name).toSet)
         .create())
     try {
-      assertCluster(() => result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).list),
+      assertCluster(() => result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).list()),
                     cluster.name)
-      val nodes = result(NodeApi.access.hostname(configurator.hostname).port(configurator.port).list)
+      val nodes = result(NodeApi.access.hostname(configurator.hostname).port(configurator.port).list())
       nodes.isEmpty shouldBe false
       nodes.foreach { node =>
         node.services.isEmpty shouldBe false
