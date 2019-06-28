@@ -19,26 +19,30 @@ import PropTypes from 'prop-types';
 import TableRow from '@material-ui/core/TableRow';
 import Tooltip from '@material-ui/core/Tooltip';
 
+import { CONNECTOR_FILTERS } from 'constants/pipelines';
 import OverviewTable from './OverviewTable';
 import { TabHeading, StyledTableCell, StyledIcon, TooltipBody } from './styles';
 
 const OverviewConnectors = props => {
   const { connectors } = props;
-  const _connectors = connectors.map(connector => {
-    const { className, definitions: defs } = connector;
-    const targetKeys = ['kind', 'version', 'author'];
-    const displayInfo = defs
-      .filter(def => targetKeys.includes(def.key))
-      .reduce((acc, { key, defaultValue }) => {
-        acc[key] = defaultValue;
-        return acc;
-      }, {});
+  const _connectors = connectors
+    // filter out connectors that are not yet supported by UI
+    .filter(({ className }) => !CONNECTOR_FILTERS.includes(className))
+    .map(connector => {
+      const { className, definitions: defs } = connector;
+      const targetKeys = ['kind', 'version', 'author'];
+      const displayInfo = defs
+        .filter(def => targetKeys.includes(def.key))
+        .reduce((acc, { key, defaultValue }) => {
+          acc[key] = defaultValue;
+          return acc;
+        }, {});
 
-    return {
-      name: className.split('.').pop(),
-      info: { ...displayInfo, className },
-    };
-  });
+      return {
+        name: className.split('.').pop(),
+        info: { ...displayInfo, className },
+      };
+    });
 
   return (
     <>
