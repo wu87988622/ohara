@@ -74,7 +74,7 @@ describe('WorkspacesPage', () => {
       });
 
     cy.get('.ReactModal__Content').should('have.length', 1);
-    cy.getByText('ohara-it-sink.jar').should('have.length', 1);
+    cy.getByText('ohara-it-sink').should('have.length', 1);
     cy.get('div.ReactModal__Content')
       .eq(0)
       .within(() => {
@@ -109,7 +109,7 @@ describe('WorkspacesPage', () => {
   });
 
   it('deletes a topic', () => {
-    cy.createTopic().as('topic');
+    cy.createTopic().as('newTopic');
     cy.visit(WORKSPACES)
       .wait('@getWorkers')
       .getByTestId(Cypress.env('WORKER_NAME'))
@@ -117,7 +117,7 @@ describe('WorkspacesPage', () => {
       .getByText('Topics')
       .click()
       .wait('@getTopics')
-      .get('@topic')
+      .get('@newTopic')
       .then(topic => {
         cy.getByTestId(topic.name)
           .click()
