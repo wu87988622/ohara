@@ -55,13 +55,21 @@ class WorkerNewModal extends React.Component {
 
   createServices = async values => {
     const { nodeNames } = values;
+
     const maxRetry = 5;
     let retryCount = 0;
     const waitForServiceCreation = async clusterName => {
       const res = await containerApi.fetchContainers(clusterName);
-      const state = get(res, 'data.result[0].containers[0].state', null);
+      const containers = get(res, 'data.result[0].containers', null);
 
-      if (state === 'RUNNING' || retryCount > maxRetry) return;
+      let containersAreReady = false;
+      if (!isEmpty(containers)) {
+        containersAreReady = containers.every(
+          container => container.state === 'RUNNING',
+        );
+      }
+
+      if (containersAreReady || retryCount > maxRetry) return;
 
       retryCount++;
       await commonUtils.sleep(2000);
@@ -73,7 +81,16 @@ class WorkerNewModal extends React.Component {
       clientPort: generate.port(),
       peerPort: generate.port(),
       electionPort: generate.port(),
-      nodeNames,
+
+      // TODO: #1632 there's a couple of rules when creating services
+      // - Rule one: if the nodes supplied by users are less than 3. Creates a zookeeper and
+      // the equal amount of brokers and workers of nodes
+      // - Rule two: on the other hand, if users provide more than 3 nodes. We create 3 zookeepers
+      // and equal amount of brokers and workers of nodes
+      // due to a bug in #696. ohara is currently unable to create more than three zookeepers. So we're
+      // now specifying only one zookeeper when creating services. `nodeNames[0]`👇
+      // and once the bug is fixed we will then apply the rule two in frontend :)
+      nodeNames: [nodeNames[0]],
     });
 
     const zookeeperClusterName = get(zookeeper, 'data.result.name');
