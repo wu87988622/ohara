@@ -23,8 +23,8 @@ import TableCell from '@material-ui/core/TableCell';
 import * as nodeApi from 'api/nodeApi';
 import { NODES } from 'constants/documentTitles';
 import { H2 } from 'components/common/Headings';
-import MuiNewModal from './MuiNewModal';
-import MuiEditModal from './MuiEditModal';
+import NodeNewModal from './NodeNewModal';
+import NodeEditModal from './NodeEditModal';
 import EditIcon from '@material-ui/icons/Edit';
 import IconButton from '@material-ui/core/IconButton';
 
@@ -147,12 +147,12 @@ class NodeListPage extends React.Component {
               }}
             </s.NodeTable>
           </s.Wrapper>
-          <MuiNewModal
+          <NodeNewModal
             isOpen={this.state.isNewModalOpen}
             handleClose={this.handleModalColse}
             handleConfirm={this.fetchData}
           />
-          <MuiEditModal
+          <NodeEditModal
             node={activeNode}
             isOpen={this.state.isEditModalOpen}
             handleClose={this.handleModalColse}

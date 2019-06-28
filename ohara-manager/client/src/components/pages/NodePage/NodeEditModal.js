@@ -32,7 +32,7 @@ import * as validateApi from 'api/validateApi';
 import validate from './validate';
 import * as MESSAGES from 'constants/messages';
 
-class MuiNewModal extends React.Component {
+class NodeEditModal extends React.Component {
   static propTypes = {
     node: PropTypes.shape({
       name: PropTypes.string,
@@ -188,4 +188,4 @@ class MuiNewModal extends React.Component {
     );
   }
 }
-export default MuiNewModal;
+export default NodeEditModal;

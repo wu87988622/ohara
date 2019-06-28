@@ -19,29 +19,27 @@ import toastr from 'toastr';
 import { isString, get, has, isEmpty } from 'lodash';
 
 export const handleError = err => {
-  const message = get(err, 'data.errorMessage.message');
+  const message = get(err, 'data.errorMessage.message', null);
 
   if (isString(message)) {
     return toastr.error(message);
   }
 
+  // Validate API returns an array which contains errors
+  // of each node in it. That's why we're looping them over
+  // and throwing error when `pass` is `false` here
   if (Array.isArray(message)) {
-    const hasFieldName = get(message, '[0][fieldName]', null);
+    const hasMessage = get(message, '[0][message]', null);
 
-    if (hasFieldName) {
-      message.forEach(({ errors, fieldName: title }) => {
-        const fullError = errors.reduce((acc, val, idx) => {
-          acc += `${++idx}: ${val} <br />`;
-          return acc;
-        }, '');
-
-        toastr.error(fullError, title);
+    if (hasMessage) {
+      message.forEach(({ message, pass }) => {
+        if (!pass) toastr.error(message);
       });
       return;
     }
   }
 
-  const errorMessage = get(err, 'data.errorMessage');
+  const errorMessage = get(err, 'data.errorMessage', null);
   if (isString(errorMessage)) {
     return toastr.error(errorMessage);
   }

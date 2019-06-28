@@ -16,23 +16,22 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { get } from 'lodash';
 import toastr from 'toastr';
-import { Form, Field, FormSpy } from 'react-final-form';
-import InputField from 'components/common/Mui/Form/InputField';
-import DialogTitle from 'components/common/Mui/Dialog/DialogTitle';
-
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
-
 import Button from '@material-ui/core/Button';
+import { get } from 'lodash';
+import { Form, Field, FormSpy } from 'react-final-form';
+
 import * as nodeApi from 'api/nodeApi';
 import * as validateApi from 'api/validateApi';
-import validate from './validate';
 import * as MESSAGES from 'constants/messages';
+import InputField from 'components/common/Mui/Form/InputField';
+import DialogTitle from 'components/common/Mui/Dialog/DialogTitle';
+import validate from './validate';
 
-class MuiNewModal extends React.Component {
+class NodeNewModal extends React.Component {
   static propTypes = {
     isOpen: PropTypes.bool.isRequired,
     handleClose: PropTypes.func.isRequired,
@@ -189,4 +188,4 @@ class MuiNewModal extends React.Component {
     );
   }
 }
-export default MuiNewModal;
+export default NodeNewModal;

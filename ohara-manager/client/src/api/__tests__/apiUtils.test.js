@@ -22,7 +22,7 @@ import { handleError, getErrors } from '../apiUtils';
 describe('handleError()', () => {
   afterEach(jest.clearAllMocks);
   it('handles error with message key ', () => {
-    const message = 'Oops';
+    const message = generate.message();
     const err = {
       data: {
         errorMessage: {
@@ -37,12 +37,21 @@ describe('handleError()', () => {
     expect(toastr.error).toHaveBeenCalledWith(message);
   });
 
-  it('handle error which contains fieldName key', () => {
-    const errors = [generate.name(), generate.name()];
-    const fieldName = generate.name();
-    const message = [{ fieldName, errors }];
-    const expectedMsg = `1: ${errors[0]} <br />2: ${errors[1]} <br />`;
-    const expectedTitle = fieldName;
+  it('handles error which contains multiple messages', () => {
+    const message = [
+      {
+        pass: false,
+        message: generate.message(),
+      },
+      {
+        pass: false,
+        message: generate.message(),
+      },
+      {
+        pass: true,
+        message: generate.message(),
+      },
+    ];
 
     const err = {
       data: {
@@ -53,13 +62,11 @@ describe('handleError()', () => {
     };
 
     handleError(err);
-
-    expect(toastr.error).toHaveBeenCalledTimes(1);
-    expect(toastr.error).toHaveBeenCalledWith(expectedMsg, expectedTitle);
+    expect(toastr.error).toHaveBeenCalledTimes(2);
   });
 
   it('handles error with errorMessage key', () => {
-    const errorMessage = 'Nah';
+    const errorMessage = generate.message();
     const err = {
       data: {
         errorMessage,
@@ -73,7 +80,7 @@ describe('handleError()', () => {
   });
 
   it(`handles error when err object itself is string`, () => {
-    const err = `I'm an error`;
+    const err = generate.message();
 
     handleError(err);
 
