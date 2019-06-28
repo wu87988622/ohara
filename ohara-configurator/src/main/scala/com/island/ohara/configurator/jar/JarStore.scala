@@ -23,6 +23,7 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
+import com.google.common.io.Files
 import com.island.ohara.client.configurator.ConfiguratorApiInfo
 import com.island.ohara.client.configurator.v0.JarApi.JarInfo
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -71,32 +72,49 @@ trait JarStore extends Releasable {
   def add(file: File, newName: String, group: String)(implicit executionContext: ExecutionContext): Future[JarInfo] =
     add(CommonUtils.requireExist(file), newName, Some(group))
 
+  /**
+    * add a file to jar store.
+    * Note: if there already existed same file in same group, we will "overwrite" the old file.
+    * Please implement this general add method if you inherited JarStore
+    *
+    * @param file the upload file
+    * @param newName file new name
+    * @param group group name (default is random string)
+    * @param executionContext execution context
+    * @return
+    */
   protected def add(file: File, newName: String, group: Option[String])(
     implicit executionContext: ExecutionContext): Future[JarInfo]
 
   /**
     * remove a existed jar file from jar store
-    * @param id jar file's id
+    * @param group group name
+    * @param name jar name
     */
-  def remove(id: String)(implicit executionContext: ExecutionContext): Future[Boolean]
+  def remove(group: String, name: String)(implicit executionContext: ExecutionContext): Future[Boolean]
 
   /**
     * update the jar
-    * @param id jar's id
+    * @param group group name
+    * @param name jar name
     * @param file new jar
     * @return a async thread which is doing the upload
     */
-  def update(id: String, file: File)(implicit executionContext: ExecutionContext): Future[JarInfo]
+  def update(group: String, name: String, file: File)(implicit executionContext: ExecutionContext): Future[JarInfo]
 
   /**
     * retrieve the information of jar
-    * @param id jar's id
+    * @param group group name
+    * @param name jar name
     * @return jar description
     */
-  def jarInfo(id: String)(implicit executionContext: ExecutionContext): Future[JarInfo] = {
-    CommonUtils.requireNonEmpty(id)
+  def jarInfo(group: String, name: String)(implicit executionContext: ExecutionContext): Future[JarInfo] = {
+    CommonUtils.requireNonEmpty(group, () => "group must specified")
+    CommonUtils.requireNonEmpty(name, () => "name must specified")
     jarInfos().map(infos => {
-      infos.find(_.id == id).getOrElse(throw new NoSuchElementException(s"$id not found"))
+      infos
+        .find(info => info.group == group && info.name == name)
+        .getOrElse(throw new NoSuchElementException(s"$name not found"))
     })
   }
 
@@ -118,29 +136,32 @@ trait JarStore extends Releasable {
 
   /**
     * check the existence of a jar
-    * @param id jar id
+    * @param group group name
+    * @param name jar name
     * @param executionContext thread pool
     * @return true if jar exists. otherwise, false
     */
-  def exist(id: String)(implicit executionContext: ExecutionContext): Future[Boolean]
+  def exist(group: String, name: String)(implicit executionContext: ExecutionContext): Future[Boolean]
 
   /**
     * Rename a existent jar
-    * @param id jar id
+    * @param group group name
+    * @param name jar name
     * @param newName new name of jar
     * @param executionContext thread pool
     * @return updated jar info
     */
-  def rename(id: String, newName: String)(implicit executionContext: ExecutionContext): Future[JarInfo]
+  def rename(group: String, name: String, newName: String)(implicit executionContext: ExecutionContext): Future[JarInfo]
 
   /**
     * Create a local file storing the jar.
     * NOTED: you should NOT modify the file since the returned file may be referenced to true data.
-    * @param id jar's id
+    * @param group group name
+    * @param name jar name
     * @param executionContext thread pool
     * @return local file
     */
-  def toFile(id: String)(implicit executionContext: ExecutionContext): Future[File]
+  def toFile(group: String, name: String)(implicit executionContext: ExecutionContext): Future[File]
 
   /**
     * generate the route offering the file download of this jar store
@@ -192,7 +213,7 @@ object JarStore {
   }
 
   private[this] val LOG = Logger(classOf[JarStore])
-  private[this] val ID_LENGTH = 10
+  private[this] val GROUP_LENGTH = 10
 
   /**
     * This is a specific prefix which enables user to download binary of jar
@@ -200,17 +221,20 @@ object JarStore {
   private[this] val DOWNLOAD_JAR_PREFIX_PATH: String = "downloadJars"
 
   private[this] class JarStoreImpl(homeFolder: String, hostname: String, port: Int) extends JarStore {
-    private[this] def toUrl(id: String): URL = new URL(
-      s"http://$hostname:$port/${ConfiguratorApiInfo.V0}/$DOWNLOAD_JAR_PREFIX_PATH/$id.jar")
+    private[this] def toUrl(group: String, name: String): URL = new URL(
+      s"http://$hostname:$port/${ConfiguratorApiInfo.V0}/$DOWNLOAD_JAR_PREFIX_PATH/$group/$name")
 
     override def route(implicit executionContext: ExecutionContext): Route =
-      pathPrefix(DOWNLOAD_JAR_PREFIX_PATH / Segment) { idWithExtension =>
+      pathPrefix(DOWNLOAD_JAR_PREFIX_PATH / Segments) { groupAndName =>
+        require(groupAndName.size == 2,
+                s"you should use the /{group}/{name} format but : ${groupAndName.mkString("/")}")
+        val group = groupAndName.head
+        val nameWithExtension = groupAndName.last
         // We force all url end with .jar
-        if (!idWithExtension.endsWith(".jar")) complete(StatusCodes.NotFound -> s"$idWithExtension doesn't exist")
+        if (!nameWithExtension.endsWith(".jar")) complete(StatusCodes.NotFound -> s"$nameWithExtension doesn't exist")
         else {
-          val id = idWithExtension.substring(0, idWithExtension.indexOf(".jar"))
           // TODO: how to use future in getFromFile???
-          getFromFile(Await.result(toFile(id), 30 seconds))
+          getFromFile(Await.result(toFile(group, nameWithExtension), 30 seconds))
         }
       }
 
@@ -222,31 +246,28 @@ object JarStore {
     }
 
     /**
-      * Create a folder base on the format : {root}/{group}/{id}
+      * Create a folder base on the format : {root}/{group}/
       *
       * @param group the group name
-      * @param id the unique id
       * @return the folder file
       */
-    private[this] def toFolder(group: String, id: String): File =
-      new File(
-        CommonUtils.path(root.getAbsolutePath, CommonUtils.requireNonEmpty(group), CommonUtils.requireNonEmpty(id)))
+    private[this] def toFolder(group: String): File =
+      new File(CommonUtils.path(root.getAbsolutePath, CommonUtils.requireNonEmpty(group)))
 
-    override def toFile(id: String)(implicit executionContext: ExecutionContext): Future[File] =
-      jarInfo(id).map(jarInfo =>
-        CommonUtils.requireExist(new File(CommonUtils.requireExist(toFolder(jarInfo.group, id)), jarInfo.name)))
+    override def toFile(group: String, jarName: String)(implicit executionContext: ExecutionContext): Future[File] =
+      jarInfo(group, Files.getNameWithoutExtension(jarName)).map(jarInfo =>
+        CommonUtils.requireExist(new File(CommonUtils.requireExist(toFolder(jarInfo.group)), jarName)))
 
     override def add(file: File, newName: String, group: Option[String])(
       implicit executionContext: ExecutionContext): Future[JarInfo] =
       Future {
-        val actualGroup = group.getOrElse(CommonUtils.randomString(ID_LENGTH))
+        val actualGroup = group.getOrElse(CommonUtils.randomString(GROUP_LENGTH))
         CommonUtils.requireNonEmpty(newName)
         CommonUtils.requireExist(file)
         def generateFolder(): File = {
           var rval: File = null
           while (rval == null) {
-            val id = CommonUtils.randomString(ID_LENGTH)
-            val f = toFolder(actualGroup, id)
+            val f = toFolder(actualGroup)
             if (!f.exists()) {
               if (!f.mkdirs()) throw new IllegalArgumentException(s"fail to create folder on ${f.getAbsolutePath}")
               rval = f
@@ -257,17 +278,18 @@ object JarStore {
           rval
         }
         val folder = generateFolder()
-        val id = folder.getName
         val newFile = new File(folder, newName)
-        if (newFile.exists()) throw new IllegalArgumentException(s"${newFile.getAbsolutePath} already exists")
+        if (newFile.exists()) {
+          // delete the existed old file
+          CommonUtils.deleteFiles(newFile)
+        }
         CommonUtils.copyFile(file, newFile)
         LOG.debug(s"copy $file to $newFile")
         val plugin = JarInfo(
-          id = id,
-          name = newFile.getName,
+          name = Files.getNameWithoutExtension(newFile.getName),
           group = actualGroup,
           size = newFile.length(),
-          url = toUrl(id),
+          url = toUrl(actualGroup, newName),
           lastModified = newFile.lastModified()
         )
         LOG.info(s"add $plugin")
@@ -285,84 +307,80 @@ object JarStore {
           .flatMap {
             case (g, files) =>
               // for group folder, we list all actual jars
-              files.map(file => file.listFiles().flatMap(_.listFiles())).flatMap { jars =>
-                // for the same name of jar, get the latest modified jar
-                jars
-                  .groupBy(_.getName)
-                  .map { case (_, sameJars) => sameJars.maxBy(_.lastModified()) }
-                  .map(
-                    jar =>
-                      JarInfo(
-                        id = jar.getParentFile.getName,
-                        name = jar.getName,
-                        group = g,
-                        size = jar.length(),
-                        url = toUrl(jar.getParentFile.getName),
-                        lastModified = jar.lastModified()
-                    ))
+              files.map(file => file.listFiles()).flatMap { jars =>
+                jars.map(
+                  jar =>
+                    JarInfo(
+                      name = Files.getNameWithoutExtension(jar.getName),
+                      group = g,
+                      size = jar.length(),
+                      url = toUrl(g, jar.getName),
+                      lastModified = jar.lastModified()
+                  )
+                )
               }
           }
           .toSeq
       }
 
-    override def remove(id: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
-      exist(id).flatMap {
+    override def remove(group: String, name: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
+      exist(group, name).flatMap {
         if (_) {
-          CommonUtils.requireNonEmpty(id)
-          jarInfo(id).map { info =>
-            val file = toFolder(info.group, id)
-            if (!file.exists()) throw new NoSuchElementException(s"$id doesn't exist")
-            if (!file.isDirectory) throw new IllegalArgumentException(s"$id doesn't reference to a folder")
-            CommonUtils.deleteFiles(file)
+          CommonUtils.requireNonEmpty(name)
+          jarInfo(group, name).map { info =>
+            val groupFolder = toFolder(info.group)
+            if (!groupFolder.exists()) throw new NoSuchElementException(s"group folder doesn't exist: $groupFolder")
+            if (!groupFolder.isDirectory) throw new IllegalArgumentException(s"$name doesn't reference to a folder")
+            CommonUtils.deleteFiles(new File(groupFolder, s"$name.jar"))
             true
           }
         } else Future.successful(false)
       }
 
-    override def exist(id: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
-      jarInfo(id).map(_ => true).recover {
+    override def exist(group: String, name: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
+      jarInfo(group, name).map(_ => true).recover {
         case _: Throwable =>
           false
       }
 
-    override def update(id: String, file: File)(implicit executionContext: ExecutionContext): Future[JarInfo] =
-      jarInfo(id).map { info =>
+    override def update(group: String, name: String, file: File)(
+      implicit executionContext: ExecutionContext): Future[JarInfo] =
+      jarInfo(group, name).map { info =>
         CommonUtils.requireExist(file)
-        val folder = toFolder(info.group, id)
-        CommonUtils.deleteFiles(folder)
-        if (!folder.mkdir()) throw new IllegalArgumentException(s"fail to create folder on $folder")
+        val folder = toFolder(info.group)
+        CommonUtils.deleteFiles(new File(folder, name))
         val newFile = new File(folder, file.getName)
         if (newFile.exists()) throw new IllegalArgumentException(s"${newFile.getAbsolutePath} already exists")
         CommonUtils.copyFile(file, newFile)
         LOG.debug(s"copy $file to $newFile")
         val plugin = JarInfo(
-          id = id,
-          name = newFile.getName,
+          name = Files.getNameWithoutExtension(newFile.getName),
           group = info.group,
           size = newFile.length(),
-          url = toUrl(id),
+          url = toUrl(info.group, newFile.getName),
           lastModified = CommonUtils.current()
         )
-        LOG.info(s"update $id by $plugin")
+        LOG.info(s"update $name by $plugin")
         plugin
       }
 
-    override def rename(id: String, newName: String)(implicit executionContext: ExecutionContext): Future[JarInfo] =
-      jarInfo(id).map { jarInfo =>
+    override def rename(group: String, name: String, newName: String)(
+      implicit executionContext: ExecutionContext): Future[JarInfo] =
+      jarInfo(group, name).map { jarInfo =>
         CommonUtils.requireNonEmpty(newName)
         if (jarInfo.name == newName) jarInfo
         else {
-          val folder = toFolder(jarInfo.group, id)
-          val previousFIle = new File(folder, jarInfo.name)
+          val folder = toFolder(jarInfo.group)
+          // jarInfo.name does not contains extension, we apply it
+          val previousFile = new File(folder, s"${jarInfo.name}.jar")
           val newFile = new File(folder, newName)
-          LOG.debug(s"copy file from $previousFIle to $newFile")
-          CommonUtils.moveFile(previousFIle, newFile)
+          LOG.debug(s"copy file from $previousFile to $newFile")
+          CommonUtils.moveFile(previousFile, newFile)
           JarInfo(
-            id = id,
-            name = newFile.getName,
+            name = Files.getNameWithoutExtension(newFile.getName),
             group = jarInfo.group,
             size = newFile.length(),
-            url = toUrl(id),
+            url = toUrl(jarInfo.group, name),
             lastModified = CommonUtils.current()
           )
         }

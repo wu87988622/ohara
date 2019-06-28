@@ -21,55 +21,10 @@ import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
-import spray.json.{JsString, _}
+import spray.json.DeserializationException
+import spray.json._
 
 class TestWorkerApi extends SmallTest with Matchers {
-
-  @Test
-  def testStaleCreationApis(): Unit = {
-    val name = CommonUtils.randomString()
-    val brokerClusterName = CommonUtils.randomString()
-    val nodeName = CommonUtils.randomString()
-    val jarId = CommonUtils.randomString()
-    val request = WORKER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(s"""
-                                               |{
-                                               |  "name": ${JsString(name).toString()},
-                                               |  "brokerClusterName": ${JsString(brokerClusterName).toString()},
-                                               |  "nodeNames": ${JsArray(Vector(JsString(nodeName))).toString()},
-                                               |  "jars": ${JsArray(Vector(JsString(jarId))).toString()}
-                                               |}
-                                            """.stripMargin.parseJson)
-    request.name shouldBe name
-    request.brokerClusterName.get shouldBe brokerClusterName
-    request.nodeNames.head shouldBe nodeName
-    request.jarIds.head shouldBe jarId
-  }
-
-  @Test
-  def seeStaleJarNames(): Unit = {
-    val workerClusterInfo = WorkerClusterInfo(
-      name = CommonUtils.randomString(),
-      imageName = CommonUtils.randomString(),
-      brokerClusterName = CommonUtils.randomString(),
-      clientPort = 10,
-      jmxPort = 10,
-      groupId = CommonUtils.randomString(),
-      statusTopicName = CommonUtils.randomString(),
-      statusTopicPartitions = 10,
-      statusTopicReplications = 10,
-      configTopicName = CommonUtils.randomString(),
-      configTopicPartitions = 10,
-      configTopicReplications = 10,
-      offsetTopicName = CommonUtils.randomString(),
-      offsetTopicPartitions = 10,
-      offsetTopicReplications = 10,
-      jarInfos = Seq.empty,
-      connectors = Seq.empty,
-      nodeNames = Set.empty,
-      deadNodes = Set.empty
-    )
-    WORKER_CLUSTER_INFO_JSON_FORMAT.write(workerClusterInfo).toString().contains("jarNames") shouldBe true
-  }
 
   @Test
   def testResponseEquals(): Unit = {
@@ -360,7 +315,7 @@ class TestWorkerApi extends SmallTest with Matchers {
     creation.statusTopicPartitions shouldBe 1
     creation.nodeNames.size shouldBe 1
     creation.nodeNames.head shouldBe nodeName
-    creation.jarIds.size shouldBe 0
+    creation.jars.size shouldBe 0
   }
 
   @Test

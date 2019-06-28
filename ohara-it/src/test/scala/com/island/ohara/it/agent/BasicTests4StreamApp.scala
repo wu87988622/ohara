@@ -161,7 +161,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
   def testFailedClusterRemoveGracefully(): Unit = {
 
     // create fake jar
-    val jarPath = CommonUtils.createTempFile("fake").getAbsolutePath
+    val jarPath = CommonUtils.createTempJar("fake").getAbsolutePath
 
     // upload streamApp jar
     val jarInfo = result(
@@ -259,7 +259,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
       streamAppListAccess.upload(Seq(jarPath), Some(wkName))
     )
     jarInfo.size shouldBe 1
-    jarInfo.head.name shouldBe "ohara-streamapp.jar"
+    jarInfo.head.name shouldBe "ohara-streamapp"
 
     // create streamApp properties
     val stream = result(streamAppPropertyAccess.add(StreamPropertyRequest(jarInfo.head.id, None, None, None, None)))

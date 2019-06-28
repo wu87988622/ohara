@@ -15,7 +15,7 @@
  */
 
 import 'cypress-testing-library/add-commands';
-
+import { axiosInstance } from '../../src/api/apiUtils';
 import * as utils from '../utils';
 
 Cypress.Commands.add('registerWorker', workerName => {
@@ -33,6 +33,10 @@ Cypress.Commands.add('createWorker', () => {
 
   const { name: nodeName } = utils.getFakeNode();
   const workerName = 'wk' + utils.makeRandomStr();
+  const groupId = utils.makeRandomStr();
+  const configTopicName = 'tp' + utils.makeRandomStr();
+  const offsetTopicName = 'otp' + utils.makeRandomStr();
+  const statusTopicName = 'stp' + utils.makeRandomStr();
 
   // Store the worker names in a file as well as
   // in the Cypress env as we'll be using them in the tests
@@ -51,6 +55,10 @@ Cypress.Commands.add('createWorker', () => {
       jmxPort: utils.makeRandomPort(),
       brokerClusterName: broker.name,
       jars: [],
+      groupId: groupId,
+      configTopicName: configTopicName,
+      offsetTopicName: offsetTopicName,
+      statusTopicName: statusTopicName,
       nodeNames: [nodeName],
     });
   });
@@ -223,6 +231,30 @@ Cypress.Commands.add('uploadStreamAppJar', () => {
       'application/java-archive',
     )
     .wait(500);
+});
+
+Cypress.Commands.add('uploadTestStreamAppJar', wk => {
+  cy.log(wk);
+  cy.fixture(`streamApp/ohara-streamapp.jar`, 'base64')
+    .then(Cypress.Blob.base64StringToBlob)
+    .then(blob => {
+      const type = 'application/java-archive';
+      const url = '/api/stream/jars';
+      const config = {
+        headers: {
+          'content-type': 'multipart/form-data',
+        },
+      };
+      const testFile = new File([blob], 'ohara-streamapp.jar', { type: type });
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(testFile);
+      blob = dataTransfer.files;
+      let formData = new FormData();
+      formData.append('streamapp', blob[0]);
+      formData.append('cluster', wk);
+      const res = axiosInstance.post(url, formData, config);
+      cy.log(res);
+    });
 });
 
 Cypress.Commands.add('uploadJar', (selector, fixturePath, name, type) => {

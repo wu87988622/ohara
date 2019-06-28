@@ -32,7 +32,7 @@ import { StyledLabel, StyledInputFile } from './styles';
 
 const StreamApp = props => {
   const { workspaceName } = props;
-  const [jarId, setJarId] = useState(null);
+  const [jarName, setJarName] = useState(null);
   const [jars, setJars] = useState([]);
   const [order, setOrder] = useState('asc');
   const [orderBy, setOrderBy] = useState('name');
@@ -75,18 +75,18 @@ const StreamApp = props => {
     { id: 'action', label: 'Action', sortable: false },
   ];
 
-  const handleDeleteRowModalOpen = id => {
-    setJarId(id);
+  const handleDeleteRowModalOpen = name => {
+    setJarName(name);
     setDeleteRowModalActive(true);
   };
 
   const actionButton = data => {
-    const { name, id } = data;
+    const { name } = data;
     return (
       <Tooltip title={`Delete ${name}`} enterDelay={1000}>
         <IconButton
           data-testid="edit-node-icon"
-          onClick={() => handleDeleteRowModalOpen(id)}
+          onClick={() => handleDeleteRowModalOpen(name)}
         >
           <ActionIcon className="fas fa-trash-alt" />
         </IconButton>
@@ -114,11 +114,11 @@ const StreamApp = props => {
 
   const handleDeleteRowModalClose = () => {
     setDeleteRowModalActive(false);
-    setJarId(null);
+    setJarName(null);
   };
 
-  const deleteJar = async id => {
-    const res = await streamApi.deleteJar({ id: id });
+  const deleteJar = async params => {
+    const res = await streamApi.deleteJar(params);
     const isSuccess = get(res, 'data.isSuccess', false);
     if (isSuccess) {
       toastr.success(MESSAGES.STREAM_APP_DELETE_SUCCESS);
@@ -128,8 +128,12 @@ const StreamApp = props => {
   };
 
   const handleDeleteClick = e => {
-    if (jarId) {
-      deleteJar(jarId);
+    if (jarName) {
+      const params = {
+        name: jarName,
+        workerClusterName: workspaceName,
+      };
+      deleteJar(params);
     }
   };
 

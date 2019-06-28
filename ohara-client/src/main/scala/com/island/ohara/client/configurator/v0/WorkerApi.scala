@@ -51,7 +51,6 @@ object WorkerApi {
   private[this] val OFFSET_TOPIC_PARTITIONS_KEY = "offsetTopicPartitions"
   private[this] val OFFSET_TOPIC_REPLICATIONS_KEY = "offsetTopicReplications"
   private[this] val JAR_INFOS_KEY = "jarInfos"
-  private[this] val JAR_NAMES_KEY = "jarNames"
   private[this] val CONNECTORS_KEY = "connectors"
   private[this] val NODE_NAMES_KEY = "nodeNames"
   private[this] val DEAD_NODES_KEY = "deadNodes"
@@ -71,7 +70,7 @@ object WorkerApi {
                                                 statusTopicName: String,
                                                 statusTopicPartitions: Int,
                                                 statusTopicReplications: Short,
-                                                jarIds: Set[String],
+                                                jars: Set[JarKey],
                                                 nodeNames: Set[String])
       extends ClusterCreationRequest {
     override def ports: Set[Int] = Set(clientPort, jmxPort)
@@ -101,10 +100,7 @@ object WorkerApi {
       .nullToRandomString("statusTopicName")
       .nullToInt("statusTopicPartitions", 1)
       .nullToShort("statusTopicReplications", 1)
-      // Noted: the execution order of nullToAnotherValueOfKey is before nullToEmptyArray
-      // the "jars" is deprecated key
-      .nullToAnotherValueOfKey("jarIds", "jars")
-      .nullToEmptyArray("jarIds")
+      .nullToEmptyArray("jars")
       .refine
 
   /**
@@ -182,8 +178,6 @@ object WorkerApi {
             CONNECTORS_KEY -> JsArray(obj.connectors.map(CONNECTION_DEFINITIONS_JSON_FORMAT.write).toVector),
             NODE_NAMES_KEY -> JsArray(obj.nodeNames.map(JsString(_)).toVector),
             DEAD_NODES_KEY -> JsArray(obj.deadNodes.map(JsString(_)).toVector),
-            // deprecated keys
-            JAR_NAMES_KEY -> JsArray(obj.jarInfos.map(_.id).map(JsString(_)).toVector),
           ))
       )
 
@@ -241,7 +235,7 @@ object WorkerApi {
     @Optional("the default number is 1")
     def offsetTopicReplications(offsetTopicReplications: Short): Request
     @Optional("the default value is empty")
-    def jarIds(jarIds: Set[String]): Request
+    def jars(jars: Set[JarKey]): Request
     def nodeName(nodeName: String): Request = nodeNames(Set(CommonUtils.requireNonEmpty(nodeName)))
     def nodeNames(nodeNames: Set[String]): Request
 
@@ -274,7 +268,7 @@ object WorkerApi {
       private[this] var statusTopicName: String = s"$groupId-status-${CommonUtils.randomString(10)}"
       private[this] var statusTopicPartitions: Int = 1
       private[this] var statusTopicReplications: Short = 1
-      private[this] var jarIds: Set[String] = Set.empty
+      private[this] var jars: Set[JarKey] = Set.empty
       private[this] var nodeNames: Set[String] = Set.empty
 
       private[this] def legalNumber(number: Int, key: String): Int = {
@@ -358,8 +352,8 @@ object WorkerApi {
       }
 
       import scala.collection.JavaConverters._
-      override def jarIds(jarIds: Set[String]): Request = {
-        this.jarIds = CommonUtils.requireNonEmpty(jarIds.asJava).asScala.toSet
+      override def jars(jars: Set[JarKey]): Request = {
+        this.jars = CommonUtils.requireNonEmpty(jars.asJava).asScala.toSet
         this
       }
 
@@ -383,7 +377,7 @@ object WorkerApi {
         statusTopicName = CommonUtils.requireNonEmpty(statusTopicName),
         statusTopicPartitions = legalNumber(statusTopicPartitions, "statusTopicPartitions"),
         statusTopicReplications = legalNumber(statusTopicReplications, "statusTopicReplications"),
-        jarIds = Objects.requireNonNull(jarIds),
+        jars = Objects.requireNonNull(jars),
         nodeNames = CommonUtils.requireNonEmpty(nodeNames.asJava).asScala.toSet
       )
 

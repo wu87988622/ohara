@@ -525,18 +525,29 @@ public final class CommonUtils {
   }
 
   /**
-   * create a temp file with specified prefix name.
+   * create a temp file with specified prefix name and suffix name.
    *
    * @param prefix prefix name
-   * @return a temp folder
+   * @param suffix suffix name
+   * @return a temp file
    */
-  public static File createTempFile(String prefix) {
+  public static File createTempFile(String prefix, String suffix) {
     try {
-      Path t = Files.createTempFile(prefix, null);
+      Path t = Files.createTempFile(prefix, suffix);
       return t.toFile();
     } catch (IOException e) {
       throw new IllegalStateException(e);
     }
+  }
+
+  /**
+   * create a temp jar file with specified prefix name.
+   *
+   * @param prefix prefix name
+   * @return a temp file
+   */
+  public static File createTempJar(String prefix) {
+    return createTempFile(prefix, ".jar");
   }
 
   /**

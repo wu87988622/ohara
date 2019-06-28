@@ -17,7 +17,9 @@
 package com.island.ohara.it.agent.ssh
 
 import java.io.File
+import java.util.concurrent.TimeUnit
 
+import com.island.ohara.client.configurator.v0.JarApi.JarKey
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.client.kafka.WorkerClient
@@ -67,6 +69,8 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
 
   private[this] val nameHolder = new ClusterNameHolder(nodeCache)
 
+  private[this] val wkName = nameHolder.generateClusterName()
+
   /**
     * used to debug. setting false to disable cleanup of containers after testing.
     */
@@ -89,10 +93,14 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
     val currentPath = new File(".").getCanonicalPath
     // Both jars are pre-generated. see readme in test/resources
 
+    // jars should use "group" (here is worker name) to identify which worker cluster will use it
     val jars = result(
       Future.traverse(Seq(new File(currentPath, "build/libs/ohara-it-source.jar"),
-                          new File(currentPath, "build/libs/ohara-it-sink.jar")))(file =>
-        JarApi.access().hostname(configurator.hostname).port(configurator.port).upload(file, None)))
+                          new File(currentPath, "build/libs/ohara-it-sink.jar")))(file => {
+        // avoid too "frequently" create group folder for same group files
+        TimeUnit.SECONDS.sleep(1)
+        JarApi.access().hostname(configurator.hostname).port(configurator.port).request().group(wkName).upload(file)
+      }))
 
     val zkCluster = result(
       zkApi.request.name(nameHolder.generateClusterName()).nodeNames(nodeCache.map(_.name).toSet).create())
@@ -110,7 +118,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
       wkApi.request
         .name(nameHolder.generateClusterName())
         .brokerClusterName(bkCluster.name)
-        .jarIds(jars.map(_.id).toSet)
+        .jars(jars.map(jar => JarKey(jar.group, jar.name)).toSet)
         .nodeName(nodeCache.head.name)
         .create())
     assertCluster(() => result(wkApi.list()), wkCluster.name)

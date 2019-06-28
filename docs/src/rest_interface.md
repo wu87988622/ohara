@@ -1791,24 +1791,22 @@ the pre-created topics CAN'T be reused by different worker clusters.
 The properties which can be set by user are shown below.
 1. name (**string**) — cluster name
 1. imageName (**string**) — docker image
-1. clientPort (**int**) — worker client port.
-1. jmxPort (**int**) — worker jmx port.
 1. brokerClusterName (**string**) — broker cluster used to host topics for this worker cluster
-1. jarIds (**array(string)**) — the id of jars that will be loaded by worker cluster. You can require worker cluster to
-                              load the jars stored in ohara if you want to run custom connectors on the worker cluster.
-                              see [Jars APIs](#jars) for uploading jars to ohara.  Noted: the response will replace 
-                              id by [JarInfo](#jars).
-1. nodeNames (**array(string)**) — the nodes running the worker process
+1. clientPort (**int**) — worker client port
+1. jmxPort (**int**) — worker jmx port
+1. groupId (**string**) — the id of worker stored in broker cluster
 1. configTopicName (**string**) — a internal topic used to store connector configuration
 1. configTopicReplications (**int**) — number of replications for config topic
-1. configTopicPartitions (**int**) — number of partitions for config topic
 1. offsetTopicName (**string**) — a internal topic used to store connector offset
-1. offsetTopicReplications (**int**) — number of replications for offset topic
 1. offsetTopicPartitions (**int**) — number of partitions for offset topic
+1. offsetTopicReplications (**int**) — number of replications for offset topic
 1. statusTopicName (**string**) — a internal topic used to store connector status
-1. statusTopicReplications (**int**) — number of replications for status topic
 1. statusTopicPartitions (**int**) — number of partitions for status topic
-1. groupId (**string**) — the id of worker stored in broker cluster
+1. statusTopicReplications (**int**) — number of replications for status topic
+1. jars (**array(object)**) — the "primary key" of jars that will be loaded by worker cluster. You can require worker cluster to
+                              load the jars stored in ohara if you want to run custom connectors on the worker cluster.
+                              see [Jars APIs](#jars) for uploading jars to ohara.  Noted: the response will replace this
+                              by [JarInfo](#jars).
 1. nodeNames (**array(string)**) — the nodes running the worker process
 1. deadNodes (**array(string)**) — the nodes that have failed containers of worker
 
@@ -1939,7 +1937,9 @@ ignore this element. However, we still list the available values here.
 1. clientPort (**int**) — worker client port.
 1. jmxPort (**int**) — worker jmx port.
 1. brokerClusterName (**string**) — broker cluster used to host topics for this worker cluster
-1. jarIds (**array(string)**) — the id of jars that will be loaded by worker cluster
+1. jars (**array(object)**) — the "primary key" object list of jar that will be loaded by worker cluster
+  - jars[i].group (**string**) — the group name of jar
+  - jars[i].name (**string**) — the name of jar
 1. groupId (**string**) — the id of worker stored in broker cluster
 1. configTopicName (**string**) — a internal topic used to store connector configuration
 1. configTopicReplications (**int**) — number of replications for config topic
@@ -1969,7 +1969,12 @@ ignore this element. However, we still list the available values here.
   "statusTopicName": "statusTopic",
   "statusTopicReplications": 1,
   "statusTopicPartitions": 1,
-  "jarIds": [],
+  "jars": [
+    {
+      "group": "abc",
+      "name": "myjar"
+    }
+  ],
   "nodeNames": [
     "node00"
   ]
@@ -2012,7 +2017,12 @@ As mentioned before, ohara provides default to most settings. You can just input
 ```json
 {
   "name": "wk00",
-  "jarIds": [],
+  "jars": [
+      {
+        "group": "abc",
+        "name": "myjar"
+      }
+  ],
   "nodeNames": [
     "node00"
   ]
@@ -2750,13 +2760,11 @@ streamapp="new-app.jar"
 [
   {
     "workerClusterName": "wk01",
-    "id": "1b022c59-93f9-452c-a062-f8e4cb6c00fe",
     "name": "ohara-streams.jar",
     "lastModified": 1547141282866
   },
   {
     "workerClusterName": "wk01",
-    "id": "1a012c59-53de-3381-a062-f8e29f4c00fe",
     "name": "other.jar",
     "lastModified": 1547141282889
   }
@@ -2765,9 +2773,9 @@ streamapp="new-app.jar"
 ----------
 ### delete a streamApp jar
 
-Delete a streamApp jar by jarId which is not used in any pipeline of current worker cluster
+Delete a streamApp jar by jar name which is not used in any pipeline of current worker cluster
 
-*DELETE /v0/stream/jars/${id}*
+*DELETE /v0/stream/jars/${name}*
 
 **Example Response**
 
@@ -2872,9 +2880,10 @@ Create the properties of a streamApp.
   "name": "my-new-app",
   "instances": 1,
   "jarInfo": {
-    "id": "1b022c59-93f9-452c-a062-f8e4cb6c00fe",
     "name": "new-name.jar",
+    "group": "wk01",
     "size": 1234,
+    "url": "http://localhost:12345/v0/downloadJars/aa.jar",
     "lastModified": 1542102595892
   },
   "from": [
@@ -2919,9 +2928,10 @@ Create the properties of a streamApp.
   "name": "my-app",
   "instances": 3,
   "jarInfo": {
-    "id": "1b022c59-93f9-452c-a062-f8e4cb6c00fe",
     "name": "new-name.jar",
+    "group": "wk01",
     "size": 1234,
+    "url": "http://localhost:12345/v0/downloadJars/aa.jar",
     "lastModified": 1542102595892
   },
   "from": [
@@ -2994,9 +3004,10 @@ Update the properties of a non-started streamApp.
   "name": "my-new-app",
   "instances": 3,
   "jarInfo": {
-    "id": "1b022c59-93f9-452c-a062-f8e4cb6c00fe",
     "name": "new-name.jar",
+    "group": "wk01",
     "size": 1234,
+    "url": "http://localhost:12345/v0/downloadJars/aa.jar",
     "lastModified": 1542102595892
   },
   "from": [
@@ -3090,13 +3101,12 @@ This api only remove the streamApp component which is stored in pipeline.
 
 Ohara encourages user to write custom application if the official applications can satisfy requirements for your use case.
 Jar APIs is a useful entry of putting your jar on ohara and then start related services with it. For example, [Worker APIs](#create-a-worker-cluster)
-accept a **jars** element which can carry the jar id pointing to a existent jar in ohara. The worker cluster will load all
+accept a **jars** element which can carry the jar name pointing to a existent jar in ohara. The worker cluster will load all
 connectors of the input jar, and then you are able to use the connectors on the worker cluster.
 
 The properties stored by ohara are shown below.
-1. id (**string**) — the jar id
-1. name (**string**) — the file name
-1. group (**string**) — the group name
+1. name (**string**) — the file name without extension
+1. group (**string**) — the group name (we use this field to separate different workspaces)
 1. size (**long**) — file size
 1. url (**option(string)**) — url to download this jar from Ohara Configurator. Noted not all jars are downloadable to user.
 1. lastModified (**long**) — the time of uploading this file
@@ -3105,6 +3115,9 @@ The properties stored by ohara are shown below.
 
 ### upload a jar to ohara
 
+Upload a jar file to ohara with field name : "jar" and group name : "group"
+the text field "group" could be empty and we will generate a random string.
+
 *POST /v0/jars*
 
 **Example Request**
@@ -3112,6 +3125,7 @@ The properties stored by ohara are shown below.
 ```http
 Content-Type: multipart/form-data
 jar="aa.jar"
+group="wk01"
 ```
 
 You have to specify the file name since it is a part of metadata stored by ohara.
@@ -3119,11 +3133,11 @@ You have to specify the file name since it is a part of metadata stored by ohara
 **Example Response**
 ```json
 {
-  "id": "aaa",
   "name": "aa.jar",
   "group": "wk01",
-  "size": 12345,
-  "lastModified": 7777
+  "size": 1779,
+  "url": "http://localhost:12345/v0/downloadJars/aa.jar",
+  "lastModified": 1561012496975
 }
 ```
 
@@ -3131,17 +3145,20 @@ You have to specify the file name since it is a part of metadata stored by ohara
 
 ### list all jars
 
-*GET /v0/jars*
+Get all jars from specific group of query parameter.
+If no query parameter, wll return all jars.
+
+*GET /v0/jars?group=wk01*
 
 **Example Response**
 ```json
 [
   {
-    "id": "aaa",
     "name": "aa.jar",
     "group": "wk01",
-    "size": 12345,
-    "lastModified": 7777
+    "size": 1779,
+    "url": "http://localhost:12345/v0/downloadJars/aa.jar",
+    "lastModified": 1561012496975
   }
 ]
 ```
@@ -3149,7 +3166,10 @@ You have to specify the file name since it is a part of metadata stored by ohara
 
 ### delete a jar
 
-*DELETE /v0/jars/$id*
+Delete a jar with specific name and group.
+Note: the query parameter must exists.
+
+*DELETE /v0/jars/$name?group=wk01*
 
 **Example Response**
 
@@ -3164,17 +3184,20 @@ You have to specify the file name since it is a part of metadata stored by ohara
 
 ### get a jar
 
-*GET /v0/jars/$id*
+Get a jar with specific name and group.
+Note: the query parameter must exists.
+
+*GET /v0/jars/$name?group=wk01*
 
 **Example Response**
 ```json
 {
-  "id": "aaa",
-  "name": "aa.jar",
-  "group": "wk01",
-  "size": 12345,
-  "lastModified": 7777
-}
+    "name": "aa.jar",
+    "group": "wk01",
+    "size": 1779,
+    "url": "http://localhost:12345/v0/downloadJars/aa.jar",
+    "lastModified": 1561012496975
+  }
 ```
 
 ----------

@@ -23,79 +23,12 @@ describe('StreamApp', () => {
     cy.createWorker();
   });
 
-  context('Stream app jars', () => {
-    beforeEach(() => {
-      cy.server();
-      cy.route('GET', 'api/pipelines/*').as('getPipeline');
-      cy.route('PUT', 'api/pipelines/*').as('putPipeline');
-
-      const pipelineName = makeRandomStr();
-
-      cy.visit(URLS.PIPELINES)
-        .getByTestId('new-pipeline')
-        .click()
-        .getByLabelText('Pipeline name')
-        .click()
-        .type(pipelineName)
-        .getByTestId('cluster-select')
-        .select(Cypress.env('WORKER_NAME'))
-        .getByText('Add')
-        .click();
-    });
-
-    it('adds a streamApp into pipeline graph and removes it with the remove button', () => {
-      cy.wait('@getPipeline')
-        .uploadStreamAppJar()
-        .getByText('Stream app successfully uploaded!')
-        .should('have.length', 1)
-        .getByText('ohara-streamapp.jar')
-        .getByText('Add')
-        .click()
-        .getByText('Untitled streamApp')
-        .should('be.exist')
-        .click()
-        .getByTestId('delete-button')
-        .click()
-        .getByText('Yes, Remove this stream app')
-        .click()
-        .wait('@getPipeline')
-        .queryAllByText('Untitled streamApp')
-        .should('have.length', 0)
-        .deleteStreamApp();
-    });
-
-    it('edits a streamApp jar name', () => {
-      cy.wait('@getPipeline')
-        .uploadStreamAppJar()
-        .getByText('ohara-streamapp.jar')
-        .click()
-        .getByTestId('title-input')
-        .type('{leftarrow}{leftarrow}{leftarrow}{leftarrow}') // move the mouse cursor with the left arrow key
-        .type('_2{enter}')
-        .getByTestId('stream-app-item')
-        .find('label')
-        .contains('ohara-streamapp_2.jar')
-        .deleteStreamApp('ohara-streamapp_2.jar');
-    });
-
-    it('deletes streamApp jar', () => {
-      cy.wait('@getPipeline')
-        .uploadStreamAppJar()
-        .getByTestId('delete-stream-app')
-        .click()
-        .getByText('Yes, Delete this jar')
-        .click()
-        .wait(500)
-        .queryAllByTestId('stream-app-item')
-        .should('have.length', 0);
-    });
-  });
-
   context('Stream app property form', () => {
     beforeEach(() => {
       cy.server();
       cy.route('GET', 'api/pipelines/*').as('getPipeline');
       cy.route('PUT', 'api/pipelines/*').as('putPipeline');
+      cy.route('GET', 'api/stream/*').as('getStream');
 
       cy.createTopic().as('fromTopic');
       cy.createTopic().as('toTopic');
@@ -103,6 +36,7 @@ describe('StreamApp', () => {
       const pipelineName = makeRandomStr();
 
       cy.visit(URLS.PIPELINES)
+        .uploadTestStreamAppJar(Cypress.env('WORKER_NAME'))
         .getByTestId('new-pipeline')
         .click()
         .getByLabelText('Pipeline name')
@@ -117,7 +51,9 @@ describe('StreamApp', () => {
     // TODO: remove the pipeline once the test is finished
     it('starts a stream app', () => {
       cy.wait('@getPipeline')
-        .uploadStreamAppJar()
+        .getByTestId('toolbar-streams')
+        .click()
+        .wait('@getStream')
         .getByText('Add')
         .click();
 

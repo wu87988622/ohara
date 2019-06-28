@@ -55,6 +55,9 @@ export const createBroker = async params => {
       name: params.name,
       zookeeperClusterName: params.zookeeperClusterName,
       nodeNames: params.nodeNames || [],
+      clientPort: params.clientPort,
+      exporterPort: params.exporterPort,
+      jmxPort: params.jmxPort,
     };
     const config = {
       timeout: 3 * 60 * 1000, // set timeout to 3 minutes.

@@ -38,7 +38,7 @@ class TestJarStore extends SmallTest with Matchers {
     JarApi.access().hostname(configurator.hostname).port(configurator.port)
 
   private[this] def generateFile(bytes: Array[Byte]): File = {
-    val tempFile = CommonUtils.createTempFile(methodName())
+    val tempFile = CommonUtils.createTempJar(methodName())
     val output = new FileOutputStream(tempFile)
     try output.write(bytes)
     finally output.close()
@@ -50,14 +50,14 @@ class TestJarStore extends SmallTest with Matchers {
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
   @Test
-  def testGroupLabel(): Unit = {
+  def testGroupLabelWithConfigurator(): Unit = {
     val group = "foobar"
 
     // add a random group folder file
     result(configurator.jarStore.add(generateFile()))
     // add two files in specific group
     val f1 = generateFile()
-    val info1 = result(configurator.jarStore.add(f1, "newfile", group))
+    result(configurator.jarStore.add(f1, "newfile", group))
     // make sure the second file has different modified time
     TimeUnit.SECONDS.sleep(2)
     val f2 = generateFile()
@@ -76,22 +76,28 @@ class TestJarStore extends SmallTest with Matchers {
     // filter jars by group
     result(configurator.jarStore.jarInfos(group)).size shouldBe 2
 
-    // same group but the old file cannot be get
-    an[NoSuchElementException] should be thrownBy result(configurator.jarStore.jarInfo(info1.id))
-
-    // same group newer file can be get
-    val res = result(configurator.jarStore.jarInfo(info2.id))
+    // we only can get the latest modified file of same group and same name
+    val res = result(configurator.jarStore.jarInfo(info2.group, info2.name))
     res.group shouldBe group
     res.size shouldBe f2.length()
     res.name shouldBe "newfile"
   }
 
   @Test
-  def nullIdInJarInfo(): Unit = an[NullPointerException] should be thrownBy result(configurator.jarStore.jarInfo(null))
+  def nullGroupJarInfo(): Unit =
+    an[NullPointerException] should be thrownBy result(configurator.jarStore.jarInfo(null, "name"))
+
+  @Test
+  def emptyGroupInJarInfo(): Unit =
+    an[IllegalArgumentException] should be thrownBy result(configurator.jarStore.jarInfo("", "name"))
+
+  @Test
+  def nullIdInJarInfo(): Unit =
+    an[NullPointerException] should be thrownBy result(configurator.jarStore.jarInfo("group", null))
 
   @Test
   def emptyIdInJarInfo(): Unit =
-    an[IllegalArgumentException] should be thrownBy result(configurator.jarStore.jarInfo(""))
+    an[IllegalArgumentException] should be thrownBy result(configurator.jarStore.jarInfo("group", ""))
 
   @Test
   def nullFileInAdd(): Unit = an[NullPointerException] should be thrownBy result(configurator.jarStore.add(null))
@@ -119,60 +125,65 @@ class TestJarStore extends SmallTest with Matchers {
 
   @Test
   def nullIdInUpdate(): Unit =
-    an[NullPointerException] should be thrownBy result(configurator.jarStore.update(null, generateFile()))
+    an[NullPointerException] should be thrownBy result(configurator.jarStore.update("group", null, generateFile()))
 
   @Test
   def emptyIdInUpdate(): Unit =
-    an[IllegalArgumentException] should be thrownBy result(configurator.jarStore.update("", generateFile()))
+    an[IllegalArgumentException] should be thrownBy result(configurator.jarStore.update("group", "", generateFile()))
 
   @Test
   def nullFileInUpdate(): Unit = {
     val jarInfo = result(configurator.jarStore.add(generateFile()))
-    an[NullPointerException] should be thrownBy result(configurator.jarStore.update(jarInfo.id, null))
+    an[NullPointerException] should be thrownBy result(configurator.jarStore.update(jarInfo.group, jarInfo.name, null))
   }
 
   @Test
   def nonexistentFileInUpdate(): Unit = {
     val jarInfo = result(configurator.jarStore.add(generateFile()))
     an[IllegalArgumentException] should be thrownBy result(
-      configurator.jarStore.update(jarInfo.id, new File(CommonUtils.randomString())))
+      configurator.jarStore.update(jarInfo.group, jarInfo.name, new File(CommonUtils.randomString())))
   }
 
   @Test
   def nonexistentIdInJarInfo(): Unit =
-    an[NoSuchElementException] should be thrownBy result(configurator.jarStore.jarInfo("Asdasd"))
+    an[NoSuchElementException] should be thrownBy result(configurator.jarStore.jarInfo("group", "Asdasd"))
 
   @Test
   def nullIdInRename(): Unit =
-    an[NullPointerException] should be thrownBy result(configurator.jarStore.rename(null, CommonUtils.randomString()))
+    an[NullPointerException] should be thrownBy result(
+      configurator.jarStore.rename("group", null, CommonUtils.randomString()))
 
   @Test
   def emptyIdInRename(): Unit =
-    an[IllegalArgumentException] should be thrownBy result(configurator.jarStore.rename("", CommonUtils.randomString()))
+    an[IllegalArgumentException] should be thrownBy result(
+      configurator.jarStore.rename("group", "", CommonUtils.randomString()))
 
   @Test
   def nullNewNameInRename(): Unit = {
     val jarInfo = result(configurator.jarStore.add(generateFile()))
-    an[NullPointerException] should be thrownBy result(configurator.jarStore.rename(jarInfo.id, null))
+    an[NullPointerException] should be thrownBy result(configurator.jarStore.rename(jarInfo.group, jarInfo.name, null))
   }
 
   @Test
   def emptyNewNameInRename(): Unit = {
     val jarInfo = result(configurator.jarStore.add(generateFile()))
-    an[IllegalArgumentException] should be thrownBy result(configurator.jarStore.rename(jarInfo.id, ""))
+    an[IllegalArgumentException] should be thrownBy result(
+      configurator.jarStore.rename(jarInfo.group, jarInfo.name, ""))
   }
 
   @Test
-  def nullIdInToFile(): Unit = an[NullPointerException] should be thrownBy result(configurator.jarStore.toFile(null))
+  def nullIdInToFile(): Unit =
+    an[NullPointerException] should be thrownBy result(configurator.jarStore.toFile("group", null))
 
   @Test
-  def emptyIdInToFile(): Unit = an[IllegalArgumentException] should be thrownBy result(configurator.jarStore.toFile(""))
+  def emptyIdInToFile(): Unit =
+    an[IllegalArgumentException] should be thrownBy result(configurator.jarStore.toFile("group", ""))
 
   @Test
   def listNonexistentIdWithExistOne(): Unit = {
     val f = generateFile(CommonUtils.randomString().getBytes)
-    val plugin = result(access.upload(f, None))
-    val jar = result(configurator.jarStore.jarInfo(plugin.id))
+    val plugin = result(access.request().upload(f))
+    val jar = result(configurator.jarStore.jarInfo(plugin.group, plugin.name))
     // the jar info from jar store does not have the url
     jar.copy(url = plugin.url) shouldBe plugin
   }
@@ -180,7 +191,7 @@ class TestJarStore extends SmallTest with Matchers {
   @Test
   def testInvalidInput(): Unit =
     an[IllegalArgumentException] should be thrownBy JarStore.builder
-      .homeFolder(CommonUtils.createTempFile("aa").getCanonicalPath)
+      .homeFolder(CommonUtils.createTempJar("aa").getCanonicalPath)
       .hostname(CommonUtils.anyLocalAddress())
       .port(CommonUtils.availablePort())
       .build()
@@ -208,17 +219,17 @@ class TestJarStore extends SmallTest with Matchers {
     val content = CommonUtils.randomString()
     val f = generateFile(content.getBytes)
 
-    val plugin = result(access.upload(f, None))
-    plugin.name shouldBe f.getName
+    val plugin = result(access.request().upload(f))
+    f.getName.contains(plugin.name) shouldBe true
     plugin.size shouldBe content.length
     plugin.url should not be None
-    result(access.list).size shouldBe 1
-    result(access.get(plugin.id)) shouldBe plugin
+    result(access.request().list).size shouldBe 1
+    result(access.request().group(plugin.group).get(plugin.name)) shouldBe plugin
 
     val url = plugin.url
     url.getProtocol shouldBe "http"
     val input = url.openStream()
-    val tempFile = CommonUtils.createTempFile(methodName())
+    val tempFile = CommonUtils.createTempJar(methodName())
     if (tempFile.exists()) tempFile.delete() shouldBe true
     try {
       Files.copy(input, tempFile.toPath)

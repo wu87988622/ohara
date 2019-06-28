@@ -52,7 +52,7 @@ export const createConnector = async ({
   } else if (isStream(typeName)) {
     // stream app needs a jar id in order to create a property form
     const res = await createProperty({
-      jarId: connector.jarId,
+      jarName: connector.jarName,
       name: connectorName,
     });
 

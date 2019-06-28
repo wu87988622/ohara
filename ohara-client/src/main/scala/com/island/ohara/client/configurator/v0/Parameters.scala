@@ -25,6 +25,7 @@ import com.island.ohara.common.util.CommonUtils
   */
 object Parameters {
   val CLUSTER_NAME: String = "cluster"
+  val GROUP_NAME: String = "group"
 
   /**
     * CLUSTER is our first query parameter. We introduce this method to append cluster parameter to url.
@@ -35,6 +36,17 @@ object Parameters {
       .requireNonEmpty(url)
       .concat(
         if (!CommonUtils.isEmpty(target)) s"?$CLUSTER_NAME=${Objects.requireNonNull(target)}"
+        else "")
+
+  /**
+    * Append group parameter to url.
+    * NOTED: If the `target` string is empty, return no parameter url
+    */
+  def appendTargetGroup(url: String, target: String): String =
+    CommonUtils
+      .requireNonEmpty(url)
+      .concat(
+        if (!CommonUtils.isEmpty(target)) s"?$GROUP_NAME=${Objects.requireNonNull(target)}"
         else "")
 
   /**

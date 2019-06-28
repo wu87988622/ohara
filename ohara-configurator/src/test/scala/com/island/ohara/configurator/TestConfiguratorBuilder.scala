@@ -31,7 +31,7 @@ class TestConfiguratorBuilder extends SmallTest with Matchers {
   @Test
   def fileToHomeFolder(): Unit = an[IllegalArgumentException] should be thrownBy Configurator
     .builder()
-    .homeFolder(CommonUtils.createTempFile(methodName()).getCanonicalPath)
+    .homeFolder(CommonUtils.createTempJar(methodName()).getCanonicalPath)
 
   @Test
   def autoMkdirForHomeFolder(): Unit = {

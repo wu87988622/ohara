@@ -51,7 +51,7 @@ class PluginSelectModal extends React.Component {
         initPluginIds: nextProps.initPluginIds,
         jars: map(prevState.jars, jar => ({
           ...jar,
-          checked: includes(nextProps.initPluginIds, jar.id),
+          checked: includes(nextProps.initPluginIds, jar.group),
         })),
       };
     }
@@ -93,7 +93,7 @@ class PluginSelectModal extends React.Component {
     this.setState(state => {
       return {
         jars: state.jars.map(jar => {
-          if (value === jar.id) {
+          if (value === jar.group) {
             return Object.assign({}, jar, {
               checked,
             });
@@ -108,7 +108,7 @@ class PluginSelectModal extends React.Component {
     this.setState(state => {
       return {
         jars: state.jars.map(jar => {
-          if (value === jar.id) {
+          if (value === jar.group) {
             return Object.assign({}, jar, {
               checked: !jar.checked,
             });
@@ -124,7 +124,7 @@ class PluginSelectModal extends React.Component {
       return {
         jars: map(state.jars, jar => ({
           ...jar,
-          checked: includes(state.initPluginIds, jar.id),
+          checked: includes(state.initPluginIds, jar.group),
         })),
       };
     });
@@ -178,11 +178,11 @@ class PluginSelectModal extends React.Component {
         <Box shadow={false}>
           <FileUploadInput onChange={this.handleFileSelect} />
           <Table headers={this.headers}>
-            {jars.map(({ id, checked, name }) => (
-              <tr key={id} onClick={() => this.handleRowClick(id)}>
+            {jars.map(({ group, checked, name }) => (
+              <tr key={group} onClick={() => this.handleRowClick(group)}>
                 <td>
                   <Checkbox
-                    value={id}
+                    value={group}
                     onChange={this.handleChecked}
                     checked={checked || false}
                     height="auto"

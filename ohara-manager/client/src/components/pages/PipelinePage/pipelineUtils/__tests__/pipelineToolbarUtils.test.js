@@ -17,7 +17,6 @@
 import { CONNECTOR_TYPES } from 'constants/pipelines';
 import * as generate from 'utils/generate';
 import * as connectorApi from 'api/connectorApi';
-import { createProperty } from 'api/streamApi';
 
 import { createConnector, trimString } from '../pipelineToolbarUtils';
 
@@ -50,33 +49,6 @@ describe('createConnector()', () => {
         to: [],
         className: CONNECTOR_TYPES.topic,
         id: topicId,
-      },
-    });
-  });
-
-  it('updates a stream app', async () => {
-    const propertyId = generate.id();
-    const typeName = CONNECTOR_TYPES.streamApp;
-    const connector = {
-      className: CONNECTOR_TYPES.streamApp,
-      jarId: generate.id(),
-      typeName,
-    };
-
-    const res = { data: { result: { id: propertyId } } };
-
-    createProperty.mockImplementation(() => Promise.resolve(res));
-
-    await createConnector({ updateGraph, connector });
-
-    expect(updateGraph).toHaveBeenCalledTimes(1);
-    expect(updateGraph).toHaveBeenCalledWith({
-      update: {
-        name: `Untitled ${typeName}`,
-        kind: CONNECTOR_TYPES.streamApp,
-        to: [],
-        className: CONNECTOR_TYPES.streamApp,
-        id: propertyId,
       },
     });
   });

@@ -17,6 +17,7 @@
 package com.island.ohara.configurator.route
 
 import java.util.Objects
+import java.util.concurrent.TimeUnit
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes
@@ -166,38 +167,39 @@ private[configurator] object StreamRoute {
                 formFields(Parameters.CLUSTER_NAME.?) { reqName =>
                   storeUploadedFiles(
                     StreamApi.INPUT_KEY,
-                    info => CommonUtils.createTempFile(info.fileName)
+                    info => CommonUtils.createTempJar(info.fileName)
                   ) { files =>
                     complete(
                       // here we try to find the pre-defined wk if not assigned by request
-                      CollieUtils
-                        .workerClient(reqName)
-                        .map(_._1.name)
-                        .map { wkName =>
-                          log.debug(s"worker: $wkName, files: ${files.map(_._1.fileName)}")
-                          Future
-                            .sequence(files.map {
-                              case (metadata, file) =>
-                                //TODO : we don't limit the jar size until we got another solution for #1234....by Sam
-                                jarStore.add(file, metadata.fileName, wkName).flatMap { jarInfo =>
-                                  store.addIfAbsent(
-                                    StreamJar(
-                                      wkName,
-                                      jarInfo.id,
+                      CollieUtils.workerClient(reqName).map(_._1.name).map { wkName =>
+                        log.debug(s"worker: $wkName, files: ${files.map(_._1.fileName)}")
+                        Future
+                          .sequence(files.map {
+                            case (metadata, file) =>
+                              // TODO : this is a temp solution for too "frequently" create absent folder for jar
+                              TimeUnit.SECONDS.sleep(1)
+                              //TODO : we don't limit the jar size until we got another solution for #1234....by Sam
+                              jarStore.add(file, metadata.fileName, wkName).flatMap { jarInfo =>
+                                store.exist[StreamJar](jarInfo.name).flatMap {
+                                  if (_) {
+                                    store.addIfPresent[StreamJar](
                                       jarInfo.name,
-                                      CommonUtils.current()
-                                    )
-                                  )
+                                      previous =>
+                                        Future.successful(previous.copy(lastModified = CommonUtils.current())))
+                                  } else {
+                                    store.addIfAbsent[StreamJar](StreamJar(wkName, jarInfo.name, CommonUtils.current()))
+                                  }
                                 }
-                            })
-                            .map { reps =>
-                              //delete temp jars after success
-                              files.foreach {
-                                case (_, file) => file.deleteOnExit()
                               }
-                              reps
+                          })
+                          .map { reps =>
+                            //delete temp jars after success
+                            files.foreach {
+                              case (_, file) => file.deleteOnExit()
                             }
-                        }
+                            reps
+                          }
+                      }
                     )
                   }
                 }
@@ -221,53 +223,57 @@ private[configurator] object StreamRoute {
             } ~
             // need id to delete / update jar
             path(Segment) { id =>
-              //delete jar
-              delete {
-                complete(store.values[StreamAppDescription]().map { streamApps =>
-                  // check the jar is not used in any streamApp which is used in pipeline
-                  if (streamApps.exists(_.jarInfo.id == id)) {
-                    val jar = streamApps.filter(_.jarInfo.id == id).map(_.jarInfo.name)
-                    throw new IllegalArgumentException(s"Jar is used in pipeline : $jar")
-                  } else {
-                    store.remove[StreamJar](id).flatMap { _ =>
-                      jarStore
-                        .exist(id)
-                        .map(if (_) {
-                          jarStore.remove(id)
-                          true
-                        } else true)
-                        .map(_ => StatusCodes.NoContent)
+              parameter(Parameters.CLUSTER_NAME) { wkName =>
+                //delete jar
+                delete {
+                  complete(store.values[StreamAppDescription]().map { streamApps =>
+                    // check the jar is not used in any streamApp which is used in pipeline
+                    if (streamApps.exists(_.jarInfo.id == id)) {
+                      val jar = streamApps.filter(_.jarInfo.id == id).map(_.jarInfo.name)
+                      throw new IllegalArgumentException(s"Jar is used in pipeline : $jar")
+                    } else {
+                      store.remove[StreamJar](id).flatMap { _ =>
+                        jarStore
+                          .exist(wkName, id)
+                          .map(if (_) {
+                            jarStore.remove(wkName, id)
+                            true
+                          } else true)
+                          .map(_ => StatusCodes.NoContent)
+                      }
+                    }
+                  })
+                } ~
+                  //update jar name
+                  put {
+                    entity(as[StreamListRequest]) { req =>
+                      if (CommonUtils.isEmpty(req.jarName))
+                        throw new IllegalArgumentException(s"Require jarName")
+                      complete(jarStore.rename(wkName, id, req.jarName).flatMap { jarInfo =>
+                        store.addIfPresent[StreamJar](
+                          id,
+                          previous =>
+                            Future.successful(
+                              previous.copy(
+                                name = jarInfo.name,
+                                lastModified = CommonUtils.current()
+                              )
+                          )
+                        )
+                      })
                     }
                   }
-                })
-              } ~
-                //update jar name
-                put {
-                  entity(as[StreamListRequest]) { req =>
-                    if (CommonUtils.isEmpty(req.jarName))
-                      throw new IllegalArgumentException(s"Require jarName")
-                    complete(jarStore.rename(id, req.jarName).flatMap { jarInfo =>
-                      store.addIfPresent[StreamJar](
-                        id,
-                        previous =>
-                          Future.successful(
-                            previous.copy(
-                              name = jarInfo.name,
-                              lastModified = CommonUtils.current()
-                            )
-                        )
-                      )
-                    })
-                  }
-                }
+              }
             }
         } ~
         //StreamApp Property Page
         RouteUtils.basicRoute(
           root = STREAM_PROPERTY_PREFIX_PATH,
           hookOfAdd = (id: Id, request: StreamPropertyRequest) =>
-            jarStore.jarInfo(request.jarId).flatMap { jarInfo =>
-              store.value[StreamJar](request.jarId).map(streamJar => toStore(id, request, streamJar, jarInfo))
+            store.value[StreamJar](request.jarName).flatMap { streamJar =>
+              jarStore
+                .jarInfo(streamJar.workerClusterName, request.jarName)
+                .map(jarInfo => toStore(id, request, streamJar, jarInfo))
           },
           hookOfUpdate = (id: Id, request: StreamPropertyRequest, previous: StreamAppDescription) =>
             if (previous.state.isDefined)
@@ -331,8 +337,8 @@ private[configurator] object StreamRoute {
                         // get broker props from worker cluster
                         .map { case (_, topicAdmin, _, _) => topicAdmin.connectionProps }
                         .flatMap { bkProps =>
-                          jarStore
-                            .jarInfo(data.jarInfo.id)
+                          Future
+                            .successful(data.jarInfo)
                             .map(_.url)
                             .flatMap {
                               url =>

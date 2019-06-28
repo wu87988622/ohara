@@ -51,13 +51,25 @@ export const fetchWorkers = async () => {
 export const createWorker = async params => {
   try {
     const url = `/api/workers`;
+
+    const jars = get(params, 'plugins', []).map(jar => {
+      return {
+        name: jar.name,
+        group: jar.group,
+      };
+    });
+
     const data = {
       name: params.name,
       jmxPort: params.jmxPort,
       brokerClusterName: params.brokerClusterName,
       clientPort: toNumber(params.clientPort),
       nodeNames: params.nodeNames || [],
-      jars: params.plugins || [],
+      jars: jars,
+      groupId: params.groupId,
+      configTopicName: params.configTopicName,
+      offsetTopicName: params.offsetTopicName,
+      statusTopicName: params.statusTopicName,
     };
     const config = {
       timeout: 3 * 60 * 1000, // set timeout to 3 minutes.

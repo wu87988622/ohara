@@ -37,7 +37,7 @@ public class TestStreamApp extends SmallTest {
 
   @Test
   public void testCanDownloadJar() {
-    File file = CommonUtils.createTempFile("streamApp");
+    File file = CommonUtils.createTempJar("streamApp");
 
     try {
       File downloadedFile = StreamApp.downloadJarByUrl(file.toURI().toURL().toString());

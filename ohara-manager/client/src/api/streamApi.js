@@ -65,8 +65,8 @@ export const uploadJar = async params => {
 
 export const deleteJar = async params => {
   try {
-    const { id } = params;
-    const url = `/api/stream/jars/${id}`;
+    const { name, workerClusterName } = params;
+    const url = `/api/stream/jars/${name}?cluster=${workerClusterName}`;
     const res = await axiosInstance.delete(url);
     const isSuccess = get(res, 'data.isSuccess', false);
 
@@ -135,8 +135,7 @@ export const updateProperty = async params => {
     const streamAppId = params.id;
     const url = `/api/stream/property/${streamAppId}`;
     const data = {
-      jarId: params.jarId,
-      name: params.name,
+      jarName: params.jarName,
       from: params.from || [],
       to: params.to || [],
       instances: params.instances ? Number(params.instances) : 1,
@@ -154,9 +153,12 @@ export const updateProperty = async params => {
   }
 };
 
-export const deleteProperty = async id => {
+export const deleteProperty = async params => {
   try {
-    const res = await axiosInstance.delete(`/api/stream/property/${id}`);
+    const { id, workerClusterName } = params;
+    const res = await axiosInstance.delete(
+      `/api/stream/property/${id}?cluster=${workerClusterName}`,
+    );
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {

@@ -94,9 +94,13 @@ class WorkerNewModal extends React.Component {
     const worker = await workerApi.createWorker({
       ...values,
       name: this.validateServiceName(values.name),
-      plugins: map(values.plugins, 'id'),
+      plugins: values.plugins,
       jmxPort: generate.port(),
       brokerClusterName,
+      groupId: generate.serviceName(),
+      configTopicName: generate.serviceName(),
+      offsetTopicName: generate.serviceName(),
+      statusTopicName: generate.serviceName(),
     });
 
     const workerClusterName = get(worker, 'data.result.name');
@@ -261,7 +265,7 @@ class WorkerNewModal extends React.Component {
                       <s.List width="16rem">
                         {values.plugins &&
                           values.plugins.map(plugin => (
-                            <s.ListItem key={plugin.id}>
+                            <s.ListItem key={plugin.group}>
                               {plugin.name}
                             </s.ListItem>
                           ))}
@@ -302,7 +306,7 @@ class WorkerNewModal extends React.Component {
                   this.setState({ activeModal: null });
                   handlePluginSelected(plugins);
                 }}
-                initPluginIds={map(values.plugins, 'id')}
+                initPluginIds={map(values.plugins, 'group')}
               />
             </Modal>
           );

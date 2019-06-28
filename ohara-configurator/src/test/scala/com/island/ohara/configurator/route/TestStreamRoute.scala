@@ -65,16 +65,16 @@ class TestStreamRoute extends SmallTest with Matchers {
 
     // delete first jar file
     val deleteStreamJar = res.head
-    result(accessStreamList.delete(deleteStreamJar.id))
+    result(accessStreamList.delete(deleteStreamJar.id, deleteStreamJar.workerClusterName))
     result(accessStreamList.list(None)).size shouldBe fileSize - 1
     // Second time delete do nothing
-    result(accessStreamList.delete(deleteStreamJar.id))
+    result(accessStreamList.delete(deleteStreamJar.id, deleteStreamJar.workerClusterName))
 
     // update last jar name
     val originJar = res.last
     val newNameJar = StreamListRequest("new-name.jar")
-    val updated = result(accessStreamList.update(originJar.id, newNameJar))
-    updated.name shouldBe "new-name.jar"
+    val updated = result(accessStreamList.update(originJar.name, originJar.workerClusterName, newNameJar))
+    updated.name shouldBe "new-name"
 
     filePaths.foreach(new File(_).deleteOnExit())
   }
@@ -98,9 +98,9 @@ class TestStreamRoute extends SmallTest with Matchers {
     // without parameter, same result as previous
     result(accessStreamList.list(None)).size shouldBe fileSize
 
-    result(accessStreamList.delete(jarInfos.head.id))
+    result(accessStreamList.delete(jarInfos.head.id, jarInfos.head.workerClusterName))
     // Second time delete do nothing
-    result(accessStreamList.delete(jarInfos.head.id))
+    result(accessStreamList.delete(jarInfos.head.id, jarInfos.head.workerClusterName))
     result(accessStreamList.list(Some(wkName))).size shouldBe fileSize - 1
 
     filePaths.foreach(new File(_).deleteOnExit())
@@ -135,11 +135,13 @@ class TestStreamRoute extends SmallTest with Matchers {
     file.setLastModified(System.currentTimeMillis())
     val res2 = result(accessStreamList.upload(Seq(file.getPath), Some(wkName)))
 
-    // list jars should only show last modified jar
+    // list jars should only show last modified jar (name should be equal)
     val jars = result(accessStreamList.list(Some(wkName)))
     jars.size shouldBe 1
-    jars.head.id should not be res1.head.id
+    jars.head.id shouldBe res1.head.id
     jars.head.id shouldBe res2.head.id
+    jars.head.lastModified should not be res1.head.lastModified
+    jars.head.lastModified shouldBe res2.head.lastModified
 
     file.deleteOnExit()
   }
@@ -286,12 +288,12 @@ class TestStreamRoute extends SmallTest with Matchers {
   @Test
   def testStreamAppListPageFailCases(): Unit = {
     val newNameJar = StreamListRequest("new-name.jar")
-    an[IllegalArgumentException] should be thrownBy result(accessStreamList.update("fake_id", newNameJar))
-    an[NullPointerException] should be thrownBy result(accessStreamList.update("id", null))
+    an[IllegalArgumentException] should be thrownBy result(accessStreamList.update("fake_name", "xxx", newNameJar))
+    an[NullPointerException] should be thrownBy result(accessStreamList.update("new-name", "xxx", null))
     an[IllegalArgumentException] should be thrownBy
-      result(accessStreamList.update("id", newNameJar.copy("")))
+      result(accessStreamList.update("new-name", "xxx", newNameJar.copy("")))
     an[IllegalArgumentException] should be thrownBy
-      result(accessStreamList.update("id", newNameJar.copy(null)))
+      result(accessStreamList.update("new-name", "xxx", newNameJar.copy(null)))
   }
 
   @Test
@@ -338,7 +340,7 @@ class TestStreamRoute extends SmallTest with Matchers {
 
   @Test
   def duplicateDeleteStream(): Unit =
-    (0 to 10).foreach(_ => result(accessStreamList.delete(CommonUtils.randomString(5))))
+    (0 to 10).foreach(_ => result(accessStreamList.delete(CommonUtils.randomString(5), "xxx")))
 
   @Test
   def duplicateDeleteStreamProperty(): Unit =

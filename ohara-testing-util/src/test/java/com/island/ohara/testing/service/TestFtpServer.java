@@ -88,7 +88,7 @@ public class TestFtpServer extends MediumTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void setFileToHomeFolder() {
-    File f = CommonUtils.createTempFile(CommonUtils.randomString(5));
+    File f = CommonUtils.createTempJar(CommonUtils.randomString(5));
     FtpServer.builder().homeFolder(f).build();
   }
 

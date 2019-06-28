@@ -68,11 +68,11 @@ object StreamApi {
     * the jar info of the uploaded streamApp jar
     *
     * @param workerClusterName which cluster the jar is belong to
-    * @param id jar upload unique id
     * @param name jar name
     * @param lastModified the data change time
     */
-  final case class StreamJar(workerClusterName: String, id: String, name: String, lastModified: Long) extends Data {
+  final case class StreamJar(workerClusterName: String, name: String, lastModified: Long) extends Data {
+    override def id: String = name
     override def kind: String = "streamJar"
   }
 
@@ -165,10 +165,10 @@ object StreamApi {
   implicit val STREAM_LIST_REQUEST_JSON_FORMAT: RootJsonFormat[StreamListRequest] = jsonFormat1(StreamListRequest)
 
   // StreamApp List Response Body
-  implicit val STREAM_JAR_JSON_FORMAT: RootJsonFormat[StreamJar] = jsonFormat4(StreamJar)
+  implicit val STREAM_JAR_JSON_FORMAT: RootJsonFormat[StreamJar] = jsonFormat3(StreamJar)
 
   // StreamApp Property Request Body
-  final case class StreamPropertyRequest(jarId: String,
+  final case class StreamPropertyRequest(jarName: String,
                                          name: Option[String],
                                          from: Option[Seq[String]],
                                          to: Option[Seq[String]],
@@ -237,23 +237,26 @@ object StreamApi {
       implicit executionContext: ExecutionContext): Future[Seq[StreamJar]]
 
     /**
-      * delete streamApp jar by id
+      * delete streamApp jar by name and group
       *
-      * @param id streamApp id
+      * @param name streamApp name
+      * @param group streamApp group
       * @param executionContext execution context
       * @return the deleted jar
       */
-    def delete(id: String)(implicit executionContext: ExecutionContext): Future[Unit]
+    def delete(name: String, group: String)(implicit executionContext: ExecutionContext): Future[Unit]
 
     /**
       * update jar information
       *
-      * @param id streamApp id
+      * @param name streamApp name
+      * @param group streamApp group
       * @param request update request
       * @param executionContext execution context
       * @return the updated jar
       */
-    def update(id: String, request: StreamListRequest)(implicit executionContext: ExecutionContext): Future[StreamJar]
+    def update(name: String, group: String, request: StreamListRequest)(
+      implicit executionContext: ExecutionContext): Future[StreamJar]
   }
   // To avoid different charset handle, replace the malformedInput and unMappable char
   implicit val codec: Codec = Codec("UTF-8")
@@ -292,14 +295,16 @@ object StreamApi {
       request(s"http://${_hostname}:${_port}/${_version}/${_prefixPath}", inputKey, contentType, filePaths, wkName)
         .flatMap(exec.request[Seq[StreamJar], ErrorApi.Error])
     }
-    override def delete(id: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-      exec.delete[ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$id")
-    override def update(id: String, request: StreamListRequest)(
+    override def delete(name: String, group: String)(implicit executionContext: ExecutionContext): Future[Unit] =
+      exec.delete[ErrorApi.Error](
+        Parameters.appendTargetCluster(s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$name",
+                                       CommonUtils.requireNonEmpty(group)))
+    override def update(name: String, group: String, request: StreamListRequest)(
       implicit executionContext: ExecutionContext): Future[StreamJar] =
       exec.put[StreamListRequest, StreamJar, ErrorApi.Error](
-        s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$id",
-        request
-      )
+        Parameters.appendTargetCluster(s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$name",
+                                       CommonUtils.requireNonEmpty(group)),
+        request)
   }
 
   sealed trait PropertyAccess {

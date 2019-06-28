@@ -35,7 +35,9 @@ object WorkerRoute {
       hookBeforeDelete = (_, name) => Future.successful(name),
       hookOfCreation = (clusters, req: Creation) =>
         Future
-          .traverse(req.jarIds)(jarStore.jarInfo)
+          .traverse(req.jars.map(jarKey => (jarKey.group, jarKey.name))) {
+            case (group, id) => jarStore.jarInfo(group, id)
+          }
           .map { jarInfos =>
             val wkClusters = clusters.filter(_.isInstanceOf[WorkerClusterInfo]).map(_.asInstanceOf[WorkerClusterInfo])
 

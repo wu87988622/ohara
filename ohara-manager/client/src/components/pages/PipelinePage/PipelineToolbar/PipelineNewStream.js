@@ -16,28 +16,16 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import toastr from 'toastr';
 import styled from 'styled-components';
-import { find, some, endsWith, get, isNull } from 'lodash';
+import { endsWith, get, isNull } from 'lodash';
 
 import * as streamApi from 'api/streamApi';
-import * as MESSAGES from 'constants/messages';
-import Editable from '../Editable';
 import { ListLoader } from 'components/common/Loader';
-import { ConfirmModal } from 'components/common/Modal';
 import { createConnector } from '../pipelineUtils/pipelineToolbarUtils';
-import { Icon, TableWrapper, Table } from './styles';
-
-const FileUploadWrapper = styled.div`
-  margin: 20px 30px;
-`;
+import { TableWrapper, Table } from './styles';
 
 const LoaderWrapper = styled.div`
   margin: 20px 40px;
-`;
-
-const StyledIcon = styled(Icon)`
-  font-size: 20px;
 `;
 
 class PipelineNewStream extends React.Component {
@@ -73,95 +61,11 @@ class PipelineNewStream extends React.Component {
     });
   };
 
-  handleTrSelect = id => {
-    this.setState({ activeId: id });
-  };
-
-  handleFileSelect = e => {
-    this.setState({ file: e.target.files[0] }, () => {
-      const { file } = this.state;
-      if (file) {
-        const filename = file.name;
-        if (!this.validateJarExtension(filename)) {
-          toastr.error(
-            `This file type is not supported.\n Please select your '.jar' file.`,
-          );
-          return;
-        }
-
-        if (this.isDuplicateTitle(filename)) {
-          toastr.error(`This file name is duplicate. '${filename}'`);
-          return;
-        }
-
-        this.uploadJar(file);
-      }
-    });
-  };
-
-  handleDeleteClick = e => {
-    e.preventDefault();
-    if (this.state.activeId) {
-      this.deleteJar(this.state.activeId);
-    }
-  };
-
-  handleDeleteRowModalOpen = (e, id) => {
-    e.preventDefault();
-    this.setState({ isDeleteRowModalActive: true, activeId: id });
-  };
-
-  handleDeleteRowModalClose = () => {
-    this.setState({ isDeleteRowModalActive: false, activeJar: null });
-  };
-
-  handleEditIconClick = () => {
-    this.setState({ isTitleEditing: true });
-  };
-
-  isDuplicateTitle = (title, excludeMyself = false) => {
-    const { jars, activeId } = this.state;
-    if (excludeMyself) {
-      return some(jars, jar => activeId !== jar.id && title === jar.name);
-    }
-    return some(jars, jar => title === jar.name);
+  handleTrSelect = name => {
+    this.setState({ activeId: name });
   };
 
   validateJarExtension = jarName => endsWith(jarName, '.jar');
-
-  handleTitleChange = ({ target: { value: title } }) => {
-    if (this.isDuplicateTitle(title, true)) {
-      toastr.error(
-        'The filename is already taken, please choose another name.',
-      );
-      return;
-    }
-
-    const newJarName = title;
-
-    if (!this.validateJarExtension(newJarName)) {
-      toastr.error(`Unsupported file.\n The accept file is "jar".`);
-      return;
-    }
-
-    this.setState(({ jars, activeId }) => {
-      return {
-        jars: jars.map(jar =>
-          jar.id === activeId ? { ...jar, name: newJarName } : jar,
-        ),
-      };
-    });
-  };
-
-  handleTitleConfirm = async isUpdate => {
-    if (isUpdate) {
-      const { jars, activeId } = this.state;
-      const jar = find(jars, { id: activeId });
-      if (jar) {
-        this.updateJar(jar.id, jar.name);
-      }
-    }
-  };
 
   fetchJars = async () => {
     const { workerClusterName, updateAddBtnStatus } = this.props;
@@ -169,7 +73,7 @@ class PipelineNewStream extends React.Component {
     this.setState({ isLoading: false });
 
     const jars = get(res, 'data.result', null);
-    const activeId = get(jars, '[0].id', null);
+    const activeId = get(jars, '[0].name', null);
     updateAddBtnStatus(activeId);
 
     if (!isNull(jars)) {
@@ -177,41 +81,9 @@ class PipelineNewStream extends React.Component {
     }
   };
 
-  uploadJar = async file => {
-    const { workerClusterName } = this.props;
-    const res = await streamApi.uploadJar({ workerClusterName, file });
-    const isSuccess = get(res, 'data.isSuccess', false);
-    if (isSuccess) {
-      toastr.success(MESSAGES.STREAM_APP_UPLOAD_SUCCESS);
-      this.setState({ file: null });
-      this.fetchJars();
-    }
-  };
-
-  updateJar = async (id, newJarName) => {
-    const res = await streamApi.updateJarName({
-      id: id,
-      jarName: newJarName,
-    });
-    const isSuccess = get(res, 'data.isSuccess', false);
-    if (isSuccess) {
-      toastr.success(MESSAGES.STREAM_APP_RENAME_SUCCESS);
-    }
-  };
-
-  deleteJar = async id => {
-    const res = await streamApi.deleteJar({ id: id });
-    const isSuccess = get(res, 'data.isSuccess', false);
-    if (isSuccess) {
-      toastr.success(MESSAGES.STREAM_APP_DELETE_SUCCESS);
-      this.handleDeleteRowModalClose();
-      this.fetchJars();
-    }
-  };
-
   update = async () => {
     const connector = {
-      jarId: this.state.activeId,
+      jarName: this.state.activeId,
       className: 'streamApp',
       typeName: 'streamApp',
     };
@@ -231,45 +103,18 @@ class PipelineNewStream extends React.Component {
           </LoaderWrapper>
         ) : (
           <React.Fragment>
-            <FileUploadWrapper>
-              <input
-                type="file"
-                accept=".jar"
-                onChange={this.handleFileSelect}
-              />
-            </FileUploadWrapper>
             <TableWrapper>
-              <Table headers={['FILENAME', 'RENAME', 'DELETE']}>
-                {jars.map(({ id, name: title }) => {
-                  const isActive = id === activeId ? 'is-active' : '';
+              <Table headers={['FILENAME']}>
+                {jars.map(({ name }) => {
+                  const isActive = name === activeId ? 'is-active' : '';
                   return (
                     <tr
                       className={isActive}
-                      key={id}
-                      onClick={() => this.handleTrSelect(id)}
+                      key={name}
+                      onClick={() => this.handleTrSelect(name)}
                       data-testid="stream-app-item"
                     >
-                      <td>
-                        <Editable
-                          title={title}
-                          handleFocusOut={this.handleTitleConfirm}
-                          handleChange={this.handleTitleChange}
-                          showIcon={false}
-                        />
-                      </td>
-                      <td>
-                        <StyledIcon
-                          className="far fa-edit"
-                          onClick={() => this.handleEditIconClick(id)}
-                        />
-                      </td>
-                      <td>
-                        <StyledIcon
-                          className="far fa-trash-alt"
-                          data-testid="delete-stream-app"
-                          onClick={e => this.handleDeleteRowModalOpen(e, id)}
-                        />
-                      </td>
+                      <td>{name}</td>
                     </tr>
                   );
                 })}
@@ -277,16 +122,6 @@ class PipelineNewStream extends React.Component {
             </TableWrapper>
           </React.Fragment>
         )}
-        <ConfirmModal
-          isActive={this.state.isDeleteRowModalActive}
-          title="Delete row?"
-          confirmBtnText="Yes, Delete this jar"
-          cancelBtnText="No, Keep it"
-          handleCancel={this.handleDeleteRowModalClose}
-          handleConfirm={this.handleDeleteClick}
-          message="Are you sure you want to delete this row? This action cannot be undone!"
-          isDelete
-        />
       </div>
     );
   }

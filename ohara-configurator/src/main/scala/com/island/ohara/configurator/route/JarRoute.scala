@@ -66,36 +66,38 @@ private[configurator] object JarRoute {
       withSizeLimit(RouteUtils.DEFAULT_JAR_SIZE_BYTES) {
         //see https://github.com/akka/akka-http/issues/1216#issuecomment-311973943
         toStrictEntity(1.seconds) {
-          formFields(Parameters.CLUSTER_NAME.?) { wkName =>
+          formFields(Parameters.GROUP_NAME.?) { wkName =>
             storeUploadedFile("jar", tempDestination) {
               case (metadata, file) =>
                 complete(if (wkName.isDefined) jarStore.add(file, metadata.fileName, wkName.get)
                 else jarStore.add(file, metadata.fileName))
             }
           }
-        } ~ path(Segment) { id =>
-          get(complete(jarStore.jarInfo(id))) ~ delete(
-            complete(
-              jarStore
-                .exist(id)
-                .flatMap {
-                  // if jar exists, we do checking is in used or not
-                  if (_)
-                    jarStore
-                      .jarInfo(id)
-                      .flatMap(check(_))
-                      .flatMap(exists => {
-                        if (exists) throw new RuntimeException(s"Cannot delete jar [$id] which is in used")
-                        else jarStore.remove(id)
-                      })
-                  // do nothing
-                  else Future.successful(false)
-                }
-                .map(_ => StatusCodes.NoContent))
-          )
+        } ~ path(Segment) { name =>
+          parameter(Parameters.GROUP_NAME) { wkName =>
+            get(complete(jarStore.jarInfo(wkName, name))) ~ delete(
+              complete(
+                jarStore
+                  .exist(wkName, name)
+                  .flatMap {
+                    // if jar exists, we do checking is in used or not
+                    if (_)
+                      jarStore
+                        .jarInfo(wkName, name)
+                        .flatMap(check(_))
+                        .flatMap(exists => {
+                          if (exists) throw new RuntimeException(s"Cannot delete jar [$name] which is in used")
+                          else jarStore.remove(wkName, name)
+                        })
+                    // do nothing
+                    else Future.successful(false)
+                  }
+                  .map(_ => StatusCodes.NoContent))
+            )
+          }
         } ~ pathEnd {
           get {
-            parameter(Parameters.CLUSTER_NAME.?) { wkName =>
+            parameter(Parameters.GROUP_NAME.?) { wkName =>
               complete(if (wkName.isDefined) jarStore.jarInfos(wkName.get)
               else jarStore.jarInfos())
             }

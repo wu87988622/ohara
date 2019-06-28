@@ -17,7 +17,8 @@
 import { makeRandomPort } from '../utils';
 
 let brokerClusterName = '';
-let jarId = '';
+let jarName = '';
+let jarGroup = '';
 let pipelineId = '';
 let pipelineName = '';
 let topicId = '';
@@ -178,11 +179,12 @@ describe('Jars', () => {
   it('createJar', () => {
     cy.createJar(testJarName).then(res => {
       const { data } = res;
-      jarId = data.result.id;
+      jarName = data.result.name;
+      jarGroup = data.result.group;
       expect(data.isSuccess).to.eq(true);
-      expect(data.result).to.include.keys('name', 'id');
+      expect(data.result).to.include.keys('name', 'group');
       expect(data.result.name).to.be.a('string');
-      expect(data.result.id).to.be.a('string');
+      expect(data.result.group).to.be.a('string');
     });
   });
   it('fetchJars', () => {
@@ -190,9 +192,9 @@ describe('Jars', () => {
       const { data } = res;
       expect(data.isSuccess).to.eq(true);
       expect(data.result).to.be.a('array');
-      expect(data.result[0]).to.include.keys('name', 'id');
+      expect(data.result[0]).to.include.keys('name', 'group');
       expect(data.result[0].name).to.be.a('string');
-      expect(data.result[0].id).to.be.a('string');
+      expect(data.result[0].group).to.be.a('string');
     });
   });
 });
@@ -205,7 +207,12 @@ describe('Workers', () => {
       brokerClusterName: brokerClusterName,
       clientPort: makeRandomPort(),
       nodeNames: [nodeName],
-      plugins: [jarId],
+      plugins: [
+        {
+          group: jarGroup,
+          name: jarName,
+        },
+      ],
     };
     cy.testCreateWorker(data).then(res => {
       cy.log(res);
@@ -215,9 +222,8 @@ describe('Workers', () => {
         'name',
         'clientPort',
         'nodeNames',
-        'sources',
-        'sinks',
-        'jarNames',
+        'connectors',
+        'jarInfos',
         'configTopicName',
         'offsetTopicName',
         'statusTopicName',
@@ -225,9 +231,8 @@ describe('Workers', () => {
       expect(data.result.name).to.be.a('string');
       expect(data.result.clientPort).to.be.a('number');
       expect(data.result.nodeNames).to.be.a('array');
-      expect(data.result.sources).to.be.a('array');
-      expect(data.result.sinks).to.be.a('array');
-      expect(data.result.jarNames).to.be.a('array');
+      expect(data.result.connectors).to.be.a('array');
+      expect(data.result.jarInfos).to.be.a('array');
       expect(data.result.configTopicName).to.be.a('string');
       expect(data.result.offsetTopicName).to.be.a('string');
       expect(data.result.statusTopicName).to.be.a('string');
@@ -241,9 +246,8 @@ describe('Workers', () => {
       expect(data.result.name).to.be.a('string');
       expect(data.result.clientPort).to.be.a('number');
       expect(data.result.nodeNames).to.be.a('array');
-      expect(data.result.sources).to.be.a('array');
-      expect(data.result.sinks).to.be.a('array');
-      expect(data.result.jarNames).to.be.a('array');
+      expect(data.result.connectors).to.be.a('array');
+      expect(data.result.jarInfos).to.be.a('array');
     });
   });
 
@@ -586,10 +590,14 @@ describe('Streamapps', () => {
     };
     cy.testUploadStreamAppJar(params).then(res => {
       const { data } = res;
-      streamAppId = data.result[0].id;
+      streamAppId = data.result[0].name;
       expect(data.isSuccess).to.eq(true);
-      expect(data.result[0]).to.include.keys('id', 'name', 'workerClusterName');
-      expect(data.result[0].id).to.be.a('string');
+      expect(data.result[0]).to.include.keys(
+        'name',
+        'workerClusterName',
+        'lastModified',
+      );
+      expect(data.result[0].lastModified).to.be.a('number');
       expect(data.result[0].name).to.be.a('string');
       expect(data.result[0].workerClusterName).to.be.a('string');
     });
@@ -598,9 +606,15 @@ describe('Streamapps', () => {
   it('fetchStreamAppJars', () => {
     cy.fetchStreamAppJars(wkName).then(res => {
       const { data } = res;
+      cy.log(wkName);
+      cy.log(data);
       expect(data.isSuccess).to.eq(true);
-      expect(data.result[0]).to.include.keys('id', 'name', 'workerClusterName');
-      expect(data.result[0].id).to.be.a('string');
+      expect(data.result[0]).to.include.keys(
+        'lastModified',
+        'name',
+        'workerClusterName',
+      );
+      expect(data.result[0].lastModified).to.be.a('number');
       expect(data.result[0].name).to.be.a('string');
       expect(data.result[0].workerClusterName).to.be.a('string');
     });
@@ -608,8 +622,8 @@ describe('Streamapps', () => {
 
   it('createProperty', () => {
     const params = {
-      jarId: streamAppId,
-      name: 'Untitled streamApp',
+      jarName: streamAppId,
+      name: 'UntitledStreamApp',
     };
     cy.createProperty(params).then(res => {
       const { data } = res;
@@ -631,7 +645,7 @@ describe('Streamapps', () => {
       expect(data.result.to).to.be.a('array');
       expect(data.result.workerClusterName).to.be.a('string');
       expect(data.result.jarInfo).to.be.a('object');
-      expect(data.result.jarInfo).to.include.keys('name', 'id');
+      expect(data.result.jarInfo).to.include.keys('name', 'group');
     });
   });
 
@@ -655,15 +669,14 @@ describe('Streamapps', () => {
       expect(data.result.to).to.be.a('array');
       expect(data.result.workerClusterName).to.be.a('string');
       expect(data.result.jarInfo).to.be.a('object');
-      expect(data.result.jarInfo).to.include.keys('name', 'id');
+      expect(data.result.jarInfo).to.include.keys('name', 'group');
     });
   });
 
   it('updateProperty', () => {
     const params = {
       id: propertyId,
-      jarId: streamAppId,
-      name: 'test',
+      jarName: streamAppId,
       from: [topicId],
       to: [],
       instances: 1,
@@ -687,8 +700,7 @@ describe('Streamapps', () => {
       expect(data.result.to).to.be.a('array');
       expect(data.result.workerClusterName).to.be.a('string');
       expect(data.result.jarInfo).to.be.a('object');
-      expect(data.result.jarInfo).to.include.keys('name', 'id');
-      expect(data.result.name).to.eq('test');
+      expect(data.result.jarInfo).to.include.keys('name', 'group');
       expect(data.result.from[0]).to.eq(topicId);
     });
   });
@@ -701,14 +713,22 @@ describe('Streamapps', () => {
   });
 
   it('deleteProperty', () => {
-    cy.stopStreamApp(propertyId).then(res => {
+    const params = {
+      id: propertyId,
+      workerClusterName: wkName,
+    };
+    cy.deleteProperty(params).then(res => {
       const { data } = res;
       expect(data.isSuccess).to.eq(true);
     });
   });
 
   it('deleteStreamAppJar', () => {
-    cy.deleteStreamAppJar(streamAppId).then(res => {
+    const params = {
+      name: streamAppId,
+      workerClusterName: wkName,
+    };
+    cy.deleteStreamAppJar(params).then(res => {
       const { data } = res;
       expect(data.isSuccess).to.eq(true);
     });
@@ -731,7 +751,7 @@ describe('Logs', () => {
 });
 
 describe('Validates', () => {
-  it('validateConnector', () => {
+  it.skip('validateConnector', () => {
     const params = {
       author: 'root',
       columns: [
@@ -755,6 +775,7 @@ describe('Validates', () => {
       version: '0.6.0-SNAPSHOT',
       workerClusterName: fakeWorkerName,
     };
+    cy.log(params);
     cy.validateConnector(params).then(res => {
       const { data } = res;
       expect(data.isSuccess).to.eq(true);
@@ -766,5 +787,15 @@ describe('Validates', () => {
 });
 
 describe('containers', () => {
-  it('fetchContainers', () => {});
+  it('fetchContainers', () => {
+    cy.fetchContainers(wkName).then(res => {
+      const { data } = res;
+      expect(data.isSuccess).to.eq(true);
+      expect(data.result).to.be.a('array');
+      expect(data.result[0]).include.keys('containers');
+      expect(data.result[0].containers).to.be.a('array');
+      expect(data.result[0].containers[0]).include.keys('state');
+      expect(data.result[0].containers[0].state).to.be.a('string');
+    });
+  });
 });

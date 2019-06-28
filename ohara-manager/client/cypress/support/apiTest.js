@@ -26,10 +26,15 @@ import { fetchBrokers } from '../../src/api/brokerApi';
 import { fetchJars } from '../../src/api/jarApi';
 import { fetchLogs } from '../../src/api/logApi';
 import { validateConnector } from '../../src/api/validateApi';
+import { fetchContainers } from '../../src/api/containerApi';
+
+Cypress.Commands.add('fetchContainers', name => fetchContainers(name));
 
 Cypress.Commands.add('validateConnector', params => validateConnector(params));
 
-Cypress.Commands.add('deleteProperty', id => streamApp.deleteProperty(id));
+Cypress.Commands.add('deleteProperty', params =>
+  streamApp.deleteProperty(params),
+);
 
 Cypress.Commands.add('stopStreamApp', id => streamApp.stopStreamApp(id));
 
@@ -63,7 +68,7 @@ Cypress.Commands.add('fetchLogs', (serviceName, clusterName) =>
   fetchLogs(serviceName, clusterName),
 );
 
-Cypress.Commands.add('deleteStreamAppJar', id => streamApp.deleteJar(id));
+Cypress.Commands.add('deleteStreamAppJar', name => streamApp.deleteJar(name));
 
 Cypress.Commands.add('fetchStreamAppJars', wk => streamApp.fetchJars(wk));
 

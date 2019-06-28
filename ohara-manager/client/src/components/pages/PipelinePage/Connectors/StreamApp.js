@@ -46,6 +46,9 @@ class StreamApp extends React.Component {
     history: PropTypes.shape({
       push: PropTypes.func.isRequired,
     }).isRequired,
+    pipeline: PropTypes.shape({
+      workerClusterName: PropTypes.string.isRequired,
+    }).isRequired,
   };
 
   selectMaps = {
@@ -112,11 +115,11 @@ class StreamApp extends React.Component {
     const { pipelineTopics, graph, updateGraph } = this.props;
     const { fromTopic, toTopic } = this.getTopics({ pipelineTopics, from, to });
     const { streamAppId, streamApp } = this.state;
-    const { id: jarId } = streamApp.jarInfo;
+    const { name: jarName } = streamApp.jarInfo;
 
     const params = {
       id: streamAppId,
-      jarId,
+      jarName,
       name,
       instances,
       from: fromTopic,
@@ -184,11 +187,16 @@ class StreamApp extends React.Component {
   handleDeleteConnector = async () => {
     const { match, refreshGraph, history } = this.props;
     const { connectorId: streamAppId, pipelineId } = match.params;
-    const res = await streamApi.deleteProperty(streamAppId);
+    const { workerClusterName } = this.props.pipeline;
+    const params = {
+      id: streamAppId,
+      workerClusterName,
+    };
+    const res = await streamApi.deleteProperty(params);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (isSuccess) {
-      const { name: connectorName } = this.state;
+      const { name: connectorName } = this.state.streamApp;
       toastr.success(`${MESSAGES.CONNECTOR_DELETION_SUCCESS} ${connectorName}`);
       await refreshGraph();
 

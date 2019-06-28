@@ -43,7 +43,6 @@ class TestStreamApi extends SmallTest with Matchers {
   def testStreamJarEquals(): Unit = {
     val info = StreamJar(
       workerClusterName = CommonUtils.randomString(5),
-      id = CommonUtils.uuid(),
       name = "test.jar",
       lastModified = CommonUtils.current()
     )
@@ -63,7 +62,7 @@ class TestStreamApi extends SmallTest with Matchers {
   @Test
   def testStreamPropertyRequestEquals(): Unit = {
     val info = StreamPropertyRequest(
-      jarId = CommonUtils.randomString(5),
+      jarName = CommonUtils.randomString(5),
       name = Some("app-id"),
       from = Some(Seq("from")),
       to = Some(Seq("to")),
@@ -82,7 +81,7 @@ class TestStreamApi extends SmallTest with Matchers {
       id = id,
       name = "my-app",
       instances = 1,
-      jarInfo = JarInfo("id", "name", "group", 1L, new URL("http://localshot:12345/v0"), CommonUtils.current()),
+      jarInfo = JarInfo("name", "group", 1L, new URL("http://localshot:12345/v0"), CommonUtils.current()),
       from = Seq.empty,
       to = Seq.empty,
       nodeNames = Set.empty,

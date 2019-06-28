@@ -387,7 +387,7 @@ public class TestCommonUtils extends SmallTest {
 
   @Test
   public void testTemporaryFile() {
-    File f = CommonUtils.createTempFile(methodName());
+    File f = CommonUtils.createTempJar(methodName());
     Assert.assertTrue(f.exists());
   }
 
@@ -400,7 +400,7 @@ public class TestCommonUtils extends SmallTest {
 
   @Test
   public void testExist() {
-    File file = CommonUtils.createTempFile(methodName());
+    File file = CommonUtils.createTempJar(methodName());
     Assert.assertTrue(file.delete());
     assertException(IllegalArgumentException.class, () -> CommonUtils.requireExist(file));
   }
@@ -408,7 +408,7 @@ public class TestCommonUtils extends SmallTest {
   @Test
   public void testNotExist() throws IOException {
     int data = 10;
-    File file = CommonUtils.createTempFile(methodName());
+    File file = CommonUtils.createTempJar(methodName());
     try (FileOutputStream output = new FileOutputStream(file)) {
       output.write(data);
     }
@@ -418,11 +418,11 @@ public class TestCommonUtils extends SmallTest {
   @Test
   public void testCopyFile() throws IOException {
     int data = 10;
-    File file = CommonUtils.createTempFile(methodName());
+    File file = CommonUtils.createTempJar(methodName());
     try (FileOutputStream output = new FileOutputStream(file)) {
       output.write(data);
     }
-    File newFile = CommonUtils.createTempFile(methodName());
+    File newFile = CommonUtils.createTempJar(methodName());
     Assert.assertTrue(newFile.delete());
     assertException(NullPointerException.class, () -> CommonUtils.copyFile(null, newFile));
     assertException(NullPointerException.class, () -> CommonUtils.copyFile(file, null));
@@ -436,11 +436,11 @@ public class TestCommonUtils extends SmallTest {
   @Test
   public void testMoveFile() throws IOException {
     int data = 10;
-    File file = CommonUtils.createTempFile(methodName());
+    File file = CommonUtils.createTempJar(methodName());
     try (FileOutputStream output = new FileOutputStream(file)) {
       output.write(data);
     }
-    File newFile = CommonUtils.createTempFile(methodName());
+    File newFile = CommonUtils.createTempJar(methodName());
     Assert.assertTrue(newFile.delete());
     assertException(NullPointerException.class, () -> CommonUtils.moveFile(null, newFile));
     assertException(NullPointerException.class, () -> CommonUtils.moveFile(file, null));

@@ -265,7 +265,6 @@ class TestWorkerCreator extends SmallTest with Matchers {
   def testJarInfo2(): Unit = {
     val jarInfos = Seq(
       JarInfo(
-        id = CommonUtils.randomString(),
         name = CommonUtils.randomString(),
         group = CommonUtils.randomString(),
         size = 100,
@@ -273,7 +272,6 @@ class TestWorkerCreator extends SmallTest with Matchers {
         lastModified = CommonUtils.current()
       ),
       JarInfo(
-        id = CommonUtils.randomString(),
         name = CommonUtils.randomString(),
         group = CommonUtils.randomString(),
         size = 100,
@@ -288,7 +286,6 @@ class TestWorkerCreator extends SmallTest with Matchers {
   def testJarInfo3(): Unit = {
     val jarInfos = Seq(
       JarInfo(
-        id = CommonUtils.randomString(),
         name = CommonUtils.randomString(),
         group = CommonUtils.randomString(),
         size = 100,
@@ -296,7 +293,6 @@ class TestWorkerCreator extends SmallTest with Matchers {
         lastModified = CommonUtils.current()
       ),
       JarInfo(
-        id = CommonUtils.randomString(),
         name = CommonUtils.randomString(),
         group = CommonUtils.randomString(),
         size = 100,
