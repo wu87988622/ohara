@@ -19,17 +19,16 @@ import PropTypes from 'prop-types';
 import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
 import IconButton from '@material-ui/core/IconButton';
-import moment from 'moment';
 import toastr from 'toastr';
 import { get } from 'lodash';
 import { ConfirmModal } from 'components/common/Modal';
 
 import * as topicApi from 'api/topicApi';
 import * as MESSAGES from 'constants/messages';
+import * as utils from '../WorkspacesDetailPageUtils';
 import TopicNewModal from './TopicNewModal';
 import { Main, NewButton, StyledTable, ActionIcon } from '../styles';
 import { useSetState } from 'utils/hooks';
-import { useFetchTopics } from '../WorkspacesDetailPageUtils';
 
 const Topics = props => {
   const { worker } = props;
@@ -38,7 +37,7 @@ const Topics = props => {
     'Topic name',
     'Partitions',
     'Replication factor',
-    'Metrics',
+    'Metrics (BytesInPerSec)',
     'Last modified',
     'Action',
   ];
@@ -50,7 +49,7 @@ const Topics = props => {
     topicToBeDeleted: '',
   });
 
-  const [topics, setTopics, isLoading, fetchTopics] = useFetchTopics(
+  const [topics, setTopics, isLoading, fetchTopics] = utils.useFetchTopics(
     worker.brokerClusterName,
   );
 
@@ -66,6 +65,7 @@ const Topics = props => {
       const updatedTopics = topics.filter(
         topic => topic.name !== topicToBeDeleted,
       );
+
       setState({
         isDeleteModalOpen: false,
         topicToBeDeleted: '',
@@ -73,10 +73,6 @@ const Topics = props => {
 
       setTopics(updatedTopics);
     }
-  };
-
-  const getDateFromTimestamp = timestamp => {
-    return moment.unix(timestamp / 1000).format('YYYY-MM-DD HH:mm:ss');
   };
 
   const { isNewModalOpen, isDeleteModalOpen, isDeleting } = state;
@@ -95,18 +91,25 @@ const Topics = props => {
         <StyledTable headers={headers} isLoading={isLoading}>
           {() => {
             return topics.map(topic => {
+              const {
+                name,
+                numberOfPartitions,
+                numberOfReplications,
+                metrics,
+                lastModified,
+              } = topic;
               return (
-                <TableRow key={topic.name}>
+                <TableRow key={name}>
                   <TableCell component="th" scope="row">
-                    {topic.name}
+                    {name}
                   </TableCell>
-                  <TableCell align="left">{topic.numberOfPartitions}</TableCell>
+                  <TableCell align="left">{numberOfPartitions}</TableCell>
+                  <TableCell align="left">{numberOfReplications}</TableCell>
                   <TableCell align="left">
-                    {topic.numberOfReplications}
+                    {utils.getMetrics(metrics)}
                   </TableCell>
-                  <TableCell align="left">451 bytes / secondes</TableCell>
                   <TableCell align="left">
-                    {getDateFromTimestamp(topic.lastModified)}
+                    {utils.getDateFromTimestamp(lastModified)}
                   </TableCell>
                   <TableCell align="right">
                     <IconButton
@@ -115,7 +118,7 @@ const Topics = props => {
                       onClick={() =>
                         setState({
                           isDeleteModalOpen: true,
-                          topicToBeDeleted: topic.name,
+                          topicToBeDeleted: name,
                         })
                       }
                     >

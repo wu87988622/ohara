@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-import { useEffect, useState } from 'react';
-import * as topicApi from 'api/topicApi';
+import moment from 'moment';
+import { useEffect, useCallback, useState } from 'react';
 import { isEmpty, get, orderBy } from 'lodash';
+
+import * as topicApi from 'api/topicApi';
 
 export const useFetchTopics = brokerClusterName => {
   const [topics, setTopics] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchTopics = async () => {
+  const fetchTopics = useCallback(async () => {
     const res = await topicApi.fetchTopics();
     const topics = get(res, 'data.result', []);
     setIsLoading(false);
@@ -33,13 +35,27 @@ export const useFetchTopics = brokerClusterName => {
       );
       setTopics(orderBy(topicsUnderBrokerCluster, 'name'));
     }
-  };
+  }, [brokerClusterName]);
 
   useEffect(() => {
     fetchTopics();
-    // Disable the eslint warning for now. As it's very default to
-    // understand what's really going on here.
-  }, []); // eslint-disable-line
+  }, [fetchTopics]);
 
   return [topics, setTopics, isLoading, fetchTopics];
+};
+
+export const getDateFromTimestamp = timestamp => {
+  return moment.unix(timestamp / 1000).format('YYYY-MM-DD HH:mm:ss');
+};
+
+export const getMetrics = metrics => {
+  const meters = get(metrics, 'meters');
+
+  if (!isEmpty(meters)) {
+    const targetMeter = meters.find(
+      meter => meter.document === 'BytesInPerSec', // Only displays this document for now
+    );
+
+    return targetMeter && `${targetMeter.value} ${targetMeter.unit}`;
+  }
 };
