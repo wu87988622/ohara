@@ -119,6 +119,28 @@ describe('addColumn()', () => {
   });
 });
 
+describe('getEditable()', () => {
+  it('return true if the key includes `name` or `connector_class`', () => {
+    expect(utils.getEditable({ key: 'name', defaultEditable: true })).toBe(
+      false,
+    );
+
+    expect(
+      utils.getEditable({ key: 'connector_class', defaultEditable: true }),
+    ).toBe(false);
+  });
+
+  it('returns the default key if the key is not matched', () => {
+    expect(
+      utils.getEditable({ key: 'someOtherKey', defaultEditable: true }),
+    ).toBe(true);
+
+    expect(utils.getEditable({ key: 'nah', defaultEditable: false })).toBe(
+      false,
+    );
+  });
+});
+
 describe('getDisplayValue()', () => {
   it('uses defaultValue if configValue is not given', () => {
     const defaultValue = generate.id();

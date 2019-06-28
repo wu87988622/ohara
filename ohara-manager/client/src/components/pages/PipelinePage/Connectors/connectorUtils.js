@@ -176,9 +176,15 @@ export const switchType = type => {
   }
 };
 
+export const getEditable = ({ key, defaultEditable }) => {
+  // we're overriding these two editable values here as
+  // - name: is a value that can only be filled once and can't be changed later on
+  // - connector_class: cannot be edited in the UI, or it will simply break
+  return key === 'name' || key === 'connector_class' ? false : defaultEditable;
+};
+
 export const getDisplayValue = ({ configValue, defaultValue }) => {
-  const displayValue = configValue ? configValue : defaultValue;
-  return displayValue;
+  return configValue ? configValue : defaultValue;
 };
 
 export const changeToken = ({ values, targetToken, replaceToken }) => {
@@ -226,14 +232,21 @@ export const getRenderData = ({ state, defs, configs }) => {
       const { key, defaultValue } = def;
       const newKey = changeKeySeparator(key);
       const configValue = configs[newKey];
+
       const displayValue = getDisplayValue({
         configValue,
         defaultValue,
       });
 
+      const editable = getEditable({
+        key: newKey,
+        defaultEditable: def.editable,
+      });
+
       return {
         ...def,
         displayValue,
+        editable,
         isRunning,
         key: newKey,
       };
