@@ -34,10 +34,12 @@ RUN echo "$ZOOKEEPER_VERSION" > $(find "${ZOOKEEPER_DIR}" -maxdepth 1 -type d -n
 # clone ohara
 ARG BRANCH="master"
 ARG COMMIT=$BRANCH
+ARG REBASE=""
 ARG REPO="https://github.com/oharastream/ohara.git"
 WORKDIR /testpatch/ohara
 RUN git clone $REPO /testpatch/ohara
 RUN git checkout $COMMIT
+RUN if [[ "$REBASE" != "" ]]; then git rebase $REBASE ; fi
 RUN git rev-parse HEAD > $(find "${ZOOKEEPER_DIR}" -maxdepth 1 -type d -name "zookeeper-*")/bin/ohara_version
 
 FROM centos:7.6.1810

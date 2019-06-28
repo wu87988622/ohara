@@ -41,10 +41,12 @@ ADD ./prometheus/exporter.config.yml /prometheus/config.yml
 # clone ohara
 ARG BRANCH="master"
 ARG COMMIT=$BRANCH
+ARG REBASE=""
 ARG REPO="https://github.com/oharastream/ohara.git"
 WORKDIR /testpatch/ohara
 RUN git clone $REPO /testpatch/ohara
 RUN git checkout $COMMIT
+RUN if [[ "$REBASE" != "" ]]; then git rebase $REBASE ; fi
 RUN git rev-parse HEAD > $(find "${KAFKA_DIR}" -maxdepth 1 -type d -name "kafka_*")/bin/ohara_version
 
 FROM centos:7.6.1810

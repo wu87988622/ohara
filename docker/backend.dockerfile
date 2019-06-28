@@ -18,10 +18,12 @@ FROM oharastream/ohara:deps as deps
 
 ARG BRANCH="master"
 ARG COMMIT=$BRANCH
+ARG REBASE=""
 ARG REPO="https://github.com/oharastream/ohara.git"
 WORKDIR /testpatch/ohara
 RUN git clone $REPO /testpatch/ohara
 RUN git checkout $COMMIT
+RUN if [[ "$REBASE" != "" ]]; then git rebase $REBASE ; fi
 RUN gradle clean build -x test -PskipManager
 RUN mkdir /opt/ohara
 RUN tar -xvf $(find "/testpatch/ohara/ohara-testing-util/build/distributions" -maxdepth 1 -type f -name "*.tar") -C /opt/ohara/

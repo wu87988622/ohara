@@ -50,10 +50,12 @@ ENV PATH=$PATH:$GRADLE_HOME/bin
 # build ohara-streams
 ARG BRANCH="master"
 ARG COMMIT=$BRANCH
+ARG REBASE=""
 ARG REPO="https://github.com/oharastream/ohara.git"
 WORKDIR /testpatch/ohara
 RUN git clone $REPO /testpatch/ohara
 RUN git checkout $COMMIT
+RUN if [[ "$REBASE" != "" ]]; then git rebase $REBASE ; fi
 
 # copy required jars except test jar
 RUN gradle jar -x test && \
