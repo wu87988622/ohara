@@ -157,7 +157,7 @@ private[configurator] object StreamRoute {
         complete(StatusCodes.BadRequest -> "wrong uri")
       } ~
         //StreamApp Property Page
-        RouteUtils.basicRoute2[Creation, Update, StreamAppDescription](
+        RouteUtils.basicRoute[Creation, Update, StreamAppDescription](
           root = STREAM_PROPERTY_PREFIX_PATH,
           hookOfAdd = (req: Creation) => Future.successful(toStore(req)),
           hookOfUpdate = (name: String, req: Update, previousOption: Option[StreamAppDescription]) => {

@@ -79,7 +79,7 @@ private[configurator] object TopicRoute {
             meterCache: MeterCache,
             brokerCollie: BrokerCollie,
             executionContext: ExecutionContext): server.Route =
-    RouteUtils.basicRoute2[Creation, Update, TopicInfo](
+    RouteUtils.basicRoute[Creation, Update, TopicInfo](
       root = TOPICS_PREFIX_PATH,
       // we don't care for generated id since topic's id should be equal to the name passed by user.
       hookOfAdd = (creation: Creation) =>

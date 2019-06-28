@@ -83,7 +83,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
             workerCollie: WorkerCollie,
             executionContext: ExecutionContext,
             meterCache: MeterCache): server.Route =
-    RouteUtils.basicRoute2[Creation, Creation, ConnectorDescription](
+    RouteUtils.basicRoute[Creation, Creation, ConnectorDescription](
       root = CONNECTORS_PREFIX_PATH,
       hookOfAdd = (request: Creation) =>
         CollieUtils.workerClient(request.workerClusterName).map {

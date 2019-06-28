@@ -40,7 +40,7 @@ object NodeRoute {
     }
 
   def apply(implicit store: DataStore, clusterCollie: ClusterCollie, executionContext: ExecutionContext): server.Route =
-    RouteUtils.basicRoute2[Creation, Update, Node](
+    RouteUtils.basicRoute[Creation, Update, Node](
       root = NODES_PREFIX_PATH,
       hookOfAdd = (request: Creation) => {
         if (request.name.isEmpty) Future.failed(new IllegalArgumentException(s"name is required"))

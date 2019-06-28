@@ -25,7 +25,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] object JdbcInfoRoute {
   def apply(implicit store: DataStore, executionContext: ExecutionContext): server.Route =
-    RouteUtils.basicRoute2[Creation, Update, JdbcInfo](
+    RouteUtils.basicRoute[Creation, Update, JdbcInfo](
       root = JDBC_PREFIX_PATH,
       hookOfCreate = (request: Creation) =>
         Future.successful(

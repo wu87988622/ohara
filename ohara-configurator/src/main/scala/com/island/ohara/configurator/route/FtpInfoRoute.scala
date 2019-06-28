@@ -26,7 +26,7 @@ import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object FtpInfoRoute {
 
   def apply(implicit store: DataStore, executionContext: ExecutionContext): server.Route =
-    RouteUtils.basicRoute2[Creation, Update, FtpInfo](
+    RouteUtils.basicRoute[Creation, Update, FtpInfo](
       root = FTP_PREFIX_PATH,
       hookOfCreate = (request: Creation) =>
         Future.successful(

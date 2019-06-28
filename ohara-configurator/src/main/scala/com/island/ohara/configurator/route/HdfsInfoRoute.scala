@@ -24,7 +24,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] object HdfsInfoRoute {
   def apply(implicit store: DataStore, executionContext: ExecutionContext): server.Route =
-    RouteUtils.basicRoute2[Creation, Update, HdfsInfo](
+    RouteUtils.basicRoute[Creation, Update, HdfsInfo](
       root = HDFS_PREFIX_PATH,
       hookOfCreate = (request: Creation) =>
         Future.successful(HdfsInfo(name = request.name, uri = request.uri, lastModified = CommonUtils.current())),

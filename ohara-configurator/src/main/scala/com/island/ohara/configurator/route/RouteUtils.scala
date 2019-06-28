@@ -27,7 +27,6 @@ import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.annotations.VisibleForTesting
-import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.store.DataStore
 import com.typesafe.scalalogging.Logger
 import spray.json.DefaultJsonProtocol._
@@ -52,39 +51,6 @@ private[route] object RouteUtils {
 
   /** default we restrict the jar size to 50MB */
   final val DEFAULT_JAR_SIZE_BYTES = 50 * 1024 * 1024L
-
-  //-------------------- default route directives ---------------------------//
-  private[this] def routeOfAdd[Req, Res <: Data](hook: (Id, Req) => Future[Res])(implicit store: DataStore,
-                                                                                 rm: RootJsonFormat[Req],
-                                                                                 rm2: RootJsonFormat[Res],
-                                                                                 executionContext: ExecutionContext) =
-    post {
-      entity(as[Req])(req => complete(hook(CommonUtils.uuid(), req).flatMap(r => store.addIfAbsent(r))))
-    }
-
-  private[this] def routeOfList[Res <: Data: ClassTag](hook: Seq[Res] => Future[Seq[Res]])(
-    implicit store: DataStore,
-    rm: RootJsonFormat[Res],
-    executionContext: ExecutionContext) = get(complete(store.values[Res]().flatMap(values => hook(values))))
-
-  private[this] def routeOfGet[Res <: Data: ClassTag](
-    id: Id,
-    hook: Res => Future[Res])(implicit store: DataStore, rm: RootJsonFormat[Res], executionContext: ExecutionContext) =
-    get(complete(store.value[Res](id).flatMap(value => hook(value))))
-
-  private[this] def routeOfDelete[Res <: Data: ClassTag](id: Id, hookBeforeDelete: String => Future[String])(
-    implicit store: DataStore,
-    executionContext: ExecutionContext) =
-    delete(complete(hookBeforeDelete(id).flatMap(id => store.remove[Res](id).map(_ => StatusCodes.NoContent))))
-
-  private[this] def routeOfUpdate[Req, Res <: Data: ClassTag](id: Id, hook: (Id, Req, Res) => Future[Res])(
-    implicit store: DataStore,
-    rm: RootJsonFormat[Req],
-    rm2: RootJsonFormat[Res],
-    executionContext: ExecutionContext) =
-    put {
-      entity(as[Req])(req => complete(store.addIfPresent(id, (previous: Res) => hook(id, req, previous))))
-    }
 
   /**
     * The name is replacing id so we have to add limit to it.
@@ -115,7 +81,7 @@ private[route] object RouteUtils {
     * @tparam Res response type
     * @return route
     */
-  def basicRoute2[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
+  def basicRoute[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
     root: String,
     hookOfCreate: Creation => Future[Res],
     hookOfUpdate: (String, Update, Option[Res]) => Future[Res])(implicit store: DataStore,
@@ -152,45 +118,12 @@ private[route] object RouteUtils {
     * @param hookOfList used to convert response for List function
     * @param hookOfGet used to convert response for Get function
     * @param hookBeforeDelete used to do something before doing delete operation. For example, validate the id.
-    * @tparam Req request
-    * @tparam Res response
-    * @return route
-    */
-  // deprecated
-  def basicRoute[Req, Res <: Data: ClassTag](root: String,
-                                             hookOfAdd: (Id, Req) => Future[Res],
-                                             hookOfUpdate: (Id, Req, Res) => Future[Res],
-                                             hookOfList: Seq[Res] => Future[Seq[Res]],
-                                             hookOfGet: Res => Future[Res],
-                                             hookBeforeDelete: String => Future[String])(
-    implicit store: DataStore,
-    rm: RootJsonFormat[Req],
-    rm2: RootJsonFormat[Res],
-    executionContext: ExecutionContext): server.Route =
-    pathPrefix(root) {
-      pathEnd {
-        routeOfAdd[Req, Res](hookOfAdd) ~ routeOfList[Res](hookOfList)
-      } ~ path(Segment) { id =>
-        routeOfGet[Res](id, hookOfGet) ~ routeOfDelete[Res](id, hookBeforeDelete) ~
-          routeOfUpdate[Req, Res](id, hookOfUpdate)
-      }
-    }
-
-  /**
-    *  this is the basic route of all APIs to access ohara's data.
-    *  It implements 1) get, 2) list, 3) delete, 4) add and 5) update function.
-    * @param root path to root
-    * @param hookOfAdd used to convert request to response for Add function
-    * @param hookOfUpdate used to convert request to response for Update function
-    * @param hookOfList used to convert response for List function
-    * @param hookOfGet used to convert response for Get function
-    * @param hookBeforeDelete used to do something before doing delete operation. For example, validate the id.
     * @tparam Creation creation request
     * @tparam Update creation request
     * @tparam Res response
     * @return route
     */
-  def basicRoute2[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
+  def basicRoute[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
     root: String,
     hookOfAdd: Creation => Future[Res],
     hookOfUpdate: (String, Update, Option[Res]) => Future[Res],
