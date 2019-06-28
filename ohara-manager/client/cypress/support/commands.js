@@ -265,7 +265,9 @@ Cypress.Commands.add('uploadJar', (selector, fixturePath, name, type) => {
         .then(Cypress.Blob.base64StringToBlob)
         .then(blob => {
           const el = subject[0];
-          const testFile = new win.File([blob], name, { type });
+          const testFile = new win.File([blob], name, {
+            type,
+          });
           const dataTransfer = new win.DataTransfer();
           dataTransfer.items.add(testFile);
           el.files = dataTransfer.files;

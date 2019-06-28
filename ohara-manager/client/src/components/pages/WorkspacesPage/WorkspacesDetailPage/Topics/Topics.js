@@ -114,7 +114,7 @@ const Topics = props => {
                   <TableCell align="right">
                     <IconButton
                       aria-label="Edit"
-                      data-testid="edit-node-icon"
+                      data-testid={topic.name}
                       onClick={() =>
                         setState({
                           isDeleteModalOpen: true,
