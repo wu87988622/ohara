@@ -28,7 +28,7 @@ describe('StreamApp', () => {
       cy.server();
       cy.route('GET', 'api/pipelines/*').as('getPipeline');
       cy.route('PUT', 'api/pipelines/*').as('putPipeline');
-      cy.route('GET', 'api/stream/*').as('getStream');
+      cy.route('GET', 'api/jars?*').as('getJars');
 
       cy.createTopic().as('fromTopic');
       cy.createTopic().as('toTopic');
@@ -53,9 +53,16 @@ describe('StreamApp', () => {
       cy.wait('@getPipeline')
         .getByTestId('toolbar-streams')
         .click()
-        .wait('@getStream')
+        .wait('@getJars')
         .getByText('Add')
-        .click();
+        .click()
+        .getByPlaceholderText('StreamApp name')
+        .type('streamapp')
+        .get('.ReactModal__Content')
+        .eq(1)
+        .within(() => {
+          cy.getByText('Add').click();
+        });
 
       // TODO: these two topics can be added via API which should be faster than
       // adding from the UI
@@ -79,7 +86,7 @@ describe('StreamApp', () => {
         .click()
         .wait('@putPipeline');
 
-      cy.getByText('Untitled streamApp')
+      cy.getByText('streamapp')
         .click()
         .getByDisplayValue('select a from topic...')
         .get('@fromTopic')
@@ -101,7 +108,7 @@ describe('StreamApp', () => {
         .click()
         .getByText('Stream app successfully started!')
         .should('be.exist')
-        .getByText('Untitled streamApp')
+        .getByText('streamapp')
         .then($el => {
           cy.wrap($el.parent()).within(() => {
             cy.getByText('Status: running').should('be.exist');

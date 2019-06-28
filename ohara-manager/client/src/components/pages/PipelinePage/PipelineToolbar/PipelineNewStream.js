@@ -17,12 +17,18 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import { endsWith, get, isNull } from 'lodash';
+import { get, isNull, truncate } from 'lodash';
 
-import * as streamApi from 'api/streamApi';
+import * as jarApi from 'api/jarApi';
 import { ListLoader } from 'components/common/Loader';
+import { Modal } from 'components/common/Modal';
 import { createConnector } from '../pipelineUtils/pipelineToolbarUtils';
 import { TableWrapper, Table } from './styles';
+import { Input, FormGroup } from 'components/common/Form';
+
+const Inner = styled.div`
+  padding: 30px 20px;
+`;
 
 const LoaderWrapper = styled.div`
   margin: 20px 40px;
@@ -37,13 +43,16 @@ class PipelineNewStream extends React.Component {
     updateGraph: PropTypes.func.isRequired,
     updateAddBtnStatus: PropTypes.func.isRequired,
     workerClusterName: PropTypes.string.isRequired,
+    handleClose: PropTypes.func.isRequired,
   };
 
   state = {
+    newStreamAppName: '',
+    isModalOpen: false,
     pipelineId: null,
     isLoading: true,
     jars: [],
-    activeId: null,
+    activeJar: null,
     file: null,
     isDeleteRowModalActive: false,
     isTitleEditing: false,
@@ -61,39 +70,72 @@ class PipelineNewStream extends React.Component {
     });
   };
 
-  handleTrSelect = name => {
-    this.setState({ activeId: name });
+  handleTrSelect = params => {
+    this.setState({
+      activeJar: {
+        group: params.group,
+        name: params.name,
+      },
+    });
   };
-
-  validateJarExtension = jarName => endsWith(jarName, '.jar');
 
   fetchJars = async () => {
     const { workerClusterName, updateAddBtnStatus } = this.props;
-    const res = await streamApi.fetchJars(workerClusterName);
+    const res = await jarApi.fetchJars(workerClusterName);
     this.setState({ isLoading: false });
 
     const jars = get(res, 'data.result', null);
-    const activeId = get(jars, '[0].name', null);
-    updateAddBtnStatus(activeId);
+    const activeJar = {
+      group: get(jars, '[0].group', null),
+      name: get(jars, '[0].name', null),
+    };
+    updateAddBtnStatus(activeJar);
 
     if (!isNull(jars)) {
-      this.setState({ jars, activeId });
+      this.setState({ jars, activeJar });
     }
   };
 
   update = async () => {
+    this.setState({ isModalOpen: true });
+  };
+
+  handleChange = ({ target: { value } }) => {
+    const test = truncate(value.replace(/[^0-9a-z]/g, ''), {
+      length: 30,
+      omission: '',
+    });
+    this.setState({ newStreamAppName: test });
+  };
+
+  handleClose = () => {
+    this.setState({ isModalOpen: false });
+  };
+
+  handleConfirm = () => {
     const connector = {
-      jarName: this.state.activeId,
+      jar: this.state.activeJar,
       className: 'streamApp',
       typeName: 'streamApp',
     };
-
     const { updateGraph } = this.props;
-    createConnector({ updateGraph, connector });
+    const { newStreamAppName } = this.state;
+    createConnector({
+      updateGraph,
+      connector,
+      newStreamAppName,
+    });
+    this.props.handleClose();
   };
 
   render() {
-    const { isLoading, jars, activeId } = this.state;
+    const {
+      isModalOpen,
+      isLoading,
+      jars,
+      activeJar,
+      newStreamAppName,
+    } = this.state;
 
     return (
       <div>
@@ -105,16 +147,17 @@ class PipelineNewStream extends React.Component {
           <React.Fragment>
             <TableWrapper>
               <Table headers={['FILENAME']}>
-                {jars.map(({ name }) => {
-                  const isActive = name === activeId ? 'is-active' : '';
+                {jars.map(({ group: id, name: title }) => {
+                  const isActive = id === activeJar.group ? 'is-active' : '';
+                  const params = { group: id, name: title };
                   return (
                     <tr
                       className={isActive}
-                      key={name}
-                      onClick={() => this.handleTrSelect(name)}
+                      key={id}
+                      onClick={() => this.handleTrSelect(params)}
                       data-testid="stream-app-item"
                     >
-                      <td>{name}</td>
+                      <td>{title}</td>
                     </tr>
                   );
                 })}
@@ -122,6 +165,28 @@ class PipelineNewStream extends React.Component {
             </TableWrapper>
           </React.Fragment>
         )}
+        <Modal
+          isActive={isModalOpen}
+          title="New StreamApp Name"
+          width="370px"
+          data-testid="addStreamApp"
+          confirmBtnText="Add"
+          handleConfirm={this.handleConfirm}
+          handleCancel={this.handleClose}
+        >
+          <Inner>
+            <FormGroup data-testid="name">
+              <Input
+                name="name"
+                width="100%"
+                placeholder="StreamApp name"
+                data-testid="name-input"
+                value={newStreamAppName}
+                handleChange={this.handleChange}
+              />
+            </FormGroup>
+          </Inner>
+        </Modal>
       </div>
     );
   }

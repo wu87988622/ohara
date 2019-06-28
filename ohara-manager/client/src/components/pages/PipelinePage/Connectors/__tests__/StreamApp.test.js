@@ -59,7 +59,8 @@ describe('<StreamApp />', () => {
           to: [],
           instances: 0,
           name: generate.name(),
-          jarInfo: {
+          jar: {
+            group: generate.name(),
             name: generate.name(),
           },
         },
@@ -72,11 +73,10 @@ describe('<StreamApp />', () => {
       <StreamApp {...props} />,
     );
 
-    const { name, instances, jarInfo } = res.data.result;
-    const { name: jarName } = jarInfo;
+    const { instances, jar } = res.data.result;
+    const { name: jarName } = jar;
 
     expect(getByText('Stream app')).toBeInTheDocument();
-    expect(getByLabelText('Name')).toHaveAttribute('value', name);
     expect(getByLabelText('Instances')).toHaveAttribute(
       'value',
       String(instances),

@@ -14,95 +14,13 @@
  * limitations under the License.
  */
 
-import { get } from 'lodash';
+import { get, size } from 'lodash';
 
 import { handleError, axiosInstance } from './apiUtils';
 
-export const fetchJars = async workerClusterName => {
+export const fetchProperty = async name => {
   try {
-    const res = await axiosInstance.get(
-      `/api/stream/jars?cluster=${workerClusterName}`,
-    );
-    const isSuccess = get(res, 'data.isSuccess', false);
-
-    if (!isSuccess) {
-      handleError(res);
-    }
-
-    return res;
-  } catch (err) {
-    handleError(err);
-  }
-};
-
-export const uploadJar = async params => {
-  try {
-    const { workerClusterName, file } = params;
-    const url = `/api/stream/jars`;
-    const formData = new FormData();
-
-    formData.append('streamapp', file);
-    formData.append('cluster', workerClusterName);
-
-    const config = {
-      headers: {
-        'content-type': 'multipart/form-data',
-      },
-    };
-
-    const res = await axiosInstance.post(url, formData, config);
-    const isSuccess = get(res, 'data.isSuccess', false);
-
-    if (!isSuccess) {
-      handleError(res);
-    }
-
-    return res;
-  } catch (err) {
-    handleError(err);
-  }
-};
-
-export const deleteJar = async params => {
-  try {
-    const { name, workerClusterName } = params;
-    const url = `/api/stream/jars/${name}?cluster=${workerClusterName}`;
-    const res = await axiosInstance.delete(url);
-    const isSuccess = get(res, 'data.isSuccess', false);
-
-    if (!isSuccess) {
-      handleError(res);
-    }
-
-    return res;
-  } catch (err) {
-    handleError(err);
-  }
-};
-
-export const updateJarName = async params => {
-  try {
-    const { id, jarName } = params;
-    const url = `/api/stream/jars/${id}`;
-    const data = {
-      jarName,
-    };
-    const res = await axiosInstance.put(url, data);
-    const isSuccess = get(res, 'data.isSuccess', false);
-
-    if (!isSuccess) {
-      handleError(res);
-    }
-
-    return res;
-  } catch (err) {
-    handleError(err);
-  }
-};
-
-export const fetchProperty = async id => {
-  try {
-    const res = await axiosInstance.get(`/api/stream/property/${id}`);
+    const res = await axiosInstance.get(`/api/stream/property/${name}`);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -117,7 +35,8 @@ export const fetchProperty = async id => {
 
 export const createProperty = async params => {
   try {
-    const res = await axiosInstance.post('/api/stream/property', params);
+    const data = { name: params.name, jar: params.jar };
+    const res = await axiosInstance.post('/api/stream/property', data);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -132,12 +51,13 @@ export const createProperty = async params => {
 
 export const updateProperty = async params => {
   try {
-    const streamAppId = params.id;
-    const url = `/api/stream/property/${streamAppId}`;
+    const propertyName = params.name;
+    const url = `/api/stream/property/${propertyName}`;
+    const from = size(params.from) > 0 ? params.from : null;
+    const to = size(params.to) > 0 ? params.to : null;
     const data = {
-      jarName: params.jarName,
-      from: params.from || [],
-      to: params.to || [],
+      from: from,
+      to: to,
       instances: params.instances ? Number(params.instances) : 1,
     };
     const res = await axiosInstance.put(url, data);
@@ -153,12 +73,9 @@ export const updateProperty = async params => {
   }
 };
 
-export const deleteProperty = async params => {
+export const deleteProperty = async name => {
   try {
-    const { id, workerClusterName } = params;
-    const res = await axiosInstance.delete(
-      `/api/stream/property/${id}?cluster=${workerClusterName}`,
-    );
+    const res = await axiosInstance.delete(`/api/stream/property/${name}`);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {

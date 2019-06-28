@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.route
 import akka.http.scaladsl.server
-import com.island.ohara.agent.{ClusterCollie, NoSuchClusterException, StreamCollie}
+import com.island.ohara.agent.{ClusterCollie, NoSuchClusterException}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorDescription
 import com.island.ohara.client.configurator.v0.MetricsApi._
@@ -202,7 +202,7 @@ private[configurator] object PipelineRoute {
             case data: StreamAppDescription =>
               clusterCollie
                 .streamCollie()
-                .cluster(StreamCollie.formatUniqueName(data.id))
+                .cluster(data.id)
                 .map(_._1.asInstanceOf[StreamClusterInfo])
                 .map { info =>
                   ObjectAbstract(
@@ -271,7 +271,7 @@ private[configurator] object PipelineRoute {
     // for example:
     // topic -> the broker cluster must be bound by same worker cluster
     // connector -> it's worker cluster must be same to pipeline's worker cluster
-    // streamapp -> TODO: it should be bound by worker cluster after issue #321 ...by Sam
+    // streamApp -> the streamApp jar should upload to specific worker cluster
     // others -> unsupported
     def verify(id: String): Future[String] = if (id != UNKNOWN_ID) {
       store
@@ -287,8 +287,13 @@ private[configurator] object PipelineRoute {
               throw new IllegalArgumentException(
                 s"topic:${d.name} is run by ${d.brokerClusterName} so it can't be placed at pipeline:$name which is placed at broker cluster:${cluster.brokerClusterName}")
             else id
-          case _: StreamAppDescription => id
-          case raw                     => throw new IllegalArgumentException(s"${raw.getClass.getName} can't be placed at pipeline")
+          case d: StreamAppDescription =>
+            if (d.jar.group != cluster.name)
+              throw new IllegalArgumentException(
+                s"streamApp:${d.name} is running in ${d.jar.group}. You cannot place it at pipeline:$name which is placed at worker cluster:${cluster.name}"
+              )
+            else id
+          case raw => throw new IllegalArgumentException(s"${raw.getClass.getName} can't be placed at pipeline")
         }
         .recover {
           // the component has been removed!

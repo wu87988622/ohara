@@ -36,33 +36,31 @@ class TestStreamCreator extends SmallTest with Matchers {
      nodeNames,
      imageName,
      jarUrl,
-     instances,
      appId,
      brokerProps,
      fromTopics,
      toTopics,
      jmxPort,
-     _,
+     enableExactlyOnce,
      executionContext) => {
       // We only check required variables
       CommonUtils.requireNonEmpty(clusterName)
+      CommonUtils.requireNonEmpty(nodeNames.asJava)
       CommonUtils.requireNonEmpty(imageName)
       CommonUtils.requireNonEmpty(jarUrl)
       CommonUtils.requireNonEmpty(appId)
       CommonUtils.requireNonEmpty(brokerProps)
       CommonUtils.requireNonEmpty(fromTopics.asJava)
       CommonUtils.requireNonEmpty(toTopics.asJava)
+      CommonUtils.requireConnectionPort(jmxPort)
+      Objects.requireNonNull(enableExactlyOnce)
       Objects.requireNonNull(executionContext)
       Future.successful(
         StreamClusterInfo(
           name = clusterName,
           imageName = imageName,
           jmxPort = jmxPort,
-          nodeNames = {
-            if (CommonUtils.isEmpty(nodeNames.asJava))
-              CommonUtils.requireNonEmpty(Seq.fill(CommonUtils.requirePositiveInt(instances))("fake").asJava).asScala
-            else CommonUtils.requireNonEmpty(nodeNames.asJava).asScala
-          }.toSet,
+          nodeNames = nodeNames,
           deadNodes = Set.empty,
           state = None
         ))
@@ -137,7 +135,7 @@ class TestStreamCreator extends SmallTest with Matchers {
 
   @Test
   def emptyFromTopics(): Unit = {
-    an[IllegalArgumentException] should be thrownBy streamCreator().fromTopics(Seq.empty)
+    an[IllegalArgumentException] should be thrownBy streamCreator().fromTopics(Set.empty)
   }
 
   @Test
@@ -147,64 +145,61 @@ class TestStreamCreator extends SmallTest with Matchers {
 
   @Test
   def emptyToTopics(): Unit = {
-    an[IllegalArgumentException] should be thrownBy streamCreator().toTopics(Seq.empty)
+    an[IllegalArgumentException] should be thrownBy streamCreator().toTopics(Set.empty)
+  }
+
+  @Test
+  def zeroJmxPort(): Unit = {
+    an[IllegalArgumentException] should be thrownBy streamCreator().jmxPort(0)
+  }
+
+  @Test
+  def negativeJmxPort(): Unit = {
+    an[IllegalArgumentException] should be thrownBy streamCreator().jmxPort(-99)
+  }
+
+  @Test
+  def testNameLength(): Unit = {
+    streamCreator()
+      .clusterName(CommonUtils.randomString(Collie.LIMIT_OF_NAME_LENGTH))
+      .imageName(CommonUtils.randomString())
+      .jarUrl("jar")
+      .nodeNames(Set("bar", "foo", "bez"))
+      .appId("app")
+      .brokerProps("broker")
+      .fromTopics(Set("topic1"))
+      .toTopics(Set("topic2"))
+      .create()
+
+    an[IllegalArgumentException] should be thrownBy streamCreator()
+      .clusterName(CommonUtils.randomString(Collie.LIMIT_OF_NAME_LENGTH + 1))
+      .imageName(CommonUtils.randomString())
+      .jarUrl("jar")
+      .nodeNames(Set("bar", "foo", "bez"))
+      .appId("app")
+      .brokerProps("broker")
+      .fromTopics(Set("topic1"))
+      .toTopics(Set("topic2"))
+      .create()
+  }
+
+  @Test
+  def testCopy(): Unit = {
+    val info = StreamClusterInfo(
+      name = CommonUtils.randomString(10),
+      imageName = CommonUtils.randomString(),
+      jmxPort = 1,
+      nodeNames = Set(CommonUtils.randomString()),
+      deadNodes = Set.empty,
+      state = None
+    )
+
+    // copy in stream is not support yet
+    an[NullPointerException] should be thrownBy awaitResult(streamCreator().copy(info).create())
   }
 
   @Test
   def testNormalCase(): Unit = {
-
-    // 0 instances is not allowed
-    an[IllegalArgumentException] should be thrownBy awaitResult(
-      streamCreator()
-        .clusterName(CommonUtils.randomString(Collie.LIMIT_OF_NAME_LENGTH))
-        .imageName(CommonUtils.randomString())
-        .jarUrl("jar")
-        .instances(0)
-        .appId("app")
-        .brokerProps("broker")
-        .fromTopics(Seq("topic1"))
-        .toTopics(Seq("topic2"))
-        .create())
-
-    // negative instances is not allowed
-    an[IllegalArgumentException] should be thrownBy awaitResult(
-      streamCreator()
-        .clusterName(CommonUtils.randomString(Collie.LIMIT_OF_NAME_LENGTH))
-        .imageName(CommonUtils.randomString())
-        .jarUrl("jar")
-        .instances(-5)
-        .appId("app")
-        .brokerProps("broker")
-        .fromTopics(Seq("topic1"))
-        .toTopics(Seq("topic2"))
-        .create())
-
-    // could set nodeNames only
-    awaitResult(
-      streamCreator()
-        .clusterName(CommonUtils.randomString(Collie.LIMIT_OF_NAME_LENGTH))
-        .imageName(CommonUtils.randomString())
-        .jarUrl("jar")
-        .nodeNames(Set("bar", "foo", "bez"))
-        .appId("app")
-        .brokerProps("broker")
-        .fromTopics(Seq("topic1"))
-        .toTopics(Seq("topic2"))
-        .create()).nodeNames.size shouldBe 3
-
-    // nodeNames will override the effect of instances
-    awaitResult(
-      streamCreator()
-        .clusterName(CommonUtils.randomString(Collie.LIMIT_OF_NAME_LENGTH))
-        .imageName(CommonUtils.randomString())
-        .jarUrl("jar")
-        .instances(10)
-        .nodeNames(Set("bar", "foo"))
-        .appId("app")
-        .brokerProps("broker")
-        .fromTopics(Seq("topic1"))
-        .toTopics(Seq("topic2"))
-        .create()).nodeNames.size shouldBe 2
 
     // could set jmx port
     awaitResult(
@@ -212,42 +207,12 @@ class TestStreamCreator extends SmallTest with Matchers {
         .clusterName(CommonUtils.randomString(Collie.LIMIT_OF_NAME_LENGTH))
         .imageName(CommonUtils.randomString())
         .jarUrl("jar")
-        .instances(10)
         .nodeNames(Set("bar", "foo"))
         .appId("app")
         .brokerProps("broker")
-        .fromTopics(Seq("topic1"))
-        .toTopics(Seq("topic2"))
+        .fromTopics(Set("topic1"))
+        .toTopics(Set("topic2"))
         .jmxPort(1000)
         .create()).jmxPort shouldBe 1000
-  }
-
-  @Test
-  def testNameLength(): Unit = {
-    awaitResult(
-      streamCreator()
-        .clusterName(CommonUtils.randomString(Collie.LIMIT_OF_NAME_LENGTH))
-        .imageName(CommonUtils.randomString())
-        .jarUrl("jar")
-        .instances(10)
-        .appId("app")
-        .brokerProps("broker")
-        .fromTopics(Seq("topic1"))
-        .toTopics(Seq("topic2"))
-        .create())
-  }
-
-  @Test
-  def testInvalidName(): Unit = {
-    an[IllegalArgumentException] should be thrownBy streamCreator()
-      .clusterName(CommonUtils.randomString(Collie.LIMIT_OF_NAME_LENGTH + 1))
-      .imageName(CommonUtils.randomString())
-      .jarUrl("jar")
-      .instances(10)
-      .appId("app")
-      .brokerProps("broker")
-      .fromTopics(Seq("topic1"))
-      .toTopics(Seq("topic2"))
-      .create()
   }
 }

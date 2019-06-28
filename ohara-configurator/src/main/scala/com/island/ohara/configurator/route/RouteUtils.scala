@@ -44,7 +44,7 @@ private[route] object RouteUtils {
     * @return error message
     */
   def errorMessage(name: String, fieldName: String): String =
-    s"$name does not exist so there is an new object will be created. Hence, you can ignore $fieldName"
+    s"$name does not exist so there is an new object will be created. Hence, you cannot ignore $fieldName"
 
   //-------------------- global parameter for route -------------------------//
   val LOG = Logger(RouteUtils.getClass)

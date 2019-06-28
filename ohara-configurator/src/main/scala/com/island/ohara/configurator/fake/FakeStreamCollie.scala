@@ -21,12 +21,10 @@ import com.island.ohara.agent.{NodeCollie, StreamCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.StreamApi
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Random
 import scala.collection.JavaConverters._
 
 private[configurator] class FakeStreamCollie(nodeCollie: NodeCollie)
@@ -38,32 +36,20 @@ private[configurator] class FakeStreamCollie(nodeCollie: NodeCollie)
     BeanChannel.local().counterMBeans().asScala
 
   override def creator(): StreamCollie.ClusterCreator =
-    (clusterName, nodeNames, imageName, _, instance, _, _, _, _, jmxPort, _, executionContext) => {
+    (clusterName, nodeNames, imageName, _, _, _, _, _, jmxPort, _, executionContext) => {
       implicit val exec: ExecutionContext = executionContext
-      nodeCollie
-        .nodes()
-        .map { all =>
-          if (CommonUtils.isEmpty(nodeNames.asJava)) {
-            if (all.size < instance)
-              throw new IllegalArgumentException(
-                s"cannot run streamApp. expect: $instance, actual: ${all.size}"
-              )
-            Random.shuffle(all).take(CommonUtils.requirePositiveInt(instance))
-          } else
-            CommonUtils.requireNonEmpty(all.filter(n => nodeNames.contains(n.name)).asJava).asScala
-        }
-        .map { nodes =>
-          addCluster(
-            StreamApi.StreamClusterInfo(
-              name = clusterName,
-              imageName = imageName,
-              nodeNames = nodes.map(_.name).toSet,
-              jmxPort = jmxPort,
-              state = Some(ContainerState.RUNNING.name),
-              deadNodes = Set.empty
-            )
+      nodeCollie.nodes(nodeNames).map { nodes =>
+        addCluster(
+          StreamApi.StreamClusterInfo(
+            name = clusterName,
+            imageName = imageName,
+            nodeNames = nodes.map(_.name).toSet,
+            jmxPort = jmxPort,
+            deadNodes = Set.empty,
+            state = Some(ContainerState.RUNNING.name)
           )
-        }
+        )
+      }
     }
 
   override protected def doRemoveNode(previousCluster: StreamClusterInfo, beRemovedContainer: ContainerInfo)(

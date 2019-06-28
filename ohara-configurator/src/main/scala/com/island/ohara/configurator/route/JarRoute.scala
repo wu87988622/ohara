@@ -49,7 +49,7 @@ private[configurator] object JarRoute {
       .raws()
       .map(_.exists {
         case d: StreamAppDescription =>
-          if (d.jarInfo.id.equals(jarInfo.id) && d.workerClusterName.equals(jarInfo.group)) true
+          if (d.jar.name.equals(jarInfo.name) && d.jar.group.equals(jarInfo.group)) true
           else false
         //TODO : does connector need checking the jar is used before deleting ??...by Sam
         case _: ConnectorDescription => false

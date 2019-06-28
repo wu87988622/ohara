@@ -75,7 +75,7 @@ object FtpApi {
 
     /**
       * Retrieve the inner object of request payload. Noted, it throw unchecked exception if you haven't filled all required fields
-      * @return the payload of creation
+      * @return the payload of update
       */
     @VisibleForTesting
     private[v0] def update: Update

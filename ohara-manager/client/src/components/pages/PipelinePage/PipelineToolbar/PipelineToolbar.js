@@ -179,10 +179,7 @@ class PipelineToolbar extends React.Component {
 
   handleConfirm = () => {
     this.modalChild.current.update();
-    if (
-      this.state.modalName !== 'sources' &&
-      this.state.modalName !== 'sinks'
-    ) {
+    if (this.state.modalName === 'topics') {
       this.handleModalClose();
     }
   };
@@ -260,6 +257,7 @@ class PipelineToolbar extends React.Component {
               activeConnector={activeConnector}
               updateAddBtnStatus={this.updateAddBtnStatus}
               ref={this.modalChild}
+              handleClose={this.handleModalClose}
             />
           )}
 

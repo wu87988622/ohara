@@ -16,12 +16,7 @@
 
 package com.island.ohara.client.configurator.v0
 
-trait ClusterCreationRequest {
-
-  /**
-    * @return cluster name
-    */
-  def name: String
+trait ClusterCreationRequest extends CreationRequest {
 
   /**
     * @return nodes to run this cluster

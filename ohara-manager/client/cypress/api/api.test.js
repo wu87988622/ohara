@@ -17,12 +17,11 @@
 import { makeRandomPort } from '../utils';
 
 let brokerClusterName = '';
-let jarName = '';
+let jar = {};
 let jarGroup = '';
 let pipelineId = '';
 let pipelineName = '';
 let topicId = '';
-let streamAppId = '';
 let propertyId = '';
 let fakeWorkerName = '';
 const nodeName = `node${makeRandomPort()}`;
@@ -179,7 +178,10 @@ describe('Jars', () => {
   it('createJar', () => {
     cy.createJar(testJarName).then(res => {
       const { data } = res;
-      jarName = data.result.name;
+      jar = {
+        name: data.result.name,
+        group: data.result.group,
+      };
       jarGroup = data.result.group;
       expect(data.isSuccess).to.eq(true);
       expect(data.result).to.include.keys('name', 'group');
@@ -188,7 +190,7 @@ describe('Jars', () => {
     });
   });
   it('fetchJars', () => {
-    cy.fetchJars().then(res => {
+    cy.fetchJars(jarGroup).then(res => {
       const { data } = res;
       expect(data.isSuccess).to.eq(true);
       expect(data.result).to.be.a('array');
@@ -207,12 +209,7 @@ describe('Workers', () => {
       brokerClusterName: brokerClusterName,
       clientPort: makeRandomPort(),
       nodeNames: [nodeName],
-      plugins: [
-        {
-          group: jarGroup,
-          name: jarName,
-        },
-      ],
+      plugins: [jar],
     };
     cy.testCreateWorker(data).then(res => {
       cy.log(res);
@@ -583,69 +580,28 @@ describe('Connectors', () => {
 });
 
 describe('Streamapps', () => {
-  it('uploadStreamAppJar', () => {
-    const params = {
-      wk: wkName,
-      jarName: 'ohara-streamapp.jar',
-    };
-    cy.testUploadStreamAppJar(params).then(res => {
-      const { data } = res;
-      streamAppId = data.result[0].name;
-      expect(data.isSuccess).to.eq(true);
-      expect(data.result[0]).to.include.keys(
-        'name',
-        'workerClusterName',
-        'lastModified',
-      );
-      expect(data.result[0].lastModified).to.be.a('number');
-      expect(data.result[0].name).to.be.a('string');
-      expect(data.result[0].workerClusterName).to.be.a('string');
-    });
-  });
-
-  it('fetchStreamAppJars', () => {
-    cy.fetchStreamAppJars(wkName).then(res => {
-      const { data } = res;
-      cy.log(wkName);
-      cy.log(data);
-      expect(data.isSuccess).to.eq(true);
-      expect(data.result[0]).to.include.keys(
-        'lastModified',
-        'name',
-        'workerClusterName',
-      );
-      expect(data.result[0].lastModified).to.be.a('number');
-      expect(data.result[0].name).to.be.a('string');
-      expect(data.result[0].workerClusterName).to.be.a('string');
-    });
-  });
-
   it('createProperty', () => {
     const params = {
-      jarName: streamAppId,
-      name: 'UntitledStreamApp',
+      jar: jar,
+      name: 'streamapp',
     };
     cy.createProperty(params).then(res => {
       const { data } = res;
-      propertyId = data.result.id;
+      propertyId = data.result.name;
       expect(data.isSuccess).to.eq(true);
       expect(data.result).to.include.keys(
-        'id',
-        'instances',
-        'jarInfo',
         'name',
+        'instances',
+        'jar',
         'from',
         'to',
-        'workerClusterName',
       );
-      expect(data.result.id).to.be.a('string');
-      expect(data.result.instances).to.be.a('number');
       expect(data.result.name).to.be.a('string');
+      expect(data.result.instances).to.be.a('number');
       expect(data.result.from).to.be.a('array');
       expect(data.result.to).to.be.a('array');
-      expect(data.result.workerClusterName).to.be.a('string');
-      expect(data.result.jarInfo).to.be.a('object');
-      expect(data.result.jarInfo).to.include.keys('name', 'group');
+      expect(data.result.jar).to.be.a('object');
+      expect(data.result.jar).to.include.keys('name', 'group');
     });
   });
 
@@ -654,53 +610,43 @@ describe('Streamapps', () => {
       const { data } = res;
       expect(data.isSuccess).to.eq(true);
       expect(data.result).to.include.keys(
-        'id',
         'instances',
-        'jarInfo',
+        'jar',
         'name',
         'from',
         'to',
-        'workerClusterName',
       );
-      expect(data.result.id).to.be.a('string');
       expect(data.result.instances).to.be.a('number');
       expect(data.result.name).to.be.a('string');
       expect(data.result.from).to.be.a('array');
       expect(data.result.to).to.be.a('array');
-      expect(data.result.workerClusterName).to.be.a('string');
-      expect(data.result.jarInfo).to.be.a('object');
-      expect(data.result.jarInfo).to.include.keys('name', 'group');
+      expect(data.result.jar).to.be.a('object');
+      expect(data.result.jar).to.include.keys('name', 'group');
     });
   });
 
   it('updateProperty', () => {
     const params = {
-      id: propertyId,
-      jarName: streamAppId,
+      name: propertyId,
       from: [topicId],
-      to: [],
       instances: 1,
     };
     cy.updateProperty(params).then(res => {
       const { data } = res;
       expect(data.isSuccess).to.eq(true);
       expect(data.result).to.include.keys(
-        'id',
         'instances',
-        'jarInfo',
+        'jar',
         'name',
         'from',
         'to',
-        'workerClusterName',
       );
-      expect(data.result.id).to.be.a('string');
       expect(data.result.instances).to.be.a('number');
       expect(data.result.name).to.be.a('string');
       expect(data.result.from).to.be.a('array');
       expect(data.result.to).to.be.a('array');
-      expect(data.result.workerClusterName).to.be.a('string');
-      expect(data.result.jarInfo).to.be.a('object');
-      expect(data.result.jarInfo).to.include.keys('name', 'group');
+      expect(data.result.jar).to.be.a('object');
+      expect(data.result.jar).to.include.keys('name', 'group');
       expect(data.result.from[0]).to.eq(topicId);
     });
   });
@@ -713,22 +659,7 @@ describe('Streamapps', () => {
   });
 
   it('deleteProperty', () => {
-    const params = {
-      id: propertyId,
-      workerClusterName: wkName,
-    };
-    cy.deleteProperty(params).then(res => {
-      const { data } = res;
-      expect(data.isSuccess).to.eq(true);
-    });
-  });
-
-  it('deleteStreamAppJar', () => {
-    const params = {
-      name: streamAppId,
-      workerClusterName: wkName,
-    };
-    cy.deleteStreamAppJar(params).then(res => {
+    cy.deleteProperty(propertyId).then(res => {
       const { data } = res;
       expect(data.isSuccess).to.eq(true);
     });

@@ -19,7 +19,7 @@ import { handleError, axiosInstance } from '../apiUtils';
 
 jest.mock('../apiUtils');
 
-const url = '/api/jars';
+const url = '/api/jars?group=wk';
 
 describe('fetchJars()', () => {
   afterEach(jest.clearAllMocks);
@@ -33,7 +33,7 @@ describe('fetchJars()', () => {
 
     axiosInstance.get.mockImplementation(() => Promise.resolve(res));
 
-    const result = await fetchJars();
+    const result = await fetchJars('wk');
     expect(axiosInstance.get).toHaveBeenCalledTimes(1);
     expect(axiosInstance.get).toHaveBeenCalledWith(url);
     expect(result).toBe(res);
@@ -47,7 +47,7 @@ describe('fetchJars()', () => {
     };
     axiosInstance.get.mockImplementation(() => Promise.resolve(res));
 
-    const result = await fetchJars();
+    const result = await fetchJars('wk');
 
     expect(axiosInstance.get).toHaveBeenCalledTimes(1);
     expect(axiosInstance.get).toHaveBeenCalledWith(url);
@@ -78,10 +78,12 @@ describe('createJar()', () => {
 
   const params = {
     file: {},
+    workerClusterName: 'wk01',
   };
 
   const formData = new FormData();
   formData.append('jar', params.file);
+  formData.append('group', params.workerClusterName);
 
   const config = {
     headers: {
@@ -100,7 +102,11 @@ describe('createJar()', () => {
 
     const result = await createJar(params);
     expect(axiosInstance.post).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.post).toHaveBeenCalledWith(url, formData, config);
+    expect(axiosInstance.post).toHaveBeenCalledWith(
+      '/api/jars',
+      formData,
+      config,
+    );
     expect(result).toBe(res);
   });
 
@@ -115,7 +121,11 @@ describe('createJar()', () => {
     const result = await createJar(params);
 
     expect(axiosInstance.post).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.post).toHaveBeenCalledWith(url, formData, config);
+    expect(axiosInstance.post).toHaveBeenCalledWith(
+      '/api/jars',
+      formData,
+      config,
+    );
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(result);
   });
@@ -142,7 +152,8 @@ describe('deleteJar()', () => {
   afterEach(jest.clearAllMocks);
 
   const params = {
-    id: '1234',
+    name: '1234',
+    workerClusterName: 'wk00',
   };
 
   it('handles success http call', async () => {
@@ -156,7 +167,9 @@ describe('deleteJar()', () => {
 
     const result = await deleteJar(params);
     expect(axiosInstance.delete).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.delete).toHaveBeenCalledWith(`${url}/${params.id}`);
+    expect(axiosInstance.delete).toHaveBeenCalledWith(
+      `/api/jars/${params.name}?group=${params.workerClusterName}`,
+    );
     expect(result).toBe(res);
   });
 
@@ -171,7 +184,9 @@ describe('deleteJar()', () => {
     const result = await deleteJar(params);
 
     expect(axiosInstance.delete).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.delete).toHaveBeenCalledWith(`${url}/${params.id}`);
+    expect(axiosInstance.delete).toHaveBeenCalledWith(
+      `/api/jars/${params.name}?group=${params.workerClusterName}`,
+    );
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(result);
   });

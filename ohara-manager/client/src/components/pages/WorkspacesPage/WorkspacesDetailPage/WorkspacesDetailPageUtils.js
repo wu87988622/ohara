@@ -19,7 +19,7 @@ import { useEffect, useCallback, useState } from 'react';
 import { isEmpty, get, orderBy } from 'lodash';
 
 import * as topicApi from 'api/topicApi';
-import * as streamApi from 'api/streamApi';
+import * as jarApi from 'api/jarApi';
 
 export const useFetchTopics = brokerClusterName => {
   const [topics, setTopics] = useState([]);
@@ -50,7 +50,7 @@ export const useFetchJars = workspaceName => {
   const [loading, setLoading] = useState(true);
 
   const fetchJars = useCallback(async () => {
-    const res = await streamApi.fetchJars(workspaceName);
+    const res = await jarApi.fetchJars(workspaceName);
     const isSuccess = get(res, 'data.isSuccess', false);
     setLoading(false);
 

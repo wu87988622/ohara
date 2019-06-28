@@ -15,126 +15,115 @@
  */
 
 package com.island.ohara.client.configurator.v0
-import java.io.File
-import java.nio.charset.CodingErrorAction
+import java.util.Objects
 
-import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.model._
+import com.island.ohara.client.configurator.v0.JarApi.JarKey
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
+import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
+import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
-import scala.io.Codec
 
 object StreamApi {
-
-  /**
-    * StreamApp List Page file "key name" for form-data
-    */
-  final val INPUT_KEY = "streamapp"
-
-  final val CONTENT_TYPE = MediaTypes.`application/java-archive`
-
-  final val TMP_ROOT = System.getProperty("java.io.tmpdir")
-
-  /**
-    *  limit the length of docker container name (&lt; 60).
-    */
-  final val LIMIT_OF_DOCKER_NAME_LENGTH: Int = 60
 
   /**
     * StreamApp Docker Image name
     */
   final val IMAGE_NAME_DEFAULT: String = s"oharastream/streamapp:${VersionUtils.VERSION}"
 
-  /**
-    * streamApp use same port to do jmx expose: {host_port}:{container_port}. Using random port to avoid possible port conflict
-    * from other clusters (zk, bk and wk)
-    */
-  final val JMX_PORT_DEFAULT: Int = CommonUtils.availablePort()
-
   val STREAM_PREFIX_PATH: String = "stream"
-  val STREAM_LIST_PREFIX_PATH: String = "jars"
   val STREAM_PROPERTY_PREFIX_PATH: String = "property"
   val START_COMMAND: String = "start"
   val STOP_COMMAND: String = "stop"
-  val STATUS_COMMAND: String = "status"
 
   // --- data stored in configurator -- //
-  //TODO : We can remove this class after #1151 solved...by Sam
-  /**
-    * the jar info of the uploaded streamApp jar
-    *
-    * @param workerClusterName which cluster the jar is belong to
-    * @param name jar name
-    * @param lastModified the data change time
-    */
-  final case class StreamJar(workerClusterName: String, name: String, lastModified: Long) extends Data {
-    override def id: String = name
-    override def kind: String = "streamJar"
-  }
-
   /**
     * the streamApp description that is kept in ohara stores
     *
-    * @param workerClusterName the worker cluster name
-    * @param id the streamApp unique id
     * @param name streamApp name in pipeline
+    * @param imageName streamApp image name
     * @param instances numbers of streamApp running container
-    * @param jarInfo uploaded jar information
+    * @param nodeNames node list of streamApp running container
+    * @param deadNodes dead node list of the exited containers from this cluster
+    * @param jar uploaded jar key
     * @param from the candidate topics for streamApp consume from
     * @param to the candidate topics for streamApp produce to
     * @param state the state of streamApp (stopped streamApp does not have this field)
     * @param error the error message if the state was failed to fetch
-    * @param nodeNames actual running nodes
-    * @param deadNodes dead nodes of dead containers from this cluster
+    * @param jmxPort the expose jmx port
     * @param metrics the metrics bean
+    * @param exactlyOnce enable exactly once
     * @param lastModified this data change time
     */
-  final case class StreamAppDescription(workerClusterName: String,
-                                        id: String,
-                                        name: String,
+  final case class StreamAppDescription(name: String,
+                                        imageName: String,
                                         instances: Int,
-                                        jarInfo: JarApi.JarInfo,
-                                        from: Seq[String],
-                                        to: Seq[String],
-                                        state: Option[String],
-                                        error: Option[String],
                                         nodeNames: Set[String],
                                         deadNodes: Set[String],
+                                        jar: JarKey,
+                                        from: Set[String],
+                                        to: Set[String],
+                                        state: Option[String],
+                                        error: Option[String],
+                                        jmxPort: Int,
                                         metrics: Metrics,
                                         // TODO remove this default value after we could handle from UI
                                         exactlyOnce: Boolean = false,
                                         lastModified: Long)
       extends Data {
+    override def id: String = name
     override def kind: String = "streamApp"
-    override def toString: String =
-      s"""
-          workerClusterName: $workerClusterName,
-          id: $id,
-          name: $name,
-          instances: $instances,
-          jarInfo: $jarInfo,
-          fromTopics: $from,
-          toTopics: $to
-      """.stripMargin
   }
   implicit val STREAMAPP_DESCRIPTION_JSON_FORMAT: RootJsonFormat[StreamAppDescription] = jsonFormat14(
     StreamAppDescription)
 
-  final case class StreamClusterCreationRequest(id: String,
-                                                name: String,
-                                                imageName: String,
-                                                from: Seq[String],
-                                                to: Seq[String],
-                                                jmxPort: Option[Int],
-                                                instances: Int,
-                                                nodeNames: Set[String])
+  final case class Creation(name: String,
+                            imageName: String,
+                            jar: JarKey,
+                            from: Set[String],
+                            to: Set[String],
+                            jmxPort: Int,
+                            instances: Int,
+                            nodeNames: Set[String])
       extends ClusterCreationRequest {
-    override def ports: Set[Int] = Set(jmxPort.getOrElse(JMX_PORT_DEFAULT))
+    override def ports: Set[Int] = Set(jmxPort)
   }
+  implicit val STREAM_CREATION_JSON_FORMAT: RootJsonFormat[Creation] =
+    JsonRefiner[Creation]
+      .format(jsonFormat8(Creation))
+      // the default value
+      .nullToString("imageName", IMAGE_NAME_DEFAULT)
+      .nullToEmptyArray("from")
+      .nullToEmptyArray("to")
+      .nullToRandomPort("jmxPort")
+      .nullToInt("instances", 1)
+      .nullToEmptyArray("nodeNames")
+      // the instances cannot by negative (zero number will be reject in StreamRoute start api)
+      .rejectNegativeNumber()
+      .rejectEmptyString()
+      .requireBindPort("jmxPort")
+      .refine
+
+  final case class Update(imageName: Option[String],
+                          from: Option[Set[String]],
+                          to: Option[Set[String]],
+                          jar: Option[JarKey],
+                          jmxPort: Option[Int],
+                          instances: Option[Int],
+                          nodeNames: Option[Set[String]])
+  implicit val STREAM_UPDATE_JSON_FORMAT: RootJsonFormat[Update] =
+    JsonRefiner[Update]
+      .format(jsonFormat7(Update))
+      // the instances cannot by negative (zero number will be reject in StreamRoute start api)
+      .rejectNegativeNumber()
+      .rejectEmptyString()
+      // the node names cannot be empty
+      .rejectEmptyArray()
+      .requireBindPort("jmxPort")
+      .refine
 
   /**
     * The Stream Cluster Information
@@ -154,169 +143,173 @@ object StreamApi {
     jmxPort: Int,
     state: Option[String] = None
   ) extends ClusterInfo {
-    // We don't care the ports since streamApp communicates by broker
-    override def ports: Set[Int] = Set.empty
+    override def ports: Set[Int] = Set(jmxPort)
 
     override def clone(newNodeNames: Set[String]): StreamClusterInfo = copy(nodeNames = newNodeNames)
   }
 
-  // StreamApp List Request Body
-  final case class StreamListRequest(jarName: String)
-  implicit val STREAM_LIST_REQUEST_JSON_FORMAT: RootJsonFormat[StreamListRequest] = jsonFormat1(StreamListRequest)
+  sealed trait Request {
+    def name(name: String): Request
+    @Optional("the default image is IMAGE_NAME_DEFAULT")
+    def imageName(imageName: String): Request
+    def jar(jar: JarKey): Request
+    def from(from: Set[String]): Request
+    def to(to: Set[String]): Request
+    @Optional("the default port is random")
+    def jmxPort(jmxPort: Int): Request
+    @Optional("this parameter has lower priority than nodeNames")
+    def instances(instances: Int): Request
+    @Optional("this parameter has higher priority than instances")
+    def nodeNames(nodeNames: Set[String]): Request
 
-  // StreamApp List Response Body
-  implicit val STREAM_JAR_JSON_FORMAT: RootJsonFormat[StreamJar] = jsonFormat3(StreamJar)
+    /**
+      * generate POST request
+      *
+      * @param executionContext execution context
+      * @return created data
+      */
+    def create()(implicit executionContext: ExecutionContext): Future[StreamAppDescription]
 
-  // StreamApp Property Request Body
-  final case class StreamPropertyRequest(jarName: String,
-                                         name: Option[String],
-                                         from: Option[Seq[String]],
-                                         to: Option[Seq[String]],
-                                         instances: Option[Int])
-  implicit val STREAM_PROPERTY_REQUEST_JSON_FORMAT: RootJsonFormat[StreamPropertyRequest] = jsonFormat5(
-    StreamPropertyRequest)
+    /**
+      * generate the PUT request
+      *
+      * @param executionContext execution context
+      * @return updated/created data
+      */
+    def update()(implicit executionContext: ExecutionContext): Future[StreamAppDescription]
+
+    /**
+      * for testing only
+      * @return the payload of creation
+      */
+    @VisibleForTesting
+    private[v0] def creation: Creation
+
+    /**
+      * for testing only
+      * @return the payload of update
+      */
+    @VisibleForTesting
+    private[v0] def update: Update
+  }
 
   sealed abstract class ActionAccess extends BasicAccess(s"$STREAM_PREFIX_PATH") {
 
     /**
       *  start a streamApp
       *
-      * @param id streamApp component id
+      * @param name streamApp object name
       * @param executionContext execution context
       * @return information of streamApp (status "RUNNING" if success, "EXITED" if fail)
       */
-    def start(id: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription]
+    def start(name: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription]
 
     /**
       * stop a streamApp
       *
-      * @param id streamApp component id
+      * @param name streamApp object name
       * @param executionContext execution context
       * @return information of streamApp (status None if stop successful, or throw exception)
       */
-    def stop(id: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription]
+    def stop(name: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription]
   }
-  def accessOfAction(): ActionAccess = new ActionAccess {
-    private[this] def url(id: String, action: String): String =
-      s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$id/$action"
-    override def start(id: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription] =
-      exec.put[StreamAppDescription, ErrorApi.Error](url(id, START_COMMAND))
-    override def stop(id: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription] =
-      exec.put[StreamAppDescription, ErrorApi.Error](url(id, STOP_COMMAND))
+  def accessOfAction: ActionAccess = new ActionAccess {
+    private[this] def url(name: String, action: String): String =
+      s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$name/$action"
+    override def start(name: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription] =
+      exec.put[StreamAppDescription, ErrorApi.Error](url(name, START_COMMAND))
+    override def stop(name: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription] =
+      exec.put[StreamAppDescription, ErrorApi.Error](url(name, STOP_COMMAND))
   }
 
-  sealed abstract class ListAccess extends BasicAccess(s"$STREAM_PREFIX_PATH/$STREAM_LIST_PREFIX_PATH") {
+  final class AccessOfProperty
+      extends Access2[StreamAppDescription](s"$STREAM_PREFIX_PATH/$STREAM_PROPERTY_PREFIX_PATH") {
+    def request: Request = new Request {
+      private[this] var name: String = _
+      private[this] var _imageName: Option[String] = None
+      private[this] var jar: JarKey = _
+      private[this] var _from: Option[Set[String]] = None
+      private[this] var _to: Option[Set[String]] = None
+      private[this] var _jmxPort: Option[Int] = None
+      private[this] var _instances: Option[Int] = None
+      private[this] var _nodeNames: Option[Set[String]] = None
 
-    /**
-      * list jar information of uploading streamApp jars
-      *
-      * @param wkName query parameter to filter by assigned worker cluster name
-      * @param executionContext execution context
-      * @return jar list in the worker cluster name, or all jars if not specify
-      */
-    def list(wkName: Option[String])(implicit executionContext: ExecutionContext): Future[Seq[StreamJar]]
+      override def name(name: String): Request = {
+        this.name = CommonUtils.requireNonEmpty(name)
+        this
+      }
+      override def imageName(imageName: String): Request = {
+        this._imageName = Some(CommonUtils.requireNonEmpty(imageName))
+        this
+      }
+      override def jar(jar: JarKey): Request = {
+        this.jar = Objects.requireNonNull(jar)
+        this
+      }
+      override def from(from: Set[String]): Request = {
+        this._from = Some(CommonUtils.requireNonEmpty(from.asJava).asScala.toSet)
+        this
+      }
+      override def to(to: Set[String]): Request = {
+        this._to = Some(CommonUtils.requireNonEmpty(to.asJava).asScala.toSet)
+        this
+      }
+      override def jmxPort(jmxPort: Int): Request = {
+        this._jmxPort = Some(CommonUtils.requireConnectionPort(jmxPort))
+        this
+      }
+      override def instances(instances: Int): Request = {
+        this._instances = Some(CommonUtils.requirePositiveInt(instances))
+        this
+      }
+      override def nodeNames(nodeNames: Set[String]): Request = {
+        this._nodeNames = Some(CommonUtils.requireNonEmpty(nodeNames.asJava).asScala.toSet)
+        this
+      }
 
-    /**
-      * upload streamApp jars to worker cluster,
-      * will try to find pre-defined worker cluster if not assigned worker cluster name
-      *
-      * @param filePaths jar path list
-      * @param wkName uploaded worker cluster name
-      * @param executionContext execution context
-      * @return upload jars to assigned worker cluster, or pre-defined worker cluster
-      */
-    def upload(filePaths: Seq[String], wkName: Option[String])(
-      implicit executionContext: ExecutionContext): Future[Seq[StreamJar]] =
-      upload(
-        filePaths: Seq[String],
-        wkName,
-        INPUT_KEY,
-        CONTENT_TYPE
+      override private[v0] def creation: Creation = Creation(
+        name = CommonUtils.requireNonEmpty(name),
+        imageName = CommonUtils.requireNonEmpty(_imageName.getOrElse(IMAGE_NAME_DEFAULT)),
+        jar = Objects.requireNonNull(jar),
+        from = Objects.requireNonNull(_from.getOrElse(Set.empty)),
+        to = Objects.requireNonNull(_to.getOrElse(Set.empty)),
+        jmxPort = CommonUtils.requireConnectionPort(_jmxPort.getOrElse(CommonUtils.availablePort())),
+        // only one of the value is needed between instances and nodes, we check the data after
+        instances = _instances.getOrElse(1),
+        nodeNames = _nodeNames.getOrElse(Set.empty)
       )
-    def upload(filePaths: Seq[String], wkName: Option[String], inputKey: String, contentType: ContentType)(
-      implicit executionContext: ExecutionContext): Future[Seq[StreamJar]]
 
-    /**
-      * delete streamApp jar by name and group
-      *
-      * @param name streamApp name
-      * @param group streamApp group
-      * @param executionContext execution context
-      * @return the deleted jar
-      */
-    def delete(name: String, group: String)(implicit executionContext: ExecutionContext): Future[Unit]
+      override private[v0] def update: Update = Update(
+        imageName = _imageName.map(CommonUtils.requireNonEmpty),
+        from = _from.map(seq => CommonUtils.requireNonEmpty(seq.asJava).asScala.toSet),
+        to = _to.map(seq => CommonUtils.requireNonEmpty(seq.asJava).asScala.toSet),
+        jar = Option(jar),
+        jmxPort = _jmxPort.map(CommonUtils.requireConnectionPort),
+        instances = _instances.map(CommonUtils.requirePositiveInt),
+        nodeNames = _nodeNames.map(seq => CommonUtils.requireNonEmpty(seq.asJava).asScala.toSet)
+      )
 
-    /**
-      * update jar information
-      *
-      * @param name streamApp name
-      * @param group streamApp group
-      * @param request update request
-      * @param executionContext execution context
-      * @return the updated jar
-      */
-    def update(name: String, group: String, request: StreamListRequest)(
-      implicit executionContext: ExecutionContext): Future[StreamJar]
-  }
-  // To avoid different charset handle, replace the malformedInput and unMappable char
-  implicit val codec: Codec = Codec("UTF-8")
-  codec.onMalformedInput(CodingErrorAction.REPLACE)
-  codec.onUnmappableCharacter(CodingErrorAction.REPLACE)
-  def accessOfList(): ListAccess = new ListAccess {
-    private[this] def request(
-      target: String,
-      inputKey: String,
-      contentType: ContentType,
-      filePaths: Seq[String],
-      wkName: Option[String])(implicit executionContext: ExecutionContext): Future[HttpRequest] = {
-      var parts = filePaths.map(filePath => {
-        Multipart.FormData.BodyPart(
-          inputKey,
-          HttpEntity.fromFile(contentType, new File(filePath)),
-          Map("filename" -> new File(filePath).getName)
+      /**
+        * generate POST request
+        *
+        * @param executionContext execution context
+        * @return created data
+        */
+      override def create()(implicit executionContext: ExecutionContext): Future[StreamAppDescription] = {
+        exec.post[Creation, StreamAppDescription, ErrorApi.Error](
+          _url,
+          creation
         )
-      })
-      if (wkName.isDefined) parts :+= Multipart.FormData.BodyPart(Parameters.CLUSTER_NAME, wkName.get)
+      }
 
-      Marshal(Multipart.FormData(parts: _*))
-        .to[RequestEntity]
-        .map(
-          entity => HttpRequest(HttpMethods.POST, uri = target, entity = entity)
+      override def update()(implicit executionContext: ExecutionContext): Future[StreamAppDescription] = {
+        exec.put[Update, StreamAppDescription, ErrorApi.Error](
+          s"${_url}/${CommonUtils.requireNonEmpty(name)}",
+          update
         )
+      }
     }
-
-    override def list(wkName: Option[String])(implicit executionContext: ExecutionContext): Future[Seq[StreamJar]] =
-      exec.get[Seq[StreamJar], ErrorApi.Error](
-        Parameters.appendTargetCluster(s"http://${_hostname}:${_port}/${_version}/${_prefixPath}",
-                                       wkName.getOrElse("")))
-
-    override def upload(filePaths: Seq[String], wkName: Option[String], inputKey: String, contentType: ContentType)(
-      implicit executionContext: ExecutionContext): Future[Seq[StreamJar]] = {
-      request(s"http://${_hostname}:${_port}/${_version}/${_prefixPath}", inputKey, contentType, filePaths, wkName)
-        .flatMap(exec.request[Seq[StreamJar], ErrorApi.Error])
-    }
-    override def delete(name: String, group: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-      exec.delete[ErrorApi.Error](
-        Parameters.appendTargetCluster(s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$name",
-                                       CommonUtils.requireNonEmpty(group)))
-    override def update(name: String, group: String, request: StreamListRequest)(
-      implicit executionContext: ExecutionContext): Future[StreamJar] =
-      exec.put[StreamListRequest, StreamJar, ErrorApi.Error](
-        Parameters.appendTargetCluster(s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$name",
-                                       CommonUtils.requireNonEmpty(group)),
-        request)
   }
 
-  sealed trait PropertyAccess {
-    def hostname(hostname: String)(implicit executionContext: ExecutionContext): PropertyAccess
-    def port(port: Int)(implicit executionContext: ExecutionContext): PropertyAccess
-    def post(request: StreamPropertyRequest)(implicit executionContext: ExecutionContext): Future[StreamAppDescription]
-    def get(id: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription]
-    def update(id: String, request: StreamPropertyRequest)(
-      implicit executionContext: ExecutionContext): Future[StreamAppDescription]
-    def delete(id: String)(implicit executionContext: ExecutionContext): Future[Unit]
-  }
-
-  def accessOfProperty(): Access[StreamPropertyRequest, StreamAppDescription] =
-    new Access[StreamPropertyRequest, StreamAppDescription](s"$STREAM_PREFIX_PATH/$STREAM_PROPERTY_PREFIX_PATH")
+  def accessOfProperty: AccessOfProperty = new AccessOfProperty
 }

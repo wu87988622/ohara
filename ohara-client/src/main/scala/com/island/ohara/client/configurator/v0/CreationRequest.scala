@@ -17,8 +17,12 @@
 package com.island.ohara.client.configurator.v0
 
 /**
-  * interface of request to create a normal object resource.
+  * this is a basic interface of request to create a normal object resource.
   */
 trait CreationRequest {
+
+  /**
+    * @return object name
+    */
   def name: String
 }

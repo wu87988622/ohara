@@ -115,12 +115,11 @@ class StreamApp extends React.Component {
     const { pipelineTopics, graph, updateGraph } = this.props;
     const { fromTopic, toTopic } = this.getTopics({ pipelineTopics, from, to });
     const { streamAppId, streamApp } = this.state;
-    const { name: jarName } = streamApp.jarInfo;
+    const { name: jarName } = streamApp.jar;
 
     const params = {
-      id: streamAppId,
+      name: streamAppId,
       jarName,
-      name,
       instances,
       from: fromTopic,
       to: toTopic,
@@ -187,12 +186,8 @@ class StreamApp extends React.Component {
   handleDeleteConnector = async () => {
     const { match, refreshGraph, history } = this.props;
     const { connectorId: streamAppId, pipelineId } = match.params;
-    const { workerClusterName } = this.props.pipeline;
-    const params = {
-      id: streamAppId,
-      workerClusterName,
-    };
-    const res = await streamApi.deleteProperty(params);
+
+    const res = await streamApi.deleteProperty(streamAppId);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (isSuccess) {
@@ -246,8 +241,8 @@ class StreamApp extends React.Component {
 
     if (!streamApp) return null;
 
-    const { name, instances, jarInfo, from, to } = streamApp;
-    const { name: jarName } = jarInfo;
+    const { name, instances, jar, from, to } = streamApp;
+    const { name: jarName } = jar;
     const fromTopic = pipelineTopics.find(({ id }) => id === from[0]);
     const toTopic = pipelineTopics.find(({ id }) => id === to[0]);
 
@@ -281,14 +276,8 @@ class StreamApp extends React.Component {
               </s.TitleWrapper>
               <s.FormRow>
                 <s.FormCol width="70%">
-                  <Label htmlFor="name-input">Name</Label>
-                  <Field
-                    id="name-input"
-                    name="name"
-                    component={InputField}
-                    width="100%"
-                    placeholder="Stream app name"
-                  />
+                  <Label>Name</Label>
+                  <Label>{streamApp.name}</Label>
                 </s.FormCol>
                 <s.FormCol width="30%">
                   <Label htmlFor="input-instances">Instances</Label>

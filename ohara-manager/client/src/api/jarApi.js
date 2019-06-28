@@ -18,9 +18,9 @@ import { get } from 'lodash';
 
 import { handleError, axiosInstance } from './apiUtils';
 
-export const fetchJars = async () => {
+export const fetchJars = async group => {
   try {
-    const res = await axiosInstance.get(`/api/jars`);
+    const res = await axiosInstance.get(`/api/jars?group=${group}`);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -35,10 +35,11 @@ export const fetchJars = async () => {
 
 export const createJar = async params => {
   try {
-    const { file } = params;
+    const { file, workerClusterName } = params;
     const url = `/api/jars`;
     const formData = new FormData();
     formData.append('jar', file);
+    formData.append('group', workerClusterName);
     const config = {
       headers: {
         'content-type': 'multipart/form-data',
@@ -60,8 +61,8 @@ export const createJar = async params => {
 
 export const deleteJar = async params => {
   try {
-    const { id } = params;
-    const url = `/api/jars/${id}`;
+    const { name, workerClusterName } = params;
+    const url = `/api/jars/${name}?group=${workerClusterName}`;
     const res = await axiosInstance.delete(url);
     const isSuccess = get(res, 'data.isSuccess', false);
 

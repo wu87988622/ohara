@@ -21,7 +21,7 @@ import Tooltip from '@material-ui/core/Tooltip';
 import IconButton from '@material-ui/core/IconButton';
 import { get } from 'lodash';
 
-import * as streamApi from 'api/streamApi';
+import * as jarApi from 'api/jarApi';
 import * as MESSAGES from 'constants/messages';
 import * as utils from '../WorkspacesDetailPageUtils';
 import { Button } from 'components/common/Mui/Form';
@@ -40,7 +40,7 @@ const StreamApp = props => {
   const { jars, fetchJars, loading } = utils.useFetchJars(workspaceName);
 
   const uploadJar = async file => {
-    const res = await streamApi.uploadJar({
+    const res = await jarApi.createJar({
       workerClusterName: workspaceName,
       file,
     });
@@ -109,7 +109,7 @@ const StreamApp = props => {
   };
 
   const deleteJar = async params => {
-    const res = await streamApi.deleteJar(params);
+    const res = await jarApi.deleteJar(params);
     const isSuccess = get(res, 'data.isSuccess', false);
     setDeleting(false);
 

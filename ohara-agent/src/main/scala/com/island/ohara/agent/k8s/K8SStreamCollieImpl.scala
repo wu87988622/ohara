@@ -25,9 +25,7 @@ import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.common.util.CommonUtils
 import com.typesafe.scalalogging.Logger
 
-import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Random
 
 private class K8SStreamCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
     extends K8SBasicCollieImpl[StreamClusterInfo, StreamCollie.ClusterCreator](nodeCollie, k8sClient)
@@ -39,7 +37,6 @@ private class K8SStreamCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
      nodeNames,
      imageName,
      jarUrl,
-     instance,
      appId,
      brokerProps,
      fromTopics,
@@ -52,20 +49,7 @@ private class K8SStreamCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
         if (_) Future.failed(new IllegalArgumentException(s"stream cluster:$clusterName exists!"))
         else
           nodeCollie
-            .nodes()
-            .map { all =>
-              if (CommonUtils.isEmpty(nodeNames.asJava)) {
-                // Check instance first
-                // Here we will check the following conditions:
-                // 1. instance should be positive
-                // 2. available nodes should be bigger than instance (one node runs one instance)
-                if (all.size < instance)
-                  throw new IllegalArgumentException(s"cannot run streamApp. expect: $instance, actual: ${all.size}")
-                Random.shuffle(all).take(CommonUtils.requirePositiveInt(instance))
-              } else
-                // if require node name is not in nodeCollie, do not take that node
-                CommonUtils.requireNonEmpty(all.filter(n => nodeNames.contains(n.name)).asJava).asScala
-            }
+            .nodes(nodeNames)
             .map(_.map(node => node -> ContainerCollie.format(PREFIX_KEY, clusterName, serviceName)).toMap)
             .flatMap { nodes =>
               def urlToHost(url: String): String = new URI(url).getHost

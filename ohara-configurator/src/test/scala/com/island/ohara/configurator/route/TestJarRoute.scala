@@ -19,8 +19,8 @@ package com.island.ohara.configurator.route
 import java.io.{File, FileOutputStream}
 import java.util.concurrent.TimeUnit
 
-import com.island.ohara.client.configurator.v0.{Access, JarApi, StreamApi}
-import com.island.ohara.client.configurator.v0.StreamApi.{StreamAppDescription, StreamPropertyRequest}
+import com.island.ohara.client.configurator.v0.JarApi.JarKey
+import com.island.ohara.client.configurator.v0.{JarApi, StreamApi}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
@@ -31,8 +31,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class TestJarRoute extends SmallTest with Matchers {
 
   private[this] var configurator: Configurator = _
-  private[this] var accessStreamList: StreamApi.ListAccess = _
-  private[this] var accessStreamProperty: Access[StreamPropertyRequest, StreamAppDescription] = _
+  private[this] var accessStreamProperty: StreamApi.AccessOfProperty = _
   private[this] var jarApi: JarApi.Access = _
   private[this] val GROUP = s"group-${this.getClass.getSimpleName}"
 
@@ -47,8 +46,7 @@ class TestJarRoute extends SmallTest with Matchers {
   @Before
   def setup(): Unit = {
     configurator = Configurator.builder().fake().build()
-    accessStreamList = StreamApi.accessOfList().hostname(configurator.hostname).port(configurator.port)
-    accessStreamProperty = StreamApi.accessOfProperty().hostname(configurator.hostname).port(configurator.port)
+    accessStreamProperty = StreamApi.accessOfProperty.hostname(configurator.hostname).port(configurator.port)
     jarApi = JarApi.access().hostname(configurator.hostname).port(configurator.port)
   }
 
@@ -93,14 +91,14 @@ class TestJarRoute extends SmallTest with Matchers {
     result(jarApi.request().list).size shouldBe 1
 
     val jar2 = result(jarApi.request().newName("yyyy").upload(f))
-    jar1.id should not be jar2.id
+    jar1.name should not be jar2.name
 
     val jar3 = result(jarApi.request().newName("xxxx").group(GROUP).upload(f))
     val jar4 = result(jarApi.request().newName("yyyy").group(GROUP).upload(f))
     result(jarApi.request().list).size shouldBe 4
     jar3.group shouldBe GROUP
     jar4.group shouldBe GROUP
-    jar3.id should not be jar4.id
+    jar3.name should not be jar4.name
 
     f.deleteOnExit()
   }
@@ -141,22 +139,32 @@ class TestJarRoute extends SmallTest with Matchers {
     f.getName.contains(jar.name) shouldBe true
     result(jarApi.request().list).size shouldBe 1
 
-    result(jarApi.request().group(jar.group).delete(jar.id))
+    result(jarApi.request().group(jar.group).delete(jar.name))
     result(jarApi.request().list).size shouldBe 0
 
     f.deleteOnExit()
   }
 
   @Test
-  def testCannotDeleteJarUsedInStreamApp(): Unit = {
+  def testDeleteJarUsedInStreamApp(): Unit = {
     val data = methodName().getBytes
+    val name = CommonUtils.randomString()
     val f = tmpFile(data)
     // upload jar
-    val streamJar = result(accessStreamList.upload(Seq(f.getPath), None)).head
+    val jar = result(jarApi.request().upload(f))
     // create streamApp property
-    result(accessStreamProperty.add(StreamPropertyRequest(streamJar.id, None, None, None, None)))
+    result(accessStreamProperty.request.name(name).jar(JarKey(jar.group, jar.name)).create())
     // cannot delete a used jar
-    an[RuntimeException] should be thrownBy result(jarApi.request().delete(streamJar.id))
+    val thrown = the[IllegalArgumentException] thrownBy result(jarApi.request().group(jar.group).delete(jar.name))
+    thrown.getMessage should include("in used")
+
+    result(accessStreamProperty.delete(name))
+    // delete is ok after remove property
+    result(jarApi.request().group(jar.group).delete(jar.name))
+
+    // the jar should be disappear
+    val thrown1 = the[IllegalArgumentException] thrownBy result(jarApi.request().group(jar.group).get(jar.name))
+    thrown1.getMessage should include("not found")
 
     f.deleteOnExit()
   }

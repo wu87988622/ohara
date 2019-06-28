@@ -239,7 +239,7 @@ Cypress.Commands.add('uploadTestStreamAppJar', wk => {
     .then(Cypress.Blob.base64StringToBlob)
     .then(blob => {
       const type = 'application/java-archive';
-      const url = '/api/stream/jars';
+      const url = '/api/jars';
       const config = {
         headers: {
           'content-type': 'multipart/form-data',
@@ -250,8 +250,8 @@ Cypress.Commands.add('uploadTestStreamAppJar', wk => {
       dataTransfer.items.add(testFile);
       blob = dataTransfer.files;
       let formData = new FormData();
-      formData.append('streamapp', blob[0]);
-      formData.append('cluster', wk);
+      formData.append('jar', blob[0]);
+      formData.append('group', wk);
       const res = axiosInstance.post(url, formData, config);
       cy.log(res);
     });

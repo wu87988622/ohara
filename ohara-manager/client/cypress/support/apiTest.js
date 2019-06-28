@@ -122,7 +122,7 @@ Cypress.Commands.add('fetchTopic', name => topicApi.fetchTopic(name));
 
 Cypress.Commands.add('testCreateTopic', params => topicApi.createTopic(params));
 
-Cypress.Commands.add('fetchJars', () => fetchJars());
+Cypress.Commands.add('fetchJars', group => fetchJars(group));
 
 Cypress.Commands.add('createJar', jarName => {
   cy.fixture(`plugin/${jarName}`, 'base64')

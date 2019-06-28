@@ -38,6 +38,7 @@ export const createConnector = async ({
   connector,
   workerClusterName,
   newConnectorName,
+  newStreamAppName,
 }) => {
   const { typeName } = connector;
 
@@ -52,11 +53,11 @@ export const createConnector = async ({
   } else if (isStream(typeName)) {
     // stream app needs a jar id in order to create a property form
     const res = await createProperty({
-      jarName: connector.jarName,
-      name: connectorName,
+      jar: connector.jar,
+      name: newStreamAppName,
     });
-
-    id = res.data.result.id;
+    connectorName = newStreamAppName;
+    id = res.data.result.name;
   } else if (isSource(typeName) || isSink(typeName)) {
     const params = {
       name: newConnectorName,

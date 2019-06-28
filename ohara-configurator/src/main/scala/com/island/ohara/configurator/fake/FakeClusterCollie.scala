@@ -18,7 +18,7 @@ package com.island.ohara.configurator.fake
 
 import com.island.ohara.agent.{ClusterCollie, NodeCollie}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi, ZookeeperApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, StreamApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.configurator.store.DataStore
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -56,7 +56,11 @@ private[configurator] class FakeClusterCollie(nodeCollie: NodeCollie,
   override def images(nodes: Seq[Node])(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[String]]] =
     Future.successful(
       nodes
-        .map(_ -> Seq(ZookeeperApi.IMAGE_NAME_DEFAULT, BrokerApi.IMAGE_NAME_DEFAULT, WorkerApi.IMAGE_NAME_DEFAULT))
+        .map(
+          _ -> Seq(ZookeeperApi.IMAGE_NAME_DEFAULT,
+                   BrokerApi.IMAGE_NAME_DEFAULT,
+                   WorkerApi.IMAGE_NAME_DEFAULT,
+                   StreamApi.IMAGE_NAME_DEFAULT))
         .toMap)
 
   override def verifyNode(node: Node)(implicit executionContext: ExecutionContext): Future[Try[String]] =

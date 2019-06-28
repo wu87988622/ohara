@@ -18,8 +18,8 @@ package com.island.ohara.configurator.route
 
 import java.io.File
 
+import com.island.ohara.client.configurator.v0.JarApi.JarKey
 import com.island.ohara.client.configurator.v0.PipelineApi.Flow
-import com.island.ohara.client.configurator.v0.StreamApi.StreamPropertyRequest
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -32,6 +32,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 // there are too many test cases in this file so we promote  it from small test to medium test
 class TestPipelineRoute extends MediumTest with Matchers {
   private[this] val configurator = Configurator.builder().fake(1, 1).build()
+
+  private[this] val workerApi = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] val pipelineApi = PipelineApi.access.hostname(configurator.hostname).port(configurator.port)
 
@@ -350,13 +352,21 @@ class TestPipelineRoute extends MediumTest with Matchers {
         .numberOfTasks(1)
         .create())
 
-    val filePath = File.createTempFile("empty_", ".jar").getPath
-    val jarId = result(
-      StreamApi.accessOfList().hostname(configurator.hostname).port(configurator.port).upload(Seq(filePath), None)
-    ).head.id
-    val streamAppRequest = StreamPropertyRequest(jarId, Some("app-id"), Some(Seq("from")), Some(Seq("to")), Some(1))
+    val wkName = result(workerApi.list()).head.name
+    val file = File.createTempFile("empty_", ".jar")
+    val jar = result(
+      JarApi.access().hostname(configurator.hostname).port(configurator.port).request().group(wkName).upload(file))
     val streamapp = result(
-      StreamApi.accessOfProperty().hostname(configurator.hostname).port(configurator.port).add(streamAppRequest))
+      StreamApi.accessOfProperty
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .request
+        .name("appid")
+        .jar(JarKey(jar.group, jar.name))
+        .from(Set("from"))
+        .to(Set("to"))
+        .instances(1)
+        .create())
 
     result(pipelineApi.request.name(CommonUtils.randomString()).flow(source.id, topic.name).create()).objects.size shouldBe 2
 

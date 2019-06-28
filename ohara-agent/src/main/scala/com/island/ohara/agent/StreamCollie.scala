@@ -73,11 +73,10 @@ trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator
 object StreamCollie {
   trait ClusterCreator extends Collie.ClusterCreator[StreamClusterInfo] {
     private[this] var jarUrl: String = _
-    private[this] var instances: Int = 0
     private[this] var appId: String = _
     private[this] var brokerProps: String = _
-    private[this] var fromTopics: Seq[String] = Seq.empty
-    private[this] var toTopics: Seq[String] = Seq.empty
+    private[this] var fromTopics: Set[String] = Set.empty
+    private[this] var toTopics: Set[String] = Set.empty
     private[this] var jmxPort: Int = CommonUtils.availablePort()
     private[this] var exactlyOnce: Boolean = false
 
@@ -96,19 +95,6 @@ object StreamCollie {
       */
     def jarUrl(jarUrl: String): ClusterCreator = {
       this.jarUrl = CommonUtils.requireNonEmpty(jarUrl)
-      this
-    }
-
-    /**
-      * set the running instances for the streamApp
-      * NOTED: do not set this value if you had set the nodeNames
-      *
-      * @param instances number of instances
-      * @return the creator
-      */
-    @Optional("you can ignore this parameter if set nodeNames")
-    def instances(instances: Int): ClusterCreator = {
-      this.instances = instances
       this
     }
 
@@ -141,8 +127,8 @@ object StreamCollie {
       * @param fromTopics from topics
       * @return this creator
       */
-    def fromTopics(fromTopics: Seq[String]): ClusterCreator = {
-      this.fromTopics = CommonUtils.requireNonEmpty(fromTopics.asJava).asScala
+    def fromTopics(fromTopics: Set[String]): ClusterCreator = {
+      this.fromTopics = CommonUtils.requireNonEmpty(fromTopics.asJava).asScala.toSet
       this
     }
 
@@ -152,8 +138,8 @@ object StreamCollie {
       * @param toTopics to topics
       * @return this creator
       */
-    def toTopics(toTopics: Seq[String]): ClusterCreator = {
-      this.toTopics = CommonUtils.requireNonEmpty(toTopics.asJava).asScala
+    def toTopics(toTopics: Set[String]): ClusterCreator = {
+      this.toTopics = CommonUtils.requireNonEmpty(toTopics.asJava).asScala.toSet
       this
     }
 
@@ -177,24 +163,21 @@ object StreamCollie {
       */
     @Optional("default is false")
     def enableExactlyOnce(exactlyOnce: Boolean): ClusterCreator = {
-      this exactlyOnce = exactlyOnce
+      this exactlyOnce = Objects.requireNonNull(exactlyOnce)
       this
     }
 
     override def create()(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] = doCreate(
       CommonUtils.requireNonEmpty(clusterName),
-      // we check nodeNames in StreamCollie
-      nodeNames,
+      CommonUtils.requireNonEmpty(nodeNames.asJava).asScala.toSet,
       CommonUtils.requireNonEmpty(imageName),
       CommonUtils.requireNonEmpty(jarUrl),
-      // we check instances in StreamCollie
-      instances,
       CommonUtils.requireNonEmpty(appId),
       CommonUtils.requireNonEmpty(brokerProps),
-      CommonUtils.requireNonEmpty(fromTopics.asJava).asScala,
-      CommonUtils.requireNonEmpty(toTopics.asJava).asScala,
+      CommonUtils.requireNonEmpty(fromTopics.asJava).asScala.toSet,
+      CommonUtils.requireNonEmpty(toTopics.asJava).asScala.toSet,
       CommonUtils.requireConnectionPort(jmxPort),
-      exactlyOnce,
+      Objects.requireNonNull(exactlyOnce),
       Objects.requireNonNull(executionContext)
     )
 
@@ -202,11 +185,10 @@ object StreamCollie {
                            nodeNames: Set[String],
                            imageName: String,
                            jarUrl: String,
-                           instances: Int,
                            appId: String,
                            brokerProps: String,
-                           fromTopics: Seq[String],
-                           toTopics: Seq[String],
+                           fromTopics: Set[String],
+                           toTopics: Set[String],
                            jmxPort: Int,
                            enableExactlyOnce: Boolean,
                            executionContext: ExecutionContext): Future[StreamClusterInfo]
@@ -242,14 +224,4 @@ object StreamCollie {
       s"-Djava.rmi.server.hostname=$hostname"
     )
   }
-
-  /**
-    * Format unique name by unique id.
-    * This name used in cluster name and appId
-    *
-    * @param id the streamApp unique id
-    * @return formatted string. form: ${streamId_with_only_char}.substring(30)
-    */
-  def formatUniqueName(id: String): String =
-    CommonUtils.assertOnlyNumberAndChar(id.replaceAll("-", "")).substring(0, Collie.LIMIT_OF_NAME_LENGTH)
 }

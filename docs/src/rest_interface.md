@@ -2699,137 +2699,86 @@ The jar you uploaded to run streaming application will be included in the image 
 The [StreamApp image](https://cloud.docker.com/u/oharastream/repository/docker/oharastream/streamapp) is kept in each node so don't worry about the network. We all hate re-download everything when running services.
 
 The following information of StreamApp are updated by ohara.
-1. workerClusterName (**string**) — worker cluster name this streamApp belong to
-1. id (**string**) — unique id of this streamApp
 1. name (**string**) — custom name of this streamApp
+1. imageName (**string**) — image name of this streamApp
 1. instances ( **int**) — numbers of streamApp container
-1. jarInfo (**object**) — uploaded jar information
+1. nodeNames (**array(string)**) — node list of streamApp running container
+1. deadNodes (**array(string)**) — dead node list of the exited containers from this cluster
+1. jar (**object**) — uploaded jar key
 1. from (**array(string)**) — topics of streamApp consume with
 1. to (**array(string)**) — topics of streamApp produce to
 1. state (**option(string)**) — only started/failed streamApp has state
+1. jmxPort (**int**) — the expose jmx port
+1. [metrics](custom_connector.md#metrics) (**object**) — the metrics from this streamApp.
+    - meters (**array(object)**) — the metrics in meter type
+      - meters[i].value (**double**) — the number stored in meter
+      - meters[i].unit (**string**) — unit for value
+      - meters[i].document (**string**) — document of this meter
+1. exactlyOnce (**boolean**) — enable exactly once
 1. error (**option(string)**) — the error message from a failed streamApp. If the streamApp is fine or un-started, you won't get this field.
 1. lastModified (**long**) — last modified this jar time
 ----------
 ### start a StreamApp
 
-*PUT /v0/stream/${id}/start*
+*PUT /v0/stream/${name}/start*
 
 **Example Response**
 
 ```json
 {
-  "id": "147dd6f2-dc5e-4538-8cb7-fdcdb785a17d",
-  "state": "RUNNING"
+  "name": "myApp",
+  "imageName": "oharastream/streamapp:0.6.0-SNAPSHOT",
+  "instances": 1,
+  "nodeNames": ["node1"],
+  "deadNodes": [],
+  "jar": {
+    "name": "streamapp",
+    "group": "wk01"
+  },
+  "from": [
+    "topicA"
+  ],
+  "to": [
+    "topicB"
+  ],
+  "state": "RUNNING",
+  "jmxPort": 5678,
+  "exactlyOnce": "false",
+  "metrics": [],
+  "lastModified": 1542102595892
 }
 ```
 ----------
 ### stop a StreamApp
 
 This action will graceful stop and remove all docker containers belong to this streamApp.
+Note: successful stop streamApp will have no status.
 
-*PUT /v0/stream/${id}/stop*
+*PUT /v0/stream/${name}/stop*
 
 **Example Response**
 
 ```json
 {
-  "id": "147dd6f2-dc5e-4538-8cb7-fdcdb785a17d"
-}
-```
-----------
-### upload streamApp jars
-
-*POST /v0/stream/jars*
-
-**Example Request**
-
-Request use form-data, which contains two field :
-1. cluster : the worker cluster name
-2. streamapp : the upload jars
-
-```http
-Content-Type: multipart/form-data
-cluster="wk01
-streamapp="my-streamApp.jar"
-streamapp="new-app.jar"
-```
-
-**Example Response**
-
-```json
-[
-  {
-    "workerClusterName": "wk01",
-    "name": "ohara-streams.jar",
-    "lastModified": 1547141282866
+  "name": "myApp",
+  "imageName": "oharastream/streamapp:0.6.0-SNAPSHOT",
+  "instances": 1,
+  "nodeNames": ["node1"],
+  "deadNodes": [],
+  "jar": {
+    "name": "streamapp",
+    "group": "wk01"
   },
-  {
-    "workerClusterName": "wk01",
-    "name": "other.jar",
-    "lastModified": 1547141282889
-  }
-]
-```
-----------
-### delete a streamApp jar
-
-Delete a streamApp jar by jar name which is not used in any pipeline of current worker cluster
-
-*DELETE /v0/stream/jars/${name}*
-
-**Example Response**
-
-```
-204 NoContent
-```
-
-> It is ok to delete an jar from an nonexistent app, and the response is 204 NoContent.
-
-----------
-### list uploaded streamApp jars
-
-*GET /v0/stream/jars?cluster=${workerClusterName}*
-
-**Example Response**
-
-```json
-[
-  {
-    "workerClusterName": "wk01",
-    "id": "1b022c59-93f9-452c-a062-f8e4cb6c00fe",
-    "name": "ohara-streams.jar",
-    "lastModified": 1547141282866
-  },
-  {
-    "workerClusterName": "wk01",
-    "id": "1a012c59-53de-3381-a062-f8e29f4c00fe",
-    "name": "other.jar",
-    "lastModified": 1547141282889
-  }
-]
-```
-----------
-### update streamApp jar
-
-Currently, this api is only used for changing jar name.
-
-*PUT /v0/stream/jars/${id}*
-
-**Example Request**
-
-```json
-{
-  "jarName": "new-streams.jar"
-}
-```
-
-**Example Response**
-
-```json
-{
-  "id": "1b022c59-93f9-452c-a062-f8e4cb6c00fe",
-  "jarName": "new-streams.jar",
-  "lastModified": 1547141282866
+  "from": [
+    "topicA"
+  ],
+  "to": [
+    "topicB"
+  ],
+  "jmxPort": 5678,
+  "exactlyOnce": "false",
+  "metrics": [],
+  "lastModified": 1542102595892
 }
 ```
 ----------
@@ -2841,57 +2790,77 @@ Create the properties of a streamApp.
 
 **Example Request**
 
-1. jarId (**string**) — the used jar id
-1. name (**option(string)**) — new streamApp name ; default is "Untitled stream app"
+1. name (**string**) — new streamApp name. This is the object unique name.
+1. imageName (**option(string)**) — image name of streamApp used to ; default is official streamapp image of current version
+1. jar (**object**) — the used jar object
+    - jar.group (**string**) — the group name of this jar
+    - jar.name (**string**) — the name without extension of this jar
 1. from (**option(array(string))**) — new source topics ; default is empty
 1. to (**option(array(string))**) — new target topics ; default is empty
-1. instances (**option(int)**) — new number of running streamApp ; default is 1
+1. jmxPort (**option(int)**) — expose port for jmx ; default is random port
+1. instances (**option(int)**) — number of running streamApp ; default is 1
+1. nodeNames (**option(array(string))**) — node name list of streamApp used to ; default is empty
 
 ```json
 {
-  "jarId": "d23e7dfa52",
-  "name": "my-new-app",
+  "name": "myApp",
+  "imageName": "oharastream/streamapp:0.6.0-SNAPSHOT",
+  "jar": {
+    "group": "wk01",
+    "name": "stream-app"
+  },
   "from": [
     "topic1"
   ],
   "to": [
     "topic2"
   ],
-  "instances": 3
+  "jmxPort": 5678,
+  "instances": 3,
+  "nodeNames": []
 }
 ```
 
 **Example Response**
 
-1. workerClusterName (**string**) — worker cluster name this streamApp belong to
-1. id (**string**) — unique id of this streamApp
 1. name (**string**) — custom name of this streamApp
+1. imageName (**string**) — image name of this streamApp
 1. instances ( **int**) — numbers of streamApp container
-1. jarInfo (**object**) — uploaded jar information
+1. nodeNames (**array(string)**) — node list of streamApp running container
+1. deadNodes (**array(string)**) — dead node list of the exited containers from this cluster
+1. jar (**object**) — uploaded jar key
 1. from (**array(string)**) — topics of streamApp consume with
 1. to (**array(string)**) — topics of streamApp produce to
 1. state (**option(string)**) — only started/failed streamApp has state
+1. jmxPort (**int**) — the expose jmx port
+1. [metrics](custom_connector.md#metrics) (**object**) — the metrics from this streamApp.
+    - meters (**array(object)**) — the metrics in meter type
+      - meters[i].value (**double**) — the number stored in meter
+      - meters[i].unit (**string**) — unit for value
+      - meters[i].document (**string**) — document of this meter
+1. exactlyOnce (**boolean**) — enable exactly once
+1. error (**option(string)**) — the error message from a failed streamApp. If the streamApp is fine or un-started, you won't get this field.
 1. lastModified (**long**) — last modified this jar time
 
 ```json
 {
-  "workerClusterName": "wk01",
-  "id": "d312871a-4a05-488d-aae0-c8b27c5312c2",
-  "name": "my-new-app",
-  "instances": 1,
-  "jarInfo": {
-    "name": "new-name.jar",
-    "group": "wk01",
-    "size": 1234,
-    "url": "http://localhost:12345/v0/downloadJars/aa.jar",
-    "lastModified": 1542102595892
+  "name": "myApp",
+  "imageName": "oharastream/streamapp:0.6.0-SNAPSHOT",
+  "instances": 3,
+  "nodeNames": [],
+  "deadNodes": [],
+  "jar": {
+    "name": "stream-app",
+    "group": "wk01"
   },
   "from": [
-    "topicA"
+    "topic1"
   ],
   "to": [
-    "topicB"
+    "topic2"
   ],
+  "jmxPort": 5678,
+  "exactlyOnce": "false",
   "metrics": [],
   "lastModified": 1542102595892
 }
@@ -2902,37 +2871,39 @@ Create the properties of a streamApp.
 ----------
 ### get information from a specific streamApp cluster
 
-*GET /v0/stream/property/${id}*
+*GET /v0/stream/property/${name}*
 
 **Example Response**
 
-1. workerClusterName (**string**) — worker cluster name this streamApp belong to
-1. id (**string**) — unique id of this streamApp
 1. name (**string**) — custom name of this streamApp
+1. imageName (**string**) — image name of this streamApp
 1. instances ( **int**) — numbers of streamApp container
-1. jarInfo (**object**) — uploaded jar information
+1. nodeNames (**array(string)**) — node list of streamApp running container
+1. deadNodes (**array(string)**) — dead node list of the exited containers from this cluster
+1. jar (**object**) — uploaded jar key
 1. from (**array(string)**) — topics of streamApp consume with
 1. to (**array(string)**) — topics of streamApp produce to
-1. metrics (**object**) — the metrics from a running streamApp
-  - meters (**array(object)**) — the metrics in meter type
-    - meters[i].value (**double**) — the number stored in meter
-    - meters[i].unit (**string**) — unit for value
-    - meters[i].document (**string**) — document of this meter
 1. state (**option(string)**) — only started/failed streamApp has state
+1. jmxPort (**int**) — the expose jmx port
+1. [metrics](custom_connector.md#metrics) (**object**) — the metrics from this streamApp.
+    - meters (**array(object)**) — the metrics in meter type
+      - meters[i].value (**double**) — the number stored in meter
+      - meters[i].unit (**string**) — unit for value
+      - meters[i].document (**string**) — document of this meter
+1. exactlyOnce (**boolean**) — enable exactly once
+1. error (**option(string)**) — the error message from a failed streamApp. If the streamApp is fine or un-started, you won't get this field.
 1. lastModified (**long**) — last modified this jar time
 
 ```json
 {
-  "workerClusterName": "wk01",
-  "id": "d312871a-4a05-488d-aae0-c8b27c5312c2",
-  "name": "my-app",
+  "name": "myApp",
+  "imageName": "oharastream/streamapp:0.6.0-SNAPSHOT",
   "instances": 3,
-  "jarInfo": {
-    "name": "new-name.jar",
-    "group": "wk01",
-    "size": 1234,
-    "url": "http://localhost:12345/v0/downloadJars/aa.jar",
-    "lastModified": 1542102595892
+  "nodeNames": [],
+  "deadNodes": [],
+  "jar": {
+    "name": "stream-app",
+    "group": "wk01"
   },
   "from": [
     "topic1"
@@ -2940,21 +2911,9 @@ Create the properties of a streamApp.
   "to": [
     "topic2"
   ],
-  "metrics": {
-    "meters": [
-      {
-        "value": 16,
-        "unit": "rows",
-        "document": "TOPIC_IN: the number of rows"
-      },
-      {
-        "value": 4,
-        "unit": "rows",
-        "document": "TOPIC_OUT: the number of rows"
-      }
-    ]
-  },
-  "state": "RUNNING",
+  "jmxPort": 5678,
+  "exactlyOnce": "false",
+  "metrics": [],
   "lastModified": 1542102595892
 }
 ```
@@ -2963,70 +2922,88 @@ Create the properties of a streamApp.
 
 Update the properties of a non-started streamApp. 
 
-*PUT /v0/stream/property/${id}*
+*PUT /v0/stream/property/${name}*
 
 **Example Request**
 
-1. name (**string**) — new streamApp name
-1. from (**array(string)**) — new source topics
-1. to (**array(string)**) — new target topics
-1. instances (**int**) — new number of running streamApp
+1. imageName (**option(string)**) — new streamApp image name
+1. from (**option(array(string))**) — new source topics
+1. to (**option(array(string))**) — new target topics
+1. jar (**option(object)**) — new uploaded jar key
+1. jmxPort (**option(int)**) — new jmx port
+1. instances (**option(int)**) — new number of running streamApp
+1. nodeNames (**option(array(string))**) — new node name list of streamApp used to (this field has higher priority than instances)
 
 ```json
 {
-  "name": "my-new-app",
+  "imageName": "myimage",
   "from": [
-    "topic1"
+    "newTopic1"
   ],
   "to": [
-    "topic2"
+    "newTopic2"
   ],
-  "instances": 3
+  "jar": {
+    "group": "newGroup",
+    "name": "newJar"
+  },
+  "jmxPort": 8888,
+  "instances": 3,
+  "nodeNames": ["node1", "node2"]
 }
 ```
 
 **Example Response**
 
-1. workerClusterName (**string**) — worker cluster name this streamApp belong to
-1. id (**string**) — unique id of this streamApp
 1. name (**string**) — custom name of this streamApp
+1. imageName (**string**) — image name of this streamApp
 1. instances ( **int**) — numbers of streamApp container
-1. jarInfo (**object**) — uploaded jar information
+1. nodeNames (**array(string)**) — node list of streamApp running container
+1. deadNodes (**array(string)**) — dead node list of the exited containers from this cluster
+1. jar (**object**) — uploaded jar key
 1. from (**array(string)**) — topics of streamApp consume with
 1. to (**array(string)**) — topics of streamApp produce to
 1. state (**option(string)**) — only started/failed streamApp has state
+1. jmxPort (**int**) — the expose jmx port
+1. [metrics](custom_connector.md#metrics) (**object**) — the metrics from this streamApp.
+    - meters (**array(object)**) — the metrics in meter type
+      - meters[i].value (**double**) — the number stored in meter
+      - meters[i].unit (**string**) — unit for value
+      - meters[i].document (**string**) — document of this meter
+1. exactlyOnce (**boolean**) — enable exactly once
+1. error (**option(string)**) — the error message from a failed streamApp. If the streamApp is fine or un-started, you won't get this field.
 1. lastModified (**long**) — last modified this jar time
 
 ```json
 {
-  "workerClusterName": "wk01",
-  "id": "d312871a-4a05-488d-aae0-c8b27c5312c2",
-  "name": "my-new-app",
-  "instances": 3,
-  "jarInfo": {
-    "name": "new-name.jar",
-    "group": "wk01",
-    "size": 1234,
-    "url": "http://localhost:12345/v0/downloadJars/aa.jar",
-    "lastModified": 1542102595892
+  "name": "myApp",
+  "imageName": "myimage",
+  "instances": 2,
+  "nodeNames": ["node1", "node2"],
+  "deadNodes": [],
+  "jar": {
+    "name": "stream-app",
+    "group": "wk01"
   },
   "from": [
-    "topic1"
+    "newTopic1"
   ],
   "to": [
-    "topic2"
+    "newTopic2"
   ],
+  "jmxPort": 8888,
+  "exactlyOnce": "false",
+  "metrics": [],
   "lastModified": 1542102595892
 }
 ```
-
 ----------
 ### delete properties of specific streamApp
 
 Delete the properties of a non-started streamApp.
 This api only remove the streamApp component which is stored in pipeline. 
 
-*DELETE /v0/stream/property/${id}*
+*DELETE /v0/stream/property/${name}*
 
 **Example Response**
 
@@ -3039,12 +3016,11 @@ This api only remove the streamApp component which is stored in pipeline.
 ----------
 ### get topology tree graph from specific streamApp
 
-*GET /v0/stream/view/${id}*
+*GET /v0/stream/view/${name}*
 
 **Example Response**
 
-1. id (**string**) — id of this streamApp
-1. jarName (**string**) — the upload jar name
+1. jarInfo (**string**) — the upload jar information
 1. name (**string**) — the streamApp name
 1. poneglyph (**object**) — the streamApp topology tree graph
   - steles (**array(object)**) — the topology collection
@@ -3060,7 +3036,12 @@ This api only remove the streamApp component which is stored in pipeline.
 ```json
 {
   "id": "d312871a-4a05-488d-aae0-c8b27c5312c2",
-  "jarName": "new-name.jar",
+  "jarInfo": {
+    "name": "stream-app",
+    "group": "wk01",
+    "size": 1234,
+    "lastModified": 1542102595892
+  },
   "name": "my-app",
   "poneglyph": {
     "steles": [
