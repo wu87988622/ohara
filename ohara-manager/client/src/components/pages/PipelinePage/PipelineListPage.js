@@ -17,93 +17,34 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import DocumentTitle from 'react-document-title';
-import styled from 'styled-components';
 import toastr from 'toastr';
 import { Link } from 'react-router-dom';
 import { get, isEmpty } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
+import * as utils from './pipelineUtils/pipelineListPageUtils';
+import * as pipelineApi from 'api/pipelineApi';
+import * as URLS from 'constants/urls';
 import { TableLoader, ListLoader } from 'components/common/Loader';
 import { Modal, ConfirmModal } from 'components/common/Modal';
-import { DataTable } from 'components/common/Table';
 import { Box } from 'components/common/Layout';
 import { Warning } from 'components/common/Messages';
 import { H2 } from 'components/common/Headings';
-import { Button, Select } from 'components/common/Form';
+import { Select } from 'components/common/Form';
 import { primaryBtn } from 'theme/btnTheme';
 import { PIPELINE } from 'constants/documentTitles';
-import {
-  addPipelineStatus,
-  getEditUrl,
-} from './pipelineUtils/pipelineListPageUtils';
 import { fetchWorkers } from 'api/workerApi';
-import {
-  fetchPipelines,
-  createPipeline,
-  deletePipeline,
-} from 'api/pipelineApi';
 import { Input, Label, FormGroup } from 'components/common/Form';
-
-const Wrapper = styled.div`
-  padding-top: 75px;
-  max-width: 1200px;
-  width: calc(100% - 100px);
-  margin: auto;
-`;
-
-const TopWrapper = styled.div`
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-`;
-
-const NewPipelineBtn = styled(Button)`
-  margin-left: auto;
-`;
-
-NewPipelineBtn.displayName = 'NewPipelineBtn';
-
-const Table = styled(DataTable)`
-  text-align: center;
-
-  .is-running {
-    background: ${props => props.theme.trBgColor};
-  }
-`;
-
-Table.displayName = 'Table';
-
-const LinkIcon = styled(Link)`
-  color: ${props => props.theme.lightBlue};
-
-  &:hover {
-    color: ${props => props.theme.blue};
-  }
-`;
-
-LinkIcon.displayName = 'LinkIcon';
-
-const DeleteIcon = styled.button`
-  color: ${props => props.theme.lightBlue};
-  border: 0;
-  font-size: 20px;
-  cursor: pointer;
-  background-color: transparent;
-
-  &:hover {
-    color: ${props => props.theme.red};
-  }
-`;
-
-DeleteIcon.displayName = 'DeleteIcon';
-
-const Inner = styled.div`
-  padding: 30px 20px;
-`;
-
-const LoaderWrapper = styled.div`
-  margin: 30px;
-`;
+import {
+  Wrapper,
+  TopWrapper,
+  NewPipelineBtn,
+  Table,
+  LinkIcon,
+  DeleteIcon,
+  Inner,
+  LoaderWrapper,
+} from './styles';
 
 class PipelineListPage extends React.Component {
   static propTypes = {
@@ -145,12 +86,12 @@ class PipelineListPage extends React.Component {
   };
 
   fetchPipelines = async () => {
-    const res = await fetchPipelines();
+    const res = await pipelineApi.fetchPipelines();
     const result = get(res, 'data.result', null);
     this.setState({ isFetchingPipeline: false });
 
     if (result) {
-      const pipelines = addPipelineStatus(result);
+      const pipelines = utils.addPipelineStatus(result);
       this.setState({ pipelines });
     }
   };
@@ -192,7 +133,7 @@ class PipelineListPage extends React.Component {
     };
 
     this.setState({ isNewPipelineWorking: true });
-    const res = await createPipeline(params);
+    const res = await pipelineApi.createPipeline(params);
     this.setState({ isNewPipelineWorking: false });
     const pipelineId = get(res, 'data.result.id', null);
     if (pipelineId) {
@@ -224,7 +165,7 @@ class PipelineListPage extends React.Component {
   handleDeletePipelineConfirm = async () => {
     const { deletePipelineId: id, pipelineName: name } = this.state;
     this.setState({ isDeletePipelineWorking: true });
-    const res = await deletePipeline(id);
+    const res = await pipelineApi.deletePipeline(id);
     const isSuccess = get(res, 'data.isSuccess', false);
     this.setState({ isDeletePipelineWorking: false });
 
@@ -259,7 +200,7 @@ class PipelineListPage extends React.Component {
     } = this.state;
     return (
       <DocumentTitle title={PIPELINE}>
-        <React.Fragment>
+        <>
           <Modal
             isActive={isSelectClusterModalActive}
             title="New pipeline"
@@ -276,14 +217,14 @@ class PipelineListPage extends React.Component {
               </LoaderWrapper>
             ) : (
               <Inner>
-                {workers.length === 0 ? (
+                {isEmpty(workers) ? (
                   <Warning
                     text={
-                      <span>
+                      <>
                         It seems like you haven't created any worker clusters
                         yet. You can create one from
-                        <Link to="/services/workers"> here</Link>
-                      </span>
+                        <Link to={URLS.WORKSPACES}> here</Link>
+                      </>
                     }
                   />
                 ) : (
@@ -348,7 +289,7 @@ class PipelineListPage extends React.Component {
                     const { id, name, status, workerClusterName } = pipeline;
                     const isRunning = status === 'Running' ? true : false;
                     const trCls = isRunning ? 'is-running' : '';
-                    const editUrl = getEditUrl(pipeline, match);
+                    const editUrl = utils.getEditUrl(pipeline, match);
 
                     return (
                       <tr key={id} className={trCls}>
@@ -376,7 +317,7 @@ class PipelineListPage extends React.Component {
               )}
             </Box>
           </Wrapper>
-        </React.Fragment>
+        </>
       </DocumentTitle>
     );
   }

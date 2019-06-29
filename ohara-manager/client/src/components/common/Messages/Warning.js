@@ -37,7 +37,8 @@ const IconWrapper = styled.i`
   align-self: flex-start;
 `;
 
-const Warning = ({ text }) => {
+const Warning = props => {
+  const { text } = props;
   return (
     <WarningWrapper>
       <IconWrapper className="fas fa-exclamation" />
