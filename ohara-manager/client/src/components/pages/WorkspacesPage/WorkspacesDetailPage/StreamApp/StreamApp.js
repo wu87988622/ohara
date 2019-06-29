@@ -93,7 +93,7 @@ const StreamApp = props => {
   const rows = jars.map(jar => {
     return createData(
       jar.name,
-      999,
+      jar.size,
       utils.getDateFromTimestamp(jar.lastModified),
       actionButton(jar),
     );
