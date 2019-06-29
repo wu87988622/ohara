@@ -120,7 +120,7 @@ describe('WorkspacesPage', () => {
       .get('@newTopic')
       .then(topic => {
         cy.getByTestId(topic.name)
-          .click()
+          .click({ force: true })
           .getByText('Yes, Delete this topic')
           .click()
           .getByText(`Successfully deleted the topic: ${topic.name}`)
