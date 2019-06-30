@@ -49,10 +49,10 @@ const OverviewStreamApps = props => {
           return jars.map(jar => {
             return (
               <TableRow key={jar.name}>
-                <StyledTableCell component="th" scope="row">
-                  {jar.name}
+                <StyledTableCell>{jar.name}</StyledTableCell>
+                <StyledTableCell align="right">
+                  {parseInt(jar.size / 1024)}
                 </StyledTableCell>
-                <StyledTableCell align="left" />
               </TableRow>
             );
           });
