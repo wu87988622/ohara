@@ -23,6 +23,13 @@ import spray.json.RootJsonFormat
 import scala.concurrent.{ExecutionContext, Future}
 
 object ZookeeperApi {
+
+  /**
+    * docker does limit the length of name (< 64). Since we format container name with some part of prefix,
+    * limit the name length to one-third of 64 chars should be suitable for most cases.
+    */
+  val LIMIT_OF_NAME_LENGTH: Int = 20
+
   val ZOOKEEPER_PREFIX_PATH: String = "zookeepers"
 
   /**
@@ -43,7 +50,7 @@ object ZookeeperApi {
   /**
     * exposed to configurator
     */
-  private[ohara] implicit val ZOOKEEPER_CLUSTER_CREATION_REQUEST_JSON_FORMAT: RootJsonFormat[Creation] =
+  private[ohara] implicit val ZOOKEEPER_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
     JsonRefiner[Creation]
       .format(jsonFormat6(Creation))
       .rejectEmptyString()
@@ -56,6 +63,11 @@ object ZookeeperApi {
       .nullToRandomPort("electionPort")
       .requireBindPort("electionPort")
       .nullToString("imageName", IMAGE_NAME_DEFAULT)
+      .stringRestriction("name")
+      .withNumber()
+      .withLowerCase()
+      .withLengthLimit(LIMIT_OF_NAME_LENGTH)
+      .toRefiner
       .refine
 
   final case class ZookeeperClusterInfo private[ZookeeperApi] (name: String,

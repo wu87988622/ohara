@@ -41,7 +41,7 @@ object QueryApi {
                                                catalogPattern: Option[String],
                                                schemaPattern: Option[String],
                                                tableName: Option[String])
-  implicit val RDB_QUERY_JSON_FORMAT: RootJsonFormat[RdbQuery] =
+  implicit val RDB_QUERY_JSON_FORMAT: OharaJsonFormat[RdbQuery] =
     JsonRefiner[RdbQuery].format(jsonFormat7(RdbQuery)).rejectEmptyString().refine
 
   final case class RdbInfo(name: String, tables: Seq[RdbTable])

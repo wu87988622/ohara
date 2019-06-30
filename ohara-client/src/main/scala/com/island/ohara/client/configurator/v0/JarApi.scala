@@ -52,7 +52,8 @@ object JarApi {
 
   // this class used to identify jar "primary key"
   final case class JarKey(group: String, name: String)
-  implicit val JAR_KEY_JSON_FORMAT: RootJsonFormat[JarKey] = jsonFormat2(JarKey)
+  implicit val JAR_KEY_JSON_FORMAT: RootJsonFormat[JarKey] =
+    JsonRefiner[JarKey].format(jsonFormat2(JarKey)).rejectEmptyString().refine
 
   trait Request {
     @Optional("default will use file name")

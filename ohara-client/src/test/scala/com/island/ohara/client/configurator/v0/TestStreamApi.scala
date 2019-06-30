@@ -45,7 +45,7 @@ class TestStreamApi extends SmallTest with Matchers {
   def testCloneNodeNames(): Unit = {
     val newNodeNames = Set(CommonUtils.randomString())
     val info = StreamClusterInfo(
-      name = CommonUtils.randomString(),
+      name = CommonUtils.randomString(10),
       imageName = CommonUtils.randomString(),
       jmxPort = 10,
       nodeNames = Set.empty,
@@ -59,7 +59,7 @@ class TestStreamApi extends SmallTest with Matchers {
     val info = Creation(
       imageName = "image",
       jar = JarKey("group", "name"),
-      name = "app-id",
+      name = "appid",
       from = Set("from"),
       to = Set("to"),
       jmxPort = 5555,
@@ -174,7 +174,7 @@ class TestStreamApi extends SmallTest with Matchers {
 
   @Test
   def testMinimumCreation(): Unit = {
-    val name = CommonUtils.randomString()
+    val name = CommonUtils.randomString(10)
     val creation = propertyAccess.request.name(name).jar(fakeJar).creation
 
     creation.name shouldBe name
@@ -189,7 +189,7 @@ class TestStreamApi extends SmallTest with Matchers {
 
   @Test
   def testCreation(): Unit = {
-    val name = CommonUtils.randomString()
+    val name = CommonUtils.randomString(10)
     val imageName = CommonUtils.randomString()
     val from = Set(CommonUtils.randomString())
     val to = Set(CommonUtils.randomString())
@@ -219,7 +219,7 @@ class TestStreamApi extends SmallTest with Matchers {
 
   @Test
   def parseMinimumJsonCreate(): Unit = {
-    val name = CommonUtils.randomString()
+    val name = CommonUtils.randomString(10)
     val creation = StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
                                                                  |  {
                                                                  |    "name": "$name",
@@ -241,24 +241,24 @@ class TestStreamApi extends SmallTest with Matchers {
   def parseNameField(): Unit = {
     // name is required
     val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-                                                                                                  |  {
-                                                                                                  |    "jar": ${fakeJar.toJson}
-                                                                                                  |  }
+                                |  {
+                                |    "jar": ${fakeJar.toJson}
+                                |  }
            """.stripMargin.parseJson)
     thrown1.getMessage should include("Object is missing required member 'name'")
 
     val thrown2 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-                                                                                                  |  {
-                                                                                                  |    "name": "",
-                                                                                                  |    "jar": ${fakeJar.toJson}
-                                                                                                  |  }
+                                                  |  {
+                                                  |    "name": "",
+                                                  |    "jar": ${fakeJar.toJson}
+                                                  |  }
            """.stripMargin.parseJson)
     thrown2.getMessage should include("the value of name can't be empty string")
   }
 
   @Test
   def parseImageNameField(): Unit = {
-    val name = CommonUtils.randomString()
+    val name = CommonUtils.randomString(10)
     val thrown = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
                                                                                                   |  {
                                                                                                   |    "name": "$name",
@@ -271,7 +271,7 @@ class TestStreamApi extends SmallTest with Matchers {
 
   @Test
   def parseJarField(): Unit = {
-    val name = CommonUtils.randomString()
+    val name = CommonUtils.randomString(10)
 
     // jar is required
     val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
@@ -293,38 +293,32 @@ class TestStreamApi extends SmallTest with Matchers {
   @Test
   def parseJmxPortField(): Unit = {
     // zero port
-    val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(
-      s"""
-                                                                                                  |  {
-                                                                                                  |    "name": "${CommonUtils
-           .randomString()}",
-                                                                                                  |    "jar": ${fakeJar.toJson},
-                                                                                                  |    "jmxPort": 0
-                                                                                                  |  }
+    val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
+          |  {
+          |    "name": "${CommonUtils.randomString(10)}",
+          |    "jar": ${fakeJar.toJson},
+          |    "jmxPort": 0
+          |  }
            """.stripMargin.parseJson)
     thrown1.getMessage should include("the connection port must be [1024, 65535)")
 
     // negative port
-    val thrown2 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(
-      s"""
-                                                                                                  |  {
-                                                                                                  |    "name": "${CommonUtils
-           .randomString()}",
-                                                                                                  |    "jar": ${fakeJar.toJson},
-                                                                                                  |    "jmxPort": -99
-                                                                                                  |  }
+    val thrown2 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
+                        |  {
+                        |    "name": "${CommonUtils.randomString(10)}",
+                        |    "jar": ${fakeJar.toJson},
+                        |    "jmxPort": -99
+                        |  }
            """.stripMargin.parseJson)
     thrown2.getMessage should include("the value of jmxPort MUST be bigger than or equal to zero")
 
     // not connection port
-    val thrown3 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(
-      s"""
-                                                                                                  |  {
-                                                                                                  |    "name": "${CommonUtils
-           .randomString()}",
-                                                                                                  |    "jar": ${fakeJar.toJson},
-                                                                                                  |    "jmxPort": 999999
-                                                                                                  |  }
+    val thrown3 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
+        |  {
+        |    "name": "${CommonUtils.randomString(10)}",
+        |    "jar": ${fakeJar.toJson},
+        |    "jmxPort": 999999
+        |  }
            """.stripMargin.parseJson)
     thrown3.getMessage should include("the connection port must be [1024, 65535)")
   }
@@ -334,17 +328,17 @@ class TestStreamApi extends SmallTest with Matchers {
     // zero instances is ok since we still check this value must bigger than 0 in streamRoute
     StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
                                                   |  {
-                                                  |    "name": "${CommonUtils.randomString()}",
+                                                  |    "name": "${CommonUtils.randomString(10)}",
                                                   |    "jar": ${fakeJar.toJson},
                                                   |    "instances": 0
                                                   |  }
            """.stripMargin.parseJson)
     // negative instances
-    val thrown = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(
-      s"""
+    val thrown = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
                                                                                                   |  {
                                                                                                   |    "name": "${CommonUtils
-           .randomString()}",
+                                                                                                        .randomString(
+                                                                                                          10)}",
                                                                                                   |    "jar": ${fakeJar.toJson},
                                                                                                   |    "instances": -99
                                                                                                   |  }
@@ -363,7 +357,7 @@ class TestStreamApi extends SmallTest with Matchers {
 
   @Test
   def testDefaultUpdate(): Unit = {
-    val name = CommonUtils.randomString()
+    val name = CommonUtils.randomString(10)
     val data = propertyAccess.request.name(name).update
     data.imageName.isEmpty shouldBe true
     data.from.isEmpty shouldBe true
@@ -375,7 +369,7 @@ class TestStreamApi extends SmallTest with Matchers {
 
   @Test
   def parseMinimumJsonUpdate(): Unit = {
-    val name = CommonUtils.randomString()
+    val name = CommonUtils.randomString(10)
     val data = StreamApi.STREAM_UPDATE_JSON_FORMAT.read(s"""
                                                                |  {
                                                                |    "name": "$name",

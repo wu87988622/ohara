@@ -159,7 +159,7 @@ private[configurator] object StreamRoute {
         //StreamApp Property Page
         RouteUtils.basicRoute[Creation, Update, StreamAppDescription](
           root = STREAM_PROPERTY_PREFIX_PATH,
-          hookOfAdd = (req: Creation) => Future.successful(toStore(req)),
+          hookOfCreation = (req: Creation) => Future.successful(toStore(req)),
           hookOfUpdate = (name: String, req: Update, previousOption: Option[StreamAppDescription]) => {
             val updateReq = previousOption
               .map { previous =>

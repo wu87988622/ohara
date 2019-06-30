@@ -26,11 +26,10 @@ import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0._
-import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.configurator.store.DataStore
 import com.typesafe.scalalogging.Logger
 import spray.json.DefaultJsonProtocol._
-import spray.json.RootJsonFormat
+import spray.json.{JsString, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
@@ -53,17 +52,6 @@ private[route] object RouteUtils {
   final val DEFAULT_JAR_SIZE_BYTES = 50 * 1024 * 1024L
 
   /**
-    * The name is replacing id so we have to add limit to it.
-    * @param name name
-    * @return valid name
-    */
-  @VisibleForTesting
-  private[configurator] def checkName(name: String): String =
-    if (name.matches("^[a-zA-Z0-9._-]*$"))
-      name
-    else throw new IllegalArgumentException(s"the legal character is [a-zA-Z0-9._-], but actual:$name")
-
-  /**
     * a route to custom CREATION and UPDATE resource. It offers default implementation to GET, LIST and DELETE.
     * The CREATION is routed to "POST  /$root"
     * The UPDATE is routed to "PUT /$root/$name"
@@ -71,7 +59,7 @@ private[route] object RouteUtils {
     * The LIST is routed to "GET /$root"
     * The DELETE is routed to "DELETE /$root/$name"
     * @param root the prefix of URL
-    * @param hookOfCreate custom action for CREATION. the name is either user-defined request or random string
+    * @param hookOfCreation custom action for CREATION. the name is either user-defined request or random string
     * @param hookOfUpdate custom action for UPDATE. the name from URL is must equal to name in payload
     * @param store data store
     * @param rm used to marshal request
@@ -83,37 +71,29 @@ private[route] object RouteUtils {
     */
   def basicRoute[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
     root: String,
-    hookOfCreate: Creation => Future[Res],
+    hookOfCreation: Creation => Future[Res],
     hookOfUpdate: (String, Update, Option[Res]) => Future[Res])(implicit store: DataStore,
-                                                                rm: RootJsonFormat[Creation],
+                                                                // normally, update request does not carry the name field,
+                                                                // Hence, the check of name have to be executed by format of creation
+                                                                // since it must have name field.
+                                                                rm: OharaJsonFormat[Creation],
                                                                 rm1: RootJsonFormat[Update],
                                                                 rm2: RootJsonFormat[Res],
                                                                 executionContext: ExecutionContext): server.Route =
-    pathPrefix(root) {
-      pathEnd {
-        post(entity(as[Creation]) { req =>
-          checkName(req.name)
-          complete(hookOfCreate(req).flatMap(res => store.addIfAbsent(res.name, res)))
-        }) ~ get(complete(store.values[Res]()))
-      } ~ path(Segment) { name =>
-        get(complete(store.value[Res](name))) ~ delete(
-          complete(store.remove[Res](name).map(_ => StatusCodes.NoContent))) ~
-          put {
-            entity(as[Update]) { req =>
-              complete(
-                store
-                  .get[Res](checkName(name))
-                  .flatMap(hookOfUpdate(name, req, _).flatMap(res => store.add(name, res))))
-            }
-          }
-      }
-    }
+    basicRoute(
+      root = root,
+      hookOfCreation = hookOfCreation,
+      hookOfUpdate = hookOfUpdate,
+      hookOfList = (res: Seq[Res]) => Future.successful(res),
+      hookOfGet = (res: Res) => Future.successful(res),
+      hookBeforeDelete = (name: String) => Future.successful(name)
+    )
 
   /**
     *  this is the basic route of all APIs to access ohara's data.
     *  It implements 1) get, 2) list, 3) delete, 4) add and 5) update function.
     * @param root path to root
-    * @param hookOfAdd used to convert request to response for Add function
+    * @param hookOfCreation used to convert request to response for Add function
     * @param hookOfUpdate used to convert request to response for Update function
     * @param hookOfList used to convert response for List function
     * @param hookOfGet used to convert response for Get function
@@ -125,28 +105,30 @@ private[route] object RouteUtils {
     */
   def basicRoute[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
     root: String,
-    hookOfAdd: Creation => Future[Res],
+    hookOfCreation: Creation => Future[Res],
     hookOfUpdate: (String, Update, Option[Res]) => Future[Res],
     hookOfList: Seq[Res] => Future[Seq[Res]],
     hookOfGet: Res => Future[Res],
     hookBeforeDelete: String => Future[String])(implicit store: DataStore,
-                                                rm: RootJsonFormat[Creation],
+                                                // normally, update request does not carry the name field,
+                                                // Hence, the check of name have to be executed by format of creation
+                                                // since it must have name field.
+                                                rm: OharaJsonFormat[Creation],
                                                 rm1: RootJsonFormat[Update],
                                                 rm2: RootJsonFormat[Res],
                                                 executionContext: ExecutionContext): server.Route =
     pathPrefix(root) {
       pathEnd {
         post(entity(as[Creation]) { creation =>
-          checkName(creation.name)
-          complete(hookOfAdd(creation).flatMap(res => store.addIfAbsent(res)))
+          complete(hookOfCreation(creation).flatMap(res => store.addIfAbsent(res)))
         }) ~
           get(complete(store.values[Res]().flatMap(hookOfList)))
       } ~ path(Segment) { name =>
         get(complete(store.value[Res](name).flatMap(hookOfGet))) ~
           delete(complete(hookBeforeDelete(name).flatMap(id => store.remove[Res](id).map(_ => StatusCodes.NoContent)))) ~
           put(entity(as[Update])(update =>
-            complete(store.get[Res](name).flatMap { previous =>
-              hookOfUpdate(checkName(name), update, previous).flatMap(res => store.add(name, res))
+            complete(store.get[Res](rm.check("name", JsString(name)).value).flatMap { previous =>
+              hookOfUpdate(name, update, previous).flatMap(res => store.add(name, res))
             })))
       }
     }

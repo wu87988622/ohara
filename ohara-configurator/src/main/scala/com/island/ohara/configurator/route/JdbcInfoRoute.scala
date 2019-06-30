@@ -27,7 +27,7 @@ private[configurator] object JdbcInfoRoute {
   def apply(implicit store: DataStore, executionContext: ExecutionContext): server.Route =
     RouteUtils.basicRoute[Creation, Update, JdbcInfo](
       root = JDBC_PREFIX_PATH,
-      hookOfCreate = (request: Creation) =>
+      hookOfCreation = (request: Creation) =>
         Future.successful(
           JdbcInfo(name = request.name,
                    url = request.url,

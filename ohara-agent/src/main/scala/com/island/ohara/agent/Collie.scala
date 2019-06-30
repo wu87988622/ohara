@@ -135,17 +135,6 @@ trait Collie[T <: ClusterInfo, Creator <: ClusterCreator[T]] {
 }
 
 object Collie {
-
-  /**
-    * docker does limit the length of name (< 64). Since we format container name with some part of prefix,
-    * limit the name length to one-third of 64 chars should be suitable for most cases.
-    */
-  private[agent] val LIMIT_OF_NAME_LENGTH: Int = 20
-
-  private[this] def assertLength(s: String): String = if (s.length > LIMIT_OF_NAME_LENGTH)
-    throw new IllegalArgumentException(s"limit of name length is $LIMIT_OF_NAME_LENGTH. actual $s: ${s.length}")
-  else s
-
   trait ClusterCreator[T <: ClusterInfo] {
     protected var imageName: String = _
     protected var clusterName: String = _
@@ -182,9 +171,17 @@ object Collie {
       * @return this creator
       */
     def clusterName(clusterName: String): ClusterCreator.this.type = {
-      this.clusterName = assertLength(CommonUtils.assertOnlyNumberAndChar(CommonUtils.requireNonEmpty(clusterName)))
+      this.clusterName = checkClusterName(CommonUtils.requireNonEmpty(clusterName))
       this
     }
+
+    /**
+      * Apart from the basic check, the sub class may have more specific restriction to name.
+      * The sub class should throw exception if the input cluster name is illegal.
+      * @param clusterName cluster name
+      * @return origin cluster
+      */
+    protected def checkClusterName(clusterName: String): String = clusterName
 
     /**
       *  create a single-node cluster.

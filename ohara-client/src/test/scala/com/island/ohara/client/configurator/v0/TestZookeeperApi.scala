@@ -147,9 +147,9 @@ class TestZookeeperApi extends SmallTest with Matchers {
 
   @Test
   def parseMinimumJson(): Unit = {
-    val name = CommonUtils.randomString()
+    val name = CommonUtils.randomString(10)
     val nodeName = CommonUtils.randomString()
-    val creation = ZookeeperApi.ZOOKEEPER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(s"""
+    val creation = ZookeeperApi.ZOOKEEPER_CREATION_JSON_FORMAT.read(s"""
          |  {
          |    "name": "$name",
          |    "nodeNames": ["$nodeName"]
@@ -167,8 +167,7 @@ class TestZookeeperApi extends SmallTest with Matchers {
 
   @Test
   def parseEmptyNodeNames(): Unit =
-    an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(
-      s"""
+    an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CREATION_JSON_FORMAT.read(s"""
          |  {
          |    "name": "name"
          |  }
@@ -176,8 +175,7 @@ class TestZookeeperApi extends SmallTest with Matchers {
 
   @Test
   def parseZeroClientPort(): Unit =
-    an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(
-      s"""
+    an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CREATION_JSON_FORMAT.read(s"""
          |  {
          |    "name": "name",
          |    "clientPort": 0,
@@ -187,8 +185,7 @@ class TestZookeeperApi extends SmallTest with Matchers {
 
   @Test
   def parseNegativeClientPort(): Unit =
-    an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(
-      s"""
+    an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CREATION_JSON_FORMAT.read(s"""
          |  {
          |    "name": "name",
          |    "clientPort": -1,
@@ -198,8 +195,7 @@ class TestZookeeperApi extends SmallTest with Matchers {
 
   @Test
   def parseLargeClientPort(): Unit =
-    an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(
-      s"""
+    an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CREATION_JSON_FORMAT.read(s"""
          |  {
          |    "name": "name",
          |    "clientPort": 999999,
@@ -209,8 +205,7 @@ class TestZookeeperApi extends SmallTest with Matchers {
 
   @Test
   def parseZeroElectionPort(): Unit =
-    an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(
-      s"""
+    an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CREATION_JSON_FORMAT.read(s"""
          |  {
          |    "name": "name",
          |    "electionPort": 0,
@@ -220,8 +215,7 @@ class TestZookeeperApi extends SmallTest with Matchers {
 
   @Test
   def parseNegativeElectionPort(): Unit =
-    an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(
-      s"""
+    an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CREATION_JSON_FORMAT.read(s"""
          |  {
          |    "name": "name",
          |    "electionPort": -1,
@@ -231,8 +225,7 @@ class TestZookeeperApi extends SmallTest with Matchers {
 
   @Test
   def parseLargeElectionPort(): Unit =
-    an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(
-      s"""
+    an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CREATION_JSON_FORMAT.read(s"""
          |  {
          |    "name": "name",
          |    "electionPort": 999999,
@@ -242,8 +235,7 @@ class TestZookeeperApi extends SmallTest with Matchers {
 
   @Test
   def parseZeroPeerPort(): Unit =
-    an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(
-      s"""
+    an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CREATION_JSON_FORMAT.read(s"""
          |  {
          |    "name": "name",
          |    "peerPort": 0,
@@ -253,8 +245,7 @@ class TestZookeeperApi extends SmallTest with Matchers {
 
   @Test
   def parseNegativePeerPort(): Unit =
-    an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(
-      s"""
+    an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CREATION_JSON_FORMAT.read(s"""
          |  {
          |    "name": "name",
          |    "peerPort": -1,
@@ -264,8 +255,7 @@ class TestZookeeperApi extends SmallTest with Matchers {
 
   @Test
   def parseLargePeerPort(): Unit =
-    an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(
-      s"""
+    an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CREATION_JSON_FORMAT.read(s"""
          |  {
          |    "name": "name",
          |    "peerPort": 999999,

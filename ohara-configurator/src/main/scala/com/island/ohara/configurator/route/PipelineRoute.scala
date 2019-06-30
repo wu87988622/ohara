@@ -396,7 +396,7 @@ private[configurator] object PipelineRoute {
             meterCache: MeterCache): server.Route =
     RouteUtils.basicRoute[Creation, Update, Pipeline](
       root = PIPELINES_PREFIX_PATH,
-      hookOfAdd = (creation: Creation) => assertNoUnknown(creation).flatMap(toRes(_)),
+      hookOfCreation = (creation: Creation) => assertNoUnknown(creation).flatMap(toRes(_)),
       hookOfUpdate = (name: String, update: Update, previousOption: Option[Pipeline]) =>
         if (previousOption.map(_.workerClusterName).exists(wkName => update.workerClusterName.exists(_ != wkName)))
           Future.failed(new IllegalArgumentException("It is illegal to move pipeline to another worker cluster"))

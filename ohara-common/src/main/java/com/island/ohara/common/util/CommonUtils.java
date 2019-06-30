@@ -472,7 +472,7 @@ public final class CommonUtils {
    * @param s string
    * @return origin string
    */
-  public static String assertOnlyNumberAndChar(String s) {
+  public static String requireNumberAndCharset(String s) {
     if (onlyNumberAndChar(s)) return s;
     else throw new IllegalArgumentException("Only number and char are accepted!!! actual:" + s);
   }
@@ -483,8 +483,8 @@ public final class CommonUtils {
   }
 
   /** Require lowercase function */
-  public static String requireLowerCase(String str, String errorMessage) {
-    if (hasUpperCase(str)) throw new IllegalArgumentException(errorMessage);
+  public static String requireLowerCase(String str, Supplier<String> msg) {
+    if (hasUpperCase(str)) throw new IllegalArgumentException(msg.get());
     return str;
   }
 

@@ -33,13 +33,19 @@ object NodeApi {
     JsonRefiner[Update].format(jsonFormat3(Update)).requireConnectionPort("port").rejectEmptyString().refine
 
   case class Creation(name: String, port: Int, user: String, password: String) extends CreationRequest
-  implicit val NODE_CREATION_JSON_FORMAT: RootJsonFormat[Creation] =
+  implicit val NODE_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
     JsonRefiner[Creation]
       .format(jsonFormat4(Creation))
       // default implementation of node is ssh, we use "default ssh port" here
       .nullToInt("port", 22)
       .requireConnectionPort("port")
       .rejectEmptyString()
+      .stringRestriction("name")
+      .withNumber()
+      .withCharset()
+      .withDot()
+      .withDash()
+      .toRefiner
       .refine
 
   case class NodeService(name: String, clusterNames: Seq[String])

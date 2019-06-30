@@ -295,11 +295,11 @@ class TestWorkerApi extends SmallTest with Matchers {
   }
 
   @Test
-  def testJson(): Unit = {
+  def parseMinimumJson(): Unit = {
     import spray.json._
     val name = CommonUtils.randomString(10)
     val nodeName = CommonUtils.randomString()
-    val creation = WorkerApi.WORKER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(s"""
+    val creation = WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
                                                                                  |  {
                                                                                  |    "name": "$name",
                                                                                  |    "nodeNames": ["$nodeName"]
@@ -315,15 +315,34 @@ class TestWorkerApi extends SmallTest with Matchers {
     creation.statusTopicPartitions shouldBe 1
     creation.nodeNames.size shouldBe 1
     creation.nodeNames.head shouldBe nodeName
-    creation.jars.size shouldBe 0
+    creation.jarKeys.size shouldBe 0
   }
 
   @Test
   def parseEmptyNodeNames(): Unit =
-    an[DeserializationException] should be thrownBy WorkerApi.WORKER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
                                                                                    |  {
                                                                                    |    "name": "asdasd",
                                                                                    |    "nodeNames": []
                                                                                    |  }
                                                                      """.stripMargin.parseJson)
+
+  @Test
+  def testDeprecatedKeyJars(): Unit = {
+    val creation = WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
+                                                                 |  {
+                                                                 |    "name": "asdasd",
+                                                                 |    "jars": [
+                                                                 |      {
+                                                                 |        "group": "g",
+                                                                 |        "name": "n"
+                                                                 |      }
+                                                                 |    ],
+                                                                 |    "nodeNames": ["Aa"]
+                                                                 |  }
+                                                                     """.stripMargin.parseJson)
+    creation.jarKeys.size shouldBe 1
+    creation.jarKeys.head.name shouldBe "n"
+    creation.jarKeys.head.group shouldBe "g"
+  }
 }

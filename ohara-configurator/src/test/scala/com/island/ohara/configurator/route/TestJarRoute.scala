@@ -148,7 +148,7 @@ class TestJarRoute extends SmallTest with Matchers {
   @Test
   def testDeleteJarUsedInStreamApp(): Unit = {
     val data = methodName().getBytes
-    val name = CommonUtils.randomString()
+    val name = CommonUtils.randomString(10)
     val f = tmpFile(data)
     // upload jar
     val jar = result(jarApi.request().upload(f))

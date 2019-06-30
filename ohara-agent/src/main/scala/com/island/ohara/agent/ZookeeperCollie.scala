@@ -18,12 +18,13 @@ package com.island.ohara.agent
 import java.util.Objects
 
 import com.island.ohara.agent.docker.ContainerState
-import com.island.ohara.client.configurator.v0.ClusterInfo
+import com.island.ohara.client.configurator.v0.{ClusterInfo, ZookeeperApi}
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
+import spray.json.JsString
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
@@ -217,6 +218,11 @@ object ZookeeperCollie {
       electionPort = CommonUtils.requireConnectionPort(electionPort),
       nodeNames = CommonUtils.requireNonEmpty(nodeNames.asJava).asScala.toSet
     )
+
+    override protected def checkClusterName(clusterName: String): String = {
+      ZookeeperApi.ZOOKEEPER_CREATION_JSON_FORMAT.check("name", JsString(clusterName))
+      clusterName
+    }
 
     protected def doCreate(executionContext: ExecutionContext,
                            clusterName: String,

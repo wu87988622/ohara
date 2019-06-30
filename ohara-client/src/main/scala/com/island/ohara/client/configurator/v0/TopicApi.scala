@@ -39,8 +39,15 @@ object TopicApi {
                                          numberOfReplications: Short)
       extends CreationRequest
 
-  implicit val TOPIC_CREATION_FORMAT: RootJsonFormat[Creation] = JsonRefiner[Creation]
+  implicit val TOPIC_CREATION_FORMAT: OharaJsonFormat[Creation] = JsonRefiner[Creation]
     .format(jsonFormat4(Creation))
+    .stringRestriction("name")
+    .withNumber()
+    .withCharset()
+    .withDot()
+    .withDash()
+    .withUnderLine()
+    .toRefiner
     .nullToInt("numberOfPartitions", DEFAULT_NUMBER_OF_REPLICATIONS)
     .nullToInt("numberOfReplications", DEFAULT_NUMBER_OF_REPLICATIONS)
     .rejectEmptyString()

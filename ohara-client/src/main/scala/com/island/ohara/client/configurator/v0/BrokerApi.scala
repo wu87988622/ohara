@@ -24,6 +24,9 @@ import spray.json.RootJsonFormat
 import scala.concurrent.{ExecutionContext, Future}
 
 object BrokerApi {
+
+  val LIMIT_OF_NAME_LENGTH: Int = ZookeeperApi.LIMIT_OF_NAME_LENGTH
+
   val BROKER_PREFIX_PATH: String = "brokers"
 
   /**
@@ -45,7 +48,7 @@ object BrokerApi {
   /**
     * exposed to configurator
     */
-  private[ohara] implicit val BROKER_CLUSTER_CREATION_REQUEST_JSON_FORMAT: RootJsonFormat[Creation] =
+  private[ohara] implicit val BROKER_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
     JsonRefiner[Creation]
       .format(jsonFormat7(Creation))
       .rejectEmptyString()
@@ -58,6 +61,11 @@ object BrokerApi {
       .nullToRandomPort("jmxPort")
       .requireBindPort("jmxPort")
       .nullToString("imageName", IMAGE_NAME_DEFAULT)
+      .stringRestriction("name")
+      .withNumber()
+      .withLowerCase()
+      .withLengthLimit(LIMIT_OF_NAME_LENGTH)
+      .toRefiner
       .refine
 
   final case class BrokerClusterInfo private[BrokerApi] (name: String,

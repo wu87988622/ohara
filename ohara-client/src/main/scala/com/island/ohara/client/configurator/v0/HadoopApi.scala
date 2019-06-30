@@ -30,8 +30,18 @@ object HadoopApi {
     JsonRefiner[Update].format(jsonFormat1(Update)).rejectEmptyString().refine
 
   final case class Creation(name: String, uri: String) extends CreationRequest
-  implicit val HDFS_CREATION_JSON_FORMAT: RootJsonFormat[Creation] =
-    JsonRefiner[Creation].format(jsonFormat2(Creation)).rejectEmptyString().refine
+  implicit val HDFS_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
+    JsonRefiner[Creation]
+      .format(jsonFormat2(Creation))
+      .rejectEmptyString()
+      .stringRestriction("name")
+      .withNumber()
+      .withCharset()
+      .withDot()
+      .withDash()
+      .withUnderLine()
+      .toRefiner
+      .refine
 
   final case class HdfsInfo(name: String, uri: String, lastModified: Long) extends Data {
     override def id: String = name

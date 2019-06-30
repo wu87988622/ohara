@@ -29,6 +29,8 @@ import scala.concurrent.{ExecutionContext, Future}
 
 object StreamApi {
 
+  val LIMIT_OF_NAME_LENGTH: Int = ZookeeperApi.LIMIT_OF_NAME_LENGTH
+
   /**
     * StreamApp Docker Image name
     */
@@ -91,7 +93,7 @@ object StreamApi {
       extends ClusterCreationRequest {
     override def ports: Set[Int] = Set(jmxPort)
   }
-  implicit val STREAM_CREATION_JSON_FORMAT: RootJsonFormat[Creation] =
+  implicit val STREAM_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
     JsonRefiner[Creation]
       .format(jsonFormat8(Creation))
       // the default value
@@ -105,6 +107,11 @@ object StreamApi {
       .rejectNegativeNumber()
       .rejectEmptyString()
       .requireBindPort("jmxPort")
+      .stringRestriction("name")
+      .withNumber()
+      .withLowerCase()
+      .withLengthLimit(LIMIT_OF_NAME_LENGTH)
+      .toRefiner
       .refine
 
   final case class Update(imageName: Option[String],

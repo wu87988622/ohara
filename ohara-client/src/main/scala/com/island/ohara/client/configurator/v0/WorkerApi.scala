@@ -28,6 +28,9 @@ import spray.json.{JsArray, JsNumber, JsObject, JsString, JsValue, RootJsonForma
 
 import scala.concurrent.{ExecutionContext, Future}
 object WorkerApi {
+
+  val LIMIT_OF_NAME_LENGTH: Int = ZookeeperApi.LIMIT_OF_NAME_LENGTH
+
   val WORKER_PREFIX_PATH: String = "workers"
 
   /**
@@ -70,7 +73,7 @@ object WorkerApi {
                                                 statusTopicName: String,
                                                 statusTopicPartitions: Int,
                                                 statusTopicReplications: Short,
-                                                jars: Set[JarKey],
+                                                jarKeys: Set[JarKey],
                                                 nodeNames: Set[String])
       extends ClusterCreationRequest {
     override def ports: Set[Int] = Set(clientPort, jmxPort)
@@ -79,7 +82,7 @@ object WorkerApi {
   /**
     * exposed to configurator
     */
-  private[ohara] implicit val WORKER_CLUSTER_CREATION_REQUEST_JSON_FORMAT: RootJsonFormat[Creation] =
+  private[ohara] implicit val WORKER_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
     JsonRefiner[Creation]
       .format(jsonFormat16(Creation))
       .rejectEmptyString()
@@ -100,7 +103,14 @@ object WorkerApi {
       .nullToRandomString("statusTopicName")
       .nullToInt("statusTopicPartitions", 1)
       .nullToShort("statusTopicReplications", 1)
-      .nullToEmptyArray("jars")
+      // TODO: remove the deprecated key "jars"
+      .nullToAnotherValueOfKey("jarKeys", "jars")
+      .nullToEmptyArray("jarKeys")
+      .stringRestriction("name")
+      .withNumber()
+      .withLowerCase()
+      .withLengthLimit(LIMIT_OF_NAME_LENGTH)
+      .toRefiner
       .refine
 
   /**
@@ -377,7 +387,7 @@ object WorkerApi {
         statusTopicName = CommonUtils.requireNonEmpty(statusTopicName),
         statusTopicPartitions = legalNumber(statusTopicPartitions, "statusTopicPartitions"),
         statusTopicReplications = legalNumber(statusTopicReplications, "statusTopicReplications"),
-        jars = Objects.requireNonNull(jars),
+        jarKeys = Objects.requireNonNull(jars),
         nodeNames = CommonUtils.requireNonEmpty(nodeNames.asJava).asScala.toSet
       )
 

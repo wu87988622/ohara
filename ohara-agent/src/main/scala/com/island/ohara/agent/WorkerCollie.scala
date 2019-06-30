@@ -19,7 +19,7 @@ import java.util.Objects
 
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.ClusterInfo
+import com.island.ohara.client.configurator.v0.{ClusterInfo, WorkerApi}
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.client.configurator.v0.JarApi.{JarInfo, _}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
@@ -29,7 +29,7 @@ import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
-import spray.json.JsArray
+import spray.json.{JsArray, JsString}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
@@ -467,6 +467,11 @@ object WorkerCollie {
       jarInfos = Objects.requireNonNull(jarInfos),
       nodeNames = CommonUtils.requireNonEmpty(nodeNames.asJava).asScala.toSet
     )
+
+    override protected def checkClusterName(clusterName: String): String = {
+      WorkerApi.WORKER_CREATION_JSON_FORMAT.check("name", JsString(clusterName))
+      clusterName
+    }
 
     protected def doCreate(executionContext: ExecutionContext,
                            clusterName: String,

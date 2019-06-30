@@ -36,7 +36,7 @@ object ValidationApi {
 
   val VALIDATION_HDFS_PREFIX_PATH: String = "hdfs"
   final case class HdfsValidation private[ValidationApi] (uri: String, workerClusterName: Option[String])
-  implicit val HDFS_VALIDATION_JSON_FORMAT: RootJsonFormat[HdfsValidation] =
+  implicit val HDFS_VALIDATION_JSON_FORMAT: OharaJsonFormat[HdfsValidation] =
     JsonRefiner[HdfsValidation].format(jsonFormat2(HdfsValidation)).rejectEmptyString().refine
 
   val VALIDATION_RDB_PREFIX_PATH: String = "rdb"
@@ -48,7 +48,7 @@ object ValidationApi {
                                                  user: String,
                                                  password: String,
                                                  workerClusterName: Option[String])
-  implicit val RDB_VALIDATION_JSON_FORMAT: RootJsonFormat[RdbValidation] =
+  implicit val RDB_VALIDATION_JSON_FORMAT: OharaJsonFormat[RdbValidation] =
     JsonRefiner[RdbValidation].format(jsonFormat4(RdbValidation)).rejectEmptyString().refine
 
   val VALIDATION_FTP_PREFIX_PATH: String = "ftp"
@@ -58,7 +58,7 @@ object ValidationApi {
                                                          password: String,
                                                          workerClusterName: Option[String])
 
-  implicit val FTP_VALIDATION_JSON_FORMAT: RootJsonFormat[FtpValidation] = JsonRefiner[FtpValidation]
+  implicit val FTP_VALIDATION_JSON_FORMAT: OharaJsonFormat[FtpValidation] = JsonRefiner[FtpValidation]
     .format(jsonFormat5(FtpValidation))
     .rejectEmptyString()
     .requireConnectionPort("port")
@@ -69,7 +69,7 @@ object ValidationApi {
 
   val VALIDATION_NODE_PREFIX_PATH: String = "node"
   final case class NodeValidation private[ValidationApi] (hostname: String, port: Int, user: String, password: String)
-  implicit val NODE_VALIDATION_JSON_FORMAT: RootJsonFormat[NodeValidation] = JsonRefiner[NodeValidation]
+  implicit val NODE_VALIDATION_JSON_FORMAT: OharaJsonFormat[NodeValidation] = JsonRefiner[NodeValidation]
     .format(jsonFormat4(NodeValidation))
     .rejectEmptyString()
     .requireConnectionPort("port")

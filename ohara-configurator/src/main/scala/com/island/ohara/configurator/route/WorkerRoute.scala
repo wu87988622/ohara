@@ -35,7 +35,7 @@ object WorkerRoute {
       hookBeforeDelete = (_, name) => Future.successful(name),
       hookOfCreation = (clusters, req: Creation) =>
         Future
-          .traverse(req.jars.map(jarKey => (jarKey.group, jarKey.name))) {
+          .traverse(req.jarKeys.map(jarKey => (jarKey.group, jarKey.name))) {
             case (group, id) => jarStore.jarInfo(group, id)
           }
           .map { jarInfos =>

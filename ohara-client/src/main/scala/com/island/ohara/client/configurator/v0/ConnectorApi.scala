@@ -47,7 +47,7 @@ object ConnectorApi {
   }
   // TODO: remove this format after ohara manager starts to use new APIs
 
-  implicit val COLUMN_JSON_FORMAT: RootJsonFormat[Column] = JsonRefiner[Column]
+  implicit val COLUMN_JSON_FORMAT: OharaJsonFormat[Column] = JsonRefiner[Column]
     .format(new RootJsonFormat[Column] {
       private[this] val nameKey: String = "name"
       private[this] val newNameKey: String = "newName"
@@ -104,7 +104,7 @@ object ConnectorApi {
     override def name: String = plain(SettingDefinition.CONNECTOR_NAME_DEFINITION.key())
   }
 
-  implicit val CONNECTOR_CREATION_JSON_FORMAT: RootJsonFormat[Creation] = JsonRefiner[Creation]
+  implicit val CONNECTOR_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] = JsonRefiner[Creation]
     .format(new RootJsonFormat[Creation] {
       override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
       override def read(json: JsValue): Creation = Creation(json.asJsObject.fields)

@@ -18,11 +18,13 @@ package com.island.ohara.agent
 
 import java.util.Objects
 
+import com.island.ohara.client.configurator.v0.StreamApi
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
+import spray.json.DeserializationException
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
@@ -75,7 +77,7 @@ class TestStreamCreator extends SmallTest with Matchers {
 
   @Test
   def IllegalClusterName(): Unit = {
-    an[IllegalArgumentException] should be thrownBy streamCreator().clusterName("!@#$-")
+    an[DeserializationException] should be thrownBy streamCreator().clusterName("!@#$-")
   }
 
   @Test
@@ -161,7 +163,7 @@ class TestStreamCreator extends SmallTest with Matchers {
   @Test
   def testNameLength(): Unit = {
     streamCreator()
-      .clusterName(CommonUtils.randomString(Collie.LIMIT_OF_NAME_LENGTH))
+      .clusterName(CommonUtils.randomString(StreamApi.LIMIT_OF_NAME_LENGTH))
       .imageName(CommonUtils.randomString())
       .jarUrl("jar")
       .nodeNames(Set("bar", "foo", "bez"))
@@ -171,8 +173,8 @@ class TestStreamCreator extends SmallTest with Matchers {
       .toTopics(Set("topic2"))
       .create()
 
-    an[IllegalArgumentException] should be thrownBy streamCreator()
-      .clusterName(CommonUtils.randomString(Collie.LIMIT_OF_NAME_LENGTH + 1))
+    an[DeserializationException] should be thrownBy streamCreator()
+      .clusterName(CommonUtils.randomString(StreamApi.LIMIT_OF_NAME_LENGTH + 1))
       .imageName(CommonUtils.randomString())
       .jarUrl("jar")
       .nodeNames(Set("bar", "foo", "bez"))
@@ -204,7 +206,7 @@ class TestStreamCreator extends SmallTest with Matchers {
     // could set jmx port
     awaitResult(
       streamCreator()
-        .clusterName(CommonUtils.randomString(Collie.LIMIT_OF_NAME_LENGTH))
+        .clusterName(CommonUtils.randomString(StreamApi.LIMIT_OF_NAME_LENGTH))
         .imageName(CommonUtils.randomString())
         .jarUrl("jar")
         .nodeNames(Set("bar", "foo"))

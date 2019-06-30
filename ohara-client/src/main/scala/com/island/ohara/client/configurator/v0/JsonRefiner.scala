@@ -18,6 +18,7 @@ package com.island.ohara.client.configurator.v0
 
 import java.util.Objects
 
+import com.island.ohara.client.configurator.v0.JsonRefiner.StringRestriction
 import com.island.ohara.common.util.CommonUtils
 import spray.json.{DeserializationException, JsArray, JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
@@ -106,7 +107,8 @@ trait JsonRefiner[T] {
       case s: JsNumber if s.value.toInt > 0 && s.value <= 65535 => // pass
       case s: JsNumber =>
         throw DeserializationException(
-          s"the connection port must be bigger than zero and small than 65536, but actual port is ${s.value}")
+          s"the connection port must be bigger than zero and small than 65536, but actual port is ${s.value}",
+          fieldNames = List(key))
       case _ => // we don't care for other types
     }
   )
@@ -120,7 +122,8 @@ trait JsonRefiner[T] {
     key, {
       case s: JsNumber if s.value.toInt > 1024 && s.value <= 65535 => // pass
       case s: JsNumber =>
-        throw DeserializationException(s"the connection port must be [1024, 65535), but actual port is ${s.value}")
+        throw DeserializationException(s"the connection port must be [1024, 65535), but actual port is ${s.value}",
+                                       fieldNames = List(key))
       case _ => // we don't care for other types
     }
   )
@@ -131,6 +134,20 @@ trait JsonRefiner[T] {
     * @return this refiner
     */
   def rejectEmptyString(): JsonRefiner[T]
+
+  /**
+    * throw exception if the specific key of input json is associated to empty string.
+    * This method check only the specific key. By contrast, rejectEmptyString() checks values for all keys.
+    * @param key key
+    * @return this refiner
+    */
+  def rejectEmptyString(key: String): JsonRefiner[T] = valueChecker(
+    key, {
+      case s: JsString if s.value.isEmpty =>
+        throw DeserializationException(s"the value array of $key can't be empty!!!", fieldNames = List(key))
+      case _ => // we don't care for other types
+    }
+  )
 
   /**
     * reject the value having negative number. For instance, the following request will be rejected.
@@ -157,9 +174,34 @@ trait JsonRefiner[T] {
   def rejectEmptyArray(key: String): JsonRefiner[T] = valueChecker(
     key, {
       case s: JsArray if s.elements.isEmpty =>
-        throw DeserializationException(s"the value array of $key can't be empty!!!")
+        throw DeserializationException(s"the value array of $key can't be empty!!!", fieldNames = List(key))
       case _ => // we don't care for other types
     }
+  )
+
+  /**
+    * add the string restriction to specific value. It throws exception if the input value can't pass any restriction.
+    * Noted: the empty restriction make the checker to reject all input values. However, you are disable to create a
+    * restriction instance without any restriction rules. see our implementation.
+    * @param key key
+    * @return refiner
+    */
+  def stringRestriction(key: String): StringRestriction[T] = (legalPairs: Seq[(Char, Char)], lengthLimit: Int) =>
+    valueChecker(
+      key, {
+        case s: JsString =>
+          if (legalPairs.nonEmpty) s.value.foreach { c =>
+            if (!legalPairs.exists {
+                  case (start, end) => c >= start && c <= end
+                })
+              throw DeserializationException(
+                s"the value:${s.value} of key:$key does not be accepted by legal charsets:${legalPairs.mkString(",")}",
+                fieldNames = List(key))
+          }
+          if (s.value.length > lengthLimit)
+            throw DeserializationException(s"the length of $s exceeds $lengthLimit", fieldNames = List(key))
+        case _ => // we don't care for other types
+      }
   )
 
   protected def valueChecker(key: String, checker: JsValue => Unit): JsonRefiner[T]
@@ -178,7 +220,9 @@ trait JsonRefiner[T] {
         try JsNumber(s.value)
         catch {
           case e: NumberFormatException =>
-            throw DeserializationException(s"the input string:${s.value} can't be converted to number", e)
+            throw DeserializationException(s"the input string:${s.value} can't be converted to number",
+                                           e,
+                                           fieldNames = List(key))
         }
       case s: JsValue => s
     }
@@ -186,10 +230,89 @@ trait JsonRefiner[T] {
 
   protected def valueConverter(key: String, converter: JsValue => JsValue): JsonRefiner[T]
 
-  def refine: RootJsonFormat[T]
+  def refine: OharaJsonFormat[T]
 }
 
 object JsonRefiner {
+
+  trait StringRestriction[T] {
+    private[this] var legalPair: Seq[(Char, Char)] = Seq.empty
+    private[this] var lengthLimit: Int = Int.MaxValue
+
+    /**
+      * accept [a-zA-Z]
+      * @return this restriction
+      */
+    def withCharset(): StringRestriction[T] = {
+      withLowerCase()
+      withUpperCase()
+    }
+
+    /**
+      * accept [a-z]
+      * @return this restriction
+      */
+    def withLowerCase(): StringRestriction[T] = withPair('a', 'z')
+
+    /**
+      * accept [A-Z]
+      * @return this restriction
+      */
+    def withUpperCase(): StringRestriction[T] = withPair('A', 'Z')
+
+    /**
+      * accept [0-9]
+      * @return this restriction
+      */
+    def withNumber(): StringRestriction[T] = withPair('0', '9')
+
+    /**
+      * accept [.]
+      * @return this restriction
+      */
+    def withDot(): StringRestriction[T] = withPair('.', '.')
+
+    /**
+      * accept [-]
+      * @return this restriction
+      */
+    def withDash(): StringRestriction[T] = withPair('-', '-')
+
+    /**
+      * accept [_]
+      * @return this restriction
+      */
+    def withUnderLine(): StringRestriction[T] = withPair('_', '_')
+
+    def withLengthLimit(limit: Int): StringRestriction[T] = {
+      this.lengthLimit = CommonUtils.requirePositiveInt(limit)
+      this
+    }
+
+    /**
+      * Complete this restriction and add it to string refiner.
+      */
+    def toRefiner: JsonRefiner[T] = if (legalPair.isEmpty && lengthLimit == Int.MaxValue)
+      throw new IllegalArgumentException("Don't use String Restriction if you hate to add any restriction")
+    else addToJsonRefiner(legalPair, lengthLimit)
+
+    /**
+      * add custom regex to this restriction instance.
+      * Noted: null and empty string produce exception.
+      * @param startChar legal start char
+      * @param endChar legal end char
+      * @return this restriction
+      */
+    private[this] def withPair(startChar: Char, endChar: Char): StringRestriction[T] = {
+      if (startChar > endChar)
+        throw new IllegalArgumentException(s"the start char:$startChar must be small than end char:$endChar")
+      legalPair = legalPair ++ Seq((startChar, endChar))
+      this
+    }
+
+    protected def addToJsonRefiner(legalPairs: Seq[(Char, Char)], lengthLimit: Int): JsonRefiner[T]
+  }
+
   def apply[T]: JsonRefiner[T] = new JsonRefiner[T] {
     private[this] var format: RootJsonFormat[T] = _
     private[this] var valueConverter: Map[String, JsValue => JsValue] = Map.empty
@@ -248,13 +371,59 @@ object JsonRefiner {
       this
     }
 
-    override def refine: RootJsonFormat[T] = {
+    override def refine: OharaJsonFormat[T] = {
       Objects.requireNonNull(format)
       nullToJsValue.keys.foreach(CommonUtils.requireNonEmpty)
       valueConverter.keys.foreach(CommonUtils.requireNonEmpty)
       nullToAnotherValueOfKey.keys.foreach(CommonUtils.requireNonEmpty)
       nullToAnotherValueOfKey.values.foreach(CommonUtils.requireNonEmpty)
-      new RootJsonFormat[T] {
+      new OharaJsonFormat[T] {
+
+        override def check[Value <: JsValue](key: String, value: Value): Value = {
+          def checkEmptyString(k: String, s: JsString): Unit =
+            if (s.value.isEmpty)
+              throw DeserializationException(s"the value of $k can't be empty string!!!", fieldNames = List(k))
+          def checkJsValueForEmptyString(k: String, v: JsValue): Unit = v match {
+            case s: JsString => checkEmptyString(k, s)
+            case s: JsArray  => s.elements.foreach(v => checkJsValueForEmptyString(k, v))
+            case s: JsObject => s.fields.foreach(pair => checkJsValueForEmptyString(pair._1, pair._2))
+            case _           => // nothing
+          }
+
+          // 1) check empty string
+          if (_rejectEmptyString) checkJsValueForEmptyString(key, value)
+
+          def checkNegativeNumber(k: String, s: JsNumber): Unit = if (s.value < 0)
+            throw DeserializationException(s"the value of $k MUST be bigger than or equal to zero!!!",
+                                           fieldNames = List(k))
+          def checkJsValueForNegativeNumber(k: String, v: JsValue): Unit = v match {
+            case s: JsNumber => checkNegativeNumber(k, s)
+            case s: JsArray  => s.elements.foreach(v => checkJsValueForNegativeNumber(k, v))
+            case s: JsObject =>
+              s.fields.foreach(pair => checkJsValueForNegativeNumber(pair._1, pair._2))
+            case _ => // nothing
+          }
+
+          // 2) check negative number
+          if (_rejectNegativeNumber) checkJsValueForNegativeNumber(key, value)
+
+          def checkEmptyArray(k: String, s: JsArray): Unit = if (s.elements.isEmpty)
+            throw DeserializationException(s"the value of $k MUST be NOT empty array!!!", fieldNames = List(k))
+          def checkJsValueForEmptyArray(k: String, v: JsValue): Unit = v match {
+            case s: JsArray => checkEmptyArray(k, s)
+            case s: JsObject =>
+              s.fields.foreach(pair => checkJsValueForEmptyArray(pair._1, pair._2))
+            case _ => // nothing
+          }
+
+          // 3) check empty array
+          if (_rejectEmptyArray) checkJsValueForEmptyArray(key, value)
+
+          // 4) custom check
+          valueChecker.get(key).foreach(_.apply(value))
+          value
+        }
+
         override def read(json: JsValue): T = {
           var fields = json.asJsObject.fields.filter {
             case (_, value) =>
@@ -294,56 +463,9 @@ object JsonRefiner {
               key -> fields.getOrElse(key, defaultValue)
           }
 
-          // 4) check empty string
-          def checkEmptyString(key: String, s: JsString): Unit =
-            if (s.value.isEmpty) throw DeserializationException(s"the value of $key can't be empty string!!!")
-          def checkJsValueForEmptyString(k: String, v: JsValue): Unit = v match {
-            case s: JsString => checkEmptyString(k, s)
-            case s: JsArray  => s.elements.foreach(v => checkJsValueForEmptyString(k, v))
-            case s: JsObject =>
-              s.fields.foreach {
-                case (key, value) => checkJsValueForEmptyString(key, value)
-              }
-            case _ => // nothing
-          }
-          if (_rejectEmptyString) fields.foreach {
-            case (key, value) => checkJsValueForEmptyString(key, value)
-          }
-
-          // 5) check negative number
-          def checkNegativeNumber(key: String, s: JsNumber): Unit = if (s.value < 0)
-            throw DeserializationException(s"the value of $key MUST be bigger than or equal to zero!!!")
-          def checkJsValueForNegativeNumber(k: String, v: JsValue): Unit = v match {
-            case s: JsNumber => checkNegativeNumber(k, s)
-            case s: JsArray  => s.elements.foreach(v => checkJsValueForNegativeNumber(k, v))
-            case s: JsObject =>
-              s.fields.foreach {
-                case (key, value) => checkJsValueForNegativeNumber(key, value)
-              }
-            case _ => // nothing
-          }
-          if (_rejectNegativeNumber) fields.foreach {
-            case (key, value) => checkJsValueForNegativeNumber(key, value)
-          }
-
-          // 6) check empty array
-          def checkEmptyArray(key: String, s: JsArray): Unit = if (s.elements.isEmpty)
-            throw DeserializationException(s"the value of $key MUST be NOT empty array!!!")
-          def checkJsValueForEmptyArray(k: String, v: JsValue): Unit = v match {
-            case s: JsArray => checkEmptyArray(k, s)
-            case s: JsObject =>
-              s.fields.foreach {
-                case (key, value) => checkJsValueForEmptyArray(key, value)
-              }
-            case _ => // nothing
-          }
-          if (_rejectEmptyArray) fields.foreach {
-            case (key, value) => checkJsValueForEmptyArray(key, value)
-          }
-
-          // 7) custom check
-          valueChecker.foreach {
-            case (key, checker) => checker(fields.getOrElse(key, JsNull))
+          // 4) check the value
+          fields.foreach {
+            case (k, v) => check(k, v)
           }
 
           format.read(JsObject(fields))

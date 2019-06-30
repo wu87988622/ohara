@@ -166,10 +166,10 @@ class TestBrokerApi extends SmallTest with Matchers {
   }
 
   @Test
-  def testJson(): Unit = {
+  def parseMinimumJson(): Unit = {
     val name = CommonUtils.randomString(10)
     val nodeName = CommonUtils.randomString()
-    val creation = BrokerApi.BROKER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(s"""
+    val creation = BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
                                                                                        |  {
                                                                                        |    "name": "$name",
                                                                                        |    "nodeNames": ["$nodeName"]
@@ -189,7 +189,7 @@ class TestBrokerApi extends SmallTest with Matchers {
     val clientPort = CommonUtils.availablePort()
     val exporterPort = CommonUtils.availablePort()
     val jmxPort = CommonUtils.availablePort()
-    val creation2 = BrokerApi.BROKER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(s"""
+    val creation2 = BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
                                                                                  |  {
                                                                                  |    "name": "$name",
                                                                                  |    "clientPort": $clientPort,
@@ -211,7 +211,7 @@ class TestBrokerApi extends SmallTest with Matchers {
 
   @Test
   def testEmptyNodeNames(): Unit =
-    an[DeserializationException] should be thrownBy BrokerApi.BROKER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
      |  {
      |    "name": "name",
      |    "nodeNames": []
@@ -220,14 +220,14 @@ class TestBrokerApi extends SmallTest with Matchers {
 
   @Test
   def testEmptyString(): Unit = {
-    an[DeserializationException] should be thrownBy BrokerApi.BROKER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
                                                                                                                   |  {
                                                                                                                   |    "name": "",
                                                                                                                   |    "nodeNames": ["a0"]
                                                                                                                   |  }
       """.stripMargin.parseJson)
 
-    an[DeserializationException] should be thrownBy BrokerApi.BROKER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
                                                                                                                   |  {
                                                                                                                   |    "name": "name",
                                                                                                                   |    "zookeeperClusterName": "",
@@ -235,7 +235,7 @@ class TestBrokerApi extends SmallTest with Matchers {
                                                                                                                   |  }
       """.stripMargin.parseJson)
 
-    an[DeserializationException] should be thrownBy BrokerApi.BROKER_CLUSTER_CREATION_REQUEST_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
                                                                                                                   |  {
                                                                                                                   |    "name": "name",
                                                                                                                   |    "imageName": "",

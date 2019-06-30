@@ -82,7 +82,7 @@ private[configurator] object TopicRoute {
     RouteUtils.basicRoute[Creation, Update, TopicInfo](
       root = TOPICS_PREFIX_PATH,
       // we don't care for generated id since topic's id should be equal to the name passed by user.
-      hookOfAdd = (creation: Creation) =>
+      hookOfCreation = (creation: Creation) =>
         CollieUtils.topicAdmin(creation.brokerClusterName).flatMap {
           case (cluster, client) =>
             client.list().map(_.find(_.name == creation.name)).flatMap { previous =>

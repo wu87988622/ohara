@@ -28,8 +28,18 @@ object JdbcApi {
     JsonRefiner[Update].format(jsonFormat3(Update)).rejectEmptyString().refine
 
   final case class Creation(name: String, url: String, user: String, password: String) extends CreationRequest
-  implicit val JDBC_CREATION_JSON_FORMAT: RootJsonFormat[Creation] =
-    JsonRefiner[Creation].format(jsonFormat4(Creation)).rejectEmptyString().refine
+  implicit val JDBC_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
+    JsonRefiner[Creation]
+      .format(jsonFormat4(Creation))
+      .rejectEmptyString()
+      .stringRestriction("name")
+      .withNumber()
+      .withCharset()
+      .withDot()
+      .withDash()
+      .withUnderLine()
+      .toRefiner
+      .refine
 
   final case class JdbcInfo(name: String, url: String, user: String, password: String, lastModified: Long)
       extends Data {

@@ -26,7 +26,7 @@ private[configurator] object HdfsInfoRoute {
   def apply(implicit store: DataStore, executionContext: ExecutionContext): server.Route =
     RouteUtils.basicRoute[Creation, Update, HdfsInfo](
       root = HDFS_PREFIX_PATH,
-      hookOfCreate = (request: Creation) =>
+      hookOfCreation = (request: Creation) =>
         Future.successful(HdfsInfo(name = request.name, uri = request.uri, lastModified = CommonUtils.current())),
       hookOfUpdate = (name: String, request: Update, previousOption: Option[HdfsInfo]) =>
         Future.successful {

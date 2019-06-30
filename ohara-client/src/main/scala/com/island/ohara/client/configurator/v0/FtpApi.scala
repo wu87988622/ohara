@@ -31,8 +31,19 @@ object FtpApi {
 
   final case class Creation(name: String, hostname: String, port: Int, user: String, password: String)
       extends CreationRequest
-  implicit val FTP_CREATION_JSON_FORMAT: RootJsonFormat[Creation] =
-    JsonRefiner[Creation].format(jsonFormat5(Creation)).requireConnectionPort("port").rejectEmptyString().refine
+  implicit val FTP_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
+    JsonRefiner[Creation]
+      .format(jsonFormat5(Creation))
+      .requireConnectionPort("port")
+      .rejectEmptyString()
+      .stringRestriction("name")
+      .withNumber()
+      .withCharset()
+      .withDot()
+      .withDash()
+      .withUnderLine()
+      .toRefiner
+      .refine
 
   final case class FtpInfo(name: String,
                            hostname: String,

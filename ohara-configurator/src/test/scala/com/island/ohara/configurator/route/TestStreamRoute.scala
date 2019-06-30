@@ -192,7 +192,7 @@ class TestStreamRoute extends SmallTest with Matchers {
 
   @Test
   def testStreamAppPropertyPageFailCases(): Unit = {
-    val streamAppName = CommonUtils.assertOnlyNumberAndChar(CommonUtils.randomString(5))
+    val streamAppName = CommonUtils.requireNumberAndCharset(CommonUtils.randomString(5))
     //operations on non-exists property should be fail
     an[NullPointerException] should be thrownBy result(accessStreamProperty.request.name("appId").jar(null).update())
     an[IllegalArgumentException] should be thrownBy result(accessStreamProperty.get("non_exist_id"))

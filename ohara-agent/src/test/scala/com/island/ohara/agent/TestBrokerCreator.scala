@@ -16,7 +16,7 @@
 
 package com.island.ohara.agent
 
-import com.island.ohara.client.configurator.v0.BrokerApi
+import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
@@ -24,6 +24,7 @@ import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
+import spray.json.DeserializationException
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -122,14 +123,8 @@ class TestBrokerCreator extends SmallTest with Matchers {
     .create()
 
   @Test
-  def testInvalidName(): Unit = an[IllegalArgumentException] should be thrownBy bkCreator()
-    .imageName(CommonUtils.randomString(10))
-    .clusterName(CommonUtils.randomString(Collie.LIMIT_OF_NAME_LENGTH + 1))
-    .zookeeperClusterName("zk")
-    .exporterPort(CommonUtils.availablePort())
-    .clientPort(CommonUtils.availablePort())
-    .nodeNames(Set("abc"))
-    .create()
+  def testInvalidName(): Unit = an[DeserializationException] should be thrownBy bkCreator().clusterName(
+    CommonUtils.randomString(WorkerApi.LIMIT_OF_NAME_LENGTH + 1))
 
   @Test
   def testCopy(): Unit = {

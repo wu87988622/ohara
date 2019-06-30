@@ -23,6 +23,7 @@ import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
+import spray.json.DeserializationException
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -108,14 +109,8 @@ class TestZookeeperCreator extends SmallTest with Matchers {
     .create()
 
   @Test
-  def testInvalidName(): Unit = an[IllegalArgumentException] should be thrownBy zkCreator()
-    .clusterName(CommonUtils.randomString(Collie.LIMIT_OF_NAME_LENGTH + 1))
-    .imageName(CommonUtils.randomString(10))
-    .peerPort(CommonUtils.availablePort())
-    .clientPort(CommonUtils.availablePort())
-    .electionPort(CommonUtils.availablePort())
-    .nodeName(CommonUtils.randomString())
-    .create()
+  def testInvalidName(): Unit = an[DeserializationException] should be thrownBy zkCreator().clusterName(
+    CommonUtils.randomString(ZookeeperApi.LIMIT_OF_NAME_LENGTH + 1))
 
   @Test
   def testCopy(): Unit = {

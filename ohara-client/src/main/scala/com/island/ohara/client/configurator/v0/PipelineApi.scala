@@ -28,7 +28,7 @@ object PipelineApi {
   val PIPELINES_PREFIX_PATH: String = "pipelines"
 
   final case class Flow(from: String, to: Set[String])
-  implicit val FLOW_JSON_FORMAT: RootJsonFormat[Flow] =
+  implicit val FLOW_JSON_FORMAT: OharaJsonFormat[Flow] =
     JsonRefiner[Flow].format(jsonFormat2(Flow)).rejectEmptyString().refine
 
   /**
@@ -106,7 +106,7 @@ object PipelineApi {
       flows = toFlows(rules)
     )
   }
-  implicit val PIPELINE_CREATION_JSON_FORMAT: RootJsonFormat[Creation] = JsonRefiner[Creation]
+  implicit val PIPELINE_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] = JsonRefiner[Creation]
     .format(new RootJsonFormat[Creation] {
       private[this] val nameKey = "name"
       private[this] val workerClusterNameKey = "workerClusterName"
@@ -133,6 +133,13 @@ object PipelineApi {
       )
     })
     .rejectEmptyString()
+    .stringRestriction("name")
+    .withNumber()
+    .withCharset()
+    .withDot()
+    .withDash()
+    .withUnderLine()
+    .toRefiner
     .refine
 
   import MetricsApi._
