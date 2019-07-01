@@ -17,7 +17,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import TableRow from '@material-ui/core/TableRow';
-import { divide ,floor} from 'lodash';
+import { divide, floor } from 'lodash';
 
 import OverviewTable from './OverviewTable';
 import { useFetchJars } from '../WorkspacesDetailPageUtils';
@@ -51,8 +51,8 @@ const OverviewStreamApps = props => {
             return (
               <TableRow key={jar.name}>
                 <StyledTableCell>{jar.name}</StyledTableCell>
-                <StyledTableCell align="right" >
-                {floor(divide(jar.size,1024),2)}
+                <StyledTableCell align="right">
+                  {floor(divide(jar.size, 1024), 2)}
                 </StyledTableCell>
               </TableRow>
             );
