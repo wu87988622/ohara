@@ -148,7 +148,7 @@ class PipelineNewStream extends React.Component {
             <TableWrapper>
               <Table headers={['FILENAME']}>
                 {jars.map(({ group: id, name: title }) => {
-                  const isActive = id === activeJar.group ? 'is-active' : '';
+                  const isActive = title === activeJar.name ? 'is-active' : '';
                   const params = { group: id, name: title };
                   return (
                     <tr

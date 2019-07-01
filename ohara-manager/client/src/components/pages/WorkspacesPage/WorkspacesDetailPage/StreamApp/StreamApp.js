@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import toastr from 'toastr';
 import Tooltip from '@material-ui/core/Tooltip';
 import IconButton from '@material-ui/core/IconButton';
-import { get } from 'lodash';
+import { get, divide, floor } from 'lodash';
 
 import * as jarApi from 'api/jarApi';
 import * as MESSAGES from 'constants/messages';
@@ -93,7 +93,7 @@ const StreamApp = props => {
   const rows = jars.map(jar => {
     return createData(
       jar.name,
-      999,
+      floor(divide(jar.size, 1024), 2),
       utils.getDateFromTimestamp(jar.lastModified),
       actionButton(jar),
     );
