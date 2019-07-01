@@ -16,5 +16,6 @@
 
 import DialogTitle from './DialogTitle';
 import AlertDialog from './AlertDialog';
+import Modal from './Modal';
 
-export { DialogTitle, AlertDialog };
+export { DialogTitle, AlertDialog, Modal };

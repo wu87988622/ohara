@@ -26,7 +26,7 @@ import * as nodeApi from 'api/nodeApi';
 import * as brokerApi from 'api/brokerApi';
 import * as workerApi from 'api/workerApi';
 import * as MESSAGES from 'constants/messages';
-import { Modal } from 'components/common/Modal';
+import { Modal } from 'components/common/Mui/Dialog';
 import * as commonUtils from 'utils/commonUtils';
 import Checkbox from '@material-ui/core/Checkbox';
 import { SortTable } from 'components/common/Mui/Table';
@@ -41,7 +41,7 @@ const Nodes = props => {
   const [order, setOrder] = useState('asc');
   const [orderBy, setOrderBy] = useState('name');
   const [loading, setLoading] = useState(true);
-  const [confirmWorking, setConfirmWorking] = useState(false);
+  const [confirmDisabled, setConfirmDisabled] = useState(false);
   const [nodeSelectOpen, setNodeSelectOpen] = useState(false);
 
   const fetchWorker = useCallback(async () => {
@@ -95,12 +95,16 @@ const Nodes = props => {
       if (!selectNodes.some(node => node === id)) {
         selectNodes.push(id);
         setSelectNodes(selectNodes);
+        setConfirmDisabled(false);
       }
     } else {
       if (selectNodes.some(node => node === id)) {
         const index = selectNodes.indexOf(id);
         selectNodes.splice(index, 1);
         setSelectNodes(selectNodes);
+      }
+      if (selectNodes.length === 0) {
+        setConfirmDisabled(true);
       }
     }
   };
@@ -119,7 +123,6 @@ const Nodes = props => {
 
   const handelAddNode = () => {
     if (selectNodes.length > 0) {
-      setConfirmWorking(true);
       selectNodes.map(async selectNode => {
         const bkParams = {
           name: broker,
@@ -132,7 +135,6 @@ const Nodes = props => {
         await brokerApi.addNodeToBroker(bkParams);
         await workerApi.addNodeToWorker(wkParams);
         await waitForServiceCreation(0);
-        setConfirmWorking(false);
         setNodeSelectOpen(false);
         fetchWorker();
       });
@@ -140,11 +142,20 @@ const Nodes = props => {
     }
   };
 
+  const handelOpen = () => {
+    if (selectNodes.length === 0) {
+      setConfirmDisabled(true);
+    } else {
+      setConfirmDisabled(false);
+    }
+    setNodeSelectOpen(true);
+  };
+
   const headers = ['Select', 'Node name', 'Port'];
 
   return (
     <>
-      <NewButton text="new node" onClick={() => setNodeSelectOpen(true)} />
+      <NewButton text="new node" onClick={handelOpen} />
       <Main>
         <SortTable
           isLoading={loading}
@@ -153,36 +164,61 @@ const Nodes = props => {
           onRequestSort={handleRequestSort}
           order={order}
           orderBy={orderBy}
+          confirmDisabled={confirmDisabled}
         />
       </Main>
+
       <Modal
-        title="Add node"
-        isActive={nodeSelectOpen}
-        width="400px"
-        handleCancel={handleNodeSelectClose}
+        handelOpen={nodeSelectOpen}
+        handelClose={handleNodeSelectClose}
+        title="Add Node"
         handleConfirm={handelAddNode}
-        confirmBtnText="Add"
-        isConfirmWorking={confirmWorking}
+        confirmDisabled={confirmDisabled}
       >
-        <StyledTable headers={headers} isLoading={false}>
-          {() => {
-            return unusedNodes.map(node => {
-              return (
-                <TableRow key={node.name}>
-                  <TableCell>
-                    <Checkbox
-                      id={node.name}
-                      color="primary"
-                      onChange={handleNodeSelect}
-                    />
-                  </TableCell>
-                  <TableCell>{node.name}</TableCell>
-                  <TableCell align="right">{node.port}</TableCell>
-                </TableRow>
-              );
-            });
-          }}
-        </StyledTable>
+        {() => {
+          return (
+            <StyledTable headers={headers} isLoading={false}>
+              {() => {
+                return (
+                  <>
+                    {unusedNodes.map(node => {
+                      return (
+                        <TableRow key={node.name}>
+                          <TableCell>
+                            <Checkbox
+                              id={node.name}
+                              color="primary"
+                              onChange={handleNodeSelect}
+                            />
+                          </TableCell>
+                          <TableCell>{node.name}</TableCell>
+                          <TableCell align="right">{node.port}</TableCell>
+                        </TableRow>
+                      );
+                    })}
+                    {useNodes.map(node => {
+                      return (
+                        <TableRow key={node.name} selected>
+                          <TableCell>
+                            <Checkbox
+                              id={node.name}
+                              color="primary"
+                              onChange={handleNodeSelect}
+                              checked
+                              disabled
+                            />
+                          </TableCell>
+                          <TableCell>{node.name}</TableCell>
+                          <TableCell align="right">{node.port}</TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </>
+                );
+              }}
+            </StyledTable>
+          );
+        }}
       </Modal>
     </>
   );
