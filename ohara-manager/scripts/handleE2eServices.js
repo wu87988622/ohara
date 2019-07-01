@@ -17,7 +17,7 @@
 const fs = require('fs');
 const axios = require('axios');
 const chalk = require('chalk');
-const lodash = require('lodash');
+const { get, isNull } = require('lodash');
 
 const commonUtils = require('../utils/commonUtils');
 
@@ -118,8 +118,8 @@ const waitForCreateService = async (baseUrl, api, name) => {
 
 const waitContainersCreate = async (baseUrl, name) => {
   const res = await axios.get(`${baseUrl}/containers/${name}`);
-  const containers = lodash.get(res, 'data[0].containers[0].state', null);
-  if (containers === null) {
+  const containers = get(res, 'data[0].containers[0].state', null);
+  if (isNull(containers)) {
     await commonUtils.sleep(1000);
     await waitContainersCreate(baseUrl, name);
   }
