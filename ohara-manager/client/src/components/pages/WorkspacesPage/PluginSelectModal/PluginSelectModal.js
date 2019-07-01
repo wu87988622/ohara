@@ -17,7 +17,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import toastr from 'toastr';
-import { includes, map, some, sortBy, get, isNull } from 'lodash';
+import { includes, map, some, sortBy, get } from 'lodash';
 
 import * as jarApi from 'api/jarApi';
 import * as MESSAGES from 'constants/messages';
@@ -57,20 +57,6 @@ class PluginSelectModal extends React.Component {
     }
     return null;
   }
-
-  componentDidMount() {
-    this.fetchData();
-  }
-
-  fetchData = async () => {
-    const res = await jarApi.fetchJars();
-    this.setState(() => ({ isLoading: false }));
-    const jars = get(res, 'data.result', null);
-    if (!isNull(jars)) {
-      const sortedJars = sortBy(jars, 'name');
-      this.setState({ jars: sortedJars });
-    }
-  };
 
   handleClose = () => {
     this.props.onClose();
