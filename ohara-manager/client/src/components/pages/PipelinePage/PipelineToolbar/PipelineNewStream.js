@@ -89,8 +89,9 @@ class PipelineNewStream extends React.Component {
       group: get(jars, '[0].group', null),
       name: get(jars, '[0].name', null),
     };
-    updateAddBtnStatus(activeJar);
-
+    if (activeJar.group == null && activeJar.name == null) {
+      updateAddBtnStatus(null);
+    }
     if (!isNull(jars)) {
       this.setState({ jars, activeJar });
     }
