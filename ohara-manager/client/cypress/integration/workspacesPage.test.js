@@ -121,7 +121,7 @@ describe('WorkspacesPage', () => {
       .then(topic => {
         cy.getByTestId(topic.name)
           .click({ force: true })
-          .getByText('Yes, Delete this topic')
+          .getByText('Delete')
           .click()
           .getByText(`Successfully deleted the topic: ${topic.name}`)
           .should('have.length', 1);

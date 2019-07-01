@@ -59,6 +59,8 @@ class WorkerNewModal extends React.Component {
     const maxRetry = 5;
     let retryCount = 0;
     const waitForServiceCreation = async clusterName => {
+      if (!clusterName) return;
+
       const res = await containerApi.fetchContainers(clusterName);
       const containers = get(res, 'data.result[0].containers', null);
 
@@ -69,7 +71,10 @@ class WorkerNewModal extends React.Component {
         );
       }
 
-      if (containersAreReady || retryCount > maxRetry) return;
+      if (retryCount > maxRetry)
+        throw new Error(`Couldn't get the container state!`);
+
+      if (containersAreReady) return; // exist successfully
 
       retryCount++;
       await commonUtils.sleep(2000);
@@ -128,11 +133,23 @@ class WorkerNewModal extends React.Component {
     if (!this.validateClientPort(values.clientPort)) return;
     if (!this.validateNodeNames(values.nodeNames)) return;
 
-    await this.createServices(values);
+    try {
+      await this.createServices(values);
+    } catch (error) {
+      // Ignore the error
 
-    form.reset();
+      toastr.error('Failed to create workspace!');
+      this.resetModal(form);
+      return;
+    }
+
     toastr.success(MESSAGES.SERVICE_CREATION_SUCCESS);
     this.props.onConfirm();
+    this.resetModal(form);
+  };
+
+  resetModal = form => {
+    form.reset();
     this.handleModalClose();
   };
 
@@ -198,10 +215,7 @@ class WorkerNewModal extends React.Component {
               isActive={this.props.isActive}
               width="600px"
               handleCancel={() => {
-                if (!submitting) {
-                  form.reset();
-                  this.handleModalClose();
-                }
+                if (!submitting) this.resetModal(form);
               }}
               handleConfirm={handleSubmit}
               confirmBtnText="Add"
