@@ -97,7 +97,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
       wkApi = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)
       containerApi = ContainerApi.access.hostname(configurator.hostname).port(configurator.port)
       topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
-      jarApi = JarApi.access().hostname(configurator.hostname).port(configurator.port)
+      jarApi = JarApi.access.hostname(configurator.hostname).port(configurator.port)
       streamAppActionAccess = StreamApi.accessOfAction.hostname(configurator.hostname).port(configurator.port)
       streamAppPropertyAccess = StreamApi.accessOfProperty.hostname(configurator.hostname).port(configurator.port)
       val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
@@ -160,7 +160,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     val jar = CommonUtils.createTempJar("fake")
 
     // upload streamApp jar
-    val jarInfo = result(jarApi.request().group(wkName).upload(jar))
+    val jarInfo = result(jarApi.request.group(wkName).upload(jar))
 
     // create streamApp properties
     val stream = result(
@@ -243,7 +243,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     val topic2 = result(topicApi.request.name(to).brokerClusterName(bkName).create())
 
     // upload streamApp jar
-    val jarInfo = result(jarApi.request().group(wkName).upload(jar))
+    val jarInfo = result(jarApi.request.group(wkName).upload(jar))
     jarInfo.name shouldBe "ohara-streamapp"
     jarInfo.group shouldBe wkName
 

@@ -38,14 +38,14 @@ class TestJarApi extends SmallTest with Matchers {
   }
 
   @Test
-  def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy JarApi.access().request().newName("")
+  def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy JarApi.access.request.newName("")
 
   @Test
-  def nullName(): Unit = an[NullPointerException] should be thrownBy JarApi.access().request().newName(null)
+  def nullName(): Unit = an[NullPointerException] should be thrownBy JarApi.access.request.newName(null)
 
   @Test
-  def emptyGroup(): Unit = an[IllegalArgumentException] should be thrownBy JarApi.access().request().group("")
+  def emptyGroup(): Unit = an[IllegalArgumentException] should be thrownBy JarApi.access.request.group("")
 
   @Test
-  def nullGroup(): Unit = an[NullPointerException] should be thrownBy JarApi.access().request().group(null)
+  def nullGroup(): Unit = an[NullPointerException] should be thrownBy JarApi.access.request.group(null)
 }

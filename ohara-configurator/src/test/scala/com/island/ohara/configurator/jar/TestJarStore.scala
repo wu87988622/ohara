@@ -35,7 +35,7 @@ class TestJarStore extends SmallTest with Matchers {
   private[this] val configurator = Configurator.builder().fake().build()
 
   private[this] val access =
-    JarApi.access().hostname(configurator.hostname).port(configurator.port)
+    JarApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] def generateFile(bytes: Array[Byte]): File = {
     val tempFile = CommonUtils.createTempJar(methodName())
@@ -182,7 +182,7 @@ class TestJarStore extends SmallTest with Matchers {
   @Test
   def listNonexistentIdWithExistOne(): Unit = {
     val f = generateFile(CommonUtils.randomString().getBytes)
-    val plugin = result(access.request().upload(f))
+    val plugin = result(access.request.upload(f))
     val jar = result(configurator.jarStore.jarInfo(plugin.group, plugin.name))
     // the jar info from jar store does not have the url
     jar.copy(url = plugin.url) shouldBe plugin
@@ -219,12 +219,12 @@ class TestJarStore extends SmallTest with Matchers {
     val content = CommonUtils.randomString()
     val f = generateFile(content.getBytes)
 
-    val plugin = result(access.request().upload(f))
+    val plugin = result(access.request.upload(f))
     f.getName.contains(plugin.name) shouldBe true
     plugin.size shouldBe content.length
     plugin.url should not be None
-    result(access.request().list).size shouldBe 1
-    result(access.request().group(plugin.group).get(plugin.name)) shouldBe plugin
+    result(access.request.list()).size shouldBe 1
+    result(access.request.group(plugin.group).get(plugin.name)) shouldBe plugin
 
     val url = plugin.url
     url.getProtocol shouldBe "http"

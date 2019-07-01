@@ -47,7 +47,7 @@ class TestJarRoute extends SmallTest with Matchers {
   def setup(): Unit = {
     configurator = Configurator.builder().fake().build()
     accessStreamProperty = StreamApi.accessOfProperty.hostname(configurator.hostname).port(configurator.port)
-    jarApi = JarApi.access().hostname(configurator.hostname).port(configurator.port)
+    jarApi = JarApi.access.hostname(configurator.hostname).port(configurator.port)
   }
 
   @Test
@@ -55,13 +55,13 @@ class TestJarRoute extends SmallTest with Matchers {
     // upload jar to random group
     val data = methodName().getBytes
     val f = tmpFile(data)
-    val jar = result(jarApi.request().upload(f))
+    val jar = result(jarApi.request.upload(f))
     jar.size shouldBe f.length()
     f.getName.contains(jar.name) shouldBe true
-    result(jarApi.request().list).size shouldBe 1
+    result(jarApi.request.list()).size shouldBe 1
 
     // upload jar to specific group
-    val jarWithGroup = result(jarApi.request().group(GROUP).upload(f))
+    val jarWithGroup = result(jarApi.request.group(GROUP).upload(f))
     jarWithGroup.group shouldBe GROUP
     jarWithGroup.size shouldBe data.size
 
@@ -76,7 +76,7 @@ class TestJarRoute extends SmallTest with Matchers {
     val bytes = new Array[Byte](RouteUtils.DEFAULT_JAR_SIZE_BYTES.toInt + 1)
     val f = tmpFile(bytes)
 
-    an[IllegalArgumentException] should be thrownBy result(jarApi.request().upload(f))
+    an[IllegalArgumentException] should be thrownBy result(jarApi.request.upload(f))
 
     f.deleteOnExit()
   }
@@ -85,17 +85,17 @@ class TestJarRoute extends SmallTest with Matchers {
   def testUploadWithNewName(): Unit = {
     val data = methodName().getBytes
     val f = tmpFile(data)
-    val jar1 = result(jarApi.request().newName("xxxx").upload(f))
+    val jar1 = result(jarApi.request.newName("xxxx").upload(f))
     jar1.size shouldBe f.length()
     jar1.name shouldBe "xxxx"
-    result(jarApi.request().list).size shouldBe 1
+    result(jarApi.request.list()).size shouldBe 1
 
-    val jar2 = result(jarApi.request().newName("yyyy").upload(f))
+    val jar2 = result(jarApi.request.newName("yyyy").upload(f))
     jar1.name should not be jar2.name
 
-    val jar3 = result(jarApi.request().newName("xxxx").group(GROUP).upload(f))
-    val jar4 = result(jarApi.request().newName("yyyy").group(GROUP).upload(f))
-    result(jarApi.request().list).size shouldBe 4
+    val jar3 = result(jarApi.request.newName("xxxx").group(GROUP).upload(f))
+    val jar4 = result(jarApi.request.newName("yyyy").group(GROUP).upload(f))
+    result(jarApi.request.list()).size shouldBe 4
     jar3.group shouldBe GROUP
     jar4.group shouldBe GROUP
     jar3.name should not be jar4.name
@@ -108,19 +108,19 @@ class TestJarRoute extends SmallTest with Matchers {
     val data = methodName().getBytes
     val f = tmpFile(data)
 
-    val jar1 = result(jarApi.request().newName("barfoo.jar").upload(f))
+    val jar1 = result(jarApi.request.newName("barfoo.jar").upload(f))
     TimeUnit.SECONDS.sleep(3)
     f.setLastModified(System.currentTimeMillis())
-    val jar2 = result(jarApi.request().newName("barfoo.jar").upload(f))
+    val jar2 = result(jarApi.request.newName("barfoo.jar").upload(f))
 
-    val jar3 = result(jarApi.request().newName("barfoo.jar").group(GROUP).upload(f))
+    val jar3 = result(jarApi.request.newName("barfoo.jar").group(GROUP).upload(f))
     TimeUnit.SECONDS.sleep(3)
     f.setLastModified(System.currentTimeMillis())
-    val jar4 = result(jarApi.request().newName("barfoo.jar").group(GROUP).upload(f))
+    val jar4 = result(jarApi.request.newName("barfoo.jar").group(GROUP).upload(f))
 
     // will get latest modified file of same name files
     // different group means different files (even if same name)
-    val res = result(jarApi.request().list)
+    val res = result(jarApi.request.list())
     res.size shouldBe 3
     res.contains(jar1) shouldBe true
     res.contains(jar2) shouldBe true
@@ -134,13 +134,13 @@ class TestJarRoute extends SmallTest with Matchers {
   def testDelete(): Unit = {
     val data = methodName().getBytes
     val f = tmpFile(data)
-    val jar = result(jarApi.request().upload(f))
+    val jar = result(jarApi.request.upload(f))
     jar.size shouldBe f.length()
     f.getName.contains(jar.name) shouldBe true
-    result(jarApi.request().list).size shouldBe 1
+    result(jarApi.request.list()).size shouldBe 1
 
-    result(jarApi.request().group(jar.group).delete(jar.name))
-    result(jarApi.request().list).size shouldBe 0
+    result(jarApi.request.group(jar.group).delete(jar.name))
+    result(jarApi.request.list()).size shouldBe 0
 
     f.deleteOnExit()
   }
@@ -151,19 +151,19 @@ class TestJarRoute extends SmallTest with Matchers {
     val name = CommonUtils.randomString(10)
     val f = tmpFile(data)
     // upload jar
-    val jar = result(jarApi.request().upload(f))
+    val jar = result(jarApi.request.upload(f))
     // create streamApp property
     result(accessStreamProperty.request.name(name).jar(JarKey(jar.group, jar.name)).create())
     // cannot delete a used jar
-    val thrown = the[IllegalArgumentException] thrownBy result(jarApi.request().group(jar.group).delete(jar.name))
+    val thrown = the[IllegalArgumentException] thrownBy result(jarApi.request.group(jar.group).delete(jar.name))
     thrown.getMessage should include("in used")
 
     result(accessStreamProperty.delete(name))
     // delete is ok after remove property
-    result(jarApi.request().group(jar.group).delete(jar.name))
+    result(jarApi.request.group(jar.group).delete(jar.name))
 
     // the jar should be disappear
-    val thrown1 = the[IllegalArgumentException] thrownBy result(jarApi.request().group(jar.group).get(jar.name))
+    val thrown1 = the[IllegalArgumentException] thrownBy result(jarApi.request.group(jar.group).get(jar.name))
     thrown1.getMessage should include("not found")
 
     f.deleteOnExit()
@@ -172,7 +172,7 @@ class TestJarRoute extends SmallTest with Matchers {
   @Test
   def duplicateDeleteStreamProperty(): Unit =
     (0 to 10).foreach(_ =>
-      result(jarApi.request().group(CommonUtils.randomString(5)).delete(CommonUtils.randomString(5))))
+      result(jarApi.request.group(CommonUtils.randomString(5)).delete(CommonUtils.randomString(5))))
 
   @After
   def tearDown(): Unit = Releasable.close(configurator)

@@ -355,7 +355,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
     val wkName = result(workerApi.list()).head.name
     val file = File.createTempFile("empty_", ".jar")
     val jar = result(
-      JarApi.access().hostname(configurator.hostname).port(configurator.port).request().group(wkName).upload(file))
+      JarApi.access.hostname(configurator.hostname).port(configurator.port).request.group(wkName).upload(file))
     val streamapp = result(
       StreamApi.accessOfProperty
         .hostname(configurator.hostname)

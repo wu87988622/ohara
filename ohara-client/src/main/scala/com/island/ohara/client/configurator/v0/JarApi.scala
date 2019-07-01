@@ -66,12 +66,12 @@ object JarApi {
     def upload(file: File)(implicit executionContext: ExecutionContext): Future[JarInfo]
     def get(name: String)(implicit executionContext: ExecutionContext): Future[JarInfo]
     def delete(name: String)(implicit executionContext: ExecutionContext): Future[Unit]
-    def list(implicit executionContext: ExecutionContext): Future[Seq[JarInfo]]
+    def list()(implicit executionContext: ExecutionContext): Future[Seq[JarInfo]]
 
   }
 
   final class Access private[v0] extends BasicAccess(JAR_PREFIX_PATH) {
-    def request(): Request = new Request {
+    def request: Request = new Request {
       private[this] var newName: Option[String] = None
       private[this] var group: Option[String] = None
 
@@ -100,7 +100,7 @@ object JarApi {
             CommonUtils.requireNonEmpty(group.getOrElse(""))
           ))
 
-      override def list(implicit executionContext: ExecutionContext): Future[Seq[JarInfo]] =
+      override def list()(implicit executionContext: ExecutionContext): Future[Seq[JarInfo]] =
         exec.get[Seq[JarInfo], ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}")
 
       override def upload(file: File)(implicit executionContext: ExecutionContext): Future[JarInfo] = {
@@ -127,5 +127,5 @@ object JarApi {
     }
   }
 
-  def access(): Access = new Access
+  def access: Access = new Access
 }

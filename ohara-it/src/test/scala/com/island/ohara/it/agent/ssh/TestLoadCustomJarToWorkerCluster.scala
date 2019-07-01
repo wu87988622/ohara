@@ -99,7 +99,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
                           new File(currentPath, "build/libs/ohara-it-sink.jar")))(file => {
         // avoid too "frequently" create group folder for same group files
         TimeUnit.SECONDS.sleep(1)
-        JarApi.access().hostname(configurator.hostname).port(configurator.port).request().group(wkName).upload(file)
+        JarApi.access.hostname(configurator.hostname).port(configurator.port).request.group(wkName).upload(file)
       }))
 
     val zkCluster = result(
