@@ -150,11 +150,11 @@ private[configurator] object PipelineRoute {
           }
           .filterNot(_ == UNKNOWN_ID)
           .toSet
-          .map(id => store.raw(id)))
+          .map((id: String) => store.raws(id)))
       .flatMap(objs => workerClient.connectors().map(connectors => (connectors, objs)))
       .flatMap {
         case (connectors, objs) =>
-          Future.traverse(objs) {
+          Future.traverse(objs.flatten) {
             case data: ConnectorDescription =>
               // the group of counter is equal to connector's name (this is a part of kafka's core setting)
               // Hence, we filter the connectors having different "name" (we use id instead of name in creating connector)
@@ -275,32 +275,35 @@ private[configurator] object PipelineRoute {
     // others -> unsupported
     def verify(id: String): Future[String] = if (id != UNKNOWN_ID) {
       store
-        .raw(id)
-        .map {
-          case d: ConnectorDescription =>
-            if (d.workerClusterName != cluster.name)
-              throw new IllegalArgumentException(
-                s"connector:${d.name} is run by ${d.workerClusterName} so it can't be placed at pipeline:$name which is placed at worker cluster:${cluster.name}")
-            else id
-          case d: TopicInfo =>
-            if (d.brokerClusterName != cluster.brokerClusterName)
-              throw new IllegalArgumentException(
-                s"topic:${d.name} is run by ${d.brokerClusterName} so it can't be placed at pipeline:$name which is placed at broker cluster:${cluster.brokerClusterName}")
-            else id
-          case d: StreamAppDescription =>
-            if (d.jar.group != cluster.name)
-              throw new IllegalArgumentException(
-                s"streamApp:${d.name} is running in ${d.jar.group}. You cannot place it at pipeline:$name which is placed at worker cluster:${cluster.name}"
-              )
-            else id
-          case raw => throw new IllegalArgumentException(s"${raw.getClass.getName} can't be placed at pipeline")
-        }
-        .recover {
-          // the component has been removed!
-          case e: NoSuchElementException =>
-            LOG.error(s"$id had been removed", e)
-            UNKNOWN_ID
-        }
+        .raws(id)
+        .map(objs =>
+          objs.map {
+            case d: ConnectorDescription =>
+              if (d.workerClusterName != cluster.name)
+                throw new IllegalArgumentException(
+                  s"connector:${d.name} is run by ${d.workerClusterName} so it can't be placed at pipeline:$name which is placed at worker cluster:${cluster.name}")
+              else id
+            case d: TopicInfo =>
+              if (d.brokerClusterName != cluster.brokerClusterName)
+                throw new IllegalArgumentException(
+                  s"topic:${d.name} is run by ${d.brokerClusterName} so it can't be placed at pipeline:$name which is placed at broker cluster:${cluster.brokerClusterName}")
+              else id
+            case d: StreamAppDescription =>
+              if (d.jar.group != cluster.name)
+                throw new IllegalArgumentException(
+                  s"streamApp:${d.name} is running in ${d.jar.group}. You cannot place it at pipeline:$name which is placed at worker cluster:${cluster.name}"
+                )
+              else id
+            case raw =>
+              if (objs.size == 1)
+                throw new IllegalArgumentException(s"${raw.getClass.getName} can't be placed at pipeline")
+              else {
+                LOG.error(
+                  s"$id is used in different type and the illegal type:${raw.kind} to pipeline will be ignored!!!")
+                id
+              }
+        })
+        .map(objs => if (objs.isEmpty) UNKNOWN_ID else id)
     } else Future.successful(id)
 
     // filter out illegal flow. the following flow are illegal.
@@ -324,18 +327,17 @@ private[configurator] object PipelineRoute {
                   ))
               else
                 verify2(flow.to).map { to =>
-                  if (to.size == 1 && to.head == from)
-                    throw new IllegalArgumentException(s"the from:$from can't be equals to to:${to.head}")
                   Flow(from = from, to = to)
                 }
             }
           })
-      .map(_.filter(_.from != UNKNOWN_ID).map(
-        flow =>
-          Flow(
-            from = flow.from,
-            to = flow.to.filter(_ != UNKNOWN_ID),
-        )))
+      .map(
+        _.filter(_.from != UNKNOWN_ID).map(
+          flow =>
+            Flow(
+              from = flow.from,
+              to = flow.to.filter(_ != UNKNOWN_ID),
+          )))
   }
 
   private[this] def update(pipeline: Pipeline)(implicit store: DataStore,
@@ -439,10 +441,10 @@ private[configurator] object PipelineRoute {
                     if (running.nonEmpty)
                       Future.failed(new IllegalArgumentException(s"${running.mkString(",")} are running"))
                     else
-                      Future.sequence(pipeline.objects.map(_.id).map(store.raw)).flatMap { objs =>
+                      Future.sequence(pipeline.objects.map(_.id).map(store.raws)).flatMap { objs =>
                         Future
                           .sequence(
-                            objs
+                            objs.flatten
                             // we only remove connectors. The streamapps and topics are still stored!
                               .filter(_.isInstanceOf[ConnectorDescription])
                               .map(_.name)

@@ -168,10 +168,6 @@ class TestPipelineRoute extends MediumTest with Matchers {
     result(topicApi.list()).size shouldBe 2
     result(hdfsAccess.list()).size shouldBe 1
 
-    // topic0 -> topic0: self-bound
-    an[IllegalArgumentException] should be thrownBy result(
-      pipelineApi.request.name(CommonUtils.randomString()).flow(topic0.name, topic0.name).create())
-
     // hdfs0 is hdfs info so it can't be applied to pipeline
     an[IllegalArgumentException] should be thrownBy result(
       pipelineApi.request.name(CommonUtils.randomString()).flow(topic0.name, hdfs.name).create())
@@ -179,10 +175,6 @@ class TestPipelineRoute extends MediumTest with Matchers {
     val pipeline = result(pipelineApi.request.name(CommonUtils.randomString()).flow(topic0.name, topic1.name).create())
 
     result(pipelineApi.list()).size shouldBe 1
-
-    // topic0 -> topic0: self-bound
-    an[IllegalArgumentException] should be thrownBy result(
-      pipelineApi.request.name(pipeline.name).flow(topic0.name, topic0.name).update())
 
     // hdfs0 is hdfs info so it can't be applied to pipeline
     an[IllegalArgumentException] should be thrownBy result(
@@ -491,6 +483,25 @@ class TestPipelineRoute extends MediumTest with Matchers {
     // let check the existence of connector
     result(connectorApi.list()).size shouldBe 0
   }
+
+  @Test
+  def testDuplicateObjectName(): Unit = {
+    val name = CommonUtils.randomString(10)
+    val topic = result(topicApi.request.name(name).create())
+
+    val connector = result(
+      connectorApi.request
+        .name(name)
+        .className(classOf[DumbSink].getName)
+        .topicName(topic.name)
+        .numberOfTasks(1)
+        .create())
+
+    val pipeline = result(pipelineApi.request.name(methodName()).flow(topic.name, connector.name).create())
+    pipeline.flows.size shouldBe 1
+    pipeline.objects.size shouldBe 2
+  }
+
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }
