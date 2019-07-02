@@ -31,12 +31,11 @@ RUN echo "$KAFKA_VERSION" > $(find "${KAFKA_DIR}" -maxdepth 1 -type d -name "kaf
 ARG BRANCH="master"
 ARG COMMIT=$BRANCH
 ARG REPO="https://github.com/oharastream/ohara.git"
-ARG REBASE_UPSTREAM=$REPO
-ARG REBASE=""
+ARG BEFORE_BUILD=""
 WORKDIR /testpatch/ohara
 RUN git clone $REPO /testpatch/ohara
 RUN git checkout $COMMIT
-RUN if [[ "$REBASE" != "" ]] && [[ "$REBASE_UPSTREAM" != "" ]]; then git remote add upstream $REBASE_UPSTREAM; git pull --rebase $REBASE_UPSTREAM $REBASE ; fi
+RUN if [[ "$BEFORE_BUILD" != "" ]]; then /bin/bash -c "$BEFORE_BUILD" ; fi
 RUN git rev-parse HEAD > $(find "${KAFKA_DIR}" -maxdepth 1 -type d -name "kafka_*")/bin/ohara_version
 # we build ohara with specified version of kafka in order to keep the compatibility
 RUN gradle clean build -x test -PskipManager -Pkafka.version=$KAFKA_VERSION -Pscala.version=$SCALA_VERSION
