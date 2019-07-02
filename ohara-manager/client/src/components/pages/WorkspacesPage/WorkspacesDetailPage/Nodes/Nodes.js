@@ -151,7 +151,6 @@ const Nodes = props => {
           rows={rows}
           confirmDisabled={confirmDisabled}
         />
-        <SortTable isLoading={loading} headRows={headRows} rows={rows} />
       </Main>
 
       <Dialog
