@@ -16,22 +16,8 @@
 
 import styled from 'styled-components';
 
-import { DataTable } from 'components/common/Table';
 import { Input } from 'components/common/Form';
-
-const Table = styled(DataTable)`
-  text-align: left;
-
-  tbody {
-    tr {
-      cursor: pointer;
-    }
-  }
-
-  .is-running {
-    background: ${props => props.theme.trBgColor};
-  }
-`;
+import { Table } from 'components/common/Mui/Table';
 
 const Checkbox = styled(Input).attrs({
   type: 'checkbox',
@@ -39,4 +25,8 @@ const Checkbox = styled(Input).attrs({
   width: auto;
 `;
 
-export { Table, Checkbox };
+const StyledTable = styled(Table)`
+  width: 80%;
+`;
+
+export { Table, Checkbox, StyledTable };

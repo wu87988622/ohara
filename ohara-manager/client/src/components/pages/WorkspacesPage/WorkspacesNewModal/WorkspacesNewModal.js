@@ -30,10 +30,10 @@ import * as s from './styles';
 import * as commonUtils from 'utils/commonUtils';
 import NodeSelectModal from '../NodeSelectModal';
 import PluginSelectModal from '../PluginSelectModal';
-import { Modal } from 'components/common/Modal';
 import { Box } from 'components/common/Layout';
 import { Label } from 'components/common/Form';
-import { InputField } from 'components/common/FormFields';
+import { InputField } from 'components/common/Mui/Form';
+import { Dialog } from 'components/common/Mui/Dialog';
 
 const SELECT_NODE_MODAL = 'selectNodeModal';
 const SELECT_PLUGIN_MODAL = 'selectPluginModal';
@@ -118,6 +118,7 @@ class WorkerNewModal extends React.Component {
       name: this.validateServiceName(values.name),
       plugins: values.plugins,
       jmxPort: generate.port(),
+      clientPort: generate.port(),
       brokerClusterName,
       groupId: generate.serviceName(),
       configTopicName: generate.serviceName(),
@@ -130,7 +131,6 @@ class WorkerNewModal extends React.Component {
   };
 
   onSubmit = async (values, form) => {
-    if (!this.validateClientPort(values.clientPort)) return;
     if (!this.validateNodeNames(values.nodeNames)) return;
 
     try {
@@ -156,27 +156,6 @@ class WorkerNewModal extends React.Component {
   validateNodeNames = nodes => {
     if (isEmpty(nodes)) {
       toastr.error('You should at least supply a node name');
-      return false;
-    }
-
-    return true;
-  };
-
-  validateClientPort = port => {
-    if (port < 5000 || port > 65535) {
-      toastr.error(
-        'Invalid port. The port has to be a value from 5000 to 65535.',
-      );
-      return false;
-    }
-
-    if (typeof port === 'undefined') {
-      toastr.error('Port is required');
-      return false;
-    }
-
-    if (isNaN(port)) {
-      toastr.error('Port only accepts number');
       return false;
     }
 
@@ -210,11 +189,10 @@ class WorkerNewModal extends React.Component {
           };
 
           return (
-            <Modal
+            <Dialog
               title="New workspace"
-              isActive={this.props.isActive}
-              width="600px"
-              handleCancel={() => {
+              handelOpen={this.props.isActive}
+              handelClose={() => {
                 if (!submitting) this.resetModal(form);
               }}
               handleConfirm={handleSubmit}
@@ -224,102 +202,113 @@ class WorkerNewModal extends React.Component {
               showActions={true}
               testId="new-workspace-modal"
             >
-              <form onSubmit={handleSubmit}>
-                <Box shadow={false}>
-                  <s.FormRow>
-                    <s.FormCol width="26rem">
-                      <Label
-                        htmlFor="service-input"
-                        tooltipAlignment="right"
-                        tooltipRender={
-                          <div>
-                            <p>1. You can use lower case letters and numbers</p>
-                            <p>2. Must be between 1 and 30 characters long</p>
-                          </div>
-                        }
-                      >
-                        Name
-                      </Label>
-                      <Field
-                        id="service-input"
-                        name="name"
-                        component={InputField}
-                        width="24rem"
-                        placeholder="cluster00"
-                        data-testid="name-input"
-                        disabled={submitting}
-                        format={this.validateServiceName}
-                      />
-                    </s.FormCol>
-                  </s.FormRow>
+              {() => {
+                return (
+                  <>
+                    <form onSubmit={handleSubmit}>
+                      <Box shadow={false}>
+                        <s.FormRow>
+                          <s.FormCol width="26rem">
+                            <Field
+                              label="Name"
+                              id="service-input"
+                              name="name"
+                              component={InputField}
+                              width="24rem"
+                              placeholder="cluster00"
+                              data-testid="name-input"
+                              disabled={submitting}
+                              format={this.validateServiceName}
+                              autoFocus
+                              helperText={
+                                <div>
+                                  <p>
+                                    1. You can use lower case letters and
+                                    numbers
+                                  </p>
+                                  <p>
+                                    2. Must be between 1 and 30 characters long
+                                  </p>
+                                </div>
+                              }
+                            />
+                          </s.FormCol>
+                        </s.FormRow>
 
-                  <s.FormRow margin="1rem 0 0 0">
-                    <s.FormCol width="18rem">
-                      <Label>Node List</Label>
-                      <s.List width="16rem">
-                        {values.nodeNames &&
-                          values.nodeNames.map(nodeName => (
-                            <s.ListItem key={nodeName}>{nodeName}</s.ListItem>
-                          ))}
-                        <s.AppendButton
-                          text="Add node"
-                          handleClick={e => {
-                            e.preventDefault();
-                            this.setState({ activeModal: SELECT_NODE_MODAL });
-                          }}
-                          disabled={submitting}
-                        />
-                      </s.List>
-                    </s.FormCol>
-                    <s.FormCol width="16rem">
-                      <Label>Plugin List</Label>
-                      <s.List width="16rem">
-                        {values.plugins &&
-                          values.plugins.map(plugin => (
-                            <s.ListItem key={plugin.group}>
-                              {plugin.name}
-                            </s.ListItem>
-                          ))}
-                        <s.AppendButton
-                          text="Add plugin"
-                          handleClick={e => {
-                            e.preventDefault();
-                            this.setState({
-                              activeModal: SELECT_PLUGIN_MODAL,
-                            });
-                          }}
-                          disabled={submitting}
-                        />
-                      </s.List>
-                    </s.FormCol>
-                  </s.FormRow>
-                </Box>
-              </form>
+                        <s.FormRow margin="1rem 0 0 0">
+                          <s.FormCol width="18rem">
+                            <Label>Node List</Label>
+                            <s.List width="16rem">
+                              {values.nodeNames &&
+                                values.nodeNames.map(nodeName => (
+                                  <s.ListItem key={nodeName}>
+                                    {nodeName}
+                                  </s.ListItem>
+                                ))}
+                              <s.AppendButton
+                                text="Add node"
+                                handleClick={e => {
+                                  e.preventDefault();
+                                  this.setState({
+                                    activeModal: SELECT_NODE_MODAL,
+                                  });
+                                }}
+                                disabled={submitting}
+                              />
+                            </s.List>
+                          </s.FormCol>
+                          <s.FormCol width="16rem">
+                            <Label>Plugin List</Label>
+                            <s.List width="16rem">
+                              {values.plugins &&
+                                values.plugins.map(plugin => (
+                                  <s.ListItem key={plugin.group}>
+                                    {plugin.name}
+                                  </s.ListItem>
+                                ))}
+                              <s.AppendButton
+                                text="Add plugin"
+                                handleClick={e => {
+                                  e.preventDefault();
+                                  this.setState({
+                                    activeModal: SELECT_PLUGIN_MODAL,
+                                  });
+                                }}
+                                disabled={submitting}
+                              />
+                            </s.List>
+                          </s.FormCol>
+                        </s.FormRow>
+                      </Box>
+                    </form>
 
-              <NodeSelectModal
-                isActive={activeModal === SELECT_NODE_MODAL}
-                onClose={() => {
-                  this.setState({ activeModal: null });
-                }}
-                onConfirm={nodeNames => {
-                  this.setState({ activeModal: null });
-                  handleNodeSelected(nodeNames);
-                }}
-                initNodeNames={values.nodeNames}
-              />
+                    <NodeSelectModal
+                      isActive={activeModal === SELECT_NODE_MODAL}
+                      onClose={() => {
+                        this.setState({ activeModal: null });
+                      }}
+                      onConfirm={nodeNames => {
+                        this.setState({ activeModal: null });
+                        handleNodeSelected(nodeNames);
+                      }}
+                      initNodeNames={values.nodeNames}
+                    />
 
-              <PluginSelectModal
-                isActive={activeModal === SELECT_PLUGIN_MODAL}
-                onClose={() => {
-                  this.setState({ activeModal: null });
-                }}
-                onConfirm={plugins => {
-                  this.setState({ activeModal: null });
-                  handlePluginSelected(plugins);
-                }}
-                initPluginIds={map(values.plugins, 'group')}
-              />
-            </Modal>
+                    <PluginSelectModal
+                      isActive={activeModal === SELECT_PLUGIN_MODAL}
+                      onClose={() => {
+                        this.setState({ activeModal: null });
+                      }}
+                      onConfirm={plugins => {
+                        this.setState({ activeModal: null });
+                        handlePluginSelected(plugins);
+                      }}
+                      initPluginIds={map(values.plugins, 'group')}
+                    />
+                  </>
+                );
+              }}
+            </Dialog>
           );
         }}
       />

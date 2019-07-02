@@ -17,11 +17,14 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { map, includes, get, isNull } from 'lodash';
+import TableRow from '@material-ui/core/TableRow';
+import TableCell from '@material-ui/core/TableCell';
+import Checkbox from '@material-ui/core/Checkbox';
 
 import * as nodeApi from 'api/nodeApi';
-import { Table, Checkbox } from './styles';
-import { Modal } from 'components/common/Modal';
+import { StyledTable } from './styles';
 import { Box } from 'components/common/Layout';
+import { Dialog } from 'components/common/Mui/Dialog';
 
 class NodeSelectModal extends React.Component {
   static propTypes = {
@@ -35,7 +38,7 @@ class NodeSelectModal extends React.Component {
     initNodeNames: [],
   };
 
-  headers = ['#', 'NODE NAME', 'PORT'];
+  headers = ['Select', 'NODE NAME', 'PORT'];
 
   state = {
     initNodeNames: null,
@@ -130,35 +133,45 @@ class NodeSelectModal extends React.Component {
   render() {
     const { nodes } = this.state;
     return (
-      <Modal
+      <Dialog
         title="Add node"
-        isActive={this.props.isActive}
-        width="400px"
-        handleCancel={this.handleClose}
+        handelOpen={this.props.isActive}
+        handelClose={this.handleClose}
         handleConfirm={this.handleConfirm}
-        confirmBtnText="Add"
         isConfirmDisabled={false}
         showActions={false}
       >
-        <Box shadow={false}>
-          <Table headers={this.headers}>
-            {nodes.map(({ name, checked, port }) => (
-              <tr key={name} onClick={() => this.handleRowClick(name)}>
-                <td>
-                  <Checkbox
-                    value={name}
-                    onChange={this.handleChecked}
-                    checked={checked || false}
-                    height="auto"
-                  />
-                </td>
-                <td>{name}</td>
-                <td>{port}</td>
-              </tr>
-            ))}
-          </Table>
-        </Box>
-      </Modal>
+        {() => {
+          return (
+            <StyledTable headers={this.headers}>
+              {() => {
+                return (
+                  <>
+                    {nodes.map(({ name, checked, port }) => (
+                      <TableRow
+                        key={name}
+                        onClick={() => this.handleRowClick(name)}
+                      >
+                        <TableCell>
+                          <Checkbox
+                            color="primary"
+                            value={name}
+                            onChange={this.handleChecked}
+                            checked={checked || false}
+                            height="auto"
+                          />
+                        </TableCell>
+                        <TableCell>{name}</TableCell>
+                        <TableCell align="right">{port}</TableCell>
+                      </TableRow>
+                    ))}
+                  </>
+                );
+              }}
+            </StyledTable>
+          );
+        }}
+      </Dialog>
     );
   }
 }

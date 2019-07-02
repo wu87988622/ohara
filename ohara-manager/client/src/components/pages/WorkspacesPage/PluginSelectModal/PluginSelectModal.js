@@ -22,8 +22,8 @@ import { includes, map, some, sortBy, get } from 'lodash';
 import * as jarApi from 'api/jarApi';
 import * as MESSAGES from 'constants/messages';
 import { Table, Checkbox, FileUploadInput } from './styles';
-import { Modal } from 'components/common/Modal';
 import { Box } from 'components/common/Layout';
+import { Dialog } from 'components/common/Mui/Dialog';
 
 class PluginSelectModal extends React.Component {
   headers = ['#', 'PLUGIN'];
@@ -151,35 +151,35 @@ class PluginSelectModal extends React.Component {
   render() {
     const { jars } = this.state;
     return (
-      <Modal
+      <Dialog
         title="Add plugin"
-        isActive={this.props.isActive}
-        width="480px"
-        handleCancel={this.handleClose}
+        handelOpen={this.props.isActive}
+        handelClose={this.handleClose}
         handleConfirm={this.handleConfirm}
-        confirmBtnText="Add"
-        isConfirmDisabled={false}
-        showActions={false}
       >
-        <Box shadow={false}>
-          <FileUploadInput onChange={this.handleFileSelect} />
-          <Table headers={this.headers}>
-            {jars.map(({ group, checked, name }) => (
-              <tr key={group} onClick={() => this.handleRowClick(group)}>
-                <td>
-                  <Checkbox
-                    value={group}
-                    onChange={this.handleChecked}
-                    checked={checked || false}
-                    height="auto"
-                  />
-                </td>
-                <td>{name}</td>
-              </tr>
-            ))}
-          </Table>
-        </Box>
-      </Modal>
+        {() => {
+          return (
+            <Box shadow={false}>
+              <FileUploadInput onChange={this.handleFileSelect} />
+              <Table headers={this.headers}>
+                {jars.map(({ group, checked, name }) => (
+                  <tr key={group} onClick={() => this.handleRowClick(group)}>
+                    <td>
+                      <Checkbox
+                        value={group}
+                        onChange={this.handleChecked}
+                        checked={checked || false}
+                        height="auto"
+                      />
+                    </td>
+                    <td>{name}</td>
+                  </tr>
+                ))}
+              </Table>
+            </Box>
+          );
+        }}
+      </Dialog>
     );
   }
 }
