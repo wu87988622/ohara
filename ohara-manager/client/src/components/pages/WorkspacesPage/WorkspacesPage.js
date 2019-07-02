@@ -32,7 +32,7 @@ const WorkspacesPage = props => {
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const fetchData = async () => {
+  const fetchWorkers = async () => {
     const res = await workerApi.fetchWorkers();
     const workers = get(res, 'data.result', []);
     setIsLoading(false);
@@ -43,7 +43,7 @@ const WorkspacesPage = props => {
   };
 
   useEffect(() => {
-    fetchData();
+    fetchWorkers();
   }, []);
 
   return (
@@ -51,7 +51,7 @@ const WorkspacesPage = props => {
       <Container>
         <WorkspacesNewModal
           isActive={isModalOpen}
-          onConfirm={fetchData}
+          onConfirm={fetchWorkers}
           onClose={() => setIsModalOpen(false)}
         />
 

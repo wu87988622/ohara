@@ -222,6 +222,7 @@ class WorkerNewModal extends React.Component {
               isConfirmDisabled={submitting || pristine}
               isConfirmWorking={submitting}
               showActions={true}
+              testId="new-workspace-modal"
             >
               <form onSubmit={handleSubmit}>
                 <Box shadow={false}>
