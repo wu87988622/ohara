@@ -43,7 +43,7 @@ ARG BRANCH="master"
 ARG COMMIT=$BRANCH
 ARG REPO="https://github.com/oharastream/ohara.git"
 ARG REBASE_UPSTREAM=$REPO
-ARG REBASE="
+ARG REBASE=""
 WORKDIR /testpatch/ohara
 RUN git clone $REPO /testpatch/ohara
 RUN git checkout $COMMIT
