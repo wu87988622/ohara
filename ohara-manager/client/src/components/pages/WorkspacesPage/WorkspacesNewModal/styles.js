@@ -15,8 +15,12 @@
  */
 
 import styled from 'styled-components';
-import { FormGroup, Button } from 'components/common/Form';
+import { FormGroup } from 'components/common/Form';
 import { primaryBtn } from 'theme/btnTheme';
+import { Button } from 'components/common/Mui/Form';
+import Fab from '@material-ui/core/Fab';
+import Icon from '@material-ui/core/Icon';
+import DialogContent from '@material-ui/core/DialogContent';
 
 const List = styled.div`
   position: relative;
@@ -51,4 +55,34 @@ const AppendButton = styled(Button).attrs({
   top: -3rem;
 `;
 
-export { List, ListItem, FormRow, FormCol, AppendButton };
+const StyledButton = styled(Button)`
+  position: absolute;
+  right: 0;
+  top: -3rem;
+`;
+
+const StyledIconButton = styled(Fab)`
+  position: absolute;
+  right: 0;
+  top: -3rem;
+`;
+
+const ActionIcon = styled(Icon)`
+  font-size: 20px;
+`;
+
+const StyledDialogConten = styled(DialogContent)`
+  padding-top: 20px;
+`;
+
+export {
+  List,
+  ListItem,
+  FormRow,
+  FormCol,
+  AppendButton,
+  StyledButton,
+  StyledIconButton,
+  ActionIcon,
+  StyledDialogConten,
+};

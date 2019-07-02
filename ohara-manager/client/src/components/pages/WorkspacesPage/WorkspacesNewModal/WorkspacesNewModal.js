@@ -14,11 +14,19 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import toastr from 'toastr';
 import { map, isEmpty, truncate, get } from 'lodash';
 import { Form, Field } from 'react-final-form';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogContentText from '@material-ui/core/DialogContentText';
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemIcon from '@material-ui/core/ListItemIcon';
+import ListItemText from '@material-ui/core/ListItemText';
+import Checkbox from '@material-ui/core/Checkbox';
+import Paper from '@material-ui/core/Paper';
 
 import * as zookeeperApi from 'api/zookeeperApi';
 import * as workerApi from 'api/workerApi';
@@ -30,7 +38,6 @@ import * as s from './styles';
 import * as commonUtils from 'utils/commonUtils';
 import NodeSelectModal from '../NodeSelectModal';
 import PluginSelectModal from '../PluginSelectModal';
-import { Box } from 'components/common/Layout';
 import { Label } from 'components/common/Form';
 import { InputField } from 'components/common/Mui/Form';
 import { Dialog } from 'components/common/Mui/Dialog';
@@ -38,22 +45,53 @@ import { Dialog } from 'components/common/Mui/Dialog';
 const SELECT_NODE_MODAL = 'selectNodeModal';
 const SELECT_PLUGIN_MODAL = 'selectPluginModal';
 
-class WorkerNewModal extends React.Component {
-  static propTypes = {
-    isActive: PropTypes.bool.isRequired,
-    onClose: PropTypes.func.isRequired,
-    onConfirm: PropTypes.func.isRequired,
+const WorkerNewModal = props => {
+  const [activeModal, setActiveModal] = useState(null);
+  const [checked, setChecked] = React.useState([]);
+
+  const handleToggle = value => () => {
+    const currentIndex = checked.indexOf(value);
+    const newChecked = [...checked];
+
+    if (currentIndex === -1) {
+      newChecked.push(value);
+    } else {
+      newChecked.splice(currentIndex, 1);
+    }
+
+    setChecked(newChecked);
+    console.log(newChecked);
   };
 
-  state = {
-    activeModal: null,
+  const handleModalClose = () => {
+    props.onClose();
   };
 
-  handleModalClose = () => {
-    this.props.onClose();
+  const resetModal = form => {
+    form.reset();
+    handleModalClose();
   };
 
-  createServices = async values => {
+  const validateNodeNames = nodes => {
+    if (isEmpty(nodes)) {
+      toastr.error('You should at least supply a node name');
+      return false;
+    }
+
+    return true;
+  };
+
+  const validateServiceName = value => {
+    if (!value) return '';
+
+    // validating rules: numbers, lowercase letter and up to 30 characters
+    return truncate(value.replace(/[^0-9a-z]/g, ''), {
+      length: 30,
+      omission: '',
+    });
+  };
+
+  const createServices = async values => {
     const { nodeNames } = values;
 
     const maxRetry = 5;
@@ -115,7 +153,7 @@ class WorkerNewModal extends React.Component {
 
     const worker = await workerApi.createWorker({
       ...values,
-      name: this.validateServiceName(values.name),
+      name: validateServiceName(values.name),
       plugins: values.plugins,
       jmxPort: generate.port(),
       clientPort: generate.port(),
@@ -130,190 +168,179 @@ class WorkerNewModal extends React.Component {
     await waitForServiceCreation(workerClusterName);
   };
 
-  onSubmit = async (values, form) => {
-    if (!this.validateNodeNames(values.nodeNames)) return;
+  const onSubmit = async (values, form) => {
+    if (!validateNodeNames(values.nodeNames)) return;
 
     try {
-      await this.createServices(values);
+      await createServices(values);
     } catch (error) {
       // Ignore the error
 
       toastr.error('Failed to create workspace!');
-      this.resetModal(form);
+      resetModal(form);
       return;
     }
 
     toastr.success(MESSAGES.SERVICE_CREATION_SUCCESS);
-    this.props.onConfirm();
-    this.resetModal(form);
+    props.onConfirm();
+    resetModal(form);
   };
 
-  resetModal = form => {
-    form.reset();
-    this.handleModalClose();
-  };
+  return (
+    <Form
+      onSubmit={onSubmit}
+      initialValues={{}}
+      render={({ handleSubmit, form, submitting, pristine, values }) => {
+        const handleNodeSelected = nodeNames => {
+          console.log(nodeNames);
+          // form.change('nodeNames', nodeNames);
+        };
 
-  validateNodeNames = nodes => {
-    if (isEmpty(nodes)) {
-      toastr.error('You should at least supply a node name');
-      return false;
-    }
+        const handlePluginSelected = plugins => {
+          form.change('plugins', plugins);
+        };
 
-    return true;
-  };
+        return (
+          <Dialog
+            title="New workspace"
+            handelOpen={props.isActive}
+            handelClose={() => {
+              if (!submitting) resetModal(form);
+            }}
+            handleConfirm={handleSubmit}
+            confirmDisabled={submitting || pristine}
+          >
+            {() => {
+              return (
+                <>
+                  <form onSubmit={handleSubmit}>
+                    <DialogContent>
+                      <DialogContentText>
+                        <Field
+                          label="Name"
+                          id="service-input"
+                          name="name"
+                          component={InputField}
+                          width="24rem"
+                          placeholder="cluster00"
+                          data-testid="name-input"
+                          disabled={submitting}
+                          format={validateServiceName}
+                          autoFocus
+                          helperText={
+                            <div>
+                              <p>
+                                1. You can use lower case letters and numbers
+                              </p>
+                              <p>2. Must be between 1 and 30 characters long</p>
+                            </div>
+                          }
+                        />
+                      </DialogContentText>
+                    </DialogContent>
+                    <s.StyledDialogConten>
+                      <DialogContentText>
+                        <Label>Node List</Label>
+                        <Paper>
+                          <List>
+                            {['node00', 'node01', 'node02', 'node03'].map(
+                              value => {
+                                const labelId = `checkbox-list-label-${value}`;
 
-  validateServiceName = value => {
-    if (!value) return '';
+                                return (
+                                  <ListItem
+                                    key={value}
+                                    dense
+                                    button
+                                    onClick={handleToggle(value)}
+                                  >
+                                    <ListItemIcon>
+                                      <Checkbox
+                                        color="primary"
+                                        edge="start"
+                                        checked={checked.indexOf(value) !== -1}
+                                        tabIndex={-1}
+                                        disableRipple
+                                        inputProps={{
+                                          'aria-labelledby': labelId,
+                                        }}
+                                      />
+                                    </ListItemIcon>
+                                    <ListItemText
+                                      id={labelId}
+                                      primary={value}
+                                    />
+                                  </ListItem>
+                                );
+                              },
+                            )}
+                          </List>
+                        </Paper>
+                      </DialogContentText>
+                    </s.StyledDialogConten>
+                    <s.StyledDialogConten>
+                      <DialogContentText>
+                        <Label>Plugin List</Label>
+                        <s.List>
+                          {values.plugins &&
+                            values.plugins.map(plugin => (
+                              <s.ListItem key={plugin.group}>
+                                {plugin.name}
+                              </s.ListItem>
+                            ))}
+                          <s.StyledIconButton
+                            zIndex="5000"
+                            color="primary"
+                            onClick={e => {
+                              e.preventDefault();
+                              setActiveModal(SELECT_PLUGIN_MODAL);
+                            }}
+                            disabled={submitting}
+                          >
+                            <s.ActionIcon className="fas fa-file-upload" />
+                          </s.StyledIconButton>
+                        </s.List>
+                      </DialogContentText>
+                    </s.StyledDialogConten>
+                  </form>
 
-    // validating rules: numbers, lowercase letter and up to 30 characters
-    return truncate(value.replace(/[^0-9a-z]/g, ''), {
-      length: 30,
-      omission: '',
-    });
-  };
+                  <NodeSelectModal
+                    isActive={activeModal === SELECT_NODE_MODAL}
+                    onClose={() => {
+                      setActiveModal(null);
+                    }}
+                    onConfirm={nodeNames => {
+                      setActiveModal(null);
+                      handleNodeSelected(nodeNames);
+                    }}
+                    initNodeNames={values.nodeNames}
+                  />
 
-  render() {
-    const { activeModal } = this.state;
+                  <PluginSelectModal
+                    isActive={activeModal === SELECT_PLUGIN_MODAL}
+                    onClose={() => {
+                      setActiveModal(null);
+                    }}
+                    onConfirm={plugins => {
+                      setActiveModal(null);
+                      handlePluginSelected(plugins);
+                    }}
+                    initPluginIds={map(values.plugins, 'group')}
+                  />
+                </>
+              );
+            }}
+          </Dialog>
+        );
+      }}
+    />
+  );
+};
 
-    return (
-      <Form
-        onSubmit={this.onSubmit}
-        initialValues={{}}
-        render={({ handleSubmit, form, submitting, pristine, values }) => {
-          const handleNodeSelected = nodeNames => {
-            form.change('nodeNames', nodeNames);
-          };
-
-          const handlePluginSelected = plugins => {
-            form.change('plugins', plugins);
-          };
-
-          return (
-            <Dialog
-              title="New workspace"
-              handelOpen={this.props.isActive}
-              handelClose={() => {
-                if (!submitting) this.resetModal(form);
-              }}
-              handleConfirm={handleSubmit}
-              confirmBtnText="Add"
-              isConfirmDisabled={submitting || pristine}
-              isConfirmWorking={submitting}
-              showActions={true}
-              testId="new-workspace-modal"
-            >
-              {() => {
-                return (
-                  <>
-                    <form onSubmit={handleSubmit}>
-                      <Box shadow={false}>
-                        <s.FormRow>
-                          <s.FormCol width="26rem">
-                            <Field
-                              label="Name"
-                              id="service-input"
-                              name="name"
-                              component={InputField}
-                              width="24rem"
-                              placeholder="cluster00"
-                              data-testid="name-input"
-                              disabled={submitting}
-                              format={this.validateServiceName}
-                              autoFocus
-                              helperText={
-                                <div>
-                                  <p>
-                                    1. You can use lower case letters and
-                                    numbers
-                                  </p>
-                                  <p>
-                                    2. Must be between 1 and 30 characters long
-                                  </p>
-                                </div>
-                              }
-                            />
-                          </s.FormCol>
-                        </s.FormRow>
-
-                        <s.FormRow margin="1rem 0 0 0">
-                          <s.FormCol width="18rem">
-                            <Label>Node List</Label>
-                            <s.List width="16rem">
-                              {values.nodeNames &&
-                                values.nodeNames.map(nodeName => (
-                                  <s.ListItem key={nodeName}>
-                                    {nodeName}
-                                  </s.ListItem>
-                                ))}
-                              <s.AppendButton
-                                text="Add node"
-                                handleClick={e => {
-                                  e.preventDefault();
-                                  this.setState({
-                                    activeModal: SELECT_NODE_MODAL,
-                                  });
-                                }}
-                                disabled={submitting}
-                              />
-                            </s.List>
-                          </s.FormCol>
-                          <s.FormCol width="16rem">
-                            <Label>Plugin List</Label>
-                            <s.List width="16rem">
-                              {values.plugins &&
-                                values.plugins.map(plugin => (
-                                  <s.ListItem key={plugin.group}>
-                                    {plugin.name}
-                                  </s.ListItem>
-                                ))}
-                              <s.AppendButton
-                                text="Add plugin"
-                                handleClick={e => {
-                                  e.preventDefault();
-                                  this.setState({
-                                    activeModal: SELECT_PLUGIN_MODAL,
-                                  });
-                                }}
-                                disabled={submitting}
-                              />
-                            </s.List>
-                          </s.FormCol>
-                        </s.FormRow>
-                      </Box>
-                    </form>
-
-                    <NodeSelectModal
-                      isActive={activeModal === SELECT_NODE_MODAL}
-                      onClose={() => {
-                        this.setState({ activeModal: null });
-                      }}
-                      onConfirm={nodeNames => {
-                        this.setState({ activeModal: null });
-                        handleNodeSelected(nodeNames);
-                      }}
-                      initNodeNames={values.nodeNames}
-                    />
-
-                    <PluginSelectModal
-                      isActive={activeModal === SELECT_PLUGIN_MODAL}
-                      onClose={() => {
-                        this.setState({ activeModal: null });
-                      }}
-                      onConfirm={plugins => {
-                        this.setState({ activeModal: null });
-                        handlePluginSelected(plugins);
-                      }}
-                      initPluginIds={map(values.plugins, 'group')}
-                    />
-                  </>
-                );
-              }}
-            </Dialog>
-          );
-        }}
-      />
-    );
-  }
-}
+WorkerNewModal.propTypes = {
+  isActive: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onConfirm: PropTypes.func.isRequired,
+};
 
 export default WorkerNewModal;
