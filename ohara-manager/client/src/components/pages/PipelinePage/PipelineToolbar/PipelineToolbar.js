@@ -16,7 +16,6 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
 import { get, includes } from 'lodash';
 
@@ -27,28 +26,8 @@ import PipelineNewTopic from './PipelineNewTopic';
 import { Modal } from 'components/common/Modal';
 import { fetchWorkers } from 'api/workerApi';
 import { isEmptyStr } from 'utils/commonUtils';
-import { Icon } from './styles.js';
+import { Icon, ToolbarWrapper, FileSavingStatus } from './styles.js';
 import { graph as graphPropType } from 'propTypes/pipeline';
-
-const ToolbarWrapper = styled.div`
-  margin-bottom: 15px;
-  padding: 15px 30px;
-  border: 1px solid ${props => props.theme.lightestBlue};
-  border-radius: ${props => props.theme.radiusNormal};
-  display: flex;
-  align-items: center;
-`;
-
-ToolbarWrapper.displayName = 'ToolbarWrapper';
-
-const FileSavingStatus = styled.div`
-  margin-left: auto;
-  color: red;
-  font-size: 12px;
-  color: ${props => props.theme.lighterBlue};
-`;
-
-FileSavingStatus.displayName = 'FileSavingStatus';
 
 const modalNames = {
   ADD_SOURCE_CONNECTOR: 'sources',
@@ -208,7 +187,6 @@ class PipelineToolbar extends React.Component {
       topics,
       currentTopic,
       updateCurrentTopic,
-      isLoading,
       workerClusterName,
     } = this.props;
 
@@ -263,14 +241,14 @@ class PipelineToolbar extends React.Component {
 
           {modalName === modalNames.ADD_TOPIC && (
             <PipelineNewTopic
+              ref={this.modalChild}
               updateGraph={updateGraph}
               graph={graph}
               topics={topics}
               currentTopic={currentTopic}
-              isLoading={isLoading}
               updateTopic={updateCurrentTopic}
-              ref={this.modalChild}
               updateAddBtnStatus={this.updateAddBtnStatus}
+              workerClusterName={workerClusterName}
             />
           )}
 

@@ -17,7 +17,7 @@
 import styled from 'styled-components';
 import { DataTable } from 'components/common/Table';
 
-const Icon = styled.i`
+export const Icon = styled.i`
   color: ${props => props.theme.lighterBlue};
   font-size: 25px;
   margin-right: 20px;
@@ -38,11 +38,11 @@ const Icon = styled.i`
 
 Icon.displayName = 'Icon';
 
-const TableWrapper = styled.div`
+export const TableWrapper = styled.div`
   margin: 30px 30px 40px;
 `;
 
-const Table = styled(DataTable)`
+export const Table = styled(DataTable)`
   thead th {
     color: ${props => props.theme.lightBlue};
     font-weight: normal;
@@ -61,4 +61,34 @@ const Table = styled(DataTable)`
   }
 `;
 
-export { Icon, TableWrapper, Table };
+export const Wrapper = styled.div`
+  padding: 20px;
+`;
+
+export const ToolbarWrapper = styled.div`
+  margin-bottom: 15px;
+  padding: 15px 30px;
+  border: 1px solid ${props => props.theme.lightestBlue};
+  border-radius: ${props => props.theme.radiusNormal};
+  display: flex;
+  align-items: center;
+`;
+
+ToolbarWrapper.displayName = 'ToolbarWrapper';
+
+export const FileSavingStatus = styled.div`
+  margin-left: auto;
+  color: red;
+  font-size: 12px;
+  color: ${props => props.theme.lighterBlue};
+`;
+
+FileSavingStatus.displayName = 'FileSavingStatus';
+
+export const Inner = styled.div`
+  padding: 30px 20px;
+`;
+
+export const LoaderWrapper = styled.div`
+  margin: 20px 40px;
+`;

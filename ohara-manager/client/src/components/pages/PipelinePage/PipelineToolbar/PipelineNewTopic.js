@@ -17,22 +17,27 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import toastr from 'toastr';
+import { isEmpty } from 'lodash';
+import { Link } from 'react-router-dom';
 
 import * as MESSAGES from 'constants/messages';
-import { Box } from 'components/common/Layout';
+import * as URLS from 'constants/urls';
+import { Warning } from 'components/common/Messages';
 import { Select } from 'components/common/Form';
-import { createConnector } from '../pipelineUtils/pipelineToolbarUtils';
+import { createConnector } from './pipelineToolbarUtils';
 import { findByGraphId } from '../pipelineUtils/commonUtils';
 import { graph as graphPropType } from 'propTypes/pipeline';
+import { Wrapper } from './styles';
 
 class PipelineNewTopic extends React.Component {
   static propTypes = {
     graph: PropTypes.arrayOf(graphPropType).isRequired,
     updateGraph: PropTypes.func.isRequired,
     topics: PropTypes.array.isRequired,
-    currentTopic: PropTypes.object.isRequired,
     updateTopic: PropTypes.func.isRequired,
     updateAddBtnStatus: PropTypes.func.isRequired,
+    workerClusterName: PropTypes.string.isRequired,
+    currentTopic: PropTypes.object,
   };
 
   componentDidMount() {
@@ -68,13 +73,20 @@ class PipelineNewTopic extends React.Component {
   };
 
   render() {
-    const { topics, currentTopic } = this.props;
-
-    if (!topics) return null;
+    const { topics, currentTopic, workerClusterName: workspace } = this.props;
 
     return (
-      <Box shadow={false}>
-        <React.Fragment>
+      <Wrapper>
+        {isEmpty(topics) ? (
+          <Warning
+            text={
+              <>
+                {`You don't have any topics available in this workspace yet. But you can create one `}
+                <Link to={`${URLS.WORKSPACES}/${workspace}/topics`}>here</Link>
+              </>
+            }
+          />
+        ) : (
           <Select
             isObject
             list={topics}
@@ -82,8 +94,8 @@ class PipelineNewTopic extends React.Component {
             handleChange={this.handleSelectChange}
             data-testid="topic-select"
           />
-        </React.Fragment>
-      </Box>
+        )}
+      </Wrapper>
     );
   }
 }

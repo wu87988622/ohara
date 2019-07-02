@@ -16,15 +16,12 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-
 import styled from 'styled-components';
+
 import * as PIPELINES from 'constants/pipelines';
+import * as utils from './pipelineToolbarUtils';
 import { Modal } from 'components/common/Modal';
 import { ListLoader } from 'components/common/Loader';
-import {
-  createConnector,
-  trimString,
-} from '../pipelineUtils/pipelineToolbarUtils';
 import { TableWrapper, Table } from './styles';
 import { Input, FormGroup } from 'components/common/Form';
 
@@ -68,7 +65,8 @@ class PipelineNewConnector extends React.Component {
       workerClusterName,
     } = this.props;
     const { newConnectorName } = this.state;
-    createConnector({
+
+    utils.createConnector({
       updateGraph,
       connector,
       workerClusterName,
@@ -102,7 +100,7 @@ class PipelineNewConnector extends React.Component {
                 >
                   <td>{name}</td>
                   <td>{version}</td>
-                  <td>{trimString(revision)}</td>
+                  <td>{utils.trimString(revision)}</td>
                 </tr>
               );
             })}

@@ -18,7 +18,12 @@ import { isObject } from 'lodash';
 
 import * as connectorApi from 'api/connectorApi';
 import { createProperty } from 'api/streamApi';
-import { isSource, isSink, isTopic, isStream } from './commonUtils';
+import {
+  isSource,
+  isSink,
+  isTopic,
+  isStream,
+} from '../pipelineUtils/commonUtils';
 
 const getClassName = connector => {
   let className = '';

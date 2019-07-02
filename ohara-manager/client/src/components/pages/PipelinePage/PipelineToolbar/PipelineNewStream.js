@@ -16,23 +16,14 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import styled from 'styled-components';
 import { get, isNull, truncate } from 'lodash';
 
 import * as jarApi from 'api/jarApi';
 import { ListLoader } from 'components/common/Loader';
 import { Modal } from 'components/common/Modal';
-import { createConnector } from '../pipelineUtils/pipelineToolbarUtils';
-import { TableWrapper, Table } from './styles';
+import { createConnector } from './pipelineToolbarUtils';
+import { TableWrapper, Table, Inner, LoaderWrapper } from './styles';
 import { Input, FormGroup } from 'components/common/Form';
-
-const Inner = styled.div`
-  padding: 30px 20px;
-`;
-
-const LoaderWrapper = styled.div`
-  margin: 20px 40px;
-`;
 
 class PipelineNewStream extends React.Component {
   static propTypes = {

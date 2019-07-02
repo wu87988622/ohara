@@ -21,6 +21,7 @@ import styled from 'styled-components';
 const WarningWrapper = styled.p`
   font-size: 13px;
   margin: 0 0 8px 0;
+  line-height: 1.6;
   color: ${props => props.theme.lighterBlue};
   display: flex;
   align-items: center;
