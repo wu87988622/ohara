@@ -238,7 +238,7 @@ class WorkerNewModal extends React.Component {
                           </div>
                         }
                       >
-                        Service
+                        Name
                       </Label>
                       <Field
                         id="service-input"
@@ -249,27 +249,6 @@ class WorkerNewModal extends React.Component {
                         data-testid="name-input"
                         disabled={submitting}
                         format={this.validateServiceName}
-                      />
-                    </s.FormCol>
-                    <s.FormCol width="8rem">
-                      <Label
-                        htmlFor="port-input"
-                        tooltipString="Must be between 5000 and 65535"
-                        tooltipAlignment="right"
-                      >
-                        Port
-                      </Label>
-                      <Field
-                        id="port-input"
-                        name="clientPort"
-                        component={InputField}
-                        type="number"
-                        min={5000}
-                        max={65535}
-                        width="8rem"
-                        placeholder="5000"
-                        data-testid="client-port-input"
-                        disabled={submitting}
                       />
                     </s.FormCol>
                   </s.FormRow>
