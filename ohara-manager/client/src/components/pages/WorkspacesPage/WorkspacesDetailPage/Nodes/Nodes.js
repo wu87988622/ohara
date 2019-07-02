@@ -17,7 +17,7 @@
 import React, { useEffect, useCallback, useState } from 'react';
 import toastr from 'toastr';
 import moment from 'moment';
-import { get } from 'lodash';
+import { get, isEmpty } from 'lodash';
 import PropTypes from 'prop-types';
 import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
@@ -26,7 +26,7 @@ import * as nodeApi from 'api/nodeApi';
 import * as brokerApi from 'api/brokerApi';
 import * as workerApi from 'api/workerApi';
 import * as MESSAGES from 'constants/messages';
-import { Modal } from 'components/common/Mui/Dialog';
+import { Dialog } from 'components/common/Mui/Dialog';
 import * as commonUtils from 'utils/commonUtils';
 import Checkbox from '@material-ui/core/Checkbox';
 import { SortTable } from 'components/common/Mui/Table';
@@ -42,7 +42,7 @@ const Nodes = props => {
   const [orderBy, setOrderBy] = useState('name');
   const [loading, setLoading] = useState(true);
   const [confirmDisabled, setConfirmDisabled] = useState(false);
-  const [nodeSelectOpen, setNodeSelectOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const fetchWorker = useCallback(async () => {
     const wkRes = await workerApi.fetchWorker(workspaceName);
@@ -86,7 +86,7 @@ const Nodes = props => {
   };
 
   const handleNodeSelectClose = e => {
-    setNodeSelectOpen(false);
+    setDialogOpen(false);
   };
 
   const handleNodeSelect = e => {
@@ -103,7 +103,7 @@ const Nodes = props => {
         selectNodes.splice(index, 1);
         setSelectNodes(selectNodes);
       }
-      if (selectNodes.length === 0) {
+      if (isEmpty(selectNodes.length)) {
         setConfirmDisabled(true);
       }
     }
@@ -135,7 +135,7 @@ const Nodes = props => {
         await brokerApi.addNodeToBroker(bkParams);
         await workerApi.addNodeToWorker(wkParams);
         await waitForServiceCreation(0);
-        setNodeSelectOpen(false);
+        setDialogOpen(false);
         fetchWorker();
       });
       setSelectNodes([]);
@@ -143,12 +143,12 @@ const Nodes = props => {
   };
 
   const handelOpen = () => {
-    if (selectNodes.length === 0) {
+    if (isEmpty(selectNodes.length)) {
       setConfirmDisabled(true);
     } else {
       setConfirmDisabled(false);
     }
-    setNodeSelectOpen(true);
+    setDialogOpen(true);
   };
 
   const headers = ['Select', 'Node name', 'Port'];
@@ -168,8 +168,8 @@ const Nodes = props => {
         />
       </Main>
 
-      <Modal
-        handelOpen={nodeSelectOpen}
+      <Dialog
+        handelOpen={dialogOpen}
         handelClose={handleNodeSelectClose}
         title="Add Node"
         handleConfirm={handelAddNode}
@@ -182,34 +182,36 @@ const Nodes = props => {
                 return (
                   <>
                     {unusedNodes.map(node => {
+                      const { name, port } = node;
                       return (
-                        <TableRow key={node.name}>
+                        <TableRow key={name}>
                           <TableCell>
                             <Checkbox
-                              id={node.name}
+                              id={name}
                               color="primary"
                               onChange={handleNodeSelect}
                             />
                           </TableCell>
-                          <TableCell>{node.name}</TableCell>
-                          <TableCell align="right">{node.port}</TableCell>
+                          <TableCell>{name}</TableCell>
+                          <TableCell align="right">{port}</TableCell>
                         </TableRow>
                       );
                     })}
                     {useNodes.map(node => {
+                      const { name, port } = node;
                       return (
-                        <TableRow key={node.name} selected>
+                        <TableRow key={name} selected>
                           <TableCell>
                             <Checkbox
-                              id={node.name}
+                              id={name}
                               color="primary"
                               onChange={handleNodeSelect}
                               checked
                               disabled
                             />
                           </TableCell>
-                          <TableCell>{node.name}</TableCell>
-                          <TableCell align="right">{node.port}</TableCell>
+                          <TableCell>{name}</TableCell>
+                          <TableCell align="right">{port}</TableCell>
                         </TableRow>
                       );
                     })}
@@ -219,7 +221,7 @@ const Nodes = props => {
             </StyledTable>
           );
         }}
-      </Modal>
+      </Dialog>
     </>
   );
 };

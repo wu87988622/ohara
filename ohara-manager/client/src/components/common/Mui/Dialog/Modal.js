@@ -21,7 +21,7 @@ import DialogActions from '@material-ui/core/DialogActions';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import Button from '@material-ui/core/Button';
 
-const Modal = props => {
+const MuiDialog = props => {
   const {
     handelOpen,
     handelClose,
@@ -53,7 +53,7 @@ const Modal = props => {
   );
 };
 
-Modal.propTypes = {
+MuiDialog.propTypes = {
   handelOpen: PropTypes.bool.isRequired,
   handelClose: PropTypes.func.isRequired,
   title: PropTypes.string.isRequired,
@@ -64,4 +64,4 @@ Modal.propTypes = {
   confirmDisabled: PropTypes.bool,
 };
 
-export default Modal;
+export default MuiDialog;
