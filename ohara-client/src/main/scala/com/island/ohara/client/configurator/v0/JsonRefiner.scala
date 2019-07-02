@@ -41,26 +41,26 @@ trait JsonRefiner[T] {
     * @param key  key
     * @return this refiner
     */
-  def nullToRandomString(key: String): JsonRefiner[T] = nullToString(key, CommonUtils.randomString(10))
+  def nullToRandomString(key: String): JsonRefiner[T] = nullToJsValue(key, () => JsString(CommonUtils.randomString(10)))
 
-  def nullToString(key: String, defaultValue: String): JsonRefiner[T] = nullToJsValue(key, JsString(defaultValue))
+  def nullToString(key: String, defaultValue: String): JsonRefiner[T] = nullToJsValue(key, () => JsString(defaultValue))
 
-  def nullToEmptyArray(key: String): JsonRefiner[T] = nullToJsValue(key, JsArray.empty)
+  def nullToEmptyArray(key: String): JsonRefiner[T] = nullToJsValue(key, () => JsArray.empty)
 
   /**
     * convert the null value to random port and check the existent port.
     * @param key keys
     * @return this refiner
     */
-  def nullToRandomPort(key: String): JsonRefiner[T] = nullToJsValue(key, JsNumber(CommonUtils.availablePort()))
+  def nullToRandomPort(key: String): JsonRefiner[T] = nullToJsValue(key, () => JsNumber(CommonUtils.availablePort()))
 
-  def nullToShort(key: String, value: Short): JsonRefiner[T] = nullToJsValue(key, JsNumber(value))
+  def nullToShort(key: String, value: Short): JsonRefiner[T] = nullToJsValue(key, () => JsNumber(value))
 
-  def nullToInt(key: String, value: Int): JsonRefiner[T] = nullToJsValue(key, JsNumber(value))
+  def nullToInt(key: String, value: Int): JsonRefiner[T] = nullToJsValue(key, () => JsNumber(value))
 
-  def nullToLong(key: String, value: Long): JsonRefiner[T] = nullToJsValue(key, JsNumber(value))
+  def nullToLong(key: String, value: Long): JsonRefiner[T] = nullToJsValue(key, () => JsNumber(value))
 
-  def nullToDouble(key: String, value: Double): JsonRefiner[T] = nullToJsValue(key, JsNumber(value))
+  def nullToDouble(key: String, value: Double): JsonRefiner[T] = nullToJsValue(key, () => JsNumber(value))
 
   /**
     * auto-fill the value of key by another key's value. For example
@@ -93,7 +93,7 @@ trait JsonRefiner[T] {
     * @param defaultValue default value
     * @return this refiner
     */
-  protected def nullToJsValue(key: String, defaultValue: JsValue): JsonRefiner[T]
+  protected def nullToJsValue(key: String, defaultValue: () => JsValue): JsonRefiner[T]
 
   //-------------------------[more checks]-------------------------//
 
@@ -317,7 +317,7 @@ object JsonRefiner {
     private[this] var format: RootJsonFormat[T] = _
     private[this] var valueConverter: Map[String, JsValue => JsValue] = Map.empty
     private[this] var valueChecker: Map[String, JsValue => Unit] = Map.empty
-    private[this] var nullToJsValue: Map[String, JsValue] = Map.empty
+    private[this] var nullToJsValue: Map[String, () => JsValue] = Map.empty
     private[this] var nullToAnotherValueOfKey: Map[String, String] = Map.empty
     private[this] var _rejectEmptyString: Boolean = false
     private[this] var _rejectNegativeNumber: Boolean = false
@@ -364,9 +364,9 @@ object JsonRefiner {
       this
     }
 
-    override protected def nullToJsValue(key: String, defaultValue: JsValue): JsonRefiner[T] = {
+    override protected def nullToJsValue(key: String, defaultValue: () => JsValue): JsonRefiner[T] = {
       if (nullToJsValue.contains(CommonUtils.requireNonEmpty(key)))
-        throw new IllegalArgumentException(s"the $key have been associated to default value:$defaultValue")
+        throw new IllegalArgumentException(s"the $key have been associated to default value")
       this.nullToJsValue = this.nullToJsValue ++ Map(key -> Objects.requireNonNull(defaultValue))
       this
     }
@@ -460,7 +460,7 @@ object JsonRefiner {
           // 3) convert the null to default value
           fields = fields ++ nullToJsValue.map {
             case (key, defaultValue) =>
-              key -> fields.getOrElse(key, defaultValue)
+              key -> fields.getOrElse(key, defaultValue())
           }
 
           // 4) check the value

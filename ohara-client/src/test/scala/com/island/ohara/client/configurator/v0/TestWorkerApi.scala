@@ -316,6 +316,15 @@ class TestWorkerApi extends SmallTest with Matchers {
     creation.nodeNames.size shouldBe 1
     creation.nodeNames.head shouldBe nodeName
     creation.jarKeys.size shouldBe 0
+
+    val creation2 = WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
+                                                                 |  {
+                                                                 |    "name": "$name",
+                                                                 |    "nodeNames": ["$nodeName"]
+                                                                 |  }
+                                                                     """.stripMargin.parseJson)
+    creation2.clientPort should not be creation.clientPort
+    creation2.jmxPort should not be creation.jmxPort
   }
 
   @Test
