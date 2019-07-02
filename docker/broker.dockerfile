@@ -42,12 +42,11 @@ ADD ./prometheus/exporter.config.yml /prometheus/config.yml
 ARG BRANCH="master"
 ARG COMMIT=$BRANCH
 ARG REPO="https://github.com/oharastream/ohara.git"
-ARG REBASE_UPSTREAM=$REPO
-ARG REBASE=""
+ARG BEFORE_BUILD=""
 WORKDIR /testpatch/ohara
 RUN git clone $REPO /testpatch/ohara
 RUN git checkout $COMMIT
-RUN if [[ "$REBASE" != "" ]] && [[ "$REBASE_UPSTREAM" != "" ]]; then git remote add upstream $REBASE_UPSTREAM; git pull --rebase $REBASE_UPSTREAM $REBASE ; fi
+RUN if [[ "$BEFORE_BUILD" != "" ]]; then /bin/bash -c "$BEFORE_BUILD" ; fi
 RUN git rev-parse HEAD > $(find "${KAFKA_DIR}" -maxdepth 1 -type d -name "kafka_*")/bin/ohara_version
 
 FROM centos:7.6.1810
