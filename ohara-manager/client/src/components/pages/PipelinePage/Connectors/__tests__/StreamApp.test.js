@@ -31,6 +31,9 @@ const props = {
     },
   },
   graph: [],
+  pipeline: {
+    workerClusterName: generate.serviceName(),
+  },
   updateGraph: jest.fn(),
   refreshGraph: jest.fn(),
   updateHasChanges: jest.fn(),

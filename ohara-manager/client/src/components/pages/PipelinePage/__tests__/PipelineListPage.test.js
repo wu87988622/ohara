@@ -147,17 +147,17 @@ describe('<PipelineListPage />', () => {
   });
 
   it('renders <ConfirmModal />', () => {
-    const modal = wrapper.find('ConfirmModal');
+    const modal = wrapper.find('AlertDialog');
     const _props = modal.props();
     expect(modal.length).toBe(1);
-    expect(_props.isActive).toBe(false);
     expect(_props.title).toBe('Delete pipeline?');
-    expect(_props.cancelBtnText).toBe('No, Keep it');
-    expect(_props.handleCancel).toBeDefined();
     expect(_props.handleConfirm).toBeDefined();
-    expect(_props.message).toBe(
+
+    expect(_props.open).toBe(false);
+    expect(_props.content).toBe(
       'Are you sure you want to delete this pipeline? This action cannot be undone!',
     );
+    expect(_props.handleClose).toBeDefined();
   });
 
   it('successfully deletes the first pipeline', async () => {
@@ -179,8 +179,8 @@ describe('<PipelineListPage />', () => {
       .find('DeleteIcon')
       .prop('onClick')(id);
 
-    expect(wrapper.find('ConfirmModal').props().isActive).toBe(true);
-    await wrapper.find('ConfirmModal').prop('handleConfirm')();
+    expect(wrapper.find('AlertDialog').props().open).toBe(true);
+    await wrapper.find('AlertDialog').prop('handleConfirm')();
     expect(deletePipeline).toHaveBeenCalledTimes(1);
     expect(deletePipeline).toHaveBeenCalledWith(id);
     expect(toastr.success).toHaveBeenCalledTimes(1);

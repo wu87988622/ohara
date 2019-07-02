@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import ReactTooltip from 'react-tooltip';
 import { noop, includes } from 'lodash';
 
-import { ConfirmModal } from 'components/common/Modal';
+import { AlertDialog } from 'components/common/Mui/Dialog';
 import * as s from './styles';
 
 const START = 'start';
@@ -104,15 +104,13 @@ class Controller extends React.Component {
           </s.ControlButton>
         )}
         <ReactTooltip />
-        <ConfirmModal
-          isActive={isDeleteModalActive}
+
+        <AlertDialog
           title={`Remove ${kind}?`}
-          confirmBtnText={`Yes, Remove this ${kind}`}
-          cancelBtnText="No, Keep it"
-          handleCancel={this.handleDeleteModalClose}
+          content={`Are you sure you want to remove this ${kind} from the pipeline graph? This action cannot be undone!`}
+          open={isDeleteModalActive}
           handleConfirm={this.handleDeleteClick}
-          message={`Are you sure you want to remove this ${kind} from the pipeline graph? This action cannot be undone!`}
-          isDelete
+          handleClose={this.handleDeleteModalClose}
         />
       </s.Controller>
     );

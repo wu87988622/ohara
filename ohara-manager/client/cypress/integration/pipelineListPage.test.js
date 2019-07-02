@@ -86,7 +86,7 @@ describe('PipelineListPage', () => {
           cy.getByTestId('delete-pipeline').click();
         });
       })
-      .getByText('Yes, Delete this pipeline')
+      .getByText('Delete')
       .click()
       .wait('@deletePipeline')
       .getByText(`Successfully deleted the pipeline: ${pipelineName}`)

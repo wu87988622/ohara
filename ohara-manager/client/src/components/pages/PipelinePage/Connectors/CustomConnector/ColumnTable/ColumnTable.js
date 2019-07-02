@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 
 import NewRowModal from './NewRowModal';
 import Table from './Table';
-import { ConfirmModal } from 'components/common/Modal';
+import { AlertDialog } from 'components/common/Mui/Dialog';
 import { NewRowBtn } from './styles';
 
 class ColumnTable extends React.Component {
@@ -139,15 +139,12 @@ class ColumnTable extends React.Component {
           handleModalClose={this.handleNewRowModalClose}
         />
 
-        <ConfirmModal
-          isActive={isDeleteRowModalActive}
+        <AlertDialog
           title="Delete row?"
-          confirmBtnText="Yes, Delete this row"
-          cancelBtnText="No, Keep it"
-          handleCancel={this.handleDeleteRowModalClose}
+          content="Are you sure you want to delete this row? This action cannot be undone!"
+          open={isDeleteRowModalActive}
+          handleClose={this.handleDeleteRowModalClose}
           handleConfirm={this.handleDeleteRow}
-          message="Are you sure you want to delete this row? This action cannot be undone!"
-          isDelete
         />
 
         <Table

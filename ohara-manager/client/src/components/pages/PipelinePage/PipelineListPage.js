@@ -26,7 +26,8 @@ import * as utils from './pipelineUtils/pipelineListPageUtils';
 import * as pipelineApi from 'api/pipelineApi';
 import * as URLS from 'constants/urls';
 import { TableLoader, ListLoader } from 'components/common/Loader';
-import { Modal, ConfirmModal } from 'components/common/Modal';
+import { AlertDialog } from 'components/common/Mui/Dialog';
+import { Modal } from 'components/common/Modal';
 import { Box } from 'components/common/Layout';
 import { Warning } from 'components/common/Messages';
 import { H2 } from 'components/common/Headings';
@@ -258,16 +259,13 @@ class PipelineListPage extends React.Component {
             )}
           </Modal>
 
-          <ConfirmModal
-            isActive={isDeletePipelineModalActive}
+          <AlertDialog
             title="Delete pipeline?"
-            confirmBtnText="Yes, Delete this pipeline"
-            cancelBtnText="No, Keep it"
-            handleCancel={this.handleDeletePipelineModalClose}
+            content="Are you sure you want to delete this pipeline? This action cannot be undone!"
+            open={isDeletePipelineModalActive}
             handleConfirm={this.handleDeletePipelineConfirm}
-            isConfirmWorking={isDeletePipelineWorking}
-            message="Are you sure you want to delete this pipeline? This action cannot be undone!"
-            isDelete
+            handleClose={this.handleDeletePipelineModalClose}
+            working={isDeletePipelineWorking}
           />
 
           <Wrapper>
