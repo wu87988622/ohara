@@ -26,7 +26,14 @@ const commonUtils = require('../utils/commonUtils');
 const { getConfig } = require('../utils/configHelpers');
 
 const { configurator, port } = getConfig();
-const { prod = false, nodeHost, nodePort, nodeUser, nodePass } = yargs.argv;
+const {
+  prod = false,
+  nodeHost,
+  nodePort,
+  nodeUser,
+  nodePass,
+  specs = null,
+} = yargs.argv;
 
 /* eslint-disable no-process-exit, no-console */
 const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
@@ -124,22 +131,48 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
     return env.join(',');
   };
 
+  const buildCypressSpec = () => {
+    const specList = specs.split(',').map(spec => {
+      return `cypress/integration/${spec}.test.js`;
+    });
+    return specList.join(',');
+  };
+
   // Run e2e test
   console.log(chalk.blue('Running end to end tests with Cypress'));
-  cypress = execa(
-    'yarn',
-    [
-      'e2e:run',
-      '--config',
-      `baseUrl=http://localhost:${prod ? serverPort : clientPort}`,
-      '--env',
-      buildCypressEnv(),
-    ],
-    {
-      cwd: 'client',
-      stdio: 'inherit',
-    },
-  );
+  if (specs === null) {
+    cypress = execa(
+      'yarn',
+      [
+        'e2e:run',
+        '--config',
+        `baseUrl=http://localhost:${prod ? serverPort : clientPort}`,
+        '--env',
+        buildCypressEnv(),
+      ],
+      {
+        cwd: 'client',
+        stdio: 'inherit',
+      },
+    );
+  } else {
+    cypress = execa(
+      'yarn',
+      [
+        'e2e:run',
+        '--config',
+        `baseUrl=http://localhost:${prod ? serverPort : clientPort}`,
+        '--env',
+        buildCypressEnv(),
+        '--spec',
+        buildCypressSpec(),
+      ],
+      {
+        cwd: 'client',
+        stdio: 'inherit',
+      },
+    );
+  }
   console.log('cypress.pid', cypress.pid);
 
   const killSubProcess = () => {

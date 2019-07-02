@@ -109,8 +109,10 @@ task it {
 
         if(!project.hasProperty('ohara.manager.it.nodePass')) throw new IllegalArgumentException("ohara.manager.it.nodePass is required")
         String nodePass = project.getProperty('ohara.manager.it.nodePass')
-               
-        commandLine 'yarn', 'test:e2e:ci', '--port', 0, '--configurator', configurator, '--nodeHost', nodeHost, '--nodePort', nodePort, '--nodeUser', nodeUser, '--nodePass', nodePass    
+        
+        String specs = project.getProperty('ohara.manager.it.specs')
+
+        commandLine 'yarn', 'test:e2e:ci', '--port', 0, '--configurator', configurator, '--nodeHost', nodeHost, '--nodePort', nodePort, '--nodeUser', nodeUser, '--nodePass', nodePass, '--specs', specs     
       }
     }
   }
