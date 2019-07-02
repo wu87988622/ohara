@@ -29,7 +29,7 @@ The core component of ohara is [Configurator](#ohara-configurator). After instal
 set up a Configurator via following docker command.
 
 ```bash
-docker run --rm -p 12345:12345 oharastream/configurator:0.6.0-SNAPSHOT --port 12345
+docker run --rm -p 12345:12345 oharastream/configurator:0.7.0-SNAPSHOT --port 12345
 ```
 
 > click [here](#execute-configurator) to see more options for configurator
@@ -37,7 +37,7 @@ docker run --rm -p 12345:12345 oharastream/configurator:0.6.0-SNAPSHOT --port 12
 And then you can also create a manager to provide a beautiful UI based on above Ohara Configurator.
 
 ```bash
-docker run --rm -p 5050:5050 oharastream/manager:0.6.0-SNAPSHOT --port 5050 --configurator http://$ip:12345/v0
+docker run --rm -p 5050:5050 oharastream/manager:0.7.0-SNAPSHOT --port 5050 --configurator http://$ip:12345/v0
 ```
 
 > Please replace the **ip** by your host's address
@@ -92,19 +92,19 @@ Please click this [link](https://docs.docker.com/install/linux/docker-ce/centos/
 
 Ohara deploys docker images on [docker hub](https://hub.docker.com/u/oharastream). You can download images via `docker pull` command.
 All images are list below.
-1. oharastream/broker:0.6.0-SNAPSHOT
-1. oharastream/zookeeper:0.6.0-SNAPSHOT
-1. oharastream/connect-worker:0.6.0-SNAPSHOT
-1. oharastream/configurator:0.6.0-SNAPSHOT
-1. oharastream/manager:0.6.0-SNAPSHOT
-1. oharastream/streamapp:0.6.0-SNAPSHOT
+1. oharastream/broker:0.7.0-SNAPSHOT
+1. oharastream/zookeeper:0.7.0-SNAPSHOT
+1. oharastream/connect-worker:0.7.0-SNAPSHOT
+1. oharastream/configurator:0.7.0-SNAPSHOT
+1. oharastream/manager:0.7.0-SNAPSHOT
+1. oharastream/streamapp:0.7.0-SNAPSHOT
 
 ----------
 
 ### Execute Configurator
 
 ```sh
-docker run --rm -p ${port}:${port} --add-host ${nodeHostName}:${nodeHostIP} oharastream/configurator:0.6.0-SNAPSHOT --port ${port} --hostname ${host} --node ${SshUserName}:${SshPassword}@${NodeHostName}:${SshPort}
+docker run --rm -p ${port}:${port} --add-host ${nodeHostName}:${nodeHostIP} oharastream/configurator:0.7.0-SNAPSHOT --port ${port} --hostname ${host} --node ${SshUserName}:${SshPassword}@${NodeHostName}:${SshPort}
 ```
 
 - folder: the folder used to store data (default is random). Mount the volume if you want to keep your data after restarting Configurator
@@ -139,7 +139,7 @@ a local folder (/tmp/configurator) on /home/ohara/configurator of Ohara Configur
 $ mkdir /tmp/configurator
 $ docker run -v /tmp/configurator:/home/ohara/configurator \
          -p 12345:12345 \
-         oharastream/configurator:0.6.0-SNAPSHOT \
+         oharastream/configurator:0.7.0-SNAPSHOT \
          --port 12345 \
          --folder /home/ohara/configurator
 ```
@@ -153,7 +153,7 @@ referencing to the outside folder. Otherwise, Ohara Configurator flush all data 
 ### Execute Manager
 
 ```sh
-docker run --rm -p 5050:5050 oharastream/manager:0.6.0-SNAPSHOT --port 5050 --configurator http://localhost:12345/v0
+docker run --rm -p 5050:5050 oharastream/manager:0.7.0-SNAPSHOT --port 5050 --configurator http://localhost:12345/v0
 ```
 - port: bound by manager (default is 5050)
 - configurator: basic form of restful API of Ohara Configurator
@@ -175,7 +175,7 @@ docker run -d --rm --name postgresql -p 5432:5432 --env POSTGRES_DB=${DB_NAME} -
 ### Execute FTP Instance
 
 ```bash
-docker run --rm -p 10000-10011:10000-10011 oharastream/backend:0.6.0-SNAPSHOT com.island.ohara.testing.service.FtpServer --controlPort 10000 --dataPorts 10001-10011 --user ${UserName} --password ${Password} --hostname ${hostIP or hostName}
+docker run --rm -p 10000-10011:10000-10011 oharastream/backend:0.7.0-SNAPSHOT com.island.ohara.testing.service.FtpServer --controlPort 10000 --dataPorts 10001-10011 --user ${UserName} --password ${Password} --hostname ${hostIP or hostName}
 ```
 
 - controlPort: bound by FTP Server
