@@ -17,7 +17,7 @@
 import React, { useEffect, useCallback, useState } from 'react';
 import toastr from 'toastr';
 import moment from 'moment';
-import { get } from 'lodash';
+import { get, isEmpty } from 'lodash';
 import PropTypes from 'prop-types';
 import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
@@ -26,7 +26,7 @@ import * as nodeApi from 'api/nodeApi';
 import * as brokerApi from 'api/brokerApi';
 import * as workerApi from 'api/workerApi';
 import * as MESSAGES from 'constants/messages';
-import { Modal } from 'components/common/Modal';
+import { Dialog } from 'components/common/Mui/Dialog';
 import * as commonUtils from 'utils/commonUtils';
 import Checkbox from '@material-ui/core/Checkbox';
 import { SortTable } from 'components/common/Mui/Table';
@@ -41,8 +41,8 @@ const Nodes = props => {
   const [order, setOrder] = useState('asc');
   const [orderBy, setOrderBy] = useState('name');
   const [loading, setLoading] = useState(true);
-  const [confirmWorking, setConfirmWorking] = useState(false);
-  const [nodeSelectOpen, setNodeSelectOpen] = useState(false);
+  const [confirmDisabled, setConfirmDisabled] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const fetchWorker = useCallback(async () => {
     const wkRes = await workerApi.fetchWorker(workspaceName);
@@ -86,7 +86,7 @@ const Nodes = props => {
   };
 
   const handleNodeSelectClose = e => {
-    setNodeSelectOpen(false);
+    setDialogOpen(false);
   };
 
   const handleNodeSelect = e => {
@@ -95,12 +95,16 @@ const Nodes = props => {
       if (!selectNodes.some(node => node === id)) {
         selectNodes.push(id);
         setSelectNodes(selectNodes);
+        setConfirmDisabled(false);
       }
     } else {
       if (selectNodes.some(node => node === id)) {
         const index = selectNodes.indexOf(id);
         selectNodes.splice(index, 1);
         setSelectNodes(selectNodes);
+      }
+      if (isEmpty(selectNodes.length)) {
+        setConfirmDisabled(true);
       }
     }
   };
@@ -119,7 +123,6 @@ const Nodes = props => {
 
   const handelAddNode = () => {
     if (selectNodes.length > 0) {
-      setConfirmWorking(true);
       selectNodes.map(async selectNode => {
         const bkParams = {
           name: broker,
@@ -132,19 +135,27 @@ const Nodes = props => {
         await brokerApi.addNodeToBroker(bkParams);
         await workerApi.addNodeToWorker(wkParams);
         await waitForServiceCreation(0);
-        setConfirmWorking(false);
-        setNodeSelectOpen(false);
+        setDialogOpen(false);
         fetchWorker();
       });
       setSelectNodes([]);
     }
   };
 
+  const handelOpen = () => {
+    if (isEmpty(selectNodes.length)) {
+      setConfirmDisabled(true);
+    } else {
+      setConfirmDisabled(false);
+    }
+    setDialogOpen(true);
+  };
+
   const headers = ['Select', 'Node name', 'Port'];
 
   return (
     <>
-      <NewButton text="new node" onClick={() => setNodeSelectOpen(true)} />
+      <NewButton text="new node" onClick={handelOpen} />
       <Main>
         <SortTable
           isLoading={loading}
@@ -153,37 +164,64 @@ const Nodes = props => {
           onRequestSort={handleRequestSort}
           order={order}
           orderBy={orderBy}
+          confirmDisabled={confirmDisabled}
         />
       </Main>
-      <Modal
-        title="Add node"
-        isActive={nodeSelectOpen}
-        width="400px"
-        handleCancel={handleNodeSelectClose}
+
+      <Dialog
+        handelOpen={dialogOpen}
+        handelClose={handleNodeSelectClose}
+        title="Add Node"
         handleConfirm={handelAddNode}
-        confirmBtnText="Add"
-        isConfirmWorking={confirmWorking}
+        confirmDisabled={confirmDisabled}
       >
-        <StyledTable headers={headers} isLoading={false}>
-          {() => {
-            return unusedNodes.map(node => {
-              return (
-                <TableRow key={node.name}>
-                  <TableCell>
-                    <Checkbox
-                      id={node.name}
-                      color="primary"
-                      onChange={handleNodeSelect}
-                    />
-                  </TableCell>
-                  <TableCell>{node.name}</TableCell>
-                  <TableCell align="right">{node.port}</TableCell>
-                </TableRow>
-              );
-            });
-          }}
-        </StyledTable>
-      </Modal>
+        {() => {
+          return (
+            <StyledTable headers={headers} isLoading={false}>
+              {() => {
+                return (
+                  <>
+                    {unusedNodes.map(node => {
+                      const { name, port } = node;
+                      return (
+                        <TableRow key={name}>
+                          <TableCell>
+                            <Checkbox
+                              id={name}
+                              color="primary"
+                              onChange={handleNodeSelect}
+                            />
+                          </TableCell>
+                          <TableCell>{name}</TableCell>
+                          <TableCell align="right">{port}</TableCell>
+                        </TableRow>
+                      );
+                    })}
+                    {useNodes.map(node => {
+                      const { name, port } = node;
+                      return (
+                        <TableRow key={name} selected>
+                          <TableCell>
+                            <Checkbox
+                              id={name}
+                              color="primary"
+                              onChange={handleNodeSelect}
+                              checked
+                              disabled
+                            />
+                          </TableCell>
+                          <TableCell>{name}</TableCell>
+                          <TableCell align="right">{port}</TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </>
+                );
+              }}
+            </StyledTable>
+          );
+        }}
+      </Dialog>
     </>
   );
 };
