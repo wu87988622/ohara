@@ -46,6 +46,7 @@ const WorkerNewModal = props => {
   const [fileChecked, setFileChecked] = useState([]);
   const [nodes, setNodes] = useState([]);
   const [jars, setJars] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const uploadJar = async file => {
     const res = await jarApi.createJar({
@@ -125,6 +126,8 @@ const WorkerNewModal = props => {
   };
 
   const createServices = async values => {
+    setIsLoading(true);
+
     const nodeNames = nodeChecked;
 
     const maxRetry = 5;
@@ -217,7 +220,7 @@ const WorkerNewModal = props => {
       resetModal(form);
       return;
     }
-
+    setIsLoading(false);
     toastr.success(MESSAGES.SERVICE_CREATION_SUCCESS);
     props.onConfirm();
     resetModal(form);
@@ -239,6 +242,7 @@ const WorkerNewModal = props => {
       render={({ handleSubmit, form, submitting, pristine, values }) => {
         return (
           <Dialog
+            loading={isLoading}
             title="New workspace"
             handelOpen={props.isActive}
             handelClose={() => {

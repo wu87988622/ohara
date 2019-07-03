@@ -20,6 +20,7 @@ import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import Button from '@material-ui/core/Button';
+import CircularProgress from '@material-ui/core/CircularProgress';
 
 const MuiDialog = props => {
   const {
@@ -32,6 +33,7 @@ const MuiDialog = props => {
     children,
     confirmDisabled = false,
     maxWidth = 'xs',
+    loading,
   } = props;
   return (
     <Dialog
@@ -54,6 +56,7 @@ const MuiDialog = props => {
         >
           {confirmBtnText}
         </Button>
+        {loading && <CircularProgress size={24} />}
       </DialogActions>
     </Dialog>
   );
