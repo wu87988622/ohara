@@ -15,12 +15,13 @@
  */
 
 import styled from 'styled-components';
-import { FormGroup } from 'components/common/Form';
+import { FormGroup, Label } from 'components/common/Form';
 import { primaryBtn } from 'theme/btnTheme';
 import { Button } from 'components/common/Mui/Form';
 import Fab from '@material-ui/core/Fab';
 import Icon from '@material-ui/core/Icon';
 import DialogContent from '@material-ui/core/DialogContent';
+import Paper from '@material-ui/core/Paper';
 
 const List = styled.div`
   position: relative;
@@ -71,8 +72,22 @@ const ActionIcon = styled(Icon)`
   font-size: 20px;
 `;
 
-const StyledDialogConten = styled(DialogContent)`
-  padding-top: 20px;
+const StyledDialogContent = styled(DialogContent)`
+  padding-top: 30px;
+`;
+
+const StyledInputFile = styled.input`
+  display: none;
+`;
+
+const StyledLabel = styled(Label)`
+  position: absolute;
+  right: 0;
+  top: -3rem;
+`;
+
+const StyledPaper = styled(Paper)`
+  min-height: 100px;
 `;
 
 export {
@@ -84,5 +99,8 @@ export {
   StyledButton,
   StyledIconButton,
   ActionIcon,
-  StyledDialogConten,
+  StyledDialogContent,
+  StyledInputFile,
+  StyledLabel,
+  StyledPaper,
 };

@@ -14,20 +14,21 @@
  * limitations under the License.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import toastr from 'toastr';
-import { map, isEmpty, truncate, get } from 'lodash';
+import { isEmpty, truncate, get, isNull, split } from 'lodash';
 import { Form, Field } from 'react-final-form';
 import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import Checkbox from '@material-ui/core/Checkbox';
-import Paper from '@material-ui/core/Paper';
 
+import { Button } from 'components/common/Mui/Form';
+import * as jarApi from 'api/jarApi';
+import * as nodeApi from 'api/nodeApi';
 import * as zookeeperApi from 'api/zookeeperApi';
 import * as workerApi from 'api/workerApi';
 import * as brokerApi from 'api/brokerApi';
@@ -36,22 +37,42 @@ import * as MESSAGES from 'constants/messages';
 import * as generate from 'utils/generate';
 import * as s from './styles';
 import * as commonUtils from 'utils/commonUtils';
-import NodeSelectModal from '../NodeSelectModal';
-import PluginSelectModal from '../PluginSelectModal';
 import { Label } from 'components/common/Form';
 import { InputField } from 'components/common/Mui/Form';
 import { Dialog } from 'components/common/Mui/Dialog';
 
-const SELECT_NODE_MODAL = 'selectNodeModal';
-const SELECT_PLUGIN_MODAL = 'selectPluginModal';
-
 const WorkerNewModal = props => {
-  const [activeModal, setActiveModal] = useState(null);
-  const [checked, setChecked] = React.useState([]);
+  const [nodeChecked, setNodeChecked] = useState([]);
+  const [fileChecked, setFileChecked] = useState([]);
+  const [nodes, setNodes] = useState([]);
+  const [jars, setJars] = useState([]);
 
-  const handleToggle = value => () => {
-    const currentIndex = checked.indexOf(value);
-    const newChecked = [...checked];
+  const uploadJar = async file => {
+    const res = await jarApi.createJar({
+      file,
+    });
+
+    const isSuccess = get(res, 'data.isSuccess', false);
+    if (isSuccess) {
+      toastr.success(`${MESSAGES.PLUGIN_UPLOAD_SUCCESS} ${file.name}`);
+    }
+  };
+
+  const fetchNodes = useCallback(async () => {
+    const res = await nodeApi.fetchNodes();
+    const newNodes = get(res, 'data.result', null);
+    if (!isNull(newNodes)) {
+      setNodes(newNodes);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchNodes();
+  }, [fetchNodes]);
+
+  const handleNodeToggle = value => () => {
+    const currentIndex = nodeChecked.indexOf(value);
+    const newChecked = [...nodeChecked];
 
     if (currentIndex === -1) {
       newChecked.push(value);
@@ -59,8 +80,20 @@ const WorkerNewModal = props => {
       newChecked.splice(currentIndex, 1);
     }
 
-    setChecked(newChecked);
-    console.log(newChecked);
+    setNodeChecked(newChecked);
+  };
+
+  const handleFileToggle = value => () => {
+    const currentIndex = fileChecked.indexOf(value);
+    const newChecked = [...fileChecked];
+
+    if (currentIndex === -1) {
+      newChecked.push(value);
+    } else {
+      newChecked.splice(currentIndex, 1);
+    }
+
+    setFileChecked(newChecked);
   };
 
   const handleModalClose = () => {
@@ -92,7 +125,7 @@ const WorkerNewModal = props => {
   };
 
   const createServices = async values => {
-    const { nodeNames } = values;
+    const nodeNames = nodeChecked;
 
     const maxRetry = 5;
     let retryCount = 0;
@@ -152,8 +185,8 @@ const WorkerNewModal = props => {
     await waitForServiceCreation(brokerClusterName);
 
     const worker = await workerApi.createWorker({
-      ...values,
       name: validateServiceName(values.name),
+      nodeNames: nodeNames,
       plugins: values.plugins,
       jmxPort: generate.port(),
       clientPort: generate.port(),
@@ -169,7 +202,11 @@ const WorkerNewModal = props => {
   };
 
   const onSubmit = async (values, form) => {
-    if (!validateNodeNames(values.nodeNames)) return;
+    if (!validateNodeNames(nodeChecked)) return;
+
+    fileChecked.forEach(file => {
+      uploadJar(file);
+    });
 
     try {
       await createServices(values);
@@ -186,20 +223,20 @@ const WorkerNewModal = props => {
     resetModal(form);
   };
 
+  const handleFileSelect = e => {
+    const file = e.target.files[0];
+    const newJars = [...jars];
+    if (file) {
+      newJars.push(file);
+    }
+    setJars(newJars);
+  };
+
   return (
     <Form
       onSubmit={onSubmit}
       initialValues={{}}
       render={({ handleSubmit, form, submitting, pristine, values }) => {
-        const handleNodeSelected = nodeNames => {
-          console.log(nodeNames);
-          // form.change('nodeNames', nodeNames);
-        };
-
-        const handlePluginSelected = plugins => {
-          form.change('plugins', plugins);
-        };
-
         return (
           <Dialog
             title="New workspace"
@@ -213,120 +250,106 @@ const WorkerNewModal = props => {
             {() => {
               return (
                 <>
+                  <s.StyledInputFile
+                    id="fileInput"
+                    accept=".jar"
+                    type="file"
+                    onChange={handleFileSelect}
+                  />
                   <form onSubmit={handleSubmit}>
                     <DialogContent>
-                      <DialogContentText>
-                        <Field
-                          label="Name"
-                          id="service-input"
-                          name="name"
-                          component={InputField}
-                          width="24rem"
-                          placeholder="cluster00"
-                          data-testid="name-input"
-                          disabled={submitting}
-                          format={validateServiceName}
-                          autoFocus
-                          helperText={
-                            <div>
-                              <p>
-                                1. You can use lower case letters and numbers
-                              </p>
-                              <p>2. Must be between 1 and 30 characters long</p>
-                            </div>
-                          }
-                        />
-                      </DialogContentText>
+                      <Field
+                        label="Name"
+                        id="service-input"
+                        name="name"
+                        component={InputField}
+                        placeholder="cluster00"
+                        data-testid="name-input"
+                        disabled={submitting}
+                        format={validateServiceName}
+                        autoFocus
+                        helperText={
+                          <>
+                            <p>1. You can use lower case letters and numbers</p>
+                            <p>2. Must be between 1 and 30 characters long</p>
+                          </>
+                        }
+                      />
                     </DialogContent>
-                    <s.StyledDialogConten>
-                      <DialogContentText>
-                        <Label>Node List</Label>
-                        <Paper>
-                          <List>
-                            {['node00', 'node01', 'node02', 'node03'].map(
-                              value => {
-                                const labelId = `checkbox-list-label-${value}`;
+                    <s.StyledDialogContent>
+                      <Label>Node List</Label>
+                      <s.StyledPaper>
+                        <List>
+                          {nodes.map(node => {
+                            const labelId = `checkbox-list-label-${node}`;
+                            const { name } = node;
+                            return (
+                              <ListItem
+                                key={name}
+                                dense
+                                button
+                                onClick={handleNodeToggle(name)}
+                              >
+                                <ListItemIcon>
+                                  <Checkbox
+                                    color="primary"
+                                    edge="start"
+                                    checked={nodeChecked.indexOf(name) !== -1}
+                                    tabIndex={-1}
+                                    disableRipple
+                                    inputProps={{
+                                      'aria-labelledby': labelId,
+                                    }}
+                                  />
+                                </ListItemIcon>
+                                <ListItemText id={labelId} primary={name} />
+                              </ListItem>
+                            );
+                          })}
+                        </List>
+                      </s.StyledPaper>
+                    </s.StyledDialogContent>
+                    <s.StyledDialogContent>
+                      <Label>Plugin List</Label>
+                      <s.StyledPaper>
+                        <List>
+                          {jars.map(jar => {
+                            const { name } = jar;
+                            const labelId = `checkbox-list-label-${name}`;
 
-                                return (
-                                  <ListItem
-                                    key={value}
-                                    dense
-                                    button
-                                    onClick={handleToggle(value)}
-                                  >
-                                    <ListItemIcon>
-                                      <Checkbox
-                                        color="primary"
-                                        edge="start"
-                                        checked={checked.indexOf(value) !== -1}
-                                        tabIndex={-1}
-                                        disableRipple
-                                        inputProps={{
-                                          'aria-labelledby': labelId,
-                                        }}
-                                      />
-                                    </ListItemIcon>
-                                    <ListItemText
-                                      id={labelId}
-                                      primary={value}
-                                    />
-                                  </ListItem>
-                                );
-                              },
-                            )}
-                          </List>
-                        </Paper>
-                      </DialogContentText>
-                    </s.StyledDialogConten>
-                    <s.StyledDialogConten>
-                      <DialogContentText>
-                        <Label>Plugin List</Label>
-                        <s.List>
-                          {values.plugins &&
-                            values.plugins.map(plugin => (
-                              <s.ListItem key={plugin.group}>
-                                {plugin.name}
-                              </s.ListItem>
-                            ))}
-                          <s.StyledIconButton
-                            zIndex="5000"
-                            color="primary"
-                            onClick={e => {
-                              e.preventDefault();
-                              setActiveModal(SELECT_PLUGIN_MODAL);
-                            }}
-                            disabled={submitting}
-                          >
-                            <s.ActionIcon className="fas fa-file-upload" />
-                          </s.StyledIconButton>
-                        </s.List>
-                      </DialogContentText>
-                    </s.StyledDialogConten>
+                            return (
+                              <ListItem
+                                key={name}
+                                dense
+                                button
+                                onClick={handleFileToggle(name)}
+                              >
+                                <ListItemIcon>
+                                  <Checkbox
+                                    color="primary"
+                                    edge="start"
+                                    checked={fileChecked.indexOf(name) !== -1}
+                                    tabIndex={-1}
+                                    disableRipple
+                                    inputProps={{
+                                      'aria-labelledby': labelId,
+                                    }}
+                                  />
+                                </ListItemIcon>
+                                <ListItemText
+                                  id={labelId}
+                                  primary={split(name, '.jar', 1)}
+                                />
+                              </ListItem>
+                            );
+                          })}
+                          <s.StyledLabel htmlFor="fileInput">
+                            <Button component="span" text="New Plugin" />
+                          </s.StyledLabel>
+                        </List>
+                      </s.StyledPaper>
+                    </s.StyledDialogContent>
                   </form>
-
-                  <NodeSelectModal
-                    isActive={activeModal === SELECT_NODE_MODAL}
-                    onClose={() => {
-                      setActiveModal(null);
-                    }}
-                    onConfirm={nodeNames => {
-                      setActiveModal(null);
-                      handleNodeSelected(nodeNames);
-                    }}
-                    initNodeNames={values.nodeNames}
-                  />
-
-                  <PluginSelectModal
-                    isActive={activeModal === SELECT_PLUGIN_MODAL}
-                    onClose={() => {
-                      setActiveModal(null);
-                    }}
-                    onConfirm={plugins => {
-                      setActiveModal(null);
-                      handlePluginSelected(plugins);
-                    }}
-                    initPluginIds={map(values.plugins, 'group')}
-                  />
                 </>
               );
             }}

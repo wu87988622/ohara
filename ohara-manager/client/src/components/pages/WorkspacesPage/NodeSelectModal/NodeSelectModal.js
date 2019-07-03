@@ -23,7 +23,6 @@ import Checkbox from '@material-ui/core/Checkbox';
 
 import * as nodeApi from 'api/nodeApi';
 import { StyledTable } from './styles';
-import { Box } from 'components/common/Layout';
 import { Dialog } from 'components/common/Mui/Dialog';
 
 class NodeSelectModal extends React.Component {
