@@ -41,7 +41,7 @@ describe('WorkspacesPage', () => {
       .getByPlaceholderText('cluster00')
       .type(clusterName)
       .getByText(nodeName)
-      .click();
+      .click({ force: true });
 
     cy.uploadJar(
       'input[type=file]',
