@@ -247,6 +247,7 @@ const WorkerNewModal = props => {
       render={({ handleSubmit, form, submitting, pristine, values }) => {
         return (
           <Dialog
+            testId="new-workspace-modal"
             scroll="paper"
             loading={isLoading}
             title="New workspace"

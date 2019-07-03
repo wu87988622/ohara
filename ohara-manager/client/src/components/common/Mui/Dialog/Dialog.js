@@ -34,6 +34,7 @@ const MuiDialog = props => {
     confirmDisabled = false,
     maxWidth = 'xs',
     loading,
+    testId,
   } = props;
   return (
     <Dialog
@@ -41,6 +42,7 @@ const MuiDialog = props => {
       onClose={handelClose}
       maxWidth={maxWidth}
       fullWidth
+      data-testid={testId}
     >
       <DialogTitle>{title}</DialogTitle>
       {children()}
@@ -73,6 +75,7 @@ MuiDialog.propTypes = {
   children: PropTypes.func.isRequired,
   confirmDisabled: PropTypes.bool,
   loading: PropTypes.bool.isRequired,
+  testId: PropTypes.string,
 };
 
 export default MuiDialog;
