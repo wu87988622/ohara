@@ -18,11 +18,11 @@ import faker from 'faker';
 
 import { CONNECTOR_TYPES } from 'constants/pipelines';
 
-const { system, random, lorem, internet } = faker;
+const { system, random, lorem, internet, date } = faker;
 const { fileName: name } = system;
 const { uuid: id, number } = random;
-const { paragraph: message } = lorem;
-const { domainName, ip, userName } = internet;
+const { paragraph: message, word } = lorem;
+const { domainName, ip, userName, url } = internet;
 
 export const connectors = () => {
   const connectors = Object.values(CONNECTOR_TYPES).map(type => {
@@ -37,25 +37,49 @@ export const connectors = () => {
   return connectors;
 };
 
-export const topics = (count = 1) => {
+export const topics = ({
+  count = 1,
+  brokerClusterName = serviceName(),
+} = {}) => {
   let topics = [];
 
   while (count > 0) {
     count--;
 
     const topic = {
-      name: name(),
+      name: serviceName(),
       id: id(),
-      lastModified: number(),
+      lastModified: date.past(),
       metrics: {},
       numberOfPartitions: number(),
       numberOfReplications: number(),
+      brokerClusterName,
     };
 
     topics.push(topic);
   }
 
   return topics;
+};
+
+export const streamApps = ({ count = 1 } = {}) => {
+  let streamApps = [];
+
+  while (count > 0) {
+    count--;
+
+    const streamApp = {
+      group: word(),
+      lastModified: date.past(),
+      name: name(),
+      size: number(),
+      url: url(),
+    };
+
+    streamApps.push(streamApp);
+  }
+
+  return streamApps;
 };
 
 export const columnRows = (rowCount = 1) => {
@@ -126,4 +150,4 @@ export const serviceName = (length = 10) => {
   return name;
 };
 
-export { name, id, message, domainName, ip, userName, number };
+export { name, id, message, domainName, ip, userName, number, url };

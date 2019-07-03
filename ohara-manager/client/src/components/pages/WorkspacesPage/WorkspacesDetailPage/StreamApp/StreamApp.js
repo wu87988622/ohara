@@ -69,17 +69,13 @@ const StreamApp = props => {
   const handleModalOpen = name => {
     setJarName(name);
     setIsModalOpen(true);
-    // setDeleteRowModalActive(true);
   };
 
   const actionButton = data => {
     const { name } = data;
     return (
       <Tooltip title={`Delete ${name}`} enterDelay={1000}>
-        <IconButton
-          data-testid="edit-node-icon"
-          onClick={() => handleModalOpen(name)}
-        >
+        <IconButton data-testid={name} onClick={() => handleModalOpen(name)}>
           <ActionIcon className="fas fa-trash-alt" />
         </IconButton>
       </Tooltip>
@@ -139,7 +135,7 @@ const StreamApp = props => {
         onChange={handleFileSelect}
       />
       <StyledLabel htmlFor="fileInput">
-        <Button component="span" text="new jar" />
+        <Button component="span" text="New jar" />
       </StyledLabel>
       <Main>
         <SortTable
@@ -149,11 +145,12 @@ const StreamApp = props => {
           onRequestSort={handleRequestSort}
           order={order}
           orderBy={orderBy}
+          tableName="streamApp"
         />
       </Main>
 
       <AlertDialog
-        title="Delete Jar?"
+        title="Delete jar?"
         content="Are you sure you want to delete this jar? This action cannot be undone!"
         open={isModalOpen}
         handleClose={handleModalClose}

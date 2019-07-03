@@ -103,20 +103,21 @@ const Topics = props => {
               } = topic;
               return (
                 <TableRow key={name}>
-                  <TableCell component="th" scope="row">
-                    {name}
+                  <TableCell data-testid="topic-name">{name}</TableCell>
+                  <TableCell data-testid="topic-partitions" align="left">
+                    {numberOfPartitions}
                   </TableCell>
-                  <TableCell align="left">{numberOfPartitions}</TableCell>
-                  <TableCell align="left">{numberOfReplications}</TableCell>
+                  <TableCell data-testid="topic-replications" align="left">
+                    {numberOfReplications}
+                  </TableCell>
                   <TableCell align="left">
                     {utils.getMetrics(metrics)}
                   </TableCell>
-                  <TableCell align="left">
+                  <TableCell data-testid="topic-last-modified" align="left">
                     {utils.getDateFromTimestamp(lastModified)}
                   </TableCell>
                   <TableCell align="right">
                     <IconButton
-                      aria-label="Edit"
                       data-testid={topic.name}
                       onClick={() =>
                         setState({
@@ -151,6 +152,7 @@ const Topics = props => {
         handleClose={() => setState({ isDeleteModalOpen: false })}
         handleConfirm={handleDelete}
         working={deleting}
+        testId="delete-topic-dialog"
       />
     </>
   );

@@ -27,7 +27,15 @@ import TableSortLabel from '@material-ui/core/TableSortLabel';
 import { TableLoader } from 'components/common/Mui/Loader';
 
 const SortTable = props => {
-  const { isLoading, order, orderBy, onRequestSort, headRows, rows } = props;
+  const {
+    isLoading,
+    order,
+    orderBy,
+    onRequestSort,
+    headRows,
+    rows,
+    tableName = 'sort',
+  } = props;
   const createSortHandler = property => event => {
     onRequestSort(event, property);
   };
@@ -102,6 +110,7 @@ const SortTable = props => {
                     <TableCell
                       key={row[key]}
                       align={key === keys[keys.length - 1] ? 'right' : 'left'}
+                      data-testid={`${tableName}-${key}`}
                     >
                       {row[key]}
                     </TableCell>
@@ -128,6 +137,7 @@ SortTable.propTypes = {
   ),
   rows: PropTypes.array.isRequired,
   isLoading: PropTypes.bool.isRequired,
+  tableName: PropTypes.string,
 };
 
 export default SortTable;

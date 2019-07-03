@@ -81,6 +81,7 @@ class TopicNewModal extends React.Component {
               isConfirmDisabled={submitting || pristine || invalid}
               isConfirmWorking={this.state.isSaving}
               showActions={true}
+              testId="topic-new-modal"
             >
               <form onSubmit={handleSubmit}>
                 <Box shadow={false}>

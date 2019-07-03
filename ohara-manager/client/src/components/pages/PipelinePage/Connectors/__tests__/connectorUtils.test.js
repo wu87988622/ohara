@@ -20,7 +20,7 @@ import { CONNECTOR_STATES } from 'constants/pipelines';
 
 describe('getCurrTopicId()', () => {
   it('gets the right topic id', () => {
-    const originals = generate.topics(3);
+    const originals = generate.topics({ count: 3 });
 
     // set the target to the randomly generated topics
     const target = originals[2];
@@ -38,7 +38,7 @@ describe('getCurrTopicId()', () => {
   });
 
   it('returns any empty array if param target is null', () => {
-    const originals = generate.topics(2);
+    const originals = generate.topics({ count: 2 });
     const target = null;
 
     const result = utils.getCurrTopicId({ originals, target });
@@ -46,7 +46,7 @@ describe('getCurrTopicId()', () => {
   });
 
   it('returns an empty array if the given target is == `Please select...`', () => {
-    const originals = generate.topics(2);
+    const originals = generate.topics({ count: 2 });
     const target = 'Please select...';
 
     const result = utils.getCurrTopicId({ originals, target });
@@ -56,7 +56,7 @@ describe('getCurrTopicId()', () => {
 
 describe('getCurrTopicName()', () => {
   it('gets the right topic name', () => {
-    const originals = generate.topics(3);
+    const originals = generate.topics({ count: 3 });
     const targetTopic = originals[1];
     const target = [targetTopic.id];
 

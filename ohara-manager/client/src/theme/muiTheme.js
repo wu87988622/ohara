@@ -14,22 +14,16 @@
  * limitations under the License.
  */
 
-import React from 'react';
-import ReactDOM from 'react-dom';
-import App from 'App';
-import { ThemeProvider } from 'styled-components';
-import { ThemeProvider as MuiThemeProvider } from '@material-ui/styles';
+import pink from '@material-ui/core/colors/pink';
+import { createMuiTheme } from '@material-ui/core/styles';
 
-import * as CSS_VARS from './theme/variables';
-import MuiTheme from './theme/muiTheme';
-import 'theme/globalStyle';
-import 'toastrConfigs';
+const MuiTheme = createMuiTheme({
+  palette: {
+    primary: {
+      main: '#4c84ff',
+    },
+    secondary: pink,
+  },
+});
 
-ReactDOM.render(
-  <MuiThemeProvider theme={MuiTheme}>
-    <ThemeProvider theme={{ ...CSS_VARS, ...MuiTheme }}>
-      <App />
-    </ThemeProvider>
-  </MuiThemeProvider>,
-  document.getElementById('root'),
-);
+export default MuiTheme;

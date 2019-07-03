@@ -54,11 +54,12 @@ const AlertDialog = props => {
     cancelText = 'Cancel',
     confirmText = 'Delete',
     working = false,
+    testId = 'delete-dialog',
   } = props;
 
   return (
     <>
-      <Dialog open={open} onClose={handleClose}>
+      <Dialog open={open} onClose={handleClose} data-testid={testId}>
         <DialogTitle>{title}</DialogTitle>
         <DialogContent>
           <DialogContentText>{content}</DialogContentText>
@@ -93,6 +94,7 @@ AlertDialog.propTypes = {
   cancelText: PropTypes.string,
   confirmText: PropTypes.string,
   working: PropTypes.bool,
+  testId: PropTypes.string,
 };
 
 export default AlertDialog;
