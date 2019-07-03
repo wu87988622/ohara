@@ -125,7 +125,12 @@ const Topics = props => {
       />
 
       <Main>
-        <SortTable isLoading={fetchingTopics} headRows={headRows} rows={rows} />
+        <SortTable
+          isLoading={fetchingTopics}
+          headRows={headRows}
+          rows={rows}
+          tableName="topic"
+        />
       </Main>
 
       <TopicNewModal

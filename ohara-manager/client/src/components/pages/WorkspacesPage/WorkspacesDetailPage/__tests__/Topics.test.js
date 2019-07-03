@@ -61,8 +61,8 @@ describe('<Topics />', () => {
 
     const topicName = getByTestId('topic-name').textContent;
     const partitions = Number(getByTestId('topic-partitions').textContent);
-    const replications = Number(getByTestId('topic-replications').textContent);
-    const lastModified = getByTestId('topic-last-modified').textContent;
+    const replications = Number(getByTestId('topic-replication').textContent);
+    const lastModified = getByTestId('topic-lastModified').textContent;
 
     expect(topicName).toBe(topics[0].name);
     expect(partitions).toBe(topics[0].numberOfPartitions);
