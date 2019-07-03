@@ -815,6 +815,15 @@ developer to choose the **fitting** type for your setting if you demand your use
 
 ----------
 
+### Type.PORT
+
+Port is a common property to connector. For example, the ftp connector needs port used to connect to source/target ftp
+server. Inputting a illegal port can destroy connector easily. Declaring your type of value to Port involve a check that
+only the port which is small than 65536 and bigger than zero can be accepted. Other port value will be rejected in starting
+connector.
+
+----------
+
 ### Checker
 
 We all love quick failure, right? A quick failure can save our resource and time. Ohara offers many checks for your setting

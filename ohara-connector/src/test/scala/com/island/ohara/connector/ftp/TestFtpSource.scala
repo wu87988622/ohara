@@ -494,7 +494,6 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       row1.cell(2) shouldBe rows(1).cell(2)
 
     } finally result(workerClient.delete(connectorName))
-
   }
 
   @Test
@@ -515,6 +514,22 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
     source.start(ConnectorFormatter.of().name("aa").settings(props.toMap.asJava).raw())
     ftpClient.exist(props.errorFolder) shouldBe true
     ftpClient.exist(props.completedFolder.get) shouldBe true
+  }
+
+  @Test
+  def testInvalidPort(): Unit = {
+    Seq(-1, 0, 10000000).foreach { port =>
+      an[IllegalArgumentException] should be thrownBy result(
+        workerClient
+          .connectorCreator()
+          .topicName(methodName())
+          .connectorClass(classOf[FtpSource])
+          .numberOfTasks(1)
+          .name(CommonUtils.randomString(10))
+          .columns(schema)
+          .settings(props.copy(port = port).toMap)
+          .create)
+    }
   }
 
   @After

@@ -78,7 +78,7 @@ class TestFtpSinkDefinitions extends SmallTest with Matchers {
     definition.editable() shouldBe true
     definition.internal() shouldBe false
     definition.reference() shouldBe "NONE"
-    definition.valueType() shouldBe SettingDefinition.Type.INT.name()
+    definition.valueType() shouldBe SettingDefinition.Type.PORT.name()
   }
 
   @Test

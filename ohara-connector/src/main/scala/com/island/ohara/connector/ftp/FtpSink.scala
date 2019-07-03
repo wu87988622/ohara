@@ -99,7 +99,7 @@ class FtpSink extends RowSinkConnector {
       .builder()
       .displayName("port of ftp server")
       .documentation("port of ftp server")
-      .valueType(SettingDefinition.Type.INT)
+      .valueType(SettingDefinition.Type.PORT)
       .key(FTP_PORT)
       .build(),
     SettingDefinition

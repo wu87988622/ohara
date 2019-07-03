@@ -369,13 +369,24 @@ public final class CommonUtils {
    * check the port to which you prepare to connect. The port must be bigger than zero and small
    * than 65536. The zero is illegal since you can't raise a connection to a zero port.
    *
-   * @param value port number
+   * @param port port
    * @return legal port
    */
-  public static int requireConnectionPort(int value) {
-    if (value <= 0 || value > 65535)
-      throw new IllegalArgumentException("the legal port range is 1 - 65535, actual:" + value);
-    return value;
+  public static boolean isConnectionPort(int port) {
+    return port >= 1 && port <= 65535;
+  }
+
+  /**
+   * check the port to which you prepare to connect. The port must be bigger than zero and small
+   * than 65536. The zero is illegal since you can't raise a connection to a zero port.
+   *
+   * @param port port
+   * @return legal port
+   */
+  public static int requireConnectionPort(int port) {
+    if (!isConnectionPort(port))
+      throw new IllegalArgumentException("the legal port range is [1, 65535], actual:" + port);
+    return port;
   }
 
   /**

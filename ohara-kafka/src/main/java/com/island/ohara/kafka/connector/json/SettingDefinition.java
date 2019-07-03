@@ -224,7 +224,9 @@ public class SettingDefinition implements JsonObject {
      * considered to be exactly 24 hours. Please reference to
      * https://docs.oracle.com/javase/8/docs/api/java/time/Duration.html#parse-java.lang.CharSequence-
      */
-    DURATION;
+    DURATION,
+    /** The legal range for port is [1, 65535]. */
+    PORT
   }
 
   /** this class is used to pre-check the setting before running connector. */
@@ -264,6 +266,7 @@ public class SettingDefinition implements JsonObject {
         return ConfigDef.Type.STRING;
       case SHORT:
         return ConfigDef.Type.SHORT;
+      case PORT:
       case INT:
         return ConfigDef.Type.INT;
       case LONG:
@@ -297,7 +300,7 @@ public class SettingDefinition implements JsonObject {
   private final Reference reference;
   private final boolean internal;
   private final List<String> tableKeys;
-  @Nullable private Checker checker = null;
+  private final Checker checker;
 
   @JsonCreator
   private SettingDefinition(
@@ -354,15 +357,19 @@ public class SettingDefinition implements JsonObject {
     this.reference = Reference.valueOf(CommonUtils.requireNonEmpty(reference));
     this.internal = internal;
     this.tableKeys = Objects.requireNonNull(tableKeys);
-    this.checker = checker;
+    this.checker = checker == null ? toChecker(this.valueType, this.tableKeys) : checker;
     // It is legal to ignore the display name.
     // However, we all hate null so we set the default value equal to key.
     this.displayName = CommonUtils.isEmpty(displayName) ? this.key : displayName;
   }
 
-  @VisibleForTesting
-  Checker checker() {
-    if (checker != null) return checker;
+  /**
+   * Generate official checker according to input type.
+   *
+   * @param valueType expected type of value
+   * @return checker
+   */
+  private static Checker toChecker(Type valueType, List<String> tableKeys) {
     switch (valueType) {
       case TABLE:
         return (Object value) -> {
@@ -401,9 +408,27 @@ public class SettingDefinition implements JsonObject {
             }
           } else throw new ConfigException("the configured value must be string type");
         };
+      case PORT:
+        return (Object value) -> {
+          if (value instanceof Integer) {
+            try {
+              int port = (int) value;
+              if (!CommonUtils.isConnectionPort(port))
+                throw new ConfigException(
+                    "the legal range for port is [1, 65535], but actual port is " + port);
+            } catch (Exception e) {
+              throw new ConfigException("can't be converted to Integer type");
+            }
+          } else throw new ConfigException("the configured value must be Integer type");
+        };
       default:
         return (Object value) -> {};
     }
+  }
+
+  @VisibleForTesting
+  Checker checker() {
+    return checker;
   }
 
   @JsonProperty(INTERNAL_KEY)

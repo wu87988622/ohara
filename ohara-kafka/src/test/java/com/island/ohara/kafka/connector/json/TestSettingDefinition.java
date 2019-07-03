@@ -449,4 +449,24 @@ public class TestSettingDefinition extends SmallTest {
   public void testTypeConversion() {
     Stream.of(SettingDefinition.Type.values()).forEach(SettingDefinition::toType);
   }
+
+  @Test
+  public void checkReturnBySettingDefinitionShouldBeSame() {
+    SettingDefinitions.DEFINITIONS_DEFAULT.forEach(
+        setting -> {
+          Assert.assertNotNull(setting.checker());
+          Assert.assertEquals(setting.checker(), setting.checker());
+        });
+  }
+
+  @Test
+  public void testPortType() {
+    SettingDefinition s =
+        SettingDefinition.builder().valueType(SettingDefinition.Type.PORT).key("port.key").build();
+    // pass
+    s.checker().check(100);
+    assertException(ConfigException.class, () -> s.checker().check(-1));
+    assertException(ConfigException.class, () -> s.checker().check(0));
+    assertException(ConfigException.class, () -> s.checker().check(100000000));
+  }
 }

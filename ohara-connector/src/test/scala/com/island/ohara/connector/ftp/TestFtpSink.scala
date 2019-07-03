@@ -21,11 +21,11 @@ import java.util.concurrent.TimeUnit
 import com.island.ohara.client.ftp.FtpClient
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Cell, DataType, Row, Serializer, _}
-import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.kafka.connector.json.ConnectorFormatter
 import com.island.ohara.kafka.{BrokerClient, Consumer, Producer}
 import com.island.ohara.testing.With3Brokers3Workers
-import org.junit.{Before, BeforeClass, Test}
+import org.junit.{After, Before, BeforeClass, Test}
 import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
@@ -429,4 +429,23 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
 
     ftpClient.exist("/output") shouldBe true
   }
+
+  @Test
+  def testInvalidPort(): Unit = {
+    Seq(-1, 0, 10000000).foreach { port =>
+      an[IllegalArgumentException] should be thrownBy result(
+        workerClient
+          .connectorCreator()
+          .topicName(methodName())
+          .connectorClass(classOf[FtpSink])
+          .numberOfTasks(1)
+          .name(CommonUtils.randomString(10))
+          .columns(schema)
+          .settings(props.copy(port = port).toMap)
+          .create)
+    }
+  }
+
+  @After
+  def tearDown(): Unit = Releasable.close(ftpClient)
 }
