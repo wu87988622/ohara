@@ -286,7 +286,7 @@ const WorkerNewModal = props => {
                                 key={name}
                                 dense
                                 button
-                                onClick={() => handleNodeToggle(name)}
+                                onClick={handleNodeToggle(name)}
                               >
                                 <ListItemIcon>
                                   <Checkbox
@@ -315,7 +315,7 @@ const WorkerNewModal = props => {
                                 key={name}
                                 dense
                                 button
-                                onClick={() => handleFileToggle(jar)}
+                                onClick={handleFileToggle(jar)}
                               >
                                 <ListItemIcon>
                                   <Checkbox
