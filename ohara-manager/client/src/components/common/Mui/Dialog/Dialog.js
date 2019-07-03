@@ -72,6 +72,7 @@ MuiDialog.propTypes = {
   handleConfirm: PropTypes.func.isRequired,
   children: PropTypes.func.isRequired,
   confirmDisabled: PropTypes.bool,
+  loading: PropTypes.bool.isRequired,
 };
 
 export default MuiDialog;

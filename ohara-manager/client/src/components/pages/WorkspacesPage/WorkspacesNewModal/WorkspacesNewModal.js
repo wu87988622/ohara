@@ -15,31 +15,31 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import PropTypes from 'prop-types';
 import toastr from 'toastr';
-import { isEmpty, truncate, get, isNull, split } from 'lodash';
-import { Form, Field } from 'react-final-form';
-import DialogContent from '@material-ui/core/DialogContent';
+import PropTypes from 'prop-types';
 import List from '@material-ui/core/List';
+import { Form, Field } from 'react-final-form';
 import ListItem from '@material-ui/core/ListItem';
+import Checkbox from '@material-ui/core/Checkbox';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
-import Checkbox from '@material-ui/core/Checkbox';
+import DialogContent from '@material-ui/core/DialogContent';
+import { isEmpty, get, isNull, split, isUndefined } from 'lodash';
 
-import { Button } from 'components/common/Mui/Form';
+import * as s from './styles';
 import * as jarApi from 'api/jarApi';
 import * as nodeApi from 'api/nodeApi';
-import * as zookeeperApi from 'api/zookeeperApi';
 import * as workerApi from 'api/workerApi';
 import * as brokerApi from 'api/brokerApi';
-import * as containerApi from 'api/containerApi';
-import * as MESSAGES from 'constants/messages';
 import * as generate from 'utils/generate';
-import * as s from './styles';
-import * as commonUtils from 'utils/commonUtils';
+import * as MESSAGES from 'constants/messages';
 import { Label } from 'components/common/Form';
-import { InputField } from 'components/common/Mui/Form';
+import * as zookeeperApi from 'api/zookeeperApi';
+import * as containerApi from 'api/containerApi';
+import * as commonUtils from 'utils/commonUtils';
+import { Button } from 'components/common/Mui/Form';
 import { Dialog } from 'components/common/Mui/Dialog';
+import { InputField } from 'components/common/Mui/Form';
 
 const WorkerNewModal = props => {
   const [nodeChecked, setNodeChecked] = useState([]);
@@ -47,6 +47,7 @@ const WorkerNewModal = props => {
   const [nodes, setNodes] = useState([]);
   const [jars, setJars] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessenger, setErrorMessenger] = useState('');
 
   const uploadJar = async file => {
     const res = await jarApi.createJar({
@@ -116,13 +117,17 @@ const WorkerNewModal = props => {
   };
 
   const validateServiceName = value => {
-    if (!value) return '';
+    if (isUndefined(value)) return '';
 
-    // validating rules: numbers, lowercase letter and up to 30 characters
-    return truncate(value.replace(/[^0-9a-z]/g, ''), {
-      length: 30,
-      omission: '',
-    });
+    if (value.match(/[^0-9a-z]/g)) {
+      setErrorMessenger('You only can use lower case letters and numbers');
+    } else if (value.length > 30) {
+      setErrorMessenger('Must be between 1 and 30 characters long');
+    } else {
+      setErrorMessenger('');
+    }
+
+    return value;
   };
 
   const createServices = async values => {
@@ -242,6 +247,7 @@ const WorkerNewModal = props => {
       render={({ handleSubmit, form, submitting, pristine, values }) => {
         return (
           <Dialog
+            scroll="paper"
             loading={isLoading}
             title="New workspace"
             handelOpen={props.isActive}
@@ -249,11 +255,16 @@ const WorkerNewModal = props => {
               if (!submitting) resetModal(form);
             }}
             handleConfirm={handleSubmit}
-            confirmDisabled={submitting || pristine}
+            confirmDisabled={
+              submitting ||
+              pristine ||
+              errorMessenger !== '' ||
+              nodeChecked.length === 0
+            }
           >
             {() => {
               return (
-                <>
+                <s.StyledDialogDividers dividers>
                   <s.StyledInputFile
                     id="fileInput"
                     accept=".jar"
@@ -272,12 +283,8 @@ const WorkerNewModal = props => {
                         disabled={submitting}
                         format={validateServiceName}
                         autoFocus
-                        helperText={
-                          <>
-                            <p>1. You can use lower case letters and numbers</p>
-                            <p>2. Must be between 1 and 30 characters long</p>
-                          </>
-                        }
+                        errorMessenger={errorMessenger}
+                        error={errorMessenger !== ''}
                       />
                     </DialogContent>
                     <s.StyledDialogContent>
@@ -354,7 +361,7 @@ const WorkerNewModal = props => {
                       </s.StyledPaper>
                     </s.StyledDialogContent>
                   </form>
-                </>
+                </s.StyledDialogDividers>
               );
             }}
           </Dialog>

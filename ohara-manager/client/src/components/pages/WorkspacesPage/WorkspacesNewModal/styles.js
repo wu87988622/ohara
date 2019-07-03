@@ -15,65 +15,17 @@
  */
 
 import styled from 'styled-components';
-import { FormGroup, Label } from 'components/common/Form';
-import { primaryBtn } from 'theme/btnTheme';
-import { Button } from 'components/common/Mui/Form';
-import Fab from '@material-ui/core/Fab';
-import Icon from '@material-ui/core/Icon';
+import { Label } from 'components/common/Form';
 import DialogContent from '@material-ui/core/DialogContent';
 import Paper from '@material-ui/core/Paper';
 
-const List = styled.div`
-  position: relative;
-  width: ${props => props.width || '100%'};
-  border: 1px solid ${props => props.theme.lighterGray};
-  padding: 0.5rem 1rem;
-  border-radius: 0.25rem;
-  min-height: 8rem;
-`;
-
-const ListItem = styled.div`
-  margin: 0.25rem 0;
-  font-size: 13px;
-  color: ${props => props.theme.lightBlue};
-`;
-
-const FormRow = styled(FormGroup).attrs({
-  isInline: true,
-})`
-  margin: ${props => props.margin || 0};
-`;
-
-const FormCol = styled(FormGroup)`
-  width: ${props => props.width || '100%'};
-`;
-
-const AppendButton = styled(Button).attrs({
-  theme: primaryBtn,
-})`
-  position: absolute;
-  right: 0;
-  top: -3rem;
-`;
-
-const StyledButton = styled(Button)`
-  position: absolute;
-  right: 0;
-  top: -3rem;
-`;
-
-const StyledIconButton = styled(Fab)`
-  position: absolute;
-  right: 0;
-  top: -3rem;
-`;
-
-const ActionIcon = styled(Icon)`
-  font-size: 20px;
-`;
-
 const StyledDialogContent = styled(DialogContent)`
   padding-top: 30px;
+`;
+
+const StyledDialogDividers = styled(DialogContent)`
+  padding-left: 5px;
+  padding-right: 5px;
 `;
 
 const StyledInputFile = styled.input`
@@ -91,16 +43,9 @@ const StyledPaper = styled(Paper)`
 `;
 
 export {
-  List,
-  ListItem,
-  FormRow,
-  FormCol,
-  AppendButton,
-  StyledButton,
-  StyledIconButton,
-  ActionIcon,
-  StyledDialogContent,
-  StyledInputFile,
-  StyledLabel,
   StyledPaper,
+  StyledLabel,
+  StyledInputFile,
+  StyledDialogContent,
+  StyledDialogDividers,
 };

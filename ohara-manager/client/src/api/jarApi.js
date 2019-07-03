@@ -47,9 +47,7 @@ export const createJar = async params => {
         'content-type': 'multipart/form-data',
       },
     };
-    console.log(formData);
     const res = await axiosInstance.post(url, formData, config);
-    console.log(res);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
