@@ -146,23 +146,37 @@ class TestZookeeperApi extends SmallTest with Matchers {
   }
 
   @Test
-  def parseMinimumJson(): Unit = {
-    val name = CommonUtils.randomString(10)
+  def parseCreation(): Unit = {
     val nodeName = CommonUtils.randomString()
     val creation = ZookeeperApi.ZOOKEEPER_CREATION_JSON_FORMAT.read(s"""
-         |  {
-         |    "name": "$name",
-         |    "nodeNames": ["$nodeName"]
-         |  }
+                                                                        |  {
+                                                                        |    "nodeNames": ["$nodeName"]
+                                                                        |  }
            """.stripMargin.parseJson)
 
-    creation.name shouldBe name
+    creation.name.length shouldBe 10
     creation.nodeNames.size shouldBe 1
     creation.nodeNames.head shouldBe nodeName
     creation.imageName shouldBe ZookeeperApi.IMAGE_NAME_DEFAULT
     creation.clientPort should not be 0
     creation.electionPort should not be 0
     creation.peerPort should not be 0
+
+    val name = CommonUtils.randomString(10)
+    val creation2 = ZookeeperApi.ZOOKEEPER_CREATION_JSON_FORMAT.read(s"""
+         |  {
+         |    "name": "$name",
+         |    "nodeNames": ["$nodeName"]
+         |  }
+           """.stripMargin.parseJson)
+
+    creation2.name shouldBe name
+    creation2.nodeNames.size shouldBe 1
+    creation2.nodeNames.head shouldBe nodeName
+    creation2.imageName shouldBe ZookeeperApi.IMAGE_NAME_DEFAULT
+    creation2.clientPort should not be 0
+    creation2.electionPort should not be 0
+    creation2.peerPort should not be 0
   }
 
   @Test

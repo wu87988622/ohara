@@ -43,6 +43,7 @@ object FtpApi {
       .withDash()
       .withUnderLine()
       .toRefiner
+      .nullToString("name", () => CommonUtils.randomString(10))
       .refine
 
   final case class FtpInfo(name: String,

@@ -92,12 +92,23 @@ class TestTopicApi extends SmallTest with Matchers {
     an[IllegalArgumentException] should be thrownBy TopicApi.access.request.numberOfReplications(-1)
 
   @Test
-  def parseJsonForCreation(): Unit = {
-    val name = CommonUtils.randomString()
+  def parseCreation(): Unit = {
     val brokerClusterName = CommonUtils.randomString()
     val numberOfPartitions = 100
     val numberOfReplications = 10
+
     val creation = TopicApi.TOPIC_CREATION_FORMAT.read(s"""
+                                                           |{
+                                                           |}
+       """.stripMargin.parseJson)
+
+    creation.name.length shouldBe 10
+    creation.brokerClusterName shouldBe None
+    creation.numberOfPartitions shouldBe TopicApi.DEFAULT_NUMBER_OF_PARTITIONS
+    creation.numberOfReplications shouldBe TopicApi.DEFAULT_NUMBER_OF_REPLICATIONS
+
+    val name = CommonUtils.randomString()
+    val creation2 = TopicApi.TOPIC_CREATION_FORMAT.read(s"""
          |{
          | "name": "$name",
          | "brokerClusterName": "$brokerClusterName",
@@ -106,21 +117,10 @@ class TestTopicApi extends SmallTest with Matchers {
          |}
        """.stripMargin.parseJson)
 
-    creation.name shouldBe name
-    creation.brokerClusterName.get shouldBe brokerClusterName
-    creation.numberOfPartitions shouldBe numberOfPartitions
-    creation.numberOfReplications shouldBe numberOfReplications
-
-    val creation2 = TopicApi.TOPIC_CREATION_FORMAT.read(s"""
-        |{
-        | "name": "$name"
-        |}
-       """.stripMargin.parseJson)
-
     creation2.name shouldBe name
-    creation2.brokerClusterName shouldBe None
-    creation2.numberOfPartitions shouldBe TopicApi.DEFAULT_NUMBER_OF_PARTITIONS
-    creation2.numberOfReplications shouldBe TopicApi.DEFAULT_NUMBER_OF_REPLICATIONS
+    creation2.brokerClusterName.get shouldBe brokerClusterName
+    creation2.numberOfPartitions shouldBe numberOfPartitions
+    creation2.numberOfReplications shouldBe numberOfReplications
   }
 
   @Test

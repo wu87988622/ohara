@@ -218,16 +218,13 @@ class TestStreamApi extends SmallTest with Matchers {
   }
 
   @Test
-  def parseMinimumJsonCreate(): Unit = {
-    val name = CommonUtils.randomString(10)
+  def parseCreation(): Unit = {
     val creation = StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-                                                                 |  {
-                                                                 |    "name": "$name",
-                                                                 |    "jar": ${fakeJar.toJson}
-                                                                 |  }
+                                                                  |  {
+                                                                  |    "jar": ${fakeJar.toJson}
+                                                                  |  }
            """.stripMargin.parseJson)
-
-    creation.name shouldBe name
+    creation.name.length shouldBe 10
     creation.imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
     creation.jar shouldBe fakeJar
     creation.from shouldBe Set.empty
@@ -235,18 +232,27 @@ class TestStreamApi extends SmallTest with Matchers {
     creation.jmxPort should not be 0
     creation.instances shouldBe 1
     creation.nodeNames shouldBe Set.empty
+
+    val name = CommonUtils.randomString(10)
+    val creation2 = StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
+                                                                 |  {
+                                                                 |    "name": "$name",
+                                                                 |    "jar": ${fakeJar.toJson}
+                                                                 |  }
+           """.stripMargin.parseJson)
+
+    creation2.name shouldBe name
+    creation2.imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
+    creation2.jar shouldBe fakeJar
+    creation2.from shouldBe Set.empty
+    creation2.to shouldBe Set.empty
+    creation2.jmxPort should not be 0
+    creation2.instances shouldBe 1
+    creation2.nodeNames shouldBe Set.empty
   }
 
   @Test
   def parseNameField(): Unit = {
-    // name is required
-    val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-                                |  {
-                                |    "jar": ${fakeJar.toJson}
-                                |  }
-           """.stripMargin.parseJson)
-    thrown1.getMessage should include("Object is missing required member 'name'")
-
     val thrown2 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
                                                   |  {
                                                   |    "name": "",

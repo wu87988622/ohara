@@ -143,9 +143,9 @@ class TestJdbcApi extends SmallTest with Matchers {
     val password = CommonUtils.randomString()
     val update = JdbcApi.JDBC_UPDATE_JSON_FORMAT.read(s"""
          |{
-         | "url": "${url}",
-         | "user": "${user}",
-         | "password": "${password}"
+         | "url": "$url",
+         | "user": "$user",
+         | "password": "$password"
          |}
        """.stripMargin.parseJson)
     update.url.get shouldBe url
@@ -155,24 +155,36 @@ class TestJdbcApi extends SmallTest with Matchers {
 
   @Test
   def testParseCreation(): Unit = {
-    val name = CommonUtils.randomString()
     val url = CommonUtils.randomString()
     val user = CommonUtils.randomString()
     val password = CommonUtils.randomString()
-
     val creation = JdbcApi.JDBC_CREATION_JSON_FORMAT.read(s"""
-        |{
-        | "name": "${name}",
-        | "url": "${url}",
-        | "user": "${user}",
-        | "password": "${password}"
-        |}
+                                                              |{
+                                                              | "url": "$url",
+                                                              | "user": "$user",
+                                                              | "password": "$password"
+                                                              |}
       """.stripMargin.parseJson)
 
-    creation.name shouldBe name
+    creation.name.length shouldBe 10
     creation.url shouldBe url
     creation.user shouldBe user
     creation.password shouldBe password
+
+    val name = CommonUtils.randomString()
+    val creation2 = JdbcApi.JDBC_CREATION_JSON_FORMAT.read(s"""
+        |{
+        | "name": "$name",
+        | "url": "$url",
+        | "user": "$user",
+        | "password": "$password"
+        |}
+      """.stripMargin.parseJson)
+
+    creation2.name shouldBe name
+    creation2.url shouldBe url
+    creation2.user shouldBe user
+    creation2.password shouldBe password
   }
 
   @Test

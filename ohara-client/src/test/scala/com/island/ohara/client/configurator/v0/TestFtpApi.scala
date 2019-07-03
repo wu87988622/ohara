@@ -280,12 +280,26 @@ class TestFtpApi extends SmallTest with Matchers {
 
   @Test
   def testParseCreation(): Unit = {
-    val name = CommonUtils.randomString()
     val hostname = CommonUtils.randomString()
     val port = CommonUtils.availablePort()
     val user = CommonUtils.randomString()
     val password = CommonUtils.randomString()
     val creation = FtpApi.FTP_CREATION_JSON_FORMAT.read(s"""
+                                                           |{
+                                                           | "hostname": "$hostname",
+                                                           | "port": $port,
+                                                           | "user": "$user",
+                                                           | "password": "$password"
+                                                           |}
+                                       """.stripMargin.parseJson)
+    creation.name.length shouldBe 10
+    creation.hostname shouldBe hostname
+    creation.port shouldBe port
+    creation.user shouldBe user
+    creation.password shouldBe password
+
+    val name = CommonUtils.randomString()
+    val creation2 = FtpApi.FTP_CREATION_JSON_FORMAT.read(s"""
                                                        |{
                                                        | "name": "$name",
                                                        | "hostname": "$hostname",
@@ -294,9 +308,10 @@ class TestFtpApi extends SmallTest with Matchers {
                                                        | "password": "$password"
                                                        |}
                                        """.stripMargin.parseJson)
-    creation.hostname shouldBe hostname
-    creation.port shouldBe port
-    creation.user shouldBe user
-    creation.password shouldBe password
+    creation2.name shouldBe name
+    creation2.hostname shouldBe hostname
+    creation2.port shouldBe port
+    creation2.user shouldBe user
+    creation2.password shouldBe password
   }
 }

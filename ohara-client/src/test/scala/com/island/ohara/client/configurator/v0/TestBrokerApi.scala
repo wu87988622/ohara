@@ -167,15 +167,13 @@ class TestBrokerApi extends SmallTest with Matchers {
 
   @Test
   def parseMinimumJson(): Unit = {
-    val name = CommonUtils.randomString(10)
     val nodeName = CommonUtils.randomString()
     val creation = BrokerApi.BROKER_CREATION_JSON_FORMAT.read(s"""
                                                                                        |  {
-                                                                                       |    "name": "$name",
                                                                                        |    "nodeNames": ["$nodeName"]
                                                                                        |  }
                                                                      """.stripMargin.parseJson)
-    creation.name shouldBe name
+    creation.name.length shouldBe 10
     creation.imageName shouldBe BrokerApi.IMAGE_NAME_DEFAULT
     creation.zookeeperClusterName shouldBe None
     creation.nodeNames.size shouldBe 1
@@ -185,6 +183,7 @@ class TestBrokerApi extends SmallTest with Matchers {
     creation.exporterPort should not be 0
     creation.ports.size shouldBe 3
 
+    val name = CommonUtils.randomString(10)
     val zookeeperClusterName = CommonUtils.randomString()
     val clientPort = CommonUtils.availablePort()
     val exporterPort = CommonUtils.availablePort()

@@ -140,6 +140,7 @@ object PipelineApi {
     .withDash()
     .withUnderLine()
     .toRefiner
+    .nullToString("name", () => CommonUtils.randomString(10))
     .refine
 
   import MetricsApi._

@@ -45,6 +45,9 @@ trait JsonRefiner[T] {
 
   def nullToString(key: String, defaultValue: String): JsonRefiner[T] = nullToJsValue(key, () => JsString(defaultValue))
 
+  def nullToString(key: String, defaultValue: () => String): JsonRefiner[T] =
+    nullToJsValue(key, () => JsString(defaultValue()))
+
   def nullToEmptyArray(key: String): JsonRefiner[T] = nullToJsValue(key, () => JsArray.empty)
 
   /**

@@ -39,6 +39,7 @@ object JdbcApi {
       .withDash()
       .withUnderLine()
       .toRefiner
+      .nullToString("name", () => CommonUtils.randomString(10))
       .refine
 
   final case class JdbcInfo(name: String, url: String, user: String, password: String, lastModified: Long)

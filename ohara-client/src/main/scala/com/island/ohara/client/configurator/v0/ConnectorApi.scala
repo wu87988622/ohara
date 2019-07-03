@@ -75,6 +75,7 @@ object ConnectorApi {
     // the order can't be negative!!
     .rejectNegativeNumber()
     .rejectEmptyString()
+    .nullToString("name", () => CommonUtils.randomString(10))
     .refine
 
   final case class Creation(settings: Map[String, JsValue]) extends CreationRequest {
@@ -112,6 +113,7 @@ object ConnectorApi {
     // set the default number of tasks
     .nullToInt(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key(), DEFAULT_NUMBER_OF_TASKS)
     .rejectEmptyString()
+    .nullToString("name", () => CommonUtils.randomString(10))
     .refine
 
   import MetricsApi._

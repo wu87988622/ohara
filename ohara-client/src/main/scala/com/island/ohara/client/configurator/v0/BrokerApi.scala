@@ -66,6 +66,7 @@ object BrokerApi {
       .withLowerCase()
       .withLengthLimit(LIMIT_OF_NAME_LENGTH)
       .toRefiner
+      .nullToString("name", () => CommonUtils.randomString(10))
       .refine
 
   final case class BrokerClusterInfo private[BrokerApi] (name: String,

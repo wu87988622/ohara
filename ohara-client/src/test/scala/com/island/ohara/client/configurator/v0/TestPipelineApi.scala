@@ -168,16 +168,25 @@ class TestPipelineApi extends SmallTest with Matchers {
 
   @Test
   def parseCreation(): Unit = {
-    val name = CommonUtils.randomString()
     val creation = PIPELINE_CREATION_JSON_FORMAT.read(s"""
+                                                          |  {
+                                                          |  }
+                                                          |
+    """.stripMargin.parseJson)
+    creation.name.length shouldBe 10
+    creation.workerClusterName shouldBe None
+    creation.flows shouldBe Seq.empty
+
+    val name = CommonUtils.randomString()
+    val creation2 = PIPELINE_CREATION_JSON_FORMAT.read(s"""
         |  {
         |    "name": "$name"
         |  }
         |
     """.stripMargin.parseJson)
-    creation.name shouldBe name
-    creation.workerClusterName shouldBe None
-    creation.flows shouldBe Seq.empty
+    creation2.name shouldBe name
+    creation2.workerClusterName shouldBe None
+    creation2.flows shouldBe Seq.empty
   }
 
   @Test

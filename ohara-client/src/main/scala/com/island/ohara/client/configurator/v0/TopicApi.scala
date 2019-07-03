@@ -51,6 +51,7 @@ object TopicApi {
     .nullToInt("numberOfPartitions", DEFAULT_NUMBER_OF_REPLICATIONS)
     .nullToInt("numberOfReplications", DEFAULT_NUMBER_OF_REPLICATIONS)
     .rejectEmptyString()
+    .nullToString("name", () => CommonUtils.randomString(10))
     .refine
 
   import MetricsApi._

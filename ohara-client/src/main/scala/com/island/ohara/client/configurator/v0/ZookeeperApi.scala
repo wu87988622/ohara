@@ -68,6 +68,7 @@ object ZookeeperApi {
       .withLowerCase()
       .withLengthLimit(LIMIT_OF_NAME_LENGTH)
       .toRefiner
+      .nullToString("name", () => CommonUtils.randomString(10))
       .refine
 
   final case class ZookeeperClusterInfo private[ZookeeperApi] (name: String,

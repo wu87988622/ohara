@@ -295,17 +295,14 @@ class TestWorkerApi extends SmallTest with Matchers {
   }
 
   @Test
-  def parseMinimumJson(): Unit = {
-    import spray.json._
-    val name = CommonUtils.randomString(10)
+  def parseCreation(): Unit = {
     val nodeName = CommonUtils.randomString()
     val creation = WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
-                                                                                 |  {
-                                                                                 |    "name": "$name",
-                                                                                 |    "nodeNames": ["$nodeName"]
-                                                                                 |  }
+                                                                  |  {
+                                                                  |    "nodeNames": ["$nodeName"]
+                                                                  |  }
                                                                      """.stripMargin.parseJson)
-    creation.name shouldBe name
+    creation.name.length shouldBe 10
     creation.imageName shouldBe WorkerApi.IMAGE_NAME_DEFAULT
     creation.brokerClusterName shouldBe None
     creation.configTopicReplications shouldBe 1
@@ -317,14 +314,24 @@ class TestWorkerApi extends SmallTest with Matchers {
     creation.nodeNames.head shouldBe nodeName
     creation.jarKeys.size shouldBe 0
 
+    val name = CommonUtils.randomString(10)
     val creation2 = WorkerApi.WORKER_CREATION_JSON_FORMAT.read(s"""
-                                                                 |  {
-                                                                 |    "name": "$name",
-                                                                 |    "nodeNames": ["$nodeName"]
-                                                                 |  }
+                                                                                 |  {
+                                                                                 |    "name": "$name",
+                                                                                 |    "nodeNames": ["$nodeName"]
+                                                                                 |  }
                                                                      """.stripMargin.parseJson)
-    creation2.clientPort should not be creation.clientPort
-    creation2.jmxPort should not be creation.jmxPort
+    creation2.name shouldBe name
+    creation2.imageName shouldBe WorkerApi.IMAGE_NAME_DEFAULT
+    creation2.brokerClusterName shouldBe None
+    creation2.configTopicReplications shouldBe 1
+    creation2.offsetTopicReplications shouldBe 1
+    creation2.offsetTopicPartitions shouldBe 1
+    creation2.statusTopicReplications shouldBe 1
+    creation2.statusTopicPartitions shouldBe 1
+    creation2.nodeNames.size shouldBe 1
+    creation2.nodeNames.head shouldBe nodeName
+    creation2.jarKeys.size shouldBe 0
   }
 
   @Test

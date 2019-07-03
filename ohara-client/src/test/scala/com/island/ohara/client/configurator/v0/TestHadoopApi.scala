@@ -76,16 +76,6 @@ class TestHadoopApi extends SmallTest with Matchers {
   }
 
   @Test
-  def testNullNameInCreation(): Unit = {
-    an[DeserializationException] should be thrownBy HadoopApi.HDFS_CREATION_JSON_FORMAT.read("""
-        |{
-        | "name": null,
-        | "uri": "file:///tmp"
-        |}
-        |""".stripMargin.parseJson)
-  }
-
-  @Test
   def testParserUpdate(): Unit = {
     val uri = s"file:///tmp/${CommonUtils.randomString()}"
     val update = HadoopApi.HDFS_UPDATE_JSON_FORMAT.read(s"""
@@ -98,16 +88,24 @@ class TestHadoopApi extends SmallTest with Matchers {
 
   @Test
   def testParseCreation(): Unit = {
-    val name = CommonUtils.randomString()
     val uri = s"file:///tmp/${CommonUtils.randomString()}"
     val creation = HadoopApi.HDFS_CREATION_JSON_FORMAT.read(s"""
+                                                               |{
+                                                               | "uri": "$uri"
+                                                               |}
+       """.stripMargin.parseJson)
+    creation.name.length shouldBe 10
+    creation.uri shouldBe uri
+
+    val name = CommonUtils.randomString()
+    val creation2 = HadoopApi.HDFS_CREATION_JSON_FORMAT.read(s"""
          |{
          | "name": "${name}",
-         | "uri": "${uri}"
+         | "uri": "$uri"
          |}
        """.stripMargin.parseJson)
-    creation.name shouldBe name
-    creation.uri shouldBe uri
+    creation2.name shouldBe name
+    creation2.uri shouldBe uri
   }
 
   @Test

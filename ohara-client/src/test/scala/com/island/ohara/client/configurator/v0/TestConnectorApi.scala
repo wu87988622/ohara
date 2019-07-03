@@ -29,10 +29,8 @@ import spray.json.{JsArray, JsString, _}
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestConnectorApi extends SmallTest with Matchers {
 
-  // TODO: remove this test after ohara manager starts to use new APIs
   @Test
   def testStaleCreationApis(): Unit = {
-    val name = CommonUtils.randomString()
     val workerClusterName = CommonUtils.randomString()
     val className = CommonUtils.randomString()
     val column = Column
@@ -46,7 +44,35 @@ class TestConnectorApi extends SmallTest with Matchers {
     val configs = Map("aaa" -> "cccc")
     val anotherKey = CommonUtils.randomString()
     val anotherValue = CommonUtils.randomString()
-    val request =
+
+    val creation =
+      CONNECTOR_CREATION_JSON_FORMAT.read(s"""
+                                             |{
+                                             |  "workerClusterName": ${JsString(workerClusterName).toString()},
+                                             |  "connector.class": ${JsString(className).toString()},
+                                             |  "schema": ${JsArray(COLUMN_JSON_FORMAT.write(column)).toString()},
+                                             |  "topics": ${JsArray(topicNames.map(v => JsString(v)).toVector)
+                                               .toString()},
+                                             |  "numberOfTasks": ${JsNumber(numberOfTasks).toString()},
+                                             |  "configs": ${JsObject(configs.map { case (k, v) => k -> JsString(v) })
+                                               .toString()},
+                                                  "$anotherKey": "$anotherValue"
+                                             |}
+                                            """.stripMargin.parseJson)
+    creation.name.length shouldBe 10
+    creation.workerClusterName.get shouldBe workerClusterName
+    creation.className shouldBe className
+    creation.columns shouldBe Seq.empty
+    creation.topicNames shouldBe topicNames
+    creation.numberOfTasks shouldBe 1
+    // this key is deprecated so json converter will replace it by new one
+    creation.settings.contains("className") shouldBe false
+    creation.settings.contains("aaa") shouldBe false
+    creation.settings(anotherKey).asInstanceOf[JsString].value shouldBe anotherValue
+    CONNECTOR_CREATION_JSON_FORMAT.read(CONNECTOR_CREATION_JSON_FORMAT.write(creation)) shouldBe creation
+
+    val name = CommonUtils.randomString()
+    val creation2 =
       CONNECTOR_CREATION_JSON_FORMAT.read(s"""
                                                |{
                                                |  "name": ${JsString(name).toString()},
@@ -61,16 +87,17 @@ class TestConnectorApi extends SmallTest with Matchers {
                                                   "$anotherKey": "$anotherValue"
                                                |}
                                             """.stripMargin.parseJson)
-    request.workerClusterName.get shouldBe workerClusterName
-    request.className shouldBe className
-    request.columns shouldBe Seq.empty
-    request.topicNames shouldBe topicNames
-    request.numberOfTasks shouldBe 1
+    creation2.name shouldBe name
+    creation2.workerClusterName.get shouldBe workerClusterName
+    creation2.className shouldBe className
+    creation2.columns shouldBe Seq.empty
+    creation2.topicNames shouldBe topicNames
+    creation2.numberOfTasks shouldBe 1
     // this key is deprecated so json converter will replace it by new one
-    request.settings.contains("className") shouldBe false
-    request.settings.contains("aaa") shouldBe false
-    request.settings(anotherKey).asInstanceOf[JsString].value shouldBe anotherValue
-    CONNECTOR_CREATION_JSON_FORMAT.read(CONNECTOR_CREATION_JSON_FORMAT.write(request)) shouldBe request
+    creation2.settings.contains("className") shouldBe false
+    creation2.settings.contains("aaa") shouldBe false
+    creation2.settings(anotherKey).asInstanceOf[JsString].value shouldBe anotherValue
+    CONNECTOR_CREATION_JSON_FORMAT.read(CONNECTOR_CREATION_JSON_FORMAT.write(creation2)) shouldBe creation2
   }
 
   @Test
