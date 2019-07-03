@@ -322,13 +322,13 @@ const WorkerNewModal = props => {
                                 key={name}
                                 dense
                                 button
-                                onClick={handleFileToggle(name)}
+                                onClick={handleFileToggle(jar)}
                               >
                                 <ListItemIcon>
                                   <Checkbox
                                     color="primary"
                                     edge="start"
-                                    checked={fileChecked.indexOf(name) !== -1}
+                                    checked={fileChecked.indexOf(jar) !== -1}
                                     tabIndex={-1}
                                     disableRipple
                                     inputProps={{
