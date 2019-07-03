@@ -69,7 +69,7 @@ const WorkerNewModal = props => {
       }
     };
     fetchNodes();
-  });
+  }, []);
 
   const handleNodeToggle = value => () => {
     const currentIndex = checkedNodes.indexOf(value);
