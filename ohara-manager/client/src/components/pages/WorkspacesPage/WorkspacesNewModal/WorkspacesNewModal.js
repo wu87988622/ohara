@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import toastr from 'toastr';
 import PropTypes from 'prop-types';
 import List from '@material-ui/core/List';
@@ -42,12 +42,12 @@ import { Dialog } from 'components/common/Mui/Dialog';
 import { InputField } from 'components/common/Mui/Form';
 
 const WorkerNewModal = props => {
-  const [nodeChecked, setNodeChecked] = useState([]);
-  const [fileChecked, setFileChecked] = useState([]);
+  const [checkedNodes, setCheckedNodes] = useState([]);
+  const [checkedFiles, setCheckedFiles] = useState([]);
   const [nodes, setNodes] = useState([]);
   const [jars, setJars] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMessenger, setErrorMessenger] = useState('');
+  const [errorMessenge, setErrorMessenge] = useState('');
 
   const uploadJar = async file => {
     const res = await jarApi.createJar({
@@ -60,21 +60,20 @@ const WorkerNewModal = props => {
     }
   };
 
-  const fetchNodes = useCallback(async () => {
-    const res = await nodeApi.fetchNodes();
-    const newNodes = get(res, 'data.result', null);
-    if (!isNull(newNodes)) {
-      setNodes(newNodes);
-    }
-  }, []);
-
   useEffect(() => {
+    const fetchNodes = async () => {
+      const res = await nodeApi.fetchNodes();
+      const newNodes = get(res, 'data.result', null);
+      if (!isNull(newNodes)) {
+        setNodes(newNodes);
+      }
+    };
     fetchNodes();
-  }, [fetchNodes]);
+  });
 
   const handleNodeToggle = value => () => {
-    const currentIndex = nodeChecked.indexOf(value);
-    const newChecked = [...nodeChecked];
+    const currentIndex = checkedNodes.indexOf(value);
+    const newChecked = [...checkedNodes];
 
     if (currentIndex === -1) {
       newChecked.push(value);
@@ -82,12 +81,12 @@ const WorkerNewModal = props => {
       newChecked.splice(currentIndex, 1);
     }
 
-    setNodeChecked(newChecked);
+    setCheckedNodes(newChecked);
   };
 
   const handleFileToggle = value => () => {
-    const currentIndex = fileChecked.indexOf(value);
-    const newChecked = [...fileChecked];
+    const currentIndex = checkedFiles.indexOf(value);
+    const newChecked = [...checkedFiles];
 
     if (currentIndex === -1) {
       newChecked.push(value);
@@ -95,7 +94,7 @@ const WorkerNewModal = props => {
       newChecked.splice(currentIndex, 1);
     }
 
-    setFileChecked(newChecked);
+    setCheckedFiles(newChecked);
   };
 
   const handleModalClose = () => {
@@ -107,24 +106,15 @@ const WorkerNewModal = props => {
     handleModalClose();
   };
 
-  const validateNodeNames = nodes => {
-    if (isEmpty(nodes)) {
-      toastr.error('You should at least supply a node name');
-      return false;
-    }
-
-    return true;
-  };
-
   const validateServiceName = value => {
     if (isUndefined(value)) return '';
 
     if (value.match(/[^0-9a-z]/g)) {
-      setErrorMessenger('You only can use lower case letters and numbers');
+      setErrorMessenge('You only can use lower case letters and numbers');
     } else if (value.length > 30) {
-      setErrorMessenger('Must be between 1 and 30 characters long');
+      setErrorMessenge('Must be between 1 and 30 characters long');
     } else {
-      setErrorMessenger('');
+      setErrorMessenge('');
     }
 
     return value;
@@ -133,7 +123,7 @@ const WorkerNewModal = props => {
   const createServices = async values => {
     setIsLoading(true);
 
-    const nodeNames = nodeChecked;
+    const nodeNames = checkedNodes;
 
     const maxRetry = 5;
     let retryCount = 0;
@@ -210,9 +200,7 @@ const WorkerNewModal = props => {
   };
 
   const onSubmit = async (values, form) => {
-    if (!validateNodeNames(nodeChecked)) return;
-
-    fileChecked.forEach(file => {
+    checkedFiles.forEach(file => {
       uploadJar(file);
     });
 
@@ -259,8 +247,8 @@ const WorkerNewModal = props => {
             confirmDisabled={
               submitting ||
               pristine ||
-              errorMessenger !== '' ||
-              nodeChecked.length === 0
+              errorMessenge !== '' ||
+              checkedNodes.length === 0
             }
           >
             {() => {
@@ -276,7 +264,6 @@ const WorkerNewModal = props => {
                     <DialogContent>
                       <Field
                         label="Name"
-                        id="service-input"
                         name="name"
                         component={InputField}
                         placeholder="cluster00"
@@ -284,8 +271,8 @@ const WorkerNewModal = props => {
                         disabled={submitting}
                         format={validateServiceName}
                         autoFocus
-                        errorMessenger={errorMessenger}
-                        error={errorMessenger !== ''}
+                        errorMessenge={errorMessenge}
+                        error={errorMessenge !== ''}
                       />
                     </DialogContent>
                     <s.StyledDialogContent>
@@ -293,28 +280,24 @@ const WorkerNewModal = props => {
                       <s.StyledPaper>
                         <List>
                           {nodes.map(node => {
-                            const labelId = `checkbox-list-label-${node}`;
                             const { name } = node;
                             return (
                               <ListItem
                                 key={name}
                                 dense
                                 button
-                                onClick={handleNodeToggle(name)}
+                                onClick={() => handleNodeToggle(name)}
                               >
                                 <ListItemIcon>
                                   <Checkbox
                                     color="primary"
                                     edge="start"
-                                    checked={nodeChecked.indexOf(name) !== -1}
+                                    checked={checkedNodes.indexOf(name) !== -1}
                                     tabIndex={-1}
                                     disableRipple
-                                    inputProps={{
-                                      'aria-labelledby': labelId,
-                                    }}
                                   />
                                 </ListItemIcon>
-                                <ListItemText id={labelId} primary={name} />
+                                <ListItemText id={node} primary={name} />
                               </ListItem>
                             );
                           })}
@@ -327,29 +310,24 @@ const WorkerNewModal = props => {
                         <List>
                           {jars.map(jar => {
                             const { name } = jar;
-                            const labelId = `checkbox-list-label-${name}`;
-
                             return (
                               <ListItem
                                 key={name}
                                 dense
                                 button
-                                onClick={handleFileToggle(jar)}
+                                onClick={() => handleFileToggle(jar)}
                               >
                                 <ListItemIcon>
                                   <Checkbox
                                     color="primary"
                                     edge="start"
-                                    checked={fileChecked.indexOf(jar) !== -1}
+                                    checked={checkedFiles.indexOf(jar) !== -1}
                                     tabIndex={-1}
                                     disableRipple
-                                    inputProps={{
-                                      'aria-labelledby': labelId,
-                                    }}
                                   />
                                 </ListItemIcon>
                                 <ListItemText
-                                  id={labelId}
+                                  id={jar}
                                   primary={split(name, '.jar', 1)}
                                 />
                               </ListItem>
