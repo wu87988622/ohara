@@ -78,6 +78,17 @@ class TestJDBCSourceConnectorDefinitions extends WithBrokerWorker with Matchers 
   }
 
   @Test
+  def checkFlushDataSize(): Unit = {
+    val definition = jdbcSource.definitions().asScala.find(_.key() == JDBC_FLUSHDATA_SIZE).get
+    definition.required shouldBe false
+    definition.defaultValue shouldBe String.valueOf(JDBC_FLUSHDATA_SIZE_DEFAULT)
+    definition.editable() shouldBe true
+    definition.internal() shouldBe false
+    definition.reference() shouldBe "NONE"
+    definition.valueType() shouldBe SettingDefinition.Type.INT.name()
+  }
+
+  @Test
   def checkTableName(): Unit = {
     val definition = jdbcSource.definitions().asScala.find(_.key() == DB_TABLENAME).get
     definition.required shouldBe true
@@ -152,7 +163,8 @@ class TestJDBCSourceConnectorDefinitions extends WithBrokerWorker with Matchers 
           DB_PASSWORD -> password,
           DB_TABLENAME -> tableName,
           TIMESTAMP_COLUMN_NAME -> timeStampColumnName,
-          JDBC_FETCHDATA_SIZE -> "1000"
+          JDBC_FETCHDATA_SIZE -> "1000",
+          JDBC_FLUSHDATA_SIZE -> "1000"
         ))
         .connectorClass(classOf[JDBCSourceConnector])
         .run())

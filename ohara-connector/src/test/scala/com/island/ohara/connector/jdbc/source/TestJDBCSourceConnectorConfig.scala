@@ -92,6 +92,7 @@ class TestJDBCSourceConnectorConfig extends SmallTest with Matchers {
       dbSchemaPattern = None,
       mode = "123",
       jdbcFetchDataSize = 1000,
+      jdbcFlushDataSize = 1000,
       timestampColumnName = "123"
     )
 

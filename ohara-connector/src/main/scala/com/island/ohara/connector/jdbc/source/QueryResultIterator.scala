@@ -16,16 +16,12 @@
 
 package com.island.ohara.connector.jdbc.source
 
-import java.sql.{PreparedStatement, ResultSet}
+import java.sql.ResultSet
 
 import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
-import com.island.ohara.common.util.{Releasable, ReleaseOnce}
 import com.island.ohara.connector.jdbc.util.ColumnInfo
 
-class QueryResultIterator(preparedStatement: PreparedStatement, columns: Seq[RdbColumn])
-    extends ReleaseOnce
-    with Iterator[Seq[ColumnInfo[_]]] {
-  private[this] val resultSet: ResultSet = preparedStatement.executeQuery()
+class QueryResultIterator(var resultSet: ResultSet, columns: Seq[RdbColumn]) extends Iterator[Seq[ColumnInfo[_]]] {
   private[this] var cache: Seq[ColumnInfo[_]] = _
 
   /**
@@ -43,13 +39,5 @@ class QueryResultIterator(preparedStatement: PreparedStatement, columns: Seq[Rdb
     else
       try cache
       finally cache = null
-  }
-
-  /**
-    * Do what you want to do when calling closing.
-    */
-  override protected def doClose(): Unit = {
-    Releasable.close(resultSet)
-    Releasable.close(preparedStatement)
   }
 }

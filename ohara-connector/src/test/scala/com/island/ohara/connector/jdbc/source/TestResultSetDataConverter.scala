@@ -56,4 +56,20 @@ class TestResultSetDataConverter extends MediumTest with Matchers with MockitoSu
     result(2).columnType shouldBe RDBDataTypeConverter.RDB_TYPE_INTEGER
     result(2).value shouldBe 10
   }
+
+  @Test
+  def testNullValue(): Unit = {
+    val resultSet: ResultSet = mock[ResultSet]
+    when(resultSet.getTimestamp("column1", DateTimeUtils.CALENDAR)).thenReturn(new Timestamp(0L))
+    when(resultSet.getString("column2")).thenReturn(null)
+
+    val columnList = new ListBuffer[RdbColumn]
+    columnList += RdbColumn("column1", RDBDataTypeConverter.RDB_TYPE_TIMESTAMP, true)
+    columnList += RdbColumn("column2", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
+
+    val result: Seq[ColumnInfo[_]] = ResultSetDataConverter.converterRecord(resultSet, columnList)
+    result(1).columnName shouldBe "column2"
+    result(1).columnType shouldBe RDBDataTypeConverter.RDB_TYPE_VARCHAR
+    result(1).value shouldBe None
+  }
 }

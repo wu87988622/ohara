@@ -61,36 +61,38 @@ class JDBCSourceTask extends RowSourceTask {
   override protected[source] def _poll(): java.util.List[RowSourceRecord] = try {
     val tableName: String = jdbcSourceConnectorConfig.dbTableName
     val timestampColumnName: String = jdbcSourceConnectorConfig.timestampColumnName
-
+    val flushDataSize: Int = jdbcSourceConnectorConfig.jdbcFlushDataSize
+    var offsetTimestampValue = offsets.readInMemoryOffset()
     val resultSet: QueryResultIterator =
       dbTableDataProvider.executeQuery(tableName, timestampColumnName, new Timestamp(offsets.readInMemoryOffset()))
 
-    try resultSet
-    //Create Ohara Schema
-      .map(
-        columns =>
-          (if (schema.isEmpty)
-             columns.map(c => Column.builder().name(c.columnName).dataType(DataType.OBJECT).order(0).build())
-           else schema,
-           columns))
-      .flatMap {
-        case (newSchema, columns) =>
-          val offsetTimestampValue = dbTimestampColumnValue(columns, timestampColumnName)
-          offsets.updateInMemOffset(offsetTimestampValue)
-          topics.map(
-            RowSourceRecord
-              .builder()
-              .sourcePartition(JDBCSourceTask.partition(tableName).asJava)
-              //Writer Offset
-              .sourceOffset(JDBCSourceTask.offset(offsetTimestampValue).asJava)
-              //Create Ohara Row
-              .row(row(newSchema, columns))
-              .topicName(_)
-              .build())
-      }
-      .toList
-      .asJava
-    finally resultSet.close()
+    val rowSourceRecords: Iterator[RowSourceRecord] = resultSet
+      .take(flushDataSize)
+      .flatMap(columns => {
+        val newSchema =
+          if (schema.isEmpty)
+            columns.map(c => Column.builder().name(c.columnName).dataType(DataType.OBJECT).order(0).build())
+          else schema
+
+        offsetTimestampValue = dbTimestampColumnValue(columns, timestampColumnName)
+        offsets.updateInMemOffset(offsetTimestampValue)
+        topics.map(
+          RowSourceRecord
+            .builder()
+            .sourcePartition(JDBCSourceTask.partition(tableName).asJava)
+            //Writer Offset
+            .sourceOffset(JDBCSourceTask.offset(offsetTimestampValue).asJava)
+            //Create Ohara Row
+            .row(row(newSchema, columns))
+            .topicName(_)
+            .build())
+      })
+
+    val result = if (rowSourceRecords.isEmpty) {
+      dbTableDataProvider.queryFlag(true)
+      Seq.empty
+    } else rowSourceRecords
+    result.toList.asJava
   } catch {
     case e: Throwable =>
       logger.error(e.getMessage, e)
@@ -117,7 +119,7 @@ class JDBCSourceTask extends RowSourceTask {
         .sortBy(_.order)
         .map(s => (s, values(s.name, columns)))
         .map {
-          case (schema, value) =>
+          case (schema, value) => {
             Cell.of(
               schema.newName,
               schema.dataType match {
@@ -133,6 +135,7 @@ class JDBCSourceTask extends RowSourceTask {
                 case _                                => throw new IllegalArgumentException("Unsupported type...")
               }
             )
+          }
         }: _*)
   }
 

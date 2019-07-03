@@ -156,6 +156,14 @@ class JDBCSourceConnector extends RowSourceConnector {
       .valueType(SettingDefinition.Type.INT)
       .key(JDBC_FETCHDATA_SIZE)
       .optional(String.valueOf(JDBC_FETCHDATA_SIZE_DEFAULT))
+      .build(),
+    SettingDefinition
+      .builder()
+      .displayName("JDBC flush size")
+      .documentation("Setting Data flush to topic size")
+      .valueType(SettingDefinition.Type.INT)
+      .key(JDBC_FLUSHDATA_SIZE)
+      .optional(String.valueOf(JDBC_FLUSHDATA_SIZE_DEFAULT))
       .build()
   ).asJava
 

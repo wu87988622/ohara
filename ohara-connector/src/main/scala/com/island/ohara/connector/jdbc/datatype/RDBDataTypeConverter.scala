@@ -41,7 +41,7 @@ class RDBDataTypeConverter {
       case RDB_TYPE_BIGINT =>
         java.lang.Long.valueOf(resultSet.getLong(columnName))
 
-      case RDB_TYPE_FLOAT =>
+      case RDB_TYPE_FLOAT | RDB_TYPE_FLOAT_2 => //TODO Refactor DB datatype for JDBC Source Connector
         java.lang.Float.valueOf(resultSet.getFloat(columnName))
 
       case RDB_TYPE_DOUBLE =>
@@ -73,6 +73,8 @@ object RDBDataTypeConverter {
   val RDB_TYPE_INTEGER_2: String = "INT4"
   val RDB_TYPE_BIGINT: String = "BIGINT"
   val RDB_TYPE_FLOAT: String = "FLOAT"
+  // a name from postgresql
+  val RDB_TYPE_FLOAT_2: String = "FLOAT8"
   val RDB_TYPE_DOUBLE: String = "DOUBLE"
   val RDB_TYPE_CHAR: String = "CHAR"
   val RDB_TYPE_VARCHAR: String = "VARCHAR"
