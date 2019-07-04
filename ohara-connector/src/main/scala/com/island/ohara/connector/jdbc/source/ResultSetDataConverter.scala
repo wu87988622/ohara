@@ -37,7 +37,9 @@ object ResultSetDataConverter {
     val rdbDataTypeConverter: RDBDataTypeConverter = RDBDataTypeConverterFactory.dataTypeConverter()
     columns.map(column => {
       val value: Object = rdbDataTypeConverter.converterValue(resultSet, column)
-      ColumnInfo(column.name, column.dataType, value)
+      if (value == null)
+        ColumnInfo(column.name, column.dataType, None)
+      else ColumnInfo(column.name, column.dataType, value)
     })
   }
 }

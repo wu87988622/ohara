@@ -29,27 +29,37 @@ import com.island.ohara.connector.jdbc.util.DateTimeUtils
   *
   */
 class DBTableDataProvider(jdbcSourceConnectorConfig: JDBCSourceConnectorConfig) extends ReleaseOnce {
+
   private[this] val client: DatabaseClient = DatabaseClient.builder
     .url(jdbcSourceConnectorConfig.dbURL)
     .user(jdbcSourceConnectorConfig.dbUserName)
     .password(jdbcSourceConnectorConfig.dbPassword)
     .build
+  private[this] var queryFlag: Boolean = true
+
+  private[this] var resultSet: ResultSet = _
 
   def executeQuery(tableName: String, timeStampColumnName: String, tsOffset: Timestamp): QueryResultIterator = {
-    val columnNames = columns(tableName)
-    val sql =
-      s"""SELECT * FROM \"$tableName\" WHERE \"$timeStampColumnName\" > ? and \"$timeStampColumnName\" < ? ORDER BY \"$timeStampColumnName\""""
+    if (queryFlag) {
+      val sql =
+        s"""SELECT * FROM \"$tableName\" WHERE \"$timeStampColumnName\" > ? and \"$timeStampColumnName\" < ? ORDER BY \"$timeStampColumnName\""""
+      val connection: Connection = client.connection
+      connection.setAutoCommit(false) //setAutoCommit must be set to false when setting the fetch size
 
-    val connection: Connection = client.connection
-    connection.setAutoCommit(false) //setAutoCommit must be set to false when setting the fetch size
+      val preparedStatement: PreparedStatement = connection.prepareStatement(sql)
+      preparedStatement.setFetchSize(jdbcSourceConnectorConfig.jdbcFetchDataSize)
 
-    val preparedStatement: PreparedStatement = connection.prepareStatement(sql)
-    preparedStatement.setFetchSize(jdbcSourceConnectorConfig.jdbcFetchDataSize)
+      val currentTimestamp: Timestamp = dbCurrentTime(DateTimeUtils.CALENDAR)
+      preparedStatement.setTimestamp(1, tsOffset, DateTimeUtils.CALENDAR)
+      preparedStatement.setTimestamp(2, currentTimestamp, DateTimeUtils.CALENDAR)
+      resultSet = preparedStatement.executeQuery()
+      queryFlag = false
+    }
+    new QueryResultIterator(resultSet, columns(tableName))
+  }
 
-    val currentTimestamp: Timestamp = dbCurrentTime(DateTimeUtils.CALENDAR)
-    preparedStatement.setTimestamp(1, tsOffset, DateTimeUtils.CALENDAR)
-    preparedStatement.setTimestamp(2, currentTimestamp, DateTimeUtils.CALENDAR)
-    new QueryResultIterator(preparedStatement, columnNames)
+  def queryFlag(queryFlag: Boolean): Unit = {
+    this.queryFlag = queryFlag
   }
 
   def columns(tableName: String): Seq[RdbColumn] = {

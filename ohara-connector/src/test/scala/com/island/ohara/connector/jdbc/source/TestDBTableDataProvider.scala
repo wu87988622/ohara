@@ -108,6 +108,20 @@ class TestDBTableDataProvider extends MediumTest with Matchers {
     dbTableDataProvider.isTableExists(tableName) shouldBe true
   }
 
+  @Test
+  def testQueryFlag(): Unit = {
+    val dbTableDataProvider = new DBTableDataProvider(jdbcConfig)
+    val result1 = dbTableDataProvider.executeQuery(tableName, "column1", new Timestamp(0))
+    result1.size shouldBe 3
+
+    val result2 = dbTableDataProvider.executeQuery(tableName, "column1", new Timestamp(0))
+    result2.size shouldBe 0
+
+    dbTableDataProvider.queryFlag(true)
+    val result3 = dbTableDataProvider.executeQuery(tableName, "column1", new Timestamp(0))
+    result3.size shouldBe 3
+  }
+
   @After
   def tearDown(): Unit = {
     Releasable.close(client)

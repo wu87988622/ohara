@@ -41,7 +41,7 @@ class TestQueryResultIterator extends MediumTest with Matchers with MockitoSugar
     columnList += RdbColumn("column2", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
     columnList += RdbColumn("column3", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
 
-    val it: Iterator[Seq[Object]] = new QueryResultIterator(preparedStatement, columnList)
+    val it: Iterator[Seq[Object]] = new QueryResultIterator(resultSet, columnList)
     intercept[NoSuchElementException] {
       it.next()
     }.getMessage shouldBe "Cache no data"
@@ -62,7 +62,7 @@ class TestQueryResultIterator extends MediumTest with Matchers with MockitoSugar
     columnList += RdbColumn("column2", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
     columnList += RdbColumn("column3", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
 
-    val it: Iterator[Seq[Object]] = new QueryResultIterator(preparedStatement, columnList)
+    val it: Iterator[Seq[Object]] = new QueryResultIterator(resultSet, columnList)
     var count: Int = 0
     while (it.hasNext) {
       it.next()
@@ -86,7 +86,7 @@ class TestQueryResultIterator extends MediumTest with Matchers with MockitoSugar
     columnList += RdbColumn("column2", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
     columnList += RdbColumn("column3", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
 
-    val it: Iterator[Seq[Object]] = new QueryResultIterator(preparedStatement, columnList)
+    val it: Iterator[Seq[Object]] = new QueryResultIterator(resultSet, columnList)
     var count: Int = 0
     while (it.hasNext) {
       it.next()
@@ -107,7 +107,7 @@ class TestQueryResultIterator extends MediumTest with Matchers with MockitoSugar
     columnList += RdbColumn("column2", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
     columnList += RdbColumn("column3", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
 
-    val it: Iterator[Seq[Object]] = new QueryResultIterator(preparedStatement, columnList)
+    val it: Iterator[Seq[Object]] = new QueryResultIterator(resultSet, columnList)
     var count: Int = 0
     while (it.hasNext) {
       it.next()

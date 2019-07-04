@@ -81,6 +81,7 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
     when(taskSetting.stringOption(MODE)).thenReturn(java.util.Optional.empty[String]())
     when(taskSetting.stringValue(TIMESTAMP_COLUMN_NAME)).thenReturn(timestampColumnName)
     when(taskSetting.intOption(JDBC_FETCHDATA_SIZE)).thenReturn(java.util.Optional.of(java.lang.Integer.valueOf(2000)))
+    when(taskSetting.intOption(JDBC_FLUSHDATA_SIZE)).thenReturn(java.util.Optional.of(java.lang.Integer.valueOf(2000)))
 
     val columns: Seq[Column] = Seq(
       Column.builder().name("COLUMN1").dataType(DataType.OBJECT).order(0).build(),
@@ -173,6 +174,7 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
     when(taskSetting.stringOption(MODE)).thenReturn(java.util.Optional.empty[String]())
     when(taskSetting.stringValue(TIMESTAMP_COLUMN_NAME)).thenReturn(timestampColumnName)
     when(taskSetting.intOption(JDBC_FETCHDATA_SIZE)).thenReturn(java.util.Optional.of(java.lang.Integer.valueOf(500)))
+    when(taskSetting.intOption(JDBC_FLUSHDATA_SIZE)).thenReturn(java.util.Optional.of(java.lang.Integer.valueOf(500)))
 
     val columns: Seq[Column] = Seq(
       Column.builder().name("COLUMN1").newName("COLUMN100").dataType(DataType.OBJECT).order(0).build(),
