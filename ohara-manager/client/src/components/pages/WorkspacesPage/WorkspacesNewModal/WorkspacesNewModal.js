@@ -297,7 +297,11 @@ const WorkerNewModal = props => {
                                     disableRipple
                                   />
                                 </ListItemIcon>
-                                <ListItemText id={node} primary={name} />
+                                <ListItemText
+                                  id={name}
+                                  primary={name}
+                                  data-testid={name}
+                                />
                               </ListItem>
                             );
                           })}
