@@ -10,3 +10,4 @@ build
 out
 ohara-common/src/main/java/com/island/ohara/common/util/VersionUtils.java
 ohara-manager/scripts/servicesApi/service.json
+.attach_pid*
