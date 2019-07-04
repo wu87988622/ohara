@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import Paper from '@material-ui/core/Paper';
 import Table from '@material-ui/core/Table';
@@ -29,15 +29,23 @@ import { TableLoader } from 'components/common/Mui/Loader';
 const SortTable = props => {
   const {
     isLoading,
-    order,
-    orderBy,
-    onRequestSort,
     headRows,
     rows,
+    defaultOrder = 'asc',
+    defaultOrderBy = headRows[0].id,
     tableName = 'sort',
   } = props;
+  const [order, setOrder] = useState(defaultOrder);
+  const [orderBy, setOrderBy] = useState(defaultOrderBy);
+
+  const handleRequestSort = (e, property) => {
+    const isDesc = orderBy === property && order === 'desc';
+    setOrder(isDesc ? 'asc' : 'desc');
+    setOrderBy(property);
+  };
+
   const createSortHandler = property => event => {
-    onRequestSort(event, property);
+    handleRequestSort(event, property);
   };
 
   const desc = (a, b, orderBy) => {
@@ -108,7 +116,7 @@ const SortTable = props => {
                 {keys.map(key => {
                   return (
                     <TableCell
-                      key={row[key]}
+                      key={`${key}:${row[key]}`}
                       align={key === keys[keys.length - 1] ? 'right' : 'left'}
                       data-testid={`${tableName}-${key}`}
                     >
@@ -126,9 +134,6 @@ const SortTable = props => {
 };
 
 SortTable.propTypes = {
-  order: PropTypes.string.isRequired,
-  orderBy: PropTypes.string.isRequired,
-  onRequestSort: PropTypes.func.isRequired,
   headRows: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.string,
@@ -138,6 +143,8 @@ SortTable.propTypes = {
   rows: PropTypes.array.isRequired,
   isLoading: PropTypes.bool.isRequired,
   tableName: PropTypes.string,
+  defaultOrder: PropTypes.string,
+  defaultOrderBy: PropTypes.string,
 };
 
 export default SortTable;

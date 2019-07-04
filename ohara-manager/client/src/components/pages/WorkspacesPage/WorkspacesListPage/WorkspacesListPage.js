@@ -26,9 +26,6 @@ import { StyledIcon } from './styles';
 const WorkspacesListPage = props => {
   const { workers, isLoading } = props;
 
-  const [order, setOrder] = React.useState('asc');
-  const [orderBy, setOrderBy] = React.useState('name');
-
   const headRows = [
     { id: 'name', label: 'Name' },
     { id: 'nodes', label: 'Nodes' },
@@ -46,34 +43,19 @@ const WorkspacesListPage = props => {
     );
   };
 
-  const createData = (name, nodes, action) => {
-    return { name, nodes, action };
-  };
-
   const rows = workers.map(d => {
-    return createData(d.name, d.nodeNames.join(','), actionButton(d));
+    return {
+      name: d.name,
+      nodes: d.nodeNames.join(','),
+      action: actionButton(d),
+    };
   });
-
-  const handleRequestSort = (event, property) => {
-    const isDesc = orderBy === property && order === 'desc';
-    setOrder(isDesc ? 'asc' : 'desc');
-    setOrderBy(property);
-  };
 
   const handleRedirect = workspaceName => {
     props.history.push(`/workspaces/${workspaceName}/overview`);
   };
 
-  return (
-    <SortTable
-      isLoading={isLoading}
-      headRows={headRows}
-      rows={rows}
-      onRequestSort={handleRequestSort}
-      order={order}
-      orderBy={orderBy}
-    />
-  );
+  return <SortTable isLoading={isLoading} headRows={headRows} rows={rows} />;
 };
 
 WorkspacesListPage.propTypes = {

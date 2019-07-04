@@ -33,8 +33,6 @@ import { StyledLabel, StyledInputFile } from './styles';
 const StreamApp = props => {
   const { workspaceName } = props;
   const [jarName, setJarName] = useState(null);
-  const [order, setOrder] = useState('asc');
-  const [orderBy, setOrderBy] = useState('name');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const { jars, fetchJars, loading } = utils.useFetchJars(workspaceName);
@@ -82,23 +80,14 @@ const StreamApp = props => {
     );
   };
 
-  const createData = (name, size, lastModified, action) => {
-    return { name, size, lastModified, action };
-  };
-
   const rows = jars.map(jar => {
-    return createData(
-      jar.name,
-      floor(divide(jar.size, 1024), 2),
-      utils.getDateFromTimestamp(jar.lastModified),
-      actionButton(jar),
-    );
+    return {
+      name: jar.name,
+      size: floor(divide(jar.size, 1024), 2),
+      lastModified: utils.getDateFromTimestamp(jar.lastModified),
+      action: actionButton(jar),
+    };
   });
-  const handleRequestSort = (e, property) => {
-    const isDesc = orderBy === property && order === 'desc';
-    setOrder(isDesc ? 'asc' : 'desc');
-    setOrderBy(property);
-  };
 
   const handleModalClose = () => {
     setIsModalOpen(false);
@@ -142,9 +131,6 @@ const StreamApp = props => {
           isLoading={loading}
           headRows={headRows}
           rows={rows}
-          onRequestSort={handleRequestSort}
-          order={order}
-          orderBy={orderBy}
           tableName="streamApp"
         />
       </Main>

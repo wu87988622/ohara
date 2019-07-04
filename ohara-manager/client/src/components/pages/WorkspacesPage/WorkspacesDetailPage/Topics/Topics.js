@@ -16,8 +16,6 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import TableRow from '@material-ui/core/TableRow';
-import TableCell from '@material-ui/core/TableCell';
 import IconButton from '@material-ui/core/IconButton';
 import toastr from 'toastr';
 import { get } from 'lodash';
@@ -27,27 +25,12 @@ import * as MESSAGES from 'constants/messages';
 import * as utils from '../WorkspacesDetailPageUtils';
 import TopicNewModal from './TopicNewModal';
 import { AlertDialog } from 'components/common/Mui/Dialog';
-import { Main, NewButton, StyledTable, ActionIcon } from '../styles';
+import { Main, NewButton, ActionIcon } from '../styles';
+import { SortTable } from 'components/common/Mui/Table';
 import { useSetState } from 'utils/hooks';
 
 const Topics = props => {
   const { worker } = props;
-
-  const headers = [
-    'Topic name',
-    'Partitions',
-    'Replication factor',
-    'Metrics (BytesInPerSec)',
-    'Last modified',
-    'Action',
-  ];
-
-  const [state, setState] = useSetState({
-    deleting: false,
-    isNewModalOpen: false,
-    isDeleteModalOpen: false,
-    topicToBeDeleted: '',
-  });
 
   const {
     topics,
@@ -55,6 +38,57 @@ const Topics = props => {
     loading: fetchingTopics,
     fetchTopics,
   } = utils.useFetchTopics(worker.brokerClusterName);
+
+  const headRows = [
+    { id: 'name', label: 'Topic name' },
+    { id: 'partitions', label: 'Partitions' },
+    { id: 'replication', label: 'Replication factor' },
+    { id: 'metrics', label: 'Metrics (BytesInPerSec)' },
+    { id: 'lastModified', label: 'Last modified' },
+    { id: 'action', label: 'Action' },
+  ];
+
+  const actionButton = name => {
+    return (
+      <IconButton
+        aria-label="Edit"
+        data-testid={name}
+        onClick={() =>
+          setState({
+            isDeleteModalOpen: true,
+            topicToBeDeleted: name,
+          })
+        }
+      >
+        <ActionIcon className="fas fa-trash-alt" />
+      </IconButton>
+    );
+  };
+
+  const rows = topics.map(topic => {
+    const {
+      name,
+      numberOfPartitions,
+      numberOfReplications,
+      metrics,
+      lastModified,
+    } = topic;
+    return {
+      name: name,
+      partitions: numberOfPartitions,
+      replication: numberOfReplications,
+      metrics: utils.getMetrics(metrics),
+      lastModified: utils.getDateFromTimestamp(lastModified),
+      action: actionButton(name),
+    };
+  });
+
+  const [state, setState] = useSetState({
+    deleting: false,
+    isNewModalOpen: false,
+    isDeleteModalOpen: false,
+    topicToBeDeleted: '',
+  });
 
   const handleDelete = async () => {
     setState({ deleting: true });
@@ -91,49 +125,12 @@ const Topics = props => {
       />
 
       <Main>
-        <StyledTable headers={headers} isLoading={fetchingTopics}>
-          {() => {
-            return topics.map(topic => {
-              const {
-                name,
-                numberOfPartitions,
-                numberOfReplications,
-                metrics,
-                lastModified,
-              } = topic;
-              return (
-                <TableRow key={name}>
-                  <TableCell data-testid="topic-name">{name}</TableCell>
-                  <TableCell data-testid="topic-partitions" align="left">
-                    {numberOfPartitions}
-                  </TableCell>
-                  <TableCell data-testid="topic-replications" align="left">
-                    {numberOfReplications}
-                  </TableCell>
-                  <TableCell align="left">
-                    {utils.getMetrics(metrics)}
-                  </TableCell>
-                  <TableCell data-testid="topic-last-modified" align="left">
-                    {utils.getDateFromTimestamp(lastModified)}
-                  </TableCell>
-                  <TableCell align="right">
-                    <IconButton
-                      data-testid={topic.name}
-                      onClick={() =>
-                        setState({
-                          isDeleteModalOpen: true,
-                          topicToBeDeleted: name,
-                        })
-                      }
-                    >
-                      <ActionIcon className="fas fa-trash-alt" />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              );
-            });
-          }}
-        </StyledTable>
+        <SortTable
+          isLoading={fetchingTopics}
+          headRows={headRows}
+          rows={rows}
+          tableName="topic"
+        />
       </Main>
 
       <TopicNewModal

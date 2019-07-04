@@ -16,7 +16,6 @@
 
 import React, { useEffect, useCallback, useState } from 'react';
 import toastr from 'toastr';
-import moment from 'moment';
 import { get, isEmpty } from 'lodash';
 import PropTypes from 'prop-types';
 import TableRow from '@material-ui/core/TableRow';
@@ -29,6 +28,7 @@ import * as MESSAGES from 'constants/messages';
 import { Dialog } from 'components/common/Mui/Dialog';
 import * as commonUtils from 'utils/commonUtils';
 import Checkbox from '@material-ui/core/Checkbox';
+import * as utils from '../WorkspacesDetailPageUtils';
 import { SortTable } from 'components/common/Mui/Table';
 import { Main, NewButton, StyledTable } from '../styles';
 
@@ -38,8 +38,6 @@ const Nodes = props => {
   const [broker, setBroker] = useState(null);
   const [unusedNodes, setUnusedNodes] = useState([]);
   const [selectNodes, setSelectNodes] = useState([]);
-  const [order, setOrder] = useState('asc');
-  const [orderBy, setOrderBy] = useState('name');
   const [loading, setLoading] = useState(true);
   const [confirmDisabled, setConfirmDisabled] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -67,23 +65,13 @@ const Nodes = props => {
     { id: 'lastModified', label: 'Last modified' },
   ];
 
-  const createData = (name, port, lastModified) => {
-    return { name, port, lastModified };
-  };
-
   const rows = useNodes.map(wk => {
-    return createData(
-      wk.name,
-      wk.port,
-      moment.unix(wk.lastModified / 1000).format('YYYY-MM-DD HH:mm:ss'),
-    );
+    return {
+      name: wk.name,
+      port: wk.port,
+      lastModified: utils.getDateFromTimestamp(wk.lastModified),
+    };
   });
-
-  const handleRequestSort = (event, property) => {
-    const isDesc = orderBy === property && order === 'desc';
-    setOrder(isDesc ? 'asc' : 'desc');
-    setOrderBy(property);
-  };
 
   const handleNodeSelectClose = e => {
     setDialogOpen(false);
@@ -161,9 +149,6 @@ const Nodes = props => {
           isLoading={loading}
           headRows={headRows}
           rows={rows}
-          onRequestSort={handleRequestSort}
-          order={order}
-          orderBy={orderBy}
           confirmDisabled={confirmDisabled}
         />
       </Main>
