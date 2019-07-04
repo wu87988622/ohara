@@ -48,7 +48,7 @@ describe('WorkspacesPage', () => {
       'plugin/ohara-it-sink.jar',
       'ohara-it-sink.jar',
       'application/java-archive',
-    ).wait(500);
+    ).wait(1000);
 
     cy.getByText('ohara-it-sink').should('have.length', 1);
     cy.getByText('ohara-it-sink').click();
