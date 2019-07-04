@@ -29,7 +29,7 @@ describe('WorkspacesPage', () => {
     cy.route('GET', 'api/topics').as('getTopics');
   });
 
-  it('creates a new connect worker cluster', () => {
+  it.skip('creates a new connect worker cluster', () => {
     const nodeName = Cypress.env('nodeHost');
     const clusterName = utils.makeRandomStr();
     const port = utils.makeRandomPort();
@@ -91,8 +91,10 @@ describe('WorkspacesPage', () => {
       .wait('@getWorkers')
       .getByTestId(Cypress.env('WORKER_NAME'))
       .click()
-      .getByText('Topics')
-      .click()
+      .getByTestId('workspace-tab')
+      .within(() => {
+        cy.getByText('Topics').click();
+      })
       .getByText('New topic')
       .click()
       .getByPlaceholderText('Kafka Topic')
@@ -114,8 +116,10 @@ describe('WorkspacesPage', () => {
       .wait('@getWorkers')
       .getByTestId(Cypress.env('WORKER_NAME'))
       .click()
-      .getByText('Topics')
-      .click()
+      .getByTestId('workspace-tab')
+      .within(() => {
+        cy.getByText('Topics').click();
+      })
       .wait('@getTopics')
       .get('@newTopic')
       .then(topic => {

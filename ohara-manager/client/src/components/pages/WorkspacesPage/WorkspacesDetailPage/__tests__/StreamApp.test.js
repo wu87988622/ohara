@@ -20,7 +20,7 @@ import {
   render,
   waitForElement,
   fireEvent,
-} from 'react-testing-library';
+} from '@testing-library/react';
 import { divide, floor } from 'lodash';
 import 'jest-dom/extend-expect';
 

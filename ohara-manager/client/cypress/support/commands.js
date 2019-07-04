@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import 'cypress-testing-library/add-commands';
+import '@testing-library/cypress/add-commands';
 import { axiosInstance } from '../../src/api/apiUtils';
 import * as utils from '../utils';
 

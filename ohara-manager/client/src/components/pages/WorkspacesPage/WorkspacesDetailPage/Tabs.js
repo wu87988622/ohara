@@ -58,6 +58,7 @@ const MuiTabs = props => {
         indicatorColor="primary"
         textColor="primary"
         onChange={handleChange}
+        data-testid="workspace-tab"
       >
         <Tab label="Overview" />
         <Tab label="Nodes" />

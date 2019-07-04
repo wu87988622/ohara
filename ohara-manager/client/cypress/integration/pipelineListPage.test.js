@@ -60,8 +60,12 @@ describe('PipelineListPage', () => {
     cy.createPipeline(pipelineParams)
       .visit(URLS.PIPELINES)
       .wait('@getPipelines')
-      .getByTestId('edit-pipeline')
-      .click()
+      .getByText(pipelineName)
+      .then($el => {
+        cy.wrap($el.parent()).within(() => {
+          cy.getByTestId('edit-pipeline').click();
+        });
+      })
       .location('pathname')
       .should('contains', `${URLS.PIPELINES}/edit`);
   });

@@ -16,7 +16,7 @@
 
 import React from 'react';
 import 'jest-dom/extend-expect';
-import { render } from 'react-testing-library';
+import { render } from '@testing-library/react';
 
 import * as generate from 'utils/generate';
 import StreamApp from '../StreamApp';

@@ -20,7 +20,7 @@ import {
   render,
   waitForElement,
   fireEvent,
-} from 'react-testing-library';
+} from '@testing-library/react';
 import 'jest-dom/extend-expect';
 
 import * as generate from 'utils/generate';
