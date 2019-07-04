@@ -55,7 +55,7 @@ ARG BEFORE_BUILD=""
 WORKDIR /testpatch/ohara
 RUN git clone $REPO /testpatch/ohara
 RUN git checkout $COMMIT
-RUN if [[ "$BEFORE_BUILD" != "" ]]; then /bin/bash -c "$BEFORE_BUILD" ; fi
+RUN if [[ "$BEFORE_BUILD" != "" ]]; then /bin/sh -c "$BEFORE_BUILD" ; fi
 
 # copy required jars except test jar
 RUN gradle jar -x test && \
