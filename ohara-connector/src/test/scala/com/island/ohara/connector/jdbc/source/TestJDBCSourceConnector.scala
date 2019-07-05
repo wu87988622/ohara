@@ -22,12 +22,11 @@ import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
 import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Cell, Row, Serializer}
-import com.island.ohara.common.util.Releasable
 import com.island.ohara.kafka.Consumer
 import com.island.ohara.kafka.connector.TaskSetting
 import com.island.ohara.testing.With3Brokers3Workers
 import com.island.ohara.testing.service.Database
-import org.junit.{After, Before, Test}
+import org.junit.{Before, Test}
 import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
@@ -47,7 +46,7 @@ class TestJDBCSourceConnector extends With3Brokers3Workers with Matchers {
 
   @Before
   def setup(): Unit = {
-    val column1 = RdbColumn("column1", "TIMESTAMP(6)", true)
+    val column1 = RdbColumn("column1", "TIMESTAMP", true)
     val column2 = RdbColumn("column2", "varchar(45)", false)
     val column3 = RdbColumn("column3", "VARCHAR(45)", false)
     val column4 = RdbColumn("column4", "integer", false)
@@ -62,15 +61,10 @@ class TestJDBCSourceConnector extends With3Brokers3Workers with Matchers {
     statement.executeUpdate(
       s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-01 00:00:02', 'a31', 'a32', 3)")
     statement.executeUpdate(
-      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-01 00:00:03.123456', 'a61', 'a62', 6)")
-    statement.executeUpdate(
-      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-01 00:00:04.123', 'a71', 'a72', 7)")
-    statement.executeUpdate(
       s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES(NOW() + INTERVAL 3 MINUTE, 'a41', 'a42', 4)")
     statement.executeUpdate(
       s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES(NOW() + INTERVAL 1 DAY, 'a51', 'a52', 5)")
   }
-
   @Test
   def testJDBCSourceConnector(): Unit = {
     val connectorName: String = "JDBC-Source-Connector-Test"
@@ -119,22 +113,7 @@ class TestJDBCSourceConnector extends With3Brokers3Workers with Matchers {
       row2.cell(1) shouldBe Cell.of("column2", "a31")
       row2.cell(2) shouldBe Cell.of("column3", "a32")
       row2.cell(3).toString shouldBe Cell.of("column4", "3").toString
-
-      val row3: Row = record(3).key.get
-      row3.size shouldBe 4
-      row3.cell(0).toString shouldBe Cell.of("column1", "2018-09-01 00:00:03.123456").toString
-      row3.cell(1) shouldBe Cell.of("column2", "a61")
-      row3.cell(2) shouldBe Cell.of("column3", "a62")
-      row3.cell(3).toString shouldBe Cell.of("column4", "6").toString
-
-      val row4: Row = record(4).key.get
-      row4.size shouldBe 4
-      row4.cell(0).toString shouldBe Cell.of("column1", "2018-09-01 00:00:04.123").toString
-      row4.cell(1) shouldBe Cell.of("column2", "a71")
-      row4.cell(2) shouldBe Cell.of("column3", "a72")
-      row4.cell(3).toString shouldBe Cell.of("column4", "7").toString
-
-      record.size shouldBe 5
+      record.size shouldBe 3
 
     } finally consumer.close()
   }
@@ -173,12 +152,6 @@ class TestJDBCSourceConnector extends With3Brokers3Workers with Matchers {
     intercept[IllegalArgumentException] {
       jdbcSourceConnector.checkTimestampColumnName("100col")
     }
-  }
-
-  @After
-  def tearDown(): Unit = {
-    Releasable.close(client)
-    Releasable.close(db)
   }
 
   import scala.collection.JavaConverters._

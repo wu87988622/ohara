@@ -27,6 +27,8 @@ import org.mockito.Mockito._
 import org.scalatest.Matchers
 import org.scalatest.mockito.MockitoSugar
 
+import scala.collection.mutable.ListBuffer
+
 class TestResultSetDataConverter extends MediumTest with Matchers with MockitoSugar {
 
   @Test
@@ -36,11 +38,10 @@ class TestResultSetDataConverter extends MediumTest with Matchers with MockitoSu
     when(resultSet.getString("column2")).thenReturn("aaa")
     when(resultSet.getInt("column3")).thenReturn(10)
 
-    val columnList = Seq(
-      RdbColumn("column1", RDBDataTypeConverter.RDB_TYPE_TIMESTAMP, true),
-      RdbColumn("column2", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false),
-      RdbColumn("column3", RDBDataTypeConverter.RDB_TYPE_INTEGER, false)
-    )
+    val columnList = new ListBuffer[RdbColumn]
+    columnList += RdbColumn("column1", RDBDataTypeConverter.RDB_TYPE_TIMESTAMP, true)
+    columnList += RdbColumn("column2", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
+    columnList += RdbColumn("column3", RDBDataTypeConverter.RDB_TYPE_INTEGER, false)
 
     val result: Seq[ColumnInfo[_]] = ResultSetDataConverter.converterRecord(resultSet, columnList)
     result.head.columnName shouldBe "column1"
@@ -62,8 +63,9 @@ class TestResultSetDataConverter extends MediumTest with Matchers with MockitoSu
     when(resultSet.getTimestamp("column1", DateTimeUtils.CALENDAR)).thenReturn(new Timestamp(0L))
     when(resultSet.getString("column2")).thenReturn(null)
 
-    val columnList = Seq(RdbColumn("column1", RDBDataTypeConverter.RDB_TYPE_TIMESTAMP, true),
-                         RdbColumn("column2", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false))
+    val columnList = new ListBuffer[RdbColumn]
+    columnList += RdbColumn("column1", RDBDataTypeConverter.RDB_TYPE_TIMESTAMP, true)
+    columnList += RdbColumn("column2", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
 
     val result: Seq[ColumnInfo[_]] = ResultSetDataConverter.converterRecord(resultSet, columnList)
     result(1).columnName shouldBe "column2"
