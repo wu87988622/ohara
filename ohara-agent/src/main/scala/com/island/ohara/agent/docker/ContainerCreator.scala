@@ -24,7 +24,7 @@ import com.island.ohara.common.util.CommonUtils
 /**
   * A interface used to run a docker container on remote node
   */
-trait ContainerCreator {
+trait ContainerCreator extends com.island.ohara.common.pattern.Creator[Unit] {
   private[this] var hostname: String = CommonUtils.randomString()
   private[this] var imageName: String = _
   private[this] var name: String = CommonUtils.randomString()
@@ -39,7 +39,7 @@ trait ContainerCreator {
   /**
     * execute the docker container on background.
     */
-  def execute(): Unit = doExecute(
+  override def create(): Unit = doCreate(
     hostname = CommonUtils.requireNonEmpty(hostname),
     imageName = CommonUtils.requireNonEmpty(imageName),
     name = CommonUtils.requireNonEmpty(name),
@@ -51,16 +51,17 @@ trait ContainerCreator {
     volumeMapping = volumeMapping,
     networkDriver = networkDriver
   )
-  protected def doExecute(hostname: String,
-                          imageName: String,
-                          name: String,
-                          command: String,
-                          removeContainerOnExit: Boolean,
-                          ports: Map[Int, Int],
-                          envs: Map[String, String],
-                          route: Map[String, String],
-                          volumeMapping: Map[String, String],
-                          networkDriver: NetworkDriver): Unit
+
+  protected def doCreate(hostname: String,
+                         imageName: String,
+                         name: String,
+                         command: String,
+                         removeContainerOnExit: Boolean,
+                         ports: Map[Int, Int],
+                         envs: Map[String, String],
+                         route: Map[String, String],
+                         volumeMapping: Map[String, String],
+                         networkDriver: NetworkDriver): Unit
 
   /**
     * set container's name. default is a random string

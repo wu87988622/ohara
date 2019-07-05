@@ -66,7 +66,7 @@ class TestShabondiK8S extends IntegrationTest with Matchers with Inside {
         .labelName(podLabelName)
         .domainName(domainName)
         .name(hostname)
-        .run()
+        .create()
     }
 
     val containerInfo = containerInfoOpt.get

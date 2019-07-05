@@ -14,23 +14,20 @@
  * limitations under the License.
  */
 
-package com.island.ohara.connector.hdfs.creator
-
-import com.island.ohara.connector.hdfs.storage.Storage
+package com.island.ohara.common.pattern;
 
 /**
-  * This abstract for define the storage instance
-  */
-trait StorageCreator extends com.island.ohara.common.pattern.Creator[Storage] {
-
+ * This is do-nothing but base class. The purpose of this class is used to make all creator have
+ * similar signatures.
+ *
+ * @param <T> type of final result
+ */
+public interface Creator<T> {
   /**
-    * get storage instance
-    * @return
-    */
-  override def create(): Storage
-
-  /**
-    * close storage filesystem
-    */
-  def close(): Unit
+   * produce a instance. This is the final operation of chain of this creator. DON'T reuse this
+   * creator since all inner objects are undefined after instantiating a object.
+   *
+   * @return an object
+   */
+  T create();
 }

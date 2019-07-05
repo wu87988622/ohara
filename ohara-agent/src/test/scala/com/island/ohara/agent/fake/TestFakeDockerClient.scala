@@ -40,7 +40,7 @@ class TestFakeDockerClient extends SmallTest with Matchers {
       .name(methodName())
       .envs(Map("bar" -> "foo"))
       .portMappings(Map(1234 -> 5678))
-      .execute()
+      .create()
   }
   @Test
   def testFakeClient(): Unit = {

@@ -20,21 +20,19 @@ import java.io.FileInputStream
 import java.util.jar.JarInputStream
 import java.util.regex.Pattern
 
+import org.apache.commons.lang3.ClassUtils
 import org.junit.Test
 
+import scala.collection.JavaConverters._
 package object assembly {
 
   /**
     * return the super class and interfaces of input class.
-    * @param clz input class
+    * @param rootClass input class
     * @return super class and interfaces
     */
-  def superClasses(clz: Class[_]): Seq[Class[_]] = new Iterator[Class[_]] {
-    private[this] var current = clz.getSuperclass
-    override def hasNext: Boolean = current != null
-    override def next(): Class[_] = try current
-    finally current = current.getSuperclass
-  }.toSeq ++ clz.getInterfaces
+  def superClasses(rootClass: Class[_]): Seq[Class[_]] =
+    ClassUtils.getAllInterfaces(rootClass).asScala ++ ClassUtils.getAllSuperclasses(rootClass).asScala
 
   /**
     * seek the methods having annotation "Test" from a class

@@ -99,7 +99,7 @@ public class RowSinkRecord {
     return new Builder();
   }
 
-  public static class Builder implements com.island.ohara.common.Builder<RowSinkRecord> {
+  public static class Builder implements com.island.ohara.common.pattern.Builder<RowSinkRecord> {
     private Builder() {
       // do nothing
     }

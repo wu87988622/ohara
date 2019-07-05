@@ -32,7 +32,6 @@ import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Await
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 /**

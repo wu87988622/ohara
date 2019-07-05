@@ -43,7 +43,7 @@ private class ZookeeperCollieImpl(node: NodeCollie, dockerCache: DockerClientCac
           .envs(containerInfo.environments)
           .name(containerInfo.name)
           .route(route)
-          .execute()
+          .create()
       )
     } catch {
       case e: Throwable =>

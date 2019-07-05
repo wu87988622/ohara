@@ -25,9 +25,8 @@ import org.junit.Test
 import org.scalatest.Matchers
 import spray.json.DeserializationException
 
-import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 class TestZookeeperCreator extends SmallTest with Matchers {
   private[this] val TIMEOUT: FiniteDuration = 30 seconds
 

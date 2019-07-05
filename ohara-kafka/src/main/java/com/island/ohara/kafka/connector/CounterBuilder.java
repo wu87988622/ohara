@@ -16,13 +16,14 @@
 
 package com.island.ohara.kafka.connector;
 
+import com.island.ohara.common.pattern.Builder;
 import com.island.ohara.metrics.basic.Counter;
 
 /**
  * this is a wrap of Counter.Builder. It simplify the Counter.Builder via removing some methods
  * which are unrelated to connector.
  */
-public final class CounterBuilder implements com.island.ohara.common.Builder<Counter> {
+public final class CounterBuilder implements Builder<Counter> {
 
   static CounterBuilder of() {
     return new CounterBuilder();

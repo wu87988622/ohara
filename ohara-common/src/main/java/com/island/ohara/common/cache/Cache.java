@@ -87,7 +87,7 @@ public interface Cache<K, V> {
     return new Builder<>();
   }
 
-  class Builder<K, V> implements com.island.ohara.common.Builder<Cache<K, V>> {
+  class Builder<K, V> implements com.island.ohara.common.pattern.Builder<Cache<K, V>> {
     private int maxSize = 1000;
     private Duration timeout = Duration.ofSeconds(5);
     private boolean blockingOnGet = false;

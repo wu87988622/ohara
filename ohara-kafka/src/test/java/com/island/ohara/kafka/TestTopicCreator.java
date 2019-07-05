@@ -24,8 +24,9 @@ public class TestTopicCreator extends SmallTest {
 
   private static class FakeTopicCreator extends TopicCreator {
     @Override
-    public void create() {
+    public Void create() {
       // do nothing
+      return null;
     }
   }
 

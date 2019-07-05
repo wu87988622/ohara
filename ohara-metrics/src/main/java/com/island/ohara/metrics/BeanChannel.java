@@ -132,7 +132,7 @@ public interface BeanChannel extends Iterable<BeanObject> {
     return new Register<T>();
   }
 
-  class Builder implements com.island.ohara.common.Builder<BeanChannel> {
+  class Builder implements com.island.ohara.common.pattern.Builder<BeanChannel> {
     private String domainName;
     private Map<String, String> properties = Collections.emptyMap();
     private String hostname = null;

@@ -29,7 +29,6 @@ import spray.json.DeserializationException
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
 
 class TestStreamCreator extends SmallTest with Matchers {
 

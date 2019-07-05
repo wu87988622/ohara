@@ -215,6 +215,8 @@ object K8SClient {
           private[this] var routes: Map[String, String] = Map.empty
           private[this] var command: Seq[String] = Seq.empty
           private[this] var args: Seq[String] = Seq.empty
+          private[this] implicit var executionContext: ExecutionContext =
+            scala.concurrent.ExecutionContext.Implicits.global
 
           override def name(name: String): ContainerCreator = {
             this.name = CommonUtils.requireNonEmpty(name)
@@ -279,7 +281,12 @@ object K8SClient {
             this
           }
 
-          override def run()(implicit executionContext: ExecutionContext): Future[Option[ContainerInfo]] =
+          override def threadPool(executionContext: ExecutionContext): ContainerCreator = {
+            this.executionContext = Objects.requireNonNull(executionContext)
+            this
+          }
+
+          override def create(): Future[Option[ContainerInfo]] =
             nodeNameIPInfo
               .map { ipInfo =>
                 CreatePodSpec(
@@ -344,7 +351,7 @@ object K8SClient {
     }
   }
 
-  trait ContainerCreator {
+  trait ContainerCreator extends com.island.ohara.common.pattern.Creator[Future[Option[ContainerInfo]]] {
     def name(name: String): ContainerCreator
 
     def imageName(imageName: String): ContainerCreator
@@ -359,7 +366,15 @@ object K8SClient {
 
     def nodename(nodename: String): ContainerCreator
 
-    def run()(implicit executionContext: ExecutionContext): Future[Option[ContainerInfo]]
+    /**
+      * set the thread pool used to execute request
+      * @param executionContext thread pool
+      * @return this creator
+      */
+    @Optional("default pool is scala.concurrent.ExecutionContext.Implicits.global")
+    def threadPool(executionContext: ExecutionContext): ContainerCreator
+
+    override def create(): Future[Option[ContainerInfo]]
 
     def domainName(domainName: String): ContainerCreator
 

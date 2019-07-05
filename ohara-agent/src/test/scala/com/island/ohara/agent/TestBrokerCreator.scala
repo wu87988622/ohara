@@ -26,7 +26,6 @@ import org.junit.Test
 import org.scalatest.Matchers
 import spray.json.DeserializationException
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 

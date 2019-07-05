@@ -52,7 +52,8 @@ public interface Producer<Key, Value> extends Releasable {
     return new Builder<>();
   }
 
-  class Builder<Key, Value> implements com.island.ohara.common.Builder<Producer<Key, Value>> {
+  class Builder<Key, Value>
+      implements com.island.ohara.common.pattern.Builder<Producer<Key, Value>> {
     private Map<String, String> options = Collections.emptyMap();
     private String connectionProps;
     // default noAcks

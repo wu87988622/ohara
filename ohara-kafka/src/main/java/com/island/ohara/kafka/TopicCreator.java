@@ -29,7 +29,7 @@ import org.apache.kafka.common.config.TopicConfig;
  * a helper class used to create the kafka topic. all member are protected since we have to
  * implement a do-nothing TopicCreator in testing.
  */
-public abstract class TopicCreator {
+public abstract class TopicCreator implements com.island.ohara.common.pattern.Creator<Void> {
   protected int numberOfPartitions = 1;
   protected short numberOfReplications = 1;
   protected Map<String, String> options = Collections.emptyMap();
@@ -118,6 +118,4 @@ public abstract class TopicCreator {
     this.name = CommonUtils.requireNonEmpty(name);
     return this;
   }
-
-  public abstract void create();
 }

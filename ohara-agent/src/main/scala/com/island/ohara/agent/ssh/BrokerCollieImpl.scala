@@ -44,7 +44,7 @@ private class BrokerCollieImpl(node: NodeCollie, dockerCache: DockerClientCache,
           .envs(containerInfo.environments)
           .name(containerInfo.name)
           .route(route)
-          .execute()
+          .create()
       )
     } catch {
       case e: Throwable =>

@@ -37,7 +37,7 @@ private[this] abstract class K8SBasicCollieImpl[T <: ClusterInfo: ClassTag, Crea
 
   override protected def doAddNode(previousCluster: T, previousContainers: Seq[ContainerInfo], newNodeName: String)(
     implicit executionContext: ExecutionContext): Future[T] =
-    creator().copy(previousCluster).nodeName(newNodeName).create()
+    creator().copy(previousCluster).nodeName(newNodeName).threadPool(executionContext).create()
 
   override protected def doRemove(clusterInfo: T, containerInfos: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[Boolean] = {

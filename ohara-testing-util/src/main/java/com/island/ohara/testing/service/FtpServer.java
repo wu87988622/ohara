@@ -68,7 +68,7 @@ public interface FtpServer extends Releasable {
     return new Builder();
   }
 
-  class Builder implements com.island.ohara.common.Builder<FtpServer> {
+  class Builder implements com.island.ohara.common.pattern.Builder<FtpServer> {
     private Builder() {}
 
     private String advertisedHostname = CommonUtils.hostname();

@@ -171,7 +171,7 @@ object FtpClient {
   private[this] val LOG = Logger(classOf[FtpClient])
   def builder(): Builder = new Builder
 
-  class Builder private[FtpClient] extends com.island.ohara.common.Builder[FtpClient] {
+  class Builder private[FtpClient] extends com.island.ohara.common.pattern.Builder[FtpClient] {
     private[this] var hostname: String = _
 
     /**

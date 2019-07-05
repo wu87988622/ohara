@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.common;
+package com.island.ohara.common.pattern;
 
 /**
  * This is do-nothing but base class. The purpose of this class is used to make all builder have

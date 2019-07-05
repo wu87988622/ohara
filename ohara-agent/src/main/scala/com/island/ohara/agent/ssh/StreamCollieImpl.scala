@@ -109,7 +109,7 @@ private class StreamCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClient
                           .command(String.join(" ",
                                                StreamCollie.formatJMXProperties(node.name, jmxPort).mkString(" "),
                                                StreamCollie.MAIN_ENTRY))
-                          .execute()
+                          .create()
                       )
                       Some(containerInfo)
                     } catch {

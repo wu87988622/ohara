@@ -173,7 +173,7 @@ object DockerClient {
     def write(path: String, content: Seq[String]): String
   }
 
-  class Builder private[agent] extends com.island.ohara.common.Builder[DockerClient] {
+  class Builder private[agent] extends com.island.ohara.common.pattern.Builder[DockerClient] {
     private[this] var hostname: String = _
     private[this] var port: Int = 22
     private[this] var user: String = _

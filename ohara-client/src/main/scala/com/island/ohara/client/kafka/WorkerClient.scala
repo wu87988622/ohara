@@ -169,7 +169,7 @@ object WorkerClient {
 
   private[this] val LOG = Logger(WorkerClient.getClass)
 
-  class Builder private[WorkerClient] extends com.island.ohara.common.Builder[WorkerClient] {
+  class Builder private[WorkerClient] extends com.island.ohara.common.pattern.Builder[WorkerClient] {
     private[this] var _workerAddress: Seq[String] = Seq.empty
     private[this] var retryLimit: Int = 3
     private[this] var retryInternal: Duration = 3 seconds
@@ -320,8 +320,9 @@ object WorkerClient {
   /**
     * a base class used to collect the setting from source/sink connector when creating
     */
-  trait Creator {
+  trait Creator extends com.island.ohara.common.pattern.Creator[Future[ConnectorCreationResponse]] {
     private[this] val connectorFormatter = ConnectorFormatter.of()
+    private[this] var executionContext: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
 
     /**
       * set the connector id. It should be a unique id.
@@ -437,11 +438,22 @@ object WorkerClient {
     }
 
     /**
+      * set the thread pool used to execute request
+      * @param executionContext thread pool
+      * @return this creator
+      */
+    @Optional("default pool is scala.concurrent.ExecutionContext.Implicits.global")
+    def threadPool(executionContext: ExecutionContext): Creator = {
+      this.executionContext = Objects.requireNonNull(executionContext)
+      this
+    }
+
+    /**
       * send the request to create the sink connector.
       *
       * @return this one
       */
-    def create()(implicit executionContext: ExecutionContext): Future[ConnectorCreationResponse] =
+    override def create(): Future[ConnectorCreationResponse] =
       doCreate(
         executionContext = Objects.requireNonNull(executionContext),
         creation = connectorFormatter.requestOfCreation()

@@ -128,5 +128,5 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: Cl
 
   override protected def doAddNode(previousCluster: T, previousContainers: Seq[ContainerInfo], newNodeName: String)(
     implicit executionContext: ExecutionContext): Future[T] =
-    creator().copy(previousCluster).nodeName(newNodeName).create()
+    creator().copy(previousCluster).nodeName(newNodeName).threadPool(executionContext).create()
 }

@@ -101,7 +101,7 @@ object PrometheusCreator {
               ))
               .name(name)
               //        .route(route)
-              .execute()
+              .create()
           } catch {
             case e: Throwable =>
               client.remove(name)

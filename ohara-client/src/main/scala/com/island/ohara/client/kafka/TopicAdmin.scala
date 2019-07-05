@@ -182,11 +182,13 @@ object TopicAdmin {
 
   final case class TopicInfo(name: String, numberOfPartitions: Int, numberOfReplications: Short)
 
-  trait Creator {
+  trait Creator extends com.island.ohara.common.pattern.Creator[Future[TopicAdmin.TopicInfo]] {
     private[this] var name: String = _
     private[this] var numberOfPartitions: Int = 1
     private[this] var numberOfReplications: Short = 1
     private[this] var cleanupPolicy: CleanupPolicy = CleanupPolicy.DELETE
+    private[this] implicit var executionContext: ExecutionContext =
+      scala.concurrent.ExecutionContext.Implicits.global
 
     def name(name: String): Creator.this.type = {
       this.name = Objects.requireNonNull(name)
@@ -211,7 +213,18 @@ object TopicAdmin {
       this
     }
 
-    def create()(implicit executionContext: ExecutionContext): Future[TopicAdmin.TopicInfo] = doCreate(
+    /**
+      * set the thread pool used to execute request
+      * @param executionContext thread pool
+      * @return this creator
+      */
+    @Optional("default pool is scala.concurrent.ExecutionContext.Implicits.global")
+    def threadPool(executionContext: ExecutionContext): Creator = {
+      this.executionContext = Objects.requireNonNull(executionContext)
+      this
+    }
+
+    override def create(): Future[TopicAdmin.TopicInfo] = doCreate(
       executionContext = Objects.requireNonNull(executionContext),
       name = Objects.requireNonNull(name),
       numberOfPartitions = CommonUtils.requirePositiveInt(numberOfPartitions),

@@ -169,7 +169,7 @@ object StreamCollie {
       this
     }
 
-    override def create()(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] = doCreate(
+    override def create(): Future[StreamClusterInfo] = doCreate(
       CommonUtils.requireNonEmpty(clusterName),
       CommonUtils.requireNonEmpty(nodeNames.asJava).asScala.toSet,
       CommonUtils.requireNonEmpty(imageName),

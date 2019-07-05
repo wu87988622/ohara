@@ -303,6 +303,7 @@ private[configurator] object StreamRoute {
                                               .fromTopics(data.from)
                                               .toTopics(data.to)
                                               .enableExactlyOnce(data.exactlyOnce)
+                                              .threadPool(executionContext)
                                               .create())
                                   }
                                   .map(_.state -> None)

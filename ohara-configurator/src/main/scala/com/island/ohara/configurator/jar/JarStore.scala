@@ -175,7 +175,7 @@ object JarStore {
 
   def builder: Builder = new Builder
 
-  class Builder private[JarStore] extends com.island.ohara.common.Builder[JarStore] {
+  class Builder private[JarStore] extends com.island.ohara.common.pattern.Builder[JarStore] {
     private[this] var homeFolder: String = _
     private[this] var hostname: String = _
     private[this] var port: Int = -1

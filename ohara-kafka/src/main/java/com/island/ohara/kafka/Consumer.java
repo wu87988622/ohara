@@ -118,7 +118,8 @@ public interface Consumer<K, V> extends Releasable {
     return new Builder<>();
   }
 
-  class Builder<Key, Value> implements com.island.ohara.common.Builder<Consumer<Key, Value>> {
+  class Builder<Key, Value>
+      implements com.island.ohara.common.pattern.Builder<Consumer<Key, Value>> {
     private Map<String, String> options = Collections.emptyMap();
     private OffsetResetStrategy fromBegin = OffsetResetStrategy.LATEST;
     private List<String> topicNames;

@@ -52,7 +52,8 @@ private class K8SBrokerCollieImpl(node: NodeCollie, zkCollie: ZookeeperCollie, k
         .hostname(s"${containerInfo.name}$DIVIDER${node.name}")
         .envs(containerInfo.environments)
         .name(containerInfo.name)
-        .run()
+        .threadPool(executionContext)
+        .create()
       Await.result(creator, TIMEOUT)
     } catch {
       case e: Throwable =>

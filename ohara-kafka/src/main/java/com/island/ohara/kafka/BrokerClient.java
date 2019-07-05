@@ -134,7 +134,7 @@ public interface BrokerClient extends Releasable {
         return new TopicCreator() {
 
           @Override
-          public void create() {
+          public Void create() {
             CheckedExceptionUtils.wrap(
                 () ->
                     admin
@@ -146,6 +146,7 @@ public interface BrokerClient extends Releasable {
                         .get(name)
                         .get(timeout.toMillis(), TimeUnit.MILLISECONDS),
                 handler);
+            return null;
           }
         };
       }

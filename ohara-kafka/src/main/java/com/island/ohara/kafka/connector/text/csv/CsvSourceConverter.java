@@ -183,7 +183,8 @@ public class CsvSourceConverter implements TextSourceConverter {
         .collect(Collectors.toList());
   }
 
-  public static class Builder implements com.island.ohara.common.Builder<CsvSourceConverter> {
+  public static class Builder
+      implements com.island.ohara.common.pattern.Builder<CsvSourceConverter> {
     // Required parameters
     private String path;
     private List<String> topics;

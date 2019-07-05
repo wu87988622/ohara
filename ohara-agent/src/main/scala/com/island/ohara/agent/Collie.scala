@@ -16,10 +16,13 @@
 
 package com.island.ohara.agent
 
+import java.util.Objects
+
 import com.island.ohara.agent.Collie.ClusterCreator
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
 
 import scala.collection.JavaConverters._
@@ -135,10 +138,11 @@ trait Collie[T <: ClusterInfo, Creator <: ClusterCreator[T]] {
 }
 
 object Collie {
-  trait ClusterCreator[T <: ClusterInfo] {
+  trait ClusterCreator[T <: ClusterInfo] extends com.island.ohara.common.pattern.Creator[Future[T]] {
     protected var imageName: String = _
     protected var clusterName: String = _
     protected var nodeNames: Set[String] = Set.empty
+    protected var executionContext: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
 
     /**
       * set the creator according to another cluster info
@@ -202,6 +206,17 @@ object Collie {
       this
     }
 
-    def create()(implicit executionContext: ExecutionContext): Future[T]
+    /**
+      * set the thread pool used to create cluster by async call
+      * @param executionContext thread pool
+      * @return this creator
+      */
+    @Optional("default pool is scala.concurrent.ExecutionContext.Implicits.global")
+    def threadPool(executionContext: ExecutionContext): ClusterCreator.this.type = {
+      this.executionContext = Objects.requireNonNull(executionContext)
+      this
+    }
+
+    override def create(): Future[T]
   }
 }

@@ -158,7 +158,7 @@ class TestK8SSimple extends IntegrationTest with Matchers {
             "ZK_PEER_PORT" -> s"${CommonUtils.availablePort()}",
             "ZK_ELECTION_PORT" -> s"${CommonUtils.availablePort()}"
           ))
-          .run()
+          .create()
       Await.result(result, TIMEOUT).get.name shouldBe containerName
     } finally {
       // Remove a container

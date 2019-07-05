@@ -53,7 +53,8 @@ private class K8SWorkerCollieImpl(node: NodeCollie, bkCollie: BrokerCollie, k8sC
         .labelName(OHARA_LABEL)
         .domainName(K8S_DOMAIN_NAME)
         .name(containerInfo.name)
-        .run()
+        .threadPool(executionContext)
+        .create()
       Await.result(creator, TIMEOUT)
     } catch {
       case e: Throwable =>

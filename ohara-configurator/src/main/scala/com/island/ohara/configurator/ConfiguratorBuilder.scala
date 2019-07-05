@@ -28,6 +28,7 @@ import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
+import com.island.ohara.common.pattern.Builder
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.fake._
 import com.island.ohara.configurator.jar.JarStore
@@ -35,7 +36,7 @@ import com.island.ohara.configurator.store.DataStore
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
-class ConfiguratorBuilder private[configurator] extends com.island.ohara.common.Builder[Configurator] {
+class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
   private[this] var hostname: String = CommonUtils.hostname()
   private[this] var port: Int = CommonUtils.availablePort()
   private[this] var homeFolder: String = CommonUtils.createTempFolder("configurator").getCanonicalPath

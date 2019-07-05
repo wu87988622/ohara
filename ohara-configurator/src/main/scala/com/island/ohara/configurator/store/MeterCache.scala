@@ -50,7 +50,7 @@ object MeterCache {
     override def toString: String = s"name:$name, service:$service"
   }
 
-  class Builder private[MeterCache] extends com.island.ohara.common.Builder[MeterCache] {
+  class Builder private[MeterCache] extends com.island.ohara.common.pattern.Builder[MeterCache] {
     private[this] var refresher: () => Map[ClusterInfo, Map[String, Seq[Meter]]] = _
     private[this] var frequency: Duration = 5 seconds
 

@@ -28,6 +28,7 @@ import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0.{ClusterInfo, NodeApi}
 import com.island.ohara.common.annotations.Optional
+import com.island.ohara.common.pattern.Builder
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.typesafe.scalalogging.Logger
 
@@ -141,7 +142,7 @@ trait ClusterCollie extends Releasable {
         DockerClient.builder.hostname(node.name).port(node.port).user(node.user).password(node.password).build
       try {
         val helloWorldImage = "hello-world"
-        dockerClient.containerCreator().name(name).imageName(helloWorldImage).execute()
+        dockerClient.containerCreator().name(name).imageName(helloWorldImage).create()
 
         // TODO: should we directly reject the node which doesn't have hello-world image??? by chia
         def checkImage(): Boolean = {
@@ -180,7 +181,7 @@ object ClusterCollie {
 
   import scala.concurrent.duration._
 
-  class SshBuilder private[ClusterCollie] extends com.island.ohara.common.Builder[ClusterCollie] {
+  class SshBuilder private[ClusterCollie] extends Builder[ClusterCollie] {
     private[this] var nodeCollie: NodeCollie = _
     private[this] var cacheTimeout: Duration = 3 seconds
     private[this] var cacheThreadPool: ExecutorService = _
@@ -222,7 +223,7 @@ object ClusterCollie {
     */
   def builderOfK8s(): K8shBuilder = new K8shBuilder
 
-  class K8shBuilder private[ClusterCollie] extends com.island.ohara.common.Builder[ClusterCollie] {
+  class K8shBuilder private[ClusterCollie] extends Builder[ClusterCollie] {
     private[this] var nodeCollie: NodeCollie = _
     private[this] var k8sClient: K8SClient = _
 

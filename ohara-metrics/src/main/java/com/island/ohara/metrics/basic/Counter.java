@@ -212,7 +212,7 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
     if (needClose) BeanChannel.unregister(CounterMBean.DOMAIN, properties);
   }
 
-  public static class Builder implements com.island.ohara.common.Builder<Counter> {
+  public static class Builder implements com.island.ohara.common.pattern.Builder<Counter> {
     private String id;
     private String group;
     private String name;

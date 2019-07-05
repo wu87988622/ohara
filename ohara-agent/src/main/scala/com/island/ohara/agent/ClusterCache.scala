@@ -106,7 +106,7 @@ object ClusterCache {
     override def toString: String = s"name:$name, service:$service"
   }
 
-  class Builder private[ClusterCache] extends com.island.ohara.common.Builder[ClusterCache] {
+  class Builder private[ClusterCache] extends com.island.ohara.common.pattern.Builder[ClusterCache] {
     private[this] var frequency: Duration = 5 seconds
     private[this] var lazyRemove: Duration = 0 seconds
     private[this] var supplier: () => Map[ClusterInfo, Seq[ContainerInfo]] = _

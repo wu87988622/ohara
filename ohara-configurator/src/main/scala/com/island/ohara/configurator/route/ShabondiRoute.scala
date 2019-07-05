@@ -148,16 +148,16 @@ object ShabondiRoute {
     val creator: K8SClient.ContainerCreator = k8sClient.containerCreator()
     creator
       .imageName(IMAGE_NAME_DEFAULT)
-      .portMappings(
-        Map(
-          9090 -> 8080
-        ))
+      .portMappings(Map(
+        9090 -> 8080
+      ))
       .nodename(slaveNode)
       .hostname(podHostname)
       .labelName(POD_LABEL)
       .domainName(POD_DOMAIN_NAME)
       .name(POD_NAME)
-      .run()
+      .threadPool(executionContext)
+      .create()
   }
 
   // TODO: we need a general function to copy object with different type of object or another function...

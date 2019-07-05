@@ -353,7 +353,7 @@ object BrokerCollie {
       this
     }
 
-    override def create()(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] = doCreate(
+    override def create(): Future[BrokerClusterInfo] = doCreate(
       executionContext = Objects.requireNonNull(executionContext),
       clusterName = CommonUtils.requireNonEmpty(clusterName),
       imageName = CommonUtils.requireNonEmpty(imageName),

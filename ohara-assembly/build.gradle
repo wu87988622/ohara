@@ -45,6 +45,7 @@ dependencies {
   testImplementation libs.kafkaStream
   testImplementation libs.mockito
   testImplementation libs.ftpServer
+  testImplementation libs.commonsLang
 }
 
 task uberJar(type: Jar) {

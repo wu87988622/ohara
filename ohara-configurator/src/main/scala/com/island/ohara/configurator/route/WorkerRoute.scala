@@ -108,6 +108,7 @@ object WorkerRoute {
                 .imageName(req.imageName)
                 .jarInfos(jarInfos.toSeq)
                 .nodeNames(req.nodeNames)
+                .threadPool(executionContext)
                 .create()
         }
     )

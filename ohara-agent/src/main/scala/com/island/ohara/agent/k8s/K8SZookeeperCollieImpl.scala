@@ -49,7 +49,8 @@ private class K8SZookeeperCollieImpl(node: NodeCollie, k8sClient: K8SClient)
         .domainName(K8S_DOMAIN_NAME)
         .envs(containerInfo.environments)
         .name(containerInfo.name)
-        .run(),
+        .threadPool(executionContext)
+        .create(),
       TIMEOUT
     )
   }

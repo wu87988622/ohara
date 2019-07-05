@@ -60,6 +60,7 @@ private[configurator] object TopicRoute {
     .name(name)
     .numberOfPartitions(numberOfPartitions)
     .numberOfReplications(numberOfReplications)
+    .threadPool(executionContext)
     .create()
     .map { info =>
       try TopicInfo(

@@ -25,7 +25,6 @@ import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Await
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 class TestPerfSourceMetrics extends WithBrokerWorker with Matchers {
   private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
@@ -47,7 +46,7 @@ class TestPerfSourceMetrics extends WithBrokerWorker with Matchers {
         .numberOfTasks(1)
         .name(connectorName)
         .settings(props.toMap)
-        .create,
+        .create(),
       10 seconds
     )
     CommonUtils.await(() => {

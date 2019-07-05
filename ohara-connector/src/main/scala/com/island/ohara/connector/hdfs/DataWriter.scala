@@ -36,7 +36,7 @@ class DataWriter(config: HDFSSinkConnectorConfig, context: RowSinkContext, schem
     .newInstance(config)
     .asInstanceOf[StorageCreator]
 
-  private[this] val storage: Storage = createStorage.storage()
+  private[this] val storage: Storage = createStorage.create()
 
   val topicPartitionWriters = new mutable.HashMap[TopicPartition, TopicPartitionWriter]()
 

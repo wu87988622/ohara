@@ -209,7 +209,7 @@ object ZookeeperCollie {
       this
     }
 
-    override def create()(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] = doCreate(
+    override def create(): Future[ZookeeperClusterInfo] = doCreate(
       executionContext = Objects.requireNonNull(executionContext),
       clusterName = CommonUtils.requireNonEmpty(clusterName),
       imageName = CommonUtils.requireNonEmpty(imageName),

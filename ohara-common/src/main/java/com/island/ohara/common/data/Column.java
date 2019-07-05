@@ -58,7 +58,7 @@ public final class Column extends Data implements Serializable {
     return new Builder();
   }
 
-  public static class Builder implements com.island.ohara.common.Builder<Column> {
+  public static class Builder implements com.island.ohara.common.pattern.Builder<Column> {
     private String name;
     private String newName;
     private DataType dataType;

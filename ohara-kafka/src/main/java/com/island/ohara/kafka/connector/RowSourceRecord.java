@@ -125,7 +125,7 @@ public class RowSourceRecord {
     return new Builder();
   }
 
-  public static class Builder implements com.island.ohara.common.Builder<RowSourceRecord> {
+  public static class Builder implements com.island.ohara.common.pattern.Builder<RowSourceRecord> {
     private Builder() {
       // do nothing
     }

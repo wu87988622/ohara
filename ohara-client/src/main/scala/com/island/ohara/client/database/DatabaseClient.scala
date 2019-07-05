@@ -58,7 +58,7 @@ object DatabaseClient {
 
   def builder: Builder = new Builder
 
-  class Builder private[DatabaseClient] extends com.island.ohara.common.Builder[DatabaseClient] {
+  class Builder private[DatabaseClient] extends com.island.ohara.common.pattern.Builder[DatabaseClient] {
     private[this] var url: String = _
     private[this] var user: String = _
     private[this] var password: String = _

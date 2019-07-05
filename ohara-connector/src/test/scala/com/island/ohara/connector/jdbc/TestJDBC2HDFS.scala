@@ -170,11 +170,8 @@ class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
 class LocalHDFSStorageCreator(config: HDFSSinkConnectorConfig) extends StorageCreator {
   // TODO: we SHOULD NOT import hdfs directly... by chia
   private[this] val hdfs = Hdfs.local()
-  private[this] val hdfsStorage: HDFSStorage = new HDFSStorage(hdfs.fileSystem())
 
-  override def storage(): Storage = {
-    hdfsStorage
-  }
+  override def create(): Storage = new HDFSStorage(hdfs.fileSystem())
 
   override def close(): Unit = Releasable.close(hdfs)
 }

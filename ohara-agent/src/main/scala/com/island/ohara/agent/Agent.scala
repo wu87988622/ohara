@@ -45,7 +45,7 @@ object Agent {
 
   def builder: Builder = new Builder()
 
-  class Builder private[agent] extends com.island.ohara.common.Builder[Agent] {
+  class Builder private[agent] extends com.island.ohara.common.pattern.Builder[Agent] {
     private[this] var hostname: String = _
     private[this] var port: Int = 22
     private[this] var user: String = _

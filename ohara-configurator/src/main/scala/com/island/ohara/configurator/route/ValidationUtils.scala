@@ -120,7 +120,8 @@ object ValidationUtils {
           ValidationApi.REQUEST_ID -> requestId,
           ValidationApi.TARGET -> target
         ))
-      .create
+      .threadPool(executionContext)
+      .create()
       .map { _ =>
         // TODO: receiving all messages may be expensive...by chia
         val client = Consumer

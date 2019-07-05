@@ -64,7 +64,7 @@ class TestDockerClient extends IntegrationTest with Matchers {
       .imageName(imageName)
       .removeContainerOnExit()
       .command(s"""/bin/bash -c \"ping $webHost\"""")
-      .execute()
+      .create()
     try client.log(name).contains(webHost) shouldBe true
     finally client.forceRemove(name)
   }
@@ -79,7 +79,7 @@ class TestDockerClient extends IntegrationTest with Matchers {
       .imageName(imageName)
       .removeContainerOnExit()
       .command(s"""/bin/bash -c \"ping $webHost\"""")
-      .execute()
+      .create()
     val container = client.container(name)
     try client.containerNames().contains(container.name) shouldBe true
     finally client.forceRemove(container.name)
@@ -96,7 +96,7 @@ class TestDockerClient extends IntegrationTest with Matchers {
       .imageName(imageName)
       .removeContainerOnExit()
       .command(s"""/bin/bash -c \"ping $webHost -c 3\"""")
-      .execute()
+      .create()
     TimeUnit.SECONDS.sleep(2)
     await(() => client.nonExist(name))
   }
@@ -110,7 +110,7 @@ class TestDockerClient extends IntegrationTest with Matchers {
       .name(name)
       .imageName(imageName)
       .command(s"""/bin/bash -c \"ping $webHost -c 3\"""")
-      .execute()
+      .create()
     try {
       client.containerNames().contains(name) shouldBe true
       TimeUnit.SECONDS.sleep(3)
@@ -131,7 +131,7 @@ class TestDockerClient extends IntegrationTest with Matchers {
       .imageName(imageName)
       .removeContainerOnExit()
       .command(s"""/bin/bash -c \"ping $webHost\"""")
-      .execute()
+      .create()
     try {
       val hostFile = client.containerInspector(name).cat("/etc/hosts").get
       hostFile.contains("192.168.123.123") shouldBe true
@@ -150,7 +150,7 @@ class TestDockerClient extends IntegrationTest with Matchers {
       .portMappings(Map(availablePort -> availablePort))
       .removeContainerOnExit()
       .command(s"""/bin/bash -c \"ping $webHost\"""")
-      .execute()
+      .create()
     try {
       val container = client.container(name)
       container.portMappings.size shouldBe 1
@@ -169,7 +169,7 @@ class TestDockerClient extends IntegrationTest with Matchers {
       .envs(Map("abc" -> "123", "ccc" -> "ttt"))
       .removeContainerOnExit()
       .command(s"""/bin/bash -c \"ping $webHost\"""")
-      .execute()
+      .create()
     try {
       val container = client.container(name)
       container.environments("abc") shouldBe "123"
@@ -188,7 +188,7 @@ class TestDockerClient extends IntegrationTest with Matchers {
       .hostname(hostname)
       .removeContainerOnExit()
       .command(s"""/bin/bash -c \"ping $webHost\"""")
-      .execute()
+      .create()
     try client.container(name).hostname shouldBe hostname
     finally client.forceRemove(name)
   }
@@ -202,7 +202,7 @@ class TestDockerClient extends IntegrationTest with Matchers {
       .imageName(imageName)
       .removeContainerOnExit()
       .command(s"""/bin/bash -c \"ping $webHost\"""")
-      .execute()
+      .create()
     try client.container(name).nodeName shouldBe remoteHostname
     finally client.forceRemove(name)
   }
@@ -216,7 +216,7 @@ class TestDockerClient extends IntegrationTest with Matchers {
       .imageName(imageName)
       .removeContainerOnExit()
       .command(s"""/bin/bash -c \"ping $webHost\"""")
-      .execute()
+      .create()
     try {
       val container = client.container(name)
       client.containerInspector(container.name).append("/tmp/ttt", "abc") shouldBe "abc\n"

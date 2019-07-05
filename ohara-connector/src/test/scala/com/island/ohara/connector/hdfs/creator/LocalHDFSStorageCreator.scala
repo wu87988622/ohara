@@ -24,11 +24,8 @@ import org.apache.hadoop.fs.FileSystem
 class LocalHDFSStorageCreator(config: HDFSSinkConnectorConfig) extends StorageCreator {
   // TODO: we should not use Hdfs.local directly ... by chia
   private[this] val fileSystem: FileSystem = Hdfs.local().fileSystem()
-  private[this] val hdfsStorage: HDFSStorage = new HDFSStorage(fileSystem)
 
-  override def storage(): Storage = {
-    hdfsStorage
-  }
+  override def create(): Storage = new HDFSStorage(fileSystem)
 
   override def close(): Unit = {
     Releasable.close(fileSystem)

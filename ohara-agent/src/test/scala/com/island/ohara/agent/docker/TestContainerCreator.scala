@@ -100,19 +100,19 @@ class TestContainerCreator extends SmallTest with Matchers {
   @Test
   def testExecuteNormalCases(): Unit = {
 
-    fake().imageName(CommonUtils.randomString(5)).execute()
-    fake().name(CommonUtils.randomString()).imageName(CommonUtils.randomString(5)).execute()
+    fake().imageName(CommonUtils.randomString(5)).create()
+    fake().name(CommonUtils.randomString()).imageName(CommonUtils.randomString(5)).create()
     fake()
       .name(CommonUtils.randomString())
       .hostname(CommonUtils.randomString(5))
       .imageName(CommonUtils.randomString(5))
-      .execute()
+      .create()
   }
 
   @Test
   def testExecuteWithoutRequireArguments(): Unit = {
 
     // At least assign imageName
-    an[NullPointerException] should be thrownBy fake().execute()
+    an[NullPointerException] should be thrownBy fake().create()
   }
 }

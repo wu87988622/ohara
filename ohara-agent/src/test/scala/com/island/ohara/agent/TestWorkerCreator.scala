@@ -28,9 +28,8 @@ import org.junit.Test
 import org.scalatest.Matchers
 import spray.json.{DeserializationException, JsArray}
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 class TestWorkerCreator extends SmallTest with Matchers {
 
   private[this] val TIMEOUT: FiniteDuration = 30 seconds

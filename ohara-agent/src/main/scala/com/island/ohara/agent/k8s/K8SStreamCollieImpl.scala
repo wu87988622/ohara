@@ -86,7 +86,8 @@ private class K8SStreamCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
                         )
                       )
                       .args(StreamCollie.formatJMXProperties(node.name, jmxPort) :+ StreamCollie.MAIN_ENTRY)
-                      .run()
+                      .threadPool(executionContext)
+                      .create()
                       .recover {
                         case e: Throwable =>
                           log.error(s"failed to start $clusterName", e)

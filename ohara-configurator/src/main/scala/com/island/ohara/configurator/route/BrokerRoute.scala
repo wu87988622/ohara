@@ -78,6 +78,7 @@ object BrokerRoute {
           .zookeeperClusterName(zkName)
           .imageName(req.imageName)
           .nodeNames(req.nodeNames)
+          .threadPool(executionContext)
           .create()
       }
     )
