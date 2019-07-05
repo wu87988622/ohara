@@ -26,8 +26,6 @@ import org.mockito.Mockito._
 import org.scalatest.Matchers
 import org.scalatest.mockito.MockitoSugar
 
-import scala.collection.mutable.ListBuffer
-
 class TestQueryResultIterator extends MediumTest with Matchers with MockitoSugar {
 
   @Test
@@ -36,10 +34,11 @@ class TestQueryResultIterator extends MediumTest with Matchers with MockitoSugar
     val resultSet = mock[ResultSet]
     when(preparedStatement.executeQuery()).thenReturn(resultSet)
 
-    val columnList = new ListBuffer[RdbColumn]
-    columnList += RdbColumn("column1", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
-    columnList += RdbColumn("column2", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
-    columnList += RdbColumn("column3", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
+    val columnList = Seq(
+      RdbColumn("column1", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false),
+      RdbColumn("column2", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false),
+      RdbColumn("column3", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
+    )
 
     val it: Iterator[Seq[Object]] = new QueryResultIterator(resultSet, columnList)
     intercept[NoSuchElementException] {
@@ -57,10 +56,11 @@ class TestQueryResultIterator extends MediumTest with Matchers with MockitoSugar
     when(resultSet.getString("column2")).thenReturn("value1-2")
     when(resultSet.getString("column3")).thenReturn("value1-3")
 
-    val columnList = new ListBuffer[RdbColumn]
-    columnList += RdbColumn("column1", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
-    columnList += RdbColumn("column2", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
-    columnList += RdbColumn("column3", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
+    val columnList = Seq(
+      RdbColumn("column1", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false),
+      RdbColumn("column2", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false),
+      RdbColumn("column3", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
+    )
 
     val it: Iterator[Seq[Object]] = new QueryResultIterator(resultSet, columnList)
     var count: Int = 0
@@ -81,10 +81,11 @@ class TestQueryResultIterator extends MediumTest with Matchers with MockitoSugar
     when(resultSet.getString("column2")).thenReturn("value1-2").thenReturn("value2-2").thenReturn("value2-3")
     when(resultSet.getString("column3")).thenReturn("value1-3").thenReturn("value2-3").thenReturn("value3-3")
 
-    val columnList = new ListBuffer[RdbColumn]
-    columnList += RdbColumn("column1", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
-    columnList += RdbColumn("column2", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
-    columnList += RdbColumn("column3", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
+    val columnList = Seq(
+      RdbColumn("column1", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false),
+      RdbColumn("column2", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false),
+      RdbColumn("column3", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
+    )
 
     val it: Iterator[Seq[Object]] = new QueryResultIterator(resultSet, columnList)
     var count: Int = 0
@@ -102,10 +103,11 @@ class TestQueryResultIterator extends MediumTest with Matchers with MockitoSugar
     when(preparedStatement.executeQuery()).thenReturn(resultSet)
     when(resultSet.next()).thenReturn(false)
 
-    val columnList = new ListBuffer[RdbColumn]
-    columnList += RdbColumn("column1", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
-    columnList += RdbColumn("column2", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
-    columnList += RdbColumn("column3", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
+    val columnList = Seq(
+      RdbColumn("column1", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false),
+      RdbColumn("column2", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false),
+      RdbColumn("column3", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
+    )
 
     val it: Iterator[Seq[Object]] = new QueryResultIterator(resultSet, columnList)
     var count: Int = 0
@@ -115,5 +117,4 @@ class TestQueryResultIterator extends MediumTest with Matchers with MockitoSugar
     }
     count shouldBe 0
   }
-
 }

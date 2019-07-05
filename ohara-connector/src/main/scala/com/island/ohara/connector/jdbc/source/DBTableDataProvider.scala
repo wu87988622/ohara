@@ -52,6 +52,7 @@ class DBTableDataProvider(jdbcSourceConnectorConfig: JDBCSourceConnectorConfig) 
       val currentTimestamp: Timestamp = dbCurrentTime(DateTimeUtils.CALENDAR)
       preparedStatement.setTimestamp(1, tsOffset, DateTimeUtils.CALENDAR)
       preparedStatement.setTimestamp(2, currentTimestamp, DateTimeUtils.CALENDAR)
+
       resultSet = preparedStatement.executeQuery()
       queryFlag = false
     }
