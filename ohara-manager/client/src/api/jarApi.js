@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { get } from 'lodash';
+import { get, isUndefined } from 'lodash';
 
 import { handleError, axiosInstance } from './apiUtils';
 
@@ -39,13 +39,14 @@ export const createJar = async params => {
     const url = `/api/jars`;
     const formData = new FormData();
     formData.append('jar', file);
-    formData.append('group', workerClusterName);
+    if (!isUndefined(workerClusterName)) {
+      formData.append('group', workerClusterName);
+    }
     const config = {
       headers: {
         'content-type': 'multipart/form-data',
       },
     };
-
     const res = await axiosInstance.post(url, formData, config);
     const isSuccess = get(res, 'data.isSuccess', false);
 

@@ -29,10 +29,9 @@ describe('WorkspacesPage', () => {
     cy.route('GET', 'api/topics').as('getTopics');
   });
 
-  it.skip('creates a new connect worker cluster', () => {
+  it('creates a new connect worker cluster', () => {
     const nodeName = Cypress.env('nodeHost');
     const clusterName = utils.makeRandomStr();
-    const port = utils.makeRandomPort();
 
     cy.registerWorker(clusterName);
 
@@ -41,23 +40,7 @@ describe('WorkspacesPage', () => {
       .click()
       .getByPlaceholderText('cluster00')
       .type(clusterName)
-      .getByLabelText('Port')
-      .click()
-      .type(port)
-      .getByText('Add node')
-      .click();
-
-    cy.get('.ReactModal__Content')
-      .eq(1)
-      .within(() => {
-        cy.getByText(nodeName)
-          .click()
-          .getByText('Add')
-          .click();
-      })
-      .getByText(nodeName)
-      .should('have.length', 1)
-      .getByText('Add plugin')
+      .getByTestId(nodeName)
       .click();
 
     cy.uploadJar(
@@ -67,19 +50,9 @@ describe('WorkspacesPage', () => {
       'application/java-archive',
     ).wait(500);
 
-    cy.get('div.ReactModal__Content')
-      .eq(1)
-      .within(() => {
-        cy.getByText('Add').click();
-      });
-
-    cy.get('.ReactModal__Content').should('have.length', 1);
     cy.getByText('ohara-it-sink').should('have.length', 1);
-    cy.get('div.ReactModal__Content')
-      .eq(0)
-      .within(() => {
-        cy.getByText('Add').click();
-      });
+    cy.getByText('ohara-it-sink').click();
+    cy.getByText('Add').click();
 
     cy.getByText(clusterName).should('have.length', 1);
   });

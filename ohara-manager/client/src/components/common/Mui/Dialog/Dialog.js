@@ -20,6 +20,7 @@ import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import Button from '@material-ui/core/Button';
+import CircularProgress from '@material-ui/core/CircularProgress';
 
 const MuiDialog = props => {
   const {
@@ -31,9 +32,18 @@ const MuiDialog = props => {
     handleConfirm,
     children,
     confirmDisabled = false,
+    maxWidth = 'xs',
+    loading,
+    testId,
   } = props;
   return (
-    <Dialog open={handelOpen} onClose={handelClose} maxWidth="xs" fullWidth>
+    <Dialog
+      open={handelOpen}
+      onClose={handelClose}
+      maxWidth={maxWidth}
+      fullWidth
+      data-testid={testId}
+    >
       <DialogTitle>{title}</DialogTitle>
       {children()}
       <DialogActions>
@@ -48,6 +58,7 @@ const MuiDialog = props => {
         >
           {confirmBtnText}
         </Button>
+        {loading && <CircularProgress size={24} />}
       </DialogActions>
     </Dialog>
   );
@@ -59,9 +70,12 @@ MuiDialog.propTypes = {
   title: PropTypes.string.isRequired,
   confirmBtnText: PropTypes.string,
   cancelBtnText: PropTypes.string,
+  maxWidth: PropTypes.string,
   handleConfirm: PropTypes.func.isRequired,
   children: PropTypes.func.isRequired,
   confirmDisabled: PropTypes.bool,
+  loading: PropTypes.bool.isRequired,
+  testId: PropTypes.string,
 };
 
 export default MuiDialog;

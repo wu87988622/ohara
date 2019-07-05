@@ -42,6 +42,7 @@ const InputField = props => {
     meta,
     width = '100%',
     helperText,
+    errorMessenge,
     ...rest
   } = props;
 
@@ -54,6 +55,7 @@ const InputField = props => {
         InputProps={restInput}
         value={value}
         width={width}
+        helperText={errorMessenge}
       />
       <TooltipWrap>
         <Tooltip text={helperText} />
@@ -73,7 +75,8 @@ InputField.propTypes = {
     error: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   }).isRequired,
   width: PropTypes.string,
-  helperText: PropTypes.string,
+  helperText: PropTypes.object,
+  errorMessenge: PropTypes.string,
 };
 
 export default InputField;

@@ -14,47 +14,119 @@
  * limitations under the License.
  */
 
-import React from 'react';
-import PropTypes from 'prop-types';
+import React, { useState, useEffect } from 'react';
 import toastr from 'toastr';
-import { map, isEmpty, truncate, get } from 'lodash';
+import PropTypes from 'prop-types';
+import List from '@material-ui/core/List';
 import { Form, Field } from 'react-final-form';
+import ListItem from '@material-ui/core/ListItem';
+import Checkbox from '@material-ui/core/Checkbox';
+import ListItemIcon from '@material-ui/core/ListItemIcon';
+import ListItemText from '@material-ui/core/ListItemText';
+import DialogContent from '@material-ui/core/DialogContent';
+import { isEmpty, get, isNull, split, isUndefined, uniq } from 'lodash';
 
-import * as zookeeperApi from 'api/zookeeperApi';
+import * as s from './styles';
+import * as jarApi from 'api/jarApi';
+import * as nodeApi from 'api/nodeApi';
 import * as workerApi from 'api/workerApi';
 import * as brokerApi from 'api/brokerApi';
-import * as containerApi from 'api/containerApi';
-import * as MESSAGES from 'constants/messages';
 import * as generate from 'utils/generate';
-import * as s from './styles';
-import * as commonUtils from 'utils/commonUtils';
-import NodeSelectModal from '../NodeSelectModal';
-import PluginSelectModal from '../PluginSelectModal';
-import { Modal } from 'components/common/Modal';
-import { Box } from 'components/common/Layout';
+import * as MESSAGES from 'constants/messages';
 import { Label } from 'components/common/Form';
-import { InputField } from 'components/common/FormFields';
+import * as zookeeperApi from 'api/zookeeperApi';
+import * as containerApi from 'api/containerApi';
+import * as commonUtils from 'utils/commonUtils';
+import { Button } from 'components/common/Mui/Form';
+import { Dialog } from 'components/common/Mui/Dialog';
+import { InputField } from 'components/common/Mui/Form';
 
-const SELECT_NODE_MODAL = 'selectNodeModal';
-const SELECT_PLUGIN_MODAL = 'selectPluginModal';
+const WorkerNewModal = props => {
+  const [checkedNodes, setCheckedNodes] = useState([]);
+  const [checkedFiles, setCheckedFiles] = useState([]);
+  const [nodes, setNodes] = useState([]);
+  const [jars, setJars] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessenge, setErrorMessenge] = useState('');
 
-class WorkerNewModal extends React.Component {
-  static propTypes = {
-    isActive: PropTypes.bool.isRequired,
-    onClose: PropTypes.func.isRequired,
-    onConfirm: PropTypes.func.isRequired,
+  const uploadJar = async file => {
+    const res = await jarApi.createJar({
+      file,
+    });
+
+    const isSuccess = get(res, 'data.isSuccess', false);
+    if (isSuccess) {
+      toastr.success(`${MESSAGES.PLUGIN_UPLOAD_SUCCESS} ${file.name}`);
+    }
   };
 
-  state = {
-    activeModal: null,
+  useEffect(() => {
+    const fetchNodes = async () => {
+      const res = await nodeApi.fetchNodes();
+      const newNodes = get(res, 'data.result', null);
+      if (!isNull(newNodes)) {
+        setNodes(newNodes);
+      }
+    };
+    fetchNodes();
+  }, []);
+
+  const handleNodeToggle = value => () => {
+    const currentIndex = checkedNodes.indexOf(value);
+    const newChecked = [...checkedNodes];
+
+    if (currentIndex === -1) {
+      newChecked.push(value);
+    } else {
+      newChecked.splice(currentIndex, 1);
+    }
+
+    setCheckedNodes(newChecked);
   };
 
-  handleModalClose = () => {
-    this.props.onClose();
+  const handleFileToggle = value => () => {
+    const currentIndex = checkedFiles.indexOf(value);
+    const newChecked = [...checkedFiles];
+
+    if (currentIndex === -1) {
+      newChecked.push(value);
+    } else {
+      newChecked.splice(currentIndex, 1);
+    }
+
+    setCheckedFiles(newChecked);
   };
 
-  createServices = async values => {
-    const { nodeNames } = values;
+  const handleModalClose = () => {
+    props.onClose();
+  };
+
+  const resetModal = form => {
+    form.reset();
+    setJars([]);
+    setCheckedFiles([]);
+    setCheckedNodes([]);
+    handleModalClose();
+  };
+
+  const validateServiceName = value => {
+    if (isUndefined(value)) return '';
+
+    if (value.match(/[^0-9a-z]/g)) {
+      setErrorMessenge('You only can use lower case letters and numbers');
+    } else if (value.length > 30) {
+      setErrorMessenge('Must be between 1 and 30 characters long');
+    } else {
+      setErrorMessenge('');
+    }
+
+    return value;
+  };
+
+  const createServices = async values => {
+    setIsLoading(true);
+
+    const nodeNames = checkedNodes;
 
     const maxRetry = 5;
     let retryCount = 0;
@@ -114,10 +186,11 @@ class WorkerNewModal extends React.Component {
     await waitForServiceCreation(brokerClusterName);
 
     const worker = await workerApi.createWorker({
-      ...values,
-      name: this.validateServiceName(values.name),
+      name: validateServiceName(values.name),
+      nodeNames: nodeNames,
       plugins: values.plugins,
       jmxPort: generate.port(),
+      clientPort: generate.port(),
       brokerClusterName,
       groupId: generate.serviceName(),
       configTopicName: generate.serviceName(),
@@ -129,223 +202,165 @@ class WorkerNewModal extends React.Component {
     await waitForServiceCreation(workerClusterName);
   };
 
-  onSubmit = async (values, form) => {
-    if (!this.validateClientPort(values.clientPort)) return;
-    if (!this.validateNodeNames(values.nodeNames)) return;
+  const onSubmit = async (values, form) => {
+    checkedFiles.forEach(file => {
+      uploadJar(file);
+    });
 
     try {
-      await this.createServices(values);
+      await createServices(values);
     } catch (error) {
       // Ignore the error
 
       toastr.error('Failed to create workspace!');
-      this.resetModal(form);
+      resetModal(form);
       return;
     }
-
+    setIsLoading(false);
     toastr.success(MESSAGES.SERVICE_CREATION_SUCCESS);
-    this.props.onConfirm();
-    this.resetModal(form);
+    props.onConfirm();
+    resetModal(form);
   };
 
-  resetModal = form => {
-    form.reset();
-    this.handleModalClose();
-  };
-
-  validateNodeNames = nodes => {
-    if (isEmpty(nodes)) {
-      toastr.error('You should at least supply a node name');
-      return false;
+  const handleFileSelect = e => {
+    const file = e.target.files[0];
+    const newJars = [...jars];
+    if (file) {
+      newJars.push(file);
     }
-
-    return true;
+    setJars(uniq(newJars));
   };
 
-  validateClientPort = port => {
-    if (port < 5000 || port > 65535) {
-      toastr.error(
-        'Invalid port. The port has to be a value from 5000 to 65535.',
-      );
-      return false;
-    }
-
-    if (typeof port === 'undefined') {
-      toastr.error('Port is required');
-      return false;
-    }
-
-    if (isNaN(port)) {
-      toastr.error('Port only accepts number');
-      return false;
-    }
-
-    return true;
-  };
-
-  validateServiceName = value => {
-    if (!value) return '';
-
-    // validating rules: numbers, lowercase letter and up to 30 characters
-    return truncate(value.replace(/[^0-9a-z]/g, ''), {
-      length: 30,
-      omission: '',
-    });
-  };
-
-  render() {
-    const { activeModal } = this.state;
-
-    return (
-      <Form
-        onSubmit={this.onSubmit}
-        initialValues={{}}
-        render={({ handleSubmit, form, submitting, pristine, values }) => {
-          const handleNodeSelected = nodeNames => {
-            form.change('nodeNames', nodeNames);
-          };
-
-          const handlePluginSelected = plugins => {
-            form.change('plugins', plugins);
-          };
-
-          return (
-            <Modal
-              title="New workspace"
-              isActive={this.props.isActive}
-              width="600px"
-              handleCancel={() => {
-                if (!submitting) this.resetModal(form);
-              }}
-              handleConfirm={handleSubmit}
-              confirmBtnText="Add"
-              isConfirmDisabled={submitting || pristine}
-              isConfirmWorking={submitting}
-              showActions={true}
-              testId="new-workspace-modal"
-            >
-              <form onSubmit={handleSubmit}>
-                <Box shadow={false}>
-                  <s.FormRow>
-                    <s.FormCol width="26rem">
-                      <Label
-                        htmlFor="service-input"
-                        tooltipAlignment="right"
-                        tooltipRender={
-                          <div>
-                            <p>1. You can use lower case letters and numbers</p>
-                            <p>2. Must be between 1 and 30 characters long</p>
-                          </div>
-                        }
-                      >
-                        Service
-                      </Label>
+  return (
+    <Form
+      onSubmit={onSubmit}
+      initialValues={{}}
+      render={({ handleSubmit, form, submitting, pristine, values }) => {
+        return (
+          <Dialog
+            testId="new-workspace-modal"
+            scroll="paper"
+            loading={isLoading}
+            title="New workspace"
+            handelOpen={props.isActive}
+            handelClose={() => {
+              if (!submitting) resetModal(form);
+            }}
+            handleConfirm={handleSubmit}
+            confirmDisabled={
+              submitting ||
+              pristine ||
+              errorMessenge !== '' ||
+              checkedNodes.length === 0
+            }
+          >
+            {() => {
+              return (
+                <s.StyledDialogDividers dividers>
+                  <s.StyledInputFile
+                    id="fileInput"
+                    accept=".jar"
+                    type="file"
+                    onChange={handleFileSelect}
+                  />
+                  <form onSubmit={handleSubmit}>
+                    <DialogContent>
                       <Field
-                        id="service-input"
+                        label="Name"
                         name="name"
                         component={InputField}
-                        width="24rem"
                         placeholder="cluster00"
                         data-testid="name-input"
                         disabled={submitting}
-                        format={this.validateServiceName}
+                        format={validateServiceName}
+                        autoFocus
+                        errorMessenge={errorMessenge}
+                        error={errorMessenge !== ''}
                       />
-                    </s.FormCol>
-                    <s.FormCol width="8rem">
-                      <Label
-                        htmlFor="port-input"
-                        tooltipString="Must be between 5000 and 65535"
-                        tooltipAlignment="right"
-                      >
-                        Port
-                      </Label>
-                      <Field
-                        id="port-input"
-                        name="clientPort"
-                        component={InputField}
-                        type="number"
-                        min={5000}
-                        max={65535}
-                        width="8rem"
-                        placeholder="5000"
-                        data-testid="client-port-input"
-                        disabled={submitting}
-                      />
-                    </s.FormCol>
-                  </s.FormRow>
-
-                  <s.FormRow margin="1rem 0 0 0">
-                    <s.FormCol width="18rem">
+                    </DialogContent>
+                    <s.StyledDialogContent>
                       <Label>Node List</Label>
-                      <s.List width="16rem">
-                        {values.nodeNames &&
-                          values.nodeNames.map(nodeName => (
-                            <s.ListItem key={nodeName}>{nodeName}</s.ListItem>
-                          ))}
-                        <s.AppendButton
-                          text="Add node"
-                          handleClick={e => {
-                            e.preventDefault();
-                            this.setState({ activeModal: SELECT_NODE_MODAL });
-                          }}
-                          disabled={submitting}
-                        />
-                      </s.List>
-                    </s.FormCol>
-                    <s.FormCol width="16rem">
+                      <s.StyledPaper>
+                        <List>
+                          {nodes.map(node => {
+                            const { name } = node;
+                            return (
+                              <ListItem
+                                key={name}
+                                dense
+                                button
+                                onClick={handleNodeToggle(name)}
+                              >
+                                <ListItemIcon>
+                                  <Checkbox
+                                    color="primary"
+                                    edge="start"
+                                    checked={checkedNodes.indexOf(name) !== -1}
+                                    tabIndex={-1}
+                                    disableRipple
+                                  />
+                                </ListItemIcon>
+                                <ListItemText
+                                  id={name}
+                                  primary={name}
+                                  data-testid={name}
+                                />
+                              </ListItem>
+                            );
+                          })}
+                        </List>
+                      </s.StyledPaper>
+                    </s.StyledDialogContent>
+                    <s.StyledDialogContent>
                       <Label>Plugin List</Label>
-                      <s.List width="16rem">
-                        {values.plugins &&
-                          values.plugins.map(plugin => (
-                            <s.ListItem key={plugin.group}>
-                              {plugin.name}
-                            </s.ListItem>
-                          ))}
-                        <s.AppendButton
-                          text="Add plugin"
-                          handleClick={e => {
-                            e.preventDefault();
-                            this.setState({
-                              activeModal: SELECT_PLUGIN_MODAL,
-                            });
-                          }}
-                          disabled={submitting}
-                        />
-                      </s.List>
-                    </s.FormCol>
-                  </s.FormRow>
-                </Box>
-              </form>
+                      <s.StyledPaper>
+                        <List>
+                          {jars.map(jar => {
+                            const { name } = jar;
+                            return (
+                              <ListItem
+                                key={name}
+                                dense
+                                button
+                                onClick={handleFileToggle(jar)}
+                              >
+                                <ListItemIcon>
+                                  <Checkbox
+                                    color="primary"
+                                    edge="start"
+                                    checked={checkedFiles.indexOf(jar) !== -1}
+                                    tabIndex={-1}
+                                    disableRipple
+                                  />
+                                </ListItemIcon>
+                                <ListItemText
+                                  id={jar}
+                                  primary={split(name, '.jar', 1)}
+                                />
+                              </ListItem>
+                            );
+                          })}
+                          <s.StyledLabel htmlFor="fileInput">
+                            <Button component="span" text="New Plugin" />
+                          </s.StyledLabel>
+                        </List>
+                      </s.StyledPaper>
+                    </s.StyledDialogContent>
+                  </form>
+                </s.StyledDialogDividers>
+              );
+            }}
+          </Dialog>
+        );
+      }}
+    />
+  );
+};
 
-              <NodeSelectModal
-                isActive={activeModal === SELECT_NODE_MODAL}
-                onClose={() => {
-                  this.setState({ activeModal: null });
-                }}
-                onConfirm={nodeNames => {
-                  this.setState({ activeModal: null });
-                  handleNodeSelected(nodeNames);
-                }}
-                initNodeNames={values.nodeNames}
-              />
-
-              <PluginSelectModal
-                isActive={activeModal === SELECT_PLUGIN_MODAL}
-                onClose={() => {
-                  this.setState({ activeModal: null });
-                }}
-                onConfirm={plugins => {
-                  this.setState({ activeModal: null });
-                  handlePluginSelected(plugins);
-                }}
-                initPluginIds={map(values.plugins, 'group')}
-              />
-            </Modal>
-          );
-        }}
-      />
-    );
-  }
-}
+WorkerNewModal.propTypes = {
+  isActive: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onConfirm: PropTypes.func.isRequired,
+};
 
 export default WorkerNewModal;
