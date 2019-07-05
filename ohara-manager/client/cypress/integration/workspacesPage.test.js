@@ -27,6 +27,7 @@ describe('WorkspacesPage', () => {
     cy.server();
     cy.route('GET', 'api/workers').as('getWorkers');
     cy.route('GET', 'api/topics').as('getTopics');
+    cy.route('GET', 'api/jars?*').as('getJars');
   });
 
   it('creates a new connect worker cluster', () => {
@@ -103,5 +104,54 @@ describe('WorkspacesPage', () => {
           .getByText(`Successfully deleted the topic: ${topic.name}`)
           .should('have.length', 1);
       });
+  });
+
+  it('adds a new streamApp', () => {
+    cy.visit(WORKSPACES)
+      .wait('@getWorkers')
+      .getByTestId(Cypress.env('WORKER_NAME'))
+      .click()
+      .getByTestId('workspace-tab')
+      .within(() => {
+        cy.getByText('Stream apps').click();
+      })
+      .wait('@getJars')
+      .uploadJar(
+        'input[type=file]',
+        'streamApp/ohara-streamapp.jar',
+        'ohara-streamapp.jar',
+        'application/java-archive',
+      )
+      .wait(500)
+      .getByText('ohara-streamapp')
+      .should('have.length', 1);
+  });
+
+  it('deletes a streamApp', () => {
+    cy.visit(WORKSPACES)
+      .wait('@getWorkers')
+      .getByTestId(Cypress.env('WORKER_NAME'))
+      .click()
+      .getByTestId('workspace-tab')
+      .within(() => {
+        cy.getByText('Stream apps').click();
+      })
+      .wait('@getJars')
+      .uploadJar(
+        'input[type=file]',
+        'streamApp/ohara-streamapp.jar',
+        'ohara-streamapp.jar',
+        'application/java-archive',
+      )
+      .wait(500)
+      .getByTestId('ohara-streamapp')
+      .click()
+      .getByText('Delete')
+      .click()
+      .getByText('Successfully deleted the stream app!')
+      .should('have.length', 1)
+      .wait('@getJars')
+      .get('td')
+      .should('have.length', 0);
   });
 });
