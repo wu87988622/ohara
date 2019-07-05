@@ -38,7 +38,10 @@ const OverviewStreamApps = props => {
         <StyledIcon className="fas fa-wind" />
         <span className="title">Stream Apps</span>
         <StyledIconLink onClick={() => handleRedirect('streamapps')}>
-          <StyledIcon className="fas fa-external-link-square-alt" />
+          <StyledIcon
+            className="fas fa-external-link-square-alt"
+            data-testid="linkToStreamapps"
+          />
         </StyledIconLink>
       </TabHeading>
 

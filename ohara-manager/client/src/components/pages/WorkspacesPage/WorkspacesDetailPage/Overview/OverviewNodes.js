@@ -111,7 +111,10 @@ const OverviewNodes = props => {
         <StyledIcon marginright="15" className="fas fa-sitemap" />
         <span className="title">Nodes</span>
         <StyledIconLink onClick={() => handleRedirect('nodes')}>
-          <StyledIcon className="fas fa-external-link-square-alt" />
+          <StyledIcon
+            className="fas fa-external-link-square-alt"
+            data-testid="linkToNodes"
+          />
         </StyledIconLink>
       </TabHeading>
 
@@ -134,6 +137,7 @@ const OverviewNodes = props => {
                   <Tooltip
                     interactive
                     placement="right"
+                    data-testid={`${clusterType}-${nodeName}`}
                     title={
                       <TooltipBody>
                         {moreInfo &&

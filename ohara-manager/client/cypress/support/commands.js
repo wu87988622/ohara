@@ -67,9 +67,14 @@ Cypress.Commands.add('createWorker', () => {
   // Make a request to configurator see if worker cluster is ready for use
   const req = endPoint => {
     cy.request('GET', endPoint).then(res => {
+      const connectors = res.body.connectors;
       // When connectors field has the right connector info
       // this means that everything is ready to be tested
-      if (res.body.some(worker => worker.name === workerName)) return;
+      if (
+        res.body.some(worker => worker.name === workerName) &&
+        connectors !== undefined
+      )
+        return;
 
       // Add a maximum loop time to prevent from running into an infinite loop
       if (count > max) return;

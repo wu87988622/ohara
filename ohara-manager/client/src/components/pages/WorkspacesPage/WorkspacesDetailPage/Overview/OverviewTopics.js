@@ -36,7 +36,10 @@ const OverviewTopics = props => {
         <StyledIcon className="fas fa-list-ul" />
         <span className="title">Topics</span>
         <StyledIconLink onClick={() => handleRedirect('topics')}>
-          <StyledIcon className="fas fa-external-link-square-alt" />
+          <StyledIcon
+            className="fas fa-external-link-square-alt"
+            data-testid="linkToTopics"
+          />
         </StyledIconLink>
       </TabHeading>
       <OverviewTable
@@ -50,10 +53,16 @@ const OverviewTopics = props => {
                 <StyledTableCell component="th" scope="row">
                   {topic.name}
                 </StyledTableCell>
-                <StyledTableCell align="left">
+                <StyledTableCell
+                  align="left"
+                  data-testid={`${topic.name}-nop-${topic.numberOfPartitions}`}
+                >
                   {topic.numberOfPartitions}
                 </StyledTableCell>
-                <StyledTableCell align="right">
+                <StyledTableCell
+                  align="right"
+                  data-testid={`${topic.name}-nor-${topic.numberOfReplications}`}
+                >
                   {topic.numberOfReplications}
                 </StyledTableCell>
               </TableRow>
