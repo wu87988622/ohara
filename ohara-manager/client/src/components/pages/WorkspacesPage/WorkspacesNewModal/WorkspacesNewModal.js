@@ -103,6 +103,9 @@ const WorkerNewModal = props => {
 
   const resetModal = form => {
     form.reset();
+    setJars([]);
+    setCheckedFiles([]);
+    setCheckedNodes([]);
     handleModalClose();
   };
 
