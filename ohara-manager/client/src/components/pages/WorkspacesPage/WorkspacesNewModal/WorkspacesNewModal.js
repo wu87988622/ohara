@@ -24,7 +24,7 @@ import Checkbox from '@material-ui/core/Checkbox';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import DialogContent from '@material-ui/core/DialogContent';
-import { isEmpty, get, isNull, split, isUndefined } from 'lodash';
+import { isEmpty, get, isNull, split, isUndefined, uniq } from 'lodash';
 
 import * as s from './styles';
 import * as jarApi from 'api/jarApi';
@@ -228,7 +228,7 @@ const WorkerNewModal = props => {
     if (file) {
       newJars.push(file);
     }
-    setJars(newJars);
+    setJars(uniq(newJars));
   };
 
   return (
