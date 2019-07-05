@@ -16,6 +16,7 @@
 
 package com.island.ohara.agent.k8s
 
+import com.island.ohara.agent.fake.FakeK8SClient
 import com.island.ohara.agent.{ContainerCollie, NodeCollie, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
