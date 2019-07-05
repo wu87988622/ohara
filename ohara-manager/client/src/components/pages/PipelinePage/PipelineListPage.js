@@ -57,7 +57,7 @@ class PipelineListPage extends React.Component {
     }).isRequired,
   };
 
-  headers = ['name', 'cluster', 'status', 'edit', 'delete'];
+  headers = ['name', 'workspace', 'status', 'edit', 'delete'];
   state = {
     isSelectClusterModalActive: false,
     isDeletePipelineModalActive: false,
