@@ -65,6 +65,7 @@ const OverviewConnectors = props => {
                   <Tooltip
                     interactive
                     placement="right"
+                    data-testid={`${name}-tooltip`}
                     title={
                       <TooltipBody>
                         <li>
