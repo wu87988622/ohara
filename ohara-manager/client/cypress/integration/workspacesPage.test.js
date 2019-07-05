@@ -188,7 +188,7 @@ describe('WorkspacesPage', () => {
       .should('include', '/streamapps');
   });
 
-  it.only('check overview info', () => {
+  it('check overview info', () => {
     cy.createTopic()
       .as('overviewTopic')
       .visit(WORKSPACES)
