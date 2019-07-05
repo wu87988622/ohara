@@ -47,17 +47,17 @@ class PipelineGraph extends React.Component {
     }
   }
 
-  handleNodeClick = currId => {
+  handleNodeClick = current => {
     const { history, graph, match } = this.props;
-    const { pipelineId } = match.params;
-    const [currConnector] = graph.filter(g => g.id === currId);
-    const { className, id: connectorId } = currConnector;
+    const { pipelineName } = match.params;
+    const [currConnector] = graph.filter(g => g.name === current);
+    const { className, name: connectorName } = currConnector;
 
     const action = match.url.includes('/edit/') ? 'edit' : 'new';
-    const baseUrl = `/pipelines/${action}/${className}/${pipelineId}`;
+    const baseUrl = `/pipelines/${action}/${className}/${pipelineName}`;
 
-    if (connectorId) {
-      history.push(`${baseUrl}/${connectorId}`);
+    if (connectorName) {
+      history.push(`${baseUrl}/${connectorName}`);
     } else {
       history.push(`${baseUrl}`);
     }
@@ -69,7 +69,7 @@ class PipelineGraph extends React.Component {
     const dagreGraph = new dagreD3.graphlib.Graph().setGraph({});
 
     graph.forEach(g => {
-      const { name, className, kind, to, id, state } = g;
+      const { name, className, kind, to, state } = g;
       const updateState = state ? state : '';
       const isTopic = kind === 'topic';
 
@@ -99,30 +99,28 @@ class PipelineGraph extends React.Component {
         </a>
       </div>`;
 
-      dagreGraph.setNode(id, {
+      dagreGraph.setNode(name, {
         ...props,
-        lable: id,
         labelType: 'html',
         label: html,
       });
 
       if (to) {
         // Get dest graphs
-        const dests = graph.map(x => x.id);
+        const dests = graph.map(g => g.name);
 
         // If the dest graphs are not listed in the graph object
         // or it's not an array, return at this point
         if (!dests.includes(to) && !Array.isArray(to)) return;
 
         if (Array.isArray(to)) {
-          // Exclude '?' as they're not valid targets
-          to.filter(t => t !== '?').forEach(t => {
-            dagreGraph.setEdge(id, t, {});
+          to.forEach(t => {
+            dagreGraph.setEdge(name, t, {});
           });
           return;
         }
 
-        dagreGraph.setEdge(id, to, {});
+        dagreGraph.setEdge(name, to, {});
       }
     });
 

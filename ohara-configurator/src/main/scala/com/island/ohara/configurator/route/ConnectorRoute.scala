@@ -129,9 +129,9 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
               update(response, cluster, wkClient)
           }
         }),
-      hookBeforeDelete = (id: String) =>
+      hookBeforeDelete = (name: String) =>
         store
-          .get[ConnectorDescription](id)
+          .get[ConnectorDescription](name)
           .flatMap(_.map { connectorDescription =>
             CollieUtils
               .workerClient(Some(connectorDescription.workerClusterName))
@@ -139,20 +139,20 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
                 case (_, wkClient) =>
                   wkClient.exist(connectorDescription.name).flatMap {
                     if (_)
-                      wkClient.delete(connectorDescription.name).map(_ => id)
-                    else Future.successful(id)
+                      wkClient.delete(connectorDescription.name).map(_ => name)
+                    else Future.successful(name)
                   }
               }
               .recover {
                 // Connector can't live without cluster...
-                case _: NoSuchClusterException => id
+                case _: NoSuchClusterException => name
               }
-          }.getOrElse(Future.successful(id)))
+          }.getOrElse(Future.successful(name)))
     ) ~
-      pathPrefix(CONNECTORS_PREFIX_PATH / Segment) { id =>
+      pathPrefix(CONNECTORS_PREFIX_PATH / Segment) { name =>
         path(START_COMMAND) {
           put {
-            complete(store.value[ConnectorDescription](id).flatMap { connectorDesc =>
+            complete(store.value[ConnectorDescription](name).flatMap { connectorDesc =>
               CollieUtils
                 .workerClient(Some(connectorDesc.workerClusterName))
                 .flatMap {
@@ -175,7 +175,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
                         wkClient
                           .connectorCreator()
                           .settings(connectorDesc.plain)
-                          // always override the id
+                          // always override the name
                           .name(connectorDesc.name)
                           .threadPool(executionContext)
                           .create()
@@ -189,12 +189,12 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
           }
         } ~ path(STOP_COMMAND) {
           put {
-            complete(store.value[ConnectorDescription](id).flatMap { connectorConfig =>
+            complete(store.value[ConnectorDescription](name).flatMap { connectorConfig =>
               CollieUtils.workerClient(Some(connectorConfig.workerClusterName)).flatMap {
                 case (cluster, wkClient) =>
-                  wkClient.exist(id).flatMap {
+                  wkClient.exist(name).flatMap {
                     if (_)
-                      wkClient.delete(id).flatMap(_ => update(connectorConfig, cluster, wkClient))
+                      wkClient.delete(name).flatMap(_ => update(connectorConfig, cluster, wkClient))
                     else update(connectorConfig, cluster, wkClient)
                   }
               }
@@ -202,25 +202,25 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
           }
         } ~ path(PAUSE_COMMAND) {
           put {
-            complete(store.value[ConnectorDescription](id).flatMap { connectorConfig =>
+            complete(store.value[ConnectorDescription](name).flatMap { connectorConfig =>
               CollieUtils.workerClient(Some(connectorConfig.workerClusterName)).flatMap {
                 case (_, wkClient) =>
-                  wkClient.status(id).map(_.connector.state).flatMap {
+                  wkClient.status(name).map(_.connector.state).flatMap {
                     case ConnectorState.PAUSED =>
                       Future.successful(connectorConfig.copy(state = Some(ConnectorState.PAUSED)))
-                    case _ => wkClient.pause(id).map(_ => connectorConfig.copy(state = Some(ConnectorState.PAUSED)))
+                    case _ => wkClient.pause(name).map(_ => connectorConfig.copy(state = Some(ConnectorState.PAUSED)))
                   }
               }
             })
           }
         } ~ path(RESUME_COMMAND) {
           put {
-            complete(store.value[ConnectorDescription](id).flatMap { connectorConfig =>
+            complete(store.value[ConnectorDescription](name).flatMap { connectorConfig =>
               CollieUtils.workerClient(Some(connectorConfig.workerClusterName)).map {
                 case (_, wkClient) =>
-                  wkClient.status(id).map(_.connector.state).flatMap {
+                  wkClient.status(name).map(_.connector.state).flatMap {
                     case ConnectorState.PAUSED =>
-                      wkClient.resume(id).map(_ => connectorConfig.copy(state = Some(ConnectorState.RUNNING)))
+                      wkClient.resume(name).map(_ => connectorConfig.copy(state = Some(ConnectorState.RUNNING)))
                     case s => Future.successful(connectorConfig.copy(state = Some(s)))
                   }
               }

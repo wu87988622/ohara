@@ -81,8 +81,8 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
     val pipelines = result(pipelineApi.list())
     pipelines.size shouldBe 2
-    pipelines.find(_.id == pipeline0.id).get.workerClusterName shouldBe pipeline0.workerClusterName
-    pipelines.find(_.id == pipeline1.id).get.workerClusterName shouldBe pipeline1.workerClusterName
+    pipelines.find(_.name == pipeline0.name).get.workerClusterName shouldBe pipeline0.workerClusterName
+    pipelines.find(_.name == pipeline1.name).get.workerClusterName shouldBe pipeline1.workerClusterName
   }
 
   @Test
@@ -97,18 +97,18 @@ class TestPipelineRoute extends MediumTest with Matchers {
     val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
 
     val pipeline = result(
-      pipelineApi.request.name(CommonUtils.randomString(10)).flow(Flow(connector.id, Set(topic.name))).create()
+      pipelineApi.request.name(CommonUtils.randomString(10)).flow(Flow(connector.name, Set(topic.name))).create()
     )
 
     pipeline.flows.size shouldBe 1
-    pipeline.flows.head.from shouldBe connector.id
+    pipeline.flows.head.from shouldBe connector.name
     pipeline.flows.head.to shouldBe Set(topic.name)
     pipeline.objects.size should not be 0
 
     // remove connector
-    result(connectorApi.delete(connector.id))
+    result(connectorApi.delete(connector.name))
 
-    val pipeline2 = result(pipelineApi.get(pipeline.id))
+    val pipeline2 = result(pipelineApi.get(pipeline.name))
 
     pipeline2.flows.size shouldBe 0
 
@@ -152,7 +152,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
     // test delete
     result(pipelineApi.list()).size shouldBe 1
-    result(pipelineApi.delete(pipeline3.id))
+    result(pipelineApi.delete(pipeline3.name))
     result(pipelineApi.list()).size shouldBe 0
 
     // test nonexistent data
@@ -196,9 +196,9 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
     result(configurator.clusterCollie.workerCollie().remove(pipeline.workerClusterName))
 
-    result(pipelineApi.delete(pipeline.id))
+    result(pipelineApi.delete(pipeline.name))
 
-    result(pipelineApi.list()).exists(_.id == pipeline.id) shouldBe false
+    result(pipelineApi.list()).exists(_.name == pipeline.name) shouldBe false
   }
 
   @Test
@@ -214,9 +214,9 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
     result(configurator.clusterCollie.workerCollie().remove(pipeline.workerClusterName))
 
-    val anotherPipeline = result(pipelineApi.list()).find(_.id == pipeline.id).get
+    val anotherPipeline = result(pipelineApi.list()).find(_.name == pipeline.name).get
 
-    anotherPipeline.id shouldBe pipeline.id
+    anotherPipeline.name shouldBe pipeline.name
     anotherPipeline.flows shouldBe pipeline.flows
     // worker cluster is gone so it fails to fetch objects status
     anotherPipeline.objects.size shouldBe 0
@@ -236,9 +236,9 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
     result(configurator.clusterCollie.workerCollie().remove(pipeline.workerClusterName))
 
-    val anotherPipeline = result(pipelineApi.list()).find(_.id == pipeline.id).get
+    val anotherPipeline = result(pipelineApi.list()).find(_.name == pipeline.name).get
 
-    anotherPipeline.id shouldBe pipeline.id
+    anotherPipeline.name shouldBe pipeline.name
     anotherPipeline.flows shouldBe pipeline.flows
     // worker cluster is gone so it fails to fetch objects status
     anotherPipeline.objects.size shouldBe 0
@@ -262,8 +262,8 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
     val pipelines = result(pipelineApi.list())
     pipelines.size shouldBe 2
-    pipelines.exists(_.id == pipeline0.id) shouldBe true
-    pipelines.exists(_.id == pipeline1.id) shouldBe true
+    pipelines.exists(_.name == pipeline0.name) shouldBe true
+    pipelines.exists(_.name == pipeline1.name) shouldBe true
   }
 
   @Test
@@ -277,7 +277,8 @@ class TestPipelineRoute extends MediumTest with Matchers {
         .numberOfTasks(1)
         .create())
 
-    val pipeline = result(pipelineApi.request.name(CommonUtils.randomString()).flow(topic.name, connector.id).create())
+    val pipeline = result(
+      pipelineApi.request.name(CommonUtils.randomString()).flow(topic.name, connector.name).create())
 
     pipeline.objects.size shouldBe 2
     pipeline.objects.foreach { obj =>
@@ -297,10 +298,11 @@ class TestPipelineRoute extends MediumTest with Matchers {
         .numberOfTasks(1)
         .create())
 
-    val pipeline = result(pipelineApi.request.name(CommonUtils.randomString()).flow(topic.name, connector.id).create())
+    val pipeline = result(
+      pipelineApi.request.name(CommonUtils.randomString()).flow(topic.name, connector.name).create())
 
     pipeline.objects.size shouldBe 2
-    pipeline.objects.filter(_.id == connector.id).foreach { obj =>
+    pipeline.objects.filter(_.name == connector.name).foreach { obj =>
       obj.error.isEmpty shouldBe false
       obj.state shouldBe None
     }
@@ -319,15 +321,15 @@ class TestPipelineRoute extends MediumTest with Matchers {
         .create())
 
     val pipeline = result(
-      pipelineApi.request.name(CommonUtils.randomString()).flow(source.id, Set.empty[String]).create())
+      pipelineApi.request.name(CommonUtils.randomString()).flow(source.name, Set.empty[String]).create())
 
     pipeline.objects.foreach(obj => obj.state shouldBe None)
 
     // start source and pipeline should "see" what happen in source
     // we don't want to compare state since the state may be changed
-    result(connectorApi.start(source.id)).copy(state = None) shouldBe source.copy(state = None)
+    result(connectorApi.start(source.name)).copy(state = None) shouldBe source.copy(state = None)
     val pipeline2 = result(
-      PipelineApi.access.hostname(configurator.hostname).port(configurator.port).get(pipeline.id)
+      PipelineApi.access.hostname(configurator.hostname).port(configurator.port).get(pipeline.name)
     )
     pipeline2.objects.foreach(
       obj => obj.state.get shouldBe "RUNNING"
@@ -360,9 +362,9 @@ class TestPipelineRoute extends MediumTest with Matchers {
         .instances(1)
         .create())
 
-    result(pipelineApi.request.name(CommonUtils.randomString()).flow(source.id, topic.name).create()).objects.size shouldBe 2
+    result(pipelineApi.request.name(CommonUtils.randomString()).flow(source.name, topic.name).create()).objects.size shouldBe 2
 
-    result(pipelineApi.request.name(CommonUtils.randomString()).flow(source.id, streamapp.id).create()).objects.size shouldBe 2
+    result(pipelineApi.request.name(CommonUtils.randomString()).flow(source.name, streamapp.name).create()).objects.size shouldBe 2
   }
 
   @Test
@@ -375,7 +377,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
         .create())
 
     an[IllegalArgumentException] should be thrownBy result(
-      pipelineApi.request.name(CommonUtils.randomString()).flow(source.id, CommonUtils.randomString()).create())
+      pipelineApi.request.name(CommonUtils.randomString()).flow(source.name, CommonUtils.randomString()).create())
 
     val source2 = result(
       connectorApi.request
@@ -386,7 +388,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
     an[IllegalArgumentException] should be thrownBy result(
       pipelineApi.request
         .name(CommonUtils.randomString())
-        .flow(source.id, Set(source2.id, CommonUtils.randomString()))
+        .flow(source.name, Set(source2.name, CommonUtils.randomString()))
         .create())
   }
 
@@ -400,7 +402,8 @@ class TestPipelineRoute extends MediumTest with Matchers {
         .create())
 
     an[IllegalArgumentException] should be thrownBy
-      result(pipelineApi.request.name(CommonUtils.randomString()).flow(CommonUtils.randomString(), source.id).create())
+      result(
+        pipelineApi.request.name(CommonUtils.randomString()).flow(CommonUtils.randomString(), source.name).create())
   }
 
   @Test

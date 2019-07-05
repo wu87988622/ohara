@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import * as generate from 'utils/generate';
 import * as pipelineApi from '../pipelineApi';
 import { handleError, axiosInstance } from '../apiUtils';
 
@@ -24,7 +25,7 @@ const url = '/api/pipelines';
 describe('fetchPipeline()', () => {
   afterEach(jest.clearAllMocks);
 
-  const id = 'abc';
+  const name = generate.name();
 
   it('handles success http call', async () => {
     const res = {
@@ -35,9 +36,9 @@ describe('fetchPipeline()', () => {
 
     axiosInstance.get.mockImplementation(() => Promise.resolve(res));
 
-    const result = await pipelineApi.fetchPipeline(id);
+    const result = await pipelineApi.fetchPipeline(name);
     expect(axiosInstance.get).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.get).toHaveBeenCalledWith(`${url}/${id}`);
+    expect(axiosInstance.get).toHaveBeenCalledWith(`${url}/${name}`);
     expect(result).toBe(res);
   });
 
@@ -49,10 +50,10 @@ describe('fetchPipeline()', () => {
     };
     axiosInstance.get.mockImplementation(() => Promise.resolve(res));
 
-    const result = await pipelineApi.fetchPipeline(id);
+    const result = await pipelineApi.fetchPipeline(name);
 
     expect(axiosInstance.get).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.get).toHaveBeenCalledWith(`${url}/${id}`);
+    expect(axiosInstance.get).toHaveBeenCalledWith(`${url}/${name}`);
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(result);
   });
@@ -68,7 +69,7 @@ describe('fetchPipeline()', () => {
 
     axiosInstance.get.mockImplementation(() => Promise.reject(res));
 
-    await pipelineApi.fetchPipeline(id);
+    await pipelineApi.fetchPipeline(name);
     expect(axiosInstance.get).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(res);
@@ -190,7 +191,7 @@ describe('UpdatePipeline()', () => {
   afterEach(jest.clearAllMocks);
 
   const params = {
-    id: 'abc',
+    name: generate.name(),
     params: {
       a: 'a',
       b: 'b',
@@ -209,7 +210,7 @@ describe('UpdatePipeline()', () => {
     const result = await pipelineApi.updatePipeline(params);
     expect(axiosInstance.put).toHaveBeenCalledTimes(1);
     expect(axiosInstance.put).toHaveBeenCalledWith(
-      `${url}/${params.id}`,
+      `${url}/${params.name}`,
       params.params,
     );
     expect(result).toBe(res);
@@ -227,7 +228,7 @@ describe('UpdatePipeline()', () => {
 
     expect(axiosInstance.put).toHaveBeenCalledTimes(1);
     expect(axiosInstance.put).toHaveBeenCalledWith(
-      `${url}/${params.id}`,
+      `${url}/${params.name}`,
       params.params,
     );
     expect(handleError).toHaveBeenCalledTimes(1);
@@ -255,7 +256,7 @@ describe('UpdatePipeline()', () => {
 describe('deletePipeline()', () => {
   afterEach(jest.clearAllMocks);
 
-  const id = '123';
+  const name = generate.name();
 
   it('handles success http call', async () => {
     const res = {
@@ -266,9 +267,9 @@ describe('deletePipeline()', () => {
 
     axiosInstance.delete.mockImplementation(() => Promise.resolve(res));
 
-    const result = await pipelineApi.deletePipeline(id);
+    const result = await pipelineApi.deletePipeline(name);
     expect(axiosInstance.delete).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.delete).toHaveBeenCalledWith(`${url}/${id}`);
+    expect(axiosInstance.delete).toHaveBeenCalledWith(`${url}/${name}`);
     expect(result).toBe(res);
   });
 
@@ -280,10 +281,10 @@ describe('deletePipeline()', () => {
     };
     axiosInstance.delete.mockImplementation(() => Promise.resolve(res));
 
-    const result = await pipelineApi.deletePipeline(id);
+    const result = await pipelineApi.deletePipeline(name);
 
     expect(axiosInstance.delete).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.delete).toHaveBeenCalledWith(`${url}/${id}`);
+    expect(axiosInstance.delete).toHaveBeenCalledWith(`${url}/${name}`);
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(result);
   });
@@ -299,7 +300,7 @@ describe('deletePipeline()', () => {
 
     axiosInstance.delete.mockImplementation(() => Promise.reject(res));
 
-    await pipelineApi.deletePipeline(id);
+    await pipelineApi.deletePipeline(name);
     expect(axiosInstance.delete).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(res);

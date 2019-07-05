@@ -69,7 +69,7 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
 
     // test delete
     result(ftpApi.list()).size shouldBe 1
-    result(ftpApi.delete(response.id))
+    result(ftpApi.delete(response.name))
     result(ftpApi.list()).size shouldBe 0
 
     // test nonexistent data

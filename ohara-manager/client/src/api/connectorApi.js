@@ -18,9 +18,9 @@ import { get } from 'lodash';
 
 import { handleError, axiosInstance } from './apiUtils';
 
-export const fetchConnector = async id => {
+export const fetchConnector = async name => {
   try {
-    const res = await axiosInstance.get(`/api/connectors/${id}`);
+    const res = await axiosInstance.get(`/api/connectors/${name}`);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -48,9 +48,9 @@ export const createConnector = async params => {
   }
 };
 
-export const updateConnector = async ({ id, params }) => {
+export const updateConnector = async ({ name, params }) => {
   try {
-    const res = await axiosInstance.put(`/api/connectors/${id}`, params);
+    const res = await axiosInstance.put(`/api/connectors/${name}`, params);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -63,9 +63,9 @@ export const updateConnector = async ({ id, params }) => {
   }
 };
 
-export const startConnector = async id => {
+export const startConnector = async name => {
   try {
-    const res = await axiosInstance.put(`/api/connectors/${id}/start`);
+    const res = await axiosInstance.put(`/api/connectors/${name}/start`);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -78,9 +78,9 @@ export const startConnector = async id => {
   }
 };
 
-export const stopConnector = async id => {
+export const stopConnector = async name => {
   try {
-    const res = await axiosInstance.put(`/api/connectors/${id}/stop`);
+    const res = await axiosInstance.put(`/api/connectors/${name}/stop`);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -93,9 +93,9 @@ export const stopConnector = async id => {
   }
 };
 
-export const deleteConnector = async id => {
+export const deleteConnector = async name => {
   try {
-    const res = await axiosInstance.delete(`/api/connectors/${id}`);
+    const res = await axiosInstance.delete(`/api/connectors/${name}`);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {

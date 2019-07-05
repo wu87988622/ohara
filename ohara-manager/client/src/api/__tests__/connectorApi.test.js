@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import * as generate from 'utils/generate';
 import * as connectorApi from '../connectorApi';
 import { handleError, axiosInstance } from '../apiUtils';
 
@@ -23,7 +24,7 @@ const url = '/api/connectors';
 describe('fetchConnector()', () => {
   afterEach(jest.clearAllMocks);
 
-  const id = 'abc';
+  const name = generate.name();
 
   it('handles success http call', async () => {
     const res = {
@@ -34,9 +35,9 @@ describe('fetchConnector()', () => {
 
     axiosInstance.get.mockImplementation(() => Promise.resolve(res));
 
-    const result = await connectorApi.fetchConnector(id);
+    const result = await connectorApi.fetchConnector(name);
     expect(axiosInstance.get).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.get).toHaveBeenCalledWith(`${url}/${id}`);
+    expect(axiosInstance.get).toHaveBeenCalledWith(`${url}/${name}`);
     expect(result).toBe(res);
   });
 
@@ -48,10 +49,10 @@ describe('fetchConnector()', () => {
     };
     axiosInstance.get.mockImplementation(() => Promise.resolve(res));
 
-    const result = await connectorApi.fetchConnector(id);
+    const result = await connectorApi.fetchConnector(name);
 
     expect(axiosInstance.get).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.get).toHaveBeenCalledWith(`${url}/${id}`);
+    expect(axiosInstance.get).toHaveBeenCalledWith(`${url}/${name}`);
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(result);
   });
@@ -67,7 +68,7 @@ describe('fetchConnector()', () => {
 
     axiosInstance.get.mockImplementation(() => Promise.reject(res));
 
-    await connectorApi.fetchConnector(id);
+    await connectorApi.fetchConnector(name);
     expect(axiosInstance.get).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(res);
@@ -135,7 +136,7 @@ describe('updateConnector()', () => {
   afterEach(jest.clearAllMocks);
 
   const params = {
-    id: 'abc',
+    name: generate.name(),
     params: {
       a: 'a',
       b: 'b',
@@ -154,7 +155,7 @@ describe('updateConnector()', () => {
     const result = await connectorApi.updateConnector(params);
     expect(axiosInstance.put).toHaveBeenCalledTimes(1);
     expect(axiosInstance.put).toHaveBeenCalledWith(
-      `${url}/${params.id}`,
+      `${url}/${params.name}`,
       params.params,
     );
     expect(result).toBe(res);
@@ -172,7 +173,7 @@ describe('updateConnector()', () => {
 
     expect(axiosInstance.put).toHaveBeenCalledTimes(1);
     expect(axiosInstance.put).toHaveBeenCalledWith(
-      `${url}/${params.id}`,
+      `${url}/${params.name}`,
       params.params,
     );
     expect(handleError).toHaveBeenCalledTimes(1);
@@ -200,7 +201,7 @@ describe('updateConnector()', () => {
 describe('startConnector()', () => {
   afterEach(jest.clearAllMocks);
 
-  const id = 'abc';
+  const name = generate.name();
 
   it('handles success http call', async () => {
     const res = {
@@ -211,9 +212,9 @@ describe('startConnector()', () => {
 
     axiosInstance.put.mockImplementation(() => Promise.resolve(res));
 
-    const result = await connectorApi.startConnector(id);
+    const result = await connectorApi.startConnector(name);
     expect(axiosInstance.put).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.put).toHaveBeenCalledWith(`${url}/${id}/start`);
+    expect(axiosInstance.put).toHaveBeenCalledWith(`${url}/${name}/start`);
     expect(result).toBe(res);
   });
 
@@ -225,10 +226,10 @@ describe('startConnector()', () => {
     };
     axiosInstance.put.mockImplementation(() => Promise.resolve(res));
 
-    const result = await connectorApi.startConnector(id);
+    const result = await connectorApi.startConnector(name);
 
     expect(axiosInstance.put).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.put).toHaveBeenCalledWith(`${url}/${id}/start`);
+    expect(axiosInstance.put).toHaveBeenCalledWith(`${url}/${name}/start`);
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(result);
   });
@@ -244,7 +245,7 @@ describe('startConnector()', () => {
 
     axiosInstance.put.mockImplementation(() => Promise.reject(res));
 
-    await connectorApi.startConnector(id);
+    await connectorApi.startConnector(name);
     expect(axiosInstance.put).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(res);
@@ -254,7 +255,7 @@ describe('startConnector()', () => {
 describe('stopConnector()', () => {
   afterEach(jest.clearAllMocks);
 
-  const id = 'abc';
+  const name = generate.name();
 
   it('handles success http call', async () => {
     const res = {
@@ -265,9 +266,9 @@ describe('stopConnector()', () => {
 
     axiosInstance.put.mockImplementation(() => Promise.resolve(res));
 
-    const result = await connectorApi.stopConnector(id);
+    const result = await connectorApi.stopConnector(name);
     expect(axiosInstance.put).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.put).toHaveBeenCalledWith(`${url}/${id}/stop`);
+    expect(axiosInstance.put).toHaveBeenCalledWith(`${url}/${name}/stop`);
     expect(result).toBe(res);
   });
 
@@ -279,10 +280,10 @@ describe('stopConnector()', () => {
     };
     axiosInstance.put.mockImplementation(() => Promise.resolve(res));
 
-    const result = await connectorApi.stopConnector(id);
+    const result = await connectorApi.stopConnector(name);
 
     expect(axiosInstance.put).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.put).toHaveBeenCalledWith(`${url}/${id}/stop`);
+    expect(axiosInstance.put).toHaveBeenCalledWith(`${url}/${name}/stop`);
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(result);
   });
@@ -298,7 +299,7 @@ describe('stopConnector()', () => {
 
     axiosInstance.put.mockImplementation(() => Promise.reject(res));
 
-    await connectorApi.stopConnector(id);
+    await connectorApi.stopConnector(name);
     expect(axiosInstance.put).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(res);
@@ -308,7 +309,7 @@ describe('stopConnector()', () => {
 describe('deleteConnector()', () => {
   afterEach(jest.clearAllMocks);
 
-  const id = 'abc';
+  const name = generate.name();
 
   it('handles success http call', async () => {
     const res = {
@@ -319,9 +320,9 @@ describe('deleteConnector()', () => {
 
     axiosInstance.delete.mockImplementation(() => Promise.resolve(res));
 
-    const result = await connectorApi.deleteConnector(id);
+    const result = await connectorApi.deleteConnector(name);
     expect(axiosInstance.delete).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.delete).toHaveBeenCalledWith(`${url}/${id}`);
+    expect(axiosInstance.delete).toHaveBeenCalledWith(`${url}/${name}`);
     expect(result).toBe(res);
   });
 
@@ -333,10 +334,10 @@ describe('deleteConnector()', () => {
     };
     axiosInstance.delete.mockImplementation(() => Promise.resolve(res));
 
-    const result = await connectorApi.deleteConnector(id);
+    const result = await connectorApi.deleteConnector(name);
 
     expect(axiosInstance.delete).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.delete).toHaveBeenCalledWith(`${url}/${id}`);
+    expect(axiosInstance.delete).toHaveBeenCalledWith(`${url}/${name}`);
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(result);
   });
@@ -352,7 +353,7 @@ describe('deleteConnector()', () => {
 
     axiosInstance.delete.mockImplementation(() => Promise.reject(res));
 
-    await connectorApi.deleteConnector(id);
+    await connectorApi.deleteConnector(name);
     expect(axiosInstance.delete).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(res);

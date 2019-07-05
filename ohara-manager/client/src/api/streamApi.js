@@ -55,6 +55,7 @@ export const updateProperty = async params => {
     const url = `/api/stream/property/${propertyName}`;
     const from = size(params.from) > 0 ? params.from : null;
     const to = size(params.to) > 0 ? params.to : null;
+
     const data = {
       from: from,
       to: to,

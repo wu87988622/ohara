@@ -80,7 +80,7 @@ trait DataStore extends Releasable {
   def raws(name: String)(implicit executor: ExecutionContext): Future[Seq[Data]]
 
   /**
-    * Remove a "specified" sublcass from ohara data mapping the id. If the data mapping to the id is not the specified
+    * Remove a "specified" sublcass from ohara data mapping the name. If the data mapping to the name is not the specified
     * type, an exception will be thrown.
     *
     * @param name from ohara data
@@ -90,8 +90,8 @@ trait DataStore extends Releasable {
   def remove[T <: Data: ClassTag](name: String)(implicit executor: ExecutionContext): Future[Boolean]
 
   /**
-    * add an object in the store. If the id doesn't  exists, an exception will be thrown.
-    * Noted, the new one replaces the previous stuff if the data returned by updater has the same id.
+    * add an object in the store. If the name doesn't  exists, an exception will be thrown.
+    * Noted, the new one replaces the previous stuff if the data returned by updater has the same name.
     * @param updater used to update data
     * @tparam T type from data
     * @return the removed data
@@ -107,7 +107,7 @@ trait DataStore extends Releasable {
     * @tparam T data type
     * @return the input data
     */
-  def addIfAbsent[T <: Data](data: T)(implicit executor: ExecutionContext): Future[T] = addIfAbsent(data.id, data)
+  def addIfAbsent[T <: Data](data: T)(implicit executor: ExecutionContext): Future[T] = addIfAbsent(data.name, data)
 
   /**
     * add a data associated to name to store. Noted, it throw exception if the input key is already associated to

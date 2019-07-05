@@ -139,7 +139,6 @@ object ConnectorApi {
         })
     }
 
-    override def id: String = name
     override def name: String = plain(SettingDefinition.CONNECTOR_NAME_DEFINITION.key())
     override def kind: String = "connector"
     def className: String = plain(SettingDefinition.CONNECTOR_CLASS_DEFINITION.key())
@@ -164,14 +163,8 @@ object ConnectorApi {
         ConnectorState.forName(json.asInstanceOf[JsString].value)
     }
 
-  implicit val CONNECTOR_DESCRIPTION_JSON_FORMAT: RootJsonFormat[ConnectorDescription] =
-    new RootJsonFormat[ConnectorDescription] {
-      private[this] val format = jsonFormat5(ConnectorDescription)
-      override def read(json: JsValue): ConnectorDescription = format.read(json)
-      override def write(obj: ConnectorDescription): JsValue = JsObject(
-        // TODO: remove the id
-        format.write(obj).asJsObject.fields ++ Map("id" -> JsString(obj.name)))
-    }
+  implicit val CONNECTOR_DESCRIPTION_JSON_FORMAT: RootJsonFormat[ConnectorDescription] = jsonFormat5(
+    ConnectorDescription)
 
   /**
     * used to generate the payload and url for POST/PUT request.
@@ -291,44 +284,44 @@ object ConnectorApi {
   class Access private[v0]
       extends com.island.ohara.client.configurator.v0.Access[ConnectorDescription](CONNECTORS_PREFIX_PATH) {
 
-    private[this] def actionUrl(id: String, action: String): String =
-      s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$id/$action"
+    private[this] def actionUrl(name: String, action: String): String =
+      s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$name/$action"
 
     /**
       * start to run a connector on worker cluster.
       *
-      * @param id connector's id
+      * @param name connector's name
       * @return the configuration of connector
       */
-    def start(id: String)(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
-      exec.put[ConnectorDescription, ErrorApi.Error](actionUrl(id, START_COMMAND))
+    def start(name: String)(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
+      exec.put[ConnectorDescription, ErrorApi.Error](actionUrl(name, START_COMMAND))
 
     /**
       * stop and remove a running connector.
       *
-      * @param id connector's id
+      * @param name connector's name
       * @return the configuration of connector
       */
-    def stop(id: String)(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
-      exec.put[ConnectorDescription, ErrorApi.Error](actionUrl(id, STOP_COMMAND))
+    def stop(name: String)(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
+      exec.put[ConnectorDescription, ErrorApi.Error](actionUrl(name, STOP_COMMAND))
 
     /**
       * pause a running connector
       *
-      * @param id connector's id
+      * @param name connector's name
       * @return the configuration of connector
       */
-    def pause(id: String)(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
-      exec.put[ConnectorDescription, ErrorApi.Error](actionUrl(id, PAUSE_COMMAND))
+    def pause(name: String)(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
+      exec.put[ConnectorDescription, ErrorApi.Error](actionUrl(name, PAUSE_COMMAND))
 
     /**
       * resume a paused connector
       *
-      * @param id connector's id
+      * @param name connector's name
       * @return the configuration of connector
       */
-    def resume(id: String)(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
-      exec.put[ConnectorDescription, ErrorApi.Error](actionUrl(id, RESUME_COMMAND))
+    def resume(name: String)(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
+      exec.put[ConnectorDescription, ErrorApi.Error](actionUrl(name, RESUME_COMMAND))
 
     def request: Request = new Request {
       override def create()(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =

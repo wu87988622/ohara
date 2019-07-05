@@ -325,7 +325,7 @@ object WorkerClient {
     private[this] var executionContext: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
 
     /**
-      * set the connector id. It should be a unique id.
+      * set the connector name. It should be a unique name.
       *
       * @param name connector name
       * @return this one

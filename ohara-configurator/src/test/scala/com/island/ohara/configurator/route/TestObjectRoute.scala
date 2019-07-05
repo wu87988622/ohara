@@ -51,9 +51,9 @@ class TestObjectRoute extends SmallTest with Matchers {
     var objs = result(objectApi.list())
     objs.size shouldBe (1 + initialSize)
 
-    objs.find(_.id == topic0.id).get.name shouldBe topic0.name
-    objs.find(_.id == topic0.id).get.kind shouldBe topic0.kind
-    objs.find(_.id == topic0.id).get.lastModified shouldBe topic0.lastModified
+    objs.find(_.name == topic0.name).get.name shouldBe topic0.name
+    objs.find(_.name == topic0.name).get.kind shouldBe topic0.kind
+    objs.find(_.name == topic0.name).get.lastModified shouldBe topic0.lastModified
 
     val topic1 = result(
       TopicApi.access
@@ -67,9 +67,9 @@ class TestObjectRoute extends SmallTest with Matchers {
 
     objs.size shouldBe (2 + initialSize)
 
-    objs.find(_.id == topic1.id).get.name shouldBe topic1.name
-    objs.find(_.id == topic1.id).get.kind shouldBe topic1.kind
-    objs.find(_.id == topic1.id).get.lastModified shouldBe topic1.lastModified
+    objs.find(_.name == topic1.name).get.name shouldBe topic1.name
+    objs.find(_.name == topic1.name).get.kind shouldBe topic1.kind
+    objs.find(_.name == topic1.name).get.lastModified shouldBe topic1.lastModified
   }
 
   @Test
@@ -84,9 +84,9 @@ class TestObjectRoute extends SmallTest with Matchers {
     var objs = result(objectApi.list())
     objs.size shouldBe (1 + initialSize)
 
-    objs.find(_.id == connector0.id).get.name shouldBe connector0.name
-    objs.find(_.id == connector0.id).get.kind shouldBe connector0.kind
-    objs.find(_.id == connector0.id).get.lastModified shouldBe connector0.lastModified
+    objs.find(_.name == connector0.name).get.name shouldBe connector0.name
+    objs.find(_.name == connector0.name).get.kind shouldBe connector0.kind
+    objs.find(_.name == connector0.name).get.lastModified shouldBe connector0.lastModified
 
     val connector1 = result(
       connectorApi.request
@@ -99,9 +99,9 @@ class TestObjectRoute extends SmallTest with Matchers {
 
     objs.size shouldBe (2 + initialSize)
 
-    objs.find(_.id == connector1.id).get.name shouldBe connector1.name
-    objs.find(_.id == connector1.id).get.kind shouldBe connector1.kind
-    objs.find(_.id == connector1.id).get.lastModified shouldBe connector1.lastModified
+    objs.find(_.name == connector1.name).get.name shouldBe connector1.name
+    objs.find(_.name == connector1.name).get.kind shouldBe connector1.kind
+    objs.find(_.name == connector1.name).get.lastModified shouldBe connector1.lastModified
   }
 
   @Test
@@ -125,13 +125,13 @@ class TestObjectRoute extends SmallTest with Matchers {
 
     objs.size shouldBe (2 + initialSize)
 
-    objs.find(_.id == connector.id).get.name shouldBe connector.name
-    objs.find(_.id == connector.id).get.kind shouldBe connector.kind
-    objs.find(_.id == connector.id).get.lastModified shouldBe connector.lastModified
+    objs.find(_.name == connector.name).get.name shouldBe connector.name
+    objs.find(_.name == connector.name).get.kind shouldBe connector.kind
+    objs.find(_.name == connector.name).get.lastModified shouldBe connector.lastModified
 
-    objs.find(_.id == topic.id).get.name shouldBe topic.name
-    objs.find(_.id == topic.id).get.kind shouldBe topic.kind
-    objs.find(_.id == topic.id).get.lastModified shouldBe topic.lastModified
+    objs.find(_.name == topic.name).get.name shouldBe topic.name
+    objs.find(_.name == topic.name).get.kind shouldBe topic.kind
+    objs.find(_.name == topic.name).get.lastModified shouldBe topic.lastModified
   }
 
   @After

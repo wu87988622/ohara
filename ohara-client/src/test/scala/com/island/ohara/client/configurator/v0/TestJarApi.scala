@@ -16,26 +16,10 @@
 
 package com.island.ohara.client.configurator.v0
 
-import java.net.URL
-
-import com.island.ohara.client.configurator.v0.JarApi.JarInfo
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
 class TestJarApi extends SmallTest with Matchers {
-
-  @Test
-  def testId(): Unit = {
-    val jarInfo = JarInfo(
-      name = CommonUtils.randomString(),
-      group = CommonUtils.randomString(),
-      size = 1L,
-      url = new URL("file://"),
-      lastModified = CommonUtils.current()
-    )
-    jarInfo.id shouldBe jarInfo.name
-  }
 
   @Test
   def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy JarApi.access.request.newName("")

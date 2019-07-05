@@ -25,21 +25,18 @@ const props = {
   graph: [
     {
       kind: 'source',
-      id: 'id1234',
       className: CONNECTOR_TYPES.jdbcSource,
       name: 'a',
       to: [],
     },
     {
       kind: 'topic',
-      id: 'id5678',
       className: CONNECTOR_TYPES.topic,
       name: 'b',
-      to: ['id9112'],
+      to: [],
     },
     {
       kind: 'sink',
-      id: 'id9112',
       className: CONNECTOR_TYPES.ftpSink,
       name: 'c',
       to: [],
@@ -51,7 +48,9 @@ const props = {
   resetGraph: jest.fn(),
   updateGraph: jest.fn(),
   match: {
-    params: {},
+    params: {
+      pipelineName: 'abc',
+    },
   },
 };
 

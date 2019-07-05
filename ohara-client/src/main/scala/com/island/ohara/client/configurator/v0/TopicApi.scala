@@ -18,7 +18,7 @@ package com.island.ohara.client.configurator.v0
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json.RootJsonFormat
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -63,17 +63,10 @@ object TopicApi {
                        metrics: Metrics,
                        lastModified: Long)
       extends Data {
-    override def id: String = name
     override def kind: String = "topic"
   }
 
-  implicit val TOPIC_INFO_FORMAT: RootJsonFormat[TopicInfo] = new RootJsonFormat[TopicInfo] {
-    private[this] val format = jsonFormat6(TopicInfo)
-    override def read(json: JsValue): TopicInfo = format.read(json)
-    override def write(obj: TopicInfo): JsValue = JsObject(
-      // TODO: remove the id
-      format.write(obj).asJsObject.fields ++ Map("id" -> JsString(obj.id)))
-  }
+  implicit val TOPIC_INFO_FORMAT: RootJsonFormat[TopicInfo] = jsonFormat6(TopicInfo)
 
   /**
     * used to generate the payload and url for POST/PUT request.

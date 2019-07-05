@@ -31,7 +31,7 @@ import { TitleWrapper, H5Wrapper, LoaderWrap } from '../styles';
 import { validateConnector } from 'api/validateApi';
 import { ListLoader } from 'components/common/Loader';
 import { Box } from 'components/common/Layout';
-import { findByGraphId } from '../../pipelineUtils/commonUtils';
+import { findByGraphName } from '../../pipelineUtils/commonUtils';
 import { CONNECTOR_ACTIONS } from 'constants/pipelines';
 
 class CustomConnector extends React.Component {
@@ -217,7 +217,7 @@ class CustomConnector extends React.Component {
     const sinkId = get(match, 'params.connectorId', null);
     const state = get(res, 'data.result.state');
     this.setState({ state });
-    const currSink = findByGraphId(graph, sinkId);
+    const currSink = findByGraphName(graph, sinkId);
     const update = { ...currSink, state };
     updateGraph({ update });
 

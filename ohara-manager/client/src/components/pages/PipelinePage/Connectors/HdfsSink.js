@@ -31,7 +31,7 @@ import { TitleWrapper, H5Wrapper, LoaderWrap } from './styles';
 import { validateConnector } from 'api/validateApi';
 import { ListLoader } from 'components/common/Loader';
 import { Box } from 'components/common/Layout';
-import { findByGraphId } from '../pipelineUtils/commonUtils';
+import { findByGraphName } from '../pipelineUtils/commonUtils';
 import { CONNECTOR_ACTIONS } from 'constants/pipelines';
 
 class HdfsSink extends React.Component {
@@ -70,15 +70,15 @@ class HdfsSink extends React.Component {
   componentDidUpdate(prevProps) {
     const { pipelineTopics: prevTopics } = prevProps;
     const { pipelineTopics: currTopics } = this.props;
-    const { connectorId: prevConnectorId } = prevProps.match.params;
-    const { connectorId: currConnectorId } = this.props.match.params;
+    const { connectorName: prevConnectorName } = prevProps.match.params;
+    const { connectorName: currConnectorName } = this.props.match.params;
 
     if (prevTopics !== currTopics) {
       const topics = currTopics.map(currTopic => currTopic.name);
       this.setState({ topics });
     }
 
-    if (prevConnectorId !== currConnectorId) {
+    if (prevConnectorName !== currConnectorName) {
       this.fetchConnector();
     }
   }
@@ -89,8 +89,8 @@ class HdfsSink extends React.Component {
   };
 
   fetchConnector = async () => {
-    const { connectorId } = this.props.match.params;
-    const res = await connectorApi.fetchConnector(connectorId);
+    const { connectorName } = this.props.match.params;
+    const res = await connectorApi.fetchConnector(connectorName);
     this.setState({ isLoading: false });
     const result = get(res, 'data.result', null);
 
@@ -158,8 +158,8 @@ class HdfsSink extends React.Component {
 
   handleDeleteConnector = async () => {
     const { match, refreshGraph, history } = this.props;
-    const { connectorId, pipelineId } = match.params;
-    const res = await connectorApi.deleteConnector(connectorId);
+    const { connectorName, pipelineName } = match.params;
+    const res = await connectorApi.deleteConnector(connectorName);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (isSuccess) {
@@ -169,19 +169,19 @@ class HdfsSink extends React.Component {
       );
       await refreshGraph();
 
-      const path = `/pipelines/edit/${pipelineId}`;
+      const path = `/pipelines/edit/${pipelineName}`;
       history.push(path);
     }
   };
 
   triggerConnector = async action => {
     const { match } = this.props;
-    const sinkId = get(match, 'params.connectorId', null);
+    const sinkName = get(match, 'params.connectorName', null);
     let res;
     if (action === CONNECTOR_ACTIONS.start) {
-      res = await connectorApi.startConnector(sinkId);
+      res = await connectorApi.startConnector(sinkName);
     } else {
-      res = await connectorApi.stopConnector(sinkId);
+      res = await connectorApi.stopConnector(sinkName);
     }
 
     this.handleTriggerConnectorResponse(action, res);
@@ -218,11 +218,11 @@ class HdfsSink extends React.Component {
     if (!isSuccess) return;
 
     const { match, graph, updateGraph } = this.props;
-    const sinkId = get(match, 'params.connectorId', null);
+    const sinkName = get(match, 'params.connectorName', null);
     const state = get(res, 'data.result.state');
     this.setState({ state });
 
-    const currSink = findByGraphId(graph, sinkId);
+    const currSink = findByGraphName(graph, sinkName);
     const update = { ...currSink, state };
     updateGraph({ update });
 
@@ -233,7 +233,7 @@ class HdfsSink extends React.Component {
 
   handleSave = async values => {
     const { match, globalTopics, graph, updateGraph } = this.props;
-    const { connectorId } = match.params;
+    const { connectorName } = match.params;
 
     const topic = utils.getCurrTopicId({
       originals: globalTopics,
@@ -247,15 +247,15 @@ class HdfsSink extends React.Component {
       replaceToken: '.',
     });
 
-    const params = { ..._values, topics, name: connectorId };
-    await connectorApi.updateConnector({ id: connectorId, params });
+    const params = { ..._values, topics, name: connectorName };
+    await connectorApi.updateConnector({ name: connectorName, params });
 
     const { sinkProps, update } = utils.getUpdatedTopic({
-      currTopicId: topic,
+      currTopicName: topic,
       configs: values,
       originalTopics: globalTopics,
       graph,
-      connectorId,
+      connectorName,
     });
 
     updateGraph({ update, ...sinkProps });

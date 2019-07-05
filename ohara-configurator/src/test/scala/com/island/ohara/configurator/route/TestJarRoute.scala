@@ -65,8 +65,8 @@ class TestJarRoute extends SmallTest with Matchers {
     jarWithGroup.group shouldBe GROUP
     jarWithGroup.size shouldBe data.size
 
-    // since id == name, use same upload jar will get same id
-    jarWithGroup.id shouldBe jar.id
+    // since name == name, use same upload jar will get same name
+    jarWithGroup.name shouldBe jar.name
 
     f.deleteOnExit()
   }

@@ -76,7 +76,6 @@ object StreamApi {
                                         exactlyOnce: Boolean = false,
                                         lastModified: Long)
       extends Data {
-    override def id: String = name
     override def kind: String = "streamApp"
   }
   implicit val STREAMAPP_DESCRIPTION_JSON_FORMAT: RootJsonFormat[StreamAppDescription] = jsonFormat14(

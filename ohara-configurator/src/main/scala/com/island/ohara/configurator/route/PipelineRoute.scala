@@ -37,7 +37,7 @@ private[configurator] object PipelineRoute {
   /**
     * this constant represents the "unknown" from or "unknown" to.
     */
-  private[this] val UNKNOWN_ID: String = "?"
+  private[this] val UNKNOWN_NAME: String = "?"
   private[this] val LOG = Logger(ConnectorRoute.getClass)
 
   private[this] def toRes(request: Creation, swallow: Boolean = false)(implicit clusterCollie: ClusterCollie,
@@ -148,16 +148,16 @@ private[configurator] object PipelineRoute {
           .flatMap { flow =>
             Set(flow.from) ++ flow.to
           }
-          .filterNot(_ == UNKNOWN_ID)
+          .filterNot(_ == UNKNOWN_NAME)
           .toSet
-          .map((id: String) => store.raws(id)))
+          .map((name: String) => store.raws(name)))
       .flatMap(objs => workerClient.connectors().map(connectors => (connectors, objs)))
       .flatMap {
         case (connectors, objs) =>
           Future.traverse(objs.flatten) {
             case data: ConnectorDescription =>
               // the group of counter is equal to connector's name (this is a part of kafka's core setting)
-              // Hence, we filter the connectors having different "name" (we use id instead of name in creating connector)
+              // Hence, we filter the connectors having different "name" (we use name instead of name in creating connector)
               val metrics = Metrics(connectorMeters.getOrElse(data.name, Seq.empty))
               workerClient
                 .exist(data.name)
@@ -173,7 +173,6 @@ private[configurator] object PipelineRoute {
                 .map {
                   case (connectorInfo, kind) =>
                     ObjectAbstract(
-                      id = data.name,
                       name = data.name,
                       kind = kind,
                       className = Some(data.className),
@@ -187,7 +186,6 @@ private[configurator] object PipelineRoute {
                   case e: Throwable =>
                     LOG.error(s"Failed to get status of connector:${data.name}", e)
                     ObjectAbstract(
-                      id = data.name,
                       name = data.name,
                       kind = data.kind,
                       className = None,
@@ -202,11 +200,10 @@ private[configurator] object PipelineRoute {
             case data: StreamAppDescription =>
               clusterCollie
                 .streamCollie()
-                .cluster(data.id)
+                .cluster(data.name)
                 .map(_._1.asInstanceOf[StreamClusterInfo])
                 .map { info =>
                   ObjectAbstract(
-                    id = data.id,
                     name = data.name,
                     kind = data.kind,
                     className = None,
@@ -218,14 +215,13 @@ private[configurator] object PipelineRoute {
                 }
                 .recover {
                   case e: Throwable =>
-                    LOG.error(s"failed to fetch status of streamApp: ${data.id}", e)
+                    LOG.error(s"failed to fetch status of streamApp: ${data.name}", e)
                     ObjectAbstract(
-                      id = data.id,
                       name = data.name,
                       kind = data.kind,
                       className = None,
                       state = None,
-                      error = Some(s"Failed to get status of streamApp: ${data.id}." +
+                      error = Some(s"Failed to get status of streamApp: ${data.name}." +
                         s"This may be temporary since our container cluster is too busy to sync status of streamApp. ${e.getMessage}"),
                       metrics = Metrics(Seq.empty),
                       lastModified = data.lastModified
@@ -234,20 +230,18 @@ private[configurator] object PipelineRoute {
 
             case data: TopicInfo =>
               Future.successful(ObjectAbstract(
-                id = data.name,
                 name = data.name,
                 kind = data.kind,
                 className = None,
                 state = None,
                 error = None,
-                // noted we create a topic with id rather than name
+                // noted we create a topic with name rather than name
                 metrics = Metrics(topicMeters.getOrElse(data.name, Seq.empty)),
                 lastModified = data.lastModified
               ))
             case data =>
               Future.successful(
-                ObjectAbstract(id = data.name,
-                               name = data.name,
+                ObjectAbstract(name = data.name,
                                kind = data.kind,
                                className = None,
                                state = None,
@@ -273,38 +267,38 @@ private[configurator] object PipelineRoute {
     // connector -> it's worker cluster must be same to pipeline's worker cluster
     // streamApp -> the streamApp jar should upload to specific worker cluster
     // others -> unsupported
-    def verify(id: String): Future[String] = if (id != UNKNOWN_ID) {
+    def verify(name: String): Future[String] = if (name != UNKNOWN_NAME) {
       store
-        .raws(id)
+        .raws(name)
         .map(objs =>
           objs.map {
             case d: ConnectorDescription =>
               if (d.workerClusterName != cluster.name)
                 throw new IllegalArgumentException(
                   s"connector:${d.name} is run by ${d.workerClusterName} so it can't be placed at pipeline:$name which is placed at worker cluster:${cluster.name}")
-              else id
+              else name
             case d: TopicInfo =>
               if (d.brokerClusterName != cluster.brokerClusterName)
                 throw new IllegalArgumentException(
                   s"topic:${d.name} is run by ${d.brokerClusterName} so it can't be placed at pipeline:$name which is placed at broker cluster:${cluster.brokerClusterName}")
-              else id
+              else name
             case d: StreamAppDescription =>
               if (d.jar.group != cluster.name)
                 throw new IllegalArgumentException(
                   s"streamApp:${d.name} is running in ${d.jar.group}. You cannot place it at pipeline:$name which is placed at worker cluster:${cluster.name}"
                 )
-              else id
+              else name
             case raw =>
               if (objs.size == 1)
                 throw new IllegalArgumentException(s"${raw.getClass.getName} can't be placed at pipeline")
               else {
                 LOG.error(
-                  s"$id is used in different type and the illegal type:${raw.kind} to pipeline will be ignored!!!")
-                id
+                  s"$name is used in different type and the illegal type:${raw.kind} to pipeline will be ignored!!!")
+                name
               }
         })
-        .map(objs => if (objs.isEmpty) UNKNOWN_ID else id)
-    } else Future.successful(id)
+        .map(objs => if (objs.isEmpty) UNKNOWN_NAME else name)
+    } else Future.successful(name)
 
     // filter out illegal flow. the following flow are illegal.
     // 1) "a": ["a"] => this case will cause a exception
@@ -315,11 +309,11 @@ private[configurator] object PipelineRoute {
       .sequence(
         flows
         // pre-filter the unknown key
-          .filter(_.from != UNKNOWN_ID)
+          .filter(_.from != UNKNOWN_NAME)
           .map { flow =>
             verify(flow.from).flatMap { from =>
               // we will remove unknown key later so it is unnecessary to fetch object for values.
-              if (from == UNKNOWN_ID)
+              if (from == UNKNOWN_NAME)
                 Future.successful(
                   Flow(
                     from = from,
@@ -332,11 +326,11 @@ private[configurator] object PipelineRoute {
             }
           })
       .map(
-        _.filter(_.from != UNKNOWN_ID).map(
+        _.filter(_.from != UNKNOWN_NAME).map(
           flow =>
             Flow(
               from = flow.from,
-              to = flow.to.filter(_ != UNKNOWN_ID),
+              to = flow.to.filter(_ != UNKNOWN_NAME),
           )))
   }
 
@@ -370,8 +364,8 @@ private[configurator] object PipelineRoute {
   private[this] def assertNoUnknown(flows: Seq[Flow])(implicit store: DataStore,
                                                       executionContext: ExecutionContext): Future[Seq[String]] =
     Future
-      .traverse(flows.flatMap(f => Seq(f.from) ++ f.to).toSet) { id =>
-        store.raws(id).map(_.nonEmpty).map(if (_) None else Some(id))
+      .traverse(flows.flatMap(f => Seq(f.from) ++ f.to).toSet) { name =>
+        store.raws(name).map(_.nonEmpty).map(if (_) None else Some(name))
       }
       .map(_.flatten.toSeq)
 
@@ -425,8 +419,8 @@ private[configurator] object PipelineRoute {
               }),
       hookOfGet = (response: Pipeline) => update(response),
       hookOfList = (responses: Seq[Pipeline]) => update(responses),
-      hookBeforeDelete = (id: String) =>
-        store.get[Pipeline](id).flatMap { pipelineOption =>
+      hookBeforeDelete = (name: String) =>
+        store.get[Pipeline](name).flatMap { pipelineOption =>
           pipelineOption
             .map {
               pipeline =>
@@ -437,11 +431,11 @@ private[configurator] object PipelineRoute {
                   }
                   .flatMap { pipeline =>
                     // If any object has "state", we reject to delete pipeline. We can't stop all objects at once.
-                    val running = pipeline.objects.filter(_.state.isDefined).map(_.id)
+                    val running = pipeline.objects.filter(_.state.isDefined).map(_.name)
                     if (running.nonEmpty)
                       Future.failed(new IllegalArgumentException(s"${running.mkString(",")} are running"))
                     else
-                      Future.sequence(pipeline.objects.map(_.id).map(store.raws)).flatMap { objs =>
+                      Future.sequence(pipeline.objects.map(_.name).map(store.raws)).flatMap { objs =>
                         Future
                           .sequence(
                             objs.flatten
@@ -453,7 +447,7 @@ private[configurator] object PipelineRoute {
                       }
                   }
             }
-            .getOrElse(Future.successful(id))
+            .getOrElse(Future.successful(name))
       }
     )
 }

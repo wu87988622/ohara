@@ -56,7 +56,7 @@ class Test873 extends SmallTest with Matchers {
           entity(as[Creation]) { req =>
             complete(
               ConnectorCreationResponse(
-                name = req.id(),
+                name = req.name(),
                 config = req.configs().asScala.toMap,
                 tasks = tasks
               ))

@@ -55,11 +55,11 @@ describe('addPipelineStatus()', () => {
 
 describe('getEditUrl()', () => {
   it('returns the correct url', () => {
-    const pipeline = { id: 'abc' };
+    const pipeline = { name: 'abc' };
     const match = { url: '/page/url' };
 
     const result = getEditUrl(pipeline, match);
-    const expected = `${match.url}/edit/${pipeline.id}`;
+    const expected = `${match.url}/edit/${pipeline.name}`;
 
     expect(result).toBe(expected);
   });

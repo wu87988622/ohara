@@ -145,8 +145,7 @@ object PipelineApi {
 
   import MetricsApi._
 
-  final case class ObjectAbstract(id: String,
-                                  name: String,
+  final case class ObjectAbstract(name: String,
                                   kind: String,
                                   className: Option[String],
                                   state: Option[String],
@@ -154,7 +153,7 @@ object PipelineApi {
                                   metrics: Metrics,
                                   lastModified: Long)
       extends Data
-  implicit val OBJECT_ABSTRACT_JSON_FORMAT: RootJsonFormat[ObjectAbstract] = jsonFormat8(ObjectAbstract)
+  implicit val OBJECT_ABSTRACT_JSON_FORMAT: RootJsonFormat[ObjectAbstract] = jsonFormat7(ObjectAbstract)
 
   final case class Pipeline(name: String,
                             flows: Seq[Flow],
@@ -162,14 +161,12 @@ object PipelineApi {
                             workerClusterName: String,
                             lastModified: Long)
       extends Data {
-    override def id: String = name
     override def kind: String = "pipeline"
     def rules: Map[String, Set[String]] = flows.map { flow =>
       flow.from -> flow.to
     }.toMap
   }
   implicit val PIPELINE_JSON_FORMAT: RootJsonFormat[Pipeline] = new RootJsonFormat[Pipeline] {
-    private[this] val idKey = "id"
     private[this] val nameKey = "name"
     private[this] val workerClusterNameKey = "workerClusterName"
     private[this] val flowsKey = "flows"
@@ -187,7 +184,6 @@ object PipelineApi {
       lastModified = json.asJsObject.fields(lastModifiedKey).asInstanceOf[JsNumber].value.toLong
     )
     override def write(obj: Pipeline): JsValue = JsObject(
-      idKey -> JsString(obj.id),
       nameKey -> JsString(obj.name),
       workerClusterNameKey -> JsString(obj.workerClusterName),
       flowsKey -> JsArray(obj.flows.map(FLOW_JSON_FORMAT.write).toVector),

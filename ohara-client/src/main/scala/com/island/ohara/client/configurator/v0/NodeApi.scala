@@ -61,8 +61,6 @@ object NodeApi {
                   services: Seq[NodeService],
                   lastModified: Long)
       extends Data {
-    override def id: String = name
-
     override def kind: String = "node"
   }
 

@@ -139,13 +139,13 @@ private[store] class RocksDataStore(folder: String,
     value[T](name)
       .flatMap(updater)
       .map(newValue => {
-        db.put(getOrCreateHandler(newValue.getClass), toKey(newValue.id), toValue(newValue))
+        db.put(getOrCreateHandler(newValue.getClass), toKey(newValue.name), toValue(newValue))
         newValue
       })
 
   override def addIfAbsent[T <: Data](key: String, data: T)(implicit executor: ExecutionContext): Future[T] =
     Future.successful {
-      if (_get(getOrCreateHandler(data.getClass), data.id).isDefined)
+      if (_get(getOrCreateHandler(data.getClass), data.name).isDefined)
         throw new IllegalStateException(s"$key exists on ${data.getClass.getName}")
       else {
         db.put(getOrCreateHandler(data.getClass), toKey(key), toValue(data))

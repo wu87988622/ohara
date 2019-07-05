@@ -46,7 +46,6 @@ describe('updatePipelineparams()', () => {
 
   it('updates params correctly', () => {
     const pipeline = {
-      id: '123',
       name: 'abc',
       objects: {},
       rules: {
@@ -56,36 +55,33 @@ describe('updatePipelineparams()', () => {
       status: 'failed',
       workerClusterName: 'e',
     };
-    const update = { id: 'a', to: ['g'] };
-    const sinkId = 'c';
+    const update = { name: 'a', to: ['g'] };
+    const sinkName = 'c';
     const expected = {
-      id: pipeline.id,
       name: pipeline.name,
       status: pipeline.status,
       workerClusterName: pipeline.workerClusterName,
       rules: { a: ['g'], b: ['d'] },
     };
 
-    expect(updatePipelineParams({ pipeline, update, sinkId })).toEqual(
+    expect(updatePipelineParams({ pipeline, update, sinkName })).toEqual(
       expected,
     );
   });
 
   it('updates the rules when the update includes rules update', () => {
     const pipeline = {
-      id: '123',
       name: 'abc',
       objects: {},
       rules: {},
       status: 'success',
       workerClusterName: 'e',
     };
-    const update = { id: 'a', to: ['b', 'c'] };
+    const update = { name: 'a', to: ['b', 'c'] };
     const updateRule = {
-      [update.id]: update.to,
+      [update.name]: update.to,
     };
     const expected = {
-      id: pipeline.id,
       name: pipeline.name,
       status: pipeline.status,
       workerClusterName: pipeline.workerClusterName,
@@ -98,9 +94,9 @@ describe('updatePipelineparams()', () => {
 
 describe('updateSingleGraph()', () => {
   it('updates the target graph', () => {
-    const graph = [{ id: '1', name: 'a' }, { id: '2', name: 'b' }];
+    const graph = [{ name: 'a' }, { name: 'b' }];
 
-    const updated = updateSingleGraph(graph, '1', g => {
+    const updated = updateSingleGraph(graph, 'a', g => {
       return { ...g, name: 'new name' };
     });
 
@@ -112,12 +108,10 @@ describe('cleanPrevFromTopics', () => {
   it('removes the previous topic', () => {
     const graph = [
       {
-        id: '1',
         name: 'a',
         to: ['2', '3', '4'],
       },
       {
-        id: '2',
         name: 'b',
         to: ['5'],
       },
@@ -125,12 +119,10 @@ describe('cleanPrevFromTopics', () => {
 
     const expected = [
       {
-        id: '1',
         name: 'a',
         to: ['3', '4'],
       },
       {
-        id: '2',
         name: 'b',
         to: ['5'],
       },
@@ -158,16 +150,16 @@ describe('cleanPrevFromTopics', () => {
 
 describe('updateGraph()', () => {
   it(`Adds a new connector to the current graph if it's not being found in the current graph`, () => {
-    const graph = [{ id: '1', name: 'a', to: ['2'] }];
-    const update = { id: '2', name: 'b', to: [] };
+    const graph = [{ name: 'a', to: ['b'] }];
+    const update = { name: 'b', to: [] };
     const expected = [...graph, update];
 
     expect(updateGraph({ graph, update })).toEqual(expected);
   });
 
   it(`updates the correct connector in the graph`, () => {
-    const graph = [{ id: '1', name: 'a', to: [] }];
-    const update = { id: '1', name: 'test', to: ['2', '3', '4'] };
+    const graph = [{ name: 'a', to: [] }];
+    const update = { name: 'a', to: ['b'] };
     const expected = [{ ...graph[0], ...update }];
 
     expect(updateGraph({ graph, update })).toEqual(expected);
@@ -176,39 +168,35 @@ describe('updateGraph()', () => {
   it('updates formTopic and sink connectors', () => {
     const graph = [
       {
-        id: '1',
         name: 'a',
-        to: ['2', '3', '4'],
+        to: ['b', 'c', 'd'],
       },
       {
-        id: '2',
-        name: 'b',
-        to: ['5'],
+        name: 'test',
+        to: ['e'],
       },
     ];
 
-    const sinkId = '2';
+    const sinkName = 'abc';
     const updatedName = 'test';
-    const update = { id: '3', name: 'c', to: ['5'] };
+    const update = { name: 'c', to: ['e'] };
 
     const result = updateGraph({
       graph,
       update,
       updatedName,
-      sinkId,
+      sinkName,
       isFromTopic: true,
     });
 
     const expected = [
       {
-        id: '1',
         name: 'a',
-        to: ['3', '4'],
+        to: ['b', 'c', 'd'],
       },
       {
-        id: '2',
         name: 'test',
-        to: ['5'],
+        to: ['e'],
       },
     ];
 
@@ -220,25 +208,23 @@ describe('loadGraph()', () => {
   it('creates the correct data structure', () => {
     const pipeline = {
       objects: [
-        { id: '1', name: 'a', kind: 'Source' },
-        { id: '2', name: 'b', kind: 'Sink' },
-        { id: '3', name: 'c', kind: 'topic' },
+        { name: 'a', kind: 'Source' },
+        { name: 'b', kind: 'Sink' },
+        { name: 'c', kind: 'topic' },
         {
-          id: '4',
           name: 'd',
           kind: 'streamApp',
           to: [],
         },
       ],
-      rules: { '1': ['3'], '3': ['2'], '2': [], 4: [] },
+      rules: { a: ['c'], c: ['b'], b: [], d: [] },
     };
 
     const expected = [
-      { id: '1', name: 'a', kind: 'Source', to: ['3'] },
-      { id: '2', name: 'b', kind: 'Sink', to: [] },
-      { id: '3', name: 'c', kind: 'topic', className: 'topic', to: ['2'] },
+      { name: 'a', kind: 'Source', to: ['c'] },
+      { name: 'c', kind: 'topic', className: 'topic', to: ['b'] },
+      { name: 'b', kind: 'Sink', to: [] },
       {
-        id: '4',
         name: 'd',
         kind: 'streamApp',
         className: 'streamApp',

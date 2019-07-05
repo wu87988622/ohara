@@ -25,7 +25,7 @@ import * as URLS from 'constants/urls';
 import { Warning } from 'components/common/Messages';
 import { Select } from 'components/common/Form';
 import { createConnector } from './pipelineToolbarUtils';
-import { findByGraphId } from '../pipelineUtils/commonUtils';
+import { findByGraphName } from '../pipelineUtils/commonUtils';
 import { graph as graphPropType } from 'propTypes/pipeline';
 import { Wrapper } from './styles';
 
@@ -45,10 +45,7 @@ class PipelineNewTopic extends React.Component {
   }
 
   handleSelectChange = ({ target }) => {
-    const selectedIdx = target.options.selectedIndex;
-    const { id } = target.options[selectedIdx].dataset;
-    const currentTopic = { name: target.value, id };
-
+    const currentTopic = { name: target.value };
     this.props.updateTopic(currentTopic);
   };
 
@@ -60,7 +57,7 @@ class PipelineNewTopic extends React.Component {
     }
 
     // Don't add a topic if it's already existed in the pipeline graph
-    const isTopicExist = findByGraphId(graph, currentTopic.id);
+    const isTopicExist = findByGraphName(graph, currentTopic.name);
 
     if (!isTopicExist) {
       const connector = {

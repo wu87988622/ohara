@@ -17,7 +17,7 @@
 package com.island.ohara.client.configurator.v0
 import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json.RootJsonFormat
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -44,16 +44,9 @@ object JdbcApi {
 
   final case class JdbcInfo(name: String, url: String, user: String, password: String, lastModified: Long)
       extends Data {
-    override def id: String = name
     override def kind: String = "jdbc"
   }
-  implicit val JDBC_INFO_JSON_FORMAT: RootJsonFormat[JdbcInfo] = new RootJsonFormat[JdbcInfo] {
-    private[this] val format = jsonFormat5(JdbcInfo)
-    override def read(json: JsValue): JdbcInfo = format.read(json)
-    override def write(obj: JdbcInfo): JsValue = JsObject(
-      // TODO: remove the id
-      format.write(obj).asJsObject.fields ++ Map("id" -> JsString(obj.id)))
-  }
+  implicit val JDBC_INFO_JSON_FORMAT: RootJsonFormat[JdbcInfo] = jsonFormat5(JdbcInfo)
 
   trait Request {
     def name(name: String): Request

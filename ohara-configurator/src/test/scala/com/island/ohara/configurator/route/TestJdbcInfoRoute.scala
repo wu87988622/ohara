@@ -63,7 +63,7 @@ class TestJdbcInfoRoute extends SmallTest with Matchers {
 
     // test delete
     result(jdbcApi.list()).size shouldBe 1
-    result(jdbcApi.delete(response.id))
+    result(jdbcApi.delete(response.name))
     result(jdbcApi.list()).size shouldBe 0
 
     // test nonexistent data

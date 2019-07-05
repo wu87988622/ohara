@@ -18,7 +18,7 @@ package com.island.ohara.client.configurator.v0
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json.RootJsonFormat
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -45,17 +45,10 @@ object HadoopApi {
       .refine
 
   final case class HdfsInfo(name: String, uri: String, lastModified: Long) extends Data {
-    override def id: String = name
     override def kind: String = "hdfs"
   }
 
-  implicit val HDFS_INFO_JSON_FORMAT: RootJsonFormat[HdfsInfo] = new RootJsonFormat[HdfsInfo] {
-    private[this] val format = jsonFormat3(HdfsInfo)
-    override def read(json: JsValue): HdfsInfo = format.read(json)
-    override def write(obj: HdfsInfo): JsValue = JsObject(
-      // TODO: remove the id
-      format.write(obj).asJsObject.fields ++ Map("id" -> JsString(obj.id)))
-  }
+  implicit val HDFS_INFO_JSON_FORMAT: RootJsonFormat[HdfsInfo] = jsonFormat3(HdfsInfo)
 
   /**
     * used to generate the payload and url for POST/PUT request.

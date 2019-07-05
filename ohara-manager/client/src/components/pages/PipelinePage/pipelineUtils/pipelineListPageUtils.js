@@ -45,6 +45,6 @@ export const addPipelineStatus = (pipelines = []) => {
 };
 
 export const getEditUrl = (pipeline, match) => {
-  const { id: pipelineId } = pipeline;
-  return `${match.url}/edit/${pipelineId}`;
+  const { name } = pipeline;
+  return `${match.url}/edit/${name}`;
 };

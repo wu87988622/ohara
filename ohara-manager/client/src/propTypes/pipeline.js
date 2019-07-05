@@ -17,7 +17,7 @@
 import { string, arrayOf, shape, bool, number } from 'prop-types';
 
 export const graph = shape({
-  id: string.isRequired,
+  name: string.isRequired,
   className: string.isRequired,
   kind: string.isRequired,
   to: arrayOf(string).isRequired,

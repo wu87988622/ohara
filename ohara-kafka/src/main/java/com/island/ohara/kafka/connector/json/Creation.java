@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 public class Creation implements JsonObject {
   private static final String NAME_KEY = "name";
   private static final String CONFIGS_KEY = "config";
-  private final String id;
+  private final String name;
   private final Map<String, String> configs;
 
   public static Creation ofJson(String json) {
@@ -48,8 +48,8 @@ public class Creation implements JsonObject {
 
   @JsonCreator
   private Creation(
-      @JsonProperty(NAME_KEY) String id, @JsonProperty(CONFIGS_KEY) Map<String, String> configs) {
-    this.id = CommonUtils.requireNonEmpty(id);
+      @JsonProperty(NAME_KEY) String name, @JsonProperty(CONFIGS_KEY) Map<String, String> configs) {
+    this.name = CommonUtils.requireNonEmpty(name);
     CommonUtils.requireNonEmpty(configs)
         .forEach(
             // key can't be empty or null
@@ -73,8 +73,8 @@ public class Creation implements JsonObject {
   }
 
   @JsonProperty(NAME_KEY)
-  public String id() {
-    return id;
+  public String name() {
+    return name;
   }
 
   @JsonProperty(CONFIGS_KEY)

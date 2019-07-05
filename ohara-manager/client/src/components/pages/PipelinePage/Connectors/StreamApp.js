@@ -29,7 +29,7 @@ import { STREAM_APP_STATES, STREAM_APP_ACTIONS } from 'constants/pipelines';
 import { Box } from 'components/common/Layout';
 import { Label } from 'components/common/Form';
 import { InputField, SelectField } from 'components/common/FormFields';
-import { findByGraphId } from '../pipelineUtils/commonUtils';
+import { findByGraphName } from '../pipelineUtils/commonUtils';
 import { graph as graphPropType } from 'propTypes/pipeline';
 import * as s from './styles';
 
@@ -56,7 +56,7 @@ class StreamApp extends React.Component {
   };
 
   state = {
-    streamAppId: null,
+    streamAppName: null,
     streamApp: null,
     state: null,
     topics: [],
@@ -64,34 +64,34 @@ class StreamApp extends React.Component {
 
   componentDidMount() {
     const { match, pipelineTopics } = this.props;
-    const { connectorId: streamAppId } = match.params;
+    const { connectorName: streamAppName } = match.params;
 
-    this.setState({ streamAppId, pipelineTopics }, () => {
-      this.fetchStreamApp(streamAppId);
+    this.setState({ streamAppName, pipelineTopics }, () => {
+      this.fetchStreamApp(streamAppName);
     });
   }
 
   componentDidUpdate(prevProps) {
     const { pipelineTopics: prevTopics } = prevProps;
     const { pipelineTopics: currTopics } = this.props;
-    const { connectorId: prevConnectorId } = prevProps.match.params;
-    const { connectorId: currConnectorId } = this.props.match.params;
+    const { connectorName: prevConnectorName } = prevProps.match.params;
+    const { connectorName: currConnectorName } = this.props.match.params;
 
     if (prevTopics !== currTopics) {
       this.setState({ topics: currTopics });
     }
 
-    if (prevConnectorId !== currConnectorId) {
-      const streamAppId = currConnectorId;
+    if (prevConnectorName !== currConnectorName) {
+      const streamAppName = currConnectorName;
 
-      this.setState({ streamAppId }, () => {
-        this.fetchStreamApp(streamAppId);
+      this.setState({ streamAppName }, () => {
+        this.fetchStreamApp(streamAppName);
       });
     }
   }
 
-  fetchStreamApp = async id => {
-    const res = await streamApi.fetchProperty(id);
+  fetchStreamApp = async name => {
+    const res = await streamApi.fetchProperty(name);
     const streamApp = get(res, 'data.result', null);
 
     if (!isEmpty(streamApp)) {
@@ -99,26 +99,15 @@ class StreamApp extends React.Component {
     }
   };
 
-  getTopics = ({ pipelineTopics, from, to }) => {
-    const fromTopic = pipelineTopics.reduce((acc, { name, id }) => {
-      return name === from ? [...acc, id] : acc;
-    }, []);
-
-    const toTopic = pipelineTopics.reduce((acc, { name, id }) => {
-      return name === to ? [...acc, id] : acc;
-    }, []);
-
-    return { fromTopic, toTopic };
-  };
-
   handleSave = async ({ name, instances, from, to }) => {
-    const { pipelineTopics, graph, updateGraph } = this.props;
-    const { fromTopic, toTopic } = this.getTopics({ pipelineTopics, from, to });
-    const { streamAppId, streamApp } = this.state;
+    const { graph, updateGraph } = this.props;
+    const { streamAppName, streamApp } = this.state;
     const { name: jarName } = streamApp.jar;
+    const fromTopic = from ? [from] : [];
+    const toTopic = to ? [to] : [];
 
     const params = {
-      name: streamAppId,
+      name: streamAppName,
       jarName,
       instances,
       from: fromTopic,
@@ -129,25 +118,25 @@ class StreamApp extends React.Component {
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (isSuccess) {
-      const [streamApp] = graph.filter(g => g.id === streamAppId);
-      const [prevFromTopic] = graph.filter(g => g.to.includes(streamAppId));
+      const [streamApp] = graph.filter(g => g.name === streamAppName);
+      const [prevFromTopic] = graph.filter(g => g.to.includes(streamAppName));
       const isToUpdate = streamApp.to[0] !== toTopic[0];
 
       // To topic update
       if (isToUpdate) {
-        const currStreamApp = findByGraphId(graph, streamAppId);
+        const currStreamApp = findByGraphName(graph, streamAppName);
         const toUpdate = { ...currStreamApp, to: toTopic };
         updateGraph({ update: toUpdate });
       } else {
         // From topic update
-        let currFromTopic = findByGraphId(graph, fromTopic[0]);
+        let currFromTopic = findByGraphName(graph, fromTopic[0]);
         let fromUpdate;
 
         if (currFromTopic) {
-          fromUpdate = [...new Set([...currFromTopic.to, streamAppId])];
+          fromUpdate = [...new Set([...currFromTopic.to, streamAppName])];
         } else {
           if (prevFromTopic) {
-            fromUpdate = prevFromTopic.to.filter(t => t !== streamAppId);
+            fromUpdate = prevFromTopic.to.filter(t => t !== streamAppName);
           } else {
             fromUpdate = [];
           }
@@ -168,7 +157,7 @@ class StreamApp extends React.Component {
         updateGraph({
           update,
           isFromTopic: true,
-          streamAppId,
+          streamAppName,
           updatedName: params.name,
         });
       }
@@ -185,9 +174,9 @@ class StreamApp extends React.Component {
 
   handleDeleteConnector = async () => {
     const { match, refreshGraph, history } = this.props;
-    const { connectorId: streamAppId, pipelineId } = match.params;
+    const { connectorName: streamAppName, pipelineName } = match.params;
 
-    const res = await streamApi.deleteProperty(streamAppId);
+    const res = await streamApi.deleteProperty(streamAppName);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (isSuccess) {
@@ -195,18 +184,18 @@ class StreamApp extends React.Component {
       toastr.success(`${MESSAGES.CONNECTOR_DELETION_SUCCESS} ${connectorName}`);
       await refreshGraph();
 
-      const path = `/pipelines/edit/${pipelineId}`;
+      const path = `/pipelines/edit/${pipelineName}`;
       history.push(path);
     }
   };
 
   triggerStreamApp = async action => {
-    const { streamAppId } = this.state;
+    const { streamAppName } = this.state;
     let res;
     if (action === STREAM_APP_ACTIONS.start) {
-      res = await streamApi.startStreamApp(streamAppId);
+      res = await streamApi.startStreamApp(streamAppName);
     } else {
-      res = await streamApi.stopStreamApp(streamAppId);
+      res = await streamApi.stopStreamApp(streamAppName);
     }
     this.handleTriggerStreamAppResponse(action, res);
   };
@@ -216,11 +205,11 @@ class StreamApp extends React.Component {
     if (!isSuccess) return;
 
     const { graph, updateGraph } = this.props;
-    const { streamAppId } = this.state;
+    const { streamAppName } = this.state;
     const state = get(res, 'data.result.state');
     this.setState({ state });
 
-    const currStreamApp = findByGraphId(graph, streamAppId);
+    const currStreamApp = findByGraphName(graph, streamAppName);
     const update = { ...currStreamApp, state };
     updateGraph({ update });
 
@@ -243,8 +232,8 @@ class StreamApp extends React.Component {
 
     const { name, instances, jar, from, to } = streamApp;
     const { name: jarName } = jar;
-    const fromTopic = pipelineTopics.find(({ id }) => id === from[0]);
-    const toTopic = pipelineTopics.find(({ id }) => id === to[0]);
+    const fromTopic = pipelineTopics.find(({ name }) => name === from[0]);
+    const toTopic = pipelineTopics.find(({ name }) => name === to[0]);
 
     const initialValues = {
       name: isEmptyStr(name) ? 'Untitled stream app' : name,

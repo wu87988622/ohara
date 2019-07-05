@@ -56,11 +56,11 @@ describe('<App />', () => {
     // TODO: reuse routes config in App.js
     const routes = [
       {
-        path: '/pipelines/new/:page?/:pipelineId/:connectorId?',
+        path: '/pipelines/new/:page?/:pipelineName/:connectorName?',
         testId: 'pipeline-new-page',
       },
       {
-        path: '/pipelines/edit/:page?/:pipelineId/:connectorId?',
+        path: '/pipelines/edit/:page?/:pipelineName/:connectorName?',
         testId: 'pipeline-edit-page',
       },
       {

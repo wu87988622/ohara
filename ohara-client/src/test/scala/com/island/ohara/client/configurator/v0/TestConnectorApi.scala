@@ -130,7 +130,6 @@ class TestConnectorApi extends SmallTest with Matchers {
       lastModified = CommonUtils.current()
     )
     val jsonString = CONNECTOR_DESCRIPTION_JSON_FORMAT.write(desc).toString()
-    jsonString.contains("id") shouldBe true
     jsonString.contains(SettingDefinition.CONNECTOR_NAME_DEFINITION.key()) shouldBe true
     jsonString.contains(SettingDefinition.CONNECTOR_CLASS_DEFINITION.key()) shouldBe true
     jsonString.contains("className") shouldBe false

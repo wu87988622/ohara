@@ -48,7 +48,6 @@ export const topics = ({
 
     const topic = {
       name: serviceName(),
-      id: id(),
       lastModified: date.past(),
       metrics: {},
       numberOfPartitions: number(),

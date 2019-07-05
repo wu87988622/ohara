@@ -44,7 +44,6 @@ object JarApi {
     * @param lastModified last modified time
     */
   final case class JarInfo(name: String, group: String, size: Long, url: URL, lastModified: Long) extends Data {
-    override def id: String = name
     override def kind: String = "jar"
   }
 

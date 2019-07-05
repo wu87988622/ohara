@@ -48,7 +48,6 @@ class TestShabondiApi extends SmallTest with Matchers {
       """.stripMargin.parseJson
     val desc3: ShabondiDescription = SHABONDI_DESCRIPTION_JSON_FORMAT.read(jsonValue)
 
-    desc3.id shouldBe "name2"
     desc3.name should be("name2")
     desc3.state should be(Some("RUNNING"))
     desc3.to should be(Seq("topic1"))

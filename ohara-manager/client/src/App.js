@@ -65,12 +65,12 @@ class App extends React.Component {
             <Header isLogin={isLogin} />
             <Switch>
               <Route
-                path="/pipelines/new/:page?/:pipelineId/:connectorId?"
+                path="/pipelines/new/:page?/:pipelineName/:connectorName?"
                 component={PipelineNewPage}
                 data-testid="pipeline-new-page"
               />
               <Route
-                path="/pipelines/edit/:page?/:pipelineId/:connectorId?"
+                path="/pipelines/edit/:page?/:pipelineName/:connectorName?"
                 component={PipelineNewPage}
                 data-testid="pipeline-edit-page"
               />

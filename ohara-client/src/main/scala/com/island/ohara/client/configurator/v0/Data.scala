@@ -21,7 +21,6 @@ package com.island.ohara.client.configurator.v0
   * All members are declared as "def" since not all subclasses intend to represent all members in restful APIs.
   */
 trait Data {
-  def id: String
   def name: String
   def lastModified: Long
   def kind: String

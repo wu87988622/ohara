@@ -97,7 +97,7 @@ private[route] object RouteUtils {
     * @param hookOfUpdate used to convert request to response for Update function
     * @param hookOfList used to convert response for List function
     * @param hookOfGet used to convert response for Get function
-    * @param hookBeforeDelete used to do something before doing delete operation. For example, validate the id.
+    * @param hookBeforeDelete used to do something before doing delete operation. For example, validate the name.
     * @tparam Creation creation request
     * @tparam Update creation request
     * @tparam Res response
@@ -125,7 +125,8 @@ private[route] object RouteUtils {
           get(complete(store.values[Res]().flatMap(hookOfList)))
       } ~ path(Segment) { name =>
         get(complete(store.value[Res](name).flatMap(hookOfGet))) ~
-          delete(complete(hookBeforeDelete(name).flatMap(id => store.remove[Res](id).map(_ => StatusCodes.NoContent)))) ~
+          delete(
+            complete(hookBeforeDelete(name).flatMap(name => store.remove[Res](name).map(_ => StatusCodes.NoContent)))) ~
           put(entity(as[Update])(update =>
             complete(store.get[Res](rm.check("name", JsString(name)).value).flatMap { previous =>
               hookOfUpdate(name, update, previous).flatMap(res => store.add(name, res))

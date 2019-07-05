@@ -73,9 +73,9 @@ object NodeRoute {
       },
       hookOfGet = (response: Node) => update(response),
       hookOfList = (responses: Seq[Node]) => update(responses),
-      hookBeforeDelete = (id: String) =>
+      hookBeforeDelete = (name: String) =>
         store
-          .get[Node](id)
+          .get[Node](name)
           .flatMap(_.map {
             update(_).map { node =>
               if (node.services.map(_.clusterNames.size).sum != 0) {
@@ -83,9 +83,9 @@ object NodeRoute {
                   s"${node.name} is running ${node.services.filter(_.clusterNames.nonEmpty).map(s => s"${s.name}:${s.clusterNames.mkString(".")}").mkString(" ")}. " +
                     s"Please stop all services before deleting")
               }
-              id
+              name
             }
-          }.getOrElse(Future.successful(id)))
+          }.getOrElse(Future.successful(name)))
     )
 
 }

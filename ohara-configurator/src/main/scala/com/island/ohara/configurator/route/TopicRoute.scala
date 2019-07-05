@@ -47,7 +47,7 @@ private[configurator] object TopicRoute {
     */
   private[this] def update(brokerCluster: BrokerClusterInfo, topicInfo: TopicInfo)(
     implicit meterCache: MeterCache): TopicInfo = topicInfo.copy(
-    metrics = metrics(brokerCluster, topicInfo.id)
+    metrics = metrics(brokerCluster, topicInfo.name)
   )
 
   private[this] def createTopic(
@@ -82,7 +82,7 @@ private[configurator] object TopicRoute {
             executionContext: ExecutionContext): server.Route =
     RouteUtils.basicRoute[Creation, Update, TopicInfo](
       root = TOPICS_PREFIX_PATH,
-      // we don't care for generated id since topic's id should be equal to the name passed by user.
+      // we don't care for generated name since topic's name should be equal to the name passed by user.
       hookOfCreation = (creation: Creation) =>
         CollieUtils.topicAdmin(creation.brokerClusterName).flatMap {
           case (cluster, client) =>
@@ -165,14 +165,14 @@ private[configurator] object TopicRoute {
               .flatMap {
                 case (_, client) =>
                   client
-                    .delete(topicInfo.id)
+                    .delete(topicInfo.name)
                     .map { _ =>
                       try name
                       finally Releasable.close(client)
                     }
                     .recover {
                       case e: Throwable =>
-                        LOG.error(s"failed to remove topic:${topicInfo.id} from kafka", e)
+                        LOG.error(s"failed to remove topic:${topicInfo.name} from kafka", e)
                         name
                     }
               }

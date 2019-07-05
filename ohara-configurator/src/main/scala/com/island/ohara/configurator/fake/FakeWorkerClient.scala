@@ -49,13 +49,13 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
   private[this] val cachedConnectorsState = new ConcurrentHashMap[String, ConnectorState]()
 
   override def connectorCreator(): WorkerClient.Creator = (_, creation) => {
-    if (cachedConnectors.contains(creation.id()))
-      Future.failed(new IllegalStateException(s"the connector:${creation.id()} exists!"))
+    if (cachedConnectors.contains(creation.name()))
+      Future.failed(new IllegalStateException(s"the connector:${creation.name()} exists!"))
     else {
       import scala.collection.JavaConverters._
-      cachedConnectors.put(creation.id(), creation.configs().asScala.toMap)
-      cachedConnectorsState.put(creation.id(), ConnectorState.RUNNING)
-      Future.successful(ConnectorCreationResponse(creation.id(), creation.configs().asScala.toMap, Seq.empty))
+      cachedConnectors.put(creation.name(), creation.configs().asScala.toMap)
+      cachedConnectorsState.put(creation.name(), ConnectorState.RUNNING)
+      Future.successful(ConnectorCreationResponse(creation.name(), creation.configs().asScala.toMap, Seq.empty))
     }
   }
 

@@ -36,9 +36,8 @@ class Topic extends React.Component {
     }).isRequired,
     history: PropTypes.object,
     pipeline: PropTypes.shape({
-      id: PropTypes.string,
-      name: PropTypes.string,
-      rules: PropTypes.object,
+      name: PropTypes.string.isRequired,
+      rules: PropTypes.object.isRequired,
     }).isRequired,
     graph: PropTypes.arrayOf(graphPropType).isRequired,
     refreshGraph: PropTypes.func.isRequired,
@@ -54,17 +53,17 @@ class Topic extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    const { connectorId: prevConnectorId } = prevProps.match.params;
-    const { connectorId: currConnectorId } = this.props.match.params;
+    const { connectorName: prevConnectorName } = prevProps.match.params;
+    const { connectorName: currConnectorName } = this.props.match.params;
 
-    if (prevConnectorId !== currConnectorId) {
+    if (prevConnectorName !== currConnectorName) {
       this.fetchTopic();
     }
   }
 
   fetchTopic = async () => {
-    const { connectorId } = this.props.match.params;
-    const res = await fetchTopic(connectorId);
+    const { connectorName } = this.props.match.params;
+    const res = await fetchTopic(connectorName);
     const topic = get(res, 'data.result', null);
     if (topic) {
       this.setState({ topic });
@@ -74,25 +73,24 @@ class Topic extends React.Component {
 
   deleteTopic = async () => {
     const { match, history, pipeline, graph, refreshGraph } = this.props;
-    const connectorId = get(match, 'params.connectorId', null);
+    const connectorName = get(match, 'params.connectorName', null);
 
-    if (this.hasAnyConnection(graph, connectorId)) {
+    if (this.hasAnyConnection(graph, connectorName)) {
       toastr.error(MESSAGES.CANNOT_DELETE_TOPIC_ERROR);
       return;
     }
 
-    const {
-      id: pipelineId,
-      name: pipelineName,
-      rules: pipelineRules,
-    } = pipeline;
+    const { name: pipelineName, rules: pipelineRules } = pipeline;
 
     const params = {
       name: pipelineName,
-      rules: omit(pipelineRules, connectorId),
+      rules: omit(pipelineRules, connectorName),
     };
 
-    const res = await pipelineApi.updatePipeline({ id: pipelineId, params });
+    const res = await pipelineApi.updatePipeline({
+      name: pipelineName,
+      params,
+    });
     const isSuccess = get(res, 'data.isSuccess', false);
     if (isSuccess) {
       const {
@@ -100,14 +98,14 @@ class Topic extends React.Component {
       } = this.state;
       toastr.success(`${MESSAGES.TOPIC_DELETION_SUCCESS} ${topicName}`);
       refreshGraph();
-      history.push(`/pipelines/edit/${pipelineId}`);
+      history.push(`/pipelines/edit/${pipelineName}`);
     }
   };
 
-  hasAnyConnection = (graph, connectorId) =>
-    some(graph, ({ id, to }) => {
-      if (id === connectorId && !isEmpty(to)) return true;
-      if (includes(to, connectorId)) return true;
+  hasAnyConnection = (graph, connectorName) =>
+    some(graph, ({ name, to }) => {
+      if (name === connectorName && !isEmpty(to)) return true;
+      if (includes(to, connectorName)) return true;
     });
 
   render() {

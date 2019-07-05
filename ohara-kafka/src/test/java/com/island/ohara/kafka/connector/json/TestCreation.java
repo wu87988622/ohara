@@ -43,7 +43,7 @@ public class TestCreation extends SmallTest {
     String key = CommonUtils.randomString(5);
     String value = CommonUtils.randomString(5);
     Creation creation = Creation.of(id, key, value);
-    Assert.assertEquals(id, creation.id());
+    Assert.assertEquals(id, creation.name());
     Assert.assertEquals(value, creation.configs().get(key));
   }
 

@@ -19,7 +19,7 @@ import {
   isSink,
   isTopic,
   isStream,
-  findByGraphId,
+  findByGraphName,
   getConnectors,
 } from '../commonUtils';
 
@@ -63,24 +63,16 @@ describe('isStream()', () => {
   });
 });
 
-describe('findByGraphId()', () => {
-  it('finds the right connector by ID', () => {
-    const graph = [
-      { id: '1', name: 'a' },
-      { id: '2', name: 'b' },
-      { id: '3', name: 'c' },
-    ];
-    expect(findByGraphId(graph, '3')).toBe(graph[2]);
+describe('findByGraphName()', () => {
+  it('finds the right connector by name', () => {
+    const graph = [{ name: 'a' }, { name: 'b' }, { name: 'c' }];
+    expect(findByGraphName(graph, 'c')).toBe(graph[2]);
   });
 
-  it(`returns undefined if it cannot find a graph that matches the given id`, () => {
-    const graph = [
-      { id: '1', name: 'a' },
-      { id: '2', name: 'b' },
-      { id: '3', name: 'c' },
-    ];
+  it(`returns undefined if it cannot find a graph that matches the given name`, () => {
+    const graph = [{ name: 'a' }, { name: 'b' }, { name: 'c' }];
 
-    expect(findByGraphId(graph, '10')).toBeUndefined();
+    expect(findByGraphName(graph, '10')).toBeUndefined();
   });
 });
 

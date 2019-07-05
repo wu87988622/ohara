@@ -29,13 +29,11 @@ describe('createConnector()', () => {
   afterEach(jest.clearAllMocks);
 
   it('updates a topic', async () => {
-    const topicId = generate.id();
     const topicName = generate.name();
 
     const connector = {
       className: CONNECTOR_TYPES.topic,
       typeName: CONNECTOR_TYPES.topic,
-      id: topicId,
       name: topicName,
     };
 
@@ -48,13 +46,11 @@ describe('createConnector()', () => {
         kind: CONNECTOR_TYPES.topic,
         to: [],
         className: CONNECTOR_TYPES.topic,
-        id: topicId,
       },
     });
   });
 
   it('updates a custom connector', async () => {
-    const connectorId = 'testConnector';
     const customConnectorClassName = generate.name();
     const typeName = 'source';
     const connectorName = 'testConnector';
@@ -65,7 +61,9 @@ describe('createConnector()', () => {
     };
     const newConnectorName = connectorName;
     const res = {
-      data: { result: { id: connectorId, settings: { name: connectorName } } },
+      data: {
+        result: { name: connectorName, settings: { name: connectorName } },
+      },
     };
 
     connectorApi.createConnector.mockImplementation(() => Promise.resolve(res));
@@ -79,7 +77,6 @@ describe('createConnector()', () => {
         kind: typeName,
         to: [],
         className: customConnectorClassName,
-        id: connectorId,
       },
     });
   });

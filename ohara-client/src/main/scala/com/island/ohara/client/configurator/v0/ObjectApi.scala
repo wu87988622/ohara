@@ -24,14 +24,12 @@ import scala.concurrent.{ExecutionContext, Future}
 object ObjectApi {
   val OBJECT_PREFIX_PATH: String = "objects"
 
-  final case class Object(name: String, lastModified: Long, kind: String) extends Data {
-    override def id: String = name
-  }
+  final case class Object(name: String, lastModified: Long, kind: String) extends Data
   implicit val OBJECT_JSON_FORMAT: RootJsonFormat[Object] = jsonFormat3(Object)
 
   class Access private[v0] extends BasicAccess(OBJECT_PREFIX_PATH) {
-    def get(id: String)(implicit executionContext: ExecutionContext): Future[Object] =
-      exec.get[Object, ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$id")
+    def get(name: String)(implicit executionContext: ExecutionContext): Future[Object] =
+      exec.get[Object, ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$name")
     def list()(implicit executionContext: ExecutionContext): Future[Seq[Object]] =
       exec.get[Seq[Object], ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}")
   }

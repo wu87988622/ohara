@@ -33,8 +33,8 @@ jest.mock('api/workerApi');
 const props = {
   match: {
     params: {
-      topicId: '1234',
-      pipelineId: '5678',
+      topicName: generate.name(),
+      pipelineName: generate.name(),
     },
   },
 };
@@ -78,7 +78,7 @@ describe('<PipelineNewPage />', () => {
     expect(wrapper.props().title).toBe(PIPELINE_NEW);
   });
 
-  it('renders edit pipeline page document title, if pipelineId is present', () => {
+  it('renders edit pipeline page document title, if pipelineName is present', () => {
     expect(wrapper.props().title).toBe(PIPELINE_EDIT);
   });
 

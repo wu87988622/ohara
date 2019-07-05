@@ -35,7 +35,6 @@ final object ShabondiApi {
                                        port: Int,
                                        instances: Int)
       extends Data {
-    override def id: String = name
     override def kind: String = "shabondi"
   }
 
@@ -48,9 +47,9 @@ final object ShabondiApi {
 
   class ShabondiAccess extends BasicAccess(PATH_PREFIX) {
 
-    private def basicUrl(id: String = "") = {
+    private def basicUrl(name: String = "") = {
       val url = s"http://${_hostname}:${_port}/${_version}/${_prefixPath}"
-      if (id.isEmpty) url else url + "/" + id
+      if (name.isEmpty) url else url + "/" + name
     }
 
     def add()(implicit executionContext: ExecutionContext): Future[ShabondiDescription] = {
@@ -58,27 +57,27 @@ final object ShabondiApi {
       exec.post[ShabondiDescription, ErrorApi.Error](url)
     }
 
-    def getProperty(id: String)(implicit executionContext: ExecutionContext): Future[ShabondiDescription] = {
-      val url = basicUrl(id)
+    def getProperty(name: String)(implicit executionContext: ExecutionContext): Future[ShabondiDescription] = {
+      val url = basicUrl(name)
       exec.get[ShabondiDescription, ErrorApi.Error](url)
     }
 
-    def updateProperty(id: String, property: ShabondiProperty)(
+    def updateProperty(name: String, property: ShabondiProperty)(
       implicit executionContext: ExecutionContext): Future[ShabondiDescription] = {
-      val url = basicUrl(id)
+      val url = basicUrl(name)
       exec.put[ShabondiProperty, ShabondiDescription, ErrorApi.Error](url, property)
     }
 
-    def delete(id: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-      exec.delete[ErrorApi.Error](basicUrl(id))
+    def delete(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
+      exec.delete[ErrorApi.Error](basicUrl(name))
 
-    def start(id: String)(implicit executionContext: ExecutionContext): Future[ShabondiDescription] = {
-      val url = basicUrl(id) + "/" + PATH_SEGMENT_START
+    def start(name: String)(implicit executionContext: ExecutionContext): Future[ShabondiDescription] = {
+      val url = basicUrl(name) + "/" + PATH_SEGMENT_START
       exec.put[ShabondiDescription, ErrorApi.Error](url)
     }
 
-    def stop(id: String)(implicit executionContext: ExecutionContext): Future[ShabondiDescription] = {
-      val url = basicUrl(id) + "/" + PATH_SEGMENT_STOP
+    def stop(name: String)(implicit executionContext: ExecutionContext): Future[ShabondiDescription] = {
+      val url = basicUrl(name) + "/" + PATH_SEGMENT_STOP
       exec.put[ShabondiDescription, ErrorApi.Error](url)
     }
   }

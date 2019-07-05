@@ -92,9 +92,9 @@ describe('<PipelineListPage />', () => {
 
   it('creates a new pipeline', async () => {
     const evt = { preventDefault: jest.fn() };
-    const id = '1234';
-    const expectedUrl = `${props.match.url}/new/${id}`;
-    const res = { data: { result: { id } } };
+    const name = '1234';
+    const expectedUrl = `${props.match.url}/new/${name}`;
+    const res = { data: { result: { name } } };
     const workersRes = {
       data: {
         result: [
@@ -162,10 +162,9 @@ describe('<PipelineListPage />', () => {
 
   it('successfully deletes the first pipeline', async () => {
     wrapper.setState({ pipelines });
-    const id = pipelines[0].id;
     const pipelineName = pipelines[0].name;
     const res = {
-      data: { result: { id, name: pipelineName }, isSuccess: true },
+      data: { result: { name: pipelineName }, isSuccess: true },
     };
     const expectedSuccessMsg = `${MESSAGES.PIPELINE_DELETION_SUCCESS} ${pipelineName}`;
 
@@ -177,12 +176,12 @@ describe('<PipelineListPage />', () => {
       .find(getTestById('delete-pipeline'))
       .at(0)
       .find('DeleteIcon')
-      .prop('onClick')(id);
+      .prop('onClick')(pipelineName);
 
     expect(wrapper.find('AlertDialog').props().open).toBe(true);
     await wrapper.find('AlertDialog').prop('handleConfirm')();
     expect(deletePipeline).toHaveBeenCalledTimes(1);
-    expect(deletePipeline).toHaveBeenCalledWith(id);
+    expect(deletePipeline).toHaveBeenCalledWith(pipelineName);
     expect(toastr.success).toHaveBeenCalledTimes(1);
     expect(toastr.success).toHaveBeenCalledWith(expectedSuccessMsg);
     expect(wrapper.find('Table tr').length).toBe(1);

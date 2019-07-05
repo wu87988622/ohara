@@ -107,7 +107,7 @@ class TestRocksDataStore extends SmallTest with Matchers {
   @Test
   def testDuplicateAddIfAbsent(): Unit = {
     val value0 = createData
-    val value1 = createData(value0.id)
+    val value1 = createData(value0.name)
     result(store.addIfAbsent(value0)) shouldBe value0
     store.size shouldBe 1
     an[IllegalStateException] should be thrownBy result(store.addIfAbsent(value1))
@@ -120,7 +120,7 @@ class TestRocksDataStore extends SmallTest with Matchers {
   @Test
   def testDuplicateAdd(): Unit = {
     val value0 = createData
-    (0 until 10).foreach(_ => result(store.add(value0.id, value0)))
+    (0 until 10).foreach(_ => result(store.add(value0.name, value0)))
   }
 
   @Test
@@ -129,7 +129,7 @@ class TestRocksDataStore extends SmallTest with Matchers {
       store.addIfPresent[SimpleData](CommonUtils.randomString(), _ => Future.successful(createData)))
     val key = CommonUtils.randomString()
     val value0 = createData(key)
-    val value1 = createData(value0.id)
+    val value1 = createData(value0.name)
     result(store.addIfAbsent(value0)) shouldBe value0
     store.size shouldBe 1
     result(store.addIfPresent[SimpleData](key, v => {
@@ -172,9 +172,9 @@ class TestRocksDataStore extends SmallTest with Matchers {
     val data = createData("abcd")
     result(store.addIfAbsent(data))
 
-    result(store.exist[SimpleData](data.id)) shouldBe true
+    result(store.exist[SimpleData](data.name)) shouldBe true
     result(store.exist[SimpleData]("12345")) shouldBe false
-    result(store.nonExist[SimpleData](data.id)) shouldBe false
+    result(store.nonExist[SimpleData](data.name)) shouldBe false
     result(store.nonExist[SimpleData]("12345")) shouldBe true
   }
 
@@ -185,7 +185,7 @@ class TestRocksDataStore extends SmallTest with Matchers {
 
     val data2 = (data: SimpleData) => Future.successful(data.copy(name = "name2"))
 
-    result(store.addIfPresent(data.id, data2)) should equal(data.copy(name = "name2"))
+    result(store.addIfPresent(data.name, data2)) should equal(data.copy(name = "name2"))
     an[NoSuchElementException] should be thrownBy result(store.addIfPresent("123", data2))
   }
 

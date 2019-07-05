@@ -32,13 +32,6 @@ and add content type of the response via the HTTP Accept header:
 - [Info](#info)
 
 ----------
-## object id
-Most storable objects in ohara is assigned with a unique id. Most access to objects require the id to indicate which
-object you want to request. You don't need to worry about how to generate the unique id but you need to **remember**
-the id in order to operate the object. Or you can request **list** to see all objects and then fetch the id to to other
-operation like delete and update.
-
-----------
 ## Statuses & Errors
 
 ohara leverages akka-http to support standards-compliant HTTP statuses. your clients should check the
@@ -449,7 +442,7 @@ The following information are tagged by ohara.
 ----------
 ### update a hdfs information
 
-*PUT /v0/hdfs/${id}*
+*PUT /v0/hdfs/${name}*
 
 1. name (**string**) — name of this hdfs information.
 1. uri (**option(string)**) — hdfs connection information. The form looks like "hdfs://namenode:9999/"
@@ -493,7 +486,7 @@ The following information are tagged by ohara.
 ----------
 ### delete a hdfs information
 
-*DELETE /v0/hdfs/${id}*
+*DELETE /v0/hdfs/${name}*
 
 **Example Response**
 
@@ -506,7 +499,7 @@ The following information are tagged by ohara.
 ----------
 ### get a hdfs information
 
-*GET /v0/hdfs/${id}*
+*GET /v0/hdfs/${name}*
 
 **Example Response**
 
@@ -784,7 +777,7 @@ a connector with above incomplete settings will introduce a error.
 ----------
 ### delete a connector
 
-*DELETE /v0/connectors/${id}*
+*DELETE /v0/connectors/${name}*
 
 Deleting the settings used by a running connector is not allowed. You should [stop](#stop-a-connector) connector before deleting it.
 
@@ -799,7 +792,7 @@ Deleting the settings used by a running connector is not allowed. You should [st
 ----------
 ### get information of connector
 
-*GET /v0/connectors/${id}*
+*GET /v0/connectors/${name}*
 
 **Example Response**
 
@@ -943,8 +936,8 @@ via following flow.
 {
   "flows": [
     {
-      "from": "topic's id",
-      "to": ["connector's id"]
+      "from": "topic's name",
+      "to": ["connector's name"]
     }
   ]
 }
@@ -972,7 +965,6 @@ The properties used in generating pipeline are shown below.
 Following information are written by ohara.
  1. lastModified (**long**) — the last time to update this pipeline
  1. objects(**array(object)**) — the abstract of all objects mentioned by pipeline
-   - objects[i].[id](#object-id) (**string**) — object's id
    - objects[i].name (**string**) — object's name
    - objects[i].kind (**string**) — the type of this object. for instance, [topic](#topic), [connector](#connector), and [streamapp](#streamapp) 
    - objects[i].className (**string**) — object's implementation. Normally, it shows the full name of a java class
@@ -1026,7 +1018,6 @@ to find the status of the [connector](#connector). That is to say, it is ok to a
     {
       "name": "topic0",
       "lastModified": 1554950034608,
-      "id": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
       "metrics": {
         "meters": []
       },
@@ -1035,7 +1026,6 @@ to find the status of the [connector](#connector). That is to say, it is ok to a
     {
       "name": "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd",
       "lastModified": 1554950058696,
-      "id": "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd",
       "error": "Failed to get status and type of connector:81cb80a9-34a5-4e45-881a-cb87d4fbb5bd.This may be temporary since our worker cluster is too busy to sync status of connector. abc doesn't exist",
       "metrics": {
         "meters": []
@@ -1080,7 +1070,6 @@ example creates a pipeline with only a object and leave empty in **to** field.
     {
       "name": "topic0",
       "lastModified": 1554950034608,
-      "id": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
       "metrics": {
         "meters": []
       },
@@ -1129,7 +1118,6 @@ example creates a pipeline with only a object and leave empty in **to** field.
     {
       "name": "topic0",
       "lastModified": 1554950034608,
-      "id": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
       "metrics": {
         "meters": []
       },
@@ -1138,7 +1126,6 @@ example creates a pipeline with only a object and leave empty in **to** field.
     {
       "name": "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd",
       "lastModified": 1554950058696,
-      "id": "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd",
       "error": "Failed to get status and type of connector:81cb80a9-34a5-4e45-881a-cb87d4fbb5bd.This may be temporary since our worker cluster is too busy to sync status of connector. abc doesn't exist",
       "metrics": {
         "meters": []
@@ -1154,7 +1141,7 @@ example creates a pipeline with only a object and leave empty in **to** field.
 *GET /v0/pipelines*
 
 Listing all pipelines is a expensive operation as it invokes a iteration to all objects stored in pipeline. The loop will
-do a lot of checks and fetch status, metrics and log from backend clusters. If you have the id of pipeline, please
+do a lot of checks and fetch status, metrics and log from backend clusters. If you have the name of pipeline, please
 use [GET](#get-a-pipeline) to fetch details of **single** pipeline.
 
 **Example Response**
@@ -1177,7 +1164,6 @@ use [GET](#get-a-pipeline) to fetch details of **single** pipeline.
       {
         "name": "topic0",
         "lastModified": 1554950034608,
-        "id": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
         "metrics": {
           "meters": []
         },
@@ -1186,7 +1172,6 @@ use [GET](#get-a-pipeline) to fetch details of **single** pipeline.
       {
         "name": "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd",
         "lastModified": 1554950058696,
-        "id": "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd",
         "error": "Failed to get status and type of connector:81cb80a9-34a5-4e45-881a-cb87d4fbb5bd.This may be temporary since our worker cluster is too busy to sync status of connector. abc doesn't exist",
         "metrics": {
           "meters": []
@@ -1237,7 +1222,6 @@ Deleting a pipeline does not delete the objects related to the pipeline.
     {
       "name": "topic0",
       "lastModified": 1554950034608,
-      "id": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
       "metrics": {
         "meters": []
       },
@@ -1246,7 +1230,6 @@ Deleting a pipeline does not delete the objects related to the pipeline.
     {
       "name": "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd",
       "lastModified": 1554950058696,
-      "id": "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd",
       "error": "Failed to get status and type of connector:81cb80a9-34a5-4e45-881a-cb87d4fbb5bd.This may be temporary since our worker cluster is too busy to sync status of connector. abc doesn't exist",
       "metrics": {
         "meters": []
@@ -1284,7 +1267,6 @@ The properties used in describing a node are shown below.
 operate docker (and k8s service) without sudo.
 
 The following information are tagged by ohara.
-1. [id](#object-id) (**string**) — node id
 1. lastModified (**long**) — the last time to update this node
   
 ----------
@@ -1317,13 +1299,12 @@ The following information are tagged by ohara.
   "user": "abc",
   "password": "pwd",
   "lastModified": 1553498552595,
-  "id": "715e09c9-b4ee-41cc-8d05-cb544904ac38"
 }
 ```
 ----------
 ### update a node
 
-*PUT /v0/nodes/${id}*
+*PUT /v0/nodes/${name}*
 
 1. name (**string**) — hostname of node
 1. port (**int**) — ssh port of node
@@ -1352,7 +1333,6 @@ The following information are tagged by ohara.
   "user": "abc",
   "password": "pwd",
   "lastModified": 1553498552595,
-  "id": "715e09c9-b4ee-41cc-8d05-cb544904ac38"
 }
 ```
 ----------
@@ -1370,14 +1350,13 @@ The following information are tagged by ohara.
     "user": "abc",
     "password": "pwd",
     "lastModified": 1553498552595,
-    "id": "715e09c9-b4ee-41cc-8d05-cb544904ac38"
   }
 ]
 ```
 ----------
 ### delete a node
 
-*DELETE /v0/nodes/${id}*
+*DELETE /v0/nodes/${name}*
 
 
 
@@ -1393,7 +1372,7 @@ The following information are tagged by ohara.
 ----------
 ### get a node
 
-*GET /v0/nodes/${id}*
+*GET /v0/nodes/${name}*
 
 **Example Response**
 
@@ -1404,7 +1383,6 @@ The following information are tagged by ohara.
   "user": "abc",
   "password": "pwd",
   "lastModified": 1553498552595,
-  "id": "715e09c9-b4ee-41cc-8d05-cb544904ac38"
 }
 ```
 ----------
@@ -3035,7 +3013,6 @@ This api only remove the streamApp component which is stored in pipeline.
 
 ```json
 {
-  "id": "d312871a-4a05-488d-aae0-c8b27c5312c2",
   "jarInfo": {
     "name": "stream-app",
     "group": "wk01",

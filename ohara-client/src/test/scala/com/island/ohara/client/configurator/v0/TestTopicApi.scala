@@ -16,44 +16,14 @@
 
 package com.island.ohara.client.configurator.v0
 
-import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
-import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
-import spray.json.JsString
+import spray.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import spray.json._
 class TestTopicApi extends SmallTest with Matchers {
-
-  @Test
-  def testId(): Unit = {
-    val topicInfo = TopicInfo(
-      name = CommonUtils.randomString(),
-      brokerClusterName = CommonUtils.randomString(),
-      numberOfPartitions = 1,
-      numberOfReplications = 1,
-      metrics = Metrics(Seq.empty),
-      lastModified = CommonUtils.current()
-    )
-    topicInfo.id shouldBe topicInfo.name
-  }
-
-  @Test
-  def testIdInJson(): Unit = {
-    val name = CommonUtils.randomString()
-    val topicInfo = TopicInfo(
-      name = name,
-      brokerClusterName = CommonUtils.randomString(),
-      numberOfPartitions = 1,
-      numberOfReplications = 1,
-      metrics = Metrics(Seq.empty),
-      lastModified = CommonUtils.current()
-    )
-    TopicApi.TOPIC_INFO_FORMAT.write(topicInfo).asJsObject.fields("id").asInstanceOf[JsString].value shouldBe name
-  }
 
   @Test
   def ignoreNameOnCreation(): Unit = an[NullPointerException] should be thrownBy TopicApi.access

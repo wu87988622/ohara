@@ -18,11 +18,9 @@ package com.island.ohara.client.configurator.v0
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json.RootJsonFormat
 
 import scala.concurrent.{ExecutionContext, Future}
-
-import spray.json._
 object FtpApi {
   val FTP_PREFIX_PATH: String = "ftp"
   final case class Update(hostname: Option[String], port: Option[Int], user: Option[String], password: Option[String])
@@ -53,16 +51,9 @@ object FtpApi {
                            password: String,
                            lastModified: Long)
       extends Data {
-    override def id: String = name
     override def kind: String = "ftp"
   }
-  implicit val FTP_INFO_JSON_FORMAT: RootJsonFormat[FtpInfo] = new RootJsonFormat[FtpInfo] {
-    private[this] val format = jsonFormat6(FtpInfo)
-    override def read(json: JsValue): FtpInfo = format.read(json)
-    override def write(obj: FtpInfo): JsValue = JsObject(
-      // TODO: remove the id
-      format.write(obj).asJsObject.fields ++ Map("id" -> JsString(obj.id)))
-  }
+  implicit val FTP_INFO_JSON_FORMAT: RootJsonFormat[FtpInfo] = jsonFormat6(FtpInfo)
 
   /**
     * used to generate the payload and url for POST/PUT request.

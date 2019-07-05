@@ -40,31 +40,31 @@ object ShabondiRoute {
     store.addIfAbsent[ShabondiDescription](newShabondi)
   }
 
-  private def getProperty(id: String, store: DataStore)(implicit executionContext: ExecutionContext) = {
-    store.value[ShabondiDescription](id)
+  private def getProperty(name: String, store: DataStore)(implicit executionContext: ExecutionContext) = {
+    store.value[ShabondiDescription](name)
   }
 
-  private def deleteShabondi(id: String, store: DataStore)(implicit executionContext: ExecutionContext) =
-    store.remove[ShabondiDescription](id).map(_ => StatusCodes.NoContent)
+  private def deleteShabondi(name: String, store: DataStore)(implicit executionContext: ExecutionContext) =
+    store.remove[ShabondiDescription](name).map(_ => StatusCodes.NoContent)
 
-  private def updateProperty(id: String, property: ShabondiProperty, store: DataStore)(
+  private def updateProperty(name: String, property: ShabondiProperty, store: DataStore)(
     implicit executionContext: ExecutionContext) = {
-    LOG.info(s"update shabondi: $id")
+    LOG.info(s"update shabondi: $name")
     val updateValue = (data: ShabondiDescription) =>
       Future.successful(
         duplicateShabondiDescription(data, property).copy(lastModified = CommonUtils.current())
     )
-    store.addIfPresent[ShabondiDescription](id, updateValue)
+    store.addIfPresent[ShabondiDescription](name, updateValue)
   }
 
-  private def updateShabondiState(id: String, state: String, store: DataStore)(
+  private def updateShabondiState(name: String, state: String, store: DataStore)(
     implicit executionContext: ExecutionContext) = {
-    LOG.info(s"update shabondi: $id")
+    LOG.info(s"update shabondi: $name")
     val updateValue = (data: ShabondiDescription) =>
       Future.successful(
         data.copy(state = Some(state), lastModified = CommonUtils.current())
     )
-    store.addIfPresent[ShabondiDescription](id, updateValue)
+    store.addIfPresent[ShabondiDescription](name, updateValue)
   }
 
   private def randomPickNode(store: DataStore)(implicit executionContext: ExecutionContext): Node = {
@@ -75,26 +75,26 @@ object ShabondiRoute {
     nodes(random.nextInt(nodes.length))
   }
 
-  private def startShabondi(id: String, k8sClient: K8SClient, store: DataStore)(
+  private def startShabondi(name: String, k8sClient: K8SClient, store: DataStore)(
     implicit executionContext: ExecutionContext) = {
     val nodeName = randomPickNode(store).name
-    val podName = POD_NAME_PREFIX + id
+    val podName = POD_NAME_PREFIX + name
     createContainer(k8sClient, nodeName, podName).flatMap {
       case Some(container) =>
         LOG.info(s"Shabondi pod created: $podName")
-        updateShabondiState(id, container.state, store)
+        updateShabondiState(name, container.state, store)
       case None =>
         throw new Exception("Shabondi starting fail...")
     }
   }
 
-  private def stopShabondi(id: String, k8sClient: K8SClient, store: DataStore)(
+  private def stopShabondi(name: String, k8sClient: K8SClient, store: DataStore)(
     implicit executionContext: ExecutionContext) = {
-    LOG.info(s"shabondi stop: $id")
-    val podName = POD_NAME_PREFIX + id
+    LOG.info(s"shabondi stop: $name")
+    val podName = POD_NAME_PREFIX + name
     k8sClient.remove(podName).flatMap { container =>
       LOG.info(s"Shabondi pod removed: $podName")
-      updateShabondiState(id, container.state, store)
+      updateShabondiState(name, container.state, store)
     }
   }
 
@@ -106,21 +106,21 @@ object ShabondiRoute {
         post { complete { addShabondi(store) } }
       }
     } ~
-      pathPrefix(PATH_PREFIX / Segment) { id: String =>
+      pathPrefix(PATH_PREFIX / Segment) { name: String =>
         pathEnd {
-          get { complete { getProperty(id, store) } } ~
+          get { complete { getProperty(name, store) } } ~
             put {
               entity(as[ShabondiProperty]) { prop: ShabondiProperty =>
-                complete { updateProperty(id, prop, store) }
+                complete { updateProperty(name, prop, store) }
               }
             } ~
-            delete { complete { deleteShabondi(id, store) } }
+            delete { complete { deleteShabondi(name, store) } }
         } ~
           path(PATH_SEGMENT_START) {
             // TODO: need integrate with Crane
             k8sClientOpt match {
               case Some(k8sClient) =>
-                put { complete { startShabondi(id, k8sClient, store) } }
+                put { complete { startShabondi(name, k8sClient, store) } }
               case None =>
                 complete(StatusCodes.ServiceUnavailable -> "Shabondi need K8SClient...")
             }
@@ -129,7 +129,7 @@ object ShabondiRoute {
             // TODO: need integrate with Crane
             k8sClientOpt match {
               case Some(k8sClient) =>
-                put { complete { stopShabondi(id, k8sClient, store) } }
+                put { complete { stopShabondi(name, k8sClient, store) } }
               case None =>
                 complete(StatusCodes.ServiceUnavailable -> "Shabondi need K8SClient...")
             }

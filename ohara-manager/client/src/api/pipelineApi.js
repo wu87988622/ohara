@@ -63,9 +63,9 @@ export const createPipeline = async params => {
   }
 };
 
-export const updatePipeline = async ({ id, params }) => {
+export const updatePipeline = async ({ name, params }) => {
   try {
-    const res = await axiosInstance.put(`/api/pipelines/${id}`, params);
+    const res = await axiosInstance.put(`/api/pipelines/${name}`, params);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {

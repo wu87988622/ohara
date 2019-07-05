@@ -28,12 +28,12 @@ export const addPipelineStatus = pipeline => {
   };
 };
 
-export const removePrevConnector = (rules, connectorId) => {
+export const removePrevConnector = (rules, connectorName) => {
   const updatedRule = Object.keys(rules)
     .map(key => {
-      // Remove the previous sinkId, if it exists
-      if (rules[key].includes(connectorId)) {
-        const updatedTo = rules[key].filter(rule => rule !== connectorId);
+      // Remove the previous sinkName, if it exists
+      if (rules[key].includes(connectorName)) {
+        const updatedTo = rules[key].filter(rule => rule !== connectorName);
         const result = { [key]: updatedTo };
         return result;
       }
@@ -54,31 +54,31 @@ export const removePrevConnector = (rules, connectorId) => {
 export const updatePipelineParams = ({
   pipeline,
   update = null,
-  sinkId = null,
-  streamAppId = null,
+  sinkName = null,
+  streamAppName = null,
 }) => {
   let params = null;
   let { rules } = pipeline;
 
   // Remove previous connector from the graph as we're only allowing single
   // connection in v0.2
-  if (!isNull(sinkId) || !isNull(streamAppId)) {
-    const connectorId = sinkId || streamAppId;
-    rules = removePrevConnector(rules, connectorId);
+  if (!isNull(sinkName) || !isNull(streamAppName)) {
+    const connectorName = sinkName || streamAppName;
+    rules = removePrevConnector(rules, connectorName);
   }
 
   // Extract necessary props for later update
   // This is due to we currently have both new and old API in the pipeline
   // When they're putting together, it would reset pipeline graph on each update...
-  const { id, name, status, workerClusterName } = pipeline;
-  const pipelineProps = { id, name, status, workerClusterName };
+  const { name, status, workerClusterName } = pipeline;
+  const pipelineProps = { name, status, workerClusterName };
 
   // If update is not specify, just pass down the entire pipeline
   if (isNull(update)) {
     params = pipeline;
   } else {
-    const { id, to } = update;
-    const updatedRule = { [id]: to };
+    const { name, to } = update;
+    const updatedRule = { [name]: to };
 
     params = {
       ...pipelineProps,
@@ -89,9 +89,9 @@ export const updatePipelineParams = ({
   return params;
 };
 
-export const updateSingleGraph = (graph, id, transformer) => {
+export const updateSingleGraph = (graph, name, transformer) => {
   return graph.map(g => {
-    if (g.id === id) {
+    if (g.name === name) {
       return { ...transformer(g) };
     }
 
@@ -99,15 +99,15 @@ export const updateSingleGraph = (graph, id, transformer) => {
   });
 };
 
-export const cleanPrevFromTopics = (graph, connectorId) => {
-  // See if the connectorId is connected with a topic in the graph
-  const prevTopic = graph.find(g => g.to.includes(connectorId));
+export const cleanPrevFromTopics = (graph, connectorName) => {
+  // See if the connectorName is connected with a topic in the graph
+  const prevTopic = graph.find(g => g.to.includes(connectorName));
 
   if (prevTopic) {
     // Remove previous "form topic"
-    const prevTopicTo = prevTopic.to.filter(t => t !== connectorId);
+    const prevTopicTo = prevTopic.to.filter(t => t !== connectorName);
     const transformer = g => ({ ...g, to: prevTopicTo });
-    const updatedGraph = updateSingleGraph(graph, prevTopic.id, transformer);
+    const updatedGraph = updateSingleGraph(graph, prevTopic.name, transformer);
 
     return updatedGraph;
   }
@@ -121,28 +121,28 @@ export const updateGraph = ({
   update,
   updatedName,
   isFromTopic,
-  streamAppId = null,
-  sinkId = null,
+  streamAppName = null,
+  sinkName = null,
 }) => {
   let updatedGraph;
 
   // From topic update -- sink connectors or the fromTopic in stream apps
   if (isFromTopic) {
-    const connectorId = sinkId || streamAppId;
+    const connectorName = sinkName || streamAppName;
 
     // Update the sink connector name
     const nameTransformer = g => ({ ...g, name: updatedName });
     updatedGraph =
-      updateSingleGraph(graph, connectorId, nameTransformer) || graph;
+      updateSingleGraph(graph, connectorName, nameTransformer) || graph;
 
     // clean up previous connections
-    updatedGraph = cleanPrevFromTopics(updatedGraph, connectorId);
+    updatedGraph = cleanPrevFromTopics(updatedGraph, connectorName);
 
     // Update current topic
     const toTransformer = g => ({ ...g, to: update.to });
-    updatedGraph = updateSingleGraph(updatedGraph, update.id, toTransformer);
+    updatedGraph = updateSingleGraph(updatedGraph, update.name, toTransformer);
   } else {
-    const target = graph.find(g => g.id === update.id);
+    const target = graph.find(g => g.name === update.name);
 
     // Adds the connector to graph
     if (isEmpty(target)) {
@@ -150,7 +150,7 @@ export const updateGraph = ({
     } else {
       // Updates the target connector
       const transformer = g => ({ ...g, ...update });
-      updatedGraph = updateSingleGraph(graph, target.id, transformer);
+      updatedGraph = updateSingleGraph(graph, target.name, transformer);
     }
   }
 
@@ -160,14 +160,14 @@ export const updateGraph = ({
 export const loadGraph = pipeline => {
   const { objects, rules } = pipeline;
 
-  const updatedGraph = Object.keys(rules).map(x => {
-    const target = objects.find(object => object.id === x);
+  const updatedGraph = Object.keys(rules).map(name => {
+    const target = objects.find(object => object.name === name);
     // Add a to prop in local state so we can create graph with this prop
     const { kind } = target;
 
     const props = {
       ...target,
-      to: rules[x],
+      to: rules[name],
     };
 
     if (isTopic(kind) || isStream(kind)) {

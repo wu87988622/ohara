@@ -48,21 +48,18 @@ export const createConnector = async ({
   const { typeName } = connector;
 
   const className = getClassName(connector);
-  let connectorName = `Untitled ${typeName}`;
-  let id;
+  let connectorName;
 
   if (isTopic(typeName)) {
-    // Topic is created beforehand therefore, an ID is already exist.
-    id = connector.id;
+    // Topic is created beforehand therefore, a name is already exist.
     connectorName = connector.name;
   } else if (isStream(typeName)) {
     // stream app needs a jar id in order to create a property form
-    const res = await createProperty({
+    await createProperty({
       jar: connector.jar,
       name: newStreamAppName,
     });
     connectorName = newStreamAppName;
-    id = res.data.result.name;
   } else if (isSource(typeName) || isSink(typeName)) {
     const params = {
       name: newConnectorName,
@@ -71,8 +68,7 @@ export const createConnector = async ({
       workerClusterName: workerClusterName,
     };
     connectorName = newConnectorName;
-    const res = await connectorApi.createConnector(params);
-    id = res.data.result.id;
+    await connectorApi.createConnector(params);
   }
 
   const update = {
@@ -80,7 +76,6 @@ export const createConnector = async ({
     kind: typeName,
     to: [],
     className,
-    id,
   };
 
   updateGraph({ update });

@@ -22,56 +22,52 @@ import ColumnTable from './CustomConnector/ColumnTable';
 import Tabs from './Tabs';
 import { FormGroup } from 'components/common/Form';
 import { InputField, Select, Checkbox } from 'components/common/Mui/Form';
-import { findByGraphId } from '../pipelineUtils/commonUtils';
+import { findByGraphName } from '../pipelineUtils/commonUtils';
 
 export const getCurrTopicId = ({ originals, target = '' }) => {
   if (isEmpty(originals) || isNull(target) || target === 'Please select...')
     return [];
 
   const findByTopicName = ({ name }) => name === target;
-  const { id } = originals.find(findByTopicName);
+  const { name } = originals.find(findByTopicName);
 
-  return id;
+  return name;
 };
 
 export const getCurrTopicName = ({ originals, target }) => {
-  const topicId = get(target, '[0]', '');
-  const findByTopicId = ({ id }) => id === topicId;
-  const currTopic = originals.find(findByTopicId);
-  const topicName = get(currTopic, 'name', '');
+  const topicName = get(target, '[0]', '');
   return topicName;
 };
 
 export const getUpdatedTopic = ({
   graph,
   configs,
-  connectorId,
-  currTopicId,
+  connectorName,
+  currTopicName,
   originalTopics,
 }) => {
-  const connector = findByGraphId(graph, connectorId);
-  const connectorName = connector.name;
+  const connector = findByGraphName(graph, connectorName);
   let update;
 
   if (connector.kind === 'source') {
     const findByTopicName = topic => topic.name === configs.topics;
     const currTopic = originalTopics.find(findByTopicName);
-    const topicId = isUndefined(currTopic) ? [] : [currTopic.id];
-    update = { update: { ...connector, name: connectorName, to: topicId } };
+    const topicName = isUndefined(currTopic) ? [] : [currTopic.name];
+    update = { update: { ...connector, name: connectorName, to: topicName } };
   } else {
-    const currSink = findByGraphId(graph, connectorId);
-    const findByCurrTopicId = g => g.id === currTopicId;
-    const topic = graph.find(findByCurrTopicId);
+    const currSink = findByGraphName(graph, connectorName);
+    const findByCurrTopicName = g => g.name === currTopicName;
+    const topic = graph.find(findByCurrTopicName);
 
     // Extra props for sink connector to properly render
     const sinkProps = {
       isFromTopic: true,
       updatedName: connectorName,
-      sinkId: connectorId,
+      sinkName: connectorName,
     };
 
     if (topic) {
-      const to = [...new Set([...topic.to, connectorId])];
+      const to = [...new Set([...topic.to, connectorName])];
       update = { sinkProps, update: { ...topic, to } };
     } else {
       update = { sinkProps, update: { ...currSink } };
@@ -117,7 +113,7 @@ export const deleteColumnRow = ({ configs, update }) => {
   const { columns } = configs;
   const updatedColumns = columns
     .filter(column => column.order !== currRow)
-    .map((column, idx) => ({ ...column, order: ++idx }));
+    .map((column, index) => ({ ...column, order: ++index }));
 
   const updatedConfigs = { ...parentValues, columns: [...updatedColumns] };
   return updatedConfigs;
@@ -129,14 +125,14 @@ export const moveColumnRowUp = ({ configs, update }) => {
 
   if (order === 1) return;
 
-  const idx = columns.findIndex(s => s.order === order);
+  const index = columns.findIndex(s => s.order === order);
 
   const updatedColumns = [
-    ...columns.slice(0, idx - 1),
-    columns[idx],
-    columns[idx - 1],
-    ...columns.slice(idx + 1),
-  ].map((columns, idx) => ({ ...columns, order: ++idx }));
+    ...columns.slice(0, index - 1),
+    columns[index],
+    columns[index - 1],
+    ...columns.slice(index + 1),
+  ].map((columns, index) => ({ ...columns, order: ++index }));
   const updatedConfigs = { ...parentValues, columns: [...updatedColumns] };
 
   return updatedConfigs;
@@ -148,14 +144,14 @@ export const moveColumnRowDown = ({ configs, update }) => {
 
   if (order === columns.length) return;
 
-  const idx = columns.findIndex(s => s.order === order);
+  const index = columns.findIndex(s => s.order === order);
 
   const updatedColumns = [
-    ...columns.slice(0, idx),
-    columns[idx + 1],
-    columns[idx],
-    ...columns.slice(idx + 2),
-  ].map((columns, idx) => ({ ...columns, order: ++idx }));
+    ...columns.slice(0, index),
+    columns[index + 1],
+    columns[index],
+    ...columns.slice(index + 2),
+  ].map((columns, index) => ({ ...columns, order: ++index }));
   const updatedConfigs = { ...parentValues, columns: [...updatedColumns] };
 
   return updatedConfigs;

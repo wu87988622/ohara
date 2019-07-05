@@ -81,10 +81,10 @@ class PipelineNewPage extends React.Component {
 
   fetchPipeline = async () => {
     const { match } = this.props;
-    const pipelineId = get(match, 'params.pipelineId', null);
+    const pipelineName = get(match, 'params.pipelineName', null);
 
-    if (pipelineId) {
-      const res = await pipelineApi.fetchPipeline(pipelineId);
+    if (pipelineName) {
+      const res = await pipelineApi.fetchPipeline(pipelineName);
       const pipeline = get(res, 'data.result', null);
 
       if (pipeline) {
@@ -142,9 +142,9 @@ class PipelineNewPage extends React.Component {
   };
 
   refreshGraph = () => {
-    const { pipelineId } = this.props.match.params;
-    if (pipelineId) {
-      this.fetchPipeline(pipelineId);
+    const { pipelineName } = this.props.match.params;
+    if (pipelineName) {
+      this.fetchPipeline(pipelineName);
     }
   };
 
@@ -162,11 +162,12 @@ class PipelineNewPage extends React.Component {
 
   updatePipeline = async (update = {}) => {
     const { pipeline } = this.state;
-    const { id, status } = pipeline;
+    const { name, status } = pipeline;
     const params = utils.updatePipelineParams({ pipeline, ...update });
 
     this.setState({ isUpdating: true }, async () => {
-      const res = await pipelineApi.updatePipeline({ id, params });
+      const res = await pipelineApi.updatePipeline({ name, params });
+
       this.setState({ isUpdating: false });
       const updatedPipelines = get(res, 'data.result', null);
 
@@ -185,8 +186,8 @@ class PipelineNewPage extends React.Component {
   };
 
   checkPipelineStatus = async () => {
-    const pipelineId = get(this.props.match, 'params.pipelineId', null);
-    await this.fetchPipeline(pipelineId);
+    const pipelineName = get(this.props.match, 'params.pipelineName', null);
+    await this.fetchPipeline(pipelineName);
 
     const { status, objects: connectors } = this.state.pipeline;
 
@@ -269,8 +270,8 @@ class PipelineNewPage extends React.Component {
         };
       });
 
-      const pipelineId = get(this.props.match, 'params.pipelineId', null);
-      this.fetchPipeline(pipelineId);
+      const pipelineName = get(this.props.match, 'params.pipelineName', null);
+      this.fetchPipeline(pipelineName);
     } else {
       toastr.error(MESSAGES.CANNOT_START_PIPELINE_ERROR);
     }
@@ -298,7 +299,7 @@ class PipelineNewPage extends React.Component {
 
     if (isEmpty(pipeline) || isEmpty(connectors)) return null;
 
-    const pipelineId = get(this, 'props.match.params.pipelineId', null);
+    const pipelineName = get(this, 'props.match.params.pipelineName', null);
     const {
       name: pipelineTitle,
       status: pipelineStatus,
@@ -331,7 +332,7 @@ class PipelineNewPage extends React.Component {
     const routeBaseUrl = `/pipelines/(new|edit)`;
 
     return (
-      <DocumentTitle title={pipelineId ? PIPELINE_EDIT : PIPELINE_NEW}>
+      <DocumentTitle title={pipelineName ? PIPELINE_EDIT : PIPELINE_NEW}>
         <>
           <Prompt
             message={location =>

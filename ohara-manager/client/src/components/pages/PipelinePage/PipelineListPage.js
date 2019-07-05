@@ -136,18 +136,19 @@ class PipelineListPage extends React.Component {
     this.setState({ isNewPipelineWorking: true });
     const res = await pipelineApi.createPipeline(params);
     this.setState({ isNewPipelineWorking: false });
-    const pipelineId = get(res, 'data.result.id', null);
-    if (pipelineId) {
+    const pipelineName = get(res, 'data.result.name', null);
+
+    if (pipelineName) {
       this.handleSelectClusterModalClose();
       toastr.success(MESSAGES.PIPELINE_CREATION_SUCCESS);
-      history.push(`${match.url}/new/${pipelineId}`);
+      history.push(`${match.url}/new/${pipelineName}`);
     }
   };
 
-  handleDeletePipelineModalOpen = (id, name) => {
+  handleDeletePipelineModalOpen = name => {
     this.setState({
       isDeletePipelineModalActive: true,
-      deletePipelineId: id,
+      pipelineToBeDeleted: name,
       pipelineName: name,
     });
   };
@@ -155,7 +156,7 @@ class PipelineListPage extends React.Component {
   handleDeletePipelineModalClose = () => {
     this.setState({
       isDeletePipelineModalActive: false,
-      deletePipelineId: '',
+      pipelineToBeDeleted: '',
     });
   };
 
@@ -164,24 +165,30 @@ class PipelineListPage extends React.Component {
   };
 
   handleDeletePipelineConfirm = async () => {
-    const { deletePipelineId: id, pipelineName: name } = this.state;
+    const { pipelineToBeDeleted } = this.state;
     this.setState({ isDeletePipelineWorking: true });
-    const res = await pipelineApi.deletePipeline(id);
+    const res = await pipelineApi.deletePipeline(pipelineToBeDeleted);
     const isSuccess = get(res, 'data.isSuccess', false);
     this.setState({ isDeletePipelineWorking: false });
 
     if (isSuccess) {
       this.setState(({ pipelines }) => {
-        const _pipelines = pipelines.filter(p => p.id !== id);
+        const _pipelines = pipelines.filter(
+          p => p.name !== pipelineToBeDeleted,
+        );
         return {
           pipelines: _pipelines,
           isDeletePipelineModalActive: false,
-          deletePipelineId: '',
+          pipelineToBeDeleted: '',
         };
       });
-      toastr.success(`${MESSAGES.PIPELINE_DELETION_SUCCESS} ${name}`);
+      toastr.success(
+        `${MESSAGES.PIPELINE_DELETION_SUCCESS} ${pipelineToBeDeleted}`,
+      );
     } else {
-      toastr.error(`${MESSAGES.PIPELINE_DELETION_ERROR} ${name}`);
+      toastr.error(
+        `${MESSAGES.PIPELINE_DELETION_ERROR} ${pipelineToBeDeleted}`,
+      );
     }
   };
 
@@ -284,13 +291,13 @@ class PipelineListPage extends React.Component {
               ) : (
                 <Table headers={this.headers}>
                   {pipelines.map(pipeline => {
-                    const { id, name, status, workerClusterName } = pipeline;
+                    const { name, status, workerClusterName } = pipeline;
                     const isRunning = status === 'Running' ? true : false;
                     const trCls = isRunning ? 'is-running' : '';
                     const editUrl = utils.getEditUrl(pipeline, match);
 
                     return (
-                      <tr key={id} className={trCls}>
+                      <tr key={name} className={trCls}>
                         <td>{name}</td>
                         <td>{workerClusterName}</td>
                         <td>{status}</td>
@@ -302,7 +309,7 @@ class PipelineListPage extends React.Component {
                         <td data-testid="delete-pipeline" className="has-icon">
                           <DeleteIcon
                             onClick={() =>
-                              this.handleDeletePipelineModalOpen(id, name)
+                              this.handleDeletePipelineModalOpen(name)
                             }
                           >
                             <i className="far fa-trash-alt" />

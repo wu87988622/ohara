@@ -26,7 +26,8 @@ export const isTopic = kind => kind === 'topic';
 
 export const isStream = kind => kind === 'streamApp';
 
-export const findByGraphId = (graph, id) => graph.find(x => x.id === id);
+export const findByGraphName = (graph, connectorName) =>
+  graph.find(g => g.name === connectorName);
 
 export const getConnectors = connectors => {
   const init = {
