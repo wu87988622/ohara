@@ -42,8 +42,8 @@ public final class OStreamBuilder<K, V> {
   private boolean exactlyOnce = false;
 
   // for inner use
-  private Serde<K> builderKeySerde;
-  private Serde<V> builderValueSerde;
+  private final Serde<K> builderKeySerde;
+  private final Serde<V> builderValueSerde;
 
   public OStreamBuilder(Serde<K> key, Serde<V> value) {
     this.builderKeySerde = key;

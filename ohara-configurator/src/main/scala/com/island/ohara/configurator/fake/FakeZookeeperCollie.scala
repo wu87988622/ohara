@@ -26,7 +26,7 @@ import scala.concurrent.{ExecutionContext, Future}
 private[configurator] class FakeZookeeperCollie(node: NodeCollie)
     extends FakeCollie[ZookeeperClusterInfo, ZookeeperCollie.ClusterCreator](node)
     with ZookeeperCollie {
-  override def creator(): ZookeeperCollie.ClusterCreator =
+  override def creator: ZookeeperCollie.ClusterCreator =
     (_, clusterName, imageName, clientPort, peerPort, electionPort, nodeNames) =>
       Future.successful(
         addCluster(

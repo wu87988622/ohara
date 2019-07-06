@@ -34,7 +34,7 @@ class CSVRecordWriterOutput(hdfsSinkConnectorConfig: HDFSSinkConnectorConfig, st
     extends RecordWriterOutput {
   private[this] lazy val logger = Logger(getClass.getName)
   private[this] var writer: BufferedWriter = _
-  val encode = hdfsSinkConnectorConfig.dataFileEncode
+  val encode: String = hdfsSinkConnectorConfig.dataFileEncode
 
   /**
     * Write file for csv format

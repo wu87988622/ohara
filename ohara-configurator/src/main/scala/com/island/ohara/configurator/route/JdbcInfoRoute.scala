@@ -36,27 +36,25 @@ private[configurator] object JdbcInfoRoute {
                    lastModified = CommonUtils.current())),
       hookOfUpdate = (name: String, request: Update, previousOption: Option[JdbcInfo]) =>
         Future.successful {
-          previousOption
-            .map { previous =>
-              JdbcInfo(
-                name = name,
-                url = request.url.getOrElse(previous.url),
-                user = request.user.getOrElse(previous.user),
-                password = request.password.getOrElse(previous.password),
-                CommonUtils.current()
-              )
-            }
-            .getOrElse {
-              if (request.url.isEmpty) throw new IllegalArgumentException(RouteUtils.errorMessage(name, "url"))
-              if (request.user.isEmpty) throw new IllegalArgumentException(RouteUtils.errorMessage(name, "user"))
-              if (request.password.isEmpty)
-                throw new IllegalArgumentException(RouteUtils.errorMessage(name, "password"))
-              JdbcInfo(name = name,
-                       url = request.url.get,
-                       user = request.user.get,
-                       password = request.password.get,
-                       CommonUtils.current())
-            }
+          previousOption.fold {
+            if (request.url.isEmpty) throw new IllegalArgumentException(RouteUtils.errorMessage(name, "url"))
+            if (request.user.isEmpty) throw new IllegalArgumentException(RouteUtils.errorMessage(name, "user"))
+            if (request.password.isEmpty)
+              throw new IllegalArgumentException(RouteUtils.errorMessage(name, "password"))
+            JdbcInfo(name = name,
+                     url = request.url.get,
+                     user = request.user.get,
+                     password = request.password.get,
+                     CommonUtils.current())
+          } { previous =>
+            JdbcInfo(
+              name = name,
+              url = request.url.getOrElse(previous.url),
+              user = request.user.getOrElse(previous.user),
+              password = request.password.getOrElse(previous.password),
+              CommonUtils.current()
+            )
+          }
 
       },
     )

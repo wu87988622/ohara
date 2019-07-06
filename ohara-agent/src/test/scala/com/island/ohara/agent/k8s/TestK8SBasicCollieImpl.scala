@@ -65,11 +65,11 @@ class TestK8SBasicCollieImpl extends SmallTest with Matchers {
             ZookeeperClusterInfo(clusterName, containers.head.imageName, 2181, 2182, 2183, Set.empty, Set.empty)
           }
         }
-        override def creator(): ZookeeperCollie.ClusterCreator =
+        override def creator: ZookeeperCollie.ClusterCreator =
           throw new UnsupportedOperationException("Test doesn't support creator function")
       }
 
-    val containers = k8sBasicCollieImpl.clusterWithAllContainers(Implicits.global)
+    val containers = k8sBasicCollieImpl.clusterWithAllContainers()(Implicits.global)
     Await.result(containers, TIMEOUT).head._1.name
   }
 }

@@ -207,7 +207,7 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker with Matchers {
   def shouldKeepColumnOrderAfterSendToKafka(): Unit = {
     val topicName = CommonUtils.randomString(10)
     val topicAdmin = TopicAdmin(testUtil().brokersConnProps())
-    try topicAdmin.creator().name(topicName).numberOfPartitions(1).numberOfReplications(1).create()
+    try topicAdmin.creator.name(topicName).numberOfPartitions(1).numberOfReplications(1).create()
     finally topicAdmin.close()
 
     val row = Row.of(Cell.of("c", 3), Cell.of("b", 2), Cell.of("a", 1))

@@ -64,9 +64,7 @@ object NodeRoute {
             user = request.user.getOrElse(
               previous.map(_.user).getOrElse(throw new NoSuchElementException(RouteUtils.errorMessage(name, "user")))),
             password = request.password.getOrElse(
-              previous
-                .map(_.password)
-                .getOrElse(throw new NoSuchElementException(RouteUtils.errorMessage(name, "password")))),
+              previous.fold(throw new NoSuchElementException(RouteUtils.errorMessage(name, "password")))(_.password)),
             services = Seq.empty,
             lastModified = CommonUtils.current()
           ))

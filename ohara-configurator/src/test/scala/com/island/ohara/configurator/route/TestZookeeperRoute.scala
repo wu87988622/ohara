@@ -199,25 +199,21 @@ class TestZookeeperRoute extends MediumTest with Matchers {
 
   @Test
   def testForceDelete(): Unit = {
-    val initialCount = configurator.clusterCollie.zookeeperCollie().asInstanceOf[FakeZookeeperCollie].forceRemoveCount
+    val initialCount = configurator.clusterCollie.zookeeperCollie.asInstanceOf[FakeZookeeperCollie].forceRemoveCount
     val name = CommonUtils.randomString(10)
     // graceful delete
     result(
       zookeeperApi.request.name(name).nodeNames(nodeNames).create()
     )
     result(zookeeperApi.delete(name))
-    configurator.clusterCollie
-      .zookeeperCollie()
-      .asInstanceOf[FakeZookeeperCollie]
-      .forceRemoveCount shouldBe initialCount
+    configurator.clusterCollie.zookeeperCollie.asInstanceOf[FakeZookeeperCollie].forceRemoveCount shouldBe initialCount
 
     // force delete
     result(
       zookeeperApi.request.name(name).nodeNames(nodeNames).create()
     )
     result(zookeeperApi.forceDelete(name))
-    configurator.clusterCollie
-      .zookeeperCollie()
+    configurator.clusterCollie.zookeeperCollie
       .asInstanceOf[FakeZookeeperCollie]
       .forceRemoveCount shouldBe initialCount + 1
   }

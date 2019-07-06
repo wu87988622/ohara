@@ -46,10 +46,10 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
     * 7) update existed containers (if we are adding new node into a running cluster)
     * @return creator of broker cluster
     */
-  override def creator(): BrokerCollie.ClusterCreator =
+  override def creator: BrokerCollie.ClusterCreator =
     (executionContext, clusterName, imageName, zookeeperClusterName, clientPort, exporterPort, jmxPort, nodeNames) => {
       implicit val exec: ExecutionContext = executionContext
-      clusters.flatMap(clusters => {
+      clusters().flatMap(clusters => {
         clusters
           .filter(_._1.isInstanceOf[BrokerClusterInfo])
           .map {

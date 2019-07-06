@@ -78,13 +78,11 @@ private[configurator] object StreamRoute {
     meterCache: MeterCache,
     executionContext: ExecutionContext): Future[StreamAppDescription] = {
     Future.successful(desc).flatMap { props =>
-      clusterCollie
-        .streamCollie()
+      clusterCollie.streamCollie
         .exist(props.name)
         .flatMap {
           if (_) {
-            clusterCollie
-              .streamCollie()
+            clusterCollie.streamCollie
               .cluster(props.name)
               .filter(_._1.isInstanceOf[StreamClusterInfo])
               .map(_._1.asInstanceOf[StreamClusterInfo] -> None)
@@ -161,34 +159,29 @@ private[configurator] object StreamRoute {
           root = STREAM_PROPERTY_PREFIX_PATH,
           hookOfCreation = (req: Creation) => Future.successful(toStore(req)),
           hookOfUpdate = (name: String, req: Update, previousOption: Option[StreamAppDescription]) => {
-            val updateReq = previousOption
-              .map { previous =>
-                previous.copy(
-                  instances = req.instances.getOrElse(previous.instances),
-                  from = req.from.getOrElse(previous.from),
-                  to = req.to.getOrElse(previous.to),
-                  nodeNames = req.nodeNames.getOrElse(previous.nodeNames),
-                  jmxPort = req.jmxPort.getOrElse(previous.jmxPort)
-                )
-              }
-              // the streamApp property is not defined yet, using create object instead
-              .getOrElse {
-                StreamAppDescription(
-                  name = name,
-                  imageName = req.imageName.getOrElse(IMAGE_NAME_DEFAULT),
-                  instances = req.nodeNames.map(_.size).getOrElse(checkField(name, req.instances, "instances")),
-                  nodeNames = req.nodeNames.getOrElse(Set.empty),
-                  deadNodes = Set.empty,
-                  jar = checkField(name, req.jar, "jar"),
-                  from = checkField(name, req.from, "from"),
-                  to = checkField(name, req.to, "to"),
-                  state = None,
-                  jmxPort = checkField(name, req.jmxPort, "jmxPort"),
-                  metrics = Metrics(Seq.empty),
-                  error = None,
-                  lastModified = CommonUtils.current()
-                )
-              }
+            val updateReq = previousOption.fold(StreamAppDescription(
+              name = name,
+              imageName = req.imageName.getOrElse(IMAGE_NAME_DEFAULT),
+              instances = req.nodeNames.fold(checkField(name, req.instances, "instances"))(_.size),
+              nodeNames = req.nodeNames.getOrElse(Set.empty),
+              deadNodes = Set.empty,
+              jar = checkField(name, req.jar, "jar"),
+              from = checkField(name, req.from, "from"),
+              to = checkField(name, req.to, "to"),
+              state = None,
+              jmxPort = checkField(name, req.jmxPort, "jmxPort"),
+              metrics = Metrics(Seq.empty),
+              error = None,
+              lastModified = CommonUtils.current()
+            )) { previous =>
+              previous.copy(
+                instances = req.instances.getOrElse(previous.instances),
+                from = req.from.getOrElse(previous.from),
+                to = req.to.getOrElse(previous.to),
+                nodeNames = req.nodeNames.getOrElse(previous.nodeNames),
+                jmxPort = req.jmxPort.getOrElse(previous.jmxPort)
+              )
+            }
             if (updateReq.state.isDefined)
               throw new RuntimeException(
                 s"You cannot update property on non-stopped streamApp: $name"
@@ -199,14 +192,14 @@ private[configurator] object StreamRoute {
           hookBeforeDelete = (name: String) =>
             // get the latest status first
             store.get[StreamAppDescription](name).flatMap {
-              _.map { desc =>
+              _.fold(Future.successful(name)) { desc =>
                 updateState(desc).flatMap { data =>
                   if (data.state.isEmpty) {
                     // state is not exists, could remove this streamApp
                     Future.successful(name)
                   } else Future.failed(new RuntimeException(s"You cannot delete a non-stopped streamApp :$name"))
                 }
-              }.getOrElse(Future.successful(name))
+              }
           },
           hookOfGet = (response: StreamAppDescription) => updateState(response),
           hookOfList = (responses: Seq[StreamAppDescription]) => Future.traverse(responses)(updateState)
@@ -223,11 +216,10 @@ private[configurator] object StreamRoute {
                 // 1) use any available node of worker cluster to run streamApp
                 // 2) use one from/to pair topic (multiple from/to topics will need to discuss flow)
 
-                clusterCollie.streamCollie().exist(data.name).flatMap {
+                clusterCollie.streamCollie.exist(data.name).flatMap {
                   if (_) {
                     // stream cluster exists, get current cluster
-                    clusterCollie
-                      .streamCollie()
+                    clusterCollie.streamCollie
                       .cluster(data.name)
                       .filter(_._1.isInstanceOf[StreamClusterInfo])
                       .map(_._1.asInstanceOf[StreamClusterInfo])
@@ -291,9 +283,7 @@ private[configurator] object StreamRoute {
                                         }
                                         .flatMap(
                                           nodes =>
-                                            clusterCollie
-                                              .streamCollie()
-                                              .creator()
+                                            clusterCollie.streamCollie.creator
                                               .clusterName(data.name)
                                               .nodeNames(nodes.map(_.name))
                                               .imageName(IMAGE_NAME_DEFAULT)
@@ -333,11 +323,10 @@ private[configurator] object StreamRoute {
             put {
               complete(
                 store.value[StreamAppDescription](name).flatMap { data =>
-                  clusterCollie.streamCollie().exist(data.name).flatMap {
+                  clusterCollie.streamCollie.exist(data.name).flatMap {
                     if (_) {
                       // if remove failed, we log the exception and return "DEAD" state
-                      clusterCollie
-                        .streamCollie()
+                      clusterCollie.streamCollie
                         .remove(data.name)
                         .map(_ => None -> None)
                         .recover {

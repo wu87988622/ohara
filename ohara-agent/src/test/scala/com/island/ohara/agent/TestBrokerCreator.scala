@@ -146,8 +146,7 @@ class TestBrokerCreator extends SmallTest with Matchers {
     val node1 = Node(node1Name, 22, "user1", "123456", services = Seq.empty, lastModified = CommonUtils.current())
     val brokerCollie = new FakeBrokerCollie(NodeCollie(Seq(node1)), Seq.empty, Seq.empty)
 
-    val bkCreator: Future[BrokerClusterInfo] = brokerCollie
-      .creator()
+    val bkCreator: Future[BrokerClusterInfo] = brokerCollie.creator
       .clusterName("cluster123")
       .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
       .zookeeperClusterName("zk123456")
@@ -168,8 +167,7 @@ class TestBrokerCreator extends SmallTest with Matchers {
     val node1 = Node(node1Name, 22, "user1", "123456", services = Seq.empty, lastModified = CommonUtils.current())
 
     val brokerCollie = new FakeBrokerCollie(NodeCollie(Seq(node1)), Seq.empty, Seq.empty) //Zk container set empty
-    val bkCreator: Future[BrokerClusterInfo] = brokerCollie
-      .creator()
+    val bkCreator: Future[BrokerClusterInfo] = brokerCollie.creator
       .clusterName("cluster123")
       .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
       .zookeeperClusterName(FakeBrokerCollie.zookeeperClusterName)
@@ -220,8 +218,7 @@ class TestBrokerCreator extends SmallTest with Matchers {
       ))
 
     val brokerCollie = new FakeBrokerCollie(NodeCollie(Seq(node1)), zkContainers, bkContainers)
-    val bkCreator: Future[BrokerClusterInfo] = brokerCollie
-      .creator()
+    val bkCreator: Future[BrokerClusterInfo] = brokerCollie.creator
       .clusterName("bk1")
       .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
       .zookeeperClusterName(FakeBrokerCollie.zookeeperClusterName)
@@ -278,8 +275,7 @@ class TestBrokerCreator extends SmallTest with Matchers {
 
     val brokerCollie = new FakeBrokerCollie(NodeCollie(Seq(node1, node2)), zkContainers, bkContainers)
 
-    val bkCreator: Future[BrokerClusterInfo] = brokerCollie
-      .creator()
+    val bkCreator: Future[BrokerClusterInfo] = brokerCollie.creator
       .clusterName("bk1")
       .zookeeperClusterName(FakeBrokerCollie.zookeeperClusterName)
       .clientPort(9092)
@@ -317,8 +313,7 @@ class TestBrokerCreator extends SmallTest with Matchers {
       ))
     val brokerCollie = new FakeBrokerCollie(NodeCollie(Seq(node1, node2)), containers, Seq.empty)
 
-    val bkCreator: Future[BrokerClusterInfo] = brokerCollie
-      .creator()
+    val bkCreator: Future[BrokerClusterInfo] = brokerCollie.creator
       .clusterName("cluster123")
       .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
       .zookeeperClusterName(FakeBrokerCollie.zookeeperClusterName)

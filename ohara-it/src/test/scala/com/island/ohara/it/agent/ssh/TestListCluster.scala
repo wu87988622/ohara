@@ -64,9 +64,7 @@ class TestListCluster extends IntegrationTest with Matchers {
     val name = nameHolder.generateClusterName()
     log.info(s"[TestListCluster] before create zk cluster:$name")
     try result(
-      clusterCollie
-        .zookeeperCollie()
-        .creator()
+      clusterCollie.zookeeperCollie.creator
         .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
         // the port:1000 is not illegal so we can't create zookeeper cluster
         .clientPort(1000)
@@ -90,16 +88,14 @@ class TestListCluster extends IntegrationTest with Matchers {
     }
 
     log.info("[TestListCluster] before check zk clusters still can be fetch")
-    await(() => result(clusterCollie.zookeeperCollie().clusters).exists(_._1.name == name))
+    await(() => result(clusterCollie.zookeeperCollie.clusters()).exists(_._1.name == name))
   }
 
   @Test
   def deadBrokerClusterShouldNotDisappear(): Unit = {
     log.info("[TestListCluster] before create zk cluster")
     val zkCluster = result(
-      clusterCollie
-        .zookeeperCollie()
-        .creator()
+      clusterCollie.zookeeperCollie.creator
         .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
         .clientPort(CommonUtils.availablePort())
         .peerPort(CommonUtils.availablePort())
@@ -111,19 +107,17 @@ class TestListCluster extends IntegrationTest with Matchers {
 
     log.info("[TestListCluster] before create bk cluster")
     try {
-      assertCluster(() => result(clusterCollie.zookeeperCollie().clusters).keys.toSeq, zkCluster.name)
+      assertCluster(() => result(clusterCollie.zookeeperCollie.clusters()).keys.toSeq, zkCluster.name)
       // since we only get "active" containers, all containers belong to the cluster should be running.
       // Currently, both k8s and pure docker have the same context of "RUNNING".
       // It is ok to filter container via RUNNING state.
       await(() => {
-        val containers = result(clusterCollie.zookeeperCollie().containers(zkCluster.name))
+        val containers = result(clusterCollie.zookeeperCollie.containers(zkCluster.name))
         containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
       })
       val name = nameHolder.generateClusterName()
       try result(
-        clusterCollie
-          .brokerCollie()
-          .creator()
+        clusterCollie.brokerCollie.creator
           .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
           // the port:1000 is not illegal so we can't create broker cluster
           .clientPort(1000)
@@ -147,8 +141,8 @@ class TestListCluster extends IntegrationTest with Matchers {
       }
 
       log.info("[TestListCluster] before check bk clusters still can be fetch")
-      await(() => result(clusterCollie.brokerCollie().clusters).exists(_._1.name == name))
-    } finally if (cleanup) result(clusterCollie.zookeeperCollie().remove(zkCluster.name))
+      await(() => result(clusterCollie.brokerCollie.clusters()).exists(_._1.name == name))
+    } finally if (cleanup) result(clusterCollie.zookeeperCollie.remove(zkCluster.name))
   }
 
   @After

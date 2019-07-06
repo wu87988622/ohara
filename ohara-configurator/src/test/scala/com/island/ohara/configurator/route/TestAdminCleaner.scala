@@ -29,11 +29,11 @@ class TestAdminCleaner extends SmallTest with Matchers {
 
   @Test
   def testTimeout(): Unit = {
-    val timeout = 2 seconds
+    val timeout: Duration = 2 seconds
     val cleaner = new AdminCleaner(timeout)
     val fakeAdmin2 = mock(classOf[TopicAdmin])
     val _closed = new AtomicBoolean(false)
-    when(fakeAdmin2.closed()).thenReturn(false)
+    when(fakeAdmin2.closed).thenReturn(false)
     when(fakeAdmin2.close()).thenAnswer(_ => _closed.set(true))
     try {
       cleaner.add(fakeAdmin2)
@@ -55,7 +55,7 @@ class TestAdminCleaner extends SmallTest with Matchers {
   def testClose2(): Unit = {
     val fakeAdmin2 = mock(classOf[TopicAdmin])
     val _closed = new AtomicBoolean(false)
-    when(fakeAdmin2.closed()).thenReturn(false)
+    when(fakeAdmin2.closed).thenReturn(false)
     when(fakeAdmin2.close()).thenAnswer(_ => _closed.set(true))
     val cleaner = new AdminCleaner(2 seconds)
     try cleaner.add(fakeAdmin2)

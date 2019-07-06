@@ -46,25 +46,25 @@ trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator
     * 7) update existed containers (if we are adding new node into a running cluster)
     * @return description of worker cluster
     */
-  override def creator(): WorkerCollie.ClusterCreator = (executionContext,
-                                                         clusterName,
-                                                         imageName,
-                                                         brokerClusterName,
-                                                         clientPort,
-                                                         jmxPort,
-                                                         groupId,
-                                                         offsetTopicName,
-                                                         offsetTopicReplications,
-                                                         offsetTopicPartitions,
-                                                         statusTopicName,
-                                                         statusTopicReplications,
-                                                         statusTopicPartitions,
-                                                         configTopicName,
-                                                         configTopicReplications,
-                                                         jarInfos,
-                                                         nodeNames) => {
+  override def creator: WorkerCollie.ClusterCreator = (executionContext,
+                                                       clusterName,
+                                                       imageName,
+                                                       brokerClusterName,
+                                                       clientPort,
+                                                       jmxPort,
+                                                       groupId,
+                                                       offsetTopicName,
+                                                       offsetTopicReplications,
+                                                       offsetTopicPartitions,
+                                                       statusTopicName,
+                                                       statusTopicReplications,
+                                                       statusTopicPartitions,
+                                                       configTopicName,
+                                                       configTopicReplications,
+                                                       jarInfos,
+                                                       nodeNames) => {
     implicit val exec: ExecutionContext = executionContext
-    clusters.flatMap(clusters => {
+    clusters().flatMap(clusters => {
       clusters
         .filter(_._1.isInstanceOf[WorkerClusterInfo])
         .map {

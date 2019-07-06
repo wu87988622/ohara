@@ -36,11 +36,11 @@ abstract class ContainerCollie[T <: ClusterInfo: ClassTag, Creator <: ClusterCre
     implicit executionContext: ExecutionContext): Future[Boolean]
 
   override final def removeNode(clusterName: String, nodeName: String)(
-    implicit executionContext: ExecutionContext): Future[Boolean] = clusters.flatMap(
+    implicit executionContext: ExecutionContext): Future[Boolean] = clusters().flatMap(
     _.find(_._1.name == clusterName)
       .filter(_._1.nodeNames.contains(nodeName))
       .filter(_._2.exists(_.nodeName == nodeName))
-      .map {
+      .fold(Future.successful(false)) {
         case (cluster, runningContainers) =>
           runningContainers.size match {
             case 1 =>
@@ -55,8 +55,7 @@ abstract class ContainerCollie[T <: ClusterInfo: ClassTag, Creator <: ClusterCre
                     s"This should not be happen!!! $nodeName doesn't exist on cluster:$clusterName"))
               )
           }
-      }
-      .getOrElse(Future.successful(false)))
+      })
 
   protected def doAddNode(previousCluster: T, previousContainers: Seq[ContainerInfo], newNodeName: String)(
     implicit executionContext: ExecutionContext): Future[T]
@@ -87,20 +86,14 @@ abstract class ContainerCollie[T <: ClusterInfo: ClassTag, Creator <: ClusterCre
     else throw new IllegalArgumentException(s"Who are you, ${classTag[T].runtimeClass} ???")
 
   override final def forceRemove(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
-    clusterWithAllContainers.flatMap(
-      _.find(_._1.name == clusterName)
-        .map {
-          case (cluster, containerInfos) => doForceRemove(cluster, containerInfos)
-        }
-        .getOrElse(Future.successful(false)))
+    clusterWithAllContainers().flatMap(_.find(_._1.name == clusterName).fold(Future.successful(false)) {
+      case (cluster, containerInfos) => doForceRemove(cluster, containerInfos)
+    })
 
   override final def remove(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
-    clusterWithAllContainers.flatMap(
-      _.find(_._1.name == clusterName)
-        .map {
-          case (cluster, containerInfos) => doRemove(cluster, containerInfos)
-        }
-        .getOrElse(Future.successful(false)))
+    clusterWithAllContainers().flatMap(_.find(_._1.name == clusterName).fold(Future.successful(false)) {
+      case (cluster, containerInfos) => doRemove(cluster, containerInfos)
+    })
 
   protected def doRemove(clusterInfo: T, containerInfos: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[Boolean]

@@ -55,8 +55,7 @@ private[configurator] object TopicRoute {
     clusterName: String,
     name: String,
     numberOfPartitions: Int,
-    numberOfReplications: Short)(implicit executionContext: ExecutionContext): Future[TopicInfo] = client
-    .creator()
+    numberOfReplications: Short)(implicit executionContext: ExecutionContext): Future[TopicInfo] = client.creator
     .name(name)
     .numberOfPartitions(numberOfPartitions)
     .numberOfReplications(numberOfReplications)
@@ -106,60 +105,54 @@ private[configurator] object TopicRoute {
             case (cluster, client) =>
               client.list.map(_.find(_.name == name)).flatMap {
                 topicFromKafkaOption =>
-                  topicFromKafkaOption
-                    .map {
-                      topicFromKafka =>
-                        if (update.numberOfPartitions.exists(_ < topicFromKafka.numberOfPartitions)) {
-                          Releasable.close(client)
-                          Future.failed(
-                            new IllegalArgumentException("Reducing the number from partitions is disallowed"))
-                        } else if (update.numberOfReplications.exists(_ != topicFromKafka.numberOfReplications)) {
-                          // we have got to release the client
-                          Releasable.close(client)
-                          Future.failed(
-                            new IllegalArgumentException("Non-support to change the number from replications"))
-                        } else if (update.numberOfPartitions.exists(_ > topicFromKafka.numberOfPartitions)) {
-                          client.changePartitions(name, update.numberOfPartitions.get).map { info =>
-                            try TopicInfo(
-                              info.name,
-                              info.numberOfPartitions,
-                              info.numberOfReplications,
-                              cluster.name,
-                              metrics = Metrics(Seq.empty),
-                              CommonUtils.current()
-                            )
-                            finally client.close()
-                          }
-                        } else {
-                          // we have got to release the client
-                          Releasable.close(client)
-                          // just return the topic info
-                          Future.successful(TopicInfo(
-                            topicFromKafka.name,
-                            topicFromKafka.numberOfPartitions,
-                            topicFromKafka.numberOfReplications,
+                  topicFromKafkaOption.fold(createTopic(
+                    client = client,
+                    clusterName = cluster.name,
+                    name = name,
+                    numberOfPartitions = update.numberOfPartitions.getOrElse(DEFAULT_NUMBER_OF_PARTITIONS),
+                    numberOfReplications = update.numberOfReplications.getOrElse(DEFAULT_NUMBER_OF_REPLICATIONS)
+                  )) {
+                    topicFromKafka =>
+                      if (update.numberOfPartitions.exists(_ < topicFromKafka.numberOfPartitions)) {
+                        Releasable.close(client)
+                        Future.failed(new IllegalArgumentException("Reducing the number from partitions is disallowed"))
+                      } else if (update.numberOfReplications.exists(_ != topicFromKafka.numberOfReplications)) {
+                        // we have got to release the client
+                        Releasable.close(client)
+                        Future.failed(
+                          new IllegalArgumentException("Non-support to change the number from replications"))
+                      } else if (update.numberOfPartitions.exists(_ > topicFromKafka.numberOfPartitions)) {
+                        client.changePartitions(name, update.numberOfPartitions.get).map { info =>
+                          try TopicInfo(
+                            info.name,
+                            info.numberOfPartitions,
+                            info.numberOfReplications,
                             cluster.name,
                             metrics = Metrics(Seq.empty),
                             CommonUtils.current()
-                          ))
+                          )
+                          finally client.close()
                         }
-                    }
-                    .getOrElse {
-                      // topic does not exist so we just create it!
-                      createTopic(
-                        client = client,
-                        clusterName = cluster.name,
-                        name = name,
-                        numberOfPartitions = update.numberOfPartitions.getOrElse(DEFAULT_NUMBER_OF_PARTITIONS),
-                        numberOfReplications = update.numberOfReplications.getOrElse(DEFAULT_NUMBER_OF_REPLICATIONS)
-                      )
-                    }
+                      } else {
+                        // we have got to release the client
+                        Releasable.close(client)
+                        // just return the topic info
+                        Future.successful(TopicInfo(
+                          topicFromKafka.name,
+                          topicFromKafka.numberOfPartitions,
+                          topicFromKafka.numberOfReplications,
+                          cluster.name,
+                          metrics = Metrics(Seq.empty),
+                          CommonUtils.current()
+                        ))
+                      }
+                  }
               }
         },
       hookBeforeDelete = (name: String) =>
         store
           .get[TopicInfo](name)
-          .flatMap(_.map { topicInfo =>
+          .flatMap(_.fold(Future.successful(name)) { topicInfo =>
             CollieUtils
               .topicAdmin(Some(topicInfo.brokerClusterName))
               .flatMap {
@@ -183,7 +176,7 @@ private[configurator] object TopicRoute {
                     e)
                   name
               }
-          }.getOrElse(Future.successful(name))),
+          }),
       hookOfGet = (response: TopicInfo) =>
         brokerCollie.cluster(response.brokerClusterName).map {
           case (cluster, _) => update(cluster, response)

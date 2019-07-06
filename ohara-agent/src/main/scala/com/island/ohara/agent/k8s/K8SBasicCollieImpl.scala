@@ -37,7 +37,7 @@ private[this] abstract class K8SBasicCollieImpl[T <: ClusterInfo: ClassTag, Crea
 
   override protected def doAddNode(previousCluster: T, previousContainers: Seq[ContainerInfo], newNodeName: String)(
     implicit executionContext: ExecutionContext): Future[T] =
-    creator().copy(previousCluster).nodeName(newNodeName).threadPool(executionContext).create()
+    creator.copy(previousCluster).nodeName(newNodeName).threadPool(executionContext).create()
 
   override protected def doRemove(clusterInfo: T, containerInfos: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[Boolean] = {
@@ -55,7 +55,8 @@ private[this] abstract class K8SBasicCollieImpl[T <: ClusterInfo: ClassTag, Crea
 
   override def logs(clusterName: String)(
     implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
-    k8sClient.containers
+    k8sClient
+      .containers()
       .flatMap(
         cs =>
           Future.sequence(
@@ -68,15 +69,16 @@ private[this] abstract class K8SBasicCollieImpl[T <: ClusterInfo: ClassTag, Crea
     implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] = {
     nodeCollie.nodes().flatMap { nodes =>
       Future
-        .sequence(nodes.map(n => {
-          k8sClient.containers.map(cs =>
-            cs.filter(x => x.name.startsWith(s"$PREFIX_KEY$DIVIDER$clusterName$DIVIDER${serviceName}")))
+        .sequence(nodes.map(_ => {
+          k8sClient
+            .containers()
+            .map(cs => cs.filter(x => x.name.startsWith(s"$PREFIX_KEY$DIVIDER$clusterName$DIVIDER$serviceName")))
         }))
         .map(_.flatten)
     }
   }
 
-  override def clusterWithAllContainers(
+  override def clusterWithAllContainers()(
     implicit executionContext: ExecutionContext): Future[Map[T, Seq[ContainerInfo]]] = nodeCollie
     .nodes()
     .flatMap(
@@ -107,12 +109,14 @@ private[this] abstract class K8SBasicCollieImpl[T <: ClusterInfo: ClassTag, Crea
     Future
       .sequence(
         nodes.map(node => {
-          k8sClient.containers.map(cs =>
-            cs.filter(_.name.split(DIVIDER).length >= 3) //Container name format is PREFIX-CLUSTTERNAME-SERVICENAME-XXX
-              .filter(x => {
-                x.nodeName.equals(node.name) && x.name
-                  .startsWith(PREFIX_KEY) && x.name.split(DIVIDER)(2).equals(serviceName)
-              }))
+          k8sClient
+            .containers()
+            .map(cs =>
+              cs.filter(_.name.split(DIVIDER).length >= 3) //Container name format is PREFIX-CLUSTTERNAME-SERVICENAME-XXX
+                .filter(x => {
+                  x.nodeName.equals(node.name) && x.name
+                    .startsWith(PREFIX_KEY) && x.name.split(DIVIDER)(2).equals(serviceName)
+                }))
         })
       )
       .map(_.flatten)

@@ -37,20 +37,21 @@ class FakeK8SClient(isK8SNode: Boolean, k8sStatusInfo: Option[K8SStatusInfo], co
 
   override def close(): Unit = LOG.info("close client")
 
-  override def containers(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] = Future.successful {
-    Seq(
-      ContainerInfo("node1",
-                    "0000",
-                    "fakeimage",
-                    "2019-05-21 00:00:00",
-                    "running",
-                    "unknow",
-                    containerName,
-                    "0",
-                    Seq.empty,
-                    Map.empty,
-                    "host1"))
-  }
+  override def containers()(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
+    Future.successful {
+      Seq(
+        ContainerInfo("node1",
+                      "0000",
+                      "fakeimage",
+                      "2019-05-21 00:00:00",
+                      "running",
+                      "unknow",
+                      containerName,
+                      "0",
+                      Seq.empty,
+                      Map.empty,
+                      "host1"))
+    }
 
   override def remove(name: String)(implicit executionContext: ExecutionContext): Future[ContainerInfo] =
     throw new UnsupportedOperationException("FakeK8SClient not support remove function")
@@ -62,7 +63,7 @@ class FakeK8SClient(isK8SNode: Boolean, k8sStatusInfo: Option[K8SStatusInfo], co
   override def log(name: String)(implicit executionContext: ExecutionContext): Future[String] =
     Future.successful(s"fake k8s log for $name")
 
-  override def nodeNameIPInfo(implicit executionContext: ExecutionContext): Future[Seq[K8SJson.HostAliases]] =
+  override def nodeNameIPInfo()(implicit executionContext: ExecutionContext): Future[Seq[K8SJson.HostAliases]] =
     Future.successful(Seq.empty)
 
   override def containerCreator()(implicit executionContext: ExecutionContext): K8SClient.ContainerCreator =

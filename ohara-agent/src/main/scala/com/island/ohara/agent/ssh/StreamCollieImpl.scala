@@ -29,7 +29,7 @@ private class StreamCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClient
     extends BasicCollieImpl[StreamClusterInfo, StreamCollie.ClusterCreator](nodeCollie, dockerCache, clusterCache)
     with StreamCollie {
 
-  override def creator(): StreamCollie.ClusterCreator =
+  override def creator: StreamCollie.ClusterCreator =
     (clusterName,
      nodeNames,
      imageName,

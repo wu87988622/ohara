@@ -95,9 +95,9 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
 
   private[this] val log = Logger(classOf[Configurator])
 
-  private[this] implicit val brokerCollie: BrokerCollie = clusterCollie.brokerCollie()
-  private[this] implicit val workerCollie: WorkerCollie = clusterCollie.workerCollie()
-  private[this] implicit val streamCollie: StreamCollie = clusterCollie.streamCollie()
+  private[this] implicit val brokerCollie: BrokerCollie = clusterCollie.brokerCollie
+  private[this] implicit val workerCollie: WorkerCollie = clusterCollie.workerCollie
+  private[this] implicit val streamCollie: StreamCollie = clusterCollie.streamCollie
 
   def mode: Mode = clusterCollie match {
     case _: com.island.ohara.agent.ssh.ClusterCollieImpl         => Mode.SSH
@@ -172,8 +172,9 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
         () =>
           // we do the sync here to simplify the interface
           Await.result(
-            clusterCollie.clusters.map(
-              _.keys
+            clusterCollie
+              .clusters()
+              .map(_.keys
                 .map {
                   case brokerClusterInfo: BrokerClusterInfo => brokerClusterInfo -> brokerToMeters(brokerClusterInfo)
                   case workerClusterInfo: WorkerClusterInfo => workerClusterInfo -> workerToMeters(workerClusterInfo)

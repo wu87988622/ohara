@@ -29,20 +29,17 @@ object ZookeeperRoute {
             nodeCollie: NodeCollie,
             executionContext: ExecutionContext): server.Route =
     RouteUtils.basicRouteOfCluster(
-      collie = clusterCollie.zookeeperCollie(),
+      collie = clusterCollie.zookeeperCollie,
       root = ZOOKEEPER_PREFIX_PATH,
       hookBeforeDelete = (clusters, name) =>
         CollieUtils
           .as[BrokerClusterInfo](clusters)
           .find(_.zookeeperClusterName == name)
-          .map(c =>
+          .fold(Future.successful(name))(c =>
             Future.failed(new IllegalArgumentException(
-              s"you can't remove zookeeper cluster:$name since it is used by broker cluster:${c.name}")))
-          .getOrElse(Future.successful(name)),
+              s"you can't remove zookeeper cluster:$name since it is used by broker cluster:${c.name}"))),
       hookOfCreation = (_, req: Creation) =>
-        clusterCollie
-          .zookeeperCollie()
-          .creator()
+        clusterCollie.zookeeperCollie.creator
           .clusterName(req.name)
           .clientPort(req.clientPort)
           .electionPort(req.electionPort)

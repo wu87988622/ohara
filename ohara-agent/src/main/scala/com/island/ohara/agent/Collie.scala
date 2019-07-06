@@ -66,7 +66,7 @@ trait Collie[T <: ClusterInfo, Creator <: ClusterCreator[T]] {
     * create a cluster creator
     * @return creator of cluster
     */
-  def creator(): Creator
+  def creator: Creator
 
   /**
     * get the containers information from a1 cluster
@@ -83,8 +83,8 @@ trait Collie[T <: ClusterInfo, Creator <: ClusterCreator[T]] {
     * @param executionContext execution context
     * @return cluster and containers information
     */
-  def clusters(implicit executionContext: ExecutionContext): Future[Map[T, Seq[ContainerInfo]]] =
-    clusterWithAllContainers.map(
+  def clusters()(implicit executionContext: ExecutionContext): Future[Map[T, Seq[ContainerInfo]]] =
+    clusterWithAllContainers().map(
       entry =>
         // Currently, both k8s and pure docker have the same context of "RUNNING".
         // It is ok to filter container via RUNNING state.
@@ -93,7 +93,7 @@ trait Collie[T <: ClusterInfo, Creator <: ClusterCreator[T]] {
 
   // Collie only care about active containers, but we need to trace the exited "orphan" containers for deleting them.
   // This method intend to fetch all containers of each cluster and we filter out needed containers in other methods.
-  protected def clusterWithAllContainers(
+  protected def clusterWithAllContainers()(
     implicit executionContext: ExecutionContext): Future[Map[T, Seq[ContainerInfo]]]
 
   /**
@@ -102,14 +102,14 @@ trait Collie[T <: ClusterInfo, Creator <: ClusterCreator[T]] {
     * @return cluster information
     */
   def cluster(name: String)(implicit executionContext: ExecutionContext): Future[(T, Seq[ContainerInfo])] =
-    clusters.map(_.find(_._1.name == name).getOrElse(throw new NoSuchClusterException(s"$name doesn't exist")))
+    clusters().map(_.find(_._1.name == name).getOrElse(throw new NoSuchClusterException(s"$name doesn't exist")))
 
   /**
     * @param clusterName cluster name
     * @return true if the cluster exists
     */
   def exist(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
-    clusters.map(_.exists(_._1.name == clusterName))
+    clusters().map(_.exists(_._1.name == clusterName))
 
   /**
     * @param clusterName cluster name
@@ -156,6 +156,10 @@ object Collie {
       this
     }
 
+    /**
+      * Do more clone from another cluster.
+      * @param clusterInfo another cluster
+      */
     protected def doCopy(clusterInfo: T): Unit
 
     /**

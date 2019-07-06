@@ -32,24 +32,21 @@ import scala.reflect.{ClassTag, classTag}
   */
 object CollieUtils {
 
-  private[route] def topicAdmin[T](clusterName: Option[String])(
-    implicit brokerCollie: BrokerCollie,
-    cleaner: AdminCleaner,
-    executionContext: ExecutionContext): Future[(BrokerClusterInfo, TopicAdmin)] = clusterName
-    .map(brokerCollie.topicAdmin)
-    .getOrElse(brokerCollie.clusters
-      .map { clusters =>
-        clusters.size match {
-          case 0 =>
-            throw new IllegalArgumentException(
-              s"we can't choose default broker cluster since there is no broker cluster")
-          case 1 => clusters.keys.head
-          case _ =>
-            throw new IllegalArgumentException(
-              s"we can't choose default broker cluster since there are too many broker cluster:${clusters.keys.map(_.name).mkString(",")}")
-        }
+  private[route] def topicAdmin[T](clusterName: Option[String])(implicit brokerCollie: BrokerCollie,
+                                                                cleaner: AdminCleaner,
+                                                                executionContext: ExecutionContext)
+    : Future[(BrokerClusterInfo, TopicAdmin)] = clusterName.fold(brokerCollie.clusters
+    .map { clusters =>
+      clusters.size match {
+        case 0 =>
+          throw new IllegalArgumentException(s"we can't choose default broker cluster since there is no broker cluster")
+        case 1 => clusters.keys.head
+        case _ =>
+          throw new IllegalArgumentException(
+            s"we can't choose default broker cluster since there are too many broker cluster:${clusters.keys.map(_.name).mkString(",")}")
       }
-      .map(c => (c, cleaner.add(brokerCollie.topicAdmin(c)))))
+    }
+    .map(c => (c, cleaner.add(brokerCollie.topicAdmin(c)))))(brokerCollie.topicAdmin)
 
   private[route] def workerClient[T](clusterName: Option[String])(
     implicit workerCollie: WorkerCollie,

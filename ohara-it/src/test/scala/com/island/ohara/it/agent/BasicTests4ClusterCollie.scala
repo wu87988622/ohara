@@ -31,9 +31,9 @@ import scala.concurrent.Future
 abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
   protected def clusterCollie: ClusterCollie
 
-  private[this] def zkCollie = clusterCollie.zookeeperCollie()
-  private[this] def bkCollie = clusterCollie.brokerCollie()
-  private[this] def wkCollie = clusterCollie.workerCollie()
+  private[this] def zkCollie = clusterCollie.zookeeperCollie
+  private[this] def bkCollie = clusterCollie.brokerCollie
+  private[this] def wkCollie = clusterCollie.workerCollie
 
   //--------------------------------------------------[zk operations]--------------------------------------------------//
   override protected def zk_exist(clusterName: String): Future[Boolean] = zkCollie.exist(clusterName)
@@ -43,8 +43,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
                                    electionPort: Int,
                                    peerPort: Int,
                                    nodeNames: Set[String]): Future[ZookeeperApi.ZookeeperClusterInfo] =
-    zkCollie
-      .creator()
+    zkCollie.creator
       .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
       .clusterName(clusterName)
       .clientPort(clientPort)
@@ -54,7 +53,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
       .create()
 
   override protected def zk_clusters(): Future[Seq[ZookeeperApi.ZookeeperClusterInfo]] =
-    zkCollie.clusters.map(_.keys.toSeq)
+    zkCollie.clusters().map(_.keys.toSeq)
 
   override protected def zk_logs(clusterName: String): Future[Seq[String]] =
     zkCollie.logs(clusterName).map(_.values.toSeq)
@@ -74,8 +73,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
                                    jmxPort: Int,
                                    zkClusterName: String,
                                    nodeNames: Set[String]): Future[BrokerApi.BrokerClusterInfo] =
-    bkCollie
-      .creator()
+    bkCollie.creator
       .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
       .clusterName(clusterName)
       .clientPort(clientPort)
@@ -85,7 +83,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
       .nodeNames(nodeNames)
       .create()
 
-  override protected def bk_clusters(): Future[Seq[BrokerApi.BrokerClusterInfo]] = bkCollie.clusters.map(_.keys.toSeq)
+  override protected def bk_clusters(): Future[Seq[BrokerApi.BrokerClusterInfo]] = bkCollie.clusters().map(_.keys.toSeq)
 
   override protected def bk_logs(clusterName: String): Future[Seq[String]] =
     bkCollie.logs(clusterName).map(_.values.toSeq)
@@ -110,8 +108,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
                                    jmxPort: Int,
                                    bkClusterName: String,
                                    nodeNames: Set[String]): Future[WorkerApi.WorkerClusterInfo] =
-    wkCollie
-      .creator()
+    wkCollie.creator
       .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
       .clusterName(clusterName)
       .clientPort(clientPort)
@@ -133,8 +130,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
                                    offsetTopicName: String,
                                    bkClusterName: String,
                                    nodeNames: Set[String]): Future[WorkerApi.WorkerClusterInfo] =
-    wkCollie
-      .creator()
+    wkCollie.creator
       .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
       .clusterName(clusterName)
       .clientPort(clientPort)
@@ -147,7 +143,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
       .nodeNames(nodeNames)
       .create()
 
-  override protected def wk_clusters(): Future[Seq[WorkerApi.WorkerClusterInfo]] = wkCollie.clusters.map(_.keys.toSeq)
+  override protected def wk_clusters(): Future[Seq[WorkerApi.WorkerClusterInfo]] = wkCollie.clusters().map(_.keys.toSeq)
 
   override protected def wk_logs(clusterName: String): Future[Seq[String]] =
     wkCollie.logs(clusterName).map(_.values.toSeq)

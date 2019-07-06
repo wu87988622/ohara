@@ -33,8 +33,7 @@ class TestTopicAdmin extends With3Brokers with Matchers {
     val numberOfReplications: Short = 1
     val topicAdmin = TopicAdmin(testUtil().brokersConnProps())
     try {
-      val topic = Await.result(topicAdmin
-                                 .creator()
+      val topic = Await.result(topicAdmin.creator
                                  .numberOfPartitions(numberOfPartitions)
                                  .numberOfReplications(numberOfReplications)
                                  .name(name)
@@ -59,8 +58,7 @@ class TestTopicAdmin extends With3Brokers with Matchers {
     val topicAdmin = TopicAdmin(testUtil().brokersConnProps())
     try {
       val topic = Await.result(
-        topicAdmin
-          .creator()
+        topicAdmin.creator
           .numberOfPartitions(numberOfPartitions)
           .numberOfReplications(numberOfReplications)
           .name(CommonUtils.randomString(10))
@@ -79,8 +77,7 @@ class TestTopicAdmin extends With3Brokers with Matchers {
     val numberOfReplications: Short = 1
     val topicAdmin = TopicAdmin(testUtil().brokersConnProps())
     try {
-      val topic = Await.result(topicAdmin
-                                 .creator()
+      val topic = Await.result(topicAdmin.creator
                                  .numberOfPartitions(numberOfPartitions)
                                  .numberOfReplications(numberOfReplications)
                                  .name(name)
@@ -98,8 +95,7 @@ class TestTopicAdmin extends With3Brokers with Matchers {
     val numberOfReplications: Short = 1
     val topicAdmin = TopicAdmin(testUtil().brokersConnProps())
     try {
-      val topic = Await.result(topicAdmin
-                                 .creator()
+      val topic = Await.result(topicAdmin.creator
                                  .numberOfPartitions(numberOfPartitions)
                                  .numberOfReplications(numberOfReplications)
                                  .name(name)
@@ -117,8 +113,7 @@ class TestTopicAdmin extends With3Brokers with Matchers {
     val numberOfReplications: Short = 1
     val topicAdmin = TopicAdmin(testUtil().brokersConnProps())
     try {
-      val topic = Await.result(topicAdmin
-                                 .creator()
+      val topic = Await.result(topicAdmin.creator
                                  .numberOfPartitions(numberOfPartitions)
                                  .numberOfReplications(numberOfReplications)
                                  .name(name)

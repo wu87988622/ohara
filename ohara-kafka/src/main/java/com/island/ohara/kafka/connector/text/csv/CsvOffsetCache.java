@@ -22,12 +22,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class CsvOffsetCache implements OffsetCache {
-  private final String partitionKey = CsvSourceConverter.CSV_PARTITION_KEY;
-  private final String offsetKey = CsvSourceConverter.CSV_OFFSET_KEY;
   private final Map<String, Integer> cache = new HashMap<>();
 
   public void update(RowSourceContext context, String path) {
-    Map<String, Object> offset = context.offset(Collections.singletonMap(partitionKey, path));
+    Map<String, Object> offset =
+        context.offset(Collections.singletonMap(CsvSourceConverter.CSV_PARTITION_KEY, path));
     if (!offset.isEmpty()) update(path, getOffsetValue(offset));
   }
 
@@ -48,7 +47,7 @@ public class CsvOffsetCache implements OffsetCache {
   }
 
   private int getOffsetValue(Map<String, Object> offset) {
-    Object value = offset.get(offsetKey);
+    Object value = offset.get(CsvSourceConverter.CSV_OFFSET_KEY);
     if (value instanceof Short) {
       return ((Short) value).intValue();
     } else if (value instanceof Integer) {

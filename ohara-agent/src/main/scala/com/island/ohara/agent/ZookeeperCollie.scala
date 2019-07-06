@@ -44,10 +44,10 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo, ZookeeperCollie.Clust
     * 4) Add routes to all zookeeper containers
     * @return creator of broker cluster
     */
-  override def creator(): ZookeeperCollie.ClusterCreator =
+  override def creator: ZookeeperCollie.ClusterCreator =
     (executionContext, clusterName, imageName, clientPort, peerPort, electionPort, nodeNames) => {
       implicit val exec: ExecutionContext = executionContext
-      clusters.flatMap(clusters => {
+      clusters().flatMap(clusters => {
         if (clusters.keys.filter(_.isInstanceOf[ZookeeperClusterInfo]).exists(_.name == clusterName))
           Future.failed(new IllegalArgumentException(s"zookeeper cluster:$clusterName exists!"))
         else

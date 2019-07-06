@@ -30,7 +30,7 @@ object WorkerRoute {
             jarStore: JarStore,
             executionContext: ExecutionContext): server.Route =
     RouteUtils.basicRouteOfCluster(
-      collie = clusterCollie.workerCollie(),
+      collie = clusterCollie.workerCollie,
       root = WORKER_PREFIX_PATH,
       hookBeforeDelete = (_, name) => Future.successful(name),
       hookOfCreation = (clusters, req: Creation) =>
@@ -66,32 +66,27 @@ object WorkerRoute {
             jarInfos
           }
           // match the broker cluster
-          .map(req.brokerClusterName
-            .map { bkName =>
-              clusters
-                .filter(_.isInstanceOf[BrokerClusterInfo])
-                .find(_.name == bkName)
-                .map(_.name)
-                .getOrElse(throw new NoSuchClusterException(s"broker cluster:$bkName doesn't exist"))
+          .map(req.brokerClusterName.fold {
+            val bkClusters = clusters.filter(_.isInstanceOf[BrokerClusterInfo])
+            bkClusters.size match {
+              case 0 =>
+                throw new IllegalArgumentException(
+                  s"You didn't specify the bk cluster for wk cluster:${req.name}, and there is no default bk cluster")
+              case 1 => bkClusters.head.name
+              case _ =>
+                throw new IllegalArgumentException(
+                  s"You didn't specify the bk cluster for wk cluster ${req.name}, and there are too many bk clusters:{${bkClusters
+                    .map(_.name)}}")
             }
-            .getOrElse {
-              val bkClusters = clusters.filter(_.isInstanceOf[BrokerClusterInfo])
-              bkClusters.size match {
-                case 0 =>
-                  throw new IllegalArgumentException(
-                    s"You didn't specify the bk cluster for wk cluster:${req.name}, and there is no default bk cluster")
-                case 1 => bkClusters.head.name
-                case _ =>
-                  throw new IllegalArgumentException(
-                    s"You didn't specify the bk cluster for wk cluster ${req.name}, and there are too many bk clusters:{${bkClusters
-                      .map(_.name)}}")
-              }
-            } -> _)
+          } { bkName =>
+            clusters
+              .filter(_.isInstanceOf[BrokerClusterInfo])
+              .find(_.name == bkName)
+              .fold(throw new NoSuchClusterException(s"broker cluster:$bkName doesn't exist"))(_.name)
+          } -> _)
           .flatMap {
             case (bkName, jarInfos) =>
-              clusterCollie
-                .workerCollie()
-                .creator()
+              clusterCollie.workerCollie.creator
                 .clusterName(req.name)
                 .clientPort(req.clientPort)
                 .jmxPort(req.jmxPort)

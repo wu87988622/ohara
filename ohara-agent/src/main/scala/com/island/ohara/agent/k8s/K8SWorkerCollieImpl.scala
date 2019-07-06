@@ -65,7 +65,7 @@ private class K8SWorkerCollieImpl(node: NodeCollie, bkCollie: BrokerCollie, k8sC
 
   override protected def brokerClusters(
     implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = {
-    bkCollie.clusters.asInstanceOf[Future[Map[ClusterInfo, Seq[ContainerInfo]]]]
+    bkCollie.clusters().asInstanceOf[Future[Map[ClusterInfo, Seq[ContainerInfo]]]]
   }
 
   /**

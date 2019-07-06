@@ -306,8 +306,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
     val node2 = Node(node2Name, 22, "", "", services = Seq.empty, lastModified = CommonUtils.current())
 
     val fakeWorkerCollie = new FakeWorkerCollie(NodeCollie(Seq(node1, node2)))
-    val workerClusterInfo: Future[WorkerClusterInfo] = fakeWorkerCollie
-      .creator()
+    val workerClusterInfo: Future[WorkerClusterInfo] = fakeWorkerCollie.creator
       .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
       .clusterName("wk1")
       .clientPort(8083)
@@ -334,8 +333,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
 
     val fakeWorkerCollie = new FakeWorkerCollie(NodeCollie(Seq(node1)))
 
-    val workerClusterInfo: Future[WorkerClusterInfo] = fakeWorkerCollie
-      .creator()
+    val workerClusterInfo: Future[WorkerClusterInfo] = fakeWorkerCollie.creator
       .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
       .clusterName("wk1")
       .clientPort(8083)
@@ -361,8 +359,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
     val node2 = Node(node2Name, 22, "", "", services = Seq.empty, lastModified = CommonUtils.current())
 
     val fakeWorkerCollie = new FakeWorkerCollie(NodeCollie(Seq(node1, node2)))
-    val workerClusterInfo: Future[WorkerClusterInfo] = fakeWorkerCollie
-      .creator()
+    val workerClusterInfo: Future[WorkerClusterInfo] = fakeWorkerCollie.creator
       .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
       .clusterName("wk1")
       .clientPort(8083)

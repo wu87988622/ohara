@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 
 public class Topology implements Releasable {
 
-  private org.apache.kafka.streams.Topology topology;
+  private final org.apache.kafka.streams.Topology topology;
   private org.apache.kafka.streams.KafkaStreams streams;
 
   private static final Logger log = LoggerFactory.getLogger(Topology.class);

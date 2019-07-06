@@ -341,21 +341,21 @@ class TestWorkerRoute extends MediumTest with Matchers {
 
   @Test
   def testForceDelete(): Unit = {
-    val initialCount = configurator.clusterCollie.workerCollie().asInstanceOf[FakeWorkerCollie].forceRemoveCount
+    val initialCount = configurator.clusterCollie.workerCollie.asInstanceOf[FakeWorkerCollie].forceRemoveCount
 
     // graceful delete
     val wk0 = result(
       workerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
     )
     result(workerApi.delete(wk0.name))
-    configurator.clusterCollie.workerCollie().asInstanceOf[FakeWorkerCollie].forceRemoveCount shouldBe initialCount
+    configurator.clusterCollie.workerCollie.asInstanceOf[FakeWorkerCollie].forceRemoveCount shouldBe initialCount
 
     // force delete
     val wk1 = result(
       workerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
     )
     result(workerApi.forceDelete(wk1.name))
-    configurator.clusterCollie.workerCollie().asInstanceOf[FakeWorkerCollie].forceRemoveCount shouldBe initialCount + 1
+    configurator.clusterCollie.workerCollie.asInstanceOf[FakeWorkerCollie].forceRemoveCount shouldBe initialCount + 1
   }
 
   @Test
@@ -367,7 +367,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
   @Test
   def testConnectorDefinitionsFromPreCreatedWorkerCluster(): Unit = {
     val configurator = Configurator.builder().fake(numberOfCluster, 1).build()
-    try result(configurator.clusterCollie.workerCollie().clusters).keys
+    try result(configurator.clusterCollie.workerCollie.clusters()).keys
       .foreach(_.connectors shouldBe FakeWorkerClient.localConnectorDefinitions)
     finally configurator.close()
   }

@@ -27,7 +27,7 @@ import scala.reflect.ClassTag
   */
 abstract class Enum[Enu: ClassTag] { self =>
   // save enum values
-  val all = {
+  val all: Seq[Enu] = {
     import scala.reflect.runtime.universe._
     val mirror = runtimeMirror(self.getClass.getClassLoader)
     val classSymbol = mirror.classSymbol(self.getClass)

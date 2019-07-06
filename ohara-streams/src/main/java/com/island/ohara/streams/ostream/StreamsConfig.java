@@ -47,7 +47,7 @@ class StreamsConfig {
     EXACTLY_ONCE(org.apache.kafka.streams.StreamsConfig.EXACTLY_ONCE),
     AT_LEAST_ONCE(org.apache.kafka.streams.StreamsConfig.AT_LEAST_ONCE);
 
-    private String actualName;
+    private final String actualName;
 
     GUARANTEES(String actualName) {
       this.actualName = actualName;

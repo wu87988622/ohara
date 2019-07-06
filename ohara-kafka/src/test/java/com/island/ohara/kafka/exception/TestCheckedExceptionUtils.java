@@ -76,41 +76,7 @@ public class TestCheckedExceptionUtils extends SmallTest {
   }
 
   @Test
-  public void TestWrapRuntime() {
-    Exception e =
-        assertException(
-            RuntimeException.class,
-            () ->
-                CheckedExceptionUtils.wrapRuntime(
-                    () -> {
-                      throw checkedException;
-                    }));
-
-    assertEquals(e.getCause().getClass(), checkedException.getClass());
-
-    Exception e2 =
-        assertException(
-            RuntimeException.class,
-            () ->
-                CheckedExceptionUtils.wrapRuntime(
-                    () -> {
-                      throw uncheckedException;
-                    }));
-
-    assertEquals(e2.getCause().getClass(), uncheckedException.getClass());
-
-    CheckedExceptionUtils.wrapRuntime(
-        () -> {
-          // no return  , no exception throws
-        });
-
-    String value = CheckedExceptionUtils.wrapRuntime(() -> "test");
-
-    assertEquals(value, "test");
-  }
-
-  @Test
-  public void TestWrapWtihHandler() {
+  public void TestWrapWithHandler() {
     // this check exception is mapping to OharaTest0000Exception  in handler
     Exception e =
         assertException(
@@ -144,95 +110,5 @@ public class TestCheckedExceptionUtils extends SmallTest {
                 () -> {
                   throw uncheckedException;
                 }));
-
-    CheckedExceptionUtils.wrap(
-        () -> {
-          // no return  , no exception throws
-        },
-        handler);
-
-    String value = CheckedExceptionUtils.wrap(() -> "test", handler);
-
-    assertEquals(value, "test");
-  }
-
-  @Test
-  public void TestWrapRuntimeWtihHandler() {
-    // this check exception is mapping to OharaTest0000Exception  in handler
-    Exception e =
-        assertException(
-            OharaTest0000Exception.class,
-            () ->
-                CheckedExceptionUtils.wrapRuntime(
-                    () -> {
-                      throw checkedException;
-                    },
-                    handler));
-    assertEquals(e.getCause().getClass(), checkedException.getClass());
-
-    // user will catch like this
-    try {
-      CheckedExceptionUtils.wrapRuntime(
-          () -> {
-            throw checkedException;
-          },
-          handler);
-    } catch (OharaTest0000Exception e2) {
-      // catch here
-    } catch (Exception e3) {
-      fail("should be catch in OharaTest0000Exception");
-    }
-
-    Exception e2 =
-        assertException(
-            OharaException.class,
-            () ->
-                CheckedExceptionUtils.wrapRuntime(
-                    () -> {
-                      throw uncheckedException;
-                    },
-                    handler));
-    assertEquals(e2.getCause().getClass(), uncheckedException.getClass());
-
-    CheckedExceptionUtils.wrapRuntime(
-        () -> {
-          // no return  , no exception throws
-        },
-        handler);
-
-    String value = CheckedExceptionUtils.wrapRuntime(() -> "test", handler);
-
-    assertEquals(value, "test");
-  }
-
-  @Test(expected = ClassNotFoundException.class)
-  public void TestRethrowException() {
-    // This method throw checked exception without check
-    CheckedExceptionUtils.rethrow(
-        () -> {
-          throw new ClassNotFoundException();
-        });
-  }
-
-  @Test(expected = ClassCastException.class)
-  public void TestRethrowRuntimeException() {
-    // This method throw checked exception without check
-    CheckedExceptionUtils.rethrow(
-        () -> {
-          throw new ClassCastException();
-        });
-  }
-
-  @Test
-  public void TestRethrow() {
-    // This method throw checked exception without check
-    CheckedExceptionUtils.rethrow(
-        () -> {
-          // do nothing  , no exception throw
-        });
-
-    String value = CheckedExceptionUtils.rethrow(() -> "test");
-
-    assertEquals(value, "test");
   }
 }

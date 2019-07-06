@@ -41,7 +41,7 @@ private[configurator] class FakeWorkerCollie(node: NodeCollie, wkConnectionProps
     * cache all connectors info in-memory so we should keep instance for each fake cluster.
     */
   private[this] val fakeClientCache = new ConcurrentHashMap[WorkerClusterInfo, FakeWorkerClient]
-  override def creator(): WorkerCollie.ClusterCreator =
+  override def creator: WorkerCollie.ClusterCreator =
     (_,
      clusterName,
      imageName,

@@ -42,7 +42,7 @@ class AdminCleaner(timeout: Duration) extends Releasable {
       try while (!queue.isEmpty) {
         val obj = queue.take()
         if (timeout != null && CommonUtils.current() - obj._1 <= timeout.toMillis) buf.add(obj)
-        else if (!obj._2.closed()) Releasable.close(obj._2)
+        else if (!obj._2.closed) Releasable.close(obj._2)
       } finally queue.addAll(buf)
     }
     Future {

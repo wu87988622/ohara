@@ -56,7 +56,7 @@ trait TopicAdmin extends Releasable {
     * start a process to create topic
     * @return topic creator
     */
-  def creator(): TopicAdmin.Creator
+  def creator: TopicAdmin.Creator
 
   /**
     * delete a existent topic
@@ -71,7 +71,7 @@ trait TopicAdmin extends Releasable {
     */
   def connectionProps: String
 
-  def closed(): Boolean
+  def closed: Boolean
 }
 
 object TopicAdmin {
@@ -80,7 +80,7 @@ object TopicAdmin {
     private[this] val _closed = new AtomicBoolean(false)
     override val connectionProps: String = _connectionProps
 
-    override def closed(): Boolean = _closed.get()
+    override def closed: Boolean = _closed.get()
 
     /**
       * extract the exception wrapped in ExecutionException.
@@ -103,7 +103,7 @@ object TopicAdmin {
 
     override def close(): Unit = if (_closed.compareAndSet(false, true)) Releasable.close(admin)
 
-    override def creator(): Creator =
+    override def creator: Creator =
       (executionContext,
        name: String,
        numberOfPartitions: Int,

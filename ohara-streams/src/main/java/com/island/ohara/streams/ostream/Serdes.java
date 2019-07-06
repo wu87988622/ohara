@@ -22,9 +22,9 @@ import java.util.Map;
 public class Serdes {
 
   public static Serde<String> STRING = StringSerde.get();
-  public static Serde<Row> ROW = RowSerde.get();
+  public static final Serde<Row> ROW = RowSerde.get();
   public static Serde<Double> DOUBLE = DoubleSerde.get();
-  public static Serde<byte[]> BYTES = BytesSerde.get();
+  public static final Serde<byte[]> BYTES = BytesSerde.get();
 
   protected static class WrapperSerde<T> implements Serde<T> {
 

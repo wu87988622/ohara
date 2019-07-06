@@ -37,9 +37,9 @@ abstract class AbstractStream<K, V> {
   KTable<K, V> ktable;
   KStream<K, V> kstreams;
   KGroupedStream<K, V> kgroupstream;
-  OStreamBuilder<K, V> builder;
-  StreamsBuilder innerBuilder;
-  static final Counter counter = MetricFactory.getCounter(MetricFactory.IOType.TOPIC_IN);
+  final OStreamBuilder<K, V> builder;
+  final StreamsBuilder innerBuilder;
+  private static final Counter counter = MetricFactory.getCounter(MetricFactory.IOType.TOPIC_IN);
 
   @SuppressWarnings("unchecked")
   AbstractStream(final OStreamBuilder builder) {

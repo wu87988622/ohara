@@ -36,7 +36,8 @@ class TestK8SStreamApp extends BasicTests4StreamApp {
     override def close(): Unit = {
       val k8sClient = K8SClient(API_SERVER_URL.get)
       Await.result(
-        k8sClient.containers
+        k8sClient
+          .containers()
           .map {
             _.filter(container => {
               usedClusterNames.exists(clusterName => {

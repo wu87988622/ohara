@@ -62,7 +62,8 @@ private[configurator] object PipelineRoute {
                                                                        store: DataStore,
                                                                        executionContext: ExecutionContext,
                                                                        meterCache: MeterCache): Future[Seq[Pipeline]] =
-    clusterCollie.clusters
+    clusterCollie
+      .clusters()
       .map { clusters =>
         reqs.map {
           case (name, request) =>
@@ -115,16 +116,14 @@ private[configurator] object PipelineRoute {
         // if the backend worker cluster is gone, we don't do any checks for this pipeline
         Future.sequence(entries.map {
           case (pipeline, clustersOption) =>
-            clustersOption
-              .map(
-                clusters =>
-                  abstracts(
-                    pipeline.flows,
-                    clusterCollie.workerCollie().workerClient(clusters._2),
-                    meterCache.meters(clusters._1),
-                    meterCache.meters(clusters._2)
-                  ).map(objects => pipeline.copy(objects = objects)))
-              .getOrElse(Future.successful(pipeline))
+            clustersOption.fold(Future.successful(pipeline))(
+              clusters =>
+                abstracts(
+                  pipeline.flows,
+                  clusterCollie.workerCollie.workerClient(clusters._2),
+                  meterCache.meters(clusters._1),
+                  meterCache.meters(clusters._2)
+                ).map(objects => pipeline.copy(objects = objects)))
         }))
       .map(_.toSeq)
 
@@ -198,8 +197,7 @@ private[configurator] object PipelineRoute {
                 }
 
             case data: StreamAppDescription =>
-              clusterCollie
-                .streamCollie()
+              clusterCollie.streamCollie
                 .cluster(data.name)
                 .map(_._1.asInstanceOf[StreamClusterInfo])
                 .map { info =>
@@ -378,13 +376,11 @@ private[configurator] object PipelineRoute {
 
   private[this] def assertNoUnknown(req: Update)(implicit store: DataStore,
                                                  executionContext: ExecutionContext): Future[Update] =
-    req.flows
-      .map(flows =>
-        assertNoUnknown(flows).map { invalidIds =>
-          if (invalidIds.isEmpty) req
-          else throw new IllegalArgumentException(s"$invalidIds don't exist!!!")
-      })
-      .getOrElse(Future.successful(req))
+    req.flows.fold(Future.successful(req))(flows =>
+      assertNoUnknown(flows).map { invalidIds =>
+        if (invalidIds.isEmpty) req
+        else throw new IllegalArgumentException(s"$invalidIds don't exist!!!")
+    })
 
   def apply(implicit store: DataStore,
             clusterCollie: ClusterCollie,

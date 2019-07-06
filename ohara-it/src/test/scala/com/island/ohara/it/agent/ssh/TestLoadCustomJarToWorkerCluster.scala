@@ -56,7 +56,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
 
   private[this] val publicHostname: String = sys.env.getOrElse(hostnameKey, invalidHostname)
 
-  private[this] val publicPort = sys.env.get(portKey).map(_.toInt).getOrElse(invalidPort)
+  private[this] val publicPort = sys.env.get(portKey).fold(invalidPort)(_.toInt)
 
   private[this] val configurator: Configurator =
     Configurator.builder().hostname(publicHostname).port(publicPort).build()

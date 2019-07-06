@@ -139,8 +139,7 @@ class TestZookeeperCreator extends SmallTest with Matchers {
 
     val zookeeperCollie = new FakeZookeeperCollie(NodeCollie(Seq(node1, node2)))
 
-    val zkCreator: Future[ZookeeperClusterInfo] = zookeeperCollie
-      .creator()
+    val zkCreator: Future[ZookeeperClusterInfo] = zookeeperCollie.creator
       .clusterName("cluster1")
       .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
       .clientPort(2181)

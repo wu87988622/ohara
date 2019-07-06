@@ -42,8 +42,8 @@ private[configurator] class FakeBrokerCollie(node: NodeCollie, bkConnectionProps
     */
   private[this] val fakeAdminCache = new ConcurrentHashMap[BrokerClusterInfo, FakeTopicAdmin]
 
-  override def creator(): BrokerCollie.ClusterCreator =
-    (executionContext, clusterName, imageName, zookeeperClusterName, clientPort, exporterPort, jmxPort, nodeNames) =>
+  override def creator: BrokerCollie.ClusterCreator =
+    (_, clusterName, imageName, zookeeperClusterName, clientPort, exporterPort, jmxPort, nodeNames) =>
       Future.successful(
         addCluster(
           BrokerClusterInfo(

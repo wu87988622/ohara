@@ -38,7 +38,7 @@ import scala.collection.JavaConverters._
 class FtpSourceTask extends TextSourceTask {
 
   override def getConverterFactory(config: TaskSetting): TextSourceConverterFactory =
-    TextSourceConverterFactory.of(config, TextType.CSV);
+    TextSourceConverterFactory.of(config, TextType.CSV)
 
   override def getFileSystem(config: TaskSetting): TextFileSystem = new TextFileSystem {
     private[this] val props: FtpSourceTaskProps = FtpSourceTaskProps(config)
@@ -75,7 +75,7 @@ class FtpSourceTask extends TextSourceTask {
 
     override def handleCompletedFile(path: String): Unit =
       props.completedFolder
-        .map(folder =>
+        .fold(() => ftpClient.delete(path))(folder =>
           () => {
             try {
               val outputPath = CommonUtils.replaceParent(folder, path)
@@ -91,7 +91,6 @@ class FtpSourceTask extends TextSourceTask {
                 else LOG.error(s"failed to remove $path", e)
             }
         })
-        .getOrElse(() => ftpClient.delete(path))
         .apply()
 
     override def close(): Unit = {

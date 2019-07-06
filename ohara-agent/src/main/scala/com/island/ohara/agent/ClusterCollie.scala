@@ -47,36 +47,36 @@ trait ClusterCollie extends Releasable {
     * create a collie for zookeeper cluster
     * @return zookeeper collie
     */
-  def zookeeperCollie(): ZookeeperCollie
+  def zookeeperCollie: ZookeeperCollie
 
   /**
     * create a collie for broker cluster
     * @return broker collie
     */
-  def brokerCollie(): BrokerCollie
+  def brokerCollie: BrokerCollie
 
   /**
     * create a collie for worker cluster
     * @return worker collie
     */
-  def workerCollie(): WorkerCollie
+  def workerCollie: WorkerCollie
 
   /**
     * create a collie for stream cluster
     * @return stream collie
     */
-  def streamCollie(): StreamCollie
+  def streamCollie: StreamCollie
 
   /**
     * the default implementation is expensive!!! Please override this method if you are a good programmer.
     * @return a collection of all clusters
     */
-  def clusters(implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] =
+  def clusters()(implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] =
     for {
-      zkMap <- zookeeperCollie().clusters
-      bkMap <- brokerCollie().clusters
-      wkMap <- workerCollie().clusters
-      streamMap <- streamCollie().clusters
+      zkMap <- zookeeperCollie.clusters()
+      bkMap <- brokerCollie.clusters()
+      wkMap <- workerCollie.clusters()
+      streamMap <- streamCollie.clusters()
     } yield zkMap ++ bkMap ++ wkMap ++ streamMap
 
   /**
@@ -93,7 +93,7 @@ trait ClusterCollie extends Releasable {
     * @return updated nodes
     */
   def fetchServices(nodes: Seq[Node])(implicit executionContext: ExecutionContext): Future[Seq[Node]] =
-    clusters.map(_.keys.toSeq).map { clusters =>
+    clusters().map(_.keys.toSeq).map { clusters =>
       nodes.map { node =>
         node.copy(
           services = Seq(

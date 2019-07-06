@@ -83,7 +83,7 @@ class FtpSinkTask extends RowSinkTask {
         writer.newLine()
       }
       try result.foreach {
-        case (r, line) =>
+        case (_, line) =>
           writer.append(line)
           writer.newLine()
       } finally writer.close()

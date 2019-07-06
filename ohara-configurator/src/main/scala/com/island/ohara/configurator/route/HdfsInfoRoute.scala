@@ -30,22 +30,20 @@ private[configurator] object HdfsInfoRoute {
         Future.successful(HdfsInfo(name = request.name, uri = request.uri, lastModified = CommonUtils.current())),
       hookOfUpdate = (name: String, request: Update, previousOption: Option[HdfsInfo]) =>
         Future.successful {
-          previousOption
-            .map { previous =>
-              HdfsInfo(
-                name = name,
-                uri = request.uri.getOrElse(previous.uri),
-                lastModified = CommonUtils.current()
-              )
-            }
-            .getOrElse {
-              if (request.uri.isEmpty) throw new IllegalArgumentException(RouteUtils.errorMessage(name, "uri"))
-              HdfsInfo(
-                name = name,
-                uri = request.uri.get,
-                lastModified = CommonUtils.current()
-              )
-            }
+          previousOption.fold {
+            if (request.uri.isEmpty) throw new IllegalArgumentException(RouteUtils.errorMessage(name, "uri"))
+            HdfsInfo(
+              name = name,
+              uri = request.uri.get,
+              lastModified = CommonUtils.current()
+            )
+          } { previous =>
+            HdfsInfo(
+              name = name,
+              uri = request.uri.getOrElse(previous.uri),
+              lastModified = CommonUtils.current()
+            )
+          }
       }
     )
 }

@@ -27,13 +27,13 @@ private[ohara] class K8SClusterCollieImpl(nodeCollie: NodeCollie, k8sClient: K8S
     extends ReleaseOnce
     with ClusterCollie {
 
-  override def zookeeperCollie(): ZookeeperCollie = new K8SZookeeperCollieImpl(nodeCollie, k8sClient)
+  override val zookeeperCollie: ZookeeperCollie = new K8SZookeeperCollieImpl(nodeCollie, k8sClient)
 
-  override def brokerCollie(): BrokerCollie = new K8SBrokerCollieImpl(nodeCollie, zookeeperCollie, k8sClient)
+  override val brokerCollie: BrokerCollie = new K8SBrokerCollieImpl(nodeCollie, zookeeperCollie, k8sClient)
 
-  override def workerCollie(): WorkerCollie = new K8SWorkerCollieImpl(nodeCollie, brokerCollie, k8sClient)
+  override val workerCollie: WorkerCollie = new K8SWorkerCollieImpl(nodeCollie, brokerCollie, k8sClient)
 
-  override def streamCollie(): StreamCollie = new K8SStreamCollieImpl(nodeCollie, k8sClient)
+  override val streamCollie: StreamCollie = new K8SStreamCollieImpl(nodeCollie, k8sClient)
 
   override protected def doClose(): Unit = Releasable.close(k8sClient)
 

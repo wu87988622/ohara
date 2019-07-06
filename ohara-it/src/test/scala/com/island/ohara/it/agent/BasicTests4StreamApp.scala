@@ -53,7 +53,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
   private[this] val invalidHostname = "unknown"
   private[this] val invalidPort = 0
   private[this] val publicHostname: String = sys.env.getOrElse(hostnameKey, invalidHostname)
-  private[this] val publicPort = sys.env.get(portKey).map(_.toInt).getOrElse(invalidPort)
+  private[this] val publicPort = sys.env.get(portKey).fold(invalidPort)(_.toInt)
 
   private[this] var nodeCache: Seq[Node] = _
   private[this] var nameHolder: ClusterNameHolder = _
@@ -186,7 +186,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     val map = nodeCache.map { node =>
       if (configurator.k8sClient.isDefined) {
         val client = configurator.k8sClient.get
-        node -> result(client.containers).map(_.name).filter(name => name.contains(properties.name))
+        node -> result(client.containers()).map(_.name).filter(name => name.contains(properties.name))
       } else {
         val client =
           DockerClient.builder.hostname(node.name).port(node.port).user(node.user).password(node.password).build
@@ -219,7 +219,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
       case (node, containers) =>
         if (configurator.k8sClient.isDefined) {
           val client = configurator.k8sClient.get
-          containers.foreach(container => !result(client.containers).map(_.name).contains(container) shouldBe true)
+          containers.foreach(container => !result(client.containers()).map(_.name).contains(container) shouldBe true)
         } else {
           val client =
             DockerClient.builder.hostname(node.name).port(node.port).user(node.user).password(node.password).build

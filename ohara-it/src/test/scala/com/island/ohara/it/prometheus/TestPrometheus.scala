@@ -64,11 +64,11 @@ class TestPrometheus extends IntegrationTest with Matchers {
   @Test
   def testExporter(): Unit = {
     startZK(zkDesc => {
-      assertCluster(() => result(clusterCollie.zookeeperCollie().clusters).keys.toSeq, zkDesc.name)
+      assertCluster(() => result(clusterCollie.zookeeperCollie.clusters()).keys.toSeq, zkDesc.name)
       startBroker(
         zkDesc.name,
         (exporterPort, bkCluster) => {
-          assertCluster(() => result(clusterCollie.brokerCollie().clusters).keys.toSeq, bkCluster.name)
+          assertCluster(() => result(clusterCollie.brokerCollie.clusters()).keys.toSeq, bkCluster.name)
           implicit val actorSystem: ActorSystem = ActorSystem(s"${classOf[PrometheusClient].getSimpleName}--system")
           implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
           val url = "http://" + node.name + ":" + exporterPort + "/metrics"
@@ -93,12 +93,11 @@ class TestPrometheus extends IntegrationTest with Matchers {
     val electionPort = CommonUtils.availablePort()
     val peerPort = CommonUtils.availablePort()
     val clientPort = CommonUtils.availablePort()
-    val zookeeperCollie = clusterCollie.zookeeperCollie()
+    val zookeeperCollie = clusterCollie.zookeeperCollie
 
     try f(
       result(
-        zookeeperCollie
-          .creator()
+        zookeeperCollie.creator
           .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
           .clientPort(clientPort)
           .electionPort(electionPort)
@@ -114,13 +113,12 @@ class TestPrometheus extends IntegrationTest with Matchers {
     val clusterName = CommonUtils.randomString(10)
     val clientPort = CommonUtils.availablePort()
     val exporterPort = CommonUtils.availablePort()
-    val brokerCollie = clusterCollie.brokerCollie()
+    val brokerCollie = clusterCollie.brokerCollie
 
     try f(
       exporterPort,
       result(
-        brokerCollie
-          .creator()
+        brokerCollie.creator
           .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
           .clusterName(clusterName)
           .clientPort(clientPort)

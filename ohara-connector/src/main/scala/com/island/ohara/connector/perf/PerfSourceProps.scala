@@ -29,7 +29,6 @@ case class PerfSourceProps(batch: Int, freq: Duration) {
 object PerfSourceProps {
   def apply(settings: TaskSetting): PerfSourceProps = PerfSourceProps(
     batch = settings.intOption(PERF_BATCH).orElse(DEFAULT_BATCH),
-    freq =
-      Option(settings.durationOption(PERF_FREQUENCE).orElse(null)).map(toScalaDuration).getOrElse(DEFAULT_FREQUENCE)
+    freq = Option(settings.durationOption(PERF_FREQUENCE).orElse(null)).fold(DEFAULT_FREQUENCE)(toScalaDuration)
   )
 }

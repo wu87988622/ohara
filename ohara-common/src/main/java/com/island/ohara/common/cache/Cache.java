@@ -135,7 +135,7 @@ public interface Cache<K, V> {
     public Cache<K, V> build() {
       Objects.requireNonNull(fetcher);
       return new Cache<K, V>() {
-        private LoadingCache<K, V> cache =
+        private final LoadingCache<K, V> cache =
             blockingOnGet
                 ? CacheBuilder.newBuilder()
                     .maximumSize(maxSize)

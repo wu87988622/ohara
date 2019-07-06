@@ -32,7 +32,7 @@ private class K8SStreamCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
     with StreamCollie {
   private[this] val log = Logger(classOf[K8SStreamCollieImpl])
 
-  override def creator(): StreamCollie.ClusterCreator =
+  override def creator: StreamCollie.ClusterCreator =
     (clusterName,
      nodeNames,
      imageName,

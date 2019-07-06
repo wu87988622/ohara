@@ -50,7 +50,7 @@ object WebServer {
     val bindingFuture = Http().bindAndHandle(route, interface, 8080)
     log.info(s"OharaStream Shabondi at http://$interface:8080/")
 
-    if (args.size > 0 && args(0) == "--return-stop") {
+    if (args.length > 0 && args(0) == "--return-stop") {
       println("Press RETURN to stop...")
       StdIn.readLine()
       bindingFuture.flatMap(_.unbind()).onComplete(_ => system.terminate())

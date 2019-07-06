@@ -66,7 +66,7 @@ private class K8SBrokerCollieImpl(node: NodeCollie, zkCollie: ZookeeperCollie, k
     implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] = toBrokerCluster(clusterName, containers)
   override protected def zookeeperClusters(
     implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = {
-    zkCollie.clusters.asInstanceOf[Future[Map[ClusterInfo, Seq[ContainerInfo]]]]
+    zkCollie.clusters().asInstanceOf[Future[Map[ClusterInfo, Seq[ContainerInfo]]]]
   }
 
   /**

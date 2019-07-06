@@ -61,24 +61,24 @@ object LogRoute {
     pathPrefix(LogApi.LOG_PREFIX_PATH) {
       pathPrefix(ZOOKEEPER_PREFIX_PATH) {
         path(Segment) { zkClusterName =>
-          route(zkClusterName, collie.zookeeperCollie().logs(zkClusterName))
+          route(zkClusterName, collie.zookeeperCollie.logs(zkClusterName))
         } ~ pathEnd(parameter(Parameters.CLUSTER_NAME) { zkClusterName =>
           // TODO: this api is deprecated
-          route(zkClusterName, collie.zookeeperCollie().logs(zkClusterName))
+          route(zkClusterName, collie.zookeeperCollie.logs(zkClusterName))
         })
       } ~ pathPrefix(BROKER_PREFIX_PATH) {
         path(Segment) { bkClusterName =>
-          route(bkClusterName, collie.brokerCollie().logs(bkClusterName))
+          route(bkClusterName, collie.brokerCollie.logs(bkClusterName))
         } ~ pathEnd(parameter(Parameters.CLUSTER_NAME) { bkClusterName =>
           // TODO: this api is deprecated
-          route(bkClusterName, collie.brokerCollie().logs(bkClusterName))
+          route(bkClusterName, collie.brokerCollie.logs(bkClusterName))
         })
       } ~ pathPrefix(WORKER_PREFIX_PATH) {
         path(Segment) { wkClusterName =>
-          route(wkClusterName, collie.workerCollie().logs(wkClusterName))
+          route(wkClusterName, collie.workerCollie.logs(wkClusterName))
         } ~ pathEnd(parameter(Parameters.CLUSTER_NAME) { wkClusterName =>
           // TODO: this api is deprecated
-          route(wkClusterName, collie.workerCollie().logs(wkClusterName))
+          route(wkClusterName, collie.workerCollie.logs(wkClusterName))
         })
       }
     }

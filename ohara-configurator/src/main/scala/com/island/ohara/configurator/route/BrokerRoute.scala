@@ -29,7 +29,7 @@ object BrokerRoute {
             nodeCollie: NodeCollie,
             executionContext: ExecutionContext): server.Route =
     RouteUtils.basicRouteOfCluster(
-      collie = clusterCollie.brokerCollie(),
+      collie = clusterCollie.brokerCollie,
       root = BROKER_PREFIX_PATH,
       hookBeforeDelete = (clusters, name) =>
         CollieUtils
@@ -68,9 +68,7 @@ object BrokerRoute {
         if (sameZkNameClusters.nonEmpty)
           throw new IllegalArgumentException(
             s"zk cluster:$zkName is already used by broker cluster:${sameZkNameClusters.head.name}")
-        clusterCollie
-          .brokerCollie()
-          .creator()
+        clusterCollie.brokerCollie.creator
           .clusterName(req.name)
           .clientPort(req.clientPort)
           .exporterPort(req.exporterPort)

@@ -48,7 +48,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
       pipelineApi.request.name(CommonUtils.randomString(10)).create()
     )
     pipeline0.workerClusterName shouldBe result(
-      configurator.clusterCollie.workerCollie().cluster(pipeline0.workerClusterName))._1.name
+      configurator.clusterCollie.workerCollie.cluster(pipeline0.workerClusterName))._1.name
 
     // add node
     val addNodeName: String = methodName().toLowerCase
@@ -192,9 +192,9 @@ class TestPipelineRoute extends MediumTest with Matchers {
     val pipeline = result(
       pipelineApi.request.name(CommonUtils.randomString()).flow(topic.name, Set.empty[String]).create())
 
-    pipeline.workerClusterName shouldBe result(configurator.clusterCollie.workerCollie().clusters).head._1.name
+    pipeline.workerClusterName shouldBe result(configurator.clusterCollie.workerCollie.clusters()).head._1.name
 
-    result(configurator.clusterCollie.workerCollie().remove(pipeline.workerClusterName))
+    result(configurator.clusterCollie.workerCollie.remove(pipeline.workerClusterName))
 
     result(pipelineApi.delete(pipeline.name))
 
@@ -212,7 +212,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
     pipeline.flows.head.from shouldBe topic.name
     pipeline.flows.head.to shouldBe Set.empty[String]
 
-    result(configurator.clusterCollie.workerCollie().remove(pipeline.workerClusterName))
+    result(configurator.clusterCollie.workerCollie.remove(pipeline.workerClusterName))
 
     val anotherPipeline = result(pipelineApi.list()).find(_.name == pipeline.name).get
 
@@ -234,7 +234,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
     pipeline.flows.head.from shouldBe topic0.name
     pipeline.flows.head.to shouldBe Set(topic1.name)
 
-    result(configurator.clusterCollie.workerCollie().remove(pipeline.workerClusterName))
+    result(configurator.clusterCollie.workerCollie.remove(pipeline.workerClusterName))
 
     val anotherPipeline = result(pipelineApi.list()).find(_.name == pipeline.name).get
 

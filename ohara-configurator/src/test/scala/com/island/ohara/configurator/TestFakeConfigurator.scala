@@ -41,16 +41,16 @@ class TestFakeConfigurator extends SmallTest with Matchers {
       case (numberOfBrokers, numberOfWorkers) =>
         val configurator = Configurator.builder().fake(numberOfBrokers, numberOfWorkers).build()
         try {
-          Await.result(configurator.clusterCollie.brokerCollie().clusters, 20 seconds).size shouldBe numberOfBrokers
-          Await.result(configurator.clusterCollie.workerCollie().clusters, 20 seconds).size shouldBe numberOfWorkers
+          Await.result(configurator.clusterCollie.brokerCollie.clusters(), 20 seconds).size shouldBe numberOfBrokers
+          Await.result(configurator.clusterCollie.workerCollie.clusters(), 20 seconds).size shouldBe numberOfWorkers
           Await
-            .result(configurator.clusterCollie.clusters, 20 seconds)
+            .result(configurator.clusterCollie.clusters(), 20 seconds)
             // one broker generates one zk cluster
             .size shouldBe (numberOfBrokers + numberOfBrokers + numberOfWorkers)
           val nodes = Await.result(configurator.store.values[Node](), 20 seconds)
           nodes.isEmpty shouldBe false
           Await
-            .result(configurator.clusterCollie.clusters, 20 seconds)
+            .result(configurator.clusterCollie.clusters(), 20 seconds)
             .flatMap(_._1.nodeNames)
             .foreach(name => nodes.exists(_.name == name) shouldBe true)
         } finally configurator.close()
@@ -65,7 +65,7 @@ class TestFakeConfigurator extends SmallTest with Matchers {
   @Test
   def createFakeConfiguratorWithoutClusters(): Unit = {
     val configurator = Configurator.builder().fake(0, 0).build()
-    try Await.result(configurator.clusterCollie.clusters, 20 seconds).size shouldBe 0
+    try Await.result(configurator.clusterCollie.clusters(), 20 seconds).size shouldBe 0
     finally configurator.close()
   }
 

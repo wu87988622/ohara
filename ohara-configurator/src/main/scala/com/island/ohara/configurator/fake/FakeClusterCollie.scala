@@ -36,18 +36,14 @@ private[configurator] class FakeClusterCollie(nodeCollie: NodeCollie,
   def this(nodeCollie: NodeCollie, store: DataStore) {
     this(nodeCollie, store, null, null)
   }
-  private[this] val _zkCollie: FakeZookeeperCollie = new FakeZookeeperCollie(nodeCollie)
-  private[this] val _bkCollie: FakeBrokerCollie = new FakeBrokerCollie(nodeCollie, bkConnectionProps)
-  private[this] val _wkCollie: FakeWorkerCollie = new FakeWorkerCollie(nodeCollie, wkConnectionProps)
-  private[this] val _streamCollie: FakeStreamCollie = new FakeStreamCollie(nodeCollie)
 
-  override def zookeeperCollie(): FakeZookeeperCollie = _zkCollie
+  override val zookeeperCollie: FakeZookeeperCollie = new FakeZookeeperCollie(nodeCollie)
 
-  override def brokerCollie(): FakeBrokerCollie = _bkCollie
+  override val brokerCollie: FakeBrokerCollie = new FakeBrokerCollie(nodeCollie, bkConnectionProps)
 
-  override def workerCollie(): FakeWorkerCollie = _wkCollie
+  override val workerCollie: FakeWorkerCollie = new FakeWorkerCollie(nodeCollie, wkConnectionProps)
 
-  override def streamCollie(): FakeStreamCollie = _streamCollie
+  override val streamCollie: FakeStreamCollie = new FakeStreamCollie(nodeCollie)
 
   override def close(): Unit = {
     // do nothing

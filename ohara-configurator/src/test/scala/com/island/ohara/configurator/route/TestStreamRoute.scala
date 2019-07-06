@@ -145,7 +145,7 @@ class TestStreamRoute extends SmallTest with Matchers {
     running.error.isEmpty shouldBe true
 
     // get the stream clusters information by clusterCache
-    val cluster = result(configurator.clusterCollie.streamCollie().clusters)
+    val cluster = result(configurator.clusterCollie.streamCollie.clusters())
     cluster.size shouldBe 1
     // jmx port should be positive
     cluster.head._1.jmxPort should not be 0
@@ -169,7 +169,7 @@ class TestStreamRoute extends SmallTest with Matchers {
     res2.error shouldBe None
 
     // get the stream clusters information again, should be zero
-    result(configurator.clusterCollie.streamCollie().clusters).size shouldBe 0
+    result(configurator.clusterCollie.streamCollie.clusters()).size shouldBe 0
 
     // stop the same streamApp cluster will only return the previous object
     val res3 = result(accessStreamAction.stop(props.name))

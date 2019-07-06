@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class LaunchImpl {
 
-  private static AtomicBoolean appCalled = new AtomicBoolean(false);
+  private static final AtomicBoolean appCalled = new AtomicBoolean(false);
   private static volatile boolean error = false;
   private static volatile RuntimeException exception = null;
 

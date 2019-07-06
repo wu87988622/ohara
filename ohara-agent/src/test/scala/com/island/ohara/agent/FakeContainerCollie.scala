@@ -55,14 +55,14 @@ class FakeContainerCollie[T <: FakeContainerCollieClusterInfo: ClassTag, Creator
     }
   }
 
-  override def clusterWithAllContainers(
+  override def clusterWithAllContainers()(
     implicit executionContext: ExecutionContext): Future[Map[FakeContainerCollieClusterInfo, Seq[ContainerInfo]]] =
     Future {
       val nodeNames = containers.map(c => c.nodeName).toSet
       Map(FakeContainerCollieClusterInfo(FakeContainerCollie.clusterName, nodeNames) -> containers)
     }
 
-  override def creator(): FakeCollie.ClusterCreator =
+  override def creator: FakeCollie.ClusterCreator =
     () => Future.successful(FakeContainerCollieClusterInfo(FakeContainerCollie.clusterName, Set.empty))
 
   override protected def serviceName: String = "fakeservice"

@@ -68,7 +68,7 @@ class TestK8SClusterCollieByConfigurator extends BasicTests4ClusterCollieByConfi
           try {
             nodeCache.foreach { node =>
               Await
-                .result(k8sClient.containers, TIMEOUT)
+                .result(k8sClient.containers(), TIMEOUT)
                 .filter(container => usedClusterNames.exists(clusterName => container.name.contains(clusterName)))
                 .foreach { container =>
                   try {

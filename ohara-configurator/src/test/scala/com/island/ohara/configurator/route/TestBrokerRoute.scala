@@ -314,17 +314,17 @@ class TestBrokerRoute extends MediumTest with Matchers {
 
   @Test
   def testForceDelete(): Unit = {
-    val initialCount = configurator.clusterCollie.brokerCollie().asInstanceOf[FakeBrokerCollie].forceRemoveCount
+    val initialCount = configurator.clusterCollie.brokerCollie.asInstanceOf[FakeBrokerCollie].forceRemoveCount
 
     // graceful delete
     val bk0 = result(brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
     result(brokerApi.delete(bk0.name))
-    configurator.clusterCollie.brokerCollie().asInstanceOf[FakeBrokerCollie].forceRemoveCount shouldBe initialCount
+    configurator.clusterCollie.brokerCollie.asInstanceOf[FakeBrokerCollie].forceRemoveCount shouldBe initialCount
 
     // force delete
     val bk1 = result(brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
     result(brokerApi.forceDelete(bk1.name))
-    configurator.clusterCollie.brokerCollie().asInstanceOf[FakeBrokerCollie].forceRemoveCount shouldBe initialCount + 1
+    configurator.clusterCollie.brokerCollie.asInstanceOf[FakeBrokerCollie].forceRemoveCount shouldBe initialCount + 1
   }
 
   @After

@@ -78,7 +78,7 @@ class TestShabondiK8S extends IntegrationTest with Matchers with Inside {
     }
 
     await(() => {
-      val containers = awaitResult(k8sClient.containers)
+      val containers = awaitResult(k8sClient.containers())
       val container = containers.filter { c =>
         c.hostname == podHostname
       }.head
@@ -89,7 +89,7 @@ class TestShabondiK8S extends IntegrationTest with Matchers with Inside {
     awaitResult(k8sClient.remove(podHostname))
 
     await(() => {
-      val containers = awaitResult(k8sClient.containers)
+      val containers = awaitResult(k8sClient.containers())
       !containers.exists { c =>
         c.hostname == podHostname
       }

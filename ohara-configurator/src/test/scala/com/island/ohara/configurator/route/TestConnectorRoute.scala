@@ -126,7 +126,7 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .className(CommonUtils.randomString(10))
         .create())
 
-    result(configurator.clusterCollie.workerCollie().remove(connector.workerClusterName))
+    result(configurator.clusterCollie.workerCollie.remove(connector.workerClusterName))
 
     result(connectorApi.delete(connector.name))
 

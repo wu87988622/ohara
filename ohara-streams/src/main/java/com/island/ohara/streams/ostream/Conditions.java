@@ -22,7 +22,7 @@ import java.util.List;
 /** Assign a condition pair (left key and right key) list for the required operation */
 public class Conditions {
 
-  private List<Pair<String, String>> conditionsPairList;
+  private final List<Pair<String, String>> conditionsPairList;
 
   private Conditions(List<Pair<String, String>> conditionsPairList) {
     this.conditionsPairList = conditionsPairList;

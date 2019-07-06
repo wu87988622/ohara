@@ -49,7 +49,7 @@ private[configurator] class FakeTopicAdmin extends TopicAdmin {
       cachedTopics.values().asScala.toSeq
     }
 
-  override def creator(): TopicAdmin.Creator = (_, name, numberOfPartitions, numberOfReplications, _) =>
+  override def creator: TopicAdmin.Creator = (_, name, numberOfPartitions, numberOfReplications, _) =>
     if (cachedTopics.contains(name)) Future.failed(new IllegalArgumentException(s"$name already exists!"))
     else {
       cachedTopics.put(name, TopicInfo(name, numberOfPartitions, numberOfReplications))
@@ -65,7 +65,7 @@ private[configurator] class FakeTopicAdmin extends TopicAdmin {
     _closed = true
   }
 
-  override def closed(): Boolean = _closed
+  override def closed: Boolean = _closed
   override def delete(name: String)(implicit executionContext: ExecutionContext): Future[TopicInfo] =
     Option(cachedTopics.remove(name))
       .map(Future.successful)

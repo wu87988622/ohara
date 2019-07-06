@@ -30,7 +30,7 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: Cl
   clusterCache: ClusterCache)
     extends ContainerCollie[T, Creator](nodeCollie) {
 
-  final override def clusterWithAllContainers(
+  final override def clusterWithAllContainers()(
     implicit executionContext: ExecutionContext): Future[Map[T, Seq[ContainerInfo]]] = {
 
     Future.successful(
@@ -128,5 +128,5 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: Cl
 
   override protected def doAddNode(previousCluster: T, previousContainers: Seq[ContainerInfo], newNodeName: String)(
     implicit executionContext: ExecutionContext): Future[T] =
-    creator().copy(previousCluster).nodeName(newNodeName).threadPool(executionContext).create()
+    creator.copy(previousCluster).nodeName(newNodeName).threadPool(executionContext).create()
 }

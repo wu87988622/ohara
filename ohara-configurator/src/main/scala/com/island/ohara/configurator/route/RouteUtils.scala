@@ -152,7 +152,7 @@ private[route] object RouteUtils {
             complete(basicCheckOfCluster[Req, Res](nodeCollie, clusterCollie, req).map(clusters =>
               hookOfCreation(clusters, req)))
           }
-        } ~ get(complete(collie.clusters.map(_.keys)))
+        } ~ get(complete(collie.clusters().map(_.keys)))
       } ~ pathPrefix(Segment) { clusterName =>
         path(Segment) { nodeName =>
           put {
@@ -161,7 +161,7 @@ private[route] object RouteUtils {
               else collie.addNode(clusterName, nodeName)
             })
           } ~ delete {
-            complete(collie.clusters.map(_.keys.toSeq).flatMap { clusters =>
+            complete(collie.clusters().map(_.keys.toSeq).flatMap { clusters =>
               if (clusters.exists(cluster => cluster.name == clusterName && cluster.nodeNames.contains(nodeName)))
                 collie.removeNode(clusterName, nodeName).map(_ => StatusCodes.NoContent)
               else Future.successful(StatusCodes.NoContent)
@@ -171,7 +171,7 @@ private[route] object RouteUtils {
           delete {
             parameter(Parameters.FORCE_REMOVE ?)(force =>
               // we must list ALL clusters !!!
-              complete(clusterCollie.clusters.map(_.keys.toSeq).flatMap { clusters =>
+              complete(clusterCollie.clusters().map(_.keys.toSeq).flatMap { clusters =>
                 if (clusters.exists(_.name == clusterName))
                   hookBeforeDelete(clusters, clusterName)
                   // we don't use boolean convert since we don't want to see the convert exception
@@ -221,7 +221,7 @@ private[route] object RouteUtils {
           .foreach(n => throw new IllegalArgumentException(s"$n doesn't have docker image:$image"))
         nodesImages
       }
-      .flatMap(_ => clusterCollie.clusters.map(_.keys.toSeq))
+      .flatMap(_ => clusterCollie.clusters().map(_.keys.toSeq))
       .map { clusters =>
         def serviceName(cluster: ClusterInfo): String = cluster match {
           case _: ZookeeperClusterInfo => s"zookeeper cluster:${cluster.name}"

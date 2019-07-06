@@ -164,8 +164,8 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
           deadNodes = Set.empty
         )
       }
-      collie.brokerCollie().addCluster(bkCluster)
-      collie.workerCollie().addCluster(wkCluster)
+      collie.brokerCollie.addCluster(bkCluster)
+      collie.workerCollie.addCluster(wkCluster)
       clusterCollie(collie)
     }
 
@@ -194,9 +194,8 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
       val collie = new FakeClusterCollie(createCollie(), store)
 
       val zkClusters = (0 until numberOfBrokerCluster).map { index =>
-        collie
-          .zookeeperCollie()
-          .addCluster(ZookeeperClusterInfo(
+        collie.zookeeperCollie.addCluster(
+          ZookeeperClusterInfo(
             name = s"$zkClusterNamePrefix$index",
             imageName = s"fakeImage$index",
             // Assigning a negative value can make test fail quickly.
@@ -211,9 +210,8 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
       // add broker cluster
       val bkClusters = zkClusters.zipWithIndex.map {
         case (zkCluster, index) =>
-          collie
-            .brokerCollie()
-            .addCluster(BrokerClusterInfo(
+          collie.brokerCollie.addCluster(
+            BrokerClusterInfo(
               name = s"$bkClusterNamePrefix$index",
               imageName = s"fakeImage$index",
               zookeeperClusterName = zkCluster.name,
@@ -229,9 +227,8 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
       // we don't need to collect wk clusters
       (0 until numberOfWorkerCluster).foreach { index =>
         val bkCluster = bkClusters((Math.random() % bkClusters.size).asInstanceOf[Int])
-        collie
-          .workerCollie()
-          .addCluster(WorkerClusterInfo(
+        collie.workerCollie.addCluster(
+          WorkerClusterInfo(
             name = s"$wkClusterNamePrefix$index",
             imageName = s"fakeImage$index",
             brokerClusterName = bkCluster.name,

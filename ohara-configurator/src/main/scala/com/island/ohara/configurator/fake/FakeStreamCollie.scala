@@ -35,7 +35,7 @@ private[configurator] class FakeStreamCollie(nodeCollie: NodeCollie)
     // we don't care for the fake mode since both fake mode and embedded mode are running on local jvm
     BeanChannel.local().counterMBeans().asScala
 
-  override def creator(): StreamCollie.ClusterCreator =
+  override def creator: StreamCollie.ClusterCreator =
     (clusterName, nodeNames, imageName, _, _, _, _, _, jmxPort, _, executionContext) => {
       implicit val exec: ExecutionContext = executionContext
       nodeCollie.nodes(nodeNames).map { nodes =>

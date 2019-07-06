@@ -42,18 +42,10 @@ private[ohara] class ClusterCollieImpl(cacheTimeout: Duration, nodeCollie: NodeC
     .lazyRemove(cacheTimeout)
     .build()
 
-  private[this] val zkCollie: ZookeeperCollieImpl = new ZookeeperCollieImpl(nodeCollie, dockerCache, clusterCache)
-
-  private[this] val bkCollie: BrokerCollieImpl = new BrokerCollieImpl(nodeCollie, dockerCache, clusterCache)
-
-  private[this] val wkCollie: WorkerCollieImpl = new WorkerCollieImpl(nodeCollie, dockerCache, clusterCache)
-
-  private[this] val _streamCollie: StreamCollieImpl = new StreamCollieImpl(nodeCollie, dockerCache, clusterCache)
-
-  override def zookeeperCollie(): ZookeeperCollie = zkCollie
-  override def brokerCollie(): BrokerCollie = bkCollie
-  override def workerCollie(): WorkerCollie = wkCollie
-  override def streamCollie(): StreamCollie = _streamCollie
+  override val zookeeperCollie: ZookeeperCollie = new ZookeeperCollieImpl(nodeCollie, dockerCache, clusterCache)
+  override val brokerCollie: BrokerCollie = new BrokerCollieImpl(nodeCollie, dockerCache, clusterCache)
+  override val workerCollie: WorkerCollie = new WorkerCollieImpl(nodeCollie, dockerCache, clusterCache)
+  override val streamCollie: StreamCollie = new StreamCollieImpl(nodeCollie, dockerCache, clusterCache)
 
   private[this] def doClusters(
     implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = nodeCollie
@@ -88,10 +80,10 @@ private[ohara] class ClusterCollieImpl(cacheTimeout: Duration, nodeCollie: NodeC
           .map(_.toMap)
 
       for {
-        zkMap <- parse(ContainerCollie.ZK_SERVICE_NAME, zkCollie.toZookeeperCluster)
-        bkMap <- parse(ContainerCollie.BK_SERVICE_NAME, bkCollie.toBrokerCluster)
-        wkMap <- parse(ContainerCollie.WK_SERVICE_NAME, wkCollie.toWorkerCluster)
-        streamMap <- parse(ContainerCollie.STREAM_SERVICE_NAME, _streamCollie.toStreamCluster)
+        zkMap <- parse(ContainerCollie.ZK_SERVICE_NAME, zookeeperCollie.toZookeeperCluster)
+        bkMap <- parse(ContainerCollie.BK_SERVICE_NAME, brokerCollie.toBrokerCluster)
+        wkMap <- parse(ContainerCollie.WK_SERVICE_NAME, workerCollie.toWorkerCluster)
+        streamMap <- parse(ContainerCollie.STREAM_SERVICE_NAME, streamCollie.toStreamCluster)
       } yield zkMap ++ bkMap ++ wkMap ++ streamMap
     }
 

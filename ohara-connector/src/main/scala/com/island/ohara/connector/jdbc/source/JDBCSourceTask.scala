@@ -119,10 +119,10 @@ class JDBCSourceTask extends RowSourceTask {
         .sortBy(_.order)
         .map(s => (s, values(s.name, columns)))
         .map {
-          case (schema, value) => {
+          case (s, value) =>
             Cell.of(
-              schema.newName,
-              schema.dataType match {
+              s.newName,
+              s.dataType match {
                 case DataType.BOOLEAN                 => value.asInstanceOf[Boolean]
                 case DataType.SHORT                   => value.asInstanceOf[Short]
                 case DataType.INT                     => value.asInstanceOf[Int]
@@ -135,7 +135,6 @@ class JDBCSourceTask extends RowSourceTask {
                 case _                                => throw new IllegalArgumentException("Unsupported type...")
               }
             )
-          }
         }: _*)
   }
 

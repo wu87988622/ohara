@@ -73,7 +73,7 @@ private[configurator] abstract class FakeCollie[T <: ClusterInfo: ClassTag, Crea
     implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
     exist(clusterName).map(if (_) clusterCache.asScala.find(_._1.name == clusterName).get._2 else Seq.empty)
 
-  override def clusterWithAllContainers(
+  override def clusterWithAllContainers()(
     implicit executionContext: ExecutionContext): Future[Map[T, Seq[ContainerInfo]]] =
     Future.successful(clusterCache.asScala.toMap)
 

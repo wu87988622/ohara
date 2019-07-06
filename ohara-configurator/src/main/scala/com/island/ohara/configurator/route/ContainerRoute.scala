@@ -32,19 +32,22 @@ object ContainerRoute {
   def apply(implicit clusterCollie: ClusterCollie, executionContext: ExecutionContext): server.Route =
     path(CONTAINER_PREFIX_PATH / Segment)({ clusterName =>
       get {
-        complete(clusterCollie.clusters.map(_.filter(_._1.name == clusterName).map {
-          case (cluster, containers) =>
-            ContainerGroup(
-              clusterName = clusterName,
-              clusterType = cluster match {
-                case _: ZookeeperClusterInfo => "zookeeper"
-                case _: BrokerClusterInfo    => "broker"
-                case _: WorkerClusterInfo    => "worker"
-                case _                       => "unknown"
-              },
-              containers = containers
-            )
-        }))
+        complete(
+          clusterCollie
+            .clusters()
+            .map(_.filter(_._1.name == clusterName).map {
+              case (cluster, containers) =>
+                ContainerGroup(
+                  clusterName = clusterName,
+                  clusterType = cluster match {
+                    case _: ZookeeperClusterInfo => "zookeeper"
+                    case _: BrokerClusterInfo    => "broker"
+                    case _: WorkerClusterInfo    => "worker"
+                    case _                       => "unknown"
+                  },
+                  containers = containers
+                )
+            }))
       }
     })
 }
