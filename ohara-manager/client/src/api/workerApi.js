@@ -88,6 +88,26 @@ export const createWorker = async params => {
   }
 };
 
+export const createWorkerNew = async params => {
+  try {
+    const url = `/api/workers`;
+
+    const config = {
+      timeout: 3 * 60 * 1000, // set timeout to 3 minutes.
+    };
+    const res = await axiosInstance.post(url, params, config);
+    const isSuccess = get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
 export const addNodeToWorker = async params => {
   try {
     const { name, nodeName } = params;

@@ -30,6 +30,7 @@ import * as s from './styles';
 import * as jarApi from 'api/jarApi';
 import * as nodeApi from 'api/nodeApi';
 import * as workerApi from 'api/workerApi';
+import { WorkerVoBuilder } from 'api/workerVo';
 import * as brokerApi from 'api/brokerApi';
 import * as generate from 'utils/generate';
 import * as MESSAGES from 'constants/messages';
@@ -48,6 +49,13 @@ const WorkerNewModal = props => {
   const [jars, setJars] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessenge, setErrorMessenge] = useState('');
+  const {
+    setName,
+    setNodeNames,
+    setJars: setWkJars,
+    setBrokerClusterName,
+    getData,
+  } = WorkerVoBuilder();
 
   const uploadJar = async file => {
     const res = await jarApi.createJar({
@@ -185,18 +193,12 @@ const WorkerNewModal = props => {
     const brokerClusterName = get(broker, 'data.result.name');
     await waitForServiceCreation(brokerClusterName);
 
-    const worker = await workerApi.createWorker({
-      name: validateServiceName(values.name),
-      nodeNames: nodeNames,
-      plugins: values.plugins,
-      jmxPort: generate.port(),
-      clientPort: generate.port(),
-      brokerClusterName,
-      groupId: generate.serviceName(),
-      configTopicName: generate.serviceName(),
-      offsetTopicName: generate.serviceName(),
-      statusTopicName: generate.serviceName(),
-    });
+    setName(validateServiceName(values.name));
+    setNodeNames(nodeNames);
+    setWkJars(values.plugins);
+    setBrokerClusterName(brokerClusterName);
+
+    const worker = await workerApi.createWorkerNew(getData());
 
     const workerClusterName = get(worker, 'data.result.name');
     await waitForServiceCreation(workerClusterName);
@@ -216,6 +218,7 @@ const WorkerNewModal = props => {
       resetModal(form);
       return;
     }
+
     setIsLoading(false);
     toastr.success(MESSAGES.SERVICE_CREATION_SUCCESS);
     props.onConfirm();

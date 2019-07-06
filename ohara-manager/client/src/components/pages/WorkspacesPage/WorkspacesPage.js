@@ -26,6 +26,7 @@ import WorkspacesListPage from './WorkspacesListPage';
 import { WORKSPACES } from 'constants/documentTitles';
 import { PageTitle } from 'components/common/Mui/Typography';
 import { PageHeader, StyledButton } from './styles';
+import { WorkerVo } from 'api/workerVo';
 
 const WorkspacesPage = props => {
   const [workers, setWorkers] = useState([]);
@@ -35,10 +36,13 @@ const WorkspacesPage = props => {
   const fetchWorkers = async () => {
     const res = await workerApi.fetchWorkers();
     const workers = get(res, 'data.result', []);
+    const wk = workers.map(worker => {
+      return WorkerVo(worker);
+    });
     setIsLoading(false);
 
     if (!isEmpty(workers)) {
-      setWorkers(workers);
+      setWorkers(wk);
     }
   };
 
