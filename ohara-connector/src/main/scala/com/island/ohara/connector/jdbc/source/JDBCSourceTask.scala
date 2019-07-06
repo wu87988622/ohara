@@ -16,7 +16,6 @@
 
 package com.island.ohara.connector.jdbc.source
 import java.sql.Timestamp
-
 import com.island.ohara.common.data.{Cell, Column, DataType, Row}
 import com.island.ohara.common.util.{Releasable, VersionUtils}
 import com.island.ohara.connector.jdbc.util.ColumnInfo
@@ -63,8 +62,9 @@ class JDBCSourceTask extends RowSourceTask {
     val timestampColumnName: String = jdbcSourceConnectorConfig.timestampColumnName
     val flushDataSize: Int = jdbcSourceConnectorConfig.jdbcFlushDataSize
     var offsetTimestampValue = offsets.readInMemoryOffset()
+
     val resultSet: QueryResultIterator =
-      dbTableDataProvider.executeQuery(tableName, timestampColumnName, new Timestamp(offsets.readInMemoryOffset()))
+      dbTableDataProvider.executeQuery(tableName, timestampColumnName, Timestamp.valueOf(offsets.readInMemoryOffset()))
 
     val rowSourceRecords: Iterator[RowSourceRecord] = resultSet
       .take(flushDataSize)
@@ -148,24 +148,24 @@ class JDBCSourceTask extends RowSourceTask {
     throw new RuntimeException(s"Database Table not have the $schemaColumnName column")
   }
 
-  private[source] def dbTimestampColumnValue(dbColumnInfo: Seq[ColumnInfo[_]], timestampColumnName: String): Long =
+  private[source] def dbTimestampColumnValue(dbColumnInfo: Seq[ColumnInfo[_]], timestampColumnName: String): String =
     dbColumnInfo
       .find(_.columnName == timestampColumnName)
-      .map(_.value.asInstanceOf[Timestamp].getTime)
+      .map(_.value.asInstanceOf[Timestamp].toString)
       .getOrElse(
         throw new RuntimeException(s"$timestampColumnName not in ${jdbcSourceConnectorConfig.dbTableName} table."))
 
   private class Offsets(context: RowSourceContext, tableName: String) {
     private[this] val offsets: Map[String, _] = context.offset(JDBCSourceTask.partition(tableName).asJava).asScala.toMap
-    private[this] var cache: Map[String, Long] =
-      if (offsets.isEmpty) Map(tableName -> 0)
-      else Map(tableName -> offsets(JDBCSourceTask.DB_TABLE_OFFSET_KEY).asInstanceOf[Long])
+    private[this] var cache: Map[String, String] =
+      if (offsets.isEmpty) Map(tableName -> new Timestamp(0).toString())
+      else Map(tableName -> offsets(JDBCSourceTask.DB_TABLE_OFFSET_KEY).asInstanceOf[String])
 
-    private[source] def updateInMemOffset(timestamp: Long): Unit = {
+    private[source] def updateInMemOffset(timestamp: String): Unit = {
       this.cache = Map(tableName -> timestamp)
     }
 
-    private[source] def readInMemoryOffset(): Long = this.cache(tableName)
+    private[source] def readInMemoryOffset(): String = this.cache(tableName)
   }
 }
 
@@ -174,5 +174,5 @@ object JDBCSourceTask {
   private[source] val DB_TABLE_OFFSET_KEY = "db.table.offset"
 
   def partition(tableName: String): Map[String, _] = Map(DB_TABLE_NAME_KEY -> tableName)
-  def offset(timestamp: Long): Map[String, _] = Map(DB_TABLE_OFFSET_KEY -> timestamp)
+  def offset(timestamp: String): Map[String, _] = Map(DB_TABLE_OFFSET_KEY -> timestamp)
 }

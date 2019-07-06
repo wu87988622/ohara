@@ -43,7 +43,7 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
 
   @Before
   def setup(): Unit = {
-    val column1 = RdbColumn("COLUMN1", "TIMESTAMP", true)
+    val column1 = RdbColumn("COLUMN1", "TIMESTAMP(6)", true)
     val column2 = RdbColumn("COLUMN2", "varchar(45)", false)
     val column3 = RdbColumn("COLUMN3", "VARCHAR(45)", false)
     val column4 = RdbColumn("COLUMN4", "integer", false)
@@ -57,6 +57,10 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
       s"INSERT INTO $tableName(COLUMN1,COLUMN2,COLUMN3,COLUMN4) VALUES('2018-09-01 00:00:01', 'a21', 'a22', 2)")
     statement.executeUpdate(
       s"INSERT INTO $tableName(COLUMN1,COLUMN2,COLUMN3,COLUMN4) VALUES('2018-09-01 00:00:02', 'a31', 'a32', 3)")
+    statement.executeUpdate(
+      s"INSERT INTO $tableName(COLUMN1,COLUMN2,COLUMN3,COLUMN4) VALUES('2018-09-01 00:00:03.12', 'a41', 'a42', 4)")
+    statement.executeUpdate(
+      s"INSERT INTO $tableName(COLUMN1,COLUMN2,COLUMN3,COLUMN4) VALUES('2018-09-01 00:00:04.123456', 'a51', 'a52', 5)")
     statement.executeUpdate(
       s"INSERT INTO $tableName(COLUMN1,COLUMN2,COLUMN3,COLUMN4) VALUES(NOW() + INTERVAL 3 MINUTE, 'a41', 'a42', 4)")
     statement.executeUpdate(
@@ -105,12 +109,22 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
     //Test row 1 offset
     rows.head.sourceOffset.asScala.foreach(x => {
       x._1 shouldBe JDBCSourceTask.DB_TABLE_OFFSET_KEY
-      x._2 shouldBe 1535731200000L
+      x._2 shouldBe "2018-09-01 00:00:00.0"
     })
     //Test row 2 offset
     rows(1).sourceOffset.asScala.foreach(x => {
       x._1 shouldBe JDBCSourceTask.DB_TABLE_OFFSET_KEY
-      x._2 shouldBe 1535731201000L
+      x._2 shouldBe "2018-09-01 00:00:01.0"
+    })
+    //Test row 4 offset
+    rows(3).sourceOffset.asScala.foreach(x => {
+      x._1 shouldBe JDBCSourceTask.DB_TABLE_OFFSET_KEY
+      x._2 shouldBe "2018-09-01 00:00:03.12"
+    })
+    //Test row 5 offset
+    rows(4).sourceOffset.asScala.foreach(x => {
+      x._1 shouldBe JDBCSourceTask.DB_TABLE_OFFSET_KEY
+      x._2 shouldBe "2018-09-01 00:00:04.123456"
     })
   }
 
@@ -203,8 +217,8 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
     val dbColumnInfo: Seq[ColumnInfo[_]] = Seq(ColumnInfo("column1", "string", "value1"),
                                                ColumnInfo("column2", "timestamp", new Timestamp(1537510900000L)),
                                                ColumnInfo("column3", "string", "value3"))
-    val timestamp: Long = jdbcSourceTask.dbTimestampColumnValue(dbColumnInfo, "column2")
-    timestamp shouldBe 1537510900000L
+    val timestamp: String = jdbcSourceTask.dbTimestampColumnValue(dbColumnInfo, "column2")
+    timestamp shouldBe "2018-09-21 14:21:40.0"
   }
 
   @After

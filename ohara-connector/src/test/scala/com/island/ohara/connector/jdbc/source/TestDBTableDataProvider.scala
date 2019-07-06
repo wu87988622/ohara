@@ -38,7 +38,7 @@ class TestDBTableDataProvider extends MediumTest with Matchers {
 
   @Before
   def setup(): Unit = {
-    val column1 = RdbColumn("column1", "TIMESTAMP", true)
+    val column1 = RdbColumn("column1", "TIMESTAMP(6)", true)
     val column2 = RdbColumn("column2", "varchar(45)", false)
     val column3 = RdbColumn("column3", "VARCHAR(45)", false)
     val column4 = RdbColumn("column4", "integer", false)
