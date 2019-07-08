@@ -16,14 +16,18 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { get, isNull, truncate } from 'lodash';
+import { Link } from 'react-router-dom';
+import { get, isNull, truncate, isEmpty } from 'lodash';
 
 import * as jarApi from 'api/jarApi';
+import * as URLS from 'constants/urls';
 import { ListLoader } from 'components/common/Loader';
 import { Modal } from 'components/common/Modal';
+import { Select } from 'components/common/Form';
 import { createConnector } from './pipelineToolbarUtils';
-import { TableWrapper, Table, Inner, LoaderWrapper } from './styles';
+import { Wrapper, Inner, LoaderWrapper } from './styles';
 import { Input, FormGroup } from 'components/common/Form';
+import { Warning } from 'components/common/Messages';
 
 class PipelineNewStream extends React.Component {
   static propTypes = {
@@ -44,9 +48,6 @@ class PipelineNewStream extends React.Component {
     isLoading: true,
     jars: [],
     activeJar: null,
-    file: null,
-    isDeleteRowModalActive: false,
-    isTitleEditing: false,
   };
 
   componentDidMount() {
@@ -61,13 +62,9 @@ class PipelineNewStream extends React.Component {
     });
   };
 
-  handleTrSelect = params => {
-    this.setState({
-      activeJar: {
-        group: params.group,
-        name: params.name,
-      },
-    });
+  handleSelectChange = ({ target }) => {
+    const activeJar = { name: target.value };
+    this.setState({ activeJar });
   };
 
   fetchJars = async () => {
@@ -80,9 +77,11 @@ class PipelineNewStream extends React.Component {
       group: get(jars, '[0].group', null),
       name: get(jars, '[0].name', null),
     };
+
     if (isNull(activeJar.group) && isNull(activeJar.name)) {
       updateAddBtnStatus(null);
     }
+
     if (!isNull(jars)) {
       this.setState({ jars, activeJar });
     }
@@ -105,22 +104,29 @@ class PipelineNewStream extends React.Component {
   };
 
   handleConfirm = () => {
+    const { updateGraph } = this.props;
+    const { newStreamAppName, jars, activeJar } = this.state;
+
+    const jar = jars.filter(jar => jar.name === activeJar.name)[0];
+
     const connector = {
-      jar: this.state.activeJar,
+      jar,
       className: 'streamApp',
       typeName: 'streamApp',
     };
-    const { updateGraph } = this.props;
-    const { newStreamAppName } = this.state;
+
     createConnector({
       updateGraph,
       connector,
       newStreamAppName,
     });
+
     this.props.handleClose();
   };
 
   render() {
+    const { workerClusterName: workspace } = this.props;
+
     const {
       isModalOpen,
       isLoading,
@@ -136,27 +142,30 @@ class PipelineNewStream extends React.Component {
             <ListLoader />
           </LoaderWrapper>
         ) : (
-          <React.Fragment>
-            <TableWrapper>
-              <Table headers={['FILENAME']}>
-                {jars.map(({ group: id, name: title }) => {
-                  const isActive = title === activeJar.name ? 'is-active' : '';
-                  const params = { group: id, name: title };
-                  return (
-                    <tr
-                      className={isActive}
-                      key={id}
-                      onClick={() => this.handleTrSelect(params)}
-                      data-testid="stream-app-item"
-                    >
-                      <td>{title}</td>
-                    </tr>
-                  );
-                })}
-              </Table>
-            </TableWrapper>
-          </React.Fragment>
+          <Wrapper>
+            {isEmpty(jars) ? (
+              <Warning
+                text={
+                  <>
+                    {`You don't have any stream jars available in this workspace yet. But you can create one in `}
+                    <Link to={`${URLS.WORKSPACES}/${workspace}/streamapps`}>
+                      here
+                    </Link>
+                  </>
+                }
+              />
+            ) : (
+              <Select
+                isObject
+                list={jars}
+                selected={activeJar}
+                handleChange={this.handleSelectChange}
+                data-testid="streamapp-select"
+              />
+            )}
+          </Wrapper>
         )}
+
         <Modal
           isActive={isModalOpen}
           title="New StreamApp Name"

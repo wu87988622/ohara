@@ -78,7 +78,7 @@ class PipelineNewTopic extends React.Component {
           <Warning
             text={
               <>
-                {`You don't have any topics available in this workspace yet. But you can create one `}
+                {`You don't have any topics available in this workspace yet. But you can create one in `}
                 <Link to={`${URLS.WORKSPACES}/${workspace}/topics`}>here</Link>
               </>
             }

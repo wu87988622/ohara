@@ -222,7 +222,12 @@ class PipelineToolbar extends React.Component {
         <Modal
           title={getModalTitle()}
           isActive={isModalActive}
-          width={modalName === modalNames.ADD_TOPIC ? '350px' : '600px'}
+          width={
+            modalName === modalNames.ADD_TOPIC ||
+            modalName === modalNames.ADD_STREAM
+              ? '350px'
+              : '600px'
+          }
           handleCancel={this.handleModalClose}
           handleConfirm={this.handleConfirm}
           confirmBtnText="Add"

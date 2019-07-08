@@ -54,7 +54,6 @@ export const createConnector = async ({
     // Topic is created beforehand therefore, a name is already exist.
     connectorName = connector.name;
   } else if (isStream(typeName)) {
-    // stream app needs a jar id in order to create a property form
     await createProperty({
       jar: connector.jar,
       name: newStreamAppName,
