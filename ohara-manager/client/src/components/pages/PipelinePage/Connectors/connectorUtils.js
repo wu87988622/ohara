@@ -162,6 +162,7 @@ export const switchType = type => {
     case 'STRING':
       return 'text';
     case 'INT':
+    case 'PORT':
     case 'LONG':
       return 'number';
     case 'PASSWORD':
@@ -300,6 +301,7 @@ export const renderer = props => {
       case 'PASSWORD':
       case 'JDBC_TABLE':
       case 'LONG':
+      case 'PORT':
         const inputType = switchType(valueType);
 
         return (
@@ -317,21 +319,6 @@ export const renderer = props => {
           </FormGroup>
         );
 
-      case 'PORT':
-        return (
-          <FormGroup key={key}>
-            <Field
-              type="number"
-              component={InputField}
-              label={displayName}
-              id={displayName}
-              helperText={documentation}
-              width="100%"
-              name={key}
-              disabled={!editable || isRunning}
-            />
-          </FormGroup>
-        );
       case 'BOOLEAN':
         return (
           <FormGroup key={key}>
