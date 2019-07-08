@@ -317,6 +317,21 @@ export const renderer = props => {
           </FormGroup>
         );
 
+      case 'PORT':
+        return (
+          <FormGroup key={key}>
+            <Field
+              type="number"
+              component={InputField}
+              label={displayName}
+              id={displayName}
+              helperText={documentation}
+              width="100%"
+              name={key}
+              disabled={!editable || isRunning}
+            />
+          </FormGroup>
+        );
       case 'BOOLEAN':
         return (
           <FormGroup key={key}>

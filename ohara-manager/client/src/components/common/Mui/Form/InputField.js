@@ -75,7 +75,8 @@ InputField.propTypes = {
     error: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   }).isRequired,
   width: PropTypes.string,
-  helperText: PropTypes.object,
+  helperText: PropTypes.oneOfType([PropTypes.string, PropTypes.object])
+    .isRequired,
   errorMessenge: PropTypes.string,
 };
 
