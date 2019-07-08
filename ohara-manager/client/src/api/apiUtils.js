@@ -44,31 +44,32 @@ export const handleError = err => {
     return toastr.error(errorMessage);
   }
 
-  toastr.error(err || 'Internal Server Error');
-};
+  const errorCount = get(err, 'errorCount', 0);
 
-export const getErrors = data => {
-  const settings = get(data, 'settings', null);
+  if (errorCount) {
+    const { settings } = err;
 
-  // If we have settings in the error, this is probably
-  // a custom connector
-  if (settings) {
     const hasError = def => !isEmpty(def.value.errors);
-    const errors = settings.filter(hasError).map(def => ({
-      fieldName: def.definition.displayName,
-      errors: def.value.errors,
-    }));
 
-    return errors;
+    const errors = settings.filter(hasError).map(def => {
+      return {
+        fieldName: def.definition.displayName,
+        errorMessage: def.value.errors.join(' '),
+      };
+    });
+
+    // There could be multiple validation errors, so we need to loop thru them and
+    // display respectively
+    errors.forEach(error =>
+      toastr.error(
+        `<b>${error.fieldName.toUpperCase()}</b><br /> ${error.errorMessage}`,
+      ),
+    );
+
+    return;
   }
 
-  // Normal connector
-  const errors = data.reduce((acc, r) => {
-    if (!r.pass) acc.push(r);
-    return acc;
-  }, []);
-
-  return errors;
+  toastr.error(err || 'Internal Server Error');
 };
 
 const createAxios = () => {
@@ -102,18 +103,7 @@ const createAxios = () => {
   instance.interceptors.response.use(
     response => {
       if (response.config.url.includes('/validate')) {
-        const errors = getErrors(response.data);
-
-        if (errors.length > 0) {
-          return {
-            data: {
-              errorMessage: {
-                message: errors,
-              },
-              isSuccess: false,
-            },
-          };
-        }
+        if (response.data.errorCount > 0) handleError(response.data);
       }
 
       return {

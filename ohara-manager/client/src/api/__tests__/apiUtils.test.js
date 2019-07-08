@@ -17,7 +17,7 @@
 import toastr from 'toastr';
 
 import * as generate from 'utils/generate';
-import { handleError, getErrors } from '../apiUtils';
+import { handleError } from '../apiUtils';
 
 describe('handleError()', () => {
   afterEach(jest.clearAllMocks);
@@ -95,34 +95,13 @@ describe('handleError()', () => {
     expect(toastr.error).toHaveBeenCalledTimes(1);
     expect(toastr.error).toHaveBeenCalledWith('Internal Server Error');
   });
-});
 
-describe('getErrors()', () => {
-  it('return errors for normal connectors', () => {
-    const data = [
-      { hostname: generate.ip(), message: generate.message(), pass: false },
-      { hostname: generate.ip(), message: generate.message(), pass: true },
-    ];
-
-    expect(getErrors(data)).toEqual([data[0]]);
-  });
-
-  it(`return an empty array if there's no errors`, () => {
-    const data = [
-      { hostname: generate.ip(), message: generate.message(), pass: true },
-      { hostname: generate.ip(), message: generate.message(), pass: true },
-      { hostname: generate.ip(), message: generate.message(), pass: true },
-      { hostname: generate.ip(), message: generate.message(), pass: true },
-    ];
-
-    expect(getErrors(data)).toEqual([]);
-  });
-
-  it('returns errors for custom connectors', () => {
+  it('returns errors for validation', () => {
     const displayName = generate.name();
-    const errors = [generate.message()];
+    const errors = [generate.message(), generate.message()];
 
-    const data = {
+    const err = {
+      errorCount: 1,
       settings: [
         {
           definition: { displayName },
@@ -139,13 +118,12 @@ describe('getErrors()', () => {
       ],
     };
 
-    const expectedErrors = [
-      {
-        fieldName: displayName,
-        errors,
-      },
-    ];
+    handleError(err);
+    const errorMessage = errors.join(' ');
 
-    expect(getErrors(data)).toEqual(expectedErrors);
+    const expectedErrors = `<b>${displayName.toUpperCase()}</b><br /> ${errorMessage}`;
+
+    expect(toastr.error).toHaveBeenCalledTimes(1);
+    expect(toastr.error).toHaveBeenCalledWith(expectedErrors);
   });
 });
