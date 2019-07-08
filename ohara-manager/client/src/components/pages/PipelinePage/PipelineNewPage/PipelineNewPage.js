@@ -57,6 +57,7 @@ class PipelineNewPage extends React.Component {
     pipeline: {},
     pipelineTopics: [],
     connectors: [],
+    brokerClusterName: '',
   };
 
   componentDidMount() {
@@ -65,8 +66,8 @@ class PipelineNewPage extends React.Component {
 
   fetchData = async () => {
     await this.fetchPipeline(); // we need workerClusterName from this request for the following fetchWorker() request
+    await this.fetchWorker();
     this.fetchTopics();
-    this.fetchWorker();
   };
 
   fetchTopics = async () => {
@@ -74,8 +75,19 @@ class PipelineNewPage extends React.Component {
     this.setState(() => ({ isLoading: false }));
 
     const topics = get(res, 'data.result', null);
-    if (topics) {
-      this.setState({ topics, currentTopic: topics[0] });
+
+    if (!isEmpty(topics)) {
+      const { brokerClusterName } = this.state;
+      const topicsUnderBrokerCluster = topics.filter(
+        topic => topic.brokerClusterName === brokerClusterName,
+      );
+
+      if (topicsUnderBrokerCluster) {
+        this.setState({
+          topics: topicsUnderBrokerCluster,
+          currentTopic: topicsUnderBrokerCluster[0],
+        });
+      }
     }
   };
 
@@ -102,11 +114,14 @@ class PipelineNewPage extends React.Component {
 
   fetchWorker = async () => {
     const { workerClusterName: name } = this.state.pipeline;
-    const worker = await workerApi.fetchWorker(name);
-    const connectors = get(worker, 'data.result.connectors', null);
+    const res = await workerApi.fetchWorker(name);
+    const worker = get(res, 'data.result', null);
 
-    if (connectors) {
-      this.setState({ connectors });
+    if (worker) {
+      this.setState({
+        connectors: worker.connectors,
+        brokerClusterName: worker.brokerClusterName,
+      });
     }
   };
 
