@@ -146,7 +146,10 @@ const WorkerNewModal = props => {
       if (retryCount > maxRetry)
         throw new Error(`Couldn't get the container state!`);
 
-      if (containersAreReady) return; // exist successfully
+      if (containersAreReady) {
+        retryCount = 0;
+        return;
+      } // exist successfully
 
       retryCount++;
       await commonUtils.sleep(2000);
