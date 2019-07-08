@@ -44,7 +44,7 @@ const Tooltip = ({ text }) => {
 };
 
 Tooltip.propTypes = {
-  text: PropTypes.object,
+  text: PropTypes.oneOfType([PropTypes.object, PropTypes.string]),
 };
 
 export default Tooltip;
