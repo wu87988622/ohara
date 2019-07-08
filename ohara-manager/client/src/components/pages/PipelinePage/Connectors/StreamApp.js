@@ -95,7 +95,7 @@ class StreamApp extends React.Component {
     const streamApp = get(res, 'data.result', null);
 
     if (!isEmpty(streamApp)) {
-      this.setState({ streamApp });
+      this.setState({ streamApp, state: streamApp.state });
     }
   };
 
@@ -242,6 +242,8 @@ class StreamApp extends React.Component {
       to: !isEmpty(toTopic) ? toTopic.name : null,
     };
 
+    const isRunning = this.state.state === 'RUNNING';
+
     return (
       <>
         <Form
@@ -279,6 +281,7 @@ class StreamApp extends React.Component {
                     max={100}
                     width="100%"
                     placeholder="1"
+                    disabled={isRunning}
                   />
                 </s.FormCol>
               </s.FormRow>
@@ -294,6 +297,7 @@ class StreamApp extends React.Component {
                     placeholder="select a from topic..."
                     isObject
                     clearable
+                    disabled={isRunning}
                   />
                 </s.FormCol>
                 <s.FormCol width="50%">
@@ -306,6 +310,7 @@ class StreamApp extends React.Component {
                     placeholder="select a to topic..."
                     isObject
                     clearable
+                    disabled={isRunning}
                   />
                 </s.FormCol>
               </s.FormRow>
