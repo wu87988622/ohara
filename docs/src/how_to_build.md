@@ -89,4 +89,4 @@ gradle clean build -PskipManager -x test bintrayUpload -PbintrayUser=$user -Pbin
 
 ## Installation
 
-see [User Guide](user_guide.md#installation)
+see [User Guide](user_guide.html#installation)

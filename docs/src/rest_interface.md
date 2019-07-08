@@ -673,7 +673,7 @@ The following information are updated by ohara.
 1. lastModified (**long**) — the last time to update this connector
 1. state (**optional(string)**) — the state of a started connector. If the connector is not started, you won't see this field
 1. error (**optional(string)**) — the error message from a failed connector. If the connector is fine or un-started, you won't get this field.
-1. [metrics](custom_connector.md#metrics) (**object**) — the metrics from a running connector
+1. [metrics](custom_connector.html#metrics) (**object**) — the metrics from a running connector
   - meters (**array(object)**) — the metrics in meter type
     - meters[i].value (**double**) — the number stored in meter
     - meters[i].unit (**string**) — unit for value
@@ -971,7 +971,7 @@ Following information are written by ohara.
    - objects[i].state (**optional(string)**) — the state of object. If the object can't have state (eg, [topic](#topic)), you won't see this field
    - objects[i].error (**optional(string)**) — the error message of this object
    - objects[i].lastModified (**long**) — the last time to update this object
-   - [metrics](custom_connector.md#metrics) (**object**) — the metrics from this object. Not all objects in pipeline have metrics!
+   - [metrics](custom_connector.html#metrics) (**object**) — the metrics from this object. Not all objects in pipeline have metrics!
      - meters (**array(object)**) — the metrics in meter type
        - meters[i].value (**double**) — the number stored in meter
        - meters[i].unit (**string**) — unit for value
@@ -2530,7 +2530,7 @@ execute the validation.
 *PUT /v0/validate/connector*
 
 Before starting a connector, you can send the settings to test whether all settings are available for specific connector.
-Ohara is not in charge of settings validation. Connector MUST define its setting via [setting definitions](custom_connector.md#setting-definitions).
+Ohara is not in charge of settings validation. Connector MUST define its setting via [setting definitions](custom_connector.html#setting-definitions).
 Ohara configurator only repackage the request to kafka format and then collect the validation result from kafka.
 
 **Example Request**
@@ -2687,7 +2687,7 @@ The following information of StreamApp are updated by ohara.
 1. to (**array(string)**) — topics of streamApp produce to
 1. state (**option(string)**) — only started/failed streamApp has state
 1. jmxPort (**int**) — the expose jmx port
-1. [metrics](custom_connector.md#metrics) (**object**) — the metrics from this streamApp.
+1. [metrics](custom_connector.html#metrics) (**object**) — the metrics from this streamApp.
     - meters (**array(object)**) — the metrics in meter type
       - meters[i].value (**double**) — the number stored in meter
       - meters[i].unit (**string**) — unit for value
@@ -2811,7 +2811,7 @@ Create the properties of a streamApp.
 1. to (**array(string)**) — topics of streamApp produce to
 1. state (**option(string)**) — only started/failed streamApp has state
 1. jmxPort (**int**) — the expose jmx port
-1. [metrics](custom_connector.md#metrics) (**object**) — the metrics from this streamApp.
+1. [metrics](custom_connector.html#metrics) (**object**) — the metrics from this streamApp.
     - meters (**array(object)**) — the metrics in meter type
       - meters[i].value (**double**) — the number stored in meter
       - meters[i].unit (**string**) — unit for value
@@ -2863,7 +2863,7 @@ Create the properties of a streamApp.
 1. to (**array(string)**) — topics of streamApp produce to
 1. state (**option(string)**) — only started/failed streamApp has state
 1. jmxPort (**int**) — the expose jmx port
-1. [metrics](custom_connector.md#metrics) (**object**) — the metrics from this streamApp.
+1. [metrics](custom_connector.html#metrics) (**object**) — the metrics from this streamApp.
     - meters (**array(object)**) — the metrics in meter type
       - meters[i].value (**double**) — the number stored in meter
       - meters[i].unit (**string**) — unit for value
@@ -2943,7 +2943,7 @@ Update the properties of a non-started streamApp.
 1. to (**array(string)**) — topics of streamApp produce to
 1. state (**option(string)**) — only started/failed streamApp has state
 1. jmxPort (**int**) — the expose jmx port
-1. [metrics](custom_connector.md#metrics) (**object**) — the metrics from this streamApp.
+1. [metrics](custom_connector.html#metrics) (**object**) — the metrics from this streamApp.
     - meters (**array(object)**) — the metrics in meter type
       - meters[i].value (**double**) — the number stored in meter
       - meters[i].unit (**string**) — unit for value

@@ -5,8 +5,8 @@ It offers a platform that enables you to define some simple actions to connect t
 You don't need to worry the application availability, data durability, or distribution anymore. All you have to do is to
 write your custom connector, which can have only the pull()/push() method, and then compile your code to a jar file.
 After uploading your jar to ohara, you are able to **deploy** your  connector on the
-[worker cluster](rest_interface.md#create-a-worker-cluster). By leveraging ohara connector framework, apart from the availability,
-scalability, and durability, you can also monitor your connector for [logs](rest_interface.md#logs) and [metrics](#metrics). 
+[worker cluster](rest_interface.html#create-a-worker-cluster). By leveraging ohara connector framework, apart from the availability,
+scalability, and durability, you can also monitor your connector for [logs](rest_interface.html#logs) and [metrics](#metrics). 
 
 The following sections start to explain how to write a good connector on ohara. You don't need to read it through if you
 are familiar with [kafka connector](https://docs.confluent.io/current/connect/managing/index.html). However, ohara connector has some
@@ -212,7 +212,7 @@ After instantizing a connector, the first method called by worker is **start()**
 in **start** method, since it has a input parameter **TaskSetting** carrying all settings, such as target topics,
 connector name and user-defined configs, from user. If you (connector developer) are a good friend of your connector user,
 you can get (and cast it to expected type) config, which is passed by connector user, from **TaskSetting**. For example,
-a connector user calls [Connector API](rest_interface.md#create-the-settings-of-connector) to store a config k0-v0 
+a connector user calls [Connector API](rest_interface.html#create-the-settings-of-connector) to store a config k0-v0 
 (both of them are string type) for your connector, and then you can get v0 via TaskSetting.stringValue("k0").
 
 > Don't be afraid of throwing exception when you notice that input parameters are incorrect. Throwing an exception can fail
@@ -226,7 +226,7 @@ It can't eliminate incorrect configs completely, but it save your time of fighti
 
 ### _stop()
 
-This method is invoked by calling [STOP API](rest_interface.md#stop-a-connector). You can release the resources allocated by
+This method is invoked by calling [STOP API](rest_interface.html#stop-a-connector). You can release the resources allocated by
 connector, or send a email to shout at someone. It is ok to throw an exception when you fails to **stop** the connector.
 Worker cluster will mark **failure** on the connector, and the world keeps running.
 
@@ -242,7 +242,7 @@ so you should NOT share any objects between them (for example, make them to acce
 
 ### _taskSetting(int maxTasks)
 
-Connector has to generate configs for each task. The value of **maxTasks** is configured by [Connector API](rest_interface.md#connector).
+Connector has to generate configs for each task. The value of **maxTasks** is configured by [Connector API](rest_interface.html#connector).
 If you prefer to make all tasks do identical job, you can just clone the task config passe by [start](#_starttasksetting).
 Or you can prepare different configs for each task. Noted that the number of configuration you return MUST be equal with
 input value - maxTasks. Otherwise, you will get a exception when running your connector.
@@ -282,7 +282,7 @@ public abstract class RowSourceTask extends SourceTask {
 ```
 
 RowSourceTask is the unit of executing **poll**. A connector can invokes multiple tasks if you set **tasks.max** be bigger
-than 1 via [Connector APIs](rest_interface.md#connector). RowSourceTask has similar lifecycle to Source connector. Worker
+than 1 via [Connector APIs](rest_interface.html#connector). RowSourceTask has similar lifecycle to Source connector. Worker
 cluster call **start** to initialize a task and call **stop** to terminate a task.
 
 ----------
@@ -560,7 +560,7 @@ public interface RowSinkContext {
 ----------
 
 ### Handle Exception In _put(List<RowSinkRecord>)
-see [handle exception in _poll()](#handle-exception-in-_poll)
+see [handle exception in _poll()](#handle-exception-in-poll)
 
 ----------
 
@@ -614,7 +614,7 @@ public abstract class RowSourceConnector extends SourceConnector {
 ```
 
 By default, all information in ConnectorVersion are **unknown**. You can override one of them or all of them when writing 
-connector. The version information of a connector is showed by [Worker API](rest_interface.md#worker).
+connector. The version information of a connector is showed by [Worker API](rest_interface.html#worker).
 
 > Don't return null, please!!!
 
@@ -654,15 +654,15 @@ SettingDefinition is a class used to describe the details of **a** setting. It c
 1. orderInGroup (**int**) — the order in group
 1. editable (**boolean**) — true if this setting is modifiable 
 1. key (**string**) — the key of configuration
-1. [valueType](rest_interface.md#setting-type) (**string**) — the type of value
+1. [valueType](rest_interface.html#setting-type) (**string**) — the type of value
 1. defaultValue (**string**) — the default value
 1. documentation (**string**) — the explanation of this definition
-1. [reference](rest_interface.md#setting-reference) (**string**) — works for ohara manager. It represents the reference of value.
+1. [reference](rest_interface.html#setting-reference) (**string**) — works for ohara manager. It represents the reference of value.
 1. required(**boolean**) — true if this setting has no default value and you have to assign a value. Otherwise, you can’t start connector.
 1. internal (**string**) — true if this setting is assigned by system automatically.
 1. tableKeys (**array(string)**) — the column name when the type is TABLE
 
-> You can call [Worker APIs](rest_interface.md#worker) to get all connectors' setting definitions
+> You can call [Worker APIs](rest_interface.html#worker) to get all connectors' setting definitions
 
 Although a SettingDefinition can include many elements, you can simply build a SettingDefinition with only what you need.
 An extreme example is that you can create a SettingDefinition with only key.
@@ -677,7 +677,7 @@ public class ExampleOfSettingDefinition {
 ```
 
 Notwithstanding it is flexible to build a SettingDefinition, we encourage connector developers to create a description-rich
-SettingDefinition. More description to your setting produces more **document** in calling [Worker APIs](rest_interface.md#worker).
+SettingDefinition. More description to your setting produces more **document** in calling [Worker APIs](rest_interface.html#worker).
 We all hate write documentation so it would be better to make your code readable.
 
 ----------
@@ -709,7 +709,7 @@ public class ExampleOfAssigningDefaultValueToSettingDefinition {
 
 > the default value is declared as **string** type as it must be **readable** in Restful APIs.
 
-After calling the **optional(String)** method, the response, which is created by [Worker APIs](rest_interface.md#worker),
+After calling the **optional(String)** method, the response, which is created by [Worker APIs](rest_interface.html#worker),
 will display the following information.
 ```json
 {
@@ -849,14 +849,14 @@ All you have to do is to check the input value. Feel free to throw exception whe
 
 We are live in a world filled with number, and so do connectors. While a connector is running, ohara collects many counts
 from the data flow for the connector in background. All of counters (and other records which will be introduced in the future)
-are called **metrics**, and it can be fetched by [Connector APIs](rest_interface.md#connector).
+are called **metrics**, and it can be fetched by [Connector APIs](rest_interface.html#connector).
 Apart from official metrics, connector developers are also able to build custom metrics for custom connectors,
-and all custom metrics are also showed by [Connector APIs](rest_interface.md#connector).
+and all custom metrics are also showed by [Connector APIs](rest_interface.html#connector).
 
 Ohara leverage JMX to offer the metrics APIs to connector. It means all metrics you created are stored as Java beans and 
-is accessible through JMX service. That is why you have to define a port via [Worker APIs](rest_interface.md#worker)
+is accessible through JMX service. That is why you have to define a port via [Worker APIs](rest_interface.html#worker)
 for creating a worker cluster. Although you can see all java mbeans via the JMX client (such as JMC), ohara still encourage
-you to apply [Connector APIs](rest_interface.md#connector) as it offers a more readable format of metrics.
+you to apply [Connector APIs](rest_interface.html#connector) as it offers a more readable format of metrics.
 
 ----------
 
@@ -891,7 +891,7 @@ public class ExampleOfCreatingCounter {
   the magic number from your counter.
 
 > The counter created by connector always has the group same to id of connector, since ohara needs to find the counters
-  for specific connector in [Connector APIs](rest_interface.md#connector)
+  for specific connector in [Connector APIs](rest_interface.html#connector)
 
 ----------
 
@@ -923,4 +923,4 @@ the connector/task.
  ```
  
 > Ohara doesn't obstruct you from using Counter directly. However, using CounterBuilder make sure that your custom metrics
-  are available in [Connector APIs](rest_interface.md#connector).
+  are available in [Connector APIs](rest_interface.html#connector).

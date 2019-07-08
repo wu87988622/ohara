@@ -7,7 +7,7 @@ All we love is only pull request so we have some rules used to make your PR look
 ## Quick start
 
 - Fork and clone the repo
-- Install dependencies. See our [how_to_build](how_to_build.md#gradle-commands) for development machine setup
+- Install dependencies. See our [how_to_build](how_to_build.html#gradle-commands) for development machine setup
 - Create a branch with your PR with `git checkout -b ${your-branch-name}`
 - Push your PR to remote: `git push origin ${your-branch-name}`
 - Create the PR with GitHub web UI and wait for reviews from our committers
