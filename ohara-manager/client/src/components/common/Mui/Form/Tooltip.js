@@ -44,7 +44,7 @@ const Tooltip = ({ text }) => {
 };
 
 Tooltip.propTypes = {
-  text: PropTypes.oneOfType([PropTypes.object, PropTypes.string]).isRequired,
+  text: PropTypes.oneOfType([PropTypes.object, PropTypes.string]),
 };
 
 export default Tooltip;
