@@ -25,7 +25,7 @@ The following sections will describe how to write a streamApp application in Oha
 ## Ohara StreamApp Overview
 
 Ohara streamApp is a wrap of [kafka streams](https://kafka.apache.org/documentation/streams) and provided an entry of interface
-class [StreamApp](#streamapp-entry) to define user custom streaming code. A normal streamApp application will use [Row](custom_connector.md#data-model)
+class [StreamApp](#streamapp-entry) to define user custom streaming code. A normal streamApp application will use [Row](custom_connector.html#data-model)
 as data type to interactive topics in Ohara Stream.
 
 Before writing your streamApp, you should download the ohara dependencies first. Ohara Stream includes many powerful tools
@@ -82,7 +82,7 @@ can be used for user to initialize some external data source connections or inpu
 
 ### start() method
 This method will be called after [init()](#init-method). Normally, you could only define start() method for most cases in
-Ohara Stream. We encourage user to use [source connector](custom_connector.md#source-connector) for importing external
+Ohara Stream. We encourage user to use [source connector](custom_connector.html#source-connector) for importing external
 data source to Ohara Stream and use topic data as custom streamApp data source in start() method.
 
 The only object you should remember in this method is **OStream** (a.k.a. ohara streamApp). You could use this object to
@@ -204,14 +204,14 @@ Will be implemented in the near future. Also see: [issue #962](https://github.co
 ## Metrics
 
 When a streamApp application is running, Ohara Stream automatically collects some metrics data from the streamApp in the background.
-The metrics data here means [official metrics](#official-metrics) which contains [Counters](custom_connector.md#counter)
+The metrics data here means [official metrics](#official-metrics) which contains [Counters](custom_connector.html#counter)
 for now (other type of metrics will be introduced in the future).
-The metrics data could be fetched by [StreamApp APIs](rest_interface.md#streamapp). Developers will be able to implement
+The metrics data could be fetched by [StreamApp APIs](rest_interface.html#streamapp). Developers will be able to implement
 their own custom metrics in the foreseeable future.
 
 Ohara Stream leverages JMX to offer the metrics data to streamApp. It means that all metrics you have created are stored as Java beans and 
-accessible through JMX service. The streamApp will expose a port via [StreamApp APIs](rest_interface.md#streamapp)
-for other JMX client tool used, such as JMC, but we still encourage you to use [StreamApp APIs](rest_interface.md#streamapp)
+accessible through JMX service. The streamApp will expose a port via [StreamApp APIs](rest_interface.html#streamapp)
+for other JMX client tool used, such as JMC, but we still encourage you to use [StreamApp APIs](rest_interface.html#streamapp)
 as it offers a more readable format of metrics.
 
 ----------
@@ -224,7 +224,7 @@ There are two type of official metrics for streamApp:
 
 A normal streamApp will connect to two topics, one is the source topic that streamApp will consume from, and the other is
 the target topic that streamApp will produce to. We use prefix words (**TOPIC_IN**, **TOPIC_OUT**) in the response
-data ([StreamApp APIs](rest_interface.md#streamapp)) in order to improve readabilities of those types.
+data ([StreamApp APIs](rest_interface.html#streamapp)) in order to improve readabilities of those types.
 You don't need to worry about the implementation of these official metrics, but you can still read the [source code](https://github.com/oharastream/ohara/blob/master/ohara-streams/src/main/java/com/island/ohara/streams/metric/MetricFactory.java)
 to see how Ohara Stream creates official metrics.
 
