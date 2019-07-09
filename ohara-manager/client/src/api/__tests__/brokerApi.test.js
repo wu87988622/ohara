@@ -15,15 +15,20 @@
  */
 
 import * as generate from 'utils/generate';
-import { fetchBrokers, createBroker, fetchBroker } from '../brokerApi';
+import {
+  fetchBrokers,
+  createBroker,
+  fetchBroker,
+  addNodeToBroker,
+} from '../brokerApi';
 import { handleError, axiosInstance } from '../apiUtils';
 
 jest.mock('../apiUtils');
 
 const url = '/api/brokers';
+afterEach(jest.clearAllMocks);
 
 describe('fetchBroker()', () => {
-  afterEach(jest.clearAllMocks);
   const brokerName = generate.serviceName();
 
   it('handles success http call', async () => {
@@ -76,8 +81,6 @@ describe('fetchBroker()', () => {
 });
 
 describe('fetchBrokers()', () => {
-  afterEach(jest.clearAllMocks);
-
   it('handles success http call', async () => {
     const res = {
       data: {
@@ -128,12 +131,10 @@ describe('fetchBrokers()', () => {
 });
 
 describe('createBroker()', () => {
-  afterEach(jest.clearAllMocks);
-
   const params = {
-    name: 'abc',
-    zookeeperClusterName: ['a', 'b'],
-    nodeNames: ['c', 'd'],
+    name: generate.name(),
+    zookeeperClusterName: [generate.name(), generate.name()],
+    nodeNames: [generate.name(), generate.name()],
   };
   const config = { timeout: 180000 };
 
@@ -181,6 +182,63 @@ describe('createBroker()', () => {
 
     await createBroker(params);
     expect(axiosInstance.post).toHaveBeenCalledTimes(1);
+    expect(handleError).toHaveBeenCalledTimes(1);
+    expect(handleError).toHaveBeenCalledWith(res);
+  });
+});
+
+describe('addNodeToBroker()', () => {
+  const params = {
+    name: generate.name(),
+    nodeName: generate.name(),
+  };
+
+  const addNodeUrl = `/api/brokers/${params.name}/${params.nodeName}`;
+
+  it('handles success http call', async () => {
+    const res = {
+      data: {
+        isSuccess: true,
+      },
+    };
+
+    axiosInstance.put.mockImplementation(() => Promise.resolve(res));
+
+    const result = await addNodeToBroker(params);
+    expect(axiosInstance.put).toHaveBeenCalledTimes(1);
+    expect(axiosInstance.put).toHaveBeenCalledWith(addNodeUrl);
+    expect(result).toBe(res);
+  });
+
+  it('handles success http call but with server error', async () => {
+    const res = {
+      data: {
+        isSuccess: false,
+      },
+    };
+    axiosInstance.put.mockImplementation(() => Promise.resolve(res));
+
+    const result = await addNodeToBroker(params);
+
+    expect(axiosInstance.put).toHaveBeenCalledTimes(1);
+    expect(axiosInstance.put).toHaveBeenCalledWith(addNodeUrl);
+    expect(handleError).toHaveBeenCalledTimes(1);
+    expect(handleError).toHaveBeenCalledWith(result);
+  });
+
+  it('handles failed http call', async () => {
+    const res = {
+      data: {
+        errorMessage: {
+          message: 'error!',
+        },
+      },
+    };
+
+    axiosInstance.put.mockImplementation(() => Promise.reject(res));
+
+    await addNodeToBroker(params);
+    expect(axiosInstance.put).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(res);
   });
