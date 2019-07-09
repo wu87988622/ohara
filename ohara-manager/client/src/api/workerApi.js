@@ -51,11 +51,11 @@ export const fetchWorkers = async () => {
 export const createWorker = async params => {
   try {
     const url = `/api/workers`;
-
     const jars = get(params, 'plugins', []).map(jar => {
+      const jarRes = jar.data.result;
       return {
-        name: jar.name,
-        group: jar.group,
+        name: jarRes.name,
+        group: jarRes.group,
       };
     });
 

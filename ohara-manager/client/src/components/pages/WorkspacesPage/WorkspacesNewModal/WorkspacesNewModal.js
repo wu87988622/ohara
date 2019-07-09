@@ -49,6 +49,7 @@ const WorkerNewModal = props => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessenge, setErrorMessenge] = useState('');
   let workingService = [];
+  let plugins = [];
 
   const uploadJar = async file => {
     const res = await jarApi.createJar({
@@ -57,6 +58,9 @@ const WorkerNewModal = props => {
 
     const isSuccess = get(res, 'data.isSuccess', false);
     if (isSuccess) {
+      const newPlugins = [...plugins];
+      newPlugins.push(res);
+      plugins = newPlugins;
       toastr.success(`${MESSAGES.PLUGIN_UPLOAD_SUCCESS} ${file.name}`);
     }
   };
@@ -109,6 +113,7 @@ const WorkerNewModal = props => {
     setCheckedNodes([]);
     handleModalClose();
     setIsLoading(false);
+    plugins = [];
   };
 
   const validateServiceName = value => {
@@ -171,6 +176,10 @@ const WorkerNewModal = props => {
   };
 
   const deleteAllSerice = async () => {
+    plugins.forEach(plugin => {
+      const { name, group } = plugin.data.result;
+      jarApi.deleteJar({ name: name, workerClusterName: group });
+    });
     const bks = workingService.filter(working => working.service === 'bk');
     const zks = workingService.filter(working => working.service === 'zk');
 
@@ -266,7 +275,7 @@ const WorkerNewModal = props => {
     const worker = await workerApi.createWorker({
       name: validateServiceName(values.name),
       nodeNames: nodeNames,
-      plugins: values.plugins,
+      plugins: plugins,
       jmxPort: generate.port(),
       clientPort: generate.port(),
       brokerClusterName,
@@ -283,9 +292,7 @@ const WorkerNewModal = props => {
   };
 
   const onSubmit = async (values, form) => {
-    checkedFiles.forEach(file => {
-      uploadJar(file);
-    });
+    await Promise.all(checkedFiles.map(async file => await uploadJar(file)));
 
     try {
       await createServices(values);
