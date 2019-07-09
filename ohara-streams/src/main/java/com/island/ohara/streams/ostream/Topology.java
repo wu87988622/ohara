@@ -16,8 +16,8 @@
 
 package com.island.ohara.streams.ostream;
 
+import com.island.ohara.common.exception.ExceptionHandler;
 import com.island.ohara.common.util.Releasable;
-import com.island.ohara.kafka.exception.CheckedExceptionUtils;
 import com.island.ohara.streams.data.Poneglyph;
 import com.island.ohara.streams.data.Stele;
 import java.io.File;
@@ -118,7 +118,11 @@ public class Topology implements Releasable {
   }
 
   void start() {
-    CheckedExceptionUtils.wrap(() -> streams.start());
+    ExceptionHandler.DEFAULT.handle(
+        () -> {
+          streams.start();
+          return null;
+        });
   }
 
   @Override

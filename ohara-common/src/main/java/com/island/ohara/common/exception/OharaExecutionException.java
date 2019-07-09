@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.kafka.exception;
+package com.island.ohara.common.exception;
 
 public class OharaExecutionException extends OharaException {
 

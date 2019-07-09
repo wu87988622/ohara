@@ -14,28 +14,18 @@
  * limitations under the License.
  */
 
-package com.island.ohara.kafka.exception;
+package com.island.ohara.common.exception;
 
-public class CheckedExceptionUtils {
+public class OharaTimeoutException extends OharaException {
+  public static final long serialVersionUID = 1L;
 
-  public static void wrap(CheckedExceptionWrapper cew) {
-    try {
-      cew.excute();
-    } catch (RuntimeException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+  public OharaTimeoutException() {}
+
+  public OharaTimeoutException(Throwable e) {
+    super(e);
   }
 
-  public static <T> T wrap(CheckedExceptionWrapperReturn<T> cew, ExceptionHandler... handlers)
-      throws RuntimeException {
-    try {
-      return cew.excute();
-    } catch (RuntimeException e) {
-      throw e;
-    } catch (Exception e) {
-      throw ExceptionHandler.handle(e, handlers);
-    }
+  public OharaTimeoutException(String message, Throwable e) {
+    super(message, e);
   }
 }

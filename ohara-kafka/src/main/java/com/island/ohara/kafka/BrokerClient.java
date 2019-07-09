@@ -17,13 +17,12 @@
 package com.island.ohara.kafka;
 
 import com.google.common.collect.ImmutableMap;
+import com.island.ohara.common.exception.ExceptionHandler;
+import com.island.ohara.common.exception.OharaException;
+import com.island.ohara.common.exception.OharaExecutionException;
+import com.island.ohara.common.exception.OharaInterruptedException;
+import com.island.ohara.common.exception.OharaTimeoutException;
 import com.island.ohara.common.util.Releasable;
-import com.island.ohara.kafka.exception.CheckedExceptionUtils;
-import com.island.ohara.kafka.exception.ExceptionHandler;
-import com.island.ohara.kafka.exception.OharaException;
-import com.island.ohara.kafka.exception.OharaExecutionException;
-import com.island.ohara.kafka.exception.OharaInterruptedException;
-import com.island.ohara.kafka.exception.OharaTimeoutException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,7 +41,6 @@ import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.config.ConfigResource;
-import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 
 /**
  * a helper methods used by configurator. It provide many helper method to operate kafka cluster.
@@ -123,11 +121,11 @@ public interface BrokerClient extends Releasable {
       private final AdminClient admin = AdminClient.create(toAdminProps(connectionProps));
 
       private final ExceptionHandler handler =
-          ExceptionHandler.creator()
-              .add(ExecutionException.class, (e) -> new OharaExecutionException(e.getCause()))
-              .add(InterruptedException.class, OharaInterruptedException::new)
-              .add(TimeoutException.class, OharaTimeoutException::new)
-              .create();
+          ExceptionHandler.builder()
+              .with(ExecutionException.class, (e) -> new OharaExecutionException(e.getCause()))
+              .with(InterruptedException.class, OharaInterruptedException::new)
+              .with(TimeoutException.class, OharaTimeoutException::new)
+              .build();
 
       @Override
       public TopicCreator topicCreator() {
@@ -135,7 +133,7 @@ public interface BrokerClient extends Releasable {
 
           @Override
           public Void create() {
-            CheckedExceptionUtils.wrap(
+            return handler.handle(
                 () ->
                     admin
                         .createTopics(
@@ -144,17 +142,14 @@ public interface BrokerClient extends Releasable {
                                     .configs(options)))
                         .values()
                         .get(name)
-                        .get(timeout.toMillis(), TimeUnit.MILLISECONDS),
-                handler);
-            return null;
+                        .get(timeout.toMillis(), TimeUnit.MILLISECONDS));
           }
         };
       }
 
       @Override
       public boolean exist(String topicName) {
-
-        return CheckedExceptionUtils.wrap(
+        return handler.handle(
             () ->
                 admin
                     .listTopics()
@@ -166,8 +161,7 @@ public interface BrokerClient extends Releasable {
                             return strings.contains(topicName);
                           }
                         })
-                    .get(timeout.toMillis(), TimeUnit.MILLISECONDS),
-            handler);
+                    .get(timeout.toMillis(), TimeUnit.MILLISECONDS));
       }
 
       @Override
@@ -177,7 +171,7 @@ public interface BrokerClient extends Releasable {
 
       @Override
       public List<TopicDescription> topicDescriptions(List<String> names) {
-        return CheckedExceptionUtils.wrap(
+        return handler.handle(
             () -> {
               try {
                 return admin.describeTopics(names).all()
@@ -213,13 +207,10 @@ public interface BrokerClient extends Releasable {
                         })
                     .collect(Collectors.toList());
               } catch (ExecutionException e) {
-                if (e.getCause() instanceof UnknownTopicOrPartitionException)
-                  throw new IllegalArgumentException(
-                      String.format("the %s doesn't exist", String.join(",", names)));
-                throw e;
+                if (e.getCause() != null) throw e.getCause();
+                else throw e;
               }
-            },
-            handler);
+            });
       }
 
       @Override
@@ -228,34 +219,31 @@ public interface BrokerClient extends Releasable {
         if (current.numberOfPartitions() > numberOfPartitions)
           throw new IllegalArgumentException("Reducing the number from partitions is disallowed");
         if (current.numberOfPartitions() < numberOfPartitions) {
-          CheckedExceptionUtils.wrap(
+          handler.handle(
               () ->
                   admin
                       .createPartitions(
                           ImmutableMap.of(topicName, NewPartitions.increaseTo(numberOfPartitions)))
                       .all()
-                      .get(timeout.toMillis(), TimeUnit.MILLISECONDS),
-              handler);
+                      .get(timeout.toMillis(), TimeUnit.MILLISECONDS));
         }
       }
 
       @Override
       public void deleteTopic(String topicName) {
-        CheckedExceptionUtils.wrap(
+        handler.handle(
             () ->
                 admin
                     .deleteTopics(Collections.singletonList(topicName))
                     .all()
-                    .get(timeout.toMillis(), TimeUnit.MILLISECONDS),
-            handler);
+                    .get(timeout.toMillis(), TimeUnit.MILLISECONDS));
       }
 
       List<String> topicNames() {
-        return CheckedExceptionUtils.wrap(
+        return handler.handle(
             () ->
                 new ArrayList<>(
-                    admin.listTopics().names().get(timeout.toMillis(), TimeUnit.MILLISECONDS)),
-            handler);
+                    admin.listTopics().names().get(timeout.toMillis(), TimeUnit.MILLISECONDS)));
       }
 
       @Override
@@ -265,12 +253,11 @@ public interface BrokerClient extends Releasable {
 
       @Override
       public Map<String, Integer> brokerPorts() {
-        return CheckedExceptionUtils.wrap(
+        return handler.handle(
             () ->
                 admin.describeCluster().nodes().get(timeout.toMillis(), TimeUnit.MILLISECONDS)
                     .stream()
-                    .collect(Collectors.toMap(Node::host, Node::port)),
-            handler);
+                    .collect(Collectors.toMap(Node::host, Node::port)));
       }
 
       /**

@@ -29,7 +29,7 @@ import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.it.IntegrationTest
-import com.island.ohara.kafka.exception.{OharaExecutionException, OharaTimeoutException}
+import com.island.ohara.common.exception.{OharaExecutionException, OharaTimeoutException}
 import com.island.ohara.kafka.{BrokerClient, Consumer, Producer}
 import com.island.ohara.metrics.BeanChannel
 import com.typesafe.scalalogging.Logger

@@ -20,8 +20,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import com.island.ohara.common.exception.OharaExecutionException;
 import com.island.ohara.common.util.Releasable;
-import com.island.ohara.kafka.exception.OharaExecutionException;
 import com.island.ohara.testing.With3Brokers;
 import java.util.Collections;
 import java.util.Map;
@@ -29,6 +29,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import org.apache.kafka.common.config.TopicConfig;
 import org.apache.kafka.common.errors.TopicExistsException;
+import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 import org.junit.After;
 import org.junit.Test;
 
@@ -51,7 +52,8 @@ public class TestBrokerClient extends With3Brokers {
     // decrease the number
     assertException(IllegalArgumentException.class, () -> client.createPartitions(topicName, 1));
     // alter an nonexistent topic
-    assertException(IllegalArgumentException.class, () -> client.createPartitions("Xxx", 2));
+    assertException(
+        UnknownTopicOrPartitionException.class, () -> client.createPartitions("Xxx", 2));
   }
 
   @Test

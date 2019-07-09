@@ -17,8 +17,8 @@
 package com.island.ohara.streams;
 
 import com.island.ohara.common.annotations.VisibleForTesting;
+import com.island.ohara.common.exception.ExceptionHandler;
 import com.island.ohara.common.util.CommonUtils;
-import com.island.ohara.kafka.exception.CheckedExceptionUtils;
 import com.island.ohara.streams.ostream.LaunchImpl;
 import java.io.File;
 import java.io.IOException;
@@ -58,12 +58,15 @@ public abstract class StreamApp {
    * @param params parameters of {@code theClass} constructor used
    */
   public static void runStreamApp(Class<? extends StreamApp> theClass, Object... params) {
-    if (StreamApp.class.isAssignableFrom(theClass)) {
-      CheckedExceptionUtils.wrap(() -> LaunchImpl.launchApplication(theClass, params));
-    } else {
+    if (StreamApp.class.isAssignableFrom(theClass))
+      ExceptionHandler.DEFAULT.handle(
+          () -> {
+            LaunchImpl.launchApplication(theClass, params);
+            return null;
+          });
+    else
       throw new RuntimeException(
           "Error: " + theClass + " is not a subclass of " + StreamApp.class.getName());
-    }
   }
 
   /**
@@ -89,19 +92,15 @@ public abstract class StreamApp {
         found = true;
       }
     }
-    if (entryClassName == null) {
-      throw new RuntimeException("Unable to find StreamApp class.");
-    }
+    if (entryClassName == null) throw new RuntimeException("Unable to find StreamApp class.");
 
     try {
       Class theClass =
           Class.forName(entryClassName, false, Thread.currentThread().getContextClassLoader());
-      if (StreamApp.class.isAssignableFrom(theClass)) {
-        CheckedExceptionUtils.wrap(() -> LaunchImpl.launchApplication(theClass));
-      } else {
+      if (StreamApp.class.isAssignableFrom(theClass)) LaunchImpl.launchApplication(theClass);
+      else
         throw new RuntimeException(
             "Error: " + theClass + " is not a subclass of " + StreamApp.class.getName());
-      }
     } catch (RuntimeException ex) {
       throw ex;
     } catch (Exception ex) {
@@ -138,31 +137,20 @@ public abstract class StreamApp {
    *
    * @param args arguments
    */
-  public static void main(String[] args) {
-    CheckedExceptionUtils.wrap(
-        () -> {
-          if (System.getenv(JAR_URL) == null) {
-            throw new RuntimeException("It seems you are not running in Ohara Environment?");
-          }
-          File jarFile = downloadJarByUrl(System.getenv(JAR_URL));
-          Map.Entry<String, URLClassLoader> entry = findStreamAppEntry(jarFile);
+  public static void main(String[] args) throws Exception {
+    if (System.getenv(JAR_URL) == null)
+      throw new RuntimeException("It seems you are not running in Ohara Environment?");
+    File jarFile = downloadJarByUrl(System.getenv(JAR_URL));
+    Map.Entry<String, URLClassLoader> entry = findStreamAppEntry(jarFile);
 
-          if (entry.getKey().isEmpty()) {
-            throw new RuntimeException("cannot find any match entry");
-          }
-          Class clz = Class.forName(entry.getKey(), true, entry.getValue());
-          if (StreamApp.class.isAssignableFrom(clz)) {
-            if (args != null && args.length > 0) {
-              CheckedExceptionUtils.wrap(
-                  () -> LaunchImpl.launchApplication(clz, Arrays.asList(args)));
-            } else {
-              CheckedExceptionUtils.wrap(() -> LaunchImpl.launchApplication(clz));
-            }
-          } else {
-            throw new RuntimeException(
-                "Error: " + clz + " is not a subclass of " + StreamApp.class.getName());
-          }
-        });
+    if (entry.getKey().isEmpty()) throw new RuntimeException("cannot find any match entry");
+    Class clz = Class.forName(entry.getKey(), true, entry.getValue());
+    if (StreamApp.class.isAssignableFrom(clz)) {
+      if (args != null && args.length > 0) LaunchImpl.launchApplication(clz, Arrays.asList(args));
+      else LaunchImpl.launchApplication(clz);
+    } else
+      throw new RuntimeException(
+          "Error: " + clz + " is not a subclass of " + StreamApp.class.getName());
   }
 
   @VisibleForTesting

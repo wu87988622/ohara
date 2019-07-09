@@ -45,9 +45,7 @@ class TestCodePattern extends MediumTest with Matchers {
       baseClass = classOf[Creator[_]],
       postfix = "creator",
       excludedClasses = Seq(
-        classOf[Creator[_]],
-        // this may be deleted by #1713
-        classOf[com.island.ohara.kafka.exception.ExceptionHandler.ExceptionHandlerCreator]
+        classOf[Creator[_]]
       )
     )
 

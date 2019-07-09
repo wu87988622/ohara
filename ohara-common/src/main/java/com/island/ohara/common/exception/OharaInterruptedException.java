@@ -14,23 +14,18 @@
  * limitations under the License.
  */
 
-package com.island.ohara.kafka.exception;
+package com.island.ohara.common.exception;
 
-public class OharaException extends RuntimeException {
-
+public class OharaInterruptedException extends OharaException {
   private static final long serialVersionUID = 1L;
 
-  public OharaException() {}
+  public OharaInterruptedException() {}
 
-  public OharaException(String message) {
-    super(message);
-  }
-
-  public OharaException(Throwable e) {
+  public OharaInterruptedException(Throwable e) {
     super(e);
   }
 
-  public OharaException(String message, Throwable e) {
+  public OharaInterruptedException(String message, Throwable e) {
     super(message, e);
   }
 }
