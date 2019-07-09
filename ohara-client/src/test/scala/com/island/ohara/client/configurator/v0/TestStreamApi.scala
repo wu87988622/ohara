@@ -31,8 +31,8 @@ import scala.concurrent.{Await, Future}
 
 class TestStreamApi extends SmallTest with Matchers {
 
-  private[this] final val propertyAccess =
-    StreamApi.accessOfProperty.hostname(CommonUtils.randomString()).port(CommonUtils.availablePort())
+  private[this] final val access =
+    StreamApi.access.hostname(CommonUtils.randomString()).port(CommonUtils.availablePort())
   private[this] final val fakeJar = JarKey(CommonUtils.randomString(1), CommonUtils.randomString(1))
   private[this] final def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
@@ -96,17 +96,17 @@ class TestStreamApi extends SmallTest with Matchers {
 
   @Test
   def nameFieldCheck(): Unit = {
-    an[NullPointerException] should be thrownBy propertyAccess.request.name(null)
-    an[IllegalArgumentException] should be thrownBy propertyAccess.request.name("")
+    an[NullPointerException] should be thrownBy access.request.name(null)
+    an[IllegalArgumentException] should be thrownBy access.request.name("")
   }
 
   @Test
   def imageNameFieldCheck(): Unit = {
-    an[NullPointerException] should be thrownBy propertyAccess.request.imageName(null)
-    an[IllegalArgumentException] should be thrownBy propertyAccess.request.imageName("")
+    an[NullPointerException] should be thrownBy access.request.imageName(null)
+    an[IllegalArgumentException] should be thrownBy access.request.imageName("")
 
     // default value
-    propertyAccess.request
+    access.request
       .name(CommonUtils.randomString())
       .jar(fakeJar)
       .creation
@@ -115,65 +115,68 @@ class TestStreamApi extends SmallTest with Matchers {
 
   @Test
   def jarFieldCheck(): Unit = {
-    an[NullPointerException] should be thrownBy propertyAccess.request.imageName(null)
-    an[IllegalArgumentException] should be thrownBy propertyAccess.request.imageName("")
+    an[NullPointerException] should be thrownBy access.request.imageName(null)
+    an[IllegalArgumentException] should be thrownBy access.request.imageName("")
   }
 
   @Test
   def topicFromFieldCheck(): Unit = {
-    an[NullPointerException] should be thrownBy propertyAccess.request.from(null)
-    an[IllegalArgumentException] should be thrownBy propertyAccess.request.from(Set.empty)
+    an[NullPointerException] should be thrownBy access.request.from(null)
+    an[IllegalArgumentException] should be thrownBy access.request.from(Set.empty)
 
     // default value
-    propertyAccess.request.name(CommonUtils.randomString()).jar(fakeJar).creation.from shouldBe Set.empty
+    access.request.name(CommonUtils.randomString()).jar(fakeJar).creation.from shouldBe Set.empty
   }
 
   @Test
   def topicToFieldCheck(): Unit = {
-    an[NullPointerException] should be thrownBy propertyAccess.request.to(null)
-    an[IllegalArgumentException] should be thrownBy propertyAccess.request.to(Set.empty)
+    an[NullPointerException] should be thrownBy access.request.to(null)
+    an[IllegalArgumentException] should be thrownBy access.request.to(Set.empty)
 
     // default value
-    propertyAccess.request.name(CommonUtils.randomString()).jar(fakeJar).creation.to shouldBe Set.empty
+    access.request.name(CommonUtils.randomString()).jar(fakeJar).creation.to shouldBe Set.empty
   }
 
   @Test
   def jmxPortFieldCheck(): Unit = {
-    an[IllegalArgumentException] should be thrownBy propertyAccess.request.jmxPort(0)
-    an[IllegalArgumentException] should be thrownBy propertyAccess.request.jmxPort(-1)
+    an[IllegalArgumentException] should be thrownBy access.request.jmxPort(0)
+    an[IllegalArgumentException] should be thrownBy access.request.jmxPort(-1)
 
     // default value
-    CommonUtils.requireConnectionPort(
-      propertyAccess.request.name(CommonUtils.randomString()).jar(fakeJar).creation.jmxPort)
+    CommonUtils.requireConnectionPort(access.request.name(CommonUtils.randomString()).jar(fakeJar).creation.jmxPort)
   }
 
   @Test
   def instancesFieldCheck(): Unit = {
-    an[IllegalArgumentException] should be thrownBy propertyAccess.request.instances(0)
-    an[IllegalArgumentException] should be thrownBy propertyAccess.request.instances(-1)
+    an[IllegalArgumentException] should be thrownBy access.request.instances(0)
+    an[IllegalArgumentException] should be thrownBy access.request.instances(-1)
 
     // default value
-    propertyAccess.request.name(CommonUtils.randomString()).jar(fakeJar).creation.instances shouldBe 1
+    access.request.name(CommonUtils.randomString()).jar(fakeJar).creation.instances shouldBe 1
   }
 
   @Test
   def nodeNamesFieldCheck(): Unit = {
-    an[NullPointerException] should be thrownBy propertyAccess.request.nodeNames(null)
-    an[IllegalArgumentException] should be thrownBy propertyAccess.request.nodeNames(Set.empty)
+    an[NullPointerException] should be thrownBy access.request.nodeNames(null)
+    an[IllegalArgumentException] should be thrownBy access.request.nodeNames(Set.empty)
 
     // default value
-    propertyAccess.request.name(CommonUtils.randomString()).jar(fakeJar).creation.nodeNames shouldBe Set.empty
+    access.request.name(CommonUtils.randomString()).jar(fakeJar).creation.nodeNames shouldBe Set.empty
   }
 
   @Test
-  def requireFieldOnPropertyCreation(): Unit =
+  def requireFieldOnPropertyCreation(): Unit = {
+    // absent name will be auto generate
+    access.request.jar(JarKey("group", "name")).creation
+
     // jar is required
-    an[NullPointerException] should be thrownBy propertyAccess.request.name(CommonUtils.randomString()).creation
+    an[NullPointerException] should be thrownBy access.request.name(CommonUtils.randomString()).creation
+  }
 
   @Test
   def testMinimumCreation(): Unit = {
     val name = CommonUtils.randomString(10)
-    val creation = propertyAccess.request.name(name).jar(fakeJar).creation
+    val creation = access.request.name(name).jar(fakeJar).creation
 
     creation.name shouldBe name
     creation.imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
@@ -194,7 +197,7 @@ class TestStreamApi extends SmallTest with Matchers {
     val jmxPort = CommonUtils.availablePort()
     val instances = CommonUtils.randomString().length
     val nodeNames = Set(CommonUtils.randomString())
-    val creation = propertyAccess.request
+    val creation = access.request
       .name(name)
       .imageName(imageName)
       .jar(fakeJar)
@@ -362,16 +365,16 @@ class TestStreamApi extends SmallTest with Matchers {
   @Test
   def requireFieldOnPropertyUpdate(): Unit = {
     // name is required
-    an[NullPointerException] should be thrownBy result(propertyAccess.request.jar(JarKey("group", "name")).update())
+    an[NullPointerException] should be thrownBy result(access.request.jar(JarKey("group", "name")).update())
 
     // no jar is ok
-    propertyAccess.request.name(CommonUtils.randomString()).update
+    access.request.name(CommonUtils.randomString()).update
   }
 
   @Test
   def testDefaultUpdate(): Unit = {
     val name = CommonUtils.randomString(10)
-    val data = propertyAccess.request.name(name).update
+    val data = access.request.name(name).update
     data.imageName.isEmpty shouldBe true
     data.from.isEmpty shouldBe true
     data.to.isEmpty shouldBe true
@@ -515,7 +518,7 @@ class TestStreamApi extends SmallTest with Matchers {
   }
 
   @Test
-  def ignoreNameOnCreation(): Unit = StreamApi.accessOfProperty
+  def ignoreNameOnCreation(): Unit = StreamApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request

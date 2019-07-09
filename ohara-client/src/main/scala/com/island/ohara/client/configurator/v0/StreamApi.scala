@@ -37,7 +37,6 @@ object StreamApi {
   final val IMAGE_NAME_DEFAULT: String = s"oharastream/streamapp:${VersionUtils.VERSION}"
 
   val STREAM_PREFIX_PATH: String = "stream"
-  val STREAM_PROPERTY_PREFIX_PATH: String = "property"
   val START_COMMAND: String = "start"
   val STOP_COMMAND: String = "stop"
 
@@ -205,7 +204,11 @@ object StreamApi {
     private[v0] def update: Update
   }
 
-  sealed abstract class ActionAccess extends BasicAccess(s"$STREAM_PREFIX_PATH") {
+  final class Access
+      extends com.island.ohara.client.configurator.v0.Access[StreamAppDescription](s"$STREAM_PREFIX_PATH") {
+
+    private[this] def actionUrl(name: String, action: String): String =
+      s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$name/$action"
 
     /**
       *  start a streamApp
@@ -214,7 +217,8 @@ object StreamApi {
       * @param executionContext execution context
       * @return information of streamApp (status "RUNNING" if success, "EXITED" if fail)
       */
-    def start(name: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription]
+    def start(name: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription] =
+      exec.put[StreamAppDescription, ErrorApi.Error](actionUrl(name, START_COMMAND))
 
     /**
       * stop a streamApp
@@ -223,20 +227,9 @@ object StreamApi {
       * @param executionContext execution context
       * @return information of streamApp (status None if stop successful, or throw exception)
       */
-    def stop(name: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription]
-  }
-  def accessOfAction: ActionAccess = new ActionAccess {
-    private[this] def url(name: String, action: String): String =
-      s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$name/$action"
-    override def start(name: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription] =
-      exec.put[StreamAppDescription, ErrorApi.Error](url(name, START_COMMAND))
-    override def stop(name: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription] =
-      exec.put[StreamAppDescription, ErrorApi.Error](url(name, STOP_COMMAND))
-  }
+    def stop(name: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription] =
+      exec.put[StreamAppDescription, ErrorApi.Error](actionUrl(name, STOP_COMMAND))
 
-  final class AccessOfProperty
-      extends com.island.ohara.client.configurator.v0.Access[StreamAppDescription](
-        s"$STREAM_PREFIX_PATH/$STREAM_PROPERTY_PREFIX_PATH") {
     def request: Request = new Request {
       private[this] var name: String = _
       private[this] var _imageName: Option[String] = None
@@ -332,5 +325,5 @@ object StreamApi {
     }
   }
 
-  def accessOfProperty: AccessOfProperty = new AccessOfProperty
+  def access: Access = new Access
 }

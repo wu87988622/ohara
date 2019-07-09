@@ -2752,79 +2752,17 @@ The following information of StreamApp are updated by ohara.
 1. error (**option(string)**) — the error message from a failed streamApp. If the streamApp is fine or un-started, you won't get this field.
 1. lastModified (**long**) — last modified this jar time
 ----------
-### start a StreamApp
-
-*PUT /v0/stream/${name}/start*
-
-**Example Response**
-
-```json
-{
-  "name": "myApp",
-  "imageName": "oharastream/streamapp:0.7.0-SNAPSHOT",
-  "instances": 1,
-  "nodeNames": ["node1"],
-  "deadNodes": [],
-  "jar": {
-    "name": "streamapp",
-    "group": "wk01"
-  },
-  "from": [
-    "topicA"
-  ],
-  "to": [
-    "topicB"
-  ],
-  "state": "RUNNING",
-  "jmxPort": 5678,
-  "exactlyOnce": "false",
-  "metrics": [],
-  "lastModified": 1542102595892
-}
-```
-----------
-### stop a StreamApp
-
-This action will graceful stop and remove all docker containers belong to this streamApp.
-Note: successful stop streamApp will have no status.
-
-*PUT /v0/stream/${name}/stop*
-
-**Example Response**
-
-```json
-{
-  "name": "myApp",
-  "imageName": "oharastream/streamapp:0.7.0-SNAPSHOT",
-  "instances": 1,
-  "nodeNames": ["node1"],
-  "deadNodes": [],
-  "jar": {
-    "name": "streamapp",
-    "group": "wk01"
-  },
-  "from": [
-    "topicA"
-  ],
-  "to": [
-    "topicB"
-  ],
-  "jmxPort": 5678,
-  "exactlyOnce": "false",
-  "metrics": [],
-  "lastModified": 1542102595892
-}
-```
-----------
 ### create properties of specific streamApp
 
 Create the properties of a streamApp.
 
-*POST /v0/stream/property*
+*POST /v0/stream*
 
 **Example Request**
 
 1. name (**string**) — new streamApp name. This is the object unique name.
+    - The acceptable char is [0-9a-z]
+    - The maximum length is 20 chars
 1. imageName (**option(string)**) — image name of streamApp used to ; default is official streamapp image of current version
 1. jar (**object**) — the used jar object
     - jar.group (**string**) — the group name of this jar
@@ -2837,7 +2775,7 @@ Create the properties of a streamApp.
 
 ```json
 {
-  "name": "myApp",
+  "name": "myapp",
   "imageName": "oharastream/streamapp:0.7.0-SNAPSHOT",
   "jar": {
     "group": "wk01",
@@ -2878,7 +2816,7 @@ Create the properties of a streamApp.
 
 ```json
 {
-  "name": "myApp",
+  "name": "myapp",
   "imageName": "oharastream/streamapp:0.7.0-SNAPSHOT",
   "instances": 3,
   "nodeNames": [],
@@ -2905,7 +2843,7 @@ Create the properties of a streamApp.
 ----------
 ### get information from a specific streamApp cluster
 
-*GET /v0/stream/property/${name}*
+*GET /v0/stream/${name}*
 
 **Example Response**
 
@@ -2930,7 +2868,7 @@ Create the properties of a streamApp.
 
 ```json
 {
-  "name": "myApp",
+  "name": "myapp",
   "imageName": "oharastream/streamapp:0.7.0-SNAPSHOT",
   "instances": 3,
   "nodeNames": [],
@@ -2956,7 +2894,7 @@ Create the properties of a streamApp.
 
 Update the properties of a non-started streamApp. 
 
-*PUT /v0/stream/property/${name}*
+*PUT /v0/stream/${name}*
 
 **Example Request**
 
@@ -3010,7 +2948,7 @@ Update the properties of a non-started streamApp.
 
 ```json
 {
-  "name": "myApp",
+  "name": "myapp",
   "imageName": "myimage",
   "instances": 2,
   "nodeNames": ["node1", "node2"],
@@ -3037,7 +2975,7 @@ Update the properties of a non-started streamApp.
 Delete the properties of a non-started streamApp.
 This api only remove the streamApp component which is stored in pipeline. 
 
-*DELETE /v0/stream/property/${name}*
+*DELETE /v0/stream/${name}*
 
 **Example Response**
 
@@ -3048,7 +2986,73 @@ This api only remove the streamApp component which is stored in pipeline.
 > It is ok to delete an nonexistent properties, and the response is 204 NoContent.
 
 ----------
+### start a StreamApp
+
+*PUT /v0/stream/${name}/start*
+
+**Example Response**
+
+```json
+{
+  "name": "myapp",
+  "imageName": "oharastream/streamapp:0.7.0-SNAPSHOT",
+  "instances": 1,
+  "nodeNames": ["node1"],
+  "deadNodes": [],
+  "jar": {
+    "name": "streamapp",
+    "group": "wk01"
+  },
+  "from": [
+    "topicA"
+  ],
+  "to": [
+    "topicB"
+  ],
+  "state": "RUNNING",
+  "jmxPort": 5678,
+  "exactlyOnce": "false",
+  "metrics": [],
+  "lastModified": 1542102595892
+}
+```
+----------
+### stop a StreamApp
+
+This action will graceful stop and remove all docker containers belong to this streamApp.
+Note: successful stop streamApp will have no status.
+
+*PUT /v0/stream/${name}/stop*
+
+**Example Response**
+
+```json
+{
+  "name": "myapp",
+  "imageName": "oharastream/streamapp:0.7.0-SNAPSHOT",
+  "instances": 1,
+  "nodeNames": ["node1"],
+  "deadNodes": [],
+  "jar": {
+    "name": "streamapp",
+    "group": "wk01"
+  },
+  "from": [
+    "topicA"
+  ],
+  "to": [
+    "topicB"
+  ],
+  "jmxPort": 5678,
+  "exactlyOnce": "false",
+  "metrics": [],
+  "lastModified": 1542102595892
+}
+```
+----------
 ### get topology tree graph from specific streamApp
+
+[TODO] This is not implemented yet !
 
 *GET /v0/stream/view/${name}*
 

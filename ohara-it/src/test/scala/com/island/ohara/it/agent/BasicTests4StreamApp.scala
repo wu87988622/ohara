@@ -22,7 +22,6 @@ import java.util.concurrent.ExecutionException
 import com.island.ohara.agent.docker.{ContainerState, DockerClient}
 import com.island.ohara.client.configurator.v0.JarApi.JarKey
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.StreamApi.{AccessOfProperty, ActionAccess}
 import com.island.ohara.client.configurator.v0.{ZookeeperApi, _}
 import com.island.ohara.common.data.{Row, Serializer}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -73,8 +72,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
   private[this] var topicApi: TopicApi.Access = _
   private[this] var jarApi: JarApi.Access = _
 
-  private[this] var streamAppActionAccess: ActionAccess = _
-  private[this] var streamAppPropertyAccess: AccessOfProperty = _
+  private[this] var access: StreamApi.Access = _
   private[this] var bkName: String = _
   private[this] var wkName: String = _
   private[this] var brokerConnProps: String = _
@@ -98,8 +96,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
       containerApi = ContainerApi.access.hostname(configurator.hostname).port(configurator.port)
       topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
       jarApi = JarApi.access.hostname(configurator.hostname).port(configurator.port)
-      streamAppActionAccess = StreamApi.accessOfAction.hostname(configurator.hostname).port(configurator.port)
-      streamAppPropertyAccess = StreamApi.accessOfProperty.hostname(configurator.hostname).port(configurator.port)
+      access = StreamApi.access.hostname(configurator.hostname).port(configurator.port)
       val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
       // add all available nodes
       nodeCache.foreach { node =>
@@ -164,14 +161,11 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
 
     // create streamApp properties
     val stream = result(
-      streamAppPropertyAccess.request
-        .name(CommonUtils.randomString(10))
-        .jar(JarKey(jarInfo.group, jarInfo.name))
-        .create())
+      access.request.name(CommonUtils.randomString(10)).jar(JarKey(jarInfo.group, jarInfo.name)).create())
 
     // update streamApp properties (use non-existed topics to make sure cluster failed)
     val properties = result(
-      streamAppPropertyAccess.request.name(stream.name).from(Set("bar-fake")).to(Set("foo-fake")).update()
+      access.request.name(stream.name).from(Set("bar-fake")).to(Set("foo-fake")).update()
     )
     properties.from.size shouldBe 1
     properties.to.size shouldBe 1
@@ -180,7 +174,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     properties.error shouldBe None
 
     // start streamApp
-    result(streamAppActionAccess.start(stream.name))
+    result(access.start(stream.name))
 
     // get the actually container names
     val map = nodeCache.map { node =>
@@ -198,7 +192,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     // we only have one instance, container exited means cluster dead (the state here uses container state is ok
     // since we use the same name for cluster state
     await(() => {
-      val res = result(streamAppPropertyAccess.get(stream.name))
+      val res = result(access.get(stream.name))
       res.state.isDefined && res.state.get == ContainerState.DEAD.name &&
       // only 1 instance, dead nodes are equal to all nodes
       res.deadNodes == res.nodeNames &&
@@ -206,11 +200,11 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     })
 
     // stop and remove failed cluster gracefully
-    result(streamAppActionAccess.stop(stream.name))
+    result(access.stop(stream.name))
 
     // wait streamApp until removed actually
     await(() => {
-      val res = result(streamAppPropertyAccess.get(stream.name))
+      val res = result(access.get(stream.name))
       res.state.isEmpty
     })
 
@@ -249,19 +243,11 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
 
     // create streamApp properties
     val stream = result(
-      streamAppPropertyAccess.request
-        .name(CommonUtils.randomString(10))
-        .jar(JarKey(jarInfo.group, jarInfo.name))
-        .create())
+      access.request.name(CommonUtils.randomString(10)).jar(JarKey(jarInfo.group, jarInfo.name)).create())
 
     // update streamApp properties
     val properties = result(
-      streamAppPropertyAccess.request
-        .name(stream.name)
-        .from(Set(topic1.name))
-        .to(Set(topic2.name))
-        .instances(instances)
-        .update()
+      access.request.name(stream.name).from(Set(topic1.name)).to(Set(topic2.name)).instances(instances).update()
     )
     properties.from.size shouldBe 1
     properties.to.size shouldBe 1
@@ -270,7 +256,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     properties.error shouldBe None
 
     // get streamApp property (cluster not create yet, hence no state)
-    val getProperties = result(streamAppPropertyAccess.get(stream.name))
+    val getProperties = result(access.get(stream.name))
     getProperties.from.size shouldBe 1
     getProperties.to.size shouldBe 1
     getProperties.instances shouldBe instances
@@ -279,7 +265,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
 
     // start streamApp
     val res1 =
-      result(streamAppActionAccess.start(stream.name))
+      result(access.start(stream.name))
     res1.name shouldBe stream.name
     res1.state.get shouldBe ContainerState.RUNNING.name
     res1.error shouldBe None
@@ -287,8 +273,8 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     nameHolder.addClusterName(res1.name)
 
     // check the cluster has the metrics data (each stream cluster has two metrics : IN_TOPIC and OUT_TOPIC)
-    await(() => result(streamAppPropertyAccess.get(stream.name)).metrics.meters.nonEmpty)
-    result(streamAppPropertyAccess.get(stream.name)).metrics.meters.size shouldBe 2
+    await(() => result(access.get(stream.name)).metrics.meters.nonEmpty)
+    result(access.get(stream.name)).metrics.meters.size shouldBe 2
 
     // write some data into topic
     val producer = Producer
@@ -320,10 +306,10 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     } finally producer.close()
 
     // wait until the metrics cache data update
-    await(() => result(streamAppPropertyAccess.get(stream.name)).metrics.meters.forall(_.value > 0))
+    await(() => result(access.get(stream.name)).metrics.meters.forall(_.value > 0))
 
     // check the metrics data again
-    val metrics = result(streamAppPropertyAccess.get(stream.name)).metrics.meters
+    val metrics = result(access.get(stream.name)).metrics.meters
     metrics.foreach { metric =>
       metric.document should include("the number of rows")
       metric.value shouldBe 1D
@@ -331,12 +317,12 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
 
     //stop streamApp
     val res2 =
-      result(streamAppActionAccess.stop(stream.name))
+      result(access.stop(stream.name))
     res2.state.isEmpty shouldBe true
     res2.error shouldBe None
 
     // after stop streamApp, property should still exist
-    result(streamAppPropertyAccess.get(stream.name)).name shouldBe stream.name
+    result(access.get(stream.name)).name shouldBe stream.name
   }
 
   @After
