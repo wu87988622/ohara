@@ -287,8 +287,6 @@ const WorkerNewModal = props => {
 
     const workerClusterName = get(worker, 'data.result.name');
     await waitForServiceCreation(workerClusterName);
-
-    saveService({ service: 'wk', name: workerClusterName });
   };
 
   const onSubmit = async (values, form) => {
