@@ -104,19 +104,3 @@ export const addNodeToWorker = async params => {
     handleError(err);
   }
 };
-
-export const deleteWorker = async name => {
-  try {
-    const url = `/api/workers/${name}`;
-    const res = await axiosInstance.delete(url);
-    const isSuccess = get(res, 'data.isSuccess', false);
-
-    if (!isSuccess) {
-      handleError(res);
-    }
-
-    return res;
-  } catch (err) {
-    handleError(err);
-  }
-};
