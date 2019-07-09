@@ -99,16 +99,14 @@ class StreamApp extends React.Component {
     }
   };
 
-  handleSave = async ({ name, instances, from, to }) => {
+  handleSave = async ({ instances, from, to }) => {
     const { graph, updateGraph } = this.props;
-    const { streamAppName, streamApp } = this.state;
-    const { name: jarName } = streamApp.jar;
+    const { streamAppName } = this.state;
     const fromTopic = from ? [from] : [];
     const toTopic = to ? [to] : [];
 
     const params = {
       name: streamAppName,
-      jarName,
       instances,
       from: fromTopic,
       to: toTopic,
