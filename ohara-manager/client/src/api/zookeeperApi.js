@@ -69,3 +69,19 @@ export const createZookeeper = async params => {
     handleError(err);
   }
 };
+
+export const deleteZookeeper = async name => {
+  try {
+    const url = `/api/zookeepers/${name}`;
+    const res = await axiosInstance.delete(url);
+    const isSuccess = get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};

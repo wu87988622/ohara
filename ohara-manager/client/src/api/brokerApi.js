@@ -92,3 +92,19 @@ export const addNodeToBroker = async params => {
     handleError(err);
   }
 };
+
+export const deleteBroker = async name => {
+  try {
+    const url = `/api/brokers/${name}`;
+    const res = await axiosInstance.delete(url);
+    const isSuccess = get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};

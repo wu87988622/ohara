@@ -48,6 +48,7 @@ const WorkerNewModal = props => {
   const [jars, setJars] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessenge, setErrorMessenge] = useState('');
+  let workingService = [];
 
   const uploadJar = async file => {
     const res = await jarApi.createJar({
@@ -107,6 +108,7 @@ const WorkerNewModal = props => {
     setCheckedFiles([]);
     setCheckedNodes([]);
     handleModalClose();
+    setIsLoading(false);
   };
 
   const validateServiceName = value => {
@@ -123,6 +125,78 @@ const WorkerNewModal = props => {
     return value;
   };
 
+  const waitDeleteService = async params => {
+    const { service, name } = params;
+    let { retryCount } = params;
+    const maxRetry = 10;
+    switch (service) {
+      case 'zk':
+        const zkRes = await zookeeperApi.fetchZookeepers();
+        const zkResult = zkRes.data.result.some(e => e.name === name);
+
+        if (!zkResult) return;
+        if (retryCount > maxRetry) {
+          toastr.error(`Failed to delete zookeeper: ${name}`);
+          return;
+        }
+
+        await commonUtils.sleep(3000);
+        retryCount++;
+        await waitDeleteService({ service, name, retryCount });
+        return;
+
+      case 'bk':
+        const bkRes = await brokerApi.fetchBrokers();
+        const bkResult = bkRes.data.result.some(e => e.name === name);
+
+        if (!bkResult) return;
+        if (retryCount > maxRetry) {
+          toastr.error(`Failed to delete broker: ${name}`);
+          return;
+        }
+
+        await commonUtils.sleep(3000);
+        retryCount++;
+        await waitDeleteService({ service, name, retryCount });
+        return;
+      default:
+        return;
+    }
+  };
+
+  const saveService = params => {
+    const newSave = [...workingService];
+    newSave.push(params);
+    workingService = newSave;
+  };
+
+  const deleteAllSerice = async () => {
+    const bks = workingService.filter(working => working.service === 'bk');
+    const zks = workingService.filter(working => working.service === 'zk');
+
+    await Promise.all(
+      bks.map(async bk => {
+        await brokerApi.deleteBroker(`${bk.name}`);
+        await waitDeleteService({
+          service: 'bk',
+          name: bk.name,
+          retryCount: 0,
+        });
+      }),
+    );
+
+    await Promise.all(
+      zks.map(async zk => {
+        await zookeeperApi.deleteZookeeper(`${zk.name}`);
+        await waitDeleteService({
+          service: 'zk',
+          name: zk.name,
+          retryCount: 0,
+        });
+      }),
+    );
+  };
+
   const createServices = async values => {
     setIsLoading(true);
 
@@ -131,7 +205,7 @@ const WorkerNewModal = props => {
     const maxRetry = 5;
     let retryCount = 0;
     const waitForServiceCreation = async clusterName => {
-      if (!clusterName) return;
+      if (!clusterName) throw new Error();
 
       const res = await containerApi.fetchContainers(clusterName);
       const containers = get(res, 'data.result[0].containers', null);
@@ -173,6 +247,8 @@ const WorkerNewModal = props => {
     const zookeeperClusterName = get(zookeeper, 'data.result.name');
     await waitForServiceCreation(zookeeperClusterName);
 
+    saveService({ service: 'zk', name: zookeeperClusterName });
+
     const broker = await brokerApi.createBroker({
       name: generate.serviceName(),
       zookeeperClusterName,
@@ -184,6 +260,8 @@ const WorkerNewModal = props => {
 
     const brokerClusterName = get(broker, 'data.result.name');
     await waitForServiceCreation(brokerClusterName);
+
+    saveService({ service: 'bk', name: brokerClusterName });
 
     const worker = await workerApi.createWorker({
       name: validateServiceName(values.name),
@@ -200,6 +278,8 @@ const WorkerNewModal = props => {
 
     const workerClusterName = get(worker, 'data.result.name');
     await waitForServiceCreation(workerClusterName);
+
+    saveService({ service: 'wk', name: workerClusterName });
   };
 
   const onSubmit = async (values, form) => {
@@ -212,11 +292,11 @@ const WorkerNewModal = props => {
     } catch (error) {
       // Ignore the error
 
-      toastr.error('Failed to create workspace!');
+      toastr.error('Failed to create services, deleting the workspace…');
+      await deleteAllSerice();
       resetModal(form);
       return;
     }
-    setIsLoading(false);
     toastr.success(MESSAGES.SERVICE_CREATION_SUCCESS);
     props.onConfirm();
     resetModal(form);
