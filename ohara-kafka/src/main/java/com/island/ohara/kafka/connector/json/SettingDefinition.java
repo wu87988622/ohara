@@ -74,7 +74,7 @@ public class SettingDefinition implements JsonObject {
       SettingDefinition.builder()
           .displayName("Topics")
           .key("topics")
-          .valueType(Type.LIST)
+          .valueType(Type.ARRAY)
           .documentation("the topics used by connector")
           .reference(Reference.TOPIC)
           .group(CORE_GROUP)
@@ -220,7 +220,8 @@ public class SettingDefinition implements JsonObject {
     INT,
     LONG,
     DOUBLE,
-    LIST,
+    /** ARRAY is a better naming than LIST as LIST has another meaning to ohara manager. */
+    ARRAY,
     CLASS,
     PASSWORD,
     /**
@@ -286,7 +287,7 @@ public class SettingDefinition implements JsonObject {
         return ConfigDef.Type.LONG;
       case DOUBLE:
         return ConfigDef.Type.DOUBLE;
-      case LIST:
+      case ARRAY:
         return ConfigDef.Type.LIST;
       case CLASS:
         return ConfigDef.Type.CLASS;
