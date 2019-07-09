@@ -164,6 +164,21 @@ const WorkerNewModal = props => {
         retryCount++;
         await waitDeleteService({ service, name, retryCount });
         return;
+
+      case 'wk':
+        const wkRes = await workerApi.fetchWorkers();
+        const wkResult = wkRes.data.result.some(e => e.name === name);
+
+        if (!wkResult) return;
+        if (retryCount > maxRetry) {
+          toastr.error(`Failed to delete broker: ${name}`);
+          return;
+        }
+
+        await commonUtils.sleep(3000);
+        retryCount++;
+        await waitDeleteService({ service, name, retryCount });
+        return;
       default:
         return;
     }
@@ -180,8 +195,20 @@ const WorkerNewModal = props => {
       const { name, group } = plugin.data.result;
       jarApi.deleteJar({ name: name, workerClusterName: group });
     });
+    const wks = workingService.filter(working => working.service === 'wk');
     const bks = workingService.filter(working => working.service === 'bk');
     const zks = workingService.filter(working => working.service === 'zk');
+
+    await Promise.all(
+      wks.map(async wk => {
+        await workerApi.deleteWorker(`${wk.name}`);
+        await waitDeleteService({
+          service: 'wk',
+          name: wk.name,
+          retryCount: 0,
+        });
+      }),
+    );
 
     await Promise.all(
       bks.map(async bk => {
@@ -287,6 +314,8 @@ const WorkerNewModal = props => {
 
     const workerClusterName = get(worker, 'data.result.name');
     await waitForServiceCreation(workerClusterName);
+
+    saveService({ service: 'wk', name: workerClusterName });
   };
 
   const onSubmit = async (values, form) => {
