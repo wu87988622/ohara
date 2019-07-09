@@ -191,7 +191,7 @@ const WorkerNewModal = props => {
 
   const deleteAllservices = async () => {
     plugins.forEach(plugin => {
-      const { name, group } = plugin.data.result;
+      const { name, group } = plugin;
       jarApi.deleteJar({ name, workerClusterName: group });
     });
     const wks = workingServices.filter(working => working.service === 'worker');
@@ -281,7 +281,7 @@ const WorkerNewModal = props => {
     const zookeeperClusterName = get(zookeeper, 'data.result.name');
     await waitForServiceCreation(zookeeperClusterName);
 
-    saveService({ service: 'zoopeeker', name: zookeeperClusterName });
+    saveService({ service: 'zookeeper', name: zookeeperClusterName });
 
     const broker = await brokerApi.createBroker({
       name: generate.serviceName(),
