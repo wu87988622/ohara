@@ -129,7 +129,7 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
   cypress = execa(
     'yarn',
     [
-      'e2e:run',
+      'test:e2e:run',
       '--config',
       `baseUrl=http://localhost:${prod ? serverPort : clientPort}`,
       '--env',

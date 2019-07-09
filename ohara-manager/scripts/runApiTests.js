@@ -30,6 +30,7 @@ const { configurator, port } = getConfig();
 const run = async (apiRoot, serverPort = 5050) => {
   let server;
   let cypress;
+
   serverPort = serverPort === 0 ? commonUtils.randomPort() : serverPort;
 
   // Start ohara manager server
@@ -55,11 +56,11 @@ const run = async (apiRoot, serverPort = 5050) => {
   await utils.waitOnService(`http://localhost:${serverPort}`);
 
   // Run api test
-  console.log(chalk.blue('Running end to end tests with Cypress'));
+  console.log(chalk.blue('Running API tests with Cypress'));
   cypress = execa(
     'yarn',
     [
-      'e2e:run',
+      'test:api:run',
       '--config',
       `baseUrl=http://localhost:${serverPort},integrationFolder=cypress/api`,
     ],
