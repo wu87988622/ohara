@@ -38,7 +38,7 @@ const OverviewTopics = props => {
         <StyledIconLink onClick={() => handleRedirect('topics')}>
           <StyledIcon
             className="fas fa-external-link-square-alt"
-            data-testid="linkToTopics"
+            data-testid="overview-topics-link"
           />
         </StyledIconLink>
       </TabHeading>

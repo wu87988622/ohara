@@ -113,7 +113,7 @@ const OverviewNodes = props => {
         <StyledIconLink onClick={() => handleRedirect('nodes')}>
           <StyledIcon
             className="fas fa-external-link-square-alt"
-            data-testid="linkToNodes"
+            data-testid="overview-nodes-link"
           />
         </StyledIconLink>
       </TabHeading>

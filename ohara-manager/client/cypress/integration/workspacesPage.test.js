@@ -159,14 +159,14 @@ describe('WorkspacesPage', () => {
       .should('have.length', 0);
   });
 
-  it('use overview link to other service', () => {
+  it('should link to the correct service page', () => {
     cy.visit(WORKSPACES)
       .wait('@getWorkers')
       .getByTestId(Cypress.env('WORKER_NAME'))
       .click()
       .url()
       .should('include', '/overview')
-      .getByTestId('linkToNodes')
+      .getByTestId('overview-nodes-link')
       .click()
       .url()
       .should('include', '/nodes')
@@ -174,7 +174,7 @@ describe('WorkspacesPage', () => {
       .within(() => {
         cy.getByText('Overview').click();
       })
-      .getByTestId('linkToTopics')
+      .getByTestId('overview-topics-link')
       .click()
       .url()
       .should('include', '/topics')
@@ -182,13 +182,13 @@ describe('WorkspacesPage', () => {
       .within(() => {
         cy.getByText('Overview').click();
       })
-      .getByTestId('linkToStreamapps')
+      .getByTestId('overview-streamapps-link')
       .click()
       .url()
       .should('include', '/streamapps');
   });
 
-  it('check overview info', () => {
+  it('should display the overview info', () => {
     cy.createTopic()
       .as('overviewTopic')
       .visit(WORKSPACES)
@@ -213,12 +213,12 @@ describe('WorkspacesPage', () => {
             .getByText(`Jmxport: ${jmxPort}`)
             .should('have.length', 1);
         });
+
         const connectors = xhr.response.body.connectors;
         connectors.forEach(connector => {
           const name = connector.className.split('.').pop();
-          if (name === 'PerfSource') {
-            return;
-          }
+          if (name === 'PerfSource') return;
+
           cy.getByText(name)
             .should('have.length', 1)
             .getByTestId(`${name}-tooltip`)
@@ -234,6 +234,7 @@ describe('WorkspacesPage', () => {
               cy.getByText(definition.defaultValue).should('have.length', 1);
             }
           });
+
           cy.getByTestId(`${name}-tooltip`).trigger('mouseout');
         });
       })
