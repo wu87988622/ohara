@@ -36,7 +36,7 @@ describe('fetchProperty()', () => {
 
     const result = await streamApi.fetchProperty(name);
     expect(axiosInstance.get).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.get).toHaveBeenCalledWith(`${url}/property/${name}`);
+    expect(axiosInstance.get).toHaveBeenCalledWith(`${url}/${name}`);
     expect(result).toBe(res);
   });
 
@@ -51,7 +51,7 @@ describe('fetchProperty()', () => {
     const result = await streamApi.fetchProperty(name);
 
     expect(axiosInstance.get).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.get).toHaveBeenCalledWith(`${url}/property/${name}`);
+    expect(axiosInstance.get).toHaveBeenCalledWith(`${url}/${name}`);
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(result);
   });
@@ -94,7 +94,7 @@ describe('createProperty()', () => {
 
     const result = await streamApi.createProperty(params);
     expect(axiosInstance.post).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.post).toHaveBeenCalledWith(`${url}/property`, params);
+    expect(axiosInstance.post).toHaveBeenCalledWith(`${url}`, params);
     expect(result).toBe(res);
   });
 
@@ -109,7 +109,7 @@ describe('createProperty()', () => {
     const result = await streamApi.createProperty(params);
 
     expect(axiosInstance.post).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.post).toHaveBeenCalledWith(`${url}/property`, params);
+    expect(axiosInstance.post).toHaveBeenCalledWith(`${url}`, params);
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(result);
   });
@@ -158,7 +158,7 @@ describe('updateProperty()', () => {
     const result = await streamApi.updateProperty(params);
     expect(axiosInstance.put).toHaveBeenCalledTimes(1);
     expect(axiosInstance.put).toHaveBeenCalledWith(
-      `${url}/property/${params.name}`,
+      `${url}/${params.name}`,
       data,
     );
     expect(result).toBe(res);
@@ -176,7 +176,7 @@ describe('updateProperty()', () => {
 
     expect(axiosInstance.put).toHaveBeenCalledTimes(1);
     expect(axiosInstance.put).toHaveBeenCalledWith(
-      `${url}/property/${params.name}`,
+      `${url}/${params.name}`,
       data,
     );
     expect(handleError).toHaveBeenCalledTimes(1);
@@ -215,9 +215,7 @@ describe('deleteProperty()', () => {
 
     const result = await streamApi.deleteProperty(name);
     expect(axiosInstance.delete).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.delete).toHaveBeenCalledWith(
-      `${url}/property/${name}`,
-    );
+    expect(axiosInstance.delete).toHaveBeenCalledWith(`${url}/${name}`);
     expect(result).toBe(res);
   });
 
@@ -232,9 +230,7 @@ describe('deleteProperty()', () => {
     const result = await streamApi.deleteProperty(name);
 
     expect(axiosInstance.delete).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.delete).toHaveBeenCalledWith(
-      `${url}/property/${name}`,
-    );
+    expect(axiosInstance.delete).toHaveBeenCalledWith(`${url}/${name}`);
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(result);
   });
