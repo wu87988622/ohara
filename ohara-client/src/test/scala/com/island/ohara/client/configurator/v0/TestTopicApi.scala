@@ -26,11 +26,13 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class TestTopicApi extends SmallTest with Matchers {
 
   @Test
-  def ignoreNameOnCreation(): Unit = an[NullPointerException] should be thrownBy TopicApi.access
+  def ignoreNameOnCreation(): Unit = TopicApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
-    .create()
+    .creation
+    .name
+    .length should not be 0
 
   @Test
   def ignoreNameOnUpdate(): Unit = an[NullPointerException] should be thrownBy TopicApi.access
@@ -121,4 +123,10 @@ class TestTopicApi extends SmallTest with Matchers {
     update2.numberOfPartitions shouldBe None
     update2.numberOfReplications shouldBe None
   }
+
+  @Test
+  def nullTags(): Unit = an[NullPointerException] should be thrownBy TopicApi.access.request.tags(null)
+
+  @Test
+  def emptyTags(): Unit = TopicApi.access.request.tags(Set.empty)
 }

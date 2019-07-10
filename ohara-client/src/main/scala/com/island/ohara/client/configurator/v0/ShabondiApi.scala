@@ -36,6 +36,9 @@ final object ShabondiApi {
                                        instances: Int)
       extends Data {
     override def kind: String = "shabondi"
+
+    // TODO: Does shabondi need the tags? by chia
+    override def tags: Set[String] = Set.empty
   }
 
   final case class ShabondiProperty(to: Option[Seq[String]], port: Option[Int])

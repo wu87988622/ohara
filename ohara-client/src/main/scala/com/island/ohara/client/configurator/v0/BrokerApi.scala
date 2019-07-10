@@ -43,6 +43,9 @@ object BrokerApi {
                                                 nodeNames: Set[String])
       extends ClusterCreationRequest {
     override def ports: Set[Int] = Set(clientPort, exporterPort, jmxPort)
+    // the properties is not stored in configurator so we can't maintain the tags now
+    // TODO: see https://github.com/oharastream/ohara/issues/1544
+    override def tags: Set[String] = Set.empty
   }
 
   /**
@@ -61,7 +64,7 @@ object BrokerApi {
       .nullToRandomPort("jmxPort")
       .requireBindPort("jmxPort")
       .nullToString("imageName", IMAGE_NAME_DEFAULT)
-      .stringRestriction("name")
+      .stringRestriction(Data.NAME_KEY)
       .withNumber()
       .withLowerCase()
       .withLengthLimit(LIMIT_OF_NAME_LENGTH)
@@ -95,6 +98,7 @@ object BrokerApi {
     * used to generate the payload and url for POST/PUT request.
     */
   sealed trait Request {
+    @Optional("default name is a random string")
     def name(name: String): Request
     @Optional("the default image is IMAGE_NAME_DEFAULT")
     def imageName(imageName: String): Request
@@ -124,7 +128,7 @@ object BrokerApi {
 
   final class Access private[BrokerApi] extends ClusterAccess[BrokerClusterInfo](BROKER_PREFIX_PATH) {
     def request: Request = new Request {
-      private[this] var name: String = _
+      private[this] var name: String = CommonUtils.randomString(LIMIT_OF_NAME_LENGTH)
       private[this] var imageName: String = IMAGE_NAME_DEFAULT
       private[this] var zookeeperClusterName: String = _
       private[this] var clientPort: Int = CommonUtils.availablePort()

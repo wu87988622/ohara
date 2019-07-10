@@ -50,29 +50,31 @@ private[configurator] object TopicRoute {
     metrics = metrics(brokerCluster, topicInfo.name)
   )
 
-  private[this] def createTopic(
-    client: TopicAdmin,
-    clusterName: String,
-    name: String,
-    numberOfPartitions: Int,
-    numberOfReplications: Short)(implicit executionContext: ExecutionContext): Future[TopicInfo] = client.creator
-    .name(name)
-    .numberOfPartitions(numberOfPartitions)
-    .numberOfReplications(numberOfReplications)
-    .threadPool(executionContext)
-    .create()
-    .map { info =>
-      try TopicInfo(
-        name,
-        info.numberOfPartitions,
-        info.numberOfReplications,
-        clusterName,
-        // the topic is just created so we don't fetch the "empty" metrics actually.
-        metrics = Metrics(Seq.empty),
-        CommonUtils.current()
-      )
-      finally client.close()
-    }
+  private[this] def createTopic(client: TopicAdmin,
+                                clusterName: String,
+                                name: String,
+                                numberOfPartitions: Int,
+                                numberOfReplications: Short,
+                                tags: Set[String])(implicit executionContext: ExecutionContext): Future[TopicInfo] =
+    client.creator
+      .name(name)
+      .numberOfPartitions(numberOfPartitions)
+      .numberOfReplications(numberOfReplications)
+      .threadPool(executionContext)
+      .create()
+      .map { info =>
+        try TopicInfo(
+          name,
+          info.numberOfPartitions,
+          info.numberOfReplications,
+          clusterName,
+          // the topic is just created so we don't fetch the "empty" metrics actually.
+          metrics = Metrics(Seq.empty),
+          CommonUtils.current(),
+          tags
+        )
+        finally client.close()
+      }
 
   def apply(implicit store: DataStore,
             adminCleaner: AdminCleaner,
@@ -93,7 +95,8 @@ private[configurator] object TopicRoute {
                   clusterName = cluster.name,
                   name = creation.name,
                   numberOfPartitions = creation.numberOfPartitions,
-                  numberOfReplications = creation.numberOfReplications
+                  numberOfReplications = creation.numberOfReplications,
+                  tags = creation.tags
                 )
             }
       },
@@ -110,7 +113,8 @@ private[configurator] object TopicRoute {
                     clusterName = cluster.name,
                     name = name,
                     numberOfPartitions = update.numberOfPartitions.getOrElse(DEFAULT_NUMBER_OF_PARTITIONS),
-                    numberOfReplications = update.numberOfReplications.getOrElse(DEFAULT_NUMBER_OF_REPLICATIONS)
+                    numberOfReplications = update.numberOfReplications.getOrElse(DEFAULT_NUMBER_OF_REPLICATIONS),
+                    tags = update.tags.getOrElse(Set.empty)
                   )) {
                     topicFromKafka =>
                       if (update.numberOfPartitions.exists(_ < topicFromKafka.numberOfPartitions)) {
@@ -129,7 +133,9 @@ private[configurator] object TopicRoute {
                             info.numberOfReplications,
                             cluster.name,
                             metrics = Metrics(Seq.empty),
-                            CommonUtils.current()
+                            CommonUtils.current(),
+                            // the topic exists so previous must be defined
+                            tags = update.tags.getOrElse(previous.get.tags)
                           )
                           finally client.close()
                         }
@@ -143,7 +149,8 @@ private[configurator] object TopicRoute {
                           topicFromKafka.numberOfReplications,
                           cluster.name,
                           metrics = Metrics(Seq.empty),
-                          CommonUtils.current()
+                          CommonUtils.current(),
+                          tags = update.tags.getOrElse(previous.map(_.tags).getOrElse(Set.empty))
                         ))
                       }
                   }

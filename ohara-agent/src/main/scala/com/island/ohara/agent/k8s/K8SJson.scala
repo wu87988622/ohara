@@ -106,7 +106,7 @@ object K8SJson {
   implicit val CREATEPOD_ENV_FORMAT: RootJsonFormat[CreatePodEnv] = jsonFormat2(CreatePodEnv)
 
   implicit val IMAGE_PULL_POLICY_FORMAT: RootJsonFormat[ImagePullPolicy] = new RootJsonFormat[ImagePullPolicy] {
-    override def read(json: JsValue): ImagePullPolicy = ImagePullPolicy.forName(json.asInstanceOf[JsString].value)
+    override def read(json: JsValue): ImagePullPolicy = ImagePullPolicy.forName(json.convertTo[String])
 
     override def write(obj: ImagePullPolicy): JsValue = JsString(obj.toString)
   }

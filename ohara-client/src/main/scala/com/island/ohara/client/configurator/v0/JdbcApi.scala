@@ -15,6 +15,9 @@
  */
 
 package com.island.ohara.client.configurator.v0
+import java.util.Objects
+
+import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
@@ -23,16 +26,20 @@ import scala.concurrent.{ExecutionContext, Future}
 
 object JdbcApi {
   val JDBC_PREFIX_PATH: String = "jdbc"
-  final case class Update(url: Option[String], user: Option[String], password: Option[String])
+  final case class Update(url: Option[String],
+                          user: Option[String],
+                          password: Option[String],
+                          tags: Option[Set[String]])
   implicit val JDBC_UPDATE_JSON_FORMAT: RootJsonFormat[Update] =
-    JsonRefiner[Update].format(jsonFormat3(Update)).rejectEmptyString().refine
+    JsonRefiner[Update].format(jsonFormat4(Update)).rejectEmptyString().refine
 
-  final case class Creation(name: String, url: String, user: String, password: String) extends CreationRequest
+  final case class Creation(name: String, url: String, user: String, password: String, tags: Set[String])
+      extends CreationRequest
   implicit val JDBC_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
     JsonRefiner[Creation]
-      .format(jsonFormat4(Creation))
+      .format(jsonFormat5(Creation))
       .rejectEmptyString()
-      .stringRestriction("name")
+      .stringRestriction(Data.NAME_KEY)
       .withNumber()
       .withCharset()
       .withDot()
@@ -40,19 +47,39 @@ object JdbcApi {
       .withUnderLine()
       .toRefiner
       .nullToString("name", () => CommonUtils.randomString(10))
+      .nullToEmptyArray(Data.TAGS_KEY)
       .refine
 
-  final case class JdbcInfo(name: String, url: String, user: String, password: String, lastModified: Long)
+  final case class JdbcInfo(name: String,
+                            url: String,
+                            user: String,
+                            password: String,
+                            lastModified: Long,
+                            tags: Set[String])
       extends Data {
     override def kind: String = "jdbc"
   }
-  implicit val JDBC_INFO_JSON_FORMAT: RootJsonFormat[JdbcInfo] = jsonFormat5(JdbcInfo)
+  implicit val JDBC_INFO_JSON_FORMAT: RootJsonFormat[JdbcInfo] = jsonFormat6(JdbcInfo)
 
   trait Request {
+    @Optional("default name is a random string. But it is required in updating")
     def name(name: String): Request
+
+    @Optional("it is ignorable if you are going to send update request")
     def url(url: String): Request
+
+    @Optional("it is ignorable if you are going to send update request")
     def user(user: String): Request
+
+    @Optional("it is ignorable if you are going to send update request")
     def password(password: String): Request
+
+    @Optional("default value is empty array")
+    def tags(tags: Set[String]): Request
+
+    private[v0] def creation: Creation
+
+    private[v0] def update: Update
 
     /**
       * generate the POST request
@@ -75,6 +102,7 @@ object JdbcApi {
       private[this] var url: String = _
       private[this] var user: String = _
       private[this] var password: String = _
+      private[this] var tags: Set[String] = _
 
       override def name(name: String): Request = {
         this.name = CommonUtils.requireNonEmpty(name)
@@ -96,24 +124,35 @@ object JdbcApi {
         this
       }
 
+      override def tags(tags: Set[String]): Request = {
+        this.tags = Objects.requireNonNull(tags)
+        this
+      }
+
+      override private[v0] def creation: Creation = Creation(
+        name = if (CommonUtils.isEmpty(name)) CommonUtils.randomString(10) else name,
+        url = CommonUtils.requireNonEmpty(url),
+        user = CommonUtils.requireNonEmpty(user),
+        password = CommonUtils.requireNonEmpty(password),
+        tags = if (tags == null) Set.empty else tags
+      )
+
+      override private[v0] def update: Update = Update(
+        url = Option(url).map(CommonUtils.requireNonEmpty),
+        user = Option(user).map(CommonUtils.requireNonEmpty),
+        password = Option(password).map(CommonUtils.requireNonEmpty),
+        tags = Option(tags)
+      )
+
       override def create()(implicit executionContext: ExecutionContext): Future[JdbcInfo] =
         exec.post[Creation, JdbcInfo, ErrorApi.Error](
           _url,
-          Creation(
-            name = CommonUtils.requireNonEmpty(name),
-            url = CommonUtils.requireNonEmpty(url),
-            user = CommonUtils.requireNonEmpty(user),
-            password = CommonUtils.requireNonEmpty(password)
-          )
+          creation
         )
       override def update()(implicit executionContext: ExecutionContext): Future[JdbcInfo] =
         exec.put[Update, JdbcInfo, ErrorApi.Error](
           s"${_url}/${CommonUtils.requireNonEmpty(name)}",
-          Update(
-            url = Option(url).map(CommonUtils.requireNonEmpty),
-            user = Option(user).map(CommonUtils.requireNonEmpty),
-            password = Option(password).map(CommonUtils.requireNonEmpty),
-          )
+          update
         )
     }
   }

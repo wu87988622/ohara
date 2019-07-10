@@ -29,7 +29,8 @@ private[configurator] object ObjectRoute {
   private[this] def toObject(data: Data): Object = Object(
     name = data.name,
     lastModified = data.lastModified,
-    kind = data.kind
+    kind = data.kind,
+    tags = data.tags
   )
   def apply(implicit store: DataStore, executionContext: ExecutionContext): server.Route =
     pathPrefix(OBJECT_PREFIX_PATH) {

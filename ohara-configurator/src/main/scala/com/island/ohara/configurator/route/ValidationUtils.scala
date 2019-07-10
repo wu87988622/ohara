@@ -37,6 +37,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
+import spray.json.DefaultJsonProtocol._
 object ValidationUtils {
   private[this] val TIMEOUT = 30 seconds
 
@@ -46,7 +47,7 @@ object ValidationUtils {
     topicAdmin,
     ValidationApi.VALIDATION_RDB_PREFIX_PATH,
     ValidationApi.RDB_VALIDATION_JSON_FORMAT.write(request).asJsObject.fields.map {
-      case (k, v) => (k, v.asInstanceOf[JsString].value)
+      case (k, v) => (k, v.convertTo[String])
     },
     taskCount
   ).map {
@@ -59,7 +60,7 @@ object ValidationUtils {
     topicAdmin,
     ValidationApi.VALIDATION_HDFS_PREFIX_PATH,
     ValidationApi.HDFS_VALIDATION_JSON_FORMAT.write(request).asJsObject.fields.map {
-      case (k, v) => (k, v.asInstanceOf[JsString].value)
+      case (k, v) => (k, v.convertTo[String])
     },
     taskCount
   ).map {

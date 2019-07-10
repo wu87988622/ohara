@@ -301,9 +301,21 @@ class TestWorkerCreator extends SmallTest with Matchers {
   @Test
   def testWkCreator(): Unit = {
     val node1Name = "node1"
-    val node1 = Node(node1Name, 22, "", "", services = Seq.empty, lastModified = CommonUtils.current())
+    val node1 = Node(name = node1Name,
+                     port = 22,
+                     user = "",
+                     password = "",
+                     services = Seq.empty,
+                     lastModified = CommonUtils.current(),
+                     tags = Set.empty)
     val node2Name = "node2"
-    val node2 = Node(node2Name, 22, "", "", services = Seq.empty, lastModified = CommonUtils.current())
+    val node2 = Node(name = node2Name,
+                     port = 22,
+                     user = "",
+                     password = "",
+                     services = Seq.empty,
+                     lastModified = CommonUtils.current(),
+                     tags = Set.empty)
 
     val fakeWorkerCollie = new FakeWorkerCollie(NodeCollie(Seq(node1, node2)))
     val workerClusterInfo: Future[WorkerClusterInfo] = fakeWorkerCollie.creator
@@ -329,7 +341,13 @@ class TestWorkerCreator extends SmallTest with Matchers {
   @Test
   def testExistWorkerNode(): Unit = {
     val node1Name = "node1" // node1 has running worker for fake
-    val node1 = Node(node1Name, 22, "", "", services = Seq.empty, lastModified = CommonUtils.current())
+    val node1 = Node(name = node1Name,
+                     port = 22,
+                     user = "",
+                     password = "",
+                     services = Seq.empty,
+                     lastModified = CommonUtils.current(),
+                     tags = Set.empty)
 
     val fakeWorkerCollie = new FakeWorkerCollie(NodeCollie(Seq(node1)))
 
@@ -354,9 +372,21 @@ class TestWorkerCreator extends SmallTest with Matchers {
   @Test
   def testBrokerClusterNotExists(): Unit = {
     val node1Name = "node1"
-    val node1 = Node(node1Name, 22, "", "", services = Seq.empty, lastModified = CommonUtils.current())
+    val node1 = Node(name = node1Name,
+                     port = 22,
+                     user = "",
+                     password = "",
+                     services = Seq.empty,
+                     lastModified = CommonUtils.current(),
+                     tags = Set.empty)
     val node2Name = "node2"
-    val node2 = Node(node2Name, 22, "", "", services = Seq.empty, lastModified = CommonUtils.current())
+    val node2 = Node(name = node2Name,
+                     port = 22,
+                     user = "",
+                     password = "",
+                     services = Seq.empty,
+                     lastModified = CommonUtils.current(),
+                     tags = Set.empty)
 
     val fakeWorkerCollie = new FakeWorkerCollie(NodeCollie(Seq(node1, node2)))
     val workerClusterInfo: Future[WorkerClusterInfo] = fakeWorkerCollie.creator

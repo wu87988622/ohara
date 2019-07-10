@@ -39,7 +39,8 @@ private[it] object CollieTestUtils {
            user = user,
            password = password,
            services = Seq.empty,
-           lastModified = CommonUtils.current())
+           lastModified = CommonUtils.current(),
+           tags = Set.empty)
     }.toSeq)
     .getOrElse(Seq.empty)
     .map { node =>

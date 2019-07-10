@@ -147,7 +147,7 @@ trait JsonRefiner[T] {
   def rejectEmptyString(key: String): JsonRefiner[T] = valueChecker(
     key, {
       case s: JsString if s.value.isEmpty =>
-        throw DeserializationException(s"the value array of $key can't be empty!!!", fieldNames = List(key))
+        throw DeserializationException(s"""the value of \"$key\" can't be empty string!!!""", fieldNames = List(key))
       case _ => // we don't care for other types
     }
   )
@@ -177,7 +177,7 @@ trait JsonRefiner[T] {
   def rejectEmptyArray(key: String): JsonRefiner[T] = valueChecker(
     key, {
       case s: JsArray if s.elements.isEmpty =>
-        throw DeserializationException(s"the value array of $key can't be empty!!!", fieldNames = List(key))
+        throw DeserializationException(s"""the value of \"$key\" MUST be NOT empty array!!!""", fieldNames = List(key))
       case _ => // we don't care for other types
     }
   )
@@ -198,7 +198,7 @@ trait JsonRefiner[T] {
                   case (start, end) => c >= start && c <= end
                 })
               throw DeserializationException(
-                s"the value:${s.value} of key:$key does not be accepted by legal charsets:${legalPairs.mkString(",")}",
+                s"""the \"${s.value}\" does not be accepted by legal charsets:${legalPairs.mkString(",")}""",
                 fieldNames = List(key))
           }
           if (s.value.length > lengthLimit)
@@ -223,7 +223,7 @@ trait JsonRefiner[T] {
         try JsNumber(s.value)
         catch {
           case e: NumberFormatException =>
-            throw DeserializationException(s"the input string:${s.value} can't be converted to number",
+            throw DeserializationException(s"""the \"${s.value}\" can't be converted to number""",
                                            e,
                                            fieldNames = List(key))
         }
@@ -333,14 +333,14 @@ object JsonRefiner {
 
     override protected def valueChecker(key: String, checker: JsValue => Unit): JsonRefiner[T] = {
       if (valueChecker.contains(CommonUtils.requireNonEmpty(key)))
-        throw new IllegalArgumentException(s"the $key already has checker")
+        throw new IllegalArgumentException(s"""the \"$key\" already has checker""")
       this.valueChecker = this.valueChecker ++ Map(key -> Objects.requireNonNull(checker))
       this
     }
 
     override protected def valueConverter(key: String, converter: JsValue => JsValue): JsonRefiner[T] = {
       if (valueConverter.contains(CommonUtils.requireNonEmpty(key)))
-        throw new IllegalArgumentException(s"the $key already has converter")
+        throw new IllegalArgumentException(s"""the \"$key\" already has converter""")
       this.valueConverter = this.valueConverter ++ Map(key -> Objects.requireNonNull(converter))
       this
     }
@@ -362,14 +362,14 @@ object JsonRefiner {
 
     override def nullToAnotherValueOfKey(key: String, anotherKey: String): JsonRefiner[T] = {
       if (nullToAnotherValueOfKey.contains(CommonUtils.requireNonEmpty(key)))
-        throw new IllegalArgumentException(s"the $key have been associated to another key:$anotherKey")
+        throw new IllegalArgumentException(s"""the \"$key\" has been associated to another key:\"$anotherKey\"""")
       this.nullToAnotherValueOfKey = this.nullToAnotherValueOfKey ++ Map(key -> CommonUtils.requireNonEmpty(anotherKey))
       this
     }
 
     override protected def nullToJsValue(key: String, defaultValue: () => JsValue): JsonRefiner[T] = {
       if (nullToJsValue.contains(CommonUtils.requireNonEmpty(key)))
-        throw new IllegalArgumentException(s"the $key have been associated to default value")
+        throw new IllegalArgumentException(s"""the \"$key\" have been associated to default value""")
       this.nullToJsValue = this.nullToJsValue ++ Map(key -> Objects.requireNonNull(defaultValue))
       this
     }
@@ -385,7 +385,7 @@ object JsonRefiner {
         override def check[Value <: JsValue](key: String, value: Value): Value = {
           def checkEmptyString(k: String, s: JsString): Unit =
             if (s.value.isEmpty)
-              throw DeserializationException(s"the value of $k can't be empty string!!!", fieldNames = List(k))
+              throw DeserializationException(s"""the value of \"$k\" can't be empty string!!!""", fieldNames = List(k))
           def checkJsValueForEmptyString(k: String, v: JsValue): Unit = v match {
             case s: JsString => checkEmptyString(k, s)
             case s: JsArray  => s.elements.foreach(v => checkJsValueForEmptyString(k, v))
@@ -397,7 +397,7 @@ object JsonRefiner {
           if (_rejectEmptyString) checkJsValueForEmptyString(key, value)
 
           def checkNegativeNumber(k: String, s: JsNumber): Unit = if (s.value < 0)
-            throw DeserializationException(s"the value of $k MUST be bigger than or equal to zero!!!",
+            throw DeserializationException(s"""the value of \"$k\" MUST be bigger than or equal to zero!!!""",
                                            fieldNames = List(k))
           def checkJsValueForNegativeNumber(k: String, v: JsValue): Unit = v match {
             case s: JsNumber => checkNegativeNumber(k, s)
@@ -411,7 +411,7 @@ object JsonRefiner {
           if (_rejectNegativeNumber) checkJsValueForNegativeNumber(key, value)
 
           def checkEmptyArray(k: String, s: JsArray): Unit = if (s.elements.isEmpty)
-            throw DeserializationException(s"the value of $k MUST be NOT empty array!!!", fieldNames = List(k))
+            throw DeserializationException(s"""the value of \"$k\" MUST be NOT empty array!!!""", fieldNames = List(k))
           def checkJsValueForEmptyArray(k: String, v: JsValue): Unit = v match {
             case s: JsArray => checkEmptyArray(k, s)
             case s: JsObject =>

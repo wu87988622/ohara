@@ -419,8 +419,6 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
   @Test
   def updatingNonexistentNameCanNotIgnoreFlows(): Unit = {
-    an[IllegalArgumentException] should be thrownBy result(
-      pipelineApi.request.name(CommonUtils.randomString()).update())
     val name = CommonUtils.randomString()
     val flows: Seq[Flow] = Seq.empty
     val pipeline = result(pipelineApi.request.name(name).flows(flows).update())
@@ -503,6 +501,23 @@ class TestPipelineRoute extends MediumTest with Matchers {
     val pipeline = result(pipelineApi.request.name(methodName()).flow(topic.name, connector.name).create())
     pipeline.flows.size shouldBe 1
     pipeline.objects.size shouldBe 2
+  }
+
+  @Test
+  def updateTags(): Unit = {
+    val tags = Set(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val pipelineDesc = result(pipelineApi.request.tags(tags).create())
+    pipelineDesc.tags shouldBe tags
+
+    val tags2 = Set(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val pipelineDesc2 = result(pipelineApi.request.name(pipelineDesc.name).tags(tags2).update())
+    pipelineDesc2.tags shouldBe tags2
+
+    val pipelineDesc3 = result(pipelineApi.request.name(pipelineDesc.name).update())
+    pipelineDesc3.tags shouldBe tags2
+
+    val pipelineDesc4 = result(pipelineApi.request.name(pipelineDesc.name).tags(Set.empty).update())
+    pipelineDesc4.tags shouldBe Set.empty
   }
 
   @After

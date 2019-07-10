@@ -133,7 +133,8 @@ class TestZookeeperCreator extends SmallTest with Matchers {
                      user = "user1",
                      password = "123456",
                      services = Seq.empty,
-                     lastModified = CommonUtils.current())
+                     lastModified = CommonUtils.current(),
+                     tags = Set.empty)
     val node2Name = "node2"
     val node2 = node1.copy(name = node2Name)
 

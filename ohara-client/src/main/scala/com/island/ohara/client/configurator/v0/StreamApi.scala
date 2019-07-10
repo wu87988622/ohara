@@ -74,11 +74,12 @@ object StreamApi {
                                         metrics: Metrics,
                                         // TODO remove this default value after we could handle from UI
                                         exactlyOnce: Boolean = false,
-                                        lastModified: Long)
+                                        lastModified: Long,
+                                        tags: Set[String])
       extends Data {
     override def kind: String = "streamApp"
   }
-  implicit val STREAMAPP_DESCRIPTION_JSON_FORMAT: RootJsonFormat[StreamAppDescription] = jsonFormat14(
+  implicit val STREAMAPP_DESCRIPTION_JSON_FORMAT: RootJsonFormat[StreamAppDescription] = jsonFormat15(
     StreamAppDescription)
 
   final case class Creation(name: String,
@@ -88,13 +89,14 @@ object StreamApi {
                             to: Set[String],
                             jmxPort: Int,
                             instances: Int,
-                            nodeNames: Set[String])
+                            nodeNames: Set[String],
+                            tags: Set[String])
       extends ClusterCreationRequest {
     override def ports: Set[Int] = Set(jmxPort)
   }
   implicit val STREAM_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
     JsonRefiner[Creation]
-      .format(jsonFormat8(Creation))
+      .format(jsonFormat9(Creation))
       // the default value
       .nullToString("imageName", IMAGE_NAME_DEFAULT)
       .nullToEmptyArray("from")
@@ -106,12 +108,13 @@ object StreamApi {
       .rejectNegativeNumber()
       .rejectEmptyString()
       .requireBindPort("jmxPort")
-      .stringRestriction("name")
+      .stringRestriction(Data.NAME_KEY)
       .withNumber()
       .withLowerCase()
       .withLengthLimit(LIMIT_OF_NAME_LENGTH)
       .toRefiner
-      .nullToString("name", () => CommonUtils.randomString(10))
+      .nullToString("name", () => CommonUtils.randomString(LIMIT_OF_NAME_LENGTH))
+      .nullToEmptyArray(Data.TAGS_KEY)
       .refine
 
   final case class Update(imageName: Option[String],
@@ -120,15 +123,14 @@ object StreamApi {
                           jar: Option[JarKey],
                           jmxPort: Option[Int],
                           instances: Option[Int],
-                          nodeNames: Option[Set[String]])
+                          nodeNames: Option[Set[String]],
+                          tags: Option[Set[String]])
   implicit val STREAM_UPDATE_JSON_FORMAT: RootJsonFormat[Update] =
     JsonRefiner[Update]
-      .format(jsonFormat7(Update))
+      .format(jsonFormat8(Update))
       // the instances cannot by negative (zero number will be reject in StreamRoute start api)
       .rejectNegativeNumber()
       .rejectEmptyString()
-      // the node names cannot be empty
-      .rejectEmptyArray()
       .requireBindPort("jmxPort")
       .refine
 
@@ -156,6 +158,7 @@ object StreamApi {
   }
 
   sealed trait Request {
+    @Optional("default name is a random string. But it is required in updating")
     def name(name: String): Request
     @Optional("the default image is IMAGE_NAME_DEFAULT")
     def imageName(imageName: String): Request
@@ -168,6 +171,8 @@ object StreamApi {
     def instances(instances: Int): Request
     @Optional("this parameter has higher priority than instances")
     def nodeNames(nodeNames: Set[String]): Request
+    @Optional("default value is empty array in creation and None in update")
+    def tags(tags: Set[String]): Request
 
     /**
       * generate POST request
@@ -241,6 +246,7 @@ object StreamApi {
       private[this] var _jmxPort: Option[Int] = None
       private[this] var _instances: Option[Int] = None
       private[this] var _nodeNames: Option[Set[String]] = None
+      private[this] var tags: Set[String] = _
 
       override def name(name: String): Request = {
         this.name = CommonUtils.requireNonEmpty(name)
@@ -275,16 +281,22 @@ object StreamApi {
         this
       }
 
+      override def tags(tags: Set[String]): Request = {
+        this.tags = Objects.requireNonNull(tags)
+        this
+      }
+
       override private[v0] def creation: Creation = Creation(
-        name = CommonUtils.requireNonEmpty(name),
+        name = if (CommonUtils.isEmpty(name)) CommonUtils.randomString(10) else name,
         imageName = CommonUtils.requireNonEmpty(_imageName.getOrElse(IMAGE_NAME_DEFAULT)),
         jar = Objects.requireNonNull(jar),
-        from = Objects.requireNonNull(_from.getOrElse(Set.empty)),
-        to = Objects.requireNonNull(_to.getOrElse(Set.empty)),
+        from = _from.getOrElse(Set.empty),
+        to = _to.getOrElse(Set.empty),
         jmxPort = CommonUtils.requireConnectionPort(_jmxPort.getOrElse(CommonUtils.availablePort())),
         // only one of the value is needed between instances and nodes, we check the data after
         instances = _instances.getOrElse(1),
-        nodeNames = _nodeNames.getOrElse(Set.empty)
+        nodeNames = _nodeNames.getOrElse(Set.empty),
+        tags = if (tags == null) Set.empty else tags
       )
 
       override private[v0] def update: Update = Update(
@@ -294,7 +306,8 @@ object StreamApi {
         jar = Option(jar),
         jmxPort = _jmxPort.map(CommonUtils.requireConnectionPort),
         instances = _instances.map(CommonUtils.requirePositiveInt),
-        nodeNames = _nodeNames.map(seq => CommonUtils.requireNonEmpty(seq.asJava).asScala.toSet)
+        nodeNames = _nodeNames.map(seq => CommonUtils.requireNonEmpty(seq.asJava).asScala.toSet),
+        tags = Option(tags)
       )
 
       /**

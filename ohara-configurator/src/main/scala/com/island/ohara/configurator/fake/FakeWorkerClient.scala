@@ -61,7 +61,7 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
 
   override def delete(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
     try if (cachedConnectors.remove(name) == null)
-      Future.failed(new IllegalStateException(s"the connector:$name doesn't exist!"))
+      Future.failed(new IllegalStateException(s"Connector:$name doesn't exist!"))
     else Future.successful(())
     finally cachedConnectorsState.remove(name)
   // TODO; does this work? by chia
@@ -72,7 +72,7 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
   override def connectionProps: String = "Unknown"
   override def status(name: String)(implicit executionContext: ExecutionContext): Future[ConnectorInfo] =
     if (!cachedConnectors.containsKey(name))
-      Future.failed(new IllegalArgumentException(s"connector:$name doesn't exist"))
+      Future.failed(new IllegalArgumentException(s"Connector:$name doesn't exist"))
     else
       Future.successful(
         ConnectorInfo(name, ConnectorStatus(cachedConnectorsState.get(name), "fake id", None), Seq.empty))

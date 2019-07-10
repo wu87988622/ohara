@@ -33,7 +33,8 @@ private[configurator] object JdbcInfoRoute {
                    url = request.url,
                    user = request.user,
                    password = request.password,
-                   lastModified = CommonUtils.current())),
+                   lastModified = CommonUtils.current(),
+                   tags = request.tags)),
       hookOfUpdate = (name: String, request: Update, previousOption: Option[JdbcInfo]) =>
         Future.successful {
           previousOption.fold {
@@ -45,14 +46,16 @@ private[configurator] object JdbcInfoRoute {
                      url = request.url.get,
                      user = request.user.get,
                      password = request.password.get,
-                     CommonUtils.current())
+                     CommonUtils.current(),
+                     tags = request.tags.getOrElse(Set.empty))
           } { previous =>
             JdbcInfo(
               name = name,
               url = request.url.getOrElse(previous.url),
               user = request.user.getOrElse(previous.user),
               password = request.password.getOrElse(previous.password),
-              CommonUtils.current()
+              CommonUtils.current(),
+              tags = request.tags.getOrElse(previous.tags)
             )
           }
 

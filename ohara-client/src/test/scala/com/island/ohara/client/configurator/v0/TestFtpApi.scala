@@ -27,7 +27,7 @@ import spray.json._
 class TestFtpApi extends SmallTest with Matchers {
 
   @Test
-  def ignoreNameOnCreation(): Unit = an[NullPointerException] should be thrownBy FtpApi.access
+  def ignoreNameOnCreation(): Unit = FtpApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
@@ -35,7 +35,9 @@ class TestFtpApi extends SmallTest with Matchers {
     .port(CommonUtils.availablePort())
     .user(CommonUtils.randomString())
     .password(CommonUtils.randomString())
-    .create()
+    .creation
+    .name
+    .length should not be 0
 
   @Test
   def ignoreNameOnUpdate(): Unit = an[NullPointerException] should be thrownBy FtpApi.access
@@ -314,4 +316,10 @@ class TestFtpApi extends SmallTest with Matchers {
     creation2.user shouldBe user
     creation2.password shouldBe password
   }
+
+  @Test
+  def nullTags(): Unit = an[NullPointerException] should be thrownBy FtpApi.access.request.tags(null)
+
+  @Test
+  def emptyTags(): Unit = FtpApi.access.request.tags(Set.empty)
 }

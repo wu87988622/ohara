@@ -15,6 +15,8 @@
  */
 
 package com.island.ohara.client.configurator.v0
+import java.util.Objects
+
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
@@ -24,17 +26,17 @@ import scala.concurrent.{ExecutionContext, Future}
 
 object HadoopApi {
   val HDFS_PREFIX_PATH: String = "hdfs"
-  final case class Update(uri: Option[String])
+  final case class Update(uri: Option[String], tags: Option[Set[String]])
 
   implicit val HDFS_UPDATE_JSON_FORMAT: RootJsonFormat[Update] =
-    JsonRefiner[Update].format(jsonFormat1(Update)).rejectEmptyString().refine
+    JsonRefiner[Update].format(jsonFormat2(Update)).rejectEmptyString().refine
 
-  final case class Creation(name: String, uri: String) extends CreationRequest
+  final case class Creation(name: String, uri: String, tags: Set[String]) extends CreationRequest
   implicit val HDFS_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
     JsonRefiner[Creation]
-      .format(jsonFormat2(Creation))
+      .format(jsonFormat3(Creation))
       .rejectEmptyString()
-      .stringRestriction("name")
+      .stringRestriction(Data.NAME_KEY)
       .withNumber()
       .withCharset()
       .withDot()
@@ -42,21 +44,31 @@ object HadoopApi {
       .withUnderLine()
       .toRefiner
       .nullToString("name", () => CommonUtils.randomString(10))
+      .nullToEmptyArray(Data.TAGS_KEY)
       .refine
 
-  final case class HdfsInfo(name: String, uri: String, lastModified: Long) extends Data {
+  final case class HdfsInfo(name: String, uri: String, lastModified: Long, tags: Set[String]) extends Data {
     override def kind: String = "hdfs"
   }
 
-  implicit val HDFS_INFO_JSON_FORMAT: RootJsonFormat[HdfsInfo] = jsonFormat3(HdfsInfo)
+  implicit val HDFS_INFO_JSON_FORMAT: RootJsonFormat[HdfsInfo] = jsonFormat4(HdfsInfo)
 
   /**
     * used to generate the payload and url for POST/PUT request.
     */
   trait Request {
+    @Optional("default name is a random string. But it is required in updating")
     def name(name: String): Request
+
     @Optional("it is ignorable if you are going to send update request")
     def uri(uri: String): Request
+
+    @Optional("default value is empty array in creation and None in update")
+    def tags(tags: Set[String]): Request
+
+    private[v0] def creation: Creation
+
+    private[v0] def update: Update
 
     /**
       * generate the POST request
@@ -77,25 +89,40 @@ object HadoopApi {
     def request: Request = new Request {
       private[this] var name: String = _
       private[this] var uri: String = _
+      private[this] var tags: Set[String] = _
       override def name(name: String): Request = {
         this.name = CommonUtils.requireNonEmpty(name)
         this
       }
+
       override def uri(uri: String): Request = {
         this.uri = CommonUtils.requireNonEmpty(uri)
         this
       }
+
+      override def tags(tags: Set[String]): Request = {
+        this.tags = Objects.requireNonNull(tags)
+        this
+      }
+
+      override private[v0] def creation: Creation = Creation(
+        name = if (CommonUtils.isEmpty(name)) CommonUtils.randomString(10) else name,
+        uri = CommonUtils.requireNonEmpty(uri),
+        tags = if (tags == null) Set.empty else tags
+      )
+
+      override private[v0] def update: Update = Update(
+        uri = Option(uri).map(CommonUtils.requireNonEmpty),
+        tags = Option(tags)
+      )
+
       override def create()(implicit executionContext: ExecutionContext): Future[HdfsInfo] =
-        exec.post[Creation, HdfsInfo, ErrorApi.Error](_url,
-                                                      Creation(
-                                                        name = CommonUtils.requireNonEmpty(name),
-                                                        uri = CommonUtils.requireNonEmpty(uri)
-                                                      ))
+        exec.post[Creation, HdfsInfo, ErrorApi.Error](
+          _url,
+          creation
+        )
       override def update()(implicit executionContext: ExecutionContext): Future[HdfsInfo] =
-        exec.put[Update, HdfsInfo, ErrorApi.Error](s"${_url}/${CommonUtils.requireNonEmpty(name)}",
-                                                   Update(
-                                                     uri = Option(uri).map(CommonUtils.requireNonEmpty)
-                                                   ))
+        exec.put[Update, HdfsInfo, ErrorApi.Error](s"${_url}/${CommonUtils.requireNonEmpty(name)}", update)
     }
   }
   def access: Access = new Access

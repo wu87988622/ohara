@@ -242,6 +242,23 @@ class TestTopicRoute extends SmallTest with Matchers {
     } finally topicAdmin.close()
   }
 
+  @Test
+  def updateTags(): Unit = {
+    val tags = Set(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val topicDesc = result(topicApi.request.tags(tags).create())
+    topicDesc.tags shouldBe tags
+
+    val tags2 = Set(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val topicDesc2 = result(topicApi.request.name(topicDesc.name).tags(tags2).update())
+    topicDesc2.tags shouldBe tags2
+
+    val topicDesc3 = result(topicApi.request.name(topicDesc.name).update())
+    topicDesc3.tags shouldBe tags2
+
+    val topicDesc4 = result(topicApi.request.name(topicDesc.name).tags(Set.empty).update())
+    topicDesc4.tags shouldBe Set.empty
+  }
+
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }

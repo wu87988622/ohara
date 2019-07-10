@@ -59,7 +59,8 @@ private[configurator] object StreamRoute {
       jmxPort = req.jmxPort,
       metrics = Metrics(Seq.empty),
       error = None,
-      lastModified = CommonUtils.current()
+      lastModified = CommonUtils.current(),
+      tags = req.tags
     )
 
   /**
@@ -172,22 +173,21 @@ private[configurator] object StreamRoute {
               jmxPort = checkField(name, req.jmxPort, "jmxPort"),
               metrics = Metrics(Seq.empty),
               error = None,
-              lastModified = CommonUtils.current()
+              lastModified = CommonUtils.current(),
+              tags = req.tags.getOrElse(Set.empty)
             )) { previous =>
               previous.copy(
                 instances = req.instances.getOrElse(previous.instances),
                 from = req.from.getOrElse(previous.from),
                 to = req.to.getOrElse(previous.to),
                 nodeNames = req.nodeNames.getOrElse(previous.nodeNames),
-                jmxPort = req.jmxPort.getOrElse(previous.jmxPort)
+                jmxPort = req.jmxPort.getOrElse(previous.jmxPort),
+                tags = req.tags.getOrElse(previous.tags)
               )
             }
             if (updateReq.state.isDefined)
-              throw new RuntimeException(
-                s"You cannot update property on non-stopped streamApp: $name"
-              )
-            else
-              Future.successful(updateReq)
+              throw new RuntimeException(s"You cannot update property on non-stopped streamApp: $name")
+            else Future.successful(updateReq)
           },
           hookBeforeDelete = (name: String) =>
             // get the latest status first
@@ -238,7 +238,8 @@ private[configurator] object StreamRoute {
                       to = data.to,
                       jmxPort = data.jmxPort,
                       instances = data.instances,
-                      nodeNames = data.nodeNames
+                      nodeNames = data.nodeNames,
+                      tags = data.tags
                     )
                     // check cluster creation rules
                     RouteUtils

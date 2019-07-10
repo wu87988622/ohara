@@ -15,6 +15,8 @@
  */
 
 package com.island.ohara.client.configurator.v0
+import java.util.Objects
+
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
@@ -29,19 +31,21 @@ object TopicApi {
   val TOPICS_PREFIX_PATH: String = "topics"
   case class Update private[TopicApi] (brokerClusterName: Option[String],
                                        numberOfPartitions: Option[Int],
-                                       numberOfReplications: Option[Short])
+                                       numberOfReplications: Option[Short],
+                                       tags: Option[Set[String]])
   implicit val TOPIC_UPDATE_FORMAT: RootJsonFormat[Update] =
-    JsonRefiner[Update].format(jsonFormat3(Update)).rejectEmptyString().refine
+    JsonRefiner[Update].format(jsonFormat4(Update)).rejectEmptyString().refine
 
   case class Creation private[TopicApi] (name: String,
                                          brokerClusterName: Option[String],
                                          numberOfPartitions: Int,
-                                         numberOfReplications: Short)
+                                         numberOfReplications: Short,
+                                         tags: Set[String])
       extends CreationRequest
 
   implicit val TOPIC_CREATION_FORMAT: OharaJsonFormat[Creation] = JsonRefiner[Creation]
-    .format(jsonFormat4(Creation))
-    .stringRestriction("name")
+    .format(jsonFormat5(Creation))
+    .stringRestriction(Data.NAME_KEY)
     .withNumber()
     .withCharset()
     .withDot()
@@ -52,6 +56,7 @@ object TopicApi {
     .nullToInt("numberOfReplications", DEFAULT_NUMBER_OF_REPLICATIONS)
     .rejectEmptyString()
     .nullToString("name", () => CommonUtils.randomString(10))
+    .nullToEmptyArray(Data.TAGS_KEY)
     .refine
 
   import MetricsApi._
@@ -61,24 +66,36 @@ object TopicApi {
                        numberOfReplications: Short,
                        brokerClusterName: String,
                        metrics: Metrics,
-                       lastModified: Long)
+                       lastModified: Long,
+                       tags: Set[String])
       extends Data {
     override def kind: String = "topic"
   }
 
-  implicit val TOPIC_INFO_FORMAT: RootJsonFormat[TopicInfo] = jsonFormat6(TopicInfo)
+  implicit val TOPIC_INFO_FORMAT: RootJsonFormat[TopicInfo] = jsonFormat7(TopicInfo)
 
   /**
     * used to generate the payload and url for POST/PUT request.
     */
   trait Request {
+    @Optional("default name is a random string. But it is required in updating")
     def name(name: String): Request
+
     @Optional("server will match a broker cluster for you if the bk name is ignored")
     def brokerClusterName(brokerClusterName: String): Request
+
     @Optional("default value is DEFAULT_NUMBER_OF_PARTITIONS")
     def numberOfPartitions(numberOfPartitions: Int): Request
+
     @Optional("default value is DEFAULT_NUMBER_OF_REPLICATIONS")
     def numberOfReplications(numberOfReplications: Short): Request
+
+    @Optional("default value is empty array")
+    def tags(tags: Set[String]): Request
+
+    private[v0] def creation: Creation
+
+    private[v0] def update: Update
 
     /**
       * generate the POST request
@@ -101,6 +118,7 @@ object TopicApi {
       private[this] var brokerClusterName: Option[String] = None
       private[this] var numberOfPartitions: Option[Int] = None
       private[this] var numberOfReplications: Option[Short] = None
+      private[this] var tags: Set[String] = _
       override def name(name: String): Request = {
         this.name = CommonUtils.requireNonEmpty(name)
         this
@@ -121,24 +139,35 @@ object TopicApi {
         this
       }
 
+      override def tags(tags: Set[String]): Request = {
+        this.tags = Objects.requireNonNull(tags)
+        this
+      }
+
+      override private[v0] def creation: Creation = Creation(
+        name = if (CommonUtils.isEmpty(name)) CommonUtils.randomString(10) else name,
+        brokerClusterName = brokerClusterName,
+        numberOfPartitions = numberOfPartitions.getOrElse(DEFAULT_NUMBER_OF_PARTITIONS),
+        numberOfReplications = numberOfReplications.getOrElse(DEFAULT_NUMBER_OF_REPLICATIONS),
+        tags = if (tags == null) Set.empty else tags
+      )
+
+      override private[v0] def update: Update = Update(
+        brokerClusterName = brokerClusterName,
+        numberOfPartitions = numberOfPartitions,
+        numberOfReplications = numberOfReplications,
+        tags = Option(tags)
+      )
+
       override def create()(implicit executionContext: ExecutionContext): Future[TopicInfo] =
         exec.post[Creation, TopicInfo, ErrorApi.Error](
           _url,
-          Creation(
-            name = CommonUtils.requireNonEmpty(name),
-            brokerClusterName = brokerClusterName,
-            numberOfPartitions = numberOfPartitions.getOrElse(DEFAULT_NUMBER_OF_PARTITIONS),
-            numberOfReplications = numberOfReplications.getOrElse(DEFAULT_NUMBER_OF_REPLICATIONS)
-          )
+          creation
         )
       override def update()(implicit executionContext: ExecutionContext): Future[TopicInfo] =
         exec.put[Update, TopicInfo, ErrorApi.Error](
           s"${_url}/${CommonUtils.requireNonEmpty(name)}",
-          Update(
-            brokerClusterName = brokerClusterName,
-            numberOfPartitions = numberOfPartitions,
-            numberOfReplications = numberOfReplications
-          )
+          update
         )
     }
   }

@@ -15,9 +15,11 @@
  */
 
 package com.island.ohara.client.configurator.v0
+import java.util.Objects
+
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.util.CommonUtils
-import spray.json.DefaultJsonProtocol.{jsonFormat6, _}
+import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -28,24 +30,26 @@ object NodeApi {
   val BROKER_SERVICE_NAME: String = "broker"
   val WORKER_SERVICE_NAME: String = "connect-worker"
 
-  case class Update(port: Option[Int], user: Option[String], password: Option[String])
+  case class Update(port: Option[Int], user: Option[String], password: Option[String], tags: Option[Set[String]])
   implicit val NODE_UPDATE_JSON_FORMAT: RootJsonFormat[Update] =
-    JsonRefiner[Update].format(jsonFormat3(Update)).requireConnectionPort("port").rejectEmptyString().refine
+    JsonRefiner[Update].format(jsonFormat4(Update)).requireConnectionPort("port").rejectEmptyString().refine
 
-  case class Creation(name: String, port: Int, user: String, password: String) extends CreationRequest
+  case class Creation(name: String, port: Int, user: String, password: String, tags: Set[String])
+      extends CreationRequest
   implicit val NODE_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
     JsonRefiner[Creation]
-      .format(jsonFormat4(Creation))
+      .format(jsonFormat5(Creation))
       // default implementation of node is ssh, we use "default ssh port" here
       .nullToInt("port", 22)
       .requireConnectionPort("port")
       .rejectEmptyString()
-      .stringRestriction("name")
+      .stringRestriction(Data.NAME_KEY)
       .withNumber()
       .withCharset()
       .withDot()
       .withDash()
       .toRefiner
+      .nullToEmptyArray(Data.TAGS_KEY)
       .refine
 
   case class NodeService(name: String, clusterNames: Seq[String])
@@ -59,24 +63,31 @@ object NodeApi {
                   user: String,
                   password: String,
                   services: Seq[NodeService],
-                  lastModified: Long)
+                  lastModified: Long,
+                  tags: Set[String])
       extends Data {
     override def kind: String = "node"
   }
 
-  implicit val NODE_JSON_FORMAT: RootJsonFormat[Node] = jsonFormat6(Node)
+  implicit val NODE_JSON_FORMAT: RootJsonFormat[Node] = jsonFormat7(Node)
 
   /**
     * used to generate the payload and url for POST/PUT request.
     */
   trait Request {
     def name(name: String): Request
+
     @Optional("it is ignorable if you are going to send update request")
     def port(port: Int): Request
+
     @Optional("it is ignorable if you are going to send update request")
     def user(user: String): Request
+
     @Optional("it is ignorable if you are going to send update request")
     def password(password: String): Request
+
+    @Optional("default value is empty array")
+    def tags(tags: Set[String]): Request
 
     /**
       * Retrieve the inner object of request payload. Noted, it throw unchecked exception if you haven't filled all required fields
@@ -113,6 +124,7 @@ object NodeApi {
       private[this] var port: Option[Int] = None
       private[this] var user: String = _
       private[this] var password: String = _
+      private[this] var tags: Set[String] = _
       override def name(name: String): Request = {
         this.name = CommonUtils.requireNonEmpty(name)
         this
@@ -130,17 +142,24 @@ object NodeApi {
         this
       }
 
+      override def tags(tags: Set[String]): Request = {
+        this.tags = Objects.requireNonNull(tags)
+        this
+      }
+
       override private[v0] def creation: Creation = Creation(
         name = CommonUtils.requireNonEmpty(name),
         user = CommonUtils.requireNonEmpty(user),
         password = CommonUtils.requireNonEmpty(password),
-        port = port.map(CommonUtils.requireConnectionPort).getOrElse(throw new NullPointerException)
+        port = port.map(CommonUtils.requireConnectionPort).getOrElse(throw new NullPointerException),
+        tags = if (tags == null) Set.empty else tags
       )
 
       override private[v0] def update: Update = Update(
         port = port.map(CommonUtils.requireConnectionPort),
         user = Option(user).map(CommonUtils.requireNonEmpty),
         password = Option(password).map(CommonUtils.requireNonEmpty),
+        tags = Option(tags)
       )
 
       override def create()(implicit executionContext: ExecutionContext): Future[Node] =

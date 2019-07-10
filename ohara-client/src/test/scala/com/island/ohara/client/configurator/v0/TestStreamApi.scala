@@ -64,7 +64,8 @@ class TestStreamApi extends SmallTest with Matchers {
       to = Set("to"),
       jmxPort = 5555,
       instances = 1,
-      nodeNames = Set("node1")
+      nodeNames = Set("node1"),
+      tags = Set.empty
     )
 
     info shouldBe StreamApi.STREAM_CREATION_JSON_FORMAT.read(StreamApi.STREAM_CREATION_JSON_FORMAT.write(info))
@@ -85,7 +86,8 @@ class TestStreamApi extends SmallTest with Matchers {
       jmxPort = 0,
       metrics = Metrics(Seq.empty),
       error = None,
-      lastModified = CommonUtils.current()
+      lastModified = CommonUtils.current(),
+      tags = Set.empty
     )
 
     info shouldBe StreamApi.STREAMAPP_DESCRIPTION_JSON_FORMAT.read(
@@ -164,13 +166,9 @@ class TestStreamApi extends SmallTest with Matchers {
   }
 
   @Test
-  def requireFieldOnPropertyCreation(): Unit = {
-    // name is required
-    an[NullPointerException] should be thrownBy propertyAccess.request.jar(JarKey("group", "name")).creation
-
+  def requireFieldOnPropertyCreation(): Unit =
     // jar is required
     an[NullPointerException] should be thrownBy propertyAccess.request.name(CommonUtils.randomString()).creation
-  }
 
   @Test
   def testMinimumCreation(): Unit = {
@@ -219,24 +217,33 @@ class TestStreamApi extends SmallTest with Matchers {
 
   @Test
   def parseCreation(): Unit = {
+    val from = "from"
+    val to = "to"
+    val nodeName = "n0"
     val creation = StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
                                                                   |  {
+                                                                  |    "from": ["$from"],
+                                                                  |    "to": ["$to"],
+                                                                  |    "nodeNames": ["$nodeName"],
                                                                   |    "jar": ${fakeJar.toJson}
                                                                   |  }
            """.stripMargin.parseJson)
-    creation.name.length shouldBe 10
+    creation.name.length shouldBe StreamApi.LIMIT_OF_NAME_LENGTH
     creation.imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
     creation.jar shouldBe fakeJar
-    creation.from shouldBe Set.empty
-    creation.to shouldBe Set.empty
+    creation.from shouldBe Set(from)
+    creation.to shouldBe Set(to)
     creation.jmxPort should not be 0
     creation.instances shouldBe 1
-    creation.nodeNames shouldBe Set.empty
+    creation.nodeNames shouldBe Set(nodeName)
 
     val name = CommonUtils.randomString(10)
     val creation2 = StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
                                                                  |  {
                                                                  |    "name": "$name",
+                                                                 |    "from": ["$from"],
+                                                                 |    "to": ["$to"],
+                                                                 |    "nodeNames": ["$nodeName"],
                                                                  |    "jar": ${fakeJar.toJson}
                                                                  |  }
            """.stripMargin.parseJson)
@@ -244,11 +251,11 @@ class TestStreamApi extends SmallTest with Matchers {
     creation2.name shouldBe name
     creation2.imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
     creation2.jar shouldBe fakeJar
-    creation2.from shouldBe Set.empty
-    creation2.to shouldBe Set.empty
+    creation.from shouldBe Set(from)
+    creation.to shouldBe Set(to)
     creation2.jmxPort should not be 0
     creation2.instances shouldBe 1
-    creation2.nodeNames shouldBe Set.empty
+    creation.nodeNames shouldBe Set(nodeName)
   }
 
   @Test
@@ -259,7 +266,7 @@ class TestStreamApi extends SmallTest with Matchers {
                                                   |    "jar": ${fakeJar.toJson}
                                                   |  }
            """.stripMargin.parseJson)
-    thrown2.getMessage should include("the value of name can't be empty string")
+    thrown2.getMessage should include("the value of \"name\" can't be empty string")
   }
 
   @Test
@@ -272,7 +279,7 @@ class TestStreamApi extends SmallTest with Matchers {
                                                                                                   |    "imageName": ""
                                                                                                   |  }
            """.stripMargin.parseJson)
-    thrown.getMessage should include("the value of imageName can't be empty string")
+    thrown.getMessage should include("the value of \"imageName\" can't be empty string")
   }
 
   @Test
@@ -293,7 +300,7 @@ class TestStreamApi extends SmallTest with Matchers {
                                                                                                   |    "jar": ""
                                                                                                   |  }
            """.stripMargin.parseJson)
-    thrown2.getMessage should include("the value of jar can't be empty string")
+    thrown2.getMessage should include("the value of \"jar\" can't be empty string")
   }
 
   @Test
@@ -316,7 +323,7 @@ class TestStreamApi extends SmallTest with Matchers {
                         |    "jmxPort": -99
                         |  }
            """.stripMargin.parseJson)
-    thrown2.getMessage should include("the value of jmxPort MUST be bigger than or equal to zero")
+    thrown2.getMessage should include("the value of \"jmxPort\" MUST be bigger than or equal to zero")
 
     // not connection port
     val thrown3 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
@@ -349,7 +356,7 @@ class TestStreamApi extends SmallTest with Matchers {
                                                                                                   |    "instances": -99
                                                                                                   |  }
            """.stripMargin.parseJson)
-    thrown.getMessage should include("the value of instances MUST be bigger than or equal to zero")
+    thrown.getMessage should include("the value of \"instances\" MUST be bigger than or equal to zero")
   }
 
   @Test
@@ -398,7 +405,18 @@ class TestStreamApi extends SmallTest with Matchers {
                                                                                                 |    "imageName": ""
                                                                                                 |  }
            """.stripMargin.parseJson)
-    thrown.getMessage should include("the value of imageName can't be empty string")
+    thrown.getMessage should include("the value of \"imageName\" can't be empty string")
+  }
+
+  @Test
+  def parseFromFieldOnCreation(): Unit = {
+    val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
+                                                                                                     |  {
+                                                                                                     |    "from": "",
+                                                                                                     |    "jar": ${fakeJar.toJson}
+                                                                                                     |  }
+           """.stripMargin.parseJson)
+    thrown1.getMessage should include("the value of \"from\" can't be empty string")
   }
 
   @Test
@@ -408,14 +426,18 @@ class TestStreamApi extends SmallTest with Matchers {
                                                                                                 |    "from": ""
                                                                                                 |  }
            """.stripMargin.parseJson)
-    thrown1.getMessage should include("the value of from can't be empty string")
+    thrown1.getMessage should include("the value of \"from\" can't be empty string")
+  }
 
-    val thrown2 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATE_JSON_FORMAT.read(s"""
-                                                                                                |  {
-                                                                                                |    "from": []
-                                                                                                |  }
+  @Test
+  def parseToFieldOnCreation(): Unit = {
+    val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
+                                                                                                     |  {
+                                                                                                     |    "to": "",
+                                                                                                     |    "jar": ${fakeJar.toJson}
+                                                                                                     |  }
            """.stripMargin.parseJson)
-    thrown2.getMessage should include("the value of from MUST be NOT empty array")
+    thrown1.getMessage should include("the value of \"to\" can't be empty string")
   }
 
   @Test
@@ -425,14 +447,7 @@ class TestStreamApi extends SmallTest with Matchers {
                                                                                                 |    "to": ""
                                                                                                 |  }
            """.stripMargin.parseJson)
-    thrown1.getMessage should include("the value of to can't be empty string")
-
-    val thrown2 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATE_JSON_FORMAT.read(s"""
-                                                                                                |  {
-                                                                                                |    "to": []
-                                                                                                |  }
-           """.stripMargin.parseJson)
-    thrown2.getMessage should include("the value of to MUST be NOT empty array")
+    thrown1.getMessage should include("the value of \"to\" can't be empty string")
   }
 
   @Test
@@ -449,7 +464,7 @@ class TestStreamApi extends SmallTest with Matchers {
                                                                                                 |    "jmxPort": -9
                                                                                                 |  }
            """.stripMargin.parseJson)
-    thrown2.getMessage should include("the value of jmxPort MUST be bigger than or equal to zero")
+    thrown2.getMessage should include("the value of \"jmxPort\" MUST be bigger than or equal to zero")
 
     val thrown3 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATE_JSON_FORMAT.read(s"""
                                                                                                 |  {
@@ -475,7 +490,18 @@ class TestStreamApi extends SmallTest with Matchers {
                                                                                                 |    "instances": -9
                                                                                                 |  }
            """.stripMargin.parseJson)
-    thrown.getMessage should include("the value of instances MUST be bigger than or equal to zero")
+    thrown.getMessage should include("the value of \"instances\" MUST be bigger than or equal to zero")
+  }
+
+  @Test
+  def parseNodeNamesFieldOnCreation(): Unit = {
+    val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
+                                                                                                     |  {
+                                                                                                     |    "nodeNames": "",
+                                                                                                     |    "jar": ${fakeJar.toJson}
+                                                                                                     |  }
+           """.stripMargin.parseJson)
+    thrown1.getMessage should include("the value of \"nodeNames\" can't be empty string")
   }
 
   @Test
@@ -485,13 +511,16 @@ class TestStreamApi extends SmallTest with Matchers {
                                                                                                 |    "nodeNames": ""
                                                                                                 |  }
            """.stripMargin.parseJson)
-    thrown1.getMessage should include("the value of nodeNames can't be empty string")
-
-    val thrown2 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATE_JSON_FORMAT.read(s"""
-                                                                                                |  {
-                                                                                                |    "nodeNames": []
-                                                                                                |  }
-           """.stripMargin.parseJson)
-    thrown2.getMessage should include("the value of nodeNames MUST be NOT empty array")
+    thrown1.getMessage should include("the value of \"nodeNames\" can't be empty string")
   }
+
+  @Test
+  def ignoreNameOnCreation(): Unit = StreamApi.accessOfProperty
+    .hostname(CommonUtils.randomString())
+    .port(CommonUtils.availablePort())
+    .request
+    .jar(JarKey(group = "1", name = "b"))
+    .creation
+    .name
+    .length should not be 0
 }

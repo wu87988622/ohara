@@ -19,11 +19,7 @@ package com.island.ohara.kafka.connector.json;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.util.CommonUtils;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 public class Validation implements JsonObject {
   private final Map<String, String> settings;
@@ -56,7 +52,11 @@ public class Validation implements JsonObject {
         .forEach(
             (k, v) -> {
               CommonUtils.requireNonEmpty(k, () -> "empty key is illegal");
-              CommonUtils.requireNonEmpty(v, () -> "the value of " + k + " can't be empty");
+              // the list format supported by kafka is not JSON representation. the form is a string
+              // splitten by
+              // dot so the empty string MUST be legal since it is used to represent empty list ...
+              // by chia
+              Objects.requireNonNull(v, () -> "the value of " + k + " can't be empty");
             });
     this.settings = Collections.unmodifiableMap(new HashMap<>(settings));
   }

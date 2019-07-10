@@ -103,7 +103,7 @@ public class TestValidation extends SmallTest {
     Validation.of(Collections.singletonMap(CommonUtils.randomString(), null));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void emptyValue() {
     Validation.of(Collections.singletonMap(CommonUtils.randomString(), ""));
   }

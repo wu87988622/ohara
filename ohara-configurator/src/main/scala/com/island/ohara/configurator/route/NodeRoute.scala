@@ -52,7 +52,8 @@ object NodeRoute {
               user = request.user,
               password = request.password,
               services = Seq.empty,
-              lastModified = CommonUtils.current()
+              lastModified = CommonUtils.current(),
+              tags = request.tags
             ))
       },
       hookOfUpdate = (name: String, request: Update, previous: Option[Node]) => {
@@ -66,7 +67,8 @@ object NodeRoute {
             password = request.password.getOrElse(
               previous.fold(throw new NoSuchElementException(RouteUtils.errorMessage(name, "password")))(_.password)),
             services = Seq.empty,
-            lastModified = CommonUtils.current()
+            lastModified = CommonUtils.current(),
+            tags = request.tags.getOrElse(previous.map(_.tags).getOrElse(Set.empty))
           ))
       },
       hookOfGet = (response: Node) => update(response),

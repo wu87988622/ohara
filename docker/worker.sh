@@ -62,7 +62,7 @@ export KAFKA_JMX_OPTS="-Dcom.sun.management.jmxremote \
 -Djava.rmi.server.hostname=$JMX_HOSTNAME
 "
 
-# We need to change working folder to another one which contains less files. Kafka had a issue
+# We need to change working folder to another one which contains less files. Kafka had an issue
 # (see https://issues.apache.org/jira/browse/KAFKA-4247) which generating classpath starting with colon and it make
 # reflection tool scan all stuff under the current folder. It may be slow if the folder has many files...
 # TODO: remove this workaround if we upgrade the kafka to 1.1.0 +

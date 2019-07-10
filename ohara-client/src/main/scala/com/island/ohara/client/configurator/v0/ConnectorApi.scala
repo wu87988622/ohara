@@ -15,13 +15,15 @@
  */
 
 package com.island.ohara.client.configurator.v0
+import java.util.Objects
+
 import com.island.ohara.client.Enum
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json.{PropGroups, SettingDefinition, StringList}
 import spray.json.DefaultJsonProtocol._
-import spray.json.{DeserializationException, JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json.{DeserializationException, JsArray, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
@@ -78,6 +80,14 @@ object ConnectorApi {
     .nullToString("name", () => CommonUtils.randomString(10))
     .refine
 
+  final case class Update(settings: Map[String, JsValue]) {
+    def workerClusterName: Option[String] = Creation(settings).workerClusterName
+  }
+  implicit val CONNECTOR_UPDATE_FORMAT: RootJsonFormat[Update] = new RootJsonFormat[Update] {
+    override def write(obj: Update): JsValue = JsObject(noJsNull(obj.settings))
+    override def read(json: JsValue): Update = Update(json.asJsObject.fields)
+  }
+
   final case class Creation(settings: Map[String, JsValue]) extends CreationRequest {
 
     /**
@@ -102,7 +112,18 @@ object ConnectorApi {
         .get(SettingDefinition.TOPIC_NAMES_DEFINITION.key())
         .map(s => StringList.ofJson(s).asScala)
         .getOrElse(Seq.empty)
+
     override def name: String = plain(SettingDefinition.CONNECTOR_NAME_DEFINITION.key())
+
+    override def tags: Set[String] = noJsNull(settings)
+      .find(_._1 == SettingDefinition.TAGS_DEFINITION.key())
+      .map(_._2)
+      .map {
+        case s: JsArray => s.elements.map(_.convertTo[String]).toSet
+        case _ =>
+          throw new IllegalArgumentException(s"the type of ${SettingDefinition.TAGS_DEFINITION.key()} should be array")
+      }
+      .getOrElse(Set.empty)
   }
 
   implicit val CONNECTOR_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] = JsonRefiner[Creation]
@@ -114,6 +135,7 @@ object ConnectorApi {
     .nullToInt(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key(), DEFAULT_NUMBER_OF_TASKS)
     .rejectEmptyString()
     .nullToString("name", () => CommonUtils.randomString(10))
+    .nullToEmptyArray(Data.TAGS_KEY)
     .refine
 
   import MetricsApi._
@@ -154,13 +176,22 @@ object ConnectorApi {
         .get(SettingDefinition.TOPIC_NAMES_DEFINITION.key())
         .map(s => StringList.ofJson(s).asScala)
         .getOrElse(Seq.empty)
+    override def tags: Set[String] = noJsNull(settings)
+      .find(_._1 == SettingDefinition.TAGS_DEFINITION.key())
+      .map(_._2)
+      .map {
+        case s: JsArray => s.elements.map(_.convertTo[String]).toSet
+        case _ =>
+          throw new IllegalArgumentException(s"the type of ${SettingDefinition.TAGS_DEFINITION.key()} should be array")
+      }
+      .getOrElse(Set.empty)
   }
 
   implicit val CONNECTOR_STATE_JSON_FORMAT: RootJsonFormat[ConnectorState] =
     new RootJsonFormat[ConnectorState] {
       override def write(obj: ConnectorState): JsValue = JsString(obj.name)
       override def read(json: JsValue): ConnectorState =
-        ConnectorState.forName(json.asInstanceOf[JsString].value)
+        ConnectorState.forName(json.convertTo[String])
     }
 
   implicit val CONNECTOR_DESCRIPTION_JSON_FORMAT: RootJsonFormat[ConnectorDescription] = jsonFormat5(
@@ -179,25 +210,32 @@ object ConnectorApi {
     protected[this] var numberOfTasks: Int = DEFAULT_NUMBER_OF_TASKS
     protected[this] var settings: Map[String, String] = Map.empty
     protected[this] var workerClusterName: String = _
+    protected[this] var tags: Set[String] = _
+
+    @Optional("default name is a random string. But it is required in updating")
     def name(name: String): BasicRequest.this.type = {
       this.name = CommonUtils.requireNonEmpty(name)
       this
     }
+
     @Optional(
       "You don't need to fill this field when update/create connector. But this filed is required in starting connector")
     def className(className: String): BasicRequest.this.type = {
       this.className = CommonUtils.requireNonEmpty(className)
       this
     }
+
     @Optional("Not all connectors demand this field. See connectors document for more details")
     def columns(columns: Seq[Column]): BasicRequest.this.type = {
       import scala.collection.JavaConverters._
       this.columns = CommonUtils.requireNonEmpty(columns.asJava).asScala
       this
     }
+
     @Optional(
       "You don't need to fill this field when update/create connector. But this filed is required in starting connector")
     def topicName(topicName: String): BasicRequest.this.type = topicNames(Seq(CommonUtils.requireNonEmpty(topicName)))
+
     @Optional(
       "You don't need to fill this field when update/create connector. But this filed is required in starting connector")
     def topicNames(topicNames: Seq[String]): BasicRequest.this.type = {
@@ -205,23 +243,33 @@ object ConnectorApi {
       this.topicNames = CommonUtils.requireNonEmpty(topicNames.asJava).asScala
       this
     }
+
     @Optional("default value is 1")
     def numberOfTasks(numberOfTasks: Int): BasicRequest.this.type = {
       this.numberOfTasks = CommonUtils.requirePositiveInt(numberOfTasks)
       this
     }
+
     @Optional("server will match a worker cluster for you if the wk name is ignored")
     def workerClusterName(workerClusterName: String): BasicRequest.this.type = {
       this.workerClusterName = CommonUtils.requireNonEmpty(workerClusterName)
       this
     }
+
     @Optional("extra settings for this connectors")
     def setting(key: String, value: String): BasicRequest.this.type = settings(
       Map(CommonUtils.requireNonEmpty(key) -> CommonUtils.requireNonEmpty(value)))
+
     @Optional("extra settings for this connectors")
     def settings(settings: Map[String, String]): BasicRequest.this.type = {
       import scala.collection.JavaConverters._
       this.settings = CommonUtils.requireNonEmpty(settings.asJava).asScala.toMap
+      this
+    }
+
+    @Optional("default value is empty array in creation and None in update")
+    def tags(tags: Set[String]): BasicRequest.this.type = {
+      this.tags = Objects.requireNonNull(tags)
       this
     }
 
@@ -234,10 +282,14 @@ object ConnectorApi {
       * @return creation object
       */
     private[v0] def creation: Creation = Creation(
-      settings = (settings.map {
+      update.settings ++
+        Map(SettingDefinition.CONNECTOR_NAME_DEFINITION.key() -> JsString(
+          if (CommonUtils.isEmpty(name)) CommonUtils.randomString(10) else name)))
+
+    private[v0] def update: Update = Update(
+      settings.map {
         case (k, v) => k -> JsString(v)
       } ++ Map(
-        SettingDefinition.CONNECTOR_NAME_DEFINITION.key() -> JsString(CommonUtils.requireNonEmpty(name)),
         SettingDefinition.CONNECTOR_CLASS_DEFINITION.key() -> (if (className == null) JsNull
                                                                else JsString(CommonUtils.requireNonEmpty(className))),
         SettingDefinition.COLUMNS_DEFINITION.key() -> (if (columns == null) JsNull
@@ -248,17 +300,19 @@ object ConnectorApi {
                                                            else if (topicNames.isEmpty) JsArray.empty
                                                            else StringList.toJsonString(topicNames.asJava).parseJson),
         SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key() -> JsNumber(CommonUtils.requirePositiveInt(numberOfTasks)),
-        SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION
-          .key() -> (if (workerClusterName == null) JsNull
-                     else JsString(CommonUtils.requireNonEmpty(workerClusterName)))
-      )).filter {
+        SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key() -> (if (workerClusterName == null) JsNull
+                                                                   else
+                                                                     JsString(
+                                                                       CommonUtils.requireNonEmpty(workerClusterName))),
+        SettingDefinition.TAGS_DEFINITION.key() -> (if (tags == null) JsNull
+                                                    else JsArray(tags.map(JsString(_)).toVector))
+      ).filter {
         case (_, value) =>
           value match {
             case JsNull => false
             case _      => true
           }
-      }
-    )
+      })
   }
 
   /**
@@ -327,18 +381,8 @@ object ConnectorApi {
       override def create()(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
         exec.post[Creation, ConnectorDescription, ErrorApi.Error](_url, creation)
 
-      /**
-        *  There is no "Update" class here since all settings in request is converted to Map[String, JsValue], and we use many helper methods to
-        *  take specific arguments from the map. Hence, we don't create another case class to represent a object which carries the related arguments.
-        *  This is a workaround to accept "unknown" settings from custom connector. There are two disadvantages caused by this way.
-        *  1. we have to define the marshaller/unmarshaller manually
-        *  2. we can't verify the existence in receiving the request. By contrast, the arguments in request is validated in route.
-        * @param executionContext thread pool
-        * @return updated/created data
-        */
       override def update()(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
-        exec.put[Creation, ConnectorDescription, ErrorApi.Error](s"${_url}/${CommonUtils.requireNonEmpty(name)}",
-                                                                 creation)
+        exec.put[Update, ConnectorDescription, ErrorApi.Error](s"${_url}/${CommonUtils.requireNonEmpty(name)}", update)
     }
   }
 

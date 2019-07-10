@@ -18,4 +18,6 @@ package com.island.ohara.configurator.store
 
 import com.island.ohara.client.configurator.v0.Data
 
-case class SimpleData(name: String, lastModified: Long, kind: String) extends Data
+case class SimpleData(name: String, lastModified: Long, kind: String) extends Data {
+  override def tags: Set[String] = Set.empty
+}

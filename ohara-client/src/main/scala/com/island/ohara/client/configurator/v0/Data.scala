@@ -24,4 +24,10 @@ trait Data {
   def name: String
   def lastModified: Long
   def kind: String
+  def tags: Set[String]
+}
+
+object Data {
+  val NAME_KEY = "name"
+  val TAGS_KEY = "tags"
 }

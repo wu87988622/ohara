@@ -209,6 +209,23 @@ class TestNodeRoute extends SmallTest with Matchers {
         .user(CommonUtils.randomString())
         .update())
 
+  @Test
+  def updateTags(): Unit = {
+    val tags = Set(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val nodeDesc = result(nodeApi.request.name("aa").port(22).user("user").password("password").tags(tags).create())
+    nodeDesc.tags shouldBe tags
+
+    val tags2 = Set(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val nodeDesc2 = result(nodeApi.request.name(nodeDesc.name).tags(tags2).update())
+    nodeDesc2.tags shouldBe tags2
+
+    val nodeDesc3 = result(nodeApi.request.name(nodeDesc.name).update())
+    nodeDesc3.tags shouldBe tags2
+
+    val nodeDesc4 = result(nodeApi.request.name(nodeDesc.name).tags(Set.empty).update())
+    nodeDesc4.tags shouldBe Set.empty
+  }
+
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }

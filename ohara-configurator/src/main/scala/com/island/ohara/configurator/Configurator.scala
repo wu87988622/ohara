@@ -352,7 +352,8 @@ object Configurator {
             name = hostname,
             password = password,
             user = user,
-            port = port
+            port = port,
+            tags = Set.empty
           ))
       case _ =>
         configuratorBuilder.cleanup()

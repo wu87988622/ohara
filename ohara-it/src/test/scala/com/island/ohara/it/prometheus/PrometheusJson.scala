@@ -41,7 +41,7 @@ object PrometheusJson {
   implicit val STATE_JSON_FORMAT: RootJsonFormat[Health] = new RootJsonFormat[Health] {
     override def write(obj: Health): JsValue = JsString(obj.name)
     override def read(json: JsValue): Health =
-      Health.forName(json.asInstanceOf[JsString].value)
+      Health.forName(json.convertTo[String])
   }
 
   final case class TargetSeq(discoveredLabels: DiscoveredLabels,

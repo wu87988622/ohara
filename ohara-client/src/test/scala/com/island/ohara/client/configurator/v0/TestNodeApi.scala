@@ -34,7 +34,7 @@ class TestNodeApi extends SmallTest with Matchers {
     .port(CommonUtils.availablePort())
     .user(CommonUtils.randomString())
     .password(CommonUtils.randomString())
-    .create()
+    .create
 
   @Test
   def ignoreNameOnUpdate(): Unit = an[NullPointerException] should be thrownBy NodeApi.access
@@ -266,4 +266,10 @@ class TestNodeApi extends SmallTest with Matchers {
     creation.user shouldBe user
     creation.password shouldBe password
   }
+
+  @Test
+  def nullTags(): Unit = an[NullPointerException] should be thrownBy NodeApi.access.request.tags(null)
+
+  @Test
+  def emptyTags(): Unit = NodeApi.access.request.tags(Set.empty)
 }

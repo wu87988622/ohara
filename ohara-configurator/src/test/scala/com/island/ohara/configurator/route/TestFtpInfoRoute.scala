@@ -168,6 +168,24 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
     updated.password shouldBe expected.password
   }
 
+  @Test
+  def updateTags(): Unit = {
+    val tags = Set(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val ftpDesc = result(
+      ftpApi.request.hostname("hostname").port(22).user("user").password("password").tags(tags).create())
+    ftpDesc.tags shouldBe tags
+
+    val tags2 = Set(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val ftpDesc2 = result(ftpApi.request.name(ftpDesc.name).tags(tags2).update())
+    ftpDesc2.tags shouldBe tags2
+
+    val ftpDesc3 = result(ftpApi.request.name(ftpDesc.name).update())
+    ftpDesc3.tags shouldBe tags2
+
+    val ftpDesc4 = result(ftpApi.request.name(ftpDesc.name).tags(Set.empty).update())
+    ftpDesc4.tags shouldBe Set.empty
+  }
+
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }

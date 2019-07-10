@@ -109,12 +109,14 @@ class TestHadoopApi extends SmallTest with Matchers {
   }
 
   @Test
-  def ignoreNameOnCreation(): Unit = an[NullPointerException] should be thrownBy HadoopApi.access
+  def ignoreNameOnCreation(): Unit = HadoopApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
     .uri(CommonUtils.randomString())
-    .create()
+    .creation
+    .name
+    .length should not be 0
 
   @Test
   def ignoreNameOnUpdate(): Unit = an[NullPointerException] should be thrownBy HadoopApi.access
@@ -143,4 +145,10 @@ class TestHadoopApi extends SmallTest with Matchers {
 
   @Test
   def nullUri(): Unit = an[NullPointerException] should be thrownBy HadoopApi.access.request.uri(null)
+
+  @Test
+  def nullTags(): Unit = an[NullPointerException] should be thrownBy HadoopApi.access.request.tags(null)
+
+  @Test
+  def emptyTags(): Unit = HadoopApi.access.request.tags(Set.empty)
 }

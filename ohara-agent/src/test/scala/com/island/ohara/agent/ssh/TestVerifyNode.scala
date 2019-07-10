@@ -94,7 +94,8 @@ class TestVerifyNode extends SmallTest with Matchers {
     user = sshServer.user(),
     password = sshServer.password(),
     services = Seq.empty,
-    lastModified = CommonUtils.current()
+    lastModified = CommonUtils.current(),
+    tags = Set.empty
   )
 
   private[this] val collie = ClusterCollie.builderOfSsh.nodeCollie(NodeCollie(Seq(node))).build

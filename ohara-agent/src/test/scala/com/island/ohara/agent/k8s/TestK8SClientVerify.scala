@@ -40,8 +40,17 @@ class TestK8SClientVerify extends SmallTest with Matchers {
     val clusterCollie: ClusterCollie =
       ClusterCollie.builderOfK8s().nodeCollie(nodeCollie).k8sClient(fakeK8SClient).build()
     val runningNode =
-      Await.result(clusterCollie.verifyNode(Node("ohara", 22, "fake", "fake", Seq.empty, CommonUtils.current())),
-                   30 seconds)
+      Await.result(
+        clusterCollie.verifyNode(
+          Node(name = "ohara",
+               port = 22,
+               user = "fake",
+               password = "fake",
+               services = Seq.empty,
+               lastModified = CommonUtils.current(),
+               tags = Set.empty)),
+        30 seconds
+      )
     runningNode match {
       case Success(value) => value shouldBe "ohara node is running."
       case Failure(e)     => throw new AssertionError()
@@ -54,8 +63,17 @@ class TestK8SClientVerify extends SmallTest with Matchers {
     val clusterCollie: ClusterCollie =
       ClusterCollie.builderOfK8s().nodeCollie(nodeCollie).k8sClient(fakeK8SClient).build()
     val runningNode =
-      Await.result(clusterCollie.verifyNode(Node("ohara", 22, "fake", "fake", Seq.empty, CommonUtils.current())),
-                   30 seconds)
+      Await.result(
+        clusterCollie.verifyNode(
+          Node(name = "ohara",
+               port = 22,
+               user = "fake",
+               password = "fake",
+               services = Seq.empty,
+               lastModified = CommonUtils.current(),
+               tags = Set.empty)),
+        30 seconds
+      )
     runningNode match {
       case Success(value) => throw new AssertionError()
       case Failure(e)     => e.getMessage shouldBe "ohara node doesn't running container. cause: node failed."
@@ -68,8 +86,17 @@ class TestK8SClientVerify extends SmallTest with Matchers {
     val clusterCollie: ClusterCollie =
       ClusterCollie.builderOfK8s().nodeCollie(nodeCollie).k8sClient(fakeK8SClient).build()
     val runningNode =
-      Await.result(clusterCollie.verifyNode(Node("ohara", 22, "fake", "fake", Seq.empty, CommonUtils.current())),
-                   30 seconds)
+      Await.result(
+        clusterCollie.verifyNode(
+          Node(name = "ohara",
+               port = 22,
+               user = "fake",
+               password = "fake",
+               services = Seq.empty,
+               lastModified = CommonUtils.current(),
+               tags = Set.empty)),
+        30 seconds
+      )
     runningNode match {
       case Success(value) => throw new AssertionError()
       case Failure(e)     => e.getMessage() shouldBe "ohara node doesn't running container. cause: failed"
@@ -82,8 +109,17 @@ class TestK8SClientVerify extends SmallTest with Matchers {
     val clusterCollie: ClusterCollie =
       ClusterCollie.builderOfK8s().nodeCollie(nodeCollie).k8sClient(fakeK8SClient).build()
     val runningNode =
-      Await.result(clusterCollie.verifyNode(Node("ohara", 22, "fake", "fake", Seq.empty, CommonUtils.current())),
-                   30 seconds)
+      Await.result(
+        clusterCollie.verifyNode(
+          Node(name = "ohara",
+               port = 22,
+               user = "fake",
+               password = "fake",
+               services = Seq.empty,
+               lastModified = CommonUtils.current(),
+               tags = Set.empty)),
+        30 seconds
+      )
     runningNode match {
       case Success(value) => throw new AssertionError()
       case Failure(e) =>

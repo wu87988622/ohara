@@ -27,6 +27,7 @@ import org.junit.Test
 import org.scalatest.Matchers
 import spray.json.{JsArray, JsString, _}
 import scala.concurrent.ExecutionContext.Implicits.global
+import spray.json.DefaultJsonProtocol._
 class TestConnectorApi extends SmallTest with Matchers {
 
   @Test
@@ -41,7 +42,7 @@ class TestConnectorApi extends SmallTest with Matchers {
       .build()
     val topicNames = Seq(CommonUtils.randomString())
     val numberOfTasks = 10
-    val configs = Map("aaa" -> "cccc")
+    val tags = Set("aa", "bb")
     val anotherKey = CommonUtils.randomString()
     val anotherValue = CommonUtils.randomString()
 
@@ -54,9 +55,8 @@ class TestConnectorApi extends SmallTest with Matchers {
                                              |  "topics": ${JsArray(topicNames.map(v => JsString(v)).toVector)
                                                .toString()},
                                              |  "numberOfTasks": ${JsNumber(numberOfTasks).toString()},
-                                             |  "configs": ${JsObject(configs.map { case (k, v) => k -> JsString(v) })
-                                               .toString()},
-                                                  "$anotherKey": "$anotherValue"
+                                             |  "tags": ${JsArray(tags.map(JsString(_)).toVector).toString()},
+                                             |  "$anotherKey": "$anotherValue"
                                              |}
                                             """.stripMargin.parseJson)
     creation.name.length shouldBe 10
@@ -65,10 +65,11 @@ class TestConnectorApi extends SmallTest with Matchers {
     creation.columns shouldBe Seq.empty
     creation.topicNames shouldBe topicNames
     creation.numberOfTasks shouldBe 1
+    creation.tags shouldBe tags
     // this key is deprecated so json converter will replace it by new one
     creation.settings.contains("className") shouldBe false
     creation.settings.contains("aaa") shouldBe false
-    creation.settings(anotherKey).asInstanceOf[JsString].value shouldBe anotherValue
+    creation.settings(anotherKey).convertTo[String] shouldBe anotherValue
     CONNECTOR_CREATION_JSON_FORMAT.read(CONNECTOR_CREATION_JSON_FORMAT.write(creation)) shouldBe creation
 
     val name = CommonUtils.randomString()
@@ -82,9 +83,7 @@ class TestConnectorApi extends SmallTest with Matchers {
                                                |  "topics": ${JsArray(topicNames.map(v => JsString(v)).toVector)
                                                .toString()},
                                                |  "numberOfTasks": ${JsNumber(numberOfTasks).toString()},
-                                               |  "configs": ${JsObject(configs.map { case (k, v) => k -> JsString(v) })
-                                               .toString()},
-                                                  "$anotherKey": "$anotherValue"
+                                               |  "$anotherKey": "$anotherValue"
                                                |}
                                             """.stripMargin.parseJson)
     creation2.name shouldBe name
@@ -96,7 +95,7 @@ class TestConnectorApi extends SmallTest with Matchers {
     // this key is deprecated so json converter will replace it by new one
     creation2.settings.contains("className") shouldBe false
     creation2.settings.contains("aaa") shouldBe false
-    creation2.settings(anotherKey).asInstanceOf[JsString].value shouldBe anotherValue
+    creation2.settings(anotherKey).convertTo[String] shouldBe anotherValue
     CONNECTOR_CREATION_JSON_FORMAT.read(CONNECTOR_CREATION_JSON_FORMAT.write(creation2)) shouldBe creation2
   }
 
@@ -112,39 +111,6 @@ class TestConnectorApi extends SmallTest with Matchers {
     request shouldBe Serializer.OBJECT.from(Serializer.OBJECT.to(request)).asInstanceOf[Creation]
   }
 
-  // TODO: remove this test after ohara manager starts to use new APIs
-  @Test
-  def testStaleCreationResponseApis(): Unit = {
-    val desc = ConnectorDescription(
-      settings = Map(
-        SettingDefinition.CONNECTOR_NAME_DEFINITION.key() -> JsString(CommonUtils.randomString()),
-        SettingDefinition.CONNECTOR_CLASS_DEFINITION.key() -> JsString(CommonUtils.randomString()),
-        SettingDefinition.COLUMNS_DEFINITION.key() -> JsNull,
-        SettingDefinition.TOPIC_NAMES_DEFINITION.key() -> JsArray(JsString(CommonUtils.randomString())),
-        SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key() -> JsNumber(1231),
-        SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key() -> JsString(CommonUtils.randomString()),
-      ),
-      state = None,
-      error = None,
-      metrics = Metrics(Seq.empty),
-      lastModified = CommonUtils.current()
-    )
-    val jsonString = CONNECTOR_DESCRIPTION_JSON_FORMAT.write(desc).toString()
-    jsonString.contains(SettingDefinition.CONNECTOR_NAME_DEFINITION.key()) shouldBe true
-    jsonString.contains(SettingDefinition.CONNECTOR_CLASS_DEFINITION.key()) shouldBe true
-    jsonString.contains("className") shouldBe false
-    jsonString.contains(SettingDefinition.COLUMNS_DEFINITION.key()) shouldBe true
-    jsonString.contains("schema") shouldBe false
-    jsonString.contains("topics") shouldBe true
-    jsonString.contains(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key()) shouldBe true
-    jsonString.contains("numberOfTasks") shouldBe false
-    jsonString.contains("settings") shouldBe true
-    jsonString.contains(SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key()) shouldBe true
-    jsonString.contains("state") shouldBe false
-    jsonString.contains("error") shouldBe false
-    jsonString.contains("lastModified") shouldBe true
-    jsonString.contains("configs") shouldBe false
-  }
   @Test
   def testState(): Unit = {
     ConnectorState.all shouldBe Seq(
@@ -306,11 +272,13 @@ class TestConnectorApi extends SmallTest with Matchers {
   }
 
   @Test
-  def ignoreNameOnCreation(): Unit = an[NullPointerException] should be thrownBy ConnectorApi.access
+  def ignoreNameOnCreation(): Unit = ConnectorApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
-    .create()
+    .creation
+    .name
+    .length should not be 0
 
   @Test
   def ignoreNameOnUpdate(): Unit = an[NullPointerException] should be thrownBy ConnectorApi.access
@@ -444,4 +412,10 @@ class TestConnectorApi extends SmallTest with Matchers {
        |  "order": -1
        |}
        |     """.stripMargin.parseJson)
+
+  @Test
+  def nullTags(): Unit = an[NullPointerException] should be thrownBy ConnectorApi.access.request.tags(null)
+
+  @Test
+  def emptyTags(): Unit = ConnectorApi.access.request.tags(Set.empty)
 }

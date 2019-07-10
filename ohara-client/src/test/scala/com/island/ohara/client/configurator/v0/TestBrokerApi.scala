@@ -43,12 +43,14 @@ class TestBrokerApi extends SmallTest with Matchers {
   }
 
   @Test
-  def ignoreNameOnCreation(): Unit = an[NullPointerException] should be thrownBy BrokerApi.access
+  def ignoreNameOnCreation(): Unit = BrokerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
     .nodeName(CommonUtils.randomString(10))
     .creation
+    .name
+    .length should not be 0
 
   @Test
   def ignoreNodeNamesOnCreation(): Unit = an[IllegalArgumentException] should be thrownBy BrokerApi.access

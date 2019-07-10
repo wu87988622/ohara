@@ -28,21 +28,6 @@ import spray.json._
 class TestPipelineApi extends SmallTest with Matchers {
 
   @Test
-  def testDeprecatedRules(): Unit = {
-    val rules = Map(
-      CommonUtils.randomString() -> Set(CommonUtils.randomString()),
-      CommonUtils.randomString() -> Set(CommonUtils.randomString(), CommonUtils.randomString())
-    )
-
-    val req = Creation(
-      name = CommonUtils.randomString(),
-      workerClusterName = None,
-      rules = rules
-    )
-    rules shouldBe req.rules
-  }
-
-  @Test
   def parseDeprecatedJsonOfPipelineCreationRequest(): Unit = {
     val from = CommonUtils.randomString()
     val to0 = CommonUtils.randomString()
@@ -69,7 +54,8 @@ class TestPipelineApi extends SmallTest with Matchers {
       workerClusterName = CommonUtils.randomString(),
       objects = Seq.empty,
       flows = Seq.empty,
-      lastModified = CommonUtils.current()
+      lastModified = CommonUtils.current(),
+      tags = Set.empty
     )
     val json = PIPELINE_JSON_FORMAT.write(pipeline).toString
     withClue(json)(json.contains("\"rules\":{") shouldBe true)
@@ -89,18 +75,21 @@ class TestPipelineApi extends SmallTest with Matchers {
           to = Set(to)
         )
       ),
-      lastModified = CommonUtils.current()
+      lastModified = CommonUtils.current(),
+      tags = Set.empty
     )
     val json = PIPELINE_JSON_FORMAT.write(pipeline).toString
     withClue(json)(json.contains(s"""\"rules\":{\"$from\":[\"$to\"]""") shouldBe true)
   }
 
   @Test
-  def ignoreNameOnCreation(): Unit = an[NullPointerException] should be thrownBy PipelineApi.access
+  def ignoreNameOnCreation(): Unit = PipelineApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
-    .create()
+    .creation
+    .name
+    .length should not be 0
 
   @Test
   def ignoreNameOnUpdate(): Unit = an[NullPointerException] should be thrownBy PipelineApi.access
@@ -187,6 +176,7 @@ class TestPipelineApi extends SmallTest with Matchers {
     creation2.name shouldBe name
     creation2.workerClusterName shouldBe None
     creation2.flows shouldBe Seq.empty
+    creation2.tags shouldBe Set.empty
   }
 
   @Test
@@ -215,4 +205,10 @@ class TestPipelineApi extends SmallTest with Matchers {
       |  }
       |
     """.stripMargin.parseJson)
+
+  @Test
+  def nullTags(): Unit = an[NullPointerException] should be thrownBy PipelineApi.access.request.tags(null)
+
+  @Test
+  def emptyTags(): Unit = PipelineApi.access.request.tags(Set.empty)
 }

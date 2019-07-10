@@ -129,7 +129,8 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
                 user = req.user,
                 password = req.password,
                 services = Seq.empty,
-                lastModified = CommonUtils.current()
+                lastModified = CommonUtils.current(),
+                tags = Set.empty
               ))
             .map {
               case Success(value) =>

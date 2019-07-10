@@ -192,6 +192,17 @@ public class SettingDefinition implements JsonObject {
   public static final SettingDefinition SINK_KIND_DEFINITION =
       SettingDefinition.builder(KIND_DEFINITION).optional("sink").build();
 
+  public static final SettingDefinition TAGS_DEFINITION =
+      SettingDefinition.builder()
+          .displayName("tags")
+          .key("tags")
+          .valueType(Type.LIST)
+          .documentation("tags to this connector")
+          .group(CORE_GROUP)
+          .optional()
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
+          .build();
+
   // -------------------------------[reference]-------------------------------//
   enum Reference {
     NONE,

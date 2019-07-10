@@ -245,6 +245,32 @@ class TestStreamRoute extends SmallTest with Matchers {
   def duplicateDeleteStreamProperty(): Unit =
     (0 to 10).foreach(_ => result(accessStreamProperty.delete(CommonUtils.randomString(5))))
 
+  @Test
+  def updateTags(): Unit = {
+    val file = CommonUtils.createTempJar("empty_")
+
+    val jar = result(accessJar.request.upload(file))
+
+    val tags = Set(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val streamDesc = result(
+      accessStreamProperty.request
+        .name(CommonUtils.randomString(10))
+        .jar(JarKey(jar.group, jar.name))
+        .tags(tags)
+        .create())
+    streamDesc.tags shouldBe tags
+
+    val tags2 = Set(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val streamDesc2 = result(accessStreamProperty.request.name(streamDesc.name).tags(tags2).update())
+    streamDesc2.tags shouldBe tags2
+
+    val streamDesc3 = result(accessStreamProperty.request.name(streamDesc.name).update())
+    streamDesc3.tags shouldBe tags2
+
+    val streamDesc4 = result(accessStreamProperty.request.name(streamDesc.name).tags(Set.empty).update())
+    streamDesc4.tags shouldBe Set.empty
+  }
+
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }

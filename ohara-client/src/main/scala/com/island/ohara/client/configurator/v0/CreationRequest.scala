@@ -25,4 +25,6 @@ trait CreationRequest {
     * @return object name
     */
   def name: String
+
+  def tags: Set[String]
 }

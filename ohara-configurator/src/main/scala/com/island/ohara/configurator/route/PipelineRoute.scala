@@ -43,13 +43,15 @@ private[configurator] object PipelineRoute {
   private[this] def toRes(request: Creation, swallow: Boolean = false)(implicit clusterCollie: ClusterCollie,
                                                                        store: DataStore,
                                                                        executionContext: ExecutionContext,
-                                                                       meterCache: MeterCache): Future[Pipeline] =
+                                                                       meterCache: MeterCache): Future[Pipeline] = {
     toRes(Map(
             request.name -> Update(
               workerClusterName = request.workerClusterName,
-              flows = Some(request.flows)
+              flows = Some(request.flows),
+              tags = Some(request.tags)
             )),
           swallow).map(_.head)
+  }
 
   /**
     * convert the request to response.
@@ -86,10 +88,14 @@ private[configurator] object PipelineRoute {
                flows = request.flows.getOrElse(
                  throw new NoSuchElementException(
                    "We produced a bug here since we must fill the flows for all input updates before processing it " +
-                     "... please file a issue to fix this ... by chia")),
+                     "... please file an issue to fix this ... by chia")),
                objects = Seq.empty,
                workerClusterName = wkName,
-               lastModified = CommonUtils.current()
+               lastModified = CommonUtils.current(),
+               tags = request.tags.getOrElse(
+                 throw new NoSuchElementException(
+                   "We produced a bug here since we must fill the tags for all input updates before processing it " +
+                     "... please file an issue to fix this ... by chia")),
              ),
              wkClusterOption.flatMap { wkCluster =>
                clusters.keys
@@ -178,7 +184,8 @@ private[configurator] object PipelineRoute {
                       state = connectorInfo.map(_.connector.state.name),
                       error = connectorInfo.flatMap(_.connector.trace),
                       metrics = metrics,
-                      lastModified = data.lastModified
+                      lastModified = data.lastModified,
+                      tags = data.tags
                     )
                 }
                 .recover {
@@ -190,9 +197,10 @@ private[configurator] object PipelineRoute {
                       className = None,
                       state = None,
                       error = Some(s"Failed to get status and type of connector:${data.name}." +
-                        s"This may be temporary since our worker cluster is too busy to sync status of connector. ${e.getMessage}"),
+                        s"This could be a temporary issue since our worker cluster is too busy to sync status of connector. ${e.getMessage}"),
                       metrics = metrics,
-                      lastModified = data.lastModified
+                      lastModified = data.lastModified,
+                      tags = data.tags
                     )
                 }
 
@@ -208,7 +216,8 @@ private[configurator] object PipelineRoute {
                     state = info.state,
                     error = None,
                     metrics = Metrics(Seq.empty),
-                    lastModified = data.lastModified
+                    lastModified = data.lastModified,
+                    tags = data.tags
                   )
                 }
                 .recover {
@@ -220,9 +229,10 @@ private[configurator] object PipelineRoute {
                       className = None,
                       state = None,
                       error = Some(s"Failed to get status of streamApp: ${data.name}." +
-                        s"This may be temporary since our container cluster is too busy to sync status of streamApp. ${e.getMessage}"),
+                        s"This could be a temporary issue since our container cluster is too busy to sync status of streamApp. ${e.getMessage}"),
                       metrics = Metrics(Seq.empty),
-                      lastModified = data.lastModified
+                      lastModified = data.lastModified,
+                      tags = data.tags
                     )
                 }
 
@@ -235,7 +245,8 @@ private[configurator] object PipelineRoute {
                 error = None,
                 // noted we create a topic with name rather than name
                 metrics = Metrics(topicMeters.getOrElse(data.name, Seq.empty)),
-                lastModified = data.lastModified
+                lastModified = data.lastModified,
+                tags = data.tags
               ))
             case data =>
               Future.successful(
@@ -245,7 +256,8 @@ private[configurator] object PipelineRoute {
                                state = None,
                                error = None,
                                metrics = Metrics(Seq.empty),
-                               lastModified = data.lastModified))
+                               lastModified = data.lastModified,
+                               tags = data.tags))
           }
       }
       // NOTED: we have to return a "serializable" list!!!
@@ -350,7 +362,8 @@ private[configurator] object PipelineRoute {
       pipelines.map { pipeline =>
         pipeline.name -> Update(
           workerClusterName = Some(pipeline.workerClusterName),
-          flows = Some(pipeline.flows)
+          flows = Some(pipeline.flows),
+          tags = Some(pipeline.tags)
         )
       }.toMap,
       true
@@ -398,21 +411,21 @@ private[configurator] object PipelineRoute {
               previousOption
                 .map { previous =>
                   toRes(
-                    Map(
-                      name -> checkedRequest.copy(flows =
-                                                    if (checkedRequest.flows.isEmpty) Some(previous.flows)
-                                                    else checkedRequest.flows,
-                                                  workerClusterName = Some(previous.workerClusterName))),
+                    Map(name -> checkedRequest.copy(
+                      flows = Some(checkedRequest.flows.getOrElse(previous.flows)),
+                      workerClusterName = Some(previous.workerClusterName),
+                      tags = Some(checkedRequest.tags.getOrElse(previous.tags))
+                    )),
                     false
                   ).map(_.head)
                 }
-                .getOrElse {
-                  if (checkedRequest.flows.isEmpty)
-                    throw new IllegalArgumentException(
-                      s"the input name:$name does not exist "
-                        + " and hence you are triggering a creation process so you can't ignore the 'flows'")
-                  toRes(Map(name -> checkedRequest), false).map(_.head)
-              }),
+                .getOrElse(
+                  toRes(Map(
+                          name -> checkedRequest.copy(
+                            flows = Some(checkedRequest.flows.getOrElse(Seq.empty)),
+                            tags = Some(checkedRequest.tags.getOrElse(Set.empty))
+                          )),
+                        false).map(_.head))),
       hookOfGet = (response: Pipeline) => update(response),
       hookOfList = (responses: Seq[Pipeline]) => update(responses),
       hookBeforeDelete = (name: String) =>

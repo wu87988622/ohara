@@ -15,6 +15,8 @@
  */
 
 package com.island.ohara.client.configurator.v0
+import java.util.Objects
+
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
@@ -23,18 +25,27 @@ import spray.json.RootJsonFormat
 import scala.concurrent.{ExecutionContext, Future}
 object FtpApi {
   val FTP_PREFIX_PATH: String = "ftp"
-  final case class Update(hostname: Option[String], port: Option[Int], user: Option[String], password: Option[String])
+  final case class Update(hostname: Option[String],
+                          port: Option[Int],
+                          user: Option[String],
+                          password: Option[String],
+                          tags: Option[Set[String]])
   implicit val FTP_UPDATE_JSON_FORMAT: RootJsonFormat[Update] =
-    JsonRefiner[Update].format(jsonFormat4(Update)).requireConnectionPort("port").rejectEmptyString().refine
+    JsonRefiner[Update].format(jsonFormat5(Update)).requireConnectionPort("port").rejectEmptyString().refine
 
-  final case class Creation(name: String, hostname: String, port: Int, user: String, password: String)
+  final case class Creation(name: String,
+                            hostname: String,
+                            port: Int,
+                            user: String,
+                            password: String,
+                            tags: Set[String])
       extends CreationRequest
   implicit val FTP_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
     JsonRefiner[Creation]
-      .format(jsonFormat5(Creation))
+      .format(jsonFormat6(Creation))
       .requireConnectionPort("port")
       .rejectEmptyString()
-      .stringRestriction("name")
+      .stringRestriction(Data.NAME_KEY)
       .withNumber()
       .withCharset()
       .withDot()
@@ -42,6 +53,7 @@ object FtpApi {
       .withUnderLine()
       .toRefiner
       .nullToString("name", () => CommonUtils.randomString(10))
+      .nullToEmptyArray(Data.TAGS_KEY)
       .refine
 
   final case class FtpInfo(name: String,
@@ -49,25 +61,34 @@ object FtpApi {
                            port: Int,
                            user: String,
                            password: String,
-                           lastModified: Long)
+                           lastModified: Long,
+                           tags: Set[String])
       extends Data {
     override def kind: String = "ftp"
   }
-  implicit val FTP_INFO_JSON_FORMAT: RootJsonFormat[FtpInfo] = jsonFormat6(FtpInfo)
+  implicit val FTP_INFO_JSON_FORMAT: RootJsonFormat[FtpInfo] = jsonFormat7(FtpInfo)
 
   /**
     * used to generate the payload and url for POST/PUT request.
     */
   trait Request {
+    @Optional("default name is a random string. But it is required in updating")
     def name(name: String): Request
+
     @Optional("it is ignorable if you are going to send update request")
     def hostname(hostname: String): Request
+
     @Optional("it is ignorable if you are going to send update request")
     def port(port: Int): Request
+
     @Optional("it is ignorable if you are going to send update request")
     def user(user: String): Request
+
     @Optional("it is ignorable if you are going to send update request")
     def password(password: String): Request
+
+    @Optional("default value is empty array in creation and None in update")
+    def tags(tags: Set[String]): Request
 
     /**
       * Retrieve the inner object of request payload. Noted, it throw unchecked exception if you haven't filled all required fields
@@ -105,6 +126,7 @@ object FtpApi {
       private[this] var hostname: String = _
       private[this] var user: String = _
       private[this] var password: String = _
+      private[this] var tags: Set[String] = _
 
       override def name(name: String): Request = {
         this.name = CommonUtils.requireNonEmpty(name)
@@ -131,12 +153,18 @@ object FtpApi {
         this
       }
 
+      override def tags(tags: Set[String]): Request = {
+        this.tags = Objects.requireNonNull(tags)
+        this
+      }
+
       override private[v0] def creation: Creation = Creation(
-        name = CommonUtils.requireNonEmpty(name),
+        name = if (CommonUtils.isEmpty(name)) CommonUtils.randomString(10) else name,
         hostname = CommonUtils.requireNonEmpty(hostname),
         port = port.map(CommonUtils.requireConnectionPort).getOrElse(throw new NullPointerException),
         user = CommonUtils.requireNonEmpty(user),
-        password = CommonUtils.requireNonEmpty(password)
+        password = CommonUtils.requireNonEmpty(password),
+        tags = if (tags == null) Set.empty else tags
       )
 
       override private[v0] def update: Update = Update(
@@ -144,6 +172,7 @@ object FtpApi {
         port = port.map(CommonUtils.requireConnectionPort),
         user = Option(user).map(CommonUtils.requireNonEmpty),
         password = Option(password).map(CommonUtils.requireNonEmpty),
+        tags = Option(tags)
       )
 
       override def create()(implicit executionContext: ExecutionContext): Future[FtpInfo] =

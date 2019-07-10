@@ -26,6 +26,7 @@ import com.island.ohara.common.util.CommonUtils
 object Parameters {
   val CLUSTER_NAME: String = "cluster"
   val GROUP_NAME: String = "group"
+  val TAGS_NAME: String = Data.TAGS_KEY
 
   /**
     * CLUSTER is our first query parameter. We introduce this method to append cluster parameter to url.

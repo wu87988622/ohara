@@ -188,14 +188,16 @@ class TestJdbcApi extends SmallTest with Matchers {
   }
 
   @Test
-  def ignoreNameOnCreation(): Unit = an[NullPointerException] should be thrownBy JdbcApi.access
+  def ignoreNameOnCreation(): Unit = JdbcApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
     .url(CommonUtils.randomString())
     .user(CommonUtils.randomString())
     .password(CommonUtils.randomString())
-    .create()
+    .creation
+    .name
+    .length should not be 0
 
   @Test
   def ignoreNameOnUpdate(): Unit = an[NullPointerException] should be thrownBy JdbcApi.access
@@ -261,4 +263,10 @@ class TestJdbcApi extends SmallTest with Matchers {
 
   @Test
   def nullPassword(): Unit = an[NullPointerException] should be thrownBy JdbcApi.access.request.password(null)
+
+  @Test
+  def nullTags(): Unit = an[NullPointerException] should be thrownBy JdbcApi.access.request.tags(null)
+
+  @Test
+  def emptyTags(): Unit = JdbcApi.access.request.tags(Set.empty)
 }

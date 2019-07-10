@@ -151,6 +151,23 @@ class TestJdbcInfoRoute extends SmallTest with Matchers {
     updated.password shouldBe expected.password
   }
 
+  @Test
+  def updateTags(): Unit = {
+    val tags = Set(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val jdbcDesc = result(jdbcApi.request.url("url").user("user").password("password").tags(tags).create())
+    jdbcDesc.tags shouldBe tags
+
+    val tags2 = Set(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val jdbcDesc2 = result(jdbcApi.request.name(jdbcDesc.name).tags(tags2).update())
+    jdbcDesc2.tags shouldBe tags2
+
+    val jdbcDesc3 = result(jdbcApi.request.name(jdbcDesc.name).update())
+    jdbcDesc3.tags shouldBe tags2
+
+    val jdbcDesc4 = result(jdbcApi.request.name(jdbcDesc.name).tags(Set.empty).update())
+    jdbcDesc4.tags shouldBe Set.empty
+  }
+
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }

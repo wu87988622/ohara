@@ -51,7 +51,8 @@ class TestK8SClusterCollieByConfigurator extends BasicTests4ClusterCollieByConfi
                  user = "fake",
                  password = "fake",
                  services = Seq.empty,
-                 lastModified = CommonUtils.current()))
+                 lastModified = CommonUtils.current(),
+                 tags = Set.empty))
 
   override def configurator: Configurator = _configurator
   private[this] var _configurator: Configurator = _

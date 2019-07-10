@@ -35,7 +35,7 @@ import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object ConnectorRoute extends SprayJsonSupport {
   private[this] lazy val LOG = Logger(ConnectorRoute.getClass)
 
-  private[this] def toRes(wkClusterName: String, request: Creation) = {
+  private[this] def toRes(wkClusterName: String, request: Creation) =
     ConnectorDescription(
       settings = request.settings ++ Map(
         SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key() -> JsString(wkClusterName)),
@@ -45,7 +45,6 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
       metrics = Metrics(Seq.empty),
       lastModified = CommonUtils.current()
     )
-  }
 
   private[this] def verify(request: Creation): Creation = {
     if (request.columns.exists(_.order < 1))
@@ -83,7 +82,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
             workerCollie: WorkerCollie,
             executionContext: ExecutionContext,
             meterCache: MeterCache): server.Route =
-    RouteUtils.basicRoute[Creation, Creation, ConnectorDescription](
+    RouteUtils.basicRoute[Creation, Update, ConnectorDescription](
       root = CONNECTORS_PREFIX_PATH,
       hookOfCreation = (request: Creation) =>
         CollieUtils.workerClient(request.workerClusterName).map {
@@ -91,10 +90,10 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
             toRes(cluster.name, verify(request))
 
       },
-      hookOfUpdate = (name: String, request: Creation, previousOption: Option[ConnectorDescription]) => {
+      hookOfUpdate = (name: String, request: Update, previousOption: Option[ConnectorDescription]) => {
         // merge the settings from previous one
-        val updatedRequest = request.copy(
-          settings = previousOption
+        val newSettings = Creation(
+          previousOption
             .map { previous =>
               if (request.workerClusterName.exists(_ != previous.workerClusterName))
                 throw new IllegalArgumentException(
@@ -107,13 +106,13 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
             }
             .getOrElse(request.settings) ++
             // Update request may not carry the name via payload so we copy the name from url to payload manually
-            Map(SettingDefinition.CONNECTOR_NAME_DEFINITION.key() -> JsString(name))
-        )
-        CollieUtils.workerClient(updatedRequest.workerClusterName).flatMap {
+            Map(SettingDefinition.CONNECTOR_NAME_DEFINITION.key() -> JsString(name)))
+
+        CollieUtils.workerClient(newSettings.workerClusterName).flatMap {
           case (cluster, wkClient) =>
             wkClient.exist(name).map {
-              if (_) throw new IllegalArgumentException(s"connector:$name is not stopped")
-              else toRes(cluster.name, verify(request))
+              if (_) throw new IllegalArgumentException(s"Connector:$name is not stopped")
+              else toRes(cluster.name, verify(newSettings))
             }
         }
       },

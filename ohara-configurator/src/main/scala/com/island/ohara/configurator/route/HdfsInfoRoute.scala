@@ -27,7 +27,8 @@ private[configurator] object HdfsInfoRoute {
     RouteUtils.basicRoute[Creation, Update, HdfsInfo](
       root = HDFS_PREFIX_PATH,
       hookOfCreation = (request: Creation) =>
-        Future.successful(HdfsInfo(name = request.name, uri = request.uri, lastModified = CommonUtils.current())),
+        Future.successful(
+          HdfsInfo(name = request.name, uri = request.uri, lastModified = CommonUtils.current(), request.tags)),
       hookOfUpdate = (name: String, request: Update, previousOption: Option[HdfsInfo]) =>
         Future.successful {
           previousOption.fold {
@@ -35,13 +36,15 @@ private[configurator] object HdfsInfoRoute {
             HdfsInfo(
               name = name,
               uri = request.uri.get,
-              lastModified = CommonUtils.current()
+              lastModified = CommonUtils.current(),
+              request.tags.getOrElse(Set.empty)
             )
           } { previous =>
             HdfsInfo(
               name = name,
               uri = request.uri.getOrElse(previous.uri),
-              lastModified = CommonUtils.current()
+              lastModified = CommonUtils.current(),
+              tags = request.tags.getOrElse(previous.tags)
             )
           }
       }
