@@ -17,7 +17,6 @@
 package com.island.ohara.connector.jdbc.source
 
 import java.sql.Statement
-
 import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
 import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.client.kafka.WorkerClient
@@ -64,6 +63,7 @@ class TestJDBCSourceConnector extends With3Brokers3Workers with Matchers {
       s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-01 00:00:03.123456', 'a61', 'a62', 6)")
     statement.executeUpdate(
       s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-01 00:00:04.123', 'a71', 'a72', 7)")
+    statement.executeUpdate(s"INSERT INTO $tableName(column1) VALUES('2018-09-01 00:00:05')")
     statement.executeUpdate(
       s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES(NOW() + INTERVAL 3 MINUTE, 'a41', 'a42', 4)")
     statement.executeUpdate(
@@ -97,7 +97,7 @@ class TestJDBCSourceConnector extends With3Brokers3Workers with Matchers {
         .valueSerializer(Serializer.BYTES)
         .build()
     try {
-      val record = consumer.poll(java.time.Duration.ofSeconds(30), 3).asScala
+      val record = consumer.poll(java.time.Duration.ofSeconds(30), 6).asScala
       val row0: Row = record.head.key.get
       row0.size shouldBe 4
       row0.cell(0).toString shouldBe Cell.of("column1", "2018-09-01 00:00:00.0").toString
@@ -133,7 +133,14 @@ class TestJDBCSourceConnector extends With3Brokers3Workers with Matchers {
       row4.cell(2) shouldBe Cell.of("column3", "a72")
       row4.cell(3).toString shouldBe Cell.of("column4", "7").toString
 
-      record.size shouldBe 5
+      val row5: Row = record(5).key.get
+      row5.size shouldBe 4
+      row5.cell(0).toString shouldBe Cell.of("column1", "2018-09-01 00:00:05.0").toString
+      row5.cell(1) shouldBe Cell.of("column2", "null")
+      row5.cell(2) shouldBe Cell.of("column3", "null")
+      row5.cell(3).toString shouldBe Cell.of("column4", "0").toString
+
+      record.size shouldBe 6
 
     } finally consumer.close()
   }

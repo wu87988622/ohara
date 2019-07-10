@@ -214,9 +214,11 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
   @Test
   def testDbTimestampColumnValue(): Unit = {
     val jdbcSourceTask: JDBCSourceTask = new JDBCSourceTask()
-    val dbColumnInfo: Seq[ColumnInfo[_]] = Seq(ColumnInfo("column1", "string", "value1"),
-                                               ColumnInfo("column2", "timestamp", new Timestamp(1537510900000L)),
-                                               ColumnInfo("column3", "string", "value3"))
+    val dbColumnInfo: Seq[ColumnInfo[_]] = Seq(
+      ColumnInfo("column1", "string", "value1"),
+      ColumnInfo("column2", "timestamp", new Timestamp(1537510900000L)),
+      ColumnInfo("column3", "string", "value3")
+    )
     val timestamp: String = jdbcSourceTask.dbTimestampColumnValue(dbColumnInfo, "column2")
     timestamp shouldBe "2018-09-21 14:21:40.0"
   }

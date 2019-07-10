@@ -16,7 +16,7 @@
 
 package com.island.ohara.connector.jdbc.source
 
-import java.sql.{ResultSet, Timestamp}
+import java.sql.{ResultSet, Time, Timestamp}
 
 import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
 import com.island.ohara.common.rule.MediumTest
@@ -61,13 +61,27 @@ class TestResultSetDataConverter extends MediumTest with Matchers with MockitoSu
     val resultSet: ResultSet = mock[ResultSet]
     when(resultSet.getTimestamp("column1", DateTimeUtils.CALENDAR)).thenReturn(new Timestamp(0L))
     when(resultSet.getString("column2")).thenReturn(null)
+    when(resultSet.getDate("column3")).thenReturn(null)
+    when(resultSet.getTime("column4")).thenReturn(null)
 
-    val columnList = Seq(RdbColumn("column1", RDBDataTypeConverter.RDB_TYPE_TIMESTAMP, true),
-                         RdbColumn("column2", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false))
+    val columnList = Seq(
+      RdbColumn("column1", RDBDataTypeConverter.RDB_TYPE_TIMESTAMP, true),
+      RdbColumn("column2", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false),
+      RdbColumn("column3", RDBDataTypeConverter.RDB_TYPE_DATE, false),
+      RdbColumn("column4", RDBDataTypeConverter.RDB_TYPE_TIME, false)
+    )
 
     val result: Seq[ColumnInfo[_]] = ResultSetDataConverter.converterRecord(resultSet, columnList)
     result(1).columnName shouldBe "column2"
     result(1).columnType shouldBe RDBDataTypeConverter.RDB_TYPE_VARCHAR
-    result(1).value shouldBe None
+    result(1).value shouldBe "null"
+
+    result(2).columnName shouldBe "column3"
+    result(2).columnType shouldBe RDBDataTypeConverter.RDB_TYPE_DATE
+    result(2).value.toString shouldBe "1970-01-01"
+
+    result(3).columnName shouldBe "column4"
+    result(3).columnType shouldBe RDBDataTypeConverter.RDB_TYPE_TIME
+    result(3).value.toString shouldBe new Time(0).toString
   }
 }
