@@ -155,7 +155,7 @@ object ClusterCache {
               case (clusterInfo, containers) => key(clusterInfo) -> (clusterInfo -> containers)
             }.asJava)
           .frequency(java.time.Duration.ofMillis(frequency.toMillis))
-          .removeListener((key, _) => CommonUtils.current() - key.createdTime > lazyRemove.toMillis)
+          .preRemoveObserver((key, _) => CommonUtils.current() - key.createdTime > lazyRemove.toMillis)
           .build()
 
         override def close(): Unit = Releasable.close(cache)

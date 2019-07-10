@@ -45,7 +45,7 @@ public class TestRefreshableCache extends SmallTest {
 
   @Test(expected = NullPointerException.class)
   public void nullRemoveListener() {
-    RefreshableCache.<String, String>builder().removeListener(null);
+    RefreshableCache.<String, String>builder().preRemoveObserver(null);
   }
 
   @Test(expected = NullPointerException.class)
@@ -289,7 +289,7 @@ public class TestRefreshableCache extends SmallTest {
                   return Collections.emptyMap();
                 })
             .frequency(Duration.ofSeconds(1))
-            .removeListener((k, v) -> !key.equals(k))
+            .preRemoveObserver((k, v) -> !key.equals(k))
             .build()) {
       cache.put(key, value);
       TimeUnit.SECONDS.sleep(2);

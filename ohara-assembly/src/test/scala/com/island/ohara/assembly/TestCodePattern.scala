@@ -30,7 +30,7 @@ class TestCodePattern extends MediumTest with Matchers {
 
   @Test
   def testBuilder(): Unit =
-    check(
+    checkBaseClasses(
       baseClass = classOf[Builder[_]],
       postfix = "builder",
       excludedClasses = Seq(
@@ -40,8 +40,22 @@ class TestCodePattern extends MediumTest with Matchers {
     )
 
   @Test
+  def testMethodNameForBuilder(): Unit =
+    checkMethodNames(
+      postfix = "builder",
+      illegalPrefixName = Set(
+        "set",
+        "get",
+        "remove"
+      ),
+      excludedMethods = Set(
+        "getClass"
+      )
+    )
+
+  @Test
   def testCreator(): Unit =
-    check(
+    checkBaseClasses(
       baseClass = classOf[Creator[_]],
       postfix = "creator",
       excludedClasses = Seq(
@@ -49,7 +63,44 @@ class TestCodePattern extends MediumTest with Matchers {
       )
     )
 
-  private[this] def check(baseClass: Class[_], postfix: String, excludedClasses: Seq[Class[_]]): Unit = {
+  @Test
+  def testMethodNameForCreator(): Unit =
+    checkMethodNames(
+      postfix = "creator",
+      illegalPrefixName = Set(
+        "set",
+        "get",
+        "remove"
+      ),
+      excludedMethods = Set(
+        "getClass",
+        "settings",
+        "settings$",
+        "removeContainerOnExit",
+        "removeContainerOnExit$"
+      )
+    )
+
+  private[this] def checkMethodNames(postfix: String,
+                                     illegalPrefixName: Set[String],
+                                     excludedMethods: Set[String]): Unit = {
+    val invalidClassesAndMethods = classesInProductionScope()
+      .filter(_.getName.toLowerCase.endsWith(postfix))
+      .map(
+        clz =>
+          clz -> clz.getMethods
+            .filter(m => illegalPrefixName.exists(n => m.getName.startsWith(n)))
+            .filterNot(m => excludedMethods.contains(m.getName)))
+      .filter(_._2.nonEmpty)
+    if (invalidClassesAndMethods.nonEmpty)
+      throw new IllegalArgumentException(
+        invalidClassesAndMethods
+          .map(clzAndMethods =>
+            s"${clzAndMethods._1} has following illegal methods:${clzAndMethods._2.map(_.getName).mkString(",")}")
+          .mkString("|"))
+  }
+
+  private[this] def checkBaseClasses(baseClass: Class[_], postfix: String, excludedClasses: Seq[Class[_]]): Unit = {
     val classes = classesInProductionScope()
     classes.size should not be 0
     val invalidClasses = classes
@@ -58,6 +109,6 @@ class TestCodePattern extends MediumTest with Matchers {
       .filter(clz => !excludedClasses.contains(clz))
     if (invalidClasses.nonEmpty)
       throw new IllegalArgumentException(
-        s"those builds:${invalidClasses.map(_.getName).mkString(",")} do not extend $baseClass")
+        s"those classes:${invalidClasses.map(_.getName).mkString(",")} do not extend $baseClass")
   }
 }
