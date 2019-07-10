@@ -16,12 +16,16 @@
 
 package com.island.ohara.streams.ostream;
 
+import com.island.ohara.common.data.Row;
+import com.island.ohara.streams.OStream;
 import com.island.ohara.streams.StreamApp;
+import com.island.ohara.streams.config.ConfigDef;
 import java.lang.reflect.Constructor;
-import java.util.Arrays;
+import java.lang.reflect.Method;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 public class LaunchImpl {
 
@@ -44,10 +48,12 @@ public class LaunchImpl {
               try {
                 final AtomicReference<StreamApp> app = new AtomicReference<>();
                 if (!error) {
-                  if (params != null) {
+                  if (params != null
+                      && params.length > 0
+                      && !params[0].equals(StreamsConfig.STREAMAPP_DRY_RUN)) {
                     Constructor<? extends StreamApp> cons =
                         clz.getConstructor(
-                            Arrays.stream(params).map(Object::getClass).toArray(Class[]::new));
+                            Stream.of(params).map(Object::getClass).toArray(Class[]::new));
                     app.set(cons.newInstance(params));
                   } else {
                     Constructor<? extends StreamApp> cons = clz.getConstructor();
@@ -55,8 +61,32 @@ public class LaunchImpl {
                   }
                   final StreamApp theApp = app.get();
 
-                  theApp.init();
-                  theApp.start();
+                  Method method =
+                      clz.getSuperclass().getDeclaredMethod(StreamsConfig.STREAMAPP_CONFIG_NAME);
+                  ConfigDef configDef = (ConfigDef) method.invoke(theApp);
+
+                  if (params != null
+                      && params.length == 1
+                      && params[0].equals(StreamsConfig.STREAMAPP_DRY_RUN)) {
+                    System.out.println(configDef.toString());
+                  } else {
+                    OStream<Row> ostream =
+                        OStream.builder()
+                            .appid(configDef.get(StreamsConfig.STREAMAPP_APPID))
+                            .bootstrapServers(
+                                configDef.get(StreamsConfig.STREAMAPP_BOOTSTRAP_SERVERS))
+                            .fromTopicWith(
+                                configDef.get(StreamsConfig.STREAMAPP_FROM_TOPICS),
+                                Serdes.ROW,
+                                Serdes.BYTES)
+                            .toTopicWith(
+                                configDef.get(StreamsConfig.STREAMAPP_TO_TOPICS),
+                                Serdes.ROW,
+                                Serdes.BYTES)
+                            .build();
+                    theApp.init();
+                    theApp.start(ostream, configDef);
+                  }
                 }
               } catch (RuntimeException e) {
                 error = true;
@@ -69,7 +99,7 @@ public class LaunchImpl {
               }
             });
     thread.setContextClassLoader(clz.getClassLoader());
-    thread.setName("Island-StreamApp");
+    thread.setName("Ohara-StreamApp");
     thread.start();
 
     try {

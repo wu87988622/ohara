@@ -22,6 +22,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.island.ohara.common.annotations.Nullable;
 import com.island.ohara.common.annotations.Optional;
 import com.island.ohara.common.annotations.VisibleForTesting;
+import com.island.ohara.common.json.JsonObject;
+import com.island.ohara.common.json.JsonUtils;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.connector.TaskSetting;
 import java.util.ArrayList;

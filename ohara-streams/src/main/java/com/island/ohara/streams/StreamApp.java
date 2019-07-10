@@ -17,8 +17,10 @@
 package com.island.ohara.streams;
 
 import com.island.ohara.common.annotations.VisibleForTesting;
+import com.island.ohara.common.data.Row;
 import com.island.ohara.common.exception.ExceptionHandler;
 import com.island.ohara.common.util.CommonUtils;
+import com.island.ohara.streams.config.ConfigDef;
 import com.island.ohara.streams.ostream.LaunchImpl;
 import java.io.File;
 import java.io.IOException;
@@ -27,7 +29,6 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.time.Duration;
 import java.util.AbstractMap;
-import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.jar.JarEntry;
@@ -112,25 +113,40 @@ public abstract class StreamApp {
   public StreamApp() {}
 
   /**
-   * User defined initialize stage before running streamApp
+   * Use to define settings for streamApp usage. Default will load the required configurations only.
    *
-   * @throws Exception initial Exception
+   * <p>Usage:
+   *
+   * <pre>
+   *   public ConfigDef config() {
+   *       // define your own configs
+   *       return ConfigDef.add(SettingDef.builder().key(key).group(group).build());
+   *   }
+   * </pre>
+   *
+   * @return the defined settings
    */
-  public void init() throws Exception {}
+  public ConfigDef config() {
+    return ConfigDef.DEFAULT;
+  }
+
+  /** User defined initialization before running streamApp */
+  public void init() {}
 
   /**
    * Entry function. <b>Usage:</b>
    *
    * <pre>
-   *   OStream.builder().toOharaEnvStream();
+   *   ostream
    *    .filter()
    *    .map()
    *    ...
    * </pre>
    *
-   * @throws Exception start Exception
+   * @param ostream the entry object to define logic
+   * @param configDef configuration object
    */
-  public abstract void start() throws Exception;
+  public abstract void start(OStream<Row> ostream, ConfigDef configDef);
 
   /**
    * find main entry of jar in ohara environment container
@@ -146,7 +162,7 @@ public abstract class StreamApp {
     if (entry.getKey().isEmpty()) throw new RuntimeException("cannot find any match entry");
     Class clz = Class.forName(entry.getKey(), true, entry.getValue());
     if (StreamApp.class.isAssignableFrom(clz)) {
-      if (args != null && args.length > 0) LaunchImpl.launchApplication(clz, Arrays.asList(args));
+      if (args != null && args.length > 0) LaunchImpl.launchApplication(clz, (Object[]) args);
       else LaunchImpl.launchApplication(clz);
     } else
       throw new RuntimeException(

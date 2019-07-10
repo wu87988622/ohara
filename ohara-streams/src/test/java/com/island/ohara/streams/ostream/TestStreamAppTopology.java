@@ -21,6 +21,7 @@ import com.island.ohara.common.data.Row;
 import com.island.ohara.common.rule.SmallTest;
 import com.island.ohara.streams.OStream;
 import com.island.ohara.streams.StreamApp;
+import com.island.ohara.streams.config.ConfigDef;
 import com.island.ohara.streams.data.Poneglyph;
 import com.island.ohara.streams.data.Stele;
 import java.util.Arrays;
@@ -43,7 +44,8 @@ public class TestStreamAppTopology extends SmallTest {
     String join = "join_topic";
 
     @Override
-    public void start() {
+    public void start(OStream<Row> stream, ConfigDef configDef) {
+      // We initial a new OStream object to test functionality
       OStream<Row> ostream =
           OStream.builder()
               .fromTopicWith(from, Serdes.ROW, Serdes.BYTES)
@@ -64,8 +66,8 @@ public class TestStreamAppTopology extends SmallTest {
               .count()
               .getPoneglyph();
 
-      // It should have two "steles", i.e., two process topology
-      Assert.assertEquals(2, poneglyph.size());
+      // It should have four "steles", i.e., four process topology
+      Assert.assertEquals(4, poneglyph.size());
 
       // Topics should be contained in topologies
       Arrays.asList(from, to, join)

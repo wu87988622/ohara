@@ -18,18 +18,15 @@ package com.island.ohara.streams;
 
 import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Row;
+import com.island.ohara.streams.config.ConfigDef;
 
 public class SimpleApplicationForOharaEnv extends StreamApp {
-
   /**
    * This is a simple version of streamApp running in ohara environment. Please packaging this file
    * into a jar, and uploading by API or Ohara UI
-   *
-   * @throws Exception
    */
   @Override
-  public void start() throws Exception {
-    OStream<Row> ostream = OStream.builder().cleanStart().toOharaEnvStream();
+  public void start(OStream<Row> ostream, ConfigDef configDef) {
 
     // A simple sample to illustrate how to use OStream
     // for example :

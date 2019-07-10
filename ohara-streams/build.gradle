@@ -32,6 +32,12 @@ dependencies {
   testImplementation libs.javassist
 }
 
+// This task is used to copy all dependencies in docker build
+task copyDependencies(type: Copy) {
+  from configurations.runtimeClasspath
+  into '/opt/lib'
+}
+
 /**
  * run a importData based on user defined kafka cluster
  */

@@ -16,6 +16,7 @@
 
 package com.island.ohara.it.streamapp
 import com.island.ohara.common.data.Row
+import com.island.ohara.streams.config.ConfigDef
 import com.island.ohara.streams.{OStream, StreamApp}
 
 /**
@@ -24,8 +25,7 @@ import com.island.ohara.streams.{OStream, StreamApp}
   */
 class DumbStreamApp extends StreamApp {
 
-  override def start(): Unit = {
-    val ostream: OStream[Row] = OStream.builder().toOharaEnvStream
+  override def start(ostream: OStream[Row], configs: ConfigDef): Unit = {
 
     // do nothing but only start streamApp and write exactly data to output topic
     ostream.start()

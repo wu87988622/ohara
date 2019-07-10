@@ -19,6 +19,8 @@ package com.island.ohara.kafka.connector.json;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.island.ohara.common.json.JsonObject;
+import com.island.ohara.common.json.JsonUtils;
 import java.util.Objects;
 import org.apache.kafka.connect.runtime.rest.entities.ConfigInfo;
 

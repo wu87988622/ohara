@@ -71,7 +71,9 @@ class StreamsConfig {
       org.apache.kafka.streams.StreamsConfig.TOPIC_PREFIX
           + TopicConfig.MIN_CLEANABLE_DIRTY_RATIO_CONFIG;
 
-  // for docker usage
+  // for internal usage
+  static final String STREAMAPP_CONFIG_NAME = "config";
+  static final String STREAMAPP_DRY_RUN = "STREAMAPP_DRY_RUN";
   static final String STREAMAPP_BOOTSTRAP_SERVERS = "STREAMAPP_SERVERS";
   static final String STREAMAPP_APPID = "STREAMAPP_APPID";
   static final String STREAMAPP_FROM_TOPICS = "STREAMAPP_FROMTOPIC";

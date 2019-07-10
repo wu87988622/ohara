@@ -17,6 +17,7 @@
 package com.island.ohara.kafka.connector.json;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.island.ohara.common.json.JsonUtils;
 import com.island.ohara.common.util.CommonUtils;
 import java.util.Arrays;
 import java.util.Collections;

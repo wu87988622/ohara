@@ -26,6 +26,7 @@ import com.island.ohara.kafka.Consumer;
 import com.island.ohara.kafka.Producer;
 import com.island.ohara.streams.OStream;
 import com.island.ohara.streams.StreamApp;
+import com.island.ohara.streams.config.ConfigDef;
 import com.island.ohara.testing.With3Brokers;
 import java.lang.reflect.Field;
 import java.time.Duration;
@@ -126,7 +127,8 @@ public class TestPurchaseAnalysis extends With3Brokers {
     }
 
     @Override
-    public void start() {
+    public void start(OStream<Row> stream, ConfigDef configDef) {
+      // We initial a new OStream object to test functionality
       OStream<Row> ostream =
           OStream.builder()
               .appid(appid)

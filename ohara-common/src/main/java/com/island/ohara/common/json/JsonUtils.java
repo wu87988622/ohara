@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-package com.island.ohara.kafka.connector.json;
+package com.island.ohara.common.json;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.util.CommonUtils;
 import java.io.IOException;
 import java.util.Objects;
 
-@VisibleForTesting
-final class JsonUtils {
+public final class JsonUtils {
 
-  static <T> T toObject(String string, TypeReference<T> ref) {
+  public static <T> T toObject(String string, TypeReference<T> ref) {
     ObjectMapper mapper = new ObjectMapper();
     try {
       return mapper.readValue(CommonUtils.requireNonEmpty(string), ref);
@@ -35,7 +33,7 @@ final class JsonUtils {
     }
   }
 
-  static String toString(Object obj) {
+  public static String toString(Object obj) {
     ObjectMapper mapper = new ObjectMapper();
     try {
       return mapper.writeValueAsString(Objects.requireNonNull(obj));

@@ -16,8 +16,10 @@
 
 package com.island.ohara.streams;
 
+import com.island.ohara.common.data.Row;
 import com.island.ohara.common.rule.SmallTest;
 import com.island.ohara.common.util.CommonUtils;
+import com.island.ohara.streams.config.ConfigDef;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -66,6 +68,11 @@ public class TestStreamApp extends SmallTest {
     final AtomicInteger counter = new AtomicInteger();
 
     @Override
+    public ConfigDef config() {
+      return ConfigDef.DEFAULT;
+    }
+
+    @Override
     public void init() {
       int res = counter.incrementAndGet();
       // StreamApp should call init() first
@@ -73,7 +80,7 @@ public class TestStreamApp extends SmallTest {
     }
 
     @Override
-    public void start() {
+    public void start(OStream<Row> ostream, ConfigDef configDef) {
       int res = counter.incrementAndGet();
       // StreamApp should call start() after init()
       Assert.assertEquals(2, res);

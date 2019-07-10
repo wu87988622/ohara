@@ -17,23 +17,11 @@
 FROM openjdk:8u171-jdk-alpine as deps
 MAINTAINER sam cho <sam@is-land.com.tw>
 
-ARG KAFKA_VERSION=2.2.1
-ARG LOG_VERSION=1.7.25
 ARG GRADLE_VERSION=5.4.1
-ARG COMMON_LANG_VERSION=3.7
-ARG ROCKDB_VERSION=5.7.3
-ARG COMMONS_IO=2.4
 
-# download all dependency jars
-RUN apk --no-cache add git curl && rm -rf /tmp/* /var/cache/apk/* && \
- mkdir -p /opt/lib/streamapp && \
- curl -L http://central.maven.org/maven2/org/apache/kafka/kafka-streams/${KAFKA_VERSION}/kafka-streams-${KAFKA_VERSION}.jar -o /opt/lib/kafka-streams.jar && \
- curl -L http://central.maven.org/maven2/org/apache/kafka/kafka-clients/${KAFKA_VERSION}/kafka-clients-${KAFKA_VERSION}.jar -o /opt/lib/kafka-clients.jar && \
- curl -L http://central.maven.org/maven2/org/slf4j/slf4j-api/${LOG_VERSION}/slf4j-api-${LOG_VERSION}.jar -o /opt/lib/slf4j-api.jar && \
- curl -L http://central.maven.org/maven2/org/slf4j/slf4j-simple/${LOG_VERSION}/slf4j-simple-${LOG_VERSION}.jar -o /opt/lib/slf4j-simple.jar && \
- curl -L http://central.maven.org/maven2/org/apache/commons/commons-lang3/${COMMON_LANG_VERSION}/commons-lang3-${COMMON_LANG_VERSION}.jar -o /opt/lib/commons-lang3.jar && \
- curl -L http://central.maven.org/maven2/org/rocksdb/rocksdbjni/${ROCKDB_VERSION}/rocksdbjni-${ROCKDB_VERSION}.jar -o /opt/lib/rocksdbjni.jar && \
- curl -L http://central.maven.org/maven2/commons-io/commons-io/${COMMONS_IO}/commons-io-${COMMONS_IO}.jar -o /opt/lib/commons-io.jar && \
+
+RUN apk --no-cache add git && rm -rf /tmp/* /var/cache/apk/* && \
+ mkdir -p /opt/lib && \
  rm -rf /var/lib/apt/lists/*
 
 # download gradle
@@ -60,6 +48,9 @@ RUN if [[ "$BEFORE_BUILD" != "" ]]; then /bin/sh -c "$BEFORE_BUILD" ; fi
 # copy required jars except test jar
 RUN gradle jar -x test && \
  cp `ls /testpatch/ohara/*/build/libs/*.jar | grep -v tests.jar | grep -E 'common|kafka|metrics|streams'` /opt/lib
+
+# download all dependencies
+RUN gradle ohara-stream:copyDependencies
 
 FROM centos:7.6.1810
 
