@@ -65,7 +65,7 @@ private class K8SStreamCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
                     k8sClient
                       .containerCreator()
                       .imageName(imageName)
-                      .nodename(node.name)
+                      .nodeName(node.name)
                       .hostname(podName)
                       .name(podName)
                       .labelName(OHARA_LABEL)

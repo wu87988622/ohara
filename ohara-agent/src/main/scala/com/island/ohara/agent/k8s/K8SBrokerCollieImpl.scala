@@ -44,7 +44,7 @@ private class K8SBrokerCollieImpl(node: NodeCollie, zkCollie: ZookeeperCollie, k
       val creator: Future[Option[ContainerInfo]] = k8sClient
         .containerCreator()
         .imageName(containerInfo.imageName)
-        .nodename(node.name)
+        .nodeName(node.name)
         .labelName(OHARA_LABEL)
         .domainName(K8S_DOMAIN_NAME)
         .portMappings(

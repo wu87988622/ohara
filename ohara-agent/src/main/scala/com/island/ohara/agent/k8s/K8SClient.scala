@@ -206,7 +206,7 @@ object K8SClient {
           private[this] var imagePullPolicy: ImagePullPolicy = ImagePullPolicy.IFNOTPRESENT
           private[this] var imageName: String = _
           private[this] var hostname: String = _
-          private[this] var nodename: String = _
+          private[this] var nodeName: String = _
           private[this] var domainName: String = _
           private[this] var labelName: String = _
           private[this] var envs: Map[String, String] = Map.empty
@@ -247,8 +247,8 @@ object K8SClient {
             this
           }
 
-          override def nodename(nodename: String): ContainerCreator = {
-            this.nodename = CommonUtils.requireNonEmpty(nodename)
+          override def nodeName(nodeName: String): ContainerCreator = {
+            this.nodeName = CommonUtils.requireNonEmpty(nodeName)
             this
           }
 
@@ -289,7 +289,7 @@ object K8SClient {
             nodeNameIPInfo
               .map { ipInfo =>
                 CreatePodSpec(
-                  CreatePodNodeSelector(nodename),
+                  CreatePodNodeSelector(nodeName),
                   hostname, //hostname is container name
                   domainName,
                   ipInfo ++ routes.map { case (host, ip) => HostAliases(ip, Seq(host)) },
@@ -316,7 +316,7 @@ object K8SClient {
               })
               .map(createPodResult =>
                 Option(ContainerInfo(
-                  nodename,
+                  nodeName,
                   createPodResult.metadata.uid,
                   imageName,
                   createPodResult.metadata.creationTimestamp,
@@ -363,7 +363,7 @@ object K8SClient {
 
     def routes(routes: Map[String, String]): ContainerCreator
 
-    def nodename(nodename: String): ContainerCreator
+    def nodeName(nodeName: String): ContainerCreator
 
     /**
       * set the thread pool used to execute request

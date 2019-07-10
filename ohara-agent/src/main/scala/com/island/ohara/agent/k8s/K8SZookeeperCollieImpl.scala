@@ -43,7 +43,7 @@ private class K8SZookeeperCollieImpl(node: NodeCollie, k8sClient: K8SClient)
         .imageName(containerInfo.imageName)
         .portMappings(
           containerInfo.portMappings.flatMap(_.portPairs).map(pair => pair.hostPort -> pair.containerPort).toMap)
-        .nodename(containerInfo.nodeName)
+        .nodeName(containerInfo.nodeName)
         .hostname(s"${containerInfo.name}$DIVIDER${node.name}")
         .labelName(OHARA_LABEL)
         .domainName(K8S_DOMAIN_NAME)

@@ -151,7 +151,7 @@ object ShabondiRoute {
       .portMappings(Map(
         9090 -> 8080
       ))
-      .nodename(slaveNode)
+      .nodeName(slaveNode)
       .hostname(podHostname)
       .labelName(POD_LABEL)
       .domainName(POD_DOMAIN_NAME)

@@ -48,7 +48,7 @@ private class K8SWorkerCollieImpl(node: NodeCollie, bkCollie: BrokerCollie, k8sC
         .portMappings(
           containerInfo.portMappings.flatMap(_.portPairs).map(pair => pair.hostPort -> pair.containerPort).toMap)
         .hostname(s"${containerInfo.name}$DIVIDER${node.name}")
-        .nodename(node.name)
+        .nodeName(node.name)
         .envs(containerInfo.environments)
         .labelName(OHARA_LABEL)
         .domainName(K8S_DOMAIN_NAME)

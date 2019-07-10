@@ -61,7 +61,7 @@ class TestK8SClient extends SmallTest with Matchers {
             .hostname("test1")
             .domainName("ohara")
             .pullImagePolicy(ImagePullPolicy.IFNOTPRESENT)
-            .nodename(nodeName)
+            .nodeName(nodeName)
             .threadPool(scala.concurrent.ExecutionContext.Implicits.global)
             .create(),
           30 seconds
@@ -90,7 +90,7 @@ class TestK8SClient extends SmallTest with Matchers {
             .hostname("test1")
             .domainName("ohara")
             .pullImagePolicy(ImagePullPolicy.ALWAYS)
-            .nodename(nodeName)
+            .nodeName(nodeName)
             .create(),
           30 seconds
         )
@@ -118,7 +118,7 @@ class TestK8SClient extends SmallTest with Matchers {
             .hostname("test1")
             .domainName("ohara")
             .pullImagePolicy(ImagePullPolicy.NEVER)
-            .nodename(nodeName)
+            .nodeName(nodeName)
             .create(),
           30 seconds
         )
@@ -145,7 +145,7 @@ class TestK8SClient extends SmallTest with Matchers {
             .labelName("ohara")
             .hostname("test1")
             .domainName("ohara")
-            .nodename(nodeName)
+            .nodeName(nodeName)
             .create(),
           30 seconds
         )

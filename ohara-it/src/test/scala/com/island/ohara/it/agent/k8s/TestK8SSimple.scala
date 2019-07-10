@@ -150,7 +150,7 @@ class TestK8SSimple extends IntegrationTest with Matchers {
           .name(containerName)
           .domainName("default")
           .labelName("ohara")
-          .nodename(nodeServerNames.head)
+          .nodeName(nodeServerNames.head)
           .hostname(containerName)
           .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
           .envs(Map(

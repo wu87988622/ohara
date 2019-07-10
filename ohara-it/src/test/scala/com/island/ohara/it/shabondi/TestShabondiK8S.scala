@@ -61,7 +61,7 @@ class TestShabondiK8S extends IntegrationTest with Matchers with Inside {
         .portMappings(Map(
           9090 -> 8080
         ))
-        .nodename(nodeName)
+        .nodeName(nodeName)
         .hostname(podHostname)
         .labelName(podLabelName)
         .domainName(domainName)
