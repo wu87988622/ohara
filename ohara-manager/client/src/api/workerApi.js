@@ -51,7 +51,6 @@ export const fetchWorkers = async () => {
 export const createWorker = async params => {
   try {
     const url = `/api/workers`;
-
     const jars = get(params, 'plugins', []).map(jar => {
       return {
         name: jar.name,

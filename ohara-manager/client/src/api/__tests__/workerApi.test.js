@@ -15,14 +15,19 @@
  */
 
 import * as generate from 'utils/generate';
-import { fetchWorkers, fetchWorker, createWorker } from '../workerApi';
+import {
+  fetchWorkers,
+  fetchWorker,
+  createWorker,
+  addNodeToWorker,
+} from '../workerApi';
 import { handleError, axiosInstance } from '../apiUtils';
 
 jest.mock('../apiUtils');
 const url = '/api/workers';
+afterEach(jest.clearAllMocks);
 
 describe('fetchWorker()', () => {
-  afterEach(jest.clearAllMocks);
   const workerName = generate.serviceName();
 
   it('handles success http call', async () => {
@@ -75,8 +80,6 @@ describe('fetchWorker()', () => {
 });
 
 describe('fetchWorkers()', () => {
-  afterEach(jest.clearAllMocks);
-
   it('handles success http call', async () => {
     const res = {
       data: {
@@ -127,22 +130,35 @@ describe('fetchWorkers()', () => {
 });
 
 describe('createWorker()', () => {
-  afterEach(jest.clearAllMocks);
-
   const params = {
-    name: 'abc',
-    clientPort: '22',
-    nodeNames: ['a', 'b'],
-    brokerClusterName: 'bk00',
-    plugins: [],
+    name: generate.name(),
+    plugins: [
+      {
+        group: generate.name(),
+        name: generate.name(),
+      },
+    ],
+    jmxPort: generate.port(),
+    clientPort: generate.port(),
+    nodeNames: [generate.name(), generate.name()],
+    brokerClusterName: generate.name(),
+    groupId: generate.name(),
+    configTopicName: generate.name(),
+    offsetTopicName: generate.name(),
+    statusTopicName: generate.name(),
   };
 
   const expectedParams = {
     name: params.name,
-    clientPort: Number(params.clientPort),
-    nodeNames: params.nodeNames,
+    jmxPort: Number(params.jmxPort),
     brokerClusterName: params.brokerClusterName,
+    clientPort: Number(params.clientPort),
+    nodeNames: params.nodeNames || [],
     jars: params.plugins,
+    groupId: params.groupId,
+    configTopicName: params.configTopicName,
+    offsetTopicName: params.offsetTopicName,
+    statusTopicName: params.statusTopicName,
   };
 
   const config = { timeout: 180000 };
@@ -199,6 +215,65 @@ describe('createWorker()', () => {
 
     await createWorker(params);
     expect(axiosInstance.post).toHaveBeenCalledTimes(1);
+    expect(handleError).toHaveBeenCalledTimes(1);
+    expect(handleError).toHaveBeenCalledWith(res);
+  });
+});
+
+describe('addNodeToWorker()', () => {
+  const params = {
+    name: generate.name(),
+    nodeName: generate.name(),
+  };
+
+  it('handles success http call', async () => {
+    const res = {
+      data: {
+        isSuccess: true,
+      },
+    };
+
+    axiosInstance.put.mockImplementation(() => Promise.resolve(res));
+
+    const result = await addNodeToWorker(params);
+    expect(axiosInstance.put).toHaveBeenCalledTimes(1);
+    expect(axiosInstance.put).toHaveBeenCalledWith(
+      `${url}/${params.name}/${params.nodeName}`,
+    );
+    expect(result).toBe(res);
+  });
+
+  it('handles success http call but with server error', async () => {
+    const res = {
+      data: {
+        isSuccess: false,
+      },
+    };
+    axiosInstance.put.mockImplementation(() => Promise.resolve(res));
+
+    const result = await addNodeToWorker(params);
+
+    expect(axiosInstance.put).toHaveBeenCalledTimes(1);
+    expect(axiosInstance.put).toHaveBeenCalledWith(
+      `${url}/${params.name}/${params.nodeName}`,
+    );
+    expect(handleError).toHaveBeenCalledTimes(1);
+    expect(handleError).toHaveBeenCalledWith(result);
+  });
+
+  it('handles failed http call', async () => {
+    const res = {
+      data: {
+        errorMessage: {
+          message: 'error!',
+        },
+      },
+    };
+
+    axiosInstance.put.mockImplementation(() => Promise.reject(res));
+
+    await addNodeToWorker(params);
+    expect(axiosInstance.put).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(res);
   });
