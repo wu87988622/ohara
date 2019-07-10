@@ -16,9 +16,8 @@
 
 package com.island.ohara.agent
 import java.util.Objects
-import java.util.concurrent.{ExecutorService, Executors, TimeUnit}
+import java.util.concurrent.{ExecutorService, Executors}
 
-import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.agent.k8s.{K8SClient, K8SClusterCollieImpl}
 import com.island.ohara.agent.ssh.ClusterCollieImpl
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
@@ -29,7 +28,7 @@ import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0.{ClusterInfo, NodeApi}
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.pattern.Builder
-import com.island.ohara.common.util.{CommonUtils, Releasable}
+import com.island.ohara.common.util.Releasable
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -128,42 +127,11 @@ trait ClusterCollie extends Releasable {
 
   /**
     * Verify the node are available to be used in collie.
-    * The default implementation has the following checks.
-    * 1) run hello-world image
-    * 2) check existence of hello-world
     * @param node validated node
     * @param executionContext thread pool
     * @return succeed report in string. Or try with exception
     */
-  def verifyNode(node: Node)(implicit executionContext: ExecutionContext): Future[Try[String]] = Future {
-    Try {
-      val name = CommonUtils.randomString(10)
-      val dockerClient =
-        DockerClient.builder.hostname(node.name).port(node.port).user(node.user).password(node.password).build
-      try {
-        val helloWorldImage = "hello-world"
-        dockerClient.containerCreator().name(name).imageName(helloWorldImage).create()
-
-        // TODO: should we directly reject the node which doesn't have hello-world image??? by chia
-        def checkImage(): Boolean = {
-          val endTime = CommonUtils.current() + 3 * 1000 // 3 seconds to timeout
-          while (endTime >= CommonUtils.current()) {
-            if (dockerClient.imageNames().contains(s"$helloWorldImage:latest")) return true
-            else TimeUnit.SECONDS.sleep(1)
-          }
-          dockerClient.imageNames().contains(helloWorldImage)
-        }
-
-        // there are two checks.
-        // 1) is there hello-world image?
-        // 2) did we succeed to run hello-world container?
-        if (!checkImage()) throw new IllegalStateException(s"Failed to download $helloWorldImage image")
-        else if (dockerClient.containerNames().contains(name)) s"succeed to run $helloWorldImage on ${node.name}"
-        else throw new IllegalStateException(s"failed to run container $helloWorldImage")
-      } finally try dockerClient.forceRemove(name)
-      finally dockerClient.close()
-    }
-  }
+  def verifyNode(node: Node)(implicit executionContext: ExecutionContext): Future[Try[String]]
 }
 
 object ClusterCollie {

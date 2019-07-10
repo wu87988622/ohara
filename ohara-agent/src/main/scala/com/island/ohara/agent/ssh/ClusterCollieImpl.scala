@@ -16,16 +16,18 @@
 
 package com.island.ohara.agent.ssh
 
-import java.util.concurrent.ExecutorService
+import java.util.concurrent.{ExecutorService, TimeUnit}
 
 import com.island.ohara.agent._
+import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.common.util.{Releasable, ReleaseOnce}
+import com.island.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.util.Try
 
 // accessible to configurator
 private[ohara] class ClusterCollieImpl(cacheTimeout: Duration, nodeCollie: NodeCollie, cacheThreadPool: ExecutorService)
@@ -94,4 +96,40 @@ private[ohara] class ClusterCollieImpl(cacheTimeout: Duration, nodeCollie: NodeC
 
   override def images(nodes: Seq[Node])(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[String]]] =
     Future.traverse(nodes)(node => Future(dockerCache.exec(node, node -> _.imageNames()))).map(_.toMap)
+
+  /**
+    * The default implementation has the following checks.
+    * 1) run hello-world image
+    * 2) check existence of hello-world
+    */
+  override def verifyNode(node: Node)(implicit executionContext: ExecutionContext): Future[Try[String]] =
+    Future.successful {
+      Try {
+        val name = CommonUtils.randomString(10)
+        val dockerClient =
+          DockerClient.builder.hostname(node.name).port(node.port).user(node.user).password(node.password).build
+        try {
+          val helloWorldImage = "hello-world"
+          dockerClient.containerCreator().name(name).imageName(helloWorldImage).create()
+
+          // TODO: should we directly reject the node which doesn't have hello-world image??? by chia
+          def checkImage(): Boolean = {
+            val endTime = CommonUtils.current() + 3 * 1000 // 3 seconds to timeout
+            while (endTime >= CommonUtils.current()) {
+              if (dockerClient.imageNames().contains(s"$helloWorldImage:latest")) return true
+              else TimeUnit.SECONDS.sleep(1)
+            }
+            dockerClient.imageNames().contains(helloWorldImage)
+          }
+
+          // there are two checks.
+          // 1) is there hello-world image?
+          // 2) did we succeed to run hello-world container?
+          if (!checkImage()) throw new IllegalStateException(s"Failed to download $helloWorldImage image")
+          else if (dockerClient.containerNames().contains(name)) s"succeed to run $helloWorldImage on ${node.name}"
+          else throw new IllegalStateException(s"failed to run container $helloWorldImage")
+        } finally try dockerClient.forceRemove(name)
+        finally dockerClient.close()
+      }
+    }
 }
