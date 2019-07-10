@@ -41,6 +41,7 @@ const Nodes = props => {
   const [loading, setLoading] = useState(true);
   const [confirmDisabled, setConfirmDisabled] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [isConfirm, setIsConfirm] = useState(false);
 
   const fetchWorker = useCallback(async () => {
     const wkRes = await workerApi.fetchWorker(workspaceName);
@@ -97,37 +98,48 @@ const Nodes = props => {
     }
   };
 
-  const waitForServiceCreation = async retryCount => {
-    const res = await workerApi.fetchWorker(workspaceName);
+  const waitForServiceCreation = async params => {
+    const { retryCount = 0, type } = params;
+    let res;
+    if (type === 'worker') {
+      res = await workerApi.fetchWorker(workspaceName);
+    } else if (type === 'broker') {
+      res = await brokerApi.fetchBroker(broker);
+    }
     const nodeNames = get(res, 'data.result.nodeNames', []);
     if (retryCount > 5) return;
     if (nodeNames.some(n => selectNodes.includes(n))) {
-      toastr.success(MESSAGES.SERVICE_CREATION_SUCCESS);
       return;
     }
     await commonUtils.sleep(2000);
     await waitForServiceCreation(retryCount + 1);
   };
 
-  const handelAddNode = () => {
-    if (selectNodes.length > 0) {
-      selectNodes.map(async selectNode => {
-        const bkParams = {
-          name: broker,
-          nodeName: selectNode,
-        };
-        const wkParams = {
-          name: workspaceName,
-          nodeName: selectNode,
-        };
-        await brokerApi.addNodeToBroker(bkParams);
-        await workerApi.addNodeToWorker(wkParams);
-        await waitForServiceCreation(0);
-        setDialogOpen(false);
-        fetchWorker();
+  const addNodeToService = async () => {
+    for (let selectNode of selectNodes) {
+      await brokerApi.addNodeToBroker({
+        name: broker,
+        nodeName: selectNode,
       });
+      await waitForServiceCreation({ type: 'broker' });
+      await workerApi.addNodeToWorker({
+        name: workspaceName,
+        nodeName: selectNode,
+      });
+      await waitForServiceCreation({ type: 'worker' });
+    }
+  };
+
+  const handelAddNode = async () => {
+    setIsConfirm(true);
+    if (selectNodes.length > 0) {
+      await addNodeToService();
+      await fetchWorker();
+      toastr.success(MESSAGES.SERVICE_CREATION_SUCCESS);
       setSelectNodes([]);
     }
+    setIsConfirm(false);
+    setDialogOpen(false);
   };
 
   const handelOpen = () => {
@@ -159,6 +171,7 @@ const Nodes = props => {
         title="Add Node"
         handleConfirm={handelAddNode}
         confirmDisabled={confirmDisabled}
+        loading={isConfirm}
       >
         {() => {
           return (
