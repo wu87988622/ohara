@@ -41,7 +41,7 @@ const Nodes = props => {
   const [loading, setLoading] = useState(true);
   const [confirmDisabled, setConfirmDisabled] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [isConfirm, setIsConfirm] = useState(false);
+  const [working, setWorking] = useState(false);
 
   const fetchWorker = useCallback(async () => {
     const wkRes = await workerApi.fetchWorker(workspaceName);
@@ -130,15 +130,15 @@ const Nodes = props => {
     }
   };
 
-  const handelAddNode = async () => {
-    setIsConfirm(true);
+  const handleAddNode = async () => {
+    setWorking(true);
     if (selectNodes.length > 0) {
       await addNodeToService();
       await fetchWorker();
       toastr.success(MESSAGES.SERVICE_CREATION_SUCCESS);
       setSelectNodes([]);
     }
-    setIsConfirm(false);
+    setWorking(false);
     setDialogOpen(false);
   };
 
@@ -169,9 +169,9 @@ const Nodes = props => {
         handelOpen={dialogOpen}
         handelClose={handleNodeSelectClose}
         title="Add Node"
-        handleConfirm={handelAddNode}
+        handleConfirm={handleAddNode}
         confirmDisabled={confirmDisabled}
-        loading={isConfirm}
+        loading={working}
       >
         {() => {
           return (
