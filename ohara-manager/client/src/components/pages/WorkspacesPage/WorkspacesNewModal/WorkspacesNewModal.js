@@ -171,7 +171,7 @@ const WorkerNewModal = props => {
 
         if (!wkResult) return;
         if (retryCount > maxRetry) {
-          toastr.error(`Failed to delete broker: ${name}`);
+          toastr.error(`Failed to delete worker: ${name}`);
           return;
         }
 
