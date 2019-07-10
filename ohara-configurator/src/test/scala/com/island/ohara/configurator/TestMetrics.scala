@@ -37,7 +37,7 @@ class TestMetrics extends WithBrokerWorker with Matchers {
   private[this] val connectorApi = ConnectorApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
 
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
+  private[this] def result[T](f: Future[T]): T = Await.result(f, 30 seconds)
 
   private[this] def assertNoMetricsForTopic(topicId: String): Unit = {
     CommonUtils.await(() => BeanChannel.local().topicMeters().asScala.count(_.topicName() == topicId) == 0,
