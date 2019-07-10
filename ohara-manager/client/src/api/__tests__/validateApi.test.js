@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
+import * as generate from 'utils/generate';
 import {
   validateNode,
   validateHdfs,
   validateFtp,
   validateRdb,
+  validateConnector,
 } from '../validateApi';
 import { handleError, axiosInstance } from '../apiUtils';
 
@@ -26,14 +28,14 @@ jest.mock('../apiUtils');
 
 const url = '/api/validate';
 
-describe('validateNode()', () => {
-  afterEach(jest.clearAllMocks);
+afterEach(jest.clearAllMocks);
 
+describe('validateNode()', () => {
   const params = {
-    hostname: 'abc',
-    port: 22,
-    user: 'usr',
-    password: 'ps',
+    hostname: generate.name(),
+    port: generate.port(),
+    user: generate.userName(),
+    password: generate.password(),
   };
 
   it('handles success http call', async () => {
@@ -86,10 +88,8 @@ describe('validateNode()', () => {
 });
 
 describe('validateHdfs()', () => {
-  afterEach(jest.clearAllMocks);
-
   const params = {
-    uri: '/path/to/wonderland',
+    uri: generate.url(),
   };
 
   it('handles success http call', async () => {
@@ -142,11 +142,9 @@ describe('validateHdfs()', () => {
 });
 
 describe('validateRdb()', () => {
-  afterEach(jest.clearAllMocks);
-
   const params = {
-    a: 'a',
-    b: 'b',
+    a: generate.name(),
+    b: generate.name(),
   };
 
   it('handles success http call', async () => {
@@ -199,11 +197,9 @@ describe('validateRdb()', () => {
 });
 
 describe('validateFtp()', () => {
-  afterEach(jest.clearAllMocks);
-
   const params = {
-    a: 'a',
-    b: 'b',
+    a: generate.name(),
+    b: generate.name(),
   };
 
   it('handles success http call', async () => {
@@ -249,6 +245,61 @@ describe('validateFtp()', () => {
     axiosInstance.put.mockImplementation(() => Promise.reject(res));
 
     await validateFtp(params);
+    expect(axiosInstance.put).toHaveBeenCalledTimes(1);
+    expect(handleError).toHaveBeenCalledTimes(1);
+    expect(handleError).toHaveBeenCalledWith(res);
+  });
+});
+
+describe('validateConnector()', () => {
+  const params = {
+    a: generate.name(),
+    b: generate.name(),
+  };
+
+  it('handles success http call', async () => {
+    const res = {
+      data: {
+        isSuccess: true,
+      },
+    };
+
+    axiosInstance.put.mockImplementation(() => Promise.resolve(res));
+
+    const result = await validateConnector(params);
+    expect(axiosInstance.put).toHaveBeenCalledTimes(1);
+    expect(axiosInstance.put).toHaveBeenCalledWith(`${url}/connector`, params);
+    expect(result).toBe(res);
+  });
+
+  it('handles success http call but with server error', async () => {
+    const res = {
+      data: {
+        isSuccess: false,
+      },
+    };
+    axiosInstance.put.mockImplementation(() => Promise.resolve(res));
+
+    const result = await validateConnector(params);
+
+    expect(axiosInstance.put).toHaveBeenCalledTimes(1);
+    expect(axiosInstance.put).toHaveBeenCalledWith(`${url}/connector`, params);
+    expect(handleError).toHaveBeenCalledTimes(1);
+    expect(handleError).toHaveBeenCalledWith(result);
+  });
+
+  it('handles failed http call', async () => {
+    const res = {
+      data: {
+        errorMessage: {
+          message: 'error!',
+        },
+      },
+    };
+
+    axiosInstance.put.mockImplementation(() => Promise.reject(res));
+
+    await validateConnector(params);
     expect(axiosInstance.put).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(res);

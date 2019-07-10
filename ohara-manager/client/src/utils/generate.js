@@ -22,7 +22,7 @@ const { system, random, lorem, internet, date } = faker;
 const { fileName: name } = system;
 const { uuid: id, number } = random;
 const { paragraph: message, word } = lorem;
-const { domainName, ip, userName, url } = internet;
+const { domainName, ip, userName, url, password } = internet;
 
 export const connectors = () => {
   const connectors = Object.values(CONNECTOR_TYPES).map(type => {
@@ -149,4 +149,4 @@ export const serviceName = (length = 10) => {
   return name;
 };
 
-export { name, id, message, domainName, ip, userName, number, url };
+export { name, id, message, domainName, ip, userName, number, url, password };
