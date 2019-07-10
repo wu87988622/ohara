@@ -16,7 +16,8 @@
 
 package com.island.ohara.connector.jdbc.datatype
 
-import java.sql.ResultSet
+import java.sql.{Date, ResultSet, Time, Timestamp}
+import java.util.Optional
 
 import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
 import com.island.ohara.connector.jdbc.util.DateTimeUtils
@@ -48,16 +49,18 @@ class RDBDataTypeConverter {
         java.lang.Double.valueOf(resultSet.getDouble(columnName))
 
       case RDB_TYPE_CHAR | RDB_TYPE_VARCHAR | RDB_TYPE_LONGVARCHAR =>
-        resultSet.getString(columnName)
+        Optional.ofNullable(resultSet.getString(columnName)).orElseGet(() => "null")
 
       case RDB_TYPE_TIMESTAMP =>
-        resultSet.getTimestamp(columnName, DateTimeUtils.CALENDAR)
+        Optional
+          .ofNullable(resultSet.getTimestamp(columnName, DateTimeUtils.CALENDAR))
+          .orElseGet(() => new Timestamp(0))
 
       case RDB_TYPE_DATE =>
-        resultSet.getDate(columnName, DateTimeUtils.CALENDAR)
+        Optional.ofNullable(resultSet.getDate(columnName, DateTimeUtils.CALENDAR)).orElseGet(() => new Date(0))
 
       case RDB_TYPE_TIME =>
-        resultSet.getTime(columnName, DateTimeUtils.CALENDAR)
+        Optional.ofNullable(resultSet.getTime(columnName, DateTimeUtils.CALENDAR)).orElseGet(() => new Time(0))
 
       case _ =>
         throw new RuntimeException(s"Data type '$typeName' not support on column '$columnName'.")

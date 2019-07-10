@@ -140,12 +140,10 @@ class JDBCSourceTask extends RowSourceTask {
   }
 
   private[this] def values(schemaColumnName: String, dbColumnInfos: Seq[ColumnInfo[_]]): Any = {
-    dbColumnInfos.foreach(dbColumn => {
-      if (dbColumn.columnName == schemaColumnName) {
-        return dbColumn.value
-      }
-    })
-    throw new RuntimeException(s"Database Table not have the $schemaColumnName column")
+    val columnInfos: Seq[ColumnInfo[_]] = dbColumnInfos.filter(_.columnName == schemaColumnName)
+    if (columnInfos.nonEmpty) {
+      columnInfos.head.value
+    } else throw new RuntimeException(s"Database Table not have the $schemaColumnName column")
   }
 
   private[source] def dbTimestampColumnValue(dbColumnInfo: Seq[ColumnInfo[_]], timestampColumnName: String): String =
