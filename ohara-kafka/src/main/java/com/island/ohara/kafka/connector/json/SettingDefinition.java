@@ -198,7 +198,7 @@ public class SettingDefinition implements JsonObject {
       SettingDefinition.builder()
           .displayName("tags")
           .key("tags")
-          .valueType(Type.LIST)
+          .valueType(Type.ARRAY)
           .documentation("tags to this connector")
           .group(CORE_GROUP)
           .optional()
