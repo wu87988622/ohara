@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM centos:7.6.1810 AS deps
+FROM centos:7.6.1810
 
 # install tools
 RUN yum install -y \
@@ -68,12 +68,9 @@ WORKDIR /ohara
 RUN git clone $REPO /ohara
 RUN git checkout $COMMIT
 # download dependencies
-RUN gradle clean build -x test -PskipManager \
-    && gradle clean ohara-client:test --tests TestDatabaseClient -PskipManager \
-    && gradle clean \
-    && cd ohara-manager \
-    && gradle setup \
-    && gradle --stop
+RUN gradle clean build -x test \
+    # trigger download of database
+    && gradle clean ohara-client:test --tests TestDatabaseClient -PskipManager
 
 # Add Tini
 ARG TINI_VERSION=v0.18.0
