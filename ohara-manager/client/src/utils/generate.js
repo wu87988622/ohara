@@ -81,6 +81,26 @@ export const streamApps = ({ count = 1 } = {}) => {
   return streamApps;
 };
 
+export const nodes = ({ count = 1, overrides = {} } = {}) => {
+  let nodes = [];
+
+  while (count > 0) {
+    count--;
+
+    const node = {
+      lastModified: date.past(),
+      nodeNames: [name()],
+      name: name(),
+      port: port(),
+      ...overrides,
+    };
+
+    nodes.push(node);
+  }
+
+  return nodes;
+};
+
 export const columnRows = (rowCount = 1) => {
   let columnRows = [];
 

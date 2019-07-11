@@ -42,24 +42,25 @@ const MuiDialog = props => {
       onClose={handelClose}
       maxWidth={maxWidth}
       fullWidth
-      data-testid={testId}
     >
-      <DialogTitle>{title}</DialogTitle>
-      {children()}
-      <DialogActions>
-        <Button onClick={handelClose} color="primary">
-          {cancelBtnText}
-        </Button>
-        <Button
-          onClick={handleConfirm}
-          color="primary"
-          autoFocus
-          disabled={confirmDisabled}
-        >
-          {confirmBtnText}
-        </Button>
-        {loading && <CircularProgress size={24} />}
-      </DialogActions>
+      <div data-testid={testId}>
+        <DialogTitle>{title}</DialogTitle>
+        {children()}
+        <DialogActions>
+          <Button onClick={handelClose} color="primary">
+            {cancelBtnText}
+          </Button>
+          <Button
+            onClick={handleConfirm}
+            color="primary"
+            autoFocus
+            disabled={confirmDisabled}
+          >
+            {confirmBtnText}
+          </Button>
+          {loading && <CircularProgress size={24} />}
+        </DialogActions>
+      </div>
     </Dialog>
   );
 };

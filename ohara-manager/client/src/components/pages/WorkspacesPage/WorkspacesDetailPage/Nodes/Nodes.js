@@ -16,19 +16,19 @@
 
 import React, { useEffect, useCallback, useState } from 'react';
 import toastr from 'toastr';
-import { get, isEmpty } from 'lodash';
 import PropTypes from 'prop-types';
 import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
+import { get, isEmpty } from 'lodash';
 
 import * as nodeApi from 'api/nodeApi';
 import * as brokerApi from 'api/brokerApi';
 import * as workerApi from 'api/workerApi';
 import * as MESSAGES from 'constants/messages';
-import { Dialog } from 'components/common/Mui/Dialog';
 import * as commonUtils from 'utils/commonUtils';
-import Checkbox from '@material-ui/core/Checkbox';
 import * as utils from '../WorkspacesDetailPageUtils';
+import Checkbox from '@material-ui/core/Checkbox';
+import { Dialog } from 'components/common/Mui/Dialog';
 import { SortTable } from 'components/common/Mui/Table';
 import { Main, NewButton, StyledTable } from '../styles';
 
@@ -44,15 +44,23 @@ const Nodes = props => {
   const [working, setWorking] = useState(false);
 
   const fetchWorker = useCallback(async () => {
-    const wkRes = await workerApi.fetchWorker(workspaceName);
+    const workerRes = await workerApi.fetchWorker(workspaceName);
     const nodeRes = await nodeApi.fetchNodes();
-    const wkNodes = get(wkRes, 'data.result.nodeNames', []);
+
+    const workerNodes = get(workerRes, 'data.result.nodeNames', []);
     const nodes = get(nodeRes, 'data.result', []);
     const nodeNames = nodes.map(node => node.name);
-    const wkNodeNames = nodeNames.filter(x => wkNodes.includes(x));
-    setBroker(wkRes.data.result.brokerClusterName);
-    setUesNodes(nodes.filter(node => wkNodeNames.includes(node.name)));
-    setUnusedNodes(nodes.filter(node => !wkNodeNames.includes(node.name)));
+    const workerNodeNames = nodeNames.filter(nodeName =>
+      workerNodes.includes(nodeName),
+    );
+
+    setBroker(workerRes.data.result.brokerClusterName);
+
+    const used = nodes.filter(node => workerNodeNames.includes(node.name));
+    const unused = nodes.filter(node => !workerNodeNames.includes(node.name));
+
+    setUesNodes(used);
+    setUnusedNodes(unused);
     setLoading(false);
   }, [workspaceName]);
 
@@ -66,20 +74,20 @@ const Nodes = props => {
     { id: 'lastModified', label: 'Last modified' },
   ];
 
-  const rows = useNodes.map(wk => {
+  const rows = useNodes.map(({ name, port, lastModified }) => {
     return {
-      name: wk.name,
-      port: wk.port,
-      lastModified: utils.getDateFromTimestamp(wk.lastModified),
+      name,
+      port,
+      lastModified: utils.getDateFromTimestamp(lastModified),
     };
   });
 
-  const handleNodeSelectClose = e => {
+  const handleNodeSelectClose = () => {
     setDialogOpen(false);
   };
 
-  const handleNodeSelect = e => {
-    const { id, checked } = e.target;
+  const handleNodeSelect = event => {
+    const { id, checked } = event.target;
     if (checked) {
       if (!selectNodes.some(node => node === id)) {
         selectNodes.push(id);
@@ -155,13 +163,14 @@ const Nodes = props => {
 
   return (
     <>
-      <NewButton text="new node" onClick={handelOpen} />
+      <NewButton text="New node" onClick={handelOpen} />
       <Main>
         <SortTable
           isLoading={loading}
           headRows={headRows}
           rows={rows}
           confirmDisabled={confirmDisabled}
+          tableName="node"
         />
       </Main>
 
@@ -172,6 +181,7 @@ const Nodes = props => {
         handleConfirm={handleAddNode}
         confirmDisabled={confirmDisabled}
         loading={working}
+        testId="node-new-dialog"
       >
         {() => {
           return (

@@ -35,6 +35,7 @@ const SortTable = props => {
     defaultOrderBy = headRows[0].id,
     tableName = 'sort',
   } = props;
+
   const [order, setOrder] = useState(defaultOrder);
   const [orderBy, setOrderBy] = useState(defaultOrderBy);
 
