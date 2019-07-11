@@ -24,6 +24,7 @@ import { get, isEmpty } from 'lodash';
 import * as nodeApi from 'api/nodeApi';
 import * as brokerApi from 'api/brokerApi';
 import * as workerApi from 'api/workerApi';
+import * as coneainerApi from 'api/containerApi';
 import * as MESSAGES from 'constants/messages';
 import * as commonUtils from 'utils/commonUtils';
 import * as utils from '../WorkspacesDetailPageUtils';
@@ -107,20 +108,21 @@ const Nodes = props => {
   };
 
   const waitForServiceCreation = async params => {
-    const { retryCount = 0, type } = params;
-    let res;
-    if (type === 'worker') {
-      res = await workerApi.fetchWorker(workspaceName);
-    } else if (type === 'broker') {
-      res = await brokerApi.fetchBroker(broker);
-    }
-    const nodeNames = get(res, 'data.result.nodeNames', []);
+    const { retryCount = 0, name } = params;
+
     if (retryCount > 5) return;
+
+    const res = await coneainerApi.fetchContainers(name);
+    const containers = get(res, 'data.result[0].containers', []);
+    const nodeNames = containers.map(container => {
+      return container.state === 'RUNNING' ? container.nodeName : '';
+    });
+
     if (nodeNames.some(n => selectNodes.includes(n))) {
       return;
     }
     await commonUtils.sleep(2000);
-    await waitForServiceCreation(retryCount + 1);
+    await waitForServiceCreation({ retryCount: retryCount + 1, name });
   };
 
   const addNodeToService = async () => {
@@ -129,12 +131,12 @@ const Nodes = props => {
         name: broker,
         nodeName: selectNode,
       });
-      await waitForServiceCreation({ type: 'broker' });
+      await waitForServiceCreation({ name: broker });
       await workerApi.addNodeToWorker({
         name: workspaceName,
         nodeName: selectNode,
       });
-      await waitForServiceCreation({ type: 'worker' });
+      await waitForServiceCreation({ name: workspaceName });
     }
   };
 
