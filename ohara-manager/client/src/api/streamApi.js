@@ -20,7 +20,7 @@ import { handleError, axiosInstance } from './apiUtils';
 
 export const fetchProperty = async name => {
   try {
-    const res = await axiosInstance.get(`/api/stream/property/${name}`);
+    const res = await axiosInstance.get(`/api/stream/${name}`);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -36,7 +36,7 @@ export const fetchProperty = async name => {
 export const createProperty = async params => {
   try {
     const data = { name: params.name, jar: params.jar };
-    const res = await axiosInstance.post('/api/stream/property', data);
+    const res = await axiosInstance.post('/api/stream', data);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -52,7 +52,7 @@ export const createProperty = async params => {
 export const updateProperty = async params => {
   try {
     const propertyName = params.name;
-    const url = `/api/stream/property/${propertyName}`;
+    const url = `/api/stream/${propertyName}`;
     const from = size(params.from) > 0 ? params.from : null;
     const to = size(params.to) > 0 ? params.to : null;
 
@@ -76,7 +76,7 @@ export const updateProperty = async params => {
 
 export const deleteProperty = async name => {
   try {
-    const res = await axiosInstance.delete(`/api/stream/property/${name}`);
+    const res = await axiosInstance.delete(`/api/stream/${name}`);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {

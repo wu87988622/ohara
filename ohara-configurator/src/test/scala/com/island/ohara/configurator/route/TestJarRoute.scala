@@ -31,7 +31,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class TestJarRoute extends SmallTest with Matchers {
 
   private[this] var configurator: Configurator = _
-  private[this] var accessStreamProperty: StreamApi.AccessOfProperty = _
+  private[this] var accessStream: StreamApi.Access = _
   private[this] var jarApi: JarApi.Access = _
   private[this] val GROUP = s"group-${this.getClass.getSimpleName}"
 
@@ -46,7 +46,7 @@ class TestJarRoute extends SmallTest with Matchers {
   @Before
   def setup(): Unit = {
     configurator = Configurator.builder().fake().build()
-    accessStreamProperty = StreamApi.accessOfProperty.hostname(configurator.hostname).port(configurator.port)
+    accessStream = StreamApi.access.hostname(configurator.hostname).port(configurator.port)
     jarApi = JarApi.access.hostname(configurator.hostname).port(configurator.port)
   }
 
@@ -153,12 +153,12 @@ class TestJarRoute extends SmallTest with Matchers {
     // upload jar
     val jar = result(jarApi.request.upload(f))
     // create streamApp property
-    result(accessStreamProperty.request.name(name).jar(JarKey(jar.group, jar.name)).create())
+    result(accessStream.request.name(name).jar(JarKey(jar.group, jar.name)).create())
     // cannot delete a used jar
     val thrown = the[IllegalArgumentException] thrownBy result(jarApi.request.group(jar.group).delete(jar.name))
     thrown.getMessage should include("in used")
 
-    result(accessStreamProperty.delete(name))
+    result(accessStream.delete(name))
     // delete is ok after remove property
     result(jarApi.request.group(jar.group).delete(jar.name))
 
