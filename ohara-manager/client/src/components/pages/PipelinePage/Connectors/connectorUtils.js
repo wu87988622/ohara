@@ -280,7 +280,7 @@ export const renderer = props => {
   const dataType = ['String'];
   const tableActions = ['Up', 'Down', 'Delete'];
 
-  const domWithValueType = params => {
+  const renderWithValueType = params => {
     const {
       valueType,
       key,
@@ -351,7 +351,7 @@ export const renderer = props => {
     }
   };
 
-  const domWithReference = params => {
+  const renderWithReference = params => {
     const { reference, key, displayName, isRunning, documentation } = params;
     switch (reference) {
       case 'TOPIC':
@@ -391,9 +391,9 @@ export const renderer = props => {
   return formData.map(data => {
     const { reference } = data;
     if (reference === 'NONE') {
-      return domWithValueType(data);
+      return renderWithValueType(data);
     } else {
-      return domWithReference(data);
+      return renderWithReference(data);
     }
   });
 };
