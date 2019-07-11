@@ -1,3 +1,5 @@
+import java.util.stream.Collectors
+
 /*
  * Copyright 2019 is-land
  *
@@ -84,34 +86,21 @@ task runFtp(type: JavaExec, dependsOn: 'classes') {
   classpath = sourceSets.main.runtimeClasspath
   main = "com.island.ohara.testing.service.FtpServer"
 
-  def inputs = []
-  if (project.hasProperty('homeFolder')) {
-    inputs << "--homeFolder"
-    inputs << project.getProperty("homeFolder")
-  }
-  if (project.hasProperty('hostname')) {
-    inputs << "--hostname"
-    inputs << project.getProperty("hostname")
-  }
-  if (project.hasProperty('user')) {
-    inputs << "--user"
-    inputs << project.getProperty("user")
-  }
-  if (project.hasProperty('password')) {
-    inputs << "--password"
-    inputs << project.getProperty("password")
-  }
-  if (project.hasProperty('controlPort')) {
-    inputs << "--controlPort"
-    inputs << project.getProperty("controlPort")
-  }
-  if (project.hasProperty('dataPorts')) {
-    inputs << "--dataPorts"
-    inputs << project.getProperty("dataPorts")
-  }
-  if (project.hasProperty('ttl')) {
-    inputs << "--ttl"
-    inputs << project.getProperty("ttl")
-  }
-  args = inputs
+  def keywords = [
+    "homeFolder",
+    "hostname",
+    "user",
+    "password",
+    "controlPort",
+    "dataPorts",
+    "ttl"
+  ]
+  args = keywords.stream()
+    .filter {
+      word -> project.hasProperty(word)
+    }
+    .flatMap {
+      word -> Arrays.asList("--$word", project.getProperty(word)).stream()
+    }
+    .collect(Collectors.toList())
 }
