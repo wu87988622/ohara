@@ -49,7 +49,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
     nodeNames.isEmpty shouldBe false
 
     nodeNames.foreach { n =>
-      result(nodeAccess.request.name(n).port(22).user("user").password("pwd").create())
+      result(nodeAccess.request.hostname(n).port(22).user("user").password("pwd").create())
     }
 
     result(nodeAccess.list()).size shouldBe (nodeNames.size + numberOfDefaultNodes)

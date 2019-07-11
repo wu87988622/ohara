@@ -52,7 +52,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
     nodeCollie = NodeCollie(Seq(node))
     clusterCollie = ClusterCollie.builderOfSsh.nodeCollie(nodeCollie).build()
     val client =
-      DockerClient.builder.user(node.user).password(node.password).hostname(node.name).port(node.port).build
+      DockerClient.builder.user(node.user).password(node.password).hostname(node.hostname).port(node.port).build
     try {
       assumeTrue(client.imageNames().contains(PrometheusServer.IMAGE_NAME_DEFAULT))
     } finally client.close()
@@ -71,7 +71,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
           assertCluster(() => result(clusterCollie.brokerCollie.clusters()).keys.toSeq, bkCluster.name)
           implicit val actorSystem: ActorSystem = ActorSystem(s"${classOf[PrometheusClient].getSimpleName}--system")
           implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
-          val url = "http://" + node.name + ":" + exporterPort + "/metrics"
+          val url = "http://" + node.hostname + ":" + exporterPort + "/metrics"
           import scala.concurrent.ExecutionContext.Implicits.global
           try {
             await(
@@ -146,10 +146,10 @@ class TestPrometheus extends IntegrationTest with Matchers {
         desc => {
 
           val client =
-            DockerClient.builder.user(node.user).password(node.password).hostname(node.name).port(node.port).build
+            DockerClient.builder.user(node.user).password(node.password).hostname(node.hostname).port(node.port).build
           try {
             val util = PrometheusConfigUtils(client.containerInspector(desc.name))
-            val pclient = PrometheusClient(node.name + ":" + desc.clientPort)
+            val pclient = PrometheusClient(node.hostname + ":" + desc.clientPort)
 
             //check not in  target
             await(() => !isContain(pclient.targets(), "123.123.123.123:" + desc.clientPort))
@@ -159,7 +159,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
 
             //check add targets
             ports
-              .map(node.name + ":" + _)
+              .map(node.hostname + ":" + _)
               .foreach(target => {
                 util.addTarget(target)
                 await(() => isActive(pclient.targets(), target))
@@ -167,7 +167,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
 
             //       check remove targets
             ports
-              .map(node.name + ":" + _)
+              .map(node.hostname + ":" + _)
               .foreach(target => {
                 util.removeTarget(target)
                 await(() => !isContain(pclient.targets(), target))

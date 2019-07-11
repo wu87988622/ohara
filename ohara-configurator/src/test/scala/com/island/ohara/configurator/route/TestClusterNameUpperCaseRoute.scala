@@ -34,7 +34,7 @@ class TestClusterNameUpperCaseRoute extends SmallTest with Matchers {
 
   @Test
   def testAddZookeeper(): Unit = {
-    result(nodeApi.request.name("host1").port(22).user("b").password("c").create())
+    result(nodeApi.request.hostname("host1").port(22).user("b").password("c").create())
 
     an[IllegalArgumentException] should be thrownBy result(
       zookeeperApi.request.name(s"ZK-${CommonUtils.randomString(10)}").nodeName("host1").create())

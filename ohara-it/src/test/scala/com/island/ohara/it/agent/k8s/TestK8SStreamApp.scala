@@ -34,7 +34,15 @@ class TestK8SStreamApp extends BasicTests4StreamApp {
   else
     NODE_SERVER_NAME.get
       .split(",")
-      .map(node => Node(node, 1, "fake", "fake", Seq.empty, CommonUtils.current(), Set.empty))
+      .map(
+        node =>
+          Node(hostname = node,
+               port = 1,
+               user = "fake",
+               password = "fake",
+               services = Seq.empty,
+               lastModified = CommonUtils.current(),
+               tags = Set.empty))
   override protected def createNameHolder(nodeCache: Seq[Node]): ClusterNameHolder = new ClusterNameHolder(nodeCache) {
     override def close(): Unit = {
       val k8sClient = K8SClient(API_SERVER_URL.get)

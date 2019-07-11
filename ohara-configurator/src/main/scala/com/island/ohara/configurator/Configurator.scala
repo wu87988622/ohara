@@ -349,7 +349,7 @@ object Configurator {
         val port = value.split("@").last.split(":").last.toInt
         nodeRequest = Some(
           NodeApi.Creation(
-            name = hostname,
+            hostname = hostname,
             password = password,
             user = user,
             port = port,
@@ -408,7 +408,7 @@ object Configurator {
           GLOBAL_CONFIGURATOR,
           (node: Node) => {
             val dockerClient =
-              DockerClient.builder.hostname(node.name).port(node.port).user(node.user).password(node.password).build
+              DockerClient.builder.hostname(node.hostname).port(node.port).user(node.user).password(node.password).build
             try checkImageExists(node, dockerClient.imageNames())
             finally dockerClient.close()
           }
@@ -458,7 +458,7 @@ object Configurator {
           .hostname(CommonUtils.hostname())
           .port(configurator.port)
           .request
-          .name(nodeRequest.name)
+          .hostname(nodeRequest.hostname)
           .port(nodeRequest.port)
           .user(nodeRequest.user)
           .password(nodeRequest.password)

@@ -301,7 +301,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
   @Test
   def testWkCreator(): Unit = {
     val node1Name = "node1"
-    val node1 = Node(name = node1Name,
+    val node1 = Node(hostname = node1Name,
                      port = 22,
                      user = "",
                      password = "",
@@ -309,7 +309,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
                      lastModified = CommonUtils.current(),
                      tags = Set.empty)
     val node2Name = "node2"
-    val node2 = Node(name = node2Name,
+    val node2 = Node(hostname = node2Name,
                      port = 22,
                      user = "",
                      password = "",
@@ -341,7 +341,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
   @Test
   def testExistWorkerNode(): Unit = {
     val node1Name = "node1" // node1 has running worker for fake
-    val node1 = Node(name = node1Name,
+    val node1 = Node(hostname = node1Name,
                      port = 22,
                      user = "",
                      password = "",
@@ -372,7 +372,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
   @Test
   def testBrokerClusterNotExists(): Unit = {
     val node1Name = "node1"
-    val node1 = Node(name = node1Name,
+    val node1 = Node(hostname = node1Name,
                      port = 22,
                      user = "",
                      password = "",
@@ -380,7 +380,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
                      lastModified = CommonUtils.current(),
                      tags = Set.empty)
     val node2Name = "node2"
-    val node2 = Node(name = node2Name,
+    val node2 = Node(hostname = node2Name,
                      port = 22,
                      user = "",
                      password = "",

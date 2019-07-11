@@ -42,7 +42,7 @@ class TestK8SClientVerify extends SmallTest with Matchers {
     val runningNode =
       Await.result(
         clusterCollie.verifyNode(
-          Node(name = "ohara",
+          Node(hostname = "ohara",
                port = 22,
                user = "fake",
                password = "fake",
@@ -65,7 +65,7 @@ class TestK8SClientVerify extends SmallTest with Matchers {
     val runningNode =
       Await.result(
         clusterCollie.verifyNode(
-          Node(name = "ohara",
+          Node(hostname = "ohara",
                port = 22,
                user = "fake",
                password = "fake",
@@ -88,7 +88,7 @@ class TestK8SClientVerify extends SmallTest with Matchers {
     val runningNode =
       Await.result(
         clusterCollie.verifyNode(
-          Node(name = "ohara",
+          Node(hostname = "ohara",
                port = 22,
                user = "fake",
                password = "fake",
@@ -111,7 +111,7 @@ class TestK8SClientVerify extends SmallTest with Matchers {
     val runningNode =
       Await.result(
         clusterCollie.verifyNode(
-          Node(name = "ohara",
+          Node(hostname = "ohara",
                port = 22,
                user = "fake",
                password = "fake",

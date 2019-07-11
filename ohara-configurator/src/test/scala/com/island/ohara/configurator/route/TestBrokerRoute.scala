@@ -41,7 +41,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
 
     nodeNames.foreach { n =>
       result(
-        nodeAccess.request.name(n).port(22).user("user").password("password").create()
+        nodeAccess.request.hostname(n).port(22).user("user").password("password").create()
       )
     }
 

@@ -144,7 +144,13 @@ class TestBrokerCreator extends SmallTest with Matchers {
   def testBkCreatorZKNotExists(): Unit = {
     val node1Name = "node1"
     val node1 =
-      Node(node1Name, 22, "user1", "123456", services = Seq.empty, lastModified = CommonUtils.current(), Set.empty)
+      Node(hostname = node1Name,
+           port = 22,
+           "user1",
+           password = "123456",
+           services = Seq.empty,
+           lastModified = CommonUtils.current(),
+           tags = Set.empty)
     val brokerCollie = new FakeBrokerCollie(NodeCollie(Seq(node1)), Seq.empty, Seq.empty)
 
     val bkCreator: Future[BrokerClusterInfo] = brokerCollie.creator
@@ -166,7 +172,13 @@ class TestBrokerCreator extends SmallTest with Matchers {
   def testBkCreatorZKContainerEmpty(): Unit = {
     val node1Name = "node1"
     val node1 =
-      Node(node1Name, 22, "user1", "123456", services = Seq.empty, lastModified = CommonUtils.current(), Set.empty)
+      Node(hostname = node1Name,
+           port = 22,
+           user = "user1",
+           password = "123456",
+           services = Seq.empty,
+           lastModified = CommonUtils.current(),
+           tags = Set.empty)
 
     val brokerCollie = new FakeBrokerCollie(NodeCollie(Seq(node1)), Seq.empty, Seq.empty) //Zk container set empty
     val bkCreator: Future[BrokerClusterInfo] = brokerCollie.creator
@@ -188,7 +200,13 @@ class TestBrokerCreator extends SmallTest with Matchers {
   def testNodeIsRunningBroker(): Unit = {
     val node1Name = "node1"
     val node1 =
-      Node(node1Name, 22, "user1", "123456", services = Seq.empty, lastModified = CommonUtils.current(), Set.empty)
+      Node(hostname = node1Name,
+           port = 22,
+           user = "user1",
+           password = "123456",
+           services = Seq.empty,
+           lastModified = CommonUtils.current(),
+           tags = Set.empty)
     val zkContainers = Seq(
       ContainerInfo(
         "node1",
@@ -240,11 +258,22 @@ class TestBrokerCreator extends SmallTest with Matchers {
   def testCheckBrokerImageValue(): Unit = {
     val node1Name = "node1"
     val node1 =
-      Node(node1Name, 22, "user1", "123456", services = Seq.empty, lastModified = CommonUtils.current(), Set.empty)
+      Node(hostname = node1Name,
+           port = 22,
+           user = "user1",
+           password = "123456",
+           services = Seq.empty,
+           lastModified = CommonUtils.current(),
+           tags = Set.empty)
 
     val node2Name = "node2"
-    val node2 =
-      Node(node2Name, 22, "user1", "123456", services = Seq.empty, lastModified = CommonUtils.current(), Set.empty)
+    val node2 = Node(hostname = node2Name,
+                     port = 22,
+                     user = "user1",
+                     password = "123456",
+                     services = Seq.empty,
+                     lastModified = CommonUtils.current(),
+                     tags = Set.empty)
 
     val zkContainers = Seq(
       ContainerInfo(
@@ -298,11 +327,21 @@ class TestBrokerCreator extends SmallTest with Matchers {
   @Test
   def testBkCreator(): Unit = {
     val node1Name = "node1"
-    val node1 =
-      Node(node1Name, 22, "user1", "123456", services = Seq.empty, lastModified = CommonUtils.current(), Set.empty)
+    val node1 = Node(hostname = node1Name,
+                     port = 22,
+                     user = "user1",
+                     password = "123456",
+                     services = Seq.empty,
+                     lastModified = CommonUtils.current(),
+                     tags = Set.empty)
     val node2Name = "node2"
-    val node2 =
-      Node(node2Name, 22, "user1", "123456", services = Seq.empty, lastModified = CommonUtils.current(), Set.empty)
+    val node2 = Node(hostname = node2Name,
+                     port = 22,
+                     user = "user1",
+                     password = "123456",
+                     services = Seq.empty,
+                     lastModified = CommonUtils.current(),
+                     tags = Set.empty)
 
     val containers = Seq(
       ContainerInfo(

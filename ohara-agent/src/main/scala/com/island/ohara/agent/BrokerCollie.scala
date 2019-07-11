@@ -149,11 +149,11 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
                             BrokerCollie.ID_KEY -> (maxId + index).toString,
                             BrokerCollie.CLIENT_PORT_KEY -> clientPort.toString,
                             BrokerCollie.ZOOKEEPERS_KEY -> zookeepers,
-                            BrokerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
+                            BrokerCollie.ADVERTISED_HOSTNAME_KEY -> node.hostname,
                             BrokerCollie.EXPORTER_PORT_KEY -> exporterPort.toString,
                             BrokerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
                             BrokerCollie.ZOOKEEPER_CLUSTER_NAME -> zookeeperClusterName,
-                            BrokerCollie.JMX_HOSTNAME_KEY -> node.name,
+                            BrokerCollie.JMX_HOSTNAME_KEY -> node.hostname,
                             BrokerCollie.JMX_PORT_KEY -> jmxPort.toString
                           ),
                           hostname = containerName

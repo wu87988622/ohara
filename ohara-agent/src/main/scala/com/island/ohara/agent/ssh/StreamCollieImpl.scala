@@ -53,7 +53,7 @@ private class StreamCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClient
             def urlToHost(url: String): String = new URI(url).getHost
 
             val route: Map[String, String] = nodes.keys.map { node =>
-              node.name -> CommonUtils.address(node.name)
+              node.hostname -> CommonUtils.address(node.hostname)
             }.toMap +
               // make sure the streamApp can connect to configurator
               (urlToHost(jarUrl) -> CommonUtils.address(urlToHost(jarUrl)))

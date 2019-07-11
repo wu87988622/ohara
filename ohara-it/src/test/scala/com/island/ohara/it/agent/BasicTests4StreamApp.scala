@@ -104,7 +104,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
       // add all available nodes
       nodeCache.foreach { node =>
         result(
-          nodeApi.request.name(node.name).port(node.port).user(node.user).password(node.password).create()
+          nodeApi.request.hostname(node.hostname).port(node.port).user(node.user).password(node.password).create()
         )
       }
       val nodes = result(nodeApi.list())
@@ -189,7 +189,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
         node -> result(client.containers()).map(_.name).filter(name => name.contains(properties.name))
       } else {
         val client =
-          DockerClient.builder.hostname(node.name).port(node.port).user(node.user).password(node.password).build
+          DockerClient.builder.hostname(node.hostname).port(node.port).user(node.user).password(node.password).build
         try node -> client.containerNames().filter(name => name.contains(properties.name))
         finally client.close()
       }
@@ -222,7 +222,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
           containers.foreach(container => !result(client.containers()).map(_.name).contains(container) shouldBe true)
         } else {
           val client =
-            DockerClient.builder.hostname(node.name).port(node.port).user(node.user).password(node.password).build
+            DockerClient.builder.hostname(node.hostname).port(node.port).user(node.user).password(node.password).build
           try containers.foreach(container => client.nonExist(container) shouldBe true)
           finally client.close()
         }

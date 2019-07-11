@@ -57,7 +57,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
         .hostname(configurator.hostname)
         .port(configurator.port)
         .request
-        .name(addNodeName)
+        .hostname(addNodeName)
         .port(22)
         .user(CommonUtils.randomString())
         .password(CommonUtils.randomString())

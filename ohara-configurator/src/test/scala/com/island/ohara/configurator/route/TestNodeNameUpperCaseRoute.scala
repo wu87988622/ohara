@@ -37,25 +37,25 @@ class TestNodeNameUpperCaseRoute extends SmallTest with Matchers {
   @Test
   def testAddNodeNameLowerCase(): Unit = {
     val name = CommonUtils.randomString().toLowerCase
-    result(nodeApi.request.name(name).port(22).user("b").password("c").create()).name shouldBe name
+    result(nodeApi.request.hostname(name).port(22).user("b").password("c").create()).name shouldBe name
   }
 
   @Test
   def testAddNodeNameUpperCase1(): Unit = {
     val name = CommonUtils.randomString().toUpperCase
-    result(nodeApi.request.name(name).port(22).user("b").password("c").create())
+    result(nodeApi.request.hostname(name).port(22).user("b").password("c").create())
   }
 
   @Test
   def testAddNodeNameUpperCase2(): Unit = {
     val name = "HOST1.test"
-    result(nodeApi.request.name(name).port(22).user("b").password("c").create())
+    result(nodeApi.request.hostname(name).port(22).user("b").password("c").create())
   }
 
   @Test
   def testAddNodeNameUpperCase3(): Unit = {
     val name = "aaa-Node1.test"
-    result(nodeApi.request.name(name).port(22).user("b").password("c").create())
+    result(nodeApi.request.hostname(name).port(22).user("b").password("c").create())
   }
 
   @After

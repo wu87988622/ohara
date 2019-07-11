@@ -108,7 +108,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
         .toSet[String]
         .map { nodeName =>
           Node(
-            name = nodeName,
+            hostname = nodeName,
             services = (if (bkConnectionProps.contains(nodeName))
                           Seq(NodeService(NodeApi.BROKER_SERVICE_NAME, Seq(embeddedBkName)))
                         else Seq.empty) ++ (if (wkConnectionProps.contains(nodeName))
@@ -262,7 +262,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
         .toSet[String]
         .map(
           name =>
-            Node(name = name,
+            Node(hostname = name,
                  port = -1,
                  user = "fake user",
                  password = "fake password",

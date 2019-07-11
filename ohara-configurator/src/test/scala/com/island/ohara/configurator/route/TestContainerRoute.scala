@@ -43,7 +43,7 @@ class TestContainerRoute extends MediumTest with Matchers {
 
     nodeNames.isEmpty shouldBe false
     nodeNames.foreach { n =>
-      result(nodeApi.request.name(n).port(22).user("user").password("pwd").create())
+      result(nodeApi.request.hostname(n).port(22).user("user").password("pwd").create())
     }
 
     result(

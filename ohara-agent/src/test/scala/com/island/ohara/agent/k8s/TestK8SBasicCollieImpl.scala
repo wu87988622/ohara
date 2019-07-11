@@ -52,7 +52,7 @@ class TestK8SBasicCollieImpl extends SmallTest with Matchers {
 
   private[this] def zookeeperClusterName(containerName: String): String = {
     val node1Name = "node1"
-    val node1: Node = Node(name = node1Name,
+    val node1: Node = Node(hostname = node1Name,
                            port = 22,
                            user = "",
                            password = "",

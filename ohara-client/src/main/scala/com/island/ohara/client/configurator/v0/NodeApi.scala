@@ -20,7 +20,7 @@ import java.util.Objects
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
-import spray.json.RootJsonFormat
+import spray.json.{JsString, JsValue, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 object NodeApi {
@@ -34,8 +34,10 @@ object NodeApi {
   implicit val NODE_UPDATE_JSON_FORMAT: RootJsonFormat[Update] =
     JsonRefiner[Update].format(jsonFormat4(Update)).requireConnectionPort("port").rejectEmptyString().refine
 
-  case class Creation(name: String, port: Int, user: String, password: String, tags: Set[String])
-      extends CreationRequest
+  case class Creation(hostname: String, port: Int, user: String, password: String, tags: Set[String])
+      extends CreationRequest {
+    override def name: String = hostname
+  }
   implicit val NODE_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
     JsonRefiner[Creation]
       .format(jsonFormat5(Creation))
@@ -43,13 +45,14 @@ object NodeApi {
       .nullToInt("port", 22)
       .requireConnectionPort("port")
       .rejectEmptyString()
-      .stringRestriction(Data.NAME_KEY)
+      .stringRestriction("hostname")
       .withNumber()
       .withCharset()
       .withDot()
       .withDash()
       .toRefiner
       .nullToEmptyArray(Data.TAGS_KEY)
+      .nullToAnotherValueOfKey("hostname", "name")
       .refine
 
   case class NodeService(name: String, clusterNames: Seq[String])
@@ -58,7 +61,7 @@ object NodeApi {
   /**
     * NOTED: the field "services" is filled at runtime. If you are in testing, it is ok to assign empty to it.
     */
-  case class Node(name: String,
+  case class Node(hostname: String,
                   port: Int,
                   user: String,
                   password: String,
@@ -66,16 +69,26 @@ object NodeApi {
                   lastModified: Long,
                   tags: Set[String])
       extends Data {
+    override def name: String = hostname
     override def kind: String = "node"
   }
 
-  implicit val NODE_JSON_FORMAT: RootJsonFormat[Node] = jsonFormat7(Node)
+  implicit val NODE_JSON_FORMAT: RootJsonFormat[Node] = new RootJsonFormat[Node] {
+    private[this] val format = jsonFormat7(Node)
+    override def read(json: JsValue): Node = format.read(json)
+
+    // TODO: remove name from this object ... by chia
+    override def write(obj: Node): JsValue = {
+      val json = format.write(obj).asJsObject
+      json.copy(fields = json.fields ++ Map("name" -> JsString(obj.hostname)))
+    }
+  }
 
   /**
     * used to generate the payload and url for POST/PUT request.
     */
   trait Request {
-    def name(name: String): Request
+    def hostname(hostname: String): Request
 
     @Optional("it is ignorable if you are going to send update request")
     def port(port: Int): Request
@@ -120,13 +133,13 @@ object NodeApi {
 
   class Access private[v0] extends com.island.ohara.client.configurator.v0.Access[Node](NODES_PREFIX_PATH) {
     def request: Request = new Request {
-      private[this] var name: String = _
+      private[this] var hostname: String = _
       private[this] var port: Option[Int] = None
       private[this] var user: String = _
       private[this] var password: String = _
       private[this] var tags: Set[String] = _
-      override def name(name: String): Request = {
-        this.name = CommonUtils.requireNonEmpty(name)
+      override def hostname(hostname: String): Request = {
+        this.hostname = CommonUtils.requireNonEmpty(hostname)
         this
       }
       override def port(port: Int): Request = {
@@ -148,7 +161,7 @@ object NodeApi {
       }
 
       override private[v0] def creation: Creation = Creation(
-        name = CommonUtils.requireNonEmpty(name),
+        hostname = CommonUtils.requireNonEmpty(hostname),
         user = CommonUtils.requireNonEmpty(user),
         password = CommonUtils.requireNonEmpty(password),
         port = port.map(CommonUtils.requireConnectionPort).getOrElse(throw new NullPointerException),
@@ -169,7 +182,7 @@ object NodeApi {
         )
       override def update()(implicit executionContext: ExecutionContext): Future[Node] =
         exec.put[Update, Node, ErrorApi.Error](
-          s"${_url}/${CommonUtils.requireNonEmpty(name)}",
+          s"${_url}/${CommonUtils.requireNonEmpty(hostname)}",
           update
         )
     }

@@ -1309,7 +1309,8 @@ The version (tag) depends on which ohara you used. It would be better to use the
 the version of ohara configurator you are running is 0.4, then the official images you should download is oharastream/xx:0.4.
 
 The properties used in describing a node are shown below.
-1. name (**string**) — hostname of node
+1. hostname (**string**) — hostname of node. This hostname must be available on you DNS. It will cause a lot of troubles
+                           if Ohara Configurator is unable to connect to remote node via this hostname.
 1. port (**int**) — ssh port of node
 1. user (**string**) — ssh account
 1. password (**string**) — ssh password
@@ -1326,7 +1327,7 @@ The following information are tagged by ohara.
 
 *POST /v0/nodes*
 
-1. name (**string**) — hostname of node
+1. hostname (**string**) — hostname of node
 1. port (**int**) — ssh port of node
 1. user (**string**) — ssh account
 1. password (**string**) — ssh password
@@ -1335,7 +1336,7 @@ The following information are tagged by ohara.
 
 ```json
 {
-  "name": "node00",
+  "hostname": "node00",
   "port": 22,
   "user": "abc",
   "password": "pwd"
@@ -1346,7 +1347,7 @@ The following information are tagged by ohara.
 
 ```json
 {
-  "name": "node00",
+  "hostname": "node00",
   "port": 22,
   "user": "abc",
   "password": "pwd",
@@ -1359,7 +1360,7 @@ The following information are tagged by ohara.
 
 *PUT /v0/nodes/${name}*
 
-1. name (**string**) — hostname of node
+1. hostname (**string**) — hostname of node
 1. port (**int**) — ssh port of node
 1. user (**string**) — ssh account
 1. password (**string**) — ssh password
@@ -1368,7 +1369,6 @@ The following information are tagged by ohara.
 
 ```json
 {
-  "name": "node00",
   "port": 22,
   "user": "abc",
   "password": "pwd"
@@ -1381,7 +1381,7 @@ The following information are tagged by ohara.
 
 ```json
 {
-  "name": "node00",
+  "hostname": "node00",
   "port": 22,
   "user": "abc",
   "password": "pwd",
@@ -1399,7 +1399,7 @@ The following information are tagged by ohara.
 ```json
 [
   {
-    "name": "node00",
+    "hostname": "node00",
     "port": 22,
     "user": "abc",
     "password": "pwd",
@@ -1433,7 +1433,7 @@ The following information are tagged by ohara.
 
 ```json
 {
-  "name": "node00",
+  "hostname": "node00",
   "port": 22,
   "user": "abc",
   "password": "pwd",

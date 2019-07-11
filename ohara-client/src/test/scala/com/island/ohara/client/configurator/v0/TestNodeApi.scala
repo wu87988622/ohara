@@ -16,6 +16,7 @@
 
 package com.island.ohara.client.configurator.v0
 
+import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
@@ -27,37 +28,11 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class TestNodeApi extends SmallTest with Matchers {
 
   @Test
-  def ignoreNameOnCreation(): Unit = an[NullPointerException] should be thrownBy NodeApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
-    .port(CommonUtils.availablePort())
-    .user(CommonUtils.randomString())
-    .password(CommonUtils.randomString())
-    .create
-
-  @Test
-  def ignoreNameOnUpdate(): Unit = an[NullPointerException] should be thrownBy NodeApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
-    .port(CommonUtils.availablePort())
-    .user(CommonUtils.randomString())
-    .password(CommonUtils.randomString())
-    .update()
-
-  @Test
-  def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy NodeApi.access.request.name("")
-
-  @Test
-  def nullName(): Unit = an[NullPointerException] should be thrownBy NodeApi.access.request.name(null)
-
-  @Test
   def ignorePortOnCreation(): Unit = an[NullPointerException] should be thrownBy NodeApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
-    .name(CommonUtils.randomString())
+    .hostname(CommonUtils.randomString())
     .user(CommonUtils.randomString())
     .password(CommonUtils.randomString())
     .create()
@@ -70,7 +45,7 @@ class TestNodeApi extends SmallTest with Matchers {
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
-    .name(CommonUtils.randomString())
+    .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .password(CommonUtils.randomString())
     .create()
@@ -82,11 +57,37 @@ class TestNodeApi extends SmallTest with Matchers {
   def nullUser(): Unit = an[NullPointerException] should be thrownBy NodeApi.access.request.user(null)
 
   @Test
+  def ignoreHostnameOnCreation(): Unit = an[NullPointerException] should be thrownBy NodeApi.access
+    .hostname(CommonUtils.randomString())
+    .port(CommonUtils.availablePort())
+    .request
+    .password(CommonUtils.randomString())
+    .port(CommonUtils.availablePort())
+    .user(CommonUtils.randomString())
+    .create()
+
+  @Test
+  def ignoreHostnameOnUpdate(): Unit = an[NullPointerException] should be thrownBy NodeApi.access
+    .hostname(CommonUtils.randomString())
+    .port(CommonUtils.availablePort())
+    .request
+    .password(CommonUtils.randomString())
+    .port(CommonUtils.availablePort())
+    .user(CommonUtils.randomString())
+    .update()
+
+  @Test
+  def emptyHostname(): Unit = an[IllegalArgumentException] should be thrownBy NodeApi.access.request.hostname("")
+
+  @Test
+  def nullHostname(): Unit = an[NullPointerException] should be thrownBy NodeApi.access.request.hostname(null)
+
+  @Test
   def ignorePasswordOnCreation(): Unit = an[NullPointerException] should be thrownBy NodeApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
-    .name(CommonUtils.randomString())
+    .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .user(CommonUtils.randomString())
     .create()
@@ -99,13 +100,14 @@ class TestNodeApi extends SmallTest with Matchers {
 
   @Test
   def testCreation(): Unit = {
-
-    val name = CommonUtils.randomString()
+    val hostname = CommonUtils.randomString()
     val user = CommonUtils.randomString()
     val password = CommonUtils.randomString()
     val port = CommonUtils.availablePort()
-    val creation = NodeApi.access.request.name(name).user(user).password(password).port(port).creation
-    creation.name shouldBe name
+    val creation =
+      NodeApi.access.request.hostname(hostname).user(user).password(password).port(port).creation
+    creation.name shouldBe hostname
+    creation.hostname shouldBe hostname
     creation.user shouldBe user
     creation.password shouldBe password
     creation.port shouldBe port
@@ -262,9 +264,27 @@ class TestNodeApi extends SmallTest with Matchers {
                                                          |}
                                        """.stripMargin.parseJson)
     creation.name shouldBe name
+    creation.hostname shouldBe name
     creation.port shouldBe port
     creation.user shouldBe user
     creation.password shouldBe password
+
+    val hostname = CommonUtils.randomString()
+    val creation2 = NodeApi.NODE_CREATION_JSON_FORMAT.read(s"""
+                                                             |{
+                                                             | "name": "$name",
+                                                             | "hostname": "$hostname",
+                                                             | "port": $port,
+                                                             | "user": "$user",
+                                                             | "password": "$password"
+                                                             |}
+                                       """.stripMargin.parseJson)
+    // the name is alias to hostname
+    creation2.name shouldBe hostname
+    creation2.hostname shouldBe hostname
+    creation2.port shouldBe port
+    creation2.user shouldBe user
+    creation2.password shouldBe password
   }
 
   @Test
@@ -272,4 +292,23 @@ class TestNodeApi extends SmallTest with Matchers {
 
   @Test
   def emptyTags(): Unit = NodeApi.access.request.tags(Set.empty)
+
+  @Test
+  def nodeJsonShouldContainName(): Unit = {
+    import spray.json.DefaultJsonProtocol._
+    val hostname = CommonUtils.randomString(10)
+    NodeApi.NODE_JSON_FORMAT
+      .write(Node(
+        hostname = hostname,
+        port = CommonUtils.availablePort(),
+        user = CommonUtils.randomString(10),
+        password = CommonUtils.randomString(10),
+        services = Seq.empty,
+        lastModified = CommonUtils.current(),
+        tags = Set.empty
+      ))
+      .asJsObject
+      .fields("name")
+      .convertTo[String] shouldBe hostname
+  }
 }

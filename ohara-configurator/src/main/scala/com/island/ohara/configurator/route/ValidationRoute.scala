@@ -124,7 +124,7 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
           clusterCollie
             .verifyNode(
               Node(
-                name = req.hostname,
+                hostname = req.hostname,
                 port = req.port,
                 user = req.user,
                 password = req.password,

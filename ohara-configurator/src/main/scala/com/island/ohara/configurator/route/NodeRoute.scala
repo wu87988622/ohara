@@ -47,7 +47,7 @@ object NodeRoute {
         else
           update(
             Node(
-              name = request.name,
+              hostname = request.hostname,
               port = request.port,
               user = request.user,
               password = request.password,
@@ -56,16 +56,20 @@ object NodeRoute {
               tags = request.tags
             ))
       },
-      hookOfUpdate = (name: String, request: Update, previous: Option[Node]) => {
+      hookOfUpdate = (hostname: String, request: Update, previous: Option[Node]) => {
         update(
           Node(
-            name = name,
+            hostname = hostname,
             port = request.port.getOrElse(
-              previous.map(_.port).getOrElse(throw new NoSuchElementException(RouteUtils.errorMessage(name, "port")))),
+              previous
+                .map(_.port)
+                .getOrElse(throw new NoSuchElementException(RouteUtils.errorMessage(hostname, "port")))),
             user = request.user.getOrElse(
-              previous.map(_.user).getOrElse(throw new NoSuchElementException(RouteUtils.errorMessage(name, "user")))),
-            password = request.password.getOrElse(
-              previous.fold(throw new NoSuchElementException(RouteUtils.errorMessage(name, "password")))(_.password)),
+              previous
+                .map(_.user)
+                .getOrElse(throw new NoSuchElementException(RouteUtils.errorMessage(hostname, "user")))),
+            password = request.password.getOrElse(previous.fold(
+              throw new NoSuchElementException(RouteUtils.errorMessage(hostname, "password")))(_.password)),
             services = Seq.empty,
             lastModified = CommonUtils.current(),
             tags = request.tags.getOrElse(previous.map(_.tags).getOrElse(Set.empty))

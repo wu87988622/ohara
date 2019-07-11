@@ -89,7 +89,7 @@ class TestVerifyNode extends SmallTest with Matchers {
   )
 
   private[this] val node = Node(
-    name = sshServer.hostname(),
+    hostname = sshServer.hostname(),
     port = sshServer.port(),
     user = sshServer.user(),
     password = sshServer.password(),
