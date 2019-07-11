@@ -32,7 +32,7 @@ import scala.concurrent.{Await, Future}
 class TestMetrics extends WithBrokerWorker with Matchers {
 
   private[this] val configurator =
-    Configurator.builder().fake(testUtil.brokersConnProps, testUtil().workersConnProps()).build()
+    Configurator.builder.fake(testUtil.brokersConnProps, testUtil().workersConnProps()).build()
 
   private[this] val connectorApi = ConnectorApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)

@@ -26,16 +26,14 @@ import akka.http.scaladsl.server.{ExceptionHandler, MalformedRequestContentRejec
 import akka.http.scaladsl.{Http, server}
 import akka.stream.ActorMaterializer
 import com.island.ohara.agent._
-import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.client.HttpExecutor
 import com.island.ohara.client.configurator.ConfiguratorApiInfo
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Meter
-import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import com.island.ohara.client.configurator.v0.{ZookeeperApi, _}
+import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce}
 import com.island.ohara.configurator.Configurator.Mode
@@ -45,8 +43,8 @@ import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.typesafe.scalalogging.Logger
 import spray.json.DeserializationException
 
-import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext}
 
 /**
   * A simple impl from Configurator. This impl maintains all subclass from ohara data in a single ohara store.
@@ -291,136 +289,62 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
 }
 
 object Configurator {
+  def builder: ConfiguratorBuilder = new ConfiguratorBuilder()
 
-  /**
-    * There are some async functions used in main function.
-    */
-  import scala.concurrent.ExecutionContext.Implicits.global
   private[configurator] val DATA_SERIALIZER: Serializer[Data] = new Serializer[Data] {
     override def to(obj: Data): Array[Byte] = Serializer.OBJECT.to(obj)
     override def from(bytes: Array[Byte]): Data =
       Serializer.OBJECT.from(bytes).asInstanceOf[Data]
   }
 
-  def builder(): ConfiguratorBuilder = new ConfiguratorBuilder()
-
   //----------------[main]----------------//
-  private[this] lazy val LOG = Logger(Configurator.getClass)
+  private[configurator] lazy val LOG = Logger(Configurator.getClass)
   private[configurator] val HELP_KEY = "--help"
   private[configurator] val FOLDER_KEY = "--folder"
   private[configurator] val HOSTNAME_KEY = "--hostname"
   private[configurator] val K8S_KEY = "--k8s"
   private[configurator] val FAKE_KEY = "--fake"
   private[configurator] val PORT_KEY = "--port"
-  private[configurator] val NODE_KEY = "--node"
-  private val USAGE =
-    s"[Usage] $FOLDER_KEY $HOSTNAME_KEY $PORT_KEY $K8S_KEY $FAKE_KEY $NODE_KEY(form: user:password@hostname:port)"
+  private val USAGE = s"[Usage] $FOLDER_KEY $HOSTNAME_KEY $PORT_KEY $K8S_KEY $FAKE_KEY"
 
   /**
-    * Running a standalone configurator.
-    * NOTED: this main is exposed to build.gradle. If you want to move the main out from this class, please update the
-    * build.gradle also.
-    *
-    * @param args the first element is hostname and the second one is port
+    * parse input arguments and then generate a Configurator instance.
+    * @param args input arguments
+    * @return configurator instance
     */
+  private[configurator] def configurator(args: Array[String]): Configurator = {
+    val configuratorBuilder = Configurator.builder
+    try {
+      args.sliding(2, 2).foreach {
+        case Array(FOLDER_KEY, value)   => configuratorBuilder.homeFolder(value)
+        case Array(HOSTNAME_KEY, value) => configuratorBuilder.hostname(value)
+        case Array(PORT_KEY, value)     => configuratorBuilder.port(value.toInt)
+        case Array(K8S_KEY, value) =>
+          configuratorBuilder.k8sClient(K8SClient(value))
+        case Array(FAKE_KEY, value) =>
+          if (value.toBoolean) configuratorBuilder.fake()
+        case _ =>
+          configuratorBuilder.cleanup()
+          throw new IllegalArgumentException(s"input:${args.mkString(" ")}. $USAGE")
+      }
+      configuratorBuilder.build()
+    } catch {
+      case e: Throwable =>
+        // release all pre-created objects
+        configuratorBuilder.cleanup()
+        throw e
+    }
+  }
+
   def main(args: Array[String]): Unit = {
     if (args.length == 1 && args(0) == HELP_KEY) {
       println(USAGE)
       return
     }
+    if (GLOBAL_CONFIGURATOR != null) throw new RuntimeException("configurator is running!!!")
 
-    val configuratorBuilder = Configurator.builder()
-    var nodeRequest: Option[NodeApi.Creation] = None
-    var k8sClient: K8SClient = null
-    var fake: Boolean = false
-    args.sliding(2, 2).foreach {
-      case Array(FOLDER_KEY, value)   => configuratorBuilder.homeFolder(value)
-      case Array(HOSTNAME_KEY, value) => configuratorBuilder.hostname(value)
-      case Array(PORT_KEY, value)     => configuratorBuilder.port(value.toInt)
-      case Array(K8S_KEY, value) =>
-        k8sClient = K8SClient(value)
-        configuratorBuilder.k8sClient(k8sClient)
-      case Array(FAKE_KEY, value) =>
-        fake = value.toBoolean
-      case Array(NODE_KEY, value) =>
-        val user = value.split(":").head
-        val password = value.split("@").head.split(":").last
-        val hostname = value.split("@").last.split(":").head
-        val port = value.split("@").last.split(":").last.toInt
-        nodeRequest = Some(
-          NodeApi.Creation(
-            hostname = hostname,
-            password = password,
-            user = user,
-            port = port,
-            tags = Set.empty
-          ))
-      case _ =>
-        configuratorBuilder.cleanup()
-        throw new IllegalArgumentException(s"input:${args.mkString(" ")}. $USAGE")
-    }
+    GLOBAL_CONFIGURATOR = configurator(args)
 
-    if (fake) {
-      if (k8sClient != null) {
-        // release all pre-created objects
-        configuratorBuilder.cleanup()
-        throw new IllegalArgumentException(
-          s"It is illegal to run fake mode on k8s. Please remove either $FAKE_KEY or $K8S_KEY")
-      }
-      if (nodeRequest.isDefined) {
-        // release all pre-created objects
-        configuratorBuilder.cleanup()
-        throw new IllegalArgumentException(
-          s"It is illegal to pre-create node for fake mode. Please remove either $FAKE_KEY or $NODE_KEY")
-      }
-      configuratorBuilder.fake()
-    }
-
-    GLOBAL_CONFIGURATOR = configuratorBuilder.build()
-
-    try if (k8sClient != null) {
-      nodeRequest.foreach(
-        processNodeRequest(
-          _,
-          GLOBAL_CONFIGURATOR,
-          (node: Node) => {
-            val validationResult: Seq[ValidationApi.ValidationReport] = Await.result(
-              ValidationApi.access
-                .hostname(CommonUtils.hostname)
-                .port(GLOBAL_CONFIGURATOR.port)
-                .nodeRequest
-                .hostname(node.name)
-                .port(node.port)
-                .user(node.user)
-                .password(node.password)
-                .verify(),
-              30 seconds
-            )
-            val isValidationPass: Boolean = validationResult.map(x => x.pass).head
-            if (!isValidationPass) throw new IllegalArgumentException(s"${validationResult.map(x => x.message).head}")
-            checkImageExists(node, Await.result(k8sClient.images(node.name), 30 seconds))
-          }
-        ))
-    } else {
-      nodeRequest.foreach(
-        processNodeRequest(
-          _,
-          GLOBAL_CONFIGURATOR,
-          (node: Node) => {
-            val dockerClient =
-              DockerClient.builder.hostname(node.hostname).port(node.port).user(node.user).password(node.password).build
-            try checkImageExists(node, dockerClient.imageNames())
-            finally dockerClient.close()
-          }
-        ))
-    } catch {
-      case e: Throwable =>
-        LOG.error("failed to initialize cluster. Will close configurator", e)
-        Releasable.close(GLOBAL_CONFIGURATOR)
-        GLOBAL_CONFIGURATOR = null
-        HttpExecutor.close()
-        throw e
-    }
     try {
       LOG.info(
         s"start a configurator built on hostname:${GLOBAL_CONFIGURATOR.hostname} and port:${GLOBAL_CONFIGURATOR.port}")
@@ -438,110 +362,6 @@ object Configurator {
     }
   }
 
-  private[this] def checkImageExists(node: Node, images: Seq[String]): Unit = {
-    if (!images.contains(ZookeeperApi.IMAGE_NAME_DEFAULT))
-      throw new IllegalArgumentException(s"$node doesn't have ${ZookeeperApi.IMAGE_NAME_DEFAULT}")
-    if (!images.contains(BrokerApi.IMAGE_NAME_DEFAULT))
-      throw new IllegalArgumentException(s"$node doesn't have ${BrokerApi.IMAGE_NAME_DEFAULT}")
-    if (!images.contains(StreamApi.IMAGE_NAME_DEFAULT))
-      throw new IllegalArgumentException(s"$node doesn't have ${StreamApi.IMAGE_NAME_DEFAULT}")
-  }
-
-  private[this] def processNodeRequest(nodeRequest: NodeApi.Creation,
-                                       configurator: Configurator,
-                                       otherCheck: Node => Unit): Unit = {
-    LOG.info(s"Find a pre-created node:$nodeRequest. Will create zookeeper and broker!!")
-
-    val node =
-      Await.result(
-        NodeApi.access
-          .hostname(CommonUtils.hostname())
-          .port(configurator.port)
-          .request
-          .hostname(nodeRequest.hostname)
-          .port(nodeRequest.port)
-          .user(nodeRequest.user)
-          .password(nodeRequest.password)
-          .create(),
-        30 seconds
-      )
-    otherCheck(node)
-
-    val zkCluster = Await.result(
-      ZookeeperApi.access
-        .hostname(CommonUtils.hostname())
-        .port(configurator.port)
-        .request
-        .name(PRE_CREATE_ZK_NAME)
-        .nodeName(node.name)
-        .create(),
-      30 seconds
-    )
-
-    // our cache applies non-blocking action so the creation may be not in cache.
-    // Hence, we have to wait the update to cache.
-    CommonUtils.await(
-      () =>
-        Await
-          .result(ZookeeperApi.access.hostname(CommonUtils.hostname()).port(configurator.port).list(), 30 seconds)
-          .exists(_.name == PRE_CREATE_ZK_NAME),
-      java.time.Duration.ofSeconds(30)
-    )
-
-    // Wait the zookeeper container creating complete
-    try {
-      CommonUtils.await(
-        () =>
-          Await
-            .result(ContainerApi.access.hostname(CommonUtils.hostname()).port(configurator.port).get(zkCluster.name),
-                    30 seconds)
-            .head
-            .containers
-            .size == 1,
-        java.time.Duration.ofSeconds(30),
-      )
-    } catch {
-      case ex: Throwable =>
-        LOG.error(s"failed to create zk cluster:$zkCluster. exception: $ex")
-        throw ex
-    }
-
-    LOG.info(s"succeed to create zk cluster:$zkCluster")
-
-    val bkCluster = Await.result(
-      BrokerApi.access
-        .hostname(CommonUtils.hostname())
-        .port(configurator.port)
-        .request
-        .name(PRE_CREATE_BK_NAME)
-        .zookeeperClusterName(PRE_CREATE_ZK_NAME)
-        .nodeName(node.name)
-        .create(),
-      30 seconds
-    )
-
-    // our cache applies non-blocking action so the creation may be not in cache.
-    // Hence, we have to wait the update to cache.
-    CommonUtils.await(
-      () =>
-        Await
-          .result(BrokerApi.access.hostname(CommonUtils.hostname()).port(configurator.port).list(), 30 seconds)
-          .exists(_.name == PRE_CREATE_BK_NAME),
-      java.time.Duration.ofSeconds(30)
-    )
-    LOG.info(s"succeed to create bk cluster:$bkCluster")
-  }
-
-  /**
-    * Add --node argument to pre create zookeeper cluster name
-    */
-  private[configurator] val PRE_CREATE_ZK_NAME: String = "precreatezkcluster"
-
-  /**
-    * Add --node argument to pre create broker cluster name
-    */
-  private[configurator] val PRE_CREATE_BK_NAME: String = "precreatebkcluster"
-
   /**
     * visible for testing.
     */
@@ -550,7 +370,7 @@ object Configurator {
   /**
     * visible for testing.
     */
-  @volatile private[configurator] def GLOBAL_CONFIGURATOR_RUNNING: Boolean = GLOBAL_CONFIGURATOR != null
+  private[configurator] def GLOBAL_CONFIGURATOR_RUNNING: Boolean = GLOBAL_CONFIGURATOR != null
 
   /**
     * visible for testing.

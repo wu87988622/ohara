@@ -28,7 +28,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 class TestShabondiRoute extends SmallTest with Matchers {
 
-  private val configurator = Configurator.builder().fake().build()
+  private val configurator = Configurator.builder.fake().build()
   private val access = ShabondiApi.access.hostname(configurator.hostname).port(configurator.port)
 
   @Test

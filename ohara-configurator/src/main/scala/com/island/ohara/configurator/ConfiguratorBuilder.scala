@@ -37,9 +37,9 @@ import com.island.ohara.configurator.store.DataStore
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
-  private[this] var hostname: String = CommonUtils.hostname()
-  private[this] var port: Int = CommonUtils.availablePort()
-  private[this] var homeFolder: String = CommonUtils.createTempFolder("configurator").getCanonicalPath
+  private[this] var hostname: String = _
+  private[this] var port: Int = -1
+  private[this] var homeFolder: String = _
   private[this] var store: DataStore = _
   private[this] var jarStore: JarStore = _
   private[this] var clusterCollie: ClusterCollie = _
@@ -47,8 +47,9 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
 
   @Optional("default is random folder")
   def homeFolder(homeFolder: String): ConfiguratorBuilder = doOrReleaseObjects {
-    if (store != null)
-      throw new IllegalArgumentException("you have instantiated a store so you can't change the home folder")
+    if (this.homeFolder != null) throw new IllegalArgumentException(alreadyExistMessage("homeFolder"))
+    if (this.store != null) throw new IllegalArgumentException(alreadyExistMessage("store"))
+    if (this.homeFolder != null) throw new IllegalArgumentException(alreadyExistMessage("homeFolder"))
     val f = new File(CommonUtils.requireNonEmpty(homeFolder))
     if (!f.exists() && !f.mkdirs()) throw new IllegalArgumentException(s"failed to mkdir on $homeFolder")
     this.homeFolder = CommonUtils.requireFolder(f).getCanonicalPath
@@ -63,19 +64,20 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
     */
   @Optional("default is localhost")
   def hostname(hostname: String): ConfiguratorBuilder = doOrReleaseObjects {
+    if (this.hostname != null) throw new IllegalArgumentException(alreadyExistMessage("hostname"))
     this.hostname = CommonUtils.requireNonEmpty(hostname)
     this
   }
 
   /**
-    * set advertised port which will be exposed by configurator.
-    * Noted: configurator is bound on this port also.
+    * configurator is bound on this port also.
     * @param port used to build the rest server
     * @return this builder
     */
   @Optional("default is random port")
   def port(port: Int): ConfiguratorBuilder = doOrReleaseObjects {
-    if (port > 0) this.port = port
+    if (this.port > 0) throw new IllegalArgumentException(alreadyExistMessage("port"))
+    this.port = if (port == 0) CommonUtils.availablePort() else CommonUtils.requireConnectionPort(port)
     this
   }
 
@@ -95,8 +97,8 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
   @VisibleForTesting
   private[configurator] def fake(bkConnectionProps: String, wkConnectionProps: String): ConfiguratorBuilder =
     doOrReleaseObjects {
-      if (k8sClient != null)
-        throw new IllegalArgumentException("k8s client exists so you can't run Configurator in fake mode")
+      if (this.k8sClient != null) throw new IllegalArgumentException(alreadyExistMessage("k8sClient"))
+      if (this.clusterCollie != null) throw new IllegalArgumentException(alreadyExistMessage("clusterCollie"))
       val store = getOrCreateStore()
       val embeddedBkName = "embedded_broker_cluster"
       val embeddedWkName = "embedded_worker_cluster"
@@ -183,8 +185,8 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
                                  bkClusterNamePrefix: String = "fakebkcluster",
                                  wkClusterNamePrefix: String = "fakewkcluster"): ConfiguratorBuilder =
     doOrReleaseObjects {
-      if (k8sClient != null)
-        throw new IllegalArgumentException("k8s client exists so you can't run Configurator in fake mode")
+      if (this.k8sClient != null) throw new IllegalArgumentException(alreadyExistMessage("k8sClient"))
+      if (this.clusterCollie != null) throw new IllegalArgumentException(alreadyExistMessage("clusterCollie"))
       if (numberOfBrokerCluster < 0)
         throw new IllegalArgumentException(s"numberOfBrokerCluster:$numberOfBrokerCluster should be positive")
       if (numberOfWorkerCluster < 0)
@@ -276,7 +278,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
   @VisibleForTesting
   @Optional("default is implemented by ssh")
   private[configurator] def clusterCollie(clusterCollie: ClusterCollie): ConfiguratorBuilder = doOrReleaseObjects {
-    if (this.clusterCollie != null) throw new IllegalArgumentException(s"cluster collie is defined!!!")
+    if (this.clusterCollie != null) throw new IllegalArgumentException(alreadyExistMessage("clusterCollie"))
     this.clusterCollie = Objects.requireNonNull(clusterCollie)
     this
   }
@@ -289,8 +291,11 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
     */
   @Optional("default is null")
   def k8sClient(k8sClient: K8SClient): ConfiguratorBuilder = doOrReleaseObjects {
-    if (this.k8sClient != null) throw new IllegalArgumentException(s"k8sClient is defined!!!")
+    if (this.k8sClient != null) throw new IllegalArgumentException(alreadyExistMessage("k8sClient"))
+    if (this.clusterCollie != null) throw new IllegalArgumentException(alreadyExistMessage("clusterCollie"))
     this.k8sClient = Objects.requireNonNull(k8sClient)
+    // initialize collie by k8s client
+    getOrCreateCollie()
     this
   }
 
@@ -304,14 +309,29 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
   }
 
   override def build(): Configurator = doOrReleaseObjects(
-    new Configurator(hostname = hostname, port = port)(store = getOrCreateStore(),
-                                                       jarStore = getOrCreateJarStore(),
-                                                       nodeCollie = createCollie(),
-                                                       clusterCollie = getOrCreateCollie(),
-                                                       k8sClient = Option(k8sClient)))
+    new Configurator(hostname = getOrCreateHostname(), port = getOrCreatePort())(store = getOrCreateStore(),
+                                                                                 jarStore = getOrCreateJarStore(),
+                                                                                 nodeCollie = createCollie(),
+                                                                                 clusterCollie = getOrCreateCollie(),
+                                                                                 k8sClient = Option(k8sClient)))
 
   private[this] def folder(prefix: String): String =
-    new File(CommonUtils.requireNonEmpty(homeFolder), prefix).getCanonicalPath
+    new File(CommonUtils.requireNonEmpty(getOrCreateHomeFolder()), prefix).getCanonicalPath
+
+  private[this] def getOrCreateHostname(): String = {
+    if (hostname == null) hostname = CommonUtils.hostname()
+    hostname
+  }
+
+  private[this] def getOrCreatePort(): Int = {
+    if (port <= 0) port = CommonUtils.availablePort()
+    port
+  }
+
+  private[this] def getOrCreateHomeFolder(): String = {
+    if (homeFolder == null) homeFolder = CommonUtils.createTempFolder("configurator").getCanonicalPath
+    homeFolder
+  }
 
   private[this] def getOrCreateStore(): DataStore = if (store == null) {
     store = DataStore.builder.persistentFolder(folder("store")).build()
@@ -319,7 +339,8 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
   } else store
 
   private[this] def getOrCreateJarStore(): JarStore = if (jarStore == null) {
-    jarStore = JarStore.builder.homeFolder(folder("jars")).hostname(hostname).port(port).build()
+    jarStore =
+      JarStore.builder.homeFolder(folder("jars")).hostname(getOrCreateHostname()).port(getOrCreatePort()).build()
     jarStore
   } else jarStore
 
@@ -339,9 +360,12 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
   private[this] def doOrReleaseObjects[T](f: => T): T = try f
   catch {
     case t: Throwable =>
+      Configurator.LOG.error("failed to pre-create resource", t)
       cleanup()
       throw t
   }
+
+  private[this] def alreadyExistMessage(key: String) = s"$key already exists!!!"
 
   /**
     * Configurator Builder take many resources so as to create a Configurator. However, in testing we may fail in assigning a part of resources

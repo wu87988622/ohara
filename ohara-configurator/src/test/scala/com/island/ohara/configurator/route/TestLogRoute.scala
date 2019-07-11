@@ -27,7 +27,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 class TestLogRoute extends SmallTest with Matchers {
-  private[this] val configurator = Configurator.builder().fake().build()
+  private[this] val configurator = Configurator.builder.fake().build()
 
   private[this] val logApi = LogApi.access.hostname(configurator.hostname).port(configurator.port)
 

@@ -26,7 +26,7 @@ import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestFtpInfoRoute extends SmallTest with Matchers {
-  private[this] val configurator = Configurator.builder().fake().build()
+  private[this] val configurator = Configurator.builder.fake().build()
 
   private[this] val ftpApi = FtpApi.access.hostname(configurator.hostname).port(configurator.port)
 

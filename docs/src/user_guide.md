@@ -104,19 +104,13 @@ All images are list below.
 ### Execute Configurator
 
 ```sh
-docker run --rm -p ${port}:${port} --add-host ${nodeHostName}:${nodeHostIP} oharastream/configurator:0.7.0-SNAPSHOT --port ${port} --hostname ${host} --node ${SshUserName}:${SshPassword}@${NodeHostName}:${SshPort}
+docker run --rm -p ${port}:${port} --add-host ${nodeHostName}:${nodeHostIP} oharastream/configurator:0.7.0-SNAPSHOT --port ${port} --hostname ${host}
 ```
 
 - folder: the folder used to store data (default is random). Mount the volume if you want to keep your data after restarting Configurator
 - port: bound by Configurator (default is random)
 - add-host: add a host mapping to /etc/hosts in Ohara Configurator (nodeHostName:nodeHostIP)
 - hostname: hostname to run Ohara Configurator (defaults to 0.0.0.0)
-- node: run a Ohara Configurator with **pre-created** broker and zookeeper clusters (for testing purpose)
-
-If `node` is not specified, the Ohara Configurator will be running without **pre-created** zookeeper and broker clusters. You will need to create them manually
-through configruator's RESTful APIs.
-
-**NOTED:** you should prepare the broker and zookeeper images in each node where pre-created clusters will be running at if you want to use the `node` option
 
 **NOTED:** you can enable the jmx reporter via inputing two env variables - "JMX_HOSTNAME" and "JMX_PORT".
 - "JMX_HOSTNAME" should be same as the host running Ohara Configurator container so as to access the jmx service in docker from outside.

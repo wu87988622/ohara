@@ -26,7 +26,7 @@ import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestBrokerRoute extends MediumTest with Matchers {
-  private[this] val configurator = Configurator.builder().fake(0, 0).build()
+  private[this] val configurator = Configurator.builder.fake(0, 0).build()
   private[this] val brokerApi = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] val zkClusterName = CommonUtils.randomString(10)

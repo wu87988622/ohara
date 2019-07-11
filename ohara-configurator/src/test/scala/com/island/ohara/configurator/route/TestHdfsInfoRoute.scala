@@ -27,7 +27,7 @@ import org.scalatest.Matchers
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class TestHdfsInfoRoute extends SmallTest with Matchers {
-  private[this] val configurator = Configurator.builder().fake().build()
+  private[this] val configurator = Configurator.builder.fake().build()
 
   private[this] val hdfsApi = HadoopApi.access.hostname(configurator.hostname).port(configurator.port)
 

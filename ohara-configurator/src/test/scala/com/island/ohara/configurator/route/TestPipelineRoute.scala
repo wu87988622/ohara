@@ -31,7 +31,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 // there are too many test cases in this file so we promote  it from small test to medium test
 class TestPipelineRoute extends MediumTest with Matchers {
-  private[this] val configurator = Configurator.builder().fake(1, 1).build()
+  private[this] val configurator = Configurator.builder.fake(1, 1).build()
 
   private[this] val workerApi = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)
 

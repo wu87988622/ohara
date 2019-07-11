@@ -30,7 +30,7 @@ import scala.concurrent.{Await, Future}
 class TestNodeNameUpperCaseRoute extends SmallTest with Matchers {
   private[this] val numberOfCluster = 1
   private[this] val configurator =
-    Configurator.builder().fake(numberOfCluster, numberOfCluster, "zookeepercluster").build()
+    Configurator.builder.fake(numberOfCluster, numberOfCluster, "zookeepercluster").build()
   private[this] val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 

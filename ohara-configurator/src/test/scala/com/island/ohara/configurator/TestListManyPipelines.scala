@@ -28,7 +28,7 @@ import scala.concurrent.{Await, Future}
 class TestListManyPipelines extends WithBrokerWorker with Matchers {
 
   private[this] val configurator =
-    Configurator.builder().fake(testUtil().brokersConnProps(), testUtil().workersConnProps()).build()
+    Configurator.builder.fake(testUtil().brokersConnProps(), testUtil().workersConnProps()).build()
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 20 seconds)
 

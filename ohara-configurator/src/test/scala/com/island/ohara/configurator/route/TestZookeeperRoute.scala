@@ -27,7 +27,7 @@ import org.scalatest.Matchers
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestZookeeperRoute extends MediumTest with Matchers {
   private[this] val numberOfCluster = 1
-  private[this] val configurator = Configurator.builder().fake(numberOfCluster, 0).build()
+  private[this] val configurator = Configurator.builder.fake(numberOfCluster, 0).build()
 
   /**
     * a fake cluster has 3 fake node.

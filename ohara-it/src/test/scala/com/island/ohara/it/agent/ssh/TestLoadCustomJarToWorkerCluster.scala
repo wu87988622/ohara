@@ -59,7 +59,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
   private[this] val publicPort = sys.env.get(portKey).fold(invalidPort)(_.toInt)
 
   private[this] val configurator: Configurator =
-    Configurator.builder().hostname(publicHostname).port(publicPort).build()
+    Configurator.builder.hostname(publicHostname).port(publicPort).build()
 
   private[this] val zkApi = ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port)
 

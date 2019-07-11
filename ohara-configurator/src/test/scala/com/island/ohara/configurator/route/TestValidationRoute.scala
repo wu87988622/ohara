@@ -25,7 +25,7 @@ import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestValidationRoute extends SmallTest with Matchers {
-  private[this] val configurator = Configurator.builder().fake().build()
+  private[this] val configurator = Configurator.builder.fake().build()
 
   private[this] val wkCluster = result(WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
 

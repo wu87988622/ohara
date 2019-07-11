@@ -27,7 +27,7 @@ import org.scalatest.Matchers
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestNodeRoute extends SmallTest with Matchers {
   private[this] val numberOfCluster = 1
-  private[this] val configurator = Configurator.builder().fake(numberOfCluster, numberOfCluster).build()
+  private[this] val configurator = Configurator.builder.fake(numberOfCluster, numberOfCluster).build()
 
   /**
     * a fake cluster has 3 fake node.

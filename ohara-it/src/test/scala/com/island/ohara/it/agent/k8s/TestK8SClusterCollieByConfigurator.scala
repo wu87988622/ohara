@@ -62,7 +62,7 @@ class TestK8SClusterCollieByConfigurator extends BasicTests4ClusterCollieByConfi
   final def setup(): Unit = {
     if (nodeCache.isEmpty) skipTest(s"You must assign nodes for collie tests")
     else {
-      _configurator = Configurator.builder().k8sClient(K8SClient(API_SERVER_URL.get)).build()
+      _configurator = Configurator.builder.k8sClient(K8SClient(API_SERVER_URL.get)).build()
       nameHolder = new ClusterNameHolder(nodeCache) {
         override def close(): Unit = {
           val k8sClient = K8SClient(API_SERVER_URL.get)

@@ -29,7 +29,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
   private[this] val configurator =
-    Configurator.builder().fake(testUtil.brokersConnProps, testUtil().workersConnProps()).build()
+    Configurator.builder.fake(testUtil.brokersConnProps, testUtil().workersConnProps()).build()
 
   private[this] val connectorApi = ConnectorApi.access.hostname(configurator.hostname).port(configurator.port)
 

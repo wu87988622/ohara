@@ -29,7 +29,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 class TestWorkerRoute extends MediumTest with Matchers {
   private[this] val numberOfCluster = 1
-  private[this] val configurator = Configurator.builder().fake(numberOfCluster, 0).build()
+  private[this] val configurator = Configurator.builder.fake(numberOfCluster, 0).build()
 
   /**
     * a fake cluster has 3 fake node.
@@ -366,7 +366,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
 
   @Test
   def testConnectorDefinitionsFromPreCreatedWorkerCluster(): Unit = {
-    val configurator = Configurator.builder().fake(numberOfCluster, 1).build()
+    val configurator = Configurator.builder.fake(numberOfCluster, 1).build()
     try result(configurator.clusterCollie.workerCollie.clusters()).keys
       .foreach(_.connectors shouldBe FakeWorkerClient.localConnectorDefinitions)
     finally configurator.close()

@@ -27,7 +27,7 @@ import org.scalatest.Matchers
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestTopicRoute extends SmallTest with Matchers {
 
-  private[this] val configurator = Configurator.builder().fake(1, 0).build()
+  private[this] val configurator = Configurator.builder.fake(1, 0).build()
 
   private[this] val topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
 

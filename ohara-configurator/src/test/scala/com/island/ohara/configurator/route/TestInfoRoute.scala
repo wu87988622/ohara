@@ -26,7 +26,7 @@ import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestInfoRoute extends SmallTest with Matchers {
-  private[this] val configurator = Configurator.builder().fake().build()
+  private[this] val configurator = Configurator.builder.fake().build()
 
   @Test
   def test(): Unit = {

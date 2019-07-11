@@ -18,9 +18,9 @@ package com.island.ohara.configurator
 import java.util.concurrent.{Executors, TimeUnit}
 
 import com.island.ohara.common.rule.LargeTest
-import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator.Mode
-import org.junit.Test
+import org.junit.{After, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -28,7 +28,23 @@ import scala.concurrent.{ExecutionContext, Future}
 class TestConfiguratorMain extends LargeTest with Matchers {
 
   @Test
-  def testFakeOnK8s(): Unit =
+  def emptyK8sArgument(): Unit =
+    an[IllegalArgumentException] should be thrownBy Configurator.main(Array[String](Configurator.K8S_KEY, ""))
+
+  @Test
+  def nullK8sArgument(): Unit =
+    an[IllegalArgumentException] should be thrownBy Configurator.main(Array[String](Configurator.K8S_KEY))
+
+  @Test
+  def fakeWithK8s(): Unit = an[IllegalArgumentException] should be thrownBy Configurator.main(
+    Array[String](Configurator.K8S_KEY, "http://localhost", Configurator.FAKE_KEY, "true"))
+
+  @Test
+  def k8sWithFake(): Unit = an[IllegalArgumentException] should be thrownBy Configurator.main(
+    Array[String](Configurator.FAKE_KEY, "true", Configurator.K8S_KEY, "http://localhost"))
+
+  @Test
+  def testFakeMode(): Unit =
     runMain(
       Array[String](Configurator.HOSTNAME_KEY, "localhost", Configurator.PORT_KEY, "0", Configurator.FAKE_KEY, "true"),
       configurator => configurator.mode shouldBe Mode.FAKE
@@ -52,5 +68,12 @@ class TestConfiguratorMain extends LargeTest with Matchers {
       service.shutdownNow()
       service.awaitTermination(60, TimeUnit.SECONDS)
     }
+  }
+
+  @After
+  def tearDown(): Unit = {
+    Configurator.GLOBAL_CONFIGURATOR_SHOULD_CLOSE = false
+    Releasable.close(Configurator.GLOBAL_CONFIGURATOR)
+    Configurator.GLOBAL_CONFIGURATOR == null
   }
 }

@@ -28,7 +28,7 @@ class TestFetchConnectorsFromDynamicWorkerCluster extends WithBrokerWorker with 
 
   @Test
   def test(): Unit = {
-    val configurator = Configurator.builder().fake(testUtil().brokersConnProps(), testUtil().workersConnProps()).build()
+    val configurator = Configurator.builder.fake(testUtil().brokersConnProps(), testUtil().workersConnProps()).build()
 
     try {
       val clusters =

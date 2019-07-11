@@ -29,7 +29,7 @@ import scala.concurrent.{Await, Future}
 
 class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
   private[this] val configurator =
-    Configurator.builder().fake(testUtil().brokersConnProps(), testUtil().workersConnProps()).build()
+    Configurator.builder.fake(testUtil().brokersConnProps(), testUtil().workersConnProps()).build()
 
   private[this] val wkCluster = result(WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
 

@@ -21,8 +21,6 @@ services:
     image: oharastream/configurator:${TAG:-0.7.0-SNAPSHOT}
     hostname: configurator
     command: ["--port", "12345"]
-    # You can add a node to initialize a zookeeper cluster and a broker cluster.
-    # command: ["--port", "12345", "--node", "username:password@hostname:port"]
     ports:
       - 12345:12345
 #    see readme for more details

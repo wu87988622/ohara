@@ -30,7 +30,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class TestStreamRoute extends SmallTest with Matchers {
 
   // create all fake cluster
-  private[this] val configurator = Configurator.builder().fake().build()
+  private[this] val configurator = Configurator.builder.fake().build()
   private[this] val wkApi = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] val accessJar = JarApi.access.hostname(configurator.hostname).port(configurator.port)

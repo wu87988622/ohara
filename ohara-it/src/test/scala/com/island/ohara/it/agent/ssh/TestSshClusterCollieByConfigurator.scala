@@ -32,7 +32,7 @@ class TestSshClusterCollieByConfigurator extends BasicTests4ClusterCollieByConfi
   @Before
   final def setup(): Unit = if (nodeCache.isEmpty) skipTest(s"You must assign nodes for collie tests")
   else {
-    _configurator = Configurator.builder().build()
+    _configurator = Configurator.builder.build()
     val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
     nodeCache.foreach { node =>
       result(nodeApi.request.hostname(node.hostname).port(node.port).user(node.user).password(node.password).create())

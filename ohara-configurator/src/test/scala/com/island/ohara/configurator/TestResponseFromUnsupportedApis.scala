@@ -33,7 +33,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class TestResponseFromUnsupportedApis extends SmallTest with Matchers {
-  private[this] val configurator = Configurator.builder().fake().build()
+  private[this] val configurator = Configurator.builder.fake().build()
 
   private[this] implicit val actorSystem: ActorSystem = ActorSystem("Executor-TestResponseFromUnsupportedApis")
   private[this] implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()

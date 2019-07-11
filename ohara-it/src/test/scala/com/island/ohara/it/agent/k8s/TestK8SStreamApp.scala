@@ -64,5 +64,5 @@ class TestK8SStreamApp extends BasicTests4StreamApp {
     }
   }
   override protected def createConfigurator(nodeCache: Seq[Node], hostname: String, port: Int): Configurator =
-    Configurator.builder().hostname(hostname).port(port).k8sClient(K8SClient(API_SERVER_URL.get)).build()
+    Configurator.builder.hostname(hostname).port(port).k8sClient(K8SClient(API_SERVER_URL.get)).build()
 }

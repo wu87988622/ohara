@@ -28,7 +28,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class TestClusterNameUpperCaseRoute extends SmallTest with Matchers {
   private[this] val numberOfCluster = 1
   private[this] val configurator =
-    Configurator.builder().fake(numberOfCluster, numberOfCluster, "ZookeeperCluster").build()
+    Configurator.builder.fake(numberOfCluster, numberOfCluster, "ZookeeperCluster").build()
   private[this] val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val zookeeperApi = ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port)
 

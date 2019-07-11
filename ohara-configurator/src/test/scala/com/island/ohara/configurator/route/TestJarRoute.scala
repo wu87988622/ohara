@@ -45,7 +45,7 @@ class TestJarRoute extends SmallTest with Matchers {
 
   @Before
   def setup(): Unit = {
-    configurator = Configurator.builder().fake().build()
+    configurator = Configurator.builder.fake().build()
     accessStream = StreamApi.access.hostname(configurator.hostname).port(configurator.port)
     jarApi = JarApi.access.hostname(configurator.hostname).port(configurator.port)
   }

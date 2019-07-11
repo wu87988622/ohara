@@ -26,7 +26,7 @@ import org.scalatest.Matchers
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class TestContainerRoute extends MediumTest with Matchers {
-  private[this] val configurator = Configurator.builder().fake(0, 0).build()
+  private[this] val configurator = Configurator.builder.fake(0, 0).build()
   private[this] val containerApi = ContainerApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val brokerApi = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val workerApi = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)

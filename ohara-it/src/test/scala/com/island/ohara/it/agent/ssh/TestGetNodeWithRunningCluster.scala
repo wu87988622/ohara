@@ -31,7 +31,7 @@ class TestGetNodeWithRunningCluster extends IntegrationTest with Matchers {
 
   private[this] val nodeCache: Seq[Node] = CollieTestUtils.nodeCache()
 
-  private[this] val configurator: Configurator = Configurator.builder().build()
+  private[this] val configurator: Configurator = Configurator.builder.build()
 
   @Before
   def setup(): Unit = if (nodeCache.isEmpty) skipTest(s"${CollieTestUtils.key} is required")

@@ -26,7 +26,7 @@ import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestConnectorRoute extends SmallTest with Matchers {
-  private[this] val configurator = Configurator.builder().fake(1, 1).build()
+  private[this] val configurator = Configurator.builder.fake(1, 1).build()
 
   private[this] val connectorApi = ConnectorApi.access.hostname(configurator.hostname).port(configurator.port)
 

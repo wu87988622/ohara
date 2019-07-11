@@ -33,7 +33,7 @@ class TestMixedFakeCollie extends WithBrokerWorker with Matchers {
 
   @Test
   def test(): Unit = {
-    val configurator = Configurator.builder().fake(testUtil().brokersConnProps(), testUtil().workersConnProps()).build()
+    val configurator = Configurator.builder.fake(testUtil().brokersConnProps(), testUtil().workersConnProps()).build()
 
     try {
       Await

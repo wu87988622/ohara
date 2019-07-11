@@ -60,7 +60,6 @@ task runConfigurator(type: JavaExec, dependsOn: 'classes') {
   def keywords = [
     "hostname",
     "port",
-    "node",
     "k8s",
     "folder",
     "fake"

@@ -28,7 +28,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 class TestObjectRoute extends SmallTest with Matchers {
 
-  private[this] val configurator = Configurator.builder().fake(1, 1).build()
+  private[this] val configurator = Configurator.builder.fake(1, 1).build()
 
   private[this] val objectApi = ObjectApi.access.hostname(configurator.hostname).port(configurator.port)
 
