@@ -169,4 +169,15 @@ export const serviceName = (length = 10) => {
   return name;
 };
 
-export { name, id, message, domainName, ip, userName, number, url, password };
+export {
+  name,
+  id,
+  message,
+  domainName,
+  ip,
+  userName,
+  number,
+  url,
+  password,
+  word,
+};
