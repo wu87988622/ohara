@@ -17,15 +17,15 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import DocumentTitle from 'react-document-title';
-import { get, isEmpty, split, map, includes } from 'lodash';
 import styled from 'styled-components';
+import { get, isEmpty, split, map, includes } from 'lodash';
 
 import * as logApi from 'api/logApi';
+import NotFoundPage from 'components/pages/NotFoundPage';
 import { TableLoader } from 'components/common/Loader';
 import { Box } from 'components/common/Layout';
 import { H2 } from 'components/common/Headings';
-import { WORKSPACES } from 'constants/documentTitles';
-import NotFoundPage from 'components/pages/NotFoundPage';
+import { LOGS } from 'constants/documentTitles';
 
 const Wrapper = styled.div`
   padding-top: 75px;
@@ -45,10 +45,6 @@ const Line = styled.div`
   line-height: 1.6;
   font-size: 13px;
 `;
-
-const ZOOKEEPERS = 'zookeepers';
-const BROKERS = 'brokers';
-const WORKERS = 'workers';
 
 class LogsPage extends React.Component {
   static propTypes = {
@@ -74,7 +70,7 @@ class LogsPage extends React.Component {
   }
 
   isValidService = serviceName =>
-    includes([ZOOKEEPERS, BROKERS, WORKERS], serviceName);
+    includes(['zookeepers', 'brokers', 'workers'], serviceName);
 
   fetchData = async () => {
     const { serviceName, clusterName } = this.state;
@@ -95,7 +91,7 @@ class LogsPage extends React.Component {
     const logContext = get(logs, '[0].value', '');
     const logLines = split(logContext, `\n`);
     return (
-      <DocumentTitle title={WORKSPACES}>
+      <DocumentTitle title={LOGS}>
         <>
           <Wrapper>
             <TopWrapper>
