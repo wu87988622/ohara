@@ -173,10 +173,12 @@ class NodeEditModal extends React.Component {
                   </Button>
                 </DialogContent>
                 <DialogActions>
-                  <Button onClick={handleClose} color="primary">
-                    Cancel
-                  </Button>
-                  <Button onClick={handleSubmit} color="primary">
+                  <Button onClick={handleClose}>Cancel</Button>
+                  <Button
+                    onClick={handleSubmit}
+                    color="primary"
+                    disabled={pristine}
+                  >
                     Save
                   </Button>
                 </DialogActions>
