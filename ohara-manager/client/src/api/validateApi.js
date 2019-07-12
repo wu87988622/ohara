@@ -39,53 +39,6 @@ export const validateNode = async ({ hostname, port, user, password }) => {
   }
 };
 
-export const validateHdfs = async ({ uri }) => {
-  try {
-    const res = await axiosInstance.put('/api/validate/hdfs', {
-      uri,
-    });
-    const isSuccess = get(res, 'data.isSuccess', false);
-
-    if (!isSuccess) {
-      handleError(res);
-    }
-
-    return res;
-  } catch (err) {
-    handleError(err);
-  }
-};
-
-export const validateRdb = async params => {
-  try {
-    const res = await axiosInstance.put('/api/validate/rdb', params);
-    const isSuccess = get(res, 'data.isSuccess', false);
-
-    if (!isSuccess) {
-      handleError(res);
-    }
-
-    return res;
-  } catch (err) {
-    handleError(err);
-  }
-};
-
-export const validateFtp = async params => {
-  try {
-    const res = await axiosInstance.put('/api/validate/ftp', params);
-    const isSuccess = get(res, 'data.isSuccess', false);
-
-    if (!isSuccess) {
-      handleError(res);
-    }
-
-    return res;
-  } catch (err) {
-    handleError(err);
-  }
-};
-
 export const validateConnector = async params => {
   try {
     const res = await axiosInstance.put('/api/validate/connector', params);
