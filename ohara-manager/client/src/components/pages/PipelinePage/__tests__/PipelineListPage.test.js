@@ -149,15 +149,9 @@ describe('<PipelineListPage />', () => {
   it('renders <ConfirmModal />', () => {
     const modal = wrapper.find('AlertDialog');
     const _props = modal.props();
-    expect(modal.length).toBe(1);
-    expect(_props.title).toBe('Delete pipeline?');
-    expect(_props.handleConfirm).toBeDefined();
 
+    expect(modal.length).toBe(1);
     expect(_props.open).toBe(false);
-    expect(_props.content).toBe(
-      'Are you sure you want to delete this pipeline? This action cannot be undone!',
-    );
-    expect(_props.handleClose).toBeDefined();
   });
 
   it('successfully deletes the first pipeline', async () => {

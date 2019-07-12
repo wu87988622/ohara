@@ -25,14 +25,14 @@ import * as jarApi from 'api/jarApi';
 import * as MESSAGES from 'constants/messages';
 import * as utils from '../WorkspacesDetailPageUtils';
 import { Button } from 'components/common/Mui/Form';
-import { AlertDialog } from 'components/common/Mui/Dialog';
+import { DeleteDialog } from 'components/common/Mui/Dialog';
 import { SortTable } from 'components/common/Mui/Table';
 import { Main, ActionIcon } from '../styles';
 import { StyledLabel, StyledInputFile } from './styles';
 
 const StreamApp = props => {
   const { workspaceName } = props;
-  const [jarName, setJarName] = useState(null);
+  const [jarNameToBeDeleted, setJarNameToBeDeleted] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const { jars, fetchJars, loading } = utils.useFetchJars(workspaceName);
@@ -50,9 +50,9 @@ const StreamApp = props => {
     fetchJars();
   };
 
-  const handleFileSelect = e => {
-    const file = e.target.files[0];
-    if (e.target.files[0]) {
+  const handleFileSelect = event => {
+    const file = event.target.files[0];
+    if (event.target.files[0]) {
       uploadJar(file);
     }
   };
@@ -64,8 +64,8 @@ const StreamApp = props => {
     { id: 'action', label: 'Action', sortable: false },
   ];
 
-  const handleModalOpen = name => {
-    setJarName(name);
+  const handleModalOpen = jarName => {
+    setJarNameToBeDeleted(jarName);
     setIsModalOpen(true);
   };
 
@@ -89,29 +89,23 @@ const StreamApp = props => {
     };
   });
 
-  const handleModalClose = () => {
-    setIsModalOpen(false);
-  };
-
-  const deleteJar = async params => {
-    const res = await jarApi.deleteJar(params);
-    const isSuccess = get(res, 'data.isSuccess', false);
-    setDeleting(false);
-
-    if (isSuccess) {
-      toastr.success(MESSAGES.STREAM_APP_DELETE_SUCCESS);
-      handleModalClose();
-      fetchJars();
-    }
-  };
-
-  const handleDelete = e => {
-    if (jarName) {
+  const handleDelete = async () => {
+    if (jarNameToBeDeleted) {
       const params = {
-        name: jarName,
+        name: jarNameToBeDeleted,
         workerClusterName: workspaceName,
       };
-      deleteJar(params);
+
+      const res = await jarApi.deleteJar(params);
+      const isSuccess = get(res, 'data.isSuccess', false);
+      setDeleting(false);
+
+      if (isSuccess) {
+        toastr.success(MESSAGES.STREAM_APP_DELETE_SUCCESS);
+        setIsModalOpen(false);
+        setJarNameToBeDeleted('');
+        fetchJars();
+      }
     }
   };
 
@@ -135,11 +129,11 @@ const StreamApp = props => {
         />
       </Main>
 
-      <AlertDialog
+      <DeleteDialog
         title="Delete jar?"
-        content="Are you sure you want to delete this jar? This action cannot be undone!"
+        content={`Are you sure you want to delete the jar: ${jarNameToBeDeleted} ? This action cannot be undone!`}
         open={isModalOpen}
-        handleClose={handleModalClose}
+        handleClose={() => setIsModalOpen(false)}
         handleConfirm={handleDelete}
         working={deleting}
       />

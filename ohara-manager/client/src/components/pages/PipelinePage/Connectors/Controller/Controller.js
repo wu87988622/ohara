@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import ReactTooltip from 'react-tooltip';
 import { noop, includes } from 'lodash';
 
-import { AlertDialog } from 'components/common/Mui/Dialog';
+import { DeleteDialog } from 'components/common/Mui/Dialog';
 import * as s from './styles';
 
 const START = 'start';
@@ -29,6 +29,7 @@ const DELETE = 'delete';
 class Controller extends React.Component {
   static propTypes = {
     kind: PropTypes.string.isRequired,
+    connectorName: PropTypes.string.isRequired,
     onStart: PropTypes.func,
     onStop: PropTypes.func,
     onDelete: PropTypes.func,
@@ -64,7 +65,7 @@ class Controller extends React.Component {
   };
 
   render() {
-    const { kind, onStart, onStop, show, disable } = this.props;
+    const { kind, onStart, onStop, show, disable, connectorName } = this.props;
     const { isDeleteModalActive } = this.state;
 
     return (
@@ -76,7 +77,7 @@ class Controller extends React.Component {
             data-testid="start-button"
             disabled={includes(disable, START)}
           >
-            <i className={`far fa-play-circle`} />
+            <i className="far fa-play-circle" />
           </s.ControlButton>
         )}
         {includes(show, STOP) && (
@@ -87,7 +88,7 @@ class Controller extends React.Component {
             disabled={includes(disable, STOP)}
             isDanger
           >
-            <i className={`far fa-stop-circle`} />
+            <i className="far fa-stop-circle" />
           </s.ControlButton>
         )}
         {includes(show, DELETE) && (
@@ -100,14 +101,14 @@ class Controller extends React.Component {
             disabled={includes(disable, DELETE)}
             isDanger
           >
-            <i className={`far fa-trash-alt`} />
+            <i className="far fa-trash-alt" />
           </s.ControlButton>
         )}
         <ReactTooltip />
 
-        <AlertDialog
+        <DeleteDialog
           title={`Remove ${kind}?`}
-          content={`Are you sure you want to remove this ${kind} from the pipeline graph? This action cannot be undone!`}
+          content={`Are you sure you want to remove the ${kind}: ${connectorName} from the pipeline graph? This action cannot be undone!`}
           open={isDeleteModalActive}
           handleConfirm={this.handleDeleteClick}
           handleClose={this.handleDeleteModalClose}

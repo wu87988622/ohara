@@ -24,7 +24,7 @@ import * as topicApi from 'api/topicApi';
 import * as MESSAGES from 'constants/messages';
 import * as utils from '../WorkspacesDetailPageUtils';
 import TopicNewModal from './TopicNewModal';
-import { AlertDialog } from 'components/common/Mui/Dialog';
+import { DeleteDialog } from 'components/common/Mui/Dialog';
 import { Main, NewButton, ActionIcon } from '../styles';
 import { SortTable } from 'components/common/Mui/Table';
 import { useSetState } from 'utils/hooks';
@@ -112,7 +112,12 @@ const Topics = props => {
     }
   };
 
-  const { isNewModalOpen, isDeleteModalOpen, deleting } = state;
+  const {
+    isNewModalOpen,
+    isDeleteModalOpen,
+    deleting,
+    topicToBeDeleted,
+  } = state;
 
   return (
     <>
@@ -142,9 +147,9 @@ const Topics = props => {
         brokerClusterName={worker.brokerClusterName}
       />
 
-      <AlertDialog
+      <DeleteDialog
         title="Delete topic?"
-        content="Are you sure you want to delete this topic? This action cannot be undone!"
+        content={`Are you sure you want to delete the topic: ${topicToBeDeleted}? This action cannot be undone!`}
         open={isDeleteModalOpen}
         handleClose={() => setState({ isDeleteModalOpen: false })}
         handleConfirm={handleDelete}

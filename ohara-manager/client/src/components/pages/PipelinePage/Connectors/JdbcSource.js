@@ -63,6 +63,7 @@ class JdbcSource extends React.Component {
   };
 
   componentDidMount() {
+    this.connectorName = this.props.match.params.connectorName;
     this.fetchConnector();
     this.setTopics();
   }
@@ -89,8 +90,7 @@ class JdbcSource extends React.Component {
   };
 
   fetchConnector = async () => {
-    const { connectorName } = this.props.match.params;
-    const res = await connectorApi.fetchConnector(connectorName);
+    const res = await connectorApi.fetchConnector(this.connectorName);
     this.setState({ isLoading: false });
     const result = get(res, 'data.result', null);
 
@@ -158,8 +158,8 @@ class JdbcSource extends React.Component {
 
   handleDeleteConnector = async () => {
     const { match, refreshGraph, history } = this.props;
-    const { connectorName, pipelineName } = match.params;
-    const res = await connectorApi.deleteConnector(connectorName);
+    const { pipelineName } = match.params;
+    const res = await connectorApi.deleteConnector(this.connectorName);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (isSuccess) {
@@ -175,13 +175,11 @@ class JdbcSource extends React.Component {
   };
 
   triggerConnector = async action => {
-    const { match } = this.props;
-    const sinkName = get(match, 'params.connectorName', null);
     let res;
     if (action === CONNECTOR_ACTIONS.start) {
-      res = await connectorApi.startConnector(sinkName);
+      res = await connectorApi.startConnector(this.connectorName);
     } else {
-      res = await connectorApi.stopConnector(sinkName);
+      res = await connectorApi.stopConnector(this.connectorName);
     }
 
     this.handleTriggerConnectorResponse(action, res);
@@ -217,11 +215,10 @@ class JdbcSource extends React.Component {
     const isSuccess = get(res, 'data.isSuccess', false);
     if (!isSuccess) return;
 
-    const { match, graph, updateGraph } = this.props;
-    const sinkName = get(match, 'params.connectorName', null);
+    const { graph, updateGraph } = this.props;
     const state = get(res, 'data.result.state');
     this.setState({ state });
-    const currSink = findByGraphName(graph, sinkName);
+    const currSink = findByGraphName(graph, this.connectorName);
     const update = { ...currSink, state };
     updateGraph({ update });
 
@@ -231,8 +228,7 @@ class JdbcSource extends React.Component {
   };
 
   handleSave = async values => {
-    const { match, globalTopics, graph, updateGraph } = this.props;
-    const { connectorName } = match.params;
+    const { globalTopics, graph, updateGraph } = this.props;
 
     const topic = utils.getCurrTopicId({
       originals: globalTopics,
@@ -246,15 +242,15 @@ class JdbcSource extends React.Component {
       replaceToken: '.',
     });
 
-    const params = { ..._values, topics, name: connectorName };
-    await connectorApi.updateConnector({ name: connectorName, params });
+    const params = { ..._values, topics, name: this.connectorName };
+    await connectorApi.updateConnector({ name: this.connectorName, params });
 
     const { sinkProps, update } = utils.getUpdatedTopic({
       currTopicName: topic,
       configs: values,
       originalTopics: globalTopics,
       graph,
-      connectorName,
+      connectorName: this.connectorName,
     });
 
     updateGraph({ update, ...sinkProps });
@@ -292,6 +288,7 @@ class JdbcSource extends React.Component {
           <H5Wrapper>JDBC source connector</H5Wrapper>
           <Controller
             kind="connector"
+            connectorName={this.connectorName}
             onStart={this.handleStartConnector}
             onStop={this.handleStopConnector}
             onDelete={this.handleDeleteConnector}

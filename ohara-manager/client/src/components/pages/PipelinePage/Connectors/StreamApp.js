@@ -18,10 +18,11 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import toastr from 'toastr';
 import { Field, Form } from 'react-final-form';
-import { get, isEmpty } from 'lodash';
+import { get, isEmpty, isUndefined } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
 import * as streamApi from 'api/streamApi';
+import * as s from './styles';
 import Controller from './Controller';
 import AutoSave from './AutoSave';
 import { isEmptyStr } from 'utils/commonUtils';
@@ -31,7 +32,6 @@ import { Label } from 'components/common/Form';
 import { InputField, SelectField } from 'components/common/FormFields';
 import { findByGraphName } from '../pipelineUtils/commonUtils';
 import { graph as graphPropType } from 'propTypes/pipeline';
-import * as s from './styles';
 
 class StreamApp extends React.Component {
   static propTypes = {
@@ -56,7 +56,6 @@ class StreamApp extends React.Component {
   };
 
   state = {
-    streamAppName: null,
     streamApp: null,
     state: null,
     topics: [],
@@ -64,10 +63,10 @@ class StreamApp extends React.Component {
 
   componentDidMount() {
     const { match, pipelineTopics } = this.props;
-    const { connectorName: streamAppName } = match.params;
+    this.streamAppName = match.params.connectorName;
 
-    this.setState({ streamAppName, pipelineTopics }, () => {
-      this.fetchStreamApp(streamAppName);
+    this.setState({ pipelineTopics }, () => {
+      this.fetchStreamApp(this.streamAppName);
     });
   }
 
@@ -83,10 +82,7 @@ class StreamApp extends React.Component {
 
     if (prevConnectorName !== currConnectorName) {
       const streamAppName = currConnectorName;
-
-      this.setState({ streamAppName }, () => {
-        this.fetchStreamApp(streamAppName);
-      });
+      this.fetchStreamApp(streamAppName);
     }
   }
 
@@ -101,12 +97,11 @@ class StreamApp extends React.Component {
 
   handleSave = async ({ instances, from, to }) => {
     const { graph, updateGraph } = this.props;
-    const { streamAppName } = this.state;
     const fromTopic = from ? [from] : [];
     const toTopic = to ? [to] : [];
 
     const params = {
-      name: streamAppName,
+      name: this.streamAppName,
       instances,
       from: fromTopic,
       to: toTopic,
@@ -116,13 +111,15 @@ class StreamApp extends React.Component {
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (isSuccess) {
-      const [streamApp] = graph.filter(g => g.name === streamAppName);
-      const [prevFromTopic] = graph.filter(g => g.to.includes(streamAppName));
+      const [streamApp] = graph.filter(g => g.name === this.streamAppName);
+      const [prevFromTopic] = graph.filter(g =>
+        g.to.includes(this.streamAppName),
+      );
       const isToUpdate = streamApp.to[0] !== toTopic[0];
 
       // To topic update
       if (isToUpdate) {
-        const currStreamApp = findByGraphName(graph, streamAppName);
+        const currStreamApp = findByGraphName(graph, this.streamAppName);
         const toUpdate = { ...currStreamApp, to: toTopic };
         updateGraph({ update: toUpdate });
       } else {
@@ -131,10 +128,10 @@ class StreamApp extends React.Component {
         let fromUpdate;
 
         if (currFromTopic) {
-          fromUpdate = [...new Set([...currFromTopic.to, streamAppName])];
+          fromUpdate = [...new Set([...currFromTopic.to, this.streamAppName])];
         } else {
           if (prevFromTopic) {
-            fromUpdate = prevFromTopic.to.filter(t => t !== streamAppName);
+            fromUpdate = prevFromTopic.to.filter(t => t !== this.streamAppName);
           } else {
             fromUpdate = [];
           }
@@ -155,7 +152,7 @@ class StreamApp extends React.Component {
         updateGraph({
           update,
           isFromTopic: true,
-          streamAppName,
+          streamAppName: this.streamAppName,
           updatedName: params.name,
         });
       }
@@ -172,14 +169,15 @@ class StreamApp extends React.Component {
 
   handleDeleteConnector = async () => {
     const { match, refreshGraph, history } = this.props;
-    const { connectorName: streamAppName, pipelineName } = match.params;
+    const { pipelineName } = match.params;
 
-    const res = await streamApi.deleteProperty(streamAppName);
+    const res = await streamApi.deleteProperty(this.streamAppName);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (isSuccess) {
-      const { name: connectorName } = this.state.streamApp;
-      toastr.success(`${MESSAGES.CONNECTOR_DELETION_SUCCESS} ${connectorName}`);
+      toastr.success(
+        `${MESSAGES.CONNECTOR_DELETION_SUCCESS} ${this.streamAppName}`,
+      );
       await refreshGraph();
 
       const path = `/pipelines/edit/${pipelineName}`;
@@ -188,12 +186,11 @@ class StreamApp extends React.Component {
   };
 
   triggerStreamApp = async action => {
-    const { streamAppName } = this.state;
     let res;
     if (action === STREAM_APP_ACTIONS.start) {
-      res = await streamApi.startStreamApp(streamAppName);
+      res = await streamApi.startStreamApp(this.streamAppName);
     } else {
-      res = await streamApi.stopStreamApp(streamAppName);
+      res = await streamApi.stopStreamApp(this.streamAppName);
     }
     this.handleTriggerStreamAppResponse(action, res);
   };
@@ -203,11 +200,10 @@ class StreamApp extends React.Component {
     if (!isSuccess) return;
 
     const { graph, updateGraph } = this.props;
-    const { streamAppName } = this.state;
     const state = get(res, 'data.result.state');
     this.setState({ state });
 
-    const currStreamApp = findByGraphName(graph, streamAppName);
+    const currStreamApp = findByGraphName(graph, this.streamAppName);
     const update = { ...currStreamApp, state };
     updateGraph({ update });
 
@@ -240,7 +236,7 @@ class StreamApp extends React.Component {
       to: !isEmpty(toTopic) ? toTopic.name : null,
     };
 
-    const isRunning = this.state.state === 'RUNNING';
+    const isRunning = !isUndefined(this.state.state);
 
     return (
       <>
@@ -257,6 +253,7 @@ class StreamApp extends React.Component {
                 <s.H5Wrapper>Stream app</s.H5Wrapper>
                 <Controller
                   kind="stream app"
+                  connectorName={this.streamAppName}
                   onStart={this.handleStartStreamApp}
                   onStop={this.handleStopStreamApp}
                   onDelete={this.handleDeleteConnector}
@@ -266,7 +263,14 @@ class StreamApp extends React.Component {
               <s.FormRow>
                 <s.FormCol width="70%">
                   <Label>Name</Label>
-                  <Label>{streamApp.name}</Label>
+                  <Field
+                    id="input-streamapp-name"
+                    name="name"
+                    component={InputField}
+                    type="text"
+                    width="100%"
+                    disabled
+                  />
                 </s.FormCol>
                 <s.FormCol width="30%">
                   <Label htmlFor="input-instances">Instances</Label>

@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 
 import NewRowModal from './NewRowModal';
 import Table from './Table';
-import { AlertDialog } from 'components/common/Mui/Dialog';
+import { DeleteDialog } from 'components/common/Mui/Dialog';
 import { NewRowBtn } from './styles';
 
 class ColumnTable extends React.Component {
@@ -86,12 +86,19 @@ class ColumnTable extends React.Component {
       currRow: this.state.currRow,
       parentValues: this.props.parentValues,
     });
+
     this.handleDeleteRowModalClose();
   };
 
   handleDeleteRowModalOpen = (e, order) => {
     e.preventDefault();
-    this.setState({ isDeleteRowModalActive: true, currRow: order });
+    const row = this.props.data.find(d => d.order === order);
+
+    this.setState({
+      isDeleteRowModalActive: true,
+      currRow: order,
+      rowNameToBeDeleted: row.name,
+    });
   };
 
   handleDeleteRowModalClose = () => {
@@ -117,6 +124,7 @@ class ColumnTable extends React.Component {
       handleTypeChange,
       currType,
       isDeleteRowModalActive,
+      rowNameToBeDeleted,
     } = this.state;
 
     return (
@@ -139,9 +147,9 @@ class ColumnTable extends React.Component {
           handleModalClose={this.handleNewRowModalClose}
         />
 
-        <AlertDialog
+        <DeleteDialog
           title="Delete row?"
-          content="Are you sure you want to delete this row? This action cannot be undone!"
+          content={`Are you sure you want to delete the row: ${rowNameToBeDeleted}? This action cannot be undone!`}
           open={isDeleteRowModalActive}
           handleClose={this.handleDeleteRowModalClose}
           handleConfirm={this.handleDeleteRow}

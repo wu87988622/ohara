@@ -26,7 +26,7 @@ import * as utils from './pipelineUtils/pipelineListPageUtils';
 import * as pipelineApi from 'api/pipelineApi';
 import * as URLS from 'constants/urls';
 import { TableLoader, ListLoader } from 'components/common/Loader';
-import { AlertDialog } from 'components/common/Mui/Dialog';
+import { DeleteDialog } from 'components/common/Mui/Dialog';
 import { Modal } from 'components/common/Modal';
 import { Box } from 'components/common/Layout';
 import { Warning } from 'components/common/Messages';
@@ -69,6 +69,7 @@ class PipelineListPage extends React.Component {
     isNewPipelineWorking: false,
     isDeletePipelineWorking: false,
     newPipelineName: '',
+    pipelineToBeDeleted: '',
   };
 
   componentDidMount() {
@@ -203,6 +204,7 @@ class PipelineListPage extends React.Component {
       isDeletePipelineWorking,
       pipelines,
       newPipelineName,
+      pipelineToBeDeleted,
       workers,
       currWorker,
     } = this.state;
@@ -266,13 +268,13 @@ class PipelineListPage extends React.Component {
             )}
           </Modal>
 
-          <AlertDialog
+          <DeleteDialog
             title="Delete pipeline?"
-            content="Are you sure you want to delete this pipeline? This action cannot be undone!"
+            content={`Are you sure you want to delete the pipeline: ${pipelineToBeDeleted}? This action cannot be undone!`}
             open={isDeletePipelineModalActive}
+            working={isDeletePipelineWorking}
             handleConfirm={this.handleDeletePipelineConfirm}
             handleClose={this.handleDeletePipelineModalClose}
-            working={isDeletePipelineWorking}
           />
 
           <Wrapper>

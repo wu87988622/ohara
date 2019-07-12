@@ -16,8 +16,8 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { get, isEmpty, some, includes, omit } from 'lodash';
 import toastr from 'toastr';
+import { get, isEmpty, some, includes, omit } from 'lodash';
 
 import * as pipelineApi from 'api/pipelineApi';
 import * as MESSAGES from 'constants/messages';
@@ -49,21 +49,21 @@ class Topic extends React.Component {
   };
 
   componentDidMount() {
+    this.topicName = this.props.match.params.connectorName;
     this.fetchTopic();
   }
 
   componentDidUpdate(prevProps) {
-    const { connectorName: prevConnectorName } = prevProps.match.params;
-    const { connectorName: currConnectorName } = this.props.match.params;
+    const { connectorName: prevTopicName } = prevProps.match.params;
+    const { connectorName: currTopicName } = this.props.match.params;
 
-    if (prevConnectorName !== currConnectorName) {
+    if (prevTopicName !== currTopicName) {
       this.fetchTopic();
     }
   }
 
   fetchTopic = async () => {
-    const { connectorName } = this.props.match.params;
-    const res = await fetchTopic(connectorName);
+    const res = await fetchTopic(this.topicName);
     const topic = get(res, 'data.result', null);
     if (topic) {
       this.setState({ topic });
@@ -72,10 +72,9 @@ class Topic extends React.Component {
   };
 
   deleteTopic = async () => {
-    const { match, history, pipeline, graph, refreshGraph } = this.props;
-    const connectorName = get(match, 'params.connectorName', null);
+    const { history, pipeline, graph, refreshGraph } = this.props;
 
-    if (this.hasAnyConnection(graph, connectorName)) {
+    if (this.hasAnyConnection(graph, this.topicName)) {
       toastr.error(MESSAGES.CANNOT_DELETE_TOPIC_ERROR);
       return;
     }
@@ -84,7 +83,7 @@ class Topic extends React.Component {
 
     const params = {
       name: pipelineName,
-      rules: omit(pipelineRules, connectorName),
+      rules: omit(pipelineRules, this.topicName),
     };
 
     const res = await pipelineApi.updatePipeline({
@@ -102,10 +101,10 @@ class Topic extends React.Component {
     }
   };
 
-  hasAnyConnection = (graph, connectorName) =>
+  hasAnyConnection = (graph, topicName) =>
     some(graph, ({ name, to }) => {
-      if (name === connectorName && !isEmpty(to)) return true;
-      if (includes(to, connectorName)) return true;
+      if (name === topicName && !isEmpty(to)) return true;
+      if (includes(to, topicName)) return true;
     });
 
   render() {
@@ -122,6 +121,7 @@ class Topic extends React.Component {
               <s.H5Wrapper>Topic</s.H5Wrapper>
               <Controller
                 kind="topic"
+                connectorName={this.topicName}
                 onDelete={this.deleteTopic}
                 show={['delete']}
               />

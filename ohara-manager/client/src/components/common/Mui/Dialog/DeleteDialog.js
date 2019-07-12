@@ -53,31 +53,36 @@ const AlertDialog = props => {
     handleClose,
     cancelText = 'Cancel',
     confirmText = 'Delete',
-    working = false,
+    isWorking = false,
     testId = 'delete-dialog',
   } = props;
 
   return (
     <>
-      <Dialog open={open} onClose={handleClose} data-testid={testId}>
+      <Dialog
+        maxWidth="xs"
+        open={open}
+        onClose={handleClose}
+        data-testid={testId}
+      >
         <DialogTitle>{title}</DialogTitle>
         <DialogContent>
           <DialogContentText>{content}</DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button disabled={working} onClick={handleClose}>
+          <Button disabled={isWorking} onClick={handleClose}>
             {cancelText}
           </Button>
           <ButtonWrapper>
             <ConfirmButton
-              disabled={working}
+              disabled={isWorking}
               onClick={handleConfirm}
               color="primary"
               autoFocus
             >
               {confirmText}
             </ConfirmButton>
-            {working && <Progress size={14} />}
+            {isWorking && <Progress size={14} />}
           </ButtonWrapper>
         </DialogActions>
       </Dialog>
@@ -93,7 +98,7 @@ AlertDialog.propTypes = {
   handleConfirm: PropTypes.func.isRequired,
   cancelText: PropTypes.string,
   confirmText: PropTypes.string,
-  working: PropTypes.bool,
+  isWorking: PropTypes.bool,
   testId: PropTypes.string,
 };
 
