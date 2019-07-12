@@ -18,6 +18,7 @@ package com.island.ohara.kafka.connector;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.kafka.connect.sink.SinkTaskContext;
 
@@ -37,6 +38,13 @@ public interface RowSinkContext {
   void offset(Map<TopicPartition, Long> offsets);
 
   /**
+   * Get the current set of assigned TopicPartitions for this task.
+   *
+   * @return the set of currently assigned TopicPartitions
+   */
+  Set<TopicPartition> assignment();
+
+  /**
    * Reset the consumer offsets for the given topic partition. SinkTasks should use if they manage
    * offsets in the sink data store rather than using Kafka consumer offsets. For example, an HDFS
    * connector might record offsets in HDFS to provide exactly once delivery. When the topic
@@ -53,7 +61,9 @@ public interface RowSinkContext {
   }
 
   static RowSinkContext toRowSinkContext(SinkTaskContext context) {
-    return offsets ->
+    return new RowSinkContext() {
+      @Override
+      public void offset(Map<TopicPartition, Long> offsets) {
         context.offset(
             offsets.entrySet().stream()
                 .collect(
@@ -62,5 +72,14 @@ public interface RowSinkContext {
                             new org.apache.kafka.common.TopicPartition(
                                 entry.getKey().topicName(), entry.getKey().partition()),
                         Map.Entry::getValue)));
+      }
+
+      @Override
+      public Set<TopicPartition> assignment() {
+        return context.assignment().stream()
+            .map(tp -> new TopicPartition(tp.topic(), tp.partition()))
+            .collect(Collectors.toSet());
+      }
+    };
   }
 }
