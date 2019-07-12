@@ -58,7 +58,7 @@ class TestK8SBasicCollieImpl extends SmallTest with Matchers {
                            password = "",
                            services = Seq.empty,
                            lastModified = CommonUtils.current(),
-                           tags = Set.empty)
+                           tags = Map.empty)
     val nodes: Seq[Node] = Seq(node1)
     val nodeCollie = NodeCollie(nodes)
     val k8sClient = new FakeK8SClient(true, None, containerName)

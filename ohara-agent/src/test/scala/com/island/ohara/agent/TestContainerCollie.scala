@@ -51,7 +51,7 @@ class TestContainerCollie extends SmallTest with Matchers {
                      password = "123456",
                      services = Seq.empty,
                      lastModified = CommonUtils.current(),
-                     tags = Set.empty)
+                     tags = Map.empty)
     val node2 = node1.copy(hostname = nodeName2)
 
     val container1 =
@@ -84,7 +84,7 @@ class TestContainerCollie extends SmallTest with Matchers {
                      password = "123456",
                      services = Seq.empty,
                      lastModified = CommonUtils.current(),
-                     tags = Set.empty)
+                     tags = Map.empty)
     val containerInfo =
       ContainerInfo("node2", "0", "fakeimage", "", "RUNNING", "", "container1", "0", Seq.empty, Map.empty, s"xxx")
     val fakeContainerCollie = new FakeContainerCollie(NodeCollie(Seq(node1)), Seq(containerInfo))
@@ -101,7 +101,7 @@ class TestContainerCollie extends SmallTest with Matchers {
                      password = "123456",
                      services = Seq.empty,
                      lastModified = CommonUtils.current(),
-                     tags = Set.empty)
+                     tags = Map.empty)
     val containerInfo =
       ContainerInfo(node1Name,
                     "0",
@@ -130,7 +130,7 @@ class TestContainerCollie extends SmallTest with Matchers {
                      password = "123456",
                      services = Seq.empty,
                      lastModified = CommonUtils.current(),
-                     tags = Set.empty)
+                     tags = Map.empty)
     val containerInfo =
       ContainerInfo(node1Name,
                     "0",
@@ -159,7 +159,7 @@ class TestContainerCollie extends SmallTest with Matchers {
                      password = "123456",
                      services = Seq.empty,
                      lastModified = CommonUtils.current(),
-                     tags = Set.empty)
+                     tags = Map.empty)
     val node2 = node1.copy(hostname = node2Name)
     val container1 =
       ContainerInfo(node1Name,
@@ -199,7 +199,7 @@ class TestContainerCollie extends SmallTest with Matchers {
                      password = "123456",
                      services = Seq.empty,
                      lastModified = CommonUtils.current(),
-                     tags = Set.empty)
+                     tags = Map.empty)
     val containerInfo =
       ContainerInfo(node1.name,
                     "0",

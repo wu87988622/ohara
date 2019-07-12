@@ -45,7 +45,7 @@ object JarApi {
     */
   final case class JarInfo(name: String, group: String, size: Long, url: URL, lastModified: Long) extends Data {
     override def kind: String = "jar"
-    override def tags: Set[String] = Set.empty
+    override def tags: Map[String, JsValue] = Map.empty
   }
 
   implicit val JAR_INFO_JSON_FORMAT: RootJsonFormat[JarInfo] = jsonFormat5(JarInfo)

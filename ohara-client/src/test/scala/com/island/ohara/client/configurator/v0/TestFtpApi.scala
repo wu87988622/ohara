@@ -321,5 +321,5 @@ class TestFtpApi extends SmallTest with Matchers {
   def nullTags(): Unit = an[NullPointerException] should be thrownBy FtpApi.access.request.tags(null)
 
   @Test
-  def emptyTags(): Unit = FtpApi.access.request.tags(Set.empty)
+  def emptyTags(): Unit = FtpApi.access.request.tags(Map.empty)
 }

@@ -23,6 +23,7 @@ import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Test}
 import org.scalatest.Matchers
+import spray.json.{JsNumber, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestJdbcInfoRoute extends SmallTest with Matchers {
@@ -153,19 +154,25 @@ class TestJdbcInfoRoute extends SmallTest with Matchers {
 
   @Test
   def updateTags(): Unit = {
-    val tags = Set(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val tags = Map(
+      CommonUtils.randomString(10) -> JsString(CommonUtils.randomString(10)),
+      CommonUtils.randomString(10) -> JsNumber(CommonUtils.randomInteger())
+    )
     val jdbcDesc = result(jdbcApi.request.url("url").user("user").password("password").tags(tags).create())
     jdbcDesc.tags shouldBe tags
 
-    val tags2 = Set(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val tags2 = Map(
+      CommonUtils.randomString(10) -> JsString(CommonUtils.randomString(10)),
+      CommonUtils.randomString(10) -> JsNumber(CommonUtils.randomInteger())
+    )
     val jdbcDesc2 = result(jdbcApi.request.name(jdbcDesc.name).tags(tags2).update())
     jdbcDesc2.tags shouldBe tags2
 
     val jdbcDesc3 = result(jdbcApi.request.name(jdbcDesc.name).update())
     jdbcDesc3.tags shouldBe tags2
 
-    val jdbcDesc4 = result(jdbcApi.request.name(jdbcDesc.name).tags(Set.empty).update())
-    jdbcDesc4.tags shouldBe Set.empty
+    val jdbcDesc4 = result(jdbcApi.request.name(jdbcDesc.name).tags(Map.empty).update())
+    jdbcDesc4.tags shouldBe Map.empty
   }
 
   @After

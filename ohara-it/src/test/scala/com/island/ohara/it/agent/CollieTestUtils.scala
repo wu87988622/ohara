@@ -40,7 +40,7 @@ private[it] object CollieTestUtils {
            password = password,
            services = Seq.empty,
            lastModified = CommonUtils.current(),
-           tags = Set.empty)
+           tags = Map.empty)
     }.toSeq)
     .getOrElse(Seq.empty)
     .map { node =>

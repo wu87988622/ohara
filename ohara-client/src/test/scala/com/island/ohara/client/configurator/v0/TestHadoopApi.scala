@@ -150,5 +150,5 @@ class TestHadoopApi extends SmallTest with Matchers {
   def nullTags(): Unit = an[NullPointerException] should be thrownBy HadoopApi.access.request.tags(null)
 
   @Test
-  def emptyTags(): Unit = HadoopApi.access.request.tags(Set.empty)
+  def emptyTags(): Unit = HadoopApi.access.request.tags(Map.empty)
 }

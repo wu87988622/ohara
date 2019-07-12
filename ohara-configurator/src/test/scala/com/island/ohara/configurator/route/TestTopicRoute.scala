@@ -23,6 +23,7 @@ import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Test}
 import org.scalatest.Matchers
+import spray.json.{JsNumber, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestTopicRoute extends SmallTest with Matchers {
@@ -244,19 +245,25 @@ class TestTopicRoute extends SmallTest with Matchers {
 
   @Test
   def updateTags(): Unit = {
-    val tags = Set(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val tags = Map(
+      CommonUtils.randomString(10) -> JsString(CommonUtils.randomString(10)),
+      CommonUtils.randomString(10) -> JsNumber(CommonUtils.randomInteger())
+    )
     val topicDesc = result(topicApi.request.tags(tags).create())
     topicDesc.tags shouldBe tags
 
-    val tags2 = Set(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val tags2 = Map(
+      CommonUtils.randomString(10) -> JsString(CommonUtils.randomString(10)),
+      CommonUtils.randomString(10) -> JsNumber(CommonUtils.randomInteger())
+    )
     val topicDesc2 = result(topicApi.request.name(topicDesc.name).tags(tags2).update())
     topicDesc2.tags shouldBe tags2
 
     val topicDesc3 = result(topicApi.request.name(topicDesc.name).update())
     topicDesc3.tags shouldBe tags2
 
-    val topicDesc4 = result(topicApi.request.name(topicDesc.name).tags(Set.empty).update())
-    topicDesc4.tags shouldBe Set.empty
+    val topicDesc4 = result(topicApi.request.name(topicDesc.name).tags(Map.empty).update())
+    topicDesc4.tags shouldBe Map.empty
   }
 
   @After

@@ -24,7 +24,7 @@ import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 import spray.json._
 class TestJsonRefiner extends SmallTest with Matchers {
-  private[this] implicit val format: RootJsonFormat[SimpleData] = jsonFormat4(SimpleData)
+  private[this] implicit val format: RootJsonFormat[SimpleData] = jsonFormat5(SimpleData)
   private[this] val format2: RootJsonFormat[SimpleData2] = jsonFormat2(SimpleData2)
 
   @Test
@@ -106,7 +106,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
             | "stringValue": "",
             | "bindPort": 123,
             | "connectionPort": 12144,
-            | "stringArray": ["aa"]
+            | "stringArray": ["aa"],
+            | "objects":{}
             |}
           """.stripMargin.parseJson)
 
@@ -117,7 +118,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
             | "stringValue": "",
             | "bindPort": 123,
             | "connectionPort": 12345,
-            | "stringArray": ["aa"]
+            | "stringArray": ["aa"],
+            | "objects":{}
             |}
           """.stripMargin.parseJson).stringValue shouldBe ""
 
@@ -128,7 +130,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
               | "stringValue": "abc",
               | "bindPort": 123,
               | "connectionPort": 77,
-              | "stringArray": ["aa"]
+              | "stringArray": ["aa"],
+              | "objects":{}
               |}
             """.stripMargin.parseJson).connectionPort shouldBe 77
 
@@ -142,7 +145,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
             | "stringValue": "abc",
             | "bindPort": 123,
             | "connectionPort": null,
-            | "stringArray": ["aa"]
+            | "stringArray": ["aa"],
+            | "objects":{}
             |}
           """.stripMargin.parseJson)
 
@@ -155,7 +159,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
             |{
             | "stringValue": "abc",
             | "bindPort": 123,
-            | "stringArray": ["aa"]
+            | "stringArray": ["aa"],
+            | "objects":{}
             |}
           """.stripMargin.parseJson)
 
@@ -178,7 +183,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
               | "stringValue": "abc",
               | "bindPort": 123,
               | "connectionPort": $port,
-              | "stringArray": ["aa"]
+              | "stringArray": ["aa"],
+              | "objects":{}
               |}
             """.stripMargin.parseJson)
 
@@ -189,7 +195,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
               | "stringValue": "abc",
               | "bindPort": 123,
               | "connectionPort": -1,
-              | "stringArray": ["aa"]
+              | "stringArray": ["aa"],
+              | "objects":{}
               |}
             """.stripMargin.parseJson).connectionPort shouldBe -1
 
@@ -200,7 +207,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
           | "stringValue": "abc",
           | "bindPort": 11111,
           | "connectionPort": 77,
-          | "stringArray": ["aa"]
+          | "stringArray": ["aa"],
+          | "objects":{}
           |}
         """.stripMargin.parseJson).bindPort shouldBe 11111
 
@@ -211,7 +219,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
         | "stringValue": "abc",
         | "bindPort": null,
         | "connectionPort": 77,
-        | "stringArray": ["aa"]
+        | "stringArray": ["aa"],
+        | "objects":{}
         |}
       """.stripMargin.parseJson).bindPort should not be 0
 
@@ -221,7 +230,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
       |{
       | "stringValue": "abc",
       | "connectionPort": 77,
-      | "stringArray": ["aa"]
+      | "stringArray": ["aa"],
+      | "objects":{}
       |}
     """.stripMargin.parseJson).bindPort should not be 0
 
@@ -244,7 +254,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
                | "stringValue": "abc",
                | "bindPort": $port,
                | "connectionPort": 111,
-               | "stringArray": ["aa"]
+               | "stringArray": ["aa"],
+               | "objects":{}
                |}
             """.stripMargin.parseJson)
 
@@ -255,7 +266,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
                      | "stringValue": "abc",
                      | "bindPort": -1,
                      | "connectionPort": 123,
-                     | "stringArray": ["aa"]
+                     | "stringArray": ["aa"],
+                     | "objects":{}
                      |}
                    """.stripMargin.parseJson).bindPort shouldBe -1
 
@@ -265,7 +277,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
                                                          |{
                                                          | "bindPort": -1,
                                                          | "connectionPort": 123,
-                                                         | "stringArray": ["aa"]
+                                                         | "stringArray": ["aa"],
+                                                         | "objects":{}
                                                          |}
                                                        """.stripMargin.parseJson).stringValue.length should not be 0
 
@@ -275,7 +288,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
              |{
              | "stringValue": "abc",
              | "bindPort": -1,
-             | "connectionPort": 123
+             | "connectionPort": 123,
+             | "objects":{}
              |}
            """.stripMargin.parseJson).stringArray shouldBe Seq.empty
 
@@ -285,7 +299,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
          |{
          | "stringValue": "abc",
          | "connectionPort": 123,
-         | "stringArray": []
+         | "stringArray": [],
+         | "objects":{}
          |}
        """.stripMargin.parseJson).bindPort shouldBe 777
 
@@ -315,7 +330,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
         |{
         | "stringValue": "abc",
         | "connectionPort": 123,
-        | "stringArray": []
+        | "stringArray": [],
+        | "objects":{}
         |}
       """.stripMargin.parseJson)
       .bindPort shouldBe 123
@@ -330,7 +346,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
       |{
       | "stringValue": "abc",
       | "connectionPort": 123,
-      | "stringArray": []
+      | "stringArray": [],
+      | "objects":{}
       |}
     """.stripMargin.parseJson)
 
@@ -348,7 +365,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
               | "stringValue": "abc",
               | "bindPort": 9999,
               | "connectionPort": 123,
-              | "stringArray": []
+              | "stringArray": [],
+              | "objects":{}
               |}
             """.stripMargin.parseJson)
       .bindPort shouldBe 9999
@@ -363,7 +381,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
             | "stringValue": "abc",
             | "bindPort": -1,
             | "connectionPort": 123,
-            | "stringArray": []
+            | "stringArray": [],
+            | "objects":{}
             |}
           """.stripMargin.parseJson)
 
@@ -375,14 +394,16 @@ class TestJsonRefiner extends SmallTest with Matchers {
             |    "stringValue": "abc",
             |    "bindPort": 22,
             |    "connectionPort": 123,
-            |    "stringArray": []
+            |    "stringArray": [],
+            |    "objects":{}
             |  },
             |  "data2": [
             |    {
             |      "stringValue": "abc",
             |      "bindPort": 22,
             |      "connectionPort": 123,
-            |      "stringArray": []
+            |      "stringArray": [],
+            |      "objects":{}
             |    }
             |  ]
             |
@@ -401,14 +422,16 @@ class TestJsonRefiner extends SmallTest with Matchers {
             |    "stringValue": "",
             |    "bindPort": 22,
             |    "connectionPort": 123,
-            |    "stringArray": []
+            |    "stringArray": [],
+            |    "objects":{}
             |  },
             |  "data2": [
             |    {
             |      "stringValue": "abc",
             |      "bindPort": 22,
             |      "connectionPort": 123,
-            |      "stringArray": []
+            |      "stringArray": [],
+            |      "objects":{}
             |    }
             |  ]
             |
@@ -427,14 +450,16 @@ class TestJsonRefiner extends SmallTest with Matchers {
             |    "stringValue": "aaa",
             |    "bindPort": 22,
             |    "connectionPort": 123,
-            |    "stringArray": []
+            |    "stringArray": [],
+            |    "objects":{}
             |  },
             |  "data2": [
             |    {
             |      "stringValue": "",
             |      "bindPort": 22,
             |      "connectionPort": 123,
-            |      "stringArray": []
+            |      "stringArray": [],
+            |      "objects":{}
             |    }
             |  ]
             |
@@ -453,14 +478,16 @@ class TestJsonRefiner extends SmallTest with Matchers {
               |    "stringValue": "aaa",
               |    "bindPort": -1,
               |    "connectionPort": 123,
-              |    "stringArray": []
+              |    "stringArray": [],
+              |    "objects":{}
               |  },
               |  "data2": [
               |    {
               |      "stringValue": "abc",
               |      "bindPort": 22,
               |      "connectionPort": 123,
-              |      "stringArray": []
+              |      "stringArray": [],
+              |      "objects":{}
               |    }
               |  ]
               |
@@ -479,14 +506,16 @@ class TestJsonRefiner extends SmallTest with Matchers {
               |    "stringValue": "aaa",
               |    "bindPort": 22,
               |    "connectionPort": 123,
-              |    "stringArray": []
+              |    "stringArray": [],
+              |    "objects":{}
               |  },
               |  "data2": [
               |    {
               |      "stringValue": "aaa",
               |      "bindPort": -1,
               |      "connectionPort": 123,
-              |      "stringArray": []
+              |      "stringArray": [],
+              |      "objects":{}
               |    }
               |  ]
               |
@@ -503,7 +532,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
             | "stringValue": "abc",
             | "bindPort": 9999,
             | "connectionPort": 123,
-            | "stringArray": []
+            | "stringArray": [],
+            | "objects":{}
             |}
           """.stripMargin.parseJson)
 
@@ -519,7 +549,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
               | "stringValue": "abc",
               | "bindPort": 9999,
               | "connectionPort": 123,
-              | "stringArray": []
+              | "stringArray": [],
+              | "objects":{}
               |}
             """.stripMargin.parseJson)
       .stringArray shouldBe Seq.empty
@@ -533,7 +564,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
               | "stringValue": "abc",
               | "bindPort": 9999,
               | "connectionPort": 123,
-              | "stringArray": []
+              | "stringArray": [],
+              | "objects":{}
               |}
             """.stripMargin.parseJson)
   }
@@ -552,7 +584,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
               | "stringValue": "abc",
               | "bindPort": "$bindPort",
               | "connectionPort": "$connectionPort",
-              | "stringArray": []
+              | "stringArray": [],
+              | "objects":{}
               |}
             """.stripMargin.parseJson)
 
@@ -569,7 +602,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
             | "stringValue": "abc",
             | "bindPort": "123",
             | "connectionPort": 123,
-            | "stringArray": []
+            | "stringArray": [],
+            | "objects":{}
             |}
           """.stripMargin.parseJson)
 
@@ -582,7 +616,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
             | "stringValue": "abc",
             | "bindPort": 123,
             | "connectionPort": "123",
-            | "stringArray": []
+            | "stringArray": [],
+            | "objects":{}
             |}
           """.stripMargin.parseJson)
 
@@ -598,7 +633,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
             | "stringValue": "abc",
             | "bindPort": 123,
             | "connectionPort": "-1",
-            | "stringArray": []
+            | "stringArray": [],
+            | "objects":{}
             |}
           """.stripMargin.parseJson)
 
@@ -614,7 +650,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
               | "stringValue": "abc",
               | "bindPort": 123,
               | "connectionPort": 111,
-              | "ttt": ["abc"]
+              | "ttt": ["abc"],
+              | "objects":{}
               |}
             """.stripMargin.parseJson)
       .stringArray shouldBe Seq("abc")
@@ -630,7 +667,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
               |{
               | "stringValue": "abc",
               | "bindPort": 123,
-              | "connectionPort": 111
+              | "connectionPort": 111,
+              | "objects":{}
               |}
             """.stripMargin.parseJson)
       .stringArray shouldBe Seq.empty
@@ -645,7 +683,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
               | "stringValue": "abc",
               | "bindPort": 123,
               | "connectionPort": 111,
-              | "stringArray": []
+              | "stringArray": [],
+              | "objects":{}
               |}
             """.stripMargin.parseJson)
 
@@ -654,7 +693,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
               | "stringValue": "123",
               | "bindPort": 123,
               | "connectionPort": 111,
-              | "stringArray": []
+              | "stringArray": [],
+              | "objects":{}
               |}
             """.stripMargin.parseJson)
   }
@@ -669,7 +709,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
               | "stringValue": "abc1",
               | "bindPort": 123,
               | "connectionPort": 111,
-              | "stringArray": []
+              | "stringArray": [],
+              | "objects":{}
               |}
             """.stripMargin.parseJson)
 
@@ -678,7 +719,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
               | "stringValue": "aaa",
               | "bindPort": 123,
               | "connectionPort": 111,
-              | "stringArray": []
+              | "stringArray": [],
+              | "objects":{}
               |}
             """.stripMargin.parseJson)
   }
@@ -693,7 +735,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
               | "stringValue": "Abc",
               | "bindPort": 123,
               | "connectionPort": 111,
-              | "stringArray": []
+              | "stringArray": [],
+              | "objects":{}
               |}
             """.stripMargin.parseJson)
 
@@ -702,7 +745,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
               | "stringValue": "abc2",
               | "bindPort": 123,
               | "connectionPort": 111,
-              | "stringArray": []
+              | "stringArray": [],
+              | "objects":{}
               |}
             """.stripMargin.parseJson)
 
@@ -711,7 +755,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
               | "stringValue": "aaa",
               | "bindPort": 123,
               | "connectionPort": 111,
-              | "stringArray": []
+              | "stringArray": [],
+              | "objects":{}
               |}
             """.stripMargin.parseJson)
   }
@@ -726,7 +771,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
               | "stringValue": "Abc",
               | "bindPort": 123,
               | "connectionPort": 111,
-              | "stringArray": []
+              | "stringArray": [],
+              | "objects":{}
               |}
             """.stripMargin.parseJson)
 
@@ -735,7 +781,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
               | "stringValue": "-",
               | "bindPort": 123,
               | "connectionPort": 111,
-              | "stringArray": []
+              | "stringArray": [],
+              | "objects":{}
               |}
             """.stripMargin.parseJson)
   }
@@ -750,7 +797,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
               | "stringValue": "Abc",
               | "bindPort": 123,
               | "connectionPort": 111,
-              | "stringArray": []
+              | "stringArray": [],
+              | "objects":{}
               |}
             """.stripMargin.parseJson)
 
@@ -759,7 +807,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
               | "stringValue": ".",
               | "bindPort": 123,
               | "connectionPort": 111,
-              | "stringArray": []
+              | "stringArray": [],
+              | "objects":{}
               |}
             """.stripMargin.parseJson)
   }
@@ -774,7 +823,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
               | "stringValue": "aaa",
               | "bindPort": 123,
               | "connectionPort": 111,
-              | "stringArray": []
+              | "stringArray": [],
+              | "objects":{}
               |}
             """.stripMargin.parseJson)
 
@@ -783,7 +833,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
               | "stringValue": "_",
               | "bindPort": 123,
               | "connectionPort": 111,
-              | "stringArray": []
+              | "stringArray": [],
+              | "objects":{}
               |}
             """.stripMargin.parseJson)
   }
@@ -803,7 +854,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
               | "stringValue": "ABC11",
               | "bindPort": 123,
               | "connectionPort": 111,
-              | "stringArray": []
+              | "stringArray": [],
+              | "objects":{}
               |}
             """.stripMargin.parseJson)
 
@@ -812,7 +864,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
                                                                   | "stringValue": "abc111-",
                                                                   | "bindPort": 123,
                                                                   | "connectionPort": 111,
-                                                                  | "stringArray": []
+                                                                  | "stringArray": [],
+                                                                  | "objects":{}
                                                                   |}
                                                                 """.stripMargin.parseJson)
 
@@ -821,7 +874,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
                   | "stringValue": "abc111",
                   | "bindPort": 123,
                   | "connectionPort": 111,
-                  | "stringArray": []
+                  | "stringArray": [],
+                  | "objects":{}
                   |}
                 """.stripMargin.parseJson)
 
@@ -830,7 +884,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
                   | "stringValue": "777abc111",
                   | "bindPort": 123,
                   | "connectionPort": 111,
-                  | "stringArray": []
+                  | "stringArray": [],
+                  | "objects":{}
                   |}
                 """.stripMargin.parseJson)
   }
@@ -848,7 +903,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
               | "stringValue": "777abc111",
               | "bindPort": 123,
               | "connectionPort": 111,
-              | "stringArray": []
+              | "stringArray": [],
+              | "objects":{}
               |}
             """.stripMargin.parseJson)
 
@@ -864,7 +920,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
               | "stringValue": "777abc111",
               | "bindPort": 123,
               | "connectionPort": 111,
-              | "stringArray": []
+              | "stringArray": [],
+              | "objects":{}
               |}
             """.stripMargin.parseJson)
   }
@@ -892,7 +949,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
                                                                               | "stringValue": "$invalidString",
                                                                               | "bindPort": 123,
                                                                               | "connectionPort": 111,
-                                                                              | "stringArray": []
+                                                                              | "stringArray": [],
+                                                                              | "objects":{}
                                                                               |}
                            """.stripMargin.parseJson)
     }
@@ -906,7 +964,8 @@ class TestJsonRefiner extends SmallTest with Matchers {
                       | "stringValue": "",
                       | "bindPort": 123,
                       | "connectionPort": 111,
-                      | "stringArray": []
+                      | "stringArray": [],
+                      | "objects":{}
                       |}
                            """.stripMargin.parseJson)
 
@@ -919,8 +978,107 @@ class TestJsonRefiner extends SmallTest with Matchers {
                       | "stringValue": "",
                       | "bindPort": 123,
                       | "connectionPort": 111,
-                      | "stringArray": []
+                      | "stringArray": [],
+                      | "objects":{}
                       |}
                            """.stripMargin.parseJson)
+  }
+
+  @Test
+  def nullToEmptyObject(): Unit = JsonRefiner[SimpleData].format(format).nullToEmptyObject("objects").refine.read(s"""
+             |{
+             | "stringValue": "111",
+             | "bindPort": 123,
+             | "connectionPort": 111,
+             | "stringArray": []
+             |}
+           """.stripMargin.parseJson).objects shouldBe Map.empty
+
+  @Test
+  def testObjects(): Unit = JsonRefiner[SimpleData].format(format).refine.read(s"""
+       |{
+       | "stringValue": "111",
+       | "bindPort": 123,
+       | "connectionPort": 111,
+       | "stringArray": [],
+       | "objects": {
+       |   "a": "bb",
+       |   "b": 123
+       | }
+       |}
+           """.stripMargin.parseJson).objects shouldBe Map("a" -> JsString("bb"), "b" -> JsNumber(123))
+
+  @Test
+  def testRejectNegativeNumberForSpecificKey(): Unit = {
+    val f = JsonRefiner[SimpleData].format(format).rejectNegativeNumber("bindPort").refine
+    f.read(s"""
+         |{
+         | "stringValue": "111",
+         | "bindPort": 123,
+         | "connectionPort": -1,
+         | "stringArray": [],
+         | "objects": {
+         |   "a": "bb",
+         |   "b": 123
+         | }
+         |}
+           """.stripMargin.parseJson).connectionPort shouldBe -1
+    an[DeserializationException] should be thrownBy f.read(s"""
+         |{
+         | "stringValue": "111",
+         | "bindPort": -123,
+         | "connectionPort": 123,
+         | "stringArray": [],
+         | "objects": {
+         |   "a": "bb",
+         |   "b": 123
+         | }
+         |}
+           """.stripMargin.parseJson)
+  }
+
+  @Test
+  def testRequirePositiveNumber(): Unit = {
+    val f = JsonRefiner[SimpleData].format(format).requirePositiveNumber("bindPort").refine
+    f.read(s"""
+              |{
+              | "stringValue": "111",
+              | "bindPort": 123,
+              | "connectionPort": 100,
+              | "stringArray": [],
+              | "objects": {
+              |   "a": "bb",
+              |   "b": 123
+              | }
+              |}
+           """.stripMargin.parseJson).bindPort shouldBe 123
+
+    // negative number is illegal
+    an[DeserializationException] should be thrownBy f.read(s"""
+                                                              |{
+                                                              | "stringValue": "111",
+                                                              | "bindPort": -123,
+                                                              | "connectionPort": 123,
+                                                              | "stringArray": [],
+                                                              | "objects": {
+                                                              |   "a": "bb",
+                                                              |   "b": 123
+                                                              | }
+                                                              |}
+           """.stripMargin.parseJson)
+
+    // zero is illegal
+    an[DeserializationException] should be thrownBy f.read(s"""
+                                                              |{
+                                                              | "stringValue": "111",
+                                                              | "bindPort": 0,
+                                                              | "connectionPort": 123,
+                                                              | "stringArray": [],
+                                                              | "objects": {
+                                                              |   "a": "bb",
+                                                              |   "b": 123
+                                                              | }
+                                                              |}
+           """.stripMargin.parseJson)
   }
 }

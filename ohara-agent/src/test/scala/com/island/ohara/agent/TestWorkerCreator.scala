@@ -307,7 +307,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
                      password = "",
                      services = Seq.empty,
                      lastModified = CommonUtils.current(),
-                     tags = Set.empty)
+                     tags = Map.empty)
     val node2Name = "node2"
     val node2 = Node(hostname = node2Name,
                      port = 22,
@@ -315,7 +315,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
                      password = "",
                      services = Seq.empty,
                      lastModified = CommonUtils.current(),
-                     tags = Set.empty)
+                     tags = Map.empty)
 
     val fakeWorkerCollie = new FakeWorkerCollie(NodeCollie(Seq(node1, node2)))
     val workerClusterInfo: Future[WorkerClusterInfo] = fakeWorkerCollie.creator
@@ -347,7 +347,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
                      password = "",
                      services = Seq.empty,
                      lastModified = CommonUtils.current(),
-                     tags = Set.empty)
+                     tags = Map.empty)
 
     val fakeWorkerCollie = new FakeWorkerCollie(NodeCollie(Seq(node1)))
 
@@ -378,7 +378,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
                      password = "",
                      services = Seq.empty,
                      lastModified = CommonUtils.current(),
-                     tags = Set.empty)
+                     tags = Map.empty)
     val node2Name = "node2"
     val node2 = Node(hostname = node2Name,
                      port = 22,
@@ -386,7 +386,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
                      password = "",
                      services = Seq.empty,
                      lastModified = CommonUtils.current(),
-                     tags = Set.empty)
+                     tags = Map.empty)
 
     val fakeWorkerCollie = new FakeWorkerCollie(NodeCollie(Seq(node1, node2)))
     val workerClusterInfo: Future[WorkerClusterInfo] = fakeWorkerCollie.creator

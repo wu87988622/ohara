@@ -128,5 +128,5 @@ class TestTopicApi extends SmallTest with Matchers {
   def nullTags(): Unit = an[NullPointerException] should be thrownBy TopicApi.access.request.tags(null)
 
   @Test
-  def emptyTags(): Unit = TopicApi.access.request.tags(Set.empty)
+  def emptyTags(): Unit = TopicApi.access.request.tags(Map.empty)
 }

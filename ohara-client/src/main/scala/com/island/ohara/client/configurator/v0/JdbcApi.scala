@@ -20,7 +20,7 @@ import java.util.Objects
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
-import spray.json.RootJsonFormat
+import spray.json.{JsValue, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -29,11 +29,11 @@ object JdbcApi {
   final case class Update(url: Option[String],
                           user: Option[String],
                           password: Option[String],
-                          tags: Option[Set[String]])
+                          tags: Option[Map[String, JsValue]])
   implicit val JDBC_UPDATE_JSON_FORMAT: RootJsonFormat[Update] =
     JsonRefiner[Update].format(jsonFormat4(Update)).rejectEmptyString().refine
 
-  final case class Creation(name: String, url: String, user: String, password: String, tags: Set[String])
+  final case class Creation(name: String, url: String, user: String, password: String, tags: Map[String, JsValue])
       extends CreationRequest
   implicit val JDBC_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
     JsonRefiner[Creation]
@@ -47,7 +47,7 @@ object JdbcApi {
       .withUnderLine()
       .toRefiner
       .nullToString("name", () => CommonUtils.randomString(10))
-      .nullToEmptyArray(Data.TAGS_KEY)
+      .nullToEmptyObject(Data.TAGS_KEY)
       .refine
 
   final case class JdbcInfo(name: String,
@@ -55,7 +55,7 @@ object JdbcApi {
                             user: String,
                             password: String,
                             lastModified: Long,
-                            tags: Set[String])
+                            tags: Map[String, JsValue])
       extends Data {
     override def kind: String = "jdbc"
   }
@@ -75,7 +75,7 @@ object JdbcApi {
     def password(password: String): Request
 
     @Optional("default value is empty array")
-    def tags(tags: Set[String]): Request
+    def tags(tags: Map[String, JsValue]): Request
 
     private[v0] def creation: Creation
 
@@ -102,7 +102,7 @@ object JdbcApi {
       private[this] var url: String = _
       private[this] var user: String = _
       private[this] var password: String = _
-      private[this] var tags: Set[String] = _
+      private[this] var tags: Map[String, JsValue] = _
 
       override def name(name: String): Request = {
         this.name = CommonUtils.requireNonEmpty(name)
@@ -124,7 +124,7 @@ object JdbcApi {
         this
       }
 
-      override def tags(tags: Set[String]): Request = {
+      override def tags(tags: Map[String, JsValue]): Request = {
         this.tags = Objects.requireNonNull(tags)
         this
       }
@@ -134,7 +134,7 @@ object JdbcApi {
         url = CommonUtils.requireNonEmpty(url),
         user = CommonUtils.requireNonEmpty(user),
         password = CommonUtils.requireNonEmpty(password),
-        tags = if (tags == null) Set.empty else tags
+        tags = if (tags == null) Map.empty else tags
       )
 
       override private[v0] def update: Update = Update(

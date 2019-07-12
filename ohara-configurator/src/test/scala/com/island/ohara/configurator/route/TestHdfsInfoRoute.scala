@@ -23,6 +23,7 @@ import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Test}
 import org.scalatest.Matchers
+import spray.json.{JsNumber, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -105,19 +106,25 @@ class TestHdfsInfoRoute extends SmallTest with Matchers {
 
   @Test
   def updateTags(): Unit = {
-    val tags = Set(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val tags = Map(
+      CommonUtils.randomString(10) -> JsString(CommonUtils.randomString(10)),
+      CommonUtils.randomString(10) -> JsNumber(CommonUtils.randomInteger())
+    )
     val hdfsDesc = result(hdfsApi.request.uri("password").tags(tags).create())
     hdfsDesc.tags shouldBe tags
 
-    val tags2 = Set(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val tags2 = Map(
+      CommonUtils.randomString(10) -> JsString(CommonUtils.randomString(10)),
+      CommonUtils.randomString(10) -> JsNumber(CommonUtils.randomInteger())
+    )
     val hdfsDesc2 = result(hdfsApi.request.name(hdfsDesc.name).tags(tags2).update())
     hdfsDesc2.tags shouldBe tags2
 
     val hdfsDesc3 = result(hdfsApi.request.name(hdfsDesc.name).update())
     hdfsDesc3.tags shouldBe tags2
 
-    val hdfsDesc4 = result(hdfsApi.request.name(hdfsDesc.name).tags(Set.empty).update())
-    hdfsDesc4.tags shouldBe Set.empty
+    val hdfsDesc4 = result(hdfsApi.request.name(hdfsDesc.name).tags(Map.empty).update())
+    hdfsDesc4.tags shouldBe Map.empty
   }
 
   @After

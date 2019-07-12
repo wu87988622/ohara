@@ -16,6 +16,8 @@
 
 package com.island.ohara.client.configurator.v0
 
+import spray.json.JsValue
+
 /**
   * This is the basic type which can be stored by configurator.
   * All members are declared as "def" since not all subclasses intend to represent all members in restful APIs.
@@ -24,7 +26,7 @@ trait Data {
   def name: String
   def lastModified: Long
   def kind: String
-  def tags: Set[String]
+  def tags: Map[String, JsValue]
 }
 
 object Data {

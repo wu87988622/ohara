@@ -24,6 +24,7 @@ import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.typesafe.scalalogging.Logger
+import spray.json.JsValue
 
 import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object TopicRoute {
@@ -50,12 +51,13 @@ private[configurator] object TopicRoute {
     metrics = metrics(brokerCluster, topicInfo.name)
   )
 
-  private[this] def createTopic(client: TopicAdmin,
-                                clusterName: String,
-                                name: String,
-                                numberOfPartitions: Int,
-                                numberOfReplications: Short,
-                                tags: Set[String])(implicit executionContext: ExecutionContext): Future[TopicInfo] =
+  private[this] def createTopic(
+    client: TopicAdmin,
+    clusterName: String,
+    name: String,
+    numberOfPartitions: Int,
+    numberOfReplications: Short,
+    tags: Map[String, JsValue])(implicit executionContext: ExecutionContext): Future[TopicInfo] =
     client.creator
       .name(name)
       .numberOfPartitions(numberOfPartitions)
@@ -114,7 +116,7 @@ private[configurator] object TopicRoute {
                     name = name,
                     numberOfPartitions = update.numberOfPartitions.getOrElse(DEFAULT_NUMBER_OF_PARTITIONS),
                     numberOfReplications = update.numberOfReplications.getOrElse(DEFAULT_NUMBER_OF_REPLICATIONS),
-                    tags = update.tags.getOrElse(Set.empty)
+                    tags = update.tags.getOrElse(Map.empty)
                   )) {
                     topicFromKafka =>
                       if (update.numberOfPartitions.exists(_ < topicFromKafka.numberOfPartitions)) {
@@ -150,7 +152,7 @@ private[configurator] object TopicRoute {
                           cluster.name,
                           metrics = Metrics(Seq.empty),
                           CommonUtils.current(),
-                          tags = update.tags.getOrElse(previous.map(_.tags).getOrElse(Set.empty))
+                          tags = update.tags.getOrElse(previous.map(_.tags).getOrElse(Map.empty))
                         ))
                       }
                   }

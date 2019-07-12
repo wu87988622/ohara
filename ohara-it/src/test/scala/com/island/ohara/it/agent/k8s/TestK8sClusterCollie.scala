@@ -43,7 +43,7 @@ class TestK8sClusterCollie extends BasicTests4ClusterCollie {
                  password = "fake",
                  services = Seq.empty,
                  lastModified = CommonUtils.current(),
-                 tags = Set.empty))
+                 tags = Map.empty))
 
   override protected def clusterCollie: ClusterCollie = _clusterCollie
   private[this] var _clusterCollie: ClusterCollie = _

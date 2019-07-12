@@ -17,7 +17,8 @@
 package com.island.ohara.configurator.store
 
 import com.island.ohara.client.configurator.v0.Data
+import spray.json.JsValue
 
 case class SimpleData(name: String, lastModified: Long, kind: String) extends Data {
-  override def tags: Set[String] = Set.empty
+  override def tags: Map[String, JsValue] = Map.empty
 }

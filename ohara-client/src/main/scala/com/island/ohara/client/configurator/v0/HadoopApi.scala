@@ -20,18 +20,18 @@ import java.util.Objects
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
-import spray.json.RootJsonFormat
+import spray.json.{JsValue, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 object HadoopApi {
   val HDFS_PREFIX_PATH: String = "hdfs"
-  final case class Update(uri: Option[String], tags: Option[Set[String]])
+  final case class Update(uri: Option[String], tags: Option[Map[String, JsValue]])
 
   implicit val HDFS_UPDATE_JSON_FORMAT: RootJsonFormat[Update] =
     JsonRefiner[Update].format(jsonFormat2(Update)).rejectEmptyString().refine
 
-  final case class Creation(name: String, uri: String, tags: Set[String]) extends CreationRequest
+  final case class Creation(name: String, uri: String, tags: Map[String, JsValue]) extends CreationRequest
   implicit val HDFS_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
     JsonRefiner[Creation]
       .format(jsonFormat3(Creation))
@@ -44,10 +44,10 @@ object HadoopApi {
       .withUnderLine()
       .toRefiner
       .nullToString("name", () => CommonUtils.randomString(10))
-      .nullToEmptyArray(Data.TAGS_KEY)
+      .nullToEmptyObject(Data.TAGS_KEY)
       .refine
 
-  final case class HdfsInfo(name: String, uri: String, lastModified: Long, tags: Set[String]) extends Data {
+  final case class HdfsInfo(name: String, uri: String, lastModified: Long, tags: Map[String, JsValue]) extends Data {
     override def kind: String = "hdfs"
   }
 
@@ -64,7 +64,7 @@ object HadoopApi {
     def uri(uri: String): Request
 
     @Optional("default value is empty array in creation and None in update")
-    def tags(tags: Set[String]): Request
+    def tags(tags: Map[String, JsValue]): Request
 
     private[v0] def creation: Creation
 
@@ -89,7 +89,7 @@ object HadoopApi {
     def request: Request = new Request {
       private[this] var name: String = _
       private[this] var uri: String = _
-      private[this] var tags: Set[String] = _
+      private[this] var tags: Map[String, JsValue] = _
       override def name(name: String): Request = {
         this.name = CommonUtils.requireNonEmpty(name)
         this
@@ -100,7 +100,7 @@ object HadoopApi {
         this
       }
 
-      override def tags(tags: Set[String]): Request = {
+      override def tags(tags: Map[String, JsValue]): Request = {
         this.tags = Objects.requireNonNull(tags)
         this
       }
@@ -108,7 +108,7 @@ object HadoopApi {
       override private[v0] def creation: Creation = Creation(
         name = if (CommonUtils.isEmpty(name)) CommonUtils.randomString(10) else name,
         uri = CommonUtils.requireNonEmpty(uri),
-        tags = if (tags == null) Set.empty else tags
+        tags = if (tags == null) Map.empty else tags
       )
 
       override private[v0] def update: Update = Update(

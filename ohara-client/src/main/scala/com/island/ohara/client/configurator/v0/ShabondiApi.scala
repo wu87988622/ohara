@@ -18,7 +18,7 @@ package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.common.util.VersionUtils
 import spray.json.DefaultJsonProtocol._
-import spray.json.RootJsonFormat
+import spray.json.{JsValue, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -38,7 +38,7 @@ final object ShabondiApi {
     override def kind: String = "shabondi"
 
     // TODO: Does shabondi need the tags? by chia
-    override def tags: Set[String] = Set.empty
+    override def tags: Map[String, JsValue] = Map.empty
   }
 
   final case class ShabondiProperty(to: Option[Seq[String]], port: Option[Int])

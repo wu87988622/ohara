@@ -268,5 +268,5 @@ class TestJdbcApi extends SmallTest with Matchers {
   def nullTags(): Unit = an[NullPointerException] should be thrownBy JdbcApi.access.request.tags(null)
 
   @Test
-  def emptyTags(): Unit = JdbcApi.access.request.tags(Set.empty)
+  def emptyTags(): Unit = JdbcApi.access.request.tags(Map.empty)
 }

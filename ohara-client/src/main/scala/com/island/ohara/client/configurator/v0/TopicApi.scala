@@ -20,7 +20,7 @@ import java.util.Objects
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
-import spray.json.RootJsonFormat
+import spray.json.{JsValue, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -32,7 +32,7 @@ object TopicApi {
   case class Update private[TopicApi] (brokerClusterName: Option[String],
                                        numberOfPartitions: Option[Int],
                                        numberOfReplications: Option[Short],
-                                       tags: Option[Set[String]])
+                                       tags: Option[Map[String, JsValue]])
   implicit val TOPIC_UPDATE_FORMAT: RootJsonFormat[Update] =
     JsonRefiner[Update].format(jsonFormat4(Update)).rejectEmptyString().refine
 
@@ -40,7 +40,7 @@ object TopicApi {
                                          brokerClusterName: Option[String],
                                          numberOfPartitions: Int,
                                          numberOfReplications: Short,
-                                         tags: Set[String])
+                                         tags: Map[String, JsValue])
       extends CreationRequest
 
   implicit val TOPIC_CREATION_FORMAT: OharaJsonFormat[Creation] = JsonRefiner[Creation]
@@ -56,7 +56,7 @@ object TopicApi {
     .nullToInt("numberOfReplications", DEFAULT_NUMBER_OF_REPLICATIONS)
     .rejectEmptyString()
     .nullToString("name", () => CommonUtils.randomString(10))
-    .nullToEmptyArray(Data.TAGS_KEY)
+    .nullToEmptyObject(Data.TAGS_KEY)
     .refine
 
   import MetricsApi._
@@ -67,7 +67,7 @@ object TopicApi {
                        brokerClusterName: String,
                        metrics: Metrics,
                        lastModified: Long,
-                       tags: Set[String])
+                       tags: Map[String, JsValue])
       extends Data {
     override def kind: String = "topic"
   }
@@ -91,7 +91,7 @@ object TopicApi {
     def numberOfReplications(numberOfReplications: Short): Request
 
     @Optional("default value is empty array")
-    def tags(tags: Set[String]): Request
+    def tags(tags: Map[String, JsValue]): Request
 
     private[v0] def creation: Creation
 
@@ -118,7 +118,7 @@ object TopicApi {
       private[this] var brokerClusterName: Option[String] = None
       private[this] var numberOfPartitions: Option[Int] = None
       private[this] var numberOfReplications: Option[Short] = None
-      private[this] var tags: Set[String] = _
+      private[this] var tags: Map[String, JsValue] = _
       override def name(name: String): Request = {
         this.name = CommonUtils.requireNonEmpty(name)
         this
@@ -139,7 +139,7 @@ object TopicApi {
         this
       }
 
-      override def tags(tags: Set[String]): Request = {
+      override def tags(tags: Map[String, JsValue]): Request = {
         this.tags = Objects.requireNonNull(tags)
         this
       }
@@ -149,7 +149,7 @@ object TopicApi {
         brokerClusterName = brokerClusterName,
         numberOfPartitions = numberOfPartitions.getOrElse(DEFAULT_NUMBER_OF_PARTITIONS),
         numberOfReplications = numberOfReplications.getOrElse(DEFAULT_NUMBER_OF_REPLICATIONS),
-        tags = if (tags == null) Set.empty else tags
+        tags = if (tags == null) Map.empty else tags
       )
 
       override private[v0] def update: Update = Update(

@@ -42,7 +42,7 @@ class TestConnectorApi extends SmallTest with Matchers {
       .build()
     val topicNames = Seq(CommonUtils.randomString())
     val numberOfTasks = 10
-    val tags = Set("aa", "bb")
+    val tags = Map("a" -> JsString("b"), "b" -> JsNumber(1))
     val anotherKey = CommonUtils.randomString()
     val anotherValue = CommonUtils.randomString()
 
@@ -55,7 +55,7 @@ class TestConnectorApi extends SmallTest with Matchers {
                                              |  "topics": ${JsArray(topicNames.map(v => JsString(v)).toVector)
                                                .toString()},
                                              |  "numberOfTasks": ${JsNumber(numberOfTasks).toString()},
-                                             |  "tags": ${JsArray(tags.map(JsString(_)).toVector).toString()},
+                                             |  "tags": ${JsObject(tags)},
                                              |  "$anotherKey": "$anotherValue"
                                              |}
                                             """.stripMargin.parseJson)
@@ -417,5 +417,25 @@ class TestConnectorApi extends SmallTest with Matchers {
   def nullTags(): Unit = an[NullPointerException] should be thrownBy ConnectorApi.access.request.tags(null)
 
   @Test
-  def emptyTags(): Unit = ConnectorApi.access.request.tags(Set.empty)
+  def emptyTags(): Unit = ConnectorApi.access.request.tags(Map.empty)
+  @Test
+  def parseTags(): Unit =
+    ConnectorApi.CONNECTOR_CREATION_JSON_FORMAT.read(s"""
+                                                        |  {
+                                                        |    "tags": {
+                                                        |      "a": "bb",
+                                                        |      "b": 123
+                                                        |    }
+                                                        |  }
+                                                        |     """.stripMargin.parseJson).tags shouldBe Map(
+      "a" -> JsString("bb"),
+      "b" -> JsNumber(123)
+    )
+
+  @Test
+  def parseNullTags(): Unit =
+    ConnectorApi.CONNECTOR_CREATION_JSON_FORMAT.read(s"""
+                                                        |  {
+                                                        |  }
+                                                        |     """.stripMargin.parseJson).tags shouldBe Map.empty
 }

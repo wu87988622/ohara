@@ -48,7 +48,7 @@ class TestK8SClientVerify extends SmallTest with Matchers {
                password = "fake",
                services = Seq.empty,
                lastModified = CommonUtils.current(),
-               tags = Set.empty)),
+               tags = Map.empty)),
         30 seconds
       )
     runningNode match {
@@ -71,7 +71,7 @@ class TestK8SClientVerify extends SmallTest with Matchers {
                password = "fake",
                services = Seq.empty,
                lastModified = CommonUtils.current(),
-               tags = Set.empty)),
+               tags = Map.empty)),
         30 seconds
       )
     runningNode match {
@@ -94,7 +94,7 @@ class TestK8SClientVerify extends SmallTest with Matchers {
                password = "fake",
                services = Seq.empty,
                lastModified = CommonUtils.current(),
-               tags = Set.empty)),
+               tags = Map.empty)),
         30 seconds
       )
     runningNode match {
@@ -117,7 +117,7 @@ class TestK8SClientVerify extends SmallTest with Matchers {
                password = "fake",
                services = Seq.empty,
                lastModified = CommonUtils.current(),
-               tags = Set.empty)),
+               tags = Map.empty)),
         30 seconds
       )
     runningNode match {

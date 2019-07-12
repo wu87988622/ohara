@@ -285,6 +285,10 @@ public final class CommonUtils {
     return string.substring(0, len);
   }
 
+  public static int randomInteger() {
+    return new Random().nextInt();
+  }
+
   /**
    * @param s string
    * @return true if s is null or empty. otherwise false

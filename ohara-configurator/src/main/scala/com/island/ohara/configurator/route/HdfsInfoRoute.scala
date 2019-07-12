@@ -37,7 +37,7 @@ private[configurator] object HdfsInfoRoute {
               name = name,
               uri = request.uri.get,
               lastModified = CommonUtils.current(),
-              request.tags.getOrElse(Set.empty)
+              tags = request.tags.getOrElse(Map.empty)
             )
           } { previous =>
             HdfsInfo(

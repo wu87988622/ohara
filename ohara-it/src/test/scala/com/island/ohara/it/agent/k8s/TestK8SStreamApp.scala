@@ -42,7 +42,7 @@ class TestK8SStreamApp extends BasicTests4StreamApp {
                password = "fake",
                services = Seq.empty,
                lastModified = CommonUtils.current(),
-               tags = Set.empty))
+               tags = Map.empty))
   override protected def createNameHolder(nodeCache: Seq[Node]): ClusterNameHolder = new ClusterNameHolder(nodeCache) {
     override def close(): Unit = {
       val k8sClient = K8SClient(API_SERVER_URL.get)

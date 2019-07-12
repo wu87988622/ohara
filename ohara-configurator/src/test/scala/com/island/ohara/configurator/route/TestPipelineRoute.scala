@@ -26,6 +26,7 @@ import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.{Configurator, DumbSink}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
+import spray.json.{JsNumber, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -505,19 +506,25 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
   @Test
   def updateTags(): Unit = {
-    val tags = Set(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val tags = Map(
+      CommonUtils.randomString(10) -> JsString(CommonUtils.randomString(10)),
+      CommonUtils.randomString(10) -> JsNumber(CommonUtils.randomInteger())
+    )
     val pipelineDesc = result(pipelineApi.request.tags(tags).create())
     pipelineDesc.tags shouldBe tags
 
-    val tags2 = Set(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val tags2 = Map(
+      CommonUtils.randomString(10) -> JsString(CommonUtils.randomString(10)),
+      CommonUtils.randomString(10) -> JsNumber(CommonUtils.randomInteger())
+    )
     val pipelineDesc2 = result(pipelineApi.request.name(pipelineDesc.name).tags(tags2).update())
     pipelineDesc2.tags shouldBe tags2
 
     val pipelineDesc3 = result(pipelineApi.request.name(pipelineDesc.name).update())
     pipelineDesc3.tags shouldBe tags2
 
-    val pipelineDesc4 = result(pipelineApi.request.name(pipelineDesc.name).tags(Set.empty).update())
-    pipelineDesc4.tags shouldBe Set.empty
+    val pipelineDesc4 = result(pipelineApi.request.name(pipelineDesc.name).tags(Map.empty).update())
+    pipelineDesc4.tags shouldBe Map.empty
   }
 
   @After

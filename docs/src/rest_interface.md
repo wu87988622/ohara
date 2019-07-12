@@ -148,7 +148,7 @@ And it works only if there is only a broker cluster exists in ohara**)
   "metrics": {
     "meters": []
   },
-  "tags": []
+  "tags": {}
 }
 ```
 
@@ -186,7 +186,7 @@ And it works only if there is only a broker cluster exists in ohara**)
   "metrics": {
    "meters": []
   },
-  "tags": []
+  "tags": {}
 }
 ```
 
@@ -209,7 +209,7 @@ And it works only if there is only a broker cluster exists in ohara**)
     "metrics": {
      "meters": []
     },
-    "tags": []
+    "tags": {}
   },
   {
     "name": "wk00",
@@ -220,7 +220,7 @@ And it works only if there is only a broker cluster exists in ohara**)
     "metrics": {
      "meters": []
     },
-    "tags": []
+    "tags": {}
   }
 ]
 ```
@@ -257,7 +257,7 @@ And it works only if there is only a broker cluster exists in ohara**)
   "metrics": {
    "meters": []
   },
-  "tags": []
+  "tags": {}
 }
 ```
 ----------
@@ -271,7 +271,7 @@ storable information is shown below.
 1. port (**int**) — ftp server port
 1. user (**string**) — account of ftp server
 1. password (**string**) — password of ftp server
-1. tags (optional **array(string)**) — the extra description to this object
+1. tags (**object**) — the extra description to this object
 
 The following information are tagged by ohara.
 
@@ -288,7 +288,7 @@ The following information are tagged by ohara.
 1. port (**int**) — ftp server port
 1. user (**string**) — account of ftp server
 1. password (**string**) — password of ftp server
-1. tags (optional **array(string)**) — the extra description to this object
+1. tags (**object**) — the extra description to this object
 
 > the string value can't be empty or null. the port should be small than 65535 and larger than zero.
 
@@ -358,7 +358,7 @@ The following information are tagged by ohara.
   "user": "abc",
   "password": "pwd",
   "lastModified": 1553498552595,
-  "tags": []
+  "tags": {}
 }
 ```
 
@@ -379,7 +379,7 @@ The following information are tagged by ohara.
     "user": "abc",
     "password": "pwd",
     "lastModified": 1553498552595,
-    "tags": []
+    "tags": {}
   }
 ]
 ```
@@ -413,7 +413,7 @@ The following information are tagged by ohara.
   "user": "abc",
   "password": "pwd",
   "lastModified": 1553498552595,
-  "tags": []
+  "tags": {}
 }
 ```
 
@@ -425,7 +425,7 @@ Ohara supports to store the simple hdfs information which is running on single n
 
 1. name (**string**) — name of this hdfs information.
 1. uri (**string**) — hdfs connection information. The form looks like "hdfs://namenode:9999/"
-1. tags (optional **array(string)**) — the extra description to this object
+1. tags (**object**) — the extra description to this object
 
 The following information are tagged by ohara.
 
@@ -437,7 +437,7 @@ The following information are tagged by ohara.
 
 1. name (**string**) — name of this hdfs information.
 1. uri (**string**) — hdfs connection information. The form looks like "hdfs://namenode:9999/"
-1. tags (optional **array(string)**) — the extra description to this object
+1. tags (**object**) — the extra description to this object
 
 **Example Request**
 
@@ -455,7 +455,7 @@ The following information are tagged by ohara.
   "name": "hdfs0",
   "uri": "hdfs://namenode:9999",
   "lastModified": 1553498552595,
-  "tags": []
+  "tags": {}
 }
 ```
 ----------
@@ -465,7 +465,7 @@ The following information are tagged by ohara.
 
 1. name (**string**) — name of this hdfs information.
 1. uri (**option(string)**) — hdfs connection information. The form looks like "hdfs://namenode:9999/"
-1. tags (optional **array(string)**) — the extra description to this object
+1. tags (**object**) — the extra description to this object
 
 **Example Request**
 
@@ -485,7 +485,7 @@ The following information are tagged by ohara.
   "name": "hdfs0",
   "uri": "hdfs://namenode:9999",
   "lastModified": 1553498552595,
-  "tags": []
+  "tags": {}
 }
 ```
 ----------
@@ -501,7 +501,7 @@ The following information are tagged by ohara.
     "name": "hdfs0",
     "uri": "hdfs://namenode:9999",
     "lastModified": 1553498552595,
-    "tags": []
+    "tags": {}
   }
 ]
 ```
@@ -530,7 +530,7 @@ The following information are tagged by ohara.
   "name": "hdfs0",
   "uri": "hdfs://namenode:9999",
   "lastModified": 1553498552595,
-  "tags": []
+  "tags": {}
 }
 ```
 ----------
@@ -544,7 +544,7 @@ the jdbc is only supported now. The storable information is shown below.
 1. url (**string**) — jdbc connection information. format: jdbc:${database}://${serverName}\$instanceName:$portNumber
 1. user (**string**) — the account which has permission to access database
 1. password (**string**) — password of account. It is stored as text in ohara
-1. tags (optional **array(string)**) — the extra description to this object
+1. tags (**object**) — the extra description to this object
 
 The following information are tagged by ohara.
 
@@ -560,7 +560,7 @@ The following information are tagged by ohara.
 1. url (**string**) — jdbc connection information. format: jdbc:${database}://${serverName}\$instanceName:$portNumber
 1. user (**string**) — the account which has permission to access database
 1. password (**string**) — password of account. It is stored as text in ohara
-1. tags (optional **array(string)**) — the extra description to this object
+1. tags (**object**) — the extra description to this object
 
 **Example Request**
 
@@ -582,7 +582,7 @@ The following information are tagged by ohara.
   "lastModified": 1540967970407,
   "user": "user",
   "password": "aaa",
-  "tags": []
+  "tags": {}
 }
 ```
 
@@ -596,7 +596,7 @@ The following information are tagged by ohara.
 1. url (**option(string)**) — jdbc connection information. format: jdbc:${database}://${serverName}\$instanceName:$portNumber
 1. user (**option(string)**) — the account which has permission to access database
 1. password (**option(string)**) — password of account. It is stored as text in ohara
-1. tags (optional **array(string)**) — the extra description to this object
+1. tags (**object**) — the extra description to this object
 
 **Example Request**
 
@@ -620,7 +620,7 @@ The following information are tagged by ohara.
   "lastModified": 1540967970407,
   "user": "user",
   "password": "aaa",
-  "tags": []
+  "tags": {}
 }
 ```
 ----------
@@ -638,7 +638,7 @@ The following information are tagged by ohara.
     "lastModified": 1540967970407,
     "user": "user",
     "password": "aaa",
-    "tags": []
+    "tags": {}
   }
 ]
 ```
@@ -671,7 +671,7 @@ The following information are tagged by ohara.
   "lastModified": 1540967970407,
   "user": "user",
   "password": "aaa",
-  "tags": []
+  "tags": {}
 }
 ```
 
@@ -697,7 +697,7 @@ Apart from custom settings, common settings are required by all connectors. The 
   - columns[i].order (**int**) — the order of this column
 1. numberOfTasks (**int**) — the number of tasks
 1. workerClusterName (**string**) — target worker cluster
-1. tags (optional **array(string)**) — the extra description to this object
+1. tags (**object**) — the extra description to this object
 
 The following information are updated by ohara.
 1. name (**string**) — connector's name
@@ -748,7 +748,7 @@ a connector with above incomplete settings will introduce a error.
   "settings": {
     "connector.name": "jdbc_name",
     "connector.class": "com.island.ohara.connector.ftp.FtpSource",
-    "tags": []
+    "tags": {}
   },
   "metrics": {
     "meters": []
@@ -778,7 +778,7 @@ a connector with above incomplete settings will introduce a error.
   "settings": {
     "connector.name": "jdbc_name",
     "connector.class": "com.island.ohara.connector.ftp.FtpSource",
-    "tags": []
+    "tags": {}
   },
   "metrics": {
     "meters": []
@@ -800,7 +800,7 @@ a connector with above incomplete settings will introduce a error.
     "settings": {
       "connector.name": "jdbc_name",
       "connector.class": "com.island.ohara.connector.ftp.FtpSource",
-      "tags": []
+      "tags": {}
     },
     "metrics": {
       "meters": []
@@ -837,7 +837,7 @@ Deleting the settings used by a running connector is not allowed. You should [st
   "settings": {
     "connector.name": "jdbc_name",
     "connector.class": "com.island.ohara.connector.ftp.FtpSource",
-    "tags": []
+    "tags": {}
   },
   "metrics": {
     "meters": []
@@ -863,7 +863,7 @@ This request is idempotent so it is safe to retry this command repeatedly.
   "settings": {
     "connector.name": "jdbc_name",
     "connector.class": "com.island.ohara.connector.ftp.FtpSource",
-    "tags": []
+    "tags": {}
   },
   "state": "RUNNING",
   "metrics": {
@@ -997,7 +997,7 @@ The properties used in generating pipeline are shown below.
   - flows[i].from (**string**) — the endpoint of source
   - flows[i].to (**array(string)**) — the endpoint of sink
 1. workerClusterName (**string**) — target worker cluster
-1. tags (optional **array(string)**) — the extra description to this object
+1. tags (**object**) — the extra description to this object
 
 Following information are written by ohara.
  1. lastModified (**long**) — the last time to update this pipeline
@@ -1059,7 +1059,7 @@ to find the status of the [connector](#connector). That is to say, it is ok to a
         "meters": []
       },
       "kind": "topic",
-      "tags": []
+      "tags": {}
     },
     {
       "name": "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd",
@@ -1069,10 +1069,10 @@ to find the status of the [connector](#connector). That is to say, it is ok to a
         "meters": []
       },
       "kind": "connector",
-      "tags": []
+      "tags": {}
     }
   ],
-  "tags": []
+  "tags": {}
 }
 ```
 
@@ -1114,10 +1114,10 @@ example creates a pipeline with only a object and leave empty in **to** field.
         "meters": []
       },
       "kind": "topic",
-      "tags": []
+      "tags": {}
     }
   ],
-  "tags": []
+  "tags": {}
 }
 ```
 ----------
@@ -1164,7 +1164,7 @@ example creates a pipeline with only a object and leave empty in **to** field.
         "meters": []
       },
       "kind": "topic",
-      "tags": []
+      "tags": {}
     },
     {
       "name": "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd",
@@ -1174,10 +1174,10 @@ example creates a pipeline with only a object and leave empty in **to** field.
         "meters": []
       },
       "kind": "connector",
-      "tags": []
+      "tags": {}
     }
   ],
-  "tags": []
+  "tags": {}
 }
 ```
 ----------
@@ -1213,7 +1213,7 @@ use [GET](#get-a-pipeline) to fetch details of **single** pipeline.
           "meters": []
         },
         "kind": "topic",
-        "tags": []
+        "tags": {}
       },
       {
         "name": "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd",
@@ -1223,10 +1223,10 @@ use [GET](#get-a-pipeline) to fetch details of **single** pipeline.
           "meters": []
         },
         "kind": "connector",
-        "tags": []
+        "tags": {}
       }
     ],
-    "tags": []
+    "tags": {}
   }
 ]
 ```
@@ -1274,7 +1274,7 @@ Deleting a pipeline does not delete the objects related to the pipeline.
         "meters": []
       },
       "kind": "topic",
-      "tags": []
+      "tags": {}
     },
     {
       "name": "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd",
@@ -1284,10 +1284,10 @@ Deleting a pipeline does not delete the objects related to the pipeline.
         "meters": []
       },
       "kind": "connector",
-      "tags": []
+      "tags": {}
     }
   ],
-  "tags": []
+  "tags": {}
 }
 ```
 ----------
@@ -1314,7 +1314,7 @@ The properties used in describing a node are shown below.
 1. port (**int**) — ssh port of node
 1. user (**string**) — ssh account
 1. password (**string**) — ssh password
-1. tags (optional **array(string)**) — the extra description to this object
+1. tags (**object**) — the extra description to this object
 
 > ohara use above information to login node to manage the containers. Please make sure the account has permission to
 operate docker (and k8s service) without sudo.
@@ -1352,7 +1352,7 @@ The following information are tagged by ohara.
   "user": "abc",
   "password": "pwd",
   "lastModified": 1553498552595,
-  "tags": []
+  "tags": {}
 }
 ```
 ----------
@@ -1386,7 +1386,7 @@ The following information are tagged by ohara.
   "user": "abc",
   "password": "pwd",
   "lastModified": 1553498552595,
-  "tags": []
+  "tags": {}
 }
 ```
 ----------
@@ -1404,7 +1404,7 @@ The following information are tagged by ohara.
     "user": "abc",
     "password": "pwd",
     "lastModified": 1553498552595,
-    "tags": []
+    "tags": {}
   }
 ]
 ```
@@ -1438,7 +1438,7 @@ The following information are tagged by ohara.
   "user": "abc",
   "password": "pwd",
   "lastModified": 1553498552595,
-  "tags": []
+  "tags": {}
 }
 ```
 ----------

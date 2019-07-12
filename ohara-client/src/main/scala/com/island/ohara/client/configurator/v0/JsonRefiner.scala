@@ -50,6 +50,8 @@ trait JsonRefiner[T] {
 
   def nullToEmptyArray(key: String): JsonRefiner[T] = nullToJsValue(key, () => JsArray.empty)
 
+  def nullToEmptyObject(key: String): JsonRefiner[T] = nullToJsValue(key, () => JsObject.empty)
+
   /**
     * convert the null value to random port and check the existent port.
     * @param key keys
@@ -110,7 +112,7 @@ trait JsonRefiner[T] {
       case s: JsNumber if s.value.toInt > 0 && s.value <= 65535 => // pass
       case s: JsNumber =>
         throw DeserializationException(
-          s"the connection port must be bigger than zero and small than 65536, but actual port is ${s.value}",
+          s"""the connection port must be bigger than zero and small than 65536, but actual port is \"${s.value}\"""",
           fieldNames = List(key))
       case _ => // we don't care for other types
     }
@@ -125,8 +127,9 @@ trait JsonRefiner[T] {
     key, {
       case s: JsNumber if s.value.toInt > 1024 && s.value <= 65535 => // pass
       case s: JsNumber =>
-        throw DeserializationException(s"the connection port must be [1024, 65535), but actual port is ${s.value}",
-                                       fieldNames = List(key))
+        throw DeserializationException(
+          s"""the connection port must be [1024, 65535), but actual port is \"${s.value}\"""",
+          fieldNames = List(key))
       case _ => // we don't care for other types
     }
   )
@@ -148,6 +151,35 @@ trait JsonRefiner[T] {
     key, {
       case s: JsString if s.value.isEmpty =>
         throw DeserializationException(s"""the value of \"$key\" can't be empty string!!!""", fieldNames = List(key))
+      case _ => // we don't care for other types
+    }
+  )
+
+  /**
+    * throw exception if the specific key of input json is associated to either negative number or zero.
+    * @param key key
+    * @return this refiner
+    */
+  def requirePositiveNumber(key: String): JsonRefiner[T] = valueChecker(
+    key, {
+      case s: JsNumber if s.value <= 0 =>
+        throw DeserializationException(s"""the \"${s.value}\" of \"$key\" can't be either negative or zero!!!""",
+                                       fieldNames = List(key))
+      case _ => // we don't care for other types
+    }
+  )
+
+  /**
+    * throw exception if the specific key of input json is associated to negative number.
+    * This method check only the specific key. By contrast, rejectNegativeNumber() checks values for all keys.
+    * @param key key
+    * @return this refiner
+    */
+  def rejectNegativeNumber(key: String): JsonRefiner[T] = valueChecker(
+    key, {
+      case s: JsNumber if s.value < 0 =>
+        throw DeserializationException(s"""the \"${s.value}\" of \"$key\" can't be negative value!!!""",
+                                       fieldNames = List(key))
       case _ => // we don't care for other types
     }
   )
@@ -397,7 +429,7 @@ object JsonRefiner {
           if (_rejectEmptyString) checkJsValueForEmptyString(key, value)
 
           def checkNegativeNumber(k: String, s: JsNumber): Unit = if (s.value < 0)
-            throw DeserializationException(s"""the value of \"$k\" MUST be bigger than or equal to zero!!!""",
+            throw DeserializationException(s"""the \"${s.value}\" of \"$k\" MUST be bigger than or equal to zero!!!""",
                                            fieldNames = List(k))
           def checkJsValueForNegativeNumber(k: String, v: JsValue): Unit = v match {
             case s: JsNumber => checkNegativeNumber(k, s)

@@ -30,11 +30,14 @@ object NodeApi {
   val BROKER_SERVICE_NAME: String = "broker"
   val WORKER_SERVICE_NAME: String = "connect-worker"
 
-  case class Update(port: Option[Int], user: Option[String], password: Option[String], tags: Option[Set[String]])
+  case class Update(port: Option[Int],
+                    user: Option[String],
+                    password: Option[String],
+                    tags: Option[Map[String, JsValue]])
   implicit val NODE_UPDATE_JSON_FORMAT: RootJsonFormat[Update] =
     JsonRefiner[Update].format(jsonFormat4(Update)).requireConnectionPort("port").rejectEmptyString().refine
 
-  case class Creation(hostname: String, port: Int, user: String, password: String, tags: Set[String])
+  case class Creation(hostname: String, port: Int, user: String, password: String, tags: Map[String, JsValue])
       extends CreationRequest {
     override def name: String = hostname
   }
@@ -51,7 +54,7 @@ object NodeApi {
       .withDot()
       .withDash()
       .toRefiner
-      .nullToEmptyArray(Data.TAGS_KEY)
+      .nullToEmptyObject(Data.TAGS_KEY)
       .nullToAnotherValueOfKey("hostname", "name")
       .refine
 
@@ -67,7 +70,7 @@ object NodeApi {
                   password: String,
                   services: Seq[NodeService],
                   lastModified: Long,
-                  tags: Set[String])
+                  tags: Map[String, JsValue])
       extends Data {
     override def name: String = hostname
     override def kind: String = "node"
@@ -100,7 +103,7 @@ object NodeApi {
     def password(password: String): Request
 
     @Optional("default value is empty array")
-    def tags(tags: Set[String]): Request
+    def tags(tags: Map[String, JsValue]): Request
 
     /**
       * Retrieve the inner object of request payload. Noted, it throw unchecked exception if you haven't filled all required fields
@@ -137,7 +140,7 @@ object NodeApi {
       private[this] var port: Option[Int] = None
       private[this] var user: String = _
       private[this] var password: String = _
-      private[this] var tags: Set[String] = _
+      private[this] var tags: Map[String, JsValue] = _
       override def hostname(hostname: String): Request = {
         this.hostname = CommonUtils.requireNonEmpty(hostname)
         this
@@ -155,7 +158,7 @@ object NodeApi {
         this
       }
 
-      override def tags(tags: Set[String]): Request = {
+      override def tags(tags: Map[String, JsValue]): Request = {
         this.tags = Objects.requireNonNull(tags)
         this
       }
@@ -165,7 +168,7 @@ object NodeApi {
         user = CommonUtils.requireNonEmpty(user),
         password = CommonUtils.requireNonEmpty(password),
         port = port.map(CommonUtils.requireConnectionPort).getOrElse(throw new NullPointerException),
-        tags = if (tags == null) Set.empty else tags
+        tags = if (tags == null) Map.empty else tags
       )
 
       override private[v0] def update: Update = Update(

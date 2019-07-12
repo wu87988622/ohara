@@ -54,7 +54,7 @@ private[configurator] object FtpInfoRoute {
             user = request.user.get,
             password = request.password.get,
             lastModified = CommonUtils.current(),
-            tags = request.tags.getOrElse(Set.empty)
+            tags = request.tags.getOrElse(Map.empty)
           )
         } { previous =>
           FtpInfo(

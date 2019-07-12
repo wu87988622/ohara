@@ -423,7 +423,7 @@ private[configurator] object PipelineRoute {
                   toRes(Map(
                           name -> checkedRequest.copy(
                             flows = Some(checkedRequest.flows.getOrElse(Seq.empty)),
-                            tags = Some(checkedRequest.tags.getOrElse(Set.empty))
+                            tags = Some(checkedRequest.tags.getOrElse(Map.empty))
                           )),
                         false).map(_.head))),
       hookOfGet = (response: Pipeline) => update(response),

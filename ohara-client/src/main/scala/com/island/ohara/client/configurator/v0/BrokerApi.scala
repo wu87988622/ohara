@@ -19,7 +19,7 @@ package com.island.ohara.client.configurator.v0
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
-import spray.json.RootJsonFormat
+import spray.json.{JsValue, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -45,7 +45,7 @@ object BrokerApi {
     override def ports: Set[Int] = Set(clientPort, exporterPort, jmxPort)
     // the properties is not stored in configurator so we can't maintain the tags now
     // TODO: see https://github.com/oharastream/ohara/issues/1544
-    override def tags: Set[String] = Set.empty
+    override def tags: Map[String, JsValue] = Map.empty
   }
 
   /**

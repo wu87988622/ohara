@@ -55,7 +55,7 @@ class TestPipelineApi extends SmallTest with Matchers {
       objects = Seq.empty,
       flows = Seq.empty,
       lastModified = CommonUtils.current(),
-      tags = Set.empty
+      tags = Map.empty
     )
     val json = PIPELINE_JSON_FORMAT.write(pipeline).toString
     withClue(json)(json.contains("\"rules\":{") shouldBe true)
@@ -76,7 +76,7 @@ class TestPipelineApi extends SmallTest with Matchers {
         )
       ),
       lastModified = CommonUtils.current(),
-      tags = Set.empty
+      tags = Map.empty
     )
     val json = PIPELINE_JSON_FORMAT.write(pipeline).toString
     withClue(json)(json.contains(s"""\"rules\":{\"$from\":[\"$to\"]""") shouldBe true)
@@ -176,7 +176,7 @@ class TestPipelineApi extends SmallTest with Matchers {
     creation2.name shouldBe name
     creation2.workerClusterName shouldBe None
     creation2.flows shouldBe Seq.empty
-    creation2.tags shouldBe Set.empty
+    creation2.tags shouldBe Map.empty
   }
 
   @Test
@@ -210,5 +210,5 @@ class TestPipelineApi extends SmallTest with Matchers {
   def nullTags(): Unit = an[NullPointerException] should be thrownBy PipelineApi.access.request.tags(null)
 
   @Test
-  def emptyTags(): Unit = PipelineApi.access.request.tags(Set.empty)
+  def emptyTags(): Unit = PipelineApi.access.request.tags(Map.empty)
 }

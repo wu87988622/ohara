@@ -291,7 +291,7 @@ class TestNodeApi extends SmallTest with Matchers {
   def nullTags(): Unit = an[NullPointerException] should be thrownBy NodeApi.access.request.tags(null)
 
   @Test
-  def emptyTags(): Unit = NodeApi.access.request.tags(Set.empty)
+  def emptyTags(): Unit = NodeApi.access.request.tags(Map.empty)
 
   @Test
   def nodeJsonShouldContainName(): Unit = {
@@ -305,7 +305,7 @@ class TestNodeApi extends SmallTest with Matchers {
         password = CommonUtils.randomString(10),
         services = Seq.empty,
         lastModified = CommonUtils.current(),
-        tags = Set.empty
+        tags = Map.empty
       ))
       .asJsObject
       .fields("name")

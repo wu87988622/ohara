@@ -23,7 +23,7 @@ import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json.{PropGroups, SettingDefinition, StringList}
 import spray.json.DefaultJsonProtocol._
-import spray.json.{DeserializationException, JsArray, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json.{DeserializationException, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
@@ -83,10 +83,14 @@ object ConnectorApi {
   final case class Update(settings: Map[String, JsValue]) {
     def workerClusterName: Option[String] = Creation(settings).workerClusterName
   }
-  implicit val CONNECTOR_UPDATE_FORMAT: RootJsonFormat[Update] = new RootJsonFormat[Update] {
-    override def write(obj: Update): JsValue = JsObject(noJsNull(obj.settings))
-    override def read(json: JsValue): Update = Update(json.asJsObject.fields)
-  }
+
+  implicit val CONNECTOR_UPDATE_FORMAT: RootJsonFormat[Update] = JsonRefiner[Update]
+    .format(new RootJsonFormat[Update] {
+      override def write(obj: Update): JsValue = JsObject(noJsNull(obj.settings))
+      override def read(json: JsValue): Update = Update(json.asJsObject.fields)
+    })
+    .rejectEmptyString()
+    .refine
 
   final case class Creation(settings: Map[String, JsValue]) extends CreationRequest {
 
@@ -115,15 +119,14 @@ object ConnectorApi {
 
     override def name: String = plain(SettingDefinition.CONNECTOR_NAME_DEFINITION.key())
 
-    override def tags: Set[String] = noJsNull(settings)
-      .find(_._1 == SettingDefinition.TAGS_DEFINITION.key())
-      .map(_._2)
+    override def tags: Map[String, JsValue] = noJsNull(settings)
+      .get(SettingDefinition.TAGS_DEFINITION.key())
       .map {
-        case s: JsArray => s.elements.map(_.convertTo[String]).toSet
-        case _ =>
-          throw new IllegalArgumentException(s"the type of ${SettingDefinition.TAGS_DEFINITION.key()} should be array")
+        case s: JsObject => s.fields
+        case other: JsValue =>
+          throw new IllegalArgumentException(s"the type of tags should be JsObject, actual type is ${other.getClass}")
       }
-      .getOrElse(Set.empty)
+      .getOrElse(Map.empty)
   }
 
   implicit val CONNECTOR_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] = JsonRefiner[Creation]
@@ -135,7 +138,7 @@ object ConnectorApi {
     .nullToInt(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key(), DEFAULT_NUMBER_OF_TASKS)
     .rejectEmptyString()
     .nullToString("name", () => CommonUtils.randomString(10))
-    .nullToEmptyArray(Data.TAGS_KEY)
+    .nullToEmptyObject(Data.TAGS_KEY)
     .refine
 
   import MetricsApi._
@@ -176,15 +179,14 @@ object ConnectorApi {
         .get(SettingDefinition.TOPIC_NAMES_DEFINITION.key())
         .map(s => StringList.ofJson(s).asScala)
         .getOrElse(Seq.empty)
-    override def tags: Set[String] = noJsNull(settings)
-      .find(_._1 == SettingDefinition.TAGS_DEFINITION.key())
-      .map(_._2)
+    override def tags: Map[String, JsValue] = noJsNull(settings)
+      .get(SettingDefinition.TAGS_DEFINITION.key())
       .map {
-        case s: JsArray => s.elements.map(_.convertTo[String]).toSet
-        case _ =>
-          throw new IllegalArgumentException(s"the type of ${SettingDefinition.TAGS_DEFINITION.key()} should be array")
+        case s: JsObject => s.fields
+        case other: JsValue =>
+          throw new IllegalArgumentException(s"the type of tags should be JsObject, actual type is ${other.getClass}")
       }
-      .getOrElse(Set.empty)
+      .getOrElse(Map.empty)
   }
 
   implicit val CONNECTOR_STATE_JSON_FORMAT: RootJsonFormat[ConnectorState] =
@@ -210,7 +212,7 @@ object ConnectorApi {
     protected[this] var numberOfTasks: Int = DEFAULT_NUMBER_OF_TASKS
     protected[this] var settings: Map[String, String] = Map.empty
     protected[this] var workerClusterName: String = _
-    protected[this] var tags: Set[String] = _
+    protected[this] var tags: Map[String, JsValue] = _
 
     @Optional("default name is a random string. But it is required in updating")
     def name(name: String): BasicRequest.this.type = {
@@ -268,7 +270,7 @@ object ConnectorApi {
     }
 
     @Optional("default value is empty array in creation and None in update")
-    def tags(tags: Set[String]): BasicRequest.this.type = {
+    def tags(tags: Map[String, JsValue]): BasicRequest.this.type = {
       this.tags = Objects.requireNonNull(tags)
       this
     }
@@ -304,8 +306,7 @@ object ConnectorApi {
                                                                    else
                                                                      JsString(
                                                                        CommonUtils.requireNonEmpty(workerClusterName))),
-        SettingDefinition.TAGS_DEFINITION.key() -> (if (tags == null) JsNull
-                                                    else JsArray(tags.map(JsString(_)).toVector))
+        SettingDefinition.TAGS_DEFINITION.key() -> (if (tags == null) JsNull else JsObject(tags))
       ).filter {
         case (_, value) =>
           value match {

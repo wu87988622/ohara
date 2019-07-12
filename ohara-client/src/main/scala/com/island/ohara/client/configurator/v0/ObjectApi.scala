@@ -17,14 +17,14 @@
 package com.island.ohara.client.configurator.v0
 
 import spray.json.DefaultJsonProtocol._
-import spray.json.RootJsonFormat
+import spray.json.{JsValue, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 object ObjectApi {
   val OBJECT_PREFIX_PATH: String = "objects"
 
-  final case class Object(name: String, lastModified: Long, kind: String, tags: Set[String]) extends Data
+  final case class Object(name: String, lastModified: Long, kind: String, tags: Map[String, JsValue]) extends Data
   implicit val OBJECT_JSON_FORMAT: RootJsonFormat[Object] = jsonFormat4(Object)
 
   class Access private[v0] extends BasicAccess(OBJECT_PREFIX_PATH) {

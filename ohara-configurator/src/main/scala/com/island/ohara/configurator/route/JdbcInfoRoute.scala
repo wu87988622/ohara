@@ -47,7 +47,7 @@ private[configurator] object JdbcInfoRoute {
                      user = request.user.get,
                      password = request.password.get,
                      CommonUtils.current(),
-                     tags = request.tags.getOrElse(Set.empty))
+                     tags = request.tags.getOrElse(Map.empty))
           } { previous =>
             JdbcInfo(
               name = name,

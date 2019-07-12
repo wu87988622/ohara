@@ -65,7 +65,7 @@ class TestStreamApi extends SmallTest with Matchers {
       jmxPort = 5555,
       instances = 1,
       nodeNames = Set("node1"),
-      tags = Set.empty
+      tags = Map.empty
     )
 
     info shouldBe StreamApi.STREAM_CREATION_JSON_FORMAT.read(StreamApi.STREAM_CREATION_JSON_FORMAT.write(info))
@@ -87,7 +87,7 @@ class TestStreamApi extends SmallTest with Matchers {
       metrics = Metrics(Seq.empty),
       error = None,
       lastModified = CommonUtils.current(),
-      tags = Set.empty
+      tags = Map.empty
     )
 
     info shouldBe StreamApi.STREAMAPP_DESCRIPTION_JSON_FORMAT.read(
@@ -326,7 +326,7 @@ class TestStreamApi extends SmallTest with Matchers {
                         |    "jmxPort": -99
                         |  }
            """.stripMargin.parseJson)
-    thrown2.getMessage should include("the value of \"jmxPort\" MUST be bigger than or equal to zero")
+    thrown2.getMessage should include("the connection port must be [1024, 65535), but actual port is \"-99\"")
 
     // not connection port
     val thrown3 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
@@ -341,13 +341,13 @@ class TestStreamApi extends SmallTest with Matchers {
 
   @Test
   def parseInstancesField(): Unit = {
-    // zero instances is ok since we still check this value must bigger than 0 in streamRoute
-    StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-                                                  |  {
-                                                  |    "name": "${CommonUtils.randomString(10)}",
-                                                  |    "jar": ${fakeJar.toJson},
-                                                  |    "instances": 0
-                                                  |  }
+    an[DeserializationException] should be thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
+                                                                                                  |  {
+                                                                                                  |    "name": "${CommonUtils
+                                                                                                    .randomString(10)}",
+                                                                                                  |    "jar": ${fakeJar.toJson},
+                                                                                                  |    "instances": 0
+                                                                                                  |  }
            """.stripMargin.parseJson)
     // negative instances
     val thrown = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
@@ -359,7 +359,7 @@ class TestStreamApi extends SmallTest with Matchers {
                                                                                                   |    "instances": -99
                                                                                                   |  }
            """.stripMargin.parseJson)
-    thrown.getMessage should include("the value of \"instances\" MUST be bigger than or equal to zero")
+    thrown.getMessage should include("the \"-99\" of \"instances\" can't be either negative or zero!!!")
   }
 
   @Test
@@ -467,7 +467,7 @@ class TestStreamApi extends SmallTest with Matchers {
                                                                                                 |    "jmxPort": -9
                                                                                                 |  }
            """.stripMargin.parseJson)
-    thrown2.getMessage should include("the value of \"jmxPort\" MUST be bigger than or equal to zero")
+    thrown2.getMessage should include("the connection port must be [1024, 65535), but actual port is \"-9\"")
 
     val thrown3 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATE_JSON_FORMAT.read(s"""
                                                                                                 |  {
@@ -479,13 +479,13 @@ class TestStreamApi extends SmallTest with Matchers {
 
   @Test
   def parseInstancesFieldOnUpdate(): Unit = {
-    // zero instances is ok since we still check this value must bigger than 0 in streamRoute
-    StreamApi.STREAM_UPDATE_JSON_FORMAT.read(s"""
-                                                |  {
-                                                |    "name": "${CommonUtils.randomString()}",
-                                                |    "jar": ${fakeJar.toJson},
-                                                |    "instances": 0
-                                                |  }
+    an[DeserializationException] should be thrownBy StreamApi.STREAM_UPDATE_JSON_FORMAT.read(s"""
+                                                                                                |  {
+                                                                                                |    "name": "${CommonUtils
+                                                                                                  .randomString()}",
+                                                                                                |    "jar": ${fakeJar.toJson},
+                                                                                                |    "instances": 0
+                                                                                                |  }
            """.stripMargin.parseJson)
 
     val thrown = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATE_JSON_FORMAT.read(s"""
@@ -493,7 +493,7 @@ class TestStreamApi extends SmallTest with Matchers {
                                                                                                 |    "instances": -9
                                                                                                 |  }
            """.stripMargin.parseJson)
-    thrown.getMessage should include("the value of \"instances\" MUST be bigger than or equal to zero")
+    thrown.getMessage should include("the \"-9\" of \"instances\" can't be either negative or zero!!!")
   }
 
   @Test

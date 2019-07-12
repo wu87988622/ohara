@@ -120,7 +120,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
             user = "fake user",
             password = "fake password",
             lastModified = CommonUtils.current(),
-            tags = Set.empty
+            tags = Map.empty
           )
         }
         .foreach(r => store.addIfAbsent(r))
@@ -270,7 +270,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
                  password = "fake password",
                  services = Seq.empty,
                  lastModified = CommonUtils.current(),
-                 tags = Set.empty))
+                 tags = Map.empty))
         .foreach(store.addIfAbsent[Node])
       clusterCollie(collie)
     }

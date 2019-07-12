@@ -16,6 +16,8 @@
 
 package com.island.ohara.client.configurator.v0
 
+import spray.json.JsValue
+
 /**
   * this is a basic interface of request to create a normal object resource.
   */
@@ -26,5 +28,5 @@ trait CreationRequest {
     */
   def name: String
 
-  def tags: Set[String]
+  def tags: Map[String, JsValue]
 }

@@ -20,7 +20,7 @@ import java.util.Objects
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
-import spray.json.RootJsonFormat
+import spray.json.{JsValue, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 object FtpApi {
@@ -29,7 +29,7 @@ object FtpApi {
                           port: Option[Int],
                           user: Option[String],
                           password: Option[String],
-                          tags: Option[Set[String]])
+                          tags: Option[Map[String, JsValue]])
   implicit val FTP_UPDATE_JSON_FORMAT: RootJsonFormat[Update] =
     JsonRefiner[Update].format(jsonFormat5(Update)).requireConnectionPort("port").rejectEmptyString().refine
 
@@ -38,7 +38,7 @@ object FtpApi {
                             port: Int,
                             user: String,
                             password: String,
-                            tags: Set[String])
+                            tags: Map[String, JsValue])
       extends CreationRequest
   implicit val FTP_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
     JsonRefiner[Creation]
@@ -53,7 +53,7 @@ object FtpApi {
       .withUnderLine()
       .toRefiner
       .nullToString("name", () => CommonUtils.randomString(10))
-      .nullToEmptyArray(Data.TAGS_KEY)
+      .nullToEmptyObject(Data.TAGS_KEY)
       .refine
 
   final case class FtpInfo(name: String,
@@ -62,7 +62,7 @@ object FtpApi {
                            user: String,
                            password: String,
                            lastModified: Long,
-                           tags: Set[String])
+                           tags: Map[String, JsValue])
       extends Data {
     override def kind: String = "ftp"
   }
@@ -88,7 +88,7 @@ object FtpApi {
     def password(password: String): Request
 
     @Optional("default value is empty array in creation and None in update")
-    def tags(tags: Set[String]): Request
+    def tags(tags: Map[String, JsValue]): Request
 
     /**
       * Retrieve the inner object of request payload. Noted, it throw unchecked exception if you haven't filled all required fields
@@ -126,7 +126,7 @@ object FtpApi {
       private[this] var hostname: String = _
       private[this] var user: String = _
       private[this] var password: String = _
-      private[this] var tags: Set[String] = _
+      private[this] var tags: Map[String, JsValue] = _
 
       override def name(name: String): Request = {
         this.name = CommonUtils.requireNonEmpty(name)
@@ -153,7 +153,7 @@ object FtpApi {
         this
       }
 
-      override def tags(tags: Set[String]): Request = {
+      override def tags(tags: Map[String, JsValue]): Request = {
         this.tags = Objects.requireNonNull(tags)
         this
       }
@@ -164,7 +164,7 @@ object FtpApi {
         port = port.map(CommonUtils.requireConnectionPort).getOrElse(throw new NullPointerException),
         user = CommonUtils.requireNonEmpty(user),
         password = CommonUtils.requireNonEmpty(password),
-        tags = if (tags == null) Set.empty else tags
+        tags = if (tags == null) Map.empty else tags
       )
 
       override private[v0] def update: Update = Update(

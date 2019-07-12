@@ -24,6 +24,7 @@ import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Test}
 import org.scalatest.Matchers
+import spray.json.{JsNumber, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -235,20 +236,26 @@ class TestStreamRoute extends SmallTest with Matchers {
 
     val jar = result(accessJar.request.upload(file))
 
-    val tags = Set(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val tags = Map(
+      CommonUtils.randomString(10) -> JsString(CommonUtils.randomString(10)),
+      CommonUtils.randomString(10) -> JsNumber(CommonUtils.randomInteger())
+    )
     val streamDesc = result(
       accessStream.request.name(CommonUtils.randomString(10)).jar(JarKey(jar.group, jar.name)).tags(tags).create())
     streamDesc.tags shouldBe tags
 
-    val tags2 = Set(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val tags2 = Map(
+      CommonUtils.randomString(10) -> JsString(CommonUtils.randomString(10)),
+      CommonUtils.randomString(10) -> JsNumber(CommonUtils.randomInteger())
+    )
     val streamDesc2 = result(accessStream.request.name(streamDesc.name).tags(tags2).update())
     streamDesc2.tags shouldBe tags2
 
     val streamDesc3 = result(accessStream.request.name(streamDesc.name).update())
     streamDesc3.tags shouldBe tags2
 
-    val streamDesc4 = result(accessStream.request.name(streamDesc.name).tags(Set.empty).update())
-    streamDesc4.tags shouldBe Set.empty
+    val streamDesc4 = result(accessStream.request.name(streamDesc.name).tags(Map.empty).update())
+    streamDesc4.tags shouldBe Map.empty
   }
 
   @After

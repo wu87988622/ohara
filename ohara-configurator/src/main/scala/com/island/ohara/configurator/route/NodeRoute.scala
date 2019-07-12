@@ -72,7 +72,7 @@ object NodeRoute {
               throw new NoSuchElementException(RouteUtils.errorMessage(hostname, "password")))(_.password)),
             services = Seq.empty,
             lastModified = CommonUtils.current(),
-            tags = request.tags.getOrElse(previous.map(_.tags).getOrElse(Set.empty))
+            tags = request.tags.getOrElse(previous.map(_.tags).getOrElse(Map.empty))
           ))
       },
       hookOfGet = (response: Node) => update(response),

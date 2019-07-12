@@ -169,7 +169,7 @@ private[configurator] object StreamRoute {
             metrics = Metrics(Seq.empty),
             error = None,
             lastModified = CommonUtils.current(),
-            tags = req.tags.getOrElse(Set.empty)
+            tags = req.tags.getOrElse(Map.empty)
           )) { previous =>
           previous.copy(
             instances = req.instances.getOrElse(previous.instances),

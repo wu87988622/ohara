@@ -22,7 +22,7 @@ import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
-import spray.json.RootJsonFormat
+import spray.json.{JsValue, RootJsonFormat}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
@@ -74,7 +74,7 @@ object StreamApi {
                                         // TODO remove this default value after we could handle from UI
                                         exactlyOnce: Boolean = false,
                                         lastModified: Long,
-                                        tags: Set[String])
+                                        tags: Map[String, JsValue])
       extends Data {
     override def kind: String = "streamApp"
   }
@@ -89,7 +89,7 @@ object StreamApi {
                             jmxPort: Int,
                             instances: Int,
                             nodeNames: Set[String],
-                            tags: Set[String])
+                            tags: Map[String, JsValue])
       extends ClusterCreationRequest {
     override def ports: Set[Int] = Set(jmxPort)
   }
@@ -103,17 +103,16 @@ object StreamApi {
       .nullToRandomPort("jmxPort")
       .nullToInt("instances", 1)
       .nullToEmptyArray("nodeNames")
-      // the instances cannot by negative (zero number will be reject in StreamRoute start api)
-      .rejectNegativeNumber()
-      .rejectEmptyString()
       .requireBindPort("jmxPort")
+      .requirePositiveNumber("instances")
+      .rejectEmptyString()
       .stringRestriction(Data.NAME_KEY)
       .withNumber()
       .withLowerCase()
       .withLengthLimit(LIMIT_OF_NAME_LENGTH)
       .toRefiner
       .nullToString("name", () => CommonUtils.randomString(LIMIT_OF_NAME_LENGTH))
-      .nullToEmptyArray(Data.TAGS_KEY)
+      .nullToEmptyObject(Data.TAGS_KEY)
       .refine
 
   final case class Update(imageName: Option[String],
@@ -123,14 +122,13 @@ object StreamApi {
                           jmxPort: Option[Int],
                           instances: Option[Int],
                           nodeNames: Option[Set[String]],
-                          tags: Option[Set[String]])
+                          tags: Option[Map[String, JsValue]])
   implicit val STREAM_UPDATE_JSON_FORMAT: RootJsonFormat[Update] =
     JsonRefiner[Update]
       .format(jsonFormat8(Update))
-      // the instances cannot by negative (zero number will be reject in StreamRoute start api)
-      .rejectNegativeNumber()
-      .rejectEmptyString()
       .requireBindPort("jmxPort")
+      .requirePositiveNumber("instances")
+      .rejectEmptyString()
       .refine
 
   /**
@@ -171,7 +169,7 @@ object StreamApi {
     @Optional("this parameter has higher priority than instances")
     def nodeNames(nodeNames: Set[String]): Request
     @Optional("default value is empty array in creation and None in update")
-    def tags(tags: Set[String]): Request
+    def tags(tags: Map[String, JsValue]): Request
 
     /**
       * generate POST request
@@ -239,7 +237,7 @@ object StreamApi {
       private[this] var _jmxPort: Option[Int] = None
       private[this] var _instances: Option[Int] = None
       private[this] var _nodeNames: Option[Set[String]] = None
-      private[this] var tags: Set[String] = _
+      private[this] var tags: Map[String, JsValue] = _
 
       override def name(name: String): Request = {
         this.name = CommonUtils.requireNonEmpty(name)
@@ -274,7 +272,7 @@ object StreamApi {
         this
       }
 
-      override def tags(tags: Set[String]): Request = {
+      override def tags(tags: Map[String, JsValue]): Request = {
         this.tags = Objects.requireNonNull(tags)
         this
       }
@@ -289,7 +287,7 @@ object StreamApi {
         // only one of the value is needed between instances and nodes, we check the data after
         instances = _instances.getOrElse(1),
         nodeNames = _nodeNames.getOrElse(Set.empty),
-        tags = if (tags == null) Set.empty else tags
+        tags = if (tags == null) Map.empty else tags
       )
 
       override private[v0] def update: Update = Update(

@@ -35,7 +35,9 @@ object PipelineApi {
     * @param flows  this filed is declared as option type since ohara supports partial update. Empty array means you want to **cleanup** this
     *               field. And none means you don't want to change any bit of this field.
     */
-  final case class Update(workerClusterName: Option[String], flows: Option[Seq[Flow]], tags: Option[Set[String]])
+  final case class Update(workerClusterName: Option[String],
+                          flows: Option[Seq[Flow]],
+                          tags: Option[Map[String, JsValue]])
 
   implicit val PIPELINE_UPDATE_JSON_FORMAT: RootJsonFormat[Update] = JsonRefiner[Update]
     .format(new RootJsonFormat[Update] {
@@ -70,8 +72,8 @@ object PipelineApi {
             case _      => true
           }
           .map {
-            case a: JsArray => a.elements.map(_.convertTo[String]).toSet
-            case _          => throw DeserializationException(s"$flowsKey should be associated to array type")
+            case a: JsObject => a.fields
+            case _           => throw DeserializationException(s"$flowsKey should be associated to JsObject type")
           }
       )
 
@@ -83,7 +85,7 @@ object PipelineApi {
             .map(_.map(e => e.from -> JsArray(e.to.map(JsString(_)).toVector)).toMap)
             .map(JsObject(_))
             .getOrElse(JsNull),
-          Data.TAGS_KEY -> obj.tags.map(ts => JsArray(ts.map(JsString(_)).toVector)).getOrElse(JsNull),
+          Data.TAGS_KEY -> obj.tags.map(JsObject(_)).getOrElse(JsNull),
         ).filter {
           case (_, v) =>
             v match {
@@ -96,7 +98,10 @@ object PipelineApi {
     .rejectEmptyString()
     .refine
 
-  final case class Creation(name: String, workerClusterName: Option[String], flows: Seq[Flow], tags: Set[String])
+  final case class Creation(name: String,
+                            workerClusterName: Option[String],
+                            flows: Seq[Flow],
+                            tags: Map[String, JsValue])
       extends CreationRequest {
     def rules: Map[String, Set[String]] = flows.map { flow =>
       flow.from -> flow.to
@@ -123,7 +128,7 @@ object PipelineApi {
           workerClusterName = update.workerClusterName,
           // TODO: we should reuse the JsonRefiner#nullToEmptyArray. However, we have to support the stale key "rules" ...
           flows = update.flows.getOrElse(Seq.empty),
-          tags = update.tags.getOrElse(Set.empty)
+          tags = update.tags.getOrElse(Map.empty)
         )
       }
 
@@ -134,7 +139,7 @@ object PipelineApi {
         rulesKey -> JsObject(obj.rules.map { e =>
           e._1 -> JsArray(e._2.map(JsString(_)).toVector)
         }),
-        Data.TAGS_KEY -> JsArray(obj.tags.map(JsString(_)).toVector)
+        Data.TAGS_KEY -> JsObject(obj.tags)
       )
     })
     .rejectEmptyString()
@@ -146,7 +151,7 @@ object PipelineApi {
     .withUnderLine()
     .toRefiner
     .nullToString("name", () => CommonUtils.randomString(10))
-    .nullToEmptyArray(Data.TAGS_KEY)
+    .nullToEmptyObject(Data.TAGS_KEY)
     .refine
 
   import MetricsApi._
@@ -158,7 +163,7 @@ object PipelineApi {
                                   error: Option[String],
                                   metrics: Metrics,
                                   lastModified: Long,
-                                  tags: Set[String])
+                                  tags: Map[String, JsValue])
       extends Data
   implicit val OBJECT_ABSTRACT_JSON_FORMAT: RootJsonFormat[ObjectAbstract] = jsonFormat8(ObjectAbstract)
 
@@ -167,7 +172,7 @@ object PipelineApi {
                             objects: Seq[ObjectAbstract],
                             workerClusterName: String,
                             lastModified: Long,
-                            tags: Set[String])
+                            tags: Map[String, JsValue])
       extends Data {
     override def kind: String = "pipeline"
     def rules: Map[String, Set[String]] = flows.map { flow =>
@@ -189,7 +194,7 @@ object PipelineApi {
         .getOrElse(Seq.empty),
       objects = json.asJsObject.fields(objectsKey).asInstanceOf[JsArray].elements.map(OBJECT_ABSTRACT_JSON_FORMAT.read),
       lastModified = json.asJsObject.fields(lastModifiedKey).asInstanceOf[JsNumber].value.toLong,
-      tags = json.asJsObject.fields(Data.TAGS_KEY).asInstanceOf[JsArray].elements.map(_.convertTo[String]).toSet
+      tags = json.asJsObject.fields(Data.TAGS_KEY).asJsObject.fields
     )
     override def write(obj: Pipeline): JsValue = JsObject(
       Data.NAME_KEY -> JsString(obj.name),
@@ -200,7 +205,7 @@ object PipelineApi {
       }),
       objectsKey -> JsArray(obj.objects.map(OBJECT_ABSTRACT_JSON_FORMAT.write).toVector),
       lastModifiedKey -> JsNumber(obj.lastModified),
-      Data.TAGS_KEY -> JsArray(obj.tags.map(JsString(_)).toVector)
+      Data.TAGS_KEY -> JsObject(obj.tags)
     )
   }
 
@@ -227,7 +232,7 @@ object PipelineApi {
     def flow(flow: Flow): Request = flows(Seq(Objects.requireNonNull(flow)))
 
     @Optional("default value is empty array in creation and None in update")
-    def tags(tags: Set[String]): Request
+    def tags(tags: Map[String, JsValue]): Request
 
     private[v0] def creation: Creation
 
@@ -253,7 +258,7 @@ object PipelineApi {
       private[this] var name: String = _
       private[this] var workerClusterName: Option[String] = None
       private[this] var flows: Seq[Flow] = _
-      private[this] var tags: Set[String] = _
+      private[this] var tags: Map[String, JsValue] = _
       override def name(name: String): Request = {
         this.name = CommonUtils.requireNonEmpty(name)
         this
@@ -269,7 +274,7 @@ object PipelineApi {
         this
       }
 
-      override def tags(tags: Set[String]): Request = {
+      override def tags(tags: Map[String, JsValue]): Request = {
         this.tags = Objects.requireNonNull(tags)
         this
       }
@@ -278,7 +283,7 @@ object PipelineApi {
         name = if (CommonUtils.isEmpty(name)) CommonUtils.randomString(10) else name,
         workerClusterName = workerClusterName,
         flows = if (flows == null) Seq.empty else flows,
-        tags = if (tags == null) Set.empty else tags
+        tags = if (tags == null) Map.empty else tags
       )
 
       override private[v0] def update: Update = Update(

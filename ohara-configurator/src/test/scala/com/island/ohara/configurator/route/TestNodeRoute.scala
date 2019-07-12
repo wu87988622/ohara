@@ -23,6 +23,7 @@ import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Test}
 import org.scalatest.Matchers
+import spray.json.{JsNumber, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestNodeRoute extends SmallTest with Matchers {
@@ -212,7 +213,10 @@ class TestNodeRoute extends SmallTest with Matchers {
 
   @Test
   def updateTags(): Unit = {
-    val tags = Set(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val tags = Map(
+      CommonUtils.randomString(10) -> JsString(CommonUtils.randomString(10)),
+      CommonUtils.randomString(10) -> JsNumber(CommonUtils.randomInteger())
+    )
     val nodeDesc = result(
       nodeApi.request
         .hostname(CommonUtils.randomString())
@@ -223,15 +227,18 @@ class TestNodeRoute extends SmallTest with Matchers {
         .create())
     nodeDesc.tags shouldBe tags
 
-    val tags2 = Set(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val tags2 = Map(
+      CommonUtils.randomString(10) -> JsString(CommonUtils.randomString(10)),
+      CommonUtils.randomString(10) -> JsNumber(CommonUtils.randomInteger())
+    )
     val nodeDesc2 = result(nodeApi.request.hostname(nodeDesc.name).tags(tags2).update())
     nodeDesc2.tags shouldBe tags2
 
     val nodeDesc3 = result(nodeApi.request.hostname(nodeDesc.name).update())
     nodeDesc3.tags shouldBe tags2
 
-    val nodeDesc4 = result(nodeApi.request.hostname(nodeDesc.name).tags(Set.empty).update())
-    nodeDesc4.tags shouldBe Set.empty
+    val nodeDesc4 = result(nodeApi.request.hostname(nodeDesc.name).tags(Map.empty).update())
+    nodeDesc4.tags shouldBe Map.empty
   }
 
   @After

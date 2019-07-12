@@ -23,6 +23,7 @@ import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Test}
 import org.scalatest.Matchers
+import spray.json.{JsNumber, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestConnectorRoute extends SmallTest with Matchers {
@@ -419,24 +420,30 @@ class TestConnectorRoute extends SmallTest with Matchers {
     request.columns.size shouldBe 2
     request.columns.head shouldBe Column.builder().name("cf0").newName("cf0").dataType(DataType.INT).order(1).build()
     request.columns.last shouldBe Column.builder().name("cf1").newName("cf1").dataType(DataType.BYTES).order(2).build()
-    request.tags shouldBe Set.empty
+    request.tags shouldBe Map.empty
   }
 
   @Test
   def updateTags(): Unit = {
-    val tags = Set(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val tags = Map(
+      CommonUtils.randomString(10) -> JsString(CommonUtils.randomString(10)),
+      CommonUtils.randomString(10) -> JsNumber(CommonUtils.randomInteger())
+    )
     val connectorDesc = result(connectorApi.request.tags(tags).create())
     connectorDesc.tags shouldBe tags
 
-    val tags2 = Set(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val tags2 = Map(
+      CommonUtils.randomString(10) -> JsString(CommonUtils.randomString(10)),
+      CommonUtils.randomString(10) -> JsNumber(CommonUtils.randomInteger())
+    )
     val connectorDesc2 = result(connectorApi.request.name(connectorDesc.name).tags(tags2).update())
     connectorDesc2.tags shouldBe tags2
 
     val connectorDesc3 = result(connectorApi.request.name(connectorDesc.name).update())
     connectorDesc3.tags shouldBe tags2
 
-    val connectorDesc4 = result(connectorApi.request.name(connectorDesc.name).tags(Set.empty).update())
-    connectorDesc4.tags shouldBe Set.empty
+    val connectorDesc4 = result(connectorApi.request.name(connectorDesc.name).tags(Map.empty).update())
+    connectorDesc4.tags shouldBe Map.empty
   }
 
   @After
