@@ -280,7 +280,7 @@ export const renderer = props => {
   const dataType = ['String'];
   const tableActions = ['Up', 'Down', 'Delete'];
 
-  return formData.map(data => {
+  const renderWithValueType = params => {
     const {
       valueType,
       key,
@@ -288,12 +288,10 @@ export const renderer = props => {
       documentation,
       editable,
       isRunning,
-      displayValue,
       tableKeys,
-    } = data;
-
+      displayValue,
+    } = params;
     const columnTableHeader = tableKeys.concat(tableActions);
-
     switch (valueType) {
       case 'STRING':
       case 'INT':
@@ -333,21 +331,6 @@ export const renderer = props => {
           </FormGroup>
         );
 
-      case 'LIST':
-        return (
-          <FormGroup key={key}>
-            <Field
-              label={displayName}
-              id={displayName}
-              list={topics}
-              component={Select}
-              name={key}
-              width="100%"
-              disabled={isRunning}
-            />
-          </FormGroup>
-        );
-
       case 'TABLE':
         return (
           <FormGroup key={key}>
@@ -365,6 +348,52 @@ export const renderer = props => {
         );
       default:
         return null;
+    }
+  };
+
+  const renderWithReference = params => {
+    const { reference, key, displayName, isRunning, documentation } = params;
+    switch (reference) {
+      case 'TOPIC':
+        return (
+          <FormGroup key={key}>
+            <Field
+              label={displayName}
+              id={displayName}
+              list={topics}
+              component={Select}
+              name={key}
+              width="100%"
+              disabled={isRunning}
+            />
+          </FormGroup>
+        );
+      case 'WORKER_CLUSTER':
+        return (
+          <FormGroup key={key}>
+            <Field
+              type="string"
+              component={InputField}
+              label={displayName}
+              id={displayName}
+              helperText={documentation}
+              width="100%"
+              name={key}
+              disabled={true}
+            />
+          </FormGroup>
+        );
+      default:
+        return;
+    }
+  };
+
+  return formData.map(data => {
+    const { reference } = data;
+    if (reference === 'NONE') {
+      return renderWithValueType(data);
+    } else {
+      return renderWithReference(data);
     }
   });
 };
