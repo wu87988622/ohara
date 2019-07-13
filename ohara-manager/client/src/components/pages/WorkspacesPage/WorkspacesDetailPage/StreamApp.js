@@ -23,12 +23,11 @@ import { get, divide, floor } from 'lodash';
 
 import * as jarApi from 'api/jarApi';
 import * as MESSAGES from 'constants/messages';
-import * as utils from '../WorkspacesDetailPageUtils';
+import * as utils from './WorkspacesDetailPageUtils';
 import { Button } from 'components/common/Mui/Form';
 import { DeleteDialog } from 'components/common/Mui/Dialog';
 import { SortTable } from 'components/common/Mui/Table';
-import { Main, ActionIcon } from '../styles';
-import { StyledLabel, StyledInputFile } from './styles';
+import { Main, ActionIcon, StyledInputFile, StyledLabel } from './styles';
 
 const StreamApp = props => {
   const { workspaceName } = props;

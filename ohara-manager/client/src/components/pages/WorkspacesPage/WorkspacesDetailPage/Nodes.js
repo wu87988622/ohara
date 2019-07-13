@@ -27,11 +27,11 @@ import * as workerApi from 'api/workerApi';
 import * as containerApi from 'api/containerApi';
 import * as MESSAGES from 'constants/messages';
 import * as commonUtils from 'utils/commonUtils';
-import * as utils from '../WorkspacesDetailPageUtils';
+import * as utils from './WorkspacesDetailPageUtils';
 import Checkbox from '@material-ui/core/Checkbox';
 import { Dialog } from 'components/common/Mui/Dialog';
 import { SortTable } from 'components/common/Mui/Table';
-import { Main, NewButton, StyledTable } from '../styles';
+import { Main, NewButton, StyledTable } from './styles';
 
 const Nodes = props => {
   const { workspaceName } = props;

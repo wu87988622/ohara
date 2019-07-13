@@ -15,6 +15,7 @@
  */
 
 import styled from 'styled-components';
+import Icon from '@material-ui/core/Icon';
 import { Button } from 'components/common/Mui/Form';
 
 export const PageHeader = styled.div`
@@ -24,4 +25,8 @@ export const PageHeader = styled.div`
 export const StyledButton = styled(Button)`
   margin-left: auto;
   align-self: center;
+`;
+
+export const StyledIcon = styled(Icon)`
+  font-size: 20px;
 `;
