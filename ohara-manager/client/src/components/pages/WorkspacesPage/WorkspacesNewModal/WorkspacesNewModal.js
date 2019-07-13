@@ -47,7 +47,7 @@ const WorkerNewModal = props => {
   const [nodes, setNodes] = useState([]);
   const [jars, setJars] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMessenge, setErrorMessenge] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   let workingServices = [];
   let plugins = [];
 
@@ -120,11 +120,11 @@ const WorkerNewModal = props => {
     if (isUndefined(value)) return '';
 
     if (value.match(/[^0-9a-z]/g)) {
-      setErrorMessenge('You only can use lower case letters and numbers');
+      setErrorMessage('You only can use lower case letters and numbers');
     } else if (value.length > 30) {
-      setErrorMessenge('Must be between 1 and 30 characters long');
+      setErrorMessage('Must be between 1 and 30 characters long');
     } else {
-      setErrorMessenge('');
+      setErrorMessage('');
     }
 
     return value;
@@ -189,7 +189,7 @@ const WorkerNewModal = props => {
     workingServices = newService;
   };
 
-  const deleteAllservices = async () => {
+  const deleteAllServices = async () => {
     plugins.forEach(plugin => {
       const { name, group } = plugin;
       jarApi.deleteJar({ name, workerClusterName: group });
@@ -328,7 +328,7 @@ const WorkerNewModal = props => {
       // Ignore the error
 
       toastr.error('Failed to create services, deleting the workspace…');
-      await deleteAllservices();
+      await deleteAllServices();
       resetModal(form);
       return;
     }
@@ -365,7 +365,7 @@ const WorkerNewModal = props => {
             confirmDisabled={
               submitting ||
               pristine ||
-              errorMessenge !== '' ||
+              errorMessage !== '' ||
               checkedNodes.length === 0
             }
           >
@@ -388,8 +388,8 @@ const WorkerNewModal = props => {
                       disabled={submitting}
                       format={validateServiceName}
                       autoFocus
-                      errorMessenge={errorMessenge}
-                      error={errorMessenge !== ''}
+                      errorMessage={errorMessage}
+                      error={errorMessage !== ''}
                     />
                   </DialogContent>
                   <s.StyledDialogContent>

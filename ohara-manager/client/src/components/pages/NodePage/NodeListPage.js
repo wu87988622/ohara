@@ -16,19 +16,18 @@
 
 import React from 'react';
 import DocumentTitle from 'react-document-title';
-import { reduce, map, sortBy, get, isNull, join } from 'lodash';
 import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
+import { sortBy, get, isNull } from 'lodash';
 
 import * as nodeApi from 'api/nodeApi';
-import { NODES } from 'constants/documentTitles';
-import { H2 } from 'components/common/Headings';
+import * as s from './styles';
 import NodeNewModal from './NodeNewModal';
 import NodeEditModal from './NodeEditModal';
 import EditIcon from '@material-ui/icons/Edit';
 import IconButton from '@material-ui/core/IconButton';
-
-import * as s from './styles';
+import { NODES } from 'constants/documentTitles';
+import { H2 } from 'components/common/Headings';
 
 const NODE_EDIT_MODAL = 'nodeEditModal';
 
@@ -52,6 +51,7 @@ class NodeListPage extends React.Component {
     const res = await nodeApi.fetchNodes();
     this.setState(() => ({ isLoading: false }));
     const nodes = get(res, 'data.result', null);
+
     if (!isNull(nodes)) {
       this.setState({ nodes: sortBy(nodes, 'name') });
     }
@@ -69,23 +69,26 @@ class NodeListPage extends React.Component {
     this.setState({ isNewModalOpen: true });
   };
 
-  handleModalColse = () => {
+  handleModalClose = () => {
     this.setState({ isNewModalOpen: false, isEditModalOpen: false });
   };
 
-  getAllClusterNames = node => {
+  getServiceNames = node => {
     if (node && node.services) {
-      return reduce(
-        node.services,
-        (results, service) => {
-          map(service.clusterNames, clusterName => {
-            results.push(clusterName);
-          });
-          return results;
-        },
-        [],
-      );
+      const result = node.services
+        .reduce((acc, service) => {
+          const { name, clusterNames } = service;
+          const prefixedClusterNames = clusterNames.map(
+            clusterName => `${clusterName}-${name}`,
+          );
+
+          return acc.concat(prefixedClusterNames);
+        }, [])
+        .join(', ');
+
+      return result;
     }
+
     return [];
   };
 
@@ -114,9 +117,7 @@ class NodeListPage extends React.Component {
                 color="primary"
                 text="New node"
                 data-testid="new-node"
-                onClick={() => {
-                  this.handleNewModalOpen();
-                }}
+                onClick={this.handleNewModalOpen}
               />
             </s.TopWrapper>
             <s.NodeTable isLoading={isLoading} headers={this.headers}>
@@ -126,7 +127,7 @@ class NodeListPage extends React.Component {
                     {node.name || ''}
                   </TableCell>
                   <TableCell align="left">
-                    {join(this.getAllClusterNames(node), ', ')}
+                    {this.getServiceNames(node)}
                   </TableCell>
                   <TableCell align="left">
                     {this.getSSHLabel(node.user, node.port)}
@@ -147,13 +148,13 @@ class NodeListPage extends React.Component {
           </s.Wrapper>
           <NodeNewModal
             isOpen={this.state.isNewModalOpen}
-            handleClose={this.handleModalColse}
+            handleClose={this.handleModalClose}
             handleConfirm={this.fetchData}
           />
           <NodeEditModal
             node={activeNode}
             isOpen={this.state.isEditModalOpen}
-            handleClose={this.handleModalColse}
+            handleClose={this.handleModalClose}
             handleConfirm={this.fetchData}
           />
         </>
