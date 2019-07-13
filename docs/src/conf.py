@@ -17,17 +17,66 @@
 # sys.path.insert(0, os.path.abspath('.'))
 
 
+import ConfigParser
+import StringIO
+import os
+
+
+def read_properties_file(file_path):
+    """
+    Read java .properties file into a dictionary
+    """
+    with open(file_path) as f:
+        config = StringIO.StringIO()
+        config.write('[dummy_section]\n')       # add dummy_section to avoid exception
+        config.write(f.read().replace('%', '%%'))
+        config.seek(0, os.SEEK_SET)
+
+        cp = ConfigParser.SafeConfigParser()
+        cp.readfp(config)
+
+        return dict(cp.items('dummy_section'))
+
+
+def parse_version(version_value):
+    """
+    Convert version value from gradle.properties to branch name
+        0.6.0-SNAPSHOT --> 0.6
+        0.6.1 --> 0.6.1
+    """
+    if "-SNAPSHOT" in version_value:
+        idx1 = version_value.index(".")
+        idx2 = version_value.index(".", idx1 + 1)
+        ver = version_value[0:idx2]
+    else:
+        ver = version_value
+    return ver
+
+
+ohara_props = read_properties_file('../../gradle.properties')
+
+ohara_version = ohara_props['version']
+ohara_branch = "master"                 # branch name "master" must be hard-code
+# ohara_branch = parse_version(ohara_props['version'])      # use when branch is not "master"
+
+
 # -- Project information -----------------------------------------------------
 
-project = u'OharaStream'
+project = u'Ohara'
 copyright = u'2019, is-land Systems'
 author = u'is-land Systems'
 
 # The short X.Y version
-version = u''
-# The full version, including alpha/beta/rc tags
-release = u'0.6'
+version = ohara_version
 
+# The full version, including alpha/beta/rc tags
+release = ohara_version
+
+
+print("=" * 40)
+print("Ohara version: %s" % ohara_version)
+print("Ohara branch/tag: %s" % ohara_branch)
+print("=" * 40)
 
 # -- General configuration ---------------------------------------------------
 
@@ -39,10 +88,10 @@ release = u'0.6'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-  'recommonmark',
-  'sphinx.ext.todo',
-  'sphinx.ext.githubpages',
-  'sphinx.ext.extlinks'
+    'recommonmark',
+    'sphinx.ext.todo',
+    'sphinx.ext.githubpages',
+    'sphinx.ext.extlinks'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -76,7 +125,6 @@ exclude_patterns = ['build', 'Thumbs.db', '.DS_Store']
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
-
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -108,12 +156,10 @@ html_static_path = ['_static']
 # html_sidebars = {}
 
 
-
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'OharaStreamdoc'
-
+htmlhelp_basename = 'Oharadoc'
 
 # -- Options for LaTeX output ------------------------------------------------
 
@@ -139,20 +185,18 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'OharaStream.tex', u'OharaStream Documentation',
+    (master_doc, 'Ohara.tex', u'Ohara Documentation',
      u'is-land Systems', 'manual'),
 ]
-
 
 # -- Options for manual page output ------------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'oharastream', u'OharaStream Documentation',
+    (master_doc, 'ohara', u'Ohara Documentation',
      [author], 1)
 ]
-
 
 # -- Options for Texinfo output ----------------------------------------------
 
@@ -160,11 +204,10 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'OharaStream', u'OharaStream Documentation',
-     author, 'OharaStream', 'One line description of project.',
+    (master_doc, 'Ohara', u'Ohara Documentation',
+     author, 'Ohara', 'One line description of project.',
      'Miscellaneous'),
 ]
-
 
 # -- Options for Epub output -------------------------------------------------
 
@@ -183,10 +226,14 @@ epub_title = project
 # A list of files that should not be packed into the epub file.
 epub_exclude_files = ['search.html']
 
-
 # extlinks
 #   https://www.sphinx-doc.org/en/master/usage/extensions/extlinks.html#module-sphinx.ext.extlinks
 
-extlinks = {}
+extlinks = {
+    'ohara-issue': ('https://github.com/oharastream/ohara/issues/%s', '#'),
+    'ohara-source': ('https://github.com/oharastream/ohara/blob/%s/' % ohara_branch + "%s", ''),
+    'kafka-issue': ('https://issues.apache.org/jira/browse/KAFKA-%s', 'KAFKA-'),
+    'zookeeper-issue': ('https://issues.apache.org/jira/browse/ZOOKEEPER-%s', 'ZOOKEEPER-'),
+    'k8s-issue': ('https://github.com/kubernetes/kubernetes/issues/%s', '#')
+}
 
-extlinks['issue'] = ('https://github.com/oharastream/ohara/issues/%s', '')
