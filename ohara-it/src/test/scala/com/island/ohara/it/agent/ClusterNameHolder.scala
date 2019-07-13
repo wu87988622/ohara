@@ -49,7 +49,7 @@ class ClusterNameHolder(nodes: Seq[Node]) extends Releasable {
   override def close(): Unit = {
     nodes.foreach { node =>
       val client =
-        DockerClient.builder.hostname(node.hostname).port(node.port).user(node.user).password(node.password).build
+        DockerClient.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
       try client
         .containerNames()
         .filter(containerName => usedClusterNames.exists(clusterName => containerName.contains(clusterName)))

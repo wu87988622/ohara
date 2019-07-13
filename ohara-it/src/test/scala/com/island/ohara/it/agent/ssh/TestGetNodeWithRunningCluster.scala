@@ -38,7 +38,7 @@ class TestGetNodeWithRunningCluster extends IntegrationTest with Matchers {
   else {
     nodeCache.foreach { node =>
       val dockerClient =
-        DockerClient.builder.hostname(node.hostname).port(node.port).user(node.user).password(node.password).build
+        DockerClient.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
       try {
         withClue(s"failed to find ${ZookeeperApi.IMAGE_NAME_DEFAULT}")(
           dockerClient.imageNames().contains(ZookeeperApi.IMAGE_NAME_DEFAULT) shouldBe true)
@@ -51,9 +51,9 @@ class TestGetNodeWithRunningCluster extends IntegrationTest with Matchers {
           .port(configurator.port)
           .request
           .hostname(node.hostname)
-          .port(node.port)
-          .user(node.user)
-          .password(node.password)
+          .port(node._port)
+          .user(node._user)
+          .password(node._password)
           .create())
     }
   }

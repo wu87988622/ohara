@@ -37,7 +37,11 @@ object NodeApi {
   implicit val NODE_UPDATE_JSON_FORMAT: RootJsonFormat[Update] =
     JsonRefiner[Update].format(jsonFormat4(Update)).requireConnectionPort("port").rejectEmptyString().refine
 
-  case class Creation(hostname: String, port: Int, user: String, password: String, tags: Map[String, JsValue])
+  case class Creation(hostname: String,
+                      port: Option[Int],
+                      user: Option[String],
+                      password: Option[String],
+                      tags: Map[String, JsValue])
       extends CreationRequest {
     override def name: String = hostname
   }
@@ -65,13 +69,17 @@ object NodeApi {
     * NOTED: the field "services" is filled at runtime. If you are in testing, it is ok to assign empty to it.
     */
   case class Node(hostname: String,
-                  port: Int,
-                  user: String,
-                  password: String,
+                  port: Option[Int],
+                  user: Option[String],
+                  password: Option[String],
                   services: Seq[NodeService],
                   lastModified: Long,
                   tags: Map[String, JsValue])
       extends Data {
+    private[this] def msg(key: String): String = s"$key is required since Ohara Configurator is in ssh mode"
+    def _port: Int = port.getOrElse(throw new NoSuchElementException(msg("port")))
+    def _user: String = user.getOrElse(throw new NoSuchElementException(msg("user")))
+    def _password: String = password.getOrElse(throw new NoSuchElementException(msg("password")))
     override def name: String = hostname
     override def kind: String = "node"
   }
@@ -138,8 +146,8 @@ object NodeApi {
     def request: Request = new Request {
       private[this] var hostname: String = _
       private[this] var port: Option[Int] = None
-      private[this] var user: String = _
-      private[this] var password: String = _
+      private[this] var user: Option[String] = None
+      private[this] var password: Option[String] = None
       private[this] var tags: Map[String, JsValue] = _
       override def hostname(hostname: String): Request = {
         this.hostname = CommonUtils.requireNonEmpty(hostname)
@@ -150,11 +158,11 @@ object NodeApi {
         this
       }
       override def user(user: String): Request = {
-        this.user = CommonUtils.requireNonEmpty(user)
+        this.user = Some(CommonUtils.requireNonEmpty(user))
         this
       }
       override def password(password: String): Request = {
-        this.password = CommonUtils.requireNonEmpty(password)
+        this.password = Some(CommonUtils.requireNonEmpty(password))
         this
       }
 
@@ -165,16 +173,16 @@ object NodeApi {
 
       override private[v0] def creation: Creation = Creation(
         hostname = CommonUtils.requireNonEmpty(hostname),
-        user = CommonUtils.requireNonEmpty(user),
-        password = CommonUtils.requireNonEmpty(password),
-        port = port.map(CommonUtils.requireConnectionPort).getOrElse(throw new NullPointerException),
+        user = user.map(CommonUtils.requireNonEmpty),
+        password = password.map(CommonUtils.requireNonEmpty),
+        port = port.map(CommonUtils.requireConnectionPort),
         tags = if (tags == null) Map.empty else tags
       )
 
       override private[v0] def update: Update = Update(
         port = port.map(CommonUtils.requireConnectionPort),
-        user = Option(user).map(CommonUtils.requireNonEmpty),
-        password = Option(password).map(CommonUtils.requireNonEmpty),
+        user = user.map(CommonUtils.requireNonEmpty),
+        password = password.map(CommonUtils.requireNonEmpty),
         tags = Option(tags)
       )
 

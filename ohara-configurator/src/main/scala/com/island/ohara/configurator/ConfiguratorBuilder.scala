@@ -116,9 +116,9 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
                         else Seq.empty) ++ (if (wkConnectionProps.contains(nodeName))
                                               Seq(NodeService(NodeApi.WORKER_SERVICE_NAME, Seq(embeddedWkName)))
                                             else Seq.empty),
-            port = -1,
-            user = "fake user",
-            password = "fake password",
+            port = Some(22),
+            user = Some("fake"),
+            password = Some("fake"),
             lastModified = CommonUtils.current(),
             tags = Map.empty
           )
@@ -265,9 +265,9 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
         .map(
           name =>
             Node(hostname = name,
-                 port = -1,
-                 user = "fake user",
-                 password = "fake password",
+                 port = Some(22),
+                 user = Some("fake"),
+                 password = Some("fake"),
                  services = Seq.empty,
                  lastModified = CommonUtils.current(),
                  tags = Map.empty))

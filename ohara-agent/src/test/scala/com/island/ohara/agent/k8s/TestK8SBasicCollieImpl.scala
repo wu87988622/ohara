@@ -21,16 +21,14 @@ import com.island.ohara.agent.{ContainerCollie, NodeCollie, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-
-import scala.concurrent.{Await, ExecutionContext, Future}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits
-import scala.concurrent.duration._
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration.{FiniteDuration, _}
+import scala.concurrent.{Await, ExecutionContext, Future}
 
 class TestK8SBasicCollieImpl extends SmallTest with Matchers {
   private[this] val TIMEOUT: FiniteDuration = 30 seconds
@@ -53,9 +51,9 @@ class TestK8SBasicCollieImpl extends SmallTest with Matchers {
   private[this] def zookeeperClusterName(containerName: String): String = {
     val node1Name = "node1"
     val node1: Node = Node(hostname = node1Name,
-                           port = 22,
-                           user = "",
-                           password = "",
+                           port = Some(22),
+                           user = Some("fake"),
+                           password = Some("fake"),
                            services = Seq.empty,
                            lastModified = CommonUtils.current(),
                            tags = Map.empty)

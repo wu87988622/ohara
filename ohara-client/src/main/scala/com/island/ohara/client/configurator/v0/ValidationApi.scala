@@ -68,7 +68,10 @@ object ValidationApi {
     .refine
 
   val VALIDATION_NODE_PREFIX_PATH: String = "node"
-  final case class NodeValidation private[ValidationApi] (hostname: String, port: Int, user: String, password: String)
+  final case class NodeValidation private[ValidationApi] (hostname: String,
+                                                          port: Option[Int],
+                                                          user: Option[String],
+                                                          password: Option[String])
   implicit val NODE_VALIDATION_JSON_FORMAT: OharaJsonFormat[NodeValidation] = JsonRefiner[NodeValidation]
     .format(jsonFormat4(NodeValidation))
     .rejectEmptyString()
@@ -308,9 +311,9 @@ object ValidationApi {
     override def nodeRequest: NodeRequest = new NodeRequest {
       override private[v0] def validation = NodeValidation(
         hostname = CommonUtils.requireNonEmpty(hostname),
-        port = port.map(CommonUtils.requireConnectionPort).getOrElse(throw new NullPointerException),
-        user = CommonUtils.requireNonEmpty(user),
-        password = CommonUtils.requireNonEmpty(password)
+        port = port.map(CommonUtils.requireConnectionPort),
+        user = Option(user).map(CommonUtils.requireNonEmpty),
+        password = Option(password).map(CommonUtils.requireNonEmpty),
       )
 
       override def verify()(implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] =

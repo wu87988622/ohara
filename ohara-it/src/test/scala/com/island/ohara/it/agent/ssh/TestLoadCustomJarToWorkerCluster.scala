@@ -84,7 +84,8 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
 
     val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
     nodeCache.foreach { node =>
-      result(nodeApi.request.hostname(node.hostname).port(node.port).user(node.user).password(node.password).create())
+      result(
+        nodeApi.request.hostname(node.hostname).port(node._port).user(node._user).password(node._password).create())
     }
   }
 

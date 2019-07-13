@@ -59,9 +59,9 @@ class TestNodeRoute extends SmallTest with Matchers {
     val res = result(nodeApi.request.hostname(hostname).port(port).user(user).password(password).create())
     res.name shouldBe hostname
     res.hostname shouldBe hostname
-    res.port shouldBe port
-    res.user shouldBe user
-    res.password shouldBe password
+    res.port.get shouldBe port
+    res.user.get shouldBe user
+    res.password.get shouldBe password
 
     result(nodeApi.list()).size shouldBe (1 + numberOfDefaultNodes)
     compare(result(nodeApi.list()).find(_.name == hostname).get, res)
@@ -153,19 +153,19 @@ class TestNodeRoute extends SmallTest with Matchers {
   @Test
   def testUpdatePort(): Unit = {
     val port = CommonUtils.availablePort()
-    updatePartOfField(_.port(port), _.copy(port = port))
+    updatePartOfField(_.port(port), _.copy(port = Some(port)))
   }
 
   @Test
   def testUpdateUser(): Unit = {
     val user = CommonUtils.randomString()
-    updatePartOfField(_.user(user), _.copy(user = user))
+    updatePartOfField(_.user(user), _.copy(user = Some(user)))
   }
 
   @Test
   def testUpdatePassword(): Unit = {
     val password = CommonUtils.randomString()
-    updatePartOfField(_.password(password), _.copy(password = password))
+    updatePartOfField(_.password(password), _.copy(password = Some(password)))
   }
 
   private[this] def updatePartOfField(req: Request => Request, _expected: Node => Node): Unit = {
@@ -185,31 +185,28 @@ class TestNodeRoute extends SmallTest with Matchers {
   }
 
   @Test
-  def failToCreateNodeWithoutPort(): Unit =
-    an[IllegalArgumentException] should be thrownBy result(
-      nodeApi.request
-        .hostname(CommonUtils.randomString())
-        .user(CommonUtils.randomString())
-        .password(CommonUtils.randomString())
-        .update())
+  def createNodeWithoutPort(): Unit = result(
+    nodeApi.request
+      .hostname(CommonUtils.randomString())
+      .user(CommonUtils.randomString())
+      .password(CommonUtils.randomString())
+      .update())
 
   @Test
-  def failToCreateNodeWithoutUser(): Unit =
-    an[IllegalArgumentException] should be thrownBy result(
-      nodeApi.request
-        .hostname(CommonUtils.randomString())
-        .port(CommonUtils.availablePort())
-        .password(CommonUtils.randomString())
-        .update())
+  def createNodeWithoutUser(): Unit = result(
+    nodeApi.request
+      .hostname(CommonUtils.randomString())
+      .port(CommonUtils.availablePort())
+      .password(CommonUtils.randomString())
+      .update())
 
   @Test
-  def failToCreateNodeWithoutPassword(): Unit =
-    an[IllegalArgumentException] should be thrownBy result(
-      nodeApi.request
-        .hostname(CommonUtils.randomString())
-        .port(CommonUtils.availablePort())
-        .user(CommonUtils.randomString())
-        .update())
+  def createNodeWithoutPassword(): Unit = result(
+    nodeApi.request
+      .hostname(CommonUtils.randomString())
+      .port(CommonUtils.availablePort())
+      .user(CommonUtils.randomString())
+      .update())
 
   @Test
   def updateTags(): Unit = {

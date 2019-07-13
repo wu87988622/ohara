@@ -112,17 +112,17 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     nodeCache.clear()
     nodeCache.append(
       Node(hostname = firstNode,
-           port = 22,
-           user = "fake",
-           password = "fake",
+           port = Some(22),
+           user = Some("fake"),
+           password = Some("fake"),
            services = Seq.empty,
            lastModified = CommonUtils.current(),
            tags = Map.empty))
     nodeCache.append(
       Node(hostname = secondNode,
-           port = 22,
-           user = "fake",
-           password = "fake",
+           port = Some(22),
+           user = Some("fake"),
+           password = Some("fake"),
            services = Seq.empty,
            lastModified = CommonUtils.current(),
            tags = Map.empty))
@@ -159,9 +159,9 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     nodeCache.clear()
     nodeCache.append(
       Node(hostname = firstNode,
-           port = 22,
-           user = "fake",
-           password = "fake",
+           port = Some(22),
+           user = Some("fake"),
+           password = Some("fake"),
            services = Seq.empty,
            lastModified = CommonUtils.current(),
            tags = Map.empty))
@@ -205,9 +205,9 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     nodeCache.clear()
     nodeCache.append(
       Node(hostname = firstNode,
-           port = 22,
-           user = "fake",
-           password = "fake",
+           port = Some(22),
+           user = Some("fake"),
+           password = Some("fake"),
            services = Seq.empty,
            lastModified = CommonUtils.current(),
            tags = Map.empty))
@@ -268,17 +268,17 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     nodeCache.clear()
     nodeCache.append(
       Node(hostname = firstNode,
-           port = 22,
-           user = "fake",
-           password = "fake",
+           port = Some(22),
+           user = Some("fake"),
+           password = Some("fake"),
            services = Seq.empty,
            lastModified = CommonUtils.current(),
            tags = Map.empty))
     nodeCache.append(
       Node(hostname = secondNode,
-           port = 22,
-           user = "fake",
-           password = "fake",
+           port = Some(22),
+           user = Some("fake"),
+           password = Some("fake"),
            services = Seq.empty,
            lastModified = CommonUtils.current(),
            tags = Map.empty))
@@ -333,17 +333,17 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     nodeCache.clear()
     nodeCache.append(
       Node(hostname = firstNode,
-           port = 22,
-           user = "fake",
-           password = "fake",
+           port = Some(22),
+           user = Some("fake"),
+           password = Some("fake"),
            services = Seq.empty,
            lastModified = CommonUtils.current(),
            tags = Map.empty))
     nodeCache.append(
       Node(hostname = secondNode,
-           port = 22,
-           user = "fake",
-           password = "fake",
+           port = Some(22),
+           user = Some("fake"),
+           password = Some("fake"),
            services = Seq.empty,
            lastModified = CommonUtils.current(),
            tags = Map.empty))
@@ -401,17 +401,17 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     nodeCache.clear()
     nodeCache.append(
       Node(hostname = firstNode,
-           port = 22,
-           user = "fake",
-           password = "fake",
+           port = Some(22),
+           user = Some("fake"),
+           password = Some("fake"),
            services = Seq.empty,
            lastModified = CommonUtils.current(),
            tags = Map.empty))
     nodeCache.append(
       Node(hostname = secondNode,
-           port = 22,
-           user = "fake",
-           password = "fake",
+           port = Some(22),
+           user = Some("fake"),
+           password = Some("fake"),
            services = Seq.empty,
            lastModified = CommonUtils.current(),
            tags = Map.empty))
@@ -461,17 +461,17 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     nodeCache.clear()
     nodeCache.append(
       Node(hostname = firstNode,
-           port = 22,
-           user = "fake",
-           password = "fake",
+           port = Some(22),
+           user = Some("fake"),
+           password = Some("fake"),
            services = Seq.empty,
            lastModified = CommonUtils.current(),
            tags = Map.empty))
     nodeCache.append(
       Node(hostname = secondNode,
-           port = 22,
-           user = "fake",
-           password = "fake",
+           port = Some(22),
+           user = Some("fake"),
+           password = Some("fake"),
            services = Seq.empty,
            lastModified = CommonUtils.current(),
            tags = Map.empty))
@@ -529,9 +529,9 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     nodeCache.clear()
     nodeCache.append(
       Node(hostname = firstNode,
-           port = 22,
-           user = "fake",
-           password = "fake",
+           port = Some(22),
+           user = Some("fake"),
+           password = Some("fake"),
            services = Seq.empty,
            lastModified = CommonUtils.current(),
            tags = Map.empty))
@@ -557,9 +557,9 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     nodeCache.clear()
     nodeCache.append(
       Node(hostname = firstNode,
-           port = 22,
-           user = "fake",
-           password = "fake",
+           port = Some(22),
+           user = Some("fake"),
+           password = Some("fake"),
            services = Seq.empty,
            lastModified = CommonUtils.current(),
            tags = Map.empty))
@@ -625,9 +625,9 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
       Await.result(
         clusterCollie.verifyNode(
           Node(hostname = firstNode,
-               port = 22,
-               user = "fake",
-               password = "fake",
+               port = Some(22),
+               user = Some("fake"),
+               password = Some("fake"),
                services = Seq.empty,
                lastModified = CommonUtils.current(),
                tags = Map.empty)),
@@ -638,9 +638,9 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val unknowNode: Try[String] = Await.result(
       clusterCollie.verifyNode(
         Node(hostname = "unknow-node",
-             port = 22,
-             user = "fake",
-             password = "fake",
+             port = Some(22),
+             user = Some("fake"),
+             password = Some("fake"),
              services = Seq.empty,
              lastModified = CommonUtils.current(),
              tags = Map.empty)),

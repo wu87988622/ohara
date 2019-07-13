@@ -81,7 +81,12 @@ object PrometheusCreator {
                                                           dataDir = dataDir)
         override def start(): PrometheusDescription = {
           val client =
-            DockerClient.builder.user(node.user).password(node.password).hostname(node.hostname).port(node.port).build
+            DockerClient.builder
+              .user(node._user)
+              .password(node._password)
+              .hostname(node.hostname)
+              .port(node._port)
+              .build
           try {
             client
               .containerCreator()
@@ -113,7 +118,12 @@ object PrometheusCreator {
 
         override def stop(): PrometheusDescription = {
           val client =
-            DockerClient.builder.user(node.user).password(node.password).hostname(node.hostname).port(node.port).build
+            DockerClient.builder
+              .user(node._user)
+              .password(node._password)
+              .hostname(node.hostname)
+              .port(node._port)
+              .build
           client.stop(name)
           client.remove(name)
           prometheusDescription

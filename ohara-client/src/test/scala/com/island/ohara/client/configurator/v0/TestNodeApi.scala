@@ -28,7 +28,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class TestNodeApi extends SmallTest with Matchers {
 
   @Test
-  def ignorePortOnCreation(): Unit = an[NullPointerException] should be thrownBy NodeApi.access
+  def ignorePortOnCreation(): Unit = NodeApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
@@ -41,7 +41,7 @@ class TestNodeApi extends SmallTest with Matchers {
   def negativePort(): Unit = an[IllegalArgumentException] should be thrownBy NodeApi.access.request.port(-1)
 
   @Test
-  def ignoreUserOnCreation(): Unit = an[NullPointerException] should be thrownBy NodeApi.access
+  def ignoreUserOnCreation(): Unit = NodeApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
@@ -83,7 +83,7 @@ class TestNodeApi extends SmallTest with Matchers {
   def nullHostname(): Unit = an[NullPointerException] should be thrownBy NodeApi.access.request.hostname(null)
 
   @Test
-  def ignorePasswordOnCreation(): Unit = an[NullPointerException] should be thrownBy NodeApi.access
+  def ignorePasswordOnCreation(): Unit = NodeApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
@@ -108,9 +108,9 @@ class TestNodeApi extends SmallTest with Matchers {
       NodeApi.access.request.hostname(hostname).user(user).password(password).port(port).creation
     creation.name shouldBe hostname
     creation.hostname shouldBe hostname
-    creation.user shouldBe user
-    creation.password shouldBe password
-    creation.port shouldBe port
+    creation.user.get shouldBe user
+    creation.password.get shouldBe password
+    creation.port.get shouldBe port
   }
 
   @Test
@@ -188,10 +188,10 @@ class TestNodeApi extends SmallTest with Matchers {
                                                           """.stripMargin.parseJson)
 
     creation.name shouldBe "name"
-    creation.user shouldBe "user"
-    creation.password shouldBe "password"
+    creation.user.get shouldBe "user"
+    creation.password.get shouldBe "password"
     // default is ssh port: 22
-    creation.port shouldBe 22
+    creation.port.get shouldBe 22
   }
 
   @Test
@@ -265,9 +265,9 @@ class TestNodeApi extends SmallTest with Matchers {
                                        """.stripMargin.parseJson)
     creation.name shouldBe name
     creation.hostname shouldBe name
-    creation.port shouldBe port
-    creation.user shouldBe user
-    creation.password shouldBe password
+    creation.port.get shouldBe port
+    creation.user.get shouldBe user
+    creation.password.get shouldBe password
 
     val hostname = CommonUtils.randomString()
     val creation2 = NodeApi.NODE_CREATION_JSON_FORMAT.read(s"""
@@ -282,9 +282,9 @@ class TestNodeApi extends SmallTest with Matchers {
     // the name is alias to hostname
     creation2.name shouldBe hostname
     creation2.hostname shouldBe hostname
-    creation2.port shouldBe port
-    creation2.user shouldBe user
-    creation2.password shouldBe password
+    creation2.port.get shouldBe port
+    creation2.user.get shouldBe user
+    creation2.password.get shouldBe password
   }
 
   @Test
@@ -300,9 +300,9 @@ class TestNodeApi extends SmallTest with Matchers {
     NodeApi.NODE_JSON_FORMAT
       .write(Node(
         hostname = hostname,
-        port = CommonUtils.availablePort(),
-        user = CommonUtils.randomString(10),
-        password = CommonUtils.randomString(10),
+        port = Some(CommonUtils.availablePort()),
+        user = Some(CommonUtils.randomString(10)),
+        password = Some(CommonUtils.randomString(10)),
         services = Seq.empty,
         lastModified = CommonUtils.current(),
         tags = Map.empty

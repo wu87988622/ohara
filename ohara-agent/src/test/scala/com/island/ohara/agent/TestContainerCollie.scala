@@ -22,9 +22,9 @@ import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
 
 class TestContainerCollie extends SmallTest with Matchers {
   private[this] val fakeClusterName: String = FakeContainerCollie.clusterName
@@ -46,9 +46,9 @@ class TestContainerCollie extends SmallTest with Matchers {
     val nodeName2 = "node2"
 
     val node1 = Node(hostname = nodeName1,
-                     port = 22,
-                     user = "user1",
-                     password = "123456",
+                     port = Some(22),
+                     user = Some("user1"),
+                     password = Some("123456"),
                      services = Seq.empty,
                      lastModified = CommonUtils.current(),
                      tags = Map.empty)
@@ -79,9 +79,9 @@ class TestContainerCollie extends SmallTest with Matchers {
   def testRemoveContainerNodeNameNotExists(): Unit = {
     val node1Name = "node1"
     val node1 = Node(hostname = node1Name,
-                     port = 22,
-                     user = "user1",
-                     password = "123456",
+                     port = Some(22),
+                     user = Some("user1"),
+                     password = Some("123456"),
                      services = Seq.empty,
                      lastModified = CommonUtils.current(),
                      tags = Map.empty)
@@ -96,9 +96,9 @@ class TestContainerCollie extends SmallTest with Matchers {
   def testRemoveSingleNode(): Unit = {
     val node1Name = "node1"
     val node1 = Node(hostname = node1Name,
-                     port = 22,
-                     user = "user1",
-                     password = "123456",
+                     port = Some(22),
+                     user = Some("user1"),
+                     password = Some("123456"),
                      services = Seq.empty,
                      lastModified = CommonUtils.current(),
                      tags = Map.empty)
@@ -125,9 +125,9 @@ class TestContainerCollie extends SmallTest with Matchers {
   def testRemoveNotExistsNode(): Unit = {
     val node1Name = "node1"
     val node1 = Node(hostname = node1Name,
-                     port = 22,
-                     user = "user1",
-                     password = "123456",
+                     port = Some(22),
+                     user = Some("user1"),
+                     password = Some("123456"),
                      services = Seq.empty,
                      lastModified = CommonUtils.current(),
                      tags = Map.empty)
@@ -154,9 +154,9 @@ class TestContainerCollie extends SmallTest with Matchers {
     val node2Name = "node2"
 
     val node1 = Node(hostname = node1Name,
-                     port = 22,
-                     user = "user1",
-                     password = "123456",
+                     port = Some(22),
+                     user = Some("user1"),
+                     password = Some("123456"),
                      services = Seq.empty,
                      lastModified = CommonUtils.current(),
                      tags = Map.empty)
@@ -194,9 +194,9 @@ class TestContainerCollie extends SmallTest with Matchers {
 
   private[this] def validErrorNodeName(nodeName: String, expectErrMsg: String): Unit = {
     val node1 = Node(hostname = nodeName,
-                     port = 22,
-                     user = "user1",
-                     password = "123456",
+                     port = Some(22),
+                     user = Some("user1"),
+                     password = Some("123456"),
                      services = Seq.empty,
                      lastModified = CommonUtils.current(),
                      tags = Map.empty)

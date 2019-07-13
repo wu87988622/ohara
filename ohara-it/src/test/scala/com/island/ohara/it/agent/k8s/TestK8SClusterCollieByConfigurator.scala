@@ -47,9 +47,9 @@ class TestK8SClusterCollieByConfigurator extends BasicTests4ClusterCollieByConfi
         .map(
           node =>
             Node(hostname = node,
-                 port = 22,
-                 user = "fake",
-                 password = "fake",
+                 port = Some(22),
+                 user = Some("fake"),
+                 password = Some("fake"),
                  services = Seq.empty,
                  lastModified = CommonUtils.current(),
                  tags = Map.empty))
@@ -86,7 +86,8 @@ class TestK8SClusterCollieByConfigurator extends BasicTests4ClusterCollieByConfi
       }
       val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
       nodeCache.foreach { node =>
-        result(nodeApi.request.hostname(node.hostname).port(node.port).user(node.user).password(node.password).create())
+        result(
+          nodeApi.request.hostname(node.hostname).port(node._port).user(node._user).password(node._password).create())
       }
       val nodes = result(nodeApi.list())
       nodes.size shouldBe nodeCache.size

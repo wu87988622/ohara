@@ -44,7 +44,7 @@ class TestDockerClient extends IntegrationTest with Matchers {
   def setup(): Unit =
     CollieTestUtils.nodeCache().headOption.foreach { node =>
       client =
-        DockerClient.builder.hostname(node.hostname).port(node.port).user(node.user).password(node.password).build
+        DockerClient.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
       remoteHostname = node.hostname
     }
 

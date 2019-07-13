@@ -60,16 +60,9 @@ object NodeRoute {
         update(
           Node(
             hostname = hostname,
-            port = request.port.getOrElse(
-              previous
-                .map(_.port)
-                .getOrElse(throw new NoSuchElementException(RouteUtils.errorMessage(hostname, "port")))),
-            user = request.user.getOrElse(
-              previous
-                .map(_.user)
-                .getOrElse(throw new NoSuchElementException(RouteUtils.errorMessage(hostname, "user")))),
-            password = request.password.getOrElse(previous.fold(
-              throw new NoSuchElementException(RouteUtils.errorMessage(hostname, "password")))(_.password)),
+            port = if (request.port.isDefined) request.port else previous.flatMap(_.port),
+            user = if (request.user.isDefined) request.user else previous.flatMap(_.user),
+            password = if (request.password.isDefined) request.password else previous.flatMap(_.password),
             services = Seq.empty,
             lastModified = CommonUtils.current(),
             tags = request.tags.getOrElse(previous.map(_.tags).getOrElse(Map.empty))

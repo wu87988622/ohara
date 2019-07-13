@@ -16,10 +16,10 @@
 
 package com.island.ohara.agent
 
-import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
+import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
@@ -145,9 +145,9 @@ class TestBrokerCreator extends SmallTest with Matchers {
     val node1Name = "node1"
     val node1 =
       Node(hostname = node1Name,
-           port = 22,
-           "user1",
-           password = "123456",
+           port = Some(22),
+           user = Some("fake"),
+           password = Some("fake"),
            services = Seq.empty,
            lastModified = CommonUtils.current(),
            tags = Map.empty)
@@ -173,9 +173,9 @@ class TestBrokerCreator extends SmallTest with Matchers {
     val node1Name = "node1"
     val node1 =
       Node(hostname = node1Name,
-           port = 22,
-           user = "user1",
-           password = "123456",
+           port = Some(22),
+           user = Some("fake"),
+           password = Some("fake"),
            services = Seq.empty,
            lastModified = CommonUtils.current(),
            tags = Map.empty)
@@ -201,9 +201,9 @@ class TestBrokerCreator extends SmallTest with Matchers {
     val node1Name = "node1"
     val node1 =
       Node(hostname = node1Name,
-           port = 22,
-           user = "user1",
-           password = "123456",
+           port = Some(22),
+           user = Some("fake"),
+           password = Some("fake"),
            services = Seq.empty,
            lastModified = CommonUtils.current(),
            tags = Map.empty)
@@ -259,18 +259,18 @@ class TestBrokerCreator extends SmallTest with Matchers {
     val node1Name = "node1"
     val node1 =
       Node(hostname = node1Name,
-           port = 22,
-           user = "user1",
-           password = "123456",
+           port = Some(22),
+           user = Some("fake"),
+           password = Some("fake"),
            services = Seq.empty,
            lastModified = CommonUtils.current(),
            tags = Map.empty)
 
     val node2Name = "node2"
     val node2 = Node(hostname = node2Name,
-                     port = 22,
-                     user = "user1",
-                     password = "123456",
+                     port = Some(22),
+                     user = Some("fake"),
+                     password = Some("fake"),
                      services = Seq.empty,
                      lastModified = CommonUtils.current(),
                      tags = Map.empty)
@@ -328,17 +328,17 @@ class TestBrokerCreator extends SmallTest with Matchers {
   def testBkCreator(): Unit = {
     val node1Name = "node1"
     val node1 = Node(hostname = node1Name,
-                     port = 22,
-                     user = "user1",
-                     password = "123456",
+                     port = Some(22),
+                     user = Some("fake"),
+                     password = Some("fake"),
                      services = Seq.empty,
                      lastModified = CommonUtils.current(),
                      tags = Map.empty)
     val node2Name = "node2"
     val node2 = Node(hostname = node2Name,
-                     port = 22,
-                     user = "user1",
-                     password = "123456",
+                     port = Some(22),
+                     user = Some("fake"),
+                     password = Some("fake"),
                      services = Seq.empty,
                      lastModified = CommonUtils.current(),
                      tags = Map.empty)

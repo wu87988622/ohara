@@ -129,9 +129,9 @@ class TestZookeeperCreator extends SmallTest with Matchers {
   def testZKCreator(): Unit = {
     val node1Name = "node1"
     val node1 = Node(hostname = node1Name,
-                     port = 22,
-                     user = "user1",
-                     password = "123456",
+                     port = Some(22),
+                     user = Some("fake"),
+                     password = Some("fake"),
                      services = Seq.empty,
                      lastModified = CommonUtils.current(),
                      tags = Map.empty)

@@ -26,8 +26,8 @@ import org.scalatest.Matchers
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.Await
-import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
 class TestK8SClientVerify extends SmallTest with Matchers {
@@ -43,9 +43,9 @@ class TestK8SClientVerify extends SmallTest with Matchers {
       Await.result(
         clusterCollie.verifyNode(
           Node(hostname = "ohara",
-               port = 22,
-               user = "fake",
-               password = "fake",
+               port = Some(22),
+               user = Some("fake"),
+               password = Some("fake"),
                services = Seq.empty,
                lastModified = CommonUtils.current(),
                tags = Map.empty)),
@@ -66,9 +66,9 @@ class TestK8SClientVerify extends SmallTest with Matchers {
       Await.result(
         clusterCollie.verifyNode(
           Node(hostname = "ohara",
-               port = 22,
-               user = "fake",
-               password = "fake",
+               port = Some(22),
+               user = Some("fake"),
+               password = Some("fake"),
                services = Seq.empty,
                lastModified = CommonUtils.current(),
                tags = Map.empty)),
@@ -89,9 +89,9 @@ class TestK8SClientVerify extends SmallTest with Matchers {
       Await.result(
         clusterCollie.verifyNode(
           Node(hostname = "ohara",
-               port = 22,
-               user = "fake",
-               password = "fake",
+               port = Some(22),
+               user = Some("fake"),
+               password = Some("fake"),
                services = Seq.empty,
                lastModified = CommonUtils.current(),
                tags = Map.empty)),
@@ -112,9 +112,9 @@ class TestK8SClientVerify extends SmallTest with Matchers {
       Await.result(
         clusterCollie.verifyNode(
           Node(hostname = "ohara",
-               port = 22,
-               user = "fake",
-               password = "fake",
+               port = Some(22),
+               user = Some("fake"),
+               password = Some("fake"),
                services = Seq.empty,
                lastModified = CommonUtils.current(),
                tags = Map.empty)),

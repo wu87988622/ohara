@@ -38,9 +38,9 @@ class TestK8sClusterCollie extends BasicTests4ClusterCollie {
         .map(
           node =>
             Node(hostname = node,
-                 port = 0,
-                 user = "fake",
-                 password = "fake",
+                 port = Some(22),
+                 user = Some("fake"),
+                 password = Some("fake"),
                  services = Seq.empty,
                  lastModified = CommonUtils.current(),
                  tags = Map.empty))

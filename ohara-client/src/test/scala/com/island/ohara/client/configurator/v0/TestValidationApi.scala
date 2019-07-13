@@ -265,9 +265,9 @@ class TestValidationApi extends SmallTest with Matchers {
       ValidationApi.access.nodeRequest.hostname(hostname).port(port).user(user).password(password).validation
 
     validation.hostname shouldBe hostname
-    validation.port shouldBe port
-    validation.user shouldBe user
-    validation.password shouldBe password
+    validation.port.get shouldBe port
+    validation.user.get shouldBe user
+    validation.password.get shouldBe password
   }
 
   @Test
@@ -508,9 +508,9 @@ class TestValidationApi extends SmallTest with Matchers {
       """.stripMargin.parseJson)
 
     nodeValidation.hostname shouldBe hostname
-    nodeValidation.port shouldBe port
-    nodeValidation.user shouldBe user
-    nodeValidation.password shouldBe password
+    nodeValidation.port.get shouldBe port
+    nodeValidation.user.get shouldBe user
+    nodeValidation.password.get shouldBe password
   }
 
   @Test

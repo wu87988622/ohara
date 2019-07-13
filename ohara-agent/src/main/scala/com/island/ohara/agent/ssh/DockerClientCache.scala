@@ -27,7 +27,6 @@ import scala.collection.mutable
 
 trait DockerClientCache extends Releasable {
   def exec[T](node: Node, f: DockerClient => T): T
-  def getClient(node: Node): DockerClient
 }
 
 object DockerClientCache {
@@ -54,12 +53,12 @@ object DockerClientCache {
       f(client)
     }
 
-    override def getClient(node: Node): DockerClient = if (isClosed) throw new IllegalStateException()
+    def getClient(node: Node): DockerClient = if (isClosed) throw new IllegalStateException()
     else {
       lock.synchronized {
         cache.getOrElseUpdate(
           node,
-          DockerClient.builder.hostname(node.hostname).port(node.port).user(node.user).password(node.password).build
+          DockerClient.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
         )
       }
     }
