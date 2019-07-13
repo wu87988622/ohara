@@ -46,29 +46,27 @@ const OverviewTopics = props => {
         headers={['Name', 'Partitions', 'Replication factor']}
         isLoading={fetchingTopics}
       >
-        {() => {
-          return topics.map(topic => {
-            return (
-              <TableRow key={topic.name}>
-                <StyledTableCell component="th" scope="row">
-                  {topic.name}
-                </StyledTableCell>
-                <StyledTableCell
-                  align="left"
-                  data-testid={`${topic.name}-nop-${topic.numberOfPartitions}`}
-                >
-                  {topic.numberOfPartitions}
-                </StyledTableCell>
-                <StyledTableCell
-                  align="right"
-                  data-testid={`${topic.name}-nor-${topic.numberOfReplications}`}
-                >
-                  {topic.numberOfReplications}
-                </StyledTableCell>
-              </TableRow>
-            );
-          });
-        }}
+        {topics.map(topic => {
+          return (
+            <TableRow key={topic.name}>
+              <StyledTableCell component="th" scope="row">
+                {topic.name}
+              </StyledTableCell>
+              <StyledTableCell
+                align="left"
+                data-testid={`${topic.name}-nop-${topic.numberOfPartitions}`}
+              >
+                {topic.numberOfPartitions}
+              </StyledTableCell>
+              <StyledTableCell
+                align="right"
+                data-testid={`${topic.name}-nor-${topic.numberOfReplications}`}
+              >
+                {topic.numberOfReplications}
+              </StyledTableCell>
+            </TableRow>
+          );
+        })}
       </OverviewTable>
     </>
   );

@@ -24,7 +24,7 @@ import { get, isEmpty } from 'lodash';
 import * as nodeApi from 'api/nodeApi';
 import * as brokerApi from 'api/brokerApi';
 import * as workerApi from 'api/workerApi';
-import * as coneainerApi from 'api/containerApi';
+import * as containerApi from 'api/containerApi';
 import * as MESSAGES from 'constants/messages';
 import * as commonUtils from 'utils/commonUtils';
 import * as utils from '../WorkspacesDetailPageUtils';
@@ -112,7 +112,7 @@ const Nodes = props => {
 
     if (retryCount > 5) return;
 
-    const res = await coneainerApi.fetchContainers(name);
+    const res = await containerApi.fetchContainers(name);
     const containers = get(res, 'data.result[0].containers', []);
     const nodeNames = containers.map(container => {
       return container.state === 'RUNNING' ? container.nodeName : '';
@@ -185,52 +185,45 @@ const Nodes = props => {
         loading={working}
         testId="node-new-dialog"
       >
-        {() => {
-          return (
-            <StyledTable headers={headers} isLoading={false}>
-              {() => {
-                return (
-                  <>
-                    {unusedNodes.map(node => {
-                      const { name, port } = node;
-                      return (
-                        <TableRow key={name}>
-                          <TableCell>
-                            <Checkbox
-                              id={name}
-                              color="primary"
-                              onChange={handleNodeSelect}
-                            />
-                          </TableCell>
-                          <TableCell>{name}</TableCell>
-                          <TableCell align="right">{port}</TableCell>
-                        </TableRow>
-                      );
-                    })}
-                    {useNodes.map(node => {
-                      const { name, port } = node;
-                      return (
-                        <TableRow key={name} selected>
-                          <TableCell>
-                            <Checkbox
-                              id={name}
-                              color="primary"
-                              onChange={handleNodeSelect}
-                              checked
-                              disabled
-                            />
-                          </TableCell>
-                          <TableCell>{name}</TableCell>
-                          <TableCell align="right">{port}</TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </>
-                );
-              }}
-            </StyledTable>
-          );
-        }}
+        <StyledTable headers={headers}>
+          <>
+            {unusedNodes.map(node => {
+              const { name, port } = node;
+              return (
+                <TableRow key={name}>
+                  <TableCell>
+                    <Checkbox
+                      id={name}
+                      color="primary"
+                      onChange={handleNodeSelect}
+                    />
+                  </TableCell>
+                  <TableCell>{name}</TableCell>
+                  <TableCell align="right">{port}</TableCell>
+                </TableRow>
+              );
+            })}
+
+            {useNodes.map(node => {
+              const { name, port } = node;
+              return (
+                <TableRow key={name} selected>
+                  <TableCell>
+                    <Checkbox
+                      id={name}
+                      color="primary"
+                      onChange={handleNodeSelect}
+                      checked
+                      disabled
+                    />
+                  </TableCell>
+                  <TableCell>{name}</TableCell>
+                  <TableCell align="right">{port}</TableCell>
+                </TableRow>
+              );
+            })}
+          </>
+        </StyledTable>
       </Dialog>
     </>
   );

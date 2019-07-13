@@ -49,18 +49,16 @@ const OverviewStreamApps = props => {
         headers={['Jar name', 'File size(KB)']}
         isLoading={fetchingJars}
       >
-        {() => {
-          return jars.map(jar => {
-            return (
-              <TableRow key={jar.name}>
-                <StyledTableCell>{jar.name}</StyledTableCell>
-                <StyledTableCell align="right">
-                  {floor(divide(jar.size, 1024), 2)}
-                </StyledTableCell>
-              </TableRow>
-            );
-          });
-        }}
+        {jars.map(jar => {
+          return (
+            <TableRow key={jar.name}>
+              <StyledTableCell>{jar.name}</StyledTableCell>
+              <StyledTableCell align="right">
+                {floor(divide(jar.size, 1024), 2)}
+              </StyledTableCell>
+            </TableRow>
+          );
+        })}
       </OverviewTable>
     </>
   );

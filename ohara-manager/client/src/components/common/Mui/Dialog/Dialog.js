@@ -45,7 +45,7 @@ const MuiDialog = props => {
     >
       <div data-testid={testId}>
         <DialogTitle>{title}</DialogTitle>
-        {children()}
+        {children}
         <DialogActions>
           <Button onClick={handelClose} color="primary">
             {cancelBtnText}
@@ -73,7 +73,7 @@ MuiDialog.propTypes = {
   cancelBtnText: PropTypes.string,
   maxWidth: PropTypes.string,
   handleConfirm: PropTypes.func.isRequired,
-  children: PropTypes.func.isRequired,
+  children: PropTypes.any.isRequired,
   confirmDisabled: PropTypes.bool,
   loading: PropTypes.bool.isRequired,
   testId: PropTypes.string,

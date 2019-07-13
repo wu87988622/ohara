@@ -51,14 +51,14 @@ const MuiTable = props => {
           })}
         </TableRow>
       </TableHead>
-      <TableBody>{children()}</TableBody>
+      <TableBody>{children}</TableBody>
     </Table>
   );
 };
 
 MuiTable.propTypes = {
   headers: PropTypes.arrayOf(PropTypes.string).isRequired,
-  children: PropTypes.func.isRequired,
+  children: PropTypes.any.isRequired,
   isLoading: PropTypes.bool,
 };
 

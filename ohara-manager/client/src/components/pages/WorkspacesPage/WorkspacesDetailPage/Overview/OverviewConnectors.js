@@ -52,44 +52,42 @@ const OverviewConnectors = props => {
       </TabHeading>
 
       <OverviewTable headers={['Name', 'More info']} isLoading={false}>
-        {() => {
-          return _connectors.map(connector => {
-            const { name, info } = connector;
-            const { author, kind, version, className } = info;
-            return (
-              <TableRow key={name}>
-                <StyledTableCell component="td" scope="row">
-                  {name}
-                </StyledTableCell>
-                <StyledTableCell component="td" scope="row" align="right">
-                  <Tooltip
-                    interactive
-                    placement="right"
-                    data-testid={`${name}-tooltip`}
-                    title={
-                      <TooltipBody>
-                        <li>
-                          <b>Author:</b> {author}
-                        </li>
-                        <li>
-                          <b>Kind:</b> {kind}
-                        </li>
-                        <li>
-                          <b>Version:</b> {version}
-                        </li>
-                        <li>
-                          <b>Class:</b> {className}
-                        </li>
-                      </TooltipBody>
-                    }
-                  >
-                    <StyledIcon className="fas fa-info-circle" size="13" />
-                  </Tooltip>
-                </StyledTableCell>
-              </TableRow>
-            );
-          });
-        }}
+        {_connectors.map(connector => {
+          const { name, info } = connector;
+          const { author, kind, version, className } = info;
+          return (
+            <TableRow key={name}>
+              <StyledTableCell component="td" scope="row">
+                {name}
+              </StyledTableCell>
+              <StyledTableCell component="td" scope="row" align="right">
+                <Tooltip
+                  interactive
+                  placement="right"
+                  data-testid={`${name}-tooltip`}
+                  title={
+                    <TooltipBody>
+                      <li>
+                        <b>Author:</b> {author}
+                      </li>
+                      <li>
+                        <b>Kind:</b> {kind}
+                      </li>
+                      <li>
+                        <b>Version:</b> {version}
+                      </li>
+                      <li>
+                        <b>Class:</b> {className}
+                      </li>
+                    </TooltipBody>
+                  }
+                >
+                  <StyledIcon className="fas fa-info-circle" size="13" />
+                </Tooltip>
+              </StyledTableCell>
+            </TableRow>
+          );
+        })}
       </OverviewTable>
     </>
   );

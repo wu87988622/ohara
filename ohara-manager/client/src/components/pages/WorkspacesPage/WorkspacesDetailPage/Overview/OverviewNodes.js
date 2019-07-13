@@ -122,40 +122,38 @@ const OverviewNodes = props => {
         headers={['Cluster type', 'Node', 'More info']}
         isLoading={isFetchingZookeeper}
       >
-        {() => {
-          // Use idx as the key as we don't have a more reliable value
-          // to use as the key
-          return nodes.map((node, idx) => {
-            const { clusterType, nodeName, shouldRender, moreInfo } = node;
-            return (
-              <TableRow key={idx}>
-                <StyledTableCell component="td">
-                  {shouldRender && clusterType}
-                </StyledTableCell>
-                <StyledTableCell component="td">{nodeName}</StyledTableCell>
-                <StyledTableCell component="td" align="right">
-                  <Tooltip
-                    interactive
-                    placement="right"
-                    data-testid={`${clusterType}-${nodeName}`}
-                    title={
-                      <TooltipBody>
-                        {moreInfo &&
-                          Object.keys(moreInfo).map(key => (
-                            <li key={key}>
-                              {capitalize(key)}: {moreInfo[key]}
-                            </li>
-                          ))}
-                      </TooltipBody>
-                    }
-                  >
-                    <StyledIcon className="fas fa-info-circle" size="13" />
-                  </Tooltip>
-                </StyledTableCell>
-              </TableRow>
-            );
-          });
-        }}
+        {// Use idx as the key as we don't have a more reliable value
+        // to use as the key
+        nodes.map((node, idx) => {
+          const { clusterType, nodeName, shouldRender, moreInfo } = node;
+          return (
+            <TableRow key={idx}>
+              <StyledTableCell component="td">
+                {shouldRender && clusterType}
+              </StyledTableCell>
+              <StyledTableCell component="td">{nodeName}</StyledTableCell>
+              <StyledTableCell component="td" align="right">
+                <Tooltip
+                  interactive
+                  placement="right"
+                  data-testid={`${clusterType}-${nodeName}`}
+                  title={
+                    <TooltipBody>
+                      {moreInfo &&
+                        Object.keys(moreInfo).map(key => (
+                          <li key={key}>
+                            {capitalize(key)}: {moreInfo[key]}
+                          </li>
+                        ))}
+                    </TooltipBody>
+                  }
+                >
+                  <StyledIcon className="fas fa-info-circle" size="13" />
+                </Tooltip>
+              </StyledTableCell>
+            </TableRow>
+          );
+        })}
       </OverviewTable>
     </>
   );

@@ -120,31 +120,29 @@ class NodeListPage extends React.Component {
               />
             </s.TopWrapper>
             <s.NodeTable isLoading={isLoading} headers={this.headers}>
-              {() => {
-                return nodes.map(node => (
-                  <TableRow key={node.name}>
-                    <TableCell component="th" scope="row">
-                      {node.name || ''}
-                    </TableCell>
-                    <TableCell align="left">
-                      {join(this.getAllClusterNames(node), ', ')}
-                    </TableCell>
-                    <TableCell align="left">
-                      {this.getSSHLabel(node.user, node.port)}
-                    </TableCell>
-                    <TableCell className="has-icon" align="right">
-                      <IconButton
-                        color="primary"
-                        aria-label="Edit"
-                        data-testid="edit-node-icon"
-                        onClick={() => this.handleEditClick(node)}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ));
-              }}
+              {nodes.map(node => (
+                <TableRow key={node.name}>
+                  <TableCell component="th" scope="row">
+                    {node.name || ''}
+                  </TableCell>
+                  <TableCell align="left">
+                    {join(this.getAllClusterNames(node), ', ')}
+                  </TableCell>
+                  <TableCell align="left">
+                    {this.getSSHLabel(node.user, node.port)}
+                  </TableCell>
+                  <TableCell className="has-icon" align="right">
+                    <IconButton
+                      color="primary"
+                      aria-label="Edit"
+                      data-testid="edit-node-icon"
+                      onClick={() => this.handleEditClick(node)}
+                    >
+                      <EditIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
             </s.NodeTable>
           </s.Wrapper>
           <NodeNewModal

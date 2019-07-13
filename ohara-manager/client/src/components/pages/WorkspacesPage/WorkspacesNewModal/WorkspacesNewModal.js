@@ -369,102 +369,100 @@ const WorkerNewModal = props => {
               checkedNodes.length === 0
             }
           >
-            {() => {
-              return (
-                <s.StyledDialogDividers dividers>
-                  <s.StyledInputFile
-                    id="fileInput"
-                    accept=".jar"
-                    type="file"
-                    onChange={handleFileSelect}
-                  />
-                  <form onSubmit={handleSubmit}>
-                    <DialogContent>
-                      <Field
-                        label="Name"
-                        name="name"
-                        component={InputField}
-                        placeholder="cluster00"
-                        data-testid="name-input"
-                        disabled={submitting}
-                        format={validateServiceName}
-                        autoFocus
-                        errorMessenge={errorMessenge}
-                        error={errorMessenge !== ''}
-                      />
-                    </DialogContent>
-                    <s.StyledDialogContent>
-                      <Label>Node List</Label>
-                      <s.StyledPaper>
-                        <List>
-                          {nodes.map(node => {
-                            const { name } = node;
-                            return (
-                              <ListItem
-                                key={name}
-                                dense
-                                button
-                                onClick={handleNodeToggle(name)}
-                              >
-                                <ListItemIcon>
-                                  <Checkbox
-                                    color="primary"
-                                    edge="start"
-                                    checked={checkedNodes.indexOf(name) !== -1}
-                                    tabIndex={-1}
-                                    disableRipple
-                                  />
-                                </ListItemIcon>
-                                <ListItemText
-                                  id={name}
-                                  primary={name}
-                                  data-testid={name}
+            {
+              <s.StyledDialogDividers dividers>
+                <s.StyledInputFile
+                  id="fileInput"
+                  accept=".jar"
+                  type="file"
+                  onChange={handleFileSelect}
+                />
+                <form onSubmit={handleSubmit}>
+                  <DialogContent>
+                    <Field
+                      label="Name"
+                      name="name"
+                      component={InputField}
+                      placeholder="cluster00"
+                      data-testid="name-input"
+                      disabled={submitting}
+                      format={validateServiceName}
+                      autoFocus
+                      errorMessenge={errorMessenge}
+                      error={errorMessenge !== ''}
+                    />
+                  </DialogContent>
+                  <s.StyledDialogContent>
+                    <Label>Node List</Label>
+                    <s.StyledPaper>
+                      <List>
+                        {nodes.map(node => {
+                          const { name } = node;
+                          return (
+                            <ListItem
+                              key={name}
+                              dense
+                              button
+                              onClick={handleNodeToggle(name)}
+                            >
+                              <ListItemIcon>
+                                <Checkbox
+                                  color="primary"
+                                  edge="start"
+                                  checked={checkedNodes.indexOf(name) !== -1}
+                                  tabIndex={-1}
+                                  disableRipple
                                 />
-                              </ListItem>
-                            );
-                          })}
-                        </List>
-                      </s.StyledPaper>
-                    </s.StyledDialogContent>
-                    <s.StyledDialogContent>
-                      <Label>Plugin List</Label>
-                      <s.StyledPaper>
-                        <List>
-                          {jars.map(jar => {
-                            const { name } = jar;
-                            return (
-                              <ListItem
-                                key={name}
-                                dense
-                                button
-                                onClick={handleFileToggle(jar)}
-                              >
-                                <ListItemIcon>
-                                  <Checkbox
-                                    color="primary"
-                                    edge="start"
-                                    checked={checkedFiles.indexOf(jar) !== -1}
-                                    tabIndex={-1}
-                                    disableRipple
-                                  />
-                                </ListItemIcon>
-                                <ListItemText
-                                  id={jar}
-                                  primary={split(name, '.jar', 1)}
+                              </ListItemIcon>
+                              <ListItemText
+                                id={name}
+                                primary={name}
+                                data-testid={name}
+                              />
+                            </ListItem>
+                          );
+                        })}
+                      </List>
+                    </s.StyledPaper>
+                  </s.StyledDialogContent>
+                  <s.StyledDialogContent>
+                    <Label>Plugin List</Label>
+                    <s.StyledPaper>
+                      <List>
+                        {jars.map(jar => {
+                          const { name } = jar;
+                          return (
+                            <ListItem
+                              key={name}
+                              dense
+                              button
+                              onClick={handleFileToggle(jar)}
+                            >
+                              <ListItemIcon>
+                                <Checkbox
+                                  color="primary"
+                                  edge="start"
+                                  checked={checkedFiles.indexOf(jar) !== -1}
+                                  tabIndex={-1}
+                                  disableRipple
                                 />
-                              </ListItem>
-                            );
-                          })}
-                          <s.StyledLabel htmlFor="fileInput">
-                            <Button component="span" text="New Plugin" />
-                          </s.StyledLabel>
-                        </List>
-                      </s.StyledPaper>
-                    </s.StyledDialogContent>
-                  </form>
-                </s.StyledDialogDividers>
-              );
-            }}
+                              </ListItemIcon>
+                              <ListItemText
+                                id={jar}
+                                primary={split(name, '.jar', 1)}
+                              />
+                            </ListItem>
+                          );
+                        })}
+                        <s.StyledLabel htmlFor="fileInput">
+                          <Button component="span" text="New Plugin" />
+                        </s.StyledLabel>
+                      </List>
+                    </s.StyledPaper>
+                  </s.StyledDialogContent>
+                </form>
+              </s.StyledDialogDividers>
+            }
           </Dialog>
         );
       }}

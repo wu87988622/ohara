@@ -27,7 +27,7 @@ jest.mock('api/streamApi');
 const props = {
   match: {
     params: {
-      connectorId: generate.id(),
+      connectorName: generate.serviceName(),
     },
   },
   graph: [],

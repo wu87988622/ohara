@@ -26,7 +26,7 @@ import Paper from '@material-ui/core/Paper';
 import { TableLoader } from 'components/common/Mui/Loader';
 
 const MuiTable = props => {
-  const { headers, isLoading, children } = props;
+  const { headers, isLoading = false, children } = props;
   const lastIdx = headers.length - 1; // Make sure we have the same length as idx
 
   if (isLoading) return <TableLoader />;
@@ -47,7 +47,7 @@ const MuiTable = props => {
             })}
           </TableRow>
         </TableHead>
-        <TableBody>{children()}</TableBody>
+        <TableBody>{children}</TableBody>
       </Table>
     </Paper>
   );
@@ -55,8 +55,8 @@ const MuiTable = props => {
 
 MuiTable.propTypes = {
   headers: PropTypes.arrayOf(PropTypes.string).isRequired,
-  isLoading: PropTypes.bool.isRequired,
-  children: PropTypes.func.isRequired,
+  children: PropTypes.any.isRequired,
+  isLoading: PropTypes.bool,
 };
 
 export default MuiTable;
