@@ -44,7 +44,7 @@ Cypress.Commands.add('createWorker', () => {
   cy.registerWorker(workerName);
 
   cy.request('GET', 'api/brokers')
-    .then(res => res.body[0]) // there should only be one broker in the list
+    .then(res => res.body[0])
     .as('broker');
 
   cy.get('@broker').then(broker => {
@@ -97,18 +97,23 @@ Cypress.Commands.add('createPipeline', pipeline => {
   }).then(({ body }) => body);
 });
 
-Cypress.Commands.add('createTopic', overrides => {
-  cy.request('GET', 'api/brokers')
-    .then(res => res.body[0]) // there should only be one broker in the list
-    .as('broker');
+Cypress.Commands.add('createTopic', () => {
+  cy.request('GET', 'api/workers')
+    .then(res => {
+      // Make sure we're getting the right broker cluster name here
+      const workers = res.body;
+      const currentWorkerName = Cypress.env('WORKER_NAME');
+      const worker = workers.find(worker => worker.name === currentWorkerName);
+      return worker.brokerClusterName;
+    })
+    .as('brokerClusterName');
 
-  cy.get('@broker').then(broker => {
+  cy.get('@brokerClusterName').then(brokerClusterName => {
     cy.request('POST', '/api/topics', {
       name: utils.makeRandomStr(),
       numberOfReplications: 1,
-      brokerClusterName: broker.name,
       numberOfPartitions: 1,
-      ...overrides,
+      brokerClusterName,
     }).then(({ body }) => body); // we'll need the returned data later on
   });
 });

@@ -90,6 +90,7 @@ describe('WorkspacesPage', () => {
 
   it('deletes a topic', () => {
     cy.createTopic().as('newTopic');
+
     cy.visit(WORKSPACES)
       .wait('@getWorkers')
       .getByTestId(Cypress.env('WORKER_NAME'))
@@ -189,9 +190,9 @@ describe('WorkspacesPage', () => {
   });
 
   it('should display the overview info', () => {
-    cy.createTopic()
-      .as('overviewTopic')
-      .visit(WORKSPACES)
+    cy.createTopic().as('overviewTopic');
+
+    cy.visit(WORKSPACES)
       .wait('@getWorkers')
       .uploadTestStreamAppJar(Cypress.env('WORKER_NAME'))
       .getByTestId(Cypress.env('WORKER_NAME'))
@@ -276,13 +277,22 @@ describe('WorkspacesPage', () => {
       })
       .wait('@getTopics')
       .then(xhr => {
-        xhr.response.body.forEach(topic => {
-          cy.getByText(topic.name)
-            .should('have.length', 1)
-            .getByTestId(`${topic.name}-nop-${topic.numberOfPartitions}`)
-            .should('have.length', 1)
-            .getByTestId(`${topic.name}-nor-${topic.numberOfReplications}`)
-            .should('have.length', 1);
+        const topics = xhr.response.body;
+
+        cy.get('@overviewTopic').then(res => {
+          const currentBroker = res.brokerClusterName;
+
+          topics
+            .filter(topic => topic.brokerClusterName === currentBroker)
+            .forEach(topic => {
+              const { name, numberOfPartitions, numberOfReplications } = topic;
+              cy.getByText(name)
+                .should('have.length', 1)
+                .getByTestId(`${name}-nop-${numberOfPartitions}`)
+                .should('have.length', 1)
+                .getByTestId(`${name}-nor-${numberOfReplications}`)
+                .should('have.length', 1);
+            });
         });
       })
       .wait('@getJars')
