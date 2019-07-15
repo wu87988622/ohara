@@ -52,7 +52,7 @@ public class TestCoreDefinitions extends SmallTest {
     Assert.assertEquals(SettingDefinition.TOPIC_NAMES_DEFINITION.key(), key.name);
     Assert.assertEquals(SettingDefinition.TOPIC_NAMES_DEFINITION.orderInGroup(), key.orderInGroup);
     Assert.assertEquals(SettingDefinition.TOPIC_NAMES_DEFINITION.group(), key.group);
-    Assert.assertEquals(SettingDefinition.TOPIC_NAMES_DEFINITION.valueType(), key.type.name());
+    Assert.assertEquals(SettingDefinition.TOPIC_NAMES_DEFINITION.valueType(), "ARRAY");
   }
 
   @Test
