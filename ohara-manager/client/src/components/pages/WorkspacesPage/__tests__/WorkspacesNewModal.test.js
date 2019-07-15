@@ -20,22 +20,19 @@ import 'jest-dom/extend-expect';
 
 import WorkspacesNewModal from '../WorkspacesNewModal';
 
-jest.mock('api/workerApi');
-jest.mock('api/brokerApi');
-jest.mock('api/zookeeperApi');
-
-const props = {
-  isActive: true,
-  onClose: jest.fn(),
-  onConfirm: jest.fn(),
-};
-
 afterEach(cleanup);
 
 describe('<WorkspacesNewModal />', () => {
-  // This test throws a console.error() when running client unit test.
-  // It's a React bug and is tracked in #1465
-  it.skip('renders the page', () => {
+  let props;
+  beforeEach(() => {
+    props = {
+      isActive: true,
+      onClose: jest.fn(),
+      onConfirm: jest.fn(),
+    };
+  });
+
+  it('renders the modal', () => {
     render(<WorkspacesNewModal {...props} />);
   });
 });

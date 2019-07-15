@@ -96,7 +96,12 @@ const WorkspacesPage = props => {
             New workspace
           </StyledButton>
         </PageHeader>
-        <SortTable isLoading={isLoading} headRows={headRows} rows={rows} />
+        <SortTable
+          isLoading={isLoading}
+          headRows={headRows}
+          rows={rows}
+          tableName="workspace"
+        />
       </Container>
     </DocumentTitle>
   );

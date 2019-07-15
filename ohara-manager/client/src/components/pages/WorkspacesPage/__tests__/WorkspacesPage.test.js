@@ -37,12 +37,13 @@ const props = {
 afterEach(cleanup);
 
 describe('<WorkspacesPage />', () => {
+  const workspaceName = generate.serviceName();
   beforeEach(() => {
     const res = {
       data: {
         result: [
           {
-            name: generate.name(),
+            name: workspaceName,
             nodeNames: [generate.name()],
           },
         ],
@@ -69,7 +70,37 @@ describe('<WorkspacesPage />', () => {
     getByText('Workspaces');
   });
 
-  it('toggles new workspace modal', async () => {
+  it('displays a workspace in the table', async () => {
+    const { getByText } = await waitForElement(() =>
+      render(<WorkspacesPage {...props} />),
+    );
+
+    getByText(workspaceName);
+  });
+
+  it('displays multiple workspaces in the table', async () => {
+    const workers = generate.workers({ count: 3 });
+
+    const res = {
+      data: {
+        result: [...workers],
+      },
+    };
+
+    fetchWorkers.mockImplementation(() => Promise.resolve(res));
+
+    const { getAllByTestId } = await waitForElement(() =>
+      render(<WorkspacesPage {...props} />),
+    );
+
+    const workspaceNames = await waitForElement(() =>
+      getAllByTestId('workspace-name'),
+    );
+
+    expect(workspaceNames.length).toBe(workers.length);
+  });
+
+  it('can open the new workspace modal with the new workspace button', async () => {
     const { getByText, getByTestId, queryByTestId } = await waitForElement(() =>
       render(<WorkspacesPage {...props} />),
     );
@@ -84,5 +115,37 @@ describe('<WorkspacesPage />', () => {
     );
 
     expect(newModal).toBeVisible();
+  });
+
+  it('disables the add button when the form is not valid', async () => {
+    const { getByText } = await waitForElement(() =>
+      render(<WorkspacesPage {...props} />),
+    );
+
+    fireEvent.click(getByText('New workspace'));
+    const addButton = await waitForElement(() => getByText('Add'));
+
+    expect(addButton).toBeDisabled();
+  });
+
+  it('displays an error message when the invalid name is given in the name field', async () => {
+    const {
+      getByText,
+      queryByText,
+      getByPlaceholderText,
+    } = await waitForElement(() => render(<WorkspacesPage {...props} />));
+
+    const errorMessage = 'You only can use lower case letters and numbers';
+    const validName = 'abc';
+    const invalidName = 'ABC';
+
+    fireEvent.click(getByText('New workspace'));
+    const nameInput = getByPlaceholderText('cluster00');
+
+    fireEvent.change(nameInput, { target: { value: validName } });
+    expect(queryByText(errorMessage)).toBeNull();
+
+    fireEvent.change(nameInput, { target: { value: invalidName } });
+    expect(queryByText(errorMessage).textContent).toBe(errorMessage);
   });
 });

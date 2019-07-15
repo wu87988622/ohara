@@ -101,6 +101,23 @@ export const nodes = ({ count = 1, overrides = {} } = {}) => {
   return nodes;
 };
 
+export const workers = ({ count = 1, overrides } = {}) => {
+  let workers = [];
+
+  while (count > 0) {
+    count--;
+
+    const worker = {
+      nodeNames: [name(), name()],
+      name: name(),
+    };
+
+    workers.push(worker);
+  }
+
+  return workers;
+};
+
 export const columnRows = (rowCount = 1) => {
   let columnRows = [];
 
