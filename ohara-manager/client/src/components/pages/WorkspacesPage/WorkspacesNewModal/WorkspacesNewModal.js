@@ -39,6 +39,7 @@ import * as containerApi from 'api/containerApi';
 import * as commonUtils from 'utils/commonUtils';
 import * as URLS from 'constants/urls';
 import { Label } from 'components/common/Form';
+import { Loading } from 'components/common/Mui/Feedback';
 import { Button } from 'components/common/Mui/Form';
 import { Dialog } from 'components/common/Mui/Dialog';
 import { InputField } from 'components/common/Mui/Form';
@@ -50,6 +51,8 @@ const WorkerNewModal = props => {
   const [jars, setJars] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [activeStep, setActiveStep] = useState(0);
+  const [deleteType, setDeleteType] = useState(false);
   let workingServices = [];
   let plugins = [];
 
@@ -116,6 +119,8 @@ const WorkerNewModal = props => {
     handleModalClose();
     setIsLoading(false);
     plugins = [];
+    setActiveStep(0);
+    setDeleteType(false);
   };
 
   const validateServiceName = value => {
@@ -192,16 +197,18 @@ const WorkerNewModal = props => {
   };
 
   const deleteAllServices = async () => {
+    setDeleteType(true);
     plugins.forEach(plugin => {
       const { name, group } = plugin;
       jarApi.deleteJar({ name, workerClusterName: group });
     });
+
     const wks = workingServices.filter(working => working.service === 'worker');
     const bks = workingServices.filter(working => working.service === 'broker');
     const zks = workingServices.filter(
       working => working.service === 'zookeeper',
     );
-
+    setActiveStep(3);
     await Promise.all(
       wks.map(async wk => {
         await workerApi.deleteWorker(`${wk.name}`);
@@ -211,7 +218,7 @@ const WorkerNewModal = props => {
         });
       }),
     );
-
+    setActiveStep(2);
     await Promise.all(
       bks.map(async bk => {
         await brokerApi.deleteBroker(`${bk.name}`);
@@ -221,7 +228,7 @@ const WorkerNewModal = props => {
         });
       }),
     );
-
+    setActiveStep(1);
     await Promise.all(
       zks.map(async zk => {
         await zookeeperApi.deleteZookeeper(`${zk.name}`);
@@ -231,11 +238,10 @@ const WorkerNewModal = props => {
         });
       }),
     );
+    setActiveStep(0);
   };
 
   const createServices = async values => {
-    setIsLoading(true);
-
     const nodeNames = checkedNodes;
 
     const maxRetry = 5;
@@ -285,6 +291,7 @@ const WorkerNewModal = props => {
 
     const zookeeperClusterName = get(zookeeper, 'data.result.name');
     await waitForServiceCreation(zookeeperClusterName);
+    setActiveStep(1);
 
     saveService({ service: 'zookeeper', name: zookeeperClusterName });
 
@@ -299,6 +306,7 @@ const WorkerNewModal = props => {
 
     const brokerClusterName = get(broker, 'data.result.name');
     await waitForServiceCreation(brokerClusterName);
+    setActiveStep(2);
 
     saveService({ service: 'broker', name: brokerClusterName });
 
@@ -314,14 +322,15 @@ const WorkerNewModal = props => {
       offsetTopicName: generate.serviceName(),
       statusTopicName: generate.serviceName(),
     });
-
     const workerClusterName = get(worker, 'data.result.name');
     await waitForServiceCreation(workerClusterName);
+    setActiveStep(3);
 
     saveService({ service: 'worker', name: workerClusterName });
   };
 
   const onSubmit = async (values, form) => {
+    setIsLoading(true);
     await Promise.all(checkedFiles.map(async file => await uploadJar(file)));
 
     try {
@@ -348,134 +357,141 @@ const WorkerNewModal = props => {
     setJars(uniq(newJars));
   };
 
+  const steps = ['Zookeeper', 'Broker', 'Worker'];
+
   return (
     <Form
       onSubmit={onSubmit}
       initialValues={{}}
       render={({ handleSubmit, form, submitting, pristine, values }) => {
         return (
-          <Dialog
-            testId="new-workspace-modal"
-            scroll="paper"
-            loading={isLoading}
-            title="New workspace"
-            handelOpen={props.isActive}
-            handelClose={() => {
-              if (!submitting) resetModal(form);
-            }}
-            handleConfirm={handleSubmit}
-            confirmDisabled={
-              submitting ||
-              pristine ||
-              errorMessage !== '' ||
-              checkedNodes.length === 0
-            }
-          >
-            {isEmpty(nodes) ? (
-              <s.StyledWarning
-                data-testid="redirect-warning"
-                text={
-                  <>
-                    {`You don't have any nodes available yet. But you can create one in `}
-                    <Link to={URLS.NODES}>here</Link>
-                  </>
-                }
-              />
-            ) : (
-              <s.StyledDialogDividers dividers>
-                <s.StyledInputFile
-                  id="fileInput"
-                  accept=".jar"
-                  type="file"
-                  onChange={handleFileSelect}
+          <>
+            <Dialog
+              testId="new-workspace-modal"
+              scroll="paper"
+              loading={isLoading}
+              title="New workspace"
+              handelOpen={props.isActive}
+              handelClose={() => {
+                if (!submitting) resetModal(form);
+              }}
+              handleConfirm={handleSubmit}
+              confirmDisabled={
+                submitting ||
+                pristine ||
+                errorMessage !== '' ||
+                checkedNodes.length === 0
+              }
+            >
+              {isEmpty(nodes) ? (
+                <s.StyledWarning
+                  data-testid="redirect-warning"
+                  text={
+                    <>
+                      {`You don't have any nodes available yet. But you can create one in `}
+                      <Link to={URLS.NODES}>here</Link>
+                    </>
+                  }
                 />
-                <form onSubmit={handleSubmit}>
-                  <DialogContent>
-                    <Field
-                      label="Name"
-                      name="name"
-                      component={InputField}
-                      placeholder="cluster00"
-                      data-testid="name-input"
-                      disabled={submitting}
-                      format={validateServiceName}
-                      autoFocus
-                      errorMessage={errorMessage}
-                      error={errorMessage !== ''}
-                    />
-                  </DialogContent>
-                  <s.StyledDialogContent>
-                    <Label>Node List</Label>
-                    <s.StyledPaper>
-                      <List>
-                        {nodes.map(node => {
-                          const { name } = node;
-                          return (
-                            <ListItem
-                              key={name}
-                              dense
-                              button
-                              onClick={handleNodeToggle(name)}
-                            >
-                              <ListItemIcon>
-                                <Checkbox
-                                  color="primary"
-                                  edge="start"
-                                  checked={checkedNodes.indexOf(name) !== -1}
-                                  tabIndex={-1}
-                                  disableRipple
+              ) : (
+                <s.StyledDialogDividers dividers>
+                  <s.StyledInputFile
+                    id="fileInput"
+                    accept=".jar"
+                    type="file"
+                    onChange={handleFileSelect}
+                  />
+                  <form onSubmit={handleSubmit}>
+                    <DialogContent>
+                      <Field
+                        label="Name"
+                        name="name"
+                        component={InputField}
+                        placeholder="cluster00"
+                        data-testid="name-input"
+                        disabled={submitting}
+                        format={validateServiceName}
+                        autoFocus
+                        errorMessage={errorMessage}
+                        error={errorMessage !== ''}
+                      />
+                    </DialogContent>
+                    <s.StyledDialogContent>
+                      <Label>Node List</Label>
+                      <s.StyledPaper>
+                        <List>
+                          {nodes.map(node => {
+                            const { name } = node;
+                            return (
+                              <ListItem
+                                key={name}
+                                dense
+                                button
+                                onClick={handleNodeToggle(name)}
+                              >
+                                <ListItemIcon>
+                                  <Checkbox
+                                    color="primary"
+                                    edge="start"
+                                    checked={checkedNodes.indexOf(name) !== -1}
+                                    tabIndex={-1}
+                                    disableRipple
+                                  />
+                                </ListItemIcon>
+                              </ListItem>
+                            );
+                          })}
+                        </List>
+                      </s.StyledPaper>
+                    </s.StyledDialogContent>
+                    <s.StyledDialogContent>
+                      <Label>Plugin List</Label>
+                      <s.StyledPaper>
+                        <List>
+                          {jars.map(jar => {
+                            const { name } = jar;
+                            return (
+                              <ListItem
+                                key={name}
+                                dense
+                                button
+                                onClick={handleFileToggle(jar)}
+                              >
+                                <ListItemIcon>
+                                  <Checkbox
+                                    color="primary"
+                                    edge="start"
+                                    checked={checkedFiles.indexOf(jar) !== -1}
+                                    tabIndex={-1}
+                                    disableRipple
+                                  />
+                                </ListItemIcon>
+                                <ListItemText
+                                  id={jar}
+                                  primary={split(name, '.jar', 1)}
                                 />
-                              </ListItemIcon>
-                              <ListItemText
-                                id={name}
-                                primary={name}
-                                data-testid={name}
-                              />
-                            </ListItem>
-                          );
-                        })}
-                      </List>
-                    </s.StyledPaper>
-                  </s.StyledDialogContent>
-                  <s.StyledDialogContent>
-                    <Label>Plugin List</Label>
-                    <s.StyledPaper>
-                      <List>
-                        {jars.map(jar => {
-                          const { name } = jar;
-                          return (
-                            <ListItem
-                              key={name}
-                              dense
-                              button
-                              onClick={handleFileToggle(jar)}
-                            >
-                              <ListItemIcon>
-                                <Checkbox
-                                  color="primary"
-                                  edge="start"
-                                  checked={checkedFiles.indexOf(jar) !== -1}
-                                  tabIndex={-1}
-                                  disableRipple
-                                />
-                              </ListItemIcon>
-                              <ListItemText
-                                id={jar}
-                                primary={split(name, '.jar', 1)}
-                              />
-                            </ListItem>
-                          );
-                        })}
-                        <s.StyledLabel htmlFor="fileInput">
-                          <Button component="span" text="New Plugin" />
-                        </s.StyledLabel>
-                      </List>
-                    </s.StyledPaper>
-                  </s.StyledDialogContent>
-                </form>
-              </s.StyledDialogDividers>
-            )}
-          </Dialog>
+                              </ListItem>
+                            );
+                          })}
+                          <s.StyledLabel htmlFor="fileInput">
+                            <Button component="span" text="New Plugin" />
+                          </s.StyledLabel>
+                        </List>
+                      </s.StyledPaper>
+                    </s.StyledDialogContent>
+                  </form>
+                </s.StyledDialogDividers>
+              )}
+            </Dialog>
+            <Loading
+              open={isLoading}
+              steps={steps}
+              activeStep={activeStep}
+              completed={50}
+              buffer={60}
+              deleteType={deleteType}
+            />
+          </>
         );
       }}
     />

@@ -50,6 +50,7 @@ const MuiDialog = props => {
           <Button onClick={handelClose} color="primary">
             {cancelBtnText}
           </Button>
+
           <Button
             onClick={handleConfirm}
             color="primary"
@@ -75,7 +76,7 @@ MuiDialog.propTypes = {
   handleConfirm: PropTypes.func.isRequired,
   children: PropTypes.any.isRequired,
   confirmDisabled: PropTypes.bool,
-  loading: PropTypes.bool.isRequired,
+  loading: PropTypes.bool,
   testId: PropTypes.string,
 };
 
