@@ -16,7 +16,7 @@
 
 import React from 'react';
 import { cleanup, render } from '@testing-library/react';
-import 'jest-dom/extend-expect';
+import '@testing-library/jest-dom/extend-expect';
 
 import WorkspacesNewModal from '../WorkspacesNewModal';
 

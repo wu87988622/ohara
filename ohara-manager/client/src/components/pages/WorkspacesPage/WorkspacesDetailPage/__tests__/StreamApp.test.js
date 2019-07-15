@@ -22,7 +22,7 @@ import {
   fireEvent,
 } from '@testing-library/react';
 import { divide, floor } from 'lodash';
-import 'jest-dom/extend-expect';
+import '@testing-library/jest-dom/extend-expect';
 
 import * as generate from 'utils/generate';
 import StreamApp from '../StreamApp';

@@ -16,7 +16,7 @@
 
 import React from 'react';
 import { cleanup, render, waitForElement } from '@testing-library/react';
-import 'jest-dom/extend-expect';
+import '@testing-library/jest-dom/extend-expect';
 
 import * as generate from 'utils/generate';
 import LogsPage from '../LogsPage';

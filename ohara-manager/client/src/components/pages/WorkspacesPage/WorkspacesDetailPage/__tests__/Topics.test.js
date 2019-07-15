@@ -21,7 +21,7 @@ import {
   waitForElement,
   fireEvent,
 } from '@testing-library/react';
-import 'jest-dom/extend-expect';
+import '@testing-library/jest-dom/extend-expect';
 
 import * as generate from 'utils/generate';
 import Topics from '../Topics';
