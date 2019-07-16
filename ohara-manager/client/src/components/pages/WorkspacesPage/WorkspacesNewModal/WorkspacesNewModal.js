@@ -369,7 +369,6 @@ const WorkerNewModal = props => {
             <Dialog
               testId="new-workspace-modal"
               scroll="paper"
-              loading={isLoading}
               title="New workspace"
               handelOpen={props.isActive}
               handelClose={() => {
@@ -438,6 +437,7 @@ const WorkerNewModal = props => {
                                     disableRipple
                                   />
                                 </ListItemIcon>
+                                <ListItemText id={name} primary={name} />
                               </ListItem>
                             );
                           })}
@@ -487,8 +487,6 @@ const WorkerNewModal = props => {
               open={isLoading}
               steps={steps}
               activeStep={activeStep}
-              completed={50}
-              buffer={60}
               deleteType={deleteType}
             />
           </>

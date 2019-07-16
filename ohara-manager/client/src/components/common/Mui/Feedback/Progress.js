@@ -48,28 +48,21 @@ const Progress = props => {
             setStepType('error');
             setTitle('Deleting');
             setBuffer(0);
+            setDiff(0);
           } else {
-            setDiff(diff + Math.random() - 2);
+            setDiff(diff - 2);
             setCompleted((100 / steps.length) * activeStep + diff);
           }
         } else {
           setDiff(diff + Math.random() + 10);
-          if (title === 'Deleting') {
-            setCompleted(0);
-            setColor();
-            setStepType();
-            setTitle('Creating');
-            setBuffer(0);
+          if (activeStep > oldActiveStep) {
+            setCompleted((100 / steps.length) * activeStep);
+            setDiff(0);
           } else {
-            if (activeStep > oldActiveStep) {
-              setCompleted((100 / steps.length) * activeStep);
-              setDiff(0);
-            } else {
-              setCompleted((100 / steps.length) * activeStep + diff);
-            }
-            setBuffer((100 / steps.length) * (activeStep + 1));
-            setOldActiveStep(activeStep);
+            setCompleted((100 / steps.length) * activeStep + diff);
           }
+          setBuffer((100 / steps.length) * (activeStep + 1));
+          setOldActiveStep(activeStep);
         }
       }
     };
@@ -82,6 +75,14 @@ const Progress = props => {
     let timer;
     if (steps.length > activeStep && open) {
       timer = setInterval(tick, 500);
+    }
+    if (!open) {
+      setCompleted(0);
+      setColor();
+      setStepType();
+      setTitle('Creating');
+      setBuffer(0);
+      setDiff(0);
     }
     return () => {
       clearInterval(timer);
@@ -116,9 +117,6 @@ const Progress = props => {
 };
 
 Progress.propTypes = {
-  completed: PropTypes.number.isRequired,
-  buffer: PropTypes.number,
-  className: PropTypes.string,
   steps: PropTypes.array.isRequired,
   open: PropTypes.bool.isRequired,
   activeStep: PropTypes.number.isRequired,
