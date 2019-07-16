@@ -43,7 +43,9 @@ def needHeaders() {
     fileTree(dir: ".").include("**/*.conf"),
     fileTree(dir: ".").include("**/*.gradle"),
     fileTree(dir: ".").include("**/*.yaml"),
-    fileTree(dir: ".").include("**/*.yml")
+    fileTree(dir: ".").include("**/*.yml"),
+    fileTree(dir: ".").include("**/*.rst"),
+    fileTree(dir: ".").include("**/*.py")
   ]
 }
 
@@ -77,6 +79,8 @@ license {
     conf='SCRIPT_STYLE'
     yaml='SCRIPT_STYLE'
     yml='SCRIPT_STYLE'
+    rst='RESTRUCTUREDTEXT_STYLE'
+    py='SCRIPT_STYLE'
   }
   // NOTED: we use spotless to format our code so the format of header must be valid to spotless!
   headerDefinitions {
@@ -89,6 +93,17 @@ license {
       lastLineDetectionPattern  = " */"
       allowBlankLines = false
       isMultiline = true
+    }
+
+    reStructuredText_style {
+      firstLine = ".."
+      beforeEachLine = ".. "
+      endLine = "..EOL"
+      firstLineDetectionPattern = ".."
+      lastLineDetectionPattern  = ".."
+      allowBlankLines = false
+      skipLinePattern = ".."
+      isMultiline = false
     }
   }
 }
