@@ -16,60 +16,52 @@
 
 import axios from 'axios';
 import toastr from 'toastr';
-import { isString, get, has, isEmpty } from 'lodash';
+import { isString, get, has, isEmpty, isUndefined } from 'lodash';
 
-export const handleError = err => {
-  const message = get(err, 'data.errorMessage.message', null);
+export const handleError = error => {
+  if (isUndefined(error)) return; // prevent `undefined` error from throwing `Internal Server Error`
 
+  const message = get(error, 'data.errorMessage.message', null);
   if (isString(message)) {
     return toastr.error(message);
   }
 
-  // Validate API returns an array which contains errors
-  // of each node in it. That's why we're looping them over
-  // and throwing error when `pass` is `false` here
-  if (Array.isArray(message)) {
-    const hasMessage = get(message, '[0][message]', null);
-
-    if (hasMessage) {
-      message.forEach(({ message, pass }) => {
-        if (!pass) toastr.error(message);
-      });
-      return;
-    }
-  }
-
-  const errorMessage = get(err, 'data.errorMessage', null);
+  const errorMessage = get(error, 'data.errorMessage', null);
   if (isString(errorMessage)) {
     return toastr.error(errorMessage);
   }
 
-  const errorCount = get(err, 'errorCount', 0);
+  toastr.error(error || 'Internal Server Error');
+};
 
-  if (errorCount) {
-    const { settings } = err;
+export const handleConnectorValidationError = error => {
+  const { settings } = error;
 
-    const hasError = def => !isEmpty(def.value.errors);
+  const hasError = def => !isEmpty(def.value.errors);
+  const errors = settings.filter(hasError).map(def => {
+    return {
+      fieldName: def.definition.displayName,
+      errorMessage: def.value.errors.join(' '),
+    };
+  });
 
-    const errors = settings.filter(hasError).map(def => {
-      return {
-        fieldName: def.definition.displayName,
-        errorMessage: def.value.errors.join(' '),
-      };
-    });
+  // There could be multiple validation errors, so we need to loop thru them and
+  // display respectively
+  errors.forEach(error =>
+    toastr.error(
+      `<b>${error.fieldName.toUpperCase()}</b><br /> ${error.errorMessage}`,
+    ),
+  );
+};
 
-    // There could be multiple validation errors, so we need to loop thru them and
-    // display respectively
-    errors.forEach(error =>
+export const handleNodeValidationError = error => {
+  error.forEach(node => {
+    if (!node.pass) {
       toastr.error(
-        `<b>${error.fieldName.toUpperCase()}</b><br /> ${error.errorMessage}`,
-      ),
-    );
-
-    return;
-  }
-
-  toastr.error(err || 'Internal Server Error');
+        `<b>${node.hostname.toUpperCase()}</b><br /> ${node.message}`,
+      );
+    }
+  });
 };
 
 const createAxios = () => {
@@ -102,8 +94,23 @@ const createAxios = () => {
   // Add a response interceptor
   instance.interceptors.response.use(
     response => {
+      // Validate API returns a slightly different response than
+      // any other API requests. So we're handling it with a few
+      // different handlers
+
       if (response.config.url.includes('/validate')) {
-        if (response.data.errorCount > 0) handleError(response.data);
+        const { data } = response;
+
+        const connectorError = data.errorCount > 0;
+
+        if (connectorError) {
+          return handleConnectorValidationError(data);
+        }
+
+        const nodeError = Array.isArray(data) && data.some(node => !node.pass);
+        if (nodeError) {
+          return handleNodeValidationError(data);
+        }
       }
 
       return {

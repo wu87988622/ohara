@@ -17,13 +17,14 @@
 import toastr from 'toastr';
 
 import * as generate from 'utils/generate';
-import { handleError } from '../apiUtils';
+import * as utils from '../apiUtils';
+
+afterEach(jest.clearAllMocks);
 
 describe('handleError()', () => {
-  afterEach(jest.clearAllMocks);
-  it('handles error with message key ', () => {
+  it('handles the error with a message key ', () => {
     const message = generate.message();
-    const err = {
+    const error = {
       data: {
         errorMessage: {
           message,
@@ -31,76 +32,72 @@ describe('handleError()', () => {
       },
     };
 
-    handleError(err);
+    utils.handleError(error);
 
     expect(toastr.error).toHaveBeenCalledTimes(1);
     expect(toastr.error).toHaveBeenCalledWith(message);
   });
 
-  it('handles error which contains multiple messages', () => {
-    const message = [
-      {
-        pass: false,
-        message: generate.message(),
-      },
-      {
-        pass: false,
-        message: generate.message(),
-      },
-      {
-        pass: true,
-        message: generate.message(),
-      },
-    ];
-
-    const err = {
-      data: {
-        errorMessage: {
-          message,
-        },
-      },
-    };
-
-    handleError(err);
-    expect(toastr.error).toHaveBeenCalledTimes(2);
-  });
-
-  it('handles error with errorMessage key', () => {
+  it('handles the error with a errorMessage key', () => {
     const errorMessage = generate.message();
-    const err = {
+    const error = {
       data: {
         errorMessage,
       },
     };
 
-    handleError(err);
+    utils.handleError(error);
 
     expect(toastr.error).toHaveBeenCalledTimes(1);
     expect(toastr.error).toHaveBeenCalledWith(errorMessage);
   });
 
-  it(`handles error when err object itself is string`, () => {
-    const err = generate.message();
+  it('handles the error when the given error object itself is string', () => {
+    const error = generate.message();
 
-    handleError(err);
+    utils.handleError(error);
 
     expect(toastr.error).toHaveBeenCalledTimes(1);
-    expect(toastr.error).toHaveBeenCalledWith(err);
+    expect(toastr.error).toHaveBeenCalledWith(error);
   });
 
-  it('returns a custom error message when err is undefined', () => {
-    let err;
-    handleError(err);
+  it('does nothing when the given error is undefined', () => {
+    let error;
+    utils.handleError(error);
 
-    expect(toastr.error).toHaveBeenCalledTimes(1);
-    expect(toastr.error).toHaveBeenCalledWith('Internal Server Error');
+    expect(toastr.error).toHaveBeenCalledTimes(0);
+  });
+});
+
+describe('handleConnectorValidationError()', () => {
+  it('handles the error which contains multiple messages', () => {
+    const error = [
+      {
+        hostname: generate.name(),
+        pass: false,
+        message: generate.message(),
+      },
+      {
+        hostname: generate.name(),
+        pass: false,
+        message: generate.message(),
+      },
+      {
+        hostname: generate.name(),
+        pass: true,
+        message: generate.message(),
+      },
+    ];
+
+    utils.handleNodeValidationError(error);
+    expect(toastr.error).toHaveBeenCalledTimes(2);
   });
 
   it('returns errors for validation', () => {
     const displayName = generate.name();
     const errors = [generate.message(), generate.message()];
 
-    const err = {
+    const error = {
       errorCount: 1,
       settings: [
         {
@@ -118,7 +115,7 @@ describe('handleError()', () => {
       ],
     };
 
-    handleError(err);
+    utils.handleConnectorValidationError(error);
     const errorMessage = errors.join(' ');
 
     const expectedErrors = `<b>${displayName.toUpperCase()}</b><br /> ${errorMessage}`;
