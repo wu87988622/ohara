@@ -38,7 +38,7 @@ class TestResponseFromUnsupportedApis extends SmallTest with Matchers {
   private[this] implicit val actorSystem: ActorSystem = ActorSystem("Executor-TestResponseFromUnsupportedApis")
   private[this] implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
 
-  private[this] val expectedMessage = "https://ohara.readthedocs.io/en/latest/rest_interface.html"
+  private[this] val expectedMessage = Configurator.apiUrl
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 20 seconds)
 

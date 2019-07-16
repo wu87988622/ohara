@@ -35,7 +35,7 @@ import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce}
+import com.island.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce, VersionUtils}
 import com.island.ohara.configurator.Configurator.Mode
 import com.island.ohara.configurator.jar.JarStore
 import com.island.ohara.configurator.route._
@@ -230,7 +230,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
             code = s"Unsupported API: $path",
             message = "please see link to find the available APIs",
             stack = "N/A",
-            apiUrl = Some("https://ohara.readthedocs.io/en/latest/rest_interface.html")
+            apiUrl = Some(Configurator.apiUrl)
           )))
 
   private[this] implicit val actorSystem: ActorSystem = ActorSystem(s"${classOf[Configurator].getSimpleName}-system")
@@ -289,6 +289,11 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
 }
 
 object Configurator {
+  def apiUrl: String = {
+    val docVersion = if (VersionUtils.BRANCH == "master") "latest" else VersionUtils.BRANCH
+    s"https://ohara.readthedocs.io/en/$docVersion/rest_interface.html"
+  }
+
   def builder: ConfiguratorBuilder = new ConfiguratorBuilder()
 
   private[configurator] val DATA_SERIALIZER: Serializer[Data] = new Serializer[Data] {

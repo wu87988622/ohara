@@ -38,26 +38,9 @@ def read_properties_file(file_path):
         return dict(cp.items('dummy_section'))
 
 
-def parse_version(version_value):
-    """
-    Convert version value from gradle.properties to branch name
-        0.6.0-SNAPSHOT --> 0.6
-        0.6.1 --> 0.6.1
-    """
-    if "-SNAPSHOT" in version_value:
-        idx1 = version_value.index(".")
-        idx2 = version_value.index(".", idx1 + 1)
-        ver = version_value[0:idx2]
-    else:
-        ver = version_value
-    return ver
-
-
 ohara_props = read_properties_file('../../gradle.properties')
-
 ohara_version = ohara_props['version']
-ohara_branch = "master"                 # branch name "master" must be hard-code
-# ohara_branch = parse_version(ohara_props['version'])      # use when branch is not "master"
+ohara_branch = ohara_props['branch']
 
 
 # -- Project information -----------------------------------------------------
