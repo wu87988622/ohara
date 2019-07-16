@@ -25,10 +25,13 @@ import '@testing-library/jest-dom/extend-expect';
 
 import * as generate from 'utils/generate';
 import WorkspacesPage from '../WorkspacesPage';
+import { renderWithRouter } from 'utils/testUtils';
 import { WORKSPACES } from 'constants/documentTitles';
 import { fetchWorkers } from 'api/workerApi';
+import { fetchNodes } from 'api/nodeApi';
 
 jest.mock('api/workerApi');
+jest.mock('api/nodeApi');
 
 const props = {
   history: { push: jest.fn() },
@@ -39,7 +42,7 @@ afterEach(cleanup);
 describe('<WorkspacesPage />', () => {
   const workspaceName = generate.serviceName();
   beforeEach(() => {
-    const res = {
+    const workerRes = {
       data: {
         result: [
           {
@@ -50,7 +53,14 @@ describe('<WorkspacesPage />', () => {
       },
     };
 
-    fetchWorkers.mockImplementation(() => Promise.resolve(res));
+    const nodeRes = {
+      data: {
+        result: generate.nodes({ count: 2 }),
+      },
+    };
+
+    fetchWorkers.mockImplementation(() => Promise.resolve(workerRes));
+    fetchNodes.mockImplementation(() => Promise.resolve(nodeRes));
   });
 
   it('renders the page', () => {
@@ -100,15 +110,34 @@ describe('<WorkspacesPage />', () => {
     expect(workspaceNames.length).toBe(workers.length);
   });
 
+  it('renders an redirect message when there is no nodes available', async () => {
+    const nodeRes = {
+      data: {
+        result: [],
+      },
+    };
+
+    fetchNodes.mockImplementation(() => Promise.resolve(nodeRes));
+
+    const { getByText, getByTestId } = await waitForElement(() =>
+      renderWithRouter(<WorkspacesPage {...props} />),
+    );
+
+    const warning = `You don't have any nodes available yet. But you can create one in here`;
+
+    fireEvent.click(getByText('New workspace'));
+
+    expect(getByTestId('redirect-warning').textContent).toBe(warning);
+  });
+
   it('can open the new workspace modal with the new workspace button', async () => {
     const { getByText, getByTestId, queryByTestId } = await waitForElement(() =>
-      render(<WorkspacesPage {...props} />),
+      renderWithRouter(<WorkspacesPage {...props} />),
     );
 
     expect(queryByTestId('new-workspace-modal')).toBeNull();
 
-    const newButton = getByText('New workspace');
-    fireEvent.click(newButton);
+    fireEvent.click(getByText('New workspace'));
 
     const newModal = await waitForElement(() =>
       getByTestId('new-workspace-modal'),
@@ -119,7 +148,7 @@ describe('<WorkspacesPage />', () => {
 
   it('disables the add button when the form is not valid', async () => {
     const { getByText } = await waitForElement(() =>
-      render(<WorkspacesPage {...props} />),
+      renderWithRouter(<WorkspacesPage {...props} />),
     );
 
     fireEvent.click(getByText('New workspace'));
@@ -133,7 +162,9 @@ describe('<WorkspacesPage />', () => {
       getByText,
       queryByText,
       getByPlaceholderText,
-    } = await waitForElement(() => render(<WorkspacesPage {...props} />));
+    } = await waitForElement(() =>
+      renderWithRouter(<WorkspacesPage {...props} />),
+    );
 
     const errorMessage = 'You only can use lower case letters and numbers';
     const validName = 'abc';

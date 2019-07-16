@@ -24,6 +24,7 @@ import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import DialogContent from '@material-ui/core/DialogContent';
 import { Form, Field } from 'react-final-form';
+import { Link } from 'react-router-dom';
 import { isEmpty, get, isNull, split, isUndefined, uniq } from 'lodash';
 
 import * as s from './styles';
@@ -36,6 +37,7 @@ import * as MESSAGES from 'constants/messages';
 import * as zookeeperApi from 'api/zookeeperApi';
 import * as containerApi from 'api/containerApi';
 import * as commonUtils from 'utils/commonUtils';
+import * as URLS from 'constants/urls';
 import { Label } from 'components/common/Form';
 import { Button } from 'components/common/Mui/Form';
 import { Dialog } from 'components/common/Mui/Dialog';
@@ -325,7 +327,7 @@ const WorkerNewModal = props => {
     try {
       await createServices(values);
     } catch (error) {
-      // Ignore the error
+      // Ignore the error, that's handled in the API request handler
 
       toastr.error('Failed to create services, deleting the workspace…');
       await deleteAllServices();
@@ -369,7 +371,17 @@ const WorkerNewModal = props => {
               checkedNodes.length === 0
             }
           >
-            {
+            {isEmpty(nodes) ? (
+              <s.StyledWarning
+                data-testid="redirect-warning"
+                text={
+                  <>
+                    {`You don't have any nodes available yet. But you can create one in `}
+                    <Link to={URLS.NODES}>here</Link>
+                  </>
+                }
+              />
+            ) : (
               <s.StyledDialogDividers dividers>
                 <s.StyledInputFile
                   id="fileInput"
@@ -462,7 +474,7 @@ const WorkerNewModal = props => {
                   </s.StyledDialogContent>
                 </form>
               </s.StyledDialogDividers>
-            }
+            )}
           </Dialog>
         );
       }}

@@ -15,37 +15,35 @@
  */
 
 import styled from 'styled-components';
-import { Label } from 'components/common/Form';
 import DialogContent from '@material-ui/core/DialogContent';
 import Paper from '@material-ui/core/Paper';
 
-const StyledDialogContent = styled(DialogContent)`
+import { Label } from 'components/common/Form';
+import { Warning } from 'components/common/Messages';
+
+export const StyledDialogContent = styled(DialogContent)`
   padding-top: 30px;
 `;
 
-const StyledDialogDividers = styled(DialogContent)`
+export const StyledDialogDividers = styled(DialogContent)`
   padding-left: 5px;
   padding-right: 5px;
 `;
 
-const StyledInputFile = styled.input`
+export const StyledInputFile = styled.input`
   display: none;
 `;
 
-const StyledLabel = styled(Label)`
+export const StyledLabel = styled(Label)`
   position: absolute;
   right: 0;
   top: -3rem;
 `;
 
-const StyledPaper = styled(Paper)`
+export const StyledPaper = styled(Paper)`
   min-height: 100px;
 `;
 
-export {
-  StyledPaper,
-  StyledLabel,
-  StyledInputFile,
-  StyledDialogContent,
-  StyledDialogDividers,
-};
+export const StyledWarning = styled(Warning)`
+  padding: 30px 20px;
+`;

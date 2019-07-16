@@ -41,7 +41,7 @@ const IconWrapper = styled.i`
 const Warning = props => {
   const { text } = props;
   return (
-    <WarningWrapper>
+    <WarningWrapper {...props}>
       <IconWrapper className="fas fa-exclamation" />
       <span>{text}</span>
     </WarningWrapper>
