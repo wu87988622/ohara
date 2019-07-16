@@ -21,7 +21,7 @@ import * as pipelineApi from '../../src/api/pipelineApi';
 import * as connectorApi from '../../src/api/connectorApi';
 import * as streamApp from '../../src/api/streamApi';
 import { axiosInstance } from '../../src/api/apiUtils';
-import { fetchZookeepers } from '../../src/api/zookeeperApi';
+import * as zookeeperApi from '../../src/api/zookeeperApi';
 import { fetchBrokers } from '../../src/api/brokerApi';
 import { fetchJars } from '../../src/api/jarApi';
 import { fetchLogs } from '../../src/api/logApi';
@@ -155,4 +155,22 @@ Cypress.Commands.add('testCreateWorker', params =>
 
 Cypress.Commands.add('fetchBrokers', () => fetchBrokers());
 
-Cypress.Commands.add('fetchZookeepers', () => fetchZookeepers());
+Cypress.Commands.add('fetchZookeeper', name =>
+  zookeeperApi.fetchZookeeper(name),
+);
+
+Cypress.Commands.add('fetchZookeepers', () => zookeeperApi.fetchZookeepers());
+
+Cypress.Commands.add('deleteZookeeper', name =>
+  zookeeperApi.deleteZookeeper(name),
+);
+
+Cypress.Commands.add('stopZookeeper', name => zookeeperApi.stopZookeeper(name));
+
+Cypress.Commands.add('startZookeeper', name =>
+  zookeeperApi.startZookeeper(name),
+);
+
+Cypress.Commands.add('createZookeeper', params =>
+  zookeeperApi.createZookeeper(params),
+);

@@ -107,6 +107,7 @@ class TestTopicRoute extends SmallTest with Matchers {
         .nodeNames(zk.nodeNames)
         .create()
     )
+    result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).start(zk2.name))
 
     val bk2 = result(
       BrokerApi.access
@@ -136,6 +137,7 @@ class TestTopicRoute extends SmallTest with Matchers {
         .nodeNames(zk.nodeNames)
         .create()
     )
+    result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).start(zk2.name))
 
     result(
       BrokerApi.access

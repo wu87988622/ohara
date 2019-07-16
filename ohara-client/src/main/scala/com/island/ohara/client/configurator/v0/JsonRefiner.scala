@@ -18,7 +18,7 @@ package com.island.ohara.client.configurator.v0
 
 import java.util.Objects
 
-import com.island.ohara.client.configurator.v0.JsonRefiner.StringRestriction
+import com.island.ohara.client.configurator.v0.JsonRefiner.{ArrayRestriction, StringRestriction}
 import com.island.ohara.common.util.CommonUtils
 import spray.json.{DeserializationException, JsArray, JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
@@ -215,6 +215,21 @@ trait JsonRefiner[T] {
   )
 
   /**
+    * add the array restriction to specific value.
+    * It throws exception if the specific key of input json violates any restriction.
+    * Noted: the empty restriction make the checker to reject all input values.
+    * @param key key
+    * @return this refiner
+    */
+  def arrayRestriction(key: String): ArrayRestriction[T] = (checkers: Seq[(String, JsArray) => Unit]) =>
+    valueChecker(
+      key, {
+        case arr: JsArray => checkers.foreach(_.apply(key, arr))
+        case _            => // we don't care for other types
+      }
+  )
+
+  /**
     * add the string restriction to specific value. It throws exception if the input value can't pass any restriction.
     * Noted: the empty restriction make the checker to reject all input values. However, you are disable to create a
     * restriction instance without any restriction rules. see our implementation.
@@ -346,6 +361,43 @@ object JsonRefiner {
     }
 
     protected def addToJsonRefiner(legalPairs: Seq[(Char, Char)], lengthLimit: Int): JsonRefiner[T]
+  }
+
+  trait ArrayRestriction[T] {
+    private[this] var checkers: Seq[(String, JsArray) => Unit] = Seq.empty
+
+    /**
+      * throw exception if the value of this key equals to specific keyword
+      * @param keyword the checked keyword
+      * @return this refiner
+      */
+    def rejectKeyword(keyword: String): ArrayRestriction[T] = addChecker(
+      (key, arr) =>
+        if (arr.elements.exists(_.asInstanceOf[JsString].value == keyword))
+          throw DeserializationException(s"""$key cannot use keyword \"$keyword\"!!!"""))
+
+    /**
+      * throw exception if this key is empty array.
+      * @return this refiner
+      */
+    def rejectEmpty(): ArrayRestriction[T] = addChecker(
+      (key, arr) =>
+        if (arr.elements.isEmpty)
+          throw DeserializationException(s"""$key cannot be empty!!!"""))
+
+    /**
+      * Complete this restriction and add it to refiner.
+      */
+    def toRefiner: JsonRefiner[T] = if (checkers.isEmpty)
+      throw new IllegalArgumentException("Don't use Array Restriction if you hate to add any restriction")
+    else addToJsonRefiner(checkers)
+
+    private[this] def addChecker(checker: (String, JsArray) => Unit): ArrayRestriction[T] = {
+      this.checkers :+= checker
+      this
+    }
+
+    protected def addToJsonRefiner(checkers: Seq[(String, JsArray) => Unit]): JsonRefiner[T]
   }
 
   def apply[T]: JsonRefiner[T] = new JsonRefiner[T] {

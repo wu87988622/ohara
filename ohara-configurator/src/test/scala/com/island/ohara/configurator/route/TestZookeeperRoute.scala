@@ -59,7 +59,9 @@ class TestZookeeperRoute extends MediumTest with Matchers {
   @Test
   def removeZookeeperClusterUsedByBrokerCluster(): Unit = {
     val zks = result(zookeeperApi.list())
-
+    val bks = result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list())
+    System.out.println(zks)
+    System.out.println(bks)
     // we have a default zk cluster
     zks.isEmpty shouldBe false
 
@@ -74,30 +76,36 @@ class TestZookeeperRoute extends MediumTest with Matchers {
       .foreach(name => result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).delete(name)))
 
     // pass
+    result(zookeeperApi.stop(zk.name))
     result(zookeeperApi.delete(zk.name))
   }
 
   @Test
   def testCreateOnNonexistentNode(): Unit = {
-    an[IllegalArgumentException] should be thrownBy result(
+    val zk = result(
       zookeeperApi.request.name(CommonUtils.randomString(10)).nodeName(CommonUtils.randomString(10)).create()
     )
+
+    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.start(zk.name))
   }
 
   @Test
   def testImageName(): Unit = {
     // pass by default image
-    result(
+    val zk = result(
       zookeeperApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
-    ).imageName shouldBe ZookeeperApi.IMAGE_NAME_DEFAULT
+    )
+    result(zookeeperApi.start(zk.name)).imageName shouldBe ZookeeperApi.IMAGE_NAME_DEFAULT
 
     // in fake mode only IMAGE_NAME_DEFAULT is supported
-    an[IllegalArgumentException] should be thrownBy result(
+    val p = result(
       zookeeperApi.request
         .name(CommonUtils.randomString(10))
         .imageName(CommonUtils.randomString(10))
         .nodeNames(nodeNames)
-        .create()
+        .create())
+    an[IllegalArgumentException] should be thrownBy result(
+      zookeeperApi.start(p.name)
     )
   }
 
@@ -114,10 +122,21 @@ class TestZookeeperRoute extends MediumTest with Matchers {
   }
 
   @Test
-  def testRemove(): Unit = {
+  def testDelete(): Unit = {
     val init = result(zookeeperApi.list()).size
     val cluster = result(zookeeperApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
     result(zookeeperApi.list()).size shouldBe init + 1
+    result(zookeeperApi.delete(cluster.name))
+    result(zookeeperApi.list()).size shouldBe init
+  }
+
+  @Test
+  def testStop(): Unit = {
+    val init = result(zookeeperApi.list()).size
+    val cluster = result(zookeeperApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
+    result(zookeeperApi.start(cluster.name))
+    result(zookeeperApi.list()).size shouldBe init + 1
+    result(zookeeperApi.stop(cluster.name))
     result(zookeeperApi.delete(cluster.name))
     result(zookeeperApi.list()).size shouldBe init
   }
@@ -127,6 +146,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     val zk = result(
       zookeeperApi.request.name(CommonUtils.randomString(10)).nodeName(nodeNames.head).create()
     )
+    result(zookeeperApi.start(zk.name))
     zk.nodeNames.size shouldBe 1
     zk.nodeNames.head shouldBe nodeNames.head
     // we don't support to add zk node at runtime
@@ -138,7 +158,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     val zk = result(
       zookeeperApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
     )
-
+    result(zookeeperApi.start(zk.name))
     // we don't support to remove zk node at runtime
     an[IllegalArgumentException] should be thrownBy result(zookeeperApi.removeNode(zk.name, nodeNames.head))
   }
@@ -164,55 +184,65 @@ class TestZookeeperRoute extends MediumTest with Matchers {
   @Test
   def clientPortConflict(): Unit = {
     val clientPort = CommonUtils.availablePort()
-    result(
+    val zk = result(
       zookeeperApi.request.name(CommonUtils.randomString(10)).clientPort(clientPort).nodeNames(nodeNames).create()
     )
+    result(zookeeperApi.start(zk.name))
 
-    an[IllegalArgumentException] should be thrownBy result(
+    val zk2 = result(
       zookeeperApi.request.name(CommonUtils.randomString(10)).clientPort(clientPort).nodeNames(nodeNames).create()
     )
+    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.start(zk2.name))
   }
 
   @Test
   def peerPortConflict(): Unit = {
     val peerPort = CommonUtils.availablePort()
-    result(
+    val zk = result(
       zookeeperApi.request.name(CommonUtils.randomString(10)).peerPort(peerPort).nodeNames(nodeNames).create()
     )
+    result(zookeeperApi.start(zk.name))
 
-    an[IllegalArgumentException] should be thrownBy result(
+    val zk2 = result(
       zookeeperApi.request.name(CommonUtils.randomString(10)).peerPort(peerPort).nodeNames(nodeNames).create()
     )
+    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.start(zk2.name))
   }
 
   @Test
   def electionPortConflict(): Unit = {
     val electionPort = CommonUtils.availablePort()
-    result(
+    val zk = result(
       zookeeperApi.request.name(CommonUtils.randomString(10)).electionPort(electionPort).nodeNames(nodeNames).create()
     )
+    result(zookeeperApi.start(zk.name))
 
-    an[IllegalArgumentException] should be thrownBy result(
+    val zk2 = result(
       zookeeperApi.request.name(CommonUtils.randomString(10)).electionPort(electionPort).nodeNames(nodeNames).create()
     )
+    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.start(zk2.name))
   }
 
   @Test
-  def testForceDelete(): Unit = {
+  def testForceStop(): Unit = {
     val initialCount = configurator.clusterCollie.zookeeperCollie.asInstanceOf[FakeZookeeperCollie].forceRemoveCount
     val name = CommonUtils.randomString(10)
-    // graceful delete
+    // graceful stop
     result(
       zookeeperApi.request.name(name).nodeNames(nodeNames).create()
     )
+    result(zookeeperApi.start(name))
+    result(zookeeperApi.stop(name))
     result(zookeeperApi.delete(name))
     configurator.clusterCollie.zookeeperCollie.asInstanceOf[FakeZookeeperCollie].forceRemoveCount shouldBe initialCount
 
-    // force delete
+    // force stop
     result(
       zookeeperApi.request.name(name).nodeNames(nodeNames).create()
     )
-    result(zookeeperApi.forceDelete(name))
+    result(zookeeperApi.start(name))
+    result(zookeeperApi.forceStop(name))
+    result(zookeeperApi.delete(name))
     configurator.clusterCollie.zookeeperCollie
       .asInstanceOf[FakeZookeeperCollie]
       .forceRemoveCount shouldBe initialCount + 1

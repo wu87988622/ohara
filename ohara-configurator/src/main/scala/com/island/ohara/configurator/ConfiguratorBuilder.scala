@@ -20,6 +20,7 @@ import java.io.File
 import java.util.Objects
 
 import com.island.ohara.agent._
+import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.NodeApi
@@ -196,6 +197,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
       val store = getOrCreateStore()
       val collie = new FakeClusterCollie(createCollie(), store)
 
+      import scala.concurrent.ExecutionContext.Implicits.global
       val zkClusters = (0 until numberOfBrokerCluster).map { index =>
         collie.zookeeperCollie.addCluster(
           ZookeeperClusterInfo(
@@ -206,9 +208,15 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
             electionPort = -1,
             peerPort = -1,
             nodeNames = (0 to 2).map(_ => CommonUtils.randomString(5)).toSet,
-            deadNodes = Set.empty
+            deadNodes = Set.empty,
+            state = Some(ContainerState.RUNNING.name),
+            error = None,
+            tags = Map.empty,
+            lastModified = CommonUtils.current()
           ))
       }
+      //TODO we need to add data into store to use the APIs...
+      zkClusters.foreach(store.addIfAbsent[ZookeeperClusterInfo])
 
       // add broker cluster
       val bkClusters = zkClusters.zipWithIndex.map {
@@ -256,7 +264,6 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
           ))
       }
 
-      import scala.concurrent.ExecutionContext.Implicits.global
       // fake nodes
       zkClusters
         .flatMap(_.nodeNames)

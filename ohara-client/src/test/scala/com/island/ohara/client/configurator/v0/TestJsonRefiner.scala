@@ -1081,4 +1081,57 @@ class TestJsonRefiner extends SmallTest with Matchers {
                                                               |}
            """.stripMargin.parseJson)
   }
+
+  @Test
+  def testKeywordsInArray(): Unit = {
+    // pass
+    JsonRefiner[SimpleData]
+      .format(format)
+      .arrayRestriction("stringArray")
+      .rejectKeyword("start")
+      .toRefiner
+      .refine
+      .read(s"""
+                    |{
+                    | "stringValue": "",
+                    | "bindPort": 123,
+                    | "connectionPort": 111,
+                    | "stringArray": ["ss", "tt"],
+                    | "objects":{}
+                    |}
+                           """.stripMargin.parseJson)
+
+    an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
+      .format(format)
+      .arrayRestriction("stringArray")
+      .rejectKeyword("stop")
+      .toRefiner
+      .refine
+      .read(s"""
+               |{
+               | "stringValue": "start",
+               | "bindPort": 123,
+               | "connectionPort": 111,
+               | "stringArray": ["stop", "abc"],
+               | "objects":{}
+               |}
+                           """.stripMargin.parseJson)
+
+    an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
+      .format(format)
+      .arrayRestriction("stringArray")
+      .rejectKeyword("stop")
+      .rejectEmpty()
+      .toRefiner
+      .refine
+      .read(s"""
+               |{
+               | "stringValue": "start",
+               | "bindPort": 123,
+               | "connectionPort": 111,
+               | "stringArray": [],
+               | "objects":{}
+               |}
+                           """.stripMargin.parseJson)
+  }
 }

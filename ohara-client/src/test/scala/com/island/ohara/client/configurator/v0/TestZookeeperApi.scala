@@ -34,7 +34,11 @@ class TestZookeeperApi extends SmallTest with Matchers {
       peerPort = 10,
       electionPort = 10,
       nodeNames = Set.empty,
-      deadNodes = Set.empty
+      deadNodes = Set.empty,
+      state = None,
+      error = None,
+      tags = Map.empty,
+      lastModified = CommonUtils.current()
     )
     zookeeperClusterInfo.clone(newNodeNames).nodeNames shouldBe newNodeNames
   }
@@ -48,6 +52,17 @@ class TestZookeeperApi extends SmallTest with Matchers {
     .creation
     .name
     .length should not be 0
+
+  @Test
+  def testTags(): Unit = ZookeeperApi.access
+    .hostname(CommonUtils.randomString())
+    .port(CommonUtils.availablePort())
+    .request
+    .nodeName(CommonUtils.randomString(10))
+    .tags(Map("a" -> JsNumber(1), "b" -> JsString("2")))
+    .creation
+    .tags
+    .size shouldBe 2
 
   @Test
   def ignoreNodeNamesOnCreation(): Unit = an[IllegalArgumentException] should be thrownBy ZookeeperApi.access
@@ -182,12 +197,32 @@ class TestZookeeperApi extends SmallTest with Matchers {
   }
 
   @Test
+  def parseImageNameOnUpdate(): Unit = {
+    val thrown = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_UPDATE_JSON_FORMAT.read(s"""
+          |  {
+          |    "imageName": ""
+          |  }
+           """.stripMargin.parseJson)
+    thrown.getMessage should include("the value of \"imageName\" can't be empty string")
+  }
+
+  @Test
   def parseEmptyNodeNames(): Unit =
     an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CREATION_JSON_FORMAT.read(s"""
          |  {
          |    "name": "name"
          |  }
            """.stripMargin.parseJson)
+
+  @Test
+  def parseNodeNamesOnUpdate(): Unit = {
+    val thrown1 = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_UPDATE_JSON_FORMAT.read(s"""
+           |  {
+           |    "nodeNames": ""
+           |  }
+           """.stripMargin.parseJson)
+    thrown1.getMessage should include("the value of \"nodeNames\" can't be empty string")
+  }
 
   @Test
   def parseZeroClientPort(): Unit =
@@ -220,6 +255,30 @@ class TestZookeeperApi extends SmallTest with Matchers {
            """.stripMargin.parseJson)
 
   @Test
+  def parseClientPortOnUpdate(): Unit = {
+    val thrown1 = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_UPDATE_JSON_FORMAT.read(s"""
+           |  {
+           |    "clientPort": 0
+           |  }
+           """.stripMargin.parseJson)
+    thrown1.getMessage should include("the connection port must be [1024, 65535)")
+
+    val thrown2 = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_UPDATE_JSON_FORMAT.read(s"""
+           |  {
+           |    "clientPort": -9
+           |  }
+           """.stripMargin.parseJson)
+    thrown2.getMessage should include("the connection port must be [1024, 65535)")
+
+    val thrown3 = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_UPDATE_JSON_FORMAT.read(s"""
+           |  {
+           |    "clientPort": 99999
+           |  }
+           """.stripMargin.parseJson)
+    thrown3.getMessage should include("the connection port must be [1024, 65535), but actual port is \"99999\"")
+  }
+
+  @Test
   def parseZeroElectionPort(): Unit =
     an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CREATION_JSON_FORMAT.read(s"""
          |  {
@@ -250,6 +309,30 @@ class TestZookeeperApi extends SmallTest with Matchers {
            """.stripMargin.parseJson)
 
   @Test
+  def parseElectionPortOnUpdate(): Unit = {
+    val thrown1 = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_UPDATE_JSON_FORMAT.read(s"""
+           |  {
+           |    "electionPort": 0
+           |  }
+           """.stripMargin.parseJson)
+    thrown1.getMessage should include("the connection port must be [1024, 65535)")
+
+    val thrown2 = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_UPDATE_JSON_FORMAT.read(s"""
+           |  {
+           |    "electionPort": -9
+           |  }
+           """.stripMargin.parseJson)
+    thrown2.getMessage should include("the connection port must be [1024, 65535)")
+
+    val thrown3 = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_UPDATE_JSON_FORMAT.read(s"""
+           |  {
+           |    "electionPort": 99999
+           |  }
+           """.stripMargin.parseJson)
+    thrown3.getMessage should include("the connection port must be [1024, 65535), but actual port is \"99999\"")
+  }
+
+  @Test
   def parseZeroPeerPort(): Unit =
     an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CREATION_JSON_FORMAT.read(s"""
          |  {
@@ -278,4 +361,38 @@ class TestZookeeperApi extends SmallTest with Matchers {
          |    "nodeNames": ["n"]
          |  }
            """.stripMargin.parseJson)
+
+  @Test
+  def parsePeerPortOnUpdate(): Unit = {
+    val thrown1 = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_UPDATE_JSON_FORMAT.read(s"""
+           |  {
+           |    "peerPort": 0
+           |  }
+           """.stripMargin.parseJson)
+    thrown1.getMessage should include("the connection port must be [1024, 65535)")
+
+    val thrown2 = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_UPDATE_JSON_FORMAT.read(s"""
+           |  {
+           |    "peerPort": -9
+           |  }
+           """.stripMargin.parseJson)
+    thrown2.getMessage should include("the connection port must be [1024, 65535)")
+
+    val thrown3 = the[DeserializationException] thrownBy ZookeeperApi.ZOOKEEPER_UPDATE_JSON_FORMAT.read(s"""
+           |  {
+           |    "peerPort": 99999
+           |  }
+           """.stripMargin.parseJson)
+    thrown3.getMessage should include("the connection port must be [1024, 65535), but actual port is \"99999\"")
+  }
+
+  @Test
+  def testDefaultUpdate(): Unit = {
+    val data = ZookeeperApi.access.hostname(CommonUtils.randomString()).port(CommonUtils.availablePort()).request.update
+    data.imageName.isEmpty shouldBe true
+    data.peerPort.isEmpty shouldBe true
+    data.electionPort.isEmpty shouldBe true
+    data.clientPort.isEmpty shouldBe true
+    data.nodeNames.isEmpty shouldBe true
+  }
 }

@@ -117,7 +117,12 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo, ZookeeperCollie.Clust
                         peerPort = peerPort,
                         electionPort = electionPort,
                         nodeNames = successfulContainers.map(_.nodeName).toSet,
-                        deadNodes = Set.empty
+                        deadNodes = Set.empty,
+                        // We do not care the user parameters since it's stored in configurator already
+                        tags = Map.empty,
+                        state = None,
+                        error = None,
+                        lastModified = CommonUtils.current()
                       )
                       postCreateZookeeperCluster(clusterInfo, successfulContainers)
                       clusterInfo
@@ -133,7 +138,7 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo, ZookeeperCollie.Clust
   protected def nodeCollie: NodeCollie
 
   /**
-    * The prefix name for paltform
+    * The prefix name for platform
     * @return
     */
   protected def prefixKey: String
@@ -174,7 +179,19 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo, ZookeeperCollie.Clust
         nodeNames = containers.map(_.nodeName).toSet,
         // Currently, docker and k8s has same naming rule for "Running",
         // it is ok that we use the containerState.RUNNING here.
-        deadNodes = containers.filterNot(_.state == ContainerState.RUNNING.name).map(_.nodeName).toSet
+        deadNodes = containers.filterNot(_.state == ContainerState.RUNNING.name).map(_.nodeName).toSet,
+        // We do not care the user parameters since it's stored in configurator already
+        tags = Map.empty,
+        state = {
+          // we only have two possible results here:
+          // 1. only assume cluster is "running" if at least one container is running
+          // 2. the cluster state is always "dead" if all containers were not running
+          val alive = containers.exists(_.state == ContainerState.RUNNING.name)
+          if (alive) Some(ContainerState.RUNNING.name) else Some(ContainerState.DEAD.name)
+        },
+        // TODO how could we fetch the error?...by Sam
+        error = None,
+        lastModified = CommonUtils.current()
       ))
   }
 }

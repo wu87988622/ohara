@@ -20,6 +20,7 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent.Collie.ClusterCreator
+import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.agent.{ClusterCollie, Collie, NodeCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
@@ -50,6 +51,10 @@ private[route] object RouteUtils {
 
   /** default we restrict the jar size to 50MB */
   final val DEFAULT_FILE_SIZE_BYTES = 50 * 1024 * 1024L
+  final val START_COMMAND: String = "start"
+  final val STOP_COMMAND: String = "stop"
+  final val PAUSE_COMMAND: String = "pause"
+  final val RESUME_COMMAND: String = "resume"
 
   /**
     * a route to custom CREATION and UPDATE resource. It offers default implementation to GET, LIST and DELETE.
@@ -134,6 +139,80 @@ private[route] object RouteUtils {
       }
     }
 
+  /**
+    * Append cluster actions to current route.
+    * For example:
+    * if the current path is: /v0/api/zookeeper
+    * we will add the following actions:
+    *
+    * - Operate current cluster: PUT /v0/api/zookeeper/xxx/[start|stop]
+    * - Manage nodes of current cluster: [PUT / DELETE] /v0/api/zookeeper/xxx/{nodeName}
+    */
+  def appendRouteOfClusterAction[Req <: ClusterInfo with Data: ClassTag, Creator <: ClusterCreator[Req]](
+    root: String,
+    collie: Collie[Req, Creator],
+    hookOfStart: (Seq[ClusterInfo], Req) => Future[Req],
+    hookOfStop: String => Future[String])(implicit store: DataStore,
+                                          clusterCollie: ClusterCollie,
+                                          nodeCollie: NodeCollie,
+                                          rm: RootJsonFormat[Req],
+                                          executionContext: ExecutionContext): server.Route =
+    pathPrefix(root / Segment) { clusterName =>
+      path(Segment) {
+        case START_COMMAND =>
+          put {
+            complete(store
+              .value[Req](clusterName)
+              .flatMap(req =>
+                if (req.nodeNames.isEmpty) throw new IllegalArgumentException(s"You are too poor to buy any server?")
+                else basicCheckOfCluster2(nodeCollie, clusterCollie, req).map(clusters => hookOfStart(clusters, req))))
+          }
+        case STOP_COMMAND =>
+          put {
+            parameter(Parameters.FORCE_REMOVE ?)(
+              force =>
+                complete(
+                  collie
+                    .exist(clusterName)
+                    .flatMap(
+                      if (_)
+                        hookOfStop(clusterName)
+                        // we don't use boolean convert since we don't want to see the convert exception
+                          .flatMap(_ =>
+                            if (force.exists(_.toLowerCase == "true")) collie.forceRemove(clusterName)
+                            else collie.remove(clusterName))
+                          .map(_ => None -> None)
+                          .recover {
+                            case e: Throwable =>
+                              Some(ContainerState.DEAD.name) -> Some(e.getMessage)
+                          }
+                          .flatMap {
+                            case (state, error) =>
+                              store.addIfPresent[Req](
+                                clusterName,
+                                data => Future.successful(data.clone2(state, error).asInstanceOf[Req]))
+                          } else
+                        store.addIfPresent[Req](clusterName,
+                                                data => Future.successful(data.clone2(None, None).asInstanceOf[Req]))
+                    )))
+          }
+        case nodeName =>
+          put {
+            complete(collie.cluster(clusterName).map(_._1).flatMap { cluster =>
+              if (cluster.nodeNames.contains(nodeName)) Future.successful(cluster)
+              else collie.addNode(clusterName, nodeName)
+            })
+          } ~ delete {
+            complete(collie.clusters().map(_.keys.toSeq).flatMap { clusters =>
+              if (clusters.exists(cluster => cluster.name == clusterName && cluster.nodeNames.contains(nodeName)))
+                collie.removeNode(clusterName, nodeName).map(_ => StatusCodes.NoContent)
+              else Future.successful(StatusCodes.NoContent)
+            })
+          }
+      }
+    }
+
+  // TODO deprecated, should be removed after finish #1544...by Sam
   def basicRouteOfCluster[Req <: ClusterCreationRequest, Res <: ClusterInfo: ClassTag, Creator <: ClusterCreator[Res]](
     collie: Collie[Res, Creator],
     root: String,
@@ -203,6 +282,57 @@ private[route] object RouteUtils {
     * @tparam Req type of request
     * @return clusters that fitted the requires
     */
+  private[route] def basicCheckOfCluster2[Req <: ClusterInfo: ClassTag](
+    nodeCollie: NodeCollie,
+    clusterCollie: ClusterCollie,
+    req: Req)(implicit executionContext: ExecutionContext): Future[Seq[ClusterInfo]] = {
+    // nodeCollie.nodes(req.nodeNames) is used to check the existence of node names of request
+    nodeCollie
+      .nodes(req.nodeNames)
+      .flatMap(clusterCollie.images)
+      // check the docker images
+      .map { nodesImages =>
+        val image = req.imageName
+        nodesImages
+          .filterNot(_._2.contains(image))
+          .keys
+          .map(_.name)
+          .foreach(n => throw new IllegalArgumentException(s"$n doesn't have docker image:$image"))
+        nodesImages
+      }
+      .flatMap(_ => clusterCollie.clusters().map(_.keys.toSeq))
+      .map { clusters =>
+        def serviceName(cluster: ClusterInfo): String = cluster match {
+          case _: ZookeeperClusterInfo => s"zookeeper cluster:${cluster.name}"
+          case _: BrokerClusterInfo    => s"broker cluster:${cluster.name}"
+          case _: WorkerClusterInfo    => s"worker cluster:${cluster.name}"
+          case _: StreamClusterInfo    => s"stream cluster:${cluster.name}"
+          case _                       => s"cluster:${cluster.name}"
+        }
+        // check name conflict
+        clusters
+          .filter(c => classTag[Req].runtimeClass.isInstance(c))
+          .map(_.asInstanceOf[Req])
+          .find(_.name == req.name)
+          .foreach(conflictCluster => throw new IllegalArgumentException(s"${serviceName(conflictCluster)} is running"))
+
+        // check port conflict
+        Some(clusters
+          .flatMap { cluster =>
+            val conflictPorts = cluster.ports.intersect(req.ports)
+            if (conflictPorts.isEmpty) None
+            else Some(cluster -> conflictPorts)
+          }
+          .map {
+            case (cluster, conflictPorts) =>
+              s"ports:${conflictPorts.mkString(",")} are used by ${serviceName(cluster)} (the port is generated randomly if it is ignored from request)"
+          }
+          .mkString(";")).filter(_.nonEmpty).foreach(s => throw new IllegalArgumentException(s))
+        clusters
+      }
+  }
+
+  // TODO deprecated, should be removed after finish #1544...by Sam
   private[route] def basicCheckOfCluster[Req <: ClusterCreationRequest, Res <: ClusterInfo: ClassTag](
     nodeCollie: NodeCollie,
     clusterCollie: ClusterCollie,

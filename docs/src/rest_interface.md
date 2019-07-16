@@ -1457,9 +1457,13 @@ all configs but open a room to enable you to overwrite somethings you do care.
 1. peerPort (**int**) — port used by internal communication
 1. nodeNames (**array(string)**) — the nodes running the zookeeper process
 1. deadNodes (**array(string)**) — the nodes that have failed containers of zookeeper
+1. tags (**object**) — the user defined parameters
+1. state (**option(string)**) — only started/failed zookeeper has state (RUNNING or DEAD)
+1. error (**option(string)**) — the error message from a failed zookeeper. If zookeeper is fine or un-started, you won't get this field.
+1. lastModified (**long**) — last modified this jar time
   
 ----------
-### create a zookeeper cluster
+### create a zookeeper properties
 
 *POST /v0/zookeepers*
 
@@ -1469,6 +1473,7 @@ all configs but open a room to enable you to overwrite somethings you do care.
 1. electionPort (**int**) — used to select the zk node leader
 1. peerPort (**int**) — port used by internal communication
 1. nodeNames (**array(string)**) — the nodes running the zookeeper process
+1. tags (**object**) — the user defined parameters
 
 **Example Request**
 
@@ -1481,7 +1486,8 @@ all configs but open a room to enable you to overwrite somethings you do care.
   "electionPort": 12347,
   "nodeNames": [
     "node00"
-  ]
+  ],
+  "tags": {}
 }
 ```
 
@@ -1490,24 +1496,25 @@ all configs but open a room to enable you to overwrite somethings you do care.
 ```json
 {
   "name": "zk00",
-  "electionPort": 12347,
   "imageName": "oharastream/zookeeper:0.7.0-SNAPSHOT",
   "clientPort": 12345,
   "peerPort": 12346,
+  "electionPort": 12347,
   "nodeNames": [
     "node00"
   ],
-  "deadNodes": []
+  "deadNodes": [],
+  "tags": {},
+  "lastModified": 1563158986411
 }
 ```
 
-As mentioned before, ohara provides default to most settings. You can just input name and nodeNames to run a zookeeper cluster.
+As mentioned before, ohara provides default to most settings. You can just input nodeNames to run a zookeeper cluster.
 
 **Example Request**
 
 ```json
 {
-  "name": "zk00",
   "nodeNames": [
     "node00"
   ]
@@ -1529,7 +1536,9 @@ does not allow you to reuse port on different purpose (a dangerous behavior, rig
   "nodeNames": [
     "node00"
   ],
-  "deadNodes": []
+  "deadNodes": [],
+  "tags": {},
+  "lastModified": 1563158986411
 }
 ```
 ----------
@@ -1550,19 +1559,19 @@ does not allow you to reuse port on different purpose (a dangerous behavior, rig
     "nodeNames": [
       "node00"
     ],
-    "deadNodes": []
+    "deadNodes": [],
+    "tags": {},
+    "state": "RUNNING"
   }
 ]
 ```
 ----------
-### delete a zookeeper cluster
+### delete a zookeeper properties
 
 *DELETE /v0/zookeepers/$name*
 
-It is disallowed to remove a zookeeper cluster used by a running [broker cluster](#broker).
-
-**Query Parameters**
-1. force (**boolean**) — true if you don't want to wait the graceful shutdown (it can save your time but may damage your data). Other values invoke graceful delete. 
+You cannot delete properties of an non-stopped zookeeper cluster.
+ 
 
 **Example Response**
 
@@ -1577,6 +1586,9 @@ It is disallowed to remove a zookeeper cluster used by a running [broker cluster
 
 *GET /v0/zookeepers/$name*
 
+Get zookeeper information by name.
+This API could fetch all information of a zookeeper (include state)
+
 **Example Response**
 
 ```json
@@ -1589,10 +1601,64 @@ It is disallowed to remove a zookeeper cluster used by a running [broker cluster
   "nodeNames": [
     "node00"
   ],
-  "deadNodes": []
+  "deadNodes": [],
+  "tags": {},
+  "state": "RUNNING"
 }
 ```
 
+----------
+### start a zookeeper cluster
+
+*PUT /v0/zookeepers/$name/start*
+
+**Example Response**
+
+```json
+{
+  "name": "zk00",
+  "electionPort": 12347,
+  "imageName": "oharastream/zookeeper:0.7.0-SNAPSHOT",
+  "clientPort": 12345,
+  "peerPort": 12346,
+  "nodeNames": [
+    "node00"
+  ],
+  "deadNodes": [],
+  "tags": {}
+}
+```
+
+----------
+### stop a zookeeper cluster
+
+Gracefully stopping a running zookeeper cluster.
+It is disallowed to stop a zookeeper cluster used by a running [broker cluster](#broker).
+
+*PUT /v0/zookeepers/$name/stop[?force=true]*
+
+**Query Parameters**
+1. force (**boolean**) — true if you don't want to wait the graceful shutdown
+(it can save your time but may damage your data).
+
+**Example Response**
+
+```json
+{
+  "name": "zk00",
+  "electionPort": 12347,
+  "imageName": "oharastream/zookeeper:0.7.0-SNAPSHOT",
+  "clientPort": 12345,
+  "peerPort": 12346,
+  "nodeNames": [
+    "node00"
+  ],
+  "deadNodes": [],
+  "tags": {}
+}
+```
+
+----------
 ### delete a node from a running zookeeper cluster
 
 Unfortunately, it is a litter dangerous to remove a node from a running zookeeper cluster so we don't support it yet. 

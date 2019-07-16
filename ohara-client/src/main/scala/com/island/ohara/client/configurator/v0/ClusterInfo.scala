@@ -57,5 +57,11 @@ trait ClusterInfo {
     * @param newNodeNames new node names
     * @return an new instance
     */
+  //TODO remove this after we finished #1544
   def clone(newNodeNames: Set[String]): ClusterInfo
+
+  // we need a "copy" of this class to change the state of cluster
+  // TODO : after #1544, we should have a basic clone() function to accept (newNodeNames, state, error)
+  def clone2(state: Option[String], error: Option[String]): ClusterInfo =
+    throw new AssertionError("[TODO] You need to define this method by class")
 }

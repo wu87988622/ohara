@@ -186,6 +186,60 @@ const WorkerNewModal = props => {
     }
   };
 
+  const waitStopService = async params => {
+    const { service, name } = params;
+    let { retryCount = 0 } = params;
+    const maxRetry = 10;
+    switch (service) {
+      case 'zookeeper':
+        const zkRes = await zookeeperApi.fetchZookeeper(name);
+        const zkResult = get(zkRes, 'data.result.state', 'stop');
+
+        if (zkResult === 'stop') return;
+        if (retryCount > maxRetry) {
+          toastr.error(`Failed to stop zookeeper: ${name}`);
+          return;
+        }
+
+        await commonUtils.sleep(3000);
+        retryCount++;
+        await waitStopService({ service, name, retryCount });
+        return;
+
+      case 'broker':
+        const bkRes = await brokerApi.fetchBroker(name);
+        const bkResult = get(bkRes, 'data.result.state', 'stop');
+
+        if (bkResult === 'stop') return;
+        if (retryCount > maxRetry) {
+          toastr.error(`Failed to stop broker: ${name}`);
+          return;
+        }
+
+        await commonUtils.sleep(3000);
+        retryCount++;
+        await waitStopService({ service, name, retryCount });
+        return;
+
+      case 'worker':
+        const wkRes = await workerApi.fetchWorker(name);
+        const wkResult = get(wkRes, 'data.result.state', 'stop');
+
+        if (wkResult === 'stop') return;
+        if (retryCount > maxRetry) {
+          toastr.error(`Failed to delete worker: ${name}`);
+          return;
+        }
+
+        await commonUtils.sleep(3000);
+        retryCount++;
+        await waitStopService({ service, name, retryCount });
+        return;
+      default:
+        return;
+    }
+  };
+
   const saveService = params => {
     const newService = [...workingServices, params];
     workingServices = newService;
@@ -224,6 +278,11 @@ const WorkerNewModal = props => {
 
     await Promise.all(
       zks.map(async zk => {
+        await zookeeperApi.stopZookeeper(`${zk.name}`);
+        await waitStopService({
+          service: 'zookeeper',
+          name: zk.name,
+        });
         await zookeeperApi.deleteZookeeper(`${zk.name}`);
         await waitDeleteService({
           service: 'zookeeper',
@@ -265,13 +324,12 @@ const WorkerNewModal = props => {
       await commonUtils.sleep(2000);
       await waitForServiceCreation(clusterName);
     };
-
+    const zookeeperName = generate.serviceName();
     const zookeeper = await zookeeperApi.createZookeeper({
-      name: generate.serviceName(),
+      name: zookeeperName,
       clientPort: generate.port(),
       peerPort: generate.port(),
       electionPort: generate.port(),
-
       // TODO: #1632 there's a couple of rules when creating services
       // - Rule one: if the nodes supplied by users are less than 3. Creates a zookeeper and
       // the equal amount of brokers and workers of nodes
@@ -282,7 +340,7 @@ const WorkerNewModal = props => {
       // and once the bug is fixed we will then apply the rule two in frontend :)
       nodeNames: [nodeNames[0]],
     });
-
+    await zookeeperApi.startZookeeper(zookeeperName);
     const zookeeperClusterName = get(zookeeper, 'data.result.name');
     await waitForServiceCreation(zookeeperClusterName);
 

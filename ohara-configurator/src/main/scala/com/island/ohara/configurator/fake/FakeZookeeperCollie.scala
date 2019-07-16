@@ -16,10 +16,12 @@
 
 package com.island.ohara.configurator.fake
 
+import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.agent.{NodeCollie, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.common.util.CommonUtils
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -37,7 +39,11 @@ private[configurator] class FakeZookeeperCollie(node: NodeCollie)
             peerPort = peerPort,
             electionPort = electionPort,
             nodeNames = nodeNames,
-            deadNodes = Set.empty
+            deadNodes = Set.empty,
+            state = Some(ContainerState.RUNNING.name),
+            error = None,
+            tags = Map.empty,
+            lastModified = CommonUtils.current()
           )))
 
   override protected def doRemoveNode(previousCluster: ZookeeperClusterInfo, beRemovedContainer: ContainerInfo)(

@@ -213,7 +213,7 @@ object StreamApi {
       *
       * @param name streamApp object name
       * @param executionContext execution context
-      * @return information of streamApp (status "RUNNING" if success, "EXITED" if fail)
+      * @return information of streamApp (status "RUNNING" if success, "DEAD" if fail)
       */
     def start(name: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription] =
       exec.put[StreamAppDescription, ErrorApi.Error](actionUrl(name, START_COMMAND))

@@ -254,7 +254,7 @@ public final class CommonUtils {
   // ---------------------------------[Primitive Type Helper]--------------------------------- //
 
   /**
-   * create a uuid. This uuid consists of "number" and [a-zA-Z]
+   * create a uuid. This uuid consists of "number" and [a-f]
    *
    * @return uuid
    */
@@ -272,7 +272,7 @@ public final class CommonUtils {
   }
 
   /**
-   * create a random string with specified length. This uuid consists of "number" and [a-zA-Z]
+   * create a random string with specified length. This uuid consists of "number" and [a-f]
    *
    * @param len the length of uuid
    * @return uuid

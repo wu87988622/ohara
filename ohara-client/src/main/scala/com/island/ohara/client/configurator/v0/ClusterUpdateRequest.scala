@@ -15,24 +15,16 @@
  */
 
 package com.island.ohara.client.configurator.v0
+import spray.json.JsValue
 
 /**
-  * this is a basic interface of cluster request to create a normal object resource.
+  * this is a basic interface of cluster request to update a normal object resource.
   */
-trait ClusterCreationRequest extends CreationRequest {
+trait ClusterUpdateRequest {
 
-  /**
-    * @return nodes to run this cluster
-    */
-  def nodeNames: Set[String]
+  def imageName: Option[String]
 
-  /**
-    * @return image used to build cluster
-    */
-  def imageName: String
+  def nodeNames: Option[Set[String]]
 
-  /**
-    * @return ports used by this cluster
-    */
-  def ports: Set[Int]
+  def tags: Option[Map[String, JsValue]]
 }

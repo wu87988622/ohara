@@ -15,6 +15,7 @@
  */
 
 package com.island.ohara.agent
+import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
@@ -29,13 +30,19 @@ private class FakeBrokerCollie(node: NodeCollie,
     implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = {
     Future {
       Map(
-        ZookeeperClusterInfo(FakeBrokerCollie.zookeeperClusterName,
-                             ZookeeperApi.IMAGE_NAME_DEFAULT,
-                             2181,
-                             2182,
-                             2183,
-                             Set("node1"),
-                             Set.empty) -> zkContainers,
+        ZookeeperClusterInfo(
+          FakeBrokerCollie.zookeeperClusterName,
+          ZookeeperApi.IMAGE_NAME_DEFAULT,
+          2181,
+          2182,
+          2183,
+          Set("node1"),
+          Set.empty,
+          Map.empty,
+          0L,
+          Some(ContainerState.RUNNING.name),
+          None
+        ) -> zkContainers,
       )
     }
   }

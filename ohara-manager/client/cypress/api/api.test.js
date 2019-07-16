@@ -24,6 +24,7 @@ let topicName = '';
 let propertyName = '';
 let fakeWorkerName = '';
 const nodeName = `node${makeRandomPort()}`;
+const zookeeperName = `zk${makeRandomPort()}`;
 const wkName = `wk${makeRandomPort()}`;
 const connectorName = `source${makeRandomPort()}`;
 
@@ -133,6 +134,29 @@ describe('Nodes', () => {
 });
 
 describe('Zookeepers', () => {
+  it('createZookeeper', () => {
+    const params = {
+      name: zookeeperName,
+      clientPort: makeRandomPort(),
+      peerPort: makeRandomPort(),
+      electionPort: makeRandomPort(),
+      nodeNames: [nodeName],
+    };
+    cy.createZookeeper(params).then(res => {
+      const {
+        data: { isSuccess, result },
+      } = res;
+      const { name, clientPort, electionPort, peerPort, nodeNames } = result;
+      expect(isSuccess).to.eq(true);
+
+      expect(name).to.be.a('string');
+      expect(nodeNames).to.be.a('array');
+      expect(clientPort).to.be.a('number');
+      expect(electionPort).to.be.a('number');
+      expect(peerPort).to.be.a('number');
+    });
+  });
+
   it('fetchZookeepers', () => {
     cy.fetchZookeepers().then(res => {
       const {
@@ -147,6 +171,100 @@ describe('Zookeepers', () => {
       expect(clientPort).to.be.a('number');
       expect(electionPort).to.be.a('number');
       expect(peerPort).to.be.a('number');
+    });
+  });
+
+  it('fetchZookeeper', () => {
+    cy.fetchZookeeper(zookeeperName).then(res => {
+      const {
+        data: { isSuccess, result },
+      } = res;
+      const { name, clientPort, electionPort, peerPort, nodeNames } = result;
+
+      expect(isSuccess).to.eq(true);
+
+      expect(name).to.be.a('string');
+      expect(nodeNames).to.be.a('array');
+      expect(clientPort).to.be.a('number');
+      expect(electionPort).to.be.a('number');
+      expect(peerPort).to.be.a('number');
+    });
+  });
+
+  it('startZookeeper', () => {
+    cy.startZookeeper(zookeeperName).then(res => {
+      const {
+        data: { isSuccess, result },
+      } = res;
+      const { name, clientPort, electionPort, peerPort, nodeNames } = result;
+
+      expect(isSuccess).to.eq(true);
+
+      expect(name).to.be.a('string');
+      expect(nodeNames).to.be.a('array');
+      expect(clientPort).to.be.a('number');
+      expect(electionPort).to.be.a('number');
+      expect(peerPort).to.be.a('number');
+    });
+
+    cy.fetchZookeeper(zookeeperName).then(res => {
+      const {
+        data: { isSuccess, result },
+      } = res;
+      const { state } = result;
+
+      expect(isSuccess).to.eq(true);
+
+      expect(state).to.be.eq('RUNNING');
+    });
+  });
+
+  it('stopZookeeper', () => {
+    cy.stopZookeeper(zookeeperName).then(res => {
+      const {
+        data: { isSuccess, result },
+      } = res;
+      const { name, clientPort, electionPort, peerPort, nodeNames } = result;
+
+      expect(isSuccess).to.eq(true);
+
+      expect(name).to.be.a('string');
+      expect(nodeNames).to.be.a('array');
+      expect(clientPort).to.be.a('number');
+      expect(electionPort).to.be.a('number');
+      expect(peerPort).to.be.a('number');
+    });
+
+    cy.fetchZookeeper(zookeeperName).then(res => {
+      const {
+        data: { isSuccess, result },
+      } = res;
+      const { state } = result;
+
+      expect(isSuccess).to.eq(true);
+
+      expect(state).to.be.eq(undefined);
+    });
+  });
+
+  it('deleteZookeeper', () => {
+    const newZKName = `zk${makeRandomPort()}`;
+    const params = {
+      name: newZKName,
+      clientPort: makeRandomPort(),
+      peerPort: makeRandomPort(),
+      electionPort: makeRandomPort(),
+      nodeNames: [nodeName],
+    };
+    cy.createZookeeper(params).then(res => {
+      const { name } = res.data.result;
+
+      cy.deleteZookeeper(name).then(deleteRes => {
+        const {
+          data: { isSuccess },
+        } = deleteRes;
+        expect(isSuccess).to.eq(true);
+      });
     });
   });
 });

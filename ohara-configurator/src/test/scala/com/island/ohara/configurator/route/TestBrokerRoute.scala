@@ -16,6 +16,7 @@
 
 package com.island.ohara.configurator.route
 
+import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -47,6 +48,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
 
     result(nodeAccess.list()).size shouldBe nodeNames.size
 
+    // create zookeeper props
     result(
       ZookeeperApi.access
         .hostname(configurator.hostname)
@@ -56,6 +58,11 @@ class TestBrokerRoute extends MediumTest with Matchers {
         .nodeNames(nodeNames)
         .create()
     ).name shouldBe zkClusterName
+
+    // start zookeeper
+    result(
+      ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).start(zkClusterName)
+    ).state shouldBe Some(ContainerState.RUNNING.name)
   }
 
   @Test
@@ -108,6 +115,8 @@ class TestBrokerRoute extends MediumTest with Matchers {
         .name(anotherZk)
         .nodeNames(nodeNames)
         .create()).name shouldBe anotherZk
+    result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).start(anotherZk))
+
     try {
       result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).list()).size shouldBe 2
 
@@ -115,7 +124,10 @@ class TestBrokerRoute extends MediumTest with Matchers {
       an[IllegalArgumentException] should be thrownBy result(
         brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
       )
-    } finally result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).delete(anotherZk))
+    } finally {
+      result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).stop(anotherZk))
+      result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).delete(anotherZk))
+    }
 
   }
 
@@ -157,6 +169,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
         .nodeNames(nodeNames)
         .create()
     )
+    result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).start(zk2.name))
 
     val bk2 = result(
       brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).zookeeperClusterName(zk2.name).create())
@@ -241,6 +254,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
         .nodeNames(nodeNames)
         .create()
     )
+    result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).start(zk2.name))
 
     an[IllegalArgumentException] should be thrownBy result(
       brokerApi.request
@@ -270,6 +284,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
         .nodeNames(nodeNames)
         .create()
     )
+    result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).start(zk2.name))
 
     an[IllegalArgumentException] should be thrownBy result(
       brokerApi.request
@@ -298,6 +313,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
         .nodeNames(nodeNames)
         .create()
     )
+    result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).start(zk2.name))
 
     an[IllegalArgumentException] should be thrownBy result(
       brokerApi.request

@@ -70,6 +70,40 @@ export const createZookeeper = async params => {
   }
 };
 
+export const startZookeeper = async name => {
+  try {
+    const url = `/api/zookeepers/${name}/start`;
+
+    const res = await axiosInstance.put(url);
+    const isSuccess = get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
+export const stopZookeeper = async name => {
+  try {
+    const url = `/api/zookeepers/${name}/stop`;
+
+    const res = await axiosInstance.put(url);
+    const isSuccess = get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
 export const deleteZookeeper = async name => {
   try {
     const url = `/api/zookeepers/${name}`;
