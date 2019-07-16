@@ -19,7 +19,7 @@ package com.island.ohara.it.agent.ssh
 import java.io.File
 import java.util.concurrent.TimeUnit
 
-import com.island.ohara.client.configurator.v0.JarApi.JarKey
+import com.island.ohara.client.configurator.v0.FileApi.FileKey
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.client.kafka.WorkerClient
@@ -67,9 +67,9 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
 
   private[this] val wkApi = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)
 
-  private[this] val nameHolder = new ClusterNameHolder(nodeCache)
+  private[this] val fileApi = FileApi.access.hostname(configurator.hostname).port(configurator.port)
 
-  private[this] val wkName = nameHolder.generateClusterName()
+  private[this] val nameHolder = new ClusterNameHolder(nodeCache)
 
   /**
     * used to debug. setting false to disable cleanup of containers after testing.
@@ -100,7 +100,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
                           new File(currentPath, "build/libs/ohara-it-sink.jar")))(file => {
         // avoid too "frequently" create group folder for same group files
         TimeUnit.SECONDS.sleep(1)
-        JarApi.access.hostname(configurator.hostname).port(configurator.port).request.group(wkName).upload(file)
+        fileApi.request.file(file).upload()
       }))
 
     val zkCluster = result(
@@ -119,7 +119,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
       wkApi.request
         .name(nameHolder.generateClusterName())
         .brokerClusterName(bkCluster.name)
-        .jars(jars.map(jar => JarKey(jar.group, jar.name)).toSet)
+        .jarKeys(jars.map(jar => FileKey(group = jar.group, name = jar.name)).toSet)
         .nodeName(nodeCache.head.name)
         .create())
     assertCluster(() => result(wkApi.list()), wkCluster.name)

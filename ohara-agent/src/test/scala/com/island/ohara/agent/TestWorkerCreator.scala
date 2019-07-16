@@ -18,7 +18,7 @@ package com.island.ohara.agent
 
 import java.net.URL
 
-import com.island.ohara.client.configurator.v0.JarApi.{JAR_INFO_JSON_FORMAT, JarInfo}
+import com.island.ohara.client.configurator.v0.FileApi.{FILE_INFO_JSON_FORMAT, FileInfo}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
@@ -254,19 +254,21 @@ class TestWorkerCreator extends SmallTest with Matchers {
   @Test
   def testJarInfo2(): Unit = {
     val jarInfos = Seq(
-      JarInfo(
+      FileInfo(
         name = CommonUtils.randomString(),
         group = CommonUtils.randomString(),
         size = 100,
         url = new URL("http://localhost:12345/aa.jar"),
-        lastModified = CommonUtils.current()
+        lastModified = CommonUtils.current(),
+        tags = Map.empty
       ),
-      JarInfo(
+      FileInfo(
         name = CommonUtils.randomString(),
         group = CommonUtils.randomString(),
         size = 100,
         url = new URL("http://localhost:12345/aa.jar"),
-        lastModified = CommonUtils.current()
+        lastModified = CommonUtils.current(),
+        tags = Map.empty
       )
     )
     WorkerCollie.toJarInfos(WorkerCollie.toString(jarInfos)) shouldBe jarInfos
@@ -275,26 +277,28 @@ class TestWorkerCreator extends SmallTest with Matchers {
   @Test
   def testJarInfo3(): Unit = {
     val jarInfos = Seq(
-      JarInfo(
+      FileInfo(
         name = CommonUtils.randomString(),
         group = CommonUtils.randomString(),
         size = 100,
         url = new URL("http://localhost:12345/aa.jar"),
-        lastModified = CommonUtils.current()
+        lastModified = CommonUtils.current(),
+        tags = Map.empty
       ),
-      JarInfo(
+      FileInfo(
         name = CommonUtils.randomString(),
         group = CommonUtils.randomString(),
         size = 100,
         url = new URL("http://localhost:12345/aa.jar"),
-        lastModified = CommonUtils.current()
+        lastModified = CommonUtils.current(),
+        tags = Map.empty
       )
     )
     WorkerCollie.toString(jarInfos).contains("\\\"") shouldBe true
 
     WorkerCollie.toJarInfos(WorkerCollie.toString(jarInfos)) shouldBe jarInfos
 
-    WorkerCollie.toJarInfos(JsArray(jarInfos.map(JAR_INFO_JSON_FORMAT.write).toVector).toString) shouldBe jarInfos
+    WorkerCollie.toJarInfos(JsArray(jarInfos.map(FILE_INFO_JSON_FORMAT.write).toVector).toString) shouldBe jarInfos
 
   }
 

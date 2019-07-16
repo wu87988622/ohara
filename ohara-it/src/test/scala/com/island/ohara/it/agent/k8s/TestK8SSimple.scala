@@ -170,8 +170,7 @@ class TestK8SSimple extends IntegrationTest with Matchers {
   def testK8SNodeInfo(): Unit = {
     val k8sClient = K8SClient(k8sApiServerURL)
     val nodes = result(k8sClient.nodeNameIPInfo())
-    nodes.size >= 3 shouldBe true
-
+    nodes.nonEmpty shouldBe true
     nodes.map(x => x.hostnames.head).mkString(",").contains(TestK8SSimple.NODE_SERVER_NAME.get) shouldBe true
   }
 

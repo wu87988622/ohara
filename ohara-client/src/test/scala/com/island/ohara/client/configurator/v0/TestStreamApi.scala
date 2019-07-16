@@ -16,7 +16,7 @@
 
 package com.island.ohara.client.configurator.v0
 
-import com.island.ohara.client.configurator.v0.JarApi.JarKey
+import com.island.ohara.client.configurator.v0.FileApi.FileKey
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.StreamApi.{Creation, StreamAppDescription, StreamClusterInfo}
 import com.island.ohara.common.rule.SmallTest
@@ -33,7 +33,7 @@ class TestStreamApi extends SmallTest with Matchers {
 
   private[this] final val access =
     StreamApi.access.hostname(CommonUtils.randomString()).port(CommonUtils.availablePort())
-  private[this] final val fakeJar = JarKey(CommonUtils.randomString(1), CommonUtils.randomString(1))
+  private[this] final val fakeJar = FileKey(CommonUtils.randomString(1), CommonUtils.randomString(1))
   private[this] final def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
   @Test
@@ -58,7 +58,7 @@ class TestStreamApi extends SmallTest with Matchers {
   def testStreamPropertyRequestEquals(): Unit = {
     val info = Creation(
       imageName = "image",
-      jar = JarKey("group", "name"),
+      jar = FileKey("group", "name"),
       name = "appid",
       from = Set("from"),
       to = Set("to"),
@@ -79,7 +79,7 @@ class TestStreamApi extends SmallTest with Matchers {
       instances = 1,
       deadNodes = Set.empty,
       nodeNames = Set("node1"),
-      jar = JarKey("group", "name"),
+      jar = FileKey("group", "name"),
       from = Set.empty,
       to = Set.empty,
       state = None,
@@ -167,7 +167,7 @@ class TestStreamApi extends SmallTest with Matchers {
   @Test
   def requireFieldOnPropertyCreation(): Unit = {
     // absent name will be auto generate
-    access.request.jar(JarKey("group", "name")).creation
+    access.request.jar(FileKey("group", "name")).creation
 
     // jar is required
     an[NullPointerException] should be thrownBy access.request.name(CommonUtils.randomString()).creation
@@ -365,7 +365,7 @@ class TestStreamApi extends SmallTest with Matchers {
   @Test
   def requireFieldOnPropertyUpdate(): Unit = {
     // name is required
-    an[NullPointerException] should be thrownBy result(access.request.jar(JarKey("group", "name")).update())
+    an[NullPointerException] should be thrownBy result(access.request.jar(FileKey("group", "name")).update())
 
     // no jar is ok
     access.request.name(CommonUtils.randomString()).update
@@ -522,7 +522,7 @@ class TestStreamApi extends SmallTest with Matchers {
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
-    .jar(JarKey(group = "1", name = "b"))
+    .jar(FileKey(group = "1", name = "b"))
     .creation
     .name
     .length should not be 0

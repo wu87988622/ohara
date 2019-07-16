@@ -30,6 +30,13 @@ trait Data {
 }
 
 object Data {
+
+  /**
+    * the default group to all objects.
+    * the group is useful to Ohara Manager. However, in simple case, the group is a bit noisy so we offer the default group to all objects when
+    * input group is ignored.
+    */
+  val DEFAULT_GROUP = "default"
   val NAME_KEY = "name"
   val TAGS_KEY = "tags"
 }

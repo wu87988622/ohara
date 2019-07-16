@@ -26,7 +26,7 @@ import com.island.ohara.agent.{BrokerCollie, ClusterCollie, NodeCollie, WorkerCo
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.StreamApi._
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.jar.JarStore
+import com.island.ohara.configurator.file.FileStore
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import org.slf4j.LoggerFactory
 
@@ -147,7 +147,7 @@ private[configurator] object StreamRoute {
             clusterCollie: ClusterCollie,
             workerCollie: WorkerCollie,
             brokerCollie: BrokerCollie,
-            jarStore: JarStore,
+            fileStore: FileStore,
             meterCache: MeterCache,
             executionContext: ExecutionContext): server.Route =
     RouteUtils.basicRoute[Creation, Update, StreamAppDescription](
@@ -244,8 +244,8 @@ private[configurator] object StreamRoute {
                         .map { case (_, topicAdmin, _, _) => topicAdmin.connectionProps }
                         .flatMap {
                           bkProps =>
-                            jarStore
-                              .jarInfo(data.jar.group, data.jar.name)
+                            fileStore
+                              .fileInfo(data.jar.group, data.jar.name)
                               .map(_.url)
                               .flatMap {
                                 url =>

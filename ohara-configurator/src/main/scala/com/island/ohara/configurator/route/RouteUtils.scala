@@ -49,7 +49,7 @@ private[route] object RouteUtils {
   type Id = String
 
   /** default we restrict the jar size to 50MB */
-  final val DEFAULT_JAR_SIZE_BYTES = 50 * 1024 * 1024L
+  final val DEFAULT_FILE_SIZE_BYTES = 50 * 1024 * 1024L
 
   /**
     * a route to custom CREATION and UPDATE resource. It offers default implementation to GET, LIST and DELETE.

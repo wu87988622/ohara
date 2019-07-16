@@ -31,7 +31,7 @@ import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.pattern.Builder
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.fake._
-import com.island.ohara.configurator.jar.JarStore
+import com.island.ohara.configurator.file.FileStore
 import com.island.ohara.configurator.store.DataStore
 
 import scala.concurrent.duration._
@@ -41,7 +41,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
   private[this] var port: Int = -1
   private[this] var homeFolder: String = _
   private[this] var store: DataStore = _
-  private[this] var jarStore: JarStore = _
+  private[this] var fileStore: FileStore = _
   private[this] var clusterCollie: ClusterCollie = _
   private[this] var k8sClient: K8SClient = _
 
@@ -310,7 +310,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
 
   override def build(): Configurator = doOrReleaseObjects(
     new Configurator(hostname = getOrCreateHostname(), port = getOrCreatePort())(store = getOrCreateStore(),
-                                                                                 jarStore = getOrCreateJarStore(),
+                                                                                 fileStore = getOrCreateFileStore(),
                                                                                  nodeCollie = createCollie(),
                                                                                  clusterCollie = getOrCreateCollie(),
                                                                                  k8sClient = Option(k8sClient)))
@@ -338,11 +338,15 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
     store
   } else store
 
-  private[this] def getOrCreateJarStore(): JarStore = if (jarStore == null) {
-    jarStore =
-      JarStore.builder.homeFolder(folder("jars")).hostname(getOrCreateHostname()).port(getOrCreatePort()).build()
-    jarStore
-  } else jarStore
+  private[this] def getOrCreateFileStore(): FileStore = if (fileStore == null) {
+    fileStore = FileStore.builder
+      .homeFolder(folder("jars"))
+      .hostname(getOrCreateHostname())
+      .port(getOrCreatePort())
+      .acceptedExtensions(Set("jar"))
+      .build()
+    fileStore
+  } else fileStore
 
   private[this] def getOrCreateCollie(): ClusterCollie = if (clusterCollie == null) {
     this.clusterCollie =
@@ -375,8 +379,8 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
   private[configurator] def cleanup(): Unit = {
     Releasable.close(store)
     store = null
-    Releasable.close(jarStore)
-    jarStore = null
+    Releasable.close(fileStore)
+    fileStore = null
     Releasable.close(clusterCollie)
     clusterCollie = null
     Releasable.close(k8sClient)

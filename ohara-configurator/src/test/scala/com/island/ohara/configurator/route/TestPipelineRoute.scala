@@ -18,7 +18,7 @@ package com.island.ohara.configurator.route
 
 import java.io.File
 
-import com.island.ohara.client.configurator.v0.JarApi.JarKey
+import com.island.ohara.client.configurator.v0.FileApi.FileKey
 import com.island.ohara.client.configurator.v0.PipelineApi.Flow
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.rule.MediumTest
@@ -350,14 +350,14 @@ class TestPipelineRoute extends MediumTest with Matchers {
     val wkName = result(workerApi.list()).head.name
     val file = File.createTempFile("empty_", ".jar")
     val jar = result(
-      JarApi.access.hostname(configurator.hostname).port(configurator.port).request.group(wkName).upload(file))
+      FileApi.access.hostname(configurator.hostname).port(configurator.port).request.group(wkName).file(file).upload())
     val streamapp = result(
       StreamApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
         .request
         .name("appid")
-        .jar(JarKey(jar.group, jar.name))
+        .jar(FileKey(jar.group, jar.name))
         .from(Set("from"))
         .to(Set("to"))
         .instances(1)

@@ -17,7 +17,7 @@
 package com.island.ohara.configurator.route
 
 import com.island.ohara.agent.docker.ContainerState
-import com.island.ohara.client.configurator.v0.JarApi.JarKey
+import com.island.ohara.client.configurator.v0.FileApi.FileKey
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -34,23 +34,23 @@ class TestStreamRoute extends SmallTest with Matchers {
   private[this] val configurator = Configurator.builder.fake().build()
   private[this] val wkApi = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)
 
-  private[this] val accessJar = JarApi.access.hostname(configurator.hostname).port(configurator.port)
+  private[this] val accessJar = FileApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val accessStream = StreamApi.access.hostname(configurator.hostname).port(configurator.port)
 
   @Test
   def testStreamAppPropertyPage(): Unit = {
     val file = CommonUtils.createTempJar("empty_")
 
-    val jar = result(accessJar.request.upload(file))
+    val jar = result(accessJar.request.file(file).upload())
 
     // create default property
     val name = CommonUtils.randomString(10)
     val defaultProps = result(
-      accessStream.request.name(name).jar(JarKey(jar.group, jar.name)).create()
+      accessStream.request.name(name).jar(FileKey(jar.group, jar.name)).create()
     )
     // same name property cannot create again
     an[IllegalArgumentException] should be thrownBy result(
-      accessStream.request.name(name).jar(JarKey(jar.group, "newJar")).create())
+      accessStream.request.name(name).jar(FileKey(jar.group, "newJar")).create())
 
     // get new streamApp property
     val res1 = result(accessStream.get(defaultProps.name))
@@ -72,7 +72,7 @@ class TestStreamRoute extends SmallTest with Matchers {
     // create property with some user defined properties
     val userAppId = CommonUtils.randomString(5)
     val userProps = result(
-      accessStream.request.name(userAppId).jar(JarKey(jar.group, jar.name)).to(Set("to")).instances(99).create())
+      accessStream.request.name(userAppId).jar(FileKey(jar.group, jar.name)).to(Set("to")).instances(99).create())
     userProps.name shouldBe userAppId
     userProps.to shouldBe Set("to")
     userProps.instances shouldBe 99
@@ -94,7 +94,7 @@ class TestStreamRoute extends SmallTest with Matchers {
     an[IllegalArgumentException] should be thrownBy result(accessStream.get(defaultProps.name))
 
     // delete property should not delete actual jar
-    result(accessJar.request.list()).size shouldBe 1
+    result(accessJar.list()).size shouldBe 1
 
     file.deleteOnExit()
   }
@@ -108,10 +108,10 @@ class TestStreamRoute extends SmallTest with Matchers {
     val wkName = result(wkApi.list).head.name
 
     // upload jar
-    val streamJar = result(accessJar.request.group(wkName).upload(file))
+    val streamJar = result(accessJar.request.group(wkName).file(file).upload())
 
     // create property
-    val props = result(accessStream.request.name(streamAppName).jar(JarKey(streamJar.group, streamJar.name)).create())
+    val props = result(accessStream.request.name(streamAppName).jar(FileKey(streamJar.group, streamJar.name)).create())
 
     // update properties
     result(
@@ -205,10 +205,10 @@ class TestStreamRoute extends SmallTest with Matchers {
     val wkName = result(wkApi.list()).head.name
 
     // upload jar
-    val streamJar = result(accessJar.request.group(wkName).upload(file))
+    val streamJar = result(accessJar.request.group(wkName).file(file).upload())
 
     // start action will check all the required parameters
-    result(accessStream.request.name(streamAppName).jar(JarKey(streamJar.group, streamJar.name)).create())
+    result(accessStream.request.name(streamAppName).jar(FileKey(streamJar.group, streamJar.name)).create())
     an[IllegalArgumentException] should be thrownBy result(accessStream.start(streamAppName))
 
     result(accessStream.request.name(streamAppName).from(Set("from")).update())
@@ -223,8 +223,7 @@ class TestStreamRoute extends SmallTest with Matchers {
 
   @Test
   def duplicateDeleteStream(): Unit =
-    (0 to 10).foreach(_ =>
-      result(accessJar.request.group(CommonUtils.randomString()).delete(CommonUtils.randomString(5))))
+    (0 to 10).foreach(_ => result(accessJar.delete(CommonUtils.randomString(), CommonUtils.randomString(5))))
 
   @Test
   def duplicateDeleteStreamProperty(): Unit =
@@ -234,14 +233,14 @@ class TestStreamRoute extends SmallTest with Matchers {
   def updateTags(): Unit = {
     val file = CommonUtils.createTempJar("empty_")
 
-    val jar = result(accessJar.request.upload(file))
+    val jar = result(accessJar.request.file(file).upload())
 
     val tags = Map(
       CommonUtils.randomString(10) -> JsString(CommonUtils.randomString(10)),
       CommonUtils.randomString(10) -> JsNumber(CommonUtils.randomInteger())
     )
     val streamDesc = result(
-      accessStream.request.name(CommonUtils.randomString(10)).jar(JarKey(jar.group, jar.name)).tags(tags).create())
+      accessStream.request.name(CommonUtils.randomString(10)).jar(FileKey(jar.group, jar.name)).tags(tags).create())
     streamDesc.tags shouldBe tags
 
     val tags2 = Map(

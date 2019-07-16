@@ -20,7 +20,7 @@ import java.io.File
 import java.util.concurrent.ExecutionException
 
 import com.island.ohara.agent.docker.{ContainerState, DockerClient}
-import com.island.ohara.client.configurator.v0.JarApi.JarKey
+import com.island.ohara.client.configurator.v0.FileApi.FileKey
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.{ZookeeperApi, _}
 import com.island.ohara.common.data.{Row, Serializer}
@@ -70,7 +70,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
   private[this] var wkApi: WorkerApi.Access = _
   private[this] var containerApi: ContainerApi.Access = _
   private[this] var topicApi: TopicApi.Access = _
-  private[this] var jarApi: JarApi.Access = _
+  private[this] var jarApi: FileApi.Access = _
 
   private[this] var access: StreamApi.Access = _
   private[this] var bkName: String = _
@@ -95,7 +95,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
       wkApi = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)
       containerApi = ContainerApi.access.hostname(configurator.hostname).port(configurator.port)
       topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
-      jarApi = JarApi.access.hostname(configurator.hostname).port(configurator.port)
+      jarApi = FileApi.access.hostname(configurator.hostname).port(configurator.port)
       access = StreamApi.access.hostname(configurator.hostname).port(configurator.port)
       val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
       // add all available nodes
@@ -157,11 +157,11 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     val jar = CommonUtils.createTempJar("fake")
 
     // upload streamApp jar
-    val jarInfo = result(jarApi.request.group(wkName).upload(jar))
+    val jarInfo = result(jarApi.request.group(wkName).file(jar).upload())
 
     // create streamApp properties
     val stream = result(
-      access.request.name(CommonUtils.randomString(10)).jar(JarKey(jarInfo.group, jarInfo.name)).create())
+      access.request.name(CommonUtils.randomString(10)).jar(FileKey(jarInfo.group, jarInfo.name)).create())
 
     // update streamApp properties (use non-existed topics to make sure cluster failed)
     val properties = result(
@@ -242,13 +242,13 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     val topic2 = result(topicApi.request.name(to).brokerClusterName(bkName).create())
 
     // upload streamApp jar
-    val jarInfo = result(jarApi.request.group(wkName).upload(jar))
-    jarInfo.name shouldBe "ohara-streamapp"
+    val jarInfo = result(jarApi.request.group(wkName).file(jar).upload())
+    jarInfo.name shouldBe "ohara-streamapp.jar"
     jarInfo.group shouldBe wkName
 
     // create streamApp properties
     val stream = result(
-      access.request.name(CommonUtils.randomString(10)).jar(JarKey(jarInfo.group, jarInfo.name)).create())
+      access.request.name(CommonUtils.randomString(10)).jar(FileKey(jarInfo.group, jarInfo.name)).create())
 
     // update streamApp properties
     val properties = result(

@@ -21,7 +21,7 @@ import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.{ClusterInfo, WorkerApi}
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
-import com.island.ohara.client.configurator.v0.JarApi.{JarInfo, _}
+import com.island.ohara.client.configurator.v0.FileApi.{FileInfo, _}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.{ConnectorDefinitions, WorkerClusterInfo}
 import com.island.ohara.client.kafka.WorkerClient
@@ -354,7 +354,7 @@ object WorkerCollie {
     private[this] var statusTopicName: String = s"$groupId-status-${CommonUtils.randomString(10)}"
     private[this] var statusTopicReplications: Short = 1
     private[this] var statusTopicPartitions: Int = 1
-    private[this] var jarInfos: Seq[JarInfo] = Seq.empty
+    private[this] var jarInfos: Seq[FileInfo] = Seq.empty
     private[this] var jmxPort: Int = CommonUtils.availablePort()
 
     override protected def doCopy(clusterInfo: WorkerClusterInfo): Unit = {
@@ -437,7 +437,7 @@ object WorkerCollie {
     }
 
     @Optional("default is empty")
-    def jarInfos(jarInfos: Seq[JarInfo]): ClusterCreator = {
+    def jarInfos(jarInfos: Seq[FileInfo]): ClusterCreator = {
       this.jarInfos = Objects.requireNonNull(jarInfos)
       this
     }
@@ -488,7 +488,7 @@ object WorkerCollie {
                            statusTopicPartitions: Int,
                            configTopicName: String,
                            configTopicReplications: Short,
-                           jarInfos: Seq[JarInfo],
+                           jarInfos: Seq[FileInfo],
                            nodeNames: Set[String]): Future[WorkerClusterInfo]
   }
   private[agent] val GROUP_ID_KEY: String = "WORKER_GROUP"
@@ -526,7 +526,7 @@ object WorkerCollie {
     * @param jarInfos jar information
     * @return a map with input value or empty if input is empty.
     */
-  private[agent] def toMap(jarInfos: Seq[JarInfo]): Map[String, String] = if (jarInfos.isEmpty) Map.empty
+  private[agent] def toMap(jarInfos: Seq[FileInfo]): Map[String, String] = if (jarInfos.isEmpty) Map.empty
   else
     Map(
       WorkerCollie.JAR_URLS_KEY -> jarInfos.map(_.url.toString).mkString(","),
@@ -538,8 +538,8 @@ object WorkerCollie {
     * this string is written to linux env and the env does not accept the double quote. Hence, we add backslash with
     * double quotes to keep the origin form in env.
     */
-  private[agent] def toString(jarInfos: Seq[JarInfo]): String =
-    JsArray(jarInfos.map(JAR_INFO_JSON_FORMAT.write).toVector).toString.replaceAll("\"", "\\\\\"")
+  private[agent] def toString(jarInfos: Seq[FileInfo]): String =
+    JsArray(jarInfos.map(FILE_INFO_JSON_FORMAT.write).toVector).toString.replaceAll("\"", "\\\\\"")
 
   import spray.json._
 
@@ -549,7 +549,7 @@ object WorkerCollie {
     * @param string json representation string with specific backslash and quote
     * @return jar information
     */
-  private[agent] def toJarInfos(string: String): Seq[JarInfo] =
+  private[agent] def toJarInfos(string: String): Seq[FileInfo] =
     // replace the backslash to nothing
-    string.replaceAll("\\\\\"", "\"").parseJson.asInstanceOf[JsArray].elements.map(JAR_INFO_JSON_FORMAT.read)
+    string.replaceAll("\\\\\"", "\"").parseJson.asInstanceOf[JsArray].elements.map(FILE_INFO_JSON_FORMAT.read)
 }

@@ -66,7 +66,7 @@ class TestConfiguratorBuilder extends SmallTest with Matchers {
           Await.result(configurator.clusterCollie.brokerCollie.clusters(), 20 seconds).size shouldBe numberOfBrokers
           Await.result(configurator.clusterCollie.workerCollie.clusters(), 20 seconds).size shouldBe numberOfWorkers
           Await
-            .result(configurator.clusterCollie.clusters(), 20 seconds)
+            .result(configurator.clusterCollie.clusters(), 30 seconds)
             // one broker generates one zk cluster
             .size shouldBe (numberOfBrokers + numberOfBrokers + numberOfWorkers)
           val nodes = Await.result(configurator.store.values[Node](), 20 seconds)

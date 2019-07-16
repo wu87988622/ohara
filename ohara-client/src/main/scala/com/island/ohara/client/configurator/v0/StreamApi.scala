@@ -17,7 +17,7 @@
 package com.island.ohara.client.configurator.v0
 import java.util.Objects
 
-import com.island.ohara.client.configurator.v0.JarApi.JarKey
+import com.island.ohara.client.configurator.v0.FileApi.FileKey
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
@@ -64,7 +64,7 @@ object StreamApi {
                                         instances: Int,
                                         nodeNames: Set[String],
                                         deadNodes: Set[String],
-                                        jar: JarKey,
+                                        jar: FileKey,
                                         from: Set[String],
                                         to: Set[String],
                                         state: Option[String],
@@ -83,7 +83,7 @@ object StreamApi {
 
   final case class Creation(name: String,
                             imageName: String,
-                            jar: JarKey,
+                            jar: FileKey,
                             from: Set[String],
                             to: Set[String],
                             jmxPort: Int,
@@ -118,7 +118,7 @@ object StreamApi {
   final case class Update(imageName: Option[String],
                           from: Option[Set[String]],
                           to: Option[Set[String]],
-                          jar: Option[JarKey],
+                          jar: Option[FileKey],
                           jmxPort: Option[Int],
                           instances: Option[Int],
                           nodeNames: Option[Set[String]],
@@ -159,7 +159,7 @@ object StreamApi {
     def name(name: String): Request
     @Optional("the default image is IMAGE_NAME_DEFAULT")
     def imageName(imageName: String): Request
-    def jar(jar: JarKey): Request
+    def jar(jar: FileKey): Request
     def from(from: Set[String]): Request
     def to(to: Set[String]): Request
     @Optional("the default port is random")
@@ -231,7 +231,7 @@ object StreamApi {
     def request: Request = new Request {
       private[this] var name: String = _
       private[this] var _imageName: Option[String] = None
-      private[this] var jar: JarKey = _
+      private[this] var jar: FileKey = _
       private[this] var _from: Option[Set[String]] = None
       private[this] var _to: Option[Set[String]] = None
       private[this] var _jmxPort: Option[Int] = None
@@ -247,7 +247,7 @@ object StreamApi {
         this._imageName = Some(CommonUtils.requireNonEmpty(imageName))
         this
       }
-      override def jar(jar: JarKey): Request = {
+      override def jar(jar: FileKey): Request = {
         this.jar = Objects.requireNonNull(jar)
         this
       }

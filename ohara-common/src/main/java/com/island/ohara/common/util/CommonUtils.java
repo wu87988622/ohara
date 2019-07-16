@@ -506,6 +506,38 @@ public final class CommonUtils {
   // ------------------------------------[File Helper]------------------------------------ //
 
   /**
+   * @param file file
+   * @return the extension of file name. Or throw exception if the input file does not have
+   *     extension
+   */
+  public static String extension(File file) {
+    return extension(file.getName());
+  }
+
+  /**
+   * @param filename file name
+   * @return the extension of file name. Or throw exception if the input file does not have
+   *     extension
+   */
+  public static String extension(String filename) {
+    CommonUtils.requireNonEmpty(filename);
+    int index = filename.lastIndexOf(".");
+    if (index == -1 || index + 1 == filename.length())
+      throw new IllegalArgumentException(filename + " does not have extension");
+    return filename.substring(index + 1);
+  }
+
+  /**
+   * @param filename file name
+   * @return true if the input name ends with ".xxx"
+   */
+  public static boolean hasExtension(String filename) {
+    CommonUtils.requireNonEmpty(filename);
+    int index = filename.lastIndexOf(".");
+    return index != -1 && index + 1 != filename.length();
+  }
+
+  /**
    * replace the path's parent path by new parent
    *
    * @param parent new parent

@@ -20,14 +20,14 @@ import akka.http.scaladsl.server
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.WorkerApi._
-import com.island.ohara.configurator.jar.JarStore
+import com.island.ohara.configurator.file.FileStore
 
 import scala.concurrent.{ExecutionContext, Future}
 object WorkerRoute {
 
   def apply(implicit clusterCollie: ClusterCollie,
             nodeCollie: NodeCollie,
-            jarStore: JarStore,
+            fileStore: FileStore,
             executionContext: ExecutionContext): server.Route =
     RouteUtils.basicRouteOfCluster(
       collie = clusterCollie.workerCollie,
@@ -36,7 +36,7 @@ object WorkerRoute {
       hookOfCreation = (clusters, req: Creation) =>
         Future
           .traverse(req.jarKeys.map(jarKey => (jarKey.group, jarKey.name))) {
-            case (group, name) => jarStore.jarInfo(group, name)
+            case (group, name) => fileStore.fileInfo(group, name)
           }
           .map { jarInfos =>
             val wkClusters = clusters.filter(_.isInstanceOf[WorkerClusterInfo]).map(_.asInstanceOf[WorkerClusterInfo])

@@ -26,7 +26,7 @@ and add content type of the response via the HTTP Accept header:
 - [Validation](#validation)
 - [Container](#container)
 - [StreamApp](#streamapp)
-- [Jars](#jars)
+- [Files](#files)
 - [Logs](#logs)
 - [Query](#query)
 - [Info](#info)
@@ -1837,10 +1837,10 @@ The properties which can be set by user are shown below.
 1. statusTopicName (**string**) — a internal topic used to store connector status
 1. statusTopicPartitions (**int**) — number of partitions for status topic
 1. statusTopicReplications (**int**) — number of replications for status topic
-1. jars (**array(object)**) — the "primary key" of jars that will be loaded by worker cluster. You can require worker cluster to
+1. jarKeys (**array(object)**) — the "primary key" of jars that will be loaded by worker cluster. You can require worker cluster to
                               load the jars stored in ohara if you want to run custom connectors on the worker cluster.
-                              see [Jars APIs](#jars) for uploading jars to ohara.  Noted: the response will replace this
-                              by [JarInfo](#jars).
+                              see [Files APIs](#files) for uploading jars to ohara.  Noted: the response will replace this
+                              by [JarInfo](#files).
 1. nodeNames (**array(string)**) — the nodes running the worker process
 1. deadNodes (**array(string)**) — the nodes that have failed containers of worker
 
@@ -1971,9 +1971,9 @@ ignore this element. However, we still list the available values here.
 1. clientPort (**int**) — worker client port.
 1. jmxPort (**int**) — worker jmx port.
 1. brokerClusterName (**string**) — broker cluster used to host topics for this worker cluster
-1. jars (**array(object)**) — the "primary key" object list of jar that will be loaded by worker cluster
-  - jars[i].group (**string**) — the group name of jar
-  - jars[i].name (**string**) — the name of jar
+1. jarKeys (**array(object)**) — the "primary key" object list of jar that will be loaded by worker cluster
+  - jarKeys[i].group (**string**) — the group name of jar
+  - jarKeys[i].name (**string**) — the name of jar
 1. groupId (**string**) — the id of worker stored in broker cluster
 1. configTopicName (**string**) — a internal topic used to store connector configuration
 1. configTopicReplications (**int**) — number of replications for config topic
@@ -2003,7 +2003,7 @@ ignore this element. However, we still list the available values here.
   "statusTopicName": "statusTopic",
   "statusTopicReplications": 1,
   "statusTopicPartitions": 1,
-  "jars": [
+  "jarKeys": [
     {
       "group": "abc",
       "name": "myjar"
@@ -2051,7 +2051,7 @@ As mentioned before, ohara provides default to most settings. You can just input
 ```json
 {
   "name": "wk00",
-  "jars": [
+  "jarKeys": [
       {
         "group": "abc",
         "name": "myjar"
@@ -3115,7 +3115,7 @@ Note: successful stop streamApp will have no status.
 }
 ```
 ----------
-## Jars
+## Files
 
 Ohara encourages user to write custom application if the official applications can satisfy requirements for your use case.
 Jar APIs is a useful entry of putting your jar on ohara and then start related services with it. For example, [Worker APIs](#create-a-worker-cluster)
@@ -3131,22 +3131,24 @@ The properties stored by ohara are shown below.
 
 ----------
 
-### upload a jar to ohara
+### upload a file to ohara
 
-Upload a jar file to ohara with field name : "jar" and group name : "group"
+Upload a file to ohara with field name : "jar" and group name : "group"
 the text field "group" could be empty and we will generate a random string.
 
-*POST /v0/jars*
+*POST /v0/files*
 
 **Example Request**
 
 ```http
 Content-Type: multipart/form-data
-jar="aa.jar"
+file="aa.jar"
 group="wk01"
+tags={}
 ```
 
-You have to specify the file name since it is a part of metadata stored by ohara.
+> You have to specify the file name since it is a part of metadata stored by ohara.
+> Noted, the later uploaded file can overwrite  the older one
 
 **Example Response**
 ```json
@@ -3154,7 +3156,7 @@ You have to specify the file name since it is a part of metadata stored by ohara
   "name": "aa.jar",
   "group": "wk01",
   "size": 1779,
-  "url": "http://localhost:12345/v0/downloadJars/aa.jar",
+  "url": "http://localhost:12345/v0/downloadFiles/aa.jar",
   "lastModified": 1561012496975
 }
 ```
@@ -3166,7 +3168,7 @@ You have to specify the file name since it is a part of metadata stored by ohara
 Get all jars from specific group of query parameter.
 If no query parameter, wll return all jars.
 
-*GET /v0/jars?group=wk01*
+*GET /v0/files?group=wk01*
 
 **Example Response**
 ```json
@@ -3175,19 +3177,19 @@ If no query parameter, wll return all jars.
     "name": "aa.jar",
     "group": "wk01",
     "size": 1779,
-    "url": "http://localhost:12345/v0/downloadJars/aa.jar",
+    "url": "http://localhost:12345/v0/downloadFiles/aa.jar",
     "lastModified": 1561012496975
   }
 ]
 ```
 ----------
 
-### delete a jar
+### delete a file
 
-Delete a jar with specific name and group.
+Delete a file with specific name and group.
 Note: the query parameter must exists.
 
-*DELETE /v0/jars/$name?group=wk01*
+*DELETE /v0/files/$name?group=wk01*
 
 **Example Response**
 
@@ -3195,17 +3197,17 @@ Note: the query parameter must exists.
 204 NoContent
 ```
 
-> It is ok to delete an nonexistent jar, and the response is 204 NoContent. If you delete a jar is used by
+> It is ok to delete an nonexistent jar, and the response is 204 NoContent. If you delete a file is used by
   other services, you also break the scalability of service as you can't run the jar on any new nodes
   
 ----------
 
-### get a jar
+### get a file
 
-Get a jar with specific name and group.
+Get a file with specific name and group.
 Note: the query parameter must exists.
 
-*GET /v0/jars/$name?group=wk01*
+*GET /v0/files/$name?group=wk01*
 
 **Example Response**
 ```json
@@ -3213,9 +3215,40 @@ Note: the query parameter must exists.
     "name": "aa.jar",
     "group": "wk01",
     "size": 1779,
-    "url": "http://localhost:12345/v0/downloadJars/aa.jar",
+    "url": "http://localhost:12345/v0/downloadFiles/aa.jar",
     "lastModified": 1561012496975
+}
+```
+
+----------
+
+### update tags of file
+
+*PUT /v0/files/$name?group=wk01*
+
+**Example Response**
+```json
+{
+  "tags": {
+    "a": "b"  
   }
+}
+```
+
+> it returns error code if input group/name are not associated to an existent file.
+
+**Example Response**
+```json
+{
+    "name": "aa.jar",
+    "group": "wk01",
+    "size": 1779,
+    "url": "http://localhost:12345/v0/downloadFiles/aa.jar",
+    "lastModified": 1561012496975,
+    "tags": {
+        "a": "b"  
+      }
+}
 ```
 
 ----------

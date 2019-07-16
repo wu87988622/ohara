@@ -19,7 +19,7 @@ package com.island.ohara.client.configurator.v0
 import java.util.Objects
 
 import com.island.ohara.client.configurator.v0.InfoApi.ConnectorVersion
-import com.island.ohara.client.configurator.v0.JarApi._
+import com.island.ohara.client.configurator.v0.FileApi._
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import com.island.ohara.kafka.connector.json.SettingDefinition
@@ -73,7 +73,7 @@ object WorkerApi {
                                                 statusTopicName: String,
                                                 statusTopicPartitions: Int,
                                                 statusTopicReplications: Short,
-                                                jarKeys: Set[JarKey],
+                                                jarKeys: Set[FileKey],
                                                 nodeNames: Set[String])
       extends ClusterCreationRequest {
     override def ports: Set[Int] = Set(clientPort, jmxPort)
@@ -147,7 +147,7 @@ object WorkerApi {
                                                      offsetTopicName: String,
                                                      offsetTopicPartitions: Int,
                                                      offsetTopicReplications: Short,
-                                                     jarInfos: Seq[JarInfo],
+                                                     jarInfos: Seq[FileInfo],
                                                      connectors: Seq[ConnectorDefinitions],
                                                      nodeNames: Set[String],
                                                      deadNodes: Set[String])
@@ -188,7 +188,7 @@ object WorkerApi {
             OFFSET_TOPIC_NAME_KEY -> JsString(obj.offsetTopicName),
             OFFSET_TOPIC_PARTITIONS_KEY -> JsNumber(obj.offsetTopicPartitions),
             OFFSET_TOPIC_REPLICATIONS_KEY -> JsNumber(obj.offsetTopicReplications),
-            JAR_INFOS_KEY -> JsArray(obj.jarInfos.map(JAR_INFO_JSON_FORMAT.write).toVector),
+            JAR_INFOS_KEY -> JsArray(obj.jarInfos.map(FILE_INFO_JSON_FORMAT.write).toVector),
             CONNECTORS_KEY -> JsArray(obj.connectors.map(CONNECTION_DEFINITIONS_JSON_FORMAT.write).toVector),
             NODE_NAMES_KEY -> JsArray(obj.nodeNames.map(JsString(_)).toVector),
             DEAD_NODES_KEY -> JsArray(obj.deadNodes.map(JsString(_)).toVector),
@@ -211,7 +211,7 @@ object WorkerApi {
         offsetTopicName = noJsNull(json)(OFFSET_TOPIC_NAME_KEY).convertTo[String],
         offsetTopicPartitions = noJsNull(json)(OFFSET_TOPIC_PARTITIONS_KEY).convertTo[Int],
         offsetTopicReplications = noJsNull(json)(OFFSET_TOPIC_REPLICATIONS_KEY).convertTo[Short],
-        jarInfos = noJsNull(json)(JAR_INFOS_KEY).convertTo[Seq[JarInfo]],
+        jarInfos = noJsNull(json)(JAR_INFOS_KEY).convertTo[Seq[FileInfo]],
         connectors = noJsNull(json)(CONNECTORS_KEY).convertTo[Seq[ConnectorDefinitions]],
         nodeNames = noJsNull(json)(NODE_NAMES_KEY).convertTo[Seq[String]].toSet,
         deadNodes = noJsNull(json)(DEAD_NODES_KEY).convertTo[Seq[String]].toSet
@@ -255,7 +255,7 @@ object WorkerApi {
     @Optional("the default number is 1")
     def offsetTopicReplications(offsetTopicReplications: Short): Request
     @Optional("the default value is empty")
-    def jars(jars: Set[JarKey]): Request
+    def jarKeys(jarKeys: Set[FileKey]): Request
     def nodeName(nodeName: String): Request = nodeNames(Set(CommonUtils.requireNonEmpty(nodeName)))
     def nodeNames(nodeNames: Set[String]): Request
 
@@ -288,7 +288,7 @@ object WorkerApi {
       private[this] var statusTopicName: String = s"$groupId-status-${CommonUtils.randomString(10)}"
       private[this] var statusTopicPartitions: Int = 1
       private[this] var statusTopicReplications: Short = 1
-      private[this] var jars: Set[JarKey] = Set.empty
+      private[this] var jarKeys: Set[FileKey] = Set.empty
       private[this] var nodeNames: Set[String] = Set.empty
 
       private[this] def legalNumber(number: Int, key: String): Int = {
@@ -372,8 +372,8 @@ object WorkerApi {
       }
 
       import scala.collection.JavaConverters._
-      override def jars(jars: Set[JarKey]): Request = {
-        this.jars = CommonUtils.requireNonEmpty(jars.asJava).asScala.toSet
+      override def jarKeys(jarKeys: Set[FileKey]): Request = {
+        this.jarKeys = CommonUtils.requireNonEmpty(jarKeys.asJava).asScala.toSet
         this
       }
 
@@ -397,7 +397,7 @@ object WorkerApi {
         statusTopicName = CommonUtils.requireNonEmpty(statusTopicName),
         statusTopicPartitions = legalNumber(statusTopicPartitions, "statusTopicPartitions"),
         statusTopicReplications = legalNumber(statusTopicReplications, "statusTopicReplications"),
-        jarKeys = Objects.requireNonNull(jars),
+        jarKeys = Objects.requireNonNull(jarKeys),
         nodeNames = CommonUtils.requireNonEmpty(nodeNames.asJava).asScala.toSet
       )
 

@@ -37,7 +37,7 @@ import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce, VersionUtils}
 import com.island.ohara.configurator.Configurator.Mode
-import com.island.ohara.configurator.jar.JarStore
+import com.island.ohara.configurator.file.FileStore
 import com.island.ohara.configurator.route._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.typesafe.scalalogging.Logger
@@ -52,7 +52,7 @@ import scala.concurrent.{Await, ExecutionContext}
   *
   */
 class Configurator private[configurator] (val hostname: String, val port: Int)(implicit val store: DataStore,
-                                                                               val jarStore: JarStore,
+                                                                               val fileStore: FileStore,
                                                                                val nodeCollie: NodeCollie,
                                                                                val clusterCollie: ClusterCollie,
                                                                                val k8sClient: Option[K8SClient])
@@ -210,9 +210,9 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
       ZookeeperRoute.apply,
       BrokerRoute.apply,
       WorkerRoute.apply,
-      JarRoute.apply,
+      FileRoute.apply,
       // the route of downloading jar is moved to jar store so we have to mount it manually.
-      jarStore.route,
+      fileStore.route,
       LogRoute.apply,
       ObjectRoute.apply,
       ContainerRoute.apply
@@ -228,7 +228,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
         complete(
           StatusCodes.NotFound -> ErrorApi.Error(
             code = s"Unsupported API: $path",
-            message = "please see link to find the available APIs",
+            message = s"please see link to find the available APIs. input url:$path",
             stack = "N/A",
             apiUrl = Some(Configurator.apiUrl)
           )))
@@ -280,7 +280,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
         log.error("failed to terminate all running threads!!!")
     }
     Releasable.close(clusterCollie)
-    Releasable.close(jarStore)
+    Releasable.close(fileStore)
     Releasable.close(store)
     k8sClient.foreach(Releasable.close)
     Releasable.close(adminCleaner)

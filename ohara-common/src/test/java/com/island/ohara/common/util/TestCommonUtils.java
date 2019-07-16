@@ -505,4 +505,18 @@ public class TestCommonUtils extends SmallTest {
     CommonUtils.requireNonNegativeLong(0);
     assertException(IllegalArgumentException.class, () -> CommonUtils.requireNonNegativeLong(-1));
   }
+
+  @Test
+  public void testExtension() {
+    File f = CommonUtils.createTempFile("aa", ".jpg");
+    Assert.assertEquals("jpg", CommonUtils.extension(f));
+    assertException(
+        IllegalArgumentException.class,
+        () -> CommonUtils.extension(CommonUtils.createTempFile("aa", "bb")));
+    assertException(IllegalArgumentException.class, () -> CommonUtils.extension("AAA"));
+    assertException(IllegalArgumentException.class, () -> CommonUtils.extension("AAA."));
+    Assert.assertTrue(CommonUtils.hasExtension(".a"));
+    Assert.assertFalse(CommonUtils.hasExtension("bbaa"));
+    Assert.assertFalse(CommonUtils.hasExtension("bbaa."));
+  }
 }
