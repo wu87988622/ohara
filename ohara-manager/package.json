@@ -53,7 +53,7 @@
     "forever": "1.0.0",
     "http-proxy-middleware": "0.19.1",
     "junit-report-merger": "0.0.6",
-    "lodash": "4.17.11",
+    "lodash": "4.17.14",
     "morgan": "1.9.1",
     "react": "16.8.6",
     "react-dom": "16.8.6",
