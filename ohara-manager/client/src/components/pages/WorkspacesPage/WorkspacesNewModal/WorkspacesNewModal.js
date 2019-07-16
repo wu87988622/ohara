@@ -39,7 +39,7 @@ import * as containerApi from 'api/containerApi';
 import * as commonUtils from 'utils/commonUtils';
 import * as URLS from 'constants/urls';
 import { Label } from 'components/common/Form';
-import { Loading } from 'components/common/Mui/Feedback';
+import { Progress } from 'components/common/Mui/Feedback';
 import { Button } from 'components/common/Mui/Form';
 import { Dialog } from 'components/common/Mui/Dialog';
 import { InputField } from 'components/common/Mui/Form';
@@ -483,7 +483,7 @@ const WorkerNewModal = props => {
                 </s.StyledDialogDividers>
               )}
             </Dialog>
-            <Loading
+            <Progress
               open={isLoading}
               steps={steps}
               activeStep={activeStep}

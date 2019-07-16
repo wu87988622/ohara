@@ -14,5 +14,5 @@
  * limitations under the License.
  */
 
-import Loading from './Progress';
-export { Loading };
+import Progress from './Progress';
+export { Progress };

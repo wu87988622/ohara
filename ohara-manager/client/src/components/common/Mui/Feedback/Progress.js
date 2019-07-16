@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import PropTypes from 'prop-types';
+import styled from 'styled-components';
+import Step from '@material-ui/core/Step';
 import Dialog from '@material-ui/core/Dialog';
 import Stepper from '@material-ui/core/Stepper';
-import Step from '@material-ui/core/Step';
 import StepLabel from '@material-ui/core/StepLabel';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import LinearProgress from '@material-ui/core/LinearProgress';
 
-const Loading = props => {
+const Progress = props => {
   const { steps = [], open, activeStep, deleteType = false } = props;
   const [completed, setCompleted] = useState(0);
   const [buffer, setBuffer] = useState(0);
@@ -33,8 +34,12 @@ const Loading = props => {
   const [color, setColor] = useState();
   const [title, setTitle] = useState('Creating');
 
-  const progress = React.useRef(() => {});
-  React.useEffect(() => {
+  const StyledDiv = styled.div`
+    margin-bottom: 15px;
+  `;
+
+  const progress = useRef(() => {});
+  useEffect(() => {
     progress.current = () => {
       if (completed < 100) {
         if (deleteType) {
@@ -75,7 +80,7 @@ const Loading = props => {
       progress.current();
     };
     let timer;
-    if (steps.length > activeStep && open === true) {
+    if (steps.length > activeStep && open) {
       timer = setInterval(tick, 500);
     }
     return () => {
@@ -105,12 +110,12 @@ const Loading = props => {
         value={completed}
         variant="buffer"
       />
-      <br />
+      <StyledDiv />
     </Dialog>
   );
 };
 
-Loading.propTypes = {
+Progress.propTypes = {
   completed: PropTypes.number.isRequired,
   buffer: PropTypes.number,
   className: PropTypes.string,
@@ -120,4 +125,4 @@ Loading.propTypes = {
   deleteType: PropTypes.bool,
 };
 
-export default Loading;
+export default Progress;
