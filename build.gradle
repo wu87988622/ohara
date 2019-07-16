@@ -99,10 +99,9 @@ license {
       firstLine = ".."
       beforeEachLine = ".. "
       endLine = "..EOL"
-      firstLineDetectionPattern = ".."
-      lastLineDetectionPattern  = ".."
+      firstLineDetectionPattern = "##.*\$"
+      lastLineDetectionPattern  = "##.*\$"
       allowBlankLines = false
-      skipLinePattern = ".."
       isMultiline = false
     }
   }
