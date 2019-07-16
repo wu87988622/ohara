@@ -305,6 +305,7 @@ class TestNodeApi extends SmallTest with Matchers {
         password = Some(CommonUtils.randomString(10)),
         services = Seq.empty,
         lastModified = CommonUtils.current(),
+        validationReport = None,
         tags = Map.empty
       ))
       .asJsObject

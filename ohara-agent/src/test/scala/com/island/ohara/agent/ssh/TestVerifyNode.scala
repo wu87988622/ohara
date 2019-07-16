@@ -95,6 +95,7 @@ class TestVerifyNode extends SmallTest with Matchers {
     password = Some(sshServer.password()),
     services = Seq.empty,
     lastModified = CommonUtils.current(),
+    validationReport = None,
     tags = Map.empty
   )
 

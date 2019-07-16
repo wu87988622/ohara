@@ -53,6 +53,7 @@ object NodeRoute {
               password = request.password,
               services = Seq.empty,
               lastModified = CommonUtils.current(),
+              validationReport = None,
               tags = request.tags
             ))
       },
@@ -65,6 +66,8 @@ object NodeRoute {
             password = if (request.password.isDefined) request.password else previous.flatMap(_.password),
             services = Seq.empty,
             lastModified = CommonUtils.current(),
+            // clear the report for update request
+            validationReport = None,
             tags = request.tags.getOrElse(previous.map(_.tags).getOrElse(Map.empty))
           ))
       },

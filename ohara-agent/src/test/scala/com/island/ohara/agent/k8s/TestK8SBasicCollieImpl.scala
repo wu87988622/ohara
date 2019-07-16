@@ -50,13 +50,16 @@ class TestK8SBasicCollieImpl extends SmallTest with Matchers {
 
   private[this] def zookeeperClusterName(containerName: String): String = {
     val node1Name = "node1"
-    val node1: Node = Node(hostname = node1Name,
-                           port = Some(22),
-                           user = Some("fake"),
-                           password = Some("fake"),
-                           services = Seq.empty,
-                           lastModified = CommonUtils.current(),
-                           tags = Map.empty)
+    val node1: Node = Node(
+      hostname = node1Name,
+      port = Some(22),
+      user = Some("fake"),
+      password = Some("fake"),
+      services = Seq.empty,
+      lastModified = CommonUtils.current(),
+      validationReport = None,
+      tags = Map.empty
+    )
     val nodes: Seq[Node] = Seq(node1)
     val nodeCollie = NodeCollie(nodes)
     val k8sClient = new FakeK8SClient(true, None, containerName)

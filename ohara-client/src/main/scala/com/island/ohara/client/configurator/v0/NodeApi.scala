@@ -17,6 +17,7 @@
 package com.island.ohara.client.configurator.v0
 import java.util.Objects
 
+import com.island.ohara.client.configurator.v0.ValidationApi.ValidationReport
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
@@ -74,6 +75,7 @@ object NodeApi {
                   password: Option[String],
                   services: Seq[NodeService],
                   lastModified: Long,
+                  validationReport: Option[ValidationReport],
                   tags: Map[String, JsValue])
       extends Data {
     private[this] def msg(key: String): String = s"$key is required since Ohara Configurator is in ssh mode"
@@ -85,7 +87,7 @@ object NodeApi {
   }
 
   implicit val NODE_JSON_FORMAT: RootJsonFormat[Node] = new RootJsonFormat[Node] {
-    private[this] val format = jsonFormat7(Node)
+    private[this] val format = jsonFormat8(Node)
     override def read(json: JsValue): Node = format.read(json)
 
     // TODO: remove name from this object ... by chia

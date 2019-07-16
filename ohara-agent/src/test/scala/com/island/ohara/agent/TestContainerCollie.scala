@@ -30,6 +30,16 @@ class TestContainerCollie extends SmallTest with Matchers {
   private[this] val fakeClusterName: String = FakeContainerCollie.clusterName
   private[this] val TIMEOUT = 10 seconds
 
+  private[this] def node(hostname: String): Node = Node(
+    hostname = hostname,
+    port = Some(22),
+    user = Some("user1"),
+    password = Some("123456"),
+    services = Seq.empty,
+    lastModified = CommonUtils.current(),
+    validationReport = None,
+    tags = Map.empty
+  )
   @Test
   def testAddNodeNameUpperCase(): Unit = {
     validErrorNodeName("Node1", "Your node name can't uppercase")
@@ -45,14 +55,8 @@ class TestContainerCollie extends SmallTest with Matchers {
     val nodeName1 = "node1"
     val nodeName2 = "node2"
 
-    val node1 = Node(hostname = nodeName1,
-                     port = Some(22),
-                     user = Some("user1"),
-                     password = Some("123456"),
-                     services = Seq.empty,
-                     lastModified = CommonUtils.current(),
-                     tags = Map.empty)
-    val node2 = node1.copy(hostname = nodeName2)
+    val node1 = node(nodeName1)
+    val node2 = node(nodeName2)
 
     val container1 =
       ContainerInfo(nodeName1, "0", "fakeimage", "", "RUNNING", "", "container1", "0", Seq(), Map(), s"xxx")
@@ -78,13 +82,7 @@ class TestContainerCollie extends SmallTest with Matchers {
   @Test
   def testRemoveContainerNodeNameNotExists(): Unit = {
     val node1Name = "node1"
-    val node1 = Node(hostname = node1Name,
-                     port = Some(22),
-                     user = Some("user1"),
-                     password = Some("123456"),
-                     services = Seq.empty,
-                     lastModified = CommonUtils.current(),
-                     tags = Map.empty)
+    val node1 = node(node1Name)
     val containerInfo =
       ContainerInfo("node2", "0", "fakeimage", "", "RUNNING", "", "container1", "0", Seq.empty, Map.empty, s"xxx")
     val fakeContainerCollie = new FakeContainerCollie(NodeCollie(Seq(node1)), Seq(containerInfo))
@@ -95,13 +93,7 @@ class TestContainerCollie extends SmallTest with Matchers {
   @Test
   def testRemoveSingleNode(): Unit = {
     val node1Name = "node1"
-    val node1 = Node(hostname = node1Name,
-                     port = Some(22),
-                     user = Some("user1"),
-                     password = Some("123456"),
-                     services = Seq.empty,
-                     lastModified = CommonUtils.current(),
-                     tags = Map.empty)
+    val node1 = node(node1Name)
     val containerInfo =
       ContainerInfo(node1Name,
                     "0",
@@ -124,13 +116,7 @@ class TestContainerCollie extends SmallTest with Matchers {
   @Test
   def testRemoveNotExistsNode(): Unit = {
     val node1Name = "node1"
-    val node1 = Node(hostname = node1Name,
-                     port = Some(22),
-                     user = Some("user1"),
-                     password = Some("123456"),
-                     services = Seq.empty,
-                     lastModified = CommonUtils.current(),
-                     tags = Map.empty)
+    val node1 = node(node1Name)
     val containerInfo =
       ContainerInfo(node1Name,
                     "0",
@@ -153,14 +139,8 @@ class TestContainerCollie extends SmallTest with Matchers {
     val node1Name = "node1"
     val node2Name = "node2"
 
-    val node1 = Node(hostname = node1Name,
-                     port = Some(22),
-                     user = Some("user1"),
-                     password = Some("123456"),
-                     services = Seq.empty,
-                     lastModified = CommonUtils.current(),
-                     tags = Map.empty)
-    val node2 = node1.copy(hostname = node2Name)
+    val node1 = node(node1Name)
+    val node2 = node(node2Name)
     val container1 =
       ContainerInfo(node1Name,
                     "0",
@@ -193,13 +173,7 @@ class TestContainerCollie extends SmallTest with Matchers {
   }
 
   private[this] def validErrorNodeName(nodeName: String, expectErrMsg: String): Unit = {
-    val node1 = Node(hostname = nodeName,
-                     port = Some(22),
-                     user = Some("user1"),
-                     password = Some("123456"),
-                     services = Seq.empty,
-                     lastModified = CommonUtils.current(),
-                     tags = Map.empty)
+    val node1 = node(nodeName)
     val containerInfo =
       ContainerInfo(node1.name,
                     "0",

@@ -35,15 +35,17 @@ class TestK8sClusterCollie extends BasicTests4ClusterCollie {
     else
       NODE_SERVER_NAME.get
         .split(",")
-        .map(
-          node =>
-            Node(hostname = node,
-                 port = Some(22),
-                 user = Some("fake"),
-                 password = Some("fake"),
-                 services = Seq.empty,
-                 lastModified = CommonUtils.current(),
-                 tags = Map.empty))
+        .map(node =>
+          Node(
+            hostname = node,
+            port = Some(22),
+            user = Some("fake"),
+            password = Some("fake"),
+            services = Seq.empty,
+            lastModified = CommonUtils.current(),
+            validationReport = None,
+            tags = Map.empty
+        ))
 
   override protected def clusterCollie: ClusterCollie = _clusterCollie
   private[this] var _clusterCollie: ClusterCollie = _

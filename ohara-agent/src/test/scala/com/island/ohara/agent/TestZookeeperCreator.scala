@@ -136,13 +136,16 @@ class TestZookeeperCreator extends SmallTest with Matchers {
   @Test
   def testZKCreator(): Unit = {
     val node1Name = "node1"
-    val node1 = Node(hostname = node1Name,
-                     port = Some(22),
-                     user = Some("fake"),
-                     password = Some("fake"),
-                     services = Seq.empty,
-                     lastModified = CommonUtils.current(),
-                     tags = Map.empty)
+    val node1 = Node(
+      hostname = node1Name,
+      port = Some(22),
+      user = Some("fake"),
+      password = Some("fake"),
+      services = Seq.empty,
+      lastModified = CommonUtils.current(),
+      validationReport = None,
+      tags = Map.empty
+    )
     val node2Name = "node2"
     val node2 = node1.copy(hostname = node2Name)
 

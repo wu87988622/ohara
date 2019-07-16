@@ -1315,6 +1315,11 @@ The properties used in describing a node are shown below.
 1. user (**string**) — ssh account
 1. password (**string**) — ssh password
 1. tags (**object**) — the extra description to this object
+1. validationReport (**object**) — last validation result. This information is attached by Ohara Configurator after you request the [validation](#validation)
+  validationReport.hostname (**string**) — the host which is in charge of validating node
+  validationReport.message (**string**) — the report
+  validationReport.pass (**boolean**) — true if the arguments is able to be connected
+  validationReport.lastModified (**long**) — the time to execute this validation
 
 > ohara use above information to login node to manage the containers. Please make sure the account has permission to
 operate docker (and k8s service) without sudo.
@@ -1376,6 +1381,8 @@ The following information are tagged by ohara.
 ```
 
 > An new node will be created if your input name does not exist
+
+> the update request will clear the validation report attached to this node
 
 **Example Response**
 

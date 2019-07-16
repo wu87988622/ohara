@@ -55,11 +55,26 @@ class ValidatorTask extends SourceTask {
     null
   } else
     try information match {
-      case info: HdfsValidation => toSourceRecord(ValidationReport(hostname, validate(info), true))
-      case info: RdbValidation  => toSourceRecord(validate(info))
-      case info: FtpValidation  => toSourceRecord(ValidationReport(hostname, validate(info), true))
+      case info: HdfsValidation =>
+        toSourceRecord(
+          ValidationReport(hostname = hostname,
+                           message = validate(info),
+                           pass = true,
+                           lastModified = CommonUtils.current()))
+      case info: RdbValidation => toSourceRecord(validate(info))
+      case info: FtpValidation =>
+        toSourceRecord(
+          ValidationReport(hostname = hostname,
+                           message = validate(info),
+                           pass = true,
+                           lastModified = CommonUtils.current()))
     } catch {
-      case e: Throwable => toSourceRecord(ValidationReport(hostname, e.getMessage, false))
+      case e: Throwable =>
+        toSourceRecord(
+          ValidationReport(hostname = hostname,
+                           message = e.getMessage,
+                           pass = false,
+                           lastModified = CommonUtils.current()))
     } finally done = true
 
   override def stop(): Unit = {

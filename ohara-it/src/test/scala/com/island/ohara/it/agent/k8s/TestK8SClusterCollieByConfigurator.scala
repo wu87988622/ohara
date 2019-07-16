@@ -44,15 +44,17 @@ class TestK8SClusterCollieByConfigurator extends BasicTests4ClusterCollieByConfi
     else
       NODE_SERVER_NAME.get
         .split(",")
-        .map(
-          node =>
-            Node(hostname = node,
-                 port = Some(22),
-                 user = Some("fake"),
-                 password = Some("fake"),
-                 services = Seq.empty,
-                 lastModified = CommonUtils.current(),
-                 tags = Map.empty))
+        .map(node =>
+          Node(
+            hostname = node,
+            port = Some(22),
+            user = Some("fake"),
+            password = Some("fake"),
+            services = Seq.empty,
+            lastModified = CommonUtils.current(),
+            validationReport = None,
+            tags = Map.empty
+        ))
 
   override def configurator: Configurator = _configurator
   private[this] var _configurator: Configurator = _

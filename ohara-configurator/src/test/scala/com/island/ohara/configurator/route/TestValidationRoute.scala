@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.{ValidationApi, WorkerApi}
+import com.island.ohara.client.configurator.v0.{NodeApi, ValidationApi, WorkerApi}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.{Configurator, DumbSink}
@@ -134,18 +134,61 @@ class TestValidationRoute extends SmallTest with Matchers {
 
   @Test
   def validateNode(): Unit = {
-    val report = result(
+    val hostname = CommonUtils.randomString(5)
+    val port = 22
+    val user = CommonUtils.randomString(5)
+    val password = CommonUtils.randomString(5)
+    result(
+      NodeApi.access
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .request
+        .hostname(hostname)
+        .port(port)
+        .user(user)
+        .password(password)
+        .create())
+    val reports = result(
       ValidationApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
         .nodeRequest
-        .hostname("fake_server")
-        .port(22)
-        .user("fake_user")
-        .password("fake_password")
+        .hostname(hostname)
+        .port(port)
+        .user(user)
+        .password(password)
         .verify())
-    report.isEmpty shouldBe false
-    report.foreach(_.pass shouldBe true)
+    reports.isEmpty shouldBe false
+    reports.foreach(_.pass shouldBe true)
+    // the validated node is equal to existent node so report is attached to the existent node
+    // the number of node validation report is always one
+    result(NodeApi.access.hostname(configurator.hostname).port(configurator.port).get(hostname)).validationReport.get shouldBe reports.head
+
+    val report2 = result(
+      ValidationApi.access
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .nodeRequest
+        .hostname(hostname)
+        .port(port + 1)
+        .user(user)
+        .password(password)
+        .verify()).head
+    // the validated node is not equal to existent node so report2 is attached to the existent node
+    result(NodeApi.access.hostname(configurator.hostname).port(configurator.port).get(hostname)).validationReport.get should not be report2
+
+    // updating the node can clean the report
+    result(
+      NodeApi.access
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .request
+        .hostname(hostname)
+        .port(port)
+        .user(user)
+        .password(password)
+        .update())
+    result(NodeApi.access.hostname(configurator.hostname).port(configurator.port).get(hostname)).validationReport shouldBe None
   }
 
   @Test

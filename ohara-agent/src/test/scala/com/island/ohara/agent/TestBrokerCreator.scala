@@ -32,6 +32,16 @@ import scala.concurrent.{Await, Future}
 class TestBrokerCreator extends SmallTest with Matchers {
   private[this] val TIMEOUT: FiniteDuration = 30 seconds
 
+  private[this] def node(hostname: String): Node = Node(
+    hostname = hostname,
+    port = Some(22),
+    user = Some("user"),
+    password = Some("password"),
+    services = Seq.empty,
+    lastModified = CommonUtils.current(),
+    validationReport = None,
+    tags = Map.empty
+  )
   private[this] def bkCreator(): BrokerCollie.ClusterCreator =
     (executionContext, clusterName, imageName, zookeeperClusterName, clientPort, exporterPort, jmxPort, nodeNames) => {
       // the inputs have been checked (NullPointerException). Hence, we throw another exception here.
@@ -143,14 +153,7 @@ class TestBrokerCreator extends SmallTest with Matchers {
   @Test
   def testBkCreatorZKNotExists(): Unit = {
     val node1Name = "node1"
-    val node1 =
-      Node(hostname = node1Name,
-           port = Some(22),
-           user = Some("fake"),
-           password = Some("fake"),
-           services = Seq.empty,
-           lastModified = CommonUtils.current(),
-           tags = Map.empty)
+    val node1 = node(node1Name)
     val brokerCollie = new FakeBrokerCollie(NodeCollie(Seq(node1)), Seq.empty, Seq.empty)
 
     val bkCreator: Future[BrokerClusterInfo] = brokerCollie.creator
@@ -171,14 +174,7 @@ class TestBrokerCreator extends SmallTest with Matchers {
   @Test
   def testBkCreatorZKContainerEmpty(): Unit = {
     val node1Name = "node1"
-    val node1 =
-      Node(hostname = node1Name,
-           port = Some(22),
-           user = Some("fake"),
-           password = Some("fake"),
-           services = Seq.empty,
-           lastModified = CommonUtils.current(),
-           tags = Map.empty)
+    val node1 = node(node1Name)
 
     val brokerCollie = new FakeBrokerCollie(NodeCollie(Seq(node1)), Seq.empty, Seq.empty) //Zk container set empty
     val bkCreator: Future[BrokerClusterInfo] = brokerCollie.creator
@@ -199,14 +195,7 @@ class TestBrokerCreator extends SmallTest with Matchers {
   @Test
   def testNodeIsRunningBroker(): Unit = {
     val node1Name = "node1"
-    val node1 =
-      Node(hostname = node1Name,
-           port = Some(22),
-           user = Some("fake"),
-           password = Some("fake"),
-           services = Seq.empty,
-           lastModified = CommonUtils.current(),
-           tags = Map.empty)
+    val node1 = node(node1Name)
     val zkContainers = Seq(
       ContainerInfo(
         "node1",
@@ -257,23 +246,10 @@ class TestBrokerCreator extends SmallTest with Matchers {
   @Test
   def testCheckBrokerImageValue(): Unit = {
     val node1Name = "node1"
-    val node1 =
-      Node(hostname = node1Name,
-           port = Some(22),
-           user = Some("fake"),
-           password = Some("fake"),
-           services = Seq.empty,
-           lastModified = CommonUtils.current(),
-           tags = Map.empty)
+    val node1 = node(node1Name)
 
     val node2Name = "node2"
-    val node2 = Node(hostname = node2Name,
-                     port = Some(22),
-                     user = Some("fake"),
-                     password = Some("fake"),
-                     services = Seq.empty,
-                     lastModified = CommonUtils.current(),
-                     tags = Map.empty)
+    val node2 = node(node2Name)
 
     val zkContainers = Seq(
       ContainerInfo(
@@ -327,21 +303,9 @@ class TestBrokerCreator extends SmallTest with Matchers {
   @Test
   def testBkCreator(): Unit = {
     val node1Name = "node1"
-    val node1 = Node(hostname = node1Name,
-                     port = Some(22),
-                     user = Some("fake"),
-                     password = Some("fake"),
-                     services = Seq.empty,
-                     lastModified = CommonUtils.current(),
-                     tags = Map.empty)
+    val node1 = node(node1Name)
     val node2Name = "node2"
-    val node2 = Node(hostname = node2Name,
-                     port = Some(22),
-                     user = Some("fake"),
-                     password = Some("fake"),
-                     services = Seq.empty,
-                     lastModified = CommonUtils.current(),
-                     tags = Map.empty)
+    val node2 = node(node2Name)
 
     val containers = Seq(
       ContainerInfo(

@@ -19,7 +19,7 @@ import com.island.ohara.client.configurator.v0.QueryApi.RdbInfo
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json._
-import spray.json.DefaultJsonProtocol.{jsonFormat3, _}
+import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -78,8 +78,8 @@ object ValidationApi {
     .requireConnectionPort("port")
     .refine
 
-  final case class ValidationReport(hostname: String, message: String, pass: Boolean)
-  implicit val VALIDATION_REPORT_JSON_FORMAT: RootJsonFormat[ValidationReport] = jsonFormat3(ValidationReport)
+  final case class ValidationReport(hostname: String, message: String, pass: Boolean, lastModified: Long)
+  implicit val VALIDATION_REPORT_JSON_FORMAT: RootJsonFormat[ValidationReport] = jsonFormat4(ValidationReport)
 
   final case class RdbValidationReport(hostname: String, message: String, pass: Boolean, rdbInfo: RdbInfo)
   implicit val RDB_VALIDATION_REPORT_JSON_FORMAT: RootJsonFormat[RdbValidationReport] = jsonFormat4(RdbValidationReport)

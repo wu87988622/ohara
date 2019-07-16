@@ -103,6 +103,17 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     })
   }
 
+  private[this] def node(hostname: String): Node = Node(
+    hostname = hostname,
+    port = Some(22),
+    user = Some("fake"),
+    password = Some("fake"),
+    services = Seq.empty,
+    lastModified = CommonUtils.current(),
+    validationReport = None,
+    tags = Map.empty
+  )
+
   @Test
   def testZookeeperCollie(): Unit = {
     val clusterName: String = s"cluster${CommonUtils.randomString(RANDOM_LEN)}"
@@ -110,22 +121,8 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val secondNode: String = nodeNames.last
     firstNode should not be secondNode
     nodeCache.clear()
-    nodeCache.append(
-      Node(hostname = firstNode,
-           port = Some(22),
-           user = Some("fake"),
-           password = Some("fake"),
-           services = Seq.empty,
-           lastModified = CommonUtils.current(),
-           tags = Map.empty))
-    nodeCache.append(
-      Node(hostname = secondNode,
-           port = Some(22),
-           user = Some("fake"),
-           password = Some("fake"),
-           services = Seq.empty,
-           lastModified = CommonUtils.current(),
-           tags = Map.empty))
+    nodeCache.append(node(firstNode))
+    nodeCache.append(node(secondNode))
 
     val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie
 
@@ -157,14 +154,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   def testBrokerCollie(): Unit = {
     val firstNode: String = nodeNames.head
     nodeCache.clear()
-    nodeCache.append(
-      Node(hostname = firstNode,
-           port = Some(22),
-           user = Some("fake"),
-           password = Some("fake"),
-           services = Seq.empty,
-           lastModified = CommonUtils.current(),
-           tags = Map.empty))
+    nodeCache.append(node(firstNode))
 
     //Create zookeeper cluster for start broker service
     val zkClusterName: String = s"zkcluster${CommonUtils.randomString(RANDOM_LEN)}"
@@ -203,14 +193,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   def testWorkerCollie(): Unit = {
     val firstNode: String = nodeNames.head
     nodeCache.clear()
-    nodeCache.append(
-      Node(hostname = firstNode,
-           port = Some(22),
-           user = Some("fake"),
-           password = Some("fake"),
-           services = Seq.empty,
-           lastModified = CommonUtils.current(),
-           tags = Map.empty))
+    nodeCache.append(node(firstNode))
 
     //Create zookeeper cluster for start broker service
     val zkClusterName: String = s"zkcluster${CommonUtils.randomString(RANDOM_LEN)}"
@@ -266,22 +249,8 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val secondNode: String = nodeNames.last
 
     nodeCache.clear()
-    nodeCache.append(
-      Node(hostname = firstNode,
-           port = Some(22),
-           user = Some("fake"),
-           password = Some("fake"),
-           services = Seq.empty,
-           lastModified = CommonUtils.current(),
-           tags = Map.empty))
-    nodeCache.append(
-      Node(hostname = secondNode,
-           port = Some(22),
-           user = Some("fake"),
-           password = Some("fake"),
-           services = Seq.empty,
-           lastModified = CommonUtils.current(),
-           tags = Map.empty))
+    nodeCache.append(node(firstNode))
+    nodeCache.append(node(secondNode))
 
     //Create zookeeper cluster for start broker service
     val zkClusterName: String = s"zkcluster${CommonUtils.randomString(RANDOM_LEN)}"
@@ -331,22 +300,8 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val secondNode: String = nodeNames.last
 
     nodeCache.clear()
-    nodeCache.append(
-      Node(hostname = firstNode,
-           port = Some(22),
-           user = Some("fake"),
-           password = Some("fake"),
-           services = Seq.empty,
-           lastModified = CommonUtils.current(),
-           tags = Map.empty))
-    nodeCache.append(
-      Node(hostname = secondNode,
-           port = Some(22),
-           user = Some("fake"),
-           password = Some("fake"),
-           services = Seq.empty,
-           lastModified = CommonUtils.current(),
-           tags = Map.empty))
+    nodeCache.append(node(firstNode))
+    nodeCache.append(node(secondNode))
 
     //Create zookeeper cluster for start broker service
     val zkClusterName: String = s"zkcluster${CommonUtils.randomString(RANDOM_LEN)}"
@@ -399,23 +354,8 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val secondNode: String = nodeNames.last
 
     nodeCache.clear()
-    nodeCache.append(
-      Node(hostname = firstNode,
-           port = Some(22),
-           user = Some("fake"),
-           password = Some("fake"),
-           services = Seq.empty,
-           lastModified = CommonUtils.current(),
-           tags = Map.empty))
-    nodeCache.append(
-      Node(hostname = secondNode,
-           port = Some(22),
-           user = Some("fake"),
-           password = Some("fake"),
-           services = Seq.empty,
-           lastModified = CommonUtils.current(),
-           tags = Map.empty))
-
+    nodeCache.append(node(firstNode))
+    nodeCache.append(node(secondNode))
     //Create zookeeper cluster for start broker service
     val zkClusterName: String = s"zkcluster${CommonUtils.randomString(RANDOM_LEN)}"
     val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie
@@ -459,22 +399,8 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val secondNode: String = nodeNames.last
 
     nodeCache.clear()
-    nodeCache.append(
-      Node(hostname = firstNode,
-           port = Some(22),
-           user = Some("fake"),
-           password = Some("fake"),
-           services = Seq.empty,
-           lastModified = CommonUtils.current(),
-           tags = Map.empty))
-    nodeCache.append(
-      Node(hostname = secondNode,
-           port = Some(22),
-           user = Some("fake"),
-           password = Some("fake"),
-           services = Seq.empty,
-           lastModified = CommonUtils.current(),
-           tags = Map.empty))
+    nodeCache.append(node(firstNode))
+    nodeCache.append(node(secondNode))
 
     //Create zookeeper cluster for start broker service
     val zkClusterName: String = s"zkcluster${CommonUtils.randomString(RANDOM_LEN)}"
@@ -527,14 +453,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   def testClusters(): Unit = {
     val firstNode: String = nodeNames.head
     nodeCache.clear()
-    nodeCache.append(
-      Node(hostname = firstNode,
-           port = Some(22),
-           user = Some("fake"),
-           password = Some("fake"),
-           services = Seq.empty,
-           lastModified = CommonUtils.current(),
-           tags = Map.empty))
+    nodeCache.append(node(firstNode))
 
     //Create zookeeper cluster for start broker service
     val zkClusterName1: String = s"zk${CommonUtils.randomString(RANDOM_LEN)}"
@@ -555,14 +474,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   def testLog(): Unit = {
     val firstNode: String = nodeNames.head
     nodeCache.clear()
-    nodeCache.append(
-      Node(hostname = firstNode,
-           port = Some(22),
-           user = Some("fake"),
-           password = Some("fake"),
-           services = Seq.empty,
-           lastModified = CommonUtils.current(),
-           tags = Map.empty))
+    nodeCache.append(node(firstNode))
 
     //Create zookeeper cluster for start broker service
     val zkClusterName: String = s"zkcluster${CommonUtils.randomString(RANDOM_LEN)}"
@@ -623,27 +535,13 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val firstNode: String = nodeNames.head
     val verifyNode: Try[String] =
       Await.result(
-        clusterCollie.verifyNode(
-          Node(hostname = firstNode,
-               port = Some(22),
-               user = Some("fake"),
-               password = Some("fake"),
-               services = Seq.empty,
-               lastModified = CommonUtils.current(),
-               tags = Map.empty)),
+        clusterCollie.verifyNode(node(firstNode)),
         30 seconds
       )
     verifyNode.get.contains("node is running.") shouldBe true
 
     val unknowNode: Try[String] = Await.result(
-      clusterCollie.verifyNode(
-        Node(hostname = "unknow-node",
-             port = Some(22),
-             user = Some("fake"),
-             password = Some("fake"),
-             services = Seq.empty,
-             lastModified = CommonUtils.current(),
-             tags = Map.empty)),
+      clusterCollie.verifyNode(node("unknow-node")),
       30 seconds
     )
     unknowNode.isFailure shouldBe true

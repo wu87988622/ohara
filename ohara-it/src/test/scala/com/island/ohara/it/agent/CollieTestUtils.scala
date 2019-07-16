@@ -34,13 +34,16 @@ private[it] object CollieTestUtils {
       val password = nodeInfo.split("@").head.split(":").last
       val hostname = nodeInfo.split("@").last.split(":").head
       val port = nodeInfo.split("@").last.split(":").last.toInt
-      Node(hostname = hostname,
-           port = Some(port),
-           user = Some(user),
-           password = Some(password),
-           services = Seq.empty,
-           lastModified = CommonUtils.current(),
-           tags = Map.empty)
+      Node(
+        hostname = hostname,
+        port = Some(port),
+        user = Some(user),
+        password = Some(password),
+        services = Seq.empty,
+        lastModified = CommonUtils.current(),
+        validationReport = None,
+        tags = Map.empty
+      )
     }.toSeq)
     .getOrElse(Seq.empty)
     .map { node =>

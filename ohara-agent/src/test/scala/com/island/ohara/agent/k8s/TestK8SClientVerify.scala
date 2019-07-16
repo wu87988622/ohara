@@ -34,6 +34,17 @@ class TestK8SClientVerify extends SmallTest with Matchers {
   private[this] val nodeCache = new ArrayBuffer[Node]()
   private[this] val nodeCollie: NodeCollie = NodeCollie(nodeCache)
 
+  private[this] def node: Node = Node(
+    hostname = "ohara",
+    port = Some(22),
+    user = Some("fake"),
+    password = Some("fake"),
+    services = Seq.empty,
+    lastModified = CommonUtils.current(),
+    validationReport = None,
+    tags = Map.empty
+  )
+
   @Test
   def testMockK8sClientVerifyNode1(): Unit = {
     val fakeK8SClient = new FakeK8SClient(true, Option(K8SStatusInfo(true, "")), "")
@@ -41,14 +52,7 @@ class TestK8SClientVerify extends SmallTest with Matchers {
       ClusterCollie.builderOfK8s().nodeCollie(nodeCollie).k8sClient(fakeK8SClient).build()
     val runningNode =
       Await.result(
-        clusterCollie.verifyNode(
-          Node(hostname = "ohara",
-               port = Some(22),
-               user = Some("fake"),
-               password = Some("fake"),
-               services = Seq.empty,
-               lastModified = CommonUtils.current(),
-               tags = Map.empty)),
+        clusterCollie.verifyNode(node),
         30 seconds
       )
     runningNode match {
@@ -64,14 +68,7 @@ class TestK8SClientVerify extends SmallTest with Matchers {
       ClusterCollie.builderOfK8s().nodeCollie(nodeCollie).k8sClient(fakeK8SClient).build()
     val runningNode =
       Await.result(
-        clusterCollie.verifyNode(
-          Node(hostname = "ohara",
-               port = Some(22),
-               user = Some("fake"),
-               password = Some("fake"),
-               services = Seq.empty,
-               lastModified = CommonUtils.current(),
-               tags = Map.empty)),
+        clusterCollie.verifyNode(node),
         30 seconds
       )
     runningNode match {
@@ -87,14 +84,7 @@ class TestK8SClientVerify extends SmallTest with Matchers {
       ClusterCollie.builderOfK8s().nodeCollie(nodeCollie).k8sClient(fakeK8SClient).build()
     val runningNode =
       Await.result(
-        clusterCollie.verifyNode(
-          Node(hostname = "ohara",
-               port = Some(22),
-               user = Some("fake"),
-               password = Some("fake"),
-               services = Seq.empty,
-               lastModified = CommonUtils.current(),
-               tags = Map.empty)),
+        clusterCollie.verifyNode(node),
         30 seconds
       )
     runningNode match {
@@ -111,13 +101,16 @@ class TestK8SClientVerify extends SmallTest with Matchers {
     val runningNode =
       Await.result(
         clusterCollie.verifyNode(
-          Node(hostname = "ohara",
-               port = Some(22),
-               user = Some("fake"),
-               password = Some("fake"),
-               services = Seq.empty,
-               lastModified = CommonUtils.current(),
-               tags = Map.empty)),
+          Node(
+            hostname = "ohara",
+            port = Some(22),
+            user = Some("fake"),
+            password = Some("fake"),
+            services = Seq.empty,
+            lastModified = CommonUtils.current(),
+            validationReport = None,
+            tags = Map.empty
+          )),
         30 seconds
       )
     runningNode match {

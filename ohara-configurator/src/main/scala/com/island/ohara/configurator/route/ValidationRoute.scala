@@ -28,6 +28,7 @@ import com.island.ohara.client.configurator.v0.ValidationApi._
 import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.fake.FakeWorkerClient
+import com.island.ohara.configurator.store.DataStore
 import com.island.ohara.kafka.connector.json.SettingDefinition
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
@@ -55,8 +56,13 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
 
   @VisibleForTesting
   private[route] def fakeReport(): Future[Seq[ValidationReport]] =
-    Future.successful((0 until DEFAULT_NUMBER_OF_VALIDATION).map(_ =>
-      ValidationReport(hostname = CommonUtils.hostname, message = "a fake report", pass = true)))
+    Future.successful(
+      (0 until DEFAULT_NUMBER_OF_VALIDATION).map(
+        _ =>
+          ValidationReport(hostname = CommonUtils.hostname,
+                           message = "a fake report",
+                           pass = true,
+                           lastModified = CommonUtils.current())))
 
   @VisibleForTesting
   private[route] def fakeJdbcReport(): Future[Seq[RdbValidationReport]] = Future.successful(
@@ -82,6 +88,7 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
     )))
 
   def apply(implicit brokerCollie: BrokerCollie,
+            dataStore: DataStore,
             adminCleaner: AdminCleaner,
             workerCollie: WorkerCollie,
             clusterCollie: ClusterCollie,
@@ -122,29 +129,45 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
         root = VALIDATION_NODE_PREFIX_PATH,
         verify = (_, req: NodeValidation) =>
           clusterCollie
-            .verifyNode(
-              Node(
-                hostname = req.hostname,
-                port = req.port,
-                user = req.user,
-                password = req.password,
-                services = Seq.empty,
-                lastModified = CommonUtils.current(),
-                tags = Map.empty
-              ))
+            .verifyNode(Node(
+              hostname = req.hostname,
+              port = req.port,
+              user = req.user,
+              password = req.password,
+              services = Seq.empty,
+              lastModified = CommonUtils.current(),
+              validationReport = None,
+              tags = Map.empty
+            ))
             .map {
               case Success(value) =>
                 ValidationReport(
                   hostname = req.hostname,
                   message = value,
-                  pass = true
+                  pass = true,
+                  lastModified = CommonUtils.current()
                 )
               case Failure(exception) =>
                 ValidationReport(
                   hostname = req.hostname,
                   message = exception.getMessage,
-                  pass = false
+                  pass = false,
+                  lastModified = CommonUtils.current()
                 )
+            }
+            .flatMap { report =>
+              dataStore.get[Node](req.hostname).flatMap { nodeOption =>
+                nodeOption
+                  .filter { node =>
+                    node.hostname == req.hostname &&
+                    node.port == req.port &&
+                    node.user == req.user &&
+                    node.password == req.password
+                  }
+                  .map(_.copy(validationReport = Some(report)))
+                  .map(node => dataStore.add[Node](node.hostname, node).map(_ => report))
+                  .getOrElse(Future.successful(report))
+              }
             }
             .map(Seq(_))
       ) ~ path(VALIDATION_CONNECTOR_PREFIX_PATH) {

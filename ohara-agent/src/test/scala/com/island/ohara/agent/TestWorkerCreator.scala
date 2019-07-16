@@ -305,21 +305,27 @@ class TestWorkerCreator extends SmallTest with Matchers {
   @Test
   def testWkCreator(): Unit = {
     val node1Name = "node1"
-    val node1 = Node(hostname = node1Name,
-                     port = Some(22),
-                     user = Some("fake"),
-                     password = Some("fake"),
-                     services = Seq.empty,
-                     lastModified = CommonUtils.current(),
-                     tags = Map.empty)
+    val node1 = Node(
+      hostname = node1Name,
+      port = Some(22),
+      user = Some("fake"),
+      password = Some("fake"),
+      services = Seq.empty,
+      lastModified = CommonUtils.current(),
+      validationReport = None,
+      tags = Map.empty
+    )
     val node2Name = "node2"
-    val node2 = Node(hostname = node2Name,
-                     port = Some(22),
-                     user = Some("fake"),
-                     password = Some("fake"),
-                     services = Seq.empty,
-                     lastModified = CommonUtils.current(),
-                     tags = Map.empty)
+    val node2 = Node(
+      hostname = node2Name,
+      port = Some(22),
+      user = Some("fake"),
+      password = Some("fake"),
+      services = Seq.empty,
+      lastModified = CommonUtils.current(),
+      validationReport = None,
+      tags = Map.empty
+    )
 
     val fakeWorkerCollie = new FakeWorkerCollie(NodeCollie(Seq(node1, node2)))
     val workerClusterInfo: Future[WorkerClusterInfo] = fakeWorkerCollie.creator
@@ -345,13 +351,16 @@ class TestWorkerCreator extends SmallTest with Matchers {
   @Test
   def testExistWorkerNode(): Unit = {
     val node1Name = "node1" // node1 has running worker for fake
-    val node1 = Node(hostname = node1Name,
-                     port = Some(22),
-                     user = Some("fake"),
-                     password = Some("fake"),
-                     services = Seq.empty,
-                     lastModified = CommonUtils.current(),
-                     tags = Map.empty)
+    val node1 = Node(
+      hostname = node1Name,
+      port = Some(22),
+      user = Some("fake"),
+      password = Some("fake"),
+      services = Seq.empty,
+      lastModified = CommonUtils.current(),
+      validationReport = None,
+      tags = Map.empty
+    )
 
     val fakeWorkerCollie = new FakeWorkerCollie(NodeCollie(Seq(node1)))
     val workerClusterInfo: Future[WorkerClusterInfo] = fakeWorkerCollie.creator
@@ -375,21 +384,27 @@ class TestWorkerCreator extends SmallTest with Matchers {
   @Test
   def testBrokerClusterNotExists(): Unit = {
     val node1Name = "node1"
-    val node1 = Node(hostname = node1Name,
-                     port = Some(22),
-                     user = Some("fake"),
-                     password = Some("fake"),
-                     services = Seq.empty,
-                     lastModified = CommonUtils.current(),
-                     tags = Map.empty)
+    val node1 = Node(
+      hostname = node1Name,
+      port = Some(22),
+      user = Some("fake"),
+      password = Some("fake"),
+      services = Seq.empty,
+      lastModified = CommonUtils.current(),
+      validationReport = None,
+      tags = Map.empty
+    )
     val node2Name = "node2"
-    val node2 = Node(hostname = node2Name,
-                     port = Some(22),
-                     user = Some("fake"),
-                     password = Some("fake"),
-                     services = Seq.empty,
-                     lastModified = CommonUtils.current(),
-                     tags = Map.empty)
+    val node2 = Node(
+      hostname = node2Name,
+      port = Some(22),
+      user = Some("fake"),
+      password = Some("fake"),
+      services = Seq.empty,
+      lastModified = CommonUtils.current(),
+      validationReport = None,
+      tags = Map.empty
+    )
 
     val fakeWorkerCollie = new FakeWorkerCollie(NodeCollie(Seq(node1, node2)))
     val workerClusterInfo: Future[WorkerClusterInfo] = fakeWorkerCollie.creator
