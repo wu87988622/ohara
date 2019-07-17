@@ -61,6 +61,30 @@ const Svg = styled.svg`
     color: ${props => props.theme.lightBlue};
   }
 
+  .metrics {
+    display: none;
+    border-top: 1px solid ${props => props.theme.lighterGray};
+    padding-top: 10px;
+
+    .metrics-icon {
+      margin: 0 22px 0 8px;
+      color: ${props => props.theme.dimBlue};
+      display: flex;
+      align-items: center;
+      font-size: 20px;
+    }
+    .metrics-text-wrapper {
+      display: flex;
+      flex-direction: column;
+      font-size: 12px;
+      color: ${props => props.theme.dimBlue};
+    }
+
+    .number-of-rows {
+      margin-bottom: 4px;
+    }
+  }
+
   .node-topic {
     position: relative;
     width: 60px;
@@ -71,6 +95,12 @@ const Svg = styled.svg`
     border: 1px solid ${props => props.theme.lighterGray};
     border-radius: ${props => props.theme.radiusRounded};
     box-shadow: ${props => props.theme.shadowNormal};
+
+    .basic-info {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
 
     .node-text-wrapper {
       position: absolute;
@@ -86,6 +116,7 @@ const Svg = styled.svg`
     .node-icon {
       color: ${props => props.theme.dimBlue};
     }
+
     .status-icon {
       display: none;
     }
@@ -98,7 +129,11 @@ const Svg = styled.svg`
     border: 1px solid ${props => props.theme.lighterGray};
     border-radius: ${props => props.theme.radiusNormal};
     box-shadow: ${props => props.theme.shadowNormal};
-    display: flex;
+
+    .basic-info {
+      display: flex;
+      margin-bottom: 10px;
+    }
 
     .node-icon {
       display: flex;
@@ -151,6 +186,10 @@ const Svg = styled.svg`
     &.is-running {
       .node-icon {
         background-color: ${props => props.theme.green};
+      }
+
+      .metrics {
+        display: flex;
       }
     }
 

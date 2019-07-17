@@ -18,6 +18,15 @@ import { string, arrayOf, shape, bool, number } from 'prop-types';
 
 export const graph = shape({
   name: string.isRequired,
+  metrics: shape({
+    meters: arrayOf(
+      shape({
+        document: string,
+        unit: string,
+        value: number,
+      }),
+    ),
+  }),
   className: string.isRequired,
   kind: string.isRequired,
   to: arrayOf(string).isRequired,

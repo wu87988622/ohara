@@ -14,147 +14,123 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import dagreD3 from 'dagre-d3';
 import * as d3 from 'd3v4';
 
-import * as _ from 'utils/commonUtils';
 import { Wrapper, H5Wrapper, Svg } from './styles';
-import { getIcon, getStatusIcon } from '../pipelineUtils/pipelineGraphUtils';
+import * as utils from './pipelineGraphUtils';
 import { graph as graphPropType } from 'propTypes/pipeline';
 
-class PipelineGraph extends React.Component {
-  static propTypes = {
-    graph: PropTypes.arrayOf(graphPropType).isRequired,
-    pipeline: PropTypes.shape({
-      workerClusterName: PropTypes.string,
-    }).isRequired,
-    resetGraph: PropTypes.func.isRequired,
-    match: PropTypes.shape({
-      params: PropTypes.object.isRequired,
-    }).isRequired,
-    history: PropTypes.object,
-  };
+const PipelineGraph = props => {
+  useEffect(() => {
+    const renderGraph = () => {
+      const { graph, pipeline = {} } = props;
+      const { workerClusterName } = pipeline;
+      const dagreGraph = new dagreD3.graphlib.Graph().setGraph({});
 
-  componentDidMount() {
-    this.renderGraph();
-  }
+      graph.forEach(g => {
+        const { name, className, kind, to, state, metrics } = g;
 
-  componentDidUpdate(prevProps) {
-    if (this.props.graph !== prevProps.graph) {
-      this.renderGraph();
-    }
-  }
+        // Topic needs different props...
+        const nodeProps = { shape: kind === 'topic' ? 'circle' : 'rect' };
 
-  handleNodeClick = current => {
-    const { history, graph, match } = this.props;
-    const { pipelineName } = match.params;
-    const [currConnector] = graph.filter(g => g.name === current);
-    const { className, name: connectorName } = currConnector;
+        const html = utils.createHtml({
+          kind,
+          state,
+          metrics,
+          name,
+          className,
+          workerClusterName,
+        });
 
-    const action = match.url.includes('/edit/') ? 'edit' : 'new';
-    const baseUrl = `/pipelines/${action}/${className}/${pipelineName}`;
+        dagreGraph.setNode(name, {
+          ...nodeProps,
+          labelType: 'html',
+          label: html,
+        });
 
-    if (connectorName) {
-      history.push(`${baseUrl}/${connectorName}`);
-    } else {
-      history.push(`${baseUrl}`);
-    }
-  };
+        if (to) {
+          // Get dest graphs
+          const destinations = graph.map(g => g.name);
 
-  renderGraph = () => {
-    const { graph, pipeline = {} } = this.props;
-    const { workerClusterName } = pipeline;
-    const dagreGraph = new dagreD3.graphlib.Graph().setGraph({});
+          // If the destinations graphs are not listed in the graph object
+          // or it's not an array, return at this point
+          if (!destinations.includes(to) && !Array.isArray(to)) return;
 
-    graph.forEach(g => {
-      const { name, className, kind, to, state } = g;
-      const updateState = state ? state : '';
-      const isTopic = kind === 'topic';
+          if (Array.isArray(to)) {
+            to.forEach(t => {
+              dagreGraph.setEdge(name, t, {});
+            });
+            return;
+          }
 
-      // Topic needs different props...
-      const props = { shape: isTopic ? 'circle' : 'rect' };
-      const displayKind = className.split('.').pop();
-
-      const topicCls = isTopic ? 'node-topic' : 'node-connector';
-      const stateCls = !_.isEmptyStr(updateState)
-        ? `is-${updateState.toLowerCase()}`
-        : '';
-      const status = !_.isEmptyStr(updateState)
-        ? updateState.toLowerCase()
-        : 'stopped';
-      const icon = getIcon(kind);
-      const statusIcon = getStatusIcon(updateState);
-
-      const html = `<div class="node-graph ${topicCls} ${stateCls}">
-        <span class="node-icon"><i class="fa ${icon}"></i></span>
-        <div class="node-text-wrapper">
-          <span class="node-name">${name}</span>
-          <span class="node-status">Status: ${status}</span>
-          <span class="node-type">${displayKind}</span>
-        </div>
-        <a class="status-icon" href="/logs/workers/${workerClusterName}" target="_blank">
-          <i class="fas ${statusIcon}"></i>
-        </a>
-      </div>`;
-
-      dagreGraph.setNode(name, {
-        ...props,
-        labelType: 'html',
-        label: html,
+          dagreGraph.setEdge(name, to, {});
+        }
       });
 
-      if (to) {
-        // Get dest graphs
-        const dests = graph.map(g => g.name);
+      const svg = d3.select('.pipeline-graph');
+      const inner = svg.select('g');
 
-        // If the dest graphs are not listed in the graph object
-        // or it's not an array, return at this point
-        if (!dests.includes(to) && !Array.isArray(to)) return;
+      const zoom = d3.zoom().on('zoom', () => {
+        inner.attr('transform', d3.event.transform);
+      });
 
-        if (Array.isArray(to)) {
-          to.forEach(t => {
-            dagreGraph.setEdge(name, t, {});
-          });
-          return;
-        }
+      svg.call(zoom);
 
-        dagreGraph.setEdge(name, to, {});
+      const render = new dagreD3.render();
+
+      dagreGraph.setGraph({
+        rankdir: 'LR',
+        marginx: 50,
+        marginy: 50,
+      });
+
+      render(inner, dagreGraph);
+
+      svg.selectAll('.node').on('click', handleNodeClick);
+    };
+
+    const handleNodeClick = current => {
+      const { history, graph, match } = props;
+      const { pipelineName } = match.params;
+      const [currConnector] = graph.filter(g => g.name === current);
+      const { className, name: connectorName } = currConnector;
+
+      const action = match.url.includes('/edit/') ? 'edit' : 'new';
+      const baseUrl = `/pipelines/${action}/${className}/${pipelineName}`;
+
+      if (connectorName) {
+        history.push(`${baseUrl}/${connectorName}`);
+      } else {
+        history.push(`${baseUrl}`);
       }
-    });
+    };
 
-    const svg = d3.select('.pipeline-graph');
-    const inner = svg.select('g');
+    renderGraph();
+  }, [props, props.graph]);
 
-    const zoom = d3.zoom().on('zoom', () => {
-      inner.attr('transform', d3.event.transform);
-    });
+  return (
+    <Wrapper>
+      <H5Wrapper>Pipeline graph</H5Wrapper>
+      <Svg className="pipeline-graph">
+        <g />
+      </Svg>
+    </Wrapper>
+  );
+};
 
-    svg.call(zoom);
+PipelineGraph.propTypes = {
+  graph: PropTypes.arrayOf(graphPropType).isRequired,
+  pipeline: PropTypes.shape({
+    workerClusterName: PropTypes.string,
+  }).isRequired,
+  resetGraph: PropTypes.func.isRequired,
+  match: PropTypes.shape({
+    params: PropTypes.object.isRequired,
+  }).isRequired,
+  history: PropTypes.object,
+};
 
-    const render = new dagreD3.render();
-
-    dagreGraph.setGraph({
-      rankdir: 'LR',
-      marginx: 50,
-      marginy: 50,
-    });
-
-    render(inner, dagreGraph);
-
-    svg.selectAll('.node').on('click', this.handleNodeClick);
-  };
-
-  render() {
-    return (
-      <Wrapper>
-        <H5Wrapper>Pipeline graph</H5Wrapper>
-        <Svg className="pipeline-graph">
-          <g />
-        </Svg>
-      </Wrapper>
-    );
-  }
-}
 export default PipelineGraph;
