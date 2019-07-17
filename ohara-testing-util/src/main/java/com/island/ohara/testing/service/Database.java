@@ -60,7 +60,7 @@ public interface Database extends Releasable {
     private String password = "password";
     private int port = 0;
 
-    @com.island.ohara.common.annotations.Optional("default is user")
+    @com.island.ohara.common.annotations.Optional("default is ohara")
     public Builder databaseName(String databaseName) {
       this.databaseName = CommonUtils.requireNonEmpty(databaseName);
       return this;
