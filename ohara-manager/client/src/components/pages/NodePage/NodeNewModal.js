@@ -98,89 +98,91 @@ class NodeNewModal extends React.Component {
               onClose={handleClose}
               aria-labelledby="form-dialog-title"
             >
-              <DialogTitle id="form-dialog-title" onClose={handleClose}>
-                New ohara node
-              </DialogTitle>
-              <FormSpy
-                subscription={{ values: true }}
-                onChange={() => {
-                  this.setState({ isValidConnection: false });
-                }}
-              />
-              <form onSubmit={handleSubmit}>
-                <DialogContent>
-                  <Field
-                    name="name"
-                    id="node"
-                    label="Node"
-                    placeholder="node-00"
-                    margin="normal"
-                    fullWidth
-                    variant="outlined"
-                    component={InputField}
-                  />
+              <div data-testid="new-node-modal">
+                <DialogTitle id="form-dialog-title" onClose={handleClose}>
+                  New ohara node
+                </DialogTitle>
+                <FormSpy
+                  subscription={{ values: true }}
+                  onChange={() => {
+                    this.setState({ isValidConnection: false });
+                  }}
+                />
+                <form onSubmit={handleSubmit}>
+                  <DialogContent>
+                    <Field
+                      name="name"
+                      id="node"
+                      label="Node"
+                      placeholder="node-00"
+                      margin="normal"
+                      fullWidth
+                      variant="outlined"
+                      component={InputField}
+                    />
 
-                  <Field
-                    id="port"
-                    name="port"
-                    label="Port"
-                    placeholder="1021"
-                    margin="normal"
-                    type="number"
-                    variant="outlined"
-                    component={InputField}
-                  />
+                    <Field
+                      id="port"
+                      name="port"
+                      label="Port"
+                      placeholder="1021"
+                      margin="normal"
+                      type="number"
+                      variant="outlined"
+                      component={InputField}
+                    />
 
-                  <Field
-                    id="user"
-                    name="user"
-                    label="User"
-                    placeholder="admin"
-                    margin="normal"
-                    fullWidth
-                    variant="outlined"
-                    component={InputField}
-                  />
+                    <Field
+                      id="user"
+                      name="user"
+                      label="User"
+                      placeholder="admin"
+                      margin="normal"
+                      fullWidth
+                      variant="outlined"
+                      component={InputField}
+                    />
 
-                  <Field
-                    id="password"
-                    name="password"
-                    label="Password"
-                    type="password"
-                    placeholder="password"
-                    margin="normal"
-                    fullWidth
-                    variant="outlined"
-                    component={InputField}
-                  />
-                </DialogContent>
-                <DialogContent>
-                  <Button
-                    variant="outlined"
-                    onClick={e => {
-                      e.preventDefault();
-                      this.testConnection(values);
-                    }}
-                    color="primary"
-                  >
-                    Test connection
-                  </Button>
-                </DialogContent>
-                <DialogActions>
-                  <Button onClick={handleClose} color="primary">
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={handleSubmit}
-                    color="primary"
-                    disabled={
-                      submitting || pristine || invalid || !isValidConnection
-                    }
-                  >
-                    Save
-                  </Button>
-                </DialogActions>
-              </form>
+                    <Field
+                      id="password"
+                      name="password"
+                      label="Password"
+                      type="password"
+                      placeholder="password"
+                      margin="normal"
+                      fullWidth
+                      variant="outlined"
+                      component={InputField}
+                    />
+                  </DialogContent>
+                  <DialogContent>
+                    <Button
+                      variant="outlined"
+                      onClick={e => {
+                        e.preventDefault();
+                        this.testConnection(values);
+                      }}
+                      color="primary"
+                    >
+                      Test connection
+                    </Button>
+                  </DialogContent>
+                  <DialogActions>
+                    <Button onClick={handleClose} color="primary">
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleSubmit}
+                      color="primary"
+                      disabled={
+                        submitting || pristine || invalid || !isValidConnection
+                      }
+                    >
+                      Save
+                    </Button>
+                  </DialogActions>
+                </form>
+              </div>
             </Dialog>
           );
         }}

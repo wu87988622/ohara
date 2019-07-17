@@ -123,7 +123,7 @@ class NodeListPage extends React.Component {
             <s.NodeTable isLoading={isLoading} headers={this.headers}>
               {nodes.map(node => (
                 <TableRow key={node.name}>
-                  <TableCell component="th" scope="row">
+                  <TableCell data-testid="node-name" component="th" scope="row">
                     {node.name || ''}
                   </TableCell>
                   <TableCell align="left">
