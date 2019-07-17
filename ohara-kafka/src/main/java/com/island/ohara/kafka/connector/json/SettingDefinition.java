@@ -198,10 +198,11 @@ public class SettingDefinition implements JsonObject {
       SettingDefinition.builder()
           .displayName("tags")
           .key("tags")
-          .valueType(Type.ARRAY)
+          .valueType(Type.STRING)
           .documentation("tags to this connector")
           .group(CORE_GROUP)
-          .optional()
+          // the tags type is json representation so we use "empty" object as default value
+          .optional("{}")
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .build();
 

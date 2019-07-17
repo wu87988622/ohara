@@ -34,7 +34,8 @@ public final class SettingDefinitions {
           SettingDefinition.VALUE_CONVERTER_DEFINITION,
           SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION,
           SettingDefinition.NUMBER_OF_TASKS_DEFINITION,
-          SettingDefinition.TOPIC_NAMES_DEFINITION);
+          SettingDefinition.TOPIC_NAMES_DEFINITION,
+          SettingDefinition.TAGS_DEFINITION);
 
   /**
    * find the default value of version from settings

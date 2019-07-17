@@ -19,14 +19,18 @@ package com.island.ohara.configurator.validation
 import com.island.ohara.client.configurator.v0.{ValidationApi, WorkerApi}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.{Configurator, DumbSink}
+import com.island.ohara.kafka.connector.json.SettingDefinition
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.{After, Test}
 import org.scalatest.Matchers
+import spray.json.JsString
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
+import spray.json._
+import scala.collection.JavaConverters._
 class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
   private[this] val configurator =
     Configurator.builder.fake(testUtil().brokersConnProps(), testUtil().workersConnProps()).build()
@@ -133,6 +137,46 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
     response.workerClusterName().get shouldBe wkCluster.name
     response.connectorType().isPresent shouldBe true
     response.errorCount() shouldBe 0
+  }
+
+  @Test
+  def testTags(): Unit = {
+    val tags = Map("a" -> JsString("b"))
+    val response = result(
+      ValidationApi.access
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .connectorRequest
+        .name(CommonUtils.randomString(10))
+        .className(classOf[DumbSink].getName)
+        .topicName(CommonUtils.randomString())
+        .workerClusterName(wkCluster.name)
+        .tags(tags)
+        .verify())
+    response.value(SettingDefinition.TAGS_DEFINITION.key()).get().parseJson shouldBe JsObject(Map("a" -> JsString("b")))
+    response
+      .settings()
+      .asScala
+      .filter(_.definition().key() == SettingDefinition.TAGS_DEFINITION.key())
+      .head
+      .definition()
+      .defaultValue()
+      .parseJson shouldBe JsObject.empty
+
+    response.errorCount() shouldBe 0
+
+    // no tags
+    val response2 = result(
+      ValidationApi.access
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .connectorRequest
+        .name(CommonUtils.randomString(10))
+        .className(classOf[DumbSink].getName)
+        .topicName(CommonUtils.randomString())
+        .workerClusterName(wkCluster.name)
+        .verify())
+    response2.errorCount() shouldBe 0
   }
 
   @After
