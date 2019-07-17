@@ -27,25 +27,23 @@ private class FakeBrokerCollie(node: NodeCollie,
                                bkExistContainers: Seq[ContainerInfo])
     extends BrokerCollie {
   override protected def zookeeperClusters(
-    implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = {
-    Future {
-      Map(
-        ZookeeperClusterInfo(
-          FakeBrokerCollie.zookeeperClusterName,
-          ZookeeperApi.IMAGE_NAME_DEFAULT,
-          2181,
-          2182,
-          2183,
-          Set("node1"),
-          Set.empty,
-          Map.empty,
-          0L,
-          Some(ContainerState.RUNNING.name),
-          None
-        ) -> zkContainers,
-      )
-    }
-  }
+    implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = Future.successful(
+    Map(
+      ZookeeperClusterInfo(
+        FakeBrokerCollie.zookeeperClusterName,
+        ZookeeperApi.IMAGE_NAME_DEFAULT,
+        2181,
+        2182,
+        2183,
+        Set("node1"),
+        Set.empty,
+        Map.empty,
+        0L,
+        Some(ContainerState.RUNNING.name),
+        None
+      ) -> zkContainers,
+    )
+  )
 
   override protected def doCreator(executionContext: ExecutionContext,
                                    clusterName: String,
@@ -64,16 +62,13 @@ private class FakeBrokerCollie(node: NodeCollie,
     throw new UnsupportedOperationException("Not support logs function")
 
   override def clusterWithAllContainers()(
-    implicit executionContext: ExecutionContext): Future[Map[BrokerClusterInfo, Seq[ContainerInfo]]] = {
-    Future {
+    implicit executionContext: ExecutionContext): Future[Map[BrokerClusterInfo, Seq[ContainerInfo]]] =
+    Future.successful(
       //Pre create broker container for test
       Map(BrokerClusterInfo("bk1", "broker", "zk1", 2181, 2182, 2183, Set("node1"), Set.empty) -> bkExistContainers)
-    }
-  }
+    )
 
-  override protected def resolveHostName(node: String): String = {
-    "1.1.1.1"
-  }
+  override protected def resolveHostName(node: String): String = "1.1.1.1"
 
   override def addNode(clusterName: String, nodeName: String)(
     implicit executionContext: ExecutionContext): Future[BrokerApi.BrokerClusterInfo] =

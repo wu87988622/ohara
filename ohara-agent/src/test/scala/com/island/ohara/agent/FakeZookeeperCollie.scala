@@ -39,11 +39,8 @@ class FakeZookeeperCollie(node: NodeCollie) extends ZookeeperCollie {
     throw new UnsupportedOperationException("Not support logs function")
 
   override def clusterWithAllContainers()(
-    implicit executionContext: ExecutionContext): Future[Map[ZookeeperClusterInfo, Seq[ContainerInfo]]] = {
-    Future {
-      Map.empty
-    }
-  }
+    implicit executionContext: ExecutionContext): Future[Map[ZookeeperClusterInfo, Seq[ContainerInfo]]] =
+    Future.successful(Map.empty)
 
   override def addNode(clusterName: String, nodeName: String)(
     implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
@@ -53,9 +50,7 @@ class FakeZookeeperCollie(node: NodeCollie) extends ZookeeperCollie {
     implicit executionContext: ExecutionContext): Future[Boolean] =
     throw new UnsupportedOperationException("Not support removeNode function")
 
-  override protected def routeInfo(nodes: Map[Node, String]): Map[String, String] = {
-    Map.empty
-  }
+  override protected def routeInfo(nodes: Map[Node, String]): Map[String, String] = Map.empty
 
   override protected def nodeCollie: NodeCollie = node
 

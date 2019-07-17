@@ -67,8 +67,8 @@ class TestK8SBasicCollieImpl extends SmallTest with Matchers {
     val k8sBasicCollieImpl =
       new K8SBasicCollieImpl[ZookeeperClusterInfo, ZookeeperCollie.ClusterCreator](nodeCollie, k8sClient) {
         override protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo])(
-          implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] = {
-          Future {
+          implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
+          Future.successful(
             ZookeeperClusterInfo(clusterName,
                                  containers.head.imageName,
                                  2181,
@@ -80,8 +80,8 @@ class TestK8SBasicCollieImpl extends SmallTest with Matchers {
                                  0L,
                                  None,
                                  None)
-          }
-        }
+          )
+
         override def creator: ZookeeperCollie.ClusterCreator =
           throw new UnsupportedOperationException("Test doesn't support creator function")
       }

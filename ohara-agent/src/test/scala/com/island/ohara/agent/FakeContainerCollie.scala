@@ -41,26 +41,20 @@ class FakeContainerCollie[T <: FakeContainerCollieClusterInfo: ClassTag, Creator
     previousCluster: FakeContainerCollieClusterInfo,
     previousContainers: Seq[ContainerInfo],
     newNodeName: String)(implicit executionContext: ExecutionContext): Future[FakeContainerCollieClusterInfo] =
-    Future {
-      FakeContainerCollieClusterInfo(previousCluster.name, previousCluster.nodeNames ++ Seq(newNodeName))
-    }
+    Future.successful(
+      FakeContainerCollieClusterInfo(previousCluster.name, previousCluster.nodeNames ++ Seq(newNodeName)))
 
   override protected def doRemove(clusterInfo: FakeContainerCollieClusterInfo, containerInfos: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[Boolean] = Future.successful(true)
 
   override def logs(clusterName: String)(
-    implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] = {
-    Future {
-      Map()
-    }
-  }
+    implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
+    Future.successful(Map.empty)
 
   override def clusterWithAllContainers()(
     implicit executionContext: ExecutionContext): Future[Map[FakeContainerCollieClusterInfo, Seq[ContainerInfo]]] =
-    Future {
-      val nodeNames = containers.map(c => c.nodeName).toSet
-      Map(FakeContainerCollieClusterInfo(FakeContainerCollie.clusterName, nodeNames) -> containers)
-    }
+    Future.successful(Map(FakeContainerCollieClusterInfo(FakeContainerCollie.clusterName,
+                                                         containers.map(c => c.nodeName).toSet) -> containers))
 
   override def creator: FakeCollie.ClusterCreator =
     () => Future.successful(FakeContainerCollieClusterInfo(FakeContainerCollie.clusterName, Set.empty))

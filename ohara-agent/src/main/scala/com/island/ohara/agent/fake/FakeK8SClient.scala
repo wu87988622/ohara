@@ -31,9 +31,10 @@ class FakeK8SClient(isK8SNode: Boolean, k8sStatusInfo: Option[K8SStatusInfo], co
       Seq(ZookeeperApi.IMAGE_NAME_DEFAULT, BrokerApi.IMAGE_NAME_DEFAULT, WorkerApi.IMAGE_NAME_DEFAULT)
     }
 
-  override def checkNode(nodeName: String)(implicit executionContext: ExecutionContext): Future[Report] = Future {
-    Report(nodeName, isK8SNode, k8sStatusInfo)
-  }
+  override def checkNode(nodeName: String)(implicit executionContext: ExecutionContext): Future[Report] =
+    Future.successful(
+      Report(nodeName, isK8SNode, k8sStatusInfo)
+    )
 
   override def close(): Unit = LOG.info("close client")
 

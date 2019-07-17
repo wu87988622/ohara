@@ -25,24 +25,22 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class FakeWorkerCollie(node: NodeCollie) extends WorkerCollie {
   override protected def brokerClusters(
-    implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = {
-    Future {
-      Map(
-        BrokerClusterInfo("bk1", "broker", "zk1", 9092, 9093, 9094, Set("node1"), Set.empty) -> Seq(ContainerInfo(
-          "node1",
-          "aaaa",
-          "broker",
-          "2019-05-28 00:00:00",
-          "running",
-          "unknown",
-          "ohara-xxx-bk-0000",
-          "unknown",
-          Seq.empty,
-          Map(BrokerCollie.CLIENT_PORT_KEY -> "9092"),
-          "ohara-xxx-bk-0000"
-        )))
-    }
-  }
+    implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = Future.successful(
+    Map(
+      BrokerClusterInfo("bk1", "broker", "zk1", 9092, 9093, 9094, Set("node1"), Set.empty) -> Seq(ContainerInfo(
+        "node1",
+        "aaaa",
+        "broker",
+        "2019-05-28 00:00:00",
+        "running",
+        "unknown",
+        "ohara-xxx-bk-0000",
+        "unknown",
+        Seq.empty,
+        Map(BrokerCollie.CLIENT_PORT_KEY -> "9092"),
+        "ohara-xxx-bk-0000"
+      )))
+  )
 
   override protected def doCreator(executionContext: ExecutionContext,
                                    clusterName: String,
@@ -61,8 +59,8 @@ class FakeWorkerCollie(node: NodeCollie) extends WorkerCollie {
     throw new UnsupportedOperationException("FakeWorkerCollie doesn't support logs function")
 
   override def clusterWithAllContainers()(
-    implicit executionContext: ExecutionContext): Future[Map[WorkerClusterInfo, Seq[ContainerInfo]]] = {
-    Future {
+    implicit executionContext: ExecutionContext): Future[Map[WorkerClusterInfo, Seq[ContainerInfo]]] =
+    Future.successful(
       Map(
         WorkerClusterInfo("wk1",
                           "worker",
@@ -94,9 +92,7 @@ class FakeWorkerCollie(node: NodeCollie) extends WorkerCollie {
                         Seq.empty,
                         Map.empty,
                         "ohara-xxx-wk-0000")))
-
-    }
-  }
+    )
 
   override def addNode(clusterName: String, nodeName: String)(
     implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] =
@@ -106,9 +102,7 @@ class FakeWorkerCollie(node: NodeCollie) extends WorkerCollie {
     implicit executionContext: ExecutionContext): Future[Boolean] =
     throw new UnsupportedOperationException("FakeWorkCollie doesn't support removeNode function")
 
-  override protected def resolveHostName(node: String): String = {
-    "1.1.1.1"
-  }
+  override protected def resolveHostName(node: String): String = "1.1.1.1"
 
   /**
     * Please implement nodeCollie
