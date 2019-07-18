@@ -58,6 +58,7 @@ class Topic extends React.Component {
     const { connectorName: currTopicName } = this.props.match.params;
 
     if (prevTopicName !== currTopicName) {
+      this.topicName = currTopicName;
       this.fetchTopic();
     }
   }
