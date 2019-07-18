@@ -18,7 +18,6 @@ package com.island.ohara.client.configurator.v0
 
 import java.util.Objects
 
-import com.island.ohara.client.configurator.v0.InfoApi.ConnectorVersion
 import com.island.ohara.client.configurator.v0.FileApi._
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
@@ -158,8 +157,6 @@ object WorkerApi {
       */
     def connectionProps: String = nodeNames.map(n => s"$n:$clientPort").mkString(",")
 
-    def sources: Seq[ConnectorVersion] = connectors.map(InfoApi.toConnectorVersion).filter(_.typeName == "source")
-    def sinks: Seq[ConnectorVersion] = connectors.map(InfoApi.toConnectorVersion).filter(_.typeName == "sink")
     override def ports: Set[Int] = Set(clientPort, jmxPort)
 
     override def clone(newNodeNames: Set[String]): ClusterInfo = copy(nodeNames = newNodeNames)
