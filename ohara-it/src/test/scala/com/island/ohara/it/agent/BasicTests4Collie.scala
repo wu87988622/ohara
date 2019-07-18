@@ -540,7 +540,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       () =>
         try {
           log.info(s"worker node head: ${cluster.nodeNames.head}:${cluster.clientPort}")
-          result(WorkerClient(s"${cluster.nodeNames.head}:${cluster.clientPort}").connectors()).nonEmpty
+          result(WorkerClient(s"${cluster.nodeNames.head}:${cluster.clientPort}").connectorDefinitions()).nonEmpty
         } catch {
           case e: Throwable =>
             log.info(s"[WORKER] worker cluster:${cluster.name} is starting ... retry", e)

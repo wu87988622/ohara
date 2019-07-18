@@ -21,7 +21,7 @@ import java.util.Objects
 import com.island.ohara.client.configurator.v0.FileApi._
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
-import com.island.ohara.kafka.connector.json.SettingDefinition
+import com.island.ohara.kafka.connector.json.{SettingDefinition, SettingDefinitions}
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsArray, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
@@ -127,9 +127,12 @@ object WorkerApi {
       override def write(obj: SettingDefinition): JsValue = obj.toJsonString.parseJson
     }
 
-  final case class ConnectorDefinitions private[WorkerApi] (className: String, definitions: Seq[SettingDefinition])
-  private[this] implicit val CONNECTION_DEFINITIONS_JSON_FORMAT: RootJsonFormat[ConnectorDefinitions] = jsonFormat2(
-    ConnectorDefinitions)
+  final case class ConnectorDefinition private[WorkerApi] (className: String, definitions: Seq[SettingDefinition]) {
+    import scala.collection.JavaConverters._
+    def kind: String = SettingDefinitions.kind(definitions.asJava)
+  }
+  private[this] implicit val CONNECTION_DEFINITIONS_JSON_FORMAT: RootJsonFormat[ConnectorDefinition] = jsonFormat2(
+    ConnectorDefinition)
 
   final case class WorkerClusterInfo private[ohara] (name: String,
                                                      imageName: String,
@@ -147,7 +150,7 @@ object WorkerApi {
                                                      offsetTopicPartitions: Int,
                                                      offsetTopicReplications: Short,
                                                      jarInfos: Seq[FileInfo],
-                                                     connectors: Seq[ConnectorDefinitions],
+                                                     connectors: Seq[ConnectorDefinition],
                                                      nodeNames: Set[String],
                                                      deadNodes: Set[String])
       extends ClusterInfo {
@@ -209,7 +212,7 @@ object WorkerApi {
         offsetTopicPartitions = noJsNull(json)(OFFSET_TOPIC_PARTITIONS_KEY).convertTo[Int],
         offsetTopicReplications = noJsNull(json)(OFFSET_TOPIC_REPLICATIONS_KEY).convertTo[Short],
         jarInfos = noJsNull(json)(JAR_INFOS_KEY).convertTo[Seq[FileInfo]],
-        connectors = noJsNull(json)(CONNECTORS_KEY).convertTo[Seq[ConnectorDefinitions]],
+        connectors = noJsNull(json)(CONNECTORS_KEY).convertTo[Seq[ConnectorDefinition]],
         nodeNames = noJsNull(json)(NODE_NAMES_KEY).convertTo[Seq[String]].toSet,
         deadNodes = noJsNull(json)(DEAD_NODES_KEY).convertTo[Seq[String]].toSet
       )

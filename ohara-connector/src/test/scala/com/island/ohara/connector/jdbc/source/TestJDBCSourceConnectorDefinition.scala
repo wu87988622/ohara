@@ -28,7 +28,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class TestJDBCSourceConnectorDefinitions extends WithBrokerWorker with Matchers {
+class TestJDBCSourceConnectorDefinition extends WithBrokerWorker with Matchers {
   private[this] val jdbcSource = new JDBCSourceConnector
   private[this] val workerClient = WorkerClient(testUtil().workersConnProps())
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)

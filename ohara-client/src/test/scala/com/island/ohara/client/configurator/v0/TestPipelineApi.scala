@@ -51,7 +51,7 @@ class TestPipelineApi extends SmallTest with Matchers {
   def parseDeprecatedJsonOfPipeline(): Unit = {
     val pipeline = Pipeline(
       name = CommonUtils.randomString(),
-      workerClusterName = CommonUtils.randomString(),
+      workerClusterName = Some(CommonUtils.randomString()),
       objects = Seq.empty,
       flows = Seq.empty,
       lastModified = CommonUtils.current(),
@@ -67,7 +67,7 @@ class TestPipelineApi extends SmallTest with Matchers {
     val to = CommonUtils.randomString()
     val pipeline = Pipeline(
       name = CommonUtils.randomString(),
-      workerClusterName = CommonUtils.randomString(),
+      workerClusterName = Some(CommonUtils.randomString()),
       objects = Seq.empty,
       flows = Seq(
         Flow(

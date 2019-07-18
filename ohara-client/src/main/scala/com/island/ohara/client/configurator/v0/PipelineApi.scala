@@ -133,13 +133,15 @@ object PipelineApi {
       }
 
       override def write(obj: Creation): JsValue = JsObject(
-        Data.NAME_KEY -> JsString(obj.name),
-        workerClusterNameKey -> obj.workerClusterName.map(JsString(_)).getOrElse(JsNull),
-        flowsKey -> JsArray(obj.flows.map(FLOW_JSON_FORMAT.write).toVector),
-        rulesKey -> JsObject(obj.rules.map { e =>
-          e._1 -> JsArray(e._2.map(JsString(_)).toVector)
-        }),
-        Data.TAGS_KEY -> JsObject(obj.tags)
+        noJsNull(Map(
+          Data.NAME_KEY -> JsString(obj.name),
+          workerClusterNameKey -> obj.workerClusterName.map(JsString(_)).getOrElse(JsNull),
+          flowsKey -> JsArray(obj.flows.map(FLOW_JSON_FORMAT.write).toVector),
+          rulesKey -> JsObject(obj.rules.map { e =>
+            e._1 -> JsArray(e._2.map(JsString(_)).toVector)
+          }),
+          Data.TAGS_KEY -> JsObject(obj.tags)
+        ))
       )
     })
     .rejectEmptyString()
@@ -170,7 +172,7 @@ object PipelineApi {
   final case class Pipeline(name: String,
                             flows: Seq[Flow],
                             objects: Seq[ObjectAbstract],
-                            workerClusterName: String,
+                            workerClusterName: Option[String],
                             lastModified: Long,
                             tags: Map[String, JsValue])
       extends Data {
@@ -185,27 +187,31 @@ object PipelineApi {
     private[this] val rulesKey = "rules"
     private[this] val objectsKey = "objects"
     private[this] val lastModifiedKey = "lastModified"
+
     override def read(json: JsValue): Pipeline = Pipeline(
-      name = json.asJsObject.fields(Data.NAME_KEY).convertTo[String],
-      workerClusterName = json.asJsObject.fields(workerClusterNameKey).convertTo[String],
-      flows = json.asJsObject.fields
+      name = noJsNull(json)(Data.NAME_KEY).convertTo[String],
+      workerClusterName = noJsNull(json).get(workerClusterNameKey).map(_.convertTo[String]),
+      flows = noJsNull(json)
         .get(flowsKey)
         .map(_.asInstanceOf[JsArray].elements.map(FLOW_JSON_FORMAT.read).toSeq)
         .getOrElse(Seq.empty),
-      objects = json.asJsObject.fields(objectsKey).asInstanceOf[JsArray].elements.map(OBJECT_ABSTRACT_JSON_FORMAT.read),
-      lastModified = json.asJsObject.fields(lastModifiedKey).asInstanceOf[JsNumber].value.toLong,
-      tags = json.asJsObject.fields(Data.TAGS_KEY).asJsObject.fields
+      objects = noJsNull(json)(objectsKey).asInstanceOf[JsArray].elements.map(OBJECT_ABSTRACT_JSON_FORMAT.read),
+      lastModified = noJsNull(json)(lastModifiedKey).asInstanceOf[JsNumber].value.toLong,
+      tags = noJsNull(json)(Data.TAGS_KEY).asJsObject.fields
     )
     override def write(obj: Pipeline): JsValue = JsObject(
-      Data.NAME_KEY -> JsString(obj.name),
-      workerClusterNameKey -> JsString(obj.workerClusterName),
-      flowsKey -> JsArray(obj.flows.map(FLOW_JSON_FORMAT.write).toVector),
-      rulesKey -> JsObject(obj.rules.map { e =>
-        e._1 -> JsArray(e._2.map(JsString(_)).toVector)
-      }),
-      objectsKey -> JsArray(obj.objects.map(OBJECT_ABSTRACT_JSON_FORMAT.write).toVector),
-      lastModifiedKey -> JsNumber(obj.lastModified),
-      Data.TAGS_KEY -> JsObject(obj.tags)
+      noJsNull(
+        Map(
+          Data.NAME_KEY -> JsString(obj.name),
+          workerClusterNameKey -> obj.workerClusterName.map(JsString(_)).getOrElse(JsNull),
+          flowsKey -> JsArray(obj.flows.map(FLOW_JSON_FORMAT.write).toVector),
+          rulesKey -> JsObject(obj.rules.map { e =>
+            e._1 -> JsArray(e._2.map(JsString(_)).toVector)
+          }),
+          objectsKey -> JsArray(obj.objects.map(OBJECT_ABSTRACT_JSON_FORMAT.write).toVector),
+          lastModifiedKey -> JsNumber(obj.lastModified),
+          Data.TAGS_KEY -> JsObject(obj.tags)
+        ))
     )
   }
 
@@ -216,7 +222,7 @@ object PipelineApi {
     @Optional("default name is a random string. But it is required in updating")
     def name(name: String): Request
 
-    @Optional("server will match a broker cluster for you if the wk name is ignored")
+    @Optional("useless field")
     def workerClusterName(workerClusterName: String): Request
 
     @Optional("default value is empty")

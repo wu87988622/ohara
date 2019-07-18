@@ -981,24 +981,17 @@ via following flow.
 }
 ```
 
-Each object described in pipeline must be related to a existent object. If you delete a object which is already used by
-a pipeline, it will be deleted from pipeline's flow.
+The objects grouped by pipeline should be existent. Otherwise, pipeline will ignore them in generating object abstracts.
 
-All objects in pipeline MUST work on the same cluster hierarchy. For example, you have following clusters.
-1. a ([worker cluster](#worker)) based on
-1. b ([broker cluster](#broker)) based on
-1. c ([zookeeper cluster](#zookeeper))
-
-When you add a [topic](#topic) to pipeline which is located at cluster-a, the [topic](#topic) must be located at broker-b. Otherwise, you will get
-a error saying the [topic](#topic) can't be belong to you. A [connect](#connector) which is not hosted by same worker cluster
-can't be related to pipeline also.
+The objects grouped by pipeline don't need to located on the same cluster hierarchy. Grouping a topic, which is placed at
+broker_0, and a topic, which is located at broker_1, is valid. However, the object based on a dead cluster will get an
+abstract with error state.
 
 The properties used in generating pipeline are shown below.
 1. name (**string**) — pipeline's name
 1. flows (**array(object)**) — the relationship between objects
   - flows[i].from (**string**) — the endpoint of source
   - flows[i].to (**array(string)**) — the endpoint of sink
-1. workerClusterName (**string**) — target worker cluster
 1. tags (**object**) — the extra description to this object
 
 Following information are written by ohara.
@@ -1044,7 +1037,6 @@ to find the status of the [connector](#connector). That is to say, it is ok to a
 {
   "name": "pipeline0",
   "lastModified": 1554950999668,
-  "workerClusterName": "wk00",
   "flows": [
     {
       "from": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
@@ -1101,7 +1093,6 @@ example creates a pipeline with only a object and leave empty in **to** field.
 {
   "name": "pipeline1",
   "lastModified": 1554952500972,
-  "workerClusterName": "wk00",
   "flows": [
     {
       "from": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
@@ -1149,7 +1140,6 @@ example creates a pipeline with only a object and leave empty in **to** field.
 {
   "name": "pipeline0",
   "lastModified": 1554950999668,
-  "workerClusterName": "wk00",
   "flows": [
     {
       "from": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
@@ -1198,7 +1188,6 @@ use [GET](#get-a-pipeline) to fetch details of **single** pipeline.
   {
     "name": "pipeline0",
     "lastModified": 1554950999668,
-    "workerClusterName": "wk00",
     "flows": [
       {
         "from": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
@@ -1259,7 +1248,6 @@ Deleting a pipeline does not delete the objects related to the pipeline.
 {
   "name": "pipeline0",
   "lastModified": 1554950999668,
-  "workerClusterName": "wk00",
   "flows": [
     {
       "from": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",

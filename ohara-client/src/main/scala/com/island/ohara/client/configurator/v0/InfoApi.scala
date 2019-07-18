@@ -15,7 +15,7 @@
  */
 
 package com.island.ohara.client.configurator.v0
-import com.island.ohara.client.configurator.v0.WorkerApi.ConnectorDefinitions
+import com.island.ohara.client.configurator.v0.WorkerApi.ConnectorDefinition
 import com.island.ohara.client.kafka.WorkerJson.Plugin
 import com.island.ohara.common.data.DataType
 import com.island.ohara.kafka.connector.json.SettingDefinitions
@@ -41,7 +41,7 @@ object InfoApi {
   final case class ConnectorVersion(className: String, typeName: String, version: String, revision: String)
   implicit val CONNECTOR_VERSION_JSON_FORMAT: RootJsonFormat[ConnectorVersion] = jsonFormat4(ConnectorVersion)
 
-  def toConnectorVersion(pluginDescription: ConnectorDefinitions): ConnectorVersion = {
+  def toConnectorVersion(pluginDescription: ConnectorDefinition): ConnectorVersion = {
     def orUnknown(f: => String): String = try f
     catch {
       case _: Throwable => "unknown"
