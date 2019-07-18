@@ -206,13 +206,7 @@ trait JsonRefiner[T] {
     * @param key key
     * @return this refiner
     */
-  def rejectEmptyArray(key: String): JsonRefiner[T] = valueChecker(
-    key, {
-      case s: JsArray if s.elements.isEmpty =>
-        throw DeserializationException(s"""the value of \"$key\" MUST be NOT empty array!!!""", fieldNames = List(key))
-      case _ => // we don't care for other types
-    }
-  )
+  def rejectEmptyArray(key: String): JsonRefiner[T] = arrayRestriction(key).rejectEmpty().toRefiner
 
   /**
     * add the array restriction to specific value.
@@ -374,7 +368,7 @@ object JsonRefiner {
     def rejectKeyword(keyword: String): ArrayRestriction[T] = addChecker(
       (key, arr) =>
         if (arr.elements.exists(_.asInstanceOf[JsString].value == keyword))
-          throw DeserializationException(s"""$key cannot use keyword \"$keyword\"!!!"""))
+          throw DeserializationException(s"""the \"$keyword\" is a illegal word to $key!!!"""))
 
     /**
       * throw exception if this key is empty array.
@@ -383,7 +377,7 @@ object JsonRefiner {
     def rejectEmpty(): ArrayRestriction[T] = addChecker(
       (key, arr) =>
         if (arr.elements.isEmpty)
-          throw DeserializationException(s"""$key cannot be empty!!!"""))
+          throw DeserializationException(s"""$key cannot be an empty array!!!"""))
 
     /**
       * Complete this restriction and add it to refiner.
