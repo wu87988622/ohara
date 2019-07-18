@@ -33,8 +33,8 @@ object InfoApi {
     override def write(obj: DataType): JsValue = JsString(obj.name)
     override def read(json: JsValue): DataType = DataType.valueOf(json.convertTo[String])
   }
-  final case class ConfiguratorVersion(version: String, user: String, revision: String, date: String)
-  implicit val CONFIGURATOR_VERSION_JSON_FORMAT: RootJsonFormat[ConfiguratorVersion] = jsonFormat4(ConfiguratorVersion)
+  final case class ConfiguratorVersion(version: String, branch: String, user: String, revision: String, date: String)
+  implicit val CONFIGURATOR_VERSION_JSON_FORMAT: RootJsonFormat[ConfiguratorVersion] = jsonFormat5(ConfiguratorVersion)
 
   val INFO_PREFIX_PATH: String = "info"
 

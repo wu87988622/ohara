@@ -71,6 +71,7 @@ We all love to see the version of software, right? Ohara provide a API to displa
 following information.
 
 1. version (**string**) — version of configurator
+1. branch(**string**) from which ohara repo branch
 1. user(**string**) — builder of configurator
 1. revision(**string**) — latest commit of configurator
 1. date(**string**) — build date of configurator
@@ -86,6 +87,7 @@ following information.
 {
   "versionInfo": {
     "version": "0.3-SNAPSHOT",
+    "branch": "master",
     "user": "Chia-Ping Tsai",
     "revision": "9af9578041f069a9a452c7fda5f7ed7217c0deea",
     "date": "2019-03-21 17:55:06"
