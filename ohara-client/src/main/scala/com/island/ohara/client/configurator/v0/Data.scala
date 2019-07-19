@@ -16,6 +16,7 @@
 
 package com.island.ohara.client.configurator.v0
 
+import com.island.ohara.kafka.connector.json.SettingDefinition
 import spray.json.JsValue
 
 /**
@@ -23,6 +24,7 @@ import spray.json.JsValue
   * All members are declared as "def" since not all subclasses intend to represent all members in restful APIs.
   */
 trait Data {
+  def group: String
   def name: String
   def lastModified: Long
   def kind: String
@@ -36,7 +38,10 @@ object Data {
     * the group is useful to Ohara Manager. However, in simple case, the group is a bit noisy so we offer the default group to all objects when
     * input group is ignored.
     */
-  val DEFAULT_GROUP = "default"
-  val NAME_KEY = "name"
-  val TAGS_KEY = "tags"
+  val DEFAULT_GROUP: String = SettingDefinition.CONNECTOR_GROUP_DEFINITION.defaultValue()
+  val GROUP_KEY: String = SettingDefinition.CONNECTOR_GROUP_DEFINITION.key()
+  val NAME_KEY: String = SettingDefinition.CONNECTOR_NAME_DEFINITION.key()
+  val TAGS_KEY: String = SettingDefinition.TAGS_DEFINITION.key()
+  val FORCE_KEY = "force"
+  val CLUSTER_KEY = "cluster"
 }

@@ -50,6 +50,16 @@ public class SettingDefinition implements JsonObject {
   static final String COLUMN_DATA_TYPE_KEY = "dataType";
   // -------------------------------[default setting]-------------------------------//
   private static final AtomicInteger ORDER_COUNTER = new AtomicInteger(0);
+  public static final SettingDefinition CONNECTOR_GROUP_DEFINITION =
+      SettingDefinition.builder()
+          .displayName("Connector group")
+          .key("group")
+          .valueType(Type.STRING)
+          .documentation("the group of this connector")
+          .group(CORE_GROUP)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
+          .optional("default")
+          .build();
   /** this setting is mapped to kafka's name. */
   public static final SettingDefinition CONNECTOR_NAME_DEFINITION =
       SettingDefinition.builder()

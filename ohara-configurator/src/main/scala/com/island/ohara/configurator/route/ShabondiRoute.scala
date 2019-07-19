@@ -51,9 +51,7 @@ object ShabondiRoute {
     implicit executionContext: ExecutionContext) = {
     LOG.info(s"update shabondi: $name")
     val updateValue = (data: ShabondiDescription) =>
-      Future.successful(
-        duplicateShabondiDescription(data, property).copy(lastModified = CommonUtils.current())
-    )
+      duplicateShabondiDescription(data, property).copy(lastModified = CommonUtils.current())
     store.addIfPresent[ShabondiDescription](name, updateValue)
   }
 
@@ -61,9 +59,7 @@ object ShabondiRoute {
     implicit executionContext: ExecutionContext) = {
     LOG.info(s"update shabondi: $name")
     val updateValue = (data: ShabondiDescription) =>
-      Future.successful(
-        data.copy(state = Some(state), lastModified = CommonUtils.current())
-    )
+      data.copy(state = Some(state), lastModified = CommonUtils.current())
     store.addIfPresent[ShabondiDescription](name, updateValue)
   }
 

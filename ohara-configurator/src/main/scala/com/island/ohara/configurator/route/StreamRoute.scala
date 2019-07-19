@@ -100,16 +100,14 @@ private[configurator] object StreamRoute {
         .flatMap {
           case (info, error) =>
             store.addIfPresent[StreamAppDescription](
-              props.name,
-              previous =>
-                Future.successful(
-                  previous.copy(
-                    nodeNames = info.nodeNames,
-                    deadNodes = info.deadNodes,
-                    state = info.state,
-                    error = error,
-                    metrics = Metrics(meterCache.meters(info).getOrElse("streamapp", Seq.empty))
-                  )
+              name = props.name,
+              updater = (previous: StreamAppDescription) =>
+                previous.copy(
+                  nodeNames = info.nodeNames,
+                  deadNodes = info.deadNodes,
+                  state = info.state,
+                  error = error,
+                  metrics = Metrics(meterCache.meters(info).getOrElse("streamapp", Seq.empty))
               )
             )
         }
@@ -216,8 +214,8 @@ private[configurator] object StreamRoute {
                   .map(_._1.asInstanceOf[StreamClusterInfo])
                   .flatMap(clusterInfo =>
                     store.addIfPresent[StreamAppDescription](
-                      name,
-                      data => Future.successful(data.copy(state = clusterInfo.state))
+                      name = name,
+                      updater = (previous: StreamAppDescription) => previous.copy(state = clusterInfo.state)
                   ))
               } else {
                 // initial the cluster creation request
@@ -296,8 +294,8 @@ private[configurator] object StreamRoute {
                         .flatMap {
                           case (state, error) =>
                             store.addIfPresent[StreamAppDescription](
-                              name,
-                              data => Future.successful(data.copy(state = state, error = error))
+                              name = name,
+                              updater = (previous: StreamAppDescription) => previous.copy(state = state, error = error)
                             )
                       })
               }
@@ -325,15 +323,15 @@ private[configurator] object StreamRoute {
                       .flatMap {
                         case (state, error) =>
                           store.addIfPresent[StreamAppDescription](
-                            name,
-                            data => Future.successful(data.copy(state = state, error = error))
+                            name = name,
+                            updater = (previous: StreamAppDescription) => previous.copy(state = state, error = error)
                           )
                       }
                   } else {
                     // stream cluster not exists, update store only
                     store.addIfPresent[StreamAppDescription](
-                      name,
-                      data => Future.successful(data.copy(state = None, error = None))
+                      name = name,
+                      updater = (previous: StreamAppDescription) => previous.copy(state = None, error = None)
                     )
                   }
                 }

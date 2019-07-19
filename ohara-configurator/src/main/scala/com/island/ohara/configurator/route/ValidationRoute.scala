@@ -21,8 +21,8 @@ import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives.{as, complete, entity, path, pathPrefix, put, _}
 import com.island.ohara.agent.{BrokerCollie, ClusterCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ConnectorApi.Creation
+import com.island.ohara.client.configurator.v0.Data
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.Parameters
 import com.island.ohara.client.configurator.v0.QueryApi.{RdbColumn, RdbInfo, RdbTable}
 import com.island.ohara.client.configurator.v0.ValidationApi._
 import com.island.ohara.common.annotations.VisibleForTesting
@@ -44,7 +44,7 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
     rm2: RootJsonFormat[Report],
     executionContext: ExecutionContext): server.Route = path(root) {
     put {
-      parameter(Parameters.CLUSTER_NAME.?) { clusterName =>
+      parameter(Data.CLUSTER_KEY ?) { clusterName =>
         entity(as[Req])(req =>
           complete(verify(clusterName, req).map { reports =>
             if (reports.isEmpty) throw new IllegalStateException(s"No report!!! Failed to run verification on $root")
@@ -165,7 +165,7 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
                     node.password == req.password
                   }
                   .map(_.copy(validationReport = Some(report)))
-                  .map(node => dataStore.add[Node](node.hostname, node).map(_ => report))
+                  .map(node => dataStore.add[Node](node).map(_ => report))
                   .getOrElse(Future.successful(report))
               }
             }

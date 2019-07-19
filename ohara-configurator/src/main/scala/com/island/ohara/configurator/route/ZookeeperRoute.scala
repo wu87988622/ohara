@@ -47,15 +47,15 @@ object ZookeeperRoute {
               }
             }
             .flatMap { finalData =>
-              store.addIfPresent[ZookeeperClusterInfo](info.name,
-                                                       previous =>
-                                                         Future.successful(
-                                                           previous.copy(
-                                                             state = finalData.state,
-                                                             nodeNames = finalData.nodeNames,
-                                                             deadNodes = finalData.deadNodes,
-                                                           )
-                                                       ))
+              store.addIfPresent[ZookeeperClusterInfo](
+                name = info.name,
+                updater = (previous: ZookeeperClusterInfo) =>
+                  previous.copy(
+                    state = finalData.state,
+                    nodeNames = finalData.nodeNames,
+                    deadNodes = finalData.deadNodes,
+                )
+              )
           }
       )
   }

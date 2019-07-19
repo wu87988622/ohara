@@ -76,6 +76,8 @@ object StreamApi {
                                         lastModified: Long,
                                         tags: Map[String, JsValue])
       extends Data {
+    // streamapp does not support to define group
+    override def group: String = Data.DEFAULT_GROUP
     override def kind: String = "streamApp"
   }
   implicit val STREAMAPP_DESCRIPTION_JSON_FORMAT: RootJsonFormat[StreamAppDescription] = jsonFormat15(

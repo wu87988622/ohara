@@ -23,23 +23,24 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 import com.island.ohara.client.configurator.v0.Data
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.Releasable
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import org.rocksdb.{ColumnFamilyDescriptor, _}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
+import RocksDataStore.Key
 
 /**
   * RocksStore is based on Facebook RocksDB. The different type is stored in different column family.
   * @param folder used to store data in disk
-  * @param keySerializer key serializer
-  * @param valueSerializer value serializer
+  * @param dataSerializer value serializer
   */
-private[store] class RocksDataStore(folder: String,
-                                    keySerializer: Serializer[String],
-                                    valueSerializer: Serializer[Data])
-    extends DataStore {
+private[store] class RocksDataStore(folder: String, dataSerializer: Serializer[Data]) extends DataStore {
+  private[this] val keySerializer: Serializer[Key] = new Serializer[Key] {
+    override def to(obj: Key): Array[Byte] = Serializer.OBJECT.to(obj)
+    override def from(bytes: Array[Byte]): Key = Serializer.OBJECT.from(bytes).asInstanceOf[Key]
+  }
   private[this] val closed = new AtomicBoolean(false)
   private[this] val classesAndHandles = new ConcurrentHashMap[String, ColumnFamilyHandle]()
 
@@ -88,13 +89,13 @@ private[store] class RocksDataStore(folder: String,
     */
   private[this] def handlers(): Seq[ColumnFamilyHandle] = doIfNotClosed(classesAndHandles.values().asScala.toList)
 
-  private[this] def toMap(iter: RocksIterator, firstKey: String, endKey: String): Map[String, Data] =
+  private[this] def toMap(iter: RocksIterator, firstKey: Key, endKey: Key): Map[Key, Data] =
     try {
-      if (firstKey == null) iter.seekToFirst() else iter.seek(toKey(firstKey))
+      if (firstKey == null) iter.seekToFirst() else iter.seek(toBytes(firstKey))
       Iterator
         .continually(
           if (iter.isValid)
-            try Some((fromKey(iter.key()), fromValue(iter.value())))
+            try Some((toKey(iter.key()), toData(iter.value())))
             finally iter.next()
           else None)
         .takeWhile(_.exists {
@@ -105,19 +106,21 @@ private[store] class RocksDataStore(folder: String,
         .toMap
     } finally iter.close()
 
-  private[this] def toKey(key: String): Array[Byte] = keySerializer.to(Objects.requireNonNull(key))
-  private[this] def fromKey(key: Array[Byte]): String = keySerializer.from(Objects.requireNonNull(key))
-  private[this] def toValue(value: Data): Array[Byte] = valueSerializer.to(Objects.requireNonNull(value))
-  private[this] def fromValue(value: Array[Byte]): Data = valueSerializer.from(Objects.requireNonNull(value))
+  private[this] def toBytes(key: Key): Array[Byte] = keySerializer.to(Objects.requireNonNull(key))
+  private[this] def toKey(key: Array[Byte]): Key = keySerializer.from(Objects.requireNonNull(key))
+  private[this] def toBytes(value: Data): Array[Byte] = dataSerializer.to(Objects.requireNonNull(value))
+  private[this] def toData(value: Array[Byte]): Data = dataSerializer.from(Objects.requireNonNull(value))
 
-  private[this] def _get(handler: ColumnFamilyHandle, name: String): Option[Data] =
-    Option(db.get(handler, toKey(name))).map(fromValue)
+  private[this] def _get(handler: ColumnFamilyHandle, key: Key): Option[Data] =
+    Option(db.get(handler, toBytes(key))).map(toData)
 
-  override def get[T <: Data: ClassTag](name: String)(implicit executor: ExecutionContext): Future[Option[T]] =
-    Future.successful(_get(getOrCreateHandler[T], name).map(_.asInstanceOf[T]))
+  override def get[T <: Data: ClassTag](group: String, name: String)(
+    implicit executor: ExecutionContext): Future[Option[T]] =
+    Future.successful(_get(getOrCreateHandler[T], Key(group, name)).map(_.asInstanceOf[T]))
 
-  override def value[T <: Data: ClassTag](name: String)(implicit executor: ExecutionContext): Future[T] = get[T](name)
-    .map(_.getOrElse(throw new NoSuchElementException(s"$name doesn't exist in ${classTag[T].runtimeClass.getName}")))
+  override def value[T <: Data: ClassTag](group: String, name: String)(implicit executor: ExecutionContext): Future[T] =
+    get[T](group, name)
+      .map(_.getOrElse(throw new NoSuchElementException(s"$name doesn't exist in ${classTag[T].runtimeClass.getName}")))
 
   override def values[T <: Data: ClassTag]()(implicit executor: ExecutionContext): Future[Seq[T]] =
     Future.successful(
@@ -128,42 +131,50 @@ private[store] class RocksDataStore(folder: String,
         .values
         .toList)
 
-  override def remove[T <: Data: ClassTag](name: String)(implicit executor: ExecutionContext): Future[Boolean] =
-    get[T](name).map { obj =>
-      if (obj.isDefined) db.delete(getOrCreateHandler[T], toKey(name))
+  override def remove[T <: Data: ClassTag](group: String, name: String)(
+    implicit executor: ExecutionContext): Future[Boolean] =
+    get[T](group, name).map { obj =>
+      if (obj.isDefined) db.delete(getOrCreateHandler[T], toBytes(Key(group, name)))
       obj.isDefined
     }
 
-  override def addIfPresent[T <: Data: ClassTag](name: String, updater: T => Future[T])(
+  override def addIfPresent[T <: Data: ClassTag](group: String, name: String, updater: T => T)(
     implicit executor: ExecutionContext): Future[T] =
-    value[T](name)
-      .flatMap(updater)
+    value[T](group, name)
+      .map(updater)
       .map(newValue => {
-        db.put(getOrCreateHandler(newValue.getClass), toKey(newValue.name), toValue(newValue))
+        if (newValue.group != group)
+          throw new IllegalArgumentException(
+            s"""the new group:\"${newValue.group}\" is not equal to group:\"$group\"""")
+        if (newValue.name != name)
+          throw new IllegalArgumentException(s"""the new name:\"${newValue.name}\" is not equal to name:\"$name\"""")
+        db.put(getOrCreateHandler(newValue.getClass), toBytes(Key(group, name)), toBytes(newValue))
         newValue
       })
 
-  override def addIfAbsent[T <: Data](key: String, data: T)(implicit executor: ExecutionContext): Future[T] =
+  override def addIfAbsent[T <: Data](data: T)(implicit executor: ExecutionContext): Future[T] =
     Future.successful {
-      if (_get(getOrCreateHandler(data.getClass), data.name).isDefined)
-        throw new IllegalStateException(s"$key exists on ${data.getClass.getName}")
+      if (_get(getOrCreateHandler(data.getClass), Key(data.group, data.name)).isDefined)
+        throw new IllegalStateException(s"(${data.group}, ${data.name}} already exists on ${data.getClass.getName}")
       else {
-        db.put(getOrCreateHandler(data.getClass), toKey(key), toValue(data))
+        db.put(getOrCreateHandler(data.getClass), toBytes(Key(data.group, data.name)), toBytes(data))
         data
       }
     }
 
-  override def add[T <: Data](key: String, data: T)(implicit executor: ExecutionContext): Future[T] =
+  override def add[T <: Data](data: T)(implicit executor: ExecutionContext): Future[T] =
     Future.successful {
-      db.put(getOrCreateHandler(data.getClass), toKey(key), toValue(data))
+      db.put(getOrCreateHandler(data.getClass), toBytes(Key(data.group, data.name)), toBytes(data))
       data
     }
 
-  override def exist[T <: Data: ClassTag](name: String)(implicit executor: ExecutionContext): Future[Boolean] =
-    get[T](name).map(_.isDefined)
+  override def exist[T <: Data: ClassTag](group: String, name: String)(
+    implicit executor: ExecutionContext): Future[Boolean] =
+    get[T](group, name).map(_.isDefined)
 
-  override def nonExist[T <: Data: ClassTag](name: String)(implicit executor: ExecutionContext): Future[Boolean] =
-    get[T](name).map(_.isEmpty)
+  override def nonExist[T <: Data: ClassTag](group: String, name: String)(
+    implicit executor: ExecutionContext): Future[Boolean] =
+    get[T](group, name).map(_.isEmpty)
 
   override def size(): Int =
     handlers().map { handler =>
@@ -190,12 +201,23 @@ private[store] class RocksDataStore(folder: String,
   override def raws()(implicit executor: ExecutionContext): Future[Seq[Data]] =
     Future.successful(handlers().flatMap(handler => toMap(db.newIterator(handler), null, null).values.toList))
 
-  override def raws(name: String)(implicit executor: ExecutionContext): Future[Seq[Data]] =
-    Future.successful(handlers().flatMap(handler => toMap(db.newIterator(handler), name, name).values.toList))
+  override def raws(group: String, name: String)(implicit executor: ExecutionContext): Future[Seq[Data]] =
+    Future.successful(
+      handlers().flatMap(handler => toMap(db.newIterator(handler), Key(group, name), Key(group, name)).values.toList))
 
   /**
     * RocksDB has a default cf in creating, and the cf is useless to us so we should not count it.
     * @return number of stored data types.
     */
   override def numberOfTypes(): Int = doIfNotClosed(classesAndHandles.size() - 1)
+}
+
+object RocksDataStore {
+  private case class Key(group: String, name: String)
+  private object Key {
+    def apply(group: String, name: String) = new Key(
+      group = CommonUtils.requireNonEmpty(group),
+      name = CommonUtils.requireNonEmpty(name)
+    )
+  }
 }

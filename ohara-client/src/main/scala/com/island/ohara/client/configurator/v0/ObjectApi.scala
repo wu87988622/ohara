@@ -24,12 +24,15 @@ import scala.concurrent.{ExecutionContext, Future}
 object ObjectApi {
   val OBJECT_PREFIX_PATH: String = "objects"
 
-  final case class Object(name: String, lastModified: Long, kind: String, tags: Map[String, JsValue]) extends Data
+  final case class Object(name: String, lastModified: Long, kind: String, tags: Map[String, JsValue]) extends Data {
+    // TODO: this will be resolved by https://github.com/oharastream/ohara/issues/1734 ... by chia
+    override def group: String = Data.DEFAULT_GROUP
+  }
   implicit val OBJECT_JSON_FORMAT: RootJsonFormat[Object] = jsonFormat4(Object)
 
   class Access private[v0] extends BasicAccess(OBJECT_PREFIX_PATH) {
-    def get(name: String)(implicit executionContext: ExecutionContext): Future[Object] =
-      exec.get[Object, ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$name")
+    def get(name: String)(implicit executionContext: ExecutionContext): Future[Seq[Object]] =
+      exec.get[Seq[Object], ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$name")
     def list()(implicit executionContext: ExecutionContext): Future[Seq[Object]] =
       exec.get[Seq[Object], ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}")
   }

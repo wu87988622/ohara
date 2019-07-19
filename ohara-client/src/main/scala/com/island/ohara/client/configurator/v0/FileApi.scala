@@ -124,7 +124,7 @@ object FileApi {
 
   final class Access private[v0] extends BasicAccess(FILE_PREFIX_PATH) {
     private[this] def url(group: String, name: String) =
-      s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/${CommonUtils.requireNonEmpty(name)}?${Parameters.GROUP_NAME}=${CommonUtils
+      s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/${CommonUtils.requireNonEmpty(name)}?${Data.GROUP_KEY}=${CommonUtils
         .requireNonEmpty(group)}"
     def list()(implicit executionContext: ExecutionContext): Future[Seq[FileInfo]] =
       exec.get[Seq[FileInfo], ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}")
@@ -164,9 +164,9 @@ object FileApi {
                                         HttpEntity.fromFile(MediaTypes.`application/octet-stream`, file),
                                         Map("filename" -> name)),
             // add group
-            Multipart.FormData.BodyPart(Parameters.GROUP_NAME, group),
+            Multipart.FormData.BodyPart(Data.GROUP_KEY, group),
             // add tags
-            Multipart.FormData.BodyPart(Parameters.TAGS_NAME, FileApi.toString(tags))
+            Multipart.FormData.BodyPart(Data.TAGS_KEY, FileApi.toString(tags))
           ))
           .to[RequestEntity]
           .map(e =>

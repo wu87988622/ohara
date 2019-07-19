@@ -134,7 +134,7 @@ private[route] object RouteUtils {
             complete(hookBeforeDelete(name).flatMap(name => store.remove[Res](name).map(_ => StatusCodes.NoContent)))) ~
           put(entity(as[Update])(update =>
             complete(store.get[Res](rm.check("name", JsString(name)).value).flatMap { previous =>
-              hookOfUpdate(name, update, previous).flatMap(res => store.add(name, res))
+              hookOfUpdate(name, update, previous).flatMap(res => store.add(res))
             })))
       }
     }
@@ -169,7 +169,7 @@ private[route] object RouteUtils {
           }
         case STOP_COMMAND =>
           put {
-            parameter(Parameters.FORCE_REMOVE ?)(
+            parameter(Data.FORCE_KEY ?)(
               force =>
                 complete(
                   collie
@@ -188,12 +188,10 @@ private[route] object RouteUtils {
                           }
                           .flatMap {
                             case (state, error) =>
-                              store.addIfPresent[Req](
-                                clusterName,
-                                data => Future.successful(data.clone2(state, error).asInstanceOf[Req]))
+                              store.addIfPresent[Req](clusterName,
+                                                      (data: Req) => data.clone2(state, error).asInstanceOf[Req])
                           } else
-                        store.addIfPresent[Req](clusterName,
-                                                data => Future.successful(data.clone2(None, None).asInstanceOf[Req]))
+                        store.addIfPresent[Req](clusterName, (data: Req) => data.clone2(None, None).asInstanceOf[Req])
                     )))
           }
         case nodeName =>
@@ -248,7 +246,7 @@ private[route] object RouteUtils {
           }
         } ~ pathEnd {
           delete {
-            parameter(Parameters.FORCE_REMOVE ?)(force =>
+            parameter(Data.FORCE_KEY ?)(force =>
               // we must list ALL clusters !!!
               complete(clusterCollie.clusters().map(_.keys.toSeq).flatMap { clusters =>
                 if (clusters.exists(_.name == clusterName))

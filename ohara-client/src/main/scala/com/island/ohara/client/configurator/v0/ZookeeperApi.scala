@@ -99,6 +99,8 @@ object ZookeeperApi {
   //TODO : move Data class to ClusterInfo after finished #1544
       extends ClusterInfo
       with Data {
+    // cluster does not support to define group
+    override def group: String = Data.DEFAULT_GROUP
     override def clone2(state: Option[String], error: Option[String]): ZookeeperClusterInfo =
       this.copy(state = state, error = error)
     override def kind: String = ZK_SERVICE_NAME
@@ -191,8 +193,7 @@ object ZookeeperApi {
       * @return information of zookeeper (status None if stop successful, or throw exception)
       */
     def forceStop(name: String)(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
-      exec.put[ZookeeperClusterInfo, ErrorApi.Error](
-        s"${actionUrl(name, STOP_COMMAND)}?${Parameters.FORCE_REMOVE}=true")
+      exec.put[ZookeeperClusterInfo, ErrorApi.Error](s"${actionUrl(name, STOP_COMMAND)}?${Data.FORCE_KEY}=true")
 
     def request: Request = new Request {
       private[this] var name: String = CommonUtils.randomString(LIMIT_OF_NAME_LENGTH)

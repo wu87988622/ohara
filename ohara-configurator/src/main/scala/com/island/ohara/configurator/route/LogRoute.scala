@@ -22,10 +22,10 @@ import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent.ClusterCollie
 import com.island.ohara.client.configurator.v0.BrokerApi.BROKER_PREFIX_PATH
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.{LogApi, Parameters}
+import com.island.ohara.client.configurator.v0.{Data, LogApi}
+import com.island.ohara.client.configurator.v0.LogApi._
 import com.island.ohara.client.configurator.v0.WorkerApi.WORKER_PREFIX_PATH
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZOOKEEPER_PREFIX_PATH
-import com.island.ohara.client.configurator.v0.LogApi._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -62,21 +62,21 @@ object LogRoute {
       pathPrefix(ZOOKEEPER_PREFIX_PATH) {
         path(Segment) { zkClusterName =>
           route(zkClusterName, collie.zookeeperCollie.logs(zkClusterName))
-        } ~ pathEnd(parameter(Parameters.CLUSTER_NAME) { zkClusterName =>
+        } ~ pathEnd(parameter(Data.CLUSTER_KEY) { zkClusterName =>
           // TODO: this api is deprecated
           route(zkClusterName, collie.zookeeperCollie.logs(zkClusterName))
         })
       } ~ pathPrefix(BROKER_PREFIX_PATH) {
         path(Segment) { bkClusterName =>
           route(bkClusterName, collie.brokerCollie.logs(bkClusterName))
-        } ~ pathEnd(parameter(Parameters.CLUSTER_NAME) { bkClusterName =>
+        } ~ pathEnd(parameter(Data.CLUSTER_KEY) { bkClusterName =>
           // TODO: this api is deprecated
           route(bkClusterName, collie.brokerCollie.logs(bkClusterName))
         })
       } ~ pathPrefix(WORKER_PREFIX_PATH) {
         path(Segment) { wkClusterName =>
           route(wkClusterName, collie.workerCollie.logs(wkClusterName))
-        } ~ pathEnd(parameter(Parameters.CLUSTER_NAME) { wkClusterName =>
+        } ~ pathEnd(parameter(Data.CLUSTER_KEY) { wkClusterName =>
           // TODO: this api is deprecated
           route(wkClusterName, collie.workerCollie.logs(wkClusterName))
         })

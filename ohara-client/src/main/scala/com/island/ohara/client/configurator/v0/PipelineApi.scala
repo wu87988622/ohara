@@ -166,7 +166,10 @@ object PipelineApi {
                                   metrics: Metrics,
                                   lastModified: Long,
                                   tags: Map[String, JsValue])
-      extends Data
+      extends Data {
+    // TODO: this will be resolved by https://github.com/oharastream/ohara/issues/1734 ... by chia
+    override def group: String = Data.DEFAULT_GROUP
+  }
   implicit val OBJECT_ABSTRACT_JSON_FORMAT: RootJsonFormat[ObjectAbstract] = jsonFormat8(ObjectAbstract)
 
   final case class Pipeline(name: String,
@@ -176,6 +179,9 @@ object PipelineApi {
                             lastModified: Long,
                             tags: Map[String, JsValue])
       extends Data {
+
+    // TODO: this will be resolved by https://github.com/oharastream/ohara/issues/1734 ... by chia
+    override def group: String = Data.DEFAULT_GROUP
     override def kind: String = "pipeline"
     def rules: Map[String, Set[String]] = flows.map { flow =>
       flow.from -> flow.to

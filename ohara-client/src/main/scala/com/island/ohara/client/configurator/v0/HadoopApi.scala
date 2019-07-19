@@ -48,6 +48,8 @@ object HadoopApi {
       .refine
 
   final case class HdfsInfo(name: String, uri: String, lastModified: Long, tags: Map[String, JsValue]) extends Data {
+    // TODO: this will be resolved by https://github.com/oharastream/ohara/issues/1734 ... by chia
+    override def group: String = Data.DEFAULT_GROUP
     override def kind: String = "hdfs"
   }
 

@@ -23,12 +23,8 @@ import org.scalatest.Matchers
 class TestDataStoreBuilder extends SmallTest with Matchers {
 
   @Test
-  def testNullKeySerializer(): Unit =
-    an[NullPointerException] should be thrownBy DataStore.builder.keySerializer(null)
-
-  @Test
   def testNullValueSerializer(): Unit =
-    an[NullPointerException] should be thrownBy DataStore.builder.valueSerializer(null)
+    an[NullPointerException] should be thrownBy DataStore.builder.dataSerializer(null)
 
   @Test
   def testNullFolder(): Unit =
