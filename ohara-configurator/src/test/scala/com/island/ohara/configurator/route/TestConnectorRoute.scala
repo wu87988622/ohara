@@ -352,47 +352,10 @@ class TestConnectorRoute extends SmallTest with Matchers {
   }
 
   @Test
-  def testParseColumnJson(): Unit = {
-    import spray.json._
-    val request = ConnectorApi.COLUMN_JSON_FORMAT.read("""
-                                                         |{
-                                                         |  "name":"cf",
-                                                         |  "dataType":"boolean",
-                                                         |  "order":1
-                                                         |}
-                                                       """.stripMargin.parseJson)
-    request.name shouldBe "cf"
-    request.newName shouldBe "cf"
-    request.dataType shouldBe DataType.BOOLEAN
-    request.order shouldBe 1
-
-    val request2 = ConnectorApi.COLUMN_JSON_FORMAT.read("""
-                                                          |{
-                                                          |  "name":"cf",
-                                                          |  "newName":null,
-                                                          |  "dataType":"boolean",
-                                                          |  "order":1
-                                                          |}
-                                                        """.stripMargin.parseJson)
-    request2 shouldBe request
-
-    val request3 = ConnectorApi.COLUMN_JSON_FORMAT.read("""
-                                                          |{
-                                                          |  "name":"cf",
-                                                          |  "newName":"cf",
-                                                          |  "dataType":"boolean",
-                                                          |  "order":1
-                                                          |}
-                                                        """.stripMargin.parseJson)
-    request3 shouldBe request
-  }
-
-  @Test
   def testParseCreationJson(): Unit = {
     import spray.json._
     val request =
-      ConnectorApi.CONNECTOR_CREATION_JSON_FORMAT.read(
-        """
+      ConnectorApi.CONNECTOR_CREATION_FORMAT.read("""
           |{
           |  "name":"perf",
           |  "connector.class":"com.island.ohara.connector.perf.PerfSource",

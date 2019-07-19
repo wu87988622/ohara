@@ -19,11 +19,11 @@ import java.util.Objects
 
 import com.island.ohara.client.Enum
 import com.island.ohara.common.annotations.Optional
-import com.island.ohara.common.data.{Column, DataType}
+import com.island.ohara.common.data.Column
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json.{PropGroups, SettingDefinition, StringList}
 import spray.json.DefaultJsonProtocol._
-import spray.json.{DeserializationException, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json.{DeserializationException, JsArray, JsObject, JsString, JsValue, RootJsonFormat}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
@@ -47,50 +47,6 @@ object ConnectorApi {
     case object FAILED extends ConnectorState("FAILED")
     case object DESTROYED extends ConnectorState("DESTROYED")
   }
-  // TODO: remove this format after ohara manager starts to use new APIs
-
-  implicit val COLUMN_JSON_FORMAT: OharaJsonFormat[Column] = JsonRefiner[Column]
-    .format(new RootJsonFormat[Column] {
-      private[this] val nameKey: String = "name"
-      private[this] val newNameKey: String = "newName"
-      private[this] val dataTypeKey: String = "dataType"
-      private[this] val orderKey: String = "order"
-      override def read(json: JsValue): Column = try Column
-        .builder()
-        .name(json.asJsObject.fields(nameKey).convertTo[String])
-        .newName(json.asJsObject.fields(newNameKey).convertTo[String])
-        .dataType(DataType.valueOf(json.asJsObject.fields(dataTypeKey).convertTo[String].toUpperCase))
-        .order(json.asJsObject.fields(orderKey).convertTo[Int])
-        .build()
-      catch {
-        case e: Throwable => throw DeserializationException("failed to parse input string", e)
-      }
-      override def write(obj: Column): JsValue = JsObject(
-        nameKey -> JsString(obj.name),
-        newNameKey -> JsString(obj.newName),
-        dataTypeKey -> JsString(obj.dataType.name),
-        orderKey -> JsNumber(obj.order)
-      )
-    })
-    // the default value of new name is equal to origin name
-    .nullToAnotherValueOfKey("newName", "name")
-    // the order can't be negative!!
-    .rejectNegativeNumber()
-    .rejectEmptyString()
-    .nullToString("name", () => CommonUtils.randomString(10))
-    .refine
-
-  final case class Update(settings: Map[String, JsValue]) {
-    def workerClusterName: Option[String] = Creation(settings).workerClusterName
-  }
-
-  implicit val CONNECTOR_UPDATE_FORMAT: RootJsonFormat[Update] = JsonRefiner[Update]
-    .format(new RootJsonFormat[Update] {
-      override def write(obj: Update): JsValue = JsObject(noJsNull(obj.settings))
-      override def read(json: JsValue): Update = Update(json.asJsObject.fields)
-    })
-    .rejectEmptyString()
-    .refine
 
   final case class Creation(settings: Map[String, JsValue]) extends CreationRequest {
 
@@ -129,7 +85,7 @@ object ConnectorApi {
       .getOrElse(Map.empty)
   }
 
-  implicit val CONNECTOR_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] = JsonRefiner[Creation]
+  implicit val CONNECTOR_CREATION_FORMAT: OharaJsonFormat[Creation] = JsonRefiner[Creation]
     .format(new RootJsonFormat[Creation] {
       override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
       override def read(json: JsValue): Creation = Creation(json.asJsObject.fields)
@@ -139,6 +95,54 @@ object ConnectorApi {
     .rejectEmptyString()
     .nullToString("name", () => CommonUtils.randomString(10))
     .nullToEmptyObject(Data.TAGS_KEY)
+    .valueChecker(
+      SettingDefinition.COLUMNS_DEFINITION.key(), {
+        case v: JsArray if v.elements.nonEmpty =>
+          try {
+            val columns = PropGroups.ofJson(v.toString()).toColumns.asScala
+            // name can't be empty
+            if (columns.exists(_.name().isEmpty))
+              throw DeserializationException(msg = s"name can't be empty", fieldNames = List("name"))
+            // newName can't be empty
+            if (columns.exists(_.newName().isEmpty))
+              throw DeserializationException(msg = s"newName can't be empty", fieldNames = List("newName"))
+            // order can't be negative number
+            if (columns.exists(_.order() < 0))
+              throw DeserializationException(msg = s"order can't be negative number", fieldNames = List("order"))
+            // order can't be duplicate
+            if (columns.map(_.order).toSet.size != columns.size)
+              throw DeserializationException(msg = s"duplicate order:${columns.map(_.order)}",
+                                             fieldNames = List("order"))
+          } catch {
+            case e: DeserializationException => throw e
+            case other: Throwable =>
+              throw DeserializationException(
+                msg = s"the string to ${SettingDefinition.COLUMNS_DEFINITION.key()} is not correct format",
+                cause = other,
+                fieldNames = List(SettingDefinition.COLUMNS_DEFINITION.key())
+              )
+          }
+        case _ => // do nothing
+      }
+    )
+    .refine
+
+  final case class Update(settings: Map[String, JsValue]) {
+    def workerClusterName: Option[String] = Creation(settings).workerClusterName
+  }
+
+  implicit val CONNECTOR_UPDATE_FORMAT: RootJsonFormat[Update] = JsonRefiner[Update]
+    .format(new RootJsonFormat[Update] {
+      override def write(obj: Update): JsValue = JsObject(noJsNull(obj.settings))
+      override def read(json: JsValue): Update = Update(json.asJsObject.fields)
+    })
+    .rejectEmptyString()
+    .valueChecker(
+      SettingDefinition.COLUMNS_DEFINITION.key(), {
+        case v: JsArray => CONNECTOR_CREATION_FORMAT.check(SettingDefinition.COLUMNS_DEFINITION.key(), v)
+        case _          => // do nothing
+      }
+    )
     .refine
 
   import MetricsApi._
@@ -192,15 +196,14 @@ object ConnectorApi {
       .getOrElse(Map.empty)
   }
 
-  implicit val CONNECTOR_STATE_JSON_FORMAT: RootJsonFormat[ConnectorState] =
+  implicit val CONNECTOR_STATE_FORMAT: RootJsonFormat[ConnectorState] =
     new RootJsonFormat[ConnectorState] {
       override def write(obj: ConnectorState): JsValue = JsString(obj.name)
       override def read(json: JsValue): ConnectorState =
         ConnectorState.forName(json.convertTo[String])
     }
 
-  implicit val CONNECTOR_DESCRIPTION_JSON_FORMAT: RootJsonFormat[ConnectorDescription] = jsonFormat5(
-    ConnectorDescription)
+  implicit val CONNECTOR_DESCRIPTION_FORMAT: RootJsonFormat[ConnectorDescription] = jsonFormat5(ConnectorDescription)
 
   /**
     * used to generate the payload and url for POST/PUT request.

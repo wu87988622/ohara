@@ -123,7 +123,7 @@ public class TestPropGroups extends SmallTest {
   }
 
   @Test
-  public void testColumns2() {
+  public void parseJson() {
     String json =
         "["
             + "{"
@@ -140,6 +140,17 @@ public class TestPropGroups extends SmallTest {
     Assert.assertEquals("cc", columns.get(0).name());
     Assert.assertEquals("ccc", columns.get(0).newName());
     Assert.assertEquals(DataType.BYTES, columns.get(0).dataType());
+
+    String json2 =
+        "[" + "{" + "\"order\": 1," + "\"name\": \"cc\"," + "\"dataType\": \"BYTES\"" + "}" + "]";
+
+    PropGroups pgs2 = PropGroups.ofJson(json2);
+    List<Column> columns2 = pgs2.toColumns();
+    Assert.assertEquals(1, columns2.size());
+    Assert.assertEquals(1, columns2.get(0).order());
+    Assert.assertEquals("cc", columns2.get(0).name());
+    Assert.assertEquals("cc", columns2.get(0).newName());
+    Assert.assertEquals(DataType.BYTES, columns2.get(0).dataType());
   }
 
   @Test(expected = UnsupportedOperationException.class)

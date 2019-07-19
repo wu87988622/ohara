@@ -38,6 +38,10 @@ public final class PropGroups implements Iterable<Map<String, String>> {
     return of(JsonUtils.toObject(json, new TypeReference<List<Map<String, String>>>() {}));
   }
 
+  public static PropGroups ofColumn(Column column) {
+    return ofColumns(Collections.singletonList(column));
+  }
+
   public static PropGroups ofColumns(List<Column> columns) {
     return of(columns.stream().map(PropGroups::toPropGroup).collect(Collectors.toList()));
   }
@@ -110,7 +114,10 @@ public final class PropGroups implements Iterable<Map<String, String>> {
     return Column.builder()
         .order(Integer.valueOf(propGroup.get(SettingDefinition.ORDER_KEY)))
         .name(propGroup.get(SettingDefinition.COLUMN_NAME_KEY))
-        .newName(propGroup.get(SettingDefinition.COLUMN_NEW_NAME_KEY))
+        .newName(
+            propGroup.getOrDefault(
+                SettingDefinition.COLUMN_NEW_NAME_KEY,
+                propGroup.get(SettingDefinition.COLUMN_NAME_KEY)))
         .dataType(
             DataType.valueOf(propGroup.get(SettingDefinition.COLUMN_DATA_TYPE_KEY).toUpperCase()))
         .build();

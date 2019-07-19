@@ -248,7 +248,15 @@ trait JsonRefiner[T] {
       }
   )
 
-  protected def valueChecker(key: String, checker: JsValue => Unit): JsonRefiner[T]
+  /**
+    * add your custom check for specific (key, value).
+    *
+    * Noted: we recommend you to throw DeserializationException when the input value is illegal.
+    * @param key key
+    * @param checker checker
+    * @return this refiner
+    */
+  def valueChecker(key: String, checker: JsValue => Unit): JsonRefiner[T]
 
   //-------------------------[more conversion]-------------------------//
 
@@ -409,7 +417,7 @@ object JsonRefiner {
       this
     }
 
-    override protected def valueChecker(key: String, checker: JsValue => Unit): JsonRefiner[T] = {
+    override def valueChecker(key: String, checker: JsValue => Unit): JsonRefiner[T] = {
       if (valueChecker.contains(CommonUtils.requireNonEmpty(key)))
         throw new IllegalArgumentException(s"""the \"$key\" already has checker""")
       this.valueChecker = this.valueChecker ++ Map(key -> Objects.requireNonNull(checker))

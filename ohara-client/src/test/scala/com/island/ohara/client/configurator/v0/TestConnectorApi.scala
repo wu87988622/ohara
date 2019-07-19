@@ -31,34 +31,25 @@ import spray.json.DefaultJsonProtocol._
 class TestConnectorApi extends SmallTest with Matchers {
 
   @Test
-  def testStaleCreationApis(): Unit = {
+  def parseJsonForCreation(): Unit = {
     val workerClusterName = CommonUtils.randomString()
     val className = CommonUtils.randomString()
-    val column = Column
-      .builder()
-      .name(CommonUtils.randomString())
-      .newName(CommonUtils.randomString())
-      .dataType(DataType.DOUBLE)
-      .build()
     val topicNames = Seq(CommonUtils.randomString())
     val numberOfTasks = 10
     val tags = Map("a" -> JsString("b"), "b" -> JsNumber(1))
     val anotherKey = CommonUtils.randomString()
     val anotherValue = CommonUtils.randomString()
 
-    val creation =
-      CONNECTOR_CREATION_JSON_FORMAT.read(s"""
-                                             |{
-                                             |  "workerClusterName": ${JsString(workerClusterName).toString()},
-                                             |  "connector.class": ${JsString(className).toString()},
-                                             |  "schema": ${JsArray(COLUMN_JSON_FORMAT.write(column)).toString()},
-                                             |  "topics": ${JsArray(topicNames.map(v => JsString(v)).toVector)
-                                               .toString()},
-                                             |  "numberOfTasks": ${JsNumber(numberOfTasks).toString()},
-                                             |  "tags": ${JsObject(tags)},
-                                             |  "$anotherKey": "$anotherValue"
-                                             |}
-                                            """.stripMargin.parseJson)
+    val creation = CONNECTOR_CREATION_FORMAT.read(s"""
+       |{
+       |  "workerClusterName": ${JsString(workerClusterName).toString()},
+       |  "connector.class": ${JsString(className).toString()},
+       |  "topics": ${JsArray(topicNames.map(v => JsString(v)).toVector).toString()},
+       |  "numberOfTasks": ${JsNumber(numberOfTasks).toString()},
+       |  "tags": ${JsObject(tags)},
+       |  "$anotherKey": "$anotherValue"
+       |}
+      """.stripMargin.parseJson)
     creation.name.length shouldBe 10
     creation.workerClusterName.get shouldBe workerClusterName
     creation.className shouldBe className
@@ -70,33 +61,36 @@ class TestConnectorApi extends SmallTest with Matchers {
     creation.settings.contains("className") shouldBe false
     creation.settings.contains("aaa") shouldBe false
     creation.settings(anotherKey).convertTo[String] shouldBe anotherValue
-    CONNECTOR_CREATION_JSON_FORMAT.read(CONNECTOR_CREATION_JSON_FORMAT.write(creation)) shouldBe creation
+    CONNECTOR_CREATION_FORMAT.read(CONNECTOR_CREATION_FORMAT.write(creation)) shouldBe creation
 
     val name = CommonUtils.randomString()
-    val creation2 =
-      CONNECTOR_CREATION_JSON_FORMAT.read(s"""
-                                               |{
-                                               |  "name": ${JsString(name).toString()},
-                                               |  "workerClusterName": ${JsString(workerClusterName).toString()},
-                                               |  "connector.class": ${JsString(className).toString()},
-                                               |  "schema": ${JsArray(COLUMN_JSON_FORMAT.write(column)).toString()},
-                                               |  "topics": ${JsArray(topicNames.map(v => JsString(v)).toVector)
-                                               .toString()},
-                                               |  "numberOfTasks": ${JsNumber(numberOfTasks).toString()},
-                                               |  "$anotherKey": "$anotherValue"
-                                               |}
-                                            """.stripMargin.parseJson)
+    val column = Column
+      .builder()
+      .name(CommonUtils.randomString())
+      .newName(CommonUtils.randomString())
+      .dataType(DataType.DOUBLE)
+      .build()
+    val creation2 = CONNECTOR_CREATION_FORMAT.read(s"""
+       |{
+       |  "name": ${JsString(name).toString()},
+       |  "workerClusterName": ${JsString(workerClusterName).toString()},
+       |  "connector.class": ${JsString(className).toString()},
+       |  "${SettingDefinition.COLUMNS_DEFINITION.key()}": ${PropGroups.ofColumn(column).toJsonString},
+       |  "topics": ${JsArray(topicNames.map(v => JsString(v)).toVector).toString()},
+       |  "numberOfTasks": ${JsNumber(numberOfTasks).toString()},
+       |  "$anotherKey": "$anotherValue"
+       |}""".stripMargin.parseJson)
     creation2.name shouldBe name
     creation2.workerClusterName.get shouldBe workerClusterName
     creation2.className shouldBe className
-    creation2.columns shouldBe Seq.empty
+    creation2.columns shouldBe Seq(column)
     creation2.topicNames shouldBe topicNames
     creation2.numberOfTasks shouldBe 1
     // this key is deprecated so json converter will replace it by new one
     creation2.settings.contains("className") shouldBe false
     creation2.settings.contains("aaa") shouldBe false
     creation2.settings(anotherKey).convertTo[String] shouldBe anotherValue
-    CONNECTOR_CREATION_JSON_FORMAT.read(CONNECTOR_CREATION_JSON_FORMAT.write(creation2)) shouldBe creation2
+    CONNECTOR_CREATION_FORMAT.read(CONNECTOR_CREATION_FORMAT.write(creation2)) shouldBe creation2
   }
 
   @Test
@@ -124,10 +118,8 @@ class TestConnectorApi extends SmallTest with Matchers {
 
   @Test
   def testStateJson(): Unit = {
-    ConnectorState.all.foreach(
-      state =>
-        ConnectorApi.CONNECTOR_STATE_JSON_FORMAT
-          .read(ConnectorApi.CONNECTOR_STATE_JSON_FORMAT.write(state)) shouldBe state)
+    ConnectorState.all.foreach(state =>
+      ConnectorApi.CONNECTOR_STATE_FORMAT.read(ConnectorApi.CONNECTOR_STATE_FORMAT.write(state)) shouldBe state)
   }
 
   @Test
@@ -143,7 +135,7 @@ class TestConnectorApi extends SmallTest with Matchers {
       lastModified = CommonUtils.current()
     )
     // pass
-    ConnectorApi.CONNECTOR_DESCRIPTION_JSON_FORMAT.write(response)
+    ConnectorApi.CONNECTOR_DESCRIPTION_FORMAT.write(response)
   }
 
   @Test
@@ -159,7 +151,7 @@ class TestConnectorApi extends SmallTest with Matchers {
       metrics = Metrics(Seq.empty),
       lastModified = CommonUtils.current()
     )
-    ConnectorApi.CONNECTOR_DESCRIPTION_JSON_FORMAT
+    ConnectorApi.CONNECTOR_DESCRIPTION_FORMAT
       .write(response)
       .asInstanceOf[JsObject]
       // previous name
@@ -171,7 +163,7 @@ class TestConnectorApi extends SmallTest with Matchers {
   def parsePreviousKeyOfClassNameFromConnectorCreationRequest(): Unit = {
     import spray.json._
     val className = CommonUtils.randomString()
-    val connectorCreationRequest = ConnectorApi.CONNECTOR_CREATION_JSON_FORMAT.read(s"""
+    val connectorCreationRequest = ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
                                                                                                | {
                                                                                                | \"className\": \"$className\"
                                                                                                | }
@@ -183,7 +175,7 @@ class TestConnectorApi extends SmallTest with Matchers {
   def parsePreviousKeyOfClassNameFromConnectorDescription(): Unit = {
     import spray.json._
     val className = CommonUtils.randomString()
-    val connectorDescription = ConnectorApi.CONNECTOR_DESCRIPTION_JSON_FORMAT.read(s"""
+    val connectorDescription = ConnectorApi.CONNECTOR_DESCRIPTION_FORMAT.read(s"""
                                                                                       | {
                                                                                       | \"id\": \"asdasdsad\",
                                                                                       | \"lastModified\": 123,
@@ -200,7 +192,7 @@ class TestConnectorApi extends SmallTest with Matchers {
 
   @Test
   def parsePropGroups(): Unit = {
-    val creationRequest = ConnectorApi.CONNECTOR_CREATION_JSON_FORMAT.read(s"""
+    val creationRequest = ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
                                                                                       | {
                                                                                       | \"columns\": [
                                                                                       |   {
@@ -221,10 +213,11 @@ class TestConnectorApi extends SmallTest with Matchers {
 
   @Test
   def parseStaleConfigs(): Unit = {
-    val creationRequest = ConnectorApi.CONNECTOR_CREATION_JSON_FORMAT.read(s"""
+    val creationRequest = ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
                                                                                       | {
                                                                                       |  "name": "ftp source",
-                                                                                      |  "schema": [
+                                                                                      |  "${SettingDefinition.COLUMNS_DEFINITION
+                                                                           .key()}": [
                                                                                       |    {
                                                                                       |      "name": "col1",
                                                                                       |      "newName": "col1",
@@ -353,7 +346,7 @@ class TestConnectorApi extends SmallTest with Matchers {
 
   @Test
   def testDefaultNumberOfTasks(): Unit =
-    ConnectorApi.CONNECTOR_CREATION_JSON_FORMAT
+    ConnectorApi.CONNECTOR_CREATION_FORMAT
       .read(s"""
                                                                 | {
                                                                 |  "name": "ftp source"
@@ -367,26 +360,39 @@ class TestConnectorApi extends SmallTest with Matchers {
     val newName = CommonUtils.randomString()
     val dataType = DataType.BOOLEAN
     val order = 1
-    val column = ConnectorApi.COLUMN_JSON_FORMAT.read(s"""
-                                            | {
-                                            |  "name": "$name",
-                                            |  "newName": "$newName",
-                                            |  "dataType": "${dataType.name}",
-                                            |  "order": $order
-                                            |}
-                                            |     """.stripMargin.parseJson)
+    val creation = ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
+                                            |  {
+                                            |    "${SettingDefinition.COLUMNS_DEFINITION.key()}": [
+                                            |      {
+                                            |        "name": "$name",
+                                            |        "newName": "$newName",
+                                            |        "dataType": "${dataType.name}",
+                                            |        "order": $order
+                                            |      }
+                                            |    ]
+                                            |  }
+                                            |""".stripMargin.parseJson)
+    creation.columns.size shouldBe 1
+    val column = creation.columns.head
     column.name shouldBe name
     column.newName shouldBe newName
     column.dataType shouldBe dataType
     column.order shouldBe order
 
-    val column2 = ConnectorApi.COLUMN_JSON_FORMAT.read(s"""
-                                                         | {
-                                                         |  "name": "$name",
-                                                         |  "dataType": "${dataType.name}",
-                                                         |  "order": $order
-                                                         |}
-                                                         |     """.stripMargin.parseJson)
+    val creation2 = ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
+                                                                       |  {
+                                                                       |    "${SettingDefinition.COLUMNS_DEFINITION
+                                                                     .key()}": [
+                                                                       |      {
+                                                                       |        "name": "$name",
+                                                                       |        "dataType": "${dataType.name}",
+                                                                       |        "order": $order
+                                                                       |      }
+                                                                       |    ]
+                                                                       |  }
+                                                                       |""".stripMargin.parseJson)
+    creation2.columns.size shouldBe 1
+    val column2 = creation2.columns.head
     column2.name shouldBe name
     column2.newName shouldBe name
     column2.dataType shouldBe dataType
@@ -394,24 +400,141 @@ class TestConnectorApi extends SmallTest with Matchers {
   }
 
   @Test
-  def emptyStringForColumn(): Unit =
-    an[DeserializationException] should be thrownBy ConnectorApi.COLUMN_JSON_FORMAT.read(s"""
-                                                                              | {
-                                                                              |  "name": "",
-                                                                              |  "dataType": "Boolean",
-                                                                              |  "order": 1
-                                                                              |}
-                                                                              |     """.stripMargin.parseJson)
+  def emptyNameForCreatingColumn(): Unit =
+    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
+                                                                                                   |  {
+                                                                                                   |    "${SettingDefinition.COLUMNS_DEFINITION
+                                                                                                     .key()}": [
+                                                                                                   |      {
+                                                                                                   |        "name": "",
+                                                                                                   |        "dataType": "Boolean",
+                                                                                                   |        "order": 1
+                                                                                                   |      }
+                                                                                                   |    ]
+                                                                                                   |  }
+                                                                                                        |""".stripMargin.parseJson)
 
   @Test
-  def negativeOrderForColumn(): Unit =
-    an[DeserializationException] should be thrownBy ConnectorApi.COLUMN_JSON_FORMAT.read(s"""
-       | {
-       |  "name": "aaa",
-       |  "dataType": "Boolean",
-       |  "order": -1
-       |}
-       |     """.stripMargin.parseJson)
+  def emptyNewNameForCreatingColumn(): Unit =
+    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
+                                                                                                   |  {
+                                                                                                   |    "${SettingDefinition.COLUMNS_DEFINITION
+                                                                                                     .key()}": [
+                                                                                                   |      {
+                                                                                                   |        "name": "AA",
+                                                                                                   |        "newName": "",
+                                                                                                   |        "dataType": "Boolean",
+                                                                                                   |        "order": 1
+                                                                                                   |      }
+                                                                                                   |    ]
+                                                                                                   |  }
+                                                                                                        |""".stripMargin.parseJson)
+
+  @Test
+  def negativeOrderForCreatingColumn(): Unit =
+    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
+                                                        |  {
+                                                        |    "${SettingDefinition.COLUMNS_DEFINITION.key()}": [
+                                                        |      {
+                                                        |        "name": "AA",
+                                                        |        "newName": "cc",
+                                                        |        "dataType": "Boolean",
+                                                        |        "order": -1
+                                                        |      }
+                                                        |    ]
+                                                        |  }
+                                                        |""".stripMargin.parseJson)
+
+  @Test
+  def duplicateOrderForCreatingColumns(): Unit =
+    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
+                                                                                                   |  {
+                                                                                                   |    "${SettingDefinition.COLUMNS_DEFINITION
+                                                                                                     .key()}": [
+                                                                                                   |      {
+                                                                                                   |        "name": "AA",
+                                                                                                   |        "newName": "",
+                                                                                                   |        "dataType": "Boolean",
+                                                                                                   |        "order": 1
+                                                                                                   |      },
+                                                                                                   |      {
+                                                                                                   |        "name": "AA",
+                                                                                                   |        "newName": "",
+                                                                                                   |        "dataType": "Boolean",
+                                                                                                   |        "order": 1
+                                                                                                   |      }
+                                                                                                   |    ]
+                                                                                                   |  }
+                                                                                                   |""".stripMargin.parseJson)
+
+  @Test
+  def emptyNameForUpdatingColumn(): Unit =
+    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATE_FORMAT.read(s"""
+                                                                                                        |  {
+                                                                                                        |    "${SettingDefinition.COLUMNS_DEFINITION
+                                                                                                   .key()}": [
+                                                                                                        |      {
+                                                                                                        |        "name": "",
+                                                                                                        |         "dataType": "Boolean",
+                                                                                                        |         "order": 1
+                                                                                                        |       }
+                                                                                                        |    ]
+                                                                                                        |  }
+                                                                                                        |""".stripMargin.parseJson)
+
+  @Test
+  def emptyNewNameForUpdatingColumn(): Unit =
+    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATE_FORMAT.read(s"""
+                                                                                                   |  {
+                                                                                                   |    "${SettingDefinition.COLUMNS_DEFINITION
+                                                                                                   .key()}": [
+                                                                                                   |      {
+                                                                                                   |        "name": "AA",
+                                                                                                   |        "newName": "",
+                                                                                                   |        "dataType": "Boolean",
+                                                                                                   |        "order": 1
+                                                                                                   |      }
+                                                                                                   |    ]
+                                                                                                   |  }
+                                                                                                   |""".stripMargin.parseJson)
+
+  @Test
+  def negativeOrderForUpdatingColumn(): Unit =
+    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATE_FORMAT.read(s"""
+                                                                                                 |  {
+                                                                                                 |    "${SettingDefinition.COLUMNS_DEFINITION
+                                                                                                   .key()}": [
+                                                                                                 |      {
+                                                                                                 |        "name": "AA",
+                                                                                                 |        "newName": "cc",
+                                                                                                 |        "dataType": "Boolean",
+                                                                                                 |        "order": -1
+                                                                                                 |      }
+                                                                                                 |    ]
+                                                                                                 |  }
+                                                                                                 |""".stripMargin.parseJson)
+
+  @Test
+  def duplicateOrderForUpdatingColumns(): Unit =
+    an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATE_FORMAT.read(s"""
+                                                                                                   |  {
+                                                                                                   |    "${SettingDefinition.COLUMNS_DEFINITION
+                                                                                                   .key()}": [
+                                                                                                   |      {
+                                                                                                   |        "name": "AA",
+                                                                                                   |        "newName": "",
+                                                                                                   |        "dataType": "Boolean",
+                                                                                                   |        "order": 1
+                                                                                                   |      },
+                                                                                                   |      {
+                                                                                                   |        "name": "AA",
+                                                                                                   |        "newName": "",
+                                                                                                   |        "dataType": "Boolean",
+                                                                                                   |        "order": 1
+                                                                                                   |      }
+                                                                                                   |    ]
+                                                                                                   |  }
+                                                                                                   |""".stripMargin.parseJson)
 
   @Test
   def nullTags(): Unit = an[NullPointerException] should be thrownBy ConnectorApi.access.request.tags(null)
@@ -420,7 +543,7 @@ class TestConnectorApi extends SmallTest with Matchers {
   def emptyTags(): Unit = ConnectorApi.access.request.tags(Map.empty)
   @Test
   def parseTags(): Unit =
-    ConnectorApi.CONNECTOR_CREATION_JSON_FORMAT.read(s"""
+    ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
                                                         |  {
                                                         |    "tags": {
                                                         |      "a": "bb",
@@ -434,7 +557,7 @@ class TestConnectorApi extends SmallTest with Matchers {
 
   @Test
   def parseNullTags(): Unit =
-    ConnectorApi.CONNECTOR_CREATION_JSON_FORMAT.read(s"""
+    ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
                                                         |  {
                                                         |  }
                                                         |     """.stripMargin.parseJson).tags shouldBe Map.empty
