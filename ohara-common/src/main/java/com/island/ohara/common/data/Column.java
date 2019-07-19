@@ -69,7 +69,7 @@ public final class Column extends Data implements Serializable {
     public Builder name(String name) {
       this.name = CommonUtils.requireNonEmpty(name);
       // default the new name is equal to name
-      this.newName = name;
+      if (newName == null) this.newName = name;
       return this;
     }
 

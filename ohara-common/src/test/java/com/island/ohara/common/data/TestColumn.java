@@ -72,4 +72,18 @@ public class TestColumn extends SmallTest {
     Assert.assertEquals(type, column.dataType());
     Assert.assertEquals(order, column.order());
   }
+
+  @Test
+  public void setNameAfterNewName() {
+    String name = CommonUtils.randomString(10);
+    String newName = CommonUtils.randomString(10);
+    DataType type = DataType.BOOLEAN;
+    int order = 100;
+    Column column =
+        Column.builder().newName(newName).name(name).dataType(type).order(order).build();
+    Assert.assertEquals(name, column.name());
+    Assert.assertEquals(newName, column.newName());
+    Assert.assertEquals(type, column.dataType());
+    Assert.assertEquals(order, column.order());
+  }
 }
