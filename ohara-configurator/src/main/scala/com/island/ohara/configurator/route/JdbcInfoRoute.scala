@@ -38,10 +38,6 @@ private[configurator] object JdbcInfoRoute {
       hookOfUpdate = (name: String, request: Update, previousOption: Option[JdbcInfo]) =>
         Future.successful {
           previousOption.fold {
-            if (request.url.isEmpty) throw new IllegalArgumentException(RouteUtils.errorMessage(name, "url"))
-            if (request.user.isEmpty) throw new IllegalArgumentException(RouteUtils.errorMessage(name, "user"))
-            if (request.password.isEmpty)
-              throw new IllegalArgumentException(RouteUtils.errorMessage(name, "password"))
             JdbcInfo(name = name,
                      url = request.url.get,
                      user = request.user.get,
