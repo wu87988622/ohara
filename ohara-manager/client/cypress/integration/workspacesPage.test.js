@@ -111,7 +111,7 @@ describe('WorkspacesPage', () => {
       });
   });
 
-  it('adds a new streamApp', () => {
+  it('adds and removes a new streamApp', () => {
     cy.visit(WORKSPACES)
       .wait('@getWorkers')
       .getByTestId(Cypress.env('WORKER_NAME'))
@@ -130,9 +130,19 @@ describe('WorkspacesPage', () => {
       .wait(500)
       .getByText('ohara-streamapp.jar')
       .should('have.length', 1);
+
+    cy.getByTestId('ohara-streamapp.jar')
+      .click()
+      .getByText('Delete')
+      .click()
+      .getByText('Successfully deleted the stream app!')
+      .should('have.length', 1)
+      .wait('@getJars')
+      .get('td')
+      .should('have.length', 0);
   });
 
-  it('deletes a streamApp', () => {
+  it('should warn the user when a duplicate jar name is upload', () => {
     cy.visit(WORKSPACES)
       .wait('@getWorkers')
       .getByTestId(Cypress.env('WORKER_NAME'))
@@ -149,15 +159,17 @@ describe('WorkspacesPage', () => {
         'application/java-archive',
       )
       .wait(500)
-      .getByTestId('ohara-streamapp.jar')
-      .click()
-      .getByText('Delete')
-      .click()
-      .getByText('Successfully deleted the stream app!')
+      .uploadJar(
+        'input[type=file]',
+        'streamApp/ohara-streamapp.jar',
+        'ohara-streamapp.jar',
+        'application/java-archive',
+      )
+      .wait(500)
+      .getByText('The jar name already exists!')
       .should('have.length', 1)
-      .wait('@getJars')
-      .get('td')
-      .should('have.length', 0);
+      .queryAllByText('ohara-streamapp.jar')
+      .should('have.length', 1);
   });
 
   it('should link to the correct service page', () => {

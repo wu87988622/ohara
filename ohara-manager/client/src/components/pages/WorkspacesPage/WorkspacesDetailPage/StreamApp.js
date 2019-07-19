@@ -51,6 +51,14 @@ const StreamApp = props => {
 
   const handleFileSelect = event => {
     const file = event.target.files[0];
+
+    const isDuplicate = () => jars.some(jar => jar.name === file.name);
+
+    if (isDuplicate()) {
+      toastr.error('The jar name already exists!');
+      return;
+    }
+
     if (event.target.files[0]) {
       uploadJar(file);
     }

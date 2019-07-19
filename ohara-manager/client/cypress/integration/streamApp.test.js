@@ -23,7 +23,6 @@ describe('StreamApp', () => {
     cy.createWorker();
   });
 
-  // TODO: remove the pipeline once the test is finished
   it('starts a stream app', () => {
     cy.server();
     cy.route('GET', 'api/pipelines/*').as('getPipeline');
@@ -85,7 +84,7 @@ describe('StreamApp', () => {
       .wait('@putPipeline');
 
     cy.getByText('streamApp')
-      .click()
+      .click({ force: true })
       .getByDisplayValue('select a from topic...')
       .get('@fromTopic')
       .then(from => {
