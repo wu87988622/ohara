@@ -17,9 +17,10 @@
 const fs = require('fs');
 const axios = require('axios');
 const chalk = require('chalk');
-const { get, isNull } = require('lodash');
+const { get } = require('lodash');
 
 const commonUtils = require('../utils/commonUtils');
+const utils = require('./scriptsUtils');
 
 /* eslint-disable no-console */
 const randomServiceName = () => {
@@ -33,134 +34,29 @@ const randomServiceName = () => {
   return name;
 };
 
-const createNode = (baseUrl, nodeHost, nodePort, nodeUser, nodePass) => {
-  return axios.post(`${baseUrl}/nodes`, {
-    name: nodeHost,
-    port: nodePort,
-    user: nodeUser,
-    password: nodePass,
-  });
-};
-
-const createZk = (baseUrl, zkName, nodeHost) => {
-  return axios.post(`${baseUrl}/zookeepers`, {
-    clientPort: commonUtils.randomPort(),
-    electionPort: commonUtils.randomPort(),
-    peerPort: commonUtils.randomPort(),
-    name: zkName,
-    nodeNames: [nodeHost],
-  });
-};
-
-const createBk = (baseUrl, zkName, bkName, nodeHost) => {
-  return axios.post(`${baseUrl}/brokers`, {
-    clientPort: commonUtils.randomPort(),
-    exporterPort: commonUtils.randomPort(),
-    jmxPort: commonUtils.randomPort(),
-    zookeeperClusterName: zkName,
-    name: bkName,
-    nodeNames: [nodeHost],
-  });
-};
-
-const cleanZk = (baseUrl, zkName) => {
-  return axios.delete(`${baseUrl}/zookeepers/${zkName}?force=true`);
-};
-
-const cleanBk = (baseUrl, bkName) => {
-  return axios.delete(`${baseUrl}/brokers/${bkName}?force=true`);
-};
-
-const cleanWk = (baseUrl, wkName) => {
-  return axios.delete(`${baseUrl}/workers/${wkName}?force=true`);
-};
-
-const getApi = async (baseUrl, api, name) => {
-  const res = await axios.get(`${baseUrl}/${api}`);
-  if (res.data.length === 0) {
-    return false;
-  }
-
-  const services = res.data.some(e => e.name == name);
-
-  if (services) {
-    return true;
-  } else {
-    return false;
-  }
-};
-
-const waitForDeleteService = async (baseUrl, api, name) => {
-  const res = await axios.get(`${baseUrl}/${api}`);
-  if (res.data.length > 0) {
-    const result = res.data.some(e => e.name == name);
-
-    if (!result) return;
-
-    await commonUtils.sleep(1000);
-    await waitForDeleteService(baseUrl, api, name);
-  }
-
-  return;
-};
-
-const waitForCreateService = async (baseUrl, api, name) => {
-  const res = await axios.get(`${baseUrl}/${api}`);
-  const result = res.data.some(e => e.name == name);
-
-  if (!result) {
-    await commonUtils.sleep(1000);
-    await waitForCreateService(baseUrl, api, name);
-  }
-
-  return;
-};
-
-const waitContainersCreate = async (baseUrl, name) => {
-  const res = await axios.get(`${baseUrl}/containers/${name}`);
-  const containers = get(res, 'data[0].containers[0].state', null);
-  if (isNull(containers)) {
-    await commonUtils.sleep(1000);
-    await waitContainersCreate(baseUrl, name);
-  }
-  return;
-};
-
-const fileHelper = (zkName, bkName) => {
+const writeServiceInfoToFile = (zookeeperClusterName, brokerClusterName) => {
   const filePath = 'scripts/servicesApi/service.json';
 
-  fs.access(filePath, function(err) {
-    if (err) {
+  fs.access(filePath, function(error) {
+    if (error) {
       fs.mkdirSync('scripts/servicesApi');
     }
 
-    const zk = {
-      name: zkName,
+    const zookeeper = {
+      name: zookeeperClusterName,
       serviceType: 'zookeepers',
     };
 
-    const bk = {
-      name: bkName,
+    const broker = {
+      name: brokerClusterName,
       serviceType: 'brokers',
     };
 
-    const data = JSON.stringify([zk, bk]);
+    const data = JSON.stringify([zookeeper, broker]);
     fs.writeFile(filePath, data, error => {
       error;
     });
   });
-};
-
-const jsonLoop = async (jsons, key, fn, baseUrl) => {
-  for (let json of jsons) {
-    if (!(await getApi(baseUrl, key, json.name))) {
-      continue;
-    }
-    if (json.serviceType == key) {
-      await fn(baseUrl, json.name);
-      await waitForDeleteService(baseUrl, key, json.name);
-    }
-  }
 };
 
 exports.getDefaultEnv = () => {
@@ -172,8 +68,52 @@ exports.getDefaultEnv = () => {
   return {};
 };
 
+const isServiceReady = async (apiRoot, serviceName) => {
+  const res = await axios.get(`${apiRoot}/containers/${serviceName}`);
+  const containerIsReady = get(res, 'data[0].containers[0].state', undefined);
+  return Boolean(containerIsReady);
+};
+
+const isRemovedFromList = async (url, serviceName) => {
+  const response = await axios.get(`${url}`);
+  const services = get(response, 'data', []);
+
+  // If there's nothing returned from the request,
+  // returns early at this point
+  if (services.length === 0) return true;
+
+  const hasService = service => service.name === serviceName;
+  const result = services.some(hasService);
+  return !result;
+};
+
+const createNode = async ({
+  apiRoot,
+  nodeHost,
+  nodePort,
+  nodeUser,
+  nodePass,
+}) => {
+  const nodeUrl = `${apiRoot}/nodes`;
+
+  await axios.post(nodeUrl, {
+    name: nodeHost,
+    port: nodePort,
+    user: nodeUser,
+    password: nodePass,
+  });
+
+  const isNodeReady = async () => {
+    const response = await axios.get(nodeUrl);
+    const result = response.data.some(service => service.name == nodeHost);
+    return result;
+  };
+
+  await utils.waitUntil({ condition: isNodeReady });
+};
+
 exports.createServices = async ({
-  configurator,
+  configurator: apiRoot,
   nodeHost,
   nodePort,
   nodeUser,
@@ -181,19 +121,40 @@ exports.createServices = async ({
 }) => {
   console.log(chalk.blue('Creating services for this test run'));
 
-  const zkName = 'zk' + randomServiceName();
-  const bkName = 'bk' + randomServiceName();
+  const zookeeperClusterName = 'zk' + randomServiceName();
+  const brokerClusterName = 'bk' + randomServiceName();
 
   try {
-    await createNode(configurator, nodeHost, nodePort, nodeUser, nodePass);
-    await waitForCreateService(configurator, 'nodes', nodeHost);
+    await createNode({ apiRoot, nodeHost, nodePort, nodeUser, nodePass });
 
-    await createZk(configurator, zkName, nodeHost);
-    await waitContainersCreate(configurator, zkName);
+    await axios.post(`${apiRoot}/zookeepers`, {
+      clientPort: commonUtils.randomPort(),
+      electionPort: commonUtils.randomPort(),
+      peerPort: commonUtils.randomPort(),
+      name: zookeeperClusterName,
+      nodeNames: [nodeHost],
+    });
 
-    await createBk(configurator, zkName, bkName, nodeHost);
-    await waitContainersCreate(configurator, bkName);
-    await fileHelper(zkName, bkName);
+    await axios.put(`${apiRoot}/zookeepers/${zookeeperClusterName}/start`);
+
+    await utils.waitUntil({
+      condition: () => isServiceReady(apiRoot, zookeeperClusterName),
+    });
+
+    await axios.post(`${apiRoot}/brokers`, {
+      clientPort: commonUtils.randomPort(),
+      exporterPort: commonUtils.randomPort(),
+      jmxPort: commonUtils.randomPort(),
+      zookeeperClusterName: zookeeperClusterName,
+      name: brokerClusterName,
+      nodeNames: [nodeHost],
+    });
+
+    await utils.waitUntil({
+      condition: () => isServiceReady(apiRoot, brokerClusterName),
+    });
+
+    await writeServiceInfoToFile(zookeeperClusterName, brokerClusterName);
 
     console.log(chalk.green('Services created!'));
   } catch (error) {
@@ -205,14 +166,74 @@ exports.createServices = async ({
   }
 };
 
-exports.cleanServices = async configurator => {
+const cleanWorkers = async (workers, apiRoot) => {
+  await Promise.all(
+    workers.map(async worker => {
+      const { name: serviceName, serviceType } = worker;
+      const url = `${apiRoot}/${serviceType}`;
+      await axios.delete(`${url}/${serviceName}`);
+      const condition = () => isRemovedFromList(url, serviceName);
+
+      await utils.waitUntil({ condition });
+    }),
+  );
+};
+
+const cleanBrokers = async (brokers, apiRoot) => {
+  await Promise.all(
+    brokers.map(async broker => {
+      const { name: serviceName, serviceType } = broker;
+      const url = `${apiRoot}/${serviceType}`;
+      await axios.delete(`${url}/${serviceName}`);
+      const condition = () => isRemovedFromList(url, serviceName);
+
+      await utils.waitUntil({ condition });
+    }),
+  );
+};
+
+const cleanZookeepers = async (zookeepers, apiRoot) => {
+  await Promise.all(
+    zookeepers.map(async zookeeper => {
+      const { name, serviceType } = zookeeper;
+      const url = `${apiRoot}/${serviceType}`;
+
+      await axios.put(`${url}/${name}/stop`);
+      const zookeeperCondition = async () => {
+        const zookeeper = await axios.get(`${url}/${name}`);
+        const zookeeperState = get(zookeeper, 'data.state', 'stop');
+        return zookeeperState === 'stop';
+      };
+
+      await utils.waitUntil({ condition: zookeeperCondition });
+      await axios.delete(`${url}/${name}`);
+    }),
+  );
+};
+
+const getByServiceType = services => {
+  let workers = [];
+  let brokers = [];
+  let zookeepers = [];
+
+  services.forEach(service => {
+    if (service.serviceType === 'workers') workers.push(service);
+    if (service.serviceType === 'brokers') brokers.push(service);
+    if (service.serviceType === 'zookeepers') zookeepers.push(service);
+  });
+
+  return { workers, brokers, zookeepers };
+};
+
+exports.cleanServices = async apiRoot => {
   try {
     const file = fs.readFileSync('scripts/servicesApi/service.json');
-    const json = JSON.parse(file);
+    const services = JSON.parse(file);
+    const { workers, brokers, zookeepers } = getByServiceType(services);
 
-    await jsonLoop(json, 'workers', cleanWk, configurator);
-    await jsonLoop(json, 'brokers', cleanBk, configurator);
-    await jsonLoop(json, 'zookeepers', cleanZk, configurator);
+    await cleanWorkers(workers, apiRoot);
+    await cleanBrokers(brokers, apiRoot);
+    await cleanZookeepers(zookeepers, apiRoot);
   } catch (error) {
     console.log(
       chalk.red('Failed to clean services, see the detailed error below:'),

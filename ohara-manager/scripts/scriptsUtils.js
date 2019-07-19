@@ -18,6 +18,7 @@ const fs = require('fs');
 const chalk = require('chalk');
 const waitOn = require('wait-on');
 
+const commonUtils = require('../utils/commonUtils');
 /* eslint-disable no-console */
 
 exports.checkClientBuildDir = () => {
@@ -55,3 +56,20 @@ exports.waitOnService = url =>
       },
     );
   });
+
+const waitUntil = async params => {
+  const { condition, sleepTime = 2000, maxRetry = 10 } = params;
+  let { retryCount = 0 } = params;
+
+  // Invoke a custom function here to see
+  // if it's time to break out of this recursive function
+  const conditionIsMet = await condition();
+
+  if (conditionIsMet || retryCount >= maxRetry) return;
+
+  retryCount++;
+  await commonUtils.sleep(sleepTime);
+  await waitUntil({ ...params, retryCount });
+};
+
+exports.waitUntil = waitUntil;

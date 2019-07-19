@@ -128,7 +128,7 @@ describe('WorkspacesPage', () => {
         'application/java-archive',
       )
       .wait(500)
-      .getByText('ohara-streamapp')
+      .getByText('ohara-streamapp.jar')
       .should('have.length', 1);
   });
 
@@ -149,7 +149,7 @@ describe('WorkspacesPage', () => {
         'application/java-archive',
       )
       .wait(500)
-      .getByTestId('ohara-streamapp')
+      .getByTestId('ohara-streamapp.jar')
       .click()
       .getByText('Delete')
       .click()

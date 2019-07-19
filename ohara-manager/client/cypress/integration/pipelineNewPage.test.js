@@ -74,6 +74,7 @@ describe('PipelineNewPage', () => {
         .click()
         .getByText(`Successfully deleted the topic: ${topic.name}`)
         .wait('@getPipeline')
+        .wait(500) // wait here, so the local state is up-to-date with the API response
         .queryByText(topic.name, { timeout: 500 })
         .should('not.be.exist');
     });
@@ -160,7 +161,7 @@ describe('PipelineNewPage', () => {
       .should('contain', 'JDBCSourceConnector');
 
     cy.getByText(connectorName)
-      .click()
+      .click({ force: true })
       .getByTestId('delete-button')
       .click()
       .getByText('Delete')
