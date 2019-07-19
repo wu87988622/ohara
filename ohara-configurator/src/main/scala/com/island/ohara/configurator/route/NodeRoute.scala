@@ -42,21 +42,18 @@ object NodeRoute {
   def apply(implicit store: DataStore, clusterCollie: ClusterCollie, executionContext: ExecutionContext): server.Route =
     RouteUtils.basicRoute[Creation, Update, Node](
       root = NODES_PREFIX_PATH,
-      hookOfCreation = (request: Creation) => {
-        if (request.name.isEmpty) Future.failed(new IllegalArgumentException(s"name is required"))
-        else
-          update(
-            Node(
-              hostname = request.hostname,
-              port = request.port,
-              user = request.user,
-              password = request.password,
-              services = Seq.empty,
-              lastModified = CommonUtils.current(),
-              validationReport = None,
-              tags = request.tags
-            ))
-      },
+      hookOfCreation = (request: Creation) =>
+        update(
+          Node(
+            hostname = request.hostname,
+            port = request.port,
+            user = request.user,
+            password = request.password,
+            services = Seq.empty,
+            lastModified = CommonUtils.current(),
+            validationReport = None,
+            tags = request.tags
+          )),
       hookOfUpdate = (hostname: String, request: Update, previous: Option[Node]) => {
         update(
           Node(
