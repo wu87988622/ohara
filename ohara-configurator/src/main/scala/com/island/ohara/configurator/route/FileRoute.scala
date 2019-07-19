@@ -34,7 +34,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object FileRoute {
 
-  private[this] val DEFAULT_GROUP = Data.DEFAULT_GROUP
+  private[this] val GROUP_DEFAULT = Data.GROUP_DEFAULT
 
   /**
     * Check the specific jar is not used in pipeline.
@@ -78,19 +78,19 @@ private[configurator] object FileRoute {
     pathPrefix(root) {
       path(Segment) { name =>
         parameter(Data.GROUP_KEY ?) { groupOption =>
-          get(complete(fileStore.fileInfo(groupOption.getOrElse(DEFAULT_GROUP), name))) ~ delete(
+          get(complete(fileStore.fileInfo(groupOption.getOrElse(GROUP_DEFAULT), name))) ~ delete(
             complete(
               fileStore
-                .exist(groupOption.getOrElse(DEFAULT_GROUP), name)
+                .exist(groupOption.getOrElse(GROUP_DEFAULT), name)
                 .flatMap {
                   // if jar exists, we do checking is in used or not
                   if (_)
                     fileStore
-                      .fileInfo(groupOption.getOrElse(DEFAULT_GROUP), name)
+                      .fileInfo(groupOption.getOrElse(GROUP_DEFAULT), name)
                       .flatMap(check(_))
                       .flatMap(exists => {
                         if (exists) throw new RuntimeException(s"Cannot delete jar [$name] which is in used")
-                        else fileStore.remove(groupOption.getOrElse(DEFAULT_GROUP), name)
+                        else fileStore.remove(groupOption.getOrElse(GROUP_DEFAULT), name)
                       })
                   // do nothing
                   else Future.successful(false)
@@ -101,8 +101,8 @@ private[configurator] object FileRoute {
             entity(as[Update]) { update =>
               parameter(Data.GROUP_KEY ?) { groupOption =>
                 val fileInfo: Future[FileInfo] = update.tags
-                  .map(fileStore.updateTags(groupOption.getOrElse(DEFAULT_GROUP), name, _))
-                  .getOrElse(fileStore.fileInfo(groupOption.getOrElse(DEFAULT_GROUP), name))
+                  .map(fileStore.updateTags(groupOption.getOrElse(GROUP_DEFAULT), name, _))
+                  .getOrElse(fileStore.fileInfo(groupOption.getOrElse(GROUP_DEFAULT), name))
                 complete(fileInfo)
               }
             }
@@ -118,7 +118,7 @@ private[configurator] object FileRoute {
                   case (metadata, file) =>
                     complete(
                       fileStore.fileInfoCreator
-                        .group(group.getOrElse(DEFAULT_GROUP))
+                        .group(group.getOrElse(GROUP_DEFAULT))
                         .name(metadata.fileName)
                         .file(file)
                         .tags(tagsString.map(FileApi.toTags).getOrElse(Map.empty))

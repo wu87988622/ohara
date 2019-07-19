@@ -137,18 +137,18 @@ trait DataStore extends Releasable {
 
   //----------------[deprecated methods]----------------//
   def get[T <: Data: ClassTag](name: String)(implicit executor: ExecutionContext): Future[Option[T]] =
-    get[T](Data.DEFAULT_GROUP, name)
+    get[T](Data.GROUP_DEFAULT, name)
   def value[T <: Data: ClassTag](name: String)(implicit executor: ExecutionContext): Future[T] =
-    value[T](Data.DEFAULT_GROUP, name)
-  def raws(name: String)(implicit executor: ExecutionContext): Future[Seq[Data]] = raws(Data.DEFAULT_GROUP, name)
+    value[T](Data.GROUP_DEFAULT, name)
+  def raws(name: String)(implicit executor: ExecutionContext): Future[Seq[Data]] = raws(Data.GROUP_DEFAULT, name)
   def remove[T <: Data: ClassTag](name: String)(implicit executor: ExecutionContext): Future[Boolean] =
-    remove[T](Data.DEFAULT_GROUP, name)
+    remove[T](Data.GROUP_DEFAULT, name)
   def addIfPresent[T <: Data: ClassTag](name: String, updater: T => T)(implicit executor: ExecutionContext): Future[T] =
-    addIfPresent[T](Data.DEFAULT_GROUP, name, updater)
+    addIfPresent[T](Data.GROUP_DEFAULT, name, updater)
   def exist[T <: Data: ClassTag](name: String)(implicit executor: ExecutionContext): Future[Boolean] =
-    exist[T](Data.DEFAULT_GROUP, name)
+    exist[T](Data.GROUP_DEFAULT, name)
   def nonExist[T <: Data: ClassTag](name: String)(implicit executor: ExecutionContext): Future[Boolean] =
-    nonExist[T](Data.DEFAULT_GROUP, name)
+    nonExist[T](Data.GROUP_DEFAULT, name)
 }
 
 object DataStore {

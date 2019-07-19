@@ -72,7 +72,7 @@ object WorkerApi {
                                                 statusTopicName: String,
                                                 statusTopicPartitions: Int,
                                                 statusTopicReplications: Short,
-                                                jarKeys: Set[FileKey],
+                                                jarKeys: Set[DataKey],
                                                 nodeNames: Set[String])
       extends ClusterCreationRequest {
     override def ports: Set[Int] = Set(clientPort, jmxPort)
@@ -255,7 +255,7 @@ object WorkerApi {
     @Optional("the default number is 1")
     def offsetTopicReplications(offsetTopicReplications: Short): Request
     @Optional("the default value is empty")
-    def jarKeys(jarKeys: Set[FileKey]): Request
+    def jarKeys(jarKeys: Set[DataKey]): Request
     def nodeName(nodeName: String): Request = nodeNames(Set(CommonUtils.requireNonEmpty(nodeName)))
     def nodeNames(nodeNames: Set[String]): Request
 
@@ -288,7 +288,7 @@ object WorkerApi {
       private[this] var statusTopicName: String = s"$groupId-status-${CommonUtils.randomString(10)}"
       private[this] var statusTopicPartitions: Int = 1
       private[this] var statusTopicReplications: Short = 1
-      private[this] var jarKeys: Set[FileKey] = Set.empty
+      private[this] var jarKeys: Set[DataKey] = Set.empty
       private[this] var nodeNames: Set[String] = Set.empty
 
       private[this] def legalNumber(number: Int, key: String): Int = {
@@ -372,7 +372,7 @@ object WorkerApi {
       }
 
       import scala.collection.JavaConverters._
-      override def jarKeys(jarKeys: Set[FileKey]): Request = {
+      override def jarKeys(jarKeys: Set[DataKey]): Request = {
         this.jarKeys = CommonUtils.requireNonEmpty(jarKeys.asJava).asScala.toSet
         this
       }

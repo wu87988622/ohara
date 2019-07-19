@@ -20,7 +20,6 @@ import java.io.File
 import java.util.concurrent.ExecutionException
 
 import com.island.ohara.agent.docker.{ContainerState, DockerClient}
-import com.island.ohara.client.configurator.v0.FileApi.FileKey
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.{ZookeeperApi, _}
 import com.island.ohara.common.data.{Row, Serializer}
@@ -161,7 +160,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
 
     // create streamApp properties
     val stream = result(
-      access.request.name(CommonUtils.randomString(10)).jar(FileKey(jarInfo.group, jarInfo.name)).create())
+      access.request.name(CommonUtils.randomString(10)).jar(DataKey(jarInfo.group, jarInfo.name)).create())
 
     // update streamApp properties (use non-existed topics to make sure cluster failed)
     val properties = result(
@@ -248,7 +247,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
 
     // create streamApp properties
     val stream = result(
-      access.request.name(CommonUtils.randomString(10)).jar(FileKey(jarInfo.group, jarInfo.name)).create())
+      access.request.name(CommonUtils.randomString(10)).jar(DataKey(jarInfo.group, jarInfo.name)).create())
 
     // update streamApp properties
     val properties = result(

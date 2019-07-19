@@ -37,7 +37,7 @@ final object ShabondiApi {
       extends Data {
 
     // Shabondi does not support to define group
-    override def group: String = Data.DEFAULT_GROUP
+    override def group: String = Data.GROUP_DEFAULT
     override def kind: String = "shabondi"
 
     // TODO: Does shabondi need the tags? by chia

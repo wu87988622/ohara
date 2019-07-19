@@ -154,7 +154,7 @@ object ConnectorApi {
       extends Data {
 
     // TODO: this will be resolved by https://github.com/oharastream/ohara/issues/1734 ... by chia
-    override def group: String = Data.DEFAULT_GROUP
+    override def group: String = Data.GROUP_DEFAULT
 
     /**
       * Convert all json value to plain string. It keeps the json format but all stuff are in string.

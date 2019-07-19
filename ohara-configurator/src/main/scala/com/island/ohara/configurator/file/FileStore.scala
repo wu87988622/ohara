@@ -215,7 +215,7 @@ object FileStore {
 
   trait FileInfoCreator extends com.island.ohara.common.pattern.Creator[Future[FileInfo]] {
     private[this] var file: File = _
-    private[this] var group: String = Data.DEFAULT_GROUP
+    private[this] var group: String = Data.GROUP_DEFAULT
     private[this] var name: String = _
     private[this] var tags: Map[String, JsValue] = Map.empty
     private[this] var threadPool: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
@@ -226,7 +226,7 @@ object FileStore {
       this
     }
 
-    @Optional("Default group is Data.DEFAULT_GROUP")
+    @Optional("Default group is Data.GROUP_DEFAULT")
     def group(group: String): FileInfoCreator = {
       this.group = CommonUtils.requireNonEmpty(group)
       this

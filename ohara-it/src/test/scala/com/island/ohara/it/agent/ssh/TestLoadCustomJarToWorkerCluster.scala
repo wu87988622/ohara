@@ -19,7 +19,6 @@ package com.island.ohara.it.agent.ssh
 import java.io.File
 import java.util.concurrent.TimeUnit
 
-import com.island.ohara.client.configurator.v0.FileApi.FileKey
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.client.kafka.WorkerClient
@@ -119,7 +118,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
       wkApi.request
         .name(nameHolder.generateClusterName())
         .brokerClusterName(bkCluster.name)
-        .jarKeys(jars.map(jar => FileKey(group = jar.group, name = jar.name)).toSet)
+        .jarKeys(jars.map(jar => DataKey(group = jar.group, name = jar.name)).toSet)
         .nodeName(nodeCache.head.name)
         .create())
     assertCluster(() => result(wkApi.list()), wkCluster.name)

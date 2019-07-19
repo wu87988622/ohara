@@ -26,7 +26,7 @@ object ObjectApi {
 
   final case class Object(name: String, lastModified: Long, kind: String, tags: Map[String, JsValue]) extends Data {
     // TODO: this will be resolved by https://github.com/oharastream/ohara/issues/1734 ... by chia
-    override def group: String = Data.DEFAULT_GROUP
+    override def group: String = Data.GROUP_DEFAULT
   }
   implicit val OBJECT_JSON_FORMAT: RootJsonFormat[Object] = jsonFormat4(Object)
 

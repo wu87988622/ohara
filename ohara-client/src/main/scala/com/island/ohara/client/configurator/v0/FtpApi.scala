@@ -65,7 +65,7 @@ object FtpApi {
                            tags: Map[String, JsValue])
       extends Data {
     // TODO: this will be resolved by https://github.com/oharastream/ohara/issues/1734 ... by chia
-    override def group: String = Data.DEFAULT_GROUP
+    override def group: String = Data.GROUP_DEFAULT
     override def kind: String = "ftp"
   }
   implicit val FTP_INFO_JSON_FORMAT: RootJsonFormat[FtpInfo] = jsonFormat7(FtpInfo)

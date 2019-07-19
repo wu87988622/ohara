@@ -100,7 +100,7 @@ object ZookeeperApi {
       extends ClusterInfo
       with Data {
     // cluster does not support to define group
-    override def group: String = Data.DEFAULT_GROUP
+    override def group: String = Data.GROUP_DEFAULT
     override def clone2(state: Option[String], error: Option[String]): ZookeeperClusterInfo =
       this.copy(state = state, error = error)
     override def kind: String = ZK_SERVICE_NAME

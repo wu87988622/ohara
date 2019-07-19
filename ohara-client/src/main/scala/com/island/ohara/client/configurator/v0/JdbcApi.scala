@@ -58,7 +58,7 @@ object JdbcApi {
                             tags: Map[String, JsValue])
       extends Data {
     // TODO: this will be resolved by https://github.com/oharastream/ohara/issues/1734 ... by chia
-    override def group: String = Data.DEFAULT_GROUP
+    override def group: String = Data.GROUP_DEFAULT
     override def kind: String = "jdbc"
   }
   implicit val JDBC_INFO_JSON_FORMAT: RootJsonFormat[JdbcInfo] = jsonFormat6(JdbcInfo)

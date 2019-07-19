@@ -79,7 +79,7 @@ object NodeApi {
                   tags: Map[String, JsValue])
       extends Data {
     // Node does not support to define group
-    override def group: String = Data.DEFAULT_GROUP
+    override def group: String = Data.GROUP_DEFAULT
     private[this] def msg(key: String): String = s"$key is required since Ohara Configurator is in ssh mode"
     def _port: Int = port.getOrElse(throw new NoSuchElementException(msg("port")))
     def _user: String = user.getOrElse(throw new NoSuchElementException(msg("user")))

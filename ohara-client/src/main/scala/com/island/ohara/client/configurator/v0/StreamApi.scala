@@ -17,7 +17,6 @@
 package com.island.ohara.client.configurator.v0
 import java.util.Objects
 
-import com.island.ohara.client.configurator.v0.FileApi.FileKey
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
@@ -64,7 +63,7 @@ object StreamApi {
                                         instances: Int,
                                         nodeNames: Set[String],
                                         deadNodes: Set[String],
-                                        jar: FileKey,
+                                        jar: DataKey,
                                         from: Set[String],
                                         to: Set[String],
                                         state: Option[String],
@@ -77,7 +76,7 @@ object StreamApi {
                                         tags: Map[String, JsValue])
       extends Data {
     // streamapp does not support to define group
-    override def group: String = Data.DEFAULT_GROUP
+    override def group: String = Data.GROUP_DEFAULT
     override def kind: String = "streamApp"
   }
   implicit val STREAMAPP_DESCRIPTION_JSON_FORMAT: RootJsonFormat[StreamAppDescription] = jsonFormat15(
@@ -85,7 +84,7 @@ object StreamApi {
 
   final case class Creation(name: String,
                             imageName: String,
-                            jar: FileKey,
+                            jar: DataKey,
                             from: Set[String],
                             to: Set[String],
                             jmxPort: Int,
@@ -120,7 +119,7 @@ object StreamApi {
   final case class Update(imageName: Option[String],
                           from: Option[Set[String]],
                           to: Option[Set[String]],
-                          jar: Option[FileKey],
+                          jar: Option[DataKey],
                           jmxPort: Option[Int],
                           instances: Option[Int],
                           nodeNames: Option[Set[String]],
@@ -161,7 +160,7 @@ object StreamApi {
     def name(name: String): Request
     @Optional("the default image is IMAGE_NAME_DEFAULT")
     def imageName(imageName: String): Request
-    def jar(jar: FileKey): Request
+    def jar(jar: DataKey): Request
     def from(from: Set[String]): Request
     def to(to: Set[String]): Request
     @Optional("the default port is random")
@@ -233,7 +232,7 @@ object StreamApi {
     def request: Request = new Request {
       private[this] var name: String = _
       private[this] var _imageName: Option[String] = None
-      private[this] var jar: FileKey = _
+      private[this] var jar: DataKey = _
       private[this] var _from: Option[Set[String]] = None
       private[this] var _to: Option[Set[String]] = None
       private[this] var _jmxPort: Option[Int] = None
@@ -249,7 +248,7 @@ object StreamApi {
         this._imageName = Some(CommonUtils.requireNonEmpty(imageName))
         this
       }
-      override def jar(jar: FileKey): Request = {
+      override def jar(jar: DataKey): Request = {
         this.jar = Objects.requireNonNull(jar)
         this
       }

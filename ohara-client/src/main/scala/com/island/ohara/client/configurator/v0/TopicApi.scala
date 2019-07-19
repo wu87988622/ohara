@@ -70,7 +70,7 @@ object TopicApi {
                        tags: Map[String, JsValue])
       extends Data {
     // TODO: topic's group ought be identical to brokerClusterName
-    override def group: String = Data.DEFAULT_GROUP
+    override def group: String = Data.GROUP_DEFAULT
     override def kind: String = "topic"
   }
 
