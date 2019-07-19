@@ -20,8 +20,16 @@ import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
 object MetricsApi {
-  final case class Meter(value: Double, unit: String, document: String)
-  implicit val METER_JSON_FORMAT: RootJsonFormat[Meter] = jsonFormat3(Meter)
+
+  /**
+    * the metric information
+    * @param value the value of metric record
+    * @param unit the unit of metric record
+    * @param document the document of metric record
+    * @param startTime the time of record generated in remote machine
+    */
+  final case class Meter(value: Double, unit: String, document: String, startTime: Long)
+  implicit val METER_JSON_FORMAT: RootJsonFormat[Meter] = jsonFormat4(Meter)
   final case class Metrics(meters: Seq[Meter])
   implicit val METRICS_JSON_FORMAT: RootJsonFormat[Metrics] = jsonFormat1(Metrics)
 }

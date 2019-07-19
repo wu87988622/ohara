@@ -33,7 +33,7 @@ public final class MetricFactory {
         .group("streamapp")
         .name(type.name())
         .unit("row")
-        .document(type.name() + ": the number of rows")
+        .document(type.value + ": the number of rows")
         .startTime(CommonUtils.current())
         .value(0)
         .register();
@@ -45,8 +45,14 @@ public final class MetricFactory {
    * <p>TOPIC_IN (the consume topic) and TOPIC_OUT (the produce topic)
    */
   public enum IOType {
-    TOPIC_IN,
-    TOPIC_OUT
+    TOPIC_IN("Input"),
+    TOPIC_OUT("Output");
+
+    private final String value;
+
+    IOType(String s) {
+      value = s;
+    }
   }
 
   // prevent construction

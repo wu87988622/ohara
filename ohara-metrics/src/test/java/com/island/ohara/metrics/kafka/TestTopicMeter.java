@@ -35,7 +35,8 @@ public class TestTopicMeter extends SmallTest {
         (double) CommonUtils.current(),
         (double) CommonUtils.current(),
         (double) CommonUtils.current(),
-        TimeUnit.DAYS);
+        TimeUnit.DAYS,
+        CommonUtils.current());
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -49,7 +50,8 @@ public class TestTopicMeter extends SmallTest {
         (double) CommonUtils.current(),
         (double) CommonUtils.current(),
         (double) CommonUtils.current(),
-        TimeUnit.DAYS);
+        TimeUnit.DAYS,
+        CommonUtils.current());
   }
 
   @Test(expected = NullPointerException.class)
@@ -63,7 +65,8 @@ public class TestTopicMeter extends SmallTest {
         (double) CommonUtils.current(),
         (double) CommonUtils.current(),
         (double) CommonUtils.current(),
-        TimeUnit.DAYS);
+        TimeUnit.DAYS,
+        CommonUtils.current());
   }
 
   @Test(expected = NullPointerException.class)
@@ -77,7 +80,8 @@ public class TestTopicMeter extends SmallTest {
         (double) CommonUtils.current(),
         (double) CommonUtils.current(),
         (double) CommonUtils.current(),
-        TimeUnit.DAYS);
+        TimeUnit.DAYS,
+        CommonUtils.current());
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -91,7 +95,8 @@ public class TestTopicMeter extends SmallTest {
         (double) CommonUtils.current(),
         (double) CommonUtils.current(),
         (double) CommonUtils.current(),
-        TimeUnit.DAYS);
+        TimeUnit.DAYS,
+        CommonUtils.current());
   }
 
   @Test(expected = NullPointerException.class)
@@ -105,7 +110,8 @@ public class TestTopicMeter extends SmallTest {
         (double) CommonUtils.current(),
         (double) CommonUtils.current(),
         (double) CommonUtils.current(),
-        null);
+        null,
+        CommonUtils.current());
   }
 
   @Test
@@ -129,7 +135,8 @@ public class TestTopicMeter extends SmallTest {
             fiveMinuteRate,
             meanRate,
             oneMinuteRate,
-            rateUnit);
+            rateUnit,
+            CommonUtils.current());
 
     Assert.assertEquals(topicName, meter.topicName());
     Assert.assertEquals(catalog, meter.catalog());

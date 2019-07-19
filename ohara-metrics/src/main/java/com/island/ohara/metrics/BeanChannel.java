@@ -202,28 +202,35 @@ public interface BeanChannel extends Iterable<BeanObject> {
     }
 
     private BeanObject to(
-        ObjectName objectName, MBeanInfo beanInfo, Function<String, Object> valueGetter) {
+        ObjectName objectName,
+        MBeanInfo beanInfo,
+        Function<String, Object> valueGetter,
+        long startTime) {
       // used to filter the "illegal" attribute
       Object unknown = new Object();
+      Map<String, Object> attributes =
+          Stream.of(beanInfo.getAttributes())
+              .collect(
+                  Collectors.toMap(
+                      MBeanAttributeInfo::getName,
+                      attribute -> {
+                        try {
+                          return valueGetter.apply(attribute.getName());
+                        } catch (Throwable e) {
+                          // It is not allow to access the value.
+                          return unknown;
+                        }
+                      }))
+              .entrySet().stream()
+              .filter(e -> e.getValue() != unknown)
+              .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
       return BeanObject.builder()
           .domainName(objectName.getDomain())
           .properties(objectName.getKeyPropertyList())
-          .attributes(
-              Stream.of(beanInfo.getAttributes())
-                  .collect(
-                      Collectors.toMap(
-                          MBeanAttributeInfo::getName,
-                          attribute -> {
-                            try {
-                              return valueGetter.apply(attribute.getName());
-                            } catch (Throwable e) {
-                              // It is not allow to access the value.
-                              return unknown;
-                            }
-                          }))
-                  .entrySet().stream()
-                  .filter(e -> e.getValue() != unknown)
-                  .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)))
+          .attributes(attributes)
+          // if the metrics contain startTime (i.e., build from ohara metric API), we use startTime
+          // of bean object, else we use the time of creating the metrics object
+          .startTime((long) attributes.getOrDefault(CounterMBean.START_TIME_KEY, startTime))
           .build();
     }
 
@@ -241,6 +248,8 @@ public interface BeanChannel extends Iterable<BeanObject> {
     private List<BeanObject> doBuild() {
       if (local) {
         MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+        // for each query, we should have same "startTime" for each metric
+        final long startTime = CommonUtils.current();
         return server.queryMBeans(objectName(), null).stream()
             .map(
                 objectInstance -> {
@@ -259,7 +268,8 @@ public interface BeanChannel extends Iterable<BeanObject> {
                                   | ReflectionException e) {
                                 throw new IllegalArgumentException(e);
                               }
-                            }));
+                            },
+                            startTime));
                   } catch (Throwable e) {
                     return Optional.empty();
                   }
@@ -278,6 +288,8 @@ public interface BeanChannel extends Iterable<BeanObject> {
                         + "/jmxrmi"),
                 null)) {
           MBeanServerConnection connection = connector.getMBeanServerConnection();
+          // for each query, we should have same "startTime" for each metric
+          final long startTime = CommonUtils.current();
           return connection.queryMBeans(objectName(), null).stream()
               .map(
                   objectInstance -> {
@@ -297,7 +309,8 @@ public interface BeanChannel extends Iterable<BeanObject> {
                                     | IOException e) {
                                   throw new IllegalArgumentException(e);
                                 }
-                              }));
+                              },
+                              startTime));
                     } catch (Throwable e) {
                       return Optional.empty();
                     }

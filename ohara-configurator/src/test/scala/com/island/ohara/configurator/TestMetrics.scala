@@ -63,9 +63,14 @@ class TestMetrics extends WithBrokerWorker with Matchers {
         .get()
     } finally producer.close()
 
-    CommonUtils.await(() => {
-      result(topicApi.get(topic.name)).metrics.meters.nonEmpty
-    }, java.time.Duration.ofSeconds(20))
+    CommonUtils.await(
+      () => {
+        val meters = result(topicApi.get(topic.name)).metrics.meters
+        // metrics should have startTime also
+        meters.nonEmpty && meters.head.startTime > 0
+      },
+      java.time.Duration.ofSeconds(20)
+    )
 
     result(topicApi.delete(topic.name))
 

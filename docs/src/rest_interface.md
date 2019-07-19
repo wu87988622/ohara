@@ -711,6 +711,7 @@ The following information are updated by ohara.
     - meters[i].value (**double**) — the number stored in meter
     - meters[i].unit (**string**) — unit for value
     - meters[i].document (**string**) — document of this meter
+    - meters[i].startTime (**long**) — the time of record generated in remote machine
     
 The settings from request, BTW, is a individual item in response. Hence, you will observe the following response
 after you store the settings with connector.class.
@@ -873,7 +874,8 @@ This request is idempotent so it is safe to retry this command repeatedly.
       {
         "value": 1234,
         "unit": "rows",
-        "document": "number of processed rows"
+        "document": "number of processed rows",
+        "startTime": 1563429590505
       }
     ]
   }
@@ -927,7 +929,8 @@ This request is idempotent so it is safe to send this request repeatedly.
       {
         "value": 1234,
         "unit": "rows",
-        "document": "number of processed rows"
+        "document": "number of processed rows",
+        "startTime": 15623429590505
       }
     ]
   }
@@ -957,7 +960,8 @@ This request is idempotent so it is safe to retry this command repeatedly.
       {
         "value": 1234,
         "unit": "rows",
-        "document": "number of processed rows"
+        "document": "number of processed rows",
+        "startTime": 1563429590505
       }
     ]
   }
@@ -1008,6 +1012,7 @@ Following information are written by ohara.
        - meters[i].value (**double**) — the number stored in meter
        - meters[i].unit (**string**) — unit for value
        - meters[i].document (**string**) — document of this meter
+       - meters[i].startTime (**long**) — the time of record generated in remote machine
 ----------
 ### create a pipeline
 
@@ -2811,6 +2816,7 @@ The following information of StreamApp are updated by ohara.
       - meters[i].value (**double**) — the number stored in meter
       - meters[i].unit (**string**) — unit for value
       - meters[i].document (**string**) — document of this meter
+      - meters[i].startTime (**long**) — the time of record generated in remote machine
 1. exactlyOnce (**boolean**) — enable exactly once
 1. error (**option(string)**) — the error message from a failed streamApp. If the streamApp is fine or un-started, you won't get this field.
 1. lastModified (**long**) — last modified this jar time
@@ -2873,6 +2879,7 @@ Create the properties of a streamApp.
       - meters[i].value (**double**) — the number stored in meter
       - meters[i].unit (**string**) — unit for value
       - meters[i].document (**string**) — document of this meter
+      - meters[i].startTime (**long**) — the time of record generated in remote machine
 1. exactlyOnce (**boolean**) — enable exactly once
 1. error (**option(string)**) — the error message from a failed streamApp. If the streamApp is fine or un-started, you won't get this field.
 1. lastModified (**long**) — last modified this jar time
@@ -2925,6 +2932,7 @@ Create the properties of a streamApp.
       - meters[i].value (**double**) — the number stored in meter
       - meters[i].unit (**string**) — unit for value
       - meters[i].document (**string**) — document of this meter
+      - meters[i].startTime (**long**) — the time of record generated in remote machine
 1. exactlyOnce (**boolean**) — enable exactly once
 1. error (**option(string)**) — the error message from a failed streamApp. If the streamApp is fine or un-started, you won't get this field.
 1. lastModified (**long**) — last modified this jar time
@@ -3005,6 +3013,7 @@ Update the properties of a non-started streamApp.
       - meters[i].value (**double**) — the number stored in meter
       - meters[i].unit (**string**) — unit for value
       - meters[i].document (**string**) — document of this meter
+      - meters[i].startTime (**long**) — the time of record generated in remote machine
 1. exactlyOnce (**boolean**) — enable exactly once
 1. error (**option(string)**) — the error message from a failed streamApp. If the streamApp is fine or un-started, you won't get this field.
 1. lastModified (**long**) — last modified this jar time
