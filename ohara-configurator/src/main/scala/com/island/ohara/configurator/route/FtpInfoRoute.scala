@@ -41,12 +41,6 @@ private[configurator] object FtpInfoRoute {
           )),
       hookOfUpdate = (name: String, request: Update, previousOption: Option[FtpInfo]) =>
         Future.successful(previousOption.fold {
-          if (request.hostname.isEmpty)
-            throw new IllegalArgumentException(RouteUtils.errorMessage(name, "hostname"))
-          if (request.port.isEmpty) throw new IllegalArgumentException(RouteUtils.errorMessage(name, "port"))
-          if (request.user.isEmpty) throw new IllegalArgumentException(RouteUtils.errorMessage(name, "user"))
-          if (request.password.isEmpty)
-            throw new IllegalArgumentException(RouteUtils.errorMessage(name, "password"))
           FtpInfo(
             name = name,
             hostname = request.hostname.get,
