@@ -17,6 +17,7 @@
 package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
 import spray.json._
@@ -47,4 +48,20 @@ class TestDataKey extends SmallTest with Matchers {
        |    "${Data.GROUP_KEY}": "group"
        |  }
     """.stripMargin.parseJson)
+
+  @Test
+  def nullGroup(): Unit =
+    an[NullPointerException] should be thrownBy DataKey(group = null, name = CommonUtils.randomString())
+
+  @Test
+  def emptyGroup(): Unit =
+    an[IllegalArgumentException] should be thrownBy DataKey(group = "", name = CommonUtils.randomString())
+
+  @Test
+  def nullName(): Unit =
+    an[NullPointerException] should be thrownBy DataKey(group = CommonUtils.randomString(), name = null)
+
+  @Test
+  def emptyName(): Unit =
+    an[IllegalArgumentException] should be thrownBy DataKey(group = CommonUtils.randomString(), name = "")
 }

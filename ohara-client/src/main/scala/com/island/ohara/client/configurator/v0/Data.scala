@@ -26,6 +26,15 @@ import spray.json.JsValue
 trait Data {
   def group: String
   def name: String
+
+  /**
+    * a helper method used to generate the key of this data.
+    * @return key
+    */
+  final def key: DataKey = DataKey(
+    group = group,
+    name = name
+  )
   def lastModified: Long
   def kind: String
   def tags: Map[String, JsValue]

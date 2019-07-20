@@ -17,6 +17,7 @@
 package com.island.ohara.configurator.store
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorDescription
+import com.island.ohara.client.configurator.v0.DataKey
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import org.junit.{After, Test}
@@ -60,8 +61,8 @@ class TestRocksDataStore extends SmallTest with Matchers {
     try {
       s1.numberOfTypes() shouldBe 1
       s1.size() shouldBe 2
-      result(s1.value[SimpleData](value0.group, value0.name)) shouldBe value0
-      result(s1.value[SimpleData](value1.group, value1.name)) shouldBe value1
+      result(s1.value[SimpleData](value0.key)) shouldBe value0
+      result(s1.value[SimpleData](value1.key)) shouldBe value1
     } finally s1.close()
   }
 
@@ -69,15 +70,15 @@ class TestRocksDataStore extends SmallTest with Matchers {
   def testGetter(): Unit = {
     val value = createData()
     result(store.addIfAbsent(value)) shouldBe value
-    result(store.get[SimpleData](value.group, value.name)) shouldBe Some(value)
+    result(store.get[SimpleData](value.key)) shouldBe Some(value)
   }
 
   @Test
   def testValue(): Unit = {
     val value = createData()
-    an[NoSuchElementException] should be thrownBy result(store.value(value.group, value.name))
+    an[NoSuchElementException] should be thrownBy result(store.value(value.key))
     result(store.addIfAbsent(value)) shouldBe value
-    result(store.value[SimpleData](value.group, value.name)) shouldBe value
+    result(store.value[SimpleData](value.key)) shouldBe value
   }
 
   @Test
@@ -95,8 +96,8 @@ class TestRocksDataStore extends SmallTest with Matchers {
   def testDelete(): Unit = {
     val value = createData()
     result(store.addIfAbsent(value)) shouldBe value
-    result(store.get[SimpleData](value.group, value.name)) shouldBe Some(value)
-    result(store.remove[SimpleData](value.group, value.name)) shouldBe true
+    result(store.get[SimpleData](value.key)) shouldBe Some(value)
+    result(store.remove[SimpleData](value.key)) shouldBe true
     store.size shouldBe 0
   }
 
@@ -122,19 +123,19 @@ class TestRocksDataStore extends SmallTest with Matchers {
   @Test
   def testUpdate(): Unit = {
     an[NoSuchElementException] should be thrownBy result(
-      store.addIfPresent[SimpleData](random(), random(), (_: SimpleData) => createData()))
+      store.addIfPresent[SimpleData](DataKey(random(), random()), (_: SimpleData) => createData()))
     val value0 = createData()
     val value1 = value0.copy(kind = CommonUtils.randomString())
     result(store.addIfAbsent(value0)) shouldBe value0
     store.size shouldBe 1
-    result(store.addIfPresent[SimpleData](value0.group, value0.name, (v: SimpleData) => {
+    result(store.addIfPresent[SimpleData](value0.key, (v: SimpleData) => {
       v shouldBe value0
       value1
     })) shouldBe value1
     store.size shouldBe 1
 
     val value2 = value0.copy(kind = CommonUtils.randomString())
-    result(store.addIfPresent[SimpleData](value0.group, value0.name, (v: SimpleData) => {
+    result(store.addIfPresent[SimpleData](value0.key, (v: SimpleData) => {
       v shouldBe value1
       value2
     })) shouldBe value2
@@ -155,10 +156,10 @@ class TestRocksDataStore extends SmallTest with Matchers {
   @Test
   def testExist(): Unit = {
     val value = createData()
-    result(store.exist(value.group, value.name)) shouldBe false
+    result(store.exist(value.key)) shouldBe false
     result(store.addIfAbsent(value)) shouldBe value
-    result(store.exist(value.group, value.name)) shouldBe false
-    result(store.exist[SimpleData](value.group, value.name)) shouldBe true
+    result(store.exist(value.key)) shouldBe false
+    result(store.exist[SimpleData](value.key)) shouldBe true
   }
 
   @Test
@@ -166,12 +167,12 @@ class TestRocksDataStore extends SmallTest with Matchers {
     val data = createData("abcd")
     result(store.addIfAbsent(data))
 
-    result(store.exist[SimpleData](data.group, data.name)) shouldBe true
-    result(store.exist[SimpleData](data.group, CommonUtils.randomString())) shouldBe false
-    result(store.exist[SimpleData](CommonUtils.randomString(), data.name)) shouldBe false
-    result(store.nonExist[SimpleData](data.group, data.name)) shouldBe false
-    result(store.nonExist[SimpleData](data.group, CommonUtils.randomString())) shouldBe true
-    result(store.nonExist[SimpleData](CommonUtils.randomString(), data.name)) shouldBe true
+    result(store.exist[SimpleData](data.key)) shouldBe true
+    result(store.exist[SimpleData](DataKey(data.group, CommonUtils.randomString()))) shouldBe false
+    result(store.exist[SimpleData](DataKey(CommonUtils.randomString(), data.name))) shouldBe false
+    result(store.nonExist[SimpleData](data.key)) shouldBe false
+    result(store.nonExist[SimpleData](DataKey(data.group, CommonUtils.randomString()))) shouldBe true
+    result(store.nonExist[SimpleData](DataKey(CommonUtils.randomString(), data.name))) shouldBe true
   }
 
   @Test
@@ -191,11 +192,11 @@ class TestRocksDataStore extends SmallTest with Matchers {
     result(store.addIfAbsent(data2))
     store.size shouldBe 2
 
-    result(store.remove(random(), random())) shouldBe false
-    result(store.remove[SimpleData](random(), random())) shouldBe false
-    result(store.remove[ConnectorDescription](random(), random())) shouldBe false
+    result(store.remove(DataKey(random(), random()))) shouldBe false
+    result(store.remove[SimpleData](DataKey(random(), random()))) shouldBe false
+    result(store.remove[ConnectorDescription](DataKey(random(), random()))) shouldBe false
 
-    result(store.remove[SimpleData](data1.group, data1.name)) shouldBe true
+    result(store.remove[SimpleData](DataKey(data1.group, data1.name))) shouldBe true
     store.size shouldBe 1
   }
 
@@ -206,13 +207,13 @@ class TestRocksDataStore extends SmallTest with Matchers {
     result(store.addIfAbsent(data1))
     store.size shouldBe 1
 
-    result(store.remove(data1.group, data1.name)) shouldBe false
-    result(store.remove[SimpleData](data1.group, "1234")) shouldBe false
-    result(store.remove[SimpleData]("1234", data1.name)) shouldBe false
-    result(store.remove[ConnectorDescription](data1.group, data1.name)) shouldBe false
+    result(store.remove(DataKey(data1.group, data1.name))) shouldBe false
+    result(store.remove[SimpleData](DataKey(data1.group, "1234"))) shouldBe false
+    result(store.remove[SimpleData](DataKey("1234", data1.name))) shouldBe false
+    result(store.remove[ConnectorDescription](DataKey(data1.group, data1.name))) shouldBe false
 
     result(store.raws()).head.asInstanceOf[SimpleData] shouldBe data1
-    result(store.raws(data1.group, data1.name)).head.asInstanceOf[SimpleData] shouldBe data1
+    result(store.raws(DataKey(data1.group, data1.name))).head.asInstanceOf[SimpleData] shouldBe data1
   }
 
   @Test
@@ -221,16 +222,16 @@ class TestRocksDataStore extends SmallTest with Matchers {
     store2.close()
     an[RuntimeException] should be thrownBy store2.size()
     an[RuntimeException] should be thrownBy store2.numberOfTypes()
-    an[RuntimeException] should be thrownBy result(store2.get[SimpleData](random(), random()))
+    an[RuntimeException] should be thrownBy result(store2.get[SimpleData](DataKey(random(), random())))
     an[RuntimeException] should be thrownBy result(store2.add[SimpleData](createData()))
-    an[RuntimeException] should be thrownBy result(store2.exist[SimpleData](random(), random()))
+    an[RuntimeException] should be thrownBy result(store2.exist[SimpleData](DataKey(random(), random())))
     an[RuntimeException] should be thrownBy result(
-      store2.addIfPresent[SimpleData](random(), random(), (_: SimpleData) => createData()))
-    an[RuntimeException] should be thrownBy result(store2.raws(random(), random()))
+      store2.addIfPresent[SimpleData](DataKey(random(), random()), (_: SimpleData) => createData()))
+    an[RuntimeException] should be thrownBy result(store2.raws(DataKey(random(), random())))
     an[RuntimeException] should be thrownBy result(store2.raws())
-    an[RuntimeException] should be thrownBy result(store2.value[SimpleData](random(), random()))
+    an[RuntimeException] should be thrownBy result(store2.value[SimpleData](DataKey(random(), random())))
     an[RuntimeException] should be thrownBy result(store2.values[SimpleData]())
-    an[RuntimeException] should be thrownBy result(store2.remove[SimpleData](random(), random()))
+    an[RuntimeException] should be thrownBy result(store2.remove[SimpleData](DataKey(random(), random())))
   }
 
   @Test
@@ -238,7 +239,7 @@ class TestRocksDataStore extends SmallTest with Matchers {
     val data = createData()
     store.add(data)
     an[IllegalArgumentException] should be thrownBy result(
-      store.addIfPresent(data.group, data.name, (_: SimpleData) => createData()))
+      store.addIfPresent(data.key, (_: SimpleData) => createData()))
   }
 
   private[this] def random(): String = CommonUtils.randomString(5)

@@ -18,7 +18,7 @@ package com.island.ohara.configurator.store
 
 import java.util.Objects
 
-import com.island.ohara.client.configurator.v0.Data
+import com.island.ohara.client.configurator.v0.{Data, DataKey}
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -34,19 +34,19 @@ trait DataStore extends Releasable {
 
   /**
     * Noted, the type of stored data must be equal to input type.
-    * @param name data name
+    * @param key data key
     * @param executor thread pool
     * @return data associated to type and name
     */
-  def get[T <: Data: ClassTag](group: String, name: String)(implicit executor: ExecutionContext): Future[Option[T]]
+  def get[T <: Data: ClassTag](key: DataKey)(implicit executor: ExecutionContext): Future[Option[T]]
 
   /**
     * Noted, the type of stored data must be equal to input type.
-    * @param name data name
+    * @param key data key
     * @param executor thread pool
     * @return data associated to type and name
     */
-  def value[T <: Data: ClassTag](group: String, name: String)(implicit executor: ExecutionContext): Future[T]
+  def value[T <: Data: ClassTag](key: DataKey)(implicit executor: ExecutionContext): Future[T]
 
   /**
     * Noted, the type of stored data must be equal to input type.
@@ -62,21 +62,21 @@ trait DataStore extends Releasable {
   def raws()(implicit executor: ExecutionContext): Future[Seq[Data]]
 
   /**
-    * @param name data name
+    * @param key data key
     * @param executor thread pool
     * @return all data associated to input name
     */
-  def raws(group: String, name: String)(implicit executor: ExecutionContext): Future[Seq[Data]]
+  def raws(key: DataKey)(implicit executor: ExecutionContext): Future[Seq[Data]]
 
   /**
     * Remove a "specified" sublcass from ohara data mapping the name. If the data mapping to the name is not the specified
     * type, an exception will be thrown.
     *
-    * @param name from ohara data
+    * @param key from ohara key
     * @tparam T subclass type
     * @return the removed data
     */
-  def remove[T <: Data: ClassTag](group: String, name: String)(implicit executor: ExecutionContext): Future[Boolean]
+  def remove[T <: Data: ClassTag](key: DataKey)(implicit executor: ExecutionContext): Future[Boolean]
 
   /**
     * add an object in the store. If the name doesn't  exists, an exception will be thrown.
@@ -85,8 +85,7 @@ trait DataStore extends Releasable {
     * @tparam T type from data
     * @return the removed data
     */
-  def addIfPresent[T <: Data: ClassTag](group: String, name: String, updater: T => T)(
-    implicit executor: ExecutionContext): Future[T]
+  def addIfPresent[T <: Data: ClassTag](key: DataKey, updater: T => T)(implicit executor: ExecutionContext): Future[T]
 
   /**
     * add a data associated to name to store. Noted, it throw exception if the input data is already associated to
@@ -109,21 +108,21 @@ trait DataStore extends Releasable {
 
   /**
     * Noted, the type of stored data must be equal to input type.
-    * @param name data's name
+    * @param key data's key
     * @param executor thread pool
     * @tparam T data type
     * @return true if there is an existed data matching type. Otherwise, false
     */
-  def exist[T <: Data: ClassTag](group: String, name: String)(implicit executor: ExecutionContext): Future[Boolean]
+  def exist[T <: Data: ClassTag](key: DataKey)(implicit executor: ExecutionContext): Future[Boolean]
 
   /**
     * Noted, the type of stored data must be equal to input type.
-    * @param name data's name
+    * @param key data's key
     * @param executor thread pool
     * @tparam T data type
     * @return false if there is an existed data matching type. Otherwise, true
     */
-  def nonExist[T <: Data: ClassTag](group: String, name: String)(implicit executor: ExecutionContext): Future[Boolean]
+  def nonExist[T <: Data: ClassTag](key: DataKey)(implicit executor: ExecutionContext): Future[Boolean]
 
   /**
     * @return the number of stored data
@@ -137,18 +136,46 @@ trait DataStore extends Releasable {
 
   //----------------[deprecated methods]----------------//
   def get[T <: Data: ClassTag](name: String)(implicit executor: ExecutionContext): Future[Option[T]] =
-    get[T](Data.GROUP_DEFAULT, name)
+    get[T](
+      DataKey(
+        group = Data.GROUP_DEFAULT,
+        name = name
+      ))
   def value[T <: Data: ClassTag](name: String)(implicit executor: ExecutionContext): Future[T] =
-    value[T](Data.GROUP_DEFAULT, name)
-  def raws(name: String)(implicit executor: ExecutionContext): Future[Seq[Data]] = raws(Data.GROUP_DEFAULT, name)
+    value[T](
+      DataKey(
+        group = Data.GROUP_DEFAULT,
+        name = name
+      ))
+  def raws(name: String)(implicit executor: ExecutionContext): Future[Seq[Data]] = raws(
+    DataKey(
+      group = Data.GROUP_DEFAULT,
+      name = name
+    ))
   def remove[T <: Data: ClassTag](name: String)(implicit executor: ExecutionContext): Future[Boolean] =
-    remove[T](Data.GROUP_DEFAULT, name)
+    remove[T](
+      DataKey(
+        group = Data.GROUP_DEFAULT,
+        name = name
+      ))
   def addIfPresent[T <: Data: ClassTag](name: String, updater: T => T)(implicit executor: ExecutionContext): Future[T] =
-    addIfPresent[T](Data.GROUP_DEFAULT, name, updater)
+    addIfPresent[T](key = DataKey(
+                      group = Data.GROUP_DEFAULT,
+                      name = name
+                    ),
+                    updater = updater)
   def exist[T <: Data: ClassTag](name: String)(implicit executor: ExecutionContext): Future[Boolean] =
-    exist[T](Data.GROUP_DEFAULT, name)
+    exist[T](
+      DataKey(
+        group = Data.GROUP_DEFAULT,
+        name = name
+      ))
   def nonExist[T <: Data: ClassTag](name: String)(implicit executor: ExecutionContext): Future[Boolean] =
-    nonExist[T](Data.GROUP_DEFAULT, name)
+    nonExist[T](
+      DataKey(
+        group = Data.GROUP_DEFAULT,
+        name = name
+      ))
 }
 
 object DataStore {

@@ -16,6 +16,7 @@
 
 package com.island.ohara.client.configurator.v0
 
+import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json.{DeserializationException, JsObject, JsString, JsValue, RootJsonFormat}
 
@@ -32,6 +33,12 @@ import spray.json.{DeserializationException, JsObject, JsString, JsValue, RootJs
 case class DataKey(group: String, name: String)
 
 object DataKey {
+
+  def apply(group: String, name: String): DataKey = new DataKey(
+    group = CommonUtils.requireNonEmpty(group),
+    name = CommonUtils.requireNonEmpty(name)
+  )
+
   implicit val DATA_KEY_JSON_FORMAT: RootJsonFormat[DataKey] =
     JsonRefiner[DataKey]
       .format(new RootJsonFormat[DataKey] {
