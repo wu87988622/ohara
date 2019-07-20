@@ -42,7 +42,6 @@ class JdbcSource extends React.Component {
     loadGraph: PropTypes.func.isRequired,
     refreshGraph: PropTypes.func.isRequired,
     pipelineTopics: PropTypes.array.isRequired,
-    isPipelineRunning: PropTypes.bool.isRequired,
     globalTopics: PropTypes.arrayOf(types.topic).isRequired,
     defs: PropTypes.arrayOf(types.definition),
     graph: PropTypes.arrayOf(types.graph).isRequired,

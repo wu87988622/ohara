@@ -20,7 +20,7 @@ import { shallow } from 'enzyme';
 import * as generate from 'utils/generate';
 import PipelineNewPage from '../PipelineNewPage';
 import { CONNECTOR_TYPES } from 'constants/pipelines';
-import { PIPELINE_NEW, PIPELINE_EDIT } from 'constants/documentTitles';
+import { PIPELINE_EDIT } from 'constants/documentTitles';
 import { getTestById } from 'utils/testUtils';
 import * as pipelineApi from 'api/pipelineApi';
 import * as connectorApi from 'api/connectorApi';
@@ -66,18 +66,6 @@ describe('<PipelineNewPage />', () => {
     expect(wrapper.find('Wrapper').length).toBe(1);
   });
 
-  it('renders new pipeline page document title', () => {
-    const match = {
-      params: {
-        pipelineId: null,
-      },
-    };
-    wrapper.setProps({ match });
-
-    expect(wrapper.dive().name()).toBe('DocumentTitle');
-    expect(wrapper.props().title).toBe(PIPELINE_NEW);
-  });
-
   it('renders edit pipeline page document title, if pipelineName is present', () => {
     expect(wrapper.props().title).toBe(PIPELINE_EDIT);
   });
@@ -92,24 +80,6 @@ describe('<PipelineNewPage />', () => {
 
   it('renders <PipelineGraph />', () => {
     expect(wrapper.find('PipelineGraph').length).toBe(1);
-  });
-
-  it('renders 7 <Route />', () => {
-    expect(wrapper.find('Route').length).toBe(7);
-  });
-
-  it('renders <StartBtn />', () => {
-    const button = wrapper.find(getTestById('start-btn'));
-
-    expect(button.length).toBe(1);
-    expect(button.find('i').props().className).toMatch(/^far fa-play-circle$/);
-  });
-
-  it('renders <StopBtn />', () => {
-    const button = wrapper.find(getTestById('stop-btn'));
-
-    expect(button.length).toBe(1);
-    expect(button.find('i').props().className).toMatch(/^far fa-stop-circle$/);
   });
 
   it.skip('starts the pipeline', async () => {

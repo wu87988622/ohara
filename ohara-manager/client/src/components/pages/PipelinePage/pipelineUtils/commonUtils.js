@@ -38,14 +38,14 @@ export const getConnectors = connectors => {
   };
 
   const result = connectors.reduce((acc, connector) => {
-    const { kind, id } = connector;
+    const { kind, name } = connector;
 
     if (isSource(kind)) {
-      acc.sources.push(id);
+      acc.sources.push(name);
     } else if (isSink(kind)) {
-      acc.sinks.push(id);
+      acc.sinks.push(name);
     } else if (isStream(kind)) {
-      acc.streams.push(id);
+      acc.streams.push(name);
     } else if (isTopic(kind)) {
       // TODO: this should behave the same way as the rest of connectors
       acc.topics.push(connector);

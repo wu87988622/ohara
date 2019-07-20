@@ -18,16 +18,6 @@ import { isNull, isEmpty } from 'lodash';
 
 import { isTopic, isStream } from '../pipelineUtils/commonUtils';
 
-export const addPipelineStatus = pipeline => {
-  const status = pipeline.objects.filter(p => p.state === 'RUNNING');
-  const updatedStatus = status.length >= 2 ? 'Running' : 'Stopped';
-
-  return {
-    ...pipeline,
-    status: updatedStatus,
-  };
-};
-
 export const removePrevConnector = (rules, connectorName) => {
   const updatedRule = Object.keys(rules)
     .map(key => {

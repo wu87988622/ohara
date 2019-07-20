@@ -17,7 +17,7 @@
 import styled from 'styled-components';
 import { H2, H3 } from 'components/common/Headings';
 
-const Wrapper = styled.div`
+export const Wrapper = styled.div`
   padding-top: 75px;
   max-width: 1200px;
   width: calc(100% - 100px);
@@ -26,22 +26,22 @@ const Wrapper = styled.div`
 
 Wrapper.displayName = 'Wrapper';
 
-const Main = styled.div`
+export const Main = styled.div`
   display: flex;
 `;
 
-const Sidebar = styled.div`
+export const Sidebar = styled.div`
   width: 37%;
 `;
 
-const Heading2 = styled(H2)`
+export const Heading2 = styled(H2)`
   font-size: 16px;
   color: ${props => props.theme.lightBlue};
 `;
 
 Heading2.displayName = 'H2';
 
-const Heading3 = styled(H3)`
+export const Heading3 = styled(H3)`
   font-size: 15px;
   font-weight: normal;
   margin: 0;
@@ -50,7 +50,7 @@ const Heading3 = styled(H3)`
 
 Heading3.displayName = 'H3';
 
-const Operate = styled.div`
+export const OperateWrapper = styled.div`
   .actions {
     display: flex;
     align-items: center;
@@ -86,5 +86,3 @@ const Operate = styled.div`
     color: ${props => props.theme.lighterBlue};
   }
 `;
-
-export { Wrapper, Main, Sidebar, Heading2, Heading3, Operate };

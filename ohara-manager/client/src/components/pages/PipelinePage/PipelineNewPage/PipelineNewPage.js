@@ -16,33 +16,29 @@
 
 import React from 'react';
 import DocumentTitle from 'react-document-title';
-import toastr from 'toastr';
 import PropTypes from 'prop-types';
-import ReactTooltip from 'react-tooltip';
-import { Route, Prompt } from 'react-router-dom';
+import { Prompt } from 'react-router-dom';
 import { get, isEmpty } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
-import * as PIPELINES from 'constants/pipelines';
 import * as pipelineApi from 'api/pipelineApi';
-import * as connectorApi from 'api/connectorApi';
-import * as streamApi from 'api/streamApi';
 import * as topicApi from 'api/topicApi';
 import * as workerApi from 'api/workerApi';
-import * as Connectors from '../Connectors';
 import * as utils from './pipelineNewPageUtils';
 import PipelineToolbar from '../PipelineToolbar';
 import PipelineGraph from '../PipelineGraph';
-import { Box } from 'components/common/Layout';
-import { getConnectors } from '../pipelineUtils/commonUtils';
+import Operate from './Operate';
+import SidebarRoutes from './SidebarRoutes';
 import { PIPELINE_NEW, PIPELINE_EDIT } from 'constants/documentTitles';
-
-import { Wrapper, Main, Sidebar, Heading2, Heading3, Operate } from './styles';
+import { getConnectors } from '../pipelineUtils/commonUtils';
+import { Wrapper, Main, Sidebar, Heading2 } from './styles';
 
 class PipelineNewPage extends React.Component {
   static propTypes = {
     match: PropTypes.shape({
-      params: PropTypes.object.isRequired,
+      params: PropTypes.shape({
+        pipelineName: PropTypes.string.isRequired,
+      }).isRequired,
     }).isRequired,
   };
 
@@ -53,7 +49,6 @@ class PipelineNewPage extends React.Component {
     isLoading: true,
     isUpdating: false,
     hasChanges: false,
-    runningConnectors: 0,
     pipeline: {},
     pipelineTopics: [],
     connectors: [],
@@ -100,12 +95,9 @@ class PipelineNewPage extends React.Component {
       const pipeline = get(res, 'data.result', null);
 
       if (pipeline) {
-        const updatedPipeline = utils.addPipelineStatus(pipeline);
-        const { topics: pipelineTopics = [] } = getConnectors(
-          updatedPipeline.objects,
-        );
+        const { topics: pipelineTopics = [] } = getConnectors(pipeline.objects);
 
-        this.setState({ pipeline: updatedPipeline, pipelineTopics }, () => {
+        this.setState({ pipeline, pipelineTopics }, () => {
           this.loadGraph(this.state.pipeline);
         });
       }
@@ -177,7 +169,7 @@ class PipelineNewPage extends React.Component {
 
   updatePipeline = async (update = {}) => {
     const { pipeline } = this.state;
-    const { name, status } = pipeline;
+    const { name } = pipeline;
     const params = utils.updatePipelineParams({ pipeline, ...update });
 
     this.setState({ isUpdating: true }, async () => {
@@ -191,112 +183,12 @@ class PipelineNewPage extends React.Component {
           updatedPipelines.objects,
         );
 
-        // Keep the pipeline status since that's not stored on the configurator
         this.setState({
-          pipeline: { ...updatedPipelines, status },
+          pipeline: updatedPipelines,
           pipelineTopics,
         });
       }
     });
-  };
-
-  checkPipelineStatus = async () => {
-    const pipelineName = get(this.props.match, 'params.pipelineName', null);
-    await this.fetchPipeline(pipelineName);
-
-    const { status, objects: connectors } = this.state.pipeline;
-
-    if (!status) {
-      toastr.error(MESSAGES.CANNOT_START_PIPELINE_ERROR);
-    }
-
-    return { connectors, status };
-  };
-
-  handlePipelineStartClick = async () => {
-    const { connectors, status } = await this.checkPipelineStatus();
-
-    if (status) {
-      const res = await this.startConnectors(connectors);
-      const isSuccess = res.filter(r => r.data.isSuccess);
-      this.handleConnectorResponse(isSuccess, 'started');
-    }
-  };
-
-  handlePipelineStopClick = async () => {
-    const { connectors, status } = await this.checkPipelineStatus();
-
-    if (status) {
-      const res = await this.stopConnectors(connectors);
-      const isSuccess = res.filter(r => r.data.isSuccess);
-      this.handleConnectorResponse(isSuccess, 'stopped');
-    }
-  };
-
-  updateRunningConnectors = (sources, sinks, streams) => {
-    const runningConnectors = [...sources, ...sinks, ...streams].length;
-    this.setState({ runningConnectors });
-  };
-
-  startConnectors = async connectors => {
-    const { sources, sinks, streams } = getConnectors(connectors);
-    this.updateRunningConnectors(sources, sinks, streams);
-
-    const connectorPromises = [...sources, ...sinks].map(source =>
-      connectorApi.startConnector(source),
-    );
-    const streamsPromises = streams.map(stream =>
-      streamApi.startStreamApp(stream),
-    );
-
-    return Promise.all([...connectorPromises, ...streamsPromises]).then(
-      result => result,
-    );
-  };
-
-  stopConnectors = connectors => {
-    const { sources, sinks, streams } = getConnectors(connectors);
-    this.updateRunningConnectors(sources, sinks, streams);
-
-    const connectorPromises = [...sources, ...sinks].map(sink =>
-      connectorApi.stopConnector(sink),
-    );
-    const streamsPromises = streams.map(stream =>
-      streamApi.stopStreamApp(stream),
-    );
-
-    return Promise.all([...connectorPromises, ...streamsPromises]).then(
-      result => result,
-    );
-  };
-
-  handleConnectorResponse = (isSuccess, action) => {
-    if (isSuccess.length === this.state.runningConnectors) {
-      toastr.success(`Pipeline has been successfully ${action}!`);
-      let status = action === 'started' ? 'Running' : 'Stopped';
-
-      this.setState(({ pipeline }) => {
-        return {
-          runningConnectors: 0,
-          pipeline: {
-            ...pipeline,
-            status,
-          },
-        };
-      });
-
-      const pipelineName = get(this.props.match, 'params.pipelineName', null);
-      this.fetchPipeline(pipelineName);
-    } else {
-      toastr.error(MESSAGES.CANNOT_START_PIPELINE_ERROR);
-    }
-  };
-
-  getConnectorDefs = ({ connectors, type }) => {
-    const getByClassName = connector => connector.className === type;
-    const connector = connectors.find(getByClassName);
-
-    return connector.definitions;
   };
 
   render() {
@@ -317,34 +209,23 @@ class PipelineNewPage extends React.Component {
     const pipelineName = get(this, 'props.match.params.pipelineName', null);
     const {
       name: pipelineTitle,
-      status: pipelineStatus,
       workerClusterName,
+      objects: pipelineConnectors,
     } = pipeline;
 
-    const isPipelineRunning = pipelineStatus === 'Running' ? true : false;
-
-    const {
-      jdbcSource,
-      ftpSource,
-      hdfsSink,
-      ftpSink,
-      customSource,
-    } = PIPELINES.CONNECTOR_TYPES;
-
     const connectorProps = {
+      ...this.props,
       loadGraph: this.loadGraph,
       updateGraph: this.updateGraph,
       refreshGraph: this.refreshGraph,
       updateHasChanges: this.updateHasChanges,
       pipelineTopics: pipelineTopics,
       globalTopics: topics,
-      isPipelineRunning,
       pipeline,
       hasChanges,
       graph,
+      connectors,
     };
-
-    const routeBaseUrl = `/pipelines/(new|edit)`;
 
     return (
       <DocumentTitle title={pipelineName ? PIPELINE_EDIT : PIPELINE_NEW}>
@@ -383,120 +264,16 @@ class PipelineNewPage extends React.Component {
 
               <Sidebar>
                 <Heading2>{pipelineTitle}</Heading2>
-
-                <Box>
-                  <Operate>
-                    <div className="actions">
-                      <Heading3>Operate</Heading3>
-                      <ReactTooltip />
-
-                      <div className="action-btns">
-                        <button
-                          className="start-btn"
-                          data-tip="Start pipeline"
-                          onClick={this.handlePipelineStartClick}
-                          data-testid="start-btn"
-                        >
-                          <i className="far fa-play-circle" />
-                        </button>
-                        <button
-                          className="stop-btn"
-                          data-tip="Stop pipeline"
-                          onClick={this.handlePipelineStopClick}
-                          data-testid="stop-btn"
-                        >
-                          <i className="far fa-stop-circle" />
-                        </button>
-                      </div>
-                    </div>
-                    <span className="cluster-name">
-                      This pipeline is running on: {workerClusterName}
-                    </span>
-                  </Operate>
-                </Box>
-
-                <Route
-                  path={`${routeBaseUrl}/${jdbcSource}`}
-                  render={() => (
-                    <Connectors.JdbcSource
-                      {...this.props}
-                      {...connectorProps}
-                      defs={this.getConnectorDefs({
-                        connectors,
-                        type: jdbcSource,
-                      })}
-                    />
-                  )}
+                <Operate
+                  pipelineName={pipelineName}
+                  pipelineConnectors={pipelineConnectors}
+                  workerClusterName={workerClusterName}
+                  fetchPipeline={this.fetchPipeline}
                 />
 
-                <Route
-                  path={`${routeBaseUrl}/${ftpSource}`}
-                  render={() => (
-                    <Connectors.FtpSource
-                      {...this.props}
-                      {...connectorProps}
-                      defs={this.getConnectorDefs({
-                        connectors,
-                        type: ftpSource,
-                      })}
-                    />
-                  )}
-                />
-
-                <Route
-                  path={`${routeBaseUrl}/${ftpSink}`}
-                  render={() => (
-                    <Connectors.FtpSink
-                      {...this.props}
-                      {...connectorProps}
-                      defs={this.getConnectorDefs({
-                        connectors,
-                        type: ftpSink,
-                      })}
-                    />
-                  )}
-                />
-
-                <Route
-                  path={`${routeBaseUrl}/topic`}
-                  render={() => (
-                    <Connectors.Topic {...this.props} {...connectorProps} />
-                  )}
-                />
-
-                <Route
-                  path={`${routeBaseUrl}/${hdfsSink}`}
-                  render={() => (
-                    <Connectors.HdfsSink
-                      {...this.props}
-                      {...connectorProps}
-                      defs={this.getConnectorDefs({
-                        connectors,
-                        type: hdfsSink,
-                      })}
-                    />
-                  )}
-                />
-
-                <Route
-                  path={`${routeBaseUrl}/streamApp`}
-                  render={() => (
-                    <Connectors.StreamApp {...this.props} {...connectorProps} />
-                  )}
-                />
-
-                <Route
-                  path={`${routeBaseUrl}/com.island.ohara.it.connector.(DumbSourceConnector|DumbSinkConnector)`}
-                  render={() => (
-                    <Connectors.CustomConnector
-                      {...this.props}
-                      {...connectorProps}
-                      defs={this.getConnectorDefs({
-                        connectors,
-                        type: customSource,
-                      })}
-                    />
-                  )}
+                <SidebarRoutes
+                  connectorProps={connectorProps}
+                  connectors={connectors}
                 />
               </Sidebar>
             </Main>

@@ -52,14 +52,12 @@ describe('updatePipelineparams()', () => {
         a: ['c'],
         b: ['d'],
       },
-      status: 'failed',
       workerClusterName: 'e',
     };
     const update = { name: 'a', to: ['g'] };
     const sinkName = 'c';
     const expected = {
       name: pipeline.name,
-      status: pipeline.status,
       workerClusterName: pipeline.workerClusterName,
       rules: { a: ['g'], b: ['d'] },
     };
@@ -74,7 +72,6 @@ describe('updatePipelineparams()', () => {
       name: 'abc',
       objects: {},
       rules: {},
-      status: 'success',
       workerClusterName: 'e',
     };
     const update = { name: 'a', to: ['b', 'c'] };
@@ -83,7 +80,6 @@ describe('updatePipelineparams()', () => {
     };
     const expected = {
       name: pipeline.name,
-      status: pipeline.status,
       workerClusterName: pipeline.workerClusterName,
       rules: { ...pipeline.rules, ...updateRule },
     };

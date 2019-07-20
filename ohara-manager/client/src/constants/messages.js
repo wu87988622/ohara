@@ -80,10 +80,6 @@ export const TEST_FAILED_ERROR = `Didn't pass the test!`;
 // Pipelines
 export const PIPELINE_DELETION_ERROR =
   'Oops, something went wrong, we cannot delete the selected pipeline:';
-export const CANNOT_START_PIPELINE_ERROR =
-  'Failed to start the pipeline, please check your pipeline settings';
-export const NO_WORKER_CLUSTER_FOUND_ERROR =
-  'Please create a cluster before creating pipelines!';
 export const NO_TOPIC_IS_SUPPLIED = 'Please select a topic!';
 
 // Connectors
