@@ -26,9 +26,13 @@ import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] object HdfsInfoRoute {
 
-  private[this] def hookOfCreation: HookOfCreation[Creation, HdfsInfo] = (_: String, request: Creation) =>
+  private[this] def hookOfCreation: HookOfCreation[Creation, HdfsInfo] = (group: String, request: Creation) =>
     Future.successful(
-      HdfsInfo(name = request.name, uri = request.uri, lastModified = CommonUtils.current(), request.tags))
+      HdfsInfo(group = group,
+               name = request.name,
+               uri = request.uri,
+               lastModified = CommonUtils.current(),
+               tags = request.tags))
 
   private[this] def hookOfUpdate: HookOfUpdate[Creation, Update, HdfsInfo] =
     (key: DataKey, update: Update, previous: Option[HdfsInfo]) =>
@@ -36,6 +40,7 @@ private[configurator] object HdfsInfoRoute {
         previous.fold {
           if (update.uri.isEmpty) throw new IllegalArgumentException(RouteUtils.errorMessage(key, "uri"))
           HdfsInfo(
+            group = key.group,
             name = key.name,
             uri = update.uri.get,
             lastModified = CommonUtils.current(),
@@ -43,6 +48,7 @@ private[configurator] object HdfsInfoRoute {
           )
         } { previous =>
           HdfsInfo(
+            group = key.group,
             name = key.name,
             uri = update.uri.getOrElse(previous.uri),
             lastModified = CommonUtils.current(),

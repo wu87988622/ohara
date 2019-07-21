@@ -127,6 +127,12 @@ class TestHadoopApi extends SmallTest with Matchers {
     .update()
 
   @Test
+  def emptyGroup(): Unit = an[IllegalArgumentException] should be thrownBy HadoopApi.access.request.group("")
+
+  @Test
+  def nullGroup(): Unit = an[NullPointerException] should be thrownBy HadoopApi.access.request.group(null)
+
+  @Test
   def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy HadoopApi.access.request.name("")
 
   @Test

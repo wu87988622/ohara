@@ -274,6 +274,7 @@ storable information is shown below.
 1. user (**string**) — account of ftp server
 1. password (**string**) — password of ftp server
 1. tags (**object**) — the extra description to this object
+1. group (**string**) — group of this ftp information. It is a optional argument, and the default value of group is "default"
 
 The following information are tagged by ohara.
 
@@ -283,7 +284,7 @@ The following information are tagged by ohara.
 
 ### store a ftp information
 
-*POST /v0/ftp*
+*POST /v0/ftp?group=${group}*
 
 1. name (**string**) — name of this ftp information
 1. hostname (**string**) — ftp server hostname
@@ -291,6 +292,7 @@ The following information are tagged by ohara.
 1. user (**string**) — account of ftp server
 1. password (**string**) — password of ftp server
 1. tags (**object**) — the extra description to this object
+1. group (**string**) — group of this ftp information. It is a optional argument, and the default value of group is "default"
 
 > the string value can't be empty or null. the port should be small than 65535 and larger than zero.
 
@@ -311,6 +313,7 @@ The following information are tagged by ohara.
 
 ```json
 {
+  "group": "default",
   "name": "ftp0",
   "hostname": "node00",
   "port": 22,
@@ -325,7 +328,7 @@ The following information are tagged by ohara.
 
 ### update a ftp information
 
-*PUT /v0/ftp/${name}*
+*PUT /v0/ftp/${name}?group=${group}*
 
 1. name (**string**) — name of this ftp information
 1. hostname (**option(string)**) — ftp server hostname
@@ -333,6 +336,7 @@ The following information are tagged by ohara.
 1. user (**option(string)**) — account of ftp server
 1. password (**option(string)**) — password of ftp server
 1. tags (**option(array(string))**) — the extra description to this object
+1. group (**string**) — group of this ftp information. It is a optional argument, and the default value of group is "default"
 
 > the string value can't be empty or null. the port should be small than 65535 and larger than zero.
 
@@ -354,6 +358,7 @@ The following information are tagged by ohara.
 
 ```json
 {
+  "group": "default",
   "name": "ftp0",
   "hostname": "node00",
   "port": 22,
@@ -375,6 +380,7 @@ The following information are tagged by ohara.
 ```json
 [
   {
+    "group": "default",
     "name": "ftp0",
     "hostname": "node00",
     "port": 22,
@@ -390,7 +396,9 @@ The following information are tagged by ohara.
 
 ### delete a ftp information
 
-*DELETE /v0/ftp/${name}*
+*DELETE /v0/ftp/${name}?group=${group}*
+
+1. group (**string**) — group of this ftp information. It is a optional argument, and the default value of group is "default"
 
 **Example Response**
 
@@ -403,12 +411,13 @@ The following information are tagged by ohara.
 ----------
 ### get a ftp information
 
-*GET /v0/ftp/${name}*
+*GET /v0/ftp/${name}?group=${group}*
 
 **Example Response**
 
 ```json
 {
+  "group": "default",
   "name": "ftp0",
   "hostname": "node00",
   "port": 22,
@@ -428,6 +437,7 @@ Ohara supports to store the simple hdfs information which is running on single n
 1. name (**string**) — name of this hdfs information.
 1. uri (**string**) — hdfs connection information. The form looks like "hdfs://namenode:9999/"
 1. tags (**object**) — the extra description to this object
+1. group (**string**) — group of this ftp information. It is a optional argument, and the default value of group is "default"
 
 The following information are tagged by ohara.
 
@@ -435,11 +445,12 @@ The following information are tagged by ohara.
 ----------
 ### store a hdfs information
 
-*POST /v0/hdfs*
+*POST /v0/hdfs?group=${group}*
 
 1. name (**string**) — name of this hdfs information.
 1. uri (**string**) — hdfs connection information. The form looks like "hdfs://namenode:9999/"
 1. tags (**object**) — the extra description to this object
+1. group (**string**) — group of this ftp information. It is a optional argument, and the default value of group is "default"
 
 **Example Request**
 
@@ -454,6 +465,7 @@ The following information are tagged by ohara.
 
 ```json
 {
+  "group": "default",
   "name": "hdfs0",
   "uri": "hdfs://namenode:9999",
   "lastModified": 1553498552595,
@@ -463,16 +475,18 @@ The following information are tagged by ohara.
 ----------
 ### update a hdfs information
 
-*PUT /v0/hdfs/${name}*
+*PUT /v0/hdfs/${name}?group=${group}*
 
 1. name (**string**) — name of this hdfs information.
 1. uri (**option(string)**) — hdfs connection information. The form looks like "hdfs://namenode:9999/"
 1. tags (**object**) — the extra description to this object
+1. group (**string**) — group of this ftp information. It is a optional argument, and the default value of group is "default"
 
 **Example Request**
 
 ```json
 {
+  "group": "default",
   "name": "hdfs0",
   "uri": "hdfs://namenode:9999"
 }
@@ -484,6 +498,7 @@ The following information are tagged by ohara.
 
 ```json
 {
+  "group": "default",
   "name": "hdfs0",
   "uri": "hdfs://namenode:9999",
   "lastModified": 1553498552595,
@@ -500,6 +515,7 @@ The following information are tagged by ohara.
 ```json
 [
   {
+    "group": "default",
     "name": "hdfs0",
     "uri": "hdfs://namenode:9999",
     "lastModified": 1553498552595,
@@ -510,7 +526,9 @@ The following information are tagged by ohara.
 ----------
 ### delete a hdfs information
 
-*DELETE /v0/hdfs/${name}*
+*DELETE /v0/hdfs/${name}?group=${group}*
+
+1. group (**string**) — group of this ftp information. It is a optional argument, and the default value of group is "default"
 
 **Example Response**
 
@@ -523,12 +541,15 @@ The following information are tagged by ohara.
 ----------
 ### get a hdfs information
 
-*GET /v0/hdfs/${name}*
+*GET /v0/hdfs/${name}?group=${group}*
+
+1. group (**string**) — group of this ftp information. It is a optional argument, and the default value of group is "default"
 
 **Example Response**
 
 ```json
 {
+  "group": "default",
   "name": "hdfs0",
   "uri": "hdfs://namenode:9999",
   "lastModified": 1553498552595,
