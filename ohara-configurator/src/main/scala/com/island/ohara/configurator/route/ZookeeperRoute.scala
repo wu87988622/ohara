@@ -19,8 +19,16 @@ package com.island.ohara.configurator.route
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent.{ClusterCollie, NodeCollie}
+import com.island.ohara.client.configurator.v0.DataKey
 import com.island.ohara.client.configurator.v0.ZookeeperApi._
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.configurator.route.RouteUtils.{
+  HookBeforeDelete,
+  HookOfCreation,
+  HookOfGet,
+  HookOfList,
+  HookOfUpdate
+}
 import com.island.ohara.configurator.store.DataStore
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -28,10 +36,9 @@ import scala.concurrent.{ExecutionContext, Future}
 object ZookeeperRoute {
 
   private[this] def updateState(info: ZookeeperClusterInfo)(
-    implicit
-    store: DataStore,
+    implicit store: DataStore,
     clusterCollie: ClusterCollie,
-    executionContext: ExecutionContext): Future[ZookeeperClusterInfo] = {
+    executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
     store
       .value[ZookeeperClusterInfo](info.name)
       .flatMap(
@@ -58,6 +65,76 @@ object ZookeeperRoute {
               )
           }
       )
+
+  private[this] def hookOfGet(implicit store: DataStore,
+                              clusterCollie: ClusterCollie,
+                              executionContext: ExecutionContext): HookOfGet[ZookeeperClusterInfo] = updateState(_)
+
+  private[this] def hookOfList(implicit store: DataStore,
+                               clusterCollie: ClusterCollie,
+                               executionContext: ExecutionContext): HookOfList[ZookeeperClusterInfo] =
+    Future.traverse(_)(updateState)
+
+  private[this] def hookOfCreation: HookOfCreation[Creation, ZookeeperClusterInfo] = (_: String, creation: Creation) =>
+    Future.successful(
+      ZookeeperClusterInfo(
+        name = creation.name,
+        imageName = creation.imageName,
+        clientPort = creation.clientPort,
+        peerPort = creation.peerPort,
+        electionPort = creation.electionPort,
+        nodeNames = creation.nodeNames,
+        deadNodes = Set.empty,
+        tags = creation.tags,
+        state = None,
+        error = None,
+        lastModified = CommonUtils.current()
+      ))
+
+  private[this] def hookOfUpdate(
+    implicit executionContext: ExecutionContext): HookOfUpdate[Creation, Update, ZookeeperClusterInfo] =
+    (key: DataKey, update: Update, previous: Option[ZookeeperClusterInfo]) =>
+      Future
+        .successful(
+          previous.fold(ZookeeperClusterInfo(
+            name = key.name,
+            imageName = update.imageName.getOrElse(IMAGE_NAME_DEFAULT),
+            clientPort = update.clientPort.getOrElse(CommonUtils.availablePort()),
+            peerPort = update.peerPort.getOrElse(CommonUtils.availablePort()),
+            electionPort = update.electionPort.getOrElse(CommonUtils.availablePort()),
+            nodeNames = update.nodeNames.getOrElse(Set.empty),
+            deadNodes = Set.empty,
+            tags = update.tags.getOrElse(Map.empty),
+            state = None,
+            error = None,
+            lastModified = CommonUtils.current()
+          )) { previous =>
+            previous.copy(
+              imageName = update.imageName.getOrElse(previous.imageName),
+              clientPort = update.clientPort.getOrElse(previous.clientPort),
+              peerPort = update.peerPort.getOrElse(previous.peerPort),
+              electionPort = update.electionPort.getOrElse(previous.electionPort),
+              nodeNames = update.nodeNames.getOrElse(previous.nodeNames),
+              tags = update.tags.getOrElse(previous.tags),
+              lastModified = CommonUtils.current()
+            )
+          })
+        .map { zookeeperClusterInfo =>
+          if (zookeeperClusterInfo.state.isDefined)
+            throw new RuntimeException(s"You cannot update property on non-stopped zookeeper cluster: $key")
+          zookeeperClusterInfo
+      }
+
+  private[this] def hookBeforeDelete(implicit store: DataStore,
+                                     clusterCollie: ClusterCollie,
+                                     executionContext: ExecutionContext): HookBeforeDelete = (key: DataKey) =>
+    store.get[ZookeeperClusterInfo](key).flatMap {
+      _.fold(Future.successful(key)) { info =>
+        updateState(info).flatMap { data =>
+          if (data.state.isEmpty) Future.successful(key)
+          else Future.failed(new RuntimeException(s"You cannot delete a non-stopped zookeeper :$key"))
+        }
+      }
   }
 
   def apply(implicit store: DataStore,
@@ -66,62 +143,12 @@ object ZookeeperRoute {
             executionContext: ExecutionContext): server.Route =
     RouteUtils.basicRoute(
       root = ZOOKEEPER_PREFIX_PATH,
-      hookOfCreation = (req: Creation) =>
-        Future.successful(
-          ZookeeperClusterInfo(
-            name = req.name,
-            imageName = req.imageName,
-            clientPort = req.clientPort,
-            peerPort = req.peerPort,
-            electionPort = req.electionPort,
-            nodeNames = req.nodeNames,
-            deadNodes = Set.empty,
-            tags = req.tags,
-            state = None,
-            error = None,
-            lastModified = CommonUtils.current()
-          )),
-      hookOfUpdate = (name: String, req: Update, previousOption: Option[ZookeeperClusterInfo]) => {
-        val updateReq = previousOption.fold(
-          ZookeeperClusterInfo(
-            name = name,
-            imageName = req.imageName.getOrElse(IMAGE_NAME_DEFAULT),
-            clientPort = req.clientPort.getOrElse(CommonUtils.availablePort()),
-            peerPort = req.peerPort.getOrElse(CommonUtils.availablePort()),
-            electionPort = req.electionPort.getOrElse(CommonUtils.availablePort()),
-            nodeNames = req.nodeNames.getOrElse(Set.empty),
-            deadNodes = Set.empty,
-            tags = req.tags.getOrElse(Map.empty),
-            state = None,
-            error = None,
-            lastModified = CommonUtils.current()
-          )) {
-          previous =>
-            previous.copy(
-              imageName = req.imageName.getOrElse(previous.imageName),
-              clientPort = req.clientPort.getOrElse(previous.clientPort),
-              peerPort = req.peerPort.getOrElse(previous.peerPort),
-              electionPort = req.electionPort.getOrElse(previous.electionPort),
-              nodeNames = req.nodeNames.getOrElse(previous.nodeNames),
-              tags = req.tags.getOrElse(previous.tags),
-              lastModified = CommonUtils.current()
-            )
-        }
-        if (updateReq.state.isDefined)
-          throw new RuntimeException(s"You cannot update property on non-stopped zookeeper cluster: $name")
-        else Future.successful(updateReq)
-      },
-      hookBeforeDelete = (name: String) =>
-        store.get[ZookeeperClusterInfo](name).flatMap {
-          _.fold(Future.successful(name)) { info =>
-            updateState(info).flatMap { data =>
-              if (data.state.isEmpty) Future.successful(name)
-              else Future.failed(new RuntimeException(s"You cannot delete a non-stopped zookeeper :$name"))
-            }
-          }
-      },
-      hookOfGet = (res: ZookeeperClusterInfo) => updateState(res),
-      hookOfList = (res: Seq[ZookeeperClusterInfo]) => Future.traverse(res)(updateState)
+      enableGroup = false,
+      hookOfCreation = hookOfCreation,
+      hookOfUpdate = hookOfUpdate,
+      hookOfGet = hookOfGet,
+      hookOfList = hookOfList,
+      hookBeforeDelete = hookBeforeDelete
     ) ~
       RouteUtils.appendRouteOfClusterAction(
         collie = clusterCollie.zookeeperCollie,

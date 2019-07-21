@@ -28,6 +28,8 @@ import scala.concurrent.{ExecutionContext, Future}
 
 object StreamApi {
 
+  val GROUP_DEFAULT: String = Data.GROUP_DEFAULT
+
   val LIMIT_OF_NAME_LENGTH: Int = ZookeeperApi.LIMIT_OF_NAME_LENGTH
 
   /**

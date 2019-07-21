@@ -25,6 +25,7 @@ import spray.json.{JsString, JsValue, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 object NodeApi {
+  val GROUP_DEFAULT: String = Data.GROUP_DEFAULT
   val NODES_PREFIX_PATH: String = "nodes"
 
   val ZOOKEEPER_SERVICE_NAME: String = "zookeeper"

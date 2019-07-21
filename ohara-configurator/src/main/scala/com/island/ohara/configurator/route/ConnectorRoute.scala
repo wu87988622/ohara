@@ -21,11 +21,19 @@ import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent.{NoSuchClusterException, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ConnectorApi._
+import com.island.ohara.client.configurator.v0.DataKey
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.configurator.route.RouteUtils.{
+  PAUSE_COMMAND => _,
+  RESUME_COMMAND => _,
+  START_COMMAND => _,
+  STOP_COMMAND => _,
+  _
+}
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.island.ohara.kafka.connector.json.SettingDefinition
 import com.typesafe.scalalogging.Logger
@@ -33,6 +41,7 @@ import spray.json.JsString
 
 import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object ConnectorRoute extends SprayJsonSupport {
+
   private[this] lazy val LOG = Logger(ConnectorRoute.getClass)
 
   private[this] def toRes(wkClusterName: String, request: Creation) =
@@ -45,14 +54,6 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
       metrics = Metrics(Seq.empty),
       lastModified = CommonUtils.current()
     )
-
-  private[this] def verify(request: Creation): Creation = {
-    if (request.columns.exists(_.order < 1))
-      throw new IllegalArgumentException(s"invalid order from column:${request.columns.map(_.order)}")
-    if (request.columns.map(_.order).toSet.size != request.columns.size)
-      throw new IllegalArgumentException(s"duplicate order:${request.columns.map(_.order)}")
-    request
-  }
 
   private[this] def update(connectorConfig: ConnectorDescription,
                            workerClusterInfo: WorkerClusterInfo,
@@ -78,75 +79,96 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
           )
       }
 
+  private[this] def hookOfGet(implicit workerCollie: WorkerCollie,
+                              executionContext: ExecutionContext,
+                              meterCache: MeterCache): HookOfGet[ConnectorDescription] =
+    (connectorDescription: ConnectorDescription) =>
+      CollieUtils.workerClient(Some(connectorDescription.workerClusterName)).flatMap {
+        case (cluster, wkClient) =>
+          update(connectorDescription, cluster, wkClient)
+    }
+
+  private[this] def hookOfList(implicit workerCollie: WorkerCollie,
+                               executionContext: ExecutionContext,
+                               meterCache: MeterCache): HookOfList[ConnectorDescription] =
+    (connectorDescriptions: Seq[ConnectorDescription]) =>
+      Future.sequence(connectorDescriptions.map { connectorDescription =>
+        CollieUtils.workerClient(Some(connectorDescription.workerClusterName)).flatMap {
+          case (cluster, wkClient) =>
+            update(connectorDescription, cluster, wkClient)
+        }
+      })
+
+  private[this] def hookOfCreation(implicit workerCollie: WorkerCollie,
+                                   executionContext: ExecutionContext): HookOfCreation[Creation, ConnectorDescription] =
+    (_: String, creation: Creation) =>
+      CollieUtils.workerClient(creation.workerClusterName).map {
+        case (cluster, _) => toRes(cluster.name, creation)
+    }
+
+  private[this] def hookOfUpdate(
+    implicit clusterCollie: WorkerCollie,
+    executionContext: ExecutionContext): HookOfUpdate[Creation, Update, ConnectorDescription] =
+    (key: DataKey, update: Update, previous: Option[ConnectorDescription]) => {
+      // merge the settings from previous one
+      val newSettings = Creation(previous
+        .map { previous =>
+          if (update.workerClusterName.exists(_ != previous.workerClusterName))
+            throw new IllegalArgumentException(
+              s"It is illegal to change worker cluster for connector. previous:${previous.workerClusterName} new:${update.workerClusterName.get}")
+          previous.settings
+        }
+        .map { previousSettings =>
+          previousSettings ++
+            update.settings
+        }
+        .getOrElse(update.settings) ++
+        // Update request may not carry the name via payload so we copy the name from url to payload manually
+        Map(SettingDefinition.CONNECTOR_NAME_DEFINITION.key() -> JsString(key.name)))
+
+      CollieUtils.workerClient(newSettings.workerClusterName).flatMap {
+        case (cluster, wkClient) =>
+          wkClient.exist(key.name).map {
+            if (_) throw new IllegalArgumentException(s"Connector:${key.name} is not stopped")
+            else toRes(cluster.name, newSettings)
+          }
+      }
+    }
+
+  private[this] def hookBeforeDelete(implicit store: DataStore,
+                                     workerCollie: WorkerCollie,
+                                     executionContext: ExecutionContext): HookBeforeDelete = (key: DataKey) =>
+    store
+      .get[ConnectorDescription](key)
+      .flatMap(_.map { connectorDescription =>
+        CollieUtils
+          .workerClient(Some(connectorDescription.workerClusterName))
+          .flatMap {
+            case (_, wkClient) =>
+              wkClient.exist(connectorDescription.name).flatMap {
+                if (_)
+                  wkClient.delete(connectorDescription.name).map(_ => key)
+                else Future.successful(key)
+              }
+          }
+          .recover {
+            // Connector can't live without cluster...
+            case _: NoSuchClusterException => key
+          }
+      }.getOrElse(Future.successful(key)))
+
   def apply(implicit store: DataStore,
             workerCollie: WorkerCollie,
             executionContext: ExecutionContext,
             meterCache: MeterCache): server.Route =
     RouteUtils.basicRoute[Creation, Update, ConnectorDescription](
       root = CONNECTORS_PREFIX_PATH,
-      hookOfCreation = (request: Creation) =>
-        CollieUtils.workerClient(request.workerClusterName).map {
-          case (cluster, _) =>
-            toRes(cluster.name, verify(request))
-
-      },
-      hookOfUpdate = (name: String, request: Update, previousOption: Option[ConnectorDescription]) => {
-        // merge the settings from previous one
-        val newSettings = Creation(
-          previousOption
-            .map { previous =>
-              if (request.workerClusterName.exists(_ != previous.workerClusterName))
-                throw new IllegalArgumentException(
-                  s"It is illegal to change worker cluster for connector. previous:${previous.workerClusterName} new:${request.workerClusterName.get}")
-              previous.settings
-            }
-            .map { previousSettings =>
-              previousSettings ++
-                request.settings
-            }
-            .getOrElse(request.settings) ++
-            // Update request may not carry the name via payload so we copy the name from url to payload manually
-            Map(SettingDefinition.CONNECTOR_NAME_DEFINITION.key() -> JsString(name)))
-
-        CollieUtils.workerClient(newSettings.workerClusterName).flatMap {
-          case (cluster, wkClient) =>
-            wkClient.exist(name).map {
-              if (_) throw new IllegalArgumentException(s"Connector:$name is not stopped")
-              else toRes(cluster.name, verify(newSettings))
-            }
-        }
-      },
-      hookOfGet = (response: ConnectorDescription) =>
-        CollieUtils.workerClient(Some(response.workerClusterName)).flatMap {
-          case (cluster, wkClient) =>
-            update(response, cluster, wkClient)
-      },
-      hookOfList = (responses: Seq[ConnectorDescription]) =>
-        Future.sequence(responses.map { response =>
-          CollieUtils.workerClient(Some(response.workerClusterName)).flatMap {
-            case (cluster, wkClient) =>
-              update(response, cluster, wkClient)
-          }
-        }),
-      hookBeforeDelete = (name: String) =>
-        store
-          .get[ConnectorDescription](name)
-          .flatMap(_.map { connectorDescription =>
-            CollieUtils
-              .workerClient(Some(connectorDescription.workerClusterName))
-              .flatMap {
-                case (_, wkClient) =>
-                  wkClient.exist(connectorDescription.name).flatMap {
-                    if (_)
-                      wkClient.delete(connectorDescription.name).map(_ => name)
-                    else Future.successful(name)
-                  }
-              }
-              .recover {
-                // Connector can't live without cluster...
-                case _: NoSuchClusterException => name
-              }
-          }.getOrElse(Future.successful(name)))
+      enableGroup = false,
+      hookOfCreation = hookOfCreation,
+      hookOfUpdate = hookOfUpdate,
+      hookOfGet = hookOfGet,
+      hookOfList = hookOfList,
+      hookBeforeDelete = hookBeforeDelete
     ) ~
       pathPrefix(CONNECTORS_PREFIX_PATH / Segment) { name =>
         path(START_COMMAND) {

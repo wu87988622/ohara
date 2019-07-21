@@ -17,44 +17,52 @@
 package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
+import com.island.ohara.client.configurator.v0.DataKey
 import com.island.ohara.client.configurator.v0.JdbcApi._
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.configurator.route.RouteUtils.{HookOfCreation, HookOfUpdate}
 import com.island.ohara.configurator.store.DataStore
 
 import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] object JdbcInfoRoute {
+
+  private[this] def hookOfCreation: HookOfCreation[Creation, JdbcInfo] = (_: String, request: Creation) =>
+    Future.successful(
+      JdbcInfo(name = request.name,
+               url = request.url,
+               user = request.user,
+               password = request.password,
+               lastModified = CommonUtils.current(),
+               tags = request.tags))
+
+  private[this] def hookOfUpdate: HookOfUpdate[Creation, Update, JdbcInfo] =
+    (key: DataKey, update: Update, previous: Option[JdbcInfo]) =>
+      Future.successful {
+        previous.fold {
+          JdbcInfo(name = key.name,
+                   url = update.url.get,
+                   user = update.user.get,
+                   password = update.password.get,
+                   CommonUtils.current(),
+                   tags = update.tags.getOrElse(Map.empty))
+        } { previous =>
+          JdbcInfo(
+            name = key.name,
+            url = update.url.getOrElse(previous.url),
+            user = update.user.getOrElse(previous.user),
+            password = update.password.getOrElse(previous.password),
+            CommonUtils.current(),
+            tags = update.tags.getOrElse(previous.tags)
+          )
+        }
+    }
+
   def apply(implicit store: DataStore, executionContext: ExecutionContext): server.Route =
     RouteUtils.basicRoute[Creation, Update, JdbcInfo](
       root = JDBC_PREFIX_PATH,
-      hookOfCreation = (request: Creation) =>
-        Future.successful(
-          JdbcInfo(name = request.name,
-                   url = request.url,
-                   user = request.user,
-                   password = request.password,
-                   lastModified = CommonUtils.current(),
-                   tags = request.tags)),
-      hookOfUpdate = (name: String, request: Update, previousOption: Option[JdbcInfo]) =>
-        Future.successful {
-          previousOption.fold {
-            JdbcInfo(name = name,
-                     url = request.url.get,
-                     user = request.user.get,
-                     password = request.password.get,
-                     CommonUtils.current(),
-                     tags = request.tags.getOrElse(Map.empty))
-          } { previous =>
-            JdbcInfo(
-              name = name,
-              url = request.url.getOrElse(previous.url),
-              user = request.user.getOrElse(previous.user),
-              password = request.password.getOrElse(previous.password),
-              CommonUtils.current(),
-              tags = request.tags.getOrElse(previous.tags)
-            )
-          }
-
-      },
+      enableGroup = true,
+      hookOfCreation = hookOfCreation,
+      hookOfUpdate = hookOfUpdate
     )
 }

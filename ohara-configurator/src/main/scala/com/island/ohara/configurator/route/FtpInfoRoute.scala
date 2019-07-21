@@ -17,49 +17,57 @@
 package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
+import com.island.ohara.client.configurator.v0.DataKey
 import com.island.ohara.client.configurator.v0.FtpApi._
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.configurator.route.RouteUtils.{HookOfCreation, HookOfUpdate}
 import com.island.ohara.configurator.store.DataStore
 
 import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] object FtpInfoRoute {
 
+  private[this] def hookOfCreation: HookOfCreation[Creation, FtpInfo] = (_: String, request: Creation) =>
+    Future.successful(
+      FtpInfo(
+        name = request.name,
+        hostname = request.hostname,
+        port = request.port,
+        user = request.user,
+        password = request.password,
+        lastModified = CommonUtils.current(),
+        tags = request.tags
+      ))
+
+  private[this] def hookOfUpdate: HookOfUpdate[Creation, Update, FtpInfo] =
+    (key: DataKey, update: Update, previous: Option[FtpInfo]) =>
+      Future.successful(previous.fold {
+        FtpInfo(
+          name = key.name,
+          hostname = update.hostname.get,
+          port = update.port.get,
+          user = update.user.get,
+          password = update.password.get,
+          lastModified = CommonUtils.current(),
+          tags = update.tags.getOrElse(Map.empty)
+        )
+      } { previous =>
+        FtpInfo(
+          name = key.name,
+          hostname = update.hostname.getOrElse(previous.hostname),
+          port = update.port.getOrElse(previous.port),
+          user = update.user.getOrElse(previous.user),
+          password = update.password.getOrElse(previous.password),
+          lastModified = CommonUtils.current(),
+          tags = update.tags.getOrElse(previous.tags)
+        )
+      })
+
   def apply(implicit store: DataStore, executionContext: ExecutionContext): server.Route =
     RouteUtils.basicRoute[Creation, Update, FtpInfo](
       root = FTP_PREFIX_PATH,
-      hookOfCreation = (request: Creation) =>
-        Future.successful(
-          FtpInfo(
-            name = request.name,
-            hostname = request.hostname,
-            port = request.port,
-            user = request.user,
-            password = request.password,
-            lastModified = CommonUtils.current(),
-            tags = request.tags
-          )),
-      hookOfUpdate = (name: String, request: Update, previousOption: Option[FtpInfo]) =>
-        Future.successful(previousOption.fold {
-          FtpInfo(
-            name = name,
-            hostname = request.hostname.get,
-            port = request.port.get,
-            user = request.user.get,
-            password = request.password.get,
-            lastModified = CommonUtils.current(),
-            tags = request.tags.getOrElse(Map.empty)
-          )
-        } { previous =>
-          FtpInfo(
-            name = name,
-            hostname = request.hostname.getOrElse(previous.hostname),
-            port = request.port.getOrElse(previous.port),
-            user = request.user.getOrElse(previous.user),
-            password = request.password.getOrElse(previous.password),
-            lastModified = CommonUtils.current(),
-            tags = request.tags.getOrElse(previous.tags)
-          )
-        })
+      enableGroup = true,
+      hookOfCreation = hookOfCreation,
+      hookOfUpdate = hookOfUpdate
     )
 }

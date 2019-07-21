@@ -82,41 +82,6 @@ class TestConnectorRoute extends SmallTest with Matchers {
   }
 
   @Test
-  def testInvalidColumns(): Unit = {
-    result(connectorApi.list()).size shouldBe 0
-
-    val illegalOrder = Seq(Column.builder().name("cf").dataType(DataType.BOOLEAN).order(0).build(),
-                           Column.builder().name("cf").dataType(DataType.BOOLEAN).order(2).build())
-
-    an[IllegalArgumentException] should be thrownBy result(
-      ConnectorApi.access
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .request
-        .name(CommonUtils.randomString(10))
-        .className(CommonUtils.randomString(10))
-        .columns(illegalOrder)
-        .create())
-
-    result(connectorApi.list()).size shouldBe 0
-
-    val duplicateOrder = Seq(Column.builder().name("cf").dataType(DataType.BOOLEAN).order(1).build(),
-                             Column.builder().name("cf").dataType(DataType.BOOLEAN).order(1).build())
-
-    an[IllegalArgumentException] should be thrownBy result(
-      ConnectorApi.access
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .request
-        .name(CommonUtils.randomString(10))
-        .className(CommonUtils.randomString(10))
-        .columns(duplicateOrder)
-        .create())
-
-    result(connectorApi.list()).size shouldBe 0
-  }
-
-  @Test
   def removeConnectorFromDeletedCluster(): Unit = {
     val connector = result(
       ConnectorApi.access

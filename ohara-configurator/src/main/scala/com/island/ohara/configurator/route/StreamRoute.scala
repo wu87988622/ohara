@@ -23,10 +23,12 @@ import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.agent.{BrokerCollie, ClusterCollie, NodeCollie, WorkerCollie}
+import com.island.ohara.client.configurator.v0.DataKey
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.StreamApi._
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.file.FileStore
+import com.island.ohara.configurator.route.RouteUtils.{START_COMMAND => _, STOP_COMMAND => _, _}
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import org.slf4j.LoggerFactory
 
@@ -41,25 +43,25 @@ private[configurator] object StreamRoute {
   /**
     * save the streamApp properties
     *
-    * @param req the creation request
+    * @param creation the creation request
     * @return '''StreamApp''' object
     */
-  private[this] def toStore(req: Creation): StreamAppDescription =
+  private[this] def toStreamAppDescription(creation: Creation): StreamAppDescription =
     StreamAppDescription(
-      name = req.name,
-      imageName = req.imageName,
-      instances = if (req.nodeNames.isEmpty) req.instances else req.nodeNames.size,
-      nodeNames = req.nodeNames,
+      name = creation.name,
+      imageName = creation.imageName,
+      instances = if (creation.nodeNames.isEmpty) creation.instances else creation.nodeNames.size,
+      nodeNames = creation.nodeNames,
       deadNodes = Set.empty,
-      jar = req.jar,
-      from = req.from,
-      to = req.to,
+      jar = creation.jar,
+      from = creation.from,
+      to = creation.to,
       state = None,
-      jmxPort = req.jmxPort,
+      jmxPort = creation.jmxPort,
       metrics = Metrics(Seq.empty),
       error = None,
       lastModified = CommonUtils.current(),
-      tags = req.tags
+      tags = creation.tags
     )
 
   /**
@@ -117,14 +119,14 @@ private[configurator] object StreamRoute {
   /**
     * Check if field was defined
     *
-    * @param name the request object name
+    * @param key the request object key
     * @param field the testing field
     * @param fieldName field name
     * @tparam T field type
     * @return field
     */
-  private[this] def checkField[T](name: String, field: Option[T], fieldName: String): T =
-    field.getOrElse(throw new IllegalArgumentException(RouteUtils.errorMessage(name, fieldName)))
+  private[this] def checkField[T](key: DataKey, field: Option[T], fieldName: String): T =
+    field.getOrElse(throw new IllegalArgumentException(RouteUtils.errorMessage(key, fieldName)))
 
   /**
     * Assert the require streamApp properties
@@ -139,6 +141,72 @@ private[configurator] object StreamRoute {
     CommonUtils.requireNonEmpty(data.to.asJava, () => "to topics fail assert")
   }
 
+  private[this] def hookOfGet(implicit store: DataStore,
+                              clusterCollie: ClusterCollie,
+                              meterCache: MeterCache,
+                              executionContext: ExecutionContext): HookOfGet[StreamAppDescription] = updateState
+
+  private[this] def hookOfList(implicit store: DataStore,
+                               clusterCollie: ClusterCollie,
+                               meterCache: MeterCache,
+                               executionContext: ExecutionContext): HookOfList[StreamAppDescription] =
+    Future.traverse(_)(updateState)
+
+  private[this] def hookOfCreation: HookOfCreation[Creation, StreamAppDescription] =
+    (_: String, creation: Creation) => Future.successful(toStreamAppDescription(creation))
+
+  private[this] def hookOfUpdate(
+    implicit executionContext: ExecutionContext): HookOfUpdate[Creation, Update, StreamAppDescription] =
+    (key: DataKey, update: Update, previous: Option[StreamAppDescription]) =>
+      Future
+        .successful(
+          previous.fold(StreamAppDescription(
+            name = key.name,
+            imageName = update.imageName.getOrElse(IMAGE_NAME_DEFAULT),
+            instances = update.nodeNames.fold(checkField(key, update.instances, "instances"))(_.size),
+            nodeNames = update.nodeNames.getOrElse(Set.empty),
+            deadNodes = Set.empty,
+            jar = checkField(key, update.jar, "jar"),
+            from = checkField(key, update.from, "from"),
+            to = checkField(key, update.to, "to"),
+            state = None,
+            jmxPort = checkField(key, update.jmxPort, "jmxPort"),
+            metrics = Metrics(Seq.empty),
+            error = None,
+            lastModified = CommonUtils.current(),
+            tags = update.tags.getOrElse(Map.empty)
+          )) { previous =>
+            previous.copy(
+              instances = update.instances.getOrElse(previous.instances),
+              from = update.from.getOrElse(previous.from),
+              to = update.to.getOrElse(previous.to),
+              nodeNames = update.nodeNames.getOrElse(previous.nodeNames),
+              jmxPort = update.jmxPort.getOrElse(previous.jmxPort),
+              tags = update.tags.getOrElse(previous.tags)
+            )
+          })
+        .map { res =>
+          if (res.state.isDefined)
+            throw new RuntimeException(s"You cannot update property on non-stopped streamApp: $key")
+          res
+      }
+
+  private[this] def hookBeforeDelete(implicit store: DataStore,
+                                     clusterCollie: ClusterCollie,
+                                     meterCache: MeterCache,
+                                     executionContext: ExecutionContext): HookBeforeDelete = (key: DataKey) =>
+    // get the latest status first
+    store.get[StreamAppDescription](key).flatMap {
+      _.fold(Future.successful(key)) { desc =>
+        updateState(desc).flatMap { data =>
+          if (data.state.isEmpty) {
+            // state is not exists, could remove this streamApp
+            Future.successful(key)
+          } else Future.failed(new RuntimeException(s"You cannot delete a non-stopped streamApp :$key"))
+        }
+      }
+  }
+
   def apply(implicit store: DataStore,
             adminCleaner: AdminCleaner,
             nodeCollie: NodeCollie,
@@ -150,52 +218,12 @@ private[configurator] object StreamRoute {
             executionContext: ExecutionContext): server.Route =
     RouteUtils.basicRoute[Creation, Update, StreamAppDescription](
       root = STREAM_PREFIX_PATH,
-      hookOfCreation = (req: Creation) => Future.successful(toStore(req)),
-      hookOfUpdate = (name: String, req: Update, previousOption: Option[StreamAppDescription]) => {
-        val updateReq = previousOption.fold(
-          StreamAppDescription(
-            name = name,
-            imageName = req.imageName.getOrElse(IMAGE_NAME_DEFAULT),
-            instances = req.nodeNames.fold(checkField(name, req.instances, "instances"))(_.size),
-            nodeNames = req.nodeNames.getOrElse(Set.empty),
-            deadNodes = Set.empty,
-            jar = checkField(name, req.jar, "jar"),
-            from = checkField(name, req.from, "from"),
-            to = checkField(name, req.to, "to"),
-            state = None,
-            jmxPort = checkField(name, req.jmxPort, "jmxPort"),
-            metrics = Metrics(Seq.empty),
-            error = None,
-            lastModified = CommonUtils.current(),
-            tags = req.tags.getOrElse(Map.empty)
-          )) { previous =>
-          previous.copy(
-            instances = req.instances.getOrElse(previous.instances),
-            from = req.from.getOrElse(previous.from),
-            to = req.to.getOrElse(previous.to),
-            nodeNames = req.nodeNames.getOrElse(previous.nodeNames),
-            jmxPort = req.jmxPort.getOrElse(previous.jmxPort),
-            tags = req.tags.getOrElse(previous.tags)
-          )
-        }
-        if (updateReq.state.isDefined)
-          throw new RuntimeException(s"You cannot update property on non-stopped streamApp: $name")
-        else Future.successful(updateReq)
-      },
-      hookBeforeDelete = (name: String) =>
-        // get the latest status first
-        store.get[StreamAppDescription](name).flatMap {
-          _.fold(Future.successful(name)) { desc =>
-            updateState(desc).flatMap { data =>
-              if (data.state.isEmpty) {
-                // state is not exists, could remove this streamApp
-                Future.successful(name)
-              } else Future.failed(new RuntimeException(s"You cannot delete a non-stopped streamApp :$name"))
-            }
-          }
-      },
-      hookOfGet = (response: StreamAppDescription) => updateState(response),
-      hookOfList = (responses: Seq[StreamAppDescription]) => Future.traverse(responses)(updateState)
+      enableGroup = false,
+      hookOfCreation = hookOfCreation,
+      hookOfUpdate = hookOfUpdate,
+      hookBeforeDelete = hookBeforeDelete,
+      hookOfGet = hookOfGet,
+      hookOfList = hookOfList
     ) ~ pathPrefix(STREAM_PREFIX_PATH / Segment) { name =>
       // start streamApp
       path(START_COMMAND) {

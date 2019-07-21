@@ -19,14 +19,15 @@ import akka.http.scaladsl.server
 import com.island.ohara.agent.ClusterCollie
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorDescription
-import com.island.ohara.client.configurator.v0.Data
 import com.island.ohara.client.configurator.v0.MetricsApi._
 import com.island.ohara.client.configurator.v0.PipelineApi._
 import com.island.ohara.client.configurator.v0.StreamApi.{StreamAppDescription, StreamClusterInfo}
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
+import com.island.ohara.client.configurator.v0.{Data, DataKey}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.configurator.route.RouteUtils._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -139,34 +140,59 @@ private[configurator] object PipelineRoute {
       })
       .map(objects => pipeline.copy(objects = objects))
 
+  private[this] def hookOfGet(implicit store: DataStore,
+                              clusterCollie: ClusterCollie,
+                              executionContext: ExecutionContext,
+                              meterCache: MeterCache): HookOfGet[Pipeline] = updateObjects(_)
+
+  private[this] def hookOfList(implicit store: DataStore,
+                               clusterCollie: ClusterCollie,
+                               executionContext: ExecutionContext,
+                               meterCache: MeterCache): HookOfList[Pipeline] = Future.traverse(_)(updateObjects)
+
+  private[this] def hookOfCreation(implicit store: DataStore,
+                                   clusterCollie: ClusterCollie,
+                                   executionContext: ExecutionContext,
+                                   meterCache: MeterCache): HookOfCreation[Creation, Pipeline] =
+    (_: String, creation: Creation) =>
+      updateObjects(
+        Pipeline(
+          name = creation.name,
+          flows = creation.flows,
+          workerClusterName = creation.workerClusterName,
+          objects = Seq.empty,
+          lastModified = CommonUtils.current(),
+          tags = creation.tags
+        ))
+
+  private[this] def hookOfUpdate(implicit store: DataStore,
+                                 clusterCollie: ClusterCollie,
+                                 executionContext: ExecutionContext,
+                                 meterCache: MeterCache): HookOfUpdate[Creation, Update, Pipeline] =
+    (key: DataKey, update: Update, previous: Option[Pipeline]) =>
+      updateObjects(
+        Pipeline(
+          name = key.name,
+          flows = update.flows.getOrElse(previous.map(_.flows).getOrElse(Seq.empty)),
+          workerClusterName = update.workerClusterName.orElse(previous.flatMap(_.workerClusterName)),
+          objects = previous.map(_.objects).getOrElse(Seq.empty),
+          lastModified = CommonUtils.current(),
+          tags = update.tags.getOrElse(previous.map(_.tags).getOrElse(Map.empty))
+        ))
+
+  private[this] def hookBeforeDelete: HookBeforeDelete = Future.successful(_)
+
   def apply(implicit store: DataStore,
             clusterCollie: ClusterCollie,
             executionContext: ExecutionContext,
             meterCache: MeterCache): server.Route =
     RouteUtils.basicRoute[Creation, Update, Pipeline](
       root = PIPELINES_PREFIX_PATH,
-      hookOfCreation = (creation: Creation) =>
-        updateObjects(
-          Pipeline(
-            name = creation.name,
-            flows = creation.flows,
-            workerClusterName = creation.workerClusterName,
-            objects = Seq.empty,
-            lastModified = CommonUtils.current(),
-            tags = creation.tags
-          )),
-      hookOfUpdate = (name: String, update: Update, previousOption: Option[Pipeline]) =>
-        updateObjects(
-          Pipeline(
-            name = name,
-            flows = update.flows.getOrElse(previousOption.map(_.flows).getOrElse(Seq.empty)),
-            workerClusterName = update.workerClusterName.orElse(previousOption.flatMap(_.workerClusterName)),
-            objects = previousOption.map(_.objects).getOrElse(Seq.empty),
-            lastModified = CommonUtils.current(),
-            tags = update.tags.getOrElse(previousOption.map(_.tags).getOrElse(Map.empty))
-          )),
-      hookOfGet = (pipeline: Pipeline) => updateObjects(pipeline),
-      hookOfList = (pipelines: Seq[Pipeline]) => Future.traverse(pipelines)(updateObjects),
-      hookBeforeDelete = (name: String) => Future.successful(name)
+      enableGroup = true,
+      hookOfCreation = hookOfCreation,
+      hookOfUpdate = hookOfUpdate,
+      hookOfGet = hookOfGet,
+      hookOfList = hookOfList,
+      hookBeforeDelete = hookBeforeDelete
     )
 }

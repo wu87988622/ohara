@@ -179,7 +179,7 @@ class TestStreamRoute extends SmallTest with Matchers {
     val streamAppName = CommonUtils.requireNumberAndCharset(CommonUtils.randomString(5))
     //operations on non-exists property should be fail
     an[NullPointerException] should be thrownBy result(accessStream.request.name("appId").jar(null).update())
-    an[IllegalArgumentException] should be thrownBy result(accessStream.get("non_exist_id"))
+    an[IllegalArgumentException] should be thrownBy result(accessStream.get(CommonUtils.randomString(5)))
 
     an[IllegalArgumentException] should be thrownBy result(
       accessStream.request.name(streamAppName).from(Set.empty).update())
@@ -194,7 +194,7 @@ class TestStreamRoute extends SmallTest with Matchers {
       accessStream.request.name(streamAppName).instances(-99).update())
 
     // delete non-exists object should do nothing
-    result(accessStream.delete("non_exist_id"))
+    result(accessStream.delete(CommonUtils.randomString(5)))
   }
 
   @Test

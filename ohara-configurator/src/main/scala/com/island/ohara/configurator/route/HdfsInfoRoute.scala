@@ -16,37 +16,46 @@
 
 package com.island.ohara.configurator.route
 import akka.http.scaladsl.server
+import com.island.ohara.client.configurator.v0.DataKey
 import com.island.ohara.client.configurator.v0.HadoopApi._
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.configurator.route.RouteUtils.{HookOfCreation, HookOfUpdate}
 import com.island.ohara.configurator.store.DataStore
 
 import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] object HdfsInfoRoute {
+
+  private[this] def hookOfCreation: HookOfCreation[Creation, HdfsInfo] = (_: String, request: Creation) =>
+    Future.successful(
+      HdfsInfo(name = request.name, uri = request.uri, lastModified = CommonUtils.current(), request.tags))
+
+  private[this] def hookOfUpdate: HookOfUpdate[Creation, Update, HdfsInfo] =
+    (key: DataKey, update: Update, previous: Option[HdfsInfo]) =>
+      Future.successful {
+        previous.fold {
+          if (update.uri.isEmpty) throw new IllegalArgumentException(RouteUtils.errorMessage(key, "uri"))
+          HdfsInfo(
+            name = key.name,
+            uri = update.uri.get,
+            lastModified = CommonUtils.current(),
+            tags = update.tags.getOrElse(Map.empty)
+          )
+        } { previous =>
+          HdfsInfo(
+            name = key.name,
+            uri = update.uri.getOrElse(previous.uri),
+            lastModified = CommonUtils.current(),
+            tags = update.tags.getOrElse(previous.tags)
+          )
+        }
+    }
+
   def apply(implicit store: DataStore, executionContext: ExecutionContext): server.Route =
     RouteUtils.basicRoute[Creation, Update, HdfsInfo](
       root = HDFS_PREFIX_PATH,
-      hookOfCreation = (request: Creation) =>
-        Future.successful(
-          HdfsInfo(name = request.name, uri = request.uri, lastModified = CommonUtils.current(), request.tags)),
-      hookOfUpdate = (name: String, request: Update, previousOption: Option[HdfsInfo]) =>
-        Future.successful {
-          previousOption.fold {
-            if (request.uri.isEmpty) throw new IllegalArgumentException(RouteUtils.errorMessage(name, "uri"))
-            HdfsInfo(
-              name = name,
-              uri = request.uri.get,
-              lastModified = CommonUtils.current(),
-              tags = request.tags.getOrElse(Map.empty)
-            )
-          } { previous =>
-            HdfsInfo(
-              name = name,
-              uri = request.uri.getOrElse(previous.uri),
-              lastModified = CommonUtils.current(),
-              tags = request.tags.getOrElse(previous.tags)
-            )
-          }
-      }
+      enableGroup = true,
+      hookOfCreation = hookOfCreation,
+      hookOfUpdate = hookOfUpdate
     )
 }

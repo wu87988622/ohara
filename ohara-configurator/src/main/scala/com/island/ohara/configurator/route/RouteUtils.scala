@@ -37,13 +37,59 @@ import scala.reflect.{ClassTag, classTag}
 private[route] object RouteUtils {
 
   /**
+    * process the data for input Get request
+    * @tparam Res data
+    */
+  trait HookOfGet[Res <: Data] {
+    def apply(res: Res): Future[Res]
+  }
+
+  /**
+    * process the data for input List request
+    * @tparam Res data
+    */
+  trait HookOfList[Res <: Data] {
+    def apply(res: Seq[Res]): Future[Seq[Res]]
+  }
+
+  /**
+    * this hook is invoked after http request is parsed and converted to scala object.
+    * @tparam Creation creation object
+    * @tparam Res result to response
+    */
+  trait HookOfCreation[Creation <: CreationRequest, Res <: Data] {
+    def apply(group: String, creation: Creation): Future[Res]
+  }
+
+  /**
+    * this hook is invoked after http request is parsed and converted to scala object.
+    *
+    * Noted: the update request ought to create a new object if the input (group, key) are not associated to an existent object
+    * (it means the previous is not defined).
+    * @tparam Creation creation object
+    * @tparam Res result to response
+    */
+  trait HookOfUpdate[Creation <: CreationRequest, Update, Res <: Data] {
+    def apply(key: DataKey, update: Update, previous: Option[Res]): Future[Res]
+  }
+
+  /**
+    * Do something before the objects does be removed from store actually.
+    *
+    * Noted: the returned (group, name) can differ from input. And the removed object is associated to the returned stuff.
+    */
+  trait HookBeforeDelete {
+    def apply(key: DataKey): Future[DataKey]
+  }
+
+  /**
     * generate the error message used to indicate that some fields are miss in the update request.
-    * @param name name
+    * @param key key
     * @param fieldName name of field
     * @return error message
     */
-  def errorMessage(name: String, fieldName: String): String =
-    s"$name does not exist so there is an new object will be created. Hence, you cannot ignore $fieldName"
+  def errorMessage(key: DataKey, fieldName: String): String =
+    s"$key does not exist so there is an new object will be created. Hence, you cannot ignore $fieldName"
 
   //-------------------- global parameter for route -------------------------//
   val LOG = Logger(RouteUtils.getClass)
@@ -64,6 +110,7 @@ private[route] object RouteUtils {
     * The LIST is routed to "GET /$root"
     * The DELETE is routed to "DELETE /$root/$name"
     * @param root the prefix of URL
+    * @param enableGroup true if this route accept group. Otherwise, the input group is ignored and the group passed to route is Data.GROUP_DEFAULT
     * @param hookOfCreation custom action for CREATION. the name is either user-defined request or random string
     * @param hookOfUpdate custom action for UPDATE. the name from URL is must equal to name in payload
     * @param store data store
@@ -76,28 +123,31 @@ private[route] object RouteUtils {
     */
   def basicRoute[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
     root: String,
-    hookOfCreation: Creation => Future[Res],
-    hookOfUpdate: (String, Update, Option[Res]) => Future[Res])(implicit store: DataStore,
-                                                                // normally, update request does not carry the name field,
-                                                                // Hence, the check of name have to be executed by format of creation
-                                                                // since it must have name field.
-                                                                rm: OharaJsonFormat[Creation],
-                                                                rm1: RootJsonFormat[Update],
-                                                                rm2: RootJsonFormat[Res],
-                                                                executionContext: ExecutionContext): server.Route =
+    enableGroup: Boolean,
+    hookOfCreation: HookOfCreation[Creation, Res],
+    hookOfUpdate: HookOfUpdate[Creation, Update, Res])(implicit store: DataStore,
+                                                       // normally, update request does not carry the name field,
+                                                       // Hence, the check of name have to be executed by format of creation
+                                                       // since it must have name field.
+                                                       rm: OharaJsonFormat[Creation],
+                                                       rm1: RootJsonFormat[Update],
+                                                       rm2: RootJsonFormat[Res],
+                                                       executionContext: ExecutionContext): server.Route =
     basicRoute(
       root = root,
+      enableGroup = enableGroup,
       hookOfCreation = hookOfCreation,
       hookOfUpdate = hookOfUpdate,
-      hookOfList = (res: Seq[Res]) => Future.successful(res),
       hookOfGet = (res: Res) => Future.successful(res),
-      hookBeforeDelete = (name: String) => Future.successful(name)
+      hookOfList = (res: Seq[Res]) => Future.successful(res),
+      hookBeforeDelete = Future.successful(_)
     )
 
   /**
     *  this is the basic route of all APIs to access ohara's data.
     *  It implements 1) get, 2) list, 3) delete, 4) add and 5) update function.
     * @param root path to root
+    * @param enableGroup true if this route accept group. Otherwise, the input group is ignored and the group passed to route is Data.GROUP_DEFAULT
     * @param hookOfCreation used to convert request to response for Add function
     * @param hookOfUpdate used to convert request to response for Update function
     * @param hookOfList used to convert response for List function
@@ -110,32 +160,46 @@ private[route] object RouteUtils {
     */
   def basicRoute[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
     root: String,
-    hookOfCreation: Creation => Future[Res],
-    hookOfUpdate: (String, Update, Option[Res]) => Future[Res],
-    hookOfList: Seq[Res] => Future[Seq[Res]],
-    hookOfGet: Res => Future[Res],
-    hookBeforeDelete: String => Future[String])(implicit store: DataStore,
-                                                // normally, update request does not carry the name field,
-                                                // Hence, the check of name have to be executed by format of creation
-                                                // since it must have name field.
-                                                rm: OharaJsonFormat[Creation],
-                                                rm1: RootJsonFormat[Update],
-                                                rm2: RootJsonFormat[Res],
-                                                executionContext: ExecutionContext): server.Route =
+    enableGroup: Boolean,
+    hookOfCreation: HookOfCreation[Creation, Res],
+    hookOfUpdate: HookOfUpdate[Creation, Update, Res],
+    hookOfList: HookOfList[Res],
+    hookOfGet: HookOfGet[Res],
+    hookBeforeDelete: HookBeforeDelete)(implicit store: DataStore,
+                                        // normally, update request does not carry the name field,
+                                        // Hence, the check of name have to be executed by format of creation
+                                        // since it must have name field.
+                                        rm: OharaJsonFormat[Creation],
+                                        rm1: RootJsonFormat[Update],
+                                        rm2: RootJsonFormat[Res],
+                                        executionContext: ExecutionContext): server.Route =
     pathPrefix(root) {
       pathEnd {
         post(entity(as[Creation]) { creation =>
-          complete(hookOfCreation(creation).flatMap(res => store.addIfAbsent(res)))
+          parameter(Data.GROUP_KEY ?) { groupOption =>
+            val group = if (enableGroup) groupOption.getOrElse(Data.GROUP_DEFAULT) else Data.GROUP_DEFAULT
+            complete(hookOfCreation(group, creation).flatMap(res => store.addIfAbsent(res)))
+          }
         }) ~
-          get(complete(store.values[Res]().flatMap(hookOfList)))
+          get(complete(store.values[Res]().flatMap(hookOfList(_))))
       } ~ path(Segment) { name =>
-        get(complete(store.value[Res](name).flatMap(hookOfGet))) ~
-          delete(
-            complete(hookBeforeDelete(name).flatMap(name => store.remove[Res](name).map(_ => StatusCodes.NoContent)))) ~
-          put(entity(as[Update])(update =>
-            complete(store.get[Res](rm.check("name", JsString(name)).value).flatMap { previous =>
-              hookOfUpdate(name, update, previous).flatMap(res => store.add(res))
-            })))
+        parameter(Data.GROUP_KEY ?) { groupOption =>
+          val group = if (enableGroup) groupOption.getOrElse(Data.GROUP_DEFAULT) else Data.GROUP_DEFAULT
+          val key = DataKey(
+            group = rm.check(Data.GROUP_KEY, JsString(group)).value,
+            name = rm.check(Data.NAME_KEY, JsString(name)).value
+          )
+          get(complete(store.value[Res](key).flatMap(hookOfGet(_)))) ~
+            delete(complete(hookBeforeDelete(key).flatMap(store.remove[Res](_).map(_ => StatusCodes.NoContent)))) ~
+            put(
+              entity(as[Update])(
+                update =>
+                  complete(
+                    store
+                      .get[Res](key)
+                      .flatMap(previous => hookOfUpdate(key = key, update = update, previous = previous))
+                      .flatMap(store.add))))
+        }
       }
     }
 
