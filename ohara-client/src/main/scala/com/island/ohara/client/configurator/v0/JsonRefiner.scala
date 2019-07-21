@@ -223,30 +223,37 @@ trait JsonRefiner[T] {
       }
   )
 
+  def stringRestriction(key: String): StringRestriction[T] = stringRestriction(Set(key))
+
   /**
     * add the string restriction to specific value. It throws exception if the input value can't pass any restriction.
     * Noted: the empty restriction make the checker to reject all input values. However, you are disable to create a
     * restriction instance without any restriction rules. see our implementation.
-    * @param key key
+    * @param keys keys
     * @return refiner
     */
-  def stringRestriction(key: String): StringRestriction[T] = (legalPairs: Seq[(Char, Char)], lengthLimit: Int) =>
-    valueChecker(
-      key, {
-        case s: JsString =>
-          if (legalPairs.nonEmpty) s.value.foreach { c =>
-            if (!legalPairs.exists {
-                  case (start, end) => c >= start && c <= end
-                })
-              throw DeserializationException(
-                s"""the \"${s.value}\" does not be accepted by legal charsets:${legalPairs.mkString(",")}""",
-                fieldNames = List(key))
+  def stringRestriction(keys: Set[String]): StringRestriction[T] =
+    (legalPairs: Seq[(Char, Char)], lengthLimit: Int) => {
+      keys.foreach { key =>
+        valueChecker(
+          key, {
+            case s: JsString =>
+              if (legalPairs.nonEmpty) s.value.foreach { c =>
+                if (!legalPairs.exists {
+                      case (start, end) => c >= start && c <= end
+                    })
+                  throw DeserializationException(
+                    s"""the \"${s.value}\" does not be accepted by legal charsets:${legalPairs.mkString(",")}""",
+                    fieldNames = List(key))
+              }
+              if (s.value.length > lengthLimit)
+                throw DeserializationException(s"the length of $s exceeds $lengthLimit", fieldNames = List(key))
+            case _ => // we don't care for other types
           }
-          if (s.value.length > lengthLimit)
-            throw DeserializationException(s"the length of $s exceeds $lengthLimit", fieldNames = List(key))
-        case _ => // we don't care for other types
+        )
       }
-  )
+      this
+    }
 
   /**
     * add your custom check for specific (key, value).

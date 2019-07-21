@@ -27,22 +27,24 @@ import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] object FtpInfoRoute {
 
-  private[this] def hookOfCreation: HookOfCreation[Creation, FtpInfo] = (_: String, request: Creation) =>
+  private[this] def hookOfCreation: HookOfCreation[Creation, FtpInfo] = (group: String, creation: Creation) =>
     Future.successful(
       FtpInfo(
-        name = request.name,
-        hostname = request.hostname,
-        port = request.port,
-        user = request.user,
-        password = request.password,
+        group = group,
+        name = creation.name,
+        hostname = creation.hostname,
+        port = creation.port,
+        user = creation.user,
+        password = creation.password,
         lastModified = CommonUtils.current(),
-        tags = request.tags
+        tags = creation.tags
       ))
 
   private[this] def hookOfUpdate: HookOfUpdate[Creation, Update, FtpInfo] =
     (key: DataKey, update: Update, previous: Option[FtpInfo]) =>
       Future.successful(previous.fold {
         FtpInfo(
+          group = key.group,
           name = key.name,
           hostname = update.hostname.get,
           port = update.port.get,
@@ -53,6 +55,7 @@ private[configurator] object FtpInfoRoute {
         )
       } { previous =>
         FtpInfo(
+          group = key.group,
           name = key.name,
           hostname = update.hostname.getOrElse(previous.hostname),
           port = update.port.getOrElse(previous.port),

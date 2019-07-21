@@ -45,18 +45,19 @@ object FtpApi {
       .format(jsonFormat6(Creation))
       .requireConnectionPort("port")
       .rejectEmptyString()
-      .stringRestriction(Data.NAME_KEY)
+      .stringRestriction(Set(Data.GROUP_KEY, Data.NAME_KEY))
       .withNumber()
       .withCharset()
       .withDot()
       .withDash()
       .withUnderLine()
       .toRefiner
-      .nullToString("name", () => CommonUtils.randomString(10))
+      .nullToString(Data.NAME_KEY, () => CommonUtils.randomString(10))
       .nullToEmptyObject(Data.TAGS_KEY)
       .refine
 
-  final case class FtpInfo(name: String,
+  final case class FtpInfo(group: String,
+                           name: String,
                            hostname: String,
                            port: Int,
                            user: String,
@@ -64,16 +65,17 @@ object FtpApi {
                            lastModified: Long,
                            tags: Map[String, JsValue])
       extends Data {
-    // TODO: this will be resolved by https://github.com/oharastream/ohara/issues/1734 ... by chia
-    override def group: String = Data.GROUP_DEFAULT
     override def kind: String = "ftp"
   }
-  implicit val FTP_INFO_JSON_FORMAT: RootJsonFormat[FtpInfo] = jsonFormat7(FtpInfo)
+  implicit val FTP_INFO_JSON_FORMAT: RootJsonFormat[FtpInfo] = jsonFormat8(FtpInfo)
 
   /**
     * used to generate the payload and url for POST/PUT request.
     */
   trait Request {
+    @Optional("default def is a Data.GROUP_DEFAULT")
+    def group(group: String): Request
+
     @Optional("default name is a random string. But it is required in updating")
     def name(name: String): Request
 
@@ -123,12 +125,18 @@ object FtpApi {
 
   class Access private[v0] extends com.island.ohara.client.configurator.v0.Access[FtpInfo](FTP_PREFIX_PATH) {
     def request: Request = new Request {
+      private[this] var group: String = Data.GROUP_DEFAULT
       private[this] var name: String = _
       private[this] var port: Option[Int] = None
       private[this] var hostname: String = _
       private[this] var user: String = _
       private[this] var password: String = _
       private[this] var tags: Map[String, JsValue] = _
+
+      override def group(group: String): Request = {
+        this.group = CommonUtils.requireNonEmpty(group)
+        this
+      }
 
       override def name(name: String): Request = {
         this.name = CommonUtils.requireNonEmpty(name)
@@ -179,12 +187,12 @@ object FtpApi {
 
       override def create()(implicit executionContext: ExecutionContext): Future[FtpInfo] =
         exec.post[Creation, FtpInfo, ErrorApi.Error](
-          _url,
+          url(group),
           creation
         )
       override def update()(implicit executionContext: ExecutionContext): Future[FtpInfo] =
         exec.put[Update, FtpInfo, ErrorApi.Error](
-          s"${_url}/${CommonUtils.requireNonEmpty(name)}",
+          url(group, name),
           update
         )
     }

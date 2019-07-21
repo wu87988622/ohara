@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.FtpApi
+import com.island.ohara.client.configurator.v0.{Data, FtpApi}
 import com.island.ohara.client.configurator.v0.FtpApi.{FtpInfo, Request}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -191,6 +191,46 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
 
     val ftpDesc4 = result(ftpApi.request.name(ftpDesc.name).tags(Map.empty).update())
     ftpDesc4.tags shouldBe Map.empty
+  }
+
+  @Test
+  def testGroup(): Unit = {
+    // default group
+    result(ftpApi.request.hostname("hostname").port(22).user("user").password("password").create()).group shouldBe Data.GROUP_DEFAULT
+
+    val group = CommonUtils.randomString()
+    val ftpInfo = result(
+      ftpApi.request.group(group).hostname("hostname").port(22).user("user").password("password").create())
+    ftpInfo.group shouldBe group
+
+    result(ftpApi.list()).size shouldBe 2
+
+    // update an existent object
+    result(
+      ftpApi.request
+        .group(ftpInfo.group)
+        .name(ftpInfo.name)
+        .hostname("hostname")
+        .port(22)
+        .user("user")
+        .password("password")
+        .update())
+
+    result(ftpApi.list()).size shouldBe 2
+
+    // update an nonexistent (different group) object
+    val group2 = CommonUtils.randomString()
+    result(
+      ftpApi.request
+        .group(group2)
+        .name(ftpInfo.name)
+        .hostname("hostname")
+        .port(22)
+        .user("user")
+        .password("password")
+        .create()).group shouldBe group2
+
+    result(ftpApi.list()).size shouldBe 3
   }
 
   @After
