@@ -111,6 +111,12 @@ Also, the delete to ohara topic also invoke a delete request to kafka. The commo
 
 > The name must be unique in a broker cluster.
 
+The following information are tagged by ohara.
+
+1. group (**string**) — the group value is always "default"
+                        (the default value will be changed to be equal to brokerClusterName as the group of topic is "broker cluster")
+1. lastModified (**long**) — the last time to update this ftp information
+
 ----------
 
 ### create a topic
@@ -142,6 +148,7 @@ And it works only if there is only a broker cluster exists in ohara**)
 
 ```json
 {
+  "group": "default",
   "name": "topic0",
   "brokerClusterName": "preCreatedBkCluster",
   "lastModified": 1553498552595,
@@ -180,6 +187,7 @@ And it works only if there is only a broker cluster exists in ohara**)
 
 ```json
 {
+  "group": "default",
   "name": "topic0",
   "brokerClusterName": "preCreatedBkCluster",
   "lastModified": 1553498552595,
@@ -203,6 +211,7 @@ And it works only if there is only a broker cluster exists in ohara**)
 ```json
 [
   {
+    "group": "default",
     "name": "topic0",
     "brokerClusterName": "preCreatedBkCluster",
     "lastModified": 1553498552595,
@@ -214,6 +223,7 @@ And it works only if there is only a broker cluster exists in ohara**)
     "tags": {}
   },
   {
+    "group": "default",
     "name": "wk00",
     "brokerClusterName": "preCreatedBkCluster",
     "lastModified": 1553498375573,
@@ -251,6 +261,7 @@ And it works only if there is only a broker cluster exists in ohara**)
 
 ```json
 {
+  "group": "default",
   "name": "topic0",
   "brokerClusterName": "preCreatedBkCluster",
   "lastModified": 1553498552595,

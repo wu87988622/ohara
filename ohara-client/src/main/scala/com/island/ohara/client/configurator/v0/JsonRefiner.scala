@@ -133,6 +133,12 @@ trait JsonRefiner[T] {
       case _ => // we don't care for other types
     }
   )
+  def rejectKeyword(keyword: String): JsonRefiner[T] = valueChecker(
+    keyword, {
+      case JsNull => // nothing
+      case _      => throw DeserializationException(s"""the \"$keyword\" is a illegal word!!!""")
+    }
+  )
 
   /**
     * reject the request having a key which is associated to empty string.

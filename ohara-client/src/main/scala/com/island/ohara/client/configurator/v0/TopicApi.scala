@@ -20,7 +20,7 @@ import java.util.Objects
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsValue, RootJsonFormat}
+import spray.json.{JsObject, JsString, JsValue, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -74,7 +74,15 @@ object TopicApi {
     override def kind: String = "topic"
   }
 
-  implicit val TOPIC_INFO_FORMAT: RootJsonFormat[TopicInfo] = jsonFormat7(TopicInfo)
+  implicit val TOPIC_INFO_FORMAT: RootJsonFormat[TopicInfo] = new RootJsonFormat[TopicInfo] {
+    private[this] val format = jsonFormat7(TopicInfo)
+    override def read(json: JsValue): TopicInfo = format.read(json)
+
+    override def write(obj: TopicInfo): JsValue = JsObject(
+      format.write(obj).asJsObject.fields ++
+        // TODO: topic's group ought be identical to brokerClusterName
+        Map(Data.GROUP_KEY -> JsString(Data.GROUP_DEFAULT)))
+  }
 
   /**
     * used to generate the payload and url for POST/PUT request.

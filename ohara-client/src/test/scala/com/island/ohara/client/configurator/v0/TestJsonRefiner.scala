@@ -1134,4 +1134,21 @@ class TestJsonRefiner extends SmallTest with Matchers {
                |}
                            """.stripMargin.parseJson)
   }
+
+  @Test
+  def testRejectKeyword(): Unit =
+    an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
+      .format(format)
+      .rejectKeyword("abc")
+      .refine
+      .read(s"""
+               |{
+               | "stringValue": "start",
+               | "bindPort": 123,
+               | "connectionPort": 111,
+               | "stringArray": [],
+               | "objects":{},
+               | "abc":[]
+               |}
+                           """.stripMargin.parseJson)
 }
