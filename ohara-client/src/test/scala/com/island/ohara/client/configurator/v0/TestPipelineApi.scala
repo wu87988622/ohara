@@ -50,6 +50,7 @@ class TestPipelineApi extends SmallTest with Matchers {
   @Test
   def parseDeprecatedJsonOfPipeline(): Unit = {
     val pipeline = Pipeline(
+      group = CommonUtils.randomString(),
       name = CommonUtils.randomString(),
       workerClusterName = Some(CommonUtils.randomString()),
       objects = Seq.empty,
@@ -66,6 +67,7 @@ class TestPipelineApi extends SmallTest with Matchers {
     val from = CommonUtils.randomString()
     val to = CommonUtils.randomString()
     val pipeline = Pipeline(
+      group = CommonUtils.randomString(),
       name = CommonUtils.randomString(),
       workerClusterName = Some(CommonUtils.randomString()),
       objects = Seq.empty,
@@ -97,6 +99,12 @@ class TestPipelineApi extends SmallTest with Matchers {
     .port(CommonUtils.availablePort())
     .request
     .update()
+
+  @Test
+  def emptyGroup(): Unit = an[IllegalArgumentException] should be thrownBy PipelineApi.access.request.group("")
+
+  @Test
+  def nullGroup(): Unit = an[NullPointerException] should be thrownBy PipelineApi.access.request.group(null)
 
   @Test
   def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy PipelineApi.access.request.name("")

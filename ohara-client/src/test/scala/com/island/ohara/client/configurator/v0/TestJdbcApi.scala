@@ -210,6 +210,12 @@ class TestJdbcApi extends SmallTest with Matchers {
     .update()
 
   @Test
+  def emptyGroup(): Unit = an[IllegalArgumentException] should be thrownBy JdbcApi.access.request.group("")
+
+  @Test
+  def nullGroup(): Unit = an[NullPointerException] should be thrownBy JdbcApi.access.request.group(null)
+
+  @Test
   def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy JdbcApi.access.request.name("")
 
   @Test

@@ -41,6 +41,7 @@ private[configurator] object PipelineRoute {
       .map(
         connectorDefinition =>
           ObjectAbstract(
+            group = data.group,
             name = data.name,
             kind = connectorDefinition.kind,
             className = Some(data.className),
@@ -68,6 +69,7 @@ private[configurator] object PipelineRoute {
     implicit meterCache: MeterCache): Future[ObjectAbstract] =
     Future.successful(
       ObjectAbstract(
+        group = data.group,
         name = data.name,
         kind = data.kind,
         className = None,
@@ -82,6 +84,7 @@ private[configurator] object PipelineRoute {
   private[this] def toAbstract(data: StreamAppDescription, clusterInfo: StreamClusterInfo): Future[ObjectAbstract] =
     Future.successful(
       ObjectAbstract(
+        group = data.group,
         name = data.name,
         kind = data.kind,
         className = None,
@@ -93,14 +96,17 @@ private[configurator] object PipelineRoute {
       ))
 
   private[this] def toAbstract(data: Data, error: Option[String]): Future[ObjectAbstract] = Future.successful(
-    ObjectAbstract(name = data.name,
-                   kind = data.kind,
-                   className = None,
-                   state = None,
-                   error = error,
-                   metrics = Metrics(Seq.empty),
-                   lastModified = data.lastModified,
-                   tags = data.tags))
+    ObjectAbstract(
+      group = data.group,
+      name = data.name,
+      kind = data.kind,
+      className = None,
+      state = None,
+      error = error,
+      metrics = Metrics(Seq.empty),
+      lastModified = data.lastModified,
+      tags = data.tags
+    ))
 
   private[this] def toAbstract(obj: Data)(implicit clusterCollie: ClusterCollie,
                                           executionContext: ExecutionContext,
@@ -154,9 +160,10 @@ private[configurator] object PipelineRoute {
                                    clusterCollie: ClusterCollie,
                                    executionContext: ExecutionContext,
                                    meterCache: MeterCache): HookOfCreation[Creation, Pipeline] =
-    (_: String, creation: Creation) =>
+    (group: String, creation: Creation) =>
       updateObjects(
         Pipeline(
+          group = group,
           name = creation.name,
           flows = creation.flows,
           workerClusterName = creation.workerClusterName,
@@ -172,6 +179,7 @@ private[configurator] object PipelineRoute {
     (key: DataKey, update: Update, previous: Option[Pipeline]) =>
       updateObjects(
         Pipeline(
+          group = key.group,
           name = key.name,
           flows = update.flows.getOrElse(previous.map(_.flows).getOrElse(Seq.empty)),
           workerClusterName = update.workerClusterName.orElse(previous.flatMap(_.workerClusterName)),

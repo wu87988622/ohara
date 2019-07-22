@@ -270,6 +270,29 @@ class TestPipelineRoute extends MediumTest with Matchers {
     pipelineDesc4.tags shouldBe Map.empty
   }
 
+  @Test
+  def testGroup(): Unit = {
+    // default group
+    result(pipelineApi.request.create()).group shouldBe Data.GROUP_DEFAULT
+
+    val group = CommonUtils.randomString()
+    val ftpInfo = result(pipelineApi.request.group(group).create())
+    ftpInfo.group shouldBe group
+
+    result(pipelineApi.list()).size shouldBe 2
+
+    // update an existent object
+    result(pipelineApi.request.group(ftpInfo.group).name(ftpInfo.name).update())
+
+    result(pipelineApi.list()).size shouldBe 2
+
+    // update an nonexistent (different group) object
+    val group2 = CommonUtils.randomString()
+    result(pipelineApi.request.group(group2).name(ftpInfo.name).create()).group shouldBe group2
+
+    result(pipelineApi.list()).size shouldBe 3
+  }
+
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }

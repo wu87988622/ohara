@@ -145,20 +145,21 @@ object PipelineApi {
       )
     })
     .rejectEmptyString()
-    .stringRestriction(Data.NAME_KEY)
+    .stringRestriction(Set(Data.GROUP_KEY, Data.NAME_KEY))
     .withNumber()
     .withCharset()
     .withDot()
     .withDash()
     .withUnderLine()
     .toRefiner
-    .nullToString("name", () => CommonUtils.randomString(10))
+    .nullToString(Data.NAME_KEY, () => CommonUtils.randomString(10))
     .nullToEmptyObject(Data.TAGS_KEY)
     .refine
 
   import MetricsApi._
 
-  final case class ObjectAbstract(name: String,
+  final case class ObjectAbstract(group: String,
+                                  name: String,
                                   kind: String,
                                   className: Option[String],
                                   state: Option[String],
@@ -166,13 +167,11 @@ object PipelineApi {
                                   metrics: Metrics,
                                   lastModified: Long,
                                   tags: Map[String, JsValue])
-      extends Data {
-    // TODO: this will be resolved by https://github.com/oharastream/ohara/issues/1734 ... by chia
-    override def group: String = Data.GROUP_DEFAULT
-  }
-  implicit val OBJECT_ABSTRACT_JSON_FORMAT: RootJsonFormat[ObjectAbstract] = jsonFormat8(ObjectAbstract)
+      extends Data
+  implicit val OBJECT_ABSTRACT_JSON_FORMAT: RootJsonFormat[ObjectAbstract] = jsonFormat9(ObjectAbstract)
 
-  final case class Pipeline(name: String,
+  final case class Pipeline(group: String,
+                            name: String,
                             flows: Seq[Flow],
                             objects: Seq[ObjectAbstract],
                             workerClusterName: Option[String],
@@ -180,8 +179,6 @@ object PipelineApi {
                             tags: Map[String, JsValue])
       extends Data {
 
-    // TODO: this will be resolved by https://github.com/oharastream/ohara/issues/1734 ... by chia
-    override def group: String = Data.GROUP_DEFAULT
     override def kind: String = "pipeline"
     def rules: Map[String, Set[String]] = flows.map { flow =>
       flow.from -> flow.to
@@ -195,6 +192,7 @@ object PipelineApi {
     private[this] val lastModifiedKey = "lastModified"
 
     override def read(json: JsValue): Pipeline = Pipeline(
+      group = noJsNull(json)(Data.GROUP_KEY).convertTo[String],
       name = noJsNull(json)(Data.NAME_KEY).convertTo[String],
       workerClusterName = noJsNull(json).get(workerClusterNameKey).map(_.convertTo[String]),
       flows = noJsNull(json)
@@ -208,6 +206,7 @@ object PipelineApi {
     override def write(obj: Pipeline): JsValue = JsObject(
       noJsNull(
         Map(
+          Data.GROUP_KEY -> JsString(obj.group),
           Data.NAME_KEY -> JsString(obj.name),
           workerClusterNameKey -> obj.workerClusterName.map(JsString(_)).getOrElse(JsNull),
           flowsKey -> JsArray(obj.flows.map(FLOW_JSON_FORMAT.write).toVector),
@@ -225,6 +224,10 @@ object PipelineApi {
     * used to generate the payload and url for POST/PUT request.
     */
   trait Request {
+
+    @Optional("default def is a Data.GROUP_DEFAULT")
+    def group(group: String): Request
+
     @Optional("default name is a random string. But it is required in updating")
     def name(name: String): Request
 
@@ -267,10 +270,17 @@ object PipelineApi {
 
   class Access private[v0] extends com.island.ohara.client.configurator.v0.Access[Pipeline](PIPELINES_PREFIX_PATH) {
     def request: Request = new Request {
+      private[this] var group: String = Data.GROUP_DEFAULT
       private[this] var name: String = _
       private[this] var workerClusterName: Option[String] = None
       private[this] var flows: Seq[Flow] = _
       private[this] var tags: Map[String, JsValue] = _
+
+      override def group(group: String): Request = {
+        this.group = CommonUtils.requireNonEmpty(group)
+        this
+      }
+
       override def name(name: String): Request = {
         this.name = CommonUtils.requireNonEmpty(name)
         this
@@ -306,12 +316,12 @@ object PipelineApi {
 
       override def create()(implicit executionContext: ExecutionContext): Future[Pipeline] =
         exec.post[Creation, Pipeline, ErrorApi.Error](
-          _url,
+          _url(group),
           creation
         )
       override def update()(implicit executionContext: ExecutionContext): Future[Pipeline] =
         exec.put[Update, Pipeline, ErrorApi.Error](
-          s"${_url}/${CommonUtils.requireNonEmpty(name)}",
+          _url(group, name),
           update
         )
     }

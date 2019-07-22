@@ -36,14 +36,14 @@ object HadoopApi {
     JsonRefiner[Creation]
       .format(jsonFormat3(Creation))
       .rejectEmptyString()
-      .stringRestriction(Data.NAME_KEY)
+      .stringRestriction(Set(Data.GROUP_KEY, Data.NAME_KEY))
       .withNumber()
       .withCharset()
       .withDot()
       .withDash()
       .withUnderLine()
       .toRefiner
-      .nullToString("name", () => CommonUtils.randomString(10))
+      .nullToString(Data.NAME_KEY, () => CommonUtils.randomString(10))
       .nullToEmptyObject(Data.TAGS_KEY)
       .refine
 
