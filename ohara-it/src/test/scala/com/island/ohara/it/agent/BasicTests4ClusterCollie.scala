@@ -52,6 +52,13 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
       .nodeNames(nodeNames)
       .create()
 
+  override protected def zk_start(clusterName: String): Future[ZookeeperApi.ZookeeperClusterInfo] =
+    // We don't need to start a cluster in collie since we already start a cluster by create method
+    zkCollie.cluster(clusterName).map(_._1)
+
+  override protected def zk_stop(clusterName: String): Future[Unit] =
+    zkCollie.forceRemove(clusterName).map(_ => Unit)
+
   override protected def zk_clusters(): Future[Seq[ZookeeperApi.ZookeeperClusterInfo]] =
     zkCollie.clusters().map(_.keys.toSeq)
 
@@ -62,7 +69,8 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
     zkCollie.containers(clusterName)
 
   override protected def zk_delete(clusterName: String): Future[Unit] =
-    zkCollie.forceRemove(clusterName).map(_ => Unit)
+    // We don't need to remove data stored in configurator in collie since there is nothing to do
+    Future.successful(Unit)
 
   //--------------------------------------------------[bk operations]--------------------------------------------------//
   override protected def bk_exist(clusterName: String): Future[Boolean] = bkCollie.exist(clusterName)

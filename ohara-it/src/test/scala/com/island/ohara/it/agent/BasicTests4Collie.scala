@@ -59,6 +59,8 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
                           electionPort: Int,
                           peerPort: Int,
                           nodeNames: Set[String]): Future[ZookeeperClusterInfo]
+  protected def zk_start(clusterName: String): Future[ZookeeperClusterInfo]
+  protected def zk_stop(clusterName: String): Future[Unit]
   protected def zk_cluster(clusterName: String): Future[ZookeeperClusterInfo] =
     zk_clusters().map(_.find(_.name == clusterName).get)
   protected def zk_clusters(): Future[Seq[ZookeeperClusterInfo]]
@@ -108,6 +110,13 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
   protected def wk_addNode(clusterName: String, nodeName: String): Future[WorkerClusterInfo]
   protected def wk_removeNode(clusterName: String, nodeName: String): Future[Unit]
 
+  private[this] def cleanZookeeper(clusterName: String): Future[Unit] = {
+    zk_stop(clusterName).flatMap(_ => {
+      await(() => result(zk_containers(clusterName)).isEmpty)
+      zk_delete(clusterName)
+    })
+  }
+
   /**
     * used to debug...
     */
@@ -142,6 +151,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
           peerPort = peerPort,
           nodeNames = Set(nodeName)
         )))
+    result(zk_start(zkCluster.name))
     try {
       assertCluster(() => result(zk_clusters()), zkCluster.name)
       assert(result(zk_cluster(zkCluster.name)))
@@ -177,7 +187,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       container.environments.exists(_._2 == clientPort.toString) shouldBe true
       container.environments.exists(_._2 == electionPort.toString) shouldBe true
       container.environments.exists(_._2 == peerPort.toString) shouldBe true
-    } finally if (cleanup) result(zk_delete(zkCluster.name))
+    } finally if (cleanup) result(cleanZookeeper(clusterName))
   }
 
   @Test
@@ -190,6 +200,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         peerPort = CommonUtils.availablePort(),
         nodeNames = Set(nodeCache.head.name)
       ))
+    result(zk_start(zkCluster.name))
     assertCluster(() => result(zk_clusters()), zkCluster.name)
     // since we only get "active" containers, all containers belong to the cluster should be running.
     // Currently, both k8s and pure docker have the same context of "RUNNING".
@@ -270,7 +281,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         result(bk_delete(bkCluster.name))
         assertNoCluster(() => result(bk_clusters()), bkCluster.name)
       }
-    } finally if (cleanup) result(zk_delete(zkCluster.name))
+    } finally if (cleanup) result(cleanZookeeper(zkCluster.name))
   }
 
   private[this] def testAddNodeToRunningBrokerCluster(previousCluster: BrokerClusterInfo): BrokerClusterInfo = {
@@ -417,6 +428,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         peerPort = CommonUtils.availablePort(),
         nodeNames = Set(nodeCache.head.name)
       ))
+    result(zk_start(zkCluster.name))
     try {
       assertCluster(() => result(zk_clusters()), zkCluster.name)
       // since we only get "active" containers, all containers belong to the cluster should be running.
@@ -531,7 +543,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         result(bk_delete(bkCluster.name))
         assertNoCluster(() => result(bk_clusters()), bkCluster.name)
       }
-    } finally if (cleanup) result(zk_delete(zkCluster.name))
+    } finally if (cleanup) result(cleanZookeeper(zkCluster.name))
 
   }
 
@@ -621,7 +633,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
             electionPort = CommonUtils.availablePort(),
             peerPort = CommonUtils.availablePort(),
             nodeNames = nodeCache.map(_.name).toSet
-          ))
+          ).flatMap(info => zk_start(info.name)))
       }
       // add a bit wait to make sure the cluster is up
       TimeUnit.SECONDS.sleep(5)
@@ -645,7 +657,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         }
       }
     } finally if (cleanup) names.foreach { name =>
-      try result(zk_delete(name))
+      try result(cleanZookeeper(name))
       catch {
         case _: Throwable =>
         // do nothing
@@ -667,7 +679,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
             electionPort = CommonUtils.availablePort(),
             peerPort = CommonUtils.availablePort(),
             nodeNames = Set(nodeCache.head.name)
-          ))
+          ).flatMap(info => zk_start(info.name)))
       }
 
       assertClusters(() => result(zk_clusters()), zks.map(_.name))
@@ -679,7 +691,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
           val containers = result(zk_containers(name))
           containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
         }))
-      zks.zipWithIndex.map {
+      zks.zipWithIndex.foreach {
         case (zk, index) =>
           val bkCluster = result(
             bk_create(
@@ -708,7 +720,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       }
       assertNoClusters(() => result(bk_clusters()), bkNames)
       zkNames.foreach { name =>
-        try result(zk_delete(name))
+        try result(cleanZookeeper(name))
         catch {
           case _: Throwable =>
           // do nothing
@@ -737,6 +749,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
           nodeNames = Set(nodeCache.head.name)
         )
       )
+      result(zk_start(zk.name))
       assertCluster(() => result(zk_clusters()), zk.name)
       // since we only get "active" containers, all containers belong to the cluster should be running.
       // Currently, both k8s and pure docker have the same context of "RUNNING".
@@ -814,7 +827,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         // do nothing
       }
       assertNoCluster(() => result(bk_clusters()), bkName)
-      try result(zk_delete(zkName))
+      try result(cleanZookeeper(zkName))
       catch {
         case _: Throwable =>
         // do nothing

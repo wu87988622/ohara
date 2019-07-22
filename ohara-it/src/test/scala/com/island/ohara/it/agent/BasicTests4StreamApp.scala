@@ -112,6 +112,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
       val zkCluster = result(
         zkApi.request.name(nameHolder.generateClusterName()).nodeNames(nodeCache.take(1).map(_.name).toSet).create()
       )
+      result(zkApi.start(zkCluster.name))
       assertCluster(() => result(zkApi.list()), zkCluster.name)
       await(() => {
         val containers = result(containerApi.get(zkCluster.name).map(_.flatMap(_.containers)))

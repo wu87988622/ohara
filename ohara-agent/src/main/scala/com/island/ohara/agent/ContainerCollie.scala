@@ -102,7 +102,6 @@ abstract class ContainerCollie[T <: ClusterInfo: ClassTag, Creator <: ClusterCre
   protected def doForceRemove(clusterInfo: T, containerInfos: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[Boolean] =
     doRemove(clusterInfo, containerInfos)
-
 }
 
 object ContainerCollie {

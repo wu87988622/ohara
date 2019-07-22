@@ -103,7 +103,11 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
       }))
 
     val zkCluster = result(
-      zkApi.request.name(nameHolder.generateClusterName()).nodeNames(nodeCache.map(_.name).toSet).create())
+      zkApi.request
+        .name(nameHolder.generateClusterName())
+        .nodeNames(nodeCache.map(_.name).toSet)
+        .create()
+        .flatMap(info => zkApi.start(info.name)))
     assertCluster(() => result(zkApi.list()), zkCluster.name)
     log.info(s"zkCluster:$zkCluster")
     val bkCluster = result(

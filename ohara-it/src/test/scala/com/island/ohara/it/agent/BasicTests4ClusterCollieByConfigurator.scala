@@ -58,6 +58,11 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
       .nodeNames(nodeNames)
       .create()
 
+  override protected def zk_start(clusterName: String): Future[ZookeeperApi.ZookeeperClusterInfo] =
+    zkApi.start(clusterName)
+
+  override protected def zk_stop(clusterName: String): Future[Unit] = zkApi.forceStop(clusterName).map(_ => Unit)
+
   override protected def zk_clusters(): Future[Seq[ZookeeperApi.ZookeeperClusterInfo]] = zkApi.list()
 
   override protected def zk_logs(clusterName: String): Future[Seq[String]] =
