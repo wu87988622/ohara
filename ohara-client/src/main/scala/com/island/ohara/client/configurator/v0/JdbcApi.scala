@@ -50,20 +50,23 @@ object JdbcApi {
       .nullToEmptyObject(Data.TAGS_KEY)
       .refine
 
-  final case class JdbcInfo(name: String,
+  final case class JdbcInfo(group: String,
+                            name: String,
                             url: String,
                             user: String,
                             password: String,
                             lastModified: Long,
                             tags: Map[String, JsValue])
       extends Data {
-    // TODO: this will be resolved by https://github.com/oharastream/ohara/issues/1734 ... by chia
-    override def group: String = Data.GROUP_DEFAULT
     override def kind: String = "jdbc"
   }
-  implicit val JDBC_INFO_JSON_FORMAT: RootJsonFormat[JdbcInfo] = jsonFormat6(JdbcInfo)
+  implicit val JDBC_INFO_JSON_FORMAT: RootJsonFormat[JdbcInfo] = jsonFormat7(JdbcInfo)
 
   trait Request {
+
+    @Optional("default def is a Data.GROUP_DEFAULT")
+    def group(group: String): Request
+
     @Optional("default name is a random string. But it is required in updating")
     def name(name: String): Request
 
@@ -100,11 +103,17 @@ object JdbcApi {
 
   class Access private[v0] extends com.island.ohara.client.configurator.v0.Access[JdbcInfo](JDBC_PREFIX_PATH) {
     def request: Request = new Request {
+      private[this] var group: String = Data.GROUP_DEFAULT
       private[this] var name: String = _
       private[this] var url: String = _
       private[this] var user: String = _
       private[this] var password: String = _
       private[this] var tags: Map[String, JsValue] = _
+
+      override def group(group: String): Request = {
+        this.group = CommonUtils.requireNonEmpty(group)
+        this
+      }
 
       override def name(name: String): Request = {
         this.name = CommonUtils.requireNonEmpty(name)
@@ -148,12 +157,12 @@ object JdbcApi {
 
       override def create()(implicit executionContext: ExecutionContext): Future[JdbcInfo] =
         exec.post[Creation, JdbcInfo, ErrorApi.Error](
-          _url,
+          _url(group),
           creation
         )
       override def update()(implicit executionContext: ExecutionContext): Future[JdbcInfo] =
         exec.put[Update, JdbcInfo, ErrorApi.Error](
-          s"${_url}/${CommonUtils.requireNonEmpty(name)}",
+          _url(group, name),
           update
         )
     }

@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.JdbcApi
+import com.island.ohara.client.configurator.v0.{Data, JdbcApi}
 import com.island.ohara.client.configurator.v0.JdbcApi.{JdbcInfo, Request}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -173,6 +173,49 @@ class TestJdbcInfoRoute extends SmallTest with Matchers {
 
     val jdbcDesc4 = result(jdbcApi.request.name(jdbcDesc.name).tags(Map.empty).update())
     jdbcDesc4.tags shouldBe Map.empty
+  }
+
+  @Test
+  def testGroup(): Unit = {
+    // default group
+    result(jdbcApi.request.url("url").user(CommonUtils.randomString()).password(CommonUtils.randomString()).create()).group shouldBe Data.GROUP_DEFAULT
+
+    val group = CommonUtils.randomString()
+    val ftpInfo = result(
+      jdbcApi.request
+        .group(group)
+        .url("url")
+        .user(CommonUtils.randomString())
+        .password(CommonUtils.randomString())
+        .create())
+    ftpInfo.group shouldBe group
+
+    result(jdbcApi.list()).size shouldBe 2
+
+    // update an existent object
+    result(
+      jdbcApi.request
+        .group(ftpInfo.group)
+        .name(ftpInfo.name)
+        .url("url")
+        .user(CommonUtils.randomString())
+        .password(CommonUtils.randomString())
+        .update())
+
+    result(jdbcApi.list()).size shouldBe 2
+
+    // update an nonexistent (different group) object
+    val group2 = CommonUtils.randomString()
+    result(
+      jdbcApi.request
+        .group(group2)
+        .name(ftpInfo.name)
+        .url("url")
+        .user(CommonUtils.randomString())
+        .password(CommonUtils.randomString())
+        .create()).group shouldBe group2
+
+    result(jdbcApi.list()).size shouldBe 3
   }
 
   @After

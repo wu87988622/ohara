@@ -53,9 +53,9 @@ abstract class BasicAccess private[v0] (prefixPath: String) {
     */
   protected def _url: String = s"http://${_hostname}:${_port}/${_version}/${_prefixPath}"
 
-  protected def url(group: String) =
+  protected def _url(group: String) =
     s"http://${_hostname}:${_port}/${_version}/${_prefixPath}?${Data.GROUP_KEY}=$group"
 
-  protected def url(group: String, name: String) =
+  protected def _url(group: String, name: String) =
     s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/${CommonUtils.requireNonEmpty(name)}?${Data.GROUP_KEY}=$group"
 }

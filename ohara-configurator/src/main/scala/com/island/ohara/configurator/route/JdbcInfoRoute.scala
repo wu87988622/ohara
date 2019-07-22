@@ -27,9 +27,10 @@ import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] object JdbcInfoRoute {
 
-  private[this] def hookOfCreation: HookOfCreation[Creation, JdbcInfo] = (_: String, request: Creation) =>
+  private[this] def hookOfCreation: HookOfCreation[Creation, JdbcInfo] = (group: String, request: Creation) =>
     Future.successful(
-      JdbcInfo(name = request.name,
+      JdbcInfo(group = group,
+               name = request.name,
                url = request.url,
                user = request.user,
                password = request.password,
@@ -40,14 +41,18 @@ private[configurator] object JdbcInfoRoute {
     (key: DataKey, update: Update, previous: Option[JdbcInfo]) =>
       Future.successful {
         previous.fold {
-          JdbcInfo(name = key.name,
-                   url = update.url.get,
-                   user = update.user.get,
-                   password = update.password.get,
-                   CommonUtils.current(),
-                   tags = update.tags.getOrElse(Map.empty))
+          JdbcInfo(
+            group = key.group,
+            name = key.name,
+            url = update.url.get,
+            user = update.user.get,
+            password = update.password.get,
+            CommonUtils.current(),
+            tags = update.tags.getOrElse(Map.empty)
+          )
         } { previous =>
           JdbcInfo(
+            group = key.group,
             name = key.name,
             url = update.url.getOrElse(previous.url),
             user = update.user.getOrElse(previous.user),

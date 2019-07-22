@@ -295,6 +295,7 @@ The following information are tagged by ohara.
 1. group (**string**) — group of this ftp information. It is a optional argument, and the default value of group is "default"
 
 > the string value can't be empty or null. the port should be small than 65535 and larger than zero.
+> the default value of group is "default"
 
 **Example Request**
 
@@ -353,6 +354,7 @@ The following information are tagged by ohara.
 ```
 
 > Noted, this APIs will create an new ftp object if the input name is not associated to an existent object.
+> the default value of group is "default"
 
 **Example Response**
 
@@ -400,6 +402,8 @@ The following information are tagged by ohara.
 
 1. group (**string**) — group of this ftp information. It is a optional argument, and the default value of group is "default"
 
+> the default value of group is "default"
+
 **Example Response**
 
 ```
@@ -412,6 +416,8 @@ The following information are tagged by ohara.
 ### get a ftp information
 
 *GET /v0/ftp/${name}?group=${group}*
+
+> the default value of group is "default"
 
 **Example Response**
 
@@ -461,6 +467,8 @@ The following information are tagged by ohara.
 }
 ```
 
+> the default value of group is "default"
+
 **Example Response**
 
 ```json
@@ -493,6 +501,7 @@ The following information are tagged by ohara.
 ```
 
 > Noted, this API creates an new object if input name does not exist.
+> the default value of group is "default"
 
 **Example Response**
 
@@ -530,6 +539,8 @@ The following information are tagged by ohara.
 
 1. group (**string**) — group of this ftp information. It is a optional argument, and the default value of group is "default"
 
+> the default value of group is "default"
+
 **Example Response**
 
 ```
@@ -544,6 +555,8 @@ The following information are tagged by ohara.
 *GET /v0/hdfs/${name}?group=${group}*
 
 1. group (**string**) — group of this ftp information. It is a optional argument, and the default value of group is "default"
+
+> the default value of group is "default"
 
 **Example Response**
 
@@ -568,6 +581,7 @@ the jdbc is only supported now. The storable information is shown below.
 1. user (**string**) — the account which has permission to access database
 1. password (**string**) — password of account. It is stored as text in ohara
 1. tags (**object**) — the extra description to this object
+1. group (**string**) — group of this ftp information. It is a optional argument, and the default value of group is "default"
 
 The following information are tagged by ohara.
 
@@ -577,13 +591,14 @@ The following information are tagged by ohara.
 
 ### store a jdbc information
 
-*POST /v0/jdbc*
+*POST /v0/jdbc?group=${group}*
 
 1. name (**string**) — name of this jdbc information.
 1. url (**string**) — jdbc connection information. format: jdbc:${database}://${serverName}\$instanceName:$portNumber
 1. user (**string**) — the account which has permission to access database
 1. password (**string**) — password of account. It is stored as text in ohara
 1. tags (**object**) — the extra description to this object
+1. group (**string**) — group of this ftp information. It is a optional argument, and the default value of group is "default"
 
 **Example Request**
 
@@ -596,10 +611,13 @@ The following information are tagged by ohara.
 }
 ```
 
+> the default value of group is "default"
+
 **Example Response**
 
 ```json
 {
+  "group": "default",
   "name": "jdbc_name",
   "url": "jdbc:mysql",
   "lastModified": 1540967970407,
@@ -613,13 +631,14 @@ The following information are tagged by ohara.
 
 ### update a jdbc information
 
-*PUT /v0/jdbc/${name}*
+*PUT /v0/jdbc/${name}?group=${group}*
 
 1. name (**string**) — name of this jdbc information.
 1. url (**option(string)**) — jdbc connection information. format: jdbc:${database}://${serverName}\$instanceName:$portNumber
 1. user (**option(string)**) — the account which has permission to access database
 1. password (**option(string)**) — password of account. It is stored as text in ohara
 1. tags (**object**) — the extra description to this object
+1. group (**string**) — group of this ftp information. It is a optional argument, and the default value of group is "default"
 
 **Example Request**
 
@@ -633,11 +652,13 @@ The following information are tagged by ohara.
 ```
 
 > Noted, an new object will be created if the input name is not associated to an existent object.
+> the default value of group is "default"
 
 **Example Response**
 
 ```json
 {
+  "group": "default",
   "name": "jdbc_name",
   "url": "jdbc:mysql",
   "lastModified": 1540967970407,
@@ -656,6 +677,7 @@ The following information are tagged by ohara.
 ```json
 [
   {
+    "group": "default",
     "name": "jdbc_name",
     "url": "jdbc:mysql",
     "lastModified": 1540967970407,
@@ -670,7 +692,11 @@ The following information are tagged by ohara.
 
 ### delete a jdbc information
 
-*DELETE /v0/jdbc/${name}*
+*DELETE /v0/jdbc/${name}?group=${group}*
+
+1. group (**string**) — group of this ftp information. It is a optional argument, and the default value of group is "default"
+
+> the default value of group is "default"
 
 **Example Response**
 
@@ -683,12 +709,15 @@ The following information are tagged by ohara.
 ----------
 ### get a jdbc information
 
-*GET /v0/jdbc/${name}*
+*GET /v0/jdbc/${name}?group=${group}*
+
+> the default value of group is "default"
 
 **Example Response**
 
 ```json
 {
+  "group": "default",
   "name": "jdbc_name",
   "url": "jdbc:mysql",
   "lastModified": 1540967970407,
