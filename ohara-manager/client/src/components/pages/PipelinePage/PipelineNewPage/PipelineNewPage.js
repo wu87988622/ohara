@@ -29,6 +29,7 @@ import PipelineToolbar from '../PipelineToolbar';
 import PipelineGraph from '../PipelineGraph';
 import Operate from './Operate';
 import SidebarRoutes from './SidebarRoutes';
+import MetricsSidebar from './MetricsSidebar';
 import { PIPELINE_NEW, PIPELINE_EDIT } from 'constants/documentTitles';
 import { getConnectors } from '../pipelineUtils/commonUtils';
 import { Wrapper, Main, Sidebar, Heading2 } from './styles';
@@ -271,7 +272,14 @@ class PipelineNewPage extends React.Component {
                   fetchPipeline={this.fetchPipeline}
                 />
 
+                <MetricsSidebar
+                  {...this.props}
+                  graph={graph}
+                  updateGraph={this.updateGraph}
+                />
+
                 <SidebarRoutes
+                  {...this.props}
                   connectorProps={connectorProps}
                   connectors={connectors}
                 />

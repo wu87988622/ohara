@@ -19,8 +19,8 @@ import PropTypes from 'prop-types';
 import dagreD3 from 'dagre-d3';
 import * as d3 from 'd3v4';
 
-import { Wrapper, H5Wrapper, Svg } from './styles';
 import * as utils from './pipelineGraphUtils';
+import { Wrapper, H5Wrapper, Svg } from './styles';
 import { graph as graphPropType } from 'propTypes/pipeline';
 
 const PipelineGraph = props => {
@@ -93,10 +93,13 @@ const PipelineGraph = props => {
     };
 
     const handleNodeClick = current => {
-      const { history, graph, match } = props;
+      const { history, graph, match, updateGraph } = props;
       const { pipelineName } = match.params;
-      const [currConnector] = graph.filter(g => g.name === current);
-      const { className, name: connectorName } = currConnector;
+      const currentConnector = graph.find(g => g.name === current);
+      const { className, name: connectorName } = currentConnector;
+
+      const update = { ...currentConnector, isActive: true };
+      updateGraph({ update });
 
       const action = match.url.includes('/edit/') ? 'edit' : 'new';
       const baseUrl = `/pipelines/${action}/${className}/${pipelineName}`;
@@ -126,7 +129,7 @@ PipelineGraph.propTypes = {
   pipeline: PropTypes.shape({
     workerClusterName: PropTypes.string,
   }).isRequired,
-  resetGraph: PropTypes.func.isRequired,
+  updateGraph: PropTypes.func.isRequired,
   match: PropTypes.shape({
     params: PropTypes.object.isRequired,
   }).isRequired,

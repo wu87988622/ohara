@@ -17,11 +17,11 @@
 import styled from 'styled-components';
 import Typography from './Typography';
 
-const H3 = styled(Typography).attrs({
-  variant: 'h3',
+const H4 = styled(Typography).attrs({
+  variant: 'h4',
 })`
-  font-size: 20px;
+  font-size: 18px;
   margin: 15px 0;
 `;
 
-export default H3;
+export default H4;

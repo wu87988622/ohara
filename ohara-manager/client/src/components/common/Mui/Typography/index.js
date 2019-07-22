@@ -17,5 +17,6 @@
 import Typography from './Typography';
 import PageTitle from './PageTitle';
 import H3 from './H3';
+import H4 from './H4';
 
-export { PageTitle, Typography, H3 };
+export { PageTitle, Typography, H3, H4 };
