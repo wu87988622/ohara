@@ -180,29 +180,29 @@ private[configurator] object TopicRoute {
                                      executionContext: ExecutionContext): HookBeforeDelete = (key: DataKey) =>
     store
       .get[TopicInfo](key)
-      .flatMap(_.fold(Future.successful(key)) { topicInfo =>
+      .flatMap(_.fold(Future.unit) { topicInfo =>
         CollieUtils
           .topicAdmin(Some(topicInfo.brokerClusterName))
           .flatMap {
             case (_, client) =>
               client
                 .delete(topicInfo.name)
-                .map { _ =>
-                  try key
+                .flatMap { _ =>
+                  try Future.unit
                   finally Releasable.close(client)
                 }
-                .recover {
+                .recoverWith {
                   case e: Throwable =>
                     LOG.error(s"failed to remove topic:${topicInfo.name} from kafka", e)
-                    key
+                    Future.unit
                 }
           }
-          .recover {
+          .recoverWith {
             case e: NoSuchClusterException =>
               LOG.warn(
                 s"the cluster:${topicInfo.brokerClusterName} doesn't exist!!! just remove topic from configurator",
                 e)
-              key
+              Future.unit
           }
       })
 

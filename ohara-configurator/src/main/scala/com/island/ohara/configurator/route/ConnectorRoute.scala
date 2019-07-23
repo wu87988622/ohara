@@ -146,16 +146,15 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
           .flatMap {
             case (_, wkClient) =>
               wkClient.exist(connectorDescription.name).flatMap {
-                if (_)
-                  wkClient.delete(connectorDescription.name).map(_ => key)
-                else Future.successful(key)
+                if (_) wkClient.delete(connectorDescription.name)
+                else Future.unit
               }
           }
-          .recover {
+          .recoverWith {
             // Connector can't live without cluster...
-            case _: NoSuchClusterException => key
+            case _: NoSuchClusterException => Future.unit
           }
-      }.getOrElse(Future.successful(key)))
+      }.getOrElse(Future.unit))
 
   def apply(implicit store: DataStore,
             workerCollie: WorkerCollie,

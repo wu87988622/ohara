@@ -197,11 +197,11 @@ private[configurator] object StreamRoute {
                                      executionContext: ExecutionContext): HookBeforeDelete = (key: DataKey) =>
     // get the latest status first
     store.get[StreamAppDescription](key).flatMap {
-      _.fold(Future.successful(key)) { desc =>
+      _.fold(Future.unit) { desc =>
         updateState(desc).flatMap { data =>
           if (data.state.isEmpty) {
             // state is not exists, could remove this streamApp
-            Future.successful(key)
+            Future.unit
           } else Future.failed(new RuntimeException(s"You cannot delete a non-stopped streamApp :$key"))
         }
       }

@@ -129,9 +129,9 @@ object ZookeeperRoute {
                                      clusterCollie: ClusterCollie,
                                      executionContext: ExecutionContext): HookBeforeDelete = (key: DataKey) =>
     store.get[ZookeeperClusterInfo](key).flatMap {
-      _.fold(Future.successful(key)) { info =>
+      _.fold(Future.unit) { info =>
         updateState(info).flatMap { data =>
-          if (data.state.isEmpty) Future.successful(key)
+          if (data.state.isEmpty) Future.unit
           else Future.failed(new RuntimeException(s"You cannot delete a non-stopped zookeeper :$key"))
         }
       }

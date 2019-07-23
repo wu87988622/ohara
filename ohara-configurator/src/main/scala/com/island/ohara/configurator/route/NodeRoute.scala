@@ -85,15 +85,14 @@ object NodeRoute {
     store
       .get[Node](key)
       .flatMap(_.map {
-        updateServices(_).map { node =>
-          if (node.services.map(_.clusterNames.size).sum != 0) {
-            throw new IllegalStateException(
+        updateServices(_).flatMap { node =>
+          if (node.services.map(_.clusterNames.size).sum != 0)
+            Future.failed(new IllegalStateException(
               s"${node.name} is running ${node.services.filter(_.clusterNames.nonEmpty).map(s => s"${s.name}:${s.clusterNames.mkString(".")}").mkString(" ")}. " +
-                s"Please stop all services before deleting")
-          }
-          key
+                s"Please stop all services before deleting"))
+          else Future.unit
         }
-      }.getOrElse(Future.successful(key)))
+      }.getOrElse(Future.unit))
 
   def apply(implicit store: DataStore, clusterCollie: ClusterCollie, executionContext: ExecutionContext): server.Route =
     RouteUtils.basicRoute[Creation, Update, Node](

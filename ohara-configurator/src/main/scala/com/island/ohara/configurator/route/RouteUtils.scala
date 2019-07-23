@@ -78,7 +78,7 @@ private[route] object RouteUtils {
     * Noted: the returned (group, name) can differ from input. And the removed object is associated to the returned stuff.
     */
   trait HookBeforeDelete {
-    def apply(key: DataKey): Future[DataKey]
+    def apply(key: DataKey): Future[Unit]
   }
 
   /**
@@ -139,7 +139,7 @@ private[route] object RouteUtils {
       hookOfUpdate = hookOfUpdate,
       hookOfGet = (res: Res) => Future.successful(res),
       hookOfList = (res: Seq[Res]) => Future.successful(res),
-      hookBeforeDelete = Future.successful(_)
+      hookBeforeDelete = (_: DataKey) => Future.successful(Unit)
     )
 
   /**
@@ -189,7 +189,8 @@ private[route] object RouteUtils {
             name = rm.check(Data.NAME_KEY, JsString(name)).value
           )
           get(complete(store.value[Res](key).flatMap(hookOfGet(_)))) ~
-            delete(complete(hookBeforeDelete(key).flatMap(store.remove[Res](_).map(_ => StatusCodes.NoContent)))) ~
+            delete(complete(
+              hookBeforeDelete(key).map(_ => key).flatMap(store.remove[Res](_).map(_ => StatusCodes.NoContent)))) ~
             put(
               entity(as[Update])(
                 update =>

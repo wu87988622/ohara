@@ -188,7 +188,7 @@ private[configurator] object PipelineRoute {
           tags = update.tags.getOrElse(previous.map(_.tags).getOrElse(Map.empty))
         ))
 
-  private[this] def hookBeforeDelete: HookBeforeDelete = Future.successful(_)
+  private[this] def hookBeforeDelete: HookBeforeDelete = _ => Future.unit
 
   def apply(implicit store: DataStore,
             clusterCollie: ClusterCollie,
