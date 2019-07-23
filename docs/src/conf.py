@@ -59,6 +59,28 @@ ohara_version = ohara_props['version']
 ohara_branch = ohara_props['branch']
 
 
+# -- Ultimate Replace -----------
+# A Sphinx hack for string replacement in directive block
+# https://github.com/sphinx-doc/sphinx/issues/4054#issuecomment-329097229
+
+def ultimate_replace(app, docname, source):
+    result = source[0]
+    for key in app.config.ultimate_replacements:
+        result = result.replace(key, app.config.ultimate_replacements[key])
+    source[0] = result
+
+
+def setup(app):
+    app.add_config_value('ultimate_replacements', {}, True)
+    app.connect('source-read', ultimate_replace)
+
+
+ultimate_replacements = {
+    "$|VERSION|": ohara_version,
+    "$|BRANCH|": ohara_branch
+}
+
+
 # -- Project information -----------------------------------------------------
 
 project = u'Ohara'
@@ -225,7 +247,7 @@ epub_title = project
 # A list of files that should not be packed into the epub file.
 epub_exclude_files = ['search.html']
 
-# extlinks
+# -- extlinks ----------------------------------------------------------------
 #   https://www.sphinx-doc.org/en/master/usage/extensions/extlinks.html#module-sphinx.ext.extlinks
 
 extlinks = {
@@ -236,3 +258,9 @@ extlinks = {
     'k8s-issue': ('https://github.com/kubernetes/kubernetes/issues/%s', '#')
 }
 
+
+# -- rst_prolog --------------------------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-rst_prolog
+rst_prolog = """
+.. |branch| replace:: %s
+""" % (ohara_branch)

@@ -79,7 +79,7 @@ on above Ohara Configurator.
 
 Open your browser (we recommend `Google
 Chrome <https://www.google.com/intl/zh-TW/chrome/>`__) and link to
-http://localhost:5050.
+`http://localhost:5050`.
 
 --------------
 

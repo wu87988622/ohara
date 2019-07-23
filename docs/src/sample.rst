@@ -18,8 +18,53 @@ A sampe file for rst practice
 ==============================
 
 - Ohara version: |version|
+- Ohara branch: |branch|
 - Ohara issue link: :ohara-issue:`800`
 - Ohara source link: :ohara-source:`PageViewRegionExample <ohara-streams/src/test/java/com/island/ohara/streams/examples/PageViewRegionExample.java>`
 - Kafka issue: :kafka-issue:`8765`
 - Zookeeper issue: :zookeeper-issue:`2345`
 - Kubernetes issue: :k8s-issue:`2345`
+
+This document branch is: |branch|
+
+
+We can replace `$|VERSION|` in the code block:
+
+.. code:: groovy
+
+   repositories {
+        maven {
+            url "https://dl.bintray.com/oharastream/ohara"
+        }
+    }
+   implementation "com.island.ohara:ohara-common:$|VERSION|"
+   implementation "com.island.ohara:ohara-kafka:$|VERSION|"
+
+
+
+Source code link: `WordCountExample`_
+
+.. _WordCountExample: https://github.com/oharastream/ohara/blob/${BRANCH}/ohara-streams/src/test/java/com/island/ohara/streams/examples/WordCountExample.java
+
+
+.. note::
+  This is note
+
+.. danger::
+  This is danger
+
+.. tip::
+  This is tip
+
+.. warning::
+  This is warning
+
+.. option::
+  This is option
+
+.. seealso::
+  This is see also
+
+.. code-block:: console
+
+  pandoc --from=markdown --to=rst --output=README.rst README.md
