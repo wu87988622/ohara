@@ -217,6 +217,22 @@ class PipelineToolbar extends React.Component {
       }
     };
 
+    const getModalTestId = () => {
+      switch (modalName) {
+        case modalNames.ADD_STREAM:
+          return 'streamapp-modal';
+        case modalNames.ADD_TOPIC:
+          return 'topic-modal';
+        default: {
+          const _connectorType = connectorType.substring(
+            0,
+            connectorType.length - 1,
+          );
+          return `${_connectorType}-connector-modal`;
+        }
+      }
+    };
+
     return (
       <ToolbarWrapper>
         <Modal
@@ -234,47 +250,49 @@ class PipelineToolbar extends React.Component {
           showActions={true}
           isConfirmDisabled={isAddBtnDisabled}
         >
-          {modalName === modalNames.ADD_STREAM && (
-            <PipelineNewStream
-              {...this.props}
-              activeConnector={activeConnector}
-              updateAddBtnStatus={this.updateAddBtnStatus}
-              ref={this.modalChild}
-              handleClose={this.handleModalClose}
-            />
-          )}
+          <div data-testid={getModalTestId()}>
+            {modalName === modalNames.ADD_STREAM && (
+              <PipelineNewStream
+                {...this.props}
+                activeConnector={activeConnector}
+                updateAddBtnStatus={this.updateAddBtnStatus}
+                ref={this.modalChild}
+                handleClose={this.handleModalClose}
+              />
+            )}
 
-          {modalName === modalNames.ADD_TOPIC && (
-            <PipelineNewTopic
-              ref={this.modalChild}
-              updateGraph={updateGraph}
-              graph={graph}
-              topics={topics}
-              currentTopic={currentTopic}
-              updateTopic={updateCurrentTopic}
-              updateAddBtnStatus={this.updateAddBtnStatus}
-              workerClusterName={workerClusterName}
-            />
-          )}
+            {modalName === modalNames.ADD_TOPIC && (
+              <PipelineNewTopic
+                ref={this.modalChild}
+                updateGraph={updateGraph}
+                graph={graph}
+                topics={topics}
+                currentTopic={currentTopic}
+                updateTopic={updateCurrentTopic}
+                updateAddBtnStatus={this.updateAddBtnStatus}
+                workerClusterName={workerClusterName}
+              />
+            )}
 
-          {includes(
-            [modalNames.ADD_SOURCE_CONNECTOR, modalNames.ADD_SINK_CONNECTOR],
-            modalName,
-          ) && (
-            <PipelineNewConnector
-              ref={this.modalChild}
-              connectorType={connectorType}
-              connectors={this.state[connectorType]}
-              activeConnector={activeConnector}
-              onSelect={this.handleTrSelect}
-              updateGraph={updateGraph}
-              graph={graph}
-              updateAddBtnStatus={this.updateAddBtnStatus}
-              isLoading={isFetchWorkerWorking}
-              workerClusterName={workerClusterName}
-              handleClose={this.handleModalClose}
-            />
-          )}
+            {includes(
+              [modalNames.ADD_SOURCE_CONNECTOR, modalNames.ADD_SINK_CONNECTOR],
+              modalName,
+            ) && (
+              <PipelineNewConnector
+                ref={this.modalChild}
+                connectorType={connectorType}
+                connectors={this.state[connectorType]}
+                activeConnector={activeConnector}
+                onSelect={this.handleTrSelect}
+                updateGraph={updateGraph}
+                graph={graph}
+                updateAddBtnStatus={this.updateAddBtnStatus}
+                isLoading={isFetchWorkerWorking}
+                workerClusterName={workerClusterName}
+                handleClose={this.handleModalClose}
+              />
+            )}
+          </div>
         </Modal>
 
         <Icon

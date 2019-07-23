@@ -97,6 +97,7 @@ class PipelineNewConnector extends React.Component {
                   className={isActive}
                   key={name}
                   onClick={() => onSelect(name)}
+                  data-testid="connector-list"
                 >
                   <td>{name}</td>
                   <td>{version}</td>
