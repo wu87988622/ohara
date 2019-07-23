@@ -23,7 +23,7 @@ import com.island.ohara.common.data.Column
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json.{PropGroups, SettingDefinition, StringList}
 import spray.json.DefaultJsonProtocol._
-import spray.json.{DeserializationException, JsArray, JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json.{DeserializationException, JsArray, JsNull, JsObject, JsString, JsValue, RootJsonFormat}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
@@ -157,7 +157,7 @@ object ConnectorApi {
                                         lastModified: Long)
       extends Data {
 
-    // TODO: this will be resolved by https://github.com/oharastream/ohara/issues/1734 ... by chia
+    // TODO: the group should be equal to workerClusterName ... by chia
     override def group: String = Data.GROUP_DEFAULT
 
     /**
@@ -203,7 +203,19 @@ object ConnectorApi {
         ConnectorState.forName(json.convertTo[String])
     }
 
-  implicit val CONNECTOR_DESCRIPTION_FORMAT: RootJsonFormat[ConnectorDescription] = jsonFormat5(ConnectorDescription)
+  implicit val CONNECTOR_DESCRIPTION_FORMAT: RootJsonFormat[ConnectorDescription] =
+    new RootJsonFormat[ConnectorDescription] {
+      private[this] val format = jsonFormat5(ConnectorDescription)
+      override def read(json: JsValue): ConnectorDescription = format.read(json)
+
+      override def write(obj: ConnectorDescription): JsValue =
+        JsObject(
+          noJsNull(
+            format.write(obj).asJsObject.fields ++
+              // TODO: the group should be equal to workerClusterName ... by chia
+              Map(Data.GROUP_KEY -> JsString(Data.GROUP_DEFAULT),
+                  Data.NAME_KEY -> obj.settings.getOrElse(Data.NAME_KEY, JsNull))))
+    }
 
   /**
     * used to generate the payload and url for POST/PUT request.

@@ -165,7 +165,7 @@ class TestConnectorApi extends SmallTest with Matchers {
     val className = CommonUtils.randomString()
     val connectorCreationRequest = ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
                                                                                                | {
-                                                                                               | \"className\": \"$className\"
+                                                                                               | "className": "$className"
                                                                                                | }
      """.stripMargin.parseJson)
     an[NoSuchElementException] should be thrownBy connectorCreationRequest.className
@@ -177,12 +177,12 @@ class TestConnectorApi extends SmallTest with Matchers {
     val className = CommonUtils.randomString()
     val connectorDescription = ConnectorApi.CONNECTOR_DESCRIPTION_FORMAT.read(s"""
                                                                                       | {
-                                                                                      | \"id\": \"asdasdsad\",
-                                                                                      | \"lastModified\": 123,
-                                                                                      | \"settings\": {
-                                                                                      | \"className\": \"$className\"
+                                                                                      | "id": "asdasdsad",
+                                                                                      | "lastModified": 123,
+                                                                                      | "settings": {
+                                                                                      | "className": "$className"
                                                                                       | },
-                                                                                      | \"metrics\": {
+                                                                                      | "metrics": {
                                                                                       |   "meters":[]
                                                                                       | }
                                                                                       | }
@@ -194,7 +194,7 @@ class TestConnectorApi extends SmallTest with Matchers {
   def parsePropGroups(): Unit = {
     val creationRequest = ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
                                                                                       | {
-                                                                                      | \"columns\": [
+                                                                                      | "columns": [
                                                                                       |   {
                                                                                       |     "order": 1,
                                                                                       |     "name": "abc",
@@ -561,4 +561,21 @@ class TestConnectorApi extends SmallTest with Matchers {
                                                         |  {
                                                         |  }
                                                         |     """.stripMargin.parseJson).tags shouldBe Map.empty
+
+  @Test
+  def groupShouldAppearInResponse(): Unit = {
+    val name = CommonUtils.randomString()
+    val js = ConnectorApi.CONNECTOR_DESCRIPTION_FORMAT.write(
+      ConnectorDescription(
+        settings = Map(
+          Data.NAME_KEY -> JsString(name)
+        ),
+        state = None,
+        error = None,
+        metrics = Metrics(Seq.empty),
+        lastModified = CommonUtils.current()
+      ))
+    js.asJsObject.fields(Data.GROUP_KEY).convertTo[String] shouldBe Data.GROUP_DEFAULT
+    js.asJsObject.fields(Data.NAME_KEY).convertTo[String] shouldBe name
+  }
 }

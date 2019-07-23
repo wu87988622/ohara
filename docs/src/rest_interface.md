@@ -763,6 +763,7 @@ Apart from custom settings, common settings are required by all connectors. The 
 1. tags (**object**) — the extra description to this object
 
 The following information are updated by ohara.
+1. group (**string**) — the value of group is always "default" (and it will be replaced by workerClusterName...see https://github.com/oharastream/ohara/issues/1734)
 1. name (**string**) — connector's name
 1. lastModified (**long**) — the last time to update this connector
 1. state (**option(string)**) — the state of a started connector. If the connector is not started, you won't see this field
@@ -809,6 +810,7 @@ a connector with above incomplete settings will introduce a error.
 ```json
 {
   "lastModified": 1540967970407,
+  "group": "default",
   "name": "jdbc_name",
   "settings": {
     "connector.name": "jdbc_name",
@@ -839,6 +841,7 @@ a connector with above incomplete settings will introduce a error.
 ```json
 {
   "lastModified": 1540967970407,
+  "group": "default",
   "name": "jdbc_name",
   "settings": {
     "connector.name": "jdbc_name",
@@ -861,6 +864,7 @@ a connector with above incomplete settings will introduce a error.
 [
   {
     "lastModified": 1540967970407,
+    "group": "default",
     "name": "jdbc_name",
     "settings": {
       "connector.name": "jdbc_name",
@@ -898,6 +902,7 @@ Deleting the settings used by a running connector is not allowed. You should [st
 ```json
 {
   "lastModified": 1540967970407,
+  "group": "default",
   "name": "jdbc_name",
   "settings": {
     "connector.name": "jdbc_name",
@@ -1118,6 +1123,7 @@ to find the status of the [connector](#connector). That is to say, it is ok to a
   ],
   "objects": [
     {
+      "group": "default",
       "name": "topic0",
       "lastModified": 1554950034608,
       "metrics": {
@@ -1127,6 +1133,7 @@ to find the status of the [connector](#connector). That is to say, it is ok to a
       "tags": {}
     },
     {
+      "group": "default",
       "name": "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd",
       "lastModified": 1554950058696,
       "error": "Failed to get status and type of connector:81cb80a9-34a5-4e45-881a-cb87d4fbb5bd. This could be a temporary issue since our worker cluster is too busy to sync status of connector. abc doesn't exist",
@@ -1172,6 +1179,7 @@ example creates a pipeline with only a object and leave empty in **to** field.
   ],
   "objects": [
     {
+      "group": "default",
       "name": "topic0",
       "lastModified": 1554950034608,
       "metrics": {
@@ -1221,6 +1229,7 @@ example creates a pipeline with only a object and leave empty in **to** field.
   ],
   "objects": [
     {
+      "group": "default",
       "name": "topic0",
       "lastModified": 1554950034608,
       "metrics": {
@@ -1230,6 +1239,7 @@ example creates a pipeline with only a object and leave empty in **to** field.
       "tags": {}
     },
     {
+      "group": "default",
       "name": "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd",
       "lastModified": 1554950058696,
       "error": "Failed to get status and type of connector:81cb80a9-34a5-4e45-881a-cb87d4fbb5bd. This could be a temporary issue since our worker cluster is too busy to sync status of connector. abc doesn't exist",
@@ -1269,6 +1279,7 @@ use [GET](#get-a-pipeline) to fetch details of **single** pipeline.
     ],
     "objects": [
       {
+        "group": "default",
         "name": "topic0",
         "lastModified": 1554950034608,
         "metrics": {
@@ -1278,6 +1289,7 @@ use [GET](#get-a-pipeline) to fetch details of **single** pipeline.
         "tags": {}
       },
       {
+        "group": "default",
         "name": "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd",
         "lastModified": 1554950058696,
         "error": "Failed to get status and type of connector:81cb80a9-34a5-4e45-881a-cb87d4fbb5bd. This could be a temporary issue since our worker cluster is too busy to sync status of connector. abc doesn't exist",
@@ -1329,6 +1341,7 @@ Deleting a pipeline does not delete the objects related to the pipeline.
   ],
   "objects": [
     {
+      "group": "default",
       "name": "topic0",
       "lastModified": 1554950034608,
       "metrics": {
@@ -1338,6 +1351,7 @@ Deleting a pipeline does not delete the objects related to the pipeline.
       "tags": {}
     },
     {
+      "group": "default",
       "name": "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd",
       "lastModified": 1554950058696,
       "error": "Failed to get status and type of connector:81cb80a9-34a5-4e45-881a-cb87d4fbb5bd. This could be a temporary issue since our worker cluster is too busy to sync status of connector. abc doesn't exist",

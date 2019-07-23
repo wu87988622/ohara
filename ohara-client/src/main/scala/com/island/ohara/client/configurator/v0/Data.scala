@@ -47,8 +47,8 @@ object Data {
     * the group is useful to Ohara Manager. However, in simple case, the group is a bit noisy so we offer the default group to all objects when
     * input group is ignored.
     */
-  val GROUP_DEFAULT: String = SettingDefinition.CONNECTOR_GROUP_DEFINITION.defaultValue()
-  val GROUP_KEY: String = SettingDefinition.CONNECTOR_GROUP_DEFINITION.key()
+  val GROUP_DEFAULT: String = "default"
+  val GROUP_KEY: String = "group"
   val NAME_KEY: String = SettingDefinition.CONNECTOR_NAME_DEFINITION.key()
   val TAGS_KEY: String = SettingDefinition.TAGS_DEFINITION.key()
   val FORCE_KEY = "force"
