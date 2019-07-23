@@ -140,7 +140,8 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
               value = meter.count(),
               unit = s"${meter.eventType()} / ${meter.rateUnit().name()}",
               document = meter.catalog.name(),
-              startTime = meter.startTime()
+              queryTime = meter.queryTime(),
+              startTime = None
             )
           }.toList // convert to serializable collection
       }
@@ -152,7 +153,8 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
               value = counter.getValue,
               unit = counter.getUnit,
               document = counter.getDocument,
-              startTime = counter.getStartTime
+              queryTime = counter.getQueryTime,
+              startTime = Some(counter.getStartTime)
             )
           }.toList // convert to serializable collection
       }
@@ -164,7 +166,8 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
               value = counter.getValue,
               unit = counter.getUnit,
               document = counter.getDocument,
-              startTime = counter.getStartTime
+              queryTime = counter.getQueryTime,
+              startTime = Some(counter.getStartTime)
             )
           }.toList // convert to serializable collection
       }

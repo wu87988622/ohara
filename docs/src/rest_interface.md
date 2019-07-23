@@ -124,13 +124,13 @@ The following information are tagged by ohara.
 *POST /v0/topics*
 
 1. name (**string**) — topic name
-1. brokerClusterName (**optional(string)**) — the broker cluster hosting this topic
+1. brokerClusterName (**option(string)**) — the broker cluster hosting this topic
 (**If you don't specify the broker cluster in request, ohara will try to find a broker cluster for you.
 And it works only if there is only a broker cluster exists in ohara**)
-1. numberOfReplications (**optional(int)**) — the number of replications for this topic
+1. numberOfReplications (**option(int)**) — the number of replications for this topic
 (**it is illegal to input the number of replications which is larger than the number of broker nodes**)
-1. numberOfPartitions (**optional(int)**)— the number of partitions for this topic
-1. tags (**optional(array(string))**) — the extra description to this object
+1. numberOfPartitions (**option(int)**)— the number of partitions for this topic
+1. tags (**option(array(string))**) — the extra description to this object
 
 **Example Request**
 
@@ -765,14 +765,15 @@ Apart from custom settings, common settings are required by all connectors. The 
 The following information are updated by ohara.
 1. name (**string**) — connector's name
 1. lastModified (**long**) — the last time to update this connector
-1. state (**optional(string)**) — the state of a started connector. If the connector is not started, you won't see this field
-1. error (**optional(string)**) — the error message from a failed connector. If the connector is fine or un-started, you won't get this field.
+1. state (**option(string)**) — the state of a started connector. If the connector is not started, you won't see this field
+1. error (**option(string)**) — the error message from a failed connector. If the connector is fine or un-started, you won't get this field.
 1. [metrics](custom_connector.html#metrics) (**object**) — the metrics from a running connector
   - meters (**array(object)**) — the metrics in meter type
     - meters[i].value (**double**) — the number stored in meter
     - meters[i].unit (**string**) — unit for value
     - meters[i].document (**string**) — document of this meter
-    - meters[i].startTime (**long**) — the time of record generated in remote machine
+    - meters[i].queryTime (**long**) — the time of query metrics from remote machine
+    - meters[i].startTime (**option(long)**) — the time of record generated in remote machine
     
 The settings from request, BTW, is a individual item in response. Hence, you will observe the following response
 after you store the settings with connector.class.
@@ -936,6 +937,7 @@ This request is idempotent so it is safe to retry this command repeatedly.
         "value": 1234,
         "unit": "rows",
         "document": "number of processed rows",
+        "queryTime": 1563429505055,
         "startTime": 1563429590505
       }
     ]
@@ -991,6 +993,7 @@ This request is idempotent so it is safe to send this request repeatedly.
         "value": 1234,
         "unit": "rows",
         "document": "number of processed rows",
+        "queryTime": 15623429590505,
         "startTime": 15623429590505
       }
     ]
@@ -1022,6 +1025,7 @@ This request is idempotent so it is safe to retry this command repeatedly.
         "value": 1234,
         "unit": "rows",
         "document": "number of processed rows",
+        "queryTime": 1563429509054,
         "startTime": 1563429590505
       }
     ]
@@ -1065,15 +1069,16 @@ Following information are written by ohara.
    - objects[i].name (**string**) — object's name
    - objects[i].kind (**string**) — the type of this object. for instance, [topic](#topic), [connector](#connector), and [streamapp](#streamapp) 
    - objects[i].className (**string**) — object's implementation. Normally, it shows the full name of a java class
-   - objects[i].state (**optional(string)**) — the state of object. If the object can't have state (eg, [topic](#topic)), you won't see this field
-   - objects[i].error (**optional(string)**) — the error message of this object
+   - objects[i].state (**option(string)**) — the state of object. If the object can't have state (eg, [topic](#topic)), you won't see this field
+   - objects[i].error (**option(string)**) — the error message of this object
    - objects[i].lastModified (**long**) — the last time to update this object
    - [metrics](custom_connector.html#metrics) (**object**) — the metrics from this object. Not all objects in pipeline have metrics!
      - meters (**array(object)**) — the metrics in meter type
        - meters[i].value (**double**) — the number stored in meter
        - meters[i].unit (**string**) — unit for value
        - meters[i].document (**string**) — document of this meter
-       - meters[i].startTime (**long**) — the time of record generated in remote machine
+       - meters[i].queryTime (**long**) — the time of query metrics from remote machine
+       - meters[i].startTime (**option(long)**) — the time of record generated in remote machine
 ----------
 ### create a pipeline
 
@@ -2786,7 +2791,7 @@ hence, the returned JSON is in array type. The details of elements are shown bel
   - name (**string**) — the name of container
   - hostname (**string**) — hostname of container
   - size (**string**) — the disk size used by this container
-  - state (**optional(string)**) — the state of container
+  - state (**option(string)**) — the state of container
   - portMappings (**array(object)**) —  the exported ports of this container
     - portMappings[i].hostIp (**string**) — the network interface of container host
     - portMappings[i].portPairs (**object**) — the container port and host port
@@ -2877,7 +2882,8 @@ The following information of StreamApp are updated by ohara.
       - meters[i].value (**double**) — the number stored in meter
       - meters[i].unit (**string**) — unit for value
       - meters[i].document (**string**) — document of this meter
-      - meters[i].startTime (**long**) — the time of record generated in remote machine
+      - meters[i].queryTime (**long**) — the time of query metrics from remote machine
+      - meters[i].startTime (**option(long)**) — the time of record generated in remote machine
 1. exactlyOnce (**boolean**) — enable exactly once
 1. error (**option(string)**) — the error message from a failed streamApp. If the streamApp is fine or un-started, you won't get this field.
 1. lastModified (**long**) — last modified this jar time
@@ -2940,7 +2946,8 @@ Create the properties of a streamApp.
       - meters[i].value (**double**) — the number stored in meter
       - meters[i].unit (**string**) — unit for value
       - meters[i].document (**string**) — document of this meter
-      - meters[i].startTime (**long**) — the time of record generated in remote machine
+      - meters[i].queryTime (**long**) — the time of query metrics from remote machine
+      - meters[i].startTime (**option(long)**) — the time of record generated in remote machine
 1. exactlyOnce (**boolean**) — enable exactly once
 1. error (**option(string)**) — the error message from a failed streamApp. If the streamApp is fine or un-started, you won't get this field.
 1. lastModified (**long**) — last modified this jar time
@@ -2993,7 +3000,8 @@ Create the properties of a streamApp.
       - meters[i].value (**double**) — the number stored in meter
       - meters[i].unit (**string**) — unit for value
       - meters[i].document (**string**) — document of this meter
-      - meters[i].startTime (**long**) — the time of record generated in remote machine
+      - meters[i].queryTime (**long**) — the time of query metrics from remote machine
+      - meters[i].startTime (**option(long)**) — the time of record generated in remote machine
 1. exactlyOnce (**boolean**) — enable exactly once
 1. error (**option(string)**) — the error message from a failed streamApp. If the streamApp is fine or un-started, you won't get this field.
 1. lastModified (**long**) — last modified this jar time
@@ -3074,7 +3082,8 @@ Update the properties of a non-started streamApp.
       - meters[i].value (**double**) — the number stored in meter
       - meters[i].unit (**string**) — unit for value
       - meters[i].document (**string**) — document of this meter
-      - meters[i].startTime (**long**) — the time of record generated in remote machine
+      - meters[i].queryTime (**long**) — the time of query metrics from remote machine
+      - meters[i].startTime (**option(long)**) — the time of record generated in remote machine
 1. exactlyOnce (**boolean**) — enable exactly once
 1. error (**option(string)**) — the error message from a failed streamApp. If the streamApp is fine or un-started, you won't get this field.
 1. lastModified (**long**) — last modified this jar time

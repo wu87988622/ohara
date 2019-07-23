@@ -205,7 +205,7 @@ public interface BeanChannel extends Iterable<BeanObject> {
         ObjectName objectName,
         MBeanInfo beanInfo,
         Function<String, Object> valueGetter,
-        long startTime) {
+        long queryTime) {
       // used to filter the "illegal" attribute
       Object unknown = new Object();
       Map<String, Object> attributes =
@@ -228,9 +228,8 @@ public interface BeanChannel extends Iterable<BeanObject> {
           .domainName(objectName.getDomain())
           .properties(objectName.getKeyPropertyList())
           .attributes(attributes)
-          // if the metrics contain startTime (i.e., build from ohara metric API), we use startTime
-          // of bean object, else we use the time of creating the metrics object
-          .startTime((long) attributes.getOrDefault(CounterMBean.START_TIME_KEY, startTime))
+          // For all metrics, we will have a time of querying object
+          .queryTime(queryTime)
           .build();
     }
 
@@ -248,8 +247,8 @@ public interface BeanChannel extends Iterable<BeanObject> {
     private List<BeanObject> doBuild() {
       if (local) {
         MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-        // for each query, we should have same "startTime" for each metric
-        final long startTime = CommonUtils.current();
+        // for each query, we should have same "queryTime" for each metric
+        final long queryTime = CommonUtils.current();
         return server.queryMBeans(objectName(), null).stream()
             .map(
                 objectInstance -> {
@@ -269,7 +268,7 @@ public interface BeanChannel extends Iterable<BeanObject> {
                                 throw new IllegalArgumentException(e);
                               }
                             },
-                            startTime));
+                            queryTime));
                   } catch (Throwable e) {
                     return Optional.empty();
                   }
@@ -288,8 +287,8 @@ public interface BeanChannel extends Iterable<BeanObject> {
                         + "/jmxrmi"),
                 null)) {
           MBeanServerConnection connection = connector.getMBeanServerConnection();
-          // for each query, we should have same "startTime" for each metric
-          final long startTime = CommonUtils.current();
+          // for each query, we should have same "queryTime" for each metric
+          final long queryTime = CommonUtils.current();
           return connection.queryMBeans(objectName(), null).stream()
               .map(
                   objectInstance -> {
@@ -310,7 +309,7 @@ public interface BeanChannel extends Iterable<BeanObject> {
                                   throw new IllegalArgumentException(e);
                                 }
                               },
-                              startTime));
+                              queryTime));
                     } catch (Throwable e) {
                       return Optional.empty();
                     }

@@ -60,6 +60,7 @@ public interface CounterMBean {
         // NOTED: name is NOT a part of attribute!!!!
         .name(obj.properties().get(NAME_KEY))
         .startTime((long) obj.attributes().get(START_TIME_KEY))
+        .queryTime(obj.queryTime())
         .value((long) obj.attributes().get(VALUE_KEY))
         .document((String) obj.attributes().get(DOCUMENT_KEY))
         .unit((String) obj.attributes().get(UNIT_KEY))
@@ -87,6 +88,13 @@ public interface CounterMBean {
    * @return the start time of this counter
    */
   long getStartTime();
+
+  /**
+   * Get query time
+   *
+   * @return the time of querying metrics object
+   */
+  long getQueryTime();
 
   /**
    * NOTED: if you are going to change the method name, you have to rewrite the {@link

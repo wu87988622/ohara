@@ -66,8 +66,8 @@ class TestMetrics extends WithBrokerWorker with Matchers {
     CommonUtils.await(
       () => {
         val meters = result(topicApi.get(topic.name)).metrics.meters
-        // metrics should have startTime also
-        meters.nonEmpty && meters.head.startTime > 0
+        // metrics should have queryTime also
+        meters.nonEmpty && meters.head.queryTime > 0
       },
       java.time.Duration.ofSeconds(20)
     )
@@ -93,9 +93,14 @@ class TestMetrics extends WithBrokerWorker with Matchers {
 
     result(connectorApi.start(sink.name))
 
-    CommonUtils.await(() => {
-      result(connectorApi.get(sink.name)).metrics.meters.nonEmpty
-    }, java.time.Duration.ofSeconds(20))
+    CommonUtils.await(
+      () => {
+        val meters = result(connectorApi.get(sink.name)).metrics.meters
+        // custom metrics should have queryTime and startTime also
+        meters.nonEmpty && meters.head.queryTime > 0 && meters.head.startTime.isDefined
+      },
+      java.time.Duration.ofSeconds(20)
+    )
 
     result(connectorApi.stop(sink.name))
 

@@ -16,7 +16,6 @@
 
 package com.island.ohara.metrics;
 
-import com.island.ohara.common.annotations.Optional;
 import com.island.ohara.common.util.CommonUtils;
 import java.util.Collections;
 import java.util.HashMap;
@@ -39,13 +38,13 @@ public class BeanObject {
   private final String domainName;
   private final Map<String, String> properties;
   private final Map<String, Object> attributes;
-  private final long startTime;
+  private final long queryTime;
 
   private BeanObject(
       String domainName,
       Map<String, String> properties,
       Map<String, Object> attributes,
-      long startTime) {
+      long queryTime) {
     this.domainName = CommonUtils.requireNonEmpty(domainName);
     this.properties = new HashMap<>(CommonUtils.requireNonEmpty(properties));
     this.attributes = new HashMap<>(CommonUtils.requireNonEmpty(attributes));
@@ -59,7 +58,7 @@ public class BeanObject {
           CommonUtils.requireNonEmpty(k);
           Objects.requireNonNull(v);
         });
-    this.startTime = startTime;
+    this.queryTime = CommonUtils.requirePositiveLong(queryTime);
   }
 
   public String domainName() {
@@ -74,15 +73,15 @@ public class BeanObject {
     return Collections.unmodifiableMap(attributes);
   }
 
-  public long startTime() {
-    return startTime;
+  public long queryTime() {
+    return queryTime;
   }
 
   static class Builder implements com.island.ohara.common.pattern.Builder<BeanObject> {
     private String domainName;
     private Map<String, String> properties;
     private Map<String, Object> attributes;
-    private long startTime = CommonUtils.current();
+    private long queryTime = -1;
 
     private Builder() {}
 
@@ -111,16 +110,15 @@ public class BeanObject {
       return this;
     }
 
-    @Optional("default is current time")
-    public Builder startTime(long startTime) {
-      this.startTime = startTime;
+    public Builder queryTime(long queryTime) {
+      this.queryTime = queryTime;
       return this;
     }
 
     @Override
     public BeanObject build() {
       // in BeanObject constructor we do check for arguments.
-      return new BeanObject(domainName, properties, attributes, startTime);
+      return new BeanObject(domainName, properties, attributes, queryTime);
     }
   }
 }

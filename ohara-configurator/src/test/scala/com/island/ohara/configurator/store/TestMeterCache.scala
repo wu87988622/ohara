@@ -56,7 +56,8 @@ class TestMeterCache extends SmallTest with Matchers {
           value = 1.1,
           unit = "unit",
           document = "document",
-          startTime = CommonUtils.current()
+          queryTime = CommonUtils.current(),
+          startTime = Some(CommonUtils.current())
         )
       )
     )

@@ -340,4 +340,48 @@ public class TestCounter extends SmallTest {
             .build()
             .size());
   }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testZeroStartTime() {
+    Counter.builder()
+        .group("group")
+        .name("name")
+        .unit("unit")
+        .document("document")
+        .startTime(0)
+        .build();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testNegativeStartTime() {
+    Counter.builder()
+        .group("group")
+        .name("name")
+        .unit("unit")
+        .document("document")
+        .startTime(-999)
+        .build();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testZeroQueryTime() {
+    Counter.builder()
+        .group("group")
+        .name("name")
+        .unit("unit")
+        .document("document")
+        .queryTime(0)
+        .build();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testNegativeQueryTime() {
+    Counter.builder()
+        .group("group")
+        .name("name")
+        .unit("unit")
+        .document("document")
+        .queryTime(-999)
+        .build();
+  }
 }

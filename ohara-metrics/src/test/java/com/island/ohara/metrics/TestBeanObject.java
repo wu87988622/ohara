@@ -75,6 +75,7 @@ public class TestBeanObject extends SmallTest {
             .domainName(CommonUtils.randomString())
             .properties(Collections.singletonMap("a", "b"))
             .attributes(Collections.singletonMap("a", "b"))
+            .queryTime(CommonUtils.current())
             .build();
     obj.properties().remove(("a"));
   }
@@ -86,7 +87,28 @@ public class TestBeanObject extends SmallTest {
             .domainName(CommonUtils.randomString())
             .properties(Collections.singletonMap("a", "b"))
             .attributes(Collections.singletonMap("a", "b"))
+            .queryTime(CommonUtils.current())
             .build();
     obj.attributes().remove(("a"));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testZeroQueryNumber() {
+    BeanObject.builder()
+        .domainName(CommonUtils.randomString())
+        .properties(Collections.singletonMap("a", "b"))
+        .attributes(Collections.singletonMap("a", "b"))
+        .queryTime(0)
+        .build();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testNegativeQueryNumber() {
+    BeanObject.builder()
+        .domainName(CommonUtils.randomString())
+        .properties(Collections.singletonMap("a", "b"))
+        .attributes(Collections.singletonMap("a", "b"))
+        .queryTime(-999)
+        .build();
   }
 }

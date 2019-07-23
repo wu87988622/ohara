@@ -26,10 +26,11 @@ object MetricsApi {
     * @param value the value of metric record
     * @param unit the unit of metric record
     * @param document the document of metric record
+    * @param queryTime the time of query metrics object
     * @param startTime the time of record generated in remote machine
     */
-  final case class Meter(value: Double, unit: String, document: String, startTime: Long)
-  implicit val METER_JSON_FORMAT: RootJsonFormat[Meter] = jsonFormat4(Meter)
+  final case class Meter(value: Double, unit: String, document: String, queryTime: Long, startTime: Option[Long])
+  implicit val METER_JSON_FORMAT: RootJsonFormat[Meter] = jsonFormat5(Meter)
   final case class Metrics(meters: Seq[Meter])
   implicit val METRICS_JSON_FORMAT: RootJsonFormat[Metrics] = jsonFormat1(Metrics)
 }

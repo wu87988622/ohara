@@ -48,6 +48,7 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
   private final String unit;
   private final AtomicLong value = new AtomicLong(0);
   private final long startTime;
+  private final long queryTime;
 
   private Counter(
       boolean needClose,
@@ -57,6 +58,7 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
       String document,
       String unit,
       long startTime,
+      long queryTime,
       long value) {
     this.needClose = needClose;
     this.properties =
@@ -66,6 +68,7 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
     this.document = CommonUtils.requireNonEmpty(document);
     this.unit = CommonUtils.requireNonEmpty(unit);
     this.startTime = startTime;
+    this.queryTime = queryTime;
     this.value.set(value);
   }
 
@@ -171,6 +174,11 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
   }
 
   @Override
+  public long getQueryTime() {
+    return queryTime;
+  }
+
+  @Override
   public long getValue() {
     return value.get();
   }
@@ -220,6 +228,7 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
     private String document = "there is no document for this counter...";
     private long value = 0;
     private long startTime = CommonUtils.current();
+    private long queryTime = CommonUtils.current();
 
     private Builder() {}
 
@@ -253,6 +262,12 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
       return this;
     }
 
+    // Internal usage
+    protected Builder queryTime(long queryTime) {
+      this.queryTime = queryTime;
+      return this;
+    }
+
     @Optional("default is no document")
     public Builder document(String document) {
       this.document = CommonUtils.requireNonEmpty(document);
@@ -270,6 +285,8 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
       CommonUtils.requireNonEmpty(name);
       CommonUtils.requireNonEmpty(unit);
       CommonUtils.requireNonEmpty(document);
+      CommonUtils.requirePositiveLong(startTime);
+      CommonUtils.requirePositiveLong(queryTime);
     }
 
     /**
@@ -315,7 +332,8 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
       // This property is required since kafka worker may create multiple tasks on same worker node.
       // If we don't have this id, the multiple tasks will fail since the duplicate counters.
       properties.put(ID_KEY, CommonUtils.isEmpty(id) ? CommonUtils.randomString() : id);
-      return new Counter(needClose, properties, group, name, document, unit, startTime, value);
+      return new Counter(
+          needClose, properties, group, name, document, unit, startTime, queryTime, value);
     }
   }
 }

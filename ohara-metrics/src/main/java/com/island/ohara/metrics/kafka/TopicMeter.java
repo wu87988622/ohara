@@ -77,7 +77,7 @@ public class TopicMeter {
         (double) obj.attributes().getOrDefault(MEAN_RATE_KEY, 0),
         (double) obj.attributes().getOrDefault(ONE_MINUTE_RATE_KEY, 0),
         (TimeUnit) obj.attributes().getOrDefault(RATE_UNIT_KEY, TimeUnit.SECONDS),
-        obj.startTime());
+        obj.queryTime());
   }
 
   private final String topicName;
@@ -89,7 +89,7 @@ public class TopicMeter {
   private final double meanRate;
   private final double oneMinuteRate;
   private final TimeUnit rateUnit;
-  private final long startTime;
+  private final long queryTime;
 
   @VisibleForTesting
   TopicMeter(
@@ -102,7 +102,7 @@ public class TopicMeter {
       double meanRate,
       double oneMinuteRate,
       TimeUnit rateUnit,
-      long startTime) {
+      long queryTime) {
     this.topicName = CommonUtils.requireNonEmpty(topicName);
     this.catalog = Objects.requireNonNull(catalog);
     this.eventType = CommonUtils.requireNonEmpty(eventType);
@@ -112,7 +112,7 @@ public class TopicMeter {
     this.meanRate = meanRate;
     this.oneMinuteRate = oneMinuteRate;
     this.rateUnit = Objects.requireNonNull(rateUnit);
-    this.startTime = startTime;
+    this.queryTime = queryTime;
   }
 
   public String topicName() {
@@ -151,7 +151,7 @@ public class TopicMeter {
     return rateUnit;
   }
 
-  public long startTime() {
-    return startTime;
+  public long queryTime() {
+    return queryTime;
   }
 }
