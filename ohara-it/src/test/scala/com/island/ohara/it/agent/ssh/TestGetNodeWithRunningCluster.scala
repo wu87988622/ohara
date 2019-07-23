@@ -68,7 +68,12 @@ class TestGetNodeWithRunningCluster extends IntegrationTest with Matchers {
         .name(CommonUtils.randomString(10))
         .nodeNames(nodeCache.map(_.name).toSet)
         .create()
-        .flatMap(info => ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).start(info.name)))
+        .flatMap(info =>
+          ZookeeperApi.access
+            .hostname(configurator.hostname)
+            .port(configurator.port)
+            .start(info.name)
+            .flatMap(_ => ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).get(info.name))))
     try {
       assertCluster(() => result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).list()),
                     cluster.name)

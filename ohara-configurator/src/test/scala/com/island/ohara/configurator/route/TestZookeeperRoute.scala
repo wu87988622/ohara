@@ -68,7 +68,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     val zk = zks.head
 
     // this zookeeper cluster is used by broker cluster
-    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.delete(zk.name))
+    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.stop(zk.name))
 
     // remove all broker clusters
     result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list())
@@ -95,7 +95,8 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     val zk = result(
       zookeeperApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
     )
-    result(zookeeperApi.start(zk.name)).imageName shouldBe ZookeeperApi.IMAGE_NAME_DEFAULT
+    result(zookeeperApi.start(zk.name))
+    result(zookeeperApi.get(zk.name)).imageName shouldBe ZookeeperApi.IMAGE_NAME_DEFAULT
 
     // in fake mode only IMAGE_NAME_DEFAULT is supported
     val p = result(
@@ -221,6 +222,29 @@ class TestZookeeperRoute extends MediumTest with Matchers {
       zookeeperApi.request.name(CommonUtils.randomString(10)).electionPort(electionPort).nodeNames(nodeNames).create()
     )
     an[IllegalArgumentException] should be thrownBy result(zookeeperApi.start(zk2.name))
+  }
+
+  @Test
+  def testIdempotentStart(): Unit = {
+    val zk = result(
+      zookeeperApi.request.nodeNames(nodeNames).create()
+    )
+    result(zookeeperApi.start(zk.name))
+    val info1 = result(zookeeperApi.get(zk.name))
+    // duplicated start will return the current cluster info
+    result(zookeeperApi.start(zk.name))
+    val info2 = result(zookeeperApi.get(zk.name))
+    info1.name shouldBe info2.name
+    info1.imageName shouldBe info2.imageName
+    info1.nodeNames shouldBe info2.nodeNames
+    info1.state shouldBe info2.state
+    info1.error shouldBe info2.error
+    info1.electionPort shouldBe info2.electionPort
+
+    // we could graceful stop zookeeper
+    result(zookeeperApi.stop(zk.name))
+    // second stop request will cause exception
+    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.stop(zk.name))
   }
 
   @Test

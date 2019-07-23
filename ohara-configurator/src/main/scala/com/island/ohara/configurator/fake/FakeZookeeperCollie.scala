@@ -16,8 +16,7 @@
 
 package com.island.ohara.configurator.fake
 
-import com.island.ohara.agent.docker.ContainerState
-import com.island.ohara.agent.{NodeCollie, ZookeeperCollie}
+import com.island.ohara.agent.{ClusterState, NodeCollie, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
@@ -40,7 +39,8 @@ private[configurator] class FakeZookeeperCollie(node: NodeCollie)
             electionPort = electionPort,
             nodeNames = nodeNames,
             deadNodes = Set.empty,
-            state = Some(ContainerState.RUNNING.name),
+            // In fake mode, we need to assign a state in creation for "GET" method to act like real case
+            state = Some(ClusterState.RUNNING.name),
             error = None,
             tags = Map.empty,
             lastModified = CommonUtils.current()

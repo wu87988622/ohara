@@ -193,18 +193,7 @@ describe('Zookeepers', () => {
 
   it('startZookeeper', () => {
     cy.startZookeeper(zookeeperName).then(res => {
-      const {
-        data: { isSuccess, result },
-      } = res;
-      const { name, clientPort, electionPort, peerPort, nodeNames } = result;
-
-      expect(isSuccess).to.eq(true);
-
-      expect(name).to.be.a('string');
-      expect(nodeNames).to.be.a('array');
-      expect(clientPort).to.be.a('number');
-      expect(electionPort).to.be.a('number');
-      expect(peerPort).to.be.a('number');
+      expect(res.data.isSuccess).to.eq(true);
     });
 
     cy.fetchZookeeper(zookeeperName).then(res => {
@@ -221,18 +210,7 @@ describe('Zookeepers', () => {
 
   it('stopZookeeper', () => {
     cy.stopZookeeper(zookeeperName).then(res => {
-      const {
-        data: { isSuccess, result },
-      } = res;
-      const { name, clientPort, electionPort, peerPort, nodeNames } = result;
-
-      expect(isSuccess).to.eq(true);
-
-      expect(name).to.be.a('string');
-      expect(nodeNames).to.be.a('array');
-      expect(clientPort).to.be.a('number');
-      expect(electionPort).to.be.a('number');
-      expect(peerPort).to.be.a('number');
+      expect(res.data.isSuccess).to.eq(true);
     });
 
     cy.fetchZookeeper(zookeeperName).then(res => {

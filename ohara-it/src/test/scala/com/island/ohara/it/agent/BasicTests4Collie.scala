@@ -59,7 +59,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
                           electionPort: Int,
                           peerPort: Int,
                           nodeNames: Set[String]): Future[ZookeeperClusterInfo]
-  protected def zk_start(clusterName: String): Future[ZookeeperClusterInfo]
+  protected def zk_start(clusterName: String): Future[Unit]
   protected def zk_stop(clusterName: String): Future[Unit]
   protected def zk_cluster(clusterName: String): Future[ZookeeperClusterInfo] =
     zk_clusters().map(_.find(_.name == clusterName).get)
@@ -339,10 +339,9 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
                 case _: InvalidReplicationFactorException => false
                 case _: Throwable                         => throw e.getCause
               }
-            case e: OharaTimeoutException => {
+            case e: OharaTimeoutException =>
               log.error(s"[BROKER] create topic error ${e.getCause}")
               false
-            }
           }
         }
       )
@@ -633,7 +632,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
             electionPort = CommonUtils.availablePort(),
             peerPort = CommonUtils.availablePort(),
             nodeNames = nodeCache.map(_.name).toSet
-          ).flatMap(info => zk_start(info.name)))
+          ).flatMap(info => zk_start(info.name).flatMap(_ => zk_cluster(info.name))))
       }
       // add a bit wait to make sure the cluster is up
       TimeUnit.SECONDS.sleep(5)
@@ -646,7 +645,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         another.clientPort shouldBe c.clientPort
         another.imageName shouldBe c.imageName
         another.electionPort shouldBe c.electionPort
-        another.nodeNames.toSet shouldBe c.nodeNames.toSet
+        another.nodeNames shouldBe c.nodeNames
         result(zk_logs(c.name)).foreach { log =>
           // If we start a single-node zk cluster, zk print a "error" warning to us to say that you are using a single-node,
           // and we won't see the connection exception since there is only a node.
@@ -679,7 +678,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
             electionPort = CommonUtils.availablePort(),
             peerPort = CommonUtils.availablePort(),
             nodeNames = Set(nodeCache.head.name)
-          ).flatMap(info => zk_start(info.name)))
+          ).flatMap(info => zk_start(info.name).flatMap(_ => zk_cluster(info.name))))
       }
 
       assertClusters(() => result(zk_clusters()), zks.map(_.name))
@@ -711,7 +710,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       }*/
     } finally if (cleanup) {
       bkNames.foreach { name =>
-        log.info(s"[Broker] Remove broker name is ${name}")
+        log.info(s"[Broker] Remove broker name is $name")
         try result(bk_delete(name))
         catch {
           case _: Throwable =>

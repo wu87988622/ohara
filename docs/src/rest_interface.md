@@ -1682,20 +1682,11 @@ This API could fetch all information of a zookeeper (include state)
 
 **Example Response**
 
-```json
-{
-  "name": "zk00",
-  "electionPort": 12347,
-  "imageName": "oharastream/zookeeper:0.7.0-SNAPSHOT",
-  "clientPort": 12345,
-  "peerPort": 12346,
-  "nodeNames": [
-    "node00"
-  ],
-  "deadNodes": [],
-  "tags": {}
-}
 ```
+202 Accepted
+```
+
+> You should use [Get zookeeper cluster](#get-a-zookeeper-cluster) to fetch up-to-date status
 
 ----------
 ### stop a zookeeper cluster
@@ -1711,20 +1702,11 @@ It is disallowed to stop a zookeeper cluster used by a running [broker cluster](
 
 **Example Response**
 
-```json
-{
-  "name": "zk00",
-  "electionPort": 12347,
-  "imageName": "oharastream/zookeeper:0.7.0-SNAPSHOT",
-  "clientPort": 12345,
-  "peerPort": 12346,
-  "nodeNames": [
-    "node00"
-  ],
-  "deadNodes": [],
-  "tags": {}
-}
 ```
+202 Accepted
+```
+
+> You should use [Get zookeeper cluster](#get-a-zookeeper-cluster) to fetch up-to-date status
 
 ----------
 ### delete a node from a running zookeeper cluster

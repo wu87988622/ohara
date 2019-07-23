@@ -16,7 +16,6 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -62,7 +61,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
     // start zookeeper
     result(
       ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).start(zkClusterName)
-    ).state shouldBe Some(ContainerState.RUNNING.name)
+    )
   }
 
   @Test

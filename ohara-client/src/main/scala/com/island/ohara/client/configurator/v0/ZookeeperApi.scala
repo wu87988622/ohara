@@ -20,7 +20,7 @@ import java.util.Objects
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsValue, RootJsonFormat}
+import spray.json.JsValue
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -111,8 +111,8 @@ object ZookeeperApi {
   /**
     * exposed to configurator
     */
-  private[ohara] implicit val ZOOKEEPER_CLUSTER_INFO_JSON_FORMAT: RootJsonFormat[ZookeeperClusterInfo] = jsonFormat11(
-    ZookeeperClusterInfo)
+  private[ohara] implicit val ZOOKEEPER_CLUSTER_INFO_JSON_FORMAT: OharaJsonFormat[ZookeeperClusterInfo] =
+    JsonRefiner[ZookeeperClusterInfo].format(jsonFormat11(ZookeeperClusterInfo)).refine
 
   /**
     * used to generate the payload and url for POST/PUT request.
@@ -170,30 +170,30 @@ object ZookeeperApi {
       *
       * @param name object name
       * @param executionContext execution context
-      * @return information of zookeeper (status "RUNNING" if success, "DEAD" if fail)
+      * @return none
       */
-    def start(name: String)(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
-      exec.put[ZookeeperClusterInfo, ErrorApi.Error](actionUrl(name, START_COMMAND))
+    def start(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
+      exec.put[ErrorApi.Error](actionUrl(name, START_COMMAND))
 
     /**
       * stop a zookeeper gracefully.
       *
       * @param name object name
       * @param executionContext execution context
-      * @return information of zookeeper (status None if stop successful, or throw exception)
+      * @return none
       */
-    def stop(name: String)(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
-      exec.put[ZookeeperClusterInfo, ErrorApi.Error](actionUrl(name, STOP_COMMAND))
+    def stop(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
+      exec.put[ErrorApi.Error](actionUrl(name, STOP_COMMAND))
 
     /**
       * force to stop a zookeeper. This action may cause some data loss if cluster was still running.
       *
       * @param name object name
       * @param executionContext execution context
-      * @return information of zookeeper (status None if stop successful, or throw exception)
+      * @return none
       */
-    def forceStop(name: String)(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
-      exec.put[ZookeeperClusterInfo, ErrorApi.Error](s"${actionUrl(name, STOP_COMMAND)}?${Data.FORCE_KEY}=true")
+    def forceStop(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
+      exec.put[ErrorApi.Error](s"${actionUrl(name, STOP_COMMAND)}?${Data.FORCE_KEY}=true")
 
     def request: Request = new Request {
       private[this] var name: String = CommonUtils.randomString(LIMIT_OF_NAME_LENGTH)

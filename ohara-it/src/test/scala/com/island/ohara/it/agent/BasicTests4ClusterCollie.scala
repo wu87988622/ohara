@@ -52,9 +52,9 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
       .nodeNames(nodeNames)
       .create()
 
-  override protected def zk_start(clusterName: String): Future[ZookeeperApi.ZookeeperClusterInfo] =
+  override protected def zk_start(clusterName: String): Future[Unit] =
     // We don't need to start a cluster in collie since we already start a cluster by create method
-    zkCollie.cluster(clusterName).map(_._1)
+    Future.successful(Unit)
 
   override protected def zk_stop(clusterName: String): Future[Unit] =
     zkCollie.forceRemove(clusterName).map(_ => Unit)

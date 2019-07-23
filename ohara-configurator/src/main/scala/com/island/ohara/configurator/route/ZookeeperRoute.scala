@@ -153,6 +153,7 @@ object ZookeeperRoute {
       RouteUtils.appendRouteOfClusterAction(
         collie = clusterCollie.zookeeperCollie,
         root = ZOOKEEPER_PREFIX_PATH,
+        enableGroup = false,
         hookOfStart = (_, req: ZookeeperClusterInfo) =>
           clusterCollie.zookeeperCollie.creator
             .clusterName(req.name)

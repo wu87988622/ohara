@@ -20,7 +20,6 @@ import java.io.File
 import java.util.Objects
 
 import com.island.ohara.agent._
-import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.NodeApi
@@ -210,7 +209,8 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
             peerPort = -1,
             nodeNames = (0 to 2).map(_ => CommonUtils.randomString(5)).toSet,
             deadNodes = Set.empty,
-            state = Some(ContainerState.RUNNING.name),
+            // In fake mode, we need to assign a state in creation for "GET" method to act like real case
+            state = Some(ClusterState.RUNNING.name),
             error = None,
             tags = Map.empty,
             lastModified = CommonUtils.current()

@@ -20,7 +20,6 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent.Collie.ClusterCreator
-import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.agent.{ClusterCollie, Collie, NodeCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
@@ -214,63 +213,74 @@ private[route] object RouteUtils {
     */
   def appendRouteOfClusterAction[Req <: ClusterInfo with Data: ClassTag, Creator <: ClusterCreator[Req]](
     root: String,
+    enableGroup: Boolean,
     collie: Collie[Req, Creator],
     hookOfStart: (Seq[ClusterInfo], Req) => Future[Req],
     hookOfStop: String => Future[String])(implicit store: DataStore,
                                           clusterCollie: ClusterCollie,
                                           nodeCollie: NodeCollie,
-                                          rm: RootJsonFormat[Req],
+                                          rm: OharaJsonFormat[Req],
                                           executionContext: ExecutionContext): server.Route =
     pathPrefix(root / Segment) { clusterName =>
-      path(Segment) {
-        case START_COMMAND =>
-          put {
-            complete(store
-              .value[Req](clusterName)
-              .flatMap(req =>
-                if (req.nodeNames.isEmpty) throw new IllegalArgumentException(s"You are too poor to buy any server?")
-                else basicCheckOfCluster2(nodeCollie, clusterCollie, req).map(clusters => hookOfStart(clusters, req))))
+      path(Segment) { remainder =>
+        parameter(Data.GROUP_KEY ?) { groupOption =>
+          val group = if (enableGroup) groupOption.getOrElse(Data.GROUP_DEFAULT) else Data.GROUP_DEFAULT
+          val key = DataKey(
+            group = rm.check(Data.GROUP_KEY, JsString(group)).value,
+            name = rm.check(Data.NAME_KEY, JsString(clusterName)).value
+          )
+          remainder match {
+            case START_COMMAND =>
+              put {
+                complete(store.value[Req](key).flatMap { req =>
+                  collie.exist(req.name).flatMap {
+                    if (_) {
+                      // this cluster already exists, return OK
+                      Future.successful(StatusCodes.Accepted)
+                    } else {
+                      basicCheckOfCluster2(nodeCollie, clusterCollie, req)
+                        .flatMap(clusters => hookOfStart(clusters, req))
+                        .map(_ => StatusCodes.Accepted)
+                    }
+                  }
+                })
+              }
+            case STOP_COMMAND =>
+              put {
+                parameter(Data.FORCE_KEY ?)(
+                  force =>
+                    complete(
+                      collie
+                        .cluster(clusterName)
+                        .flatMap(
+                          _ =>
+                            hookOfStop(clusterName)
+                              .flatMap(_ =>
+                                if (force.exists(_.toLowerCase == "true"))
+                                  collie.forceRemove(clusterName)
+                                else collie.remove(clusterName))
+                              .map(_ => StatusCodes.Accepted)
+                        )
+                  )
+                )
+              }
+            case nodeName =>
+              put {
+                complete(collie.cluster(clusterName).map(_._1).flatMap { cluster =>
+                  if (cluster.nodeNames.contains(nodeName)) Future.successful(cluster)
+                  else collie.addNode(clusterName, nodeName)
+                })
+              } ~ delete {
+                complete(collie.clusters().map(_.keys.toSeq).flatMap { clusters =>
+                  if (clusters.exists(
+                        cluster => cluster.name == clusterName && cluster.nodeNames.contains(nodeName)
+                      ))
+                    collie.removeNode(clusterName, nodeName).map(_ => StatusCodes.NoContent)
+                  else Future.successful(StatusCodes.NoContent)
+                })
+              }
           }
-        case STOP_COMMAND =>
-          put {
-            parameter(Data.FORCE_KEY ?)(
-              force =>
-                complete(
-                  collie
-                    .exist(clusterName)
-                    .flatMap(
-                      if (_)
-                        hookOfStop(clusterName)
-                        // we don't use boolean convert since we don't want to see the convert exception
-                          .flatMap(_ =>
-                            if (force.exists(_.toLowerCase == "true")) collie.forceRemove(clusterName)
-                            else collie.remove(clusterName))
-                          .map(_ => None -> None)
-                          .recover {
-                            case e: Throwable =>
-                              Some(ContainerState.DEAD.name) -> Some(e.getMessage)
-                          }
-                          .flatMap {
-                            case (state, error) =>
-                              store.addIfPresent[Req](clusterName,
-                                                      (data: Req) => data.clone2(state, error).asInstanceOf[Req])
-                          } else
-                        store.addIfPresent[Req](clusterName, (data: Req) => data.clone2(None, None).asInstanceOf[Req])
-                    )))
-          }
-        case nodeName =>
-          put {
-            complete(collie.cluster(clusterName).map(_._1).flatMap { cluster =>
-              if (cluster.nodeNames.contains(nodeName)) Future.successful(cluster)
-              else collie.addNode(clusterName, nodeName)
-            })
-          } ~ delete {
-            complete(collie.clusters().map(_.keys.toSeq).flatMap { clusters =>
-              if (clusters.exists(cluster => cluster.name == clusterName && cluster.nodeNames.contains(nodeName)))
-                collie.removeNode(clusterName, nodeName).map(_ => StatusCodes.NoContent)
-              else Future.successful(StatusCodes.NoContent)
-            })
-          }
+        }
       }
     }
 

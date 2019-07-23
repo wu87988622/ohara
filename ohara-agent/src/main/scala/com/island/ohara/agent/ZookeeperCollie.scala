@@ -185,9 +185,9 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo, ZookeeperCollie.Clust
         state = {
           // we only have two possible results here:
           // 1. only assume cluster is "running" if at least one container is running
-          // 2. the cluster state is always "dead" if all containers were not running
-          val alive = containers.exists(_.state == ContainerState.RUNNING.name)
-          if (alive) Some(ContainerState.RUNNING.name) else Some(ContainerState.DEAD.name)
+          // 2. the cluster state is always "failed" if all containers were not running
+          val alive = containers.exists(_.state == ClusterState.RUNNING.name)
+          if (alive) Some(ContainerState.RUNNING.name) else Some(ClusterState.FAILED.name)
         },
         // TODO how could we fetch the error?...by Sam
         error = None,
