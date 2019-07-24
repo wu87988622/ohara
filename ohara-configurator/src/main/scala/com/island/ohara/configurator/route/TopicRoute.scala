@@ -65,16 +65,16 @@ private[configurator] object TopicRoute {
       .numberOfPartitions(numberOfPartitions)
       .numberOfReplications(numberOfReplications)
       .create()
-      .map { info =>
+      .map { _ =>
         try TopicInfo(
-          name,
-          info.numberOfPartitions,
-          info.numberOfReplications,
-          clusterName,
+          name = name,
+          numberOfPartitions = numberOfPartitions,
+          numberOfReplications = numberOfReplications,
+          brokerClusterName = clusterName,
           // the topic is just created so we don't fetch the "empty" metrics actually.
           metrics = Metrics(Seq.empty),
-          CommonUtils.current(),
-          tags
+          lastModified = CommonUtils.current(),
+          tags = tags
         )
         finally client.close()
       }
@@ -142,14 +142,14 @@ private[configurator] object TopicRoute {
                   Releasable.close(client)
                   Future.failed(new IllegalArgumentException("Non-support to change the number from replications"))
                 } else if (update.numberOfPartitions.exists(_ > topicFromKafka.numberOfPartitions)) {
-                  client.changePartitions(key.name, update.numberOfPartitions.get).map { info =>
+                  client.changePartitions(key.name, update.numberOfPartitions.get).map { _ =>
                     try TopicInfo(
-                      info.name,
-                      info.numberOfPartitions,
-                      info.numberOfReplications,
-                      cluster.name,
+                      name = key.name,
+                      numberOfPartitions = update.numberOfPartitions.get,
+                      numberOfReplications = topicFromKafka.numberOfReplications,
+                      brokerClusterName = cluster.name,
                       metrics = Metrics(Seq.empty),
-                      CommonUtils.current(),
+                      lastModified = CommonUtils.current(),
                       // the topic exists so previous must be defined
                       tags = update.tags.getOrElse(previous.get.tags)
                     )

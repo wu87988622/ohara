@@ -25,7 +25,7 @@ import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.admin.{AdminClient, NewPartitions, NewTopic, TopicDescription}
-import org.apache.kafka.common.config.TopicConfig
+import org.apache.kafka.common.config.{ConfigResource, TopicConfig}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{Future, Promise}
@@ -43,7 +43,7 @@ trait TopicAdmin extends Releasable {
     * @param numberOfPartitions the partitions that given topic should have
     * @return topic information
     */
-  def changePartitions(name: String, numberOfPartitions: Int): Future[TopicAdmin.TopicInfo]
+  def changePartitions(name: String, numberOfPartitions: Int): Future[Unit]
 
   /**
     * list all topics
@@ -103,35 +103,30 @@ object TopicAdmin {
     override def close(): Unit = if (_closed.compareAndSet(false, true)) Releasable.close(admin)
 
     override def creator: Creator =
-      (name: String, numberOfPartitions: Int, numberOfReplications: Short, cleanupPolicy: CleanupPolicy) => {
-        val promise: Promise[TopicInfo] = Promise[TopicInfo]
+      (name: String, numberOfPartitions: Int, numberOfReplications: Short, configs: Map[String, String]) => {
+        val promise = Promise[Unit]
         unwrap(
           () =>
             admin
-              .createTopics(
-                util.Collections.singletonList(new NewTopic(name, numberOfPartitions, numberOfReplications).configs(Map(
-                  TopicConfig.CLEANUP_POLICY_CONFIG -> cleanupPolicy.name
-                ).asJava)))
+              .createTopics(util.Collections.singletonList(
+                new NewTopic(name, numberOfPartitions, numberOfReplications).configs(configs.asJava)))
               .values()
               .get(name)
               .whenComplete((_, exception) => {
                 if (exception == null)
-                  promise.success(
-                    TopicInfo(
-                      name = name,
-                      numberOfPartitions = numberOfPartitions,
-                      numberOfReplications = numberOfReplications
-                    ))
+                  promise.success(Unit)
                 else promise.failure(exception)
               }))
         promise.future
       }
 
-    private[this] def toTopicInfo(desc: TopicDescription): TopicInfo = TopicInfo(
-      name = desc.name(),
-      numberOfPartitions = desc.partitions().size(),
-      numberOfReplications = desc.partitions().get(0).replicas().size().asInstanceOf[Short]
-    )
+    private[this] def toTopicInfo(topicDescription: TopicDescription, configs: Map[String, String]): TopicInfo =
+      TopicInfo(
+        name = topicDescription.name(),
+        numberOfPartitions = topicDescription.partitions().size(),
+        numberOfReplications = topicDescription.partitions().get(0).replicas().size().asInstanceOf[Short],
+        configs = configs
+      )
 
     override def topics(): Future[Seq[TopicInfo]] = {
       val promise = Promise[Seq[TopicInfo]]
@@ -141,46 +136,53 @@ object TopicAdmin {
             .listTopics()
             .names()
             .whenComplete((topicNames, exception) => {
-              if (exception == null) {
+              if (exception == null)
                 admin
                   .describeTopics(topicNames)
                   .all()
-                  .whenComplete((topics, exception) => {
-                    if (exception == null) promise.success(topics.values().asScala.map(toTopicInfo).toSeq)
+                  .whenComplete((topicDescriptions, exception) => {
+                    if (exception == null)
+                      admin
+                        .describeConfigs(
+                          topicDescriptions
+                            .keySet()
+                            .asScala
+                            .map(name => new ConfigResource(ConfigResource.Type.TOPIC, name))
+                            .asJava)
+                        .all()
+                        .whenComplete((topicsAndConfigs, exception) => {
+                          if (exception == null)
+                            promise.success(
+                              topicDescriptions
+                                .values()
+                                .asScala
+                                .map { topicDescription =>
+                                  val configs = topicsAndConfigs.asScala
+                                    .find(_._1.name() == topicDescription.name())
+                                    .map(_._2.entries().asScala.map(e => e.name() -> e.value()).toMap)
+                                    .getOrElse(Map.empty)
+                                  toTopicInfo(topicDescription, configs)
+                                }
+                                .toSeq)
+                          else promise.failure(exception)
+                        })
                     else promise.failure(exception)
                   })
-              } else promise.failure(exception)
+              else promise.failure(exception)
             }))
       promise.future
     }
 
-    override def changePartitions(name: String, numberOfPartitions: Int): Future[TopicInfo] = {
-      val promise = Promise[TopicInfo]
+    override def changePartitions(name: String, numberOfPartitions: Int): Future[Unit] = {
+      val promise = Promise[Unit]
       unwrap(
         () =>
           admin
-            .describeTopics(util.Collections.singletonList(name))
+            .createPartitions(Collections.singletonMap(name, NewPartitions.increaseTo(numberOfPartitions)))
             .all()
-            .whenComplete((topics, exception) => {
-              if (exception == null) {
-                val topicOption = topics.values().asScala.find(_.name() == name)
-                if (topicOption.isDefined) {
-                  val topicInfo = toTopicInfo(topicOption.get)
-                  if (topicInfo.numberOfPartitions > numberOfPartitions)
-                    promise.failure(new IllegalArgumentException("Reducing the number from partitions is illegal"))
-                  else if (topicInfo.numberOfPartitions == numberOfPartitions) promise.success(topicInfo)
-                  else
-                    unwrap(() =>
-                      admin
-                        .createPartitions(Collections.singletonMap(name, NewPartitions.increaseTo(numberOfPartitions)))
-                        .all()
-                        .whenComplete((_, exception) => {
-                          if (exception == null)
-                            promise.success(topicInfo.copy(numberOfPartitions = numberOfPartitions))
-                          else promise.failure(exception)
-                        }))
-                } else promise.failure(new NoSuchElementException(s"$name doesn't exist"))
-              } else promise.failure(exception)
+            .whenComplete((_, exception) => {
+              if (exception == null) promise.success(Unit)
+              else promise.failure(exception)
             }))
       promise.future
     }
@@ -210,14 +212,18 @@ object TopicAdmin {
     }
   }
 
-  final case class TopicInfo(name: String, numberOfPartitions: Int, numberOfReplications: Short)
+  final case class TopicInfo(name: String,
+                             numberOfPartitions: Int,
+                             numberOfReplications: Short,
+                             configs: Map[String, String])
 
-  trait Creator extends com.island.ohara.common.pattern.Creator[Future[TopicAdmin.TopicInfo]] {
+  trait Creator extends com.island.ohara.common.pattern.Creator[Future[Unit]] {
     private[this] var name: String = _
     private[this] var numberOfPartitions: Int = 1
     private[this] var numberOfReplications: Short = 1
-    private[this] var cleanupPolicy: CleanupPolicy = CleanupPolicy.DELETE
-
+    private[this] var configs: Map[String, String] = Map(
+      TopicConfig.CLEANUP_POLICY_CONFIG -> CleanupPolicy.DELETE.name
+    )
     def name(name: String): Creator.this.type = {
       this.name = Objects.requireNonNull(name)
       this
@@ -237,20 +243,30 @@ object TopicAdmin {
 
     @Optional("default is CleanupPolicy.DELETE")
     def cleanupPolicy(cleanupPolicy: CleanupPolicy): Creator = {
-      this.cleanupPolicy = Objects.requireNonNull(cleanupPolicy)
+      this.configs ++= Map(TopicConfig.CLEANUP_POLICY_CONFIG -> cleanupPolicy.name)
       this
     }
 
-    override def create(): Future[TopicAdmin.TopicInfo] = doCreate(
+    def config(key: String, value: String): Creator = {
+      this.configs ++= Map(CommonUtils.requireNonEmpty(key) -> CommonUtils.requireNonEmpty(value))
+      this
+    }
+
+    def configs(configs: Map[String, String]): Creator = {
+      this.configs ++= Objects.requireNonNull(configs)
+      this
+    }
+
+    override def create(): Future[Unit] = doCreate(
       name = Objects.requireNonNull(name),
       numberOfPartitions = CommonUtils.requirePositiveInt(numberOfPartitions),
       numberOfReplications = CommonUtils.requirePositiveShort(numberOfReplications),
-      cleanupPolicy = Objects.requireNonNull(cleanupPolicy)
+      configs = Objects.requireNonNull(configs)
     )
 
     protected def doCreate(name: String,
                            numberOfPartitions: Int,
                            numberOfReplications: Short,
-                           cleanupPolicy: CleanupPolicy): Future[TopicAdmin.TopicInfo]
+                           configs: Map[String, String]): Future[Unit]
   }
 }

@@ -30,34 +30,34 @@ private[configurator] class FakeTopicAdmin extends TopicAdmin {
 
   private[this] val cachedTopics = new ConcurrentHashMap[String, TopicInfo]()
 
-  override def changePartitions(name: String, numberOfPartitions: Int): Future[TopicInfo] =
-    Option(cachedTopics.get(name))
-      .map(
-        previous =>
-          Future.successful(
-            TopicInfo(
-              name,
-              numberOfPartitions,
-              previous.numberOfReplications
-            )))
-      .getOrElse(Future.failed(new NoSuchElementException(
-        s"the topic:$name doesn't exist. actual:${cachedTopics.keys().asScala.mkString(",")}")))
+  override def changePartitions(name: String, numberOfPartitions: Int): Future[Unit] = {
+    val previous = cachedTopics.get(name)
+    if (previous == null)
+      Future.failed(
+        new NoSuchElementException(
+          s"the topic:$name doesn't exist. actual:${cachedTopics.keys().asScala.mkString(",")}"))
+    else {
+      cachedTopics.put(name, previous.copy(numberOfPartitions = numberOfPartitions))
+      Future.unit
+    }
+  }
 
   override def topics(): Future[Seq[TopicAdmin.TopicInfo]] =
     Future.successful {
       cachedTopics.values().asScala.toSeq
     }
 
-  override def creator: TopicAdmin.Creator = (name, numberOfPartitions, numberOfReplications, _) =>
+  override def creator: TopicAdmin.Creator = (name, numberOfPartitions, numberOfReplications, configs) =>
     if (cachedTopics.contains(name)) Future.failed(new IllegalArgumentException(s"$name already exists!"))
     else {
-      cachedTopics.put(name, TopicInfo(name, numberOfPartitions, numberOfReplications))
-      Future.successful(
-        TopicInfo(
-          name,
-          numberOfPartitions,
-          numberOfReplications
-        ))
+      val topicInfo = TopicInfo(
+        name = name,
+        numberOfPartitions = numberOfPartitions,
+        numberOfReplications = numberOfReplications,
+        configs
+      )
+      cachedTopics.put(name, topicInfo)
+      Future.unit
   }
   private[this] var _closed = false
   override def close(): Unit = {

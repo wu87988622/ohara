@@ -16,29 +16,37 @@
 
 package com.island.ohara.client.kafka
 
+import com.island.ohara.client.kafka.TopicAdmin.TopicInfo
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.testing.With3Brokers
-import org.apache.kafka.common.errors.UnknownTopicOrPartitionException
+import org.apache.kafka.common.config.TopicConfig
+import org.apache.kafka.common.errors.{InvalidPartitionsException, UnknownTopicOrPartitionException}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
-import scala.concurrent.Await
-import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestTopicAdmin extends With3Brokers with Matchers {
 
   private[this] val topicAdmin = TopicAdmin(testUtil().brokersConnProps())
+
+  private[this] def waitAndGetTopicInfo(name: String): TopicInfo = {
+    // wait the topic to be available
+    CommonUtils.await(() => result(topicAdmin.topics().map(_.exists(_.name == name))), java.time.Duration.ofSeconds(10))
+    result(topicAdmin.topics()).find(_.name == name).get
+  }
 
   @Test
   def createTopic(): Unit = {
     val name = CommonUtils.randomString(10)
     val numberOfPartitions: Int = 1
     val numberOfReplications: Short = 1
-    val topic = result(
+    result(
       topicAdmin.creator
         .numberOfPartitions(numberOfPartitions)
         .numberOfReplications(numberOfReplications)
         .name(name)
         .create())
+    val topic = waitAndGetTopicInfo(name)
     topic.name shouldBe name
     topic.numberOfPartitions shouldBe numberOfPartitions
     topic.numberOfReplications shouldBe numberOfReplications
@@ -52,17 +60,19 @@ class TestTopicAdmin extends With3Brokers with Matchers {
 
   @Test
   def addPartitions(): Unit = {
+    val name = CommonUtils.randomString(10)
     val numberOfPartitions: Int = 1
     val numberOfReplications: Short = 1
-    val topic = Await.result(
+    result(
       topicAdmin.creator
         .numberOfPartitions(numberOfPartitions)
         .numberOfReplications(numberOfReplications)
-        .name(CommonUtils.randomString(10))
-        .create(),
-      30 seconds
+        .name(name)
+        .create()
     )
-    val topic2 = result(topicAdmin.changePartitions(topic.name, numberOfPartitions + 1))
+    val topic = waitAndGetTopicInfo(name)
+    result(topicAdmin.changePartitions(topic.name, numberOfPartitions + 1))
+    val topic2 = waitAndGetTopicInfo(name)
     topic2 shouldBe topic.copy(numberOfPartitions = numberOfPartitions + 1)
   }
 
@@ -71,13 +81,14 @@ class TestTopicAdmin extends With3Brokers with Matchers {
     val name = CommonUtils.randomString(10)
     val numberOfPartitions: Int = 2
     val numberOfReplications: Short = 1
-    val topic = Await.result(topicAdmin.creator
-                               .numberOfPartitions(numberOfPartitions)
-                               .numberOfReplications(numberOfReplications)
-                               .name(name)
-                               .create(),
-                             30 seconds)
-    an[IllegalArgumentException] should be thrownBy result(
+    result(
+      topicAdmin.creator
+        .numberOfPartitions(numberOfPartitions)
+        .numberOfReplications(numberOfReplications)
+        .name(name)
+        .create())
+    val topic = waitAndGetTopicInfo(name)
+    an[InvalidPartitionsException] should be thrownBy result(
       topicAdmin.changePartitions(topic.name, numberOfPartitions - 1))
   }
 
@@ -86,13 +97,14 @@ class TestTopicAdmin extends With3Brokers with Matchers {
     val name = CommonUtils.randomString(10)
     val numberOfPartitions: Int = 2
     val numberOfReplications: Short = 1
-    val topic = Await.result(topicAdmin.creator
-                               .numberOfPartitions(numberOfPartitions)
-                               .numberOfReplications(numberOfReplications)
-                               .name(name)
-                               .create(),
-                             30 seconds)
-    an[IllegalArgumentException] should be thrownBy result(topicAdmin.changePartitions(topic.name, -10))
+    result(
+      topicAdmin.creator
+        .numberOfPartitions(numberOfPartitions)
+        .numberOfReplications(numberOfReplications)
+        .name(name)
+        .create())
+    val topic = waitAndGetTopicInfo(name)
+    an[InvalidPartitionsException] should be thrownBy result(topicAdmin.changePartitions(topic.name, -10))
   }
 
   @Test
@@ -100,14 +112,15 @@ class TestTopicAdmin extends With3Brokers with Matchers {
     val name = CommonUtils.randomString(10)
     val numberOfPartitions: Int = 2
     val numberOfReplications: Short = 1
-    val topic = result(
+    result(
       topicAdmin.creator
         .numberOfPartitions(numberOfPartitions)
         .numberOfReplications(numberOfReplications)
         .name(name)
         .create())
-
-    topic shouldBe result(topicAdmin.changePartitions(topic.name, numberOfPartitions))
+    val topic = waitAndGetTopicInfo(name)
+    an[InvalidPartitionsException] should be thrownBy result(
+      topicAdmin.changePartitions(topic.name, numberOfPartitions))
   }
 
   @Test
@@ -117,13 +130,29 @@ class TestTopicAdmin extends With3Brokers with Matchers {
 
   @Test
   def deleteNonexistentTopic(): Unit = {
-    import scala.concurrent.ExecutionContext.Implicits.global
+    val name = CommonUtils.randomString(10)
     result(topicAdmin.delete(CommonUtils.randomString())) shouldBe false
-    val topic = result(topicAdmin.creator.name(CommonUtils.randomString(10)).create())
-    // wait the topic to be available
-    CommonUtils
-      .await(() => result(topicAdmin.topics().map(_.exists(_.name == topic.name))), java.time.Duration.ofSeconds(10))
-    result(topicAdmin.delete(topic.name)) shouldBe true
+    result(topicAdmin.creator.name(name).create())
+    waitAndGetTopicInfo(name)
+    result(topicAdmin.delete(name)) shouldBe true
+  }
+
+  @Test
+  def testCleanupPolicy(): Unit = {
+    val name = CommonUtils.randomString(10)
+    result(topicAdmin.creator.name(name).cleanupPolicy(CleanupPolicy.DELETE).create())
+    val topic = waitAndGetTopicInfo(name)
+    topic.configs(TopicConfig.CLEANUP_POLICY_CONFIG) shouldBe CleanupPolicy.DELETE.name
+  }
+
+  @Test
+  def testCustomConfigs(): Unit = {
+    val name = CommonUtils.randomString(10)
+    val key = TopicConfig.SEGMENT_BYTES_CONFIG
+    val value = 1024 * 1024
+    result(topicAdmin.creator.name(name).config(key, value.toString).create())
+    val topic = waitAndGetTopicInfo(name)
+    topic.configs(key) shouldBe value.toString
   }
 
   @After
