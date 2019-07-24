@@ -18,7 +18,6 @@ package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.server
-import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent.{NoSuchClusterException, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ConnectorApi._
 import com.island.ohara.client.configurator.v0.DataKey
@@ -27,13 +26,7 @@ import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.route.RouteUtils.{
-  PAUSE_COMMAND => _,
-  RESUME_COMMAND => _,
-  START_COMMAND => _,
-  STOP_COMMAND => _,
-  _
-}
+import com.island.ohara.configurator.route.RouteUtils._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.island.ohara.kafka.connector.json.SettingDefinition
 import com.typesafe.scalalogging.Logger
@@ -156,96 +149,105 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
           }
       }.getOrElse(Future.unit))
 
+  private[this] def hookOfStart(implicit store: DataStore,
+                                workerCollie: WorkerCollie,
+                                meterCache: MeterCache,
+                                executionContext: ExecutionContext): HookOfStart[ConnectorDescription] =
+    (key: DataKey) =>
+      store.value[ConnectorDescription](key).flatMap { connectorDesc =>
+        CollieUtils
+          .workerClient(Some(connectorDesc.workerClusterName))
+          .flatMap {
+            case (cluster, wkClient) =>
+              store
+                .values[TopicInfo]()
+                .map(topics =>
+                  (cluster, wkClient, topics.filter(t => t.brokerClusterName == cluster.brokerClusterName)))
+          }
+          .flatMap {
+            case (cluster, wkClient, topicInfos) =>
+              connectorDesc.topicNames.foreach(t =>
+                if (!topicInfos.exists(_.name == t))
+                  throw new NoSuchElementException(s"$t doesn't exist. actual:${topicInfos.map(_.name).mkString(",")}"))
+              if (connectorDesc.topicNames.isEmpty) throw new IllegalArgumentException("topics are required")
+              wkClient.exist(connectorDesc.name).flatMap {
+                if (_) update(connectorDesc, cluster, wkClient)
+                else
+                  wkClient
+                    .connectorCreator()
+                    .settings(connectorDesc.plain)
+                    // always override the name
+                    .name(connectorDesc.name)
+                    .threadPool(executionContext)
+                    .create()
+                    .map(res =>
+                      connectorDesc.copy(state =
+                        if (res.tasks.isEmpty) Some(ConnectorState.UNASSIGNED)
+                        else Some(ConnectorState.RUNNING)))
+              }
+          }
+    }
+
+  private[this] def hookOfStop(implicit store: DataStore,
+                               workerCollie: WorkerCollie,
+                               meterCache: MeterCache,
+                               executionContext: ExecutionContext): HookOfStop[ConnectorDescription] = (key: DataKey) =>
+    store.value[ConnectorDescription](key).flatMap { connectorConfig =>
+      CollieUtils.workerClient(Some(connectorConfig.workerClusterName)).flatMap {
+        case (cluster, wkClient) =>
+          wkClient.exist(key.name).flatMap {
+            if (_)
+              wkClient.delete(key.name).flatMap(_ => update(connectorConfig, cluster, wkClient))
+            else update(connectorConfig, cluster, wkClient)
+          }
+      }
+  }
+
+  private[this] def hookOfPause(implicit store: DataStore,
+                                workerCollie: WorkerCollie,
+                                executionContext: ExecutionContext): HookOfPause[ConnectorDescription] =
+    (key: DataKey) =>
+      store.value[ConnectorDescription](key).flatMap { connectorConfig =>
+        CollieUtils.workerClient(Some(connectorConfig.workerClusterName)).flatMap {
+          case (_, wkClient) =>
+            wkClient.status(key.name).map(_.connector.state).flatMap {
+              case ConnectorState.PAUSED =>
+                Future.successful(connectorConfig.copy(state = Some(ConnectorState.PAUSED)))
+              case _ => wkClient.pause(key.name).map(_ => connectorConfig.copy(state = Some(ConnectorState.PAUSED)))
+            }
+        }
+    }
+
+  private[this] def hookOfResume(implicit store: DataStore,
+                                 workerCollie: WorkerCollie,
+                                 executionContext: ExecutionContext): HookOfResume[ConnectorDescription] =
+    (key: DataKey) =>
+      store.value[ConnectorDescription](key).flatMap { connectorConfig =>
+        CollieUtils.workerClient(Some(connectorConfig.workerClusterName)).flatMap {
+          case (_, wkClient) =>
+            wkClient.status(key.name).map(_.connector.state).flatMap {
+              case ConnectorState.PAUSED =>
+                wkClient.resume(key.name).map(_ => connectorConfig.copy(state = Some(ConnectorState.RUNNING)))
+              case s => Future.successful(connectorConfig.copy(state = Some(s)))
+            }
+        }
+    }
+
   def apply(implicit store: DataStore,
             workerCollie: WorkerCollie,
             executionContext: ExecutionContext,
             meterCache: MeterCache): server.Route =
-    RouteUtils.basicRoute[Creation, Update, ConnectorDescription](
+    RouteUtils.route[Creation, Update, ConnectorDescription](
       root = CONNECTORS_PREFIX_PATH,
       enableGroup = false,
       hookOfCreation = hookOfCreation,
       hookOfUpdate = hookOfUpdate,
       hookOfGet = hookOfGet,
       hookOfList = hookOfList,
-      hookBeforeDelete = hookBeforeDelete
-    ) ~
-      pathPrefix(CONNECTORS_PREFIX_PATH / Segment) { name =>
-        path(START_COMMAND) {
-          put {
-            complete(store.value[ConnectorDescription](name).flatMap { connectorDesc =>
-              CollieUtils
-                .workerClient(Some(connectorDesc.workerClusterName))
-                .flatMap {
-                  case (cluster, wkClient) =>
-                    store
-                      .values[TopicInfo]()
-                      .map(topics =>
-                        (cluster, wkClient, topics.filter(t => t.brokerClusterName == cluster.brokerClusterName)))
-                }
-                .flatMap {
-                  case (cluster, wkClient, topicInfos) =>
-                    connectorDesc.topicNames.foreach(t =>
-                      if (!topicInfos.exists(_.name == t))
-                        throw new NoSuchElementException(
-                          s"$t doesn't exist. actual:${topicInfos.map(_.name).mkString(",")}"))
-                    if (connectorDesc.topicNames.isEmpty) throw new IllegalArgumentException("topics are required")
-                    wkClient.exist(connectorDesc.name).flatMap {
-                      if (_) update(connectorDesc, cluster, wkClient)
-                      else
-                        wkClient
-                          .connectorCreator()
-                          .settings(connectorDesc.plain)
-                          // always override the name
-                          .name(connectorDesc.name)
-                          .threadPool(executionContext)
-                          .create()
-                          .flatMap(res =>
-                            Future.successful(connectorDesc.copy(state =
-                              if (res.tasks.isEmpty) Some(ConnectorState.UNASSIGNED)
-                              else Some(ConnectorState.RUNNING))))
-                    }
-                }
-            })
-          }
-        } ~ path(STOP_COMMAND) {
-          put {
-            complete(store.value[ConnectorDescription](name).flatMap { connectorConfig =>
-              CollieUtils.workerClient(Some(connectorConfig.workerClusterName)).flatMap {
-                case (cluster, wkClient) =>
-                  wkClient.exist(name).flatMap {
-                    if (_)
-                      wkClient.delete(name).flatMap(_ => update(connectorConfig, cluster, wkClient))
-                    else update(connectorConfig, cluster, wkClient)
-                  }
-              }
-            })
-          }
-        } ~ path(PAUSE_COMMAND) {
-          put {
-            complete(store.value[ConnectorDescription](name).flatMap { connectorConfig =>
-              CollieUtils.workerClient(Some(connectorConfig.workerClusterName)).flatMap {
-                case (_, wkClient) =>
-                  wkClient.status(name).map(_.connector.state).flatMap {
-                    case ConnectorState.PAUSED =>
-                      Future.successful(connectorConfig.copy(state = Some(ConnectorState.PAUSED)))
-                    case _ => wkClient.pause(name).map(_ => connectorConfig.copy(state = Some(ConnectorState.PAUSED)))
-                  }
-              }
-            })
-          }
-        } ~ path(RESUME_COMMAND) {
-          put {
-            complete(store.value[ConnectorDescription](name).flatMap { connectorConfig =>
-              CollieUtils.workerClient(Some(connectorConfig.workerClusterName)).map {
-                case (_, wkClient) =>
-                  wkClient.status(name).map(_.connector.state).flatMap {
-                    case ConnectorState.PAUSED =>
-                      wkClient.resume(name).map(_ => connectorConfig.copy(state = Some(ConnectorState.RUNNING)))
-                    case s => Future.successful(connectorConfig.copy(state = Some(s)))
-                  }
-              }
-            })
-          }
-        }
-      }
+      hookBeforeDelete = hookBeforeDelete,
+      hookOfStart = hookOfStart,
+      hookOfStop = hookOfStop,
+      hookOfPause = hookOfPause,
+      hookOfResume = hookOfResume
+    )
 }

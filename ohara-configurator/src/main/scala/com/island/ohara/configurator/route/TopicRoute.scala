@@ -211,7 +211,7 @@ private[configurator] object TopicRoute {
             meterCache: MeterCache,
             brokerCollie: BrokerCollie,
             executionContext: ExecutionContext): server.Route =
-    RouteUtils.basicRoute[Creation, Update, TopicInfo](
+    RouteUtils.route[Creation, Update, TopicInfo](
       root = TOPICS_PREFIX_PATH,
       enableGroup = false,
       hookOfCreation = hookOfCreation,

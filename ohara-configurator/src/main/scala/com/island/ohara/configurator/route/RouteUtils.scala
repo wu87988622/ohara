@@ -82,6 +82,38 @@ private[route] object RouteUtils {
   }
 
   /**
+    * used to execute START request.
+    * @tparam Res data
+    */
+  trait HookOfStart[Res] {
+    def apply(key: DataKey): Future[Res]
+  }
+
+  /**
+    * used to execute STOP request.
+    * @tparam Res data
+    */
+  trait HookOfStop[Res] {
+    def apply(key: DataKey): Future[Res]
+  }
+
+  /**
+    * used to execute PAUSE request.
+    * @tparam Res data
+    */
+  trait HookOfPause[Res] {
+    def apply(key: DataKey): Future[Res]
+  }
+
+  /**
+    * used to execute RESUME request.
+    * @tparam Res data
+    */
+  trait HookOfResume[Res] {
+    def apply(key: DataKey): Future[Res]
+  }
+
+  /**
     * generate the error message used to indicate that some fields are miss in the update request.
     * @param key key
     * @param fieldName name of field
@@ -120,7 +152,7 @@ private[route] object RouteUtils {
     * @tparam Res response type
     * @return route
     */
-  def basicRoute[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
+  def route[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
     root: String,
     enableGroup: Boolean,
     hookOfCreation: HookOfCreation[Creation, Res],
@@ -132,7 +164,7 @@ private[route] object RouteUtils {
                                                        rm1: RootJsonFormat[Update],
                                                        rm2: RootJsonFormat[Res],
                                                        executionContext: ExecutionContext): server.Route =
-    basicRoute(
+    route(
       root = root,
       enableGroup = enableGroup,
       hookOfCreation = hookOfCreation,
@@ -152,12 +184,17 @@ private[route] object RouteUtils {
     * @param hookOfList used to convert response for List function
     * @param hookOfGet used to convert response for Get function
     * @param hookBeforeDelete used to do something before doing delete operation. For example, validate the name.
+    * @param store data store
+    * @param rm marshalling of creation
+    * @param rm1 marshalling of update
+    * @param rm2 marshalling of response
+    * @param executionContext thread pool
     * @tparam Creation creation request
     * @tparam Update creation request
     * @tparam Res response
     * @return route
     */
-  def basicRoute[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
+  def route[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
     root: String,
     enableGroup: Boolean,
     hookOfCreation: HookOfCreation[Creation, Res],
@@ -202,6 +239,147 @@ private[route] object RouteUtils {
         }
       }
     }
+
+  /**
+    * this is the basic route of all APIs to access ohara's data.
+    * It implements 1) get, 2) list, 3) delete, 4) add, 5) update, 6) start and 7) stop function.
+    * The CREATION is routed to "POST  /$root"
+    * The UPDATE is routed to "PUT /$root/$name"
+    * The GET is routed to "GET /$root/$name"
+    * The LIST is routed to "GET /$root"
+    * The DELETE is routed to "DELETE /$root/$name"
+    * The START is routed to "PUT /$root/$name/start"
+    * The STOP is routed to "PUT /$root/$name/stop"
+    * @param root path to root
+    * @param enableGroup true if this route accept group. Otherwise, the input group is ignored and the group passed to route is Data.GROUP_DEFAULT
+    * @param hookOfCreation used to convert request to response for Add function
+    * @param hookOfUpdate used to convert request to response for Update function
+    * @param hookOfList used to convert response for List function
+    * @param hookOfGet used to convert response for Get function
+    * @param hookBeforeDelete used to do something before doing delete operation. For example, validate the name.
+    * @param hookOfStart used to handle start command
+    * @param hookOfStop used to handle stop command
+    * @param store data store
+    * @param rm marshalling of creation
+    * @param rm1 marshalling of update
+    * @param rm2 marshalling of response
+    * @param executionContext thread pool
+    * @tparam Creation creation request
+    * @tparam Update creation request
+    * @tparam Res response
+    * @return route
+    */
+  def route[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
+    root: String,
+    enableGroup: Boolean,
+    hookOfCreation: HookOfCreation[Creation, Res],
+    hookOfUpdate: HookOfUpdate[Creation, Update, Res],
+    hookOfList: HookOfList[Res],
+    hookOfGet: HookOfGet[Res],
+    hookBeforeDelete: HookBeforeDelete,
+    hookOfStart: HookOfStart[Res],
+    hookOfStop: HookOfStop[Res])(implicit store: DataStore,
+                                 // normally, update request does not carry the name field,
+                                 // Hence, the check of name have to be executed by format of creation
+                                 // since it must have name field.
+                                 rm: OharaJsonFormat[Creation],
+                                 rm1: RootJsonFormat[Update],
+                                 rm2: RootJsonFormat[Res],
+                                 executionContext: ExecutionContext): server.Route = route(
+    root = root,
+    enableGroup = enableGroup,
+    hookOfCreation = hookOfCreation,
+    hookOfUpdate = hookOfUpdate,
+    hookOfList = hookOfList,
+    hookOfGet = hookOfGet,
+    hookBeforeDelete = hookBeforeDelete
+  ) ~ pathPrefix(root / Segment) { name =>
+    parameter(Data.GROUP_KEY ?) { groupOption =>
+      put {
+        val group = if (enableGroup) groupOption.getOrElse(Data.GROUP_DEFAULT) else Data.GROUP_DEFAULT
+        val key = DataKey(
+          group = group,
+          name = name
+        )
+        path(START_COMMAND)(complete(hookOfStart(key))) ~ path(STOP_COMMAND)(complete(hookOfStop(key)))
+      }
+    }
+  }
+
+  /**
+    * this is the basic route of all APIs to access ohara's data.
+    * It implements 1) get, 2) list, 3) delete, 4) add, 5) update, 6) start and 7) stop function.
+    * The CREATION is routed to "POST  /$root"
+    * The UPDATE is routed to "PUT /$root/$name"
+    * The GET is routed to "GET /$root/$name"
+    * The LIST is routed to "GET /$root"
+    * The DELETE is routed to "DELETE /$root/$name"
+    * The START is routed to "PUT /$root/$name/start"
+    * The STOP is routed to "PUT /$root/$name/stop"
+    * The PAUSE is routed to "PUT /$root/$name/pause"
+    * The RESUME is routed to "PUT /$root/$name/resume"
+    * @param root path to root
+    * @param enableGroup true if this route accept group. Otherwise, the input group is ignored and the group passed to route is Data.GROUP_DEFAULT
+    * @param hookOfCreation used to convert request to response for Add function
+    * @param hookOfUpdate used to convert request to response for Update function
+    * @param hookOfList used to convert response for List function
+    * @param hookOfGet used to convert response for Get function
+    * @param hookBeforeDelete used to do something before doing delete operation. For example, validate the name.
+    * @param hookOfStart used to handle start command
+    * @param hookOfStop used to handle stop command
+    * @param hookOfPause used to handle pause command
+    * @param hookOfResume used to handle resume command
+    * @param store data store
+    * @param rm marshalling of creation
+    * @param rm1 marshalling of update
+    * @param rm2 marshalling of response
+    * @param executionContext thread pool
+    * @tparam Creation creation request
+    * @tparam Update creation request
+    * @tparam Res response
+    * @return route
+    */
+  def route[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
+    root: String,
+    enableGroup: Boolean,
+    hookOfCreation: HookOfCreation[Creation, Res],
+    hookOfUpdate: HookOfUpdate[Creation, Update, Res],
+    hookOfList: HookOfList[Res],
+    hookOfGet: HookOfGet[Res],
+    hookBeforeDelete: HookBeforeDelete,
+    hookOfStart: HookOfStart[Res],
+    hookOfStop: HookOfStop[Res],
+    hookOfPause: HookOfPause[Res],
+    hookOfResume: HookOfResume[Res])(implicit store: DataStore,
+                                     // normally, update request does not carry the name field,
+                                     // Hence, the check of name have to be executed by format of creation
+                                     // since it must have name field.
+                                     rm: OharaJsonFormat[Creation],
+                                     rm1: RootJsonFormat[Update],
+                                     rm2: RootJsonFormat[Res],
+                                     executionContext: ExecutionContext): server.Route = route(
+    root = root,
+    enableGroup = enableGroup,
+    hookOfCreation = hookOfCreation,
+    hookOfUpdate = hookOfUpdate,
+    hookOfList = hookOfList,
+    hookOfGet = hookOfGet,
+    hookBeforeDelete = hookBeforeDelete
+  ) ~ pathPrefix(root / Segment) { name =>
+    parameter(Data.GROUP_KEY ?) { groupOption =>
+      put {
+        val group = if (enableGroup) groupOption.getOrElse(Data.GROUP_DEFAULT) else Data.GROUP_DEFAULT
+        val key = DataKey(
+          group = group,
+          name = name
+        )
+        path(START_COMMAND)(complete(hookOfStart(key))) ~
+          path(STOP_COMMAND)(complete(hookOfStop(key))) ~
+          path(PAUSE_COMMAND)(complete(hookOfPause(key))) ~
+          path(RESUME_COMMAND)(complete(hookOfResume(key)))
+      }
+    }
+  }
 
   /**
     * Append cluster actions to current route.

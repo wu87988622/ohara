@@ -141,7 +141,7 @@ object ZookeeperRoute {
             clusterCollie: ClusterCollie,
             nodeCollie: NodeCollie,
             executionContext: ExecutionContext): server.Route =
-    RouteUtils.basicRoute(
+    RouteUtils.route(
       root = ZOOKEEPER_PREFIX_PATH,
       enableGroup = false,
       hookOfCreation = hookOfCreation,

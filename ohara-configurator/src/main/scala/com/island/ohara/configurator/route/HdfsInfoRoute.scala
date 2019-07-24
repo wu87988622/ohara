@@ -58,7 +58,7 @@ private[configurator] object HdfsInfoRoute {
     }
 
   def apply(implicit store: DataStore, executionContext: ExecutionContext): server.Route =
-    RouteUtils.basicRoute[Creation, Update, HdfsInfo](
+    RouteUtils.route[Creation, Update, HdfsInfo](
       root = HDFS_PREFIX_PATH,
       enableGroup = true,
       hookOfCreation = hookOfCreation,

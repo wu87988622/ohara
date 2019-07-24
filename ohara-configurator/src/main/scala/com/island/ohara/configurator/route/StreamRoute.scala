@@ -18,9 +18,7 @@ package com.island.ohara.configurator.route
 
 import java.util.Objects
 
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server
-import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.agent.{BrokerCollie, ClusterCollie, NodeCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.DataKey
@@ -207,6 +205,147 @@ private[configurator] object StreamRoute {
       }
   }
 
+  private[this] def hookOfStart(implicit store: DataStore,
+                                adminCleaner: AdminCleaner,
+                                nodeCollie: NodeCollie,
+                                clusterCollie: ClusterCollie,
+                                workerCollie: WorkerCollie,
+                                brokerCollie: BrokerCollie,
+                                fileStore: FileStore,
+                                executionContext: ExecutionContext): HookOfStart[StreamAppDescription] =
+    (key: DataKey) =>
+      store.value[StreamAppDescription](key).flatMap { data =>
+        assertParameters(data)
+        // we assume streamApp has following conditions:
+        // 1) use any available node of worker cluster to run streamApp
+        // 2) use one from/to pair topic (multiple from/to topics will need to discuss flow)
+        clusterCollie.streamCollie.exist(data.name).flatMap {
+          if (_) {
+            // stream cluster exists, get current cluster
+            clusterCollie.streamCollie
+              .cluster(data.name)
+              .filter(_._1.isInstanceOf[StreamClusterInfo])
+              .map(_._1.asInstanceOf[StreamClusterInfo])
+              .flatMap(
+                clusterInfo =>
+                  store.addIfPresent[StreamAppDescription](
+                    key = key,
+                    updater = (previous: StreamAppDescription) => previous.copy(state = clusterInfo.state)
+                ))
+          } else {
+            // initial the cluster creation request
+            val req = Creation(
+              name = data.name,
+              imageName = data.imageName,
+              jar = data.jar,
+              from = data.from,
+              to = data.to,
+              jmxPort = data.jmxPort,
+              instances = data.instances,
+              nodeNames = data.nodeNames,
+              tags = data.tags
+            )
+            // check cluster creation rules
+            RouteUtils
+              .basicCheckOfCluster[Creation, StreamClusterInfo](nodeCollie, clusterCollie, req)
+              .flatMap(
+                _ =>
+                  // get the broker info and topic info from worker cluster name
+                  CollieUtils
+                    .both(Some(data.jar.group))
+                    // get broker props from worker cluster
+                    .map { case (_, topicAdmin, _, _) => topicAdmin.connectionProps }
+                    .flatMap { bkProps =>
+                      fileStore
+                        .fileInfo(data.jar.group, data.jar.name)
+                        .map(_.url)
+                        .flatMap { url =>
+                          nodeCollie
+                            .nodes()
+                            .map { all =>
+                              if (CommonUtils.isEmpty(data.nodeNames.asJava)) {
+                                // Check instance first
+                                // Here we will check the following conditions:
+                                // 1. instance should be positive
+                                // 2. available nodes should be bigger than instance (one node runs one instance)
+                                if (all.size < data.instances)
+                                  throw new IllegalArgumentException(
+                                    s"cannot run streamApp. expect: ${data.instances}, actual: ${all.size}")
+                                Random.shuffle(all).take(CommonUtils.requirePositiveInt(data.instances)).toSet
+                              } else
+                                // if require node name is not in nodeCollie, do not take that node
+                                CommonUtils
+                                  .requireNonEmpty(all.filter(n => data.nodeNames.contains(n.name)).asJava)
+                                  .asScala
+                                  .toSet
+                            }
+                            .flatMap(
+                              nodes =>
+                                clusterCollie.streamCollie.creator
+                                  .clusterName(data.name)
+                                  .nodeNames(nodes.map(_.name))
+                                  .imageName(IMAGE_NAME_DEFAULT)
+                                  .jarUrl(url.toString)
+                                  .appId(data.name)
+                                  .brokerProps(bkProps)
+                                  .fromTopics(data.from)
+                                  .toTopics(data.to)
+                                  .enableExactlyOnce(data.exactlyOnce)
+                                  .threadPool(executionContext)
+                                  .create())
+                        }
+                        .map(_.state -> None)
+                    }
+                    // if start failed (no matter why), we change the status to "DEAD"
+                    // in order to identify "fail started"(status: DEAD) and "successful stopped"(status = None)
+                    .recover {
+                      case ex: Throwable =>
+                        log.error(s"start streamApp failed: ", ex)
+                        Some(ContainerState.DEAD.name) -> Some(ex.getMessage)
+                    }
+                    .flatMap {
+                      case (state, error) =>
+                        store.addIfPresent[StreamAppDescription](
+                          key = key,
+                          updater = (previous: StreamAppDescription) => previous.copy(state = state, error = error)
+                        )
+                  })
+          }
+        }
+    }
+
+  private[this] def hookOfStop(implicit store: DataStore,
+                               clusterCollie: ClusterCollie,
+                               executionContext: ExecutionContext): HookOfStop[StreamAppDescription] = (key: DataKey) =>
+    store.value[StreamAppDescription](key).flatMap { data =>
+      clusterCollie.streamCollie.exist(data.name).flatMap {
+        if (_) {
+          // if remove failed, we log the exception and return "DEAD" state
+          clusterCollie.streamCollie
+            .remove(data.name)
+            .map(_ => None -> None)
+            .recover {
+              case ex: Throwable =>
+                log.error(s"failed to stop streamApp for $key.", ex)
+                Some(ContainerState.DEAD.name) -> Some(ex.getMessage)
+            }
+            .flatMap {
+              case (state, error) =>
+                store.addIfPresent[StreamAppDescription](
+                  key = key,
+                  updater = (previous: StreamAppDescription) => previous.copy(state = state, error = error)
+                )
+            }
+        } else {
+          // stream cluster not exists, update store only
+          store.addIfPresent[StreamAppDescription](
+            key = key,
+            updater = (previous: StreamAppDescription) => previous.copy(state = None, error = None)
+          )
+        }
+      }
+  }
+
   def apply(implicit store: DataStore,
             adminCleaner: AdminCleaner,
             nodeCollie: NodeCollie,
@@ -216,156 +355,15 @@ private[configurator] object StreamRoute {
             fileStore: FileStore,
             meterCache: MeterCache,
             executionContext: ExecutionContext): server.Route =
-    RouteUtils.basicRoute[Creation, Update, StreamAppDescription](
+    RouteUtils.route[Creation, Update, StreamAppDescription](
       root = STREAM_PREFIX_PATH,
       enableGroup = false,
       hookOfCreation = hookOfCreation,
       hookOfUpdate = hookOfUpdate,
       hookBeforeDelete = hookBeforeDelete,
       hookOfGet = hookOfGet,
-      hookOfList = hookOfList
-    ) ~ pathPrefix(STREAM_PREFIX_PATH / Segment) { name =>
-      // start streamApp
-      path(START_COMMAND) {
-        put {
-          complete(store.value[StreamAppDescription](name).flatMap { data =>
-            assertParameters(data)
-            // we assume streamApp has following conditions:
-            // 1) use any available node of worker cluster to run streamApp
-            // 2) use one from/to pair topic (multiple from/to topics will need to discuss flow)
-            clusterCollie.streamCollie.exist(data.name).flatMap {
-              if (_) {
-                // stream cluster exists, get current cluster
-                clusterCollie.streamCollie
-                  .cluster(data.name)
-                  .filter(_._1.isInstanceOf[StreamClusterInfo])
-                  .map(_._1.asInstanceOf[StreamClusterInfo])
-                  .flatMap(clusterInfo =>
-                    store.addIfPresent[StreamAppDescription](
-                      name = name,
-                      updater = (previous: StreamAppDescription) => previous.copy(state = clusterInfo.state)
-                  ))
-              } else {
-                // initial the cluster creation request
-                val req = Creation(
-                  name = data.name,
-                  imageName = data.imageName,
-                  jar = data.jar,
-                  from = data.from,
-                  to = data.to,
-                  jmxPort = data.jmxPort,
-                  instances = data.instances,
-                  nodeNames = data.nodeNames,
-                  tags = data.tags
-                )
-                // check cluster creation rules
-                RouteUtils
-                  .basicCheckOfCluster[Creation, StreamClusterInfo](nodeCollie, clusterCollie, req)
-                  .flatMap(
-                    _ =>
-                      // get the broker info and topic info from worker cluster name
-                      CollieUtils
-                        .both(Some(data.jar.group))
-                        // get broker props from worker cluster
-                        .map { case (_, topicAdmin, _, _) => topicAdmin.connectionProps }
-                        .flatMap {
-                          bkProps =>
-                            fileStore
-                              .fileInfo(data.jar.group, data.jar.name)
-                              .map(_.url)
-                              .flatMap {
-                                url =>
-                                  nodeCollie
-                                    .nodes()
-                                    .map {
-                                      all =>
-                                        if (CommonUtils.isEmpty(data.nodeNames.asJava)) {
-                                          // Check instance first
-                                          // Here we will check the following conditions:
-                                          // 1. instance should be positive
-                                          // 2. available nodes should be bigger than instance (one node runs one instance)
-                                          if (all.size < data.instances)
-                                            throw new IllegalArgumentException(
-                                              s"cannot run streamApp. expect: ${data.instances}, actual: ${all.size}")
-                                          Random.shuffle(all).take(CommonUtils.requirePositiveInt(data.instances)).toSet
-                                        } else
-                                          // if require node name is not in nodeCollie, do not take that node
-                                          CommonUtils
-                                            .requireNonEmpty(all.filter(n => data.nodeNames.contains(n.name)).asJava)
-                                            .asScala
-                                            .toSet
-                                    }
-                                    .flatMap(
-                                      nodes =>
-                                        clusterCollie.streamCollie.creator
-                                          .clusterName(data.name)
-                                          .nodeNames(nodes.map(_.name))
-                                          .imageName(IMAGE_NAME_DEFAULT)
-                                          .jarUrl(url.toString)
-                                          .appId(data.name)
-                                          .brokerProps(bkProps)
-                                          .fromTopics(data.from)
-                                          .toTopics(data.to)
-                                          .enableExactlyOnce(data.exactlyOnce)
-                                          .threadPool(executionContext)
-                                          .create())
-                              }
-                              .map(_.state -> None)
-                        }
-                        // if start failed (no matter why), we change the status to "DEAD"
-                        // in order to identify "fail started"(status: DEAD) and "successful stopped"(status = None)
-                        .recover {
-                          case ex: Throwable =>
-                            log.error(s"start streamApp failed: ", ex)
-                            Some(ContainerState.DEAD.name) -> Some(ex.getMessage)
-                        }
-                        .flatMap {
-                          case (state, error) =>
-                            store.addIfPresent[StreamAppDescription](
-                              name = name,
-                              updater = (previous: StreamAppDescription) => previous.copy(state = state, error = error)
-                            )
-                      })
-              }
-            }
-
-          })
-        }
-      } ~
-        // stop streamApp
-        path(STOP_COMMAND) {
-          put {
-            complete(
-              store.value[StreamAppDescription](name).flatMap { data =>
-                clusterCollie.streamCollie.exist(data.name).flatMap {
-                  if (_) {
-                    // if remove failed, we log the exception and return "DEAD" state
-                    clusterCollie.streamCollie
-                      .remove(data.name)
-                      .map(_ => None -> None)
-                      .recover {
-                        case ex: Throwable =>
-                          log.error(s"failed to stop streamApp for $name.", ex)
-                          Some(ContainerState.DEAD.name) -> Some(ex.getMessage)
-                      }
-                      .flatMap {
-                        case (state, error) =>
-                          store.addIfPresent[StreamAppDescription](
-                            name = name,
-                            updater = (previous: StreamAppDescription) => previous.copy(state = state, error = error)
-                          )
-                      }
-                  } else {
-                    // stream cluster not exists, update store only
-                    store.addIfPresent[StreamAppDescription](
-                      name = name,
-                      updater = (previous: StreamAppDescription) => previous.copy(state = None, error = None)
-                    )
-                  }
-                }
-              }
-            )
-          }
-        }
-    }
+      hookOfList = hookOfList,
+      hookOfStart = hookOfStart,
+      hookOfStop = hookOfStop
+    )
 }

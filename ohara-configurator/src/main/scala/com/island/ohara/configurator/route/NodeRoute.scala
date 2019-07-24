@@ -95,7 +95,7 @@ object NodeRoute {
       }.getOrElse(Future.unit))
 
   def apply(implicit store: DataStore, clusterCollie: ClusterCollie, executionContext: ExecutionContext): server.Route =
-    RouteUtils.basicRoute[Creation, Update, Node](
+    RouteUtils.route[Creation, Update, Node](
       root = NODES_PREFIX_PATH,
       enableGroup = false,
       hookOfCreation = hookOfCreation,

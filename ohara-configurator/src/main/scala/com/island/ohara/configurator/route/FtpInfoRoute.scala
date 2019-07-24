@@ -67,7 +67,7 @@ private[configurator] object FtpInfoRoute {
       })
 
   def apply(implicit store: DataStore, executionContext: ExecutionContext): server.Route =
-    RouteUtils.basicRoute[Creation, Update, FtpInfo](
+    RouteUtils.route[Creation, Update, FtpInfo](
       root = FTP_PREFIX_PATH,
       enableGroup = true,
       hookOfCreation = hookOfCreation,

@@ -194,7 +194,7 @@ private[configurator] object PipelineRoute {
             clusterCollie: ClusterCollie,
             executionContext: ExecutionContext,
             meterCache: MeterCache): server.Route =
-    RouteUtils.basicRoute[Creation, Update, Pipeline](
+    RouteUtils.route[Creation, Update, Pipeline](
       root = PIPELINES_PREFIX_PATH,
       enableGroup = true,
       hookOfCreation = hookOfCreation,

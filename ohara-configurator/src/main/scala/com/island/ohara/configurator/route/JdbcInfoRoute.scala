@@ -64,7 +64,7 @@ private[configurator] object JdbcInfoRoute {
     }
 
   def apply(implicit store: DataStore, executionContext: ExecutionContext): server.Route =
-    RouteUtils.basicRoute[Creation, Update, JdbcInfo](
+    RouteUtils.route[Creation, Update, JdbcInfo](
       root = JDBC_PREFIX_PATH,
       enableGroup = true,
       hookOfCreation = hookOfCreation,
