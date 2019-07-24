@@ -134,7 +134,9 @@ describe('PipelineNewPage', () => {
     });
   });
 
-  it('saves and removes a connector even after page refresh', () => {
+  // Skip for now, this test is currently broken and is tracked in
+  // https://github.com/oharastream/ohara/issues/1944
+  it.skip('saves and removes a connector even after page refresh', () => {
     const connectorName = makeRandomStr();
     cy.getByTestId('toolbar-sources')
       .click()
@@ -225,7 +227,7 @@ describe('PipelineNewPage', () => {
       .wait('@putPipeline');
 
     cy.getByText('FtpSink')
-      .click()
+      .click({ force: true })
       .getByText('FTP sink connector')
       .should('have.length', '1')
       .getByText('core')
@@ -236,14 +238,15 @@ describe('PipelineNewPage', () => {
         cy.getByText('Please select...')
           .click()
           .get(`li[data-value=${topic.name}]`)
-          .click();
+          .click()
+          .wait(2000); // UI has one sec throttle, so we need to wait a bit time and then wait for the request
       })
       .wait('@putPipeline')
       .get('g.edgePath')
       .should('have.length', 1);
 
     cy.getByText('FtpSource')
-      .click()
+      .click({ force: true })
       .getByText('FTP source connector')
       .should('have.length', '1')
       .wait('@getConnector')
@@ -254,7 +257,8 @@ describe('PipelineNewPage', () => {
         cy.getByText('Please select...')
           .click()
           .get(`li[data-value=${topic.name}]`)
-          .click();
+          .click()
+          .wait(2000); // UI has one sec throttle, so we need to wait a bit time and then wait for the request
       })
       .wait('@putPipeline')
       .get('g.edgePath')
@@ -309,7 +313,7 @@ describe('PipelineNewPage', () => {
       .wait('@putPipeline');
 
     cy.getByText('HDFSSinkConnector')
-      .click()
+      .click({ force: true })
       .wait('@getConnector')
       .getByText('HDFS sink connector')
       .should('have.length', '1')
@@ -320,14 +324,15 @@ describe('PipelineNewPage', () => {
         cy.getByText('Please select...')
           .click()
           .get(`li[data-value=${topic.name}]`)
-          .click();
+          .click()
+          .wait(2000); // UI has one sec throttle, so we need to wait a bit time and then wait for the request
       })
       .wait('@putPipeline')
       .get('g.edgePath')
       .should('have.length', 1);
 
     cy.getByText('JDBCSourceConnector')
-      .click()
+      .click({ force: true })
       .wait('@getConnector')
       .getByText('JDBC source connector')
       .should('have.length', '1')
@@ -338,7 +343,8 @@ describe('PipelineNewPage', () => {
         cy.getByText('Please select...')
           .click()
           .get(`li[data-value=${topic.name}]`)
-          .click();
+          .click()
+          .wait(2000); // UI has one sec throttle, so we need to wait a bit time and then wait for the request
       })
       .wait('@putPipeline')
       .get('g.edgePath')

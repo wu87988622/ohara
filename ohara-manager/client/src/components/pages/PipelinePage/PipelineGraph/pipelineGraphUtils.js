@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
+import { isEmpty } from 'lodash';
+
 import { CONNECTOR_STATES } from 'constants/pipelines';
-import { get } from 'lodash';
 import { isEmptyStr } from 'utils/commonUtils';
 import {
   isSource,
@@ -50,22 +51,39 @@ export const getStatusIcon = state => {
   return icon;
 };
 
+const createMetricsHtml = meters => {
+  const meterData = meters.map(meter => `<span>${meter.value}</span>`).join('');
+  const metricsHtml = `<div class="metrics">
+    <span class="metrics-icon"><i class="fas fa-tachometer-alt"></i></span>
+      <div class="metrics-text-wrapper">
+        ${meterData}
+      </div>
+  </div>
+  `;
+
+  return metricsHtml;
+};
+
 export const createHtml = params => {
   const {
     kind,
     state,
-    metrics,
     name,
     workerClusterName,
     className,
     isActive,
+    metrics = {},
   } = params;
+
+  // The metrics data are not ready yet, add default value so
+  // it won't break our app
+  const { meters = [] } = metrics;
 
   const activeClass = isActive ? 'is-active' : '';
   const connectorState = state ? state : '';
-  const numberOfRows = get(metrics, 'meters[0].value', 0);
-  const sizeOfRows = get(metrics, 'meters[1].value', 0);
-  const topicClass = kind === 'topic' ? 'node-topic' : 'node-connector';
+  const isTopic = kind === 'topic';
+
+  const topicClass = isTopic ? 'node-topic' : 'node-connector';
   const stateClass = !isEmptyStr(connectorState)
     ? `is-${connectorState.toLowerCase()}`
     : '';
@@ -75,6 +93,7 @@ export const createHtml = params => {
   const icon = getIcon(kind);
   const statusIcon = getStatusIcon(connectorState);
   const displayKind = className.split('.').pop();
+  const metricsHtml = createMetricsHtml(meters);
 
   const html = `<div class="node-graph ${topicClass} ${stateClass} ${activeClass}">
         <div class="basic-info">
@@ -85,16 +104,10 @@ export const createHtml = params => {
             <span class="node-type">${displayKind}</span>
           </div>
         </div>
-        <div class="metrics">
-          <span class="metrics-icon"><i class="fas fa-tachometer-alt"></i></span>
-           <div class="metrics-text-wrapper">
-            <span class="number-of-rows">${numberOfRows}</span>
-            <span class="size-of-rows">${sizeOfRows}</span>
-          </div>
-        </div>
         <a class="status-icon" href="/logs/workers/${workerClusterName}" target="_blank">
           <i class="fas ${statusIcon}"></i>
         </a>
+        ${!isEmpty(meters) && !isTopic ? metricsHtml : ''}
       </div>`;
 
   return html;

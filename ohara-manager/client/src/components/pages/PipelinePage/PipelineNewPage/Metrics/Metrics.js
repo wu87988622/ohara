@@ -46,14 +46,12 @@ const Metrics = props => {
 
   if (isEmpty(meters)) return null;
 
-  const meterData = meters.map(meter => meter);
-
   return (
     <Box>
       {kind === 'topic' ? (
-        <TopicMetrics topicName={connectorName} meters={meterData} />
+        <TopicMetrics topicName={connectorName} meters={meters} />
       ) : (
-        <ConnectorMetrics connectorName={connectorName} meters={meterData} />
+        <ConnectorMetrics connectorName={connectorName} meters={meters} />
       )}
     </Box>
   );

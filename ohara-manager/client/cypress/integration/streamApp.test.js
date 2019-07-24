@@ -17,7 +17,9 @@
 import * as URLS from '../../src/constants/urls';
 import { makeRandomStr } from '../utils';
 
-describe('StreamApp', () => {
+// This test is broken and somehow related to
+// https://github.com/oharastream/ohara/issues/1944
+describe.skip('StreamApp', () => {
   before(() => {
     cy.deleteAllWorkers();
     cy.createWorker();
