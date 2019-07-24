@@ -64,7 +64,6 @@ private[configurator] object TopicRoute {
       .name(name)
       .numberOfPartitions(numberOfPartitions)
       .numberOfReplications(numberOfReplications)
-      .threadPool(executionContext)
       .create()
       .map { info =>
         try TopicInfo(
@@ -103,7 +102,7 @@ private[configurator] object TopicRoute {
     (_: String, creation: Creation) =>
       CollieUtils.topicAdmin(creation.brokerClusterName).flatMap {
         case (cluster, client) =>
-          client.list().map(_.find(_.name == creation.name)).flatMap { previous =>
+          client.topics().map(_.find(_.name == creation.name)).flatMap { previous =>
             if (previous.isDefined) Future.failed(new IllegalArgumentException(s"${creation.name} already exists"))
             else
               createTopic(
@@ -126,7 +125,7 @@ private[configurator] object TopicRoute {
       else
         CollieUtils.topicAdmin(previous.map(_.brokerClusterName).orElse(update.brokerClusterName)).flatMap {
           case (cluster, client) =>
-            client.list.map(_.find(_.name == key.name)).flatMap { topicFromKafkaOption =>
+            client.topics().map(_.find(_.name == key.name)).flatMap { topicFromKafkaOption =>
               topicFromKafkaOption.fold(createTopic(
                 client = client,
                 clusterName = cluster.name,

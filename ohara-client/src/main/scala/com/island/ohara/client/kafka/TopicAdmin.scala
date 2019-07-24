@@ -24,11 +24,11 @@ import java.util.{Collections, Objects, Properties}
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import org.apache.kafka.clients.CommonClientConfigs
-import org.apache.kafka.clients.admin.{AdminClient, NewPartitions, NewTopic}
+import org.apache.kafka.clients.admin.{AdminClient, NewPartitions, NewTopic, TopicDescription}
 import org.apache.kafka.common.config.TopicConfig
 
 import scala.collection.JavaConverters._
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Future, Promise}
 
 /**
   * this is a wrap of kafka's AdminClient. However, we only wrap the functions about "topic" since the others are useless
@@ -43,14 +43,13 @@ trait TopicAdmin extends Releasable {
     * @param numberOfPartitions the partitions that given topic should have
     * @return topic information
     */
-  def changePartitions(name: String, numberOfPartitions: Int)(
-    implicit executionContext: ExecutionContext): Future[TopicAdmin.TopicInfo]
+  def changePartitions(name: String, numberOfPartitions: Int): Future[TopicAdmin.TopicInfo]
 
   /**
     * list all topics
     * @return topics information
     */
-  def list()(implicit executionContext: ExecutionContext): Future[Seq[TopicAdmin.TopicInfo]]
+  def topics(): Future[Seq[TopicAdmin.TopicInfo]]
 
   /**
     * start a process to create topic
@@ -61,9 +60,9 @@ trait TopicAdmin extends Releasable {
   /**
     * delete a existent topic
     * @param name topic name
-    * @return topic information
+    * @return true if it does delete a topic. otherwise, false
     */
-  def delete(name: String)(implicit executionContext: ExecutionContext): Future[TopicAdmin.TopicInfo]
+  def delete(name: String): Future[Boolean]
 
   /**
     * the connection information to kafka's broker
@@ -104,79 +103,110 @@ object TopicAdmin {
     override def close(): Unit = if (_closed.compareAndSet(false, true)) Releasable.close(admin)
 
     override def creator: Creator =
-      (executionContext,
-       name: String,
-       numberOfPartitions: Int,
-       numberOfReplications: Short,
-       cleanupPolicy: CleanupPolicy) =>
-        Future {
-          unwrap(
-            () =>
-              admin
-                .createTopics(
-                  util.Arrays.asList(new NewTopic(name, numberOfPartitions, numberOfReplications).configs(Map(
-                    TopicConfig.CLEANUP_POLICY_CONFIG -> cleanupPolicy.name
-                  ).asJava)))
-                .values()
-                .get(name)
-                .get())
-          TopicAdmin.TopicInfo(
-            name = name,
-            numberOfPartitions = numberOfPartitions,
-            numberOfReplications = numberOfReplications
-          )
-        }(executionContext)
-
-    /**
-      * list name of topics
-      * @return a list of topic's names
-      */
-    private[this] def listNames(implicit executionContext: ExecutionContext): Future[Seq[String]] = Future {
-      unwrap(() => admin.listTopics().names().get().asScala.toSeq)
-    }
-
-    private[this] def list(names: Seq[String])(implicit executionContext: ExecutionContext): Future[Seq[TopicInfo]] =
-      Future {
+      (name: String, numberOfPartitions: Int, numberOfReplications: Short, cleanupPolicy: CleanupPolicy) => {
+        val promise: Promise[TopicInfo] = Promise[TopicInfo]
         unwrap(
           () =>
             admin
-              .describeTopics(names.asJava)
-              .all()
-              .get()
+              .createTopics(
+                util.Collections.singletonList(new NewTopic(name, numberOfPartitions, numberOfReplications).configs(Map(
+                  TopicConfig.CLEANUP_POLICY_CONFIG -> cleanupPolicy.name
+                ).asJava)))
               .values()
-              .asScala
-              .map(t =>
-                TopicInfo(t.name(), t.partitions().size(), t.partitions().get(0).replicas().size().asInstanceOf[Short]))
-              .toSeq)
+              .get(name)
+              .whenComplete((_, exception) => {
+                if (exception == null)
+                  promise.success(
+                    TopicInfo(
+                      name = name,
+                      numberOfPartitions = numberOfPartitions,
+                      numberOfReplications = numberOfReplications
+                    ))
+                else promise.failure(exception)
+              }))
+        promise.future
       }
 
-    override def list()(implicit executionContext: ExecutionContext): Future[Seq[TopicInfo]] = listNames.flatMap(list)
+    private[this] def toTopicInfo(desc: TopicDescription): TopicInfo = TopicInfo(
+      name = desc.name(),
+      numberOfPartitions = desc.partitions().size(),
+      numberOfReplications = desc.partitions().get(0).replicas().size().asInstanceOf[Short]
+    )
 
-    override def changePartitions(name: String, numberOfPartitions: Int)(
-      implicit executionContext: ExecutionContext): Future[TopicInfo] = list.flatMap(
-      _.find(_.name == name)
-        .map { topicInfo =>
-          if (topicInfo.numberOfPartitions > numberOfPartitions)
-            Future.failed(new IllegalArgumentException("Reducing the number from partitions is disallowed"))
-          else if (topicInfo.numberOfPartitions == numberOfPartitions) Future.successful(topicInfo)
-          else
-            Future {
-              unwrap(
-                () =>
+    override def topics(): Future[Seq[TopicInfo]] = {
+      val promise = Promise[Seq[TopicInfo]]
+      unwrap(
+        () =>
+          admin
+            .listTopics()
+            .names()
+            .whenComplete((topicNames, exception) => {
+              if (exception == null) {
+                admin
+                  .describeTopics(topicNames)
+                  .all()
+                  .whenComplete((topics, exception) => {
+                    if (exception == null) promise.success(topics.values().asScala.map(toTopicInfo).toSeq)
+                    else promise.failure(exception)
+                  })
+              } else promise.failure(exception)
+            }))
+      promise.future
+    }
+
+    override def changePartitions(name: String, numberOfPartitions: Int): Future[TopicInfo] = {
+      val promise = Promise[TopicInfo]
+      unwrap(
+        () =>
+          admin
+            .describeTopics(util.Collections.singletonList(name))
+            .all()
+            .whenComplete((topics, exception) => {
+              if (exception == null) {
+                val topicOption = topics.values().asScala.find(_.name() == name)
+                if (topicOption.isDefined) {
+                  val topicInfo = toTopicInfo(topicOption.get)
+                  if (topicInfo.numberOfPartitions > numberOfPartitions)
+                    promise.failure(new IllegalArgumentException("Reducing the number from partitions is illegal"))
+                  else if (topicInfo.numberOfPartitions == numberOfPartitions) promise.success(topicInfo)
+                  else
+                    unwrap(() =>
+                      admin
+                        .createPartitions(Collections.singletonMap(name, NewPartitions.increaseTo(numberOfPartitions)))
+                        .all()
+                        .whenComplete((_, exception) => {
+                          if (exception == null)
+                            promise.success(topicInfo.copy(numberOfPartitions = numberOfPartitions))
+                          else promise.failure(exception)
+                        }))
+                } else promise.failure(new NoSuchElementException(s"$name doesn't exist"))
+              } else promise.failure(exception)
+            }))
+      promise.future
+    }
+
+    override def delete(name: String): Future[Boolean] = {
+      val promise = Promise[Boolean]
+      unwrap(
+        () =>
+          admin
+            .listTopics()
+            .names()
+            .whenComplete((topicNames, exception) => {
+              if (exception == null) {
+                if (topicNames.asScala.contains(name))
                   admin
-                    .createPartitions(Collections.singletonMap(name, NewPartitions.increaseTo(numberOfPartitions)))
+                    .deleteTopics(util.Collections.singletonList(name))
                     .all()
-                    .get())
-            }.map(_ => topicInfo.copy(numberOfPartitions = numberOfPartitions))
-        }
-        .getOrElse(Future.failed(new NoSuchElementException(s"$name doesn't exist"))))
-
-    override def delete(name: String)(implicit executionContext: ExecutionContext): Future[TopicInfo] = list.flatMap {
-      topics =>
-        val topic = topics.find(_.name == name).get
-        Future {
-          unwrap(() => admin.deleteTopics(util.Arrays.asList(name)).all().get)
-        }.map(_ => topic)
+                    .whenComplete((_, exception) => {
+                      if (exception == null) promise.success(true)
+                      else promise.failure(exception)
+                    })
+                else
+                  promise.success(false)
+              } else promise.failure(exception)
+            }))
+      promise.future
     }
   }
 
@@ -187,8 +217,6 @@ object TopicAdmin {
     private[this] var numberOfPartitions: Int = 1
     private[this] var numberOfReplications: Short = 1
     private[this] var cleanupPolicy: CleanupPolicy = CleanupPolicy.DELETE
-    private[this] implicit var executionContext: ExecutionContext =
-      scala.concurrent.ExecutionContext.Implicits.global
 
     def name(name: String): Creator.this.type = {
       this.name = Objects.requireNonNull(name)
@@ -213,27 +241,14 @@ object TopicAdmin {
       this
     }
 
-    /**
-      * set the thread pool used to execute request
-      * @param executionContext thread pool
-      * @return this creator
-      */
-    @Optional("default pool is scala.concurrent.ExecutionContext.Implicits.global")
-    def threadPool(executionContext: ExecutionContext): Creator = {
-      this.executionContext = Objects.requireNonNull(executionContext)
-      this
-    }
-
     override def create(): Future[TopicAdmin.TopicInfo] = doCreate(
-      executionContext = Objects.requireNonNull(executionContext),
       name = Objects.requireNonNull(name),
       numberOfPartitions = CommonUtils.requirePositiveInt(numberOfPartitions),
       numberOfReplications = CommonUtils.requirePositiveShort(numberOfReplications),
       cleanupPolicy = Objects.requireNonNull(cleanupPolicy)
     )
 
-    protected def doCreate(executionContext: ExecutionContext,
-                           name: String,
+    protected def doCreate(name: String,
                            numberOfPartitions: Int,
                            numberOfReplications: Short,
                            cleanupPolicy: CleanupPolicy): Future[TopicAdmin.TopicInfo]

@@ -16,58 +16,54 @@
 
 package com.island.ohara.client.kafka
 
-import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.testing.With3Brokers
-import org.junit.Test
+import org.apache.kafka.common.errors.UnknownTopicOrPartitionException
+import org.junit.{After, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
 class TestTopicAdmin extends With3Brokers with Matchers {
+
+  private[this] val topicAdmin = TopicAdmin(testUtil().brokersConnProps())
 
   @Test
   def createTopic(): Unit = {
     val name = CommonUtils.randomString(10)
     val numberOfPartitions: Int = 1
     val numberOfReplications: Short = 1
-    val topicAdmin = TopicAdmin(testUtil().brokersConnProps())
-    try {
-      val topic = Await.result(topicAdmin.creator
-                                 .numberOfPartitions(numberOfPartitions)
-                                 .numberOfReplications(numberOfReplications)
-                                 .name(name)
-                                 .create(),
-                               30 seconds)
-      topic.name shouldBe name
-      topic.numberOfPartitions shouldBe numberOfPartitions
-      topic.numberOfReplications shouldBe numberOfReplications
+    val topic = result(
+      topicAdmin.creator
+        .numberOfPartitions(numberOfPartitions)
+        .numberOfReplications(numberOfReplications)
+        .name(name)
+        .create())
+    topic.name shouldBe name
+    topic.numberOfPartitions shouldBe numberOfPartitions
+    topic.numberOfReplications shouldBe numberOfReplications
 
-      Await.result(topicAdmin.list, 30 seconds).find(_.name == name).get shouldBe topic
+    result(topicAdmin.topics()).find(_.name == name).get shouldBe topic
 
-      Await.result(topicAdmin.delete(name), 30 seconds) shouldBe topic
+    result(topicAdmin.delete(name)) shouldBe true
 
-      Await.result(topicAdmin.list, 30 seconds).find(_.name == name) shouldBe None
-    } finally topicAdmin.close()
+    result(topicAdmin.topics()).find(_.name == name) shouldBe None
   }
 
   @Test
   def addPartitions(): Unit = {
     val numberOfPartitions: Int = 1
     val numberOfReplications: Short = 1
-    val topicAdmin = TopicAdmin(testUtil().brokersConnProps())
-    try {
-      val topic = Await.result(
-        topicAdmin.creator
-          .numberOfPartitions(numberOfPartitions)
-          .numberOfReplications(numberOfReplications)
-          .name(CommonUtils.randomString(10))
-          .create(),
-        30 seconds
-      )
-      val topic2 = Await.result(topicAdmin.changePartitions(topic.name, numberOfPartitions + 1), 30 seconds)
-      topic2 shouldBe topic.copy(numberOfPartitions = numberOfPartitions + 1)
-    } finally topicAdmin.close()
+    val topic = Await.result(
+      topicAdmin.creator
+        .numberOfPartitions(numberOfPartitions)
+        .numberOfReplications(numberOfReplications)
+        .name(CommonUtils.randomString(10))
+        .create(),
+      30 seconds
+    )
+    val topic2 = result(topicAdmin.changePartitions(topic.name, numberOfPartitions + 1))
+    topic2 shouldBe topic.copy(numberOfPartitions = numberOfPartitions + 1)
   }
 
   @Test
@@ -75,17 +71,14 @@ class TestTopicAdmin extends With3Brokers with Matchers {
     val name = CommonUtils.randomString(10)
     val numberOfPartitions: Int = 2
     val numberOfReplications: Short = 1
-    val topicAdmin = TopicAdmin(testUtil().brokersConnProps())
-    try {
-      val topic = Await.result(topicAdmin.creator
-                                 .numberOfPartitions(numberOfPartitions)
-                                 .numberOfReplications(numberOfReplications)
-                                 .name(name)
-                                 .create(),
-                               30 seconds)
-      an[IllegalArgumentException] should be thrownBy Await
-        .result(topicAdmin.changePartitions(topic.name, numberOfPartitions - 1), 30 seconds)
-    } finally topicAdmin.close()
+    val topic = Await.result(topicAdmin.creator
+                               .numberOfPartitions(numberOfPartitions)
+                               .numberOfReplications(numberOfReplications)
+                               .name(name)
+                               .create(),
+                             30 seconds)
+    an[IllegalArgumentException] should be thrownBy result(
+      topicAdmin.changePartitions(topic.name, numberOfPartitions - 1))
   }
 
   @Test
@@ -93,17 +86,13 @@ class TestTopicAdmin extends With3Brokers with Matchers {
     val name = CommonUtils.randomString(10)
     val numberOfPartitions: Int = 2
     val numberOfReplications: Short = 1
-    val topicAdmin = TopicAdmin(testUtil().brokersConnProps())
-    try {
-      val topic = Await.result(topicAdmin.creator
-                                 .numberOfPartitions(numberOfPartitions)
-                                 .numberOfReplications(numberOfReplications)
-                                 .name(name)
-                                 .create(),
-                               30 seconds)
-      an[IllegalArgumentException] should be thrownBy Await.result(topicAdmin.changePartitions(topic.name, -10),
-                                                                   30 seconds)
-    } finally topicAdmin.close()
+    val topic = Await.result(topicAdmin.creator
+                               .numberOfPartitions(numberOfPartitions)
+                               .numberOfReplications(numberOfReplications)
+                               .name(name)
+                               .create(),
+                             30 seconds)
+    an[IllegalArgumentException] should be thrownBy result(topicAdmin.changePartitions(topic.name, -10))
   }
 
   @Test
@@ -111,16 +100,32 @@ class TestTopicAdmin extends With3Brokers with Matchers {
     val name = CommonUtils.randomString(10)
     val numberOfPartitions: Int = 2
     val numberOfReplications: Short = 1
-    val topicAdmin = TopicAdmin(testUtil().brokersConnProps())
-    try {
-      val topic = Await.result(topicAdmin.creator
-                                 .numberOfPartitions(numberOfPartitions)
-                                 .numberOfReplications(numberOfReplications)
-                                 .name(name)
-                                 .create(),
-                               30 seconds)
+    val topic = result(
+      topicAdmin.creator
+        .numberOfPartitions(numberOfPartitions)
+        .numberOfReplications(numberOfReplications)
+        .name(name)
+        .create())
 
-      topic shouldBe Await.result(topicAdmin.changePartitions(topic.name, numberOfPartitions), 30 seconds)
-    } finally topicAdmin.close()
+    topic shouldBe result(topicAdmin.changePartitions(topic.name, numberOfPartitions))
   }
+
+  @Test
+  def changePartitionsOfNonexistentTopic(): Unit =
+    an[UnknownTopicOrPartitionException] should be thrownBy result(
+      topicAdmin.changePartitions(CommonUtils.randomString(10), 10))
+
+  @Test
+  def deleteNonexistentTopic(): Unit = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    result(topicAdmin.delete(CommonUtils.randomString())) shouldBe false
+    val topic = result(topicAdmin.creator.name(CommonUtils.randomString(10)).create())
+    // wait the topic to be available
+    CommonUtils
+      .await(() => result(topicAdmin.topics().map(_.exists(_.name == topic.name))), java.time.Duration.ofSeconds(10))
+    result(topicAdmin.delete(topic.name)) shouldBe true
+  }
+
+  @After
+  def tearDown(): Unit = Releasable.close(topicAdmin)
 }

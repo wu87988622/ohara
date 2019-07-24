@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap
 import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.client.kafka.TopicAdmin.TopicInfo
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 private[configurator] class FakeTopicAdmin extends TopicAdmin {
   import scala.collection.JavaConverters._
@@ -30,8 +30,7 @@ private[configurator] class FakeTopicAdmin extends TopicAdmin {
 
   private[this] val cachedTopics = new ConcurrentHashMap[String, TopicInfo]()
 
-  override def changePartitions(name: String, numberOfPartitions: Int)(
-    implicit executionContext: ExecutionContext): Future[TopicInfo] =
+  override def changePartitions(name: String, numberOfPartitions: Int): Future[TopicInfo] =
     Option(cachedTopics.get(name))
       .map(
         previous =>
@@ -44,12 +43,12 @@ private[configurator] class FakeTopicAdmin extends TopicAdmin {
       .getOrElse(Future.failed(new NoSuchElementException(
         s"the topic:$name doesn't exist. actual:${cachedTopics.keys().asScala.mkString(",")}")))
 
-  override def list()(implicit executionContext: ExecutionContext): Future[Seq[TopicAdmin.TopicInfo]] =
+  override def topics(): Future[Seq[TopicAdmin.TopicInfo]] =
     Future.successful {
       cachedTopics.values().asScala.toSeq
     }
 
-  override def creator: TopicAdmin.Creator = (_, name, numberOfPartitions, numberOfReplications, _) =>
+  override def creator: TopicAdmin.Creator = (name, numberOfPartitions, numberOfReplications, _) =>
     if (cachedTopics.contains(name)) Future.failed(new IllegalArgumentException(s"$name already exists!"))
     else {
       cachedTopics.put(name, TopicInfo(name, numberOfPartitions, numberOfReplications))
@@ -66,8 +65,9 @@ private[configurator] class FakeTopicAdmin extends TopicAdmin {
   }
 
   override def closed: Boolean = _closed
-  override def delete(name: String)(implicit executionContext: ExecutionContext): Future[TopicInfo] =
-    Option(cachedTopics.remove(name))
-      .map(Future.successful)
-      .getOrElse(Future.failed(new NoSuchElementException(s"the topic:$name doesn't exist")))
+  override def delete(name: String): Future[Boolean] = {
+    val removed = cachedTopics.remove(name)
+    if (removed == null) Future.successful(false)
+    else Future.successful(true)
+  }
 }
