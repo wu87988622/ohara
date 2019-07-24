@@ -147,16 +147,17 @@ export const updateGraph = ({
   return updatedGraph;
 };
 
-export const loadGraph = pipeline => {
+export const loadGraph = (pipeline, currentConnectorName) => {
   const { objects, rules } = pipeline;
 
-  const updatedGraph = Object.keys(rules).map(name => {
+  const graph = Object.keys(rules).map(name => {
     const target = objects.find(object => object.name === name);
-    // Add a to prop in local state so we can create graph with this prop
     const { kind } = target;
+    const isActive = name === currentConnectorName;
 
     const props = {
       ...target,
+      isActive,
       to: rules[name],
     };
 
@@ -170,5 +171,5 @@ export const loadGraph = pipeline => {
     return { ...props };
   });
 
-  return updatedGraph;
+  return graph;
 };

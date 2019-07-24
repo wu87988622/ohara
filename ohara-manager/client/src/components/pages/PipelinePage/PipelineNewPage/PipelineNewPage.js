@@ -39,6 +39,7 @@ class PipelineNewPage extends React.Component {
     match: PropTypes.shape({
       params: PropTypes.shape({
         pipelineName: PropTypes.string.isRequired,
+        connectorName: PropTypes.string,
       }).isRequired,
     }).isRequired,
   };
@@ -132,9 +133,8 @@ class PipelineNewPage extends React.Component {
   };
 
   loadGraph = pipeline => {
-    this.setState(() => {
-      return { graph: utils.loadGraph(pipeline) };
-    });
+    const { connectorName } = this.props.match.params;
+    this.setState({ graph: utils.loadGraph(pipeline, connectorName) });
   };
 
   resetGraph = () => {
@@ -218,7 +218,6 @@ class PipelineNewPage extends React.Component {
 
     const connectorProps = {
       ...this.props,
-      loadGraph: this.loadGraph,
       updateGraph: this.updateGraph,
       refreshGraph: this.refreshGraph,
       updateHasChanges: this.updateHasChanges,

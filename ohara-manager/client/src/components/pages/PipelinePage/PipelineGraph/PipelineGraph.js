@@ -31,17 +31,18 @@ const PipelineGraph = props => {
       const dagreGraph = new dagreD3.graphlib.Graph().setGraph({});
 
       graph.forEach(g => {
-        const { name, className, kind, to, state, metrics } = g;
+        const { name, className, kind, to, state, metrics, isActive } = g;
 
         // Topic needs different props...
         const nodeProps = { shape: kind === 'topic' ? 'circle' : 'rect' };
 
         const html = utils.createHtml({
+          name,
+          className,
           kind,
           state,
           metrics,
-          name,
-          className,
+          isActive,
           workerClusterName,
         });
 
@@ -97,9 +98,7 @@ const PipelineGraph = props => {
       const { pipelineName } = match.params;
       const currentConnector = graph.find(g => g.name === current);
       const { className, name: connectorName } = currentConnector;
-
-      const update = { ...currentConnector, isActive: true };
-      updateGraph({ update });
+      updateGraph({ update: currentConnector });
 
       const action = match.url.includes('/edit/') ? 'edit' : 'new';
       const baseUrl = `/pipelines/${action}/${className}/${pipelineName}`;

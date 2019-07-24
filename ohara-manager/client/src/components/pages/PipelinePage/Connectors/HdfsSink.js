@@ -39,7 +39,6 @@ class HdfsSink extends React.Component {
     hasChanges: PropTypes.bool.isRequired,
     updateHasChanges: PropTypes.func.isRequired,
     updateGraph: PropTypes.func.isRequired,
-    loadGraph: PropTypes.func.isRequired,
     refreshGraph: PropTypes.func.isRequired,
     pipelineTopics: PropTypes.array.isRequired,
     globalTopics: PropTypes.arrayOf(types.topic).isRequired,

@@ -34,6 +34,7 @@ const TopicMetrics = props => {
   const remainingMeters = [];
 
   meters.forEach((meter, index) => {
+    // Display the first two items as the preview from the list
     if (index < 2) {
       previewMeters.push(meter);
     } else {

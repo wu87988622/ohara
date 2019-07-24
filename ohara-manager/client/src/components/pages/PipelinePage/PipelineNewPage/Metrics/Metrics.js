@@ -16,13 +16,11 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-
 import { isEmpty } from 'lodash';
 
-import { graph as graphPropType } from 'propTypes/pipeline';
 import TopicMetrics from './TopicMetrics';
 import ConnectorMetrics from './ConnectorMetrics';
-
+import { graph as graphPropType } from 'propTypes/pipeline';
 import { Box } from './styles';
 
 const Metrics = props => {

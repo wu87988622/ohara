@@ -120,6 +120,10 @@ const Svg = styled.svg`
     .status-icon {
       display: none;
     }
+
+    &.is-active {
+      box-shadow: 0 2px 12px 1px rgba(0, 0, 0, 0.1);
+    }
   }
 
   .node-connector {
@@ -181,6 +185,10 @@ const Svg = styled.svg`
       right: 8px;
       top: 7px;
       display: none;
+    }
+
+    &.is-active {
+      box-shadow: 0 2px 12px 1px rgba(0, 0, 0, 0.1);
     }
 
     &.is-running {

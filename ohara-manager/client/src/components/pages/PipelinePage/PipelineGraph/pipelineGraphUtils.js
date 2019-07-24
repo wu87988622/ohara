@@ -51,23 +51,32 @@ export const getStatusIcon = state => {
 };
 
 export const createHtml = params => {
-  const { kind, state, metrics, name, workerClusterName, className } = params;
+  const {
+    kind,
+    state,
+    metrics,
+    name,
+    workerClusterName,
+    className,
+    isActive,
+  } = params;
 
-  const updateState = state ? state : '';
+  const activeClass = isActive ? 'is-active' : '';
+  const connectorState = state ? state : '';
   const numberOfRows = get(metrics, 'meters[0].value', 0);
   const sizeOfRows = get(metrics, 'meters[1].value', 0);
   const topicClass = kind === 'topic' ? 'node-topic' : 'node-connector';
-  const stateClass = !isEmptyStr(updateState)
-    ? `is-${updateState.toLowerCase()}`
+  const stateClass = !isEmptyStr(connectorState)
+    ? `is-${connectorState.toLowerCase()}`
     : '';
-  const status = !isEmptyStr(updateState)
-    ? updateState.toLowerCase()
+  const status = !isEmptyStr(connectorState)
+    ? connectorState.toLowerCase()
     : 'stopped';
   const icon = getIcon(kind);
-  const statusIcon = getStatusIcon(updateState);
+  const statusIcon = getStatusIcon(connectorState);
   const displayKind = className.split('.').pop();
 
-  const html = `<div class="node-graph ${topicClass} ${stateClass}">
+  const html = `<div class="node-graph ${topicClass} ${stateClass} ${activeClass}">
         <div class="basic-info">
           <span class="node-icon"><i class="fa ${icon}"></i></span>
           <div class="node-text-wrapper">

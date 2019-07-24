@@ -26,7 +26,6 @@ const props = {
   hasChanges: false,
   updateHasChanges: jest.fn(),
   updateGraph: jest.fn(),
-  loadGraph: jest.fn(),
   graph: [],
   pipelineTopics: generate.topics(),
   match: {
@@ -40,7 +39,6 @@ const props = {
   history: {
     push: jest.fn(),
   },
-  isPipelineRunning: false,
 };
 
 // skip the tests for now as we will wrap this component

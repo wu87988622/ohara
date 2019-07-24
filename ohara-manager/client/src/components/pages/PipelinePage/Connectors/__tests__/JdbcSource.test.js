@@ -50,7 +50,6 @@ const props = {
   ],
   updateHasChanges: jest.fn(),
   updateGraph: jest.fn(),
-  loadGraph: jest.fn(),
   pipelineTopics: generate.topics(),
   match: { params: { connectorId: '1234' } },
   schema: [],
@@ -58,7 +57,6 @@ const props = {
   history: {
     push: jest.fn(),
   },
-  isPipelineRunning: false,
 };
 
 describe.skip('<FtpSource />', () => {

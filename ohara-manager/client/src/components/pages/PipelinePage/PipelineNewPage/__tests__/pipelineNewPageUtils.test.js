@@ -215,19 +215,27 @@ describe('loadGraph()', () => {
       ],
       rules: { a: ['c'], c: ['b'], b: [], d: [] },
     };
+    const connectorName = 'a';
 
     const expected = [
-      { name: 'a', kind: 'Source', to: ['c'] },
-      { name: 'c', kind: 'topic', className: 'topic', to: ['b'] },
-      { name: 'b', kind: 'Sink', to: [] },
+      { name: 'a', kind: 'Source', to: ['c'], isActive: true },
+      {
+        name: 'c',
+        kind: 'topic',
+        className: 'topic',
+        to: ['b'],
+        isActive: false,
+      },
+      { name: 'b', kind: 'Sink', to: [], isActive: false },
       {
         name: 'd',
         kind: 'streamApp',
         className: 'streamApp',
         to: [],
+        isActive: false,
       },
     ];
 
-    expect(loadGraph(pipeline)).toEqual(expected);
+    expect(loadGraph(pipeline, connectorName)).toEqual(expected);
   });
 });

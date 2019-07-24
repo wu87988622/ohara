@@ -18,7 +18,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import MetricsListItem from './MetricsListItem';
-
 import { StyledH4, MetricsList } from './styles';
 
 const ConnectorMetrics = props => {
