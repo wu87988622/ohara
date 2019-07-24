@@ -25,10 +25,14 @@ A sampe file for rst practice
 - Zookeeper issue: :zookeeper-issue:`2345`
 - Kubernetes issue: :k8s-issue:`2345`
 
+.. _my_label:
+
+Replace version and branch
+--------------------------
+
 This document branch is: |branch|
 
-
-We can replace `$|VERSION|` in the code block:
+We can replace **$\|VERSION\|** in the code block:
 
 .. code:: groovy
 
@@ -37,14 +41,14 @@ We can replace `$|VERSION|` in the code block:
             url "https://dl.bintray.com/oharastream/ohara"
         }
     }
-   implementation "com.island.ohara:ohara-common:$|VERSION|"
-   implementation "com.island.ohara:ohara-kafka:$|VERSION|"
+   implementation "com.island.ohara:ohara-common:$|version|"
+   implementation "com.island.ohara:ohara-kafka:$|version|"
 
 
 
 Source code link: `WordCountExample`_
 
-.. _WordCountExample: https://github.com/oharastream/ohara/blob/${BRANCH}/ohara-streams/src/test/java/com/island/ohara/streams/examples/WordCountExample.java
+.. _WordCountExample: https://github.com/oharastream/ohara/blob/$|branch|/ohara-streams/src/test/java/com/island/ohara/streams/examples/WordCountExample.java
 
 
 .. note::
@@ -68,3 +72,8 @@ Source code link: `WordCountExample`_
 .. code-block:: console
 
   pandoc --from=markdown --to=rst --output=README.rst README.md
+
+
+This is a link my_label_
+
+This is a link :ref:`my_label`

@@ -76,8 +76,8 @@ def setup(app):
 
 
 ultimate_replacements = {
-    "$|VERSION|": ohara_version,
-    "$|BRANCH|": ohara_branch
+    "$|version|": ohara_version,
+    "$|branch|": ohara_branch
 }
 
 

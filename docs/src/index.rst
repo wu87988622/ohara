@@ -61,7 +61,7 @@ Apart from contributing code to ohara, you can also leverage ohara to design you
    custom_connector
    custom_streamapp
    how_to_build
-   ohara_manager_development_guideline
+   manager_dev_guide
    docker
    integration_test
    contributing

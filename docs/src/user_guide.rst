@@ -185,7 +185,7 @@ for related steps).
 **Keep the data of Configurator**
 
 
-Ohara Configurator demand a folder to store `data <rest_interface.md>`__
+Ohara Configurator demand a folder to store `data <rest_interface.html>`__
 and `jars <rest_interface.html#jars>`__. As Ohara Configurator is
 running in docker container, you have to mount the volume, which is
 located on container host, on the home folder of Ohara Configurator if
@@ -412,7 +412,7 @@ by clicking on the sub menu on the left hand side sidebar:
    You can view your running brokers here as well as adding new topics
    in an existing broker. Please note that as of Ohara v0.5.0, we
    doesn’t support creating broker with the UI yet. You can do so via
-   the `RESTful APIs <rest_interface.md>`__.
+   the `RESTful APIs <rest_interface.html>`__.
 
    .. figure:: images/broker.png
       :alt: Ohara Manager broker page
@@ -452,7 +452,7 @@ by clicking on the sub menu on the left hand side sidebar:
 
 If you’d like to learn more about the development setup or have issue
 starting/working with it. Please see the
-`docs <ohara_manager_development_guideline.md>`__ here
+`docs <manager_dev_guide.html>`__ here
 
 --------------
 

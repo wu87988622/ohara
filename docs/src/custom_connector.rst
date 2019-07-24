@@ -68,8 +68,8 @@ to help you to access kafka and design custom connector.
             url "https://dl.bintray.com/oharastream/ohara"
         }
     }
-   implementation "com.island.ohara:ohara-common:$|VERSION|"
-   implementation "com.island.ohara:ohara-kafka:$|VERSION|"
+   implementation "com.island.ohara:ohara-common:$|version|"
+   implementation "com.island.ohara:ohara-kafka:$|version|"
 
 .. note::
    The `releases <https://github.com/oharastream/ohara/releases>`__ page shows the available version of ohara

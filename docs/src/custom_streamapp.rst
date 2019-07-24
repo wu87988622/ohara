@@ -54,9 +54,9 @@ required dependencies are shown below.
             url "https://dl.bintray.com/oharastream/ohara"
         }
     }
-   implementation "com.island.ohara:ohara-streams:$|VERSION|"
-   implementation "com.island.ohara:ohara-common:$|VERSION|"
-   implementation "com.island.ohara:ohara-kafka:$|VERSION|"
+   implementation "com.island.ohara:ohara-streams:$|version|"
+   implementation "com.island.ohara:ohara-common:$|version|"
+   implementation "com.island.ohara:ohara-kafka:$|version|"
 
 .. note::
    The `releases <https://github.com/oharastream/ohara/releases>`__ page
