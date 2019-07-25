@@ -27,7 +27,6 @@ import * as generate from 'utils/generate';
 import { renderWithRouter } from 'utils/testUtils';
 import PipelineToolbar from '../PipelineToolbar';
 import { ICON_KEYS } from 'constants/pipelines';
-import { fetchWorkers } from 'api/workerApi';
 import { fetchJars } from 'api/jarApi';
 import { CONNECTOR_TYPES } from 'constants/pipelines';
 import { createConnector } from 'api/connectorApi';
@@ -74,62 +73,47 @@ const props = {
   updateCurrentTopic: jest.fn(),
   resetCurrentTopic: jest.fn(),
   workerClusterName: 'abc',
+  connectors: [
+    {
+      className: '',
+      definitions: [
+        {
+          displayName: 'kind',
+          defaultValue: 'source',
+        },
+        {
+          displayName: 'version',
+          defaultValue: generate.number(),
+        },
+        {
+          displayName: 'revision',
+          defaultValue: generate.number(),
+        },
+      ],
+    },
+    {
+      className: '',
+      definitions: [
+        {
+          displayName: 'kind',
+          defaultValue: 'sink',
+        },
+        {
+          displayName: 'version',
+          defaultValue: generate.number(),
+        },
+        {
+          displayName: 'revision',
+          defaultValue: generate.number(),
+        },
+      ],
+    },
+  ],
 };
 
 afterEach(cleanup);
 
 describe('<PipelineToolbar />', () => {
-  beforeEach(() => {
-    const res = {
-      data: {
-        result: [
-          {
-            name: 'abc',
-            connectors: [
-              {
-                className: '',
-                definitions: [
-                  {
-                    displayName: 'kind',
-                    defaultValue: 'source',
-                  },
-                  {
-                    displayName: 'version',
-                    defaultValue: generate.number(),
-                  },
-                  {
-                    displayName: 'revision',
-                    defaultValue: generate.number(),
-                  },
-                ],
-              },
-              {
-                className: '',
-                definitions: [
-                  {
-                    displayName: 'kind',
-                    defaultValue: 'sink',
-                  },
-                  {
-                    displayName: 'version',
-                    defaultValue: generate.number(),
-                  },
-                  {
-                    displayName: 'revision',
-                    defaultValue: generate.number(),
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-        resetCurrentTopic: '',
-      },
-    };
-
-    fetchWorkers.mockImplementation(() => Promise.resolve(res));
-  });
-
   it('renders self', async () => {
     render(<PipelineToolbar {...props} />);
   });

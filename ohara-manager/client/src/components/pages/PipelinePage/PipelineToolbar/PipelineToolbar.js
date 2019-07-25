@@ -17,17 +17,15 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import ReactTooltip from 'react-tooltip';
-import { get, includes } from 'lodash';
 
 import * as PIPELINES from 'constants/pipelines';
 import PipelineNewStream from './PipelineNewStream';
 import PipelineNewConnector from './PipelineNewConnector';
 import PipelineNewTopic from './PipelineNewTopic';
 import { Modal } from 'components/common/Modal';
-import { fetchWorkers } from 'api/workerApi';
 import { isEmptyStr } from 'utils/commonUtils';
 import { Icon, ToolbarWrapper, FileSavingStatus } from './styles.js';
-import { graph as graphPropType } from 'propTypes/pipeline';
+import { graph as graphPropType, definition } from 'propTypes/pipeline';
 
 const modalNames = {
   ADD_SOURCE_CONNECTOR: 'sources',
@@ -41,6 +39,12 @@ class PipelineToolbar extends React.Component {
     match: PropTypes.shape({
       params: PropTypes.object,
     }).isRequired,
+    connectors: PropTypes.arrayOf(
+      PropTypes.shape({
+        className: PropTypes.string.isRequired,
+        definitions: PropTypes.arrayOf(definition).isRequired,
+      }).isRequired,
+    ).isRequired,
     graph: PropTypes.arrayOf(graphPropType).isRequired,
     updateGraph: PropTypes.func.isRequired,
     hasChanges: PropTypes.bool.isRequired,
@@ -59,77 +63,64 @@ class PipelineToolbar extends React.Component {
     activeConnector: null,
     connectorType: '',
     isAddBtnDisabled: false,
-    isFetchWorkerWorking: true,
     currWorker: null,
   };
 
   componentDidMount() {
-    this.fetchWorker();
+    this.getConnectorInfo();
     this.modalChild = React.createRef();
   }
 
-  fetchWorker = async () => {
-    const { workerClusterName } = this.props;
-    const res = await fetchWorkers();
-    this.setState({ isFetchWorkerWorking: false });
-    const workers = get(res, 'data.result', null);
+  getConnectorInfo = async () => {
+    const result = this.props.connectors.map(connector => {
+      const { className, definitions } = connector;
+      let targetMeta = {};
 
-    if (workers) {
-      const currWorker = workers.find(({ name }) => name === workerClusterName);
+      definitions.forEach(meta => {
+        const { displayName, defaultValue } = meta;
 
-      if (currWorker) {
-        const result = currWorker.connectors.map(connector => {
-          const { className, definitions } = connector;
-          let targetMeta = {};
-
-          definitions.forEach(meta => {
-            const { displayName, defaultValue } = meta;
-
-            if (
-              displayName === 'version' ||
-              displayName === 'revision' ||
-              displayName === 'kind'
-            ) {
-              targetMeta = {
-                ...targetMeta,
-                [displayName]: defaultValue,
-              };
-            }
-          });
-
-          const { kind, version, revision } = targetMeta;
-
-          return {
-            typeName: kind,
-            className,
-            version,
-            revision,
+        if (
+          displayName === 'version' ||
+          displayName === 'revision' ||
+          displayName === 'kind'
+        ) {
+          targetMeta = {
+            ...targetMeta,
+            [displayName]: defaultValue,
           };
-        });
+        }
+      });
 
-        const sources = result.filter(
-          ({ typeName, className }) =>
-            typeName === 'source' &&
-            !PIPELINES.CONNECTOR_FILTERS.includes(className),
-        );
+      const { kind, version, revision } = targetMeta;
 
-        const sinks = result.filter(
-          ({ typeName, className }) =>
-            typeName === 'sink' &&
-            !PIPELINES.CONNECTOR_FILTERS.includes(className),
-        );
+      return {
+        typeName: kind,
+        className,
+        version,
+        revision,
+      };
+    });
 
-        this.setState({ sources, sinks }, () => {
-          // If we have the supported connectors data at hand, let's set the
-          // default connector so they can be rendered in connector modal
+    const sources = result.filter(
+      ({ typeName, className }) =>
+        typeName === 'source' &&
+        !PIPELINES.CONNECTOR_FILTERS.includes(className),
+    );
 
-          const { activeConnector, connectorType = '' } = this.state;
-          if (!activeConnector && !isEmptyStr(connectorType)) {
-            this.setDefaultConnector(connectorType);
-          }
-        });
+    const sinks = result.filter(
+      ({ typeName, className }) =>
+        typeName === 'sink' && !PIPELINES.CONNECTOR_FILTERS.includes(className),
+    );
+
+    this.setState({ sources, sinks }, () => {
+      // If we have the supported connectors data at hand, let's set the
+      // default connector so they can be rendered in connector modal
+
+      const { activeConnector, connectorType = '' } = this.state;
+      if (!activeConnector && !isEmptyStr(connectorType)) {
+        this.setDefaultConnector(connectorType);
       }
-    }
+    });
   };
 
   setDefaultConnector = connectorType => {
@@ -196,7 +187,6 @@ class PipelineToolbar extends React.Component {
       connectorType,
       activeConnector,
       isAddBtnDisabled,
-      isFetchWorkerWorking,
     } = this.state;
 
     const { ftpSource } = PIPELINES.CONNECTOR_TYPES;
@@ -274,10 +264,10 @@ class PipelineToolbar extends React.Component {
               />
             )}
 
-            {includes(
-              [modalNames.ADD_SOURCE_CONNECTOR, modalNames.ADD_SINK_CONNECTOR],
-              modalName,
-            ) && (
+            {[
+              modalNames.ADD_SOURCE_CONNECTOR,
+              modalNames.ADD_SINK_CONNECTOR,
+            ].includes(modalName) && (
               <PipelineNewConnector
                 ref={this.modalChild}
                 connectorType={connectorType}
@@ -287,7 +277,6 @@ class PipelineToolbar extends React.Component {
                 updateGraph={updateGraph}
                 graph={graph}
                 updateAddBtnStatus={this.updateAddBtnStatus}
-                isLoading={isFetchWorkerWorking}
                 workerClusterName={workerClusterName}
                 handleClose={this.handleModalClose}
               />

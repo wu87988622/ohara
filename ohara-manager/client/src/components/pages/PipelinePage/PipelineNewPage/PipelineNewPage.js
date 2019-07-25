@@ -253,6 +253,7 @@ class PipelineNewPage extends React.Component {
               resetCurrentTopic={this.resetCurrentTopic}
               updateCurrentTopic={this.updateCurrentTopic}
               workerClusterName={workerClusterName}
+              connectors={connectors}
             />
 
             <Main>

@@ -36,7 +36,6 @@ class PipelineNewConnector extends React.Component {
     updateGraph: PropTypes.func.isRequired,
     activeConnector: PropTypes.object,
     updateAddBtnStatus: PropTypes.func.isRequired,
-    isLoading: PropTypes.bool.isRequired,
     workerClusterName: PropTypes.string.isRequired,
     handleClose: PropTypes.func.isRequired,
   };
@@ -80,12 +79,12 @@ class PipelineNewConnector extends React.Component {
   };
 
   render() {
-    const { connectors, activeConnector, onSelect, isLoading } = this.props;
+    const { connectors, activeConnector, onSelect } = this.props;
     const { isModalOpen, newConnectorName } = this.state;
 
     return (
       <TableWrapper>
-        {isLoading || !activeConnector ? (
+        {!activeConnector ? (
           <ListLoader />
         ) : (
           <Table headers={PIPELINES.TABLE_HEADERS}>
