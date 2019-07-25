@@ -18,20 +18,24 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Tooltip from '@material-ui/core/Tooltip';
 import TableRow from '@material-ui/core/TableRow';
-import { divide, floor } from 'lodash';
+import { divide, floor, get } from 'lodash';
 
 import OverviewTable from './OverviewTable';
-import { useFetchJars } from '../WorkspacesDetailPageUtils';
 import {
   TabHeading,
   StyledTableCell,
   StyledIcon,
   StyledIconLink,
 } from './styles';
+import * as useApi from 'components/controller';
+import * as URL from 'components/controller/url';
 
 const OverviewStreamApps = props => {
   const { handleRedirect, workerName } = props;
-  const { jars, loading: fetchingJars } = useFetchJars(workerName);
+  // const { jars, loading: fetchingJars } = useFetchJars(workerName);
+  const { data: jars, loading: fetchingJars } = useApi.useFetchApi(
+    `${URL.FILE_URL}?group=${workerName}`,
+  );
 
   return (
     <>
@@ -52,12 +56,12 @@ const OverviewStreamApps = props => {
         headers={['Jar name', 'File size(KB)']}
         isLoading={fetchingJars}
       >
-        {jars.map(jar => {
+        {get(jars, 'data.result', []).map(jar => {
           return (
             <TableRow key={jar.name}>
               <StyledTableCell>{jar.name}</StyledTableCell>
               <StyledTableCell align="right">
-                {floor(divide(jar.size, 1024), 2)}
+                {floor(divide(jar.size, 1024), 1)}
               </StyledTableCell>
             </TableRow>
           );

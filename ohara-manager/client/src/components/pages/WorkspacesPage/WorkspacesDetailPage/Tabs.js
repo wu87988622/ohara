@@ -23,8 +23,8 @@ import Tab from '@material-ui/core/Tab';
 import { Route } from 'react-router-dom';
 
 import Topics from './Topics';
-import StreamApp from './StreamApp';
-import Nodes from './Nodes';
+import StreamApp from './StreamApp/StreamApp';
+import Nodes from './Node/Nodes';
 import Overview from './Overview';
 
 const StyledTabs = styled(Tabs)`

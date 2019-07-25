@@ -17,7 +17,24 @@
 import styled from 'styled-components';
 import Icon from '@material-ui/core/Icon';
 
-export const StyledIcon = styled(Icon)`
-  font-size: 12px;
-  margin: 0 12px;
+import { Label } from 'components/common/Form';
+
+export const ActionIcon = styled(Icon)`
+  font-size: 20px;
+`;
+
+export const Main = styled.div`
+  clear: both;
+  padding: 30px 0;
+  width: calc(100% - 60px);
+  margin: auto;
+`;
+
+export const StyledLabel = styled(Label)`
+  margin: 30px 30px 0;
+  float: right;
+`;
+
+export const StyledInputFile = styled.input`
+  display: none;
 `;

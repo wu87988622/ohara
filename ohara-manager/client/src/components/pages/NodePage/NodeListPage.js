@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import DocumentTitle from 'react-document-title';
 import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
-import { sortBy, get, isNull } from 'lodash';
+import { get } from 'lodash';
 
-import * as nodeApi from 'api/nodeApi';
 import * as s from './styles';
 import NodeNewModal from './NodeNewModal';
 import NodeEditModal from './NodeEditModal';
@@ -28,52 +27,33 @@ import EditIcon from '@material-ui/icons/Edit';
 import IconButton from '@material-ui/core/IconButton';
 import { NODES } from 'constants/documentTitles';
 import { H2 } from 'components/common/Headings';
+import * as useApi from 'components/controller';
+import * as URL from 'components/controller/url';
 
-const NODE_EDIT_MODAL = 'nodeEditModal';
+const NodeListPage = () => {
+  const headers = ['HOST NAME', 'SERVICES', 'SSH', 'EDIT'];
+  const [activeNode, setActiveNode] = useState(null);
+  const [isNewModalOpen, setIsNewModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const { data: nodeRes, isLoading, setRefetch } = useApi.useFetchApi(
+    URL.NODE_URL,
+  );
 
-class NodeListPage extends React.Component {
-  headers = ['HOST NAME', 'SERVICES', 'SSH', 'EDIT'];
-
-  state = {
-    isLoading: true,
-    nodes: [],
-    activeModal: null,
-    activeNode: null,
-    isNewModalOpen: false,
-    isEditModalOpen: false,
+  const handleEditClick = node => {
+    setActiveNode(node);
+    setIsEditModalOpen(true);
   };
 
-  componentDidMount() {
-    this.fetchData();
-  }
-
-  fetchData = async () => {
-    const res = await nodeApi.fetchNodes();
-    this.setState(() => ({ isLoading: false }));
-    const nodes = get(res, 'data.result', null);
-
-    if (!isNull(nodes)) {
-      this.setState({ nodes: sortBy(nodes, 'name') });
-    }
+  const handleNewModalOpen = () => {
+    setIsNewModalOpen(true);
   };
 
-  handleEditClick = node => {
-    this.setState({
-      activeModal: NODE_EDIT_MODAL,
-      activeNode: node,
-      isEditModalOpen: true,
-    });
+  const handleModalClose = () => {
+    setIsNewModalOpen(false);
+    setIsEditModalOpen(false);
   };
 
-  handleNewModalOpen = () => {
-    this.setState({ isNewModalOpen: true });
-  };
-
-  handleModalClose = () => {
-    this.setState({ isNewModalOpen: false, isEditModalOpen: false });
-  };
-
-  getServiceNames = node => {
+  const getServiceNames = node => {
     if (node && node.services) {
       const result = node.services
         .reduce((acc, service) => {
@@ -92,7 +72,7 @@ class NodeListPage extends React.Component {
     return [];
   };
 
-  getSSHLabel = (user, port) => {
+  const getSSHLabel = (user, port) => {
     if (user && port) {
       return `user: ${user}, port: ${port}`;
     } else if (user) {
@@ -103,64 +83,62 @@ class NodeListPage extends React.Component {
     return '';
   };
 
-  render() {
-    const { nodes, isLoading, activeNode } = this.state;
-
-    return (
-      <DocumentTitle title={NODES}>
-        <>
-          <s.Wrapper>
-            <s.TopWrapper>
-              <H2>Nodes</H2>
-              <s.NewNodeBtn
-                variant="contained"
-                color="primary"
-                text="New node"
-                data-testid="new-node"
-                onClick={this.handleNewModalOpen}
-              />
-            </s.TopWrapper>
-            <s.NodeTable isLoading={isLoading} headers={this.headers}>
-              {nodes.map(node => (
-                <TableRow key={node.name}>
-                  <TableCell data-testid="node-name" component="th" scope="row">
-                    {node.name || ''}
-                  </TableCell>
-                  <TableCell align="left">
-                    {this.getServiceNames(node)}
-                  </TableCell>
-                  <TableCell align="left">
-                    {this.getSSHLabel(node.user, node.port)}
-                  </TableCell>
-                  <TableCell className="has-icon" align="right">
-                    <IconButton
-                      color="primary"
-                      aria-label="Edit"
-                      data-testid="edit-node-icon"
-                      onClick={() => this.handleEditClick(node)}
-                    >
-                      <EditIcon />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </s.NodeTable>
-          </s.Wrapper>
-          <NodeNewModal
-            isOpen={this.state.isNewModalOpen}
-            handleClose={this.handleModalClose}
-            handleConfirm={this.fetchData}
-          />
-          <NodeEditModal
-            node={activeNode}
-            isOpen={this.state.isEditModalOpen}
-            handleClose={this.handleModalClose}
-            handleConfirm={this.fetchData}
-          />
-        </>
-      </DocumentTitle>
-    );
-  }
-}
+  return (
+    <DocumentTitle title={NODES}>
+      <>
+        <s.Wrapper>
+          <s.TopWrapper>
+            <H2>Nodes</H2>
+            <s.NewNodeBtn
+              variant="contained"
+              color="primary"
+              text="New node"
+              data-testid="new-node"
+              onClick={handleNewModalOpen}
+            />
+          </s.TopWrapper>
+          <s.NodeTable isLoading={isLoading} headers={headers}>
+            {get(nodeRes, 'data.result', []).map(node => (
+              <TableRow key={node.name}>
+                <TableCell data-testid="node-name" component="th" scope="row">
+                  {node.name || ''}
+                </TableCell>
+                <TableCell align="left">{getServiceNames(node)}</TableCell>
+                <TableCell align="left">
+                  {getSSHLabel(node.user, node.port)}
+                </TableCell>
+                <TableCell className="has-icon" align="right">
+                  <IconButton
+                    color="primary"
+                    aria-label="Edit"
+                    data-testid="edit-node-icon"
+                    onClick={() => handleEditClick(node)}
+                  >
+                    <EditIcon />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            ))}
+          </s.NodeTable>
+        </s.Wrapper>
+        <NodeNewModal
+          isOpen={isNewModalOpen}
+          handleClose={handleModalClose}
+          handleConfirm={() => {
+            setRefetch();
+          }}
+        />
+        <NodeEditModal
+          node={activeNode}
+          isOpen={isEditModalOpen}
+          handleClose={handleModalClose}
+          handleConfirm={() => {
+            setRefetch();
+          }}
+        />
+      </>
+    </DocumentTitle>
+  );
+};
 
 export default NodeListPage;

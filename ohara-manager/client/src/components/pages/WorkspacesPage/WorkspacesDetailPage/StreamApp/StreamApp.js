@@ -16,37 +16,48 @@
 
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import toastr from 'toastr';
 import Tooltip from '@material-ui/core/Tooltip';
 import IconButton from '@material-ui/core/IconButton';
 import { get, divide, floor } from 'lodash';
 
-import * as jarApi from 'api/jarApi';
+// import * as jarApi from 'api/jarApi';
 import * as MESSAGES from 'constants/messages';
-import * as utils from './WorkspacesDetailPageUtils';
+import * as utils from '../WorkspacesDetailPageUtils';
 import { Button } from 'components/common/Mui/Form';
 import { DeleteDialog } from 'components/common/Mui/Dialog';
 import { SortTable } from 'components/common/Mui/Table';
 import { Main, ActionIcon, StyledInputFile, StyledLabel } from './styles';
+import * as useApi from 'components/controller';
+import * as URL from 'components/controller/url';
+import useSnackbar from 'components/context/Snackbar/useSnackbar';
 
 const StreamApp = props => {
   const { workspaceName } = props;
   const [jarNameToBeDeleted, setJarNameToBeDeleted] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const { jars, fetchJars, loading } = utils.useFetchJars(workspaceName);
+  // const { jars, fetchJars, loading } = utils.useFetchJars(workspaceName);
+  const { data: jarsRes, isLoading, setRefetch } = useApi.useFetchApi(
+    `${URL.FILE_URL}?group=${workspaceName}`,
+  );
+  const jars = get(jarsRes, 'data.result', []);
+  const { getData: getJarRes, uploadApi } = useApi.useUploadApi(URL.FILE_URL);
+  const { getData: getDeleteRes, deleteApi } = useApi.useDeleteApi(
+    URL.FILE_URL,
+  );
+  const { showMessage } = useSnackbar();
 
   const uploadJar = async file => {
-    const res = await jarApi.createJar({
-      workerClusterName: workspaceName,
-      file,
-    });
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('group', workspaceName);
+    await uploadApi(formData);
 
-    const isSuccess = get(res, 'data.isSuccess', false);
+    const isSuccess = get(getJarRes(), 'data.isSuccess', false);
     if (isSuccess) {
-      toastr.success(MESSAGES.STREAM_APP_UPLOAD_SUCCESS);
+      showMessage(MESSAGES.STREAM_APP_UPLOAD_SUCCESS);
     }
-    fetchJars();
+    setRefetch();
   };
 
   const handleFileSelect = event => {
@@ -55,7 +66,7 @@ const StreamApp = props => {
     const isDuplicate = () => jars.some(jar => jar.name === file.name);
 
     if (isDuplicate()) {
-      toastr.error('The jar name already exists!');
+      showMessage('The jar name already exists!');
       return;
     }
 
@@ -90,7 +101,7 @@ const StreamApp = props => {
   const rows = jars.map(jar => {
     return {
       name: jar.name,
-      size: floor(divide(jar.size, 1024), 2),
+      size: floor(divide(jar.size, 1024), 1),
       lastModified: utils.getDateFromTimestamp(jar.lastModified),
       action: actionButton(jar),
     };
@@ -98,20 +109,15 @@ const StreamApp = props => {
 
   const handleDelete = async () => {
     if (jarNameToBeDeleted) {
-      const params = {
-        name: jarNameToBeDeleted,
-        workerClusterName: workspaceName,
-      };
-
-      const res = await jarApi.deleteJar(params);
-      const isSuccess = get(res, 'data.isSuccess', false);
+      await deleteApi(`${jarNameToBeDeleted}?group=${workspaceName}`);
+      const isSuccess = get(getDeleteRes(), 'data.isSuccess', false);
       setDeleting(false);
 
       if (isSuccess) {
-        toastr.success(MESSAGES.STREAM_APP_DELETE_SUCCESS);
+        showMessage(MESSAGES.STREAM_APP_DELETE_SUCCESS);
         setIsModalOpen(false);
         setJarNameToBeDeleted('');
-        fetchJars();
+        setRefetch();
       }
     }
   };
@@ -129,7 +135,7 @@ const StreamApp = props => {
       </StyledLabel>
       <Main>
         <SortTable
-          isLoading={loading}
+          isLoading={isLoading}
           headRows={headRows}
           rows={rows}
           tableName="streamApp"

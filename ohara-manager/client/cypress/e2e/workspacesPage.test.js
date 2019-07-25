@@ -31,7 +31,7 @@ describe('WorkspacesPage', () => {
     cy.route('GET', 'api/brokers/*').as('getBroker');
     cy.route('GET', 'api/zookeepers/*').as('getZookeeper');
     cy.route('GET', 'api/topics').as('getTopics');
-    cy.route('GET', 'api/jars?*').as('getJars');
+    cy.route('GET', 'api/files?*').as('getFiles');
   });
 
   it('creates a new connect worker cluster', () => {
@@ -307,7 +307,7 @@ describe('WorkspacesPage', () => {
             });
         });
       })
-      .wait('@getJars')
+      .wait('@getFiles')
       .then(xhr => {
         cy.log(xhr);
         xhr.response.body.forEach(streamapp => {

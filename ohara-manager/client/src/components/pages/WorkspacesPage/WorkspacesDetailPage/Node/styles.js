@@ -15,9 +15,22 @@
  */
 
 import styled from 'styled-components';
-import Icon from '@material-ui/core/Icon';
 
-export const StyledIcon = styled(Icon)`
-  font-size: 12px;
-  margin: 0 12px;
+import { Table as MuiTable } from 'components/common/Mui/Table';
+import { Button } from 'components/common/Mui/Form';
+
+export const Main = styled.div`
+  clear: both;
+  padding: 30px 0;
+  width: calc(100% - 60px);
+  margin: auto;
+`;
+
+export const NewButton = styled(Button)`
+  margin: 30px 30px 0;
+  float: right;
+`;
+
+export const StyledTable = styled(MuiTable)`
+  width: 80%;
 `;

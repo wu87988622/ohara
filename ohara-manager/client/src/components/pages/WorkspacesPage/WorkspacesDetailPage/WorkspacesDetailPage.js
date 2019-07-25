@@ -14,34 +14,23 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import DocumentTitle from 'react-document-title';
 import { get } from 'lodash';
 
-import * as workerApi from 'api/workerApi';
 import Container from 'components/common/Mui/Layout';
 import Tabs from './Tabs';
 import { WORKSPACES_DETAIL } from 'constants/documentTitles';
 import { PageTitle } from 'components/common/Mui/Typography';
 import { StyledIcon } from './styles';
+import * as useApi from 'components/controller';
+import * as URL from 'components/controller/url';
 
 const WorkspacesDetailPage = props => {
   const { workspaceName } = props.match.params;
-  const [worker, setWorker] = useState(null);
-
-  useEffect(() => {
-    const fetchWorker = async () => {
-      const res = await workerApi.fetchWorker(workspaceName);
-      const worker = get(res, 'data.result', null);
-
-      if (worker) {
-        setWorker(worker);
-      }
-    };
-
-    fetchWorker();
-  }, [workspaceName]);
+  const { data: response } = useApi.useFetchApi(URL.WORKER_URL, workspaceName);
+  const worker = get(response, 'data.result', null);
 
   if (!worker) return null;
 

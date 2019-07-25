@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 
-import styled from 'styled-components';
-import Icon from '@material-ui/core/Icon';
+import { useContext } from 'react';
+import SnackbarContext from './SnackbarContext';
 
-export const StyledIcon = styled(Icon)`
-  font-size: 12px;
-  margin: 0 12px;
-`;
+const useSnackbar = () => {
+  const { setSnackMessage } = useContext(SnackbarContext);
+
+  return {
+    showMessage: setSnackMessage,
+  };
+};
+export default useSnackbar;

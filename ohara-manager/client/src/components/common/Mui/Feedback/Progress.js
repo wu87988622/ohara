@@ -25,14 +25,21 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 import LinearProgress from '@material-ui/core/LinearProgress';
 
 const Progress = props => {
-  const { steps = [], open, activeStep, deleteType = false } = props;
+  const {
+    steps = [],
+    open,
+    activeStep,
+    deleteType = false,
+    createTitle = 'Creating',
+    deleteTitle = 'Deleting',
+  } = props;
   const [completed, setCompleted] = useState(0);
   const [buffer, setBuffer] = useState(0);
   const [diff, setDiff] = useState(0);
   const [oldActiveStep, setOldActiveStep] = useState(0);
   const [stepType, setStepType] = useState();
   const [color, setColor] = useState();
-  const [title, setTitle] = useState('Creating');
+  const [title, setTitle] = useState('');
 
   const StyledDiv = styled.div`
     margin-bottom: 15px;
@@ -43,10 +50,10 @@ const Progress = props => {
     progress.current = () => {
       if (completed < 100) {
         if (deleteType) {
-          if (title === 'Creating') {
+          if (title === createTitle) {
             setColor('secondary');
             setStepType('error');
-            setTitle('Deleting');
+            setTitle(deleteTitle);
             setBuffer(0);
             setDiff(0);
           } else {
@@ -80,14 +87,14 @@ const Progress = props => {
       setCompleted(0);
       setColor();
       setStepType();
-      setTitle('Creating');
+      setTitle(createTitle);
       setBuffer(0);
       setDiff(0);
     }
     return () => {
       clearInterval(timer);
     };
-  }, [activeStep, open, steps.length]);
+  }, [activeStep, createTitle, open, steps.length]);
 
   return (
     <Dialog open={open} fullWidth>
@@ -121,6 +128,8 @@ Progress.propTypes = {
   open: PropTypes.bool.isRequired,
   activeStep: PropTypes.number.isRequired,
   deleteType: PropTypes.bool,
+  createTitle: PropTypes.string,
+  deleteTitle: PropTypes.string,
 };
 
 export default Progress;

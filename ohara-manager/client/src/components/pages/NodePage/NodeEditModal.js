@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { get } from 'lodash';
-import toastr from 'toastr';
 import { Form, Field, FormSpy } from 'react-final-form';
 import InputField from 'components/common/Mui/Form/InputField';
 import DialogTitle from 'components/common/Mui/Dialog/DialogTitle';
@@ -27,169 +26,177 @@ import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 
 import Button from '@material-ui/core/Button';
-import * as nodeApi from 'api/nodeApi';
-import * as validateApi from 'api/validateApi';
 import validate from './validate';
 import * as MESSAGES from 'constants/messages';
+import * as useApi from 'components/controller';
+import * as URL from 'components/controller/url';
+import useSnackbar from 'components/context/Snackbar/useSnackbar';
 
-class NodeEditModal extends React.Component {
-  static propTypes = {
-    node: PropTypes.shape({
-      name: PropTypes.string,
-      port: PropTypes.number,
-      user: PropTypes.string,
-      password: PropTypes.string,
-    }),
-    isOpen: PropTypes.bool.isRequired,
-    handleClose: PropTypes.func.isRequired,
-    handleConfirm: PropTypes.func.isRequired,
-  };
-  state = {
-    isValidConnection: false,
-    isTestBtnWorking: false,
+const NodeEditModal = props => {
+  const [isValidConnection, setIsValidConnection] = useState(false);
+  const { getData, validationApi } = useApi.useValidationApi(
+    URL.VALIDATE_NODE_URL,
+  );
+  const { getData: saveRes, putApi } = useApi.usePutApi(URL.NODE_URL);
+  const { showMessage } = useSnackbar();
+
+  const handleModalClose = () => {
+    props.handleClose();
   };
 
-  handleModalClose = () => {
-    this.props.handleClose();
-  };
+  const onSubmit = async (values, form) => {
+    const data = {
+      name: values.name,
+      password: values.password,
+      port: Number(values.port),
+      user: values.user,
+    };
 
-  onSubmit = async (values, form) => {
-    const res = await nodeApi.createNode(values);
-    const isSuccess = get(res, 'data.isSuccess', false);
+    await putApi({ type: values.name, data });
+    const isSuccess = get(saveRes(), 'data.isSuccess', false);
     if (isSuccess) {
       form.reset();
-      toastr.success(MESSAGES.NODE_CREATION_SUCCESS);
-      this.props.handleConfirm();
-      this.handleModalClose();
+      showMessage(MESSAGES.NODE_CREATION_SUCCESS);
+      props.handleConfirm();
+      handleModalClose();
     }
   };
 
-  testConnection = async values => {
-    const { name: hostname, port, user, password } = values;
-    this.setState({ isTestBtnWorking: true });
-    const res = await validateApi.validateNode({
-      hostname,
-      port,
-      user,
-      password,
-    });
+  const testConnection = async values => {
+    const data = {
+      hostname: values.name,
+      password: values.password,
+      port: Number(values.port),
+      user: values.user,
+    };
+    await validationApi(data);
 
-    const pass = get(res, 'data.result[0].pass', false);
-    this.setState({ isValidConnection: pass, isTestBtnWorking: false });
+    const pass = get(getData(), 'data.result[0].pass', false);
+    setIsValidConnection(pass);
     if (pass) {
-      toastr.success(MESSAGES.TEST_SUCCESS);
+      showMessage(MESSAGES.TEST_SUCCESS);
     }
   };
 
-  render() {
-    const { node } = this.props;
-    if (!node) return null;
-    const { name, port, user, password } = node;
-    const { isOpen, handleClose } = this.props;
-    return (
-      <Form
-        onSubmit={this.onSubmit}
-        initialValues={{ name, port: `${port}`, user, password }}
-        validate={validate}
-        render={({
-          handleSubmit,
-          form,
-          submitting,
-          pristine,
-          invalid,
-          values,
-        }) => {
-          return (
-            <Dialog
-              fullWidth={true}
-              maxWidth="xs"
-              open={isOpen}
-              onClose={handleClose}
-              aria-labelledby="form-dialog-title"
-            >
-              <div data-testid="edit-node-modal">
-                <DialogTitle id="form-dialog-title" onClose={handleClose}>
-                  New ohara node
-                </DialogTitle>
-                <FormSpy
-                  subscription={{ values: true }}
-                  onChange={() => {
-                    this.setState({ isValidConnection: false });
-                  }}
-                />
-                <form onSubmit={handleSubmit}>
-                  <DialogContent>
-                    <Field
-                      disabled
-                      name="name"
-                      label="Node"
-                      placeholder="node-00"
-                      margin="normal"
-                      fullWidth
-                      variant="outlined"
-                      component={InputField}
-                    />
+  const { node } = props;
+  if (!node) return null;
+  const { name, port, user, password } = node;
+  const { isOpen, handleClose } = props;
+  return (
+    <Form
+      onSubmit={onSubmit}
+      initialValues={{ name, port: `${port}`, user, password }}
+      validate={validate}
+      render={({
+        handleSubmit,
+        form,
+        submitting,
+        pristine,
+        invalid,
+        values,
+      }) => {
+        return (
+          <Dialog
+            fullWidth={true}
+            maxWidth="xs"
+            open={isOpen}
+            onClose={handleClose}
+            aria-labelledby="form-dialog-title"
+          >
+            <div data-testid="edit-node-modal">
+              <DialogTitle id="form-dialog-title" onClose={handleClose}>
+                New ohara node
+              </DialogTitle>
+              <FormSpy
+                subscription={{ values: true }}
+                onChange={() => {
+                  setIsValidConnection(false);
+                }}
+              />
+              <form onSubmit={handleSubmit}>
+                <DialogContent>
+                  <Field
+                    disabled
+                    name="name"
+                    label="Node"
+                    placeholder="node-00"
+                    margin="normal"
+                    fullWidth
+                    variant="outlined"
+                    component={InputField}
+                  />
 
-                    <Field
-                      name="port"
-                      label="Port"
-                      placeholder="1021"
-                      margin="normal"
-                      type="number"
-                      variant="outlined"
-                      component={InputField}
-                    />
+                  <Field
+                    name="port"
+                    label="Port"
+                    placeholder="1021"
+                    margin="normal"
+                    type="number"
+                    variant="outlined"
+                    component={InputField}
+                  />
 
-                    <Field
-                      name="user"
-                      label="User"
-                      placeholder="admin"
-                      margin="normal"
-                      fullWidth
-                      variant="outlined"
-                      component={InputField}
-                    />
+                  <Field
+                    name="user"
+                    label="User"
+                    placeholder="admin"
+                    margin="normal"
+                    fullWidth
+                    variant="outlined"
+                    component={InputField}
+                  />
 
-                    <Field
-                      name="password"
-                      label="Password"
-                      type="password"
-                      placeholder="password"
-                      margin="normal"
-                      fullWidth
-                      variant="outlined"
-                      component={InputField}
-                    />
-                  </DialogContent>
-                  <DialogContent>
-                    <Button
-                      variant="outlined"
-                      onClick={e => {
-                        e.preventDefault();
-                        this.testConnection(values);
-                      }}
-                      color="primary"
-                    >
-                      Test connection
-                    </Button>
-                  </DialogContent>
-                  <DialogActions>
-                    <Button onClick={handleClose}>Cancel</Button>
-                    <Button
-                      onClick={handleSubmit}
-                      color="primary"
-                      disabled={pristine}
-                    >
-                      Save
-                    </Button>
-                  </DialogActions>
-                </form>
-              </div>
-            </Dialog>
-          );
-        }}
-      />
-    );
-  }
-}
+                  <Field
+                    name="password"
+                    label="Password"
+                    type="password"
+                    placeholder="password"
+                    margin="normal"
+                    fullWidth
+                    variant="outlined"
+                    component={InputField}
+                  />
+                </DialogContent>
+                <DialogContent>
+                  <Button
+                    variant="outlined"
+                    onClick={e => {
+                      e.preventDefault();
+                      testConnection(values);
+                    }}
+                    color="primary"
+                  >
+                    Test connection
+                  </Button>
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={handleClose}>Cancel</Button>
+                  <Button
+                    onClick={handleSubmit}
+                    color="primary"
+                    disabled={!isValidConnection}
+                  >
+                    Save
+                  </Button>
+                </DialogActions>
+              </form>
+            </div>
+          </Dialog>
+        );
+      }}
+    />
+  );
+};
+
+NodeEditModal.propTypes = {
+  node: PropTypes.shape({
+    name: PropTypes.string,
+    port: PropTypes.number,
+    user: PropTypes.string,
+    password: PropTypes.string,
+  }),
+  isOpen: PropTypes.bool.isRequired,
+  handleClose: PropTypes.func.isRequired,
+  handleConfirm: PropTypes.func.isRequired,
+};
 export default NodeEditModal;

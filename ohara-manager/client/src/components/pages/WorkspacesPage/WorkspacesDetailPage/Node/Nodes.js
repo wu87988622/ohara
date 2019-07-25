@@ -14,60 +14,51 @@
  * limitations under the License.
  */
 
-import React, { useEffect, useCallback, useState } from 'react';
-import toastr from 'toastr';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
 import { get, isEmpty } from 'lodash';
 
-import * as nodeApi from 'api/nodeApi';
-import * as brokerApi from 'api/brokerApi';
-import * as workerApi from 'api/workerApi';
-import * as containerApi from 'api/containerApi';
 import * as MESSAGES from 'constants/messages';
 import * as commonUtils from 'utils/commonUtils';
-import * as utils from './WorkspacesDetailPageUtils';
+import * as utils from '../WorkspacesDetailPageUtils';
 import Checkbox from '@material-ui/core/Checkbox';
 import { Dialog } from 'components/common/Mui/Dialog';
 import { SortTable } from 'components/common/Mui/Table';
 import { Main, NewButton, StyledTable } from './styles';
+import * as useApi from 'components/controller';
+import * as URL from 'components/controller/url';
+import useSnackbar from 'components/context/Snackbar/useSnackbar';
 
 const Nodes = props => {
   const { workspaceName } = props;
-  const [useNodes, setUesNodes] = useState([]);
-  const [broker, setBroker] = useState(null);
-  const [unusedNodes, setUnusedNodes] = useState([]);
   const [selectNodes, setSelectNodes] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [confirmDisabled, setConfirmDisabled] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [working, setWorking] = useState(false);
+  const { putApi: putWorker } = useApi.usePutApi(URL.WORKER_URL);
+  const { putApi: putBroker } = useApi.usePutApi(URL.BROKER_URL);
+  const { getData, getApi } = useApi.useGetApi(URL.CONTAINER_URL);
+  const { showMessage } = useSnackbar();
 
-  const fetchWorker = useCallback(async () => {
-    const workerRes = await workerApi.fetchWorker(workspaceName);
-    const nodeRes = await nodeApi.fetchNodes();
+  const { data: workerRes, isLoading, setRefetch } = useApi.useFetchApi(
+    URL.WORKER_URL,
+    workspaceName,
+  );
+  const { data: nodeRes } = useApi.useFetchApi(URL.NODE_URL);
+  const workerNodes = get(workerRes, 'data.result.nodeNames', []);
+  const broker = get(workerRes, 'data.result.brokerClusterName', null);
+  const nodes = get(nodeRes, 'data.result', []);
+  const nodeNames = nodes.map(node => node.name);
+  const workerNodeNames = nodeNames.filter(nodeName =>
+    workerNodes.includes(nodeName),
+  );
 
-    const workerNodes = get(workerRes, 'data.result.nodeNames', []);
-    const nodes = get(nodeRes, 'data.result', []);
-    const nodeNames = nodes.map(node => node.name);
-    const workerNodeNames = nodeNames.filter(nodeName =>
-      workerNodes.includes(nodeName),
-    );
-
-    setBroker(workerRes.data.result.brokerClusterName);
-
-    const used = nodes.filter(node => workerNodeNames.includes(node.name));
-    const unused = nodes.filter(node => !workerNodeNames.includes(node.name));
-
-    setUesNodes(used);
-    setUnusedNodes(unused);
-    setLoading(false);
-  }, [workspaceName]);
-
-  useEffect(() => {
-    fetchWorker();
-  }, [fetchWorker]);
+  const useNodes = nodes.filter(node => workerNodeNames.includes(node.name));
+  const unusedNodes = nodes.filter(
+    node => !workerNodeNames.includes(node.name),
+  );
 
   const headRows = [
     { id: 'name', label: 'Node name' },
@@ -112,8 +103,8 @@ const Nodes = props => {
 
     if (retryCount > 5) return;
 
-    const res = await containerApi.fetchContainers(name);
-    const containers = get(res, 'data.result[0].containers', []);
+    await getApi(name);
+    const containers = get(getData(), 'data.result[0].containers', []);
     const nodeNames = containers.map(container => {
       return container.state === 'RUNNING' ? container.nodeName : '';
     });
@@ -127,15 +118,9 @@ const Nodes = props => {
 
   const addNodeToService = async () => {
     for (let selectNode of selectNodes) {
-      await brokerApi.addNodeToBroker({
-        name: broker,
-        nodeName: selectNode,
-      });
+      await putBroker({ type: `${broker}/${selectNode}` });
       await waitForServiceCreation({ name: broker });
-      await workerApi.addNodeToWorker({
-        name: workspaceName,
-        nodeName: selectNode,
-      });
+      await putWorker({ type: `${workspaceName}/${selectNode}` });
       await waitForServiceCreation({ name: workspaceName });
     }
   };
@@ -144,8 +129,8 @@ const Nodes = props => {
     setWorking(true);
     if (selectNodes.length > 0) {
       await addNodeToService();
-      await fetchWorker();
-      toastr.success(MESSAGES.SERVICE_CREATION_SUCCESS);
+      setRefetch();
+      showMessage(MESSAGES.SERVICE_CREATION_SUCCESS);
       setSelectNodes([]);
     }
     setWorking(false);
@@ -168,7 +153,7 @@ const Nodes = props => {
       <NewButton text="New node" onClick={handelOpen} />
       <Main>
         <SortTable
-          isLoading={loading}
+          isLoading={isLoading}
           headRows={headRows}
           rows={rows}
           confirmDisabled={confirmDisabled}
