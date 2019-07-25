@@ -111,10 +111,12 @@ const OverviewNodes = props => {
         <StyledIcon marginright="15" className="fas fa-sitemap" />
         <span className="title">Nodes</span>
         <StyledIconLink onClick={() => handleRedirect('nodes')}>
-          <StyledIcon
-            className="fas fa-external-link-square-alt"
-            data-testid="overview-nodes-link"
-          />
+          <Tooltip title="Link to Nodes page" enterDelay={1000}>
+            <StyledIcon
+              className="fas fa-external-link-square-alt"
+              data-testid="overview-nodes-link"
+            />
+          </Tooltip>
         </StyledIconLink>
       </TabHeading>
 

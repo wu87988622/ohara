@@ -17,6 +17,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import TableRow from '@material-ui/core/TableRow';
+import Tooltip from '@material-ui/core/Tooltip';
 
 import OverviewTable from './OverviewTable';
 import { useFetchTopics } from '../WorkspacesDetailPageUtils';
@@ -36,10 +37,12 @@ const OverviewTopics = props => {
         <StyledIcon className="fas fa-list-ul" />
         <span className="title">Topics</span>
         <StyledIconLink onClick={() => handleRedirect('topics')}>
-          <StyledIcon
-            className="fas fa-external-link-square-alt"
-            data-testid="overview-topics-link"
-          />
+          <Tooltip title={`Link to Topics page`} enterDelay={1000}>
+            <StyledIcon
+              className="fas fa-external-link-square-alt"
+              data-testid="overview-topics-link"
+            />
+          </Tooltip>
         </StyledIconLink>
       </TabHeading>
       <OverviewTable

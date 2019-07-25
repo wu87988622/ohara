@@ -16,6 +16,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import Tooltip from '@material-ui/core/Tooltip';
 import TableRow from '@material-ui/core/TableRow';
 import { divide, floor } from 'lodash';
 
@@ -38,10 +39,12 @@ const OverviewStreamApps = props => {
         <StyledIcon className="fas fa-wind" />
         <span className="title">Stream Apps</span>
         <StyledIconLink onClick={() => handleRedirect('streamapps')}>
-          <StyledIcon
-            className="fas fa-external-link-square-alt"
-            data-testid="overview-streamapps-link"
-          />
+          <Tooltip title="Link to Stream Apps page" enterDelay={1000}>
+            <StyledIcon
+              className="fas fa-external-link-square-alt"
+              data-testid="overview-streamapps-link"
+            />
+          </Tooltip>
         </StyledIconLink>
       </TabHeading>
 

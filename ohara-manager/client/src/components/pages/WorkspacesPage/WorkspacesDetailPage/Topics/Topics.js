@@ -17,6 +17,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import IconButton from '@material-ui/core/IconButton';
+import Tooltip from '@material-ui/core/Tooltip';
 import toastr from 'toastr';
 import { get } from 'lodash';
 
@@ -50,18 +51,20 @@ const Topics = props => {
 
   const actionButton = name => {
     return (
-      <IconButton
-        aria-label="Edit"
-        data-testid={name}
-        onClick={() =>
-          setState({
-            isDeleteModalOpen: true,
-            topicToBeDeleted: name,
-          })
-        }
-      >
-        <ActionIcon className="fas fa-trash-alt" />
-      </IconButton>
+      <Tooltip title={`Delete ${name}`} enterDelay={1000}>
+        <IconButton
+          aria-label="Edit"
+          data-testid={name}
+          onClick={() =>
+            setState({
+              isDeleteModalOpen: true,
+              topicToBeDeleted: name,
+            })
+          }
+        >
+          <ActionIcon className="fas fa-trash-alt" />
+        </IconButton>
+      </Tooltip>
     );
   };
 
