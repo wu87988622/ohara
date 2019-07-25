@@ -29,7 +29,7 @@ describe.skip('StreamApp', () => {
     cy.server();
     cy.route('GET', 'api/pipelines/*').as('getPipeline');
     cy.route('PUT', 'api/pipelines/*').as('putPipeline');
-    cy.route('GET', 'api/jars?*').as('getJars');
+    cy.route('GET', 'api/files?*').as('getJars');
 
     cy.createTopic().as('fromTopic');
     cy.createTopic().as('toTopic');
