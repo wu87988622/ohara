@@ -943,6 +943,9 @@ update the settings of connector
 
 *PUT /v0/connectors/${name}*
 
+.. note::
+  you cannot delete a non-stopped connector.
+
 **Example Request**
 
   .. code-block:: json

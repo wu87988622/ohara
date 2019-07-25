@@ -39,7 +39,8 @@ object ConnectorApi {
   /**
     * The name is a part of "Restful APIs" so "DON'T" change it arbitrarily
     */
-  abstract sealed class ConnectorState(val name: String)
+  // Make this class to be serializable since it's stored in configurator
+  abstract sealed class ConnectorState(val name: String) extends Serializable
   object ConnectorState extends Enum[ConnectorState] {
     case object UNASSIGNED extends ConnectorState("UNASSIGNED")
     case object RUNNING extends ConnectorState("RUNNING")
@@ -93,7 +94,7 @@ object ConnectorApi {
     // set the default number of tasks
     .nullToInt(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key(), DEFAULT_NUMBER_OF_TASKS)
     .rejectEmptyString()
-    .nullToString("name", () => CommonUtils.randomString(10))
+    .nullToString(Data.NAME_KEY, () => CommonUtils.randomString(10))
     .nullToEmptyObject(Data.TAGS_KEY)
     .valueChecker(
       SettingDefinition.COLUMNS_DEFINITION.key(), {
@@ -180,7 +181,7 @@ object ConnectorApi {
       .map(s => PropGroups.ofJson(s).toColumns.asScala)
       .getOrElse(Seq.empty)
     def numberOfTasks: Int = plain(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key()).toInt
-    def workerClusterName: String = plain(SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key())
+    def workerClusterName: Option[String] = plain.get(SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key())
     def topicNames: Seq[String] =
       plain
         .get(SettingDefinition.TOPIC_NAMES_DEFINITION.key())

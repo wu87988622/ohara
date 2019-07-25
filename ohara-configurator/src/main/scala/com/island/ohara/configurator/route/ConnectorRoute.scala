@@ -30,17 +30,17 @@ import com.island.ohara.configurator.route.RouteUtils._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.island.ohara.kafka.connector.json.SettingDefinition
 import com.typesafe.scalalogging.Logger
-import spray.json.JsString
+import spray.json.{JsString, JsValue}
 
 import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object ConnectorRoute extends SprayJsonSupport {
 
   private[this] lazy val LOG = Logger(ConnectorRoute.getClass)
 
-  private[this] def toRes(wkClusterName: String, request: Creation) =
+  private[this] def toRes(request: Creation) =
     ConnectorDescription(
-      settings = request.settings ++ Map(
-        SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key() -> JsString(wkClusterName)),
+      settings = request.settings ++ request.workerClusterName.fold[Map[String, JsValue]](Map.empty)(s =>
+        Map(SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key() -> JsString(s))),
       // we don't need to fetch connector from kafka since it has not existed in kafka.
       state = None,
       error = None,
@@ -50,7 +50,8 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
 
   private[this] def update(connectorConfig: ConnectorDescription,
                            workerClusterInfo: WorkerClusterInfo,
-                           workerClient: WorkerClient)(implicit executionContext: ExecutionContext,
+                           workerClient: WorkerClient)(implicit store: DataStore,
+                                                       executionContext: ExecutionContext,
                                                        meterCache: MeterCache): Future[ConnectorDescription] =
     workerClient
       .statusOrNone(connectorConfig.name)
@@ -67,65 +68,61 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
         case (state, trace) =>
           connectorConfig.copy(
             state = state,
-            error = trace,
-            metrics = Metrics(meterCache.meters(workerClusterInfo).getOrElse(connectorConfig.name, Seq.empty))
+            error = trace
           )
       }
+      .flatMap { data =>
+        store.addIfPresent[ConnectorDescription](
+          name = data.name,
+          updater = (previous: ConnectorDescription) =>
+            previous.copy(
+              // Absent worker will be filled by workerClient, we should update it here
+              settings = previous.settings ++ Map(SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key() ->
+                JsString(previous.workerClusterName.getOrElse(workerClusterInfo.name))),
+              state = data.state,
+              error = data.error,
+              metrics = Metrics(meterCache.meters(workerClusterInfo).getOrElse(connectorConfig.name, Seq.empty))
+          )
+        )
+      }
 
-  private[this] def hookOfGet(implicit workerCollie: WorkerCollie,
+  private[this] def hookOfGet(implicit store: DataStore,
+                              workerCollie: WorkerCollie,
                               executionContext: ExecutionContext,
                               meterCache: MeterCache): HookOfGet[ConnectorDescription] =
     (connectorDescription: ConnectorDescription) =>
-      CollieUtils.workerClient(Some(connectorDescription.workerClusterName)).flatMap {
+      CollieUtils.workerClient(connectorDescription.workerClusterName).flatMap {
         case (cluster, wkClient) =>
           update(connectorDescription, cluster, wkClient)
     }
 
-  private[this] def hookOfList(implicit workerCollie: WorkerCollie,
+  private[this] def hookOfList(implicit store: DataStore,
+                               workerCollie: WorkerCollie,
                                executionContext: ExecutionContext,
                                meterCache: MeterCache): HookOfList[ConnectorDescription] =
     (connectorDescriptions: Seq[ConnectorDescription]) =>
       Future.sequence(connectorDescriptions.map { connectorDescription =>
-        CollieUtils.workerClient(Some(connectorDescription.workerClusterName)).flatMap {
+        CollieUtils.workerClient(connectorDescription.workerClusterName).flatMap {
           case (cluster, wkClient) =>
             update(connectorDescription, cluster, wkClient)
         }
       })
 
-  private[this] def hookOfCreation(implicit workerCollie: WorkerCollie,
-                                   executionContext: ExecutionContext): HookOfCreation[Creation, ConnectorDescription] =
-    (_: String, creation: Creation) =>
-      CollieUtils.workerClient(creation.workerClusterName).map {
-        case (cluster, _) => toRes(cluster.name, creation)
-    }
+  private[this] def hookOfCreation: HookOfCreation[Creation, ConnectorDescription] =
+    (_: String, creation: Creation) => Future.successful(toRes(creation))
 
-  private[this] def hookOfUpdate(
-    implicit clusterCollie: WorkerCollie,
-    executionContext: ExecutionContext): HookOfUpdate[Creation, Update, ConnectorDescription] =
+  private[this] def hookOfUpdate: HookOfUpdate[Creation, Update, ConnectorDescription] =
     (key: DataKey, update: Update, previous: Option[ConnectorDescription]) => {
       // merge the settings from previous one
-      val newSettings = Creation(previous
-        .map { previous =>
-          if (update.workerClusterName.exists(_ != previous.workerClusterName))
-            throw new IllegalArgumentException(
-              s"It is illegal to change worker cluster for connector. previous:${previous.workerClusterName} new:${update.workerClusterName.get}")
-          previous.settings
-        }
-        .map { previousSettings =>
-          previousSettings ++
-            update.settings
-        }
-        .getOrElse(update.settings) ++
-        // Update request may not carry the name via payload so we copy the name from url to payload manually
-        Map(SettingDefinition.CONNECTOR_NAME_DEFINITION.key() -> JsString(key.name)))
-
-      CollieUtils.workerClient(newSettings.workerClusterName).flatMap {
-        case (cluster, wkClient) =>
-          wkClient.exist(key.name).map {
-            if (_) throw new IllegalArgumentException(s"Connector:${key.name} is not stopped")
-            else toRes(cluster.name, newSettings)
-          }
-      }
+      val newSettings = Creation(
+        previous
+          .map(old =>
+            if (old.state.isDefined) throw new IllegalArgumentException(s"Connector:${key.name} is not stopped")
+            else old.settings ++ update.settings)
+          .getOrElse(update.settings) ++
+          // Update request may not carry the name via payload so we copy the name from url to payload manually
+          Map(SettingDefinition.CONNECTOR_NAME_DEFINITION.key() -> JsString(key.name)))
+      Future.successful(toRes(newSettings))
     }
 
   private[this] def hookBeforeDelete(implicit store: DataStore,
@@ -135,7 +132,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
       .get[ConnectorDescription](key)
       .flatMap(_.map { connectorDescription =>
         CollieUtils
-          .workerClient(Some(connectorDescription.workerClusterName))
+          .workerClient(connectorDescription.workerClusterName)
           .flatMap {
             case (_, wkClient) =>
               wkClient.exist(connectorDescription.name).flatMap {
@@ -156,7 +153,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
     (key: DataKey) =>
       store.value[ConnectorDescription](key).flatMap { connectorDesc =>
         CollieUtils
-          .workerClient(Some(connectorDesc.workerClusterName))
+          .workerClient(connectorDesc.workerClusterName)
           .flatMap {
             case (cluster, wkClient) =>
               store
@@ -184,6 +181,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
                       connectorDesc.copy(state =
                         if (res.tasks.isEmpty) Some(ConnectorState.UNASSIGNED)
                         else Some(ConnectorState.RUNNING)))
+                    .flatMap(update(_, cluster, wkClient))
               }
           }
     }
@@ -193,7 +191,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
                                meterCache: MeterCache,
                                executionContext: ExecutionContext): HookOfStop[ConnectorDescription] = (key: DataKey) =>
     store.value[ConnectorDescription](key).flatMap { connectorConfig =>
-      CollieUtils.workerClient(Some(connectorConfig.workerClusterName)).flatMap {
+      CollieUtils.workerClient(connectorConfig.workerClusterName).flatMap {
         case (cluster, wkClient) =>
           wkClient.exist(key.name).flatMap {
             if (_)
@@ -208,7 +206,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
                                 executionContext: ExecutionContext): HookOfPause[ConnectorDescription] =
     (key: DataKey) =>
       store.value[ConnectorDescription](key).flatMap { connectorConfig =>
-        CollieUtils.workerClient(Some(connectorConfig.workerClusterName)).flatMap {
+        CollieUtils.workerClient(connectorConfig.workerClusterName).flatMap {
           case (_, wkClient) =>
             wkClient.status(key.name).map(_.connector.state).flatMap {
               case ConnectorState.PAUSED =>
@@ -223,7 +221,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
                                  executionContext: ExecutionContext): HookOfResume[ConnectorDescription] =
     (key: DataKey) =>
       store.value[ConnectorDescription](key).flatMap { connectorConfig =>
-        CollieUtils.workerClient(Some(connectorConfig.workerClusterName)).flatMap {
+        CollieUtils.workerClient(connectorConfig.workerClusterName).flatMap {
           case (_, wkClient) =>
             wkClient.status(key.name).map(_.connector.state).flatMap {
               case ConnectorState.PAUSED =>

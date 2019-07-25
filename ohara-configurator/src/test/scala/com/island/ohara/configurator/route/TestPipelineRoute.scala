@@ -41,14 +41,16 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
   @Test
   def testFlowAndObjects(): Unit = {
+    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
+
     val connector = result(
       connectorApi.request
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
         .numberOfTasks(1)
+        .topicName(topic.name)
         .create())
-
-    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
+    result(connectorApi.start(connector.name))
 
     var pipeline = result(
       pipelineApi.request.name(CommonUtils.randomString(10)).flow(Flow(connector.name, Set(topic.name))).create()
@@ -172,7 +174,9 @@ class TestPipelineRoute extends MediumTest with Matchers {
         .name(CommonUtils.randomString(10))
         .className(CommonUtils.randomString(10))
         .numberOfTasks(1)
+        .topicName(topic.name)
         .create())
+    result(connectorApi.start(connector.name))
 
     val pipeline = result(
       pipelineApi.request.name(CommonUtils.randomString()).flow(topic.name, connector.name).create())
