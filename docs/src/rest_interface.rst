@@ -138,7 +138,7 @@ The following information are tagged by ohara.
 2. lastModified (**long**) — the last time to update this ftp
    information
 
-create a topic
+store a topic properties
 ~~~~~~~~~~~~~~
 
 *POST /v0/topics*
@@ -154,8 +154,14 @@ create a topic
 4. numberOfPartitions (**option(int)**)— the number of partitions for
    this topic
 5. configs (**option(object)**) — the custom configs used to create topic
-6. tags (**option(object)**) — the extra description to this
+6. state (**option(string)**) — state of a running topic. nothing if the topic is not running.
+7. tags (**option(object)**) — the extra description to this
    object
+
+.. note::
+  1. the name you pass to ohara is used to build topic on kafka, and it is restricted by kafka ([a-zA-Z0-9\._\-])
+  2. the ignored fields will be auto-completed by Ohara Configurator. Also, you could update/replace it by UPDATE request later.
+  3. this API does NOT create a topic on broker cluster. Instead, you should sent START request to run a topic on broker cluster actually
 
 **Example Request**
 
@@ -169,8 +175,6 @@ create a topic
 
 ..
 
-   the name you pass to ohara is used to build topic on kafka, and it is
-   restricted by kafka ([a-zA-Z0-9\._\-])
 
 **Example Response**
 
@@ -194,7 +198,7 @@ create a topic
 
    The topic, which is just created, does not have any metrics.
 
-update a topic
+update a topic properties
 ~~~~~~~~~~~~~~
 
 *PUT /v0/topics/${name}*
@@ -234,7 +238,7 @@ update them.
      "tags": {}
    }
 
-list all topics
+list all topics properties
 ~~~~~~~~~~~~~~~
 
 *GET /v0/topics*
@@ -272,7 +276,7 @@ list all topics
      }
    ]
 
-delete a topic
+delete a topic properties
 ~~~~~~~~~~~~~~
 
 *DELETE /v0/topics/${name}*
@@ -283,12 +287,11 @@ delete a topic
 
      204 NoContent
 
-  .. note::
-     It is ok to delete an jar from an nonexistent topic, and the response
-     is 204 NoContent.
+.. note::
+  It is ok to delete an nonexistent topic, and the response is 204 NoContent.
 
 
-get a topic
+get a topic properties
 ~~~~~~~~~~~
 
 *GET /v0/topics/${name}*
@@ -310,6 +313,32 @@ get a topic
        "configs": {},
        "tags": {}
      }
+
+start a topic on remote broker cluster
+~~~~~~~~~~~
+
+*PUT /v0/topics/${name}/start*
+
+
+**Example Response**
+
+  ::
+
+     202 Accepted
+
+stop a topic from remote broker cluster
+~~~~~~~~~~~
+
+*PUT /v0/topics/${name}/stop*
+
+.. note::
+  the topic will lose all data after stopping.
+
+**Example Response**
+
+  ::
+
+     202 Accepted
 
 
 FTP Connection Information

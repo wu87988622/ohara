@@ -83,6 +83,7 @@ private[route] object RouteUtils {
 
   /**
     * used to execute START request.
+    * Noted, the response will be added to store.
     * @tparam Res data
     */
   trait HookOfStart[Res] {
@@ -91,6 +92,7 @@ private[route] object RouteUtils {
 
   /**
     * used to execute STOP request.
+    * Noted, the response will be added to store.
     * @tparam Res data
     */
   trait HookOfStop[Res] {
@@ -99,6 +101,7 @@ private[route] object RouteUtils {
 
   /**
     * used to execute PAUSE request.
+    * Noted, the response will be added to store.
     * @tparam Res data
     */
   trait HookOfPause[Res] {
@@ -107,6 +110,7 @@ private[route] object RouteUtils {
 
   /**
     * used to execute RESUME request.
+    * Noted, the response will be added to store.
     * @tparam Res data
     */
   trait HookOfResume[Res] {
@@ -301,7 +305,8 @@ private[route] object RouteUtils {
           group = group,
           name = name
         )
-        path(START_COMMAND)(complete(hookOfStart(key))) ~ path(STOP_COMMAND)(complete(hookOfStop(key)))
+        path(START_COMMAND)(complete(StatusCodes.Accepted -> hookOfStart(key).flatMap(res => store.add[Res](res)))) ~ path(
+          STOP_COMMAND)(complete(StatusCodes.Accepted -> hookOfStop(key).flatMap(res => store.add[Res](res))))
       }
     }
   }
@@ -373,10 +378,10 @@ private[route] object RouteUtils {
           group = group,
           name = name
         )
-        path(START_COMMAND)(complete(hookOfStart(key))) ~
-          path(STOP_COMMAND)(complete(hookOfStop(key))) ~
-          path(PAUSE_COMMAND)(complete(hookOfPause(key))) ~
-          path(RESUME_COMMAND)(complete(hookOfResume(key)))
+        path(START_COMMAND)(complete(StatusCodes.Accepted -> hookOfStart(key).flatMap(res => store.add[Res](res)))) ~
+          path(STOP_COMMAND)(complete(StatusCodes.Accepted -> hookOfStop(key).flatMap(res => store.add[Res](res)))) ~
+          path(PAUSE_COMMAND)(complete(StatusCodes.Accepted -> hookOfPause(key).flatMap(res => store.add[Res](res)))) ~
+          path(RESUME_COMMAND)(complete(StatusCodes.Accepted -> hookOfResume(key).flatMap(res => store.add[Res](res))))
       }
     }
   }

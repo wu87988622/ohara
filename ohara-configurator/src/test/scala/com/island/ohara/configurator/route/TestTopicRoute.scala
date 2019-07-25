@@ -178,7 +178,10 @@ class TestTopicRoute extends SmallTest with Matchers {
 
   @Test
   def testReplications(): Unit = {
-    val topicInfo = result(topicApi.request.name(CommonUtils.randomString(10)).create())
+    val topicInfo = result(topicApi.request.name(CommonUtils.randomString(10)).numberOfReplications(3).create())
+    topicInfo.state shouldBe None
+
+    result(topicApi.start(topicInfo.key))
 
     // we can't reduce number of replications
     an[IllegalArgumentException] should be thrownBy result(
@@ -275,6 +278,16 @@ class TestTopicRoute extends SmallTest with Matchers {
     val value = 1024 * 1024
     val topicDesc = result(topicApi.request.configs(Map(key -> value.toString)).create())
     topicDesc.configs(key) shouldBe value.toString
+  }
+
+  @Test
+  def testStartAndStop(): Unit = {
+    val topicDesc = result(topicApi.request.create())
+    topicDesc.state shouldBe None
+    result(topicApi.start(topicDesc.key))
+    result(topicApi.get(topicDesc.name)).state should not be None
+    result(topicApi.stop(topicDesc.key))
+    result(topicApi.get(topicDesc.name)).state shouldBe None
   }
 
   @After

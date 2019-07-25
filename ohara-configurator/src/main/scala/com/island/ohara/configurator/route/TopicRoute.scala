@@ -53,15 +53,27 @@ private[configurator] object TopicRoute {
     metrics = metrics(brokerCluster, topicInfo.name)
   )
 
+  private[this] def createTopic(topicAdmin: TopicAdmin, topicInfo: TopicInfo)(
+    implicit executionContext: ExecutionContext): Future[TopicInfo] =
+    createTopic(
+      topicAdmin = topicAdmin,
+      clusterName = topicInfo.brokerClusterName,
+      name = topicInfo.name,
+      numberOfPartitions = topicInfo.numberOfPartitions,
+      numberOfReplications = topicInfo.numberOfReplications,
+      configs = topicInfo.configs,
+      tags = topicInfo.tags
+    )
+
   private[this] def createTopic(
-    client: TopicAdmin,
+    topicAdmin: TopicAdmin,
     clusterName: String,
     name: String,
     numberOfPartitions: Int,
     numberOfReplications: Short,
     configs: Map[String, String],
     tags: Map[String, JsValue])(implicit executionContext: ExecutionContext): Future[TopicInfo] =
-    client.creator
+    topicAdmin.creator
       .name(name)
       .numberOfPartitions(numberOfPartitions)
       .numberOfReplications(numberOfReplications)
@@ -75,11 +87,12 @@ private[configurator] object TopicRoute {
           brokerClusterName = clusterName,
           // the topic is just created so we don't fetch the "empty" metrics actually.
           metrics = Metrics(Seq.empty),
+          state = Some(TopicState.RUNNING),
           lastModified = CommonUtils.current(),
           configs = configs,
           tags = tags
         )
-        finally client.close()
+        finally topicAdmin.close()
       }
 
   private[this] def hookOfGet(implicit meterCache: MeterCache,
@@ -105,19 +118,34 @@ private[configurator] object TopicRoute {
     (_: String, creation: Creation) =>
       CollieUtils.topicAdmin(creation.brokerClusterName).flatMap {
         case (cluster, client) =>
-          client.topics().map(_.find(_.name == creation.name)).flatMap { previous =>
-            if (previous.isDefined) Future.failed(new IllegalArgumentException(s"${creation.name} already exists"))
-            else
-              createTopic(
-                client = client,
-                clusterName = cluster.name,
+          // TODO: remove this deprecated behavior. We pre-create the topic on kafka only if the input arguments is completed
+          // This stuff is for backward-compatibility.
+          if (creation.brokerClusterName.isDefined)
+            client.topics().map(_.find(_.name == creation.name)).flatMap { previous =>
+              if (previous.isDefined) Future.failed(new IllegalArgumentException(s"${creation.name} already exists"))
+              else
+                createTopic(
+                  topicAdmin = client,
+                  clusterName = cluster.name,
+                  name = creation.name,
+                  numberOfPartitions = creation.numberOfPartitions,
+                  numberOfReplications = creation.numberOfReplications,
+                  configs = creation.configs,
+                  tags = creation.tags
+                )
+            } else
+            Future.successful(
+              TopicInfo(
                 name = creation.name,
                 numberOfPartitions = creation.numberOfPartitions,
                 numberOfReplications = creation.numberOfReplications,
+                brokerClusterName = cluster.name,
+                metrics = Metrics(Seq.empty),
+                state = None,
+                lastModified = CommonUtils.current(),
                 configs = creation.configs,
                 tags = creation.tags
-              )
-          }
+              ))
     }
 
   private[this] def hookOfUpdate(implicit adminCleaner: AdminCleaner,
@@ -130,15 +158,17 @@ private[configurator] object TopicRoute {
         CollieUtils.topicAdmin(previous.map(_.brokerClusterName).orElse(update.brokerClusterName)).flatMap {
           case (cluster, client) =>
             client.topics().map(_.find(_.name == key.name)).flatMap { topicFromKafkaOption =>
-              topicFromKafkaOption.fold(createTopic(
-                client = client,
-                clusterName = cluster.name,
+              topicFromKafkaOption.fold(Future.successful(TopicInfo(
                 name = key.name,
                 numberOfPartitions = update.numberOfPartitions.getOrElse(DEFAULT_NUMBER_OF_PARTITIONS),
                 numberOfReplications = update.numberOfReplications.getOrElse(DEFAULT_NUMBER_OF_REPLICATIONS),
-                configs = update.configs.getOrElse(Map.empty),
-                tags = update.tags.getOrElse(Map.empty)
-              )) { topicFromKafka =>
+                brokerClusterName = cluster.name,
+                metrics = Metrics(Seq.empty),
+                state = None,
+                lastModified = CommonUtils.current(),
+                configs = update.configs.orElse(previous.map(_.configs)).getOrElse(Map.empty),
+                tags = update.tags.orElse(previous.map(_.tags)).getOrElse(Map.empty)
+              ))) { topicFromKafka =>
                 if (update.configs.exists(_ != topicFromKafka.configs)) {
                   Releasable.close(client)
                   Future.failed(new IllegalArgumentException("Changing configs is disallowed"))
@@ -157,6 +187,7 @@ private[configurator] object TopicRoute {
                       numberOfReplications = topicFromKafka.numberOfReplications,
                       brokerClusterName = cluster.name,
                       metrics = Metrics(Seq.empty),
+                      state = Some(TopicState.RUNNING),
                       lastModified = CommonUtils.current(),
                       configs = topicFromKafka.configs,
                       tags = update.tags.orElse(previous.map(_.tags)).getOrElse(Map.empty)
@@ -173,6 +204,7 @@ private[configurator] object TopicRoute {
                     topicFromKafka.numberOfReplications,
                     cluster.name,
                     metrics = Metrics(Seq.empty),
+                    state = Some(TopicState.RUNNING),
                     lastModified = CommonUtils.current(),
                     configs = topicFromKafka.configs,
                     tags = update.tags.orElse(previous.map(_.tags)).getOrElse(Map.empty)
@@ -194,10 +226,15 @@ private[configurator] object TopicRoute {
           .flatMap {
             case (_, client) =>
               client
-                .delete(topicInfo.name)
-                .flatMap { _ =>
-                  try Future.unit
-                  finally Releasable.close(client)
+                .exist(topicInfo.name)
+                .flatMap {
+                  // TODO: it should forbid user to delete a running topic... by chia
+                  if (_) client.delete(topicInfo.name).flatMap { _ =>
+                    try Future.unit
+                    finally Releasable.close(client)
+                  } else
+                    try Future.unit
+                    finally Releasable.close(client)
                 }
                 .recoverWith {
                   case e: Throwable =>
@@ -214,6 +251,49 @@ private[configurator] object TopicRoute {
           }
       })
 
+  private[this] def hookOfStart(implicit store: DataStore,
+                                adminCleaner: AdminCleaner,
+                                brokerCollie: BrokerCollie,
+                                executionContext: ExecutionContext): HookOfStart[TopicInfo] =
+    (key: DataKey) =>
+      store
+        .value[TopicInfo](key)
+        .flatMap(topicInfo =>
+          CollieUtils.topicAdmin(Some(topicInfo.brokerClusterName)).flatMap {
+            case (_, client) =>
+              client.exist(topicInfo.name).flatMap {
+                if (_) Future.successful(topicInfo.copy(state = Some(TopicState.RUNNING)))
+                else
+                  createTopic(
+                    topicAdmin = client,
+                    topicInfo = topicInfo
+                  )
+              }
+        })
+
+  private[this] def hookOfStop(implicit store: DataStore,
+                               adminCleaner: AdminCleaner,
+                               brokerCollie: BrokerCollie,
+                               executionContext: ExecutionContext): HookOfStop[TopicInfo] =
+    (key: DataKey) =>
+      store.value[TopicInfo](key).flatMap { topicInfo =>
+        CollieUtils.topicAdmin(Some(topicInfo.brokerClusterName)).flatMap {
+          case (_, client) =>
+            client
+              .exist(topicInfo.name)
+              .flatMap {
+                if (_) client.delete(topicInfo.name)
+                else Future.unit
+              }
+              .map(
+                _ =>
+                  topicInfo.copy(
+                    state = None,
+                    lastModified = CommonUtils.current()
+                ))
+        }
+    }
+
   def apply(implicit store: DataStore,
             adminCleaner: AdminCleaner,
             meterCache: MeterCache,
@@ -226,6 +306,8 @@ private[configurator] object TopicRoute {
       hookOfUpdate = hookOfUpdate,
       hookOfGet = hookOfGet,
       hookOfList = hookOfList,
-      hookBeforeDelete = hookBeforeDelete
+      hookBeforeDelete = hookBeforeDelete,
+      hookOfStart = hookOfStart,
+      hookOfStop = hookOfStop
     )
 }

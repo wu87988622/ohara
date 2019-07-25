@@ -52,6 +52,13 @@ trait TopicAdmin extends Releasable {
   def topics(): Future[Seq[TopicAdmin.TopicInfo]]
 
   /**
+    * check the existence of topic on remote broker cluster
+    * @param topicName topic name
+    * @return true if the topic lies in the cluster. Otherwise, false
+    */
+  def exist(topicName: String): Future[Boolean]
+
+  /**
     * start a process to create topic
     * @return topic creator
     */
@@ -59,10 +66,10 @@ trait TopicAdmin extends Releasable {
 
   /**
     * delete a existent topic
-    * @param name topic name
+    * @param topicName topic name
     * @return true if it does delete a topic. otherwise, false
     */
-  def delete(name: String): Future[Boolean]
+  def delete(topicName: String): Future[Boolean]
 
   /**
     * the connection information to kafka's broker
@@ -187,7 +194,7 @@ object TopicAdmin {
       promise.future
     }
 
-    override def delete(name: String): Future[Boolean] = {
+    override def delete(topicName: String): Future[Boolean] = {
       val promise = Promise[Boolean]
       unwrap(
         () =>
@@ -196,9 +203,9 @@ object TopicAdmin {
             .names()
             .whenComplete((topicNames, exception) => {
               if (exception == null) {
-                if (topicNames.asScala.contains(name))
+                if (topicNames.asScala.contains(topicName))
                   admin
-                    .deleteTopics(util.Collections.singletonList(name))
+                    .deleteTopics(util.Collections.singletonList(topicName))
                     .all()
                     .whenComplete((_, exception) => {
                       if (exception == null) promise.success(true)
@@ -207,6 +214,20 @@ object TopicAdmin {
                 else
                   promise.success(false)
               } else promise.failure(exception)
+            }))
+      promise.future
+    }
+
+    override def exist(topicName: String): Future[Boolean] = {
+      val promise = Promise[Boolean]
+      unwrap(
+        () =>
+          admin
+            .listTopics()
+            .names()
+            .whenComplete((topicNames, exception) => {
+              if (exception == null) promise.success(topicNames.asScala.contains(topicName))
+              else promise.failure(exception)
             }))
       promise.future
     }

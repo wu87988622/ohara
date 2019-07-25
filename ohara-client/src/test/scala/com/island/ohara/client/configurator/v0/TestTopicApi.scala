@@ -150,6 +150,7 @@ class TestTopicApi extends SmallTest with Matchers {
         brokerClusterName = CommonUtils.randomString(),
         metrics = Metrics(Seq.empty),
         lastModified = CommonUtils.current(),
+        state = None,
         configs = Map.empty,
         tags = Map.empty
       ))

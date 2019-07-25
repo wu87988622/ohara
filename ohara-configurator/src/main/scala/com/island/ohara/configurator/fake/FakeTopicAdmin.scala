@@ -70,4 +70,6 @@ private[configurator] class FakeTopicAdmin extends TopicAdmin {
     if (removed == null) Future.successful(false)
     else Future.successful(true)
   }
+
+  override def exist(topicName: String): Future[Boolean] = Future.successful(cachedTopics.containsKey(topicName))
 }

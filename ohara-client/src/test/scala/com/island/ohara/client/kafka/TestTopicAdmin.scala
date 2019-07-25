@@ -155,6 +155,15 @@ class TestTopicAdmin extends With3Brokers with Matchers {
     topic.configs(key) shouldBe value.toString
   }
 
+  @Test
+  def testExist(): Unit = {
+    result(topicAdmin.exist(CommonUtils.randomString())) shouldBe false
+    val name = CommonUtils.randomString(10)
+    result(topicAdmin.creator.name(name).create())
+    waitAndGetTopicInfo(name)
+    result(topicAdmin.exist(name)) shouldBe true
+  }
+
   @After
   def tearDown(): Unit = Releasable.close(topicAdmin)
 }

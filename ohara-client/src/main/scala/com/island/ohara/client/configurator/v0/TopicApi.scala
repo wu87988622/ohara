@@ -17,6 +17,7 @@
 package com.island.ohara.client.configurator.v0
 import java.util.Objects
 
+import com.island.ohara.client.Enum
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
@@ -69,11 +70,21 @@ object TopicApi {
 
   import MetricsApi._
 
+  abstract sealed class TopicState(val name: String) extends Serializable
+  object TopicState extends Enum[TopicState] {
+    case object RUNNING extends TopicState("RUNNING")
+  }
+  implicit val TOPIC_STATE_FORMAT: RootJsonFormat[TopicState] = new RootJsonFormat[TopicState] {
+    override def read(json: JsValue): TopicState = TopicState.forName(json.convertTo[String].toUpperCase)
+    override def write(obj: TopicState): JsValue = JsString(obj.name)
+  }
+
   case class TopicInfo(name: String,
                        numberOfPartitions: Int,
                        numberOfReplications: Short,
                        brokerClusterName: String,
                        metrics: Metrics,
+                       state: Option[TopicState],
                        lastModified: Long,
                        configs: Map[String, String],
                        tags: Map[String, JsValue])
@@ -84,7 +95,7 @@ object TopicApi {
   }
 
   implicit val TOPIC_INFO_FORMAT: RootJsonFormat[TopicInfo] = new RootJsonFormat[TopicInfo] {
-    private[this] val format = jsonFormat8(TopicInfo)
+    private[this] val format = jsonFormat9(TopicInfo)
     override def read(json: JsValue): TopicInfo = format.read(json)
 
     override def write(obj: TopicInfo): JsValue = JsObject(
@@ -135,6 +146,8 @@ object TopicApi {
   }
 
   class Access private[v0] extends com.island.ohara.client.configurator.v0.Access[TopicInfo](TOPICS_PREFIX_PATH) {
+    def start(key: DataKey)(implicit executionContext: ExecutionContext): Future[Unit] = put("start", key)
+    def stop(key: DataKey)(implicit executionContext: ExecutionContext): Future[Unit] = put("stop", key)
     def request: Request = new Request {
       private[this] var name: String = _
       private[this] var brokerClusterName: Option[String] = None
