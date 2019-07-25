@@ -31,6 +31,7 @@ const Operate = props => {
     fetchPipeline,
     pipelineConnectors,
     pipelineName,
+    updateHasRunningServices,
   } = props;
 
   const makeRequest = (action, connectors) => {
@@ -72,6 +73,9 @@ const Operate = props => {
 
     if (!hasError) {
       toastr.success(`Pipeline has been successfully ${action}!`);
+
+      const hasRunningServices = action === 'start';
+      updateHasRunningServices(hasRunningServices);
       await fetchPipeline(pipelineName);
     }
   };
@@ -115,6 +119,7 @@ Operate.propTypes = {
   fetchPipeline: PropTypes.func.isRequired,
   pipelineConnectors: PropTypes.arrayOf(PropTypes.object),
   pipelineName: PropTypes.string.isRequired,
+  updateHasRunningServices: PropTypes.func.isRequired,
 };
 
 export default Operate;

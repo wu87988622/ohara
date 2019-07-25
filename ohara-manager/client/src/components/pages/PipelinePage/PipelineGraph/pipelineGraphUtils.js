@@ -52,7 +52,9 @@ export const getStatusIcon = state => {
 };
 
 const createMetricsHtml = meters => {
-  const meterData = meters.map(meter => `<span>${meter.value}</span>`).join('');
+  const meterData = meters
+    .map(meter => `<span>${meter.value.toLocaleString()}</span>`)
+    .join('');
   const metricsHtml = `<div class="metrics">
     <span class="metrics-icon"><i class="fas fa-tachometer-alt"></i></span>
       <div class="metrics-text-wrapper">
@@ -107,7 +109,7 @@ export const createHtml = params => {
         <a class="status-icon" href="/logs/workers/${workerClusterName}" target="_blank">
           <i class="fas ${statusIcon}"></i>
         </a>
-        ${!isEmpty(meters) && !isTopic ? metricsHtml : ''}
+        ${!isEmpty(meters) ? metricsHtml : ''}
       </div>`;
 
   return html;

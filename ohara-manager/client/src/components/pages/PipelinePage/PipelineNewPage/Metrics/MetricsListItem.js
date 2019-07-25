@@ -24,7 +24,7 @@ const MetricListItem = props => {
     <li className="item">
       <div className="item-header">{document}</div>
       <div className="item-body">
-        <span className="item-value">{value} </span>
+        <span className="item-value">{value.toLocaleString()} </span>
         <span className="item-unit">{unit}</span>
       </div>
     </li>

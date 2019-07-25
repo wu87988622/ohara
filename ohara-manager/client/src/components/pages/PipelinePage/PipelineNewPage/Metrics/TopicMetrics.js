@@ -18,6 +18,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
 import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
+import { sortBy } from 'lodash';
 
 import MetricsListItem from './MetricsListItem';
 import {
@@ -30,10 +31,11 @@ import {
 const TopicMetrics = props => {
   const { topicName, meters } = props;
 
+  const sortedMeters = sortBy(meters, ['document']);
   const previewMeters = [];
   const remainingMeters = [];
 
-  meters.forEach((meter, index) => {
+  sortedMeters.forEach((meter, index) => {
     // Display the first two items as the preview from the list
     if (index < 2) {
       previewMeters.push(meter);

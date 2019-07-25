@@ -51,20 +51,51 @@ class PipelineNewPage extends React.Component {
     isLoading: true,
     isUpdating: false,
     hasChanges: false,
+    hasRunningServices: false,
     pipeline: {},
     pipelineTopics: [],
     connectors: [],
     brokerClusterName: '',
+    hasTimer: false,
   };
 
-  componentDidMount() {
-    this.fetchData();
+  async componentDidMount() {
+    await this.fetchData();
+    this.fetchPipelineWithInterval();
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    const prevHasRunningServices = prevState.hasRunningServices;
+    const nextHasRunningServices = this.state.hasRunningServices;
+
+    if (prevHasRunningServices !== nextHasRunningServices) {
+      if (this.state.hasRunningServices) {
+        this.fetchPipelineWithInterval();
+      } else {
+        clearInterval(this.fetchPipelineTimer);
+      }
+    }
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.fetchPipelineTimer);
   }
 
   fetchData = async () => {
-    await this.fetchPipeline(); // we need workerClusterName from this request for the following fetchWorker() request
+    await this.fetchPipeline();
     await this.fetchWorker();
     this.fetchTopics();
+  };
+
+  fetchPipelineWithInterval = () => {
+    if (!this.state.hasRunningServices || this.state.hasTimer) return;
+
+    this.fetchPipelineTimer = setInterval(async () => {
+      await this.fetchPipeline();
+    }, 5000);
+
+    // Prevent duplicating timers
+    this.setState({ hasTimer: true });
   };
 
   fetchTopics = async () => {
@@ -98,8 +129,11 @@ class PipelineNewPage extends React.Component {
 
       if (pipeline) {
         const { topics: pipelineTopics = [] } = getConnectors(pipeline.objects);
+        const hasRunningServices = pipeline.objects.some(object =>
+          Boolean(object.state),
+        );
 
-        this.setState({ pipeline, pipelineTopics }, () => {
+        this.setState({ pipeline, pipelineTopics, hasRunningServices }, () => {
           this.loadGraph(this.state.pipeline);
         });
       }
@@ -194,6 +228,10 @@ class PipelineNewPage extends React.Component {
     });
   };
 
+  updateHasRunningServices = update => {
+    this.setState({ hasRunningServices: update });
+  };
+
   render() {
     const {
       isLoading,
@@ -272,6 +310,7 @@ class PipelineNewPage extends React.Component {
                   pipelineConnectors={pipelineConnectors}
                   workerClusterName={workerClusterName}
                   fetchPipeline={this.fetchPipeline}
+                  updateHasRunningServices={this.updateHasRunningServices}
                 />
 
                 <Metrics
