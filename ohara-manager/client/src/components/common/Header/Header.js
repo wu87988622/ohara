@@ -95,12 +95,6 @@ const Btn = styled.button`
   }
 `;
 
-const Login = styled(Link)`
-  margin: 0 10px;
-`;
-
-Login.displayName = 'Login';
-
 const Icon = styled.i`
   margin-right: 8px;
 `;
@@ -147,7 +141,6 @@ const LoaderWrapper = styled.div`
 
 class Header extends React.Component {
   static propTypes = {
-    isLogin: PropTypes.bool.isRequired,
     versionInfo: PropTypes.object,
   };
 
@@ -190,7 +183,6 @@ class Header extends React.Component {
   };
 
   render() {
-    const { isLogin } = this.props;
     const { isVersionModalActive, info = {}, isLoading } = this.state;
 
     const { versionInfo = {}, mode = '' } = info;
@@ -272,16 +264,6 @@ class Header extends React.Component {
             >
               <i className="fas fa-info-circle" />
             </Btn>
-
-            {/* Features not yet finished, don't display them in the UI */}
-            {false && (
-              <Login
-                data-testid="login-state"
-                to={isLogin ? URLS.LOGOUT : URLS.LOGIN}
-              >
-                {isLogin ? 'Log out' : 'Log in'}
-              </Login>
-            )}
           </RightCol>
         </HeaderWrapper>
       </StyledHeader>

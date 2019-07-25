@@ -16,6 +16,8 @@
 
 import React from 'react';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import { create } from 'jss';
+import { StylesProvider, jssPreset } from '@material-ui/styles';
 
 import Header from 'components/common/Header';
 import HomePage from 'components/pages/HomePage';
@@ -26,12 +28,7 @@ import WorkspacesPage from 'components/pages/WorkspacesPage';
 import WorkspacesDetailPage from 'components/pages/WorkspacesPage/WorkspacesDetailPage';
 import MonitoringPage from 'components/pages/MonitoringPage';
 import LogsPage from 'components/pages/LogsPage';
-import LoginPage from 'components/pages/LoginPage';
-import LogoutPage from 'components/pages/LogoutPage';
 import NotFoundPage from 'components/pages/NotFoundPage';
-import { getUserKey } from 'utils/authUtils';
-import { create } from 'jss';
-import { StylesProvider, jssPreset } from '@material-ui/styles';
 
 //We need to override Mui styles with our custom styles. See Mui docs for more info:https://material-ui.com/customization/css-in-js/#other-html-element
 const jss = create({
@@ -40,29 +37,12 @@ const jss = create({
 });
 
 class App extends React.Component {
-  state = {
-    isLogin: false,
-  };
-
-  componentDidMount() {
-    const key = getUserKey();
-    if (key) {
-      this.setState({ isLogin: true });
-    }
-  }
-
-  updateLoginState = state => {
-    this.setState({ isLogin: state });
-  };
-
   render() {
-    const { isLogin } = this.state;
-
     return (
       <StylesProvider jss={jss}>
         <Router>
           <React.Fragment>
-            <Header isLogin={isLogin} />
+            <Header />
             <Switch>
               <Route
                 path="/pipelines/new/:page?/:pipelineName/:connectorName?"
@@ -103,26 +83,6 @@ class App extends React.Component {
                 path="/logs/:serviceName/:clusterName"
                 component={LogsPage}
                 data-testid="logs-page"
-              />
-              <Route
-                path="/login"
-                data-testid="login-page"
-                render={props => (
-                  <LoginPage
-                    updateLoginState={this.updateLoginState}
-                    {...props}
-                  />
-                )}
-              />
-              <Route
-                path="/logout"
-                data-testid="logout-page"
-                render={props => (
-                  <LogoutPage
-                    updateLoginState={this.updateLoginState}
-                    {...props}
-                  />
-                )}
               />
               <Route
                 exact

@@ -37,9 +37,6 @@ app.use(morgan('combined'));
 // Serve client build dir
 app.use(express.static(path.resolve(__dirname, 'client', 'build')));
 
-// API routes
-require('./routes/authRoutes')(app);
-
 // API Proxy
 app.use(
   '/api',
