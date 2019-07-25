@@ -143,6 +143,14 @@ language = None
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['build', 'Thumbs.db', '.DS_Store']
 
+# Use environment variable "SPHINXOPTS" or "O" to set tag option,
+# Reference: https://www.sphinx-doc.org/en/master/man/sphinx-build.html#environment-variables
+# Example: $ O="-v -t prod" make html
+if tags.has('prod'):
+    print "[Producton Mode]"
+    exclude_patterns.extend(['sample.rst'])
+
+
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 

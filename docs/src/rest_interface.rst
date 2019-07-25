@@ -3719,7 +3719,7 @@ string.
 
 **Example Request**
 
-  .. code-block:: http
+  .. code-block:: text
 
      Content-Type: multipart/form-data
      file="aa.jar"
