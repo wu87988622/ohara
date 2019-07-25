@@ -153,7 +153,8 @@ create a topic
    which is larger than the number of broker nodes**)
 4. numberOfPartitions (**option(int)**)— the number of partitions for
    this topic
-5. tags (**option(array(string))**) — the extra description to this
+5. configs (**option(object)**) — the custom configs used to create topic
+6. tags (**option(object)**) — the extra description to this
    object
 
 **Example Request**
@@ -185,6 +186,7 @@ create a topic
      "metrics": {
        "meters": []
      },
+     "configs": {},
      "tags": {}
    }
 
@@ -201,6 +203,9 @@ update a topic
    topic (**it is illegal to decrease the number**)
 2. tags (**array(string)**) — the extra description to this object
 
+Both number of replications and configs are unmodifiable. An error response is produced if the update request tries to
+update them.
+
 **Example Request**
 
 .. code-block:: json
@@ -210,9 +215,6 @@ update a topic
    }
 
 ..
-
-   You wil get an exception if you try to change the unmodifiable
-   attributes!!!
 
 **Example Response**
 
@@ -228,6 +230,7 @@ update a topic
      "metrics": {
       "meters": []
      },
+     "configs": {},
      "tags": {}
    }
 
@@ -251,6 +254,7 @@ list all topics
        "metrics": {
         "meters": []
        },
+       "configs": {},
        "tags": {}
      },
      {
@@ -263,6 +267,7 @@ list all topics
        "metrics": {
         "meters": []
        },
+       "configs": {},
        "tags": {}
      }
    ]
@@ -302,6 +307,7 @@ get a topic
        "metrics": {
         "meters": []
        },
+       "configs": {},
        "tags": {}
      }
 
@@ -386,7 +392,7 @@ update a ftp information
 3. port (**option(int)**) — ftp server port
 4. user (**option(string)**) — account of ftp server
 5. password (**option(string)**) — password of ftp server
-6. tags (**option(array(string))**) — the extra description to this
+6. tags (**option(object)**) — the extra description to this
    object
 7. group (**string**) — group of this ftp information. It is a optional
    argument, and the default value of group is “default”

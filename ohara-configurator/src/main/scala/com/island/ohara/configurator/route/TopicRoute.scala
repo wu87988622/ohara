@@ -59,11 +59,13 @@ private[configurator] object TopicRoute {
     name: String,
     numberOfPartitions: Int,
     numberOfReplications: Short,
+    configs: Map[String, String],
     tags: Map[String, JsValue])(implicit executionContext: ExecutionContext): Future[TopicInfo] =
     client.creator
       .name(name)
       .numberOfPartitions(numberOfPartitions)
       .numberOfReplications(numberOfReplications)
+      .configs(configs)
       .create()
       .map { _ =>
         try TopicInfo(
@@ -74,6 +76,7 @@ private[configurator] object TopicRoute {
           // the topic is just created so we don't fetch the "empty" metrics actually.
           metrics = Metrics(Seq.empty),
           lastModified = CommonUtils.current(),
+          configs = configs,
           tags = tags
         )
         finally client.close()
@@ -111,6 +114,7 @@ private[configurator] object TopicRoute {
                 name = creation.name,
                 numberOfPartitions = creation.numberOfPartitions,
                 numberOfReplications = creation.numberOfReplications,
+                configs = creation.configs,
                 tags = creation.tags
               )
           }
@@ -132,9 +136,13 @@ private[configurator] object TopicRoute {
                 name = key.name,
                 numberOfPartitions = update.numberOfPartitions.getOrElse(DEFAULT_NUMBER_OF_PARTITIONS),
                 numberOfReplications = update.numberOfReplications.getOrElse(DEFAULT_NUMBER_OF_REPLICATIONS),
+                configs = update.configs.getOrElse(Map.empty),
                 tags = update.tags.getOrElse(Map.empty)
               )) { topicFromKafka =>
-                if (update.numberOfPartitions.exists(_ < topicFromKafka.numberOfPartitions)) {
+                if (update.configs.exists(_ != topicFromKafka.configs)) {
+                  Releasable.close(client)
+                  Future.failed(new IllegalArgumentException("Changing configs is disallowed"))
+                } else if (update.numberOfPartitions.exists(_ < topicFromKafka.numberOfPartitions)) {
                   Releasable.close(client)
                   Future.failed(new IllegalArgumentException("Reducing the number from partitions is disallowed"))
                 } else if (update.numberOfReplications.exists(_ != topicFromKafka.numberOfReplications)) {
@@ -150,8 +158,8 @@ private[configurator] object TopicRoute {
                       brokerClusterName = cluster.name,
                       metrics = Metrics(Seq.empty),
                       lastModified = CommonUtils.current(),
-                      // the topic exists so previous must be defined
-                      tags = update.tags.getOrElse(previous.get.tags)
+                      configs = topicFromKafka.configs,
+                      tags = update.tags.orElse(previous.map(_.tags)).getOrElse(Map.empty)
                     )
                     finally client.close()
                   }
@@ -165,8 +173,9 @@ private[configurator] object TopicRoute {
                     topicFromKafka.numberOfReplications,
                     cluster.name,
                     metrics = Metrics(Seq.empty),
-                    CommonUtils.current(),
-                    tags = update.tags.getOrElse(previous.map(_.tags).getOrElse(Map.empty))
+                    lastModified = CommonUtils.current(),
+                    configs = topicFromKafka.configs,
+                    tags = update.tags.orElse(previous.map(_.tags)).getOrElse(Map.empty)
                   ))
                 }
               }

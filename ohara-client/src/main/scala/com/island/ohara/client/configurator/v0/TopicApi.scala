@@ -29,22 +29,29 @@ object TopicApi {
   val DEFAULT_NUMBER_OF_PARTITIONS: Int = 1
   val DEFAULT_NUMBER_OF_REPLICATIONS: Short = 1
   val TOPICS_PREFIX_PATH: String = "topics"
+
+  private[this] val CONFIGS_KEY = "configs"
+  private[this] val NUMBER_OF_PARTITIONS_KEY = "numberOfPartitions"
+  private[this] val NUMBER_OF_REPLICATIONS_KEY = "numberOfReplications"
+
   case class Update private[TopicApi] (brokerClusterName: Option[String],
                                        numberOfPartitions: Option[Int],
                                        numberOfReplications: Option[Short],
+                                       configs: Option[Map[String, String]],
                                        tags: Option[Map[String, JsValue]])
   implicit val TOPIC_UPDATE_FORMAT: RootJsonFormat[Update] =
-    JsonRefiner[Update].format(jsonFormat4(Update)).rejectEmptyString().refine
+    JsonRefiner[Update].format(jsonFormat5(Update)).rejectEmptyString().refine
 
   case class Creation private[TopicApi] (name: String,
                                          brokerClusterName: Option[String],
                                          numberOfPartitions: Int,
                                          numberOfReplications: Short,
+                                         configs: Map[String, String],
                                          tags: Map[String, JsValue])
       extends CreationRequest
 
   implicit val TOPIC_CREATION_FORMAT: OharaJsonFormat[Creation] = JsonRefiner[Creation]
-    .format(jsonFormat5(Creation))
+    .format(jsonFormat6(Creation))
     .stringRestriction(Data.NAME_KEY)
     .withNumber()
     .withCharset()
@@ -52,10 +59,11 @@ object TopicApi {
     .withDash()
     .withUnderLine()
     .toRefiner
-    .nullToInt("numberOfPartitions", DEFAULT_NUMBER_OF_REPLICATIONS)
-    .nullToInt("numberOfReplications", DEFAULT_NUMBER_OF_REPLICATIONS)
+    .nullToInt(NUMBER_OF_PARTITIONS_KEY, DEFAULT_NUMBER_OF_REPLICATIONS)
+    .nullToInt(NUMBER_OF_REPLICATIONS_KEY, DEFAULT_NUMBER_OF_REPLICATIONS)
     .rejectEmptyString()
-    .nullToString("name", () => CommonUtils.randomString(10))
+    .nullToString(Data.NAME_KEY, () => CommonUtils.randomString(10))
+    .nullToEmptyObject(CONFIGS_KEY)
     .nullToEmptyObject(Data.TAGS_KEY)
     .refine
 
@@ -67,6 +75,7 @@ object TopicApi {
                        brokerClusterName: String,
                        metrics: Metrics,
                        lastModified: Long,
+                       configs: Map[String, String],
                        tags: Map[String, JsValue])
       extends Data {
     // TODO: topic's group ought be identical to brokerClusterName
@@ -75,7 +84,7 @@ object TopicApi {
   }
 
   implicit val TOPIC_INFO_FORMAT: RootJsonFormat[TopicInfo] = new RootJsonFormat[TopicInfo] {
-    private[this] val format = jsonFormat7(TopicInfo)
+    private[this] val format = jsonFormat8(TopicInfo)
     override def read(json: JsValue): TopicInfo = format.read(json)
 
     override def write(obj: TopicInfo): JsValue = JsObject(
@@ -99,6 +108,9 @@ object TopicApi {
 
     @Optional("default value is DEFAULT_NUMBER_OF_REPLICATIONS")
     def numberOfReplications(numberOfReplications: Short): Request
+
+    @Optional("default configs is empty array")
+    def configs(configs: Map[String, String]): Request
 
     @Optional("default value is empty array")
     def tags(tags: Map[String, JsValue]): Request
@@ -128,6 +140,7 @@ object TopicApi {
       private[this] var brokerClusterName: Option[String] = None
       private[this] var numberOfPartitions: Option[Int] = None
       private[this] var numberOfReplications: Option[Short] = None
+      private[this] var configs: Map[String, String] = _
       private[this] var tags: Map[String, JsValue] = _
       override def name(name: String): Request = {
         this.name = CommonUtils.requireNonEmpty(name)
@@ -149,6 +162,11 @@ object TopicApi {
         this
       }
 
+      override def configs(configs: Map[String, String]): Request = {
+        this.configs = Objects.requireNonNull(configs)
+        this
+      }
+
       override def tags(tags: Map[String, JsValue]): Request = {
         this.tags = Objects.requireNonNull(tags)
         this
@@ -159,6 +177,7 @@ object TopicApi {
         brokerClusterName = brokerClusterName,
         numberOfPartitions = numberOfPartitions.getOrElse(DEFAULT_NUMBER_OF_PARTITIONS),
         numberOfReplications = numberOfReplications.getOrElse(DEFAULT_NUMBER_OF_REPLICATIONS),
+        configs = if (configs == null) Map.empty else configs,
         tags = if (tags == null) Map.empty else tags
       )
 
@@ -166,6 +185,7 @@ object TopicApi {
         brokerClusterName = brokerClusterName,
         numberOfPartitions = numberOfPartitions,
         numberOfReplications = numberOfReplications,
+        configs = Option(configs),
         tags = Option(tags)
       )
 

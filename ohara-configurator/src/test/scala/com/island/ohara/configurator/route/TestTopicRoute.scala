@@ -21,6 +21,7 @@ import com.island.ohara.client.configurator.v0.{BrokerApi, TopicApi, ZookeeperAp
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
+import org.apache.kafka.common.config.TopicConfig
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 import spray.json.{JsNumber, JsString}
@@ -266,6 +267,14 @@ class TestTopicRoute extends SmallTest with Matchers {
 
     val topicDesc4 = result(topicApi.request.name(topicDesc.name).tags(Map.empty).update())
     topicDesc4.tags shouldBe Map.empty
+  }
+
+  @Test
+  def testCustomConfigs(): Unit = {
+    val key = TopicConfig.SEGMENT_BYTES_CONFIG
+    val value = 1024 * 1024
+    val topicDesc = result(topicApi.request.configs(Map(key -> value.toString)).create())
+    topicDesc.configs(key) shouldBe value.toString
   }
 
   @After

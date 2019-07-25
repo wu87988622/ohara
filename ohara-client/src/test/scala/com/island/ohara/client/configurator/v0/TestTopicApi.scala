@@ -81,14 +81,20 @@ class TestTopicApi extends SmallTest with Matchers {
     creation.brokerClusterName shouldBe None
     creation.numberOfPartitions shouldBe TopicApi.DEFAULT_NUMBER_OF_PARTITIONS
     creation.numberOfReplications shouldBe TopicApi.DEFAULT_NUMBER_OF_REPLICATIONS
+    creation.configs shouldBe Map.empty
 
     val name = CommonUtils.randomString()
+    val key = CommonUtils.randomString()
+    val value = CommonUtils.randomString()
     val creation2 = TopicApi.TOPIC_CREATION_FORMAT.read(s"""
          |{
          | "name": "$name",
          | "brokerClusterName": "$brokerClusterName",
          | "numberOfPartitions": $numberOfPartitions,
-         | "numberOfReplications": $numberOfReplications
+         | "numberOfReplications": $numberOfReplications,
+         | "configs": {
+         |   "$key": "$value"
+         | }
          |}
        """.stripMargin.parseJson)
 
@@ -96,6 +102,7 @@ class TestTopicApi extends SmallTest with Matchers {
     creation2.brokerClusterName.get shouldBe brokerClusterName
     creation2.numberOfPartitions shouldBe numberOfPartitions
     creation2.numberOfReplications shouldBe numberOfReplications
+    creation2.configs shouldBe Map(key -> value)
   }
 
   @Test
@@ -143,6 +150,7 @@ class TestTopicApi extends SmallTest with Matchers {
         brokerClusterName = CommonUtils.randomString(),
         metrics = Metrics(Seq.empty),
         lastModified = CommonUtils.current(),
+        configs = Map.empty,
         tags = Map.empty
       ))
       .asJsObject
