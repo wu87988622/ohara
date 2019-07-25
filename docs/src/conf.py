@@ -57,6 +57,10 @@ def read_properties_file(file_path):
 ohara_props = read_properties_file('../../gradle.properties')
 ohara_version = ohara_props['version']
 ohara_branch = ohara_props['branch']
+ohara_prod_env = False
+
+if os.environ.get('OHARA_ENV') == 'prod':
+    ohara_prod_env = True
 
 
 # -- Ultimate Replace -----------
@@ -97,6 +101,7 @@ release = ohara_version
 print("=" * 40)
 print("Ohara version: %s" % ohara_version)
 print("Ohara branch/tag: %s" % ohara_branch)
+print("Producton Mode: %s" % ohara_prod_env)
 print("=" * 40)
 
 # -- General configuration ---------------------------------------------------
@@ -143,13 +148,8 @@ language = None
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['build', 'Thumbs.db', '.DS_Store']
 
-# Use environment variable "SPHINXOPTS" or "O" to set tag option,
-# Reference: https://www.sphinx-doc.org/en/master/man/sphinx-build.html#environment-variables
-# Example: $ O="-v -t prod" make html
-if tags.has('prod'):
-    print "[Producton Mode]"
+if ohara_prod_env:
     exclude_patterns.extend(['sample.rst'])
-
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
@@ -172,7 +172,7 @@ html_theme_path = ["_themes", ]
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+# html_static_path = ['_static']
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
