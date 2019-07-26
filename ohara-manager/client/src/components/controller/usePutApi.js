@@ -30,19 +30,18 @@
  * limitations under the License.
  */
 import { useRef } from 'react';
-import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import { get } from 'lodash';
+
+import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import { handleError, axiosInstance } from './apiUtils';
 
-export const usePutApi = url => {
+const usePutApi = url => {
   const { showMessage } = useSnackbar();
   const resData = useRef();
 
-  const request = async params => {
+  const request = async (type, data) => {
     try {
-      const { type = '', data } = params;
-      const newType = type !== '' ? `/${type}` : '';
-      const res = await axiosInstance.put(`${url}${newType}`, data);
+      const res = await axiosInstance.put(`${url}${type}`, data);
       const isSuccess = get(res, 'data.isSuccess', false);
 
       if (!isSuccess) {
@@ -54,11 +53,13 @@ export const usePutApi = url => {
     }
   };
 
-  const putApi = async params => {
-    await request(params);
+  const putApi = async (type, data) => {
+    await request(type, data);
   };
 
   const getData = () => resData.current;
 
   return { getData, putApi };
 };
+
+export default usePutApi;

@@ -30,8 +30,9 @@
  * limitations under the License.
  */
 import { useRef } from 'react';
-import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import { get } from 'lodash';
+
+import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import {
   handleError,
   axiosInstance,
@@ -40,7 +41,7 @@ import {
 } from './apiUtils';
 import * as URL from './url';
 
-export const useValidationApi = url => {
+const useValidationApi = url => {
   const { showMessage } = useSnackbar();
   const resData = useRef();
 
@@ -83,3 +84,5 @@ export const useValidationApi = url => {
 
   return { getData, validationApi };
 };
+
+export default useValidationApi;

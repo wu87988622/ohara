@@ -15,11 +15,12 @@
  */
 
 import { useRef, useState } from 'react';
-import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import { get, isUndefined } from 'lodash';
+
+import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import { handleError, axiosInstance } from './apiUtils';
 
-export const useGetApi = url => {
+const useGetApi = url => {
   const { showMessage } = useSnackbar();
   const [isLoading, setIsLoading] = useState(false);
   const resData = useRef();
@@ -53,3 +54,5 @@ export const useGetApi = url => {
 
   return { getData, getApi, isLoading };
 };
+
+export default useGetApi;

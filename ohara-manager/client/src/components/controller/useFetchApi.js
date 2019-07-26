@@ -15,21 +15,20 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import { get } from 'lodash';
+
+import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import { handleError, axiosInstance } from './apiUtils';
 
-export const useFetchApi = (url, name = '') => {
+const useFetchApi = url => {
   const { showMessage } = useSnackbar();
   const [response, setResponse] = useState();
-  const [isLoading, setIsloading] = useState(false);
-  const [refetch, setRefetch] = useState('');
+  const [isLoading, setIsloading] = useState(true);
+  const [refetchState, refetch] = useState(null);
   const request = useCallback(
     async url => {
       try {
-        setIsloading(true);
-        const newUrl = name === '' ? url : `${url}/${name}`;
-        const res = await axiosInstance.get(newUrl);
+        const res = await axiosInstance.get(url);
         const isSuccess = get(res, 'data.isSuccess', false);
 
         if (!isSuccess) {
@@ -37,17 +36,19 @@ export const useFetchApi = (url, name = '') => {
         }
         setResponse(res);
         setIsloading(false);
-        setRefetch('');
+        refetch(null);
       } catch (err) {
         showMessage(handleError(err));
       }
     },
-    [name, showMessage],
+    [showMessage],
   );
 
   useEffect(() => {
-    request(url, name);
-  }, [name, request, url, refetch]);
+    request(url);
+  }, [request, url, refetchState]);
 
-  return { data: response, isLoading, setRefetch };
+  return { data: response, isLoading, refetch };
 };
+
+export default useFetchApi;

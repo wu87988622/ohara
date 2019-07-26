@@ -29,7 +29,9 @@ import * as URL from 'components/controller/url';
 
 const WorkspacesDetailPage = props => {
   const { workspaceName } = props.match.params;
-  const { data: response } = useApi.useFetchApi(URL.WORKER_URL, workspaceName);
+  const { data: response } = useApi.useFetchApi(
+    `${URL.WORKER_URL}/${workspaceName}`,
+  );
   const worker = get(response, 'data.result', null);
 
   if (!worker) return null;

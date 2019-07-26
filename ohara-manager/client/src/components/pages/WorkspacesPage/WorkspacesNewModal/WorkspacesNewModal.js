@@ -307,7 +307,7 @@ const WorkerNewModal = props => {
     setActiveStep(1);
     await Promise.all(
       zks.map(async zk => {
-        await putZookeeper({ type: `${zk.name}/stop` });
+        await putZookeeper(`/${zk.name}/stop`);
         await waitStopService({
           service: 'zookeeper',
           name: zk.name,
@@ -370,7 +370,7 @@ const WorkerNewModal = props => {
       nodeNames: [nodeNames[0]],
     });
 
-    await putZookeeper({ type: `${zookeeperName}/start` });
+    await putZookeeper(`/${zookeeperName}/start`);
     const zookeeperClusterName = get(zookeeper(), 'data.result.name');
     await waitForServiceCreation(zookeeperClusterName);
     setActiveStep(1);

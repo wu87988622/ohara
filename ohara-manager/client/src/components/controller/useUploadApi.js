@@ -15,11 +15,12 @@
  */
 
 import { useRef } from 'react';
-import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import { get } from 'lodash';
+
+import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import { handleError, axiosInstance } from './apiUtils';
 
-export const useUploadApi = url => {
+const useUploadApi = url => {
   const { showMessage } = useSnackbar();
   const resData = useRef();
   const request = async params => {
@@ -49,3 +50,5 @@ export const useUploadApi = url => {
 
   return { getData, uploadApi };
 };
+
+export default useUploadApi;

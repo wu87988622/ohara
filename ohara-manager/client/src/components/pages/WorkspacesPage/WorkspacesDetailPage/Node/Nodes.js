@@ -42,9 +42,8 @@ const Nodes = props => {
   const { getData, getApi } = useApi.useGetApi(URL.CONTAINER_URL);
   const { showMessage } = useSnackbar();
 
-  const { data: workerRes, isLoading, setRefetch } = useApi.useFetchApi(
-    URL.WORKER_URL,
-    workspaceName,
+  const { data: workerRes, isLoading, refetch } = useApi.useFetchApi(
+    `${URL.WORKER_URL}/${workspaceName}`,
   );
   const { data: nodeRes } = useApi.useFetchApi(URL.NODE_URL);
   const workerNodes = get(workerRes, 'data.result.nodeNames', []);
@@ -118,9 +117,9 @@ const Nodes = props => {
 
   const addNodeToService = async () => {
     for (let selectNode of selectNodes) {
-      await putBroker({ type: `${broker}/${selectNode}` });
+      await putBroker(`/${broker}/${selectNode}`);
       await waitForServiceCreation({ name: broker });
-      await putWorker({ type: `${workspaceName}/${selectNode}` });
+      await putWorker(`/${workspaceName}/${selectNode}`);
       await waitForServiceCreation({ name: workspaceName });
     }
   };
@@ -129,7 +128,7 @@ const Nodes = props => {
     setWorking(true);
     if (selectNodes.length > 0) {
       await addNodeToService();
-      setRefetch();
+      refetch();
       showMessage(MESSAGES.SERVICE_CREATION_SUCCESS);
       setSelectNodes([]);
     }

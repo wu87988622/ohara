@@ -35,7 +35,7 @@ const NodeListPage = () => {
   const [activeNode, setActiveNode] = useState(null);
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const { data: nodeRes, isLoading, setRefetch } = useApi.useFetchApi(
+  const { data: nodeRes, isLoading, refetch } = useApi.useFetchApi(
     URL.NODE_URL,
   );
 
@@ -125,7 +125,7 @@ const NodeListPage = () => {
           isOpen={isNewModalOpen}
           handleClose={handleModalClose}
           handleConfirm={() => {
-            setRefetch();
+            refetch();
           }}
         />
         <NodeEditModal
@@ -133,7 +133,7 @@ const NodeListPage = () => {
           isOpen={isEditModalOpen}
           handleClose={handleModalClose}
           handleConfirm={() => {
-            setRefetch();
+            refetch();
           }}
         />
       </>

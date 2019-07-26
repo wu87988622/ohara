@@ -37,7 +37,7 @@ const StreamApp = props => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   // const { jars, fetchJars, loading } = utils.useFetchJars(workspaceName);
-  const { data: jarsRes, isLoading, setRefetch } = useApi.useFetchApi(
+  const { data: jarsRes, isLoading, refetch } = useApi.useFetchApi(
     `${URL.FILE_URL}?group=${workspaceName}`,
   );
   const jars = get(jarsRes, 'data.result', []);
@@ -57,7 +57,7 @@ const StreamApp = props => {
     if (isSuccess) {
       showMessage(MESSAGES.STREAM_APP_UPLOAD_SUCCESS);
     }
-    setRefetch();
+    refetch();
   };
 
   const handleFileSelect = event => {
@@ -117,7 +117,7 @@ const StreamApp = props => {
         showMessage(MESSAGES.STREAM_APP_DELETE_SUCCESS);
         setIsModalOpen(false);
         setJarNameToBeDeleted('');
-        setRefetch();
+        refetch();
       }
     }
   };

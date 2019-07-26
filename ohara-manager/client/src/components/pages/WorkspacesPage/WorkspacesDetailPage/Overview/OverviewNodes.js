@@ -37,14 +37,12 @@ const OverviewNodes = props => {
 
   const [nodes, setNodes] = useState([]);
   const { data: brokerRes } = useApi.useFetchApi(
-    URL.BROKER_URL,
-    brokerClusterName,
+    `${URL.BROKER_URL}/${brokerClusterName}`,
   );
   const broker = get(brokerRes, 'data.result', null);
   const zookeeperName = broker === null ? '' : broker.zookeeperClusterName;
   const { data: zookeeperRes } = useApi.useFetchApi(
-    URL.ZOOKEEPER_URL,
-    zookeeperName,
+    `${URL.ZOOKEEPER_URL}/${zookeeperName}`,
   );
   const zookeeper = get(zookeeperRes, 'data.result', null);
 

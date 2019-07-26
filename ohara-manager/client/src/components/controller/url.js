@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-const BASE_URL = '/api/';
-export const ZOOKEEPER_URL = `${BASE_URL}zookeepers`;
-export const BROKER_URL = `${BASE_URL}brokers`;
-export const WORKER_URL = `${BASE_URL}workers`;
-export const HDFS_URL = `${BASE_URL}hdfs`;
-export const JDBC_URL = `${BASE_URL}jdbc`;
-export const FTP_URL = `${BASE_URL}ftp`;
-export const CONNECTOR_URL = `${BASE_URL}connectors`;
-export const CONTAINER_URL = `${BASE_URL}containers`;
-export const INFO_URL = `${BASE_URL}info`;
-export const FILE_URL = `${BASE_URL}files`;
-export const LOG_URL = `${BASE_URL}logs`;
-export const NODE_URL = `${BASE_URL}nodes`;
-export const PIPELINE_URL = `${BASE_URL}pipelines`;
-export const STREAM_URL = `${BASE_URL}stream`;
-export const TOPIC_URL = `${BASE_URL}topics`;
-export const VALIDATE_NODE_URL = `${BASE_URL}validate/node`;
-export const VALIDATE_CONNECTOR_URL = `${BASE_URL}validate/connector`;
+const BASE_URL = '/api';
+export const ZOOKEEPER_URL = `${BASE_URL}/zookeepers`;
+export const BROKER_URL = `${BASE_URL}/brokers`;
+export const WORKER_URL = `${BASE_URL}/workers`;
+export const HDFS_URL = `${BASE_URL}/hdfs`;
+export const JDBC_URL = `${BASE_URL}/jdbc`;
+export const FTP_URL = `${BASE_URL}/ftp`;
+export const CONNECTOR_URL = `${BASE_URL}/connectors`;
+export const CONTAINER_URL = `${BASE_URL}/containers`;
+export const INFO_URL = `${BASE_URL}/info`;
+export const FILE_URL = `${BASE_URL}/files`;
+export const LOG_URL = `${BASE_URL}/logs`;
+export const NODE_URL = `${BASE_URL}/nodes`;
+export const PIPELINE_URL = `${BASE_URL}/pipelines`;
+export const STREAM_URL = `${BASE_URL}/stream`;
+export const TOPIC_URL = `${BASE_URL}/topics`;
+export const VALIDATE_NODE_URL = `${BASE_URL}/validate/node`;
+export const VALIDATE_CONNECTOR_URL = `${BASE_URL}/validate/connector`;

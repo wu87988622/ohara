@@ -38,7 +38,7 @@ const Topics = props => {
   const {
     data: topics,
     isLoading: fetchingTopics,
-    setRefetch,
+    refetch,
   } = useApi.useFetchApi(URL.TOPIC_URL);
   const topicsUnderBrokerCluster = get(topics, 'data.result', []).filter(
     topic => topic.brokerClusterName === worker.brokerClusterName,
@@ -110,7 +110,7 @@ const Topics = props => {
         isDeleteModalOpen: false,
         topicToBeDeleted: '',
       });
-      setRefetch();
+      refetch();
     }
   };
 
@@ -146,7 +146,7 @@ const Topics = props => {
           setState({ isNewModalOpen: false });
         }}
         onConfirm={() => {
-          setRefetch();
+          refetch();
         }}
         brokerClusterName={worker.brokerClusterName}
       />

@@ -15,11 +15,12 @@
  */
 
 import { useRef } from 'react';
-import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import { get } from 'lodash';
+
+import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import { handleError, axiosInstance } from './apiUtils';
 
-export const usePostApi = url => {
+const usePostApi = url => {
   const { showMessage } = useSnackbar();
   const resData = useRef();
   const request = async params => {
@@ -43,3 +44,5 @@ export const usePostApi = url => {
 
   return { getData, postApi };
 };
+
+export default usePostApi;

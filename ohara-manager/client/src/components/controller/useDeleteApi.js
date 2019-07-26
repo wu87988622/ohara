@@ -15,11 +15,12 @@
  */
 
 import { useRef } from 'react';
-import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import { get } from 'lodash';
+
+import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import { handleError, axiosInstance } from './apiUtils';
 
-export const useDeleteApi = url => {
+const useDeleteApi = url => {
   const { showMessage } = useSnackbar();
   const data = useRef();
   const request = async name => {
@@ -41,3 +42,5 @@ export const useDeleteApi = url => {
   const getData = () => data.current;
   return { deleteApi, getData };
 };
+
+export default useDeleteApi;

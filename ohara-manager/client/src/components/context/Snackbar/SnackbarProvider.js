@@ -48,11 +48,11 @@ const SnackbarProvider = props => {
   return (
     <SnackbarContext.Provider
       value={{
-        isOpen: isOpen,
-        message: message,
-        handleClose: handleClose,
-        autoClose: autoClose,
-        setSnackMessage: setSnackMessage,
+        isOpen,
+        message,
+        handleClose,
+        autoClose,
+        setSnackMessage,
       }}
     >
       <Snackbar

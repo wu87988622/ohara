@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import { useDeleteApi } from './useDeleteApi';
-import { useFetchApi } from './useFetchApi';
-import { useGetApi } from './useGetApi';
-import { usePostApi } from './usePostApi';
-import { usePutApi } from './usePutApi';
-import { useUploadApi } from './useUploadApi';
-import { useValidationApi } from './useValidationApi';
+import useDeleteApi from './useDeleteApi';
+import useFetchApi from './useFetchApi';
+import useGetApi from './useGetApi';
+import usePostApi from './usePostApi';
+import usePutApi from './usePutApi';
+import useUploadApi from './useUploadApi';
+import useValidationApi from './useValidationApi';
 
 export {
   useDeleteApi,

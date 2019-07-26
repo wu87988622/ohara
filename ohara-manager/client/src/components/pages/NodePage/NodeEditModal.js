@@ -52,7 +52,7 @@ const NodeEditModal = props => {
       user: values.user,
     };
 
-    await putApi({ type: values.name, data });
+    await putApi(`/${values.name}`, data);
     const isSuccess = get(saveRes(), 'data.isSuccess', false);
     if (isSuccess) {
       form.reset();
