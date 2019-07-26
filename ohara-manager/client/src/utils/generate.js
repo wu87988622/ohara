@@ -20,7 +20,7 @@ import { CONNECTOR_TYPES } from 'constants/pipelines';
 
 const { system, random, lorem, internet, date } = faker;
 const { fileName: name } = system;
-const { uuid: id, number } = random;
+const { uuid: id, number, alphaNumeric: revision } = random;
 const { paragraph: message, word } = lorem;
 const { domainName, ip, userName, url, password } = internet;
 
@@ -197,4 +197,5 @@ export {
   url,
   password,
   word,
+  revision,
 };

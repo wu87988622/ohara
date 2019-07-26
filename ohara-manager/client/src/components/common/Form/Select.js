@@ -68,7 +68,7 @@ const Select = ({
       {isObject
         ? list.map(({ id, name }, idx) => {
             return (
-              <option key={idx} data-id={id}>
+              <option value={name} key={idx} data-id={id}>
                 {name}
               </option>
             );

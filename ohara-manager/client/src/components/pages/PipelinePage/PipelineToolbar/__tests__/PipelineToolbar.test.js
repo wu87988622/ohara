@@ -24,11 +24,11 @@ import {
 import '@testing-library/jest-dom/extend-expect';
 
 import * as generate from 'utils/generate';
-import { renderWithRouter } from 'utils/testUtils';
+import * as URLS from 'constants/urls';
 import PipelineToolbar from '../PipelineToolbar';
-import { ICON_KEYS } from 'constants/pipelines';
+import { renderWithRouter } from 'utils/testUtils';
+import { ICON_KEYS, CONNECTOR_TYPES } from 'constants/pipelines';
 import { fetchJars } from 'api/jarApi';
-import { CONNECTOR_TYPES } from 'constants/pipelines';
 import { createConnector } from 'api/connectorApi';
 import { createProperty } from 'api/streamApi';
 
@@ -37,13 +37,6 @@ jest.mock('api/workerApi');
 jest.mock('api/jarApi');
 jest.mock('api/connectorApi');
 jest.mock('api/streamApi');
-jest.mock('../pipelineToolbarUtils');
-
-// Add more test cases including:
-// 1. Test if the connector, stream app and topic lists are properly rendered
-// 2. Test if the modal title is correctly rendered
-// 3. Renders a redirect message when stream app and topic modals do not have any data.
-// Plug, the add button should be disabled
 
 const topics = generate.topics({ count: 3 });
 
@@ -87,7 +80,7 @@ const props = {
         },
         {
           displayName: 'revision',
-          defaultValue: generate.number(),
+          defaultValue: generate.revision(6),
         },
       ],
     },
@@ -104,7 +97,7 @@ const props = {
         },
         {
           displayName: 'revision',
-          defaultValue: generate.number(),
+          defaultValue: generate.revision(6),
         },
       ],
     },
@@ -155,21 +148,72 @@ describe('<PipelineToolbar />', () => {
     expect(queryByTestId('topic-modal')).toBeNull();
   });
 
+  it('renders new topic modal title', async () => {
+    const { getByText, getByTestId } = render(<PipelineToolbar {...props} />);
+
+    fireEvent.click(getByTestId('toolbar-topics'));
+    getByText('Add a new topic');
+  });
+
+  it('renders new topic modal topic list', async () => {
+    const { getByTestId } = render(<PipelineToolbar {...props} />);
+
+    fireEvent.click(getByTestId('toolbar-topics'));
+
+    expect(getByTestId('topic-select').options.length).toBe(topics.length);
+
+    expect(getByTestId('topic-select').options[0].value).toBe(topics[0].name);
+    expect(getByTestId('topic-select').options[1].value).toBe(topics[1].name);
+    expect(getByTestId('topic-select').options[2].value).toBe(topics[2].name);
+  });
+
+  it('should display redirect info when render new topic modal without topic data', async () => {
+    const { getByText, getByTestId, queryByTestId } = renderWithRouter(
+      <PipelineToolbar {...props} topics={[]} currentTopic={null} />,
+    );
+
+    fireEvent.click(getByTestId('toolbar-topics'));
+
+    expect(queryByTestId('topic-select')).toBeNull();
+
+    getByText(
+      "You don't have any topics available in this workspace yet. But you can create one in",
+    );
+
+    const expectUrl =
+      'http://' +
+      window.location.hostname +
+      URLS.WORKSPACES +
+      '/' +
+      props.workerClusterName +
+      '/topics';
+    expect(getByText('here').href).toBe(expectUrl);
+
+    expect(getByText('Add')).toBeDisabled();
+  });
+
   it('tests change selected topic ', async () => {
     const { getByText, getByTestId, queryByTestId } = render(
       <PipelineToolbar {...props} />,
     );
 
     fireEvent.click(getByTestId('toolbar-topics'));
-    fireEvent.change(getByTestId('topic-select'), {
-      target: { value: topics[2] },
-    });
-
-    // select test change is no useful, pass the test for now;
-    // expect(getByTestId('topic-select').value).toBe(topics[2].name);
-
     fireEvent.click(getByText('Add'));
-    expect(queryByTestId('topic-select')).toBeNull();
+
+    const expectedParamsForUpdateGraph = {
+      update: {
+        name: topics[0].name,
+        className: 'topic',
+        kind: 'topic',
+        to: [],
+      },
+    };
+
+    expect(props.updateGraph).toHaveBeenCalledTimes(1);
+    expect(props.updateGraph).toHaveBeenCalledWith(
+      expectedParamsForUpdateGraph,
+    );
+    expect(queryByTestId('topic-modal')).toBeNull();
   });
 
   it('toggles new stream app modal', async () => {
@@ -199,6 +243,78 @@ describe('<PipelineToolbar />', () => {
     expect(queryByTestId('streamapp-modal')).toBeNull();
   });
 
+  it('renders new stream app modal title', async () => {
+    const { getByText, getByTestId } = renderWithRouter(
+      <PipelineToolbar {...props} />,
+    );
+
+    fireEvent.click(getByTestId('toolbar-streams'));
+
+    getByText('Add a new stream app');
+
+    fireEvent.click(getByText('Add'));
+
+    getByText('New StreamApp Name');
+  });
+
+  it('renders new stream app modal stream app list', async () => {
+    const streamApps = generate.streamApps({ count: 3 });
+    const res = {
+      data: {
+        result: streamApps,
+      },
+    };
+
+    fetchJars.mockImplementation(() => Promise.resolve(res));
+    const { getByTestId } = renderWithRouter(<PipelineToolbar {...props} />);
+
+    fireEvent.click(getByTestId('toolbar-streams'));
+    const newStreamSelect = await waitForElement(() =>
+      getByTestId('streamapp-select'),
+    );
+
+    expect(newStreamSelect.options.length).toBe(streamApps.length);
+
+    expect(newStreamSelect.options[0].value).toBe(streamApps[0].name);
+    expect(newStreamSelect.options[1].value).toBe(streamApps[1].name);
+    expect(newStreamSelect.options[2].value).toBe(streamApps[2].name);
+  });
+
+  it('should display redirect info when render new stream app modal without stream app data', async () => {
+    const streamApps = [];
+    const res = {
+      data: {
+        result: streamApps,
+      },
+    };
+
+    fetchJars.mockImplementation(() => Promise.resolve(res));
+
+    const { getByText, getByTestId, queryByTestId } = renderWithRouter(
+      <PipelineToolbar {...props} />,
+    );
+
+    fireEvent.click(getByTestId('toolbar-streams'));
+    await waitForElement(() => getByTestId('streamapp-modal'));
+
+    expect(queryByTestId('streamapp-select')).toBeNull();
+
+    getByText(
+      "You don't have any stream jars available in this workspace yet. But you can create one in",
+    );
+
+    const expectUrl =
+      'http://' +
+      window.location.hostname +
+      URLS.WORKSPACES +
+      '/' +
+      props.workerClusterName +
+      '/streamapps';
+    expect(getByText('here').href).toBe(expectUrl);
+
+    expect(getByText('Add')).toBeDisabled();
+  });
+
   it('changes selected stream app at new stream modal', async () => {
     const streamApps = generate.streamApps({ count: 3 });
     const res = {
@@ -213,14 +329,15 @@ describe('<PipelineToolbar />', () => {
     const newStreamModal = await waitForElement(() =>
       getByTestId('streamapp-select'),
     );
-
     expect(newStreamModal).toBeVisible();
 
-    fireEvent.change(newStreamModal, { target: { value: streamApps[1] } });
+    fireEvent.change(newStreamModal, { target: { value: streamApps[1].name } });
+
+    expect(newStreamModal.value).toBe(streamApps[1].name);
   });
 
   it('toggles new source connector modal', async () => {
-    const { getByTestId, queryByTestId } = render(
+    const { getByTestId, queryByTestId } = renderWithRouter(
       <PipelineToolbar {...props} />,
     );
 
@@ -236,6 +353,112 @@ describe('<PipelineToolbar />', () => {
     expect(queryByTestId('source-connector-modal')).toBeNull();
   });
 
+  it('renders new source connector modal title', async () => {
+    const { getByText, getByTestId } = renderWithRouter(
+      <PipelineToolbar {...props} />,
+    );
+
+    fireEvent.click(getByTestId('toolbar-sources'));
+    await waitForElement(() => getByTestId('source-connector-modal'));
+    getByText('Add a new source connector');
+
+    fireEvent.click(getByTestId('connector-list'));
+    fireEvent.click(getByTestId('modal-confirm-btn'));
+    getByText('New Connector Name');
+  });
+
+  it('renders new source connector modal source connector list', async () => {
+    const connectors = [
+      {
+        className: CONNECTOR_TYPES.ftpSource,
+        definitions: [
+          {
+            displayName: 'kind',
+            defaultValue: 'source',
+          },
+          {
+            displayName: 'version',
+            defaultValue: generate.number(),
+          },
+          {
+            displayName: 'revision',
+            defaultValue: generate.revision(6),
+          },
+        ],
+      },
+      {
+        className: CONNECTOR_TYPES.jdbcSource,
+        definitions: [
+          {
+            displayName: 'kind',
+            defaultValue: 'source',
+          },
+          {
+            displayName: 'version',
+            defaultValue: generate.number(),
+          },
+          {
+            displayName: 'revision',
+            defaultValue: generate.revision(6),
+          },
+        ],
+      },
+    ];
+
+    const { getByText, getByTestId, getAllByTestId } = renderWithRouter(
+      <PipelineToolbar {...props} connectors={connectors} />,
+    );
+
+    fireEvent.click(getByTestId('toolbar-sources'));
+    const newSourceConnectorSelect = await waitForElement(() =>
+      getAllByTestId('connector-list'),
+    );
+
+    getByText('connector name');
+    getByText('version');
+    getByText('revision');
+
+    expect(newSourceConnectorSelect.length).toBe(connectors.length);
+
+    expect(newSourceConnectorSelect[0].cells.length).toBe(
+      connectors[0].definitions.length,
+    );
+
+    expect(newSourceConnectorSelect[0].cells[0].textContent).toBe(
+      connectors[0].className,
+    );
+
+    expect(newSourceConnectorSelect[1].cells[0].textContent).toBe(
+      connectors[1].className,
+    );
+
+    expect(newSourceConnectorSelect[0].cells[1].textContent).toBe(
+      connectors[0].definitions[1].defaultValue.toString(),
+    );
+    expect(newSourceConnectorSelect[1].cells[1].textContent).toBe(
+      connectors[1].definitions[1].defaultValue.toString(),
+    );
+
+    expect(newSourceConnectorSelect[0].cells[2].textContent).toBe(
+      connectors[0].definitions[2].defaultValue.toString(),
+    );
+    expect(newSourceConnectorSelect[1].cells[2].textContent).toBe(
+      connectors[1].definitions[2].defaultValue.toString(),
+    );
+  });
+
+  it('should disable add button when render new source connector modal without source connector data', async () => {
+    const { getByText, getByTestId, queryByTestId } = renderWithRouter(
+      <PipelineToolbar {...props} connectors={[]} />,
+    );
+
+    fireEvent.click(getByTestId('toolbar-sources'));
+
+    expect(queryByTestId('connector-list')).toBeNull();
+
+    expect(getByText('Add')).toBeDisabled();
+  });
+
   it('toggles new sink connector modal', async () => {
     const res = {
       data: {
@@ -246,7 +469,7 @@ describe('<PipelineToolbar />', () => {
     createConnector.mockImplementation(() => Promise.resolve(res));
     createProperty.mockImplementation(() => Promise.resolve(res));
 
-    const { getByTestId, queryByTestId } = render(
+    const { getByTestId, queryByTestId } = renderWithRouter(
       <PipelineToolbar {...props} />,
     );
 
@@ -262,5 +485,113 @@ describe('<PipelineToolbar />', () => {
 
     fireEvent.click(getByTestId('modal-cancel-btn'));
     expect(queryByTestId('sink-connector-modal')).toBeNull();
+  });
+
+  it('renders new sink connector modal title', async () => {
+    const { getByText, getByTestId } = renderWithRouter(
+      <PipelineToolbar {...props} />,
+    );
+
+    fireEvent.click(getByTestId('toolbar-sinks'));
+    await waitForElement(() => getByTestId('sink-connector-modal'));
+    getByText('Add a new sink connector');
+
+    fireEvent.click(getByTestId('connector-list'));
+    fireEvent.click(getByTestId('modal-confirm-btn'));
+    getByText('New Connector Name');
+  });
+
+  it('renders sink connector list in new sink connector modal', async () => {
+    const connectors = [
+      {
+        className: CONNECTOR_TYPES.ftpSink,
+        definitions: [
+          {
+            displayName: 'kind',
+            defaultValue: 'sink',
+          },
+          {
+            displayName: 'version',
+            defaultValue: generate.number(),
+          },
+          {
+            displayName: 'revision',
+            defaultValue: generate.revision(6),
+          },
+        ],
+      },
+      {
+        className: CONNECTOR_TYPES.hdfsSink,
+        definitions: [
+          {
+            displayName: 'kind',
+            defaultValue: 'sink',
+          },
+          {
+            displayName: 'version',
+            defaultValue: generate.number(),
+          },
+          {
+            displayName: 'revision',
+            defaultValue: generate.revision(6),
+          },
+        ],
+      },
+    ];
+
+    const { getByText, getByTestId, getAllByTestId } = renderWithRouter(
+      <PipelineToolbar {...props} connectors={connectors} />,
+    );
+
+    fireEvent.click(getByTestId('toolbar-sinks'));
+    const newSinkConnectorSelect = await waitForElement(() =>
+      getAllByTestId('connector-list'),
+    );
+
+    getByText('connector name');
+    getByText('version');
+    getByText('revision');
+
+    expect(newSinkConnectorSelect.length).toBe(connectors.length);
+
+    expect(newSinkConnectorSelect[0].cells.length).toBe(
+      connectors[0].definitions.length,
+    );
+
+    expect(newSinkConnectorSelect[0].cells[0].textContent).toBe(
+      connectors[0].className,
+    );
+
+    expect(newSinkConnectorSelect[1].cells[0].textContent).toBe(
+      connectors[1].className,
+    );
+
+    expect(newSinkConnectorSelect[0].cells[1].textContent).toBe(
+      connectors[0].definitions[1].defaultValue.toString(),
+    );
+
+    expect(newSinkConnectorSelect[1].cells[1].textContent).toBe(
+      connectors[1].definitions[1].defaultValue.toString(),
+    );
+
+    expect(newSinkConnectorSelect[0].cells[2].textContent).toBe(
+      connectors[0].definitions[2].defaultValue.toString(),
+    );
+
+    expect(newSinkConnectorSelect[1].cells[2].textContent).toBe(
+      connectors[1].definitions[2].defaultValue.toString(),
+    );
+  });
+
+  it('should disable add button when render new sink connector modal without sink connector data', async () => {
+    const { getByText, getByTestId, queryByTestId } = renderWithRouter(
+      <PipelineToolbar {...props} connectors={[]} />,
+    );
+
+    fireEvent.click(getByTestId('toolbar-sinks'));
+
+    expect(queryByTestId('connector-list')).toBeNull();
+
+    expect(getByText('Add')).toBeDisabled();
   });
 });
