@@ -27,7 +27,7 @@ import scala.concurrent.{ExecutionContext, Future}
 object PipelineApi {
   val PIPELINES_PREFIX_PATH: String = "pipelines"
 
-  final case class Flow(from: String, to: Set[String])
+  final case class Flow(from: DataKey, to: Set[DataKey])
   implicit val FLOW_JSON_FORMAT: OharaJsonFormat[Flow] =
     JsonRefiner[Flow].format(jsonFormat2(Flow)).rejectEmptyString().refine
 
@@ -82,7 +82,7 @@ object PipelineApi {
           workerClusterNameKey -> obj.workerClusterName.map(JsString(_)).getOrElse(JsNull),
           flowsKey -> obj.flows.map(_.map(FLOW_JSON_FORMAT.write).toVector).map(JsArray(_)).getOrElse(JsNull),
           rulesKey -> obj.flows
-            .map(_.map(e => e.from -> JsArray(e.to.map(JsString(_)).toVector)).toMap)
+            .map(_.map(e => e.from.name -> JsArray(e.to.map(_.name).map(JsString(_)).toVector)).toMap)
             .map(JsObject(_))
             .getOrElse(JsNull),
           Data.TAGS_KEY -> obj.tags.map(JsObject(_)).getOrElse(JsNull),
@@ -104,14 +104,14 @@ object PipelineApi {
                             tags: Map[String, JsValue])
       extends CreationRequest {
     def rules: Map[String, Set[String]] = flows.map { flow =>
-      flow.from -> flow.to
+      flow.from.name -> flow.to.map(_.name)
     }.toMap
   }
 
   private[this] def toFlows(rules: Map[String, Set[String]]): Seq[Flow] = rules.map { e =>
     Flow(
-      from = e._1,
-      to = e._2
+      from = DataKey(Data.GROUP_DEFAULT, e._1),
+      to = e._2.map(DataKey(Data.GROUP_DEFAULT, _))
     )
   }.toSeq
 
@@ -181,7 +181,7 @@ object PipelineApi {
 
     override def kind: String = "pipeline"
     def rules: Map[String, Set[String]] = flows.map { flow =>
-      flow.from -> flow.to
+      flow.from.name -> flow.to.map(_.name)
     }.toMap
   }
   implicit val PIPELINE_JSON_FORMAT: RootJsonFormat[Pipeline] = new RootJsonFormat[Pipeline] {
@@ -238,10 +238,10 @@ object PipelineApi {
     def flows(flows: Seq[Flow]): Request
 
     @Optional("default value is empty")
-    def flow(from: String, to: String): Request = flow(from, Set(to))
+    def flow(from: DataKey, to: DataKey): Request = flow(from, Set(to))
 
     @Optional("default value is empty")
-    def flow(from: String, to: Set[String]): Request = flow(Flow(from = from, to = to))
+    def flow(from: DataKey, to: Set[DataKey]): Request = flow(Flow(from = from, to = to))
 
     @Optional("default value is empty")
     def flow(flow: Flow): Request = flows(Seq(Objects.requireNonNull(flow)))

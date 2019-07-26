@@ -124,7 +124,7 @@ class TestMetrics extends WithBrokerWorker with Matchers {
 
     val pipelineApi = PipelineApi.access.hostname(configurator.hostname).port(configurator.port)
 
-    val pipeline = result(pipelineApi.request.name(CommonUtils.randomString()).flow(topic.name, sink.name).create())
+    val pipeline = result(pipelineApi.request.name(CommonUtils.randomString()).flow(topic.key, sink.key).create())
 
     pipeline.objects.filter(_.name == sink.name).head.metrics.meters.size shouldBe 0
     result(connectorApi.start(sink.name))
@@ -158,7 +158,7 @@ class TestMetrics extends WithBrokerWorker with Matchers {
 
     val pipelineApi = PipelineApi.access.hostname(configurator.hostname).port(configurator.port)
 
-    val pipeline = result(pipelineApi.request.name(CommonUtils.randomString()).flow(topic.name, source.name).create())
+    val pipeline = result(pipelineApi.request.name(CommonUtils.randomString()).flow(topic.key, source.key).create())
 
     pipeline.objects.filter(_.name == source.name).head.metrics.meters.size shouldBe 0
     result(connectorApi.start(source.name))

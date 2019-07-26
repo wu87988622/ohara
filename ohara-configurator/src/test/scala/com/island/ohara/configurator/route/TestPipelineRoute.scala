@@ -53,12 +53,12 @@ class TestPipelineRoute extends MediumTest with Matchers {
     result(connectorApi.start(connector.name))
 
     var pipeline = result(
-      pipelineApi.request.name(CommonUtils.randomString(10)).flow(Flow(connector.name, Set(topic.name))).create()
+      pipelineApi.request.name(CommonUtils.randomString(10)).flow(Flow(connector.key, Set(topic.key))).create()
     )
 
     pipeline.flows.size shouldBe 1
-    pipeline.flows.head.from shouldBe connector.name
-    pipeline.flows.head.to shouldBe Set(topic.name)
+    pipeline.flows.head.from shouldBe connector.key
+    pipeline.flows.head.to shouldBe Set(topic.key)
     pipeline.objects.size shouldBe 2
     pipeline.workerClusterName shouldBe None
 
@@ -92,7 +92,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
   def testNonexistentData(): Unit = {
     val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
     val name = CommonUtils.randomString()
-    val flow = Flow(from = topic.name, to = Set(CommonUtils.randomString()))
+    val flow = Flow(from = topic.key, to = Set(DataKey(CommonUtils.randomString(), CommonUtils.randomString())))
     val pipeline = result(pipelineApi.request.name(name).flow(flow).create())
     // the "to" is reference to an nonexistent data
     pipeline.objects.size shouldBe 1
@@ -110,9 +110,9 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
     val topic1 = result(topicApi.request.name(CommonUtils.randomString(10)).create())
 
-    val pipeline0 = result(pipelineApi.request.name(CommonUtils.randomString()).flow(topic0.name, topic1.name).create())
+    val pipeline0 = result(pipelineApi.request.name(CommonUtils.randomString()).flow(topic0.key, topic1.key).create())
 
-    val pipeline1 = result(pipelineApi.request.name(CommonUtils.randomString()).flow(topic0.name, topic1.name).create())
+    val pipeline1 = result(pipelineApi.request.name(CommonUtils.randomString()).flow(topic0.key, topic1.key).create())
 
     val pipelines = result(pipelineApi.list())
     pipelines.size shouldBe 2
@@ -131,8 +131,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
         .numberOfTasks(1)
         .create())
 
-    val pipeline = result(
-      pipelineApi.request.name(CommonUtils.randomString()).flow(topic.name, connector.name).create())
+    val pipeline = result(pipelineApi.request.name(CommonUtils.randomString()).flow(topic.key, connector.key).create())
 
     pipeline.objects.size shouldBe 2
     pipeline.objects.foreach { obj =>
@@ -155,7 +154,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
     result(connectorApi.start(connector.name))
 
     val pipeline = result(
-      pipelineApi.request.name(CommonUtils.randomString()).flow(connector.name, connector.name).create())
+      pipelineApi.request.name(CommonUtils.randomString()).flow(connector.key, connector.key).create())
 
     // duplicate object is removed
     pipeline.objects.size shouldBe 1
@@ -178,8 +177,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
         .create())
     result(connectorApi.start(connector.name))
 
-    val pipeline = result(
-      pipelineApi.request.name(CommonUtils.randomString()).flow(topic.name, connector.name).create())
+    val pipeline = result(pipelineApi.request.name(CommonUtils.randomString()).flow(topic.key, connector.key).create())
 
     pipeline.objects.size shouldBe 2
     pipeline.objects.filter(_.name == connector.name).foreach { obj =>
@@ -213,9 +211,9 @@ class TestPipelineRoute extends MediumTest with Matchers {
   def updateOnlyFlow(): Unit = {
     val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
     val pipeline = result(
-      pipelineApi.request.name(CommonUtils.randomString()).flow(topic.name, Set.empty[String]).update())
+      pipelineApi.request.name(CommonUtils.randomString()).flow(topic.key, Set.empty[DataKey]).update())
     pipeline.flows.size shouldBe 1
-    pipeline.flows.head.from shouldBe topic.name
+    pipeline.flows.head.from shouldBe topic.key
     pipeline.flows.head.to.size shouldBe 0
 
     val pipeline2 = result(pipelineApi.request.name(pipeline.name).flows(Seq.empty).update())
@@ -228,7 +226,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
   def updateOnlyWorkerClusterName(): Unit = {
     val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
     val pipeline = result(
-      pipelineApi.request.name(CommonUtils.randomString()).flow(topic.name, Set.empty[String]).update())
+      pipelineApi.request.name(CommonUtils.randomString()).flow(topic.key, Set.empty[DataKey]).update())
     // worker cluster is useless to pipeline
     result(pipelineApi.request.name(pipeline.name).workerClusterName(CommonUtils.randomString()).update())
   }
@@ -246,7 +244,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
         .numberOfTasks(1)
         .create())
 
-    val pipeline = result(pipelineApi.request.name(methodName()).flow(topic.name, connector.name).create())
+    val pipeline = result(pipelineApi.request.name(methodName()).flow(topic.key, connector.key).create())
     pipeline.flows.size shouldBe 1
     pipeline.objects.size shouldBe 2
   }

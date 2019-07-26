@@ -71,8 +71,8 @@ class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
         .flows(
           Seq(
             Flow(
-              from = topic.name,
-              to = Set(connector.name)
+              from = topic.key,
+              to = Set(connector.key)
             )))
         .create())
 
@@ -125,8 +125,8 @@ class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
         .flows(
           Seq(
             Flow(
-              from = topic.name,
-              to = Set(connector.name)
+              from = topic.key,
+              to = Set(connector.key)
             )))
         .create())
 

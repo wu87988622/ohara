@@ -1229,8 +1229,16 @@ relationship via following flow.
    {
      "flows": [
        {
-         "from": "topic's name",
-         "to": ["connector's name"]
+         "from": {
+           "group": "topic's group",
+           "name": "topic's name"
+         },
+         "to": [
+           {
+             "group": "connector's group",
+             "name": "connector's name"
+           }
+         ]
        }
      ]
    }
@@ -1247,8 +1255,12 @@ The properties used in generating pipeline are shown below.
 
 1. name (**string**) — pipeline’s name
 2. flows (**array(object)**) — the relationship between objects
-    - flows[i].from (**string**) — the endpoint of source
-    - flows[i].to (**array(string)**) — the endpoint of sink
+  - flows[i].from (**object**) — the endpoint of source
+    - flows[i].from.group — the group of source
+    - flows[i].from.name — the name of source
+  - flows[i].to (**array(object)**) — the endpoint of sinks
+    - flows[i].to[j].group — the group of sink[j]
+    - flows[i].to[j].name — the name of sink[j]
 3. tags (**object**) — the extra description to this object
 
 
@@ -1295,8 +1307,16 @@ the response from server shows that it fails to find the status of the
        "name": "pipeline0",
        "flows": [
          {
-           "from": "be48b7d8-08a8-40a4-8f17-aaa",
-           "to": ["81cb80a9-34a5-4e45-881a-cb87d4fbb5bd"]
+           "from": {
+             "group": "default",
+             "name": "be48b7d8-08a8-40a4-8f17-aaa"
+           },
+           "to": [
+             {
+               "group": "default",
+               "name": "be48b7d8-08a8-40a4-8f17-aaa"
+             }
+           ]
          }
        ]
      }
@@ -1310,9 +1330,15 @@ the response from server shows that it fails to find the status of the
        "lastModified": 1554950999668,
        "flows": [
          {
-           "from": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
+           "from": {
+             "group": "default",
+             "name": "be48b7d8-08a8-40a4-8f17-aaa"
+           },
            "to": [
-             "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd"
+             {
+               "group": "default",
+               "name": "be48b7d8-08a8-40a4-8f17-aaa"
+             }
            ]
          }
        ],
@@ -1355,8 +1381,16 @@ the response from server shows that it fails to find the status of the
        "name": "pipeline1",
        "flows": [
          {
-           "from": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
-           "to": []
+           "from": {
+             "group": "default",
+             "name": "be48b7d8-08a8-40a4-8f17-aaa"
+           },
+           "to": [
+             {
+               "group": "default",
+               "name": "be48b7d8-08a8-40a4-8f17-aaa"
+             }
+           ]
          }
        ]
      }
@@ -1370,8 +1404,16 @@ the response from server shows that it fails to find the status of the
        "lastModified": 1554952500972,
        "flows": [
          {
-           "from": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
-           "to": []
+           "from": {
+             "group": "default",
+             "name": "be48b7d8-08a8-40a4-8f17-aaa"
+           },
+           "to": [
+             {
+               "group": "default",
+               "name": "be48b7d8-08a8-40a4-8f17-aaa"
+             }
+           ]
          }
        ],
        "objects": [
@@ -1401,10 +1443,17 @@ update a pipeline
 
      {
        "name": "pipeline0",
-       "flows": [
          {
-           "from": "be48b7d8-08a8-40a4-8f17-aaa",
-           "to": ["81cb80a9-34a5-4e45-881a-cb87d4fbb5bd"]
+           "from": {
+             "group": "default",
+             "name": "be48b7d8-08a8-40a4-8f17-aaa"
+           },
+           "to": [
+             {
+               "group": "default",
+               "name": "be48b7d8-08a8-40a4-8f17-aaa"
+             }
+           ]
          }
        ]
      }
@@ -1422,9 +1471,15 @@ update a pipeline
        "lastModified": 1554950999668,
        "flows": [
          {
-           "from": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
+           "from": {
+             "group": "default",
+             "name": "be48b7d8-08a8-40a4-8f17-aaa"
+           },
            "to": [
-             "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd"
+             {
+               "group": "default",
+               "name": "be48b7d8-08a8-40a4-8f17-aaa"
+             }
            ]
          }
        ],
@@ -1476,9 +1531,15 @@ of **single** pipeline.
          "lastModified": 1554950999668,
          "flows": [
            {
-             "from": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
+             "from": {
+               "group": "default",
+               "name": "be48b7d8-08a8-40a4-8f17-aaa"
+             },
              "to": [
-               "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd"
+               {
+                 "group": "default",
+                 "name": "be48b7d8-08a8-40a4-8f17-aaa"
+               }
              ]
            }
          ],
@@ -1542,9 +1603,15 @@ get a pipeline
        "lastModified": 1554950999668,
        "flows": [
          {
-           "from": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
+           "from": {
+             "group": "default",
+             "name": "be48b7d8-08a8-40a4-8f17-aaa"
+           },
            "to": [
-             "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd"
+             {
+               "group": "default",
+               "name": "be48b7d8-08a8-40a4-8f17-aaa"
+             }
            ]
          }
        ],

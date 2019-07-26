@@ -43,9 +43,9 @@ class TestPipelineApi extends SmallTest with Matchers {
                                                |}
                                             """.stripMargin.parseJson)
     req.flows.size shouldBe 1
-    req.flows.head.from shouldBe from
+    req.flows.head.from shouldBe DataKey(Data.GROUP_DEFAULT, from)
     req.flows.head.to.size shouldBe 2
-    req.flows.head.to shouldBe Set(to0, to1)
+    req.flows.head.to shouldBe Set(DataKey(Data.GROUP_DEFAULT, to0), DataKey(Data.GROUP_DEFAULT, to1))
   }
   @Test
   def parseDeprecatedJsonOfPipeline(): Unit = {
@@ -64,8 +64,8 @@ class TestPipelineApi extends SmallTest with Matchers {
 
   @Test
   def parseDeprecatedJsonOfPipeline2(): Unit = {
-    val from = CommonUtils.randomString()
-    val to = CommonUtils.randomString()
+    val from = DataKey(CommonUtils.randomString(), CommonUtils.randomString())
+    val to = DataKey(CommonUtils.randomString(), CommonUtils.randomString())
     val pipeline = Pipeline(
       group = CommonUtils.randomString(),
       name = CommonUtils.randomString(),
@@ -81,7 +81,7 @@ class TestPipelineApi extends SmallTest with Matchers {
       tags = Map.empty
     )
     val json = PIPELINE_JSON_FORMAT.write(pipeline).toString
-    withClue(json)(json.contains(s"""\"rules\":{\"$from\":[\"$to\"]""") shouldBe true)
+    withClue(json)(json.contains(s"""\"rules\":{\"${from.name}\":[\"${to.name}\"]""") shouldBe true)
   }
 
   @Test
@@ -131,12 +131,20 @@ class TestPipelineApi extends SmallTest with Matchers {
 
   @Test
   def parseFlow(): Unit = {
-    val from = CommonUtils.randomString()
-    val to = CommonUtils.randomString()
+    val from = DataKey(CommonUtils.randomString(), CommonUtils.randomString())
+    val to = DataKey(CommonUtils.randomString(), CommonUtils.randomString())
     val flow = FLOW_JSON_FORMAT.read(s"""
         |  {
-        |    "from": "$from",
-        |    "to": ["$to"]
+        |    "from": {
+        |      "group": "${from.group}",
+        |      "name": "${from.name}"
+        |    },
+        |    "to": [
+        |      {
+        |        "group": "${to.group}",
+        |        "name": "${to.name}"
+        |      }
+        |    ]
         |  }
         |
     """.stripMargin.parseJson)

@@ -62,7 +62,7 @@ class TestListManyPipelines extends WithBrokerWorker with Matchers {
           .port(configurator.port)
           .request
           .name(CommonUtils.randomString())
-          .flow(connector.name, topic.name)
+          .flow(connector.key, topic.key)
           .create()
       )
     }
