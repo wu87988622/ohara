@@ -25,6 +25,8 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
+import DrabblePaper from './DrabblePaper';
+
 const ButtonWrapper = styled.div`
   position: relative;
 `;
@@ -64,6 +66,7 @@ const AlertDialog = props => {
         open={open}
         onClose={handleClose}
         data-testid={testId}
+        PaperComponent={DrabblePaper}
       >
         <DialogTitle>{title}</DialogTitle>
         <DialogContent>

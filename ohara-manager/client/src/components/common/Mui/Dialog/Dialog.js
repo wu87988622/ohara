@@ -22,6 +22,8 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 import Button from '@material-ui/core/Button';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
+import DrabblePaper from './DrabblePaper';
+
 const MuiDialog = props => {
   const {
     handelOpen,
@@ -41,6 +43,7 @@ const MuiDialog = props => {
       open={handelOpen}
       onClose={handelClose}
       maxWidth={maxWidth}
+      PaperComponent={DrabblePaper}
       fullWidth
     >
       <div data-testid={testId}>
