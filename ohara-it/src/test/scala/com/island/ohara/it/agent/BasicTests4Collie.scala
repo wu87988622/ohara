@@ -76,6 +76,8 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
                           jmxPort: Int,
                           zkClusterName: String,
                           nodeNames: Set[String]): Future[BrokerClusterInfo]
+  protected def bk_start(clusterName: String): Future[Unit]
+  protected def bk_stop(clusterName: String): Future[Unit]
   protected def bk_cluster(clusterName: String): Future[BrokerClusterInfo] =
     bk_clusters().map(_.find(_.name == clusterName).get)
   protected def bk_clusters(): Future[Seq[BrokerClusterInfo]]
@@ -111,10 +113,29 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
   protected def wk_removeNode(clusterName: String, nodeName: String): Future[Unit]
 
   private[this] def cleanZookeeper(clusterName: String): Future[Unit] = {
-    zk_stop(clusterName).flatMap(_ => {
-      await(() => result(zk_containers(clusterName)).isEmpty)
-      zk_delete(clusterName)
+    result(zk_stop(clusterName))
+    await(() => {
+      // In configurator mode: clusters() will return the "stopped list" in normal case
+      // In collie mode: clusters() will return the "cluster list except stop one" in normal case
+      // we should consider these two cases by case...
+      val clusters = result(zk_clusters())
+      !clusters.map(_.name).contains(clusterName) || clusters.find(_.name == clusterName).get.state.isEmpty
     })
+    // the cluster is stopped actually, delete the data
+    zk_delete(clusterName)
+  }
+
+  private[this] def cleanBroker(clusterName: String): Future[Unit] = {
+    result(bk_stop(clusterName))
+    await(() => {
+      // In configurator mode: clusters() will return the "stopped list" in normal case
+      // In collie mode: clusters() will return the "cluster list except stop one" in normal case
+      // we should consider these two cases by case...
+      val clusters = result(bk_clusters())
+      !clusters.map(_.name).contains(clusterName) || clusters.find(_.name == clusterName).get.state.isEmpty
+    })
+    // the cluster is stopped actually, delete the data
+    bk_delete(clusterName)
   }
 
   /**
@@ -219,7 +240,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       val exporterPort = CommonUtils.availablePort()
       val jmxPort = CommonUtils.availablePort()
       def assert(brokerCluster: BrokerClusterInfo): BrokerClusterInfo = {
-        brokerCluster.zookeeperClusterName shouldBe zkCluster.name
+        brokerCluster.zookeeperClusterName shouldBe Some(zkCluster.name)
         brokerCluster.name shouldBe clusterName
         brokerCluster.nodeNames.head shouldBe nodeName
         brokerCluster.clientPort shouldBe clientPort
@@ -238,6 +259,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
             zkClusterName = zkCluster.name,
             nodeNames = Set(nodeName)
           )))
+      result(bk_start(bkCluster.name))
       log.info("[BROKER] start to run broker cluster...done")
       assertCluster(() => result(bk_clusters()), bkCluster.name)
       assert(result(bk_cluster(bkCluster.name)))
@@ -278,7 +300,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         testTopic(curCluster)
         testJmx(curCluster)
       } finally if (cleanup) {
-        result(bk_delete(bkCluster.name))
+        result(cleanBroker(bkCluster.name))
         assertNoCluster(() => result(bk_clusters()), bkCluster.name)
       }
     } finally if (cleanup) result(cleanZookeeper(zkCluster.name))
@@ -446,6 +468,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
           zkClusterName = zkCluster.name,
           nodeNames = Set(nodeCache.head.name)
         ))
+      result(bk_start(bkCluster.name))
       try {
         assertCluster(() => result(bk_clusters()), bkCluster.name)
         // since we only get "active" containers, all containers belong to the cluster should be running.
@@ -539,7 +562,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
           assertNoCluster(() => result(wk_clusters()), wkCluster.name)
         }
       } finally if (cleanup) {
-        result(bk_delete(bkCluster.name))
+        result(cleanBroker(bkCluster.name))
         assertNoCluster(() => result(bk_clusters()), bkCluster.name)
       }
     } finally if (cleanup) result(cleanZookeeper(zkCluster.name))
@@ -701,6 +724,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
               zkClusterName = zk.name,
               nodeNames = Set(nodeCache.head.name)
             ))
+          result(bk_start(bkCluster.name))
           testTopic(bkCluster)
       }
       //TODO #1358 Integration test timeout exception for check topic on TestK8SClusterCollie class
@@ -711,7 +735,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     } finally if (cleanup) {
       bkNames.foreach { name =>
         log.info(s"[Broker] Remove broker name is $name")
-        try result(bk_delete(name))
+        try result(cleanBroker(name))
         catch {
           case _: Throwable =>
           // do nothing
@@ -768,6 +792,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
           zkClusterName = zk.name,
           nodeNames = Set(nodeCache.head.name)
         ))
+      result(bk_start(bk.name))
       assertCluster(() => result(bk_clusters()), bk.name)
       // since we only get "active" containers, all containers belong to the cluster should be running.
       // Currently, both k8s and pure docker have the same context of "RUNNING".
@@ -820,7 +845,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         }
       }
       assertNoClusters(() => result(wk_clusters()), wkNames)
-      try result(bk_delete(bkName))
+      try result(cleanBroker(bkName))
       catch {
         case _: Throwable =>
         // do nothing

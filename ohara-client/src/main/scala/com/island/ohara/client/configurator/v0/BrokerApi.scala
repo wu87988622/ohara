@@ -16,10 +16,12 @@
 
 package com.island.ohara.client.configurator.v0
 
+import java.util.Objects
+
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsValue, RootJsonFormat}
+import spray.json.{JsArray, JsString, JsValue}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -28,6 +30,8 @@ object BrokerApi {
   val LIMIT_OF_NAME_LENGTH: Int = ZookeeperApi.LIMIT_OF_NAME_LENGTH
 
   val BROKER_PREFIX_PATH: String = "brokers"
+
+  val BK_SERVICE_NAME: String = "bk"
 
   /**
     * the default docker image used to run containers of broker cluster
@@ -40,59 +44,74 @@ object BrokerApi {
                                                 exporterPort: Int,
                                                 clientPort: Int,
                                                 jmxPort: Int,
-                                                nodeNames: Set[String])
+                                                nodeNames: Set[String],
+                                                tags: Map[String, JsValue])
       extends ClusterCreationRequest {
     override def ports: Set[Int] = Set(clientPort, exporterPort, jmxPort)
-    // the properties is not stored in configurator so we can't maintain the tags now
-    // TODO: see https://github.com/oharastream/ohara/issues/1544
-    override def tags: Map[String, JsValue] = Map.empty
   }
 
   /**
     * exposed to configurator
     */
   private[ohara] implicit val BROKER_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
-    JsonRefiner[Creation]
-      .format(jsonFormat7(Creation))
-      .rejectEmptyString()
-      // the node names can't be empty
-      .rejectEmptyArray()
+    ClusterJsonRefiner
+      .basicRulesOfCreation[Creation](IMAGE_NAME_DEFAULT)
+      .format(jsonFormat8(Creation))
       .nullToRandomPort("clientPort")
       .requireBindPort("clientPort")
       .nullToRandomPort("exporterPort")
       .requireBindPort("exporterPort")
       .nullToRandomPort("jmxPort")
       .requireBindPort("jmxPort")
-      .nullToString("imageName", IMAGE_NAME_DEFAULT)
-      .stringRestriction(Data.NAME_KEY)
-      .withNumber()
-      .withLowerCase()
-      .withLengthLimit(LIMIT_OF_NAME_LENGTH)
-      .toRefiner
-      .nullToString("name", () => CommonUtils.randomString(10))
+      .refine
+
+  final case class Update private[BrokerApi] (imageName: Option[String],
+                                              zookeeperClusterName: Option[String],
+                                              exporterPort: Option[Int],
+                                              clientPort: Option[Int],
+                                              jmxPort: Option[Int],
+                                              nodeNames: Option[Set[String]],
+                                              tags: Option[Map[String, JsValue]])
+      extends ClusterUpdateRequest
+  implicit val BROKER_UPDATE_JSON_FORMAT: OharaJsonFormat[Update] =
+    ClusterJsonRefiner
+      .basicRulesOfUpdate[Update]
+      .format(jsonFormat7(Update))
+      .requireBindPort("clientPort")
+      .requireBindPort("exporterPort")
+      .requireBindPort("jmxPort")
       .refine
 
   final case class BrokerClusterInfo private[BrokerApi] (name: String,
                                                          imageName: String,
-                                                         zookeeperClusterName: String,
+                                                         zookeeperClusterName: Option[String],
                                                          clientPort: Int,
                                                          exporterPort: Int,
                                                          jmxPort: Int,
                                                          nodeNames: Set[String],
-                                                         deadNodes: Set[String])
-      extends ClusterInfo {
+                                                         deadNodes: Set[String],
+                                                         tags: Map[String, JsValue],
+                                                         lastModified: Long,
+                                                         state: Option[String],
+                                                         error: Option[String])
+  //TODO : move Data class to ClusterInfo after finished #1544
+      extends ClusterInfo
+      with Data {
+    // cluster does not support to define group
+    override def group: String = Data.GROUP_DEFAULT
+    override def clone2(state: Option[String], error: Option[String]): BrokerClusterInfo =
+      this.copy(state = state, error = error)
+    override def kind: String = BK_SERVICE_NAME
     override def ports: Set[Int] = Set(clientPort, exporterPort, jmxPort)
-
     override def clone(newNodeNames: Set[String]): ClusterInfo = copy(nodeNames = newNodeNames)
-
     def connectionProps: String = nodeNames.map(n => s"$n:$clientPort").mkString(",")
   }
 
   /**
     * exposed to configurator
     */
-  private[ohara] implicit val BROKER_CLUSTER_INFO_JSON_FORMAT: RootJsonFormat[BrokerClusterInfo] = jsonFormat8(
-    BrokerClusterInfo)
+  private[ohara] implicit val BROKER_CLUSTER_INFO_JSON_FORMAT: OharaJsonFormat[BrokerClusterInfo] =
+    JsonRefiner[BrokerClusterInfo].format(jsonFormat12(BrokerClusterInfo)).refine
 
   /**
     * used to generate the payload and url for POST/PUT request.
@@ -112,6 +131,8 @@ object BrokerApi {
     def jmxPort(jmxPort: Int): Request
     def nodeName(nodeName: String): Request = nodeNames(Set(CommonUtils.requireNonEmpty(nodeName)))
     def nodeNames(nodeNames: Set[String]): Request
+    @Optional("default value is empty array in creation and None in update")
+    def tags(tags: Map[String, JsValue]): Request
 
     /**
       * generate the POST request
@@ -121,70 +142,108 @@ object BrokerApi {
     def create()(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo]
 
     /**
+      * generate the PUT request
+      * @param executionContext execution context
+      * @return updated/created data
+      */
+    def update()(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo]
+
+    /**
+      * for testing only
       * @return the payload of creation
       */
     private[v0] def creation: Creation
+
+    /**
+      * for testing only
+      * @return the payload of update
+      */
+    private[v0] def update: Update
   }
 
   final class Access private[BrokerApi] extends ClusterAccess[BrokerClusterInfo](BROKER_PREFIX_PATH) {
     def request: Request = new Request {
       private[this] var name: String = CommonUtils.randomString(LIMIT_OF_NAME_LENGTH)
-      private[this] var imageName: String = IMAGE_NAME_DEFAULT
-      private[this] var zookeeperClusterName: String = _
-      private[this] var clientPort: Int = CommonUtils.availablePort()
-      private[this] var exporterPort: Int = CommonUtils.availablePort()
-      private[this] var jmxPort: Int = CommonUtils.availablePort()
-      private[this] var nodeNames: Set[String] = Set.empty
+      private[this] var imageName: Option[String] = None
+      private[this] var zookeeperClusterName: Option[String] = None
+      private[this] var clientPort: Option[Int] = None
+      private[this] var exporterPort: Option[Int] = None
+      private[this] var jmxPort: Option[Int] = None
+      private[this] var nodeNames: Option[Set[String]] = None
+      private[this] var tags: Map[String, JsValue] = _
       override def name(name: String): Request = {
         this.name = CommonUtils.requireNonEmpty(name)
         this
       }
 
       override def imageName(imageName: String): Request = {
-        this.imageName = CommonUtils.requireNonEmpty(imageName)
+        this.imageName = Some(CommonUtils.requireNonEmpty(imageName))
         this
       }
 
       override def zookeeperClusterName(zookeeperClusterName: String): Request = {
-        this.zookeeperClusterName = CommonUtils.requireNonEmpty(zookeeperClusterName)
+        this.zookeeperClusterName = Some(CommonUtils.requireNonEmpty(zookeeperClusterName))
         this
       }
 
       override def clientPort(clientPort: Int): Request = {
-        this.clientPort = CommonUtils.requireConnectionPort(clientPort)
+        this.clientPort = Some(CommonUtils.requireConnectionPort(clientPort))
         this
       }
 
       override def exporterPort(exporterPort: Int): Request = {
-        this.exporterPort = CommonUtils.requireConnectionPort(exporterPort)
+        this.exporterPort = Some(CommonUtils.requireConnectionPort(exporterPort))
         this
       }
 
       override def jmxPort(jmxPort: Int): Request = {
-        this.jmxPort = CommonUtils.requireConnectionPort(jmxPort)
+        this.jmxPort = Some(CommonUtils.requireConnectionPort(jmxPort))
         this
       }
 
       import scala.collection.JavaConverters._
       override def nodeNames(nodeNames: Set[String]): Request = {
-        this.nodeNames = CommonUtils.requireNonEmpty(nodeNames.asJava).asScala.toSet
+        this.nodeNames = Some(CommonUtils.requireNonEmpty(nodeNames.asJava).asScala.toSet)
+        BROKER_CREATION_JSON_FORMAT.check("nodeNames", JsArray(nodeNames.map(JsString(_)).toVector))
+        this
+      }
+
+      override def tags(tags: Map[String, JsValue]): Request = {
+        this.tags = Objects.requireNonNull(tags)
         this
       }
 
       override private[v0] def creation = Creation(
         name = CommonUtils.requireNonEmpty(name),
-        imageName = CommonUtils.requireNonEmpty(imageName),
-        zookeeperClusterName = Option(zookeeperClusterName),
-        clientPort = CommonUtils.requireConnectionPort(clientPort),
-        exporterPort = CommonUtils.requireConnectionPort(exporterPort),
-        jmxPort = CommonUtils.requireConnectionPort(jmxPort),
-        nodeNames = CommonUtils.requireNonEmpty(nodeNames.asJava).asScala.toSet
+        imageName = CommonUtils.requireNonEmpty(imageName.getOrElse(IMAGE_NAME_DEFAULT)),
+        zookeeperClusterName = zookeeperClusterName.map(CommonUtils.requireNonEmpty),
+        clientPort = CommonUtils.requireConnectionPort(clientPort.getOrElse(CommonUtils.availablePort())),
+        exporterPort = CommonUtils.requireConnectionPort(exporterPort.getOrElse(CommonUtils.availablePort())),
+        jmxPort = CommonUtils.requireConnectionPort(jmxPort.getOrElse(CommonUtils.availablePort())),
+        nodeNames = CommonUtils.requireNonEmpty(nodeNames.getOrElse(Set.empty).asJava).asScala.toSet,
+        tags = if (tags == null) Map.empty else tags
+      )
+
+      override private[v0] def update: Update = Update(
+        imageName = imageName.map(CommonUtils.requireNonEmpty),
+        zookeeperClusterName = zookeeperClusterName.map(CommonUtils.requireNonEmpty),
+        clientPort = clientPort.map(CommonUtils.requireConnectionPort),
+        exporterPort = exporterPort.map(CommonUtils.requireConnectionPort),
+        jmxPort = jmxPort.map(CommonUtils.requireConnectionPort),
+        nodeNames = nodeNames.map(seq => CommonUtils.requireNonEmpty(seq.asJava).asScala.toSet),
+        tags = Option(tags)
       )
 
       override def create()(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] =
         exec.post[Creation, BrokerClusterInfo, ErrorApi.Error](
           _url,
           creation
+        )
+
+      override def update()(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] =
+        exec.put[Update, BrokerClusterInfo, ErrorApi.Error](
+          s"${_url}/${CommonUtils.requireNonEmpty(name)}",
+          update
         )
     }
   }

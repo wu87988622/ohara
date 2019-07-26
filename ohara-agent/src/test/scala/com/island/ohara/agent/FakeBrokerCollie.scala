@@ -20,6 +20,7 @@ import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0._
+import com.island.ohara.common.util.CommonUtils
 
 import scala.concurrent.{ExecutionContext, Future}
 private class FakeBrokerCollie(node: NodeCollie,
@@ -65,7 +66,19 @@ private class FakeBrokerCollie(node: NodeCollie,
     implicit executionContext: ExecutionContext): Future[Map[BrokerClusterInfo, Seq[ContainerInfo]]] =
     Future.successful(
       //Pre create broker container for test
-      Map(BrokerClusterInfo("bk1", "broker", "zk1", 2181, 2182, 2183, Set("node1"), Set.empty) -> bkExistContainers)
+      Map(
+        BrokerClusterInfo("bk1",
+                          "broker",
+                          Some("zk1"),
+                          2181,
+                          2182,
+                          2183,
+                          Set("node1"),
+                          Set.empty,
+                          Map.empty,
+                          CommonUtils.current(),
+                          None,
+                          None) -> bkExistContainers)
     )
 
   override protected def resolveHostName(node: String): String = "1.1.1.1"

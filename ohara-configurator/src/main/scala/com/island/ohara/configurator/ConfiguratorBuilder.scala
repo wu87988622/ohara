@@ -133,12 +133,17 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
         BrokerClusterInfo(
           name = embeddedBkName,
           imageName = "None",
-          zookeeperClusterName = "None",
+          zookeeperClusterName = Some("None"),
           exporterPort = -1,
           jmxPort = -1,
           clientPort = port,
           nodeNames = Set(host),
-          deadNodes = Set.empty
+          deadNodes = Set.empty,
+          // In fake mode, we need to assign a state in creation for "GET" method to act like real case
+          state = Some(ClusterState.RUNNING.name),
+          error = None,
+          tags = Map.empty,
+          lastModified = CommonUtils.current()
         )
       }
       val wkCluster = {
@@ -168,6 +173,10 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
           deadNodes = Set.empty
         )
       }
+      //TODO: we need to add data into store to use the APIs
+      //TODO: refactor this if cluster data could be stored automatically...by Sam
+      store.addIfAbsent[BrokerClusterInfo](bkCluster)
+
       collie.brokerCollie.addCluster(bkCluster)
       collie.workerCollie.addCluster(wkCluster)
       clusterCollie(collie)
@@ -216,8 +225,6 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
             lastModified = CommonUtils.current()
           ))
       }
-      //TODO we need to add data into store to use the APIs...
-      zkClusters.foreach(store.addIfAbsent[ZookeeperClusterInfo])
 
       // add broker cluster
       val bkClusters = zkClusters.zipWithIndex.map {
@@ -226,13 +233,18 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
             BrokerClusterInfo(
               name = s"$bkClusterNamePrefix$index",
               imageName = s"fakeImage$index",
-              zookeeperClusterName = zkCluster.name,
+              zookeeperClusterName = Some(zkCluster.name),
               // Assigning a negative value can make test fail quickly.
               clientPort = -1,
               exporterPort = -1,
               jmxPort = -1,
               nodeNames = zkCluster.nodeNames,
-              deadNodes = Set.empty
+              deadNodes = Set.empty,
+              // In fake mode, we need to assign a state in creation for "GET" method to act like real case
+              state = Some(ClusterState.RUNNING.name),
+              error = None,
+              tags = Map.empty,
+              lastModified = CommonUtils.current()
             ))
       }
 
@@ -264,6 +276,11 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
             deadNodes = Set.empty
           ))
       }
+
+      //TODO: we need to add data into store to use the APIs
+      //TODO: refactor this if cluster data could be stored automatically...by Sam
+      zkClusters.foreach(store.addIfAbsent[ZookeeperClusterInfo])
+      bkClusters.foreach(store.addIfAbsent[BrokerClusterInfo])
 
       // fake nodes
       zkClusters

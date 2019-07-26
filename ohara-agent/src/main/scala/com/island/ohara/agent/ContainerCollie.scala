@@ -18,7 +18,7 @@ package com.island.ohara.agent
 
 import com.island.ohara.agent.Collie.ClusterCreator
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.{ClusterInfo, ZookeeperApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterInfo, ZookeeperApi}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
@@ -80,7 +80,7 @@ abstract class ContainerCollie[T <: ClusterInfo: ClassTag, Creator <: ClusterCre
 
   protected def serviceName: String =
     if (classTag[T].runtimeClass.isAssignableFrom(classOf[ZookeeperClusterInfo])) ZookeeperApi.ZK_SERVICE_NAME
-    else if (classTag[T].runtimeClass.isAssignableFrom(classOf[BrokerClusterInfo])) ContainerCollie.BK_SERVICE_NAME
+    else if (classTag[T].runtimeClass.isAssignableFrom(classOf[BrokerClusterInfo])) BrokerApi.BK_SERVICE_NAME
     else if (classTag[T].runtimeClass.isAssignableFrom(classOf[WorkerClusterInfo])) ContainerCollie.WK_SERVICE_NAME
     else if (classTag[T].runtimeClass.isAssignableFrom(classOf[StreamClusterInfo])) ContainerCollie.STREAM_SERVICE_NAME
     else throw new IllegalArgumentException(s"Who are you, ${classTag[T].runtimeClass} ???")
@@ -106,7 +106,6 @@ abstract class ContainerCollie[T <: ClusterInfo: ClassTag, Creator <: ClusterCre
 
 object ContainerCollie {
 
-  val BK_SERVICE_NAME: String = "bk"
   val WK_SERVICE_NAME: String = "wk"
 
   /**

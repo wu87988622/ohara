@@ -22,7 +22,7 @@ import * as connectorApi from '../../src/api/connectorApi';
 import * as streamApp from '../../src/api/streamApi';
 import { axiosInstance } from '../../src/api/apiUtils';
 import * as zookeeperApi from '../../src/api/zookeeperApi';
-import { fetchBrokers } from '../../src/api/brokerApi';
+import * as brokerApi from '../../src/api/brokerApi';
 import { fetchJars } from '../../src/api/jarApi';
 import { fetchLogs } from '../../src/api/logApi';
 import { validateConnector } from '../../src/api/validateApi';
@@ -153,7 +153,20 @@ Cypress.Commands.add('testCreateWorker', params =>
   workerApi.createWorker(params),
 );
 
-Cypress.Commands.add('fetchBrokers', () => fetchBrokers());
+Cypress.Commands.add('createBroker', params => brokerApi.createBroker(params));
+Cypress.Commands.add('fetchBrokers', () => brokerApi.fetchBrokers());
+Cypress.Commands.add('fetchBroker', brokerName =>
+  brokerApi.fetchBroker(brokerName),
+);
+Cypress.Commands.add('startBroker', brokerName =>
+  brokerApi.startBroker(brokerName),
+);
+Cypress.Commands.add('stopBroker', brokerName =>
+  brokerApi.stopBroker(brokerName),
+);
+Cypress.Commands.add('deleteBroker', brokerName =>
+  brokerApi.deleteBroker(brokerName),
+);
 
 Cypress.Commands.add('fetchZookeeper', name =>
   zookeeperApi.fetchZookeeper(name),

@@ -82,7 +82,7 @@ class TestTopicRoute extends SmallTest with Matchers {
           BrokerApi.access
             .hostname(configurator.hostname)
             .port(configurator.port)
-            .delete(topicInfo.brokerClusterName)
+            .stop(topicInfo.brokerClusterName)
             .flatMap(_ => topicApi.delete(topicInfo.name))
         }
         .flatMap(_ => topicApi.list())
@@ -119,6 +119,7 @@ class TestTopicRoute extends SmallTest with Matchers {
         .zookeeperClusterName(zk2.name)
         .nodeNames(zk2.nodeNames)
         .create())
+    result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).start(bk2.name))
 
     an[IllegalArgumentException] should be thrownBy result(topicApi.request.name(CommonUtils.randomString(10)).create())
 
@@ -140,7 +141,7 @@ class TestTopicRoute extends SmallTest with Matchers {
     )
     result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).start(zk2.name))
 
-    result(
+    val bk = result(
       BrokerApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
@@ -149,6 +150,7 @@ class TestTopicRoute extends SmallTest with Matchers {
         .zookeeperClusterName(zk2.name)
         .nodeNames(zk2.nodeNames)
         .create())
+    result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).start(bk.name))
 
     val bks = result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list())
     bks.size shouldBe 2

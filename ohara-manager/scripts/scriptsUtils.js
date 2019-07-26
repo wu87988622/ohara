@@ -65,7 +65,10 @@ const waitUntil = async params => {
   // if it's time to break out of this recursive function
   const conditionIsMet = await condition();
 
-  if (conditionIsMet || retryCount >= maxRetry) return;
+  if (conditionIsMet) return true;
+
+  if (retryCount >= maxRetry)
+    throw new Error('Failed with reaching the maximum retry times');
 
   retryCount++;
   await commonUtils.sleep(sleepTime);

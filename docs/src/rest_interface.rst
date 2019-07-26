@@ -2018,21 +2018,24 @@ The properties which can be set by user are shown below.
 1. zookeeperClusterName (**String**) — name of zookeeper cluster used to store metadata of broker cluster
 1. nodeNames (**array(string)**) — the nodes running the broker process
 1. deadNodes (**array(string)**) — the nodes that have failed containers of broker
-
+1. tags (**object**) — the user defined parameters
+1. state (**option(string)**) — only started/failed broker has state (RUNNING or DEAD)
+1. error (**option(string)**) — the error message from a failed broker. If broker is fine or un-started, you won't get this field.
+1. lastModified (**long**) — last modified this jar time
 
 create a broker cluster
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 *POST /v0/brokers*
 
-1. name (**string**) — cluster name
-2. imageName (**string**) — docker image
-3. clientPort (**int**) — broker client port.
-4. exporterPort (**int**) — port used by internal communication
-5. jmxPort (**int**) — port used by jmx service
-6. zookeeperClusterName (**String**) — name of zookeeper cluster used to
-   store metadata of broker cluster
-7. nodeNames (**array(string)**) — the nodes running the broker process
+#. name (**string**) — cluster name
+#. imageName (**string**) — docker image
+#. clientPort (**int**) — broker client port.
+#. exporterPort (**int**) — port used by internal communication
+#. jmxPort (**int**) — port used by jmx service
+#. zookeeperClusterName (**option(string)**) — name of zookeeper cluster used to store metadata of broker cluster. default will find a zookeeper for you
+#. nodeNames (**array(string)**) — the nodes running the broker process
+#. tags(**object**) — the user defined parameters
 
 **Example Request**
 
@@ -2047,7 +2050,8 @@ create a broker cluster
        "jmxPort": 12347,
        "nodeNames": [
          "node00"
-       ]
+       ],
+       "tags": {}
      }
 
 **Example Response**
@@ -2064,7 +2068,9 @@ create a broker cluster
        "nodeNames": [
          "node00"
        ],
-       "deadNodes": []
+       "deadNodes": [],
+       "tags": {},
+       "lastModified": 1563158986411
      }
 
   As mentioned before, ohara provides default to most settings. You can
@@ -2128,7 +2134,9 @@ list all broker clusters
          "nodeNames": [
            "node00"
          ],
-         "deadNodes": []
+         "deadNodes": [],
+         "tags": {},
+         "state": "RUNNING"
        }
      ]
 
@@ -2138,12 +2146,7 @@ delete a broker cluster
 
 *DELETE /v0/brokers/$name*
 
-It is disallowed to remove a broker cluster used by a running `worker cluster <#worker>`__.
-
-**Query Parameters**
-
-1. force (**boolean**) — true if you don’t want to wait the graceful shutdown
-   (it can save your time but may damage your data). Other values invoke graceful delete.
+You cannot delete properties of an non-stopped broker cluster.
 
 **Example Response**
 
@@ -2161,6 +2164,8 @@ get a broker cluster
 
 *GET /v0/brokers/$name*
 
+Get broker information by name. This API could fetch all information of a broker (include state)
+
 **Example Response**
 
   .. code-block:: json
@@ -2175,9 +2180,46 @@ get a broker cluster
        "nodeNames": [
          "node00"
        ],
-       "deadNodes": []
+       "deadNodes": [],
+       "tags": {},
+       "state": "RUNNING"
      }
 
+start a broker cluster
+~~~~~~~~~~~~~~~~~~~~~~
+
+*PUT /v0/brokers/$name/start*
+
+**Example Response**
+
+  ::
+
+    202 Accepted
+
+  .. note::
+    You should use `Get broker cluster <#get-a-broker-cluster>`__ to fetch up-to-date status
+
+stop a broker cluster
+~~~~~~~~~~~~~~~~~~~~~
+
+Gracefully stopping a running broker cluster. It is disallowed to
+stop a broker cluster used by a running `worker cluster <#worker>`__.
+
+*PUT /v0/brokers/$name/stop[?force=true]*
+
+**Query Parameters**
+
+1. force (**boolean**) — true if you don’t want to wait the graceful shutdown
+    (it can save your time but may damage your data).
+
+**Example Response**
+
+  ::
+
+    202 Accepted
+
+  .. note::
+    You should use `Get broker cluster <#get-a-broker-cluster>`__ to fetch up-to-date status
 
 add a new node to a running broker cluster
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2205,6 +2247,13 @@ balance is not triggered at once.
        ],
        "deadNodes": []
      }
+
+  .. note::
+    Although it's a rare case, you should not use the "API keyword" as the nodeName.
+    For example, the following APIs are invalid and will trigger different behavior!
+
+    - /v0/brokers/$name/start
+    - /v0/brokers/$name/stop
 
 remove a node from a running broker cluster
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

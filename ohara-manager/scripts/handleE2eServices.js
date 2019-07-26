@@ -17,7 +17,7 @@
 const fs = require('fs');
 const axios = require('axios');
 const chalk = require('chalk');
-const { get } = require('lodash');
+const { get, isUndefined } = require('lodash');
 
 const commonUtils = require('../utils/commonUtils');
 const utils = require('./scriptsUtils');
@@ -68,10 +68,11 @@ exports.getDefaultEnv = () => {
   return {};
 };
 
-const isServiceReady = async (apiRoot, serviceName) => {
-  const res = await axios.get(`${apiRoot}/containers/${serviceName}`);
-  const containerIsReady = get(res, 'data[0].containers[0].state', undefined);
-  return Boolean(containerIsReady);
+const isServiceReady = async apiUrl => {
+  const response = await axios.get(apiUrl);
+  const serviceIsReady = get(response, 'data.state', 'FAILED');
+  console.log(serviceIsReady);
+  return serviceIsReady === 'RUNNING';
 };
 
 const isRemovedFromList = async (url, serviceName) => {
@@ -127,7 +128,10 @@ exports.createServices = async ({
   try {
     await createNode({ apiRoot, nodeHost, nodePort, nodeUser, nodePass });
 
-    await axios.post(`${apiRoot}/zookeepers`, {
+    const zookeeperUrl = `${apiRoot}/zookeepers`;
+    const brokerUrl = `${apiRoot}/brokers`;
+
+    await axios.post(zookeeperUrl, {
       clientPort: commonUtils.randomPort(),
       electionPort: commonUtils.randomPort(),
       peerPort: commonUtils.randomPort(),
@@ -135,13 +139,14 @@ exports.createServices = async ({
       nodeNames: [nodeHost],
     });
 
-    await axios.put(`${apiRoot}/zookeepers/${zookeeperClusterName}/start`);
+    await axios.put(`${zookeeperUrl}/${zookeeperClusterName}/start`);
 
     await utils.waitUntil({
-      condition: () => isServiceReady(apiRoot, zookeeperClusterName),
+      condition: () =>
+        isServiceReady(`${zookeeperUrl}/${zookeeperClusterName}`),
     });
 
-    await axios.post(`${apiRoot}/brokers`, {
+    await axios.post(brokerUrl, {
       clientPort: commonUtils.randomPort(),
       exporterPort: commonUtils.randomPort(),
       jmxPort: commonUtils.randomPort(),
@@ -150,8 +155,10 @@ exports.createServices = async ({
       nodeNames: [nodeHost],
     });
 
+    await axios.put(`${brokerUrl}/${brokerClusterName}/start`);
+
     await utils.waitUntil({
-      condition: () => isServiceReady(apiRoot, brokerClusterName),
+      condition: () => isServiceReady(`${brokerUrl}/${brokerClusterName}`),
     });
 
     await writeServiceInfoToFile(zookeeperClusterName, brokerClusterName);
@@ -164,6 +171,12 @@ exports.createServices = async ({
     console.log(error);
     throw new Error();
   }
+};
+
+const isServiceStopped = async apiUrl => {
+  const zookeeper = await axios.get(apiUrl);
+  const zookeeperState = get(zookeeper, 'data.state', 'RUNNING');
+  return isUndefined(zookeeperState);
 };
 
 const cleanWorkers = async (workers, apiRoot) => {
@@ -179,34 +192,15 @@ const cleanWorkers = async (workers, apiRoot) => {
   );
 };
 
-const cleanBrokers = async (brokers, apiRoot) => {
+const deleteServices = async (services, apiRoot) => {
   await Promise.all(
-    brokers.map(async broker => {
-      const { name: serviceName, serviceType } = broker;
-      const url = `${apiRoot}/${serviceType}`;
-      await axios.delete(`${url}/${serviceName}`);
-      const condition = () => isRemovedFromList(url, serviceName);
+    services.map(async service => {
+      const { name: serviceName, serviceType } = service;
+      const apiUrl = `${apiRoot}/${serviceType}`;
 
-      await utils.waitUntil({ condition });
-    }),
-  );
-};
-
-const cleanZookeepers = async (zookeepers, apiRoot) => {
-  await Promise.all(
-    zookeepers.map(async zookeeper => {
-      const { name, serviceType } = zookeeper;
-      const url = `${apiRoot}/${serviceType}`;
-
-      await axios.put(`${url}/${name}/stop`);
-      const zookeeperCondition = async () => {
-        const zookeeper = await axios.get(`${url}/${name}`);
-        const zookeeperState = get(zookeeper, 'data.state', 'stop');
-        return zookeeperState === 'stop';
-      };
-
-      await utils.waitUntil({ condition: zookeeperCondition });
-      await axios.delete(`${url}/${name}`);
+      await axios.put(`${apiUrl}/${serviceName}/stop`);
+      await utils.waitUntil({ condition: () => isServiceStopped(apiUrl) });
+      await axios.delete(`${apiUrl}/${serviceName}`);
     }),
   );
 };
@@ -231,9 +225,14 @@ exports.cleanServices = async apiRoot => {
     const services = JSON.parse(file);
     const { workers, brokers, zookeepers } = getByServiceType(services);
 
+    // 1. Note that the deleting order matters, it should goes with
+    // workers -> brokers -> zookeepers
+    // 2. We're not deleting node we created early since it can be
+    // deleted safely with Jenkins
+
     await cleanWorkers(workers, apiRoot);
-    await cleanBrokers(brokers, apiRoot);
-    await cleanZookeepers(zookeepers, apiRoot);
+    await deleteServices(brokers, apiRoot);
+    await deleteServices(zookeepers, apiRoot);
   } catch (error) {
     console.log(
       chalk.red('Failed to clean services, see the detailed error below:'),

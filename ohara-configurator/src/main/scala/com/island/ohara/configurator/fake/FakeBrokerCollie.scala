@@ -18,11 +18,12 @@ package com.island.ohara.configurator.fake
 
 import java.util.concurrent.ConcurrentHashMap
 
-import com.island.ohara.agent.{BrokerCollie, NodeCollie}
+import com.island.ohara.agent.{BrokerCollie, ClusterState, NodeCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.{ClusterInfo, ContainerApi, NodeApi}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.kafka.TopicAdmin
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.kafka.TopicMeter
 
@@ -52,9 +53,14 @@ private[configurator] class FakeBrokerCollie(node: NodeCollie, bkConnectionProps
             clientPort = clientPort,
             exporterPort = exporterPort,
             jmxPort = jmxPort,
-            zookeeperClusterName = zookeeperClusterName,
+            zookeeperClusterName = Some(zookeeperClusterName),
             nodeNames = nodeNames,
-            deadNodes = Set.empty
+            deadNodes = Set.empty,
+            // In fake mode, we need to assign a state in creation for "GET" method to act like real case
+            state = Some(ClusterState.RUNNING.name),
+            error = None,
+            tags = Map.empty,
+            lastModified = CommonUtils.current()
           )))
 
   override protected def doRemoveNode(previousCluster: BrokerClusterInfo, beRemovedContainer: ContainerInfo)(
@@ -68,7 +74,12 @@ private[configurator] class FakeBrokerCollie(node: NodeCollie, bkConnectionProps
         clientPort = previousCluster.clientPort,
         jmxPort = previousCluster.jmxPort,
         nodeNames = previousCluster.nodeNames.filterNot(_ == beRemovedContainer.nodeName),
-        deadNodes = Set.empty
+        deadNodes = Set.empty,
+        // In fake mode, we need to assign a state in creation for "GET" method to act like real case
+        state = Some(ClusterState.RUNNING.name),
+        error = None,
+        tags = Map.empty,
+        lastModified = CommonUtils.current()
       )))
     .map(_ => true)
 
@@ -92,7 +103,12 @@ private[configurator] class FakeBrokerCollie(node: NodeCollie, bkConnectionProps
         exporterPort = previousCluster.exporterPort,
         jmxPort = previousCluster.jmxPort,
         nodeNames = previousCluster.nodeNames ++ Set(newNodeName),
-        deadNodes = Set.empty
+        deadNodes = Set.empty,
+        // In fake mode, we need to assign a state in creation for "GET" method to act like real case
+        state = Some(ClusterState.RUNNING.name),
+        error = None,
+        tags = Map.empty,
+        lastModified = CommonUtils.current()
       )))
 
   override protected def doCreator(executionContext: ExecutionContext,

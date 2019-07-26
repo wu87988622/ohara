@@ -171,12 +171,17 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
                     val clusterInfo = BrokerClusterInfo(
                       name = clusterName,
                       imageName = imageName,
-                      zookeeperClusterName = zookeeperClusterName,
+                      zookeeperClusterName = Some(zookeeperClusterName),
                       exporterPort = exporterPort,
                       clientPort = clientPort,
                       jmxPort = jmxPort,
                       nodeNames = (successfulContainers.map(_.nodeName) ++ existNodes.map(_._1.name)).toSet,
-                      deadNodes = Set.empty
+                      deadNodes = Set.empty,
+                      // We do not care the user parameters since it's stored in configurator already
+                      tags = Map.empty,
+                      state = None,
+                      error = None,
+                      lastModified = CommonUtils.current()
                     )
                     postCreateBrokerCluster(clusterInfo, successfulContainers)
                     clusterInfo
@@ -288,14 +293,26 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
       BrokerClusterInfo(
         name = clusterName,
         imageName = first.imageName,
-        zookeeperClusterName = first.environments(BrokerCollie.ZOOKEEPER_CLUSTER_NAME),
+        zookeeperClusterName = Some(first.environments(BrokerCollie.ZOOKEEPER_CLUSTER_NAME)),
         exporterPort = first.environments(BrokerCollie.EXPORTER_PORT_KEY).toInt,
         clientPort = first.environments(BrokerCollie.CLIENT_PORT_KEY).toInt,
         jmxPort = first.environments(BrokerCollie.JMX_PORT_KEY).toInt,
         nodeNames = containers.map(_.nodeName).toSet,
         // Currently, docker and k8s has same naming rule for "Running",
         // it is ok that we use the containerState.RUNNING here.
-        deadNodes = containers.filterNot(_.state == ContainerState.RUNNING.name).map(_.nodeName).toSet
+        deadNodes = containers.filterNot(_.state == ContainerState.RUNNING.name).map(_.nodeName).toSet,
+        // We do not care the user parameters since it's stored in configurator already
+        tags = Map.empty,
+        state = {
+          // we only have two possible results here:
+          // 1. only assume cluster is "running" if at least one container is running
+          // 2. the cluster state is always "failed" if all containers were not running
+          val alive = containers.exists(_.state == ClusterState.RUNNING.name)
+          if (alive) Some(ContainerState.RUNNING.name) else Some(ClusterState.FAILED.name)
+        },
+        // TODO how could we fetch the error?...by Sam
+        error = None,
+        lastModified = CommonUtils.current()
       ))
   }
 
@@ -324,7 +341,9 @@ object BrokerCollie {
     private[this] var jmxPort: Int = CommonUtils.availablePort()
 
     override protected def doCopy(clusterInfo: BrokerClusterInfo): Unit = {
-      zookeeperClusterName(clusterInfo.zookeeperClusterName)
+      zookeeperClusterName(
+        clusterInfo.zookeeperClusterName.getOrElse(
+          throw new IllegalArgumentException(s"The broker:${clusterInfo.name} doesn't have any zookeeper?")))
       clientPort(clusterInfo.clientPort)
       exporterPort(clusterInfo.exporterPort)
       jmxPort(clusterInfo.jmxPort)

@@ -90,6 +90,10 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
     .nodeNames(nodeNames)
     .create()
 
+  override protected def bk_start(clusterName: String): Future[Unit] = bkApi.start(clusterName)
+
+  override protected def bk_stop(clusterName: String): Future[Unit] = bkApi.forceStop(clusterName).map(_ => Unit)
+
   override protected def bk_clusters(): Future[Seq[BrokerApi.BrokerClusterInfo]] = bkApi.list()
 
   override protected def bk_logs(clusterName: String): Future[Seq[String]] =

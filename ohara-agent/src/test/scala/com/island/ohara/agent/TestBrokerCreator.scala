@@ -57,12 +57,16 @@ class TestBrokerCreator extends SmallTest with Matchers {
         BrokerClusterInfo(
           name = clusterName,
           imageName = imageName,
-          zookeeperClusterName = zookeeperClusterName,
+          zookeeperClusterName = Some(zookeeperClusterName),
           clientPort = clientPort,
           exporterPort = exporterPort,
           jmxPort = jmxPort,
           nodeNames = nodeNames,
-          deadNodes = Set.empty
+          deadNodes = Set.empty,
+          state = None,
+          error = None,
+          tags = Map.empty,
+          lastModified = 0
         ))
     }
 
@@ -140,12 +144,16 @@ class TestBrokerCreator extends SmallTest with Matchers {
     val brokerClusterInfo = BrokerClusterInfo(
       name = CommonUtils.randomString(10),
       imageName = CommonUtils.randomString(),
-      zookeeperClusterName = CommonUtils.randomString(),
+      zookeeperClusterName = Some(CommonUtils.randomString()),
       exporterPort = 10,
       clientPort = 10,
       jmxPort = 10,
       nodeNames = Set(CommonUtils.randomString()),
-      deadNodes = Set.empty
+      deadNodes = Set.empty,
+      state = None,
+      error = None,
+      tags = Map.empty,
+      lastModified = 0
     )
     Await.result(bkCreator().copy(brokerClusterInfo).create(), 30 seconds) shouldBe brokerClusterInfo
   }
@@ -334,7 +342,7 @@ class TestBrokerCreator extends SmallTest with Matchers {
       .create()
 
     val result: BrokerClusterInfo = Await.result(bkCreator, TIMEOUT)
-    result.zookeeperClusterName shouldBe FakeBrokerCollie.zookeeperClusterName
+    result.zookeeperClusterName shouldBe Some(FakeBrokerCollie.zookeeperClusterName)
     result.nodeNames.size shouldBe 2
     result.clientPort shouldBe 9092
     result.exporterPort shouldBe 9093

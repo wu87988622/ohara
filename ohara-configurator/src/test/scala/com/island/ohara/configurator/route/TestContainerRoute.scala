@@ -57,7 +57,9 @@ class TestContainerRoute extends MediumTest with Matchers {
     zk.name shouldBe zkClusterName
     result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).start(zk.name))
 
-    result(brokerApi.request.name(bkClusterName).zookeeperClusterName(zkClusterName).nodeNames(nodeNames).create())
+    val bk = result(
+      brokerApi.request.name(bkClusterName).zookeeperClusterName(zkClusterName).nodeNames(nodeNames).create())
+    result(brokerApi.start(bk.name))
 
     result(workerApi.request.name(wkClusterName).brokerClusterName(bkClusterName).nodeNames(nodeNames).create())
   }

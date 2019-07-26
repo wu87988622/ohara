@@ -20,7 +20,7 @@ import java.util.concurrent.{ExecutorService, TimeUnit}
 
 import com.island.ohara.agent._
 import com.island.ohara.agent.docker.DockerClient
-import com.island.ohara.client.configurator.v0.{ClusterInfo, ZookeeperApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterInfo, ZookeeperApi}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce}
@@ -83,7 +83,7 @@ private[ohara] class ClusterCollieImpl(cacheTimeout: Duration, nodeCollie: NodeC
 
       for {
         zkMap <- parse(ZookeeperApi.ZK_SERVICE_NAME, zookeeperCollie.toZookeeperCluster)
-        bkMap <- parse(ContainerCollie.BK_SERVICE_NAME, brokerCollie.toBrokerCluster)
+        bkMap <- parse(BrokerApi.BK_SERVICE_NAME, brokerCollie.toBrokerCluster)
         wkMap <- parse(ContainerCollie.WK_SERVICE_NAME, workerCollie.toWorkerCluster)
         streamMap <- parse(ContainerCollie.STREAM_SERVICE_NAME, streamCollie.toStreamCluster)
       } yield zkMap ++ bkMap ++ wkMap ++ streamMap

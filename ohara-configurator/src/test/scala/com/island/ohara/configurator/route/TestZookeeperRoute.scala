@@ -73,7 +73,9 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     // remove all broker clusters
     result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list())
       .map(_.name)
-      .foreach(name => result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).delete(name)))
+      .foreach(name =>
+        result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).stop(name)
+          flatMap (_ => BrokerApi.access.hostname(configurator.hostname).port(configurator.port).delete(name))))
 
     // pass
     result(zookeeperApi.stop(zk.name))

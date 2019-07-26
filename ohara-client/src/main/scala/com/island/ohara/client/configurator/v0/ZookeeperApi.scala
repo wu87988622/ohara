@@ -20,7 +20,7 @@ import java.util.Objects
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
-import spray.json.JsValue
+import spray.json.{JsArray, JsString, JsValue}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -35,8 +35,6 @@ object ZookeeperApi {
   val ZOOKEEPER_PREFIX_PATH: String = "zookeepers"
 
   val ZK_SERVICE_NAME: String = "zk"
-  val START_COMMAND: String = "start"
-  val STOP_COMMAND: String = "stop"
 
   /**
     * the default docker image used to run containers of worker cluster
@@ -161,40 +159,6 @@ object ZookeeperApi {
   }
 
   final class Access private[ZookeeperApi] extends ClusterAccess[ZookeeperClusterInfo](ZOOKEEPER_PREFIX_PATH) {
-
-    private[this] def actionUrl(name: String, action: String): String =
-      s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$name/$action"
-
-    /**
-      *  start a zookeeper
-      *
-      * @param name object name
-      * @param executionContext execution context
-      * @return none
-      */
-    def start(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-      exec.put[ErrorApi.Error](actionUrl(name, START_COMMAND))
-
-    /**
-      * stop a zookeeper gracefully.
-      *
-      * @param name object name
-      * @param executionContext execution context
-      * @return none
-      */
-    def stop(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-      exec.put[ErrorApi.Error](actionUrl(name, STOP_COMMAND))
-
-    /**
-      * force to stop a zookeeper. This action may cause some data loss if cluster was still running.
-      *
-      * @param name object name
-      * @param executionContext execution context
-      * @return none
-      */
-    def forceStop(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-      exec.put[ErrorApi.Error](s"${actionUrl(name, STOP_COMMAND)}?${Data.FORCE_KEY}=true")
-
     def request: Request = new Request {
       private[this] var name: String = CommonUtils.randomString(LIMIT_OF_NAME_LENGTH)
       private[this] var imageName: Option[String] = None
@@ -231,6 +195,7 @@ object ZookeeperApi {
       import scala.collection.JavaConverters._
       override def nodeNames(nodeNames: Set[String]): Request = {
         this.nodeNames = Some(CommonUtils.requireNonEmpty(nodeNames.asJava).asScala.toSet)
+        ZOOKEEPER_CREATION_JSON_FORMAT.check("nodeNames", JsArray(nodeNames.map(JsString(_)).toVector))
         this
       }
 

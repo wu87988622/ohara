@@ -141,6 +141,7 @@ const WorkerNewModal = props => {
     const { service, name } = params;
     let { retryCount = 0 } = params;
     const maxRetry = 10;
+
     switch (service) {
       case 'zookeeper':
         const zkRes = await zookeeperApi.fetchZookeepers();
@@ -195,12 +196,13 @@ const WorkerNewModal = props => {
     const { service, name } = params;
     let { retryCount = 0 } = params;
     const maxRetry = 10;
+
     switch (service) {
       case 'zookeeper':
         const zkRes = await zookeeperApi.fetchZookeeper(name);
-        const zkResult = get(zkRes, 'data.result.state', 'stop');
+        const zkResult = get(zkRes, 'data.result.state', undefined);
 
-        if (zkResult === 'stop') return;
+        if (isUndefined(zkResult)) return;
         if (retryCount > maxRetry) {
           toastr.error(`Failed to stop zookeeper: ${name}`);
           return;
@@ -275,6 +277,11 @@ const WorkerNewModal = props => {
     setActiveStep(2);
     await Promise.all(
       bks.map(async bk => {
+        await brokerApi.stopBroker(`${bk.name}`);
+        await waitStopService({
+          service: 'broker',
+          name: bk.name,
+        });
         await brokerApi.deleteBroker(`${bk.name}`);
         await waitDeleteService({
           service: 'broker',
@@ -282,6 +289,7 @@ const WorkerNewModal = props => {
         });
       }),
     );
+
     setActiveStep(1);
     await Promise.all(
       zks.map(async zk => {
@@ -305,6 +313,7 @@ const WorkerNewModal = props => {
 
     const maxRetry = 5;
     let retryCount = 0;
+
     const waitForServiceCreation = async clusterName => {
       if (!clusterName) throw new Error();
 
@@ -330,6 +339,7 @@ const WorkerNewModal = props => {
       await commonUtils.sleep(2000);
       await waitForServiceCreation(clusterName);
     };
+
     const zookeeperName = generate.serviceName();
     const zookeeper = await zookeeperApi.createZookeeper({
       name: zookeeperName,
@@ -346,6 +356,7 @@ const WorkerNewModal = props => {
       // and once the bug is fixed we will then apply the rule two in frontend :)
       nodeNames: [nodeNames[0]],
     });
+
     await zookeeperApi.startZookeeper(zookeeperName);
     const zookeeperClusterName = get(zookeeper, 'data.result.name');
     await waitForServiceCreation(zookeeperClusterName);
@@ -353,8 +364,9 @@ const WorkerNewModal = props => {
 
     saveService({ service: 'zookeeper', name: zookeeperClusterName });
 
+    const brokerName = generate.serviceName();
     const broker = await brokerApi.createBroker({
-      name: generate.serviceName(),
+      name: brokerName,
       zookeeperClusterName,
       clientPort: generate.port(),
       exporterPort: generate.port(),
@@ -362,6 +374,7 @@ const WorkerNewModal = props => {
       nodeNames,
     });
 
+    await brokerApi.startBroker(brokerName);
     const brokerClusterName = get(broker, 'data.result.name');
     await waitForServiceCreation(brokerClusterName);
     setActiveStep(2);

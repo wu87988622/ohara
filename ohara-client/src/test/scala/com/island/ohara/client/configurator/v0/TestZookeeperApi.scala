@@ -387,6 +387,40 @@ class TestZookeeperApi extends SmallTest with Matchers {
   }
 
   @Test
+  def testInvalidNodeNames(): Unit = {
+    an[DeserializationException] should be thrownBy ZookeeperApi.access
+      .hostname(CommonUtils.randomString())
+      .port(CommonUtils.availablePort())
+      .request
+      .nodeName("start")
+      .creation
+    an[DeserializationException] should be thrownBy ZookeeperApi.access
+      .hostname(CommonUtils.randomString())
+      .port(CommonUtils.availablePort())
+      .request
+      .nodeName("stop")
+      .creation
+    an[DeserializationException] should be thrownBy ZookeeperApi.access
+      .hostname(CommonUtils.randomString())
+      .port(CommonUtils.availablePort())
+      .request
+      .nodeName("start")
+      .update
+    an[DeserializationException] should be thrownBy ZookeeperApi.access
+      .hostname(CommonUtils.randomString())
+      .port(CommonUtils.availablePort())
+      .request
+      .nodeName("stop")
+      .update
+
+    an[DeserializationException] should be thrownBy ZookeeperApi.ZOOKEEPER_CREATION_JSON_FORMAT.read(s"""
+                                                                                                  |  {
+                                                                                                  |    "nodeNames": ["start", "stop"]
+                                                                                                  |  }
+           """.stripMargin.parseJson)
+  }
+
+  @Test
   def testDefaultUpdate(): Unit = {
     val data = ZookeeperApi.access.hostname(CommonUtils.randomString()).port(CommonUtils.availablePort()).request.update
     data.imageName.isEmpty shouldBe true

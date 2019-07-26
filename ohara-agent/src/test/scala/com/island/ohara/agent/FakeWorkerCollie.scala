@@ -20,6 +20,7 @@ import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.{ClusterInfo, NodeApi}
+import com.island.ohara.common.util.CommonUtils
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -27,7 +28,18 @@ class FakeWorkerCollie(node: NodeCollie) extends WorkerCollie {
   override protected def brokerClusters(
     implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = Future.successful(
     Map(
-      BrokerClusterInfo("bk1", "broker", "zk1", 9092, 9093, 9094, Set("node1"), Set.empty) -> Seq(ContainerInfo(
+      BrokerClusterInfo("bk1",
+                        "broker",
+                        Some("zk1"),
+                        9092,
+                        9093,
+                        9094,
+                        Set("node1"),
+                        Set.empty,
+                        Map.empty,
+                        CommonUtils.current(),
+                        None,
+                        None) -> Seq(ContainerInfo(
         "node1",
         "aaaa",
         "broker",

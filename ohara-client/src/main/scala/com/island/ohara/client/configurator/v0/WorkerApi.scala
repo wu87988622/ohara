@@ -168,55 +168,57 @@ object WorkerApi {
   /**
     * exposed to configurator
     */
-  private[ohara] implicit val WORKER_CLUSTER_INFO_JSON_FORMAT: RootJsonFormat[WorkerClusterInfo] =
-    new RootJsonFormat[WorkerClusterInfo] {
-      override def write(obj: WorkerClusterInfo): JsValue = JsObject(
-        noJsNull(
-          Map(
-            NAME_KEY -> JsString(obj.name),
-            IMAGE_NAME_KEY -> JsString(obj.imageName),
-            BROKER_CLUSTER_NAME_KEY -> JsString(obj.brokerClusterName),
-            CLIENT_PORT_KEY -> JsNumber(obj.clientPort),
-            JMX_PORT_KEY -> JsNumber(obj.jmxPort),
-            GROUP_ID_KEY -> JsString(obj.groupId),
-            STATUS_TOPIC_NAME_KEY -> JsString(obj.statusTopicName),
-            STATUS_TOPIC_PARTITIONS_KEY -> JsNumber(obj.statusTopicPartitions),
-            STATUS_TOPIC_REPLICATIONS_KEY -> JsNumber(obj.statusTopicReplications),
-            CONFIG_TOPIC_NAME_KEY -> JsString(obj.configTopicName),
-            CONFIG_TOPIC_PARTITIONS_KEY -> JsNumber(obj.configTopicPartitions),
-            CONFIG_TOPIC_REPLICATIONS_KEY -> JsNumber(obj.configTopicReplications),
-            OFFSET_TOPIC_NAME_KEY -> JsString(obj.offsetTopicName),
-            OFFSET_TOPIC_PARTITIONS_KEY -> JsNumber(obj.offsetTopicPartitions),
-            OFFSET_TOPIC_REPLICATIONS_KEY -> JsNumber(obj.offsetTopicReplications),
-            JAR_INFOS_KEY -> JsArray(obj.jarInfos.map(FILE_INFO_JSON_FORMAT.write).toVector),
-            CONNECTORS_KEY -> JsArray(obj.connectors.map(CONNECTION_DEFINITIONS_JSON_FORMAT.write).toVector),
-            NODE_NAMES_KEY -> JsArray(obj.nodeNames.map(JsString(_)).toVector),
-            DEAD_NODES_KEY -> JsArray(obj.deadNodes.map(JsString(_)).toVector),
-          ))
-      )
+  private[ohara] implicit val WORKER_CLUSTER_INFO_JSON_FORMAT: OharaJsonFormat[WorkerClusterInfo] =
+    JsonRefiner[WorkerClusterInfo]
+      .format(new RootJsonFormat[WorkerClusterInfo] {
+        override def write(obj: WorkerClusterInfo): JsValue = JsObject(
+          noJsNull(
+            Map(
+              NAME_KEY -> JsString(obj.name),
+              IMAGE_NAME_KEY -> JsString(obj.imageName),
+              BROKER_CLUSTER_NAME_KEY -> JsString(obj.brokerClusterName),
+              CLIENT_PORT_KEY -> JsNumber(obj.clientPort),
+              JMX_PORT_KEY -> JsNumber(obj.jmxPort),
+              GROUP_ID_KEY -> JsString(obj.groupId),
+              STATUS_TOPIC_NAME_KEY -> JsString(obj.statusTopicName),
+              STATUS_TOPIC_PARTITIONS_KEY -> JsNumber(obj.statusTopicPartitions),
+              STATUS_TOPIC_REPLICATIONS_KEY -> JsNumber(obj.statusTopicReplications),
+              CONFIG_TOPIC_NAME_KEY -> JsString(obj.configTopicName),
+              CONFIG_TOPIC_PARTITIONS_KEY -> JsNumber(obj.configTopicPartitions),
+              CONFIG_TOPIC_REPLICATIONS_KEY -> JsNumber(obj.configTopicReplications),
+              OFFSET_TOPIC_NAME_KEY -> JsString(obj.offsetTopicName),
+              OFFSET_TOPIC_PARTITIONS_KEY -> JsNumber(obj.offsetTopicPartitions),
+              OFFSET_TOPIC_REPLICATIONS_KEY -> JsNumber(obj.offsetTopicReplications),
+              JAR_INFOS_KEY -> JsArray(obj.jarInfos.map(FILE_INFO_JSON_FORMAT.write).toVector),
+              CONNECTORS_KEY -> JsArray(obj.connectors.map(CONNECTION_DEFINITIONS_JSON_FORMAT.write).toVector),
+              NODE_NAMES_KEY -> JsArray(obj.nodeNames.map(JsString(_)).toVector),
+              DEAD_NODES_KEY -> JsArray(obj.deadNodes.map(JsString(_)).toVector),
+            ))
+        )
 
-      override def read(json: JsValue): WorkerClusterInfo = WorkerClusterInfo(
-        name = noJsNull(json)(NAME_KEY).convertTo[String],
-        imageName = noJsNull(json)(IMAGE_NAME_KEY).convertTo[String],
-        brokerClusterName = noJsNull(json)(BROKER_CLUSTER_NAME_KEY).convertTo[String],
-        clientPort = noJsNull(json)(CLIENT_PORT_KEY).convertTo[Int],
-        jmxPort = noJsNull(json)(JMX_PORT_KEY).convertTo[Int],
-        groupId = noJsNull(json)(GROUP_ID_KEY).convertTo[String],
-        statusTopicName = noJsNull(json)(STATUS_TOPIC_NAME_KEY).convertTo[String],
-        statusTopicPartitions = noJsNull(json)(STATUS_TOPIC_PARTITIONS_KEY).convertTo[Int],
-        statusTopicReplications = noJsNull(json)(STATUS_TOPIC_REPLICATIONS_KEY).convertTo[Short],
-        configTopicName = noJsNull(json)(CONFIG_TOPIC_NAME_KEY).convertTo[String],
-        configTopicPartitions = noJsNull(json)(CONFIG_TOPIC_PARTITIONS_KEY).convertTo[Int],
-        configTopicReplications = noJsNull(json)(CONFIG_TOPIC_REPLICATIONS_KEY).convertTo[Short],
-        offsetTopicName = noJsNull(json)(OFFSET_TOPIC_NAME_KEY).convertTo[String],
-        offsetTopicPartitions = noJsNull(json)(OFFSET_TOPIC_PARTITIONS_KEY).convertTo[Int],
-        offsetTopicReplications = noJsNull(json)(OFFSET_TOPIC_REPLICATIONS_KEY).convertTo[Short],
-        jarInfos = noJsNull(json)(JAR_INFOS_KEY).convertTo[Seq[FileInfo]],
-        connectors = noJsNull(json)(CONNECTORS_KEY).convertTo[Seq[ConnectorDefinition]],
-        nodeNames = noJsNull(json)(NODE_NAMES_KEY).convertTo[Seq[String]].toSet,
-        deadNodes = noJsNull(json)(DEAD_NODES_KEY).convertTo[Seq[String]].toSet
-      )
-    }
+        override def read(json: JsValue): WorkerClusterInfo = WorkerClusterInfo(
+          name = noJsNull(json)(NAME_KEY).convertTo[String],
+          imageName = noJsNull(json)(IMAGE_NAME_KEY).convertTo[String],
+          brokerClusterName = noJsNull(json)(BROKER_CLUSTER_NAME_KEY).convertTo[String],
+          clientPort = noJsNull(json)(CLIENT_PORT_KEY).convertTo[Int],
+          jmxPort = noJsNull(json)(JMX_PORT_KEY).convertTo[Int],
+          groupId = noJsNull(json)(GROUP_ID_KEY).convertTo[String],
+          statusTopicName = noJsNull(json)(STATUS_TOPIC_NAME_KEY).convertTo[String],
+          statusTopicPartitions = noJsNull(json)(STATUS_TOPIC_PARTITIONS_KEY).convertTo[Int],
+          statusTopicReplications = noJsNull(json)(STATUS_TOPIC_REPLICATIONS_KEY).convertTo[Short],
+          configTopicName = noJsNull(json)(CONFIG_TOPIC_NAME_KEY).convertTo[String],
+          configTopicPartitions = noJsNull(json)(CONFIG_TOPIC_PARTITIONS_KEY).convertTo[Int],
+          configTopicReplications = noJsNull(json)(CONFIG_TOPIC_REPLICATIONS_KEY).convertTo[Short],
+          offsetTopicName = noJsNull(json)(OFFSET_TOPIC_NAME_KEY).convertTo[String],
+          offsetTopicPartitions = noJsNull(json)(OFFSET_TOPIC_PARTITIONS_KEY).convertTo[Int],
+          offsetTopicReplications = noJsNull(json)(OFFSET_TOPIC_REPLICATIONS_KEY).convertTo[Short],
+          jarInfos = noJsNull(json)(JAR_INFOS_KEY).convertTo[Seq[FileInfo]],
+          connectors = noJsNull(json)(CONNECTORS_KEY).convertTo[Seq[ConnectorDefinition]],
+          nodeNames = noJsNull(json)(NODE_NAMES_KEY).convertTo[Seq[String]].toSet,
+          deadNodes = noJsNull(json)(DEAD_NODES_KEY).convertTo[Seq[String]].toSet
+        )
+      })
+      .refine
 
   /**
     * used to generate the payload and url for POST/PUT request.
