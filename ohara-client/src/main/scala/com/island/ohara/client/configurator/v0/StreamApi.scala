@@ -38,8 +38,6 @@ object StreamApi {
   final val IMAGE_NAME_DEFAULT: String = s"oharastream/streamapp:${VersionUtils.VERSION}"
 
   val STREAM_PREFIX_PATH: String = "stream"
-  val START_COMMAND: String = "start"
-  val STOP_COMMAND: String = "stop"
 
   // --- data stored in configurator -- //
   /**

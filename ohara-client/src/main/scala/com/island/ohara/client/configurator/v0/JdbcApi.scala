@@ -162,7 +162,7 @@ object JdbcApi {
         )
       override def update()(implicit executionContext: ExecutionContext): Future[JdbcInfo] =
         exec.put[Update, JdbcInfo, ErrorApi.Error](
-          _url(group, name),
+          _url(DataKey(group, name)),
           update
         )
     }

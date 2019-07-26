@@ -20,6 +20,8 @@ import com.island.ohara.client.HttpExecutor
 import com.island.ohara.client.configurator.ConfiguratorApiInfo
 import com.island.ohara.common.util.CommonUtils
 
+import scala.concurrent.{ExecutionContext, Future}
+
 /**
   * all accesses in v0 APIs need the hostname and port of remote node. This class implements the basic methods used to store the required
   * information to create the subclass access.
@@ -56,6 +58,14 @@ abstract class BasicAccess private[v0] (prefixPath: String) {
   protected def _url(group: String) =
     s"http://${_hostname}:${_port}/${_version}/${_prefixPath}?${Data.GROUP_KEY}=$group"
 
-  protected def _url(group: String, name: String) =
-    s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/${CommonUtils.requireNonEmpty(name)}?${Data.GROUP_KEY}=$group"
+  //----------------[for runnable objects]----------------//
+  protected def _url(key: DataKey) =
+    s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/${key.name}?${Data.GROUP_KEY}=${key.group}"
+
+  protected def _url(key: DataKey, postFix: String) =
+    s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/${key.name}/${CommonUtils.requireNonEmpty(postFix)}?${Data.GROUP_KEY}=${key.group}"
+
+  protected def put(key: DataKey, action: String)(implicit executionContext: ExecutionContext): Future[Unit] =
+    exec.put[ErrorApi.Error](
+      s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/${key.name}/$action?group=${key.group}")
 }

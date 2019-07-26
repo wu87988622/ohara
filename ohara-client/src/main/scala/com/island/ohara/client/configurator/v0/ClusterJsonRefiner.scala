@@ -34,8 +34,6 @@ object ClusterJsonRefiner {
     * limit the name length to one-third of 64 chars should be suitable for most cases.
     */
   private[this] val LIMIT_OF_NAME_LENGTH: Int = 20
-  private[this] val START_COMMAND: String = "start"
-  private[this] val STOP_COMMAND: String = "stop"
 
   /**
     * use basic check rules of creation request for json refiner.

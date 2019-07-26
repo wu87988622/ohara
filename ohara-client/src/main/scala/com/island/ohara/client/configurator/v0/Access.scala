@@ -36,8 +36,4 @@ abstract class Access[Res] private[v0] (prefixPath: String)(implicit rm: RootJso
     exec.delete[ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$name")
   def list()(implicit executionContext: ExecutionContext): Future[Seq[Res]] =
     exec.get[Seq[Res], ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}")
-  //----------------[for runnable objects]----------------//
-  protected def put(action: String, key: DataKey)(implicit executionContext: ExecutionContext): Future[Unit] =
-    exec.put[ErrorApi.Error](
-      s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/${key.name}/$action?group=${key.group}")
 }

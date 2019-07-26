@@ -25,8 +25,6 @@ import scala.concurrent.{ExecutionContext, Future}
 final object ShabondiApi {
   val IMAGE_NAME_DEFAULT: String = s"oharastream/shabondi:${VersionUtils.VERSION}"
   val PATH_PREFIX = "shabondi"
-  val PATH_SEGMENT_START = "start"
-  val PATH_SEGMENT_STOP = "stop"
 
   final case class ShabondiDescription(name: String,
                                        lastModified: Long,
@@ -78,12 +76,12 @@ final object ShabondiApi {
       exec.delete[ErrorApi.Error](basicUrl(name))
 
     def start(name: String)(implicit executionContext: ExecutionContext): Future[ShabondiDescription] = {
-      val url = basicUrl(name) + "/" + PATH_SEGMENT_START
+      val url = basicUrl(name) + "/" + START_COMMAND
       exec.put[ShabondiDescription, ErrorApi.Error](url)
     }
 
     def stop(name: String)(implicit executionContext: ExecutionContext): Future[ShabondiDescription] = {
-      val url = basicUrl(name) + "/" + PATH_SEGMENT_STOP
+      val url = basicUrl(name) + "/" + STOP_COMMAND
       exec.put[ShabondiDescription, ErrorApi.Error](url)
     }
   }

@@ -132,10 +132,10 @@ private[route] object RouteUtils {
 
   /** default we restrict the jar size to 50MB */
   final val DEFAULT_FILE_SIZE_BYTES = 50 * 1024 * 1024L
-  final val START_COMMAND: String = "start"
-  final val STOP_COMMAND: String = "stop"
-  final val PAUSE_COMMAND: String = "pause"
-  final val RESUME_COMMAND: String = "resume"
+  final val START_COMMAND: String = com.island.ohara.client.configurator.v0.START_COMMAND
+  final val STOP_COMMAND: String = com.island.ohara.client.configurator.v0.STOP_COMMAND
+  final val PAUSE_COMMAND: String = com.island.ohara.client.configurator.v0.PAUSE_COMMAND
+  final val RESUME_COMMAND: String = com.island.ohara.client.configurator.v0.RESUME_COMMAND
 
   /**
     * a route to custom CREATION and UPDATE resource. It offers default implementation to GET, LIST and DELETE.

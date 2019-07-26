@@ -112,7 +112,7 @@ object ShabondiRoute {
             } ~
             delete { complete { deleteShabondi(name, store) } }
         } ~
-          path(PATH_SEGMENT_START) {
+          path(com.island.ohara.client.configurator.v0.START_COMMAND) {
             // TODO: need integrate with Crane
             k8sClientOpt match {
               case Some(k8sClient) =>
@@ -121,7 +121,7 @@ object ShabondiRoute {
                 complete(StatusCodes.ServiceUnavailable -> "Shabondi need K8SClient...")
             }
           } ~
-          path(PATH_SEGMENT_STOP) {
+          path(com.island.ohara.client.configurator.v0.STOP_COMMAND) {
             // TODO: need integrate with Crane
             k8sClientOpt match {
               case Some(k8sClient) =>

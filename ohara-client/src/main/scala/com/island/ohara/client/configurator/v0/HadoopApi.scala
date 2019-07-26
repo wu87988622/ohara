@@ -134,7 +134,7 @@ object HadoopApi {
           creation
         )
       override def update()(implicit executionContext: ExecutionContext): Future[HdfsInfo] =
-        exec.put[Update, HdfsInfo, ErrorApi.Error](_url(group, name), update)
+        exec.put[Update, HdfsInfo, ErrorApi.Error](_url(DataKey(group, name)), update)
     }
   }
   def access: Access = new Access

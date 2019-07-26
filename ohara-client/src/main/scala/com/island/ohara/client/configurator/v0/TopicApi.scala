@@ -146,8 +146,8 @@ object TopicApi {
   }
 
   class Access private[v0] extends com.island.ohara.client.configurator.v0.Access[TopicInfo](TOPICS_PREFIX_PATH) {
-    def start(key: DataKey)(implicit executionContext: ExecutionContext): Future[Unit] = put("start", key)
-    def stop(key: DataKey)(implicit executionContext: ExecutionContext): Future[Unit] = put("stop", key)
+    def start(key: DataKey)(implicit executionContext: ExecutionContext): Future[Unit] = put(key, START_COMMAND)
+    def stop(key: DataKey)(implicit executionContext: ExecutionContext): Future[Unit] = put(key, STOP_COMMAND)
     def request: Request = new Request {
       private[this] var name: String = _
       private[this] var brokerClusterName: Option[String] = None

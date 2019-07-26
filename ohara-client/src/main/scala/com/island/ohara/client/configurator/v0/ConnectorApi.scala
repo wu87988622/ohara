@@ -30,10 +30,6 @@ import scala.concurrent.{ExecutionContext, Future}
 
 object ConnectorApi {
   val CONNECTORS_PREFIX_PATH: String = "connectors"
-  val START_COMMAND: String = "start"
-  val STOP_COMMAND: String = "stop"
-  val PAUSE_COMMAND: String = "pause"
-  val RESUME_COMMAND: String = "resume"
   val DEFAULT_NUMBER_OF_TASKS = 1
 
   /**

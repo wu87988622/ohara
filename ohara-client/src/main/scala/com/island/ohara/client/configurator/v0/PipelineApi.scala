@@ -321,7 +321,7 @@ object PipelineApi {
         )
       override def update()(implicit executionContext: ExecutionContext): Future[Pipeline] =
         exec.put[Update, Pipeline, ErrorApi.Error](
-          _url(group, name),
+          _url(DataKey(group, name)),
           update
         )
     }

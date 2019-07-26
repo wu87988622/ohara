@@ -19,6 +19,10 @@ package com.island.ohara.client.configurator
 import spray.json.{JsNull, JsValue}
 
 package object v0 {
+  val START_COMMAND: String = "start"
+  val STOP_COMMAND: String = "stop"
+  val PAUSE_COMMAND: String = "pause"
+  val RESUME_COMMAND: String = "resume"
 
   /**
     * In this APIs we have to integrate json format between scala (spray-json) and java (jackson).
