@@ -18,7 +18,7 @@ package com.island.ohara.agent
 
 import com.island.ohara.agent.Collie.ClusterCreator
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterInfo, ZookeeperApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterInfo, StreamApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
@@ -79,10 +79,10 @@ abstract class ContainerCollie[T <: ClusterInfo: ClassTag, Creator <: ClusterCre
   }
 
   protected def serviceName: String =
-    if (classTag[T].runtimeClass.isAssignableFrom(classOf[ZookeeperClusterInfo])) ZookeeperApi.ZK_SERVICE_NAME
-    else if (classTag[T].runtimeClass.isAssignableFrom(classOf[BrokerClusterInfo])) BrokerApi.BK_SERVICE_NAME
-    else if (classTag[T].runtimeClass.isAssignableFrom(classOf[WorkerClusterInfo])) ContainerCollie.WK_SERVICE_NAME
-    else if (classTag[T].runtimeClass.isAssignableFrom(classOf[StreamClusterInfo])) ContainerCollie.STREAM_SERVICE_NAME
+    if (classTag[T].runtimeClass.isAssignableFrom(classOf[ZookeeperClusterInfo])) ZookeeperApi.ZOOKEEPER_SERVICE_NAME
+    else if (classTag[T].runtimeClass.isAssignableFrom(classOf[BrokerClusterInfo])) BrokerApi.BROKER_SERVICE_NAME
+    else if (classTag[T].runtimeClass.isAssignableFrom(classOf[WorkerClusterInfo])) WorkerApi.WORKER_SERVICE_NAME
+    else if (classTag[T].runtimeClass.isAssignableFrom(classOf[StreamClusterInfo])) StreamApi.STREAM_SERVICE_NAME
     else throw new IllegalArgumentException(s"Who are you, ${classTag[T].runtimeClass} ???")
 
   override final def forceRemove(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
@@ -105,13 +105,6 @@ abstract class ContainerCollie[T <: ClusterInfo: ClassTag, Creator <: ClusterCre
 }
 
 object ContainerCollie {
-
-  val WK_SERVICE_NAME: String = "wk"
-
-  /**
-    * container name is controlled by streamRoute, the service name here use five words was ok.
-    */
-  val STREAM_SERVICE_NAME: String = "stream"
 
   /**
     * used to distinguish the cluster name and service name

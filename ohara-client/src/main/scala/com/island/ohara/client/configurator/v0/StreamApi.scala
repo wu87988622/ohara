@@ -28,6 +28,11 @@ import scala.concurrent.{ExecutionContext, Future}
 
 object StreamApi {
 
+  /**
+    * container name is controlled by streamRoute, the service name here use five words was ok.
+    */
+  val STREAM_SERVICE_NAME: String = "stream"
+
   val GROUP_DEFAULT: String = Data.GROUP_DEFAULT
 
   val LIMIT_OF_NAME_LENGTH: Int = ZookeeperApi.LIMIT_OF_NAME_LENGTH
@@ -77,7 +82,7 @@ object StreamApi {
       extends Data {
     // streamapp does not support to define group
     override def group: String = Data.GROUP_DEFAULT
-    override def kind: String = "streamApp"
+    override def kind: String = STREAM_SERVICE_NAME
   }
   implicit val STREAMAPP_DESCRIPTION_JSON_FORMAT: RootJsonFormat[StreamAppDescription] = jsonFormat15(
     StreamAppDescription)
@@ -153,6 +158,16 @@ object StreamApi {
     override def ports: Set[Int] = Set(jmxPort)
 
     override def clone(newNodeNames: Set[String]): StreamClusterInfo = copy(nodeNames = newNodeNames)
+
+    override def group: String = Data.GROUP_DEFAULT
+
+    override def kind: String = STREAM_SERVICE_NAME
+
+    // TODO: move it to be a part of constructor field ... by chia
+    override def lastModified: Long = CommonUtils.current()
+
+    // TODO: move it to be a part of constructor field ... by chia
+    override def tags: Map[String, JsValue] = Map.empty
   }
 
   sealed trait Request {

@@ -20,7 +20,7 @@ package com.island.ohara.client.configurator.v0
   * There are many kinds of cluster hosted by ohara. We extract an interface to define "what" information should be included by a "cluster
   * information".
   */
-trait ClusterInfo {
+trait ClusterInfo extends Data {
 
   /**
     * @return cluster name

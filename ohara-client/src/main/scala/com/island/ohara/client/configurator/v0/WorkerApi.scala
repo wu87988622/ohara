@@ -28,6 +28,8 @@ import spray.json.{JsArray, JsNumber, JsObject, JsString, JsValue, RootJsonForma
 import scala.concurrent.{ExecutionContext, Future}
 object WorkerApi {
 
+  val WORKER_SERVICE_NAME: String = "wk"
+
   val LIMIT_OF_NAME_LENGTH: Int = ZookeeperApi.LIMIT_OF_NAME_LENGTH
 
   val WORKER_PREFIX_PATH: String = "workers"
@@ -163,6 +165,16 @@ object WorkerApi {
     override def ports: Set[Int] = Set(clientPort, jmxPort)
 
     override def clone(newNodeNames: Set[String]): ClusterInfo = copy(nodeNames = newNodeNames)
+
+    override def group: String = Data.GROUP_DEFAULT
+
+    override def kind: String = WORKER_SERVICE_NAME
+
+    // TODO: move it to be a part of constructor field ... by chia
+    override def lastModified: Long = CommonUtils.current()
+
+    // TODO: move it to be a part of constructor field ... by chia
+    override def tags: Map[String, JsValue] = Map.empty
   }
 
   /**

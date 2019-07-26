@@ -31,7 +31,7 @@ object BrokerApi {
 
   val BROKER_PREFIX_PATH: String = "brokers"
 
-  val BK_SERVICE_NAME: String = "bk"
+  val BROKER_SERVICE_NAME: String = "bk"
 
   /**
     * the default docker image used to run containers of broker cluster
@@ -94,14 +94,12 @@ object BrokerApi {
                                                          lastModified: Long,
                                                          state: Option[String],
                                                          error: Option[String])
-  //TODO : move Data class to ClusterInfo after finished #1544
-      extends ClusterInfo
-      with Data {
+      extends ClusterInfo {
     // cluster does not support to define group
     override def group: String = Data.GROUP_DEFAULT
     override def clone2(state: Option[String], error: Option[String]): BrokerClusterInfo =
       this.copy(state = state, error = error)
-    override def kind: String = BK_SERVICE_NAME
+    override def kind: String = BROKER_SERVICE_NAME
     override def ports: Set[Int] = Set(clientPort, exporterPort, jmxPort)
     override def clone(newNodeNames: Set[String]): ClusterInfo = copy(nodeNames = newNodeNames)
     def connectionProps: String = nodeNames.map(n => s"$n:$clientPort").mkString(",")

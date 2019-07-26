@@ -17,8 +17,10 @@
 package com.island.ohara.agent
 
 import com.island.ohara.agent.Collie.ClusterCreator
-import com.island.ohara.client.configurator.v0.ClusterInfo
+import com.island.ohara.client.configurator.v0.{ClusterInfo, Data}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.common.util.CommonUtils
+import spray.json.JsValue
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.ClassTag
@@ -70,6 +72,14 @@ case class FakeContainerCollieClusterInfo(name: String, nodeNames: Set[String]) 
   override def ports: Set[Int] = Set.empty
 
   override def clone(newNodeNames: Set[String]): ClusterInfo = throw new UnsupportedOperationException
+
+  override def group: String = Data.GROUP_DEFAULT
+
+  override def lastModified: Long = CommonUtils.current()
+
+  override def kind: String = "fake_cluster"
+
+  override def tags: Map[String, JsValue] = Map.empty
 }
 
 object FakeContainerCollie {

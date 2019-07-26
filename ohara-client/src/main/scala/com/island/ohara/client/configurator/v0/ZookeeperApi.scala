@@ -34,7 +34,7 @@ object ZookeeperApi {
 
   val ZOOKEEPER_PREFIX_PATH: String = "zookeepers"
 
-  val ZK_SERVICE_NAME: String = "zk"
+  val ZOOKEEPER_SERVICE_NAME: String = "zk"
 
   /**
     * the default docker image used to run containers of worker cluster
@@ -94,14 +94,12 @@ object ZookeeperApi {
                                                                lastModified: Long,
                                                                state: Option[String],
                                                                error: Option[String])
-  //TODO : move Data class to ClusterInfo after finished #1544
-      extends ClusterInfo
-      with Data {
+      extends ClusterInfo {
     // cluster does not support to define group
     override def group: String = Data.GROUP_DEFAULT
     override def clone2(state: Option[String], error: Option[String]): ZookeeperClusterInfo =
       this.copy(state = state, error = error)
-    override def kind: String = ZK_SERVICE_NAME
+    override def kind: String = ZOOKEEPER_SERVICE_NAME
     override def ports: Set[Int] = Set(clientPort, peerPort, electionPort)
     override def clone(newNodeNames: Set[String]): ClusterInfo = this.copy(nodeNames = newNodeNames)
   }
