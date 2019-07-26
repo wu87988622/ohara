@@ -181,8 +181,7 @@ describe('<PipelineToolbar />', () => {
     );
 
     const expectUrl =
-      'http://' +
-      window.location.hostname +
+      generate.serverHost() +
       URLS.WORKSPACES +
       '/' +
       props.workerClusterName +
@@ -304,8 +303,7 @@ describe('<PipelineToolbar />', () => {
     );
 
     const expectUrl =
-      'http://' +
-      window.location.hostname +
+      generate.serverHost() +
       URLS.WORKSPACES +
       '/' +
       props.workerClusterName +

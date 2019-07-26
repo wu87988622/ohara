@@ -15,129 +15,25 @@
  */
 
 import React from 'react';
-import styled from 'styled-components';
 import PropTypes from 'prop-types';
-import { NavLink } from 'react-router-dom';
 import { get } from 'lodash';
 
 import * as URLS from 'constants/urls';
 import { ListLoader } from 'components/common/Loader';
 import { fetchInfo } from 'api/infoApi';
 import { InfoModal } from '../Modal';
-
-const StyledHeader = styled.div`
-  background-color: ${props => props.theme.white};
-  position: fixed;
-  left: 0;
-  top: 0;
-  right: 0;
-  height: 59px;
-  border-bottom: 1px solid ${props => props.theme.lighterGray};
-  padding: 0 50px;
-  z-index: 100;
-`;
-
-StyledHeader.displayName = 'StyledHeader';
-
-const HeaderWrapper = styled.header`
-  width: 100%;
-  height: 100%;
-  max-width: 1200px;
-  display: flex;
-  align-items: center;
-  margin: auto;
-`;
-
-HeaderWrapper.displayName = 'Header';
-
-const Brand = styled(NavLink)`
-  font-family: Merriweather, sans-serif;
-  color: ${props => props.theme.blue};
-  font-size: 24px;
-  padding: 0;
-  display: block;
-`;
-
-Brand.displayName = 'Brand';
-
-const Nav = styled.nav`
-  margin-left: 54px;
-  background-color: ${props => props.theme.white};
-`;
-
-Nav.displayName = 'Nav';
-
-const Link = styled(NavLink)`
-  color: ${props => props.theme.dimBlue};
-  font-size: 14px;
-  padding: 15px 0;
-  margin: 10px 20px;
-  position: relative;
-  transition: 0.3s all;
-
-  &:hover,
-  &.active {
-    color: ${props => props.theme.blue};
-  }
-`;
-
-Link.displayName = 'Link';
-
-const Btn = styled.button`
-  border: none;
-  color: ${props => props.theme.dimBlue};
-  font-size: 18px;
-  background-color: transparent;
-
-  &:hover,
-  &.active {
-    color: ${props => props.theme.blue};
-  }
-`;
-
-const Icon = styled.i`
-  margin-right: 8px;
-`;
-
-Icon.displayName = 'Icon';
-
-const RightCol = styled.div`
-  margin-left: auto;
-`;
-
-const Ul = styled.ul`
-  padding: 22px 25px;
-
-  li {
-    margin-bottom: 15px;
-    display: flex;
-    align-items: center;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
-
-  .item {
-    margin-right: 10px;
-    padding: 13px 15px;
-    color: ${props => props.theme.darkerBlue};
-    background-color: ${props => props.theme.whiteSmoke};
-  }
-
-  .content {
-    color: ${props => props.theme.lightBlue};
-  }
-
-  .item,
-  .content {
-    font-size: 13px;
-  }
-`;
-
-const LoaderWrapper = styled.div`
-  margin: 30px;
-`;
+import {
+  StyledHeader,
+  HeaderWrapper,
+  Brand,
+  Nav,
+  Link,
+  Btn,
+  Icon,
+  RightCol,
+  Ul,
+  LoaderWrapper,
+} from './styles';
 
 class Header extends React.Component {
   static propTypes = {
@@ -145,10 +41,7 @@ class Header extends React.Component {
   };
 
   state = {
-    isConfigModalActive: false,
     isVersionModalActive: false,
-    partitions: '',
-    replicationFactor: '',
     isLoading: true,
   };
 
@@ -159,19 +52,11 @@ class Header extends React.Component {
   fetchInfo = async () => {
     const res = await fetchInfo();
     this.setState({ isLoading: false });
-    const result = get(res, 'data.result', null);
+    const info = get(res, 'data.result', null);
 
-    if (result) {
-      this.setState({ info: result });
+    if (info) {
+      this.setState({ info });
     }
-  };
-
-  handleConfigModalOpen = () => {
-    this.setState({ isConfigModalActive: true });
-  };
-
-  handleConfigModalClose = () => {
-    this.setState({ isConfigModalActive: false });
   };
 
   handleVersionModalOpen = () => {
@@ -233,7 +118,10 @@ class Header extends React.Component {
               data-testid="pipelines-link"
               to={URLS.PIPELINES}
             >
-              <Icon className="fas fa-code-branch" />
+              <Icon
+                className="fas fa-code-branch"
+                data-testid="pipelines-icon"
+              />
               <span>Pipelines</span>
             </Link>
 
@@ -242,7 +130,7 @@ class Header extends React.Component {
               data-testid="nodes-link"
               to={URLS.NODES}
             >
-              <Icon className="fas fa-sitemap" />
+              <Icon className="fas fa-sitemap" data-testid="nodes-icon" />
               <span>Nodes</span>
             </Link>
 
@@ -251,7 +139,10 @@ class Header extends React.Component {
               data-testid="workspaces-link"
               to={URLS.WORKSPACES}
             >
-              <Icon className="fas fa-project-diagram" />
+              <Icon
+                className="fas fa-project-diagram"
+                data-testid="workspaces-icon"
+              />
               <span>Workspaces</span>
             </Link>
           </Nav>

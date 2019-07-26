@@ -15,112 +15,80 @@
  */
 
 import React from 'react';
-import { shallow } from 'enzyme';
+import { cleanup, waitForElement, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom/extend-expect';
 
+import * as generate from 'utils/generate';
 import * as URLS from 'constants/urls';
 import Header from '../Header';
 import { fetchInfo } from 'api/infoApi';
+import { renderWithRouter } from 'utils/testUtils';
 
 jest.mock('api/infoApi');
 
-fetchInfo.mockImplementation(() =>
-  Promise.resolve({
-    data: { result: { versionInfo: {}, mode: 'K8S' }, isSuccess: true },
-  }),
-);
-
-const props = {
-  isLogin: false,
-};
+afterEach(cleanup);
 
 describe('<Header />', () => {
-  let wrapper;
-
   beforeEach(() => {
-    fetchInfo.mockImplementation(() =>
-      Promise.resolve({
-        data: {
-          result: {
-            versionInfo: {
-              version: '123',
-              revision: 'abcdefghijklno123',
-              date: Date.now(),
-            },
+    const response = {
+      data: {
+        result: {
+          versionInfo: {
+            version: generate.word(),
+            revision: generate.revision(),
+            date: String(generate.date.past()),
           },
-          isSuccess: true,
         },
-      }),
-    );
-    wrapper = shallow(<Header {...props} />);
+        isSuccess: true,
+      },
+    };
+
+    fetchInfo.mockImplementation(() => Promise.resolve(response));
   });
 
   it('renders self', () => {
-    expect(wrapper.length).toBe(1);
-    expect(wrapper.name()).toBe('StyledHeader');
+    renderWithRouter(<Header />);
   });
 
-  it('renders <Brand />', () => {
-    const brand = wrapper.find('Brand');
-    const _props = brand.props();
+  it('renders the brand', () => {
+    const { getByText } = renderWithRouter(<Header />);
+    const brand = getByText('Ohara Stream');
 
-    expect(brand.length).toBe(1);
-    expect(_props.to).toBe(URLS.HOME);
-    expect(brand.children().text()).toBe('Ohara Stream');
+    expect(brand).toHaveAttribute('href', URLS.HOME);
   });
 
-  it('renders <Nav />', () => {
-    expect(wrapper.find('Nav').length).toBe(1);
+  it('renders navigation', () => {
+    const { getByText, getByTestId } = renderWithRouter(<Header />);
+
+    getByText('Pipelines');
+    getByText('Nodes');
+    getByText('Workspaces');
+
+    getByTestId('pipelines-icon');
+    getByTestId('nodes-icon');
+    getByTestId('workspaces-icon');
+
+    const expectPipelinesUrl = generate.serverHost() + URLS.PIPELINES;
+    const expectNodesUrl = generate.serverHost() + URLS.NODES;
+    const expectWorkspacesUrl = generate.serverHost() + URLS.WORKSPACES;
+
+    expect(getByTestId('pipelines-link').href).toBe(expectPipelinesUrl);
+    expect(getByTestId('nodes-link').href).toBe(expectNodesUrl);
+    expect(getByTestId('workspaces-link').href).toBe(expectWorkspacesUrl);
   });
 
-  // TODO: ignore the following two tests for now, since login feature is disabled in v0.2, see more info in OHARA-1269
-  it.skip('renders log in link and text when this.state.isLogin is false', () => {
-    const login = wrapper.find('Login');
-    expect(login.props().to).toBe(URLS.LOGIN);
-    expect(login.children().text()).toBe('Log in');
-  });
+  it('toggles info modal', async () => {
+    const { getByTestId, queryByTestId } = await waitForElement(() =>
+      renderWithRouter(<Header />),
+    );
 
-  it.skip('renders log out link and text when this.state.isLogin is true', () => {
-    wrapper.setProps({ isLogin: true });
+    expect(queryByTestId('info-modal')).toBeNull();
 
-    const login = wrapper.find('Login');
+    fireEvent.click(getByTestId('version-btn'));
+    const newInfoModal = await waitForElement(() => getByTestId('info-modal'));
+    expect(newInfoModal).toBeVisible();
 
-    expect(login.props().to).toBe(URLS.LOGOUT);
-    expect(login.children().text()).toBe('Log out');
-  });
-
-  it('renders Navigation <Link />', () => {
-    const links = wrapper.find('Link');
-
-    const expected = [
-      {
-        to: URLS.PIPELINES,
-        text: 'Pipelines',
-        iconCls: 'fa-code-branch',
-      },
-      {
-        to: URLS.NODES,
-        text: 'Nodes',
-        iconCls: 'fa-sitemap',
-      },
-      {
-        to: URLS.WORKSPACES,
-        text: 'Workspaces',
-        iconCls: 'fa-project-diagram',
-      },
-    ];
-
-    links.forEach((link, idx) => {
-      const linkProps = link.props();
-      const icon = link.find('Icon');
-      const span = link.find('span');
-      const iconProps = icon.props();
-
-      expect(span.children().text()).toBe(expected[idx].text);
-      expect(linkProps.activeClassName).toBe('active');
-      expect(linkProps.to).toBe(expected[idx].to);
-
-      // TODO: change this to regex, this is prone to error
-      expect(iconProps.className).toBe(`fas ${expected[idx].iconCls}`);
-    });
+    fireEvent.click(getByTestId('close-btn'));
+    expect(queryByTestId('info-modal')).toBeNull();
   });
 });

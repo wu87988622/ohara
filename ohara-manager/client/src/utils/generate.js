@@ -186,6 +186,10 @@ export const serviceName = (length = 10) => {
   return name;
 };
 
+export const serverHost = () => {
+  return 'http://' + window.location.hostname;
+};
+
 export {
   name,
   id,
@@ -198,4 +202,5 @@ export {
   password,
   word,
   revision,
+  date,
 };
