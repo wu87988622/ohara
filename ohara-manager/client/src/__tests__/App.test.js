@@ -68,10 +68,6 @@ describe('<App />', () => {
         testId: 'workspaces-page',
       },
       {
-        path: '/monitoring',
-        testId: 'monitoring-page',
-      },
-      {
         path: '/',
         testId: 'home-page',
       },

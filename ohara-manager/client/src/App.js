@@ -26,7 +26,6 @@ import PipelineNewPage from 'components/pages/PipelinePage/PipelineNewPage';
 import NodesPage from 'components/pages/NodePage/NodeListPage';
 import WorkspacesPage from 'components/pages/WorkspacesPage';
 import WorkspacesDetailPage from 'components/pages/WorkspacesPage/WorkspacesDetailPage';
-import MonitoringPage from 'components/pages/MonitoringPage';
 import LogsPage from 'components/pages/LogsPage';
 import NotFoundPage from 'components/pages/NotFoundPage';
 
@@ -73,11 +72,6 @@ class App extends React.Component {
                 path="/workspaces"
                 component={WorkspacesPage}
                 data-testid="workspaces-page"
-              />
-              <Route
-                path="/monitoring"
-                component={MonitoringPage}
-                data-testid="monitoring-page"
               />
               <Route
                 path="/logs/:serviceName/:clusterName"

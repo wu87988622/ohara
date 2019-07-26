@@ -15,26 +15,22 @@
  */
 
 import React from 'react';
-import { shallow } from 'enzyme';
+import { cleanup, render } from '@testing-library/react';
+import '@testing-library/jest-dom/extend-expect';
 
 import NotFoundPage from '../NotFoundPage';
 import { NOT_FOUND_PAGE } from 'constants/documentTitles';
 
+afterEach(cleanup);
+
 describe('<NotFoundPage />', () => {
-  let wrapper;
-  beforeEach(() => {
-    wrapper = shallow(<NotFoundPage />);
+  it('renders the right document title', () => {
+    render(<NotFoundPage />);
+    expect(document.title).toBe(NOT_FOUND_PAGE);
   });
 
-  it('renders <DocumentTitle />', () => {
-    expect(wrapper.dive().name()).toBe('DocumentTitle');
-    expect(wrapper.dive().props().title).toBe(NOT_FOUND_PAGE);
-  });
-
-  it('renders <AppWrapper />', () => {
-    expect(wrapper.find('AppWrapper').length).toBe(1);
-    expect(wrapper.find('AppWrapper').props().title).toBe(
-      'Oops, page not found',
-    );
+  it('renders page title', () => {
+    const { getByText } = render(<NotFoundPage />);
+    getByText('Oops, page not found');
   });
 });

@@ -18,13 +18,6 @@
   Success messages -- green 
 *******************************/
 
-// Login
-export const LOGIN_SUCCESS = 'You are now logged in!';
-export const LOGOUT_SUCCESS = 'You are now logged out!';
-
-// Schema
-export const SCHEMA_CREATION_SUCCESS = 'Schema successfully created!';
-
 // Topic
 export const TOPIC_CREATION_SUCCESS = 'Topic successfully created!';
 export const TOPIC_DELETION_SUCCESS = 'Successfully deleted the topic:';
@@ -32,6 +25,7 @@ export const TOPIC_DELETION_SUCCESS = 'Successfully deleted the topic:';
 // Node
 export const NODE_CREATION_SUCCESS = 'Node successfully created!';
 export const NODE_SAVE_SUCCESS = 'Node successfully saved!';
+export const TEST_SUCCESS = 'Test has passed!';
 
 // Service
 export const SERVICE_CREATION_SUCCESS = 'Service successfully created!';
@@ -41,12 +35,6 @@ export const PIPELINE_CREATION_SUCCESS = 'Pipeline successfully created!';
 export const PIPELINE_DELETION_SUCCESS = 'Successfully deleted the pipeline:';
 export const START_CONNECTOR_SUCCESS = 'Connector successfully started!';
 export const CONNECTOR_DELETION_SUCCESS = 'Successfully deleted the connector:';
-
-// Configuration
-export const CONFIG_DELETE_SUCCESS = 'Successfully deleted the configuration:';
-export const CONFIG_SAVE_SUCCESS = 'Configuration successfully saved!';
-export const CONFIG_DELETE_CHECK = 'Please select a connection to delete!';
-export const TEST_SUCCESS = 'Test has passed!';
 
 // Stream app
 export const STREAM_APP_UPLOAD_SUCCESS = 'Stream app successfully uploaded!';
