@@ -16,17 +16,20 @@
 
 package com.island.ohara.client.configurator.v0
 
-import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
-import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
 import spray.json._
-import spray.json.DefaultJsonProtocol._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestTopicApi extends SmallTest with Matchers {
+
+  @Test
+  def emptyGroup(): Unit = an[IllegalArgumentException] should be thrownBy TopicApi.access.request.group("")
+
+  @Test
+  def nullGroup(): Unit = an[NullPointerException] should be thrownBy TopicApi.access.request.group(null)
 
   @Test
   def ignoreNameOnCreation(): Unit = TopicApi.access
@@ -139,22 +142,4 @@ class TestTopicApi extends SmallTest with Matchers {
 
   @Test
   def emptyTags(): Unit = TopicApi.access.request.tags(Map.empty)
-
-  @Test
-  def groupShouldAppearInResponse(): Unit =
-    TopicApi.TOPIC_INFO_FORMAT
-      .write(TopicInfo(
-        name = CommonUtils.randomString(),
-        numberOfPartitions = 1,
-        numberOfReplications = 1,
-        brokerClusterName = CommonUtils.randomString(),
-        metrics = Metrics(Seq.empty),
-        lastModified = CommonUtils.current(),
-        state = None,
-        configs = Map.empty,
-        tags = Map.empty
-      ))
-      .asJsObject
-      .fields(Data.GROUP_KEY)
-      .convertTo[String] shouldBe Data.GROUP_DEFAULT
 }

@@ -21,7 +21,7 @@ import com.island.ohara.client.Enum
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json.{JsString, JsValue, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -79,7 +79,14 @@ object TopicApi {
     override def write(obj: TopicState): JsValue = JsString(obj.name)
   }
 
-  case class TopicInfo(name: String,
+  /**
+    * kafka topic does not support to group topic so we salt the group with name.
+    * @return topic name for kafka
+    */
+  def toTopicNameOnKafka(key: DataKey): String = s"${key.group}-${key.name}"
+
+  case class TopicInfo(group: String,
+                       name: String,
                        numberOfPartitions: Int,
                        numberOfReplications: Short,
                        brokerClusterName: String,
@@ -89,25 +96,24 @@ object TopicApi {
                        configs: Map[String, String],
                        tags: Map[String, JsValue])
       extends Data {
-    // TODO: topic's group ought be identical to brokerClusterName
-    override def group: String = Data.GROUP_DEFAULT
     override def kind: String = "topic"
+
+    /**
+      * kafka topic does not support to group topic so we salt the group with name.
+      * @return topic name for kafka
+      */
+    def topicNameOnKafka: String = toTopicNameOnKafka(key)
   }
 
-  implicit val TOPIC_INFO_FORMAT: RootJsonFormat[TopicInfo] = new RootJsonFormat[TopicInfo] {
-    private[this] val format = jsonFormat9(TopicInfo)
-    override def read(json: JsValue): TopicInfo = format.read(json)
-
-    override def write(obj: TopicInfo): JsValue = JsObject(
-      format.write(obj).asJsObject.fields ++
-        // TODO: topic's group ought be identical to brokerClusterName
-        Map(Data.GROUP_KEY -> JsString(Data.GROUP_DEFAULT)))
-  }
+  implicit val TOPIC_INFO_FORMAT: RootJsonFormat[TopicInfo] = jsonFormat10(TopicInfo)
 
   /**
     * used to generate the payload and url for POST/PUT request.
     */
   trait Request {
+    @Optional("default group is \"default\"")
+    def group(group: String): Request
+
     @Optional("default name is a random string. But it is required in updating")
     def name(name: String): Request
 
@@ -149,12 +155,19 @@ object TopicApi {
     def start(key: DataKey)(implicit executionContext: ExecutionContext): Future[Unit] = put(key, START_COMMAND)
     def stop(key: DataKey)(implicit executionContext: ExecutionContext): Future[Unit] = put(key, STOP_COMMAND)
     def request: Request = new Request {
+      private[this] var group: String = Data.GROUP_DEFAULT
       private[this] var name: String = _
       private[this] var brokerClusterName: Option[String] = None
       private[this] var numberOfPartitions: Option[Int] = None
       private[this] var numberOfReplications: Option[Short] = None
       private[this] var configs: Map[String, String] = _
       private[this] var tags: Map[String, JsValue] = _
+
+      override def group(group: String): Request = {
+        this.group = CommonUtils.requireNonEmpty(group)
+        this
+      }
+
       override def name(name: String): Request = {
         this.name = CommonUtils.requireNonEmpty(name)
         this
@@ -204,12 +217,12 @@ object TopicApi {
 
       override def create()(implicit executionContext: ExecutionContext): Future[TopicInfo] =
         exec.post[Creation, TopicInfo, ErrorApi.Error](
-          _url,
+          _url(group),
           creation
         )
       override def update()(implicit executionContext: ExecutionContext): Future[TopicInfo] =
         exec.put[Update, TopicInfo, ErrorApi.Error](
-          s"${_url}/${CommonUtils.requireNonEmpty(name)}",
+          _url(DataKey(group, name)),
           update
         )
     }

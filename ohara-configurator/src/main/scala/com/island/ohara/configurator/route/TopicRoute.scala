@@ -18,7 +18,7 @@ package com.island.ohara.configurator.route
 import akka.http.scaladsl.server
 import com.island.ohara.agent.{BrokerCollie, NoSuchClusterException}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.DataKey
+import com.island.ohara.client.configurator.v0.{DataKey, TopicApi}
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.TopicApi._
 import com.island.ohara.client.kafka.TopicAdmin
@@ -55,45 +55,46 @@ private[configurator] object TopicRoute {
 
   private[this] def createTopic(topicAdmin: TopicAdmin, topicInfo: TopicInfo)(
     implicit executionContext: ExecutionContext): Future[TopicInfo] =
-    createTopic(
-      topicAdmin = topicAdmin,
-      clusterName = topicInfo.brokerClusterName,
-      name = topicInfo.name,
-      numberOfPartitions = topicInfo.numberOfPartitions,
-      numberOfReplications = topicInfo.numberOfReplications,
-      configs = topicInfo.configs,
-      tags = topicInfo.tags
-    )
+    topicAdmin.creator
+      .name(topicInfo.topicNameOnKafka)
+      .numberOfPartitions(topicInfo.numberOfPartitions)
+      .numberOfReplications(topicInfo.numberOfReplications)
+      .configs(topicInfo.configs)
+      .create()
+      .map { _ =>
+        try topicInfo.copy(
+          // the topic is just created so we don't fetch the "empty" metrics actually.
+          metrics = Metrics(Seq.empty),
+          state = Some(TopicState.RUNNING),
+          lastModified = CommonUtils.current(),
+        )
+        finally topicAdmin.close()
+      }
 
   private[this] def createTopic(
     topicAdmin: TopicAdmin,
     clusterName: String,
+    group: String,
     name: String,
     numberOfPartitions: Int,
     numberOfReplications: Short,
     configs: Map[String, String],
     tags: Map[String, JsValue])(implicit executionContext: ExecutionContext): Future[TopicInfo] =
-    topicAdmin.creator
-      .name(name)
-      .numberOfPartitions(numberOfPartitions)
-      .numberOfReplications(numberOfReplications)
-      .configs(configs)
-      .create()
-      .map { _ =>
-        try TopicInfo(
-          name = name,
-          numberOfPartitions = numberOfPartitions,
-          numberOfReplications = numberOfReplications,
-          brokerClusterName = clusterName,
-          // the topic is just created so we don't fetch the "empty" metrics actually.
-          metrics = Metrics(Seq.empty),
-          state = Some(TopicState.RUNNING),
-          lastModified = CommonUtils.current(),
-          configs = configs,
-          tags = tags
-        )
-        finally topicAdmin.close()
-      }
+    createTopic(
+      topicAdmin = topicAdmin,
+      topicInfo = TopicInfo(
+        group = group,
+        name = name,
+        numberOfPartitions = numberOfPartitions,
+        numberOfReplications = numberOfReplications,
+        brokerClusterName = clusterName,
+        metrics = Metrics(Seq.empty),
+        state = Some(TopicState.RUNNING),
+        lastModified = CommonUtils.current(),
+        configs = configs,
+        tags = tags
+      )
+    )
 
   private[this] def hookOfGet(implicit meterCache: MeterCache,
                               brokerCollie: BrokerCollie,
@@ -115,27 +116,37 @@ private[configurator] object TopicRoute {
   private[this] def hookOfCreation(implicit adminCleaner: AdminCleaner,
                                    brokerCollie: BrokerCollie,
                                    executionContext: ExecutionContext): HookOfCreation[Creation, TopicInfo] =
-    (_: String, creation: Creation) =>
+    (group: String, creation: Creation) =>
       CollieUtils.topicAdmin(creation.brokerClusterName).flatMap {
         case (cluster, client) =>
           // TODO: remove this deprecated behavior. We pre-create the topic on kafka only if the input arguments is completed
           // This stuff is for backward-compatibility.
           if (creation.brokerClusterName.isDefined)
-            client.topics().map(_.find(_.name == creation.name)).flatMap { previous =>
-              if (previous.isDefined) Future.failed(new IllegalArgumentException(s"${creation.name} already exists"))
-              else
-                createTopic(
-                  topicAdmin = client,
-                  clusterName = cluster.name,
-                  name = creation.name,
-                  numberOfPartitions = creation.numberOfPartitions,
-                  numberOfReplications = creation.numberOfReplications,
-                  configs = creation.configs,
-                  tags = creation.tags
-                )
-            } else
+            client
+              .topics()
+              .map(
+                _.find(
+                  _.name == TopicApi.toTopicNameOnKafka(DataKey(
+                    group = group,
+                    name = creation.name
+                  ))))
+              .flatMap { previous =>
+                if (previous.isDefined) Future.failed(new IllegalArgumentException(s"${creation.name} already exists"))
+                else
+                  createTopic(
+                    topicAdmin = client,
+                    clusterName = cluster.name,
+                    group = group,
+                    name = creation.name,
+                    numberOfPartitions = creation.numberOfPartitions,
+                    numberOfReplications = creation.numberOfReplications,
+                    configs = creation.configs,
+                    tags = creation.tags
+                  )
+              } else
             Future.successful(
               TopicInfo(
+                group = group,
                 name = creation.name,
                 numberOfPartitions = creation.numberOfPartitions,
                 numberOfReplications = creation.numberOfReplications,
@@ -157,8 +168,9 @@ private[configurator] object TopicRoute {
       else
         CollieUtils.topicAdmin(previous.map(_.brokerClusterName).orElse(update.brokerClusterName)).flatMap {
           case (cluster, client) =>
-            client.topics().map(_.find(_.name == key.name)).flatMap { topicFromKafkaOption =>
+            client.topics().map(_.find(_.name == TopicApi.toTopicNameOnKafka(key))).flatMap { topicFromKafkaOption =>
               topicFromKafkaOption.fold(Future.successful(TopicInfo(
+                group = key.group,
                 name = key.name,
                 numberOfPartitions = update.numberOfPartitions.getOrElse(DEFAULT_NUMBER_OF_PARTITIONS),
                 numberOfReplications = update.numberOfReplications.getOrElse(DEFAULT_NUMBER_OF_REPLICATIONS),
@@ -182,6 +194,7 @@ private[configurator] object TopicRoute {
                 } else if (update.numberOfPartitions.exists(_ > topicFromKafka.numberOfPartitions)) {
                   client.changePartitions(key.name, update.numberOfPartitions.get).map { _ =>
                     try TopicInfo(
+                      group = key.group,
                       name = key.name,
                       numberOfPartitions = update.numberOfPartitions.get,
                       numberOfReplications = topicFromKafka.numberOfReplications,
@@ -199,10 +212,11 @@ private[configurator] object TopicRoute {
                   Releasable.close(client)
                   // just return the topic info
                   Future.successful(TopicInfo(
-                    topicFromKafka.name,
-                    topicFromKafka.numberOfPartitions,
-                    topicFromKafka.numberOfReplications,
-                    cluster.name,
+                    group = key.group,
+                    name = key.name,
+                    numberOfPartitions = topicFromKafka.numberOfPartitions,
+                    numberOfReplications = topicFromKafka.numberOfReplications,
+                    brokerClusterName = cluster.name,
                     metrics = Metrics(Seq.empty),
                     state = Some(TopicState.RUNNING),
                     lastModified = CommonUtils.current(),
@@ -301,7 +315,7 @@ private[configurator] object TopicRoute {
             executionContext: ExecutionContext): server.Route =
     RouteUtils.route[Creation, Update, TopicInfo](
       root = TOPICS_PREFIX_PATH,
-      enableGroup = false,
+      enableGroup = true,
       hookOfCreation = hookOfCreation,
       hookOfUpdate = hookOfUpdate,
       hookOfGet = hookOfGet,

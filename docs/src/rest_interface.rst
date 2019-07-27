@@ -116,15 +116,21 @@ ohara will invoke a creation of kafka also. Also, the delete to ohara
 topic also invoke a delete request to kafka. The common properties in
 topic are shown below.
 
-1. name (**string**) — topic name
-2. brokerClusterName (**string**) — the broker cluster hosting this
-   topic
-3. numberOfReplications (**int**) — the number of replications for this
-   topic
-4. numberOfPartitions (**int**) — the number of partitions for this
-   topic
-5. lastModified (**long**) — the last time to update this topic
-6. tags (**array(string)**) — the extra description to this object
+1. group (**string**) — topic group.
+2. name (**string**) — topic name
+3. brokerClusterName (**option(string)**) — the broker cluster hosting
+   this topic (**If you don’t specify the broker cluster in request,
+   ohara will try to find a broker cluster for you. And it works only if
+   there is only a broker cluster exists in ohara**)
+4. numberOfReplications (**option(int)**) — the number of replications
+   for this topic (**it is illegal to input the number of replications
+   which is larger than the number of broker nodes**)
+5. numberOfPartitions (**option(int)**)— the number of partitions for
+   this topic
+6. configs (**option(object)**) — the custom configs used to create topic
+7. state (**option(string)**) — state of a running topic. nothing if the topic is not running.
+8. tags (**option(object)**) — the extra description to this
+   object
 
 ..
 
@@ -141,21 +147,22 @@ The following information are tagged by ohara.
 store a topic properties
 ~~~~~~~~~~~~~~
 
-*POST /v0/topics*
+*POST /v0/topics?group=${group}*
 
-1. name (**string**) — topic name
-2. brokerClusterName (**option(string)**) — the broker cluster hosting
+1. group (**string**) — topic group. Default group is "default".
+2. name (**string**) — topic name
+3. brokerClusterName (**option(string)**) — the broker cluster hosting
    this topic (**If you don’t specify the broker cluster in request,
    ohara will try to find a broker cluster for you. And it works only if
    there is only a broker cluster exists in ohara**)
-3. numberOfReplications (**option(int)**) — the number of replications
+4. numberOfReplications (**option(int)**) — the number of replications
    for this topic (**it is illegal to input the number of replications
    which is larger than the number of broker nodes**)
-4. numberOfPartitions (**option(int)**)— the number of partitions for
+5. numberOfPartitions (**option(int)**)— the number of partitions for
    this topic
-5. configs (**option(object)**) — the custom configs used to create topic
-6. state (**option(string)**) — state of a running topic. nothing if the topic is not running.
-7. tags (**option(object)**) — the extra description to this
+6. configs (**option(object)**) — the custom configs used to create topic
+7. state (**option(string)**) — state of a running topic. nothing if the topic is not running.
+8. tags (**option(object)**) — the extra description to this
    object
 
 .. note::
@@ -201,7 +208,7 @@ store a topic properties
 update a topic properties
 ~~~~~~~~~~~~~~
 
-*PUT /v0/topics/${name}*
+*PUT /v0/topics/${name}?group=${group}*
 
 1. numberOfPartitions (**int**) — the number of partitions for this
    topic (**it is illegal to decrease the number**)
@@ -279,7 +286,7 @@ list all topics properties
 delete a topic properties
 ~~~~~~~~~~~~~~
 
-*DELETE /v0/topics/${name}*
+*DELETE /v0/topics/${name}?group=${group}*
 
 **Example Response**
 

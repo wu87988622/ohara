@@ -292,6 +292,15 @@ class TestTopicRoute extends SmallTest with Matchers {
     result(topicApi.get(topicDesc.name)).state shouldBe None
   }
 
+  @Test
+  def testGroup(): Unit = {
+    val group = CommonUtils.randomString(10)
+    val topicDesc = result(topicApi.request.group(group).create())
+    topicDesc.group shouldBe group
+    result(topicApi.list()).size shouldBe 1
+    result(topicApi.list()).exists(_.key == topicDesc.key) shouldBe true
+  }
+
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }
