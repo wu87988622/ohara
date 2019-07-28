@@ -182,24 +182,6 @@ describe('Broker API', () => {
     });
   });
 
-  it('deleteBroker', () => {
-    cy.get('@createBroker').then(response => {
-      expect(response.data.isSuccess).to.eq(true);
-    });
-
-    cy.deleteBroker(brokerClusterName).then(response => {
-      expect(response.data.isSuccess).to.eq(true);
-    });
-
-    cy.fetchBrokers().then(response => {
-      const targetBroker = response.data.result.find(
-        broker => broker.name === brokerClusterName,
-      );
-
-      expect(targetBroker).to.be.undefined;
-    });
-  });
-
   it('forceDeleteBroker', () => {
     cy.get('@createBroker').then(response => {
       expect(response.data.isSuccess).to.eq(true);

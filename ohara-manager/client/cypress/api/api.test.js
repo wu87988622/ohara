@@ -332,29 +332,14 @@ describe('Workers', () => {
         data: { isSuccess, result },
       } = res;
 
+      fakeWorkerName = result.name;
+
       expect(isSuccess).to.eq(true);
       expect(result.name).to.be.a('string');
       expect(result.clientPort).to.be.a('number');
       expect(result.nodeNames).to.be.a('array');
       expect(result.connectors).to.be.a('array');
       expect(result.jarInfos).to.be.a('array');
-    });
-  });
-
-  it('fetchWorkers', () => {
-    cy.fetchWorkers().then(res => {
-      const {
-        data: { isSuccess, result },
-      } = res;
-
-      fakeWorkerName = result[0].name;
-      expect(isSuccess).to.eq(true);
-      expect(result).to.be.a('array');
-      expect(result[0].name).to.be.a('string');
-      expect(result[0].nodeNames).to.be.a('array');
-      expect(result[0].configTopicName).to.be.a('string');
-      expect(result[0].offsetTopicName).to.be.a('string');
-      expect(result[0].statusTopicName).to.be.a('string');
     });
   });
 });
@@ -402,28 +387,6 @@ describe('Topics', () => {
         numberOfReplications,
         metrics,
       } = result;
-
-      expect(isSuccess).to.eq(true);
-      expect(name).to.be.a('string');
-      expect(numberOfPartitions).to.be.a('number');
-      expect(numberOfReplications).to.be.a('number');
-      expect(metrics).to.be.a('object');
-      expect(metrics.meters).to.be.a('array');
-    });
-  });
-
-  it('fetchTopics', () => {
-    cy.fetchTopics().then(res => {
-      const {
-        data: { isSuccess, result },
-      } = res;
-      const {
-        name,
-        numberOfPartitions,
-        numberOfReplications,
-        metrics,
-      } = result[0];
-      topicName = name;
 
       expect(isSuccess).to.eq(true);
       expect(name).to.be.a('string');
@@ -734,24 +697,6 @@ describe('Streamapps', () => {
   });
 });
 
-describe('Logs', () => {
-  it('fetchLogs', () => {
-    cy.fetchLogs('workers', wkName).then(res => {
-      const {
-        data: { isSuccess, result },
-      } = res;
-      const { name, logs } = result;
-
-      expect(isSuccess).to.eq(true);
-
-      expect(name).to.be.a('string');
-      expect(logs).to.be.a('array');
-      expect(logs[0].name).to.be.a('string');
-      expect(logs[0].value).to.be.a('string');
-    });
-  });
-});
-
 describe('Validates', () => {
   it.skip('validateConnector', () => {
     const params = {
@@ -783,23 +728,6 @@ describe('Validates', () => {
       expect(data.result.errorCount).to.eq(0);
       expect(data.result).to.include.keys('errorCount', 'settings');
       expect(data.result.settings).to.be.a('array');
-    });
-  });
-});
-
-describe('containers', () => {
-  it('fetchContainers', () => {
-    cy.fetchContainers(wkName).then(res => {
-      const {
-        data: { isSuccess, result },
-      } = res;
-
-      expect(isSuccess).to.eq(true);
-      expect(result).to.be.a('array');
-      expect(result[0]).include.keys('containers');
-      expect(result[0].containers).to.be.a('array');
-      expect(result[0].containers[0]).include.keys('state');
-      expect(result[0].containers[0].state).to.be.a('string');
     });
   });
 });

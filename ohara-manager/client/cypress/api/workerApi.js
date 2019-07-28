@@ -16,7 +16,9 @@
 
 import * as utils from '../utils';
 
-describe('Workers', () => {
+/* eslint-disable no-unused-expressions */
+// eslint is complaining about `expect(thing).to.be.undefined`
+describe('Worker API', () => {
   let nodeName = '';
   let zookeeperClusterName = '';
   let brokerClusterName = '';
@@ -123,6 +125,50 @@ describe('Workers', () => {
       );
 
       expect(workers.length).to.eq(2);
+    });
+  });
+
+  it('deleteWorker', () => {
+    cy.get('@testCreateWorker').then(response => {
+      expect(response.data.isSuccess).to.eq(true);
+    });
+
+    // We're not currently using this API in the client, and so it's not
+    // listed in the brokerApi.js, so we're asserting the response status
+    // not the isSuccess value
+    cy.request('DELETE', `api/workers/${workerClusterName}`).then(response => {
+      expect(response.status).to.eq(204);
+    });
+
+    cy.fetchWorkers().then(response => {
+      const targetWorker = response.data.result.find(
+        worker => worker.name === workerClusterName,
+      );
+
+      expect(targetWorker).to.be.undefined;
+    });
+  });
+
+  it('forceDeleteWorker', () => {
+    cy.get('@testCreateWorker').then(response => {
+      expect(response.data.isSuccess).to.eq(true);
+    });
+
+    // We're not currently using this API in the client, and so it's not
+    // listed in the brokerApi.js, so we're asserting the response status
+    // not the isSuccess value
+    cy.request('DELETE', `api/workers/${workerClusterName}?force=true`).then(
+      response => {
+        expect(response.status).to.eq(204);
+      },
+    );
+
+    cy.fetchWorkers().then(response => {
+      const targetWorker = response.data.result.find(
+        worker => worker.name === workerClusterName,
+      );
+
+      expect(targetWorker).to.be.undefined;
     });
   });
 });
