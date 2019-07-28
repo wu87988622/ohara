@@ -40,6 +40,8 @@ describe('Broker API', () => {
       nodeNames: [nodeName],
     });
 
+    cy.startZookeeper(zookeeperClusterName);
+
     cy.createBroker({
       name: brokerClusterName,
       zookeeperClusterName: zookeeperClusterName,
@@ -159,6 +161,65 @@ describe('Broker API', () => {
 
     cy.fetchBroker(brokerClusterName).then(response => {
       expect(response.data.result.state).to.eq.undefined;
+    });
+  });
+
+  it('deleteBroker', () => {
+    cy.get('@createBroker').then(response => {
+      expect(response.data.isSuccess).to.eq(true);
+    });
+
+    cy.deleteBroker(brokerClusterName).then(response => {
+      expect(response.data.isSuccess).to.eq(true);
+    });
+
+    cy.fetchBrokers().then(response => {
+      const targetBroker = response.data.result.find(
+        broker => broker.name === brokerClusterName,
+      );
+
+      expect(targetBroker).to.be.undefined;
+    });
+  });
+
+  it('deleteBroker', () => {
+    cy.get('@createBroker').then(response => {
+      expect(response.data.isSuccess).to.eq(true);
+    });
+
+    cy.deleteBroker(brokerClusterName).then(response => {
+      expect(response.data.isSuccess).to.eq(true);
+    });
+
+    cy.fetchBrokers().then(response => {
+      const targetBroker = response.data.result.find(
+        broker => broker.name === brokerClusterName,
+      );
+
+      expect(targetBroker).to.be.undefined;
+    });
+  });
+
+  it('forceDeleteBroker', () => {
+    cy.get('@createBroker').then(response => {
+      expect(response.data.isSuccess).to.eq(true);
+    });
+
+    // We're not currently using this API in the client, and so it's not
+    // listed in the brokerApi.js, so we're asserting the response status
+    // not the isSuccess value
+    cy.request('DELETE', `api/brokers/${brokerClusterName}?force=true`).then(
+      response => {
+        expect(response.status).to.eq(204);
+      },
+    );
+
+    cy.fetchBrokers().then(response => {
+      const targetBroker = response.data.result.find(
+        broker => broker.name === brokerClusterName,
+      );
+
+      expect(targetBroker).to.be.undefined;
     });
   });
 });
