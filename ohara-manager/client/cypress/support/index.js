@@ -31,13 +31,4 @@
 
 import './commands';
 import './apiTest';
-
-const integrationFolderName = Cypress.config('integrationFolder')
-  .split('/')
-  .pop();
-
-// Enable cypress to retry on fail end-to-end tests
-if (integrationFolderName === 'integration') {
-  require('cypress-plugin-retries');
-  Cypress.env('RETRIES', 5);
-}
+import './retryOnFail';

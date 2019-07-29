@@ -71,7 +71,6 @@ exports.getDefaultEnv = () => {
 const isServiceReady = async apiUrl => {
   const response = await axios.get(apiUrl);
   const serviceIsReady = get(response, 'data.state', 'FAILED');
-  console.log(serviceIsReady);
   return serviceIsReady === 'RUNNING';
 };
 
