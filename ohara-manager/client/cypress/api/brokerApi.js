@@ -23,6 +23,8 @@ describe('Broker API', () => {
   let zookeeperClusterName = '';
   let brokerClusterName = '';
 
+  before(() => cy.deleteAllServices());
+
   beforeEach(() => {
     nodeName = `node${utils.makeRandomStr()}`;
     zookeeperClusterName = `zookeeper${utils.makeRandomStr()}`;

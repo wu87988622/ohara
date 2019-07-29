@@ -16,11 +16,13 @@
 
 import * as utils from '../utils';
 
-describe('containers', () => {
+describe('Container API', () => {
   let nodeName = '';
   let zookeeperClusterName = '';
   let brokerClusterName = '';
   let workerClusterName = '';
+
+  before(() => cy.deleteAllServices());
 
   beforeEach(() => {
     nodeName = `node${utils.makeRandomStr()}`;

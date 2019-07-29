@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
+import { isEmpty, isUndefined } from 'lodash';
+
 import * as workerApi from '../../src/api/workerApi';
 import * as topicApi from '../../src/api/topicApi';
 import * as nodeApi from '../../src/api/nodeApi';
 import * as pipelineApi from '../../src/api/pipelineApi';
 import * as connectorApi from '../../src/api/connectorApi';
 import * as streamApp from '../../src/api/streamApi';
-import { axiosInstance } from '../../src/api/apiUtils';
 import * as zookeeperApi from '../../src/api/zookeeperApi';
 import * as brokerApi from '../../src/api/brokerApi';
+import { axiosInstance } from '../../src/api/apiUtils';
 import { fetchJars } from '../../src/api/jarApi';
 import { fetchLogs } from '../../src/api/logApi';
 import { validateConnector } from '../../src/api/validateApi';
@@ -187,3 +189,53 @@ Cypress.Commands.add('startZookeeper', name =>
 Cypress.Commands.add('createZookeeper', params =>
   zookeeperApi.createZookeeper(params),
 );
+
+Cypress.Commands.add('deleteAllServices', () => {
+  cy.fetchWorkers().then(response => {
+    const { result: workers } = response.data;
+
+    if (!isEmpty(workers)) {
+      workers.forEach(worker =>
+        cy.request('DELETE', `api/workers/${worker.name}`),
+      );
+    }
+  });
+
+  cy.fetchTopics().then(response => {
+    const { result: topics } = response.data;
+
+    if (!isEmpty(topics)) {
+      topics.forEach(topic => {
+        cy.request('DELETE', `api/topics/${topic.name}`);
+      });
+    }
+  });
+
+  cy.fetchBrokers().then(response => {
+    const { result: brokers } = response.data;
+
+    if (!isEmpty(brokers)) {
+      brokers.forEach(broker => {
+        if (!isUndefined(broker.state)) {
+          cy.stopBroker(broker.name);
+        }
+
+        cy.deleteBroker(broker.name);
+      });
+    }
+  });
+
+  cy.fetchZookeepers().then(response => {
+    const { result: zookeepers } = response.data;
+
+    if (!isEmpty(zookeepers)) {
+      zookeepers.forEach(zookeeper => {
+        if (!isUndefined(zookeeper.state)) {
+          cy.stopZookeeper(zookeeper.name);
+        }
+
+        cy.deleteZookeeper(zookeeper.name);
+      });
+    }
+  });
+});

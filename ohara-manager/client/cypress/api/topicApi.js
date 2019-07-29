@@ -22,6 +22,8 @@ describe('Topic API', () => {
   let brokerClusterName = '';
   let topicName = '';
 
+  before(() => cy.deleteAllServices());
+
   beforeEach(() => {
     nodeName = `node${utils.makeRandomStr()}`;
     zookeeperClusterName = `zookeeper${utils.makeRandomStr()}`;
@@ -44,7 +46,7 @@ describe('Topic API', () => {
 
     cy.createBroker({
       name: brokerClusterName,
-      zookeeperClusterName: zookeeperClusterName,
+      zookeeperClusterName,
       nodeNames: [nodeName],
     });
 
@@ -52,7 +54,7 @@ describe('Topic API', () => {
 
     cy.testCreateTopic({
       name: topicName,
-      brokerClusterName: brokerClusterName,
+      brokerClusterName,
     }).as('testCreateTopic');
   });
 
