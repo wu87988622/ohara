@@ -16,7 +16,7 @@
 
 package com.island.ohara.streams.data;
 
-import com.island.ohara.common.data.Data;
+import com.island.ohara.common.data.BasicObject;
 import java.io.Serializable;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
@@ -37,7 +37,7 @@ import org.apache.commons.lang3.builder.ToStringStyle;
  *
  * @see org.apache.kafka.streams.Topology
  */
-public final class Stele extends Data implements Serializable {
+public final class Stele extends BasicObject implements Serializable {
   private static final long serialVersionUID = 1L;
   /**
    * The type of this {@code stele}. Should be one of the following : <b>Source</b>, <b>Sink</b>, or

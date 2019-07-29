@@ -22,7 +22,7 @@ import java.io.Serializable;
 import java.util.Objects;
 
 /** implements Serializable ,because akka unmashaller throws java.io.NotSerializableException */
-public final class Column extends Data implements Serializable {
+public final class Column extends BasicObject implements Serializable {
 
   private static final long serialVersionUID = 1L;
 

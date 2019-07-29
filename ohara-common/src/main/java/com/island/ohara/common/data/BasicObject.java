@@ -32,7 +32,7 @@ import org.apache.commons.lang3.builder.ToStringStyle;
  *
  * <p>You need to custom the equals by self !!!!!!!!!!!!!!!!!!
  */
-public abstract class Data {
+public abstract class BasicObject {
 
   static {
     // default byte array -> [97, 97, 117]

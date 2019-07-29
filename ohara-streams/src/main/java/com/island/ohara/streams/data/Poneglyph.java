@@ -16,7 +16,7 @@
 
 package com.island.ohara.streams.data;
 
-import com.island.ohara.common.data.Data;
+import com.island.ohara.common.data.BasicObject;
 import java.io.Serializable;
 import java.util.HashSet;
 
@@ -24,9 +24,9 @@ import java.util.HashSet;
  * The {@code Poneglyph} represents the overall logic flow in this streamApp. User can recognize the
  * from-and-to view in each operation {@link Stele}. A {@code Poneglyph} is represent a complete
  * flow from data in to data out, there may have multiple {@code Poneglyph} in a streamApp. We
- * extend this class from {@link Data} to use the JSON string function.
+ * extend this class from {@link BasicObject} to use the JSON string function.
  */
-public final class Poneglyph extends Data implements Serializable {
+public final class Poneglyph extends BasicObject implements Serializable {
   private static final long serialVersionUID = 1L;
   private final HashSet<Stele> steles = new HashSet<>();
 
