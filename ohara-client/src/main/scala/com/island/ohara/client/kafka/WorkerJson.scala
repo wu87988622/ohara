@@ -66,7 +66,7 @@ object WorkerJson {
   implicit val ERROR_RESPONSE_JSON_FORMAT: RootJsonFormat[Error] = jsonFormat2(Error)
 
   final case class ConnectorConfig(tasksMax: Int,
-                                   topicNames: Seq[String],
+                                   topicNames: Set[String],
                                    connectorClass: String,
                                    args: Map[String, String])
 
@@ -81,7 +81,7 @@ object WorkerJson {
         case Seq(JsString(tasksMax), JsString(topicNames), JsString(connectorClass)) =>
           ConnectorConfig(
             tasksMax = tasksMax.toInt,
-            topicNames = topicNames.split(","),
+            topicNames = topicNames.split(",").toSet,
             connectorClass = connectorClass,
             args = json.convertTo[Map[String, String]] - (taskMaxKey, topicNamesKey, connectClassKey)
           )

@@ -27,6 +27,7 @@ import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.IntegrationTest
 import com.island.ohara.it.agent.{ClusterNameHolder, CollieTestUtils}
 import com.island.ohara.it.connector.{DumbSinkConnector, DumbSourceConnector}
+import com.island.ohara.kafka.connector.json.ObjectKey
 import com.typesafe.scalalogging.Logger
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
@@ -123,7 +124,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
       wkApi.request
         .name(nameHolder.generateClusterName())
         .brokerClusterName(bkCluster.name)
-        .jarKeys(jars.map(jar => DataKey(group = jar.group, name = jar.name)).toSet)
+        .jarKeys(jars.map(jar => ObjectKey.of(jar.group, jar.name)).toSet)
         .nodeName(nodeCache.head.name)
         .create())
     assertCluster(() => result(wkApi.list()), wkCluster.name)

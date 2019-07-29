@@ -42,7 +42,7 @@ import scala.collection.JavaConverters._
 class ValidatorTask extends SourceTask {
   private[this] var done = false
   private[this] var props: Map[String, String] = _
-  private[this] val topic: String = ValidationApi.INTERNAL_TOPIC
+  private[this] val topic: String = ValidationApi.INTERNAL_TOPIC_KEY.topicNameOnKafka
   private[this] var requestId: String = _
   override def start(props: util.Map[String, String]): Unit = {
     this.props = props.asScala.toMap

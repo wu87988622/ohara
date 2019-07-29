@@ -23,16 +23,16 @@ import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Cell, DataType, Row, Serializer, _}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.kafka.Consumer.Record
-import com.island.ohara.kafka.connector.json.ConnectorFormatter
+import com.island.ohara.kafka.connector.json.{ConnectorFormatter, TopicKey}
 import com.island.ohara.kafka.{BrokerClient, Consumer}
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
-import scala.concurrent.{Await, Future}
-import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 class TestFtpSource extends With3Brokers3Workers with Matchers {
 
   private[this] val schema: Seq[Column] = Seq(
@@ -111,12 +111,12 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
     topicInfo.numberOfReplications() shouldBe 1
   }
 
-  private[this] def pollData(topicName: String,
+  private[this] def pollData(topicKey: TopicKey,
                              timeout: scala.concurrent.duration.Duration = 100 seconds,
                              size: Int = data.length): Seq[Record[Row, Array[Byte]]] = {
     val consumer = Consumer
       .builder[Row, Array[Byte]]()
-      .topicName(methodName)
+      .topicName(topicKey.topicNameOnKafka)
       .offsetFromBegin()
       .connectionProps(testUtil.brokersConnProps)
       .keySerializer(Serializer.ROW)
@@ -139,23 +139,23 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
 
   @Test
   def testDuplicateInput(): Unit = {
-    val topicName = methodName
+    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorName = methodName
     result(
       workerClient
         .connectorCreator()
-        .topicName(topicName)
+        .topicKey(topicKey)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
         .name(connectorName)
         .columns(schema)
         .settings(props.toMap)
-        .create)
+        .create())
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
 
       checkFileCount(0, 1, 0)
-      var records = pollData(topicName)
+      var records = pollData(topicKey)
       records.size shouldBe data.length
       val row0 = records.head.key.get
       row0.size shouldBe 3
@@ -171,7 +171,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       // put a duplicate file
       setupInput()
       checkFileCount(0, 2, 0)
-      records = pollData(topicName, 10 second)
+      records = pollData(topicKey, 10 second)
       records.size shouldBe data.length
 
     } finally result(workerClient.delete(connectorName))
@@ -179,12 +179,12 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
 
   @Test
   def testColumnRename(): Unit = {
-    val topicName = methodName
+    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorName = methodName
     result(
       workerClient
         .connectorCreator()
-        .topicName(topicName)
+        .topicKey(topicKey)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
         .name(connectorName)
@@ -194,12 +194,12 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
           Column.builder().name("single").newName("newSingle").dataType(DataType.BOOLEAN).order(3).build()
         ))
         .settings(props.toMap)
-        .create)
+        .create())
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
       checkFileCount(0, 1, 0)
 
-      val records = pollData(topicName)
+      val records = pollData(topicKey)
       records.size shouldBe data.length
       val row0 = records.head.key.get
       row0.size shouldBe 3
@@ -223,12 +223,12 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
 
   @Test
   def testObjectType(): Unit = {
-    val topicName = methodName
+    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorName = methodName
     result(
       workerClient
         .connectorCreator()
-        .topicName(topicName)
+        .topicKey(topicKey)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
         .name(connectorName)
@@ -238,12 +238,12 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
           Column.builder().name("single").dataType(DataType.BOOLEAN).order(3).build()
         ))
         .settings(props.toMap)
-        .create)
+        .create())
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
       checkFileCount(0, 1, 0)
 
-      val records = pollData(topicName)
+      val records = pollData(topicKey)
       records.size shouldBe data.length
       val row0 = records.head.key.get
       row0.size shouldBe 3
@@ -261,23 +261,23 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
 
   @Test
   def testNormalCase(): Unit = {
-    val topicName = methodName
+    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorName = methodName
     result(
       workerClient
         .connectorCreator()
-        .topicName(topicName)
+        .topicKey(topicKey)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
         .name(connectorName)
         .columns(schema)
         .settings(props.toMap)
-        .create)
+        .create())
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
       checkFileCount(0, 1, 0)
 
-      val records = pollData(topicName)
+      val records = pollData(topicKey)
       records.size shouldBe data.length
       val row0 = records.head.key.get
       row0.size shouldBe 3
@@ -296,22 +296,22 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
 
   @Test
   def testNormalCaseWithoutSchema(): Unit = {
-    val topicName = methodName
+    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorName = methodName
     result(
       workerClient
         .connectorCreator()
-        .topicName(topicName)
+        .topicKey(topicKey)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
         .name(connectorName)
         .settings(props.toMap)
-        .create)
+        .create())
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
       checkFileCount(0, 1, 0)
 
-      val records = pollData(topicName)
+      val records = pollData(topicKey)
       records.size shouldBe data.length
       val row0 = records.head.key.get
       row0.size shouldBe 3
@@ -330,24 +330,24 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
 
   @Test
   def testNormalCaseWithoutEncode(): Unit = {
-    val topicName = methodName
+    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorName = methodName
     result(
       workerClient
         .connectorCreator()
-        .topicName(topicName)
+        .topicKey(topicKey)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
         .name(connectorName)
         .columns(schema)
         // will use default UTF-8
         .settings(props.toMap - FTP_ENCODE)
-        .create)
+        .create())
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
       checkFileCount(0, 1, 0)
 
-      val records = pollData(topicName)
+      val records = pollData(topicKey)
       records.size shouldBe data.length
       val row0 = records.head.key.get
       row0.size shouldBe 3
@@ -365,24 +365,24 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
 
   @Test
   def testPartialColumns(): Unit = {
-    val topicName = methodName
+    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorName = methodName
     result(
       workerClient
         .connectorCreator()
-        .topicName(topicName)
+        .topicKey(topicKey)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
         .name(connectorName)
         // skip last column
         .columns(schema.slice(0, schema.length - 1))
         .settings(props.toMap)
-        .create)
+        .create())
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
       checkFileCount(0, 1, 0)
 
-      val records = pollData(topicName)
+      val records = pollData(topicKey)
       records.size shouldBe data.length
       val row0 = records.head.key.get
       row0.size shouldBe 2
@@ -397,24 +397,24 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
 
   @Test
   def testUnmatchedSchema(): Unit = {
-    val topicName = methodName
+    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorName = methodName
     result(
       workerClient
         .connectorCreator()
-        .topicName(topicName)
+        .topicKey(topicKey)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
         .name(connectorName)
         // the name can't be casted to int
         .columns(Seq(Column.builder().name("name").dataType(DataType.INT).order(1).build()))
         .settings(props.toMap)
-        .create)
+        .create())
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
       checkFileCount(0, 0, 1)
 
-      val records = pollData(topicName, 10 second)
+      val records = pollData(topicKey, 10 second)
       records.size shouldBe 0
 
       // add a file to input again
@@ -425,29 +425,29 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
 
   @Test
   def testInvalidInput(): Unit = {
-    val topicName = methodName
+    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorName = methodName
     result(
       workerClient
         .connectorCreator()
-        .topicName(topicName)
+        .topicKey(topicKey)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
         .name(connectorName)
         .columns(schema)
         .settings(props.copy(inputFolder = "/abc").toMap)
-        .create)
+        .create())
     FtpUtils.assertFailedConnector(testUtil, connectorName)
   }
 
   @Test
   def testInvalidSchema(): Unit = {
-    val topicName = methodName
+    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorName = methodName
     result(
       workerClient
         .connectorCreator()
-        .topicName(topicName)
+        .topicKey(topicKey)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
         .name(connectorName)
@@ -458,29 +458,29 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
           Column.builder().name("single").dataType(DataType.BOOLEAN).order(3).build()
         ))
         .settings(props.toMap)
-        .create)
+        .create())
     FtpUtils.assertFailedConnector(testUtil, connectorName)
   }
 
   @Test
   def inputFilesShouldBeRemovedIfCompletedFolderIsNotDefined(): Unit = {
-    val topicName = methodName
+    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorName = methodName
     result(
       workerClient
         .connectorCreator()
-        .topicName(topicName)
+        .topicKey(topicKey)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
         .name(connectorName)
         .columns(schema)
         .settings(props.copy(completedFolder = None).toMap)
-        .create)
+        .create())
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
       checkFileCount(0, 0, 0)
 
-      val records = pollData(topicName)
+      val records = pollData(topicKey)
       records.size shouldBe data.length
       val row0 = records.head.key.get
       row0.size shouldBe 3
@@ -518,17 +518,18 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
 
   @Test
   def testInvalidPort(): Unit = {
+    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     Seq(-1, 0, 10000000).foreach { port =>
       an[IllegalArgumentException] should be thrownBy result(
         workerClient
           .connectorCreator()
-          .topicName(methodName())
+          .topicKey(topicKey)
           .connectorClass(classOf[FtpSource])
           .numberOfTasks(1)
           .name(CommonUtils.randomString(10))
           .columns(schema)
           .settings(props.copy(port = port).toMap)
-          .create)
+          .create())
     }
   }
 

@@ -19,6 +19,7 @@ package com.island.ohara.client.configurator.v0
 import com.island.ohara.client.configurator.v0.PipelineApi._
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.kafka.connector.json.ObjectKey
 import org.junit.Test
 import org.scalatest.Matchers
 import spray.json.DeserializationException
@@ -43,9 +44,9 @@ class TestPipelineApi extends SmallTest with Matchers {
                                                |}
                                             """.stripMargin.parseJson)
     req.flows.size shouldBe 1
-    req.flows.head.from shouldBe DataKey(Data.GROUP_DEFAULT, from)
+    req.flows.head.from shouldBe ObjectKey.of(Data.GROUP_DEFAULT, from)
     req.flows.head.to.size shouldBe 2
-    req.flows.head.to shouldBe Set(DataKey(Data.GROUP_DEFAULT, to0), DataKey(Data.GROUP_DEFAULT, to1))
+    req.flows.head.to shouldBe Set(ObjectKey.of(Data.GROUP_DEFAULT, to0), ObjectKey.of(Data.GROUP_DEFAULT, to1))
   }
   @Test
   def parseDeprecatedJsonOfPipeline(): Unit = {
@@ -64,8 +65,8 @@ class TestPipelineApi extends SmallTest with Matchers {
 
   @Test
   def parseDeprecatedJsonOfPipeline2(): Unit = {
-    val from = DataKey(CommonUtils.randomString(), CommonUtils.randomString())
-    val to = DataKey(CommonUtils.randomString(), CommonUtils.randomString())
+    val from = ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString())
+    val to = ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString())
     val pipeline = Pipeline(
       group = CommonUtils.randomString(),
       name = CommonUtils.randomString(),
@@ -131,8 +132,8 @@ class TestPipelineApi extends SmallTest with Matchers {
 
   @Test
   def parseFlow(): Unit = {
-    val from = DataKey(CommonUtils.randomString(), CommonUtils.randomString())
-    val to = DataKey(CommonUtils.randomString(), CommonUtils.randomString())
+    val from = ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString())
+    val to = ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString())
     val flow = FLOW_JSON_FORMAT.read(s"""
         |  {
         |    "from": {

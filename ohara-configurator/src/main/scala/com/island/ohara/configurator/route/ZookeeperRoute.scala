@@ -19,7 +19,6 @@ package com.island.ohara.configurator.route
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent.{ClusterCollie, NodeCollie}
-import com.island.ohara.client.configurator.v0.DataKey
 import com.island.ohara.client.configurator.v0.ZookeeperApi._
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.RouteUtils.{
@@ -30,6 +29,7 @@ import com.island.ohara.configurator.route.RouteUtils.{
   HookOfUpdate
 }
 import com.island.ohara.configurator.store.DataStore
+import com.island.ohara.kafka.connector.json.ObjectKey
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -93,7 +93,7 @@ object ZookeeperRoute {
 
   private[this] def hookOfUpdate(
     implicit executionContext: ExecutionContext): HookOfUpdate[Creation, Update, ZookeeperClusterInfo] =
-    (key: DataKey, update: Update, previous: Option[ZookeeperClusterInfo]) =>
+    (key: ObjectKey, update: Update, previous: Option[ZookeeperClusterInfo]) =>
       Future
         .successful(
           previous.fold(ZookeeperClusterInfo(
@@ -127,7 +127,7 @@ object ZookeeperRoute {
 
   private[this] def hookBeforeDelete(implicit store: DataStore,
                                      clusterCollie: ClusterCollie,
-                                     executionContext: ExecutionContext): HookBeforeDelete = (key: DataKey) =>
+                                     executionContext: ExecutionContext): HookBeforeDelete = (key: ObjectKey) =>
     store.get[ZookeeperClusterInfo](key).flatMap {
       _.fold(Future.unit) { info =>
         updateState(info).flatMap { data =>

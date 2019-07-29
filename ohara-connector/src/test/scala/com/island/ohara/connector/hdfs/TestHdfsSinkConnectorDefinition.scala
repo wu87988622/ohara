@@ -18,7 +18,7 @@ package com.island.ohara.connector.hdfs
 
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.json.SettingDefinition
+import com.island.ohara.kafka.connector.json.{SettingDefinition, TopicKey}
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.Test
 import org.scalatest.Matchers
@@ -111,12 +111,13 @@ class TestHdfsSinkConnectorDefinition extends WithBrokerWorker with Matchers {
 
   @Test
   def testSink1(): Unit = {
+    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val response = result(
       workerClient
         .connectorValidator()
         .name(CommonUtils.randomString())
         .numberOfTasks(1)
-        .topicName(CommonUtils.randomString(5))
+        .topicKey(topicKey)
         .settings(Map(HDFS_URL -> s"file://${testUtil.hdfs.tmpDirectory}"))
         .connectorClass(classOf[HDFSSinkConnector])
         .run())
@@ -162,12 +163,13 @@ class TestHdfsSinkConnectorDefinition extends WithBrokerWorker with Matchers {
 
   @Test
   def testSink2(): Unit = {
+    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val response = result(
       workerClient
         .connectorValidator()
         .name(CommonUtils.randomString())
         .numberOfTasks(1)
-        .topicName(CommonUtils.randomString(5))
+        .topicKey(topicKey)
         .settings(Map(FLUSH_LINE_COUNT -> "1000", TMP_DIR -> "/tmp", HDFS_URL -> "file://"))
         .connectorClass(classOf[HDFSSinkConnector])
         .run())

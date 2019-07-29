@@ -18,7 +18,9 @@ package com.island.ohara.kafka.connector;
 
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.data.DataType;
+import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.connector.json.ConnectorFormatter;
+import com.island.ohara.kafka.connector.json.TopicKey;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -44,6 +46,10 @@ public class DumbSink extends RowSinkConnector {
   protected List<TaskSetting> _taskSettings(int maxTasks) {
     return Collections.singletonList(
         TaskSetting.of(
-            ConnectorFormatter.of().name("test").topicName("topic").columns(columns).raw()));
+            ConnectorFormatter.of()
+                .name("test")
+                .topicKey(TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
+                .columns(columns)
+                .raw()));
   }
 }

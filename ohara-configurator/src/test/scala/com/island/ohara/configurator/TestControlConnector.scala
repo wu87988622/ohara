@@ -49,7 +49,7 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
         .numberOfTasks(1)
-        .topicName(topic.name)
+        .topicKey(topic.key)
         .create())
 
     // test idempotent start
@@ -99,7 +99,7 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
       connectorApi.request
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
-        .topicName(topic.name)
+        .topicKey(topic.key)
         .numberOfTasks(1)
         .create())
     // test start
@@ -135,7 +135,7 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
       connectorApi.request
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
-        .topicName(topic.name)
+        .topicKey(topic.key)
         .numberOfTasks(1)
         .create())
     // test start

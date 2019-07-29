@@ -19,6 +19,7 @@ package com.island.ohara.client.kafka
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorState
 import com.island.ohara.common.data._
 import com.island.ohara.common.util.{CommonUtils, Releasable}
+import com.island.ohara.kafka.connector.json.TopicKey
 import com.island.ohara.kafka.{BrokerClient, Consumer, Producer}
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.{After, Test}
@@ -37,37 +38,43 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker with Matchers {
   @After
   def tearDown(): Unit = Releasable.close(brokerClient)
 
-  private[this] def createTopic(topicName: String, compacted: Boolean): Unit = {
+  private[this] def createTopic(topicKey: TopicKey, compacted: Boolean): Unit = {
     if (compacted)
       brokerClient
         .topicCreator()
         .compacted()
         .numberOfPartitions(1)
         .numberOfReplications(1)
-        .topicName(topicName)
+        .topicName(topicKey.topicNameOnKafka)
         .create()
     else
-      brokerClient.topicCreator().deleted().numberOfPartitions(1).numberOfReplications(1).topicName(topicName).create()
+      brokerClient
+        .topicCreator()
+        .deleted()
+        .numberOfPartitions(1)
+        .numberOfReplications(1)
+        .topicName(topicKey.topicNameOnKafka)
+        .create()
   }
 
-  private[this] def setupData(topicName: String): Unit = {
+  private[this] def setupData(topicKey: TopicKey): Unit = {
     val producer = Producer
       .builder[Row, Array[Byte]]()
       .connectionProps(testUtil.brokersConnProps)
       .keySerializer(Serializer.ROW)
       .valueSerializer(Serializer.BYTES)
       .build()
-    try 0 until numberOfRows foreach (_ => producer.sender().key(row).topicName(topicName).send())
+    try 0 until numberOfRows foreach (_ => producer.sender().key(row).topicName(topicKey.topicNameOnKafka).send())
     finally producer.close()
-    checkData(topicName)
+    checkData(topicKey)
   }
 
-  private[this] def checkData(topicName: String): Unit = {
+  private[this] def checkData(topicKey: TopicKey): Unit = {
     val consumer = Consumer
       .builder[Row, Array[Byte]]()
       .offsetFromBegin()
       .connectionProps(testUtil.brokersConnProps)
-      .topicName(topicName)
+      .topicName(topicKey.topicNameOnKafka)
       .keySerializer(Serializer.ROW)
       .valueSerializer(Serializer.BYTES)
       .build()
@@ -89,27 +96,27 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker with Matchers {
 
   @Test
   def testRowProducer2RowConsumer(): Unit = {
-    var topicName = methodName
+    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     //test deleted topic
-    createTopic(topicName, false)
-    testRowProducer2RowConsumer(topicName)
+    createTopic(topicKey, false)
+    testRowProducer2RowConsumer(topicKey)
 
-    topicName = methodName + "-2"
+    val topicKey2 = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     //test compacted topic
-    createTopic(topicName, true)
-    testRowProducer2RowConsumer(topicName)
+    createTopic(topicKey2, true)
+    testRowProducer2RowConsumer(topicKey2)
   }
 
   /**
     * producer -> topic_1(topicName) -> consumer
     */
-  private[this] def testRowProducer2RowConsumer(topicName: String): Unit = {
-    setupData(topicName)
+  private[this] def testRowProducer2RowConsumer(topicKey: TopicKey): Unit = {
+    setupData(topicKey)
     val consumer = Consumer
       .builder[Row, Array[Byte]]()
       .offsetFromBegin()
       .connectionProps(testUtil.brokersConnProps)
-      .topicName(topicName)
+      .topicName(topicKey.topicNameOnKafka)
       .keySerializer(Serializer.ROW)
       .valueSerializer(Serializer.BYTES)
       .build()
@@ -122,81 +129,81 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker with Matchers {
 
   @Test
   def testProducer2SinkConnector(): Unit = {
-    val topicName = CommonUtils.randomString(10)
-    val topicName2 = CommonUtils.randomString(10)
+    val srcKey = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val targetKey = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     //test deleted topic
-    createTopic(topicName, false)
-    createTopic(topicName2, false)
-    testProducer2SinkConnector(topicName, topicName2)
+    createTopic(srcKey, false)
+    createTopic(targetKey, false)
+    testProducer2SinkConnector(srcKey, targetKey)
 
-    val topicName3 = CommonUtils.randomString(10)
-    val topicName4 = CommonUtils.randomString(10)
+    val srcKey2 = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val targetKey2 = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     //test compacted topic
-    createTopic(topicName3, true)
-    createTopic(topicName4, true)
-    testProducer2SinkConnector(topicName3, topicName4)
+    createTopic(srcKey2, true)
+    createTopic(targetKey2, true)
+    testProducer2SinkConnector(srcKey2, targetKey2)
   }
 
   /**
     * producer -> topic_1(topicName) -> sink connector -> topic_2(topicName2)
     */
-  private[this] def testProducer2SinkConnector(topicName: String, topicName2: String): Unit = {
+  private[this] def testProducer2SinkConnector(srcKey: TopicKey, targetKey: TopicKey): Unit = {
     val connectorName = CommonUtils.randomString(10)
     result(
       workerClient
         .connectorCreator()
         .name(connectorName)
         .connectorClass(classOf[SimpleRowSinkConnector])
-        .topicName(topicName)
+        .topicKey(srcKey)
         .numberOfTasks(1)
         .columns(schema)
-        .settings(Map(BROKER -> testUtil.brokersConnProps, OUTPUT -> topicName2))
-        .create)
+        .settings(Map(BROKER -> testUtil.brokersConnProps, OUTPUT -> targetKey.topicNameOnKafka))
+        .create())
 
     try {
       checkConnector(connectorName)
-      setupData(topicName)
-      checkData(topicName2)
+      setupData(srcKey)
+      checkData(targetKey)
     } finally result(workerClient.delete(connectorName))
   }
 
   @Test
   def testSourceConnector2Consumer(): Unit = {
-    var topicName = methodName
-    var topicName2 = methodName + "-2"
+    val srcKey = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val targetKey = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     //test deleted topic
-    createTopic(topicName, false)
-    createTopic(topicName2, false)
-    testSourceConnector2Consumer(topicName, topicName2)
+    createTopic(srcKey, false)
+    createTopic(targetKey, false)
+    testSourceConnector2Consumer(srcKey, targetKey)
 
-    topicName = methodName + "-3"
-    topicName2 = methodName + "-4"
+    val srcKey2 = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val targetKey2 = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     //test compacted topic
-    createTopic(topicName, true)
-    createTopic(topicName2, true)
-    testSourceConnector2Consumer(topicName, topicName2)
+    createTopic(srcKey2, true)
+    createTopic(targetKey2, true)
+    testSourceConnector2Consumer(srcKey2, targetKey2)
   }
 
   /**
     * producer -> topic_1(topicName) -> row source -> topic_2 -> consumer
     */
-  private[this] def testSourceConnector2Consumer(topicName: String, topicName2: String): Unit = {
+  private[this] def testSourceConnector2Consumer(srcKey: TopicKey, targetKey: TopicKey): Unit = {
     val connectorName = CommonUtils.randomString(10)
     result(
       workerClient
         .connectorCreator()
         .name(connectorName)
         .connectorClass(classOf[SimpleRowSourceConnector])
-        .topicName(topicName2)
+        .topicKey(targetKey)
         .numberOfTasks(1)
         .columns(schema)
-        .settings(Map(BROKER -> testUtil.brokersConnProps, INPUT -> topicName))
-        .create)
+        .settings(Map(BROKER -> testUtil.brokersConnProps, INPUT -> srcKey.topicNameOnKafka))
+        .create())
 
     try {
       checkConnector(connectorName)
-      setupData(topicName)
-      checkData(topicName2)
+      setupData(srcKey)
+      checkData(targetKey)
     } finally result(workerClient.delete(connectorName))
   }
 
@@ -250,24 +257,24 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker with Matchers {
   @Test
   def testWorkerClient(): Unit = {
     val connectorName = CommonUtils.randomString(10)
-    val topics = Seq(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val topicKeys = Set(TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10)))
     val outputTopic = CommonUtils.randomString(10)
     result(
       workerClient
         .connectorCreator()
         .name(connectorName)
         .connectorClass(classOf[SimpleRowSinkConnector])
-        .topicNames(topics)
+        .topicKeys(topicKeys)
         .numberOfTasks(1)
         .columns(schema)
         .settings(Map(BROKER -> testUtil.brokersConnProps, OUTPUT -> outputTopic))
-        .create)
+        .create())
 
     val activeConnectors = result(workerClient.activeConnectors())
     activeConnectors.contains(connectorName) shouldBe true
 
     val config = result(workerClient.config(connectorName))
-    config.topicNames shouldBe topics
+    config.topicNames shouldBe topicKeys.map(_.topicNameOnKafka)
 
     await(
       () =>

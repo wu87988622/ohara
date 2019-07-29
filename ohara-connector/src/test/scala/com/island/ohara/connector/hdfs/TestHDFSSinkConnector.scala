@@ -26,7 +26,7 @@ import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.connector.hdfs.creator.LocalHDFSStorageCreator
 import com.island.ohara.connector.hdfs.storage.HDFSStorage
 import com.island.ohara.kafka.Producer
-import com.island.ohara.kafka.connector.json.ConnectorFormatter
+import com.island.ohara.kafka.connector.json.{ConnectorFormatter, TopicKey}
 import com.island.ohara.kafka.connector.{RowSinkTask, TaskSetting}
 import com.island.ohara.testing.WithBrokerWorker
 import org.apache.hadoop.fs.Path
@@ -47,11 +47,12 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
 
   @Test
   def testTaskConfigs(): Unit = {
+    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val maxTasks = 5
     val hdfsSinkConnector = new HDFSSinkConnector()
 
     hdfsSinkConnector.start(
-      ConnectorFormatter.of().name("test").topicName("topic").setting(HDFS_URL, hdfsURL).setting(TMP_DIR, tmpDir).raw())
+      ConnectorFormatter.of().name("test").topicKey(topicKey).setting(HDFS_URL, hdfsURL).setting(TMP_DIR, tmpDir).raw())
     val result = hdfsSinkConnector._taskSettings(maxTasks)
 
     result.size shouldBe maxTasks
@@ -64,7 +65,7 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
   @Test
   def testRunMiniClusterAndAssignConfig(): Unit = {
     val connectorName = methodName
-    val topicName = methodName
+    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val flushLineCountName = FLUSH_LINE_COUNT
     val flushLineCount = 2000
     val rotateIntervalMSName = ROTATE_INTERVAL_MS
@@ -78,11 +79,11 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
         .connectorCreator()
         .name(connectorName)
         .connectorClass(classOf[SimpleHDFSSinkConnector])
-        .topicName(topicName)
+        .topicKey(topicKey)
         .settings(Map(flushLineCountName -> flushLineCount.toString, tmpDirName -> tmpDirPath, hdfsURLName -> localURL))
         .columns(schema)
         .numberOfTasks(1)
-        .create)
+        .create())
 
     CommonUtils.await(() => SimpleHDFSSinkTask.taskProps != null && SimpleHDFSSinkTask.sinkConnectorConfig != null,
                       Duration.ofSeconds(20))
@@ -105,7 +106,7 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
     val isHeader = DATAFILE_NEEDHEADER
     val hdfsURLName = HDFS_URL
     val connectorName = methodName
-    val topicName = methodName
+    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val rowCount = 100
     val row = Row.of(Cell.of("cf0", 10), Cell.of("cf1", 11))
     val hdfsCreatorClassName = HDFS_STORAGE_CREATOR_CLASS
@@ -122,7 +123,7 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
       .valueSerializer(Serializer.BYTES)
       .build()
     try {
-      0 until rowCount foreach (_ => producer.sender().key(row).topicName(topicName).send())
+      0 until rowCount foreach (_ => producer.sender().key(row).topicName(topicKey.topicNameOnKafka).send())
       producer.flush()
     } finally producer.close()
 
@@ -132,7 +133,7 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
         .connectorCreator()
         .name(connectorName)
         .connectorClass(classOf[HDFSSinkConnector])
-        .topicName(topicName)
+        .topicKey(topicKey)
         .numberOfTasks(1)
         .settings(Map(
           flushLineCountName -> flushLineCount,
@@ -143,25 +144,30 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
           isHeader -> "false"
         ))
         .columns(schema)
-        .create)
+        .create())
 
     TimeUnit.SECONDS.sleep(5)
     val partitionID: String = "partition0"
-    CommonUtils.await(() => storage.list(s"$dataDirPath/$topicName/$partitionID").size == 10, Duration.ofSeconds(20))
+    CommonUtils.await(() => storage.list(s"$dataDirPath/${topicKey.topicNameOnKafka}/$partitionID").size == 10,
+                      Duration.ofSeconds(20))
 
     CommonUtils.await(
       () =>
-        FileUtils.getStopOffset(storage.list(s"$dataDirPath/$topicName/$partitionID").map(FileUtils.fileName)) == 100,
-      Duration.ofSeconds(20))
+        FileUtils.getStopOffset(
+          storage.list(s"$dataDirPath/${topicKey.topicNameOnKafka}/$partitionID").map(FileUtils.fileName)) == 100,
+      Duration.ofSeconds(20)
+    )
 
-    CommonUtils.await(() =>
-                        storage
-                          .list(s"$dataDirPath/$topicName/$partitionID")
-                          .map(FileUtils.fileName)
-                          .contains("part-000000090-000000100.csv"),
-                      Duration.ofSeconds(20))
+    CommonUtils.await(
+      () =>
+        storage
+          .list(s"$dataDirPath/${topicKey.topicNameOnKafka}/$partitionID")
+          .map(FileUtils.fileName)
+          .contains("part-000000090-000000100.csv"),
+      Duration.ofSeconds(20)
+    )
 
-    val path: Path = new Path(s"$dataDirPath/$topicName/$partitionID/part-000000090-000000100.csv")
+    val path: Path = new Path(s"$dataDirPath/${topicKey.topicNameOnKafka}/$partitionID/part-000000090-000000100.csv")
     val file: InputStream = testUtil.hdfs.fileSystem.open(path)
     val streamReader: InputStreamReader = new InputStreamReader(file)
     val bufferedReaderStream: BufferedReader = new BufferedReader(streamReader)
@@ -184,7 +190,7 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
     val isHeader = DATAFILE_NEEDHEADER
     val hdfsURLName = HDFS_URL
     val connectorName = methodName
-    val topicName = methodName
+    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val rowCount = 10
     val row = Row.of(Cell.of("cf0", 10), Cell.of("cf1", 11))
     val hdfsCreatorClassName = HDFS_STORAGE_CREATOR_CLASS
@@ -201,7 +207,7 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
       .valueSerializer(Serializer.BYTES)
       .build()
     try {
-      0 until rowCount foreach (_ => producer.sender().key(row).topicName(topicName).send())
+      0 until rowCount foreach (_ => producer.sender().key(row).topicName(topicKey.topicNameOnKafka).send())
       producer.flush()
     } finally producer.close()
 
@@ -211,7 +217,7 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
         .connectorCreator()
         .name(connectorName)
         .connectorClass(classOf[HDFSSinkConnector])
-        .topicName(topicName)
+        .topicKey(topicKey)
         .numberOfTasks(1)
         .settings(Map(
           flushLineCountName -> flushLineCount,
@@ -222,34 +228,41 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
           isHeader -> "false"
         ))
         .columns(schema)
-        .create)
+        .create())
 
     TimeUnit.SECONDS.sleep(5)
     val partitionID: String = "partition0"
-    CommonUtils.await(() => storage.list(s"$dataDirPath/$topicName/$partitionID").size == 10, Duration.ofSeconds(30))
+    CommonUtils.await(() => storage.list(s"$dataDirPath/${topicKey.topicNameOnKafka}/$partitionID").size == 10,
+                      Duration.ofSeconds(30))
 
-    CommonUtils.await(() =>
-                        storage
-                          .list(s"$dataDirPath/$topicName/$partitionID")
-                          .map(FileUtils.fileName)
-                          .contains("part-000000000-000000001.csv"),
-                      Duration.ofSeconds(20))
+    CommonUtils.await(
+      () =>
+        storage
+          .list(s"$dataDirPath/${topicKey.topicNameOnKafka}/$partitionID")
+          .map(FileUtils.fileName)
+          .contains("part-000000000-000000001.csv"),
+      Duration.ofSeconds(20)
+    )
 
-    CommonUtils.await(() =>
-                        storage
-                          .list(s"$dataDirPath/$topicName/$partitionID")
-                          .map(FileUtils.fileName)
-                          .contains("part-000000001-000000002.csv"),
-                      Duration.ofSeconds(20))
+    CommonUtils.await(
+      () =>
+        storage
+          .list(s"$dataDirPath/${topicKey.topicNameOnKafka}/$partitionID")
+          .map(FileUtils.fileName)
+          .contains("part-000000001-000000002.csv"),
+      Duration.ofSeconds(20)
+    )
 
-    CommonUtils.await(() =>
-                        storage
-                          .list(s"$dataDirPath/$topicName/$partitionID")
-                          .map(FileUtils.fileName)
-                          .contains("part-000000008-000000009.csv"),
-                      Duration.ofSeconds(20))
+    CommonUtils.await(
+      () =>
+        storage
+          .list(s"$dataDirPath/${topicKey.topicNameOnKafka}/$partitionID")
+          .map(FileUtils.fileName)
+          .contains("part-000000008-000000009.csv"),
+      Duration.ofSeconds(20)
+    )
 
-    val path: Path = new Path(s"$dataDirPath/$topicName/$partitionID/part-000000005-000000006.csv")
+    val path: Path = new Path(s"$dataDirPath/${topicKey.topicNameOnKafka}/$partitionID/part-000000005-000000006.csv")
     val file: InputStream = testUtil.hdfs.fileSystem.open(path)
     val streamReader: InputStreamReader = new InputStreamReader(file)
     val bufferedReaderStream: BufferedReader = new BufferedReader(streamReader)
@@ -272,7 +285,7 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
     val hdfsURLName = HDFS_URL
     val needHeader = DATAFILE_NEEDHEADER
     val connectorName = methodName
-    val topicName = methodName
+    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val rowCount = 200
     val row = Row.of(Cell.of("cf0", 10), Cell.of("cf1", 11))
     val hdfsCreatorClassName = HDFS_STORAGE_CREATOR_CLASS
@@ -284,7 +297,8 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
     val dataDirPath = s"${testUtil.hdfs.tmpDirectory}/${CommonUtils.randomString(10)}"
     //Before running the Kafka Connector, create the file to local hdfs for test recover offset
     val partitionID: String = "partition0"
-    fileSystem.createNewFile(new Path(s"$dataDirPath/$topicName/$partitionID/part-000000000-000000099.csv"))
+    fileSystem.createNewFile(
+      new Path(s"$dataDirPath/${topicKey.topicNameOnKafka}/$partitionID/part-000000000-000000099.csv"))
 
     val producer = Producer
       .builder[Row, Array[Byte]]()
@@ -293,7 +307,7 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
       .valueSerializer(Serializer.BYTES)
       .build()
     try {
-      0 until rowCount foreach (_ => producer.sender().key(row).topicName(topicName).send())
+      0 until rowCount foreach (_ => producer.sender().key(row).topicName(topicKey.topicNameOnKafka).send())
       producer.flush()
     } finally producer.close()
 
@@ -303,7 +317,7 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
         .connectorCreator()
         .name(connectorName)
         .connectorClass(classOf[HDFSSinkConnector])
-        .topicName(topicName)
+        .topicKey(topicKey)
         .numberOfTasks(1)
         .settings(Map(
           flushLineCountName -> flushLineCount,
@@ -314,24 +328,29 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
           dataDirName -> dataDirPath
         ))
         .columns(schema)
-        .create)
+        .create())
 
     TimeUnit.SECONDS.sleep(5)
-    CommonUtils.await(() => storage.list(s"$dataDirPath/$topicName/$partitionID").size == 2, Duration.ofSeconds(20))
+    CommonUtils.await(() => storage.list(s"$dataDirPath/${topicKey.topicNameOnKafka}/$partitionID").size == 2,
+                      Duration.ofSeconds(20))
 
     CommonUtils.await(
       () =>
-        FileUtils.getStopOffset(storage.list(s"$dataDirPath/$topicName/$partitionID").map(FileUtils.fileName)) == 199,
-      Duration.ofSeconds(20))
+        FileUtils.getStopOffset(
+          storage.list(s"$dataDirPath/${topicKey.topicNameOnKafka}/$partitionID").map(FileUtils.fileName)) == 199,
+      Duration.ofSeconds(20)
+    )
 
-    CommonUtils.await(() =>
-                        storage
-                          .list(s"$dataDirPath/$topicName/$partitionID")
-                          .map(FileUtils.fileName)
-                          .contains("part-000000099-000000199.csv"),
-                      Duration.ofSeconds(20))
+    CommonUtils.await(
+      () =>
+        storage
+          .list(s"$dataDirPath/${topicKey.topicNameOnKafka}/$partitionID")
+          .map(FileUtils.fileName)
+          .contains("part-000000099-000000199.csv"),
+      Duration.ofSeconds(20)
+    )
 
-    val path: Path = new Path(s"$dataDirPath/$topicName/$partitionID/part-000000099-000000199.csv")
+    val path: Path = new Path(s"$dataDirPath/${topicKey.topicNameOnKafka}/$partitionID/part-000000099-000000199.csv")
     val file: InputStream = testUtil.hdfs.fileSystem.open(path)
     val streamReader: InputStreamReader = new InputStreamReader(file)
     val bufferedReaderStream: BufferedReader = new BufferedReader(streamReader)
@@ -354,7 +373,7 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
     val isHeader = DATAFILE_NEEDHEADER
     val hdfsURLName = HDFS_URL
     val connectorName = methodName
-    val topicName = methodName
+    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val rowCount = 100
     val row = Row.of(Cell.of("cf0", 10), Cell.of("cf1", 11))
     val hdfsCreatorClassName = HDFS_STORAGE_CREATOR_CLASS
@@ -372,7 +391,7 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
       .valueSerializer(Serializer.BYTES)
       .build()
     try {
-      0 until rowCount foreach (_ => producer.sender().key(row).topicName(topicName).send())
+      0 until rowCount foreach (_ => producer.sender().key(row).topicName(topicKey.topicNameOnKafka).send())
       producer.flush()
     } finally producer.close()
 
@@ -382,7 +401,7 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
         .connectorCreator()
         .name(connectorName)
         .connectorClass(classOf[HDFSSinkConnector])
-        .topicName(topicName)
+        .topicKey(topicKey)
         .numberOfTasks(1)
         .settings(Map(
           flushLineCountName -> flushLineCount,
@@ -393,11 +412,12 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
           isHeader -> "false"
         ))
         .columns(Seq(Column.builder().name("cccc").dataType(DataType.BOOLEAN).order(1).build()))
-        .create)
+        .create())
 
     TimeUnit.SECONDS.sleep(5)
     val partitionID: String = "partition0"
-    CommonUtils.await(() => storage.list(s"$dataDirPath/$topicName/$partitionID").isEmpty, Duration.ofSeconds(20))
+    CommonUtils.await(() => storage.list(s"$dataDirPath/${topicKey.topicNameOnKafka}/$partitionID").isEmpty,
+                      Duration.ofSeconds(20))
   }
 
   @Test

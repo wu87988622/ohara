@@ -16,11 +16,13 @@
 
 package com.island.ohara.kafka.connector.json;
 
+import com.google.common.collect.Sets;
+import com.island.ohara.common.json.JsonUtils;
 import com.island.ohara.common.rule.SmallTest;
 import com.island.ohara.common.util.CommonUtils;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -43,30 +45,23 @@ public class TestConnectorFormatter extends SmallTest {
 
   @Test
   public void stringListShouldInKafkaFormat() {
-    List<String> topicNames = Collections.singletonList(CommonUtils.randomString());
+    Set<TopicKey> topicKeys =
+        Sets.newHashSet(TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString()));
+    Set<String> topicNames =
+        topicKeys.stream().map(TopicKey::topicNameOnKafka).collect(Collectors.toSet());
     Creation creation =
         ConnectorFormatter.of()
             .name(CommonUtils.randomString())
-            .topicNames(topicNames)
+            .topicKeys(topicKeys)
             .requestOfCreation();
     Assert.assertNotNull(creation.configs().get(SettingDefinition.TOPIC_NAMES_DEFINITION.key()));
     Assert.assertEquals(
         StringList.toKafkaString(topicNames),
-        creation.configs().entrySet().iterator().next().getValue());
-  }
-
-  @Test
-  public void stringListShouldInKafkaFormat2() {
-    List<String> topicNames = Arrays.asList(CommonUtils.randomString(), CommonUtils.randomString());
-    Creation creation =
-        ConnectorFormatter.of()
-            .name(CommonUtils.randomString())
-            .topicNames(topicNames)
-            .requestOfCreation();
-    Assert.assertNotNull(creation.configs().get(SettingDefinition.TOPIC_NAMES_DEFINITION.key()));
+        creation.configs().get(SettingDefinition.TOPIC_NAMES_DEFINITION.key()));
+    Assert.assertNotNull(creation.configs().get(SettingDefinition.TOPIC_KEYS_DEFINITION.key()));
     Assert.assertEquals(
-        StringList.toKafkaString(topicNames),
-        creation.configs().entrySet().iterator().next().getValue());
+        JsonUtils.toString(topicKeys),
+        creation.configs().get(SettingDefinition.TOPIC_KEYS_DEFINITION.key()));
   }
 
   @Test
@@ -74,7 +69,7 @@ public class TestConnectorFormatter extends SmallTest {
     Creation creation =
         ConnectorFormatter.of()
             .name(CommonUtils.randomString())
-            .topicName(CommonUtils.randomString())
+            .topicKey(TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString()))
             .requestOfCreation();
     Assert.assertNull(creation.configs().get(SettingDefinition.CONNECTOR_NAME_DEFINITION.key()));
   }
@@ -89,19 +84,6 @@ public class TestConnectorFormatter extends SmallTest {
             .requestOfCreation();
     Assert.assertTrue(creation.toJsonString().contains(ConverterType.JSON.className()));
     Assert.assertFalse(creation.toJsonString().contains(ConverterType.NONE.className()));
-  }
-
-  @Test
-  public void testStringList() {
-    List<String> topicNames = Arrays.asList(CommonUtils.randomString(), CommonUtils.randomString());
-    Creation creation =
-        ConnectorFormatter.of()
-            .name(CommonUtils.randomString())
-            .topicNames(topicNames)
-            .requestOfCreation();
-    Assert.assertEquals(
-        StringList.toKafkaString(topicNames),
-        creation.configs().get(SettingDefinition.TOPIC_NAMES_DEFINITION.key()));
   }
 
   @Test(expected = NullPointerException.class)

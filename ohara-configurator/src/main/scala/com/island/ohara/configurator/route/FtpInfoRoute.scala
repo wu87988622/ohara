@@ -17,11 +17,11 @@
 package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
-import com.island.ohara.client.configurator.v0.DataKey
 import com.island.ohara.client.configurator.v0.FtpApi._
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.RouteUtils.{HookOfCreation, HookOfUpdate}
 import com.island.ohara.configurator.store.DataStore
+import com.island.ohara.kafka.connector.json.ObjectKey
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -41,7 +41,7 @@ private[configurator] object FtpInfoRoute {
       ))
 
   private[this] def hookOfUpdate: HookOfUpdate[Creation, Update, FtpInfo] =
-    (key: DataKey, update: Update, previous: Option[FtpInfo]) =>
+    (key: ObjectKey, update: Update, previous: Option[FtpInfo]) =>
       Future.successful(previous.fold {
         FtpInfo(
           group = key.group,

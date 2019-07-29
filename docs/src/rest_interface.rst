@@ -2487,8 +2487,6 @@ types are shown below.
 #. Password — the value must be castable to **java.lang.String**. the value is replaced by **hidden** in APIs
 #. List — the value must be castable to **java.lang.String** and it is split according to JSON array
 #. Table — the value must be castable to **java.lang.String** and it has the following JSON representation.
-#. Duration — the value must be castable to **java.time.Duration** and it is based on the ISO-860 duration
-   format PnDTnHnMn.nS
 
 .. code-block:: json
 
@@ -2534,6 +2532,23 @@ having table type is shown below.
      "editable": true
    }
 
+#. Duration — the value must be castable to **java.time.Duration** and it is based on the ISO-860 duration
+   format PnDTnHnMn.nS
+#. TOPIC_KEYS — each field must be castable to **com.island.ohara.kafka.connector.json.TopicKey**. The json representation
+   is shown below.
+
+.. code-block:: json
+
+   [
+     {
+       "group": "g0",
+       "name": "n0"
+     },
+     {
+       "group": "g1",
+       "name": "n1"
+     }
+   ]
 
 Setting Reference
 ~~~~~~~~~~~~~~~~~

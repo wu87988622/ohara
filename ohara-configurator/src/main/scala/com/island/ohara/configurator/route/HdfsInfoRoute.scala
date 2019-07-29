@@ -16,11 +16,11 @@
 
 package com.island.ohara.configurator.route
 import akka.http.scaladsl.server
-import com.island.ohara.client.configurator.v0.DataKey
 import com.island.ohara.client.configurator.v0.HadoopApi._
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.RouteUtils.{HookOfCreation, HookOfUpdate}
 import com.island.ohara.configurator.store.DataStore
+import com.island.ohara.kafka.connector.json.ObjectKey
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -35,7 +35,7 @@ private[configurator] object HdfsInfoRoute {
                tags = request.tags))
 
   private[this] def hookOfUpdate: HookOfUpdate[Creation, Update, HdfsInfo] =
-    (key: DataKey, update: Update, previous: Option[HdfsInfo]) =>
+    (key: ObjectKey, update: Update, previous: Option[HdfsInfo]) =>
       Future.successful {
         previous.fold {
           if (update.uri.isEmpty) throw new IllegalArgumentException(RouteUtils.errorMessage(key, "uri"))

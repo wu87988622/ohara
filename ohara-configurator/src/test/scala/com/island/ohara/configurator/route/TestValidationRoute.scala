@@ -20,6 +20,7 @@ import com.island.ohara.client.configurator.v0.{NodeApi, ValidationApi, WorkerAp
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.{Configurator, DumbSink}
+import com.island.ohara.kafka.connector.json.TopicKey
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
@@ -39,7 +40,7 @@ class TestValidationRoute extends SmallTest with Matchers {
         .connectorRequest
         .name(CommonUtils.randomString(10))
         .className(className)
-        .topicName(CommonUtils.randomString(10))
+        .topicKey(TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
         .workerClusterName(wkCluster.name)
         .verify()
     )

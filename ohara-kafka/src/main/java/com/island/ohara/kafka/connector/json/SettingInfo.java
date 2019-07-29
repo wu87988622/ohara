@@ -108,9 +108,33 @@ public final class SettingInfo implements JsonObject {
     return value(SettingDefinition.CONNECTOR_CLASS_DEFINITION.key());
   }
 
-  public List<String> topicNames() {
+  /**
+   * this value is generated from topicKeys. The form is for kafka which does not support to group
+   * topic ... Hence, we generate the topic names via topicKeys
+   *
+   * @return the topic names in kafka form
+   */
+  public List<String> topicNamesOnKafka() {
     return value(SettingDefinition.TOPIC_NAMES_DEFINITION.key())
         .map(StringList::ofKafkaList)
+        .orElse(Collections.emptyList());
+  }
+
+  private static List<TopicKey> toTopicKeys(String json) {
+    return CommonUtils.isEmpty(json) || json.equalsIgnoreCase("null")
+        ? Collections.emptyList()
+        : JsonUtils.toObject(json, new TypeReference<List<KeyImpl>>() {}).stream()
+            .map(key -> (TopicKey) key)
+            .collect(Collectors.toList());
+  }
+  /**
+   * this is what user input for connector.
+   *
+   * @return topic keys
+   */
+  public List<TopicKey> topicKeys() {
+    return value(SettingDefinition.TOPIC_KEYS_DEFINITION.key())
+        .map(SettingInfo::toTopicKeys)
         .orElse(Collections.emptyList());
   }
 

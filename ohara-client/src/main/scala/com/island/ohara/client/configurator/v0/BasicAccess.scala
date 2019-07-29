@@ -19,6 +19,7 @@ package com.island.ohara.client.configurator.v0
 import com.island.ohara.client.HttpExecutor
 import com.island.ohara.client.configurator.ConfiguratorApiInfo
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.kafka.connector.json.ObjectKey
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -59,13 +60,13 @@ abstract class BasicAccess private[v0] (prefixPath: String) {
     s"http://${_hostname}:${_port}/${_version}/${_prefixPath}?${Data.GROUP_KEY}=$group"
 
   //----------------[for runnable objects]----------------//
-  protected def _url(key: DataKey) =
+  protected def _url(key: ObjectKey) =
     s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/${key.name}?${Data.GROUP_KEY}=${key.group}"
 
-  protected def _url(key: DataKey, postFix: String) =
+  protected def _url(key: ObjectKey, postFix: String) =
     s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/${key.name}/${CommonUtils.requireNonEmpty(postFix)}?${Data.GROUP_KEY}=${key.group}"
 
-  protected def put(key: DataKey, action: String)(implicit executionContext: ExecutionContext): Future[Unit] =
+  protected def put(key: ObjectKey, action: String)(implicit executionContext: ExecutionContext): Future[Unit] =
     exec.put[ErrorApi.Error](
       s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/${key.name}/$action?group=${key.group}")
 }

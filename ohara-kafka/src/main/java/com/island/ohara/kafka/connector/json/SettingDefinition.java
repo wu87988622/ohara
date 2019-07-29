@@ -70,15 +70,29 @@ public class SettingDefinition implements JsonObject {
           .group(CORE_GROUP)
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .build();
+
+  public static final SettingDefinition TOPIC_KEYS_DEFINITION =
+      SettingDefinition.builder()
+          .displayName("Topics")
+          .key("topicKeys")
+          .valueType(Type.TOPIC_KEYS)
+          .documentation("the topics used by connector")
+          .reference(Reference.TOPIC)
+          .group(CORE_GROUP)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
+          .build();
   public static final SettingDefinition TOPIC_NAMES_DEFINITION =
       SettingDefinition.builder()
           .displayName("Topics")
           .key("topics")
           .valueType(Type.ARRAY)
-          .documentation("the topics used by connector")
+          .documentation(
+              "the topic names in kafka form used by connector."
+                  + "This field is internal and is generated from topicKeys. Normally, it is composed by group and name")
           .reference(Reference.TOPIC)
           .group(CORE_GROUP)
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
+          .internal()
           .build();
   public static final SettingDefinition NUMBER_OF_TASKS_DEFINITION =
       SettingDefinition.builder()
@@ -241,7 +255,9 @@ public class SettingDefinition implements JsonObject {
      */
     DURATION,
     /** The legal range for port is [1, 65535]. */
-    PORT
+    PORT,
+    /** [ { "group": "g", "name":" n" } ] */
+    TOPIC_KEYS
   }
 
   /** this class is used to pre-check the setting before running connector. */
@@ -278,6 +294,7 @@ public class SettingDefinition implements JsonObject {
       case STRING:
       case DURATION:
       case TABLE:
+      case TOPIC_KEYS:
         return ConfigDef.Type.STRING;
       case SHORT:
         return ConfigDef.Type.SHORT;
@@ -398,7 +415,7 @@ public class SettingDefinition implements JsonObject {
                       row ->
                           tableKeys.forEach(
                               tableKey -> {
-                                if (!row.keySet().contains(tableKey))
+                                if (!row.containsKey(tableKey))
                                   throw new IllegalArgumentException(
                                       "table key:"
                                           + tableKey
@@ -435,6 +452,18 @@ public class SettingDefinition implements JsonObject {
               throw new ConfigException("can't be converted to Integer type");
             }
           } else throw new ConfigException("the configured value must be Integer type");
+        };
+      case TOPIC_KEYS:
+        return (Object value) -> {
+          if (value instanceof String) {
+            try {
+              if (JsonUtils.toObject((String) value, new TypeReference<List<KeyImpl>>() {})
+                  .isEmpty()) throw new ConfigException("TOPIC_KEYS can't be empty!!!");
+            } catch (Exception e) {
+              throw new ConfigException(
+                  "can't be converted to TOPIC_KEYS type. since:" + e.getMessage());
+            }
+          } else throw new ConfigException("the configured value must be String type");
         };
       default:
         return (Object value) -> {};

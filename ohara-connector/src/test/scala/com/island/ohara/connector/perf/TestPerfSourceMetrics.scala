@@ -18,6 +18,7 @@ package com.island.ohara.connector.perf
 
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.kafka.connector.json.TopicKey
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.Test
@@ -36,12 +37,12 @@ class TestPerfSourceMetrics extends WithBrokerWorker with Matchers {
 
   @Test
   def test(): Unit = {
-    val topicName = methodName
+    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorName = methodName
     Await.result(
       workerClient
         .connectorCreator()
-        .topicName(topicName)
+        .topicKey(topicKey)
         .connectorClass(classOf[PerfSource])
         .numberOfTasks(1)
         .name(connectorName)

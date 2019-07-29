@@ -20,6 +20,7 @@ import java.util.Objects
 import com.island.ohara.client.Enum
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.kafka.connector.json.TopicKey
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsString, JsValue, RootJsonFormat}
 
@@ -79,12 +80,6 @@ object TopicApi {
     override def write(obj: TopicState): JsValue = JsString(obj.name)
   }
 
-  /**
-    * kafka topic does not support to group topic so we salt the group with name.
-    * @return topic name for kafka
-    */
-  def toTopicNameOnKafka(key: DataKey): String = s"${key.group}-${key.name}"
-
   case class TopicInfo(group: String,
                        name: String,
                        numberOfPartitions: Int,
@@ -96,13 +91,14 @@ object TopicApi {
                        configs: Map[String, String],
                        tags: Map[String, JsValue])
       extends Data {
+    override def key: TopicKey = TopicKey.of(group, name)
     override def kind: String = "topic"
 
     /**
       * kafka topic does not support to group topic so we salt the group with name.
       * @return topic name for kafka
       */
-    def topicNameOnKafka: String = toTopicNameOnKafka(key)
+    def topicNameOnKafka: String = key.topicNameOnKafka
   }
 
   implicit val TOPIC_INFO_FORMAT: RootJsonFormat[TopicInfo] = jsonFormat10(TopicInfo)
@@ -152,8 +148,8 @@ object TopicApi {
   }
 
   class Access private[v0] extends com.island.ohara.client.configurator.v0.Access[TopicInfo](TOPICS_PREFIX_PATH) {
-    def start(key: DataKey)(implicit executionContext: ExecutionContext): Future[Unit] = put(key, START_COMMAND)
-    def stop(key: DataKey)(implicit executionContext: ExecutionContext): Future[Unit] = put(key, STOP_COMMAND)
+    def start(key: TopicKey)(implicit executionContext: ExecutionContext): Future[Unit] = put(key, START_COMMAND)
+    def stop(key: TopicKey)(implicit executionContext: ExecutionContext): Future[Unit] = put(key, STOP_COMMAND)
     def request: Request = new Request {
       private[this] var group: String = Data.GROUP_DEFAULT
       private[this] var name: String = _
@@ -222,7 +218,7 @@ object TopicApi {
         )
       override def update()(implicit executionContext: ExecutionContext): Future[TopicInfo] =
         exec.put[Update, TopicInfo, ErrorApi.Error](
-          _url(DataKey(group, name)),
+          _url(TopicKey.of(group, name)),
           update
         )
     }

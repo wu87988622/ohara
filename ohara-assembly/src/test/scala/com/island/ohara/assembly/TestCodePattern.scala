@@ -74,6 +74,8 @@ class TestCodePattern extends MediumTest with Matchers {
       ),
       excludedMethods = Set(
         "getClass",
+        "setting",
+        "setting$",
         "settings",
         "settings$",
         "removeContainerOnExit",

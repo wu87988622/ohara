@@ -115,7 +115,7 @@ object ValidationUtils {
       .name(validationName)
       .className("com.island.ohara.connector.validation.Validator")
       .numberOfTasks(taskCount)
-      .topicName(ValidationApi.INTERNAL_TOPIC)
+      .topicKey(ValidationApi.INTERNAL_TOPIC_KEY)
       .settings(
         settings ++ Map(
           ValidationApi.REQUEST_ID -> requestId,
@@ -129,7 +129,7 @@ object ValidationUtils {
           .builder[String, Object]()
           .connectionProps(topicAdmin.connectionProps)
           .offsetFromBegin()
-          .topicName(ValidationApi.INTERNAL_TOPIC)
+          .topicName(ValidationApi.INTERNAL_TOPIC_KEY.topicNameOnKafka)
           .keySerializer(Serializer.STRING)
           .valueSerializer(Serializer.OBJECT)
           .build()

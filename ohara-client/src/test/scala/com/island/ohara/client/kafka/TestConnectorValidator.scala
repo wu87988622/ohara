@@ -78,22 +78,14 @@ class TestConnectorValidator extends SmallTest with Matchers {
     an[IllegalArgumentException] should be thrownBy notWorkingClient.connectorValidator().className("")
 
   @Test
-  def nullTopicName(): Unit =
-    an[NullPointerException] should be thrownBy notWorkingClient.connectorValidator().topicName(null)
+  def nullTopicKey(): Unit =
+    an[NullPointerException] should be thrownBy notWorkingClient.connectorValidator().topicKey(null)
 
   @Test
-  def emptyTopicName(): Unit =
-    an[IllegalArgumentException] should be thrownBy notWorkingClient.connectorValidator().topicName("")
+  def nullTopicKeys(): Unit =
+    an[NullPointerException] should be thrownBy notWorkingClient.connectorValidator().topicKeys(null)
 
   @Test
-  def nullTopicNames(): Unit =
-    an[NullPointerException] should be thrownBy notWorkingClient.connectorValidator().topicNames(null)
-
-  @Test
-  def emptyTopicNames(): Unit =
-    an[IllegalArgumentException] should be thrownBy notWorkingClient.connectorValidator().topicNames(Seq.empty)
-
-  @Test
-  def emptyTopicNames2(): Unit =
-    an[IllegalArgumentException] should be thrownBy notWorkingClient.connectorValidator().topicNames(Seq(""))
+  def emptyTopicKeys(): Unit =
+    an[IllegalArgumentException] should be thrownBy notWorkingClient.connectorValidator().topicKeys(Set.empty)
 }

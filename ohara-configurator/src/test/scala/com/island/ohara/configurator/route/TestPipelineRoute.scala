@@ -21,6 +21,7 @@ import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.{Configurator, DumbSink}
+import com.island.ohara.kafka.connector.json.ObjectKey
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 import spray.json.{JsNumber, JsString}
@@ -48,7 +49,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
         .numberOfTasks(1)
-        .topicName(topic.name)
+        .topicKey(topic.key)
         .create())
     result(connectorApi.start(connector.name))
 
@@ -92,7 +93,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
   def testNonexistentData(): Unit = {
     val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
     val name = CommonUtils.randomString()
-    val flow = Flow(from = topic.key, to = Set(DataKey(CommonUtils.randomString(), CommonUtils.randomString())))
+    val flow = Flow(from = topic.key, to = Set(ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString())))
     val pipeline = result(pipelineApi.request.name(name).flow(flow).create())
     // the "to" is reference to an nonexistent data
     pipeline.objects.size shouldBe 1
@@ -148,7 +149,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
         .numberOfTasks(1)
-        .topicName(topic.name)
+        .topicKey(topic.key)
         .create())
 
     result(connectorApi.start(connector.name))
@@ -173,7 +174,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
         .name(CommonUtils.randomString(10))
         .className(CommonUtils.randomString(10))
         .numberOfTasks(1)
-        .topicName(topic.name)
+        .topicKey(topic.key)
         .create())
     result(connectorApi.start(connector.name))
 
@@ -211,7 +212,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
   def updateOnlyFlow(): Unit = {
     val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
     val pipeline = result(
-      pipelineApi.request.name(CommonUtils.randomString()).flow(topic.key, Set.empty[DataKey]).update())
+      pipelineApi.request.name(CommonUtils.randomString()).flow(topic.key, Set.empty[ObjectKey]).update())
     pipeline.flows.size shouldBe 1
     pipeline.flows.head.from shouldBe topic.key
     pipeline.flows.head.to.size shouldBe 0
@@ -226,7 +227,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
   def updateOnlyWorkerClusterName(): Unit = {
     val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
     val pipeline = result(
-      pipelineApi.request.name(CommonUtils.randomString()).flow(topic.key, Set.empty[DataKey]).update())
+      pipelineApi.request.name(CommonUtils.randomString()).flow(topic.key, Set.empty[ObjectKey]).update())
     // worker cluster is useless to pipeline
     result(pipelineApi.request.name(pipeline.name).workerClusterName(CommonUtils.randomString()).update())
   }
@@ -240,7 +241,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
       connectorApi.request
         .name(name)
         .className(classOf[DumbSink].getName)
-        .topicName(topic.name)
+        .topicKey(topic.key)
         .numberOfTasks(1)
         .create())
 

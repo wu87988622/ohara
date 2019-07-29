@@ -19,6 +19,7 @@ import java.util.Objects
 
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.kafka.connector.json.ObjectKey
 import spray.json.DefaultJsonProtocol._
 import spray.json.{DeserializationException, JsArray, JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
@@ -27,7 +28,7 @@ import scala.concurrent.{ExecutionContext, Future}
 object PipelineApi {
   val PIPELINES_PREFIX_PATH: String = "pipelines"
 
-  final case class Flow(from: DataKey, to: Set[DataKey])
+  final case class Flow(from: ObjectKey, to: Set[ObjectKey])
   implicit val FLOW_JSON_FORMAT: OharaJsonFormat[Flow] =
     JsonRefiner[Flow].format(jsonFormat2(Flow)).rejectEmptyString().refine
 
@@ -110,8 +111,8 @@ object PipelineApi {
 
   private[this] def toFlows(rules: Map[String, Set[String]]): Seq[Flow] = rules.map { e =>
     Flow(
-      from = DataKey(Data.GROUP_DEFAULT, e._1),
-      to = e._2.map(DataKey(Data.GROUP_DEFAULT, _))
+      from = ObjectKey.of(Data.GROUP_DEFAULT, e._1),
+      to = e._2.map(ObjectKey.of(Data.GROUP_DEFAULT, _))
     )
   }.toSeq
 
@@ -238,10 +239,10 @@ object PipelineApi {
     def flows(flows: Seq[Flow]): Request
 
     @Optional("default value is empty")
-    def flow(from: DataKey, to: DataKey): Request = flow(from, Set(to))
+    def flow(from: ObjectKey, to: ObjectKey): Request = flow(from, Set(to))
 
     @Optional("default value is empty")
-    def flow(from: DataKey, to: Set[DataKey]): Request = flow(Flow(from = from, to = to))
+    def flow(from: ObjectKey, to: Set[ObjectKey]): Request = flow(Flow(from = from, to = to))
 
     @Optional("default value is empty")
     def flow(flow: Flow): Request = flows(Seq(Objects.requireNonNull(flow)))
@@ -321,7 +322,7 @@ object PipelineApi {
         )
       override def update()(implicit executionContext: ExecutionContext): Future[Pipeline] =
         exec.put[Update, Pipeline, ErrorApi.Error](
-          _url(DataKey(group, name)),
+          _url(ObjectKey.of(group, name)),
           update
         )
     }

@@ -21,13 +21,13 @@ import java.util.Objects
 import akka.http.scaladsl.server
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.agent.{BrokerCollie, ClusterCollie, NodeCollie, WorkerCollie}
-import com.island.ohara.client.configurator.v0.DataKey
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.StreamApi._
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.file.FileStore
 import com.island.ohara.configurator.route.RouteUtils.{START_COMMAND => _, STOP_COMMAND => _, _}
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
+import com.island.ohara.kafka.connector.json.ObjectKey
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
@@ -123,7 +123,7 @@ private[configurator] object StreamRoute {
     * @tparam T field type
     * @return field
     */
-  private[this] def checkField[T](key: DataKey, field: Option[T], fieldName: String): T =
+  private[this] def checkField[T](key: ObjectKey, field: Option[T], fieldName: String): T =
     field.getOrElse(throw new IllegalArgumentException(RouteUtils.errorMessage(key, fieldName)))
 
   /**
@@ -155,7 +155,7 @@ private[configurator] object StreamRoute {
 
   private[this] def hookOfUpdate(
     implicit executionContext: ExecutionContext): HookOfUpdate[Creation, Update, StreamAppDescription] =
-    (key: DataKey, update: Update, previous: Option[StreamAppDescription]) =>
+    (key: ObjectKey, update: Update, previous: Option[StreamAppDescription]) =>
       Future
         .successful(
           previous.fold(StreamAppDescription(
@@ -192,7 +192,7 @@ private[configurator] object StreamRoute {
   private[this] def hookBeforeDelete(implicit store: DataStore,
                                      clusterCollie: ClusterCollie,
                                      meterCache: MeterCache,
-                                     executionContext: ExecutionContext): HookBeforeDelete = (key: DataKey) =>
+                                     executionContext: ExecutionContext): HookBeforeDelete = (key: ObjectKey) =>
     // get the latest status first
     store.get[StreamAppDescription](key).flatMap {
       _.fold(Future.unit) { desc =>
@@ -213,7 +213,7 @@ private[configurator] object StreamRoute {
                                 brokerCollie: BrokerCollie,
                                 fileStore: FileStore,
                                 executionContext: ExecutionContext): HookOfStart[StreamAppDescription] =
-    (key: DataKey) =>
+    (key: ObjectKey) =>
       store.value[StreamAppDescription](key).flatMap { data =>
         assertParameters(data)
         // we assume streamApp has following conditions:
@@ -316,35 +316,36 @@ private[configurator] object StreamRoute {
 
   private[this] def hookOfStop(implicit store: DataStore,
                                clusterCollie: ClusterCollie,
-                               executionContext: ExecutionContext): HookOfStop[StreamAppDescription] = (key: DataKey) =>
-    store.value[StreamAppDescription](key).flatMap { data =>
-      clusterCollie.streamCollie.exist(data.name).flatMap {
-        if (_) {
-          // if remove failed, we log the exception and return "DEAD" state
-          clusterCollie.streamCollie
-            .remove(data.name)
-            .map(_ => None -> None)
-            .recover {
-              case ex: Throwable =>
-                log.error(s"failed to stop streamApp for $key.", ex)
-                Some(ContainerState.DEAD.name) -> Some(ex.getMessage)
-            }
-            .flatMap {
-              case (state, error) =>
-                store.addIfPresent[StreamAppDescription](
-                  key = key,
-                  updater = (previous: StreamAppDescription) => previous.copy(state = state, error = error)
-                )
-            }
-        } else {
-          // stream cluster not exists, update store only
-          store.addIfPresent[StreamAppDescription](
-            key = key,
-            updater = (previous: StreamAppDescription) => previous.copy(state = None, error = None)
-          )
+                               executionContext: ExecutionContext): HookOfStop[StreamAppDescription] =
+    (key: ObjectKey) =>
+      store.value[StreamAppDescription](key).flatMap { data =>
+        clusterCollie.streamCollie.exist(data.name).flatMap {
+          if (_) {
+            // if remove failed, we log the exception and return "DEAD" state
+            clusterCollie.streamCollie
+              .remove(data.name)
+              .map(_ => None -> None)
+              .recover {
+                case ex: Throwable =>
+                  log.error(s"failed to stop streamApp for $key.", ex)
+                  Some(ContainerState.DEAD.name) -> Some(ex.getMessage)
+              }
+              .flatMap {
+                case (state, error) =>
+                  store.addIfPresent[StreamAppDescription](
+                    key = key,
+                    updater = (previous: StreamAppDescription) => previous.copy(state = state, error = error)
+                  )
+              }
+          } else {
+            // stream cluster not exists, update store only
+            store.addIfPresent[StreamAppDescription](
+              key = key,
+              updater = (previous: StreamAppDescription) => previous.copy(state = None, error = None)
+            )
+          }
         }
-      }
-  }
+    }
 
   def apply(implicit store: DataStore,
             adminCleaner: AdminCleaner,

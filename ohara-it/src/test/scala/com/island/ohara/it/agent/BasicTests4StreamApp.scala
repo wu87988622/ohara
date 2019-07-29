@@ -27,6 +27,7 @@ import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.IntegrationTest
 import com.island.ohara.kafka.Producer
+import com.island.ohara.kafka.connector.json.ObjectKey
 import com.typesafe.scalalogging.Logger
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException
 import org.junit.{After, Before, Test}
@@ -162,7 +163,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
 
     // create streamApp properties
     val stream = result(
-      access.request.name(CommonUtils.randomString(10)).jar(DataKey(jarInfo.group, jarInfo.name)).create())
+      access.request.name(CommonUtils.randomString(10)).jar(ObjectKey.of(jarInfo.group, jarInfo.name)).create())
 
     // update streamApp properties (use non-existed topics to make sure cluster failed)
     val properties = result(
@@ -249,7 +250,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
 
     // create streamApp properties
     val stream = result(
-      access.request.name(CommonUtils.randomString(10)).jar(DataKey(jarInfo.group, jarInfo.name)).create())
+      access.request.name(CommonUtils.randomString(10)).jar(ObjectKey.of(jarInfo.group, jarInfo.name)).create())
 
     // update streamApp properties
     val properties = result(

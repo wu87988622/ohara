@@ -55,22 +55,15 @@ class TestConnectorCreator extends SmallTest with Matchers {
     an[IllegalArgumentException] should be thrownBy notWorkingClient.connectorCreator().className("")
 
   @Test
-  def nullTopicName(): Unit =
-    an[NullPointerException] should be thrownBy notWorkingClient.connectorCreator().topicName(null)
+  def nullTopicKey(): Unit =
+    an[NullPointerException] should be thrownBy notWorkingClient.connectorCreator().topicKey(null)
 
   @Test
-  def emptyTopicName(): Unit =
-    an[IllegalArgumentException] should be thrownBy notWorkingClient.connectorCreator().topicName("")
+  def nullTopicKeys(): Unit =
+    an[NullPointerException] should be thrownBy notWorkingClient.connectorCreator().topicKeys(null)
 
   @Test
-  def nullTopicNames(): Unit =
-    an[NullPointerException] should be thrownBy notWorkingClient.connectorCreator().topicNames(null)
+  def emptyTopicKeys(): Unit =
+    an[IllegalArgumentException] should be thrownBy notWorkingClient.connectorCreator().topicKeys(Set.empty)
 
-  @Test
-  def emptyTopicNames(): Unit =
-    an[IllegalArgumentException] should be thrownBy notWorkingClient.connectorCreator().topicNames(Seq.empty)
-
-  @Test
-  def emptyTopicNames2(): Unit =
-    an[IllegalArgumentException] should be thrownBy notWorkingClient.connectorCreator().topicNames(Seq(""))
 }

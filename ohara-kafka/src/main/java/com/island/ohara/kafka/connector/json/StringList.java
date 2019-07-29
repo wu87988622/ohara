@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.island.ohara.common.json.JsonUtils;
 import com.island.ohara.common.util.CommonUtils;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -55,7 +56,7 @@ public final class StringList {
    * @param stringList string list
    * @return string list
    */
-  public static String toKafkaString(List<String> stringList) {
+  public static String toKafkaString(Collection<String> stringList) {
     return String.join(",", stringList);
   }
 

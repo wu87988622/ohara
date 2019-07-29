@@ -23,6 +23,7 @@ import com.island.ohara.client.ftp.FtpClient
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Cell, Column, DataType, Row}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
+import com.island.ohara.kafka.connector.json.TopicKey
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
@@ -91,20 +92,20 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
 
   @Test
   def testNormalCase(): Unit = {
-    val topicName = methodName
-    val sinkName = methodName + "-sink"
-    val sourceName = methodName + "-source"
+    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    val sinkName = CommonUtils.randomString(5)
+    val sourceName = CommonUtils.randomString(5)
     // start sink
     Await.result(
       workerClient
         .connectorCreator()
-        .topicName(topicName)
+        .topicKey(topicKey)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
         .name(sinkName)
         .columns(schema)
         .settings(sinkProps.toMap)
-        .create,
+        .create(),
       10 seconds
     )
 
@@ -113,13 +114,13 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
         Await.result(
           workerClient
             .connectorCreator()
-            .topicName(topicName)
+            .topicKey(topicKey)
             .connectorClass(classOf[FtpSource])
             .numberOfTasks(1)
             .name(sourceName)
             .columns(schema)
             .settings(sourceProps.toMap)
-            .create,
+            .create(),
           10 seconds
         )
         CommonUtils.await(() => ftpClient.listFileNames(sourceProps.inputFolder).isEmpty, Duration.ofSeconds(30))

@@ -22,7 +22,7 @@ import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorState
 import com.island.ohara.common.data.{Row, Serializer}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.Consumer
-import com.island.ohara.kafka.connector.json.{ConverterType, SettingDefinition, StringList}
+import com.island.ohara.kafka.connector.json.{ConverterType, SettingDefinition, StringList, TopicKey}
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.Test
 import org.scalatest.Matchers
@@ -34,18 +34,18 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
   private[this] val workerClient = WorkerClient(testUtil().workersConnProps())
   @Test
   def testExist(): Unit = {
-    val topicName = CommonUtils.randomString(10)
+    val topicKey = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     val connectorName = CommonUtils.randomString(10)
     result(workerClient.exist(connectorName)) shouldBe false
 
     result(
       workerClient
         .connectorCreator()
-        .topicName(topicName)
+        .topicKey(topicKey)
         .connectorClass(classOf[MyConnector])
         .name(connectorName)
         .numberOfTasks(1)
-        .create)
+        .create())
 
     try assertExist(workerClient, connectorName)
     finally result(workerClient.delete(connectorName))
@@ -53,18 +53,18 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
 
   @Test
   def testExistOnUnrunnableConnector(): Unit = {
-    val topicName = CommonUtils.randomString(10)
+    val topicKey = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     val connectorName = CommonUtils.randomString(10)
     result(workerClient.exist(connectorName)) shouldBe false
 
     result(
       workerClient
         .connectorCreator()
-        .topicName(topicName)
+        .topicKey(topicKey)
         .connectorClass(classOf[BrokenConnector])
         .name(connectorName)
         .numberOfTasks(1)
-        .create)
+        .create())
 
     try assertExist(workerClient, connectorName)
     finally result(workerClient.delete(connectorName))
@@ -72,22 +72,22 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
 
   @Test
   def testPauseAndResumeSource(): Unit = {
-    val topicName = CommonUtils.randomString(10)
+    val topicKey = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     val connectorName = CommonUtils.randomString(10)
     result(
       workerClient
         .connectorCreator()
-        .topicName(topicName)
+        .topicKey(topicKey)
         .connectorClass(classOf[MyConnector])
         .name(connectorName)
         .numberOfTasks(1)
-        .create)
+        .create())
     try {
       assertExist(workerClient, connectorName)
       val consumer =
         Consumer
           .builder[Row, Array[Byte]]()
-          .topicName(topicName)
+          .topicName(topicKey.topicNameOnKafka)
           .offsetFromBegin()
           .connectionProps(testUtil.brokersConnProps)
           .keySerializer(Serializer.ROW)
@@ -141,7 +141,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
         .run())
     settingInfo.className.get shouldBe classOf[MyConnector].getName
     settingInfo.settings.size should not be 0
-    settingInfo.topicNames.asScala shouldBe Seq(topicName)
+    settingInfo.topicNamesOnKafka.asScala shouldBe Seq(topicName)
     settingInfo.numberOfTasks.get shouldBe numberOfTasks
   }
 
@@ -155,15 +155,12 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
 
   @Test
   def testValidateWithoutValue(): Unit = {
+    val topicKey = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     val settingInfo = result(
-      workerClient
-        .connectorValidator()
-        .className(classOf[MyConnector].getName)
-        .topicName(CommonUtils.randomString())
-        .run())
+      workerClient.connectorValidator().className(classOf[MyConnector].getName).topicKey(topicKey).run())
     settingInfo.className.get shouldBe classOf[MyConnector].getName
     settingInfo.settings.size should not be 0
-    settingInfo.topicNames.isEmpty shouldBe false
+    settingInfo.topicNamesOnKafka.isEmpty shouldBe false
     settingInfo.numberOfTasks.isPresent shouldBe false
   }
 
@@ -233,7 +230,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
       .find(_.key() == SettingDefinition.TOPIC_NAMES_DEFINITION.key())
       .head
       .group() shouldBe SettingDefinition.CORE_GROUP
-    settingDefinitionS.find(_.key() == SettingDefinition.TOPIC_NAMES_DEFINITION.key()).head.internal() shouldBe false
+    settingDefinitionS.find(_.key() == SettingDefinition.TOPIC_NAMES_DEFINITION.key()).head.internal() shouldBe true
     settingDefinitionS.find(_.key() == SettingDefinition.TOPIC_NAMES_DEFINITION.key()).head.editable() shouldBe true
     settingDefinitionS.find(_.key() == SettingDefinition.TOPIC_NAMES_DEFINITION.key()).head.defaultValue() shouldBe null
 
@@ -328,16 +325,17 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
 
   @Test
   def passIncorrectColumns(): Unit = {
+    val topicKey = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     val e = intercept[IllegalArgumentException] {
       result(
         workerClient
           .connectorCreator()
-          .topicName(CommonUtils.randomString(10))
+          .topicKey(topicKey)
           .connectorClass(classOf[MyConnector])
           .name(CommonUtils.randomString(10))
           .numberOfTasks(1)
           .settings(Map(SettingDefinition.COLUMNS_DEFINITION.key() -> "Asdasdasd"))
-          .create)
+          .create())
     }
     //see SettingDefinition.validator
     e.getMessage.contains("can't be converted to PropGroups type") shouldBe true
@@ -345,16 +343,17 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
 
   @Test
   def passIncorrectDuration(): Unit = {
+    val topicKey = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     val e = intercept[IllegalArgumentException] {
       result(
         workerClient
           .connectorCreator()
-          .topicName(CommonUtils.randomString(10))
+          .topicKey(topicKey)
           .connectorClass(classOf[MyConnector])
           .name(CommonUtils.randomString(10))
           .numberOfTasks(1)
           .settings(Map(MyConnector.DURATION_KEY -> "Asdasdasd"))
-          .create)
+          .create())
     }
     //see SettingDefinition.validator
     e.getMessage.contains("can't be converted to Duration type") shouldBe true
@@ -362,41 +361,44 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
 
   @Test
   def pass1Second(): Unit = {
+    val topicKey = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     result(
       workerClient
         .connectorCreator()
-        .topicName(CommonUtils.randomString(10))
+        .topicKey(topicKey)
         .connectorClass(classOf[MyConnector])
         .name(CommonUtils.randomString(10))
         .numberOfTasks(1)
         .settings(Map(MyConnector.DURATION_KEY -> "PT1S"))
-        .create)
+        .create())
   }
   @Test
   def pass1Minute1Second(): Unit = {
+    val topicKey = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     result(
       workerClient
         .connectorCreator()
-        .topicName(CommonUtils.randomString(10))
+        .topicKey(topicKey)
         .connectorClass(classOf[MyConnector])
         .name(CommonUtils.randomString(10))
         .numberOfTasks(1)
         .settings(Map(MyConnector.DURATION_KEY -> "PT1M1S"))
-        .create)
+        .create())
   }
 
   @Test
   def testStatusOrNone(): Unit = {
+    val topicKey = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     result(workerClient.statusOrNone(CommonUtils.randomString())) shouldBe None
     val response = result(
       workerClient
         .connectorCreator()
-        .topicName(CommonUtils.randomString(10))
+        .topicKey(topicKey)
         .connectorClass(classOf[MyConnector])
         .name(CommonUtils.randomString(10))
         .numberOfTasks(1)
         .settings(Map(MyConnector.DURATION_KEY -> "PT1M1S"))
-        .create)
+        .create())
     await(
       () =>
         try result(workerClient.statusOrNone(response.name)).isDefined

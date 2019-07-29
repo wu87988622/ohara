@@ -17,13 +17,15 @@
 package com.island.ohara.connector.jdbc.source
 
 import java.sql.Statement
+
 import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
 import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Cell, Row, Serializer}
-import com.island.ohara.common.util.Releasable
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.kafka.Consumer
 import com.island.ohara.kafka.connector.TaskSetting
+import com.island.ohara.kafka.connector.json.TopicKey
 import com.island.ohara.testing.With3Brokers3Workers
 import com.island.ohara.testing.service.Database
 import org.junit.{After, Before, Test}
@@ -73,14 +75,14 @@ class TestJDBCSourceConnector extends With3Brokers3Workers with Matchers {
   @Test
   def testJDBCSourceConnector(): Unit = {
     val connectorName: String = "JDBC-Source-Connector-Test"
-    val topicName: String = "topic-test-1"
+    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
 
     Await.result(
       workerClient
         .connectorCreator()
         .name(connectorName)
         .connectorClass(classOf[JDBCSourceConnector])
-        .topicName(topicName)
+        .topicKey(topicKey)
         .numberOfTasks(1)
         .settings(props.toMap)
         .create,
@@ -90,7 +92,7 @@ class TestJDBCSourceConnector extends With3Brokers3Workers with Matchers {
     val consumer =
       Consumer
         .builder[Row, Array[Byte]]()
-        .topicName(topicName)
+        .topicName(topicKey.topicNameOnKafka)
         .offsetFromBegin()
         .connectionProps(testUtil.brokersConnProps)
         .keySerializer(Serializer.ROW)

@@ -19,6 +19,7 @@ import java.util.Objects
 
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.kafka.connector.json.ObjectKey
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsValue, RootJsonFormat}
 
@@ -134,7 +135,7 @@ object HadoopApi {
           creation
         )
       override def update()(implicit executionContext: ExecutionContext): Future[HdfsInfo] =
-        exec.put[Update, HdfsInfo, ErrorApi.Error](_url(DataKey(group, name)), update)
+        exec.put[Update, HdfsInfo, ErrorApi.Error](_url(ObjectKey.of(group, name)), update)
     }
   }
   def access: Access = new Access

@@ -19,8 +19,9 @@ import java.util.Collections
 
 import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.TaskSetting
-import com.island.ohara.kafka.connector.json.ConnectorFormatter
+import com.island.ohara.kafka.connector.json.{ConnectorFormatter, TopicKey}
 import org.junit.Test
 import org.scalatest.Matchers
 
@@ -29,7 +30,7 @@ import scala.concurrent.duration._
 
 class TestPerfSourceProps extends SmallTest with Matchers {
   private[this] val props = PerfSourceProps(10, 10 seconds)
-  private[this] val topics = Seq("TestPerfSourceProps")
+  private[this] val topicKeys = Set(TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
   private[this] val schema = Seq(Column.builder().name("name").dataType(DataType.SHORT).order(1).build())
 
   @Test
@@ -52,14 +53,15 @@ class TestPerfSourceProps extends SmallTest with Matchers {
     val source = new PerfSource
 
     source.start(
-      ConnectorFormatter.of().name(methodName()).topicNames(topics.asJava).settings(props.toMap.asJava).raw())
+      ConnectorFormatter.of().name(methodName()).topicKeys(topicKeys.asJava).settings(props.toMap.asJava).raw())
   }
 
   @Test
   def testEmptySchemaOnSourceTask(): Unit = {
     val task = new PerfSourceTask
 
-    task.start(ConnectorFormatter.of().name(methodName()).topicNames(topics.asJava).settings(props.toMap.asJava).raw())
+    task.start(
+      ConnectorFormatter.of().name(methodName()).topicKeys(topicKeys.asJava).settings(props.toMap.asJava).raw())
 
     task.schema shouldBe DEFAULT_SCHEMA
   }
@@ -87,7 +89,7 @@ class TestPerfSourceProps extends SmallTest with Matchers {
       ConnectorFormatter
         .of()
         .name(methodName())
-        .topicNames(topics.asJava)
+        .topicKeys(topicKeys.asJava)
         .columns(schema.asJava)
         .settings(props.copy(batch = -1).toMap.asJava)
         .raw())

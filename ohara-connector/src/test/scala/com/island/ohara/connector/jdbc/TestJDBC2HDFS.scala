@@ -30,6 +30,7 @@ import com.island.ohara.connector.hdfs.storage.{HDFSStorage, Storage}
 import com.island.ohara.connector.hdfs.{HDFSSinkConnector, HDFSSinkConnectorConfig, _}
 import com.island.ohara.connector.jdbc.source._
 import com.island.ohara.kafka.connector.TaskSetting
+import com.island.ohara.kafka.connector.json.TopicKey
 import com.island.ohara.testing.With3Brokers3Workers
 import com.island.ohara.testing.service.Hdfs
 import org.apache.hadoop.fs.{FileSystem, Path}
@@ -105,17 +106,17 @@ class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
   def testNormalCase(): Unit = {
     val jdbcSourceConnectorName: String = "jdbc-source-connector-it-test"
     val hdfsSinkConnectorName: String = "hdfs-sink-connector-it-test"
-    val topicName: String = "it-test"
+    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
 
     Await.result(
       workerClient
         .connectorCreator()
         .name(jdbcSourceConnectorName)
         .connectorClass(classOf[JDBCSourceConnector])
-        .topicName(topicName)
+        .topicKey(topicKey)
         .numberOfTasks(1)
         .settings(jdbcProps.toMap)
-        .create,
+        .create(),
       10 seconds
     )
 
@@ -124,16 +125,16 @@ class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
         .connectorCreator()
         .name(hdfsSinkConnectorName)
         .connectorClass(classOf[HDFSSinkConnector])
-        .topicName(topicName)
+        .topicKey(topicKey)
         .settings(hdfsProps.toMap)
         .numberOfTasks(1)
-        .create,
+        .create(),
       10 seconds
     )
 
     try {
       val storage = new HDFSStorage(testUtil.hdfs.fileSystem)
-      val hdfsResultFolder = s"${testUtil.hdfs.tmpDirectory}/data/$topicName/partition0"
+      val hdfsResultFolder = s"${testUtil.hdfs.tmpDirectory}/data/${topicKey.topicNameOnKafka}/partition0"
 
       CommonUtils.await(() => storage.list(hdfsResultFolder).size == 2, java.time.Duration.ofSeconds(20))
 

@@ -51,7 +51,7 @@ class TestListManyPipelines extends WithBrokerWorker with Matchers {
         .request
         .name(CommonUtils.randomString(10))
         .className("com.island.ohara.connector.perf.PerfSource")
-        .topicName(topic.name)
+        .topicKey(topic.key)
         .numberOfTasks(1)
         .create())
 

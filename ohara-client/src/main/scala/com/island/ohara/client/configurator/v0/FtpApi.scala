@@ -19,6 +19,7 @@ import java.util.Objects
 
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.kafka.connector.json.ObjectKey
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsValue, RootJsonFormat}
 
@@ -192,7 +193,7 @@ object FtpApi {
         )
       override def update()(implicit executionContext: ExecutionContext): Future[FtpInfo] =
         exec.put[Update, FtpInfo, ErrorApi.Error](
-          _url(DataKey(group, name)),
+          _url(ObjectKey.of(group, name)),
           update
         )
     }

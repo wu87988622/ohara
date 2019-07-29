@@ -27,7 +27,7 @@ object ValidationApi {
   val TARGET = "target"
   val VALIDATION_PREFIX_PATH: String = "validate"
   // TODO: We should use a temporary topic instead of fixed topic...by chia
-  val INTERNAL_TOPIC = "_Validator_topic"
+  val INTERNAL_TOPIC_KEY: TopicKey = TopicKey.of(Data.GROUP_DEFAULT, "_Validator_topic")
 
   /**
     * add this to setting and then the key pushed to topic will be same with the value

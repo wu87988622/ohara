@@ -18,6 +18,7 @@ package com.island.ohara.kafka.connector.json;
 
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.data.DataType;
+import com.island.ohara.common.json.JsonUtils;
 import com.island.ohara.common.rule.SmallTest;
 import com.island.ohara.common.util.CommonUtils;
 import java.time.Duration;
@@ -467,6 +468,26 @@ public class TestSettingDefinition extends SmallTest {
     s.checker().check(100);
     assertException(ConfigException.class, () -> s.checker().check(-1));
     assertException(ConfigException.class, () -> s.checker().check(0));
+    assertException(ConfigException.class, () -> s.checker().check(100000000));
+  }
+
+  @Test
+  public void testTopicKeysType() {
+    SettingDefinition s =
+        SettingDefinition.builder()
+            .valueType(SettingDefinition.Type.TOPIC_KEYS)
+            .key("topicKeys.key")
+            .build();
+    // pass
+    s.checker()
+        .check(
+            JsonUtils.toString(
+                Collections.singleton(
+                    TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString()))));
+    // empty array is illegal
+    assertException(ConfigException.class, () -> s.checker().check("[]"));
+    assertException(ConfigException.class, () -> s.checker().check("{}"));
+    assertException(ConfigException.class, () -> s.checker().check(CommonUtils.randomString()));
     assertException(ConfigException.class, () -> s.checker().check(100000000));
   }
 }

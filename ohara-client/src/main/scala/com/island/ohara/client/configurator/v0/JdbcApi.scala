@@ -19,6 +19,7 @@ import java.util.Objects
 
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.kafka.connector.json.ObjectKey
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsValue, RootJsonFormat}
 
@@ -162,7 +163,7 @@ object JdbcApi {
         )
       override def update()(implicit executionContext: ExecutionContext): Future[JdbcInfo] =
         exec.put[Update, JdbcInfo, ErrorApi.Error](
-          _url(DataKey(group, name)),
+          _url(ObjectKey.of(group, name)),
           update
         )
     }

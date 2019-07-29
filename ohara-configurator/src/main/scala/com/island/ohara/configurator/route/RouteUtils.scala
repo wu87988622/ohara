@@ -27,6 +27,7 @@ import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.configurator.store.DataStore
+import com.island.ohara.kafka.connector.json.ObjectKey
 import com.typesafe.scalalogging.Logger
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsString, RootJsonFormat}
@@ -69,7 +70,7 @@ private[route] object RouteUtils {
     * @tparam Res result to response
     */
   trait HookOfUpdate[Creation <: CreationRequest, Update, Res <: Data] {
-    def apply(key: DataKey, update: Update, previous: Option[Res]): Future[Res]
+    def apply(key: ObjectKey, update: Update, previous: Option[Res]): Future[Res]
   }
 
   /**
@@ -78,7 +79,7 @@ private[route] object RouteUtils {
     * Noted: the returned (group, name) can differ from input. And the removed object is associated to the returned stuff.
     */
   trait HookBeforeDelete {
-    def apply(key: DataKey): Future[Unit]
+    def apply(key: ObjectKey): Future[Unit]
   }
 
   /**
@@ -87,7 +88,7 @@ private[route] object RouteUtils {
     * @tparam Res data
     */
   trait HookOfStart[Res] {
-    def apply(key: DataKey): Future[Res]
+    def apply(key: ObjectKey): Future[Res]
   }
 
   /**
@@ -96,7 +97,7 @@ private[route] object RouteUtils {
     * @tparam Res data
     */
   trait HookOfStop[Res] {
-    def apply(key: DataKey): Future[Res]
+    def apply(key: ObjectKey): Future[Res]
   }
 
   /**
@@ -105,7 +106,7 @@ private[route] object RouteUtils {
     * @tparam Res data
     */
   trait HookOfPause[Res] {
-    def apply(key: DataKey): Future[Res]
+    def apply(key: ObjectKey): Future[Res]
   }
 
   /**
@@ -114,7 +115,7 @@ private[route] object RouteUtils {
     * @tparam Res data
     */
   trait HookOfResume[Res] {
-    def apply(key: DataKey): Future[Res]
+    def apply(key: ObjectKey): Future[Res]
   }
 
   /**
@@ -123,7 +124,7 @@ private[route] object RouteUtils {
     * @param fieldName name of field
     * @return error message
     */
-  def errorMessage(key: DataKey, fieldName: String): String =
+  def errorMessage(key: ObjectKey, fieldName: String): String =
     s"$key does not exist so there is an new object will be created. Hence, you cannot ignore $fieldName"
 
   //-------------------- global parameter for route -------------------------//
@@ -175,7 +176,7 @@ private[route] object RouteUtils {
       hookOfUpdate = hookOfUpdate,
       hookOfGet = (res: Res) => Future.successful(res),
       hookOfList = (res: Seq[Res]) => Future.successful(res),
-      hookBeforeDelete = (_: DataKey) => Future.successful(Unit)
+      hookBeforeDelete = (_: ObjectKey) => Future.successful(Unit)
     )
 
   /**
@@ -225,10 +226,8 @@ private[route] object RouteUtils {
       } ~ path(Segment) { name =>
         parameter(Data.GROUP_KEY ?) { groupOption =>
           val group = if (enableGroup) groupOption.getOrElse(Data.GROUP_DEFAULT) else Data.GROUP_DEFAULT
-          val key = DataKey(
-            group = rm.check(Data.GROUP_KEY, JsString(group)).value,
-            name = rm.check(Data.NAME_KEY, JsString(name)).value
-          )
+          val key =
+            ObjectKey.of(rm.check(Data.GROUP_KEY, JsString(group)).value, rm.check(Data.NAME_KEY, JsString(name)).value)
           get(complete(store.value[Res](key).flatMap(hookOfGet(_)))) ~
             delete(complete(
               hookBeforeDelete(key).map(_ => key).flatMap(store.remove[Res](_).map(_ => StatusCodes.NoContent)))) ~
@@ -301,10 +300,7 @@ private[route] object RouteUtils {
     parameter(Data.GROUP_KEY ?) { groupOption =>
       put {
         val group = if (enableGroup) groupOption.getOrElse(Data.GROUP_DEFAULT) else Data.GROUP_DEFAULT
-        val key = DataKey(
-          group = group,
-          name = name
-        )
+        val key = ObjectKey.of(group, name)
         path(START_COMMAND)(complete(StatusCodes.Accepted -> hookOfStart(key).flatMap(res => store.add[Res](res)))) ~ path(
           STOP_COMMAND)(complete(StatusCodes.Accepted -> hookOfStop(key).flatMap(res => store.add[Res](res))))
       }
@@ -374,10 +370,7 @@ private[route] object RouteUtils {
     parameter(Data.GROUP_KEY ?) { groupOption =>
       put {
         val group = if (enableGroup) groupOption.getOrElse(Data.GROUP_DEFAULT) else Data.GROUP_DEFAULT
-        val key = DataKey(
-          group = group,
-          name = name
-        )
+        val key = ObjectKey.of(group, name)
         path(START_COMMAND)(complete(StatusCodes.Accepted -> hookOfStart(key).flatMap(res => store.add[Res](res)))) ~
           path(STOP_COMMAND)(complete(StatusCodes.Accepted -> hookOfStop(key).flatMap(res => store.add[Res](res)))) ~
           path(PAUSE_COMMAND)(complete(StatusCodes.Accepted -> hookOfPause(key).flatMap(res => store.add[Res](res)))) ~
@@ -409,10 +402,8 @@ private[route] object RouteUtils {
       path(Segment) { remainder =>
         parameter(Data.GROUP_KEY ?) { groupOption =>
           val group = if (enableGroup) groupOption.getOrElse(Data.GROUP_DEFAULT) else Data.GROUP_DEFAULT
-          val key = DataKey(
-            group = rm.check(Data.GROUP_KEY, JsString(group)).value,
-            name = rm.check(Data.NAME_KEY, JsString(clusterName)).value
-          )
+          val key = ObjectKey.of(rm.check(Data.GROUP_KEY, JsString(group)).value,
+                                 rm.check(Data.NAME_KEY, JsString(clusterName)).value)
           remainder match {
             case START_COMMAND =>
               put {

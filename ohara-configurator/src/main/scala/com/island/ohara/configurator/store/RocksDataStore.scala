@@ -16,14 +16,16 @@
 
 package com.island.ohara.configurator.store
 
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, DataInputStream, DataOutputStream}
 import java.util
 import java.util.Objects
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 
-import com.island.ohara.client.configurator.v0.{Data, DataKey}
+import com.island.ohara.client.configurator.v0.Data
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.Releasable
+import com.island.ohara.kafka.connector.json.ObjectKey
 import org.rocksdb.{ColumnFamilyDescriptor, _}
 
 import scala.collection.JavaConverters._
@@ -36,9 +38,31 @@ import scala.reflect.{ClassTag, classTag}
   * @param dataSerializer value serializer
   */
 private[store] class RocksDataStore(folder: String, dataSerializer: Serializer[Data]) extends DataStore {
-  private[this] val keySerializer: Serializer[DataKey] = new Serializer[DataKey] {
-    override def to(obj: DataKey): Array[Byte] = Serializer.OBJECT.to(obj)
-    override def from(bytes: Array[Byte]): DataKey = Serializer.OBJECT.from(bytes).asInstanceOf[DataKey]
+
+  /**
+    * ObjectKey is an interface without Serializable mark. Hence, we do the serialization manually.
+    * TODO: Should we have a specific case class for ObjectKey to complete the serialization ??? by chia
+    */
+  private[this] val keySerializer: Serializer[ObjectKey] = new Serializer[ObjectKey] {
+    override def to(obj: ObjectKey): Array[Byte] = {
+      val bytesBuf = new ByteArrayOutputStream();
+      try {
+        val writer = new DataOutputStream(bytesBuf)
+        try {
+          writer.writeUTF(obj.group())
+          writer.writeUTF(obj.name())
+        } finally writer.close()
+        bytesBuf.toByteArray
+      } finally bytesBuf.close()
+    }
+    override def from(bytes: Array[Byte]): ObjectKey = {
+      val bytesBuf = new ByteArrayInputStream(bytes)
+      try {
+        val reader = new DataInputStream(bytesBuf)
+        try ObjectKey.of(reader.readUTF(), reader.readUTF())
+        finally reader.close()
+      } finally bytesBuf.close()
+    }
   }
   private[this] val closed = new AtomicBoolean(false)
   private[this] val classesAndHandles = new ConcurrentHashMap[String, ColumnFamilyHandle]()
@@ -88,7 +112,7 @@ private[store] class RocksDataStore(folder: String, dataSerializer: Serializer[D
     */
   private[this] def handlers(): Seq[ColumnFamilyHandle] = doIfNotClosed(classesAndHandles.values().asScala.toList)
 
-  private[this] def toMap(iter: RocksIterator, firstKey: DataKey, endKey: DataKey): Map[DataKey, Data] =
+  private[this] def toMap(iter: RocksIterator, firstKey: ObjectKey, endKey: ObjectKey): Map[ObjectKey, Data] =
     try {
       if (firstKey == null) iter.seekToFirst() else iter.seek(toBytes(firstKey))
       Iterator
@@ -105,18 +129,18 @@ private[store] class RocksDataStore(folder: String, dataSerializer: Serializer[D
         .toMap
     } finally iter.close()
 
-  private[this] def toBytes(key: DataKey): Array[Byte] = keySerializer.to(Objects.requireNonNull(key))
-  private[this] def toKey(key: Array[Byte]): DataKey = keySerializer.from(Objects.requireNonNull(key))
+  private[this] def toBytes(key: ObjectKey): Array[Byte] = keySerializer.to(Objects.requireNonNull(key))
+  private[this] def toKey(key: Array[Byte]): ObjectKey = keySerializer.from(Objects.requireNonNull(key))
   private[this] def toBytes(value: Data): Array[Byte] = dataSerializer.to(Objects.requireNonNull(value))
   private[this] def toData(value: Array[Byte]): Data = dataSerializer.from(Objects.requireNonNull(value))
 
-  private[this] def _get(handler: ColumnFamilyHandle, key: DataKey): Option[Data] =
+  private[this] def _get(handler: ColumnFamilyHandle, key: ObjectKey): Option[Data] =
     Option(db.get(handler, toBytes(key))).map(toData)
 
-  override def get[T <: Data: ClassTag](key: DataKey)(implicit executor: ExecutionContext): Future[Option[T]] =
+  override def get[T <: Data: ClassTag](key: ObjectKey)(implicit executor: ExecutionContext): Future[Option[T]] =
     Future.successful(_get(getOrCreateHandler[T], key).map(_.asInstanceOf[T]))
 
-  override def value[T <: Data: ClassTag](key: DataKey)(implicit executor: ExecutionContext): Future[T] =
+  override def value[T <: Data: ClassTag](key: ObjectKey)(implicit executor: ExecutionContext): Future[T] =
     get[T](key)
       .map(_.getOrElse(throw new NoSuchElementException(s"$key doesn't exist in ${classTag[T].runtimeClass.getName}")))
 
@@ -129,13 +153,13 @@ private[store] class RocksDataStore(folder: String, dataSerializer: Serializer[D
         .values
         .toList)
 
-  override def remove[T <: Data: ClassTag](key: DataKey)(implicit executor: ExecutionContext): Future[Boolean] =
+  override def remove[T <: Data: ClassTag](key: ObjectKey)(implicit executor: ExecutionContext): Future[Boolean] =
     get[T](key).map { obj =>
       if (obj.isDefined) db.delete(getOrCreateHandler[T], toBytes(key))
       obj.isDefined
     }
 
-  override def addIfPresent[T <: Data: ClassTag](key: DataKey, updater: T => T)(
+  override def addIfPresent[T <: Data: ClassTag](key: ObjectKey, updater: T => T)(
     implicit executor: ExecutionContext): Future[T] =
     value[T](key)
       .map(updater)
@@ -151,25 +175,21 @@ private[store] class RocksDataStore(folder: String, dataSerializer: Serializer[D
       })
 
   override def addIfAbsent[T <: Data](data: T)(implicit executor: ExecutionContext): Future[T] =
-    Future.successful {
-      if (_get(getOrCreateHandler(data.getClass), DataKey(data.group, data.name)).isDefined)
-        throw new IllegalStateException(s"(${data.group}, ${data.name}} already exists on ${data.getClass.getName}")
-      else {
-        db.put(getOrCreateHandler(data.getClass), toBytes(DataKey(data.group, data.name)), toBytes(data))
-        data
-      }
-    }
+    if (_get(getOrCreateHandler(data.getClass), ObjectKey.of(data.group, data.name)).isDefined)
+      Future.failed(
+        new IllegalStateException(s"(${data.group}, ${data.name}} already exists on ${data.getClass.getName}"))
+    else add(data)
 
   override def add[T <: Data](data: T)(implicit executor: ExecutionContext): Future[T] =
     Future.successful {
-      db.put(getOrCreateHandler(data.getClass), toBytes(DataKey(data.group, data.name)), toBytes(data))
+      db.put(getOrCreateHandler(data.getClass), toBytes(ObjectKey.of(data.group, data.name)), toBytes(data))
       data
     }
 
-  override def exist[T <: Data: ClassTag](key: DataKey)(implicit executor: ExecutionContext): Future[Boolean] =
+  override def exist[T <: Data: ClassTag](key: ObjectKey)(implicit executor: ExecutionContext): Future[Boolean] =
     get[T](key).map(_.isDefined)
 
-  override def nonExist[T <: Data: ClassTag](key: DataKey)(implicit executor: ExecutionContext): Future[Boolean] =
+  override def nonExist[T <: Data: ClassTag](key: ObjectKey)(implicit executor: ExecutionContext): Future[Boolean] =
     get[T](key).map(_.isEmpty)
 
   override def size(): Int =
@@ -197,7 +217,7 @@ private[store] class RocksDataStore(folder: String, dataSerializer: Serializer[D
   override def raws()(implicit executor: ExecutionContext): Future[Seq[Data]] =
     Future.successful(handlers().flatMap(handler => toMap(db.newIterator(handler), null, null).values.toList))
 
-  override def raws(key: DataKey)(implicit executor: ExecutionContext): Future[Seq[Data]] =
+  override def raws(key: ObjectKey)(implicit executor: ExecutionContext): Future[Seq[Data]] =
     Future.successful(handlers().flatMap(handler => toMap(db.newIterator(handler), key, key).values.toList))
 
   /**

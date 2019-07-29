@@ -18,10 +18,11 @@ package com.island.ohara.configurator.store
 
 import java.util.Objects
 
-import com.island.ohara.client.configurator.v0.{Data, DataKey}
+import com.island.ohara.client.configurator.v0.Data
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtils, Releasable}
+import com.island.ohara.kafka.connector.json.ObjectKey
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.ClassTag
@@ -38,7 +39,7 @@ trait DataStore extends Releasable {
     * @param executor thread pool
     * @return data associated to type and name
     */
-  def get[T <: Data: ClassTag](key: DataKey)(implicit executor: ExecutionContext): Future[Option[T]]
+  def get[T <: Data: ClassTag](key: ObjectKey)(implicit executor: ExecutionContext): Future[Option[T]]
 
   /**
     * Noted, the type of stored data must be equal to input type.
@@ -46,7 +47,7 @@ trait DataStore extends Releasable {
     * @param executor thread pool
     * @return data associated to type and name
     */
-  def value[T <: Data: ClassTag](key: DataKey)(implicit executor: ExecutionContext): Future[T]
+  def value[T <: Data: ClassTag](key: ObjectKey)(implicit executor: ExecutionContext): Future[T]
 
   /**
     * Noted, the type of stored data must be equal to input type.
@@ -66,7 +67,7 @@ trait DataStore extends Releasable {
     * @param executor thread pool
     * @return all data associated to input name
     */
-  def raws(key: DataKey)(implicit executor: ExecutionContext): Future[Seq[Data]]
+  def raws(key: ObjectKey)(implicit executor: ExecutionContext): Future[Seq[Data]]
 
   /**
     * Remove a "specified" sublcass from ohara data mapping the name. If the data mapping to the name is not the specified
@@ -76,7 +77,7 @@ trait DataStore extends Releasable {
     * @tparam T subclass type
     * @return the removed data
     */
-  def remove[T <: Data: ClassTag](key: DataKey)(implicit executor: ExecutionContext): Future[Boolean]
+  def remove[T <: Data: ClassTag](key: ObjectKey)(implicit executor: ExecutionContext): Future[Boolean]
 
   /**
     * add an object in the store. If the name doesn't  exists, an exception will be thrown.
@@ -85,7 +86,7 @@ trait DataStore extends Releasable {
     * @tparam T type from data
     * @return the removed data
     */
-  def addIfPresent[T <: Data: ClassTag](key: DataKey, updater: T => T)(implicit executor: ExecutionContext): Future[T]
+  def addIfPresent[T <: Data: ClassTag](key: ObjectKey, updater: T => T)(implicit executor: ExecutionContext): Future[T]
 
   /**
     * add a data associated to name to store. Noted, it throw exception if the input data is already associated to
@@ -113,7 +114,7 @@ trait DataStore extends Releasable {
     * @tparam T data type
     * @return true if there is an existed data matching type. Otherwise, false
     */
-  def exist[T <: Data: ClassTag](key: DataKey)(implicit executor: ExecutionContext): Future[Boolean]
+  def exist[T <: Data: ClassTag](key: ObjectKey)(implicit executor: ExecutionContext): Future[Boolean]
 
   /**
     * Noted, the type of stored data must be equal to input type.
@@ -122,7 +123,7 @@ trait DataStore extends Releasable {
     * @tparam T data type
     * @return false if there is an existed data matching type. Otherwise, true
     */
-  def nonExist[T <: Data: ClassTag](key: DataKey)(implicit executor: ExecutionContext): Future[Boolean]
+  def nonExist[T <: Data: ClassTag](key: ObjectKey)(implicit executor: ExecutionContext): Future[Boolean]
 
   /**
     * @return the number of stored data
@@ -136,46 +137,19 @@ trait DataStore extends Releasable {
 
   //----------------[deprecated methods]----------------//
   def get[T <: Data: ClassTag](name: String)(implicit executor: ExecutionContext): Future[Option[T]] =
-    get[T](
-      DataKey(
-        group = Data.GROUP_DEFAULT,
-        name = name
-      ))
+    get[T](ObjectKey.of(Data.GROUP_DEFAULT, name))
   def value[T <: Data: ClassTag](name: String)(implicit executor: ExecutionContext): Future[T] =
-    value[T](
-      DataKey(
-        group = Data.GROUP_DEFAULT,
-        name = name
-      ))
+    value[T](ObjectKey.of(Data.GROUP_DEFAULT, name))
   def raws(name: String)(implicit executor: ExecutionContext): Future[Seq[Data]] = raws(
-    DataKey(
-      group = Data.GROUP_DEFAULT,
-      name = name
-    ))
+    ObjectKey.of(Data.GROUP_DEFAULT, name))
   def remove[T <: Data: ClassTag](name: String)(implicit executor: ExecutionContext): Future[Boolean] =
-    remove[T](
-      DataKey(
-        group = Data.GROUP_DEFAULT,
-        name = name
-      ))
+    remove[T](ObjectKey.of(Data.GROUP_DEFAULT, name))
   def addIfPresent[T <: Data: ClassTag](name: String, updater: T => T)(implicit executor: ExecutionContext): Future[T] =
-    addIfPresent[T](key = DataKey(
-                      group = Data.GROUP_DEFAULT,
-                      name = name
-                    ),
-                    updater = updater)
+    addIfPresent[T](key = ObjectKey.of(Data.GROUP_DEFAULT, name), updater = updater)
   def exist[T <: Data: ClassTag](name: String)(implicit executor: ExecutionContext): Future[Boolean] =
-    exist[T](
-      DataKey(
-        group = Data.GROUP_DEFAULT,
-        name = name
-      ))
+    exist[T](ObjectKey.of(Data.GROUP_DEFAULT, name))
   def nonExist[T <: Data: ClassTag](name: String)(implicit executor: ExecutionContext): Future[Boolean] =
-    nonExist[T](
-      DataKey(
-        group = Data.GROUP_DEFAULT,
-        name = name
-      ))
+    nonExist[T](ObjectKey.of(Data.GROUP_DEFAULT, name))
 }
 
 object DataStore {

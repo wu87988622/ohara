@@ -18,10 +18,11 @@ package com.island.ohara.configurator.route
 
 import java.io.{File, FileOutputStream}
 
-import com.island.ohara.client.configurator.v0.{Data, DataKey, FileApi, StreamApi}
+import com.island.ohara.client.configurator.v0.{Data, FileApi, StreamApi}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
+import com.island.ohara.kafka.connector.json.ObjectKey
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 import spray.json.{JsNumber, JsString}
@@ -115,7 +116,7 @@ class TestFileRoute extends SmallTest with Matchers {
     // upload jar
     val jar = result(fileApi.request.file(f).upload())
     // create streamApp property
-    result(streamApi.request.name(name).jar(DataKey(jar.group, jar.name)).create())
+    result(streamApi.request.name(name).jar(ObjectKey.of(jar.group, jar.name)).create())
     // cannot delete a used jar
     val thrown = the[IllegalArgumentException] thrownBy result(fileApi.delete(jar.group, jar.name))
     thrown.getMessage should include("in used")

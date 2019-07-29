@@ -22,19 +22,19 @@ import com.island.ohara.client.ftp.FtpClient
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Cell, DataType, Row, Serializer, _}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.kafka.connector.json.ConnectorFormatter
+import com.island.ohara.kafka.connector.json.{ConnectorFormatter, TopicKey}
 import com.island.ohara.kafka.{BrokerClient, Consumer, Producer}
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.{After, Before, BeforeClass, Test}
 import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
 object TestFtpSink extends With3Brokers3Workers with Matchers {
 
-  private val TOPIC = "TestFtpSink"
+  private val TOPIC = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
 
   private val data = Row.of(Cell.of("a", "abc"), Cell.of("b", 123), Cell.of("c", true))
 
@@ -43,11 +43,17 @@ object TestFtpSink extends With3Brokers3Workers with Matchers {
     this.setupData(TOPIC)
   }
 
-  def setupData(topicName: String): Unit = {
+  def setupData(topicKey: TopicKey): Unit = {
     val client = BrokerClient.of(testUtil.brokersConnProps)
     try {
-      if (client.exist(topicName)) client.deleteTopic(topicName)
-      client.topicCreator().numberOfPartitions(1).numberOfReplications(1).compacted().topicName(topicName).create()
+      if (client.exist(topicKey.topicNameOnKafka)) client.deleteTopic(topicKey.topicNameOnKafka)
+      client
+        .topicCreator()
+        .numberOfPartitions(1)
+        .numberOfReplications(1)
+        .compacted()
+        .topicName(topicKey.topicNameOnKafka)
+        .create()
     } finally client.close()
 
     val producer = Producer
@@ -56,12 +62,12 @@ object TestFtpSink extends With3Brokers3Workers with Matchers {
       .keySerializer(Serializer.ROW)
       .valueSerializer(Serializer.BYTES)
       .build()
-    try producer.sender().key(data).topicName(topicName).send()
+    try producer.sender().key(data).topicName(topicKey.topicNameOnKafka).send()
     finally producer.close()
 
     val consumer = Consumer
       .builder[Row, Array[Byte]]()
-      .topicName(topicName)
+      .topicName(topicKey.topicNameOnKafka)
       .offsetFromBegin()
       .connectionProps(testUtil.brokersConnProps)
       .keySerializer(Serializer.ROW)
@@ -130,7 +136,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
 
   @Test
   def testReorder(): Unit = {
-    val topicName = TOPIC
+    val topicKey = TOPIC
     val connectorName = methodName
     val newSchema: Seq[Column] = Seq(
       Column.builder().name("a").dataType(DataType.STRING).order(3).build(),
@@ -140,13 +146,13 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .topicName(topicName)
+        .topicKey(topicKey)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
         .name(connectorName)
         .columns(newSchema)
         .settings(props.toMap)
-        .create)
+        .create())
 
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
@@ -166,18 +172,18 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
 
   @Test
   def testHeader(): Unit = {
-    val topicName = TOPIC
+    val topicKey = TOPIC
     val connectorName = methodName
     result(
       workerClient
         .connectorCreator()
-        .topicName(topicName)
+        .topicKey(topicKey)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
         .name(connectorName)
         .columns(schema)
         .settings(props.copy(needHeader = true).toMap)
-        .create)
+        .create())
 
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
@@ -198,17 +204,17 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
 
   @Test
   def testHeaderWithoutSchema(): Unit = {
-    val topicName = TOPIC
+    val topicKey = TOPIC
     val connectorName = methodName
     result(
       workerClient
         .connectorCreator()
-        .topicName(topicName)
+        .topicKey(topicKey)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
         .name(connectorName)
         .settings(props.copy(needHeader = true).toMap)
-        .create)
+        .create())
 
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
@@ -229,7 +235,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
 
   @Test
   def testColumnRename(): Unit = {
-    val topicName = TOPIC
+    val topicKey = TOPIC
     val connectorName = methodName
     val schema = Seq(
       Column.builder().name("a").newName("aa").dataType(DataType.STRING).order(1).build(),
@@ -239,13 +245,13 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .topicName(topicName)
+        .topicKey(topicKey)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
         .name(connectorName)
         .columns(schema)
         .settings(props.copy(needHeader = true).toMap)
-        .create)
+        .create())
 
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
@@ -266,18 +272,18 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
 
   @Test
   def testNormalCase(): Unit = {
-    val topicName = TOPIC
+    val topicKey = TOPIC
     val connectorName = methodName
     result(
       workerClient
         .connectorCreator()
-        .topicName(topicName)
+        .topicKey(topicKey)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
         .name(connectorName)
         .columns(schema)
         .settings(props.toMap)
-        .create)
+        .create())
 
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
@@ -297,17 +303,17 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
 
   @Test
   def testNormalCaseWithoutSchema(): Unit = {
-    val topicName = TOPIC
+    val topicKey = TOPIC
     val connectorName = methodName
     result(
       workerClient
         .connectorCreator()
-        .topicName(topicName)
+        .topicKey(topicKey)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
         .name(connectorName)
         .settings(props.toMap)
-        .create)
+        .create())
 
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
@@ -327,19 +333,19 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
 
   @Test
   def testNormalCaseWithoutEncode(): Unit = {
-    val topicName = TOPIC
+    val topicKey = TOPIC
     val connectorName = methodName
     result(
       workerClient
         .connectorCreator()
-        .topicName(topicName)
+        .topicKey(topicKey)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
         .name(connectorName)
         .columns(schema)
         //will use default UTF-8
         .settings(props.toMap - FTP_ENCODE)
-        .create)
+        .create())
 
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
@@ -359,19 +365,19 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
 
   @Test
   def testPartialColumns(): Unit = {
-    val topicName = TOPIC
+    val topicKey = TOPIC
     val connectorName = methodName
     result(
       workerClient
         .connectorCreator()
-        .topicName(topicName)
+        .topicKey(topicKey)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
         .name(connectorName)
         // skip last column
         .columns(schema.slice(0, schema.length - 1))
         .settings(props.toMap)
-        .create)
+        .create())
 
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
@@ -390,19 +396,19 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
 
   @Test
   def testUnmatchedSchema(): Unit = {
-    val topicName = TOPIC
+    val topicKey = TOPIC
     val connectorName = methodName
     result(
       workerClient
         .connectorCreator()
-        .topicName(topicName)
+        .topicKey(topicKey)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
         .name(connectorName)
         // the name can't be casted to int
         .columns(Seq(Column.builder().name("name").dataType(DataType.INT).order(1).build()))
         .settings(props.toMap)
-        .create)
+        .create())
 
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
@@ -432,17 +438,18 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
 
   @Test
   def testInvalidPort(): Unit = {
+    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     Seq(-1, 0, 10000000).foreach { port =>
       an[IllegalArgumentException] should be thrownBy result(
         workerClient
           .connectorCreator()
-          .topicName(methodName())
+          .topicKey(topicKey)
           .connectorClass(classOf[FtpSink])
           .numberOfTasks(1)
           .name(CommonUtils.randomString(10))
           .columns(schema)
           .settings(props.copy(port = port).toMap)
-          .create)
+          .create())
     }
   }
 

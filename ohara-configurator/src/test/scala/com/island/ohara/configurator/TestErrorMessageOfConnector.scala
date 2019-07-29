@@ -49,7 +49,7 @@ class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
       connectorApi.request
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
-        .topicName(topic.name)
+        .topicKey(topic.key)
         .numberOfTasks(1)
         .setting("you_should_fail", "true")
         .create())
@@ -104,7 +104,7 @@ class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
       connectorApi.request
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
-        .topicName(topic.name)
+        .topicKey(topic.key)
         .numberOfTasks(1)
         .create())
 

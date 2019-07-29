@@ -23,7 +23,7 @@ import com.island.ohara.common.data.Cell
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.kafka.connector.TaskSetting
-import com.island.ohara.kafka.connector.json.ConnectorFormatter
+import com.island.ohara.kafka.connector.json.{ConnectorFormatter, TopicKey}
 import com.island.ohara.kafka.connector.text.TextFileSystem
 import com.island.ohara.kafka.connector.text.csv.CsvSourceConverterFactory
 import com.island.ohara.testing.service.FtpServer
@@ -60,9 +60,8 @@ class TestFtpSourceTask extends SmallTest with Matchers {
     } finally ftpClient.close()
   }
 
-  private[this] def createFtpClient() = {
+  private[this] def createFtpClient() =
     FtpClient.builder().hostname(props.hostname).password(props.password).port(props.port).user(props.user).build()
-  }
 
   private[this] def setupInputData(path: String): Map[Int, Seq[Cell[String]]] = {
     val header = Seq("cf0", "cf1", "cf2")
@@ -95,7 +94,13 @@ class TestFtpSourceTask extends SmallTest with Matchers {
 
   private[this] def createTask() = {
     val task = new FtpSourceTask()
-    task.start(ConnectorFormatter.of().name(methodName()).topicName(methodName()).settings(props.toMap.asJava).raw())
+    task.start(
+      ConnectorFormatter
+        .of()
+        .name(methodName())
+        .topicKey(TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
+        .settings(props.toMap.asJava)
+        .raw())
     task
   }
 

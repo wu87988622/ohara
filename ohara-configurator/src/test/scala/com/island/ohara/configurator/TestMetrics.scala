@@ -47,6 +47,7 @@ class TestMetrics extends WithBrokerWorker with Matchers {
   @Test
   def testTopic(): Unit = {
     val topic = result(topicApi.request.name(CommonUtils.randomString()).create())
+    println(s"[CHIA] key:${topic.key}")
     val producer = Producer
       .builder[String, String]()
       .connectionProps(testUtil().brokersConnProps())
@@ -56,7 +57,7 @@ class TestMetrics extends WithBrokerWorker with Matchers {
     try {
       producer
         .sender()
-        .topicName(topic.name)
+        .topicName(topic.key.topicNameOnKafka)
         .key(CommonUtils.randomString())
         .value(CommonUtils.randomString())
         .send()
@@ -85,7 +86,7 @@ class TestMetrics extends WithBrokerWorker with Matchers {
       connectorApi.request
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
-        .topicName(topic.name)
+        .topicKey(topic.key)
         .numberOfTasks(1)
         .create())
 
@@ -118,7 +119,7 @@ class TestMetrics extends WithBrokerWorker with Matchers {
       connectorApi.request
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
-        .topicName(topic.name)
+        .topicKey(topic.key)
         .numberOfTasks(1)
         .create())
 
@@ -151,7 +152,7 @@ class TestMetrics extends WithBrokerWorker with Matchers {
       connectorApi.request
         .name(CommonUtils.randomString(10))
         .className("com.island.ohara.connector.perf.PerfSource")
-        .topicName(topic.name)
+        .topicKey(topic.key)
         .numberOfTasks(1)
         .settings(Map("perf.batch" -> "1", "perf.frequence" -> java.time.Duration.ofSeconds(1).toString))
         .create())

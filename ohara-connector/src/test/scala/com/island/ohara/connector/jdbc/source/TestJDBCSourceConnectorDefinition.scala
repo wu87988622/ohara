@@ -18,15 +18,15 @@ package com.island.ohara.connector.jdbc.source
 
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.json.SettingDefinition
+import com.island.ohara.kafka.connector.json.{SettingDefinition, TopicKey}
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.Test
 import org.scalatest.Matchers
 
-import scala.concurrent.duration._
 import scala.collection.JavaConverters._
-import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
 class TestJDBCSourceConnectorDefinition extends WithBrokerWorker with Matchers {
   private[this] val jdbcSource = new JDBCSourceConnector
@@ -150,13 +150,14 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker with Matchers {
     val password: String = "123456"
     val tableName: String = "table1"
     val timeStampColumnName: String = "COLUMN1"
+    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
 
     val response = result(
       workerClient
         .connectorValidator()
         .name(CommonUtils.randomString(10))
         .numberOfTasks(1)
-        .topicName(CommonUtils.randomString(5))
+        .topicKey(topicKey)
         .settings(Map(
           DB_URL -> url,
           DB_USERNAME -> userName,

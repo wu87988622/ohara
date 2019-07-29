@@ -166,4 +166,19 @@ public class TestSettingDefinitions extends SmallTest {
     Assert.assertTrue(setting.tableKeys().isEmpty());
     Assert.assertEquals(SettingDefinition.CORE_GROUP, setting.group());
   }
+
+  @Test
+  public void testTopicKeysSetting() {
+    SettingDefinition setting =
+        SettingDefinitions.DEFINITIONS_DEFAULT.stream()
+            .filter(s -> s.key().equals(SettingDefinition.TOPIC_KEYS_DEFINITION.key()))
+            .findFirst()
+            .get();
+    Assert.assertTrue(setting.required());
+    Assert.assertFalse(setting.internal());
+    Assert.assertNull(setting.defaultValue());
+    Assert.assertEquals(SettingDefinition.Reference.TOPIC.name(), setting.reference());
+    Assert.assertTrue(setting.tableKeys().isEmpty());
+    Assert.assertEquals(SettingDefinition.CORE_GROUP, setting.group());
+  }
 }

@@ -21,7 +21,7 @@ import com.island.ohara.client.Enum
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.data.Column
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.json.{PropGroups, SettingDefinition, StringList}
+import com.island.ohara.kafka.connector.json.{PropGroups, SettingDefinition, StringList, TopicKey}
 import spray.json.DefaultJsonProtocol._
 import spray.json.{DeserializationException, JsArray, JsNull, JsObject, JsString, JsValue, RootJsonFormat}
 
@@ -64,11 +64,21 @@ object ConnectorApi {
       .getOrElse(Seq.empty)
     def numberOfTasks: Int = plain(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key()).toInt
     def workerClusterName: Option[String] = plain.get(SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key())
-    def topicNames: Seq[String] =
+
+    /**
+      * TODO: remove this old key parser ... by chia
+      */
+    private[this] def topicKeysFromTopicNames: Set[TopicKey] =
       plain
         .get(SettingDefinition.TOPIC_NAMES_DEFINITION.key())
-        .map(s => StringList.ofJson(s).asScala)
-        .getOrElse(Seq.empty)
+        .map(s => StringList.ofJson(s).asScala.toSet)
+        .map(_.map(TopicKey.of(Data.GROUP_DEFAULT, _)))
+        .getOrElse(Set.empty)
+    def topicKeys: Set[TopicKey] =
+      noJsNull(settings)
+        .get(SettingDefinition.TOPIC_KEYS_DEFINITION.key())
+        .map(_.convertTo[Set[TopicKey]])
+        .getOrElse(topicKeysFromTopicNames)
 
     override def name: String = plain(SettingDefinition.CONNECTOR_NAME_DEFINITION.key())
 
@@ -178,11 +188,21 @@ object ConnectorApi {
       .getOrElse(Seq.empty)
     def numberOfTasks: Int = plain(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key()).toInt
     def workerClusterName: Option[String] = plain.get(SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key())
-    def topicNames: Seq[String] =
+
+    /**
+      * TODO: remove this old key parser ... by chia
+      */
+    private[this] def topicKeysFromTopicNames: Set[TopicKey] =
       plain
         .get(SettingDefinition.TOPIC_NAMES_DEFINITION.key())
-        .map(s => StringList.ofJson(s).asScala)
-        .getOrElse(Seq.empty)
+        .map(s => StringList.ofJson(s).asScala.toSet)
+        .map(_.map(TopicKey.of(Data.GROUP_DEFAULT, _)))
+        .getOrElse(Set.empty)
+    def topicKeys: Set[TopicKey] =
+      noJsNull(settings)
+        .get(SettingDefinition.TOPIC_KEYS_DEFINITION.key())
+        .map(_.convertTo[Set[TopicKey]])
+        .getOrElse(topicKeysFromTopicNames)
     override def tags: Map[String, JsValue] = noJsNull(settings)
       .get(SettingDefinition.TAGS_DEFINITION.key())
       .map {
@@ -223,7 +243,7 @@ object ConnectorApi {
     protected[this] var name: String = _
     protected[this] var className: String = _
     protected[this] var columns: Seq[Column] = _
-    protected[this] var topicNames: Seq[String] = _
+    protected[this] var topicKeys: Set[TopicKey] = _
     protected[this] var numberOfTasks: Int = DEFAULT_NUMBER_OF_TASKS
     protected[this] var settings: Map[String, String] = Map.empty
     protected[this] var workerClusterName: String = _
@@ -251,13 +271,13 @@ object ConnectorApi {
 
     @Optional(
       "You don't need to fill this field when update/create connector. But this filed is required in starting connector")
-    def topicName(topicName: String): BasicRequest.this.type = topicNames(Seq(CommonUtils.requireNonEmpty(topicName)))
+    def topicKey(topicKey: TopicKey): BasicRequest.this.type = topicKeys(Set(topicKey))
 
     @Optional(
       "You don't need to fill this field when update/create connector. But this filed is required in starting connector")
-    def topicNames(topicNames: Seq[String]): BasicRequest.this.type = {
+    def topicKeys(topicKeys: Set[TopicKey]): BasicRequest.this.type = {
       import scala.collection.JavaConverters._
-      this.topicNames = CommonUtils.requireNonEmpty(topicNames.asJava).asScala
+      this.topicKeys = CommonUtils.requireNonEmpty(topicKeys.asJava).asScala.toSet
       this
     }
 
@@ -313,9 +333,9 @@ object ConnectorApi {
                                                        else if (columns.isEmpty) JsArray.empty
                                                        else
                                                          PropGroups.ofColumns(columns.asJava).toJsonString.parseJson),
-        SettingDefinition.TOPIC_NAMES_DEFINITION.key() -> (if (topicNames == null) JsNull
-                                                           else if (topicNames.isEmpty) JsArray.empty
-                                                           else StringList.toJsonString(topicNames.asJava).parseJson),
+        SettingDefinition.TOPIC_KEYS_DEFINITION.key() -> (if (topicKeys == null) JsNull
+                                                          else if (topicKeys.isEmpty) JsArray.empty
+                                                          else JsArray(topicKeys.map(TOPIC_KEY_FORMAT.write).toVector)),
         SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key() -> JsNumber(CommonUtils.requirePositiveInt(numberOfTasks)),
         SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key() -> (if (workerClusterName == null) JsNull
                                                                    else

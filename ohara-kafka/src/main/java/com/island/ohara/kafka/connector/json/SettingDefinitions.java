@@ -34,6 +34,8 @@ public final class SettingDefinitions {
           SettingDefinition.VALUE_CONVERTER_DEFINITION,
           SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION,
           SettingDefinition.NUMBER_OF_TASKS_DEFINITION,
+          SettingDefinition.TOPIC_KEYS_DEFINITION,
+          // TODO: remove this one ... by chia
           SettingDefinition.TOPIC_NAMES_DEFINITION,
           SettingDefinition.TAGS_DEFINITION);
 

@@ -19,18 +19,16 @@ package com.island.ohara.configurator.validation
 import com.island.ohara.client.configurator.v0.{ValidationApi, WorkerApi}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.{Configurator, DumbSink}
-import com.island.ohara.kafka.connector.json.SettingDefinition
+import com.island.ohara.kafka.connector.json.{SettingDefinition, TopicKey}
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.{After, Test}
 import org.scalatest.Matchers
-import spray.json.JsString
+import spray.json.{JsString, _}
 
+import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-
-import spray.json._
-import scala.collection.JavaConverters._
 class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
   private[this] val configurator =
     Configurator.builder.fake(testUtil().brokersConnProps(), testUtil().workersConnProps()).build()
@@ -41,7 +39,7 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
 
   @Test
   def goodCase(): Unit = {
-    val topicNames = Seq(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val topicKeys = Set(TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10)))
     val response = result(
       ValidationApi.access
         .hostname(configurator.hostname)
@@ -51,13 +49,13 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
         .className(classOf[DumbSink].getName)
         .numberOfTasks(1)
         .workerClusterName(wkCluster.name)
-        .topicNames(topicNames)
+        .topicKeys(topicKeys)
         .verify())
     response.className.get() shouldBe classOf[DumbSink].getName
     response.settings().size() should not be 0
     response.numberOfTasks().get() shouldBe 1
     import scala.collection.JavaConverters._
-    response.topicNames().asScala shouldBe topicNames
+    response.topicKeys().asScala.toSet shouldBe topicKeys
     response.author().isPresent shouldBe true
     response.version().isPresent shouldBe true
     response.revision().isPresent shouldBe true
@@ -75,7 +73,7 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
       .name(CommonUtils.randomString(10))
       .numberOfTasks(1)
       .workerClusterName(wkCluster.name)
-      .topicName(CommonUtils.randomString())
+      .topicKey(TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString()))
       .verify())
 
   @Test
@@ -100,12 +98,12 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
         .numberOfTasks(2)
-        .topicName(CommonUtils.randomString())
+        .topicKey(TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString()))
         .verify())
     response.className.get() shouldBe classOf[DumbSink].getName
     response.settings().size() should not be 0
     response.numberOfTasks().get shouldBe 2
-    response.topicNames().size() shouldBe 1
+    response.topicNamesOnKafka().size() shouldBe 1
     response.author().isPresent shouldBe true
     response.version().isPresent shouldBe true
     response.revision().isPresent shouldBe true
@@ -124,13 +122,13 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
         .connectorRequest
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
-        .topicName(CommonUtils.randomString())
+        .topicKey(TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString()))
         .workerClusterName(wkCluster.name)
         .verify())
     response.className.get() shouldBe classOf[DumbSink].getName
     response.settings().size() should not be 0
     response.numberOfTasks().get shouldBe 1
-    response.topicNames().size() shouldBe 1
+    response.topicNamesOnKafka().size() shouldBe 1
     response.author().isPresent shouldBe true
     response.version().isPresent shouldBe true
     response.revision().isPresent shouldBe true
@@ -149,7 +147,7 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
         .connectorRequest
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
-        .topicName(CommonUtils.randomString())
+        .topicKey(TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString()))
         .workerClusterName(wkCluster.name)
         .tags(tags)
         .verify())
@@ -173,7 +171,7 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
         .connectorRequest
         .name(CommonUtils.randomString(10))
         .className(classOf[DumbSink].getName)
-        .topicName(CommonUtils.randomString())
+        .topicKey(TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString()))
         .workerClusterName(wkCluster.name)
         .verify())
     response2.errorCount() shouldBe 0

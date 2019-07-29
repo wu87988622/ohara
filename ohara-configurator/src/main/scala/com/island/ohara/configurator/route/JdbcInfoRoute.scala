@@ -17,11 +17,11 @@
 package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
-import com.island.ohara.client.configurator.v0.DataKey
 import com.island.ohara.client.configurator.v0.JdbcApi._
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.RouteUtils.{HookOfCreation, HookOfUpdate}
 import com.island.ohara.configurator.store.DataStore
+import com.island.ohara.kafka.connector.json.ObjectKey
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -38,7 +38,7 @@ private[configurator] object JdbcInfoRoute {
                tags = request.tags))
 
   private[this] def hookOfUpdate: HookOfUpdate[Creation, Update, JdbcInfo] =
-    (key: DataKey, update: Update, previous: Option[JdbcInfo]) =>
+    (key: ObjectKey, update: Update, previous: Option[JdbcInfo]) =>
       Future.successful {
         previous.fold {
           JdbcInfo(

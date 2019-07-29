@@ -18,11 +18,11 @@ package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
 import com.island.ohara.agent.ClusterCollie
-import com.island.ohara.client.configurator.v0.DataKey
 import com.island.ohara.client.configurator.v0.NodeApi._
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.RouteUtils._
 import com.island.ohara.configurator.store.DataStore
+import com.island.ohara.kafka.connector.json.ObjectKey
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -65,7 +65,7 @@ object NodeRoute {
 
   private[this] def hookOfUpdate(implicit clusterCollie: ClusterCollie,
                                  executionContext: ExecutionContext): HookOfUpdate[Creation, Update, Node] =
-    (key: DataKey, update: Update, previous: Option[Node]) =>
+    (key: ObjectKey, update: Update, previous: Option[Node]) =>
       updateServices(
         Node(
           hostname = key.name,
@@ -81,7 +81,7 @@ object NodeRoute {
 
   private[this] def hookBeforeDelete(implicit store: DataStore,
                                      clusterCollie: ClusterCollie,
-                                     executionContext: ExecutionContext): HookBeforeDelete = (key: DataKey) =>
+                                     executionContext: ExecutionContext): HookBeforeDelete = (key: ObjectKey) =>
     store
       .get[Node](key)
       .flatMap(_.map {

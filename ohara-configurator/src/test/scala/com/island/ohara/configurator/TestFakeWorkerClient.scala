@@ -17,24 +17,26 @@
 package com.island.ohara.configurator
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorState
 import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.fake.FakeWorkerClient
+import com.island.ohara.kafka.connector.json.TopicKey
 import org.junit.Test
 import org.scalatest.Matchers
 
-import scala.concurrent.{Await, Future}
-import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 class TestFakeWorkerClient extends SmallTest with Matchers {
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
   @Test
   def testControlConnector(): Unit = {
     val connectorName = methodName
-    val topicName = methodName
+    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val className = methodName
     val fake = new FakeWorkerClient()
     result(
-      fake.connectorCreator().name(connectorName).topicName(topicName).numberOfTasks(1).className(className).create)
+      fake.connectorCreator().name(connectorName).topicKey(topicKey).numberOfTasks(1).className(className).create())
 
     result(fake.exist(connectorName)) shouldBe true
 

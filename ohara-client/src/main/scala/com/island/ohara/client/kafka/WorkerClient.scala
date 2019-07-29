@@ -165,7 +165,7 @@ trait WorkerClient {
     connectorValidator()
       .className(connectorClassName)
       // kafka 2.x requires topic names for all sink connectors so we add a random topic for this request.
-      .topicName(CommonUtils.randomString(5))
+      .topicKey(TopicKey.of("fake_group", "fake_name"))
       .run()
       .map(_.settings().asScala.map(_.definition()))
 
@@ -366,17 +366,6 @@ object WorkerClient {
     def connectorClass[T](clz: Class[T]): Creator = className(Objects.requireNonNull(clz).getName)
 
     /**
-      * set the topic in which you have interest.
-      *
-      * @param topicName topic
-      * @return this one
-      */
-    def topicName(topicName: String): Creator = {
-      connectorFormatter.topicName(topicName)
-      this
-    }
-
-    /**
       * the max number from sink task you want to create
       *
       * @param numberOfTasks max number from sink task
@@ -385,6 +374,12 @@ object WorkerClient {
     @Optional("default is 1")
     def numberOfTasks(numberOfTasks: Int): Creator = {
       connectorFormatter.numberOfTasks(numberOfTasks)
+      this
+    }
+
+    @Optional("default is empty")
+    def setting(key: String, value: String): Creator = {
+      connectorFormatter.setting(key, value)
       this
     }
 
@@ -411,14 +406,10 @@ object WorkerClient {
       this
     }
 
-    /**
-      * set the topics in which you have interest.
-      *
-      * @param topicNames topics
-      * @return this one
-      */
-    def topicNames(topicNames: Seq[String]): Creator = {
-      connectorFormatter.topicNames(topicNames.asJava)
+    def topicKey(topicKey: TopicKey): Creator = topicKeys((Set(topicKey)))
+
+    def topicKeys(topicKeys: Set[TopicKey]): Creator = {
+      connectorFormatter.topicKeys(topicKeys.asJava)
       this
     }
 
@@ -498,24 +489,17 @@ object WorkerClient {
       this
     }
 
-    /**
-      * set the topic in which you have interest.
-      *
-      * @param topicName topic
-      * @return this one
-      */
-    @Optional("Default is none")
-    def topicName(topicName: String): Validator = topicNames(Seq(CommonUtils.requireNonEmpty(topicName)))
+    def topicKey(topicKey: TopicKey): Validator = topicKeys((Set(topicKey)))
 
     /**
       * set the topic in which you have interest.
       *
-      * @param topicNames topic
+      * @param topicKeys topic keys
       * @return this one
       */
     @Optional("Default is none")
-    def topicNames(topicNames: Seq[String]): Validator = {
-      this.formatter.topicNames(CommonUtils.requireNonEmpty(topicNames.asJava))
+    def topicKeys(topicKeys: Set[TopicKey]): Validator = {
+      formatter.topicKeys(topicKeys.asJava)
       this
     }
 

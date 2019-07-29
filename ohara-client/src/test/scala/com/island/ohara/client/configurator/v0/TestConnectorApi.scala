@@ -22,10 +22,11 @@ import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.data.{Column, DataType, Serializer}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.json.{PropGroups, SettingDefinition}
+import com.island.ohara.kafka.connector.json.{PropGroups, SettingDefinition, TopicKey}
 import org.junit.Test
 import org.scalatest.Matchers
 import spray.json.{JsArray, JsString, _}
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import spray.json.DefaultJsonProtocol._
 class TestConnectorApi extends SmallTest with Matchers {
@@ -54,7 +55,7 @@ class TestConnectorApi extends SmallTest with Matchers {
     creation.workerClusterName.get shouldBe workerClusterName
     creation.className shouldBe className
     creation.columns shouldBe Seq.empty
-    creation.topicNames shouldBe topicNames
+    creation.topicKeys shouldBe topicNames.map(n => TopicKey.of(Data.GROUP_DEFAULT, n)).toSet
     creation.numberOfTasks shouldBe 1
     creation.tags shouldBe tags
     // this key is deprecated so json converter will replace it by new one
@@ -84,7 +85,7 @@ class TestConnectorApi extends SmallTest with Matchers {
     creation2.workerClusterName.get shouldBe workerClusterName
     creation2.className shouldBe className
     creation2.columns shouldBe Seq(column)
-    creation2.topicNames shouldBe topicNames
+    creation.topicKeys shouldBe topicNames.map(n => TopicKey.of(Data.GROUP_DEFAULT, n)).toSet
     creation2.numberOfTasks shouldBe 1
     // this key is deprecated so json converter will replace it by new one
     creation2.settings.contains("className") shouldBe false
@@ -310,12 +311,12 @@ class TestConnectorApi extends SmallTest with Matchers {
     an[NullPointerException] should be thrownBy ConnectorApi.access.request.workerClusterName(null)
 
   @Test
-  def emptyTopicNames(): Unit =
-    an[IllegalArgumentException] should be thrownBy ConnectorApi.access.request.topicNames(Seq.empty)
+  def emptyTopicKeys(): Unit =
+    an[IllegalArgumentException] should be thrownBy ConnectorApi.access.request.topicKeys(Set.empty)
 
   @Test
-  def nullTopicNames(): Unit =
-    an[NullPointerException] should be thrownBy ConnectorApi.access.request.topicName(null)
+  def nullTopicKeys(): Unit =
+    an[NullPointerException] should be thrownBy ConnectorApi.access.request.topicKeys(null)
 
   @Test
   def emptySettings(): Unit =
@@ -328,17 +329,17 @@ class TestConnectorApi extends SmallTest with Matchers {
   def testCreation(): Unit = {
     val name = CommonUtils.randomString(10)
     val className = CommonUtils.randomString(10)
-    val topicNames = Seq(CommonUtils.randomString(10))
+    val topicKeys = Set(TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10)))
     val map = Map(
       CommonUtils.randomString(10) -> CommonUtils.randomString(10),
       CommonUtils.randomString(10) -> CommonUtils.randomString(10),
       CommonUtils.randomString(10) -> CommonUtils.randomString(10)
     )
     val creation =
-      ConnectorApi.access.request.name(name).className(className).topicNames(topicNames).settings(map).creation
+      ConnectorApi.access.request.name(name).className(className).topicKeys(topicKeys).settings(map).creation
     creation.name shouldBe name
     creation.className shouldBe className
-    creation.topicNames shouldBe topicNames
+    creation.topicKeys shouldBe topicKeys
     map.foreach {
       case (k, v) => creation.plain(k) shouldBe v
     }

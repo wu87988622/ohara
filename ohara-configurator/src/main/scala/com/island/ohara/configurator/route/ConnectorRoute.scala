@@ -20,7 +20,6 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.server
 import com.island.ohara.agent.{NoSuchClusterException, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ConnectorApi._
-import com.island.ohara.client.configurator.v0.DataKey
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
@@ -28,7 +27,7 @@ import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.RouteUtils._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
-import com.island.ohara.kafka.connector.json.SettingDefinition
+import com.island.ohara.kafka.connector.json.{ObjectKey, SettingDefinition}
 import com.typesafe.scalalogging.Logger
 import spray.json.{JsString, JsValue}
 
@@ -112,7 +111,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
     (_: String, creation: Creation) => Future.successful(toRes(creation))
 
   private[this] def hookOfUpdate: HookOfUpdate[Creation, Update, ConnectorDescription] =
-    (key: DataKey, update: Update, previous: Option[ConnectorDescription]) => {
+    (key: ObjectKey, update: Update, previous: Option[ConnectorDescription]) => {
       // merge the settings from previous one
       val newSettings = Creation(
         previous
@@ -127,7 +126,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
 
   private[this] def hookBeforeDelete(implicit store: DataStore,
                                      workerCollie: WorkerCollie,
-                                     executionContext: ExecutionContext): HookBeforeDelete = (key: DataKey) =>
+                                     executionContext: ExecutionContext): HookBeforeDelete = (key: ObjectKey) =>
     store
       .get[ConnectorDescription](key)
       .flatMap(_.map { connectorDescription =>
@@ -150,7 +149,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
                                 workerCollie: WorkerCollie,
                                 meterCache: MeterCache,
                                 executionContext: ExecutionContext): HookOfStart[ConnectorDescription] =
-    (key: DataKey) =>
+    (key: ObjectKey) =>
       store.value[ConnectorDescription](key).flatMap { connectorDesc =>
         CollieUtils
           .workerClient(connectorDesc.workerClusterName)
@@ -163,10 +162,12 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
           }
           .flatMap {
             case (cluster, wkClient, topicInfos) =>
-              connectorDesc.topicNames.foreach(t =>
-                if (!topicInfos.exists(_.name == t))
-                  throw new NoSuchElementException(s"$t doesn't exist. actual:${topicInfos.map(_.name).mkString(",")}"))
-              if (connectorDesc.topicNames.isEmpty) throw new IllegalArgumentException("topics are required")
+              connectorDesc.topicKeys.foreach(
+                key =>
+                  if (!topicInfos.exists(_.key == key))
+                    throw new NoSuchElementException(
+                      s"$key doesn't exist. actual:${topicInfos.map(_.name).mkString(",")}"))
+              if (connectorDesc.topicKeys.isEmpty) throw new IllegalArgumentException("topics are required")
               wkClient.exist(connectorDesc.name).flatMap {
                 if (_) update(connectorDesc, cluster, wkClient)
                 else
@@ -176,6 +177,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
                     // always override the name
                     .name(connectorDesc.name)
                     .threadPool(executionContext)
+                    .topicKeys(connectorDesc.topicKeys)
                     .create()
                     .map(res =>
                       connectorDesc.copy(state =
@@ -189,22 +191,23 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
   private[this] def hookOfStop(implicit store: DataStore,
                                workerCollie: WorkerCollie,
                                meterCache: MeterCache,
-                               executionContext: ExecutionContext): HookOfStop[ConnectorDescription] = (key: DataKey) =>
-    store.value[ConnectorDescription](key).flatMap { connectorConfig =>
-      CollieUtils.workerClient(connectorConfig.workerClusterName).flatMap {
-        case (cluster, wkClient) =>
-          wkClient.exist(key.name).flatMap {
-            if (_)
-              wkClient.delete(key.name).flatMap(_ => update(connectorConfig, cluster, wkClient))
-            else update(connectorConfig, cluster, wkClient)
-          }
-      }
-  }
+                               executionContext: ExecutionContext): HookOfStop[ConnectorDescription] =
+    (key: ObjectKey) =>
+      store.value[ConnectorDescription](key).flatMap { connectorConfig =>
+        CollieUtils.workerClient(connectorConfig.workerClusterName).flatMap {
+          case (cluster, wkClient) =>
+            wkClient.exist(key.name).flatMap {
+              if (_)
+                wkClient.delete(key.name).flatMap(_ => update(connectorConfig, cluster, wkClient))
+              else update(connectorConfig, cluster, wkClient)
+            }
+        }
+    }
 
   private[this] def hookOfPause(implicit store: DataStore,
                                 workerCollie: WorkerCollie,
                                 executionContext: ExecutionContext): HookOfPause[ConnectorDescription] =
-    (key: DataKey) =>
+    (key: ObjectKey) =>
       store.value[ConnectorDescription](key).flatMap { connectorConfig =>
         CollieUtils.workerClient(connectorConfig.workerClusterName).flatMap {
           case (_, wkClient) =>
@@ -219,7 +222,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
   private[this] def hookOfResume(implicit store: DataStore,
                                  workerCollie: WorkerCollie,
                                  executionContext: ExecutionContext): HookOfResume[ConnectorDescription] =
-    (key: DataKey) =>
+    (key: ObjectKey) =>
       store.value[ConnectorDescription](key).flatMap { connectorConfig =>
         CollieUtils.workerClient(connectorConfig.workerClusterName).flatMap {
           case (_, wkClient) =>

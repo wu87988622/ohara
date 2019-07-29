@@ -16,7 +16,7 @@
 
 package com.island.ohara.client.configurator.v0
 
-import com.island.ohara.kafka.connector.json.SettingDefinition
+import com.island.ohara.kafka.connector.json.{ObjectKey, SettingDefinition}
 import spray.json.JsValue
 
 /**
@@ -31,10 +31,8 @@ trait Data {
     * a helper method used to generate the key of this data.
     * @return key
     */
-  final def key: DataKey = DataKey(
-    group = group,
-    name = name
-  )
+  def key: ObjectKey = ObjectKey.of(group, name)
+
   def lastModified: Long
   def kind: String
   def tags: Map[String, JsValue]
@@ -53,4 +51,5 @@ object Data {
   val TAGS_KEY: String = SettingDefinition.TAGS_DEFINITION.key()
   val FORCE_KEY = "force"
   val CLUSTER_KEY = "cluster"
+
 }

@@ -19,16 +19,17 @@ import akka.http.scaladsl.server
 import com.island.ohara.agent.ClusterCollie
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorDescription
+import com.island.ohara.client.configurator.v0.Data
 import com.island.ohara.client.configurator.v0.MetricsApi._
 import com.island.ohara.client.configurator.v0.PipelineApi._
 import com.island.ohara.client.configurator.v0.StreamApi.{StreamAppDescription, StreamClusterInfo}
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import com.island.ohara.client.configurator.v0.{Data, DataKey}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.RouteUtils._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
+import com.island.ohara.kafka.connector.json.ObjectKey
 
 import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object PipelineRoute {
@@ -76,7 +77,7 @@ private[configurator] object PipelineRoute {
         state = None,
         error = None,
         // noted we create a topic with name rather than name
-        metrics = Metrics(meterCache.meters(clusterInfo).getOrElse(data.name, Seq.empty)),
+        metrics = Metrics(meterCache.meters(clusterInfo).getOrElse(data.topicNameOnKafka, Seq.empty)),
         lastModified = data.lastModified,
         tags = data.tags
       ))
@@ -190,7 +191,7 @@ private[configurator] object PipelineRoute {
                                  clusterCollie: ClusterCollie,
                                  executionContext: ExecutionContext,
                                  meterCache: MeterCache): HookOfUpdate[Creation, Update, Pipeline] =
-    (key: DataKey, update: Update, previous: Option[Pipeline]) =>
+    (key: ObjectKey, update: Update, previous: Option[Pipeline]) =>
       updateObjects(
         Pipeline(
           group = key.group,

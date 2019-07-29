@@ -19,8 +19,10 @@ package com.island.ohara.kafka.connector.json;
 import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.annotations.Optional;
 import com.island.ohara.common.data.Column;
+import com.island.ohara.common.json.JsonUtils;
 import com.island.ohara.common.util.CommonUtils;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Kafka worker accept json and then unmarshal it to Map[String, String]. In most cases we can't
@@ -71,14 +73,36 @@ public final class ConnectorFormatter {
     return setting(SettingDefinition.CONNECTOR_CLASS_DEFINITION.key(), className);
   }
 
-  public ConnectorFormatter topicName(String topicName) {
-    return topicNames(Collections.singletonList(CommonUtils.requireNonEmpty(topicName)));
-  }
-
-  public ConnectorFormatter topicNames(List<String> topicNames) {
-    topicNames.forEach(CommonUtils::requireNonEmpty);
+  /**
+   * topic names, now, are formatted by group and name.
+   *
+   * @param topicNames topic names
+   * @return this formatter
+   */
+  private ConnectorFormatter topicNames(Set<String> topicNames) {
     return setting(
         SettingDefinition.TOPIC_NAMES_DEFINITION.key(), StringList.toKafkaString(topicNames));
+  }
+
+  public ConnectorFormatter topicKey(TopicKey key) {
+    return topicKeys(Collections.singleton(key));
+  }
+
+  private static String toJsonString(Collection<? extends TopicKey> keys) {
+    return JsonUtils.toString(
+        keys.stream()
+            .map(
+                key -> {
+                  if (key instanceof KeyImpl) return (KeyImpl) key;
+                  else return new KeyImpl(key.group(), key.name());
+                })
+            .collect(Collectors.toList()));
+  }
+
+  public ConnectorFormatter topicKeys(Set<TopicKey> topicKeys) {
+    setting(SettingDefinition.TOPIC_KEYS_DEFINITION.key(), toJsonString(topicKeys));
+    return topicNames(
+        topicKeys.stream().map(TopicKey::topicNameOnKafka).collect(Collectors.toSet()));
   }
 
   public ConnectorFormatter numberOfTasks(int numberOfTasks) {

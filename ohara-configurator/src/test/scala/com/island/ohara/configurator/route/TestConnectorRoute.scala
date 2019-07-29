@@ -133,7 +133,7 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .create())
 
     // absent worker cluster is ok since there is only one worker cluster
-    val connector = result(connectorApi.request.topicName(topic.name).create())
+    val connector = result(connectorApi.request.topicKey(topic.key).create())
     // In creation, workerClusterName will not be auto-filled
     connector.workerClusterName.isEmpty shouldBe true
     // In start, workerClusterName will be filled by configurator (if there is only one)
@@ -171,7 +171,7 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .request
         .name(CommonUtils.randomString(10))
         .className(CommonUtils.randomString(10))
-        .topicName(topic.name)
+        .topicKey(topic.key)
         .workerClusterName(wk.name)
         .create())
     //pass since we have assigned a worker cluster
@@ -195,7 +195,7 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .request
         .name(CommonUtils.randomString(10))
         .className(CommonUtils.randomString(10))
-        .topicName(topic.name)
+        .topicKey(topic.key)
         .create())
 
     result(connectorApi.start(connector.name)).state should not be None
@@ -220,7 +220,7 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .request
         .name(CommonUtils.randomString(10))
         .className(CommonUtils.randomString(10))
-        .topicName(topic.name)
+        .topicKey(topic.key)
         .create())
 
     result(connectorApi.start(connector.name)).state should not be None
@@ -245,7 +245,7 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .request
         .name(CommonUtils.randomString(10))
         .className(CommonUtils.randomString(10))
-        .topicName(topic.name)
+        .topicKey(topic.key)
         .create())
 
     result(connectorApi.start(connector.name)).state should not be None
@@ -270,7 +270,7 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .request
         .name(CommonUtils.randomString(10))
         .className(CommonUtils.randomString(10))
-        .topicName(topic.name)
+        .topicKey(topic.key)
         .create())
 
     result(connectorApi.start(connector.name)).state should not be None
@@ -306,7 +306,7 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .name(CommonUtils.randomString(10))
         .className(CommonUtils.randomString(10))
         .workerClusterName(originWkName)
-        .topicName(topic.name)
+        .topicKey(topic.key)
         .create())
 
     result(connectorApi.start(response.name))
@@ -373,7 +373,7 @@ class TestConnectorRoute extends SmallTest with Matchers {
           |}
         """.stripMargin.parseJson)
     request.className shouldBe "com.island.ohara.connector.perf.PerfSource"
-    request.topicNames.head shouldBe "59e9010c-fd9c-4a41-918a-dacc9b84aa2b"
+    request.topicKeys.head.name shouldBe "59e9010c-fd9c-4a41-918a-dacc9b84aa2b"
     request.numberOfTasks shouldBe 1
     request.plain("perf.batch") shouldBe "1"
     request.columns.size shouldBe 2
