@@ -27,10 +27,10 @@ import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] object FtpInfoRoute {
 
-  private[this] def hookOfCreation: HookOfCreation[Creation, FtpInfo] = (group: String, creation: Creation) =>
+  private[this] def hookOfCreation: HookOfCreation[Creation, FtpInfo] = (creation: Creation) =>
     Future.successful(
       FtpInfo(
-        group = group,
+        group = creation.group,
         name = creation.name,
         hostname = creation.hostname,
         port = creation.port,

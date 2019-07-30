@@ -166,14 +166,17 @@ class TestJdbcInfoApi extends SmallTest with Matchers {
                                                               |}
       """.stripMargin.parseJson)
 
+    creation.group shouldBe Data.GROUP_DEFAULT
     creation.name.length shouldBe 10
     creation.url shouldBe url
     creation.user shouldBe user
     creation.password shouldBe password
 
+    val group = CommonUtils.randomString()
     val name = CommonUtils.randomString()
     val creation2 = JdbcInfoApi.JDBC_CREATION_JSON_FORMAT.read(s"""
         |{
+        | "group": "$group",
         | "name": "$name",
         | "url": "$url",
         | "user": "$user",
@@ -181,6 +184,7 @@ class TestJdbcInfoApi extends SmallTest with Matchers {
         |}
       """.stripMargin.parseJson)
 
+    creation2.group shouldBe group
     creation2.name shouldBe name
     creation2.url shouldBe url
     creation2.user shouldBe user

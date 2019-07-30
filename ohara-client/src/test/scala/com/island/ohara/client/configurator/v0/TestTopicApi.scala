@@ -80,17 +80,20 @@ class TestTopicApi extends SmallTest with Matchers {
                                                            |}
        """.stripMargin.parseJson)
 
+    creation.group shouldBe Data.GROUP_DEFAULT
     creation.name.length shouldBe 10
     creation.brokerClusterName shouldBe None
     creation.numberOfPartitions shouldBe TopicApi.DEFAULT_NUMBER_OF_PARTITIONS
     creation.numberOfReplications shouldBe TopicApi.DEFAULT_NUMBER_OF_REPLICATIONS
     creation.configs shouldBe Map.empty
 
+    val group = CommonUtils.randomString()
     val name = CommonUtils.randomString()
     val key = CommonUtils.randomString()
     val value = CommonUtils.randomString()
     val creation2 = TopicApi.TOPIC_CREATION_FORMAT.read(s"""
          |{
+         | "group": "$group",
          | "name": "$name",
          | "brokerClusterName": "$brokerClusterName",
          | "numberOfPartitions": $numberOfPartitions,
@@ -101,6 +104,7 @@ class TestTopicApi extends SmallTest with Matchers {
          |}
        """.stripMargin.parseJson)
 
+    creation2.group shouldBe group
     creation2.name shouldBe name
     creation2.brokerClusterName.get shouldBe brokerClusterName
     creation2.numberOfPartitions shouldBe numberOfPartitions

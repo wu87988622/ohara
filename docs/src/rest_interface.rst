@@ -151,7 +151,7 @@ The following information are tagged by ohara.
 store a topic properties
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-*POST /v0/topics?group=${group}*
+*POST /v0/topics*
 
 1. group (**string**) — topic group. Default group is "default".
 2. name (**string**) — topic name
@@ -374,7 +374,7 @@ The following information are tagged by ohara.
 store a ftp information
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-*POST /v0/ftp?group=${group}*
+*POST /v0/ftp*
 
 1. name (**string**) — name of this ftp information
 2. hostname (**string**) — ftp server hostname
@@ -558,7 +558,7 @@ The following information are tagged by ohara.
 store a hdfs information
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-*POST /v0/hdfs?group=${group}*
+*POST /v0/hdfs*
 
 1. name (**string**) — name of this hdfs information.
 2. uri (**string**) — hdfs connection information. The form looks like
@@ -726,7 +726,7 @@ The following information are tagged by ohara.
 store a jdbc information
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-*POST /v0/jdbc?group=$group*
+*POST /v0/jdbc*
 
 1. name (**string**) — name of this jdbc information.
 2. url (**string**) — jdbc connection information. format:
@@ -950,7 +950,7 @@ you will observe the following response after you store the settings with connec
 create the settings of connector
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*POST /v0/connectors?group=${group}*
+*POST /v0/connectors*
 
 It is ok to lack some common settings when creating settings for a
 connector. However, it is illegal to start a connector with incomplete
@@ -1264,8 +1264,9 @@ on a dead cluster will get an abstract with error state.
 
 The properties used in generating pipeline are shown below.
 
-1. name (**string**) — pipeline’s name
-2. flows (**array(object)**) — the relationship between objects
+1. group (**string**) — pipeline’s name
+2. name (**string**) — pipeline’s name
+3. flows (**array(object)**) — the relationship between objects
 
   - flows[i].from (**object**) — the endpoint of source
 
@@ -1277,7 +1278,7 @@ The properties used in generating pipeline are shown below.
     - flows[i].to[j].group — the group of sink[j]
     - flows[i].to[j].name — the name of sink[j]
 
-3. tags (**object**) — the extra description to this object
+4. tags (**object**) — the extra description to this object
 
 
 Following information are written by ohara.

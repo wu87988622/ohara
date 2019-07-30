@@ -45,6 +45,7 @@ object NodeApi {
                       password: Option[String],
                       tags: Map[String, JsValue])
       extends CreationRequest {
+    override def group: String = Data.GROUP_DEFAULT
     override def name: String = hostname
   }
   implicit val NODE_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =

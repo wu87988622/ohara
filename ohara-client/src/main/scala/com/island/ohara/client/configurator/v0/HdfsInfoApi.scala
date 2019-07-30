@@ -32,10 +32,11 @@ object HdfsInfoApi {
   implicit val HDFS_UPDATE_JSON_FORMAT: RootJsonFormat[Update] =
     JsonRefiner[Update].format(jsonFormat2(Update)).rejectEmptyString().refine
 
-  final case class Creation(name: String, uri: String, tags: Map[String, JsValue]) extends CreationRequest
+  final case class Creation(group: String, name: String, uri: String, tags: Map[String, JsValue])
+      extends CreationRequest
   implicit val HDFS_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
     JsonRefiner[Creation]
-      .format(jsonFormat3(Creation))
+      .format(jsonFormat4(Creation))
       .rejectEmptyString()
       .stringRestriction(Set(Data.GROUP_KEY, Data.NAME_KEY))
       .withNumber()
@@ -44,6 +45,7 @@ object HdfsInfoApi {
       .withDash()
       .withUnderLine()
       .toRefiner
+      .nullToString(Data.GROUP_KEY, () => Data.GROUP_DEFAULT)
       .nullToString(Data.NAME_KEY, () => CommonUtils.randomString(10))
       .nullToEmptyObject(Data.TAGS_KEY)
       .refine
@@ -119,6 +121,7 @@ object HdfsInfoApi {
       }
 
       override private[v0] def creation: Creation = Creation(
+        group = CommonUtils.requireNonEmpty(group),
         name = if (CommonUtils.isEmpty(name)) CommonUtils.randomString(10) else name,
         uri = CommonUtils.requireNonEmpty(uri),
         tags = if (tags == null) Map.empty else tags
@@ -131,7 +134,7 @@ object HdfsInfoApi {
 
       override def create()(implicit executionContext: ExecutionContext): Future[HdfsInfo] =
         exec.post[Creation, HdfsInfo, ErrorApi.Error](
-          urlWithGroup(group),
+          _url,
           creation
         )
       override def update()(implicit executionContext: ExecutionContext): Future[HdfsInfo] =

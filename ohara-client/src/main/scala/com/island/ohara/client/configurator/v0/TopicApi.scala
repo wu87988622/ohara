@@ -44,17 +44,20 @@ object TopicApi {
   implicit val TOPIC_UPDATE_FORMAT: RootJsonFormat[Update] =
     JsonRefiner[Update].format(jsonFormat5(Update)).rejectEmptyString().refine
 
-  case class Creation private[TopicApi] (name: String,
+  case class Creation private[TopicApi] (group: String,
+                                         name: String,
                                          brokerClusterName: Option[String],
                                          numberOfPartitions: Int,
                                          numberOfReplications: Short,
                                          configs: Map[String, String],
                                          tags: Map[String, JsValue])
-      extends CreationRequest
+      extends CreationRequest {
+    def key: TopicKey = TopicKey.of(group, name)
+  }
 
   implicit val TOPIC_CREATION_FORMAT: OharaJsonFormat[Creation] = JsonRefiner[Creation]
-    .format(jsonFormat6(Creation))
-    .stringRestriction(Data.NAME_KEY)
+    .format(jsonFormat7(Creation))
+    .stringRestriction(Set(Data.GROUP_KEY, Data.NAME_KEY))
     .withNumber()
     .withCharset()
     .withDot()
@@ -64,6 +67,7 @@ object TopicApi {
     .nullToInt(NUMBER_OF_PARTITIONS_KEY, DEFAULT_NUMBER_OF_REPLICATIONS)
     .nullToInt(NUMBER_OF_REPLICATIONS_KEY, DEFAULT_NUMBER_OF_REPLICATIONS)
     .rejectEmptyString()
+    .nullToString(Data.GROUP_KEY, () => Data.GROUP_DEFAULT)
     .nullToString(Data.NAME_KEY, () => CommonUtils.randomString(10))
     .nullToEmptyObject(CONFIGS_KEY)
     .nullToEmptyObject(Data.TAGS_KEY)
@@ -195,6 +199,7 @@ object TopicApi {
       }
 
       override private[v0] def creation: Creation = Creation(
+        group = CommonUtils.requireNonEmpty(group),
         name = if (CommonUtils.isEmpty(name)) CommonUtils.randomString(10) else name,
         brokerClusterName = brokerClusterName,
         numberOfPartitions = numberOfPartitions.getOrElse(DEFAULT_NUMBER_OF_PARTITIONS),
@@ -213,7 +218,7 @@ object TopicApi {
 
       override def create()(implicit executionContext: ExecutionContext): Future[TopicInfo] =
         exec.post[Creation, TopicInfo, ErrorApi.Error](
-          urlWithGroup(group),
+          _url,
           creation
         )
       override def update()(implicit executionContext: ExecutionContext): Future[TopicInfo] =

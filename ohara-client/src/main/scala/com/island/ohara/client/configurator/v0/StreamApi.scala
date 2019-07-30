@@ -54,6 +54,7 @@ object StreamApi {
                             nodeNames: Set[String],
                             tags: Map[String, JsValue])
       extends ClusterCreationRequest {
+    override def group: String = Data.GROUP_DEFAULT
     override def ports: Set[Int] = Set(jmxPort)
   }
   implicit val STREAM_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =

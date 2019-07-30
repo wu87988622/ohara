@@ -179,17 +179,21 @@ class TestPipelineApi extends SmallTest with Matchers {
                                                           |  }
                                                           |
     """.stripMargin.parseJson)
+    creation.group shouldBe Data.GROUP_DEFAULT
     creation.name.length shouldBe 10
     creation.workerClusterName shouldBe None
     creation.flows shouldBe Seq.empty
 
+    val group = CommonUtils.randomString()
     val name = CommonUtils.randomString()
     val creation2 = PIPELINE_CREATION_JSON_FORMAT.read(s"""
         |  {
+        |    "group": "$group",
         |    "name": "$name"
         |  }
         |
     """.stripMargin.parseJson)
+    creation2.group shouldBe group
     creation2.name shouldBe name
     creation2.workerClusterName shouldBe None
     creation2.flows shouldBe Seq.empty

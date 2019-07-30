@@ -34,11 +34,16 @@ object JdbcInfoApi {
   implicit val JDBC_UPDATE_JSON_FORMAT: RootJsonFormat[Update] =
     JsonRefiner[Update].format(jsonFormat4(Update)).rejectEmptyString().refine
 
-  final case class Creation(name: String, url: String, user: String, password: String, tags: Map[String, JsValue])
+  final case class Creation(group: String,
+                            name: String,
+                            url: String,
+                            user: String,
+                            password: String,
+                            tags: Map[String, JsValue])
       extends CreationRequest
   implicit val JDBC_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
     JsonRefiner[Creation]
-      .format(jsonFormat5(Creation))
+      .format(jsonFormat6(Creation))
       .rejectEmptyString()
       .stringRestriction(Set(Data.GROUP_KEY, Data.NAME_KEY))
       .withNumber()
@@ -47,6 +52,7 @@ object JdbcInfoApi {
       .withDash()
       .withUnderLine()
       .toRefiner
+      .nullToString(Data.GROUP_KEY, () => Data.GROUP_DEFAULT)
       .nullToString(Data.NAME_KEY, () => CommonUtils.randomString(10))
       .nullToEmptyObject(Data.TAGS_KEY)
       .refine
@@ -142,6 +148,7 @@ object JdbcInfoApi {
       }
 
       override private[v0] def creation: Creation = Creation(
+        group = CommonUtils.requireNonEmpty(group),
         name = if (CommonUtils.isEmpty(name)) CommonUtils.randomString(10) else name,
         url = CommonUtils.requireNonEmpty(url),
         user = CommonUtils.requireNonEmpty(user),
@@ -158,7 +165,7 @@ object JdbcInfoApi {
 
       override def create()(implicit executionContext: ExecutionContext): Future[JdbcInfo] =
         exec.post[Creation, JdbcInfo, ErrorApi.Error](
-          urlWithGroup(group),
+          _url,
           creation
         )
       override def update()(implicit executionContext: ExecutionContext): Future[JdbcInfo] =

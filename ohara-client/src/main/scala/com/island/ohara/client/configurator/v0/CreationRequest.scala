@@ -23,6 +23,8 @@ import spray.json.JsValue
   */
 trait CreationRequest {
 
+  def group: String
+
   /**
     * @return object name
     */

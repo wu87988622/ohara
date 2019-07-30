@@ -50,7 +50,7 @@ object NodeRoute {
 
   private[this] def hookOfCreation(implicit clusterCollie: ClusterCollie,
                                    executionContext: ExecutionContext): HookOfCreation[Creation, Node] =
-    (_: String, creation: Creation) =>
+    (creation: Creation) =>
       updateServices(
         Node(
           hostname = creation.hostname,

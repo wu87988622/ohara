@@ -144,7 +144,7 @@ private[configurator] object StreamRoute {
     Future.traverse(_)(updateState)
 
   private[this] def hookOfCreation: HookOfCreation[Creation, StreamClusterInfo] =
-    (_: String, creation: Creation) => Future.successful(toStreamClusterInfo(creation))
+    (creation: Creation) => Future.successful(toStreamClusterInfo(creation))
 
   private[this] def hookOfUpdate(
     implicit executionContext: ExecutionContext): HookOfUpdate[Creation, Update, StreamClusterInfo] =

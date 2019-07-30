@@ -32,7 +32,7 @@ import spray.json.DefaultJsonProtocol._
 class TestConnectorApi extends SmallTest with Matchers {
 
   @Test
-  def parseJsonForCreation(): Unit = {
+  def testParseCreation(): Unit = {
     val workerClusterName = CommonUtils.randomString()
     val className = CommonUtils.randomString()
     val topicNames = Seq(CommonUtils.randomString())
@@ -51,6 +51,8 @@ class TestConnectorApi extends SmallTest with Matchers {
        |  "$anotherKey": "$anotherValue"
        |}
       """.stripMargin.parseJson)
+
+    creation.group shouldBe Data.GROUP_DEFAULT
     creation.name.length shouldBe 10
     creation.workerClusterName.get shouldBe workerClusterName
     creation.className shouldBe className
@@ -64,6 +66,7 @@ class TestConnectorApi extends SmallTest with Matchers {
     creation.settings(anotherKey).convertTo[String] shouldBe anotherValue
     CONNECTOR_CREATION_FORMAT.read(CONNECTOR_CREATION_FORMAT.write(creation)) shouldBe creation
 
+    val group = CommonUtils.randomString()
     val name = CommonUtils.randomString()
     val column = Column
       .builder()
@@ -73,6 +76,7 @@ class TestConnectorApi extends SmallTest with Matchers {
       .build()
     val creation2 = CONNECTOR_CREATION_FORMAT.read(s"""
        |{
+       |  "group": "$group",
        |  "name": ${JsString(name).toString()},
        |  "workerClusterName": ${JsString(workerClusterName).toString()},
        |  "connector.class": ${JsString(className).toString()},
@@ -81,6 +85,7 @@ class TestConnectorApi extends SmallTest with Matchers {
        |  "numberOfTasks": ${JsNumber(numberOfTasks).toString()},
        |  "$anotherKey": "$anotherValue"
        |}""".stripMargin.parseJson)
+    creation2.group shouldBe group
     creation2.name shouldBe name
     creation2.workerClusterName.get shouldBe workerClusterName
     creation2.className shouldBe className

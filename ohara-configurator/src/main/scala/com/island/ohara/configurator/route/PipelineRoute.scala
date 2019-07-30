@@ -175,10 +175,10 @@ private[configurator] object PipelineRoute {
                                    clusterCollie: ClusterCollie,
                                    executionContext: ExecutionContext,
                                    meterCache: MeterCache): HookOfCreation[Creation, Pipeline] =
-    (group: String, creation: Creation) =>
+    (creation: Creation) =>
       updateObjects(
         Pipeline(
-          group = group,
+          group = creation.group,
           name = creation.name,
           flows = creation.flows,
           workerClusterName = creation.workerClusterName,

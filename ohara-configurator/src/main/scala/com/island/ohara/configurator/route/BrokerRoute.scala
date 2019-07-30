@@ -72,7 +72,7 @@ object BrokerRoute {
                                executionContext: ExecutionContext): HookOfList[BrokerClusterInfo] =
     Future.traverse(_)(updateState)
 
-  private[this] def hookOfCreation: HookOfCreation[Creation, BrokerClusterInfo] = (_: String, creation: Creation) =>
+  private[this] def hookOfCreation: HookOfCreation[Creation, BrokerClusterInfo] = (creation: Creation) =>
     Future.successful(
       BrokerClusterInfo(
         name = creation.name,

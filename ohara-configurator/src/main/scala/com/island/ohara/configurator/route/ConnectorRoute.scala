@@ -110,12 +110,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
       })
 
   private[this] def hookOfCreation: HookOfCreation[Creation, ConnectorDescription] =
-    (group: String, creation: Creation) =>
-      Future.successful(
-        toRes(
-          creation.copy(
-            settings = creation.settings ++ Map(Data.GROUP_KEY -> JsString(group))
-          )))
+    (creation: Creation) => Future.successful(toRes(creation))
 
   private[this] def hookOfUpdate: HookOfUpdate[Creation, Update, ConnectorDescription] =
     (key: ObjectKey, update: Update, previous: Option[ConnectorDescription]) => {

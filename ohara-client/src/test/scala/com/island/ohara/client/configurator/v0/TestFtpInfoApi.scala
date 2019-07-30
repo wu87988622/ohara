@@ -300,15 +300,18 @@ class TestFtpInfoApi extends SmallTest with Matchers {
                                                            | "password": "$password"
                                                            |}
                                        """.stripMargin.parseJson)
+    creation.group shouldBe Data.GROUP_DEFAULT
     creation.name.length shouldBe 10
     creation.hostname shouldBe hostname
     creation.port shouldBe port
     creation.user shouldBe user
     creation.password shouldBe password
 
+    val group = CommonUtils.randomString()
     val name = CommonUtils.randomString()
     val creation2 = FtpInfoApi.FTP_CREATION_JSON_FORMAT.read(s"""
                                                        |{
+                                                       | "group": "$group",
                                                        | "name": "$name",
                                                        | "hostname": "$hostname",
                                                        | "port": $port,
@@ -316,6 +319,7 @@ class TestFtpInfoApi extends SmallTest with Matchers {
                                                        | "password": "$password"
                                                        |}
                                        """.stripMargin.parseJson)
+    creation2.group shouldBe group
     creation2.name shouldBe name
     creation2.hostname shouldBe hostname
     creation2.port shouldBe port

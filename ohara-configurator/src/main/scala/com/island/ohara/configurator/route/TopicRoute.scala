@@ -116,30 +116,29 @@ private[configurator] object TopicRoute {
   private[this] def hookOfCreation(implicit adminCleaner: AdminCleaner,
                                    brokerCollie: BrokerCollie,
                                    executionContext: ExecutionContext): HookOfCreation[Creation, TopicInfo] =
-    (group: String, creation: Creation) =>
+    (creation: Creation) =>
       CollieUtils.topicAdmin(creation.brokerClusterName).flatMap {
         case (cluster, client) =>
           // TODO: remove this deprecated behavior. We pre-create the topic on kafka only if the input arguments is completed
           // This stuff is for backward-compatibility.
           if (creation.brokerClusterName.isDefined)
-            client.topics().map(_.find(_.name == TopicKey.of(group, creation.name).topicNameOnKafka)).flatMap {
-              previous =>
-                if (previous.isDefined) Future.failed(new IllegalArgumentException(s"${creation.name} already exists"))
-                else
-                  createTopic(
-                    topicAdmin = client,
-                    clusterName = cluster.name,
-                    group = group,
-                    name = creation.name,
-                    numberOfPartitions = creation.numberOfPartitions,
-                    numberOfReplications = creation.numberOfReplications,
-                    configs = creation.configs,
-                    tags = creation.tags
-                  )
+            client.topics().map(_.find(_.name == creation.key.topicNameOnKafka)).flatMap { previous =>
+              if (previous.isDefined) Future.failed(new IllegalArgumentException(s"${creation.name} already exists"))
+              else
+                createTopic(
+                  topicAdmin = client,
+                  clusterName = cluster.name,
+                  group = creation.group,
+                  name = creation.name,
+                  numberOfPartitions = creation.numberOfPartitions,
+                  numberOfReplications = creation.numberOfReplications,
+                  configs = creation.configs,
+                  tags = creation.tags
+                )
             } else
             Future.successful(
               TopicInfo(
-                group = group,
+                group = creation.group,
                 name = creation.name,
                 numberOfPartitions = creation.numberOfPartitions,
                 numberOfReplications = creation.numberOfReplications,

@@ -58,7 +58,7 @@ private[route] object RouteUtils {
     * @tparam Res result to response
     */
   trait HookOfCreation[Creation <: CreationRequest, Res <: Data] {
-    def apply(group: String, creation: Creation): Future[Res]
+    def apply(creation: Creation): Future[Res]
   }
 
   /**
@@ -217,10 +217,7 @@ private[route] object RouteUtils {
     pathPrefix(root) {
       pathEnd {
         post(entity(as[Creation]) { creation =>
-          parameter(Data.GROUP_KEY ?) { groupOption =>
-            val group = if (enableGroup) groupOption.getOrElse(Data.GROUP_DEFAULT) else Data.GROUP_DEFAULT
-            complete(hookOfCreation(group, creation).flatMap(res => store.addIfAbsent(res)))
-          }
+          complete(hookOfCreation(creation).flatMap(res => store.addIfAbsent(res)))
         }) ~
           get(complete(store.values[Res]().flatMap(hookOfList(_))))
       } ~ path(Segment) { name =>

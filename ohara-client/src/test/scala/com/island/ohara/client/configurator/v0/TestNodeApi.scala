@@ -263,6 +263,7 @@ class TestNodeApi extends SmallTest with Matchers {
                                                          | "password": "$password"
                                                          |}
                                        """.stripMargin.parseJson)
+    creation.group shouldBe Data.GROUP_DEFAULT
     creation.name shouldBe name
     creation.hostname shouldBe name
     creation.port.get shouldBe port
@@ -272,6 +273,7 @@ class TestNodeApi extends SmallTest with Matchers {
     val hostname = CommonUtils.randomString()
     val creation2 = NodeApi.NODE_CREATION_JSON_FORMAT.read(s"""
                                                              |{
+                                                             | "group": "${CommonUtils.randomString()}",
                                                              | "name": "$name",
                                                              | "hostname": "$hostname",
                                                              | "port": $port,
@@ -279,6 +281,8 @@ class TestNodeApi extends SmallTest with Matchers {
                                                              | "password": "$password"
                                                              |}
                                        """.stripMargin.parseJson)
+    // node does support custom group
+    creation2.group shouldBe Data.GROUP_DEFAULT
     // the name is alias to hostname
     creation2.name shouldBe hostname
     creation2.hostname shouldBe hostname

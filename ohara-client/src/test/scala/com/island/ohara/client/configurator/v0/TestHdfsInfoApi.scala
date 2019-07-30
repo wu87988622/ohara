@@ -94,16 +94,20 @@ class TestHdfsInfoApi extends SmallTest with Matchers {
                                                                | "uri": "$uri"
                                                                |}
        """.stripMargin.parseJson)
+    creation.group shouldBe Data.GROUP_DEFAULT
     creation.name.length shouldBe 10
     creation.uri shouldBe uri
 
+    val group = CommonUtils.randomString()
     val name = CommonUtils.randomString()
     val creation2 = HdfsInfoApi.HDFS_CREATION_JSON_FORMAT.read(s"""
          |{
-         | "name": "${name}",
+         | "group": "$group",
+         | "name": "$name",
          | "uri": "$uri"
          |}
        """.stripMargin.parseJson)
+    creation2.group shouldBe group
     creation2.name shouldBe name
     creation2.uri shouldBe uri
   }

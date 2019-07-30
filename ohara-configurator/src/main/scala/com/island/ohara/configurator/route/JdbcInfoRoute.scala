@@ -27,15 +27,17 @@ import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] object JdbcInfoRoute {
 
-  private[this] def hookOfCreation: HookOfCreation[Creation, JdbcInfo] = (group: String, request: Creation) =>
+  private[this] def hookOfCreation: HookOfCreation[Creation, JdbcInfo] = (creation: Creation) =>
     Future.successful(
-      JdbcInfo(group = group,
-               name = request.name,
-               url = request.url,
-               user = request.user,
-               password = request.password,
-               lastModified = CommonUtils.current(),
-               tags = request.tags))
+      JdbcInfo(
+        group = creation.group,
+        name = creation.name,
+        url = creation.url,
+        user = creation.user,
+        password = creation.password,
+        lastModified = CommonUtils.current(),
+        tags = creation.tags
+      ))
 
   private[this] def hookOfUpdate: HookOfUpdate[Creation, Update, JdbcInfo] =
     (key: ObjectKey, update: Update, previous: Option[JdbcInfo]) =>

@@ -26,13 +26,13 @@ import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] object HdfsInfoRoute {
 
-  private[this] def hookOfCreation: HookOfCreation[Creation, HdfsInfo] = (group: String, request: Creation) =>
+  private[this] def hookOfCreation: HookOfCreation[Creation, HdfsInfo] = (creation: Creation) =>
     Future.successful(
-      HdfsInfo(group = group,
-               name = request.name,
-               uri = request.uri,
+      HdfsInfo(group = creation.group,
+               name = creation.name,
+               uri = creation.uri,
                lastModified = CommonUtils.current(),
-               tags = request.tags))
+               tags = creation.tags))
 
   private[this] def hookOfUpdate: HookOfUpdate[Creation, Update, HdfsInfo] =
     (key: ObjectKey, update: Update, previous: Option[HdfsInfo]) =>

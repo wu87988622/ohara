@@ -56,17 +56,25 @@ abstract class BasicAccess private[v0] (prefixPath: String) {
     */
   protected def _url: String = s"http://${_hostname}:${_port}/${_version}/${_prefixPath}"
 
-  protected def urlWithGroup(group: String) =
-    s"http://${_hostname}:${_port}/${_version}/${_prefixPath}?${Data.GROUP_KEY}=$group"
-
-  //----------------[for runnable objects]----------------//
+  /**
+    * used by UPDATE, DELETE and GET requests
+    * @param key object key
+    * @return url string
+    */
   protected def _url(key: ObjectKey) =
     s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/${key.name}?${Data.GROUP_KEY}=${key.group}"
-
-  protected def _url(key: ObjectKey, postFix: String) =
-    s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/${key.name}/${CommonUtils.requireNonEmpty(postFix)}?${Data.GROUP_KEY}=${key.group}"
 
   protected def put(key: ObjectKey, action: String)(implicit executionContext: ExecutionContext): Future[Unit] =
     exec.put[ErrorApi.Error](
       s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/${key.name}/$action?group=${key.group}")
+
+  /**
+    * used by START, STOP, PAUSE and RESUME requests.
+    * TODO: remove this helper method since it is used by decrepit method which return object description ...
+    * @param key object key
+    * @param postFix action string
+    * @return url string
+    */
+  protected def _url(key: ObjectKey, postFix: String) =
+    s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/${key.name}/${CommonUtils.requireNonEmpty(postFix)}?${Data.GROUP_KEY}=${key.group}"
 }

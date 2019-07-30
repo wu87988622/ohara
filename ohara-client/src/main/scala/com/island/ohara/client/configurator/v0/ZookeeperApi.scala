@@ -49,6 +49,7 @@ object ZookeeperApi {
                                                    nodeNames: Set[String],
                                                    tags: Map[String, JsValue])
       extends ClusterCreationRequest {
+    override def group: String = Data.GROUP_DEFAULT
     override def ports: Set[Int] = Set(clientPort, peerPort, electionPort)
   }
 

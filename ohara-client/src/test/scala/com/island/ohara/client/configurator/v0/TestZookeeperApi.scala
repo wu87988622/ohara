@@ -171,6 +171,7 @@ class TestZookeeperApi extends SmallTest with Matchers {
                                                                         |  }
            """.stripMargin.parseJson)
 
+    creation.group shouldBe Data.GROUP_DEFAULT
     creation.name.length shouldBe 10
     creation.nodeNames.size shouldBe 1
     creation.nodeNames.head shouldBe nodeName
@@ -182,11 +183,13 @@ class TestZookeeperApi extends SmallTest with Matchers {
     val name = CommonUtils.randomString(10)
     val creation2 = ZookeeperApi.ZOOKEEPER_CREATION_JSON_FORMAT.read(s"""
          |  {
+         |    "group": "${CommonUtils.randomString()}",
          |    "name": "$name",
          |    "nodeNames": ["$nodeName"]
          |  }
            """.stripMargin.parseJson)
-
+    // node does support custom group
+    creation2.group shouldBe Data.GROUP_DEFAULT
     creation2.name shouldBe name
     creation2.nodeNames.size shouldBe 1
     creation2.nodeNames.head shouldBe nodeName

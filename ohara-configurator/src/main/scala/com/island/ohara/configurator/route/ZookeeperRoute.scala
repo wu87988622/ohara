@@ -75,7 +75,7 @@ object ZookeeperRoute {
                                executionContext: ExecutionContext): HookOfList[ZookeeperClusterInfo] =
     Future.traverse(_)(updateState)
 
-  private[this] def hookOfCreation: HookOfCreation[Creation, ZookeeperClusterInfo] = (_: String, creation: Creation) =>
+  private[this] def hookOfCreation: HookOfCreation[Creation, ZookeeperClusterInfo] = (creation: Creation) =>
     Future.successful(
       ZookeeperClusterInfo(
         name = creation.name,

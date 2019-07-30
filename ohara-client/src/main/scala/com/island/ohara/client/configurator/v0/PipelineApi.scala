@@ -99,7 +99,8 @@ object PipelineApi {
     .rejectEmptyString()
     .refine
 
-  final case class Creation(name: String,
+  final case class Creation(group: String,
+                            name: String,
                             workerClusterName: Option[String],
                             flows: Seq[Flow],
                             tags: Map[String, JsValue])
@@ -125,6 +126,7 @@ object PipelineApi {
         // reuse the code of paring update
         val update = PIPELINE_UPDATE_JSON_FORMAT.read(json)
         Creation(
+          group = json.asJsObject.fields(Data.GROUP_KEY).convertTo[String],
           name = json.asJsObject.fields(Data.NAME_KEY).convertTo[String],
           workerClusterName = update.workerClusterName,
           // TODO: we should reuse the JsonRefiner#nullToEmptyArray. However, we have to support the stale key "rules" ...
@@ -135,6 +137,7 @@ object PipelineApi {
 
       override def write(obj: Creation): JsValue = JsObject(
         noJsNull(Map(
+          Data.GROUP_KEY -> JsString(obj.group),
           Data.NAME_KEY -> JsString(obj.name),
           workerClusterNameKey -> obj.workerClusterName.map(JsString(_)).getOrElse(JsNull),
           flowsKey -> JsArray(obj.flows.map(FLOW_JSON_FORMAT.write).toVector),
@@ -153,6 +156,7 @@ object PipelineApi {
     .withDash()
     .withUnderLine()
     .toRefiner
+    .nullToString(Data.GROUP_KEY, () => Data.GROUP_DEFAULT)
     .nullToString(Data.NAME_KEY, () => CommonUtils.randomString(10))
     .nullToEmptyObject(Data.TAGS_KEY)
     .refine
@@ -303,6 +307,7 @@ object PipelineApi {
       }
 
       override private[v0] def creation: Creation = Creation(
+        group = CommonUtils.requireNonEmpty(group),
         name = if (CommonUtils.isEmpty(name)) CommonUtils.randomString(10) else name,
         workerClusterName = workerClusterName,
         flows = if (flows == null) Seq.empty else flows,
@@ -317,7 +322,7 @@ object PipelineApi {
 
       override def create()(implicit executionContext: ExecutionContext): Future[Pipeline] =
         exec.post[Creation, Pipeline, ErrorApi.Error](
-          urlWithGroup(group),
+          _url,
           creation
         )
       override def update()(implicit executionContext: ExecutionContext): Future[Pipeline] =

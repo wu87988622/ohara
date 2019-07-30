@@ -77,6 +77,7 @@ object WorkerApi {
                                                 jarKeys: Set[ObjectKey],
                                                 nodeNames: Set[String])
       extends ClusterCreationRequest {
+    override def group: String = Data.GROUP_DEFAULT
     override def ports: Set[Int] = Set(clientPort, jmxPort)
     // the properties is not stored in configurator so we can't maintain the tags now
     // TODO: see https://github.com/oharastream/ohara/issues/1544

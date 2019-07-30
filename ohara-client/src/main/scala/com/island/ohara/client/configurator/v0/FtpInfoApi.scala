@@ -34,7 +34,8 @@ object FtpInfoApi {
   implicit val FTP_UPDATE_JSON_FORMAT: RootJsonFormat[Update] =
     JsonRefiner[Update].format(jsonFormat5(Update)).requireConnectionPort("port").rejectEmptyString().refine
 
-  final case class Creation(name: String,
+  final case class Creation(group: String,
+                            name: String,
                             hostname: String,
                             port: Int,
                             user: String,
@@ -43,7 +44,7 @@ object FtpInfoApi {
       extends CreationRequest
   implicit val FTP_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
     JsonRefiner[Creation]
-      .format(jsonFormat6(Creation))
+      .format(jsonFormat7(Creation))
       .requireConnectionPort("port")
       .rejectEmptyString()
       .stringRestriction(Set(Data.GROUP_KEY, Data.NAME_KEY))
@@ -53,6 +54,7 @@ object FtpInfoApi {
       .withDash()
       .withUnderLine()
       .toRefiner
+      .nullToString(Data.GROUP_KEY, () => Data.GROUP_DEFAULT)
       .nullToString(Data.NAME_KEY, () => CommonUtils.randomString(10))
       .nullToEmptyObject(Data.TAGS_KEY)
       .refine
@@ -170,6 +172,7 @@ object FtpInfoApi {
       }
 
       override private[v0] def creation: Creation = Creation(
+        group = CommonUtils.requireNonEmpty(group),
         name = if (CommonUtils.isEmpty(name)) CommonUtils.randomString(10) else name,
         hostname = CommonUtils.requireNonEmpty(hostname),
         port = port.map(CommonUtils.requireConnectionPort).getOrElse(throw new NullPointerException),
@@ -188,7 +191,7 @@ object FtpInfoApi {
 
       override def create()(implicit executionContext: ExecutionContext): Future[FtpInfo] =
         exec.post[Creation, FtpInfo, ErrorApi.Error](
-          urlWithGroup(group),
+          _url,
           creation
         )
       override def update()(implicit executionContext: ExecutionContext): Future[FtpInfo] =

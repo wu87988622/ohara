@@ -80,9 +80,8 @@ object ConnectorApi {
         .map(_.convertTo[Set[TopicKey]])
         .getOrElse(topicKeysFromTopicNames)
 
+    override def group: String = plain(Data.GROUP_KEY)
     override def name: String = plain(SettingDefinition.CONNECTOR_NAME_DEFINITION.key())
-
-    private[this] def group: String = plain.getOrElse(Data.GROUP_KEY, Data.GROUP_DEFAULT)
 
     def key: ConnectorKey = ConnectorKey.of(group, name)
 
@@ -104,6 +103,7 @@ object ConnectorApi {
     // set the default number of tasks
     .nullToInt(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key(), DEFAULT_NUMBER_OF_TASKS)
     .rejectEmptyString()
+    .nullToString(Data.GROUP_KEY, () => Data.GROUP_DEFAULT)
     .nullToString(Data.NAME_KEY, () => CommonUtils.randomString(10))
     .nullToEmptyObject(Data.TAGS_KEY)
     .valueChecker(
@@ -423,7 +423,7 @@ object ConnectorApi {
 
     def request: Request = new Request {
       override def create()(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
-        exec.post[Creation, ConnectorDescription, ErrorApi.Error](urlWithGroup(group), creation)
+        exec.post[Creation, ConnectorDescription, ErrorApi.Error](_url, creation)
 
       override def update()(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
         exec.put[Update, ConnectorDescription, ErrorApi.Error](_url(ConnectorKey.of(group, name)), update)
