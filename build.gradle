@@ -68,7 +68,9 @@ license {
             "**/target",
             "**/build",
             "ohara-manager/**/node_modules",
-            "ohara-manager/**/coverage"
+            "ohara-manager/**/coverage",
+            // we have yet to exercise gradlew on project
+            "gradle/wrapper/gradle-wrapper.properties"
   ])
   // http://code.mycila.com/license-maven-plugin/#supported-comment-types
   mapping {
