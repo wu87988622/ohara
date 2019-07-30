@@ -14,92 +14,160 @@
  * limitations under the License.
  */
 
-describe.skip('Pipeline API', () => {
-  // TODO: the test are skipped for now, need to enable and
-  // refactor the tests later in #1749
-  const pipelineName = 'name';
-  const topicName = 'name';
-  const wkName = 'name';
+import * as utils from '../utils';
+
+describe('Pipeline API', () => {
+  let nodeName = '';
+  let zookeeperClusterName = '';
+  let brokerClusterName = '';
+  let workerClusterName = '';
+  let pipelineName = '';
+
+  before(() => cy.deleteAllServices());
+
+  beforeEach(() => {
+    nodeName = `node${utils.makeRandomStr()}`;
+    zookeeperClusterName = `zookeeper${utils.makeRandomStr()}`;
+    brokerClusterName = `broker${utils.makeRandomStr()}`;
+    workerClusterName = `worker${utils.makeRandomStr()}`;
+    pipelineName = `pipeline${utils.makeRandomStr()}`;
+
+    cy.createNode({
+      name: nodeName,
+      port: 22,
+      user: utils.makeRandomStr(),
+      password: utils.makeRandomStr(),
+    });
+
+    cy.createZookeeper({
+      name: zookeeperClusterName,
+      nodeNames: [nodeName],
+    });
+
+    cy.startZookeeper(zookeeperClusterName);
+
+    cy.createBroker({
+      name: brokerClusterName,
+      zookeeperClusterName: zookeeperClusterName,
+      nodeNames: [nodeName],
+    });
+
+    cy.startBroker(brokerClusterName);
+
+    cy.testCreateWorker({
+      name: workerClusterName,
+      brokerClusterName,
+      nodeNames: [nodeName],
+    });
+
+    cy.testCreatePipeline({
+      name: pipelineName,
+      workerClusterName,
+    }).as('testCreatePipeline');
+  });
 
   it('createPipeline', () => {
-    const params = {
-      name: 'fakePipeline',
-      rules: {},
-      workerClusterName: 'wkName',
-    };
-
-    cy.testCreatePipeline(params).then(res => {
+    cy.get('@testCreatePipeline').then(response => {
       const {
         data: { isSuccess, result },
-      } = res;
-      const { name, workerClusterName, objects } = result;
+      } = response;
+      const { name, workerClusterName, objects, rules } = result;
 
       expect(isSuccess).to.eq(true);
-      expect(name).to.be.a('string');
+
+      expect(name).to.eq(pipelineName);
       expect(workerClusterName).to.be.a('string');
-      expect(objects).to.be.a('array');
+      expect(objects).to.be.an('array');
+      expect(rules).to.be.an('object');
     });
   });
 
   it('fetchPipeline', () => {
-    cy.fetchPipeline(pipelineName).then(res => {
+    cy.fetchPipeline(pipelineName).then(response => {
       const {
         data: { isSuccess, result },
-      } = res;
-      const { name, workerClusterName, objects } = result;
+      } = response;
+      const { name, workerClusterName, objects, rules } = result;
 
       expect(isSuccess).to.eq(true);
-      expect(name).to.be.a('string');
+
+      expect(name).to.eq(pipelineName);
       expect(workerClusterName).to.be.a('string');
       expect(objects).to.be.a('array');
+      expect(rules).to.be.an('object');
     });
   });
 
   it('fetchPipelines', () => {
-    cy.fetchPipelines().then(res => {
+    const paramsOne = {
+      name: `pipeline${utils.makeRandomStr()}`,
+      workerClusterName,
+    };
+
+    const paramsTwo = {
+      name: `pipeline${utils.makeRandomStr()}`,
+      workerClusterName,
+    };
+
+    cy.testCreatePipeline(paramsOne);
+    cy.testCreatePipeline(paramsTwo);
+
+    cy.fetchPipelines().then(response => {
       const {
         data: { isSuccess, result },
-      } = res;
-      const { name, workerClusterName, objects } = result[0];
+      } = response;
 
       expect(isSuccess).to.eq(true);
-      expect(name).to.be.a('string');
-      expect(workerClusterName).to.be.a('string');
-      expect(objects).to.be.a('array');
+
+      const pipelines = result.filter(
+        pipeline =>
+          pipeline.name === paramsOne.name || pipeline.name === paramsTwo.name,
+      );
+
+      expect(pipelines.length).to.eq(2);
     });
   });
 
   it('updatePipeline', () => {
-    const data = {
+    let topicName = `topic${utils.makeRandomStr()}`;
+
+    cy.testCreateTopic({
+      name: topicName,
+      brokerClusterName,
+    });
+
+    const params = {
+      name: pipelineName,
       params: {
-        name: pipelineName,
         rules: {
           [topicName]: [],
         },
-        workerClusterName: wkName,
+        workerClusterName,
       },
     };
 
-    cy.updatePipeline(data).then(res => {
+    cy.updatePipeline(params).then(response => {
       const {
         data: { isSuccess, result },
-      } = res;
+      } = response;
 
       expect(isSuccess).to.eq(true);
-      expect(result.name).to.be.a('string');
-      expect(result.workerClusterName).to.be.a('string');
+
+      expect(result.name).to.eq(pipelineName);
+      expect(result.workerClusterName).to.eq(workerClusterName);
       expect(result.objects).to.be.a('array');
       expect(result.rules).to.be.a('object');
-      expect(result.objects[0].id).to.eq(topicName);
+
       expect(result.objects[0].kind).to.eq('topic');
       expect(result.objects[0].name).to.eq(topicName);
+      expect(result.objects[0].metrics).to.be.an('object');
+      expect(result.objects[0].metrics.meters).to.be.an('array');
     });
   });
 
   it('deletePipeline', () => {
-    cy.testDeletePipeline(pipelineName).then(res => {
-      const { data } = res;
-      expect(data.isSuccess).to.eq(true);
+    cy.testDeletePipeline(pipelineName).then(response => {
+      expect(response.data.isSuccess).to.eq(true);
     });
   });
 });
