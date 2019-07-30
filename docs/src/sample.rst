@@ -14,6 +14,8 @@
 .. limitations under the License.
 ..
 
+.. _sample:
+
 A sampe file for rst practice
 ==============================
 
@@ -25,7 +27,7 @@ A sampe file for rst practice
 - Zookeeper issue: :zookeeper-issue:`2345`
 - Kubernetes issue: :k8s-issue:`2345`
 
-.. _my_label:
+.. _sample-version:
 
 Replace version and branch
 --------------------------
@@ -74,6 +76,6 @@ Source code link: `WordCountExample`_
   pandoc --from=markdown --to=rst --output=README.rst README.md
 
 
-This is a link my_label_
+This is a link sample-version_
 
-This is a link :ref:`my_label`
+This is a link :ref:`sample-version`

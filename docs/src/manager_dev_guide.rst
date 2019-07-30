@@ -14,6 +14,8 @@
 .. limitations under the License.
 ..
 
+.. _managerdev:
+
 Ohara Manager Development Guideline
 ===================================
 
@@ -22,6 +24,8 @@ This module contains Ohara manager (an HTTP server powered by
 web-based user interface built with `React.js <https://reactjs.org/>`__
 ). In the following docs, we refer to **Server** as Ohara manager and
 **Client** as Ohara manager client.
+
+.. _managerdev-initial-setup:
 
 Initial machine setup
 ---------------------
@@ -40,7 +44,9 @@ Initial machine setup
    production build for the client.
 
 4. **Optional**: If you’re using Visual Studio Code as your editor, have
-   a look at our `Editors <#editors>`__ section.
+   a look at our :ref:`Editors <managerdev-editors>` section.
+
+.. _managerdev-mac:
 
 Mac
 ^^^
@@ -63,15 +69,14 @@ Install these dependencies for cypress:
 
 ..
 
-   Have issues while setting up? Try the `Having
-   issues <#having-issues>`__ section to troubleshoot.
+   Have issues while setting up? Try the :ref:`Having issues <managerdev-having-issues>` section to troubleshoot.
 
 Development
 -----------
 
 .. note::
   If this is your first time running this project, you need to complete
-  the `Initial machine setup <#initial-machine-setup>`__ section above 👆
+  the :ref:`Initial machine setup <managerdev-initial-setup>` section above 👆
 
 Quick start guide
 ^^^^^^^^^^^^^^^^^
@@ -86,7 +91,7 @@ Quick start guide
 
      Note that the configurator option is required, and you should have
      configurator running before starting Ohara manager. You can see the
-     `user guide <user_guide.html>`__ on how to spin up a configurator
+     :ref:`user guide <userguide>` on how to spin up a configurator
 
 
   Open another terminal tab, and start the **Client**:
@@ -359,6 +364,7 @@ Prepush
 
     yarn prepush
 
+.. _managerdev-editors:
 
 Editors
 -------
@@ -441,6 +447,8 @@ Switch different version of Node.js
 
   For more info, you can read the `docs <https://github.com/tj/n>`__ here.
 
+.. _managerdev-having-issues:
+
 Having issues?
 --------------
 
@@ -480,7 +488,7 @@ Having issues?
 
         Error watching file for changes: EMFILE
 
-     Try installing ``watchman`` for your mac with the `instruction <#mac>`__
+     Try installing ``watchman`` for your mac with the :ref:`instruction <managerdev-mac>`
 
      For more info: https://github.com/facebook/jest/issues/1767
 

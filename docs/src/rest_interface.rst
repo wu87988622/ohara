@@ -14,6 +14,8 @@
 .. limitations under the License.
 ..
 
+.. _rest:
+
 Ohara REST Interface
 ====================
 
@@ -66,16 +68,15 @@ containers.
 
 Ohara automatically configure all clusters for you. Of course, you have
 the freedom to overwrite any settings. see section
-`zookeeper <#zookeeper>`__, `broker <#broker>`__ and
-`worker <#worker>`__ to see more details.
+:ref:`zookeeper <rest-zookeeper>`, :ref:`broker <rest-broker>` and
+:ref:`worker <rest-worker>` to see more details.
 
 In order to provide a great experience in exercising containers, ohara
 pre-builds a lot of docker images with custom scripts. Of course, Ohara
 APIs allow you to choose other image instead of ohara official images.
 However, it works only if the images you pick up are compatible to ohara
-command. see `here <docker.html>`__ for more details. Also, all official
-images are hosted by `docker
-hub <https://cloud.docker.com/u/oharastream/repository/list>`__
+command. see :ref:`here <docker>` for more details. Also, all official
+images are hosted by `docker hub <https://cloud.docker.com/u/oharastream/repository/list>`__
 
 Version
 -------
@@ -84,10 +85,11 @@ We all love to see the version of software, right? Ohara provide a API
 to display the details of version. It includes following information.
 
 1. version (**string**) — version of configurator
-2. branch(\ **string**) from which ohara repo branch
-3. user(\ **string**) — builder of configurator
-4. revision(\ **string**) — latest commit of configurator
-5. date(\ **string**) — build date of configurator
+2. branch (**string**) from which ohara repo branch
+3. user (**string**) — builder of configurator
+4. revision (**string**) — latest commit of configurator
+5. date (**string**) — build date of configurator
+
 
 get the version of ohara
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -107,6 +109,8 @@ get the version of ohara
        "date": "2019-03-21 17:55:06"
      }
    }
+
+.. _rest-topic:
 
 Topic
 -----
@@ -145,7 +149,7 @@ The following information are tagged by ohara.
    information
 
 store a topic properties
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 *POST /v0/topics?group=${group}*
 
@@ -180,8 +184,6 @@ store a topic properties
      "numberOfPartitions": 1
    }
 
-..
-
 
 **Example Response**
 
@@ -206,7 +208,7 @@ store a topic properties
    The topic, which is just created, does not have any metrics.
 
 update a topic properties
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 *PUT /v0/topics/${name}?group=${group}*
 
@@ -225,7 +227,6 @@ update them.
      "numberOfPartitions": 3
    }
 
-..
 
 **Example Response**
 
@@ -246,7 +247,7 @@ update them.
    }
 
 list all topics properties
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 *GET /v0/topics*
 
@@ -284,7 +285,7 @@ list all topics properties
    ]
 
 delete a topic properties
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 *DELETE /v0/topics/${name}?group=${group}*
 
@@ -299,7 +300,7 @@ delete a topic properties
 
 
 get a topic properties
-~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 *GET /v0/topics/${name}*
 
@@ -322,7 +323,7 @@ get a topic properties
      }
 
 start a topic on remote broker cluster
-~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 *PUT /v0/topics/${name}/start*
 
@@ -334,7 +335,7 @@ start a topic on remote broker cluster
      202 Accepted
 
 stop a topic from remote broker cluster
-~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 *PUT /v0/topics/${name}/stop*
 
@@ -628,7 +629,7 @@ update a hdfs information
        "tags": {}
      }
 
-a
+
 list all hdfs information stored in ohara
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -880,19 +881,21 @@ get a jdbc information
        "tags": {}
      }
 
+.. _rest-connector:
+
 Connector
 ---------
 
-Connector is core of application in ohara `pipeline <#pipeline>`__.
+Connector is core of application in ohara :ref:`pipeline <rest-pipeline>`.
 Connector has two type - source and sink. Source connector pulls data
 from another system and then push to topic. By contrast, Sink connector
 pulls data from topic and then push to another system. In order to use
-connector in `pipeline <#pipeline>`__, you have to set up a connector
-settings in ohara and then add it to `pipeline <#pipeline>`__. Of
+connector in :ref:`pipeline <rest-pipeline>`, you have to set up a connector
+settings in ohara and then add it to :ref:`pipeline <rest-pipeline>`. Of
 course, the connector settings must belong to a existent connector in
 target worker cluster. By default, worker cluster hosts only the
 official connectors. If you have more custom requirement for connector,
-please follow `custom connector guideline <custom_connector.html>`__ to
+please follow :ref:`custom connector guideline <connector>` to
 write your connector.
 
 Apart from custom settings, common settings are required by all
@@ -920,7 +923,7 @@ The following information are updated by ohara.
 #. lastModified (**long**) — the last time to update this connector
 #. state (**option(string)**) — the state of a started connector. If the connector is not started, you won’t see this field
 #. error (**option(string)**) — the error message from a failed connector. If the connector is fine or un-started, you won’t get this field.
-#. `metrics <custom_connector.html#metrics>`__ (**object**) — the metrics from a running connector
+#. :ref:`metrics <connector-metrics>` (**object**) — the metrics from a running connector
 
   - meters (**array(object)**) — the metrics in meter type
 
@@ -940,6 +943,8 @@ you will observe the following response after you store the settings with connec
          "connector.class": "abc"
        }
      }
+
+.. _rest-connector-create-settings:
 
 create the settings of connector
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1041,6 +1046,7 @@ list information of all connectors
        }
      ]
 
+.. _rest-connectors-delete:
 
 delete a connector
 ~~~~~~~~~~~~~~~~~~
@@ -1048,7 +1054,7 @@ delete a connector
 *DELETE /v0/connectors/${name}*
 
 Deleting the settings used by a running connector is not allowed. You
-should `stop <#stop-a-connector>`__ connector before deleting it.
+should :ref:`stop <rest-stop-connector>` connector before deleting it.
 
 **Example Response**
 
@@ -1059,6 +1065,8 @@ should `stop <#stop-a-connector>`__ connector before deleting it.
   .. note::
      It is ok to delete an jar from an nonexistent connector or a running
      connector, and the response is 204 NoContent.
+
+.. _rest-connectors-get-info:
 
 get information of connector
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1091,8 +1099,8 @@ start a connector
 Ohara will send a start request to specific worker cluster to start the
 connector with stored settings, and then make a response to called. The
 connector is executed async so the connector may be still in starting
-after you retrieve the response. You can send `GET
-request <#get-information-of-connector>`__ to see the state of
+after you retrieve the response. You can send
+:ref:`GET request <rest-connectors-get-info>` to see the state of
 connector. This request is idempotent so it is safe to retry this
 command repeatedly.
 
@@ -1122,6 +1130,7 @@ command repeatedly.
        }
      }
 
+.. _rest-stop-connector:
 
 stop a connector
 ~~~~~~~~~~~~~~~~
@@ -1133,7 +1142,7 @@ connector. The stopped connector will be removed from worker cluster.
 The settings of connector is still kept by ohara so you can start the
 connector with same settings again in the future. If you want to delete
 the connector totally, you should stop the connector and then
-`delete <#delete-a-connector>`__ it. This request is idempotent so it is
+:ref:`delete <rest-connectors-delete>` it. This request is idempotent so it is
 safe to send this request repeatedly.
 
 **Example Response**
@@ -1221,6 +1230,7 @@ command repeatedly.
        }
      }
 
+.. _rest-pipeline:
 
 Pipeline
 --------
@@ -1228,7 +1238,8 @@ Pipeline
 Pipeline APIs are born of ohara-manager which needs a way to store the
 relationship of components in streaming. The relationship in pipeline is
 made up of multi **flows**. Each **flow** describe a **from** and multi **to**\s. For example,
-you have a `topic <#topic>`__ as source and a `connector <#connector>`__ as consumer, so you can describe the
+you have a :ref:`topic <rest-topic>` as source and a :ref:`connector <rest-connector>`
+as consumer, so you can describe the
 relationship via following flow.
 
 .. code-block:: json
@@ -1236,16 +1247,8 @@ relationship via following flow.
    {
      "flows": [
        {
-         "from": {
-           "group": "topic's group",
-           "name": "topic's name"
-         },
-         "to": [
-           {
-             "group": "connector's group",
-             "name": "connector's name"
-           }
-         ]
+         "from": "topic's name",
+         "to": ["connector's name"]
        }
      ]
    }
@@ -1262,12 +1265,17 @@ The properties used in generating pipeline are shown below.
 
 1. name (**string**) — pipeline’s name
 2. flows (**array(object)**) — the relationship between objects
+
   - flows[i].from (**object**) — the endpoint of source
+
     - flows[i].from.group — the group of source
     - flows[i].from.name — the name of source
+
   - flows[i].to (**array(object)**) — the endpoint of sinks
+
     - flows[i].to[j].group — the group of sink[j]
     - flows[i].to[j].name — the name of sink[j]
+
 3. tags (**object**) — the extra description to this object
 
 
@@ -1275,17 +1283,18 @@ Following information are written by ohara.
 
 1. lastModified (**long**) — the last time to update this pipeline
 2. objects (**array(object)**) — the abstract of all objects mentioned by pipeline
+
     - objects[i].name (**string**) — object’s name
-    - objects[i].kind (**string**) — the type of this object. for instance, `topic <#topic>`__,
-      `connector <#connector>`__, and `streamapp <#streamapp>`__
+    - objects[i].kind (**string**) — the type of this object. for instance, :ref:`topic <rest-topic>`,
+        :ref:`connector <rest-connector>`, and :ref:`streamapp <rest-streamapp>`
     - objects[i].className (**string**) — object’s implementation. Normally, it shows the full name of
-      a java class
+        a java class
     - objects[i].state (**option(string)**) — the state of object. If the object can’t have state
-      (eg, `topic <#topic>`__), you won’t see this field
+        (eg, :ref:`topic <rest-topic>`), you won’t see this field
     - objects[i].error (**option(string)**) — the error message of this object
     - objects[i].lastModified (**long**) — the last time to update this object
-    - `metrics <custom_connector.html#metrics>`__ (**object**) — the metrics from this object.
-      Not all objects in pipeline have metrics!
+    - :ref:`metrics <connector-metrics>` (**object**) — the metrics from this object.
+        Not all objects in pipeline have metrics!
     - meters (**array(object)**) — the metrics in meter type
     - meters[i].value (**double**) — the number stored in meter
     - meters[i].unit (**string**) — unit for value
@@ -1299,12 +1308,12 @@ create a pipeline
 
 *POST /v0/pipelines*
 
-The following example creates a pipeline with a `topic <#topic>`__ and
-`connector <#connector>`__. The `topic <#topic>`__ is created on `broker
-cluster <#broker>`__ but the `connector <#connector>`__ isn’t. Hence,
+The following example creates a pipeline with a :ref:`topic <rest-topic>` and
+:ref:`connector <rest-connector>`. The :ref:`topic <rest-topic>` is created on
+:ref:`broker cluster <rest-broker>` but the :ref:`connector <rest-connector>` isn’t. Hence,
 the response from server shows that it fails to find the status of the
-`connector <#connector>`__. That is to say, it is ok to add un-running
-`connector <#connector>`__ to pipeline.
+:ref:`connector <rest-connector>`. That is to say, it is ok to add un-running
+:ref:`connector <rest-connector>` to pipeline.
 
 **Example Request 1**
 
@@ -1314,16 +1323,8 @@ the response from server shows that it fails to find the status of the
        "name": "pipeline0",
        "flows": [
          {
-           "from": {
-             "group": "default",
-             "name": "be48b7d8-08a8-40a4-8f17-aaa"
-           },
-           "to": [
-             {
-               "group": "default",
-               "name": "be48b7d8-08a8-40a4-8f17-aaa"
-             }
-           ]
+           "from": "be48b7d8-08a8-40a4-8f17-aaa",
+           "to": ["81cb80a9-34a5-4e45-881a-cb87d4fbb5bd"]
          }
        ]
      }
@@ -1337,15 +1338,9 @@ the response from server shows that it fails to find the status of the
        "lastModified": 1554950999668,
        "flows": [
          {
-           "from": {
-             "group": "default",
-             "name": "be48b7d8-08a8-40a4-8f17-aaa"
-           },
+           "from": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
            "to": [
-             {
-               "group": "default",
-               "name": "be48b7d8-08a8-40a4-8f17-aaa"
-             }
+             "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd"
            ]
          }
        ],
@@ -1388,16 +1383,8 @@ the response from server shows that it fails to find the status of the
        "name": "pipeline1",
        "flows": [
          {
-           "from": {
-             "group": "default",
-             "name": "be48b7d8-08a8-40a4-8f17-aaa"
-           },
-           "to": [
-             {
-               "group": "default",
-               "name": "be48b7d8-08a8-40a4-8f17-aaa"
-             }
-           ]
+           "from": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
+           "to": []
          }
        ]
      }
@@ -1411,16 +1398,8 @@ the response from server shows that it fails to find the status of the
        "lastModified": 1554952500972,
        "flows": [
          {
-           "from": {
-             "group": "default",
-             "name": "be48b7d8-08a8-40a4-8f17-aaa"
-           },
-           "to": [
-             {
-               "group": "default",
-               "name": "be48b7d8-08a8-40a4-8f17-aaa"
-             }
-           ]
+           "from": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
+           "to": []
          }
        ],
        "objects": [
@@ -1450,17 +1429,10 @@ update a pipeline
 
      {
        "name": "pipeline0",
+       "flows": [
          {
-           "from": {
-             "group": "default",
-             "name": "be48b7d8-08a8-40a4-8f17-aaa"
-           },
-           "to": [
-             {
-               "group": "default",
-               "name": "be48b7d8-08a8-40a4-8f17-aaa"
-             }
-           ]
+           "from": "be48b7d8-08a8-40a4-8f17-aaa",
+           "to": ["81cb80a9-34a5-4e45-881a-cb87d4fbb5bd"]
          }
        ]
      }
@@ -1478,15 +1450,9 @@ update a pipeline
        "lastModified": 1554950999668,
        "flows": [
          {
-           "from": {
-             "group": "default",
-             "name": "be48b7d8-08a8-40a4-8f17-aaa"
-           },
+           "from": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
            "to": [
-             {
-               "group": "default",
-               "name": "be48b7d8-08a8-40a4-8f17-aaa"
-             }
+             "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd"
            ]
          }
        ],
@@ -1525,7 +1491,7 @@ list all pipelines
 Listing all pipelines is a expensive operation as it invokes a iteration
 to all objects stored in pipeline. The loop will do a lot of checks and
 fetch status, metrics and log from backend clusters. If you have the
-name of pipeline, please use `GET <#get-a-pipeline>`__ to fetch details
+name of pipeline, please use :ref:`GET <rest-pipeline-get>` to fetch details
 of **single** pipeline.
 
 **Example Response**
@@ -1538,15 +1504,9 @@ of **single** pipeline.
          "lastModified": 1554950999668,
          "flows": [
            {
-             "from": {
-               "group": "default",
-               "name": "be48b7d8-08a8-40a4-8f17-aaa"
-             },
+             "from": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
              "to": [
-               {
-                 "group": "default",
-                 "name": "be48b7d8-08a8-40a4-8f17-aaa"
-               }
+               "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd"
              ]
            }
          ],
@@ -1596,6 +1556,8 @@ Deleting a pipeline does not delete the objects related to the pipeline.
      204 NoContent. However, it is illegal to remove a pipeline having any
      running objects
 
+.. _rest-pipeline-get:
+
 get a pipeline
 ~~~~~~~~~~~~~~
 
@@ -1610,15 +1572,9 @@ get a pipeline
        "lastModified": 1554950999668,
        "flows": [
          {
-           "from": {
-             "group": "default",
-             "name": "be48b7d8-08a8-40a4-8f17-aaa"
-           },
+           "from": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
            "to": [
-             {
-               "group": "default",
-               "name": "be48b7d8-08a8-40a4-8f17-aaa"
-             }
+             "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd"
            ]
          }
        ],
@@ -1648,12 +1604,14 @@ get a pipeline
        "tags": {}
      }
 
+.. _rest-node:
+
 Node
 ----
 
 Node is the basic unit of running service. It can be either physical
-machine or vm. In section `Zookeeper <#zookeeper>`__,
-`Broker <#broker>`__ and `Worker <#worker>`__, you will see many
+machine or vm. In section :ref:`zookeeper <rest-zookeeper>`,
+:ref:`Broker <rest-broker>` and :ref:`Worker <rest-worker>`, you will see many
 requests demanding you to fill the node name to build the services.
 Currently, ohara requires the node added to ohara should pre-install
 following services.
@@ -1684,7 +1642,7 @@ The properties used in describing a node are shown below.
 #. password (**string**) — ssh password
 #. tags (**object**) — the extra description to this object
 #. validationReport (**object**) — last validation result.
-    This information is attached by Ohara Configurator after you request the `validation <#validation>`__
+    This information is attached by Ohara Configurator after you request the :ref:`validation <rest-validation>`
 
   - validationReport.hostname (**string**) — the host which is in charge of validating node
   - validationReport.message (**string**) — the report
@@ -1832,6 +1790,7 @@ get a node
        "tags": {}
      }
 
+.. _rest-zookeeper:
 
 Zookeeper
 ---------
@@ -1860,6 +1819,8 @@ room to enable you to overwrite somethings you do care.
    you won’t get this field.
 #. lastModified (**long**) — last modified this jar time
 
+
+.. _rest-create-zookeeper-properties:
 
 create a zookeeper properties
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1987,6 +1948,7 @@ You cannot delete properties of an non-stopped zookeeper cluster.
   .. note::
      It is ok to delete an nonexistent zookeeper cluster, and the response is 204 NoContent.
 
+.. _rest-zookeeper-get:
 
 get a zookeeper cluster
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -2027,13 +1989,13 @@ start a zookeeper cluster
     202 Accepted
 
   .. note::
-    You should use `Get zookeeper cluster <#get-a-zookeeper-cluster>`__ to fetch up-to-date status
+    You should use :ref:`Get zookeeper cluster <rest-zookeeper-get>` to fetch up-to-date status
 
 stop a zookeeper cluster
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Gracefully stopping a running zookeeper cluster. It is disallowed to
-stop a zookeeper cluster used by a running `broker cluster <#broker>`__.
+stop a zookeeper cluster used by a running :ref:`broker cluster <rest-broker>`.
 
 *PUT /v0/zookeepers/$name/stop[?force=true]*
 
@@ -2049,7 +2011,7 @@ stop a zookeeper cluster used by a running `broker cluster <#broker>`__.
     202 Accepted
 
   .. note::
-    You should use `Get zookeeper cluster <#get-a-zookeeper-cluster>`__ to fetch up-to-date status
+    You should use :ref:`Get zookeeper cluster <rest-zookeeper-get>` to fetch up-to-date status
 
 
 delete a node from a running zookeeper cluster
@@ -2065,6 +2027,7 @@ add a node to a running zookeeper cluster
 Unfortunately, it is a litter hard to add a node to a running zookeeper
 cluster so we don’t support it yet.
 
+.. _rest-broker:
 
 Broker
 ------
@@ -2073,29 +2036,31 @@ Broker
 in ohara. The topic, which is a part our data lake, is hosted by broker
 cluster. The number of brokers impacts the performance of transferring
 data and data durability. But it is ok to setup broker cluster in single
-node when testing. As with `Zookeeper <#zookeeper>`__, broker has many
+node when testing. As with :ref:`zookeeper <rest-zookeeper>`, broker has many
 configs also. Ohara still provide default to most configs and then
 enable user to overwrite them.
 
-Broker is based on `Zookeeper <#zookeeper>`__, hence you have to create
+Broker is based on :ref:`zookeeper <rest-zookeeper>`, hence you have to create
 zookeeper cluster first. Noted that a zookeeper cluster can be used by
 only a broker cluster. It will fail if you try to multi broker cluster
 on same zookeeper cluster.
 
 The properties which can be set by user are shown below.
 
-1. name (**string**) — cluster name
-1. imageName (**string**) — docker image
-1. clientPort (**int**) — broker client port
-1. exporterPort (**int**) — port used by internal communication
-1. jmxPort (**int**) — port used by jmx service
-1. zookeeperClusterName (**String**) — name of zookeeper cluster used to store metadata of broker cluster
-1. nodeNames (**array(string)**) — the nodes running the broker process
-1. deadNodes (**array(string)**) — the nodes that have failed containers of broker
-1. tags (**object**) — the user defined parameters
-1. state (**option(string)**) — only started/failed broker has state (RUNNING or DEAD)
-1. error (**option(string)**) — the error message from a failed broker. If broker is fine or un-started, you won't get this field.
-1. lastModified (**long**) — last modified this jar time
+#. name (**string**) — cluster name
+#. imageName (**string**) — docker image
+#. clientPort (**int**) — broker client port
+#. exporterPort (**int**) — port used by internal communication
+#. jmxPort (**int**) — port used by jmx service
+#. zookeeperClusterName (**String**) — name of zookeeper cluster used to store metadata of broker cluster
+#. nodeNames (**array(string)**) — the nodes running the broker process
+#. deadNodes (**array(string)**) — the nodes that have failed containers of broker
+#. tags (**object**) — the user defined parameters
+#. state (**option(string)**) — only started/failed broker has state (RUNNING or DEAD)
+#. error (**option(string)**) — the error message from a failed broker. If broker is fine or un-started, you won't get this field.
+#. lastModified (**long**) — last modified this jar time
+
+.. _rest-create-brokercluster:
 
 create a broker cluster
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -2232,13 +2197,12 @@ You cannot delete properties of an non-stopped broker cluster.
      It is ok to delete an nonexistent broker cluster, and the response is
      204 NoContent.
 
+.. _rest-broker-get:
 
 get a broker cluster
 ~~~~~~~~~~~~~~~~~~~~
 
 *GET /v0/brokers/$name*
-
-Get broker information by name. This API could fetch all information of a broker (include state)
 
 **Example Response**
 
@@ -2271,13 +2235,13 @@ start a broker cluster
     202 Accepted
 
   .. note::
-    You should use `Get broker cluster <#get-a-broker-cluster>`__ to fetch up-to-date status
+    You should use :ref:`Get broker cluster <rest-broker-get>` to fetch up-to-date status
 
 stop a broker cluster
 ~~~~~~~~~~~~~~~~~~~~~
 
 Gracefully stopping a running broker cluster. It is disallowed to
-stop a broker cluster used by a running `worker cluster <#worker>`__.
+stop a broker cluster used by a running :ref:`worker cluster <rest-worker>`.
 
 *PUT /v0/brokers/$name/stop[?force=true]*
 
@@ -2293,7 +2257,7 @@ stop a broker cluster used by a running `worker cluster <#worker>`__.
     202 Accepted
 
   .. note::
-    You should use `Get broker cluster <#get-a-broker-cluster>`__ to fetch up-to-date status
+    You should use :ref:`Get broker cluster <rest-broker-get>` to fetch up-to-date status
 
 add a new node to a running broker cluster
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2348,6 +2312,7 @@ invoke a lot of data move. The loading may burn out the remaining nodes.
      It is ok to delete an nonexistent broker node, and the response is
      204 NoContent.
 
+.. _rest-worker:
 
 Worker
 ------
@@ -2361,7 +2326,7 @@ nodes within your worker cluster and you specify 6 tasks for your
 connector, the tasks of you connectors still be deployed on 3 nodes.
 That is to say, the connector can’t get more resources to execute.
 
-Worker is based on `Broker <#broker>`__, hence you have to create broker
+Worker is based on :ref:`Broker <rest-broker>`, hence you have to create broker
 cluster first. Noted that a broker cluster can be used by multi worker
 clusters. BTW, worker cluster will pre-allocate a lot of topics on
 broker cluster, and the pre-created topics CAN’T be reused by different
@@ -2385,8 +2350,8 @@ The properties which can be set by user are shown below.
 #. statusTopicReplications (**int**) — number of replications for status topic
 #. jarKeys (**array(object)**) — the “primary key” of jars that will be loaded by worker cluster.
    You can require worker cluster to load the jars stored in ohara if you want to run custom connectors
-   on the worker cluster. see `Files APIs <#files>`__ for uploading jars to ohara. Noted: the response
-   will replace this by `JarInfo <#files>`__.
+   on the worker cluster. see :ref:`Files APIs <rest-files>` for uploading jars to ohara. Noted: the response
+   will replace this by :ref:`JarInfo <rest-files>`.
 #. nodeNames (**array(string)**) — the nodes running the worker process
 #. deadNodes (**array(string)**) — the nodes that have failed containers of worker
 
@@ -2402,7 +2367,7 @@ After building the worker cluster, ohara starts to fetch the details of
 available connectors from the worker cluster. The details is the setting
 definitions of connector. It shows how to assign the settings to a
 connector correctly. The details of connector’s setting definitions can
-be retrieved via `GET <#get-a-worker-cluster>`__ or `LIST <#list-all-workers-clusters>`__,
+be retrieved via :ref:`GET <rest-worker-get>` or :ref:`LIST <rest-worker-list>`,
 and the JSON representation is shown below.
 
 .. code-block:: json
@@ -2446,12 +2411,12 @@ and the JSON representation is shown below.
           setting is modifiable
         - connectors[i].definitions[j].key (**string**) — the key of
           configuration
-        - connectors[i].definitions[j]. `valueType <#setting-type>`__ (**string**) — the type of value
+        - connectors[i].definitions[j].:ref:`valueType <rest-setting-type>` (**string**) — the type of value
         - connectors[i].definitions[j].defaultValue (**string**) — the
           default value
         - connectors[i].definitions[j].documentation (**string**) — the
           explanation of this definition
-        - connectors[i].definitions[j]. `reference <#setting-reference>`__ (**string**) — works for ohara manager.
+        - connectors[i].definitions[j].:ref:`reference <rest-setting-ref>` (**string**) — works for ohara manager.
           It represents the reference of value.
         - connectors[i].definitions[j].required (**boolean**) — true if
           this setting has no default value and you have to assign a value.
@@ -2463,11 +2428,12 @@ and the JSON representation is shown below.
 
 Apart from official settings (topics, columns, etc), a connector also
 have custom settings. Those setting definition can be found through
-`GET <#get-a-worker-cluster>`__ or
-`LIST <#list-all-workers-clusters>`__. And for another, the worker
+:ref:`GET <rest-worker-get>` or :ref:`LIST <rest-worker-list>`.
+And for another, the worker
 cluster needs to take some time to load available connectors. If you
 don’t see the setting definitions, please retry it later.
 
+.. _rest-setting-type:
 
 Setting Type
 ~~~~~~~~~~~~
@@ -2488,67 +2454,67 @@ types are shown below.
 #. List — the value must be castable to **java.lang.String** and it is split according to JSON array
 #. Table — the value must be castable to **java.lang.String** and it has the following JSON representation.
 
-.. code-block:: json
+    .. code-block:: json
 
-   [
-     {
-       "order": 1,
-       "c0": "v0",
-       "c1": "v1",
-       "c2": "v2"
-     },
-     {
-       "order": 2,
-       "c0": "t0",
-       "c1": "t1",
-       "c2": "t2"
-     }
-   ]
+       [
+         {
+           "order": 1,
+           "c0": "v0",
+           "c1": "v1",
+           "c2": "v2"
+         },
+         {
+           "order": 2,
+           "c0": "t0",
+           "c1": "t1",
+           "c2": "t2"
+         }
+       ]
 
-How to get the description of above **keys**? If the setting type is
-**table**, the setting must have **tableKeys**. It is a array of string
-which shows the keys used in the table type. For instance, a setting
-having table type is shown below.
+    How to get the description of above **keys**? If the setting type is
+    **table**, the setting must have **tableKeys**. It is a array of string
+    which shows the keys used in the table type. For instance, a setting
+    having table type is shown below.
 
-.. code-block:: json
+    .. code-block:: json
 
-   {
-     "reference": "NONE",
-     "displayName": "columns",
-     "internal": false,
-     "documentation": "output schema",
-     "valueType": "TABLE",
-     "tableKeys": [
-       "order",
-       "dataType",
-       "name",
-       "newName"
-     ],
-     "orderInGroup": 6,
-     "key": "columns",
-     "required": false,
-     "defaultValue": null,
-     "group": "core",
-     "editable": true
-   }
+       {
+         "reference": "NONE",
+         "displayName": "columns",
+         "internal": false,
+         "documentation": "output schema",
+         "valueType": "TABLE",
+         "tableKeys": [
+           "order",
+           "dataType",
+           "name",
+           "newName"
+         ],
+         "orderInGroup": 6,
+         "key": "columns",
+         "required": false,
+         "defaultValue": null,
+         "group": "core",
+         "editable": true
+       }
 
 #. Duration — the value must be castable to **java.time.Duration** and it is based on the ISO-860 duration
    format PnDTnHnMn.nS
 #. TOPIC_KEYS — each field must be castable to **com.island.ohara.kafka.connector.json.TopicKey**. The json representation
    is shown below.
 
-.. code-block:: json
+    .. code-block:: json
 
-   [
-     {
-       "group": "g0",
-       "name": "n0"
-     },
-     {
-       "group": "g1",
-       "name": "n1"
-     }
-   ]
+       [
+         {
+           "group": "g0",
+           "name": "n0"
+         },
+         {
+           "group": "g1",
+           "name": "n1"
+         }
+       ]
 
 Setting Reference
 ~~~~~~~~~~~~~~~~~
@@ -2560,34 +2526,37 @@ element. However, we still list the available values here.
 #. TOPIC
 #. WORKER_CLUSTER
 
+.. _rest-worker-create:
+
+.. _rest-setting-ref:
 
 create a worker cluster
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 *POST /v0/workers*
 
-1. name (**string**) — cluster name
-2. imageName (**string**) — docker image
-3. clientPort (**int**) — worker client port.
-4. jmxPort (**int**) — worker jmx port.
-5. brokerClusterName (**string**) — broker cluster used to host topics
+#. name (**string**) — cluster name
+#. imageName (**string**) — docker image
+#. clientPort (**int**) — worker client port.
+#. jmxPort (**int**) — worker jmx port.
+#. brokerClusterName (**string**) — broker cluster used to host topics
    for this worker cluster
-6. jarKeys (**array(object)**) — the “primary key” object list of jar
+#. jarKeys (**array(object)**) — the “primary key” object list of jar
    that will be loaded by worker cluster
 
     - jarKeys[i].group (**string**) — the group name of jar
     - jarKeys[i].name (**string**) — the name of jar
 
-1. groupId (**string**) — the id of worker stored in broker cluster
-2. configTopicName (**string**) — a internal topic used to store connector configuration
-3. configTopicReplications (**int**) — number of replications for config topic
-4. offsetTopicName (**string**) — a internal topic used to store connector offset
-5. offsetTopicReplications (**int**) — number of replications for offset topic
-6. offsetTopicPartitions (**int**) — number of partitions for offset topic
-7. statusTopicName (**string**) — a internal topic used to store connector status
-8. statusTopicReplications (**int**) — number of replications for status topic
-9. statusTopicPartitions (**int**) — number of partitions for status topic
-10. nodeNames (**array(string)**) — the nodes running the worker process
+#. groupId (**string**) — the id of worker stored in broker cluster
+#. configTopicName (**string**) — a internal topic used to store connector configuration
+#. configTopicReplications (**int**) — number of replications for config topic
+#. offsetTopicName (**string**) — a internal topic used to store connector offset
+#. offsetTopicReplications (**int**) — number of replications for offset topic
+#. offsetTopicPartitions (**int**) — number of partitions for offset topic
+#. statusTopicName (**string**) — a internal topic used to store connector status
+#. statusTopicReplications (**int**) — number of replications for status topic
+#. statusTopicPartitions (**int**) — number of partitions for status topic
+#. nodeNames (**array(string)**) — the nodes running the worker process
 
 **Example Request**
 
@@ -2705,6 +2674,7 @@ create a worker cluster
      "deadNodes": []
    }
 
+.. _rest-worker-list:
 
 list all workers clusters
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2762,6 +2732,7 @@ delete a worker cluster
      It is ok to delete an nonexistent worker cluster, and the response is
      204 NoContent.
 
+.. _rest-worker-get:
 
 get a worker cluster
 ~~~~~~~~~~~~~~~~~~~~
@@ -3036,6 +3007,7 @@ connector.
      It is ok to delete an nonexistent worker node, and the response is
      204 NoContent.
 
+.. _rest-validation:
 
 Validation
 ----------
@@ -3248,13 +3220,13 @@ Validate the connector settings
 Before starting a connector, you can send the settings to test whether
 all settings are available for specific connector. Ohara is not in
 charge of settings validation. Connector MUST define its setting via
-`setting definitions <custom_connector.html#setting-definitions>`__.
+:ref:`setting definitions <connector-setting-def>`.
 Ohara configurator only repackage the request to kafka format and then
 collect the validation result from kafka.
 
 **Example Request**
 
-  The request format is same as `connector request <#create-the-settings-of-connector>`__
+  The request format is same as :ref:`connector request <rest-connector-create-settings>`
 
 **Example Response**
 
@@ -3292,7 +3264,7 @@ collect the validation result from kafka.
      }
 
 The above example only show a part of report. The element **definition**
-is equal to `connector’s setting definition <#worker>`__. The definition
+is equal to :ref:`connector’s setting definition <rest-worker>`. The definition
 is what connector must define. If you don’t write any definitions for
 you connector, the validation will do nothing for you. The element
 **setting** is what you request to validate.
@@ -3399,6 +3371,7 @@ below.
        }
      ]
 
+.. _rest-streamapp:
 
 StreamApp
 ---------
@@ -3406,7 +3379,7 @@ StreamApp
 Ohara StreamApp is a unparalleled wrap of kafka streaming. It leverages
 and enhances `kafka streams <https://kafka.apache.org/documentation/streams/>`__ to make
 developer easily design and implement the streaming application. More
-details of developing streaming application is in `custom stream guideline <custom_streamapp.html>`__.
+details of developing streaming application is in :ref:`custom stream guideline <streamapp>`.
 
 Assume that you have completed a streaming application via ohara Java
 APIs, and you have generated a jar including your streaming code. By
@@ -3435,7 +3408,7 @@ The following information of StreamApp are updated by ohara.
 #. to (**array(string)**) — topics of streamApp produce to
 #. state (**option(string)**) — only started/failed streamApp has state
 #. jmxPort (**int**) — the expose jmx port 
-#. `metrics <custom_connector.html#metrics>`__ (**object**) — the metrics from this streamApp.
+#. :ref:`metrics <connector-metrics>` (**object**) — the metrics from this streamApp.
     - meters (**array(object)**) — the metrics in meter type
         - meters[i].value (**double**) — the number stored in meter
         - meters[i].unit (**string**) — unit for value
@@ -3495,61 +3468,57 @@ Create the properties of a streamApp.
 
 **Example Response**
 
-1.  name (**string**) — custom name of this streamApp
-2.  imageName (**string**) — image name of this streamApp
-3.  instances ( **int**) — numbers of streamApp container
-4.  nodeNames (**array(string)**) — node list of streamApp running
-    container
-5.  deadNodes (**array(string)**) — dead node list of the exited
-    containers from this cluster
-6.  jar (**object**) — uploaded jar key
-7.  from (**array(string)**) — topics of streamApp consume with
-8.  to (**array(string)**) — topics of streamApp produce to
-9.  state (**option(string)**) — only started/failed streamApp has state
-10. jmxPort (**int**) — the expose jmx port
-11. `metrics <custom_connector.html#metrics>`__ (**object**) — the
-    metrics from this streamApp.
-
+#. name (**string**) — custom name of this streamApp
+#. imageName (**string**) — image name of this streamApp
+#. instances ( **int**) — numbers of streamApp container
+#. nodeNames (**array(string)**) — node list of streamApp running
+   container
+#. deadNodes (**array(string)**) — dead node list of the exited
+   containers from this cluster
+#. jar (**object**) — uploaded jar key
+#. from (**array(string)**) — topics of streamApp consume with
+#. to (**array(string)**) — topics of streamApp produce to
+#. state (**option(string)**) — only started/failed streamApp has state
+#. jmxPort (**int**) — the expose jmx port
+#. :ref:`metrics <connector-metrics>` (**object**) — the metrics from this streamApp.
     - meters (**array(object)**) — the metrics in meter type
+        - meters[i].value (**double**) — the number stored in meter
+        - meters[i].unit (**string**) — unit for value
+        - meters[i].document (**string**) — document of this meter
+        - meters[i].queryTime (**long**) — the time of query metrics from remote machine
+        - meters[i].startTime (**option(long)**) — the time of record generated in remote machine
+#. exactlyOnce (**boolean**) — enable exactly once
+#. error (**option(string)**) — the error message from a failed
+   streamApp. If the streamApp is fine or un-started, you won’t get
+   this field.
+#. lastModified (**long**) — last modified this jar time
 
-       - meters[i].value (**double**) — the number stored in meter
-       - meters[i].unit (**string**) — unit for value
-       - meters[i].document (**string**) — document of this meter
-       - meters[i].queryTime (**long**) — the time of query metrics from remote machine
-       - meters[i].startTime (**option(long)**) — the time of record generated in remote machine
+.. code-block:: json
 
-12. exactlyOnce (**boolean**) — enable exactly once
-13. error (**option(string)**) — the error message from a failed
-    streamApp. If the streamApp is fine or un-started, you won’t get
-    this field.
-14. lastModified (**long**) — last modified this jar time
+   {
+     "name": "myapp",
+     "imageName": "oharastream/streamapp:$|version|",
+     "instances": 3,
+     "nodeNames": [],
+     "deadNodes": [],
+     "jar": {
+       "name": "stream-app",
+       "group": "wk01"
+     },
+     "from": [
+       "topic1"
+     ],
+     "to": [
+       "topic2"
+     ],
+     "jmxPort": 5678,
+     "exactlyOnce": "false",
+     "metrics": [],
+     "lastModified": 1542102595892
+   }
 
-  .. code-block:: json
-
-     {
-       "name": "myapp",
-       "imageName": "oharastream/streamapp:$|version|",
-       "instances": 3,
-       "nodeNames": [],
-       "deadNodes": [],
-       "jar": {
-         "name": "stream-app",
-         "group": "wk01"
-       },
-       "from": [
-         "topic1"
-       ],
-       "to": [
-         "topic2"
-       ],
-       "jmxPort": 5678,
-       "exactlyOnce": "false",
-       "metrics": [],
-       "lastModified": 1542102595892
-     }
-
-  .. note::
-     The streamApp, which is just created, does not have any metrics.
+.. note::
+   The streamApp, which is just created, does not have any metrics.
 
 
 get information from a specific streamApp cluster
@@ -3559,32 +3528,30 @@ get information from a specific streamApp cluster
 
 **Example Response**
 
-1.  name (**string**) — custom name of this streamApp
-2.  imageName (**string**) — image name of this streamApp
-3.  instances ( **int**) — numbers of streamApp container
-4.  nodeNames (**array(string)**) — node list of streamApp running
-    container
-5.  deadNodes (**array(string)**) — dead node list of the exited
-    containers from this cluster
-6.  jar (**object**) — uploaded jar key
-7.  from (**array(string)**) — topics of streamApp consume with
-8.  to (**array(string)**) — topics of streamApp produce to
-9.  state (**option(string)**) — only started/failed streamApp has state
-10. jmxPort (**int**) — the expose jmx port
-11. `metrics <custom_connector.html#metrics>`__ (**object**) — the metrics from this streamApp.
-
+#. name (**string**) — custom name of this streamApp
+#. imageName (**string**) — image name of this streamApp
+#. instances ( **int**) — numbers of streamApp container
+#. nodeNames (**array(string)**) — node list of streamApp running
+   container
+#. deadNodes (**array(string)**) — dead node list of the exited
+   containers from this cluster
+#. jar (**object**) — uploaded jar key
+#. from (**array(string)**) — topics of streamApp consume with
+#. to (**array(string)**) — topics of streamApp produce to
+#. state (**option(string)**) — only started/failed streamApp has state
+#. jmxPort (**int**) — the expose jmx port
+#. :ref:`metrics <connector-metrics>` (**object**) — the metrics from this streamApp.
     - meters (**array(object)**) — the metrics in meter type
-
       - meters[i].value (**double**) — the number stored in meter
       - meters[i].unit (**string**) — unit for value
       - meters[i].document (**string**) — document of this meter
       - meters[i].queryTime (**long**) — the time of record generated in remote machine
       - meters[i].startTime (**option(long)**) — the time of record generated in remote machine
-12. exactlyOnce (**boolean**) — enable exactly once
-13. error (**option(string)**) — the error message from a failed
+#. exactlyOnce (**boolean**) — enable exactly once
+#. error (**option(string)**) — the error message from a failed
     streamApp. If the streamApp is fine or un-started, you won’t get
     this field.
-14. lastModified (**long**) — last modified this jar time
+#. lastModified (**long**) — last modified this jar time
 
   .. code-block:: json
 
@@ -3661,7 +3628,7 @@ Update the properties of a non-started streamApp.
 8.  to (**array(string)**) — topics of streamApp produce to
 9.  state (**option(string)**) — only started/failed streamApp has state
 10. jmxPort (**int**) — the expose jmx port
-11. `metrics <custom_connector.html#metrics>`__ (**object**) — the
+11. :ref:`metrics <connector-metrics>` (**object**) — the
     metrics from this streamApp.
 
     - meters (**array(object)**) — the metrics in meter type
@@ -3754,6 +3721,7 @@ start a StreamApp
        "lastModified": 1542102595892
      }
 
+.. _rest-stop-streamapp:
 
 stop a StreamApp
 ~~~~~~~~~~~~~~~~
@@ -3862,6 +3830,7 @@ get topology tree graph from specific streamApp
        }
      }
 
+.. _rest-files:
 
 Files
 -----
@@ -3869,7 +3838,7 @@ Files
 Ohara encourages user to write custom application if the official
 applications can satisfy requirements for your use case. Jar APIs is a
 useful entry of putting your jar on ohara and then start related
-services with it. For example, `Worker APIs <#create-a-worker-cluster>`__ 
+services with it. For example, :ref:`Worker APIs <rest-worker-create>`
 accept a **jars** element which can
 carry the jar name pointing to a existent jar in ohara. The worker
 cluster will load all connectors of the input jar, and then you are able
@@ -4019,6 +3988,7 @@ update tags of file
            }
      }
 
+.. _rest-logs:
 
 Logs
 ----
@@ -4071,8 +4041,8 @@ compatibility to this APIs. Normally, Ohara Configurator can’t run the
 query for you since most queries demand specific dependencies in
 runtime, and we don’t allow you to touch the classpath of Ohara
 Configurator. Hence, Ohara Configurator pass the queries to official
-specific **connectors** to execute the queries on a `worker cluster <#worker>`__.
-It implies that you should set up a `worker cluster <#worker>`__ before submitting query request to Ohara
+specific **connectors** to execute the queries on a :ref:`worker cluster <rest-worker>`.
+It implies that you should set up a :ref:`worker cluster <rest-worker>` before submitting query request to Ohara
 Configurator.
 
 

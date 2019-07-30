@@ -14,8 +14,12 @@
 .. limitations under the License.
 ..
 
+.. _build:
+
 How to build
 ============
+
+.. _build-prerequisites:
 
 Prerequisites
 -------------
@@ -32,12 +36,15 @@ Prerequisites
 
 --------------
 
+.. _build-gradle-commands:
+
 Gradle Commands
 ---------------
 
 Ohara build is based on `gradle`_. Ohara has defined many gradle tasks
 to simplify the development of ohara.
 
+.. _build-binary:
 
 **Build Binary**
 
@@ -124,9 +131,8 @@ files
 Installation
 ------------
 
-see `User Guide`_
+see :ref:`User Guide <userguide>`
 
 .. _Use multi-stage builds: https://docs.docker.com/develop/develop-images/multistage-build/
 .. _gradle: https://gradle.org/
 .. _official QA: https://builds.is-land.com.tw/job/PreCommit-OHARA/
-.. _User Guide: user_guide.html#installation

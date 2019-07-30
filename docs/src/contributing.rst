@@ -14,6 +14,8 @@
 .. limitations under the License.
 ..
 
+.. _contrib:
+
 Contributing
 ============
 
@@ -27,7 +29,7 @@ Quick start
 -----------
 
 - Fork and clone the `oharastream/ohara`_ repo
-- Install dependencies. See our `how_to_build`_ for development machine setup
+- Install dependencies. See our :ref:`how_to_build <build-gradle-commands>` for development machine setup
 - Create a branch with your PR with ``git checkout -b ${your-branch-name}``
 - Push your PR to remote: ``git push origin ${your-branch-name}``
 - Create the PR with GitHub web UI and wait for reviews from our committers
@@ -69,7 +71,9 @@ Important things about pull request
 
 - Pass all tests
 - Your PR should not make ohara unstable, if it does. It should be reverted ASAP.
-- You can either run these tests on your local (see our `how_to_build <how_to_build.html>`__ for more info on how to run tests) or by opening the PR on our repo. These tests will be running on your CI server.
+- You can either run these tests on your local (see our :ref:`how to build <build>`
+  for more info on how to run tests) or by opening the PR on our repo. These tests will be running
+  on your CI server.
 - Pass code style check. You can automatically fix these issues with a single command: ::
 
    gradle spotlessApply
@@ -88,4 +92,3 @@ Important things about pull request
 -  Bring in new APIs for Configurator without prior discussion
 
 .. _oharastream/ohara: https://github.com/oharastream/ohara
-.. _how_to_build: how_to_build.html#gradle-commands

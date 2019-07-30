@@ -14,6 +14,8 @@
 .. limitations under the License.
 ..
 
+.. _docker:
+
 Docker and Docker-compose
 =========================
 
@@ -26,6 +28,8 @@ ohara, we need a way to run a bunch of systems simultaneously. We can
 build a heavy infra to iron out this problem. Or we can leverage
 docker-compose to host various systems "locally" (yes, you need a
 powerful machine to use ohara's docker-compose file).
+
+.. _docker-prerequisites:
 
 Prerequisites
 -------------

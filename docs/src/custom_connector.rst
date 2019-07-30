@@ -14,6 +14,8 @@
 .. limitations under the License.
 ..
 
+.. _connector:
+
 Custom Connector Guideline
 ==========================
 
@@ -25,19 +27,18 @@ application availability, data durability, or distribution anymore. All
 you have to do is to write your custom connector, which can have only
 the pull()/push() method, and then compile your code to a jar file.
 After uploading your jar to ohara, you are able to **deploy** your
-connector on the `worker
-cluster <rest_interface.html#create-a-worker-cluster>`__. By leveraging
+connector on the :ref:`worker cluster <rest-worker-create>`. By leveraging
 ohara connector framework, apart from the availability, scalability, and
 durability, you can also monitor your connector for
-`logs <rest_interface.html#logs>`__ and `metrics <#metrics>`__.
+:ref:`logs <rest-logs>` and :ref:`metrics <connector-metrics>`.
 
 The following sections start to explain how to write a good connector on
 ohara. You don’t need to read it through if you are familiar with `kafka
 connector <https://docs.confluent.io/current/connect/managing/index.html>`__.
 However, ohara connector has some improvements which are not in `kafka
 connector <https://docs.confluent.io/current/connect/managing/index.html>`__
-so it has worth of taking a look at `metrics <#metrics>`__ and `setting
-definitions <#setting-definitions>`__
+so it has worth of taking a look at :ref:`metrics <connector-metrics>` and
+:ref:`setting definitions <connector-setting-def>`
 
 
 ---------------------------
@@ -45,10 +46,10 @@ definitions <#setting-definitions>`__
 Ohara Connector Overview
 ------------------------
 
-Ohara connector is composed of `source connect <#source-connector>`__
-and `sink connector <#sink-connector>`__. `source
-connect <#source-connector>`__ is used to pull data **from external
-system to topic**. By contrast, `sink connector <#sink-connector>`__ is
+Ohara connector is composed of :ref:`source connector <connector-sourceconnector>`
+and :ref:`sink connector <connector-sink>`.
+:ref:`source connector <connector-sourceconnector>` is used to pull data **from external
+system to topic**. By contrast, :ref:`sink connector <connector-sink>` is
 used to pull data from **topic to external system**. A complete
 connector consists of **SourceConnector** / **SinkConnector** and
 **SourceTask** / **SinkTask**. Worker cluster picks up a node to host your
@@ -76,6 +77,8 @@ to help you to access kafka and design custom connector.
 
 
 ---------------------------
+
+.. _connector-datamodel:
 
 Data Model
 ----------
@@ -210,6 +213,8 @@ process it in your connectors.
 
 ---------------------------
 
+.. _connector-sourceconnector:
+
 Source Connector
 ----------------
 
@@ -256,10 +261,20 @@ connector only includes four methods - **_start**, **_stop**, **_taskClass**, an
    ohara user. In order to distinguish the APIs between ohara and kafka,
    we add prefix "_" to all ohara methods and make them be abstract.
 
+.. _connector-source-start:
+
 _start(TaskSetting)
 ^^^^^^^^^^^^^^^^^^^
 
-  After instantizing a connector, the first method called by worker is **start()**. You should initialize your connector in **start** method, since it has a input parameter **TaskSetting** carrying all settings, such as target topics, connector name and user-defined configs, from user. If you (connector developer) are a good friend of your connector user, you can get (and cast it to expected type) config, which is passed by connector user, from **TaskSetting**. For example, a connector user calls `Connector API <rest_interface.html#create-the-settings-of-connector>`__ to store a config k0-v0 (both of them are string type) for your connector, and then you can get v0 via TaskSetting.stringValue(“k0”).
+  After instantizing a connector, the first method called by worker is **start()**.
+  You should initialize your connector in **start** method, since it has a input
+  parameter **TaskSetting** carrying all settings, such as target topics, connector
+  name and user-defined configs, from user. If you (connector developer) are a good
+  friend of your connector user, you can get (and cast it to expected type) config,
+  which is passed by connector user, from **TaskSetting**. For example, a connector
+  user calls :ref:`Connector API <rest-connector-create-settings>`
+  to store a config k0-v0 (both of them are string type) for your connector, and then
+  you can get v0 via TaskSetting.stringValue(“k0”).
 
 .. note::
    Don’t be afraid of throwing exception when you notice that input
@@ -269,40 +284,44 @@ _start(TaskSetting)
 
 
 We all hate wrong configs, right? When you design the connector, you can
-**define** the `settings <#setting-definitions>`__ on your own
-initiative. The `settings <#setting-definitions>`__ enable worker to
+**define** the :ref:`setting <connector-setting-def>` on your own
+initiative. The :ref:`setting <connector-setting-def>` enable worker to
 check the input configs before starting connector. It can’t eliminate
 incorrect configs completely, but it save your time of fighting against
 wrong configs (have a great time with your family)
 
 
+.. _connector-source-stop:
+
 _stop()
 ^^^^^^^
 
-  This method is invoked by calling `STOP API <rest_interface.html#stop-a-connector>`__. You can release the resources allocated by connector, or send a email to shout at someone.
+  This method is invoked by calling :ref:`STOP API <rest-stop-streamapp>`.
+  You can release the resources allocated by connector, or send a email to shout at someone.
   It is ok to throw an exception when you fails to **stop** the connector.
   Worker cluster will mark **failure** on the connector, and the world
   keeps running.
 
+.. _connector-source-taskclass:
 
 _taskClass()
 ^^^^^^^^^^^^
 
-  This method returns the java class of `RowSourceTask <#source-task>`__
+  This method returns the java class of :ref:`RowSourceTask <connector-sourcetask>`
   implementation. It tells worker cluster which class should be created to
   pull data from external system. Noted that connector and task may not be
   created on same node (jvm) so you should NOT share any objects between
   them (for example, make them to access a global variable).
 
+.. _connector-source-tasksetting:
 
 _taskSetting(int maxTasks)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
   Connector has to generate configs for each task. The value of
-  **maxTasks** is configured by `Connector
-  API <rest_interface.html#connector>`__. If you prefer to make all tasks
+  **maxTasks** is configured by :ref:`Connector API <rest-connector>`. If you prefer to make all tasks
   do identical job, you can just clone the task config passe by
-  `start <#start-tasksetting>`__. Or you can prepare different configs for
+  :ref:`start <connector-source-start>`. Or you can prepare different configs for
   each task. Noted that the number of configuration you return MUST be
   equal with input value - maxTasks. Otherwise, you will get a exception
   when running your connector.
@@ -314,6 +333,8 @@ _taskSetting(int maxTasks)
    time and resources.
 
 ---------------------------
+
+.. _connector-sourcetask:
 
 Source Task
 -----------
@@ -346,10 +367,12 @@ Source Task
    }  
 
 RowSourceTask is the unit of executing **poll**. A connector can invokes
-multiple tasks if you set **tasks.max** be bigger than 1 via `Connector
-APIs <rest_interface.html#connector>`__. RowSourceTask has similar
-lifecycle to Source connector. Worker cluster call **start** to
+multiple tasks if you set **tasks.max** be bigger than 1 via :ref:`Connector API <rest-connector>`.
+RowSourceTask has similar lifecycle to Source connector. Worker cluster call **start** to
 initialize a task and call **stop** to terminate a task.
+
+
+.. _connector-sourcetask-pull:
 
 _pull()
 ^^^^^^^
@@ -376,6 +399,7 @@ _pull()
 
    You can read the java docs of RowSourceRecord.Builder to see which default values are set for other (optional) elements.
 
+.. _connector-source-partition-offsets:
 
 Partition and Offsets in Source
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -449,6 +473,7 @@ and **offset**, you can override the **_commit()**.
      }
    }
 
+.. _connector-sourcetask-handle-exception:
 
 Handle Exception in _poll()
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -490,6 +515,8 @@ Data From _poll() Are Committed Async
 
 --------------
 
+.. _connector-sink:
+
 Sink Connector
 --------------
 
@@ -525,14 +552,16 @@ Sink Connector
      protected abstract List<TaskSetting> _taskSetting(int maxTasks);
    }
 
-Sink connector is similar to `source connector <#source-connector>`__.
-It also have `_task(TaskSetting) <#start-tasksetting>`__, `_stop() <#stop>`__,
-`_taskClass() <#taskclass>`__, `_taskSetting(int maxTasks) <#tasksetting-int-maxtasks>`__,
-`partition and offsets <#partition-and-offsets-in-source>`__. The main difference
+Sink connector is similar to :ref:`source connector <connector-sourceconnector>`.
+It also have :ref:`_start(TaskSetting) <connector-source-start>`,
+:ref:`_stop() <connector-source-stop>`,
+:ref:`_taskClass() <connector-source-taskclass>`,
+:ref:`_taskSetting(int maxTasks) <connector-source-tasksetting>`,
+:ref:`partition and offsets <connector-source-partition-offsets>`. The main difference
 between sink connector and source connector is that sink connector do
 pull data from topic and then push processed data to outside system.
-Hence, it does have `_put <#put-list-rowsinkrecord-records>`__ rather
-than `_pull <#pull>`__
+Hence, it does have :ref:`_put <connector-sinktask-put>` rather
+than :ref:`_pull <connector-sourcetask-pull>`
 
 .. note::
    Though sink connector and source connector have many identical
@@ -577,10 +606,12 @@ Sink Task
      protected abstract void _put(List<RowSinkRecord> records);
    }  
 
-RowSinkTask is similar to `RowSourceTask <#source-task>`__ that both of
+RowSinkTask is similar to :ref:`RowSourceTask <connector-sourcetask>` that both of
 them have **_start** and **_stop** phase. RowSinkTask is executed by a
 separate thread on worker also.
 
+
+.. _connector-sinktask-put:
 
 _put(List<RowSinkRecord> records)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -615,7 +646,8 @@ input data.
 Handle Exception In _put(List<RowSinkRecord>)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Any thrown exception will make this connector failed and stopped. You should handle the recoverable error and throw the exception which obstruct connector from running.
+Any thrown exception will make this connector failed and stopped. You should handle the recoverable error and
+throw the exception which obstruct connector from running.
 
 .. code-block:: java
 
@@ -658,7 +690,7 @@ Any thrown exception will make this connector failed and stopped. You should han
 Handle Exception In _pool(List<RowSinkRecord>)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-see `handle exception in _poll() <#handle-exception-in-poll>`__
+see :ref:`handle exception in _poll() <connector-sourcetask-handle-exception>`
 
 
 Commit Your Output Data When Kafka Commit Input Data
@@ -695,6 +727,8 @@ you can trigger the commit in this callback.
 
 --------------
 
+.. _connector-version:
+
 Version
 -------
 
@@ -717,7 +751,7 @@ a connector.
 
 By default, all information in ConnectorVersion are **unknown**. You can
 override one of them or all of them when writing connector. The version
-information of a connector is showed by `Worker API <rest_interface.html#worker>`__.
+information of a connector is showed by :ref:`Worker APIs <rest-worker>`.
 
 .. warning:: Don’t return null, please!!!
 
@@ -744,9 +778,12 @@ However, Please don’t use illegal values like **null** or **empty string**.
 .. note::
    Version in ohara connector is different to kafka connector. The later
    only supports **version** and it’s APIs show only **version**. Hence,
-   you can’t get revision, author or other `settings <#setting-definitions>`__ through kafka APIs
+   you can’t get revision, author or other :ref:`settings <connector-setting-def>`
+   through kafka APIs
 
 --------------
+
+.. _connector-setting-def:
 
 Setting Definitions
 -------------------
@@ -769,16 +806,16 @@ setting. It consists of following arguments.
 #. orderInGroup (**int**) — the order in group
 #. editable (**boolean**) — true if this setting is modifiable
 #. key (**string**) — the key of configuration
-#. `valueType <rest_interface.html#setting-type>`__ (**string**) — the type of value
+#. :ref:`valueType <rest-setting-type>` (**string**) — the type of value
 #. defaultValue (**string**) — the default value
 #. documentation (**string**) — the explanation of this definition
-#. `reference <rest_interface.html#setting-reference>`__ (**string**) — works for ohara manager. It represents the reference of value.
-#. required(\ **boolean**) — true if this setting has no default value and you have to assign a value. Otherwise, you can’t start connector.
+#. :ref:`reference <rest-setting-ref>` (**string**) — works for ohara manager. It represents the reference of value.
+#. required (**boolean**) — true if this setting has no default value and you have to assign a value. Otherwise, you can’t start connector.
 #. internal (**string**) — true if this setting is assigned by system automatically.
 #. tableKeys (**array(string)**) — the column name when the type is TABLE
 
 .. note::
-   You can call `Worker APIs <rest_interface.html#worker>`__ to get all
+   You can call :ref:`Worker APIs <rest-worker>` to get all
    connectors’ setting definitions
 
 Although a SettingDefinition can include many elements, you can simply
@@ -798,7 +835,7 @@ that you can create a SettingDefinition with only key.
 Notwithstanding it is flexible to build a SettingDefinition, we
 encourage connector developers to create a description-rich
 SettingDefinition. More description to your setting produces more
-**document** in calling `Worker APIs <rest_interface.html#worker>`__. We
+**document** in calling :ref:`Worker APIs <rest-worker>`. We
 all hate write documentation so it would be better to make your code
 readable.
 
@@ -838,7 +875,7 @@ Assigning a default value to a SettingDefinition is a piece of cake.
    the default value is declared as **string** type as it must be **readable** in Restful APIs.
 
 After calling the **optional(String)** method, the response, which is
-created by `Worker APIs <rest_interface.html#worker>`__, will display
+created by :ref:`Worker APIs <rest-worker>`, will display
 the following information.
 
 .. code-block:: json
@@ -849,7 +886,7 @@ the following information.
    }
 
 .. note::
-   The default value will be added to `TaskSetting <#_starttasksetting>`__ automatically if the specified
+   The default value will be added to :ref:`TaskSetting <connector-source-start>` automatically if the specified
    key is not already associated with a value.
 
 
@@ -859,7 +896,7 @@ A Readonly Setting Definition
 You can declare a **readonly** setting that not only exposes something
 of your connector to user but also remind user the setting can’t be
 changed at runtime. For instance, the information of
-`version <#version>`__ is fixed after you have completed your connector
+:ref:`version <connector-version>` is fixed after you have completed your connector
 so it is not a **editable** setting. Hence, ohara define a setting for
 **version** with a readonly label. By the way, you should assign a
 default value to a readonly setting since a readonly setting without
@@ -942,7 +979,7 @@ support to Duration type so as to ease the pain of using string in
 connector. When you declare a setting with duration type, ohara provides
 the default check which casts input value to java Duration and scala
 Duration. Also, your connector can get the **Duration** from
-`TaskSetting <#_starttasksetting>`__ easily without worrying about the
+:ref:`TaskSetting <connector-source-start>` easily without worrying about the
 conversion between java and scala. Furthermore, connector users can
 input both java.Duration and scala.Duration when starting connector.
 
@@ -1000,6 +1037,8 @@ exception when you hate input value or type.
 
 --------------
 
+.. _connector-metrics:
+
 Metrics
 -------
 
@@ -1007,20 +1046,21 @@ We are live in a world filled with number, and so do connectors. While a
 connector is running, ohara collects many counts from the data flow for
 the connector in background. All of counters (and other records which
 will be introduced in the future) are called **metrics**, and it can be
-fetched by `Connector APIs <rest_interface.html#connector>`__. Apart
+fetched by :ref:`Connector API <rest-connector>`. Apart
 from official metrics, connector developers are also able to build
 custom metrics for custom connectors, and all custom metrics are also
-showed by `Connector APIs <rest_interface.html#connector>`__.
+showed by :ref:`Connector API <rest-connector>`.
 
 Ohara leverage JMX to offer the metrics APIs to connector. It means all
 metrics you created are stored as Java beans and is accessible through
-JMX service. That is why you have to define a port via `Worker
-APIs <rest_interface.html#worker>`__ for creating a worker cluster.
+JMX service. That is why you have to define a port via :ref:`Worker APIs <rest-worker>`
+for creating a worker cluster.
 Although you can see all java mbeans via the JMX client (such as JMC),
-ohara still encourage you to apply `Connector
-APIs <rest_interface.html#connector>`__ as it offers a more readable
-format of metrics.
+ohara still encourage you to apply :ref:`Connector API <rest-connector>`
+as it offers a more readable format of metrics.
 
+
+.. _connector-counter:
 
 Counter
 ^^^^^^^
@@ -1061,7 +1101,7 @@ A example of creating a counter is shown below.
 .. note::
    The counter created by connector always has the group same to id of
    connector, since ohara needs to find the counters for specific
-   connector in `Connector APIs <rest_interface.html#connector>`__
+   connector in :ref:`Connector API <rest-connector>`
 
 
 Official Metrics
@@ -1099,4 +1139,4 @@ of CounterBuilder must be after initializing the connector/task.
 .. note::
    Ohara doesn’t obstruct you from using Counter directly. However,
    using CounterBuilder make sure that your custom metrics are available
-   in `Connector APIs <rest_interface.html#connector>`__.
+   in :ref:`Connector API <rest-connector>`.
