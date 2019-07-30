@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-import styled from 'styled-components';
-import Icon from '@material-ui/core/Icon';
+import React from 'react';
 
-export const StyledIcon = styled(Icon)`
-  font-size: 12px;
-  margin: 0 12px;
-`;
+const SnackbarContext = React.createContext();
+
+export default SnackbarContext;

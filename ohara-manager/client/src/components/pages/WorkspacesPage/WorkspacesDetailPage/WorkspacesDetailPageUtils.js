@@ -18,16 +18,19 @@ import moment from 'moment';
 import { useEffect, useCallback, useState } from 'react';
 import { isEmpty, get, orderBy } from 'lodash';
 
-import * as topicApi from 'api/topicApi';
 import * as jarApi from 'api/jarApi';
+import * as useApi from 'components/controller';
+import * as URL from 'components/controller/url';
 
 export const useFetchTopics = brokerClusterName => {
   const [topics, setTopics] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const { getData: getTopicsRes, getApi: getTopics } = useApi.useGetApi(
+    URL.TOPIC_URL,
+  );
   const fetchTopics = useCallback(async () => {
-    const res = await topicApi.fetchTopics();
-    const topics = get(res, 'data.result', []);
+    await getTopics();
+    const topics = get(getTopicsRes(), 'data.result', []);
     setLoading(false);
 
     if (!isEmpty(topics)) {
@@ -36,7 +39,7 @@ export const useFetchTopics = brokerClusterName => {
       );
       setTopics(orderBy(topicsUnderBrokerCluster, 'name'));
     }
-  }, [brokerClusterName]);
+  }, [brokerClusterName, getTopics, getTopicsRes]);
 
   useEffect(() => {
     fetchTopics();

@@ -20,8 +20,6 @@ import TableRow from '@material-ui/core/TableRow';
 import Tooltip from '@material-ui/core/Tooltip';
 import { get, capitalize } from 'lodash';
 
-import * as brokerApi from 'api/brokerApi';
-import * as zookeeperApi from 'api/zookeeperApi';
 import OverviewTable from './OverviewTable';
 import {
   TabHeading,
@@ -30,13 +28,23 @@ import {
   StyledTableCell,
   TooltipBody,
 } from './styles';
+import * as useApi from 'components/controller';
+import * as URL from 'components/controller/url';
 
 const OverviewNodes = props => {
   const { worker, handleRedirect } = props;
   const { brokerClusterName } = worker;
 
   const [nodes, setNodes] = useState([]);
-  const [zookeeperName, setZookeeperName] = useState('');
+  const { data: brokerRes } = useApi.useFetchApi(
+    `${URL.BROKER_URL}/${brokerClusterName}`,
+  );
+  const broker = get(brokerRes, 'data.result', null);
+  const zookeeperName = broker === null ? '' : broker.zookeeperClusterName;
+  const { data: zookeeperRes } = useApi.useFetchApi(
+    `${URL.ZOOKEEPER_URL}/${zookeeperName}`,
+  );
+  const zookeeper = get(zookeeperRes, 'data.result', null);
 
   useEffect(() => {
     const { nodeNames, clientPort, jmxPort } = worker;
@@ -54,8 +62,6 @@ const OverviewNodes = props => {
 
   useEffect(() => {
     const fetchBroker = async () => {
-      const res = await brokerApi.fetchBroker(brokerClusterName);
-      const broker = get(res, 'data.result', null);
       if (!broker) return;
 
       const { nodeNames, clientPort, exporterPort, jmxPort } = broker;
@@ -69,11 +75,10 @@ const OverviewNodes = props => {
       });
 
       setNodes(prevNodes => [...prevNodes, ...brokerNodes]);
-      setZookeeperName(broker.zookeeperClusterName);
     };
 
     fetchBroker();
-  }, [brokerClusterName]);
+  }, [broker, brokerClusterName, brokerRes]);
 
   // Since zookeeper is the last request we sent, we just need to wait for this
   // in longer term, we should have a better way to determine if a request a
@@ -81,29 +86,20 @@ const OverviewNodes = props => {
   const [isFetchingZookeeper, setIsFetchingZookeeper] = useState(true);
 
   useEffect(() => {
-    if (zookeeperName) {
-      const fetchZookeeper = async () => {
-        const res = await zookeeperApi.fetchZookeeper(zookeeperName);
-        setIsFetchingZookeeper(false);
-        const zookeeper = get(res, 'data.result', null);
-        if (!zookeeper) return;
-
-        const { nodeNames, clientPort, electionPort, peerPort } = zookeeper;
-        const zookeeperNodes = nodeNames.map((nodeName, idx) => {
-          return {
-            clusterType: 'Zookeeper',
-            nodeName: `${nodeName}:${clientPort}`,
-            moreInfo: { electionPort, peerPort },
-            shouldRender: idx === 0,
-          };
-        });
-
-        setNodes(prevNodes => [...prevNodes, ...zookeeperNodes]);
+    setIsFetchingZookeeper(false);
+    if (!zookeeper || Array.isArray(zookeeper)) return;
+    const { nodeNames, clientPort, electionPort, peerPort } = zookeeper;
+    const zookeeperNodes = nodeNames.map((nodeName, idx) => {
+      return {
+        clusterType: 'Zookeeper',
+        nodeName: `${nodeName}:${clientPort}`,
+        moreInfo: { electionPort, peerPort },
+        shouldRender: idx === 0,
       };
+    });
 
-      fetchZookeeper();
-    }
-  }, [zookeeperName]);
+    setNodes(prevNodes => [...prevNodes, ...zookeeperNodes]);
+  }, [broker, zookeeper, zookeeperName]);
 
   return (
     <>

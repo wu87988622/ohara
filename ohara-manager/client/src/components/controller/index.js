@@ -14,10 +14,20 @@
  * limitations under the License.
  */
 
-import styled from 'styled-components';
-import Icon from '@material-ui/core/Icon';
+import useDeleteApi from './useDeleteApi';
+import useFetchApi from './useFetchApi';
+import useGetApi from './useGetApi';
+import usePostApi from './usePostApi';
+import usePutApi from './usePutApi';
+import useUploadApi from './useUploadApi';
+import useValidationApi from './useValidationApi';
 
-export const StyledIcon = styled(Icon)`
-  font-size: 12px;
-  margin: 0 12px;
-`;
+export {
+  useDeleteApi,
+  useFetchApi,
+  useGetApi,
+  usePostApi,
+  usePutApi,
+  useUploadApi,
+  useValidationApi,
+};

@@ -21,6 +21,7 @@ import { createMemoryHistory } from 'history';
 
 import { ThemeProvider as MuiThemeProvider } from '@material-ui/styles';
 import { ThemeProvider } from 'styled-components';
+import SnackbarProvider from 'components/context/Snackbar/SnackbarProvider';
 import MuiTheme from 'theme/muiTheme';
 import * as CSS_VARS from 'theme/variables';
 
@@ -46,9 +47,35 @@ export const renderWithTheme = ui => {
   return {
     ...render(
       <MuiThemeProvider theme={MuiTheme}>
-        <ThemeProvider theme={{ ...CSS_VARS, ...MuiTheme }}>{ui}</ThemeProvider>
+        <ThemeProvider theme={{ ...CSS_VARS, ...MuiTheme }}>
+          <SnackbarProvider>{ui}</SnackbarProvider>
+        </ThemeProvider>
       </MuiThemeProvider>,
     ),
+  };
+};
+
+export const renderWithProvider = (
+  ui,
+  {
+    route = '/',
+    history = createMemoryHistory({ initialEntries: [route] }),
+  } = {},
+) => {
+  return {
+    ...render(
+      <MuiThemeProvider theme={MuiTheme}>
+        <ThemeProvider theme={{ ...CSS_VARS, ...MuiTheme }}>
+          <SnackbarProvider>
+            <Router history={history}>{ui}</Router>
+          </SnackbarProvider>
+        </ThemeProvider>
+      </MuiThemeProvider>,
+    ),
+    // adding `history` to the returned utilities to allow us
+    // to reference it in our tests (just try to avoid using
+    // this to test implementation details).
+    history,
   };
 };
 

@@ -26,20 +26,23 @@ import * as MESSAGES from 'constants/messages';
 import * as utils from '../WorkspacesDetailPageUtils';
 import TopicNewModal from './TopicNewModal';
 import { DeleteDialog } from 'components/common/Mui/Dialog';
-import { Main, NewButton, ActionIcon } from '../styles';
+import { Main, NewButton, ActionIcon } from './styles';
 import { SortTable } from 'components/common/Mui/Table';
 import { useSetState } from 'utils/hooks';
+import * as useApi from 'components/controller';
+import * as URL from 'components/controller/url';
 
 const Topics = props => {
   const { worker } = props;
 
   const {
-    topics,
-    setTopics,
-    loading: fetchingTopics,
-    fetchTopics,
-  } = utils.useFetchTopics(worker.brokerClusterName);
-
+    data: topics,
+    isLoading: fetchingTopics,
+    refetch,
+  } = useApi.useFetchApi(URL.TOPIC_URL);
+  const topicsUnderBrokerCluster = get(topics, 'data.result', []).filter(
+    topic => topic.brokerClusterName === worker.brokerClusterName,
+  );
   const headRows = [
     { id: 'name', label: 'Topic name' },
     { id: 'partitions', label: 'Partitions' },
@@ -68,7 +71,7 @@ const Topics = props => {
     );
   };
 
-  const rows = topics.map(topic => {
+  const rows = topicsUnderBrokerCluster.map(topic => {
     const {
       name,
       numberOfPartitions,
@@ -102,16 +105,12 @@ const Topics = props => {
 
     if (isSuccess) {
       toastr.success(`${MESSAGES.TOPIC_DELETION_SUCCESS} ${topicToBeDeleted}`);
-      const updatedTopics = topics.filter(
-        topic => topic.name !== topicToBeDeleted,
-      );
 
       setState({
         isDeleteModalOpen: false,
         topicToBeDeleted: '',
       });
-
-      setTopics(updatedTopics);
+      refetch();
     }
   };
 
@@ -146,7 +145,9 @@ const Topics = props => {
         onClose={() => {
           setState({ isNewModalOpen: false });
         }}
-        onConfirm={fetchTopics}
+        onConfirm={() => {
+          refetch();
+        }}
         brokerClusterName={worker.brokerClusterName}
       />
 

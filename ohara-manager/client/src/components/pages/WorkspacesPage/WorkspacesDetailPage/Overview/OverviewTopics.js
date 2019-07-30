@@ -18,19 +18,27 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import TableRow from '@material-ui/core/TableRow';
 import Tooltip from '@material-ui/core/Tooltip';
+import { get } from 'lodash';
 
 import OverviewTable from './OverviewTable';
-import { useFetchTopics } from '../WorkspacesDetailPageUtils';
 import {
   TabHeading,
   StyledTableCell,
   StyledIcon,
   StyledIconLink,
 } from './styles';
+import * as useApi from 'components/controller';
+import * as URL from 'components/controller/url';
 
 const OverviewTopics = props => {
   const { handleRedirect, brokerClusterName } = props;
-  const { topics, loading: fetchingTopics } = useFetchTopics(brokerClusterName);
+  const { data: topics, isLoading: fetchingTopics } = useApi.useFetchApi(
+    URL.TOPIC_URL,
+  );
+
+  const topicsUnderBrokerCluster = get(topics, 'data.result', []).filter(
+    topic => topic.brokerClusterName === brokerClusterName,
+  );
   return (
     <>
       <TabHeading>
@@ -49,7 +57,7 @@ const OverviewTopics = props => {
         headers={['Name', 'Partitions', 'Replication factor']}
         isLoading={fetchingTopics}
       >
-        {topics.map(topic => {
+        {topicsUnderBrokerCluster.map(topic => {
           return (
             <TableRow key={topic.name}>
               <StyledTableCell component="th" scope="row">

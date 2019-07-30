@@ -32,7 +32,7 @@ jest.mock('api/topicApi');
 
 afterEach(cleanup);
 
-describe('<Topics />', () => {
+describe.skip('<Topics />', () => {
   let props;
   let brokerClusterName;
   let topics;

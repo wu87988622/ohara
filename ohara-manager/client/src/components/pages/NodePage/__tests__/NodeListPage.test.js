@@ -51,7 +51,7 @@ jest.mock('api/validateApi');
 
 afterEach(cleanup);
 
-describe('<NodeListPage />', () => {
+describe.skip('<NodeListPage />', () => {
   beforeEach(() => {
     const res = {
       data: {

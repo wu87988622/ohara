@@ -28,6 +28,7 @@ import WorkspacesPage from 'components/pages/WorkspacesPage';
 import WorkspacesDetailPage from 'components/pages/WorkspacesPage/WorkspacesDetailPage';
 import LogsPage from 'components/pages/LogsPage';
 import NotFoundPage from 'components/pages/NotFoundPage';
+import SnackbarProvider from 'components/context/Snackbar/SnackbarProvider';
 
 //We need to override Mui styles with our custom styles. See Mui docs for more info:https://material-ui.com/customization/css-in-js/#other-html-element
 const jss = create({
@@ -39,55 +40,57 @@ class App extends React.Component {
   render() {
     return (
       <StylesProvider jss={jss}>
-        <Router>
-          <React.Fragment>
-            <Header />
-            <Switch>
-              <Route
-                path="/pipelines/new/:page?/:pipelineName/:connectorName?"
-                component={PipelineNewPage}
-                data-testid="pipeline-new-page"
-              />
-              <Route
-                path="/pipelines/edit/:page?/:pipelineName/:connectorName?"
-                component={PipelineNewPage}
-                data-testid="pipeline-edit-page"
-              />
-              <Route
-                path="/pipelines"
-                component={PipelinePage}
-                data-testid="pipeline-page"
-              />
-              <Route
-                path="/nodes"
-                component={NodesPage}
-                data-testid="nodes-page"
-              />
-              <Route
-                path="/workspaces/:workspaceName/:serviceName?"
-                component={WorkspacesDetailPage}
-                data-testid="workspace-page"
-              />
-              <Route
-                path="/workspaces"
-                component={WorkspacesPage}
-                data-testid="workspaces-page"
-              />
-              <Route
-                path="/logs/:serviceName/:clusterName"
-                component={LogsPage}
-                data-testid="logs-page"
-              />
-              <Route
-                exact
-                path="/"
-                data-testid="home-page"
-                component={HomePage}
-              />
-              <Route component={NotFoundPage} data-testid="not-found-page" />
-            </Switch>
-          </React.Fragment>
-        </Router>
+        <SnackbarProvider>
+          <Router>
+            <React.Fragment>
+              <Header />
+              <Switch>
+                <Route
+                  path="/pipelines/new/:page?/:pipelineName/:connectorName?"
+                  component={PipelineNewPage}
+                  data-testid="pipeline-new-page"
+                />
+                <Route
+                  path="/pipelines/edit/:page?/:pipelineName/:connectorName?"
+                  component={PipelineNewPage}
+                  data-testid="pipeline-edit-page"
+                />
+                <Route
+                  path="/pipelines"
+                  component={PipelinePage}
+                  data-testid="pipeline-page"
+                />
+                <Route
+                  path="/nodes"
+                  component={NodesPage}
+                  data-testid="nodes-page"
+                />
+                <Route
+                  path="/workspaces/:workspaceName/:serviceName?"
+                  component={WorkspacesDetailPage}
+                  data-testid="workspace-page"
+                />
+                <Route
+                  path="/workspaces"
+                  component={WorkspacesPage}
+                  data-testid="workspaces-page"
+                />
+                <Route
+                  path="/logs/:serviceName/:clusterName"
+                  component={LogsPage}
+                  data-testid="logs-page"
+                />
+                <Route
+                  exact
+                  path="/"
+                  data-testid="home-page"
+                  component={HomePage}
+                />
+                <Route component={NotFoundPage} data-testid="not-found-page" />
+              </Switch>
+            </React.Fragment>
+          </Router>
+        </SnackbarProvider>
       </StylesProvider>
     );
   }

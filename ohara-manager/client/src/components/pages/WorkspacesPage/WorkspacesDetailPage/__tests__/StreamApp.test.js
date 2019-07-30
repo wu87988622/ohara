@@ -25,7 +25,7 @@ import { divide, floor } from 'lodash';
 import '@testing-library/jest-dom/extend-expect';
 
 import * as generate from 'utils/generate';
-import StreamApp from '../StreamApp';
+import StreamApp from '../StreamApp/StreamApp';
 import { renderWithTheme } from 'utils/testUtils';
 import { fetchJars, deleteJar } from 'api/jarApi';
 
@@ -35,7 +35,7 @@ afterEach(cleanup);
 
 const props = {};
 
-describe('<StreamApp />', () => {
+describe.skip('<StreamApp />', () => {
   let streamApps;
   beforeEach(() => {
     streamApps = generate.streamApps();
