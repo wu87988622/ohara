@@ -21,7 +21,7 @@ import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.{ClusterInfo, WorkerApi}
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
-import com.island.ohara.client.configurator.v0.FileApi.{FileInfo, _}
+import com.island.ohara.client.configurator.v0.FileInfoApi.{FileInfo, _}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.{ConnectorDefinition, WorkerClusterInfo}
 import com.island.ohara.client.kafka.WorkerClient

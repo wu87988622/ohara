@@ -18,7 +18,7 @@ package com.island.ohara.agent
 
 import java.net.URL
 
-import com.island.ohara.client.configurator.v0.FileApi.{FILE_INFO_JSON_FORMAT, FileInfo}
+import com.island.ohara.client.configurator.v0.FileInfoApi.{FILE_INFO_JSON_FORMAT, FileInfo}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo

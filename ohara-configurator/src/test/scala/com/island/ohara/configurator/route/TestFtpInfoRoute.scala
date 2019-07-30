@@ -16,8 +16,8 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.{Data, FtpApi}
-import com.island.ohara.client.configurator.v0.FtpApi.{FtpInfo, Request}
+import com.island.ohara.client.configurator.v0.{Data, FtpInfoApi}
+import com.island.ohara.client.configurator.v0.FtpInfoApi.{FtpInfo, Request}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
@@ -29,7 +29,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class TestFtpInfoRoute extends SmallTest with Matchers {
   private[this] val configurator = Configurator.builder.fake().build()
 
-  private[this] val ftpApi = FtpApi.access.hostname(configurator.hostname).port(configurator.port)
+  private[this] val ftpApi = FtpInfoApi.access.hostname(configurator.hostname).port(configurator.port)
 
   @Test
   def test(): Unit = {

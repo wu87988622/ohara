@@ -18,7 +18,7 @@ package com.island.ohara.client.configurator.v0
 
 import java.util.Objects
 
-import com.island.ohara.client.configurator.v0.FileApi._
+import com.island.ohara.client.configurator.v0.FileInfoApi._
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import com.island.ohara.kafka.connector.json.{ObjectKey, SettingDefinition, SettingDefinitions}

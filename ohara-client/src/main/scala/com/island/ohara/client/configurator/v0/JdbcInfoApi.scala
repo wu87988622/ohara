@@ -25,7 +25,7 @@ import spray.json.{JsValue, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-object JdbcApi {
+object JdbcInfoApi {
   val JDBC_PREFIX_PATH: String = "jdbc"
   final case class Update(url: Option[String],
                           user: Option[String],

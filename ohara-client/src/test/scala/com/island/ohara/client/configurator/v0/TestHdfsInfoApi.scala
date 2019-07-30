@@ -23,11 +23,11 @@ import org.scalatest.Matchers
 import spray.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-class TestHadoopApi extends SmallTest with Matchers {
+class TestHdfsInfoApi extends SmallTest with Matchers {
 
   @Test
   def testNullUriInUpdate(): Unit = {
-    val update = HadoopApi.HDFS_UPDATE_JSON_FORMAT.read("""
+    val update = HdfsInfoApi.HDFS_UPDATE_JSON_FORMAT.read("""
         |{
         | "uri": null
         |}
@@ -37,7 +37,7 @@ class TestHadoopApi extends SmallTest with Matchers {
 
   @Test
   def testEmptyUriInUpdate(): Unit = {
-    an[DeserializationException] should be thrownBy HadoopApi.HDFS_UPDATE_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy HdfsInfoApi.HDFS_UPDATE_JSON_FORMAT.read("""
         |{
         | "uri": ""
         |}
@@ -46,7 +46,7 @@ class TestHadoopApi extends SmallTest with Matchers {
 
   @Test
   def testEmptyNameInCreation(): Unit = {
-    an[DeserializationException] should be thrownBy HadoopApi.HDFS_CREATION_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy HdfsInfoApi.HDFS_CREATION_JSON_FORMAT.read("""
         |{
         | "name": "",
         | "uri": "file:///tmp"
@@ -56,7 +56,7 @@ class TestHadoopApi extends SmallTest with Matchers {
 
   @Test
   def testEmptyUriInCreation(): Unit = {
-    an[DeserializationException] should be thrownBy HadoopApi.HDFS_CREATION_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy HdfsInfoApi.HDFS_CREATION_JSON_FORMAT.read("""
         |{
         | "name": "hdfs_name1",
         | "uri": ""
@@ -67,7 +67,7 @@ class TestHadoopApi extends SmallTest with Matchers {
 
   @Test
   def testNullUriInCreation(): Unit = {
-    an[DeserializationException] should be thrownBy HadoopApi.HDFS_CREATION_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy HdfsInfoApi.HDFS_CREATION_JSON_FORMAT.read("""
         |{
         | "name": "hdfs_name1",
         | "uri": null
@@ -78,7 +78,7 @@ class TestHadoopApi extends SmallTest with Matchers {
   @Test
   def testParserUpdate(): Unit = {
     val uri = s"file:///tmp/${CommonUtils.randomString()}"
-    val update = HadoopApi.HDFS_UPDATE_JSON_FORMAT.read(s"""
+    val update = HdfsInfoApi.HDFS_UPDATE_JSON_FORMAT.read(s"""
          |{
          | "uri": "${uri}"
          |}
@@ -89,7 +89,7 @@ class TestHadoopApi extends SmallTest with Matchers {
   @Test
   def testParseCreation(): Unit = {
     val uri = s"file:///tmp/${CommonUtils.randomString()}"
-    val creation = HadoopApi.HDFS_CREATION_JSON_FORMAT.read(s"""
+    val creation = HdfsInfoApi.HDFS_CREATION_JSON_FORMAT.read(s"""
                                                                |{
                                                                | "uri": "$uri"
                                                                |}
@@ -98,7 +98,7 @@ class TestHadoopApi extends SmallTest with Matchers {
     creation.uri shouldBe uri
 
     val name = CommonUtils.randomString()
-    val creation2 = HadoopApi.HDFS_CREATION_JSON_FORMAT.read(s"""
+    val creation2 = HdfsInfoApi.HDFS_CREATION_JSON_FORMAT.read(s"""
          |{
          | "name": "${name}",
          | "uri": "$uri"
@@ -109,7 +109,7 @@ class TestHadoopApi extends SmallTest with Matchers {
   }
 
   @Test
-  def ignoreNameOnCreation(): Unit = HadoopApi.access
+  def ignoreNameOnCreation(): Unit = HdfsInfoApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
@@ -119,7 +119,7 @@ class TestHadoopApi extends SmallTest with Matchers {
     .length should not be 0
 
   @Test
-  def ignoreNameOnUpdate(): Unit = an[NullPointerException] should be thrownBy HadoopApi.access
+  def ignoreNameOnUpdate(): Unit = an[NullPointerException] should be thrownBy HdfsInfoApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
@@ -127,19 +127,19 @@ class TestHadoopApi extends SmallTest with Matchers {
     .update()
 
   @Test
-  def emptyGroup(): Unit = an[IllegalArgumentException] should be thrownBy HadoopApi.access.request.group("")
+  def emptyGroup(): Unit = an[IllegalArgumentException] should be thrownBy HdfsInfoApi.access.request.group("")
 
   @Test
-  def nullGroup(): Unit = an[NullPointerException] should be thrownBy HadoopApi.access.request.group(null)
+  def nullGroup(): Unit = an[NullPointerException] should be thrownBy HdfsInfoApi.access.request.group(null)
 
   @Test
-  def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy HadoopApi.access.request.name("")
+  def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy HdfsInfoApi.access.request.name("")
 
   @Test
-  def nullName(): Unit = an[NullPointerException] should be thrownBy HadoopApi.access.request.name(null)
+  def nullName(): Unit = an[NullPointerException] should be thrownBy HdfsInfoApi.access.request.name(null)
 
   @Test
-  def ignoreUriOnCreation(): Unit = an[NullPointerException] should be thrownBy HadoopApi.access
+  def ignoreUriOnCreation(): Unit = an[NullPointerException] should be thrownBy HdfsInfoApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
@@ -147,14 +147,14 @@ class TestHadoopApi extends SmallTest with Matchers {
     .create()
 
   @Test
-  def emptyUri(): Unit = an[IllegalArgumentException] should be thrownBy HadoopApi.access.request.uri("")
+  def emptyUri(): Unit = an[IllegalArgumentException] should be thrownBy HdfsInfoApi.access.request.uri("")
 
   @Test
-  def nullUri(): Unit = an[NullPointerException] should be thrownBy HadoopApi.access.request.uri(null)
+  def nullUri(): Unit = an[NullPointerException] should be thrownBy HdfsInfoApi.access.request.uri(null)
 
   @Test
-  def nullTags(): Unit = an[NullPointerException] should be thrownBy HadoopApi.access.request.tags(null)
+  def nullTags(): Unit = an[NullPointerException] should be thrownBy HdfsInfoApi.access.request.tags(null)
 
   @Test
-  def emptyTags(): Unit = HadoopApi.access.request.tags(Map.empty)
+  def emptyTags(): Unit = HdfsInfoApi.access.request.tags(Map.empty)
 }

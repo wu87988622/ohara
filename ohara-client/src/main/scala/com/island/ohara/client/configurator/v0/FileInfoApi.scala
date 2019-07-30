@@ -28,7 +28,7 @@ import spray.json.DefaultJsonProtocol._
 import spray.json.{JsObject, JsString, JsValue, RootJsonFormat}
 import spray.json._
 import scala.concurrent.{ExecutionContext, Future}
-object FileApi {
+object FileInfoApi {
   val FILE_PREFIX_PATH: String = "files"
   def toString(tags: Map[String, JsValue]): String = JsObject(tags).toString
 
@@ -161,7 +161,7 @@ object FileApi {
             // add group
             Multipart.FormData.BodyPart(Data.GROUP_KEY, group),
             // add tags
-            Multipart.FormData.BodyPart(Data.TAGS_KEY, FileApi.toString(tags))
+            Multipart.FormData.BodyPart(Data.TAGS_KEY, FileInfoApi.toString(tags))
           ))
           .to[RequestEntity]
           .map(e =>

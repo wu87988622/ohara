@@ -23,11 +23,11 @@ import org.scalatest.Matchers
 import spray.json._
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class TestJdbcApi extends SmallTest with Matchers {
+class TestJdbcInfoApi extends SmallTest with Matchers {
 
   @Test
   def testNullUrlInUpdate(): Unit = {
-    val update = JdbcApi.JDBC_UPDATE_JSON_FORMAT.read("""
+    val update = JdbcInfoApi.JDBC_UPDATE_JSON_FORMAT.read("""
         |{
         | "url": null
         |}
@@ -37,7 +37,7 @@ class TestJdbcApi extends SmallTest with Matchers {
 
   @Test
   def testNullUserInUpdate(): Unit = {
-    val update = JdbcApi.JDBC_UPDATE_JSON_FORMAT.read("""
+    val update = JdbcInfoApi.JDBC_UPDATE_JSON_FORMAT.read("""
         |{
         | "user": null
         |}
@@ -47,7 +47,7 @@ class TestJdbcApi extends SmallTest with Matchers {
 
   @Test
   def testNullPasswordInUpdate(): Unit = {
-    val update = JdbcApi.JDBC_UPDATE_JSON_FORMAT.read("""
+    val update = JdbcInfoApi.JDBC_UPDATE_JSON_FORMAT.read("""
         |{
         | "password": null
         |}
@@ -57,7 +57,7 @@ class TestJdbcApi extends SmallTest with Matchers {
 
   @Test
   def testEmptyUrlInUpdate(): Unit = {
-    an[DeserializationException] should be thrownBy JdbcApi.JDBC_UPDATE_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy JdbcInfoApi.JDBC_UPDATE_JSON_FORMAT.read("""
         |{
         | "url": ""
         |}
@@ -66,7 +66,7 @@ class TestJdbcApi extends SmallTest with Matchers {
 
   @Test
   def testEmptyUserInUpdate(): Unit = {
-    an[DeserializationException] should be thrownBy JdbcApi.JDBC_UPDATE_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy JdbcInfoApi.JDBC_UPDATE_JSON_FORMAT.read("""
         |{
         | "user": ""
         |}
@@ -75,7 +75,7 @@ class TestJdbcApi extends SmallTest with Matchers {
 
   @Test
   def testEmptyPasswordInUpdate(): Unit = {
-    an[DeserializationException] should be thrownBy JdbcApi.JDBC_UPDATE_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy JdbcInfoApi.JDBC_UPDATE_JSON_FORMAT.read("""
         |{
         | "password": ""
         |}
@@ -84,7 +84,7 @@ class TestJdbcApi extends SmallTest with Matchers {
 
   @Test
   def testNullNameInCreation(): Unit = {
-    an[DeserializationException] should be thrownBy JdbcApi.JDBC_CREATION_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy JdbcInfoApi.JDBC_CREATION_JSON_FORMAT.read("""
         |{
         | "name": null
         |}
@@ -93,7 +93,7 @@ class TestJdbcApi extends SmallTest with Matchers {
 
   @Test
   def testNullUrlInCreation(): Unit = {
-    an[DeserializationException] should be thrownBy JdbcApi.JDBC_CREATION_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy JdbcInfoApi.JDBC_CREATION_JSON_FORMAT.read("""
         |{
         | "url": null
         |}
@@ -102,7 +102,7 @@ class TestJdbcApi extends SmallTest with Matchers {
 
   @Test
   def testEmptyNameInCreation(): Unit = {
-    an[DeserializationException] should be thrownBy JdbcApi.JDBC_CREATION_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy JdbcInfoApi.JDBC_CREATION_JSON_FORMAT.read("""
         |{
         | "name": ""
         |}
@@ -111,7 +111,7 @@ class TestJdbcApi extends SmallTest with Matchers {
 
   @Test
   def testEmptyUrlInCreation(): Unit = {
-    an[DeserializationException] should be thrownBy JdbcApi.JDBC_CREATION_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy JdbcInfoApi.JDBC_CREATION_JSON_FORMAT.read("""
         |{
         | "url": ""
         |}
@@ -120,7 +120,7 @@ class TestJdbcApi extends SmallTest with Matchers {
 
   @Test
   def testEmptyUserInCreation(): Unit = {
-    an[DeserializationException] should be thrownBy JdbcApi.JDBC_CREATION_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy JdbcInfoApi.JDBC_CREATION_JSON_FORMAT.read("""
         |{
         | "user": ""
         |}
@@ -129,7 +129,7 @@ class TestJdbcApi extends SmallTest with Matchers {
 
   @Test
   def testEmptyPasswordInCreation(): Unit = {
-    an[DeserializationException] should be thrownBy JdbcApi.JDBC_CREATION_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy JdbcInfoApi.JDBC_CREATION_JSON_FORMAT.read("""
         |{
         | "password": ""
         |}
@@ -141,7 +141,7 @@ class TestJdbcApi extends SmallTest with Matchers {
     val url = CommonUtils.randomString()
     val user = CommonUtils.randomString()
     val password = CommonUtils.randomString()
-    val update = JdbcApi.JDBC_UPDATE_JSON_FORMAT.read(s"""
+    val update = JdbcInfoApi.JDBC_UPDATE_JSON_FORMAT.read(s"""
          |{
          | "url": "$url",
          | "user": "$user",
@@ -158,7 +158,7 @@ class TestJdbcApi extends SmallTest with Matchers {
     val url = CommonUtils.randomString()
     val user = CommonUtils.randomString()
     val password = CommonUtils.randomString()
-    val creation = JdbcApi.JDBC_CREATION_JSON_FORMAT.read(s"""
+    val creation = JdbcInfoApi.JDBC_CREATION_JSON_FORMAT.read(s"""
                                                               |{
                                                               | "url": "$url",
                                                               | "user": "$user",
@@ -172,7 +172,7 @@ class TestJdbcApi extends SmallTest with Matchers {
     creation.password shouldBe password
 
     val name = CommonUtils.randomString()
-    val creation2 = JdbcApi.JDBC_CREATION_JSON_FORMAT.read(s"""
+    val creation2 = JdbcInfoApi.JDBC_CREATION_JSON_FORMAT.read(s"""
         |{
         | "name": "$name",
         | "url": "$url",
@@ -188,7 +188,7 @@ class TestJdbcApi extends SmallTest with Matchers {
   }
 
   @Test
-  def ignoreNameOnCreation(): Unit = JdbcApi.access
+  def ignoreNameOnCreation(): Unit = JdbcInfoApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
@@ -200,7 +200,7 @@ class TestJdbcApi extends SmallTest with Matchers {
     .length should not be 0
 
   @Test
-  def ignoreNameOnUpdate(): Unit = an[NullPointerException] should be thrownBy JdbcApi.access
+  def ignoreNameOnUpdate(): Unit = an[NullPointerException] should be thrownBy JdbcInfoApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
@@ -210,25 +210,25 @@ class TestJdbcApi extends SmallTest with Matchers {
     .update()
 
   @Test
-  def emptyGroup(): Unit = an[IllegalArgumentException] should be thrownBy JdbcApi.access.request.group("")
+  def emptyGroup(): Unit = an[IllegalArgumentException] should be thrownBy JdbcInfoApi.access.request.group("")
 
   @Test
-  def nullGroup(): Unit = an[NullPointerException] should be thrownBy JdbcApi.access.request.group(null)
+  def nullGroup(): Unit = an[NullPointerException] should be thrownBy JdbcInfoApi.access.request.group(null)
 
   @Test
-  def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy JdbcApi.access.request.name("")
+  def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy JdbcInfoApi.access.request.name("")
 
   @Test
-  def nullName(): Unit = an[NullPointerException] should be thrownBy JdbcApi.access.request.name(null)
+  def nullName(): Unit = an[NullPointerException] should be thrownBy JdbcInfoApi.access.request.name(null)
 
   @Test
-  def emptyUrl(): Unit = an[IllegalArgumentException] should be thrownBy JdbcApi.access.request.url("")
+  def emptyUrl(): Unit = an[IllegalArgumentException] should be thrownBy JdbcInfoApi.access.request.url("")
 
   @Test
-  def nullUrl(): Unit = an[NullPointerException] should be thrownBy JdbcApi.access.request.url(null)
+  def nullUrl(): Unit = an[NullPointerException] should be thrownBy JdbcInfoApi.access.request.url(null)
 
   @Test
-  def ignoreUrlOnCreation(): Unit = an[NullPointerException] should be thrownBy JdbcApi.access
+  def ignoreUrlOnCreation(): Unit = an[NullPointerException] should be thrownBy JdbcInfoApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
@@ -238,7 +238,7 @@ class TestJdbcApi extends SmallTest with Matchers {
     .create()
 
   @Test
-  def ignoreUserOnCreation(): Unit = an[NullPointerException] should be thrownBy JdbcApi.access
+  def ignoreUserOnCreation(): Unit = an[NullPointerException] should be thrownBy JdbcInfoApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
@@ -248,13 +248,13 @@ class TestJdbcApi extends SmallTest with Matchers {
     .create()
 
   @Test
-  def emptyUser(): Unit = an[IllegalArgumentException] should be thrownBy JdbcApi.access.request.user("")
+  def emptyUser(): Unit = an[IllegalArgumentException] should be thrownBy JdbcInfoApi.access.request.user("")
 
   @Test
-  def nullUser(): Unit = an[NullPointerException] should be thrownBy JdbcApi.access.request.user(null)
+  def nullUser(): Unit = an[NullPointerException] should be thrownBy JdbcInfoApi.access.request.user(null)
 
   @Test
-  def ignorePasswordOnCreation(): Unit = an[NullPointerException] should be thrownBy JdbcApi.access
+  def ignorePasswordOnCreation(): Unit = an[NullPointerException] should be thrownBy JdbcInfoApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
@@ -265,14 +265,14 @@ class TestJdbcApi extends SmallTest with Matchers {
 
   @Test
   def emptyPassword(): Unit =
-    an[IllegalArgumentException] should be thrownBy JdbcApi.access.request.password("")
+    an[IllegalArgumentException] should be thrownBy JdbcInfoApi.access.request.password("")
 
   @Test
-  def nullPassword(): Unit = an[NullPointerException] should be thrownBy JdbcApi.access.request.password(null)
+  def nullPassword(): Unit = an[NullPointerException] should be thrownBy JdbcInfoApi.access.request.password(null)
 
   @Test
-  def nullTags(): Unit = an[NullPointerException] should be thrownBy JdbcApi.access.request.tags(null)
+  def nullTags(): Unit = an[NullPointerException] should be thrownBy JdbcInfoApi.access.request.tags(null)
 
   @Test
-  def emptyTags(): Unit = JdbcApi.access.request.tags(Map.empty)
+  def emptyTags(): Unit = JdbcInfoApi.access.request.tags(Map.empty)
 }

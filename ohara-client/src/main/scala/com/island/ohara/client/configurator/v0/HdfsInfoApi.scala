@@ -25,7 +25,7 @@ import spray.json.{JsValue, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-object HadoopApi {
+object HdfsInfoApi {
   val HDFS_PREFIX_PATH: String = "hdfs"
   final case class Update(uri: Option[String], tags: Option[Map[String, JsValue]])
 

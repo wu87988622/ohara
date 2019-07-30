@@ -16,8 +16,8 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.{Data, HadoopApi}
-import com.island.ohara.client.configurator.v0.HadoopApi.{HdfsInfo, Request}
+import com.island.ohara.client.configurator.v0.{Data, HdfsInfoApi}
+import com.island.ohara.client.configurator.v0.HdfsInfoApi.{HdfsInfo, Request}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
@@ -30,7 +30,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class TestHdfsInfoRoute extends SmallTest with Matchers {
   private[this] val configurator = Configurator.builder.fake().build()
 
-  private[this] val hdfsApi = HadoopApi.access.hostname(configurator.hostname).port(configurator.port)
+  private[this] val hdfsApi = HdfsInfoApi.access.hostname(configurator.hostname).port(configurator.port)
 
   @Test
   def test(): Unit = {

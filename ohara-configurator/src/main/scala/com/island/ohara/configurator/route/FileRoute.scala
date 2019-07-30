@@ -23,9 +23,9 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorDescription
-import com.island.ohara.client.configurator.v0.FileApi._
+import com.island.ohara.client.configurator.v0.FileInfoApi._
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import com.island.ohara.client.configurator.v0.{Data, FileApi}
+import com.island.ohara.client.configurator.v0.{Data, FileInfoApi}
 import com.island.ohara.configurator.file.FileStore
 import com.island.ohara.configurator.store.DataStore
 import spray.json.DefaultJsonProtocol._
@@ -121,7 +121,7 @@ private[configurator] object FileRoute {
                         .group(group.getOrElse(GROUP_DEFAULT))
                         .name(metadata.fileName)
                         .file(file)
-                        .tags(tagsString.map(FileApi.toTags).getOrElse(Map.empty))
+                        .tags(tagsString.map(FileInfoApi.toTags).getOrElse(Map.empty))
                         .threadPool(executionContext)
                         .create())
                 }

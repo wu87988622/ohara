@@ -18,7 +18,7 @@ package com.island.ohara.configurator.route
 
 import java.io.{File, FileOutputStream}
 
-import com.island.ohara.client.configurator.v0.{Data, FileApi, StreamApi}
+import com.island.ohara.client.configurator.v0.{Data, FileInfoApi, StreamApi}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
@@ -33,7 +33,8 @@ class TestFileRoute extends SmallTest with Matchers {
   private[this] val configurator: Configurator = Configurator.builder.fake().build()
   private[this] val streamApi: StreamApi.Access =
     StreamApi.access.hostname(configurator.hostname).port(configurator.port)
-  private[this] val fileApi: FileApi.Access = FileApi.access.hostname(configurator.hostname).port(configurator.port)
+  private[this] val fileApi: FileInfoApi.Access =
+    FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] def tmpFile(bytes: Array[Byte]): File = {
     val f = CommonUtils.createTempJar(methodName())

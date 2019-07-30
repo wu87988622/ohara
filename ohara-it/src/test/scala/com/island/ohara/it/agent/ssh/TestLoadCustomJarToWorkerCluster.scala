@@ -67,7 +67,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
 
   private[this] val wkApi = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)
 
-  private[this] val fileApi = FileApi.access.hostname(configurator.hostname).port(configurator.port)
+  private[this] val fileApi = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] val nameHolder = new ClusterNameHolder(nodeCache)
 

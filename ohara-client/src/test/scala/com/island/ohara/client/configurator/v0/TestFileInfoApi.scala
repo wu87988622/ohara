@@ -24,9 +24,9 @@ import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits.global
-class TestFileApi extends SmallTest with Matchers {
+class TestFileInfoApi extends SmallTest with Matchers {
 
-  private[this] def access: FileApi.Access = FileApi.access.hostname(CommonUtils.hostname()).port(22)
+  private[this] def access: FileInfoApi.Access = FileInfoApi.access.hostname(CommonUtils.hostname()).port(22)
 
   @Test
   def emptyNameInGet(): Unit =

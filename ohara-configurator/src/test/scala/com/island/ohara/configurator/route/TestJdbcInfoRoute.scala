@@ -16,8 +16,8 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.{Data, JdbcApi}
-import com.island.ohara.client.configurator.v0.JdbcApi.{JdbcInfo, Request}
+import com.island.ohara.client.configurator.v0.{Data, JdbcInfoApi}
+import com.island.ohara.client.configurator.v0.JdbcInfoApi.{JdbcInfo, Request}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
@@ -29,7 +29,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class TestJdbcInfoRoute extends SmallTest with Matchers {
   private[this] val configurator = Configurator.builder.fake().build()
 
-  private[this] val jdbcApi = JdbcApi.access.hostname(configurator.hostname).port(configurator.port)
+  private[this] val jdbcApi = JdbcInfoApi.access.hostname(configurator.hostname).port(configurator.port)
 
   @Test
   def test(): Unit = {

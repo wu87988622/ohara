@@ -27,8 +27,8 @@ import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import com.island.ohara.client.configurator.ConfiguratorApiInfo
-import com.island.ohara.client.configurator.v0.{Data, FileApi}
-import com.island.ohara.client.configurator.v0.FileApi.FileInfo
+import com.island.ohara.client.configurator.v0.{Data, FileInfoApi}
+import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.file.FileStore.FileInfoCreator
@@ -300,7 +300,7 @@ object FileStore {
       Future {
         // ok, the file info exists!!! we are goint to overwrite the tags file now.
         val tagsFile = new File(toFolder(group), toTagsFileName(name))
-        Files.write(tagsFile.toPath, FileApi.toString(Objects.requireNonNull(tags)).getBytes(charset))
+        Files.write(tagsFile.toPath, FileInfoApi.toString(Objects.requireNonNull(tags)).getBytes(charset))
         fileInfo.copy(tags = tags)
       }
     }
@@ -322,7 +322,7 @@ object FileStore {
           }
           CommonUtils.copyFile(file, newFile)
           LOG.debug(s"copy $file to $newFile")
-          Files.write(new File(folder, toTagsFileName(newFile)).toPath, FileApi.toString(tags).getBytes(charset))
+          Files.write(new File(folder, toTagsFileName(newFile)).toPath, FileInfoApi.toString(tags).getBytes(charset))
           val plugin = FileInfo(
             name = name,
             group = group,
@@ -382,7 +382,7 @@ object FileStore {
                 .flatMap { file =>
                   val tagsFile = new File(folder, toTagsFileName(file))
                   if (tagsFile.isFile) {
-                    val tags = FileApi.toTags(new String(Files.readAllBytes(tagsFile.toPath)))
+                    val tags = FileInfoApi.toTags(new String(Files.readAllBytes(tagsFile.toPath)))
                     Some((folder.getName, file, tags))
                   } else None
                 }

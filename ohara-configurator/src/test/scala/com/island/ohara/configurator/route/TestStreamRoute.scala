@@ -34,7 +34,7 @@ class TestStreamRoute extends SmallTest with Matchers {
   private[this] val configurator = Configurator.builder.fake().build()
   private[this] val wkApi = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)
 
-  private[this] val accessJar = FileApi.access.hostname(configurator.hostname).port(configurator.port)
+  private[this] val accessJar = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val accessStream = StreamApi.access.hostname(configurator.hostname).port(configurator.port)
 
   @Test

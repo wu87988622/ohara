@@ -24,7 +24,7 @@ import spray.json.DefaultJsonProtocol._
 import spray.json.{JsValue, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
-object FtpApi {
+object FtpInfoApi {
   val FTP_PREFIX_PATH: String = "ftp"
   final case class Update(hostname: Option[String],
                           port: Option[Int],

@@ -71,7 +71,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
   private[this] var wkApi: WorkerApi.Access = _
   private[this] var containerApi: ContainerApi.Access = _
   private[this] var topicApi: TopicApi.Access = _
-  private[this] var jarApi: FileApi.Access = _
+  private[this] var jarApi: FileInfoApi.Access = _
 
   private[this] var access: StreamApi.Access = _
   private[this] var bkName: String = _
@@ -106,7 +106,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
       wkApi = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)
       containerApi = ContainerApi.access.hostname(configurator.hostname).port(configurator.port)
       topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
-      jarApi = FileApi.access.hostname(configurator.hostname).port(configurator.port)
+      jarApi = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
       access = StreamApi.access.hostname(configurator.hostname).port(configurator.port)
       val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
       // add all available nodes

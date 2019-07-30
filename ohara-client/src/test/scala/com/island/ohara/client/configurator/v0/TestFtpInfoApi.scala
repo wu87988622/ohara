@@ -24,10 +24,10 @@ import spray.json.DeserializationException
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import spray.json._
-class TestFtpApi extends SmallTest with Matchers {
+class TestFtpInfoApi extends SmallTest with Matchers {
 
   @Test
-  def ignoreNameOnCreation(): Unit = FtpApi.access
+  def ignoreNameOnCreation(): Unit = FtpInfoApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
@@ -40,7 +40,7 @@ class TestFtpApi extends SmallTest with Matchers {
     .length should not be 0
 
   @Test
-  def ignoreNameOnUpdate(): Unit = an[NullPointerException] should be thrownBy FtpApi.access
+  def ignoreNameOnUpdate(): Unit = an[NullPointerException] should be thrownBy FtpInfoApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
@@ -51,19 +51,19 @@ class TestFtpApi extends SmallTest with Matchers {
     .update()
 
   @Test
-  def emptyGroup(): Unit = an[IllegalArgumentException] should be thrownBy FtpApi.access.request.group("")
+  def emptyGroup(): Unit = an[IllegalArgumentException] should be thrownBy FtpInfoApi.access.request.group("")
 
   @Test
-  def nullGroup(): Unit = an[NullPointerException] should be thrownBy FtpApi.access.request.group(null)
+  def nullGroup(): Unit = an[NullPointerException] should be thrownBy FtpInfoApi.access.request.group(null)
 
   @Test
-  def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy FtpApi.access.request.name("")
+  def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy FtpInfoApi.access.request.name("")
 
   @Test
-  def nullName(): Unit = an[NullPointerException] should be thrownBy FtpApi.access.request.name(null)
+  def nullName(): Unit = an[NullPointerException] should be thrownBy FtpInfoApi.access.request.name(null)
 
   @Test
-  def ignoreHostnameOnCreation(): Unit = an[NullPointerException] should be thrownBy FtpApi.access
+  def ignoreHostnameOnCreation(): Unit = an[NullPointerException] should be thrownBy FtpInfoApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
@@ -74,13 +74,13 @@ class TestFtpApi extends SmallTest with Matchers {
     .create()
 
   @Test
-  def emptyHostname(): Unit = an[IllegalArgumentException] should be thrownBy FtpApi.access.request.hostname("")
+  def emptyHostname(): Unit = an[IllegalArgumentException] should be thrownBy FtpInfoApi.access.request.hostname("")
 
   @Test
-  def nullHostname(): Unit = an[NullPointerException] should be thrownBy FtpApi.access.request.hostname(null)
+  def nullHostname(): Unit = an[NullPointerException] should be thrownBy FtpInfoApi.access.request.hostname(null)
 
   @Test
-  def ignorePortOnCreation(): Unit = an[NullPointerException] should be thrownBy FtpApi.access
+  def ignorePortOnCreation(): Unit = an[NullPointerException] should be thrownBy FtpInfoApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
@@ -91,10 +91,10 @@ class TestFtpApi extends SmallTest with Matchers {
     .create()
 
   @Test
-  def negativePort(): Unit = an[IllegalArgumentException] should be thrownBy FtpApi.access.request.port(-1)
+  def negativePort(): Unit = an[IllegalArgumentException] should be thrownBy FtpInfoApi.access.request.port(-1)
 
   @Test
-  def ignoreUserOnCreation(): Unit = an[NullPointerException] should be thrownBy FtpApi.access
+  def ignoreUserOnCreation(): Unit = an[NullPointerException] should be thrownBy FtpInfoApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
@@ -105,13 +105,13 @@ class TestFtpApi extends SmallTest with Matchers {
     .create()
 
   @Test
-  def emptyUser(): Unit = an[IllegalArgumentException] should be thrownBy FtpApi.access.request.user("")
+  def emptyUser(): Unit = an[IllegalArgumentException] should be thrownBy FtpInfoApi.access.request.user("")
 
   @Test
-  def nullUser(): Unit = an[NullPointerException] should be thrownBy FtpApi.access.request.user(null)
+  def nullUser(): Unit = an[NullPointerException] should be thrownBy FtpInfoApi.access.request.user(null)
 
   @Test
-  def ignorePasswordOnCreation(): Unit = an[NullPointerException] should be thrownBy FtpApi.access
+  def ignorePasswordOnCreation(): Unit = an[NullPointerException] should be thrownBy FtpInfoApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
@@ -122,10 +122,10 @@ class TestFtpApi extends SmallTest with Matchers {
     .create()
 
   @Test
-  def emptyPassword(): Unit = an[IllegalArgumentException] should be thrownBy FtpApi.access.request.password("")
+  def emptyPassword(): Unit = an[IllegalArgumentException] should be thrownBy FtpInfoApi.access.request.password("")
 
   @Test
-  def nullPassword(): Unit = an[NullPointerException] should be thrownBy FtpApi.access.request.password(null)
+  def nullPassword(): Unit = an[NullPointerException] should be thrownBy FtpInfoApi.access.request.password(null)
 
   @Test
   def testCreation(): Unit = {
@@ -136,7 +136,7 @@ class TestFtpApi extends SmallTest with Matchers {
     val password = CommonUtils.randomString(10)
 
     val creation =
-      FtpApi.access.request.name(name).hostname(hostname).port(port).user(user).password(password).creation
+      FtpInfoApi.access.request.name(name).hostname(hostname).port(port).user(user).password(password).creation
     creation.name shouldBe name
     creation.hostname shouldBe hostname
     creation.port shouldBe port
@@ -152,21 +152,21 @@ class TestFtpApi extends SmallTest with Matchers {
     val user = CommonUtils.randomString(10)
     val password = CommonUtils.randomString(10)
 
-    val update = FtpApi.access.request.name(name).hostname(hostname).port(port).user(user).password(password).update
+    val update = FtpInfoApi.access.request.name(name).hostname(hostname).port(port).user(user).password(password).update
     update.hostname.get shouldBe hostname
     update.port.get shouldBe port
     update.user.get shouldBe user
     update.password.get shouldBe password
 
-    FtpApi.access.request.update.hostname shouldBe None
-    FtpApi.access.request.update.port shouldBe None
-    FtpApi.access.request.update.user shouldBe None
-    FtpApi.access.request.update.password shouldBe None
+    FtpInfoApi.access.request.update.hostname shouldBe None
+    FtpInfoApi.access.request.update.port shouldBe None
+    FtpInfoApi.access.request.update.user shouldBe None
+    FtpInfoApi.access.request.update.password shouldBe None
   }
 
   @Test
   def testEmptyHostnameInUpdate(): Unit =
-    an[DeserializationException] should be thrownBy FtpApi.FTP_UPDATE_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy FtpInfoApi.FTP_UPDATE_JSON_FORMAT.read("""
          |{
          | "hostname": ""
          |}
@@ -174,7 +174,7 @@ class TestFtpApi extends SmallTest with Matchers {
 
   @Test
   def testEmptyUserInUpdate(): Unit =
-    an[DeserializationException] should be thrownBy FtpApi.FTP_UPDATE_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy FtpInfoApi.FTP_UPDATE_JSON_FORMAT.read("""
              |{
              | "user": ""
              |}
@@ -182,7 +182,7 @@ class TestFtpApi extends SmallTest with Matchers {
 
   @Test
   def testNegativePortInUpdate(): Unit =
-    an[DeserializationException] should be thrownBy FtpApi.FTP_UPDATE_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy FtpInfoApi.FTP_UPDATE_JSON_FORMAT.read("""
                                                                                          |{
                                                                                          | "port": -1
                                                                                          |}
@@ -190,7 +190,7 @@ class TestFtpApi extends SmallTest with Matchers {
 
   @Test
   def testEmptyPasswordInUpdate(): Unit =
-    an[DeserializationException] should be thrownBy FtpApi.FTP_UPDATE_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy FtpInfoApi.FTP_UPDATE_JSON_FORMAT.read("""
                                |{
                                | "password": ""
                                |}
@@ -202,7 +202,7 @@ class TestFtpApi extends SmallTest with Matchers {
     val port = CommonUtils.availablePort()
     val user = CommonUtils.randomString()
     val password = CommonUtils.randomString()
-    val update = FtpApi.FTP_UPDATE_JSON_FORMAT.read(s"""
+    val update = FtpInfoApi.FTP_UPDATE_JSON_FORMAT.read(s"""
                                          |{
                                          | "hostname": "$hostname",
                                          | "port": $port,
@@ -218,7 +218,7 @@ class TestFtpApi extends SmallTest with Matchers {
 
   @Test
   def testEmptyNameInCreation(): Unit =
-    an[DeserializationException] should be thrownBy FtpApi.FTP_CREATION_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy FtpInfoApi.FTP_CREATION_JSON_FORMAT.read("""
                                                                                            |{
                                                                                            | "name": "",
                                                                                            | "hostname": "hostname",
@@ -230,7 +230,7 @@ class TestFtpApi extends SmallTest with Matchers {
 
   @Test
   def testEmptyHostnameInCreation(): Unit =
-    an[DeserializationException] should be thrownBy FtpApi.FTP_CREATION_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy FtpInfoApi.FTP_CREATION_JSON_FORMAT.read("""
                                                                                            |{
                                                                                            | "name": "name",
                                                                                            | "hostname": "",
@@ -241,7 +241,7 @@ class TestFtpApi extends SmallTest with Matchers {
                                                                                          """.stripMargin.parseJson)
   @Test
   def testNegativePortInCreation(): Unit =
-    an[DeserializationException] should be thrownBy FtpApi.FTP_CREATION_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy FtpInfoApi.FTP_CREATION_JSON_FORMAT.read("""
                                                                                            |{
                                                                                            | "name": "name",
                                                                                            | "hostname": "123",
@@ -253,7 +253,7 @@ class TestFtpApi extends SmallTest with Matchers {
 
   @Test
   def testZeroPortInCreation(): Unit =
-    an[DeserializationException] should be thrownBy FtpApi.FTP_CREATION_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy FtpInfoApi.FTP_CREATION_JSON_FORMAT.read("""
                                                                                            |{
                                                                                            | "name": "name",
                                                                                            | "hostname": "123",
@@ -265,7 +265,7 @@ class TestFtpApi extends SmallTest with Matchers {
 
   @Test
   def testEmptyUserInCreation(): Unit =
-    an[DeserializationException] should be thrownBy FtpApi.FTP_CREATION_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy FtpInfoApi.FTP_CREATION_JSON_FORMAT.read("""
                                                                                            |{
                                                                                            | "name": "name",
                                                                                            | "hostname": "hostname",
@@ -276,7 +276,7 @@ class TestFtpApi extends SmallTest with Matchers {
                                                                                          """.stripMargin.parseJson)
   @Test
   def testEmptyPasswordInCreation(): Unit =
-    an[DeserializationException] should be thrownBy FtpApi.FTP_CREATION_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy FtpInfoApi.FTP_CREATION_JSON_FORMAT.read("""
                                                                                            |{
                                                                                            | "name": "name",
                                                                                            | "hostname": "hostname",
@@ -292,7 +292,7 @@ class TestFtpApi extends SmallTest with Matchers {
     val port = CommonUtils.availablePort()
     val user = CommonUtils.randomString()
     val password = CommonUtils.randomString()
-    val creation = FtpApi.FTP_CREATION_JSON_FORMAT.read(s"""
+    val creation = FtpInfoApi.FTP_CREATION_JSON_FORMAT.read(s"""
                                                            |{
                                                            | "hostname": "$hostname",
                                                            | "port": $port,
@@ -307,7 +307,7 @@ class TestFtpApi extends SmallTest with Matchers {
     creation.password shouldBe password
 
     val name = CommonUtils.randomString()
-    val creation2 = FtpApi.FTP_CREATION_JSON_FORMAT.read(s"""
+    val creation2 = FtpInfoApi.FTP_CREATION_JSON_FORMAT.read(s"""
                                                        |{
                                                        | "name": "$name",
                                                        | "hostname": "$hostname",
@@ -324,8 +324,8 @@ class TestFtpApi extends SmallTest with Matchers {
   }
 
   @Test
-  def nullTags(): Unit = an[NullPointerException] should be thrownBy FtpApi.access.request.tags(null)
+  def nullTags(): Unit = an[NullPointerException] should be thrownBy FtpInfoApi.access.request.tags(null)
 
   @Test
-  def emptyTags(): Unit = FtpApi.access.request.tags(Map.empty)
+  def emptyTags(): Unit = FtpInfoApi.access.request.tags(Map.empty)
 }

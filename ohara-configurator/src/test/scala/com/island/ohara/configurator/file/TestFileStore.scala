@@ -19,7 +19,7 @@ package com.island.ohara.configurator.file
 import java.io.File
 import java.nio.file.Files
 
-import com.island.ohara.client.configurator.v0.{Data, FileApi}
+import com.island.ohara.client.configurator.v0.{Data, FileInfoApi}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
@@ -183,7 +183,7 @@ class TestFileStore extends SmallTest with Matchers {
     val content = CommonUtils.randomString()
     val file = generateJarFile(content.getBytes)
 
-    val fileApi = FileApi.access.hostname(configurator.hostname).port(configurator.port)
+    val fileApi = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
     val fileInfo = result(fileApi.request.file(file).upload())
     file.getName shouldBe fileInfo.name
     fileInfo.size shouldBe content.length
