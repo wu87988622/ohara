@@ -17,7 +17,7 @@
 package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
-import com.island.ohara.client.configurator.v0.StreamApi.{Creation, StreamAppDescription, StreamClusterInfo}
+import com.island.ohara.client.configurator.v0.StreamApi.{Creation, StreamClusterInfo}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import com.island.ohara.kafka.connector.json.ObjectKey
@@ -47,9 +47,18 @@ class TestStreamApi extends SmallTest with Matchers {
     val info = StreamClusterInfo(
       name = CommonUtils.randomString(10),
       imageName = CommonUtils.randomString(),
-      jmxPort = 10,
+      instances = 1,
+      jar = ObjectKey.of("group", "name"),
+      from = Set("from"),
+      to = Set("from"),
+      metrics = Metrics(Seq.empty),
       nodeNames = Set.empty,
-      deadNodes = Set.empty
+      deadNodes = Set.empty,
+      jmxPort = 10,
+      state = None,
+      error = None,
+      lastModified = CommonUtils.current(),
+      tags = Map.empty
     )
     info.clone(newNodeNames).nodeNames shouldBe newNodeNames
   }
@@ -72,8 +81,8 @@ class TestStreamApi extends SmallTest with Matchers {
   }
 
   @Test
-  def testStreamAppDescriptionEquals(): Unit = {
-    val info = StreamAppDescription(
+  def testStreamClusterInfoEquals(): Unit = {
+    val info = StreamClusterInfo(
       name = "my-app",
       imageName = "image",
       instances = 1,
@@ -90,8 +99,7 @@ class TestStreamApi extends SmallTest with Matchers {
       tags = Map.empty
     )
 
-    info shouldBe StreamApi.STREAMAPP_DESCRIPTION_JSON_FORMAT.read(
-      StreamApi.STREAMAPP_DESCRIPTION_JSON_FORMAT.write(info))
+    info shouldBe StreamApi.STREAM_CLUSTER_INFO_JSON_FORMAT.read(StreamApi.STREAM_CLUSTER_INFO_JSON_FORMAT.write(info))
   }
 
   @Test

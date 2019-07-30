@@ -19,6 +19,7 @@ package com.island.ohara.it.agent
 import java.io.File
 import java.util.concurrent.ExecutionException
 
+import com.island.ohara.agent.ClusterState
 import com.island.ohara.agent.docker.{ContainerState, DockerClient}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.{ZookeeperApi, _}
@@ -77,6 +78,16 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
   private[this] var wkName: String = _
   private[this] var brokerConnProps: String = _
   private[this] val instances = 1
+
+  private[this] def waitStopFinish(clusterName: String): Unit = {
+    await(() => {
+      // In configurator mode: clusters() will return the "stopped list" in normal case
+      // In collie mode: clusters() will return the "cluster list except stop one" in normal case
+      // we should consider these two cases by case...
+      val clusters = result(access.list())
+      !clusters.map(_.name).contains(clusterName) || clusters.find(_.name == clusterName).get.state.isEmpty
+    })
+  }
 
   @Before
   def setup(): Unit = {
@@ -177,6 +188,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
 
     // start streamApp
     result(access.start(stream.name))
+    await(() => result(access.get(stream.name)).state.isDefined)
 
     // get the actually container names
     val map = nodeCache.map { node =>
@@ -195,7 +207,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     // since we use the same name for cluster state
     await(() => {
       val res = result(access.get(stream.name))
-      res.state.isDefined && res.state.get == ContainerState.DEAD.name &&
+      res.state.isDefined && res.state.get == ClusterState.FAILED.name &&
       // only 1 instance, dead nodes are equal to all nodes
       res.deadNodes == res.nodeNames &&
       res.nodeNames.size == 1
@@ -203,6 +215,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
 
     // stop and remove failed cluster gracefully
     result(access.stop(stream.name))
+    waitStopFinish(stream.name)
 
     // wait streamApp until removed actually
     await(() => {
@@ -254,7 +267,12 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
 
     // update streamApp properties
     val properties = result(
-      access.request.name(stream.name).from(Set(topic1.name)).to(Set(topic2.name)).instances(instances).update()
+      access.request
+        .name(stream.name)
+        .from(Set(topic1.topicNameOnKafka))
+        .to(Set(topic2.topicNameOnKafka))
+        .instances(instances)
+        .update()
     )
     properties.from.size shouldBe 1
     properties.to.size shouldBe 1
@@ -271,10 +289,14 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     getProperties.error shouldBe None
 
     // start streamApp
-    val res1 =
-      result(access.start(stream.name))
+    result(access.start(stream.name))
+    await(() => {
+      val res = result(access.get(stream.name))
+      res.state.isDefined && res.state.get == ClusterState.RUNNING.name
+    })
+
+    val res1 = result(access.get(stream.name))
     res1.name shouldBe stream.name
-    res1.state.get shouldBe ContainerState.RUNNING.name
     res1.error shouldBe None
     // save the cluster name to cache
     nameHolder.addClusterName(res1.name)
@@ -298,10 +320,10 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
             .sender()
             .key(Row.EMPTY)
             .value(Array.emptyByteArray)
-            .topicName(topic1.name)
+            .topicName(topic1.topicNameOnKafka)
             .send()
             .get()
-            .topicName() == topic1.name
+            .topicName() == topic1.topicNameOnKafka
           catch {
             case e: ExecutionException =>
               e.getCause match {
@@ -323,10 +345,9 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     }
 
     //stop streamApp
-    val res2 =
-      result(access.stop(stream.name))
-    res2.state.isEmpty shouldBe true
-    res2.error shouldBe None
+    result(access.stop(stream.name))
+    waitStopFinish(stream.name)
+    result(access.get(stream.name)).state.isEmpty shouldBe true
 
     // after stop streamApp, property should still exist
     result(access.get(stream.name)).name shouldBe stream.name

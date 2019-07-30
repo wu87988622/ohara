@@ -118,12 +118,13 @@ class TestStreamRoute extends SmallTest with Matchers {
     result(
       accessStream.request.name(streamAppName).from(Set("fromTopic")).to(Set("toTopic")).instances(instances).update())
 
-    val res1 = result(accessStream.start(props.name))
+    result(accessStream.start(props.name))
+    val res1 = result(accessStream.get(props.name))
     res1.name shouldBe props.name
     res1.name shouldBe streamAppName
     res1.from shouldBe Set("fromTopic")
     res1.to shouldBe Set("toTopic")
-    res1.jar.name shouldBe streamJar.name
+    res1.jar shouldBe ObjectKey.of(streamJar.group, streamJar.name)
     res1.instances shouldBe instances
     res1.state.get shouldBe ContainerState.RUNNING.name
 
@@ -138,7 +139,8 @@ class TestStreamRoute extends SmallTest with Matchers {
     cluster.head._1.jmxPort should not be 0
 
     // create the same streamApp cluster will get the previous stream cluster
-    val prevRes = result(accessStream.start(props.name))
+    result(accessStream.start(props.name))
+    val prevRes = result(accessStream.get(props.name))
     prevRes.name shouldBe props.name
     prevRes.name shouldBe streamAppName
     prevRes.state.get shouldBe ContainerState.RUNNING.name
@@ -150,17 +152,15 @@ class TestStreamRoute extends SmallTest with Matchers {
     // running streamApp cannot delete
     an[RuntimeException] should be thrownBy result(accessStream.delete(props.name))
 
-    val res2 = result(accessStream.stop(props.name))
-    res2.state shouldBe None
-    res2.error shouldBe None
+    result(accessStream.stop(props.name))
+    result(accessStream.get(props.name)).state shouldBe None
 
     // get the stream clusters information again, should be zero
     result(configurator.clusterCollie.streamCollie.clusters()).size shouldBe 0
 
     // stop the same streamApp cluster will only return the previous object
-    val res3 = result(accessStream.stop(props.name))
-    res3.state shouldBe None
-    res3.error shouldBe None
+    result(accessStream.stop(props.name))
+    result(accessStream.get(props.name)).state shouldBe None
 
     // get property will get the latest state (streamApp not exist)
     val latest = result(accessStream.get(props.name))

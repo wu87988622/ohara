@@ -20,10 +20,12 @@ import java.util.Objects
 
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.StreamApi
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.kafka.connector.json.ObjectKey
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
 import spray.json.JsString
@@ -53,6 +55,11 @@ trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator
       StreamClusterInfo(
         name = clusterName,
         imageName = first.imageName,
+        instances = containers.size,
+        jar = StreamCollie.urlToDataKey(first.environments(StreamCollie.JARURL_KEY)),
+        from = first.environments(StreamCollie.FROM_TOPIC_KEY).split(",").toSet,
+        to = first.environments(StreamCollie.TO_TOPIC_KEY).split(",").toSet,
+        metrics = Metrics(Seq.empty),
         nodeNames = containers.map(_.nodeName).toSet,
         // Currently, docker and k8s has same naming rule for "Running",
         // it is ok that we use the containerState.RUNNING here.
@@ -65,8 +72,12 @@ trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator
           // 1. only assume cluster is "running" if at least one container is running
           // 2. the cluster state is always "dead" if all containers were not running
           val alive = containers.exists(_.state == ContainerState.RUNNING.name)
-          if (alive) Some(ContainerState.RUNNING.name) else Some(ContainerState.DEAD.name)
-        }
+          if (alive) Some(ClusterState.RUNNING.name) else Some(ClusterState.FAILED.name)
+        },
+        error = None,
+        lastModified = CommonUtils.current(),
+        // We do not care the user parameters since it's stored in configurator already
+        tags = Map.empty
       )
     )
   }
@@ -230,5 +241,17 @@ object StreamCollie {
       s"-Dcom.sun.management.jmxremote.rmi.port=$port",
       s"-Djava.rmi.server.hostname=$hostname"
     )
+  }
+
+  /**
+    * This is a helper method to convert the jar url to DataKey
+    *
+    * @param jarUrl jar url
+    * @return data key
+    */
+  private[agent] def urlToDataKey(jarUrl: String): ObjectKey = {
+    val name = jarUrl.split("\\/").last
+    val group = jarUrl.split("\\/").init.last
+    ObjectKey.of(group, name)
   }
 }

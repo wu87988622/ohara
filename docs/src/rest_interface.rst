@@ -3493,6 +3493,19 @@ Create the properties of a streamApp.
    this field.
 #. lastModified (**long**) — last modified this jar time
 
+       - meters[i].value (**double**) — the number stored in meter
+       - meters[i].unit (**string**) — unit for value
+       - meters[i].document (**string**) — document of this meter
+       - meters[i].queryTime (**long**) — the time of query metrics from remote machine
+       - meters[i].startTime (**option(long)**) — the time of record generated in remote machine
+
+12. exactlyOnce (**boolean**) — enable exactly once
+13. error (**option(string)**) — the error message from a failed
+    streamApp. If the streamApp is fine or un-started, you won’t get
+    this field.
+14. lastModified (**long**) — last modified this jar time
+15. tags (**object**) — user defined data
+
 .. code-block:: json
 
    {
@@ -3520,6 +3533,7 @@ Create the properties of a streamApp.
 .. note::
    The streamApp, which is just created, does not have any metrics.
 
+.. _rest-streamapp-get-information:
 
 get information from a specific streamApp cluster
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3696,6 +3710,14 @@ start a StreamApp
 
 **Example Response**
 
+  ::
+
+    202 Accepted
+
+  .. note::
+
+     You should use :ref:`get streamapp <rest-streamapp-get-information>` to fetch up-to-date status
+
   .. code-block:: json
 
      {
@@ -3732,6 +3754,16 @@ to this streamApp. Note: successful stop streamApp will have no status.
 *PUT /v0/stream/${name}/stop*
 
 **Example Response**
+
+
+  ::
+
+    202 Accepted
+
+  .. note::
+
+     You should use :ref:`get streamapp <rest-streamapp-get-information>` to fetch up-to-date status
+
 
   .. code-block:: json
 

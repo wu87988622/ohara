@@ -18,9 +18,9 @@ package com.island.ohara.agent.ssh
 
 import java.net.URI
 
-import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.agent.{ClusterCache, ContainerCollie, NodeCollie, StreamCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
+import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.common.util.CommonUtils
 
@@ -131,11 +131,19 @@ private class StreamCollieImpl(nodeCollie: NodeCollie, dockerCache: DockerClient
                 val clusterInfo = StreamClusterInfo(
                   name = clusterName,
                   imageName = imageName,
+                  instances = successfulContainers.size,
+                  jar = StreamCollie.urlToDataKey(jarUrl),
+                  from = fromTopics,
+                  to = toTopics,
+                  metrics = Metrics(Seq.empty),
                   nodeNames = successfulContainers.map(_.nodeName).toSet,
                   deadNodes = Set.empty,
                   jmxPort = jmxPort,
-                  // creating cluster success could be applied containers are "running"
-                  state = Some(ContainerState.RUNNING.name)
+                  state = None,
+                  error = None,
+                  lastModified = CommonUtils.current(),
+                  // We do not care the user parameters since it's stored in configurator already
+                  tags = Map.empty
                 )
                 clusterCache.put(clusterInfo, clusterCache.get(clusterInfo) ++ successfulContainers)
                 clusterInfo

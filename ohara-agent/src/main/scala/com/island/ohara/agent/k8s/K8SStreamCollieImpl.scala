@@ -18,9 +18,9 @@ package com.island.ohara.agent.k8s
 
 import java.net.URI
 
-import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.agent.{ContainerCollie, NodeCollie, StreamCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.common.util.CommonUtils
 import com.typesafe.scalalogging.Logger
@@ -102,11 +102,19 @@ private class K8SStreamCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
                   StreamClusterInfo(
                     name = clusterName,
                     imageName = imageName,
+                    instances = successfulNodeNames.size,
+                    jar = StreamCollie.urlToDataKey(jarUrl),
+                    from = fromTopics,
+                    to = toTopics,
+                    metrics = Metrics(Seq.empty),
                     nodeNames = successfulNodeNames.toSet,
                     deadNodes = Set.empty,
                     jmxPort = jmxPort,
-                    // creating cluster success could be applied containers are "running"
-                    state = Some(ContainerState.RUNNING.name)
+                    state = None,
+                    error = None,
+                    lastModified = CommonUtils.current(),
+                    // We do not care the user parameters since it's stored in configurator already
+                    tags = Map.empty
                   )
                 }
             }

@@ -19,13 +19,16 @@ package com.island.ohara.configurator.fake
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.agent.{NodeCollie, StreamCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.StreamApi
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
+import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.kafka.connector.json.ObjectKey
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
 
-import scala.concurrent.{ExecutionContext, Future}
 import scala.collection.JavaConverters._
+import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] class FakeStreamCollie(nodeCollie: NodeCollie)
     extends FakeCollie[StreamClusterInfo, StreamCollie.ClusterCreator](nodeCollie)
@@ -36,17 +39,25 @@ private[configurator] class FakeStreamCollie(nodeCollie: NodeCollie)
     BeanChannel.local().counterMBeans().asScala
 
   override def creator: StreamCollie.ClusterCreator =
-    (clusterName, nodeNames, imageName, _, _, _, _, _, jmxPort, _, executionContext) => {
+    (clusterName, nodeNames, imageName, jarUrl, _, _, from, to, jmxPort, _, executionContext) => {
       implicit val exec: ExecutionContext = executionContext
       nodeCollie.nodes(nodeNames).map { nodes =>
         addCluster(
           StreamApi.StreamClusterInfo(
             name = clusterName,
             imageName = imageName,
+            instances = nodes.size,
+            jar = ObjectKey.of("fakeGroup", "fakeJar"),
+            from = from,
+            to = to,
+            metrics = Metrics(Seq.empty),
             nodeNames = nodes.map(_.name).toSet,
-            jmxPort = jmxPort,
             deadNodes = Set.empty,
-            state = Some(ContainerState.RUNNING.name)
+            jmxPort = jmxPort,
+            state = Some(ContainerState.RUNNING.name),
+            error = None,
+            lastModified = CommonUtils.current(),
+            tags = Map.empty
           )
         )
       }

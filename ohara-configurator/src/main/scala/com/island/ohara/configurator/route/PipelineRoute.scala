@@ -22,7 +22,7 @@ import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorDescription
 import com.island.ohara.client.configurator.v0.Data
 import com.island.ohara.client.configurator.v0.MetricsApi._
 import com.island.ohara.client.configurator.v0.PipelineApi._
-import com.island.ohara.client.configurator.v0.StreamApi.{StreamAppDescription, StreamClusterInfo}
+import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
@@ -82,7 +82,7 @@ private[configurator] object PipelineRoute {
         tags = data.tags
       ))
 
-  private[this] def toAbstract(data: StreamAppDescription, clusterInfo: StreamClusterInfo): Future[ObjectAbstract] =
+  private[this] def toAbstract(data: StreamClusterInfo, clusterInfo: StreamClusterInfo): Future[ObjectAbstract] =
     Future.successful(
       ObjectAbstract(
         group = data.group,
@@ -132,7 +132,7 @@ private[configurator] object PipelineRoute {
       })
     case data: TopicInfo =>
       clusterCollie.brokerCollie.cluster(data.brokerClusterName).map(_._1).flatMap(toAbstract(data, _))
-    case data: StreamAppDescription =>
+    case data: StreamClusterInfo =>
       clusterCollie.streamCollie.cluster(data.name).map(_._1).flatMap(toAbstract(data, _))
     case _ => toAbstract(obj, None)
   }

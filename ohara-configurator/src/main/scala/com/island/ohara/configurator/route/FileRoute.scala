@@ -24,7 +24,7 @@ import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorDescription
 import com.island.ohara.client.configurator.v0.FileApi._
-import com.island.ohara.client.configurator.v0.StreamApi.StreamAppDescription
+import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.{Data, FileApi}
 import com.island.ohara.configurator.file.FileStore
 import com.island.ohara.configurator.store.DataStore
@@ -49,8 +49,8 @@ private[configurator] object FileRoute {
     store
       .raws()
       .map(_.exists {
-        case streamAppDesc: StreamAppDescription =>
-          streamAppDesc.jar.group == fileInfo.group && streamAppDesc.jar.name == fileInfo.name
+        case info: StreamClusterInfo =>
+          info.jar.group == fileInfo.group && info.jar.name == fileInfo.name
         //TODO : does connector need checking the jar is used before deleting ??...by Sam
         case _: ConnectorDescription => false
         // other data type do nothing

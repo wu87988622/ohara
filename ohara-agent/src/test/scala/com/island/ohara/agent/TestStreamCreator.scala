@@ -18,10 +18,12 @@ package com.island.ohara.agent
 
 import java.util.Objects
 
+import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.StreamApi
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.kafka.connector.json.ObjectKey
 import org.junit.Test
 import org.scalatest.Matchers
 import spray.json.DeserializationException
@@ -43,7 +45,7 @@ class TestStreamCreator extends SmallTest with Matchers {
      toTopics,
      jmxPort,
      enableExactlyOnce,
-     executionContext) => {
+     _) => {
       // We only check required variables
       CommonUtils.requireNonEmpty(clusterName)
       CommonUtils.requireNonEmpty(nodeNames.asJava)
@@ -55,15 +57,22 @@ class TestStreamCreator extends SmallTest with Matchers {
       CommonUtils.requireNonEmpty(toTopics.asJava)
       CommonUtils.requireConnectionPort(jmxPort)
       Objects.requireNonNull(enableExactlyOnce)
-      Objects.requireNonNull(executionContext)
       Future.successful(
         StreamClusterInfo(
           name = clusterName,
           imageName = imageName,
-          jmxPort = jmxPort,
+          instances = nodeNames.size,
+          jar = ObjectKey.of("group", "name"),
+          from = fromTopics,
+          to = toTopics,
+          metrics = Metrics(Seq.empty),
           nodeNames = nodeNames,
           deadNodes = Set.empty,
-          state = None
+          jmxPort = jmxPort,
+          state = None,
+          error = None,
+          lastModified = CommonUtils.current(),
+          tags = Map.empty
         ))
     }
 
@@ -189,10 +198,18 @@ class TestStreamCreator extends SmallTest with Matchers {
     val info = StreamClusterInfo(
       name = CommonUtils.randomString(10),
       imageName = CommonUtils.randomString(),
-      jmxPort = 1,
-      nodeNames = Set(CommonUtils.randomString()),
+      instances = 1,
+      jar = ObjectKey.of("group", "name"),
+      from = Set("from"),
+      to = Set("from"),
+      metrics = Metrics(Seq.empty),
+      nodeNames = Set("aa"),
       deadNodes = Set.empty,
-      state = None
+      jmxPort = 10,
+      state = None,
+      error = None,
+      lastModified = CommonUtils.current(),
+      tags = Map.empty
     )
 
     // copy in stream is not support yet

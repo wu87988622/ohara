@@ -33,6 +33,7 @@ object StreamApi {
     * container name is controlled by streamRoute, the service name here use five words was ok.
     */
   val STREAM_SERVICE_NAME: String = "stream"
+  val STREAM_PREFIX_PATH: String = STREAM_SERVICE_NAME
 
   val GROUP_DEFAULT: String = Data.GROUP_DEFAULT
 
@@ -42,51 +43,6 @@ object StreamApi {
     * StreamApp Docker Image name
     */
   final val IMAGE_NAME_DEFAULT: String = s"oharastream/streamapp:${VersionUtils.VERSION}"
-
-  val STREAM_PREFIX_PATH: String = "stream"
-
-  // --- data stored in configurator -- //
-  /**
-    * the streamApp description that is kept in ohara stores
-    *
-    * @param name streamApp name in pipeline
-    * @param imageName streamApp image name
-    * @param instances numbers of streamApp running container
-    * @param nodeNames node list of streamApp running container
-    * @param deadNodes dead node list of the exited containers from this cluster
-    * @param jar uploaded jar key
-    * @param from the candidate topics for streamApp consume from
-    * @param to the candidate topics for streamApp produce to
-    * @param state the state of streamApp (stopped streamApp does not have this field)
-    * @param error the error message if the state was failed to fetch
-    * @param jmxPort the expose jmx port
-    * @param metrics the metrics bean
-    * @param exactlyOnce enable exactly once
-    * @param lastModified this data change time
-    */
-  final case class StreamAppDescription(name: String,
-                                        imageName: String,
-                                        instances: Int,
-                                        nodeNames: Set[String],
-                                        deadNodes: Set[String],
-                                        jar: ObjectKey,
-                                        from: Set[String],
-                                        to: Set[String],
-                                        state: Option[String],
-                                        error: Option[String],
-                                        jmxPort: Int,
-                                        metrics: Metrics,
-                                        // TODO remove this default value after we could handle from UI
-                                        exactlyOnce: Boolean = false,
-                                        lastModified: Long,
-                                        tags: Map[String, JsValue])
-      extends Data {
-    // streamapp does not support to define group
-    override def group: String = Data.GROUP_DEFAULT
-    override def kind: String = STREAM_SERVICE_NAME
-  }
-  implicit val STREAMAPP_DESCRIPTION_JSON_FORMAT: RootJsonFormat[StreamAppDescription] = jsonFormat15(
-    StreamAppDescription)
 
   final case class Creation(name: String,
                             imageName: String,
@@ -139,37 +95,54 @@ object StreamApi {
       .refine
 
   /**
-    * The Stream Cluster Information
+    * The Stream Cluster Information stored in configurator
     *
     * @param name cluster name
     * @param imageName image name
+    * @param instances numbers of streamApp running container
+    * @param jar uploaded jar key
+    * @param from the candidate topics for streamApp consume from
+    * @param to the candidate topics for streamApp produce to
+    * @param metrics the metrics bean
+    * @param exactlyOnce enable exactly once (currently it's always false)
     * @param nodeNames actual running nodes
     * @param deadNodes dead nodes of dead containers from this cluster
     * @param jmxPort  jmx port
     * @param state the state of this cluster (see '''ContainerState''')
+    * @param error the error message if the state was failed to fetch
+    * @param lastModified this data change time
+    * @param tags user defined data
     */
-  final case class StreamClusterInfo(
-    name: String,
-    imageName: String,
-    nodeNames: Set[String],
-    deadNodes: Set[String],
-    jmxPort: Int,
-    state: Option[String] = None
-  ) extends ClusterInfo {
+  final case class StreamClusterInfo(name: String,
+                                     imageName: String,
+                                     instances: Int,
+                                     jar: ObjectKey,
+                                     from: Set[String],
+                                     to: Set[String],
+                                     metrics: Metrics,
+                                     // TODO remove this default value after we could handle from UI
+                                     exactlyOnce: Boolean = false,
+                                     nodeNames: Set[String],
+                                     deadNodes: Set[String],
+                                     jmxPort: Int,
+                                     state: Option[String] = None,
+                                     error: Option[String],
+                                     lastModified: Long,
+                                     tags: Map[String, JsValue])
+      extends ClusterInfo
+      //TODO : move Data class to ClusterInfo after finished #1544
+      with Data {
+    // streamapp does not support to define group
+    override def group: String = Data.GROUP_DEFAULT
+    override def kind: String = STREAM_SERVICE_NAME
     override def ports: Set[Int] = Set(jmxPort)
 
     override def clone(newNodeNames: Set[String]): StreamClusterInfo = copy(nodeNames = newNodeNames)
-
-    override def group: String = Data.GROUP_DEFAULT
-
-    override def kind: String = STREAM_SERVICE_NAME
-
-    // TODO: move it to be a part of constructor field ... by chia
-    override def lastModified: Long = CommonUtils.current()
-
-    // TODO: move it to be a part of constructor field ... by chia
-    override def tags: Map[String, JsValue] = Map.empty
+    override def clone2(state: Option[String], error: Option[String]): StreamClusterInfo =
+      this.copy(state = state, error = error)
   }
+  private[ohara] implicit val STREAM_CLUSTER_INFO_JSON_FORMAT: OharaJsonFormat[StreamClusterInfo] =
+    JsonRefiner[StreamClusterInfo].format(jsonFormat15(StreamClusterInfo)).refine
 
   sealed trait Request {
     @Optional("default name is a random string. But it is required in updating")
@@ -194,7 +167,7 @@ object StreamApi {
       * @param executionContext execution context
       * @return created data
       */
-    def create()(implicit executionContext: ExecutionContext): Future[StreamAppDescription]
+    def create()(implicit executionContext: ExecutionContext): Future[StreamClusterInfo]
 
     /**
       * generate the PUT request
@@ -202,7 +175,7 @@ object StreamApi {
       * @param executionContext execution context
       * @return updated/created data
       */
-    def update()(implicit executionContext: ExecutionContext): Future[StreamAppDescription]
+    def update()(implicit executionContext: ExecutionContext): Future[StreamClusterInfo]
 
     /**
       * for testing only
@@ -219,31 +192,7 @@ object StreamApi {
     private[v0] def update: Update
   }
 
-  final class Access
-      extends com.island.ohara.client.configurator.v0.Access[StreamAppDescription](s"$STREAM_PREFIX_PATH") {
-
-    private[this] def actionUrl(name: String, action: String): String =
-      s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$name/$action"
-
-    /**
-      *  start a streamApp
-      *
-      * @param name streamApp object name
-      * @param executionContext execution context
-      * @return information of streamApp (status "RUNNING" if success, "DEAD" if fail)
-      */
-    def start(name: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription] =
-      exec.put[StreamAppDescription, ErrorApi.Error](actionUrl(name, START_COMMAND))
-
-    /**
-      * stop a streamApp
-      *
-      * @param name streamApp object name
-      * @param executionContext execution context
-      * @return information of streamApp (status None if stop successful, or throw exception)
-      */
-    def stop(name: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription] =
-      exec.put[StreamAppDescription, ErrorApi.Error](actionUrl(name, STOP_COMMAND))
+  final class Access extends ClusterAccess[StreamClusterInfo](s"$STREAM_PREFIX_PATH") {
 
     def request: Request = new Request {
       private[this] var name: String = _
@@ -318,15 +267,15 @@ object StreamApi {
         tags = Option(tags)
       )
 
-      override def create()(implicit executionContext: ExecutionContext): Future[StreamAppDescription] = {
-        exec.post[Creation, StreamAppDescription, ErrorApi.Error](
+      override def create()(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] = {
+        exec.post[Creation, StreamClusterInfo, ErrorApi.Error](
           _url,
           creation
         )
       }
 
-      override def update()(implicit executionContext: ExecutionContext): Future[StreamAppDescription] = {
-        exec.put[Update, StreamAppDescription, ErrorApi.Error](
+      override def update()(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] = {
+        exec.put[Update, StreamClusterInfo, ErrorApi.Error](
           s"${_url}/${CommonUtils.requireNonEmpty(name)}",
           update
         )
