@@ -28,7 +28,7 @@
     "@testing-library/jest-dom": "4.0.0",
     "@testing-library/react": "8.0.7",
     "classnames": "2.2.6",
-    "cypress": "3.4.0",
+    "cypress": "3.4.1",
     "cypress-plugin-retries": "1.2.2",
     "d3v4": "4.2.2",
     "dagre-d3": "0.6.1",
