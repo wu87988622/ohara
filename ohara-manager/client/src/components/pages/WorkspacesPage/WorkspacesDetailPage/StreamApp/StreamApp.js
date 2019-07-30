@@ -20,7 +20,6 @@ import Tooltip from '@material-ui/core/Tooltip';
 import IconButton from '@material-ui/core/IconButton';
 import { get, divide, floor } from 'lodash';
 
-// import * as jarApi from 'api/jarApi';
 import * as MESSAGES from 'constants/messages';
 import * as utils from '../WorkspacesDetailPageUtils';
 import { Button } from 'components/common/Mui/Form';
@@ -36,7 +35,6 @@ const StreamApp = props => {
   const [jarNameToBeDeleted, setJarNameToBeDeleted] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  // const { jars, fetchJars, loading } = utils.useFetchJars(workspaceName);
   const { data: jarsRes, isLoading, refetch } = useApi.useFetchApi(
     `${URL.FILE_URL}?group=${workspaceName}`,
   );

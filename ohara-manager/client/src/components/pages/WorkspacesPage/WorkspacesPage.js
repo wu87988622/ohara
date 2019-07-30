@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import DocumentTitle from 'react-document-title';
 import Tooltip from '@material-ui/core/Tooltip';
 import IconButton from '@material-ui/core/IconButton';
-import { isEmpty, get } from 'lodash';
+import { get } from 'lodash';
 
-import * as workerApi from 'api/workerApi';
 import Container from 'components/common/Mui/Layout';
 import WorkspacesNewModal from './WorkspacesNewModal';
 import { WORKSPACES } from 'constants/documentTitles';
@@ -29,25 +28,16 @@ import { PageTitle } from 'components/common/Mui/Typography';
 import { PageHeader, StyledButton } from './styles';
 import { SortTable } from 'components/common/Mui/Table';
 import { StyledIcon } from './styles';
+import * as useApi from 'components/controller';
+import * as URL from 'components/controller/url';
 
 const WorkspacesPage = props => {
-  const [workers, setWorkers] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { data: workersRes, isLoading, refetch } = useApi.useFetchApi(
+    URL.WORKER_URL,
+  );
 
-  const fetchWorkers = async () => {
-    const res = await workerApi.fetchWorkers();
-    const workers = get(res, 'data.result', []);
-    setIsLoading(false);
-
-    if (!isEmpty(workers)) {
-      setWorkers(workers);
-    }
-  };
-
-  useEffect(() => {
-    fetchWorkers();
-  }, []);
+  const workers = get(workersRes, 'data.result', []);
 
   const headRows = [
     { id: 'name', label: 'Name' },
@@ -83,7 +73,7 @@ const WorkspacesPage = props => {
       <Container>
         <WorkspacesNewModal
           isActive={isModalOpen}
-          onConfirm={fetchWorkers}
+          onConfirm={() => refetch()}
           onClose={() => setIsModalOpen(false)}
         />
         <PageHeader>
