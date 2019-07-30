@@ -39,17 +39,23 @@ package object v0 {
 
   private[v0] def noJsNull(jsValue: JsValue): Map[String, JsValue] = noJsNull(jsValue.asJsObject.fields)
 
-  implicit val OBJECT_KEY_FORMAT: RootJsonFormat[ObjectKey] = new RootJsonFormat[ObjectKey] {
-    import spray.json._
-    override def write(obj: ObjectKey): JsValue = ObjectKey.toJsonString(obj).parseJson
+  implicit val OBJECT_KEY_FORMAT: RootJsonFormat[ObjectKey] = JsonRefiner[ObjectKey]
+    .format(new RootJsonFormat[ObjectKey] {
+      import spray.json._
+      override def write(obj: ObjectKey): JsValue = ObjectKey.toJsonString(obj).parseJson
+      override def read(json: JsValue): ObjectKey = ObjectKey.ofJsonString(json.toString())
+    })
+    .nullToString(Data.GROUP_KEY, () => Data.GROUP_DEFAULT)
+    .rejectEmptyString()
+    .refine
 
-    override def read(json: JsValue): ObjectKey = ObjectKey.ofJsonString(json.toString())
-  }
-
-  implicit val TOPIC_KEY_FORMAT: RootJsonFormat[TopicKey] = new RootJsonFormat[TopicKey] {
-    import spray.json._
-    override def write(obj: TopicKey): JsValue = TopicKey.toJsonString(obj).parseJson
-
-    override def read(json: JsValue): TopicKey = TopicKey.ofJsonString(json.toString())
-  }
+  implicit val TOPIC_KEY_FORMAT: RootJsonFormat[TopicKey] = JsonRefiner[TopicKey]
+    .format(new RootJsonFormat[TopicKey] {
+      import spray.json._
+      override def write(obj: TopicKey): JsValue = TopicKey.toJsonString(obj).parseJson
+      override def read(json: JsValue): TopicKey = TopicKey.ofJsonString(json.toString())
+    })
+    .nullToString(Data.GROUP_KEY, () => Data.GROUP_DEFAULT)
+    .rejectEmptyString()
+    .refine
 }
