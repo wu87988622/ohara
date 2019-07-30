@@ -49,6 +49,12 @@ RUN yum install -y \
   alsa-lib* \
   libgtk-3*
 
+# the following installation is for building documents
+RUN yum install -y python2 make \
+  && curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py \
+  && python get-pip.py \
+  && pip install -U sphinx recommonmark sphinx_rtd_theme
+
 # download gradle
 ARG GRADLE_VERSION=5.4.1
 WORKDIR /opt/gradle
