@@ -20,7 +20,7 @@ import com.island.ohara.common.data._
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.Consumer
 import com.island.ohara.kafka.Consumer.Record
-import com.island.ohara.kafka.connector.json.TopicKey
+import com.island.ohara.kafka.connector.json.{ConnectorKey, TopicKey}
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.Test
 import org.scalatest.Matchers
@@ -85,20 +85,20 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
   @Test
   def testNormalCase(): Unit = {
     val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
-    val connectorName = methodName
+    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result(
       workerClient
         .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(classOf[PerfSource])
         .numberOfTasks(1)
-        .name(connectorName)
+        .connectorKey(connectorKey)
         .columns(schema)
         .settings(props.toMap)
         .create())
 
     try {
-      PerfUtils.checkConnector(testUtil, connectorName)
+      PerfUtils.checkConnector(testUtil, connectorKey)
       // it is hard to evaluate number from records in topics so we just fetch some records here.
       val records = pollData(topicKey, props.freq * 3, props.batch)
       records.size >= props.batch shouldBe true
@@ -112,26 +112,26 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
             matchType(cell.value.getClass, c.dataType)
           })
         })
-    } finally result(workerClient.delete(connectorName))
+    } finally result(workerClient.delete(connectorKey))
   }
 
   @Test
   def testNormalCaseWithoutBatch(): Unit = {
     val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
-    val connectorName = methodName
+    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result(
       workerClient
         .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(classOf[PerfSource])
         .numberOfTasks(1)
-        .name(connectorName)
+        .connectorKey(connectorKey)
         .columns(schema)
         .settings(Map(PERF_FREQUENCE -> "PT5S"))
         .create())
 
     try {
-      PerfUtils.checkConnector(testUtil, connectorName)
+      PerfUtils.checkConnector(testUtil, connectorKey)
       // it is hard to evaluate number from records in topics so we just fetch some records here.
       val records = pollData(topicKey, props.freq * 3, props.batch)
       records.size >= props.batch shouldBe true
@@ -145,26 +145,26 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
             matchType(cell.value.getClass, c.dataType)
           })
         })
-    } finally result(workerClient.delete(connectorName))
+    } finally result(workerClient.delete(connectorKey))
   }
 
   @Test
   def testNormalCaseWithoutFrequence(): Unit = {
     val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
-    val connectorName = methodName
+    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result(
       workerClient
         .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(classOf[PerfSource])
         .numberOfTasks(1)
-        .name(connectorName)
+        .connectorKey(connectorKey)
         .columns(schema)
         .settings(Map(PERF_BATCH -> "5"))
         .create())
 
     try {
-      PerfUtils.checkConnector(testUtil, connectorName)
+      PerfUtils.checkConnector(testUtil, connectorKey)
       // it is hard to evaluate number from records in topics so we just fetch some records here.
       val records = pollData(topicKey, props.freq * 3, props.batch)
       records.size >= props.batch shouldBe true
@@ -178,26 +178,26 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
             matchType(cell.value.getClass, c.dataType)
           })
         })
-    } finally result(workerClient.delete(connectorName))
+    } finally result(workerClient.delete(connectorKey))
   }
 
   @Test
   def testNormalCaseWithoutInput(): Unit = {
     val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
-    val connectorName = methodName
+    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result(
       workerClient
         .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(classOf[PerfSource])
         .numberOfTasks(1)
-        .name(connectorName)
+        .connectorKey(connectorKey)
         .columns(schema)
         .settings(Map.empty)
         .create())
 
     try {
-      PerfUtils.checkConnector(testUtil, connectorName)
+      PerfUtils.checkConnector(testUtil, connectorKey)
       // it is hard to evaluate number from records in topics so we just fetch some records here.
       val records = pollData(topicKey, props.freq * 3, props.batch)
       records.size >= props.batch shouldBe true
@@ -211,20 +211,20 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
             matchType(cell.value.getClass, c.dataType)
           })
         })
-    } finally result(workerClient.delete(connectorName))
+    } finally result(workerClient.delete(connectorKey))
   }
 
   @Test
   def testInvalidInput(): Unit = {
     val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
-    val connectorName = methodName
+    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     an[IllegalArgumentException] should be thrownBy result(
       workerClient
         .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(classOf[PerfSource])
         .numberOfTasks(1)
-        .name(connectorName)
+        .connectorKey(connectorKey)
         .columns(schema)
         .settings(Map(PERF_FREQUENCE -> "abcd"))
         .create())
@@ -233,17 +233,17 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
   @Test
   def testInvalidInputWithNegative(): Unit = {
     val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
-    val connectorName = methodName
+    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result(
       workerClient
         .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(classOf[PerfSource])
         .numberOfTasks(1)
-        .name(connectorName)
+        .connectorKey(connectorKey)
         .columns(schema)
         .settings(Map(PERF_BATCH -> "-1"))
         .create())
-    PerfUtils.assertFailedConnector(testUtil, connectorName)
+    PerfUtils.assertFailedConnector(testUtil, connectorKey)
   }
 }

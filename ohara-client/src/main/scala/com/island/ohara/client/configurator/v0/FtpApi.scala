@@ -188,7 +188,7 @@ object FtpApi {
 
       override def create()(implicit executionContext: ExecutionContext): Future[FtpInfo] =
         exec.post[Creation, FtpInfo, ErrorApi.Error](
-          _url(group),
+          urlWithGroup(group),
           creation
         )
       override def update()(implicit executionContext: ExecutionContext): Future[FtpInfo] =

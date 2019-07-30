@@ -84,4 +84,13 @@ public class TestTopicKey extends SmallTest {
                     TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))))
             instanceof Serializable);
   }
+
+  @Test
+  public void testEqualToOtherKindsOfKey() {
+    String group = CommonUtils.randomString();
+    String name = CommonUtils.randomString();
+    Assert.assertEquals(ObjectKey.of(group, name), TopicKey.of(group, name));
+    Assert.assertEquals(TopicKey.of(group, name), TopicKey.of(group, name));
+    Assert.assertEquals(ConnectorKey.of(group, name), TopicKey.of(group, name));
+  }
 }

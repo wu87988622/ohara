@@ -138,16 +138,32 @@ public class TestSettingDefinitions extends SmallTest {
   }
 
   @Test
-  public void testNameSetting() {
+  public void testConnectorNameSetting() {
     SettingDefinition setting =
         SettingDefinitions.DEFINITIONS_DEFAULT.stream()
             .filter(s -> s.key().equals(SettingDefinition.CONNECTOR_NAME_DEFINITION.key()))
             .findFirst()
             .get();
     Assert.assertTrue(setting.required());
+    Assert.assertTrue(setting.internal());
+    Assert.assertNull(setting.defaultValue());
+    Assert.assertEquals(SettingDefinition.Reference.NONE.name(), setting.reference());
+    Assert.assertTrue(setting.tableKeys().isEmpty());
+    Assert.assertEquals(SettingDefinition.CORE_GROUP, setting.group());
+  }
+
+  @Test
+  public void testConnectorKeySetting() {
+    SettingDefinition setting =
+        SettingDefinitions.DEFINITIONS_DEFAULT.stream()
+            .filter(s -> s.key().equals(SettingDefinition.CONNECTOR_KEY_DEFINITION.key()))
+            .findFirst()
+            .get();
+    Assert.assertTrue(setting.required());
     Assert.assertFalse(setting.internal());
     Assert.assertNull(setting.defaultValue());
     Assert.assertEquals(SettingDefinition.Reference.NONE.name(), setting.reference());
+    Assert.assertEquals(SettingDefinition.Type.CONNECTOR_KEY.name(), setting.valueType());
     Assert.assertTrue(setting.tableKeys().isEmpty());
     Assert.assertEquals(SettingDefinition.CORE_GROUP, setting.group());
   }

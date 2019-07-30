@@ -22,7 +22,7 @@ import com.island.ohara.client.ftp.FtpClient
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Cell, DataType, Row, Serializer, _}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.kafka.connector.json.{ConnectorFormatter, TopicKey}
+import com.island.ohara.kafka.connector.json.{ConnectorFormatter, ConnectorKey, TopicKey}
 import com.island.ohara.kafka.{BrokerClient, Consumer, Producer}
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.{After, Before, BeforeClass, Test}
@@ -137,7 +137,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
   @Test
   def testReorder(): Unit = {
     val topicKey = TOPIC
-    val connectorName = methodName
+    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val newSchema: Seq[Column] = Seq(
       Column.builder().name("a").dataType(DataType.STRING).order(3).build(),
       Column.builder().name("b").dataType(DataType.INT).order(2).build(),
@@ -149,13 +149,13 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .topicKey(topicKey)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
-        .name(connectorName)
+        .connectorKey(connectorKey)
         .columns(newSchema)
         .settings(props.toMap)
         .create())
 
     try {
-      FtpUtils.checkConnector(testUtil, connectorName)
+      FtpUtils.checkConnector(testUtil, connectorKey)
       CommonUtils.await(() => ftpClient.listFileNames(props.outputFolder).size == 1, Duration.ofSeconds(20))
       val lines = ftpClient.readLines(
         com.island.ohara.common.util.CommonUtils
@@ -167,26 +167,26 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       items(0) shouldBe data.cell(2).value.toString
       items(1) shouldBe data.cell(1).value.toString
       items(2) shouldBe data.cell(0).value.toString
-    } finally result(workerClient.delete(connectorName))
+    } finally result(workerClient.delete(connectorKey))
   }
 
   @Test
   def testHeader(): Unit = {
     val topicKey = TOPIC
-    val connectorName = methodName
+    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result(
       workerClient
         .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
-        .name(connectorName)
+        .connectorKey(connectorKey)
         .columns(schema)
         .settings(props.copy(needHeader = true).toMap)
         .create())
 
     try {
-      FtpUtils.checkConnector(testUtil, connectorName)
+      FtpUtils.checkConnector(testUtil, connectorKey)
       CommonUtils.await(() => ftpClient.listFileNames(props.outputFolder).size == 1, Duration.ofSeconds(20))
       val lines = ftpClient.readLines(
         com.island.ohara.common.util.CommonUtils
@@ -199,25 +199,25 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       items(0) shouldBe data.cell(0).value.toString
       items(1) shouldBe data.cell(1).value.toString
       items(2) shouldBe data.cell(2).value.toString
-    } finally result(workerClient.delete(connectorName))
+    } finally result(workerClient.delete(connectorKey))
   }
 
   @Test
   def testHeaderWithoutSchema(): Unit = {
     val topicKey = TOPIC
-    val connectorName = methodName
+    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result(
       workerClient
         .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
-        .name(connectorName)
+        .connectorKey(connectorKey)
         .settings(props.copy(needHeader = true).toMap)
         .create())
 
     try {
-      FtpUtils.checkConnector(testUtil, connectorName)
+      FtpUtils.checkConnector(testUtil, connectorKey)
       CommonUtils.await(() => ftpClient.listFileNames(props.outputFolder).size == 1, Duration.ofSeconds(20))
       val lines = ftpClient.readLines(
         com.island.ohara.common.util.CommonUtils
@@ -230,13 +230,13 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       items(0) shouldBe data.cell(0).value.toString
       items(1) shouldBe data.cell(1).value.toString
       items(2) shouldBe data.cell(2).value.toString
-    } finally result(workerClient.delete(connectorName))
+    } finally result(workerClient.delete(connectorKey))
   }
 
   @Test
   def testColumnRename(): Unit = {
     val topicKey = TOPIC
-    val connectorName = methodName
+    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val schema = Seq(
       Column.builder().name("a").newName("aa").dataType(DataType.STRING).order(1).build(),
       Column.builder().name("b").newName("bb").dataType(DataType.INT).order(2).build(),
@@ -248,13 +248,13 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .topicKey(topicKey)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
-        .name(connectorName)
+        .connectorKey(connectorKey)
         .columns(schema)
         .settings(props.copy(needHeader = true).toMap)
         .create())
 
     try {
-      FtpUtils.checkConnector(testUtil, connectorName)
+      FtpUtils.checkConnector(testUtil, connectorKey)
       CommonUtils.await(() => ftpClient.listFileNames(props.outputFolder).size == 1, Duration.ofSeconds(20))
       val lines = ftpClient.readLines(
         com.island.ohara.common.util.CommonUtils
@@ -267,26 +267,26 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       items(0) shouldBe data.cell(0).value.toString
       items(1) shouldBe data.cell(1).value.toString
       items(2) shouldBe data.cell(2).value.toString
-    } finally result(workerClient.delete(connectorName))
+    } finally result(workerClient.delete(connectorKey))
   }
 
   @Test
   def testNormalCase(): Unit = {
     val topicKey = TOPIC
-    val connectorName = methodName
+    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result(
       workerClient
         .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
-        .name(connectorName)
+        .connectorKey(connectorKey)
         .columns(schema)
         .settings(props.toMap)
         .create())
 
     try {
-      FtpUtils.checkConnector(testUtil, connectorName)
+      FtpUtils.checkConnector(testUtil, connectorKey)
       CommonUtils.await(() => ftpClient.listFileNames(props.outputFolder).size == 1, Duration.ofSeconds(20))
       val lines = ftpClient.readLines(
         com.island.ohara.common.util.CommonUtils
@@ -298,25 +298,25 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       items(0) shouldBe data.cell(0).value.toString
       items(1) shouldBe data.cell(1).value.toString
       items(2) shouldBe data.cell(2).value.toString
-    } finally result(workerClient.delete(connectorName))
+    } finally result(workerClient.delete(connectorKey))
   }
 
   @Test
   def testNormalCaseWithoutSchema(): Unit = {
     val topicKey = TOPIC
-    val connectorName = methodName
+    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result(
       workerClient
         .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
-        .name(connectorName)
+        .connectorKey(connectorKey)
         .settings(props.toMap)
         .create())
 
     try {
-      FtpUtils.checkConnector(testUtil, connectorName)
+      FtpUtils.checkConnector(testUtil, connectorKey)
       CommonUtils.await(() => ftpClient.listFileNames(props.outputFolder).size == 1, Duration.ofSeconds(20))
       val lines = ftpClient.readLines(
         com.island.ohara.common.util.CommonUtils
@@ -328,27 +328,27 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       items(0) shouldBe data.cell(0).value.toString
       items(1) shouldBe data.cell(1).value.toString
       items(2) shouldBe data.cell(2).value.toString
-    } finally result(workerClient.delete(connectorName))
+    } finally result(workerClient.delete(connectorKey))
   }
 
   @Test
   def testNormalCaseWithoutEncode(): Unit = {
     val topicKey = TOPIC
-    val connectorName = methodName
+    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result(
       workerClient
         .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
-        .name(connectorName)
+        .connectorKey(connectorKey)
         .columns(schema)
         //will use default UTF-8
         .settings(props.toMap - FTP_ENCODE)
         .create())
 
     try {
-      FtpUtils.checkConnector(testUtil, connectorName)
+      FtpUtils.checkConnector(testUtil, connectorKey)
       CommonUtils.await(() => ftpClient.listFileNames(props.outputFolder).size == 1, Duration.ofSeconds(20))
       val lines = ftpClient.readLines(
         com.island.ohara.common.util.CommonUtils
@@ -360,27 +360,27 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       items(0) shouldBe data.cell(0).value.toString
       items(1) shouldBe data.cell(1).value.toString
       items(2) shouldBe data.cell(2).value.toString
-    } finally result(workerClient.delete(connectorName))
+    } finally result(workerClient.delete(connectorKey))
   }
 
   @Test
   def testPartialColumns(): Unit = {
     val topicKey = TOPIC
-    val connectorName = methodName
+    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result(
       workerClient
         .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
-        .name(connectorName)
+        .connectorKey(connectorKey)
         // skip last column
         .columns(schema.slice(0, schema.length - 1))
         .settings(props.toMap)
         .create())
 
     try {
-      FtpUtils.checkConnector(testUtil, connectorName)
+      FtpUtils.checkConnector(testUtil, connectorKey)
       CommonUtils.await(() => ftpClient.listFileNames(props.outputFolder).size == 1, Duration.ofSeconds(20))
       val lines = ftpClient.readLines(
         com.island.ohara.common.util.CommonUtils
@@ -391,31 +391,31 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       items.length shouldBe data.size - 1
       items(0) shouldBe data.cell(0).value.toString
       items(1) shouldBe data.cell(1).value.toString
-    } finally result(workerClient.delete(connectorName))
+    } finally result(workerClient.delete(connectorKey))
   }
 
   @Test
   def testUnmatchedSchema(): Unit = {
     val topicKey = TOPIC
-    val connectorName = methodName
+    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result(
       workerClient
         .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
-        .name(connectorName)
+        .connectorKey(connectorKey)
         // the name can't be casted to int
         .columns(Seq(Column.builder().name("name").dataType(DataType.INT).order(1).build()))
         .settings(props.toMap)
         .create())
 
     try {
-      FtpUtils.checkConnector(testUtil, connectorName)
+      FtpUtils.checkConnector(testUtil, connectorKey)
       TimeUnit.SECONDS.sleep(5)
       ftpClient.listFileNames(props.outputFolder).size shouldBe 0
       ftpClient.close()
-    } finally result(workerClient.delete(connectorName))
+    } finally result(workerClient.delete(connectorKey))
   }
 
   @Test
@@ -431,7 +431,8 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
     )
 
     val sink = new FtpSink
-    sink.start(ConnectorFormatter.of().name("aa").settings(props.toMap.asJava).raw())
+    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    sink.start(ConnectorFormatter.of().connectorKey(connectorKey).settings(props.toMap.asJava).raw())
 
     ftpClient.exist("/output") shouldBe true
   }
@@ -439,6 +440,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
   @Test
   def testInvalidPort(): Unit = {
     val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     Seq(-1, 0, 10000000).foreach { port =>
       an[IllegalArgumentException] should be thrownBy result(
         workerClient
@@ -446,7 +448,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
           .topicKey(topicKey)
           .connectorClass(classOf[FtpSink])
           .numberOfTasks(1)
-          .name(CommonUtils.randomString(10))
+          .connectorKey(connectorKey)
           .columns(schema)
           .settings(props.copy(port = port).toMap)
           .create())

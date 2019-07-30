@@ -45,8 +45,21 @@ public final class ConnectorFormatter {
     converterTypeOfValue(ConverterType.NONE);
   }
 
-  public ConnectorFormatter name(String name) {
+  /**
+   * the name is not exposed now since we have a salted connector name. This connectorName is
+   * defined when user input connector key.
+   *
+   * @param name connector name on kafka
+   * @return this formatter
+   */
+  private ConnectorFormatter name(String name) {
     return setting(SettingDefinition.CONNECTOR_NAME_DEFINITION.key(), name);
+  }
+
+  public ConnectorFormatter connectorKey(ConnectorKey connectorKey) {
+    setting(
+        SettingDefinition.CONNECTOR_KEY_DEFINITION.key(), ConnectorKey.toJsonString(connectorKey));
+    return name(connectorKey.connectorNameOnKafka());
   }
 
   public ConnectorFormatter setting(String key, String value) {

@@ -16,6 +16,7 @@
 
 package com.island.ohara.client.configurator.v0
 
+import com.island.ohara.kafka.connector.json.ObjectKey
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
@@ -30,10 +31,15 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 abstract class Access[Res] private[v0] (prefixPath: String)(implicit rm: RootJsonFormat[Res])
     extends BasicAccess(prefixPath) {
+  def get(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Res] =
+    exec.get[Res, ErrorApi.Error](_url(key))
+  def delete(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Unit] =
+    exec.delete[ErrorApi.Error](_url(key))
+  def list()(implicit executionContext: ExecutionContext): Future[Seq[Res]] =
+    exec.get[Seq[Res], ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}")
+  //----------[TODO: remove those stale APIs]----------
   def get(name: String)(implicit executionContext: ExecutionContext): Future[Res] =
     exec.get[Res, ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$name")
   def delete(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
     exec.delete[ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$name")
-  def list()(implicit executionContext: ExecutionContext): Future[Seq[Res]] =
-    exec.get[Seq[Res], ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}")
 }

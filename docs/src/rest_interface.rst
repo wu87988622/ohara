@@ -919,6 +919,7 @@ connectors. The common settings are shown below.
 
 The following information are updated by ohara.
 
+#. group (**string**) — connector’s group
 #. name (**string**) — connector’s name
 #. lastModified (**long**) — the last time to update this connector
 #. state (**option(string)**) — the state of a started connector. If the connector is not started, you won’t see this field
@@ -949,7 +950,7 @@ you will observe the following response after you store the settings with connec
 create the settings of connector
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*POST /v0/connectors*
+*POST /v0/connectors?group=${group}*
 
 It is ok to lack some common settings when creating settings for a
 connector. However, it is illegal to start a connector with incomplete
@@ -988,7 +989,7 @@ settings will introduce a error.
 update the settings of connector
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*PUT /v0/connectors/${name}*
+*PUT /v0/connectors/${name}?group=${group}*
 
 .. note::
   you cannot delete a non-stopped connector.
@@ -1026,7 +1027,7 @@ list information of all connectors
 
 *GET /v0/connectors*
 
-**Example Response**
+**Eample Response**
 
   .. code-block:: json
 
@@ -1051,7 +1052,7 @@ list information of all connectors
 delete a connector
 ~~~~~~~~~~~~~~~~~~
 
-*DELETE /v0/connectors/${name}*
+*DELETE /v0/connectors/${name}?group=${group}*
 
 Deleting the settings used by a running connector is not allowed. You
 should :ref:`stop <rest-stop-connector>` connector before deleting it.
@@ -1071,7 +1072,7 @@ should :ref:`stop <rest-stop-connector>` connector before deleting it.
 get information of connector
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*GET /v0/connectors/${name}*
+*GET /v0/connectors/${name}?group=${group}*
 
 **Example Response**
 
@@ -1094,7 +1095,7 @@ get information of connector
 start a connector
 ~~~~~~~~~~~~~~~~~
 
-*PUT /v0/connectors/${name}/start*
+*PUT /v0/connectors/${name}/start?group=${group}*
 
 Ohara will send a start request to specific worker cluster to start the
 connector with stored settings, and then make a response to called. The
@@ -1135,7 +1136,7 @@ command repeatedly.
 stop a connector
 ~~~~~~~~~~~~~~~~
 
-*PUT /v0/connectors/${name}/stop*
+*PUT /v0/connectors/${name}/stop?group=${group}*
 
 Ohara will send a stop request to specific worker cluster to stop the
 connector. The stopped connector will be removed from worker cluster.
@@ -1165,7 +1166,7 @@ safe to send this request repeatedly.
 pause a connector
 ~~~~~~~~~~~~~~~~~
 
-*PUT /v0/connectors/${name}/pause*
+*PUT /v0/connectors/${name}/pause?group=${group}*
 
 Pausing a connector is to disable connector to pull/push data from/to
 source/sink. The connector is still alive in kafka. This request is
@@ -1199,7 +1200,7 @@ idempotent so it is safe to send this request repeatedly.
 resume a connector
 ~~~~~~~~~~~~~~~~~~
 
-*PUT /v0/connectors/${name}/resume*
+*PUT /v0/connectors/${name}/resume?group=${group}*
 
 Resuming a connector is to enable connector to pull/push data from/to
 source/sink. This request is idempotent so it is safe to retry this
@@ -2335,9 +2336,9 @@ worker clusters.
 The properties which can be set by user are shown below.
 
 #. name (**string**) — cluster name
-#. imageName (**string**) — docker image 
+#. imageName (**string**) — docker image
 #. brokerClusterName (**string**) — broker cluster used to host topics for this worker cluster
-#. clientPort (**int**) — worker client port 
+#. clientPort (**int**) — worker client port
 #. jmxPort (**int**) — worker jmx port
 #. groupId (**string**) — the id of worker stored in broker cluster
 #. configTopicName (**string**) — a internal topic used to store connector configuration
@@ -3030,7 +3031,7 @@ Validate the FTP connection
 The parameters of request are shown below:
 
 #. hostname (**string**) — ftp server hostname
-#. port (**int**) — ftp server port 
+#. port (**int**) — ftp server port
 #. user (**string**) — account of ftp server
 #. password (**string**) — password of ftp server
 #. workerClusterName (**string**) — the target cluster used to validate this connection
@@ -3081,7 +3082,7 @@ Validate the JDBC connection
 The parameters of request are shown below:
 
 #. url (**string**) — jdbc url
-#. user (**string**) — account of db server 
+#. user (**string**) — account of db server
 #. password (**string**) — password of db server
 #. workerClusterName (**string**) — the target cluster used to validate this connection
 
@@ -3177,14 +3178,14 @@ Validate the node connection
 The parameters of request are shown below:
 
 #. hostname (**string**) — hostname of node
-#. port (**int**) — ssh port of node 
+#. port (**int**) — ssh port of node
 #. user (**string**) — ssh account
 #. password (**string**) — ssh password
 
 **Example Request**
 
   .. code-block:: json
-  
+
      {
        "hostname": "node00",
        "port": 22,
@@ -3299,7 +3300,7 @@ would be better to avoid using same name on different services), hence,
 the returned JSON is in array type. The details of elements are shown
 below.
 
-#. clusterName (**string**) — cluster name 
+#. clusterName (**string**) — cluster name
 #. clusterType (**string**) — cluster type
 #. containers (**array(object)**) — the container in this cluster
 
@@ -3407,7 +3408,7 @@ The following information of StreamApp are updated by ohara.
 #. from (**array(string)**) — topics of streamApp consume with
 #. to (**array(string)**) — topics of streamApp produce to
 #. state (**option(string)**) — only started/failed streamApp has state
-#. jmxPort (**int**) — the expose jmx port 
+#. jmxPort (**int**) — the expose jmx port
 #. :ref:`metrics <connector-metrics>` (**object**) — the metrics from this streamApp.
     - meters (**array(object)**) — the metrics in meter type
         - meters[i].value (**double**) — the number stored in meter

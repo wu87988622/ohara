@@ -213,7 +213,7 @@ object TopicApi {
 
       override def create()(implicit executionContext: ExecutionContext): Future[TopicInfo] =
         exec.post[Creation, TopicInfo, ErrorApi.Error](
-          _url(group),
+          urlWithGroup(group),
           creation
         )
       override def update()(implicit executionContext: ExecutionContext): Future[TopicInfo] =

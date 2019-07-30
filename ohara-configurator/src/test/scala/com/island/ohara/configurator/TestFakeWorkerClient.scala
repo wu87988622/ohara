@@ -19,7 +19,7 @@ import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorState
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.fake.FakeWorkerClient
-import com.island.ohara.kafka.connector.json.TopicKey
+import com.island.ohara.kafka.connector.json.{ConnectorKey, TopicKey}
 import org.junit.Test
 import org.scalatest.Matchers
 
@@ -31,24 +31,30 @@ class TestFakeWorkerClient extends SmallTest with Matchers {
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
   @Test
   def testControlConnector(): Unit = {
-    val connectorName = methodName
+    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val className = methodName
     val fake = new FakeWorkerClient()
     result(
-      fake.connectorCreator().name(connectorName).topicKey(topicKey).numberOfTasks(1).className(className).create())
+      fake
+        .connectorCreator()
+        .connectorKey(connectorKey)
+        .topicKey(topicKey)
+        .numberOfTasks(1)
+        .className(className)
+        .create())
 
-    result(fake.exist(connectorName)) shouldBe true
+    result(fake.exist(connectorKey)) shouldBe true
 
-    result(fake.status(connectorName)).connector.state shouldBe ConnectorState.RUNNING
+    result(fake.status(connectorKey)).connector.state shouldBe ConnectorState.RUNNING
 
-    result(fake.pause(connectorName))
-    result(fake.status(connectorName)).connector.state shouldBe ConnectorState.PAUSED
+    result(fake.pause(connectorKey))
+    result(fake.status(connectorKey)).connector.state shouldBe ConnectorState.PAUSED
 
-    result(fake.resume(connectorName))
-    result(fake.status(connectorName)).connector.state shouldBe ConnectorState.RUNNING
+    result(fake.resume(connectorKey))
+    result(fake.status(connectorKey)).connector.state shouldBe ConnectorState.RUNNING
 
-    result(fake.delete(connectorName))
-    result(fake.exist(connectorName)) shouldBe false
+    result(fake.delete(connectorKey))
+    result(fake.exist(connectorKey)) shouldBe false
   }
 }

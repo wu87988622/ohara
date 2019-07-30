@@ -23,7 +23,7 @@ import com.island.ohara.common.data.Cell
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.kafka.connector.TaskSetting
-import com.island.ohara.kafka.connector.json.{ConnectorFormatter, TopicKey}
+import com.island.ohara.kafka.connector.json.{ConnectorFormatter, ConnectorKey, TopicKey}
 import com.island.ohara.kafka.connector.text.TextFileSystem
 import com.island.ohara.kafka.connector.text.csv.CsvSourceConverterFactory
 import com.island.ohara.testing.service.FtpServer
@@ -97,7 +97,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
     task.start(
       ConnectorFormatter
         .of()
-        .name(methodName())
+        .connectorKey(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
         .topicKey(TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
         .settings(props.toMap.asJava)
         .raw())

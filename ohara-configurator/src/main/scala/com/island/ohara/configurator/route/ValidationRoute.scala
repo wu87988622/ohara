@@ -191,6 +191,8 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
                         // The name of topic is a required for connector and hence we have to fill the filed when starting
                         // connector.
                         .topicKeys(req.topicKeys)
+                        // add the connector key manually since the arguments exposed to user is "group" and "name" than "key"
+                        .connectorKey(req.key)
                         .run()
                   }
                   .map(settingInfo => HttpEntity(ContentTypes.`application/json`, settingInfo.toJsonString))))

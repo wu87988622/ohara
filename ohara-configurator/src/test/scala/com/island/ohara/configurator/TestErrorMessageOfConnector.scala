@@ -54,12 +54,12 @@ class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
         .setting("you_should_fail", "true")
         .create())
 
-    result(connectorApi.start(connector.name))
+    result(connectorApi.start(connector.key))
 
-    CommonUtils.await(() => result(connectorApi.get(connector.name)).state.isDefined, java.time.Duration.ofSeconds(10))
+    CommonUtils.await(() => result(connectorApi.get(connector.key)).state.isDefined, java.time.Duration.ofSeconds(10))
 
-    result(connectorApi.get(connector.name)).state.get shouldBe ConnectorState.FAILED
-    result(connectorApi.get(connector.name)).error.isDefined shouldBe true
+    result(connectorApi.get(connector.key)).state.get shouldBe ConnectorState.FAILED
+    result(connectorApi.get(connector.key)).error.isDefined shouldBe true
 
     // test state in pipeline
     val pipeline = result(
@@ -77,13 +77,13 @@ class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
         .create())
 
     result(PipelineApi.access.hostname(configurator.hostname).port(configurator.port).get(pipeline.name)).objects
-      .filter(_.name == connector.name)
+      .filter(_.key == connector.key)
       .head
       .state
       .get shouldBe ConnectorState.FAILED.name
 
     result(PipelineApi.access.hostname(configurator.hostname).port(configurator.port).get(pipeline.name)).objects
-      .filter(_.name == connector.name)
+      .filter(_.key == connector.key)
       .head
       .error
       .isDefined shouldBe true
@@ -108,12 +108,12 @@ class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
         .numberOfTasks(1)
         .create())
 
-    result(connectorApi.start(connector.name))
+    result(connectorApi.start(connector.key))
 
-    CommonUtils.await(() => result(connectorApi.get(connector.name)).state.isDefined, java.time.Duration.ofSeconds(10))
+    CommonUtils.await(() => result(connectorApi.get(connector.key)).state.isDefined, java.time.Duration.ofSeconds(10))
 
-    result(connectorApi.get(connector.name)).state.get shouldBe ConnectorState.RUNNING
-    result(connectorApi.get(connector.name)).error.isEmpty shouldBe true
+    result(connectorApi.get(connector.key)).state.get shouldBe ConnectorState.RUNNING
+    result(connectorApi.get(connector.key)).error.isEmpty shouldBe true
 
     // test state in pipeline
     val pipeline = result(
@@ -131,13 +131,13 @@ class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
         .create())
 
     result(PipelineApi.access.hostname(configurator.hostname).port(configurator.port).get(pipeline.name)).objects
-      .filter(_.name == connector.name)
+      .filter(_.key == connector.key)
       .head
       .state
       .get shouldBe ConnectorState.RUNNING.name
 
     result(PipelineApi.access.hostname(configurator.hostname).port(configurator.port).get(pipeline.name)).objects
-      .filter(_.name == connector.name)
+      .filter(_.key == connector.key)
       .head
       .error
       .isEmpty shouldBe true

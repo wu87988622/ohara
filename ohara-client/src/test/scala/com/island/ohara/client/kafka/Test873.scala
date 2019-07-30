@@ -24,7 +24,7 @@ import akka.stream.ActorMaterializer
 import com.island.ohara.client.kafka.WorkerJson.{ConnectorCreationResponse, ConnectorTaskId, _}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.json.Creation
+import com.island.ohara.kafka.connector.json.{ConnectorKey, Creation}
 import org.junit.Test
 import org.scalatest.Matchers
 
@@ -66,9 +66,11 @@ class Test873 extends SmallTest with Matchers {
     }
 
     try {
+      val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
       val client = WorkerClient(s"${server.hostname}:${server.port}")
       val response = result(
-        client.connectorCreator().name(CommonUtils.randomString()).settings(settings).className(className).create())
+        client.connectorCreator().connectorKey(connectorKey).settings(settings).className(className).create())
+      response.name shouldBe connectorKey.connectorNameOnKafka()
       response.tasks shouldBe tasks
       settings.foreach {
         case (k, v) =>

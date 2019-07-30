@@ -50,17 +50,17 @@ private[configurator] object PipelineRoute {
             error = None,
             // the group of counter is equal to connector's name (this is a part of kafka's core setting)
             // Hence, we filter the connectors having different "name" (we use name instead of name in creating connector)
-            metrics = Metrics(meterCache.meters(clusterInfo).getOrElse(data.name, Seq.empty)),
+            metrics = Metrics(meterCache.meters(clusterInfo).getOrElse(data.key.connectorNameOnKafka, Seq.empty)),
             lastModified = data.lastModified,
             tags = data.tags
         )
       )
       .flatMap { obj =>
-        workerClient.exist(obj.name).flatMap {
-          if (_) workerClient.status(obj.name).map { connectorInfo =>
+        workerClient.exist(data.key).flatMap {
+          if (_) workerClient.status(data.key).map { connectorInfo =>
             obj.copy(
               state = Some(connectorInfo.connector.state.name),
-              error = connectorInfo.connector.trace,
+              error = connectorInfo.connector.trace
             )
           } else Future.successful(obj)
         }

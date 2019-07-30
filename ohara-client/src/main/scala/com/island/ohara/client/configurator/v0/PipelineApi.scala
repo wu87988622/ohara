@@ -317,7 +317,7 @@ object PipelineApi {
 
       override def create()(implicit executionContext: ExecutionContext): Future[Pipeline] =
         exec.post[Creation, Pipeline, ErrorApi.Error](
-          _url(group),
+          urlWithGroup(group),
           creation
         )
       override def update()(implicit executionContext: ExecutionContext): Future[Pipeline] =

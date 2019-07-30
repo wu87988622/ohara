@@ -29,7 +29,7 @@ import java.io.Serializable;
  * have identical impl, and we all hate duplicate code. Noted: this class should be internal than
  * public to other packages.
  */
-class KeyImpl implements JsonObject, TopicKey, Serializable {
+class KeyImpl implements JsonObject, TopicKey, ConnectorKey, Serializable {
   private static final long serialVersionUID = 1L;
   private static final String GROUP_KEY = "group";
   private static final String NAME_KEY = "name";
@@ -57,7 +57,8 @@ class KeyImpl implements JsonObject, TopicKey, Serializable {
   // ------------------------[object]------------------------//
   @Override
   public boolean equals(Object obj) {
-    if (obj instanceof KeyImpl) return toJsonString().equals(((KeyImpl) obj).toJsonString());
+    if (obj instanceof ObjectKey)
+      return ((ObjectKey) obj).group().equals(group) && ((ObjectKey) obj).name().equals(name);
     return false;
   }
 

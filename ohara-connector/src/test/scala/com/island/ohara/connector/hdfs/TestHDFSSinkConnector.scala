@@ -26,7 +26,7 @@ import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.connector.hdfs.creator.LocalHDFSStorageCreator
 import com.island.ohara.connector.hdfs.storage.HDFSStorage
 import com.island.ohara.kafka.Producer
-import com.island.ohara.kafka.connector.json.{ConnectorFormatter, TopicKey}
+import com.island.ohara.kafka.connector.json.{ConnectorFormatter, ConnectorKey, TopicKey}
 import com.island.ohara.kafka.connector.{RowSinkTask, TaskSetting}
 import com.island.ohara.testing.WithBrokerWorker
 import org.apache.hadoop.fs.Path
@@ -47,12 +47,19 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
 
   @Test
   def testTaskConfigs(): Unit = {
+    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val maxTasks = 5
     val hdfsSinkConnector = new HDFSSinkConnector()
 
     hdfsSinkConnector.start(
-      ConnectorFormatter.of().name("test").topicKey(topicKey).setting(HDFS_URL, hdfsURL).setting(TMP_DIR, tmpDir).raw())
+      ConnectorFormatter
+        .of()
+        .connectorKey(connectorKey)
+        .topicKey(topicKey)
+        .setting(HDFS_URL, hdfsURL)
+        .setting(TMP_DIR, tmpDir)
+        .raw())
     val result = hdfsSinkConnector._taskSettings(maxTasks)
 
     result.size shouldBe maxTasks
@@ -64,7 +71,7 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
 
   @Test
   def testRunMiniClusterAndAssignConfig(): Unit = {
-    val connectorName = methodName
+    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val flushLineCountName = FLUSH_LINE_COUNT
     val flushLineCount = 2000
@@ -77,7 +84,7 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .name(connectorName)
+        .connectorKey(connectorKey)
         .connectorClass(classOf[SimpleHDFSSinkConnector])
         .topicKey(topicKey)
         .settings(Map(flushLineCountName -> flushLineCount.toString, tmpDirName -> tmpDirPath, hdfsURLName -> localURL))
@@ -105,7 +112,7 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
     val dataDirName = DATA_DIR
     val isHeader = DATAFILE_NEEDHEADER
     val hdfsURLName = HDFS_URL
-    val connectorName = methodName
+    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val rowCount = 100
     val row = Row.of(Cell.of("cf0", 10), Cell.of("cf1", 11))
@@ -131,7 +138,7 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .name(connectorName)
+        .connectorKey(connectorKey)
         .connectorClass(classOf[HDFSSinkConnector])
         .topicKey(topicKey)
         .numberOfTasks(1)
@@ -189,7 +196,7 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
     val dataDirName = DATA_DIR
     val isHeader = DATAFILE_NEEDHEADER
     val hdfsURLName = HDFS_URL
-    val connectorName = methodName
+    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val rowCount = 10
     val row = Row.of(Cell.of("cf0", 10), Cell.of("cf1", 11))
@@ -215,7 +222,7 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .name(connectorName)
+        .connectorKey(connectorKey)
         .connectorClass(classOf[HDFSSinkConnector])
         .topicKey(topicKey)
         .numberOfTasks(1)
@@ -284,7 +291,7 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
     val dataDirName = DATA_DIR
     val hdfsURLName = HDFS_URL
     val needHeader = DATAFILE_NEEDHEADER
-    val connectorName = methodName
+    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val rowCount = 200
     val row = Row.of(Cell.of("cf0", 10), Cell.of("cf1", 11))
@@ -315,7 +322,7 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .name(connectorName)
+        .connectorKey(connectorKey)
         .connectorClass(classOf[HDFSSinkConnector])
         .topicKey(topicKey)
         .numberOfTasks(1)
@@ -372,7 +379,7 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
     val dataDirName = DATA_DIR
     val isHeader = DATAFILE_NEEDHEADER
     val hdfsURLName = HDFS_URL
-    val connectorName = methodName
+    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val rowCount = 100
     val row = Row.of(Cell.of("cf0", 10), Cell.of("cf1", 11))
@@ -399,7 +406,7 @@ class TestHDFSSinkConnector extends WithBrokerWorker with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .name(connectorName)
+        .connectorKey(connectorKey)
         .connectorClass(classOf[HDFSSinkConnector])
         .topicKey(topicKey)
         .numberOfTasks(1)

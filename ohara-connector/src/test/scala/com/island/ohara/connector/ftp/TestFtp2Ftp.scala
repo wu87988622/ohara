@@ -23,7 +23,7 @@ import com.island.ohara.client.ftp.FtpClient
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Cell, Column, DataType, Row}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.kafka.connector.json.TopicKey
+import com.island.ohara.kafka.connector.json.{ConnectorKey, TopicKey}
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
@@ -93,8 +93,8 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
   @Test
   def testNormalCase(): Unit = {
     val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
-    val sinkName = CommonUtils.randomString(5)
-    val sourceName = CommonUtils.randomString(5)
+    val sinkConnectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    val sourceConnectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     // start sink
     Await.result(
       workerClient
@@ -102,7 +102,7 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
         .topicKey(topicKey)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
-        .name(sinkName)
+        .connectorKey(sinkConnectorKey)
         .columns(schema)
         .settings(sinkProps.toMap)
         .create(),
@@ -117,7 +117,7 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
             .topicKey(topicKey)
             .connectorClass(classOf[FtpSource])
             .numberOfTasks(1)
-            .name(sourceName)
+            .connectorKey(sourceConnectorKey)
             .columns(schema)
             .settings(sourceProps.toMap)
             .create(),
@@ -135,8 +135,8 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
         lines(0) shouldBe header
         lines(1) shouldBe data.head
         lines(2) shouldBe data(1)
-      } finally workerClient.delete(sourceName)
-    } finally workerClient.delete(sinkName)
+      } finally workerClient.delete(sourceConnectorKey)
+    } finally workerClient.delete(sinkConnectorKey)
   }
 
   @After

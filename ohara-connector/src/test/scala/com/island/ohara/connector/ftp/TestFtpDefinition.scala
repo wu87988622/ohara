@@ -18,7 +18,7 @@ package com.island.ohara.connector.ftp
 
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.json.{SettingDefinition, TopicKey}
+import com.island.ohara.kafka.connector.json.{ConnectorKey, SettingDefinition, TopicKey}
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.Test
 import org.scalatest.Matchers
@@ -36,10 +36,11 @@ class TestFtpDefinition extends WithBrokerWorker with Matchers {
   @Test
   def testSource(): Unit = {
     val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val response = result(
       workerClient
         .connectorValidator()
-        .name(CommonUtils.randomString())
+        .connectorKey(connectorKey)
         .numberOfTasks(1)
         .topicKey(topicKey)
         .connectorClass(classOf[FtpSource])
@@ -88,10 +89,11 @@ class TestFtpDefinition extends WithBrokerWorker with Matchers {
   @Test
   def testSink(): Unit = {
     val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val response = result(
       workerClient
         .connectorValidator()
-        .name(CommonUtils.randomString())
+        .connectorKey(connectorKey)
         .numberOfTasks(1)
         .topicKey(topicKey)
         .connectorClass(classOf[FtpSink])

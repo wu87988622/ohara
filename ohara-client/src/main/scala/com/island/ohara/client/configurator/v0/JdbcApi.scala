@@ -158,7 +158,7 @@ object JdbcApi {
 
       override def create()(implicit executionContext: ExecutionContext): Future[JdbcInfo] =
         exec.post[Creation, JdbcInfo, ErrorApi.Error](
-          _url(group),
+          urlWithGroup(group),
           creation
         )
       override def update()(implicit executionContext: ExecutionContext): Future[JdbcInfo] =

@@ -22,6 +22,7 @@ import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
+import com.island.ohara.kafka.connector.json.ConnectorKey
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 import spray.json.{JsNumber, JsString}
@@ -45,7 +46,7 @@ class TestConnectorRoute extends SmallTest with Matchers {
     val connector = result(
       connectorApi.request.name(CommonUtils.randomString(10)).className(CommonUtils.randomString(10)).create())
 
-    an[IllegalArgumentException] should be thrownBy result(connectorApi.start(connector.name))
+    an[IllegalArgumentException] should be thrownBy result(connectorApi.start(connector.key))
   }
 
   @Test
@@ -105,7 +106,7 @@ class TestConnectorRoute extends SmallTest with Matchers {
     connector.workerClusterName.isDefined shouldBe true
     result(configurator.clusterCollie.workerCollie.remove(connector.workerClusterName.get))
 
-    result(connectorApi.delete(connector.name))
+    result(connectorApi.delete(connector.key))
 
     result(connectorApi.list()).exists(_.name == connector.name) shouldBe false
   }
@@ -119,7 +120,7 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .workerClusterName(CommonUtils.randomString())
         .create())
 
-    an[IllegalArgumentException] should be thrownBy result(connectorApi.start(c.name))
+    an[IllegalArgumentException] should be thrownBy result(connectorApi.start(c.key))
   }
 
   @Test
@@ -137,9 +138,9 @@ class TestConnectorRoute extends SmallTest with Matchers {
     // In creation, workerClusterName will not be auto-filled
     connector.workerClusterName.isEmpty shouldBe true
     // In start, workerClusterName will be filled by configurator (if there is only one)
-    result(connectorApi.start(connector.name)).workerClusterName.get shouldBe defaultWk.name
+    result(connectorApi.start(connector.key)).workerClusterName.get shouldBe defaultWk.name
     // data stored in configurator should also get the auto-filled result
-    result(connectorApi.get(connector.name)).workerClusterName.get shouldBe defaultWk.name
+    result(connectorApi.get(connector.key)).workerClusterName.get shouldBe defaultWk.name
 
     val bk = result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
 
@@ -162,7 +163,7 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .className(CommonUtils.randomString(10))
         .create())
     // there are two worker cluster so it fails to match worker cluster
-    an[IllegalArgumentException] should be thrownBy result(connectorApi.start(c.name))
+    an[IllegalArgumentException] should be thrownBy result(connectorApi.start(c.key))
 
     val c2 = result(
       ConnectorApi.access
@@ -175,7 +176,7 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .workerClusterName(wk.name)
         .create())
     //pass since we have assigned a worker cluster
-    result(connectorApi.start(c2.name))
+    result(connectorApi.start(c2.key))
   }
 
   @Test
@@ -198,9 +199,9 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .topicKey(topic.key)
         .create())
 
-    result(connectorApi.start(connector.name)).state should not be None
+    result(connectorApi.start(connector.key)).state should not be None
 
-    (0 to 10).foreach(_ => result(connectorApi.pause(connector.name)).state should not be None)
+    (0 to 10).foreach(_ => result(connectorApi.pause(connector.key)).state should not be None)
   }
 
   @Test
@@ -223,9 +224,9 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .topicKey(topic.key)
         .create())
 
-    result(connectorApi.start(connector.name)).state should not be None
+    result(connectorApi.start(connector.key)).state should not be None
 
-    (0 to 10).foreach(_ => result(connectorApi.resume(connector.name)).state should not be None)
+    (0 to 10).foreach(_ => result(connectorApi.resume(connector.key)).state should not be None)
   }
 
   @Test
@@ -248,9 +249,9 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .topicKey(topic.key)
         .create())
 
-    result(connectorApi.start(connector.name)).state should not be None
+    result(connectorApi.start(connector.key)).state should not be None
 
-    (0 to 10).foreach(_ => result(connectorApi.stop(connector.name)).state shouldBe None)
+    (0 to 10).foreach(_ => result(connectorApi.stop(connector.key)).state shouldBe None)
   }
 
   @Test
@@ -273,9 +274,9 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .topicKey(topic.key)
         .create())
 
-    result(connectorApi.start(connector.name)).state should not be None
+    result(connectorApi.start(connector.key)).state should not be None
 
-    (0 to 10).foreach(_ => result(connectorApi.start(connector.name)).state should not be None)
+    (0 to 10).foreach(_ => result(connectorApi.start(connector.key)).state should not be None)
   }
 
   @Test
@@ -309,7 +310,7 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .topicKey(topic.key)
         .create())
 
-    result(connectorApi.start(response.name))
+    result(connectorApi.start(response.key))
     // after start, you cannot change worker cluster
     an[IllegalArgumentException] should be thrownBy result(
       connectorApi.request
@@ -329,23 +330,23 @@ class TestConnectorRoute extends SmallTest with Matchers {
   }
 
   @Test
-  def testStartAnNonexistentConnector(): Unit = {
-    an[IllegalArgumentException] should be thrownBy result(connectorApi.start(methodName()))
-  }
+  def testStartAnNonexistentConnector(): Unit =
+    an[IllegalArgumentException] should be thrownBy result(
+      connectorApi.start(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))))
 
   @Test
-  def testStopAnNonexistentConnector(): Unit = {
-    an[IllegalArgumentException] should be thrownBy result(connectorApi.stop(methodName()))
-  }
+  def testStopAnNonexistentConnector(): Unit =
+    an[IllegalArgumentException] should be thrownBy result(
+      connectorApi.stop(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))))
   @Test
-  def testPauseAnNonexistentConnector(): Unit = {
-    an[IllegalArgumentException] should be thrownBy result(connectorApi.pause(methodName()))
-  }
+  def testPauseAnNonexistentConnector(): Unit =
+    an[IllegalArgumentException] should be thrownBy result(
+      connectorApi.pause(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))))
 
   @Test
-  def testResumeAnNonexistentConnector(): Unit = {
-    an[IllegalArgumentException] should be thrownBy result(connectorApi.resume(methodName()))
-  }
+  def testResumeAnNonexistentConnector(): Unit =
+    an[IllegalArgumentException] should be thrownBy result(
+      connectorApi.resume(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))))
 
   @Test
   def testParseCreationJson(): Unit = {

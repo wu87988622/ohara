@@ -31,12 +31,12 @@ import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.kafka.Consumer
 import com.island.ohara.kafka.Consumer.Record
+import com.island.ohara.kafka.connector.json.ConnectorKey
 import spray.json.{JsNull, JsNumber, JsString}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
-
 import spray.json.DefaultJsonProtocol._
 object ValidationUtils {
   private[this] val TIMEOUT = 30 seconds
@@ -109,10 +109,10 @@ object ValidationUtils {
                         settings: Map[String, String],
                         taskCount: Int)(implicit executionContext: ExecutionContext): Future[Seq[Object]] = {
     val requestId: String = CommonUtils.uuid()
-    val validationName = s"Validator-${CommonUtils.randomString()}"
+    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), s"Validator-${CommonUtils.randomString()}")
     workerClient
       .connectorCreator()
-      .name(validationName)
+      .connectorKey(connectorKey)
       .className("com.island.ohara.connector.validation.Validator")
       .numberOfTasks(taskCount)
       .topicKey(ValidationApi.INTERNAL_TOPIC_KEY)
@@ -149,7 +149,7 @@ object ValidationUtils {
         finally Releasable.close(client)
       }
       .flatMap { r =>
-        workerClient.delete(validationName).map(_ => r)
+        workerClient.delete(connectorKey).map(_ => r)
       }
   }
 }

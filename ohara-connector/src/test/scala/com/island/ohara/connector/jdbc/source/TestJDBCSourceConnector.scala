@@ -25,7 +25,7 @@ import com.island.ohara.common.data.{Cell, Row, Serializer}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.kafka.Consumer
 import com.island.ohara.kafka.connector.TaskSetting
-import com.island.ohara.kafka.connector.json.TopicKey
+import com.island.ohara.kafka.connector.json.{ConnectorKey, TopicKey}
 import com.island.ohara.testing.With3Brokers3Workers
 import com.island.ohara.testing.service.Database
 import org.junit.{After, Before, Test}
@@ -74,18 +74,18 @@ class TestJDBCSourceConnector extends With3Brokers3Workers with Matchers {
 
   @Test
   def testJDBCSourceConnector(): Unit = {
-    val connectorName: String = "JDBC-Source-Connector-Test"
+    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), "JDBC-Source-Connector-Test")
     val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
 
     Await.result(
       workerClient
         .connectorCreator()
-        .name(connectorName)
+        .connectorKey(connectorKey)
         .connectorClass(classOf[JDBCSourceConnector])
         .topicKey(topicKey)
         .numberOfTasks(1)
         .settings(props.toMap)
-        .create,
+        .create(),
       10 seconds
     )
 

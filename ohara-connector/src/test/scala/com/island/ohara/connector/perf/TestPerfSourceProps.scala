@@ -21,7 +21,7 @@ import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.TaskSetting
-import com.island.ohara.kafka.connector.json.{ConnectorFormatter, TopicKey}
+import com.island.ohara.kafka.connector.json.{ConnectorFormatter, ConnectorKey, TopicKey}
 import org.junit.Test
 import org.scalatest.Matchers
 
@@ -45,7 +45,12 @@ class TestPerfSourceProps extends SmallTest with Matchers {
     val source = new PerfSource
 
     an[NoSuchElementException] should be thrownBy source.start(
-      ConnectorFormatter.of().name(methodName()).columns(schema.asJava).settings(props.toMap.asJava).raw())
+      ConnectorFormatter
+        .of()
+        .connectorKey(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
+        .columns(schema.asJava)
+        .settings(props.toMap.asJava)
+        .raw())
   }
 
   @Test
@@ -53,7 +58,12 @@ class TestPerfSourceProps extends SmallTest with Matchers {
     val source = new PerfSource
 
     source.start(
-      ConnectorFormatter.of().name(methodName()).topicKeys(topicKeys.asJava).settings(props.toMap.asJava).raw())
+      ConnectorFormatter
+        .of()
+        .connectorKey(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
+        .topicKeys(topicKeys.asJava)
+        .settings(props.toMap.asJava)
+        .raw())
   }
 
   @Test
@@ -61,7 +71,12 @@ class TestPerfSourceProps extends SmallTest with Matchers {
     val task = new PerfSourceTask
 
     task.start(
-      ConnectorFormatter.of().name(methodName()).topicKeys(topicKeys.asJava).settings(props.toMap.asJava).raw())
+      ConnectorFormatter
+        .of()
+        .connectorKey(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
+        .topicKeys(topicKeys.asJava)
+        .settings(props.toMap.asJava)
+        .raw())
 
     task.schema shouldBe DEFAULT_SCHEMA
   }
@@ -88,7 +103,7 @@ class TestPerfSourceProps extends SmallTest with Matchers {
     an[IllegalArgumentException] should be thrownBy source.start(
       ConnectorFormatter
         .of()
-        .name(methodName())
+        .connectorKey(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
         .topicKeys(topicKeys.asJava)
         .columns(schema.asJava)
         .settings(props.copy(batch = -1).toMap.asJava)

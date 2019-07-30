@@ -131,7 +131,7 @@ object HadoopApi {
 
       override def create()(implicit executionContext: ExecutionContext): Future[HdfsInfo] =
         exec.post[Creation, HdfsInfo, ErrorApi.Error](
-          _url(group),
+          urlWithGroup(group),
           creation
         )
       override def update()(implicit executionContext: ExecutionContext): Future[HdfsInfo] =

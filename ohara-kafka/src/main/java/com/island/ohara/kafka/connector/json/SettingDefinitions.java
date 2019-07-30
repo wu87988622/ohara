@@ -28,6 +28,7 @@ public final class SettingDefinitions {
   public static final List<SettingDefinition> DEFINITIONS_DEFAULT =
       Arrays.asList(
           SettingDefinition.CONNECTOR_NAME_DEFINITION,
+          SettingDefinition.CONNECTOR_KEY_DEFINITION,
           SettingDefinition.CONNECTOR_CLASS_DEFINITION,
           SettingDefinition.COLUMNS_DEFINITION,
           SettingDefinition.KEY_CONVERTER_DEFINITION,
@@ -35,7 +36,6 @@ public final class SettingDefinitions {
           SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION,
           SettingDefinition.NUMBER_OF_TASKS_DEFINITION,
           SettingDefinition.TOPIC_KEYS_DEFINITION,
-          // TODO: remove this one ... by chia
           SettingDefinition.TOPIC_NAMES_DEFINITION,
           SettingDefinition.TAGS_DEFINITION);
 

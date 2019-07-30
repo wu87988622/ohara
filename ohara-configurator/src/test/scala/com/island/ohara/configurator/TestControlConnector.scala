@@ -53,39 +53,39 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
         .create())
 
     // test idempotent start
-    (0 until 3).foreach(_ => Await.result(connectorApi.start(sink.name), 30 seconds).state should not be None)
+    (0 until 3).foreach(_ => Await.result(connectorApi.start(sink.key), 30 seconds).state should not be None)
     val workerClient = WorkerClient(testUtil.workersConnProps)
     try {
       CommonUtils.await(() =>
-                          try if (result(workerClient.exist(sink.name))) true else false
+                          try if (result(workerClient.exist(sink.key))) true else false
                           catch {
                             case _: Throwable => false
                         },
                         Duration.ofSeconds(30))
-      CommonUtils.await(() => result(workerClient.status(sink.name)).connector.state == ConnectorState.RUNNING,
+      CommonUtils.await(() => result(workerClient.status(sink.key)).connector.state == ConnectorState.RUNNING,
                         Duration.ofSeconds(20))
-      result(connectorApi.get(sink.name)).state.get shouldBe ConnectorState.RUNNING
+      result(connectorApi.get(sink.key)).state.get shouldBe ConnectorState.RUNNING
 
       // test idempotent pause
       (0 until 3).foreach(_ =>
-        Await.result(connectorApi.pause(sink.name), 10 seconds).state.get shouldBe ConnectorState.PAUSED)
-      CommonUtils.await(() => result(workerClient.status(sink.name)).connector.state == ConnectorState.PAUSED,
+        Await.result(connectorApi.pause(sink.key), 10 seconds).state.get shouldBe ConnectorState.PAUSED)
+      CommonUtils.await(() => result(workerClient.status(sink.key)).connector.state == ConnectorState.PAUSED,
                         Duration.ofSeconds(20))
-      result(connectorApi.get(sink.name)).state.get shouldBe ConnectorState.PAUSED
+      result(connectorApi.get(sink.key)).state.get shouldBe ConnectorState.PAUSED
 
       // test idempotent resume
       (0 until 3).foreach(_ =>
-        Await.result(connectorApi.resume(sink.name), 10 seconds).state.get shouldBe ConnectorState.RUNNING)
-      CommonUtils.await(() => result(workerClient.status(sink.name)).connector.state == ConnectorState.RUNNING,
+        Await.result(connectorApi.resume(sink.key), 10 seconds).state.get shouldBe ConnectorState.RUNNING)
+      CommonUtils.await(() => result(workerClient.status(sink.key)).connector.state == ConnectorState.RUNNING,
                         Duration.ofSeconds(20))
-      result(connectorApi.get(sink.name)).state.get shouldBe ConnectorState.RUNNING
+      result(connectorApi.get(sink.key)).state.get shouldBe ConnectorState.RUNNING
 
       // test idempotent stop. the connector should be removed
-      (0 until 3).foreach(_ => Await.result(connectorApi.stop(sink.name), 10 seconds))
-      CommonUtils.await(() => if (result(workerClient.nonExist(sink.name))) true else false, Duration.ofSeconds(20))
-      result(connectorApi.get(sink.name)).state shouldBe None
+      (0 until 3).foreach(_ => Await.result(connectorApi.stop(sink.key), 10 seconds))
+      CommonUtils.await(() => if (result(workerClient.nonExist(sink.key))) true else false, Duration.ofSeconds(20))
+      result(connectorApi.get(sink.key)).state shouldBe None
     } finally {
-      if (result(workerClient.exist(sink.name))) result(workerClient.delete(sink.name))
+      if (result(workerClient.exist(sink.key))) result(workerClient.delete(sink.key))
     }
   }
 
@@ -103,26 +103,31 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
         .numberOfTasks(1)
         .create())
     // test start
-    Await.result(connectorApi.start(sink.name), 10 seconds)
+    Await.result(connectorApi.start(sink.key), 10 seconds)
     val workerClient = WorkerClient(testUtil.workersConnProps)
     try {
       CommonUtils.await(() =>
-                          try if (result(workerClient.exist(sink.name))) true else false
+                          try if (result(workerClient.exist(sink.key))) true else false
                           catch {
                             case _: Throwable => false
                         },
                         Duration.ofSeconds(30))
-      CommonUtils.await(() => result(workerClient.status(sink.name)).connector.state == ConnectorState.RUNNING,
+      CommonUtils.await(() => result(workerClient.status(sink.key)).connector.state == ConnectorState.RUNNING,
                         Duration.ofSeconds(20))
 
       an[IllegalArgumentException] should be thrownBy result(
-        connectorApi.request.name(sink.name).className(classOf[DumbSink].getName).numberOfTasks(1).create())
+        connectorApi.request
+          .name(sink.name)
+          .group(sink.group)
+          .className(classOf[DumbSink].getName)
+          .numberOfTasks(1)
+          .create())
 
       // test stop. the connector should be removed
-      Await.result(connectorApi.stop(sink.name), 10 seconds)
-      CommonUtils.await(() => if (result(workerClient.nonExist(sink.name))) true else false, Duration.ofSeconds(20))
-      result(connectorApi.get(sink.name)).state shouldBe None
-    } finally if (result(workerClient.exist(sink.name))) result(workerClient.delete(sink.name))
+      Await.result(connectorApi.stop(sink.key), 10 seconds)
+      CommonUtils.await(() => if (result(workerClient.nonExist(sink.key))) true else false, Duration.ofSeconds(20))
+      result(connectorApi.get(sink.key)).state shouldBe None
+    } finally if (result(workerClient.exist(sink.key))) result(workerClient.delete(sink.key))
   }
 
   @Test
@@ -139,18 +144,18 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
         .numberOfTasks(1)
         .create())
     // test start
-    Await.result(connectorApi.start(sink.name), 10 seconds)
+    Await.result(connectorApi.start(sink.key), 10 seconds)
     val workerClient = WorkerClient(testUtil.workersConnProps)
     try {
       CommonUtils.await(() =>
-                          try if (result(workerClient.exist(sink.name))) true else false
+                          try if (result(workerClient.exist(sink.key))) true else false
                           catch {
                             case _: Throwable => false
                         },
                         Duration.ofSeconds(30))
-      result(workerClient.delete(sink.name))
-      result(workerClient.exist(sink.name)) shouldBe false
-    } finally if (result(workerClient.exist(sink.name))) result(workerClient.delete(sink.name))
+      result(workerClient.delete(sink.key))
+      result(workerClient.exist(sink.key)) shouldBe false
+    } finally if (result(workerClient.exist(sink.key))) result(workerClient.delete(sink.key))
   }
   @After
   def tearDown(): Unit = Releasable.close(configurator)

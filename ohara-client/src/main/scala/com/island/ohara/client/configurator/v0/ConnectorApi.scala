@@ -21,7 +21,7 @@ import com.island.ohara.client.Enum
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.data.Column
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.json.{PropGroups, SettingDefinition, StringList, TopicKey}
+import com.island.ohara.kafka.connector.json._
 import spray.json.DefaultJsonProtocol._
 import spray.json.{DeserializationException, JsArray, JsNull, JsObject, JsString, JsValue, RootJsonFormat}
 
@@ -81,6 +81,10 @@ object ConnectorApi {
         .getOrElse(topicKeysFromTopicNames)
 
     override def name: String = plain(SettingDefinition.CONNECTOR_NAME_DEFINITION.key())
+
+    private[this] def group: String = plain.getOrElse(Data.GROUP_KEY, Data.GROUP_DEFAULT)
+
+    def key: ConnectorKey = ConnectorKey.of(group, name)
 
     override def tags: Map[String, JsValue] = noJsNull(settings)
       .get(SettingDefinition.TAGS_DEFINITION.key())
@@ -164,8 +168,9 @@ object ConnectorApi {
                                         lastModified: Long)
       extends Data {
 
-    // TODO: the group should be equal to workerClusterName ... by chia
-    override def group: String = Data.GROUP_DEFAULT
+    override def key: ConnectorKey = ConnectorKey.of(group, name)
+
+    override def group: String = plain(Data.GROUP_KEY)
 
     /**
       * Convert all json value to plain string. It keeps the json format but all stuff are in string.
@@ -240,6 +245,7 @@ object ConnectorApi {
     * We use private[v0] instead of "sealed" since it is extendable to ValidationApi.
     */
   abstract class BasicRequest private[v0] {
+    protected[this] var group: String = Data.GROUP_DEFAULT
     protected[this] var name: String = _
     protected[this] var className: String = _
     protected[this] var columns: Seq[Column] = _
@@ -249,6 +255,11 @@ object ConnectorApi {
     protected[this] var workerClusterName: String = _
     protected[this] var tags: Map[String, JsValue] = _
 
+    @Optional("default group is \"default\"")
+    def group(group: String): BasicRequest.this.type = {
+      this.group = CommonUtils.requireNonEmpty(group)
+      this
+    }
     @Optional("default name is a random string. But it is required in updating")
     def name(name: String): BasicRequest.this.type = {
       this.name = CommonUtils.requireNonEmpty(name)
@@ -374,51 +385,48 @@ object ConnectorApi {
   class Access private[v0]
       extends com.island.ohara.client.configurator.v0.Access[ConnectorDescription](CONNECTORS_PREFIX_PATH) {
 
-    private[this] def actionUrl(name: String, action: String): String =
-      s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$name/$action"
-
     /**
       * start to run a connector on worker cluster.
       *
-      * @param name connector's name
+      * @param key connector's key
       * @return the configuration of connector
       */
-    def start(name: String)(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
-      exec.put[ConnectorDescription, ErrorApi.Error](actionUrl(name, START_COMMAND))
+    def start(key: ConnectorKey)(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
+      exec.put[ConnectorDescription, ErrorApi.Error](_url(key, START_COMMAND))
 
     /**
       * stop and remove a running connector.
       *
-      * @param name connector's name
+      * @param key connector's key
       * @return the configuration of connector
       */
-    def stop(name: String)(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
-      exec.put[ConnectorDescription, ErrorApi.Error](actionUrl(name, STOP_COMMAND))
+    def stop(key: ConnectorKey)(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
+      exec.put[ConnectorDescription, ErrorApi.Error](_url(key, STOP_COMMAND))
 
     /**
       * pause a running connector
       *
-      * @param name connector's name
+      * @param key connector's key
       * @return the configuration of connector
       */
-    def pause(name: String)(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
-      exec.put[ConnectorDescription, ErrorApi.Error](actionUrl(name, PAUSE_COMMAND))
+    def pause(key: ConnectorKey)(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
+      exec.put[ConnectorDescription, ErrorApi.Error](_url(key, PAUSE_COMMAND))
 
     /**
       * resume a paused connector
       *
-      * @param name connector's name
+      * @param key connector's key
       * @return the configuration of connector
       */
-    def resume(name: String)(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
-      exec.put[ConnectorDescription, ErrorApi.Error](actionUrl(name, RESUME_COMMAND))
+    def resume(key: ConnectorKey)(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
+      exec.put[ConnectorDescription, ErrorApi.Error](_url(key, RESUME_COMMAND))
 
     def request: Request = new Request {
       override def create()(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
-        exec.post[Creation, ConnectorDescription, ErrorApi.Error](_url, creation)
+        exec.post[Creation, ConnectorDescription, ErrorApi.Error](urlWithGroup(group), creation)
 
       override def update()(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
-        exec.put[Update, ConnectorDescription, ErrorApi.Error](s"${_url}/${CommonUtils.requireNonEmpty(name)}", update)
+        exec.put[Update, ConnectorDescription, ErrorApi.Error](_url(ConnectorKey.of(group, name)), update)
     }
   }
 

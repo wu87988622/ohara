@@ -51,7 +51,7 @@ public class TestConnectorFormatter extends SmallTest {
         topicKeys.stream().map(TopicKey::topicNameOnKafka).collect(Collectors.toSet());
     Creation creation =
         ConnectorFormatter.of()
-            .name(CommonUtils.randomString())
+            .connectorKey(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
             .topicKeys(topicKeys)
             .requestOfCreation();
     Assert.assertNotNull(creation.configs().get(SettingDefinition.TOPIC_NAMES_DEFINITION.key()));
@@ -68,7 +68,7 @@ public class TestConnectorFormatter extends SmallTest {
   public void configsNameShouldBeRemoved() {
     Creation creation =
         ConnectorFormatter.of()
-            .name(CommonUtils.randomString())
+            .connectorKey(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
             .topicKey(TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString()))
             .requestOfCreation();
     Assert.assertNull(creation.configs().get(SettingDefinition.CONNECTOR_NAME_DEFINITION.key()));
@@ -78,7 +78,7 @@ public class TestConnectorFormatter extends SmallTest {
   public void testSetKeyConverter() {
     Creation creation =
         ConnectorFormatter.of()
-            .name(CommonUtils.randomString())
+            .connectorKey(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
             .converterTypeOfKey(ConverterType.JSON)
             .converterTypeOfValue(ConverterType.JSON)
             .requestOfCreation();
@@ -92,12 +92,7 @@ public class TestConnectorFormatter extends SmallTest {
   }
 
   @Test(expected = NullPointerException.class)
-  public void nullName() {
-    ConnectorFormatter.of().name(null).requestOfCreation();
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void emptyName() {
-    ConnectorFormatter.of().name("").requestOfCreation();
+  public void nullConnectorKey() {
+    ConnectorFormatter.of().connectorKey(null).requestOfCreation();
   }
 }

@@ -56,7 +56,7 @@ abstract class BasicAccess private[v0] (prefixPath: String) {
     */
   protected def _url: String = s"http://${_hostname}:${_port}/${_version}/${_prefixPath}"
 
-  protected def _url(group: String) =
+  protected def urlWithGroup(group: String) =
     s"http://${_hostname}:${_port}/${_version}/${_prefixPath}?${Data.GROUP_KEY}=$group"
 
   //----------------[for runnable objects]----------------//

@@ -40,6 +40,11 @@ import scala.util.Random
 
 /**
   * a helper class used to send the rest request to kafka worker.
+  *
+  * Noted: the input key is a specific form across whole project and it is NOT supported by kafka. Hence, the response
+  * of this class is "pure" kafka response and a astounding fact is the "connector name" in response is a salt name composed by
+  * group and name from input key. For example, the input key is ("g0", "n0") and a salt connector name called "g0-n0"
+  * ensues from response.
   */
 trait WorkerClient {
 
@@ -57,24 +62,24 @@ trait WorkerClient {
 
   /**
     * delete a connector from worker cluster
-    * @param name connector's name
+    * @param connectorKey connector's key
     * @return async future containing nothing
     */
-  def delete(name: String)(implicit executionContext: ExecutionContext): Future[Unit]
+  def delete(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Unit]
 
   /**
     * pause a running connector
-    * @param name connector's name
+    * @param connectorKey connector's key
     * @return async future containing nothing
     */
-  def pause(name: String)(implicit executionContext: ExecutionContext): Future[Unit]
+  def pause(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Unit]
 
   /**
     * resume a paused connector
-    * @param name connector's name
+    * @param connectorKey connector's key
     * @return async future containing nothing
     */
-  def resume(name: String)(implicit executionContext: ExecutionContext): Future[Unit]
+  def resume(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Unit]
 
   /**
     * list available plugins.
@@ -114,44 +119,46 @@ trait WorkerClient {
   def connectionProps: String
 
   /**
-    * @param name connector's name
+    * @param connectorKey connector's key
     * @return status of connector
     */
-  def status(name: String)(implicit executionContext: ExecutionContext): Future[ConnectorInfo]
+  def status(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[ConnectorInfo]
 
   /**
     * a helper method which is composed by exist and status. It is useful when you want to fetch a may-be-nonexistent
     * connector but you hate to write future-chain code.
-    * @param name connector's name
+    * @param connectorKey connector's key
     * @param executionContext thread pool
     * @return status of nothing
     */
-  def statusOrNone(name: String)(implicit executionContext: ExecutionContext): Future[Option[ConnectorInfo]] =
-    exist(name).flatMap(if (_) status(name).map(Some(_)) else Future.successful(None))
+  def statusOrNone(connectorKey: ConnectorKey)(
+    implicit executionContext: ExecutionContext): Future[Option[ConnectorInfo]] =
+    exist(connectorKey).flatMap(if (_) status(connectorKey).map(Some(_)) else Future.successful(None))
 
   /**
-    * @param name connector's name
+    * @param connectorKey connector's key
     * @return configuration of connector
     */
-  def config(name: String)(implicit executionContext: ExecutionContext): Future[ConnectorConfig]
+  def config(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[ConnectorConfig]
 
   /**
-    * @param name connector's name
+    * @param connectorKey connector's key
     * @param id task's id
     * @return task status
     */
-  def taskStatus(name: String, id: Int)(implicit executionContext: ExecutionContext): Future[TaskStatus]
+  def taskStatus(connectorKey: ConnectorKey, id: Int)(implicit executionContext: ExecutionContext): Future[TaskStatus]
 
   /**
     * Check whether a connector name is used in creating connector (even if the connector fails to start, this method
     * still return true)
-    * @param name connector name
+    * @param connectorKey connector key
     * @return true if connector exists
     */
-  def exist(name: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
-    activeConnectors().map(_.contains(name))
+  def exist(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Boolean] =
+    activeConnectors().map(_.contains(connectorKey.connectorNameOnKafka()))
 
-  def nonExist(name: String)(implicit executionContext: ExecutionContext): Future[Boolean] = exist(name).map(!_)
+  def nonExist(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Boolean] =
+    exist(connectorKey).map(!_)
 
   /**
     * list all definitions for connector.
@@ -245,8 +252,11 @@ object WorkerClient {
         )
       }
 
-      override def delete(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-        retry(() => HttpExecutor.SINGLETON.delete[Error](s"http://$workerAddress/connectors/$name"), s"delete $name")
+      override def delete(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Unit] =
+        retry(() =>
+                HttpExecutor.SINGLETON
+                  .delete[Error](s"http://$workerAddress/connectors/${connectorKey.connectorNameOnKafka()}"),
+              s"delete $connectorKey")
 
       override def plugins()(implicit executionContext: ExecutionContext): Future[Seq[Plugin]] = retry(
         () => HttpExecutor.SINGLETON.get[Seq[Plugin], Error](s"http://$workerAddress/connector-plugins"),
@@ -276,25 +286,41 @@ object WorkerClient {
 
       override def connectionProps: String = _workerAddress.mkString(",")
 
-      override def status(name: String)(implicit executionContext: ExecutionContext): Future[ConnectorInfo] = retry(
-        () => HttpExecutor.SINGLETON.get[ConnectorInfo, Error](s"http://$workerAddress/connectors/$name/status"),
-        s"status of $name")
+      override def status(connectorKey: ConnectorKey)(
+        implicit executionContext: ExecutionContext): Future[ConnectorInfo] = retry(
+        () =>
+          HttpExecutor.SINGLETON.get[ConnectorInfo, Error](
+            s"http://$workerAddress/connectors/${connectorKey.connectorNameOnKafka()}/status"),
+        s"status of $connectorKey"
+      )
 
-      override def config(name: String)(implicit executionContext: ExecutionContext): Future[ConnectorConfig] = retry(
-        () => HttpExecutor.SINGLETON.get[ConnectorConfig, Error](s"http://$workerAddress/connectors/$name/config"),
-        s"config of $name")
+      override def config(connectorKey: ConnectorKey)(
+        implicit executionContext: ExecutionContext): Future[ConnectorConfig] = retry(
+        () =>
+          HttpExecutor.SINGLETON.get[ConnectorConfig, Error](
+            s"http://$workerAddress/connectors/${connectorKey.connectorNameOnKafka()}/config"),
+        s"config of $connectorKey"
+      )
 
-      override def taskStatus(name: String, id: Int)(implicit executionContext: ExecutionContext): Future[TaskStatus] =
+      override def taskStatus(connectorKey: ConnectorKey, id: Int)(
+        implicit executionContext: ExecutionContext): Future[TaskStatus] =
         retry(
           () =>
-            HttpExecutor.SINGLETON.get[TaskStatus, Error](s"http://$workerAddress/connectors/$name/tasks/$id/status"),
-          s"status of $name/$id")
-      override def pause(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-        retry(() => HttpExecutor.SINGLETON.put[Error](s"http://$workerAddress/connectors/$name/pause"), s"pause $name")
+            HttpExecutor.SINGLETON.get[TaskStatus, Error](
+              s"http://$workerAddress/connectors/${connectorKey.connectorNameOnKafka()}/tasks/$id/status"),
+          s"status of $connectorKey/$id"
+        )
+      override def pause(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Unit] =
+        retry(() =>
+                HttpExecutor.SINGLETON
+                  .put[Error](s"http://$workerAddress/connectors/${connectorKey.connectorNameOnKafka()}/pause"),
+              s"pause $connectorKey")
 
-      override def resume(name: String)(implicit executionContext: ExecutionContext): Future[Unit] = retry(
-        () => HttpExecutor.SINGLETON.put[Error](s"http://$workerAddress/connectors/$name/resume"),
-        s"resume $name")
+      override def resume(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Unit] =
+        retry(() =>
+                HttpExecutor.SINGLETON
+                  .put[Error](s"http://$workerAddress/connectors/${connectorKey.connectorNameOnKafka()}/resume"),
+              s"resume $connectorKey")
 
       override def connectorValidator(): Validator =
         (executionContext, validation) => {
@@ -336,13 +362,13 @@ object WorkerClient {
     private[this] var executionContext: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
 
     /**
-      * set the connector name. It should be a unique name.
+      * set the connector key. It should be a unique key.
       *
-      * @param name connector name
+      * @param connectorKey connector key
       * @return this one
       */
-    def name(name: String): Creator = {
-      connectorFormatter.name(name)
+    def connectorKey(connectorKey: ConnectorKey): Creator = {
+      connectorFormatter.connectorKey(connectorKey)
       this
     }
 
@@ -526,8 +552,8 @@ object WorkerClient {
       this
     }
 
-    def name(name: String): Validator = {
-      this.formatter.name(name)
+    def connectorKey(connectorKey: ConnectorKey): Validator = {
+      this.formatter.connectorKey(connectorKey)
       this
     }
 

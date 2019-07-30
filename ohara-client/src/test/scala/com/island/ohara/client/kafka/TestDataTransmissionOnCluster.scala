@@ -19,7 +19,7 @@ package com.island.ohara.client.kafka
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorState
 import com.island.ohara.common.data._
 import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.kafka.connector.json.TopicKey
+import com.island.ohara.kafka.connector.json.{ConnectorKey, TopicKey}
 import com.island.ohara.kafka.{BrokerClient, Consumer, Producer}
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.{After, Test}
@@ -83,12 +83,12 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker with Matchers {
     data.asScala.foreach(_.key.get shouldBe row)
   }
 
-  private[this] def checkConnector(name: String): Unit = {
-    await(() => result(workerClient.activeConnectors()).contains(name))
-    await(() => result(workerClient.config(name)).topicNames.nonEmpty)
+  private[this] def checkConnector(connectorKey: ConnectorKey): Unit = {
+    await(() => result(workerClient.activeConnectors()).contains(connectorKey.connectorNameOnKafka()))
+    await(() => result(workerClient.config(connectorKey)).topicNames.nonEmpty)
     await(
       () =>
-        try result(workerClient.status(name)).connector.state == ConnectorState.RUNNING
+        try result(workerClient.status(connectorKey)).connector.state == ConnectorState.RUNNING
         catch {
           case _: Throwable => false
       })
@@ -148,11 +148,11 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker with Matchers {
     * producer -> topic_1(topicName) -> sink connector -> topic_2(topicName2)
     */
   private[this] def testProducer2SinkConnector(srcKey: TopicKey, targetKey: TopicKey): Unit = {
-    val connectorName = CommonUtils.randomString(10)
+    val connectorKey = ConnectorKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     result(
       workerClient
         .connectorCreator()
-        .name(connectorName)
+        .connectorKey(connectorKey)
         .connectorClass(classOf[SimpleRowSinkConnector])
         .topicKey(srcKey)
         .numberOfTasks(1)
@@ -161,10 +161,10 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker with Matchers {
         .create())
 
     try {
-      checkConnector(connectorName)
+      checkConnector(connectorKey)
       setupData(srcKey)
       checkData(targetKey)
-    } finally result(workerClient.delete(connectorName))
+    } finally result(workerClient.delete(connectorKey))
   }
 
   @Test
@@ -188,11 +188,11 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker with Matchers {
     * producer -> topic_1(topicName) -> row source -> topic_2 -> consumer
     */
   private[this] def testSourceConnector2Consumer(srcKey: TopicKey, targetKey: TopicKey): Unit = {
-    val connectorName = CommonUtils.randomString(10)
+    val connectorKey = ConnectorKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     result(
       workerClient
         .connectorCreator()
-        .name(connectorName)
+        .connectorKey(connectorKey)
         .connectorClass(classOf[SimpleRowSourceConnector])
         .topicKey(targetKey)
         .numberOfTasks(1)
@@ -201,10 +201,10 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker with Matchers {
         .create())
 
     try {
-      checkConnector(connectorName)
+      checkConnector(connectorKey)
       setupData(srcKey)
       checkData(targetKey)
-    } finally result(workerClient.delete(connectorName))
+    } finally result(workerClient.delete(connectorKey))
   }
 
   /**
@@ -256,13 +256,13 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker with Matchers {
     */
   @Test
   def testWorkerClient(): Unit = {
-    val connectorName = CommonUtils.randomString(10)
+    val connectorKey = ConnectorKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     val topicKeys = Set(TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10)))
     val outputTopic = CommonUtils.randomString(10)
     result(
       workerClient
         .connectorCreator()
-        .name(connectorName)
+        .connectorKey(connectorKey)
         .connectorClass(classOf[SimpleRowSinkConnector])
         .topicKeys(topicKeys)
         .numberOfTasks(1)
@@ -271,26 +271,26 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker with Matchers {
         .create())
 
     val activeConnectors = result(workerClient.activeConnectors())
-    activeConnectors.contains(connectorName) shouldBe true
+    activeConnectors.contains(connectorKey.connectorNameOnKafka()) shouldBe true
 
-    val config = result(workerClient.config(connectorName))
+    val config = result(workerClient.config(connectorKey))
     config.topicNames shouldBe topicKeys.map(_.topicNameOnKafka)
 
     await(
       () =>
-        try result(workerClient.status(connectorName)).tasks.nonEmpty
+        try result(workerClient.status(connectorKey)).tasks.nonEmpty
         catch {
           case _: Throwable => false
       })
-    val status = result(workerClient.status(connectorName))
+    val status = result(workerClient.status(connectorKey))
     status.tasks.head should not be null
 
-    val task = result(workerClient.taskStatus(connectorName, status.tasks.head.id))
+    val task = result(workerClient.taskStatus(connectorKey, status.tasks.head.id))
     task should not be null
     task == status.tasks.head shouldBe true
     task.worker_id.isEmpty shouldBe false
 
-    result(workerClient.delete(connectorName))
-    result(workerClient.activeConnectors()).contains(connectorName) shouldBe false
+    result(workerClient.delete(connectorKey))
+    result(workerClient.activeConnectors()).contains(connectorKey.connectorNameOnKafka()) shouldBe false
   }
 }

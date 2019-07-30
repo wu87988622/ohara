@@ -50,6 +50,15 @@ public class SettingDefinition implements JsonObject {
   static final String COLUMN_DATA_TYPE_KEY = "dataType";
   // -------------------------------[default setting]-------------------------------//
   private static final AtomicInteger ORDER_COUNTER = new AtomicInteger(0);
+  public static final SettingDefinition CONNECTOR_KEY_DEFINITION =
+      SettingDefinition.builder()
+          .displayName("Connector key")
+          .key("connectorKey")
+          .valueType(Type.CONNECTOR_KEY)
+          .documentation("the key of this connector")
+          .group(CORE_GROUP)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
+          .build();
   /** this setting is mapped to kafka's name. */
   public static final SettingDefinition CONNECTOR_NAME_DEFINITION =
       SettingDefinition.builder()
@@ -59,6 +68,7 @@ public class SettingDefinition implements JsonObject {
           .documentation("the name of this connector")
           .group(CORE_GROUP)
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
+          .internal()
           .build();
 
   public static final SettingDefinition CONNECTOR_CLASS_DEFINITION =
@@ -257,7 +267,9 @@ public class SettingDefinition implements JsonObject {
     /** The legal range for port is [1, 65535]. */
     PORT,
     /** [ { "group": "g", "name":" n" } ] */
-    TOPIC_KEYS
+    TOPIC_KEYS,
+    /** { "group": "g0", "name": "n0" } */
+    CONNECTOR_KEY,
   }
 
   /** this class is used to pre-check the setting before running connector. */
@@ -295,6 +307,7 @@ public class SettingDefinition implements JsonObject {
       case DURATION:
       case TABLE:
       case TOPIC_KEYS:
+      case CONNECTOR_KEY:
         return ConfigDef.Type.STRING;
       case SHORT:
         return ConfigDef.Type.SHORT;
@@ -462,6 +475,19 @@ public class SettingDefinition implements JsonObject {
             } catch (Exception e) {
               throw new ConfigException(
                   "can't be converted to TOPIC_KEYS type. since:" + e.getMessage());
+            }
+          } else throw new ConfigException("the configured value must be String type");
+        };
+      case CONNECTOR_KEY:
+        return (Object value) -> {
+          if (value instanceof String) {
+            try {
+              // try parse the json string to Connector Key
+              ConnectorKey.ofJsonString((String) value);
+              // pass
+            } catch (Exception e) {
+              throw new ConfigException(
+                  "can't be converted to CONNECTOR_KEY type. since:" + e.getMessage());
             }
           } else throw new ConfigException("the configured value must be String type");
         };

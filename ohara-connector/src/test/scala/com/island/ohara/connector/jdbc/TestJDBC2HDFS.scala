@@ -30,7 +30,7 @@ import com.island.ohara.connector.hdfs.storage.{HDFSStorage, Storage}
 import com.island.ohara.connector.hdfs.{HDFSSinkConnector, HDFSSinkConnectorConfig, _}
 import com.island.ohara.connector.jdbc.source._
 import com.island.ohara.kafka.connector.TaskSetting
-import com.island.ohara.kafka.connector.json.TopicKey
+import com.island.ohara.kafka.connector.json.{ConnectorKey, TopicKey}
 import com.island.ohara.testing.With3Brokers3Workers
 import com.island.ohara.testing.service.Hdfs
 import org.apache.hadoop.fs.{FileSystem, Path}
@@ -104,14 +104,15 @@ class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
 
   @Test
   def testNormalCase(): Unit = {
-    val jdbcSourceConnectorName: String = "jdbc-source-connector-it-test"
-    val hdfsSinkConnectorName: String = "hdfs-sink-connector-it-test"
+    val jdbcSourceConnectorKey: ConnectorKey =
+      ConnectorKey.of(CommonUtils.randomString(5), "jdbc-source-connector-it-test")
+    val hdfsSinkConnectorKey: ConnectorKey = ConnectorKey.of(CommonUtils.randomString(5), "hdfs-sink-connector-it-test")
     val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
 
     Await.result(
       workerClient
         .connectorCreator()
-        .name(jdbcSourceConnectorName)
+        .connectorKey(jdbcSourceConnectorKey)
         .connectorClass(classOf[JDBCSourceConnector])
         .topicKey(topicKey)
         .numberOfTasks(1)
@@ -123,7 +124,7 @@ class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
     Await.result(
       workerClient
         .connectorCreator()
-        .name(hdfsSinkConnectorName)
+        .connectorKey(hdfsSinkConnectorKey)
         .connectorClass(classOf[HDFSSinkConnector])
         .topicKey(topicKey)
         .settings(hdfsProps.toMap)
@@ -159,8 +160,8 @@ class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
       lineCountFile1(1) shouldBe "2018-07-13 00:00:00.0,50,NAME-50,ADDRESS-50"
       lineCountFile1(50) shouldBe "2018-08-31 00:00:00.0,1,NAME-1,ADDRESS-1"
     } finally {
-      workerClient.delete(jdbcSourceConnectorName)
-      workerClient.delete(hdfsSinkConnectorName)
+      workerClient.delete(jdbcSourceConnectorKey)
+      workerClient.delete(hdfsSinkConnectorKey)
     }
   }
 

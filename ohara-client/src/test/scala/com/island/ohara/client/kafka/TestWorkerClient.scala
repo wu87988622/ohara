@@ -22,7 +22,7 @@ import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorState
 import com.island.ohara.common.data.{Row, Serializer}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.Consumer
-import com.island.ohara.kafka.connector.json.{ConverterType, SettingDefinition, StringList, TopicKey}
+import com.island.ohara.kafka.connector.json.{ConnectorKey, ConverterType, SettingDefinition, StringList, TopicKey}
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.Test
 import org.scalatest.Matchers
@@ -35,55 +35,55 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
   @Test
   def testExist(): Unit = {
     val topicKey = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
-    val connectorName = CommonUtils.randomString(10)
-    result(workerClient.exist(connectorName)) shouldBe false
+    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    result(workerClient.exist(connectorKey)) shouldBe false
 
     result(
       workerClient
         .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(classOf[MyConnector])
-        .name(connectorName)
+        .connectorKey(connectorKey)
         .numberOfTasks(1)
         .create())
 
-    try assertExist(workerClient, connectorName)
-    finally result(workerClient.delete(connectorName))
+    try assertExist(workerClient, connectorKey)
+    finally result(workerClient.delete(connectorKey))
   }
 
   @Test
   def testExistOnUnrunnableConnector(): Unit = {
     val topicKey = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
-    val connectorName = CommonUtils.randomString(10)
-    result(workerClient.exist(connectorName)) shouldBe false
+    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    result(workerClient.exist(connectorKey)) shouldBe false
 
     result(
       workerClient
         .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(classOf[BrokenConnector])
-        .name(connectorName)
+        .connectorKey(connectorKey)
         .numberOfTasks(1)
         .create())
 
-    try assertExist(workerClient, connectorName)
-    finally result(workerClient.delete(connectorName))
+    try assertExist(workerClient, connectorKey)
+    finally result(workerClient.delete(connectorKey))
   }
 
   @Test
   def testPauseAndResumeSource(): Unit = {
     val topicKey = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
-    val connectorName = CommonUtils.randomString(10)
+    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result(
       workerClient
         .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(classOf[MyConnector])
-        .name(connectorName)
+        .connectorKey(connectorKey)
         .numberOfTasks(1)
         .create())
     try {
-      assertExist(workerClient, connectorName)
+      assertExist(workerClient, connectorKey)
       val consumer =
         Consumer
           .builder[Row, Array[Byte]]()
@@ -99,9 +99,9 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
         rows.size should not be 0
         rows.asScala.foreach(_.key.get shouldBe ROW)
         // pause connector
-        result(workerClient.pause(connectorName))
+        result(workerClient.pause(connectorKey))
 
-        await(() => result(workerClient.status(connectorName)).connector.state == ConnectorState.PAUSED)
+        await(() => result(workerClient.status(connectorKey)).connector.state == ConnectorState.PAUSED)
 
         // try to receive all data from topic...10 seconds should be enough in this case
         rows = consumer.poll(java.time.Duration.ofSeconds(10), Int.MaxValue)
@@ -112,15 +112,15 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
         rows.size shouldBe 0
 
         // resume connector
-        result(workerClient.resume(connectorName))
+        result(workerClient.resume(connectorKey))
 
-        await(() => result(workerClient.status(connectorName)).connector.state == ConnectorState.RUNNING)
+        await(() => result(workerClient.status(connectorKey)).connector.state == ConnectorState.RUNNING)
 
         // since connector is resumed so some data are generated
         rows = consumer.poll(java.time.Duration.ofSeconds(20), 1)
         rows.size should not be 0
       } finally consumer.close()
-    } finally result(workerClient.delete(connectorName))
+    } finally result(workerClient.delete(connectorKey))
   }
 
   @Test
@@ -332,7 +332,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
           .connectorCreator()
           .topicKey(topicKey)
           .connectorClass(classOf[MyConnector])
-          .name(CommonUtils.randomString(10))
+          .connectorKey(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
           .numberOfTasks(1)
           .settings(Map(SettingDefinition.COLUMNS_DEFINITION.key() -> "Asdasdasd"))
           .create())
@@ -350,7 +350,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
           .connectorCreator()
           .topicKey(topicKey)
           .connectorClass(classOf[MyConnector])
-          .name(CommonUtils.randomString(10))
+          .connectorKey(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
           .numberOfTasks(1)
           .settings(Map(MyConnector.DURATION_KEY -> "Asdasdasd"))
           .create())
@@ -367,7 +367,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
         .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(classOf[MyConnector])
-        .name(CommonUtils.randomString(10))
+        .connectorKey(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
         .numberOfTasks(1)
         .settings(Map(MyConnector.DURATION_KEY -> "PT1S"))
         .create())
@@ -380,7 +380,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
         .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(classOf[MyConnector])
-        .name(CommonUtils.randomString(10))
+        .connectorKey(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
         .numberOfTasks(1)
         .settings(Map(MyConnector.DURATION_KEY -> "PT1M1S"))
         .create())
@@ -389,26 +389,28 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
   @Test
   def testStatusOrNone(): Unit = {
     val topicKey = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
-    result(workerClient.statusOrNone(CommonUtils.randomString())) shouldBe None
+    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    result(workerClient.statusOrNone(connectorKey)) shouldBe None
     val response = result(
       workerClient
         .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(classOf[MyConnector])
-        .name(CommonUtils.randomString(10))
+        .connectorKey(connectorKey)
         .numberOfTasks(1)
         .settings(Map(MyConnector.DURATION_KEY -> "PT1M1S"))
         .create())
+    response.name shouldBe connectorKey.connectorNameOnKafka()
     await(
       () =>
-        try result(workerClient.statusOrNone(response.name)).isDefined
+        try result(workerClient.statusOrNone(connectorKey)).isDefined
         catch {
           case e: Throwable =>
             // keep looping if kafka slowly sync the status ...
             if (e.getMessage.contains("No status found for connector")) false
             else throw e
       })
-    result(workerClient.delete(response.name))
+    result(workerClient.delete(connectorKey))
   }
 
   @Test

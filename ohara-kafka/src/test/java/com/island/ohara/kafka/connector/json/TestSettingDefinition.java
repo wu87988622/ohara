@@ -490,4 +490,22 @@ public class TestSettingDefinition extends SmallTest {
     assertException(ConfigException.class, () -> s.checker().check(CommonUtils.randomString()));
     assertException(ConfigException.class, () -> s.checker().check(100000000));
   }
+
+  @Test
+  public void testConnectorKeyType() {
+    SettingDefinition s =
+        SettingDefinition.builder()
+            .valueType(SettingDefinition.Type.CONNECTOR_KEY)
+            .key("connectorKey.key")
+            .build();
+    // pass
+    s.checker()
+        .check(
+            JsonUtils.toString(
+                ConnectorKey.of(CommonUtils.randomString(), CommonUtils.randomString())));
+    // empty array is illegal
+    assertException(ConfigException.class, () -> s.checker().check("{}"));
+    assertException(ConfigException.class, () -> s.checker().check(CommonUtils.randomString()));
+    assertException(ConfigException.class, () -> s.checker().check(100000000));
+  }
 }

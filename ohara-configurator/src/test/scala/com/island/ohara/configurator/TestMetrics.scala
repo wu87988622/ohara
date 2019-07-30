@@ -47,7 +47,6 @@ class TestMetrics extends WithBrokerWorker with Matchers {
   @Test
   def testTopic(): Unit = {
     val topic = result(topicApi.request.name(CommonUtils.randomString()).create())
-    println(s"[CHIA] key:${topic.key}")
     val producer = Producer
       .builder[String, String]()
       .connectionProps(testUtil().brokersConnProps())
@@ -92,21 +91,21 @@ class TestMetrics extends WithBrokerWorker with Matchers {
 
     sink.metrics.meters.size shouldBe 0
 
-    result(connectorApi.start(sink.name))
+    result(connectorApi.start(sink.key))
 
     CommonUtils.await(
       () => {
-        val meters = result(connectorApi.get(sink.name)).metrics.meters
+        val meters = result(connectorApi.get(sink.key)).metrics.meters
         // custom metrics should have queryTime and startTime also
         meters.nonEmpty && meters.head.queryTime > 0 && meters.head.startTime.isDefined
       },
       java.time.Duration.ofSeconds(20)
     )
 
-    result(connectorApi.stop(sink.name))
+    result(connectorApi.stop(sink.key))
 
     CommonUtils.await(() => {
-      result(connectorApi.get(sink.name)).metrics.meters.isEmpty
+      result(connectorApi.get(sink.key)).metrics.meters.isEmpty
     }, java.time.Duration.ofSeconds(20))
   }
 
@@ -128,14 +127,14 @@ class TestMetrics extends WithBrokerWorker with Matchers {
     val pipeline = result(pipelineApi.request.name(CommonUtils.randomString()).flow(topic.key, sink.key).create())
 
     pipeline.objects.filter(_.name == sink.name).head.metrics.meters.size shouldBe 0
-    result(connectorApi.start(sink.name))
+    result(connectorApi.start(sink.key))
 
     // the connector is running so we should "see" the beans.
     CommonUtils.await(
       () => result(pipelineApi.get(pipeline.name)).objects.filter(_.name == sink.name).head.metrics.meters.nonEmpty,
       java.time.Duration.ofSeconds(20))
 
-    result(connectorApi.stop(sink.name))
+    result(connectorApi.stop(sink.key))
 
     // the connector is stopped so we should NOT "see" the beans.
     CommonUtils.await(
@@ -162,7 +161,7 @@ class TestMetrics extends WithBrokerWorker with Matchers {
     val pipeline = result(pipelineApi.request.name(CommonUtils.randomString()).flow(topic.key, source.key).create())
 
     pipeline.objects.filter(_.name == source.name).head.metrics.meters.size shouldBe 0
-    result(connectorApi.start(source.name))
+    result(connectorApi.start(source.key))
 
     // the connector is running so we should "see" the beans.
     CommonUtils.await(
@@ -173,7 +172,7 @@ class TestMetrics extends WithBrokerWorker with Matchers {
       () => result(pipelineApi.get(pipeline.name)).objects.filter(_.name == topic.name).head.metrics.meters.nonEmpty,
       java.time.Duration.ofSeconds(20))
 
-    result(connectorApi.stop(source.name))
+    result(connectorApi.stop(source.key))
 
     // the connector is stopped so we should NOT "see" the beans.
     CommonUtils.await(

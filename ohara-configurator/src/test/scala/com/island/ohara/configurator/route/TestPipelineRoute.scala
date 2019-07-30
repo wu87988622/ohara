@@ -51,7 +51,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
         .numberOfTasks(1)
         .topicKey(topic.key)
         .create())
-    result(connectorApi.start(connector.name))
+    result(connectorApi.start(connector.key))
 
     var pipeline = result(
       pipelineApi.request.name(CommonUtils.randomString(10)).flow(Flow(connector.key, Set(topic.key))).create()
@@ -152,7 +152,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
         .topicKey(topic.key)
         .create())
 
-    result(connectorApi.start(connector.name))
+    result(connectorApi.start(connector.key))
 
     val pipeline = result(
       pipelineApi.request.name(CommonUtils.randomString()).flow(connector.key, connector.key).create())
@@ -176,7 +176,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
         .numberOfTasks(1)
         .topicKey(topic.key)
         .create())
-    result(connectorApi.start(connector.name))
+    result(connectorApi.start(connector.key))
 
     val pipeline = result(pipelineApi.request.name(CommonUtils.randomString()).flow(topic.key, connector.key).create())
 
