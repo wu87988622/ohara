@@ -18,17 +18,15 @@ import * as utils from '../utils';
 
 /* eslint-disable no-unused-expressions */
 // eslint is complaining about `expect(thing).to.be.undefined`
-describe('Broker API', () => {
+describe('Zookeeper API', () => {
   let nodeName = '';
   let zookeeperClusterName = '';
-  let brokerClusterName = '';
 
   before(() => cy.deleteAllServices());
 
   beforeEach(() => {
     nodeName = `node${utils.makeRandomStr()}`;
     zookeeperClusterName = `zookeeper${utils.makeRandomStr()}`;
-    brokerClusterName = `broker${utils.makeRandomStr()}`;
 
     cy.createNode({
       name: nodeName,
@@ -40,19 +38,11 @@ describe('Broker API', () => {
     cy.createZookeeper({
       name: zookeeperClusterName,
       nodeNames: [nodeName],
-    });
-
-    cy.startZookeeper(zookeeperClusterName);
-
-    cy.createBroker({
-      name: brokerClusterName,
-      zookeeperClusterName: zookeeperClusterName,
-      nodeNames: [nodeName],
-    }).as('createBroker');
+    }).as('createZookeeper');
   });
 
-  it('createBroker', () => {
-    cy.get('@createBroker').then(response => {
+  it('createZookeeper', () => {
+    cy.get('@createZookeeper').then(response => {
       const {
         data: { isSuccess, result },
       } = response;
@@ -60,26 +50,26 @@ describe('Broker API', () => {
         name,
         nodeNames,
         clientPort,
-        exporterPort,
-        jmxPort,
+        electionPort,
+        peerPort,
         state,
       } = result;
 
       expect(isSuccess).to.eq(true);
 
-      expect(name).to.eq(brokerClusterName);
+      expect(name).to.eq(zookeeperClusterName);
       expect(nodeNames)
         .to.be.an('array')
         .that.have.lengthOf(1);
       expect(clientPort).to.be.a('number');
-      expect(exporterPort).to.be.a('number');
-      expect(jmxPort).to.be.a('number');
+      expect(electionPort).to.be.a('number');
+      expect(peerPort).to.be.a('number');
       expect(state).to.be.undefined;
     });
   });
 
-  it('fetchBroker', () => {
-    cy.fetchBroker(brokerClusterName).then(response => {
+  it('fetchZookeeper', () => {
+    cy.fetchZookeeper(zookeeperClusterName).then(response => {
       const {
         data: { isSuccess, result },
       } = response;
@@ -87,133 +77,130 @@ describe('Broker API', () => {
         name,
         nodeNames,
         clientPort,
-        exporterPort,
-        jmxPort,
+        electionPort,
+        peerPort,
         state,
       } = result;
 
       expect(isSuccess).to.eq(true);
-      expect(name).to.eq(brokerClusterName);
+
+      expect(name).to.eq(zookeeperClusterName);
       expect(nodeNames)
         .to.be.an('array')
         .that.have.lengthOf(1);
       expect(clientPort).to.be.a('number');
-      expect(exporterPort).to.be.a('number');
-      expect(jmxPort).to.be.a('number');
+      expect(electionPort).to.be.a('number');
+      expect(peerPort).to.be.a('number');
       expect(state).to.be.undefined;
     });
   });
 
-  it('fetchBrokers', () => {
+  it('fetchZookeepers', () => {
     const paramsOne = {
       name: utils.makeRandomStr(),
-      zookeeperClusterName,
       nodeNames: [nodeName],
     };
 
     const paramsTwo = {
       name: utils.makeRandomStr(),
-      zookeeperClusterName,
       nodeNames: [nodeName],
     };
 
-    cy.createBroker(paramsOne);
-    cy.createBroker(paramsTwo);
+    cy.createZookeeper(paramsOne);
+    cy.createZookeeper(paramsTwo);
 
-    cy.fetchBrokers().then(res => {
+    cy.fetchZookeepers().then(res => {
       const {
         data: { isSuccess, result },
       } = res;
 
       expect(isSuccess).to.eq(true);
 
-      const brokers = result.filter(
-        broker =>
-          broker.name === paramsOne.name || broker.name === paramsTwo.name,
+      const zookeepers = result.filter(
+        zookeeper =>
+          zookeeper.name === paramsOne.name ||
+          zookeeper.name === paramsTwo.name,
       );
 
-      expect(brokers.length).to.eq(2);
+      expect(zookeepers.length).to.eq(2);
     });
   });
 
-  it('startBroker', () => {
-    cy.startZookeeper(zookeeperClusterName);
-
-    cy.fetchBroker(brokerClusterName).then(response => {
+  it('startZookeeper', () => {
+    cy.fetchZookeeper(zookeeperClusterName).then(response => {
       expect(response.state).to.be.undefined;
     });
 
-    cy.startBroker(brokerClusterName).then(response => {
+    cy.startZookeeper(zookeeperClusterName).then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });
 
-    cy.fetchBroker(brokerClusterName).then(response => {
+    cy.fetchZookeeper(zookeeperClusterName).then(response => {
       expect(response.data.result.state).to.eq('RUNNING');
     });
   });
 
   it('stopBroker', () => {
-    cy.startZookeeper(zookeeperClusterName);
-
-    cy.fetchBroker(brokerClusterName).then(response => {
+    cy.fetchZookeeper(zookeeperClusterName).then(response => {
       expect(response.state).to.be.undefined;
     });
 
-    cy.startBroker(brokerClusterName).then(response => {
+    cy.startZookeeper(zookeeperClusterName).then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });
 
-    cy.fetchBroker(brokerClusterName).then(response => {
+    cy.fetchZookeeper(zookeeperClusterName).then(response => {
       expect(response.data.result.state).to.eq('RUNNING');
     });
 
-    cy.stopBroker(brokerClusterName).then(response => {
+    cy.stopZookeeper(zookeeperClusterName).then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });
 
-    cy.fetchBroker(brokerClusterName).then(response => {
+    cy.fetchZookeeper(zookeeperClusterName).then(response => {
       expect(response.data.result.state).to.eq.undefined;
     });
   });
 
-  it('deleteBroker', () => {
-    cy.fetchBroker(brokerClusterName).then(response => {
+  it('deleteZookeeper', () => {
+    cy.fetchZookeeper(zookeeperClusterName).then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });
 
-    cy.deleteBroker(brokerClusterName).then(response => {
+    cy.deleteZookeeper(zookeeperClusterName).then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });
 
-    cy.fetchBrokers().then(response => {
-      const targetBroker = response.data.result.find(
-        broker => broker.name === brokerClusterName,
+    cy.fetchZookeepers().then(response => {
+      const targetZookeeper = response.data.result.find(
+        zookeeper => zookeeper.name === zookeeperClusterName,
       );
 
-      expect(targetBroker).to.be.undefined;
+      expect(targetZookeeper).to.be.undefined;
     });
   });
 
   it('forceDeleteBroker', () => {
-    cy.fetchBroker(brokerClusterName).then(response => {
+    cy.fetchZookeeper(zookeeperClusterName).then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });
 
     // We're not currently using this API in the client, and so it's not
     // listed in the brokerApi.js, so we're asserting the response status
     // not the isSuccess value
-    cy.request('DELETE', `api/brokers/${brokerClusterName}?force=true`).then(
-      response => {
-        expect(response.status).to.eq(204);
-      },
-    );
+    cy.request(
+      'DELETE',
+      `api/zookeepers/${zookeeperClusterName}?force=true`,
+    ).then(response => {
+      expect(response.status).to.eq(204);
+    });
 
-    cy.fetchBrokers().then(response => {
-      const targetBroker = response.data.result.find(
-        broker => broker.name === brokerClusterName,
+    cy.fetchZookeepers().then(response => {
+      const targetZookeeper = response.data.result.find(
+        zookeeper => zookeeper.name === zookeeperClusterName,
       );
 
-      expect(targetBroker).to.be.undefined;
+      expect(targetZookeeper).to.be.undefined;
     });
   });
 });
