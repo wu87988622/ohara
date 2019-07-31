@@ -34,12 +34,6 @@ describe('<StreamApp />', () => {
   let streamApps;
   beforeEach(() => {
     streamApps = generate.streamApps();
-    const res = {
-      data: {
-        isSuccess: true,
-        result: streamApps,
-      },
-    };
 
     jest.spyOn(useApi, 'useDeleteApi').mockImplementation(() => {
       return {
