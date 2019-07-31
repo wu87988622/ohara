@@ -141,7 +141,7 @@ trait ContainerCreator extends com.island.ohara.common.pattern.Creator[Unit] {
   }
 
   /**
-    * set docker container's network driver. implement by --network=$value
+    * set docker container's network driver. implement by --network={value}
     *
     * @param networkDriver network driver
     * @return this builder

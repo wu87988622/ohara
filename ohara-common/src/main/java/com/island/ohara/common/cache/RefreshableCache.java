@@ -41,7 +41,11 @@ import org.slf4j.LoggerFactory;
  * @param <V> value type
  */
 public interface RefreshableCache<K, V> extends Releasable {
-  /** remove the cached value associated to key. */
+  /**
+   * remove the cached value associated to key.
+   *
+   * @param key key
+   */
   void remove(K key);
 
   /**

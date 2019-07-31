@@ -232,6 +232,9 @@ public class SettingDef implements JsonObject {
     /**
      * This property is required by ohara manager. There are some official setting having particular
      * control on UI.
+     *
+     * @param reference reference
+     * @return this builder
      */
     @Optional("default is None")
     public Builder reference(Reference reference) {

@@ -139,7 +139,7 @@ object ClusterCollie {
 
   /**
     * the default implementation uses ssh and docker command to manage all clusters.
-    * Each node running the service has name "${clusterName}-${service}-${index}".
+    * Each node running the service has name "{clusterName}-{service}-{index}".
     * For example, there is a worker cluster called "workercluster" and it is run on 3 nodes.
     * node-0 => workercluster-worker-0
     * node-1 => workercluster-worker-1

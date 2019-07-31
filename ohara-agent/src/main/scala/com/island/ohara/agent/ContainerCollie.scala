@@ -118,7 +118,7 @@ object ContainerCollie {
     * generate unique name for the container.
     * It can be used in setting container's hostname and name
     * @param clusterName cluster name
-    * @return a formatted string. form: ${clusterName}-${service}-${index}
+    * @return a formatted string. form: {clusterName}-{service}-{index}
     */
   def format(prefixKey: String, clusterName: String, serviceName: String): String =
     Seq(

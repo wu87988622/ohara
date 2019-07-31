@@ -152,6 +152,7 @@ public abstract class StreamApp {
    * find main entry of jar in ohara environment container
    *
    * @param args arguments
+   * @throws Exception exception
    */
   public static void main(String[] args) throws Exception {
     if (System.getenv(JAR_URL) == null)
