@@ -59,7 +59,7 @@ const WorkerNewModal = props => {
     URL.ZOOKEEPER_URL,
   );
   const { getData: jarRes, uploadApi } = useApi.useUploadApi(URL.FILE_URL);
-  const { DELETE: deleteJar } = useApi.useDeleteApi(URL.FILE_URL);
+  const { deleteApi: deleteJar } = useApi.useDeleteApi(URL.FILE_URL);
   const { getData: getWorkers, getApi: fetchWorkers } = useApi.useGetApi(
     URL.WORKER_URL,
   );
@@ -387,6 +387,7 @@ const WorkerNewModal = props => {
     });
 
     const brokerClusterName = get(broker(), 'data.result.name');
+    await putBroker(`/${brokerClusterName}/start`);
     await waitForServiceCreation(brokerClusterName);
     setActiveStep(2);
 

@@ -120,7 +120,7 @@ describe('WorkspacesPage', () => {
       .within(() => {
         cy.getByText('Stream apps').click();
       })
-      .wait('@getJars')
+      .wait('@getFiles')
       .uploadJar(
         'input[type=file]',
         'streamApp/ohara-streamapp.jar',
@@ -137,7 +137,7 @@ describe('WorkspacesPage', () => {
       .click()
       .getByText('Successfully deleted the stream app!')
       .should('have.length', 1)
-      .wait('@getJars')
+      .wait('@getFiles')
       .get('td')
       .should('have.length', 0);
   });
@@ -151,7 +151,7 @@ describe('WorkspacesPage', () => {
       .within(() => {
         cy.getByText('Stream apps').click();
       })
-      .wait('@getJars')
+      .wait('@getFiles')
       .uploadJar(
         'input[type=file]',
         'streamApp/ohara-streamapp.jar',
@@ -311,7 +311,7 @@ describe('WorkspacesPage', () => {
       .then(xhr => {
         cy.log(xhr);
         xhr.response.body.forEach(streamapp => {
-          const size = floor(divide(streamapp.size, 1024), 2);
+          const size = floor(divide(streamapp.size, 1024), 1);
           cy.getByText(streamapp.name)
             .should('have.length', 1)
             .getByText(String(size))
