@@ -23,6 +23,7 @@ import spray.json.{JsValue, RootJsonFormat}
 import scala.concurrent.{ExecutionContext, Future}
 
 final object ShabondiApi {
+  val GROUP_DEFAULT: String = Data.GROUP_DEFAULT
   val IMAGE_NAME_DEFAULT: String = s"oharastream/shabondi:${VersionUtils.VERSION}"
   val PATH_PREFIX = "shabondi"
 
@@ -35,7 +36,7 @@ final object ShabondiApi {
       extends Data {
 
     // Shabondi does not support to define group
-    override def group: String = Data.GROUP_DEFAULT
+    override def group: String = GROUP_DEFAULT
     override def kind: String = "shabondi"
 
     // TODO: Does shabondi need the tags? by chia

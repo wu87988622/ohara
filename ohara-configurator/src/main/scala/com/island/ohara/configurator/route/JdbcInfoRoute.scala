@@ -19,7 +19,7 @@ package com.island.ohara.configurator.route
 import akka.http.scaladsl.server
 import com.island.ohara.client.configurator.v0.JdbcInfoApi._
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.route.RouteUtils.{HookOfCreation, HookOfUpdate}
+import com.island.ohara.configurator.route.RouteUtils.{HookOfCreation, HookOfGroup, HookOfUpdate}
 import com.island.ohara.configurator.store.DataStore
 import com.island.ohara.kafka.connector.json.ObjectKey
 
@@ -65,10 +65,12 @@ private[configurator] object JdbcInfoRoute {
         }
     }
 
+  private[this] def hookOfGroup: HookOfGroup = _.getOrElse(GROUP_DEFAULT)
+
   def apply(implicit store: DataStore, executionContext: ExecutionContext): server.Route =
     RouteUtils.route[Creation, Update, JdbcInfo](
       root = JDBC_PREFIX_PATH,
-      enableGroup = true,
+      hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
       hookOfUpdate = hookOfUpdate
     )

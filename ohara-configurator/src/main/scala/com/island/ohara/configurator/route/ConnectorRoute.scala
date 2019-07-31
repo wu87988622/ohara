@@ -244,13 +244,15 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
         }
     }
 
+  private[this] def hookOfGroup: HookOfGroup = _.getOrElse(GROUP_DEFAULT)
+
   def apply(implicit store: DataStore,
             workerCollie: WorkerCollie,
             executionContext: ExecutionContext,
             meterCache: MeterCache): server.Route =
     RouteUtils.route[Creation, Update, ConnectorDescription](
       root = CONNECTORS_PREFIX_PATH,
-      enableGroup = false,
+      hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
       hookOfUpdate = hookOfUpdate,
       hookOfGet = hookOfGet,

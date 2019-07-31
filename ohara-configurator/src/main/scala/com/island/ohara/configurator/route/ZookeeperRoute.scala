@@ -25,6 +25,7 @@ import com.island.ohara.configurator.route.RouteUtils.{
   HookBeforeDelete,
   HookOfCreation,
   HookOfGet,
+  HookOfGroup,
   HookOfList,
   HookOfUpdate
 }
@@ -137,13 +138,15 @@ object ZookeeperRoute {
       }
   }
 
+  private[this] def hookOfGroup: HookOfGroup = _ => GROUP_DEFAULT
+
   def apply(implicit store: DataStore,
             clusterCollie: ClusterCollie,
             nodeCollie: NodeCollie,
             executionContext: ExecutionContext): server.Route =
     RouteUtils.route(
       root = ZOOKEEPER_PREFIX_PATH,
-      enableGroup = false,
+      hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
       hookOfUpdate = hookOfUpdate,
       hookOfGet = hookOfGet,
@@ -153,7 +156,7 @@ object ZookeeperRoute {
       RouteUtils.appendRouteOfClusterAction(
         collie = clusterCollie.zookeeperCollie,
         root = ZOOKEEPER_PREFIX_PATH,
-        enableGroup = false,
+        hookOfGroup = hookOfGroup,
         hookOfStart = (_, req: ZookeeperClusterInfo) =>
           clusterCollie.zookeeperCollie.creator
             .clusterName(req.name)

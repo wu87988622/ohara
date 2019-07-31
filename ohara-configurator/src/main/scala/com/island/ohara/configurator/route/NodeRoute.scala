@@ -94,10 +94,12 @@ object NodeRoute {
         }
       }.getOrElse(Future.unit))
 
+  private[this] def hookOfGroup: HookOfGroup = _ => GROUP_DEFAULT
+
   def apply(implicit store: DataStore, clusterCollie: ClusterCollie, executionContext: ExecutionContext): server.Route =
     RouteUtils.route[Creation, Update, Node](
       root = NODES_PREFIX_PATH,
-      enableGroup = false,
+      hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
       hookOfUpdate = hookOfUpdate,
       hookOfGet = hookOfGet,

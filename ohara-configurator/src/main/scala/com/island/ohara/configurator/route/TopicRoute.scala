@@ -301,6 +301,8 @@ private[configurator] object TopicRoute {
         }
     }
 
+  private[this] def hookOfGroup: HookOfGroup = _.getOrElse(GROUP_DEFAULT)
+
   def apply(implicit store: DataStore,
             adminCleaner: AdminCleaner,
             meterCache: MeterCache,
@@ -308,7 +310,7 @@ private[configurator] object TopicRoute {
             executionContext: ExecutionContext): server.Route =
     RouteUtils.route[Creation, Update, TopicInfo](
       root = TOPICS_PREFIX_PATH,
-      enableGroup = true,
+      hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
       hookOfUpdate = hookOfUpdate,
       hookOfGet = hookOfGet,

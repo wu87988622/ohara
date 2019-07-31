@@ -54,7 +54,7 @@ object StreamApi {
                             nodeNames: Set[String],
                             tags: Map[String, JsValue])
       extends ClusterCreationRequest {
-    override def group: String = Data.GROUP_DEFAULT
+    override def group: String = GROUP_DEFAULT
     override def ports: Set[Int] = Set(jmxPort)
   }
   implicit val STREAM_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
@@ -134,7 +134,7 @@ object StreamApi {
       //TODO : move Data class to ClusterInfo after finished #1544
       with Data {
     // streamapp does not support to define group
-    override def group: String = Data.GROUP_DEFAULT
+    override def group: String = GROUP_DEFAULT
     override def kind: String = STREAM_SERVICE_NAME
     override def ports: Set[Int] = Set(jmxPort)
 

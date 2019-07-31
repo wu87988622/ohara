@@ -205,13 +205,15 @@ private[configurator] object PipelineRoute {
 
   private[this] def hookBeforeDelete: HookBeforeDelete = _ => Future.unit
 
+  private[this] def hookOfGroup: HookOfGroup = _.getOrElse(GROUP_DEFAULT)
+
   def apply(implicit store: DataStore,
             clusterCollie: ClusterCollie,
             executionContext: ExecutionContext,
             meterCache: MeterCache): server.Route =
     RouteUtils.route[Creation, Update, Pipeline](
       root = PIPELINES_PREFIX_PATH,
-      enableGroup = true,
+      hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
       hookOfUpdate = hookOfUpdate,
       hookOfGet = hookOfGet,

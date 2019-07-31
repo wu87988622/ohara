@@ -138,13 +138,15 @@ object BrokerRoute {
       }
   }
 
+  private[this] def hookOfGroup: HookOfGroup = _ => GROUP_DEFAULT
+
   def apply(implicit store: DataStore,
             clusterCollie: ClusterCollie,
             nodeCollie: NodeCollie,
             executionContext: ExecutionContext): server.Route =
     RouteUtils.route(
       root = BROKER_PREFIX_PATH,
-      enableGroup = false,
+      hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
       hookOfUpdate = hookOfUpdate,
       hookOfGet = hookOfGet,
@@ -154,7 +156,7 @@ object BrokerRoute {
       RouteUtils.appendRouteOfClusterAction(
         collie = clusterCollie.brokerCollie,
         root = BROKER_PREFIX_PATH,
-        enableGroup = false,
+        hookOfGroup = hookOfGroup,
         hookOfStart = (clusters, req: BrokerClusterInfo) => {
           val zkName = req.zookeeperClusterName
             .map { zkName =>

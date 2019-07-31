@@ -340,6 +340,8 @@ private[configurator] object StreamRoute {
       }
   }
 
+  private[this] def hookOfGroup: HookOfGroup = _ => GROUP_DEFAULT
+
   def apply(implicit store: DataStore,
             adminCleaner: AdminCleaner,
             nodeCollie: NodeCollie,
@@ -351,7 +353,7 @@ private[configurator] object StreamRoute {
             executionContext: ExecutionContext): server.Route =
     RouteUtils.route[Creation, Update, StreamClusterInfo](
       root = STREAM_PREFIX_PATH,
-      enableGroup = false,
+      hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
       hookOfUpdate = hookOfUpdate,
       hookBeforeDelete = hookBeforeDelete,

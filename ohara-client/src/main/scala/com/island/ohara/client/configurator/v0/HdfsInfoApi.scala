@@ -26,6 +26,7 @@ import spray.json.{JsValue, RootJsonFormat}
 import scala.concurrent.{ExecutionContext, Future}
 
 object HdfsInfoApi {
+  val GROUP_DEFAULT: String = Data.GROUP_DEFAULT
   val HDFS_PREFIX_PATH: String = "hdfs"
   final case class Update(uri: Option[String], tags: Option[Map[String, JsValue]])
 
@@ -45,7 +46,7 @@ object HdfsInfoApi {
       .withDash()
       .withUnderLine()
       .toRefiner
-      .nullToString(Data.GROUP_KEY, () => Data.GROUP_DEFAULT)
+      .nullToString(Data.GROUP_KEY, () => GROUP_DEFAULT)
       .nullToString(Data.NAME_KEY, () => CommonUtils.randomString(10))
       .nullToEmptyObject(Data.TAGS_KEY)
       .refine
@@ -62,7 +63,7 @@ object HdfsInfoApi {
     */
   trait Request {
 
-    @Optional("default def is a Data.GROUP_DEFAULT")
+    @Optional("default def is a GROUP_DEFAULT")
     def group(group: String): Request
 
     @Optional("default name is a random string. But it is required in updating")
@@ -95,7 +96,7 @@ object HdfsInfoApi {
 
   class Access private[v0] extends com.island.ohara.client.configurator.v0.Access[HdfsInfo](HDFS_PREFIX_PATH) {
     def request: Request = new Request {
-      private[this] var group: String = Data.GROUP_DEFAULT
+      private[this] var group: String = GROUP_DEFAULT
       private[this] var name: String = _
       private[this] var uri: String = _
       private[this] var tags: Map[String, JsValue] = _

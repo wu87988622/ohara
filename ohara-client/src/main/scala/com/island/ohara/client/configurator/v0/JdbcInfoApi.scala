@@ -26,6 +26,7 @@ import spray.json.{JsValue, RootJsonFormat}
 import scala.concurrent.{ExecutionContext, Future}
 
 object JdbcInfoApi {
+  val GROUP_DEFAULT: String = Data.GROUP_DEFAULT
   val JDBC_PREFIX_PATH: String = "jdbc"
   final case class Update(url: Option[String],
                           user: Option[String],
@@ -52,7 +53,7 @@ object JdbcInfoApi {
       .withDash()
       .withUnderLine()
       .toRefiner
-      .nullToString(Data.GROUP_KEY, () => Data.GROUP_DEFAULT)
+      .nullToString(Data.GROUP_KEY, () => GROUP_DEFAULT)
       .nullToString(Data.NAME_KEY, () => CommonUtils.randomString(10))
       .nullToEmptyObject(Data.TAGS_KEY)
       .refine
@@ -71,7 +72,7 @@ object JdbcInfoApi {
 
   trait Request {
 
-    @Optional("default def is a Data.GROUP_DEFAULT")
+    @Optional("default def is a GROUP_DEFAULT")
     def group(group: String): Request
 
     @Optional("default name is a random string. But it is required in updating")
@@ -110,7 +111,7 @@ object JdbcInfoApi {
 
   class Access private[v0] extends com.island.ohara.client.configurator.v0.Access[JdbcInfo](JDBC_PREFIX_PATH) {
     def request: Request = new Request {
-      private[this] var group: String = Data.GROUP_DEFAULT
+      private[this] var group: String = GROUP_DEFAULT
       private[this] var name: String = _
       private[this] var url: String = _
       private[this] var user: String = _

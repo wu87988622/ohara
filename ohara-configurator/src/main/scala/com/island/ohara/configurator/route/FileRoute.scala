@@ -34,8 +34,6 @@ import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object FileRoute {
 
-  private[this] val GROUP_DEFAULT = Data.GROUP_DEFAULT
-
   /**
     * Check the specific jar is not used in pipeline.
     * will check same group (worker cluster) only.

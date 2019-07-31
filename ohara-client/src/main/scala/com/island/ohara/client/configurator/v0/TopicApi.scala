@@ -28,6 +28,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 object TopicApi {
 
+  val GROUP_DEFAULT: String = Data.GROUP_DEFAULT
   val DEFAULT_NUMBER_OF_PARTITIONS: Int = 1
   val DEFAULT_NUMBER_OF_REPLICATIONS: Short = 1
   val TOPICS_PREFIX_PATH: String = "topics"
@@ -67,7 +68,7 @@ object TopicApi {
     .nullToInt(NUMBER_OF_PARTITIONS_KEY, DEFAULT_NUMBER_OF_REPLICATIONS)
     .nullToInt(NUMBER_OF_REPLICATIONS_KEY, DEFAULT_NUMBER_OF_REPLICATIONS)
     .rejectEmptyString()
-    .nullToString(Data.GROUP_KEY, () => Data.GROUP_DEFAULT)
+    .nullToString(Data.GROUP_KEY, () => GROUP_DEFAULT)
     .nullToString(Data.NAME_KEY, () => CommonUtils.randomString(10))
     .nullToEmptyObject(CONFIGS_KEY)
     .nullToEmptyObject(Data.TAGS_KEY)
@@ -155,7 +156,7 @@ object TopicApi {
     def start(key: TopicKey)(implicit executionContext: ExecutionContext): Future[Unit] = put(key, START_COMMAND)
     def stop(key: TopicKey)(implicit executionContext: ExecutionContext): Future[Unit] = put(key, STOP_COMMAND)
     def request: Request = new Request {
-      private[this] var group: String = Data.GROUP_DEFAULT
+      private[this] var group: String = GROUP_DEFAULT
       private[this] var name: String = _
       private[this] var brokerClusterName: Option[String] = None
       private[this] var numberOfPartitions: Option[Int] = None

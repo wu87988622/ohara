@@ -29,6 +29,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 object ConnectorApi {
+  val GROUP_DEFAULT: String = Data.GROUP_DEFAULT
   val CONNECTORS_PREFIX_PATH: String = "connectors"
   val DEFAULT_NUMBER_OF_TASKS = 1
 
@@ -72,7 +73,7 @@ object ConnectorApi {
       plain
         .get(SettingDefinition.TOPIC_NAMES_DEFINITION.key())
         .map(s => StringList.ofJson(s).asScala.toSet)
-        .map(_.map(TopicKey.of(Data.GROUP_DEFAULT, _)))
+        .map(_.map(TopicKey.of(GROUP_DEFAULT, _)))
         .getOrElse(Set.empty)
     def topicKeys: Set[TopicKey] =
       noJsNull(settings)
@@ -103,7 +104,7 @@ object ConnectorApi {
     // set the default number of tasks
     .nullToInt(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key(), DEFAULT_NUMBER_OF_TASKS)
     .rejectEmptyString()
-    .nullToString(Data.GROUP_KEY, () => Data.GROUP_DEFAULT)
+    .nullToString(Data.GROUP_KEY, () => GROUP_DEFAULT)
     .nullToString(Data.NAME_KEY, () => CommonUtils.randomString(10))
     .nullToEmptyObject(Data.TAGS_KEY)
     .valueChecker(
@@ -201,7 +202,7 @@ object ConnectorApi {
       plain
         .get(SettingDefinition.TOPIC_NAMES_DEFINITION.key())
         .map(s => StringList.ofJson(s).asScala.toSet)
-        .map(_.map(TopicKey.of(Data.GROUP_DEFAULT, _)))
+        .map(_.map(TopicKey.of(GROUP_DEFAULT, _)))
         .getOrElse(Set.empty)
     def topicKeys: Set[TopicKey] =
       noJsNull(settings)
@@ -235,7 +236,7 @@ object ConnectorApi {
           noJsNull(
             format.write(obj).asJsObject.fields ++
               // TODO: the group should be equal to workerClusterName ... by chia
-              Map(Data.GROUP_KEY -> JsString(Data.GROUP_DEFAULT),
+              Map(Data.GROUP_KEY -> JsString(GROUP_DEFAULT),
                   Data.NAME_KEY -> obj.settings.getOrElse(Data.NAME_KEY, JsNull))))
     }
 
@@ -245,7 +246,7 @@ object ConnectorApi {
     * We use private[v0] instead of "sealed" since it is extendable to ValidationApi.
     */
   abstract class BasicRequest private[v0] {
-    protected[this] var group: String = Data.GROUP_DEFAULT
+    protected[this] var group: String = GROUP_DEFAULT
     protected[this] var name: String = _
     protected[this] var className: String = _
     protected[this] var columns: Seq[Column] = _

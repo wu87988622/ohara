@@ -26,6 +26,8 @@ import scala.concurrent.{ExecutionContext, Future}
 
 object ZookeeperApi {
 
+  val GROUP_DEFAULT: String = Data.GROUP_DEFAULT
+
   /**
     * docker does limit the length of name (< 64). Since we format container name with some part of prefix,
     * limit the name length to one-third of 64 chars should be suitable for most cases.
@@ -49,7 +51,7 @@ object ZookeeperApi {
                                                    nodeNames: Set[String],
                                                    tags: Map[String, JsValue])
       extends ClusterCreationRequest {
-    override def group: String = Data.GROUP_DEFAULT
+    override def group: String = GROUP_DEFAULT
     override def ports: Set[Int] = Set(clientPort, peerPort, electionPort)
   }
 
@@ -97,7 +99,7 @@ object ZookeeperApi {
                                                                error: Option[String])
       extends ClusterInfo {
     // cluster does not support to define group
-    override def group: String = Data.GROUP_DEFAULT
+    override def group: String = GROUP_DEFAULT
     override def clone2(state: Option[String], error: Option[String]): ZookeeperClusterInfo =
       this.copy(state = state, error = error)
     override def kind: String = ZOOKEEPER_SERVICE_NAME

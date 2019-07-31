@@ -29,6 +29,7 @@ import spray.json.{JsObject, JsString, JsValue, RootJsonFormat}
 import spray.json._
 import scala.concurrent.{ExecutionContext, Future}
 object FileInfoApi {
+  val GROUP_DEFAULT: String = Data.GROUP_DEFAULT
   val FILE_PREFIX_PATH: String = "files"
   def toString(tags: Map[String, JsValue]): String = JsObject(tags).toString
 
@@ -68,12 +69,12 @@ object FileInfoApi {
   implicit val FILE_INFO_JSON_FORMAT: RootJsonFormat[FileInfo] = jsonFormat6(FileInfo)
 
   sealed trait Request {
-    private[this] var group: String = Data.GROUP_DEFAULT
+    private[this] var group: String = GROUP_DEFAULT
     private[this] var name: String = _
     private[this] var file: File = _
     private[this] var tags: Map[String, JsValue] = _
 
-    @Optional("default group is Data.GROUP_DEFAULT")
+    @Optional("default group is GROUP_DEFAULT")
     def group(group: String): Request = {
       this.group = CommonUtils.requireNonEmpty(group)
       this
@@ -125,23 +126,23 @@ object FileInfoApi {
       exec.get[Seq[FileInfo], ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}")
 
     /**
-      * get file info mapped to specific name. The group is ${Data.GROUP_DEFAULT} by default.
+      * get file info mapped to specific name. The group is ${GROUP_DEFAULT} by default.
       * @param name file name
       * @param executionContext thread pool
       * @return file info
       */
-    def get(name: String)(implicit executionContext: ExecutionContext): Future[FileInfo] = get(Data.GROUP_DEFAULT, name)
+    def get(name: String)(implicit executionContext: ExecutionContext): Future[FileInfo] = get(GROUP_DEFAULT, name)
     def get(group: String, name: String)(implicit executionContext: ExecutionContext): Future[FileInfo] =
       exec.get[FileInfo, ErrorApi.Error](url(group, name))
 
     /**
-      * delete file info mapped to specific name. The group is ${Data.GROUP_DEFAULT} by default.
+      * delete file info mapped to specific name. The group is ${GROUP_DEFAULT} by default.
       * @param name file name
       * @param executionContext thread pool
       * @return file info
       */
     def delete(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-      delete(Data.GROUP_DEFAULT, name)
+      delete(GROUP_DEFAULT, name)
     def delete(group: String, name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
       exec.delete[ErrorApi.Error](url(group, name))
 

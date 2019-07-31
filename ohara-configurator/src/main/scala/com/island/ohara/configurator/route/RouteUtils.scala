@@ -37,6 +37,19 @@ import scala.reflect.{ClassTag, classTag}
 private[route] object RouteUtils {
 
   /**
+    * process the group for all requests.
+    */
+  trait HookOfGroup {
+
+    /**
+      * return the group you do want to exercise
+      * @param groupOption the group from request. it may be none
+      * @return the group sent to route to process
+      */
+    def apply(groupOption: Option[String]): String
+  }
+
+  /**
     * process the data for input Get request
     * @tparam Res data
     */
@@ -146,7 +159,7 @@ private[route] object RouteUtils {
     * The LIST is routed to "GET /$root"
     * The DELETE is routed to "DELETE /$root/$name"
     * @param root the prefix of URL
-    * @param enableGroup true if this route accept group. Otherwise, the input group is ignored and the group passed to route is Data.GROUP_DEFAULT
+    * @param hookOfGroup used to generate the true group used by route
     * @param hookOfCreation custom action for CREATION. the name is either user-defined request or random string
     * @param hookOfUpdate custom action for UPDATE. the name from URL is must equal to name in payload
     * @param store data store
@@ -159,7 +172,7 @@ private[route] object RouteUtils {
     */
   def route[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
     root: String,
-    enableGroup: Boolean,
+    hookOfGroup: HookOfGroup,
     hookOfCreation: HookOfCreation[Creation, Res],
     hookOfUpdate: HookOfUpdate[Creation, Update, Res])(implicit store: DataStore,
                                                        // normally, update request does not carry the name field,
@@ -171,7 +184,7 @@ private[route] object RouteUtils {
                                                        executionContext: ExecutionContext): server.Route =
     route(
       root = root,
-      enableGroup = enableGroup,
+      hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
       hookOfUpdate = hookOfUpdate,
       hookOfGet = (res: Res) => Future.successful(res),
@@ -183,7 +196,7 @@ private[route] object RouteUtils {
     *  this is the basic route of all APIs to access ohara's data.
     *  It implements 1) get, 2) list, 3) delete, 4) add and 5) update function.
     * @param root path to root
-    * @param enableGroup true if this route accept group. Otherwise, the input group is ignored and the group passed to route is Data.GROUP_DEFAULT
+    * @param hookOfGroup used to generate the true group used by route
     * @param hookOfCreation used to convert request to response for Add function
     * @param hookOfUpdate used to convert request to response for Update function
     * @param hookOfList used to convert response for List function
@@ -201,7 +214,7 @@ private[route] object RouteUtils {
     */
   def route[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
     root: String,
-    enableGroup: Boolean,
+    hookOfGroup: HookOfGroup,
     hookOfCreation: HookOfCreation[Creation, Res],
     hookOfUpdate: HookOfUpdate[Creation, Update, Res],
     hookOfList: HookOfList[Res],
@@ -222,7 +235,7 @@ private[route] object RouteUtils {
           get(complete(store.values[Res]().flatMap(hookOfList(_))))
       } ~ path(Segment) { name =>
         parameter(Data.GROUP_KEY ?) { groupOption =>
-          val group = if (enableGroup) groupOption.getOrElse(Data.GROUP_DEFAULT) else Data.GROUP_DEFAULT
+          val group = hookOfGroup(groupOption)
           val key =
             ObjectKey.of(rm.check(Data.GROUP_KEY, JsString(group)).value, rm.check(Data.NAME_KEY, JsString(name)).value)
           get(complete(store.value[Res](key).flatMap(hookOfGet(_)))) ~
@@ -251,7 +264,7 @@ private[route] object RouteUtils {
     * The START is routed to "PUT /$root/$name/start"
     * The STOP is routed to "PUT /$root/$name/stop"
     * @param root path to root
-    * @param enableGroup true if this route accept group. Otherwise, the input group is ignored and the group passed to route is Data.GROUP_DEFAULT
+    * @param hookOfGroup used to generate the true group used by route
     * @param hookOfCreation used to convert request to response for Add function
     * @param hookOfUpdate used to convert request to response for Update function
     * @param hookOfList used to convert response for List function
@@ -271,7 +284,7 @@ private[route] object RouteUtils {
     */
   def route[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
     root: String,
-    enableGroup: Boolean,
+    hookOfGroup: HookOfGroup,
     hookOfCreation: HookOfCreation[Creation, Res],
     hookOfUpdate: HookOfUpdate[Creation, Update, Res],
     hookOfList: HookOfList[Res],
@@ -287,7 +300,7 @@ private[route] object RouteUtils {
                                  rm2: RootJsonFormat[Res],
                                  executionContext: ExecutionContext): server.Route = route(
     root = root,
-    enableGroup = enableGroup,
+    hookOfGroup = hookOfGroup,
     hookOfCreation = hookOfCreation,
     hookOfUpdate = hookOfUpdate,
     hookOfList = hookOfList,
@@ -296,7 +309,7 @@ private[route] object RouteUtils {
   ) ~ pathPrefix(root / Segment) { name =>
     parameter(Data.GROUP_KEY ?) { groupOption =>
       put {
-        val group = if (enableGroup) groupOption.getOrElse(Data.GROUP_DEFAULT) else Data.GROUP_DEFAULT
+        val group = hookOfGroup(groupOption)
         val key = ObjectKey.of(group, name)
         path(START_COMMAND)(complete(StatusCodes.Accepted -> hookOfStart(key).flatMap(res => store.add[Res](res)))) ~ path(
           STOP_COMMAND)(complete(StatusCodes.Accepted -> hookOfStop(key).flatMap(res => store.add[Res](res))))
@@ -317,7 +330,7 @@ private[route] object RouteUtils {
     * The PAUSE is routed to "PUT /$root/$name/pause"
     * The RESUME is routed to "PUT /$root/$name/resume"
     * @param root path to root
-    * @param enableGroup true if this route accept group. Otherwise, the input group is ignored and the group passed to route is Data.GROUP_DEFAULT
+    * @param hookOfGroup used to generate the true group used by route
     * @param hookOfCreation used to convert request to response for Add function
     * @param hookOfUpdate used to convert request to response for Update function
     * @param hookOfList used to convert response for List function
@@ -339,7 +352,7 @@ private[route] object RouteUtils {
     */
   def route[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
     root: String,
-    enableGroup: Boolean,
+    hookOfGroup: HookOfGroup,
     hookOfCreation: HookOfCreation[Creation, Res],
     hookOfUpdate: HookOfUpdate[Creation, Update, Res],
     hookOfList: HookOfList[Res],
@@ -357,7 +370,7 @@ private[route] object RouteUtils {
                                      rm2: RootJsonFormat[Res],
                                      executionContext: ExecutionContext): server.Route = route(
     root = root,
-    enableGroup = enableGroup,
+    hookOfGroup = hookOfGroup,
     hookOfCreation = hookOfCreation,
     hookOfUpdate = hookOfUpdate,
     hookOfList = hookOfList,
@@ -366,7 +379,7 @@ private[route] object RouteUtils {
   ) ~ pathPrefix(root / Segment) { name =>
     parameter(Data.GROUP_KEY ?) { groupOption =>
       put {
-        val group = if (enableGroup) groupOption.getOrElse(Data.GROUP_DEFAULT) else Data.GROUP_DEFAULT
+        val group = hookOfGroup(groupOption)
         val key = ObjectKey.of(group, name)
         path(START_COMMAND)(complete(StatusCodes.Accepted -> hookOfStart(key).flatMap(res => store.add[Res](res)))) ~
           path(STOP_COMMAND)(complete(StatusCodes.Accepted -> hookOfStop(key).flatMap(res => store.add[Res](res)))) ~
@@ -387,7 +400,7 @@ private[route] object RouteUtils {
     */
   def appendRouteOfClusterAction[Req <: ClusterInfo with Data: ClassTag, Creator <: ClusterCreator[Req]](
     root: String,
-    enableGroup: Boolean,
+    hookOfGroup: HookOfGroup,
     collie: Collie[Req, Creator],
     hookOfStart: (Seq[ClusterInfo], Req) => Future[Req],
     hookOfStop: String => Future[String])(implicit store: DataStore,
@@ -398,7 +411,7 @@ private[route] object RouteUtils {
     pathPrefix(root / Segment) { clusterName =>
       path(Segment) { remainder =>
         parameter(Data.GROUP_KEY ?) { groupOption =>
-          val group = if (enableGroup) groupOption.getOrElse(Data.GROUP_DEFAULT) else Data.GROUP_DEFAULT
+          val group = hookOfGroup(groupOption)
           val key = ObjectKey.of(rm.check(Data.GROUP_KEY, JsString(group)).value,
                                  rm.check(Data.NAME_KEY, JsString(clusterName)).value)
           remainder match {

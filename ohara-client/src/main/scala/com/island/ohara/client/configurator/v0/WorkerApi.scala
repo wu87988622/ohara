@@ -28,6 +28,7 @@ import spray.json.{JsArray, JsNumber, JsObject, JsString, JsValue, RootJsonForma
 import scala.concurrent.{ExecutionContext, Future}
 object WorkerApi {
 
+  val GROUP_DEFAULT: String = Data.GROUP_DEFAULT
   val WORKER_SERVICE_NAME: String = "wk"
 
   val LIMIT_OF_NAME_LENGTH: Int = ZookeeperApi.LIMIT_OF_NAME_LENGTH
@@ -77,7 +78,7 @@ object WorkerApi {
                                                 jarKeys: Set[ObjectKey],
                                                 nodeNames: Set[String])
       extends ClusterCreationRequest {
-    override def group: String = Data.GROUP_DEFAULT
+    override def group: String = GROUP_DEFAULT
     override def ports: Set[Int] = Set(clientPort, jmxPort)
     // the properties is not stored in configurator so we can't maintain the tags now
     // TODO: see https://github.com/oharastream/ohara/issues/1544
@@ -167,7 +168,7 @@ object WorkerApi {
 
     override def clone(newNodeNames: Set[String]): ClusterInfo = copy(nodeNames = newNodeNames)
 
-    override def group: String = Data.GROUP_DEFAULT
+    override def group: String = GROUP_DEFAULT
 
     override def kind: String = WORKER_SERVICE_NAME
 
