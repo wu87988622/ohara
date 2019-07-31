@@ -34,7 +34,7 @@ import useSnackbar from 'components/context/Snackbar/useSnackbar';
 
 const NodeEditModal = props => {
   const [isValidConnection, setIsValidConnection] = useState(false);
-  const { getData, validationApi } = useApi.useValidationApi(
+  const { getData: validateNodeRes, validationApi } = useApi.useValidationApi(
     URL.VALIDATE_NODE_URL,
   );
   const { getData: saveRes, putApi } = useApi.usePutApi(URL.NODE_URL);
@@ -69,19 +69,20 @@ const NodeEditModal = props => {
       port: Number(values.port),
       user: values.user,
     };
+
     await validationApi(data);
 
-    const pass = get(getData(), 'data.result[0].pass', false);
+    const pass = get(validateNodeRes(), 'data.result[0].pass', false);
+
     setIsValidConnection(pass);
     if (pass) {
       showMessage(MESSAGES.TEST_SUCCESS);
     }
   };
 
-  const { node } = props;
+  const { node, isOpen, handleClose } = props;
   if (!node) return null;
   const { name, port, user, password } = node;
-  const { isOpen, handleClose } = props;
   return (
     <Form
       onSubmit={onSubmit}
@@ -159,9 +160,9 @@ const NodeEditModal = props => {
                 </DialogContent>
                 <DialogContent>
                   <Button
+                    data-testid="edit-test-connection-button"
                     variant="outlined"
-                    onClick={e => {
-                      e.preventDefault();
+                    onClick={() => {
                       testConnection(values);
                     }}
                     color="primary"
@@ -170,8 +171,11 @@ const NodeEditModal = props => {
                   </Button>
                 </DialogContent>
                 <DialogActions>
-                  <Button onClick={handleClose}>Cancel</Button>
+                  <Button onClick={handleClose} color="primary">
+                    Cancel
+                  </Button>
                   <Button
+                    data-testid="edit-save-button"
                     onClick={handleSubmit}
                     color="primary"
                     disabled={!isValidConnection}

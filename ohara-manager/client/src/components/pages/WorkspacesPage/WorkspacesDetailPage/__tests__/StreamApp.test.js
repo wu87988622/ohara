@@ -15,27 +15,22 @@
  */
 
 import React from 'react';
-import {
-  cleanup,
-  render,
-  waitForElement,
-  fireEvent,
-} from '@testing-library/react';
+import { cleanup, waitForElement, fireEvent } from '@testing-library/react';
 import { divide, floor } from 'lodash';
 import '@testing-library/jest-dom/extend-expect';
 
 import * as generate from 'utils/generate';
 import StreamApp from '../StreamApp/StreamApp';
-import { renderWithTheme } from 'utils/testUtils';
-import { fetchJars, deleteJar } from 'api/jarApi';
+import { renderWithProvider } from 'utils/testUtils';
+import * as useApi from 'components/controller';
 
-jest.mock('api/jarApi');
+jest.mock('components/controller');
 
 afterEach(cleanup);
 
-const props = {};
+const props = { workspaceName: generate.serviceName() };
 
-describe.skip('<StreamApp />', () => {
+describe('<StreamApp />', () => {
   let streamApps;
   beforeEach(() => {
     streamApps = generate.streamApps();
@@ -46,15 +41,36 @@ describe.skip('<StreamApp />', () => {
       },
     };
 
-    fetchJars.mockImplementation(() => Promise.resolve(res));
+    jest.spyOn(useApi, 'useDeleteApi').mockImplementation(() => {
+      return {
+        getData: jest.fn(),
+      };
+    });
+
+    jest.spyOn(useApi, 'useUploadApi').mockImplementation(() => {
+      return {
+        getData: jest.fn(),
+      };
+    });
+
+    jest.spyOn(useApi, 'useFetchApi').mockImplementation(() => {
+      return {
+        data: {
+          data: {
+            result: streamApps,
+          },
+        },
+        isLoading: false,
+      };
+    });
   });
 
   it('renders the page', async () => {
-    await render(<StreamApp {...props} />);
+    await renderWithProvider(<StreamApp {...props} />);
   });
 
   it('should properly render the table data', async () => {
-    const { getByTestId } = await render(<StreamApp {...props} />);
+    const { getByTestId } = await renderWithProvider(<StreamApp {...props} />);
 
     const { name, size } = streamApps[0];
 
@@ -63,7 +79,7 @@ describe.skip('<StreamApp />', () => {
     const lastModified = getByTestId('streamApp-lastModified').textContent;
 
     expect(streamAppName).toBe(name);
-    expect(streamAppSize).toBe(floor(divide(size, 1024), 2));
+    expect(streamAppSize).toBe(floor(divide(size, 1024), 1));
 
     // It's hard to assert the output date format since the topic last modified
     // date is generated. So we're asserting it with any given string here.
@@ -73,10 +89,20 @@ describe.skip('<StreamApp />', () => {
   it('renders multiple streamApps', async () => {
     const streamApps = generate.streamApps({ count: 5 });
 
-    const res = { data: { isSuccess: true, result: streamApps } };
-    fetchJars.mockImplementation(() => Promise.resolve(res));
+    jest.spyOn(useApi, 'useFetchApi').mockImplementation(() => {
+      return {
+        data: {
+          data: {
+            result: streamApps,
+          },
+        },
+        isLoading: false,
+      };
+    });
 
-    const { getAllByTestId } = await render(<StreamApp {...props} />);
+    const { getAllByTestId } = await renderWithProvider(
+      <StreamApp {...props} />,
+    );
 
     const streamAppNames = await waitForElement(() =>
       getAllByTestId('streamApp-name'),
@@ -85,9 +111,7 @@ describe.skip('<StreamApp />', () => {
   });
 
   it('should close the new jar modal with cancel button', async () => {
-    deleteJar.mockImplementation(() => Promise.resolve({}));
-
-    const { getByText, getByTestId } = await renderWithTheme(
+    const { getByText, getByTestId } = await renderWithProvider(
       <StreamApp {...props} />,
     );
 

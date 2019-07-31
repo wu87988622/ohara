@@ -22,11 +22,9 @@ import * as generate from 'utils/generate';
 import WorkspacesPage from '../WorkspacesPage';
 import { renderWithProvider } from 'utils/testUtils';
 import { WORKSPACES } from 'constants/documentTitles';
-import { fetchWorkers } from 'api/workerApi';
-import { fetchNodes } from 'api/nodeApi';
+import * as useApi from 'components/controller';
 
-jest.mock('api/workerApi');
-jest.mock('api/nodeApi');
+jest.mock('components/controller');
 
 const props = {
   history: { push: jest.fn() },
@@ -34,28 +32,44 @@ const props = {
 
 afterEach(cleanup);
 
-describe.skip('<WorkspacesPage />', () => {
+describe('<WorkspacesPage />', () => {
   const workspaceName = generate.serviceName();
   beforeEach(() => {
-    const workerRes = {
-      data: {
-        result: [
-          {
-            name: workspaceName,
-            nodeNames: [generate.name()],
+    jest.spyOn(useApi, 'usePostApi').mockImplementation(() => {
+      return { getData: () => {} };
+    });
+
+    jest.spyOn(useApi, 'useUploadApi').mockImplementation(() => {
+      return { getData: () => {} };
+    });
+
+    jest.spyOn(useApi, 'useDeleteApi').mockImplementation(() => {
+      return { deleteApi: () => {} };
+    });
+
+    jest.spyOn(useApi, 'useGetApi').mockImplementation(() => {
+      return { getData: () => {} };
+    });
+
+    jest.spyOn(useApi, 'useFetchApi').mockImplementation(() => {
+      return {
+        data: {
+          data: {
+            result: [
+              {
+                name: workspaceName,
+                nodeNames: [generate.name()],
+              },
+            ],
           },
-        ],
-      },
-    };
+        },
+        isLoading: false,
+      };
+    });
 
-    const nodeRes = {
-      data: {
-        result: generate.nodes({ count: 2 }),
-      },
-    };
-
-    fetchWorkers.mockImplementation(() => Promise.resolve(workerRes));
-    fetchNodes.mockImplementation(() => Promise.resolve(nodeRes));
+    jest.spyOn(useApi, 'usePutApi').mockImplementation(() => {
+      return { putApi: () => {} };
+    });
   });
 
   it('renders the page', () => {
@@ -86,13 +100,16 @@ describe.skip('<WorkspacesPage />', () => {
   it('displays multiple workspaces in the table', async () => {
     const workers = generate.workers({ count: 3 });
 
-    const res = {
-      data: {
-        result: [...workers],
-      },
-    };
-
-    fetchWorkers.mockImplementation(() => Promise.resolve(res));
+    jest.spyOn(useApi, 'useFetchApi').mockImplementation(() => {
+      return {
+        data: {
+          data: {
+            result: [...workers],
+          },
+        },
+        isLoading: false,
+      };
+    });
 
     const { getAllByTestId } = await waitForElement(() =>
       renderWithProvider(<WorkspacesPage {...props} />),
@@ -106,17 +123,13 @@ describe.skip('<WorkspacesPage />', () => {
   });
 
   it('renders an redirect message when there is no nodes available', async () => {
-    const nodeRes = {
-      data: {
-        result: [],
-      },
-    };
-
-    fetchNodes.mockImplementation(() => Promise.resolve(nodeRes));
-
     const { getByText, getByTestId } = await waitForElement(() =>
       renderWithProvider(<WorkspacesPage {...props} />),
     );
+
+    jest.spyOn(useApi, 'useFetchApi').mockImplementation(() => {
+      return { isLoading: false };
+    });
 
     const warning = `You don't have any nodes available yet. But you can create one in here`;
 
@@ -160,6 +173,14 @@ describe.skip('<WorkspacesPage />', () => {
     } = await waitForElement(() =>
       renderWithProvider(<WorkspacesPage {...props} />),
     );
+    jest.spyOn(useApi, 'useFetchApi').mockImplementation(() => {
+      return {
+        data: {
+          result: [],
+        },
+        isLoading: false,
+      };
+    });
 
     const errorMessage = 'You only can use lower case letters and numbers';
     const validName = 'abc';

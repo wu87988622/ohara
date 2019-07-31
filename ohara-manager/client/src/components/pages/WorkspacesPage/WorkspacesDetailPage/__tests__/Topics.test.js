@@ -15,24 +15,19 @@
  */
 
 import React from 'react';
-import {
-  cleanup,
-  render,
-  waitForElement,
-  fireEvent,
-} from '@testing-library/react';
+import { cleanup, waitForElement, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 
 import * as generate from 'utils/generate';
 import Topics from '../Topics';
-import { renderWithTheme } from 'utils/testUtils';
-import { fetchTopics, deleteTopic } from 'api/topicApi';
+import { renderWithProvider } from 'utils/testUtils';
+import * as useApi from 'components/controller';
 
-jest.mock('api/topicApi');
+jest.mock('components/controller');
 
 afterEach(cleanup);
 
-describe.skip('<Topics />', () => {
+describe('<Topics />', () => {
   let props;
   let brokerClusterName;
   let topics;
@@ -48,16 +43,24 @@ describe.skip('<Topics />', () => {
       },
     };
 
-    const res = { data: { result: topics } };
-    fetchTopics.mockImplementation(() => Promise.resolve(res));
+    jest.spyOn(useApi, 'useFetchApi').mockImplementation(() => {
+      return {
+        data: {
+          data: {
+            result: topics,
+          },
+        },
+        isLoading: false,
+      };
+    });
   });
 
   it('renders the page', async () => {
-    await render(<Topics {...props} />);
+    await renderWithProvider(<Topics {...props} />);
   });
 
   it('should properly render the table data', async () => {
-    const { getByTestId } = await render(<Topics {...props} />);
+    const { getByTestId } = await renderWithProvider(<Topics {...props} />);
 
     const topicName = getByTestId('topic-name').textContent;
     const partitions = Number(getByTestId('topic-partitions').textContent);
@@ -76,17 +79,25 @@ describe.skip('<Topics />', () => {
   it('renders multiple topics', async () => {
     const topics = generate.topics({ count: 5, brokerClusterName });
 
-    const res = { data: { result: topics } };
-    fetchTopics.mockImplementation(() => Promise.resolve(res));
+    jest.spyOn(useApi, 'useFetchApi').mockImplementation(() => {
+      return {
+        data: {
+          data: {
+            result: topics,
+          },
+        },
+        isLoading: false,
+      };
+    });
 
-    const { getAllByTestId } = await render(<Topics {...props} />);
+    const { getAllByTestId } = await renderWithProvider(<Topics {...props} />);
 
     const topicNames = await waitForElement(() => getAllByTestId('topic-name'));
     expect(topicNames.length).toBe(topics.length);
   });
 
   it('should close the new topic modal with cancel button', async () => {
-    const { getByText, queryByTestId } = await renderWithTheme(
+    const { getByText, queryByTestId } = await renderWithProvider(
       <Topics {...props} />,
     );
 
@@ -98,9 +109,7 @@ describe.skip('<Topics />', () => {
   });
 
   it('should close the delete dialog with the cancel button', async () => {
-    deleteTopic.mockImplementation(() => Promise.resolve({}));
-
-    const { getByTestId, getByText } = await renderWithTheme(
+    const { getByTestId, getByText } = await renderWithProvider(
       <Topics {...props} />,
     );
     const topic = getByTestId(topics[0].name);
@@ -110,7 +119,6 @@ describe.skip('<Topics />', () => {
 
     fireEvent.click(getByText('Cancel'));
 
-    expect(deleteTopic).toHaveBeenCalledTimes(0);
     expect(getByText('Delete topic?')).not.toBeVisible();
   });
 });
