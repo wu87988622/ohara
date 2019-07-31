@@ -18,6 +18,7 @@ package com.island.ohara.it.connector
 
 import java.util
 
+import com.island.ohara.kafka.connector.json.SettingDefinition
 import com.island.ohara.kafka.connector.{RowSinkConnector, RowSinkTask, TaskSetting}
 
 import scala.collection.JavaConverters._
@@ -32,4 +33,5 @@ class DumbSinkConnector extends RowSinkConnector {
   override protected def _stop(): Unit = {}
   override protected def _taskClass(): Class[_ <: RowSinkTask] = classOf[DumbSinkTask]
   override protected def _taskSettings(maxTasks: Int): util.List[TaskSetting] = Seq.fill(maxTasks)(settings).asJava
+  override protected def _definitions(): util.List[SettingDefinition] = DUMB_SETTING_DEFINITIONS.asJava
 }
