@@ -16,23 +16,25 @@
 
 import * as utils from '../utils';
 
+const setup = () => {
+  const nodeName = `node${utils.makeRandomStr()}`;
+
+  cy.createNode({
+    name: nodeName,
+    port: 22,
+    user: utils.makeRandomStr(),
+    password: utils.makeRandomStr(),
+  }).as('createNode');
+
+  return { nodeName };
+};
+
 describe('Node API', () => {
-  let nodeName = '';
-
-  before(() => cy.deleteAllServices());
-
-  beforeEach(() => {
-    nodeName = `node${utils.makeRandomStr()}`;
-
-    cy.createNode({
-      name: nodeName,
-      port: 22,
-      user: utils.makeRandomStr(),
-      password: utils.makeRandomStr(),
-    }).as('createNode');
-  });
+  beforeEach(() => cy.deleteAllServices());
 
   it('createNode', () => {
+    const { nodeName } = setup();
+
     cy.get('@createNode').then(res => {
       const {
         data: { isSuccess, result },
@@ -43,7 +45,7 @@ describe('Node API', () => {
       expect(isSuccess).to.eq(true);
 
       expect(services).to.be.a('array');
-      expect(name).to.be.a('string');
+      expect(name).to.eq(nodeName);
       expect(password).to.be.a('string');
       expect(port).to.be.a('number');
       expect(user).to.be.a('string');
@@ -63,6 +65,8 @@ describe('Node API', () => {
   });
 
   it('updateNode', () => {
+    const { nodeName } = setup();
+
     const params = {
       name: nodeName,
       port: utils.makeRandomPort(),

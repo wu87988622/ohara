@@ -18,30 +18,35 @@ import * as utils from '../utils';
 
 /* eslint-disable no-unused-expressions */
 // eslint is complaining about `expect(thing).to.be.undefined`
-describe('Zookeeper API', () => {
-  let nodeName = '';
-  let zookeeperClusterName = '';
 
-  before(() => cy.deleteAllServices());
+const setup = () => {
+  const nodeName = `node${utils.makeRandomStr()}`;
+  const zookeeperClusterName = `zookeeper${utils.makeRandomStr()}`;
 
-  beforeEach(() => {
-    nodeName = `node${utils.makeRandomStr()}`;
-    zookeeperClusterName = `zookeeper${utils.makeRandomStr()}`;
-
-    cy.createNode({
-      name: nodeName,
-      port: 22,
-      user: utils.makeRandomStr(),
-      password: utils.makeRandomStr(),
-    });
-
-    cy.createZookeeper({
-      name: zookeeperClusterName,
-      nodeNames: [nodeName],
-    }).as('createZookeeper');
+  cy.createNode({
+    name: nodeName,
+    port: 22,
+    user: utils.makeRandomStr(),
+    password: utils.makeRandomStr(),
   });
 
+  cy.createZookeeper({
+    name: zookeeperClusterName,
+    nodeNames: [nodeName],
+  }).as('createZookeeper');
+
+  return {
+    nodeName,
+    zookeeperClusterName,
+  };
+};
+
+describe('Zookeeper API', () => {
+  beforeEach(() => cy.deleteAllServices());
+
   it('createZookeeper', () => {
+    const { zookeeperClusterName } = setup();
+
     cy.get('@createZookeeper').then(response => {
       const {
         data: { isSuccess, result },
@@ -69,6 +74,8 @@ describe('Zookeeper API', () => {
   });
 
   it('fetchZookeeper', () => {
+    const { zookeeperClusterName } = setup();
+
     cy.fetchZookeeper(zookeeperClusterName).then(response => {
       const {
         data: { isSuccess, result },
@@ -96,6 +103,8 @@ describe('Zookeeper API', () => {
   });
 
   it('fetchZookeepers', () => {
+    const { nodeName } = setup();
+
     const paramsOne = {
       name: utils.makeRandomStr(),
       nodeNames: [nodeName],
@@ -127,6 +136,8 @@ describe('Zookeeper API', () => {
   });
 
   it('startZookeeper', () => {
+    const { zookeeperClusterName } = setup();
+
     cy.fetchZookeeper(zookeeperClusterName).then(response => {
       expect(response.state).to.be.undefined;
     });
@@ -141,6 +152,8 @@ describe('Zookeeper API', () => {
   });
 
   it('stopBroker', () => {
+    const { zookeeperClusterName } = setup();
+
     cy.fetchZookeeper(zookeeperClusterName).then(response => {
       expect(response.state).to.be.undefined;
     });
@@ -163,6 +176,8 @@ describe('Zookeeper API', () => {
   });
 
   it('deleteZookeeper', () => {
+    const { zookeeperClusterName } = setup();
+
     cy.fetchZookeeper(zookeeperClusterName).then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });
@@ -181,6 +196,8 @@ describe('Zookeeper API', () => {
   });
 
   it('forceDeleteBroker', () => {
+    const { zookeeperClusterName } = setup();
+
     cy.fetchZookeeper(zookeeperClusterName).then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });

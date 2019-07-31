@@ -18,50 +18,55 @@ import * as utils from '../utils';
 
 /* eslint-disable no-unused-expressions */
 // eslint is complaining about `expect(thing).to.be.undefined`
-describe('Worker API', () => {
-  let nodeName = '';
-  let zookeeperClusterName = '';
-  let brokerClusterName = '';
-  let workerClusterName = '';
 
-  before(() => cy.deleteAllServices());
+const setup = () => {
+  const nodeName = `node${utils.makeRandomStr()}`;
+  const zookeeperClusterName = `zookeeper${utils.makeRandomStr()}`;
+  const brokerClusterName = `broker${utils.makeRandomStr()}`;
+  const workerClusterName = `worker${utils.makeRandomStr()}`;
 
-  beforeEach(() => {
-    nodeName = `node${utils.makeRandomStr()}`;
-    zookeeperClusterName = `zookeeper${utils.makeRandomStr()}`;
-    brokerClusterName = `broker${utils.makeRandomStr()}`;
-    workerClusterName = `worker${utils.makeRandomStr()}`;
-
-    cy.createNode({
-      name: nodeName,
-      port: 22,
-      user: utils.makeRandomStr(),
-      password: utils.makeRandomStr(),
-    });
-
-    cy.createZookeeper({
-      name: zookeeperClusterName,
-      nodeNames: [nodeName],
-    });
-
-    cy.startZookeeper(zookeeperClusterName);
-
-    cy.createBroker({
-      name: brokerClusterName,
-      zookeeperClusterName: zookeeperClusterName,
-      nodeNames: [nodeName],
-    });
-
-    cy.startBroker(brokerClusterName);
-
-    cy.testCreateWorker({
-      name: workerClusterName,
-      brokerClusterName,
-      nodeNames: [nodeName],
-    }).as('testCreateWorker');
+  cy.createNode({
+    name: nodeName,
+    port: 22,
+    user: utils.makeRandomStr(),
+    password: utils.makeRandomStr(),
   });
 
+  cy.createZookeeper({
+    name: zookeeperClusterName,
+    nodeNames: [nodeName],
+  });
+
+  cy.startZookeeper(zookeeperClusterName);
+
+  cy.createBroker({
+    name: brokerClusterName,
+    zookeeperClusterName: zookeeperClusterName,
+    nodeNames: [nodeName],
+  });
+
+  cy.startBroker(brokerClusterName);
+
+  cy.testCreateWorker({
+    name: workerClusterName,
+    brokerClusterName,
+    nodeNames: [nodeName],
+  }).as('testCreateWorker');
+
+  return {
+    nodeName,
+    zookeeperClusterName,
+    brokerClusterName,
+    workerClusterName,
+  };
+};
+
+describe('Worker API', () => {
+  beforeEach(() => cy.deleteAllServices());
+
   it('createWorker', () => {
+    const { workerClusterName } = setup();
+
     cy.get('@testCreateWorker').then(res => {
       const {
         data: { isSuccess, result },
@@ -83,6 +88,8 @@ describe('Worker API', () => {
   });
 
   it('fetchWorker', () => {
+    const { workerClusterName } = setup();
+
     cy.fetchWorker(workerClusterName).then(res => {
       const {
         data: { isSuccess, result },
@@ -99,6 +106,8 @@ describe('Worker API', () => {
   });
 
   it('fetchWorkers', () => {
+    const { nodeName, brokerClusterName } = setup();
+
     const paramsOne = {
       name: utils.makeRandomStr(),
       brokerClusterName,
@@ -131,6 +140,8 @@ describe('Worker API', () => {
   });
 
   it('deleteWorker', () => {
+    const { workerClusterName } = setup();
+
     cy.get('@testCreateWorker').then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });
@@ -152,6 +163,8 @@ describe('Worker API', () => {
   });
 
   it('forceDeleteWorker', () => {
+    const { workerClusterName } = setup();
+
     cy.get('@testCreateWorker').then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });

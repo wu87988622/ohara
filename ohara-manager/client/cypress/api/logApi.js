@@ -17,18 +17,13 @@
 import * as utils from '../utils';
 
 describe('Log API', () => {
-  let nodeName = '';
-  let zookeeperClusterName = '';
-  let brokerClusterName = '';
-  let workerClusterName = '';
+  beforeEach(() => cy.deleteAllServices());
 
-  before(() => cy.deleteAllServices());
-
-  beforeEach(() => {
-    nodeName = `node${utils.makeRandomStr()}`;
-    zookeeperClusterName = `zookeeper${utils.makeRandomStr()}`;
-    brokerClusterName = `broker${utils.makeRandomStr()}`;
-    workerClusterName = `worker${utils.makeRandomStr()}`;
+  it('fetchLogs', () => {
+    const nodeName = `node${utils.makeRandomStr()}`;
+    const zookeeperClusterName = `zookeeper${utils.makeRandomStr()}`;
+    const brokerClusterName = `broker${utils.makeRandomStr()}`;
+    const workerClusterName = `worker${utils.makeRandomStr()}`;
 
     cy.createNode({
       name: nodeName,
@@ -57,9 +52,7 @@ describe('Log API', () => {
       brokerClusterName,
       nodeNames: [nodeName],
     });
-  });
 
-  it('fetchLogs', () => {
     cy.fetchLogs('workers', workerClusterName).then(res => {
       const {
         data: { isSuccess, result },

@@ -16,67 +16,71 @@
 
 import * as utils from '../utils';
 
-describe('Connector API', () => {
-  let nodeName = '';
-  let zookeeperClusterName = '';
-  let brokerClusterName = '';
-  let workerClusterName = '';
-  let connectorName = '';
-  let topicName = '';
+const setup = () => {
+  const nodeName = `node${utils.makeRandomStr()}`;
+  const zookeeperClusterName = `zookeeper${utils.makeRandomStr()}`;
+  const brokerClusterName = `broker${utils.makeRandomStr()}`;
+  const workerClusterName = `worker${utils.makeRandomStr()}`;
+  const connectorName = `connector${utils.makeRandomStr()}`;
+  const topicName = `topic${utils.makeRandomStr()}`;
 
-  before(() => cy.deleteAllServices());
-
-  beforeEach(() => {
-    nodeName = `node${utils.makeRandomStr()}`;
-    zookeeperClusterName = `zookeeper${utils.makeRandomStr()}`;
-    brokerClusterName = `broker${utils.makeRandomStr()}`;
-    workerClusterName = `worker${utils.makeRandomStr()}`;
-    connectorName = `connector${utils.makeRandomStr()}`;
-    topicName = `topic${utils.makeRandomStr()}`;
-
-    cy.createNode({
-      name: nodeName,
-      port: 22,
-      user: utils.makeRandomStr(),
-      password: utils.makeRandomStr(),
-    });
-
-    cy.createZookeeper({
-      name: zookeeperClusterName,
-      nodeNames: [nodeName],
-    });
-
-    cy.startZookeeper(zookeeperClusterName);
-
-    cy.createBroker({
-      name: brokerClusterName,
-      zookeeperClusterName,
-      nodeNames: [nodeName],
-    });
-
-    cy.startBroker(brokerClusterName);
-
-    cy.testCreateWorker({
-      name: workerClusterName,
-      brokerClusterName,
-      nodeNames: [nodeName],
-    });
-
-    cy.testCreateTopic({
-      name: topicName,
-      brokerClusterName,
-    });
-
-    cy.createConnector({
-      className: 'com.island.ohara.connector.ftp.FtpSource',
-      'connector.name': connectorName,
-      name: connectorName,
-      topics: [topicName],
-      workerClusterName,
-    }).as('createConnector');
+  cy.createNode({
+    name: nodeName,
+    port: 22,
+    user: utils.makeRandomStr(),
+    password: utils.makeRandomStr(),
   });
 
+  cy.createZookeeper({
+    name: zookeeperClusterName,
+    nodeNames: [nodeName],
+  });
+
+  cy.startZookeeper(zookeeperClusterName);
+
+  cy.createBroker({
+    name: brokerClusterName,
+    zookeeperClusterName,
+    nodeNames: [nodeName],
+  });
+
+  cy.startBroker(brokerClusterName);
+
+  cy.testCreateWorker({
+    name: workerClusterName,
+    brokerClusterName,
+    nodeNames: [nodeName],
+  });
+
+  cy.testCreateTopic({
+    name: topicName,
+    brokerClusterName,
+  });
+
+  cy.createConnector({
+    className: 'com.island.ohara.connector.ftp.FtpSource',
+    'connector.name': connectorName,
+    name: connectorName,
+    topics: [topicName],
+    workerClusterName,
+  }).as('createConnector');
+
+  return {
+    nodeName,
+    zookeeperClusterName,
+    brokerClusterName,
+    workerClusterName,
+    connectorName,
+    topicName,
+  };
+};
+
+describe('Connector API', () => {
+  beforeEach(() => cy.deleteAllServices());
+
   it('createConnector', () => {
+    const { connectorName } = setup();
+
     cy.get('@createConnector').then(res => {
       const {
         data: { isSuccess, result },
@@ -95,6 +99,8 @@ describe('Connector API', () => {
   });
 
   it('fetchConnector', () => {
+    const { connectorName } = setup();
+
     cy.fetchConnector(connectorName).then(res => {
       const {
         data: { isSuccess, result },
@@ -114,6 +120,8 @@ describe('Connector API', () => {
   });
 
   it('updateConnector', () => {
+    const { workerClusterName, connectorName, topicName } = setup();
+
     const params = {
       name: connectorName,
       params: {
@@ -173,6 +181,8 @@ describe('Connector API', () => {
   });
 
   it('startConnector', () => {
+    const { connectorName } = setup();
+
     cy.startConnector(connectorName).then(res => {
       const { data } = res;
       expect(data.isSuccess).to.eq(true);
@@ -182,6 +192,8 @@ describe('Connector API', () => {
   });
 
   it('stopConnector', () => {
+    const { connectorName } = setup();
+
     cy.stopConnector(connectorName).then(res => {
       const { data } = res;
       expect(data.isSuccess).to.eq(true);
@@ -190,6 +202,8 @@ describe('Connector API', () => {
   });
 
   it('deleteConnector', () => {
+    const { connectorName } = setup();
+
     cy.deleteConnector(connectorName).then(res => {
       const { data } = res;
       expect(data.isSuccess).to.eq(true);

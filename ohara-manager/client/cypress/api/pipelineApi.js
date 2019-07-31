@@ -16,57 +16,60 @@
 
 import * as utils from '../utils';
 
-describe('Pipeline API', () => {
-  let nodeName = '';
-  let zookeeperClusterName = '';
-  let brokerClusterName = '';
-  let workerClusterName = '';
-  let pipelineName = '';
+const setup = () => {
+  const nodeName = `node${utils.makeRandomStr()}`;
+  const zookeeperClusterName = `zookeeper${utils.makeRandomStr()}`;
+  const brokerClusterName = `broker${utils.makeRandomStr()}`;
+  const workerClusterName = `worker${utils.makeRandomStr()}`;
+  const pipelineName = `pipeline${utils.makeRandomStr()}`;
 
-  before(() => cy.deleteAllServices());
-
-  beforeEach(() => {
-    nodeName = `node${utils.makeRandomStr()}`;
-    zookeeperClusterName = `zookeeper${utils.makeRandomStr()}`;
-    brokerClusterName = `broker${utils.makeRandomStr()}`;
-    workerClusterName = `worker${utils.makeRandomStr()}`;
-    pipelineName = `pipeline${utils.makeRandomStr()}`;
-
-    cy.createNode({
-      name: nodeName,
-      port: 22,
-      user: utils.makeRandomStr(),
-      password: utils.makeRandomStr(),
-    });
-
-    cy.createZookeeper({
-      name: zookeeperClusterName,
-      nodeNames: [nodeName],
-    });
-
-    cy.startZookeeper(zookeeperClusterName);
-
-    cy.createBroker({
-      name: brokerClusterName,
-      zookeeperClusterName: zookeeperClusterName,
-      nodeNames: [nodeName],
-    });
-
-    cy.startBroker(brokerClusterName);
-
-    cy.testCreateWorker({
-      name: workerClusterName,
-      brokerClusterName,
-      nodeNames: [nodeName],
-    });
-
-    cy.testCreatePipeline({
-      name: pipelineName,
-      workerClusterName,
-    }).as('testCreatePipeline');
+  cy.createNode({
+    name: nodeName,
+    port: 22,
+    user: utils.makeRandomStr(),
+    password: utils.makeRandomStr(),
   });
 
+  cy.createZookeeper({
+    name: zookeeperClusterName,
+    nodeNames: [nodeName],
+  });
+
+  cy.startZookeeper(zookeeperClusterName);
+
+  cy.createBroker({
+    name: brokerClusterName,
+    zookeeperClusterName: zookeeperClusterName,
+    nodeNames: [nodeName],
+  });
+
+  cy.startBroker(brokerClusterName);
+
+  cy.testCreateWorker({
+    name: workerClusterName,
+    brokerClusterName,
+    nodeNames: [nodeName],
+  });
+
+  cy.testCreatePipeline({
+    name: pipelineName,
+    workerClusterName,
+  }).as('testCreatePipeline');
+
+  return {
+    zookeeperClusterName,
+    brokerClusterName,
+    workerClusterName,
+    pipelineName,
+  };
+};
+
+describe('Pipeline API', () => {
+  beforeEach(() => cy.deleteAllServices());
+
   it('createPipeline', () => {
+    const { pipelineName } = setup();
+
     cy.get('@testCreatePipeline').then(response => {
       const {
         data: { isSuccess, result },
@@ -83,6 +86,8 @@ describe('Pipeline API', () => {
   });
 
   it('fetchPipeline', () => {
+    const { pipelineName } = setup();
+
     cy.fetchPipeline(pipelineName).then(response => {
       const {
         data: { isSuccess, result },
@@ -99,6 +104,8 @@ describe('Pipeline API', () => {
   });
 
   it('fetchPipelines', () => {
+    const { workerClusterName } = setup();
+
     const paramsOne = {
       name: `pipeline${utils.makeRandomStr()}`,
       workerClusterName,
@@ -129,6 +136,8 @@ describe('Pipeline API', () => {
   });
 
   it('updatePipeline', () => {
+    const { brokerClusterName, workerClusterName, pipelineName } = setup();
+
     let topicName = `topic${utils.makeRandomStr()}`;
 
     cy.testCreateTopic({
@@ -166,6 +175,8 @@ describe('Pipeline API', () => {
   });
 
   it('deletePipeline', () => {
+    const { pipelineName } = setup();
+
     cy.testDeletePipeline(pipelineName).then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });

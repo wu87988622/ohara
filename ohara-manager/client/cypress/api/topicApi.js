@@ -16,49 +16,53 @@
 
 import * as utils from '../utils';
 
-describe('Topic API', () => {
-  let nodeName = '';
-  let zookeeperClusterName = '';
-  let brokerClusterName = '';
-  let topicName = '';
+const setup = () => {
+  const nodeName = `node${utils.makeRandomStr()}`;
+  const zookeeperClusterName = `zookeeper${utils.makeRandomStr()}`;
+  const brokerClusterName = `broker${utils.makeRandomStr()}`;
+  const topicName = `topic${utils.makeRandomStr()}`;
 
-  before(() => cy.deleteAllServices());
-
-  beforeEach(() => {
-    nodeName = `node${utils.makeRandomStr()}`;
-    zookeeperClusterName = `zookeeper${utils.makeRandomStr()}`;
-    brokerClusterName = `broker${utils.makeRandomStr()}`;
-    topicName = `topic${utils.makeRandomStr()}`;
-
-    cy.createNode({
-      name: nodeName,
-      port: 22,
-      user: utils.makeRandomStr(),
-      password: utils.makeRandomStr(),
-    });
-
-    cy.createZookeeper({
-      name: zookeeperClusterName,
-      nodeNames: [nodeName],
-    });
-
-    cy.startZookeeper(zookeeperClusterName);
-
-    cy.createBroker({
-      name: brokerClusterName,
-      zookeeperClusterName,
-      nodeNames: [nodeName],
-    });
-
-    cy.startBroker(brokerClusterName);
-
-    cy.testCreateTopic({
-      name: topicName,
-      brokerClusterName,
-    }).as('testCreateTopic');
+  cy.createNode({
+    name: nodeName,
+    port: 22,
+    user: utils.makeRandomStr(),
+    password: utils.makeRandomStr(),
   });
 
+  cy.createZookeeper({
+    name: zookeeperClusterName,
+    nodeNames: [nodeName],
+  });
+
+  cy.startZookeeper(zookeeperClusterName);
+
+  cy.createBroker({
+    name: brokerClusterName,
+    zookeeperClusterName,
+    nodeNames: [nodeName],
+  });
+
+  cy.startBroker(brokerClusterName);
+
+  cy.testCreateTopic({
+    name: topicName,
+    brokerClusterName,
+  }).as('testCreateTopic');
+
+  return {
+    nodeName,
+    zookeeperClusterName,
+    brokerClusterName,
+    topicName,
+  };
+};
+
+describe('Topic API', () => {
+  beforeEach(() => cy.deleteAllServices());
+
   it('CreateTopic', () => {
+    const { topicName } = setup();
+
     cy.get('@testCreateTopic').then(res => {
       const {
         data: { isSuccess, result },
@@ -81,6 +85,8 @@ describe('Topic API', () => {
   });
 
   it('fetchTopic', () => {
+    const { topicName } = setup();
+
     cy.fetchTopic(topicName).then(res => {
       const {
         data: { isSuccess, result },
@@ -104,6 +110,8 @@ describe('Topic API', () => {
   });
 
   it('fetchTopics', () => {
+    const { brokerClusterName } = setup();
+
     const paramsOne = {
       name: utils.makeRandomStr(),
       brokerClusterName,

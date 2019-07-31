@@ -17,18 +17,13 @@
 import * as utils from '../utils';
 
 describe('Container API', () => {
-  let nodeName = '';
-  let zookeeperClusterName = '';
-  let brokerClusterName = '';
-  let workerClusterName = '';
+  beforeEach(() => cy.deleteAllServices());
 
-  before(() => cy.deleteAllServices());
-
-  beforeEach(() => {
-    nodeName = `node${utils.makeRandomStr()}`;
-    zookeeperClusterName = `zookeeper${utils.makeRandomStr()}`;
-    brokerClusterName = `broker${utils.makeRandomStr()}`;
-    workerClusterName = `worker${utils.makeRandomStr()}`;
+  it('fetchContainers', () => {
+    const nodeName = `node${utils.makeRandomStr()}`;
+    const zookeeperClusterName = `zookeeper${utils.makeRandomStr()}`;
+    const brokerClusterName = `broker${utils.makeRandomStr()}`;
+    const workerClusterName = `worker${utils.makeRandomStr()}`;
 
     cy.createNode({
       name: nodeName,
@@ -57,9 +52,7 @@ describe('Container API', () => {
       brokerClusterName,
       nodeNames: [nodeName],
     });
-  });
 
-  it('fetchContainers', () => {
     cy.fetchContainers(workerClusterName).then(res => {
       const {
         data: { isSuccess, result },
