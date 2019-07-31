@@ -47,7 +47,6 @@ const useGetApi = url => {
 
   const getApi = async name => {
     await request(name);
-    return resData.current;
   };
 
   const getData = () => resData.current;

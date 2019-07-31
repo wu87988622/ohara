@@ -21,6 +21,7 @@ import usePostApi from './usePostApi';
 import usePutApi from './usePutApi';
 import useUploadApi from './useUploadApi';
 import useValidationApi from './useValidationApi';
+import useWaitApi from './useWaitApi';
 
 export {
   useDeleteApi,
@@ -30,4 +31,5 @@ export {
   usePutApi,
   useUploadApi,
   useValidationApi,
+  useWaitApi,
 };

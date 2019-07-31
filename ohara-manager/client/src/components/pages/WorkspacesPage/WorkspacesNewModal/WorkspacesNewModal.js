@@ -39,6 +39,7 @@ import { InputField } from 'components/common/Mui/Form';
 import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import * as useApi from 'components/controller';
 import * as URL from 'components/controller/url';
+import { ERROR } from 'jest-validate/build/utils';
 
 const WorkerNewModal = props => {
   const [checkedNodes, setCheckedNodes] = useState([]);
@@ -69,15 +70,13 @@ const WorkerNewModal = props => {
   const { getData: getZookeepers, getApi: fetchZookeepers } = useApi.useGetApi(
     URL.ZOOKEEPER_URL,
   );
-  const { getData: containerRes, getApi: fetchContainer } = useApi.useGetApi(
-    URL.CONTAINER_URL,
-  );
   const { deleteApi: deleteWorker } = useApi.useDeleteApi(URL.WORKER_URL);
   const { deleteApi: deleteBroker } = useApi.useDeleteApi(URL.BROKER_URL);
   const { deleteApi: deleteZookeeper } = useApi.useDeleteApi(URL.ZOOKEEPER_URL);
   const { data: nodes } = useApi.useFetchApi(URL.NODE_URL);
   const { putApi: putZookeeper } = useApi.usePutApi(URL.ZOOKEEPER_URL);
   const { putApi: putBroker } = useApi.usePutApi(URL.BROKER_URL);
+  const { waitApi, getFinish } = useApi.useWaitApi();
 
   let workingServices = [];
   let plugins = [];
@@ -325,32 +324,8 @@ const WorkerNewModal = props => {
   const createServices = async values => {
     const nodeNames = checkedNodes;
 
-    const maxRetry = 5;
-    let retryCount = 0;
-
-    const waitForServiceCreation = async clusterName => {
-      if (!clusterName) throw new Error();
-
-      await fetchContainer(clusterName);
-      const containers = get(containerRes(), 'data.result[0].containers', null);
-      let containersAreReady = false;
-      if (!isEmpty(containers)) {
-        containersAreReady = containers.every(
-          container => container.state === 'RUNNING',
-        );
-      }
-
-      if (retryCount > maxRetry)
-        throw new Error(`Couldn't get the container state!`);
-
-      if (containersAreReady) {
-        retryCount = 0;
-        return;
-      } // exist successfully
-
-      retryCount++;
-      await commonUtils.sleep(2000);
-      await waitForServiceCreation(clusterName);
+    const checkResult = res => {
+      return 'RUNNING' === get(res, 'data.result.state', null);
     };
 
     const zookeeperName = generate.serviceName();
@@ -372,7 +347,12 @@ const WorkerNewModal = props => {
 
     await putZookeeper(`/${zookeeperName}/start`);
     const zookeeperClusterName = get(zookeeper(), 'data.result.name');
-    await waitForServiceCreation(zookeeperClusterName);
+    const zkParams = {
+      url: `${URL.ZOOKEEPER_URL}/${zookeeperClusterName}`,
+      checkFn: checkResult,
+    };
+    await waitApi(zkParams);
+    if (!getFinish()) throw new ERROR();
     setActiveStep(1);
 
     saveService({ service: 'zookeeper', name: zookeeperClusterName });
@@ -388,7 +368,12 @@ const WorkerNewModal = props => {
 
     const brokerClusterName = get(broker(), 'data.result.name');
     await putBroker(`/${brokerClusterName}/start`);
-    await waitForServiceCreation(brokerClusterName);
+    const bkParams = {
+      url: `${URL.BROKER_URL}/${brokerClusterName}`,
+      checkFn: checkResult,
+    };
+    await waitApi(bkParams);
+    if (!getFinish()) throw new ERROR();
     setActiveStep(2);
 
     saveService({ service: 'broker', name: brokerClusterName });
@@ -414,7 +399,15 @@ const WorkerNewModal = props => {
     });
 
     const workerClusterName = get(worker(), 'data.result.name');
-    await waitForServiceCreation(workerClusterName);
+    const checkContainerResult = res => {
+      return 'RUNNING' === get(res, 'data.result[0].containers[0].state', null);
+    };
+    const wkParams = {
+      url: `${URL.CONTAINER_URL}/${workerClusterName}1`,
+      checkFn: checkContainerResult,
+    };
+    await waitApi(wkParams);
+    if (!getFinish()) throw new ERROR();
     setActiveStep(3);
 
     saveService({ service: 'worker', name: workerClusterName });
