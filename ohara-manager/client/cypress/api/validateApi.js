@@ -14,11 +14,53 @@
  * limitations under the License.
  */
 
-describe('Validate API', () => {
-  // TODO: the test are skipped for now, need to enable and
-  // refactor the tests later in #1749
+import * as utils from '../utils';
 
-  it.skip('validateConnector', () => {
+const setup = () => {
+  const nodeName = `node${utils.makeRandomStr()}`;
+  const zookeeperClusterName = `zookeeper${utils.makeRandomStr()}`;
+  const brokerClusterName = `broker${utils.makeRandomStr()}`;
+  const workerClusterName = `worker${utils.makeRandomStr()}`;
+
+  cy.createNode({
+    name: nodeName,
+    port: 22,
+    user: utils.makeRandomStr(),
+    password: utils.makeRandomStr(),
+  });
+
+  cy.createZookeeper({
+    name: zookeeperClusterName,
+    nodeNames: [nodeName],
+  });
+
+  cy.startZookeeper(zookeeperClusterName);
+
+  cy.createBroker({
+    name: brokerClusterName,
+    zookeeperClusterName: zookeeperClusterName,
+    nodeNames: [nodeName],
+  });
+
+  cy.startBroker(brokerClusterName);
+
+  cy.testCreateWorker({
+    name: workerClusterName,
+    brokerClusterName,
+    nodeNames: [nodeName],
+  }).as('testCreateWorker');
+
+  return {
+    workerClusterName,
+  };
+};
+
+describe('Validate API', () => {
+  before(() => cy.deleteAllServices());
+
+  it('validateConnector', () => {
+    const { workerClusterName } = setup();
+
     const params = {
       author: 'root',
       columns: [
@@ -40,14 +82,20 @@ describe('Validate API', () => {
       'tasks.max': 1,
       topics: ['topicName'],
       version: '0.7.0-SNAPSHOT',
-      workerClusterName: 'fakeWorkerName',
+      workerClusterName,
     };
-    cy.validateConnector(params).then(res => {
-      const { data } = res;
-      expect(data.isSuccess).to.eq(true);
-      expect(data.result.errorCount).to.eq(0);
-      expect(data.result).to.include.keys('errorCount', 'settings');
-      expect(data.result.settings).to.be.a('array');
+
+    cy.validateConnector(params).then(response => {
+      const {
+        data: { isSuccess, result },
+      } = response;
+
+      const { errorCount, settings } = result;
+
+      expect(isSuccess).to.eq(true);
+
+      expect(errorCount).to.eq(0);
+      expect(settings).to.be.a('array');
     });
   });
 });

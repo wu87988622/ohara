@@ -24,6 +24,7 @@ import * as connectorApi from '../../src/api/connectorApi';
 import * as streamApp from '../../src/api/streamApi';
 import * as zookeeperApi from '../../src/api/zookeeperApi';
 import * as brokerApi from '../../src/api/brokerApi';
+import { fetchInfo } from '../../src/api/infoApi';
 import { axiosInstance } from '../../src/api/apiUtils';
 import { fetchJars } from '../../src/api/jarApi';
 import { fetchLogs } from '../../src/api/logApi';
@@ -189,6 +190,8 @@ Cypress.Commands.add('startZookeeper', name =>
 Cypress.Commands.add('createZookeeper', params =>
   zookeeperApi.createZookeeper(params),
 );
+
+Cypress.Commands.add('fetchInfo', () => fetchInfo());
 
 Cypress.Commands.add('deleteAllServices', () => {
   cy.fetchWorkers().then(response => {
