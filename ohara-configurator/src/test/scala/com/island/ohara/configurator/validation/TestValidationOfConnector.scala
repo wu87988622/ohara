@@ -158,8 +158,7 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
       .filter(_.definition().key() == SettingDefinition.TAGS_DEFINITION.key())
       .head
       .definition()
-      .defaultValue()
-      .parseJson shouldBe JsObject.empty
+      .defaultValue() shouldBe null
 
     response.errorCount() shouldBe 0
 

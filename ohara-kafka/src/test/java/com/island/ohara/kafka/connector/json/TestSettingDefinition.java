@@ -508,4 +508,15 @@ public class TestSettingDefinition extends SmallTest {
     assertException(ConfigException.class, () -> s.checker().check(CommonUtils.randomString()));
     assertException(ConfigException.class, () -> s.checker().check(100000000));
   }
+
+  @Test
+  public void testTagsType() {
+    SettingDefinition s =
+        SettingDefinition.builder().valueType(SettingDefinition.Type.TAGS).key("tags.key").build();
+    // pass
+    s.checker().check(CommonUtils.randomString());
+    // empty array is illegal
+    assertException(ConfigException.class, () -> s.checker().check(Collections.emptyList()));
+    assertException(ConfigException.class, () -> s.checker().check(100000000));
+  }
 }

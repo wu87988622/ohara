@@ -176,8 +176,8 @@ public class TestSettingDefinitions extends SmallTest {
             .findFirst()
             .get();
     Assert.assertFalse(setting.required());
-    Assert.assertFalse(setting.internal());
-    Assert.assertEquals("{}", setting.defaultValue());
+    Assert.assertTrue(setting.internal());
+    Assert.assertNull(setting.defaultValue());
     Assert.assertEquals(SettingDefinition.Reference.NONE.name(), setting.reference());
     Assert.assertTrue(setting.tableKeys().isEmpty());
     Assert.assertEquals(SettingDefinition.CORE_GROUP, setting.group());

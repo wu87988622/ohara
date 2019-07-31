@@ -2505,18 +2505,32 @@ types are shown below.
 #. TOPIC_KEYS — each field must be castable to **com.island.ohara.kafka.connector.json.TopicKey**. The json representation
    is shown below.
 
-    .. code-block:: json
+  .. code-block:: json
 
-       [
-         {
-           "group": "g0",
-           "name": "n0"
-         },
-         {
-           "group": "g1",
-           "name": "n1"
-         }
-       ]
+    [
+      {
+        "group": "g0",
+        "name": "n0"
+      },
+      {
+        "group": "g1",
+        "name": "n1"
+      }
+    ]
+
+#. TAGS — this setting accepts a json representation string. For example:
+
+  .. code-block:: json
+
+    {
+      "k0": "g0",
+      "k1": "n0",
+      "k2": [],
+      "k3": {
+        "k3.1": "v3.1"
+      }
+    }
+
 
 Setting Reference
 ~~~~~~~~~~~~~~~~~

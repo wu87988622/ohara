@@ -222,11 +222,12 @@ public class SettingDefinition implements JsonObject {
       SettingDefinition.builder()
           .displayName("tags")
           .key("tags")
-          .valueType(Type.STRING)
+          .valueType(Type.TAGS)
           .documentation("tags to this connector")
           .group(CORE_GROUP)
-          // the tags type is json representation so we use "empty" object as default value
-          .optional("{}")
+          // the tags in connector
+          .internal()
+          .optional()
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .build();
 
@@ -270,6 +271,11 @@ public class SettingDefinition implements JsonObject {
     TOPIC_KEYS,
     /** { "group": "g0", "name": "n0" } */
     CONNECTOR_KEY,
+    /**
+     * TAGS is a flexible type accepting a json representation. For example: { "k0": "v0", "k1":
+     * "v1", "k2": ["a0", "b0" ] }
+     */
+    TAGS,
   }
 
   /** this class is used to pre-check the setting before running connector. */
@@ -308,6 +314,7 @@ public class SettingDefinition implements JsonObject {
       case TABLE:
       case TOPIC_KEYS:
       case CONNECTOR_KEY:
+      case TAGS:
         return ConfigDef.Type.STRING;
       case SHORT:
         return ConfigDef.Type.SHORT;
@@ -490,6 +497,11 @@ public class SettingDefinition implements JsonObject {
                   "can't be converted to CONNECTOR_KEY type. since:" + e.getMessage());
             }
           } else throw new ConfigException("the configured value must be String type");
+        };
+      case TAGS:
+        return (Object value) -> {
+          if (!(value instanceof String))
+            throw new ConfigException("the TAGS value must be String type");
         };
       default:
         return (Object value) -> {};
