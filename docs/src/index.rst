@@ -58,6 +58,8 @@ or build your UI interface via :ref:`Ohara REST interface <Rest>`.
    docker
    integration_test
    contributing
+   contrib-docs/index
+
 
 Indices and tables
 ==================
