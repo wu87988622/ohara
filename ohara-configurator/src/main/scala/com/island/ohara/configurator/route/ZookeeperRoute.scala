@@ -41,7 +41,7 @@ object ZookeeperRoute {
     clusterCollie: ClusterCollie,
     executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
     store
-      .value[ZookeeperClusterInfo](info.name)
+      .value[ZookeeperClusterInfo](info.key)
       .flatMap(
         cluster =>
           clusterCollie.zookeeperCollie
@@ -56,12 +56,12 @@ object ZookeeperRoute {
             }
             .flatMap { finalData =>
               store.addIfPresent[ZookeeperClusterInfo](
-                name = info.name,
+                key = info.key,
                 updater = (previous: ZookeeperClusterInfo) =>
                   previous.copy(
                     state = finalData.state,
                     nodeNames = finalData.nodeNames,
-                    deadNodes = finalData.deadNodes,
+                    deadNodes = finalData.deadNodes
                 )
               )
           }

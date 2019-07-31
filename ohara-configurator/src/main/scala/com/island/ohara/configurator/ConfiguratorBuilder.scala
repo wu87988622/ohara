@@ -329,8 +329,8 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
   private[configurator] def createCollie(): NodeCollie = {
     val store = getOrCreateStore()
     new NodeCollie {
-      override def node(name: String)(implicit executionContext: ExecutionContext): Future[Node] =
-        store.value[Node](name)
+      override def node(hostname: String)(implicit executionContext: ExecutionContext): Future[Node] =
+        store.value[Node](NodeApi.key(hostname))
       override def nodes()(implicit executionContext: ExecutionContext): Future[Seq[Node]] = store.values[Node]()
     }
   }

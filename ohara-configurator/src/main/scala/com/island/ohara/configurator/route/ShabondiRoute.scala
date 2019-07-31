@@ -22,6 +22,7 @@ import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node
+import com.island.ohara.client.configurator.v0.ShabondiApi
 import com.island.ohara.client.configurator.v0.ShabondiApi._
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.store.DataStore
@@ -41,18 +42,18 @@ object ShabondiRoute {
   }
 
   private def getProperty(name: String, store: DataStore)(implicit executionContext: ExecutionContext) = {
-    store.value[ShabondiDescription](name)
+    store.value[ShabondiDescription](ShabondiApi.key(name))
   }
 
   private def deleteShabondi(name: String, store: DataStore)(implicit executionContext: ExecutionContext) =
-    store.remove[ShabondiDescription](name).map(_ => StatusCodes.NoContent)
+    store.remove[ShabondiDescription](ShabondiApi.key(name)).map(_ => StatusCodes.NoContent)
 
   private def updateProperty(name: String, property: ShabondiProperty, store: DataStore)(
     implicit executionContext: ExecutionContext) = {
     LOG.info(s"update shabondi: $name")
     val updateValue = (data: ShabondiDescription) =>
       duplicateShabondiDescription(data, property).copy(lastModified = CommonUtils.current())
-    store.addIfPresent[ShabondiDescription](name, updateValue)
+    store.addIfPresent[ShabondiDescription](ShabondiApi.key(name), updateValue)
   }
 
   private def updateShabondiState(name: String, state: String, store: DataStore)(
@@ -60,7 +61,7 @@ object ShabondiRoute {
     LOG.info(s"update shabondi: $name")
     val updateValue = (data: ShabondiDescription) =>
       data.copy(state = Some(state), lastModified = CommonUtils.current())
-    store.addIfPresent[ShabondiDescription](name, updateValue)
+    store.addIfPresent[ShabondiDescription](ShabondiApi.key(name), updateValue)
   }
 
   private def randomPickNode(store: DataStore)(implicit executionContext: ExecutionContext): Node = {

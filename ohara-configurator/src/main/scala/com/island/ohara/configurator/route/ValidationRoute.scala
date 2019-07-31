@@ -21,7 +21,7 @@ import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives.{as, complete, entity, path, pathPrefix, put, _}
 import com.island.ohara.agent.{BrokerCollie, ClusterCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ConnectorApi.Creation
-import com.island.ohara.client.configurator.v0.Data
+import com.island.ohara.client.configurator.v0.{Data, NodeApi}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.QueryApi.{RdbColumn, RdbInfo, RdbTable}
 import com.island.ohara.client.configurator.v0.ValidationApi._
@@ -156,7 +156,7 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
                 )
             }
             .flatMap { report =>
-              dataStore.get[Node](req.hostname).flatMap { nodeOption =>
+              dataStore.get[Node](NodeApi.key(req.hostname)).flatMap { nodeOption =>
                 nodeOption
                   .filter { node =>
                     node.hostname == req.hostname &&

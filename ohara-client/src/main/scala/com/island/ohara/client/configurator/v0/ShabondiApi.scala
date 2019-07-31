@@ -17,6 +17,7 @@
 package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.common.util.VersionUtils
+import com.island.ohara.kafka.connector.json.ObjectKey
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsValue, RootJsonFormat}
 
@@ -24,6 +25,15 @@ import scala.concurrent.{ExecutionContext, Future}
 
 final object ShabondiApi {
   val GROUP_DEFAULT: String = Data.GROUP_DEFAULT
+
+  /**
+    * shabondi does not support group. However, we are in group world and there are many cases of inputting key (group, name)
+    * to access resource. This method used to generate key for hostname of node.
+    * @param name name
+    * @return object key
+    */
+  def key(name: String): ObjectKey = ObjectKey.of(GROUP_DEFAULT, name)
+
   val IMAGE_NAME_DEFAULT: String = s"oharastream/shabondi:${VersionUtils.VERSION}"
   val PATH_PREFIX = "shabondi"
 

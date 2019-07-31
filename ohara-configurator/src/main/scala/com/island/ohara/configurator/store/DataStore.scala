@@ -134,22 +134,6 @@ trait DataStore extends Releasable {
     * @return number of stored data types.
     */
   def numberOfTypes(): Int
-
-  //----------------[deprecated methods]----------------//
-  def get[T <: Data: ClassTag](name: String)(implicit executor: ExecutionContext): Future[Option[T]] =
-    get[T](ObjectKey.of(Data.GROUP_DEFAULT, name))
-  def value[T <: Data: ClassTag](name: String)(implicit executor: ExecutionContext): Future[T] =
-    value[T](ObjectKey.of(Data.GROUP_DEFAULT, name))
-  def raws(name: String)(implicit executor: ExecutionContext): Future[Seq[Data]] = raws(
-    ObjectKey.of(Data.GROUP_DEFAULT, name))
-  def remove[T <: Data: ClassTag](name: String)(implicit executor: ExecutionContext): Future[Boolean] =
-    remove[T](ObjectKey.of(Data.GROUP_DEFAULT, name))
-  def addIfPresent[T <: Data: ClassTag](name: String, updater: T => T)(implicit executor: ExecutionContext): Future[T] =
-    addIfPresent[T](key = ObjectKey.of(Data.GROUP_DEFAULT, name), updater = updater)
-  def exist[T <: Data: ClassTag](name: String)(implicit executor: ExecutionContext): Future[Boolean] =
-    exist[T](ObjectKey.of(Data.GROUP_DEFAULT, name))
-  def nonExist[T <: Data: ClassTag](name: String)(implicit executor: ExecutionContext): Future[Boolean] =
-    nonExist[T](ObjectKey.of(Data.GROUP_DEFAULT, name))
 }
 
 object DataStore {

@@ -35,7 +35,7 @@ object BrokerRoute {
     clusterCollie: ClusterCollie,
     executionContext: ExecutionContext): Future[BrokerClusterInfo] =
     store
-      .value[BrokerClusterInfo](info.name)
+      .value[BrokerClusterInfo](info.key)
       .flatMap(
         cluster =>
           clusterCollie.brokerCollie
@@ -50,7 +50,7 @@ object BrokerRoute {
             }
             .flatMap { finalData =>
               store.addIfPresent[BrokerClusterInfo](
-                name = info.name,
+                key = info.key,
                 updater = (previous: BrokerClusterInfo) =>
                   previous.copy(
                     zookeeperClusterName = finalData.zookeeperClusterName,

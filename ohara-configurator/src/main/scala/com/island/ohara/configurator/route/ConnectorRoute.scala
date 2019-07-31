@@ -73,7 +73,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
       }
       .flatMap { data =>
         store.addIfPresent[ConnectorDescription](
-          name = data.name,
+          key = data.key,
           updater = (previous: ConnectorDescription) =>
             previous.copy(
               // Absent worker will be filled by workerClient, we should update it here

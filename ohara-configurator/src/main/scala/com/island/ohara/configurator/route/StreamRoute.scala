@@ -82,7 +82,7 @@ private[configurator] object StreamRoute {
     meterCache: MeterCache,
     executionContext: ExecutionContext): Future[StreamClusterInfo] = {
     store
-      .value[StreamClusterInfo](info.name)
+      .value[StreamClusterInfo](info.key)
       .flatMap(cluster =>
         clusterCollie.streamCollie.exist(cluster.name).flatMap {
           if (_) {
@@ -94,7 +94,7 @@ private[configurator] object StreamRoute {
       })
       .flatMap { finalData =>
         store.addIfPresent[StreamClusterInfo](
-          name = finalData.name,
+          key = finalData.key,
           updater = (previous: StreamClusterInfo) =>
             previous.copy(
               nodeNames = finalData.nodeNames,
