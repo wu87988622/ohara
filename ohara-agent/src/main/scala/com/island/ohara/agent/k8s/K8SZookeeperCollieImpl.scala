@@ -20,39 +20,41 @@ import com.island.ohara.agent.{NodeCollie, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.typesafe.scalalogging.Logger
 
-import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future}
 
 private class K8SZookeeperCollieImpl(node: NodeCollie, k8sClient: K8SClient)
     extends K8SBasicCollieImpl[ZookeeperClusterInfo, ZookeeperCollie.ClusterCreator](node, k8sClient)
     with ZookeeperCollie {
-  private[this] val TIMEOUT: FiniteDuration = 30 seconds
+  private[this] val LOG = Logger(classOf[K8SZookeeperCollieImpl])
 
   override protected def doCreator(executionContext: ExecutionContext,
                                    clusterName: String,
                                    containerName: String,
                                    containerInfo: ContainerInfo,
                                    node: Node,
-                                   route: Map[String, String]): Unit = {
+                                   route: Map[String, String]): Future[Unit] = {
     implicit val exec: ExecutionContext = executionContext
-    // Kubernetes create pod async to need to await container create completely.
-    Await.result(
-      k8sClient
-        .containerCreator()
-        .imageName(containerInfo.imageName)
-        .portMappings(
-          containerInfo.portMappings.flatMap(_.portPairs).map(pair => pair.hostPort -> pair.containerPort).toMap)
-        .nodeName(containerInfo.nodeName)
-        .hostname(s"${containerInfo.name}$DIVIDER${node.name}")
-        .labelName(OHARA_LABEL)
-        .domainName(K8S_DOMAIN_NAME)
-        .envs(containerInfo.environments)
-        .name(containerInfo.name)
-        .threadPool(executionContext)
-        .create(),
-      TIMEOUT
-    )
+    k8sClient
+      .containerCreator()
+      .imageName(containerInfo.imageName)
+      .portMappings(
+        containerInfo.portMappings.flatMap(_.portPairs).map(pair => pair.hostPort -> pair.containerPort).toMap)
+      .nodeName(containerInfo.nodeName)
+      .hostname(s"${containerInfo.name}$DIVIDER${node.name}")
+      .labelName(OHARA_LABEL)
+      .domainName(K8S_DOMAIN_NAME)
+      .envs(containerInfo.environments)
+      .name(containerInfo.name)
+      .threadPool(executionContext)
+      .create()
+      .recover {
+        case e: Throwable =>
+          LOG.error(s"failed to start ${containerInfo.imageName} on ${node.name}", e)
+          None
+      }
+      .map(_ => Unit)
   }
 
   override protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo])(

@@ -27,8 +27,9 @@ class FakeZookeeperCollie(node: NodeCollie) extends ZookeeperCollie {
                                    containerName: String,
                                    containerInfo: ContainerInfo,
                                    node: Node,
-                                   route: Map[String, String]): Unit = {
+                                   route: Map[String, String]): Future[Unit] = {
     //Nothing
+    Future.unit
   }
 
   override def remove(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =

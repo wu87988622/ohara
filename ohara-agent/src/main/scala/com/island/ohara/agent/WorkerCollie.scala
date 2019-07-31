@@ -110,51 +110,49 @@ trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator
               Future
                 .sequence(newNodes.map {
                   case (node, containerName) =>
-                    Future {
-                      val containerInfo = ContainerInfo(
-                        nodeName = node.name,
-                        id = ContainerCollie.UNKNOWN,
-                        imageName = imageName,
-                        created = ContainerCollie.UNKNOWN,
-                        state = ContainerCollie.UNKNOWN,
-                        kind = ContainerCollie.UNKNOWN,
-                        name = containerName,
-                        size = ContainerCollie.UNKNOWN,
-                        portMappings = Seq(
-                          PortMapping(
-                            hostIp = ContainerCollie.UNKNOWN,
-                            portPairs = Seq(PortPair(
-                                              hostPort = clientPort,
-                                              containerPort = clientPort
-                                            ),
-                                            PortPair(
-                                              hostPort = jmxPort,
-                                              containerPort = jmxPort
-                                            ))
-                          )),
-                        environments = Map(
-                          WorkerCollie.CLIENT_PORT_KEY -> clientPort.toString,
-                          WorkerCollie.BROKERS_KEY -> brokers,
-                          WorkerCollie.GROUP_ID_KEY -> groupId,
-                          WorkerCollie.OFFSET_TOPIC_KEY -> offsetTopicName,
-                          WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY -> offsetTopicPartitions.toString,
-                          WorkerCollie.OFFSET_TOPIC_REPLICATIONS_KEY -> offsetTopicReplications.toString,
-                          WorkerCollie.CONFIG_TOPIC_KEY -> configTopicName,
-                          WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY -> configTopicReplications.toString,
-                          WorkerCollie.STATUS_TOPIC_KEY -> statusTopicName,
-                          WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY -> statusTopicPartitions.toString,
-                          WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY -> statusTopicReplications.toString,
-                          WorkerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
-                          WorkerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
-                          WorkerCollie.BROKER_CLUSTER_NAME -> brokerClusterName,
-                          WorkerCollie.JMX_HOSTNAME_KEY -> node.name,
-                          WorkerCollie.JMX_PORT_KEY -> jmxPort.toString
-                        ) ++ WorkerCollie.toMap(jarInfos),
-                        hostname = containerName
-                      )
-                      doCreator(executionContext, clusterName, containerName, containerInfo, node, route)
-                      Some(containerInfo)
-                    }
+                    val containerInfo = ContainerInfo(
+                      nodeName = node.name,
+                      id = ContainerCollie.UNKNOWN,
+                      imageName = imageName,
+                      created = ContainerCollie.UNKNOWN,
+                      state = ContainerCollie.UNKNOWN,
+                      kind = ContainerCollie.UNKNOWN,
+                      name = containerName,
+                      size = ContainerCollie.UNKNOWN,
+                      portMappings = Seq(
+                        PortMapping(
+                          hostIp = ContainerCollie.UNKNOWN,
+                          portPairs = Seq(PortPair(
+                                            hostPort = clientPort,
+                                            containerPort = clientPort
+                                          ),
+                                          PortPair(
+                                            hostPort = jmxPort,
+                                            containerPort = jmxPort
+                                          ))
+                        )),
+                      environments = Map(
+                        WorkerCollie.CLIENT_PORT_KEY -> clientPort.toString,
+                        WorkerCollie.BROKERS_KEY -> brokers,
+                        WorkerCollie.GROUP_ID_KEY -> groupId,
+                        WorkerCollie.OFFSET_TOPIC_KEY -> offsetTopicName,
+                        WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY -> offsetTopicPartitions.toString,
+                        WorkerCollie.OFFSET_TOPIC_REPLICATIONS_KEY -> offsetTopicReplications.toString,
+                        WorkerCollie.CONFIG_TOPIC_KEY -> configTopicName,
+                        WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY -> configTopicReplications.toString,
+                        WorkerCollie.STATUS_TOPIC_KEY -> statusTopicName,
+                        WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY -> statusTopicPartitions.toString,
+                        WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY -> statusTopicReplications.toString,
+                        WorkerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
+                        WorkerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
+                        WorkerCollie.BROKER_CLUSTER_NAME -> brokerClusterName,
+                        WorkerCollie.JMX_HOSTNAME_KEY -> node.name,
+                        WorkerCollie.JMX_PORT_KEY -> jmxPort.toString
+                      ) ++ WorkerCollie.toMap(jarInfos),
+                      hostname = containerName
+                    )
+                    doCreator(executionContext, clusterName, containerName, containerInfo, node, route).map(_ =>
+                      Some(containerInfo))
                 })
                 .map(_.flatten.toSeq)
                 .map {
@@ -233,7 +231,7 @@ trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator
                           containerName: String,
                           containerInfo: ContainerInfo,
                           node: Node,
-                          route: Map[String, String]): Unit
+                          route: Map[String, String]): Future[Unit]
 
   /**
     * After the worker container creates complete, you maybe need to do other things.

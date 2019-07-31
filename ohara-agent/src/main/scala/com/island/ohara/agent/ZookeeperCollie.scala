@@ -64,46 +64,44 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo, ZookeeperCollie.Clust
                 Future
                   .sequence(nodes.zipWithIndex.map {
                     case ((node, containerName), index) =>
-                      Future {
-                        val containerInfo = ContainerInfo(
-                          nodeName = node.name,
-                          id = ContainerCollie.UNKNOWN,
-                          imageName = imageName,
-                          created = ContainerCollie.UNKNOWN,
-                          state = ContainerCollie.UNKNOWN,
-                          kind = ContainerCollie.UNKNOWN,
-                          name = containerName,
-                          size = ContainerCollie.UNKNOWN,
-                          portMappings = Seq(PortMapping(
-                            hostIp = ContainerCollie.UNKNOWN,
-                            portPairs = Seq(
-                              PortPair(
-                                hostPort = clientPort,
-                                containerPort = clientPort
-                              ),
-                              PortPair(
-                                hostPort = peerPort,
-                                containerPort = peerPort
-                              ),
-                              PortPair(
-                                hostPort = electionPort,
-                                containerPort = electionPort
-                              )
+                      val containerInfo = ContainerInfo(
+                        nodeName = node.name,
+                        id = ContainerCollie.UNKNOWN,
+                        imageName = imageName,
+                        created = ContainerCollie.UNKNOWN,
+                        state = ContainerCollie.UNKNOWN,
+                        kind = ContainerCollie.UNKNOWN,
+                        name = containerName,
+                        size = ContainerCollie.UNKNOWN,
+                        portMappings = Seq(PortMapping(
+                          hostIp = ContainerCollie.UNKNOWN,
+                          portPairs = Seq(
+                            PortPair(
+                              hostPort = clientPort,
+                              containerPort = clientPort
+                            ),
+                            PortPair(
+                              hostPort = peerPort,
+                              containerPort = peerPort
+                            ),
+                            PortPair(
+                              hostPort = electionPort,
+                              containerPort = electionPort
                             )
-                          )),
-                          environments = Map(
-                            ZookeeperCollie.ID_KEY -> index.toString,
-                            ZookeeperCollie.CLIENT_PORT_KEY -> clientPort.toString,
-                            ZookeeperCollie.PEER_PORT_KEY -> peerPort.toString,
-                            ZookeeperCollie.ELECTION_PORT_KEY -> electionPort.toString,
-                            ZookeeperCollie.SERVERS_KEY -> zkServers
-                          ),
-                          // zookeeper doesn't have advertised hostname/port so we assign the "docker host" directly
-                          hostname = node.name
-                        )
-                        doCreator(executionContext, clusterName, containerName, containerInfo, node, route)
-                        Some(containerInfo)
-                      }
+                          )
+                        )),
+                        environments = Map(
+                          ZookeeperCollie.ID_KEY -> index.toString,
+                          ZookeeperCollie.CLIENT_PORT_KEY -> clientPort.toString,
+                          ZookeeperCollie.PEER_PORT_KEY -> peerPort.toString,
+                          ZookeeperCollie.ELECTION_PORT_KEY -> electionPort.toString,
+                          ZookeeperCollie.SERVERS_KEY -> zkServers
+                        ),
+                        // zookeeper doesn't have advertised hostname/port so we assign the "docker host" directly
+                        hostname = node.name
+                      )
+                      doCreator(executionContext, clusterName, containerName, containerInfo, node, route).map(_ =>
+                        Some(containerInfo))
                   })
                   .map(_.flatten.toSeq)
                   .map {
@@ -154,7 +152,7 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo, ZookeeperCollie.Clust
                           containerName: String,
                           containerInfo: ContainerInfo,
                           node: Node,
-                          route: Map[String, String]): Unit
+                          route: Map[String, String]): Future[Unit]
 
   protected def postCreateZookeeperCluster(clusterInfo: ClusterInfo, successfulContainers: Seq[ContainerInfo]): Unit = {
     //Default Nothing

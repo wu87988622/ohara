@@ -16,12 +16,14 @@
 
 package com.island.ohara.agent
 
+import java.net.URI
 import java.util.Objects
 
 import com.island.ohara.agent.docker.ContainerState
-import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
-import com.island.ohara.client.configurator.v0.StreamApi
+import com.island.ohara.client.configurator.v0.NodeApi.Node
+import com.island.ohara.client.configurator.v0.{ClusterInfo, StreamApi}
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
@@ -38,6 +40,103 @@ import scala.concurrent.{ExecutionContext, Future}
   * It isolates the implementation of container manager from Configurator.
   */
 trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator] {
+
+  override def creator: StreamCollie.ClusterCreator =
+    (clusterName,
+     nodeNames,
+     imageName,
+     jarUrl,
+     appId,
+     brokerProps,
+     fromTopics,
+     toTopics,
+     jmxPort,
+     enableExactlyOnce,
+     executionContext) => {
+      implicit val exec: ExecutionContext = executionContext
+      clusters().flatMap(clusters => {
+        if (clusters.keys.filter(_.isInstanceOf[StreamClusterInfo]).exists(_.name == clusterName))
+          Future.failed(new IllegalArgumentException(s"stream cluster:$clusterName exists!"))
+        else
+          nodeCollie
+            .nodes(nodeNames)
+            .map(_.map(node => node -> ContainerCollie.format(prefixKey, clusterName, serviceName)).toMap)
+            .flatMap {
+              nodes =>
+                def urlToHost(url: String): String = new URI(url).getHost
+
+                val route: Map[String, String] = nodes.keys.map { node =>
+                  node.hostname -> CommonUtils.address(node.hostname)
+                }.toMap +
+                  // make sure the streamApp can connect to configurator
+                  (urlToHost(jarUrl) -> CommonUtils.address(urlToHost(jarUrl)))
+                // ssh connection is slow so we submit request by multi-thread
+                Future
+                  .sequence(nodes.map {
+                    case (node, containerName) =>
+                      val containerInfo = ContainerInfo(
+                        nodeName = node.name,
+                        id = ContainerCollie.UNKNOWN,
+                        imageName = imageName,
+                        created = ContainerCollie.UNKNOWN,
+                        state = ContainerCollie.UNKNOWN,
+                        kind = ContainerCollie.UNKNOWN,
+                        name = containerName,
+                        size = ContainerCollie.UNKNOWN,
+                        portMappings = Seq(
+                          PortMapping(
+                            hostIp = ContainerCollie.UNKNOWN,
+                            portPairs = Seq(
+                              PortPair(
+                                hostPort = jmxPort,
+                                containerPort = jmxPort
+                              )
+                            )
+                          )
+                        ),
+                        environments = Map(
+                          StreamCollie.JARURL_KEY -> jarUrl,
+                          StreamCollie.APPID_KEY -> appId,
+                          StreamCollie.SERVERS_KEY -> brokerProps,
+                          StreamCollie.FROM_TOPIC_KEY -> fromTopics.mkString(","),
+                          StreamCollie.TO_TOPIC_KEY -> toTopics.mkString(","),
+                          StreamCollie.JMX_PORT_KEY -> jmxPort.toString,
+                          StreamCollie.EXACTLY_ONCE -> enableExactlyOnce.toString
+                        ),
+                        // we should set the hostname to container name in order to avoid duplicate name with other containers
+                        hostname = containerName
+                      )
+                      doCreator(executionContext, clusterName, containerName, containerInfo, node, jmxPort, route).map(
+                        _ => Some(containerInfo))
+                  })
+                  .map(_.flatten.toSeq)
+                  .map {
+                    successfulContainers =>
+                      if (successfulContainers.isEmpty)
+                        throw new IllegalArgumentException(s"failed to create $clusterName on $serviceName")
+                      val clusterInfo = StreamClusterInfo(
+                        name = clusterName,
+                        imageName = imageName,
+                        instances = successfulContainers.size,
+                        jar = StreamCollie.urlToDataKey(jarUrl),
+                        from = fromTopics,
+                        to = toTopics,
+                        metrics = Metrics(Seq.empty),
+                        nodeNames = successfulContainers.map(_.nodeName).toSet,
+                        deadNodes = Set.empty,
+                        jmxPort = jmxPort,
+                        state = None,
+                        error = None,
+                        lastModified = CommonUtils.current(),
+                        // We do not care the user parameters since it's stored in configurator already
+                        tags = Map.empty
+                      )
+                      postCreateCluster(clusterInfo, successfulContainers)
+                      clusterInfo
+                  }
+            }
+      })
+    }
 
   /**
     * Get all counter beans from cluster
@@ -80,6 +179,36 @@ trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator
         tags = Map.empty
       )
     )
+  }
+
+  /**
+    * Define nodeCollie by different environment
+    * @return
+    */
+  protected def nodeCollie: NodeCollie
+
+  /**
+    * Define prefixKey by different environment
+    * @return prefix key
+    */
+  protected def prefixKey: String
+
+  /**
+    * Define serviceName by different environment
+    * @return service name
+    */
+  protected def serviceName: String
+
+  protected def doCreator(executionContext: ExecutionContext,
+                          clusterName: String,
+                          containerName: String,
+                          containerInfo: ContainerInfo,
+                          node: Node,
+                          jmxPort: Int,
+                          route: Map[String, String]): Future[Unit]
+
+  protected def postCreateCluster(clusterInfo: ClusterInfo, successfulContainers: Seq[ContainerInfo]): Unit = {
+    //Default do nothing
   }
 }
 

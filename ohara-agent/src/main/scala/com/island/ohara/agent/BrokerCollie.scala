@@ -118,49 +118,47 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
                   // ssh connection is slow so we submit request by multi-thread
                   Future.sequence(newNodes.zipWithIndex.map {
                     case ((node, containerName), index) =>
-                      Future {
-                        val containerInfo = ContainerInfo(
-                          nodeName = node.name,
-                          id = ContainerCollie.UNKNOWN,
-                          imageName = imageName,
-                          created = ContainerCollie.UNKNOWN,
-                          state = ContainerCollie.UNKNOWN,
-                          kind = ContainerCollie.UNKNOWN,
-                          name = containerName,
-                          size = ContainerCollie.UNKNOWN,
-                          portMappings = Seq(PortMapping(
-                            hostIp = ContainerCollie.UNKNOWN,
-                            portPairs = Seq(
-                              PortPair(
-                                hostPort = clientPort,
-                                containerPort = clientPort
-                              ),
-                              PortPair(
-                                hostPort = exporterPort,
-                                containerPort = exporterPort
-                              ),
-                              PortPair(
-                                hostPort = jmxPort,
-                                containerPort = jmxPort
-                              )
+                      val containerInfo = ContainerInfo(
+                        nodeName = node.name,
+                        id = ContainerCollie.UNKNOWN,
+                        imageName = imageName,
+                        created = ContainerCollie.UNKNOWN,
+                        state = ContainerCollie.UNKNOWN,
+                        kind = ContainerCollie.UNKNOWN,
+                        name = containerName,
+                        size = ContainerCollie.UNKNOWN,
+                        portMappings = Seq(PortMapping(
+                          hostIp = ContainerCollie.UNKNOWN,
+                          portPairs = Seq(
+                            PortPair(
+                              hostPort = clientPort,
+                              containerPort = clientPort
+                            ),
+                            PortPair(
+                              hostPort = exporterPort,
+                              containerPort = exporterPort
+                            ),
+                            PortPair(
+                              hostPort = jmxPort,
+                              containerPort = jmxPort
                             )
-                          )),
-                          environments = Map(
-                            BrokerCollie.ID_KEY -> (maxId + index).toString,
-                            BrokerCollie.CLIENT_PORT_KEY -> clientPort.toString,
-                            BrokerCollie.ZOOKEEPERS_KEY -> zookeepers,
-                            BrokerCollie.ADVERTISED_HOSTNAME_KEY -> node.hostname,
-                            BrokerCollie.EXPORTER_PORT_KEY -> exporterPort.toString,
-                            BrokerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
-                            BrokerCollie.ZOOKEEPER_CLUSTER_NAME -> zookeeperClusterName,
-                            BrokerCollie.JMX_HOSTNAME_KEY -> node.hostname,
-                            BrokerCollie.JMX_PORT_KEY -> jmxPort.toString
-                          ),
-                          hostname = containerName
-                        )
-                        doCreator(executionContext, clusterName, containerName, containerInfo, node, route)
-                        Some(containerInfo)
-                      }
+                          )
+                        )),
+                        environments = Map(
+                          BrokerCollie.ID_KEY -> (maxId + index).toString,
+                          BrokerCollie.CLIENT_PORT_KEY -> clientPort.toString,
+                          BrokerCollie.ZOOKEEPERS_KEY -> zookeepers,
+                          BrokerCollie.ADVERTISED_HOSTNAME_KEY -> node.hostname,
+                          BrokerCollie.EXPORTER_PORT_KEY -> exporterPort.toString,
+                          BrokerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
+                          BrokerCollie.ZOOKEEPER_CLUSTER_NAME -> zookeeperClusterName,
+                          BrokerCollie.JMX_HOSTNAME_KEY -> node.hostname,
+                          BrokerCollie.JMX_PORT_KEY -> jmxPort.toString
+                        ),
+                        hostname = containerName
+                      )
+                      doCreator(executionContext, clusterName, containerName, containerInfo, node, route).map(_ =>
+                        Some(containerInfo))
                   })
                 })
                 .map(_.flatten.toSeq)
@@ -249,7 +247,7 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
                           containerName: String,
                           containerInfo: ContainerInfo,
                           node: Node,
-                          route: Map[String, String]): Unit
+                          route: Map[String, String]): Future[Unit]
 
   /**
     * After creating the broker, need to processor other things

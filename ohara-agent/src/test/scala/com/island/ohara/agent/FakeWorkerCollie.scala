@@ -59,8 +59,9 @@ class FakeWorkerCollie(node: NodeCollie) extends WorkerCollie {
                                    containerName: String,
                                    containerInfo: ContainerInfo,
                                    node: NodeApi.Node,
-                                   route: Map[String, String]): Unit = {
-    //No implement
+                                   route: Map[String, String]): Future[Unit] = {
+    //Nothing
+    Future.unit
   }
 
   override def remove(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =

@@ -62,8 +62,8 @@ private[configurator] class FakeZookeeperCollie(node: NodeCollie)
                                    containerName: String,
                                    containerInfo: ContainerInfo,
                                    node: NodeApi.Node,
-                                   route: Map[String, String]): Unit =
-    new UnsupportedOperationException("zookeeper collie doesn't support to doCreator function")
+                                   route: Map[String, String]): Future[Unit] =
+    throw new UnsupportedOperationException("zookeeper collie doesn't support to doCreator function")
 
   override protected def nodeCollie: NodeCollie = node
 

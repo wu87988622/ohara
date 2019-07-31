@@ -38,8 +38,8 @@ private class WorkerCollieImpl(node: NodeCollie, dockerCache: DockerClientCache,
                                    containerName: String,
                                    containerInfo: ContainerInfo,
                                    node: NodeApi.Node,
-                                   route: Map[String, String]): Unit = {
-    try {
+                                   route: Map[String, String]): Future[Unit] =
+    Future.successful(try {
       dockerCache.exec(
         node,
         _.containerCreator()
@@ -70,10 +70,9 @@ private class WorkerCollieImpl(node: NodeCollie, dockerCache: DockerClientCache,
           case _: Throwable =>
           // do nothing
         }
-        LOG.error(s"failed to start ${containerInfo.imageName}", e)
+        LOG.error(s"failed to start ${containerInfo.imageName} on ${node.name}", e)
         None
-    }
-  }
+    })
 
   override protected def hookUpdate(node: Node, container: ContainerInfo, route: Map[String, String]): Unit = {
     updateRoute(node, container.name, route)

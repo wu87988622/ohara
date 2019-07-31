@@ -149,7 +149,7 @@ private[configurator] class FakeWorkerCollie(node: NodeCollie, wkConnectionProps
                                    containerName: String,
                                    containerInfo: ContainerInfo,
                                    node: NodeApi.Node,
-                                   route: Map[String, String]): Unit =
+                                   route: Map[String, String]): Future[Unit] =
     throw new UnsupportedOperationException("FakeWorkerCollie doesn't support doCreator function")
 
   override protected def brokerClusters(

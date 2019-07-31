@@ -20,7 +20,7 @@ import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.agent.{NodeCollie, StreamCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
-import com.island.ohara.client.configurator.v0.StreamApi
+import com.island.ohara.client.configurator.v0.{NodeApi, StreamApi}
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json.ObjectKey
@@ -30,8 +30,8 @@ import com.island.ohara.metrics.basic.CounterMBean
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
-private[configurator] class FakeStreamCollie(nodeCollie: NodeCollie)
-    extends FakeCollie[StreamClusterInfo, StreamCollie.ClusterCreator](nodeCollie)
+private[configurator] class FakeStreamCollie(node: NodeCollie)
+    extends FakeCollie[StreamClusterInfo, StreamCollie.ClusterCreator](node)
     with StreamCollie {
 
   override def counters(cluster: StreamClusterInfo): Seq[CounterMBean] =
@@ -39,29 +39,25 @@ private[configurator] class FakeStreamCollie(nodeCollie: NodeCollie)
     BeanChannel.local().counterMBeans().asScala
 
   override def creator: StreamCollie.ClusterCreator =
-    (clusterName, nodeNames, imageName, jarUrl, _, _, from, to, jmxPort, _, executionContext) => {
-      implicit val exec: ExecutionContext = executionContext
-      nodeCollie.nodes(nodeNames).map { nodes =>
+    (clusterName, nodeNames, imageName, _, _, _, from, to, jmxPort, _, _) =>
+      Future.successful(
         addCluster(
           StreamApi.StreamClusterInfo(
             name = clusterName,
             imageName = imageName,
-            instances = nodes.size,
+            instances = nodeNames.size,
             jar = ObjectKey.of("fakeGroup", "fakeJar"),
             from = from,
             to = to,
             metrics = Metrics(Seq.empty),
-            nodeNames = nodes.map(_.name).toSet,
+            nodeNames = nodeNames,
             deadNodes = Set.empty,
             jmxPort = jmxPort,
             state = Some(ContainerState.RUNNING.name),
             error = None,
             lastModified = CommonUtils.current(),
             tags = Map.empty
-          )
-        )
-      }
-    }
+          )))
 
   override protected def doRemoveNode(previousCluster: StreamClusterInfo, beRemovedContainer: ContainerInfo)(
     implicit executionContext: ExecutionContext): Future[Boolean] =
@@ -73,4 +69,17 @@ private[configurator] class FakeStreamCollie(nodeCollie: NodeCollie)
     previousContainers: Seq[ContainerInfo],
     newNodeName: String)(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] =
     Future.failed(new UnsupportedOperationException("stream collie doesn't support to add node from a running cluster"))
+
+  override protected def doCreator(executionContext: ExecutionContext,
+                                   clusterName: String,
+                                   containerName: String,
+                                   containerInfo: ContainerInfo,
+                                   node: NodeApi.Node,
+                                   jmxPort: Int,
+                                   route: Map[String, String]): Future[Unit] =
+    throw new UnsupportedOperationException("stream collie doesn't support to doCreator function")
+
+  override protected def nodeCollie: NodeCollie = node
+
+  override protected def prefixKey: String = "fakestream"
 }

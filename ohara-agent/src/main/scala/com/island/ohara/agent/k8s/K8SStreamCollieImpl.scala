@@ -16,110 +16,48 @@
 
 package com.island.ohara.agent.k8s
 
-import java.net.URI
-
-import com.island.ohara.agent.{ContainerCollie, NodeCollie, StreamCollie}
+import com.island.ohara.agent.{NodeCollie, StreamCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
+import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import com.island.ohara.common.util.CommonUtils
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
 
-private class K8SStreamCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
-    extends K8SBasicCollieImpl[StreamClusterInfo, StreamCollie.ClusterCreator](nodeCollie, k8sClient)
+private class K8SStreamCollieImpl(node: NodeCollie, k8sClient: K8SClient)
+    extends K8SBasicCollieImpl[StreamClusterInfo, StreamCollie.ClusterCreator](node, k8sClient)
     with StreamCollie {
-  private[this] val log = Logger(classOf[K8SStreamCollieImpl])
+  private[this] val LOG = Logger(classOf[K8SStreamCollieImpl])
 
-  override def creator: StreamCollie.ClusterCreator =
-    (clusterName,
-     nodeNames,
-     imageName,
-     jarUrl,
-     appId,
-     brokerProps,
-     fromTopics,
-     toTopics,
-     jmxPort,
-     enableExactlyOnce,
-     executionContext) => {
-      implicit val exec: ExecutionContext = executionContext
-      exist(clusterName).flatMap {
-        if (_) Future.failed(new IllegalArgumentException(s"stream cluster:$clusterName exists!"))
-        else
-          nodeCollie
-            .nodes(nodeNames)
-            .map(_.map(node => node -> ContainerCollie.format(PREFIX_KEY, clusterName, serviceName)).toMap)
-            .flatMap { nodes =>
-              def urlToHost(url: String): String = new URI(url).getHost
-
-              val route: Map[String, String] = nodes.keys.map { node =>
-                node.name -> CommonUtils.address(node.name)
-              }.toMap +
-                // make sure the streamApp can connect to configurator
-                (urlToHost(jarUrl).toLowerCase -> CommonUtils.address(urlToHost(jarUrl)))
-              Future
-                .sequence(nodes.map {
-                  case (node, podName) =>
-                    k8sClient
-                      .containerCreator()
-                      .imageName(imageName)
-                      .nodeName(node.name)
-                      .hostname(podName)
-                      .name(podName)
-                      .labelName(OHARA_LABEL)
-                      .domainName(K8S_DOMAIN_NAME)
-                      .portMappings(Map(
-                        jmxPort -> jmxPort
-                      ))
-                      .routes(route)
-                      .envs(
-                        Map(
-                          StreamCollie.JARURL_KEY -> jarUrl,
-                          StreamCollie.APPID_KEY -> appId,
-                          StreamCollie.SERVERS_KEY -> brokerProps,
-                          StreamCollie.FROM_TOPIC_KEY -> fromTopics.mkString(","),
-                          StreamCollie.TO_TOPIC_KEY -> toTopics.mkString(","),
-                          StreamCollie.JMX_PORT_KEY -> jmxPort.toString,
-                          StreamCollie.EXACTLY_ONCE -> enableExactlyOnce.toString
-                        )
-                      )
-                      .args(StreamCollie.formatJMXProperties(node.name, jmxPort) :+ StreamCollie.MAIN_ENTRY)
-                      .threadPool(executionContext)
-                      .create()
-                      .recover {
-                        case e: Throwable =>
-                          log.error(s"failed to start $clusterName", e)
-                          None
-                      }
-                })
-                .map(_.flatten.toSeq.map(_.nodeName))
-                .map { successfulNodeNames =>
-                  if (successfulNodeNames.isEmpty) {
-                    throw new IllegalArgumentException(s"failed to create $clusterName")
-                  }
-                  StreamClusterInfo(
-                    name = clusterName,
-                    imageName = imageName,
-                    instances = successfulNodeNames.size,
-                    jar = StreamCollie.urlToDataKey(jarUrl),
-                    from = fromTopics,
-                    to = toTopics,
-                    metrics = Metrics(Seq.empty),
-                    nodeNames = successfulNodeNames.toSet,
-                    deadNodes = Set.empty,
-                    jmxPort = jmxPort,
-                    state = None,
-                    error = None,
-                    lastModified = CommonUtils.current(),
-                    // We do not care the user parameters since it's stored in configurator already
-                    tags = Map.empty
-                  )
-                }
-            }
+  override protected def doCreator(executionContext: ExecutionContext,
+                                   clusterName: String,
+                                   containerName: String,
+                                   containerInfo: ContainerInfo,
+                                   node: Node,
+                                   jmxPort: Int,
+                                   route: Map[String, String]): Future[Unit] = {
+    implicit val exec: ExecutionContext = executionContext
+    k8sClient
+      .containerCreator()
+      .imageName(containerInfo.imageName)
+      .nodeName(containerInfo.nodeName)
+      .hostname(s"${containerInfo.name}$DIVIDER${node.name}")
+      .name(containerInfo.name)
+      .labelName(OHARA_LABEL)
+      .domainName(K8S_DOMAIN_NAME)
+      .portMappings(Map(jmxPort -> jmxPort))
+      .routes(route)
+      .envs(containerInfo.environments)
+      .args(StreamCollie.formatJMXProperties(node.name, jmxPort) :+ StreamCollie.MAIN_ENTRY)
+      .threadPool(executionContext)
+      .create()
+      .recover {
+        case e: Throwable =>
+          LOG.error(s"failed to start ${containerInfo.imageName} on ${node.name}", e)
+          None
       }
-    }
+      .map(_ => Unit)
+  }
 
   override protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[StreamClusterInfo] =
@@ -135,4 +73,7 @@ private class K8SStreamCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
     previousContainers: Seq[ContainerInfo],
     newNodeName: String)(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] =
     Future.failed(new UnsupportedOperationException("stream collie doesn't support to add node from a running cluster"))
+
+  override protected def nodeCollie: NodeCollie = node
+  override protected def prefixKey: String = PREFIX_KEY
 }

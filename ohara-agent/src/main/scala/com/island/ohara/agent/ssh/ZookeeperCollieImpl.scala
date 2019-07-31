@@ -31,8 +31,8 @@ private class ZookeeperCollieImpl(node: NodeCollie, dockerCache: DockerClientCac
                                    containerName: String,
                                    containerInfo: ContainerInfo,
                                    node: Node,
-                                   route: Map[String, String]): Unit = {
-    try {
+                                   route: Map[String, String]): Future[Unit] =
+    Future.successful(try {
       dockerCache.exec(
         node,
         _.containerCreator()
@@ -52,10 +52,9 @@ private class ZookeeperCollieImpl(node: NodeCollie, dockerCache: DockerClientCac
           case _: Throwable =>
           // do nothing
         }
-        LOG.error(s"failed to start $clusterName", e)
+        LOG.error(s"failed to start ${containerInfo.imageName} on ${node.name}", e)
         None
-    }
-  }
+    })
 
   override protected def postCreateZookeeperCluster(clusterInfo: ClusterInfo,
                                                     successfulContainers: Seq[ContainerInfo]): Unit = {
