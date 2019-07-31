@@ -153,7 +153,7 @@ private[configurator] object PipelineRoute {
                                                       meterCache: MeterCache): Future[Pipeline] =
     Future
       .traverse(pipeline.flows.flatMap(flow => flow.to ++ Set(flow.from)))(store.raws)
-      .map(_.flatten)
+      .map(_.flatten.toSet)
       .flatMap(Future.traverse(_) { obj =>
         toAbstract(obj).recoverWith {
           case e: Throwable => toAbstract(obj, Some(e.getMessage))
@@ -182,7 +182,7 @@ private[configurator] object PipelineRoute {
           name = creation.name,
           flows = creation.flows,
           workerClusterName = creation.workerClusterName,
-          objects = Seq.empty,
+          objects = Set.empty,
           lastModified = CommonUtils.current(),
           tags = creation.tags
         ))
@@ -198,7 +198,7 @@ private[configurator] object PipelineRoute {
           name = key.name,
           flows = update.flows.getOrElse(previous.map(_.flows).getOrElse(Seq.empty)),
           workerClusterName = update.workerClusterName.orElse(previous.flatMap(_.workerClusterName)),
-          objects = previous.map(_.objects).getOrElse(Seq.empty),
+          objects = previous.map(_.objects).getOrElse(Set.empty),
           lastModified = CommonUtils.current(),
           tags = update.tags.getOrElse(previous.map(_.tags).getOrElse(Map.empty))
         ))

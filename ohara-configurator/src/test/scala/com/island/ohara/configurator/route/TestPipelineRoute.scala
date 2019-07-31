@@ -296,6 +296,17 @@ class TestPipelineRoute extends MediumTest with Matchers {
     result(pipelineApi.list()).size shouldBe 3
   }
 
+  @Test
+  def testDuplicateObjects(): Unit = {
+    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
+
+    val pipeline = result(
+      pipelineApi.request.flows(Seq(Flow(topic.key, Set(topic.key)), Flow(topic.key, Set(topic.key)))).create())
+
+    pipeline.objects.size shouldBe 1
+    pipeline.objects.head.key shouldBe topic.key
+  }
+
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }

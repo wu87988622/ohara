@@ -54,7 +54,7 @@ class TestPipelineApi extends SmallTest with Matchers {
       group = CommonUtils.randomString(),
       name = CommonUtils.randomString(),
       workerClusterName = Some(CommonUtils.randomString()),
-      objects = Seq.empty,
+      objects = Set.empty,
       flows = Seq.empty,
       lastModified = CommonUtils.current(),
       tags = Map.empty
@@ -71,7 +71,7 @@ class TestPipelineApi extends SmallTest with Matchers {
       group = CommonUtils.randomString(),
       name = CommonUtils.randomString(),
       workerClusterName = Some(CommonUtils.randomString()),
-      objects = Seq.empty,
+      objects = Set.empty,
       flows = Seq(
         Flow(
           from = from,

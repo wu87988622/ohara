@@ -178,7 +178,7 @@ object PipelineApi {
   final case class Pipeline(group: String,
                             name: String,
                             flows: Seq[Flow],
-                            objects: Seq[ObjectAbstract],
+                            objects: Set[ObjectAbstract],
                             workerClusterName: Option[String],
                             lastModified: Long,
                             tags: Map[String, JsValue])
@@ -204,7 +204,7 @@ object PipelineApi {
         .get(flowsKey)
         .map(_.asInstanceOf[JsArray].elements.map(FLOW_JSON_FORMAT.read).toSeq)
         .getOrElse(Seq.empty),
-      objects = noJsNull(json)(objectsKey).asInstanceOf[JsArray].elements.map(OBJECT_ABSTRACT_JSON_FORMAT.read),
+      objects = noJsNull(json)(objectsKey).asInstanceOf[JsArray].elements.map(OBJECT_ABSTRACT_JSON_FORMAT.read).toSet,
       lastModified = noJsNull(json)(lastModifiedKey).asInstanceOf[JsNumber].value.toLong,
       tags = noJsNull(json)(Data.TAGS_KEY).asJsObject.fields
     )
