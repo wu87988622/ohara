@@ -49,15 +49,8 @@ const useWaitApi = () => {
         return;
       }
 
-      const newParams = {
-        url,
-        checkFn,
-        retryCount: retryCount + 1,
-        maxRetry,
-        sleep,
-      };
       await commonUtils.sleep(sleep);
-      await request(newParams);
+      await request({ ...params, retryCount: retryCount + 1 });
     } catch (err) {
       showMessage('Wait is failed');
       finish.current = false;

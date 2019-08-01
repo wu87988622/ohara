@@ -25,6 +25,7 @@ import DialogContent from '@material-ui/core/DialogContent';
 import { Form, Field } from 'react-final-form';
 import { Link } from 'react-router-dom';
 import { isEmpty, get, split, isUndefined, uniq } from 'lodash';
+import { ERROR } from 'jest-validate/build/utils';
 
 import * as s from './styles';
 import * as generate from 'utils/generate';
@@ -38,7 +39,7 @@ import { InputField } from 'components/common/Mui/Form';
 import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import * as useApi from 'components/controller';
 import * as URL from 'components/controller/url';
-import { ERROR } from 'jest-validate/build/utils';
+import useCreateServices from './useCreateServices';
 
 const WorkerNewModal = props => {
   const [checkedNodes, setCheckedNodes] = useState([]);
@@ -49,15 +50,6 @@ const WorkerNewModal = props => {
   const [activeStep, setActiveStep] = useState(0);
   const [deleteType, setDeleteType] = useState(false);
   const { showMessage } = useSnackbar();
-  const { getData: worker, postApi: createWorker } = useApi.usePostApi(
-    URL.WORKER_URL,
-  );
-  const { getData: broker, postApi: createBroker } = useApi.usePostApi(
-    URL.BROKER_URL,
-  );
-  const { getData: zookeeper, postApi: createZookeeper } = useApi.usePostApi(
-    URL.ZOOKEEPER_URL,
-  );
   const { getData: jarRes, uploadApi } = useApi.useUploadApi(URL.FILE_URL);
   const { deleteApi: deleteJar } = useApi.useDeleteApi(URL.FILE_URL);
   const { deleteApi: deleteWorker } = useApi.useDeleteApi(URL.WORKER_URL);
@@ -67,6 +59,16 @@ const WorkerNewModal = props => {
   const { putApi: putZookeeper } = useApi.usePutApi(URL.ZOOKEEPER_URL);
   const { putApi: putBroker } = useApi.usePutApi(URL.BROKER_URL);
   const { waitApi, getFinish } = useApi.useWaitApi();
+  const {
+    create: createZookeeper,
+    handleFail: handleZookeeper,
+  } = useCreateServices(URL.ZOOKEEPER_URL);
+  const { create: createBroker, handleFail: handleBroker } = useCreateServices(
+    URL.BROKER_URL,
+  );
+  const { create: createWorker, handleFail: handleWorker } = useCreateServices(
+    URL.WORKER_URL,
+  );
 
   let workingServices = [];
   let plugins = [];
@@ -270,7 +272,7 @@ const WorkerNewModal = props => {
     };
 
     const zookeeperName = generate.serviceName();
-    await createZookeeper({
+    const zookeeperPostParams = {
       name: zookeeperName,
       clientPort: generate.port(),
       peerPort: generate.port(),
@@ -284,40 +286,27 @@ const WorkerNewModal = props => {
       // now specifying only one zookeeper when creating services. `nodeNames[0]`👇
       // and once the bug is fixed we will then apply the rule two in frontend :)
       nodeNames: [nodeNames[0]],
-    });
-    const zookeeperClusterName = get(zookeeper(), 'data.result.name');
-    if (!zookeeperClusterName) throw new ERROR();
-    await putZookeeper(`/${zookeeperName}/start`);
-    const zkParams = {
-      url: `${URL.ZOOKEEPER_URL}/${zookeeperClusterName}`,
-      checkFn: checkResult,
     };
-    await waitApi(zkParams);
-    if (!getFinish()) throw new ERROR();
+    await createZookeeper({
+      postParams: zookeeperPostParams,
+      checkResult,
+    });
+    if (handleZookeeper()) throw new ERROR();
     setActiveStep(1);
+    saveService({ service: 'zookeeper', name: zookeeperName });
 
-    saveService({ service: 'zookeeper', name: zookeeperClusterName });
-
-    await createBroker({
-      name: generate.serviceName(),
-      zookeeperClusterName,
+    const brokerClusterName = generate.serviceName();
+    const brokerPostParams = {
+      name: brokerClusterName,
+      zookeeperClusterName: zookeeperName,
       clientPort: generate.port(),
       exporterPort: generate.port(),
       jmxPort: generate.port(),
       nodeNames,
-    });
-
-    const brokerClusterName = get(broker(), 'data.result.name');
-    if (!brokerClusterName) throw new ERROR();
-    await putBroker(`/${brokerClusterName}/start`);
-    const bkParams = {
-      url: `${URL.BROKER_URL}/${brokerClusterName}`,
-      checkFn: checkResult,
     };
-    await waitApi(bkParams);
-    if (!getFinish()) throw new ERROR();
+    await createBroker({ postParams: brokerPostParams, checkResult });
+    if (handleBroker()) throw new ERROR();
     setActiveStep(2);
-
     saveService({ service: 'broker', name: brokerClusterName });
 
     const jars = plugins.map(jar => {
@@ -327,7 +316,7 @@ const WorkerNewModal = props => {
       };
     });
 
-    await createWorker({
+    const workerPostParams = {
       name: validateServiceName(values.name),
       nodeNames,
       jars,
@@ -338,22 +327,20 @@ const WorkerNewModal = props => {
       configTopicName: generate.serviceName(),
       offsetTopicName: generate.serviceName(),
       statusTopicName: generate.serviceName(),
-    });
+    };
 
-    const workerClusterName = get(worker(), 'data.result.name');
-    if (!workerClusterName) throw new ERROR();
     const checkContainerResult = res => {
       return 'RUNNING' === get(res, 'data.result[0].containers[0].state', null);
     };
-    const wkParams = {
-      url: `${URL.CONTAINER_URL}/${workerClusterName}`,
-      checkFn: checkContainerResult,
-    };
-    await waitApi(wkParams);
-    if (!getFinish()) throw new ERROR();
+    await createWorker({
+      postParams: workerPostParams,
+      checkResult: checkContainerResult,
+      needStart: false,
+      waitUrl: URL.CONTAINER_URL,
+    });
+    if (handleWorker()) throw new ERROR();
     setActiveStep(3);
-
-    saveService({ service: 'worker', name: workerClusterName });
+    saveService({ service: 'worker', name: values.name });
   };
 
   const onSubmit = async (values, form) => {
@@ -364,7 +351,6 @@ const WorkerNewModal = props => {
       await createServices(values);
     } catch (error) {
       // Ignore the error, that's handled in the API request handler
-
       await deleteAllServices();
       resetModal(form);
       return;
