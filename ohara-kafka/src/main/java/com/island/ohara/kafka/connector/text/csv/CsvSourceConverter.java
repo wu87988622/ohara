@@ -19,6 +19,7 @@ package com.island.ohara.kafka.connector.text.csv;
 import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.data.*;
 import com.island.ohara.common.util.CommonUtils;
+import com.island.ohara.common.util.StreamUtils;
 import com.island.ohara.kafka.connector.RowSourceRecord;
 import com.island.ohara.kafka.connector.text.TextSourceConverter;
 import java.io.BufferedReader;

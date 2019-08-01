@@ -1,0 +1,202 @@
+/*
+ * Copyright 2019 is-land
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.island.ohara.kafka.connector.csv;
+
+import com.island.ohara.common.annotations.VisibleForTesting;
+import com.island.ohara.common.data.Column;
+import com.island.ohara.kafka.connector.TaskSetting;
+import java.util.*;
+
+/** This class is used to define the configuration of CsvSinkTask. */
+public class CsvSinkConfig {
+  public static final String TOPICS_DIR_CONFIG = "topics.dir";
+
+  public static final String FLUSH_SIZE_CONFIG = "flush.size";
+
+  public static final int FLUSH_SIZE_DEFAULT = 1000;
+
+  public static final String ROTATE_INTERVAL_MS_CONFIG = "rotate.interval.ms";
+
+  public static final long ROTATE_INTERVAL_MS_DEFAULT = 60000;
+
+  public static final String FILE_NEED_HEADER_CONFIG = "file.need.header";
+
+  public static final boolean FILE_NEED_HEADER_DEFAULT = true;
+
+  public static final String FILE_ENCODE_CONFIG = "file.encode";
+
+  public static final String FILE_ENCODE_DEFAULT = "UTF-8";
+
+  /**
+   * Creates a CsvSinkConfig based on raw input.
+   *
+   * @param props raw input
+   * @param schema the schema
+   * @return CsvSinkConfig
+   */
+  public static CsvSinkConfig of(Map<String, String> props, List<Column> schema) {
+    return of(TaskSetting.of(props), schema);
+  }
+
+  /**
+   * Create a CsvSinkConfig based on task setting definitions. This method is used by CsvSinkTask.
+   *
+   * @param setting setting definitions
+   * @param schema the schema
+   * @return an object of CsvSinkConfig
+   */
+  public static CsvSinkConfig of(TaskSetting setting, List<Column> schema) {
+    Builder builder = new Builder();
+
+    Optional<String> topicDir = setting.stringOption(TOPICS_DIR_CONFIG);
+    if (topicDir.isPresent()) {
+      builder.topicsDir(topicDir.get());
+    }
+
+    Optional<Integer> flushSize = setting.intOption(FLUSH_SIZE_CONFIG);
+    if (flushSize.isPresent()) {
+      builder.flushSize(flushSize.get());
+    }
+
+    Optional<Long> rotateIntervalMs = setting.longOption(ROTATE_INTERVAL_MS_CONFIG);
+    if (rotateIntervalMs.isPresent()) {
+      builder.rotateIntervalMs(rotateIntervalMs.get());
+    }
+
+    Optional<Boolean> needHeader = setting.booleanOption(FILE_NEED_HEADER_CONFIG);
+    if (needHeader.isPresent()) {
+      builder.needHeader(needHeader.get());
+    }
+
+    Optional<String> encode = setting.stringOption(FILE_ENCODE_CONFIG);
+    if (encode.isPresent()) {
+      builder.encode(encode.get());
+    }
+
+    if (schema != null) {
+      builder.schema(schema);
+    } else {
+      builder.schema(setting.columns());
+    }
+
+    return builder.build();
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static class Builder implements com.island.ohara.common.pattern.Builder<CsvSinkConfig> {
+    private String topicsDir;
+    private int flushSize = FLUSH_SIZE_DEFAULT;
+    private long rotateIntervalMs = ROTATE_INTERVAL_MS_DEFAULT;
+    private boolean needHeader = FILE_NEED_HEADER_DEFAULT;
+    private String encode = FILE_ENCODE_DEFAULT;
+    private List<Column> schema;
+
+    public Builder topicsDir(String val) {
+      topicsDir = val;
+      return this;
+    }
+
+    @com.island.ohara.common.annotations.Optional("default is " + FLUSH_SIZE_DEFAULT)
+    public Builder flushSize(int val) {
+      flushSize = val;
+      return this;
+    }
+
+    @com.island.ohara.common.annotations.Optional("default is " + ROTATE_INTERVAL_MS_DEFAULT)
+    public Builder rotateIntervalMs(long val) {
+      rotateIntervalMs = val;
+      return this;
+    }
+
+    @com.island.ohara.common.annotations.Optional("default is " + FILE_ENCODE_DEFAULT)
+    public Builder encode(String val) {
+      encode = val;
+      return this;
+    }
+
+    @com.island.ohara.common.annotations.Optional("default is " + FILE_NEED_HEADER_DEFAULT)
+    public Builder needHeader(boolean val) {
+      needHeader = val;
+      return this;
+    }
+
+    public Builder schema(List<Column> val) {
+      schema = val;
+      return this;
+    }
+
+    @Override
+    public CsvSinkConfig build() {
+      Objects.requireNonNull(topicsDir);
+      return new CsvSinkConfig(this);
+    }
+  }
+
+  private final int flushSize;
+  private final long rotateIntervalMs;
+  private final String topicsDir;
+  private final String encode;
+  private final boolean needHeader;
+  private final List<Column> schema;
+
+  private CsvSinkConfig(Builder builder) {
+    this.topicsDir = builder.topicsDir;
+    this.flushSize = builder.flushSize;
+    this.rotateIntervalMs = builder.rotateIntervalMs;
+    this.encode = builder.encode;
+    this.needHeader = builder.needHeader;
+    this.schema = builder.schema;
+  }
+
+  public int flushSize() {
+    return flushSize;
+  }
+
+  public long rotateIntervalMs() {
+    return rotateIntervalMs;
+  }
+
+  public String topicsDir() {
+    return topicsDir;
+  }
+
+  public String encode() {
+    return encode;
+  }
+
+  public boolean needHeader() {
+    return needHeader;
+  }
+
+  public List<Column> schema() {
+    return schema;
+  }
+
+  @VisibleForTesting
+  public Map<String, String> toProps() {
+    Map<String, String> props = new HashMap<>();
+    props.put(TOPICS_DIR_CONFIG, topicsDir);
+    props.put(FLUSH_SIZE_CONFIG, String.valueOf(flushSize));
+    props.put(ROTATE_INTERVAL_MS_CONFIG, String.valueOf(rotateIntervalMs));
+    props.put(FILE_NEED_HEADER_CONFIG, String.valueOf(needHeader));
+    props.put(FILE_ENCODE_CONFIG, encode);
+    return props;
+  }
+}

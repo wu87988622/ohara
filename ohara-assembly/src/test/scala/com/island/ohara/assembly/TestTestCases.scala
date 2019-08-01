@@ -16,6 +16,7 @@
 
 package com.island.ohara.assembly
 
+import com.island.ohara.common.annotations.IgnoreNamingRule
 import com.island.ohara.common.rule.{LargeTest, MediumTest, SmallTest}
 import com.island.ohara.it.IntegrationTest
 import org.junit.Test
@@ -81,6 +82,7 @@ class TestTestCases extends MediumTest with Matchers {
     val invalidClasses = classesInTestScope()
       .filterNot(isAnonymous)
       .filterNot(ignoredTestClasses.contains)
+      .filterNot(clz => clz.isAnnotationPresent(classOf[IgnoreNamingRule]))
       .map(clz => clz -> superClasses(clz))
       .filter {
         case (_, supers) => supers.exists(validTestGroups.contains)

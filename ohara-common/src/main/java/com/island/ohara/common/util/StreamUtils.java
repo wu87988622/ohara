@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.kafka.connector.text.csv;
+package com.island.ohara.common.util;
 
 import com.island.ohara.common.data.Pair;
 import java.util.*;
@@ -22,21 +22,34 @@ import java.util.function.BiFunction;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-final class StreamUtils {
+/** This is a stream helper. */
+public final class StreamUtils {
 
-  // Suppress default constructor for noninstantiability
+  /** Suppress default constructor for noninstantiability */
   private StreamUtils() {
     throw new AssertionError();
   }
 
-  /** Converts an {@link java.util.Iterator} to {@link java.util.stream.Stream}. */
+  /**
+   * Converts an {@link java.util.Iterator} to {@link java.util.stream.Stream}.
+   *
+   * @param iterator an {@link java.util.Iterator}
+   * @param <T> the type of the stream elements
+   * @return an {@link java.util.stream.Stream}
+   */
   public static <T> Stream<T> iterate(Iterator<? extends T> iterator) {
     int characteristics = Spliterator.ORDERED | Spliterator.IMMUTABLE;
     return StreamSupport.stream(
         Spliterators.spliteratorUnknownSize(iterator, characteristics), false);
   }
 
-  /** Zips the specified stream with its indices. */
+  /**
+   * Zips the specified stream with its indices.
+   *
+   * @param stream an {@link java.util.stream.Stream}
+   * @param <T> the type of the stream elements
+   * @return a stream consisting of the results with index
+   */
   public static <T> Stream<Pair<Integer, T>> zipWithIndex(Stream<? extends T> stream) {
     return iterate(
         new Iterator<Pair<Integer, T>>() {
@@ -59,6 +72,12 @@ final class StreamUtils {
    * Returns a stream consisting of the results of applying the given two-arguments function to the
    * elements of this stream. The first argument of the function is the element index and the second
    * one - the element value.
+   *
+   * @param stream an input stream
+   * @param mapper a function that accepts two arguments and produces a result
+   * @param <T> the type of the source stream elements
+   * @param <R> the type of the result stream elements
+   * @return a stream consisting of the results
    */
   public static <T, R> Stream<R> mapWithIndex(
       Stream<? extends T> stream, BiFunction<Integer, ? super T, ? extends R> mapper) {
