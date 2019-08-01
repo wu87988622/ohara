@@ -36,19 +36,19 @@ describe('<WorkspacesPage />', () => {
   const workspaceName = generate.serviceName();
   beforeEach(() => {
     jest.spyOn(useApi, 'usePostApi').mockImplementation(() => {
-      return { getData: () => {} };
+      return { getData: jest.fn() };
     });
 
     jest.spyOn(useApi, 'useUploadApi').mockImplementation(() => {
-      return { getData: () => {} };
+      return { getData: jest.fn() };
     });
 
     jest.spyOn(useApi, 'useDeleteApi').mockImplementation(() => {
-      return { deleteApi: () => {} };
+      return { deleteApi: jest.fn() };
     });
 
     jest.spyOn(useApi, 'useGetApi').mockImplementation(() => {
-      return { getData: () => {} };
+      return { getData: jest.fn() };
     });
 
     jest.spyOn(useApi, 'useFetchApi').mockImplementation(() => {
@@ -68,7 +68,7 @@ describe('<WorkspacesPage />', () => {
     });
 
     jest.spyOn(useApi, 'usePutApi').mockImplementation(() => {
-      return { putApi: () => {} };
+      return { putApi: jest.fn() };
     });
   });
 

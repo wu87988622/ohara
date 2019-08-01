@@ -40,15 +40,15 @@ describe('<Nodes />', () => {
     };
 
     jest.spyOn(useApi, 'useGetApi').mockImplementation(() => {
-      return { getData: () => {} };
+      return { getData: jest.fn() };
     });
 
     jest.spyOn(useApi, 'usePutApi').mockImplementation(() => {
-      return { putApi: () => {} };
+      return { putApi: jest.fn() };
     });
 
     jest.spyOn(useApi, 'useFetchApi').mockImplementation(url => {
-      if (url === URL.WORKER_URL + '/' + props.workspaceName) {
+      if (url === `${URL.WORKER_URL}/${props.workspaceName}`) {
         return {
           data: {
             data: {

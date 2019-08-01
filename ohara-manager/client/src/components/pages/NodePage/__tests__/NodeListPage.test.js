@@ -258,6 +258,7 @@ describe('<NodeListPage />', () => {
       expect(saveButton).toBeDisabled();
     });
 
+    //In jest we cant't change hooks useState, so we cant't test this task.
     it.skip('enables save button when there is new change made in the form', async () => {
       const { getByTestId } = await waitForElement(() =>
         renderWithProvider(<NodeListPage />),
