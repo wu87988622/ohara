@@ -23,12 +23,12 @@ describe('addPipelineStatus()', () => {
         objects: [
           {
             name: 'a',
-            kind: 'Source',
+            kind: 'source',
             state: 'RUNNING',
           },
           {
             name: 'b',
-            kind: 'Sink',
+            kind: 'sink',
             state: 'RUNNING',
           },
         ],
@@ -37,11 +37,11 @@ describe('addPipelineStatus()', () => {
         objects: [
           {
             name: 'c',
-            kind: 'Source',
+            kind: 'source',
           },
           {
             name: 'd',
-            kind: 'Sink',
+            kind: 'sink',
           },
         ],
       },

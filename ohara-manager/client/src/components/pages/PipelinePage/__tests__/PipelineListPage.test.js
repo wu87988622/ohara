@@ -15,42 +15,21 @@
  */
 
 import React from 'react';
-import toastr from 'toastr';
-import { shallow } from 'enzyme';
+import { cleanup, waitForElement, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom/extend-expect';
 
-import * as MESSAGES from 'constants/messages';
 import PipelineListPage from '../PipelineListPage';
 import { PIPELINE } from 'constants/documentTitles';
-import { getTestById } from 'utils/testUtils';
+import { renderWithRouter, renderWithProvider } from 'utils/testUtils';
 import { fetchWorkers } from 'api/workerApi';
-import {
-  createPipeline,
-  deletePipeline,
-  fetchPipelines,
-} from 'api/pipelineApi';
+import { fetchPipelines } from 'api/pipelineApi';
+import * as generate from 'utils/generate';
+import * as URLS from 'constants/urls';
 
-jest.mock('api/pipelineApi');
-jest.mock('../pipelineUtils/commonUtils');
+jest.mock('api/infoApi');
 jest.mock('api/workerApi');
-
-const pipelines = [
-  {
-    name: 'a',
-    workerClusterName: 'worker-a',
-    status: 'Stopped',
-    id: '1234',
-    objects: [{ abc: 'def', kind: 'topic', id: '123' }],
-  },
-  {
-    name: 'b',
-    workerClusterName: 'worker-b',
-    status: 'Running',
-    id: '5678',
-    objects: [{ def: 'abc', kind: 'topic', id: '456' }],
-  },
-];
-
-fetchPipelines.mockImplementation(() => Promise.resolve(pipelines));
+jest.mock('api/pipelineApi');
+jest.mock('api/workerApi');
 
 const props = {
   match: {
@@ -59,175 +38,231 @@ const props = {
   history: { push: jest.fn() },
 };
 
+jest.doMock('../PipelineToolbar', () => {
+  const PipelineToolbar = () => <div />;
+  return PipelineToolbar;
+});
+
+afterEach(cleanup);
+
+const workers = generate.workers({ count: 1 });
+const pipelines = [
+  {
+    name: 'a',
+    workerClusterName: 'worker-a',
+    status: 'Stopped',
+    id: '1234',
+    objects: [
+      { kind: 'topic', id: '123', name: 'bb' },
+      { kind: 'source', id: '789', name: 'dd' },
+    ],
+  },
+  {
+    name: 'b',
+    workerClusterName: 'worker-b',
+    status: 'Running',
+    id: '5678',
+    objects: [
+      { kind: 'topic', id: '456', name: 'aa' },
+      { kind: 'source', id: '012', name: 'cc' },
+    ],
+  },
+];
+
 describe('<PipelineListPage />', () => {
-  let wrapper;
   beforeEach(() => {
-    wrapper = shallow(<PipelineListPage {...props} />);
-    jest.clearAllMocks();
-  });
-
-  it('renders <DocumentTitle />', () => {
-    expect(wrapper.dive().name()).toBe('DocumentTitle');
-    expect(wrapper.dive().props().title).toBe(PIPELINE);
-  });
-
-  it('renders a loading indicator when the pipeline data is still loading', () => {
-    wrapper.setState({ isFetchingPipeline: true });
-    expect(wrapper.find('TableLoader').length).toBe(1);
-
-    wrapper.setState({ isFetchingPipeline: false });
-    expect(wrapper.find('TableLoader').length).toBe(0);
-  });
-
-  it('renders <H2 />', () => {
-    const h2 = wrapper.find('H2');
-    expect(h2.length).toBe(1);
-    expect(h2.children().text()).toBe('Pipelines');
-  });
-
-  it('renders <NewPipelineBtn>', () => {
-    expect(wrapper.find('NewPipelineBtn').length).toBe(1);
-    expect(wrapper.find('NewPipelineBtn').props().text).toBe('New pipeline');
-  });
-
-  it('creates a new pipeline', async () => {
-    const evt = { preventDefault: jest.fn() };
-    const name = '1234';
-    const expectedUrl = `${props.match.url}/new/${name}`;
-    const res = { data: { result: { name } } };
-    const workersRes = {
+    const resWorker = {
       data: {
-        result: [
-          {
-            name: 'worker-1',
-          },
-          {
-            name: 'worker-2',
-          },
-        ],
+        result: workers,
       },
     };
 
-    createPipeline.mockImplementation(() => Promise.resolve(res));
-    fetchWorkers.mockImplementation(() => Promise.resolve(workersRes));
+    fetchWorkers.mockImplementation(() => Promise.resolve(resWorker));
 
-    wrapper.find('NewPipelineBtn').prop('handleClick')(evt);
+    const resPipelines = {
+      data: {
+        result: pipelines,
+      },
+    };
 
-    expect(wrapper.find('Modal').props().isActive).toBe(true);
+    fetchPipelines.mockImplementation(() => Promise.resolve(resPipelines));
+  });
 
-    await wrapper.find('Modal').prop('handleConfirm')();
+  it('renders page title', async () => {
+    renderWithRouter(<PipelineListPage {...props} />);
+    expect(document.title).toBe(PIPELINE);
+  });
 
-    expect(wrapper.find('Modal').props().isActive).toBe(false);
-    expect(toastr.success).toHaveBeenCalledTimes(1);
-    expect(toastr.success).toHaveBeenCalledWith(
-      MESSAGES.PIPELINE_CREATION_SUCCESS,
+  it('renders page heading', async () => {
+    const { getByText } = await waitForElement(() =>
+      renderWithRouter(<PipelineListPage {...props} />),
     );
-    expect(props.history.push).toHaveBeenCalledTimes(1);
-    expect(props.history.push).toHaveBeenCalledWith(expectedUrl);
+    getByText('Pipelines');
   });
 
-  it(`toggles <Modal />'s confirm button state if there's no worker cluster present`, async () => {
-    const workersRes = {
+  it('renders a loading indicator when the pipeline data is still loading', async () => {
+    const { getByTestId } = renderWithRouter(<PipelineListPage {...props} />);
+    getByTestId('table-loader');
+  });
+
+  it('renders new pipeline button', async () => {
+    const { getByText } = await waitForElement(() =>
+      renderWithRouter(<PipelineListPage {...props} />),
+    );
+    getByText('New pipeline');
+  });
+
+  it('toggles new pipeline modal', async () => {
+    const { getByText, getByTestId, queryByTestId } = await waitForElement(() =>
+      renderWithRouter(<PipelineListPage {...props} />),
+    );
+    expect(queryByTestId('new-pipeline-modal')).toBeNull();
+    fireEvent.click(getByTestId('new-pipeline'));
+
+    expect(queryByTestId('new-pipeline-modal')).not.toBeNull();
+
+    fireEvent.click(getByText('Cancel'));
+    expect(queryByTestId('new-pipeline-modal')).toBeNull();
+  });
+
+  it(`renders new pipeline modal's content`, async () => {
+    const {
+      getByText,
+      getAllByText,
+      getByTestId,
+      getByLabelText,
+    } = await waitForElement(() =>
+      renderWithRouter(<PipelineListPage {...props} />),
+    );
+
+    fireEvent.click(getByTestId('new-pipeline'));
+
+    // Modal title
+    getAllByText('New pipeline');
+
+    // label
+    getByText('Pipeline name');
+    getByLabelText('Pipeline name');
+
+    // select
+    getByText('Workspace name');
+    getByTestId('cluster-select');
+
+    expect(getByTestId('cluster-select').length).toBe(workers.length);
+
+    expect(getByText('Add')).not.toBeDisabled();
+  });
+
+  it(`displays a redirect message when there's no workspace in the dropdown`, async () => {
+    const workerResponse = {
       data: {
-        result: [
-          {
-            name: 'worker-1',
-          },
-        ],
+        result: [],
       },
     };
 
-    wrapper.setState({ workers: [], currWorker: {} });
-    expect(wrapper.find('Modal').props().isConfirmDisabled).toBe(true);
+    fetchWorkers.mockImplementation(() => Promise.resolve(workerResponse));
 
-    fetchWorkers.mockImplementation(() => Promise.resolve(workersRes));
-    wrapper = await shallow(<PipelineListPage {...props} />);
+    const { getByText, getByTestId, queryByTestId } = await waitForElement(() =>
+      renderWithRouter(<PipelineListPage {...props} />),
+    );
 
-    expect(wrapper.find('Modal').props().isConfirmDisabled).toBe(false);
+    fireEvent.click(getByTestId('new-pipeline'));
+
+    // If there's no workspace in the select
+    expect(queryByTestId('cluster-select')).toBeNull();
+
+    expect(getByTestId('warning-message').textContent).toBe(
+      "It seems like you haven't created any worker clusters yet. You can create one from here",
+    );
+
+    const expectedUrl = generate.serverHost() + URLS.WORKSPACES;
+    expect(getByText('here').href).toBe(expectedUrl);
+
+    expect(getByText('Add')).toBeDisabled();
   });
 
-  it('renders <ConfirmModal />', () => {
-    const modal = wrapper.find('AlertDialog');
-    const _props = modal.props();
+  it('renders pipeline data list', async () => {
+    const { getByText, getAllByTestId } = await waitForElement(() =>
+      renderWithRouter(<PipelineListPage {...props} />),
+    );
 
-    expect(modal.length).toBe(1);
-    expect(_props.open).toBe(false);
+    getByText('name');
+    getByText('workspace');
+    getByText('status');
+    getByText('edit');
+    getByText('delete');
+
+    const pipelineTr = await waitForElement(() =>
+      getAllByTestId('pipeline-tr'),
+    );
+
+    expect(pipelineTr.length).toBe(pipelines.length);
   });
 
-  it('successfully deletes the first pipeline', async () => {
-    wrapper.setState({ pipelines });
-    const pipelineName = pipelines[0].name;
-    const res = {
-      data: { result: { name: pipelineName }, isSuccess: true },
+  it('toggles delete pipeline modal', async () => {
+    const pipelineName = generate.name();
+
+    const pipelines = [
+      {
+        name: pipelineName,
+        workerClusterName: 'worker-a',
+        status: 'Stopped',
+        id: '1234',
+        objects: [
+          { kind: 'topic', id: '123', name: 'bb' },
+          { kind: 'source', id: '789', name: 'dd' },
+        ],
+      },
+    ];
+
+    const pipelineResponse = {
+      data: {
+        result: pipelines,
+      },
     };
-    const expectedSuccessMsg = `${MESSAGES.PIPELINE_DELETION_SUCCESS} ${pipelineName}`;
 
-    deletePipeline.mockImplementation(() => Promise.resolve(res));
+    fetchPipelines.mockImplementation(() => Promise.resolve(pipelineResponse));
 
-    expect(wrapper.find('Table tr').length).toBe(2);
+    const { getByText, getByTestId } = await waitForElement(() =>
+      renderWithProvider(<PipelineListPage {...props} />),
+    );
 
-    wrapper
-      .find(getTestById('delete-pipeline'))
-      .at(0)
-      .find('DeleteIcon')
-      .prop('onClick')(pipelineName);
+    fireEvent.click(getByTestId('delete-pipeline-btn'));
 
-    expect(wrapper.find('AlertDialog').props().open).toBe(true);
-    await wrapper.find('AlertDialog').prop('handleConfirm')();
-    expect(deletePipeline).toHaveBeenCalledTimes(1);
-    expect(deletePipeline).toHaveBeenCalledWith(pipelineName);
-    expect(toastr.success).toHaveBeenCalledTimes(1);
-    expect(toastr.success).toHaveBeenCalledWith(expectedSuccessMsg);
-    expect(wrapper.find('Table tr').length).toBe(1);
+    getByTestId('delete-dialog');
+    getByText('Delete pipeline?');
+    getByText(
+      `Are you sure you want to delete the pipeline: ${pipelineName}? This action cannot be undone!`,
+    );
+
+    expect(getByTestId('delete-dialog')).toBeVisible();
+
+    fireEvent.click(getByText('Cancel'));
+    expect(getByTestId('delete-dialog')).not.toBeVisible();
   });
 
-  describe('<DataTable />', () => {
-    let table;
-    beforeEach(() => {
-      wrapper.setState({ pipelines });
-      table = wrapper.find('Table');
+  it('renders new pipeline modal with multiple workspace data', async () => {
+    const workers = generate.workers({ count: 3 });
+
+    const workerResponse = {
+      data: {
+        result: workers,
+      },
+    };
+
+    fetchWorkers.mockImplementation(() => Promise.resolve(workerResponse));
+
+    const { getByTestId } = await waitForElement(() =>
+      renderWithRouter(<PipelineListPage {...props} />),
+    );
+
+    fireEvent.click(getByTestId('new-pipeline'));
+    expect(getByTestId('cluster-select').length).toBe(workers.length);
+
+    fireEvent.change(getByTestId('cluster-select'), {
+      target: { value: workers[1].name },
     });
 
-    it('renders self', () => {
-      expect(table.length).toBe(1);
-    });
-
-    it('renders the correct rows', () => {
-      const rows = table.find('tr');
-      expect(rows.length).toBe(pipelines.length);
-    });
-
-    it('renders <tr /> and <td />', () => {
-      const table = wrapper.find('Table');
-      const rows = table.find('tr');
-
-      const firstRow = rows.at(0).find('td');
-      const secondRow = rows.at(1).find('td');
-
-      const createExpects = pipelines => {
-        return pipelines.map(({ name, workerClusterName, status }) => {
-          return [name, workerClusterName, status, 'LinkIcon', 'DeleteIcon'];
-        });
-      };
-
-      const expected = createExpects(pipelines);
-
-      firstRow.forEach((x, idx) => {
-        if (!x.props().className) {
-          expect(x.text()).toBe(expected[0][idx]);
-        } else if (x.props().className === 'has-icon') {
-          expect(x.children().name()).toBe(expected[0][idx]);
-        }
-      });
-
-      // TODO: add tests for LinkIcon and DeleteIcon
-      secondRow.forEach((x, idx) => {
-        if (!x.props().className) {
-          expect(x.text()).toBe(expected[1][idx]);
-        } else if (x.props().className === 'has-icon') {
-          expect(x.children().name()).toBe(expected[1][idx]);
-        }
-      });
-    });
+    expect(getByTestId('cluster-select').value).toBe(workers[1].name);
   });
 });

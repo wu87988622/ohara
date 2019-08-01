@@ -36,7 +36,6 @@ export const getConnectors = connectors => {
     topics: [],
     streams: [],
   };
-
   const result = connectors.reduce((acc, connector) => {
     const { kind, name } = connector;
 
@@ -50,9 +49,7 @@ export const getConnectors = connectors => {
       // TODO: this should behave the same way as the rest of connectors
       acc.topics.push(connector);
     }
-
     return acc;
   }, init);
-
   return result;
 };

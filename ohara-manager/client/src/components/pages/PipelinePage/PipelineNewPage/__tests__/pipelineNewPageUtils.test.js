@@ -204,8 +204,8 @@ describe('loadGraph()', () => {
   it('creates the correct data structure', () => {
     const pipeline = {
       objects: [
-        { name: 'a', kind: 'Source' },
-        { name: 'b', kind: 'Sink' },
+        { name: 'a', kind: 'source' },
+        { name: 'b', kind: 'sink' },
         { name: 'c', kind: 'topic' },
         {
           name: 'd',
@@ -218,7 +218,7 @@ describe('loadGraph()', () => {
     const connectorName = 'a';
 
     const expected = [
-      { name: 'a', kind: 'Source', to: ['c'], isActive: true },
+      { name: 'a', kind: 'source', to: ['c'], isActive: true },
       {
         name: 'c',
         kind: 'topic',
@@ -226,7 +226,7 @@ describe('loadGraph()', () => {
         to: ['b'],
         isActive: false,
       },
-      { name: 'b', kind: 'Sink', to: [], isActive: false },
+      { name: 'b', kind: 'sink', to: [], isActive: false },
       {
         name: 'd',
         kind: 'streamApp',

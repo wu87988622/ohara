@@ -60,14 +60,13 @@ const AlertDialog = props => {
   } = props;
 
   return (
-    <>
-      <Dialog
-        maxWidth="xs"
-        open={open}
-        onClose={handleClose}
-        data-testid={testId}
-        PaperComponent={DrabblePaper}
-      >
+    <Dialog
+      maxWidth="xs"
+      open={open}
+      onClose={handleClose}
+      PaperComponent={DrabblePaper}
+    >
+      <div data-testid={testId}>
         <DialogTitle>{title}</DialogTitle>
         <DialogContent>
           <DialogContentText>{content}</DialogContentText>
@@ -88,8 +87,8 @@ const AlertDialog = props => {
             {isWorking && <Progress size={14} />}
           </ButtonWrapper>
         </DialogActions>
-      </Dialog>
-    </>
+      </div>
+    </Dialog>
   );
 };
 

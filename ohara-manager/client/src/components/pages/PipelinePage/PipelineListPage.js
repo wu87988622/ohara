@@ -81,7 +81,6 @@ class PipelineListPage extends React.Component {
     const res = await fetchWorkers();
     const workers = get(res, 'data.result', null);
     this.setState({ isFetchingWorker: false });
-
     if (workers) {
       this.setState({ workers, currWorker: workers[0] });
     }
@@ -221,51 +220,53 @@ class PipelineListPage extends React.Component {
             isConfirmDisabled={isEmpty(workers) ? true : false}
             isConfirmWorking={isNewPipelineWorking}
           >
-            {isFetchingWorker ? (
-              <LoaderWrapper>
-                <ListLoader />
-              </LoaderWrapper>
-            ) : (
-              <Inner>
-                {isEmpty(workers) ? (
-                  <Warning
-                    text={
-                      <>
-                        It seems like you haven't created any worker clusters
-                        yet. You can create one from
-                        <Link to={URLS.WORKSPACES}> here</Link>
-                      </>
-                    }
-                  />
-                ) : (
-                  <>
-                    <FormGroup data-testid="name">
-                      <Label htmlFor="pipelineInput">Pipeline name</Label>
-                      <Input
-                        id="pipelineInput"
-                        name="name"
-                        width="100%"
-                        placeholder="Pipeline name"
-                        data-testid="name-input"
-                        value={newPipelineName}
-                        handleChange={this.handleChange}
-                      />
-                    </FormGroup>
-                    <FormGroup data-testid="workerSelect">
-                      <Label htmlFor="workerSelect">Worker cluster name</Label>
-                      <Select
-                        id="workerSelect"
-                        data-testid="cluster-select"
-                        list={workers}
-                        selected={currWorker}
-                        handleChange={this.handleSelectChange}
-                        isObject
-                      />
-                    </FormGroup>
-                  </>
-                )}
-              </Inner>
-            )}
+            <div data-testid="new-pipeline-modal">
+              {isFetchingWorker ? (
+                <LoaderWrapper>
+                  <ListLoader />
+                </LoaderWrapper>
+              ) : (
+                <Inner>
+                  {isEmpty(workers) ? (
+                    <Warning
+                      text={
+                        <>
+                          It seems like you haven't created any worker clusters
+                          yet. You can create one from
+                          <Link to={URLS.WORKSPACES}> here</Link>
+                        </>
+                      }
+                    />
+                  ) : (
+                    <>
+                      <FormGroup data-testid="name">
+                        <Label htmlFor="pipelineInput">Pipeline name</Label>
+                        <Input
+                          id="pipelineInput"
+                          name="name"
+                          width="100%"
+                          placeholder="Pipeline name"
+                          data-testid="name-input"
+                          value={newPipelineName}
+                          handleChange={this.handleChange}
+                        />
+                      </FormGroup>
+                      <FormGroup data-testid="workerSelect">
+                        <Label htmlFor="workerSelect">Workspace name</Label>
+                        <Select
+                          id="workerSelect"
+                          data-testid="cluster-select"
+                          list={workers}
+                          selected={currWorker}
+                          handleChange={this.handleSelectChange}
+                          isObject
+                        />
+                      </FormGroup>
+                    </>
+                  )}
+                </Inner>
+              )}
+            </div>
           </Modal>
 
           <DeleteDialog
@@ -299,7 +300,11 @@ class PipelineListPage extends React.Component {
                     const editUrl = utils.getEditUrl(pipeline, match);
 
                     return (
-                      <tr key={name} className={trCls}>
+                      <tr
+                        key={name}
+                        className={trCls}
+                        data-testid="pipeline-tr"
+                      >
                         <td>{name}</td>
                         <td>{workerClusterName}</td>
                         <td>{status}</td>
@@ -310,6 +315,7 @@ class PipelineListPage extends React.Component {
                         </td>
                         <td data-testid="delete-pipeline" className="has-icon">
                           <DeleteIcon
+                            data-testid="delete-pipeline-btn"
                             onClick={() =>
                               this.handleDeletePipelineModalOpen(name)
                             }

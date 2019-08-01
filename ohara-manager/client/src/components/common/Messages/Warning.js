@@ -43,7 +43,7 @@ const Warning = props => {
   return (
     <WarningWrapper {...props}>
       <IconWrapper className="fas fa-exclamation" />
-      <span>{text}</span>
+      <span data-testid="warning-message">{text}</span>
     </WarningWrapper>
   );
 };

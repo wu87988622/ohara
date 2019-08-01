@@ -82,22 +82,27 @@ describe('getConnectors()', () => {
       {
         id: '1',
         kind: 'source',
+        name: 'sourceName1',
       },
       {
         id: '2',
         kind: 'source',
+        name: 'sourceName2',
       },
       {
         id: '3',
         kind: 'sink',
+        name: 'sinkName',
       },
       {
         id: '4',
         kind: 'topic',
+        name: 'topicName',
       },
       {
         id: '5',
         kind: 'streamApp',
+        name: 'streamAppName',
       },
     ];
 

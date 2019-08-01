@@ -19,7 +19,6 @@ import { getConnectors } from './commonUtils';
 export const addPipelineStatus = (pipelines = []) => {
   const updatedPipeline = pipelines.reduce((acc, pipeline) => {
     const { objects } = pipeline;
-
     const status = objects.filter(p => p.state === 'RUNNING');
     const { sources, sinks, streams } = getConnectors(objects);
     const connectorLength = [...sources, ...sinks, ...streams].length;
