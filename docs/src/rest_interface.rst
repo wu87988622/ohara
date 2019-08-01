@@ -102,7 +102,7 @@ get the version of ohara
 
    {
      "versionInfo": {
-       "version": "0.3-SNAPSHOT",
+       "version": "$|version|",
        "branch": "master",
        "user": "Chia-Ping Tsai",
        "revision": "9af9578041f069a9a452c7fda5f7ed7217c0deea",
@@ -3415,6 +3415,7 @@ re-download everything when running services.
 The following information of StreamApp are updated by ohara.
 
 #. name (**string**) — custom name of this streamApp
+#. group (**string**) — the value of group is always "default" (this logic apply to current version |version|)
 #. imageName (**string**) — image name of this streamApp
 #. instances (**int**) — numbers of streamApp container
 #. nodeNames (**array(string)**) — node list of streamApp running container
@@ -3446,26 +3447,25 @@ Create the properties of a streamApp.
 
 **Example Request**
 
-1. name (**string**) — new streamApp name. This is the object unique name.
+#. name (**string**) — new streamApp name. This is the object unique name.
     - The acceptable char is [0-9a-z]
     - The maximum length is 20 chars
-
-2. imageName (**option(string)**) — image name of streamApp used to ;
+#. imageName (**option(string)**) — image name of streamApp used to ;
    default is official streamapp image of current version
-3. jar (**object**) — the used jar object
+#. jar (**object**) — the used jar object
     - jar.group (**string**) — the group name of this jar
     - jar.name (**string**) — the name without extension of this jar
-
-4. from (**option(array(string))**) — new source topics ; default is empty
-5. to (**option(array(string))**) — new target topics ; default is empty
-6. jmxPort (**option(int)**) — expose port for jmx ; default is random port
-7. instances (**option(int)**) — number of running streamApp ; default is 1
-8. nodeNames (**option(array(string))**) — node name list of streamApp used to ; default is empty
+#. from (**option(array(string))**) — new source topics ; default is empty
+#. to (**option(array(string))**) — new target topics ; default is empty
+#. jmxPort (**option(int)**) — expose port for jmx ; default is random port
+#. instances (**option(int)**) — number of running streamApp ; default is 1
+#. nodeNames (**option(array(string))**) — node name list of streamApp used to ; default is empty
 
 .. code-block:: json
 
    {
      "name": "myapp",
+     "group": "default",
      "imageName": "oharastream/streamapp:$|version|",
      "jar": {
        "group": "wk01",
@@ -3485,6 +3485,7 @@ Create the properties of a streamApp.
 **Example Response**
 
 #. name (**string**) — custom name of this streamApp
+#. group (**string**) — the value of group is always "default" (this logic apply to current version |version|)
 #. imageName (**string**) — image name of this streamApp
 #. instances ( **int**) — numbers of streamApp container
 #. nodeNames (**array(string)**) — node list of streamApp running
@@ -3505,46 +3506,40 @@ Create the properties of a streamApp.
         - meters[i].startTime (**option(long)**) — the time of record generated in remote machine
 #. exactlyOnce (**boolean**) — enable exactly once
 #. error (**option(string)**) — the error message from a failed
-   streamApp. If the streamApp is fine or un-started, you won’t get
-   this field.
-#. lastModified (**long**) — last modified this jar time
-
-       - meters[i].value (**double**) — the number stored in meter
-       - meters[i].unit (**string**) — unit for value
-       - meters[i].document (**string**) — document of this meter
-       - meters[i].queryTime (**long**) — the time of query metrics from remote machine
-       - meters[i].startTime (**option(long)**) — the time of record generated in remote machine
-
-12. exactlyOnce (**boolean**) — enable exactly once
-13. error (**option(string)**) — the error message from a failed
     streamApp. If the streamApp is fine or un-started, you won’t get
     this field.
-14. lastModified (**long**) — last modified this jar time
-15. tags (**object**) — user defined data
+#. lastModified (**long**) — last modified this jar time
+#. exactlyOnce (**boolean**) — enable exactly once
+#. error (**option(string)**) — the error message from a failed
+    streamApp. If the streamApp is fine or un-started, you won’t get
+    this field.
+#. lastModified (**long**) — last modified this jar time
+#. tags (**object**) — user defined data
 
-.. code-block:: json
+  .. code-block:: json
 
-   {
-     "name": "myapp",
-     "imageName": "oharastream/streamapp:$|version|",
-     "instances": 3,
-     "nodeNames": [],
-     "deadNodes": [],
-     "jar": {
-       "name": "stream-app",
-       "group": "wk01"
-     },
-     "from": [
-       "topic1"
-     ],
-     "to": [
-       "topic2"
-     ],
-     "jmxPort": 5678,
-     "exactlyOnce": "false",
-     "metrics": [],
-     "lastModified": 1542102595892
-   }
+     {
+       "name": "myapp",
+       "group": "default",
+       "imageName": "oharastream/streamapp:$|version|",
+       "instances": 3,
+       "nodeNames": [],
+       "deadNodes": [],
+       "jar": {
+         "name": "stream-app",
+         "group": "wk01"
+       },
+       "from": [
+         "topic1"
+       ],
+       "to": [
+         "topic2"
+       ],
+       "jmxPort": 5678,
+       "exactlyOnce": "false",
+       "metrics": [],
+       "lastModified": 1542102595892
+     }
 
 .. note::
    The streamApp, which is just created, does not have any metrics.
@@ -3559,6 +3554,7 @@ get information from a specific streamApp cluster
 **Example Response**
 
 #. name (**string**) — custom name of this streamApp
+#. group (**string**) — the value of group is always "default" (this logic apply to current version |version|)
 #. imageName (**string**) — image name of this streamApp
 #. instances ( **int**) — numbers of streamApp container
 #. nodeNames (**array(string)**) — node list of streamApp running
@@ -3572,21 +3568,22 @@ get information from a specific streamApp cluster
 #. jmxPort (**int**) — the expose jmx port
 #. :ref:`metrics <connector-metrics>` (**object**) — the metrics from this streamApp.
     - meters (**array(object)**) — the metrics in meter type
-      - meters[i].value (**double**) — the number stored in meter
-      - meters[i].unit (**string**) — unit for value
-      - meters[i].document (**string**) — document of this meter
-      - meters[i].queryTime (**long**) — the time of record generated in remote machine
-      - meters[i].startTime (**option(long)**) — the time of record generated in remote machine
+       - meters[i].value (**double**) — the number stored in meter
+       - meters[i].unit (**string**) — unit for value
+       - meters[i].document (**string**) — document of this meter
+       - meters[i].queryTime (**long**) — the time of record generated in remote machine
+       - meters[i].startTime (**option(long)**) — the time of record generated in remote machine
 #. exactlyOnce (**boolean**) — enable exactly once
 #. error (**option(string)**) — the error message from a failed
-    streamApp. If the streamApp is fine or un-started, you won’t get
-    this field.
+   streamApp. If the streamApp is fine or un-started, you won’t get
+   this field.
 #. lastModified (**long**) — last modified this jar time
 
   .. code-block:: json
 
      {
        "name": "myapp",
+       "group": "default",
        "imageName": "oharastream/streamapp:$|version|",
        "instances": 3,
        "nodeNames": [],
@@ -3616,13 +3613,13 @@ Update the properties of a non-started streamApp.
 
 **Example Request**
 
-1. imageName (**option(string)**) — new streamApp image name
-2. from (**option(array(string))**) — new source topics
-3. to (**option(array(string))**) — new target topics
-4. jar (**option(object)**) — new uploaded jar key
-5. jmxPort (**option(int)**) — new jmx port
-6. instances (**option(int)**) — new number of running streamApp
-7. nodeNames (**option(array(string))**) — new node name list of
+#. imageName (**option(string)**) — new streamApp image name
+#. from (**option(array(string))**) — new source topics
+#. to (**option(array(string))**) — new target topics
+#. jar (**option(object)**) — new uploaded jar key
+#. jmxPort (**option(int)**) — new jmx port
+#. instances (**option(int)**) — new number of running streamApp
+#. nodeNames (**option(array(string))**) — new node name list of
    streamApp used to (this field has higher priority than instances)
 
   .. code-block:: json
@@ -3646,39 +3643,37 @@ Update the properties of a non-started streamApp.
 
 **Example Response**
 
-1.  name (**string**) — custom name of this streamApp
-2.  imageName (**string**) — image name of this streamApp
-3.  instances ( **int**) — numbers of streamApp container
-4.  nodeNames (**array(string)**) — node list of streamApp running
+#.  name (**string**) — custom name of this streamApp
+#. group (**string**) — the value of group is always "default" (this logic apply to current version |version|)
+#.  imageName (**string**) — image name of this streamApp
+#.  instances ( **int**) — numbers of streamApp container
+#.  nodeNames (**array(string)**) — node list of streamApp running
     container
-5.  deadNodes (**array(string)**) — dead node list of the exited
+#.  deadNodes (**array(string)**) — dead node list of the exited
     containers from this cluster
-6.  jar (**object**) — uploaded jar key
-7.  from (**array(string)**) — topics of streamApp consume with
-8.  to (**array(string)**) — topics of streamApp produce to
-9.  state (**option(string)**) — only started/failed streamApp has state
-10. jmxPort (**int**) — the expose jmx port
-11. :ref:`metrics <connector-metrics>` (**object**) — the
-    metrics from this streamApp.
-
+#.  jar (**object**) — uploaded jar key
+#.  from (**array(string)**) — topics of streamApp consume with
+#.  to (**array(string)**) — topics of streamApp produce to
+#.  state (**option(string)**) — only started/failed streamApp has state
+#. jmxPort (**int**) — the expose jmx port
+#. :ref:`metrics <connector-metrics>` (**object**) — the metrics from this streamApp.
     - meters (**array(object)**) — the metrics in meter type
-
        - meters[i].value (**double**) — the number stored in meter
        - meters[i].unit (**string**) — unit for value
        - meters[i].document (**string**) — document of this meter
        - meters[i].queryTime (**long**) — the time of query metrics from remote machine
        - meters[i].startTime (**option(long)**) — the time of record generated in remote machine
-
-12. exactlyOnce (**boolean**) — enable exactly once
-13. error (**option(string)**) — the error message from a failed
-    streamApp. If the streamApp is fine or un-started, you won’t get
-    this field.
-14. lastModified (**long**) — last modified this jar time
+#. exactlyOnce (**boolean**) — enable exactly once
+#. error (**option(string)**) — the error message from a failed
+   streamApp. If the streamApp is fine or un-started, you won’t get
+   this field.
+#. lastModified (**long**) — last modified this jar time
 
   .. code-block:: json
 
      {
        "name": "myapp",
+       "group": "default",
        "imageName": "myimage",
        "instances": 2,
        "nodeNames": ["node1", "node2"],
@@ -3738,6 +3733,7 @@ start a StreamApp
 
      {
        "name": "myapp",
+       "group": "default",
        "imageName": "oharastream/streamapp:$|version|",
        "instances": 1,
        "nodeNames": ["node1"],
@@ -3785,6 +3781,7 @@ to this streamApp. Note: successful stop streamApp will have no status.
 
      {
        "name": "myapp",
+       "group": "default",
        "imageName": "oharastream/streamapp:$|version|",
        "instances": 1,
        "nodeNames": ["node1"],

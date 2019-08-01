@@ -24,6 +24,7 @@ import com.island.ohara.kafka.connector.json.ObjectKey
 import org.junit.Test
 import org.scalatest.Matchers
 import spray.json._
+import spray.json.DefaultJsonProtocol._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -534,4 +535,28 @@ class TestStreamApi extends SmallTest with Matchers {
     .creation
     .name
     .length should not be 0
+
+  @Test
+  def groupShouldAppearInResponse(): Unit = {
+    val name = CommonUtils.randomString()
+    val res = StreamApi.STREAM_CLUSTER_INFO_JSON_FORMAT.write(
+      StreamClusterInfo(
+        name = name,
+        imageName = CommonUtils.randomString(),
+        instances = 1,
+        jar = ObjectKey.of("group", "name"),
+        from = Set("from"),
+        to = Set("from"),
+        metrics = Metrics(Seq.empty),
+        nodeNames = Set.empty,
+        deadNodes = Set.empty,
+        jmxPort = 10,
+        state = None,
+        error = None,
+        lastModified = CommonUtils.current(),
+        tags = Map.empty
+      ))
+    res.asJsObject.fields(Data.NAME_KEY).convertTo[String] shouldBe name
+    res.asJsObject.fields(Data.GROUP_KEY).convertTo[String] shouldBe Data.GROUP_DEFAULT
+  }
 }

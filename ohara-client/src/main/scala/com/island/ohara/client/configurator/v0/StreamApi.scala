@@ -22,7 +22,7 @@ import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import com.island.ohara.kafka.connector.json.ObjectKey
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsValue, RootJsonFormat}
+import spray.json.{JsObject, JsString, JsValue, RootJsonFormat}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
@@ -143,7 +143,17 @@ object StreamApi {
       this.copy(state = state, error = error)
   }
   private[ohara] implicit val STREAM_CLUSTER_INFO_JSON_FORMAT: OharaJsonFormat[StreamClusterInfo] =
-    JsonRefiner[StreamClusterInfo].format(jsonFormat15(StreamClusterInfo)).refine
+    JsonRefiner[StreamClusterInfo]
+      .format(new RootJsonFormat[StreamClusterInfo] {
+        private[this] val format = jsonFormat15(StreamClusterInfo)
+        override def read(json: JsValue): StreamClusterInfo = format.read(json)
+        override def write(obj: StreamClusterInfo): JsValue =
+          JsObject(
+            noJsNull(
+              format.write(obj).asJsObject.fields ++ Map(Data.GROUP_KEY -> JsString(Data.GROUP_DEFAULT))
+            ))
+      })
+      .refine
 
   sealed trait Request {
     @Optional("default name is a random string. But it is required in updating")
