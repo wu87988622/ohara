@@ -76,7 +76,7 @@ task streamAppJar(type: Jar, dependsOn: compileJava) {
  */
 task sourceJar(type: Jar, dependsOn: compileJava) {
   from sourceSets.main.output
-  include '**/DumbSource**.class'
+  include '**/connector/DumbSource**.class', "**/connector/package*.class"
   archiveName "ohara-it-source.jar"
 }
 
@@ -85,7 +85,7 @@ task sourceJar(type: Jar, dependsOn: compileJava) {
  */
 task sinkJar(type: Jar, dependsOn: compileJava) {
   from sourceSets.main.output
-  include '**/DumbSink**.class'
+  include '**/connector/DumbSink**.class', "**/connector/package*.class"
   archiveName "ohara-it-sink.jar"
 }
 
