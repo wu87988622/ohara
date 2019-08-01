@@ -19,17 +19,16 @@ package com.island.ohara.configurator
 import com.island.ohara.agent.ClusterCollie
 import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
 import org.scalatest.mockito.MockitoSugar
 
 import scala.concurrent.Await
-
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-class TestConfiguratorBuilder extends SmallTest with Matchers {
+class TestConfiguratorBuilder extends MediumTest with Matchers {
   @Test
   def nullHomeFolder(): Unit = an[NullPointerException] should be thrownBy Configurator.builder.homeFolder(null)
 
