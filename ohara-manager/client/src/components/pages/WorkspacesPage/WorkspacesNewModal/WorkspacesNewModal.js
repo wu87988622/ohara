@@ -29,7 +29,6 @@ import { isEmpty, get, split, isUndefined, uniq } from 'lodash';
 import * as s from './styles';
 import * as generate from 'utils/generate';
 import * as MESSAGES from 'constants/messages';
-import * as commonUtils from 'utils/commonUtils';
 import * as URLS from 'constants/urls';
 import { Label } from 'components/common/Form';
 import { Progress } from 'components/common/Mui/Feedback';
@@ -61,15 +60,6 @@ const WorkerNewModal = props => {
   );
   const { getData: jarRes, uploadApi } = useApi.useUploadApi(URL.FILE_URL);
   const { deleteApi: deleteJar } = useApi.useDeleteApi(URL.FILE_URL);
-  const { getData: getWorkers, getApi: fetchWorkers } = useApi.useGetApi(
-    URL.WORKER_URL,
-  );
-  const { getData: getBrokers, getApi: fetchBrokers } = useApi.useGetApi(
-    URL.BROKER_URL,
-  );
-  const { getData: getZookeepers, getApi: fetchZookeepers } = useApi.useGetApi(
-    URL.ZOOKEEPER_URL,
-  );
   const { deleteApi: deleteWorker } = useApi.useDeleteApi(URL.WORKER_URL);
   const { deleteApi: deleteBroker } = useApi.useDeleteApi(URL.BROKER_URL);
   const { deleteApi: deleteZookeeper } = useApi.useDeleteApi(URL.ZOOKEEPER_URL);
