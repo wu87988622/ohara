@@ -25,11 +25,11 @@ import DialogContent from '@material-ui/core/DialogContent';
 import { Form, Field } from 'react-final-form';
 import { Link } from 'react-router-dom';
 import { isEmpty, get, split, isUndefined, uniq } from 'lodash';
+import { ERROR } from 'jest-validate/build/utils';
 
 import * as s from './styles';
 import * as generate from 'utils/generate';
 import * as MESSAGES from 'constants/messages';
-import * as commonUtils from 'utils/commonUtils';
 import * as URLS from 'constants/urls';
 import { Label } from 'components/common/Form';
 import { Progress } from 'components/common/Mui/Feedback';
@@ -39,6 +39,7 @@ import { InputField } from 'components/common/Mui/Form';
 import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import * as useApi from 'components/controller';
 import * as URL from 'components/controller/url';
+import useCreateServices from './useCreateServices';
 
 const WorkerNewModal = props => {
   const [checkedNodes, setCheckedNodes] = useState([]);
@@ -49,35 +50,25 @@ const WorkerNewModal = props => {
   const [activeStep, setActiveStep] = useState(0);
   const [deleteType, setDeleteType] = useState(false);
   const { showMessage } = useSnackbar();
-  const { getData: worker, postApi: createWorker } = useApi.usePostApi(
-    URL.WORKER_URL,
-  );
-  const { getData: broker, postApi: createBroker } = useApi.usePostApi(
-    URL.BROKER_URL,
-  );
-  const { getData: zookeeper, postApi: createZookeeper } = useApi.usePostApi(
-    URL.ZOOKEEPER_URL,
-  );
   const { getData: jarRes, uploadApi } = useApi.useUploadApi(URL.FILE_URL);
   const { deleteApi: deleteJar } = useApi.useDeleteApi(URL.FILE_URL);
-  const { getData: getWorkers, getApi: fetchWorkers } = useApi.useGetApi(
-    URL.WORKER_URL,
-  );
-  const { getData: getBrokers, getApi: fetchBrokers } = useApi.useGetApi(
-    URL.BROKER_URL,
-  );
-  const { getData: getZookeepers, getApi: fetchZookeepers } = useApi.useGetApi(
-    URL.ZOOKEEPER_URL,
-  );
-  const { getData: containerRes, getApi: fetchContainer } = useApi.useGetApi(
-    URL.CONTAINER_URL,
-  );
   const { deleteApi: deleteWorker } = useApi.useDeleteApi(URL.WORKER_URL);
   const { deleteApi: deleteBroker } = useApi.useDeleteApi(URL.BROKER_URL);
   const { deleteApi: deleteZookeeper } = useApi.useDeleteApi(URL.ZOOKEEPER_URL);
   const { data: nodes } = useApi.useFetchApi(URL.NODE_URL);
   const { putApi: putZookeeper } = useApi.usePutApi(URL.ZOOKEEPER_URL);
   const { putApi: putBroker } = useApi.usePutApi(URL.BROKER_URL);
+  const { waitApi, getFinish } = useApi.useWaitApi();
+  const {
+    create: createZookeeper,
+    handleFail: handleZookeeper,
+  } = useCreateServices(URL.ZOOKEEPER_URL);
+  const { create: createBroker, handleFail: handleBroker } = useCreateServices(
+    URL.BROKER_URL,
+  );
+  const { create: createWorker, handleFail: handleWorker } = useCreateServices(
+    URL.WORKER_URL,
+  );
 
   let workingServices = [];
   let plugins = [];
@@ -151,113 +142,59 @@ const WorkerNewModal = props => {
     return value;
   };
 
-  const waitDeleteService = async params => {
-    const { service, name } = params;
-    let { retryCount = 0 } = params;
-    const maxRetry = 10;
-
-    switch (service) {
-      case 'zookeeper':
-        await fetchZookeepers();
-        const zkResult = getZookeepers().data.result.some(e => e.name === name);
-
-        if (!zkResult) return;
-        if (retryCount > maxRetry) {
-          showMessage(`Failed to delete zookeeper: ${name}`);
-          return;
-        }
-
-        await commonUtils.sleep(3000);
-        retryCount++;
-        await waitDeleteService({ service, name, retryCount });
-        return;
-
-      case 'broker':
-        await fetchBrokers();
-        const bkResult = getBrokers().data.result.some(e => e.name === name);
-
-        if (!bkResult) return;
-        if (retryCount > maxRetry) {
-          showMessage(`Failed to delete broker: ${name}`);
-          return;
-        }
-
-        await commonUtils.sleep(3000);
-        retryCount++;
-        await waitDeleteService({ service, name, retryCount });
-        return;
-
-      case 'worker':
-        await fetchWorkers();
-        const wkResult = getWorkers().data.result.some(e => e.name === name);
-
-        if (!wkResult) return;
-        if (retryCount > maxRetry) {
-          showMessage(`Failed to delete worker: ${name}`);
-          return;
-        }
-
-        await commonUtils.sleep(3000);
-        retryCount++;
-        await waitDeleteService({ service, name, retryCount });
-        return;
-      default:
-        return;
+  const waitService = async params => {
+    const { service, name, type } = params;
+    const deleteCheckFn = res => {
+      return !res.data.result.some(e => e.name === name);
+    };
+    const stopCheckFn = res => {
+      return isUndefined(get(res, 'data.result.state', undefined));
+    };
+    let checkFn;
+    if (type === 'delete') {
+      checkFn = deleteCheckFn;
+    } else if (type === 'stop') {
+      checkFn = stopCheckFn;
     }
-  };
-
-  const waitStopService = async params => {
-    const { service, name } = params;
-    let { retryCount = 0 } = params;
-    const maxRetry = 10;
-
     switch (service) {
       case 'zookeeper':
-        await fetchZookeepers(name);
-        const zkResult = get(getZookeepers(), 'data.result.state', undefined);
-
-        if (isUndefined(zkResult)) return;
-        if (retryCount > maxRetry) {
-          showMessage(`Failed to stop zookeeper: ${name}`);
-          return;
-        }
-
-        await commonUtils.sleep(3000);
-        retryCount++;
-        await waitStopService({ service, name, retryCount });
-        return;
+        const zkUrl =
+          type === 'stop' ? `${URL.ZOOKEEPER_URL}/${name}` : URL.ZOOKEEPER_URL;
+        const zkParams = {
+          url: zkUrl,
+          checkFn: checkFn,
+          sleep: 3000,
+        };
+        await waitApi(zkParams);
+        if (!getFinish()) showMessage(`Failed to delete ${service}: ${name}`);
+        break;
 
       case 'broker':
-        fetchBrokers(name);
-        const bkResult = get(getBrokers(), 'data.result.state', 'stop');
-
-        if (bkResult === 'stop') return;
-        if (retryCount > maxRetry) {
-          showMessage(`Failed to stop broker: ${name}`);
-          return;
-        }
-
-        await commonUtils.sleep(3000);
-        retryCount++;
-        await waitStopService({ service, name, retryCount });
-        return;
+        const bkUrl =
+          type === 'stop' ? `${URL.BROKER_URL}/${name}` : URL.BROKER_URL;
+        const bkParams = {
+          url: bkUrl,
+          checkFn: checkFn,
+          sleep: 3000,
+        };
+        await waitApi(bkParams);
+        if (!getFinish()) showMessage(`Failed to delete ${service}: ${name}`);
+        break;
 
       case 'worker':
-        await fetchWorkers(name);
-        const wkResult = get(getWorkers(), 'data.result.state', 'stop');
+        const wkUrl =
+          type === 'stop' ? `${URL.WORKER_URL}/${name}` : URL.WORKER_URL;
+        const wkParams = {
+          url: wkUrl,
+          checkFn: checkFn,
+          sleep: 3000,
+        };
+        await waitApi(wkParams);
+        if (!getFinish()) showMessage(`Failed to delete ${service}: ${name}`);
+        break;
 
-        if (wkResult === 'stop') return;
-        if (retryCount > maxRetry) {
-          showMessage(`Failed to delete worker: ${name}`);
-          return;
-        }
-
-        await commonUtils.sleep(3000);
-        retryCount++;
-        await waitStopService({ service, name, retryCount });
-        return;
       default:
-        return;
+        break;
     }
   };
 
@@ -282,9 +219,10 @@ const WorkerNewModal = props => {
     await Promise.all(
       wks.map(async wk => {
         await deleteWorker(`${wk.name}`);
-        await waitDeleteService({
+        await waitService({
           service: 'worker',
           name: wk.name,
+          type: 'delete',
         });
       }),
     );
@@ -292,14 +230,16 @@ const WorkerNewModal = props => {
     await Promise.all(
       bks.map(async bk => {
         await putBroker(`/${bk.name}/stop`);
-        await waitStopService({
+        await waitService({
           service: 'broker',
           name: bk.name,
+          type: 'stop',
         });
         await deleteBroker(`${bk.name}`);
-        await waitDeleteService({
+        await waitService({
           service: 'broker',
           name: bk.name,
+          type: 'delete',
         });
       }),
     );
@@ -308,14 +248,16 @@ const WorkerNewModal = props => {
     await Promise.all(
       zks.map(async zk => {
         await putZookeeper(`/${zk.name}/stop`);
-        await waitStopService({
+        await waitService({
           service: 'zookeeper',
           name: zk.name,
+          type: 'stop',
         });
         await deleteZookeeper(`${zk.name}`);
-        await waitDeleteService({
+        await waitService({
           service: 'zookeeper',
           name: zk.name,
+          type: 'delete',
         });
       }),
     );
@@ -325,36 +267,12 @@ const WorkerNewModal = props => {
   const createServices = async values => {
     const nodeNames = checkedNodes;
 
-    const maxRetry = 5;
-    let retryCount = 0;
-
-    const waitForServiceCreation = async clusterName => {
-      if (!clusterName) throw new Error();
-
-      await fetchContainer(clusterName);
-      const containers = get(containerRes(), 'data.result[0].containers', null);
-      let containersAreReady = false;
-      if (!isEmpty(containers)) {
-        containersAreReady = containers.every(
-          container => container.state === 'RUNNING',
-        );
-      }
-
-      if (retryCount > maxRetry)
-        throw new Error(`Couldn't get the container state!`);
-
-      if (containersAreReady) {
-        retryCount = 0;
-        return;
-      } // exist successfully
-
-      retryCount++;
-      await commonUtils.sleep(2000);
-      await waitForServiceCreation(clusterName);
+    const checkResult = res => {
+      return 'RUNNING' === get(res, 'data.result.state', null);
     };
 
     const zookeeperName = generate.serviceName();
-    await createZookeeper({
+    const zookeeperPostParams = {
       name: zookeeperName,
       clientPort: generate.port(),
       peerPort: generate.port(),
@@ -368,29 +286,27 @@ const WorkerNewModal = props => {
       // now specifying only one zookeeper when creating services. `nodeNames[0]`👇
       // and once the bug is fixed we will then apply the rule two in frontend :)
       nodeNames: [nodeNames[0]],
+    };
+    await createZookeeper({
+      postParams: zookeeperPostParams,
+      checkResult,
     });
-
-    await putZookeeper(`/${zookeeperName}/start`);
-    const zookeeperClusterName = get(zookeeper(), 'data.result.name');
-    await waitForServiceCreation(zookeeperClusterName);
+    if (handleZookeeper()) throw new ERROR();
     setActiveStep(1);
+    saveService({ service: 'zookeeper', name: zookeeperName });
 
-    saveService({ service: 'zookeeper', name: zookeeperClusterName });
-
-    await createBroker({
-      name: generate.serviceName(),
-      zookeeperClusterName,
+    const brokerClusterName = generate.serviceName();
+    const brokerPostParams = {
+      name: brokerClusterName,
+      zookeeperClusterName: zookeeperName,
       clientPort: generate.port(),
       exporterPort: generate.port(),
       jmxPort: generate.port(),
       nodeNames,
-    });
-
-    const brokerClusterName = get(broker(), 'data.result.name');
-    await putBroker(`/${brokerClusterName}/start`);
-    await waitForServiceCreation(brokerClusterName);
+    };
+    await createBroker({ postParams: brokerPostParams, checkResult });
+    if (handleBroker()) throw new ERROR();
     setActiveStep(2);
-
     saveService({ service: 'broker', name: brokerClusterName });
 
     const jars = plugins.map(jar => {
@@ -400,7 +316,7 @@ const WorkerNewModal = props => {
       };
     });
 
-    await createWorker({
+    const workerPostParams = {
       name: validateServiceName(values.name),
       nodeNames,
       jars,
@@ -411,13 +327,20 @@ const WorkerNewModal = props => {
       configTopicName: generate.serviceName(),
       offsetTopicName: generate.serviceName(),
       statusTopicName: generate.serviceName(),
+    };
+
+    const checkContainerResult = res => {
+      return 'RUNNING' === get(res, 'data.result[0].containers[0].state', null);
+    };
+    await createWorker({
+      postParams: workerPostParams,
+      checkResult: checkContainerResult,
+      needStart: false,
+      waitUrl: URL.CONTAINER_URL,
     });
-
-    const workerClusterName = get(worker(), 'data.result.name');
-    await waitForServiceCreation(workerClusterName);
+    if (handleWorker()) throw new ERROR();
     setActiveStep(3);
-
-    saveService({ service: 'worker', name: workerClusterName });
+    saveService({ service: 'worker', name: values.name });
   };
 
   const onSubmit = async (values, form) => {
@@ -428,7 +351,6 @@ const WorkerNewModal = props => {
       await createServices(values);
     } catch (error) {
       // Ignore the error, that's handled in the API request handler
-
       await deleteAllServices();
       resetModal(form);
       return;
