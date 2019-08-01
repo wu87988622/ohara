@@ -73,6 +73,43 @@ public class TestProducerToConsumer extends WithBroker {
   }
 
   @Test
+  public void testOffset() {
+    try (Producer<String, String> producer =
+        Producer.<String, String>builder()
+            .keySerializer(Serializer.STRING)
+            .valueSerializer(Serializer.STRING)
+            .connectionProps(testUtil().brokersConnProps())
+            .build()) {
+      for (int i = 0; i < 100; i++)
+        producer.sender().key("key" + i).value("value" + i).topicName(topicName).send();
+    }
+
+    try (Consumer<String, String> consumer =
+        Consumer.<String, String>builder()
+            .keySerializer(Serializer.STRING)
+            .valueSerializer(Serializer.STRING)
+            .offsetFromBegin()
+            .topicName(topicName)
+            .connectionProps(testUtil().brokersConnProps())
+            .build()) {
+      List<Consumer.Record<String, String>> records = consumer.poll(Duration.ofSeconds(30), 1);
+      Assert.assertEquals(100, records.size());
+
+      Assert.assertEquals(0, records.get(0).offset());
+      Assert.assertEquals("key0", records.get(0).key().get());
+      Assert.assertEquals("value0", records.get(0).value().get());
+
+      Assert.assertEquals(50, records.get(50).offset());
+      Assert.assertEquals("key50", records.get(50).key().get());
+      Assert.assertEquals("value50", records.get(50).value().get());
+
+      Assert.assertEquals(99, records.get(99).offset());
+      Assert.assertEquals("key99", records.get(99).key().get());
+      Assert.assertEquals("value99", records.get(99).value().get());
+    }
+  }
+
+  @Test
   public void normalCase() throws ExecutionException, InterruptedException {
     try (Producer<String, String> producer =
         Producer.<String, String>builder()
@@ -95,6 +132,7 @@ public class TestProducerToConsumer extends WithBroker {
         Assert.assertEquals(1, records.size());
         Assert.assertEquals("a", records.get(0).key().get());
         Assert.assertEquals("b", records.get(0).value().get());
+        Assert.assertEquals(0, records.get(0).offset());
       }
     }
   }

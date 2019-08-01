@@ -279,6 +279,7 @@ public interface Consumer<K, V> extends Releasable {
                             cr.topic(),
                             cr.timestamp(),
                             TimestampType.of(cr.timestampType()),
+                            cr.offset(),
                             Optional.ofNullable(cr.headers())
                                 .map(
                                     headers ->
@@ -314,6 +315,7 @@ public interface Consumer<K, V> extends Releasable {
     private final String topicName;
     private final long timestamp;
     private final TimestampType timestampType;
+    private final long offset;
     private final List<Header> headers;
     private final K key;
     private final V value;
@@ -328,37 +330,78 @@ public interface Consumer<K, V> extends Releasable {
         String topicName,
         long timestamp,
         TimestampType timestampType,
+        long offset,
         List<Header> headers,
         K key,
         V value) {
       this.topicName = topicName;
       this.timestamp = timestamp;
       this.timestampType = timestampType;
+      this.offset = offset;
       this.headers = Collections.unmodifiableList(headers);
       this.key = key;
       this.value = value;
     }
 
+    /**
+     * Kafka topic name
+     *
+     * @return a topic name
+     */
     public String topicName() {
       return topicName;
     }
 
+    /**
+     * The timestamp of this record.
+     *
+     * @return timestamp
+     */
     public long timestamp() {
       return timestamp;
     }
 
+    /**
+     * The timestamp type of this record
+     *
+     * @return timestamp type
+     */
     public TimestampType timestampType() {
       return timestampType;
     }
 
+    /**
+     * The position of this record in the corresponding Kafka partition.
+     *
+     * @return offset
+     */
+    public long offset() {
+      return offset;
+    }
+
+    /**
+     * The headers
+     *
+     * @return header list
+     */
     public List<Header> headers() {
       return headers;
     }
 
+    /**
+     * The key
+     *
+     * @return optional key
+     */
     public Optional<K> key() {
       return Optional.ofNullable(key);
     }
 
+    /**
+     * The value
+     *
+     * @return optional value
+     */
     public Optional<V> value() {
       return Optional.ofNullable(value);
     }
@@ -371,6 +414,7 @@ public interface Consumer<K, V> extends Releasable {
       return Objects.equals(topicName, that.topicName)
           && Objects.equals(timestamp, that.timestamp)
           && Objects.equals(timestampType, that.timestampType)
+          && Objects.equals(offset, that.offset)
           && CommonUtils.equals(headers, that.headers)
           && Objects.equals(key, that.key)
           && Objects.equals(value, that.value);
@@ -386,6 +430,7 @@ public interface Consumer<K, V> extends Releasable {
       return new ToStringBuilder(this)
           .append("topicName", topicName)
           .append("timestamp", timestamp)
+          .append("offset", offset)
           .append("headers", headers)
           .append("key", key)
           .append("value", value)
