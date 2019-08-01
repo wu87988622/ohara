@@ -20,12 +20,12 @@ import '@testing-library/jest-dom/extend-expect';
 
 import * as generate from 'utils/generate';
 import Overview from '../Overview';
-import { renderWithTheme } from 'utils/testUtils';
+import { renderWithProvider } from 'utils/testUtils';
 
 afterEach(cleanup);
 
 // Skip the tests for now. We should mock the XHR requests in the test
-describe.skip('<Overview />', () => {
+describe('<Overview />', () => {
   const imageName = generate.name();
 
   const props = {
@@ -44,11 +44,11 @@ describe.skip('<Overview />', () => {
   };
 
   it('renders the page', async () => {
-    await waitForElement(() => renderWithTheme(<Overview {...props} />));
+    await waitForElement(() => renderWithProvider(<Overview {...props} />));
   });
 
   it('renders the correct docker image name', async () => {
-    const { getByText } = await renderWithTheme(<Overview {...props} />);
+    const { getByText } = await renderWithProvider(<Overview {...props} />);
 
     getByText(`Image: ${imageName}`);
   });

@@ -89,8 +89,8 @@ export const nodes = ({ count = 1, overrides = {} } = {}) => {
 
     const node = {
       lastModified: date.past(),
-      nodeNames: [name()],
-      name: name(),
+      nodeNames: [serviceName()],
+      name: serviceName(),
       port: port(),
       ...overrides,
     };

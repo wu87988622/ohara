@@ -15,64 +15,71 @@
  */
 
 import React from 'react';
-import {
-  cleanup,
-  render,
-  waitForElement,
-  fireEvent,
-} from '@testing-library/react';
+import { cleanup, waitForElement, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 
+import { renderWithProvider } from 'utils/testUtils';
 import * as generate from 'utils/generate';
 import Nodes from '../Node/Nodes';
-import { fetchNodes } from 'api/nodeApi';
-import { fetchWorker } from 'api/workerApi';
+import * as useApi from 'components/controller';
+import * as URL from 'components/controller/url';
 
-jest.mock('api/nodeApi');
-jest.mock('api/workerApi');
+jest.mock('components/controller');
 
 afterEach(cleanup);
 
-describe.skip('<Nodes />', () => {
+describe('<Nodes />', () => {
   let nodes;
   let props;
 
   beforeEach(() => {
     nodes = generate.nodes();
     const nodeNames = nodes.map(node => node.name);
-
     props = {
       workspaceName: generate.serviceName(),
     };
 
-    const nodesRes = {
-      data: {
-        isSuccess: true,
-        result: nodes,
-      },
-    };
+    jest.spyOn(useApi, 'useGetApi').mockImplementation(() => {
+      return { getData: jest.fn() };
+    });
 
-    const workerRes = {
-      data: {
-        isSuccess: true,
-        result: {
-          nodeNames,
-          brokerClusterName: generate.serviceName(),
-        },
-      },
-    };
+    jest.spyOn(useApi, 'usePutApi').mockImplementation(() => {
+      return { putApi: jest.fn() };
+    });
 
-    fetchWorker.mockImplementation(() => Promise.resolve(workerRes));
-    fetchNodes.mockImplementation(() => Promise.resolve(nodesRes));
+    jest.spyOn(useApi, 'useFetchApi').mockImplementation(url => {
+      if (url === `${URL.WORKER_URL}/${props.workspaceName}`) {
+        return {
+          data: {
+            data: {
+              result: {
+                nodeNames,
+              },
+            },
+          },
+          isLoading: false,
+        };
+      }
+      if (url === URL.NODE_URL) {
+        return {
+          data: {
+            data: {
+              isSuccess: true,
+              result: nodes,
+            },
+          },
+        };
+      }
+    });
   });
 
   it('renders the page', async () => {
-    render(<Nodes {...props} />);
+    renderWithProvider(<Nodes {...props} />);
   });
 
   it('should properly render the table data', async () => {
     const { getByTestId, getByText } = await waitForElement(() =>
-      render(<Nodes {...props} />),
+      renderWithProvider(<Nodes {...props} />),
     );
 
     // Make sure we're rendering the right table heads
@@ -95,30 +102,32 @@ describe.skip('<Nodes />', () => {
     const nodes = generate.nodes({ count: 5 });
     const nodeNames = nodes.map(node => node.name);
 
-    const nodesRes = {
-      data: {
-        isSuccess: true,
-        result: nodes,
-      },
-    };
+    jest.spyOn(useApi, 'useFetchApi').mockImplementation(url => {
+      if (url === URL.WORKER_URL + '/' + props.workspaceName) {
+        return {
+          data: {
+            data: {
+              result: {
+                nodeNames,
+              },
+            },
+          },
+          isLoading: false,
+        };
+      }
+      if (url === URL.NODE_URL) {
+        return {
+          data: {
+            data: {
+              isSuccess: true,
+              result: nodes,
+            },
+          },
+        };
+      }
+    });
 
-    const workerRes = {
-      data: {
-        isSuccess: true,
-        result: {
-          nodeNames,
-          brokerClusterName: generate.serviceName(),
-        },
-      },
-    };
-
-    fetchWorker.mockImplementation(() => Promise.resolve(workerRes));
-    fetchNodes.mockImplementation(() => Promise.resolve(nodesRes));
-
-    const res = { data: { isSuccess: true, result: nodes } };
-    fetchNodes.mockImplementation(() => Promise.resolve(res));
-
-    const { getAllByTestId } = await render(<Nodes {...props} />);
+    const { getAllByTestId } = await renderWithProvider(<Nodes {...props} />);
 
     const tableNodeNames = await waitForElement(() =>
       getAllByTestId('node-name'),
@@ -128,7 +137,7 @@ describe.skip('<Nodes />', () => {
   });
 
   it('should close the new node modal with cancel button', async () => {
-    const { getByText, getByTestId } = render(<Nodes {...props} />);
+    const { getByText, getByTestId } = renderWithProvider(<Nodes {...props} />);
 
     fireEvent.click(getByText('New node'));
     expect(getByTestId('node-new-dialog')).toBeVisible();
