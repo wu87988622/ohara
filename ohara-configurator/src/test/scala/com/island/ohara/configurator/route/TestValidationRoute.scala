@@ -79,7 +79,7 @@ class TestValidationRoute extends SmallTest with Matchers {
         .hostname(configurator.hostname)
         .port(configurator.port)
         .rdbRequest
-        .url("fake_url")
+        .jdbcUrl("fake_url")
         .user("fake_user")
         .password("fake_password")
         .verify())
@@ -95,7 +95,7 @@ class TestValidationRoute extends SmallTest with Matchers {
         .hostname(configurator.hostname)
         .port(configurator.port)
         .rdbRequest
-        .url("fake_url")
+        .jdbcUrl("fake_url")
         .user("fake_user")
         .password("fake_password")
         .workerClusterName(CommonUtils.randomString(10))
@@ -163,7 +163,7 @@ class TestValidationRoute extends SmallTest with Matchers {
     reports.foreach(_.pass shouldBe true)
     // the validated node is equal to existent node so report is attached to the existent node
     // the number of node validation report is always one
-    result(NodeApi.access.hostname(configurator.hostname).port(configurator.port).get(hostname)).validationReport.get shouldBe reports.head
+    result(NodeApi.access.hostname(configurator.hostname).port(configurator.port).get(NodeApi.key(hostname))).validationReport.get shouldBe reports.head
 
     val report2 = result(
       ValidationApi.access
@@ -176,7 +176,7 @@ class TestValidationRoute extends SmallTest with Matchers {
         .password(password)
         .verify()).head
     // the validated node is not equal to existent node so report2 is attached to the existent node
-    result(NodeApi.access.hostname(configurator.hostname).port(configurator.port).get(hostname)).validationReport.get should not be report2
+    result(NodeApi.access.hostname(configurator.hostname).port(configurator.port).get(NodeApi.key(hostname))).validationReport.get should not be report2
 
     // updating the node can clean the report
     result(
@@ -189,7 +189,7 @@ class TestValidationRoute extends SmallTest with Matchers {
         .user(user)
         .password(password)
         .update())
-    result(NodeApi.access.hostname(configurator.hostname).port(configurator.port).get(hostname)).validationReport shouldBe None
+    result(NodeApi.access.hostname(configurator.hostname).port(configurator.port).get(NodeApi.key(hostname))).validationReport shouldBe None
   }
 
   @Test

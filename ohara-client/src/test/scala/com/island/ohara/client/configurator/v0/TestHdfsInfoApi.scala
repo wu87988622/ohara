@@ -26,6 +26,14 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class TestHdfsInfoApi extends SmallTest with Matchers {
 
   @Test
+  def nullKeyInGet(): Unit =
+    an[NullPointerException] should be thrownBy HdfsInfoApi.access.get(null)
+
+  @Test
+  def nullKeyInDelete(): Unit =
+    an[NullPointerException] should be thrownBy HdfsInfoApi.access.delete(null)
+
+  @Test
   def testNullUriInUpdate(): Unit = {
     val update = HdfsInfoApi.HDFS_UPDATE_JSON_FORMAT.read("""
         |{

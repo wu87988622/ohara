@@ -45,7 +45,7 @@ class TestQueryRoute extends SmallTest with Matchers {
           .hostname(configurator.hostname)
           .port(configurator.port)
           .request
-          .url(db.url())
+          .jdbcUrl(db.url())
           .user(db.user())
           .password(db.password())
           .query())
@@ -71,7 +71,7 @@ class TestQueryRoute extends SmallTest with Matchers {
             .hostname(configurator.hostname)
             .port(configurator.port)
             .request
-            .url(db.url())
+            .jdbcUrl(db.url())
             .user(db.user())
             .password(db.password())
             .query()))
@@ -82,7 +82,7 @@ class TestQueryRoute extends SmallTest with Matchers {
             .hostname(configurator.hostname)
             .port(configurator.port)
             .request
-            .url(db.url())
+            .jdbcUrl(db.url())
             .user(db.user())
             .password(db.password())
             .catalogPattern(db.databaseName)

@@ -21,6 +21,7 @@ import com.island.ohara.client.configurator.v0.FtpInfoApi.{FtpInfo, Request}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
+import com.island.ohara.kafka.connector.json.ObjectKey
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 import spray.json.{JsNumber, JsString}
@@ -50,7 +51,7 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
     response.password shouldBe password
 
     // test get
-    response shouldBe result(ftpApi.get(response.name))
+    response shouldBe result(ftpApi.get(response.key))
 
     // test update
     val port2 = CommonUtils.availablePort()
@@ -58,7 +59,7 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
     val user2 = CommonUtils.randomString()
     val password2 = CommonUtils.randomString()
     val response2 = result(
-      ftpApi.request.name(name).hostname(hostname2).port(port2).user(user2).password(password2).update())
+      ftpApi.request.key(response.key).hostname(hostname2).port(port2).user(user2).password(password2).update())
     response2.name shouldBe name
     response2.port shouldBe port2
     response2.hostname shouldBe hostname2
@@ -66,20 +67,22 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
     response2.password shouldBe password2
 
     // test get
-    response2 shouldBe result(ftpApi.get(response2.name))
+    response2 shouldBe result(ftpApi.get(response2.key))
 
     // test delete
     result(ftpApi.list()).size shouldBe 1
-    result(ftpApi.delete(response.name))
+    result(ftpApi.delete(response.key))
     result(ftpApi.list()).size shouldBe 0
 
     // test nonexistent data
-    an[IllegalArgumentException] should be thrownBy result(ftpApi.get("asdadas"))
+    an[IllegalArgumentException] should be thrownBy result(
+      ftpApi.get(ObjectKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))))
   }
 
   @Test
   def duplicateDelete(): Unit =
-    (0 to 10).foreach(_ => result(ftpApi.delete(CommonUtils.randomString(5))))
+    (0 to 10).foreach(_ =>
+      result(ftpApi.delete(ObjectKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))))
 
   @Test
   def duplicateUpdate(): Unit = {
@@ -160,7 +163,7 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
         .user(CommonUtils.randomString())
         .password(CommonUtils.randomString())
         .update())
-    val updated = result(req(ftpApi.request.name(previous.name)).update())
+    val updated = result(req(ftpApi.request.key(previous.key)).update())
     val expected = _expected(previous)
     updated.name shouldBe expected.name
     updated.hostname shouldBe expected.hostname
@@ -183,13 +186,13 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
       CommonUtils.randomString(10) -> JsString(CommonUtils.randomString(10)),
       CommonUtils.randomString(10) -> JsNumber(CommonUtils.randomInteger())
     )
-    val ftpDesc2 = result(ftpApi.request.name(ftpDesc.name).tags(tags2).update())
+    val ftpDesc2 = result(ftpApi.request.key(ftpDesc.key).tags(tags2).update())
     ftpDesc2.tags shouldBe tags2
 
-    val ftpDesc3 = result(ftpApi.request.name(ftpDesc.name).update())
+    val ftpDesc3 = result(ftpApi.request.key(ftpDesc.key).update())
     ftpDesc3.tags shouldBe tags2
 
-    val ftpDesc4 = result(ftpApi.request.name(ftpDesc.name).tags(Map.empty).update())
+    val ftpDesc4 = result(ftpApi.request.key(ftpDesc.key).tags(Map.empty).update())
     ftpDesc4.tags shouldBe Map.empty
   }
 

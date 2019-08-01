@@ -26,6 +26,14 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class TestTopicApi extends SmallTest with Matchers {
 
   @Test
+  def nullKeyInGet(): Unit =
+    an[NullPointerException] should be thrownBy TopicApi.access.get(null)
+
+  @Test
+  def nullKeyInDelete(): Unit =
+    an[NullPointerException] should be thrownBy TopicApi.access.delete(null)
+
+  @Test
   def emptyGroup(): Unit = an[IllegalArgumentException] should be thrownBy TopicApi.access.request.group("")
 
   @Test

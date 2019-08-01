@@ -29,6 +29,14 @@ import spray.json._
 class TestPipelineApi extends SmallTest with Matchers {
 
   @Test
+  def nullKeyInGet(): Unit =
+    an[NullPointerException] should be thrownBy PipelineApi.access.get(null)
+
+  @Test
+  def nullKeyInDelete(): Unit =
+    an[NullPointerException] should be thrownBy PipelineApi.access.delete(null)
+
+  @Test
   def parseDeprecatedJsonOfPipelineCreationRequest(): Unit = {
     val from = CommonUtils.randomString()
     val to0 = CommonUtils.randomString()

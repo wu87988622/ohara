@@ -21,6 +21,7 @@ import com.island.ohara.client.configurator.v0.JdbcInfoApi.{JdbcInfo, Request}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
+import com.island.ohara.kafka.connector.json.ObjectKey
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 import spray.json.{JsNumber, JsString}
@@ -40,40 +41,42 @@ class TestJdbcInfoRoute extends SmallTest with Matchers {
     val url = CommonUtils.randomString()
     val user = CommonUtils.randomString()
     val password = CommonUtils.randomString()
-    val response = result(jdbcApi.request.name(name).url(url).user(user).password(password).create())
+    val response = result(jdbcApi.request.name(name).jdbcUrl(url).user(user).password(password).create())
     response.name shouldBe name
     response.url shouldBe url
     response.user shouldBe user
     response.password shouldBe password
 
     // test get
-    response shouldBe result(jdbcApi.get(response.name))
+    response shouldBe result(jdbcApi.get(response.key))
 
     // test update
     val url2 = CommonUtils.randomString()
     val user2 = CommonUtils.randomString()
     val password2 = CommonUtils.randomString()
-    val response2 = result(jdbcApi.request.name(name).url(url2).user(user2).password(password2).update())
+    val response2 = result(jdbcApi.request.name(name).jdbcUrl(url2).user(user2).password(password2).update())
     response2.name shouldBe name
     response2.url shouldBe url2
     response2.user shouldBe user2
     response2.password shouldBe password2
 
     // test get
-    response2 shouldBe result(jdbcApi.get(response2.name))
+    response2 shouldBe result(jdbcApi.get(response2.key))
 
     // test delete
     result(jdbcApi.list()).size shouldBe 1
-    result(jdbcApi.delete(response.name))
+    result(jdbcApi.delete(response.key))
     result(jdbcApi.list()).size shouldBe 0
 
     // test nonexistent data
-    an[IllegalArgumentException] should be thrownBy result(jdbcApi.get("asdadas"))
+    an[IllegalArgumentException] should be thrownBy result(
+      jdbcApi.get(ObjectKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))))
   }
 
   @Test
   def duplicateDelete(): Unit =
-    (0 to 10).foreach(_ => result(jdbcApi.delete(CommonUtils.randomString(5))))
+    (0 to 10).foreach(_ =>
+      result(jdbcApi.delete(ObjectKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))))
 
   @Test
   def duplicateUpdate(): Unit = {
@@ -83,7 +86,7 @@ class TestJdbcInfoRoute extends SmallTest with Matchers {
         result(
           jdbcApi.request
             .name(CommonUtils.randomString())
-            .url(CommonUtils.randomString())
+            .jdbcUrl(CommonUtils.randomString())
             .user(CommonUtils.randomString())
             .password(CommonUtils.randomString())
             .update()))
@@ -97,7 +100,7 @@ class TestJdbcInfoRoute extends SmallTest with Matchers {
       an[IllegalArgumentException] should be thrownBy result(
         jdbcApi.request
           .name(invalidString)
-          .url(CommonUtils.randomString())
+          .jdbcUrl(CommonUtils.randomString())
           .user(CommonUtils.randomString())
           .password(CommonUtils.randomString())
           .update())
@@ -111,7 +114,7 @@ class TestJdbcInfoRoute extends SmallTest with Matchers {
       an[IllegalArgumentException] should be thrownBy result(
         jdbcApi.request
           .name(invalidString)
-          .url(CommonUtils.randomString())
+          .jdbcUrl(CommonUtils.randomString())
           .user(CommonUtils.randomString())
           .password(CommonUtils.randomString())
           .create())
@@ -121,7 +124,7 @@ class TestJdbcInfoRoute extends SmallTest with Matchers {
   @Test
   def testUpdateUrl(): Unit = {
     val url = CommonUtils.randomString()
-    updatePartOfField(_.url(url), _.copy(url = url))
+    updatePartOfField(_.jdbcUrl(url), _.copy(url = url))
   }
 
   @Test
@@ -140,7 +143,7 @@ class TestJdbcInfoRoute extends SmallTest with Matchers {
     val previous = result(
       jdbcApi.request
         .name(CommonUtils.randomString())
-        .url(CommonUtils.randomString())
+        .jdbcUrl(CommonUtils.randomString())
         .user(CommonUtils.randomString())
         .password(CommonUtils.randomString())
         .update())
@@ -158,7 +161,7 @@ class TestJdbcInfoRoute extends SmallTest with Matchers {
       CommonUtils.randomString(10) -> JsString(CommonUtils.randomString(10)),
       CommonUtils.randomString(10) -> JsNumber(CommonUtils.randomInteger())
     )
-    val jdbcDesc = result(jdbcApi.request.url("url").user("user").password("password").tags(tags).create())
+    val jdbcDesc = result(jdbcApi.request.jdbcUrl("url").user("user").password("password").tags(tags).create())
     jdbcDesc.tags shouldBe tags
 
     val tags2 = Map(
@@ -178,13 +181,18 @@ class TestJdbcInfoRoute extends SmallTest with Matchers {
   @Test
   def testGroup(): Unit = {
     // default group
-    result(jdbcApi.request.url("url").user(CommonUtils.randomString()).password(CommonUtils.randomString()).create()).group shouldBe Data.GROUP_DEFAULT
+    result(
+      jdbcApi.request
+        .jdbcUrl("url")
+        .user(CommonUtils.randomString())
+        .password(CommonUtils.randomString())
+        .create()).group shouldBe Data.GROUP_DEFAULT
 
     val group = CommonUtils.randomString()
     val ftpInfo = result(
       jdbcApi.request
         .group(group)
-        .url("url")
+        .jdbcUrl("url")
         .user(CommonUtils.randomString())
         .password(CommonUtils.randomString())
         .create())
@@ -197,7 +205,7 @@ class TestJdbcInfoRoute extends SmallTest with Matchers {
       jdbcApi.request
         .group(ftpInfo.group)
         .name(ftpInfo.name)
-        .url("url")
+        .jdbcUrl("url")
         .user(CommonUtils.randomString())
         .password(CommonUtils.randomString())
         .update())
@@ -210,7 +218,7 @@ class TestJdbcInfoRoute extends SmallTest with Matchers {
       jdbcApi.request
         .group(group2)
         .name(ftpInfo.name)
-        .url("url")
+        .jdbcUrl("url")
         .user(CommonUtils.randomString())
         .password(CommonUtils.randomString())
         .create()).group shouldBe group2

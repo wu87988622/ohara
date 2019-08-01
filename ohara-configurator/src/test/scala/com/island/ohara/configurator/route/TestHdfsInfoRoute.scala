@@ -21,6 +21,7 @@ import com.island.ohara.client.configurator.v0.HdfsInfoApi.{HdfsInfo, Request}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
+import com.island.ohara.kafka.connector.json.ObjectKey
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 import spray.json.{JsNumber, JsString}
@@ -42,7 +43,7 @@ class TestHdfsInfoRoute extends SmallTest with Matchers {
     response.uri shouldBe uri
 
     // test get
-    response shouldBe result(hdfsApi.get(response.name))
+    response shouldBe result(hdfsApi.get(response.key))
 
     // test update
     val uri2 = CommonUtils.randomString()
@@ -50,13 +51,14 @@ class TestHdfsInfoRoute extends SmallTest with Matchers {
     result(hdfsApi.list()).size shouldBe 1
     newResponse.name shouldBe name
     newResponse.uri shouldBe uri2
-    newResponse shouldBe result(hdfsApi.get(response.name))
+    newResponse shouldBe result(hdfsApi.get(response.key))
 
-    result(hdfsApi.delete(response.name))
+    result(hdfsApi.delete(response.key))
     result(hdfsApi.list()).size shouldBe 0
 
     // test nonexistent data
-    an[IllegalArgumentException] should be thrownBy result(hdfsApi.get("123"))
+    an[IllegalArgumentException] should be thrownBy result(
+      hdfsApi.get(ObjectKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))))
   }
 
   @Test
@@ -70,7 +72,8 @@ class TestHdfsInfoRoute extends SmallTest with Matchers {
 
   @Test
   def duplicateDelete(): Unit =
-    (0 to 10).foreach(_ => result(hdfsApi.delete(CommonUtils.randomString(5))))
+    (0 to 10).foreach(_ =>
+      result(hdfsApi.delete(ObjectKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))))
 
   @Test
   def testInvalidNameOnUpdate(): Unit = {

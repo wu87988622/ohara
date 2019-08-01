@@ -29,36 +29,12 @@ class TestFileInfoApi extends SmallTest with Matchers {
   private[this] def access: FileInfoApi.Access = FileInfoApi.access.hostname(CommonUtils.hostname()).port(22)
 
   @Test
-  def emptyNameInGet(): Unit =
-    an[IllegalArgumentException] should be thrownBy access.get(CommonUtils.randomString(10), "")
+  def nullKeyInGet(): Unit =
+    an[NullPointerException] should be thrownBy access.get(null)
 
   @Test
-  def nullNameInGet(): Unit =
-    an[NullPointerException] should be thrownBy access.get(CommonUtils.randomString(10), null)
-
-  @Test
-  def emptyGroupInGet(): Unit =
-    an[IllegalArgumentException] should be thrownBy access.get("", CommonUtils.randomString(10))
-
-  @Test
-  def nullGroupInGet(): Unit =
-    an[NullPointerException] should be thrownBy access.get(null, CommonUtils.randomString(10))
-
-  @Test
-  def emptyNameInDelete(): Unit =
-    an[IllegalArgumentException] should be thrownBy access.delete(CommonUtils.randomString(10), "")
-
-  @Test
-  def nullNameInDelete(): Unit =
-    an[NullPointerException] should be thrownBy access.delete(CommonUtils.randomString(10), null)
-
-  @Test
-  def emptyGroupInDelete(): Unit =
-    an[IllegalArgumentException] should be thrownBy access.delete("", CommonUtils.randomString(10))
-
-  @Test
-  def nullGroupInDelete(): Unit =
-    an[NullPointerException] should be thrownBy access.delete(null, CommonUtils.randomString(10))
+  def nullKeyInDelete(): Unit =
+    an[NullPointerException] should be thrownBy access.delete(null)
 
   @Test
   def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy access.request.name("")

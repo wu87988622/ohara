@@ -72,6 +72,15 @@ object JdbcInfoApi {
 
   trait Request {
 
+    /**
+      * set the group and name via key
+      * @param objectKey object key
+      * @return this request
+      */
+    def key(objectKey: ObjectKey): Request = {
+      group(objectKey.group())
+      name(objectKey.name())
+    }
     @Optional("default def is a GROUP_DEFAULT")
     def group(group: String): Request
 
@@ -79,7 +88,7 @@ object JdbcInfoApi {
     def name(name: String): Request
 
     @Optional("it is ignorable if you are going to send update request")
-    def url(url: String): Request
+    def jdbcUrl(jdbcUrl: String): Request
 
     @Optional("it is ignorable if you are going to send update request")
     def user(user: String): Request
@@ -113,7 +122,7 @@ object JdbcInfoApi {
     def request: Request = new Request {
       private[this] var group: String = GROUP_DEFAULT
       private[this] var name: String = _
-      private[this] var url: String = _
+      private[this] var jdbcUrl: String = _
       private[this] var user: String = _
       private[this] var password: String = _
       private[this] var tags: Map[String, JsValue] = _
@@ -128,8 +137,8 @@ object JdbcInfoApi {
         this
       }
 
-      override def url(url: String): Request = {
-        this.url = CommonUtils.requireNonEmpty(url)
+      override def jdbcUrl(jdbcUrl: String): Request = {
+        this.jdbcUrl = CommonUtils.requireNonEmpty(jdbcUrl)
         this
       }
 
@@ -151,14 +160,14 @@ object JdbcInfoApi {
       override private[v0] def creation: Creation = Creation(
         group = CommonUtils.requireNonEmpty(group),
         name = if (CommonUtils.isEmpty(name)) CommonUtils.randomString(10) else name,
-        url = CommonUtils.requireNonEmpty(url),
+        url = CommonUtils.requireNonEmpty(jdbcUrl),
         user = CommonUtils.requireNonEmpty(user),
         password = CommonUtils.requireNonEmpty(password),
         tags = if (tags == null) Map.empty else tags
       )
 
       override private[v0] def update: Update = Update(
-        url = Option(url).map(CommonUtils.requireNonEmpty),
+        url = Option(jdbcUrl).map(CommonUtils.requireNonEmpty),
         user = Option(user).map(CommonUtils.requireNonEmpty),
         password = Option(password).map(CommonUtils.requireNonEmpty),
         tags = Option(tags)
@@ -166,12 +175,12 @@ object JdbcInfoApi {
 
       override def create()(implicit executionContext: ExecutionContext): Future[JdbcInfo] =
         exec.post[Creation, JdbcInfo, ErrorApi.Error](
-          _url,
+          url,
           creation
         )
       override def update()(implicit executionContext: ExecutionContext): Future[JdbcInfo] =
         exec.put[Update, JdbcInfo, ErrorApi.Error](
-          _url(ObjectKey.of(group, name)),
+          url(ObjectKey.of(group, name)),
           update
         )
     }

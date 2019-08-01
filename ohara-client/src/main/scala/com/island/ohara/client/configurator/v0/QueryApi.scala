@@ -51,7 +51,7 @@ object QueryApi {
     * used to generate the payload and url for POST/PUT request.
     */
   trait Request {
-    def url(url: String): Request
+    def jdbcUrl(url: String): Request
 
     @Optional("server will match a broker cluster for you if the wk name is ignored")
     def workerClusterName(workerClusterName: String): Request
@@ -82,7 +82,7 @@ object QueryApi {
 
   final class Access private[QueryApi] extends BasicAccess(QUERY_PREFIX_PATH) {
     def request: Request = new Request {
-      private[this] var url: String = _
+      private[this] var jdbcUrl: String = _
       private[this] var user: String = _
       private[this] var password: String = _
       private[this] var workerClusterName: String = _
@@ -90,8 +90,8 @@ object QueryApi {
       private[this] var schemaPattern: String = _
       private[this] var tableName: String = _
 
-      override def url(url: String): Request = {
-        this.url = CommonUtils.requireNonEmpty(url)
+      override def jdbcUrl(jdbcUrl: String): Request = {
+        this.jdbcUrl = CommonUtils.requireNonEmpty(jdbcUrl)
         this
       }
 
@@ -126,7 +126,7 @@ object QueryApi {
       }
 
       override private[v0] def query: RdbQuery = RdbQuery(
-        url = CommonUtils.requireNonEmpty(url),
+        url = CommonUtils.requireNonEmpty(jdbcUrl),
         user = CommonUtils.requireNonEmpty(user),
         password = CommonUtils.requireNonEmpty(password),
         workerClusterName = Option(workerClusterName).map(CommonUtils.requireNonEmpty),
@@ -136,9 +136,7 @@ object QueryApi {
       )
 
       override def query()(implicit executionContext: ExecutionContext): Future[RdbInfo] =
-        exec.post[RdbQuery, RdbInfo, ErrorApi.Error](
-          s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$RDB_PREFIX_PATH",
-          query)
+        exec.post[RdbQuery, RdbInfo, ErrorApi.Error](s"$url/$RDB_PREFIX_PATH", query)
     }
   }
 

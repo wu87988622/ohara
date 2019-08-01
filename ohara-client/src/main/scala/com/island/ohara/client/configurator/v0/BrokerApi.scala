@@ -236,13 +236,13 @@ object BrokerApi {
 
       override def create()(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] =
         exec.post[Creation, BrokerClusterInfo, ErrorApi.Error](
-          _url,
+          url,
           creation
         )
 
       override def update()(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] =
         exec.put[Update, BrokerClusterInfo, ErrorApi.Error](
-          s"${_url}/${CommonUtils.requireNonEmpty(name)}",
+          s"${url}/${CommonUtils.requireNonEmpty(name)}",
           update
         )
     }

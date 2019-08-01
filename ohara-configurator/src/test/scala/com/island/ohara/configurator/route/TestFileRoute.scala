@@ -103,7 +103,7 @@ class TestFileRoute extends SmallTest with Matchers {
     f.getName.contains(jar.name) shouldBe true
     result(fileApi.list()).size shouldBe 1
 
-    result(fileApi.delete(jar.group, jar.name))
+    result(fileApi.delete(jar.key))
     result(fileApi.list()).size shouldBe 0
 
     f.deleteOnExit()
@@ -117,22 +117,23 @@ class TestFileRoute extends SmallTest with Matchers {
     // upload jar
     val jar = result(fileApi.request.file(f).upload())
     // create streamApp property
-    result(streamApi.request.name(name).jar(ObjectKey.of(jar.group, jar.name)).create())
+    result(streamApi.request.name(name).jar(jar.key).create())
     // cannot delete a used jar
-    val thrown = the[IllegalArgumentException] thrownBy result(fileApi.delete(jar.group, jar.name))
+    val thrown = the[IllegalArgumentException] thrownBy result(fileApi.delete(jar.key))
     thrown.getMessage should include("in used")
 
     result(streamApi.delete(name))
     // delete is ok after remove property
-    result(fileApi.delete(jar.group, jar.name))
+    result(fileApi.delete(jar.key))
 
     // the jar should be disappear
-    an[IllegalArgumentException] should be thrownBy result(fileApi.get(jar.group, jar.name))
+    an[IllegalArgumentException] should be thrownBy result(fileApi.get(jar.key))
   }
 
   @Test
   def duplicateDeleteStreamProperty(): Unit =
-    (0 to 10).foreach(_ => result(fileApi.delete(CommonUtils.randomString(5), CommonUtils.randomString(5))))
+    (0 to 10).foreach(_ =>
+      result(fileApi.delete(ObjectKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))))
 
   @Test
   def updateTags(): Unit = {

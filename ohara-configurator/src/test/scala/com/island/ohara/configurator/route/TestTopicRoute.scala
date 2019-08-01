@@ -21,6 +21,7 @@ import com.island.ohara.client.configurator.v0.{BrokerApi, TopicApi, ZookeeperAp
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
+import com.island.ohara.kafka.connector.json.TopicKey
 import org.apache.kafka.common.config.TopicConfig
 import org.junit.{After, Test}
 import org.scalatest.Matchers
@@ -51,7 +52,7 @@ class TestTopicRoute extends SmallTest with Matchers {
     response.numberOfReplications shouldBe numberOfReplications
 
     // test get
-    val response2 = result(topicApi.get(response.name))
+    val response2 = result(topicApi.get(response.key))
     response.name shouldBe response2.name
     response.brokerClusterName shouldBe response2.brokerClusterName
     response.numberOfPartitions shouldBe response2.numberOfPartitions
@@ -64,11 +65,12 @@ class TestTopicRoute extends SmallTest with Matchers {
 
     // test delete
     result(topicApi.list()).size shouldBe 1
-    result(topicApi.delete(response.name))
+    result(topicApi.delete(response.key))
     result(topicApi.list()).size shouldBe 0
 
     // test nonexistent data
-    an[IllegalArgumentException] should be thrownBy result(topicApi.get("123"))
+    an[IllegalArgumentException] should be thrownBy result(
+      topicApi.get(TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))))
   }
 
   @Test
@@ -83,7 +85,7 @@ class TestTopicRoute extends SmallTest with Matchers {
             .hostname(configurator.hostname)
             .port(configurator.port)
             .stop(topicInfo.brokerClusterName)
-            .flatMap(_ => topicApi.delete(topicInfo.name))
+            .flatMap(_ => topicApi.delete(topicInfo.key))
         }
         .flatMap(_ => topicApi.list())
         .map(topics => topics.exists(_.name == name))) shouldBe false
@@ -159,7 +161,7 @@ class TestTopicRoute extends SmallTest with Matchers {
       topicApi.request.name(CommonUtils.randomString(10)).brokerClusterName(bks.head.name).create())
 
     an[IllegalArgumentException] should be thrownBy result(
-      topicApi.request.name(topicInfo.name).brokerClusterName(bks.last.name).update())
+      topicApi.request.key(topicInfo.key).brokerClusterName(bks.last.name).update())
   }
 
   @Test
@@ -188,14 +190,14 @@ class TestTopicRoute extends SmallTest with Matchers {
     // we can't reduce number of replications
     an[IllegalArgumentException] should be thrownBy result(
       topicApi.request
-        .name(topicInfo.name)
+        .key(topicInfo.key)
         .numberOfReplications((topicInfo.numberOfReplications - 1).asInstanceOf[Short])
         .update())
 
     // we can't add number of replications
     an[IllegalArgumentException] should be thrownBy result(
       topicApi.request
-        .name(topicInfo.name)
+        .key(topicInfo.key)
         .numberOfReplications((topicInfo.numberOfReplications + 1).asInstanceOf[Short])
         .update())
 
@@ -206,7 +208,8 @@ class TestTopicRoute extends SmallTest with Matchers {
 
   @Test
   def duplicateDelete(): Unit =
-    (0 to 10).foreach(_ => result(topicApi.delete(CommonUtils.randomString(5))))
+    (0 to 10).foreach(_ =>
+      result(topicApi.delete(TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))))
 
   @Test
   def duplicateUpdate(): Unit =
@@ -216,7 +219,7 @@ class TestTopicRoute extends SmallTest with Matchers {
   def testBrokerClusterName(): Unit = {
     val topicInfo = result(topicApi.request.name(CommonUtils.randomString(10)).create())
     an[IllegalArgumentException] should be thrownBy result(
-      topicApi.request.name(topicInfo.name).brokerClusterName(CommonUtils.randomString()).update())
+      topicApi.request.key(topicInfo.key).brokerClusterName(CommonUtils.randomString()).update())
   }
 
   @Test
@@ -247,7 +250,7 @@ class TestTopicRoute extends SmallTest with Matchers {
     try {
       topicAdmin.delete(topic.name)
       // the topic is removed but we don't throw exception.
-      result(topicApi.delete(topic.name))
+      result(topicApi.delete(topic.key))
     } finally topicAdmin.close()
   }
 
@@ -264,13 +267,13 @@ class TestTopicRoute extends SmallTest with Matchers {
       CommonUtils.randomString(10) -> JsString(CommonUtils.randomString(10)),
       CommonUtils.randomString(10) -> JsNumber(CommonUtils.randomInteger())
     )
-    val topicDesc2 = result(topicApi.request.name(topicDesc.name).tags(tags2).update())
+    val topicDesc2 = result(topicApi.request.key(topicDesc.key).tags(tags2).update())
     topicDesc2.tags shouldBe tags2
 
-    val topicDesc3 = result(topicApi.request.name(topicDesc.name).update())
+    val topicDesc3 = result(topicApi.request.key(topicDesc.key).update())
     topicDesc3.tags shouldBe tags2
 
-    val topicDesc4 = result(topicApi.request.name(topicDesc.name).tags(Map.empty).update())
+    val topicDesc4 = result(topicApi.request.key(topicDesc.key).tags(Map.empty).update())
     topicDesc4.tags shouldBe Map.empty
   }
 
@@ -287,9 +290,9 @@ class TestTopicRoute extends SmallTest with Matchers {
     val topicDesc = result(topicApi.request.create())
     topicDesc.state shouldBe None
     result(topicApi.start(topicDesc.key))
-    result(topicApi.get(topicDesc.name)).state should not be None
+    result(topicApi.get(topicDesc.key)).state should not be None
     result(topicApi.stop(topicDesc.key))
-    result(topicApi.get(topicDesc.name)).state shouldBe None
+    result(topicApi.get(topicDesc.key)).state shouldBe None
   }
 
   @Test

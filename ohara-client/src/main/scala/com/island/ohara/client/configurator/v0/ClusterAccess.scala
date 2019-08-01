@@ -35,21 +35,21 @@ abstract class ClusterAccess[Res <: ClusterInfo] private[v0] (prefixPath: String
     CommonUtils.requireNonEmpty(name, () => "node name can't be empty")
   }
   private[this] def actionUrl(name: String, action: String): String =
-    s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$name/$action"
+    s"$url/$name/$action"
 
   def get(clusterName: String)(implicit executionContext: ExecutionContext): Future[Res] =
-    exec.get[Res, ErrorApi.Error](s"${_url}/${_clusterName(clusterName)}")
+    exec.get[Res, ErrorApi.Error](s"$url/${_clusterName(clusterName)}")
   def delete(clusterName: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-    exec.delete[ErrorApi.Error](s"${_url}/$clusterName")
+    exec.delete[ErrorApi.Error](s"$url/$clusterName")
   //TODO remove this after finished #1544...by Sam
   def forceDelete(clusterName: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-    exec.delete[ErrorApi.Error](s"${_url}/$clusterName?${Data.FORCE_KEY}=true")
+    exec.delete[ErrorApi.Error](s"$url/$clusterName?${Data.FORCE_KEY}=true")
   def list()(implicit executionContext: ExecutionContext): Future[Seq[Res]] =
-    exec.get[Seq[Res], ErrorApi.Error](s"${_url}")
+    exec.get[Seq[Res], ErrorApi.Error](url)
   def addNode(clusterName: String, nodeName: String)(implicit executionContext: ExecutionContext): Future[Res] =
-    exec.put[Res, ErrorApi.Error](s"${_url}/${_clusterName(clusterName)}/${_nodeName(nodeName)}")
+    exec.put[Res, ErrorApi.Error](s"$url/${_clusterName(clusterName)}/${_nodeName(nodeName)}")
   def removeNode(clusterName: String, nodeName: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-    exec.delete[ErrorApi.Error](s"${_url}/${_clusterName(clusterName)}/${_nodeName(nodeName)}")
+    exec.delete[ErrorApi.Error](s"$url/${_clusterName(clusterName)}/${_nodeName(nodeName)}")
 
   /**
     *  start a cluster

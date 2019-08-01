@@ -231,6 +231,16 @@ object PipelineApi {
     */
   trait Request {
 
+    /**
+      * set the group and name via key
+      * @param objectKey object key
+      * @return this request
+      */
+    def key(objectKey: ObjectKey): Request = {
+      group(objectKey.group())
+      name(objectKey.name())
+    }
+
     @Optional("default def is a GROUP_DEFAULT")
     def group(group: String): Request
 
@@ -323,12 +333,12 @@ object PipelineApi {
 
       override def create()(implicit executionContext: ExecutionContext): Future[Pipeline] =
         exec.post[Creation, Pipeline, ErrorApi.Error](
-          _url,
+          url,
           creation
         )
       override def update()(implicit executionContext: ExecutionContext): Future[Pipeline] =
         exec.put[Update, Pipeline, ErrorApi.Error](
-          _url(ObjectKey.of(group, name)),
+          url(ObjectKey.of(group, name)),
           update
         )
     }

@@ -32,7 +32,7 @@ class TestQueryApi extends SmallTest with Matchers {
       .hostname(CommonUtils.randomString())
       .port(CommonUtils.availablePort())
       .request
-      .url(url)
+      .jdbcUrl(url)
       .user(user)
       .password(password)
       .query
@@ -59,7 +59,7 @@ class TestQueryApi extends SmallTest with Matchers {
       .hostname(CommonUtils.randomString())
       .port(CommonUtils.availablePort())
       .request
-      .url(url)
+      .jdbcUrl(url)
       .user(user)
       .password(password)
       .workerClusterName(workerClusterName)
@@ -91,7 +91,7 @@ class TestQueryApi extends SmallTest with Matchers {
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
-    .url(CommonUtils.randomString())
+    .jdbcUrl(CommonUtils.randomString())
     .password(CommonUtils.randomString())
     .query
 
@@ -100,15 +100,15 @@ class TestQueryApi extends SmallTest with Matchers {
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
-    .url(CommonUtils.randomString())
+    .jdbcUrl(CommonUtils.randomString())
     .user(CommonUtils.randomString())
     .query
 
   @Test
-  def nullUrl(): Unit = an[NullPointerException] should be thrownBy QueryApi.access.request.url(null)
+  def nullUrl(): Unit = an[NullPointerException] should be thrownBy QueryApi.access.request.jdbcUrl(null)
 
   @Test
-  def emptyUrl(): Unit = an[IllegalArgumentException] should be thrownBy QueryApi.access.request.url("")
+  def emptyUrl(): Unit = an[IllegalArgumentException] should be thrownBy QueryApi.access.request.jdbcUrl("")
 
   @Test
   def nullUser(): Unit = an[NullPointerException] should be thrownBy QueryApi.access.request.user(null)

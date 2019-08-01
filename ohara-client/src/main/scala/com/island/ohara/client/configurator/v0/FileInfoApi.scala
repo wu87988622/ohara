@@ -24,9 +24,11 @@ import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model._
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.kafka.connector.json.ObjectKey
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsObject, JsString, JsValue, RootJsonFormat}
 import spray.json._
+
 import scala.concurrent.{ExecutionContext, Future}
 object FileInfoApi {
   val GROUP_DEFAULT: String = Data.GROUP_DEFAULT
@@ -119,32 +121,27 @@ object FileInfoApi {
   }
 
   final class Access private[v0] extends BasicAccess(FILE_PREFIX_PATH) {
-    private[this] def url(group: String, name: String) =
-      s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/${CommonUtils.requireNonEmpty(name)}?${Data.GROUP_KEY}=${CommonUtils
-        .requireNonEmpty(group)}"
+
     def list()(implicit executionContext: ExecutionContext): Future[Seq[FileInfo]] =
-      exec.get[Seq[FileInfo], ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}")
+      exec.get[Seq[FileInfo], ErrorApi.Error](url)
 
     /**
       * get file info mapped to specific name. The group is ${GROUP_DEFAULT} by default.
-      * @param name file name
+      * @param key file key
       * @param executionContext thread pool
       * @return file info
       */
-    def get(name: String)(implicit executionContext: ExecutionContext): Future[FileInfo] = get(GROUP_DEFAULT, name)
-    def get(group: String, name: String)(implicit executionContext: ExecutionContext): Future[FileInfo] =
-      exec.get[FileInfo, ErrorApi.Error](url(group, name))
+    def get(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[FileInfo] =
+      exec.get[FileInfo, ErrorApi.Error](url(key))
 
     /**
       * delete file info mapped to specific name. The group is ${GROUP_DEFAULT} by default.
-      * @param name file name
+      * @param key file key
       * @param executionContext thread pool
       * @return file info
       */
-    def delete(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-      delete(GROUP_DEFAULT, name)
-    def delete(group: String, name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-      exec.delete[ErrorApi.Error](url(group, name))
+    def delete(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Unit] =
+      exec.delete[ErrorApi.Error](url(key))
 
     /**
       * start a progress to upload file to remote Configurator
@@ -165,13 +162,12 @@ object FileInfoApi {
             Multipart.FormData.BodyPart(Data.TAGS_KEY, FileInfoApi.toString(tags))
           ))
           .to[RequestEntity]
-          .map(e =>
-            HttpRequest(HttpMethods.POST, uri = s"http://${_hostname}:${_port}/${_version}/${_prefixPath}", entity = e))
+          .map(e => HttpRequest(HttpMethods.POST, uri = url, entity = e))
           .flatMap(exec.request[FileInfo, ErrorApi.Error])
 
       override protected def doUpdate(group: String, name: String, update: Update)(
         implicit executionContext: ExecutionContext): Future[FileInfo] =
-        exec.put[Update, FileInfo, ErrorApi.Error](url(group, name), update)
+        exec.put[Update, FileInfo, ErrorApi.Error](url(ObjectKey.of(group, name)), update)
     }
   }
 

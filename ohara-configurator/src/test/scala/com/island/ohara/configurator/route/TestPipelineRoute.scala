@@ -64,9 +64,9 @@ class TestPipelineRoute extends MediumTest with Matchers {
     pipeline.workerClusterName shouldBe None
 
     // remove topic
-    result(topicApi.delete(topic.name))
+    result(topicApi.delete(topic.key))
 
-    pipeline = result(pipelineApi.get(pipeline.name))
+    pipeline = result(pipelineApi.get(pipeline.key))
 
     // topic is gone
     pipeline.objects.size shouldBe 1
@@ -82,7 +82,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
     result(workerApi.delete(result(workerApi.list()).head.name))
 
     // worker cluster is gone so the object abstract should contain error
-    pipeline = result(pipelineApi.get(pipeline.name))
+    pipeline = result(pipelineApi.get(pipeline.key))
     // topic is gone
     pipeline.objects.size shouldBe 1
     pipeline.objects.head.error should not be None
@@ -189,7 +189,8 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
   @Test
   def duplicateDelete(): Unit =
-    (0 to 10).foreach(_ => result(pipelineApi.delete(CommonUtils.randomString(5))))
+    (0 to 10).foreach(_ =>
+      result(pipelineApi.delete(ObjectKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))))
 
   @Test
   def duplicateUpdate(): Unit = {
@@ -217,7 +218,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
     pipeline.flows.head.from shouldBe topic.key
     pipeline.flows.head.to.size shouldBe 0
 
-    val pipeline2 = result(pipelineApi.request.name(pipeline.name).flows(Seq.empty).update())
+    val pipeline2 = result(pipelineApi.request.key(pipeline.key).flows(Seq.empty).update())
     result(pipelineApi.list()).size shouldBe 1
     pipeline2.name shouldBe pipeline.name
     pipeline2.flows shouldBe Seq.empty
@@ -229,7 +230,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
     val pipeline = result(
       pipelineApi.request.name(CommonUtils.randomString()).flow(topic.key, Set.empty[ObjectKey]).update())
     // worker cluster is useless to pipeline
-    result(pipelineApi.request.name(pipeline.name).workerClusterName(CommonUtils.randomString()).update())
+    result(pipelineApi.request.key(pipeline.key).workerClusterName(CommonUtils.randomString()).update())
   }
 
   @Test

@@ -16,6 +16,7 @@
 
 package com.island.ohara.client.configurator.v0
 
+import com.island.ohara.kafka.connector.json.ObjectKey
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsValue, RootJsonFormat}
 
@@ -31,10 +32,10 @@ object ObjectApi {
   implicit val OBJECT_JSON_FORMAT: RootJsonFormat[Object] = jsonFormat4(Object)
 
   class Access private[v0] extends BasicAccess(OBJECT_PREFIX_PATH) {
-    def get(name: String)(implicit executionContext: ExecutionContext): Future[Seq[Object]] =
-      exec.get[Seq[Object], ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$name")
+    def get(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Seq[Object]] =
+      exec.get[Seq[Object], ErrorApi.Error](url(key))
     def list()(implicit executionContext: ExecutionContext): Future[Seq[Object]] =
-      exec.get[Seq[Object], ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}")
+      exec.get[Seq[Object], ErrorApi.Error](url)
   }
 
   def access: Access = new Access

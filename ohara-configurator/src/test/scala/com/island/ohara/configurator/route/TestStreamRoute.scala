@@ -224,7 +224,8 @@ class TestStreamRoute extends SmallTest with Matchers {
 
   @Test
   def duplicateDeleteStream(): Unit =
-    (0 to 10).foreach(_ => result(accessJar.delete(CommonUtils.randomString(), CommonUtils.randomString(5))))
+    (0 to 10).foreach(_ =>
+      result(accessJar.delete(ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString(5)))))
 
   @Test
   def duplicateDeleteStreamProperty(): Unit =

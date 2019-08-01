@@ -189,7 +189,7 @@ class TestFileStore extends SmallTest with Matchers {
     fileInfo.size shouldBe content.length
     fileInfo.url should not be None
     result(fileApi.list()).size shouldBe 1
-    result(fileApi.get(fileInfo.group, fileInfo.name)) shouldBe fileInfo
+    result(fileApi.get(fileInfo.key)) shouldBe fileInfo
 
     val url = fileInfo.url
     url.getProtocol shouldBe "http"

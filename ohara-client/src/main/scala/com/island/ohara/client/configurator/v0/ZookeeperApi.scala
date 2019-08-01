@@ -226,13 +226,13 @@ object ZookeeperApi {
 
       override def create()(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
         exec.post[Creation, ZookeeperClusterInfo, ErrorApi.Error](
-          _url,
+          url,
           creation
         )
 
       override def update()(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
         exec.put[Update, ZookeeperClusterInfo, ErrorApi.Error](
-          s"${_url}/${CommonUtils.requireNonEmpty(name)}",
+          s"${url}/${CommonUtils.requireNonEmpty(name)}",
           update
         )
     }

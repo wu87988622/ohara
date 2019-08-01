@@ -76,13 +76,13 @@ class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
             )))
         .create())
 
-    result(PipelineApi.access.hostname(configurator.hostname).port(configurator.port).get(pipeline.name)).objects
+    result(PipelineApi.access.hostname(configurator.hostname).port(configurator.port).get(pipeline.key)).objects
       .filter(_.key == connector.key)
       .head
       .state
       .get shouldBe ConnectorState.FAILED.name
 
-    result(PipelineApi.access.hostname(configurator.hostname).port(configurator.port).get(pipeline.name)).objects
+    result(PipelineApi.access.hostname(configurator.hostname).port(configurator.port).get(pipeline.key)).objects
       .filter(_.key == connector.key)
       .head
       .error
@@ -130,13 +130,13 @@ class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
             )))
         .create())
 
-    result(PipelineApi.access.hostname(configurator.hostname).port(configurator.port).get(pipeline.name)).objects
+    result(PipelineApi.access.hostname(configurator.hostname).port(configurator.port).get(pipeline.key)).objects
       .filter(_.key == connector.key)
       .head
       .state
       .get shouldBe ConnectorState.RUNNING.name
 
-    result(PipelineApi.access.hostname(configurator.hostname).port(configurator.port).get(pipeline.name)).objects
+    result(PipelineApi.access.hostname(configurator.hostname).port(configurator.port).get(pipeline.key)).objects
       .filter(_.key == connector.key)
       .head
       .error

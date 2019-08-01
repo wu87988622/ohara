@@ -175,10 +175,11 @@ class TestValidationApi extends SmallTest with Matchers {
   }
 
   @Test
-  def nullUrlOnRdb(): Unit = an[NullPointerException] should be thrownBy ValidationApi.access.rdbRequest.url(null)
+  def nullUrlOnRdb(): Unit = an[NullPointerException] should be thrownBy ValidationApi.access.rdbRequest.jdbcUrl(null)
 
   @Test
-  def emptyUrlOnRdb(): Unit = an[IllegalArgumentException] should be thrownBy ValidationApi.access.rdbRequest.url("")
+  def emptyUrlOnRdb(): Unit =
+    an[IllegalArgumentException] should be thrownBy ValidationApi.access.rdbRequest.jdbcUrl("")
 
   @Test
   def nullUserOnRdb(): Unit = an[NullPointerException] should be thrownBy ValidationApi.access.rdbRequest.user(null)
@@ -210,7 +211,7 @@ class TestValidationApi extends SmallTest with Matchers {
     val workerClusterName = CommonUtils.randomString()
 
     val validation = ValidationApi.access.rdbRequest
-      .url(url)
+      .jdbcUrl(url)
       .user(user)
       .password(password)
       .workerClusterName(workerClusterName)
@@ -221,7 +222,12 @@ class TestValidationApi extends SmallTest with Matchers {
     validation.password shouldBe password
     validation.workerClusterName.get shouldBe workerClusterName
 
-    ValidationApi.access.rdbRequest.url(url).user(user).password(password).validation.workerClusterName shouldBe None
+    ValidationApi.access.rdbRequest
+      .jdbcUrl(url)
+      .user(user)
+      .password(password)
+      .validation
+      .workerClusterName shouldBe None
   }
 
   @Test

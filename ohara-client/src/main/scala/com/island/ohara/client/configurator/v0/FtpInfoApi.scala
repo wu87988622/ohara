@@ -77,6 +77,16 @@ object FtpInfoApi {
     * used to generate the payload and url for POST/PUT request.
     */
   trait Request {
+
+    /**
+      * set the group and name via key
+      * @param objectKey object key
+      * @return this request
+      */
+    def key(objectKey: ObjectKey): Request = {
+      group(objectKey.group())
+      name(objectKey.name())
+    }
     @Optional("default def is a GROUP_DEFAULT")
     def group(group: String): Request
 
@@ -192,12 +202,12 @@ object FtpInfoApi {
 
       override def create()(implicit executionContext: ExecutionContext): Future[FtpInfo] =
         exec.post[Creation, FtpInfo, ErrorApi.Error](
-          _url,
+          url,
           creation
         )
       override def update()(implicit executionContext: ExecutionContext): Future[FtpInfo] =
         exec.put[Update, FtpInfo, ErrorApi.Error](
-          _url(ObjectKey.of(group, name)),
+          url(ObjectKey.of(group, name)),
           update
         )
     }

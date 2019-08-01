@@ -21,6 +21,7 @@ import com.island.ohara.client.configurator.v0.NodeApi.{Node, Request}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
+import com.island.ohara.kafka.connector.json.ObjectKey
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 import spray.json.{JsNumber, JsString}
@@ -82,7 +83,7 @@ class TestNodeRoute extends SmallTest with Matchers {
 
     result(nodeApi.list()).size shouldBe (1 + numberOfDefaultNodes)
 
-    result(nodeApi.delete(res.hostname))
+    result(nodeApi.delete(res.key))
     result(nodeApi.list()).size shouldBe numberOfDefaultNodes
   }
 
@@ -90,7 +91,7 @@ class TestNodeRoute extends SmallTest with Matchers {
   def disableToDeleteNodeRunningService(): Unit = {
     val nodes = result(nodeApi.list())
     val runningNode = nodes.filter(_.services.exists(_.clusterNames.nonEmpty)).head
-    an[IllegalArgumentException] should be thrownBy result(nodeApi.delete(runningNode.name))
+    an[IllegalArgumentException] should be thrownBy result(nodeApi.delete(runningNode.key))
   }
 
   @Test
@@ -118,7 +119,8 @@ class TestNodeRoute extends SmallTest with Matchers {
 
   @Test
   def duplicateDelete(): Unit =
-    (0 to 10).foreach(_ => result(nodeApi.delete(CommonUtils.randomString(5))))
+    (0 to 10).foreach(_ =>
+      result(nodeApi.delete(ObjectKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))))
 
   @Test
   def duplicateUpdate(): Unit = {

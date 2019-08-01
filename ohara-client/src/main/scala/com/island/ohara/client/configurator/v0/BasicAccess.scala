@@ -45,28 +45,23 @@ abstract class BasicAccess private[v0] (prefixPath: String) {
     this
   }
 
-  protected def _hostname: String = CommonUtils.requireNonEmpty(hostname)
-  protected def _port: Int = CommonUtils.requireConnectionPort(port)
-  protected def _version: String = CommonUtils.requireNonEmpty(version)
-  protected def _prefixPath: String = CommonUtils.requireNonEmpty(prefixPath)
-
   /**
     * Compose the url with hostname, port, version and prefix
     * @return url string
     */
-  protected def _url: String = s"http://${_hostname}:${_port}/${_version}/${_prefixPath}"
+  protected final def url: String = s"http://${CommonUtils.requireNonEmpty(hostname)}:${CommonUtils
+    .requireConnectionPort(port)}/${CommonUtils.requireNonEmpty(version)}/${CommonUtils.requireNonEmpty(prefixPath)}"
 
   /**
     * used by UPDATE, DELETE and GET requests
     * @param key object key
     * @return url string
     */
-  protected def _url(key: ObjectKey) =
-    s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/${key.name}?${Data.GROUP_KEY}=${key.group}"
+  protected final def url(key: ObjectKey): String =
+    s"$url/${key.name}?${Data.GROUP_KEY}=${key.group}"
 
-  protected def put(key: ObjectKey, action: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-    exec.put[ErrorApi.Error](
-      s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/${key.name}/$action?group=${key.group}")
+  protected final def put(key: ObjectKey, action: String)(implicit executionContext: ExecutionContext): Future[Unit] =
+    exec.put[ErrorApi.Error](url(key, action))
 
   /**
     * used by START, STOP, PAUSE and RESUME requests.
@@ -75,6 +70,6 @@ abstract class BasicAccess private[v0] (prefixPath: String) {
     * @param postFix action string
     * @return url string
     */
-  protected def _url(key: ObjectKey, postFix: String) =
-    s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/${key.name}/${CommonUtils.requireNonEmpty(postFix)}?${Data.GROUP_KEY}=${key.group}"
+  protected final def url(key: ObjectKey, postFix: String): String =
+    s"$url/${key.name}/${CommonUtils.requireNonEmpty(postFix)}?${Data.GROUP_KEY}=${key.group}"
 }

@@ -63,6 +63,15 @@ object HdfsInfoApi {
     */
   trait Request {
 
+    /**
+      * set the group and name via key
+      * @param objectKey object key
+      * @return this request
+      */
+    def key(objectKey: ObjectKey): Request = {
+      group(objectKey.group())
+      name(objectKey.name())
+    }
     @Optional("default def is a GROUP_DEFAULT")
     def group(group: String): Request
 
@@ -135,11 +144,11 @@ object HdfsInfoApi {
 
       override def create()(implicit executionContext: ExecutionContext): Future[HdfsInfo] =
         exec.post[Creation, HdfsInfo, ErrorApi.Error](
-          _url,
+          url,
           creation
         )
       override def update()(implicit executionContext: ExecutionContext): Future[HdfsInfo] =
-        exec.put[Update, HdfsInfo, ErrorApi.Error](_url(ObjectKey.of(group, name)), update)
+        exec.put[Update, HdfsInfo, ErrorApi.Error](url(ObjectKey.of(group, name)), update)
     }
   }
   def access: Access = new Access

@@ -86,6 +86,6 @@ object InfoApi {
 
   def access: InfoAccess = new InfoAccess {
     override def get()(implicit executionContext: ExecutionContext): Future[ConfiguratorInfo] =
-      exec.get[ConfiguratorInfo, ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}")
+      exec.get[ConfiguratorInfo, ErrorApi.Error](url)
   }
 }

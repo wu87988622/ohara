@@ -32,17 +32,14 @@ object LogApi {
 
   class Access extends BasicAccess(LOG_PREFIX_PATH) {
 
-    private[this] def url(service: String, clusterName: String): String =
-      s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$service/$clusterName"
-
     def log4ZookeeperCluster(clusterName: String)(implicit executionContext: ExecutionContext): Future[ClusterLog] =
-      exec.get[ClusterLog, ErrorApi.Error](url(ZookeeperApi.ZOOKEEPER_PREFIX_PATH, clusterName))
+      exec.get[ClusterLog, ErrorApi.Error](s"$url/${ZookeeperApi.ZOOKEEPER_PREFIX_PATH}/$clusterName")
 
     def log4BrokerCluster(clusterName: String)(implicit executionContext: ExecutionContext): Future[ClusterLog] =
-      exec.get[ClusterLog, ErrorApi.Error](url(BrokerApi.BROKER_PREFIX_PATH, clusterName))
+      exec.get[ClusterLog, ErrorApi.Error](s"$url/${BrokerApi.BROKER_PREFIX_PATH}/$clusterName")
 
     def log4WorkerCluster(clusterName: String)(implicit executionContext: ExecutionContext): Future[ClusterLog] =
-      exec.get[ClusterLog, ErrorApi.Error](url(WorkerApi.WORKER_PREFIX_PATH, clusterName))
+      exec.get[ClusterLog, ErrorApi.Error](s"$url/${WorkerApi.WORKER_PREFIX_PATH}/$clusterName")
   }
 
   def access: Access = new Access

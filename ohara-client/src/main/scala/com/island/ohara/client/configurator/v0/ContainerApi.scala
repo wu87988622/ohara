@@ -47,8 +47,7 @@ object ContainerApi {
 
   class Access private[v0] extends BasicAccess(CONTAINER_PREFIX_PATH) {
     def get(clusterName: String)(implicit executionContext: ExecutionContext): Future[Seq[ContainerGroup]] =
-      exec.get[Seq[ContainerGroup], ErrorApi.Error](
-        s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/${CommonUtils.requireNonEmpty(clusterName)}")
+      exec.get[Seq[ContainerGroup], ErrorApi.Error](s"$url/${CommonUtils.requireNonEmpty(clusterName)}")
   }
 
   def access: Access = new Access

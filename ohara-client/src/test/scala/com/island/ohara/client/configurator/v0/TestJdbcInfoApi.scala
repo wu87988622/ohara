@@ -26,6 +26,14 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class TestJdbcInfoApi extends SmallTest with Matchers {
 
   @Test
+  def nullKeyInGet(): Unit =
+    an[NullPointerException] should be thrownBy JdbcInfoApi.access.get(null)
+
+  @Test
+  def nullKeyInDelete(): Unit =
+    an[NullPointerException] should be thrownBy JdbcInfoApi.access.delete(null)
+
+  @Test
   def testNullUrlInUpdate(): Unit = {
     val update = JdbcInfoApi.JDBC_UPDATE_JSON_FORMAT.read("""
         |{
@@ -196,7 +204,7 @@ class TestJdbcInfoApi extends SmallTest with Matchers {
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
-    .url(CommonUtils.randomString())
+    .jdbcUrl(CommonUtils.randomString())
     .user(CommonUtils.randomString())
     .password(CommonUtils.randomString())
     .creation
@@ -208,7 +216,7 @@ class TestJdbcInfoApi extends SmallTest with Matchers {
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
-    .url(CommonUtils.randomString())
+    .jdbcUrl(CommonUtils.randomString())
     .user(CommonUtils.randomString())
     .password(CommonUtils.randomString())
     .update()
@@ -226,10 +234,10 @@ class TestJdbcInfoApi extends SmallTest with Matchers {
   def nullName(): Unit = an[NullPointerException] should be thrownBy JdbcInfoApi.access.request.name(null)
 
   @Test
-  def emptyUrl(): Unit = an[IllegalArgumentException] should be thrownBy JdbcInfoApi.access.request.url("")
+  def emptyUrl(): Unit = an[IllegalArgumentException] should be thrownBy JdbcInfoApi.access.request.jdbcUrl("")
 
   @Test
-  def nullUrl(): Unit = an[NullPointerException] should be thrownBy JdbcInfoApi.access.request.url(null)
+  def nullUrl(): Unit = an[NullPointerException] should be thrownBy JdbcInfoApi.access.request.jdbcUrl(null)
 
   @Test
   def ignoreUrlOnCreation(): Unit = an[NullPointerException] should be thrownBy JdbcInfoApi.access
@@ -247,7 +255,7 @@ class TestJdbcInfoApi extends SmallTest with Matchers {
     .port(CommonUtils.availablePort())
     .request
     .name(CommonUtils.randomString())
-    .url(CommonUtils.randomString())
+    .jdbcUrl(CommonUtils.randomString())
     .password(CommonUtils.randomString())
     .create()
 
@@ -263,7 +271,7 @@ class TestJdbcInfoApi extends SmallTest with Matchers {
     .port(CommonUtils.availablePort())
     .request
     .name(CommonUtils.randomString())
-    .url(CommonUtils.randomString())
+    .jdbcUrl(CommonUtils.randomString())
     .user(CommonUtils.randomString())
     .create()
 

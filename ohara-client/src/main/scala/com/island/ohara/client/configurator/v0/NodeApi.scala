@@ -204,12 +204,12 @@ object NodeApi {
 
       override def create()(implicit executionContext: ExecutionContext): Future[Node] =
         exec.post[Creation, Node, ErrorApi.Error](
-          _url,
+          url,
           creation
         )
       override def update()(implicit executionContext: ExecutionContext): Future[Node] =
         exec.put[Update, Node, ErrorApi.Error](
-          s"${_url}/${CommonUtils.requireNonEmpty(hostname)}",
+          s"${url}/${CommonUtils.requireNonEmpty(hostname)}",
           update
         )
     }

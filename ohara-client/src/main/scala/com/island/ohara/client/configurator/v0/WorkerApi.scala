@@ -419,7 +419,7 @@ object WorkerApi {
 
       override def create()(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] =
         exec.post[Creation, WorkerClusterInfo, ErrorApi.Error](
-          _url,
+          url,
           creation
         )
     }

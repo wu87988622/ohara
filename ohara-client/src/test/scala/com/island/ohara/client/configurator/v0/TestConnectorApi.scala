@@ -32,6 +32,14 @@ import spray.json.DefaultJsonProtocol._
 class TestConnectorApi extends SmallTest with Matchers {
 
   @Test
+  def nullKeyInGet(): Unit =
+    an[NullPointerException] should be thrownBy ConnectorApi.access.get(null)
+
+  @Test
+  def nullKeyInDelete(): Unit =
+    an[NullPointerException] should be thrownBy ConnectorApi.access.delete(null)
+
+  @Test
   def testParseCreation(): Unit = {
     val workerClusterName = CommonUtils.randomString()
     val className = CommonUtils.randomString()

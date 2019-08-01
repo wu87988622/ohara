@@ -180,7 +180,7 @@ object ValidationApi {
   }
 
   sealed trait RdbRequest {
-    def url(url: String): RdbRequest
+    def jdbcUrl(url: String): RdbRequest
     def user(user: String): RdbRequest
     def password(password: String): RdbRequest
     @Optional("server will try to pick a worker cluster for you if this field is ignored")
@@ -243,8 +243,6 @@ object ValidationApi {
 
   def access: Access = new Access(VALIDATION_PREFIX_PATH) {
 
-    private[this] def _url(prefix: String): String = s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$prefix"
-
     override def hdfsRequest: HdfsRequest = new HdfsRequest {
       private[this] var uri: String = _
       private[this] var workerClusterName: String = _
@@ -265,18 +263,19 @@ object ValidationApi {
       )
 
       override def verify()(implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] =
-        exec.put[HdfsValidation, Seq[ValidationReport], ErrorApi.Error](_url(VALIDATION_HDFS_PREFIX_PATH), validation)
+        exec
+          .put[HdfsValidation, Seq[ValidationReport], ErrorApi.Error](s"$url/$VALIDATION_HDFS_PREFIX_PATH", validation)
 
     }
 
     override def rdbRequest: RdbRequest = new RdbRequest {
-      private[this] var url: String = _
+      private[this] var jdbcUrl: String = _
       private[this] var user: String = _
       private[this] var password: String = _
       private[this] var workerClusterName: String = _
 
-      override def url(url: String): RdbRequest = {
-        this.url = CommonUtils.requireNonEmpty(url)
+      override def jdbcUrl(jdbcUrl: String): RdbRequest = {
+        this.jdbcUrl = CommonUtils.requireNonEmpty(jdbcUrl)
         this
       }
 
@@ -296,7 +295,7 @@ object ValidationApi {
       }
 
       override private[v0] def validation: RdbValidation = RdbValidation(
-        url = CommonUtils.requireNonEmpty(url),
+        url = CommonUtils.requireNonEmpty(jdbcUrl),
         user = CommonUtils.requireNonEmpty(user),
         password = CommonUtils.requireNonEmpty(password),
         workerClusterName = Option(workerClusterName).map(CommonUtils.requireNonEmpty)
@@ -305,7 +304,8 @@ object ValidationApi {
       //      override def verify()(implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] =
       //        exec.put[RdbValidation, Seq[ValidationReport], ErrorApi.Error](url(VALIDATION_RDB_PREFIX_PATH), validation)
       override def verify()(implicit executionContext: ExecutionContext): Future[Seq[RdbValidationReport]] =
-        exec.put[RdbValidation, Seq[RdbValidationReport], ErrorApi.Error](_url(VALIDATION_RDB_PREFIX_PATH), validation)
+        exec
+          .put[RdbValidation, Seq[RdbValidationReport], ErrorApi.Error](s"$url/$VALIDATION_RDB_PREFIX_PATH", validation)
     }
 
     override def nodeRequest: NodeRequest = new NodeRequest {
@@ -317,13 +317,14 @@ object ValidationApi {
       )
 
       override def verify()(implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] =
-        exec.put[NodeValidation, Seq[ValidationReport], ErrorApi.Error](_url(VALIDATION_NODE_PREFIX_PATH), validation)
+        exec
+          .put[NodeValidation, Seq[ValidationReport], ErrorApi.Error](s"$url/$VALIDATION_NODE_PREFIX_PATH", validation)
     }
 
     override def connectorRequest: ConnectorRequest = new ConnectorRequest {
       override def verify()(implicit executionContext: ExecutionContext): Future[SettingInfo] =
         exec.put[com.island.ohara.client.configurator.v0.ConnectorApi.Creation, SettingInfo, ErrorApi.Error](
-          _url(VALIDATION_CONNECTOR_PREFIX_PATH),
+          s"$url/$VALIDATION_CONNECTOR_PREFIX_PATH",
           creation)
     }
 
@@ -337,7 +338,7 @@ object ValidationApi {
       )
 
       override def verify()(implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] =
-        exec.put[FtpValidation, Seq[ValidationReport], ErrorApi.Error](_url(VALIDATION_FTP_PREFIX_PATH), validation)
+        exec.put[FtpValidation, Seq[ValidationReport], ErrorApi.Error](s"$url/$VALIDATION_FTP_PREFIX_PATH", validation)
     }
   }
 }

@@ -22,7 +22,7 @@ import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.kafka.connector.json.ConnectorKey
+import com.island.ohara.kafka.connector.json.{ConnectorKey, ObjectKey}
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 import spray.json.{JsNumber, JsString}
@@ -72,7 +72,7 @@ class TestConnectorRoute extends SmallTest with Matchers {
     val columns2 = Seq(Column.builder().name("cf").dataType(DataType.BOOLEAN).order(1).build())
     val response2 = result(
       connectorApi.request
-        .name(response.name)
+        .key(response.key)
         .className(className2)
         .columns(columns2)
         .numberOfTasks(numberOfTasks2)
@@ -84,11 +84,12 @@ class TestConnectorRoute extends SmallTest with Matchers {
 
     // test delete
     result(connectorApi.list()).size shouldBe 1
-    result(connectorApi.delete(response.name))
+    result(connectorApi.delete(response.key))
     result(connectorApi.list()).size shouldBe 0
 
     // test nonexistent data
-    an[IllegalArgumentException] should be thrownBy result(connectorApi.get(CommonUtils.randomString()))
+    an[IllegalArgumentException] should be thrownBy result(
+      connectorApi.get(ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString())))
   }
 
   @Test
@@ -314,7 +315,7 @@ class TestConnectorRoute extends SmallTest with Matchers {
     // after start, you cannot change worker cluster
     an[IllegalArgumentException] should be thrownBy result(
       connectorApi.request
-        .name(response.name)
+        .key(response.key)
         .className(CommonUtils.randomString(10))
         .workerClusterName(wk.name)
         .update())

@@ -280,14 +280,14 @@ object StreamApi {
 
       override def create()(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] = {
         exec.post[Creation, StreamClusterInfo, ErrorApi.Error](
-          _url,
+          url,
           creation
         )
       }
 
       override def update()(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] = {
         exec.put[Update, StreamClusterInfo, ErrorApi.Error](
-          s"${_url}/${CommonUtils.requireNonEmpty(name)}",
+          s"${url}/${CommonUtils.requireNonEmpty(name)}",
           update
         )
       }

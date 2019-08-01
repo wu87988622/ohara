@@ -27,6 +27,14 @@ import spray.json._
 class TestFtpInfoApi extends SmallTest with Matchers {
 
   @Test
+  def nullKeyInGet(): Unit =
+    an[NullPointerException] should be thrownBy FtpInfoApi.access.get(null)
+
+  @Test
+  def nullKeyInDelete(): Unit =
+    an[NullPointerException] should be thrownBy FtpInfoApi.access.delete(null)
+
+  @Test
   def ignoreNameOnCreation(): Unit = FtpInfoApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())

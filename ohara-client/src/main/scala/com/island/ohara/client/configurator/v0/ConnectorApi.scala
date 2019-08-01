@@ -256,6 +256,16 @@ object ConnectorApi {
     protected[this] var workerClusterName: String = _
     protected[this] var tags: Map[String, JsValue] = _
 
+    /**
+      * set the group and name via key
+      * @param objectKey object key
+      * @return this request
+      */
+    def key(objectKey: ObjectKey): BasicRequest.this.type = {
+      group(objectKey.group())
+      name(objectKey.name())
+    }
+
     @Optional("default group is \"default\"")
     def group(group: String): BasicRequest.this.type = {
       this.group = CommonUtils.requireNonEmpty(group)
@@ -393,7 +403,7 @@ object ConnectorApi {
       * @return the configuration of connector
       */
     def start(key: ConnectorKey)(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
-      exec.put[ConnectorDescription, ErrorApi.Error](_url(key, START_COMMAND))
+      exec.put[ConnectorDescription, ErrorApi.Error](url(key, START_COMMAND))
 
     /**
       * stop and remove a running connector.
@@ -402,7 +412,7 @@ object ConnectorApi {
       * @return the configuration of connector
       */
     def stop(key: ConnectorKey)(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
-      exec.put[ConnectorDescription, ErrorApi.Error](_url(key, STOP_COMMAND))
+      exec.put[ConnectorDescription, ErrorApi.Error](url(key, STOP_COMMAND))
 
     /**
       * pause a running connector
@@ -411,7 +421,7 @@ object ConnectorApi {
       * @return the configuration of connector
       */
     def pause(key: ConnectorKey)(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
-      exec.put[ConnectorDescription, ErrorApi.Error](_url(key, PAUSE_COMMAND))
+      exec.put[ConnectorDescription, ErrorApi.Error](url(key, PAUSE_COMMAND))
 
     /**
       * resume a paused connector
@@ -420,14 +430,14 @@ object ConnectorApi {
       * @return the configuration of connector
       */
     def resume(key: ConnectorKey)(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
-      exec.put[ConnectorDescription, ErrorApi.Error](_url(key, RESUME_COMMAND))
+      exec.put[ConnectorDescription, ErrorApi.Error](url(key, RESUME_COMMAND))
 
     def request: Request = new Request {
       override def create()(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
-        exec.post[Creation, ConnectorDescription, ErrorApi.Error](_url, creation)
+        exec.post[Creation, ConnectorDescription, ErrorApi.Error](url, creation)
 
       override def update()(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
-        exec.put[Update, ConnectorDescription, ErrorApi.Error](_url(ConnectorKey.of(group, name)), update)
+        exec.put[Update, ConnectorDescription, ErrorApi.Error](url(ConnectorKey.of(group, name)), update)
     }
   }
 

@@ -112,6 +112,17 @@ object TopicApi {
     * used to generate the payload and url for POST/PUT request.
     */
   trait Request {
+
+    /**
+      * set the group and name via key
+      * @param topicKey topic key
+      * @return this request
+      */
+    def key(topicKey: TopicKey): Request = {
+      group(topicKey.group())
+      name(topicKey.name())
+    }
+
     @Optional("default group is \"default\"")
     def group(group: String): Request
 
@@ -219,12 +230,12 @@ object TopicApi {
 
       override def create()(implicit executionContext: ExecutionContext): Future[TopicInfo] =
         exec.post[Creation, TopicInfo, ErrorApi.Error](
-          _url,
+          url,
           creation
         )
       override def update()(implicit executionContext: ExecutionContext): Future[TopicInfo] =
         exec.put[Update, TopicInfo, ErrorApi.Error](
-          _url(TopicKey.of(group, name)),
+          url(TopicKey.of(group, name)),
           update
         )
     }

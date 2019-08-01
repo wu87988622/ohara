@@ -62,10 +62,7 @@ final object ShabondiApi {
 
   class ShabondiAccess extends BasicAccess(PATH_PREFIX) {
 
-    private def basicUrl(name: String = "") = {
-      val url = s"http://${_hostname}:${_port}/${_version}/${_prefixPath}"
-      if (name.isEmpty) url else url + "/" + name
-    }
+    private def basicUrl(name: String = "") = if (name.isEmpty) url else url + "/" + name
 
     def add()(implicit executionContext: ExecutionContext): Future[ShabondiDescription] = {
       val url = basicUrl()

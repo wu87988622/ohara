@@ -65,14 +65,14 @@ class TestMetrics extends WithBrokerWorker with Matchers {
 
     CommonUtils.await(
       () => {
-        val meters = result(topicApi.get(topic.name)).metrics.meters
+        val meters = result(topicApi.get(topic.key)).metrics.meters
         // metrics should have queryTime also
         meters.nonEmpty && meters.head.queryTime > 0
       },
       java.time.Duration.ofSeconds(20)
     )
 
-    result(topicApi.delete(topic.name))
+    result(topicApi.delete(topic.key))
 
     assertNoMetricsForTopic(topic.name)
   }
@@ -131,14 +131,14 @@ class TestMetrics extends WithBrokerWorker with Matchers {
 
     // the connector is running so we should "see" the beans.
     CommonUtils.await(
-      () => result(pipelineApi.get(pipeline.name)).objects.filter(_.name == sink.name).head.metrics.meters.nonEmpty,
+      () => result(pipelineApi.get(pipeline.key)).objects.filter(_.name == sink.name).head.metrics.meters.nonEmpty,
       java.time.Duration.ofSeconds(20))
 
     result(connectorApi.stop(sink.key))
 
     // the connector is stopped so we should NOT "see" the beans.
     CommonUtils.await(
-      () => result(pipelineApi.get(pipeline.name)).objects.filter(_.name == sink.name).head.metrics.meters.isEmpty,
+      () => result(pipelineApi.get(pipeline.key)).objects.filter(_.name == sink.name).head.metrics.meters.isEmpty,
       java.time.Duration.ofSeconds(20))
   }
 
@@ -165,23 +165,23 @@ class TestMetrics extends WithBrokerWorker with Matchers {
 
     // the connector is running so we should "see" the beans.
     CommonUtils.await(
-      () => result(pipelineApi.get(pipeline.name)).objects.filter(_.name == source.name).head.metrics.meters.nonEmpty,
+      () => result(pipelineApi.get(pipeline.key)).objects.filter(_.name == source.name).head.metrics.meters.nonEmpty,
       java.time.Duration.ofSeconds(20))
 
     CommonUtils.await(
-      () => result(pipelineApi.get(pipeline.name)).objects.filter(_.name == topic.name).head.metrics.meters.nonEmpty,
+      () => result(pipelineApi.get(pipeline.key)).objects.filter(_.name == topic.name).head.metrics.meters.nonEmpty,
       java.time.Duration.ofSeconds(20))
 
     result(connectorApi.stop(source.key))
 
     // the connector is stopped so we should NOT "see" the beans.
     CommonUtils.await(
-      () => result(pipelineApi.get(pipeline.name)).objects.filter(_.name == source.name).head.metrics.meters.isEmpty,
+      () => result(pipelineApi.get(pipeline.key)).objects.filter(_.name == source.name).head.metrics.meters.isEmpty,
       java.time.Duration.ofSeconds(20))
 
     // remove topic
-    result(topicApi.delete(topic.name))
-    CommonUtils.await(() => !result(pipelineApi.get(pipeline.name)).objects.exists(_.name == topic.name),
+    result(topicApi.delete(topic.key))
+    CommonUtils.await(() => !result(pipelineApi.get(pipeline.key)).objects.exists(_.name == topic.name),
                       java.time.Duration.ofSeconds(30))
     assertNoMetricsForTopic(topic.name)
   }
