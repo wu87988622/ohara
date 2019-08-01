@@ -150,113 +150,59 @@ const WorkerNewModal = props => {
     return value;
   };
 
-  const waitDeleteService = async params => {
-    const { service, name } = params;
-    let { retryCount = 0 } = params;
-    const maxRetry = 10;
-
-    switch (service) {
-      case 'zookeeper':
-        await fetchZookeepers();
-        const zkResult = getZookeepers().data.result.some(e => e.name === name);
-
-        if (!zkResult) return;
-        if (retryCount > maxRetry) {
-          showMessage(`Failed to delete zookeeper: ${name}`);
-          return;
-        }
-
-        await commonUtils.sleep(3000);
-        retryCount++;
-        await waitDeleteService({ service, name, retryCount });
-        return;
-
-      case 'broker':
-        await fetchBrokers();
-        const bkResult = getBrokers().data.result.some(e => e.name === name);
-
-        if (!bkResult) return;
-        if (retryCount > maxRetry) {
-          showMessage(`Failed to delete broker: ${name}`);
-          return;
-        }
-
-        await commonUtils.sleep(3000);
-        retryCount++;
-        await waitDeleteService({ service, name, retryCount });
-        return;
-
-      case 'worker':
-        await fetchWorkers();
-        const wkResult = getWorkers().data.result.some(e => e.name === name);
-
-        if (!wkResult) return;
-        if (retryCount > maxRetry) {
-          showMessage(`Failed to delete worker: ${name}`);
-          return;
-        }
-
-        await commonUtils.sleep(3000);
-        retryCount++;
-        await waitDeleteService({ service, name, retryCount });
-        return;
-      default:
-        return;
+  const waitService = async params => {
+    const { service, name, type } = params;
+    const deleteCheckFn = res => {
+      return !res.data.result.some(e => e.name === name);
+    };
+    const stopCheckFn = res => {
+      return isUndefined(get(res, 'data.result.state', undefined));
+    };
+    let checkFn;
+    if (type === 'delete') {
+      checkFn = deleteCheckFn;
+    } else if (type === 'stop') {
+      checkFn = stopCheckFn;
     }
-  };
-
-  const waitStopService = async params => {
-    const { service, name } = params;
-    let { retryCount = 0 } = params;
-    const maxRetry = 10;
-
     switch (service) {
       case 'zookeeper':
-        await fetchZookeepers(name);
-        const zkResult = get(getZookeepers(), 'data.result.state', undefined);
-
-        if (isUndefined(zkResult)) return;
-        if (retryCount > maxRetry) {
-          showMessage(`Failed to stop zookeeper: ${name}`);
-          return;
-        }
-
-        await commonUtils.sleep(3000);
-        retryCount++;
-        await waitStopService({ service, name, retryCount });
-        return;
+        const zkUrl =
+          type === 'stop' ? `${URL.ZOOKEEPER_URL}/${name}` : URL.ZOOKEEPER_URL;
+        const zkParams = {
+          url: zkUrl,
+          checkFn: checkFn,
+          sleep: 3000,
+        };
+        await waitApi(zkParams);
+        if (!getFinish()) showMessage(`Failed to delete ${service}: ${name}`);
+        break;
 
       case 'broker':
-        fetchBrokers(name);
-        const bkResult = get(getBrokers(), 'data.result.state', 'stop');
-
-        if (bkResult === 'stop') return;
-        if (retryCount > maxRetry) {
-          showMessage(`Failed to stop broker: ${name}`);
-          return;
-        }
-
-        await commonUtils.sleep(3000);
-        retryCount++;
-        await waitStopService({ service, name, retryCount });
-        return;
+        const bkUrl =
+          type === 'stop' ? `${URL.BROKER_URL}/${name}` : URL.BROKER_URL;
+        const bkParams = {
+          url: bkUrl,
+          checkFn: checkFn,
+          sleep: 3000,
+        };
+        await waitApi(bkParams);
+        if (!getFinish()) showMessage(`Failed to delete ${service}: ${name}`);
+        break;
 
       case 'worker':
-        await fetchWorkers(name);
-        const wkResult = get(getWorkers(), 'data.result.state', 'stop');
+        const wkUrl =
+          type === 'stop' ? `${URL.WORKER_URL}/${name}` : URL.WORKER_URL;
+        const wkParams = {
+          url: wkUrl,
+          checkFn: checkFn,
+          sleep: 3000,
+        };
+        await waitApi(wkParams);
+        if (!getFinish()) showMessage(`Failed to delete ${service}: ${name}`);
+        break;
 
-        if (wkResult === 'stop') return;
-        if (retryCount > maxRetry) {
-          showMessage(`Failed to delete worker: ${name}`);
-          return;
-        }
-
-        await commonUtils.sleep(3000);
-        retryCount++;
-        await waitStopService({ service, name, retryCount });
-        return;
       default:
-        return;
+        break;
     }
   };
 
@@ -281,9 +227,10 @@ const WorkerNewModal = props => {
     await Promise.all(
       wks.map(async wk => {
         await deleteWorker(`${wk.name}`);
-        await waitDeleteService({
+        await waitService({
           service: 'worker',
           name: wk.name,
+          type: 'delete',
         });
       }),
     );
@@ -291,14 +238,16 @@ const WorkerNewModal = props => {
     await Promise.all(
       bks.map(async bk => {
         await putBroker(`/${bk.name}/stop`);
-        await waitStopService({
+        await waitService({
           service: 'broker',
           name: bk.name,
+          type: 'stop',
         });
         await deleteBroker(`${bk.name}`);
-        await waitDeleteService({
+        await waitService({
           service: 'broker',
           name: bk.name,
+          type: 'delete',
         });
       }),
     );
@@ -307,14 +256,16 @@ const WorkerNewModal = props => {
     await Promise.all(
       zks.map(async zk => {
         await putZookeeper(`/${zk.name}/stop`);
-        await waitStopService({
+        await waitService({
           service: 'zookeeper',
           name: zk.name,
+          type: 'stop',
         });
         await deleteZookeeper(`${zk.name}`);
-        await waitDeleteService({
+        await waitService({
           service: 'zookeeper',
           name: zk.name,
+          type: 'delete',
         });
       }),
     );
@@ -344,9 +295,9 @@ const WorkerNewModal = props => {
       // and once the bug is fixed we will then apply the rule two in frontend :)
       nodeNames: [nodeNames[0]],
     });
-
-    await putZookeeper(`/${zookeeperName}/start`);
     const zookeeperClusterName = get(zookeeper(), 'data.result.name');
+    if (!zookeeperClusterName) throw new ERROR();
+    await putZookeeper(`/${zookeeperName}/start`);
     const zkParams = {
       url: `${URL.ZOOKEEPER_URL}/${zookeeperClusterName}`,
       checkFn: checkResult,
@@ -367,6 +318,7 @@ const WorkerNewModal = props => {
     });
 
     const brokerClusterName = get(broker(), 'data.result.name');
+    if (!brokerClusterName) throw new ERROR();
     await putBroker(`/${brokerClusterName}/start`);
     const bkParams = {
       url: `${URL.BROKER_URL}/${brokerClusterName}`,
@@ -399,11 +351,12 @@ const WorkerNewModal = props => {
     });
 
     const workerClusterName = get(worker(), 'data.result.name');
+    if (!workerClusterName) throw new ERROR();
     const checkContainerResult = res => {
       return 'RUNNING' === get(res, 'data.result[0].containers[0].state', null);
     };
     const wkParams = {
-      url: `${URL.CONTAINER_URL}/${workerClusterName}1`,
+      url: `${URL.CONTAINER_URL}/${workerClusterName}`,
       checkFn: checkContainerResult,
     };
     await waitApi(wkParams);
