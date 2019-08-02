@@ -47,10 +47,19 @@ const setup = () => {
 
   cy.startBroker(brokerClusterName);
 
+  const jarKeys = cy.createJar('ohara-it-source.jar').then(res => {
+    const { data } = res;
+    return {
+      name: data.result.name,
+      group: data.result.group,
+    };
+  });
+
   cy.testCreateWorker({
     name: workerClusterName,
     brokerClusterName,
     nodeNames: [nodeName],
+    jarKeys,
   }).as('testCreateWorker');
 
   return {

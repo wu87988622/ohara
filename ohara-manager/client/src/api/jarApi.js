@@ -20,7 +20,7 @@ import { handleError, axiosInstance } from './apiUtils';
 
 export const fetchJars = async group => {
   try {
-    const res = await axiosInstance.get(`/api/jars?group=${group}`);
+    const res = await axiosInstance.get(`/api/files?group=${group}`);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -36,9 +36,9 @@ export const fetchJars = async group => {
 export const createJar = async params => {
   try {
     const { file, workerClusterName } = params;
-    const url = `/api/jars`;
+    const url = `/api/files`;
     const formData = new FormData();
-    formData.append('jar', file);
+    formData.append('file', file);
     if (!isUndefined(workerClusterName)) {
       formData.append('group', workerClusterName);
     }
@@ -63,7 +63,7 @@ export const createJar = async params => {
 export const deleteJar = async params => {
   try {
     const { name, workerClusterName } = params;
-    const url = `/api/jars/${name}?group=${workerClusterName}`;
+    const url = `/api/files/${name}?group=${workerClusterName}`;
     const res = await axiosInstance.delete(url);
     const isSuccess = get(res, 'data.isSuccess', false);
 
