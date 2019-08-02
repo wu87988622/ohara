@@ -25,11 +25,9 @@ import scala.concurrent.{ExecutionContext, Future}
 object ObjectApi {
   val OBJECT_PREFIX_PATH: String = "objects"
 
-  final case class Object(name: String, lastModified: Long, kind: String, tags: Map[String, JsValue]) extends Data {
-    // TODO: this will be resolved by https://github.com/oharastream/ohara/issues/1734 ... by chia
-    override def group: String = Data.GROUP_DEFAULT
-  }
-  implicit val OBJECT_JSON_FORMAT: RootJsonFormat[Object] = jsonFormat4(Object)
+  final case class Object(group: String, name: String, lastModified: Long, kind: String, tags: Map[String, JsValue])
+      extends Data
+  implicit val OBJECT_JSON_FORMAT: RootJsonFormat[Object] = jsonFormat5(Object)
 
   class Access private[v0] extends BasicAccess(OBJECT_PREFIX_PATH) {
     def get(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Seq[Object]] =

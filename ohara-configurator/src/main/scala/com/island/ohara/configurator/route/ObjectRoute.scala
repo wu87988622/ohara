@@ -28,6 +28,7 @@ import spray.json.DefaultJsonProtocol._
 import scala.concurrent.ExecutionContext
 private[configurator] object ObjectRoute {
   private[this] def toObject(data: Data): Object = Object(
+    group = data.group,
     name = data.name,
     lastModified = data.lastModified,
     kind = data.kind,
