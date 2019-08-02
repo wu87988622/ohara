@@ -60,9 +60,9 @@ const MuiDialog = props => {
             autoFocus
             disabled={confirmDisabled}
           >
-            {confirmBtnText}
+            {!loading && confirmBtnText}
+            {loading && <CircularProgress size={24} />}
           </Button>
-          {loading && <CircularProgress size={24} />}
         </DialogActions>
       </div>
     </Dialog>

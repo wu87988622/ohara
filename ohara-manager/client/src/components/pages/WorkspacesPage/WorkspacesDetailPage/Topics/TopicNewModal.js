@@ -14,124 +14,116 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import toastr from 'toastr';
 import { Form, Field } from 'react-final-form';
 import { get } from 'lodash';
+import DialogContent from '@material-ui/core/DialogContent';
 
-import * as topicApi from 'api/topicApi';
 import * as MESSAGES from 'constants/messages';
-import { Modal } from 'components/common/Modal';
-import { Box } from 'components/common/Layout';
-import { FormGroup, Label } from 'components/common/Form';
-import { InputField } from 'components/common/FormFields';
+import { Dialog } from 'components/common/Mui/Dialog';
+import { InputField } from 'components/common/Mui/Form';
+import useSnackbar from 'components/context/Snackbar/useSnackbar';
+import * as useApi from 'components/controller';
+import * as URL from 'components/controller/url';
 
-class TopicNewModal extends React.Component {
-  static propTypes = {
-    isActive: PropTypes.bool.isRequired,
-    onClose: PropTypes.func.isRequired,
-    onConfirm: PropTypes.func.isRequired,
-    brokerClusterName: PropTypes.string.isRequired,
+const TopicNewModal = props => {
+  const [isSaving, setIsSaving] = useState(false);
+  const { getData: topicRes, postApi: createTopic } = useApi.usePostApi(
+    URL.TOPIC_URL,
+  );
+  const { showMessage } = useSnackbar();
+
+  const handleClose = () => {
+    props.onClose();
   };
 
-  state = {
-    isSaving: false,
-  };
+  const onSubmit = async (values, form) => {
+    setIsSaving(true);
 
-  handleClose = () => {
-    this.props.onClose();
-  };
-
-  onSubmit = async (values, form) => {
-    this.setState({ isSaving: true });
-
-    const res = await topicApi.createTopic({
-      ...values,
-      brokerClusterName: this.props.brokerClusterName,
+    await createTopic({
+      name: values.name,
+      numberOfPartitions: Number(values.numberOfPartitions),
+      numberOfReplications: Number(values.numberOfReplications),
+      brokerClusterName: props.brokerClusterName,
     });
 
-    this.setState({ isSaving: false });
-    const isSuccess = get(res, 'data.isSuccess', false);
+    setIsSaving(false);
+    const isSuccess = get(topicRes(), 'data.isSuccess', false);
     if (isSuccess) {
       form.reset();
-      toastr.success(MESSAGES.TOPIC_CREATION_SUCCESS);
-      this.props.onConfirm();
-      this.handleClose();
+      showMessage(MESSAGES.TOPIC_CREATION_SUCCESS);
+      props.onConfirm();
+      handleClose();
     }
   };
 
-  render() {
-    return (
-      <Form
-        onSubmit={this.onSubmit}
-        initialValues={{}}
-        render={({ handleSubmit, form, submitting, pristine, invalid }) => {
-          return (
-            <Modal
-              title="New topic"
-              isActive={this.props.isActive}
-              width="320px"
-              handleCancel={() => {
-                form.reset();
-                this.handleClose();
-              }}
-              handleConfirm={handleSubmit}
-              confirmBtnText="Save"
-              isConfirmDisabled={submitting || pristine || invalid}
-              isConfirmWorking={this.state.isSaving}
-              showActions={true}
-              testId="topic-new-modal"
-            >
-              <form onSubmit={handleSubmit}>
-                <Box shadow={false}>
-                  <FormGroup data-testid="name">
-                    <Label htmlFor="topicInput">Topic name</Label>
-                    <Field
-                      id="topicInput"
-                      name="name"
-                      component={InputField}
-                      width="100%"
-                      placeholder="Kafka Topic"
-                      data-testid="name-input"
-                    />
-                  </FormGroup>
-                  <FormGroup data-testid="partitions">
-                    <Label htmlFor="partInput">Partitions</Label>
-                    <Field
-                      id="partInput"
-                      name="numberOfPartitions"
-                      component={InputField}
-                      type="number"
-                      min={1}
-                      max={1000}
-                      width="50%"
-                      placeholder="1"
-                      data-testid="partitions-input"
-                    />
-                  </FormGroup>
-                  <FormGroup data-testid="replications">
-                    <Label htmlFor="repInput">Replication factor</Label>
-                    <Field
-                      id="repInput"
-                      name="numberOfReplications"
-                      component={InputField}
-                      type="number"
-                      min={1}
-                      max={1000}
-                      width="50%"
-                      placeholder="3"
-                      data-testid="replications-input"
-                    />
-                  </FormGroup>
-                </Box>
-              </form>
-            </Modal>
-          );
-        }}
-      />
-    );
-  }
-}
+  return (
+    <Form
+      onSubmit={onSubmit}
+      initialValues={{}}
+      render={({ handleSubmit, form, submitting, pristine, invalid }) => {
+        return (
+          <Dialog
+            title="New topic"
+            handelOpen={props.isActive}
+            handelClose={() => {
+              form.reset();
+              handleClose();
+            }}
+            loading={isSaving}
+            handleConfirm={handleSubmit}
+            confirmBtnText="Save"
+            confirmDisabled={submitting || pristine || invalid}
+            testId="topic-new-modal"
+          >
+            <form onSubmit={handleSubmit}>
+              <DialogContent>
+                <Field
+                  label="Topic name"
+                  id="topicInput"
+                  name="name"
+                  component={InputField}
+                  placeholder="Kafka Topic"
+                  data-testid="name-input"
+                  autoFocus
+                />
+              </DialogContent>
+              <DialogContent>
+                <Field
+                  label="Partitions"
+                  id="partInput"
+                  name="numberOfPartitions"
+                  component={InputField}
+                  type="number"
+                  placeholder="1"
+                  data-testid="partitions-input"
+                />
+              </DialogContent>
+              <DialogContent>
+                <Field
+                  label="Replication factor"
+                  id="repInput"
+                  name="numberOfReplications"
+                  component={InputField}
+                  type="number"
+                  placeholder="3"
+                  data-testid="replications-input"
+                />
+              </DialogContent>
+            </form>
+          </Dialog>
+        );
+      }}
+    />
+  );
+};
+
+TopicNewModal.propTypes = {
+  isActive: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onConfirm: PropTypes.func.isRequired,
+  brokerClusterName: PropTypes.string.isRequired,
+};
 
 export default TopicNewModal;

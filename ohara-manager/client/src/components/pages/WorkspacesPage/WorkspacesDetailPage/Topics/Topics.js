@@ -18,10 +18,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import IconButton from '@material-ui/core/IconButton';
 import Tooltip from '@material-ui/core/Tooltip';
-import toastr from 'toastr';
 import { get } from 'lodash';
 
-import * as topicApi from 'api/topicApi';
 import * as MESSAGES from 'constants/messages';
 import * as utils from '../WorkspacesDetailPageUtils';
 import TopicNewModal from './TopicNewModal';
@@ -31,15 +29,21 @@ import { SortTable } from 'components/common/Mui/Table';
 import { useSetState } from 'utils/hooks';
 import * as useApi from 'components/controller';
 import * as URL from 'components/controller/url';
+import useSnackbar from 'components/context/Snackbar/useSnackbar';
 
 const Topics = props => {
   const { worker } = props;
 
+  const { showMessage } = useSnackbar();
   const {
     data: topics,
     isLoading: fetchingTopics,
     refetch,
   } = useApi.useFetchApi(URL.TOPIC_URL);
+  const {
+    getData: deleteTopicRes,
+    deleteApi: deleteTopic,
+  } = useApi.useDeleteApi(URL.TOPIC_URL);
   const topicsUnderBrokerCluster = get(topics, 'data.result', []).filter(
     topic => topic.brokerClusterName === worker.brokerClusterName,
   );
@@ -99,12 +103,12 @@ const Topics = props => {
   const handleDelete = async () => {
     setState({ deleting: true });
     const { topicToBeDeleted } = state;
-    const res = await topicApi.deleteTopic(topicToBeDeleted);
-    const isSuccess = get(res, 'data.isSuccess', false);
+    await deleteTopic(topicToBeDeleted);
+    const isSuccess = get(deleteTopicRes(), 'data.isSuccess', false);
     setState({ deleting: false });
 
     if (isSuccess) {
-      toastr.success(`${MESSAGES.TOPIC_DELETION_SUCCESS} ${topicToBeDeleted}`);
+      showMessage(`${MESSAGES.TOPIC_DELETION_SUCCESS} ${topicToBeDeleted}`);
 
       setState({
         isDeleteModalOpen: false,
@@ -153,7 +157,7 @@ const Topics = props => {
 
       <DeleteDialog
         title="Delete topic?"
-        content={`Are you sure you want to delete the topic: ${topicToBeDeleted}? This action cannot be undone!`}
+        content={`Are you sure you want to delete the topic: ${topicToBeDeleted} ? This action cannot be undone!`}
         open={isDeleteModalOpen}
         handleClose={() => setState({ isDeleteModalOpen: false })}
         handleConfirm={handleDelete}
