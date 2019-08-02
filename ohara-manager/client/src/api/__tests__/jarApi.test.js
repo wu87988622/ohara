@@ -19,7 +19,7 @@ import { handleError, axiosInstance } from '../apiUtils';
 
 jest.mock('../apiUtils');
 
-const url = '/api/jars?group=wk';
+const url = '/api/files?group=wk';
 
 describe('fetchJars()', () => {
   afterEach(jest.clearAllMocks);
@@ -82,7 +82,7 @@ describe('createJar()', () => {
   };
 
   const formData = new FormData();
-  formData.append('jar', params.file);
+  formData.append('file', params.file);
   formData.append('group', params.workerClusterName);
 
   const config = {
@@ -103,7 +103,7 @@ describe('createJar()', () => {
     const result = await createJar(params);
     expect(axiosInstance.post).toHaveBeenCalledTimes(1);
     expect(axiosInstance.post).toHaveBeenCalledWith(
-      '/api/jars',
+      '/api/files',
       formData,
       config,
     );
@@ -122,7 +122,7 @@ describe('createJar()', () => {
 
     expect(axiosInstance.post).toHaveBeenCalledTimes(1);
     expect(axiosInstance.post).toHaveBeenCalledWith(
-      '/api/jars',
+      '/api/files',
       formData,
       config,
     );
@@ -168,7 +168,7 @@ describe('deleteJar()', () => {
     const result = await deleteJar(params);
     expect(axiosInstance.delete).toHaveBeenCalledTimes(1);
     expect(axiosInstance.delete).toHaveBeenCalledWith(
-      `/api/jars/${params.name}?group=${params.workerClusterName}`,
+      `/api/files/${params.name}?group=${params.workerClusterName}`,
     );
     expect(result).toBe(res);
   });
@@ -185,7 +185,7 @@ describe('deleteJar()', () => {
 
     expect(axiosInstance.delete).toHaveBeenCalledTimes(1);
     expect(axiosInstance.delete).toHaveBeenCalledWith(
-      `/api/jars/${params.name}?group=${params.workerClusterName}`,
+      `/api/files/${params.name}?group=${params.workerClusterName}`,
     );
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(result);

@@ -309,7 +309,7 @@ const WorkerNewModal = props => {
     setActiveStep(2);
     saveService({ service: 'broker', name: brokerClusterName });
 
-    const jars = plugins.map(jar => {
+    const jarKeys = plugins.map(jar => {
       return {
         name: jar.name,
         group: jar.group,
@@ -319,7 +319,7 @@ const WorkerNewModal = props => {
     const workerPostParams = {
       name: validateServiceName(values.name),
       nodeNames,
-      jars,
+      jarKeys,
       jmxPort: generate.port(),
       clientPort: generate.port(),
       brokerClusterName,

@@ -132,7 +132,7 @@ Cypress.Commands.add('createJar', jarName => {
     .then(Cypress.Blob.base64StringToBlob)
     .then(blob => {
       const type = 'application/java-archive';
-      const url = '/api/jars';
+      const url = '/api/files';
       const config = {
         headers: {
           'content-type': 'multipart/form-data',
@@ -143,7 +143,7 @@ Cypress.Commands.add('createJar', jarName => {
       dataTransfer.items.add(testFile);
       blob = dataTransfer.files;
       let formData = new FormData();
-      formData.append('jar', blob[0]);
+      formData.append('file', blob[0]);
       return axiosInstance.post(url, formData, config);
     });
 });
@@ -201,6 +201,16 @@ Cypress.Commands.add('deleteAllServices', () => {
       workers.forEach(worker =>
         cy.request('DELETE', `api/workers/${worker.name}`),
       );
+    }
+  });
+
+  cy.fetchJars('default').then(response => {
+    const { result: files } = response.data;
+
+    if (!isEmpty(files)) {
+      files.forEach(file => {
+        cy.request('DELETE', `api/files/${file.name}?group=default`);
+      });
     }
   });
 
