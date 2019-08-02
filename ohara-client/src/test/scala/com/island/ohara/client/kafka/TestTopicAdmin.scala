@@ -18,6 +18,7 @@ package com.island.ohara.client.kafka
 
 import com.island.ohara.client.kafka.TopicAdmin.TopicInfo
 import com.island.ohara.common.util.{CommonUtils, Releasable}
+import com.island.ohara.kafka.connector.json.TopicKey
 import com.island.ohara.testing.With3Brokers
 import org.apache.kafka.common.config.TopicConfig
 import org.apache.kafka.common.errors.{InvalidPartitionsException, UnknownTopicOrPartitionException}
@@ -28,140 +29,150 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class TestTopicAdmin extends With3Brokers with Matchers {
 
   private[this] val topicAdmin = TopicAdmin(testUtil().brokersConnProps())
+  private[this] val GROUP = "topic_group"
 
-  private[this] def waitAndGetTopicInfo(name: String): TopicInfo = {
+  private[this] def waitAndGetTopicInfo(topicKey: TopicKey): TopicInfo = {
     // wait the topic to be available
-    CommonUtils.await(() => result(topicAdmin.topics().map(_.exists(_.name == name))), java.time.Duration.ofSeconds(60))
-    result(topicAdmin.topics()).find(_.name == name).get
+    CommonUtils.await(() => result(topicAdmin.topics().map(_.exists(_.name == topicKey.topicNameOnKafka()))),
+                      java.time.Duration.ofSeconds(60))
+    result(topicAdmin.topics()).find(_.name == topicKey.topicNameOnKafka()).get
   }
 
   @Test
   def createTopic(): Unit = {
     val name = CommonUtils.randomString(10)
+    val topicKey = TopicKey.of(GROUP, name)
     val numberOfPartitions: Int = 1
     val numberOfReplications: Short = 1
     result(
       topicAdmin.creator
         .numberOfPartitions(numberOfPartitions)
         .numberOfReplications(numberOfReplications)
-        .name(name)
+        .topicKey(topicKey)
         .create())
-    val topic = waitAndGetTopicInfo(name)
-    topic.name shouldBe name
+    val topic = waitAndGetTopicInfo(topicKey)
+    topic.name shouldBe topicKey.topicNameOnKafka()
     topic.numberOfPartitions shouldBe numberOfPartitions
     topic.numberOfReplications shouldBe numberOfReplications
 
-    result(topicAdmin.topics()).find(_.name == name).get shouldBe topic
+    result(topicAdmin.topics()).find(_.name == topicKey.topicNameOnKafka()).get shouldBe topic
 
-    result(topicAdmin.delete(name)) shouldBe true
+    result(topicAdmin.delete(topicKey)) shouldBe true
 
-    result(topicAdmin.topics()).find(_.name == name) shouldBe None
+    result(topicAdmin.topics()).find(_.name == topicKey.topicNameOnKafka()) shouldBe None
   }
 
   @Test
   def addPartitions(): Unit = {
     val name = CommonUtils.randomString(10)
+    val topicKey = TopicKey.of(GROUP, name)
     val numberOfPartitions: Int = 1
     val numberOfReplications: Short = 1
     result(
       topicAdmin.creator
         .numberOfPartitions(numberOfPartitions)
         .numberOfReplications(numberOfReplications)
-        .name(name)
+        .topicKey(topicKey)
         .create()
     )
-    val topic = waitAndGetTopicInfo(name)
-    result(topicAdmin.changePartitions(topic.name, numberOfPartitions + 1))
-    val topic2 = waitAndGetTopicInfo(name)
+    val topic = waitAndGetTopicInfo(topicKey)
+    result(topicAdmin.changePartitions(topicKey, numberOfPartitions + 1))
+    val topic2 = waitAndGetTopicInfo(topicKey)
     topic2 shouldBe topic.copy(numberOfPartitions = numberOfPartitions + 1)
   }
 
   @Test
   def reducePartitions(): Unit = {
     val name = CommonUtils.randomString(10)
+    val topicKey = TopicKey.of(GROUP, name)
     val numberOfPartitions: Int = 2
     val numberOfReplications: Short = 1
     result(
       topicAdmin.creator
         .numberOfPartitions(numberOfPartitions)
         .numberOfReplications(numberOfReplications)
-        .name(name)
+        .topicKey(topicKey)
         .create())
-    val topic = waitAndGetTopicInfo(name)
+    waitAndGetTopicInfo(topicKey)
     an[InvalidPartitionsException] should be thrownBy result(
-      topicAdmin.changePartitions(topic.name, numberOfPartitions - 1))
+      topicAdmin.changePartitions(topicKey, numberOfPartitions - 1))
   }
 
   @Test
   def negativePartitions(): Unit = {
     val name = CommonUtils.randomString(10)
+    val topicKey = TopicKey.of(GROUP, name)
     val numberOfPartitions: Int = 2
     val numberOfReplications: Short = 1
     result(
       topicAdmin.creator
         .numberOfPartitions(numberOfPartitions)
         .numberOfReplications(numberOfReplications)
-        .name(name)
+        .topicKey(topicKey)
         .create())
-    val topic = waitAndGetTopicInfo(name)
-    an[InvalidPartitionsException] should be thrownBy result(topicAdmin.changePartitions(topic.name, -10))
+    waitAndGetTopicInfo(topicKey)
+    an[InvalidPartitionsException] should be thrownBy result(topicAdmin.changePartitions(topicKey, -10))
   }
 
   @Test
   def keepPartitions(): Unit = {
     val name = CommonUtils.randomString(10)
+    val topicKey = TopicKey.of(GROUP, name)
     val numberOfPartitions: Int = 2
     val numberOfReplications: Short = 1
     result(
       topicAdmin.creator
         .numberOfPartitions(numberOfPartitions)
         .numberOfReplications(numberOfReplications)
-        .name(name)
+        .topicKey(topicKey)
         .create())
-    val topic = waitAndGetTopicInfo(name)
-    an[InvalidPartitionsException] should be thrownBy result(
-      topicAdmin.changePartitions(topic.name, numberOfPartitions))
+    waitAndGetTopicInfo(topicKey)
+    an[InvalidPartitionsException] should be thrownBy result(topicAdmin.changePartitions(topicKey, numberOfPartitions))
   }
 
   @Test
   def changePartitionsOfNonexistentTopic(): Unit =
     an[UnknownTopicOrPartitionException] should be thrownBy result(
-      topicAdmin.changePartitions(CommonUtils.randomString(10), 10))
+      topicAdmin.changePartitions(TopicKey.of(GROUP, CommonUtils.randomString(10)), 10))
 
   @Test
   def deleteNonexistentTopic(): Unit = {
     val name = CommonUtils.randomString(10)
-    result(topicAdmin.delete(CommonUtils.randomString())) shouldBe false
-    result(topicAdmin.creator.name(name).create())
-    waitAndGetTopicInfo(name)
-    result(topicAdmin.delete(name)) shouldBe true
+    val topicKey = TopicKey.of(GROUP, name)
+    result(topicAdmin.delete(TopicKey.of(GROUP, CommonUtils.randomString()))) shouldBe false
+    result(topicAdmin.creator.topicKey(topicKey).create())
+    waitAndGetTopicInfo(topicKey)
+    result(topicAdmin.delete(topicKey)) shouldBe true
   }
 
   @Test
   def testCleanupPolicy(): Unit = {
     val name = CommonUtils.randomString(10)
-    result(topicAdmin.creator.name(name).cleanupPolicy(CleanupPolicy.DELETE).create())
-    val topic = waitAndGetTopicInfo(name)
+    val topicKey = TopicKey.of(GROUP, name)
+    result(topicAdmin.creator.topicKey(topicKey).cleanupPolicy(CleanupPolicy.DELETE).create())
+    val topic = waitAndGetTopicInfo(topicKey)
     topic.configs(TopicConfig.CLEANUP_POLICY_CONFIG) shouldBe CleanupPolicy.DELETE.name
   }
 
   @Test
   def testCustomConfigs(): Unit = {
     val name = CommonUtils.randomString(10)
+    val topicKey = TopicKey.of(GROUP, name)
     val key = TopicConfig.SEGMENT_BYTES_CONFIG
     val value = 1024 * 1024
-    result(topicAdmin.creator.name(name).config(key, value.toString).create())
-    val topic = waitAndGetTopicInfo(name)
+    result(topicAdmin.creator.topicKey(topicKey).config(key, value.toString).create())
+    val topic = waitAndGetTopicInfo(topicKey)
     topic.configs(key) shouldBe value.toString
   }
 
   @Test
   def testExist(): Unit = {
-    result(topicAdmin.exist(CommonUtils.randomString())) shouldBe false
+    result(topicAdmin.exist(TopicKey.of(GROUP, CommonUtils.randomString()))) shouldBe false
     val name = CommonUtils.randomString(10)
-    result(topicAdmin.creator.name(name).create())
-    waitAndGetTopicInfo(name)
-    result(topicAdmin.exist(name)) shouldBe true
+    val topicKey = TopicKey.of(GROUP, name)
+    result(topicAdmin.creator.topicKey(topicKey).create())
+    waitAndGetTopicInfo(topicKey)
+    result(topicAdmin.exist(topicKey)) shouldBe true
   }
 
   @After

@@ -23,6 +23,7 @@ import java.util.{Collections, Objects, Properties}
 
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.{CommonUtils, Releasable}
+import com.island.ohara.kafka.connector.json.TopicKey
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.admin.{AdminClient, NewPartitions, NewTopic, TopicDescription}
 import org.apache.kafka.common.config.{ConfigResource, TopicConfig}
@@ -39,11 +40,11 @@ trait TopicAdmin extends Releasable {
   /**
     * Change the number of partitions of topic.
     * Currently, reducing the number of partitions is not allowed!
-    * @param name topic name
+    * @param topicKey topic key
     * @param numberOfPartitions the partitions that given topic should have
     * @return topic information
     */
-  def changePartitions(name: String, numberOfPartitions: Int): Future[Unit]
+  def changePartitions(topicKey: TopicKey, numberOfPartitions: Int): Future[Unit]
 
   /**
     * list all topics
@@ -53,10 +54,10 @@ trait TopicAdmin extends Releasable {
 
   /**
     * check the existence of topic on remote broker cluster
-    * @param topicName topic name
+    * @param topicKey topic key
     * @return true if the topic lies in the cluster. Otherwise, false
     */
-  def exist(topicName: String): Future[Boolean]
+  def exist(topicKey: TopicKey): Future[Boolean]
 
   /**
     * start a process to create topic
@@ -66,10 +67,10 @@ trait TopicAdmin extends Releasable {
 
   /**
     * delete a existent topic
-    * @param topicName topic name
+    * @param topicKey topic key
     * @return true if it does delete a topic. otherwise, false
     */
-  def delete(topicName: String): Future[Boolean]
+  def delete(topicKey: TopicKey): Future[Boolean]
 
   /**
     * the connection information to kafka's broker
@@ -110,15 +111,17 @@ object TopicAdmin {
     override def close(): Unit = if (_closed.compareAndSet(false, true)) Releasable.close(admin)
 
     override def creator: Creator =
-      (name: String, numberOfPartitions: Int, numberOfReplications: Short, configs: Map[String, String]) => {
+      (topicKey: TopicKey, numberOfPartitions: Int, numberOfReplications: Short, configs: Map[String, String]) => {
         val promise = Promise[Unit]
         unwrap(
           () =>
             admin
-              .createTopics(util.Collections.singletonList(
-                new NewTopic(name, numberOfPartitions, numberOfReplications).configs(configs.asJava)))
+              .createTopics(
+                util.Collections.singletonList(
+                  new NewTopic(topicKey.topicNameOnKafka(), numberOfPartitions, numberOfReplications)
+                    .configs(configs.asJava)))
               .values()
-              .get(name)
+              .get(topicKey.topicNameOnKafka())
               .whenComplete((_, exception) => {
                 if (exception == null)
                   promise.success(Unit)
@@ -180,12 +183,13 @@ object TopicAdmin {
       promise.future
     }
 
-    override def changePartitions(name: String, numberOfPartitions: Int): Future[Unit] = {
+    override def changePartitions(topicKey: TopicKey, numberOfPartitions: Int): Future[Unit] = {
       val promise = Promise[Unit]
       unwrap(
         () =>
           admin
-            .createPartitions(Collections.singletonMap(name, NewPartitions.increaseTo(numberOfPartitions)))
+            .createPartitions(
+              Collections.singletonMap(topicKey.topicNameOnKafka(), NewPartitions.increaseTo(numberOfPartitions)))
             .all()
             .whenComplete((_, exception) => {
               if (exception == null) promise.success(Unit)
@@ -194,7 +198,7 @@ object TopicAdmin {
       promise.future
     }
 
-    override def delete(topicName: String): Future[Boolean] = {
+    override def delete(topicKey: TopicKey): Future[Boolean] = {
       val promise = Promise[Boolean]
       unwrap(
         () =>
@@ -203,9 +207,9 @@ object TopicAdmin {
             .names()
             .whenComplete((topicNames, exception) => {
               if (exception == null) {
-                if (topicNames.asScala.contains(topicName))
+                if (topicNames.asScala.contains(topicKey.topicNameOnKafka()))
                   admin
-                    .deleteTopics(util.Collections.singletonList(topicName))
+                    .deleteTopics(util.Collections.singletonList(topicKey.topicNameOnKafka()))
                     .all()
                     .whenComplete((_, exception) => {
                       if (exception == null) promise.success(true)
@@ -218,7 +222,7 @@ object TopicAdmin {
       promise.future
     }
 
-    override def exist(topicName: String): Future[Boolean] = {
+    override def exist(topicKey: TopicKey): Future[Boolean] = {
       val promise = Promise[Boolean]
       unwrap(
         () =>
@@ -226,7 +230,7 @@ object TopicAdmin {
             .listTopics()
             .names()
             .whenComplete((topicNames, exception) => {
-              if (exception == null) promise.success(topicNames.asScala.contains(topicName))
+              if (exception == null) promise.success(topicNames.asScala.contains(topicKey.topicNameOnKafka()))
               else promise.failure(exception)
             }))
       promise.future
@@ -239,14 +243,14 @@ object TopicAdmin {
                              configs: Map[String, String])
 
   trait Creator extends com.island.ohara.common.pattern.Creator[Future[Unit]] {
-    private[this] var name: String = _
+    private[this] var topicKey: TopicKey = _
     private[this] var numberOfPartitions: Int = 1
     private[this] var numberOfReplications: Short = 1
     private[this] var configs: Map[String, String] = Map(
       TopicConfig.CLEANUP_POLICY_CONFIG -> CleanupPolicy.DELETE.name
     )
-    def name(name: String): Creator.this.type = {
-      this.name = Objects.requireNonNull(name)
+    def topicKey(topicKey: TopicKey): Creator.this.type = {
+      this.topicKey = Objects.requireNonNull(topicKey)
       this
     }
 
@@ -279,13 +283,13 @@ object TopicAdmin {
     }
 
     override def create(): Future[Unit] = doCreate(
-      name = Objects.requireNonNull(name),
+      topicKey = Objects.requireNonNull(topicKey),
       numberOfPartitions = CommonUtils.requirePositiveInt(numberOfPartitions),
       numberOfReplications = CommonUtils.requirePositiveShort(numberOfReplications),
       configs = Objects.requireNonNull(configs)
     )
 
-    protected def doCreate(name: String,
+    protected def doCreate(topicKey: TopicKey,
                            numberOfPartitions: Int,
                            numberOfReplications: Short,
                            configs: Map[String, String]): Future[Unit]

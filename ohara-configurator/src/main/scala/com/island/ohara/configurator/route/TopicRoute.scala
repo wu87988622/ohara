@@ -56,7 +56,7 @@ private[configurator] object TopicRoute {
   private[this] def createTopic(topicAdmin: TopicAdmin, topicInfo: TopicInfo)(
     implicit executionContext: ExecutionContext): Future[TopicInfo] =
     topicAdmin.creator
-      .name(topicInfo.topicNameOnKafka)
+      .topicKey(topicInfo.key)
       .numberOfPartitions(topicInfo.numberOfPartitions)
       .numberOfReplications(topicInfo.numberOfReplications)
       .configs(topicInfo.configs)
@@ -185,20 +185,21 @@ private[configurator] object TopicRoute {
                     Releasable.close(client)
                     Future.failed(new IllegalArgumentException("Non-support to change the number from replications"))
                   } else if (update.numberOfPartitions.exists(_ > topicFromKafka.numberOfPartitions)) {
-                    client.changePartitions(key.name, update.numberOfPartitions.get).map { _ =>
-                      try TopicInfo(
-                        group = key.group,
-                        name = key.name,
-                        numberOfPartitions = update.numberOfPartitions.get,
-                        numberOfReplications = topicFromKafka.numberOfReplications,
-                        brokerClusterName = cluster.name,
-                        metrics = Metrics(Seq.empty),
-                        state = Some(TopicState.RUNNING),
-                        lastModified = CommonUtils.current(),
-                        configs = topicFromKafka.configs,
-                        tags = update.tags.orElse(previous.map(_.tags)).getOrElse(Map.empty)
-                      )
-                      finally client.close()
+                    client.changePartitions(TopicKey.of(key.group(), key.name()), update.numberOfPartitions.get).map {
+                      _ =>
+                        try TopicInfo(
+                          group = key.group,
+                          name = key.name,
+                          numberOfPartitions = update.numberOfPartitions.get,
+                          numberOfReplications = topicFromKafka.numberOfReplications,
+                          brokerClusterName = cluster.name,
+                          metrics = Metrics(Seq.empty),
+                          state = Some(TopicState.RUNNING),
+                          lastModified = CommonUtils.current(),
+                          configs = topicFromKafka.configs,
+                          tags = update.tags.orElse(previous.map(_.tags)).getOrElse(Map.empty)
+                        )
+                        finally client.close()
                     }
                   } else {
                     // we have got to release the client
@@ -233,10 +234,10 @@ private[configurator] object TopicRoute {
           .flatMap {
             case (_, client) =>
               client
-                .exist(topicInfo.topicNameOnKafka)
+                .exist(topicInfo.key)
                 .flatMap {
                   // TODO: it should forbid user to delete a running topic... by chia
-                  if (_) client.delete(topicInfo.topicNameOnKafka).flatMap { _ =>
+                  if (_) client.delete(topicInfo.key).flatMap { _ =>
                     try Future.unit
                     finally Releasable.close(client)
                   } else
@@ -268,7 +269,7 @@ private[configurator] object TopicRoute {
         .flatMap(topicInfo =>
           CollieUtils.topicAdmin(Some(topicInfo.brokerClusterName)).flatMap {
             case (_, client) =>
-              client.exist(topicInfo.topicNameOnKafka).flatMap {
+              client.exist(topicInfo.key).flatMap {
                 if (_) Future.successful(topicInfo.copy(state = Some(TopicState.RUNNING)))
                 else
                   createTopic(
@@ -287,9 +288,9 @@ private[configurator] object TopicRoute {
         CollieUtils.topicAdmin(Some(topicInfo.brokerClusterName)).flatMap {
           case (_, client) =>
             client
-              .exist(topicInfo.topicNameOnKafka)
+              .exist(topicInfo.key)
               .flatMap {
-                if (_) client.delete(topicInfo.topicNameOnKafka)
+                if (_) client.delete(topicInfo.key)
                 else Future.unit
               }
               .map(

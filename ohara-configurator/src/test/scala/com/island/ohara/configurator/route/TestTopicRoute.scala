@@ -248,7 +248,7 @@ class TestTopicRoute extends SmallTest with Matchers {
     val topicAdmin = configurator.clusterCollie.brokerCollie
       .topicAdmin(result(configurator.clusterCollie.brokerCollie.clusters()).head._1)
     try {
-      topicAdmin.delete(topic.name)
+      topicAdmin.delete(topic.key)
       // the topic is removed but we don't throw exception.
       result(topicApi.delete(topic.key))
     } finally topicAdmin.close()

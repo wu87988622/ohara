@@ -20,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.client.kafka.TopicAdmin.TopicInfo
+import com.island.ohara.kafka.connector.json.TopicKey
 
 import scala.concurrent.Future
 
@@ -30,14 +31,13 @@ private[configurator] class FakeTopicAdmin extends TopicAdmin {
 
   private[this] val cachedTopics = new ConcurrentHashMap[String, TopicInfo]()
 
-  override def changePartitions(name: String, numberOfPartitions: Int): Future[Unit] = {
-    val previous = cachedTopics.get(name)
+  override def changePartitions(topicKey: TopicKey, numberOfPartitions: Int): Future[Unit] = {
+    val previous = cachedTopics.get(topicKey.topicNameOnKafka())
     if (previous == null)
-      Future.failed(
-        new NoSuchElementException(
-          s"the topic:$name doesn't exist. actual:${cachedTopics.keys().asScala.mkString(",")}"))
+      Future.failed(new NoSuchElementException(
+        s"the topic:${topicKey.topicNameOnKafka()} doesn't exist. actual:${cachedTopics.keys().asScala.mkString(",")}"))
     else {
-      cachedTopics.put(name, previous.copy(numberOfPartitions = numberOfPartitions))
+      cachedTopics.put(topicKey.topicNameOnKafka(), previous.copy(numberOfPartitions = numberOfPartitions))
       Future.unit
     }
   }
@@ -47,17 +47,18 @@ private[configurator] class FakeTopicAdmin extends TopicAdmin {
       cachedTopics.values().asScala.toSeq
     }
 
-  override def creator: TopicAdmin.Creator = (name, numberOfPartitions, numberOfReplications, configs) =>
-    if (cachedTopics.contains(name)) Future.failed(new IllegalArgumentException(s"$name already exists!"))
+  override def creator: TopicAdmin.Creator = (topicKey, numberOfPartitions, numberOfReplications, configs) =>
+    if (cachedTopics.contains(topicKey.topicNameOnKafka()))
+      Future.failed(new IllegalArgumentException(s"${topicKey.topicNameOnKafka()} already exists!"))
     else {
       val topicInfo = TopicInfo(
-        name = name,
+        name = topicKey.topicNameOnKafka(),
         numberOfPartitions = numberOfPartitions,
         numberOfReplications = numberOfReplications,
         configs
       )
-      if (cachedTopics.putIfAbsent(name, topicInfo) != null)
-        throw new RuntimeException(s"the $name already exists in kafka")
+      if (cachedTopics.putIfAbsent(topicKey.topicNameOnKafka(), topicInfo) != null)
+        throw new RuntimeException(s"the ${topicKey.topicNameOnKafka()} already exists in kafka")
       Future.unit
   }
   private[this] var _closed = false
@@ -66,11 +67,12 @@ private[configurator] class FakeTopicAdmin extends TopicAdmin {
   }
 
   override def closed: Boolean = _closed
-  override def delete(name: String): Future[Boolean] = {
-    val removed = cachedTopics.remove(name)
+  override def delete(topicKey: TopicKey): Future[Boolean] = {
+    val removed = cachedTopics.remove(topicKey.topicNameOnKafka())
     if (removed == null) Future.successful(false)
     else Future.successful(true)
   }
 
-  override def exist(topicName: String): Future[Boolean] = Future.successful(cachedTopics.containsKey(topicName))
+  override def exist(topicKey: TopicKey): Future[Boolean] =
+    Future.successful(cachedTopics.containsKey(topicKey.topicNameOnKafka()))
 }
