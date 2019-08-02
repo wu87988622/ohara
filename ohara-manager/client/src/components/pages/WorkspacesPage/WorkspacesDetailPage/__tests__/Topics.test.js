@@ -53,6 +53,20 @@ describe('<Topics />', () => {
         isLoading: false,
       };
     });
+
+    jest.spyOn(useApi, 'useDeleteApi').mockImplementation(() => {
+      return {
+        getData: jest.fn(),
+        deleteApi: jest.fn(),
+      };
+    });
+
+    jest.spyOn(useApi, 'usePostApi').mockImplementation(() => {
+      return {
+        getData: jest.fn(),
+        postApi: jest.fn(),
+      };
+    });
   });
 
   it('renders the page', async () => {
@@ -105,7 +119,7 @@ describe('<Topics />', () => {
     expect(queryByTestId('topic-new-modal')).toBeVisible();
 
     fireEvent.click(getByText('Cancel'));
-    expect(queryByTestId('topic-new-modal')).toBeNull();
+    expect(queryByTestId('topic-new-modal')).not.toBeVisible();
   });
 
   it('should close the delete dialog with the cancel button', async () => {
