@@ -67,6 +67,18 @@ describe('<Topics />', () => {
         postApi: jest.fn(),
       };
     });
+
+    jest.spyOn(useApi, 'usePutApi').mockImplementation(() => {
+      return {
+        putApi: jest.fn(),
+      };
+    });
+
+    jest.spyOn(useApi, 'useWaitApi').mockImplementation(() => {
+      return {
+        waitApi: jest.fn(),
+      };
+    });
   });
 
   it('renders the page', async () => {
