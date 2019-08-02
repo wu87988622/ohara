@@ -51,6 +51,7 @@ or build your UI interface via :ref:`Ohara REST interface <Rest>`.
 
    user_guide
    rest_interface
+   rest/index
    custom_connector
    custom_streamapp
    how_to_build
