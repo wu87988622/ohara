@@ -51,6 +51,10 @@ describe('<WorkspacesPage />', () => {
       return { getData: jest.fn() };
     });
 
+    jest.spyOn(useApi, 'useWaitApi').mockImplementation(() => {
+      return { waitApi: jest.fn() };
+    });
+
     jest.spyOn(useApi, 'useFetchApi').mockImplementation(() => {
       return {
         data: {
