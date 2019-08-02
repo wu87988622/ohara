@@ -23,9 +23,9 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorDescription
+import com.island.ohara.client.configurator.v0.FileInfoApi
 import com.island.ohara.client.configurator.v0.FileInfoApi._
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import com.island.ohara.client.configurator.v0.{Data, FileInfoApi}
 import com.island.ohara.configurator.file.FileStore
 import com.island.ohara.configurator.store.DataStore
 import spray.json.DefaultJsonProtocol._
@@ -75,7 +75,7 @@ private[configurator] object FileRoute {
                                                            executionContext: ExecutionContext): server.Route =
     pathPrefix(root) {
       path(Segment) { name =>
-        parameter(Data.GROUP_KEY ?) { groupOption =>
+        parameter(RouteUtils.GROUP_KEY ?) { groupOption =>
           get(complete(fileStore.fileInfo(groupOption.getOrElse(GROUP_DEFAULT), name))) ~ delete(
             complete(
               fileStore
@@ -97,7 +97,7 @@ private[configurator] object FileRoute {
           ) ~ put {
             // update the tags for an existent file
             entity(as[Update]) { update =>
-              parameter(Data.GROUP_KEY ?) { groupOption =>
+              parameter(RouteUtils.GROUP_KEY ?) { groupOption =>
                 val fileInfo: Future[FileInfo] = update.tags
                   .map(fileStore.updateTags(groupOption.getOrElse(GROUP_DEFAULT), name, _))
                   .getOrElse(fileStore.fileInfo(groupOption.getOrElse(GROUP_DEFAULT), name))
@@ -110,7 +110,7 @@ private[configurator] object FileRoute {
         withSizeLimit(RouteUtils.DEFAULT_FILE_SIZE_BYTES) {
           //see https://github.com/akka/akka-http/issues/1216#issuecomment-311973943
           toStrictEntity(1.seconds) {
-            formFields((Data.GROUP_KEY ?, Data.TAGS_KEY ?)) {
+            formFields((RouteUtils.GROUP_KEY ?, RouteUtils.TAGS_KEY ?)) {
               case (group, tagsString) =>
                 storeUploadedFile(fieldName, tempDestination) {
                   case (metadata, file) =>
@@ -126,7 +126,7 @@ private[configurator] object FileRoute {
             }
           }
         } ~ get {
-          parameter(Data.GROUP_KEY ?) { groupOption =>
+          parameter(RouteUtils.GROUP_KEY ?) { groupOption =>
             val fileInfos: Future[Seq[FileInfo]] = groupOption.map(fileStore.fileInfos).getOrElse(fileStore.fileInfos())
             complete(fileInfos)
           }

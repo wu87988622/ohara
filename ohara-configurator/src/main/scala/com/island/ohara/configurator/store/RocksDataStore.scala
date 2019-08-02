@@ -22,7 +22,7 @@ import java.util.Objects
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 
-import com.island.ohara.client.configurator.v0.Data
+import com.island.ohara.client.configurator.Data
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.kafka.connector.json.ObjectKey

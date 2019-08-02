@@ -18,6 +18,7 @@ package com.island.ohara.client.configurator.v0
 import java.util.Objects
 
 import com.island.ohara.client.Enum
+import com.island.ohara.client.configurator.Data
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json.TopicKey
@@ -28,7 +29,10 @@ import scala.concurrent.{ExecutionContext, Future}
 
 object TopicApi {
 
-  val GROUP_DEFAULT: String = Data.GROUP_DEFAULT
+  /**
+    * The default value of group for this API.
+    */
+  val GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
   val DEFAULT_NUMBER_OF_PARTITIONS: Int = 1
   val DEFAULT_NUMBER_OF_REPLICATIONS: Short = 1
   val TOPICS_PREFIX_PATH: String = "topics"
@@ -58,7 +62,7 @@ object TopicApi {
 
   implicit val TOPIC_CREATION_FORMAT: OharaJsonFormat[Creation] = JsonRefiner[Creation]
     .format(jsonFormat7(Creation))
-    .stringRestriction(Set(Data.GROUP_KEY, Data.NAME_KEY))
+    .stringRestriction(Set(GROUP_KEY, NAME_KEY))
     .withNumber()
     .withCharset()
     .withDot()
@@ -68,10 +72,10 @@ object TopicApi {
     .nullToInt(NUMBER_OF_PARTITIONS_KEY, DEFAULT_NUMBER_OF_REPLICATIONS)
     .nullToInt(NUMBER_OF_REPLICATIONS_KEY, DEFAULT_NUMBER_OF_REPLICATIONS)
     .rejectEmptyString()
-    .nullToString(Data.GROUP_KEY, () => GROUP_DEFAULT)
-    .nullToString(Data.NAME_KEY, () => CommonUtils.randomString(10))
+    .nullToString(GROUP_KEY, () => GROUP_DEFAULT)
+    .nullToString(NAME_KEY, () => CommonUtils.randomString(10))
     .nullToEmptyObject(CONFIGS_KEY)
-    .nullToEmptyObject(Data.TAGS_KEY)
+    .nullToEmptyObject(TAGS_KEY)
     .refine
 
   import MetricsApi._

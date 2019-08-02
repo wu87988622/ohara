@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 import com.island.ohara.agent.ClusterCache.{RequestKey, Service}
-import com.island.ohara.client.configurator.v0.{ClusterInfo, Data}
+import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
@@ -163,7 +163,7 @@ class TestClusterCache extends SmallTest with Matchers {
       override def clone(newNodeNames: Set[String]): ClusterInfo = throw new UnsupportedOperationException(
         "what are you doing!!!")
 
-      override def group: String = Data.GROUP_DEFAULT
+      override def group: String = "fake_group"
 
       override def lastModified: Long = CommonUtils.current()
 

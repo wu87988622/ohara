@@ -190,7 +190,7 @@ class TestBrokerApi extends SmallTest with Matchers {
                                                                                        |    "nodeNames": ["$nodeName"]
                                                                                        |  }
                                                                      """.stripMargin.parseJson)
-    creation.group shouldBe Data.GROUP_DEFAULT
+    creation.group shouldBe BrokerApi.GROUP_DEFAULT
     creation.name.length shouldBe 10
     creation.imageName shouldBe BrokerApi.IMAGE_NAME_DEFAULT
     creation.zookeeperClusterName shouldBe None
@@ -217,7 +217,7 @@ class TestBrokerApi extends SmallTest with Matchers {
                                                                                  |  }
                                                                      """.stripMargin.parseJson)
     // node does support custom group
-    creation2.group shouldBe Data.GROUP_DEFAULT
+    creation2.group shouldBe BrokerApi.GROUP_DEFAULT
     creation2.name shouldBe name
     creation2.imageName shouldBe BrokerApi.IMAGE_NAME_DEFAULT
     creation2.nodeNames.size shouldBe 1

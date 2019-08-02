@@ -16,7 +16,7 @@
 
 package com.island.ohara.agent
 
-import com.island.ohara.client.configurator.v0.{ClusterInfo, Data}
+import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.common.util.CommonUtils
 import spray.json.JsValue
 
@@ -34,7 +34,7 @@ case class FakeClusterInfo(name: String) extends ClusterInfo {
   override def clone(newNodeNames: Set[String]): FakeClusterInfo = throw new UnsupportedOperationException(
     "what are you doing!!!")
 
-  override def group: String = Data.GROUP_DEFAULT
+  override def group: String = "fake_group"
 
   override def lastModified: Long = CommonUtils.current()
 

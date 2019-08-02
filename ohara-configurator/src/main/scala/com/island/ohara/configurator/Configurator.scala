@@ -28,7 +28,7 @@ import akka.stream.ActorMaterializer
 import com.island.ohara.agent._
 import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.client.HttpExecutor
-import com.island.ohara.client.configurator.ConfiguratorApiInfo
+import com.island.ohara.client.configurator.{ConfiguratorApiInfo, Data}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Meter
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo

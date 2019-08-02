@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.{Data, HdfsInfoApi}
+import com.island.ohara.client.configurator.v0.HdfsInfoApi
 import com.island.ohara.client.configurator.v0.HdfsInfoApi.{HdfsInfo, Request}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -133,7 +133,7 @@ class TestHdfsInfoRoute extends SmallTest with Matchers {
   @Test
   def testGroup(): Unit = {
     // default group
-    result(hdfsApi.request.uri("uri").create()).group shouldBe Data.GROUP_DEFAULT
+    result(hdfsApi.request.uri("uri").create()).group shouldBe HdfsInfoApi.GROUP_DEFAULT
 
     val group = CommonUtils.randomString()
     val ftpInfo = result(hdfsApi.request.group(group).uri("uri").create())

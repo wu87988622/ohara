@@ -16,6 +16,8 @@
 
 package com.island.ohara.client.configurator.v0
 
+import com.island.ohara.client.configurator.Data
+
 /**
   * There are many kinds of cluster hosted by ohara. We extract an interface to define "what" information should be included by a "cluster
   * information".

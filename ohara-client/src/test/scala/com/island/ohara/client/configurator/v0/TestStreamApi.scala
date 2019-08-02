@@ -23,8 +23,8 @@ import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import com.island.ohara.kafka.connector.json.ObjectKey
 import org.junit.Test
 import org.scalatest.Matchers
-import spray.json._
 import spray.json.DefaultJsonProtocol._
+import spray.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -556,7 +556,7 @@ class TestStreamApi extends SmallTest with Matchers {
         lastModified = CommonUtils.current(),
         tags = Map.empty
       ))
-    res.asJsObject.fields(Data.NAME_KEY).convertTo[String] shouldBe name
-    res.asJsObject.fields(Data.GROUP_KEY).convertTo[String] shouldBe Data.GROUP_DEFAULT
+    res.asJsObject.fields(NAME_KEY).convertTo[String] shouldBe name
+    res.asJsObject.fields(GROUP_KEY).convertTo[String] shouldBe StreamApi.GROUP_DEFAULT
   }
 }

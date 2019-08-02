@@ -88,7 +88,7 @@ class TestTopicApi extends SmallTest with Matchers {
                                                            |}
        """.stripMargin.parseJson)
 
-    creation.group shouldBe Data.GROUP_DEFAULT
+    creation.group shouldBe TopicApi.GROUP_DEFAULT
     creation.name.length shouldBe 10
     creation.brokerClusterName shouldBe None
     creation.numberOfPartitions shouldBe TopicApi.DEFAULT_NUMBER_OF_PARTITIONS

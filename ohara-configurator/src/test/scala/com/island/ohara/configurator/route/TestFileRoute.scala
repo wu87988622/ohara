@@ -18,7 +18,7 @@ package com.island.ohara.configurator.route
 
 import java.io.{File, FileOutputStream}
 
-import com.island.ohara.client.configurator.v0.{Data, FileInfoApi, StreamApi}
+import com.island.ohara.client.configurator.v0.{FileInfoApi, StreamApi}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
@@ -88,7 +88,7 @@ class TestFileRoute extends SmallTest with Matchers {
     }
     result(fileApi.list()).size shouldBe 1
     val fileInfo = result(fileApi.list()).head
-    fileInfo.group shouldBe Data.GROUP_DEFAULT
+    fileInfo.group shouldBe FileInfoApi.GROUP_DEFAULT
     fileInfo.name shouldBe file.getName
     fileInfo.size shouldBe file.length()
     fileInfo.tags shouldBe tagsList.last

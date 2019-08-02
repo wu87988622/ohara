@@ -27,7 +27,7 @@ import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import com.island.ohara.client.configurator.ConfiguratorApiInfo
-import com.island.ohara.client.configurator.v0.{Data, FileInfoApi}
+import com.island.ohara.client.configurator.v0.FileInfoApi
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -215,7 +215,7 @@ object FileStore {
 
   trait FileInfoCreator extends com.island.ohara.common.pattern.Creator[Future[FileInfo]] {
     private[this] var file: File = _
-    private[this] var group: String = Data.GROUP_DEFAULT
+    private[this] var group: String = FileInfoApi.GROUP_DEFAULT
     private[this] var name: String = _
     private[this] var tags: Map[String, JsValue] = Map.empty
     private[this] var threadPool: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global

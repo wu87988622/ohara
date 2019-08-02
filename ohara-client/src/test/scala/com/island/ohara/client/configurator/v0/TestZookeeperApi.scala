@@ -171,7 +171,7 @@ class TestZookeeperApi extends SmallTest with Matchers {
                                                                         |  }
            """.stripMargin.parseJson)
 
-    creation.group shouldBe Data.GROUP_DEFAULT
+    creation.group shouldBe ZookeeperApi.GROUP_DEFAULT
     creation.name.length shouldBe 10
     creation.nodeNames.size shouldBe 1
     creation.nodeNames.head shouldBe nodeName
@@ -189,7 +189,7 @@ class TestZookeeperApi extends SmallTest with Matchers {
          |  }
            """.stripMargin.parseJson)
     // node does support custom group
-    creation2.group shouldBe Data.GROUP_DEFAULT
+    creation2.group shouldBe ZookeeperApi.GROUP_DEFAULT
     creation2.name shouldBe name
     creation2.nodeNames.size shouldBe 1
     creation2.nodeNames.head shouldBe nodeName

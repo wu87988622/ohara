@@ -17,6 +17,7 @@
 package com.island.ohara.client.configurator.v0
 import java.util.Objects
 
+import com.island.ohara.client.configurator.Data
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
@@ -35,7 +36,10 @@ object StreamApi {
   val STREAM_SERVICE_NAME: String = "stream"
   val STREAM_PREFIX_PATH: String = STREAM_SERVICE_NAME
 
-  val GROUP_DEFAULT: String = Data.GROUP_DEFAULT
+  /**
+    * The default value of group for this API.
+    */
+  val GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
 
   val LIMIT_OF_NAME_LENGTH: Int = ZookeeperApi.LIMIT_OF_NAME_LENGTH
 
@@ -70,13 +74,13 @@ object StreamApi {
       .requireBindPort("jmxPort")
       .requirePositiveNumber("instances")
       .rejectEmptyString()
-      .stringRestriction(Data.NAME_KEY)
+      .stringRestriction(NAME_KEY)
       .withNumber()
       .withLowerCase()
       .withLengthLimit(LIMIT_OF_NAME_LENGTH)
       .toRefiner
       .nullToString("name", () => CommonUtils.randomString(LIMIT_OF_NAME_LENGTH))
-      .nullToEmptyObject(Data.TAGS_KEY)
+      .nullToEmptyObject(TAGS_KEY)
       .refine
 
   final case class Update(imageName: Option[String],
@@ -150,7 +154,7 @@ object StreamApi {
         override def write(obj: StreamClusterInfo): JsValue =
           JsObject(
             noJsNull(
-              format.write(obj).asJsObject.fields ++ Map(Data.GROUP_KEY -> JsString(Data.GROUP_DEFAULT))
+              format.write(obj).asJsObject.fields ++ Map(GROUP_KEY -> JsString(GROUP_DEFAULT))
             ))
       })
       .refine

@@ -18,7 +18,7 @@ package com.island.ohara.configurator.store
 
 import java.util.Objects
 
-import com.island.ohara.client.configurator.v0.Data
+import com.island.ohara.client.configurator.Data
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtils, Releasable}

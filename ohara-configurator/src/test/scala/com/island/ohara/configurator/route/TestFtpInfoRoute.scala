@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.{Data, FtpInfoApi}
+import com.island.ohara.client.configurator.v0.FtpInfoApi
 import com.island.ohara.client.configurator.v0.FtpInfoApi.{FtpInfo, Request}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -199,7 +199,7 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
   @Test
   def testGroup(): Unit = {
     // default group
-    result(ftpApi.request.hostname("hostname").port(22).user("user").password("password").create()).group shouldBe Data.GROUP_DEFAULT
+    result(ftpApi.request.hostname("hostname").port(22).user("user").password("password").create()).group shouldBe FtpInfoApi.GROUP_DEFAULT
 
     val group = CommonUtils.randomString()
     val ftpInfo = result(

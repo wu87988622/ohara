@@ -22,13 +22,13 @@ import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.data.{Column, DataType, Serializer}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.json.{PropGroups, SettingDefinition, TopicKey}
+import com.island.ohara.kafka.connector.json.{PropGroups, TopicKey}
 import org.junit.Test
 import org.scalatest.Matchers
+import spray.json.DefaultJsonProtocol._
 import spray.json.{JsArray, JsString, _}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import spray.json.DefaultJsonProtocol._
 class TestConnectorApi extends SmallTest with Matchers {
 
   @Test
@@ -60,12 +60,12 @@ class TestConnectorApi extends SmallTest with Matchers {
        |}
       """.stripMargin.parseJson)
 
-    creation.group shouldBe Data.GROUP_DEFAULT
+    creation.group shouldBe ConnectorApi.GROUP_DEFAULT
     creation.name.length shouldBe 10
     creation.workerClusterName.get shouldBe workerClusterName
     creation.className shouldBe className
     creation.columns shouldBe Seq.empty
-    creation.topicKeys shouldBe topicNames.map(n => TopicKey.of(Data.GROUP_DEFAULT, n)).toSet
+    creation.topicKeys shouldBe topicNames.map(n => TopicKey.of(ConnectorApi.GROUP_DEFAULT, n)).toSet
     creation.numberOfTasks shouldBe 1
     creation.tags shouldBe tags
     // this key is deprecated so json converter will replace it by new one
@@ -88,7 +88,7 @@ class TestConnectorApi extends SmallTest with Matchers {
        |  "name": ${JsString(name).toString()},
        |  "workerClusterName": ${JsString(workerClusterName).toString()},
        |  "connector.class": ${JsString(className).toString()},
-       |  "${SettingDefinition.COLUMNS_DEFINITION.key()}": ${PropGroups.ofColumn(column).toJsonString},
+       |  "$COLUMNS_KEY": ${PropGroups.ofColumn(column).toJsonString},
        |  "topics": ${JsArray(topicNames.map(v => JsString(v)).toVector).toString()},
        |  "numberOfTasks": ${JsNumber(numberOfTasks).toString()},
        |  "$anotherKey": "$anotherValue"
@@ -98,7 +98,7 @@ class TestConnectorApi extends SmallTest with Matchers {
     creation2.workerClusterName.get shouldBe workerClusterName
     creation2.className shouldBe className
     creation2.columns shouldBe Seq(column)
-    creation.topicKeys shouldBe topicNames.map(n => TopicKey.of(Data.GROUP_DEFAULT, n)).toSet
+    creation.topicKeys shouldBe topicNames.map(n => TopicKey.of(ConnectorApi.GROUP_DEFAULT, n)).toSet
     creation2.numberOfTasks shouldBe 1
     // this key is deprecated so json converter will replace it by new one
     creation2.settings.contains("className") shouldBe false
@@ -141,7 +141,7 @@ class TestConnectorApi extends SmallTest with Matchers {
     val response = ConnectorDescription(
       settings = Map(
         CommonUtils.randomString() -> JsString(CommonUtils.randomString()),
-        SettingDefinition.CONNECTOR_NAME_DEFINITION.key() -> JsString(CommonUtils.randomString())
+        NAME_KEY -> JsString(CommonUtils.randomString())
       ),
       state = None,
       error = None,
@@ -157,8 +157,8 @@ class TestConnectorApi extends SmallTest with Matchers {
     val className = CommonUtils.randomString()
     val response = ConnectorDescription(
       settings = Map(
-        SettingDefinition.CONNECTOR_CLASS_DEFINITION.key() -> JsString(className),
-        SettingDefinition.CONNECTOR_NAME_DEFINITION.key() -> JsString(CommonUtils.randomString())
+        CONNECTOR_CLASS_KEY -> JsString(className),
+        NAME_KEY -> JsString(CommonUtils.randomString())
       ),
       state = None,
       error = None,
@@ -230,8 +230,7 @@ class TestConnectorApi extends SmallTest with Matchers {
     val creationRequest = ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
                                                                                       | {
                                                                                       |  "name": "ftp source",
-                                                                                      |  "${SettingDefinition.COLUMNS_DEFINITION
-                                                                           .key()}": [
+                                                                                      |  "$COLUMNS_KEY": [
                                                                                       |    {
                                                                                       |      "name": "col1",
                                                                                       |      "newName": "col1",
@@ -382,7 +381,7 @@ class TestConnectorApi extends SmallTest with Matchers {
     val order = 1
     val creation = ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
                                             |  {
-                                            |    "${SettingDefinition.COLUMNS_DEFINITION.key()}": [
+                                            |    "$COLUMNS_KEY": [
                                             |      {
                                             |        "name": "$name",
                                             |        "newName": "$newName",
@@ -401,8 +400,7 @@ class TestConnectorApi extends SmallTest with Matchers {
 
     val creation2 = ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
                                                                        |  {
-                                                                       |    "${SettingDefinition.COLUMNS_DEFINITION
-                                                                     .key()}": [
+                                                                       |    "$COLUMNS_KEY": [
                                                                        |      {
                                                                        |        "name": "$name",
                                                                        |        "dataType": "${dataType.name}",
@@ -423,8 +421,7 @@ class TestConnectorApi extends SmallTest with Matchers {
   def emptyNameForCreatingColumn(): Unit =
     an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
                                                                                                    |  {
-                                                                                                   |    "${SettingDefinition.COLUMNS_DEFINITION
-                                                                                                     .key()}": [
+                                                                                                   |    "$COLUMNS_KEY": [
                                                                                                    |      {
                                                                                                    |        "name": "",
                                                                                                    |        "dataType": "Boolean",
@@ -438,8 +435,7 @@ class TestConnectorApi extends SmallTest with Matchers {
   def emptyNewNameForCreatingColumn(): Unit =
     an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
                                                                                                    |  {
-                                                                                                   |    "${SettingDefinition.COLUMNS_DEFINITION
-                                                                                                     .key()}": [
+                                                                                                   |    "$COLUMNS_KEY": [
                                                                                                    |      {
                                                                                                    |        "name": "AA",
                                                                                                    |        "newName": "",
@@ -454,7 +450,7 @@ class TestConnectorApi extends SmallTest with Matchers {
   def negativeOrderForCreatingColumn(): Unit =
     an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
                                                         |  {
-                                                        |    "${SettingDefinition.COLUMNS_DEFINITION.key()}": [
+                                                        |    "$COLUMNS_KEY": [
                                                         |      {
                                                         |        "name": "AA",
                                                         |        "newName": "cc",
@@ -469,8 +465,7 @@ class TestConnectorApi extends SmallTest with Matchers {
   def duplicateOrderForCreatingColumns(): Unit =
     an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
                                                                                                    |  {
-                                                                                                   |    "${SettingDefinition.COLUMNS_DEFINITION
-                                                                                                     .key()}": [
+                                                                                                   |    "$COLUMNS_KEY": [
                                                                                                    |      {
                                                                                                    |        "name": "AA",
                                                                                                    |        "newName": "",
@@ -491,8 +486,7 @@ class TestConnectorApi extends SmallTest with Matchers {
   def emptyNameForUpdatingColumn(): Unit =
     an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATE_FORMAT.read(s"""
                                                                                                         |  {
-                                                                                                        |    "${SettingDefinition.COLUMNS_DEFINITION
-                                                                                                   .key()}": [
+                                                                                                        |    "$COLUMNS_KEY": [
                                                                                                         |      {
                                                                                                         |        "name": "",
                                                                                                         |         "dataType": "Boolean",
@@ -506,8 +500,7 @@ class TestConnectorApi extends SmallTest with Matchers {
   def emptyNewNameForUpdatingColumn(): Unit =
     an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATE_FORMAT.read(s"""
                                                                                                    |  {
-                                                                                                   |    "${SettingDefinition.COLUMNS_DEFINITION
-                                                                                                   .key()}": [
+                                                                                                   |    "$COLUMNS_KEY": [
                                                                                                    |      {
                                                                                                    |        "name": "AA",
                                                                                                    |        "newName": "",
@@ -522,8 +515,7 @@ class TestConnectorApi extends SmallTest with Matchers {
   def negativeOrderForUpdatingColumn(): Unit =
     an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATE_FORMAT.read(s"""
                                                                                                  |  {
-                                                                                                 |    "${SettingDefinition.COLUMNS_DEFINITION
-                                                                                                   .key()}": [
+                                                                                                 |    "$COLUMNS_KEY": [
                                                                                                  |      {
                                                                                                  |        "name": "AA",
                                                                                                  |        "newName": "cc",
@@ -538,8 +530,7 @@ class TestConnectorApi extends SmallTest with Matchers {
   def duplicateOrderForUpdatingColumns(): Unit =
     an[DeserializationException] should be thrownBy ConnectorApi.CONNECTOR_UPDATE_FORMAT.read(s"""
                                                                                                    |  {
-                                                                                                   |    "${SettingDefinition.COLUMNS_DEFINITION
-                                                                                                   .key()}": [
+                                                                                                   |    "$COLUMNS_KEY": [
                                                                                                    |      {
                                                                                                    |        "name": "AA",
                                                                                                    |        "newName": "",
@@ -588,14 +579,14 @@ class TestConnectorApi extends SmallTest with Matchers {
     val js = ConnectorApi.CONNECTOR_DESCRIPTION_FORMAT.write(
       ConnectorDescription(
         settings = Map(
-          Data.NAME_KEY -> JsString(name)
+          NAME_KEY -> JsString(name)
         ),
         state = None,
         error = None,
         metrics = Metrics(Seq.empty),
         lastModified = CommonUtils.current()
       ))
-    js.asJsObject.fields(Data.GROUP_KEY).convertTo[String] shouldBe Data.GROUP_DEFAULT
-    js.asJsObject.fields(Data.NAME_KEY).convertTo[String] shouldBe name
+    js.asJsObject.fields(GROUP_KEY).convertTo[String] shouldBe ConnectorApi.GROUP_DEFAULT
+    js.asJsObject.fields(NAME_KEY).convertTo[String] shouldBe name
   }
 }

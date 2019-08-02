@@ -28,7 +28,10 @@ import spray.json.{JsArray, JsNumber, JsObject, JsString, JsValue, RootJsonForma
 import scala.concurrent.{ExecutionContext, Future}
 object WorkerApi {
 
-  val GROUP_DEFAULT: String = Data.GROUP_DEFAULT
+  /**
+    * The default value of group for this API.
+    */
+  val GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
   val WORKER_SERVICE_NAME: String = "wk"
 
   val LIMIT_OF_NAME_LENGTH: Int = ZookeeperApi.LIMIT_OF_NAME_LENGTH
@@ -40,7 +43,6 @@ object WorkerApi {
     */
   val IMAGE_NAME_DEFAULT: String = s"oharastream/connect-worker:${VersionUtils.VERSION}"
 
-  private[this] val NAME_KEY = "name"
   private[this] val IMAGE_NAME_KEY = "imageName"
   private[this] val BROKER_CLUSTER_NAME_KEY = "brokerClusterName"
   private[this] val CLIENT_PORT_KEY = "clientPort"
@@ -112,7 +114,7 @@ object WorkerApi {
       // TODO: remove the deprecated key "jars"
       .nullToAnotherValueOfKey("jarKeys", "jars")
       .nullToEmptyArray("jarKeys")
-      .stringRestriction(Data.NAME_KEY)
+      .stringRestriction(NAME_KEY)
       .withNumber()
       .withLowerCase()
       .withLengthLimit(LIMIT_OF_NAME_LENGTH)

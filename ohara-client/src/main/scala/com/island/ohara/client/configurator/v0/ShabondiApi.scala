@@ -16,6 +16,7 @@
 
 package com.island.ohara.client.configurator.v0
 
+import com.island.ohara.client.configurator.Data
 import com.island.ohara.common.util.VersionUtils
 import com.island.ohara.kafka.connector.json.ObjectKey
 import spray.json.DefaultJsonProtocol._
@@ -24,7 +25,11 @@ import spray.json.{JsValue, RootJsonFormat}
 import scala.concurrent.{ExecutionContext, Future}
 
 final object ShabondiApi {
-  val GROUP_DEFAULT: String = Data.GROUP_DEFAULT
+
+  /**
+    * The default value of group for this API.
+    */
+  val GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
 
   /**
     * shabondi does not support group. However, we are in group world and there are many cases of inputting key (group, name)

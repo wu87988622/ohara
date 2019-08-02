@@ -17,6 +17,7 @@
 package com.island.ohara.client.configurator.v0
 import java.util.Objects
 
+import com.island.ohara.client.configurator.Data
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json.ObjectKey
@@ -26,7 +27,11 @@ import spray.json.{JsValue, RootJsonFormat}
 import scala.concurrent.{ExecutionContext, Future}
 
 object JdbcInfoApi {
-  val GROUP_DEFAULT: String = Data.GROUP_DEFAULT
+
+  /**
+    * The default value of group for this API.
+    */
+  val GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
   val JDBC_PREFIX_PATH: String = "jdbc"
   final case class Update(url: Option[String],
                           user: Option[String],
@@ -46,16 +51,16 @@ object JdbcInfoApi {
     JsonRefiner[Creation]
       .format(jsonFormat6(Creation))
       .rejectEmptyString()
-      .stringRestriction(Set(Data.GROUP_KEY, Data.NAME_KEY))
+      .stringRestriction(Set(GROUP_KEY, NAME_KEY))
       .withNumber()
       .withCharset()
       .withDot()
       .withDash()
       .withUnderLine()
       .toRefiner
-      .nullToString(Data.GROUP_KEY, () => GROUP_DEFAULT)
-      .nullToString(Data.NAME_KEY, () => CommonUtils.randomString(10))
-      .nullToEmptyObject(Data.TAGS_KEY)
+      .nullToString(GROUP_KEY, () => GROUP_DEFAULT)
+      .nullToString(NAME_KEY, () => CommonUtils.randomString(10))
+      .nullToEmptyObject(TAGS_KEY)
       .refine
 
   final case class JdbcInfo(group: String,

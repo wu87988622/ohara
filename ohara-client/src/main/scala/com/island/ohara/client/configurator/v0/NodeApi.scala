@@ -17,6 +17,7 @@
 package com.island.ohara.client.configurator.v0
 import java.util.Objects
 
+import com.island.ohara.client.configurator.Data
 import com.island.ohara.client.configurator.v0.ValidationApi.ValidationReport
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.util.CommonUtils
@@ -26,7 +27,11 @@ import spray.json.{JsString, JsValue, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 object NodeApi {
-  val GROUP_DEFAULT: String = Data.GROUP_DEFAULT
+
+  /**
+    * The default value of group for this API.
+    */
+  val GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
 
   /**
     * node does not support group. However, we are in group world and there are many cases of inputting key (group, name)
@@ -55,7 +60,7 @@ object NodeApi {
                       password: Option[String],
                       tags: Map[String, JsValue])
       extends CreationRequest {
-    override def group: String = Data.GROUP_DEFAULT
+    override def group: String = GROUP_DEFAULT
     override def name: String = hostname
   }
   implicit val NODE_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
@@ -71,7 +76,7 @@ object NodeApi {
       .withDot()
       .withDash()
       .toRefiner
-      .nullToEmptyObject(Data.TAGS_KEY)
+      .nullToEmptyObject(TAGS_KEY)
       .nullToAnotherValueOfKey("hostname", "name")
       .refine
 
@@ -91,7 +96,7 @@ object NodeApi {
                   tags: Map[String, JsValue])
       extends Data {
     // Node does not support to define group
-    override def group: String = Data.GROUP_DEFAULT
+    override def group: String = GROUP_DEFAULT
     private[this] def msg(key: String): String = s"$key is required since Ohara Configurator is in ssh mode"
     def _port: Int = port.getOrElse(throw new NoSuchElementException(msg("port")))
     def _user: String = user.getOrElse(throw new NoSuchElementException(msg("user")))

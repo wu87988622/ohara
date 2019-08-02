@@ -22,6 +22,7 @@ import java.util.Objects
 
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model._
+import com.island.ohara.client.configurator.Data
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json.ObjectKey
@@ -31,7 +32,11 @@ import spray.json._
 
 import scala.concurrent.{ExecutionContext, Future}
 object FileInfoApi {
-  val GROUP_DEFAULT: String = Data.GROUP_DEFAULT
+
+  /**
+    * The default value of group for this API.
+    */
+  val GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
   val FILE_PREFIX_PATH: String = "files"
   def toString(tags: Map[String, JsValue]): String = JsObject(tags).toString
 
@@ -157,9 +162,9 @@ object FileInfoApi {
                                         HttpEntity.fromFile(MediaTypes.`application/octet-stream`, file),
                                         Map("filename" -> name)),
             // add group
-            Multipart.FormData.BodyPart(Data.GROUP_KEY, group),
+            Multipart.FormData.BodyPart(GROUP_KEY, group),
             // add tags
-            Multipart.FormData.BodyPart(Data.TAGS_KEY, FileInfoApi.toString(tags))
+            Multipart.FormData.BodyPart(TAGS_KEY, FileInfoApi.toString(tags))
           ))
           .to[RequestEntity]
           .map(e => HttpRequest(HttpMethods.POST, uri = url, entity = e))

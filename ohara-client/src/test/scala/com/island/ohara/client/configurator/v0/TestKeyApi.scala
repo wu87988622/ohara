@@ -33,7 +33,7 @@ class TestKeyApi extends SmallTest with Matchers {
                                               |   "name": "$name"
                                               | }
                                               |""".stripMargin.parseJson)
-    objectKey.group() shouldBe Data.GROUP_DEFAULT
+    objectKey.group() shouldBe GROUP_DEFAULT
     objectKey.name() shouldBe name
   }
 
@@ -65,7 +65,7 @@ class TestKeyApi extends SmallTest with Matchers {
                                               |   "name": "$name"
                                               | }
                                               |""".stripMargin.parseJson)
-    topicKey.group() shouldBe Data.GROUP_DEFAULT
+    topicKey.group() shouldBe GROUP_DEFAULT
     topicKey.name() shouldBe name
   }
 

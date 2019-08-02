@@ -263,7 +263,7 @@ class TestNodeApi extends SmallTest with Matchers {
                                                          | "password": "$password"
                                                          |}
                                        """.stripMargin.parseJson)
-    creation.group shouldBe Data.GROUP_DEFAULT
+    creation.group shouldBe NodeApi.GROUP_DEFAULT
     creation.name shouldBe name
     creation.hostname shouldBe name
     creation.port.get shouldBe port
@@ -282,7 +282,7 @@ class TestNodeApi extends SmallTest with Matchers {
                                                              |}
                                        """.stripMargin.parseJson)
     // node does support custom group
-    creation2.group shouldBe Data.GROUP_DEFAULT
+    creation2.group shouldBe NodeApi.GROUP_DEFAULT
     // the name is alias to hostname
     creation2.name shouldBe hostname
     creation2.hostname shouldBe hostname

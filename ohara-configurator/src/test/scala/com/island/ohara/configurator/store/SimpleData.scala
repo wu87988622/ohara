@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.store
 
-import com.island.ohara.client.configurator.v0.Data
+import com.island.ohara.client.configurator.Data
 import spray.json.JsValue
 
 case class SimpleData(group: String, name: String, lastModified: Long, kind: String) extends Data {

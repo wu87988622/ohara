@@ -26,8 +26,6 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 abstract class ClusterAccess[Res <: ClusterInfo] private[v0] (prefixPath: String)(implicit rm: OharaJsonFormat[Res])
     extends BasicAccess(prefixPath) {
-  val START_COMMAND: String = "start"
-  val STOP_COMMAND: String = "stop"
 
   private[this] def _clusterName(name: String): String =
     CommonUtils.requireNonEmpty(name, () => "cluster name can't be empty")
@@ -43,7 +41,7 @@ abstract class ClusterAccess[Res <: ClusterInfo] private[v0] (prefixPath: String
     exec.delete[ErrorApi.Error](s"$url/$clusterName")
   //TODO remove this after finished #1544...by Sam
   def forceDelete(clusterName: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-    exec.delete[ErrorApi.Error](s"$url/$clusterName?${Data.FORCE_KEY}=true")
+    exec.delete[ErrorApi.Error](s"$url/$clusterName?$FORCE_KEY=true")
   def list()(implicit executionContext: ExecutionContext): Future[Seq[Res]] =
     exec.get[Seq[Res], ErrorApi.Error](url)
   def addNode(clusterName: String, nodeName: String)(implicit executionContext: ExecutionContext): Future[Res] =
@@ -80,5 +78,5 @@ abstract class ClusterAccess[Res <: ClusterInfo] private[v0] (prefixPath: String
     * @return none
     */
   def forceStop(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-    exec.put[ErrorApi.Error](s"${actionUrl(name, STOP_COMMAND)}?${Data.FORCE_KEY}=true")
+    exec.put[ErrorApi.Error](s"${actionUrl(name, STOP_COMMAND)}?$FORCE_KEY=true")
 }

@@ -19,7 +19,7 @@ package com.island.ohara.configurator.route
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
-import com.island.ohara.client.configurator.v0.Data
+import com.island.ohara.client.configurator.Data
 import com.island.ohara.client.configurator.v0.ObjectApi._
 import com.island.ohara.configurator.store.DataStore
 import com.island.ohara.kafka.connector.json.ObjectKey
@@ -37,8 +37,8 @@ private[configurator] object ObjectRoute {
   def apply(implicit store: DataStore, executionContext: ExecutionContext): server.Route =
     pathPrefix(OBJECT_PREFIX_PATH) {
       pathEnd(get(complete(store.raws().map(_.map(toObject))))) ~ path(Segment) { name =>
-        parameter(Data.GROUP_KEY ?) { groupOption =>
-          val group = groupOption.getOrElse(Data.GROUP_DEFAULT)
+        parameter(RouteUtils.GROUP_KEY ?) { groupOption =>
+          val group = groupOption.getOrElse(GROUP_DEFAULT)
           get(complete(store.raws(ObjectKey.of(group, name)).map(_.map(toObject))))
         }
       }

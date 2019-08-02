@@ -277,7 +277,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
   @Test
   def testGroup(): Unit = {
     // default group
-    result(pipelineApi.request.create()).group shouldBe Data.GROUP_DEFAULT
+    result(pipelineApi.request.create()).group shouldBe PipelineApi.GROUP_DEFAULT
 
     val group = CommonUtils.randomString()
     val ftpInfo = result(pipelineApi.request.group(group).create())

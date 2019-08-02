@@ -61,13 +61,13 @@ object ClusterJsonRefiner {
     .rejectEmpty()
     .toRefiner
     .nullToString("imageName", defaultImage)
-    .stringRestriction(Data.NAME_KEY)
+    .stringRestriction(NAME_KEY)
     .withNumber()
     .withLowerCase()
     .withLengthLimit(LIMIT_OF_NAME_LENGTH)
     .toRefiner
-    .nullToString(Data.NAME_KEY, () => CommonUtils.randomString(10))
-    .nullToEmptyObject(Data.TAGS_KEY)
+    .nullToString(NAME_KEY, () => CommonUtils.randomString(10))
+    .nullToEmptyObject(TAGS_KEY)
 
   /**
     * use basic check rules of update request for json refiner.

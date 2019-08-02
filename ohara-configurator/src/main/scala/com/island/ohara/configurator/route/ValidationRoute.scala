@@ -21,7 +21,7 @@ import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives.{as, complete, entity, path, pathPrefix, put, _}
 import com.island.ohara.agent.{BrokerCollie, ClusterCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ConnectorApi.Creation
-import com.island.ohara.client.configurator.v0.{Data, NodeApi}
+import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.QueryApi.{RdbColumn, RdbInfo, RdbTable}
 import com.island.ohara.client.configurator.v0.ValidationApi._
@@ -37,6 +37,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 private[configurator] object ValidationRoute extends SprayJsonSupport {
+  private[this] val CLUSTER_KEY = RouteUtils.CLUSTER_KEY
   private[this] val DEFAULT_NUMBER_OF_VALIDATION = 3
 
   private[this] def verifyRoute[Req, Report](root: String, verify: (Option[String], Req) => Future[Seq[Report]])(
@@ -44,7 +45,7 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
     rm2: RootJsonFormat[Report],
     executionContext: ExecutionContext): server.Route = path(root) {
     put {
-      parameter(Data.CLUSTER_KEY ?) { clusterName =>
+      parameter(CLUSTER_KEY ?) { clusterName =>
         entity(as[Req])(req =>
           complete(verify(clusterName, req).map { reports =>
             if (reports.isEmpty) throw new IllegalStateException(s"No report!!! Failed to run verification on $root")

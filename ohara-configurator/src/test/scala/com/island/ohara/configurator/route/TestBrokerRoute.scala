@@ -215,6 +215,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
     result(brokerApi.start(cluster.name))
 
     // it's ok use keyword, but the "actual" behavior is not expected (expected addNode, but stop cluster)
+    an[RuntimeException] should be thrownBy result(brokerApi.addNode(cluster.name, RouteUtils.START_COMMAND))
     an[RuntimeException] should be thrownBy result(brokerApi.addNode(cluster.name, RouteUtils.STOP_COMMAND))
   }
 

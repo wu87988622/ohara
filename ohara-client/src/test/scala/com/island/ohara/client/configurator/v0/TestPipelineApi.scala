@@ -52,9 +52,10 @@ class TestPipelineApi extends SmallTest with Matchers {
                                                |}
                                             """.stripMargin.parseJson)
     req.flows.size shouldBe 1
-    req.flows.head.from shouldBe ObjectKey.of(Data.GROUP_DEFAULT, from)
+    req.flows.head.from shouldBe ObjectKey.of(PipelineApi.GROUP_DEFAULT, from)
     req.flows.head.to.size shouldBe 2
-    req.flows.head.to shouldBe Set(ObjectKey.of(Data.GROUP_DEFAULT, to0), ObjectKey.of(Data.GROUP_DEFAULT, to1))
+    req.flows.head.to shouldBe Set(ObjectKey.of(PipelineApi.GROUP_DEFAULT, to0),
+                                   ObjectKey.of(PipelineApi.GROUP_DEFAULT, to1))
   }
   @Test
   def parseDeprecatedJsonOfPipeline(): Unit = {
@@ -187,7 +188,7 @@ class TestPipelineApi extends SmallTest with Matchers {
                                                           |  }
                                                           |
     """.stripMargin.parseJson)
-    creation.group shouldBe Data.GROUP_DEFAULT
+    creation.group shouldBe PipelineApi.GROUP_DEFAULT
     creation.name.length shouldBe 10
     creation.workerClusterName shouldBe None
     creation.flows shouldBe Seq.empty

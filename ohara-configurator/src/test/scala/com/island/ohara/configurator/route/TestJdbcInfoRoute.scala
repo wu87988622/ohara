@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.{Data, JdbcInfoApi}
+import com.island.ohara.client.configurator.v0.JdbcInfoApi
 import com.island.ohara.client.configurator.v0.JdbcInfoApi.{JdbcInfo, Request}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -186,7 +186,7 @@ class TestJdbcInfoRoute extends SmallTest with Matchers {
         .jdbcUrl("url")
         .user(CommonUtils.randomString())
         .password(CommonUtils.randomString())
-        .create()).group shouldBe Data.GROUP_DEFAULT
+        .create()).group shouldBe JdbcInfoApi.GROUP_DEFAULT
 
     val group = CommonUtils.randomString()
     val ftpInfo = result(

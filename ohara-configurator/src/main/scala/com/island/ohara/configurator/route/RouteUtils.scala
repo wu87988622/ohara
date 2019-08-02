@@ -21,11 +21,13 @@ import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent.Collie.ClusterCreator
 import com.island.ohara.agent.{ClusterCollie, Collie, NodeCollie}
+import com.island.ohara.client.configurator.Data
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.{ClusterCreationRequest, ClusterInfo, CreationRequest, OharaJsonFormat}
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import com.island.ohara.client.configurator.v0._
+import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.configurator.store.DataStore
 import com.island.ohara.kafka.connector.json.ObjectKey
 import com.typesafe.scalalogging.Logger
@@ -145,11 +147,18 @@ private[route] object RouteUtils {
   type Id = String
 
   /** default we restrict the jar size to 50MB */
-  final val DEFAULT_FILE_SIZE_BYTES = 50 * 1024 * 1024L
-  final val START_COMMAND: String = com.island.ohara.client.configurator.v0.START_COMMAND
-  final val STOP_COMMAND: String = com.island.ohara.client.configurator.v0.STOP_COMMAND
-  final val PAUSE_COMMAND: String = com.island.ohara.client.configurator.v0.PAUSE_COMMAND
-  final val RESUME_COMMAND: String = com.island.ohara.client.configurator.v0.RESUME_COMMAND
+  private[route] val DEFAULT_FILE_SIZE_BYTES = 50 * 1024 * 1024L
+  private[route] val NAME_KEY: String = com.island.ohara.client.configurator.v0.NAME_KEY
+  private[route] val GROUP_KEY: String = com.island.ohara.client.configurator.v0.GROUP_KEY
+  private[route] val CLUSTER_KEY: String = com.island.ohara.client.configurator.v0.CLUSTER_KEY
+  private[route] val TAGS_KEY: String = com.island.ohara.client.configurator.v0.TAGS_KEY
+  private[this] val FORCE_KEY: String = com.island.ohara.client.configurator.v0.FORCE_KEY
+  @VisibleForTesting
+  private[configurator] val START_COMMAND: String = com.island.ohara.client.configurator.v0.START_COMMAND
+  @VisibleForTesting
+  private[configurator] val STOP_COMMAND: String = com.island.ohara.client.configurator.v0.STOP_COMMAND
+  private[this] val PAUSE_COMMAND: String = com.island.ohara.client.configurator.v0.PAUSE_COMMAND
+  private[this] val RESUME_COMMAND: String = com.island.ohara.client.configurator.v0.RESUME_COMMAND
 
   /**
     * a route to custom CREATION and UPDATE resource. It offers default implementation to GET, LIST and DELETE.
@@ -234,10 +243,10 @@ private[route] object RouteUtils {
         }) ~
           get(complete(store.values[Res]().flatMap(hookOfList(_))))
       } ~ path(Segment) { name =>
-        parameter(Data.GROUP_KEY ?) { groupOption =>
+        parameter(GROUP_KEY ?) { groupOption =>
           val group = hookOfGroup(groupOption)
           val key =
-            ObjectKey.of(rm.check(Data.GROUP_KEY, JsString(group)).value, rm.check(Data.NAME_KEY, JsString(name)).value)
+            ObjectKey.of(rm.check(GROUP_KEY, JsString(group)).value, rm.check(NAME_KEY, JsString(name)).value)
           get(complete(store.value[Res](key).flatMap(hookOfGet(_)))) ~
             delete(complete(
               hookBeforeDelete(key).map(_ => key).flatMap(store.remove[Res](_).map(_ => StatusCodes.NoContent)))) ~
@@ -307,7 +316,7 @@ private[route] object RouteUtils {
     hookOfGet = hookOfGet,
     hookBeforeDelete = hookBeforeDelete
   ) ~ pathPrefix(root / Segment) { name =>
-    parameter(Data.GROUP_KEY ?) { groupOption =>
+    parameter(GROUP_KEY ?) { groupOption =>
       put {
         val group = hookOfGroup(groupOption)
         val key = ObjectKey.of(group, name)
@@ -377,7 +386,7 @@ private[route] object RouteUtils {
     hookOfGet = hookOfGet,
     hookBeforeDelete = hookBeforeDelete
   ) ~ pathPrefix(root / Segment) { name =>
-    parameter(Data.GROUP_KEY ?) { groupOption =>
+    parameter(GROUP_KEY ?) { groupOption =>
       put {
         val group = hookOfGroup(groupOption)
         val key = ObjectKey.of(group, name)
@@ -410,10 +419,10 @@ private[route] object RouteUtils {
                                           executionContext: ExecutionContext): server.Route =
     pathPrefix(root / Segment) { clusterName =>
       path(Segment) { remainder =>
-        parameter(Data.GROUP_KEY ?) { groupOption =>
+        parameter(GROUP_KEY ?) { groupOption =>
           val group = hookOfGroup(groupOption)
-          val key = ObjectKey.of(rm.check(Data.GROUP_KEY, JsString(group)).value,
-                                 rm.check(Data.NAME_KEY, JsString(clusterName)).value)
+          val key =
+            ObjectKey.of(rm.check(GROUP_KEY, JsString(group)).value, rm.check(NAME_KEY, JsString(clusterName)).value)
           remainder match {
             case START_COMMAND =>
               put {
@@ -432,7 +441,7 @@ private[route] object RouteUtils {
               }
             case STOP_COMMAND =>
               put {
-                parameter(Data.FORCE_KEY ?)(
+                parameter(FORCE_KEY ?)(
                   force =>
                     complete(
                       collie
@@ -505,7 +514,7 @@ private[route] object RouteUtils {
           }
         } ~ pathEnd {
           delete {
-            parameter(Data.FORCE_KEY ?)(force =>
+            parameter(FORCE_KEY ?)(force =>
               // we must list ALL clusters !!!
               complete(clusterCollie.clusters().map(_.keys.toSeq).flatMap { clusters =>
                 if (clusters.exists(_.name == clusterName))

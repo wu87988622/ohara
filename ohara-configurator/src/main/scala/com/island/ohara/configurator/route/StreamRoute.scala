@@ -25,7 +25,16 @@ import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.StreamApi._
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.file.FileStore
-import com.island.ohara.configurator.route.RouteUtils.{START_COMMAND => _, STOP_COMMAND => _, _}
+import com.island.ohara.configurator.route.RouteUtils.{
+  HookBeforeDelete,
+  HookOfCreation,
+  HookOfGet,
+  HookOfGroup,
+  HookOfList,
+  HookOfStart,
+  HookOfStop,
+  HookOfUpdate
+}
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.island.ohara.kafka.connector.json.ObjectKey
 import org.slf4j.LoggerFactory

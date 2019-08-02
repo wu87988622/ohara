@@ -16,10 +16,35 @@
 
 package com.island.ohara.client.configurator
 
-import com.island.ohara.kafka.connector.json.{ObjectKey, TopicKey}
+import com.island.ohara.kafka.connector.json.{ObjectKey, SettingDefinition, TopicKey}
 import spray.json.{JsNull, JsValue, RootJsonFormat}
 
 package object v0 {
+
+  /**
+    * the default group to all objects.
+    * the group is useful to Ohara Manager. However, in simple case, the group is a bit noisy so we offer the default group to all objects when
+    * input group is ignored.
+    *
+    * This field is protected since it is a "default" to all APIs scopes than a "global" default to whole project.
+    * However, each APIs scope may have custom default value of group.
+    */
+  private[v0] val GROUP_DEFAULT: String = "default"
+  val GROUP_KEY: String = "group"
+
+  /**
+    * This reference ensures that the name key in scala json is same to java json (connector metadata).
+    * This a bit complicated code is what we had to "enjoy" as Ohara is a hybrid project consisting of scala and java.
+    */
+  val NAME_KEY: String = SettingDefinition.CONNECTOR_NAME_DEFINITION.key()
+
+  /**
+    * This reference ensures that the tags key in scala json is same to java json (connector metadata).
+    * This a bit complicated code is what we had to "enjoy" as Ohara is a hybrid project consisting of scala and java.
+    */
+  val TAGS_KEY: String = SettingDefinition.TAGS_DEFINITION.key()
+  val CLUSTER_KEY: String = "cluster"
+  val FORCE_KEY: String = "force"
   val START_COMMAND: String = "start"
   val STOP_COMMAND: String = "stop"
   val PAUSE_COMMAND: String = "pause"
@@ -45,7 +70,7 @@ package object v0 {
       override def write(obj: ObjectKey): JsValue = ObjectKey.toJsonString(obj).parseJson
       override def read(json: JsValue): ObjectKey = ObjectKey.ofJsonString(json.toString())
     })
-    .nullToString(Data.GROUP_KEY, () => Data.GROUP_DEFAULT)
+    .nullToString(GROUP_KEY, () => GROUP_DEFAULT)
     .rejectEmptyString()
     .refine
 
@@ -55,7 +80,7 @@ package object v0 {
       override def write(obj: TopicKey): JsValue = TopicKey.toJsonString(obj).parseJson
       override def read(json: JsValue): TopicKey = TopicKey.ofJsonString(json.toString())
     })
-    .nullToString(Data.GROUP_KEY, () => Data.GROUP_DEFAULT)
+    .nullToString(GROUP_KEY, () => GROUP_DEFAULT)
     .rejectEmptyString()
     .refine
 }

@@ -308,7 +308,7 @@ class TestFtpInfoApi extends SmallTest with Matchers {
                                                            | "password": "$password"
                                                            |}
                                        """.stripMargin.parseJson)
-    creation.group shouldBe Data.GROUP_DEFAULT
+    creation.group shouldBe FtpInfoApi.GROUP_DEFAULT
     creation.name.length shouldBe 10
     creation.hostname shouldBe hostname
     creation.port shouldBe port

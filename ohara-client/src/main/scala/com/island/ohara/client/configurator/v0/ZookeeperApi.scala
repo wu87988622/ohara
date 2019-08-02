@@ -26,7 +26,10 @@ import scala.concurrent.{ExecutionContext, Future}
 
 object ZookeeperApi {
 
-  val GROUP_DEFAULT: String = Data.GROUP_DEFAULT
+  /**
+    * The default value of group for this API.
+    */
+  val GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
 
   /**
     * docker does limit the length of name (< 64). Since we format container name with some part of prefix,

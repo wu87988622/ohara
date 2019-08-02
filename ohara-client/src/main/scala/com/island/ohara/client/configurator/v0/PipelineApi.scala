@@ -17,6 +17,7 @@
 package com.island.ohara.client.configurator.v0
 import java.util.Objects
 
+import com.island.ohara.client.configurator.Data
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json.ObjectKey
@@ -26,7 +27,11 @@ import spray.json.{DeserializationException, JsArray, JsNull, JsNumber, JsObject
 import scala.concurrent.{ExecutionContext, Future}
 
 object PipelineApi {
-  val GROUP_DEFAULT: String = Data.GROUP_DEFAULT
+
+  /**
+    * The default value of group for this API.
+    */
+  val GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
   val PIPELINES_PREFIX_PATH: String = "pipelines"
 
   final case class Flow(from: ObjectKey, to: Set[ObjectKey])
@@ -68,7 +73,7 @@ object PipelineApi {
               case _ => throw DeserializationException(s"$rulesKey should be associated to object type")
             } else None,
         tags = json.asJsObject.fields
-          .get(Data.TAGS_KEY)
+          .get(TAGS_KEY)
           .filter {
             case JsNull => false
             case _      => true
@@ -87,7 +92,7 @@ object PipelineApi {
             .map(_.map(e => e.from.name -> JsArray(e.to.map(_.name).map(JsString(_)).toVector)).toMap)
             .map(JsObject(_))
             .getOrElse(JsNull),
-          Data.TAGS_KEY -> obj.tags.map(JsObject(_)).getOrElse(JsNull),
+          TAGS_KEY -> obj.tags.map(JsObject(_)).getOrElse(JsNull),
         ).filter {
           case (_, v) =>
             v match {
@@ -127,8 +132,8 @@ object PipelineApi {
         // reuse the code of paring update
         val update = PIPELINE_UPDATE_JSON_FORMAT.read(json)
         Creation(
-          group = json.asJsObject.fields(Data.GROUP_KEY).convertTo[String],
-          name = json.asJsObject.fields(Data.NAME_KEY).convertTo[String],
+          group = json.asJsObject.fields(GROUP_KEY).convertTo[String],
+          name = json.asJsObject.fields(NAME_KEY).convertTo[String],
           workerClusterName = update.workerClusterName,
           // TODO: we should reuse the JsonRefiner#nullToEmptyArray. However, we have to support the stale key "rules" ...
           flows = update.flows.getOrElse(Seq.empty),
@@ -138,28 +143,28 @@ object PipelineApi {
 
       override def write(obj: Creation): JsValue = JsObject(
         noJsNull(Map(
-          Data.GROUP_KEY -> JsString(obj.group),
-          Data.NAME_KEY -> JsString(obj.name),
+          GROUP_KEY -> JsString(obj.group),
+          NAME_KEY -> JsString(obj.name),
           workerClusterNameKey -> obj.workerClusterName.map(JsString(_)).getOrElse(JsNull),
           flowsKey -> JsArray(obj.flows.map(FLOW_JSON_FORMAT.write).toVector),
           rulesKey -> JsObject(obj.rules.map { e =>
             e._1 -> JsArray(e._2.map(JsString(_)).toVector)
           }),
-          Data.TAGS_KEY -> JsObject(obj.tags)
+          TAGS_KEY -> JsObject(obj.tags)
         ))
       )
     })
     .rejectEmptyString()
-    .stringRestriction(Set(Data.GROUP_KEY, Data.NAME_KEY))
+    .stringRestriction(Set(GROUP_KEY, NAME_KEY))
     .withNumber()
     .withCharset()
     .withDot()
     .withDash()
     .withUnderLine()
     .toRefiner
-    .nullToString(Data.GROUP_KEY, () => GROUP_DEFAULT)
-    .nullToString(Data.NAME_KEY, () => CommonUtils.randomString(10))
-    .nullToEmptyObject(Data.TAGS_KEY)
+    .nullToString(GROUP_KEY, () => GROUP_DEFAULT)
+    .nullToString(NAME_KEY, () => CommonUtils.randomString(10))
+    .nullToEmptyObject(TAGS_KEY)
     .refine
 
   import MetricsApi._
@@ -198,8 +203,8 @@ object PipelineApi {
     private[this] val lastModifiedKey = "lastModified"
 
     override def read(json: JsValue): Pipeline = Pipeline(
-      group = noJsNull(json)(Data.GROUP_KEY).convertTo[String],
-      name = noJsNull(json)(Data.NAME_KEY).convertTo[String],
+      group = noJsNull(json)(GROUP_KEY).convertTo[String],
+      name = noJsNull(json)(NAME_KEY).convertTo[String],
       workerClusterName = noJsNull(json).get(workerClusterNameKey).map(_.convertTo[String]),
       flows = noJsNull(json)
         .get(flowsKey)
@@ -207,13 +212,13 @@ object PipelineApi {
         .getOrElse(Seq.empty),
       objects = noJsNull(json)(objectsKey).asInstanceOf[JsArray].elements.map(OBJECT_ABSTRACT_JSON_FORMAT.read).toSet,
       lastModified = noJsNull(json)(lastModifiedKey).asInstanceOf[JsNumber].value.toLong,
-      tags = noJsNull(json)(Data.TAGS_KEY).asJsObject.fields
+      tags = noJsNull(json)(TAGS_KEY).asJsObject.fields
     )
     override def write(obj: Pipeline): JsValue = JsObject(
       noJsNull(
         Map(
-          Data.GROUP_KEY -> JsString(obj.group),
-          Data.NAME_KEY -> JsString(obj.name),
+          GROUP_KEY -> JsString(obj.group),
+          NAME_KEY -> JsString(obj.name),
           workerClusterNameKey -> obj.workerClusterName.map(JsString(_)).getOrElse(JsNull),
           flowsKey -> JsArray(obj.flows.map(FLOW_JSON_FORMAT.write).toVector),
           rulesKey -> JsObject(obj.rules.map { e =>
@@ -221,7 +226,7 @@ object PipelineApi {
           }),
           objectsKey -> JsArray(obj.objects.map(OBJECT_ABSTRACT_JSON_FORMAT.write).toVector),
           lastModifiedKey -> JsNumber(obj.lastModified),
-          Data.TAGS_KEY -> JsObject(obj.tags)
+          TAGS_KEY -> JsObject(obj.tags)
         ))
     )
   }

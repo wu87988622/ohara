@@ -20,7 +20,6 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.server
 import com.island.ohara.agent.{NoSuchClusterException, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ConnectorApi._
-import com.island.ohara.client.configurator.v0.Data
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
@@ -28,7 +27,7 @@ import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.RouteUtils._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
-import com.island.ohara.kafka.connector.json.{ConnectorKey, ObjectKey, SettingDefinition}
+import com.island.ohara.kafka.connector.json.{ConnectorKey, ObjectKey}
 import com.typesafe.scalalogging.Logger
 import spray.json.{JsString, JsValue}
 
@@ -40,7 +39,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
   private[this] def toRes(request: Creation) =
     ConnectorDescription(
       settings = request.settings ++ request.workerClusterName.fold[Map[String, JsValue]](Map.empty)(s =>
-        Map(SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key() -> JsString(s))),
+        Map(WORKER_CLUSTER_NAME_KEY -> JsString(s))),
       // we don't need to fetch connector from kafka since it has not existed in kafka.
       state = None,
       error = None,
@@ -77,7 +76,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
           updater = (previous: ConnectorDescription) =>
             previous.copy(
               // Absent worker will be filled by workerClient, we should update it here
-              settings = previous.settings ++ Map(SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key() ->
+              settings = previous.settings ++ Map(WORKER_CLUSTER_NAME_KEY ->
                 JsString(previous.workerClusterName.getOrElse(workerClusterInfo.name))),
               state = data.state,
               error = data.error,
@@ -122,8 +121,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
             else old.settings ++ update.settings)
           .getOrElse(update.settings) ++
           // Update request may not carry the name via payload so we copy the name from url to payload manually
-          Map(SettingDefinition.CONNECTOR_NAME_DEFINITION.key() -> JsString(key.name),
-              Data.GROUP_KEY -> JsString(key.group)))
+          Map(NAME_KEY -> JsString(key.name), GROUP_KEY -> JsString(key.group)))
       Future.successful(toRes(newSettings))
     }
 
