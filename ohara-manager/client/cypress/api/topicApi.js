@@ -16,6 +16,9 @@
 
 import * as utils from '../utils';
 
+/* eslint-disable no-unused-expressions */
+// eslint is complaining about `expect(thing).to.be.undefined`
+
 const setup = () => {
   const nodeName = `node${utils.makeRandomStr()}`;
   const zookeeperClusterName = `zookeeper${utils.makeRandomStr()}`;
@@ -137,6 +140,58 @@ describe('Topic API', () => {
       );
 
       expect(topics.length).to.eq(2);
+    });
+  });
+
+  it('startTopic', () => {
+    const { topicName } = setup();
+
+    cy.startTopic(topicName).then(response => {
+      expect(response.data.isSuccess).to.eq(true);
+    });
+
+    cy.fetchTopic(topicName).then(response => {
+      expect(response.data.result.state).to.eq('RUNNING');
+    });
+  });
+
+  it('stopTopic', () => {
+    const { topicName } = setup();
+
+    cy.startTopic(topicName).then(response => {
+      expect(response.data.isSuccess).to.eq(true);
+    });
+
+    cy.fetchTopic(topicName).then(response => {
+      expect(response.data.result.state).to.eq('RUNNING');
+    });
+
+    cy.stopTopic(topicName).then(response => {
+      expect(response.data.isSuccess).to.eq(true);
+    });
+
+    cy.fetchTopic(topicName).then(response => {
+      expect(response.data.result.state).to.eq.undefined;
+    });
+  });
+
+  it('deleteTopic', () => {
+    const { topicName } = setup();
+
+    cy.fetchTopic(topicName).then(response => {
+      expect(response.data.isSuccess).to.eq(true);
+    });
+
+    cy.deleteTopic(topicName).then(response => {
+      expect(response.data.isSuccess).to.eq(true);
+    });
+
+    cy.fetchTopics().then(response => {
+      const targetTopic = response.data.result.find(
+        topic => topic.name === topicName,
+      );
+
+      expect(targetTopic).to.be.undefined;
     });
   });
 });

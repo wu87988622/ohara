@@ -72,6 +72,36 @@ export const createTopic = async params => {
   }
 };
 
+export const startTopic = async name => {
+  try {
+    const res = await axiosInstance.put(`/api/topics/${name}/start`);
+    const isSuccess = get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
+export const stopTopic = async name => {
+  try {
+    const res = await axiosInstance.put(`/api/topics/${name}/stop`);
+    const isSuccess = get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
 export const deleteTopic = async name => {
   try {
     const res = await axiosInstance.delete(`/api/topics/${name}`);

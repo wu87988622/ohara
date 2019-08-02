@@ -125,6 +125,12 @@ Cypress.Commands.add('fetchTopic', name => topicApi.fetchTopic(name));
 
 Cypress.Commands.add('testCreateTopic', params => topicApi.createTopic(params));
 
+Cypress.Commands.add('deleteTopic', name => topicApi.deleteTopic(name));
+
+Cypress.Commands.add('startTopic', name => topicApi.startTopic(name));
+
+Cypress.Commands.add('stopTopic', name => topicApi.stopTopic(name));
+
 Cypress.Commands.add('fetchJars', group => fetchJars(group));
 
 Cypress.Commands.add('createJar', jarName => {
