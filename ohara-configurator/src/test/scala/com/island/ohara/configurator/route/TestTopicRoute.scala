@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.TopicApi.{Request, TopicInfo}
+import com.island.ohara.client.configurator.v0.TopicApi.{Request, TopicInfo, TopicState}
 import com.island.ohara.client.configurator.v0.{BrokerApi, TopicApi, ZookeeperApi}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -302,6 +302,43 @@ class TestTopicRoute extends SmallTest with Matchers {
     topicDesc.group shouldBe group
     result(topicApi.list()).size shouldBe 1
     result(topicApi.list()).exists(_.key == topicDesc.key) shouldBe true
+  }
+
+  @Test
+  def testCreateSameTopicAfterCreateWithoutAction(): Unit = {
+    // This is the backward-compatibility test
+    val name = CommonUtils.randomString()
+    val topic = result(topicApi.request.name(name).create())
+    result(topicApi.get(topic.key)).name shouldBe name
+
+    result(topicApi.delete(topic.key))
+    result(topicApi.list()).size shouldBe 0
+
+    result(topicApi.request.name(name).create()).name shouldBe name
+  }
+
+  @Test
+  def testCreateSameTopicAfterCreateWithAction(): Unit = {
+    val name = CommonUtils.randomString()
+    val topic = result(topicApi.request.name(name).create())
+    result(topicApi.start(topic.key))
+    val res = result(topicApi.get(topic.key))
+    res.name shouldBe name
+    res.state.get shouldBe TopicState.RUNNING
+
+    // stop and delete action sequentially should remove the topic totally
+    result(topicApi.stop(topic.key))
+    result(topicApi.get(topic.key)).state.isEmpty shouldBe true
+    result(topicApi.delete(topic.key))
+    result(topicApi.list()).size shouldBe 0
+
+    // pass
+    result(topicApi.request.name(name).create())
+    result(topicApi.start(topic.key))
+    result(topicApi.get(topic.key)).state.get shouldBe TopicState.RUNNING
+
+    result(topicApi.stop(topic.key))
+    result(topicApi.get(topic.key)).state.isEmpty shouldBe true
   }
 
   @After

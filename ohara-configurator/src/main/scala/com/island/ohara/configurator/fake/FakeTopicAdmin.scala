@@ -56,7 +56,8 @@ private[configurator] class FakeTopicAdmin extends TopicAdmin {
         numberOfReplications = numberOfReplications,
         configs
       )
-      cachedTopics.put(name, topicInfo)
+      if (cachedTopics.putIfAbsent(name, topicInfo) != null)
+        throw new RuntimeException(s"the $name already exists in kafka")
       Future.unit
   }
   private[this] var _closed = false

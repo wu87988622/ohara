@@ -31,7 +31,7 @@ class TestTopicAdmin extends With3Brokers with Matchers {
 
   private[this] def waitAndGetTopicInfo(name: String): TopicInfo = {
     // wait the topic to be available
-    CommonUtils.await(() => result(topicAdmin.topics().map(_.exists(_.name == name))), java.time.Duration.ofSeconds(10))
+    CommonUtils.await(() => result(topicAdmin.topics().map(_.exists(_.name == name))), java.time.Duration.ofSeconds(60))
     result(topicAdmin.topics()).find(_.name == name).get
   }
 

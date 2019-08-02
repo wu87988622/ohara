@@ -233,10 +233,10 @@ private[configurator] object TopicRoute {
           .flatMap {
             case (_, client) =>
               client
-                .exist(topicInfo.name)
+                .exist(topicInfo.topicNameOnKafka)
                 .flatMap {
                   // TODO: it should forbid user to delete a running topic... by chia
-                  if (_) client.delete(topicInfo.name).flatMap { _ =>
+                  if (_) client.delete(topicInfo.topicNameOnKafka).flatMap { _ =>
                     try Future.unit
                     finally Releasable.close(client)
                   } else
@@ -268,7 +268,7 @@ private[configurator] object TopicRoute {
         .flatMap(topicInfo =>
           CollieUtils.topicAdmin(Some(topicInfo.brokerClusterName)).flatMap {
             case (_, client) =>
-              client.exist(topicInfo.name).flatMap {
+              client.exist(topicInfo.topicNameOnKafka).flatMap {
                 if (_) Future.successful(topicInfo.copy(state = Some(TopicState.RUNNING)))
                 else
                   createTopic(
@@ -287,9 +287,9 @@ private[configurator] object TopicRoute {
         CollieUtils.topicAdmin(Some(topicInfo.brokerClusterName)).flatMap {
           case (_, client) =>
             client
-              .exist(topicInfo.name)
+              .exist(topicInfo.topicNameOnKafka)
               .flatMap {
-                if (_) client.delete(topicInfo.name)
+                if (_) client.delete(topicInfo.topicNameOnKafka)
                 else Future.unit
               }
               .map(
