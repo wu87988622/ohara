@@ -42,20 +42,24 @@ Example Response
   #. clusterName (**string**) — cluster name
   #. clusterType (**string**) — cluster type
   #. containers (**array(object)**) — the container in this cluster
-      - environments (**object**) — the environment variables of container
-      - name (**string**) — the name of container
-      - hostname (**string**) — hostname of container
-      - size (**string**) — the disk size used by this container
-      - state (**option(string)**) — the state of container
-      - portMappings (**array(object)**) — the exported ports of this container
-         - portMappings[i].hostIp (**string**) — the network interface of container host
-         - portMappings[i].portPairs (**object**) — the container port and host port
-            - portMappings[i].portPairs[j].hostPort (**int**) — host port
-            - portMappings[i].portPairs[j].containerPort (**int**) — container port
-      - nodeName (**string**) — the node which host this container
-      - imageName (**string**) — the image used to create this container
-      - id (**string**) — container id
-      - created (**string**) — create time
+
+     - environments (**object**) — the environment variables of container
+     - name (**string**) — the name of container
+     - hostname (**string**) — hostname of container
+     - size (**string**) — the disk size used by this container
+     - state (**option(string)**) — the state of container
+     - portMappings (**array(object)**) — the exported ports of this container
+
+       - portMappings[i].hostIp (**string**) — the network interface of container host
+       - portMappings[i].portPairs (**object**) — the container port and host port
+
+          - portMappings[i].portPairs[j].hostPort (**int**) — host port
+          - portMappings[i].portPairs[j].containerPort (**int**) — container port
+
+     - nodeName (**string**) — the node which host this container
+     - imageName (**string**) — the image used to create this container
+     - id (**string**) — container id
+     - created (**string**) — create time
 
   .. code-block:: json
 

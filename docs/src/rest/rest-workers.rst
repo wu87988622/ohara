@@ -14,7 +14,7 @@
 .. limitations under the License.
 ..
 
-.. _rest-worker:
+.. _rest-workers:
 
 Worker
 ======
@@ -28,7 +28,7 @@ nodes within your worker cluster and you specify 6 tasks for your
 connector, the tasks of you connectors still be deployed on 3 nodes.
 That is to say, the connector can’t get more resources to execute.
 
-Worker is based on :ref:`Broker <rest-broker>`, hence you have to create broker
+Worker is based on :ref:`Broker <rest-brokers>`, hence you have to create broker
 cluster first. Noted that a broker cluster can be used by multi worker
 clusters. BTW, worker cluster will pre-allocate a lot of topics on
 broker cluster, and the pre-created topics CAN’T be reused by different
@@ -69,7 +69,7 @@ The properties which can be set by user are shown below.
     available connectors from the worker cluster. The details is the setting
     definitions of connector. It shows how to assign the settings to a
     connector correctly. The details of connector’s setting definitions can
-    be retrieved via :ref:`GET <rest-worker-get>` or :ref:`LIST <rest-worker-list>`,
+    be retrieved via :ref:`GET <rest-workers-get>` or :ref:`LIST <rest-workers-list>`,
     and the JSON representation is shown below.
 
     .. code-block:: json
@@ -113,12 +113,12 @@ The properties which can be set by user are shown below.
          setting is modifiable
        - connectors[i].definitions[j].key (**string**) — the key of
          configuration
-       - connectors[i].definitions[j]. :ref:`valueType <rest-worker-setting-type>` (**string**) — the type of value
+       - connectors[i].definitions[j]. :ref:`valueType <rest-workers-setting-type>` (**string**) — the type of value
        - connectors[i].definitions[j].defaultValue (**string**) — the
          default value
        - connectors[i].definitions[j].documentation (**string**) — the
          explanation of this definition
-       - connectors[i].definitions[j]. :ref:`reference <rest-wroker-setting-ref>` (**string**) — works for ohara manager.
+       - connectors[i].definitions[j]. :ref:`reference <rest-workers-setting-ref>` (**string**) — works for ohara manager.
          It represents the reference of value.
        - connectors[i].definitions[j].required (**boolean**) — true if
          this setting has no default value and you have to assign a value.
@@ -130,12 +130,12 @@ The properties which can be set by user are shown below.
 
     Apart from official settings (topics, columns, etc), a connector also
     have custom settings. Those setting definition can be found through
-    :ref:`GET <rest-worker-get>` or :ref:`LIST <rest-worker-list>`.
+    :ref:`GET <rest-workers-get>` or :ref:`LIST <rest-workers-list>`.
     And for another, the worker
     cluster needs to take some time to load available connectors. If you
     don’t see the setting definitions, please retry it later.
 
-.. _rest-worker-setting-type:
+.. _rest-workers-setting-type:
 
 Setting Type
 ------------
@@ -231,7 +231,7 @@ types are shown below.
         }
       }
 
-.. _rest-wroker-setting-ref:
+.. _rest-workers-setting-ref:
 
 Setting Reference
 -----------------
@@ -243,7 +243,7 @@ element. However, we still list the available values here.
 #. TOPIC
 #. WORKER_CLUSTER
 
-.. _rest-worker-create:
+.. _rest-workers-create:
 
 create a worker cluster
 -----------------------
@@ -385,7 +385,7 @@ Example Response
        "deadNodes": []
      }
 
-.. _rest-worker-list:
+.. _rest-workers-list:
 
 list all workers clusters
 -------------------------
@@ -440,7 +440,7 @@ Example Response
      It is ok to delete an nonexistent worker cluster, and the response is
      204 NoContent.
 
-.. _rest-worker-get:
+.. _rest-workers-get:
 
 get a worker cluster
 --------------------

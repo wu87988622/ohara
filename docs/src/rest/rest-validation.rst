@@ -226,7 +226,7 @@ Ohara configurator only repackage the request to kafka format and then
 collect the validation result from kafka.
 
 Example Request
-  The request format is same as :ref:`connector request <rest-connector-create-settings>`
+  The request format is same as :ref:`connector request <rest-connectors-create-settings>`
 
 Example Response
   If target connector has defined the settings correctly, kafka is doable
@@ -263,7 +263,7 @@ Example Response
      }
 
 The above example only show a part of report. The element **definition**
-is equal to :ref:`connector’s setting definition <rest-worker>`. The definition
+is equal to :ref:`connector’s setting definition <rest-workers>`. The definition
 is what connector must define. If you don’t write any definitions for
 you connector, the validation will do nothing for you. The element
 **setting** is what you request to validate.

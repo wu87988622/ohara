@@ -24,8 +24,8 @@ compatibility to this APIs. Normally, Ohara Configurator can’t run the
 query for you since most queries demand specific dependencies in
 runtime, and we don’t allow you to touch the classpath of Ohara
 Configurator. Hence, Ohara Configurator pass the queries to official
-specific **connectors** to execute the queries on a :ref:`worker cluster <rest-worker>`.
-It implies that you should set up a :ref:`worker cluster <rest-worker>` before submitting query request to Ohara
+specific **connectors** to execute the queries on a :ref:`worker cluster <rest-workers>`.
+It implies that you should set up a :ref:`worker cluster <rest-workers>` before submitting query request to Ohara
 Configurator.
 
 

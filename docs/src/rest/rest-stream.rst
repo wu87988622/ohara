@@ -14,7 +14,7 @@
 .. limitations under the License.
 ..
 
-.. _rest-streamapp:
+.. _rest-stream:
 
 StreamApp
 =========
@@ -169,7 +169,7 @@ Example Response
 .. note::
    The streamApp, which is just created, does not have any metrics.
 
-.. _rest-streamapp-get-information:
+.. _rest-stream-get-information:
 
 get information from a specific streamApp cluster
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -347,7 +347,7 @@ Example Response
     202 Accepted
 
   .. note::
-     You should use :ref:`get streamapp <rest-streamapp-get-information>` to fetch up-to-date status
+     You should use :ref:`get streamapp <rest-stream-get-information>` to fetch up-to-date status
 
   .. code-block:: json
 
@@ -392,7 +392,7 @@ Example Response
 
   .. note::
 
-     You should use :ref:`get streamapp <rest-streamapp-get-information>` to fetch up-to-date status
+     You should use :ref:`get streamapp <rest-stream-get-information>` to fetch up-to-date status
 
 
   .. code-block:: json

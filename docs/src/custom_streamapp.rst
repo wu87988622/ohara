@@ -270,15 +270,15 @@ collects some metrics data from the streamApp in the background. The
 metrics data here means :ref:`official metrics <streamapp-official-metrics>` which
 contains :ref:`Counters <connector-counter>` for now (other
 type of metrics will be introduced in the future). The metrics data
-could be fetched by :ref:`StreamApp APIs<rest-streamapp>`.
+could be fetched by :ref:`StreamApp APIs<rest-stream>`.
 Developers will be able to implement their own custom metrics in the
 foreseeable future.
 
 Ohara leverages JMX to offer the metrics data to streamApp. It
 means that all metrics you have created are stored as Java beans and
 accessible through JMX service. The streamApp will expose a port via
-:ref:`StreamApp APIs<rest-streamapp>` for other JMX client
-tool used, such as JMC, but we still encourage you to use :ref:`StreamApp APIs<rest-streamapp>`
+:ref:`StreamApp APIs<rest-stream>` for other JMX client
+tool used, such as JMC, but we still encourage you to use :ref:`StreamApp APIs<rest-stream>`
 as it offers a more readable format of metrics.
 
 .. _streamapp-official-metrics:
@@ -292,7 +292,7 @@ records (counter) - produced topic records (counter)
 A normal streamApp will connect to two topics, one is the source topic
 that streamApp will consume from, and the other is the target topic that
 streamApp will produce to. We use prefix words (**TOPIC_IN**, **TOPIC_OUT**)
-in the response data (:ref:`StreamApp APIs<rest-streamapp>`)
+in the response data (:ref:`StreamApp APIs<rest-stream>`)
 in order to improve readabilities of those types. You don’t need to worry about the
 implementation of these official metrics, but you can still read the
 :ohara-source:`source code <ohara-streams/src/main/java/com/island/ohara/streams/metric/MetricFactory.java>`

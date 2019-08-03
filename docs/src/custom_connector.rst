@@ -27,7 +27,7 @@ application availability, data durability, or distribution anymore. All
 you have to do is to write your custom connector, which can have only
 the pull()/push() method, and then compile your code to a jar file.
 After uploading your jar to ohara, you are able to **deploy** your
-connector on the :ref:`worker cluster <rest-worker-create>`. By leveraging
+connector on the :ref:`worker cluster <rest-workers-create>`. By leveraging
 ohara connector framework, apart from the availability, scalability, and
 durability, you can also monitor your connector for
 :ref:`logs <rest-logs>` and :ref:`metrics <connector-metrics>`.
@@ -272,7 +272,7 @@ _start(TaskSetting)
   name and user-defined configs, from user. If you (connector developer) are a good
   friend of your connector user, you can get (and cast it to expected type) config,
   which is passed by connector user, from **TaskSetting**. For example, a connector
-  user calls :ref:`Connector API <rest-connector-create-settings>`
+  user calls :ref:`Connector API <rest-connectors-create-settings>`
   to store a config k0-v0 (both of them are string type) for your connector, and then
   you can get v0 via TaskSetting.stringValue(“k0”).
 
@@ -319,7 +319,7 @@ _taskSetting(int maxTasks)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
   Connector has to generate configs for each task. The value of
-  **maxTasks** is configured by :ref:`Connector API <rest-connector>`. If you prefer to make all tasks
+  **maxTasks** is configured by :ref:`Connector API <rest-connectors>`. If you prefer to make all tasks
   do identical job, you can just clone the task config passe by
   :ref:`start <connector-source-start>`. Or you can prepare different configs for
   each task. Noted that the number of configuration you return MUST be
@@ -367,7 +367,7 @@ Source Task
    }  
 
 RowSourceTask is the unit of executing **poll**. A connector can invokes
-multiple tasks if you set **tasks.max** be bigger than 1 via :ref:`Connector API <rest-connector>`.
+multiple tasks if you set **tasks.max** be bigger than 1 via :ref:`Connector API <rest-connectors>`.
 RowSourceTask has similar lifecycle to Source connector. Worker cluster call **start** to
 initialize a task and call **stop** to terminate a task.
 
@@ -751,7 +751,7 @@ a connector.
 
 By default, all information in ConnectorVersion are **unknown**. You can
 override one of them or all of them when writing connector. The version
-information of a connector is showed by :ref:`Worker APIs <rest-worker>`.
+information of a connector is showed by :ref:`Worker APIs <rest-workers>`.
 
 .. warning:: Don’t return null, please!!!
 
@@ -806,16 +806,16 @@ setting. It consists of following arguments.
 #. orderInGroup (**int**) — the order in group
 #. editable (**boolean**) — true if this setting is modifiable
 #. key (**string**) — the key of configuration
-#. :ref:`valueType <rest-worker-setting-type>` (**string**) — the type of value
+#. :ref:`valueType <rest-workers-setting-type>` (**string**) — the type of value
 #. defaultValue (**string**) — the default value
 #. documentation (**string**) — the explanation of this definition
-#. :ref:`reference <rest-wroker-setting-ref>` (**string**) — works for ohara manager. It represents the reference of value.
+#. :ref:`reference <rest-workers-setting-ref>` (**string**) — works for ohara manager. It represents the reference of value.
 #. required (**boolean**) — true if this setting has no default value and you have to assign a value. Otherwise, you can’t start connector.
 #. internal (**string**) — true if this setting is assigned by system automatically.
 #. tableKeys (**array(string)**) — the column name when the type is TABLE
 
 .. note::
-   You can call :ref:`Worker APIs <rest-worker>` to get all
+   You can call :ref:`Worker APIs <rest-workers>` to get all
    connectors’ setting definitions
 
 Although a SettingDefinition can include many elements, you can simply
@@ -835,7 +835,7 @@ that you can create a SettingDefinition with only key.
 Notwithstanding it is flexible to build a SettingDefinition, we
 encourage connector developers to create a description-rich
 SettingDefinition. More description to your setting produces more
-**document** in calling :ref:`Worker APIs <rest-worker>`. We
+**document** in calling :ref:`Worker APIs <rest-workers>`. We
 all hate write documentation so it would be better to make your code
 readable.
 
@@ -875,7 +875,7 @@ Assigning a default value to a SettingDefinition is a piece of cake.
    the default value is declared as **string** type as it must be **readable** in Restful APIs.
 
 After calling the **optional(String)** method, the response, which is
-created by :ref:`Worker APIs <rest-worker>`, will display
+created by :ref:`Worker APIs <rest-workers>`, will display
 the following information.
 
 .. code-block:: json
@@ -1046,17 +1046,17 @@ We are live in a world filled with number, and so do connectors. While a
 connector is running, ohara collects many counts from the data flow for
 the connector in background. All of counters (and other records which
 will be introduced in the future) are called **metrics**, and it can be
-fetched by :ref:`Connector API <rest-connector>`. Apart
+fetched by :ref:`Connector API <rest-connectors>`. Apart
 from official metrics, connector developers are also able to build
 custom metrics for custom connectors, and all custom metrics are also
-showed by :ref:`Connector API <rest-connector>`.
+showed by :ref:`Connector API <rest-connectors>`.
 
 Ohara leverage JMX to offer the metrics APIs to connector. It means all
 metrics you created are stored as Java beans and is accessible through
-JMX service. That is why you have to define a port via :ref:`Worker APIs <rest-worker>`
+JMX service. That is why you have to define a port via :ref:`Worker APIs <rest-workers>`
 for creating a worker cluster.
 Although you can see all java mbeans via the JMX client (such as JMC),
-ohara still encourage you to apply :ref:`Connector API <rest-connector>`
+ohara still encourage you to apply :ref:`Connector API <rest-connectors>`
 as it offers a more readable format of metrics.
 
 
@@ -1101,7 +1101,7 @@ A example of creating a counter is shown below.
 .. note::
    The counter created by connector always has the group same to id of
    connector, since ohara needs to find the counters for specific
-   connector in :ref:`Connector API <rest-connector>`
+   connector in :ref:`Connector API <rest-connectors>`
 
 
 Official Metrics
@@ -1139,4 +1139,4 @@ of CounterBuilder must be after initializing the connector/task.
 .. note::
    Ohara doesn’t obstruct you from using Counter directly. However,
    using CounterBuilder make sure that your custom metrics are available
-   in :ref:`Connector API <rest-connector>`.
+   in :ref:`Connector API <rest-connectors>`.

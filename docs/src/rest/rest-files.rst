@@ -22,7 +22,7 @@ Files
 Ohara encourages user to write custom application if the official
 applications can satisfy requirements for your use case. Jar APIs is a
 useful entry of putting your jar on ohara and then start related
-services with it. For example, :ref:`Worker APIs <rest-worker-create>`
+services with it. For example, :ref:`Worker APIs <rest-workers-create>`
 accept a **jars** element which can
 carry the jar name pointing to a existent jar in ohara. The worker
 cluster will load all connectors of the input jar, and then you are able
