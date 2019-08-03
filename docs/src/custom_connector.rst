@@ -806,10 +806,10 @@ setting. It consists of following arguments.
 #. orderInGroup (**int**) — the order in group
 #. editable (**boolean**) — true if this setting is modifiable
 #. key (**string**) — the key of configuration
-#. :ref:`valueType <rest-setting-type>` (**string**) — the type of value
+#. :ref:`valueType <rest-worker-setting-type>` (**string**) — the type of value
 #. defaultValue (**string**) — the default value
 #. documentation (**string**) — the explanation of this definition
-#. :ref:`reference <rest-setting-ref>` (**string**) — works for ohara manager. It represents the reference of value.
+#. :ref:`reference <rest-wroker-setting-ref>` (**string**) — works for ohara manager. It represents the reference of value.
 #. required (**boolean**) — true if this setting has no default value and you have to assign a value. Otherwise, you can’t start connector.
 #. internal (**string**) — true if this setting is assigned by system automatically.
 #. tableKeys (**array(string)**) — the column name when the type is TABLE

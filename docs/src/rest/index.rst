@@ -24,6 +24,10 @@ Ohara REST Interface(new)
    :maxdepth: 2
    :caption: Table of Contents
 
+   rest-worker
+   rest-validation
+   rest-container
+   rest-streamapp
    rest-files
    rest-logs
    rest-query
