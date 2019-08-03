@@ -15,84 +15,143 @@
  */
 
 import React from 'react';
-import { shallow } from 'enzyme';
+import { cleanup, waitForElement, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom/extend-expect';
 
 import * as generate from 'utils/generate';
-import PipelineNewPage from '../PipelineNewPage';
-import { CONNECTOR_TYPES } from 'constants/pipelines';
-import { PIPELINE_EDIT } from 'constants/documentTitles';
-import { getTestById } from 'utils/testUtils';
 import * as pipelineApi from 'api/pipelineApi';
 import * as connectorApi from 'api/connectorApi';
 import * as workerApi from 'api/workerApi';
+import * as topicApi from 'api/topicApi';
+import PipelineNewPage from '../PipelineNewPage';
+import { PIPELINE_EDIT } from 'constants/documentTitles';
+import { renderWithRouter } from 'utils/testUtils';
 
 jest.mock('api/pipelineApi');
 jest.mock('api/connectorApi');
 jest.mock('api/workerApi');
+jest.mock('api/topicApi');
 
 const props = {
-  match: {
-    params: {
-      topicName: generate.name(),
-      pipelineName: generate.name(),
-    },
-  },
+  match: { params: jest.fn() },
 };
 
-const res = {
+const workerResponse = {
   result: {
     connectors: generate.connectors(),
   },
 };
 
-workerApi.fetchWorker.mockImplementation(() => Promise.resolve({ data: res }));
+workerApi.fetchWorker.mockImplementation(() =>
+  Promise.resolve({ data: workerResponse }),
+);
+
+const pipeline = {
+  name: generate.name(),
+  workerClusterName: generate.name(),
+  status: 'Running',
+  id: '1234',
+  objects: [
+    { kind: 'topic', id: '123', name: generate.name(), state: true },
+    { kind: 'source', id: '789', name: generate.name(), state: true },
+  ],
+  rules: {},
+};
+
+const topics = generate.topics({ count: 1 });
+
+afterEach(cleanup);
 
 describe('<PipelineNewPage />', () => {
-  let wrapper;
+  const match = {
+    params: {
+      pipelineName: generate.name(),
+      connectorName: generate.name(),
+    },
+  };
+
   beforeEach(() => {
-    wrapper = shallow(<PipelineNewPage {...props} />);
+    const resPipelines = {
+      data: {
+        result: pipeline,
+      },
+    };
 
-    jest.clearAllMocks();
+    pipelineApi.fetchPipeline.mockImplementation(() =>
+      Promise.resolve(resPipelines),
+    );
 
-    // TODO: change this to a more real world like case, e.g., mock data returns by some requests
-    wrapper.setState({
-      pipeline: { name: 'test', workerClusterName: 'abc' },
-    });
+    const topicResponse = {
+      data: {
+        result: topics,
+      },
+    };
+
+    topicApi.fetchTopics.mockImplementation(() =>
+      Promise.resolve(topicResponse),
+    );
   });
 
-  afterEach(() => wrapper.setState({ pipeline: {} }));
-
-  it('renders self', () => {
-    expect(wrapper.find('Wrapper').length).toBe(1);
+  it('renders self', async () => {
+    await waitForElement(() =>
+      renderWithRouter(<PipelineNewPage {...props} match={match} />),
+    );
   });
 
-  it('renders edit pipeline page document title, if pipelineName is present', () => {
-    expect(wrapper.props().title).toBe(PIPELINE_EDIT);
+  it('renders edit pipeline page document title, if pipelineName is present', async () => {
+    await waitForElement(() =>
+      renderWithRouter(<PipelineNewPage {...props} match={match} />),
+    );
+    expect(document.title).toBe(PIPELINE_EDIT);
   });
 
-  it('renders the <H2 />', () => {
-    expect(wrapper.find('H2').length).toBe(1);
+  it('display the pipeline name', async () => {
+    const { getByText } = await waitForElement(() =>
+      renderWithRouter(<PipelineNewPage {...props} match={match} />),
+    );
+    getByText(pipeline.name);
   });
 
-  it('renders <Toolbar />', () => {
-    expect(wrapper.find('PipelineToolbar').length).toBe(1);
+  it('renders Toolbar', async () => {
+    const { getByText, getByTestId } = await waitForElement(() =>
+      renderWithRouter(<PipelineNewPage {...props} match={match} />),
+    );
+    getByTestId('toolbar-sources');
+    getByTestId('toolbar-topics');
+    getByTestId('toolbar-streams');
+    getByTestId('toolbar-sinks');
+    getByText('All changes saved');
   });
 
-  it('renders <PipelineGraph />', () => {
-    expect(wrapper.find('PipelineGraph').length).toBe(1);
+  it('renders Pipeline graph title', async () => {
+    const { getByText } = await waitForElement(() =>
+      renderWithRouter(<PipelineNewPage {...props} match={match} />),
+    );
+    getByText('Pipeline graph');
   });
 
-  it.skip('starts the pipeline', async () => {
+  it('renders Pipeline operate', async () => {
+    const { getByText, getByTestId } = await waitForElement(() =>
+      renderWithRouter(<PipelineNewPage {...props} match={match} />),
+    );
+    getByText('Operate');
+    getByTestId('start-btn');
+    getByTestId('stop-btn');
+    getByText('This pipeline is running on: ' + pipeline.workerClusterName);
+  });
+
+  it('starts the pipeline', async () => {
     const data = {
       result: {
         name: 'test',
         status: 'Stopped',
         objects: [
-          { kind: CONNECTOR_TYPES.jdbcSource, name: 'c', id: '3' },
-          { kind: CONNECTOR_TYPES.hdfsSink, name: 'b', id: '2' },
-          { kind: CONNECTOR_TYPES.topic, name: 'a', id: '1' },
+          { kind: 'source', name: 'c', id: '3' },
+          { kind: 'sink', name: 'b', id: '2' },
+          { kind: 'topic', name: 'a', id: '1' },
         ],
         rules: {},
+        workerClusterName: generate.name(),
       },
     };
 
@@ -103,28 +162,33 @@ describe('<PipelineNewPage />', () => {
     connectorApi.startConnector.mockImplementation(() =>
       Promise.resolve({ data: { isSuccess: true } }),
     );
+    const { getByTestId } = await waitForElement(() =>
+      renderWithRouter(<PipelineNewPage {...props} match={match} />),
+    );
 
-    await wrapper.find(getTestById('start-btn')).prop('onClick')();
+    // Start the pipeline
+    fireEvent.click(await waitForElement(() => getByTestId('start-btn')));
 
     expect(connectorApi.startConnector).toHaveBeenCalledTimes(2);
     expect(connectorApi.startConnector).toHaveBeenCalledWith(
-      data.result.objects[0].id,
+      data.result.objects[0].name,
     );
     expect(connectorApi.startConnector).toHaveBeenCalledWith(
-      data.result.objects[1].id,
+      data.result.objects[1].name,
     );
   });
 
-  it.skip('stops the pipeline', async () => {
+  it('stops the pipeline', async () => {
     const data = {
       result: {
         name: 'test',
         objects: [
-          { kind: CONNECTOR_TYPES.jdbcSource, name: 'c', id: '3' },
-          { kind: CONNECTOR_TYPES.hdfsSink, name: 'b', id: '2' },
-          { kind: CONNECTOR_TYPES.topic, name: 'a', id: '1' },
+          { kind: 'source', name: 'c', id: '3' },
+          { kind: 'sink', name: 'b', id: '2' },
+          { kind: 'topic', name: 'a', id: '1' },
         ],
         rules: {},
+        workerClusterName: generate.name(),
       },
     };
 
@@ -136,15 +200,19 @@ describe('<PipelineNewPage />', () => {
       Promise.resolve({ data: { isSuccess: true } }),
     );
 
+    const { getByTestId } = await waitForElement(() =>
+      renderWithRouter(<PipelineNewPage {...props} match={match} />),
+    );
+
     // Stop the pipeline
-    await wrapper.find(getTestById('stop-btn')).prop('onClick')();
+    fireEvent.click(await waitForElement(() => getByTestId('stop-btn')));
 
     expect(connectorApi.stopConnector).toHaveBeenCalledTimes(2);
     expect(connectorApi.stopConnector).toHaveBeenCalledWith(
-      data.result.objects[0].id,
+      data.result.objects[0].name,
     );
     expect(connectorApi.stopConnector).toHaveBeenCalledWith(
-      data.result.objects[1].id,
+      data.result.objects[1].name,
     );
   });
 });
