@@ -40,7 +40,7 @@ const Topics = props => {
     isLoading: fetchingTopics,
     refetch,
   } = useApi.useFetchApi(URL.TOPIC_URL);
-  const { putApi: actionTopic } = useApi.usePutApi(URL.TOPIC_URL);
+  const { putApi: stopTopic } = useApi.usePutApi(URL.TOPIC_URL);
   const {
     getData: deleteTopicRes,
     deleteApi: deleteTopic,
@@ -113,7 +113,7 @@ const Topics = props => {
       url: `${URL.TOPIC_URL}/${topicToBeDeleted}`,
       checkFn,
     };
-    await actionTopic(`/${topicToBeDeleted}/stop`);
+    await stopTopic(`/${topicToBeDeleted}/stop`);
     await waitApi(topicParams);
     await deleteTopic(topicToBeDeleted);
     const isSuccess = get(deleteTopicRes(), 'data.isSuccess', false);

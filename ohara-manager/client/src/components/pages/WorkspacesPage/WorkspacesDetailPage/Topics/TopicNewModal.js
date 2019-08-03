@@ -32,7 +32,7 @@ const TopicNewModal = props => {
   const { getData: topicRes, postApi: createTopic } = useApi.usePostApi(
     URL.TOPIC_URL,
   );
-  const { putApi: actionTopic } = useApi.usePutApi(URL.TOPIC_URL);
+  const { putApi: startTopic } = useApi.usePutApi(URL.TOPIC_URL);
   const { showMessage } = useSnackbar();
 
   const handleClose = () => {
@@ -48,7 +48,7 @@ const TopicNewModal = props => {
       numberOfReplications: Number(values.numberOfReplications),
       brokerClusterName: props.brokerClusterName,
     });
-    await actionTopic(`/${values.name}/start`);
+    await startTopic(`/${values.name}/start`);
     setIsSaving(false);
     const isSuccess = get(topicRes(), 'data.isSuccess', false);
     if (isSuccess) {
