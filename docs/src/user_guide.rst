@@ -326,7 +326,7 @@ Cache of Ohara Configurator
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The cost of coordinating countless services is the big **latency**. For
-example, :ref:`Topic APIs <rest-topic>` allows you to fetch
+example, :ref:`Topic APIs <rest-topics>` allows you to fetch
 metrics from different :ref:`broker clusters <rest-brokers>`.
 Ohara Configurator has to file a bunch of connections to different
 clusters to retrieve all requisite information, and, of course, the
@@ -531,7 +531,7 @@ a broker cluster before going on your streaming trip.
 ohara that all applications on ohara goes through brokers to switch
 data. There are many stories about Ohara leverages the broker to
 complete countless significant works. But the most important usage of
-Brokers for ohara is the :ref:`Topic <rest-topic>`. Each
+Brokers for ohara is the :ref:`Topic <rest-topics>`. Each
 endpoint in :ref:`Pipeline <rest-pipelines>` must connect
 to/from a topic, and each topic in ohara is mapped to a topic in broker.
 It means all data sent/received to/from topic is implemented by a true

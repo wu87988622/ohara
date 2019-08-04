@@ -22,7 +22,7 @@ Pipeline
 Pipeline APIs are born of Ohara manager which needs a way to store the
 relationship of components in streaming. The relationship in pipeline is
 made up of multi **flows**. Each **flow** describe a **from** and multi **to**\s. For example,
-you have a :ref:`topic <rest-topic>` as source and a :ref:`connector <rest-connectors>`
+you have a :ref:`topic <rest-topics>` as source and a :ref:`connector <rest-connectors>`
 as consumer, so you can describe the
 relationship via following flow.
 
@@ -53,13 +53,13 @@ The properties used in generating pipeline are shown below.
 
    - flows[i].from (**object**) — the endpoint of source
 
-       - flows[i].from.group — the group of source
-       - flows[i].from.name — the name of source
+     - flows[i].from.group — the group of source
+     - flows[i].from.name — the name of source
 
    - flows[i].to (**array(object)**) — the endpoint of sinks
 
-       - flows[i].to[j].group — the group of sink[j]
-       - flows[i].to[j].name — the name of sink[j]
+     - flows[i].to[j].group — the group of sink[j]
+     - flows[i].to[j].name — the name of sink[j]
 
 #. tags (**object**) — the extra description to this object
 
@@ -70,23 +70,23 @@ Following information are written by Ohara.
 #. lastModified (**long**) — the last time to update this pipeline
 #. objects (**array(object)**) — the abstract of all objects mentioned by pipeline
 
-    - objects[i].name (**string**) — object’s name
-    - objects[i].kind (**string**) — the type of this object. for instance, :ref:`topic <rest-topic>`,
-      :ref:`connector <rest-connectors>`, and :ref:`streamapp <rest-stream>`
-    - objects[i].className (**string**) — object’s implementation. Normally, it shows the full name of
-      a java class
-    - objects[i].state (**option(string)**) — the state of object. If the object can’t have state
-      (eg, :ref:`topic <rest-topic>`), you won’t see this field
-    - objects[i].error (**option(string)**) — the error message of this object
-    - objects[i].lastModified (**long**) — the last time to update this object
-    - :ref:`metrics <connector-metrics>` (**object**) — the metrics from this object.
-      Not all objects in pipeline have metrics!
-    - meters (**array(object)**) — the metrics in meter type
-    - meters[i].value (**double**) — the number stored in meter
-    - meters[i].unit (**string**) — unit for value
-    - meters[i].document (**string**) — document of this meter
-    - meters[i].queryTime (**long**) — the time of query metrics from remote machine
-    - meters[i].startTime (**option(long)**) — the time of record generated in remote machine
+   - objects[i].name (**string**) — object’s name
+   - objects[i].kind (**string**) — the type of this object. for instance, :ref:`topic <rest-topics>`,
+     :ref:`connector <rest-connectors>`, and :ref:`streamapp <rest-stream>`
+   - objects[i].className (**string**) — object’s implementation. Normally, it shows the full name of
+     a java class
+   - objects[i].state (**option(string)**) — the state of object. If the object can’t have state
+     (eg, :ref:`topic <rest-topics>`), you won’t see this field
+   - objects[i].error (**option(string)**) — the error message of this object
+   - objects[i].lastModified (**long**) — the last time to update this object
+   - :ref:`metrics <connector-metrics>` (**object**) — the metrics from this object.
+     Not all objects in pipeline have metrics!
+   - meters (**array(object)**) — the metrics in meter type
+   - meters[i].value (**double**) — the number stored in meter
+   - meters[i].unit (**string**) — unit for value
+   - meters[i].document (**string**) — document of this meter
+   - meters[i].queryTime (**long**) — the time of query metrics from remote machine
+   - meters[i].startTime (**option(long)**) — the time of record generated in remote machine
 
 
 create a pipeline
@@ -94,8 +94,8 @@ create a pipeline
 
 *POST /v0/pipelines*
 
-The following example creates a pipeline with a :ref:`topic <rest-topic>` and
-:ref:`connector <rest-connectors>`. The :ref:`topic <rest-topic>` is created on
+The following example creates a pipeline with a :ref:`topic <rest-topics>` and
+:ref:`connector <rest-connectors>`. The :ref:`topic <rest-topics>` is created on
 :ref:`broker cluster <rest-brokers>` but the :ref:`connector <rest-connectors>` isn’t. Hence,
 the response from server shows that it fails to find the status of the
 :ref:`connector <rest-connectors>`. That is to say, it is ok to add un-running
@@ -324,8 +324,7 @@ delete a pipeline
 
 Deleting a pipeline does not delete the objects related to the pipeline.
 
-**Example Response**
-
+Example Response
   ::
 
      204 NoContent
@@ -334,6 +333,7 @@ Deleting a pipeline does not delete the objects related to the pipeline.
      It is ok to delete an an nonexistent pipeline, and the response is
      204 NoContent. However, it is illegal to remove a pipeline having any
      running objects
+
 
 .. _rest-pipelines-get:
 

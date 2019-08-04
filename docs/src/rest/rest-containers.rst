@@ -53,8 +53,8 @@ Example Response
        - portMappings[i].hostIp (**string**) — the network interface of container host
        - portMappings[i].portPairs (**object**) — the container port and host port
 
-          - portMappings[i].portPairs[j].hostPort (**int**) — host port
-          - portMappings[i].portPairs[j].containerPort (**int**) — container port
+         - portMappings[i].portPairs[j].hostPort (**int**) — host port
+         - portMappings[i].portPairs[j].containerPort (**int**) — container port
 
      - nodeName (**string**) — the node which host this container
      - imageName (**string**) — the image used to create this container

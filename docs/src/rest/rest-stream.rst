@@ -20,7 +20,7 @@ StreamApp
 =========
 
 Ohara StreamApp is a unparalleled wrap of kafka streaming. It leverages
-and enhances `kafka streams <https://kafka.apache.org/documentation/streams/>`__ to make
+and enhances `Kafka Streams`_ to make
 developer easily design and implement the streaming application. More
 details of developing streaming application is in :ref:`custom stream guideline <streamapp>`.
 
@@ -53,12 +53,15 @@ The following information of StreamApp are updated by ohara.
 #. state (**option(string)**) — only started/failed streamApp has state
 #. jmxPort (**int**) — the expose jmx port
 #. :ref:`metrics <connector-metrics>` (**object**) — the metrics from this streamApp.
-    - meters (**array(object)**) — the metrics in meter type
-        - meters[i].value (**double**) — the number stored in meter
-        - meters[i].unit (**string**) — unit for value
-        - meters[i].document (**string**) — document of this meter
-        - meters[i].queryTime (**long**) — the time of query metrics from remote machine
-        - meters[i].startTime (**option(long)**) — the time of record generated in remote machine
+
+   - meters (**array(object)**) — the metrics in meter type
+
+     - meters[i].value (**double**) — the number stored in meter
+     - meters[i].unit (**string**) — unit for value
+     - meters[i].document (**string**) — document of this meter
+     - meters[i].queryTime (**long**) — the time of query metrics from remote machine
+     - meters[i].startTime (**option(long)**) — the time of record generated in remote machine
+
 #. exactlyOnce (**boolean**) — enable exactly once
 #. error (**option(string)**) — the error message from a failed streamApp.
    If the streamApp is fine or un-started, you won’t get this field.
@@ -74,13 +77,17 @@ Create the properties of a streamApp.
 
 Example Request
   #. name (**string**) — new streamApp name. This is the object unique name.
-      - The acceptable char is [0-9a-z]
-      - The maximum length is 20 chars
+
+     - The acceptable char is [0-9a-z]
+     - The maximum length is 20 chars
+
   #. imageName (**option(string)**) — image name of streamApp used to ;
      default is official streamapp image of current version
   #. jar (**object**) — the used jar object
-      - jar.group (**string**) — the group name of this jar
-      - jar.name (**string**) — the name without extension of this jar
+
+     - jar.group (**string**) — the group name of this jar
+     - jar.name (**string**) — the name without extension of this jar
+
   #. from (**option(array(string))**) — new source topics ; default is empty
   #. to (**option(array(string))**) — new target topics ; default is empty
   #. jmxPort (**option(int)**) — expose port for jmx ; default is random port
@@ -123,21 +130,24 @@ Example Response
   #. state (**option(string)**) — only started/failed streamApp has state
   #. jmxPort (**int**) — the expose jmx port
   #. :ref:`metrics <connector-metrics>` (**object**) — the metrics from this streamApp.
-      - meters (**array(object)**) — the metrics in meter type
-          - meters[i].value (**double**) — the number stored in meter
-          - meters[i].unit (**string**) — unit for value
-          - meters[i].document (**string**) — document of this meter
-          - meters[i].queryTime (**long**) — the time of query metrics from remote machine
-          - meters[i].startTime (**option(long)**) — the time of record generated in remote machine
+
+     - meters (**array(object)**) — the metrics in meter type
+
+       - meters[i].value (**double**) — the number stored in meter
+       - meters[i].unit (**string**) — unit for value
+       - meters[i].document (**string**) — document of this meter
+       - meters[i].queryTime (**long**) — the time of query metrics from remote machine
+       - meters[i].startTime (**option(long)**) — the time of record generated in remote machine
+
   #. exactlyOnce (**boolean**) — enable exactly once
   #. error (**option(string)**) — the error message from a failed
-      streamApp. If the streamApp is fine or un-started, you won’t get
-      this field.
+     streamApp. If the streamApp is fine or un-started, you won’t get
+     this field.
   #. lastModified (**long**) — last modified this jar time
   #. exactlyOnce (**boolean**) — enable exactly once
   #. error (**option(string)**) — the error message from a failed
-      streamApp. If the streamApp is fine or un-started, you won’t get
-      this field.
+     streamApp. If the streamApp is fine or un-started, you won’t get
+     this field.
   #. lastModified (**long**) — last modified this jar time
   #. tags (**object**) — user defined data
 
@@ -166,8 +176,9 @@ Example Response
        "lastModified": 1542102595892
      }
 
-.. note::
-   The streamApp, which is just created, does not have any metrics.
+  .. note::
+     The streamApp, which is just created, does not have any metrics.
+
 
 .. _rest-stream-get-information:
 
@@ -178,7 +189,8 @@ get information from a specific streamApp cluster
 
 Example Response
   #. name (**string**) — custom name of this streamApp
-  #. group (**string**) — the value of group is always "default" (this logic apply to current version |version|)
+  #. group (**string**) — the value of group is always "default"
+     (this logic apply to current version |version|)
   #. imageName (**string**) — image name of this streamApp
   #. instances ( **int**) — numbers of streamApp container
   #. nodeNames (**array(string)**) — node list of streamApp running
@@ -191,12 +203,15 @@ Example Response
   #. state (**option(string)**) — only started/failed streamApp has state
   #. jmxPort (**int**) — the expose jmx port
   #. :ref:`metrics <connector-metrics>` (**object**) — the metrics from this streamApp.
-      - meters (**array(object)**) — the metrics in meter type
-         - meters[i].value (**double**) — the number stored in meter
-         - meters[i].unit (**string**) — unit for value
-         - meters[i].document (**string**) — document of this meter
-         - meters[i].queryTime (**long**) — the time of record generated in remote machine
-         - meters[i].startTime (**option(long)**) — the time of record generated in remote machine
+
+     - meters (**array(object)**) — the metrics in meter type
+
+       - meters[i].value (**double**) — the number stored in meter
+       - meters[i].unit (**string**) — unit for value
+       - meters[i].document (**string**) — document of this meter
+       - meters[i].queryTime (**long**) — the time of record generated in remote machine
+       - meters[i].startTime (**option(long)**) — the time of record generated in remote machine
+
   #. exactlyOnce (**boolean**) — enable exactly once
   #. error (**option(string)**) — the error message from a failed
      streamApp. If the streamApp is fine or un-started, you won’t get
@@ -227,6 +242,7 @@ Example Response
        "metrics": [],
        "lastModified": 1542102595892
      }
+
 
 update properties of specific streamApp
 ---------------------------------------
@@ -265,26 +281,28 @@ Example Request
      }
 
 Example Response
-  #.  name (**string**) — custom name of this streamApp
+  #. name (**string**) — custom name of this streamApp
   #. group (**string**) — the value of group is always "default" (this logic apply to current version |version|)
-  #.  imageName (**string**) — image name of this streamApp
-  #.  instances ( **int**) — numbers of streamApp container
-  #.  nodeNames (**array(string)**) — node list of streamApp running
-      container
-  #.  deadNodes (**array(string)**) — dead node list of the exited
-      containers from this cluster
-  #.  jar (**object**) — uploaded jar key
-  #.  from (**array(string)**) — topics of streamApp consume with
-  #.  to (**array(string)**) — topics of streamApp produce to
-  #.  state (**option(string)**) — only started/failed streamApp has state
+  #. imageName (**string**) — image name of this streamApp
+  #. instances ( **int**) — numbers of streamApp container
+  #. nodeNames (**array(string)**) — node list of streamApp running
+     container
+  #. deadNodes (**array(string)**) — dead node list of the exited
+     containers from this cluster
+  #. jar (**object**) — uploaded jar key
+  #. from (**array(string)**) — topics of streamApp consume with
+  #. to (**array(string)**) — topics of streamApp produce to
+  #. state (**option(string)**) — only started/failed streamApp has state
   #. jmxPort (**int**) — the expose jmx port
   #. :ref:`metrics <connector-metrics>` (**object**) — the metrics from this streamApp.
-      - meters (**array(object)**) — the metrics in meter type
-         - meters[i].value (**double**) — the number stored in meter
-         - meters[i].unit (**string**) — unit for value
-         - meters[i].document (**string**) — document of this meter
-         - meters[i].queryTime (**long**) — the time of query metrics from remote machine
-         - meters[i].startTime (**option(long)**) — the time of record generated in remote machine
+
+     - meters (**array(object)**) — the metrics in meter type
+
+       - meters[i].value (**double**) — the number stored in meter
+       - meters[i].unit (**string**) — unit for value
+       - meters[i].document (**string**) — document of this meter
+       - meters[i].queryTime (**long**) — the time of query metrics from remote machine
+       - meters[i].startTime (**option(long)**) — the time of record generated in remote machine
   #. exactlyOnce (**boolean**) — enable exactly once
   #. error (**option(string)**) — the error message from a failed
      streamApp. If the streamApp is fine or un-started, you won’t get
@@ -492,4 +510,5 @@ Example Response
        }
      }
 
+.. _Kafka Streams: kafka streams <https://kafka.apache.org/documentation/streams
 .. _StreamApp image: https://cloud.docker.com/u/oharastream/repository/docker/oharastream/streamapp

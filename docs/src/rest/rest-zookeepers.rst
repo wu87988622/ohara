@@ -39,8 +39,8 @@ room to enable you to overwrite somethings you do care.
 #. deadNodes (**array(string)**) — the nodes that have failed containers of zookeeper
 #. tags (**object**) — the user defined parameters
 #. state (**option(string)**) — only started/failed zookeeper has state (RUNNING or DEAD)
-#. error (**option(string)**) — the error message from a failed zookeeper. If zookeeper is fine or un-started,
-   you won’t get this field.
+#. error (**option(string)**) — the error message from a failed zookeeper.
+   If zookeeper is fine or un-started, you won’t get this field.
 #. lastModified (**long**) — last modified this jar time
 
 
@@ -166,6 +166,7 @@ Example Response
   .. note::
      It is ok to delete an nonexistent zookeeper cluster, and the response is 204 NoContent.
 
+
 .. _rest-zookeepers-get:
 
 get a zookeeper cluster
@@ -206,6 +207,7 @@ Example Response
 
   .. note::
     You should use :ref:`Get zookeeper cluster <rest-zookeepers-get>` to fetch up-to-date status
+
 
 stop a zookeeper cluster
 ------------------------

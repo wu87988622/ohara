@@ -22,14 +22,17 @@ Info API returns the information of Ohara Configurator you are
 executing. It consists of following fields:
 
 #. versionInfo (**object**) — version details of Ohara Configurator
-     - version (**string**) — the release version of Ohara Configurator
-     - revision (**string**) — commit hash of Ohara Configurator. You can trace the hash code via `Github <https://github.com/oharastream/ohara/commits/master>`__
-     - user (**string**) — the release manager of Ohara Configurator.
-     - date (**string**) — the date of releasing Ohara Configurator.
+
+   - version (**string**) — the release version of Ohara Configurator
+   - revision (**string**) — commit hash of Ohara Configurator. You can trace the hash code via `Github <https://github.com/oharastream/ohara/commits/master>`__
+   - user (**string**) — the release manager of Ohara Configurator.
+   - date (**string**) — the date of releasing Ohara Configurator.
+
 #. mode (**string**) — the mode of this configurator. There are three modes now:
-     - First, k8s mode is for the production.
-     - Second, ssh is useful to simple env.
-     - Third, fake mode is used to test APIs.
+
+   - First, k8s mode is for the production.
+   - Second, ssh is useful to simple env.
+   - Third, fake mode is used to test APIs.
 
 Example Response
   .. code-block:: json

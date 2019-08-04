@@ -48,6 +48,7 @@ The properties used in describing a node are shown below.
    This hostname must be available on you DNS.
    It will cause a lot of troubles if Ohara Configurator is unable to
    connect to remote node via this hostname.
+
 #. port (**int**) — ssh port of node
 #. user (**string**) — ssh account
 #. password (**string**) — ssh password
@@ -169,7 +170,6 @@ delete a node
 *DELETE /v0/nodes/${name}*
 
 Example Response
-
   ::
 
      204 NoContent

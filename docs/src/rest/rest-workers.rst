@@ -100,40 +100,40 @@ The properties which can be set by user are shown below.
 
 #. connectors (**array(string)**) — the available connectors of worker cluster
 
-    - connectors[i].className (**string**) — the class name of available connector
-    - connectors[i].definitions (**array(object)**) — the settings used by this connector
+   - connectors[i].className (**string**) — the class name of available connector
+   - connectors[i].definitions (**array(object)**) — the settings used by this connector
 
-       - connectors[i].definitions[j].displayName (**string**) — the
-         readable name of this setting
-       - connectors[i].definitions[j].group (**string**) — the group of
-         this setting (all core setting are in core group)
-       - connectors[i].definitions[j].orderInGroup (**int**) — the order in
-         group
-       - connectors[i].definitions[j].editable (**boolean**) — true if this
-         setting is modifiable
-       - connectors[i].definitions[j].key (**string**) — the key of
-         configuration
-       - connectors[i].definitions[j]. :ref:`valueType <rest-workers-setting-type>` (**string**) — the type of value
-       - connectors[i].definitions[j].defaultValue (**string**) — the
-         default value
-       - connectors[i].definitions[j].documentation (**string**) — the
-         explanation of this definition
-       - connectors[i].definitions[j]. :ref:`reference <rest-workers-setting-ref>` (**string**) — works for ohara manager.
-         It represents the reference of value.
-       - connectors[i].definitions[j].required (**boolean**) — true if
-         this setting has no default value and you have to assign a value.
-         Otherwise, you can’t start connector.
-       - connectors[i].definitions[j].internal (**string**) — true if this
-         setting is assigned by system automatically.
-       - connectors[i].definitions[j].tableKeys (**array(string)**) — the
-         column name when the type is TABLE
+     - connectors[i].definitions[j].displayName (**string**) — the
+       readable name of this setting
+     - connectors[i].definitions[j].group (**string**) — the group of
+       this setting (all core setting are in core group)
+     - connectors[i].definitions[j].orderInGroup (**int**) — the order in
+       group
+     - connectors[i].definitions[j].editable (**boolean**) — true if this
+       setting is modifiable
+     - connectors[i].definitions[j].key (**string**) — the key of
+       configuration
+     - connectors[i].definitions[j]. :ref:`valueType <rest-workers-setting-type>` (**string**) — the type of value
+     - connectors[i].definitions[j].defaultValue (**string**) — the
+       default value
+     - connectors[i].definitions[j].documentation (**string**) — the
+       explanation of this definition
+     - connectors[i].definitions[j]. :ref:`reference <rest-workers-setting-ref>` (**string**) — works for ohara manager.
+       It represents the reference of value.
+     - connectors[i].definitions[j].required (**boolean**) — true if
+       this setting has no default value and you have to assign a value.
+       Otherwise, you can’t start connector.
+     - connectors[i].definitions[j].internal (**string**) — true if this
+       setting is assigned by system automatically.
+     - connectors[i].definitions[j].tableKeys (**array(string)**) — the
+       column name when the type is TABLE
 
-    Apart from official settings (topics, columns, etc), a connector also
-    have custom settings. Those setting definition can be found through
-    :ref:`GET <rest-workers-get>` or :ref:`LIST <rest-workers-list>`.
-    And for another, the worker
-    cluster needs to take some time to load available connectors. If you
-    don’t see the setting definitions, please retry it later.
+  Apart from official settings (topics, columns, etc), a connector also
+  have custom settings. Those setting definition can be found through
+  :ref:`GET <rest-workers-get>` or :ref:`LIST <rest-workers-list>`.
+  And for another, the worker
+  cluster needs to take some time to load available connectors. If you
+  don’t see the setting definitions, please retry it later.
 
 .. _rest-workers-setting-type:
 
@@ -259,8 +259,8 @@ create a worker cluster
 #. jarKeys (**array(object)**) — the “primary key” object list of jar
    that will be loaded by worker cluster
 
-    - jarKeys[i].group (**string**) — the group name of jar
-    - jarKeys[i].name (**string**) — the name of jar
+   - jarKeys[i].group (**string**) — the group name of jar
+   - jarKeys[i].name (**string**) — the name of jar
 
 #. groupId (**string**) — the id of worker stored in broker cluster
 #. configTopicName (**string**) — a internal topic used to store connector configuration

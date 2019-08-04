@@ -62,13 +62,15 @@ Example Request
 Example Response
   #. name (**string**) — database name
   #. tables (**array(object)**)
-       - tables[i].catalogPattern (**option(object)**) — table’s catalog pattern
-       - tables[i].schemaPattern (**option(object)**) — table’s schema pattern
-       - tables[i].name (**option(object)**) — table’s name
-       - tables[i].columns (**array(object)**) — table’s columns
-           - tables[i].columns[j].name (**string**) — column’s columns
-           - tables[i].columns[j].dataType (**string**) — column’s data type
-           - tables[i].columns[j].pk (**boolean**) — true if this column is pk. otherwise false
+
+     - tables[i].catalogPattern (**option(object)**) — table’s catalog pattern
+     - tables[i].schemaPattern (**option(object)**) — table’s schema pattern
+     - tables[i].name (**option(object)**) — table’s name
+     - tables[i].columns (**array(object)**) — table’s columns
+
+       - tables[i].columns[j].name (**string**) — column’s columns
+       - tables[i].columns[j].dataType (**string**) — column’s data type
+       - tables[i].columns[j].pk (**boolean**) — true if this column is pk. otherwise false
 
   .. code-block:: json
 

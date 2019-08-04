@@ -41,10 +41,11 @@ connectors. The common settings are shown below.
 #. topics(**array(string)**) — the source topics or target topics for this connector
 #. columns (**array(object)**) — the schema of data for this connector
 
-    - columns[i].name (**string**) — origin name of column
-    - columns[i].newName (**string**) — new name of column
-    - columns[i].dataType (**string**) — the type used to convert data
-    - columns[i].order (**int**) — the order of this column
+   - columns[i].name (**string**) — origin name of column
+   - columns[i].newName (**string**) — new name of column
+   - columns[i].dataType (**string**) — the type used to convert data
+   - columns[i].order (**int**) — the order of this column
+
 #. numberOfTasks (**int**) — the number of tasks
 #. workerClusterName (**string**) — target worker cluster
 #. tags (**object**) — the extra description to this object
@@ -60,13 +61,13 @@ The following information are updated by Ohara.
    If the connector is fine or un-started, you won’t get this field.
 #. :ref:`metrics <connector-metrics>` (**object**) — the metrics from a running connector
 
-  - meters (**array(object)**) — the metrics in meter type
+   - meters (**array(object)**) — the metrics in meter type
 
-    - meters[i].value (**double**) — the number stored in meter
-    - meters[i].unit (**string**) — unit for value
-    - meters[i].document (**string**) — document of this meter
-    - meters[i].queryTime (**long**) — the time of query metrics from remote machine
-    - meters[i].startTime (**option(long)**) — the time of record generated in remote machine
+     - meters[i].value (**double**) — the number stored in meter
+     - meters[i].unit (**string**) — unit for value
+     - meters[i].document (**string**) — document of this meter
+     - meters[i].queryTime (**long**) — the time of query metrics from remote machine
+     - meters[i].startTime (**option(long)**) — the time of record generated in remote machine
 
 The settings from request, BTW, is a individual item in response. Hence,
 you will observe the following response after you store the settings with connector.class.

@@ -29,8 +29,9 @@ to JSON representation which has following elements.
 
 #. name (**string**) — cluster name
 #. logs (**array(object)**) — log of each container
-     - logs[i].name — container’s name
-     - logs[i].value — total output of a container
+
+   - logs[i].name — container’s name
+   - logs[i].value — total output of a container
 
 
 get the log of a running cluster
@@ -39,9 +40,10 @@ get the log of a running cluster
 *GET /v0/logs/$clusterType/$clusterName*
 
 - clusterType (**string**)
-    - zookeepers
-    - brokers
-    - workers
+
+  - zookeepers
+  - brokers
+  - workers
 
 Example Response
   .. code-block:: json
