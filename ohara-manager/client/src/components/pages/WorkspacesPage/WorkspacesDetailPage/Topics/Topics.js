@@ -18,7 +18,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import IconButton from '@material-ui/core/IconButton';
 import Tooltip from '@material-ui/core/Tooltip';
-import { get } from 'lodash';
+import { get, isUndefined } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
 import * as utils from '../WorkspacesDetailPageUtils';
@@ -40,10 +40,13 @@ const Topics = props => {
     isLoading: fetchingTopics,
     refetch,
   } = useApi.useFetchApi(URL.TOPIC_URL);
+  const { putApi: stopTopic } = useApi.usePutApi(URL.TOPIC_URL);
   const {
     getData: deleteTopicRes,
     deleteApi: deleteTopic,
   } = useApi.useDeleteApi(URL.TOPIC_URL);
+  const { waitApi } = useApi.useWaitApi();
+
   const topicsUnderBrokerCluster = get(topics, 'data.result', []).filter(
     topic => topic.brokerClusterName === worker.brokerClusterName,
   );
@@ -103,6 +106,15 @@ const Topics = props => {
   const handleDelete = async () => {
     setState({ deleting: true });
     const { topicToBeDeleted } = state;
+    const checkFn = res => {
+      return isUndefined(get(res, 'data.result.state', undefined));
+    };
+    const topicParams = {
+      url: `${URL.TOPIC_URL}/${topicToBeDeleted}`,
+      checkFn,
+    };
+    await stopTopic(`/${topicToBeDeleted}/stop`);
+    await waitApi(topicParams);
     await deleteTopic(topicToBeDeleted);
     const isSuccess = get(deleteTopicRes(), 'data.isSuccess', false);
     setState({ deleting: false });
