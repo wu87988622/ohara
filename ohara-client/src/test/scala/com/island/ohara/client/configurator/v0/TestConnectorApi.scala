@@ -23,7 +23,7 @@ import com.island.ohara.common.data.{Column, DataType, Serializer}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.setting.PropGroups
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.json.TopicKey
+import com.island.ohara.kafka.connector.json.{ConnectorKey, TopicKey}
 import org.junit.Test
 import org.scalatest.Matchers
 import spray.json.DefaultJsonProtocol._
@@ -587,5 +587,48 @@ class TestConnectorApi extends SmallTest with Matchers {
       ))
     js.asJsObject.fields(GROUP_KEY).convertTo[String] shouldBe ConnectorApi.GROUP_DEFAULT
     js.asJsObject.fields(NAME_KEY).convertTo[String] shouldBe name
+  }
+
+  @Test
+  def parseConnectorKey(): Unit = {
+    // try connector key
+    val group = CommonUtils.randomString()
+    val name = CommonUtils.randomString()
+    ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
+         |  {
+         |    "$CONNECTOR_KEY": {
+         |      "group": "$group",
+         |      "name": "$name"
+         |    }
+         |  }
+         |     """.stripMargin.parseJson).key shouldBe ConnectorKey.of(group, name)
+
+    ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
+         |  {
+         |    "$CONNECTOR_KEY": {
+         |      "name": "$name"
+         |    }
+         |  }
+         |     """.stripMargin.parseJson).key shouldBe ConnectorKey.of(ConnectorApi.GROUP_DEFAULT, name)
+
+    ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
+         |  {
+         |    "group": "$group",
+         |    "name": "$name"
+         |  }
+         |     """.stripMargin.parseJson).key shouldBe ConnectorKey.of(group, name)
+
+    ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
+         |  {
+         |    "name": "$name"
+         |  }
+         |     """.stripMargin.parseJson).key shouldBe ConnectorKey.of(ConnectorApi.GROUP_DEFAULT, name)
+
+    // the name is random string
+    ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
+         |  {
+         |    "name": "$name"
+         |  }
+         |     """.stripMargin.parseJson).key.group() shouldBe ConnectorApi.GROUP_DEFAULT
   }
 }

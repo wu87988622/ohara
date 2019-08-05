@@ -17,7 +17,7 @@
 package com.island.ohara.client.configurator
 
 import com.island.ohara.common.setting.SettingDef
-import com.island.ohara.kafka.connector.json.{ConnectorDefinitions, ObjectKey, TopicKey}
+import com.island.ohara.kafka.connector.json.{ConnectorDefinitions, ConnectorKey, ObjectKey, TopicKey}
 import spray.json.{JsNull, JsValue, RootJsonFormat}
 
 package object v0 {
@@ -78,10 +78,36 @@ package object v0 {
   implicit val TOPIC_KEY_FORMAT: RootJsonFormat[TopicKey] = JsonRefiner[TopicKey]
     .format(new RootJsonFormat[TopicKey] {
       import spray.json._
-      override def write(obj: TopicKey): JsValue = TopicKey.toJsonString(obj).parseJson
+      override def write(obj: TopicKey): JsValue = try TopicKey.toJsonString(obj).parseJson
+      catch {
+        case e: Throwable =>
+          throw DeserializationException(
+            msg = e.getMessage,
+            cause = e,
+            fieldNames = List("group", "name")
+          )
+      }
       override def read(json: JsValue): TopicKey = TopicKey.ofJsonString(json.toString())
     })
-    .nullToString(GROUP_KEY, () => GROUP_DEFAULT)
+    .nullToString(GROUP_KEY, () => TopicApi.GROUP_DEFAULT)
+    .rejectEmptyString()
+    .refine
+
+  implicit val CONNECTOR_KEY_FORMAT: RootJsonFormat[ConnectorKey] = JsonRefiner[ConnectorKey]
+    .format(new RootJsonFormat[ConnectorKey] {
+      import spray.json._
+      override def write(obj: ConnectorKey): JsValue = try ConnectorKey.toJsonString(obj).parseJson
+      catch {
+        case e: Throwable =>
+          throw DeserializationException(
+            msg = e.getMessage,
+            cause = e,
+            fieldNames = List("group", "name")
+          )
+      }
+      override def read(json: JsValue): ConnectorKey = ConnectorKey.ofJsonString(json.toString())
+    })
+    .nullToString(GROUP_KEY, () => ConnectorApi.GROUP_DEFAULT)
     .rejectEmptyString()
     .refine
 

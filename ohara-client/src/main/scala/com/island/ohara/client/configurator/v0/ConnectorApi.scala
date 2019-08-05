@@ -42,6 +42,7 @@ object ConnectorApi {
   val TOPIC_NAME_KEYS: String = ConnectorDefinitions.TOPIC_NAMES_DEFINITION.key()
   val CONNECTOR_CLASS_KEY: String = ConnectorDefinitions.CONNECTOR_CLASS_DEFINITION.key()
   val COLUMNS_KEY: String = ConnectorDefinitions.COLUMNS_DEFINITION.key()
+  val CONNECTOR_KEY: String = ConnectorDefinitions.CONNECTOR_KEY_DEFINITION.key()
   val CONNECTORS_PREFIX_PATH: String = "connectors"
   val DEFAULT_NUMBER_OF_TASKS: Int = 1
 
@@ -88,10 +89,33 @@ object ConnectorApi {
     def topicKeys: Set[TopicKey] =
       noJsNull(settings).get(TOPIC_KEYS_KEY).map(_.convertTo[Set[TopicKey]]).getOrElse(topicKeysFromTopicNames)
 
-    override def group: String = plain(GROUP_KEY)
-    override def name: String = plain(NAME_KEY)
+    /**
+      * find the value of "CONNECTOR_KEY". It is ignorable since it is able to be replaced by "group" and "name"
+      * @return connector key
+      */
+    private[this] def connectorKey: Option[ConnectorKey] =
+      noJsNull(settings).get(CONNECTOR_KEY).map(_.convertTo[ConnectorKey])
 
-    def key: ConnectorKey = ConnectorKey.of(group, name)
+    /**
+      * return the group of connectorKey. If connectorKey does not exist, the value of "group" returned.
+      * @return group
+      */
+    override def group: String = connectorKey.map(_.group()).getOrElse(plain(GROUP_KEY))
+
+    /**
+      * return the name of connectorKey. If connectorKey does not exist, the value of "name" returned.
+      * @return name
+      */
+    override def name: String = connectorKey.map(_.name()).getOrElse(plain(NAME_KEY))
+
+    /**
+      * the search path is shown below.
+      * 1) value of "ConnectorKey"
+      * 2) value of "group"
+      * 3) value of "name"
+      * @return
+      */
+    def key: ConnectorKey = connectorKey.getOrElse(ConnectorKey.of(group, name))
 
     override def tags: Map[String, JsValue] = noJsNull(settings)
       .get(TAGS_KEY)
