@@ -16,22 +16,20 @@
 
 import React, { useState } from 'react';
 import DocumentTitle from 'react-document-title';
-import TableRow from '@material-ui/core/TableRow';
-import TableCell from '@material-ui/core/TableCell';
+import Tooltip from '@material-ui/core/Tooltip';
 import { get } from 'lodash';
 
 import * as s from './styles';
 import NodeNewModal from './NodeNewModal';
 import NodeEditModal from './NodeEditModal';
-import EditIcon from '@material-ui/icons/Edit';
 import IconButton from '@material-ui/core/IconButton';
 import { NODES } from 'constants/documentTitles';
 import { H2 } from 'components/common/Headings';
 import * as useApi from 'components/controller';
 import * as URL from 'components/controller/url';
+import { SortTable } from 'components/common/Mui/Table';
 
 const NodeListPage = () => {
-  const headers = ['HOST NAME', 'SERVICES', 'SSH', 'EDIT'];
   const [activeNode, setActiveNode] = useState(null);
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -83,6 +81,36 @@ const NodeListPage = () => {
     return '';
   };
 
+  const actionButton = node => {
+    const { hostname } = node;
+    return (
+      <Tooltip title={`Edit ${hostname} node`} enterDelay={1000}>
+        <IconButton
+          data-testid="edit-node-icon"
+          onClick={() => handleEditClick(node)}
+        >
+          <s.StyledIcon className="fas fa-pen-square" />
+        </IconButton>
+      </Tooltip>
+    );
+  };
+
+  const headRows = [
+    { id: 'name', label: 'Host name' },
+    { id: 'services', label: 'Services' },
+    { id: 'ssh', label: 'SSH' },
+    { id: 'edit', label: 'Edit', sortable: false },
+  ];
+
+  const rows = get(nodeRes, 'data.result', []).map(node => {
+    return {
+      name: node.hostname,
+      services: getServiceNames(node),
+      ssh: getSSHLabel(node.user, node.port),
+      edit: actionButton(node),
+    };
+  });
+
   return (
     <DocumentTitle title={NODES}>
       <>
@@ -97,29 +125,12 @@ const NodeListPage = () => {
               onClick={handleNewModalOpen}
             />
           </s.TopWrapper>
-          <s.NodeTable isLoading={isLoading} headers={headers}>
-            {get(nodeRes, 'data.result', []).map(node => (
-              <TableRow key={node.name}>
-                <TableCell data-testid="node-name" component="th" scope="row">
-                  {node.name || ''}
-                </TableCell>
-                <TableCell align="left">{getServiceNames(node)}</TableCell>
-                <TableCell align="left">
-                  {getSSHLabel(node.user, node.port)}
-                </TableCell>
-                <TableCell className="has-icon" align="right">
-                  <IconButton
-                    color="primary"
-                    aria-label="Edit"
-                    data-testid="edit-node-icon"
-                    onClick={() => handleEditClick(node)}
-                  >
-                    <EditIcon />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-          </s.NodeTable>
+          <SortTable
+            isLoading={isLoading}
+            headRows={headRows}
+            rows={rows}
+            tableName="node"
+          />
         </s.Wrapper>
         <NodeNewModal
           isOpen={isNewModalOpen}

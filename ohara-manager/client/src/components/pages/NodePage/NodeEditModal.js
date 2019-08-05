@@ -18,19 +18,16 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { get } from 'lodash';
 import { Form, Field, FormSpy } from 'react-final-form';
-import InputField from 'components/common/Mui/Form/InputField';
-import DialogTitle from 'components/common/Mui/Dialog/DialogTitle';
-
-import Dialog from '@material-ui/core/Dialog';
-import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 
-import Button from '@material-ui/core/Button';
+import * as s from './styles';
+import { InputField } from 'components/common/Mui/Form';
 import validate from './validate';
 import * as MESSAGES from 'constants/messages';
 import * as useApi from 'components/controller';
 import * as URL from 'components/controller/url';
 import useSnackbar from 'components/context/Snackbar/useSnackbar';
+import { Dialog } from 'components/common/Mui/Dialog';
 
 const NodeEditModal = props => {
   const [isValidConnection, setIsValidConnection] = useState(false);
@@ -98,16 +95,14 @@ const NodeEditModal = props => {
       }) => {
         return (
           <Dialog
-            fullWidth={true}
-            maxWidth="xs"
-            open={isOpen}
-            onClose={handleClose}
-            aria-labelledby="form-dialog-title"
+            handelOpen={isOpen}
+            handelClose={handleClose}
+            title="New ohara node"
+            handleConfirm={handleSubmit}
+            confirmBtnText="Save"
+            confirmDisabled={!isValidConnection}
           >
             <div data-testid="edit-node-modal">
-              <DialogTitle id="form-dialog-title" onClose={handleClose}>
-                New ohara node
-              </DialogTitle>
               <FormSpy
                 subscription={{ values: true }}
                 onChange={() => {
@@ -123,7 +118,7 @@ const NodeEditModal = props => {
                     placeholder="node-00"
                     margin="normal"
                     fullWidth
-                    variant="outlined"
+                    autoFocus
                     component={InputField}
                   />
 
@@ -133,7 +128,6 @@ const NodeEditModal = props => {
                     placeholder="1021"
                     margin="normal"
                     type="number"
-                    variant="outlined"
                     component={InputField}
                   />
 
@@ -143,7 +137,6 @@ const NodeEditModal = props => {
                     placeholder="admin"
                     margin="normal"
                     fullWidth
-                    variant="outlined"
                     component={InputField}
                   />
 
@@ -154,35 +147,20 @@ const NodeEditModal = props => {
                     placeholder="password"
                     margin="normal"
                     fullWidth
-                    variant="outlined"
                     component={InputField}
                   />
                 </DialogContent>
                 <DialogContent>
-                  <Button
+                  <s.NewNodeBtn
+                    variant="contained"
+                    color="primary"
+                    text="Test connection"
                     data-testid="edit-test-connection-button"
-                    variant="outlined"
                     onClick={() => {
                       testConnection(values);
                     }}
-                    color="primary"
-                  >
-                    Test connection
-                  </Button>
+                  />
                 </DialogContent>
-                <DialogActions>
-                  <Button onClick={handleClose} color="primary">
-                    Cancel
-                  </Button>
-                  <Button
-                    data-testid="edit-save-button"
-                    onClick={handleSubmit}
-                    color="primary"
-                    disabled={!isValidConnection}
-                  >
-                    Save
-                  </Button>
-                </DialogActions>
               </form>
             </div>
           </Dialog>
