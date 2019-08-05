@@ -183,7 +183,7 @@ Example Response
 .. _rest-stream-get-information:
 
 get information from a specific streamApp cluster
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------------------------------
 
 *GET /v0/stream/${name}*
 
@@ -243,6 +243,68 @@ Example Response
        "lastModified": 1542102595892
      }
 
+list information of streamApp cluster
+-------------------------------------
+
+*GET /v0/stream*
+
+Example Response
+  #. name (**string**) — custom name of this streamApp
+  #. group (**string**) — the value of group is always "default"
+     (this logic apply to current version |version|)
+  #. imageName (**string**) — image name of this streamApp
+  #. instances ( **int**) — numbers of streamApp container
+  #. nodeNames (**array(string)**) — node list of streamApp running
+     container
+  #. deadNodes (**array(string)**) — dead node list of the exited
+     containers from this cluster
+  #. jar (**object**) — uploaded jar key
+  #. from (**array(string)**) — topics of streamApp consume with
+  #. to (**array(string)**) — topics of streamApp produce to
+  #. state (**option(string)**) — only started/failed streamApp has state
+  #. jmxPort (**int**) — the expose jmx port
+  #. :ref:`metrics <connector-metrics>` (**object**) — the metrics from this streamApp.
+
+     - meters (**array(object)**) — the metrics in meter type
+
+       - meters[i].value (**double**) — the number stored in meter
+       - meters[i].unit (**string**) — unit for value
+       - meters[i].document (**string**) — document of this meter
+       - meters[i].queryTime (**long**) — the time of record generated in remote machine
+       - meters[i].startTime (**option(long)**) — the time of record generated in remote machine
+
+  #. exactlyOnce (**boolean**) — enable exactly once
+  #. error (**option(string)**) — the error message from a failed
+     streamApp. If the streamApp is fine or un-started, you won’t get
+     this field.
+  #. lastModified (**long**) — last modified this jar time
+
+  .. code-block:: json
+
+     [
+       {
+         "name": "myapp",
+         "group": "default",
+         "imageName": "oharastream/streamapp:$|version|",
+         "instances": 3,
+         "nodeNames": [],
+         "deadNodes": [],
+         "jar": {
+           "name": "stream-app",
+           "group": "wk01"
+         },
+         "from": [
+           "topic1"
+         ],
+         "to": [
+           "topic2"
+         ],
+         "jmxPort": 5678,
+         "exactlyOnce": "false",
+         "metrics": [],
+         "lastModified": 1542102595892
+       }
+     ]
 
 update properties of specific streamApp
 ---------------------------------------
