@@ -19,6 +19,7 @@ package com.island.ohara.client.configurator.v0
 import java.util.Objects
 
 import com.island.ohara.common.annotations.Optional
+import com.island.ohara.common.setting.SettingDef
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsArray, JsString, JsValue}
@@ -98,7 +99,8 @@ object BrokerApi {
                                                          tags: Map[String, JsValue],
                                                          lastModified: Long,
                                                          state: Option[String],
-                                                         error: Option[String])
+                                                         error: Option[String],
+                                                         topicSettingDefinitions: Seq[SettingDef])
       extends ClusterInfo {
     // cluster does not support to define group
     override def group: String = GROUP_DEFAULT
@@ -114,7 +116,7 @@ object BrokerApi {
     * exposed to configurator
     */
   private[ohara] implicit val BROKER_CLUSTER_INFO_JSON_FORMAT: OharaJsonFormat[BrokerClusterInfo] =
-    JsonRefiner[BrokerClusterInfo].format(jsonFormat12(BrokerClusterInfo)).refine
+    JsonRefiner[BrokerClusterInfo].format(jsonFormat13(BrokerClusterInfo)).refine
 
   /**
     * used to generate the payload and url for POST/PUT request.

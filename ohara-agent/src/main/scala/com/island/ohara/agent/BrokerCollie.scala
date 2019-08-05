@@ -16,18 +16,22 @@
 
 package com.island.ohara.agent
 import java.util.Objects
+import java.util.concurrent.atomic.AtomicInteger
 
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterInfo}
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterInfo}
 import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.common.annotations.Optional
+import com.island.ohara.common.setting.SettingDef
+import com.island.ohara.common.setting.SettingDef.Type
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.kafka.TopicMeter
+import org.apache.kafka.common.config.TopicConfig
 import spray.json.JsString
 
 import scala.collection.JavaConverters._
@@ -179,7 +183,8 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
                       tags = Map.empty,
                       state = None,
                       error = None,
-                      lastModified = CommonUtils.current()
+                      lastModified = CommonUtils.current(),
+                      topicSettingDefinitions = BrokerCollie.TOPIC_CUSTOM_DEFINITIONS
                     )
                     postCreateBrokerCluster(clusterInfo, successfulContainers)
                     clusterInfo
@@ -310,7 +315,8 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
         },
         // TODO how could we fetch the error?...by Sam
         error = None,
-        lastModified = CommonUtils.current()
+        lastModified = CommonUtils.current(),
+        topicSettingDefinitions = BrokerCollie.TOPIC_CUSTOM_DEFINITIONS
       ))
   }
 
@@ -332,6 +338,54 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
 }
 
 object BrokerCollie {
+
+  /**
+    * list the custom configs of topic. It is useful to developers who long for controlling the topic totally.
+    */
+  val TOPIC_CUSTOM_DEFINITIONS: Seq[SettingDef] = {
+    val group = "core"
+    val count = new AtomicInteger(0);
+    def toSettingDefinition(key: String, doc: String): SettingDef =
+      SettingDef
+        .builder()
+        .key(key)
+        .displayName(key)
+        .documentation(doc)
+        .group(group)
+        .orderInGroup(count.getAndIncrement())
+        .valueType(Type.STRING)
+        .optional()
+        .build()
+    Seq(
+      toSettingDefinition(TopicConfig.SEGMENT_BYTES_CONFIG, TopicConfig.SEGMENT_BYTES_DOC),
+      toSettingDefinition(TopicConfig.SEGMENT_MS_CONFIG, TopicConfig.SEGMENT_MS_DOC),
+      toSettingDefinition(TopicConfig.SEGMENT_JITTER_MS_CONFIG, TopicConfig.SEGMENT_JITTER_MS_DOC),
+      toSettingDefinition(TopicConfig.SEGMENT_INDEX_BYTES_CONFIG, TopicConfig.SEGMENT_INDEX_BYTES_DOC),
+      toSettingDefinition(TopicConfig.FLUSH_MESSAGES_INTERVAL_CONFIG, TopicConfig.FLUSH_MESSAGES_INTERVAL_DOC),
+      toSettingDefinition(TopicConfig.FLUSH_MS_CONFIG, TopicConfig.FLUSH_MS_DOC),
+      toSettingDefinition(TopicConfig.RETENTION_BYTES_CONFIG, TopicConfig.RETENTION_BYTES_DOC),
+      toSettingDefinition(TopicConfig.RETENTION_MS_CONFIG, TopicConfig.RETENTION_MS_DOC),
+      toSettingDefinition(TopicConfig.MAX_MESSAGE_BYTES_CONFIG, TopicConfig.MAX_MESSAGE_BYTES_DOC),
+      toSettingDefinition(TopicConfig.INDEX_INTERVAL_BYTES_CONFIG, TopicConfig.INDEX_INTERVAL_BYTES_DOCS),
+      toSettingDefinition(TopicConfig.FILE_DELETE_DELAY_MS_CONFIG, TopicConfig.FILE_DELETE_DELAY_MS_DOC),
+      toSettingDefinition(TopicConfig.DELETE_RETENTION_MS_CONFIG, TopicConfig.DELETE_RETENTION_MS_DOC),
+      toSettingDefinition(TopicConfig.MIN_COMPACTION_LAG_MS_CONFIG, TopicConfig.MIN_COMPACTION_LAG_MS_DOC),
+      toSettingDefinition(TopicConfig.MIN_CLEANABLE_DIRTY_RATIO_CONFIG, TopicConfig.MIN_CLEANABLE_DIRTY_RATIO_DOC),
+      toSettingDefinition(TopicConfig.CLEANUP_POLICY_CONFIG, TopicConfig.CLEANUP_POLICY_DOC),
+      toSettingDefinition(TopicConfig.UNCLEAN_LEADER_ELECTION_ENABLE_CONFIG,
+                          TopicConfig.UNCLEAN_LEADER_ELECTION_ENABLE_DOC),
+      toSettingDefinition(TopicConfig.MIN_IN_SYNC_REPLICAS_CONFIG, TopicConfig.MIN_IN_SYNC_REPLICAS_DOC),
+      toSettingDefinition(TopicConfig.COMPRESSION_TYPE_CONFIG, TopicConfig.COMPRESSION_TYPE_DOC),
+      toSettingDefinition(TopicConfig.PREALLOCATE_CONFIG, TopicConfig.PREALLOCATE_DOC),
+      toSettingDefinition(TopicConfig.MESSAGE_FORMAT_VERSION_CONFIG, TopicConfig.MESSAGE_FORMAT_VERSION_DOC),
+      toSettingDefinition(TopicConfig.MESSAGE_TIMESTAMP_TYPE_CONFIG, TopicConfig.MESSAGE_TIMESTAMP_TYPE_DOC),
+      toSettingDefinition(TopicConfig.MESSAGE_TIMESTAMP_DIFFERENCE_MAX_MS_CONFIG,
+                          TopicConfig.MESSAGE_TIMESTAMP_DIFFERENCE_MAX_MS_DOC),
+      toSettingDefinition(TopicConfig.MESSAGE_DOWNCONVERSION_ENABLE_CONFIG,
+                          TopicConfig.MESSAGE_DOWNCONVERSION_ENABLE_DOC)
+    )
+  }
+
   trait ClusterCreator extends Collie.ClusterCreator[BrokerClusterInfo] {
     private[this] var clientPort: Int = CommonUtils.availablePort()
     private[this] var zookeeperClusterName: String = _

@@ -41,7 +41,8 @@ class TestBrokerApi extends SmallTest with Matchers {
       state = None,
       error = None,
       tags = Map.empty,
-      lastModified = CommonUtils.current()
+      lastModified = CommonUtils.current(),
+      topicSettingDefinitions = Seq.empty
     )
     brokerClusterInfo.clone(newNodeNames).nodeNames shouldBe newNodeNames
   }

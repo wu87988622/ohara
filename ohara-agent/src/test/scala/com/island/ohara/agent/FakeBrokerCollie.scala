@@ -68,18 +68,21 @@ private class FakeBrokerCollie(node: NodeCollie,
     Future.successful(
       //Pre create broker container for test
       Map(
-        BrokerClusterInfo("bk1",
-                          "broker",
-                          Some("zk1"),
-                          2181,
-                          2182,
-                          2183,
-                          Set("node1"),
-                          Set.empty,
-                          Map.empty,
-                          CommonUtils.current(),
-                          None,
-                          None) -> bkExistContainers)
+        BrokerClusterInfo(
+          name = "bk1",
+          imageName = BrokerApi.IMAGE_NAME_DEFAULT,
+          zookeeperClusterName = Some("zk1"),
+          clientPort = 2181,
+          exporterPort = 2182,
+          jmxPort = 2183,
+          nodeNames = Set("node1"),
+          deadNodes = Set.empty,
+          tags = Map.empty,
+          lastModified = CommonUtils.current(),
+          state = None,
+          error = None,
+          topicSettingDefinitions = BrokerCollie.TOPIC_CUSTOM_DEFINITIONS
+        ) -> bkExistContainers)
     )
 
   override protected def resolveHostName(node: String): String = "1.1.1.1"

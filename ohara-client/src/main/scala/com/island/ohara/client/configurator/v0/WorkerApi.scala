@@ -123,17 +123,6 @@ object WorkerApi {
       .nullToString("name", () => CommonUtils.randomString(10))
       .refine
 
-  /**
-    * exposed to configurator
-    */
-  private[ohara] implicit val SETTING_DEFINITION_JSON_FORMAT: RootJsonFormat[SettingDef] =
-    new RootJsonFormat[SettingDef] {
-      import spray.json._
-      override def read(json: JsValue): SettingDef = SettingDef.ofJson(json.toString())
-
-      override def write(obj: SettingDef): JsValue = obj.toJsonString.parseJson
-    }
-
   final case class ConnectorDefinition private[WorkerApi] (className: String, definitions: Seq[SettingDef]) {
     import scala.collection.JavaConverters._
     def kind: String = ConnectorDefinitions.kind(definitions.asJava)

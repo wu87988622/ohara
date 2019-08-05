@@ -16,6 +16,7 @@
 
 package com.island.ohara.client.configurator
 
+import com.island.ohara.common.setting.SettingDef
 import com.island.ohara.kafka.connector.json.{ConnectorDefinitions, ObjectKey, TopicKey}
 import spray.json.{JsNull, JsValue, RootJsonFormat}
 
@@ -83,4 +84,15 @@ package object v0 {
     .nullToString(GROUP_KEY, () => GROUP_DEFAULT)
     .rejectEmptyString()
     .refine
+
+  /**
+    * exposed to configurator
+    */
+  private[ohara] implicit val SETTING_DEFINITION_JSON_FORMAT: RootJsonFormat[SettingDef] =
+    new RootJsonFormat[SettingDef] {
+      import spray.json._
+      override def read(json: JsValue): SettingDef = SettingDef.ofJson(json.toString())
+
+      override def write(obj: SettingDef): JsValue = obj.toJsonString.parseJson
+    }
 }

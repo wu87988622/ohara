@@ -18,7 +18,7 @@ package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
-import com.island.ohara.agent.{ClusterCollie, NoSuchClusterException, NodeCollie}
+import com.island.ohara.agent.{BrokerCollie, ClusterCollie, NoSuchClusterException, NodeCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.{Creation, _}
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.util.CommonUtils
@@ -86,7 +86,8 @@ object BrokerRoute {
         tags = creation.tags,
         state = None,
         error = None,
-        lastModified = CommonUtils.current()
+        lastModified = CommonUtils.current(),
+        topicSettingDefinitions = BrokerCollie.TOPIC_CUSTOM_DEFINITIONS
       )
   )
 
@@ -107,7 +108,8 @@ object BrokerRoute {
             tags = update.tags.getOrElse(Map.empty),
             state = None,
             error = None,
-            lastModified = CommonUtils.current()
+            lastModified = CommonUtils.current(),
+            topicSettingDefinitions = BrokerCollie.TOPIC_CUSTOM_DEFINITIONS
           )) { previous =>
             previous.copy(
               imageName = update.imageName.getOrElse(previous.imageName),

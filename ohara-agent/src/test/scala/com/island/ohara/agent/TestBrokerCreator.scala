@@ -66,7 +66,8 @@ class TestBrokerCreator extends SmallTest with Matchers {
           state = None,
           error = None,
           tags = Map.empty,
-          lastModified = 0
+          lastModified = 0,
+          topicSettingDefinitions = BrokerCollie.TOPIC_CUSTOM_DEFINITIONS
         ))
     }
 
@@ -153,7 +154,8 @@ class TestBrokerCreator extends SmallTest with Matchers {
       state = None,
       error = None,
       tags = Map.empty,
-      lastModified = 0
+      lastModified = 0,
+      topicSettingDefinitions = BrokerCollie.TOPIC_CUSTOM_DEFINITIONS
     )
     Await.result(bkCreator().copy(brokerClusterInfo).create(), 30 seconds) shouldBe brokerClusterInfo
   }

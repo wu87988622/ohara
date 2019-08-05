@@ -46,6 +46,7 @@ The properties which can be set by user are shown below.
 #. state (**option(string)**) — only started/failed broker has state (RUNNING or DEAD)
 #. error (**option(string)**) — the error message from a failed broker. If broker is fine or un-started, you won't get this field.
 #. lastModified (**long**) — last modified this jar time
+#. topicSettingDefinitions (**array(onject)**) — the available custom configs of topics. see :ref:`custom connector guideline <connector>` for the format of setting definition.
 
 .. _rest-brokers-create:
 

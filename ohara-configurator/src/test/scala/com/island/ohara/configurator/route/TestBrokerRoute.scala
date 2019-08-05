@@ -392,6 +392,13 @@ class TestBrokerRoute extends MediumTest with Matchers {
     configurator.clusterCollie.brokerCollie.asInstanceOf[FakeBrokerCollie].forceRemoveCount shouldBe initialCount + 1
   }
 
+  @Test
+  def testTopicSettingDefinitions(): Unit = {
+    result(brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
+    result(brokerApi.list()).size should not be 0
+    result(brokerApi.list()).foreach(_.topicSettingDefinitions.size should not be 0)
+  }
+
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }

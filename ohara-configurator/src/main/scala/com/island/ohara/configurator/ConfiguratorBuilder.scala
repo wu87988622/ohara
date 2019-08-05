@@ -143,7 +143,8 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
           state = Some(ClusterState.RUNNING.name),
           error = None,
           tags = Map.empty,
-          lastModified = CommonUtils.current()
+          lastModified = CommonUtils.current(),
+          topicSettingDefinitions = BrokerCollie.TOPIC_CUSTOM_DEFINITIONS
         )
       }
       val wkCluster = {
@@ -244,7 +245,8 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
               state = Some(ClusterState.RUNNING.name),
               error = None,
               tags = Map.empty,
-              lastModified = CommonUtils.current()
+              lastModified = CommonUtils.current(),
+              topicSettingDefinitions = BrokerCollie.TOPIC_CUSTOM_DEFINITIONS
             ))
       }
 

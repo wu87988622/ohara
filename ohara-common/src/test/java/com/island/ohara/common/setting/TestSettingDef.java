@@ -16,6 +16,7 @@
 
 package com.island.ohara.common.setting;
 
+import com.island.ohara.common.data.Serializer;
 import com.island.ohara.common.exception.OharaConfigException;
 import com.island.ohara.common.rule.SmallTest;
 import com.island.ohara.common.util.CommonUtils;
@@ -241,5 +242,13 @@ public class TestSettingDef extends SmallTest {
     // empty array is illegal
     assertException(OharaConfigException.class, () -> s.checker().accept(Collections.emptyList()));
     assertException(OharaConfigException.class, () -> s.checker().accept(100000000));
+  }
+
+  @Test
+  public void testSerialization() {
+    SettingDef setting =
+        SettingDef.builder().valueType(SettingDef.Type.TAGS).key("tags.key").build();
+    SettingDef copy = (SettingDef) Serializer.OBJECT.from(Serializer.OBJECT.to(setting));
+    Assert.assertEquals(setting, copy);
   }
 }

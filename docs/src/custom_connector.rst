@@ -1020,20 +1020,7 @@ and time. Ohara offers many checks for your setting according to the
 a checker which validate whether the input value is able to be cast to
 either java.time.Duration or scala.duration.Duration. However, you are
 going to design a complicated connector which has specific limit for
-input value. Or you don’t like the default checkers supplied by ohara.
-Ohara allows and encourages connector developer to provide custom
-checker. The Checker is a functional interface.
-
-.. code-block:: java
-
-   @FunctionalInterface
-   interface Checker {
-     /** @param value value of input */
-     void check(Object value);
-   }
-
-All you have to do is to check the input value. Feel free to throw
-exception when you hate input value or type.
+input value.
 
 --------------
 
