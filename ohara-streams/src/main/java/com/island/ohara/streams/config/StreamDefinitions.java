@@ -31,24 +31,25 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * This is an entry class for getting / setting {@link com.island.ohara.common.setting.SettingDef}.
+ * This is an entry class for getting / setting {@link com.island.ohara.common.setting.SettingDef}
+ * of StreamApp.
  *
  * <p>The data we keep in this class is use the format : Map(SettingDef.key, SettingDef)
  */
-public final class ConfigDef implements JsonObject {
+public final class StreamDefinitions implements JsonObject {
 
   static final String CORE_GROUP = "core";
 
   private final Map<String, SettingDef> configs;
 
   @JsonCreator
-  private ConfigDef(Map<String, SettingDef> configs) {
+  private StreamDefinitions(Map<String, SettingDef> configs) {
     // sort the configs
     this.configs = new TreeMap<>(configs);
   }
 
   /** get default configurations */
-  public static final ConfigDef DEFAULT = new ConfigDef(getDefault());
+  public static final StreamDefinitions DEFAULT = new StreamDefinitions(getDefault());
 
   /**
    * Load configs from default definitions. Note that we will return <b>Map.Empty</b> if the class
@@ -71,26 +72,26 @@ public final class ConfigDef implements JsonObject {
    * Add a {@code Config} into this class.
    *
    * @param config config object
-   * @return this ConfigDef
+   * @return this StreamDefinitions
    */
-  public static ConfigDef add(SettingDef config) {
-    Map<String, SettingDef> configs = ConfigDef.getDefault();
+  public static StreamDefinitions add(SettingDef config) {
+    Map<String, SettingDef> configs = StreamDefinitions.getDefault();
     if (configs.containsKey(config.key())) {
       throw new IllegalArgumentException(
-          String.format("ConfigDef: %s is defined twice", config.key()));
+          String.format("StreamDefinitions: %s is defined twice", config.key()));
     }
     configs.put(config.key(), config);
-    return new ConfigDef(configs);
+    return new StreamDefinitions(configs);
   }
 
   /**
    * Add {@code Config} list into this class.
    *
    * @param configMap config map list
-   * @return this ConfigDef
+   * @return this StreamDefinitions
    */
-  public static ConfigDef addAll(Map<String, SettingDef> configMap) {
-    Map<String, SettingDef> configs = ConfigDef.getDefault();
+  public static StreamDefinitions addAll(Map<String, SettingDef> configMap) {
+    Map<String, SettingDef> configs = StreamDefinitions.getDefault();
     if (configs.keySet().stream().anyMatch(p -> configMap.keySet().contains(p))) {
       throw new IllegalArgumentException(
           String.format(
@@ -98,7 +99,7 @@ public final class ConfigDef implements JsonObject {
               String.join(",", configMap.keySet()), String.join(",", configs.keySet())));
     }
     configs.putAll(configMap);
-    return new ConfigDef(configs);
+    return new StreamDefinitions(configs);
   }
 
   /**
@@ -131,7 +132,7 @@ public final class ConfigDef implements JsonObject {
   }
 
   /**
-   * This is the default configurations we will load into {@code ConfigDef}.
+   * This is the default configurations we will load into {@code StreamDefinitions}.
    *
    * <p>Do not change this class except you know what you are doing.
    *
@@ -198,7 +199,7 @@ public final class ConfigDef implements JsonObject {
    */
   @Override
   public boolean equals(Object obj) {
-    if (obj instanceof ConfigDef) {
+    if (obj instanceof StreamDefinitions) {
       return toString().equals(obj.toString());
     } else return false;
   }
@@ -213,8 +214,8 @@ public final class ConfigDef implements JsonObject {
     return toJsonString();
   }
 
-  public static ConfigDef ofJson(String json) {
-    return new ConfigDef(
+  public static StreamDefinitions ofJson(String json) {
+    return new StreamDefinitions(
         JsonUtils.toObject(json, new TypeReference<Map<String, List<SettingDef>>>() {})
             .get("values").stream()
             .collect(Collectors.toMap(SettingDef::key, Function.identity())));

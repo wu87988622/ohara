@@ -21,6 +21,7 @@ import com.island.ohara.client.Enum
 import com.island.ohara.client.configurator.Data
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.data.Column
+import com.island.ohara.common.setting.PropGroups
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json._
 import spray.json.DefaultJsonProtocol._
@@ -35,12 +36,12 @@ object ConnectorApi {
     * The default value of group for this API.
     */
   val GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
-  val WORKER_CLUSTER_NAME_KEY: String = SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key()
-  val NUMBER_OF_TASKS_KEY: String = SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key()
-  val TOPIC_KEYS_KEY: String = SettingDefinition.TOPIC_KEYS_DEFINITION.key()
-  val TOPIC_NAME_KEYS: String = SettingDefinition.TOPIC_NAMES_DEFINITION.key()
-  val CONNECTOR_CLASS_KEY: String = SettingDefinition.CONNECTOR_CLASS_DEFINITION.key()
-  val COLUMNS_KEY: String = SettingDefinition.COLUMNS_DEFINITION.key()
+  val WORKER_CLUSTER_NAME_KEY: String = ConnectorDefinitions.WORKER_CLUSTER_NAME_DEFINITION.key()
+  val NUMBER_OF_TASKS_KEY: String = ConnectorDefinitions.NUMBER_OF_TASKS_DEFINITION.key()
+  val TOPIC_KEYS_KEY: String = ConnectorDefinitions.TOPIC_KEYS_DEFINITION.key()
+  val TOPIC_NAME_KEYS: String = ConnectorDefinitions.TOPIC_NAMES_DEFINITION.key()
+  val CONNECTOR_CLASS_KEY: String = ConnectorDefinitions.CONNECTOR_CLASS_DEFINITION.key()
+  val COLUMNS_KEY: String = ConnectorDefinitions.COLUMNS_DEFINITION.key()
   val CONNECTORS_PREFIX_PATH: String = "connectors"
   val DEFAULT_NUMBER_OF_TASKS: Int = 1
 
@@ -135,7 +136,7 @@ object ConnectorApi {
             case e: DeserializationException => throw e
             case other: Throwable =>
               throw DeserializationException(
-                msg = s"the string to ${COLUMNS_KEY} is not correct format",
+                msg = s"the string to $COLUMNS_KEY is not correct format",
                 cause = other,
                 fieldNames = List(COLUMNS_KEY)
               )

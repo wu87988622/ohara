@@ -20,7 +20,7 @@ import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.exception.ExceptionHandler;
 import com.island.ohara.common.util.CommonUtils;
-import com.island.ohara.streams.config.ConfigDef;
+import com.island.ohara.streams.config.StreamDefinitions;
 import com.island.ohara.streams.ostream.LaunchImpl;
 import java.io.File;
 import java.io.IOException;
@@ -118,16 +118,16 @@ public abstract class StreamApp {
    * <p>Usage:
    *
    * <pre>
-   *   public ConfigDef config() {
+   *   public StreamDefinitions config() {
    *       // define your own configs
-   *       return ConfigDef.add(SettingDef.builder().key(key).group(group).build());
+   *       return StreamDefinitions.add(SettingDef.builder().key(key).group(group).build());
    *   }
    * </pre>
    *
    * @return the defined settings
    */
-  public ConfigDef config() {
-    return ConfigDef.DEFAULT;
+  public StreamDefinitions config() {
+    return StreamDefinitions.DEFAULT;
   }
 
   /** User defined initialization before running streamApp */
@@ -144,9 +144,9 @@ public abstract class StreamApp {
    * </pre>
    *
    * @param ostream the entry object to define logic
-   * @param configDef configuration object
+   * @param streamDefinitions configuration object
    */
-  public abstract void start(OStream<Row> ostream, ConfigDef configDef);
+  public abstract void start(OStream<Row> ostream, StreamDefinitions streamDefinitions);
 
   /**
    * find main entry of jar in ohara environment container

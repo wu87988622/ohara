@@ -21,8 +21,9 @@ import com.island.ohara.client.configurator.v0.ConnectorApi.{Creation, _}
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.data.{Column, DataType, Serializer}
 import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.setting.PropGroups
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.json.{PropGroups, TopicKey}
+import com.island.ohara.kafka.connector.json.TopicKey
 import org.junit.Test
 import org.scalatest.Matchers
 import spray.json.DefaultJsonProtocol._
@@ -178,10 +179,10 @@ class TestConnectorApi extends SmallTest with Matchers {
     import spray.json._
     val className = CommonUtils.randomString()
     val connectorCreationRequest = ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
-                                                                                               | {
-                                                                                               | "className": "$className"
-                                                                                               | }
-     """.stripMargin.parseJson)
+      | {
+      | "className": "$className"
+      | }
+      | """.stripMargin.parseJson)
     an[NoSuchElementException] should be thrownBy connectorCreationRequest.className
   }
 
@@ -190,34 +191,34 @@ class TestConnectorApi extends SmallTest with Matchers {
     import spray.json._
     val className = CommonUtils.randomString()
     val connectorDescription = ConnectorApi.CONNECTOR_DESCRIPTION_FORMAT.read(s"""
-                                                                                      | {
-                                                                                      | "id": "asdasdsad",
-                                                                                      | "lastModified": 123,
-                                                                                      | "settings": {
-                                                                                      | "className": "$className"
-                                                                                      | },
-                                                                                      | "metrics": {
-                                                                                      |   "meters":[]
-                                                                                      | }
-                                                                                      | }
-     """.stripMargin.parseJson)
+      | {
+      | "id": "asdasdsad",
+      | "lastModified": 123,
+      | "settings": {
+      | "className": "$className"
+      | },
+      | "metrics": {
+      |   "meters":[]
+      | }
+      | }
+      | """.stripMargin.parseJson)
     an[NoSuchElementException] should be thrownBy connectorDescription.className
   }
 
   @Test
   def parsePropGroups(): Unit = {
     val creationRequest = ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
-                                                                                      | {
-                                                                                      | "columns": [
-                                                                                      |   {
-                                                                                      |     "order": 1,
-                                                                                      |     "name": "abc",
-                                                                                      |     "newName": "ccc",
-                                                                                      |     "dataType": "STRING"
-                                                                                      |   }
-                                                                                      | ]
-                                                                                      | }
-     """.stripMargin.parseJson)
+      | {
+      | "columns": [
+      |   {
+      |     "order": 1,
+      |     "name": "abc",
+      |     "newName": "ccc",
+      |     "dataType": "STRING"
+      |   }
+      | ]
+      | }
+      | """.stripMargin.parseJson)
     val column = PropGroups.ofJson(creationRequest.settings("columns").toString()).toColumns.get(0)
     column.order() shouldBe 1
     column.name() shouldBe "abc"
@@ -365,13 +366,11 @@ class TestConnectorApi extends SmallTest with Matchers {
 
   @Test
   def testDefaultNumberOfTasks(): Unit =
-    ConnectorApi.CONNECTOR_CREATION_FORMAT
-      .read(s"""
-                                                                | {
-                                                                |  "name": "ftp source"
-                                                                |}
-                                                                |     """.stripMargin.parseJson)
-      .numberOfTasks shouldBe 1
+    ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
+      | {
+      |  "name": "ftp source"
+      |}
+      |     """.stripMargin.parseJson).numberOfTasks shouldBe 1
 
   @Test
   def parseColumn(): Unit = {
@@ -555,13 +554,13 @@ class TestConnectorApi extends SmallTest with Matchers {
   @Test
   def parseTags(): Unit =
     ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
-                                                        |  {
-                                                        |    "tags": {
-                                                        |      "a": "bb",
-                                                        |      "b": 123
-                                                        |    }
-                                                        |  }
-                                                        |     """.stripMargin.parseJson).tags shouldBe Map(
+      |  {
+      |    "tags": {
+      |      "a": "bb",
+      |      "b": 123
+      |    }
+      |  }
+      |     """.stripMargin.parseJson).tags shouldBe Map(
       "a" -> JsString("bb"),
       "b" -> JsNumber(123)
     )
@@ -569,9 +568,9 @@ class TestConnectorApi extends SmallTest with Matchers {
   @Test
   def parseNullTags(): Unit =
     ConnectorApi.CONNECTOR_CREATION_FORMAT.read(s"""
-                                                        |  {
-                                                        |  }
-                                                        |     """.stripMargin.parseJson).tags shouldBe Map.empty
+      |  {
+      |  }
+      |     """.stripMargin.parseJson).tags shouldBe Map.empty
 
   @Test
   def groupShouldAppearInResponse(): Unit = {

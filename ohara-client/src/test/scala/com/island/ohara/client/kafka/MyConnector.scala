@@ -19,8 +19,8 @@ package com.island.ohara.client.kafka
 import java.util
 import java.util.Collections
 
-import com.island.ohara.kafka.connector.json.SettingDefinition
-import com.island.ohara.kafka.connector.json.SettingDefinition.Type
+import com.island.ohara.common.setting.SettingDef
+import com.island.ohara.common.setting.SettingDef.Type
 import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceTask, TaskSetting}
 
 import scala.collection.JavaConverters._
@@ -39,9 +39,9 @@ class MyConnector extends RowSourceConnector {
     // do nothing
   }
 
-  override protected def _definitions(): util.List[SettingDefinition] = Collections.singletonList(
+  override protected def _definitions(): util.List[SettingDef] = Collections.singletonList(
     // used by TestWorkerClient.passIncorrectDuration
-    SettingDefinition.builder().key(MyConnector.DURATION_KEY).optional().valueType(Type.DURATION).build()
+    SettingDef.builder().key(MyConnector.DURATION_KEY).optional().valueType(Type.DURATION).build()
   )
 }
 

@@ -17,8 +17,10 @@
 package com.island.ohara.connector.hdfs.sink
 
 import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.common.setting.SettingDef
+import com.island.ohara.common.setting.SettingDef.Reference
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.json.{ConnectorKey, SettingDefinition, TopicKey}
+import com.island.ohara.kafka.connector.json.{ConnectorDefinitions, ConnectorKey, TopicKey}
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.Test
 import org.scalatest.Matchers
@@ -40,8 +42,8 @@ class TestHDFSSinkDefinition extends WithBrokerWorker with Matchers {
     definition.defaultValue shouldBe null
     definition.editable() shouldBe true
     definition.internal() shouldBe false
-    definition.reference() shouldBe "NONE"
-    definition.valueType() shouldBe SettingDefinition.Type.STRING.name()
+    definition.reference() shouldBe Reference.NONE
+    definition.valueType() shouldBe SettingDef.Type.STRING
   }
 
   @Test
@@ -51,8 +53,8 @@ class TestHDFSSinkDefinition extends WithBrokerWorker with Matchers {
     definition.defaultValue shouldBe TOPICS_DIR_DEFAULT.toString
     definition.editable() shouldBe true
     definition.internal() shouldBe false
-    definition.reference() shouldBe "NONE"
-    definition.valueType() shouldBe SettingDefinition.Type.STRING.name()
+    definition.reference() shouldBe Reference.NONE
+    definition.valueType() shouldBe SettingDef.Type.STRING
   }
 
   @Test
@@ -62,8 +64,8 @@ class TestHDFSSinkDefinition extends WithBrokerWorker with Matchers {
     definition.defaultValue shouldBe FLUSH_SIZE_DEFAULT.toString
     definition.editable() shouldBe true
     definition.internal() shouldBe false
-    definition.reference() shouldBe "NONE"
-    definition.valueType() shouldBe SettingDefinition.Type.INT.name()
+    definition.reference() shouldBe Reference.NONE
+    definition.valueType() shouldBe SettingDef.Type.INT
   }
 
   @Test
@@ -73,8 +75,8 @@ class TestHDFSSinkDefinition extends WithBrokerWorker with Matchers {
     definition.defaultValue shouldBe ROTATE_INTERVAL_MS_DEFAULT.toString
     definition.editable() shouldBe true
     definition.internal() shouldBe false
-    definition.reference() shouldBe "NONE"
-    definition.valueType() shouldBe SettingDefinition.Type.LONG.name()
+    definition.reference() shouldBe Reference.NONE
+    definition.valueType() shouldBe SettingDef.Type.LONG
   }
 
   @Test
@@ -84,8 +86,8 @@ class TestHDFSSinkDefinition extends WithBrokerWorker with Matchers {
     definition.defaultValue shouldBe FILE_NEED_HEADER_DEFAULT.toString
     definition.editable() shouldBe true
     definition.internal() shouldBe false
-    definition.reference() shouldBe "NONE"
-    definition.valueType() shouldBe SettingDefinition.Type.BOOLEAN.name()
+    definition.reference() shouldBe Reference.NONE
+    definition.valueType() shouldBe SettingDef.Type.BOOLEAN
   }
 
   @Test
@@ -95,8 +97,8 @@ class TestHDFSSinkDefinition extends WithBrokerWorker with Matchers {
     definition.defaultValue shouldBe FILE_ENCODE_DEFAULT.toString
     definition.editable() shouldBe true
     definition.internal() shouldBe false
-    definition.reference() shouldBe "NONE"
-    definition.valueType() shouldBe SettingDefinition.Type.STRING.name()
+    definition.reference() shouldBe Reference.NONE
+    definition.valueType() shouldBe SettingDef.Type.STRING
   }
 
   @Test
@@ -122,35 +124,35 @@ class TestHDFSSinkDefinition extends WithBrokerWorker with Matchers {
     response
       .settings()
       .asScala
-      .filter(_.definition().key() == SettingDefinition.TOPIC_NAMES_DEFINITION.key())
+      .filter(_.definition().key() == ConnectorDefinitions.TOPIC_NAMES_DEFINITION.key())
       .head
       .definition()
       .required() shouldBe true
     response
       .settings()
       .asScala
-      .filter(_.definition().key() == SettingDefinition.CONNECTOR_CLASS_DEFINITION.key())
+      .filter(_.definition().key() == ConnectorDefinitions.CONNECTOR_CLASS_DEFINITION.key())
       .head
       .definition()
       .required() shouldBe true
     response
       .settings()
       .asScala
-      .filter(_.definition().key() == SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key())
+      .filter(_.definition().key() == ConnectorDefinitions.NUMBER_OF_TASKS_DEFINITION.key())
       .head
       .definition()
       .required() shouldBe true
     response
       .settings()
       .asScala
-      .filter(_.definition().key() == SettingDefinition.COLUMNS_DEFINITION.key())
+      .filter(_.definition().key() == ConnectorDefinitions.COLUMNS_DEFINITION.key())
       .head
       .definition()
       .required() shouldBe false
     response
       .settings()
       .asScala
-      .filter(_.definition().key() == SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key())
+      .filter(_.definition().key() == ConnectorDefinitions.WORKER_CLUSTER_NAME_DEFINITION.key())
       .head
       .definition()
       .required() shouldBe false

@@ -15,17 +15,16 @@
  */
 
 package com.island.ohara.it
-
-import com.island.ohara.kafka.connector.json.SettingDefinition
-import com.island.ohara.kafka.connector.json.SettingDefinition.Type
+import com.island.ohara.common.setting.SettingDef
+import com.island.ohara.common.setting.SettingDef.Type
 
 package object connector {
 
   /**
     * add some definitions for testing.
     */
-  val DUMB_SETTING_DEFINITIONS: Seq[SettingDefinition] = Seq(
-    SettingDefinition
+  val DUMB_SETTING_DEFINITIONS: Seq[SettingDef] = Seq(
+    SettingDef
       .builder()
       .displayName("dumb boolean")
       .key("dumb.boolean")
@@ -33,15 +32,7 @@ package object connector {
       .documentation("boolean for testing")
       .optional("false")
       .build(),
-    SettingDefinition
-      .builder()
-      .displayName("dumb boolean")
-      .key("dumb.boolean")
-      .valueType(Type.BOOLEAN)
-      .documentation("boolean for testing")
-      .optional("false")
-      .build(),
-    SettingDefinition
+    SettingDef
       .builder()
       .displayName("dumb short")
       .key("dumb.short")
@@ -49,7 +40,7 @@ package object connector {
       .documentation("short for testing")
       .optional("10")
       .build(),
-    SettingDefinition
+    SettingDef
       .builder()
       .displayName("dumb integer")
       .key("dumb.integer")
@@ -57,7 +48,7 @@ package object connector {
       .documentation("integer for testing")
       .optional("10")
       .build(),
-    SettingDefinition
+    SettingDef
       .builder()
       .displayName("dumb long")
       .key("dumb.long")
@@ -65,7 +56,7 @@ package object connector {
       .documentation("long for testing")
       .optional("10")
       .build(),
-    SettingDefinition
+    SettingDef
       .builder()
       .displayName("dumb double")
       .key("dumb.double")
@@ -73,7 +64,7 @@ package object connector {
       .documentation("double for testing")
       .optional("10")
       .build(),
-    SettingDefinition
+    SettingDef
       .builder()
       .displayName("dumb array")
       .key("dumb.array")
@@ -81,7 +72,7 @@ package object connector {
       .documentation("array for testing")
       .optional()
       .build(),
-    SettingDefinition
+    SettingDef
       .builder()
       .displayName("dumb password")
       .key("dumb.password")
@@ -89,7 +80,7 @@ package object connector {
       .documentation("password for testing")
       .optional()
       .build(),
-    SettingDefinition
+    SettingDef
       .builder()
       .displayName("dumb jdbc table")
       .key("dumb.jdbc.table")
@@ -97,7 +88,7 @@ package object connector {
       .documentation("jdbc table for testing")
       .optional()
       .build(),
-    SettingDefinition
+    SettingDef
       .builder()
       .displayName("dumb duration")
       .key("dumb.duration")
@@ -105,7 +96,7 @@ package object connector {
       .documentation("duration for testing")
       .optional(java.time.Duration.ofSeconds(30).toString)
       .build(),
-    SettingDefinition
+    SettingDef
       .builder()
       .displayName("dumb port")
       .key("dumb.port")

@@ -26,7 +26,7 @@ import com.island.ohara.kafka.Producer;
 import com.island.ohara.metrics.BeanChannel;
 import com.island.ohara.streams.OStream;
 import com.island.ohara.streams.StreamApp;
-import com.island.ohara.streams.config.ConfigDef;
+import com.island.ohara.streams.config.StreamDefinitions;
 import com.island.ohara.streams.metric.MetricFactory;
 import com.island.ohara.testing.WithBroker;
 import java.time.Duration;
@@ -119,7 +119,7 @@ public class TestSimpleStreamCounter extends WithBroker {
     }
 
     @Override
-    public void start(OStream<Row> stream, ConfigDef configDef) {
+    public void start(OStream<Row> stream, StreamDefinitions streamDefinitions) {
       // We initial a new OStream object to test functionality
       OStream<Row> ostream =
           OStream.builder()

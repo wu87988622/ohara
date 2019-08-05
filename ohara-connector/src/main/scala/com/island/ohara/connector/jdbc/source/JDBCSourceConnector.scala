@@ -16,7 +16,7 @@
 
 package com.island.ohara.connector.jdbc.source
 
-import com.island.ohara.kafka.connector.json.SettingDefinition
+import com.island.ohara.common.setting.SettingDef
 import com.island.ohara.kafka.connector._
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -89,79 +89,79 @@ class JDBCSourceConnector extends RowSourceConnector {
       throw new IllegalArgumentException("Your column name input error, Please checkout your column name.")
   }
 
-  override protected def _definitions(): java.util.List[SettingDefinition] = Seq(
-    SettingDefinition
+  override protected def _definitions(): java.util.List[SettingDef] = Seq(
+    SettingDef
       .builder()
       .displayName("jdbc url")
       .documentation("Connection database url")
-      .valueType(SettingDefinition.Type.STRING)
+      .valueType(SettingDef.Type.STRING)
       .key(DB_URL)
       .build(),
-    SettingDefinition
+    SettingDef
       .builder()
       .displayName("user name")
       .documentation("Connection database user name")
-      .valueType(SettingDefinition.Type.STRING)
+      .valueType(SettingDef.Type.STRING)
       .key(DB_USERNAME)
       .build(),
-    SettingDefinition
+    SettingDef
       .builder()
       .displayName("password")
       .documentation("Connection database user password")
-      .valueType(SettingDefinition.Type.PASSWORD)
+      .valueType(SettingDef.Type.PASSWORD)
       .key(DB_PASSWORD)
       .build(),
-    SettingDefinition
+    SettingDef
       .builder()
       .displayName("table name")
       .documentation("write to topic from database table name")
-      .valueType(SettingDefinition.Type.JDBC_TABLE)
+      .valueType(SettingDef.Type.JDBC_TABLE)
       .key(DB_TABLENAME)
       .build(),
-    SettingDefinition
+    SettingDef
       .builder()
       .displayName("catalog pattern")
       .documentation("database metadata catalog")
-      .valueType(SettingDefinition.Type.STRING)
+      .valueType(SettingDef.Type.STRING)
       .key(DB_CATALOG_PATTERN)
       .optional()
       .build(),
-    SettingDefinition
+    SettingDef
       .builder()
       .displayName("schema pattern")
       .documentation("database metadata schema pattern")
-      .valueType(SettingDefinition.Type.STRING)
+      .valueType(SettingDef.Type.STRING)
       .key(DB_SCHEMA_PATTERN)
       .optional()
       .build(),
-    SettingDefinition
+    SettingDef
       .builder()
       .displayName("mode")
       .documentation("Only support timestamp column")
-      .valueType(SettingDefinition.Type.STRING)
+      .valueType(SettingDef.Type.STRING)
       .key(MODE)
       .optional(MODE_DEFAULT)
       .build(),
-    SettingDefinition
+    SettingDef
       .builder()
       .displayName("timestamp column name")
       .documentation("Use a timestamp column to detect new and modified rows")
-      .valueType(SettingDefinition.Type.STRING)
+      .valueType(SettingDef.Type.STRING)
       .key(TIMESTAMP_COLUMN_NAME)
       .build(),
-    SettingDefinition
+    SettingDef
       .builder()
       .displayName("JDBC fetch size")
       .documentation("Setting JDBC fetch data size for ResultSet")
-      .valueType(SettingDefinition.Type.INT)
+      .valueType(SettingDef.Type.INT)
       .key(JDBC_FETCHDATA_SIZE)
       .optional(String.valueOf(JDBC_FETCHDATA_SIZE_DEFAULT))
       .build(),
-    SettingDefinition
+    SettingDef
       .builder()
       .displayName("JDBC flush size")
       .documentation("Setting Data flush to topic size")
-      .valueType(SettingDefinition.Type.INT)
+      .valueType(SettingDef.Type.INT)
       .key(JDBC_FLUSHDATA_SIZE)
       .optional(String.valueOf(JDBC_FLUSHDATA_SIZE_DEFAULT))
       .build()

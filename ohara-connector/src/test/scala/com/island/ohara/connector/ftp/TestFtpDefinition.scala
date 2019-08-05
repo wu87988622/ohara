@@ -18,7 +18,7 @@ package com.island.ohara.connector.ftp
 
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.json.{ConnectorKey, SettingDefinition, TopicKey}
+import com.island.ohara.kafka.connector.json.{ConnectorKey, ConnectorDefinitions, TopicKey}
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.Test
 import org.scalatest.Matchers
@@ -50,35 +50,35 @@ class TestFtpDefinition extends WithBrokerWorker with Matchers {
     response
       .settings()
       .asScala
-      .filter(_.definition().key() == SettingDefinition.TOPIC_NAMES_DEFINITION.key())
+      .filter(_.definition().key() == ConnectorDefinitions.TOPIC_NAMES_DEFINITION.key())
       .head
       .definition()
       .required() shouldBe true
     response
       .settings()
       .asScala
-      .filter(_.definition().key() == SettingDefinition.CONNECTOR_CLASS_DEFINITION.key())
+      .filter(_.definition().key() == ConnectorDefinitions.CONNECTOR_CLASS_DEFINITION.key())
       .head
       .definition()
       .required() shouldBe true
     response
       .settings()
       .asScala
-      .filter(_.definition().key() == SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key())
+      .filter(_.definition().key() == ConnectorDefinitions.NUMBER_OF_TASKS_DEFINITION.key())
       .head
       .definition()
       .required() shouldBe true
     response
       .settings()
       .asScala
-      .filter(_.definition().key() == SettingDefinition.COLUMNS_DEFINITION.key())
+      .filter(_.definition().key() == ConnectorDefinitions.COLUMNS_DEFINITION.key())
       .head
       .definition()
       .required() shouldBe false
     response
       .settings()
       .asScala
-      .filter(_.definition().key() == SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key())
+      .filter(_.definition().key() == ConnectorDefinitions.WORKER_CLUSTER_NAME_DEFINITION.key())
       .head
       .definition()
       .required() shouldBe false
@@ -103,35 +103,35 @@ class TestFtpDefinition extends WithBrokerWorker with Matchers {
     response
       .settings()
       .asScala
-      .filter(_.definition().key() == SettingDefinition.TOPIC_NAMES_DEFINITION.key())
+      .filter(_.definition().key() == ConnectorDefinitions.TOPIC_NAMES_DEFINITION.key())
       .head
       .definition()
       .required() shouldBe true
     response
       .settings()
       .asScala
-      .filter(_.definition().key() == SettingDefinition.CONNECTOR_CLASS_DEFINITION.key())
+      .filter(_.definition().key() == ConnectorDefinitions.CONNECTOR_CLASS_DEFINITION.key())
       .head
       .definition()
       .required() shouldBe true
     response
       .settings()
       .asScala
-      .filter(_.definition().key() == SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key())
+      .filter(_.definition().key() == ConnectorDefinitions.NUMBER_OF_TASKS_DEFINITION.key())
       .head
       .definition()
       .required() shouldBe true
     response
       .settings()
       .asScala
-      .filter(_.definition().key() == SettingDefinition.COLUMNS_DEFINITION.key())
+      .filter(_.definition().key() == ConnectorDefinitions.COLUMNS_DEFINITION.key())
       .head
       .definition()
       .required() shouldBe false
     response
       .settings()
       .asScala
-      .filter(_.definition().key() == SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key())
+      .filter(_.definition().key() == ConnectorDefinitions.WORKER_CLUSTER_NAME_DEFINITION.key())
       .head
       .definition()
       .required() shouldBe false

@@ -19,7 +19,7 @@ package com.island.ohara.streams.ostream;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.streams.OStream;
 import com.island.ohara.streams.StreamApp;
-import com.island.ohara.streams.config.ConfigDef;
+import com.island.ohara.streams.config.StreamDefinitions;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.concurrent.CountDownLatch;
@@ -63,29 +63,29 @@ public class LaunchImpl {
 
                   Method method =
                       clz.getSuperclass().getDeclaredMethod(StreamsConfig.STREAMAPP_CONFIG_NAME);
-                  ConfigDef configDef = (ConfigDef) method.invoke(theApp);
+                  StreamDefinitions streamDefinitions = (StreamDefinitions) method.invoke(theApp);
 
                   if (params != null
                       && params.length == 1
                       && params[0].equals(StreamsConfig.STREAMAPP_DRY_RUN)) {
-                    System.out.println(configDef.toString());
+                    System.out.println(streamDefinitions.toString());
                   } else {
                     OStream<Row> ostream =
                         OStream.builder()
-                            .appid(configDef.get(StreamsConfig.STREAMAPP_APPID))
+                            .appid(streamDefinitions.get(StreamsConfig.STREAMAPP_APPID))
                             .bootstrapServers(
-                                configDef.get(StreamsConfig.STREAMAPP_BOOTSTRAP_SERVERS))
+                                streamDefinitions.get(StreamsConfig.STREAMAPP_BOOTSTRAP_SERVERS))
                             .fromTopicWith(
-                                configDef.get(StreamsConfig.STREAMAPP_FROM_TOPICS),
+                                streamDefinitions.get(StreamsConfig.STREAMAPP_FROM_TOPICS),
                                 Serdes.ROW,
                                 Serdes.BYTES)
                             .toTopicWith(
-                                configDef.get(StreamsConfig.STREAMAPP_TO_TOPICS),
+                                streamDefinitions.get(StreamsConfig.STREAMAPP_TO_TOPICS),
                                 Serdes.ROW,
                                 Serdes.BYTES)
                             .build();
                     theApp.init();
-                    theApp.start(ostream, configDef);
+                    theApp.start(ostream, streamDefinitions);
                   }
                 }
               } catch (RuntimeException e) {

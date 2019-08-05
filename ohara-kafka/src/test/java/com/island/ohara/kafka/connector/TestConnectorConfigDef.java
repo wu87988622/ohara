@@ -17,7 +17,7 @@
 package com.island.ohara.kafka.connector;
 
 import com.island.ohara.common.rule.SmallTest;
-import com.island.ohara.kafka.connector.json.SettingDefinition;
+import com.island.ohara.kafka.connector.json.ConnectorDefinitions;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -27,25 +27,27 @@ public class TestConnectorConfigDef extends SmallTest {
   public void testVersion() {
     DumbSink sink = new DumbSink();
     Assert.assertNotNull(
-        sink.config().configKeys().get(SettingDefinition.VERSION_DEFINITION.key()));
+        sink.config().configKeys().get(ConnectorDefinitions.VERSION_DEFINITION.key()));
   }
 
   @Test
   public void testRevision() {
     DumbSink sink = new DumbSink();
     Assert.assertNotNull(
-        sink.config().configKeys().get(SettingDefinition.REVISION_DEFINITION.key()));
+        sink.config().configKeys().get(ConnectorDefinitions.REVISION_DEFINITION.key()));
   }
 
   @Test
   public void testAuthor() {
     DumbSink sink = new DumbSink();
-    Assert.assertNotNull(sink.config().configKeys().get(SettingDefinition.AUTHOR_DEFINITION.key()));
+    Assert.assertNotNull(
+        sink.config().configKeys().get(ConnectorDefinitions.AUTHOR_DEFINITION.key()));
   }
 
   @Test
   public void testKind() {
     DumbSink sink = new DumbSink();
-    Assert.assertNotNull(sink.config().configKeys().get(SettingDefinition.KIND_DEFINITION.key()));
+    Assert.assertNotNull(
+        sink.config().configKeys().get(ConnectorDefinitions.KIND_DEFINITION.key()));
   }
 }

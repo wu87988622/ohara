@@ -18,7 +18,7 @@ package com.island.ohara.streams;
 
 import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Row;
-import com.island.ohara.streams.config.ConfigDef;
+import com.island.ohara.streams.config.StreamDefinitions;
 
 public class SimpleApplicationForOharaEnv extends StreamApp {
   /**
@@ -26,7 +26,7 @@ public class SimpleApplicationForOharaEnv extends StreamApp {
    * into a jar, and uploading by API or Ohara UI
    */
   @Override
-  public void start(OStream<Row> ostream, ConfigDef configDef) {
+  public void start(OStream<Row> ostream, StreamDefinitions streamDefinitions) {
 
     // A simple sample to illustrate how to use OStream
     // for example :

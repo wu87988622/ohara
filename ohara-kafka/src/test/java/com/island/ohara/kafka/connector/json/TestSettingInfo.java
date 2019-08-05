@@ -19,6 +19,7 @@ package com.island.ohara.kafka.connector.json;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.util.CommonUtils;
 import java.io.IOException;
 import java.util.Collections;
@@ -35,7 +36,7 @@ public class TestSettingInfo extends SmallTest {
         SettingInfo.of(
             Collections.singletonList(
                 Setting.of(
-                    SettingDefinition.builder().key(CommonUtils.randomString()).build(),
+                    SettingDef.builder().key(CommonUtils.randomString()).build(),
                     SettingValue.of(
                         CommonUtils.randomString(),
                         CommonUtils.randomString(),
@@ -51,7 +52,7 @@ public class TestSettingInfo extends SmallTest {
   public void testGetter() {
     Setting setting =
         Setting.of(
-            SettingDefinition.builder().key(CommonUtils.randomString()).build(),
+            SettingDef.builder().key(CommonUtils.randomString()).build(),
             SettingValue.of(
                 CommonUtils.randomString(), CommonUtils.randomString(), Collections.emptyList()));
     String name = CommonUtils.randomString();
@@ -86,7 +87,7 @@ public class TestSettingInfo extends SmallTest {
   public void testOfSettings() {
     Setting setting =
         Setting.of(
-            SettingDefinition.builder().key(CommonUtils.randomString()).build(),
+            SettingDef.builder().key(CommonUtils.randomString()).build(),
             SettingValue.of(
                 CommonUtils.randomString(),
                 CommonUtils.randomString(),

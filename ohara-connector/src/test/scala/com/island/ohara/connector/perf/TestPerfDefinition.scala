@@ -17,8 +17,10 @@
 package com.island.ohara.connector.perf
 
 import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.common.setting.SettingDef
+import com.island.ohara.common.setting.SettingDef.Reference
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.json.{ConnectorKey, SettingDefinition, TopicKey}
+import com.island.ohara.kafka.connector.json.{ConnectorDefinitions, ConnectorKey, TopicKey}
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.Test
 import org.scalatest.Matchers
@@ -39,8 +41,8 @@ class TestPerfDefinition extends WithBrokerWorker with Matchers {
     definition.defaultValue shouldBe "10"
     definition.editable() shouldBe true
     definition.internal() shouldBe false
-    definition.reference() shouldBe "NONE"
-    definition.valueType() shouldBe SettingDefinition.Type.INT.name()
+    definition.reference() shouldBe Reference.NONE
+    definition.valueType() shouldBe SettingDef.Type.INT
   }
 
   @Test
@@ -50,8 +52,8 @@ class TestPerfDefinition extends WithBrokerWorker with Matchers {
     definition.defaultValue shouldBe "PT1S"
     definition.editable() shouldBe true
     definition.internal() shouldBe false
-    definition.reference() shouldBe "NONE"
-    definition.valueType() shouldBe SettingDefinition.Type.DURATION.name()
+    definition.reference() shouldBe Reference.NONE
+    definition.valueType() shouldBe SettingDef.Type.DURATION
   }
 
   @Test
@@ -70,35 +72,35 @@ class TestPerfDefinition extends WithBrokerWorker with Matchers {
     response
       .settings()
       .asScala
-      .filter(_.definition().key() == SettingDefinition.TOPIC_NAMES_DEFINITION.key())
+      .filter(_.definition().key() == ConnectorDefinitions.TOPIC_NAMES_DEFINITION.key())
       .head
       .definition()
       .required() shouldBe true
     response
       .settings()
       .asScala
-      .filter(_.definition().key() == SettingDefinition.CONNECTOR_CLASS_DEFINITION.key())
+      .filter(_.definition().key() == ConnectorDefinitions.CONNECTOR_CLASS_DEFINITION.key())
       .head
       .definition()
       .required() shouldBe true
     response
       .settings()
       .asScala
-      .filter(_.definition().key() == SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key())
+      .filter(_.definition().key() == ConnectorDefinitions.NUMBER_OF_TASKS_DEFINITION.key())
       .head
       .definition()
       .required() shouldBe true
     response
       .settings()
       .asScala
-      .filter(_.definition().key() == SettingDefinition.COLUMNS_DEFINITION.key())
+      .filter(_.definition().key() == ConnectorDefinitions.COLUMNS_DEFINITION.key())
       .head
       .definition()
       .required() shouldBe false
     response
       .settings()
       .asScala
-      .filter(_.definition().key() == SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key())
+      .filter(_.definition().key() == ConnectorDefinitions.WORKER_CLUSTER_NAME_DEFINITION.key())
       .head
       .definition()
       .required() shouldBe false

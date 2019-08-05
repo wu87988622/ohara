@@ -20,7 +20,7 @@ import java.util
 
 import com.island.ohara.client.ftp.FtpClient
 import com.island.ohara.common.data.Column
-import com.island.ohara.kafka.connector.json.SettingDefinition
+import com.island.ohara.common.setting.SettingDef
 import com.island.ohara.kafka.connector.{ConnectorVersion, RowSourceConnector, RowSourceTask, TaskSetting}
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -76,65 +76,65 @@ class FtpSource extends RowSourceConnector {
 
   override protected def _version: ConnectorVersion = ConnectorVersion.DEFAULT
 
-  override protected def _definitions(): util.List[SettingDefinition] = Seq(
-    SettingDefinition
+  override protected def _definitions(): util.List[SettingDef] = Seq(
+    SettingDef
       .builder()
       .displayName("input folder")
       .documentation("ftp source connector will load csv file from this folder")
-      .valueType(SettingDefinition.Type.STRING)
+      .valueType(SettingDef.Type.STRING)
       .key(FTP_INPUT)
       .build(),
-    SettingDefinition
+    SettingDef
       .builder()
       .displayName("completed folder")
       .documentation("this folder is used to store the completed files. If you don't define a folder," +
         " all completed files will be deleted from ftp server")
-      .valueType(SettingDefinition.Type.STRING)
+      .valueType(SettingDef.Type.STRING)
       .optional()
       .key(FTP_COMPLETED_FOLDER)
       .build(),
-    SettingDefinition
+    SettingDef
       .builder()
       .displayName("error folder")
       .documentation("this folder is used to keep the invalid file. For example, non-csv file")
-      .valueType(SettingDefinition.Type.STRING)
+      .valueType(SettingDef.Type.STRING)
       .key(FTP_ERROR)
       .build(),
-    SettingDefinition
+    SettingDef
       .builder()
       .displayName("csv file encode")
       .documentation("The encode is used to parse input csv files")
-      .valueType(SettingDefinition.Type.STRING)
+      .valueType(SettingDef.Type.STRING)
       .key(FTP_ENCODE)
       .optional(FTP_ENCODE_DEFAULT)
       .build(),
-    SettingDefinition
+    SettingDef
       .builder()
       .displayName("hostname of ftp server")
       .documentation("hostname of ftp server")
-      .valueType(SettingDefinition.Type.STRING)
+      .valueType(SettingDef.Type.STRING)
       .key(FTP_HOSTNAME)
       .build(),
-    SettingDefinition
+    SettingDef
       .builder()
       .displayName("port of ftp server")
       .documentation("port of ftp server")
-      .valueType(SettingDefinition.Type.PORT)
+      .valueType(SettingDef.Type.PORT)
       .key(FTP_PORT)
       .build(),
-    SettingDefinition
+    SettingDef
       .builder()
       .displayName("user of ftp server")
       .documentation(
         "user of ftp server. This account must have read/delete permission of input folder and error folder")
-      .valueType(SettingDefinition.Type.STRING)
+      .valueType(SettingDef.Type.STRING)
       .key(FTP_USER_NAME)
       .build(),
-    SettingDefinition
+    SettingDef
       .builder()
       .displayName("password of ftp server")
       .documentation("password of ftp server")
-      .valueType(SettingDefinition.Type.PASSWORD)
+      .valueType(SettingDef.Type.PASSWORD)
       .key(FTP_PASSWORD)
       .build(),
   ).asJava

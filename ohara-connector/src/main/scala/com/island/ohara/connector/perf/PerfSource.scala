@@ -16,7 +16,7 @@
 
 package com.island.ohara.connector.perf
 import com.island.ohara.common.annotations.VisibleForTesting
-import com.island.ohara.kafka.connector.json.SettingDefinition
+import com.island.ohara.common.setting.SettingDef
 import com.island.ohara.kafka.connector.{ConnectorVersion, RowSourceConnector, RowSourceTask, TaskSetting}
 
 import scala.collection.JavaConverters._
@@ -41,20 +41,20 @@ class PerfSource extends RowSourceConnector {
 
   override protected def _stop(): Unit = {}
 
-  override protected def _definitions(): java.util.List[SettingDefinition] = Seq(
-    SettingDefinition
+  override protected def _definitions(): java.util.List[SettingDef] = Seq(
+    SettingDef
       .builder()
       .displayName("Batch")
       .documentation("The batch of perf")
-      .valueType(SettingDefinition.Type.INT)
+      .valueType(SettingDef.Type.INT)
       .key(PERF_BATCH)
       .optional(DEFAULT_BATCH.toString)
       .build(),
-    SettingDefinition
+    SettingDef
       .builder()
       .displayName("Frequence")
       .documentation("The frequence of perf")
-      .valueType(SettingDefinition.Type.DURATION)
+      .valueType(SettingDef.Type.DURATION)
       .key(PERF_FREQUENCE)
       .optional(toJavaDuration(DEFAULT_FREQUENCE).toString)
       .build(),

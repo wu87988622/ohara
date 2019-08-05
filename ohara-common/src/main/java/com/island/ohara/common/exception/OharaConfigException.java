@@ -14,14 +14,24 @@
  * limitations under the License.
  */
 
-package com.island.ohara.kafka.connector;
+package com.island.ohara.common.exception;
 
-import com.island.ohara.common.setting.SettingDef;
-import java.util.List;
+public class OharaConfigException extends RuntimeException {
 
-/** An interface to declare it has definitions. */
-@FunctionalInterface
-public interface WithDefinitions {
-  /** @return a unmodifiable collection of definitions */
-  List<SettingDef> definitions();
+  private static final long serialVersionUID = 1L;
+
+  public OharaConfigException(String message) {
+    super(message);
+  }
+
+  public OharaConfigException(String name, Object value) {
+    this(name, value, null);
+  }
+
+  public OharaConfigException(String name, Object value, String message) {
+    super(
+        String.format(
+            "Invalid value of [%s] for configuration [%s] :\n%s",
+            name, value, message == null ? "" : message));
+  }
 }

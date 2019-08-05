@@ -21,7 +21,7 @@ import com.island.ohara.common.data.Pair;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.streams.OStream;
 import com.island.ohara.streams.StreamApp;
-import com.island.ohara.streams.config.ConfigDef;
+import com.island.ohara.streams.config.StreamDefinitions;
 import com.island.ohara.streams.ostream.Conditions;
 import java.util.Collections;
 
@@ -97,7 +97,7 @@ import java.util.Collections;
  */
 public class PageViewRegionExample extends StreamApp {
   @Override
-  public void start(OStream<Row> ostream, ConfigDef configDef) {
+  public void start(OStream<Row> ostream, StreamDefinitions streamDefinitions) {
     ostream
         .leftJoin(
             "user-profiles",

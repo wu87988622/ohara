@@ -17,7 +17,8 @@
 package com.island.ohara.connector.ftp
 
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.kafka.connector.json.SettingDefinition
+import com.island.ohara.common.setting.SettingDef
+import com.island.ohara.common.setting.SettingDef.Reference
 import org.junit.Test
 import org.scalatest.Matchers
 
@@ -33,8 +34,8 @@ class TestFtpSinkDefinitions extends SmallTest with Matchers {
     definition.defaultValue() shouldBe null
     definition.editable() shouldBe true
     definition.internal() shouldBe false
-    definition.reference() shouldBe "NONE"
-    definition.valueType() shouldBe SettingDefinition.Type.STRING.name()
+    definition.reference() shouldBe Reference.NONE
+    definition.valueType() shouldBe SettingDef.Type.STRING
   }
 
   @Test
@@ -44,8 +45,8 @@ class TestFtpSinkDefinitions extends SmallTest with Matchers {
     definition.defaultValue() shouldBe null
     definition.editable() shouldBe true
     definition.internal() shouldBe false
-    definition.reference() shouldBe "NONE"
-    definition.valueType() shouldBe SettingDefinition.Type.BOOLEAN.name()
+    definition.reference() shouldBe Reference.NONE
+    definition.valueType() shouldBe SettingDef.Type.BOOLEAN
   }
 
   @Test
@@ -55,8 +56,8 @@ class TestFtpSinkDefinitions extends SmallTest with Matchers {
     definition.defaultValue() shouldBe "UTF-8"
     definition.editable() shouldBe true
     definition.internal() shouldBe false
-    definition.reference() shouldBe "NONE"
-    definition.valueType() shouldBe SettingDefinition.Type.STRING.name()
+    definition.reference() shouldBe Reference.NONE
+    definition.valueType() shouldBe SettingDef.Type.STRING
   }
 
   @Test
@@ -66,8 +67,8 @@ class TestFtpSinkDefinitions extends SmallTest with Matchers {
     definition.defaultValue() shouldBe null
     definition.editable() shouldBe true
     definition.internal() shouldBe false
-    definition.reference() shouldBe "NONE"
-    definition.valueType() shouldBe SettingDefinition.Type.STRING.name()
+    definition.reference() shouldBe Reference.NONE
+    definition.valueType() shouldBe SettingDef.Type.STRING
   }
 
   @Test
@@ -77,8 +78,8 @@ class TestFtpSinkDefinitions extends SmallTest with Matchers {
     definition.defaultValue() shouldBe null
     definition.editable() shouldBe true
     definition.internal() shouldBe false
-    definition.reference() shouldBe "NONE"
-    definition.valueType() shouldBe SettingDefinition.Type.PORT.name()
+    definition.reference() shouldBe Reference.NONE
+    definition.valueType() shouldBe SettingDef.Type.PORT
   }
 
   @Test
@@ -88,8 +89,8 @@ class TestFtpSinkDefinitions extends SmallTest with Matchers {
     definition.defaultValue() shouldBe null
     definition.editable() shouldBe true
     definition.internal() shouldBe false
-    definition.reference() shouldBe "NONE"
-    definition.valueType() shouldBe SettingDefinition.Type.STRING.name()
+    definition.reference() shouldBe Reference.NONE
+    definition.valueType() shouldBe SettingDef.Type.STRING
   }
 
   @Test
@@ -99,7 +100,7 @@ class TestFtpSinkDefinitions extends SmallTest with Matchers {
     definition.defaultValue() shouldBe null
     definition.editable() shouldBe true
     definition.internal() shouldBe false
-    definition.reference() shouldBe "NONE"
-    definition.valueType() shouldBe SettingDefinition.Type.PASSWORD.name()
+    definition.reference() shouldBe Reference.NONE
+    definition.valueType() shouldBe SettingDef.Type.PASSWORD
   }
 }

@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.island.ohara.common.json.JsonObject;
 import com.island.ohara.common.json.JsonUtils;
+import com.island.ohara.common.setting.SettingDef;
 import java.util.Objects;
 import org.apache.kafka.connect.runtime.rest.entities.ConfigInfo;
 
@@ -36,30 +37,30 @@ public final class Setting implements JsonObject {
 
   public static Setting of(ConfigInfo configInfo) {
     return of(
-        SettingDefinition.of(configInfo.configKey()), SettingValue.of(configInfo.configValue()));
+        ConnectorDefinitions.of(configInfo.configKey()), SettingValue.of(configInfo.configValue()));
   }
 
   public static Setting ofJson(String json) {
     return JsonUtils.toObject(json, new TypeReference<Setting>() {});
   }
 
-  public static Setting of(SettingDefinition definition, SettingValue value) {
+  public static Setting of(SettingDef definition, SettingValue value) {
     return new Setting(definition, value);
   }
 
-  private final SettingDefinition definition;
+  private final SettingDef definition;
   private final SettingValue value;
 
   @JsonCreator
   private Setting(
-      @JsonProperty(DEFINITION_KEY) SettingDefinition definition,
+      @JsonProperty(DEFINITION_KEY) SettingDef definition,
       @JsonProperty(VALUE_KEY) SettingValue value) {
     this.definition = Objects.requireNonNull(definition);
     this.value = Objects.requireNonNull(value);
   }
 
   @JsonProperty(DEFINITION_KEY)
-  public SettingDefinition definition() {
+  public SettingDef definition() {
     return definition;
   }
 

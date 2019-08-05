@@ -20,8 +20,9 @@ import java.util.Objects
 
 import com.island.ohara.client.configurator.v0.FileInfoApi._
 import com.island.ohara.common.annotations.Optional
+import com.island.ohara.common.setting.SettingDef
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
-import com.island.ohara.kafka.connector.json.{ObjectKey, SettingDefinition, SettingDefinitions}
+import com.island.ohara.kafka.connector.json.{ObjectKey, ConnectorDefinitions}
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsArray, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
@@ -125,17 +126,17 @@ object WorkerApi {
   /**
     * exposed to configurator
     */
-  private[ohara] implicit val SETTING_DEFINITION_JSON_FORMAT: RootJsonFormat[SettingDefinition] =
-    new RootJsonFormat[SettingDefinition] {
+  private[ohara] implicit val SETTING_DEFINITION_JSON_FORMAT: RootJsonFormat[SettingDef] =
+    new RootJsonFormat[SettingDef] {
       import spray.json._
-      override def read(json: JsValue): SettingDefinition = SettingDefinition.ofJson(json.toString())
+      override def read(json: JsValue): SettingDef = SettingDef.ofJson(json.toString())
 
-      override def write(obj: SettingDefinition): JsValue = obj.toJsonString.parseJson
+      override def write(obj: SettingDef): JsValue = obj.toJsonString.parseJson
     }
 
-  final case class ConnectorDefinition private[WorkerApi] (className: String, definitions: Seq[SettingDefinition]) {
+  final case class ConnectorDefinition private[WorkerApi] (className: String, definitions: Seq[SettingDef]) {
     import scala.collection.JavaConverters._
-    def kind: String = SettingDefinitions.kind(definitions.asJava)
+    def kind: String = ConnectorDefinitions.kind(definitions.asJava)
   }
   private[this] implicit val CONNECTION_DEFINITIONS_JSON_FORMAT: RootJsonFormat[ConnectorDefinition] = jsonFormat2(
     ConnectorDefinition)

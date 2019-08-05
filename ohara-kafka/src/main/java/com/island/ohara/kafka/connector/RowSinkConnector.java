@@ -18,8 +18,8 @@ package com.island.ohara.kafka.connector;
 
 import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.annotations.VisibleForTesting;
-import com.island.ohara.kafka.connector.json.SettingDefinition;
-import com.island.ohara.kafka.connector.json.SettingDefinitions;
+import com.island.ohara.common.setting.SettingDef;
+import com.island.ohara.kafka.connector.json.ConnectorDefinitions;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +66,7 @@ public abstract class RowSinkConnector extends SinkConnector implements WithDefi
    *
    * @return The ConfigDef for this connector.
    */
-  protected List<SettingDefinition> _definitions() {
+  protected List<SettingDef> _definitions() {
     return Collections.emptyList();
   }
 
@@ -118,12 +118,12 @@ public abstract class RowSinkConnector extends SinkConnector implements WithDefi
 
   /** @return custom definitions + core definitions */
   @Override
-  public final List<SettingDefinition> definitions() {
+  public final List<SettingDef> definitions() {
     return ConnectorUtils.toSettingDefinitions(
         Stream.of(
-                Collections.singletonList(SettingDefinition.SINK_KIND_DEFINITION),
+                Collections.singletonList(ConnectorDefinitions.SINK_KIND_DEFINITION),
                 _definitions(),
-                SettingDefinitions.DEFINITIONS_DEFAULT)
+                ConnectorDefinitions.DEFINITIONS_DEFAULT)
             .flatMap(List::stream)
             .collect(Collectors.toList()),
         _version());

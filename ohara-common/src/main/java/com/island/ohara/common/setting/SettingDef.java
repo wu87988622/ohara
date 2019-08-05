@@ -21,20 +21,39 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.island.ohara.common.annotations.Nullable;
 import com.island.ohara.common.annotations.Optional;
+import com.island.ohara.common.exception.OharaConfigException;
 import com.island.ohara.common.json.JsonObject;
 import com.island.ohara.common.json.JsonUtils;
 import com.island.ohara.common.util.CommonUtils;
-import java.util.*;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Consumer;
 
-/** This class is used to define the setting of ohara object. */
-public class SettingDef implements JsonObject {
+/**
+ * This class is the base class to define configuration for ohara object.
+ *
+ * <p>SettingDef is stored by Configurator Store now, and the serialization is based on java
+ * serializable. Hence, we add this Serializable interface here.
+ */
+public class SettingDef implements JsonObject, Serializable {
+  private static final long serialVersionUID = 1L;
+  // -------------------------------[groups]-------------------------------//
+  public static final String COMMON_GROUP = "common";
+  public static final String ORDER_KEY = "order";
+  public static final String COLUMN_NAME_KEY = "name";
+  public static final String COLUMN_NEW_NAME_KEY = "newName";
+  public static final String COLUMN_DATA_TYPE_KEY = "dataType";
   // -------------------------------[reference]-------------------------------//
   public enum Reference {
     NONE,
     TOPIC,
     WORKER_CLUSTER
   }
-  // -------------------------------[type]-----------------------------------//
+
+  // -------------------------------[type]-------------------------------//
   public enum Type {
     BOOLEAN,
     STRING,
@@ -42,7 +61,8 @@ public class SettingDef implements JsonObject {
     INT,
     LONG,
     DOUBLE,
-    LIST,
+    /** ARRAY is a better naming than LIST as LIST has another meaning to ohara manager. */
+    ARRAY,
     CLASS,
     PASSWORD,
     /**
@@ -61,7 +81,16 @@ public class SettingDef implements JsonObject {
      */
     DURATION,
     /** The legal range for port is [1, 65535]. */
-    PORT
+    PORT,
+    /** [ { "group": "g", "name":" n" } ] */
+    TOPIC_KEYS,
+    /** { "group": "g0", "name": "n0" } */
+    CONNECTOR_KEY,
+    /**
+     * TAGS is a flexible type accepting a json representation. For example: { "k0": "v0", "k1":
+     * "v1", "k2": ["a0", "b0" ] }
+     */
+    TAGS,
   }
 
   // -------------------------------[key]-------------------------------//
@@ -77,6 +106,10 @@ public class SettingDef implements JsonObject {
   private static final String DOCUMENTATION_KEY = "documentation";
   private static final String INTERNAL_KEY = "internal";
   private static final String TABLE_KEYS_KEY = "tableKeys";
+
+  public static SettingDef ofJson(String json) {
+    return JsonUtils.toObject(json, new TypeReference<SettingDef>() {});
+  }
 
   private final String displayName;
   private final String group;
@@ -119,6 +152,73 @@ public class SettingDef implements JsonObject {
     // It is legal to ignore the display name.
     // However, we all hate null so we set the default value equal to key.
     this.displayName = CommonUtils.isEmpty(displayName) ? this.key : displayName;
+  }
+
+  /**
+   * Generate official checker according to input type.
+   *
+   * @return checker
+   */
+  public Consumer<Object> checker() {
+    switch (valueType) {
+      case TABLE:
+        return (Object value) -> {
+          if (value instanceof String) {
+            try {
+              PropGroups propGroups = PropGroups.ofJson((String) value);
+              if (tableKeys.isEmpty()) return;
+              propGroups
+                  .raw()
+                  .forEach(
+                      row ->
+                          tableKeys.forEach(
+                              tableKey -> {
+                                if (!row.containsKey(tableKey))
+                                  throw new IllegalArgumentException(
+                                      "table key:"
+                                          + tableKey
+                                          + " does not exist in row:"
+                                          + String.join(",", row.keySet()));
+                              }));
+
+            } catch (Exception e) {
+              throw new OharaConfigException(
+                  "the value:" + value + " can't be converted to PropGroups type");
+            }
+            // It is ok to convert the value from string to list<column>, thank God!
+          } else throw new OharaConfigException("the configured value must be string type");
+        };
+      case DURATION:
+        return (Object value) -> {
+          if (value instanceof String) {
+            try {
+              CommonUtils.toDuration((String) value);
+            } catch (Exception e) {
+              throw new OharaConfigException("can't be converted to Duration type");
+            }
+          } else throw new OharaConfigException("the configured value must be string type");
+        };
+      case PORT:
+        return (Object value) -> {
+          if (value instanceof Integer) {
+            try {
+              int port = (int) value;
+              if (!CommonUtils.isConnectionPort(port))
+                throw new OharaConfigException(
+                    "the legal range for port is [1, 65535], but actual port is " + port);
+            } catch (Exception e) {
+              throw new OharaConfigException("can't be converted to Integer type");
+            }
+          } else throw new OharaConfigException("the configured value must be Integer type");
+        };
+      case TAGS:
+        return (Object value) -> {
+          if (!(value instanceof String))
+            throw new OharaConfigException("the TAGS value must be String type");
+        };
+      default:
+        return (Object value) -> {};
+    }
   }
 
   @JsonProperty(INTERNAL_KEY)
@@ -199,18 +299,17 @@ public class SettingDef implements JsonObject {
     return toJsonString();
   }
 
-  public static SettingDef ofJson(String json) {
-    return JsonUtils.toObject(json, new TypeReference<SettingDef>() {});
-  }
-
   public static Builder builder() {
     return new Builder();
   }
 
+  public static Builder builder(SettingDef definition) {
+    return new Builder(definition);
+  }
+
   public static class Builder implements com.island.ohara.common.pattern.Builder<SettingDef> {
-    private Reference reference = Reference.NONE;
     private String displayName;
-    private String group;
+    private String group = COMMON_GROUP;
     private int orderInGroup = -1;
     private boolean editable = true;
     private String key;
@@ -218,27 +317,30 @@ public class SettingDef implements JsonObject {
     private boolean required = true;
     @Nullable private String defaultValue = null;
     private String documentation = "this is no documentation for this setting";
+    private Reference reference = Reference.NONE;
     private boolean internal = false;
     private List<String> tableKeys = Collections.emptyList();
 
     private Builder() {}
 
+    private Builder(SettingDef definition) {
+      this.displayName = definition.displayName;
+      this.group = definition.group;
+      this.orderInGroup = definition.orderInGroup;
+      this.editable = definition.editable;
+      this.key = definition.key;
+      this.valueType = definition.valueType;
+      this.required = definition.required;
+      this.defaultValue = definition.defaultValue;
+      this.documentation = definition.documentation;
+      this.reference = definition.reference;
+      this.internal = definition.internal;
+      this.tableKeys = definition.tableKeys;
+    }
+
     @Optional("default value is false")
     public Builder internal() {
       this.internal = true;
-      return this;
-    }
-
-    /**
-     * This property is required by ohara manager. There are some official setting having particular
-     * control on UI.
-     *
-     * @param reference reference
-     * @return this builder
-     */
-    @Optional("default is None")
-    public Builder reference(Reference reference) {
-      this.reference = Objects.requireNonNull(reference);
       return this;
     }
 
@@ -250,7 +352,7 @@ public class SettingDef implements JsonObject {
      */
     @Optional("default value is empty")
     public Builder tableKeys(List<String> tableKeys) {
-      this.tableKeys = CommonUtils.requireNonEmpty(tableKeys);
+      this.tableKeys = new ArrayList<>(CommonUtils.requireNonEmpty(tableKeys));
       return this;
     }
 
@@ -285,6 +387,20 @@ public class SettingDef implements JsonObject {
       return this;
     }
 
+    /**
+     * This property is required by ohara manager. There are some official setting having particular
+     * control on UI.
+     *
+     * @param reference the reference type
+     * @return this builder
+     */
+    @Optional("Using in Ohara Manager. Default is None")
+    public Builder reference(Reference reference) {
+      this.reference = Objects.requireNonNull(reference);
+      return this;
+    }
+
+    @Optional("default is common")
     public Builder group(String group) {
       this.group = CommonUtils.requireNonEmpty(group);
       return this;

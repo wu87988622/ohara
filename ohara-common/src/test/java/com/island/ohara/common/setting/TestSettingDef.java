@@ -16,8 +16,14 @@
 
 package com.island.ohara.common.setting;
 
+import com.island.ohara.common.exception.OharaConfigException;
 import com.island.ohara.common.rule.SmallTest;
 import com.island.ohara.common.util.CommonUtils;
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -79,28 +85,11 @@ public class TestSettingDef extends SmallTest {
   }
 
   @Test
-  public void testJson() {
-    SettingDef def =
-        SettingDef.builder()
-            .key(CommonUtils.randomString())
-            .displayName(CommonUtils.randomString())
-            .group(CommonUtils.randomString())
-            .documentation(CommonUtils.randomString())
-            .build();
-
-    Assert.assertEquals(def, SettingDef.ofJson(def.toString()));
-  }
-
-  @Test
-  public void testOnlyKeyAndGroup() {
+  public void testOnlyKey() {
     String key = CommonUtils.randomString(5);
-    String group = "default";
-    SettingDef def = SettingDef.builder().key(key).group(group).build();
+    SettingDef def = SettingDef.builder().key(key).build();
     Assert.assertEquals(key, def.key());
-    Assert.assertEquals(group, def.group());
     Assert.assertNotNull(def.displayName());
-    // default we use key as display name
-    Assert.assertEquals(def.key(), def.displayName());
     Assert.assertNotNull(def.documentation());
     Assert.assertNotNull(def.valueType());
     Assert.assertNotNull(def.group());
@@ -181,15 +170,76 @@ public class TestSettingDef extends SmallTest {
   }
 
   @Test
+  public void testTableChecker() {
+    SettingDef settingDef =
+        SettingDef.builder()
+            .key(CommonUtils.randomString())
+            .valueType(SettingDef.Type.TABLE)
+            .tableKeys(Arrays.asList("a", "b"))
+            .build();
+    assertException(Exception.class, () -> settingDef.checker().accept(null));
+    assertException(Exception.class, () -> settingDef.checker().accept(123));
+    assertException(Exception.class, () -> settingDef.checker().accept(Collections.emptyList()));
+    assertException(
+        Exception.class,
+        () ->
+            settingDef
+                .checker()
+                .accept(Collections.singletonList(Collections.singletonMap("a", "c"))));
+    settingDef
+        .checker()
+        .accept(
+            PropGroups.of(
+                    Collections.singletonList(
+                        settingDef.tableKeys().stream()
+                            .collect(Collectors.toMap(Function.identity(), Function.identity()))))
+                .toJsonString());
+  }
+
+  @Test
+  public void testDurationChecker() {
+    SettingDef settingDef =
+        SettingDef.builder()
+            .key(CommonUtils.randomString())
+            .valueType(SettingDef.Type.DURATION)
+            .build();
+    assertException(Exception.class, () -> settingDef.checker().accept(null));
+    assertException(Exception.class, () -> settingDef.checker().accept(123));
+    assertException(Exception.class, () -> settingDef.checker().accept(Collections.emptyList()));
+    settingDef.checker().accept(Duration.ofHours(3).toString());
+    settingDef.checker().accept("10 MILLISECONDS");
+    settingDef.checker().accept("10 SECONDS");
+  }
+
+  @Test
   public void testSetDisplayName() {
     String displayName = CommonUtils.randomString();
-    SettingDef def =
+    SettingDef settingDef =
         SettingDef.builder()
             .displayName(displayName)
             .key(CommonUtils.randomString())
-            .group(CommonUtils.randomString())
             .valueType(SettingDef.Type.STRING)
             .build();
-    Assert.assertEquals(displayName, def.displayName());
+    Assert.assertEquals(displayName, settingDef.displayName());
+  }
+
+  @Test
+  public void testPortType() {
+    SettingDef s = SettingDef.builder().valueType(SettingDef.Type.PORT).key("port.key").build();
+    // pass
+    s.checker().accept(100);
+    assertException(OharaConfigException.class, () -> s.checker().accept(-1));
+    assertException(OharaConfigException.class, () -> s.checker().accept(0));
+    assertException(OharaConfigException.class, () -> s.checker().accept(100000000));
+  }
+
+  @Test
+  public void testTagsType() {
+    SettingDef s = SettingDef.builder().valueType(SettingDef.Type.TAGS).key("tags.key").build();
+    // pass
+    s.checker().accept(CommonUtils.randomString());
+    // empty array is illegal
+    assertException(OharaConfigException.class, () -> s.checker().accept(Collections.emptyList()));
+    assertException(OharaConfigException.class, () -> s.checker().accept(100000000));
   }
 }

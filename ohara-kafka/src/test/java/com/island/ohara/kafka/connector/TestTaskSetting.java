@@ -18,9 +18,9 @@ package com.island.ohara.kafka.connector;
 
 import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.setting.PropGroups;
+import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.util.CommonUtils;
-import com.island.ohara.kafka.connector.json.PropGroups;
-import com.island.ohara.kafka.connector.json.SettingDefinition;
 import com.island.ohara.kafka.connector.json.StringList;
 import java.time.Duration;
 import java.util.Arrays;
@@ -157,8 +157,7 @@ public class TestTaskSetting extends SmallTest {
   public void testFillDefaultValue() {
     String key = CommonUtils.randomString();
     String defaultValue = CommonUtils.randomString();
-    SettingDefinition settingDefinition =
-        SettingDefinition.builder().key(key).optional(defaultValue).build();
+    SettingDef settingDefinition = SettingDef.builder().key(key).optional(defaultValue).build();
     TaskSetting config =
         TaskSetting.of(Collections.emptyMap(), Collections.singletonList(settingDefinition));
     Assert.assertEquals(1, config.raw().size());
@@ -170,8 +169,7 @@ public class TestTaskSetting extends SmallTest {
     String key = CommonUtils.randomString();
     String value = CommonUtils.randomString();
     String defaultValue = CommonUtils.randomString();
-    SettingDefinition settingDefinition =
-        SettingDefinition.builder().key(key).optional(defaultValue).build();
+    SettingDef settingDefinition = SettingDef.builder().key(key).optional(defaultValue).build();
     TaskSetting config =
         TaskSetting.of(
             Collections.singletonMap(key, value), Collections.singletonList(settingDefinition));
@@ -182,7 +180,7 @@ public class TestTaskSetting extends SmallTest {
   @Test
   public void testToDuration() {
     Duration duration = Duration.ofSeconds(10);
-    Assert.assertEquals(duration, TaskSetting.toDuration(duration.toString()));
-    Assert.assertEquals(duration, TaskSetting.toDuration("10 seconds"));
+    Assert.assertEquals(duration, CommonUtils.toDuration(duration.toString()));
+    Assert.assertEquals(duration, CommonUtils.toDuration("10 seconds"));
   }
 }

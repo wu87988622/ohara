@@ -26,12 +26,12 @@ import java.util.stream.IntStream;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestConfig extends SmallTest {
+public class TestStreamDefinitions extends SmallTest {
 
   @Test
   public void testConfigJson() {
-    ConfigDef defaultConfig = ConfigDef.DEFAULT;
-    ConfigDef config = ConfigDef.ofJson(defaultConfig.toString());
+    StreamDefinitions defaultConfig = StreamDefinitions.DEFAULT;
+    StreamDefinitions config = StreamDefinitions.ofJson(defaultConfig.toString());
 
     Assert.assertEquals(defaultConfig, config);
     Assert.assertEquals(defaultConfig, config);
@@ -39,13 +39,14 @@ public class TestConfig extends SmallTest {
     Assert.assertEquals(
         "default config size not equal", config.values().size(), defaultConfig.values().size());
 
-    ConfigDef another =
-        ConfigDef.add(
+    StreamDefinitions another =
+        StreamDefinitions.add(
             SettingDef.builder()
                 .key(CommonUtils.randomString())
                 .group(CommonUtils.randomString())
                 .build());
-    Assert.assertEquals(another.toString(), ConfigDef.ofJson(another.toString()).toString());
+    Assert.assertEquals(
+        another.toString(), StreamDefinitions.ofJson(another.toString()).toString());
   }
 
   @Test
@@ -53,8 +54,9 @@ public class TestConfig extends SmallTest {
     String key = CommonUtils.randomString();
     String group = "default";
 
-    ConfigDef newConfigs = ConfigDef.add(SettingDef.builder().key(key).group(group).build());
-    Assert.assertEquals(newConfigs.values().size(), ConfigDef.DEFAULT.values().size() + 1);
+    StreamDefinitions newConfigs =
+        StreamDefinitions.add(SettingDef.builder().key(key).group(group).build());
+    Assert.assertEquals(newConfigs.values().size(), StreamDefinitions.DEFAULT.values().size() + 1);
     Assert.assertTrue(newConfigs.keys().contains(key));
 
     Map<String, SettingDef> maps = new HashMap<>();
@@ -66,8 +68,9 @@ public class TestConfig extends SmallTest {
               SettingDef setting = SettingDef.builder().key(String.valueOf(i)).group(group).build();
               maps.putIfAbsent(setting.key(), setting);
             });
-    ConfigDef newConfigList = ConfigDef.addAll(maps);
-    Assert.assertEquals(newConfigList.values().size(), ConfigDef.DEFAULT.values().size() + 10);
+    StreamDefinitions newConfigList = StreamDefinitions.addAll(maps);
+    Assert.assertEquals(
+        newConfigList.values().size(), StreamDefinitions.DEFAULT.values().size() + 10);
     Assert.assertTrue(
         newConfigList
             .keys()

@@ -18,7 +18,7 @@ package com.island.ohara.it.connector
 
 import java.util
 
-import com.island.ohara.kafka.connector.json.SettingDefinition
+import com.island.ohara.common.setting.SettingDef
 import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceTask, TaskSetting}
 
 import scala.collection.JavaConverters._
@@ -33,5 +33,5 @@ class DumbSourceConnector extends RowSourceConnector {
   override protected def _taskSettings(maxTasks: Int): util.List[TaskSetting] = Seq.fill(maxTasks)(settings).asJava
   override protected def _start(settings: TaskSetting): Unit = this.settings = settings
   override protected def _stop(): Unit = {}
-  override protected def _definitions(): util.List[SettingDefinition] = DUMB_SETTING_DEFINITIONS.asJava
+  override protected def _definitions(): util.List[SettingDef] = DUMB_SETTING_DEFINITIONS.asJava
 }

@@ -233,13 +233,13 @@ class TestStreamApi extends SmallTest with Matchers {
     val to = "to"
     val nodeName = "n0"
     val creation = StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-                                                                  |  {
-                                                                  |    "from": ["$from"],
-                                                                  |    "to": ["$to"],
-                                                                  |    "nodeNames": ["$nodeName"],
-                                                                  |    "jar": ${fakeJar.toJson}
-                                                                  |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "from": ["$from"],
+      |    "to": ["$to"],
+      |    "nodeNames": ["$nodeName"],
+      |    "jar": ${fakeJar.toJson}
+      |  }
+      |  """.stripMargin.parseJson)
     creation.name.length shouldBe StreamApi.LIMIT_OF_NAME_LENGTH
     creation.imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
     creation.jar shouldBe fakeJar
@@ -251,14 +251,14 @@ class TestStreamApi extends SmallTest with Matchers {
 
     val name = CommonUtils.randomString(10)
     val creation2 = StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-                                                                 |  {
-                                                                 |    "name": "$name",
-                                                                 |    "from": ["$from"],
-                                                                 |    "to": ["$to"],
-                                                                 |    "nodeNames": ["$nodeName"],
-                                                                 |    "jar": ${fakeJar.toJson}
-                                                                 |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "name": "$name",
+      |    "from": ["$from"],
+      |    "to": ["$to"],
+      |    "nodeNames": ["$nodeName"],
+      |    "jar": ${fakeJar.toJson}
+      |  }
+      |  """.stripMargin.parseJson)
 
     creation2.name shouldBe name
     creation2.imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
@@ -273,11 +273,11 @@ class TestStreamApi extends SmallTest with Matchers {
   @Test
   def parseNameField(): Unit = {
     val thrown2 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-                                                  |  {
-                                                  |    "name": "",
-                                                  |    "jar": ${fakeJar.toJson}
-                                                  |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "name": "",
+      |    "jar": ${fakeJar.toJson}
+      |  }
+      |  """.stripMargin.parseJson)
     thrown2.getMessage should include("the value of \"name\" can't be empty string")
   }
 
@@ -285,12 +285,12 @@ class TestStreamApi extends SmallTest with Matchers {
   def parseImageNameField(): Unit = {
     val name = CommonUtils.randomString(10)
     val thrown = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-                                                                                                  |  {
-                                                                                                  |    "name": "$name",
-                                                                                                  |    "jar": ${fakeJar.toJson},
-                                                                                                  |    "imageName": ""
-                                                                                                  |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "name": "$name",
+      |    "jar": ${fakeJar.toJson},
+      |    "imageName": ""
+      |  }
+      |  """.stripMargin.parseJson)
     thrown.getMessage should include("the value of \"imageName\" can't be empty string")
   }
 
@@ -300,18 +300,18 @@ class TestStreamApi extends SmallTest with Matchers {
 
     // jar is required
     val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-                                                                                                  |  {
-                                                                                                  |    "name": "$name"
-                                                                                                  |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "name": "$name"
+      |  }
+      |  """.stripMargin.parseJson)
     thrown1.getMessage should include("Object is missing required member 'jar'")
 
     val thrown2 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-                                                                                                  |  {
-                                                                                                  |    "name": "$name",
-                                                                                                  |    "jar": ""
-                                                                                                  |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "name": "$name",
+      |    "jar": ""
+      |  }
+      |  """.stripMargin.parseJson)
     thrown2.getMessage should include("the value of \"jar\" can't be empty string")
   }
 
@@ -319,55 +319,52 @@ class TestStreamApi extends SmallTest with Matchers {
   def parseJmxPortField(): Unit = {
     // zero port
     val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-          |  {
-          |    "name": "${CommonUtils.randomString(10)}",
-          |    "jar": ${fakeJar.toJson},
-          |    "jmxPort": 0
-          |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "name": "${CommonUtils.randomString(10)}",
+      |    "jar": ${fakeJar.toJson},
+      |    "jmxPort": 0
+      |  }
+      |  """.stripMargin.parseJson)
     thrown1.getMessage should include("the connection port must be [1024, 65535)")
 
     // negative port
     val thrown2 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-                        |  {
-                        |    "name": "${CommonUtils.randomString(10)}",
-                        |    "jar": ${fakeJar.toJson},
-                        |    "jmxPort": -99
-                        |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "name": "${CommonUtils.randomString(10)}",
+      |    "jar": ${fakeJar.toJson},
+      |    "jmxPort": -99
+      |  }
+      |  """.stripMargin.parseJson)
     thrown2.getMessage should include("the connection port must be [1024, 65535), but actual port is \"-99\"")
 
     // not connection port
     val thrown3 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-        |  {
-        |    "name": "${CommonUtils.randomString(10)}",
-        |    "jar": ${fakeJar.toJson},
-        |    "jmxPort": 999999
-        |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "name": "${CommonUtils.randomString(10)}",
+      |    "jar": ${fakeJar.toJson},
+      |    "jmxPort": 999999
+      |  }
+      |  """.stripMargin.parseJson)
     thrown3.getMessage should include("the connection port must be [1024, 65535)")
   }
 
   @Test
   def parseInstancesField(): Unit = {
     an[DeserializationException] should be thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-                                                                                                  |  {
-                                                                                                  |    "name": "${CommonUtils
-                                                                                                    .randomString(10)}",
-                                                                                                  |    "jar": ${fakeJar.toJson},
-                                                                                                  |    "instances": 0
-                                                                                                  |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "name": "${CommonUtils.randomString(10)}",
+      |    "jar": ${fakeJar.toJson},
+      |    "instances": 0
+      |  }
+      |  """.stripMargin.parseJson)
     // negative instances
     val thrown = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-                                                                                                  |  {
-                                                                                                  |    "name": "${CommonUtils
-                                                                                                        .randomString(
-                                                                                                          10)}",
-                                                                                                  |    "jar": ${fakeJar.toJson},
-                                                                                                  |    "instances": -99
-                                                                                                  |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "name": "${CommonUtils.randomString(10)}",
+      |    "jar": ${fakeJar.toJson},
+      |    "instances": -99
+      |  }
+      |  """.stripMargin.parseJson)
     thrown.getMessage should include("the \"-99\" of \"instances\" can't be either negative or zero!!!")
   }
 
@@ -396,11 +393,11 @@ class TestStreamApi extends SmallTest with Matchers {
   def parseMinimumJsonUpdate(): Unit = {
     val name = CommonUtils.randomString(10)
     val data = StreamApi.STREAM_UPDATE_JSON_FORMAT.read(s"""
-                                                               |  {
-                                                               |    "name": "$name",
-                                                               |    "jar": ${fakeJar.toJson}
-                                                               |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "name": "$name",
+      |    "jar": ${fakeJar.toJson}
+      |  }
+      |  """.stripMargin.parseJson)
 
     data.imageName.isEmpty shouldBe true
     data.from.isEmpty shouldBe true
@@ -413,116 +410,115 @@ class TestStreamApi extends SmallTest with Matchers {
   @Test
   def parseImageNameFieldOnUpdate(): Unit = {
     val thrown = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATE_JSON_FORMAT.read(s"""
-                                                                                                |  {
-                                                                                                |    "imageName": ""
-                                                                                                |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "imageName": ""
+      |  }
+      |  """.stripMargin.parseJson)
     thrown.getMessage should include("the value of \"imageName\" can't be empty string")
   }
 
   @Test
   def parseFromFieldOnCreation(): Unit = {
     val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-                                                                                                     |  {
-                                                                                                     |    "from": "",
-                                                                                                     |    "jar": ${fakeJar.toJson}
-                                                                                                     |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "from": "",
+      |    "jar": ${fakeJar.toJson}
+      |  }
+      |  """.stripMargin.parseJson)
     thrown1.getMessage should include("the value of \"from\" can't be empty string")
   }
 
   @Test
   def parseFromFieldOnUpdate(): Unit = {
     val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATE_JSON_FORMAT.read(s"""
-                                                                                                |  {
-                                                                                                |    "from": ""
-                                                                                                |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "from": ""
+      |  }
+      |  """.stripMargin.parseJson)
     thrown1.getMessage should include("the value of \"from\" can't be empty string")
   }
 
   @Test
   def parseToFieldOnCreation(): Unit = {
     val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-                                                                                                     |  {
-                                                                                                     |    "to": "",
-                                                                                                     |    "jar": ${fakeJar.toJson}
-                                                                                                     |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "to": "",
+      |    "jar": ${fakeJar.toJson}
+      |  }
+      |  """.stripMargin.parseJson)
     thrown1.getMessage should include("the value of \"to\" can't be empty string")
   }
 
   @Test
   def parseToFieldOnUpdate(): Unit = {
     val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATE_JSON_FORMAT.read(s"""
-                                                                                                |  {
-                                                                                                |    "to": ""
-                                                                                                |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "to": ""
+      |  }
+      |  """.stripMargin.parseJson)
     thrown1.getMessage should include("the value of \"to\" can't be empty string")
   }
 
   @Test
   def parseJmxPortFieldOnUpdate(): Unit = {
     val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATE_JSON_FORMAT.read(s"""
-                                                                                                |  {
-                                                                                                |    "jmxPort": 0
-                                                                                                |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "jmxPort": 0
+      |  }
+      |  """.stripMargin.parseJson)
     thrown1.getMessage should include("the connection port must be [1024, 65535)")
 
     val thrown2 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATE_JSON_FORMAT.read(s"""
-                                                                                                |  {
-                                                                                                |    "jmxPort": -9
-                                                                                                |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "jmxPort": -9
+      |  }
+      |  """.stripMargin.parseJson)
     thrown2.getMessage should include("the connection port must be [1024, 65535), but actual port is \"-9\"")
 
     val thrown3 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATE_JSON_FORMAT.read(s"""
-                                                                                                |  {
-                                                                                                |    "jmxPort": 99999
-                                                                                                |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "jmxPort": 99999
+      |  }
+      |  """.stripMargin.parseJson)
     thrown3.getMessage should include("the connection port must be [1024, 65535)")
   }
 
   @Test
   def parseInstancesFieldOnUpdate(): Unit = {
     an[DeserializationException] should be thrownBy StreamApi.STREAM_UPDATE_JSON_FORMAT.read(s"""
-                                                                                                |  {
-                                                                                                |    "name": "${CommonUtils
-                                                                                                  .randomString()}",
-                                                                                                |    "jar": ${fakeJar.toJson},
-                                                                                                |    "instances": 0
-                                                                                                |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "name": "${CommonUtils.randomString()}",
+      |    "jar": ${fakeJar.toJson},
+      |    "instances": 0
+      |  }
+      |  """.stripMargin.parseJson)
 
     val thrown = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATE_JSON_FORMAT.read(s"""
-                                                                                                |  {
-                                                                                                |    "instances": -9
-                                                                                                |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "instances": -9
+      |  }
+      |  """.stripMargin.parseJson)
     thrown.getMessage should include("the \"-9\" of \"instances\" can't be either negative or zero!!!")
   }
 
   @Test
   def parseNodeNamesFieldOnCreation(): Unit = {
     val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-                                                                                                     |  {
-                                                                                                     |    "nodeNames": "",
-                                                                                                     |    "jar": ${fakeJar.toJson}
-                                                                                                     |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "nodeNames": "",
+      |    "jar": ${fakeJar.toJson}
+      |  }
+      |  """.stripMargin.parseJson)
     thrown1.getMessage should include("the value of \"nodeNames\" can't be empty string")
   }
 
   @Test
   def parseNodeNamesFieldOnUpdate(): Unit = {
     val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATE_JSON_FORMAT.read(s"""
-                                                                                                |  {
-                                                                                                |    "nodeNames": ""
-                                                                                                |  }
-           """.stripMargin.parseJson)
+      |  {
+      |    "nodeNames": ""
+      |  }
+      |  """.stripMargin.parseJson)
     thrown1.getMessage should include("the value of \"nodeNames\" can't be empty string")
   }
 

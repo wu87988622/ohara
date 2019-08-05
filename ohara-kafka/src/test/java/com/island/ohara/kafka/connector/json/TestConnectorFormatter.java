@@ -54,14 +54,14 @@ public class TestConnectorFormatter extends SmallTest {
             .connectorKey(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
             .topicKeys(topicKeys)
             .requestOfCreation();
-    Assert.assertNotNull(creation.configs().get(SettingDefinition.TOPIC_NAMES_DEFINITION.key()));
+    Assert.assertNotNull(creation.configs().get(ConnectorDefinitions.TOPIC_NAMES_DEFINITION.key()));
     Assert.assertEquals(
         StringList.toKafkaString(topicNames),
-        creation.configs().get(SettingDefinition.TOPIC_NAMES_DEFINITION.key()));
-    Assert.assertNotNull(creation.configs().get(SettingDefinition.TOPIC_KEYS_DEFINITION.key()));
+        creation.configs().get(ConnectorDefinitions.TOPIC_NAMES_DEFINITION.key()));
+    Assert.assertNotNull(creation.configs().get(ConnectorDefinitions.TOPIC_KEYS_DEFINITION.key()));
     Assert.assertEquals(
         JsonUtils.toString(topicKeys),
-        creation.configs().get(SettingDefinition.TOPIC_KEYS_DEFINITION.key()));
+        creation.configs().get(ConnectorDefinitions.TOPIC_KEYS_DEFINITION.key()));
   }
 
   @Test
@@ -71,7 +71,7 @@ public class TestConnectorFormatter extends SmallTest {
             .connectorKey(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
             .topicKey(TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString()))
             .requestOfCreation();
-    Assert.assertNull(creation.configs().get(SettingDefinition.CONNECTOR_NAME_DEFINITION.key()));
+    Assert.assertNull(creation.configs().get(ConnectorDefinitions.CONNECTOR_NAME_DEFINITION.key()));
   }
 
   @Test

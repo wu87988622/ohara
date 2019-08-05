@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.kafka.connector.json;
+package com.island.ohara.common.setting;
 
 import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.data.Column;
@@ -189,8 +189,7 @@ public class TestPropGroups extends SmallTest {
             .build();
     Map<String, String> raw = new HashMap<>(PropGroups.toPropGroup(column));
     raw.put(
-        SettingDefinition.COLUMN_DATA_TYPE_KEY,
-        raw.get(SettingDefinition.COLUMN_DATA_TYPE_KEY).toLowerCase());
+        SettingDef.COLUMN_DATA_TYPE_KEY, raw.get(SettingDef.COLUMN_DATA_TYPE_KEY).toLowerCase());
     PropGroups group = PropGroups.of(Collections.singletonList(raw));
     Column another = group.toColumns().get(0);
     Assert.assertEquals(column, another);

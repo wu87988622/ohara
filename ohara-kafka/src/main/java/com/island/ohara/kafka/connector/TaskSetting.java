@@ -16,12 +16,15 @@
 
 package com.island.ohara.kafka.connector;
 
+import static com.island.ohara.common.util.CommonUtils.toDuration;
+
 import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.data.Column;
+import com.island.ohara.common.setting.PropGroups;
+import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.util.CommonUtils;
-import com.island.ohara.kafka.connector.json.PropGroups;
-import com.island.ohara.kafka.connector.json.SettingDefinition;
+import com.island.ohara.kafka.connector.json.ConnectorDefinitions;
 import com.island.ohara.kafka.connector.json.StringList;
 import java.time.Duration;
 import java.util.Collections;
@@ -31,7 +34,6 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 /** this class carries all required settings for row connectors. */
 public class TaskSetting {
@@ -55,7 +57,7 @@ public class TaskSetting {
    * @param settingDefinitions custom settings
    * @return a TaskSetting
    */
-  static TaskSetting of(Map<String, String> options, List<SettingDefinition> settingDefinitions) {
+  static TaskSetting of(Map<String, String> options, List<SettingDef> settingDefinitions) {
     Map<String, String> copy = new HashMap<>(options);
     settingDefinitions.forEach(
         setting -> {
@@ -288,20 +290,20 @@ public class TaskSetting {
    * @return duration value
    */
   public Optional<Duration> durationOption(String key) {
-    return Optional.ofNullable(raw.get(key)).map(TaskSetting::toDuration);
+    return Optional.ofNullable(raw.get(key)).map(CommonUtils::toDuration);
   }
 
   // ----------------------------------[helper methods]----------------------------------//
   public String name() {
-    return stringValue(SettingDefinition.CONNECTOR_NAME_DEFINITION.key());
+    return stringValue(ConnectorDefinitions.CONNECTOR_NAME_DEFINITION.key());
   }
 
   public List<String> topicNames() {
-    return stringList(SettingDefinition.TOPIC_NAMES_DEFINITION.key());
+    return stringList(ConnectorDefinitions.TOPIC_NAMES_DEFINITION.key());
   }
 
   public List<Column> columns() {
-    return propGroupsOption(SettingDefinition.COLUMNS_DEFINITION.key())
+    return propGroupsOption(ConnectorDefinitions.COLUMNS_DEFINITION.key())
         .map(PropGroups::toColumns)
         .orElseGet(Collections::emptyList);
   }
@@ -322,36 +324,5 @@ public class TaskSetting {
     Map<String, String> raw = new HashMap<>(this.raw);
     raw.putAll(newConfig);
     return TaskSetting.of(raw);
-  }
-
-  /**
-   * convert the string to java.Duration or scala.Duration.
-   *
-   * @param value duration string
-   * @return java.time.Duration
-   */
-  public static Duration toDuration(String value) {
-    try {
-      return Duration.parse(value);
-    } catch (Exception e) {
-      // ok, it is not based on java.Duration. Let's try the scala.Duration based on
-      // <number><unit>
-      String stringValue = value.replaceAll(" ", "");
-      int indexOfUnit = -1;
-      for (int index = 0; index != stringValue.length(); ++index) {
-        if (!Character.isDigit(stringValue.charAt(index))) {
-          indexOfUnit = index;
-          break;
-        }
-      }
-      if (indexOfUnit == -1)
-        throw new IllegalArgumentException(
-            "the value:"
-                + value
-                + " can't be converted to either java.time.Duration or scala.concurrent.duration.Duration type");
-      long number = Long.valueOf(stringValue.substring(0, indexOfUnit));
-      TimeUnit unit = TimeUnit.valueOf(stringValue.substring(indexOfUnit).toUpperCase());
-      return Duration.ofMillis(unit.toMillis(number));
-    }
   }
 }

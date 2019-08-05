@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.json.JsonObject;
 import com.island.ohara.common.json.JsonUtils;
+import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.util.CommonUtils;
 import java.util.*;
 
@@ -40,9 +41,10 @@ public class Validation implements JsonObject {
   public static Validation of(String className, List<String> topicsName) {
     return new Validation(
         ImmutableMap.of(
-            SettingDefinition.CONNECTOR_CLASS_DEFINITION.key(),
+            ConnectorDefinitions.CONNECTOR_CLASS_DEFINITION.key(),
                 CommonUtils.requireNonEmpty(className),
-            SettingDefinition.TOPIC_NAMES_DEFINITION.key(), StringList.toKafkaString(topicsName)));
+            ConnectorDefinitions.TOPIC_NAMES_DEFINITION.key(),
+                StringList.toKafkaString(topicsName)));
   }
 
   public static Validation of(Map<String, String> settings) {
@@ -85,7 +87,7 @@ public class Validation implements JsonObject {
 
   // ------------------------------------------[helper
   // methods]------------------------------------------//
-  private String value(SettingDefinition settingDefinition) {
+  private String value(SettingDef settingDefinition) {
     if (settings.containsKey(settingDefinition.key())) return settings.get(settingDefinition.key());
     else throw new NoSuchElementException(settingDefinition.key() + " doesn't exist");
   }
@@ -96,7 +98,7 @@ public class Validation implements JsonObject {
    * @return class name
    */
   public String className() {
-    return value(SettingDefinition.CONNECTOR_CLASS_DEFINITION);
+    return value(ConnectorDefinitions.CONNECTOR_CLASS_DEFINITION);
   }
 
   /**
@@ -105,6 +107,6 @@ public class Validation implements JsonObject {
    * @return topics name
    */
   public List<String> topicNames() {
-    return StringList.ofKafkaList(value(SettingDefinition.TOPIC_NAMES_DEFINITION));
+    return StringList.ofKafkaList(value(ConnectorDefinitions.TOPIC_NAMES_DEFINITION));
   }
 }

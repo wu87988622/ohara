@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package com.island.ohara.kafka.connector.json;
+package com.island.ohara.common.setting;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableMap;
-import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.data.DataType;
 import com.island.ohara.common.json.JsonUtils;
@@ -112,24 +111,21 @@ public final class PropGroups implements Iterable<Map<String, String>> {
 
   private static Column toColumn(Map<String, String> propGroup) {
     return Column.builder()
-        .order(Integer.valueOf(propGroup.get(SettingDefinition.ORDER_KEY)))
-        .name(propGroup.get(SettingDefinition.COLUMN_NAME_KEY))
+        .order(Integer.valueOf(propGroup.get(SettingDef.ORDER_KEY)))
+        .name(propGroup.get(SettingDef.COLUMN_NAME_KEY))
         .newName(
             propGroup.getOrDefault(
-                SettingDefinition.COLUMN_NEW_NAME_KEY,
-                propGroup.get(SettingDefinition.COLUMN_NAME_KEY)))
-        .dataType(
-            DataType.valueOf(propGroup.get(SettingDefinition.COLUMN_DATA_TYPE_KEY).toUpperCase()))
+                SettingDef.COLUMN_NEW_NAME_KEY, propGroup.get(SettingDef.COLUMN_NAME_KEY)))
+        .dataType(DataType.valueOf(propGroup.get(SettingDef.COLUMN_DATA_TYPE_KEY).toUpperCase()))
         .build();
   }
 
-  @VisibleForTesting
-  static Map<String, String> toPropGroup(Column column) {
+  public static Map<String, String> toPropGroup(Column column) {
     return ImmutableMap.of(
-        SettingDefinition.ORDER_KEY, String.valueOf(column.order()),
-        SettingDefinition.COLUMN_NAME_KEY, column.name(),
-        SettingDefinition.COLUMN_NEW_NAME_KEY, column.newName(),
-        SettingDefinition.COLUMN_DATA_TYPE_KEY, column.dataType().name());
+        SettingDef.ORDER_KEY, String.valueOf(column.order()),
+        SettingDef.COLUMN_NAME_KEY, column.name(),
+        SettingDef.COLUMN_NEW_NAME_KEY, column.newName(),
+        SettingDef.COLUMN_DATA_TYPE_KEY, column.dataType().name());
   }
 
   @Override

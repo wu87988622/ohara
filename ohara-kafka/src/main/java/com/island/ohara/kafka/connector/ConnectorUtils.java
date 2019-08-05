@@ -19,9 +19,10 @@ package com.island.ohara.kafka.connector;
 import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.data.Serializer;
+import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.util.ByteUtils;
 import com.island.ohara.common.util.CommonUtils;
-import com.island.ohara.kafka.connector.json.SettingDefinition;
+import com.island.ohara.kafka.connector.json.ConnectorDefinitions;
 import com.island.ohara.metrics.basic.Counter;
 import java.util.Arrays;
 import java.util.Collection;
@@ -32,25 +33,25 @@ import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.connector.ConnectRecord;
 
 final class ConnectorUtils {
-  private static SettingDefinition copy(String value, SettingDefinition definition) {
-    return SettingDefinition.builder(definition).optional(value).build();
+  private static SettingDef copy(String value, SettingDef definition) {
+    return SettingDef.builder(definition).optional(value).build();
   }
 
-  static List<SettingDefinition> toSettingDefinitions(
-      List<SettingDefinition> settingDefinitions, ConnectorVersion version) {
+  static List<SettingDef> toSettingDefinitions(
+      List<SettingDef> settingDefinitions, ConnectorVersion version) {
     return Stream.of(
             settingDefinitions,
             Arrays.asList(
-                copy(version.version(), SettingDefinition.VERSION_DEFINITION),
-                copy(version.revision(), SettingDefinition.REVISION_DEFINITION),
-                copy(version.author(), SettingDefinition.AUTHOR_DEFINITION)))
+                copy(version.version(), ConnectorDefinitions.VERSION_DEFINITION),
+                copy(version.revision(), ConnectorDefinitions.REVISION_DEFINITION),
+                copy(version.author(), ConnectorDefinitions.AUTHOR_DEFINITION)))
         .flatMap(Collection::stream)
         .collect(Collectors.toList());
   }
 
-  static ConfigDef toConfigDef(List<SettingDefinition> settingDefinitions) {
+  static ConfigDef toConfigDef(List<SettingDef> settingDefinitions) {
     ConfigDef def = new ConfigDef();
-    settingDefinitions.stream().map(SettingDefinition::toConfigKey).forEach(def::define);
+    settingDefinitions.stream().map(ConnectorDefinitions::toConfigKey).forEach(def::define);
     return def;
   }
 

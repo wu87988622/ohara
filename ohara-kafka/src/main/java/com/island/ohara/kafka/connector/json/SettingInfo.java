@@ -105,7 +105,7 @@ public final class SettingInfo implements JsonObject {
 
   // ------------------------[common]------------------------//
   public Optional<String> className() {
-    return value(SettingDefinition.CONNECTOR_CLASS_DEFINITION.key());
+    return value(ConnectorDefinitions.CONNECTOR_CLASS_DEFINITION.key());
   }
 
   /**
@@ -115,7 +115,7 @@ public final class SettingInfo implements JsonObject {
    * @return the topic names in kafka form
    */
   public List<String> topicNamesOnKafka() {
-    return value(SettingDefinition.TOPIC_NAMES_DEFINITION.key())
+    return value(ConnectorDefinitions.TOPIC_NAMES_DEFINITION.key())
         .map(StringList::ofKafkaList)
         .orElse(Collections.emptyList());
   }
@@ -133,33 +133,33 @@ public final class SettingInfo implements JsonObject {
    * @return topic keys
    */
   public List<TopicKey> topicKeys() {
-    return value(SettingDefinition.TOPIC_KEYS_DEFINITION.key())
+    return value(ConnectorDefinitions.TOPIC_KEYS_DEFINITION.key())
         .map(SettingInfo::toTopicKeys)
         .orElse(Collections.emptyList());
   }
 
   public Optional<Integer> numberOfTasks() {
-    return value(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key()).map(Integer::valueOf);
+    return value(ConnectorDefinitions.NUMBER_OF_TASKS_DEFINITION.key()).map(Integer::valueOf);
   }
 
   public Optional<String> author() {
-    return value(SettingDefinition.AUTHOR_DEFINITION.key());
+    return value(ConnectorDefinitions.AUTHOR_DEFINITION.key());
   }
 
   public Optional<String> version() {
-    return value(SettingDefinition.VERSION_DEFINITION.key());
+    return value(ConnectorDefinitions.VERSION_DEFINITION.key());
   }
 
   public Optional<String> revision() {
-    return value(SettingDefinition.REVISION_DEFINITION.key());
+    return value(ConnectorDefinitions.REVISION_DEFINITION.key());
   }
 
   public Optional<String> workerClusterName() {
-    return value(SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key());
+    return value(ConnectorDefinitions.WORKER_CLUSTER_NAME_DEFINITION.key());
   }
 
   public Optional<String> connectorType() {
-    return value(SettingDefinition.KIND_DEFINITION.key());
+    return value(ConnectorDefinitions.KIND_DEFINITION.key());
   }
 
   // ------------------------[json]------------------------//

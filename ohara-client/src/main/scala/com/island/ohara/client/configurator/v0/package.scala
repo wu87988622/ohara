@@ -16,7 +16,7 @@
 
 package com.island.ohara.client.configurator
 
-import com.island.ohara.kafka.connector.json.{ObjectKey, SettingDefinition, TopicKey}
+import com.island.ohara.kafka.connector.json.{ConnectorDefinitions, ObjectKey, TopicKey}
 import spray.json.{JsNull, JsValue, RootJsonFormat}
 
 package object v0 {
@@ -36,13 +36,13 @@ package object v0 {
     * This reference ensures that the name key in scala json is same to java json (connector metadata).
     * This a bit complicated code is what we had to "enjoy" as Ohara is a hybrid project consisting of scala and java.
     */
-  val NAME_KEY: String = SettingDefinition.CONNECTOR_NAME_DEFINITION.key()
+  val NAME_KEY: String = ConnectorDefinitions.CONNECTOR_NAME_DEFINITION.key()
 
   /**
     * This reference ensures that the tags key in scala json is same to java json (connector metadata).
     * This a bit complicated code is what we had to "enjoy" as Ohara is a hybrid project consisting of scala and java.
     */
-  val TAGS_KEY: String = SettingDefinition.TAGS_DEFINITION.key()
+  val TAGS_KEY: String = ConnectorDefinitions.TAGS_DEFINITION.key()
   val CLUSTER_KEY: String = "cluster"
   val FORCE_KEY: String = "force"
   val START_COMMAND: String = "start"
