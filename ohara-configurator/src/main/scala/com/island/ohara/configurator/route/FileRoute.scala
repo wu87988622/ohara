@@ -22,6 +22,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
+import com.island.ohara.client.configurator.Data
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorDescription
 import com.island.ohara.client.configurator.v0.FileInfoApi
 import com.island.ohara.client.configurator.v0.FileInfoApi._
@@ -35,18 +36,17 @@ import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object FileRoute {
 
   /**
-    * Check the specific jar is not used in pipeline.
-    * will check same group (worker cluster) only.
+    * find the objects accessing the input file.
     * @param fileInfo the file
     * @param executionContext execution context
     * @param store data store
-    * @return true if the jar is in used, false otherwise.
+    * @return list of objects
     */
-  private[this] def check(fileInfo: FileInfo)(implicit executionContext: ExecutionContext,
-                                              store: DataStore): Future[Boolean] = {
+  private[this] def accessBy(fileInfo: FileInfo)(implicit executionContext: ExecutionContext,
+                                                 store: DataStore): Future[Seq[Data]] =
     store
       .raws()
-      .map(_.exists {
+      .map(_.filter {
         case info: StreamClusterInfo =>
           info.jar.group == fileInfo.group && info.jar.name == fileInfo.name
         //TODO : does connector need checking the jar is used before deleting ??...by Sam
@@ -54,7 +54,6 @@ private[configurator] object FileRoute {
         // other data type do nothing
         case _ => false
       })
-  }
 
   private[this] def tempDestination(fileInfo: akka.http.scaladsl.server.directives.FileInfo): File =
     File.createTempFile(fileInfo.fileName, ".tmp")
@@ -77,23 +76,24 @@ private[configurator] object FileRoute {
       path(Segment) { name =>
         parameter(RouteUtils.GROUP_KEY ?) { groupOption =>
           get(complete(fileStore.fileInfo(groupOption.getOrElse(GROUP_DEFAULT), name))) ~ delete(
-            complete(
-              fileStore
-                .exist(groupOption.getOrElse(GROUP_DEFAULT), name)
-                .flatMap {
-                  // if jar exists, we do checking is in used or not
-                  if (_)
-                    fileStore
-                      .fileInfo(groupOption.getOrElse(GROUP_DEFAULT), name)
-                      .flatMap(check(_))
-                      .flatMap(exists => {
-                        if (exists) throw new RuntimeException(s"Cannot delete jar [$name] which is in used")
-                        else fileStore.remove(groupOption.getOrElse(GROUP_DEFAULT), name)
-                      })
-                  // do nothing
-                  else Future.successful(false)
-                }
-                .map(_ => StatusCodes.NoContent))
+            complete(fileStore
+              .exist(groupOption.getOrElse(GROUP_DEFAULT), name)
+              .flatMap {
+                // if jar exists, we do checking is in used or not
+                if (_)
+                  fileStore
+                    .fileInfo(groupOption.getOrElse(GROUP_DEFAULT), name)
+                    .flatMap(accessBy(_))
+                    .flatMap(objects => {
+                      if (objects.nonEmpty)
+                        throw new RuntimeException(
+                          s"Cannot delete jar [$name] since it is used by ${objects.map(o => s"${o.kind}:${o.name}").mkString(",")}")
+                      else fileStore.remove(groupOption.getOrElse(GROUP_DEFAULT), name)
+                    })
+                // do nothing
+                else Future.successful(false)
+              }
+              .map(_ => StatusCodes.NoContent))
           ) ~ put {
             // update the tags for an existent file
             entity(as[Update]) { update =>
