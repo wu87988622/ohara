@@ -16,7 +16,6 @@
 
 package com.island.ohara.connector.hdfs.sink
 
-import com.island.ohara.connector.hdfs.HadoopConfigurationConstants
 import com.island.ohara.kafka.connector.TaskSetting
 import org.apache.hadoop.conf.Configuration
 
@@ -25,12 +24,13 @@ case class HDFSSinkConfig(hdfsURL: String) {
 
   def hadoopConfiguration(): Configuration = {
     val config = new Configuration()
-    config.set(HadoopConfigurationConstants.FS_DEFAULTFS, hdfsURL)
+    config.set(HDFSSinkConfig.FS_DEFAULT, hdfsURL)
     config
   }
 }
 
 object HDFSSinkConfig {
+  val FS_DEFAULT: String = "fs.defaultFS"
   def apply(settings: TaskSetting): HDFSSinkConfig = {
     HDFSSinkConfig(hdfsURL = settings.stringValue(HDFS_URL_CONFIG))
   }

@@ -102,7 +102,7 @@ describe('PipelineNewPage', () => {
       },
       {
         type: CONNECTOR_TYPES.hdfsSink,
-        nodeType: 'HDFSSinkConnector',
+        nodeType: 'HDFSSink',
         toolbarTestId: 'toolbar-sinks',
         connectorName: makeRandomStr(),
       },
@@ -312,7 +312,7 @@ describe('PipelineNewPage', () => {
       .click()
       .wait('@putPipeline');
 
-    cy.getByText('HDFSSinkConnector')
+    cy.getByText('HDFSSink')
       .click({ force: true })
       .wait('@getConnector')
       .getByText('HDFS sink connector')

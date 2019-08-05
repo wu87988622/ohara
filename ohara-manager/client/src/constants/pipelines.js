@@ -17,7 +17,7 @@
 export const CONNECTOR_TYPES = {
   jdbcSource: 'com.island.ohara.connector.jdbc.source.JDBCSourceConnector',
   ftpSource: 'com.island.ohara.connector.ftp.FtpSource',
-  hdfsSink: 'com.island.ohara.connector.hdfs.HDFSSinkConnector',
+  hdfsSink: 'com.island.ohara.connector.hdfs.sink.HDFSSink',
   ftpSink: 'com.island.ohara.connector.ftp.FtpSink',
   customSource: 'com.island.ohara.it.connector.DumbSourceConnector',
   customSink: 'com.island.ohara.it.connector.DumbSinkConnector',
