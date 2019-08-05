@@ -57,6 +57,8 @@ const setup = () => {
     brokerClusterName,
   });
 
+  cy.startTopic(topicName);
+
   cy.createConnector({
     className: 'com.island.ohara.connector.ftp.FtpSource',
     'connector.name': connectorName,
@@ -81,10 +83,10 @@ describe('Connector API', () => {
   it('createConnector', () => {
     const { connectorName } = setup();
 
-    cy.get('@createConnector').then(res => {
+    cy.get('@createConnector').then(response => {
       const {
         data: { isSuccess, result },
-      } = res;
+      } = response;
       const { settings } = result;
 
       expect(isSuccess).to.eq(true);
@@ -101,10 +103,10 @@ describe('Connector API', () => {
   it('fetchConnector', () => {
     const { connectorName } = setup();
 
-    cy.fetchConnector(connectorName).then(res => {
+    cy.fetchConnector(connectorName).then(response => {
       const {
         data: { isSuccess, result },
-      } = res;
+      } = response;
       const { settings } = result;
 
       expect(isSuccess).to.eq(true);
@@ -149,10 +151,10 @@ describe('Connector API', () => {
       },
     };
 
-    cy.updateConnector(params).then(res => {
+    cy.updateConnector(params).then(response => {
       const {
         data: { isSuccess, result },
-      } = res;
+      } = response;
       const { settings } = result;
 
       expect(isSuccess).to.eq(true);
@@ -183,8 +185,8 @@ describe('Connector API', () => {
   it('startConnector', () => {
     const { connectorName } = setup();
 
-    cy.startConnector(connectorName).then(res => {
-      const { data } = res;
+    cy.startConnector(connectorName).then(response => {
+      const { data } = response;
       expect(data.isSuccess).to.eq(true);
       expect(data.result).to.include.keys('settings', 'state');
       expect(data.result.state).to.be.a('string');
@@ -194,8 +196,8 @@ describe('Connector API', () => {
   it('stopConnector', () => {
     const { connectorName } = setup();
 
-    cy.stopConnector(connectorName).then(res => {
-      const { data } = res;
+    cy.stopConnector(connectorName).then(response => {
+      const { data } = response;
       expect(data.isSuccess).to.eq(true);
       expect(data.result).to.include.keys('settings');
     });
@@ -204,8 +206,8 @@ describe('Connector API', () => {
   it('deleteConnector', () => {
     const { connectorName } = setup();
 
-    cy.deleteConnector(connectorName).then(res => {
-      const { data } = res;
+    cy.deleteConnector(connectorName).then(response => {
+      const { data } = response;
       expect(data.isSuccess).to.eq(true);
     });
   });

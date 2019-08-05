@@ -33,16 +33,16 @@ const setup = () => {
   });
 
   cy.createZookeeper({
-    name: zookeeperClusterName,
     nodeNames: [nodeName],
+    name: zookeeperClusterName,
   });
 
   cy.startZookeeper(zookeeperClusterName);
 
   cy.createBroker({
     name: brokerClusterName,
-    zookeeperClusterName: zookeeperClusterName,
     nodeNames: [nodeName],
+    zookeeperClusterName,
   });
 
   cy.startBroker(brokerClusterName);
@@ -57,9 +57,9 @@ const setup = () => {
 
   cy.testCreateWorker({
     name: workerClusterName,
-    brokerClusterName,
     nodeNames: [nodeName],
     jarKeys,
+    brokerClusterName,
   }).as('testCreateWorker');
 
   return {
@@ -76,10 +76,10 @@ describe('Worker API', () => {
   it('createWorker', () => {
     const { workerClusterName } = setup();
 
-    cy.get('@testCreateWorker').then(res => {
+    cy.get('@testCreateWorker').then(response => {
       const {
         data: { isSuccess, result },
-      } = res;
+      } = response;
 
       expect(isSuccess).to.eq(true);
 
@@ -99,10 +99,10 @@ describe('Worker API', () => {
   it('fetchWorker', () => {
     const { workerClusterName } = setup();
 
-    cy.fetchWorker(workerClusterName).then(res => {
+    cy.fetchWorker(workerClusterName).then(response => {
       const {
         data: { isSuccess, result },
-      } = res;
+      } = response;
 
       expect(isSuccess).to.eq(true);
 

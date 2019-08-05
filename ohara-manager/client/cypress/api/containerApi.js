@@ -41,24 +41,25 @@ describe('Container API', () => {
 
     cy.createBroker({
       name: brokerClusterName,
-      zookeeperClusterName: zookeeperClusterName,
       nodeNames: [nodeName],
+      zookeeperClusterName,
     });
 
     cy.startBroker(brokerClusterName);
 
     cy.testCreateWorker({
       name: workerClusterName,
-      brokerClusterName,
       nodeNames: [nodeName],
+      brokerClusterName,
     });
 
-    cy.fetchContainers(workerClusterName).then(res => {
+    cy.fetchContainers(workerClusterName).then(response => {
       const {
         data: { isSuccess, result },
-      } = res;
+      } = response;
 
       expect(isSuccess).to.eq(true);
+
       expect(result).to.be.a('array');
       expect(result[0]).include.keys('containers');
       expect(result[0].containers).to.be.a('array');

@@ -118,10 +118,10 @@ describe('Zookeeper API', () => {
     cy.createZookeeper(paramsOne);
     cy.createZookeeper(paramsTwo);
 
-    cy.fetchZookeepers().then(res => {
+    cy.fetchZookeepers().then(response => {
       const {
         data: { isSuccess, result },
-      } = res;
+      } = response;
 
       expect(isSuccess).to.eq(true);
 

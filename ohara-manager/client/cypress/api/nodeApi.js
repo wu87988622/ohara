@@ -35,10 +35,10 @@ describe('Node API', () => {
   it('createNode', () => {
     const { nodeName } = setup();
 
-    cy.get('@createNode').then(res => {
+    cy.get('@createNode').then(response => {
       const {
         data: { isSuccess, result },
-      } = res;
+      } = response;
       const { services, name, password, port, user, lastModified } = result;
       const [zookeeper, broker, worker] = services;
 
@@ -74,10 +74,10 @@ describe('Node API', () => {
       password: utils.makeRandomStr(),
     };
 
-    cy.updateNode(params).then(res => {
+    cy.updateNode(params).then(response => {
       const {
         data: { isSuccess, result },
-      } = res;
+      } = response;
       const { services, name, password, port, user, lastModified } = result;
       const [zookeeper, broker, worker] = services;
 
@@ -121,10 +121,10 @@ describe('Node API', () => {
     cy.createNode(paramsOne);
     cy.createNode(paramsTwo);
 
-    cy.fetchNodes().then(res => {
+    cy.fetchNodes().then(response => {
       const {
         data: { isSuccess, result },
-      } = res;
+      } = response;
 
       expect(isSuccess).to.eq(true);
 

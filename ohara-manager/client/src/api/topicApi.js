@@ -18,9 +18,9 @@ import { toNumber, get } from 'lodash';
 
 import { handleError, axiosInstance } from './apiUtils';
 
-export const fetchTopic = async topicId => {
+export const fetchTopic = async name => {
   try {
-    const res = await axiosInstance.get(`/api/topics/${topicId}`);
+    const res = await axiosInstance.get(`/api/topics/${name}`);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {

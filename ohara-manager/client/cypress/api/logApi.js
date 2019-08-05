@@ -33,30 +33,30 @@ describe('Log API', () => {
     });
 
     cy.createZookeeper({
-      name: zookeeperClusterName,
       nodeNames: [nodeName],
+      name: zookeeperClusterName,
     });
 
     cy.startZookeeper(zookeeperClusterName);
 
     cy.createBroker({
       name: brokerClusterName,
-      zookeeperClusterName: zookeeperClusterName,
       nodeNames: [nodeName],
+      zookeeperClusterName,
     });
 
     cy.startBroker(brokerClusterName);
 
     cy.testCreateWorker({
       name: workerClusterName,
-      brokerClusterName,
       nodeNames: [nodeName],
+      brokerClusterName,
     });
 
-    cy.fetchLogs('workers', workerClusterName).then(res => {
+    cy.fetchLogs('workers', workerClusterName).then(response => {
       const {
         data: { isSuccess, result },
-      } = res;
+      } = response;
       const { name, logs } = result;
 
       expect(isSuccess).to.eq(true);

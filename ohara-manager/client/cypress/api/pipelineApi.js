@@ -39,16 +39,16 @@ const setup = () => {
 
   cy.createBroker({
     name: brokerClusterName,
-    zookeeperClusterName: zookeeperClusterName,
     nodeNames: [nodeName],
+    zookeeperClusterName,
   });
 
   cy.startBroker(brokerClusterName);
 
   cy.testCreateWorker({
     name: workerClusterName,
-    brokerClusterName,
     nodeNames: [nodeName],
+    brokerClusterName,
   });
 
   cy.testCreatePipeline({
@@ -144,6 +144,8 @@ describe('Pipeline API', () => {
       name: topicName,
       brokerClusterName,
     });
+
+    cy.startTopic(topicName);
 
     const params = {
       name: pipelineName,

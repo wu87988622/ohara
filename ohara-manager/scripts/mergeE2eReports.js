@@ -44,7 +44,7 @@ const merge = ({ reportDistPath, filesToBeMerged, reject, resolve }) => {
 
     console.log(
       chalk.green(
-        `Merged all end-to-end test reports!\nYou can view the end-to-end test report at ${reportDistPath}`,
+        `Merged all test reports!\nYou can view report at ${reportDistPath}`,
       ),
     );
 
@@ -65,9 +65,7 @@ const mergeE2eReports = fileName =>
     };
 
     if (isEmpty(files)) {
-      console.log(
-        chalk.red(`No end-to-end report found in ${reportDistPath}!`),
-      );
+      console.log(chalk.red(`No report found in ${reportDistPath}!`));
       reject();
     }
 

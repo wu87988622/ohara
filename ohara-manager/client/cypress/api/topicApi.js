@@ -41,8 +41,8 @@ const setup = () => {
 
   cy.createBroker({
     name: brokerClusterName,
-    zookeeperClusterName,
     nodeNames: [nodeName],
+    zookeeperClusterName,
   });
 
   cy.startBroker(brokerClusterName);
@@ -51,6 +51,8 @@ const setup = () => {
     name: topicName,
     brokerClusterName,
   }).as('testCreateTopic');
+
+  cy.startTopic(topicName);
 
   return {
     nodeName,
@@ -66,10 +68,10 @@ describe('Topic API', () => {
   it('CreateTopic', () => {
     const { topicName } = setup();
 
-    cy.get('@testCreateTopic').then(res => {
+    cy.get('@testCreateTopic').then(response => {
       const {
         data: { isSuccess, result },
-      } = res;
+      } = response;
       const {
         name,
         numberOfPartitions,
@@ -90,10 +92,10 @@ describe('Topic API', () => {
   it('fetchTopic', () => {
     const { topicName } = setup();
 
-    cy.fetchTopic(topicName).then(res => {
+    cy.fetchTopic(topicName).then(response => {
       const {
         data: { isSuccess, result },
-      } = res;
+      } = response;
 
       const {
         name,
@@ -128,10 +130,13 @@ describe('Topic API', () => {
     cy.testCreateTopic(paramsOne);
     cy.testCreateTopic(paramsTwo);
 
-    cy.fetchTopics().then(res => {
+    cy.startTopic(paramsOne.name);
+    cy.startTopic(paramsTwo.name);
+
+    cy.fetchTopics().then(response => {
       const {
         data: { isSuccess, result },
-      } = res;
+      } = response;
 
       expect(isSuccess).to.eq(true);
 
@@ -182,7 +187,11 @@ describe('Topic API', () => {
       expect(response.data.isSuccess).to.eq(true);
     });
 
-    cy.deleteTopic(topicName).then(response => {
+    cy.stopTopic(topicName).then(response => {
+      expect(response.data.isSuccess).to.eq(true);
+    });
+
+    cy.testDeleteTopic(topicName).then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });
 
