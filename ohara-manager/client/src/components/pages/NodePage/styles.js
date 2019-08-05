@@ -15,6 +15,7 @@
  */
 
 import styled from 'styled-components';
+import Icon from '@material-ui/core/Icon';
 import { Link } from 'react-router-dom';
 
 import { Button } from 'components/common/Mui/Form';
@@ -53,21 +54,6 @@ export const LinkIcon = styled(Link)`
   }
 `;
 
-export const Icon = styled.i`
-  color: ${props => props.theme.lighterBlue};
+export const StyledIcon = styled(Icon)`
   font-size: 20px;
-  margin-right: 20px;
-  transition: ${props => props.theme.durationNormal} all;
-  cursor: pointer;
-
-  &:hover,
-  &.is-active {
-    transition: ${props => props.theme.durationNormal} all;
-    color: ${props => props.theme.blue};
-  }
-
-  &:last-child {
-    border-right: none;
-    margin-right: 0;
-  }
 `;
