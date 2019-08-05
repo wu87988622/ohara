@@ -91,7 +91,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
   private[this] def hookOfCreation(implicit workerCollie: WorkerCollie,
                                    executionContext: ExecutionContext): HookOfCreation[Creation, ConnectorDescription] =
     (creation: Creation) =>
-      CollieUtils.orElseCluster(creation.workerClusterName).map { clusterName =>
+      CollieUtils.orElseClusterName(creation.workerClusterName).map { clusterName =>
         toRes(creation.copy(settings = creation.settings + (WORKER_CLUSTER_NAME_KEY -> JsString(clusterName))))
     }
 
@@ -114,7 +114,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
             throw new IllegalStateException(
               "the connector is working now. Please stop it before updating the properties")
           // 3) locate the correct worker cluster name
-          CollieUtils.orElseCluster(update.workerClusterName.orElse(previous.map(_.workerClusterName)))
+          CollieUtils.orElseClusterName(update.workerClusterName.orElse(previous.map(_.workerClusterName)))
         }
         .map { clusterName =>
           toRes(

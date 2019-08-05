@@ -93,8 +93,10 @@ class TestTopicRoute extends SmallTest with Matchers {
 
   @Test
   def createTopicOnNonexistentCluster(): Unit = {
-    an[IllegalArgumentException] should be thrownBy result(
+    // we don't check the existence of broker cluster in creating properties
+    val topic = result(
       topicApi.request.name(CommonUtils.randomString(10)).brokerClusterName(CommonUtils.randomString()).create())
+    an[IllegalArgumentException] should be thrownBy result(topicApi.start(topic.key))
   }
 
   @Test
@@ -160,8 +162,7 @@ class TestTopicRoute extends SmallTest with Matchers {
     val topicInfo = result(
       topicApi.request.name(CommonUtils.randomString(10)).brokerClusterName(bks.head.name).create())
 
-    an[IllegalArgumentException] should be thrownBy result(
-      topicApi.request.key(topicInfo.key).brokerClusterName(bks.last.name).update())
+    result(topicApi.request.key(topicInfo.key).brokerClusterName(bks.last.name).update())
   }
 
   @Test
@@ -214,13 +215,6 @@ class TestTopicRoute extends SmallTest with Matchers {
   @Test
   def duplicateUpdate(): Unit =
     (0 to 10).foreach(_ => result(topicApi.request.name(CommonUtils.randomString()).update()))
-
-  @Test
-  def testBrokerClusterName(): Unit = {
-    val topicInfo = result(topicApi.request.name(CommonUtils.randomString(10)).create())
-    an[IllegalArgumentException] should be thrownBy result(
-      topicApi.request.key(topicInfo.key).brokerClusterName(CommonUtils.randomString()).update())
-  }
 
   @Test
   def testUpdateNumberOfPartitions(): Unit = {
@@ -339,6 +333,62 @@ class TestTopicRoute extends SmallTest with Matchers {
 
     result(topicApi.stop(topic.key))
     result(topicApi.get(topic.key)).state.isEmpty shouldBe true
+  }
+
+  @Test
+  def failToDeleteRunningTopic(): Unit = {
+    val topic = result(topicApi.request.create())
+    result(topicApi.start(topic.key))
+    an[IllegalArgumentException] should be thrownBy result(topicApi.delete(topic.key))
+
+    result(topicApi.stop(topic.key))
+    result(topicApi.delete(topic.key))
+    result(topicApi.list()).exists(_.key == topic.key) shouldBe false
+  }
+
+  @Test
+  def stopTopicFromStoppingBrokerCluster(): Unit = {
+    val topic = result(topicApi.request.create())
+    result(topicApi.start(topic.key))
+
+    // remove broker cluster
+    result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).stop(topic.brokerClusterName))
+    result(topicApi.stop(topic.key))
+    result(topicApi.delete(topic.key))
+  }
+
+  @Test
+  def stopTopicFromNonexistentBrokerCluster(): Unit = {
+    val topic = result(topicApi.request.create())
+    result(topicApi.start(topic.key))
+
+    // remove broker cluster
+    result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).stop(topic.brokerClusterName))
+    result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).delete(topic.brokerClusterName))
+    result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).size shouldBe 0
+    result(topicApi.stop(topic.key))
+    result(topicApi.delete(topic.key))
+  }
+
+  @Test
+  def deleteTopicFromNonexistentBrokerCluster(): Unit = {
+    val topic = result(topicApi.request.create())
+    result(topicApi.start(topic.key))
+
+    // remove broker cluster
+    result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).stop(topic.brokerClusterName))
+    result(topicApi.delete(topic.key))
+  }
+
+  @Test
+  def failToUpdateRunningTopic(): Unit = {
+    val topic = result(topicApi.request.create())
+    result(topicApi.start(topic.key))
+    an[IllegalArgumentException] should be thrownBy result(topicApi.request.key(topic.key).update())
+
+    result(topicApi.stop(topic.key))
+    // topic is stopped now.
+    result(topicApi.request.key(topic.key).update())
   }
 
   @After

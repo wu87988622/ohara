@@ -47,6 +47,7 @@ class TestMetrics extends WithBrokerWorker with Matchers {
   @Test
   def testTopic(): Unit = {
     val topic = result(topicApi.request.name(CommonUtils.randomString()).create())
+    result(topicApi.start(topic.key))
     val producer = Producer
       .builder[String, String]()
       .connectionProps(testUtil().brokersConnProps())
@@ -72,6 +73,7 @@ class TestMetrics extends WithBrokerWorker with Matchers {
       java.time.Duration.ofSeconds(20)
     )
 
+    result(topicApi.stop(topic.key))
     result(topicApi.delete(topic.key))
 
     assertNoMetricsForTopic(topic.name)
@@ -146,6 +148,7 @@ class TestMetrics extends WithBrokerWorker with Matchers {
   def testTopicMeterInPerfSource(): Unit = {
     val topicName = CommonUtils.randomString()
     val topic = result(topicApi.request.name(topicName).create())
+    result(topicApi.start(topic.key))
 
     val source = result(
       connectorApi.request
@@ -180,6 +183,7 @@ class TestMetrics extends WithBrokerWorker with Matchers {
       java.time.Duration.ofSeconds(20))
 
     // remove topic
+    result(topicApi.stop(topic.key))
     result(topicApi.delete(topic.key))
     CommonUtils.await(() => !result(pipelineApi.get(pipeline.key)).objects.exists(_.name == topic.name),
                       java.time.Duration.ofSeconds(30))

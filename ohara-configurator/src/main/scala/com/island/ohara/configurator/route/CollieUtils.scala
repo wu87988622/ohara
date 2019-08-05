@@ -64,7 +64,7 @@ object CollieUtils {
     * @tparam Creator cluster creator. collie must have both Req and Creator to distinguish the kind of cluster
     * @return matched cluster name
     */
-  private[route] def orElseCluster[Req <: ClusterInfo: ClassTag, Creator <: ClusterCreator[Req]](
+  private[route] def orElseClusterName[Req <: ClusterInfo: ClassTag, Creator <: ClusterCreator[Req]](
     clusterName: Option[String])(implicit collie: Collie[Req, Creator],
                                  executionContext: ExecutionContext): Future[String] = if (clusterName.isDefined)
     Future.successful(clusterName.get)

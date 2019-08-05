@@ -18,7 +18,7 @@ package com.island.ohara.configurator.fake
 
 import java.util.concurrent.ConcurrentHashMap
 
-import com.island.ohara.agent.{BrokerCollie, ClusterState, NodeCollie}
+import com.island.ohara.agent.{BrokerCollie, ClusterState, NoSuchClusterException, NodeCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.{ClusterInfo, ContainerApi, NodeApi}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
@@ -87,6 +87,8 @@ private[configurator] class FakeBrokerCollie(node: NodeCollie, bkConnectionProps
 
   override def topicAdmin(cluster: BrokerClusterInfo): TopicAdmin =
     if (bkConnectionProps == null) {
+      if (!clusterCache.containsKey(cluster))
+        throw new NoSuchClusterException(s"cluster:${cluster.name} is not running")
       val fake = new FakeTopicAdmin
       val r = fakeAdminCache.putIfAbsent(cluster, fake)
       if (r == null) fake else r

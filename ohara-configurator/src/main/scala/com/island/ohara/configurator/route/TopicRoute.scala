@@ -26,7 +26,6 @@ import com.island.ohara.configurator.route.RouteUtils._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.island.ohara.kafka.connector.json.{ObjectKey, TopicKey}
 import com.typesafe.scalalogging.Logger
-import spray.json.JsValue
 
 import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object TopicRoute {
@@ -71,31 +70,6 @@ private[configurator] object TopicRoute {
         finally topicAdmin.close()
       }
 
-  private[this] def createTopic(
-    topicAdmin: TopicAdmin,
-    clusterName: String,
-    group: String,
-    name: String,
-    numberOfPartitions: Int,
-    numberOfReplications: Short,
-    configs: Map[String, String],
-    tags: Map[String, JsValue])(implicit executionContext: ExecutionContext): Future[TopicInfo] =
-    createTopic(
-      topicAdmin = topicAdmin,
-      topicInfo = TopicInfo(
-        group = group,
-        name = name,
-        numberOfPartitions = numberOfPartitions,
-        numberOfReplications = numberOfReplications,
-        brokerClusterName = clusterName,
-        metrics = Metrics(Seq.empty),
-        state = Some(TopicState.RUNNING),
-        lastModified = CommonUtils.current(),
-        configs = configs,
-        tags = tags
-      )
-    )
-
   private[this] def hookOfGet(implicit meterCache: MeterCache,
                               brokerCollie: BrokerCollie,
                               executionContext: ExecutionContext): HookOfGet[TopicInfo] = (topicInfo: TopicInfo) =>
@@ -113,114 +87,50 @@ private[configurator] object TopicRoute {
         }
     }
 
-  private[this] def hookOfCreation(implicit adminCleaner: AdminCleaner,
-                                   brokerCollie: BrokerCollie,
+  private[this] def hookOfCreation(implicit brokerCollie: BrokerCollie,
                                    executionContext: ExecutionContext): HookOfCreation[Creation, TopicInfo] =
     (creation: Creation) =>
-      CollieUtils.topicAdmin(creation.brokerClusterName).flatMap {
-        case (cluster, client) =>
-          // TODO: remove this deprecated behavior. We pre-create the topic on kafka only if the input arguments is completed
-          // This stuff is for backward-compatibility.
-          if (creation.brokerClusterName.isDefined)
-            client.topics().map(_.find(_.name == creation.key.topicNameOnKafka)).flatMap { previous =>
-              if (previous.isDefined) Future.failed(new IllegalArgumentException(s"${creation.name} already exists"))
-              else
-                createTopic(
-                  topicAdmin = client,
-                  clusterName = cluster.name,
-                  group = creation.group,
-                  name = creation.name,
-                  numberOfPartitions = creation.numberOfPartitions,
-                  numberOfReplications = creation.numberOfReplications,
-                  configs = creation.configs,
-                  tags = creation.tags
-                )
-            } else
-            Future.successful(
-              TopicInfo(
-                group = creation.group,
-                name = creation.name,
-                numberOfPartitions = creation.numberOfPartitions,
-                numberOfReplications = creation.numberOfReplications,
-                brokerClusterName = cluster.name,
-                metrics = Metrics(Seq.empty),
-                state = None,
-                lastModified = CommonUtils.current(),
-                configs = creation.configs,
-                tags = creation.tags
-              ))
+      CollieUtils.orElseClusterName(creation.brokerClusterName).map { clusterName =>
+        TopicInfo(
+          group = creation.group,
+          name = creation.name,
+          numberOfPartitions = creation.numberOfPartitions,
+          numberOfReplications = creation.numberOfReplications,
+          brokerClusterName = clusterName,
+          metrics = Metrics(Seq.empty),
+          state = None,
+          lastModified = CommonUtils.current(),
+          configs = creation.configs,
+          tags = creation.tags
+        )
     }
 
   private[this] def hookOfUpdate(implicit adminCleaner: AdminCleaner,
                                  brokerCollie: BrokerCollie,
                                  executionContext: ExecutionContext): HookOfUpdate[Creation, Update, TopicInfo] =
     (key: ObjectKey, update: Update, previous: Option[TopicInfo]) =>
-      if (previous.map(_.brokerClusterName).exists(bkName => update.brokerClusterName.exists(_ != bkName)))
-        Future.failed(new IllegalArgumentException("It is illegal to move topic to another broker cluster"))
-      else
-        CollieUtils.topicAdmin(previous.map(_.brokerClusterName).orElse(update.brokerClusterName)).flatMap {
-          case (cluster, client) =>
-            client.topics().map(_.find(_.name == TopicKey.of(key.group, key.name).topicNameOnKafka)).flatMap {
-              topicFromKafkaOption =>
-                topicFromKafkaOption.fold(Future.successful(TopicInfo(
-                  group = key.group,
-                  name = key.name,
-                  numberOfPartitions = update.numberOfPartitions.getOrElse(DEFAULT_NUMBER_OF_PARTITIONS),
-                  numberOfReplications = update.numberOfReplications.getOrElse(DEFAULT_NUMBER_OF_REPLICATIONS),
-                  brokerClusterName = cluster.name,
-                  metrics = Metrics(Seq.empty),
-                  state = None,
-                  lastModified = CommonUtils.current(),
-                  configs = update.configs.orElse(previous.map(_.configs)).getOrElse(Map.empty),
-                  tags = update.tags.orElse(previous.map(_.tags)).getOrElse(Map.empty)
-                ))) { topicFromKafka =>
-                  if (update.configs.exists(_ != topicFromKafka.configs)) {
-                    Releasable.close(client)
-                    Future.failed(new IllegalArgumentException("Changing configs is disallowed"))
-                  } else if (update.numberOfPartitions.exists(_ < topicFromKafka.numberOfPartitions)) {
-                    Releasable.close(client)
-                    Future.failed(new IllegalArgumentException("Reducing the number from partitions is disallowed"))
-                  } else if (update.numberOfReplications.exists(_ != topicFromKafka.numberOfReplications)) {
-                    // we have got to release the client
-                    Releasable.close(client)
-                    Future.failed(new IllegalArgumentException("Non-support to change the number from replications"))
-                  } else if (update.numberOfPartitions.exists(_ > topicFromKafka.numberOfPartitions)) {
-                    client.changePartitions(TopicKey.of(key.group(), key.name()), update.numberOfPartitions.get).map {
-                      _ =>
-                        try TopicInfo(
-                          group = key.group,
-                          name = key.name,
-                          numberOfPartitions = update.numberOfPartitions.get,
-                          numberOfReplications = topicFromKafka.numberOfReplications,
-                          brokerClusterName = cluster.name,
-                          metrics = Metrics(Seq.empty),
-                          state = Some(TopicState.RUNNING),
-                          lastModified = CommonUtils.current(),
-                          configs = topicFromKafka.configs,
-                          tags = update.tags.orElse(previous.map(_.tags)).getOrElse(Map.empty)
-                        )
-                        finally client.close()
-                    }
-                  } else {
-                    // we have got to release the client
-                    Releasable.close(client)
-                    // just return the topic info
-                    Future.successful(TopicInfo(
-                      group = key.group,
-                      name = key.name,
-                      numberOfPartitions = topicFromKafka.numberOfPartitions,
-                      numberOfReplications = topicFromKafka.numberOfReplications,
-                      brokerClusterName = cluster.name,
-                      metrics = Metrics(Seq.empty),
-                      state = Some(TopicState.RUNNING),
-                      lastModified = CommonUtils.current(),
-                      configs = topicFromKafka.configs,
-                      tags = update.tags.orElse(previous.map(_.tags)).getOrElse(Map.empty)
-                    ))
-                  }
-                }
-            }
-      }
+      CollieUtils.topicAdmin(previous.map(_.brokerClusterName).orElse(update.brokerClusterName)).flatMap {
+        case (cluster, client) =>
+          client.topics().map(_.find(_.name == TopicKey.of(key.group, key.name).topicNameOnKafka)).map {
+            topicFromKafkaOption =>
+              if (topicFromKafkaOption.isDefined)
+                throw new IllegalStateException(
+                  s"the topic:$key is working now. Please stop it before updating the properties")
+              try TopicInfo(
+                group = key.group,
+                name = key.name,
+                numberOfPartitions = update.numberOfPartitions.getOrElse(DEFAULT_NUMBER_OF_PARTITIONS),
+                numberOfReplications = update.numberOfReplications.getOrElse(DEFAULT_NUMBER_OF_REPLICATIONS),
+                brokerClusterName = cluster.name,
+                metrics = Metrics(Seq.empty),
+                state = None,
+                lastModified = CommonUtils.current(),
+                configs = update.configs.orElse(previous.map(_.configs)).getOrElse(Map.empty),
+                tags = update.tags.orElse(previous.map(_.tags)).getOrElse(Map.empty)
+              )
+              finally Releasable.close(client)
+          }
+    }
 
   private[this] def hookBeforeDelete(implicit store: DataStore,
                                      adminCleaner: AdminCleaner,
@@ -233,22 +143,15 @@ private[configurator] object TopicRoute {
           .topicAdmin(Some(topicInfo.brokerClusterName))
           .flatMap {
             case (_, client) =>
-              client
-                .exist(topicInfo.key)
-                .flatMap {
-                  // TODO: it should forbid user to delete a running topic... by chia
-                  if (_) client.delete(topicInfo.key).flatMap { _ =>
-                    try Future.unit
-                    finally Releasable.close(client)
-                  } else
-                    try Future.unit
-                    finally Releasable.close(client)
-                }
-                .recoverWith {
-                  case e: Throwable =>
-                    LOG.error(s"failed to remove topic:${topicInfo.name} from kafka", e)
-                    Future.unit
-                }
+              client.exist(topicInfo.key).flatMap {
+                if (_)
+                  try Future.failed(
+                    new IllegalStateException(s"the topic:${topicInfo.key} is running. Please stop it first"))
+                  finally Releasable.close(client)
+                else
+                  try Future.unit
+                  finally Releasable.close(client)
+              }
           }
           .recoverWith {
             case e: NoSuchClusterException =>
@@ -285,21 +188,26 @@ private[configurator] object TopicRoute {
                                executionContext: ExecutionContext): HookOfStop[TopicInfo] =
     (key: ObjectKey) =>
       store.value[TopicInfo](key).flatMap { topicInfo =>
-        CollieUtils.topicAdmin(Some(topicInfo.brokerClusterName)).flatMap {
-          case (_, client) =>
-            client
-              .exist(topicInfo.key)
-              .flatMap {
+        CollieUtils
+          .topicAdmin(Some(topicInfo.brokerClusterName))
+          .flatMap {
+            case (_, client) =>
+              client.exist(topicInfo.key).flatMap {
                 if (_) client.delete(topicInfo.key)
                 else Future.unit
               }
-              .map(
-                _ =>
-                  topicInfo.copy(
-                    state = None,
-                    lastModified = CommonUtils.current()
-                ))
-        }
+          }
+          .recoverWith {
+            case e: Throwable =>
+              LOG.error(s"failed to remove topic:${topicInfo.name} from kafka", e)
+              Future.unit
+          }
+          .map(
+            _ =>
+              topicInfo.copy(
+                state = None,
+                lastModified = CommonUtils.current()
+            ))
     }
 
   private[this] def hookOfGroup: HookOfGroup = _.getOrElse(GROUP_DEFAULT)
