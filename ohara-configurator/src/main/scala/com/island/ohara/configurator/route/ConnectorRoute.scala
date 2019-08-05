@@ -138,7 +138,9 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
           .flatMap {
             case (_, wkClient) =>
               wkClient.exist(connectorDescription.key).flatMap {
-                if (_) wkClient.delete(connectorDescription.key)
+                if (_)
+                  throw new IllegalStateException(
+                    "the connector is working now. Please stop it before deleting the properties")
                 else Future.unit
               }
           }

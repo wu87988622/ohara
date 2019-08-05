@@ -413,6 +413,23 @@ class TestConnectorRoute extends SmallTest with Matchers {
     connectorDesc4.tags shouldBe Map.empty
   }
 
+  @Test
+  def failToDeletePropertiesOfRunningConnector(): Unit = {
+    val topic = result(
+      TopicApi.access
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .request
+        .name(CommonUtils.randomString(10))
+        .create())
+    val connectorDesc = result(connectorApi.request.topicKey(topic.key).create())
+    result(connectorApi.start(connectorDesc.key))
+
+    an[IllegalArgumentException] should be thrownBy result(connectorApi.request.key(connectorDesc.key).update())
+    result(connectorApi.stop(connectorDesc.key))
+    result(connectorApi.request.key(connectorDesc.key).update())
+  }
+
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }
