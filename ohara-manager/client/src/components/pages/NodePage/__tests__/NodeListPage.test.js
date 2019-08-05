@@ -260,15 +260,13 @@ describe('<NodeListPage />', () => {
 
     //In jest we cant't change hooks useState, so we cant't test this task.
     it.skip('enables save button when there is new change made in the form', async () => {
-      const { getByTestId, debug, getByText } = await waitForElement(() =>
+      const { getByTestId, getByText } = await waitForElement(() =>
         renderWithProvider(<NodeListPage />),
       );
 
       fireEvent.click(getByTestId('edit-node-icon'));
       const testConnectionButton = getByText('Test connection');
-      debug();
       fireEvent.click(testConnectionButton);
-      debug();
       // expect(getByText('Save')).not.toBeDisabled();
     });
   });
