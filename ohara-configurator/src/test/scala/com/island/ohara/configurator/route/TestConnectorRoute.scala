@@ -104,8 +104,8 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .workerClusterName(defaultWk.name)
         .create())
 
-    connector.workerClusterName.isDefined shouldBe true
-    result(configurator.clusterCollie.workerCollie.remove(connector.workerClusterName.get))
+    connector.workerClusterName shouldBe defaultWk.name
+    result(configurator.clusterCollie.workerCollie.remove(connector.workerClusterName))
 
     result(connectorApi.delete(connector.key))
 
@@ -137,11 +137,9 @@ class TestConnectorRoute extends SmallTest with Matchers {
     // absent worker cluster is ok since there is only one worker cluster
     val connector = result(connectorApi.request.topicKey(topic.key).create())
     // In creation, workerClusterName will not be auto-filled
-    connector.workerClusterName.isEmpty shouldBe true
-    // In start, workerClusterName will be filled by configurator (if there is only one)
-    result(connectorApi.start(connector.key)).workerClusterName.get shouldBe defaultWk.name
+    connector.workerClusterName shouldBe defaultWk.name
     // data stored in configurator should also get the auto-filled result
-    result(connectorApi.get(connector.key)).workerClusterName.get shouldBe defaultWk.name
+    result(connectorApi.get(connector.key)).workerClusterName shouldBe defaultWk.name
 
     val bk = result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
 
@@ -155,7 +153,8 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .nodeNames(bk.nodeNames)
         .create())
 
-    val c = result(
+    // there are two worker cluster so it fails to match worker cluster
+    an[IllegalArgumentException] should be thrownBy result(
       ConnectorApi.access
         .hostname(configurator.hostname)
         .port(configurator.port)
@@ -163,8 +162,6 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .name(CommonUtils.randomString(10))
         .className(CommonUtils.randomString(10))
         .create())
-    // there are two worker cluster so it fails to match worker cluster
-    an[IllegalArgumentException] should be thrownBy result(connectorApi.start(c.key))
 
     val c2 = result(
       ConnectorApi.access
@@ -282,8 +279,6 @@ class TestConnectorRoute extends SmallTest with Matchers {
 
   @Test
   def failToChangeWorkerCluster(): Unit = {
-    val originWkName = result(WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.name
-
     val bk = result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
 
     val wk = result(
@@ -307,11 +302,12 @@ class TestConnectorRoute extends SmallTest with Matchers {
       connectorApi.request
         .name(CommonUtils.randomString(10))
         .className(CommonUtils.randomString(10))
-        .workerClusterName(originWkName)
+        .workerClusterName(defaultWk.name)
         .topicKey(topic.key)
         .create())
 
-    result(connectorApi.start(response.key))
+    response.workerClusterName shouldBe defaultWk.name
+    result(connectorApi.start(response.key)).state should not be None
     // after start, you cannot change worker cluster
     an[IllegalArgumentException] should be thrownBy result(
       connectorApi.request
@@ -319,6 +315,16 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .className(CommonUtils.randomString(10))
         .workerClusterName(wk.name)
         .update())
+
+    result(connectorApi.stop(response.key)).state shouldBe None
+
+    // the connector is stopped so it is ok to update it now.
+    result(
+      connectorApi.request
+        .key(response.key)
+        .className(CommonUtils.randomString(10))
+        .workerClusterName(wk.name)
+        .update()).workerClusterName shouldBe wk.name
   }
 
   @Test

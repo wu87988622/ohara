@@ -197,7 +197,7 @@ object ConnectorApi {
     def columns: Seq[Column] =
       plain.get(COLUMNS_KEY).map(s => PropGroups.ofJson(s).toColumns.asScala).getOrElse(Seq.empty)
     def numberOfTasks: Int = plain(NUMBER_OF_TASKS_KEY).toInt
-    def workerClusterName: Option[String] = plain.get(WORKER_CLUSTER_NAME_KEY)
+    def workerClusterName: String = plain(WORKER_CLUSTER_NAME_KEY)
 
     /**
       * TODO: remove this old key parser ... by chia

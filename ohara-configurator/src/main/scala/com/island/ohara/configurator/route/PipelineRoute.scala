@@ -113,23 +113,9 @@ private[configurator] object PipelineRoute {
                                           executionContext: ExecutionContext,
                                           meterCache: MeterCache): Future[ObjectAbstract] = obj match {
     case data: ConnectorDescription =>
-      data.workerClusterName.fold(
-        // no worker cluster defined, set initial value
-        Future.successful(
-          ObjectAbstract(
-            group = data.group,
-            name = data.name,
-            kind = data.kind,
-            className = Some(data.className),
-            state = None,
-            error = None,
-            metrics = Metrics(Seq.empty),
-            lastModified = data.lastModified,
-            tags = data.tags
-          ))
-      )(clusterCollie.workerCollie.workerClient(_).flatMap {
+      clusterCollie.workerCollie.workerClient(data.workerClusterName).flatMap {
         case (workerClusterInfo, workerClient) => toAbstract(data, workerClusterInfo, workerClient)
-      })
+      }
     case data: TopicInfo =>
       clusterCollie.brokerCollie.cluster(data.brokerClusterName).map(_._1).flatMap(toAbstract(data, _))
     case data: StreamClusterInfo =>

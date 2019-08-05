@@ -407,7 +407,7 @@ private[route] object RouteUtils {
     * - Operate current cluster: PUT /v0/api/zookeeper/xxx/[start|stop]
     * - Manage nodes of current cluster: [PUT / DELETE] /v0/api/zookeeper/xxx/{nodeName}
     */
-  def appendRouteOfClusterAction[Req <: ClusterInfo with Data: ClassTag, Creator <: ClusterCreator[Req]](
+  def appendRouteOfClusterAction[Req <: ClusterInfo: ClassTag, Creator <: ClusterCreator[Req]](
     root: String,
     hookOfGroup: HookOfGroup,
     collie: Collie[Req, Creator],

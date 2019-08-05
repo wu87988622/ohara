@@ -15,7 +15,8 @@
  */
 
 package com.island.ohara.configurator.route
-import com.island.ohara.agent.{BrokerCollie, WorkerCollie}
+import com.island.ohara.agent.Collie.ClusterCreator
+import com.island.ohara.agent.{BrokerCollie, Collie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
@@ -47,6 +48,41 @@ object CollieUtils {
       }
     }
     .map(c => (c, cleaner.add(brokerCollie.topicAdmin(c)))))(brokerCollie.topicAdmin)
+
+  /**
+    * The routes, which is based on external system, require property to define cluster name. As a friendly server, those
+    * routes offer the auto-completion mechanism to define the cluster for the property lacking of cluster name.
+    *
+    * The mechanism has three phases.
+    * 1) return the cluster name from property if the property has defined the cluster name
+    * 2) return the cluster name if there is only one running cluster
+    * 3) finally, throw exception to remind caller that server fails to do auto-completion for property
+    * @param clusterName cluster name
+    * @param collie collie
+    * @param executionContext thread pool
+    * @tparam Req cluster type
+    * @tparam Creator cluster creator. collie must have both Req and Creator to distinguish the kind of cluster
+    * @return matched cluster name
+    */
+  private[route] def orElseCluster[Req <: ClusterInfo: ClassTag, Creator <: ClusterCreator[Req]](
+    clusterName: Option[String])(implicit collie: Collie[Req, Creator],
+                                 executionContext: ExecutionContext): Future[String] = if (clusterName.isDefined)
+    Future.successful(clusterName.get)
+  else
+    collie.clusters().map { clusters =>
+      clusters.size match {
+        case 0 =>
+          throw new IllegalArgumentException(s"we can't choose default worker cluster since there is no worker cluster")
+        case 1 => clusters.keys.head.name
+        case _ =>
+          throw new IllegalArgumentException(
+            s"we can't choose default worker cluster since there are too many worker cluster:${clusters.keys.map(_.name).mkString(",")}")
+      }
+    }
+
+  private[route] def workerClient[T](clusterName: String)(
+    implicit workerCollie: WorkerCollie,
+    executionContext: ExecutionContext): Future[(WorkerClusterInfo, WorkerClient)] = workerClient(Some(clusterName))
 
   private[route] def workerClient[T](clusterName: Option[String])(
     implicit workerCollie: WorkerCollie,
