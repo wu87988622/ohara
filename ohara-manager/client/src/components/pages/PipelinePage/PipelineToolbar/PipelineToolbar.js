@@ -25,7 +25,7 @@ import PipelineNewTopic from './PipelineNewTopic';
 import { Modal } from 'components/common/Modal';
 import { isEmptyStr } from 'utils/commonUtils';
 import { Icon, ToolbarWrapper, FileSavingStatus } from './styles.js';
-import { graph as graphPropType, definition } from 'propTypes/pipeline';
+import { graph as graphPropType } from 'propTypes/pipeline';
 
 const modalNames = {
   ADD_SOURCE_CONNECTOR: 'sources',
@@ -42,7 +42,12 @@ class PipelineToolbar extends React.Component {
     connectors: PropTypes.arrayOf(
       PropTypes.shape({
         className: PropTypes.string.isRequired,
-        definitions: PropTypes.arrayOf(definition).isRequired,
+        definitions: PropTypes.arrayOf(
+          PropTypes.shape({
+            displayName: PropTypes.string.isRequired,
+            defaultValue: PropTypes.any,
+          }),
+        ).isRequired,
       }).isRequired,
     ).isRequired,
     graph: PropTypes.arrayOf(graphPropType).isRequired,
@@ -74,24 +79,24 @@ class PipelineToolbar extends React.Component {
   getConnectorInfo = async () => {
     const result = this.props.connectors.map(connector => {
       const { className, definitions } = connector;
-      let targetMeta = {};
+      let targetDefinition = {};
 
-      definitions.forEach(meta => {
-        const { displayName, defaultValue } = meta;
+      definitions.forEach(definition => {
+        const { displayName, defaultValue } = definition;
 
         if (
           displayName === 'version' ||
           displayName === 'revision' ||
           displayName === 'kind'
         ) {
-          targetMeta = {
-            ...targetMeta,
+          targetDefinition = {
+            ...targetDefinition,
             [displayName]: defaultValue,
           };
         }
       });
 
-      const { kind, version, revision } = targetMeta;
+      const { kind, version, revision } = targetDefinition;
 
       return {
         typeName: kind,
