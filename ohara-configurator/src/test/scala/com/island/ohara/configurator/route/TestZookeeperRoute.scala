@@ -272,6 +272,17 @@ class TestZookeeperRoute extends MediumTest with Matchers {
       .forceRemoveCount shouldBe initialCount + 1
   }
 
+  @Test
+  def failToUpdateRunningZookeeperCluster(): Unit = {
+    val zk = result(zookeeperApi.request.nodeName(nodeNames.head).create())
+    result(zookeeperApi.start(zk.name))
+    an[IllegalArgumentException] should be thrownBy result(
+      zookeeperApi.request.name(zk.name).nodeNames(nodeNames).update())
+    result(zookeeperApi.stop(zk.name))
+    result(zookeeperApi.request.nodeNames(nodeNames).update())
+    result(zookeeperApi.start(zk.name))
+  }
+
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }

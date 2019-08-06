@@ -414,6 +414,17 @@ class TestBrokerRoute extends MediumTest with Matchers {
     (0 until 10).foreach(_ => result(brokerApi.start(bk.name)))
   }
 
+  @Test
+  def failToUpdateRunningBrokerCluster(): Unit = {
+    val bk = result(brokerApi.request.nodeName(nodeNames.head).create())
+    result(brokerApi.start(bk.name))
+    an[IllegalArgumentException] should be thrownBy result(
+      brokerApi.request.name(bk.name).nodeNames(nodeNames).update())
+    result(brokerApi.stop(bk.name))
+    result(brokerApi.request.nodeNames(nodeNames).update())
+    result(brokerApi.start(bk.name))
+  }
+
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }

@@ -85,23 +85,27 @@ object ZookeeperRoute {
       ))
 
   private[this] def hookOfUpdate(
-    implicit executionContext: ExecutionContext): HookOfUpdate[Creation, Update, ZookeeperClusterInfo] =
+    implicit clusterCollie: ClusterCollie,
+    executionContext: ExecutionContext): HookOfUpdate[Creation, Update, ZookeeperClusterInfo] =
     (key: ObjectKey, update: Update, previous: Option[ZookeeperClusterInfo]) =>
-      Future
-        .successful(
-          previous.fold(ZookeeperClusterInfo(
-            name = key.name,
-            imageName = update.imageName.getOrElse(IMAGE_NAME_DEFAULT),
-            clientPort = update.clientPort.getOrElse(CommonUtils.availablePort()),
-            peerPort = update.peerPort.getOrElse(CommonUtils.availablePort()),
-            electionPort = update.electionPort.getOrElse(CommonUtils.availablePort()),
-            nodeNames = update.nodeNames.getOrElse(Set.empty),
-            deadNodes = Set.empty,
-            tags = update.tags.getOrElse(Map.empty),
-            state = None,
-            error = None,
-            lastModified = CommonUtils.current()
-          )) { previous =>
+      clusterCollie.zookeeperCollie.clusters().map { clusters =>
+        if (clusters.keys.filter(_.name == key.name()).exists(_.state.nonEmpty))
+          throw new RuntimeException(s"You cannot update property on non-stopped zookeeper cluster: $key")
+        else
+          previous.fold(
+            ZookeeperClusterInfo(
+              name = key.name,
+              imageName = update.imageName.getOrElse(IMAGE_NAME_DEFAULT),
+              clientPort = update.clientPort.getOrElse(CommonUtils.availablePort()),
+              peerPort = update.peerPort.getOrElse(CommonUtils.availablePort()),
+              electionPort = update.electionPort.getOrElse(CommonUtils.availablePort()),
+              nodeNames = update.nodeNames.getOrElse(Set.empty),
+              deadNodes = Set.empty,
+              tags = update.tags.getOrElse(Map.empty),
+              state = None,
+              error = None,
+              lastModified = CommonUtils.current()
+            )) { previous =>
             previous.copy(
               imageName = update.imageName.getOrElse(previous.imageName),
               clientPort = update.clientPort.getOrElse(previous.clientPort),
@@ -111,12 +115,8 @@ object ZookeeperRoute {
               tags = update.tags.getOrElse(previous.tags),
               lastModified = CommonUtils.current()
             )
-          })
-        .map { zookeeperClusterInfo =>
-          if (zookeeperClusterInfo.state.isDefined)
-            throw new RuntimeException(s"You cannot update property on non-stopped zookeeper cluster: $key")
-          zookeeperClusterInfo
-      }
+          }
+    }
 
   private[this] def hookBeforeDelete(implicit store: DataStore,
                                      clusterCollie: ClusterCollie,

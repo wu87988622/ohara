@@ -93,26 +93,33 @@ object BrokerRoute {
 
   private[this] def hookOfUpdate(
     implicit zookeeperCollie: ZookeeperCollie,
+    clusterCollie: ClusterCollie,
     executionContext: ExecutionContext): HookOfUpdate[Creation, Update, BrokerClusterInfo] =
     (key: ObjectKey, update: Update, previous: Option[BrokerClusterInfo]) =>
-      CollieUtils
-        .orElseClusterName(update.zookeeperClusterName.orElse(previous.map(_.zookeeperClusterName)))
+      clusterCollie.brokerCollie
+        .clusters()
+        .flatMap { clusters =>
+          if (clusters.keys.filter(_.name == key.name()).exists(_.state.nonEmpty))
+            throw new RuntimeException(s"You cannot update property on non-stopped broker cluster: $key")
+          CollieUtils.orElseClusterName(update.zookeeperClusterName.orElse(previous.map(_.zookeeperClusterName)))
+        }
         .map { zkName =>
-          previous.fold(BrokerClusterInfo(
-            name = key.name,
-            imageName = update.imageName.getOrElse(IMAGE_NAME_DEFAULT),
-            zookeeperClusterName = zkName,
-            clientPort = update.clientPort.getOrElse(CommonUtils.availablePort()),
-            exporterPort = update.exporterPort.getOrElse(CommonUtils.availablePort()),
-            jmxPort = update.jmxPort.getOrElse(CommonUtils.availablePort()),
-            nodeNames = update.nodeNames.getOrElse(Set.empty),
-            deadNodes = Set.empty,
-            tags = update.tags.getOrElse(Map.empty),
-            state = None,
-            error = None,
-            lastModified = CommonUtils.current(),
-            topicSettingDefinitions = BrokerCollie.TOPIC_CUSTOM_DEFINITIONS
-          )) { previous =>
+          previous.fold(
+            BrokerClusterInfo(
+              name = key.name,
+              imageName = update.imageName.getOrElse(IMAGE_NAME_DEFAULT),
+              zookeeperClusterName = zkName,
+              clientPort = update.clientPort.getOrElse(CommonUtils.availablePort()),
+              exporterPort = update.exporterPort.getOrElse(CommonUtils.availablePort()),
+              jmxPort = update.jmxPort.getOrElse(CommonUtils.availablePort()),
+              nodeNames = update.nodeNames.getOrElse(Set.empty),
+              deadNodes = Set.empty,
+              tags = update.tags.getOrElse(Map.empty),
+              state = None,
+              error = None,
+              lastModified = CommonUtils.current(),
+              topicSettingDefinitions = BrokerCollie.TOPIC_CUSTOM_DEFINITIONS
+            )) { previous =>
             previous.copy(
               imageName = update.imageName.getOrElse(previous.imageName),
               zookeeperClusterName = zkName,
@@ -124,11 +131,6 @@ object BrokerRoute {
               lastModified = CommonUtils.current()
             )
           }
-        }
-        .map { brokerClusterInfo =>
-          if (brokerClusterInfo.state.isDefined)
-            throw new RuntimeException(s"You cannot update property on non-stopped broker cluster: $key")
-          brokerClusterInfo
       }
 
   private[this] def hookBeforeDelete(implicit store: DataStore,
