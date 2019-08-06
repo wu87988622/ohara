@@ -219,7 +219,7 @@ class HdfsSink extends React.Component {
 
     const currSink = findByGraphName(graph, this.connectorName);
     const update = { ...currSink, state };
-    updateGraph({ update });
+    updateGraph({ update, dispatcher: { name: 'CONNECTOR' } });
 
     if (action === CONNECTOR_ACTIONS.start) {
       if (!isNull(state)) toastr.success(MESSAGES.START_CONNECTOR_SUCCESS);
