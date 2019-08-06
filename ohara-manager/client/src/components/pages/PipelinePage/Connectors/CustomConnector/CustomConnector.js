@@ -93,12 +93,8 @@ class CustomConnector extends React.Component {
 
     if (result) {
       const { settings, state } = result;
-      const { topics } = settings;
-
-      const topicName = utils.getCurrTopicName({
-        originals: this.props.globalTopics,
-        target: topics,
-      });
+      const { topicKeys } = settings;
+      const topicName = get(topicKeys, '[0].name', '');
 
       const _settings = utils.changeToken({
         values: settings,
@@ -181,7 +177,7 @@ class CustomConnector extends React.Component {
     this.handleTriggerConnectorResponse(action, res);
   };
 
-  handleTestConnection = async (e, values) => {
+  handleTestConfigs = async (e, values) => {
     e.preventDefault();
 
     const topic = utils.getCurrTopicId({
@@ -189,14 +185,17 @@ class CustomConnector extends React.Component {
       target: values.topics,
     });
 
-    const topics = Array.isArray(topic) ? topic : [topic];
+    const topicKeys = Array.isArray(topic)
+      ? topic
+      : [{ group: 'default', name: topic }];
+
     const _values = utils.changeToken({
       values,
       targetToken: '_',
       replaceToken: '.',
     });
 
-    const params = { ..._values, topics };
+    const params = { ..._values, topicKeys };
     this.setState({ isTestingConfig: true });
     const res = await validateConnector(params);
     this.setState({ isTestingConfig: false });
@@ -233,14 +232,17 @@ class CustomConnector extends React.Component {
       target: values.topics,
     });
 
-    const topics = Array.isArray(topic) ? topic : [topic];
+    const topicKeys = Array.isArray(topic)
+      ? topic
+      : [{ group: 'default', name: topic }];
+
     const _values = utils.changeToken({
       values,
       targetToken: '_',
       replaceToken: '.',
     });
 
-    const params = { ..._values, topics };
+    const params = { ..._values, topicKeys };
     await connectorApi.updateConnector({ id: connectorId, params });
 
     const { sinkProps, update } = utils.getUpdatedTopic({
@@ -251,7 +253,7 @@ class CustomConnector extends React.Component {
       connectorId,
     });
 
-    updateGraph({ update, ...sinkProps });
+    updateGraph({ update, dispatcher: { name: 'CONNECTOR' }, ...sinkProps });
   };
 
   render() {
@@ -310,7 +312,7 @@ class CustomConnector extends React.Component {
 
                   {utils.renderForm({ parentValues: values, ...formProps })}
                   <TestConfigBtn
-                    handleClick={e => this.handleTestConnection(e, values)}
+                    handleClick={e => this.handleTestConfigs(e, values)}
                     isWorking={isTestingConfig}
                   />
                 </form>

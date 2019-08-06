@@ -96,11 +96,7 @@ class JdbcSource extends React.Component {
       const { settings } = result;
       const { topicKeys } = settings;
       const state = get(result, 'state', null);
-
-      const topicName = utils.getCurrTopicName({
-        originals: this.props.globalTopics,
-        target: topicKeys,
-      });
+      const topicName = get(topicKeys, '[0].name', '');
 
       const _settings = utils.changeToken({
         values: settings,
@@ -183,22 +179,25 @@ class JdbcSource extends React.Component {
     this.handleTriggerConnectorResponse(action, res);
   };
 
-  handleTestConnection = async (e, values) => {
-    e.preventDefault();
+  handleTestConfigs = async (event, values) => {
+    event.preventDefault();
 
     const topic = utils.getCurrTopicId({
       originals: this.props.globalTopics,
-      target: values.topics,
+      target: values.topicKeys,
     });
 
-    const topics = Array.isArray(topic) ? topic : [topic];
+    const topicKeys = Array.isArray(topic)
+      ? topic
+      : [{ group: 'default', name: topic }];
+
     const _values = utils.changeToken({
       values,
       targetToken: '_',
       replaceToken: '.',
     });
 
-    const params = { ..._values, topics };
+    const params = { ..._values, topicKeys };
     this.setState({ isTestingConfig: true });
     const res = await validateConnector(params);
     this.setState({ isTestingConfig: false });
@@ -233,7 +232,10 @@ class JdbcSource extends React.Component {
       target: values.topicKeys,
     });
 
-    const topicKeys = Array.isArray(topic) ? topic : [topic];
+    const topicKeys = Array.isArray(topic)
+      ? topic
+      : [{ group: 'default', name: topic }];
+
     const _values = utils.changeToken({
       values,
       targetToken: '_',
@@ -311,7 +313,7 @@ class JdbcSource extends React.Component {
 
                   {utils.renderForm({ parentValues: values, ...formProps })}
                   <TestConfigBtn
-                    handleClick={e => this.handleTestConnection(e, values)}
+                    handleClick={e => this.handleTestConfigs(e, values)}
                     isWorking={isTestingConfig}
                   />
                 </form>

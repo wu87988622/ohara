@@ -63,7 +63,7 @@ const setup = () => {
     className: 'com.island.ohara.connector.ftp.FtpSource',
     'connector.name': connectorName,
     name: connectorName,
-    topics: [topicName],
+    topicKeys: [{ group: 'default', name: topicName }],
     workerClusterName,
   }).as('createConnector');
 
@@ -81,7 +81,7 @@ describe('Connector API', () => {
   beforeEach(() => cy.deleteAllServices());
 
   it('createConnector', () => {
-    const { connectorName } = setup();
+    const { connectorName, topicName } = setup();
 
     cy.get('@createConnector').then(response => {
       const {
@@ -97,11 +97,17 @@ describe('Connector API', () => {
       expect(settings['tasks.max']).to.be.a('number');
       expect(settings.name).to.be.a('string');
       expect(settings.workerClusterName).to.be.a('string');
+      expect(settings.topicKeys)
+        .to.be.an('array')
+        .to.have.lengthOf(1)
+        .to.have.deep.property('[0].name', topicName);
+
+      expect(settings.topicKeys).to.have.deep.property('[0].group', 'default');
     });
   });
 
   it('fetchConnector', () => {
-    const { connectorName } = setup();
+    const { connectorName, topicName } = setup();
 
     cy.fetchConnector(connectorName).then(response => {
       const {
@@ -112,12 +118,19 @@ describe('Connector API', () => {
       expect(isSuccess).to.eq(true);
 
       expect(result).to.include.keys('settings');
-      expect(settings).to.be.a('object');
+      expect(settings).to.be.an('object');
       expect(settings['className']).to.be.a('string');
       expect(settings['connector.name']).to.eq(connectorName);
       expect(settings['tasks.max']).to.be.a('number');
       expect(settings.name).to.be.a('string');
       expect(settings.workerClusterName).to.be.a('string');
+
+      expect(settings.topicKeys)
+        .to.be.an('array')
+        .to.have.lengthOf(1)
+        .to.have.deep.property('[0].name', topicName);
+
+      expect(settings.topicKeys).to.have.deep.property('[0].group', 'default');
     });
   });
 
@@ -145,7 +158,7 @@ describe('Connector API', () => {
         kind: 'source',
         revision: '1e7da9544e6aa7ad2f9f2792ed8daf5380783727',
         'tasks.max': 1,
-        topics: [topicName],
+        topicKeys: [{ group: 'default', name: topicName }],
         version: '0.7.0-SNAPSHOT',
         workerClusterName,
       },
@@ -176,9 +189,15 @@ describe('Connector API', () => {
       expect(settings.kind).to.be.a('string');
       expect(settings.revision).to.be.a('string');
       expect(settings['tasks.max']).to.be.a('number');
-      expect(settings.topics).to.be.a('array');
       expect(settings.version).to.be.a('string');
       expect(settings.workerClusterName).to.be.a('string');
+
+      expect(settings.topicKeys)
+        .to.be.an('array')
+        .to.have.lengthOf(1)
+        .to.have.deep.property('[0].name', topicName);
+
+      expect(settings.topicKeys).to.have.deep.property('[0].group', 'default');
     });
   });
 
@@ -186,10 +205,7 @@ describe('Connector API', () => {
     const { connectorName } = setup();
 
     cy.startConnector(connectorName).then(response => {
-      const { data } = response;
-      expect(data.isSuccess).to.eq(true);
-      expect(data.result).to.include.keys('settings', 'state');
-      expect(data.result.state).to.be.a('string');
+      expect(response.data.isSuccess).to.eq(true);
     });
   });
 
@@ -197,9 +213,7 @@ describe('Connector API', () => {
     const { connectorName } = setup();
 
     cy.stopConnector(connectorName).then(response => {
-      const { data } = response;
-      expect(data.isSuccess).to.eq(true);
-      expect(data.result).to.include.keys('settings');
+      expect(response.data.isSuccess).to.eq(true);
     });
   });
 
@@ -207,8 +221,7 @@ describe('Connector API', () => {
     const { connectorName } = setup();
 
     cy.deleteConnector(connectorName).then(response => {
-      const { data } = response;
-      expect(data.isSuccess).to.eq(true);
+      expect(response.data.isSuccess).to.eq(true);
     });
   });
 });

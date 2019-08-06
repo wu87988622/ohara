@@ -54,17 +54,6 @@ describe('getCurrTopicId()', () => {
   });
 });
 
-describe('getCurrTopicName()', () => {
-  it('gets the right topic name', () => {
-    const originals = generate.topics({ count: 3 });
-    const targetTopic = originals[1];
-    const target = [targetTopic.name];
-
-    const topicName = utils.getCurrTopicName({ originals, target });
-    expect(topicName).toBe(targetTopic.name);
-  });
-});
-
 describe('addColumn()', () => {
   it('adds a new column to empty column array', () => {
     const configs = { columns: [] };

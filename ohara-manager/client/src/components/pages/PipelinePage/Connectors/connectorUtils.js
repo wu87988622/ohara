@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-import { get, isEmpty, isUndefined, isNull } from 'lodash';
+import { isEmpty, isUndefined, isNull } from 'lodash';
 import { Field } from 'react-final-form';
 
 import ColumnTable from './CustomConnector/ColumnTable';
@@ -32,11 +32,6 @@ export const getCurrTopicId = ({ originals, target = '' }) => {
   const { name } = originals.find(findByTopicName);
 
   return name;
-};
-
-export const getCurrTopicName = ({ originals, target }) => {
-  const topicName = get(target, '[0]', '');
-  return topicName;
 };
 
 export const getUpdatedTopic = ({

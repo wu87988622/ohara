@@ -97,11 +97,7 @@ class FtpSource extends React.Component {
       const { settings } = result;
       const { topicKeys } = settings;
       const state = get(result, 'state', null);
-
-      const currentTopicKeys = utils.getCurrTopicName({
-        originals: this.props.globalTopics,
-        target: topicKeys,
-      });
+      const topicName = get(topicKeys, '[0].name', '');
 
       const _settings = utils.changeToken({
         values: settings,
@@ -109,7 +105,7 @@ class FtpSource extends React.Component {
         replaceToken: '_',
       });
 
-      const configs = { ..._settings, topicKeys: currentTopicKeys };
+      const configs = { ..._settings, topicKeys: topicName };
       this.setState({ configs, state });
     }
   };
@@ -184,15 +180,18 @@ class FtpSource extends React.Component {
     this.handleTriggerConnectorResponse(action, res);
   };
 
-  handleTestConnection = async (e, values) => {
-    e.preventDefault();
+  handleTestConfigs = async (event, values) => {
+    event.preventDefault();
 
     const topic = utils.getCurrTopicId({
       originals: this.props.globalTopics,
       target: values.topicKeys,
     });
 
-    const topicKeys = Array.isArray(topic) ? topic : [topic];
+    const topicKeys = Array.isArray(topic)
+      ? topic
+      : [{ group: 'default', name: topic }];
+
     const _values = utils.changeToken({
       values,
       targetToken: '_',
@@ -234,7 +233,10 @@ class FtpSource extends React.Component {
       target: values.topicKeys,
     });
 
-    const topicKeys = Array.isArray(topic) ? topic : [topic];
+    const topicKeys = Array.isArray(topic)
+      ? topic
+      : [{ group: 'default', name: topic }];
+
     const _values = utils.changeToken({
       values,
       targetToken: '_',
@@ -315,7 +317,7 @@ class FtpSource extends React.Component {
 
                   {utils.renderForm({ parentValues: values, ...formProps })}
                   <TestConfigBtn
-                    handleClick={e => this.handleTestConnection(e, values)}
+                    handleClick={e => this.handleTestConfigs(e, values)}
                     isWorking={isTestingConfig}
                   />
                 </form>

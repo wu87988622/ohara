@@ -96,11 +96,7 @@ class FtpSink extends React.Component {
       const { settings } = result;
       const { topicKeys } = settings;
       const state = get(result, 'state', null);
-
-      const topicName = utils.getCurrTopicName({
-        originals: this.props.globalTopics,
-        target: topicKeys,
-      });
+      const topicName = get(topicKeys, '[0].name', '');
 
       const _settings = utils.changeToken({
         values: settings,
@@ -183,7 +179,7 @@ class FtpSink extends React.Component {
     this.handleTriggerConnectorResponse(action, res);
   };
 
-  handleTestConnection = async (e, values) => {
+  handleTestConfigs = async (e, values) => {
     e.preventDefault();
 
     const topic = utils.getCurrTopicId({
@@ -191,7 +187,10 @@ class FtpSink extends React.Component {
       target: values.topicKeys,
     });
 
-    const topicKeys = Array.isArray(topic) ? topic : [topic];
+    const topicKeys = Array.isArray(topic)
+      ? topic
+      : [{ group: 'default', name: topic }];
+
     const _values = utils.changeToken({
       values,
       targetToken: '_',
@@ -235,7 +234,10 @@ class FtpSink extends React.Component {
       target: values.topicKeys,
     });
 
-    const topicKeys = Array.isArray(topic) ? topic : [topic];
+    const topicKeys = Array.isArray(topic)
+      ? topic
+      : [{ group: 'default', name: topic }];
+
     const _values = utils.changeToken({
       values,
       targetToken: '_',
@@ -313,7 +315,7 @@ class FtpSink extends React.Component {
 
                   {utils.renderForm({ parentValues: values, ...formProps })}
                   <TestConfigBtn
-                    handleClick={e => this.handleTestConnection(e, values)}
+                    handleClick={e => this.handleTestConfigs(e, values)}
                     isWorking={isTestingConfig}
                   />
                 </form>
