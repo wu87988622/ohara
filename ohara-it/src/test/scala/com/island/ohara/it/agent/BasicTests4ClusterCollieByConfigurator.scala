@@ -105,7 +105,7 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
   override protected def bk_delete(clusterName: String): Future[Unit] = bkApi.delete(clusterName)
 
   override protected def bk_addNode(clusterName: String, nodeName: String): Future[BrokerApi.BrokerClusterInfo] =
-    bkApi.addNode(clusterName, nodeName)
+    bkApi.addNode(clusterName, nodeName).flatMap(_ => bkApi.get(clusterName))
 
   override protected def bk_removeNode(clusterName: String, nodeName: String): Future[Unit] =
     bkApi.removeNode(clusterName, nodeName)
@@ -159,7 +159,7 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
   override protected def wk_delete(clusterName: String): Future[Unit] = wkApi.delete(clusterName)
 
   override protected def wk_addNode(clusterName: String, nodeName: String): Future[WorkerApi.WorkerClusterInfo] =
-    wkApi.addNode(clusterName, nodeName)
+    wkApi.addNode(clusterName, nodeName).flatMap(_ => wkApi.get(clusterName))
 
   override protected def wk_removeNode(clusterName: String, nodeName: String): Future[Unit] =
     wkApi.removeNode(clusterName, nodeName)

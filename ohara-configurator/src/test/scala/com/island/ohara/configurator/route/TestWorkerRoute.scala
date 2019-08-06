@@ -206,8 +206,8 @@ class TestWorkerRoute extends MediumTest with Matchers {
     val cluster = result(
       workerApi.request.name(CommonUtils.randomString(10)).nodeName(nodeNames.head).create()
     )
-    val cluster2 = result(workerApi.addNode(cluster.name, nodeNames.last))
-    cluster2 shouldBe cluster.copy(nodeNames = cluster2.nodeNames)
+    result(workerApi.addNode(cluster.name, nodeNames.last))
+    result(workerApi.get(cluster.name)) shouldBe cluster.copy(nodeNames = cluster.nodeNames + nodeNames.last)
   }
 
   @Test

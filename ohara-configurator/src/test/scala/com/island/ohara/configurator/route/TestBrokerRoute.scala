@@ -220,9 +220,10 @@ class TestBrokerRoute extends MediumTest with Matchers {
     val cluster = result(brokerApi.request.name(CommonUtils.randomString(10)).nodeName(nodeNames.head).create())
     result(brokerApi.start(cluster.name))
 
-    // it's ok use keyword, but the "actual" behavior is not expected (expected addNode, but stop cluster)
-    an[RuntimeException] should be thrownBy result(brokerApi.addNode(cluster.name, RouteUtils.START_COMMAND))
-    an[RuntimeException] should be thrownBy result(brokerApi.addNode(cluster.name, RouteUtils.STOP_COMMAND))
+    // it's ok use keyword, but the "actual" behavior is not expected (expected addNode, but start/stop cluster)
+    result(brokerApi.addNode(cluster.name, RouteUtils.START_COMMAND))
+    result(brokerApi.addNode(cluster.name, RouteUtils.STOP_COMMAND))
+    result(brokerApi.get(cluster.name)).state shouldBe None
   }
 
   @Test
@@ -230,7 +231,9 @@ class TestBrokerRoute extends MediumTest with Matchers {
     val cluster = result(brokerApi.request.name(CommonUtils.randomString(10)).nodeName(nodeNames.head).create())
     result(brokerApi.start(cluster.name))
 
-    result(brokerApi.addNode(cluster.name, nodeNames.last)).nodeNames shouldBe cluster
+    result(brokerApi.addNode(cluster.name, nodeNames.last))
+
+    result(brokerApi.get(cluster.name)).nodeNames shouldBe cluster
       .copy(nodeNames = cluster.nodeNames ++ Set(nodeNames.last))
       .nodeNames
   }
@@ -403,6 +406,12 @@ class TestBrokerRoute extends MediumTest with Matchers {
     result(brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
     result(brokerApi.list()).size should not be 0
     result(brokerApi.list()).foreach(_.topicSettingDefinitions.size should not be 0)
+  }
+
+  @Test
+  def testIdempotentStart(): Unit = {
+    val bk = result(brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
+    (0 until 10).foreach(_ => result(brokerApi.start(bk.name)))
   }
 
   @After

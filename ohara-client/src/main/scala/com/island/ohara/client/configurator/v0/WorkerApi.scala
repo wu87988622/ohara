@@ -280,7 +280,7 @@ object WorkerApi {
     private[v0] def creation: Creation
   }
 
-  final class Access private[WorkerApi] extends ClusterAccess[WorkerClusterInfo](WORKER_PREFIX_PATH) {
+  final class Access private[WorkerApi] extends ClusterAccess[WorkerClusterInfo](WORKER_PREFIX_PATH, GROUP_DEFAULT) {
     def request: Request = new Request {
       private[this] var name: String = CommonUtils.randomString(LIMIT_OF_NAME_LENGTH)
       private[this] var imageName: String = IMAGE_NAME_DEFAULT

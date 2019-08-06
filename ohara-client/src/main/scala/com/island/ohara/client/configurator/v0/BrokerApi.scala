@@ -166,7 +166,7 @@ object BrokerApi {
     private[v0] def update: Update
   }
 
-  final class Access private[BrokerApi] extends ClusterAccess[BrokerClusterInfo](BROKER_PREFIX_PATH) {
+  final class Access private[BrokerApi] extends ClusterAccess[BrokerClusterInfo](BROKER_PREFIX_PATH, GROUP_DEFAULT) {
     def request: Request = new Request {
       private[this] var name: String = CommonUtils.randomString(LIMIT_OF_NAME_LENGTH)
       private[this] var imageName: Option[String] = None

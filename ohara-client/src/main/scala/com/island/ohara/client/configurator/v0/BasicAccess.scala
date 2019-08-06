@@ -63,13 +63,34 @@ abstract class BasicAccess private[v0] (prefixPath: String) {
   protected final def put(key: ObjectKey, action: String)(implicit executionContext: ExecutionContext): Future[Unit] =
     exec.put[ErrorApi.Error](url(key, action))
 
+  private[this] def toString(params: Map[String, String]): String = {
+    val paramString = params
+      .map {
+        case (key, value) => s"$key=$value"
+      }
+      .mkString("&")
+    if (paramString.nonEmpty) s"&$paramString"
+    else paramString
+  }
+
   /**
     * used by START, STOP, PAUSE and RESUME requests.
-    * TODO: remove this helper method since it is used by decrepit method which return object description ...
+    * the form is shown below:
+    * url/${key.name}?group=${key.group}&param0=${param0}
+    * @param key object key
+    * @return url string
+    */
+  protected final def url(key: ObjectKey, params: Map[String, String]): String =
+    s"$url/${key.name}?$GROUP_KEY=${key.group}${toString(params)}"
+
+  /**
+    * used by START, STOP, PAUSE and RESUME requests.
+    * the form is shown below:
+    * url/${key.name}/$postFix?group=${key.group}&param0=${param0}
     * @param key object key
     * @param postFix action string
     * @return url string
     */
-  protected final def url(key: ObjectKey, postFix: String): String =
-    s"$url/${key.name}/${CommonUtils.requireNonEmpty(postFix)}?${GROUP_KEY}=${key.group}"
+  protected final def url(key: ObjectKey, postFix: String, params: Map[String, String] = Map.empty): String =
+    s"$url/${key.name}/${CommonUtils.requireNonEmpty(postFix)}?$GROUP_KEY=${key.group}${toString(params)}"
 }

@@ -23,20 +23,27 @@ import com.island.ohara.agent.Collie.ClusterCreator
 import com.island.ohara.agent.{ClusterCollie, Collie, NodeCollie}
 import com.island.ohara.client.configurator.Data
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.{ClusterCreationRequest, ClusterInfo, CreationRequest, OharaJsonFormat}
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.client.configurator.v0.{
+  ClusterCreationRequest,
+  ClusterInfo,
+  CreationRequest,
+  ErrorApi,
+  OharaJsonFormat
+}
 import com.island.ohara.common.annotations.VisibleForTesting
+import com.island.ohara.common.util.VersionUtils
 import com.island.ohara.configurator.store.DataStore
 import com.island.ohara.kafka.connector.json.ObjectKey
 import com.typesafe.scalalogging.Logger
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsString, RootJsonFormat}
+import spray.json.{JsArray, JsString, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
-private[route] object RouteUtils {
+private[configurator] object RouteUtils {
 
   /**
     * process the group for all requests.
@@ -98,39 +105,72 @@ private[route] object RouteUtils {
   }
 
   /**
-    * used to execute START request.
-    * Noted, the response will be added to store.
-    * @tparam Res data
+    * The basic interface of handling the request carrying the sub name (/$name/$subName)
     */
-  trait HookOfStart[Res] {
-    def apply(key: ObjectKey): Future[Res]
+  private[this] trait HookOfSubName {
+    def apply(key: ObjectKey, subName: String, params: Map[String, String]): Option[Future[Unit]]
   }
 
   /**
-    * used to execute STOP request.
-    * Noted, the response will be added to store.
-    * @tparam Res data
+    * The basic interface of handling particular action
     */
-  trait HookOfStop[Res] {
-    def apply(key: ObjectKey): Future[Res]
+  trait HookOfAction {
+    def apply(key: ObjectKey, subName: String, params: Map[String, String]): Future[Unit]
   }
 
   /**
-    * used to execute PAUSE request.
-    * Noted, the response will be added to store.
-    * @tparam Res data
+    * a collection of action hooks.
+    * The order of calling hook is shown below.
+    * /$name/$action?group=${group}
+    * 1) the hook which has key composed by (group, name)
+    * 2) the hook
+    * 3) return NotFound
+    *
+    * For cluster resource, the "action" may be a node name that the request is used to add/remove node from cluster.
     */
-  trait HookOfPause[Res] {
-    def apply(key: ObjectKey): Future[Res]
-  }
+  private[this] object HookOfSubName {
+    val empty: HookOfSubName = (_, _, _) => None
 
-  /**
-    * used to execute RESUME request.
-    * Noted, the response will be added to store.
-    * @tparam Res data
-    */
-  trait HookOfResume[Res] {
-    def apply(key: ObjectKey): Future[Res]
+    def apply(hook: HookOfAction): HookOfSubName = builder.hook(hook).build()
+
+    def apply(hooks: Map[String, HookOfAction]): HookOfSubName = {
+      val builder = new Builder
+      hooks.foreach {
+        case (action, hook) => builder.hook(action, hook)
+      }
+      builder.build()
+    }
+
+    def builder: Builder = new Builder
+    class Builder extends com.island.ohara.common.pattern.Builder[HookOfSubName] {
+      private[this] var hooks: Map[String, HookOfAction] = Map.empty
+      private[this] var finalHook: Option[HookOfAction] = None
+
+      /**
+        * add the hook for particular action from PUT method.
+        * @param action action
+        * @param hook hook
+        * @return this builder
+        */
+      def hook(action: String, hook: HookOfAction): Builder = {
+        if (hooks.contains(action)) throw new IllegalArgumentException(s"the action:$action already has hook")
+        this.hooks += (action -> hook)
+        this
+      }
+
+      /**
+        * add the hook for all actions from PUT method
+        * @param hook hook
+        * @return this builder
+        */
+      def hook(hook: HookOfAction): Builder = {
+        this.finalHook = Some(hook)
+        this
+      }
+
+      override def build(): HookOfSubName = (key: ObjectKey, subName: String, params: Map[String, String]) =>
+        hooks.get(subName).orElse(finalHook).map(_(key, subName, params))
+    }
   }
 
   /**
@@ -244,9 +284,9 @@ private[route] object RouteUtils {
           get(complete(store.values[Res]().flatMap(hookOfList(_))))
       } ~ path(Segment) { name =>
         parameter(GROUP_KEY ?) { groupOption =>
-          val group = hookOfGroup(groupOption)
           val key =
-            ObjectKey.of(rm.check(GROUP_KEY, JsString(group)).value, rm.check(NAME_KEY, JsString(name)).value)
+            ObjectKey.of(rm.check(GROUP_KEY, JsString(hookOfGroup(groupOption))).value,
+                         rm.check(NAME_KEY, JsString(name)).value)
           get(complete(store.value[Res](key).flatMap(hookOfGet(_)))) ~
             delete(complete(
               hookBeforeDelete(key).map(_ => key).flatMap(store.remove[Res](_).map(_ => StatusCodes.NoContent)))) ~
@@ -299,32 +339,27 @@ private[route] object RouteUtils {
     hookOfList: HookOfList[Res],
     hookOfGet: HookOfGet[Res],
     hookBeforeDelete: HookBeforeDelete,
-    hookOfStart: HookOfStart[Res],
-    hookOfStop: HookOfStop[Res])(implicit store: DataStore,
-                                 // normally, update request does not carry the name field,
-                                 // Hence, the check of name have to be executed by format of creation
-                                 // since it must have name field.
-                                 rm: OharaJsonFormat[Creation],
-                                 rm1: RootJsonFormat[Update],
-                                 rm2: RootJsonFormat[Res],
-                                 executionContext: ExecutionContext): server.Route = route(
+    hookOfStart: HookOfAction,
+    hookOfStop: HookOfAction)(implicit store: DataStore,
+                              // normally, update request does not carry the name field,
+                              // Hence, the check of name have to be executed by format of creation
+                              // since it must have name field.
+                              rm: OharaJsonFormat[Creation],
+                              rm1: RootJsonFormat[Update],
+                              rm2: RootJsonFormat[Res],
+                              executionContext: ExecutionContext): server.Route = route(
     root = root,
     hookOfGroup = hookOfGroup,
     hookOfCreation = hookOfCreation,
     hookOfUpdate = hookOfUpdate,
     hookOfList = hookOfList,
     hookOfGet = hookOfGet,
-    hookBeforeDelete = hookBeforeDelete
-  ) ~ pathPrefix(root / Segment) { name =>
-    parameter(GROUP_KEY ?) { groupOption =>
-      put {
-        val group = hookOfGroup(groupOption)
-        val key = ObjectKey.of(group, name)
-        path(START_COMMAND)(complete(StatusCodes.Accepted -> hookOfStart(key).flatMap(res => store.add[Res](res)))) ~ path(
-          STOP_COMMAND)(complete(StatusCodes.Accepted -> hookOfStop(key).flatMap(res => store.add[Res](res))))
-      }
-    }
-  }
+    hookBeforeDelete = hookBeforeDelete,
+    hookOfActions = Map(
+      START_COMMAND -> hookOfStart,
+      STOP_COMMAND -> hookOfStop,
+    )
+  )
 
   /**
     * this is the basic route of all APIs to access ohara's data.
@@ -367,17 +402,132 @@ private[route] object RouteUtils {
     hookOfList: HookOfList[Res],
     hookOfGet: HookOfGet[Res],
     hookBeforeDelete: HookBeforeDelete,
-    hookOfStart: HookOfStart[Res],
-    hookOfStop: HookOfStop[Res],
-    hookOfPause: HookOfPause[Res],
-    hookOfResume: HookOfResume[Res])(implicit store: DataStore,
-                                     // normally, update request does not carry the name field,
-                                     // Hence, the check of name have to be executed by format of creation
-                                     // since it must have name field.
-                                     rm: OharaJsonFormat[Creation],
-                                     rm1: RootJsonFormat[Update],
-                                     rm2: RootJsonFormat[Res],
-                                     executionContext: ExecutionContext): server.Route = route(
+    hookOfStart: HookOfAction,
+    hookOfStop: HookOfAction,
+    hookOfPause: HookOfAction,
+    hookOfResume: HookOfAction)(implicit store: DataStore,
+                                // normally, update request does not carry the name field,
+                                // Hence, the check of name have to be executed by format of creation
+                                // since it must have name field.
+                                rm: OharaJsonFormat[Creation],
+                                rm1: RootJsonFormat[Update],
+                                rm2: RootJsonFormat[Res],
+                                executionContext: ExecutionContext): server.Route = route(
+    root = root,
+    hookOfGroup = hookOfGroup,
+    hookOfCreation = hookOfCreation,
+    hookOfUpdate = hookOfUpdate,
+    hookOfList = hookOfList,
+    hookOfGet = hookOfGet,
+    hookBeforeDelete = hookBeforeDelete,
+    hookOfActions = Map(
+      START_COMMAND -> hookOfStart,
+      STOP_COMMAND -> hookOfStop,
+      PAUSE_COMMAND -> hookOfPause,
+      RESUME_COMMAND -> hookOfResume
+    )
+  )
+
+  /**
+    * this is the basic route of all APIs to access ohara's data.
+    * It implements 1) get, 2) list, 3) delete, 4) add, 5) update, 6) start and 7) stop function.
+    * The CREATION is routed to "POST  /$root"
+    * The UPDATE is routed to "PUT /$root/$name"
+    * The GET is routed to "GET /$root/$name"
+    * The LIST is routed to "GET /$root"
+    * The DELETE is routed to "DELETE /$root/$name"
+    * The ACTION is routed to "PUT /$root/$name/$action"
+    * @param root path to root
+    * @param hookOfGroup used to generate the true group used by route
+    * @param hookOfCreation used to convert request to response for Add function
+    * @param hookOfUpdate used to convert request to response for Update function
+    * @param hookOfList used to convert response for List function
+    * @param hookOfGet used to convert response for Get function
+    * @param hookBeforeDelete used to do something before doing delete operation. For example, validate the name.
+    * @param hookOfActions used to handle particular commands
+    * @param store data store
+    * @param rm marshalling of creation
+    * @param rm1 marshalling of update
+    * @param rm2 marshalling of response
+    * @param executionContext thread pool
+    * @tparam Creation creation request
+    * @tparam Update creation request
+    * @tparam Res response
+    * @return route
+    */
+  def route[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
+    root: String,
+    hookOfGroup: HookOfGroup,
+    hookOfCreation: HookOfCreation[Creation, Res],
+    hookOfUpdate: HookOfUpdate[Creation, Update, Res],
+    hookOfList: HookOfList[Res],
+    hookOfGet: HookOfGet[Res],
+    hookBeforeDelete: HookBeforeDelete,
+    hookOfActions: Map[String, HookOfAction])(implicit store: DataStore,
+                                              // normally, update request does not carry the name field,
+                                              // Hence, the check of name have to be executed by format of creation
+                                              // since it must have name field.
+                                              rm: OharaJsonFormat[Creation],
+                                              rm1: RootJsonFormat[Update],
+                                              rm2: RootJsonFormat[Res],
+                                              executionContext: ExecutionContext): server.Route = route(
+    root = root,
+    hookOfGroup = hookOfGroup,
+    hookOfCreation = hookOfCreation,
+    hookOfUpdate = hookOfUpdate,
+    hookOfList = hookOfList,
+    hookOfGet = hookOfGet,
+    hookBeforeDelete = hookBeforeDelete,
+    HookOfSubNameOfPut = HookOfSubName(hookOfActions),
+    HookOfSubNameOfDeletion = HookOfSubName.empty
+  )
+
+  /**
+    * this is the basic route of all APIs to access ohara's data.
+    * It implements 1) get, 2) list, 3) delete, 4) add, 5) update,and 6) various "actions" function.
+    * The CREATION is routed to "POST  /$root"
+    * The UPDATE is routed to "PUT /$root/$name"
+    * The GET is routed to "GET /$root/$name"
+    * The LIST is routed to "GET /$root"
+    * The DELETE is routed to "DELETE /$root/$name"
+    * The "ACTION"" is routed to "PUT /$root/$name/$action". Noted: the action request will get NotFound if the input
+    * action handles are disable to process the request properly.
+    * @param root path to root
+    * @param hookOfGroup used to generate the true group used by route
+    * @param hookOfCreation used to convert request to response for Add function
+    * @param hookOfUpdate used to convert request to response for Update function
+    * @param hookOfList used to convert response for List function
+    * @param hookOfGet used to convert response for Get function
+    * @param hookBeforeDelete used to do something before doing delete operation. For example, validate the name.
+    * @param HookOfSubNameOfPut used to handle custom commands for PUT method
+    * @param HookOfSubNameOfDeletion used to handle custom commands for DELETE method
+    * @param store data store
+    * @param rm marshalling of creation
+    * @param rm1 marshalling of update
+    * @param rm2 marshalling of response
+    * @param executionContext thread pool
+    * @tparam Creation creation request
+    * @tparam Update creation request
+    * @tparam Res response
+    * @return route
+    */
+  private[this] def route[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
+    root: String,
+    hookOfGroup: HookOfGroup,
+    hookOfCreation: HookOfCreation[Creation, Res],
+    hookOfUpdate: HookOfUpdate[Creation, Update, Res],
+    hookOfList: HookOfList[Res],
+    hookOfGet: HookOfGet[Res],
+    hookBeforeDelete: HookBeforeDelete,
+    HookOfSubNameOfPut: HookOfSubName,
+    HookOfSubNameOfDeletion: HookOfSubName)(implicit store: DataStore,
+                                            // normally, update request does not carry the name field,
+                                            // Hence, the check of name have to be executed by format of creation
+                                            // since it must have name field.
+                                            rm: OharaJsonFormat[Creation],
+                                            rm1: RootJsonFormat[Update],
+                                            rm2: RootJsonFormat[Res],
+                                            executionContext: ExecutionContext): server.Route = route(
     root = root,
     hookOfGroup = hookOfGroup,
     hookOfCreation = hookOfCreation,
@@ -385,98 +535,208 @@ private[route] object RouteUtils {
     hookOfList = hookOfList,
     hookOfGet = hookOfGet,
     hookBeforeDelete = hookBeforeDelete
-  ) ~ pathPrefix(root / Segment) { name =>
-    parameter(GROUP_KEY ?) { groupOption =>
-      put {
-        val group = hookOfGroup(groupOption)
-        val key = ObjectKey.of(group, name)
-        path(START_COMMAND)(complete(StatusCodes.Accepted -> hookOfStart(key).flatMap(res => store.add[Res](res)))) ~
-          path(STOP_COMMAND)(complete(StatusCodes.Accepted -> hookOfStop(key).flatMap(res => store.add[Res](res)))) ~
-          path(PAUSE_COMMAND)(complete(StatusCodes.Accepted -> hookOfPause(key).flatMap(res => store.add[Res](res)))) ~
-          path(RESUME_COMMAND)(complete(StatusCodes.Accepted -> hookOfResume(key).flatMap(res => store.add[Res](res))))
+  ) ~ pathPrefix(root / Segment / Segment) {
+    case (name, subName) =>
+      parameterMap { params =>
+        val key = ObjectKey.of(hookOfGroup(params.get(GROUP_KEY)), name)
+        put {
+          HookOfSubNameOfPut(key, subName, params)
+            .map(_.map(_ => StatusCodes.Accepted))
+            .map(complete(_))
+            .getOrElse(routeToOfficialUrl(s"/$root/$subName"))
+        } ~ delete {
+          HookOfSubNameOfDeletion(key, subName, params)
+            .map(_.map(_ => StatusCodes.Accepted))
+            .map(complete(_))
+            .getOrElse(routeToOfficialUrl(s"/$root/$subName"))
+        }
       }
-    }
   }
 
   /**
-    * Append cluster actions to current route.
-    * For example:
-    * if the current path is: /v0/api/zookeeper
-    * we will add the following actions:
-    *
-    * - Operate current cluster: PUT /v0/api/zookeeper/xxx/[start|stop]
-    * - Manage nodes of current cluster: [PUT / DELETE] /v0/api/zookeeper/xxx/{nodeName}
+    * this is a variety to basic route of all APIs to access ohara's "cluster" data.
+    * It implements 1) get, 2) list, 3) delete, 4) add, 5) update, 6) start and 7) stop function.
+    * The CREATION is routed to "POST  /$root"
+    * The UPDATE is routed to "PUT /$root/$name"
+    * The GET is routed to "GET /$root/$name"
+    * The LIST is routed to "GET /$root"
+    * The DELETE is routed to "DELETE /$root/$name"
+    * The START is routed to "PUT /$root/$name/start"
+    * The STOP is routed to "PUT /$root/$name/stop"
+    * @param root path to root
+    * @param hookOfGroup used to generate the true group used by route
+    * @param hookOfCreation used to convert request to response for Add function
+    * @param hookOfUpdate used to convert request to response for Update function
+    * @param hookOfList used to convert response for List function
+    * @param hookOfGet used to convert response for Get function
+    * @param hookBeforeDelete used to do something before doing delete operation. For example, validate the name.
+    * @param hookOfStart used to handle start command
+    * @param hookBeforeStop used to perform checks before stopping cluster
+    * @param store data store
+    * @param rm marshalling of creation
+    * @param rm1 marshalling of update
+    * @param rm2 marshalling of response
+    * @param executionContext thread pool
+    * @tparam Creation creation request for cluster resources
+    * @tparam Creator another type ot indicate the cluster resources
+    * @tparam Update creation request
+    * @tparam Res response
+    * @return route
     */
-  def appendRouteOfClusterAction[Req <: ClusterInfo: ClassTag, Creator <: ClusterCreator[Req]](
+  def route[Res <: ClusterInfo: ClassTag, Creator <: ClusterCreator[Res], Creation <: ClusterCreationRequest, Update](
     root: String,
     hookOfGroup: HookOfGroup,
-    collie: Collie[Req, Creator],
-    hookOfStart: (Seq[ClusterInfo], Req) => Future[Req],
-    hookOfStop: String => Future[String])(implicit store: DataStore,
-                                          clusterCollie: ClusterCollie,
-                                          nodeCollie: NodeCollie,
-                                          rm: OharaJsonFormat[Req],
-                                          executionContext: ExecutionContext): server.Route =
-    pathPrefix(root / Segment) { clusterName =>
-      path(Segment) { remainder =>
-        parameter(GROUP_KEY ?) { groupOption =>
-          val group = hookOfGroup(groupOption)
-          val key =
-            ObjectKey.of(rm.check(GROUP_KEY, JsString(group)).value, rm.check(NAME_KEY, JsString(clusterName)).value)
-          remainder match {
-            case START_COMMAND =>
-              put {
-                complete(store.value[Req](key).flatMap { req =>
-                  collie.exist(req.name).flatMap {
-                    if (_) {
-                      // this cluster already exists, return OK
-                      Future.successful(StatusCodes.Accepted)
-                    } else {
-                      basicCheckOfCluster2(nodeCollie, clusterCollie, req)
-                        .flatMap(clusters => hookOfStart(clusters, req))
-                        .map(_ => StatusCodes.Accepted)
-                    }
-                  }
-                })
-              }
-            case STOP_COMMAND =>
-              put {
-                parameter(FORCE_KEY ?)(
-                  force =>
-                    complete(
-                      collie
-                        .cluster(clusterName)
-                        .flatMap(
-                          _ =>
-                            hookOfStop(clusterName)
-                              .flatMap(_ =>
-                                if (force.exists(_.toLowerCase == "true"))
-                                  collie.forceRemove(clusterName)
-                                else collie.remove(clusterName))
-                              .map(_ => StatusCodes.Accepted)
-                        )
-                  )
-                )
-              }
-            case nodeName =>
-              put {
-                complete(collie.cluster(clusterName).map(_._1).flatMap { cluster =>
-                  if (cluster.nodeNames.contains(nodeName)) Future.successful(cluster)
-                  else collie.addNode(clusterName, nodeName)
-                })
-              } ~ delete {
-                complete(collie.clusters().map(_.keys.toSeq).flatMap { clusters =>
-                  if (clusters.exists(
-                        cluster => cluster.name == clusterName && cluster.nodeNames.contains(nodeName)
-                      ))
-                    collie.removeNode(clusterName, nodeName).map(_ => StatusCodes.NoContent)
-                  else Future.successful(StatusCodes.NoContent)
-                })
+    hookOfCreation: HookOfCreation[Creation, Res],
+    hookOfUpdate: HookOfUpdate[Creation, Update, Res],
+    hookOfList: HookOfList[Res],
+    hookOfGet: HookOfGet[Res],
+    hookBeforeDelete: HookBeforeDelete,
+    collie: Collie[Res, Creator],
+    hookOfStart: HookOfAction,
+    hookBeforeStop: HookOfAction)(implicit store: DataStore,
+                                  clusterCollie: ClusterCollie,
+                                  nodeCollie: NodeCollie,
+                                  rm: OharaJsonFormat[Creation],
+                                  rm1: RootJsonFormat[Update],
+                                  rm2: RootJsonFormat[Res],
+                                  executionContext: ExecutionContext): server.Route =
+    route(
+      root = root,
+      hookOfGroup = hookOfGroup,
+      hookOfCreation = hookOfCreation,
+      hookOfUpdate = hookOfUpdate,
+      hookOfList = hookOfList,
+      hookOfGet = hookOfGet,
+      hookBeforeDelete = hookBeforeDelete,
+      HookOfSubNameOfPut = HookOfSubName.builder
+      // start cluster
+        .hook(
+          START_COMMAND,
+          (key: ObjectKey, subName: String, params: Map[String, String]) =>
+            store.value[Res](key).flatMap { req =>
+              collie.exist(req.name).flatMap {
+                if (_) {
+                  // this cluster already exists, return OK
+                  Future.unit
+                } else {
+                  checkResourcesConflict(nodeCollie, clusterCollie, req).flatMap(_ => hookOfStart(key, subName, params))
+                }
               }
           }
-        }
+        )
+        // stop cluster
+        .hook(
+          STOP_COMMAND,
+          (key: ObjectKey, subName: String, params: Map[String, String]) =>
+            hookBeforeStop(key, subName, params).flatMap(
+              _ =>
+                collie
+                  .clusters()
+                  .flatMap { clusters =>
+                    if (!clusters.map(_._1.name).exists(_ == key.name())) Future.unit
+                    else if (params.get(FORCE_KEY).exists(_.toLowerCase == "true")) collie.forceRemove(key.name())
+                    else collie.remove(key.name())
+                  }
+                  .flatMap(_ => Future.unit)
+          )
+        )
+        // handle the node increment
+        .hook((key: ObjectKey, nodeName: String, _: Map[String, String]) =>
+          collie.cluster(key.name()).map(_._1).flatMap { cluster =>
+            // A BIT hard-code here to reuse the checker :(
+            rm.check[JsArray]("nodeNames", JsArray(JsString(nodeName)))
+            if (cluster.nodeNames.contains(nodeName)) Future.unit
+            else collie.addNode(key.name(), nodeName).map(_ => Unit)
+        })
+        .build(),
+      // handle the node decrement
+      HookOfSubNameOfDeletion = HookOfSubName((key: ObjectKey, nodeName: String, _: Map[String, String]) =>
+        collie.clusters().map(_.keys.toSeq).flatMap { clusters =>
+          if (clusters.exists(cluster => cluster.name == key.name() && cluster.nodeNames.contains(nodeName)))
+            collie.removeNode(key.name(), nodeName).map(_ => Unit)
+          else Future.unit
+      })
+    )
+
+  /**
+    * the url to official APIs documentation.
+    * @return url string
+    */
+  def apiUrl: String = {
+    val docVersion = if (VersionUtils.BRANCH == "master") "latest" else VersionUtils.BRANCH
+    s"https://ohara.readthedocs.io/en/$docVersion/rest_interface.html"
+  }
+
+  private[this] def errorWithOfficialApis(inputPath: String): ErrorApi.Error = ErrorApi.Error(
+    code = s"Unsupported API: $inputPath",
+    message = s"please see link to find the available APIs. input url:$inputPath",
+    stack = "N/A",
+    apiUrl = Some(apiUrl)
+  )
+
+  def routeToOfficialUrl(inputPath: String): server.Route = complete(
+    StatusCodes.NotFound -> errorWithOfficialApis(inputPath))
+
+  /**
+    * Test whether this cluster satisfied the following rules:
+    * <p>
+    * 1) cluster image in all nodes
+    * 2) name should not conflict
+    * 3) port should not conflict
+    *
+    * @param nodeCollie nodeCollie instance
+    * @param clusterCollie clusterCollie instance
+    * @param req cluster creation request
+    * @param executionContext execution context
+    * @tparam Req type of request
+    * @return clusters that fitted the requires
+    */
+  private[route] def checkResourcesConflict[Req <: ClusterInfo: ClassTag](
+    nodeCollie: NodeCollie,
+    clusterCollie: ClusterCollie,
+    req: Req)(implicit executionContext: ExecutionContext): Future[Unit] =
+    // nodeCollie.nodes(req.nodeNames) is used to check the existence of node names of request
+    nodeCollie
+      .nodes(req.nodeNames)
+      .flatMap(clusterCollie.images)
+      // check the docker images
+      .map { nodesImages =>
+        nodesImages
+          .filterNot(_._2.contains(req.imageName))
+          .keys
+          .map(_.name)
+          .foreach(n => throw new IllegalArgumentException(s"$n doesn't have docker image:${req.imageName}"))
       }
-    }
+      .flatMap(_ => clusterCollie.clusters().map(_.keys.toSeq))
+      .flatMap { clusters =>
+        def serviceName(cluster: ClusterInfo): String = cluster match {
+          case _: ZookeeperClusterInfo => s"zookeeper cluster:${cluster.name}"
+          case _: BrokerClusterInfo    => s"broker cluster:${cluster.name}"
+          case _: WorkerClusterInfo    => s"worker cluster:${cluster.name}"
+          case _: StreamClusterInfo    => s"stream cluster:${cluster.name}"
+          case _                       => s"cluster:${cluster.name}"
+        }
+        // check name conflict
+        clusters
+          .filter(c => classTag[Req].runtimeClass.isInstance(c))
+          .map(_.asInstanceOf[Req])
+          .find(_.name == req.name)
+          .foreach(conflictCluster => throw new IllegalArgumentException(s"${serviceName(conflictCluster)} is running"))
+
+        // check port conflict
+        Some(clusters
+          .flatMap { cluster =>
+            val conflictPorts = cluster.ports.intersect(req.ports)
+            if (conflictPorts.isEmpty) None
+            else Some(cluster -> conflictPorts)
+          }
+          .map {
+            case (cluster, conflictPorts) =>
+              s"ports:${conflictPorts.mkString(",")} are used by ${serviceName(cluster)} (the port is generated randomly if it is ignored from request)"
+          }
+          .mkString(";")).filter(_.nonEmpty).foreach(s => throw new IllegalArgumentException(s))
+        Future.unit
+      }
 
   // TODO deprecated, should be removed after finish #1544...by Sam
   def basicRouteOfCluster[Req <: ClusterCreationRequest, Res <: ClusterInfo: ClassTag, Creator <: ClusterCreator[Res]](
@@ -533,73 +793,8 @@ private[route] object RouteUtils {
       }
     }
 
-  //------------------------------ helper methods ---------------------------//
-  /**
-    * Test whether this cluster satisfied the following rules:
-    * <p>
-    * 1) cluster image in all nodes
-    * 2) name should not conflict
-    * 3) port should not conflict
-    *
-    * @param nodeCollie nodeCollie instance
-    * @param clusterCollie clusterCollie instance
-    * @param req cluster creation request
-    * @param executionContext execution context
-    * @tparam Req type of request
-    * @return clusters that fitted the requires
-    */
-  private[route] def basicCheckOfCluster2[Req <: ClusterInfo: ClassTag](
-    nodeCollie: NodeCollie,
-    clusterCollie: ClusterCollie,
-    req: Req)(implicit executionContext: ExecutionContext): Future[Seq[ClusterInfo]] = {
-    // nodeCollie.nodes(req.nodeNames) is used to check the existence of node names of request
-    nodeCollie
-      .nodes(req.nodeNames)
-      .flatMap(clusterCollie.images)
-      // check the docker images
-      .map { nodesImages =>
-        val image = req.imageName
-        nodesImages
-          .filterNot(_._2.contains(image))
-          .keys
-          .map(_.name)
-          .foreach(n => throw new IllegalArgumentException(s"$n doesn't have docker image:$image"))
-        nodesImages
-      }
-      .flatMap(_ => clusterCollie.clusters().map(_.keys.toSeq))
-      .map { clusters =>
-        def serviceName(cluster: ClusterInfo): String = cluster match {
-          case _: ZookeeperClusterInfo => s"zookeeper cluster:${cluster.name}"
-          case _: BrokerClusterInfo    => s"broker cluster:${cluster.name}"
-          case _: WorkerClusterInfo    => s"worker cluster:${cluster.name}"
-          case _: StreamClusterInfo    => s"stream cluster:${cluster.name}"
-          case _                       => s"cluster:${cluster.name}"
-        }
-        // check name conflict
-        clusters
-          .filter(c => classTag[Req].runtimeClass.isInstance(c))
-          .map(_.asInstanceOf[Req])
-          .find(_.name == req.name)
-          .foreach(conflictCluster => throw new IllegalArgumentException(s"${serviceName(conflictCluster)} is running"))
-
-        // check port conflict
-        Some(clusters
-          .flatMap { cluster =>
-            val conflictPorts = cluster.ports.intersect(req.ports)
-            if (conflictPorts.isEmpty) None
-            else Some(cluster -> conflictPorts)
-          }
-          .map {
-            case (cluster, conflictPorts) =>
-              s"ports:${conflictPorts.mkString(",")} are used by ${serviceName(cluster)} (the port is generated randomly if it is ignored from request)"
-          }
-          .mkString(";")).filter(_.nonEmpty).foreach(s => throw new IllegalArgumentException(s))
-        clusters
-      }
-  }
-
   // TODO deprecated, should be removed after finish #1544...by Sam
-  private[route] def basicCheckOfCluster[Req <: ClusterCreationRequest, Res <: ClusterInfo: ClassTag](
+  private[this] def basicCheckOfCluster[Req <: ClusterCreationRequest, Res <: ClusterInfo: ClassTag](
     nodeCollie: NodeCollie,
     clusterCollie: ClusterCollie,
     req: Req)(implicit executionContext: ExecutionContext): Future[Seq[ClusterInfo]] = {

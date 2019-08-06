@@ -53,7 +53,7 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
         .create())
 
     // test idempotent start
-    (0 until 3).foreach(_ => Await.result(connectorApi.start(sink.key), 30 seconds).state should not be None)
+    (0 until 3).foreach(_ => Await.result(connectorApi.start(sink.key), 30 seconds))
     val workerClient = WorkerClient(testUtil.workersConnProps)
     try {
       CommonUtils.await(() =>
@@ -67,15 +67,13 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
       result(connectorApi.get(sink.key)).state.get shouldBe ConnectorState.RUNNING
 
       // test idempotent pause
-      (0 until 3).foreach(_ =>
-        Await.result(connectorApi.pause(sink.key), 10 seconds).state.get shouldBe ConnectorState.PAUSED)
+      (0 until 3).foreach(_ => Await.result(connectorApi.pause(sink.key), 10 seconds))
       CommonUtils.await(() => result(workerClient.status(sink.key)).connector.state == ConnectorState.PAUSED,
                         Duration.ofSeconds(20))
       result(connectorApi.get(sink.key)).state.get shouldBe ConnectorState.PAUSED
 
       // test idempotent resume
-      (0 until 3).foreach(_ =>
-        Await.result(connectorApi.resume(sink.key), 10 seconds).state.get shouldBe ConnectorState.RUNNING)
+      (0 until 3).foreach(_ => Await.result(connectorApi.resume(sink.key), 10 seconds))
       CommonUtils.await(() => result(workerClient.status(sink.key)).connector.state == ConnectorState.RUNNING,
                         Duration.ofSeconds(20))
       result(connectorApi.get(sink.key)).state.get shouldBe ConnectorState.RUNNING

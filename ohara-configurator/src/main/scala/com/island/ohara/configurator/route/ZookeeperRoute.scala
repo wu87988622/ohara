@@ -17,18 +17,10 @@
 package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
-import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent.{ClusterCollie, NodeCollie}
 import com.island.ohara.client.configurator.v0.ZookeeperApi._
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.route.RouteUtils.{
-  HookBeforeDelete,
-  HookOfCreation,
-  HookOfGet,
-  HookOfGroup,
-  HookOfList,
-  HookOfUpdate
-}
+import com.island.ohara.configurator.route.RouteUtils._
 import com.island.ohara.configurator.store.DataStore
 import com.island.ohara.kafka.connector.json.ObjectKey
 
@@ -140,6 +132,43 @@ object ZookeeperRoute {
 
   private[this] def hookOfGroup: HookOfGroup = _ => GROUP_DEFAULT
 
+  private[this] def hookOfStart(implicit store: DataStore,
+                                clusterCollie: ClusterCollie,
+                                executionContext: ExecutionContext): HookOfAction =
+    (key: ObjectKey, _: String, _: Map[String, String]) =>
+      store
+        .value[ZookeeperClusterInfo](key)
+        .flatMap(
+          zkClusterInfo =>
+            clusterCollie.zookeeperCollie.creator
+              .clusterName(zkClusterInfo.name)
+              .clientPort(zkClusterInfo.clientPort)
+              .electionPort(zkClusterInfo.electionPort)
+              .peerPort(zkClusterInfo.peerPort)
+              .imageName(zkClusterInfo.imageName)
+              .nodeNames(zkClusterInfo.nodeNames)
+              .threadPool(executionContext)
+              .create())
+        .map(_ => Unit)
+
+  private[this] def hookBeforeStop(
+    implicit store: DataStore,
+    clusterCollie: ClusterCollie,
+    executionContext: ExecutionContext): HookOfAction = (key: ObjectKey, _: String, _: Map[String, String]) =>
+    store
+      .value[ZookeeperClusterInfo](key)
+      .flatMap(
+        zkClusterInfo =>
+          clusterCollie.brokerCollie
+            .clusters()
+            .map(
+              _.keys
+                .find(_.zookeeperClusterName == zkClusterInfo.name)
+                .map(cluster =>
+                  throw new IllegalArgumentException(
+                    s"you can't remove zookeeper cluster:${zkClusterInfo.name} since it is used by broker cluster:${cluster.name}"))
+          ))
+
   def apply(implicit store: DataStore,
             clusterCollie: ClusterCollie,
             nodeCollie: NodeCollie,
@@ -151,31 +180,9 @@ object ZookeeperRoute {
       hookOfUpdate = hookOfUpdate,
       hookOfGet = hookOfGet,
       hookOfList = hookOfList,
-      hookBeforeDelete = hookBeforeDelete
-    ) ~
-      RouteUtils.appendRouteOfClusterAction(
-        collie = clusterCollie.zookeeperCollie,
-        root = ZOOKEEPER_PREFIX_PATH,
-        hookOfGroup = hookOfGroup,
-        hookOfStart = (_, req: ZookeeperClusterInfo) =>
-          clusterCollie.zookeeperCollie.creator
-            .clusterName(req.name)
-            .clientPort(req.clientPort)
-            .electionPort(req.electionPort)
-            .peerPort(req.peerPort)
-            .imageName(req.imageName)
-            .nodeNames(req.nodeNames)
-            .threadPool(executionContext)
-            .create(),
-        hookOfStop = (name: String) =>
-          clusterCollie.brokerCollie
-            .clusters()
-            .flatMap(
-              _.keys
-                .find(_.zookeeperClusterName == name)
-                .fold(Future.successful(name))(c =>
-                  Future.failed(new IllegalArgumentException(
-                    s"you can't remove zookeeper cluster:$name since it is used by broker cluster:${c.name}")))
-          )
-      )
+      hookBeforeDelete = hookBeforeDelete,
+      collie = clusterCollie.zookeeperCollie,
+      hookOfStart = hookOfStart,
+      hookBeforeStop = hookBeforeStop
+    )
 }

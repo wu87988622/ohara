@@ -31,11 +31,22 @@ import scala.reflect.{ClassTag, classTag}
   *    we need to handle the request with "default" broker cluster
   * 2) make ops to cluster be "blocking"
   */
-object CollieUtils {
+private[route] object CollieUtils {
 
-  private[route] def topicAdmin[T](clusterName: Option[String])(implicit brokerCollie: BrokerCollie,
-                                                                cleaner: AdminCleaner,
-                                                                executionContext: ExecutionContext)
+  /**
+    * create a topic admin and then register it into cleaner
+    * @param clusterInfo cluster info
+    * @param brokerCollie broker collie
+    * @param cleaner cleaner
+    * @return topic admin
+    */
+  def topicAdmin(clusterInfo: BrokerClusterInfo)(implicit brokerCollie: BrokerCollie,
+                                                 cleaner: AdminCleaner): TopicAdmin =
+    cleaner.add(brokerCollie.topicAdmin(clusterInfo))
+
+  def topicAdmin(clusterName: Option[String])(implicit brokerCollie: BrokerCollie,
+                                              cleaner: AdminCleaner,
+                                              executionContext: ExecutionContext)
     : Future[(BrokerClusterInfo, TopicAdmin)] = clusterName.fold(brokerCollie.clusters
     .map { clusters =>
       clusters.size match {
@@ -47,7 +58,7 @@ object CollieUtils {
             s"we can't choose default broker cluster since there are too many broker cluster:${clusters.keys.map(_.name).mkString(",")}")
       }
     }
-    .map(c => (c, cleaner.add(brokerCollie.topicAdmin(c)))))(brokerCollie.topicAdmin)
+    .map(c => (c, cleaner.add(topicAdmin(c)))))(brokerCollie.topicAdmin)
 
   /**
     * The routes, which is based on external system, require property to define cluster name. As a friendly server, those
@@ -64,9 +75,9 @@ object CollieUtils {
     * @tparam Creator cluster creator. collie must have both Req and Creator to distinguish the kind of cluster
     * @return matched cluster name
     */
-  private[route] def orElseClusterName[Req <: ClusterInfo: ClassTag, Creator <: ClusterCreator[Req]](
-    clusterName: Option[String])(implicit collie: Collie[Req, Creator],
-                                 executionContext: ExecutionContext): Future[String] = if (clusterName.isDefined)
+  def orElseClusterName[Req <: ClusterInfo: ClassTag, Creator <: ClusterCreator[Req]](clusterName: Option[String])(
+    implicit collie: Collie[Req, Creator],
+    executionContext: ExecutionContext): Future[String] = if (clusterName.isDefined)
     Future.successful(clusterName.get)
   else
     collie.clusters().map { clusters =>
@@ -80,11 +91,11 @@ object CollieUtils {
       }
     }
 
-  private[route] def workerClient[T](clusterName: String)(
+  def workerClient[T](clusterName: String)(
     implicit workerCollie: WorkerCollie,
     executionContext: ExecutionContext): Future[(WorkerClusterInfo, WorkerClient)] = workerClient(Some(clusterName))
 
-  private[route] def workerClient[T](clusterName: Option[String])(
+  def workerClient[T](clusterName: Option[String])(
     implicit workerCollie: WorkerCollie,
     executionContext: ExecutionContext): Future[(WorkerClusterInfo, WorkerClient)] = clusterName
     .map(workerCollie.workerClient)
@@ -102,7 +113,7 @@ object CollieUtils {
       }
       .map(c => (c, workerCollie.workerClient(c))))
 
-  private[route] def both[T](wkClusterName: Option[String])(
+  def both[T](wkClusterName: Option[String])(
     implicit brokerCollie: BrokerCollie,
     cleaner: AdminCleaner,
     workerCollie: WorkerCollie,
@@ -114,6 +125,6 @@ object CollieUtils {
         }
     }
 
-  private[route] def as[T <: ClusterInfo: ClassTag](clusters: Seq[ClusterInfo]): Seq[T] =
+  def as[T <: ClusterInfo: ClassTag](clusters: Seq[ClusterInfo]): Seq[T] =
     clusters.filter(classTag[T].runtimeClass.isInstance).map(_.asInstanceOf[T])
 }

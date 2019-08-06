@@ -15,7 +15,7 @@
  */
 
 package com.island.ohara.client.configurator.v0
-import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.kafka.connector.json.ObjectKey
 import spray.json.DefaultJsonProtocol._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -24,30 +24,31 @@ import scala.concurrent.{ExecutionContext, Future}
   * the cluster-related data is different from normal data so we need another type of access.
   * @param prefixPath path to remote resource
   */
-abstract class ClusterAccess[Res <: ClusterInfo] private[v0] (prefixPath: String)(implicit rm: OharaJsonFormat[Res])
+abstract class ClusterAccess[Res <: ClusterInfo] private[v0] (prefixPath: String,
+                                                              // the cluster service is able to define custom group by default.
+                                                              group: String)(implicit rm: OharaJsonFormat[Res])
     extends BasicAccess(prefixPath) {
 
-  private[this] def _clusterName(name: String): String =
-    CommonUtils.requireNonEmpty(name, () => "cluster name can't be empty")
-  private[this] def _nodeName(name: String): String = {
-    CommonUtils.requireNonEmpty(name, () => "node name can't be empty")
-  }
-  private[this] def actionUrl(name: String, action: String): String =
-    s"$url/$name/$action"
+  /**
+    * generate a key for cluster with default group
+    * @param name cluster name
+    * @return key of this cluster
+    */
+  private[this] def key(name: String): ObjectKey = ObjectKey.of(group, name)
 
   def get(clusterName: String)(implicit executionContext: ExecutionContext): Future[Res] =
-    exec.get[Res, ErrorApi.Error](s"$url/${_clusterName(clusterName)}")
+    exec.get[Res, ErrorApi.Error](url(key(clusterName)))
   def delete(clusterName: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-    exec.delete[ErrorApi.Error](s"$url/$clusterName")
+    exec.delete[ErrorApi.Error](url(key(clusterName)))
   //TODO remove this after finished #1544...by Sam
   def forceDelete(clusterName: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-    exec.delete[ErrorApi.Error](s"$url/$clusterName?$FORCE_KEY=true")
+    exec.delete[ErrorApi.Error](url(key = key(clusterName), params = Map(FORCE_KEY -> "true")))
   def list()(implicit executionContext: ExecutionContext): Future[Seq[Res]] =
     exec.get[Seq[Res], ErrorApi.Error](url)
-  def addNode(clusterName: String, nodeName: String)(implicit executionContext: ExecutionContext): Future[Res] =
-    exec.put[Res, ErrorApi.Error](s"$url/${_clusterName(clusterName)}/${_nodeName(nodeName)}")
+  def addNode(clusterName: String, nodeName: String)(implicit executionContext: ExecutionContext): Future[Unit] =
+    exec.put[ErrorApi.Error](url(key(clusterName), nodeName))
   def removeNode(clusterName: String, nodeName: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-    exec.delete[ErrorApi.Error](s"$url/${_clusterName(clusterName)}/${_nodeName(nodeName)}")
+    exec.delete[ErrorApi.Error](url(key(clusterName), nodeName))
 
   /**
     *  start a cluster
@@ -56,8 +57,7 @@ abstract class ClusterAccess[Res <: ClusterInfo] private[v0] (prefixPath: String
     * @param executionContext execution context
     * @return none
     */
-  def start(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-    exec.put[ErrorApi.Error](actionUrl(name, START_COMMAND))
+  def start(name: String)(implicit executionContext: ExecutionContext): Future[Unit] = put(key(name), START_COMMAND)
 
   /**
     * stop a cluster gracefully.
@@ -66,8 +66,7 @@ abstract class ClusterAccess[Res <: ClusterInfo] private[v0] (prefixPath: String
     * @param executionContext execution context
     * @return none
     */
-  def stop(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-    exec.put[ErrorApi.Error](actionUrl(name, STOP_COMMAND))
+  def stop(name: String)(implicit executionContext: ExecutionContext): Future[Unit] = put(key(name), STOP_COMMAND)
 
   /**
     * force to stop a cluster.
@@ -78,5 +77,5 @@ abstract class ClusterAccess[Res <: ClusterInfo] private[v0] (prefixPath: String
     * @return none
     */
   def forceStop(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-    exec.put[ErrorApi.Error](s"${actionUrl(name, STOP_COMMAND)}?$FORCE_KEY=true")
+    exec.put[ErrorApi.Error](url(key = key(name), postFix = STOP_COMMAND, params = Map(FORCE_KEY -> "true")))
 }

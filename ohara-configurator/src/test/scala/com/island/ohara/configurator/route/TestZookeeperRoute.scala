@@ -245,8 +245,6 @@ class TestZookeeperRoute extends MediumTest with Matchers {
 
     // we could graceful stop zookeeper
     result(zookeeperApi.stop(zk.name))
-    // second stop request will cause exception
-    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.stop(zk.name))
   }
 
   @Test

@@ -48,9 +48,26 @@ private[configurator] object TopicRoute {
     * @return updated topic info
     */
   private[this] def update(brokerCluster: BrokerClusterInfo, topicInfo: TopicInfo)(
-    implicit meterCache: MeterCache): TopicInfo = topicInfo.copy(
-    metrics = metrics(brokerCluster, topicInfo.key.topicNameOnKafka)
-  )
+    implicit adminCleaner: AdminCleaner,
+    meterCache: MeterCache,
+    brokerCollie: BrokerCollie,
+    executionContext: ExecutionContext): Future[TopicInfo] = {
+    CollieUtils.topicAdmin(brokerCluster)
+    val topicAdmin = brokerCollie.topicAdmin(brokerCluster)
+    topicAdmin
+      .exist(topicInfo.key)
+      // pre-close topic admin
+      .map(v =>
+        try v
+        finally Releasable.close(topicAdmin))
+      .map(if (_) Some(TopicState.RUNNING) else None)
+      .map(
+        state =>
+          topicInfo.copy(
+            state = state,
+            metrics = metrics(brokerCluster, topicInfo.key.topicNameOnKafka)
+        ))
+  }
 
   private[this] def createTopic(topicAdmin: TopicAdmin, topicInfo: TopicInfo)(
     implicit executionContext: ExecutionContext): Future[TopicInfo] =
@@ -70,19 +87,21 @@ private[configurator] object TopicRoute {
         finally topicAdmin.close()
       }
 
-  private[this] def hookOfGet(implicit meterCache: MeterCache,
+  private[this] def hookOfGet(implicit adminCleaner: AdminCleaner,
+                              meterCache: MeterCache,
                               brokerCollie: BrokerCollie,
                               executionContext: ExecutionContext): HookOfGet[TopicInfo] = (topicInfo: TopicInfo) =>
-    brokerCollie.cluster(topicInfo.brokerClusterName).map {
+    brokerCollie.cluster(topicInfo.brokerClusterName).flatMap {
       case (cluster, _) => update(cluster, topicInfo)
   }
 
-  private[this] def hookOfList(implicit meterCache: MeterCache,
+  private[this] def hookOfList(implicit adminCleaner: AdminCleaner,
+                               meterCache: MeterCache,
                                brokerCollie: BrokerCollie,
                                executionContext: ExecutionContext): HookOfList[TopicInfo] =
     (topicInfos: Seq[TopicInfo]) =>
       Future.traverse(topicInfos) { response =>
-        brokerCollie.cluster(response.brokerClusterName).map {
+        brokerCollie.cluster(response.brokerClusterName).flatMap {
           case (cluster, _) => update(cluster, response)
         }
     }
@@ -153,61 +172,53 @@ private[configurator] object TopicRoute {
                   finally Releasable.close(client)
               }
           }
-          .recoverWith {
+          .recover {
             case e: NoSuchClusterException =>
               LOG.warn(
                 s"the cluster:${topicInfo.brokerClusterName} doesn't exist!!! just remove topic from configurator",
                 e)
-              Future.unit
           }
       })
 
   private[this] def hookOfStart(implicit store: DataStore,
                                 adminCleaner: AdminCleaner,
                                 brokerCollie: BrokerCollie,
-                                executionContext: ExecutionContext): HookOfStart[TopicInfo] =
-    (key: ObjectKey) =>
+                                executionContext: ExecutionContext): HookOfAction =
+    (key: ObjectKey, _, _) =>
       store
         .value[TopicInfo](key)
         .flatMap(topicInfo =>
           CollieUtils.topicAdmin(Some(topicInfo.brokerClusterName)).flatMap {
             case (_, client) =>
               client.exist(topicInfo.key).flatMap {
-                if (_) Future.successful(topicInfo.copy(state = Some(TopicState.RUNNING)))
+                if (_) Future.unit
                 else
                   createTopic(
                     topicAdmin = client,
                     topicInfo = topicInfo
-                  )
+                  ).map(_ => Unit)
               }
         })
 
   private[this] def hookOfStop(implicit store: DataStore,
                                adminCleaner: AdminCleaner,
                                brokerCollie: BrokerCollie,
-                               executionContext: ExecutionContext): HookOfStop[TopicInfo] =
-    (key: ObjectKey) =>
+                               executionContext: ExecutionContext): HookOfAction =
+    (key: ObjectKey, _, _) =>
       store.value[TopicInfo](key).flatMap { topicInfo =>
         CollieUtils
           .topicAdmin(Some(topicInfo.brokerClusterName))
           .flatMap {
             case (_, client) =>
               client.exist(topicInfo.key).flatMap {
-                if (_) client.delete(topicInfo.key)
+                if (_) client.delete(topicInfo.key).flatMap(_ => Future.unit)
                 else Future.unit
               }
           }
-          .recoverWith {
+          .recover {
             case e: Throwable =>
               LOG.error(s"failed to remove topic:${topicInfo.name} from kafka", e)
-              Future.unit
           }
-          .map(
-            _ =>
-              topicInfo.copy(
-                state = None,
-                lastModified = CommonUtils.current()
-            ))
     }
 
   private[this] def hookOfGroup: HookOfGroup = _.getOrElse(GROUP_DEFAULT)

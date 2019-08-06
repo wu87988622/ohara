@@ -253,21 +253,9 @@ share the heavy loading of a running broker cluster. However, the
 balance is not triggered at once.
 
 Example Response
-  .. code-block:: json
+  ::
 
-     {
-       "name": "bk00",
-       "zookeeperClusterName": "zk00",
-       "imageName": "oharastream/broker:$|version|",
-       "exporterPort": 7071,
-       "clientPort": 9092,
-       "jmxPort": 9093,
-       "nodeNames": [
-         "node01",
-         "node00"
-       ],
-       "deadNodes": []
-     }
+    202 Accepted
 
   .. note::
     Although it's a rare case, you should not use the "API keyword" as the nodeName.

@@ -197,9 +197,9 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .topicKey(topic.key)
         .create())
 
-    result(connectorApi.start(connector.key)).state should not be None
+    result(connectorApi.start(connector.key))
 
-    (0 to 10).foreach(_ => result(connectorApi.pause(connector.key)).state should not be None)
+    (0 to 10).foreach(_ => result(connectorApi.pause(connector.key)))
   }
 
   @Test
@@ -222,9 +222,9 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .topicKey(topic.key)
         .create())
 
-    result(connectorApi.start(connector.key)).state should not be None
+    result(connectorApi.start(connector.key))
 
-    (0 to 10).foreach(_ => result(connectorApi.resume(connector.key)).state should not be None)
+    (0 to 10).foreach(_ => result(connectorApi.resume(connector.key)))
   }
 
   @Test
@@ -247,9 +247,9 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .topicKey(topic.key)
         .create())
 
-    result(connectorApi.start(connector.key)).state should not be None
+    result(connectorApi.start(connector.key))
 
-    (0 to 10).foreach(_ => result(connectorApi.stop(connector.key)).state shouldBe None)
+    (0 to 10).foreach(_ => result(connectorApi.stop(connector.key)))
   }
 
   @Test
@@ -272,9 +272,9 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .topicKey(topic.key)
         .create())
 
-    result(connectorApi.start(connector.key)).state should not be None
+    result(connectorApi.start(connector.key))
 
-    (0 to 10).foreach(_ => result(connectorApi.start(connector.key)).state should not be None)
+    (0 to 10).foreach(_ => result(connectorApi.start(connector.key)))
   }
 
   @Test
@@ -307,7 +307,7 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .create())
 
     response.workerClusterName shouldBe defaultWk.name
-    result(connectorApi.start(response.key)).state should not be None
+    result(connectorApi.start(response.key))
     // after start, you cannot change worker cluster
     an[IllegalArgumentException] should be thrownBy result(
       connectorApi.request
@@ -316,7 +316,7 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .workerClusterName(wk.name)
         .update())
 
-    result(connectorApi.stop(response.key)).state shouldBe None
+    result(connectorApi.stop(response.key))
 
     // the connector is stopped so it is ok to update it now.
     result(

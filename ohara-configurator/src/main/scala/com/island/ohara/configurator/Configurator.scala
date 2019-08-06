@@ -28,14 +28,14 @@ import akka.stream.ActorMaterializer
 import com.island.ohara.agent._
 import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.client.HttpExecutor
-import com.island.ohara.client.configurator.{ConfiguratorApiInfo, Data}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Meter
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0._
+import com.island.ohara.client.configurator.{ConfiguratorApiInfo, Data}
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce, VersionUtils}
+import com.island.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce}
 import com.island.ohara.configurator.Configurator.Mode
 import com.island.ohara.configurator.file.FileStore
 import com.island.ohara.configurator.route._
@@ -230,15 +230,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
       complete(StatusCodes.NotFound -> s"you have to buy the license for advanced API: $path")))
 
   private[this] def finalRoute(): server.Route =
-    path(Remaining)(
-      path =>
-        complete(
-          StatusCodes.NotFound -> ErrorApi.Error(
-            code = s"Unsupported API: $path",
-            message = s"please see link to find the available APIs. input url:$path",
-            stack = "N/A",
-            apiUrl = Some(Configurator.apiUrl)
-          )))
+    path(Remaining)(RouteUtils.routeToOfficialUrl)
 
   private[this] implicit val actorSystem: ActorSystem = ActorSystem(s"${classOf[Configurator].getSimpleName}-system")
   private[this] implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
@@ -296,10 +288,6 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
 }
 
 object Configurator {
-  def apiUrl: String = {
-    val docVersion = if (VersionUtils.BRANCH == "master") "latest" else VersionUtils.BRANCH
-    s"https://ohara.readthedocs.io/en/$docVersion/rest_interface.html"
-  }
 
   def builder: ConfiguratorBuilder = new ConfiguratorBuilder()
 

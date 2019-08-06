@@ -207,7 +207,7 @@ object StreamApi {
     private[v0] def update: Update
   }
 
-  final class Access extends ClusterAccess[StreamClusterInfo](s"$STREAM_PREFIX_PATH") {
+  final class Access extends ClusterAccess[StreamClusterInfo](STREAM_PREFIX_PATH, GROUP_DEFAULT) {
 
     def request: Request = new Request {
       private[this] var name: String = _

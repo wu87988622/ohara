@@ -200,6 +200,8 @@ Example Response
     It is ok to delete an nonexistent topic, and the response is 204 NoContent.
 
 
+.. _rest-topics-get:
+
 get a topic properties
 ----------------------
 
@@ -234,6 +236,8 @@ Example Response
 
      202 Accepted
 
+  .. note::
+    You should use :ref:`Get Topic info <rest-topics-get>` to fetch up-to-date status
 
 stop a topic from remote broker cluster
 ---------------------------------------
@@ -248,4 +252,5 @@ Example Response
 
      202 Accepted
 
-
+  .. note::
+    You should use :ref:`Get Topic info <rest-topics-get>` to fetch up-to-date status

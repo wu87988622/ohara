@@ -17,7 +17,6 @@
 package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
-import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.BrokerApi.{Creation, _}
 import com.island.ohara.common.util.CommonUtils
@@ -146,6 +145,53 @@ object BrokerRoute {
 
   private[this] def hookOfGroup: HookOfGroup = _ => GROUP_DEFAULT
 
+  private[this] def hookOfStart(implicit store: DataStore,
+                                clusterCollie: ClusterCollie,
+                                executionContext: ExecutionContext): HookOfAction =
+    (key: ObjectKey, _: String, _: Map[String, String]) =>
+      store
+        .value[BrokerClusterInfo](key)
+        .flatMap(brokerClusterInfo => clusterCollie.clusters().map(_.keys.toSeq).map(_ -> brokerClusterInfo))
+        .flatMap {
+          case (clusters, brokerClusterInfo) =>
+            val sameZkNameClusters = clusters
+              .filter(_.isInstanceOf[BrokerClusterInfo])
+              .map(_.asInstanceOf[BrokerClusterInfo])
+              .filter(_.zookeeperClusterName == brokerClusterInfo.zookeeperClusterName)
+            if (sameZkNameClusters.nonEmpty)
+              throw new IllegalArgumentException(
+                s"zk cluster:${brokerClusterInfo.zookeeperClusterName} is already used by broker cluster:${sameZkNameClusters.head.name}")
+            clusterCollie.brokerCollie.creator
+              .clusterName(brokerClusterInfo.name)
+              .clientPort(brokerClusterInfo.clientPort)
+              .exporterPort(brokerClusterInfo.exporterPort)
+              .jmxPort(brokerClusterInfo.jmxPort)
+              .zookeeperClusterName(brokerClusterInfo.zookeeperClusterName)
+              .imageName(brokerClusterInfo.imageName)
+              .nodeNames(brokerClusterInfo.nodeNames)
+              .threadPool(executionContext)
+              .create()
+        }
+        .map(_ => Unit)
+
+  private[this] def hookBeforeStop(implicit store: DataStore,
+                                   clusterCollie: ClusterCollie,
+                                   executionContext: ExecutionContext): HookOfAction =
+    (key: ObjectKey, _: String, _: Map[String, String]) =>
+      store
+        .value[BrokerClusterInfo](key)
+        .flatMap(
+          brokerClusterInfo =>
+            clusterCollie.workerCollie
+              .clusters()
+              .map(
+                _.keys
+                  .find(_.brokerClusterName == brokerClusterInfo.name)
+                  .map(cluster =>
+                    throw new IllegalArgumentException(
+                      s"you can't remove broker cluster:${brokerClusterInfo.name} since it is used by worker cluster:${cluster.name}"))
+            ))
+
   def apply(implicit store: DataStore,
             zookeeperCollie: ZookeeperCollie,
             clusterCollie: ClusterCollie,
@@ -158,40 +204,9 @@ object BrokerRoute {
       hookOfUpdate = hookOfUpdate,
       hookOfGet = hookOfGet,
       hookOfList = hookOfList,
-      hookBeforeDelete = hookBeforeDelete
-    ) ~
-      RouteUtils.appendRouteOfClusterAction(
-        collie = clusterCollie.brokerCollie,
-        root = BROKER_PREFIX_PATH,
-        hookOfGroup = hookOfGroup,
-        hookOfStart = (clusters, req: BrokerClusterInfo) => {
-          val sameZkNameClusters = clusters
-            .filter(_.isInstanceOf[BrokerClusterInfo])
-            .map(_.asInstanceOf[BrokerClusterInfo])
-            .filter(_.zookeeperClusterName == req.zookeeperClusterName)
-          if (sameZkNameClusters.nonEmpty)
-            throw new IllegalArgumentException(
-              s"zk cluster:${req.zookeeperClusterName} is already used by broker cluster:${sameZkNameClusters.head.name}")
-          clusterCollie.brokerCollie.creator
-            .clusterName(req.name)
-            .clientPort(req.clientPort)
-            .exporterPort(req.exporterPort)
-            .jmxPort(req.jmxPort)
-            .zookeeperClusterName(req.zookeeperClusterName)
-            .imageName(req.imageName)
-            .nodeNames(req.nodeNames)
-            .threadPool(executionContext)
-            .create()
-        },
-        hookOfStop = (name: String) =>
-          clusterCollie.workerCollie
-            .clusters()
-            .flatMap(
-              _.keys
-                .find(_.brokerClusterName == name)
-                .fold(Future.successful(name))(c =>
-                  Future.failed(new IllegalArgumentException(
-                    s"you can't remove broker cluster:$name since it is used by worker cluster:${c.name}")))
-          )
-      )
+      hookBeforeDelete = hookBeforeDelete,
+      collie = clusterCollie.brokerCollie,
+      hookOfStart = hookOfStart,
+      hookBeforeStop = hookBeforeStop
+    )
 }

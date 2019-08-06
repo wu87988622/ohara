@@ -425,8 +425,7 @@ object ConnectorApi {
       * @param key connector's key
       * @return the configuration of connector
       */
-    def start(key: ConnectorKey)(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
-      exec.put[ConnectorDescription, ErrorApi.Error](url(key, START_COMMAND))
+    def start(key: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Unit] = put(key, START_COMMAND)
 
     /**
       * stop and remove a running connector.
@@ -434,8 +433,7 @@ object ConnectorApi {
       * @param key connector's key
       * @return the configuration of connector
       */
-    def stop(key: ConnectorKey)(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
-      exec.put[ConnectorDescription, ErrorApi.Error](url(key, STOP_COMMAND))
+    def stop(key: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Unit] = put(key, STOP_COMMAND)
 
     /**
       * pause a running connector
@@ -443,8 +441,7 @@ object ConnectorApi {
       * @param key connector's key
       * @return the configuration of connector
       */
-    def pause(key: ConnectorKey)(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
-      exec.put[ConnectorDescription, ErrorApi.Error](url(key, PAUSE_COMMAND))
+    def pause(key: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Unit] = put(key, PAUSE_COMMAND)
 
     /**
       * resume a paused connector
@@ -452,8 +449,7 @@ object ConnectorApi {
       * @param key connector's key
       * @return the configuration of connector
       */
-    def resume(key: ConnectorKey)(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
-      exec.put[ConnectorDescription, ErrorApi.Error](url(key, RESUME_COMMAND))
+    def resume(key: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Unit] = put(key, RESUME_COMMAND)
 
     def request: Request = new Request {
       override def create()(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =

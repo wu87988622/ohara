@@ -152,6 +152,7 @@ class TestStreamRoute extends SmallTest with Matchers {
     // running streamApp cannot delete
     an[RuntimeException] should be thrownBy result(accessStream.delete(props.name))
 
+    result(accessStream.get(props.name)).state should not be None
     result(accessStream.stop(props.name))
     result(accessStream.get(props.name)).state shouldBe None
 
@@ -223,9 +224,8 @@ class TestStreamRoute extends SmallTest with Matchers {
   }
 
   @Test
-  def duplicateDeleteStream(): Unit =
-    (0 to 10).foreach(_ =>
-      result(accessJar.delete(ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString(5)))))
+  def duplicateStopStream(): Unit =
+    (0 to 10).foreach(_ => result(accessStream.stop(CommonUtils.randomString())))
 
   @Test
   def duplicateDeleteStreamProperty(): Unit =

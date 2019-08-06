@@ -238,30 +238,12 @@ connector. This request is idempotent so it is safe to retry this
 command repeatedly.
 
 Example Response
-  .. code-block:: json
+  ::
 
-     {
-       "lastModified": 1540967970407,
-       "name": "jdbc_name",
-       "settings": {
-         "connector.name": "jdbc_name",
-         "connector.class": "com.island.ohara.connector.ftp.FtpSource",
-         "tags": {}
-       },
-       "state": "RUNNING",
-       "metrics": {
-         "meters": [
-           {
-             "value": 1234,
-             "unit": "rows",
-             "document": "number of processed rows",
-             "queryTime": 1563429505055,
-             "startTime": 1563429590505
-           }
-         ]
-       }
-     }
+    202 Accepted
 
+  .. note::
+    You should use :ref:`Get Connector info <rest-connectors-get-info>` to fetch up-to-date status
 
 .. _rest-connectors-stop:
 
@@ -279,19 +261,12 @@ the connector totally, you should stop the connector and then
 safe to send this request repeatedly.
 
 Example Response
-  .. code-block:: json
+  ::
 
-     {
-       "lastModified": 1540967970407,
-       "name": "jdbc_name",
-       "settings": {
-         "connector.name": "jdbc_name",
-         "connector.class": "com.island.ohara.connector.ftp.FtpSource"
-       },
-       "metrics": {
-         "meters": []
-       }
-     }
+    202 Accepted
+
+  .. note::
+    You should use :ref:`Get Connector info <rest-connectors-get-info>` to fetch up-to-date status
 
 
 pause a connector
