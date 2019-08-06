@@ -22,7 +22,7 @@ import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json.ObjectKey
 import spray.json.DefaultJsonProtocol._
-import spray.json.{DeserializationException, JsArray, JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json.{JsValue, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -46,114 +46,18 @@ object PipelineApi {
                           flows: Option[Seq[Flow]],
                           tags: Option[Map[String, JsValue]])
 
-  implicit val PIPELINE_UPDATE_JSON_FORMAT: RootJsonFormat[Update] = JsonRefiner[Update]
-    .format(new RootJsonFormat[Update] {
-      private[this] val workerClusterNameKey = "workerClusterName"
-      private[this] val flowsKey = "flows"
-      private[this] val rulesKey = "rules"
-      override def read(json: JsValue): Update = Update(
-        workerClusterName = json.asJsObject.fields
-          .get(workerClusterNameKey)
-          // filter JsNULL
-          .filter(_.isInstanceOf[JsString])
-          .map(_.convertTo[String]),
-        flows =
-          if (json.asJsObject.fields.contains(flowsKey))
-            json.asJsObject.fields(flowsKey) match {
-              case JsNull     => None
-              case a: JsArray => Some(a.elements.map(FLOW_JSON_FORMAT.read))
-              case _          => throw DeserializationException(s"$flowsKey should be associated to array type")
-            } else if (json.asJsObject.fields.contains(rulesKey))
-            json.asJsObject.fields(rulesKey) match {
-              case JsNull => None
-              case o: JsObject =>
-                Some(toFlows(o.fields.map {
-                  case (k, v) => k -> v.asInstanceOf[JsArray].elements.map(_.convertTo[String]).toSet
-                }))
-              case _ => throw DeserializationException(s"$rulesKey should be associated to object type")
-            } else None,
-        tags = json.asJsObject.fields
-          .get(TAGS_KEY)
-          .filter {
-            case JsNull => false
-            case _      => true
-          }
-          .map {
-            case a: JsObject => a.fields
-            case _           => throw DeserializationException(s"$flowsKey should be associated to JsObject type")
-          }
-      )
-
-      override def write(obj: Update): JsValue = JsObject(
-        Map(
-          workerClusterNameKey -> obj.workerClusterName.map(JsString(_)).getOrElse(JsNull),
-          flowsKey -> obj.flows.map(_.map(FLOW_JSON_FORMAT.write).toVector).map(JsArray(_)).getOrElse(JsNull),
-          rulesKey -> obj.flows
-            .map(_.map(e => e.from.name -> JsArray(e.to.map(_.name).map(JsString(_)).toVector)).toMap)
-            .map(JsObject(_))
-            .getOrElse(JsNull),
-          TAGS_KEY -> obj.tags.map(JsObject(_)).getOrElse(JsNull),
-        ).filter {
-          case (_, v) =>
-            v match {
-              case JsNull => false
-              case _      => true
-            }
-        }
-      )
-    })
-    .rejectEmptyString()
-    .refine
+  implicit val PIPELINE_UPDATE_JSON_FORMAT: RootJsonFormat[Update] =
+    JsonRefiner[Update].format(jsonFormat3(Update)).rejectEmptyString().refine
 
   final case class Creation(group: String,
                             name: String,
                             workerClusterName: Option[String],
                             flows: Seq[Flow],
                             tags: Map[String, JsValue])
-      extends CreationRequest {
-    def rules: Map[String, Set[String]] = flows.map { flow =>
-      flow.from.name -> flow.to.map(_.name)
-    }.toMap
-  }
-
-  private[this] def toFlows(rules: Map[String, Set[String]]): Seq[Flow] = rules.map { e =>
-    Flow(
-      from = ObjectKey.of(GROUP_DEFAULT, e._1),
-      to = e._2.map(ObjectKey.of(GROUP_DEFAULT, _))
-    )
-  }.toSeq
+      extends CreationRequest
 
   implicit val PIPELINE_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] = JsonRefiner[Creation]
-    .format(new RootJsonFormat[Creation] {
-      private[this] val workerClusterNameKey = "workerClusterName"
-      private[this] val flowsKey = "flows"
-      private[this] val rulesKey = "rules"
-      override def read(json: JsValue): Creation = {
-        // reuse the code of paring update
-        val update = PIPELINE_UPDATE_JSON_FORMAT.read(json)
-        Creation(
-          group = json.asJsObject.fields(GROUP_KEY).convertTo[String],
-          name = json.asJsObject.fields(NAME_KEY).convertTo[String],
-          workerClusterName = update.workerClusterName,
-          // TODO: we should reuse the JsonRefiner#nullToEmptyArray. However, we have to support the stale key "rules" ...
-          flows = update.flows.getOrElse(Seq.empty),
-          tags = update.tags.getOrElse(Map.empty)
-        )
-      }
-
-      override def write(obj: Creation): JsValue = JsObject(
-        noJsNull(Map(
-          GROUP_KEY -> JsString(obj.group),
-          NAME_KEY -> JsString(obj.name),
-          workerClusterNameKey -> obj.workerClusterName.map(JsString(_)).getOrElse(JsNull),
-          flowsKey -> JsArray(obj.flows.map(FLOW_JSON_FORMAT.write).toVector),
-          rulesKey -> JsObject(obj.rules.map { e =>
-            e._1 -> JsArray(e._2.map(JsString(_)).toVector)
-          }),
-          TAGS_KEY -> JsObject(obj.tags)
-        ))
-      )
-    })
+    .format(jsonFormat5(Creation))
     .rejectEmptyString()
     .stringRestriction(Set(GROUP_KEY, NAME_KEY))
     .withNumber()
@@ -165,6 +69,7 @@ object PipelineApi {
     .nullToString(GROUP_KEY, () => GROUP_DEFAULT)
     .nullToString(NAME_KEY, () => CommonUtils.randomString(10))
     .nullToEmptyObject(TAGS_KEY)
+    .nullToEmptyArray("flows")
     .refine
 
   import MetricsApi._
@@ -189,47 +94,10 @@ object PipelineApi {
                             lastModified: Long,
                             tags: Map[String, JsValue])
       extends Data {
-
     override def kind: String = "pipeline"
-    def rules: Map[String, Set[String]] = flows.map { flow =>
-      flow.from.name -> flow.to.map(_.name)
-    }.toMap
   }
-  implicit val PIPELINE_JSON_FORMAT: RootJsonFormat[Pipeline] = new RootJsonFormat[Pipeline] {
-    private[this] val workerClusterNameKey = "workerClusterName"
-    private[this] val flowsKey = "flows"
-    private[this] val rulesKey = "rules"
-    private[this] val objectsKey = "objects"
-    private[this] val lastModifiedKey = "lastModified"
 
-    override def read(json: JsValue): Pipeline = Pipeline(
-      group = noJsNull(json)(GROUP_KEY).convertTo[String],
-      name = noJsNull(json)(NAME_KEY).convertTo[String],
-      workerClusterName = noJsNull(json).get(workerClusterNameKey).map(_.convertTo[String]),
-      flows = noJsNull(json)
-        .get(flowsKey)
-        .map(_.asInstanceOf[JsArray].elements.map(FLOW_JSON_FORMAT.read).toSeq)
-        .getOrElse(Seq.empty),
-      objects = noJsNull(json)(objectsKey).asInstanceOf[JsArray].elements.map(OBJECT_ABSTRACT_JSON_FORMAT.read).toSet,
-      lastModified = noJsNull(json)(lastModifiedKey).asInstanceOf[JsNumber].value.toLong,
-      tags = noJsNull(json)(TAGS_KEY).asJsObject.fields
-    )
-    override def write(obj: Pipeline): JsValue = JsObject(
-      noJsNull(
-        Map(
-          GROUP_KEY -> JsString(obj.group),
-          NAME_KEY -> JsString(obj.name),
-          workerClusterNameKey -> obj.workerClusterName.map(JsString(_)).getOrElse(JsNull),
-          flowsKey -> JsArray(obj.flows.map(FLOW_JSON_FORMAT.write).toVector),
-          rulesKey -> JsObject(obj.rules.map { e =>
-            e._1 -> JsArray(e._2.map(JsString(_)).toVector)
-          }),
-          objectsKey -> JsArray(obj.objects.map(OBJECT_ABSTRACT_JSON_FORMAT.write).toVector),
-          lastModifiedKey -> JsNumber(obj.lastModified),
-          TAGS_KEY -> JsObject(obj.tags)
-        ))
-    )
-  }
+  implicit val PIPELINE_JSON_FORMAT: RootJsonFormat[Pipeline] = jsonFormat7(Pipeline)
 
   /**
     * used to generate the payload and url for POST/PUT request.

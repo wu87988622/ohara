@@ -37,64 +37,6 @@ class TestPipelineApi extends SmallTest with Matchers {
     an[NullPointerException] should be thrownBy PipelineApi.access.delete(null)
 
   @Test
-  def parseDeprecatedJsonOfPipelineCreationRequest(): Unit = {
-    val from = CommonUtils.randomString()
-    val to0 = CommonUtils.randomString()
-    val to1 = CommonUtils.randomString()
-    val req = PIPELINE_CREATION_JSON_FORMAT.read(s"""
-                                               |{
-                                               |  "name":"${CommonUtils.randomString()}",
-                                               |  "rules": {
-                                               |    "$from": [
-                                               |      "$to0", "$to1"
-                                               |    ]
-                                               |  }
-                                               |}
-                                            """.stripMargin.parseJson)
-    req.flows.size shouldBe 1
-    req.flows.head.from shouldBe ObjectKey.of(PipelineApi.GROUP_DEFAULT, from)
-    req.flows.head.to.size shouldBe 2
-    req.flows.head.to shouldBe Set(ObjectKey.of(PipelineApi.GROUP_DEFAULT, to0),
-                                   ObjectKey.of(PipelineApi.GROUP_DEFAULT, to1))
-  }
-  @Test
-  def parseDeprecatedJsonOfPipeline(): Unit = {
-    val pipeline = Pipeline(
-      group = CommonUtils.randomString(),
-      name = CommonUtils.randomString(),
-      workerClusterName = Some(CommonUtils.randomString()),
-      objects = Set.empty,
-      flows = Seq.empty,
-      lastModified = CommonUtils.current(),
-      tags = Map.empty
-    )
-    val json = PIPELINE_JSON_FORMAT.write(pipeline).toString
-    withClue(json)(json.contains("\"rules\":{") shouldBe true)
-  }
-
-  @Test
-  def parseDeprecatedJsonOfPipeline2(): Unit = {
-    val from = ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString())
-    val to = ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString())
-    val pipeline = Pipeline(
-      group = CommonUtils.randomString(),
-      name = CommonUtils.randomString(),
-      workerClusterName = Some(CommonUtils.randomString()),
-      objects = Set.empty,
-      flows = Seq(
-        Flow(
-          from = from,
-          to = Set(to)
-        )
-      ),
-      lastModified = CommonUtils.current(),
-      tags = Map.empty
-    )
-    val json = PIPELINE_JSON_FORMAT.write(pipeline).toString
-    withClue(json)(json.contains(s"""\"rules\":{\"${from.name}\":[\"${to.name}\"]""") shouldBe true)
-  }
-
-  @Test
   def ignoreNameOnCreation(): Unit = PipelineApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
