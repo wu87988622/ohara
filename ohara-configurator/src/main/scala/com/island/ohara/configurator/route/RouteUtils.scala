@@ -136,7 +136,7 @@ private[configurator] object RouteUtils {
     def apply(hooks: Map[String, HookOfAction]): HookOfSubName = {
       val builder = new Builder
       hooks.foreach {
-        case (action, hook) => builder.hook(action, hook)
+        case (action, hook) => builder.addHook(action, hook)
       }
       builder.build()
     }
@@ -152,14 +152,14 @@ private[configurator] object RouteUtils {
         * @param hook hook
         * @return this builder
         */
-      def hook(action: String, hook: HookOfAction): Builder = {
+      def addHook(action: String, hook: HookOfAction): Builder = {
         if (hooks.contains(action)) throw new IllegalArgumentException(s"the action:$action already has hook")
         this.hooks += (action -> hook)
         this
       }
 
       /**
-        * add the hook for all actions from PUT method
+        * set the hook for all actions from PUT method
         * @param hook hook
         * @return this builder
         */
@@ -610,7 +610,7 @@ private[configurator] object RouteUtils {
       hookBeforeDelete = hookBeforeDelete,
       HookOfSubNameOfPut = HookOfSubName.builder
       // start cluster
-        .hook(
+        .addHook(
           START_COMMAND,
           (key: ObjectKey, subName: String, params: Map[String, String]) =>
             store.value[Res](key).flatMap { req =>
@@ -625,7 +625,7 @@ private[configurator] object RouteUtils {
           }
         )
         // stop cluster
-        .hook(
+        .addHook(
           STOP_COMMAND,
           (key: ObjectKey, subName: String, params: Map[String, String]) =>
             hookBeforeStop(key, subName, params).flatMap(
