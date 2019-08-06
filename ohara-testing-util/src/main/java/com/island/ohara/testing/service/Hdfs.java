@@ -44,7 +44,7 @@ public interface Hdfs extends Releasable {
 
       @Override
       public String hdfsURL() {
-        return "file://" + tmpDirectory();
+        return new File(tmpDirectory()).toURI().toString();
       }
 
       @Override

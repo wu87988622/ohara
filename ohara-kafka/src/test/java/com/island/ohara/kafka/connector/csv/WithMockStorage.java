@@ -17,6 +17,7 @@
 package com.island.ohara.kafka.connector.csv;
 
 import com.island.ohara.common.annotations.IgnoreNamingRule;
+import com.island.ohara.common.exception.OharaException;
 import com.island.ohara.kafka.connector.storage.Storage;
 import java.io.*;
 import java.nio.file.Files;
@@ -26,7 +27,6 @@ import java.nio.file.StandardCopyOption;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.stream.Collectors;
-import org.apache.kafka.connect.errors.ConnectException;
 import org.junit.rules.TemporaryFolder;
 
 @IgnoreNamingRule
@@ -45,7 +45,7 @@ public class WithMockStorage extends CsvSinkTestBase {
       folder.create();
       return folder.getRoot();
     } catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new OharaException(e);
     }
   }
 
@@ -61,12 +61,12 @@ public class WithMockStorage extends CsvSinkTestBase {
       try {
         return Files.list(Paths.get(dirPath)).map(p -> p.toString()).iterator();
       } catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new OharaException(e);
       }
     }
 
     @Override
-    public OutputStream create(String filePathAndName, boolean overwrite) {
+    public OutputStream create(String filePathAndName) {
       try {
         Path path = Paths.get(filePathAndName);
         Path parent = path.getParent();
@@ -75,7 +75,7 @@ public class WithMockStorage extends CsvSinkTestBase {
         }
         return Files.newOutputStream(Paths.get(filePathAndName));
       } catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new OharaException(e);
       }
     }
 
@@ -89,7 +89,7 @@ public class WithMockStorage extends CsvSinkTestBase {
       try {
         return Files.newInputStream(Paths.get(filePathAndName));
       } catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new OharaException(e);
       }
     }
 
@@ -115,7 +115,7 @@ public class WithMockStorage extends CsvSinkTestBase {
 
         return true;
       } catch (IOException e) {
-        throw new ConnectException(e);
+        throw new OharaException(e);
       }
     }
 
@@ -125,7 +125,7 @@ public class WithMockStorage extends CsvSinkTestBase {
         Files.move(Paths.get(sourcePath), Paths.get(targetPath));
         return true;
       } catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new OharaException(e);
       }
     }
 
@@ -134,7 +134,16 @@ public class WithMockStorage extends CsvSinkTestBase {
       try {
         Files.delete(Paths.get(filePathAndName));
       } catch (IOException e) {
-        throw new ConnectException(e);
+        throw new OharaException(e);
+      }
+    }
+
+    @Override
+    public void mkdirs(String path) {
+      try {
+        Files.createDirectories(Paths.get(path));
+      } catch (IOException e) {
+        throw new OharaException(e);
       }
     }
 

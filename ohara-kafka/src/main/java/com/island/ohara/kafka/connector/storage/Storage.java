@@ -16,6 +16,8 @@
 
 package com.island.ohara.kafka.connector.storage;
 
+import com.island.ohara.common.exception.OharaException;
+import com.island.ohara.common.exception.OharaFileAlreadyExistsException;
 import com.island.ohara.common.util.Releasable;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -41,9 +43,7 @@ public interface Storage extends Releasable {
   /**
    * List the contents of the storage at a given path.
    *
-   * <p>NOTED: throw an unchecked exception {@link com.island.ohara.common.exception.OharaException}
-   * if the path does not exist.
-   *
+   * @throws OharaException if the path does not exist.
    * @param path the path.
    * @return the listing of the contents.
    */
@@ -53,16 +53,17 @@ public interface Storage extends Releasable {
    * Creates a new object in the given path.
    *
    * @param path the path of the object to be created.
-   * @param overwrite whether to override an existing object with the same path (optional
-   *     operation).
+   * @throws OharaFileAlreadyExistsException if a object of that path already exists.
+   * @throws OharaException if the parent container does not exist.
    * @return an output stream associated with the new object.
    */
-  OutputStream create(String path, boolean overwrite);
+  OutputStream create(String path);
 
   /**
    * Append data to an existing object at the given path (optional operation).
    *
    * @param path the path of the object to be appended.
+   * @throws OharaException if the path does not exist.
    * @return an output stream associated with the existing object.
    */
   OutputStream append(String path);
@@ -92,6 +93,13 @@ public interface Storage extends Releasable {
    * @return true if object have moved to target path , false otherwise.
    */
   boolean move(String sourcePath, String targetPath);
+
+  /**
+   * creates container, including any necessary but nonexistent parent containers
+   *
+   * @param path container path
+   */
+  void mkdirs(String path);
 
   /** Stop using this storage. */
   void close();

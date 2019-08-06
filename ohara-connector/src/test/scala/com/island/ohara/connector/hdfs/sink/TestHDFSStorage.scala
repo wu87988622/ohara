@@ -16,72 +16,26 @@
 
 package com.island.ohara.connector.hdfs.sink
 
-import java.io.{InputStream, OutputStream}
+import java.io.IOException
+import java.nio.file.{Path, Paths}
 
-import com.island.ohara.kafka.connector.storage.Storage
+import com.island.ohara.kafka.connector.storage.StorageTestBase
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.testing.WithTestUtils
-import org.apache.hadoop.fs.{FileSystem, Path}
-import org.junit.Test
 import org.scalatest.Matchers
 
-import scala.collection.JavaConverters._
+class TestHDFSStorage extends StorageTestBase with Matchers {
+  override protected def createStorage() = new HDFSStorage(testUtil.hdfs.fileSystem)
 
-class TestHDFSStorage extends WithTestUtils with Matchers {
+  override protected def getRootFolder: Path =
+    Paths.get(CommonUtils.path(testUtil.hdfs.tmpDirectory, CommonUtils.randomString(10)))
 
-  @Test
-  def testHdfsStorage(): Unit = {
-    val fileSystem: FileSystem = testUtil.hdfs.fileSystem
-    val hdfsTempDir: String = s"${testUtil.hdfs.tmpDirectory}/${CommonUtils.randomString(10)}"
-    val hdfsStorage: Storage = new HDFSStorage(fileSystem)
-    hdfsStorage.list(hdfsTempDir).asScala.size shouldBe 0
+  // override this method because the Local HDFS doesn't support append()
+  override def testAppend(): Unit = {
+    val file = randomFile()
+    getStorage.create(file).close()
 
-    fileSystem.createNewFile(new Path(s"$hdfsTempDir/file.txt"))
-    hdfsStorage.list(hdfsTempDir).asScala.size shouldBe 1
-
-    fileSystem.mkdirs(new Path(s"$hdfsTempDir/1"))
-    fileSystem.mkdirs(new Path(s"$hdfsTempDir/2"))
-    hdfsStorage.list(hdfsTempDir).asScala.size shouldBe 3
-  }
-
-  @Test
-  def testCreateFile(): Unit = {
-    val fileSystem: FileSystem = testUtil.hdfs.fileSystem
-    val hdfsTempDir: String = testUtil.hdfs.tmpDirectory
-    val fileName: String = s"$hdfsTempDir/file.txt"
-    val hdfsStorage: Storage = new HDFSStorage(fileSystem)
-    val text: String = "helloworld"
-
-    fileSystem.createNewFile(new Path(fileName))
-    val outputStream: OutputStream = hdfsStorage.create(fileName, true)
-    outputStream.write(text.getBytes)
-    outputStream.close()
-
-    val inputStream: InputStream = fileSystem.open(new Path(fileName))
-    val result: StringBuilder = new StringBuilder()
-    Stream
-      .continually(inputStream.read())
-      .takeWhile(_ != -1)
-      .foreach(x => {
-        result.append(x.toChar)
-      })
-    inputStream.close()
-    result.toString shouldBe text
-  }
-
-  @Test
-  def testRename(): Unit = {
-    val fileSystem: FileSystem = testUtil.hdfs.fileSystem
-    val hdfsTempDir: String = testUtil.hdfs.tmpDirectory
-    val folderName: String = s"$hdfsTempDir/folder1"
-    val newFolderName: String = s"$hdfsTempDir/folder2"
-
-    fileSystem.create(new Path(folderName))
-
-    val hdfsStorage: Storage = new HDFSStorage(fileSystem)
-    hdfsStorage.exists(folderName) shouldBe true
-    hdfsStorage.move(folderName, newFolderName) shouldBe true
-    hdfsStorage.exists(folderName) shouldBe false
-    hdfsStorage.exists(newFolderName) shouldBe true
+    intercept[IOException] {
+      getStorage.append(file)
+    }.getMessage shouldBe "Not supported"
   }
 }

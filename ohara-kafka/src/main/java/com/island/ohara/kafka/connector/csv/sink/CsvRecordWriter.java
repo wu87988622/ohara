@@ -58,7 +58,7 @@ public class CsvRecordWriter implements RecordWriter {
       String line = RecordUtils.toLine(newSchema, record);
       if (RecordUtils.isNonEmpty(line)) {
         if (bufferedWriter == null) {
-          OutputStream out = storage.create(temporaryFile.toString(), false);
+          OutputStream out = storage.create(temporaryFile.toString());
           bufferedWriter = new BufferedWriter(new OutputStreamWriter(out, Charset.forName(encode)));
 
           if (needHeader) {

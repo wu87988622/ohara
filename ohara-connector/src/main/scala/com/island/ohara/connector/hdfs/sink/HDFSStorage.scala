@@ -20,18 +20,17 @@ import java.io.{InputStream, OutputStream}
 import java.util
 import java.util.Collections
 
+import com.island.ohara.common.exception.{OharaException, OharaFileAlreadyExistsException}
 import com.island.ohara.kafka.connector.storage.Storage
 import com.typesafe.scalalogging.Logger
-import org.apache.hadoop.fs.{FileSystem, Path, PathFilter, RemoteIterator}
+import org.apache.hadoop.fs.{FileAlreadyExistsException, FileSystem, Path, PathFilter, RemoteIterator}
 
 import scala.collection.JavaConverters._
 
 class HDFSStorage(fileSystem: FileSystem) extends Storage {
   private[this] lazy val logger = Logger(getClass.getName)
 
-  override def exists(path: String): Boolean = {
-    fileSystem.exists(new Path(path))
-  }
+  override def exists(path: String): Boolean = fileSystem.exists(new Path(path))
 
   override def list(path: String): util.Iterator[String] = {
     implicit def convertToScalaIterator[T](underlying: RemoteIterator[T]): Iterator[T] = {
@@ -50,9 +49,10 @@ class HDFSStorage(fileSystem: FileSystem) extends Storage {
           fileStatus.getPath.toString
         })
         .asJava
-    else Collections.emptyIterator()
+    else throw new OharaException(s"${path} doesn't exist", null)
   }
 
+  // for testing
   def list(path: String, pathFilter: PathFilter): util.List[String] = {
     if (exists(path)) {
       fileSystem.listStatus(new Path(path), pathFilter).map(fileStat => fileStat.getPath.toString).toList.asJava
@@ -61,21 +61,19 @@ class HDFSStorage(fileSystem: FileSystem) extends Storage {
     }
   }
 
-  override def create(path: String, overwrite: Boolean): OutputStream = {
-    fileSystem.create(new Path(path), overwrite)
+  override def create(path: String): OutputStream = try {
+    fileSystem.create(new Path(path), false)
+  } catch {
+    case e: FileAlreadyExistsException => throw new OharaFileAlreadyExistsException(e)
+    case ex: Throwable                 => throw new OharaException(ex)
   }
 
-  override def append(path: String): OutputStream = {
-    fileSystem.append(new Path(path))
-  }
+  override def append(path: String): OutputStream =
+    if (exists(path)) fileSystem.append(new Path(path)) else throw new OharaException(s"${path} doesn't exist")
 
-  override def open(path: String): InputStream = {
-    fileSystem.open(new Path(path))
-  }
+  override def open(path: String): InputStream = fileSystem.open(new Path(path))
 
-  override def delete(path: String): Unit = {
-    fileSystem.delete(new Path(path), true)
-  }
+  override def delete(path: String): Unit = if (exists(path)) fileSystem.delete(new Path(path), true)
 
   override def move(sourcePath: String, targetPath: String): Boolean = {
     if (exists(targetPath)) {
@@ -100,7 +98,7 @@ class HDFSStorage(fileSystem: FileSystem) extends Storage {
     }
   }
 
-  override def close(): Unit = {
-    fileSystem.close()
-  }
+  override def mkdirs(path: String): Unit = fileSystem.mkdirs(new Path(path))
+
+  override def close(): Unit = fileSystem.close()
 }
