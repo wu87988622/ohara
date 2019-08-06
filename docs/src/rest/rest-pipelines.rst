@@ -382,3 +382,23 @@ Example Response
        "tags": {}
      }
 
+
+refresh a pipeline
+------------------
+
+*PUT /v0/pipelines/$name/refresh*
+
+Requires Ohara Configurator to cleanup nonexistent objects of pipeline. Pipeline is a group of objects and it contains,
+sometimes, some nonexistent objects. Those nonexistent objects won't hurt our services but it may be ugly and weird to
+read. Hence, the (helper) API do a background cleanup for your pipeline. The cleanup rules are shown below.
+
+#. the flow having nonexistent "from" is removed
+#. the objects in "to" get removed
+
+Example Response
+  ::
+
+    202 Accepted
+
+  .. note::
+    You should use :ref:`Get pipeline <rest-pipelines-get>` to fetch up-to-date status

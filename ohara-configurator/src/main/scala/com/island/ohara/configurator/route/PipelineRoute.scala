@@ -19,6 +19,7 @@ import akka.http.scaladsl.server
 import com.island.ohara.agent.ClusterCollie
 import com.island.ohara.client.configurator.Data
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.ConnectorApi
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorDescription
 import com.island.ohara.client.configurator.v0.MetricsApi._
 import com.island.ohara.client.configurator.v0.PipelineApi._
@@ -103,7 +104,7 @@ private[configurator] object PipelineRoute {
       kind = data.kind,
       // Just cast the input data to get the correct className
       className = data match {
-        case description: ConnectorDescription => Some(description.className)
+        case description: ConnectorDescription => description.plain.get(ConnectorApi.CONNECTOR_CLASS_KEY)
         case _                                 => None
       },
       state = None,
@@ -197,6 +198,30 @@ private[configurator] object PipelineRoute {
 
   private[this] def hookOfGroup: HookOfGroup = _.getOrElse(GROUP_DEFAULT)
 
+  private[this] def hookOfRefresh(implicit store: DataStore, executionContext: ExecutionContext): HookOfAction =
+    (key: ObjectKey, _, _) =>
+      store.get[Pipeline](key).flatMap { pipelineOption =>
+        if (pipelineOption.isEmpty) Future.unit
+        else {
+          val pipeline = pipelineOption.get
+          val objKeys = pipeline.flows.flatMap(flow => flow.to + flow.from)
+          Future
+            .traverse(objKeys)(key => store.raws(key).map(objs => key -> objs.nonEmpty))
+            // filter the nonexistent objKeys
+            .map(_.filter(_._2).map(_._1).toSeq)
+            .map(
+              existedObjKeys =>
+                pipeline.copy(
+                  flows = pipeline.flows
+                  // remove the flow if the obj in "from" is nonexistent
+                    .filter(flow => existedObjKeys.contains(flow.from))
+                    // remove nonexistent obj from "to"
+                    .map(flow => flow.copy(to = flow.to.filter(existedObjKeys.contains)))))
+            .flatMap(pipeline => store.add[Pipeline](pipeline))
+            .map(_ => Unit)
+        }
+    }
+
   def apply(implicit store: DataStore,
             clusterCollie: ClusterCollie,
             executionContext: ExecutionContext,
@@ -208,6 +233,7 @@ private[configurator] object PipelineRoute {
       hookOfUpdate = hookOfUpdate,
       hookOfGet = hookOfGet,
       hookOfList = hookOfList,
-      hookBeforeDelete = hookBeforeDelete
+      hookBeforeDelete = hookBeforeDelete,
+      hookOfActions = Map(REFRESH_COMMAND -> hookOfRefresh)
     )
 }

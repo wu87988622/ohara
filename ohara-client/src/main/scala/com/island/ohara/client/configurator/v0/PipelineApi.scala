@@ -34,6 +34,11 @@ object PipelineApi {
   val GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
   val PIPELINES_PREFIX_PATH: String = "pipelines"
 
+  /**
+    * action key. it is used to auto-remove the existent objs from flows,
+    */
+  val REFRESH_COMMAND: String = "refresh"
+
   final case class Flow(from: ObjectKey, to: Set[ObjectKey])
   implicit val FLOW_JSON_FORMAT: OharaJsonFormat[Flow] =
     JsonRefiner[Flow].format(jsonFormat2(Flow)).rejectEmptyString().refine
@@ -158,6 +163,9 @@ object PipelineApi {
   }
 
   class Access private[v0] extends com.island.ohara.client.configurator.v0.Access[Pipeline](PIPELINES_PREFIX_PATH) {
+
+    def refresh(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Unit] = put(key, REFRESH_COMMAND)
+
     def request: Request = new Request {
       private[this] var group: String = GROUP_DEFAULT
       private[this] var name: String = _

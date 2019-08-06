@@ -324,6 +324,29 @@ class TestPipelineRoute extends MediumTest with Matchers {
     pipeline.objects.find(_.key == connector.key).get.className shouldBe Some(className)
   }
 
+  @Test
+  def testRefresh(): Unit = {
+    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
+    val connector = result(connectorApi.request.name(CommonUtils.randomString(10)).create())
+    val pipeline = result(
+      pipelineApi.request
+      // the first flow contains the topic in "to"
+      // the second flow contains the topic in "from"
+        .flows(Seq(Flow(connector.key, Set(topic.key)), Flow(topic.key, Set(connector.key))))
+        .create())
+    pipeline.objects.size shouldBe 2
+
+    result(topicApi.delete(topic.key))
+    result(pipelineApi.refresh(pipeline.key))
+
+    // the topic is removed so
+    // 1) the first flow should have nothing in "to"
+    // 2) the second flow should be removed since it have nothing in "from"
+    result(pipelineApi.get(pipeline.key)).flows.size shouldBe 1
+    result(pipelineApi.get(pipeline.key)).flows.head.to shouldBe Set.empty
+    result(pipelineApi.get(pipeline.key)).objects.size shouldBe 1
+  }
+
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }
