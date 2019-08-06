@@ -218,7 +218,7 @@ private[configurator] object StreamRoute {
           // get broker props from worker cluster
           .map { case (_, topicAdmin, _, _) => topicAdmin.connectionProps }
           .flatMap { bkProps =>
-            fileStore.fileInfo(data.jar.group, data.jar.name).map(_.url).flatMap { url =>
+            fileStore.fileInfo(data.jar).map(_.url).flatMap { url =>
               nodeCollie
                 .nodes()
                 .map { all =>

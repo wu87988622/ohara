@@ -23,6 +23,7 @@ import com.island.ohara.client.configurator.v0.FileInfoApi
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
+import com.island.ohara.kafka.connector.json.ObjectKey
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 import spray.json.{JsNumber, JsString}
@@ -99,22 +100,6 @@ class TestFileStore extends SmallTest with Matchers {
   }
 
   @Test
-  def nullGroupFileInfo(): Unit =
-    an[NullPointerException] should be thrownBy result(fileStore.fileInfo(null, "name"))
-
-  @Test
-  def emptyGroupInFileInfo(): Unit =
-    an[IllegalArgumentException] should be thrownBy result(fileStore.fileInfo("", "name"))
-
-  @Test
-  def nullIdInFileInfo(): Unit =
-    an[NullPointerException] should be thrownBy result(fileStore.fileInfo("group", null))
-
-  @Test
-  def emptyIdInFileInfo(): Unit =
-    an[IllegalArgumentException] should be thrownBy result(fileStore.fileInfo("group", ""))
-
-  @Test
   def nullFileInAdd(): Unit = an[NullPointerException] should be thrownBy fileStore.fileInfoCreator.file(null)
 
   @Test
@@ -143,15 +128,8 @@ class TestFileStore extends SmallTest with Matchers {
 
   @Test
   def nonexistentIdInFileInfo(): Unit =
-    an[NoSuchElementException] should be thrownBy result(fileStore.fileInfo("group", "Asdasd"))
-
-  @Test
-  def nullIdInToFile(): Unit =
-    an[NullPointerException] should be thrownBy result(fileStore.toFile("group", null))
-
-  @Test
-  def emptyIdInToFile(): Unit =
-    an[IllegalArgumentException] should be thrownBy result(fileStore.toFile("group", ""))
+    an[NoSuchElementException] should be thrownBy result(
+      fileStore.fileInfo(ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString())))
 
   @Test
   def testInvalidInput(): Unit =
@@ -184,8 +162,10 @@ class TestFileStore extends SmallTest with Matchers {
     val file = generateJarFile(content.getBytes)
 
     val fileApi = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
-    val fileInfo = result(fileApi.request.file(file).upload())
+    val group = CommonUtils.randomString()
+    val fileInfo = result(fileApi.request.group(group).file(file).upload())
     file.getName shouldBe fileInfo.name
+    fileInfo.group shouldBe group
     fileInfo.size shouldBe content.length
     fileInfo.url should not be None
     result(fileApi.list()).size shouldBe 1
@@ -196,9 +176,8 @@ class TestFileStore extends SmallTest with Matchers {
     val input = url.openStream()
     val tempFile = CommonUtils.createTempJar(methodName())
     if (tempFile.exists()) tempFile.delete() shouldBe true
-    try {
-      Files.copy(input, tempFile.toPath)
-    } finally input.close()
+    try Files.copy(input, tempFile.toPath)
+    finally input.close()
     tempFile.length() shouldBe fileInfo.size
     new String(Files.readAllBytes(tempFile.toPath)) shouldBe content
   }
@@ -242,7 +221,7 @@ class TestFileStore extends SmallTest with Matchers {
   def testRemove(): Unit = {
     val f = result(fileStore.fileInfoCreator.file(generateJarFile()).create())
     result(fileStore.fileInfos()).size shouldBe 1
-    result(fileStore.remove(f.group, f.name))
+    result(fileStore.remove(f.key))
     result(fileStore.fileInfos()).size shouldBe 0
   }
 
@@ -253,13 +232,13 @@ class TestFileStore extends SmallTest with Matchers {
     val tags = Map(
       "a" -> JsString("123213")
     )
-    val f1 = result(fileStore.updateTags(f0.group, f0.name, tags))
+    val f1 = result(fileStore.updateTags(f0.key, tags))
     f1.tags shouldBe tags
 
     an[NoSuchElementException] should be thrownBy result(
-      fileStore.updateTags(CommonUtils.randomString(5), f0.name, tags))
+      fileStore.updateTags(ObjectKey.of(CommonUtils.randomString(5), f0.name), tags))
     an[NoSuchElementException] should be thrownBy result(
-      fileStore.updateTags(f0.group, CommonUtils.randomString(5), tags))
+      fileStore.updateTags(ObjectKey.of(f0.group, CommonUtils.randomString(5)), tags))
   }
 
   @After

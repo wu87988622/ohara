@@ -29,6 +29,7 @@ import com.island.ohara.client.configurator.v0.FileInfoApi._
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.configurator.file.FileStore
 import com.island.ohara.configurator.store.DataStore
+import com.island.ohara.kafka.connector.json.ObjectKey
 import spray.json.DefaultJsonProtocol._
 
 import scala.concurrent.duration._
@@ -75,20 +76,21 @@ private[configurator] object FileRoute {
     pathPrefix(root) {
       path(Segment) { name =>
         parameter(RouteUtils.GROUP_KEY ?) { groupOption =>
-          get(complete(fileStore.fileInfo(groupOption.getOrElse(GROUP_DEFAULT), name))) ~ delete(
+          val key = ObjectKey.of(groupOption.getOrElse(GROUP_DEFAULT), name)
+          get(complete(fileStore.fileInfo(key))) ~ delete(
             complete(fileStore
-              .exist(groupOption.getOrElse(GROUP_DEFAULT), name)
+              .exist(key)
               .flatMap {
                 // if jar exists, we do checking is in used or not
                 if (_)
                   fileStore
-                    .fileInfo(groupOption.getOrElse(GROUP_DEFAULT), name)
+                    .fileInfo(key)
                     .flatMap(accessBy(_))
                     .flatMap(objects => {
                       if (objects.nonEmpty)
                         throw new RuntimeException(
                           s"Cannot delete jar [$name] since it is used by ${objects.map(o => s"${o.kind}:${o.name}").mkString(",")}")
-                      else fileStore.remove(groupOption.getOrElse(GROUP_DEFAULT), name)
+                      else fileStore.remove(key)
                     })
                 // do nothing
                 else Future.successful(false)
@@ -97,12 +99,9 @@ private[configurator] object FileRoute {
           ) ~ put {
             // update the tags for an existent file
             entity(as[Update]) { update =>
-              parameter(RouteUtils.GROUP_KEY ?) { groupOption =>
-                val fileInfo: Future[FileInfo] = update.tags
-                  .map(fileStore.updateTags(groupOption.getOrElse(GROUP_DEFAULT), name, _))
-                  .getOrElse(fileStore.fileInfo(groupOption.getOrElse(GROUP_DEFAULT), name))
-                complete(fileInfo)
-              }
+              val fileInfo: Future[FileInfo] =
+                update.tags.map(fileStore.updateTags(key, _)).getOrElse(fileStore.fileInfo(key))
+              complete(fileInfo)
             }
           }
         }

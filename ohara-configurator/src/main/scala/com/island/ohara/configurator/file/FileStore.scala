@@ -32,6 +32,7 @@ import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.file.FileStore.FileInfoCreator
+import com.island.ohara.kafka.connector.json.ObjectKey
 import com.typesafe.scalalogging.Logger
 import spray.json.JsValue
 
@@ -73,26 +74,19 @@ trait FileStore extends Releasable {
 
   /**
     * remove a existed file from file store
-    * @param group group name
-    * @param name file name
+    * @param key object key
     */
-  def remove(group: String, name: String)(implicit executionContext: ExecutionContext): Future[Boolean]
+  def remove(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Boolean]
 
   /**
     * retrieve the information of file
-    * @param group group name
-    * @param name file name
+    * @param key object key
     * @return file description
     */
-  def fileInfo(group: String, name: String)(implicit executionContext: ExecutionContext): Future[FileInfo] = {
-    CommonUtils.requireNonEmpty(group, () => "group must specified")
-    CommonUtils.requireNonEmpty(name, () => "name must specified")
+  def fileInfo(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[FileInfo] =
     fileInfos().map(infos => {
-      infos
-        .find(info => info.group == group && info.name == name)
-        .getOrElse(throw new NoSuchElementException(s"$name does not exist in the group:$group"))
+      infos.find(info => info.key == key).getOrElse(throw new NoSuchElementException(s"$key does not exist"))
     })
-  }
 
   /**
     * retrieve all files from file store
@@ -112,32 +106,29 @@ trait FileStore extends Releasable {
 
   /**
     * check the existence of a file
-    * @param group group name
-    * @param name file name
+    * @param key object key
     * @param executionContext thread pool
     * @return true if file exists. otherwise, false
     */
-  def exist(group: String, name: String)(implicit executionContext: ExecutionContext): Future[Boolean]
+  def exist(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Boolean]
 
   /**
     * Create a local file storing the file.
     * NOTED: you should NOT modify the file since the returned file may be referenced to true data.
-    * @param group group name
-    * @param name file name
+    * @param key object key
     * @param executionContext thread pool
     * @return local file
     */
-  def toFile(group: String, name: String)(implicit executionContext: ExecutionContext): Future[File]
+  def toFile(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[File]
 
   /**
     * update the tags of an existent file
-    * @param group group
-    * @param name name
+    * @param key object key
     * @param tags new tags
     * @param executionContext thread pool
     * @return updated file
     */
-  def updateTags(group: String, name: String, tags: Map[String, JsValue])(
+  def updateTags(key: ObjectKey, tags: Map[String, JsValue])(
     implicit executionContext: ExecutionContext): Future[FileInfo]
 
   /**
@@ -151,6 +142,7 @@ trait FileStore extends Releasable {
 object FileStore {
   def builder: Builder = new Builder
 
+  private[this] val GROUP_KEY = com.island.ohara.client.configurator.v0.GROUP_KEY
   class Builder private[FileStore] extends com.island.ohara.common.pattern.Builder[FileStore] {
     private[this] var homeFolder: String = _
     private[this] var hostname: String = _
@@ -252,15 +244,13 @@ object FileStore {
 
     override def create(): Future[FileInfo] = doCreate(
       file = CommonUtils.requireFile(file),
-      group = CommonUtils.requireNonEmpty(group),
-      name = CommonUtils.requireNonEmpty(name),
+      key = ObjectKey.of(group, name),
       tags = Objects.requireNonNull(tags),
       threadPool = Objects.requireNonNull(threadPool)
     )
 
     protected def doCreate(file: File,
-                           group: String,
-                           name: String,
+                           key: ObjectKey,
                            tags: Map[String, JsValue],
                            threadPool: ExecutionContext): Future[FileInfo]
   }
@@ -274,8 +264,8 @@ object FileStore {
 
   private[this] class FileStoreImpl(homeFolder: String, hostname: String, port: Int, acceptedExtensions: Set[String])
       extends FileStore {
-    private[this] def toUrl(group: String, name: String): URL = new URL(
-      s"http://$hostname:$port/${ConfiguratorApiInfo.V0}/$DOWNLOAD_FILE_PREFIX_PATH/$group/$name")
+    private[this] def toUrl(key: ObjectKey): URL = new URL(
+      s"http://$hostname:$port/${ConfiguratorApiInfo.V0}/$DOWNLOAD_FILE_PREFIX_PATH/${key.name()}?$GROUP_KEY=${key.group()}")
 
     // ----------------------[helper methods for tags]----------------------//
     private[this] val charset: Charset = Charset.forName("UTF-8")
@@ -295,24 +285,24 @@ object FileStore {
         CommonUtils.extension(filename) != "tags" &&
         (acceptedExtensions.isEmpty || acceptedExtensions.contains(CommonUtils.extension(filename)))
 
-    override def updateTags(group: String, name: String, tags: Map[String, JsValue])(
-      implicit executionContext: ExecutionContext): Future[FileInfo] = fileInfo(group, name).flatMap { fileInfo =>
+    override def updateTags(key: ObjectKey, tags: Map[String, JsValue])(
+      implicit executionContext: ExecutionContext): Future[FileInfo] = fileInfo(key).flatMap { fileInfo =>
       Future {
         // ok, the file info exists!!! we are goint to overwrite the tags file now.
-        val tagsFile = new File(toFolder(group), toTagsFileName(name))
+        val tagsFile = new File(toFolder(key.group()), toTagsFileName(key.name))
         Files.write(tagsFile.toPath, FileInfoApi.toString(Objects.requireNonNull(tags)).getBytes(charset))
         fileInfo.copy(tags = tags)
       }
     }
 
     override def fileInfoCreator: FileInfoCreator =
-      (file: File, group: String, name: String, tags: Map[String, JsValue], threadPool: ExecutionContext) =>
+      (file: File, key: ObjectKey, tags: Map[String, JsValue], threadPool: ExecutionContext) =>
         Future {
-          val folder = toFolder(group)
-          if (folder.isFile) throw new IllegalArgumentException(s"group:$group is associated to a file")
+          val folder = toFolder(key.group())
+          if (folder.isFile) throw new IllegalArgumentException(s"group:${key.group()} is associated to a file")
           if (!folder.exists() && !folder.mkdir())
             throw new IllegalArgumentException(s"failed to make folder on ${folder.getAbsolutePath}")
-          val newFile = new File(folder, name)
+          val newFile = new File(folder, key.name())
           if (!isAcceptedFile(newFile))
             throw new IllegalArgumentException(
               s"$newFile has illegal extension. the accepted extension are ${acceptedExtensions.mkString(",")}")
@@ -324,10 +314,10 @@ object FileStore {
           LOG.debug(s"copy $file to $newFile")
           Files.write(new File(folder, toTagsFileName(newFile)).toPath, FileInfoApi.toString(tags).getBytes(charset))
           val plugin = FileInfo(
-            name = name,
-            group = group,
+            name = key.name(),
+            group = key.group(),
             size = newFile.length(),
-            url = toUrl(group, name),
+            url = toUrl(key),
             lastModified = newFile.lastModified(),
             tags = tags
           )
@@ -336,17 +326,16 @@ object FileStore {
         }(threadPool)
 
     override def route(implicit executionContext: ExecutionContext): Route =
-      pathPrefix(DOWNLOAD_FILE_PREFIX_PATH / Segments) { groupAndName =>
-        val (group, name) = {
-          require(groupAndName.size == 2,
-                  s"you should use the /{group}/{name} format but : ${groupAndName.mkString("/")}")
-          (groupAndName.head, groupAndName.last)
+      pathPrefix(DOWNLOAD_FILE_PREFIX_PATH / Segment) { name =>
+        parameter(GROUP_KEY ?) { groupOption =>
+          val key = ObjectKey.of(groupOption.getOrElse(FileInfoApi.GROUP_DEFAULT), name)
+          if (!isAcceptedFilename(name))
+            complete(
+              StatusCodes.NotFound -> s"$name is illegal. Accepted extensions are ${acceptedExtensions.mkString(",")}")
+          // TODO: how to use future in getFromFile???
+          else getFromFile(Await.result(toFile(key), 30 seconds))
         }
-        if (!isAcceptedFilename(name))
-          complete(
-            StatusCodes.NotFound -> s"$name is illegal. Accepted extensions are ${acceptedExtensions.mkString(",")}")
-        // TODO: how to use future in getFromFile???
-        else getFromFile(Await.result(toFile(group, name), 30 seconds))
+
       }
 
     private[this] val root: File = {
@@ -365,9 +354,9 @@ object FileStore {
     private[this] def toFolder(group: String): File =
       new File(CommonUtils.path(root.getAbsolutePath, CommonUtils.requireNonEmpty(group)))
 
-    override def toFile(group: String, name: String)(implicit executionContext: ExecutionContext): Future[File] =
-      fileInfo(group, name).map(jarInfo =>
-        CommonUtils.requireExist(new File(CommonUtils.requireExist(toFolder(jarInfo.group)), name)))
+    override def toFile(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[File] =
+      fileInfo(key).map(jarInfo =>
+        CommonUtils.requireExist(new File(CommonUtils.requireExist(toFolder(jarInfo.group)), key.name())))
 
     override def fileInfos()(implicit executionContext: ExecutionContext): Future[Seq[FileInfo]] =
       Future.successful {
@@ -395,7 +384,7 @@ object FileStore {
                 name = file.getName,
                 group = group,
                 size = file.length(),
-                url = toUrl(group, file.getName),
+                url = toUrl(ObjectKey.of(group, file.getName)),
                 lastModified = file.lastModified(),
                 tags = tags
               )
@@ -403,14 +392,14 @@ object FileStore {
           .toSeq
       }
 
-    override def remove(group: String, name: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
-      fileInfo(group, name)
+    override def remove(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Boolean] =
+      fileInfo(key)
         .map { info =>
           val groupFolder = toFolder(info.group)
           if (groupFolder.exists()) {
-            if (!groupFolder.isDirectory) throw new IllegalArgumentException(s"$group doesn't reference to a folder")
-            val f = new File(groupFolder, name)
-            val tagsFile = new File(groupFolder, toTagsFileName(name))
+            if (!groupFolder.isDirectory) throw new IllegalArgumentException(s"$key doesn't reference to a folder")
+            val f = new File(groupFolder, key.name())
+            val tagsFile = new File(groupFolder, toTagsFileName(key.name()))
             if (f.exists()) CommonUtils.deleteFiles(f)
             if (tagsFile.exists()) CommonUtils.deleteFiles(tagsFile)
           }
@@ -421,8 +410,8 @@ object FileStore {
           case _: NoSuchElementException => false
         }
 
-    override def exist(group: String, name: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
-      fileInfo(group, name).map(_ => true).recover {
+    override def exist(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Boolean] =
+      fileInfo(key).map(_ => true).recover {
         case _: Throwable =>
           false
       }
