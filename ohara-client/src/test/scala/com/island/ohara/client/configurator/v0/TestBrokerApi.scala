@@ -32,7 +32,7 @@ class TestBrokerApi extends SmallTest with Matchers {
     val brokerClusterInfo = BrokerClusterInfo(
       name = CommonUtils.randomString(),
       imageName = CommonUtils.randomString(),
-      zookeeperClusterName = Some(CommonUtils.randomString()),
+      zookeeperClusterName = CommonUtils.randomString(),
       clientPort = 10,
       exporterPort = 10,
       jmxPort = 10,

@@ -173,7 +173,7 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
                     val clusterInfo = BrokerClusterInfo(
                       name = clusterName,
                       imageName = imageName,
-                      zookeeperClusterName = Some(zookeeperClusterName),
+                      zookeeperClusterName = zookeeperClusterName,
                       exporterPort = exporterPort,
                       clientPort = clientPort,
                       jmxPort = jmxPort,
@@ -296,7 +296,7 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
       BrokerClusterInfo(
         name = clusterName,
         imageName = first.imageName,
-        zookeeperClusterName = Some(first.environments(BrokerCollie.ZOOKEEPER_CLUSTER_NAME)),
+        zookeeperClusterName = first.environments(BrokerCollie.ZOOKEEPER_CLUSTER_NAME),
         exporterPort = first.environments(BrokerCollie.EXPORTER_PORT_KEY).toInt,
         clientPort = first.environments(BrokerCollie.CLIENT_PORT_KEY).toInt,
         jmxPort = first.environments(BrokerCollie.JMX_PORT_KEY).toInt,
@@ -393,9 +393,7 @@ object BrokerCollie {
     private[this] var jmxPort: Int = CommonUtils.availablePort()
 
     override protected def doCopy(clusterInfo: BrokerClusterInfo): Unit = {
-      zookeeperClusterName(
-        clusterInfo.zookeeperClusterName.getOrElse(
-          throw new IllegalArgumentException(s"The broker:${clusterInfo.name} doesn't have any zookeeper?")))
+      zookeeperClusterName(clusterInfo.zookeeperClusterName)
       clientPort(clusterInfo.clientPort)
       exporterPort(clusterInfo.exporterPort)
       jmxPort(clusterInfo.jmxPort)

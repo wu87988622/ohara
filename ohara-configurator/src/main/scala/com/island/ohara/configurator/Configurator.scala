@@ -93,6 +93,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
 
   private[this] val log = Logger(classOf[Configurator])
 
+  private[this] implicit val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie
   private[this] implicit val brokerCollie: BrokerCollie = clusterCollie.brokerCollie
   private[this] implicit val workerCollie: WorkerCollie = clusterCollie.workerCollie
   private[this] implicit val streamCollie: StreamCollie = clusterCollie.streamCollie

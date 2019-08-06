@@ -240,7 +240,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       val exporterPort = CommonUtils.availablePort()
       val jmxPort = CommonUtils.availablePort()
       def assert(brokerCluster: BrokerClusterInfo): BrokerClusterInfo = {
-        brokerCluster.zookeeperClusterName shouldBe Some(zkCluster.name)
+        brokerCluster.zookeeperClusterName shouldBe zkCluster.name
         brokerCluster.name shouldBe clusterName
         brokerCluster.nodeNames.head shouldBe nodeName
         brokerCluster.clientPort shouldBe clientPort

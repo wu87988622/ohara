@@ -18,9 +18,8 @@ package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
-import com.island.ohara.agent.{BrokerCollie, ClusterCollie, NoSuchClusterException, NodeCollie}
+import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.BrokerApi.{Creation, _}
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.RouteUtils._
 import com.island.ohara.configurator.store.DataStore
@@ -72,34 +71,38 @@ object BrokerRoute {
                                executionContext: ExecutionContext): HookOfList[BrokerClusterInfo] =
     Future.traverse(_)(updateState)
 
-  private[this] def hookOfCreation: HookOfCreation[Creation, BrokerClusterInfo] = (creation: Creation) =>
-    Future.successful(
-      BrokerClusterInfo(
-        name = creation.name,
-        imageName = creation.imageName,
-        zookeeperClusterName = creation.zookeeperClusterName,
-        clientPort = creation.clientPort,
-        exporterPort = creation.exporterPort,
-        jmxPort = creation.jmxPort,
-        nodeNames = creation.nodeNames,
-        deadNodes = Set.empty,
-        tags = creation.tags,
-        state = None,
-        error = None,
-        lastModified = CommonUtils.current(),
-        topicSettingDefinitions = BrokerCollie.TOPIC_CUSTOM_DEFINITIONS
-      )
-  )
+  private[this] def hookOfCreation(implicit zookeeperCollie: ZookeeperCollie,
+                                   executionContext: ExecutionContext): HookOfCreation[Creation, BrokerClusterInfo] =
+    (creation: Creation) =>
+      CollieUtils.orElseClusterName(creation.zookeeperClusterName).map { zkName =>
+        BrokerClusterInfo(
+          name = creation.name,
+          imageName = creation.imageName,
+          zookeeperClusterName = zkName,
+          clientPort = creation.clientPort,
+          exporterPort = creation.exporterPort,
+          jmxPort = creation.jmxPort,
+          nodeNames = creation.nodeNames,
+          deadNodes = Set.empty,
+          tags = creation.tags,
+          state = None,
+          error = None,
+          lastModified = CommonUtils.current(),
+          topicSettingDefinitions = BrokerCollie.TOPIC_CUSTOM_DEFINITIONS
+        )
+    }
 
   private[this] def hookOfUpdate(
-    implicit executionContext: ExecutionContext): HookOfUpdate[Creation, Update, BrokerClusterInfo] =
+    implicit zookeeperCollie: ZookeeperCollie,
+    executionContext: ExecutionContext): HookOfUpdate[Creation, Update, BrokerClusterInfo] =
     (key: ObjectKey, update: Update, previous: Option[BrokerClusterInfo]) =>
-      Future
-        .successful(
+      CollieUtils
+        .orElseClusterName(update.zookeeperClusterName.orElse(previous.map(_.zookeeperClusterName)))
+        .map { zkName =>
           previous.fold(BrokerClusterInfo(
             name = key.name,
             imageName = update.imageName.getOrElse(IMAGE_NAME_DEFAULT),
-            zookeeperClusterName = update.zookeeperClusterName,
+            zookeeperClusterName = zkName,
             clientPort = update.clientPort.getOrElse(CommonUtils.availablePort()),
             exporterPort = update.exporterPort.getOrElse(CommonUtils.availablePort()),
             jmxPort = update.jmxPort.getOrElse(CommonUtils.availablePort()),
@@ -113,7 +116,7 @@ object BrokerRoute {
           )) { previous =>
             previous.copy(
               imageName = update.imageName.getOrElse(previous.imageName),
-              zookeeperClusterName = update.zookeeperClusterName,
+              zookeeperClusterName = zkName,
               clientPort = update.clientPort.getOrElse(previous.clientPort),
               exporterPort = update.exporterPort.getOrElse(previous.exporterPort),
               jmxPort = update.jmxPort.getOrElse(previous.jmxPort),
@@ -121,7 +124,8 @@ object BrokerRoute {
               tags = update.tags.getOrElse(previous.tags),
               lastModified = CommonUtils.current()
             )
-          })
+          }
+        }
         .map { brokerClusterInfo =>
           if (brokerClusterInfo.state.isDefined)
             throw new RuntimeException(s"You cannot update property on non-stopped broker cluster: $key")
@@ -143,6 +147,7 @@ object BrokerRoute {
   private[this] def hookOfGroup: HookOfGroup = _ => GROUP_DEFAULT
 
   def apply(implicit store: DataStore,
+            zookeeperCollie: ZookeeperCollie,
             clusterCollie: ClusterCollie,
             nodeCollie: NodeCollie,
             executionContext: ExecutionContext): server.Route =
@@ -160,40 +165,19 @@ object BrokerRoute {
         root = BROKER_PREFIX_PATH,
         hookOfGroup = hookOfGroup,
         hookOfStart = (clusters, req: BrokerClusterInfo) => {
-          val zkName = req.zookeeperClusterName
-            .map { zkName =>
-              clusters
-                .filter(_.isInstanceOf[ZookeeperClusterInfo])
-                .find(_.name == zkName)
-                .map(_.name)
-                .getOrElse(throw new NoSuchClusterException(s"zookeeper cluster:$zkName doesn't exist"))
-            }
-            .getOrElse {
-              val zkClusters = clusters.filter(_.isInstanceOf[ZookeeperClusterInfo])
-              zkClusters.size match {
-                case 0 =>
-                  throw new IllegalArgumentException(
-                    s"You didn't specify the zk cluster for bk cluster:${req.name}, and there is no default zk cluster")
-                case 1 => zkClusters.head.name
-                case _ =>
-                  throw new IllegalArgumentException(
-                    s"You didn't specify the zk cluster for bk cluster ${req.name}, and there are too many zk clusters:{${zkClusters
-                      .map(_.name)}}")
-              }
-            }
           val sameZkNameClusters = clusters
             .filter(_.isInstanceOf[BrokerClusterInfo])
             .map(_.asInstanceOf[BrokerClusterInfo])
-            .filter(_.zookeeperClusterName.exists(_ == zkName))
+            .filter(_.zookeeperClusterName == req.zookeeperClusterName)
           if (sameZkNameClusters.nonEmpty)
             throw new IllegalArgumentException(
-              s"zk cluster:$zkName is already used by broker cluster:${sameZkNameClusters.head.name}")
+              s"zk cluster:${req.zookeeperClusterName} is already used by broker cluster:${sameZkNameClusters.head.name}")
           clusterCollie.brokerCollie.creator
             .clusterName(req.name)
             .clientPort(req.clientPort)
             .exporterPort(req.exporterPort)
             .jmxPort(req.jmxPort)
-            .zookeeperClusterName(zkName)
+            .zookeeperClusterName(req.zookeeperClusterName)
             .imageName(req.imageName)
             .nodeNames(req.nodeNames)
             .threadPool(executionContext)

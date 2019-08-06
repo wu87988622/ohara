@@ -90,7 +90,7 @@ object BrokerApi {
 
   final case class BrokerClusterInfo private[BrokerApi] (name: String,
                                                          imageName: String,
-                                                         zookeeperClusterName: Option[String],
+                                                         zookeeperClusterName: String,
                                                          clientPort: Int,
                                                          exporterPort: Int,
                                                          jmxPort: Int,

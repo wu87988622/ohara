@@ -121,16 +121,20 @@ class TestBrokerRoute extends MediumTest with Matchers {
     try {
       result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).list()).size shouldBe 2
 
-      val bk = result(
+      // there are two zk cluster so we have to assign the zk cluster...
+      an[IllegalArgumentException] should be thrownBy result(
         brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create()
       )
-      // there are two zk cluster so we have to assign the zk cluster...
-      an[IllegalArgumentException] should be thrownBy result(brokerApi.start(bk.name))
+
+      val updated = result(brokerApi.request.zookeeperClusterName(anotherZk).nodeNames(nodeNames).update())
+      updated.zookeeperClusterName shouldBe anotherZk
+      // after assigned, start is ok
+      result(brokerApi.start(updated.name))
+      result(brokerApi.stop(updated.name))
     } finally {
       result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).stop(anotherZk))
       result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).delete(anotherZk))
     }
-
   }
 
   @Test
@@ -144,8 +148,10 @@ class TestBrokerRoute extends MediumTest with Matchers {
   @Test
   def testDefaultZk(): Unit = {
     val bk = result(brokerApi.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).create())
+    // absent zookeeper name will be auto-filled in creation
+    bk.zookeeperClusterName shouldBe zkClusterName
     result(brokerApi.start(bk.name))
-    result(brokerApi.get(bk.name)).zookeeperClusterName shouldBe Some(zkClusterName)
+    result(brokerApi.get(bk.name)).zookeeperClusterName shouldBe zkClusterName
   }
 
   @Test

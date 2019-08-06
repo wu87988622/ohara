@@ -53,7 +53,7 @@ private[configurator] class FakeBrokerCollie(node: NodeCollie, bkConnectionProps
             clientPort = clientPort,
             exporterPort = exporterPort,
             jmxPort = jmxPort,
-            zookeeperClusterName = Some(zookeeperClusterName),
+            zookeeperClusterName = zookeeperClusterName,
             nodeNames = nodeNames,
             deadNodes = Set.empty,
             // In fake mode, we need to assign a state in creation for "GET" method to act like real case

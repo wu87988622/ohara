@@ -172,7 +172,7 @@ object ZookeeperRoute {
             .clusters()
             .flatMap(
               _.keys
-                .find(_.zookeeperClusterName.exists(_ == name))
+                .find(_.zookeeperClusterName == name)
                 .fold(Future.successful(name))(c =>
                   Future.failed(new IllegalArgumentException(
                     s"you can't remove zookeeper cluster:$name since it is used by broker cluster:${c.name}")))

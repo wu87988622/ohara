@@ -71,7 +71,7 @@ private class FakeBrokerCollie(node: NodeCollie,
         BrokerClusterInfo(
           name = "bk1",
           imageName = BrokerApi.IMAGE_NAME_DEFAULT,
-          zookeeperClusterName = Some("zk1"),
+          zookeeperClusterName = "zk1",
           clientPort = 2181,
           exporterPort = 2182,
           jmxPort = 2183,

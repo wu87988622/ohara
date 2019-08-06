@@ -72,11 +72,11 @@ object CollieUtils {
     collie.clusters().map { clusters =>
       clusters.size match {
         case 0 =>
-          throw new IllegalArgumentException(s"we can't choose default worker cluster since there is no worker cluster")
+          throw new IllegalArgumentException(s"we can't choose default cluster since there is no cluster available")
         case 1 => clusters.keys.head.name
         case _ =>
           throw new IllegalArgumentException(
-            s"we can't choose default worker cluster since there are too many worker cluster:${clusters.keys.map(_.name).mkString(",")}")
+            s"we can't choose default cluster since there are too many clusters:${clusters.keys.map(_.name).mkString(",")}")
       }
     }
 

@@ -133,7 +133,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
         BrokerClusterInfo(
           name = embeddedBkName,
           imageName = "None",
-          zookeeperClusterName = Some("None"),
+          zookeeperClusterName = "None",
           exporterPort = -1,
           jmxPort = -1,
           clientPort = port,
@@ -234,7 +234,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
             BrokerClusterInfo(
               name = s"$bkClusterNamePrefix$index",
               imageName = s"fakeImage$index",
-              zookeeperClusterName = Some(zkCluster.name),
+              zookeeperClusterName = zkCluster.name,
               // Assigning a negative value can make test fail quickly.
               clientPort = -1,
               exporterPort = -1,

@@ -182,7 +182,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
         waitBrokerCluster(brokerClusterName)
         //Check broker info
         brokerClusterInfo.clientPort shouldBe brokerClientPort
-        brokerClusterInfo.zookeeperClusterName shouldBe Some(zkClusterName)
+        brokerClusterInfo.zookeeperClusterName shouldBe zkClusterName
         brokerClusterInfo.connectionProps shouldBe s"$firstNode:$brokerClientPort"
       } finally result(brokerCollie.remove(brokerClusterName))
     } finally result(zookeeperCollie.remove(zkClusterName))
@@ -284,8 +284,8 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
         brokerClusterInfo1.connectionProps shouldBe s"$firstNode:$brokerClientPort"
         brokerClusterInfo2.connectionProps shouldBe s"$secondNode:$brokerClientPort,$firstNode:$brokerClientPort"
 
-        brokerClusterInfo1.zookeeperClusterName shouldBe Some(zkClusterName)
-        brokerClusterInfo2.zookeeperClusterName shouldBe Some(zkClusterName)
+        brokerClusterInfo1.zookeeperClusterName shouldBe zkClusterName
+        brokerClusterInfo2.zookeeperClusterName shouldBe zkClusterName
         brokerClusterInfo1.clientPort shouldBe brokerClientPort
         brokerClusterInfo2.clientPort shouldBe brokerClientPort
 
