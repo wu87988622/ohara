@@ -18,7 +18,7 @@ package com.island.ohara.configurator.fake
 
 import java.util.concurrent.ConcurrentHashMap
 
-import com.island.ohara.agent.{NodeCollie, WorkerCollie}
+import com.island.ohara.agent.{NoSuchClusterException, NodeCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.{ClusterInfo, ContainerApi, NodeApi}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
@@ -111,6 +111,8 @@ private[configurator] class FakeWorkerCollie(node: NodeCollie, wkConnectionProps
 
   override def workerClient(cluster: WorkerClusterInfo): WorkerClient =
     if (wkConnectionProps == null) {
+      if (!clusterCache.containsKey(cluster))
+        throw new NoSuchClusterException(s"worker cluster:$cluster does not exist")
       val fake = FakeWorkerClient()
       val r = fakeClientCache.putIfAbsent(cluster, fake)
       if (r == null) fake else r

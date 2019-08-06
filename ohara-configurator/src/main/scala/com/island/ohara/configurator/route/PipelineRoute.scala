@@ -101,7 +101,11 @@ private[configurator] object PipelineRoute {
       group = data.group,
       name = data.name,
       kind = data.kind,
-      className = None,
+      // Just cast the input data to get the correct className
+      className = data match {
+        case description: ConnectorDescription => Some(description.className)
+        case _                                 => None
+      },
       state = None,
       error = error,
       metrics = Metrics(Seq.empty),

@@ -308,6 +308,22 @@ class TestPipelineRoute extends MediumTest with Matchers {
     pipeline.objects.head.key shouldBe topic.key
   }
 
+  @Test
+  def connectorObjectAlwaysCarryClassName(): Unit = {
+    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
+    val className = CommonUtils.randomString()
+    val connector = result(
+      connectorApi.request
+        .name(CommonUtils.randomString(10))
+        .className(className)
+        // unknown worker
+        .workerClusterName(CommonUtils.randomString())
+        .create())
+    val pipeline = result(pipelineApi.request.flow(Flow(connector.key, Set(topic.key))).create())
+    pipeline.objects.size shouldBe 2
+    pipeline.objects.find(_.key == connector.key).get.className shouldBe Some(className)
+  }
+
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }
