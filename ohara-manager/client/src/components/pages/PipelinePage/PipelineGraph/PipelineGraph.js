@@ -62,7 +62,11 @@ const PipelineGraph = props => {
 
           if (Array.isArray(to)) {
             to.forEach(t => {
-              dagreGraph.setEdge(name, t, {});
+              // The pipeline API now requires the `to` key to be an array of object
+              // but the connector topic is still an array containing string...
+              const topicName = typeof t === 'object' ? t.name : t;
+
+              dagreGraph.setEdge(name, topicName, {});
             });
             return;
           }
@@ -98,7 +102,10 @@ const PipelineGraph = props => {
       const { pipelineName } = match.params;
       const currentConnector = graph.find(g => g.name === current);
       const { className, name: connectorName } = currentConnector;
-      updateGraph({ update: currentConnector });
+      updateGraph({
+        update: currentConnector,
+        dispatcher: { name: 'GRAPH' },
+      });
 
       const action = match.url.includes('/edit/') ? 'edit' : 'new';
       const baseUrl = `/pipelines/${action}/${className}/${pipelineName}`;

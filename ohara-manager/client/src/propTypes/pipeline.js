@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-import { string, arrayOf, shape, bool, number } from 'prop-types';
+import { string, arrayOf, shape, bool, number, any } from 'prop-types';
 
 export const graph = shape({
   name: string.isRequired,
+  isActive: bool,
   metrics: shape({
     meters: arrayOf(
       shape({
@@ -29,7 +30,7 @@ export const graph = shape({
   }),
   className: string.isRequired,
   kind: string.isRequired,
-  to: arrayOf(string).isRequired,
+  to: any.isRequired,
 });
 
 export const topic = shape({

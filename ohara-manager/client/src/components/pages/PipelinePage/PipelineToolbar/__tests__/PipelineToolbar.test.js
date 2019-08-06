@@ -191,7 +191,7 @@ describe('<PipelineToolbar />', () => {
     expect(getByText('Add')).toBeDisabled();
   });
 
-  it('tests change selected topic ', async () => {
+  it('should change the selected topic ', async () => {
     const { getByText, getByTestId, queryByTestId } = render(
       <PipelineToolbar {...props} />,
     );
@@ -206,6 +206,7 @@ describe('<PipelineToolbar />', () => {
         kind: 'topic',
         to: [],
       },
+      dispatcher: { name: 'TOOLBAR' },
     };
 
     expect(props.updateGraph).toHaveBeenCalledTimes(1);

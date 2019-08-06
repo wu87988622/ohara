@@ -47,13 +47,15 @@ export const getUpdatedTopic = ({
   originalTopics,
 }) => {
   const connector = findByGraphName(graph, connectorName);
-  let update;
+  let updatedTopic;
 
   if (connector.kind === 'source') {
-    const findByTopicName = topic => topic.name === configs.topics;
+    const findByTopicName = topic => topic.name === currTopicName;
     const currTopic = originalTopics.find(findByTopicName);
     const topicName = isUndefined(currTopic) ? [] : [currTopic.name];
-    update = { update: { ...connector, name: connectorName, to: topicName } };
+    updatedTopic = {
+      update: { ...connector, name: connectorName, to: topicName },
+    };
   } else {
     const currSink = findByGraphName(graph, connectorName);
     const findByCurrTopicName = g => g.name === currTopicName;
@@ -68,12 +70,12 @@ export const getUpdatedTopic = ({
 
     if (topic) {
       const to = [...new Set([...topic.to, connectorName])];
-      update = { sinkProps, update: { ...topic, to } };
+      updatedTopic = { sinkProps, update: { ...topic, to } };
     } else {
-      update = { sinkProps, update: { ...currSink } };
+      updatedTopic = { sinkProps, update: { ...currSink } };
     }
   }
-  return update;
+  return updatedTopic;
 };
 
 export const addColumn = ({ configs, update }) => {

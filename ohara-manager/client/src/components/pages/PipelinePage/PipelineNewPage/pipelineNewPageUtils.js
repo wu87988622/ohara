@@ -14,69 +14,76 @@
  * limitations under the License.
  */
 
-import { isNull, isEmpty } from 'lodash';
+import { isNull, isEmpty, isString } from 'lodash';
 
 import { isTopic, isStream } from '../pipelineUtils/commonUtils';
 
-export const removePrevConnector = (rules, connectorName) => {
-  const updatedRule = Object.keys(rules)
-    .map(key => {
-      // Remove the previous sinkName, if it exists
-      if (rules[key].includes(connectorName)) {
-        const updatedTo = rules[key].filter(rule => rule !== connectorName);
-        const result = { [key]: updatedTo };
-        return result;
-      }
+export const removePrevConnector = (flows, connectorName) => {
+  const updateFlows = flows.map(flow => {
+    const hasConnection = flow.to.find(t => t.name === connectorName);
 
-      return {
-        [key]: rules[key],
-      };
-    })
-    .reduce((acc, rule) => {
-      // Change the result data structure
-      acc = { ...acc, ...rule };
-      return acc;
-    }, {});
+    if (hasConnection) {
+      const updatedTo = flow.to.filter(t => t.name !== connectorName);
+      return { ...flow, to: updatedTo };
+    }
+    return flow;
+  });
 
-  return updatedRule;
+  return updateFlows;
 };
 
-export const updatePipelineParams = ({
+export const updateFlows = ({
   pipeline,
   update = null,
   sinkName = null,
   streamAppName = null,
+  dispatcher,
 }) => {
-  let params = null;
-  let { rules } = pipeline;
+  let { flows } = pipeline;
 
   // Remove previous connector from the graph as we're only allowing single
-  // connection in v0.2
+  // connection between a connector to a topic for now
   if (!isNull(sinkName) || !isNull(streamAppName)) {
     const connectorName = sinkName || streamAppName;
-    rules = removePrevConnector(rules, connectorName);
+    flows = removePrevConnector(flows, connectorName);
   }
 
-  // Extract necessary props for later update
-  // This is due to we currently have both new and old API in the pipeline
-  // When they're putting together, it would reset pipeline graph on each update...
-  const { name, status, workerClusterName } = pipeline;
-  const pipelineProps = { name, status, workerClusterName };
+  const { name: connectorName, to } = update;
+  let updatedFlows = null;
 
-  // If update is not specify, just pass down the entire pipeline
-  if (isNull(update)) {
-    params = pipeline;
-  } else {
-    const { name, to } = update;
-    const updatedRule = { [name]: to };
+  if (dispatcher.name === 'TOOLBAR') {
+    // Toolbar update only needs to `add` new connector to the graph
+    updatedFlows = [
+      ...flows,
+      { from: { group: 'default', name: connectorName }, to: [] },
+    ];
+  } else if (dispatcher.name === 'CONNECTOR') {
+    updatedFlows = flows.map(flow => {
+      if (flow.from.name === connectorName) {
+        const newTo = to.map(to => {
+          // If the to is a string, let's wrap it with an object
+          if (isString(to)) return { group: 'default', name: to };
+          return to;
+        });
 
-    params = {
-      ...pipelineProps,
-      rules: { ...rules, ...updatedRule },
-    };
+        // 1. reset the `to` to an empty array which means there's no
+        // topic connect to this connector
+        // 2. use the new to
+        const updatedTo = isEmpty(to) ? [] : [...newTo];
+
+        const update = {
+          ...flow,
+          to: updatedTo,
+        };
+
+        return update;
+      }
+
+      return flow;
+    });
   }
 
-  return params;
+  return updatedFlows;
 };
 
 export const updateSingleGraph = (graph, name, transformer) => {
@@ -148,17 +155,20 @@ export const updateGraph = ({
 };
 
 export const loadGraph = (pipeline, currentConnectorName) => {
-  const { objects, rules } = pipeline;
+  const { objects, flows } = pipeline;
 
-  const graph = Object.keys(rules).map(name => {
-    const target = objects.find(object => object.name === name);
+  // temp fix, if the flows and objects are not the same
+  if (isEmpty(objects) && !isEmpty(flows)) return [];
+
+  const graph = flows.map((flow, index) => {
+    const target = objects.find(object => object.name === flow.from.name);
     const { kind } = target;
-    const isActive = name === currentConnectorName;
+    const isActive = flow.from.name === currentConnectorName;
 
     const props = {
       ...target,
       isActive,
-      to: rules[name],
+      to: flows[index].to,
     };
 
     if (isTopic(kind) || isStream(kind)) {

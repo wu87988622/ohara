@@ -14,77 +14,74 @@
  * limitations under the License.
  */
 
-import {
-  cleanPrevFromTopics,
-  removePrevConnector,
-  updatePipelineParams,
-  updateSingleGraph,
-  updateGraph,
-  loadGraph,
-} from '../pipelineNewPageUtils';
+import * as generate from 'utils/generate';
+import * as utils from '../pipelineNewPageUtils';
 
 describe('removePrevConnector()', () => {
-  it('removes previous sink connection', () => {
-    const rules = { a: ['e', 'f'], b: ['d'] };
-    const sinkId = 'f';
-    const expected = { ...rules, a: ['e'] };
+  it('removes previous connection', () => {
+    const connectorNameOne = generate.name();
+    const connectorNameTwo = generate.name();
+    const flows = [
+      {
+        form: { group: 'default', name: generate.word() },
+        to: [
+          { group: 'default', name: connectorNameOne },
+          {
+            group: 'default',
+            name: connectorNameTwo,
+          },
+        ],
+      },
+    ];
 
-    expect(removePrevConnector(rules, sinkId)).toEqual(expected);
+    const expected = [
+      {
+        ...flows[0],
+        to: [{ group: 'default', name: connectorNameTwo }],
+      },
+    ];
+
+    expect(utils.removePrevConnector(flows, connectorNameOne)).toEqual(
+      expected,
+    );
   });
 });
 
-describe('updatePipelineparams()', () => {
-  it('returns the pipeline if the update is only for the pipeline name', () => {
-    const pipeline = {
-      name: 'abc',
-      objects: {},
-      rules: {},
-    };
-
-    expect(updatePipelineParams({ pipeline })).toBe(pipeline);
-  });
-
+describe('updatePipelineFlows()', () => {
   it('updates params correctly', () => {
     const pipeline = {
       name: 'abc',
       objects: {},
-      rules: {
-        a: ['c'],
-        b: ['d'],
+      flows: [
+        {
+          from: { group: 'default', name: 'abc' },
+          to: [],
+        },
+        {
+          from: { group: 'default', name: 'efg' },
+          to: [],
+        },
+      ],
+      workerClusterName: 'e',
+    };
+
+    const update = {
+      update: { name: 'abc', to: ['efg'] },
+      dispatcher: { name: 'CONNECTOR' },
+    };
+
+    const expected = [
+      {
+        from: { group: 'default', name: 'abc' },
+        to: [{ group: 'default', name: 'efg' }],
       },
-      workerClusterName: 'e',
-    };
-    const update = { name: 'a', to: ['g'] };
-    const sinkName = 'c';
-    const expected = {
-      name: pipeline.name,
-      workerClusterName: pipeline.workerClusterName,
-      rules: { a: ['g'], b: ['d'] },
-    };
+      {
+        from: { group: 'default', name: 'efg' },
+        to: [],
+      },
+    ];
 
-    expect(updatePipelineParams({ pipeline, update, sinkName })).toEqual(
-      expected,
-    );
-  });
-
-  it('updates the rules when the update includes rules update', () => {
-    const pipeline = {
-      name: 'abc',
-      objects: {},
-      rules: {},
-      workerClusterName: 'e',
-    };
-    const update = { name: 'a', to: ['b', 'c'] };
-    const updateRule = {
-      [update.name]: update.to,
-    };
-    const expected = {
-      name: pipeline.name,
-      workerClusterName: pipeline.workerClusterName,
-      rules: { ...pipeline.rules, ...updateRule },
-    };
-
-    expect(updatePipelineParams({ pipeline, update })).toEqual(expected);
+    expect(utils.updateFlows({ pipeline, ...update })).toEqual(expected);
   });
 });
 
@@ -92,7 +89,7 @@ describe('updateSingleGraph()', () => {
   it('updates the target graph', () => {
     const graph = [{ name: 'a' }, { name: 'b' }];
 
-    const updated = updateSingleGraph(graph, 'a', g => {
+    const updated = utils.updateSingleGraph(graph, 'a', g => {
       return { ...g, name: 'new name' };
     });
 
@@ -124,7 +121,7 @@ describe('cleanPrevFromTopics', () => {
       },
     ];
 
-    expect(cleanPrevFromTopics(graph, '2')).toEqual(expected);
+    expect(utils.cleanPrevFromTopics(graph, '2')).toEqual(expected);
   });
 
   it(`returns the given graph if there's no matched of previous topic`, () => {
@@ -140,7 +137,7 @@ describe('cleanPrevFromTopics', () => {
         to: ['5'],
       },
     ];
-    expect(cleanPrevFromTopics(graph, '1')).toEqual(graph);
+    expect(utils.cleanPrevFromTopics(graph, '1')).toEqual(graph);
   });
 });
 
@@ -150,7 +147,7 @@ describe('updateGraph()', () => {
     const update = { name: 'b', to: [] };
     const expected = [...graph, update];
 
-    expect(updateGraph({ graph, update })).toEqual(expected);
+    expect(utils.updateGraph({ graph, update })).toEqual(expected);
   });
 
   it(`updates the correct connector in the graph`, () => {
@@ -158,7 +155,7 @@ describe('updateGraph()', () => {
     const update = { name: 'a', to: ['b'] };
     const expected = [{ ...graph[0], ...update }];
 
-    expect(updateGraph({ graph, update })).toEqual(expected);
+    expect(utils.updateGraph({ graph, update })).toEqual(expected);
   });
 
   it('updates formTopic and sink connectors', () => {
@@ -177,7 +174,7 @@ describe('updateGraph()', () => {
     const updatedName = 'test';
     const update = { name: 'c', to: ['e'] };
 
-    const result = updateGraph({
+    const result = utils.updateGraph({
       graph,
       update,
       updatedName,
@@ -213,17 +210,39 @@ describe('loadGraph()', () => {
           to: [],
         },
       ],
-      rules: { a: ['c'], c: ['b'], b: [], d: [] },
+      flows: [
+        {
+          from: { group: 'default', name: 'a' },
+          to: [{ group: 'default', name: 'c' }],
+        },
+        {
+          from: { group: 'default', name: 'c' },
+          to: [{ group: 'default', name: 'b' }],
+        },
+        {
+          from: { group: 'default', name: 'b' },
+          to: [],
+        },
+        {
+          from: { group: 'default', name: 'd' },
+          to: [],
+        },
+      ],
     };
     const connectorName = 'a';
 
     const expected = [
-      { name: 'a', kind: 'source', to: ['c'], isActive: true },
+      {
+        name: 'a',
+        kind: 'source',
+        to: [{ group: 'default', name: 'c' }],
+        isActive: true,
+      },
       {
         name: 'c',
         kind: 'topic',
         className: 'topic',
-        to: ['b'],
+        to: [{ group: 'default', name: 'b' }],
         isActive: false,
       },
       { name: 'b', kind: 'sink', to: [], isActive: false },
@@ -236,6 +255,6 @@ describe('loadGraph()', () => {
       },
     ];
 
-    expect(loadGraph(pipeline, connectorName)).toEqual(expected);
+    expect(utils.loadGraph(pipeline, connectorName)).toEqual(expected);
   });
 });

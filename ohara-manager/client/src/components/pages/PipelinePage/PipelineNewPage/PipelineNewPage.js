@@ -205,10 +205,11 @@ class PipelineNewPage extends React.Component {
   updatePipeline = async (update = {}) => {
     const { pipeline } = this.state;
     const { name } = pipeline;
-    const params = utils.updatePipelineParams({ pipeline, ...update });
+
+    const flows = utils.updateFlows({ pipeline, ...update });
 
     this.setState({ isUpdating: true }, async () => {
-      const res = await pipelineApi.updatePipeline({ name, params });
+      const res = await pipelineApi.updatePipeline({ name, params: { flows } });
 
       this.setState({ isUpdating: false });
       const updatedPipelines = get(res, 'data.result', null);

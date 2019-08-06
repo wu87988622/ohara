@@ -37,7 +37,7 @@ const Metrics = props => {
   // When a new connector is added the first on the canvas, there's
   // no current/active connector at the time, return at this point
   // so we won't break the app
-  if (!currentConnector) return null;
+  if (!currentConnector || !currentConnector.metrics) return null;
 
   const {
     metrics: { meters },

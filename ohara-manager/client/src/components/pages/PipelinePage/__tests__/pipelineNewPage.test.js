@@ -24,6 +24,7 @@ import * as connectorApi from 'api/connectorApi';
 import * as workerApi from 'api/workerApi';
 import * as topicApi from 'api/topicApi';
 import PipelineNewPage from '../PipelineNewPage';
+import { CONNECTOR_TYPES } from 'constants/pipelines';
 import { PIPELINE_EDIT } from 'constants/documentTitles';
 import { renderWithRouter } from 'utils/testUtils';
 
@@ -32,89 +33,113 @@ jest.mock('api/connectorApi');
 jest.mock('api/workerApi');
 jest.mock('api/topicApi');
 
-const props = {
-  match: { params: jest.fn() },
+// Mock the entire graph component for now. As we don't know how
+// to test it yet...
+jest.mock('../PipelineGraph', () => () => <span>Graph</span>);
+
+const setup = () => {
+  const props = {
+    match: {
+      params: {
+        pipelineName: generate.name(),
+        connectorName: generate.name(),
+      },
+    },
+  };
+
+  workerApi.fetchWorker.mockImplementation(() =>
+    Promise.resolve({
+      data: {
+        result: {
+          connectors: generate.connectors(),
+        },
+      },
+    }),
+  );
+
+  const topicName = generate.name();
+  const sourceName = generate.name();
+
+  const pipeline = {
+    flows: [
+      { from: { group: 'default', name: topicName }, to: [] },
+      { from: { group: 'default', name: sourceName }, to: [] },
+    ],
+    name: generate.name(),
+    workerClusterName: generate.name(),
+    objects: [
+      {
+        kind: 'topic',
+        name: topicName,
+        className: CONNECTOR_TYPES.topic,
+      },
+      {
+        kind: 'source',
+        name: sourceName,
+        state: 'RUNNING',
+        className: CONNECTOR_TYPES.ftpSource,
+      },
+    ],
+  };
+
+  const topics = generate.topics({ count: 1 });
+
+  pipelineApi.fetchPipeline.mockImplementation(() =>
+    Promise.resolve({
+      data: {
+        result: pipeline,
+      },
+    }),
+  );
+
+  topicApi.fetchTopics.mockImplementation(() =>
+    Promise.resolve({
+      data: {
+        result: topics,
+      },
+    }),
+  );
+
+  return {
+    props,
+    pipeline,
+  };
 };
-
-const workerResponse = {
-  result: {
-    connectors: generate.connectors(),
-  },
-};
-
-workerApi.fetchWorker.mockImplementation(() =>
-  Promise.resolve({ data: workerResponse }),
-);
-
-const pipeline = {
-  name: generate.name(),
-  workerClusterName: generate.name(),
-  status: 'Running',
-  id: '1234',
-  objects: [
-    { kind: 'topic', id: '123', name: generate.name(), state: true },
-    { kind: 'source', id: '789', name: generate.name(), state: true },
-  ],
-  rules: {},
-};
-
-const topics = generate.topics({ count: 1 });
 
 afterEach(cleanup);
 
 describe('<PipelineNewPage />', () => {
-  const match = {
-    params: {
-      pipelineName: generate.name(),
-      connectorName: generate.name(),
-    },
-  };
-
-  beforeEach(() => {
-    const resPipelines = {
-      data: {
-        result: pipeline,
-      },
-    };
-
-    pipelineApi.fetchPipeline.mockImplementation(() =>
-      Promise.resolve(resPipelines),
-    );
-
-    const topicResponse = {
-      data: {
-        result: topics,
-      },
-    };
-
-    topicApi.fetchTopics.mockImplementation(() =>
-      Promise.resolve(topicResponse),
-    );
-  });
-
   it('renders self', async () => {
+    const { props } = setup();
+
     await waitForElement(() =>
-      renderWithRouter(<PipelineNewPage {...props} match={match} />),
+      renderWithRouter(<PipelineNewPage {...props} />),
     );
   });
 
   it('renders edit pipeline page document title, if pipelineName is present', async () => {
+    const { props } = setup();
+
     await waitForElement(() =>
-      renderWithRouter(<PipelineNewPage {...props} match={match} />),
+      renderWithRouter(<PipelineNewPage {...props} />),
     );
     expect(document.title).toBe(PIPELINE_EDIT);
   });
 
   it('display the pipeline name', async () => {
+    const { pipeline, props } = setup();
+
     const { getByText } = await waitForElement(() =>
-      renderWithRouter(<PipelineNewPage {...props} match={match} />),
+      renderWithRouter(<PipelineNewPage {...props} />),
     );
     getByText(pipeline.name);
   });
 
   it('renders Toolbar', async () => {
+    const { props } = setup();
+
     const { getByText, getByTestId } = await waitForElement(() =>
-      renderWithRouter(<PipelineNewPage {...props} match={match} />),
+      renderWithRouter(<PipelineNewPage {...props} />),
     );
     getByTestId('toolbar-sources');
     getByTestId('toolbar-topics');
@@ -123,16 +148,11 @@ describe('<PipelineNewPage />', () => {
     getByText('All changes saved');
   });
 
-  it('renders Pipeline graph title', async () => {
-    const { getByText } = await waitForElement(() =>
-      renderWithRouter(<PipelineNewPage {...props} match={match} />),
-    );
-    getByText('Pipeline graph');
-  });
-
   it('renders Pipeline operate', async () => {
+    const { props, pipeline } = setup();
+
     const { getByText, getByTestId } = await waitForElement(() =>
-      renderWithRouter(<PipelineNewPage {...props} match={match} />),
+      renderWithRouter(<PipelineNewPage {...props} />),
     );
     getByText('Operate');
     getByTestId('start-btn');
@@ -141,16 +161,21 @@ describe('<PipelineNewPage />', () => {
   });
 
   it('starts the pipeline', async () => {
+    const { props } = setup();
+
     const data = {
       result: {
         name: 'test',
-        status: 'Stopped',
         objects: [
-          { kind: 'source', name: 'c', id: '3' },
-          { kind: 'sink', name: 'b', id: '2' },
-          { kind: 'topic', name: 'a', id: '1' },
+          { kind: 'source', name: 'c', className: CONNECTOR_TYPES.ftpSource },
+          { kind: 'sink', name: 'b', className: CONNECTOR_TYPES.ftpSink },
+          { kind: 'topic', name: 'a', className: CONNECTOR_TYPES.topic },
         ],
-        rules: {},
+        flows: [
+          { from: { group: 'default', name: 'c' }, to: [] },
+          { from: { group: 'default', name: 'b' }, to: [] },
+          { from: { group: 'default', name: 'a' }, to: [] },
+        ],
         workerClusterName: generate.name(),
       },
     };
@@ -162,8 +187,9 @@ describe('<PipelineNewPage />', () => {
     connectorApi.startConnector.mockImplementation(() =>
       Promise.resolve({ data: { isSuccess: true } }),
     );
+
     const { getByTestId } = await waitForElement(() =>
-      renderWithRouter(<PipelineNewPage {...props} match={match} />),
+      renderWithRouter(<PipelineNewPage {...props} />),
     );
 
     // Start the pipeline
@@ -179,15 +205,21 @@ describe('<PipelineNewPage />', () => {
   });
 
   it('stops the pipeline', async () => {
+    const { props } = setup();
+
     const data = {
       result: {
         name: 'test',
         objects: [
-          { kind: 'source', name: 'c', id: '3' },
-          { kind: 'sink', name: 'b', id: '2' },
-          { kind: 'topic', name: 'a', id: '1' },
+          { kind: 'source', name: 'c', className: CONNECTOR_TYPES.ftpSource },
+          { kind: 'sink', name: 'b', className: CONNECTOR_TYPES.ftpSink },
+          { kind: 'topic', name: 'a', className: CONNECTOR_TYPES.topic },
         ],
-        rules: {},
+        flows: [
+          { from: { group: 'default', name: 'c' }, to: [] },
+          { from: { group: 'default', name: 'b' }, to: [] },
+          { from: { group: 'default', name: 'a' }, to: [] },
+        ],
         workerClusterName: generate.name(),
       },
     };
@@ -201,7 +233,7 @@ describe('<PipelineNewPage />', () => {
     );
 
     const { getByTestId } = await waitForElement(() =>
-      renderWithRouter(<PipelineNewPage {...props} match={match} />),
+      renderWithRouter(<PipelineNewPage {...props} />),
     );
 
     // Stop the pipeline

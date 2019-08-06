@@ -94,12 +94,12 @@ class FtpSink extends React.Component {
 
     if (result) {
       const { settings } = result;
-      const { topics } = settings;
+      const { topicKeys } = settings;
       const state = get(result, 'state', null);
 
       const topicName = utils.getCurrTopicName({
         originals: this.props.globalTopics,
-        target: topics,
+        target: topicKeys,
       });
 
       const _settings = utils.changeToken({
@@ -108,7 +108,7 @@ class FtpSink extends React.Component {
         replaceToken: '_',
       });
 
-      const configs = { ..._settings, topics: topicName };
+      const configs = { ..._settings, topicKeys: topicName };
       this.setState({ configs, state });
     }
   };
@@ -188,17 +188,17 @@ class FtpSink extends React.Component {
 
     const topic = utils.getCurrTopicId({
       originals: this.props.globalTopics,
-      target: values.topics,
+      target: values.topicKeys,
     });
 
-    const topics = Array.isArray(topic) ? topic : [topic];
+    const topicKeys = Array.isArray(topic) ? topic : [topic];
     const _values = utils.changeToken({
       values,
       targetToken: '_',
       replaceToken: '.',
     });
 
-    const params = { ..._values, topics };
+    const params = { ..._values, topicKeys };
     this.setState({ isTestingConfig: true });
     const res = await validateConnector(params);
     this.setState({ isTestingConfig: false });
@@ -232,17 +232,17 @@ class FtpSink extends React.Component {
 
     const topic = utils.getCurrTopicId({
       originals: globalTopics,
-      target: values.topics,
+      target: values.topicKeys,
     });
 
-    const topics = Array.isArray(topic) ? topic : [topic];
+    const topicKeys = Array.isArray(topic) ? topic : [topic];
     const _values = utils.changeToken({
       values,
       targetToken: '_',
       replaceToken: '.',
     });
 
-    const params = { ..._values, topics, name: this.connectorName };
+    const params = { ..._values, topicKeys, name: this.connectorName };
     await connectorApi.updateConnector({ name: this.connectorName, params });
 
     const { sinkProps, update } = utils.getUpdatedTopic({
@@ -253,7 +253,7 @@ class FtpSink extends React.Component {
       connectorName: this.connectorName,
     });
 
-    updateGraph({ update, ...sinkProps });
+    updateGraph({ update, dispatcher: { name: 'CONNECTOR' }, ...sinkProps });
   };
 
   render() {

@@ -77,7 +77,7 @@ export const createConnector = async ({
     className,
   };
 
-  updateGraph({ update });
+  updateGraph({ update, dispatcher: { name: 'TOOLBAR' } });
 };
 
 export const trimString = string => {

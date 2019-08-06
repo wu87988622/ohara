@@ -68,38 +68,36 @@ describe('Pipeline API', () => {
   beforeEach(() => cy.deleteAllServices());
 
   it('createPipeline', () => {
-    const { pipelineName } = setup();
+    const { pipelineName, workerClusterName } = setup();
 
     cy.get('@testCreatePipeline').then(response => {
       const {
         data: { isSuccess, result },
       } = response;
-      const { name, workerClusterName, objects, rules } = result;
 
       expect(isSuccess).to.eq(true);
 
-      expect(name).to.eq(pipelineName);
-      expect(workerClusterName).to.be.a('string');
-      expect(objects).to.be.an('array');
-      expect(rules).to.be.an('object');
+      expect(result.name).to.eq(pipelineName);
+      expect(result.workerClusterName).to.eq(workerClusterName);
+      expect(result.objects).to.be.an('array');
+      expect(result.flows).to.be.an('array');
     });
   });
 
   it('fetchPipeline', () => {
-    const { pipelineName } = setup();
+    const { pipelineName, workerClusterName } = setup();
 
     cy.fetchPipeline(pipelineName).then(response => {
       const {
         data: { isSuccess, result },
       } = response;
-      const { name, workerClusterName, objects, rules } = result;
 
       expect(isSuccess).to.eq(true);
 
-      expect(name).to.eq(pipelineName);
-      expect(workerClusterName).to.be.a('string');
-      expect(objects).to.be.a('array');
-      expect(rules).to.be.an('object');
+      expect(result.name).to.eq(pipelineName);
+      expect(result.workerClusterName).to.eq(workerClusterName);
+      expect(result.objects).to.be.an('array');
+      expect(result.flows).to.be.an('array');
     });
   });
 
@@ -150,9 +148,7 @@ describe('Pipeline API', () => {
     const params = {
       name: pipelineName,
       params: {
-        rules: {
-          [topicName]: [],
-        },
+        flows: [{ from: { group: 'default', name: topicName }, to: [] }],
         workerClusterName,
       },
     };
@@ -166,13 +162,15 @@ describe('Pipeline API', () => {
 
       expect(result.name).to.eq(pipelineName);
       expect(result.workerClusterName).to.eq(workerClusterName);
-      expect(result.objects).to.be.a('array');
-      expect(result.rules).to.be.a('object');
+      expect(result.objects).to.be.an('array');
+      expect(result.flows).to.be.an('array');
 
-      expect(result.objects[0].kind).to.eq('topic');
-      expect(result.objects[0].name).to.eq(topicName);
-      expect(result.objects[0].metrics).to.be.an('object');
-      expect(result.objects[0].metrics.meters).to.be.an('array');
+      const [topic] = result.objects;
+
+      expect(topic.kind).to.eq('topic');
+      expect(topic.name).to.eq(topicName);
+      expect(topic.metrics).to.be.an('object');
+      expect(topic.metrics.meters).to.be.an('array');
     });
   });
 

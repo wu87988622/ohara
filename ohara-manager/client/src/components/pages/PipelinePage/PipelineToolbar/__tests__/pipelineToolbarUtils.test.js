@@ -47,6 +47,7 @@ describe('createConnector()', () => {
         to: [],
         className: CONNECTOR_TYPES.topic,
       },
+      dispatcher: { name: 'TOOLBAR' },
     });
   });
 
@@ -78,6 +79,7 @@ describe('createConnector()', () => {
         to: [],
         className: customConnectorClassName,
       },
+      dispatcher: { name: 'TOOLBAR' },
     });
   });
 });
