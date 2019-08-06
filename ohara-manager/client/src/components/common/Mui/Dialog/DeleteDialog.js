@@ -84,7 +84,7 @@ const AlertDialog = props => {
             >
               {confirmText}
             </ConfirmButton>
-            {isWorking && <Progress size={14} />}
+            {isWorking && <Progress data-testid="dialog-loader" size={14} />}
           </ButtonWrapper>
         </DialogActions>
       </div>
