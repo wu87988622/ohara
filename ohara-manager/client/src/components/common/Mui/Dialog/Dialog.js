@@ -26,7 +26,7 @@ import DrabblePaper from './DrabblePaper';
 
 const MuiDialog = props => {
   const {
-    handelOpen,
+    open,
     handelClose,
     title,
     confirmBtnText = 'Add',
@@ -40,7 +40,7 @@ const MuiDialog = props => {
   } = props;
   return (
     <Dialog
-      open={handelOpen}
+      open={open}
       onClose={handelClose}
       maxWidth={maxWidth}
       PaperComponent={DrabblePaper}
@@ -61,7 +61,9 @@ const MuiDialog = props => {
             disabled={confirmDisabled}
           >
             {!loading && confirmBtnText}
-            {loading && <CircularProgress size={24} />}
+            {loading && (
+              <CircularProgress data-testid="dialog-loader" size={24} />
+            )}
           </Button>
         </DialogActions>
       </div>
@@ -70,7 +72,7 @@ const MuiDialog = props => {
 };
 
 MuiDialog.propTypes = {
-  handelOpen: PropTypes.bool.isRequired,
+  open: PropTypes.bool.isRequired,
   handelClose: PropTypes.func.isRequired,
   title: PropTypes.string.isRequired,
   confirmBtnText: PropTypes.string,

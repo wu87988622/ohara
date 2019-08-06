@@ -382,7 +382,7 @@ const WorkerNewModal = props => {
               testId="new-workspace-modal"
               scroll="paper"
               title="New workspace"
-              handelOpen={props.isActive}
+              open={props.isActive}
               handelClose={() => {
                 if (!submitting) resetModal(form);
               }}

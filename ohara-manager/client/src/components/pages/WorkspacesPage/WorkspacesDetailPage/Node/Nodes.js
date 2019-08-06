@@ -161,7 +161,7 @@ const Nodes = props => {
       </Main>
 
       <Dialog
-        handelOpen={dialogOpen}
+        open={dialogOpen}
         handelClose={handleNodeSelectClose}
         title="Add Node"
         handleConfirm={handleAddNode}

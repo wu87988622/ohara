@@ -93,7 +93,7 @@ const NodeNewModal = props => {
       }) => {
         return (
           <Dialog
-            handelOpen={isOpen}
+            open={isOpen}
             handelClose={handleClose}
             title="New ohara node"
             handleConfirm={handleSubmit}
