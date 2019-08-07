@@ -23,6 +23,7 @@ dependencies {
   implementation project(':ohara-agent')
   implementation project(':ohara-client')
   implementation project(':ohara-common')
+  implementation project(':ohara-connector')
   implementation project(':ohara-kafka')
   implementation project(":ohara-streams")
   implementation project(":ohara-metrics")
