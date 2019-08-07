@@ -20,7 +20,7 @@ import com.island.ohara.client.HttpExecutor
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorState
 import com.island.ohara.kafka.connector.json.{Creation, Validation}
 import spray.json.DefaultJsonProtocol.{jsonFormat2, jsonFormat3, jsonFormat4, _}
-import spray.json.{DeserializationException, JsArray, JsBoolean, JsNull, JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json.{DeserializationException, JsArray, JsNull, JsObject, JsString, JsValue, RootJsonFormat}
 
 /**
   * a collection from marshalling/unmarshalling connector data to/from json.
@@ -94,50 +94,6 @@ object WorkerJson {
         topicNamesKey -> JsString(config.topicNames.mkString(",")),
         connectClassKey -> JsString(config.connectorClass))
       )
-  }
-
-  case class Definition(
-    name: String,
-    valueType: String,
-    required: Boolean,
-    valueDefault: Option[String],
-    documentation: String,
-  )
-
-  implicit val DEFINITION_FORMAT: RootJsonFormat[Definition] = new RootJsonFormat[Definition] {
-    private[this] val nameKey: String = "name"
-    private[this] val valueTypeKey: String = "type"
-    private[this] val requiredKey: String = "required"
-    private[this] val defaultKey: String = "default_value"
-    private[this] val documentationKey: String = "documentation"
-    override def read(json: JsValue): Definition =
-      json.asJsObject.getFields(nameKey, valueTypeKey, requiredKey, documentationKey) match {
-        case Seq(JsString(name), JsString(valueType), JsBoolean(required), JsString(documentation)) =>
-          Definition(
-            name = name,
-            valueType = valueType,
-            required = required,
-            valueDefault = json.asJsObject.fields
-              .get(defaultKey)
-              .flatMap {
-                case v: JsString => Some(v.value)
-                case JsNull      => None
-                case other: Any  => throw DeserializationException(s"unknown format of $defaultKey from $other")
-              }
-              .filter(_.nonEmpty),
-            documentation = documentation,
-          )
-        case other: Any => throw DeserializationException(s"${classOf[Definition].getSimpleName} expected but $other")
-      }
-
-    override def write(obj: Definition): JsValue = JsObject(
-      Map(
-        nameKey -> JsString(obj.name),
-        valueTypeKey -> JsString(obj.valueType),
-        requiredKey -> JsBoolean(obj.required),
-        defaultKey -> JsString(obj.valueDefault.getOrElse("")),
-        documentationKey -> JsString(obj.documentation)
-      ))
   }
 
   case class ValidatedValue(name: String, value: Option[String], errors: Seq[String])
