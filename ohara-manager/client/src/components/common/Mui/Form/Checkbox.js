@@ -38,6 +38,7 @@ const MuiCheckbox = ({
   meta,
   label,
   helperText,
+  testId,
   ...rest
 }) => {
   return (
@@ -45,6 +46,7 @@ const MuiCheckbox = ({
       <FormControlLabel
         control={
           <Checkbox
+            data-testid={testId}
             {...rest}
             onChange={onChange}
             name={name}
@@ -56,7 +58,7 @@ const MuiCheckbox = ({
         label={label}
       />
 
-      <TooltipWrap>
+      <TooltipWrap data-testid="tooltip">
         <Tooltip text={helperText} />
       </TooltipWrap>
     </InputWrap>
@@ -79,6 +81,7 @@ MuiCheckbox.propTypes = {
   }).isRequired,
   label: PropTypes.string,
   helperText: PropTypes.string,
+  testId: PropTypes.string,
 };
 
 export default MuiCheckbox;
