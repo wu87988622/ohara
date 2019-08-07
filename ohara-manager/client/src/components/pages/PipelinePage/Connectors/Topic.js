@@ -17,7 +17,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import toastr from 'toastr';
-import { get, isEmpty, some, includes, omit } from 'lodash';
+import { get, isEmpty, some, includes } from 'lodash';
 
 import * as pipelineApi from 'api/pipelineApi';
 import * as MESSAGES from 'constants/messages';
@@ -37,7 +37,12 @@ class Topic extends React.Component {
     history: PropTypes.object,
     pipeline: PropTypes.shape({
       name: PropTypes.string.isRequired,
-      rules: PropTypes.object.isRequired,
+      flows: PropTypes.arrayOf(
+        PropTypes.shape({
+          from: PropTypes.object,
+          to: PropTypes.arrayOf(PropTypes.object),
+        }),
+      ).isRequired,
     }).isRequired,
     graph: PropTypes.arrayOf(graphPropType).isRequired,
     refreshGraph: PropTypes.func.isRequired,
@@ -75,22 +80,27 @@ class Topic extends React.Component {
   deleteTopic = async () => {
     const { history, pipeline, graph, refreshGraph } = this.props;
 
-    if (this.hasAnyConnection(graph, this.topicName)) {
+    if (this.hasConnection(graph, this.topicName)) {
       toastr.error(MESSAGES.CANNOT_DELETE_TOPIC_ERROR);
       return;
     }
 
-    const { name: pipelineName, rules: pipelineRules } = pipeline;
+    const { name: pipelineName, flows } = pipeline;
+
+    const updatedFlows = flows.filter(
+      flow => flow.from.name !== this.topicName,
+    );
 
     const params = {
       name: pipelineName,
-      rules: omit(pipelineRules, this.topicName),
+      flows: updatedFlows,
     };
 
     const res = await pipelineApi.updatePipeline({
       name: pipelineName,
       params,
     });
+
     const isSuccess = get(res, 'data.isSuccess', false);
     if (isSuccess) {
       const {
@@ -102,7 +112,7 @@ class Topic extends React.Component {
     }
   };
 
-  hasAnyConnection = (graph, topicName) =>
+  hasConnection = (graph, topicName) =>
     some(graph, ({ name, to }) => {
       if (name === topicName && !isEmpty(to)) return true;
       if (includes(to, topicName)) return true;

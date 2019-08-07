@@ -83,7 +83,8 @@ export const updateFlows = ({
     });
   }
 
-  return updatedFlows;
+  // If there's no update in flows, return the original flows
+  return isNull(updatedFlows) ? flows : updatedFlows;
 };
 
 export const updateSingleGraph = (graph, name, transformer) => {
@@ -113,27 +114,21 @@ export const cleanPrevFromTopics = (graph, connectorName) => {
   return graph;
 };
 
-export const updateGraph = ({
-  graph,
-  update,
-  updatedName,
-  isFromTopic,
-  streamAppName = null,
-  sinkName = null,
-}) => {
+export const updateGraph = params => {
+  const {
+    graph,
+    update,
+    isFromTopic,
+    streamAppName = null,
+    sinkName = null,
+  } = params;
+
   let updatedGraph;
 
-  // From topic update -- sink connectors or the fromTopic in stream apps
+  // From topic update -- sink connectors or the From topic field update in stream apps
   if (isFromTopic) {
     const connectorName = sinkName || streamAppName;
-
-    // Update the sink connector name
-    const nameTransformer = g => ({ ...g, name: updatedName });
-    updatedGraph =
-      updateSingleGraph(graph, connectorName, nameTransformer) || graph;
-
-    // clean up previous connections
-    updatedGraph = cleanPrevFromTopics(updatedGraph, connectorName);
+    updatedGraph = cleanPrevFromTopics(graph, connectorName);
 
     // Update current topic
     const toTransformer = g => ({ ...g, to: update.to });
@@ -150,6 +145,12 @@ export const updateGraph = ({
       updatedGraph = updateSingleGraph(graph, target.name, transformer);
     }
   }
+
+  // Update active graph, this state is not kept on the server, so
+  // we're storing it in the local state, and update if needed for now
+  updatedGraph = updatedGraph.map(graph => {
+    return { ...graph, isActive: graph.name === update.name };
+  });
 
   return updatedGraph;
 };

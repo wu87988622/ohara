@@ -18,7 +18,7 @@ import React from 'react';
 import DocumentTitle from 'react-document-title';
 import PropTypes from 'prop-types';
 import { Prompt } from 'react-router-dom';
-import { get, isEmpty } from 'lodash';
+import { get, isEmpty, isEqual } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
 import * as pipelineApi from 'api/pipelineApi';
@@ -204,12 +204,20 @@ class PipelineNewPage extends React.Component {
 
   updatePipeline = async (update = {}) => {
     const { pipeline } = this.state;
-    const { name } = pipeline;
+    const { name, flows } = pipeline;
 
-    const flows = utils.updateFlows({ pipeline, ...update });
+    const updatedFlows = utils.updateFlows({ pipeline, ...update });
+
+    // Do not do the update if there's no need to do so,
+    // we're only comparing flows here as the only field we're updating
+    // is the flows field
+    if (isEqual(updatedFlows, flows)) return;
 
     this.setState({ isUpdating: true }, async () => {
-      const res = await pipelineApi.updatePipeline({ name, params: { flows } });
+      const res = await pipelineApi.updatePipeline({
+        name,
+        params: { flows: updatedFlows },
+      });
 
       this.setState({ isUpdating: false });
       const updatedPipelines = get(res, 'data.result', null);

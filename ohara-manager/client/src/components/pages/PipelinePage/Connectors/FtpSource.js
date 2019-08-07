@@ -79,6 +79,7 @@ class FtpSource extends React.Component {
     }
 
     if (prevConnectorName !== currConnectorName) {
+      this.connectorName = currConnectorName;
       this.fetchConnector();
     }
   }

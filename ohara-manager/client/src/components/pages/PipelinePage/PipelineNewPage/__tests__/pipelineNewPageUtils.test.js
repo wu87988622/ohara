@@ -145,7 +145,11 @@ describe('updateGraph()', () => {
   it(`Adds a new connector to the current graph if it's not being found in the current graph`, () => {
     const graph = [{ name: 'a', to: ['b'] }];
     const update = { name: 'b', to: [] };
-    const expected = [...graph, update];
+
+    const expected = [
+      { name: 'a', to: ['b'], isActive: false },
+      { ...update, isActive: true },
+    ];
 
     expect(utils.updateGraph({ graph, update })).toEqual(expected);
   });
@@ -153,7 +157,8 @@ describe('updateGraph()', () => {
   it(`updates the correct connector in the graph`, () => {
     const graph = [{ name: 'a', to: [] }];
     const update = { name: 'a', to: ['b'] };
-    const expected = [{ ...graph[0], ...update }];
+
+    const expected = [{ name: 'a', to: ['b'], isActive: true }];
 
     expect(utils.updateGraph({ graph, update })).toEqual(expected);
   });
@@ -171,13 +176,11 @@ describe('updateGraph()', () => {
     ];
 
     const sinkName = 'abc';
-    const updatedName = 'test';
     const update = { name: 'c', to: ['e'] };
 
     const result = utils.updateGraph({
       graph,
       update,
-      updatedName,
       sinkName,
       isFromTopic: true,
     });
@@ -186,10 +189,12 @@ describe('updateGraph()', () => {
       {
         name: 'a',
         to: ['b', 'c', 'd'],
+        isActive: false,
       },
       {
         name: 'test',
         to: ['e'],
+        isActive: false,
       },
     ];
 
