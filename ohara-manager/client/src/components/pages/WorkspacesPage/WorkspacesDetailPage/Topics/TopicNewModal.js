@@ -108,7 +108,7 @@ const TopicNewModal = props => {
                   name="numberOfReplications"
                   component={InputField}
                   type="number"
-                  placeholder="3"
+                  placeholder="1"
                   data-testid="replications-input"
                 />
               </DialogContent>

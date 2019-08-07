@@ -17,6 +17,7 @@
 export const CONNECTOR_TYPES = {
   jdbcSource: 'com.island.ohara.connector.jdbc.source.JDBCSourceConnector',
   ftpSource: 'com.island.ohara.connector.ftp.FtpSource',
+  perfSource: 'com.island.ohara.connector.perf.PerfSource',
   hdfsSink: 'com.island.ohara.connector.hdfs.sink.HDFSSink',
   ftpSink: 'com.island.ohara.connector.ftp.FtpSink',
   customSource: 'com.island.ohara.it.connector.DumbSourceConnector',
@@ -29,7 +30,6 @@ export const TABLE_HEADERS = ['connector name', 'version', 'revision'];
 
 export const CONNECTOR_FILTERS = [
   'com.island.ohara.connector.validation.Validator',
-  'com.island.ohara.connector.perf.PerfSource',
   'org.apache.kafka.connect.file.FileStreamSourceConnector',
   'org.apache.kafka.connect.file.FileStreamSinkConnector',
 ];
