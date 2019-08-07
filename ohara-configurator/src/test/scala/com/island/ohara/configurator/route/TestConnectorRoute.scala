@@ -32,6 +32,7 @@ class TestConnectorRoute extends SmallTest with Matchers {
   private[this] val configurator = Configurator.builder.fake(1, 1).build()
 
   private[this] val connectorApi = ConnectorApi.access.hostname(configurator.hostname).port(configurator.port)
+  private[this] val topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] var defaultWk: WorkerClusterInfo = _
 
@@ -126,13 +127,7 @@ class TestConnectorRoute extends SmallTest with Matchers {
 
   @Test
   def runConnectorWithoutSpecificCluster(): Unit = {
-    val topic = result(
-      TopicApi.access
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .request
-        .name(CommonUtils.randomString(10))
-        .create())
+    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
 
     // absent worker cluster is ok since there is only one worker cluster
     val connector = result(connectorApi.request.topicKey(topic.key).create())
@@ -174,18 +169,13 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .workerClusterName(wk.name)
         .create())
     //pass since we have assigned a worker cluster
+    result(topicApi.start(topic.key))
     result(connectorApi.start(c2.key))
   }
 
   @Test
   def testIdempotentPause(): Unit = {
-    val topic = result(
-      TopicApi.access
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .request
-        .name(CommonUtils.randomString(10))
-        .create())
+    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
 
     val connector = result(
       ConnectorApi.access
@@ -197,6 +187,7 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .topicKey(topic.key)
         .create())
 
+    result(topicApi.start(topic.key))
     result(connectorApi.start(connector.key))
 
     (0 to 10).foreach(_ => result(connectorApi.pause(connector.key)))
@@ -204,13 +195,7 @@ class TestConnectorRoute extends SmallTest with Matchers {
 
   @Test
   def testIdempotentResume(): Unit = {
-    val topic = result(
-      TopicApi.access
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .request
-        .name(CommonUtils.randomString(10))
-        .create())
+    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
 
     val connector = result(
       ConnectorApi.access
@@ -222,6 +207,7 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .topicKey(topic.key)
         .create())
 
+    result(topicApi.start(topic.key))
     result(connectorApi.start(connector.key))
 
     (0 to 10).foreach(_ => result(connectorApi.resume(connector.key)))
@@ -229,13 +215,7 @@ class TestConnectorRoute extends SmallTest with Matchers {
 
   @Test
   def testIdempotentStop(): Unit = {
-    val topic = result(
-      TopicApi.access
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .request
-        .name(CommonUtils.randomString(10))
-        .create())
+    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
 
     val connector = result(
       ConnectorApi.access
@@ -247,6 +227,7 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .topicKey(topic.key)
         .create())
 
+    result(topicApi.start(topic.key))
     result(connectorApi.start(connector.key))
 
     (0 to 10).foreach(_ => result(connectorApi.stop(connector.key)))
@@ -254,13 +235,7 @@ class TestConnectorRoute extends SmallTest with Matchers {
 
   @Test
   def testIdempotentStart(): Unit = {
-    val topic = result(
-      TopicApi.access
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .request
-        .name(CommonUtils.randomString(10))
-        .create())
+    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
 
     val connector = result(
       ConnectorApi.access
@@ -272,6 +247,7 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .topicKey(topic.key)
         .create())
 
+    result(topicApi.start(topic.key))
     result(connectorApi.start(connector.key))
 
     (0 to 10).foreach(_ => result(connectorApi.start(connector.key)))
@@ -290,13 +266,7 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .brokerClusterName(bk.name)
         .nodeNames(bk.nodeNames)
         .create())
-    val topic = result(
-      TopicApi.access
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .request
-        .name(CommonUtils.randomString(10))
-        .create())
+    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
 
     val response = result(
       connectorApi.request
@@ -307,6 +277,7 @@ class TestConnectorRoute extends SmallTest with Matchers {
         .create())
 
     response.workerClusterName shouldBe defaultWk.name
+    result(topicApi.start(topic.key))
     result(connectorApi.start(response.key))
     // after start, you cannot change worker cluster
     an[IllegalArgumentException] should be thrownBy result(
@@ -415,19 +386,25 @@ class TestConnectorRoute extends SmallTest with Matchers {
 
   @Test
   def failToDeletePropertiesOfRunningConnector(): Unit = {
-    val topic = result(
-      TopicApi.access
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .request
-        .name(CommonUtils.randomString(10))
-        .create())
+    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
     val connectorDesc = result(connectorApi.request.topicKey(topic.key).create())
+    result(topicApi.start(topic.key))
     result(connectorApi.start(connectorDesc.key))
 
     an[IllegalArgumentException] should be thrownBy result(connectorApi.request.key(connectorDesc.key).update())
     result(connectorApi.stop(connectorDesc.key))
     result(connectorApi.request.key(connectorDesc.key).update())
+  }
+
+  @Test
+  def failToRunConnectorWithStoppedTopic(): Unit = {
+    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
+    val connectorDesc = result(connectorApi.request.topicKey(topic.key).create())
+    an[IllegalArgumentException] should be thrownBy result(connectorApi.start(connectorDesc.key))
+
+    result(topicApi.start(topic.key))
+    result(connectorApi.start(connectorDesc.key))
+
   }
 
   @After

@@ -32,19 +32,14 @@ class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
     Configurator.builder.fake(testUtil.brokersConnProps, testUtil().workersConnProps()).build()
 
   private[this] val connectorApi = ConnectorApi.access.hostname(configurator.hostname).port(configurator.port)
+  private[this] val topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
   @Test
   def failToRun(): Unit = {
-    val topic = result(
-      TopicApi.access
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .request
-        .name(CommonUtils.randomString(10))
-        .create()
-    )
+    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
+    result(topicApi.start(topic.key))
     val connector = result(
       connectorApi.request
         .name(CommonUtils.randomString(10))
@@ -91,14 +86,8 @@ class TestErrorMessageOfConnector extends WithBrokerWorker with Matchers {
 
   @Test
   def succeedToRun(): Unit = {
-    val topic = result(
-      TopicApi.access
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .request
-        .name(CommonUtils.randomString(10))
-        .create()
-    )
+    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
+    result(topicApi.start(topic.key))
 
     val connector = result(
       connectorApi.request

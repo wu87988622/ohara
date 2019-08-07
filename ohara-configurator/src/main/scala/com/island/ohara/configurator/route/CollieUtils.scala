@@ -23,7 +23,7 @@ import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.reflect.{ClassTag, classTag}
+import scala.reflect.ClassTag
 
 /**
   * TODO: this is just a workaround in ohara 0.3. It handles the following trouble:
@@ -113,6 +113,13 @@ private[route] object CollieUtils {
       }
       .map(c => (c, workerCollie.workerClient(c))))
 
+  def both[T](wkClusterName: String)(
+    implicit brokerCollie: BrokerCollie,
+    cleaner: AdminCleaner,
+    workerCollie: WorkerCollie,
+    executionContext: ExecutionContext): Future[(BrokerClusterInfo, TopicAdmin, WorkerClusterInfo, WorkerClient)] =
+    both(Some(wkClusterName))
+
   def both[T](wkClusterName: Option[String])(
     implicit brokerCollie: BrokerCollie,
     cleaner: AdminCleaner,
@@ -124,7 +131,4 @@ private[route] object CollieUtils {
           case (bkInfo, topicAdmin) => (bkInfo, cleaner.add(topicAdmin), wkInfo, wkClient)
         }
     }
-
-  def as[T <: ClusterInfo: ClassTag](clusters: Seq[ClusterInfo]): Seq[T] =
-    clusters.filter(classTag[T].runtimeClass.isInstance).map(_.asInstanceOf[T])
 }

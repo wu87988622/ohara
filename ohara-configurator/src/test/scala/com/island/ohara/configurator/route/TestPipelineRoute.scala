@@ -43,6 +43,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
   @Test
   def testFlowAndObjects(): Unit = {
     val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
+    result(topicApi.start(topic.key))
 
     val connector = result(
       connectorApi.request
@@ -63,6 +64,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
     pipeline.objects.size shouldBe 2
     pipeline.workerClusterName shouldBe None
 
+    result(topicApi.stop(topic.key))
     // remove topic
     result(topicApi.delete(topic.key))
 
@@ -124,6 +126,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
   @Test
   def listConnectorWhichIsNotRunning(): Unit = {
     val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
+    result(topicApi.start(topic.key))
 
     val connector = result(
       connectorApi.request
@@ -144,6 +147,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
   @Test
   def testRunningConnector(): Unit = {
     val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
+    result(topicApi.start(topic.key))
     val connector = result(
       connectorApi.request
         .name(CommonUtils.randomString(10))
@@ -168,6 +172,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
   @Test
   def nonexistentConnectorClass(): Unit = {
     val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
+    result(topicApi.start(topic.key))
 
     val connector = result(
       connectorApi.request

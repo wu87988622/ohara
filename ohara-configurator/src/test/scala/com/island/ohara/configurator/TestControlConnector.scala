@@ -36,13 +36,13 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
 
   private[this] val connectorApi = ConnectorApi.access.hostname(configurator.hostname).port(configurator.port)
 
+  private[this] val topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
   @Test
   def testNormalCase(): Unit = {
     val topicName = methodName
-    val topic = result(
-      TopicApi.access.hostname(configurator.hostname).port(configurator.port).request.name(topicName).create())
+    val topic = result(topicApi.request.name(topicName).create())
 
     val sink = result(
       connectorApi.request
@@ -53,7 +53,8 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
         .create())
 
     // test idempotent start
-    (0 until 3).foreach(_ => Await.result(connectorApi.start(sink.key), 30 seconds))
+    result(topicApi.start(topic.key))
+    (0 until 3).foreach(_ => result(connectorApi.start(sink.key)))
     val workerClient = WorkerClient(testUtil.workersConnProps)
     try {
       CommonUtils.await(() =>
@@ -67,19 +68,19 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
       result(connectorApi.get(sink.key)).state.get shouldBe ConnectorState.RUNNING
 
       // test idempotent pause
-      (0 until 3).foreach(_ => Await.result(connectorApi.pause(sink.key), 10 seconds))
+      (0 until 3).foreach(_ => result(connectorApi.pause(sink.key)))
       CommonUtils.await(() => result(workerClient.status(sink.key)).connector.state == ConnectorState.PAUSED,
                         Duration.ofSeconds(20))
       result(connectorApi.get(sink.key)).state.get shouldBe ConnectorState.PAUSED
 
       // test idempotent resume
-      (0 until 3).foreach(_ => Await.result(connectorApi.resume(sink.key), 10 seconds))
+      (0 until 3).foreach(_ => result(connectorApi.resume(sink.key)))
       CommonUtils.await(() => result(workerClient.status(sink.key)).connector.state == ConnectorState.RUNNING,
                         Duration.ofSeconds(20))
       result(connectorApi.get(sink.key)).state.get shouldBe ConnectorState.RUNNING
 
       // test idempotent stop. the connector should be removed
-      (0 until 3).foreach(_ => Await.result(connectorApi.stop(sink.key), 10 seconds))
+      (0 until 3).foreach(_ => result(connectorApi.stop(sink.key)))
       CommonUtils.await(() => if (result(workerClient.nonExist(sink.key))) true else false, Duration.ofSeconds(20))
       result(connectorApi.get(sink.key)).state shouldBe None
     } finally {
@@ -90,9 +91,7 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
   @Test
   def testUpdateRunningConnector(): Unit = {
     val topicName = methodName
-    val topic = result(
-      TopicApi.access.hostname(configurator.hostname).port(configurator.port).request.name(topicName).create()
-    )
+    val topic = result(topicApi.request.name(topicName).create())
     val sink = result(
       connectorApi.request
         .name(CommonUtils.randomString(10))
@@ -101,7 +100,8 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
         .numberOfTasks(1)
         .create())
     // test start
-    Await.result(connectorApi.start(sink.key), 10 seconds)
+    result(topicApi.start(topic.key))
+    result(connectorApi.start(sink.key))
     val workerClient = WorkerClient(testUtil.workersConnProps)
     try {
       CommonUtils.await(() =>
@@ -122,7 +122,7 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
           .create())
 
       // test stop. the connector should be removed
-      Await.result(connectorApi.stop(sink.key), 10 seconds)
+      result(connectorApi.stop(sink.key))
       CommonUtils.await(() => if (result(workerClient.nonExist(sink.key))) true else false, Duration.ofSeconds(20))
       result(connectorApi.get(sink.key)).state shouldBe None
     } finally if (result(workerClient.exist(sink.key))) result(workerClient.delete(sink.key))
@@ -131,9 +131,7 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
   @Test
   def deleteRunningConnector(): Unit = {
     val topicName = methodName
-    val topic = result(
-      TopicApi.access.hostname(configurator.hostname).port(configurator.port).request.name(topicName).create()
-    )
+    val topic = result(topicApi.request.name(topicName).create())
     val sink = result(
       connectorApi.request
         .name(CommonUtils.randomString(10))
@@ -142,7 +140,8 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
         .numberOfTasks(1)
         .create())
     // test start
-    Await.result(connectorApi.start(sink.key), 10 seconds)
+    result(topicApi.start(topic.key))
+    result(connectorApi.start(sink.key))
     val workerClient = WorkerClient(testUtil.workersConnProps)
     try {
       CommonUtils.await(() =>

@@ -82,6 +82,7 @@ class TestMetrics extends WithBrokerWorker with Matchers {
   @Test
   def testConnector(): Unit = {
     val topic = result(topicApi.request.name(CommonUtils.randomString()).create())
+    result(topicApi.start(topic.key))
 
     val sink = result(
       connectorApi.request
@@ -115,6 +116,7 @@ class TestMetrics extends WithBrokerWorker with Matchers {
   def testPipeline(): Unit = {
     val topicName = methodName
     val topic = result(topicApi.request.name(topicName).create())
+    result(topicApi.start(topic.key))
 
     val sink = result(
       connectorApi.request

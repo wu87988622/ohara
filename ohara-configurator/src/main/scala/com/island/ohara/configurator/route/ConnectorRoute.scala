@@ -18,10 +18,9 @@ package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.server
-import com.island.ohara.agent.{NoSuchClusterException, WorkerCollie}
+import com.island.ohara.agent.{BrokerCollie, NoSuchClusterException, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ConnectorApi._
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
-import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.CommonUtils
@@ -151,26 +150,24 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
       }.getOrElse(Future.unit))
 
   private[this] def hookOfStart(implicit store: DataStore,
+                                adminCleaner: AdminCleaner,
+                                brokerCollie: BrokerCollie,
                                 workerCollie: WorkerCollie,
                                 executionContext: ExecutionContext): HookOfAction =
     (key: ObjectKey, _, _) =>
       store.value[ConnectorDescription](key).flatMap { connectorDesc =>
         CollieUtils
-          .workerClient(connectorDesc.workerClusterName)
+          .both(connectorDesc.workerClusterName)
           .flatMap {
-            case (cluster, wkClient) =>
-              store
-                .values[TopicInfo]()
-                .map(topics =>
-                  (cluster, wkClient, topics.filter(t => t.brokerClusterName == cluster.brokerClusterName)))
+            case (_, topicAdmin, cluster, wkClient) =>
+              topicAdmin.topics().map(topics => (cluster, wkClient, topics))
           }
           .flatMap {
             case (_, wkClient, topicInfos) =>
-              connectorDesc.topicKeys.foreach(
-                key =>
-                  if (!topicInfos.exists(_.key == key))
-                    throw new NoSuchElementException(
-                      s"$key doesn't exist. actual:${topicInfos.map(_.name).mkString(",")}"))
+              connectorDesc.topicKeys.foreach { key =>
+                if (!topicInfos.exists(_.name == key.topicNameOnKafka()))
+                  throw new NoSuchElementException(s"topic:$key is not running")
+              }
               if (connectorDesc.topicKeys.isEmpty) throw new IllegalArgumentException("topics are required")
               wkClient.exist(connectorDesc.key).flatMap {
                 if (_) Future.unit
@@ -235,6 +232,8 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
   private[this] def hookOfGroup: HookOfGroup = _.getOrElse(GROUP_DEFAULT)
 
   def apply(implicit store: DataStore,
+            adminCleaner: AdminCleaner,
+            brokerCollie: BrokerCollie,
             workerCollie: WorkerCollie,
             executionContext: ExecutionContext,
             meterCache: MeterCache): server.Route =
