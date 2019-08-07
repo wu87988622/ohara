@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 import com.island.ohara.agent.{BrokerCollie, ClusterState, NoSuchClusterException, NodeCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.{ClusterInfo, ContainerApi, NodeApi}
+import com.island.ohara.client.configurator.v0.{ClusterInfo, ContainerApi, NodeApi, TopicApi}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.common.util.CommonUtils
@@ -61,7 +61,7 @@ private[configurator] class FakeBrokerCollie(node: NodeCollie, bkConnectionProps
             error = None,
             tags = Map.empty,
             lastModified = CommonUtils.current(),
-            topicSettingDefinitions = BrokerCollie.TOPIC_CUSTOM_DEFINITIONS
+            topicSettingDefinitions = TopicApi.TOPIC_CUSTOM_DEFINITIONS
           )))
 
   override protected def doRemoveNode(previousCluster: BrokerClusterInfo, beRemovedContainer: ContainerInfo)(
@@ -81,7 +81,7 @@ private[configurator] class FakeBrokerCollie(node: NodeCollie, bkConnectionProps
         error = None,
         tags = Map.empty,
         lastModified = CommonUtils.current(),
-        topicSettingDefinitions = BrokerCollie.TOPIC_CUSTOM_DEFINITIONS
+        topicSettingDefinitions = TopicApi.TOPIC_CUSTOM_DEFINITIONS
       )))
     .map(_ => true)
 
@@ -113,7 +113,7 @@ private[configurator] class FakeBrokerCollie(node: NodeCollie, bkConnectionProps
         error = None,
         tags = Map.empty,
         lastModified = CommonUtils.current(),
-        topicSettingDefinitions = BrokerCollie.TOPIC_CUSTOM_DEFINITIONS
+        topicSettingDefinitions = TopicApi.TOPIC_CUSTOM_DEFINITIONS
       )))
 
   override protected def doCreator(executionContext: ExecutionContext,

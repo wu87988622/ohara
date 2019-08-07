@@ -19,7 +19,7 @@ package com.island.ohara.agent
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, TopicApi, WorkerApi}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
@@ -67,7 +67,7 @@ class TestBrokerCreator extends SmallTest with Matchers {
           error = None,
           tags = Map.empty,
           lastModified = 0,
-          topicSettingDefinitions = BrokerCollie.TOPIC_CUSTOM_DEFINITIONS
+          topicSettingDefinitions = TopicApi.TOPIC_CUSTOM_DEFINITIONS
         ))
     }
 
@@ -155,7 +155,7 @@ class TestBrokerCreator extends SmallTest with Matchers {
       error = None,
       tags = Map.empty,
       lastModified = 0,
-      topicSettingDefinitions = BrokerCollie.TOPIC_CUSTOM_DEFINITIONS
+      topicSettingDefinitions = TopicApi.TOPIC_CUSTOM_DEFINITIONS
     )
     Await.result(bkCreator().copy(brokerClusterInfo).create(), 30 seconds) shouldBe brokerClusterInfo
   }

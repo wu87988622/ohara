@@ -391,6 +391,14 @@ class TestTopicRoute extends SmallTest with Matchers {
     result(topicApi.request.key(topic.key).update())
   }
 
+  @Test
+  def checkDefaultConfigs(): Unit = {
+    val topic = result(topicApi.request.create())
+    TopicApi.TOPIC_CUSTOM_DEFINITIONS.foreach { setting =>
+      topic.configs(setting.key()) shouldBe setting.defaultValue()
+    }
+  }
+
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }

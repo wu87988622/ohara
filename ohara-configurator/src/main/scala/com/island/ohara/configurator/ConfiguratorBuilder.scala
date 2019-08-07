@@ -22,7 +22,7 @@ import java.util.Objects
 import com.island.ohara.agent._
 import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.NodeApi
+import com.island.ohara.client.configurator.v0.{NodeApi, TopicApi}
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeService}
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
@@ -144,7 +144,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
           error = None,
           tags = Map.empty,
           lastModified = CommonUtils.current(),
-          topicSettingDefinitions = BrokerCollie.TOPIC_CUSTOM_DEFINITIONS
+          topicSettingDefinitions = TopicApi.TOPIC_CUSTOM_DEFINITIONS
         )
       }
       val wkCluster = {
@@ -246,7 +246,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
               error = None,
               tags = Map.empty,
               lastModified = CommonUtils.current(),
-              topicSettingDefinitions = BrokerCollie.TOPIC_CUSTOM_DEFINITIONS
+              topicSettingDefinitions = TopicApi.TOPIC_CUSTOM_DEFINITIONS
             ))
       }
 

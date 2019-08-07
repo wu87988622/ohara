@@ -16,12 +16,17 @@
 
 package com.island.ohara.client.configurator.v0
 import java.util.Objects
+import java.util.concurrent.atomic.AtomicInteger
 
 import com.island.ohara.client.Enum
 import com.island.ohara.client.configurator.Data
 import com.island.ohara.common.annotations.Optional
+import com.island.ohara.common.setting.SettingDef
+import com.island.ohara.common.setting.SettingDef.Type
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json.TopicKey
+import org.apache.kafka.common.config.TopicConfig
+import org.apache.kafka.common.record.Records
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsString, JsValue, RootJsonFormat}
 
@@ -40,6 +45,69 @@ object TopicApi {
   private[this] val CONFIGS_KEY = "configs"
   private[this] val NUMBER_OF_PARTITIONS_KEY = "numberOfPartitions"
   private[this] val NUMBER_OF_REPLICATIONS_KEY = "numberOfReplications"
+
+  /**
+    * list the custom configs of topic. It is useful to developers who long for controlling the topic totally.
+    */
+  val TOPIC_CUSTOM_DEFINITIONS: Seq[SettingDef] = {
+    val group = "core"
+    val count = new AtomicInteger(0);
+    def toSettingDefinition(key: String, doc: String, default: Any): SettingDef =
+      SettingDef
+        .builder()
+        .key(key)
+        .displayName(key)
+        .documentation(doc)
+        .group(group)
+        .orderInGroup(count.getAndIncrement())
+        .valueType(Type.STRING)
+        .optional(default.toString)
+        .build()
+    Seq(
+      toSettingDefinition(TopicConfig.SEGMENT_BYTES_CONFIG, TopicConfig.SEGMENT_BYTES_DOC, 1 * 1024 * 1024 * 1024),
+      toSettingDefinition(TopicConfig.SEGMENT_MS_CONFIG, TopicConfig.SEGMENT_MS_DOC, 24 * 7 * 60 * 60 * 1000L),
+      toSettingDefinition(TopicConfig.SEGMENT_JITTER_MS_CONFIG, TopicConfig.SEGMENT_JITTER_MS_DOC, 0 * 60 * 60 * 1000L),
+      toSettingDefinition(TopicConfig.SEGMENT_INDEX_BYTES_CONFIG,
+                          TopicConfig.SEGMENT_INDEX_BYTES_DOC,
+                          10 * 1024 * 1024),
+      toSettingDefinition(TopicConfig.FLUSH_MESSAGES_INTERVAL_CONFIG,
+                          TopicConfig.FLUSH_MESSAGES_INTERVAL_DOC,
+                          Long.MaxValue),
+      toSettingDefinition(TopicConfig.FLUSH_MS_CONFIG, TopicConfig.FLUSH_MS_DOC, Long.MaxValue),
+      toSettingDefinition(TopicConfig.RETENTION_BYTES_CONFIG, TopicConfig.RETENTION_BYTES_DOC, -1L),
+      toSettingDefinition(TopicConfig.RETENTION_MS_CONFIG, TopicConfig.RETENTION_MS_DOC, 24 * 7 * 60 * 60 * 1000L),
+      toSettingDefinition(TopicConfig.MAX_MESSAGE_BYTES_CONFIG,
+                          TopicConfig.MAX_MESSAGE_BYTES_DOC,
+                          1000000 + Records.LOG_OVERHEAD),
+      toSettingDefinition(TopicConfig.INDEX_INTERVAL_BYTES_CONFIG, TopicConfig.INDEX_INTERVAL_BYTES_DOCS, 4096),
+      toSettingDefinition(TopicConfig.FILE_DELETE_DELAY_MS_CONFIG, TopicConfig.FILE_DELETE_DELAY_MS_DOC, 60000),
+      toSettingDefinition(TopicConfig.DELETE_RETENTION_MS_CONFIG,
+                          TopicConfig.DELETE_RETENTION_MS_DOC,
+                          24 * 60 * 60 * 1000L),
+      toSettingDefinition(TopicConfig.MIN_COMPACTION_LAG_MS_CONFIG, TopicConfig.MIN_COMPACTION_LAG_MS_DOC, 0L),
+      toSettingDefinition(TopicConfig.MIN_CLEANABLE_DIRTY_RATIO_CONFIG,
+                          TopicConfig.MIN_CLEANABLE_DIRTY_RATIO_DOC,
+                          0.5d),
+      toSettingDefinition(TopicConfig.CLEANUP_POLICY_CONFIG, TopicConfig.CLEANUP_POLICY_DOC, "delete"),
+      toSettingDefinition(TopicConfig.UNCLEAN_LEADER_ELECTION_ENABLE_CONFIG,
+                          TopicConfig.UNCLEAN_LEADER_ELECTION_ENABLE_DOC,
+                          false),
+      toSettingDefinition(TopicConfig.MIN_IN_SYNC_REPLICAS_CONFIG, TopicConfig.MIN_IN_SYNC_REPLICAS_DOC, 1),
+      toSettingDefinition(TopicConfig.COMPRESSION_TYPE_CONFIG, TopicConfig.COMPRESSION_TYPE_DOC, "producer"),
+      toSettingDefinition(TopicConfig.PREALLOCATE_CONFIG, TopicConfig.PREALLOCATE_DOC, false),
+      // this config impacts the available APIs so we don't expose it.
+      //      toSettingDefinition(TopicConfig.MESSAGE_FORMAT_VERSION_CONFIG, TopicConfig.MESSAGE_FORMAT_VERSION_DOC, ApiVersion.latestVersion.toString),
+      toSettingDefinition(TopicConfig.MESSAGE_TIMESTAMP_TYPE_CONFIG,
+                          TopicConfig.MESSAGE_TIMESTAMP_TYPE_DOC,
+                          "CreateTime"),
+      toSettingDefinition(TopicConfig.MESSAGE_TIMESTAMP_DIFFERENCE_MAX_MS_CONFIG,
+                          TopicConfig.MESSAGE_TIMESTAMP_DIFFERENCE_MAX_MS_DOC,
+                          Long.MaxValue),
+      toSettingDefinition(TopicConfig.MESSAGE_DOWNCONVERSION_ENABLE_CONFIG,
+                          TopicConfig.MESSAGE_DOWNCONVERSION_ENABLE_DOC,
+                          true)
+    )
+  }
 
   case class Update private[TopicApi] (brokerClusterName: Option[String],
                                        numberOfPartitions: Option[Int],

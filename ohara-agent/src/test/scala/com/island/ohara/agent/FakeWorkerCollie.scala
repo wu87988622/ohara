@@ -19,7 +19,7 @@ package com.island.ohara.agent
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterInfo, NodeApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterInfo, NodeApi, TopicApi}
 import com.island.ohara.common.util.CommonUtils
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -41,7 +41,7 @@ class FakeWorkerCollie(node: NodeCollie) extends WorkerCollie {
         lastModified = CommonUtils.current(),
         state = None,
         error = None,
-        topicSettingDefinitions = BrokerCollie.TOPIC_CUSTOM_DEFINITIONS
+        topicSettingDefinitions = TopicApi.TOPIC_CUSTOM_DEFINITIONS
       ) -> Seq(ContainerInfo(
         "node1",
         "aaaa",

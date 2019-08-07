@@ -32,6 +32,12 @@ private[configurator] object TopicRoute {
   private[this] val LOG = Logger(TopicRoute.getClass)
 
   /**
+    * convert the setting defs to plain map.
+    */
+  private[this] val TOPIC_CUSTOM_CONFIGS: Map[String, String] =
+    TOPIC_CUSTOM_DEFINITIONS.map(setting => setting.key() -> setting.defaultValue()).toMap
+
+  /**
     * fetch the topic meters from broker cluster
     * @param brokerCluster the broker cluster hosting the topic
     * @param topicName topic name which used to filter the correct meter
@@ -119,7 +125,7 @@ private[configurator] object TopicRoute {
           metrics = Metrics(Seq.empty),
           state = None,
           lastModified = CommonUtils.current(),
-          configs = creation.configs,
+          configs = TOPIC_CUSTOM_CONFIGS ++ creation.configs,
           tags = creation.tags
         )
     }
