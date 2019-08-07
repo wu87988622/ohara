@@ -98,7 +98,7 @@ const TopicNewModal = props => {
                   component={InputField}
                   type="number"
                   placeholder="1"
-                  data-testid="partitions-input"
+                  inputProps={{ 'data-testid': 'partitions-input' }}
                 />
               </DialogContent>
               <DialogContent>
@@ -109,7 +109,7 @@ const TopicNewModal = props => {
                   component={InputField}
                   type="number"
                   placeholder="1"
-                  data-testid="replications-input"
+                  inputProps={{ 'data-testid': 'replications-input' }}
                 />
               </DialogContent>
             </form>

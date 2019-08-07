@@ -118,8 +118,6 @@ const NodeListPage = () => {
           <s.TopWrapper>
             <H2>Nodes</H2>
             <s.NewNodeBtn
-              variant="contained"
-              color="primary"
               text="New node"
               data-testid="new-node"
               onClick={handleNewModalOpen}

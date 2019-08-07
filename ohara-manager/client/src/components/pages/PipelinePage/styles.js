@@ -15,10 +15,11 @@
  */
 
 import styled from 'styled-components';
+import Icon from '@material-ui/core/Icon';
 import { Link } from 'react-router-dom';
 
 import { DataTable } from 'components/common/Table';
-import { Button } from 'components/common/Form';
+import { Button } from 'components/common/Mui/Form';
 
 export const Wrapper = styled.div`
   padding-top: 75px;
@@ -32,12 +33,6 @@ export const TopWrapper = styled.div`
   display: flex;
   align-items: center;
 `;
-
-export const NewPipelineBtn = styled(Button)`
-  margin-left: auto;
-`;
-
-NewPipelineBtn.displayName = 'NewPipelineBtn';
 
 export const Table = styled(DataTable)`
   text-align: center;
@@ -79,4 +74,12 @@ export const Inner = styled.div`
 
 export const LoaderWrapper = styled.div`
   margin: 30px;
+`;
+
+export const StyledIcon = styled(Icon)`
+  font-size: 20px;
+`;
+
+export const NewPipelineBtn = styled(Button)`
+  margin-left: auto;
 `;

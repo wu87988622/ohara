@@ -77,9 +77,9 @@ describe('WorkspacesPage', () => {
       .click()
       .getByPlaceholderText('Kafka Topic')
       .type(topicName)
-      .getByPlaceholderText('1')
+      .getByTestId('partitions-input')
       .type(1)
-      .getByPlaceholderText('3')
+      .getByTestId('replications-input')
       .type(1)
       .getByText('Save')
       .click()
@@ -89,7 +89,7 @@ describe('WorkspacesPage', () => {
   });
 
   it('deletes a topic', () => {
-    cy.createTopic().as('newTopic');
+    cy.createTopic();
 
     cy.visit(WORKSPACES)
       .wait('@getWorkers')
@@ -99,16 +99,16 @@ describe('WorkspacesPage', () => {
       .within(() => {
         cy.getByText('Topics').click();
       })
-      .wait('@getTopics')
-      .get('@newTopic')
-      .then(topic => {
-        cy.getByTestId(topic.name)
-          .click({ force: true })
-          .getByText('Delete')
-          .click()
-          .getByText(`Successfully deleted the topic: ${topic.name}`)
-          .should('have.length', 1);
-      });
+      .wait('@getTopics');
+
+    cy.getByTestId(Cypress.env('TOPICS_NAME'))
+      .click({ force: true })
+      .getByText('DELETE')
+      .click()
+      .getByText(
+        `Successfully deleted the topic: ${Cypress.env('TOPICS_NAME')}`,
+      )
+      .should('have.length', 1);
   });
 
   it('adds and removes a new streamApp', () => {
@@ -133,7 +133,7 @@ describe('WorkspacesPage', () => {
 
     cy.getByTestId('ohara-streamapp.jar')
       .click()
-      .getByText('Delete')
+      .getByText('DELETE')
       .click()
       .getByText('Successfully deleted the stream app!')
       .should('have.length', 1)

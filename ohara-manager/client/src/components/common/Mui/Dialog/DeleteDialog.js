@@ -54,7 +54,7 @@ const AlertDialog = props => {
     handleConfirm,
     handleClose,
     cancelText = 'Cancel',
-    confirmText = 'Delete',
+    confirmText = 'DELETE',
     isWorking = false,
     testId = 'delete-dialog',
   } = props;
