@@ -35,6 +35,7 @@ const SidebarRoutes = props => {
   const {
     jdbcSource,
     ftpSource,
+    perfSource,
     hdfsSink,
     ftpSink,
     customSource,
@@ -63,6 +64,19 @@ const SidebarRoutes = props => {
             defs={getConnectorDefs({
               connectors,
               type: ftpSource,
+            })}
+          />
+        )}
+      />
+
+      <Route
+        path={`${routeBaseUrl}/${perfSource}`}
+        render={() => (
+          <Connectors.PerfSource
+            {...connectorProps}
+            defs={getConnectorDefs({
+              connectors,
+              type: perfSource,
             })}
           />
         )}
