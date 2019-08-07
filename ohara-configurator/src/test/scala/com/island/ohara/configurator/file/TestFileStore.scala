@@ -195,6 +195,7 @@ class TestFileStore extends SmallTest with Matchers {
       val jarInfo = result(store.fileInfoCreator.file(generateJarFile()).create())
       jarInfo.url.getHost shouldBe hostname
       jarInfo.url.getPort shouldBe port
+      jarInfo.url.getPath should endWith(".jar")
     } finally store.close()
   }
 

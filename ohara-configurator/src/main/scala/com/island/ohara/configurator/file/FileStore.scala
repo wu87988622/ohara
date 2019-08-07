@@ -142,7 +142,6 @@ trait FileStore extends Releasable {
 object FileStore {
   def builder: Builder = new Builder
 
-  private[this] val GROUP_KEY = com.island.ohara.client.configurator.v0.GROUP_KEY
   class Builder private[FileStore] extends com.island.ohara.common.pattern.Builder[FileStore] {
     private[this] var homeFolder: String = _
     private[this] var hostname: String = _
@@ -264,8 +263,18 @@ object FileStore {
 
   private[this] class FileStoreImpl(homeFolder: String, hostname: String, port: Int, acceptedExtensions: Set[String])
       extends FileStore {
+
+    /**
+      * generate the url for file.
+      *
+      * Noted: the form of url is different to other APIs. The group is placed at url than query parameter since most tool
+      * prefer to name the file according to url than metadata. It causes a weird name if we put the group at the query
+      * parameter.
+      * @param key file key
+      * @return URL
+      */
     private[this] def toUrl(key: ObjectKey): URL = new URL(
-      s"http://$hostname:$port/${ConfiguratorApiInfo.V0}/$DOWNLOAD_FILE_PREFIX_PATH/${key.name()}?$GROUP_KEY=${key.group()}")
+      s"http://$hostname:$port/${ConfiguratorApiInfo.V0}/$DOWNLOAD_FILE_PREFIX_PATH/${key.group()}/${key.name()}")
 
     // ----------------------[helper methods for tags]----------------------//
     private[this] val charset: Charset = Charset.forName("UTF-8")
@@ -326,16 +335,17 @@ object FileStore {
         }(threadPool)
 
     override def route(implicit executionContext: ExecutionContext): Route =
-      pathPrefix(DOWNLOAD_FILE_PREFIX_PATH / Segment) { name =>
-        parameter(GROUP_KEY ?) { groupOption =>
-          val key = ObjectKey.of(groupOption.getOrElse(FileInfoApi.GROUP_DEFAULT), name)
-          if (!isAcceptedFilename(name))
-            complete(
-              StatusCodes.NotFound -> s"$name is illegal. Accepted extensions are ${acceptedExtensions.mkString(",")}")
-          // TODO: how to use future in getFromFile???
-          else getFromFile(Await.result(toFile(key), 30 seconds))
+      pathPrefix(DOWNLOAD_FILE_PREFIX_PATH / Segments) { groupAndName =>
+        val key = {
+          require(groupAndName.size == 2,
+                  s"you should use the /{group}/{name} format but : ${groupAndName.mkString("/")}")
+          ObjectKey.of(groupAndName.head, groupAndName.last)
         }
-
+        if (!isAcceptedFilename(key.name()))
+          complete(
+            StatusCodes.NotFound -> s"$key is illegal. Accepted extensions are ${acceptedExtensions.mkString(",")}")
+        // TODO: how to use future in getFromFile???
+        else getFromFile(Await.result(toFile(key), 30 seconds))
       }
 
     private[this] val root: File = {

@@ -254,7 +254,9 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
 
     // create topic
     val topic1 = result(topicApi.request.name(from).brokerClusterName(bkName).create())
+    result(topicApi.start(topic1.key))
     val topic2 = result(topicApi.request.name(to).brokerClusterName(bkName).create())
+    result(topicApi.start(topic2.key))
 
     // upload streamApp jar
     val jarInfo = result(jarApi.request.group(wkName).file(jar).upload())
