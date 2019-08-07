@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import DialogTitle from './DialogTitle';
 import DeleteDialog from './DeleteDialog';
 import Dialog from './Dialog';
 
-export { DialogTitle, DeleteDialog, Dialog };
+export { DeleteDialog, Dialog };
