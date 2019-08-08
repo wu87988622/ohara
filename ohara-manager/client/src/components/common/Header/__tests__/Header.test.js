@@ -22,7 +22,7 @@ import * as generate from 'utils/generate';
 import * as URLS from 'constants/urls';
 import Header from '../Header';
 import { fetchInfo } from 'api/infoApi';
-import { renderWithRouter } from 'utils/testUtils';
+import { renderWithProvider } from 'utils/testUtils';
 
 jest.mock('api/infoApi');
 
@@ -47,18 +47,18 @@ describe('<Header />', () => {
   });
 
   it('renders self', () => {
-    renderWithRouter(<Header />);
+    renderWithProvider(<Header />);
   });
 
   it('renders the brand', () => {
-    const { getByText } = renderWithRouter(<Header />);
+    const { getByText } = renderWithProvider(<Header />);
     const brand = getByText('Ohara Stream');
 
     expect(brand).toHaveAttribute('href', URLS.HOME);
   });
 
   it('renders navigation', () => {
-    const { getByText, getByTestId } = renderWithRouter(<Header />);
+    const { getByText, getByTestId } = renderWithProvider(<Header />);
 
     getByText('Pipelines');
     getByText('Nodes');
@@ -79,7 +79,7 @@ describe('<Header />', () => {
 
   it('toggles info modal', async () => {
     const { getByTestId, queryByTestId } = await waitForElement(() =>
-      renderWithRouter(<Header />),
+      renderWithProvider(<Header />),
     );
 
     expect(queryByTestId('info-modal')).toBeNull();
