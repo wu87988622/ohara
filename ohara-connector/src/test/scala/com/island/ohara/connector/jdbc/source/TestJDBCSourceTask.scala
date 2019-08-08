@@ -97,35 +97,47 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
     when(taskSetting.topicNames()).thenReturn(Seq("topic1").asJava)
     jdbcSourceTask._start(taskSetting)
 
-    val rows: Seq[RowSourceRecord] = jdbcSourceTask._poll().asScala
-    rows.head.row.cell(0).value.toString shouldBe "2018-09-01 00:00:00.0"
-    rows.head.row.cell(1).value shouldBe "a11"
-    rows.head.row.cell(2).value shouldBe 1
+    val rows1: Seq[RowSourceRecord] = jdbcSourceTask._poll().asScala
+    rows1.head.row.cell(0).value.toString shouldBe "2018-09-01 00:00:00.0"
+    rows1.head.row.cell(1).value shouldBe "a11"
+    rows1.head.row.cell(2).value shouldBe 1
 
-    rows.head.row.cell(0).name shouldBe "COLUMN1"
-    rows(1).row.cell(1).name shouldBe "COLUMN2"
-    rows(2).row.cell(2).name shouldBe "COLUMN4"
+    rows1.head.row.cell(0).name shouldBe "COLUMN1"
+    rows1(1).row.cell(1).name shouldBe "COLUMN2"
+    rows1(2).row.cell(2).name shouldBe "COLUMN4"
 
     //Test row 1 offset
-    rows.head.sourceOffset.asScala.foreach(x => {
+    rows1.head.sourceOffset.asScala.foreach(x => {
       x._1 shouldBe JDBCSourceTask.DB_TABLE_OFFSET_KEY
-      x._2 shouldBe "2018-09-01 00:00:00.0"
+      x._2 shouldBe s"${new Timestamp(0).toString},1"
     })
     //Test row 2 offset
-    rows(1).sourceOffset.asScala.foreach(x => {
+    rows1(1).sourceOffset.asScala.foreach(x => {
       x._1 shouldBe JDBCSourceTask.DB_TABLE_OFFSET_KEY
-      x._2 shouldBe "2018-09-01 00:00:01.0"
+      x._2 shouldBe "2018-09-01 00:00:00.0,1"
     })
     //Test row 4 offset
-    rows(3).sourceOffset.asScala.foreach(x => {
+    rows1(3).sourceOffset.asScala.foreach(x => {
       x._1 shouldBe JDBCSourceTask.DB_TABLE_OFFSET_KEY
-      x._2 shouldBe "2018-09-01 00:00:03.12"
+      x._2 shouldBe "2018-09-01 00:00:02.0,1"
     })
     //Test row 5 offset
-    rows(4).sourceOffset.asScala.foreach(x => {
+    rows1(4).sourceOffset.asScala.foreach(x => {
       x._1 shouldBe JDBCSourceTask.DB_TABLE_OFFSET_KEY
-      x._2 shouldBe "2018-09-01 00:00:04.123456"
+      x._2 shouldBe "2018-09-01 00:00:03.12,1"
     })
+    rows1.size shouldBe 5
+
+    val statement: Statement = db.connection.createStatement()
+    statement.executeUpdate(
+      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-02 00:00:00.0', 'a81', 'a82', 8)")
+    jdbcSourceTask.stop()
+    val maps: Map[String, Object] = Map("db.table.offset" -> "2018-09-01 00:00:04.123456,0")
+    when(offsetStorageReader.offset(Map("db.table.name" -> tableName).asJava)).thenReturn(maps.asJava)
+
+    jdbcSourceTask._start(taskSetting)
+    val rows2: Seq[RowSourceRecord] = jdbcSourceTask._poll().asScala
+    rows2.size shouldBe 1
   }
 
   @Test

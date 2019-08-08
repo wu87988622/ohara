@@ -66,6 +66,7 @@ class TestJDBCSourceConnector extends With3Brokers3Workers with Matchers {
     statement.executeUpdate(
       s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-01 00:00:04.123', 'a71', 'a72', 7)")
     statement.executeUpdate(s"INSERT INTO $tableName(column1) VALUES('2018-09-01 00:00:05')")
+
     statement.executeUpdate(
       s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES(NOW() + INTERVAL 3 MINUTE, 'a41', 'a42', 4)")
     statement.executeUpdate(
@@ -141,7 +142,6 @@ class TestJDBCSourceConnector extends With3Brokers3Workers with Matchers {
       row5.cell(1) shouldBe Cell.of("column2", "null")
       row5.cell(2) shouldBe Cell.of("column3", "null")
       row5.cell(3).toString shouldBe Cell.of("column4", "0").toString
-
       record.size shouldBe 6
 
     } finally consumer.close()

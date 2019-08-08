@@ -117,7 +117,7 @@ class TestDBTableDataProvider extends MediumTest with Matchers {
     val result2 = dbTableDataProvider.executeQuery(tableName, "column1", new Timestamp(0))
     result2.size shouldBe 0
 
-    dbTableDataProvider.queryFlag(true)
+    dbTableDataProvider.releaseResultSet(true)
     val result3 = dbTableDataProvider.executeQuery(tableName, "column1", new Timestamp(0))
     result3.size shouldBe 3
   }

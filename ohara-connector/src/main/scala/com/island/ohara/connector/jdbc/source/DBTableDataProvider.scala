@@ -59,7 +59,13 @@ class DBTableDataProvider(jdbcSourceConnectorConfig: JDBCSourceConnectorConfig) 
     new QueryResultIterator(resultSet, columns(tableName))
   }
 
-  def queryFlag(queryFlag: Boolean): Unit = {
+  def releaseResultSet(queryFlag: Boolean): Unit = {
+    Releasable.close(resultSet)
+    resultSet = null
+    // Use the JDBC fetchSize function, should setting setAutoCommit function to false.
+    // Confirm this connection ResultSet to update, need to call connection commit function.
+    // Release any database locks currently held by this Connection object
+    this.client.connection.commit()
     this.queryFlag = queryFlag
   }
 
