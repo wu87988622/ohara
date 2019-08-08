@@ -49,7 +49,7 @@ private[configurator] object FileRoute {
       .raws()
       .map(_.filter {
         case info: StreamClusterInfo =>
-          info.jar.group == fileInfo.group && info.jar.name == fileInfo.name
+          info.jarKey.group == fileInfo.group && info.jarKey.name == fileInfo.name
         //TODO : does connector need checking the jar is used before deleting ??...by Sam
         case _: ConnectorDescription => false
         // other data type do nothing

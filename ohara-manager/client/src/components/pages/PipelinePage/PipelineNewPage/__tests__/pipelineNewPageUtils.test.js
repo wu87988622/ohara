@@ -211,7 +211,7 @@ describe('loadGraph()', () => {
         { name: 'c', kind: 'topic' },
         {
           name: 'd',
-          kind: 'streamApp',
+          kind: 'stream',
           to: [],
         },
       ],
@@ -253,8 +253,8 @@ describe('loadGraph()', () => {
       { name: 'b', kind: 'sink', to: [], isActive: false },
       {
         name: 'd',
-        kind: 'streamApp',
-        className: 'streamApp',
+        kind: 'stream',
+        className: 'stream',
         to: [],
         isActive: false,
       },

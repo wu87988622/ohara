@@ -251,6 +251,7 @@ in javadoc.
 
 ---------------------------
 
+.. _streamapp-setting-definitions:
 
 Setting Definitions
 -------------------

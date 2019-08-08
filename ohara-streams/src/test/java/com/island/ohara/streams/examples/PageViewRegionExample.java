@@ -19,6 +19,7 @@ package com.island.ohara.streams.examples;
 import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Pair;
 import com.island.ohara.common.data.Row;
+import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.streams.OStream;
 import com.island.ohara.streams.StreamApp;
 import com.island.ohara.streams.config.StreamDefinitions;
@@ -96,12 +97,20 @@ import java.util.Collections;
  * with the above format
  */
 public class PageViewRegionExample extends StreamApp {
+  private final String joinTopic = "joinTopic";
+
+  @Override
+  public StreamDefinitions config() {
+    return StreamDefinitions.create()
+        .add(SettingDef.builder().key(joinTopic).group("default").build());
+  }
+
   @Override
   public void start(OStream<Row> ostream, StreamDefinitions streamDefinitions) {
     ostream
         .leftJoin(
-            "user-profiles",
-            Conditions.add(Collections.singletonList(Pair.of("user", "user"))),
+            streamDefinitions.get(joinTopic),
+            Conditions.create().add(Collections.singletonList(Pair.of("user", "user"))),
             (r1, r2) ->
                 Row.of(
                     r1.cell("user"),

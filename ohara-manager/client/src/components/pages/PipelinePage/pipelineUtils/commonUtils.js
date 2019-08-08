@@ -24,7 +24,7 @@ export const isSink = type => {
 
 export const isTopic = kind => kind === 'topic';
 
-export const isStream = kind => kind === 'streamApp';
+export const isStream = kind => kind === 'stream';
 
 export const findByGraphName = (graph, connectorName) =>
   graph.find(g => g.name === connectorName);

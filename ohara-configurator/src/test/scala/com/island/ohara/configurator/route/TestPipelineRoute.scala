@@ -40,6 +40,8 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
   private[this] val topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
 
+  private[this] val streamApi = StreamApi.access.hostname(configurator.hostname).port(configurator.port)
+
   @Test
   def testFlowAndObjects(): Unit = {
     val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
@@ -89,6 +91,37 @@ class TestPipelineRoute extends MediumTest with Matchers {
     pipeline.objects.size shouldBe 1
     pipeline.objects.head.error should not be None
 
+  }
+
+  @Test
+  def testAddStreamAppToPipeline(): Unit = {
+    // create worker
+    val nodes = result(configurator.nodeCollie.nodes()).map(_.name).toSet
+    val wk = result(workerApi.request.nodeNames(nodes).create())
+
+    // create an empty streamApp
+    val streamApp = result(streamApi.request.create())
+
+    val pipeline = result(
+      pipelineApi.request
+        .workerClusterName(wk.name)
+        .name(CommonUtils.randomString(10))
+        .flow(Flow(streamApp.key, Set.empty))
+        .create()
+    )
+    pipeline.flows.size shouldBe 1
+    pipeline.flows.head.from shouldBe streamApp.key
+    pipeline.flows.head.to shouldBe Set.empty
+    pipeline.objects.size shouldBe 1
+    // we cannot parse class name from empty jar
+    pipeline.objects.head.className shouldBe None
+    pipeline.workerClusterName shouldBe Some(wk.name)
+
+    // remove worker cluster
+    result(workerApi.delete(wk.name))
+
+    // worker cluster is gone so the object abstract should contain error
+    result(pipelineApi.get(pipeline.key)).objects.head.error should not be None
   }
 
   @Test

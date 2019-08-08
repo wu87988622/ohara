@@ -72,7 +72,7 @@ export const createHtml = params => {
     state,
     name,
     workerClusterName,
-    className,
+    className = 'streamApp', // temp fix for now
     isActive,
     metrics = {},
   } = params;

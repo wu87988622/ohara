@@ -20,9 +20,8 @@ import java.util.Objects
 
 import com.island.ohara.client.configurator.v0.FileInfoApi._
 import com.island.ohara.common.annotations.Optional
-import com.island.ohara.common.setting.SettingDef
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
-import com.island.ohara.kafka.connector.json.{ObjectKey, ConnectorDefinitions}
+import com.island.ohara.kafka.connector.json.ObjectKey
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsArray, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
@@ -123,13 +122,6 @@ object WorkerApi {
       .nullToString("name", () => CommonUtils.randomString(10))
       .refine
 
-  final case class ConnectorDefinition private[WorkerApi] (className: String, definitions: Seq[SettingDef]) {
-    import scala.collection.JavaConverters._
-    def kind: String = ConnectorDefinitions.kind(definitions.asJava)
-  }
-  private[this] implicit val CONNECTION_DEFINITIONS_JSON_FORMAT: RootJsonFormat[ConnectorDefinition] = jsonFormat2(
-    ConnectorDefinition)
-
   final case class WorkerClusterInfo private[ohara] (name: String,
                                                      imageName: String,
                                                      brokerClusterName: String,
@@ -146,7 +138,7 @@ object WorkerApi {
                                                      offsetTopicPartitions: Int,
                                                      offsetTopicReplications: Short,
                                                      jarInfos: Seq[FileInfo],
-                                                     connectors: Seq[ConnectorDefinition],
+                                                     connectors: Seq[Definition],
                                                      nodeNames: Set[String],
                                                      deadNodes: Set[String])
       extends ClusterInfo {
@@ -196,12 +188,13 @@ object WorkerApi {
               OFFSET_TOPIC_PARTITIONS_KEY -> JsNumber(obj.offsetTopicPartitions),
               OFFSET_TOPIC_REPLICATIONS_KEY -> JsNumber(obj.offsetTopicReplications),
               JAR_INFOS_KEY -> JsArray(obj.jarInfos.map(FILE_INFO_JSON_FORMAT.write).toVector),
-              CONNECTORS_KEY -> JsArray(obj.connectors.map(CONNECTION_DEFINITIONS_JSON_FORMAT.write).toVector),
+              CONNECTORS_KEY -> JsArray(obj.connectors.map(Definition.DEFINITION_JSON_FORMAT.write).toVector),
               NODE_NAMES_KEY -> JsArray(obj.nodeNames.map(JsString(_)).toVector),
               DEAD_NODES_KEY -> JsArray(obj.deadNodes.map(JsString(_)).toVector),
             ))
         )
 
+        implicit val DEFINITION_JSON_FORMAT: OharaJsonFormat[Definition] = Definition.DEFINITION_JSON_FORMAT
         override def read(json: JsValue): WorkerClusterInfo = WorkerClusterInfo(
           name = noJsNull(json)(NAME_KEY).convertTo[String],
           imageName = noJsNull(json)(IMAGE_NAME_KEY).convertTo[String],
@@ -219,7 +212,7 @@ object WorkerApi {
           offsetTopicPartitions = noJsNull(json)(OFFSET_TOPIC_PARTITIONS_KEY).convertTo[Int],
           offsetTopicReplications = noJsNull(json)(OFFSET_TOPIC_REPLICATIONS_KEY).convertTo[Short],
           jarInfos = noJsNull(json)(JAR_INFOS_KEY).convertTo[Seq[FileInfo]],
-          connectors = noJsNull(json)(CONNECTORS_KEY).convertTo[Seq[ConnectorDefinition]],
+          connectors = noJsNull(json)(CONNECTORS_KEY).convertTo[Seq[Definition]],
           nodeNames = noJsNull(json)(NODE_NAMES_KEY).convertTo[Seq[String]].toSet,
           deadNodes = noJsNull(json)(DEAD_NODES_KEY).convertTo[Seq[String]].toSet
         )

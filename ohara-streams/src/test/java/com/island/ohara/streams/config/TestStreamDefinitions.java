@@ -19,8 +19,8 @@ package com.island.ohara.streams.config;
 import com.island.ohara.common.rule.SmallTest;
 import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.util.CommonUtils;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.junit.Assert;
@@ -30,21 +30,21 @@ public class TestStreamDefinitions extends SmallTest {
 
   @Test
   public void testConfigJson() {
-    StreamDefinitions defaultConfig = StreamDefinitions.DEFAULT;
+    StreamDefinitions defaultConfig = StreamDefinitions.create();
     StreamDefinitions config = StreamDefinitions.ofJson(defaultConfig.toString());
 
     Assert.assertEquals(defaultConfig, config);
     Assert.assertEquals(defaultConfig, config);
-    Assert.assertEquals(5, defaultConfig.values().size());
     Assert.assertEquals(
         "default config size not equal", config.values().size(), defaultConfig.values().size());
 
     StreamDefinitions another =
-        StreamDefinitions.add(
-            SettingDef.builder()
-                .key(CommonUtils.randomString())
-                .group(CommonUtils.randomString())
-                .build());
+        StreamDefinitions.create()
+            .add(
+                SettingDef.builder()
+                    .key(CommonUtils.randomString())
+                    .group(CommonUtils.randomString())
+                    .build());
     Assert.assertEquals(
         another.toString(), StreamDefinitions.ofJson(another.toString()).toString());
   }
@@ -55,22 +55,18 @@ public class TestStreamDefinitions extends SmallTest {
     String group = "default";
 
     StreamDefinitions newConfigs =
-        StreamDefinitions.add(SettingDef.builder().key(key).group(group).build());
-    Assert.assertEquals(newConfigs.values().size(), StreamDefinitions.DEFAULT.values().size() + 1);
+        StreamDefinitions.create().add(SettingDef.builder().key(key).group(group).build());
+    Assert.assertEquals(newConfigs.values().size(), StreamDefinitions.create().values().size() + 1);
     Assert.assertTrue(newConfigs.keys().contains(key));
 
-    Map<String, SettingDef> maps = new HashMap<>();
+    List<SettingDef> list = new ArrayList<>();
     IntStream.rangeClosed(1, 10)
         .boxed()
         .map(String::valueOf)
-        .forEach(
-            i -> {
-              SettingDef setting = SettingDef.builder().key(String.valueOf(i)).group(group).build();
-              maps.putIfAbsent(setting.key(), setting);
-            });
-    StreamDefinitions newConfigList = StreamDefinitions.addAll(maps);
+        .forEach(i -> list.add(SettingDef.builder().key(String.valueOf(i)).group(group).build()));
+    StreamDefinitions newConfigList = StreamDefinitions.create().addAll(list);
     Assert.assertEquals(
-        newConfigList.values().size(), StreamDefinitions.DEFAULT.values().size() + 10);
+        newConfigList.values().size(), StreamDefinitions.create().values().size() + 10);
     Assert.assertTrue(
         newConfigList
             .keys()
@@ -79,5 +75,26 @@ public class TestStreamDefinitions extends SmallTest {
                     .boxed()
                     .map(String::valueOf)
                     .collect(Collectors.toList())));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testDuplicateKey() {
+    StreamDefinitions streamDefinitions = StreamDefinitions.create();
+    streamDefinitions
+        .add(SettingDef.builder().key("a").group("b").build())
+        .add(SettingDef.builder().key("a").group("c").build());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testDuplicatePartialKey() {
+    List<SettingDef> list =
+        IntStream.rangeClosed(1, 10)
+            .boxed()
+            .map(String::valueOf)
+            .map(i -> SettingDef.builder().key(String.valueOf(i)).group("b").build())
+            .collect(Collectors.toList());
+
+    StreamDefinitions streamDefinitions = StreamDefinitions.create();
+    streamDefinitions.add(SettingDef.builder().key("1").group("b").build()).addAll(list);
   }
 }

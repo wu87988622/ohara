@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit
 
 import akka.stream.StreamTcpException
 import com.island.ohara.client.HttpExecutor
-import com.island.ohara.client.configurator.v0.WorkerApi.ConnectorDefinition
+import com.island.ohara.client.configurator.v0.Definition
 import com.island.ohara.client.kafka.WorkerJson._
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.data.Column
@@ -96,7 +96,7 @@ trait WorkerClient {
     * NOTED: the plugins which are not sub class of ohara connector are not included.
     * @return async future containing connector details
     */
-  def connectorDefinitions()(implicit executionContext: ExecutionContext): Future[Seq[ConnectorDefinition]]
+  def connectorDefinitions()(implicit executionContext: ExecutionContext): Future[Seq[Definition]]
 
   /**
     * get the definitions for specific connector
@@ -104,7 +104,7 @@ trait WorkerClient {
     * @param executionContext thread pool
     * @return definition
     */
-  def connectorDefinition(className: String)(implicit executionContext: ExecutionContext): Future[ConnectorDefinition] =
+  def connectorDefinition(className: String)(implicit executionContext: ExecutionContext): Future[Definition] =
     connectorDefinitions().map(
       _.find(_.className == className).getOrElse(throw new NoSuchElementException(s"$className does not exist")))
 
@@ -262,20 +262,19 @@ object WorkerClient {
         () => HttpExecutor.SINGLETON.get[Seq[Plugin], Error](s"http://$workerAddress/connector-plugins"),
         s"fetch plugins $workerAddress")
 
-      override def connectorDefinitions()(
-        implicit executionContext: ExecutionContext): Future[Seq[ConnectorDefinition]] =
+      override def connectorDefinitions()(implicit executionContext: ExecutionContext): Future[Seq[Definition]] =
         plugins()
           .flatMap(Future.traverse(_) { p =>
             definitions(p.className)
               .map(
                 definitions =>
-                  ConnectorDefinition(
+                  Definition(
                     className = p.className,
                     definitions = definitions
                 ))
               .recover {
                 // It should fail if we try to parse non-ohara connectors
-                case _: IllegalArgumentException => ConnectorDefinition(p.className, Seq.empty)
+                case _: IllegalArgumentException => Definition(p.className, Seq.empty)
               }
           })
           .map(_.filter(_.definitions.nonEmpty))

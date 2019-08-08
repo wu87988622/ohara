@@ -143,7 +143,7 @@ public class TestPurchaseAnalysis extends With3Brokers {
       ostream
           .leftJoin(
               userTopic,
-              Conditions.add(Collections.singletonList(Pair.of("userName", "name"))),
+              Conditions.create().add(Collections.singletonList(Pair.of("userName", "name"))),
               (row1, row2) ->
                   Row.of(
                       row1.cell("userName"),
@@ -154,7 +154,7 @@ public class TestPurchaseAnalysis extends With3Brokers {
           .filter(row -> row.cell("address").value() != null)
           .leftJoin(
               itemTopic,
-              Conditions.add(Collections.singletonList(Pair.of("itemName", "itemName"))),
+              Conditions.create().add(Collections.singletonList(Pair.of("itemName", "itemName"))),
               (row1, row2) ->
                   Row.of(
                       row1.cell("userName"),

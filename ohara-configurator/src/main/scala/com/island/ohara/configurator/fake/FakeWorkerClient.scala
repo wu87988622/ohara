@@ -20,7 +20,7 @@ import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorState
-import com.island.ohara.client.configurator.v0.WorkerApi.ConnectorDefinition
+import com.island.ohara.client.configurator.v0.Definition
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.client.kafka.WorkerClient.Validator
 import com.island.ohara.client.kafka.WorkerJson.{
@@ -119,7 +119,7 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
           AbstractHerder.generateResult(connectorType, configDef.configKeys(), values, Collections.emptyList()))
       }(executionContext)
 
-  override def connectorDefinitions()(implicit executionContext: ExecutionContext): Future[Seq[ConnectorDefinition]] =
+  override def connectorDefinitions()(implicit executionContext: ExecutionContext): Future[Seq[Definition]] =
     Future.successful(FakeWorkerClient.localConnectorDefinitions)
 }
 
@@ -131,7 +131,7 @@ object FakeWorkerClient {
     * Dynamically instantiate local connector classes and then fetch the definitions from them.
     * @return local connector definitions
     */
-  private[configurator] lazy val localConnectorDefinitions: Seq[ConnectorDefinition] = {
+  private[configurator] lazy val localConnectorDefinitions: Seq[Definition] = {
     Seq.empty
     val reflections = new Reflections()
     val classes = reflections.getSubTypesOf(classOf[RowSourceConnector]).asScala ++ reflections
@@ -147,7 +147,7 @@ object FakeWorkerClient {
         }
       }
       .map { entry =>
-        ConnectorDefinition(
+        Definition(
           className = entry._1,
           definitions = entry._2
         )

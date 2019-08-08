@@ -60,7 +60,7 @@ public class TestStreamAppTopology extends SmallTest {
               .map(row -> Row.of(row.cell(0)))
               .leftJoin(
                   join,
-                  Conditions.add(Collections.singletonList(Pair.of("pk", "fk"))),
+                  Conditions.create().add(Collections.singletonList(Pair.of("pk", "fk"))),
                   (r1, r2) -> r1)
               .groupByKey(Collections.singletonList("key"))
               .count()

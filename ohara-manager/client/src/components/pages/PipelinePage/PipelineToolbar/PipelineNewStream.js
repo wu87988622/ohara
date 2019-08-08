@@ -107,12 +107,12 @@ class PipelineNewStream extends React.Component {
     const { updateGraph } = this.props;
     const { newStreamAppName, jars, activeJar } = this.state;
 
-    const jar = jars.filter(jar => jar.name === activeJar.name)[0];
+    const { group, name } = jars.filter(jar => jar.name === activeJar.name)[0];
 
     const connector = {
-      jar,
+      jarKey: { group, name },
       className: 'streamApp',
-      typeName: 'streamApp',
+      typeName: 'stream',
     };
 
     createConnector({

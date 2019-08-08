@@ -17,11 +17,11 @@
 package com.island.ohara.streams;
 
 import com.island.ohara.common.data.Row;
+import com.island.ohara.common.exception.OharaException;
 import com.island.ohara.common.rule.SmallTest;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.streams.config.StreamDefinitions;
 import java.io.File;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URLClassLoader;
 import java.util.Map;
@@ -59,7 +59,7 @@ public class TestStreamApp extends SmallTest {
     try {
       Map.Entry<String, URLClassLoader> entry = StreamApp.findStreamAppEntry(file);
       Assert.assertEquals("com.island.ohara.streams.SimpleApplicationForOharaEnv", entry.getKey());
-    } catch (IOException | ClassNotFoundException e) {
+    } catch (OharaException e) {
       Assert.fail(e.getMessage());
     }
   }
@@ -69,7 +69,7 @@ public class TestStreamApp extends SmallTest {
 
     @Override
     public StreamDefinitions config() {
-      return StreamDefinitions.DEFAULT;
+      return StreamDefinitions.create();
     }
 
     @Override

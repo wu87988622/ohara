@@ -16,7 +16,7 @@
 
 .. _sample:
 
-A sampe file for rst practice
+A sample file for rst practice
 ==============================
 
 - Ohara version: |version|

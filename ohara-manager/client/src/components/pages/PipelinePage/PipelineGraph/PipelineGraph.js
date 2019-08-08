@@ -101,7 +101,7 @@ const PipelineGraph = props => {
       const { history, graph, match, updateGraph } = props;
       const { pipelineName } = match.params;
       const currentConnector = graph.find(g => g.name === current);
-      const { className, name: connectorName } = currentConnector;
+      const { className = 'streamApp', name: connectorName } = currentConnector;
       updateGraph({
         update: currentConnector,
         dispatcher: { name: 'GRAPH' },

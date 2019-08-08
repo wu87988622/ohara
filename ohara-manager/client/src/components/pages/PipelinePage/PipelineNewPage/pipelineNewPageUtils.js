@@ -57,7 +57,10 @@ export const updateFlows = ({
       ...flows,
       { from: { group: 'default', name: connectorName }, to: [] },
     ];
-  } else if (dispatcher.name === 'CONNECTOR') {
+  } else if (
+    dispatcher.name === 'CONNECTOR' ||
+    dispatcher.name === 'STEAM_APP'
+  ) {
     updatedFlows = flows.map(flow => {
       if (flow.from.name === connectorName) {
         const newTo = to.map(to => {

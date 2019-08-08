@@ -72,11 +72,6 @@ class StreamsConfig {
           + TopicConfig.MIN_CLEANABLE_DIRTY_RATIO_CONFIG;
 
   // for internal usage
-  static final String STREAMAPP_CONFIG_NAME = "config";
-  static final String STREAMAPP_DRY_RUN = "STREAMAPP_DRY_RUN";
-  static final String STREAMAPP_BOOTSTRAP_SERVERS = "STREAMAPP_SERVERS";
-  static final String STREAMAPP_APPID = "STREAMAPP_APPID";
-  static final String STREAMAPP_FROM_TOPICS = "STREAMAPP_FROMTOPIC";
-  static final String STREAMAPP_TO_TOPICS = "STREAMAPP_TOTOPIC";
-  static final String STREAMAPP_EXACTLY_ONCE = "STREAMAPP_EXACTLY_ONCE";
+  static final String STREAMAPP_CONFIG_KEY = "CONFIG_KEY";
+  static final String STREAMAPP_CONFIG_METHOD_NAME = "config";
 }

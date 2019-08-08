@@ -21,6 +21,7 @@ import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
+import com.island.ohara.streams.config.StreamDefinitions.DefaultConfigs
 
 import scala.concurrent.{ExecutionContext, Future}
 private class StreamCollieImpl(node: NodeCollie, dockerCache: DockerClientCache, clusterCache: ClusterCache)
@@ -28,12 +29,12 @@ private class StreamCollieImpl(node: NodeCollie, dockerCache: DockerClientCache,
     with StreamCollie {
 
   override protected def doCreator(executionContext: ExecutionContext,
-                                   clusterName: String,
                                    containerName: String,
                                    containerInfo: ContainerInfo,
                                    node: Node,
+                                   route: Map[String, String],
                                    jmxPort: Int,
-                                   route: Map[String, String]): Future[Unit] =
+                                   jarUrl: String): Future[Unit] =
     Future.successful(try {
       dockerCache.exec(
         node,
@@ -45,8 +46,12 @@ private class StreamCollieImpl(node: NodeCollie, dockerCache: DockerClientCache,
           .portMappings(
             containerInfo.portMappings.flatMap(_.portPairs).map(pair => pair.hostPort -> pair.containerPort).toMap)
           .route(route)
-          .command(String
-            .join(" ", StreamCollie.formatJMXProperties(node.name, jmxPort).mkString(" "), StreamCollie.MAIN_ENTRY))
+          .command(String.join(
+            " ",
+            StreamCollie.formatJMXProperties(node.name, jmxPort).mkString(" "),
+            StreamCollie.MAIN_ENTRY,
+            s"""${DefaultConfigs.JAR_KEY_DEFINITION.key()}=\"$jarUrl\""""
+          ))
           .create()
       )
     } catch {

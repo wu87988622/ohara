@@ -55,7 +55,7 @@ export const createConnector = async ({
     connectorName = connector.name;
   } else if (isStream(typeName)) {
     await createProperty({
-      jar: connector.jar,
+      jarKey: connector.jarKey,
       name: newStreamAppName,
     });
     connectorName = newStreamAppName;

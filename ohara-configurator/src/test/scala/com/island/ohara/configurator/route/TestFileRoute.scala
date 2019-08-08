@@ -117,7 +117,7 @@ class TestFileRoute extends SmallTest with Matchers {
     // upload jar
     val jar = result(fileApi.request.file(f).upload())
     // create streamApp property
-    result(streamApi.request.name(name).jar(jar.key).create())
+    result(streamApi.request.name(name).jarKey(jar.key).create())
     // cannot delete a used jar
     val thrown = the[IllegalArgumentException] thrownBy result(fileApi.delete(jar.key))
     thrown.getMessage should include(StreamApi.STREAM_SERVICE_NAME)

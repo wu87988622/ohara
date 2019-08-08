@@ -17,15 +17,20 @@
 package com.island.ohara.streams.ostream;
 
 import com.island.ohara.common.data.Pair;
+import java.util.ArrayList;
 import java.util.List;
 
 /** Assign a condition pair (left key and right key) list for the required operation */
 public class Conditions {
 
-  private final List<Pair<String, String>> conditionsPairList;
+  private List<Pair<String, String>> conditionsPairList;
 
-  private Conditions(List<Pair<String, String>> conditionsPairList) {
-    this.conditionsPairList = conditionsPairList;
+  private Conditions() {
+    this.conditionsPairList = new ArrayList<>();
+  }
+
+  public static Conditions create() {
+    return new Conditions();
   }
 
   /**
@@ -36,8 +41,9 @@ public class Conditions {
    * @param pair the conditions of key pair for join
    * @return the conditions
    */
-  public static Conditions add(List<Pair<String, String>> pair) {
-    return new Conditions(pair);
+  public Conditions add(List<Pair<String, String>> pair) {
+    this.conditionsPairList.addAll(pair);
+    return this;
   }
 
   List<Pair<String, String>> getConditionList() {

@@ -17,19 +17,18 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import toastr from 'toastr';
-import { Field, Form } from 'react-final-form';
-import { get, isEmpty, isUndefined } from 'lodash';
+import { Form } from 'react-final-form';
+import { get, isString, isNull } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
 import * as streamApi from 'api/streamApi';
-import * as s from './styles';
+import * as utils from './connectorUtils';
 import Controller from './Controller';
 import AutoSave from './AutoSave';
-import { isEmptyStr } from 'utils/commonUtils';
-import { STREAM_APP_STATES, STREAM_APP_ACTIONS } from 'constants/pipelines';
+import { TitleWrapper, H5Wrapper, LoaderWrap } from './styles';
+import { STREAM_APP_ACTIONS } from 'constants/pipelines';
+import { ListLoader } from 'components/common/Loader';
 import { Box } from 'components/common/Layout';
-import { Label } from 'components/common/Form';
-import { InputField, SelectField } from 'components/common/FormFields';
 import { findByGraphName } from '../pipelineUtils/commonUtils';
 import { graph as graphPropType } from 'propTypes/pipeline';
 
@@ -62,12 +61,9 @@ class StreamApp extends React.Component {
   };
 
   componentDidMount() {
-    const { match, pipelineTopics } = this.props;
-    this.streamAppName = match.params.connectorName;
-
-    this.setState({ pipelineTopics }, () => {
-      this.fetchStreamApp(this.streamAppName);
-    });
+    this.streamAppName = this.props.match.params.connectorName;
+    this.fetchStreamApp(this.streamAppName);
+    this.setTopics();
   }
 
   componentDidUpdate(prevProps) {
@@ -81,24 +77,44 @@ class StreamApp extends React.Component {
     }
 
     if (prevConnectorName !== currConnectorName) {
-      const streamAppName = currConnectorName;
-      this.fetchStreamApp(streamAppName);
+      this.fetchStreamApp(currConnectorName);
     }
   }
 
+  setTopics = () => {
+    const { pipelineTopics } = this.props;
+    this.setState({ topics: pipelineTopics.map(t => t.name) });
+  };
+
   fetchStreamApp = async name => {
     const res = await streamApi.fetchProperty(name);
-    const streamApp = get(res, 'data.result', null);
+    this.setState({ isLoading: false });
+    const result = get(res, 'data.result', null);
 
-    if (!isEmpty(streamApp)) {
-      this.setState({ streamApp, state: streamApp.state });
+    if (result) {
+      const {
+        settings,
+        definition: { definitions },
+      } = result;
+      const { topicKeys } = settings;
+      const state = get(result, 'state', null);
+      const topicName = get(topicKeys, '[0].name', '');
+
+      const _settings = utils.changeToken({
+        values: settings,
+        targetToken: '.',
+        replaceToken: '_',
+      });
+
+      const configs = { ..._settings, topicKeys: topicName };
+      this.setState({ configs, state, defs: definitions });
     }
   };
 
   handleSave = async ({ instances, from, to }) => {
     const { graph, updateGraph } = this.props;
-    const fromTopic = from ? [from] : [];
-    const toTopic = to ? [to] : [];
+    let fromTopic = isString(from) ? [from] : from;
+    let toTopic = isString(to) ? [to] : to;
 
     const params = {
       name: this.streamAppName,
@@ -121,7 +137,7 @@ class StreamApp extends React.Component {
       if (isToUpdate) {
         const currStreamApp = findByGraphName(graph, this.streamAppName);
         const toUpdate = { ...currStreamApp, to: toTopic };
-        updateGraph({ update: toUpdate });
+        updateGraph({ update: toUpdate, dispatcher: { name: 'STREAM_APP' } });
       } else {
         // From topic update
         let currFromTopic = findByGraphName(graph, fromTopic[0]);
@@ -150,6 +166,7 @@ class StreamApp extends React.Component {
         }
 
         updateGraph({
+          dispatcher: { name: 'STREAM_APP' },
           update,
           isFromTopic: true,
           streamAppName: this.streamAppName,
@@ -167,7 +184,7 @@ class StreamApp extends React.Component {
     await this.triggerStreamApp(STREAM_APP_ACTIONS.stop);
   };
 
-  handleDeleteConnector = async () => {
+  handleDeleteStreamApp = async () => {
     const { match, refreshGraph, history } = this.props;
     const { pipelineName } = match.params;
 
@@ -205,132 +222,74 @@ class StreamApp extends React.Component {
 
     const currStreamApp = findByGraphName(graph, this.streamAppName);
     const update = { ...currStreamApp, state };
-    updateGraph({ update });
+    updateGraph({ update, dispatcher: { name: 'STREAM_APP' } });
 
     if (action === STREAM_APP_ACTIONS.start) {
-      if (state === STREAM_APP_STATES.running) {
-        toastr.success(MESSAGES.STREAM_APP_START_SUCCESS);
-      } else {
-        toastr.error(MESSAGES.CANNOT_START_STREAM_APP_ERROR);
-      }
-    } else if (action === STREAM_APP_ACTIONS.stop) {
-      toastr.success(MESSAGES.STREAM_APP_STOP_SUCCESS);
+      if (!isNull(state)) toastr.success(MESSAGES.STREAM_APP_STOP_SUCCESS);
     }
   };
 
   render() {
-    const { updateHasChanges, pipelineTopics } = this.props;
-    const { streamApp } = this.state;
+    const { state, configs, isLoading, topics, defs } = this.state;
+    const { updateHasChanges } = this.props;
 
-    if (!streamApp) return null;
+    if (!configs) return null;
 
-    const { name, instances, jar, from, to } = streamApp;
-    const { name: jarName } = jar;
-    const fromTopic = pipelineTopics.find(({ name }) => name === from[0]);
-    const toTopic = pipelineTopics.find(({ name }) => name === to[0]);
+    const formData = utils.getRenderData({
+      defs,
+      configs,
+      state,
+    });
 
-    const initialValues = {
-      name: isEmptyStr(name) ? 'Untitled stream app' : name,
-      instances: String(instances),
-      from: !isEmpty(fromTopic) ? fromTopic.name : null,
-      to: !isEmpty(toTopic) ? toTopic.name : null,
+    const initialValues = formData.reduce((acc, cur) => {
+      acc[cur.key] = cur.displayValue;
+      return acc;
+    }, {});
+
+    const formProps = {
+      formData,
+      topics,
+      handleColumnChange: this.handleColumnChange,
+      handleColumnRowDelete: this.handleColumnRowDelete,
+      handleColumnRowUp: this.handleColumnRowUp,
+      handleColumnRowDown: this.handleColumnRowDown,
     };
 
-    const isRunning = !isUndefined(this.state.state);
-
     return (
-      <>
-        <Form
-          onSubmit={this.handleSave}
-          initialValues={initialValues}
-          render={() => (
-            <Box>
-              <AutoSave
-                save={this.handleSave}
-                updateHasChanges={updateHasChanges}
-              />
-              <s.TitleWrapper>
-                <s.H5Wrapper>Stream app</s.H5Wrapper>
-                <Controller
-                  kind="stream app"
-                  connectorName={this.streamAppName}
-                  onStart={this.handleStartStreamApp}
-                  onStop={this.handleStopStreamApp}
-                  onDelete={this.handleDeleteConnector}
-                  show={['start', 'stop', 'delete']}
-                />
-              </s.TitleWrapper>
-              <s.FormRow>
-                <s.FormCol width="70%">
-                  <Label>Name</Label>
-                  <Field
-                    id="input-streamapp-name"
-                    name="name"
-                    component={InputField}
-                    type="text"
-                    width="100%"
-                    disabled
+      <Box>
+        <TitleWrapper>
+          <H5Wrapper>FTP source connector</H5Wrapper>
+          <Controller
+            kind="connector"
+            connectorName={this.streamAppName}
+            onStart={this.handleStartStreamApp}
+            onStop={this.handleStopStreamApp}
+            onDelete={this.handleDeleteStreamApp}
+          />
+        </TitleWrapper>
+        {isLoading ? (
+          <LoaderWrap>
+            <ListLoader />
+          </LoaderWrap>
+        ) : (
+          <Form
+            onSubmit={this.handleSave}
+            initialValues={initialValues}
+            render={({ values }) => {
+              return (
+                <form>
+                  <AutoSave
+                    save={this.handleSave}
+                    updateHasChanges={updateHasChanges}
                   />
-                </s.FormCol>
-                <s.FormCol width="30%">
-                  <Label htmlFor="input-instances">Instances</Label>
-                  <Field
-                    id="input-instances"
-                    name="instances"
-                    component={InputField}
-                    type="number"
-                    min={1}
-                    max={100}
-                    width="100%"
-                    placeholder="1"
-                    disabled={isRunning}
-                  />
-                </s.FormCol>
-              </s.FormRow>
-              <s.FormRow>
-                <s.FormCol width="50%">
-                  <Label htmlFor="">From topic</Label>
-                  <Field
-                    id="select-from"
-                    name="from"
-                    component={SelectField}
-                    list={pipelineTopics}
-                    width="100%"
-                    placeholder="select a from topic..."
-                    isObject
-                    clearable
-                    disabled={isRunning}
-                  />
-                </s.FormCol>
-                <s.FormCol width="50%">
-                  <Label>To topic</Label>
-                  <Field
-                    name="to"
-                    component={SelectField}
-                    list={pipelineTopics}
-                    width="100%"
-                    placeholder="select a to topic..."
-                    isObject
-                    clearable
-                    disabled={isRunning}
-                  />
-                </s.FormCol>
-              </s.FormRow>
-              <s.FormRow>
-                <s.FormCol>
-                  <Label>Jar name</Label>
-                  <s.JarNameText>{jarName}</s.JarNameText>
-                </s.FormCol>
-              </s.FormRow>
-              <s.FormRow>
-                <s.FormCol>
-                  <s.ViewTopologyBtn text="View topology" disabled />
-                </s.FormCol>
-              </s.FormRow>
-            </Box>
-          )}
-        />
-      </>
+
+                  {utils.renderForm({ parentValues: values, ...formProps })}
+                </form>
+              );
+            }}
+          />
+        )}
+      </Box>
     );
   }
 }

@@ -20,6 +20,7 @@ import com.island.ohara.agent.{NodeCollie, StreamCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
+import com.island.ohara.streams.config.StreamDefinitions.DefaultConfigs
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -30,12 +31,12 @@ private class K8SStreamCollieImpl(node: NodeCollie, k8sClient: K8SClient)
   private[this] val LOG = Logger(classOf[K8SStreamCollieImpl])
 
   override protected def doCreator(executionContext: ExecutionContext,
-                                   clusterName: String,
                                    containerName: String,
                                    containerInfo: ContainerInfo,
                                    node: Node,
+                                   route: Map[String, String],
                                    jmxPort: Int,
-                                   route: Map[String, String]): Future[Unit] = {
+                                   jarUrl: String): Future[Unit] = {
     implicit val exec: ExecutionContext = executionContext
     k8sClient
       .containerCreator()
@@ -48,7 +49,8 @@ private class K8SStreamCollieImpl(node: NodeCollie, k8sClient: K8SClient)
       .portMappings(Map(jmxPort -> jmxPort))
       .routes(route)
       .envs(containerInfo.environments)
-      .args(StreamCollie.formatJMXProperties(node.name, jmxPort) :+ StreamCollie.MAIN_ENTRY)
+      .args(StreamCollie.formatJMXProperties(node.name, jmxPort) ++
+        Seq(StreamCollie.MAIN_ENTRY, s"""${DefaultConfigs.JAR_KEY_DEFINITION.key()}=\"$jarUrl\""""))
       .threadPool(executionContext)
       .create()
       .recover {

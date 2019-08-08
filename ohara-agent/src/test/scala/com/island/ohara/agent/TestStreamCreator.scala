@@ -19,14 +19,15 @@ package com.island.ohara.agent
 import java.util.Objects
 
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
-import com.island.ohara.client.configurator.v0.StreamApi
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
+import com.island.ohara.client.configurator.v0.{Definition, StreamApi}
 import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.setting.SettingDef
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.json.ObjectKey
+import com.island.ohara.streams.config.StreamDefinitions.DefaultConfigs
 import org.junit.Test
 import org.scalatest.Matchers
-import spray.json.DeserializationException
+import spray.json.{DeserializationException, JsArray, JsNumber, JsObject, JsString}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
@@ -35,44 +36,39 @@ import scala.concurrent.{Await, Future}
 class TestStreamCreator extends SmallTest with Matchers {
 
   private[this] def streamCreator(): StreamCollie.ClusterCreator =
-    (clusterName,
-     nodeNames,
-     imageName,
-     jarUrl,
-     appId,
-     brokerProps,
-     fromTopics,
-     toTopics,
-     jmxPort,
-     enableExactlyOnce,
-     _) => {
+    (clusterName, nodeNames, imageName, jarUrl, jmxPort, settings, executionContext) => {
       // We only check required variables
       CommonUtils.requireNonEmpty(clusterName)
       CommonUtils.requireNonEmpty(nodeNames.asJava)
       CommonUtils.requireNonEmpty(imageName)
       CommonUtils.requireNonEmpty(jarUrl)
-      CommonUtils.requireNonEmpty(appId)
-      CommonUtils.requireNonEmpty(brokerProps)
-      CommonUtils.requireNonEmpty(fromTopics.asJava)
-      CommonUtils.requireNonEmpty(toTopics.asJava)
       CommonUtils.requireConnectionPort(jmxPort)
-      Objects.requireNonNull(enableExactlyOnce)
+      Objects.requireNonNull(settings)
+      Objects.requireNonNull(executionContext)
       Future.successful(
         StreamClusterInfo(
-          name = clusterName,
-          imageName = imageName,
-          instances = nodeNames.size,
-          jar = ObjectKey.of("group", "name"),
-          from = fromTopics,
-          to = toTopics,
-          metrics = Metrics(Seq.empty),
+          settings = Map(
+            DefaultConfigs.NAME_DEFINITION.key() -> JsString(clusterName),
+            DefaultConfigs.IMAGE_NAME_DEFINITION.key() -> JsString(imageName),
+            DefaultConfigs.INSTANCES_DEFINITION.key() -> JsNumber(nodeNames.size),
+            DefaultConfigs.JAR_KEY_DEFINITION.key() -> JsObject(
+              com.island.ohara.client.configurator.v0.GROUP_KEY -> JsString("group"),
+              com.island.ohara.client.configurator.v0.NAME_KEY -> JsString("name")),
+            DefaultConfigs.FROM_TOPICS_DEFINITION.key() -> JsArray(
+              JsString(settings(DefaultConfigs.FROM_TOPICS_DEFINITION.key()))
+            ),
+            DefaultConfigs.TO_TOPICS_DEFINITION.key() -> JsArray(
+              JsString(settings(DefaultConfigs.TO_TOPICS_DEFINITION.key()))
+            ),
+            DefaultConfigs.JMX_PORT_DEFINITION.key() -> JsNumber(jmxPort),
+          ),
+          definition = None,
           nodeNames = nodeNames,
           deadNodes = Set.empty,
-          jmxPort = jmxPort,
+          metrics = Metrics(Seq.empty),
           state = None,
           error = None,
-          lastModified = CommonUtils.current(),
-          tags = Map.empty
+          lastModified = CommonUtils.current()
         ))
     }
 
@@ -119,46 +115,6 @@ class TestStreamCreator extends SmallTest with Matchers {
   }
 
   @Test
-  def nullAppId(): Unit = {
-    an[NullPointerException] should be thrownBy streamCreator().appId(null)
-  }
-
-  @Test
-  def emptyAppId(): Unit = {
-    an[IllegalArgumentException] should be thrownBy streamCreator().appId("")
-  }
-
-  @Test
-  def nullBrokerProps(): Unit = {
-    an[NullPointerException] should be thrownBy streamCreator().brokerProps(null)
-  }
-
-  @Test
-  def emptyBrokerProps(): Unit = {
-    an[IllegalArgumentException] should be thrownBy streamCreator().brokerProps("")
-  }
-
-  @Test
-  def nullFromTopics(): Unit = {
-    an[NullPointerException] should be thrownBy streamCreator().fromTopics(null)
-  }
-
-  @Test
-  def emptyFromTopics(): Unit = {
-    an[IllegalArgumentException] should be thrownBy streamCreator().fromTopics(Set.empty)
-  }
-
-  @Test
-  def nullToTopics(): Unit = {
-    an[NullPointerException] should be thrownBy streamCreator().toTopics(null)
-  }
-
-  @Test
-  def emptyToTopics(): Unit = {
-    an[IllegalArgumentException] should be thrownBy streamCreator().toTopics(Set.empty)
-  }
-
-  @Test
   def zeroJmxPort(): Unit = {
     an[IllegalArgumentException] should be thrownBy streamCreator().jmxPort(0)
   }
@@ -169,16 +125,20 @@ class TestStreamCreator extends SmallTest with Matchers {
   }
 
   @Test
+  def nullSettings(): Unit = an[NullPointerException] should be thrownBy streamCreator().settings(null)
+
+  @Test
   def testNameLength(): Unit = {
     streamCreator()
       .clusterName(CommonUtils.randomString(StreamApi.LIMIT_OF_NAME_LENGTH))
       .imageName(CommonUtils.randomString())
       .jarUrl("jar")
+      .settings(
+        Map(
+          DefaultConfigs.FROM_TOPICS_DEFINITION.key() -> "from",
+          DefaultConfigs.TO_TOPICS_DEFINITION.key() -> "to"
+        ))
       .nodeNames(Set("bar", "foo", "bez"))
-      .appId("app")
-      .brokerProps("broker")
-      .fromTopics(Set("topic1"))
-      .toTopics(Set("topic2"))
       .create()
 
     an[DeserializationException] should be thrownBy streamCreator()
@@ -186,30 +146,28 @@ class TestStreamCreator extends SmallTest with Matchers {
       .imageName(CommonUtils.randomString())
       .jarUrl("jar")
       .nodeNames(Set("bar", "foo", "bez"))
-      .appId("app")
-      .brokerProps("broker")
-      .fromTopics(Set("topic1"))
-      .toTopics(Set("topic2"))
       .create()
   }
 
   @Test
   def testCopy(): Unit = {
     val info = StreamClusterInfo(
-      name = CommonUtils.randomString(10),
-      imageName = CommonUtils.randomString(),
-      instances = 1,
-      jar = ObjectKey.of("group", "name"),
-      from = Set("from"),
-      to = Set("from"),
-      metrics = Metrics(Seq.empty),
-      nodeNames = Set("aa"),
+      settings = Map(
+        DefaultConfigs.NAME_DEFINITION.key() -> JsString("name"),
+        DefaultConfigs.IMAGE_NAME_DEFINITION.key() -> JsString("imageName"),
+        DefaultConfigs.INSTANCES_DEFINITION.key() -> JsNumber(1),
+        DefaultConfigs.FROM_TOPICS_DEFINITION.key() -> JsString("aa"),
+        DefaultConfigs.TO_TOPICS_DEFINITION.key() -> JsString("bb"),
+        DefaultConfigs.JMX_PORT_DEFINITION.key() -> JsNumber(0),
+        DefaultConfigs.TAGS_DEFINITION.key() -> JsObject(Map("bar" -> JsString("foo"), "he" -> JsNumber(1)))
+      ),
+      definition = Some(Definition("className", Seq(SettingDef.builder().key("key").group("group").build()))),
+      nodeNames = Set("node1"),
       deadNodes = Set.empty,
-      jmxPort = 10,
       state = None,
       error = None,
-      lastModified = CommonUtils.current(),
-      tags = Map.empty
+      metrics = Metrics(Seq.empty),
+      lastModified = CommonUtils.current()
     )
 
     // copy in stream is not support yet
@@ -225,11 +183,11 @@ class TestStreamCreator extends SmallTest with Matchers {
         .clusterName(CommonUtils.randomString(StreamApi.LIMIT_OF_NAME_LENGTH))
         .imageName(CommonUtils.randomString())
         .jarUrl("jar")
+        .settings(Map(
+          DefaultConfigs.FROM_TOPICS_DEFINITION.key() -> "from",
+          DefaultConfigs.TO_TOPICS_DEFINITION.key() -> "to"
+        ))
         .nodeNames(Set("bar", "foo"))
-        .appId("app")
-        .brokerProps("broker")
-        .fromTopics(Set("topic1"))
-        .toTopics(Set("topic2"))
         .jmxPort(1000)
         .create()).jmxPort shouldBe 1000
   }

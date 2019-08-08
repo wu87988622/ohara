@@ -276,6 +276,7 @@ public abstract class ConnectorDefinitions {
       case TABLE:
       case TOPIC_KEYS:
       case CONNECTOR_KEY:
+      case JAR_KEY:
       case TAGS:
         return ConfigDef.Type.STRING;
       case SHORT:

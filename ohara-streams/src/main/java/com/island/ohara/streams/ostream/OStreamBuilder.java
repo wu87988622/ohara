@@ -17,9 +17,7 @@
 package com.island.ohara.streams.ostream;
 
 import com.island.ohara.common.data.Row;
-import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.streams.OStream;
-import java.util.Map;
 
 /**
  * This class is responsible for managing all the properties that will use in {@code OStream}. Use
@@ -171,36 +169,6 @@ public final class OStreamBuilder<K, V> {
 
   // This is for testing
   OStream<Row> build() {
-    return new OStreamImpl(this);
-  }
-
-  /**
-   * For running an application inside ohara environment. Typically, this is the <b>only</b>
-   * entrance to build an {@code OStream}.
-   *
-   * @return the logic entry for {@code OStream}
-   */
-  public OStream<Row> toOharaEnvStream() {
-    Map<String, String> envs = System.getenv();
-    CommonUtils.requireNonEmpty(
-        envs, () -> "You should run this application in ohara environment.");
-
-    this.bootstrapServers =
-        CommonUtils.requireNonEmpty(envs.get(StreamsConfig.STREAMAPP_BOOTSTRAP_SERVERS));
-    this.appId = CommonUtils.requireNonEmpty(envs.get(StreamsConfig.STREAMAPP_APPID));
-    this.fromTopicWith(
-        CommonUtils.requireNonEmpty(envs.get(StreamsConfig.STREAMAPP_FROM_TOPICS)),
-        Serdes.ROW,
-        Serdes.BYTES);
-    this.toTopicWith(
-        CommonUtils.requireNonEmpty(envs.get(StreamsConfig.STREAMAPP_TO_TOPICS)),
-        Serdes.ROW,
-        Serdes.BYTES);
-    this.exactlyOnce =
-        Boolean.valueOf(
-            CommonUtils.requireNonEmpty(
-                envs.getOrDefault(StreamsConfig.STREAMAPP_EXACTLY_ONCE, "false")));
-
     return new OStreamImpl(this);
   }
 

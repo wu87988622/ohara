@@ -55,7 +55,7 @@ describe('isTopic()', () => {
 
 describe('isStream()', () => {
   it(`returns true if it's a stream app`, () => {
-    expect(isStream('streamApp')).toBe(true);
+    expect(isStream('stream')).toBe(true);
   });
 
   it(`returns false if it's not a topic`, () => {
@@ -101,7 +101,7 @@ describe('getConnectors()', () => {
       },
       {
         id: '5',
-        kind: 'streamApp',
+        kind: 'stream',
         name: 'streamAppName',
       },
     ];

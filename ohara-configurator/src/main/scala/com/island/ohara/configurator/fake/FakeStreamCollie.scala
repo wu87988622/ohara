@@ -16,16 +16,18 @@
 
 package com.island.ohara.configurator.fake
 
-import com.island.ohara.agent.docker.ContainerState
-import com.island.ohara.agent.{NodeCollie, StreamCollie}
+import com.island.ohara.agent.{ClusterState, NodeCollie, StreamCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
-import com.island.ohara.client.configurator.v0.{NodeApi, StreamApi}
+import com.island.ohara.client.configurator.v0.NodeApi.Node
+import com.island.ohara.client.configurator.v0.{Definition, StreamApi}
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
+import com.island.ohara.common.setting.SettingDef
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.json.ObjectKey
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
+import com.island.ohara.streams.config.StreamDefinitions.DefaultConfigs
+import spray.json.{JsArray, JsNumber, JsObject, JsString}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
@@ -39,24 +41,30 @@ private[configurator] class FakeStreamCollie(node: NodeCollie)
     BeanChannel.local().counterMBeans().asScala
 
   override def creator: StreamCollie.ClusterCreator =
-    (clusterName, nodeNames, imageName, _, _, _, from, to, jmxPort, _, _) =>
+    (clusterName, nodeNames, imageName, _, jmxPort, _, _) =>
       Future.successful(
         addCluster(
           StreamApi.StreamClusterInfo(
-            name = clusterName,
-            imageName = imageName,
-            instances = nodeNames.size,
-            jar = ObjectKey.of("fakeGroup", "fakeJar"),
-            from = from,
-            to = to,
-            metrics = Metrics(Seq.empty),
+            settings = Map(
+              DefaultConfigs.NAME_DEFINITION.key() -> JsString(clusterName),
+              DefaultConfigs.IMAGE_NAME_DEFINITION.key() -> JsString(imageName),
+              DefaultConfigs.INSTANCES_DEFINITION.key() -> JsNumber(1),
+              DefaultConfigs.JAR_KEY_DEFINITION.key() -> JsObject(
+                com.island.ohara.client.configurator.v0.GROUP_KEY -> JsString("fgroup"),
+                com.island.ohara.client.configurator.v0.NAME_KEY -> JsString("fname")),
+              DefaultConfigs.FROM_TOPICS_DEFINITION.key() -> JsArray(JsString("bar")),
+              DefaultConfigs.TO_TOPICS_DEFINITION.key() -> JsArray(JsString("foo")),
+              DefaultConfigs.JMX_PORT_DEFINITION.key() -> JsNumber(jmxPort),
+              DefaultConfigs.TAGS_DEFINITION.key() -> JsObject(Map("bar" -> JsString("foo"), "he" -> JsNumber(1)))
+            ),
+            definition = Some(Definition("className", Seq(SettingDef.builder().key("key").group("group").build()))),
             nodeNames = nodeNames,
             deadNodes = Set.empty,
-            jmxPort = jmxPort,
-            state = Some(ContainerState.RUNNING.name),
+            // In fake mode, we need to assign a state in creation for "GET" method to act like real case
+            state = Some(ClusterState.RUNNING.name),
             error = None,
-            lastModified = CommonUtils.current(),
-            tags = Map.empty
+            metrics = Metrics(Seq.empty),
+            lastModified = CommonUtils.current()
           )))
 
   override protected def doRemoveNode(previousCluster: StreamClusterInfo, beRemovedContainer: ContainerInfo)(
@@ -71,12 +79,12 @@ private[configurator] class FakeStreamCollie(node: NodeCollie)
     Future.failed(new UnsupportedOperationException("stream collie doesn't support to add node from a running cluster"))
 
   override protected def doCreator(executionContext: ExecutionContext,
-                                   clusterName: String,
                                    containerName: String,
                                    containerInfo: ContainerInfo,
-                                   node: NodeApi.Node,
+                                   node: Node,
+                                   route: Map[String, String],
                                    jmxPort: Int,
-                                   route: Map[String, String]): Future[Unit] =
+                                   jarUrl: String): Future[Unit] =
     throw new UnsupportedOperationException("stream collie doesn't support to doCreator function")
 
   override protected def nodeCollie: NodeCollie = node

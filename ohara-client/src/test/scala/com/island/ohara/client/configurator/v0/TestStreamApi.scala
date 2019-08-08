@@ -17,10 +17,12 @@
 package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
-import com.island.ohara.client.configurator.v0.StreamApi.{Creation, StreamClusterInfo}
+import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.setting.SettingDef
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import com.island.ohara.kafka.connector.json.ObjectKey
+import com.island.ohara.streams.config.StreamDefinitions.DefaultConfigs
 import org.junit.Test
 import org.scalatest.Matchers
 import spray.json.DefaultJsonProtocol._
@@ -32,8 +34,8 @@ import scala.concurrent.{Await, Future}
 
 class TestStreamApi extends SmallTest with Matchers {
 
-  private[this] final val access =
-    StreamApi.access.hostname(CommonUtils.randomString()).port(CommonUtils.availablePort())
+  private[this] final val accessRequest =
+    StreamApi.access.hostname(CommonUtils.randomString()).port(CommonUtils.availablePort()).request
   private[this] final val fakeJar = ObjectKey.of(CommonUtils.randomString(1), CommonUtils.randomString(1))
   private[this] final def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
@@ -46,172 +48,191 @@ class TestStreamApi extends SmallTest with Matchers {
   def testCloneNodeNames(): Unit = {
     val newNodeNames = Set(CommonUtils.randomString())
     val info = StreamClusterInfo(
-      name = CommonUtils.randomString(10),
-      imageName = CommonUtils.randomString(),
-      instances = 1,
-      jar = ObjectKey.of("group", "name"),
-      from = Set("from"),
-      to = Set("from"),
-      metrics = Metrics(Seq.empty),
-      nodeNames = Set.empty,
+      settings = Map(
+        DefaultConfigs.NAME_DEFINITION.key() -> JsString("name"),
+        DefaultConfigs.IMAGE_NAME_DEFINITION.key() -> JsString("imageName"),
+        DefaultConfigs.INSTANCES_DEFINITION.key() -> JsNumber(1),
+        DefaultConfigs.JAR_KEY_DEFINITION.key() -> ObjectKey.of("group", "name").toJson,
+        DefaultConfigs.FROM_TOPICS_DEFINITION.key() -> JsString("aa"),
+        DefaultConfigs.TO_TOPICS_DEFINITION.key() -> JsString("bb"),
+        DefaultConfigs.JMX_PORT_DEFINITION.key() -> JsNumber(0),
+        DefaultConfigs.TAGS_DEFINITION.key() -> JsObject(Map("bar" -> JsString("foo"), "he" -> JsNumber(1)))
+      ),
+      definition = Some(Definition("className", Seq(SettingDef.builder().key("key").group("group").build()))),
+      nodeNames = Set("node1"),
       deadNodes = Set.empty,
-      jmxPort = 10,
       state = None,
       error = None,
-      lastModified = CommonUtils.current(),
-      tags = Map.empty
+      metrics = Metrics(Seq.empty),
+      lastModified = CommonUtils.current()
     )
     info.clone(newNodeNames).nodeNames shouldBe newNodeNames
   }
 
   @Test
-  def testStreamPropertyRequestEquals(): Unit = {
-    val info = Creation(
-      imageName = "image",
-      jar = ObjectKey.of("group", "name"),
-      name = "appid",
-      from = Set("from"),
-      to = Set("to"),
-      jmxPort = 5555,
-      instances = 1,
-      nodeNames = Set("node1"),
-      tags = Map.empty
-    )
-
-    info shouldBe StreamApi.STREAM_CREATION_JSON_FORMAT.read(StreamApi.STREAM_CREATION_JSON_FORMAT.write(info))
+  def testStreamDefinitionEquals(): Unit = {
+    val definition = Definition("className", Seq(SettingDef.builder().key("key").group("group").build()))
+    definition shouldBe Definition.DEFINITION_JSON_FORMAT.read(Definition.DEFINITION_JSON_FORMAT.write(definition))
   }
 
   @Test
   def testStreamClusterInfoEquals(): Unit = {
     val info = StreamClusterInfo(
-      name = "my-app",
-      imageName = "image",
-      instances = 1,
-      deadNodes = Set.empty,
+      settings = Map(
+        DefaultConfigs.NAME_DEFINITION.key() -> JsString("name"),
+        DefaultConfigs.IMAGE_NAME_DEFINITION.key() -> JsString("imageName"),
+        DefaultConfigs.INSTANCES_DEFINITION.key() -> JsNumber(1),
+        DefaultConfigs.JAR_KEY_DEFINITION.key() -> ObjectKey.of("group", "name").toJson,
+        DefaultConfigs.FROM_TOPICS_DEFINITION.key() -> JsArray(Vector(JsString("aa"))),
+        DefaultConfigs.TO_TOPICS_DEFINITION.key() -> JsArray(Vector(JsString("bb"))),
+        DefaultConfigs.JMX_PORT_DEFINITION.key() -> JsNumber(0),
+        DefaultConfigs.TAGS_DEFINITION.key() -> JsObject(Map("bar" -> JsString("foo"), "he" -> JsNumber(1)))
+      ),
+      definition = Some(Definition("className", Seq(SettingDef.builder().key("key").group("group").build()))),
       nodeNames = Set("node1"),
-      jar = ObjectKey.of("group", "name"),
-      from = Set.empty,
-      to = Set.empty,
+      deadNodes = Set.empty,
       state = None,
-      jmxPort = 0,
-      metrics = Metrics(Seq.empty),
       error = None,
-      lastModified = CommonUtils.current(),
-      tags = Map.empty
+      metrics = Metrics(Seq.empty),
+      lastModified = CommonUtils.current()
     )
 
     info shouldBe StreamApi.STREAM_CLUSTER_INFO_JSON_FORMAT.read(StreamApi.STREAM_CLUSTER_INFO_JSON_FORMAT.write(info))
+
+    info.name shouldBe "name"
+    info.imageName shouldBe "imageName"
+    info.instances shouldBe 1
+    info.jarKey shouldBe ObjectKey.of("group", "name")
+    info.from shouldBe Set("aa")
+    info.to shouldBe Set("bb")
+    info.definition.isDefined && info.definition.get.definitions.size == 1 shouldBe true
+    info.tags.keys.size shouldBe 2
+    // we initial exactlyOnce to be false
+    info.exactlyOnce shouldBe false
   }
 
   @Test
   def nameFieldCheck(): Unit = {
-    an[NullPointerException] should be thrownBy access.request.name(null)
-    an[IllegalArgumentException] should be thrownBy access.request.name("")
+    an[NullPointerException] should be thrownBy accessRequest.name(null)
+    an[IllegalArgumentException] should be thrownBy accessRequest.name("")
   }
 
   @Test
   def imageNameFieldCheck(): Unit = {
-    an[NullPointerException] should be thrownBy access.request.imageName(null)
-    an[IllegalArgumentException] should be thrownBy access.request.imageName("")
+    an[NullPointerException] should be thrownBy accessRequest.imageName(null)
+    an[IllegalArgumentException] should be thrownBy accessRequest.imageName("")
 
     // default value
-    access.request
+    accessRequest
       .name(CommonUtils.randomString())
-      .jar(fakeJar)
+      .jarKey(fakeJar)
       .creation
       .imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
   }
 
   @Test
   def jarFieldCheck(): Unit = {
-    an[NullPointerException] should be thrownBy access.request.imageName(null)
-    an[IllegalArgumentException] should be thrownBy access.request.imageName("")
+    an[NullPointerException] should be thrownBy accessRequest.imageName(null)
+    an[IllegalArgumentException] should be thrownBy accessRequest.imageName("")
   }
 
   @Test
   def topicFromFieldCheck(): Unit = {
-    an[NullPointerException] should be thrownBy access.request.from(null)
-    an[IllegalArgumentException] should be thrownBy access.request.from(Set.empty)
+    an[NullPointerException] should be thrownBy accessRequest.from(null)
+    an[IllegalArgumentException] should be thrownBy accessRequest.from(Set.empty)
 
-    // default value
-    access.request.name(CommonUtils.randomString()).jar(fakeJar).creation.from shouldBe Set.empty
+    // default from field will be empty
+    accessRequest.name(CommonUtils.randomString()).creation.from shouldBe Set.empty
   }
 
   @Test
   def topicToFieldCheck(): Unit = {
-    an[NullPointerException] should be thrownBy access.request.to(null)
-    an[IllegalArgumentException] should be thrownBy access.request.to(Set.empty)
+    an[NullPointerException] should be thrownBy accessRequest.to(null)
+    an[IllegalArgumentException] should be thrownBy accessRequest.to(Set.empty)
 
-    // default value
-    access.request.name(CommonUtils.randomString()).jar(fakeJar).creation.to shouldBe Set.empty
+    // default to field will be empty
+    accessRequest.name(CommonUtils.randomString()).creation.to shouldBe Set.empty
   }
 
   @Test
   def jmxPortFieldCheck(): Unit = {
-    an[IllegalArgumentException] should be thrownBy access.request.jmxPort(0)
-    an[IllegalArgumentException] should be thrownBy access.request.jmxPort(-1)
+    an[IllegalArgumentException] should be thrownBy accessRequest.jmxPort(0)
+    an[IllegalArgumentException] should be thrownBy accessRequest.jmxPort(-1)
 
     // default value
-    CommonUtils.requireConnectionPort(access.request.name(CommonUtils.randomString()).jar(fakeJar).creation.jmxPort)
+    CommonUtils.requireConnectionPort(accessRequest.name(CommonUtils.randomString()).creation.jmxPort)
   }
 
   @Test
   def instancesFieldCheck(): Unit = {
-    an[IllegalArgumentException] should be thrownBy access.request.instances(0)
-    an[IllegalArgumentException] should be thrownBy access.request.instances(-1)
+    an[IllegalArgumentException] should be thrownBy accessRequest.instances(0)
+    an[IllegalArgumentException] should be thrownBy accessRequest.instances(-1)
 
     // default value
-    access.request.name(CommonUtils.randomString()).jar(fakeJar).creation.instances shouldBe 1
+    accessRequest.name(CommonUtils.randomString()).creation.instances shouldBe 1
   }
 
   @Test
   def nodeNamesFieldCheck(): Unit = {
-    an[NullPointerException] should be thrownBy access.request.nodeNames(null)
-    an[IllegalArgumentException] should be thrownBy access.request.nodeNames(Set.empty)
+    an[NullPointerException] should be thrownBy accessRequest.nodeNames(null)
+    an[IllegalArgumentException] should be thrownBy accessRequest.nodeNames(Set.empty)
 
     // default value
-    access.request.name(CommonUtils.randomString()).jar(fakeJar).creation.nodeNames shouldBe Set.empty
+    accessRequest.name(CommonUtils.randomString()).creation.nodeNames shouldBe Set.empty
   }
 
   @Test
   def requireFieldOnPropertyCreation(): Unit = {
     // absent name will be auto generate
-    access.request.jar(ObjectKey.of("group", "name")).creation
+    accessRequest.creation
 
-    // jar is required
-    an[NullPointerException] should be thrownBy access.request.name(CommonUtils.randomString()).creation
+    // no jarKey is ok
+    accessRequest.name(CommonUtils.randomString()).creation
   }
 
   @Test
   def testMinimumCreation(): Unit = {
-    val name = CommonUtils.randomString(10)
-    val creation = access.request.name(name).jar(fakeJar).creation
+    val creationApi = accessRequest.creation
 
-    creation.name shouldBe name
-    creation.imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
-    creation.jar shouldBe fakeJar
-    creation.from shouldBe Set.empty
-    creation.to shouldBe Set.empty
-    creation.jmxPort should not be 0
-    creation.instances shouldBe 1
-    creation.nodeNames shouldBe Set.empty
+    creationApi.name.nonEmpty shouldBe true
+    creationApi.imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
+    creationApi.jarKey shouldBe None
+    creationApi.from shouldBe Set.empty
+    creationApi.to shouldBe Set.empty
+    creationApi.jmxPort should not be 0
+    creationApi.instances shouldBe 1
+    creationApi.nodeNames shouldBe Set.empty
+    creationApi.tags shouldBe Map.empty
+
+    val creationJson = StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
+                                                  |  {
+                                                  |  }
+     """.stripMargin.parseJson)
+    creationJson.name.nonEmpty shouldBe true
+    creationJson.imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
+    creationJson.jmxPort should not be 0
+    creationJson.instances shouldBe 1
+    creationJson.nodeNames shouldBe Set.empty
+    creationJson.tags shouldBe Map.empty
+
+    creationApi.settings.keys.size shouldBe creationJson.settings.keys.size
   }
 
   @Test
   def testCreation(): Unit = {
     val name = CommonUtils.randomString(10)
     val imageName = CommonUtils.randomString()
-    val from = Set(CommonUtils.randomString())
-    val to = Set(CommonUtils.randomString())
+    val from = CommonUtils.randomString()
+    val to = CommonUtils.randomString()
     val jmxPort = CommonUtils.availablePort()
     val instances = CommonUtils.randomString().length
     val nodeNames = Set(CommonUtils.randomString())
-    val creation = access.request
+    val creation = accessRequest
       .name(name)
       .imageName(imageName)
-      .jar(fakeJar)
-      .from(from)
-      .to(to)
+      .jarKey(fakeJar)
+      .from(Set(from))
+      .to(Set(to))
       .jmxPort(jmxPort)
       .instances(instances)
       .nodeNames(nodeNames)
@@ -219,12 +240,21 @@ class TestStreamApi extends SmallTest with Matchers {
 
     creation.name shouldBe name
     creation.imageName shouldBe imageName
-    creation.jar shouldBe fakeJar
-    creation.from shouldBe from
-    creation.to shouldBe to
+    creation.jarKey shouldBe Some(fakeJar)
+    creation.from shouldBe Set(from)
+    creation.to shouldBe Set(to)
     creation.jmxPort shouldBe jmxPort
     creation.instances shouldBe instances
     creation.nodeNames shouldBe nodeNames
+  }
+
+  @Test
+  def testExtraSettingInCreation(): Unit = {
+    val name = CommonUtils.randomString(10)
+    val creation = accessRequest.name(name).settings(Map("name" -> CommonUtils.randomString())).creation
+
+    // settings() has higher priority than name()
+    creation.name should not be name
   }
 
   @Test
@@ -237,12 +267,13 @@ class TestStreamApi extends SmallTest with Matchers {
       |    "from": ["$from"],
       |    "to": ["$to"],
       |    "nodeNames": ["$nodeName"],
-      |    "jar": ${fakeJar.toJson}
+      |    "jarKey": ${fakeJar.toJson}
       |  }
       |  """.stripMargin.parseJson)
     creation.name.length shouldBe StreamApi.LIMIT_OF_NAME_LENGTH
+    creation.group shouldBe StreamApi.GROUP_DEFAULT
     creation.imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
-    creation.jar shouldBe fakeJar
+    creation.jarKey shouldBe Some(fakeJar)
     creation.from shouldBe Set(from)
     creation.to shouldBe Set(to)
     creation.jmxPort should not be 0
@@ -251,18 +282,17 @@ class TestStreamApi extends SmallTest with Matchers {
 
     val name = CommonUtils.randomString(10)
     val creation2 = StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
-      |  {
-      |    "name": "$name",
-      |    "from": ["$from"],
-      |    "to": ["$to"],
-      |    "nodeNames": ["$nodeName"],
-      |    "jar": ${fakeJar.toJson}
-      |  }
-      |  """.stripMargin.parseJson)
-
+       |  {
+       |    "name": "$name",
+       |    "from": ["$from"],
+       |    "to": ["$to"],
+       |    "nodeNames": ["$nodeName"],
+       |    "jarKey": ${fakeJar.toJson}
+       |  }
+       |  """.stripMargin.parseJson)
     creation2.name shouldBe name
     creation2.imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
-    creation2.jar shouldBe fakeJar
+    creation2.jarKey shouldBe Some(fakeJar)
     creation.from shouldBe Set(from)
     creation.to shouldBe Set(to)
     creation2.jmxPort should not be 0
@@ -271,11 +301,16 @@ class TestStreamApi extends SmallTest with Matchers {
   }
 
   @Test
+  def testDefaultName(): Unit = StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
+       |  {
+       |  }
+     """.stripMargin.parseJson).name.nonEmpty shouldBe true
+
+  @Test
   def parseNameField(): Unit = {
     val thrown2 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
       |  {
-      |    "name": "",
-      |    "jar": ${fakeJar.toJson}
+      |    "name": ""
       |  }
       |  """.stripMargin.parseJson)
     thrown2.getMessage should include("the value of \"name\" can't be empty string")
@@ -283,11 +318,8 @@ class TestStreamApi extends SmallTest with Matchers {
 
   @Test
   def parseImageNameField(): Unit = {
-    val name = CommonUtils.randomString(10)
     val thrown = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
       |  {
-      |    "name": "$name",
-      |    "jar": ${fakeJar.toJson},
       |    "imageName": ""
       |  }
       |  """.stripMargin.parseJson)
@@ -295,24 +327,22 @@ class TestStreamApi extends SmallTest with Matchers {
   }
 
   @Test
-  def parseJarField(): Unit = {
+  def parseJarKeyField(): Unit = {
     val name = CommonUtils.randomString(10)
 
-    // jar is required
-    val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
+    // no jarKey is OK
+    StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
       |  {
       |    "name": "$name"
       |  }
       |  """.stripMargin.parseJson)
-    thrown1.getMessage should include("Object is missing required member 'jar'")
 
     val thrown2 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
       |  {
-      |    "name": "$name",
-      |    "jar": ""
+      |    "jarKey": ""
       |  }
       |  """.stripMargin.parseJson)
-    thrown2.getMessage should include("the value of \"jar\" can't be empty string")
+    thrown2.getMessage should include("the value of \"jarKey\" can't be empty string")
   }
 
   @Test
@@ -321,7 +351,6 @@ class TestStreamApi extends SmallTest with Matchers {
     val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
       |  {
       |    "name": "${CommonUtils.randomString(10)}",
-      |    "jar": ${fakeJar.toJson},
       |    "jmxPort": 0
       |  }
       |  """.stripMargin.parseJson)
@@ -331,7 +360,6 @@ class TestStreamApi extends SmallTest with Matchers {
     val thrown2 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
       |  {
       |    "name": "${CommonUtils.randomString(10)}",
-      |    "jar": ${fakeJar.toJson},
       |    "jmxPort": -99
       |  }
       |  """.stripMargin.parseJson)
@@ -341,7 +369,6 @@ class TestStreamApi extends SmallTest with Matchers {
     val thrown3 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
       |  {
       |    "name": "${CommonUtils.randomString(10)}",
-      |    "jar": ${fakeJar.toJson},
       |    "jmxPort": 999999
       |  }
       |  """.stripMargin.parseJson)
@@ -352,16 +379,12 @@ class TestStreamApi extends SmallTest with Matchers {
   def parseInstancesField(): Unit = {
     an[DeserializationException] should be thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
       |  {
-      |    "name": "${CommonUtils.randomString(10)}",
-      |    "jar": ${fakeJar.toJson},
       |    "instances": 0
       |  }
       |  """.stripMargin.parseJson)
     // negative instances
     val thrown = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
       |  {
-      |    "name": "${CommonUtils.randomString(10)}",
-      |    "jar": ${fakeJar.toJson},
       |    "instances": -99
       |  }
       |  """.stripMargin.parseJson)
@@ -371,40 +394,25 @@ class TestStreamApi extends SmallTest with Matchers {
   @Test
   def requireFieldOnPropertyUpdate(): Unit = {
     // name is required
-    an[NullPointerException] should be thrownBy result(access.request.jar(ObjectKey.of("group", "name")).update())
+    an[NullPointerException] should be thrownBy result(accessRequest.jarKey(ObjectKey.of("group", "name")).update())
 
     // no jar is ok
-    access.request.name(CommonUtils.randomString()).update
+    accessRequest.name(CommonUtils.randomString()).update
   }
 
   @Test
   def testDefaultUpdate(): Unit = {
     val name = CommonUtils.randomString(10)
-    val data = access.request.name(name).update
-    data.imageName.isEmpty shouldBe true
-    data.from.isEmpty shouldBe true
-    data.to.isEmpty shouldBe true
-    data.jmxPort.isEmpty shouldBe true
-    data.instances.isEmpty shouldBe true
-    data.nodeNames.isEmpty shouldBe true
-  }
-
-  @Test
-  def parseMinimumJsonUpdate(): Unit = {
-    val name = CommonUtils.randomString(10)
-    val data = StreamApi.STREAM_UPDATE_JSON_FORMAT.read(s"""
-      |  {
-      |    "name": "$name",
-      |    "jar": ${fakeJar.toJson}
-      |  }
-      |  """.stripMargin.parseJson)
-
-    data.imageName.isEmpty shouldBe true
-    data.from.isEmpty shouldBe true
-    data.to.isEmpty shouldBe true
-    data.jmxPort.isEmpty shouldBe true
-    data.instances.isEmpty shouldBe true
-    data.nodeNames.isEmpty shouldBe true
+    val data = accessRequest.name(name).update
+    data
+      .settings(DefaultConfigs.IMAGE_NAME_DEFINITION.key())
+      .asInstanceOf[JsString]
+      .value shouldBe StreamApi.IMAGE_NAME_DEFAULT
+    data.settings(DefaultConfigs.FROM_TOPICS_DEFINITION.key()).asInstanceOf[JsArray].elements.isEmpty shouldBe true
+    data.settings(DefaultConfigs.TO_TOPICS_DEFINITION.key()).asInstanceOf[JsArray].elements.isEmpty shouldBe true
+    data.settings.get(DefaultConfigs.JMX_PORT_DEFINITION.key()).isDefined shouldBe true
+    data.settings(DefaultConfigs.INSTANCES_DEFINITION.key()).asInstanceOf[JsNumber].value shouldBe 1
+    data.settings(DefaultConfigs.NODE_NAMES_DEFINITION.key()).asInstanceOf[JsArray].elements.isEmpty shouldBe true
   }
 
   @Test
@@ -421,8 +429,7 @@ class TestStreamApi extends SmallTest with Matchers {
   def parseFromFieldOnCreation(): Unit = {
     val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
       |  {
-      |    "from": "",
-      |    "jar": ${fakeJar.toJson}
+      |    "from": [""]
       |  }
       |  """.stripMargin.parseJson)
     thrown1.getMessage should include("the value of \"from\" can't be empty string")
@@ -432,7 +439,7 @@ class TestStreamApi extends SmallTest with Matchers {
   def parseFromFieldOnUpdate(): Unit = {
     val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATE_JSON_FORMAT.read(s"""
       |  {
-      |    "from": ""
+      |    "from": [""]
       |  }
       |  """.stripMargin.parseJson)
     thrown1.getMessage should include("the value of \"from\" can't be empty string")
@@ -442,8 +449,7 @@ class TestStreamApi extends SmallTest with Matchers {
   def parseToFieldOnCreation(): Unit = {
     val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
       |  {
-      |    "to": "",
-      |    "jar": ${fakeJar.toJson}
+      |    "to": [""]
       |  }
       |  """.stripMargin.parseJson)
     thrown1.getMessage should include("the value of \"to\" can't be empty string")
@@ -453,7 +459,7 @@ class TestStreamApi extends SmallTest with Matchers {
   def parseToFieldOnUpdate(): Unit = {
     val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATE_JSON_FORMAT.read(s"""
       |  {
-      |    "to": ""
+      |    "to": [""]
       |  }
       |  """.stripMargin.parseJson)
     thrown1.getMessage should include("the value of \"to\" can't be empty string")
@@ -487,8 +493,6 @@ class TestStreamApi extends SmallTest with Matchers {
   def parseInstancesFieldOnUpdate(): Unit = {
     an[DeserializationException] should be thrownBy StreamApi.STREAM_UPDATE_JSON_FORMAT.read(s"""
       |  {
-      |    "name": "${CommonUtils.randomString()}",
-      |    "jar": ${fakeJar.toJson},
       |    "instances": 0
       |  }
       |  """.stripMargin.parseJson)
@@ -505,8 +509,7 @@ class TestStreamApi extends SmallTest with Matchers {
   def parseNodeNamesFieldOnCreation(): Unit = {
     val thrown1 = the[DeserializationException] thrownBy StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
       |  {
-      |    "nodeNames": "",
-      |    "jar": ${fakeJar.toJson}
+      |    "nodeNames": ""
       |  }
       |  """.stripMargin.parseJson)
     thrown1.getMessage should include("the value of \"nodeNames\" can't be empty string")
@@ -523,36 +526,59 @@ class TestStreamApi extends SmallTest with Matchers {
   }
 
   @Test
-  def ignoreNameOnCreation(): Unit = StreamApi.access
-    .hostname(CommonUtils.randomString())
-    .port(CommonUtils.availablePort())
-    .request
-    .jar(ObjectKey.of("1", "b"))
-    .creation
-    .name
-    .length should not be 0
+  def ignoreNameOnCreation(): Unit =
+    accessRequest.jarKey(ObjectKey.of("1", "b")).creation.name.length should not be 0
 
   @Test
   def groupShouldAppearInResponse(): Unit = {
     val name = CommonUtils.randomString()
     val res = StreamApi.STREAM_CLUSTER_INFO_JSON_FORMAT.write(
       StreamClusterInfo(
-        name = name,
-        imageName = CommonUtils.randomString(),
-        instances = 1,
-        jar = ObjectKey.of("group", "name"),
-        from = Set("from"),
-        to = Set("from"),
-        metrics = Metrics(Seq.empty),
-        nodeNames = Set.empty,
+        settings = Map(
+          DefaultConfigs.NAME_DEFINITION.key() -> JsString(name),
+          DefaultConfigs.IMAGE_NAME_DEFINITION.key() -> JsString("imageName"),
+          DefaultConfigs.INSTANCES_DEFINITION.key() -> JsNumber(1),
+          DefaultConfigs.JAR_KEY_DEFINITION.key() -> ObjectKey.of("group", "name").toJson,
+          DefaultConfigs.FROM_TOPICS_DEFINITION.key() -> JsString("aa"),
+          DefaultConfigs.TO_TOPICS_DEFINITION.key() -> JsString("bb"),
+          DefaultConfigs.JMX_PORT_DEFINITION.key() -> JsNumber(0),
+          DefaultConfigs.TAGS_DEFINITION.key() -> JsObject(Map("bar" -> JsString("foo"), "he" -> JsNumber(1)))
+        ),
+        definition = Some(Definition("className", Seq(SettingDef.builder().key("key").group("group").build()))),
+        nodeNames = Set("node1"),
         deadNodes = Set.empty,
-        jmxPort = 10,
         state = None,
         error = None,
-        lastModified = CommonUtils.current(),
-        tags = Map.empty
+        metrics = Metrics(Seq.empty),
+        lastModified = CommonUtils.current()
       ))
+    // serialize to json should see the object key (group, name)
     res.asJsObject.fields(NAME_KEY).convertTo[String] shouldBe name
     res.asJsObject.fields(GROUP_KEY).convertTo[String] shouldBe StreamApi.GROUP_DEFAULT
+
+    // // deserialize to info should see the object key (group, name)
+    val data = StreamApi.STREAM_CLUSTER_INFO_JSON_FORMAT.read(res)
+    data.name shouldBe name
+    data.group shouldBe StreamApi.GROUP_DEFAULT
+  }
+
+  @Test
+  def testTagsOnUpdate(): Unit = accessRequest.update.tags shouldBe None
+
+  @Test
+  def testOverwriteSettings(): Unit = {
+    val r1 = accessRequest.from(Set("from")).to(Set("to")).jarKey(ObjectKey.of("group", "name")).creation
+
+    val r2 = accessRequest
+      .from(Set("from"))
+      .to(Set("to"))
+      .jarKey(ObjectKey.of("group", "name"))
+      .settings(Map("name" -> "fake"))
+      .creation
+
+    r1.to shouldBe r2.to
+    r1.from shouldBe Set("from")
+    // settings will overwrite default value
+    r1.name should not be r2.name
   }
 }

@@ -36,7 +36,6 @@ export const getCurrTopicId = ({ originals, target = '' }) => {
 
 export const getUpdatedTopic = ({
   graph,
-  configs,
   connectorName,
   currTopicName,
   originalTopics,

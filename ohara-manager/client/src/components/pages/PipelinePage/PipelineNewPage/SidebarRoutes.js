@@ -114,7 +114,7 @@ const SidebarRoutes = props => {
       />
 
       <Route
-        path={`${routeBaseUrl}/streamApp`}
+        path={`${routeBaseUrl}/stream`}
         render={() => <Connectors.StreamApp {...connectorProps} />}
       />
 

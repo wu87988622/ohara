@@ -46,33 +46,37 @@ class TestStreamRoute extends SmallTest with Matchers {
     // create default property
     val name = CommonUtils.randomString(10)
     val defaultProps = result(
-      accessStream.request.name(name).jar(ObjectKey.of(jar.group, jar.name)).create()
+      accessStream.request.name(name).jarKey(ObjectKey.of(jar.group, jar.name)).create()
     )
     // same name property cannot create again
     an[IllegalArgumentException] should be thrownBy result(
-      accessStream.request.name(name).jar(ObjectKey.of(jar.group, "newJar")).create())
+      accessStream.request.name(name).jarKey(ObjectKey.of(jar.group, "newJar")).create())
 
     // get new streamApp property
     val res1 = result(accessStream.get(defaultProps.name))
     // check initial values
     res1.name shouldBe defaultProps.name
     res1.name shouldBe name
-    res1.from.size shouldBe 0
-    res1.to.size shouldBe 0
+    res1.from shouldBe Set.empty
+    res1.to shouldBe Set.empty
     res1.instances shouldBe 1
 
     // update partial properties
-    val res2 = result(accessStream.request.name(defaultProps.name).to(Set("to1", "to2")).instances(10).update())
+    val res2 = result(accessStream.request.name(defaultProps.name).to(Set("to1")).instances(10).update())
     res2.name shouldBe name
-    res2.from.size shouldBe 0
-    res2.to.size shouldBe 2
-    res2.to shouldBe Set("to1", "to2")
+    res2.from shouldBe Set.empty
+    res2.to shouldBe Set("to1")
     res2.instances shouldBe 10
 
     // create property with some user defined properties
     val userAppId = CommonUtils.randomString(5)
     val userProps = result(
-      accessStream.request.name(userAppId).jar(ObjectKey.of(jar.group, jar.name)).to(Set("to")).instances(99).create())
+      accessStream.request
+        .name(userAppId)
+        .jarKey(ObjectKey.of(jar.group, jar.name))
+        .to(Set("to"))
+        .instances(99)
+        .create())
     userProps.name shouldBe userAppId
     userProps.to shouldBe Set("to")
     userProps.instances shouldBe 99
@@ -83,8 +87,8 @@ class TestStreamRoute extends SmallTest with Matchers {
     // update properties
     val res3 = result(accessStream.request.name(userAppId).from(Set("from")).to(Set("to")).instances(1).update())
     res3.name shouldBe userAppId
-    res3.from.size shouldBe 1
-    res3.to.size shouldBe 1
+    res3.from shouldBe Set("from")
+    res3.to shouldBe Set("to")
     res3.instances shouldBe 1
 
     // delete properties
@@ -112,7 +116,7 @@ class TestStreamRoute extends SmallTest with Matchers {
 
     // create property
     val props = result(
-      accessStream.request.name(streamAppName).jar(ObjectKey.of(streamJar.group, streamJar.name)).create())
+      accessStream.request.name(streamAppName).jarKey(ObjectKey.of(streamJar.group, streamJar.name)).create())
 
     // update properties
     result(
@@ -124,7 +128,7 @@ class TestStreamRoute extends SmallTest with Matchers {
     res1.name shouldBe streamAppName
     res1.from shouldBe Set("fromTopic")
     res1.to shouldBe Set("toTopic")
-    res1.jar shouldBe ObjectKey.of(streamJar.group, streamJar.name)
+    res1.jarKey.name shouldBe streamJar.name
     res1.instances shouldBe instances
     res1.state.get shouldBe ContainerState.RUNNING.name
 
@@ -181,8 +185,8 @@ class TestStreamRoute extends SmallTest with Matchers {
   def testStreamAppPropertyPageFailCases(): Unit = {
     val streamAppName = CommonUtils.requireNumberAndCharset(CommonUtils.randomString(5))
     //operations on non-exists property should be fail
-    an[NullPointerException] should be thrownBy result(accessStream.request.name("appId").jar(null).update())
-    an[IllegalArgumentException] should be thrownBy result(accessStream.get(CommonUtils.randomString(5)))
+    an[NullPointerException] should be thrownBy result(accessStream.request.name("appId").jarKey(null).update())
+    an[IllegalArgumentException] should be thrownBy result(accessStream.get("non_exist_id"))
 
     an[IllegalArgumentException] should be thrownBy result(
       accessStream.request.name(streamAppName).from(Set.empty).update())
@@ -210,7 +214,7 @@ class TestStreamRoute extends SmallTest with Matchers {
     val streamJar = result(accessJar.request.group(wkName).file(file).upload())
 
     // start action will check all the required parameters
-    result(accessStream.request.name(streamAppName).jar(ObjectKey.of(streamJar.group, streamJar.name)).create())
+    result(accessStream.request.name(streamAppName).jarKey(ObjectKey.of(streamJar.group, streamJar.name)).create())
     an[IllegalArgumentException] should be thrownBy result(accessStream.start(streamAppName))
 
     result(accessStream.request.name(streamAppName).from(Set("from")).update())
@@ -244,10 +248,11 @@ class TestStreamRoute extends SmallTest with Matchers {
     val streamDesc = result(
       accessStream.request
         .name(CommonUtils.randomString(10))
-        .jar(ObjectKey.of(jar.group, jar.name))
+        .jarKey(ObjectKey.of(jar.group, jar.name))
         .tags(tags)
         .create())
     streamDesc.tags shouldBe tags
+    streamDesc.jarKey shouldBe ObjectKey.of(jar.group, jar.name)
 
     val tags2 = Map(
       CommonUtils.randomString(10) -> JsString(CommonUtils.randomString(10)),
@@ -255,6 +260,7 @@ class TestStreamRoute extends SmallTest with Matchers {
     )
     val streamDesc2 = result(accessStream.request.name(streamDesc.name).tags(tags2).update())
     streamDesc2.tags shouldBe tags2
+    streamDesc2.jarKey shouldBe ObjectKey.of(jar.group, jar.name)
 
     val streamDesc3 = result(accessStream.request.name(streamDesc.name).update())
     streamDesc3.tags shouldBe tags2

@@ -27,7 +27,9 @@ import com.island.ohara.configurator.file.FileStore
 import com.island.ohara.configurator.route.RouteUtils._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.island.ohara.kafka.connector.json.ObjectKey
+import com.island.ohara.streams.config.StreamDefinitions.DefaultConfigs
 import org.slf4j.LoggerFactory
+import spray.json.{JsNumber, JsObject, _}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
@@ -42,28 +44,51 @@ private[configurator] object StreamRoute {
   private[this] val log = LoggerFactory.getLogger(StreamRoute.getClass)
 
   /**
-    * save the streamApp properties
+    * Save the streamApp properties.
+    * This method will try to fetch the definitions of custom jar.
+    * Note: request fields must have definition to used in streamApp.
     *
-    * @param creation the creation request
+    * @param req the creation request
     * @return '''StreamApp''' object
     */
-  private[this] def toStreamClusterInfo(creation: Creation): StreamClusterInfo =
-    StreamClusterInfo(
-      name = creation.name,
-      imageName = creation.imageName,
-      instances = if (creation.nodeNames.isEmpty) creation.instances else creation.nodeNames.size,
-      nodeNames = creation.nodeNames,
-      deadNodes = Set.empty,
-      jar = creation.jar,
-      from = creation.from,
-      to = creation.to,
-      state = None,
-      jmxPort = creation.jmxPort,
-      metrics = Metrics(Seq.empty),
-      error = None,
-      lastModified = CommonUtils.current(),
-      tags = creation.tags,
-    )
+  private[this] def toStore(req: Creation)(implicit
+                                           fileStore: FileStore,
+                                           clusterCollie: ClusterCollie,
+                                           executionContext: ExecutionContext): Future[StreamClusterInfo] = {
+    req.jarKey.fold {
+      log.info(s"there is no jar provided, we skip definition...")
+      Future.successful(
+        StreamClusterInfo(
+          settings = req.settings,
+          definition = None,
+          nodeNames = req.nodeNames,
+          deadNodes = Set.empty,
+          state = None,
+          metrics = Metrics(Seq.empty),
+          error = None,
+          lastModified = CommonUtils.current()
+        ))
+    } { jarKey =>
+      fileStore
+        .fileInfo(jarKey)
+        .map(_.url)
+        .flatMap(
+          url =>
+            clusterCollie.streamCollie
+              .definitions(url)
+              .map(streamDefOption =>
+                StreamClusterInfo(
+                  settings = req.settings,
+                  definition = streamDefOption,
+                  nodeNames = req.nodeNames,
+                  deadNodes = Set.empty,
+                  state = None,
+                  metrics = Metrics(Seq.empty),
+                  error = None,
+                  lastModified = CommonUtils.current()
+              )))
+    }
+  }
 
   /**
     * Update the streamApp cluster state.
@@ -107,7 +132,7 @@ private[configurator] object StreamRoute {
   }
 
   /**
-    * Check if field was defined
+    * Check if field was defined, throw exception otherwise
     *
     * @param key the request object key
     * @param field the testing field
@@ -119,16 +144,18 @@ private[configurator] object StreamRoute {
     field.getOrElse(throw new IllegalArgumentException(RouteUtils.errorMessage(key, fieldName)))
 
   /**
-    * Assert the require streamApp properties
+    * Assert the require streamApp properties before running
     *
     * @param data streamApp data
     */
   private[this] def assertParameters(data: StreamClusterInfo): Unit = {
     CommonUtils.requireNonEmpty(data.name, () => "name fail assert")
     CommonUtils.requireConnectionPort(data.jmxPort)
-    Objects.requireNonNull(data.jar)
-    CommonUtils.requireNonEmpty(data.from.asJava, () => "from topics fail assert")
-    CommonUtils.requireNonEmpty(data.to.asJava, () => "to topics fail assert")
+    Objects.requireNonNull(data.jarKey)
+    // from topic should be defined
+    CommonUtils.requireNonEmpty(data.from.asJava, () => "from topic fail assert")
+    // to topic should be defined
+    CommonUtils.requireNonEmpty(data.to.asJava, () => "to topic fail assert")
   }
 
   private[this] def hookOfGet(implicit store: DataStore,
@@ -142,44 +169,80 @@ private[configurator] object StreamRoute {
                                executionContext: ExecutionContext): HookOfList[StreamClusterInfo] =
     Future.traverse(_)(updateState)
 
-  private[this] def hookOfCreation: HookOfCreation[Creation, StreamClusterInfo] =
-    (creation: Creation) => Future.successful(toStreamClusterInfo(creation))
+  private[this] def hookOfCreation(implicit fileStore: FileStore,
+                                   clusterCollie: ClusterCollie,
+                                   executionContext: ExecutionContext): HookOfCreation[Creation, StreamClusterInfo] =
+    (creation: Creation) => toStore(creation)
 
-  private[this] def hookOfUpdate(
-    implicit executionContext: ExecutionContext): HookOfUpdate[Creation, Update, StreamClusterInfo] =
-    (key: ObjectKey, update: Update, previous: Option[StreamClusterInfo]) =>
-      Future
-        .successful(
-          previous.fold(StreamClusterInfo(
-            name = key.name,
-            imageName = update.imageName.getOrElse(IMAGE_NAME_DEFAULT),
-            instances = update.nodeNames.fold(checkField(key, update.instances, "instances"))(_.size),
-            nodeNames = update.nodeNames.getOrElse(Set.empty),
-            deadNodes = Set.empty,
-            jar = checkField(key, update.jar, "jar"),
-            from = checkField(key, update.from, "from"),
-            to = checkField(key, update.to, "to"),
-            state = None,
-            jmxPort = checkField(key, update.jmxPort, "jmxPort"),
-            metrics = Metrics(Seq.empty),
-            error = None,
-            lastModified = CommonUtils.current(),
-            tags = update.tags.getOrElse(Map.empty)
-          )) { previous =>
-            previous.copy(
-              instances = update.instances.getOrElse(previous.instances),
-              from = update.from.getOrElse(previous.from),
-              to = update.to.getOrElse(previous.to),
-              nodeNames = update.nodeNames.getOrElse(previous.nodeNames),
-              jmxPort = update.jmxPort.getOrElse(previous.jmxPort),
-              tags = update.tags.getOrElse(previous.tags)
-            )
-          })
-        .map { res =>
-          if (res.state.isDefined)
-            throw new RuntimeException(s"You cannot update property on non-stopped streamApp: $key")
-          res
+  private[this] def hookOfUpdate: HookOfUpdate[Creation, Update, StreamClusterInfo] =
+    (key: ObjectKey, req: Update, previousOption: Option[StreamClusterInfo]) => {
+      val updateReq = previousOption.fold(
+        // data not exists, we used PUT as create object method
+        StreamClusterInfo(
+          settings = req.settings ++
+            Map(
+              DefaultConfigs.NAME_DEFINITION.key() -> JsString(key.name),
+              DefaultConfigs.FROM_TOPICS_DEFINITION.key() -> JsArray(req.from.map(JsString(_)).toVector),
+              DefaultConfigs.TO_TOPICS_DEFINITION.key() -> JsArray(req.to.map(JsString(_)).toVector),
+              DefaultConfigs.JAR_KEY_DEFINITION.key() -> {
+                val jarKey = checkField(key, req.jarKey, DefaultConfigs.JAR_KEY_DEFINITION.key())
+                JsObject(
+                  GROUP_KEY -> JsString(jarKey.group()),
+                  NAME_KEY -> JsString(jarKey.name())
+                )
+              },
+              DefaultConfigs.IMAGE_NAME_DEFINITION.key() -> JsString(req.imageName.getOrElse(IMAGE_NAME_DEFAULT)),
+              DefaultConfigs.INSTANCES_DEFINITION.key() -> JsNumber(
+                req.nodeNames.fold(checkField(key, req.instances, "instances"))(_.size)
+              ),
+              DefaultConfigs.TAGS_DEFINITION.key() -> JsObject(req.tags.getOrElse(Map.empty))
+            ),
+          definition = None,
+          nodeNames = req.nodeNames.getOrElse(Set.empty),
+          deadNodes = Set.empty,
+          state = None,
+          metrics = Metrics(Seq.empty),
+          error = None,
+          lastModified = CommonUtils.current()
+        )
+      ) { previous =>
+        previous.copy(
+          settings = previous.settings ++
+            Map(
+              DefaultConfigs.IMAGE_NAME_DEFINITION.key() -> JsString(
+                req.imageName.getOrElse(previous.imageName)
+              ),
+              DefaultConfigs.INSTANCES_DEFINITION.key() -> JsNumber(
+                req.instances.getOrElse(previous.instances)
+              ),
+              DefaultConfigs.FROM_TOPICS_DEFINITION.key() -> {
+                if (req.from.isEmpty) JsArray(previous.from.map(JsString(_)).toVector)
+                else JsArray(req.from.map(JsString(_)).toVector)
+              },
+              DefaultConfigs.TO_TOPICS_DEFINITION.key() -> {
+                if (req.to.isEmpty) JsArray(previous.to.map(JsString(_)).toVector)
+                else JsArray(req.to.map(JsString(_)).toVector)
+              },
+              DefaultConfigs.JMX_PORT_DEFINITION.key() -> JsNumber(
+                req.jmxPort.getOrElse(previous.jmxPort)
+              ),
+              DefaultConfigs.JAR_KEY_DEFINITION.key() -> JsObject(
+                GROUP_KEY -> JsString(req.jarKey.getOrElse(previous.jarKey).group()),
+                NAME_KEY -> JsString(req.jarKey.getOrElse(previous.jarKey).name())
+              ),
+              DefaultConfigs.TAGS_DEFINITION.key() -> JsObject(
+                req.tags.getOrElse(previous.tags)
+              )
+            ),
+          nodeNames = req.nodeNames.getOrElse(previous.nodeNames)
+        )
       }
+      if (updateReq.state.isDefined)
+        throw new RuntimeException(
+          s"You cannot update property on non-stopped streamApp: $key"
+        )
+      else Future.successful(updateReq)
+    }
 
   private[this] def hookBeforeDelete(implicit store: DataStore,
                                      clusterCollie: ClusterCollie,
@@ -212,13 +275,13 @@ private[configurator] object StreamRoute {
         // 1) use any available node of worker cluster to run streamApp
         // 2) use one from/to pair topic (multiple from/to topics will need to discuss flow)
         // get the broker info and topic info from worker cluster name
-        CollieUtils
         // TODO: decouple this cryptic dependency ... by chia (see https://github.com/oharastream/ohara/issues/2151)
-          .both(Some(data.jar.group))
+        CollieUtils
+          .both(Some(data.jarKey.group()))
           // get broker props from worker cluster
           .map { case (_, topicAdmin, _, _) => topicAdmin.connectionProps }
           .flatMap { bkProps =>
-            fileStore.fileInfo(data.jar).map(_.url).flatMap { url =>
+            fileStore.fileInfo(data.jarKey).map(_.url).flatMap { url =>
               nodeCollie
                 .nodes()
                 .map { all =>
@@ -229,17 +292,11 @@ private[configurator] object StreamRoute {
                     // 2. available nodes should be bigger than instance (one node runs one instance)
                     if (all.size < data.instances)
                       throw new IllegalArgumentException(
-                        s"cannot run streamApp. expect: ${data.instances}, actual: ${all.size}"
-                      )
+                        s"cannot run streamApp. expect: ${data.instances}, actual: ${all.size}")
                     Random.shuffle(all).take(CommonUtils.requirePositiveInt(data.instances)).toSet
                   } else
                     // if require node name is not in nodeCollie, do not take that node
-                    CommonUtils
-                      .requireNonEmpty(
-                        all.filter(n => data.nodeNames.contains(n.name)).asJava
-                      )
-                      .asScala
-                      .toSet
+                    CommonUtils.requireNonEmpty(all.filter(n => data.nodeNames.contains(n.name)).asJava).asScala.toSet
                 }
                 .flatMap(
                   nodes =>
@@ -248,19 +305,21 @@ private[configurator] object StreamRoute {
                       .nodeNames(nodes.map(_.name))
                       .imageName(IMAGE_NAME_DEFAULT)
                       .jarUrl(url.toString)
-                      .appId(data.name)
-                      .brokerProps(bkProps)
-                      .fromTopics(data.from)
-                      .toTopics(data.to)
-                      .enableExactlyOnce(data.exactlyOnce)
+                      // these settings will send to container environment
+                      // we convert all value to string for convenient
+                      .settings(data.settings.map {
+                        case (k, v) =>
+                          k -> (v match {
+                            case JsString(value) => value
+                            case JsArray(arr)    => arr.mkString(",")
+                            case _               => v.toString()
+                          })
+                      } + (DefaultConfigs.BROKER_DEFINITION.key() -> bkProps)
+                        + (DefaultConfigs.EXACTLY_ONCE_DEFINITION.key() -> data.exactlyOnce.toString))
                       .threadPool(executionContext)
-                      .create()
-                )
-                .map(_ => Unit)
+                      .create())
             }
           }
-          // if start failed (no matter why), we change the status to "DEAD"
-          // in order to identify "fail started"(status: DEAD) and "successful stopped"(status = None)
           .recover {
             case ex: Throwable =>
               log.error(s"start streamApp failed: ", ex)

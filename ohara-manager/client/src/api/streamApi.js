@@ -35,8 +35,7 @@ export const fetchProperty = async name => {
 
 export const createProperty = async params => {
   try {
-    const data = { name: params.name, jar: params.jar };
-    const res = await axiosInstance.post('/api/stream', data);
+    const res = await axiosInstance.post('/api/stream', params);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -53,8 +52,8 @@ export const updateProperty = async params => {
   try {
     const propertyName = params.name;
     const url = `/api/stream/${propertyName}`;
-    const from = size(params.from) > 0 ? params.from : null;
-    const to = size(params.to) > 0 ? params.to : null;
+    const from = size(params.from) > 0 ? params.from : [];
+    const to = size(params.to) > 0 ? params.to : [];
 
     const data = {
       from: from,
@@ -89,9 +88,9 @@ export const deleteProperty = async name => {
   }
 };
 
-export const startStreamApp = async id => {
+export const startStreamApp = async name => {
   try {
-    const res = await axiosInstance.put(`/api/stream/${id}/start`);
+    const res = await axiosInstance.put(`/api/stream/${name}/start`);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -104,9 +103,9 @@ export const startStreamApp = async id => {
   }
 };
 
-export const stopStreamApp = async id => {
+export const stopStreamApp = async name => {
   try {
-    const res = await axiosInstance.put(`/api/stream/${id}/stop`);
+    const res = await axiosInstance.put(`/api/stream/${name}/stop`);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {

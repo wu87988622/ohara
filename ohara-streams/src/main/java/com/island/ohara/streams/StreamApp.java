@@ -19,6 +19,7 @@ package com.island.ohara.streams;
 import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.exception.ExceptionHandler;
+import com.island.ohara.common.exception.OharaException;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.streams.config.StreamDefinitions;
 import com.island.ohara.streams.ostream.LaunchImpl;
@@ -28,20 +29,28 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.time.Duration;
-import java.util.AbstractMap;
-import java.util.Enumeration;
-import java.util.Map;
+import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 public abstract class StreamApp {
 
-  private static final String JAR_URL = "STREAMAPP_JARURL";
+  private static final Logger log = LoggerFactory.getLogger(StreamApp.class);
 
   // We set timeout to 30 seconds
   private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(30);
   private static final Duration READ_TIMEOUT = Duration.ofSeconds(30);
+
+  // Exception handler
+  private static ExceptionHandler handler =
+      ExceptionHandler.builder()
+          .with(IOException.class, OharaException::new)
+          .with(MalformedURLException.class, OharaException::new)
+          .with(ClassNotFoundException.class, OharaException::new)
+          .build();
 
   /**
    * Running a standalone streamApp. This method is usually called from the main(). It must not be
@@ -120,14 +129,14 @@ public abstract class StreamApp {
    * <pre>
    *   public StreamDefinitions config() {
    *       // define your own configs
-   *       return StreamDefinitions.add(SettingDef.builder().key(key).group(group).build());
+   *       return StreamDefinitions.create().add(SettingDef.builder().key(key).group(group).build());
    *   }
    * </pre>
    *
    * @return the defined settings
    */
   public StreamDefinitions config() {
-    return StreamDefinitions.DEFAULT;
+    return StreamDefinitions.create();
   }
 
   /** User defined initialization before running streamApp */
@@ -152,54 +161,75 @@ public abstract class StreamApp {
    * find main entry of jar in ohara environment container
    *
    * @param args arguments
-   * @throws Exception exception
+   * @throws OharaException exception
    */
-  public static void main(String[] args) throws Exception {
-    if (System.getenv(JAR_URL) == null)
+  public static void main(String[] args) throws OharaException {
+    Properties props = loadArgs(args);
+    String jarUrl = props.getProperty(StreamDefinitions.DefaultConfigs.JAR_KEY_DEFINITION.key());
+    if (CommonUtils.isEmpty(jarUrl))
       throw new RuntimeException("It seems you are not running in Ohara Environment?");
-    File jarFile = downloadJarByUrl(System.getenv(JAR_URL));
+    File jarFile = downloadJarByUrl(jarUrl);
     Map.Entry<String, URLClassLoader> entry = findStreamAppEntry(jarFile);
 
     if (entry.getKey().isEmpty()) throw new RuntimeException("cannot find any match entry");
-    Class clz = Class.forName(entry.getKey(), true, entry.getValue());
+    Class clz = handler.handle(() -> Class.forName(entry.getKey(), true, entry.getValue()));
     if (StreamApp.class.isAssignableFrom(clz)) {
-      if (args != null && args.length > 0) LaunchImpl.launchApplication(clz, (Object[]) args);
-      else LaunchImpl.launchApplication(clz);
+      LaunchImpl.launchApplication(clz, props);
     } else
       throw new RuntimeException(
           "Error: " + clz + " is not a subclass of " + StreamApp.class.getName());
   }
 
   @VisibleForTesting
-  static File downloadJarByUrl(String jarUrl) throws MalformedURLException {
-    return CommonUtils.downloadUrl(new URL(jarUrl), CONNECT_TIMEOUT, READ_TIMEOUT);
+  static File downloadJarByUrl(String jarUrl) throws OharaException {
+    return handler.handle(
+        () -> CommonUtils.downloadUrl(new URL(jarUrl), CONNECT_TIMEOUT, READ_TIMEOUT));
   }
 
   @VisibleForTesting
-  static Map.Entry<String, URLClassLoader> findStreamAppEntry(File jarFile)
-      throws IOException, ClassNotFoundException {
+  static Map.Entry<String, URLClassLoader> findStreamAppEntry(File jarFile) throws OharaException {
     String entryClassName = "";
 
     String jarHeader = "jar:file:";
     String jarTail = "!/";
 
     // Find the StreamApp entry class name
-    JarFile jar = new JarFile(jarFile);
+    JarFile jar = handler.handle(() -> new JarFile(jarFile));
     Enumeration<JarEntry> e = jar.entries();
 
-    URL[] urls = {new URL(jarHeader + jarFile + jarTail)};
+    URL[] urls = handler.handle(() -> new URL[] {new URL(jarHeader + jarFile + jarTail)});
     URLClassLoader loader = URLClassLoader.newInstance(urls);
 
     while (e.hasMoreElements()) {
       JarEntry entry = e.nextElement();
       if (!entry.isDirectory() && entry.getName().endsWith(".class")) {
         String className = entry.getName().replace(".class", "").replaceAll("/", ".");
-        Class c = loader.loadClass(className);
+        Class c = handler.handle(() -> loader.loadClass(className));
         if (StreamApp.class.isAssignableFrom(c)) {
           entryClassName = c.getName();
         }
       }
     }
     return new AbstractMap.SimpleEntry<>(entryClassName, loader);
+  }
+
+  /**
+   * Put the arguments into properties object with format: (String, String) For Example, "arg1=abc
+   * arg2" will be transformed to ("arg1", "abc") and ("arg2", null)
+   *
+   * @param args argument list
+   * @return properties
+   */
+  private static Properties loadArgs(String[] args) {
+    Properties properties = new Properties();
+    for (String arg : args) {
+      if (!Character.isLetter(arg.charAt(0))) {
+        log.warn(String.format("We cannot handle the argument: [%s], so we skip it", arg));
+        continue;
+      }
+      String[] prop = arg.split("=");
+      properties.setProperty(prop[0], prop.length == 2 ? prop[1] : "");
+    }
+    return properties;
   }
 }

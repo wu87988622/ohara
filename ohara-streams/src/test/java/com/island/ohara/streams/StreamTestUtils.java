@@ -26,7 +26,6 @@ import com.island.ohara.kafka.Producer;
 import java.lang.reflect.Field;
 import java.time.Duration;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -47,14 +46,9 @@ class StreamTestUtils {
         .create();
   }
 
-  static void setOharaEnv(String brokerProps, String appid, String from, String to) {
+  static void setOharaEnv(Map<String, String> settings) {
     try {
-      Map<String, String> map = new HashMap<>();
-      map.put("STREAMAPP_SERVERS", brokerProps);
-      map.put("STREAMAPP_APPID", appid);
-      map.put("STREAMAPP_FROMTOPIC", from);
-      map.put("STREAMAPP_TOTOPIC", to);
-      setEnv(map);
+      setEnv(settings);
     } catch (Exception e) {
       Assert.fail(e.getMessage());
     }

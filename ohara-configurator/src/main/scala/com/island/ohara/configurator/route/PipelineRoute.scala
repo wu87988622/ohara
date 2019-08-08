@@ -30,8 +30,9 @@ import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.RouteUtils._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
-import com.island.ohara.kafka.connector.json.ObjectKey
+import com.island.ohara.kafka.connector.json.{ConnectorDefinitions, ObjectKey}
 
+import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object PipelineRoute {
 
@@ -45,7 +46,7 @@ private[configurator] object PipelineRoute {
           ObjectAbstract(
             group = data.group,
             name = data.name,
-            kind = connectorDefinition.kind,
+            kind = ConnectorDefinitions.kind(connectorDefinition.definitions.asJava),
             className = Some(data.className),
             state = None,
             error = None,
@@ -89,7 +90,7 @@ private[configurator] object PipelineRoute {
         group = data.group,
         name = data.name,
         kind = data.kind,
-        className = None,
+        className = data.definition.map(_.className),
         state = clusterInfo.state,
         error = None,
         metrics = Metrics(Seq.empty),
@@ -105,6 +106,7 @@ private[configurator] object PipelineRoute {
       // Just cast the input data to get the correct className
       className = data match {
         case description: ConnectorDescription => description.plain.get(ConnectorApi.CONNECTOR_CLASS_KEY)
+        case description: StreamClusterInfo    => description.definition.map(_.className)
         case _                                 => None
       },
       state = None,

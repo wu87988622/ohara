@@ -22,9 +22,12 @@ import com.island.ohara.common.data.Serializer;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.BrokerClient;
 import com.island.ohara.kafka.Producer;
+import com.island.ohara.streams.config.StreamDefinitions.DefaultConfigs;
 import com.island.ohara.streams.examples.PageViewRegionExample;
 import com.island.ohara.testing.WithBroker;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -109,7 +112,13 @@ public class TestPageViewRegionExample extends WithBroker {
     String appId = CommonUtils.randomString();
 
     // prepare ohara environment
-    StreamTestUtils.setOharaEnv(client.connectionProps(), appId, fromTopic, toTopic);
+    Map<String, String> settings = new HashMap<>();
+    settings.putIfAbsent(DefaultConfigs.BROKER_DEFINITION.key(), client.connectionProps());
+    settings.putIfAbsent(DefaultConfigs.NAME_DEFINITION.key(), appId);
+    settings.putIfAbsent(DefaultConfigs.FROM_TOPICS_DEFINITION.key(), fromTopic);
+    settings.putIfAbsent(DefaultConfigs.TO_TOPICS_DEFINITION.key(), toTopic);
+    settings.putIfAbsent("joinTopic", joinTableTopic);
+    StreamTestUtils.setOharaEnv(settings);
 
     StreamTestUtils.createTopic(client, fromTopic, partitions, replications);
     StreamTestUtils.createTopic(client, joinTableTopic, partitions, replications);

@@ -79,9 +79,8 @@ Cypress.Commands.add('testCreateWorker', params =>
 Cypress.Commands.add('deleteProperty', params =>
   streamApp.deleteProperty(params),
 );
-
+Cypress.Commands.add('startStreamApp', name => streamApp.startStreamApp(name));
 Cypress.Commands.add('stopStreamApp', name => streamApp.stopStreamApp(name));
-
 Cypress.Commands.add('updateProperty', params =>
   streamApp.updateProperty(params),
 );

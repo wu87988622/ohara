@@ -16,21 +16,24 @@
 
 package com.island.ohara.agent
 
-import java.net.URI
+import java.net.{URI, URL}
 import java.util.Objects
 
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.{ClusterInfo, StreamApi}
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
+import com.island.ohara.client.configurator.v0.{ClusterInfo, Definition, StreamApi}
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json.ObjectKey
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
-import spray.json.JsString
+import com.island.ohara.streams.config.StreamDefinitions
+import com.island.ohara.streams.config.StreamDefinitions.DefaultConfigs
+import com.typesafe.scalalogging.Logger
+import spray.json.{JsArray, JsNumber, JsObject, JsString}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
@@ -40,19 +43,10 @@ import scala.concurrent.{ExecutionContext, Future}
   * It isolates the implementation of container manager from Configurator.
   */
 trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator] {
+  private[this] val LOG = Logger(classOf[StreamCollie])
 
   override def creator: StreamCollie.ClusterCreator =
-    (clusterName,
-     nodeNames,
-     imageName,
-     jarUrl,
-     appId,
-     brokerProps,
-     fromTopics,
-     toTopics,
-     jmxPort,
-     enableExactlyOnce,
-     executionContext) => {
+    (clusterName, nodeNames, imageName, jarUrl, jmxPort, settings, executionContext) => {
       implicit val exec: ExecutionContext = executionContext
       clusters().flatMap(clusters => {
         if (clusters.keys.filter(_.isInstanceOf[StreamClusterInfo]).exists(_.name == clusterName))
@@ -94,42 +88,44 @@ trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator
                             )
                           )
                         ),
-                        environments = Map(
-                          StreamCollie.JARURL_KEY -> jarUrl,
-                          StreamCollie.APPID_KEY -> appId,
-                          StreamCollie.SERVERS_KEY -> brokerProps,
-                          StreamCollie.FROM_TOPIC_KEY -> fromTopics.mkString(","),
-                          StreamCollie.TO_TOPIC_KEY -> toTopics.mkString(","),
-                          StreamCollie.JMX_PORT_KEY -> jmxPort.toString,
-                          StreamCollie.EXACTLY_ONCE -> enableExactlyOnce.toString
-                        ),
+                        environments = settings,
                         // we should set the hostname to container name in order to avoid duplicate name with other containers
                         hostname = containerName
                       )
-                      doCreator(executionContext, clusterName, containerName, containerInfo, node, jmxPort, route).map(
-                        _ => Some(containerInfo))
+                      doCreator(executionContext, containerName, containerInfo, node, route, jmxPort, jarUrl).map(_ =>
+                        Some(containerInfo))
                   })
                   .map(_.flatten.toSeq)
                   .map {
                     successfulContainers =>
                       if (successfulContainers.isEmpty)
                         throw new IllegalArgumentException(s"failed to create $clusterName on $serviceName")
+                      val jarKey = StreamCollie.urlToDataKey(jarUrl)
                       val clusterInfo = StreamClusterInfo(
-                        name = clusterName,
-                        imageName = imageName,
-                        instances = successfulContainers.size,
-                        jar = StreamCollie.urlToDataKey(jarUrl),
-                        from = fromTopics,
-                        to = toTopics,
-                        metrics = Metrics(Seq.empty),
+                        settings = Map(
+                          DefaultConfigs.NAME_DEFINITION.key() -> JsString(clusterName),
+                          DefaultConfigs.IMAGE_NAME_DEFINITION.key() -> JsString(imageName),
+                          DefaultConfigs.INSTANCES_DEFINITION.key() -> JsNumber(successfulContainers.size),
+                          DefaultConfigs.JAR_KEY_DEFINITION.key() -> JsObject(
+                            com.island.ohara.client.configurator.v0.GROUP_KEY -> JsString(jarKey.group()),
+                            com.island.ohara.client.configurator.v0.NAME_KEY -> JsString(jarKey.name())),
+                          DefaultConfigs.FROM_TOPICS_DEFINITION.key() -> JsArray(
+                            JsString(settings(DefaultConfigs.FROM_TOPICS_DEFINITION.key()))
+                          ),
+                          DefaultConfigs.TO_TOPICS_DEFINITION.key() -> JsArray(
+                            JsString(settings(DefaultConfigs.TO_TOPICS_DEFINITION.key()))
+                          ),
+                          DefaultConfigs.JMX_PORT_DEFINITION.key() -> JsNumber(jmxPort),
+                        ),
+                        // we don't care the runtime definitions; it's saved to store already
+                        definition = None,
                         nodeNames = successfulContainers.map(_.nodeName).toSet,
                         deadNodes = Set.empty,
-                        jmxPort = jmxPort,
+                        metrics = Metrics(Seq.empty),
+                        // creating cluster success but still need to update state by another request
                         state = None,
                         error = None,
-                        lastModified = CommonUtils.current(),
-                        // We do not care the user parameters since it's stored in configurator already
-                        tags = Map.empty
+                        lastModified = CommonUtils.current()
                       )
                       postCreateCluster(clusterInfo, successfulContainers)
                       clusterInfo
@@ -147,25 +143,64 @@ trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator
     BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().counterMBeans().asScala
   }.toSeq
 
+  /**
+    *
+    * @return async future containing configs
+    */
+  /**
+    * Get all '''SettingDef''' of current streamApp.
+    * Note: This method intends to call a method that invokes the reflection method of streamApp.
+    *
+    * @param jarUrl the custom streamApp jar url
+    * @return stream definition
+    */
+  def definitions(jarUrl: URL): Future[Option[Definition]] =
+    Future.successful {
+      import sys.process._
+      val classpath = System.getProperty("java.class.path")
+      val command =
+        s"""java -cp $classpath ${StreamCollie.MAIN_ENTRY} ${DefaultConfigs.JAR_KEY_DEFINITION
+          .key()}=\"${jarUrl.toString}\" ${StreamCollie.CONFIG_KEY}"""
+      try {
+        val result = command.!!
+        Some(Definition(result.split("=")(0), StreamDefinitions.ofJson(result.split("=")(1)).values().asScala))
+      } catch {
+        case e: RuntimeException =>
+          // We cannot parse the provided jar, return nothing and log it
+          LOG.warn(s"the provided jar url: [$jarUrl] could not be parsed, skipped it :", e)
+          None
+      }
+    }
+
   private[agent] def toStreamCluster(clusterName: String, containers: Seq[ContainerInfo]): Future[StreamClusterInfo] = {
     // get the first running container, or first non-running container if not found
     val first = containers.find(_.state == ContainerState.RUNNING.name).getOrElse(containers.head)
+    val jarKey = ObjectKey.ofJsonString(first.environments(DefaultConfigs.JAR_KEY_DEFINITION.key()))
     Future.successful(
       StreamClusterInfo(
-        name = clusterName,
-        imageName = first.imageName,
-        instances = containers.size,
-        jar = StreamCollie.urlToDataKey(first.environments(StreamCollie.JARURL_KEY)),
-        from = first.environments(StreamCollie.FROM_TOPIC_KEY).split(",").toSet,
-        to = first.environments(StreamCollie.TO_TOPIC_KEY).split(",").toSet,
-        metrics = Metrics(Seq.empty),
+        settings = Map(
+          DefaultConfigs.NAME_DEFINITION.key() -> JsString(clusterName),
+          DefaultConfigs.IMAGE_NAME_DEFINITION.key() -> JsString(first.imageName),
+          DefaultConfigs.INSTANCES_DEFINITION.key() -> JsNumber(containers.size),
+          DefaultConfigs.JAR_KEY_DEFINITION.key() -> JsObject(
+            com.island.ohara.client.configurator.v0.GROUP_KEY -> JsString(jarKey.group()),
+            com.island.ohara.client.configurator.v0.NAME_KEY -> JsString(jarKey.name())),
+          DefaultConfigs.FROM_TOPICS_DEFINITION.key() -> JsArray(
+            JsString(first.environments(DefaultConfigs.FROM_TOPICS_DEFINITION.key()))
+          ),
+          DefaultConfigs.TO_TOPICS_DEFINITION.key() -> JsArray(
+            JsString(first.environments(DefaultConfigs.TO_TOPICS_DEFINITION.key()))
+          ),
+          DefaultConfigs.JMX_PORT_DEFINITION.key() -> JsNumber(
+            first.environments(DefaultConfigs.JMX_PORT_DEFINITION.key()).toInt)
+        ),
+        // we don't care the runtime definitions; it's saved to store already
+        definition = None,
         nodeNames = containers.map(_.nodeName).toSet,
         // Currently, docker and k8s has same naming rule for "Running",
         // it is ok that we use the containerState.RUNNING here.
         deadNodes = containers.filterNot(_.state == ContainerState.RUNNING.name).map(_.nodeName).toSet,
-        // Currently, streamApp use expose portMappings for jmx port only.
-        // Since dead container would not expose the port, we directly get it from environment for consistency.
-        jmxPort = first.environments(StreamCollie.JMX_PORT_KEY).toInt,
+        metrics = Metrics(Seq.empty),
         state = {
           // we only have two possible results here:
           // 1. only assume cluster is "running" if at least one container is running
@@ -174,9 +209,7 @@ trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator
           if (alive) Some(ClusterState.RUNNING.name) else Some(ClusterState.FAILED.name)
         },
         error = None,
-        lastModified = CommonUtils.current(),
-        // We do not care the user parameters since it's stored in configurator already
-        tags = Map.empty
+        lastModified = CommonUtils.current()
       )
     )
   }
@@ -200,12 +233,12 @@ trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator
   protected def serviceName: String
 
   protected def doCreator(executionContext: ExecutionContext,
-                          clusterName: String,
                           containerName: String,
                           containerInfo: ContainerInfo,
                           node: Node,
+                          route: Map[String, String],
                           jmxPort: Int,
-                          route: Map[String, String]): Future[Unit]
+                          jarUrl: String): Future[Unit]
 
   protected def postCreateCluster(clusterInfo: ClusterInfo, successfulContainers: Seq[ContainerInfo]): Unit = {
     //Default do nothing
@@ -215,12 +248,8 @@ trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator
 object StreamCollie {
   trait ClusterCreator extends Collie.ClusterCreator[StreamClusterInfo] {
     private[this] var jarUrl: String = _
-    private[this] var appId: String = _
-    private[this] var brokerProps: String = _
-    private[this] var fromTopics: Set[String] = Set.empty
-    private[this] var toTopics: Set[String] = Set.empty
     private[this] var jmxPort: Int = CommonUtils.availablePort()
-    private[this] var exactlyOnce: Boolean = false
+    private[this] var settings: Map[String, String] = Map.empty
 
     override protected def doCopy(clusterInfo: StreamClusterInfo): Unit = {
       // doCopy is used to add node for a running cluster.
@@ -241,51 +270,6 @@ object StreamCollie {
     }
 
     /**
-      * set the appId for the streamApp
-      * NOTED: this appId should be unique from other streamApps
-      *
-      * @param appId app id
-      * @return this creator
-      */
-    def appId(appId: String): ClusterCreator = {
-      this.appId = CommonUtils.requireNonEmpty(appId)
-      this
-    }
-
-    /**
-      * set the broker connection props (host:port,...)
-      *
-      * @param brokerProps broker props
-      * @return this creator
-      */
-    def brokerProps(brokerProps: String): ClusterCreator = {
-      this.brokerProps = CommonUtils.requireNonEmpty(brokerProps)
-      this
-    }
-
-    /**
-      * set the topics that the streamApp consumed with
-      *
-      * @param fromTopics from topics
-      * @return this creator
-      */
-    def fromTopics(fromTopics: Set[String]): ClusterCreator = {
-      this.fromTopics = CommonUtils.requireNonEmpty(fromTopics.asJava).asScala.toSet
-      this
-    }
-
-    /**
-      * set the topics that the streamApp produced to
-      *
-      * @param toTopics to topics
-      * @return this creator
-      */
-    def toTopics(toTopics: Set[String]): ClusterCreator = {
-      this.toTopics = CommonUtils.requireNonEmpty(toTopics.asJava).asScala.toSet
-      this
-    }
-
-    /**
       * set the jmx port
       *
       * @param jmxPort jmx port
@@ -298,14 +282,14 @@ object StreamCollie {
     }
 
     /**
-      * set whether enable exactly once
+      * set the key-value data map for container
       *
-      * @param exactlyOnce exactlyOnce
+      * @param settings data settings
       * @return this creator
       */
-    @Optional("default is false")
-    def enableExactlyOnce(exactlyOnce: Boolean): ClusterCreator = {
-      this exactlyOnce = Objects.requireNonNull(exactlyOnce)
+    @Optional("default is empty map")
+    def settings(settings: Map[String, String]): ClusterCreator = {
+      this.settings = Objects.requireNonNull(settings)
       this
     }
 
@@ -314,12 +298,8 @@ object StreamCollie {
       CommonUtils.requireNonEmpty(nodeNames.asJava).asScala.toSet,
       CommonUtils.requireNonEmpty(imageName),
       CommonUtils.requireNonEmpty(jarUrl),
-      CommonUtils.requireNonEmpty(appId),
-      CommonUtils.requireNonEmpty(brokerProps),
-      CommonUtils.requireNonEmpty(fromTopics.asJava).asScala.toSet,
-      CommonUtils.requireNonEmpty(toTopics.asJava).asScala.toSet,
       CommonUtils.requireConnectionPort(jmxPort),
-      Objects.requireNonNull(exactlyOnce),
+      Objects.requireNonNull(settings),
       Objects.requireNonNull(executionContext)
     )
 
@@ -332,27 +312,20 @@ object StreamCollie {
                            nodeNames: Set[String],
                            imageName: String,
                            jarUrl: String,
-                           appId: String,
-                           brokerProps: String,
-                           fromTopics: Set[String],
-                           toTopics: Set[String],
                            jmxPort: Int,
-                           enableExactlyOnce: Boolean,
+                           settings: Map[String, String],
                            executionContext: ExecutionContext): Future[StreamClusterInfo]
   }
-
-  private[agent] val JARURL_KEY: String = "STREAMAPP_JARURL"
-  private[agent] val APPID_KEY: String = "STREAMAPP_APPID"
-  private[agent] val SERVERS_KEY: String = "STREAMAPP_SERVERS"
-  private[agent] val FROM_TOPIC_KEY: String = "STREAMAPP_FROMTOPIC"
-  private[agent] val TO_TOPIC_KEY: String = "STREAMAPP_TOTOPIC"
-  private[agent] val JMX_PORT_KEY: String = "STREAMAPP_JMX_PORT"
-  private[agent] val EXACTLY_ONCE: String = "STREAMAPP_EXACTLY_ONCE"
 
   /**
     * the only entry for ohara streamApp
     */
   private[agent] val MAIN_ENTRY = "com.island.ohara.streams.StreamApp"
+
+  /**
+    * the flag to get/set streamApp configs for container
+    */
+  private[agent] val CONFIG_KEY = "CONFIG_KEY"
 
   /**
     * generate the jmx required properties

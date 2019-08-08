@@ -21,9 +21,12 @@ import com.island.ohara.common.data.Row;
 import com.island.ohara.common.data.Serializer;
 import com.island.ohara.kafka.BrokerClient;
 import com.island.ohara.kafka.Producer;
+import com.island.ohara.streams.config.StreamDefinitions;
 import com.island.ohara.streams.examples.WordCountExample;
 import com.island.ohara.testing.WithBroker;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.Test;
@@ -45,7 +48,13 @@ public class TestWordCountExample extends WithBroker {
     String toTopic = "count-output";
 
     // prepare ohara environment
-    StreamTestUtils.setOharaEnv(client.connectionProps(), methodName(), fromTopic, toTopic);
+    Map<String, String> settings = new HashMap<>();
+    settings.putIfAbsent(
+        StreamDefinitions.DefaultConfigs.BROKER_DEFINITION.key(), client.connectionProps());
+    settings.putIfAbsent(StreamDefinitions.DefaultConfigs.NAME_DEFINITION.key(), methodName());
+    settings.putIfAbsent(StreamDefinitions.DefaultConfigs.FROM_TOPICS_DEFINITION.key(), fromTopic);
+    settings.putIfAbsent(StreamDefinitions.DefaultConfigs.TO_TOPICS_DEFINITION.key(), toTopic);
+    StreamTestUtils.setOharaEnv(settings);
     StreamTestUtils.createTopic(client, fromTopic, partitions, replications);
     StreamTestUtils.createTopic(client, toTopic, partitions, replications);
     // prepare data

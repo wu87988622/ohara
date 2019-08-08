@@ -130,7 +130,6 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
         val containers = result(containerApi.get(zkCluster.name).map(_.flatMap(_.containers)))
         containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
       })
-
       log.info("create zkCluster...done")
 
       // create broker cluster
@@ -174,14 +173,14 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
 
     // create streamApp properties
     val stream = result(
-      access.request.name(CommonUtils.randomString(10)).jar(ObjectKey.of(jarInfo.group, jarInfo.name)).create())
+      access.request.name(CommonUtils.randomString(10)).jarKey(ObjectKey.of(jarInfo.group, jarInfo.name)).create())
 
     // update streamApp properties (use non-existed topics to make sure cluster failed)
     val properties = result(
       access.request.name(stream.name).from(Set("bar-fake")).to(Set("foo-fake")).update()
     )
-    properties.from.size shouldBe 1
-    properties.to.size shouldBe 1
+    properties.from.isEmpty shouldBe false
+    properties.to.isEmpty shouldBe false
     properties.instances shouldBe instances
     properties.state shouldBe None
     properties.error shouldBe None
@@ -265,27 +264,22 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
 
     // create streamApp properties
     val stream = result(
-      access.request.name(CommonUtils.randomString(10)).jar(ObjectKey.of(jarInfo.group, jarInfo.name)).create())
+      access.request.name(CommonUtils.randomString(10)).jarKey(ObjectKey.of(jarInfo.group, jarInfo.name)).create())
 
     // update streamApp properties
     val properties = result(
-      access.request
-        .name(stream.name)
-        .from(Set(topic1.topicNameOnKafka))
-        .to(Set(topic2.topicNameOnKafka))
-        .instances(instances)
-        .update()
+      access.request.name(stream.name).from(Set(topic1.name)).to(Set(topic2.name)).instances(instances).update()
     )
-    properties.from.size shouldBe 1
-    properties.to.size shouldBe 1
+    properties.from shouldBe Set(topic1.name)
+    properties.to shouldBe Set(topic2.name)
     properties.instances shouldBe instances
     properties.state shouldBe None
     properties.error shouldBe None
 
     // get streamApp property (cluster not create yet, hence no state)
     val getProperties = result(access.get(stream.name))
-    getProperties.from.size shouldBe 1
-    getProperties.to.size shouldBe 1
+    getProperties.from shouldBe Set(topic1.name)
+    getProperties.to shouldBe Set(topic2.name)
     getProperties.instances shouldBe instances
     getProperties.state shouldBe None
     getProperties.error shouldBe None
