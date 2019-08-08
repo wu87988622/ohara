@@ -14,326 +14,270 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import DocumentTitle from 'react-document-title';
-import toastr from 'toastr';
+import Tooltip from '@material-ui/core/Tooltip';
+import IconButton from '@material-ui/core/IconButton';
 import { Link } from 'react-router-dom';
-import { get, isEmpty } from 'lodash';
+import { get, isEmpty, isUndefined } from 'lodash';
+import DialogContent from '@material-ui/core/DialogContent';
+import { Form, Field } from 'react-final-form';
 
 import * as MESSAGES from 'constants/messages';
 import * as utils from './pipelineUtils/pipelineListPageUtils';
-import * as pipelineApi from 'api/pipelineApi';
 import * as URLS from 'constants/urls';
-import { TableLoader, ListLoader } from 'components/common/Loader';
+import { ListLoader } from 'components/common/Loader';
 import { DeleteDialog } from 'components/common/Mui/Dialog';
-import { Modal } from 'components/common/Modal';
-import { Box } from 'components/common/Layout';
 import { Warning } from 'components/common/Messages';
 import { H2 } from 'components/common/Headings';
-import { Select } from 'components/common/Form';
-import { primaryBtn } from 'theme/btnTheme';
 import { PIPELINE } from 'constants/documentTitles';
-import { fetchWorkers } from 'api/workerApi';
-import { Input, Label, FormGroup } from 'components/common/Form';
-import {
-  Wrapper,
-  TopWrapper,
-  NewPipelineBtn,
-  Table,
-  LinkIcon,
-  DeleteIcon,
-  Inner,
-  LoaderWrapper,
-} from './styles';
+import * as s from './styles';
+import { SortTable } from 'components/common/Mui/Table';
+import useSnackbar from 'components/context/Snackbar/useSnackbar';
+import * as useApi from 'components/controller';
+import * as URL from 'components/controller/url';
+import { Dialog } from 'components/common/Mui/Dialog';
+import { InputField, Select } from 'components/common/Mui/Form';
 
-class PipelineListPage extends React.Component {
-  static propTypes = {
-    match: PropTypes.shape({
-      url: PropTypes.string.isRequired,
-    }).isRequired,
-    history: PropTypes.shape({
-      push: PropTypes.func.isRequired,
-    }).isRequired,
+const PipelineListPage = props => {
+  const { match } = props;
+  const [isSelectClusterModalActive, setIsSelectClusterModalActive] = useState(
+    false,
+  );
+  const [
+    isDeletePipelineModalActive,
+    setIsDeletePipelineModalActive,
+  ] = useState(false);
+  const [isNewPipelineWorking, setIsNewPipelineWorking] = useState(false);
+  const [isDeletePipelineWorking, setIsDeletePipelineWorking] = useState(false);
+  const [pipelineToBeDeleted, setPipelineToBeDeleted] = useState('');
+  const { showMessage } = useSnackbar();
+  const {
+    data: pipelines,
+    isLoading: isFetchingPipeline,
+    refetch: refetchPipelines,
+  } = useApi.useFetchApi(URL.PIPELINE_URL);
+  const { data: workers, isLoading: isFetchingWorker } = useApi.useFetchApi(
+    URL.WORKER_URL,
+  );
+  const { getData: pipelineRes, postApi: createPipeline } = useApi.usePostApi(
+    URL.PIPELINE_URL,
+  );
+  const {
+    getData: deletePipelineRes,
+    deleteApi: deletePipeline,
+  } = useApi.useDeleteApi(URL.PIPELINE_URL);
+
+  const handleSelectClusterModalClose = () => {
+    setIsSelectClusterModalActive(false);
   };
 
-  headers = ['name', 'workspace', 'status', 'edit', 'delete'];
-  state = {
-    isSelectClusterModalActive: false,
-    isDeletePipelineModalActive: false,
-    isFetchingPipeline: true,
-    isFetchingWorker: true,
-    pipelines: [],
-    workers: [],
-    currWorker: {},
-    isNewPipelineWorking: false,
-    isDeletePipelineWorking: false,
-    newPipelineName: '',
-    pipelineToBeDeleted: '',
+  const handleSelectClusterModalOpen = () => {
+    setIsSelectClusterModalActive(true);
   };
 
-  componentDidMount() {
-    this.fetchPipelines();
-    this.fetchWorkers();
-  }
-
-  fetchWorkers = async () => {
-    const res = await fetchWorkers();
-    const workers = get(res, 'data.result', null);
-    this.setState({ isFetchingWorker: false });
-    if (workers) {
-      this.setState({ workers, currWorker: workers[0] });
-    }
-  };
-
-  fetchPipelines = async () => {
-    const res = await pipelineApi.fetchPipelines();
-    const result = get(res, 'data.result', null);
-    this.setState({ isFetchingPipeline: false });
-
-    if (result) {
-      const pipelines = utils.addPipelineStatus(result);
-      this.setState({ pipelines });
-    }
-  };
-
-  handleSelectChange = ({ target }) => {
-    const selectedIdx = target.options.selectedIndex;
-    const { id } = target.options[selectedIdx].dataset;
-
-    this.setState({
-      currWorker: {
-        name: target.value,
-        id,
-      },
-    });
-  };
-
-  handleSelectClusterModalClose = () => {
-    this.setState(({ workers }) => {
-      return {
-        isSelectClusterModalActive: false,
-        currWorker: workers[0],
-      };
-    });
-  };
-
-  handleSelectClusterModalOpen = e => {
-    e.preventDefault();
-    this.setState({ isSelectClusterModalActive: true });
-  };
-
-  handleSelectClusterModalConfirm = async () => {
-    const { history, match } = this.props;
-    const { currWorker, newPipelineName } = this.state;
-
+  const handleSelectClusterModalConfirm = async values => {
+    const { history, match } = props;
     const params = {
-      name: newPipelineName,
+      name: values.name,
       rules: {},
-      workerClusterName: currWorker.name,
+      workerClusterName: values.workspace,
     };
 
-    this.setState({ isNewPipelineWorking: true });
-    const res = await pipelineApi.createPipeline(params);
-    this.setState({ isNewPipelineWorking: false });
-    const pipelineName = get(res, 'data.result.name', null);
+    setIsNewPipelineWorking(true);
+    await createPipeline(params);
+    setIsNewPipelineWorking(false);
+    const pipelineName = get(pipelineRes(), 'data.result.name', null);
 
     if (pipelineName) {
-      this.handleSelectClusterModalClose();
-      toastr.success(MESSAGES.PIPELINE_CREATION_SUCCESS);
+      handleSelectClusterModalClose();
+      showMessage(MESSAGES.PIPELINE_CREATION_SUCCESS);
       history.push(`${match.url}/new/${pipelineName}`);
     }
   };
 
-  handleDeletePipelineModalOpen = name => {
-    this.setState({
-      isDeletePipelineModalActive: true,
-      pipelineToBeDeleted: name,
-      pipelineName: name,
-    });
+  const handleDeletePipelineModalOpen = name => {
+    setIsDeletePipelineModalActive(true);
+    setPipelineToBeDeleted(name);
   };
 
-  handleDeletePipelineModalClose = () => {
-    this.setState({
-      isDeletePipelineModalActive: false,
-      pipelineToBeDeleted: '',
-    });
+  const handleDeletePipelineModalClose = () => {
+    setIsDeletePipelineModalActive(false);
+    setPipelineToBeDeleted('');
   };
 
-  handleChange = ({ target: { value } }) => {
-    this.setState({ newPipelineName: value });
-  };
-
-  handleDeletePipelineConfirm = async () => {
-    const { pipelineToBeDeleted } = this.state;
-    this.setState({ isDeletePipelineWorking: true });
-    const res = await pipelineApi.deletePipeline(pipelineToBeDeleted);
-    const isSuccess = get(res, 'data.isSuccess', false);
-    this.setState({ isDeletePipelineWorking: false });
+  const handleDeletePipelineConfirm = async () => {
+    setIsDeletePipelineWorking(true);
+    await deletePipeline(pipelineToBeDeleted);
+    const isSuccess = get(deletePipelineRes(), 'data.isSuccess', false);
+    setIsDeletePipelineWorking(false);
 
     if (isSuccess) {
-      this.setState(({ pipelines }) => {
-        const _pipelines = pipelines.filter(
-          p => p.name !== pipelineToBeDeleted,
-        );
-        return {
-          pipelines: _pipelines,
-          isDeletePipelineModalActive: false,
-          pipelineToBeDeleted: '',
-        };
-      });
-      toastr.success(
+      refetchPipelines();
+      showMessage(
         `${MESSAGES.PIPELINE_DELETION_SUCCESS} ${pipelineToBeDeleted}`,
       );
     } else {
-      toastr.error(
-        `${MESSAGES.PIPELINE_DELETION_ERROR} ${pipelineToBeDeleted}`,
-      );
+      showMessage(`${MESSAGES.PIPELINE_DELETION_ERROR} ${pipelineToBeDeleted}`);
     }
+    setIsDeletePipelineModalActive(false);
   };
 
-  render() {
-    const { match } = this.props;
-    const {
-      isDeletePipelineModalActive,
-      isSelectClusterModalActive,
-      isFetchingPipeline,
-      isFetchingWorker,
-      isNewPipelineWorking,
-      isDeletePipelineWorking,
-      pipelines,
-      newPipelineName,
-      pipelineToBeDeleted,
-      workers,
-      currWorker,
-    } = this.state;
+  const deleteButton = pipeline => {
+    const { name } = pipeline;
     return (
-      <DocumentTitle title={PIPELINE}>
-        <>
-          <Modal
-            isActive={isSelectClusterModalActive}
-            title="New pipeline"
-            width="370px"
-            confirmBtnText="Add"
-            handleConfirm={this.handleSelectClusterModalConfirm}
-            handleCancel={this.handleSelectClusterModalClose}
-            isConfirmDisabled={isEmpty(workers) ? true : false}
-            isConfirmWorking={isNewPipelineWorking}
-          >
-            <div data-testid="new-pipeline-modal">
-              {isFetchingWorker ? (
-                <LoaderWrapper>
-                  <ListLoader />
-                </LoaderWrapper>
-              ) : (
-                <Inner>
-                  {isEmpty(workers) ? (
-                    <Warning
-                      text={
-                        <>
-                          It seems like you haven't created any worker clusters
-                          yet. You can create one from
-                          <Link to={URLS.WORKSPACES}> here</Link>
-                        </>
-                      }
-                    />
-                  ) : (
-                    <>
-                      <FormGroup data-testid="name">
-                        <Label htmlFor="pipelineInput">Pipeline name</Label>
-                        <Input
-                          id="pipelineInput"
-                          name="name"
-                          width="100%"
-                          placeholder="Pipeline name"
-                          data-testid="name-input"
-                          value={newPipelineName}
-                          handleChange={this.handleChange}
-                        />
-                      </FormGroup>
-                      <FormGroup data-testid="workerSelect">
-                        <Label htmlFor="workerSelect">Workspace name</Label>
-                        <Select
-                          id="workerSelect"
-                          data-testid="cluster-select"
-                          list={workers}
-                          selected={currWorker}
-                          handleChange={this.handleSelectChange}
-                          isObject
-                        />
-                      </FormGroup>
-                    </>
-                  )}
-                </Inner>
-              )}
-            </div>
-          </Modal>
-
-          <DeleteDialog
-            title="Delete pipeline?"
-            content={`Are you sure you want to delete the pipeline: ${pipelineToBeDeleted}? This action cannot be undone!`}
-            open={isDeletePipelineModalActive}
-            working={isDeletePipelineWorking}
-            handleConfirm={this.handleDeletePipelineConfirm}
-            handleClose={this.handleDeletePipelineModalClose}
-          />
-
-          <Wrapper>
-            <TopWrapper>
-              <H2>Pipelines</H2>
-              <NewPipelineBtn
-                theme={primaryBtn}
-                text="New pipeline"
-                data-testid="new-pipeline"
-                handleClick={this.handleSelectClusterModalOpen}
-              />
-            </TopWrapper>
-            <Box>
-              {isFetchingPipeline ? (
-                <TableLoader />
-              ) : (
-                <Table headers={this.headers}>
-                  {pipelines.map(pipeline => {
-                    const { name, status, workerClusterName } = pipeline;
-                    const isRunning = status === 'Running' ? true : false;
-                    const trCls = isRunning ? 'is-running' : '';
-                    const editUrl = utils.getEditUrl(pipeline, match);
-
-                    return (
-                      <tr
-                        key={name}
-                        className={trCls}
-                        data-testid="pipeline-tr"
-                      >
-                        <td>{name}</td>
-                        <td>{workerClusterName}</td>
-                        <td>{status}</td>
-                        <td data-testid="edit-pipeline" className="has-icon">
-                          <LinkIcon to={editUrl}>
-                            <i className="far fa-edit" />
-                          </LinkIcon>
-                        </td>
-                        <td data-testid="delete-pipeline" className="has-icon">
-                          <DeleteIcon
-                            data-testid="delete-pipeline-btn"
-                            onClick={() =>
-                              this.handleDeletePipelineModalOpen(name)
-                            }
-                          >
-                            <i className="far fa-trash-alt" />
-                          </DeleteIcon>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </Table>
-              )}
-            </Box>
-          </Wrapper>
-        </>
-      </DocumentTitle>
+      <Tooltip title={`Delete ${name} pipeline`} enterDelay={1000}>
+        <IconButton
+          onClick={() => handleDeletePipelineModalOpen(name)}
+          data-testid="delete-pipeline"
+        >
+          <s.StyledIcon className="fas fa-trash-alt" />
+        </IconButton>
+      </Tooltip>
     );
-  }
-}
+  };
+
+  const editButton = pipeline => {
+    const { name } = pipeline;
+    return (
+      <Tooltip title={`Edit ${name} pipeline`} enterDelay={1000}>
+        <Link to={utils.getEditUrl(pipeline, match)}>
+          <IconButton data-testid="edit-pipeline">
+            <s.StyledIcon className="fas fa-external-link-square-alt" />
+          </IconButton>
+        </Link>
+      </Tooltip>
+    );
+  };
+
+  const headRows = [
+    { id: 'name', label: 'Name' },
+    { id: 'workspace', label: 'Workspace' },
+    { id: 'status', label: 'Status' },
+    { id: 'edit', label: 'Edit', sortable: false },
+    { id: 'delete', label: 'Delete', sortable: false },
+  ];
+
+  const rows = utils
+    .addPipelineStatus(get(pipelines, 'data.result', []))
+    .map(pipeline => {
+      return {
+        name: pipeline.name,
+        workspace: pipeline.workerClusterName,
+        status: pipeline.status,
+        edit: editButton(pipeline),
+        delete: deleteButton(pipeline),
+      };
+    });
+  return (
+    <Form
+      onSubmit={handleSelectClusterModalConfirm}
+      initialValues={{}}
+      render={({ handleSubmit, submitting, values }) => {
+        return (
+          <DocumentTitle title={PIPELINE}>
+            <>
+              <Dialog
+                title="New pipeline"
+                handleConfirm={handleSubmit}
+                isLoading={isNewPipelineWorking}
+                confirmDisabled={
+                  submitting ||
+                  isUndefined(values.workspace) ||
+                  isUndefined(values.name)
+                }
+                open={isSelectClusterModalActive}
+                handelClose={handleSelectClusterModalClose}
+                testId="new-pipeline-modal"
+              >
+                {isFetchingWorker ? (
+                  <s.LoaderWrapper>
+                    <ListLoader />
+                  </s.LoaderWrapper>
+                ) : (
+                  <>
+                    {isEmpty(get(workers, 'data.result')) ? (
+                      <DialogContent>
+                        <Warning
+                          text={
+                            <>
+                              It seems like you haven't created any worker
+                              clusters yet. You can create one from
+                              <Link to={URLS.WORKSPACES}> here</Link>
+                            </>
+                          }
+                        />
+                      </DialogContent>
+                    ) : (
+                      <form onSubmit={handleSubmit}>
+                        <DialogContent>
+                          <Field
+                            name="name"
+                            label="Pipeline name"
+                            placeholder="PipelineName"
+                            inputProps={{ 'data-testid': 'name-input' }}
+                            component={InputField}
+                            autoFocus
+                          />
+                        </DialogContent>
+                        <DialogContent>
+                          <Field
+                            name="workspace"
+                            label="Workspace name"
+                            data-testid="cluster-select"
+                            list={get(workers, 'data.result', []).map(
+                              worker => worker.name,
+                            )}
+                            component={Select}
+                          />
+                        </DialogContent>
+                      </form>
+                    )}
+                  </>
+                )}
+              </Dialog>
+
+              <DeleteDialog
+                title="Delete pipeline?"
+                content={`Are you sure you want to delete the pipeline: ${pipelineToBeDeleted}? This action cannot be undone!`}
+                open={isDeletePipelineModalActive}
+                working={isDeletePipelineWorking}
+                handleConfirm={handleDeletePipelineConfirm}
+                handleClose={handleDeletePipelineModalClose}
+              />
+
+              <s.Wrapper>
+                <s.TopWrapper>
+                  <H2>Pipelines</H2>
+                  <s.NewPipelineBtn
+                    text="New pipeline"
+                    testId="new-pipeline"
+                    onClick={handleSelectClusterModalOpen}
+                  />
+                </s.TopWrapper>
+                <SortTable
+                  isLoading={isFetchingPipeline}
+                  headRows={headRows}
+                  rows={rows}
+                  tableName="pipeline"
+                />
+              </s.Wrapper>
+            </>
+          </DocumentTitle>
+        );
+      }}
+    />
+  );
+};
+
+PipelineListPage.propTypes = {
+  match: PropTypes.shape({
+    url: PropTypes.string.isRequired,
+  }).isRequired,
+  history: PropTypes.shape({
+    push: PropTypes.func.isRequired,
+  }).isRequired,
+};
 
 export default PipelineListPage;

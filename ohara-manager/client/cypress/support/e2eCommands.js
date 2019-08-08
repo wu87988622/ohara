@@ -108,14 +108,19 @@ Cypress.Commands.add('createTopic', () => {
     })
     .as('brokerClusterName');
 
+  const topicName = utils.makeRandomStr();
+
   cy.get('@brokerClusterName').then(brokerClusterName => {
     cy.request('POST', '/api/topics', {
-      name: utils.makeRandomStr(),
+      name: topicName,
       numberOfReplications: 1,
       numberOfPartitions: 1,
       brokerClusterName,
     }).then(({ body }) => body); // we'll need the returned data later on
   });
+
+  cy.request('PUT', `/api/topics/${topicName}/start`);
+  Cypress.env('TOPICS_NAME', topicName);
 });
 
 Cypress.Commands.add('deleteAllWorkers', () => {
@@ -180,9 +185,10 @@ Cypress.Commands.add('deleteAllNodes', () => {
 
 Cypress.Commands.add('deleteTopic', topicName => {
   cy.request('GET', 'api/topics').then(res => {
-    res.body.forEach(({ name, id }) => {
+    res.body.forEach(({ name }) => {
       if (name === topicName) {
-        cy.request('DELETE', `api/topics/${id}`);
+        cy.request('PUT', `/api/topics/${name}/stop`);
+        cy.request('DELETE', `api/topics/${name}`);
       }
     });
   });

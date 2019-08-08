@@ -27,6 +27,7 @@ const Button = props => {
     variant = 'contained',
     size = 'medium',
     onClick,
+    testId,
   } = props;
 
   return (
@@ -37,6 +38,7 @@ const Button = props => {
       variant={variant}
       onClick={onClick}
       size={size}
+      data-testid={testId}
     >
       {text}
     </MuiButton>
@@ -51,6 +53,7 @@ Button.propTypes = {
   variant: PropTypes.string,
   onClick: PropTypes.func,
   component: PropTypes.string,
+  testId: PropTypes.string,
 };
 
 export default Button;
