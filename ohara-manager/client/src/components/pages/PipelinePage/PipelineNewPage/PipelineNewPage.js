@@ -141,7 +141,8 @@ class PipelineNewPage extends React.Component {
   };
 
   fetchWorker = async () => {
-    const { workerClusterName: name } = this.state.pipeline;
+    const { tags } = this.state.pipeline;
+    const { workerClusterName: name } = tags;
     const res = await workerApi.fetchWorker(name);
     const worker = get(res, 'data.result', null);
 
@@ -257,11 +258,9 @@ class PipelineNewPage extends React.Component {
     if (isEmpty(pipeline) || isEmpty(connectors)) return null;
 
     const pipelineName = get(this, 'props.match.params.pipelineName', null);
-    const {
-      name: pipelineTitle,
-      workerClusterName,
-      objects: pipelineConnectors,
-    } = pipeline;
+    const { name: pipelineTitle, tags, objects: pipelineConnectors } = pipeline;
+
+    const { workerClusterName } = tags;
 
     const connectorProps = {
       ...this.props,
