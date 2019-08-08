@@ -142,8 +142,8 @@ class PipelineNewPage extends React.Component {
 
   fetchWorker = async () => {
     const { tags } = this.state.pipeline;
-    const { workerClusterName: name } = tags;
-    const res = await workerApi.fetchWorker(name);
+    const { workerClusterName } = tags;
+    const res = await workerApi.fetchWorker(workerClusterName);
     const worker = get(res, 'data.result', null);
 
     if (worker) {
