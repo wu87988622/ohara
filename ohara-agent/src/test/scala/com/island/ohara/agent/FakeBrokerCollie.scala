@@ -81,7 +81,7 @@ private class FakeBrokerCollie(node: NodeCollie,
           lastModified = CommonUtils.current(),
           state = None,
           error = None,
-          topicSettingDefinitions = TopicApi.TOPIC_CUSTOM_DEFINITIONS
+          topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
         ) -> bkExistContainers)
     )
 

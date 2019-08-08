@@ -41,7 +41,7 @@ class FakeWorkerCollie(node: NodeCollie) extends WorkerCollie {
         lastModified = CommonUtils.current(),
         state = None,
         error = None,
-        topicSettingDefinitions = TopicApi.TOPIC_CUSTOM_DEFINITIONS
+        topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
       ) -> Seq(ContainerInfo(
         "node1",
         "aaaa",

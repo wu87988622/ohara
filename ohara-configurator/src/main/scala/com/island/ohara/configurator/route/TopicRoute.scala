@@ -26,6 +26,7 @@ import com.island.ohara.configurator.route.RouteUtils._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.island.ohara.kafka.connector.json.{ObjectKey, TopicKey}
 import com.typesafe.scalalogging.Logger
+import spray.json.JsString
 
 import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object TopicRoute {
@@ -34,8 +35,8 @@ private[configurator] object TopicRoute {
   /**
     * convert the setting defs to plain map.
     */
-  private[this] val TOPIC_CUSTOM_CONFIGS: Map[String, String] =
-    TOPIC_CUSTOM_DEFINITIONS.map(setting => setting.key() -> setting.defaultValue()).toMap
+  private[route] val TOPIC_CUSTOM_CONFIGS: Map[String, JsString] =
+    TOPIC_CUSTOM_DEFINITIONS.map(setting => setting.key() -> JsString(setting.defaultValue())).toMap
 
   /**
     * fetch the topic meters from broker cluster
@@ -53,7 +54,7 @@ private[configurator] object TopicRoute {
     * @param topicInfo topic info
     * @return updated topic info
     */
-  private[this] def update(brokerCluster: BrokerClusterInfo, topicInfo: TopicInfo)(
+  private[this] def updateState(brokerCluster: BrokerClusterInfo, topicInfo: TopicInfo)(
     implicit adminCleaner: AdminCleaner,
     meterCache: MeterCache,
     brokerCollie: BrokerCollie,
@@ -98,7 +99,7 @@ private[configurator] object TopicRoute {
                               brokerCollie: BrokerCollie,
                               executionContext: ExecutionContext): HookOfGet[TopicInfo] = (topicInfo: TopicInfo) =>
     brokerCollie.cluster(topicInfo.brokerClusterName).flatMap {
-      case (cluster, _) => update(cluster, topicInfo)
+      case (cluster, _) => updateState(cluster, topicInfo)
   }
 
   private[this] def hookOfList(implicit adminCleaner: AdminCleaner,
@@ -108,7 +109,7 @@ private[configurator] object TopicRoute {
     (topicInfos: Seq[TopicInfo]) =>
       Future.traverse(topicInfos) { response =>
         brokerCollie.cluster(response.brokerClusterName).flatMap {
-          case (cluster, _) => update(cluster, response)
+          case (cluster, _) => updateState(cluster, response)
         }
     }
 
@@ -117,16 +118,13 @@ private[configurator] object TopicRoute {
     (creation: Creation) =>
       CollieUtils.orElseClusterName(creation.brokerClusterName).map { clusterName =>
         TopicInfo(
-          group = creation.group,
-          name = creation.name,
-          numberOfPartitions = creation.numberOfPartitions,
-          numberOfReplications = creation.numberOfReplications,
-          brokerClusterName = clusterName,
+          // the default custom configs is at first since it is able to be replaced by creation.
+          settings = TOPIC_CUSTOM_CONFIGS
+            ++ creation.settings
+            + (BROKER_CLUSTER_NAME_KEY -> JsString(clusterName)),
           metrics = Metrics(Seq.empty),
           state = None,
-          lastModified = CommonUtils.current(),
-          configs = TOPIC_CUSTOM_CONFIGS ++ creation.configs,
-          tags = creation.tags
+          lastModified = CommonUtils.current()
         )
     }
 
@@ -142,16 +140,12 @@ private[configurator] object TopicRoute {
                 throw new IllegalStateException(
                   s"the topic:$key is working now. Please stop it before updating the properties")
               try TopicInfo(
-                group = key.group,
-                name = key.name,
-                numberOfPartitions = update.numberOfPartitions.getOrElse(DEFAULT_NUMBER_OF_PARTITIONS),
-                numberOfReplications = update.numberOfReplications.getOrElse(DEFAULT_NUMBER_OF_REPLICATIONS),
-                brokerClusterName = cluster.name,
+                settings = previous.map(_.settings).getOrElse(Map.empty)
+                  ++ update.settings
+                  + (BROKER_CLUSTER_NAME_KEY -> JsString(cluster.name)),
                 metrics = Metrics(Seq.empty),
                 state = None,
-                lastModified = CommonUtils.current(),
-                configs = update.configs.orElse(previous.map(_.configs)).getOrElse(Map.empty),
-                tags = update.tags.orElse(previous.map(_.tags)).getOrElse(Map.empty)
+                lastModified = CommonUtils.current()
               )
               finally Releasable.close(client)
           }

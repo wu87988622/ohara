@@ -88,7 +88,7 @@ object BrokerRoute {
           state = None,
           error = None,
           lastModified = CommonUtils.current(),
-          topicSettingDefinitions = TopicApi.TOPIC_CUSTOM_DEFINITIONS
+          topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
         )
     }
 
@@ -119,7 +119,7 @@ object BrokerRoute {
               state = None,
               error = None,
               lastModified = CommonUtils.current(),
-              topicSettingDefinitions = TopicApi.TOPIC_CUSTOM_DEFINITIONS
+              topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
             )) { previous =>
             previous.copy(
               imageName = update.imageName.getOrElse(previous.imageName),

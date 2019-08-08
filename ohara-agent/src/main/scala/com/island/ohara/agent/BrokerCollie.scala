@@ -180,7 +180,7 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
                       state = None,
                       error = None,
                       lastModified = CommonUtils.current(),
-                      topicSettingDefinitions = TopicApi.TOPIC_CUSTOM_DEFINITIONS
+                      topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
                     )
                     postCreateBrokerCluster(clusterInfo, successfulContainers)
                     clusterInfo
@@ -312,7 +312,7 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
         // TODO how could we fetch the error?...by Sam
         error = None,
         lastModified = CommonUtils.current(),
-        topicSettingDefinitions = TopicApi.TOPIC_CUSTOM_DEFINITIONS
+        topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
       ))
   }
 

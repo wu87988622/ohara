@@ -61,7 +61,7 @@ private[configurator] class FakeBrokerCollie(node: NodeCollie, bkConnectionProps
             error = None,
             tags = Map.empty,
             lastModified = CommonUtils.current(),
-            topicSettingDefinitions = TopicApi.TOPIC_CUSTOM_DEFINITIONS
+            topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
           )))
 
   override protected def doRemoveNode(previousCluster: BrokerClusterInfo, beRemovedContainer: ContainerInfo)(
@@ -81,7 +81,7 @@ private[configurator] class FakeBrokerCollie(node: NodeCollie, bkConnectionProps
         error = None,
         tags = Map.empty,
         lastModified = CommonUtils.current(),
-        topicSettingDefinitions = TopicApi.TOPIC_CUSTOM_DEFINITIONS
+        topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
       )))
     .map(_ => true)
 
@@ -113,7 +113,7 @@ private[configurator] class FakeBrokerCollie(node: NodeCollie, bkConnectionProps
         error = None,
         tags = Map.empty,
         lastModified = CommonUtils.current(),
-        topicSettingDefinitions = TopicApi.TOPIC_CUSTOM_DEFINITIONS
+        topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
       )))
 
   override protected def doCreator(executionContext: ExecutionContext,

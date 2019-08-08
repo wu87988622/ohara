@@ -35,13 +35,14 @@ topic are shown below.
    which is larger than the number of broker nodes**)
 #. numberOfPartitions (**option(int)**)— the number of partitions for
    this topic
-#. configs (**option(object)**) — the custom configs used to create topic
 #. state (**option(string)**) — state of a running topic. nothing if the topic is not running.
 #. tags (**option(object)**) — the extra description to this
    object
 
 .. note::
-   The name must be unique in a broker cluster.
+  #. The name must be unique in a broker cluster.
+  #. There are many other available configs which are useful in creating topic. Please ref :ref:`broker clusters <rest-brokers>` to see how to retrieve the available configs for specific broker cluster.
+
 
 The following information are tagged by ohara.
 
@@ -68,7 +69,6 @@ store a topic properties
    which is larger than the number of broker nodes**)
 #. numberOfPartitions (**option(int)**)— the number of partitions for
    this topic
-#. configs (**option(object)**) — the custom configs used to create topic
 #. state (**option(string)**) — state of a running topic. nothing if the topic is not running.
 #. tags (**option(object)**) — the extra description to this
    object
@@ -77,6 +77,7 @@ store a topic properties
   #. the name you pass to ohara is used to build topic on kafka, and it is restricted by Kafka ([a-zA-Z0-9\._\-])
   #. the ignored fields will be auto-completed by Ohara Configurator. Also, you could update/replace it by UPDATE request later.
   #. this API does NOT create a topic on broker cluster. Instead, you should sent START request to run a topic on broker cluster actually
+  #. There are many other available configs which are useful in creating topic. Please ref :ref:`broker clusters <rest-brokers>` to see how to retrieve the available configs for specific broker cluster.
 
 Example Request
   .. code-block:: json
@@ -91,19 +92,20 @@ Example Request
 Example Response
   .. code-block:: json
 
-     {
-       "group": "default",
-       "name": "topic0",
-       "brokerClusterName": "preCreatedBkCluster",
-       "lastModified": 1553498552595,
-       "numberOfReplications": 1,
-       "numberOfPartitions": 1,
-       "metrics": {
-         "meters": []
-       },
-       "configs": {},
-       "tags": {}
-     }
+    {
+      "settings": {
+        "group": "default",
+        "name": "topic0",
+        "brokerClusterName": "preCreatedBkCluster",
+        "numberOfReplications": 1,
+        "numberOfPartitions": 1,
+        "tags": {}
+      }
+      "lastModified": 1553498552595,
+      "metrics": {
+        "meters": []
+      }
+    }
 
   .. note::
      The topic, which is just created, does not have any metrics.
@@ -114,12 +116,24 @@ update a topic properties
 
 *PUT /v0/topics/${name}?group=${group}*
 
-1. numberOfPartitions (**int**) — the number of partitions for this
-   topic (**it is illegal to decrease the number**)
-2. tags (**array(string)**) — the extra description to this object
+#. group (**string**) — topic group. Default group is "default".
+#. name (**string**) — topic name
+#. brokerClusterName (**option(string)**) — the broker cluster hosting
+   this topic (**If you don’t specify the broker cluster in request,
+   ohara will try to find a broker cluster for you. And it works only if
+   there is only a broker cluster exists in ohara**)
+#. numberOfReplications (**option(int)**) — the number of replications
+   for this topic (**it is illegal to input the number of replications
+   which is larger than the number of broker nodes**)
+#. numberOfPartitions (**option(int)**)— the number of partitions for
+   this topic
+#. state (**option(string)**) — state of a running topic. nothing if the topic is not running.
+#. tags (**option(object)**) — the extra description to this
+   object
 
-Both number of replications and configs are unmodifiable. An error response is produced if the update request tries to
-update them.
+.. note::
+  #. There are many other available configs which are useful in creating topic. Please ref :ref:`broker clusters <rest-brokers>`
+  to see how to retrieve the available configs for specific broker cluster.
 
 Example Request
   .. code-block:: json
@@ -132,19 +146,20 @@ Example Request
 Example Response
   .. code-block:: json
 
-     {
-       "group": "default",
-       "name": "topic0",
-       "brokerClusterName": "preCreatedBkCluster",
-       "lastModified": 1553498552595,
-       "numberOfReplications": 1,
-       "numberOfPartitions": 3,
-       "metrics": {
+    {
+      "settings": {
+        "group": "default",
+        "name": "topic0",
+        "brokerClusterName": "preCreatedBkCluster",
+        "numberOfReplications": 1,
+        "numberOfPartitions": 3,
+        "tags": {}
+      }
+      "lastModified": 1553498552595,
+      "metrics": {
         "meters": []
-       },
-       "configs": {},
-       "tags": {}
-     }
+      }
+    }
 
 
 list all topics properties
@@ -155,34 +170,22 @@ list all topics properties
 Example Response
   .. code-block:: json
 
-     [
-       {
-         "group": "default",
-         "name": "topic0",
-         "brokerClusterName": "preCreatedBkCluster",
-         "lastModified": 1553498552595,
-         "numberOfReplications": 1,
-         "numberOfPartitions": 1,
-         "metrics": {
+    [
+      {
+        "settings": {
+          "group": "default",
+          "name": "topic0",
+          "brokerClusterName": "preCreatedBkCluster",
+          "numberOfReplications": 1,
+          "numberOfPartitions": 3,
+          "tags": {}
+        }
+        "lastModified": 1553498552595,
+        "metrics": {
           "meters": []
-         },
-         "configs": {},
-         "tags": {}
-       },
-       {
-         "group": "default",
-         "name": "wk00",
-         "brokerClusterName": "preCreatedBkCluster",
-         "lastModified": 1553498375573,
-         "numberOfReplications": 1,
-         "numberOfPartitions": 1,
-         "metrics": {
-          "meters": []
-         },
-         "configs": {},
-         "tags": {}
-       }
-     ]
+        }
+      }
+    ]
 
 
 delete a topic properties
@@ -210,19 +213,20 @@ get a topic properties
 Example Response
   .. code-block:: json
 
-     {
-       "group": "default",
-       "name": "topic0",
-       "brokerClusterName": "preCreatedBkCluster",
-       "lastModified": 1553498552595,
-       "numberOfReplications": 1,
-       "numberOfPartitions": 1,
-       "metrics": {
+    {
+      "settings": {
+        "group": "default",
+        "name": "topic0",
+        "brokerClusterName": "preCreatedBkCluster",
+        "numberOfReplications": 1,
+        "numberOfPartitions": 3,
+        "tags": {}
+      }
+      "lastModified": 1553498552595,
+      "metrics": {
         "meters": []
-       },
-       "configs": {},
-       "tags": {}
-     }
+      }
+    }
 
 
 start a topic on remote broker cluster

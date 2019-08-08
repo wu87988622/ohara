@@ -16,6 +16,7 @@
 
 package com.island.ohara.client.configurator.v0
 
+import com.island.ohara.client.configurator.v0.TopicApi._
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
@@ -93,22 +94,16 @@ class TestTopicApi extends SmallTest with Matchers {
     creation.brokerClusterName shouldBe None
     creation.numberOfPartitions shouldBe TopicApi.DEFAULT_NUMBER_OF_PARTITIONS
     creation.numberOfReplications shouldBe TopicApi.DEFAULT_NUMBER_OF_REPLICATIONS
-    creation.configs shouldBe Map.empty
 
     val group = CommonUtils.randomString()
     val name = CommonUtils.randomString()
-    val key = CommonUtils.randomString()
-    val value = CommonUtils.randomString()
     val creation2 = TopicApi.TOPIC_CREATION_FORMAT.read(s"""
          |{
-         | "group": "$group",
-         | "name": "$name",
-         | "brokerClusterName": "$brokerClusterName",
-         | "numberOfPartitions": $numberOfPartitions,
-         | "numberOfReplications": $numberOfReplications,
-         | "configs": {
-         |   "$key": "$value"
-         | }
+         | "$GROUP_KEY": "$group",
+         | "$NAME_KEY": "$name",
+         | "$BROKER_CLUSTER_NAME_KEY": "$brokerClusterName",
+         | "$NUMBER_OF_PARTITIONS_KEY": $numberOfPartitions,
+         | "$NUMBER_OF_REPLICATIONS_KEY": $numberOfReplications
          |}
        """.stripMargin.parseJson)
 
@@ -117,7 +112,6 @@ class TestTopicApi extends SmallTest with Matchers {
     creation2.brokerClusterName.get shouldBe brokerClusterName
     creation2.numberOfPartitions shouldBe numberOfPartitions
     creation2.numberOfReplications shouldBe numberOfReplications
-    creation2.configs shouldBe Map(key -> value)
   }
 
   @Test
@@ -128,16 +122,16 @@ class TestTopicApi extends SmallTest with Matchers {
     val numberOfReplications = 10
     val update = TopicApi.TOPIC_UPDATE_FORMAT.read(s"""
                                                                   |{
-                                                                  | "name": "$name",
-                                                                  | "brokerClusterName": "$brokerClusterName",
-                                                                  | "numberOfPartitions": $numberOfPartitions,
-                                                                  | "numberOfReplications": $numberOfReplications
+                                                                  | "$NAME_KEY": "$name",
+                                                                  | "$BROKER_CLUSTER_NAME_KEY": "$brokerClusterName",
+                                                                  | "$NUMBER_OF_PARTITIONS_KEY": $numberOfPartitions,
+                                                                  | "$NUMBER_OF_REPLICATIONS_KEY": $numberOfReplications
                                                                   |}
        """.stripMargin.parseJson)
 
     update.brokerClusterName.get shouldBe brokerClusterName
-    update.numberOfPartitions.get shouldBe numberOfPartitions
-    update.numberOfReplications.get shouldBe numberOfReplications
+    update.settings(NUMBER_OF_PARTITIONS_KEY) shouldBe JsNumber(numberOfPartitions)
+    update.settings(NUMBER_OF_REPLICATIONS_KEY) shouldBe JsNumber(numberOfReplications)
 
     val update2 = TopicApi.TOPIC_UPDATE_FORMAT.read(s"""
          |{
@@ -145,8 +139,8 @@ class TestTopicApi extends SmallTest with Matchers {
        """.stripMargin.parseJson)
 
     update2.brokerClusterName shouldBe None
-    update2.numberOfPartitions shouldBe None
-    update2.numberOfReplications shouldBe None
+    update2.settings should not contain NUMBER_OF_PARTITIONS_KEY
+    update2.settings should not contain NUMBER_OF_REPLICATIONS_KEY
   }
 
   @Test

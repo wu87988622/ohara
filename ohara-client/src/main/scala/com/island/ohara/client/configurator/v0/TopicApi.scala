@@ -28,8 +28,9 @@ import com.island.ohara.kafka.connector.json.TopicKey
 import org.apache.kafka.common.config.TopicConfig
 import org.apache.kafka.common.record.Records
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsString, JsValue, RootJsonFormat}
+import spray.json.{JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
+import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 
 object TopicApi {
@@ -42,94 +43,246 @@ object TopicApi {
   val DEFAULT_NUMBER_OF_REPLICATIONS: Short = 1
   val TOPICS_PREFIX_PATH: String = "topics"
 
-  private[this] val CONFIGS_KEY = "configs"
-  private[this] val NUMBER_OF_PARTITIONS_KEY = "numberOfPartitions"
-  private[this] val NUMBER_OF_REPLICATIONS_KEY = "numberOfReplications"
+  val NUMBER_OF_PARTITIONS_KEY = "numberOfPartitions"
+  val NUMBER_OF_REPLICATIONS_KEY = "numberOfReplications"
+  val BROKER_CLUSTER_NAME_KEY = "brokerClusterName"
+  val TAGS_KEY = "tags"
+
+  /**
+    * the config with this group is mapped to kafka's custom config. Kafka divide configs into two parts.
+    * 1) required configs (number of partitions and number of replications)
+    * 2) custom configs (those config must be able to convert to string)
+    *
+    * Furthermore, kafka forbids us to put required configs to custom configs. Hence, we have to mark the custom config
+    * in order to filter the custom from settings (see Creation).
+    */
+  private[this] val GROUP_TO_EXTRA_CONFIG = "extra"
 
   /**
     * list the custom configs of topic. It is useful to developers who long for controlling the topic totally.
     */
-  val TOPIC_CUSTOM_DEFINITIONS: Seq[SettingDef] = {
-    val group = "core"
-    val count = new AtomicInteger(0);
-    def toSettingDefinition(key: String, doc: String, default: Any): SettingDef =
-      SettingDef
+  val TOPIC_DEFINITIONS: Seq[SettingDef] = {
+    val coreGroup = "core"
+    val count = new AtomicInteger(0)
+    def toDefWithDefault(key: String, group: String, doc: String, valueType: Type, default: Any): SettingDef =
+      toDef(key, group, doc, valueType, Some(default))
+    def toDefWithoutDefault(key: String, group: String, doc: String, valueType: Type): SettingDef =
+      toDef(key, group, doc, valueType, None)
+    def toDef(key: String, group: String, doc: String, valueType: Type, default: Option[Any]): SettingDef = {
+      val builder = SettingDef
         .builder()
         .key(key)
         .displayName(key)
         .documentation(doc)
         .group(group)
         .orderInGroup(count.getAndIncrement())
-        .valueType(Type.STRING)
-        .optional(default.toString)
-        .build()
+        .valueType(valueType)
+      if (default.isDefined) builder.optional(default.get.toString) else builder.optional()
+      builder.build()
+    }
     Seq(
-      toSettingDefinition(TopicConfig.SEGMENT_BYTES_CONFIG, TopicConfig.SEGMENT_BYTES_DOC, 1 * 1024 * 1024 * 1024),
-      toSettingDefinition(TopicConfig.SEGMENT_MS_CONFIG, TopicConfig.SEGMENT_MS_DOC, 24 * 7 * 60 * 60 * 1000L),
-      toSettingDefinition(TopicConfig.SEGMENT_JITTER_MS_CONFIG, TopicConfig.SEGMENT_JITTER_MS_DOC, 0 * 60 * 60 * 1000L),
-      toSettingDefinition(TopicConfig.SEGMENT_INDEX_BYTES_CONFIG,
-                          TopicConfig.SEGMENT_INDEX_BYTES_DOC,
-                          10 * 1024 * 1024),
-      toSettingDefinition(TopicConfig.FLUSH_MESSAGES_INTERVAL_CONFIG,
-                          TopicConfig.FLUSH_MESSAGES_INTERVAL_DOC,
-                          Long.MaxValue),
-      toSettingDefinition(TopicConfig.FLUSH_MS_CONFIG, TopicConfig.FLUSH_MS_DOC, Long.MaxValue),
-      toSettingDefinition(TopicConfig.RETENTION_BYTES_CONFIG, TopicConfig.RETENTION_BYTES_DOC, -1L),
-      toSettingDefinition(TopicConfig.RETENTION_MS_CONFIG, TopicConfig.RETENTION_MS_DOC, 24 * 7 * 60 * 60 * 1000L),
-      toSettingDefinition(TopicConfig.MAX_MESSAGE_BYTES_CONFIG,
-                          TopicConfig.MAX_MESSAGE_BYTES_DOC,
-                          1000000 + Records.LOG_OVERHEAD),
-      toSettingDefinition(TopicConfig.INDEX_INTERVAL_BYTES_CONFIG, TopicConfig.INDEX_INTERVAL_BYTES_DOCS, 4096),
-      toSettingDefinition(TopicConfig.FILE_DELETE_DELAY_MS_CONFIG, TopicConfig.FILE_DELETE_DELAY_MS_DOC, 60000),
-      toSettingDefinition(TopicConfig.DELETE_RETENTION_MS_CONFIG,
-                          TopicConfig.DELETE_RETENTION_MS_DOC,
-                          24 * 60 * 60 * 1000L),
-      toSettingDefinition(TopicConfig.MIN_COMPACTION_LAG_MS_CONFIG, TopicConfig.MIN_COMPACTION_LAG_MS_DOC, 0L),
-      toSettingDefinition(TopicConfig.MIN_CLEANABLE_DIRTY_RATIO_CONFIG,
-                          TopicConfig.MIN_CLEANABLE_DIRTY_RATIO_DOC,
-                          0.5d),
-      toSettingDefinition(TopicConfig.CLEANUP_POLICY_CONFIG, TopicConfig.CLEANUP_POLICY_DOC, "delete"),
-      toSettingDefinition(TopicConfig.UNCLEAN_LEADER_ELECTION_ENABLE_CONFIG,
-                          TopicConfig.UNCLEAN_LEADER_ELECTION_ENABLE_DOC,
-                          false),
-      toSettingDefinition(TopicConfig.MIN_IN_SYNC_REPLICAS_CONFIG, TopicConfig.MIN_IN_SYNC_REPLICAS_DOC, 1),
-      toSettingDefinition(TopicConfig.COMPRESSION_TYPE_CONFIG, TopicConfig.COMPRESSION_TYPE_DOC, "producer"),
-      toSettingDefinition(TopicConfig.PREALLOCATE_CONFIG, TopicConfig.PREALLOCATE_DOC, false),
+      //-----------[kafka prerequisite]-----------
+      toDefWithDefault(key = GROUP_KEY,
+                       group = coreGroup,
+                       doc = "the group of this topic",
+                       valueType = Type.STRING,
+                       default = GROUP_DEFAULT),
+      toDefWithoutDefault(key = NAME_KEY, group = coreGroup, doc = "the name of this topic", valueType = Type.STRING),
+      toDefWithDefault(key = NUMBER_OF_PARTITIONS_KEY,
+                       group = coreGroup,
+                       doc = "the number of partitions",
+                       valueType = Type.INT,
+                       default = DEFAULT_NUMBER_OF_PARTITIONS),
+      toDefWithDefault(key = NUMBER_OF_REPLICATIONS_KEY,
+                       group = coreGroup,
+                       doc = "the number of replications",
+                       valueType = Type.SHORT,
+                       default = NUMBER_OF_REPLICATIONS_KEY),
+      toDefWithoutDefault(key = BROKER_CLUSTER_NAME_KEY,
+                          group = coreGroup,
+                          valueType = Type.STRING,
+                          doc = "the broker cluster to deploy this topic"),
+      toDefWithoutDefault(key = TAGS_KEY, group = coreGroup, doc = "the tags to this topic", valueType = Type.TAGS),
+      //-----------[kafka custom]-----------
+      toDefWithDefault(key = TopicConfig.SEGMENT_BYTES_CONFIG,
+                       group = GROUP_TO_EXTRA_CONFIG,
+                       doc = TopicConfig.SEGMENT_BYTES_DOC,
+                       valueType = Type.LONG,
+                       default = 1 * 1024 * 1024 * 1024),
+      toDefWithDefault(key = TopicConfig.SEGMENT_MS_CONFIG,
+                       group = GROUP_TO_EXTRA_CONFIG,
+                       doc = TopicConfig.SEGMENT_MS_DOC,
+                       valueType = Type.LONG,
+                       default = 24 * 7 * 60 * 60 * 1000L),
+      toDefWithDefault(key = TopicConfig.SEGMENT_JITTER_MS_CONFIG,
+                       group = GROUP_TO_EXTRA_CONFIG,
+                       doc = TopicConfig.SEGMENT_JITTER_MS_DOC,
+                       valueType = Type.LONG,
+                       default = 0 * 60 * 60 * 1000L),
+      toDefWithDefault(
+        key = TopicConfig.SEGMENT_INDEX_BYTES_CONFIG,
+        group = GROUP_TO_EXTRA_CONFIG,
+        doc = TopicConfig.SEGMENT_INDEX_BYTES_DOC,
+        valueType = Type.LONG,
+        default = 10 * 1024 * 1024
+      ),
+      toDefWithDefault(
+        key = TopicConfig.FLUSH_MESSAGES_INTERVAL_CONFIG,
+        group = GROUP_TO_EXTRA_CONFIG,
+        doc = TopicConfig.FLUSH_MESSAGES_INTERVAL_DOC,
+        valueType = Type.LONG,
+        default = Long.MaxValue
+      ),
+      toDefWithDefault(TopicConfig.FLUSH_MS_CONFIG,
+                       group = GROUP_TO_EXTRA_CONFIG,
+                       doc = TopicConfig.FLUSH_MS_DOC,
+                       valueType = Type.LONG,
+                       default = Long.MaxValue),
+      toDefWithDefault(key = TopicConfig.RETENTION_BYTES_CONFIG,
+                       group = GROUP_TO_EXTRA_CONFIG,
+                       doc = TopicConfig.RETENTION_BYTES_DOC,
+                       valueType = Type.LONG,
+                       default = -1L),
+      toDefWithDefault(key = TopicConfig.RETENTION_MS_CONFIG,
+                       group = GROUP_TO_EXTRA_CONFIG,
+                       doc = TopicConfig.RETENTION_MS_DOC,
+                       valueType = Type.LONG,
+                       default = 24 * 7 * 60 * 60 * 1000L),
+      toDefWithDefault(
+        key = TopicConfig.MAX_MESSAGE_BYTES_CONFIG,
+        group = GROUP_TO_EXTRA_CONFIG,
+        doc = TopicConfig.MAX_MESSAGE_BYTES_DOC,
+        valueType = Type.LONG,
+        default = 1000000 + Records.LOG_OVERHEAD
+      ),
+      toDefWithDefault(key = TopicConfig.INDEX_INTERVAL_BYTES_CONFIG,
+                       group = GROUP_TO_EXTRA_CONFIG,
+                       doc = TopicConfig.INDEX_INTERVAL_BYTES_DOCS,
+                       valueType = Type.INT,
+                       4096),
+      toDefWithDefault(TopicConfig.FILE_DELETE_DELAY_MS_CONFIG,
+                       group = GROUP_TO_EXTRA_CONFIG,
+                       doc = TopicConfig.FILE_DELETE_DELAY_MS_DOC,
+                       valueType = Type.INT,
+                       default = 60000),
+      toDefWithDefault(
+        key = TopicConfig.DELETE_RETENTION_MS_CONFIG,
+        group = GROUP_TO_EXTRA_CONFIG,
+        doc = TopicConfig.DELETE_RETENTION_MS_DOC,
+        valueType = Type.LONG,
+        default = 24 * 60 * 60 * 1000L
+      ),
+      toDefWithDefault(key = TopicConfig.MIN_COMPACTION_LAG_MS_CONFIG,
+                       group = GROUP_TO_EXTRA_CONFIG,
+                       doc = TopicConfig.MIN_COMPACTION_LAG_MS_DOC,
+                       valueType = Type.LONG,
+                       default = 0L),
+      toDefWithDefault(
+        key = TopicConfig.MIN_CLEANABLE_DIRTY_RATIO_CONFIG,
+        group = GROUP_TO_EXTRA_CONFIG,
+        doc = TopicConfig.MIN_CLEANABLE_DIRTY_RATIO_DOC,
+        valueType = Type.DOUBLE,
+        default = 0.5d
+      ),
+      toDefWithDefault(key = TopicConfig.CLEANUP_POLICY_CONFIG,
+                       group = GROUP_TO_EXTRA_CONFIG,
+                       doc = TopicConfig.CLEANUP_POLICY_DOC,
+                       valueType = Type.STRING,
+                       default = "delete"),
+      toDefWithDefault(
+        key = TopicConfig.UNCLEAN_LEADER_ELECTION_ENABLE_CONFIG,
+        group = GROUP_TO_EXTRA_CONFIG,
+        doc = TopicConfig.UNCLEAN_LEADER_ELECTION_ENABLE_DOC,
+        valueType = Type.BOOLEAN,
+        default = false
+      ),
+      toDefWithDefault(key = TopicConfig.MIN_IN_SYNC_REPLICAS_CONFIG,
+                       group = GROUP_TO_EXTRA_CONFIG,
+                       doc = TopicConfig.MIN_IN_SYNC_REPLICAS_DOC,
+                       valueType = Type.INT,
+                       default = 1),
+      toDefWithDefault(TopicConfig.COMPRESSION_TYPE_CONFIG,
+                       group = GROUP_TO_EXTRA_CONFIG,
+                       doc = TopicConfig.COMPRESSION_TYPE_DOC,
+                       valueType = Type.STRING,
+                       default = "producer"),
+      toDefWithDefault(key = TopicConfig.PREALLOCATE_CONFIG,
+                       group = GROUP_TO_EXTRA_CONFIG,
+                       doc = TopicConfig.PREALLOCATE_DOC,
+                       valueType = Type.BOOLEAN,
+                       default = false),
       // this config impacts the available APIs so we don't expose it.
-      //      toSettingDefinition(TopicConfig.MESSAGE_FORMAT_VERSION_CONFIG, TopicConfig.MESSAGE_FORMAT_VERSION_DOC, ApiVersion.latestVersion.toString),
-      toSettingDefinition(TopicConfig.MESSAGE_TIMESTAMP_TYPE_CONFIG,
-                          TopicConfig.MESSAGE_TIMESTAMP_TYPE_DOC,
-                          "CreateTime"),
-      toSettingDefinition(TopicConfig.MESSAGE_TIMESTAMP_DIFFERENCE_MAX_MS_CONFIG,
-                          TopicConfig.MESSAGE_TIMESTAMP_DIFFERENCE_MAX_MS_DOC,
-                          Long.MaxValue),
-      toSettingDefinition(TopicConfig.MESSAGE_DOWNCONVERSION_ENABLE_CONFIG,
-                          TopicConfig.MESSAGE_DOWNCONVERSION_ENABLE_DOC,
-                          true)
+      //      toDefWithDefault(TopicConfig.MESSAGE_FORMAT_VERSION_CONFIG, TopicConfig.MESSAGE_FORMAT_VERSION_DOC, ApiVersion.latestVersion.toString),
+      toDefWithDefault(
+        key = TopicConfig.MESSAGE_TIMESTAMP_TYPE_CONFIG,
+        group = GROUP_TO_EXTRA_CONFIG,
+        doc = TopicConfig.MESSAGE_TIMESTAMP_TYPE_DOC,
+        valueType = Type.STRING,
+        default = "CreateTime"
+      ),
+      toDefWithDefault(
+        key = TopicConfig.MESSAGE_TIMESTAMP_DIFFERENCE_MAX_MS_CONFIG,
+        group = GROUP_TO_EXTRA_CONFIG,
+        doc = TopicConfig.MESSAGE_TIMESTAMP_DIFFERENCE_MAX_MS_DOC,
+        valueType = Type.LONG,
+        default = Long.MaxValue
+      ),
+      toDefWithDefault(
+        key = TopicConfig.MESSAGE_DOWNCONVERSION_ENABLE_CONFIG,
+        group = GROUP_TO_EXTRA_CONFIG,
+        doc = TopicConfig.MESSAGE_DOWNCONVERSION_ENABLE_DOC,
+        valueType = Type.BOOLEAN,
+        default = true
+      )
     )
   }
 
-  case class Update private[TopicApi] (brokerClusterName: Option[String],
-                                       numberOfPartitions: Option[Int],
-                                       numberOfReplications: Option[Short],
-                                       configs: Option[Map[String, String]],
-                                       tags: Option[Map[String, JsValue]])
-  implicit val TOPIC_UPDATE_FORMAT: RootJsonFormat[Update] =
-    JsonRefiner[Update].format(jsonFormat5(Update)).rejectEmptyString().refine
+  /**
+    * only the custom definitions.
+    */
+  val TOPIC_CUSTOM_DEFINITIONS: Seq[SettingDef] = TOPIC_DEFINITIONS.filter(_.group() == GROUP_TO_EXTRA_CONFIG)
 
-  case class Creation private[TopicApi] (group: String,
-                                         name: String,
-                                         brokerClusterName: Option[String],
-                                         numberOfPartitions: Int,
-                                         numberOfReplications: Short,
-                                         configs: Map[String, String],
-                                         tags: Map[String, JsValue])
-      extends CreationRequest {
+  case class Update private[TopicApi] (settings: Map[String, JsValue]) {
+    private[this] def plain: Map[String, String] = settings.filter(_._2.isInstanceOf[JsString]).map {
+      case (key, value) => key -> value.convertTo[String]
+    }
+
+    def brokerClusterName: Option[String] = plain.get(BROKER_CLUSTER_NAME_KEY)
+  }
+
+  implicit val TOPIC_UPDATE_FORMAT: RootJsonFormat[Update] =
+    JsonRefiner[Update]
+      .format(new RootJsonFormat[Update] {
+        override def read(json: JsValue): Update = Update(noJsNull(json.asJsObject.fields))
+        override def write(obj: Update): JsValue = JsObject(obj.settings)
+      })
+      .rejectEmptyString()
+      .refine
+
+  case class Creation private[TopicApi] (settings: Map[String, JsValue]) extends CreationRequest {
     def key: TopicKey = TopicKey.of(group, name)
+
+    private[this] def plain: Map[String, String] = settings.filter(_._2.isInstanceOf[JsString]).map {
+      case (key, value) => key -> value.convertTo[String]
+    }
+
+    def brokerClusterName: Option[String] = plain.get(BROKER_CLUSTER_NAME_KEY)
+
+    def numberOfPartitions: Int = settings(NUMBER_OF_PARTITIONS_KEY).convertTo[Int]
+    def numberOfReplications: Short = settings(NUMBER_OF_REPLICATIONS_KEY).convertTo[Short]
+
+    override def group: String = plain(GROUP_KEY)
+
+    override def name: String = plain(NAME_KEY)
+
+    override def tags: Map[String, JsValue] = settings(TAGS_KEY).asJsObject.fields
   }
 
   implicit val TOPIC_CREATION_FORMAT: OharaJsonFormat[Creation] = JsonRefiner[Creation]
-    .format(jsonFormat7(Creation))
+    .format(new RootJsonFormat[Creation] {
+      override def read(json: JsValue): Creation = Creation(noJsNull(json.asJsObject.fields))
+      override def write(obj: Creation): JsValue = JsObject(obj.settings)
+    })
     .stringRestriction(Set(GROUP_KEY, NAME_KEY))
     .withNumber()
     .withCharset()
@@ -142,7 +295,6 @@ object TopicApi {
     .rejectEmptyString()
     .nullToString(GROUP_KEY, () => GROUP_DEFAULT)
     .nullToString(NAME_KEY, () => CommonUtils.randomString(10))
-    .nullToEmptyObject(CONFIGS_KEY)
     .nullToEmptyObject(TAGS_KEY)
     .refine
 
@@ -157,16 +309,7 @@ object TopicApi {
     override def write(obj: TopicState): JsValue = JsString(obj.name)
   }
 
-  case class TopicInfo(group: String,
-                       name: String,
-                       numberOfPartitions: Int,
-                       numberOfReplications: Short,
-                       brokerClusterName: String,
-                       metrics: Metrics,
-                       state: Option[TopicState],
-                       lastModified: Long,
-                       configs: Map[String, String],
-                       tags: Map[String, JsValue])
+  case class TopicInfo(settings: Map[String, JsValue], metrics: Metrics, state: Option[TopicState], lastModified: Long)
       extends Data {
     override def key: TopicKey = TopicKey.of(group, name)
     override def kind: String = "topic"
@@ -176,9 +319,53 @@ object TopicApi {
       * @return topic name for kafka
       */
     def topicNameOnKafka: String = key.topicNameOnKafka
+
+    override def group: String = noJsNull(settings)(GROUP_KEY).convertTo[String]
+
+    override def name: String = noJsNull(settings)(NAME_KEY).convertTo[String]
+
+    override def tags: Map[String, JsValue] =
+      noJsNull(settings).get(TAGS_KEY).map(_.asJsObject.fields).getOrElse(Map.empty)
+
+    def brokerClusterName: String = noJsNull(settings)(BROKER_CLUSTER_NAME_KEY).convertTo[String]
+    def numberOfPartitions: Int =
+      noJsNull(settings).get(NUMBER_OF_PARTITIONS_KEY).map(_.convertTo[Int]).getOrElse(DEFAULT_NUMBER_OF_PARTITIONS)
+    def numberOfReplications: Short = noJsNull(settings)
+      .get(NUMBER_OF_REPLICATIONS_KEY)
+      .map(_.convertTo[Short])
+      .getOrElse(DEFAULT_NUMBER_OF_REPLICATIONS)
+
+    /**
+      * @return the custom configs. the core configs are not included
+      */
+    def configs: Map[String, String] = settings
+      .filter {
+        case (key, value) =>
+          TOPIC_DEFINITIONS.filter(_.group() == GROUP_TO_EXTRA_CONFIG).exists(_.key() == key) &&
+            value.isInstanceOf[JsString]
+      }
+      .map {
+        case (key, value) => key -> value.convertTo[String]
+      }
+
   }
 
-  implicit val TOPIC_INFO_FORMAT: RootJsonFormat[TopicInfo] = jsonFormat10(TopicInfo)
+  implicit val TOPIC_INFO_FORMAT: RootJsonFormat[TopicInfo] = new RootJsonFormat[TopicInfo] {
+    private[this] val format = jsonFormat4(TopicInfo)
+    override def read(json: JsValue): TopicInfo = format.read(json)
+
+    override def write(obj: TopicInfo): JsValue = JsObject(
+      format.write(obj).asJsObject.fields ++
+        // TODO: remove this stale fields ... by chia
+        Map(
+          GROUP_KEY -> JsString(obj.group),
+          NAME_KEY -> JsString(obj.name),
+          BROKER_CLUSTER_NAME_KEY -> JsString(obj.brokerClusterName),
+          NUMBER_OF_PARTITIONS_KEY -> JsNumber(obj.numberOfPartitions),
+          NUMBER_OF_REPLICATIONS_KEY -> JsNumber(obj.numberOfReplications),
+          TAGS_KEY -> JsObject(obj.tags)
+        ))
+  }
 
   /**
     * used to generate the payload and url for POST/PUT request.
@@ -239,66 +426,49 @@ object TopicApi {
     def start(key: TopicKey)(implicit executionContext: ExecutionContext): Future[Unit] = put(key, START_COMMAND)
     def stop(key: TopicKey)(implicit executionContext: ExecutionContext): Future[Unit] = put(key, STOP_COMMAND)
     def request: Request = new Request {
-      private[this] var group: String = GROUP_DEFAULT
-      private[this] var name: String = _
-      private[this] var brokerClusterName: Option[String] = None
-      private[this] var numberOfPartitions: Option[Int] = None
-      private[this] var numberOfReplications: Option[Short] = None
-      private[this] var configs: Map[String, String] = _
-      private[this] var tags: Map[String, JsValue] = _
+      // add the default value to group
+      private[this] var settings: mutable.Map[String, JsValue] = new mutable.HashMap() + (GROUP_KEY -> JsString(
+        GROUP_DEFAULT))
 
-      override def group(group: String): Request = {
-        this.group = CommonUtils.requireNonEmpty(group)
-        this
-      }
+      override def group(group: String): Request =
+        add(GROUP_KEY, JsString(CommonUtils.requireNonEmpty(group)))
 
-      override def name(name: String): Request = {
-        this.name = CommonUtils.requireNonEmpty(name)
-        this
-      }
+      override def name(name: String): Request =
+        add(NAME_KEY, JsString(CommonUtils.requireNonEmpty(name)))
 
-      override def brokerClusterName(brokerClusterName: String): Request = {
-        this.brokerClusterName = Some(CommonUtils.requireNonEmpty(brokerClusterName))
-        this
-      }
+      override def brokerClusterName(brokerClusterName: String): Request =
+        add(BROKER_CLUSTER_NAME_KEY, JsString(CommonUtils.requireNonEmpty(brokerClusterName)))
 
-      override def numberOfPartitions(numberOfPartitions: Int): Request = {
-        this.numberOfPartitions = Some(CommonUtils.requirePositiveInt(numberOfPartitions))
-        this
-      }
+      override def numberOfPartitions(numberOfPartitions: Int): Request =
+        add(NUMBER_OF_PARTITIONS_KEY, JsNumber(CommonUtils.requirePositiveInt(numberOfPartitions)))
 
-      override def numberOfReplications(numberOfReplications: Short): Request = {
-        this.numberOfReplications = Some(CommonUtils.requirePositiveShort(numberOfReplications))
-        this
-      }
+      override def numberOfReplications(numberOfReplications: Short): Request =
+        add(NUMBER_OF_REPLICATIONS_KEY, JsNumber(CommonUtils.requirePositiveShort(numberOfReplications)))
 
       override def configs(configs: Map[String, String]): Request = {
-        this.configs = Objects.requireNonNull(configs)
+        settings ++= configs.map {
+          case (key, value) => key -> JsString(value)
+        }
         this
       }
 
-      override def tags(tags: Map[String, JsValue]): Request = {
-        this.tags = Objects.requireNonNull(tags)
+      override def tags(tags: Map[String, JsValue]): Request =
+        add(TAGS_KEY, JsObject(Objects.requireNonNull(tags)))
+
+      private[this] def add(key: String, value: JsValue): Request = {
+        settings += key -> value
         this
       }
 
-      override private[v0] def creation: Creation = Creation(
-        group = CommonUtils.requireNonEmpty(group),
-        name = if (CommonUtils.isEmpty(name)) CommonUtils.randomString(10) else name,
-        brokerClusterName = brokerClusterName,
-        numberOfPartitions = numberOfPartitions.getOrElse(DEFAULT_NUMBER_OF_PARTITIONS),
-        numberOfReplications = numberOfReplications.getOrElse(DEFAULT_NUMBER_OF_REPLICATIONS),
-        configs = if (configs == null) Map.empty else configs,
-        tags = if (tags == null) Map.empty else tags
-      )
+      override private[v0] def creation: Creation =
+        // rewrite the creation via format since the format will auto-complete the creation
+        // this make the creaion is consistent to creation sent to server
+        TOPIC_CREATION_FORMAT.read(TOPIC_CREATION_FORMAT.write(Creation(settings.toMap)))
 
-      override private[v0] def update: Update = Update(
-        brokerClusterName = brokerClusterName,
-        numberOfPartitions = numberOfPartitions,
-        numberOfReplications = numberOfReplications,
-        configs = Option(configs),
-        tags = Option(tags)
-      )
+      override private[v0] def update: Update =
+        // rewrite the update via format since the format will auto-complete the creation
+        // this make the update is consistent to creation sent to server
+        TOPIC_UPDATE_FORMAT.read(TOPIC_UPDATE_FORMAT.write(Update(settings.toMap)))
 
       override def create()(implicit executionContext: ExecutionContext): Future[TopicInfo] =
         exec.post[Creation, TopicInfo, ErrorApi.Error](
@@ -307,7 +477,9 @@ object TopicApi {
         )
       override def update()(implicit executionContext: ExecutionContext): Future[TopicInfo] =
         exec.put[Update, TopicInfo, ErrorApi.Error](
-          url(TopicKey.of(group, name)),
+          url(
+            TopicKey.of(settings.get(GROUP_KEY).map(_.convertTo[String]).getOrElse(GROUP_DEFAULT),
+                        settings.get(NAME_KEY).map(_.convertTo[String]).orNull)),
           update
         )
     }

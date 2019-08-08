@@ -144,7 +144,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
           error = None,
           tags = Map.empty,
           lastModified = CommonUtils.current(),
-          topicSettingDefinitions = TopicApi.TOPIC_CUSTOM_DEFINITIONS
+          topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
         )
       }
       val wkCluster = {
@@ -246,7 +246,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
               error = None,
               tags = Map.empty,
               lastModified = CommonUtils.current(),
-              topicSettingDefinitions = TopicApi.TOPIC_CUSTOM_DEFINITIONS
+              topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
             ))
       }
 

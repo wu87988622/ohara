@@ -17,6 +17,7 @@
 package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0.TopicApi.{Request, TopicInfo, TopicState}
+import com.island.ohara.client.configurator.v0.TopicApi._
 import com.island.ohara.client.configurator.v0.{BrokerApi, TopicApi, ZookeeperApi}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -219,7 +220,21 @@ class TestTopicRoute extends SmallTest with Matchers {
   @Test
   def testUpdateNumberOfPartitions(): Unit = {
     val numberOfPartitions = 2
-    updatePartOfField(_.numberOfPartitions(numberOfPartitions), _.copy(numberOfPartitions = numberOfPartitions))
+    updatePartOfField(
+      _.numberOfPartitions(numberOfPartitions),
+      topicInfo =>
+        topicInfo.copy(settings = topicInfo.settings + (NUMBER_OF_PARTITIONS_KEY -> JsNumber(numberOfPartitions)))
+    )
+  }
+
+  @Test
+  def testUpdateNumberOfReplications(): Unit = {
+    val numberOfReplications: Short = 2
+    updatePartOfField(
+      _.numberOfReplications(numberOfReplications),
+      topicInfo =>
+        topicInfo.copy(settings = topicInfo.settings + (NUMBER_OF_REPLICATIONS_KEY -> JsNumber(numberOfReplications)))
+    )
   }
 
   private[this] def updatePartOfField(req: Request => Request, _expected: TopicInfo => TopicInfo): Unit = {
@@ -394,8 +409,9 @@ class TestTopicRoute extends SmallTest with Matchers {
   @Test
   def checkDefaultConfigs(): Unit = {
     val topic = result(topicApi.request.create())
-    TopicApi.TOPIC_CUSTOM_DEFINITIONS.foreach { setting =>
-      topic.configs(setting.key()) shouldBe setting.defaultValue()
+    TopicRoute.TOPIC_CUSTOM_CONFIGS.foreach {
+      case (key, value) =>
+        topic.settings(key) shouldBe value
     }
   }
 
