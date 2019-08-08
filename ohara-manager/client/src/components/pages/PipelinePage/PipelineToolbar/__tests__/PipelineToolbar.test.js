@@ -26,7 +26,7 @@ import '@testing-library/jest-dom/extend-expect';
 import * as generate from 'utils/generate';
 import * as URLS from 'constants/urls';
 import PipelineToolbar from '../PipelineToolbar';
-import { renderWithRouter } from 'utils/testUtils';
+import { renderWithProvider } from 'utils/testUtils';
 import { ICON_KEYS, CONNECTOR_TYPES } from 'constants/pipelines';
 import { fetchJars } from 'api/jarApi';
 import { createConnector } from 'api/connectorApi';
@@ -168,7 +168,7 @@ describe('<PipelineToolbar />', () => {
   });
 
   it('should display redirect info when render new topic modal without topic data', async () => {
-    const { getByText, getByTestId, queryByTestId } = renderWithRouter(
+    const { getByText, getByTestId, queryByTestId } = renderWithProvider(
       <PipelineToolbar {...props} topics={[]} currentTopic={null} />,
     );
 
@@ -227,7 +227,7 @@ describe('<PipelineToolbar />', () => {
 
     fetchJars.mockImplementation(() => Promise.resolve(res));
 
-    const { getByTestId, queryByTestId } = renderWithRouter(
+    const { getByTestId, queryByTestId } = renderWithProvider(
       <PipelineToolbar {...props} />,
     );
 
@@ -244,7 +244,7 @@ describe('<PipelineToolbar />', () => {
   });
 
   it('renders new stream app modal title', async () => {
-    const { getByText, getByTestId } = renderWithRouter(
+    const { getByText, getByTestId } = renderWithProvider(
       <PipelineToolbar {...props} />,
     );
 
@@ -266,7 +266,7 @@ describe('<PipelineToolbar />', () => {
     };
 
     fetchJars.mockImplementation(() => Promise.resolve(res));
-    const { getByTestId } = renderWithRouter(<PipelineToolbar {...props} />);
+    const { getByTestId } = renderWithProvider(<PipelineToolbar {...props} />);
 
     fireEvent.click(getByTestId('toolbar-streams'));
     const newStreamSelect = await waitForElement(() =>
@@ -290,7 +290,7 @@ describe('<PipelineToolbar />', () => {
 
     fetchJars.mockImplementation(() => Promise.resolve(res));
 
-    const { getByText, getByTestId, queryByTestId } = renderWithRouter(
+    const { getByText, getByTestId, queryByTestId } = renderWithProvider(
       <PipelineToolbar {...props} />,
     );
 
@@ -323,7 +323,7 @@ describe('<PipelineToolbar />', () => {
     };
 
     fetchJars.mockImplementation(() => Promise.resolve(res));
-    const { getByTestId } = renderWithRouter(<PipelineToolbar {...props} />);
+    const { getByTestId } = renderWithProvider(<PipelineToolbar {...props} />);
     fireEvent.click(getByTestId('toolbar-streams'));
     const newStreamModal = await waitForElement(() =>
       getByTestId('streamapp-select'),
@@ -336,7 +336,7 @@ describe('<PipelineToolbar />', () => {
   });
 
   it('toggles new source connector modal', async () => {
-    const { getByTestId, queryByTestId } = renderWithRouter(
+    const { getByTestId, queryByTestId } = renderWithProvider(
       <PipelineToolbar {...props} />,
     );
 
@@ -353,7 +353,7 @@ describe('<PipelineToolbar />', () => {
   });
 
   it('renders new source connector modal title', async () => {
-    const { getByText, getByTestId } = renderWithRouter(
+    const { getByText, getByTestId } = renderWithProvider(
       <PipelineToolbar {...props} />,
     );
 
@@ -404,7 +404,7 @@ describe('<PipelineToolbar />', () => {
       },
     ];
 
-    const { getByText, getByTestId, getAllByTestId } = renderWithRouter(
+    const { getByText, getByTestId, getAllByTestId } = renderWithProvider(
       <PipelineToolbar {...props} connectors={connectors} />,
     );
 
@@ -447,7 +447,7 @@ describe('<PipelineToolbar />', () => {
   });
 
   it('should disable add button when render new source connector modal without source connector data', async () => {
-    const { getByText, getByTestId, queryByTestId } = renderWithRouter(
+    const { getByText, getByTestId, queryByTestId } = renderWithProvider(
       <PipelineToolbar {...props} connectors={[]} />,
     );
 
@@ -468,7 +468,7 @@ describe('<PipelineToolbar />', () => {
     createConnector.mockImplementation(() => Promise.resolve(res));
     createProperty.mockImplementation(() => Promise.resolve(res));
 
-    const { getByTestId, queryByTestId } = renderWithRouter(
+    const { getByTestId, queryByTestId } = renderWithProvider(
       <PipelineToolbar {...props} />,
     );
 
@@ -487,7 +487,7 @@ describe('<PipelineToolbar />', () => {
   });
 
   it('renders new sink connector modal title', async () => {
-    const { getByText, getByTestId } = renderWithRouter(
+    const { getByText, getByTestId } = renderWithProvider(
       <PipelineToolbar {...props} />,
     );
 
@@ -538,7 +538,7 @@ describe('<PipelineToolbar />', () => {
       },
     ];
 
-    const { getByText, getByTestId, getAllByTestId } = renderWithRouter(
+    const { getByText, getByTestId, getAllByTestId } = renderWithProvider(
       <PipelineToolbar {...props} connectors={connectors} />,
     );
 
@@ -583,7 +583,7 @@ describe('<PipelineToolbar />', () => {
   });
 
   it('should disable add button when render new sink connector modal without sink connector data', async () => {
-    const { getByText, getByTestId, queryByTestId } = renderWithRouter(
+    const { getByText, getByTestId, queryByTestId } = renderWithProvider(
       <PipelineToolbar {...props} connectors={[]} />,
     );
 

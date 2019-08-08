@@ -26,7 +26,7 @@ import * as topicApi from 'api/topicApi';
 import PipelineNewPage from '../PipelineNewPage';
 import { CONNECTOR_TYPES } from 'constants/pipelines';
 import { PIPELINE_EDIT } from 'constants/documentTitles';
-import { renderWithRouter } from 'utils/testUtils';
+import { renderWithProvider } from 'utils/testUtils';
 
 jest.mock('api/pipelineApi');
 jest.mock('api/connectorApi');
@@ -113,7 +113,7 @@ describe('<PipelineNewPage />', () => {
     const { props } = setup();
 
     await waitForElement(() =>
-      renderWithRouter(<PipelineNewPage {...props} />),
+      renderWithProvider(<PipelineNewPage {...props} />),
     );
   });
 
@@ -121,7 +121,7 @@ describe('<PipelineNewPage />', () => {
     const { props } = setup();
 
     await waitForElement(() =>
-      renderWithRouter(<PipelineNewPage {...props} />),
+      renderWithProvider(<PipelineNewPage {...props} />),
     );
     expect(document.title).toBe(PIPELINE_EDIT);
   });
@@ -130,7 +130,7 @@ describe('<PipelineNewPage />', () => {
     const { pipeline, props } = setup();
 
     const { getByText } = await waitForElement(() =>
-      renderWithRouter(<PipelineNewPage {...props} />),
+      renderWithProvider(<PipelineNewPage {...props} />),
     );
     getByText(pipeline.name);
   });
@@ -139,7 +139,7 @@ describe('<PipelineNewPage />', () => {
     const { props } = setup();
 
     const { getByText, getByTestId } = await waitForElement(() =>
-      renderWithRouter(<PipelineNewPage {...props} />),
+      renderWithProvider(<PipelineNewPage {...props} />),
     );
     getByTestId('toolbar-sources');
     getByTestId('toolbar-topics');
@@ -152,7 +152,7 @@ describe('<PipelineNewPage />', () => {
     const { props, pipeline } = setup();
 
     const { getByText, getByTestId } = await waitForElement(() =>
-      renderWithRouter(<PipelineNewPage {...props} />),
+      renderWithProvider(<PipelineNewPage {...props} />),
     );
     getByText('Operate');
     getByTestId('start-btn');
@@ -189,7 +189,7 @@ describe('<PipelineNewPage />', () => {
     );
 
     const { getByTestId } = await waitForElement(() =>
-      renderWithRouter(<PipelineNewPage {...props} />),
+      renderWithProvider(<PipelineNewPage {...props} />),
     );
 
     // Start the pipeline
@@ -233,7 +233,7 @@ describe('<PipelineNewPage />', () => {
     );
 
     const { getByTestId } = await waitForElement(() =>
-      renderWithRouter(<PipelineNewPage {...props} />),
+      renderWithProvider(<PipelineNewPage {...props} />),
     );
 
     // Stop the pipeline
