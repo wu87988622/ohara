@@ -17,6 +17,7 @@
 import { useRef } from 'react';
 import { get } from 'lodash';
 
+import * as URL from './url';
 import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import {
   handleError,
@@ -24,7 +25,6 @@ import {
   handleConnectorValidationError,
   handleNodeValidationError,
 } from './apiUtils';
-import * as URL from './url';
 
 const useValidationApi = url => {
   const { showMessage } = useSnackbar();

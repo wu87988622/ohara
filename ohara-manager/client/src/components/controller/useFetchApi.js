@@ -23,7 +23,7 @@ import { handleError, axiosInstance } from './apiUtils';
 const useFetchApi = url => {
   const { showMessage } = useSnackbar();
   const [response, setResponse] = useState();
-  const [isLoading, setIsloading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [refetchState, refetch] = useState(null);
   const request = useCallback(
     async url => {
@@ -35,7 +35,7 @@ const useFetchApi = url => {
           showMessage(handleError(res));
         }
         setResponse(res);
-        setIsloading(false);
+        setIsLoading(false);
         refetch(null);
       } catch (err) {
         showMessage(handleError(err));

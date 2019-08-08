@@ -16,13 +16,14 @@
 
 import { useRef } from 'react';
 
-import { handleError, axiosInstance } from './apiUtils';
 import * as commonUtils from 'utils/commonUtils';
+import { handleError, axiosInstance } from './apiUtils';
 import useSnackbar from 'components/context/Snackbar/useSnackbar';
 
 const useWaitApi = () => {
   const { showMessage } = useSnackbar();
   const finish = useRef();
+
   const request = async params => {
     try {
       const {
@@ -44,7 +45,7 @@ const useWaitApi = () => {
         finish.current = true;
         return;
       } else if (maxRetry <= retryCount) {
-        showMessage(`Wait count is over to ${maxRetry}!!`);
+        showMessage(`Failed with reaching the maximum retry times`);
         finish.current = false;
         return;
       }
@@ -52,7 +53,7 @@ const useWaitApi = () => {
       await commonUtils.sleep(sleep);
       await request({ ...params, retryCount: retryCount + 1 });
     } catch (err) {
-      showMessage('Wait is failed');
+      showMessage('Failed to wait');
       finish.current = false;
     }
   };

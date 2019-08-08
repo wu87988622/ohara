@@ -23,7 +23,7 @@ import IconButton from '@material-ui/core/IconButton';
 import SnackbarContent from '@material-ui/core/SnackbarContent';
 import SnackbarContext from './SnackbarContext';
 
-const SytledCloseIcon = styled(Icon)`
+const StyledCloseIcon = styled(Icon)`
   font-size: 15px;
 `;
 
@@ -68,7 +68,7 @@ const SnackbarProvider = props => {
           message={message}
           action={[
             <IconButton key="close" color="inherit" onClick={handleClose}>
-              <SytledCloseIcon className="fas fa-times" />
+              <StyledCloseIcon className="fas fa-times" />
             </IconButton>,
           ]}
         />

@@ -152,37 +152,6 @@ Cypress.Commands.add('deleteAllWorkers', () => {
   });
 });
 
-Cypress.Commands.add('insertNode', node => {
-  Cypress.log({
-    name: 'INSERT_NODE',
-  });
-
-  cy.request('POST', 'api/nodes', {
-    name: node.name,
-    port: node.port,
-    user: node.user,
-    password: node.password,
-  });
-});
-
-Cypress.Commands.add('deleteAllNodes', () => {
-  Cypress.log({
-    name: 'DELETE_ALL_NODES',
-  });
-
-  const _ = Cypress._;
-
-  cy.request('GET', 'api/nodes')
-    .then(res => res.body)
-    .then(nodes => {
-      if (!_.isEmpty(nodes)) {
-        _.forEach(nodes, node => {
-          cy.request('DELETE', `api/nodes/${node.name}`);
-        });
-      }
-    });
-});
-
 Cypress.Commands.add('deleteTopic', topicName => {
   cy.request('GET', 'api/topics').then(res => {
     res.body.forEach(({ name }) => {
@@ -203,36 +172,6 @@ Cypress.Commands.add('deletePipeline', pipelineName => {
     });
   });
 });
-
-Cypress.Commands.add('deleteAllPipeline', pipelineName => {
-  cy.request('GET', 'api/pipelines').then(res => {
-    res.body.forEach(({ name, id }) => {
-      cy.request({
-        method: 'DELETE',
-        url: `api/pipelines/${id}`,
-        retryOnStatusCodeFailure: true,
-      });
-    });
-  });
-});
-
-Cypress.Commands.add(
-  'deleteStreamApp',
-  (
-    streamAppName = 'ohara-streamapp.jar',
-    workerName = Cypress.env('WORKER_NAME'),
-  ) => {
-    cy.request('GET', 'api/stream/jars').then(res => {
-      res.body.forEach(({ name, workerClusterName, id }) => {
-        const isTarget =
-          name === streamAppName && workerName === workerClusterName;
-        if (isTarget) {
-          cy.request('DELETE', `api/stream/jars/${id}`);
-        }
-      });
-    });
-  },
-);
 
 Cypress.Commands.add('uploadStreamAppJar', () => {
   cy.getByTestId('toolbar-streams')
