@@ -17,8 +17,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import ReactTooltip from 'react-tooltip';
-import uuid from 'uuid/v4';
 
 const LabelWrapper = styled.label`
   color: ${props => props.theme.lightBlue};
@@ -41,7 +39,6 @@ const TooltipIcon = styled.span`
 const Label = ({
   children,
   css = { margin: '0 0 8px', width: 'auto' },
-  tooltipId = uuid(),
   tooltipString,
   tooltipRender,
   tooltipAlignment = 'left',
@@ -56,15 +53,6 @@ const Label = ({
         <TooltipIcon alignment={tooltipAlignment} data-tip={tooltipString}>
           <i className="fas fa-info-circle" />
         </TooltipIcon>
-      )}
-      {tooltipString && <ReactTooltip />}
-      {tooltipRender && (
-        <TooltipIcon alignment={tooltipAlignment} data-tip data-for={tooltipId}>
-          <i className="fas fa-info-circle" />
-        </TooltipIcon>
-      )}
-      {tooltipRender && (
-        <ReactTooltip id={tooltipId}>{tooltipRender}</ReactTooltip>
       )}
     </LabelWrapper>
   );

@@ -16,7 +16,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import ReactTooltip from 'react-tooltip';
+import Tooltip from '@material-ui/core/Tooltip';
 import { noop, includes } from 'lodash';
 
 import { DeleteDialog } from 'components/common/Mui/Dialog';
@@ -71,40 +71,42 @@ class Controller extends React.Component {
     return (
       <s.Controller>
         {includes(show, START) && (
-          <s.ControlButton
-            data-tip={`Start ${kind}`}
-            onClick={onStart}
-            data-testid="start-button"
-            disabled={includes(disable, START)}
-          >
-            <i className="far fa-play-circle" />
-          </s.ControlButton>
+          <Tooltip title={`Start ${kind}`} enterDelay={1000}>
+            <s.ControlButton
+              onClick={onStart}
+              data-testid="start-button"
+              disabled={includes(disable, START)}
+            >
+              <i className="far fa-play-circle" />
+            </s.ControlButton>
+          </Tooltip>
         )}
         {includes(show, STOP) && (
-          <s.ControlButton
-            data-tip={`Stop ${kind}`}
-            onClick={onStop}
-            data-testid="stop-button"
-            disabled={includes(disable, STOP)}
-            isDanger
-          >
-            <i className="far fa-stop-circle" />
-          </s.ControlButton>
+          <Tooltip title={`Stop ${kind}`} enterDelay={1000}>
+            <s.ControlButton
+              onClick={onStop}
+              data-testid="stop-button"
+              disabled={includes(disable, STOP)}
+              isDanger
+            >
+              <i className="far fa-stop-circle" />
+            </s.ControlButton>
+          </Tooltip>
         )}
         {includes(show, DELETE) && (
-          <s.ControlButton
-            data-tip={`Delete ${kind}`}
-            onClick={e => {
-              this.handleDeleteModalOpen(e);
-            }}
-            data-testid="delete-button"
-            disabled={includes(disable, DELETE)}
-            isDanger
-          >
-            <i className="far fa-trash-alt" />
-          </s.ControlButton>
+          <Tooltip title={`Delete ${kind}`} enterDelay={1000}>
+            <s.ControlButton
+              onClick={e => {
+                this.handleDeleteModalOpen(e);
+              }}
+              data-testid="delete-button"
+              disabled={includes(disable, DELETE)}
+              isDanger
+            >
+              <i className="far fa-trash-alt" />
+            </s.ControlButton>
+          </Tooltip>
         )}
-        <ReactTooltip />
 
         <DeleteDialog
           title={`Remove ${kind}?`}

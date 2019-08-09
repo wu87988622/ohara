@@ -16,7 +16,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import ReactTooltip from 'react-tooltip';
+import Tooltip from '@material-ui/core/Tooltip';
 import toastr from 'toastr';
 
 import * as connectorApi from 'api/connectorApi';
@@ -85,25 +85,26 @@ const Operate = props => {
       <OperateWrapper>
         <div className="actions">
           <Heading3>Operate</Heading3>
-          <ReactTooltip />
-
           <div className="action-btns">
-            <button
-              className="start-btn"
-              data-tip="Start pipeline"
-              onClick={() => handleActionClick('start')}
-              data-testid="start-btn"
-            >
-              <i className="far fa-play-circle" />
-            </button>
-            <button
-              className="stop-btn"
-              data-tip="Stop pipeline"
-              onClick={() => handleActionClick('stop')}
-              data-testid="stop-btn"
-            >
-              <i className="far fa-stop-circle" />
-            </button>
+            <Tooltip title="Start pipeline" enterDelay={1000}>
+              <button
+                className="start-btn"
+                onClick={() => handleActionClick('start')}
+                data-testid="start-btn"
+              >
+                <i className="far fa-play-circle" />
+              </button>
+            </Tooltip>
+
+            <Tooltip title="Stop pipeline" enterDelay={1000}>
+              <button
+                className="stop-btn"
+                onClick={() => handleActionClick('stop')}
+                data-testid="stop-btn"
+              >
+                <i className="far fa-stop-circle" />
+              </button>
+            </Tooltip>
           </div>
         </div>
         <span className="cluster-name">

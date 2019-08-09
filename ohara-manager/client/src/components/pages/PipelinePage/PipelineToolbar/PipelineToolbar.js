@@ -16,7 +16,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import ReactTooltip from 'react-tooltip';
+import Tooltip from '@material-ui/core/Tooltip';
 
 import * as PIPELINES from 'constants/pipelines';
 import PipelineNewStream from './PipelineNewStream';
@@ -289,40 +289,47 @@ class PipelineToolbar extends React.Component {
           </div>
         </Modal>
 
-        <Icon
-          className="fas fa-file-import"
-          data-tip="Add a source connector"
-          onClick={() =>
-            this.handleModalOpen(modalNames.ADD_SOURCE_CONNECTOR, 'sources')
-          }
-          data-id={ftpSource}
-          data-testid="toolbar-sources"
-        />
-        <Icon
-          className="fas fa-list-ul"
-          data-tip="Add a topic"
-          onClick={() => this.handleModalOpen(modalNames.ADD_TOPIC)}
-          data-id={modalNames.ADD_TOPIC}
-          data-testid="toolbar-topics"
-        />
-        <Icon
-          className="fas fa-wind"
-          data-tip="Add a stream app"
-          onClick={() => this.handleModalOpen(modalNames.ADD_STREAM, 'stream')}
-          data-id={modalNames.ADD_STREAM}
-          data-testid="toolbar-streams"
-        />
-        <Icon
-          className="fas fa-file-export"
-          data-tip="Add a sink connector"
-          onClick={() =>
-            this.handleModalOpen(modalNames.ADD_SINK_CONNECTOR, 'sinks')
-          }
-          data-id={ftpSource}
-          data-testid="toolbar-sinks"
-        />
+        <Tooltip title="Add a source connector" enterDelay={1000}>
+          <Icon
+            className="fas fa-file-import"
+            onClick={() =>
+              this.handleModalOpen(modalNames.ADD_SOURCE_CONNECTOR, 'sources')
+            }
+            data-id={ftpSource}
+            data-testid="toolbar-sources"
+          />
+        </Tooltip>
 
-        <ReactTooltip />
+        <Tooltip title="Add a topic" enterDelay={1000}>
+          <Icon
+            className="fas fa-list-ul"
+            onClick={() => this.handleModalOpen(modalNames.ADD_TOPIC)}
+            data-id={modalNames.ADD_TOPIC}
+            data-testid="toolbar-topics"
+          />
+        </Tooltip>
+
+        <Tooltip title="Add a stream app" enterDelay={1000}>
+          <Icon
+            className="fas fa-wind"
+            onClick={() =>
+              this.handleModalOpen(modalNames.ADD_STREAM, 'stream')
+            }
+            data-id={modalNames.ADD_STREAM}
+            data-testid="toolbar-streams"
+          />
+        </Tooltip>
+
+        <Tooltip title="Add a sink connector" enterDelay={1000}>
+          <Icon
+            className="fas fa-file-export"
+            onClick={() =>
+              this.handleModalOpen(modalNames.ADD_SINK_CONNECTOR, 'sinks')
+            }
+            data-id={ftpSource}
+            data-testid="toolbar-sinks"
+          />
+        </Tooltip>
 
         <FileSavingStatus>
           {hasChanges ? 'Saving...' : 'All changes saved'}
