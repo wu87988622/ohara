@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package com.island.ohara.kafka.connector.json;
+package com.island.ohara.common.setting;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.island.ohara.common.json.JsonUtils;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * the key of connector object. It is almost same with {@link ObjectKey} excepting for the method
@@ -36,7 +37,11 @@ public interface ConnectorKey extends ObjectKey {
   }
 
   static String toJsonString(ConnectorKey key) {
-    return new KeyImpl(key.group(), key.name()).toJsonString();
+    return ObjectKey.toJsonString(key);
+  }
+
+  static String toJsonString(Collection<? extends ConnectorKey> key) {
+    return ObjectKey.toJsonString(key);
   }
 
   /**
@@ -45,8 +50,21 @@ public interface ConnectorKey extends ObjectKey {
    * @param json json representation
    * @return a serializable instance
    */
-  static ConnectorKey ofJsonString(String json) {
-    return JsonUtils.toObject(json, new TypeReference<KeyImpl>() {});
+  static ConnectorKey toConnectorKey(String json) {
+    ObjectKey key = ObjectKey.toObjectKey(json);
+    return ConnectorKey.of(key.group(), key.name());
+  }
+
+  /**
+   * parse input json and then generate a ConnectorKey instance.
+   *
+   * @param json json representation
+   * @return a serializable instance
+   */
+  static List<ConnectorKey> toConnectorKeys(String json) {
+    return ObjectKey.toObjectKeys(json).stream()
+        .map(key -> ConnectorKey.of(key.group(), key.name()))
+        .collect(Collectors.toList());
   }
 
   /**

@@ -17,7 +17,7 @@
 package com.island.ohara.client.configurator.v0
 import com.island.ohara.client.kafka.WorkerJson.Plugin
 import com.island.ohara.common.data.DataType
-import com.island.ohara.kafka.connector.json.ConnectorDefinitions
+import com.island.ohara.kafka.connector.json.ConnectorDefUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsString, JsValue, RootJsonFormat}
 
@@ -48,9 +48,9 @@ object InfoApi {
     import scala.collection.JavaConverters._
     ConnectorVersion(
       className = pluginDescription.className,
-      version = orUnknown(ConnectorDefinitions.version(pluginDescription.definitions.asJava)),
-      revision = orUnknown(ConnectorDefinitions.revision(pluginDescription.definitions.asJava)),
-      typeName = orUnknown(ConnectorDefinitions.kind(pluginDescription.definitions.asJava))
+      version = orUnknown(ConnectorDefUtils.version(pluginDescription.definitions.asJava)),
+      revision = orUnknown(ConnectorDefUtils.revision(pluginDescription.definitions.asJava)),
+      typeName = orUnknown(ConnectorDefUtils.kind(pluginDescription.definitions.asJava))
     )
   }
 

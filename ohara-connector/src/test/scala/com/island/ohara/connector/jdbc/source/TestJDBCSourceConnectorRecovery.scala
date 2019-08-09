@@ -17,23 +17,25 @@
 package com.island.ohara.connector.jdbc.source
 
 import java.sql.Statement
+
 import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
 import com.island.ohara.client.configurator.v0.TopicApi
 import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Row, Serializer}
+import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.kafka.Consumer
 import com.island.ohara.kafka.connector.TaskSetting
-import com.island.ohara.kafka.connector.json.{ConnectorKey, TopicKey}
 import com.island.ohara.testing.With3Brokers3Workers
 import com.island.ohara.testing.service.Database
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
+
 import scala.collection.JavaConverters._
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
 
 class TestJDBCSourceConnectorRecovery extends With3Brokers3Workers with Matchers {
   private[this] val db = Database.local()

@@ -31,6 +31,7 @@ import com.island.ohara.client.kafka.WorkerJson.{
   Plugin,
   TaskStatus
 }
+import com.island.ohara.common.setting.ConnectorKey
 import com.island.ohara.kafka.connector.json._
 import com.island.ohara.kafka.connector.{RowSinkConnector, RowSourceConnector}
 import com.typesafe.scalalogging.Logger

@@ -16,8 +16,8 @@
 
 package com.island.ohara.client.configurator
 
-import com.island.ohara.common.setting.SettingDef
-import com.island.ohara.kafka.connector.json.{ConnectorDefinitions, ConnectorKey, ObjectKey, TopicKey}
+import com.island.ohara.common.setting.{ConnectorKey, ObjectKey, SettingDef, TopicKey}
+import com.island.ohara.kafka.connector.json.ConnectorDefUtils
 import spray.json.{JsNull, JsValue, RootJsonFormat}
 
 package object v0 {
@@ -37,13 +37,13 @@ package object v0 {
     * This reference ensures that the name key in scala json is same to java json (connector metadata).
     * This a bit complicated code is what we had to "enjoy" as Ohara is a hybrid project consisting of scala and java.
     */
-  val NAME_KEY: String = ConnectorDefinitions.CONNECTOR_NAME_DEFINITION.key()
+  val NAME_KEY: String = ConnectorDefUtils.CONNECTOR_NAME_DEFINITION.key()
 
   /**
     * This reference ensures that the tags key in scala json is same to java json (connector metadata).
     * This a bit complicated code is what we had to "enjoy" as Ohara is a hybrid project consisting of scala and java.
     */
-  val TAGS_KEY: String = ConnectorDefinitions.TAGS_DEFINITION.key()
+  val TAGS_KEY: String = ConnectorDefUtils.TAGS_DEFINITION.key()
   val CLUSTER_KEY: String = "cluster"
   val FORCE_KEY: String = "force"
   val START_COMMAND: String = "start"
@@ -69,7 +69,7 @@ package object v0 {
     .format(new RootJsonFormat[ObjectKey] {
       import spray.json._
       override def write(obj: ObjectKey): JsValue = ObjectKey.toJsonString(obj).parseJson
-      override def read(json: JsValue): ObjectKey = ObjectKey.ofJsonString(json.toString())
+      override def read(json: JsValue): ObjectKey = ObjectKey.toObjectKey(json.toString())
     })
     .nullToString(GROUP_KEY, () => GROUP_DEFAULT)
     .rejectEmptyString()
@@ -87,7 +87,7 @@ package object v0 {
             fieldNames = List("group", "name")
           )
       }
-      override def read(json: JsValue): TopicKey = TopicKey.ofJsonString(json.toString())
+      override def read(json: JsValue): TopicKey = TopicKey.toTopicKey(json.toString())
     })
     .nullToString(GROUP_KEY, () => TopicApi.GROUP_DEFAULT)
     .rejectEmptyString()
@@ -105,7 +105,7 @@ package object v0 {
             fieldNames = List("group", "name")
           )
       }
-      override def read(json: JsValue): ConnectorKey = ConnectorKey.ofJsonString(json.toString())
+      override def read(json: JsValue): ConnectorKey = ConnectorKey.toConnectorKey(json.toString())
     })
     .nullToString(GROUP_KEY, () => ConnectorApi.GROUP_DEFAULT)
     .rejectEmptyString()

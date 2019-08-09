@@ -17,18 +17,18 @@
 package com.island.ohara.connector.hdfs.sink
 
 import com.island.ohara.client.kafka.WorkerClient
-import com.island.ohara.common.setting.SettingDef
 import com.island.ohara.common.setting.SettingDef.Reference
+import com.island.ohara.common.setting.{ConnectorKey, SettingDef, TopicKey}
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.json.{ConnectorDefinitions, ConnectorKey, TopicKey}
+import com.island.ohara.kafka.connector.json.ConnectorDefUtils
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
 
 class TestHDFSSinkDefinition extends WithBrokerWorker with Matchers {
   private[this] val hdfsSink = new HDFSSink
@@ -124,35 +124,35 @@ class TestHDFSSinkDefinition extends WithBrokerWorker with Matchers {
     response
       .settings()
       .asScala
-      .filter(_.definition().key() == ConnectorDefinitions.TOPIC_NAMES_DEFINITION.key())
+      .filter(_.definition().key() == ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key())
       .head
       .definition()
       .required() shouldBe true
     response
       .settings()
       .asScala
-      .filter(_.definition().key() == ConnectorDefinitions.CONNECTOR_CLASS_DEFINITION.key())
+      .filter(_.definition().key() == ConnectorDefUtils.CONNECTOR_CLASS_DEFINITION.key())
       .head
       .definition()
       .required() shouldBe true
     response
       .settings()
       .asScala
-      .filter(_.definition().key() == ConnectorDefinitions.NUMBER_OF_TASKS_DEFINITION.key())
+      .filter(_.definition().key() == ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key())
       .head
       .definition()
       .required() shouldBe true
     response
       .settings()
       .asScala
-      .filter(_.definition().key() == ConnectorDefinitions.COLUMNS_DEFINITION.key())
+      .filter(_.definition().key() == ConnectorDefUtils.COLUMNS_DEFINITION.key())
       .head
       .definition()
       .required() shouldBe false
     response
       .settings()
       .asScala
-      .filter(_.definition().key() == ConnectorDefinitions.WORKER_CLUSTER_NAME_DEFINITION.key())
+      .filter(_.definition().key() == ConnectorDefUtils.WORKER_CLUSTER_NAME_DEFINITION.key())
       .head
       .definition()
       .required() shouldBe false

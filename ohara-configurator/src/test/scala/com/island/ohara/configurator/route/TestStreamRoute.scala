@@ -19,9 +19,9 @@ package com.island.ohara.configurator.route
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.kafka.connector.json.{ObjectKey, TopicKey}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 import spray.json.{JsNumber, JsString}

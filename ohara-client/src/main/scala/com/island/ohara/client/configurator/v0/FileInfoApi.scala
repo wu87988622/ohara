@@ -24,8 +24,8 @@ import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model._
 import com.island.ohara.client.configurator.Data
 import com.island.ohara.common.annotations.Optional
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.json.ObjectKey
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsObject, JsString, JsValue, RootJsonFormat}
 import spray.json._

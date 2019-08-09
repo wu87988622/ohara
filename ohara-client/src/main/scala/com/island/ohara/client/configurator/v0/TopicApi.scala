@@ -21,10 +21,9 @@ import java.util.concurrent.atomic.AtomicInteger
 import com.island.ohara.client.Enum
 import com.island.ohara.client.configurator.Data
 import com.island.ohara.common.annotations.Optional
-import com.island.ohara.common.setting.SettingDef
+import com.island.ohara.common.setting.{SettingDef, TopicKey}
 import com.island.ohara.common.setting.SettingDef.Type
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.json.TopicKey
 import org.apache.kafka.common.config.TopicConfig
 import org.apache.kafka.common.record.Records
 import spray.json.DefaultJsonProtocol._

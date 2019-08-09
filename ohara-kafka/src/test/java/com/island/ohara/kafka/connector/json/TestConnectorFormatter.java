@@ -19,6 +19,8 @@ package com.island.ohara.kafka.connector.json;
 import com.google.common.collect.Sets;
 import com.island.ohara.common.json.JsonUtils;
 import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.setting.ConnectorKey;
+import com.island.ohara.common.setting.TopicKey;
 import com.island.ohara.common.util.CommonUtils;
 import java.util.Collections;
 import java.util.Set;
@@ -54,14 +56,14 @@ public class TestConnectorFormatter extends SmallTest {
             .connectorKey(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
             .topicKeys(topicKeys)
             .requestOfCreation();
-    Assert.assertNotNull(creation.configs().get(ConnectorDefinitions.TOPIC_NAMES_DEFINITION.key()));
+    Assert.assertNotNull(creation.configs().get(ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key()));
     Assert.assertEquals(
         StringList.toKafkaString(topicNames),
-        creation.configs().get(ConnectorDefinitions.TOPIC_NAMES_DEFINITION.key()));
-    Assert.assertNotNull(creation.configs().get(ConnectorDefinitions.TOPIC_KEYS_DEFINITION.key()));
+        creation.configs().get(ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key()));
+    Assert.assertNotNull(creation.configs().get(ConnectorDefUtils.TOPIC_KEYS_DEFINITION.key()));
     Assert.assertEquals(
         JsonUtils.toString(topicKeys),
-        creation.configs().get(ConnectorDefinitions.TOPIC_KEYS_DEFINITION.key()));
+        creation.configs().get(ConnectorDefUtils.TOPIC_KEYS_DEFINITION.key()));
   }
 
   @Test
@@ -71,7 +73,7 @@ public class TestConnectorFormatter extends SmallTest {
             .connectorKey(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
             .topicKey(TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString()))
             .requestOfCreation();
-    Assert.assertNull(creation.configs().get(ConnectorDefinitions.CONNECTOR_NAME_DEFINITION.key()));
+    Assert.assertNull(creation.configs().get(ConnectorDefUtils.CONNECTOR_NAME_DEFINITION.key()));
   }
 
   @Test

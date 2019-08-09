@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.kafka.connector.json;
+package com.island.ohara.common.setting;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -79,7 +79,7 @@ public class TestTopicKey extends SmallTest {
         TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
             instanceof Serializable);
     Assert.assertTrue(
-        TopicKey.ofJsonString(
+        TopicKey.toTopicKey(
                 TopicKey.toJsonString(
                     TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))))
             instanceof Serializable);

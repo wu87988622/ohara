@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.kafka.connector.json;
+package com.island.ohara.common.setting;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

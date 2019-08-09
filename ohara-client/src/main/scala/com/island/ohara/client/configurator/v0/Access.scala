@@ -16,7 +16,7 @@
 
 package com.island.ohara.client.configurator.v0
 
-import com.island.ohara.kafka.connector.json.ObjectKey
+import com.island.ohara.common.setting.ObjectKey
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 

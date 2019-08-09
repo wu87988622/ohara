@@ -19,8 +19,9 @@ package com.island.ohara.kafka.connector.json;
 import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.annotations.Optional;
 import com.island.ohara.common.data.Column;
-import com.island.ohara.common.json.JsonUtils;
+import com.island.ohara.common.setting.ConnectorKey;
 import com.island.ohara.common.setting.PropGroups;
+import com.island.ohara.common.setting.TopicKey;
 import com.island.ohara.common.util.CommonUtils;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -54,13 +55,12 @@ public final class ConnectorFormatter {
    * @return this formatter
    */
   private ConnectorFormatter name(String name) {
-    return setting(ConnectorDefinitions.CONNECTOR_NAME_DEFINITION.key(), name);
+    return setting(ConnectorDefUtils.CONNECTOR_NAME_DEFINITION.key(), name);
   }
 
   public ConnectorFormatter connectorKey(ConnectorKey connectorKey) {
     setting(
-        ConnectorDefinitions.CONNECTOR_KEY_DEFINITION.key(),
-        ConnectorKey.toJsonString(connectorKey));
+        ConnectorDefUtils.CONNECTOR_KEY_DEFINITION.key(), ConnectorKey.toJsonString(connectorKey));
     return name(connectorKey.connectorNameOnKafka());
   }
 
@@ -85,7 +85,7 @@ public final class ConnectorFormatter {
   }
 
   public ConnectorFormatter className(String className) {
-    return setting(ConnectorDefinitions.CONNECTOR_CLASS_DEFINITION.key(), className);
+    return setting(ConnectorDefUtils.CONNECTOR_CLASS_DEFINITION.key(), className);
   }
 
   /**
@@ -96,44 +96,33 @@ public final class ConnectorFormatter {
    */
   private ConnectorFormatter topicNames(Set<String> topicNames) {
     return setting(
-        ConnectorDefinitions.TOPIC_NAMES_DEFINITION.key(), StringList.toKafkaString(topicNames));
+        ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key(), StringList.toKafkaString(topicNames));
   }
 
   public ConnectorFormatter topicKey(TopicKey key) {
     return topicKeys(Collections.singleton(key));
   }
 
-  private static String toJsonString(Collection<? extends TopicKey> keys) {
-    return JsonUtils.toString(
-        keys.stream()
-            .map(
-                key -> {
-                  if (key instanceof KeyImpl) return (KeyImpl) key;
-                  else return new KeyImpl(key.group(), key.name());
-                })
-            .collect(Collectors.toList()));
-  }
-
   public ConnectorFormatter topicKeys(Set<TopicKey> topicKeys) {
-    setting(ConnectorDefinitions.TOPIC_KEYS_DEFINITION.key(), toJsonString(topicKeys));
+    setting(ConnectorDefUtils.TOPIC_KEYS_DEFINITION.key(), TopicKey.toJsonString(topicKeys));
     return topicNames(
         topicKeys.stream().map(TopicKey::topicNameOnKafka).collect(Collectors.toSet()));
   }
 
   public ConnectorFormatter numberOfTasks(int numberOfTasks) {
     return setting(
-        ConnectorDefinitions.NUMBER_OF_TASKS_DEFINITION.key(),
+        ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key(),
         String.valueOf(CommonUtils.requirePositiveInt(numberOfTasks)));
   }
 
   @Optional("default is ConverterType.NONE")
   public ConnectorFormatter converterTypeOfKey(ConverterType type) {
-    return setting(ConnectorDefinitions.KEY_CONVERTER_DEFINITION.key(), type.className());
+    return setting(ConnectorDefUtils.KEY_CONVERTER_DEFINITION.key(), type.className());
   }
 
   @Optional("default is ConverterType.NONE")
   public ConnectorFormatter converterTypeOfValue(ConverterType type) {
-    return setting(ConnectorDefinitions.VALUE_CONVERTER_DEFINITION.key(), type.className());
+    return setting(ConnectorDefUtils.VALUE_CONVERTER_DEFINITION.key(), type.className());
   }
 
   public ConnectorFormatter propGroups(String key, PropGroups propGroups) {
@@ -146,7 +135,7 @@ public final class ConnectorFormatter {
 
   public ConnectorFormatter columns(List<Column> columns) {
     return propGroups(
-        ConnectorDefinitions.COLUMNS_DEFINITION.key(),
+        ConnectorDefUtils.COLUMNS_DEFINITION.key(),
         PropGroups.ofColumns(CommonUtils.requireNonEmpty(columns)));
   }
 

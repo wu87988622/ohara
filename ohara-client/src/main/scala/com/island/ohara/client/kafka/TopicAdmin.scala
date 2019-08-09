@@ -22,8 +22,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.{Collections, Objects, Properties}
 
 import com.island.ohara.common.annotations.Optional
+import com.island.ohara.common.setting.TopicKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.kafka.connector.json.TopicKey
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.admin.{AdminClient, NewPartitions, NewTopic, TopicDescription}
 import org.apache.kafka.common.config.{ConfigResource, TopicConfig}

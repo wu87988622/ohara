@@ -27,10 +27,11 @@ import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.RouteUtils._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
-import com.island.ohara.kafka.connector.json.{ConnectorDefinitions, ObjectKey}
+import com.island.ohara.kafka.connector.json.ConnectorDefUtils
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
@@ -46,7 +47,7 @@ private[configurator] object PipelineRoute {
           ObjectAbstract(
             group = data.group,
             name = data.name,
-            kind = ConnectorDefinitions.kind(connectorDefinition.definitions.asJava),
+            kind = ConnectorDefUtils.kind(connectorDefinition.definitions.asJava),
             className = Some(data.className),
             state = None,
             error = None,

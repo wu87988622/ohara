@@ -21,9 +21,10 @@ import java.util.Collections
 import com.island.ohara.client.ftp.FtpClient
 import com.island.ohara.common.data.Cell
 import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.kafka.connector.TaskSetting
-import com.island.ohara.kafka.connector.json.{ConnectorFormatter, ConnectorKey, TopicKey}
+import com.island.ohara.kafka.connector.json.ConnectorFormatter
 import com.island.ohara.kafka.connector.text.TextFileSystem
 import com.island.ohara.kafka.connector.text.csv.CsvSourceConverterFactory
 import com.island.ohara.testing.service.FtpServer

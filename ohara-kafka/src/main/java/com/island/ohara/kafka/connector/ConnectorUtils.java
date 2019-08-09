@@ -22,7 +22,7 @@ import com.island.ohara.common.data.Serializer;
 import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.util.ByteUtils;
 import com.island.ohara.common.util.CommonUtils;
-import com.island.ohara.kafka.connector.json.ConnectorDefinitions;
+import com.island.ohara.kafka.connector.json.ConnectorDefUtils;
 import com.island.ohara.metrics.basic.Counter;
 import java.util.Arrays;
 import java.util.Collection;
@@ -42,16 +42,16 @@ final class ConnectorUtils {
     return Stream.of(
             settingDefinitions,
             Arrays.asList(
-                copy(version.version(), ConnectorDefinitions.VERSION_DEFINITION),
-                copy(version.revision(), ConnectorDefinitions.REVISION_DEFINITION),
-                copy(version.author(), ConnectorDefinitions.AUTHOR_DEFINITION)))
+                copy(version.version(), ConnectorDefUtils.VERSION_DEFINITION),
+                copy(version.revision(), ConnectorDefUtils.REVISION_DEFINITION),
+                copy(version.author(), ConnectorDefUtils.AUTHOR_DEFINITION)))
         .flatMap(Collection::stream)
         .collect(Collectors.toList());
   }
 
   static ConfigDef toConfigDef(List<SettingDef> settingDefinitions) {
     ConfigDef def = new ConfigDef();
-    settingDefinitions.stream().map(ConnectorDefinitions::toConfigKey).forEach(def::define);
+    settingDefinitions.stream().map(ConnectorDefUtils::toConfigKey).forEach(def::define);
     return def;
   }
 

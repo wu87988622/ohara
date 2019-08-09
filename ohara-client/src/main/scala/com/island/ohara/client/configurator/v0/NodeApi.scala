@@ -20,8 +20,8 @@ import java.util.Objects
 import com.island.ohara.client.configurator.Data
 import com.island.ohara.client.configurator.v0.ValidationApi.ValidationReport
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.json.ObjectKey
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsString, JsValue, RootJsonFormat}
 

@@ -19,8 +19,8 @@ package com.island.ohara.client
 import java.time.Duration
 
 import com.island.ohara.common.data.{Cell, Row}
+import com.island.ohara.common.setting.ConnectorKey
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.json.ConnectorKey
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._

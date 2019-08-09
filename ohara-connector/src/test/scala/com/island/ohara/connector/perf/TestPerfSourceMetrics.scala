@@ -17,8 +17,8 @@
 package com.island.ohara.connector.perf
 
 import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.json.{ConnectorKey, TopicKey}
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.Test

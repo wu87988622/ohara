@@ -22,16 +22,16 @@ import java.time.Duration
 import com.island.ohara.client.ftp.FtpClient
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Cell, Column, DataType, Row}
+import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.kafka.connector.json.{ConnectorKey, TopicKey}
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Await
-import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 
 /**
   * ftp csv -> topic -> ftp csv

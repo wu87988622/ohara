@@ -21,8 +21,9 @@ import java.util.concurrent.TimeUnit
 import com.island.ohara.client.ftp.FtpClient
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Cell, DataType, Row, Serializer, _}
+import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.kafka.connector.json.{ConnectorFormatter, ConnectorKey, TopicKey}
+import com.island.ohara.kafka.connector.json.ConnectorFormatter
 import com.island.ohara.kafka.{BrokerClient, Consumer, Producer}
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.{After, Before, BeforeClass, Test}

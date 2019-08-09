@@ -24,8 +24,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 import com.island.ohara.client.configurator.Data
 import com.island.ohara.common.data.Serializer
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.Releasable
-import com.island.ohara.kafka.connector.json.ObjectKey
 import org.rocksdb.{ColumnFamilyDescriptor, _}
 
 import scala.collection.JavaConverters._

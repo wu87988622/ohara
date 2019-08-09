@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package com.island.ohara.kafka.connector.json;
+package com.island.ohara.common.setting;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.island.ohara.common.json.JsonUtils;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * the key of topic object. It is almost same with {@link ObjectKey} excepting for the method
@@ -35,7 +36,11 @@ public interface TopicKey extends ObjectKey {
   }
 
   static String toJsonString(TopicKey key) {
-    return new KeyImpl(key.group(), key.name()).toJsonString();
+    return ObjectKey.toJsonString(key);
+  }
+
+  static String toJsonString(Collection<? extends TopicKey> key) {
+    return ObjectKey.toJsonString(key);
   }
 
   /**
@@ -44,8 +49,21 @@ public interface TopicKey extends ObjectKey {
    * @param json json representation
    * @return a serializable instance
    */
-  static TopicKey ofJsonString(String json) {
-    return JsonUtils.toObject(json, new TypeReference<KeyImpl>() {});
+  static TopicKey toTopicKey(String json) {
+    ObjectKey key = ObjectKey.toObjectKey(json);
+    return TopicKey.of(key.group(), key.name());
+  }
+
+  /**
+   * parse input json and then generate a TopicKey instances.
+   *
+   * @param json json representation
+   * @return a serializable instance
+   */
+  static List<TopicKey> toTopicKeys(String json) {
+    return ObjectKey.toObjectKeys(json).stream()
+        .map(key -> TopicKey.of(key.group(), key.name()))
+        .collect(Collectors.toList());
   }
 
   /**

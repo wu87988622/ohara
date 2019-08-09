@@ -22,7 +22,7 @@ import com.island.ohara.common.rule.SmallTest;
 import com.island.ohara.common.setting.PropGroups;
 import com.island.ohara.kafka.connector.RowSourceContext;
 import com.island.ohara.kafka.connector.TaskSetting;
-import com.island.ohara.kafka.connector.json.ConnectorDefinitions;
+import com.island.ohara.kafka.connector.json.ConnectorDefUtils;
 import java.util.*;
 import org.junit.Assert;
 import org.junit.Test;
@@ -38,8 +38,8 @@ public class TestCsvSourceConvertFactory extends SmallTest {
         PropGroups.ofColumns(Collections.singletonList(column)).toJsonString();
 
     Map<String, String> props = new HashMap<>();
-    props.put(ConnectorDefinitions.TOPIC_NAMES_DEFINITION.key(), "T1, T2");
-    props.put(ConnectorDefinitions.COLUMNS_DEFINITION.key(), columnJsonString);
+    props.put(ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key(), "T1, T2");
+    props.put(ConnectorDefUtils.COLUMNS_DEFINITION.key(), columnJsonString);
     return TaskSetting.of(props);
   }
 

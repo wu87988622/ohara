@@ -27,9 +27,9 @@ import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorDescription
 import com.island.ohara.client.configurator.v0.FileInfoApi
 import com.island.ohara.client.configurator.v0.FileInfoApi._
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.configurator.file.FileStore
 import com.island.ohara.configurator.store.DataStore
-import com.island.ohara.kafka.connector.json.ObjectKey
 import spray.json.DefaultJsonProtocol._
 
 import scala.concurrent.duration._

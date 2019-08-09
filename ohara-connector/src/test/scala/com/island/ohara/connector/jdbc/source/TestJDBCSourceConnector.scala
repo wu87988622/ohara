@@ -22,10 +22,10 @@ import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
 import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Cell, Row, Serializer}
+import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.kafka.Consumer
 import com.island.ohara.kafka.connector.TaskSetting
-import com.island.ohara.kafka.connector.json.{ConnectorKey, TopicKey}
 import com.island.ohara.testing.With3Brokers3Workers
 import com.island.ohara.testing.service.Database
 import org.junit.{After, Before, Test}

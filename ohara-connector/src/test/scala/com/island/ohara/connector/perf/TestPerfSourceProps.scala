@@ -19,9 +19,10 @@ import java.util.Collections
 
 import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.TaskSetting
-import com.island.ohara.kafka.connector.json.{ConnectorFormatter, ConnectorKey, TopicKey}
+import com.island.ohara.kafka.connector.json.ConnectorFormatter
 import org.junit.Test
 import org.scalatest.Matchers
 

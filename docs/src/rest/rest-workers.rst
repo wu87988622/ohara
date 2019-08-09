@@ -202,7 +202,7 @@ types are shown below.
 
 #. Duration — the value must be castable to **java.time.Duration** and it is based on the ISO-860 duration
    format PnDTnHnMn.nS
-#. TOPIC_KEYS — each field must be castable to **com.island.ohara.kafka.connector.json.TopicKey** .
+#. TOPIC_KEYS — each field must be castable to **com.island.ohara.common.setting.TopicKey** .
    The json representation is shown below.
 
     .. code-block:: json

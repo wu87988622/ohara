@@ -34,9 +34,9 @@ import com.island.ohara.client.configurator.v0.{
   OharaJsonFormat
 }
 import com.island.ohara.common.annotations.VisibleForTesting
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.VersionUtils
 import com.island.ohara.configurator.store.DataStore
-import com.island.ohara.kafka.connector.json.ObjectKey
 import com.typesafe.scalalogging.Logger
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsArray, JsString, RootJsonFormat}

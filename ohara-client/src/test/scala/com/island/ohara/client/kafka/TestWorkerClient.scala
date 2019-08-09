@@ -20,10 +20,10 @@ import java.util.Collections
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorState
 import com.island.ohara.common.data.{Row, Serializer}
-import com.island.ohara.common.setting.SettingDef
+import com.island.ohara.common.setting.{ConnectorKey, SettingDef, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.Consumer
-import com.island.ohara.kafka.connector.json.{ConnectorKey, ConverterType, ConnectorDefinitions, StringList, TopicKey}
+import com.island.ohara.kafka.connector.json.{ConnectorDefUtils, ConverterType, StringList}
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.Test
 import org.scalatest.Matchers
@@ -134,10 +134,10 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
         .connectorValidator()
         .className(classOf[MyConnector].getName)
         .settings(Map(
-          ConnectorDefinitions.CONNECTOR_NAME_DEFINITION.key() -> name,
-          ConnectorDefinitions.TOPIC_NAMES_DEFINITION.key() -> StringList.toJsonString(
+          ConnectorDefUtils.CONNECTOR_NAME_DEFINITION.key() -> name,
+          ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key() -> StringList.toJsonString(
             Collections.singletonList(topicName)),
-          ConnectorDefinitions.NUMBER_OF_TASKS_DEFINITION.key() -> numberOfTasks.toString
+          ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key() -> numberOfTasks.toString
         ))
         .run())
     settingInfo.className.get shouldBe classOf[MyConnector].getName
@@ -168,7 +168,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
   @Test
   def testColumnsDefinition(): Unit =
     result(workerClient.connectorDefinitions())
-      .map(_.definitions.filter(_.key() == ConnectorDefinitions.COLUMNS_DEFINITION.key()).head)
+      .map(_.definitions.filter(_.key() == ConnectorDefUtils.COLUMNS_DEFINITION.key()).head)
       .foreach { definition =>
         definition.tableKeys().size() should not be 0
       }
@@ -187,163 +187,139 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
   private[this] def check(settingDefinitionS: Seq[SettingDef]): Unit = {
     settingDefinitionS.size should not be 0
 
-    settingDefinitionS.exists(_.key() == ConnectorDefinitions.CONNECTOR_CLASS_DEFINITION.key()) shouldBe true
+    settingDefinitionS.exists(_.key() == ConnectorDefUtils.CONNECTOR_CLASS_DEFINITION.key()) shouldBe true
     settingDefinitionS
-      .find(_.key() == ConnectorDefinitions.CONNECTOR_CLASS_DEFINITION.key())
+      .find(_.key() == ConnectorDefUtils.CONNECTOR_CLASS_DEFINITION.key())
       .head
-      .group() shouldBe ConnectorDefinitions.CORE_GROUP
+      .group() shouldBe ConnectorDefUtils.CORE_GROUP
     settingDefinitionS
-      .find(_.key() == ConnectorDefinitions.CONNECTOR_CLASS_DEFINITION.key())
+      .find(_.key() == ConnectorDefUtils.CONNECTOR_CLASS_DEFINITION.key())
+      .head
+      .internal() shouldBe false
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.CONNECTOR_CLASS_DEFINITION.key()).head.editable() shouldBe true
+    settingDefinitionS
+      .find(_.key() == ConnectorDefUtils.CONNECTOR_CLASS_DEFINITION.key())
+      .head
+      .defaultValue() shouldBe null
+
+    settingDefinitionS.exists(_.key() == ConnectorDefUtils.COLUMNS_DEFINITION.key()) shouldBe true
+    settingDefinitionS
+      .find(_.key() == ConnectorDefUtils.COLUMNS_DEFINITION.key())
+      .head
+      .group() shouldBe ConnectorDefUtils.CORE_GROUP
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.COLUMNS_DEFINITION.key()).head.internal() shouldBe false
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.COLUMNS_DEFINITION.key()).head.editable() shouldBe true
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.COLUMNS_DEFINITION.key()).head.defaultValue() shouldBe null
+
+    settingDefinitionS.exists(_.key() == ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key()) shouldBe true
+    settingDefinitionS
+      .find(_.key() == ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key())
+      .head
+      .group() shouldBe ConnectorDefUtils.CORE_GROUP
+    settingDefinitionS
+      .find(_.key() == ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key())
+      .head
+      .internal() shouldBe false
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key()).head.editable() shouldBe true
+    settingDefinitionS
+      .find(_.key() == ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key())
+      .head
+      .defaultValue() shouldBe null
+
+    settingDefinitionS.exists(_.key() == ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key()) shouldBe true
+    settingDefinitionS
+      .find(_.key() == ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key())
+      .head
+      .group() shouldBe ConnectorDefUtils.CORE_GROUP
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key()).head.internal() shouldBe true
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key()).head.editable() shouldBe true
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key()).head.defaultValue() shouldBe null
+
+    settingDefinitionS.exists(_.key() == ConnectorDefUtils.WORKER_CLUSTER_NAME_DEFINITION.key()) shouldBe true
+    settingDefinitionS
+      .find(_.key() == ConnectorDefUtils.WORKER_CLUSTER_NAME_DEFINITION.key())
+      .head
+      .group() shouldBe ConnectorDefUtils.CORE_GROUP
+    settingDefinitionS
+      .find(_.key() == ConnectorDefUtils.WORKER_CLUSTER_NAME_DEFINITION.key())
       .head
       .internal() shouldBe false
     settingDefinitionS
-      .find(_.key() == ConnectorDefinitions.CONNECTOR_CLASS_DEFINITION.key())
+      .find(_.key() == ConnectorDefUtils.WORKER_CLUSTER_NAME_DEFINITION.key())
       .head
       .editable() shouldBe true
     settingDefinitionS
-      .find(_.key() == ConnectorDefinitions.CONNECTOR_CLASS_DEFINITION.key())
+      .find(_.key() == ConnectorDefUtils.WORKER_CLUSTER_NAME_DEFINITION.key())
       .head
       .defaultValue() shouldBe null
 
-    settingDefinitionS.exists(_.key() == ConnectorDefinitions.COLUMNS_DEFINITION.key()) shouldBe true
+    settingDefinitionS.exists(_.key() == ConnectorDefUtils.AUTHOR_DEFINITION.key()) shouldBe true
     settingDefinitionS
-      .find(_.key() == ConnectorDefinitions.COLUMNS_DEFINITION.key())
+      .find(_.key() == ConnectorDefUtils.AUTHOR_DEFINITION.key())
       .head
-      .group() shouldBe ConnectorDefinitions.CORE_GROUP
-    settingDefinitionS.find(_.key() == ConnectorDefinitions.COLUMNS_DEFINITION.key()).head.internal() shouldBe false
-    settingDefinitionS.find(_.key() == ConnectorDefinitions.COLUMNS_DEFINITION.key()).head.editable() shouldBe true
-    settingDefinitionS.find(_.key() == ConnectorDefinitions.COLUMNS_DEFINITION.key()).head.defaultValue() shouldBe null
+      .group() shouldBe ConnectorDefUtils.CORE_GROUP
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.AUTHOR_DEFINITION.key()).head.internal() shouldBe false
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.AUTHOR_DEFINITION.key()).head.editable() shouldBe false
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.AUTHOR_DEFINITION.key()).head.defaultValue() shouldBe "unknown"
 
-    settingDefinitionS.exists(_.key() == ConnectorDefinitions.NUMBER_OF_TASKS_DEFINITION.key()) shouldBe true
+    settingDefinitionS.exists(_.key() == ConnectorDefUtils.VERSION_DEFINITION.key()) shouldBe true
     settingDefinitionS
-      .find(_.key() == ConnectorDefinitions.NUMBER_OF_TASKS_DEFINITION.key())
+      .find(_.key() == ConnectorDefUtils.VERSION_DEFINITION.key())
       .head
-      .group() shouldBe ConnectorDefinitions.CORE_GROUP
+      .group() shouldBe ConnectorDefUtils.CORE_GROUP
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.VERSION_DEFINITION.key()).head.internal() shouldBe false
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.VERSION_DEFINITION.key()).head.editable() shouldBe false
     settingDefinitionS
-      .find(_.key() == ConnectorDefinitions.NUMBER_OF_TASKS_DEFINITION.key())
-      .head
-      .internal() shouldBe false
-    settingDefinitionS
-      .find(_.key() == ConnectorDefinitions.NUMBER_OF_TASKS_DEFINITION.key())
-      .head
-      .editable() shouldBe true
-    settingDefinitionS
-      .find(_.key() == ConnectorDefinitions.NUMBER_OF_TASKS_DEFINITION.key())
-      .head
-      .defaultValue() shouldBe null
-
-    settingDefinitionS.exists(_.key() == ConnectorDefinitions.TOPIC_NAMES_DEFINITION.key()) shouldBe true
-    settingDefinitionS
-      .find(_.key() == ConnectorDefinitions.TOPIC_NAMES_DEFINITION.key())
-      .head
-      .group() shouldBe ConnectorDefinitions.CORE_GROUP
-    settingDefinitionS.find(_.key() == ConnectorDefinitions.TOPIC_NAMES_DEFINITION.key()).head.internal() shouldBe true
-    settingDefinitionS.find(_.key() == ConnectorDefinitions.TOPIC_NAMES_DEFINITION.key()).head.editable() shouldBe true
-    settingDefinitionS
-      .find(_.key() == ConnectorDefinitions.TOPIC_NAMES_DEFINITION.key())
-      .head
-      .defaultValue() shouldBe null
-
-    settingDefinitionS.exists(_.key() == ConnectorDefinitions.WORKER_CLUSTER_NAME_DEFINITION.key()) shouldBe true
-    settingDefinitionS
-      .find(_.key() == ConnectorDefinitions.WORKER_CLUSTER_NAME_DEFINITION.key())
-      .head
-      .group() shouldBe ConnectorDefinitions.CORE_GROUP
-    settingDefinitionS
-      .find(_.key() == ConnectorDefinitions.WORKER_CLUSTER_NAME_DEFINITION.key())
-      .head
-      .internal() shouldBe false
-    settingDefinitionS
-      .find(_.key() == ConnectorDefinitions.WORKER_CLUSTER_NAME_DEFINITION.key())
-      .head
-      .editable() shouldBe true
-    settingDefinitionS
-      .find(_.key() == ConnectorDefinitions.WORKER_CLUSTER_NAME_DEFINITION.key())
-      .head
-      .defaultValue() shouldBe null
-
-    settingDefinitionS.exists(_.key() == ConnectorDefinitions.AUTHOR_DEFINITION.key()) shouldBe true
-    settingDefinitionS
-      .find(_.key() == ConnectorDefinitions.AUTHOR_DEFINITION.key())
-      .head
-      .group() shouldBe ConnectorDefinitions.CORE_GROUP
-    settingDefinitionS.find(_.key() == ConnectorDefinitions.AUTHOR_DEFINITION.key()).head.internal() shouldBe false
-    settingDefinitionS.find(_.key() == ConnectorDefinitions.AUTHOR_DEFINITION.key()).head.editable() shouldBe false
-    settingDefinitionS
-      .find(_.key() == ConnectorDefinitions.AUTHOR_DEFINITION.key())
+      .find(_.key() == ConnectorDefUtils.VERSION_DEFINITION.key())
       .head
       .defaultValue() shouldBe "unknown"
 
-    settingDefinitionS.exists(_.key() == ConnectorDefinitions.VERSION_DEFINITION.key()) shouldBe true
+    settingDefinitionS.exists(_.key() == ConnectorDefUtils.REVISION_DEFINITION.key()) shouldBe true
     settingDefinitionS
-      .find(_.key() == ConnectorDefinitions.VERSION_DEFINITION.key())
+      .find(_.key() == ConnectorDefUtils.REVISION_DEFINITION.key())
       .head
-      .group() shouldBe ConnectorDefinitions.CORE_GROUP
-    settingDefinitionS.find(_.key() == ConnectorDefinitions.VERSION_DEFINITION.key()).head.internal() shouldBe false
-    settingDefinitionS.find(_.key() == ConnectorDefinitions.VERSION_DEFINITION.key()).head.editable() shouldBe false
+      .group() shouldBe ConnectorDefUtils.CORE_GROUP
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.REVISION_DEFINITION.key()).head.internal() shouldBe false
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.REVISION_DEFINITION.key()).head.editable() shouldBe false
     settingDefinitionS
-      .find(_.key() == ConnectorDefinitions.VERSION_DEFINITION.key())
-      .head
-      .defaultValue() shouldBe "unknown"
-
-    settingDefinitionS.exists(_.key() == ConnectorDefinitions.REVISION_DEFINITION.key()) shouldBe true
-    settingDefinitionS
-      .find(_.key() == ConnectorDefinitions.REVISION_DEFINITION.key())
-      .head
-      .group() shouldBe ConnectorDefinitions.CORE_GROUP
-    settingDefinitionS.find(_.key() == ConnectorDefinitions.REVISION_DEFINITION.key()).head.internal() shouldBe false
-    settingDefinitionS.find(_.key() == ConnectorDefinitions.REVISION_DEFINITION.key()).head.editable() shouldBe false
-    settingDefinitionS
-      .find(_.key() == ConnectorDefinitions.REVISION_DEFINITION.key())
+      .find(_.key() == ConnectorDefUtils.REVISION_DEFINITION.key())
       .head
       .defaultValue() shouldBe "unknown"
 
-    settingDefinitionS.exists(_.key() == ConnectorDefinitions.KIND_DEFINITION.key()) shouldBe true
+    settingDefinitionS.exists(_.key() == ConnectorDefUtils.KIND_DEFINITION.key()) shouldBe true
     settingDefinitionS
-      .find(_.key() == ConnectorDefinitions.KIND_DEFINITION.key())
+      .find(_.key() == ConnectorDefUtils.KIND_DEFINITION.key())
       .head
-      .group() shouldBe ConnectorDefinitions.CORE_GROUP
-    settingDefinitionS.find(_.key() == ConnectorDefinitions.KIND_DEFINITION.key()).head.internal() shouldBe false
-    settingDefinitionS.find(_.key() == ConnectorDefinitions.KIND_DEFINITION.key()).head.editable() shouldBe false
-    (settingDefinitionS.find(_.key() == ConnectorDefinitions.KIND_DEFINITION.key()).head.defaultValue() == "source"
+      .group() shouldBe ConnectorDefUtils.CORE_GROUP
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.KIND_DEFINITION.key()).head.internal() shouldBe false
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.KIND_DEFINITION.key()).head.editable() shouldBe false
+    (settingDefinitionS.find(_.key() == ConnectorDefUtils.KIND_DEFINITION.key()).head.defaultValue() == "source"
     || settingDefinitionS
-      .find(_.key() == ConnectorDefinitions.KIND_DEFINITION.key())
+      .find(_.key() == ConnectorDefUtils.KIND_DEFINITION.key())
       .head
       .defaultValue() == "sink") shouldBe true
 
-    settingDefinitionS.exists(_.key() == ConnectorDefinitions.KEY_CONVERTER_DEFINITION.key()) shouldBe true
+    settingDefinitionS.exists(_.key() == ConnectorDefUtils.KEY_CONVERTER_DEFINITION.key()) shouldBe true
     settingDefinitionS
-      .find(_.key() == ConnectorDefinitions.KEY_CONVERTER_DEFINITION.key())
+      .find(_.key() == ConnectorDefUtils.KEY_CONVERTER_DEFINITION.key())
       .head
-      .group() shouldBe ConnectorDefinitions.CORE_GROUP
+      .group() shouldBe ConnectorDefUtils.CORE_GROUP
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.KEY_CONVERTER_DEFINITION.key()).head.internal() shouldBe true
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.KEY_CONVERTER_DEFINITION.key()).head.editable() shouldBe true
     settingDefinitionS
-      .find(_.key() == ConnectorDefinitions.KEY_CONVERTER_DEFINITION.key())
-      .head
-      .internal() shouldBe true
-    settingDefinitionS
-      .find(_.key() == ConnectorDefinitions.KEY_CONVERTER_DEFINITION.key())
-      .head
-      .editable() shouldBe true
-    settingDefinitionS
-      .find(_.key() == ConnectorDefinitions.KEY_CONVERTER_DEFINITION.key())
+      .find(_.key() == ConnectorDefUtils.KEY_CONVERTER_DEFINITION.key())
       .head
       .defaultValue() shouldBe ConverterType.NONE.className()
 
-    settingDefinitionS.exists(_.key() == ConnectorDefinitions.VALUE_CONVERTER_DEFINITION.key()) shouldBe true
+    settingDefinitionS.exists(_.key() == ConnectorDefUtils.VALUE_CONVERTER_DEFINITION.key()) shouldBe true
     settingDefinitionS
-      .find(_.key() == ConnectorDefinitions.VALUE_CONVERTER_DEFINITION.key())
+      .find(_.key() == ConnectorDefUtils.VALUE_CONVERTER_DEFINITION.key())
       .head
-      .group() shouldBe ConnectorDefinitions.CORE_GROUP
+      .group() shouldBe ConnectorDefUtils.CORE_GROUP
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.VALUE_CONVERTER_DEFINITION.key()).head.internal() shouldBe true
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.VALUE_CONVERTER_DEFINITION.key()).head.editable() shouldBe true
     settingDefinitionS
-      .find(_.key() == ConnectorDefinitions.VALUE_CONVERTER_DEFINITION.key())
-      .head
-      .internal() shouldBe true
-    settingDefinitionS
-      .find(_.key() == ConnectorDefinitions.VALUE_CONVERTER_DEFINITION.key())
-      .head
-      .editable() shouldBe true
-    settingDefinitionS
-      .find(_.key() == ConnectorDefinitions.VALUE_CONVERTER_DEFINITION.key())
+      .find(_.key() == ConnectorDefUtils.VALUE_CONVERTER_DEFINITION.key())
       .head
       .defaultValue() shouldBe ConverterType.NONE.className()
   }
@@ -359,7 +335,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
           .connectorClass(classOf[MyConnector])
           .connectorKey(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
           .numberOfTasks(1)
-          .settings(Map(ConnectorDefinitions.COLUMNS_DEFINITION.key() -> "Asdasdasd"))
+          .settings(Map(ConnectorDefUtils.COLUMNS_DEFINITION.key() -> "Asdasdasd"))
           .create())
     }
     //see ConnectorDefinitions.validator

@@ -18,8 +18,8 @@ package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.v0.PipelineApi._
 import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.json.ObjectKey
 import org.junit.Test
 import org.scalatest.Matchers
 import spray.json.DeserializationException

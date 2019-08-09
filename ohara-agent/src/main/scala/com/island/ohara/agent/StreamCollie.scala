@@ -26,8 +26,8 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.{ClusterInfo, Definition, StreamApi}
 import com.island.ohara.common.annotations.Optional
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.json.ObjectKey
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
 import com.island.ohara.streams.config.StreamDefinitions
@@ -175,7 +175,7 @@ trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator
   private[agent] def toStreamCluster(clusterName: String, containers: Seq[ContainerInfo]): Future[StreamClusterInfo] = {
     // get the first running container, or first non-running container if not found
     val first = containers.find(_.state == ContainerState.RUNNING.name).getOrElse(containers.head)
-    val jarKey = ObjectKey.ofJsonString(first.environments(DefaultConfigs.JAR_KEY_DEFINITION.key()))
+    val jarKey = ObjectKey.toObjectKey(first.environments(DefaultConfigs.JAR_KEY_DEFINITION.key()))
     Future.successful(
       StreamClusterInfo(
         settings = Map(

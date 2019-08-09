@@ -26,7 +26,7 @@ import com.island.ohara.client.configurator.v0.Definition
 import com.island.ohara.client.kafka.WorkerJson._
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.data.Column
-import com.island.ohara.common.setting.SettingDef
+import com.island.ohara.common.setting.{ConnectorKey, SettingDef, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json.{ConverterType, _}
 import com.typesafe.scalalogging.Logger

@@ -18,8 +18,8 @@ package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.HttpExecutor
 import com.island.ohara.client.configurator.ConfiguratorApiInfo
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.json.ObjectKey
 
 import scala.concurrent.{ExecutionContext, Future}
 

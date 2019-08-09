@@ -16,12 +16,13 @@
 
 package com.island.ohara.kafka.connector.json;
 
-import static com.island.ohara.common.setting.SettingDef.*;
+import static com.island.ohara.common.setting.SettingDef.COLUMN_DATA_TYPE_KEY;
+import static com.island.ohara.common.setting.SettingDef.COLUMN_NAME_KEY;
+import static com.island.ohara.common.setting.SettingDef.COLUMN_NEW_NAME_KEY;
+import static com.island.ohara.common.setting.SettingDef.ORDER_KEY;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.exception.OharaConfigException;
-import com.island.ohara.common.json.JsonUtils;
 import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.setting.SettingDef.Reference;
 import com.island.ohara.common.setting.SettingDef.Type;
@@ -40,7 +41,7 @@ import org.apache.kafka.connect.runtime.rest.entities.ConfigKeyInfo;
  * This class is used to define the configuration of ohara connector. this class is related to
  * org.apache.kafka.connect.runtime.rest.entities.ConfigKeyInfo
  */
-public abstract class ConnectorDefinitions {
+public final class ConnectorDefUtils {
   // -------------------------------[groups]-------------------------------//
   public static final String CORE_GROUP = "core";
   // -------------------------------[default setting]-------------------------------//
@@ -56,21 +57,6 @@ public abstract class ConnectorDefinitions {
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .build();
 
-  // TODO this is a workaround way to enable custom checker
-  // Please refactor this in https://github.com/oharastream/ohara/issues/2124...by Sam
-  static final Consumer<Object> chekerOfConnectorKey =
-      (Object value) -> {
-        if (value instanceof String) {
-          try {
-            // try parse the json string to Connector Key
-            ConnectorKey.ofJsonString((String) value);
-            // pass
-          } catch (Exception e) {
-            throw new OharaConfigException(
-                "can't be converted to CONNECTOR_KEY type. since:" + e.getMessage());
-          }
-        } else throw new OharaConfigException("the configured value must be String type");
-      };
   /** this setting is mapped to kafka's name. */
   public static final SettingDef CONNECTOR_NAME_DEFINITION =
       SettingDef.builder()
@@ -103,21 +89,6 @@ public abstract class ConnectorDefinitions {
           .group(CORE_GROUP)
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .build();
-
-  // TODO this is a workaround way to enable custom checker
-  // Please refactor this in https://github.com/oharastream/ohara/issues/2124...by Sam
-  static final Consumer<Object> chekerOfTopicKeys =
-      (Object value) -> {
-        if (value instanceof String) {
-          try {
-            if (JsonUtils.toObject((String) value, new TypeReference<List<KeyImpl>>() {}).isEmpty())
-              throw new OharaConfigException("TOPIC_KEYS can't be empty!!!");
-          } catch (Exception e) {
-            throw new OharaConfigException(
-                "can't be converted to TOPIC_KEYS type. since:" + e.getMessage());
-          }
-        } else throw new OharaConfigException("the configured value must be String type");
-      };
 
   public static final SettingDef TOPIC_NAMES_DEFINITION =
       SettingDef.builder()
@@ -334,9 +305,7 @@ public abstract class ConnectorDefinitions {
             throw new ConfigException(key + " is required!");
           if (value == null) return;
           try {
-            if (def.valueType().equals(Type.CONNECTOR_KEY)) chekerOfConnectorKey.accept(value);
-            else if (def.valueType().equals(Type.TOPIC_KEYS)) chekerOfTopicKeys.accept(value);
-            else def.checker().accept(value);
+            def.checker().accept(value);
           } catch (OharaConfigException e) {
             // wrap OharaConfigException to ConfigException in order to pass this checker to kafka
             throw new ConfigException(e.getMessage());
@@ -362,17 +331,17 @@ public abstract class ConnectorDefinitions {
   /** the default definitions for all ohara connector. */
   public static final List<SettingDef> DEFINITIONS_DEFAULT =
       Arrays.asList(
-          ConnectorDefinitions.CONNECTOR_NAME_DEFINITION,
-          ConnectorDefinitions.CONNECTOR_KEY_DEFINITION,
-          ConnectorDefinitions.CONNECTOR_CLASS_DEFINITION,
-          ConnectorDefinitions.COLUMNS_DEFINITION,
-          ConnectorDefinitions.KEY_CONVERTER_DEFINITION,
-          ConnectorDefinitions.VALUE_CONVERTER_DEFINITION,
-          ConnectorDefinitions.WORKER_CLUSTER_NAME_DEFINITION,
-          ConnectorDefinitions.NUMBER_OF_TASKS_DEFINITION,
-          ConnectorDefinitions.TOPIC_KEYS_DEFINITION,
-          ConnectorDefinitions.TOPIC_NAMES_DEFINITION,
-          ConnectorDefinitions.TAGS_DEFINITION);
+          ConnectorDefUtils.CONNECTOR_NAME_DEFINITION,
+          ConnectorDefUtils.CONNECTOR_KEY_DEFINITION,
+          ConnectorDefUtils.CONNECTOR_CLASS_DEFINITION,
+          ConnectorDefUtils.COLUMNS_DEFINITION,
+          ConnectorDefUtils.KEY_CONVERTER_DEFINITION,
+          ConnectorDefUtils.VALUE_CONVERTER_DEFINITION,
+          ConnectorDefUtils.WORKER_CLUSTER_NAME_DEFINITION,
+          ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION,
+          ConnectorDefUtils.TOPIC_KEYS_DEFINITION,
+          ConnectorDefUtils.TOPIC_NAMES_DEFINITION,
+          ConnectorDefUtils.TAGS_DEFINITION);
 
   /**
    * find the default value of version from settings
@@ -381,7 +350,7 @@ public abstract class ConnectorDefinitions {
    * @return default value of version. Otherwise, NoSuchElementException will be thrown
    */
   public static String version(List<SettingDef> settingDefinitions) {
-    return defaultValue(settingDefinitions, ConnectorDefinitions.VERSION_DEFINITION.key());
+    return defaultValue(settingDefinitions, ConnectorDefUtils.VERSION_DEFINITION.key());
   }
 
   /**
@@ -391,7 +360,7 @@ public abstract class ConnectorDefinitions {
    * @return default value of revision. Otherwise, NoSuchElementException will be thrown
    */
   public static String revision(List<SettingDef> settingDefinitions) {
-    return defaultValue(settingDefinitions, ConnectorDefinitions.REVISION_DEFINITION.key());
+    return defaultValue(settingDefinitions, ConnectorDefUtils.REVISION_DEFINITION.key());
   }
 
   /**
@@ -401,7 +370,7 @@ public abstract class ConnectorDefinitions {
    * @return default value of author. Otherwise, NoSuchElementException will be thrown
    */
   public static String author(List<SettingDef> settingDefinitions) {
-    return defaultValue(settingDefinitions, ConnectorDefinitions.AUTHOR_DEFINITION.key());
+    return defaultValue(settingDefinitions, ConnectorDefUtils.AUTHOR_DEFINITION.key());
   }
 
   /**
@@ -411,7 +380,7 @@ public abstract class ConnectorDefinitions {
    * @return default value of type name. Otherwise, NoSuchElementException will be thrown
    */
   public static String kind(List<SettingDef> settingDefinitions) {
-    return defaultValue(settingDefinitions, ConnectorDefinitions.KIND_DEFINITION.key());
+    return defaultValue(settingDefinitions, ConnectorDefUtils.KIND_DEFINITION.key());
   }
 
   private static String defaultValue(List<SettingDef> settingDefinitions, String key) {
@@ -433,5 +402,5 @@ public abstract class ConnectorDefinitions {
   }
 
   // disable constructor
-  private ConnectorDefinitions() {}
+  private ConnectorDefUtils() {}
 }

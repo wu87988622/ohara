@@ -22,6 +22,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.island.ohara.common.json.JsonObject;
 import com.island.ohara.common.json.JsonUtils;
+import com.island.ohara.common.setting.TopicKey;
 import com.island.ohara.common.util.CommonUtils;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -105,7 +106,7 @@ public final class SettingInfo implements JsonObject {
 
   // ------------------------[common]------------------------//
   public Optional<String> className() {
-    return value(ConnectorDefinitions.CONNECTOR_CLASS_DEFINITION.key());
+    return value(ConnectorDefUtils.CONNECTOR_CLASS_DEFINITION.key());
   }
 
   /**
@@ -115,51 +116,44 @@ public final class SettingInfo implements JsonObject {
    * @return the topic names in kafka form
    */
   public List<String> topicNamesOnKafka() {
-    return value(ConnectorDefinitions.TOPIC_NAMES_DEFINITION.key())
+    return value(ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key())
         .map(StringList::ofKafkaList)
         .orElse(Collections.emptyList());
   }
 
-  private static List<TopicKey> toTopicKeys(String json) {
-    return CommonUtils.isEmpty(json) || json.equalsIgnoreCase("null")
-        ? Collections.emptyList()
-        : JsonUtils.toObject(json, new TypeReference<List<KeyImpl>>() {}).stream()
-            .map(key -> (TopicKey) key)
-            .collect(Collectors.toList());
-  }
   /**
    * this is what user input for connector.
    *
    * @return topic keys
    */
   public List<TopicKey> topicKeys() {
-    return value(ConnectorDefinitions.TOPIC_KEYS_DEFINITION.key())
-        .map(SettingInfo::toTopicKeys)
+    return value(ConnectorDefUtils.TOPIC_KEYS_DEFINITION.key())
+        .map(TopicKey::toTopicKeys)
         .orElse(Collections.emptyList());
   }
 
   public Optional<Integer> numberOfTasks() {
-    return value(ConnectorDefinitions.NUMBER_OF_TASKS_DEFINITION.key()).map(Integer::valueOf);
+    return value(ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key()).map(Integer::valueOf);
   }
 
   public Optional<String> author() {
-    return value(ConnectorDefinitions.AUTHOR_DEFINITION.key());
+    return value(ConnectorDefUtils.AUTHOR_DEFINITION.key());
   }
 
   public Optional<String> version() {
-    return value(ConnectorDefinitions.VERSION_DEFINITION.key());
+    return value(ConnectorDefUtils.VERSION_DEFINITION.key());
   }
 
   public Optional<String> revision() {
-    return value(ConnectorDefinitions.REVISION_DEFINITION.key());
+    return value(ConnectorDefUtils.REVISION_DEFINITION.key());
   }
 
   public Optional<String> workerClusterName() {
-    return value(ConnectorDefinitions.WORKER_CLUSTER_NAME_DEFINITION.key());
+    return value(ConnectorDefUtils.WORKER_CLUSTER_NAME_DEFINITION.key());
   }
 
   public Optional<String> connectorType() {
-    return value(ConnectorDefinitions.KIND_DEFINITION.key());
+    return value(ConnectorDefUtils.KIND_DEFINITION.key());
   }
 
   // ------------------------[json]------------------------//

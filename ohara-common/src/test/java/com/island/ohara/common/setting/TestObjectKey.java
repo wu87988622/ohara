@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.kafka.connector.json;
+package com.island.ohara.common.setting;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,11 +25,11 @@ import java.io.Serializable;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestConnectorKey extends SmallTest {
+public class TestObjectKey extends SmallTest {
 
   @Test
   public void testEqual() throws IOException {
-    ConnectorKey key = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5));
+    ObjectKey key = ObjectKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5));
     ObjectMapper mapper = new ObjectMapper();
     Assert.assertEquals(
         key, mapper.readValue(mapper.writeValueAsString(key), new TypeReference<KeyImpl>() {}));
@@ -39,36 +39,36 @@ public class TestConnectorKey extends SmallTest {
   public void testGetter() {
     String group = CommonUtils.randomString(5);
     String name = CommonUtils.randomString(5);
-    ConnectorKey key = ConnectorKey.of(group, name);
+    ObjectKey key = ObjectKey.of(group, name);
     Assert.assertEquals(group, key.group());
     Assert.assertEquals(name, key.name());
   }
 
   @Test(expected = NullPointerException.class)
   public void nullGroup() {
-    ConnectorKey.of(null, CommonUtils.randomString(5));
+    ObjectKey.of(null, CommonUtils.randomString(5));
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void emptyGroup() {
-    ConnectorKey.of("", CommonUtils.randomString(5));
+    ObjectKey.of("", CommonUtils.randomString(5));
   }
 
   @Test(expected = NullPointerException.class)
   public void nullName() {
-    ConnectorKey.of(CommonUtils.randomString(5), null);
+    ObjectKey.of(CommonUtils.randomString(5), null);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void emptyName() {
-    ConnectorKey.of(CommonUtils.randomString(5), "");
+    ObjectKey.of(CommonUtils.randomString(5), "");
   }
 
   @Test
   public void testToString() {
     String group = CommonUtils.randomString(5);
     String name = CommonUtils.randomString(5);
-    ConnectorKey key = ConnectorKey.of(group, name);
+    ObjectKey key = ObjectKey.of(group, name);
     Assert.assertTrue(key.toString().contains(group));
     Assert.assertTrue(key.toString().contains(name));
   }
@@ -76,12 +76,12 @@ public class TestConnectorKey extends SmallTest {
   @Test
   public void testSerialization() {
     Assert.assertTrue(
-        ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+        ObjectKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
             instanceof Serializable);
     Assert.assertTrue(
-        ConnectorKey.ofJsonString(
-                ConnectorKey.toJsonString(
-                    ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))))
+        ObjectKey.toObjectKey(
+                ObjectKey.toJsonString(
+                    ObjectKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))))
             instanceof Serializable);
   }
 
@@ -89,8 +89,8 @@ public class TestConnectorKey extends SmallTest {
   public void testEqualToOtherKindsOfKey() {
     String group = CommonUtils.randomString();
     String name = CommonUtils.randomString();
-    Assert.assertEquals(ObjectKey.of(group, name), ConnectorKey.of(group, name));
-    Assert.assertEquals(TopicKey.of(group, name), ConnectorKey.of(group, name));
-    Assert.assertEquals(ConnectorKey.of(group, name), ConnectorKey.of(group, name));
+    Assert.assertEquals(ObjectKey.of(group, name), ObjectKey.of(group, name));
+    Assert.assertEquals(TopicKey.of(group, name), ObjectKey.of(group, name));
+    Assert.assertEquals(ConnectorKey.of(group, name), ObjectKey.of(group, name));
   }
 }

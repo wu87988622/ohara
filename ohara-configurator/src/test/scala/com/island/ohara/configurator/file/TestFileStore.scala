@@ -21,9 +21,9 @@ import java.nio.file.Files
 
 import com.island.ohara.client.configurator.v0.FileInfoApi
 import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.kafka.connector.json.ObjectKey
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 import spray.json.{JsNumber, JsString}

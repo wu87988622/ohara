@@ -17,8 +17,8 @@
 package com.island.ohara.client.kafka
 
 import com.island.ohara.client.kafka.TopicAdmin.TopicInfo
+import com.island.ohara.common.setting.TopicKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.kafka.connector.json.TopicKey
 import com.island.ohara.testing.With3Brokers
 import org.apache.kafka.common.config.TopicConfig
 import org.apache.kafka.common.errors.{InvalidPartitionsException, UnknownTopicOrPartitionException}

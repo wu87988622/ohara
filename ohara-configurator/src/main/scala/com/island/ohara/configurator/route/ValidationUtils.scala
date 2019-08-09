@@ -28,10 +28,10 @@ import com.island.ohara.client.configurator.v0.ValidationApi.{
 }
 import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
 import com.island.ohara.common.data.Serializer
+import com.island.ohara.common.setting.ConnectorKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.kafka.Consumer
 import com.island.ohara.kafka.Consumer.Record
-import com.island.ohara.kafka.connector.json.ConnectorKey
 import spray.json.{JsNull, JsNumber, JsString}
 
 import scala.collection.JavaConverters._

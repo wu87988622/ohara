@@ -41,10 +41,9 @@ public class Validation implements JsonObject {
   public static Validation of(String className, List<String> topicsName) {
     return new Validation(
         ImmutableMap.of(
-            ConnectorDefinitions.CONNECTOR_CLASS_DEFINITION.key(),
+            ConnectorDefUtils.CONNECTOR_CLASS_DEFINITION.key(),
                 CommonUtils.requireNonEmpty(className),
-            ConnectorDefinitions.TOPIC_NAMES_DEFINITION.key(),
-                StringList.toKafkaString(topicsName)));
+            ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key(), StringList.toKafkaString(topicsName)));
   }
 
   public static Validation of(Map<String, String> settings) {
@@ -98,7 +97,7 @@ public class Validation implements JsonObject {
    * @return class name
    */
   public String className() {
-    return value(ConnectorDefinitions.CONNECTOR_CLASS_DEFINITION);
+    return value(ConnectorDefUtils.CONNECTOR_CLASS_DEFINITION);
   }
 
   /**
@@ -107,6 +106,6 @@ public class Validation implements JsonObject {
    * @return topics name
    */
   public List<String> topicNames() {
-    return StringList.ofKafkaList(value(ConnectorDefinitions.TOPIC_NAMES_DEFINITION));
+    return StringList.ofKafkaList(value(ConnectorDefUtils.TOPIC_NAMES_DEFINITION));
   }
 }

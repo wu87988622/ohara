@@ -17,6 +17,7 @@
 package com.island.ohara.client.configurator.v0
 import com.island.ohara.client.configurator.v0.QueryApi.RdbInfo
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
+import com.island.ohara.common.setting.TopicKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json._
 import spray.json.DefaultJsonProtocol._

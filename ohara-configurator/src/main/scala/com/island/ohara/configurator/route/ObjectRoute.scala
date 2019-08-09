@@ -21,8 +21,8 @@ import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.client.configurator.Data
 import com.island.ohara.client.configurator.v0.ObjectApi._
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.configurator.store.DataStore
-import com.island.ohara.kafka.connector.json.ObjectKey
 import spray.json.DefaultJsonProtocol._
 
 import scala.concurrent.ExecutionContext

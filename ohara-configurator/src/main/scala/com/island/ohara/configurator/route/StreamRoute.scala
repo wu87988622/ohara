@@ -23,11 +23,11 @@ import com.island.ohara.agent.{BrokerCollie, ClusterCollie, NodeCollie, WorkerCo
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.StreamApi._
 import com.island.ohara.client.kafka.TopicAdmin.TopicInfo
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.file.FileStore
 import com.island.ohara.configurator.route.RouteUtils._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
-import com.island.ohara.kafka.connector.json.ObjectKey
 import com.island.ohara.streams.config.StreamDefinitions.DefaultConfigs
 import org.slf4j.LoggerFactory
 import spray.json.{JsNumber, JsObject, _}

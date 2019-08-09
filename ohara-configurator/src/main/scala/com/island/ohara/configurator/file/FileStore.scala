@@ -30,9 +30,9 @@ import com.island.ohara.client.configurator.ConfiguratorApiInfo
 import com.island.ohara.client.configurator.v0.FileInfoApi
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.common.annotations.Optional
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.file.FileStore.FileInfoCreator
-import com.island.ohara.kafka.connector.json.ObjectKey
 import com.typesafe.scalalogging.Logger
 import spray.json.JsValue
 

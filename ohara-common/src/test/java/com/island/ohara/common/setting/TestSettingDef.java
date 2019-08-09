@@ -18,6 +18,7 @@ package com.island.ohara.common.setting;
 
 import com.island.ohara.common.data.Serializer;
 import com.island.ohara.common.exception.OharaConfigException;
+import com.island.ohara.common.json.JsonUtils;
 import com.island.ohara.common.rule.SmallTest;
 import com.island.ohara.common.util.CommonUtils;
 import java.time.Duration;
@@ -250,5 +251,45 @@ public class TestSettingDef extends SmallTest {
         SettingDef.builder().valueType(SettingDef.Type.TAGS).key("tags.key").build();
     SettingDef copy = (SettingDef) Serializer.OBJECT.from(Serializer.OBJECT.to(setting));
     Assert.assertEquals(setting, copy);
+  }
+
+  @Test
+  public void testTopicKeysType() {
+    SettingDef def =
+        SettingDef.builder()
+            .key(CommonUtils.randomString())
+            .valueType(SettingDef.Type.TOPIC_KEYS)
+            .build();
+    // pass
+    def.checker()
+        .accept(
+            JsonUtils.toString(
+                Collections.singleton(
+                    TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString()))));
+    // empty array is illegal
+    assertException(OharaConfigException.class, () -> def.checker().accept("[]"));
+    assertException(OharaConfigException.class, () -> def.checker().accept("{}"));
+    assertException(
+        OharaConfigException.class, () -> def.checker().accept(CommonUtils.randomString()));
+    assertException(OharaConfigException.class, () -> def.checker().accept(100000000));
+  }
+
+  @Test
+  public void testConnectorKeyType() {
+    SettingDef def =
+        SettingDef.builder()
+            .key(CommonUtils.randomString())
+            .valueType(SettingDef.Type.CONNECTOR_KEY)
+            .build();
+    // pass
+    def.checker()
+        .accept(
+            JsonUtils.toString(
+                ConnectorKey.of(CommonUtils.randomString(), CommonUtils.randomString())));
+    // empty array is illegal
+    assertException(OharaConfigException.class, () -> def.checker().accept("{}"));
+    assertException(
+        OharaConfigException.class, () -> def.checker().accept(CommonUtils.randomString()));
+    assertException(OharaConfigException.class, () -> def.checker().accept(100000000));
   }
 }

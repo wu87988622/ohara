@@ -19,8 +19,8 @@ import java.util.Objects
 
 import com.island.ohara.client.configurator.Data
 import com.island.ohara.common.annotations.Optional
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.json.ObjectKey
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsValue, RootJsonFormat}
 

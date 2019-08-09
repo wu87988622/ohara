@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
-package com.island.ohara.kafka.connector.json;
+package com.island.ohara.common.setting;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.island.ohara.common.json.JsonUtils;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * This key represents a unique object stored in Ohara Configurator. This class is moved from
@@ -39,14 +42,30 @@ public interface ObjectKey {
     return new KeyImpl(key.group(), key.name()).toJsonString();
   }
 
+  static String toJsonString(Collection<? extends ObjectKey> keys) {
+    return JsonUtils.toString(
+        keys.stream()
+            .map(
+                key -> {
+                  if (key instanceof KeyImpl) return (KeyImpl) key;
+                  else return new KeyImpl(key.group(), key.name());
+                })
+            .collect(Collectors.toList()));
+  }
   /**
    * parse input json and then generate a ObjectKey instance.
    *
    * @param json json representation
    * @return a serializable instance
    */
-  static ObjectKey ofJsonString(String json) {
+  static ObjectKey toObjectKey(String json) {
     return JsonUtils.toObject(json, new TypeReference<KeyImpl>() {});
+  }
+
+  static List<ObjectKey> toObjectKeys(String json) {
+    return JsonUtils.toObject(json, new TypeReference<List<KeyImpl>>() {}).stream()
+        .map(key -> (ObjectKey) key)
+        .collect(Collectors.toList());
   }
 
   /** @return the group of object */

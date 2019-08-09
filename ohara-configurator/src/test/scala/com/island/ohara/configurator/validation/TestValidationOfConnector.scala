@@ -17,9 +17,10 @@
 package com.island.ohara.configurator.validation
 
 import com.island.ohara.client.configurator.v0.{ValidationApi, WorkerApi}
+import com.island.ohara.common.setting.TopicKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.{Configurator, DumbSink}
-import com.island.ohara.kafka.connector.json.{ConnectorDefinitions, TopicKey}
+import com.island.ohara.kafka.connector.json.ConnectorDefUtils
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.{After, Test}
 import org.scalatest.Matchers
@@ -151,12 +152,11 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
         .workerClusterName(wkCluster.name)
         .tags(tags)
         .verify())
-    response.value(ConnectorDefinitions.TAGS_DEFINITION.key()).get().parseJson shouldBe JsObject(
-      Map("a" -> JsString("b")))
+    response.value(ConnectorDefUtils.TAGS_DEFINITION.key()).get().parseJson shouldBe JsObject(Map("a" -> JsString("b")))
     response
       .settings()
       .asScala
-      .filter(_.definition().key() == ConnectorDefinitions.TAGS_DEFINITION.key())
+      .filter(_.definition().key() == ConnectorDefUtils.TAGS_DEFINITION.key())
       .head
       .definition()
       .defaultValue() shouldBe null

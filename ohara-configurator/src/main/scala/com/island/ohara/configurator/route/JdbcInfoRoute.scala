@@ -18,10 +18,10 @@ package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
 import com.island.ohara.client.configurator.v0.JdbcInfoApi._
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.RouteUtils.{HookOfCreation, HookOfGroup, HookOfUpdate}
 import com.island.ohara.configurator.store.DataStore
-import com.island.ohara.kafka.connector.json.ObjectKey
 
 import scala.concurrent.{ExecutionContext, Future}
 

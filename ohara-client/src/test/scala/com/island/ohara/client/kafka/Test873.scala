@@ -23,8 +23,9 @@ import akka.http.scaladsl.{Http, server}
 import akka.stream.ActorMaterializer
 import com.island.ohara.client.kafka.WorkerJson.{ConnectorCreationResponse, ConnectorTaskId, _}
 import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.setting.ConnectorKey
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.json.{ConnectorKey, Creation}
+import com.island.ohara.kafka.connector.json.Creation
 import org.junit.Test
 import org.scalatest.Matchers
 

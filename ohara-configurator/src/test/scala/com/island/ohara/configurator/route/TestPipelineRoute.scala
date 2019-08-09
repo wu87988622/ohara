@@ -19,9 +19,9 @@ package com.island.ohara.configurator.route
 import com.island.ohara.client.configurator.v0.PipelineApi.Flow
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.rule.MediumTest
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.{Configurator, DumbSink}
-import com.island.ohara.kafka.connector.json.ObjectKey
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 import spray.json.{JsNumber, JsString}

@@ -218,6 +218,31 @@ public class SettingDef implements JsonObject, Serializable {
           if (!(value instanceof String))
             throw new OharaConfigException("the TAGS value must be String type");
         };
+      case TOPIC_KEYS:
+        return (Object value) -> {
+          if (value instanceof String) {
+            try {
+              if (TopicKey.toTopicKeys((String) value).isEmpty())
+                throw new OharaConfigException("TOPIC_KEYS can't be empty!!!");
+            } catch (Exception e) {
+              throw new OharaConfigException(
+                  "can't be converted to TOPIC_KEYS type. since:" + e.getMessage());
+            }
+          } else throw new OharaConfigException("the configured value must be String type");
+        };
+      case CONNECTOR_KEY:
+        return (Object value) -> {
+          if (value instanceof String) {
+            try {
+              // try parse the json string to Connector Key
+              ConnectorKey.toConnectorKey((String) value);
+              // pass
+            } catch (Exception e) {
+              throw new OharaConfigException(
+                  "can't be converted to CONNECTOR_KEY type. since:" + e.getMessage());
+            }
+          } else throw new OharaConfigException("the configured value must be String type");
+        };
       default:
         return (Object value) -> {};
     }

@@ -18,10 +18,10 @@ package com.island.ohara.kafka.connector;
 
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.data.DataType;
+import com.island.ohara.common.setting.ConnectorKey;
+import com.island.ohara.common.setting.TopicKey;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.connector.json.ConnectorFormatter;
-import com.island.ohara.kafka.connector.json.ConnectorKey;
-import com.island.ohara.kafka.connector.json.TopicKey;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;

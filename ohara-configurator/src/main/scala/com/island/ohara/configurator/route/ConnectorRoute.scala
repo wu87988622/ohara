@@ -23,10 +23,10 @@ import com.island.ohara.client.configurator.v0.ConnectorApi._
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.common.setting.{ConnectorKey, ObjectKey}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.RouteUtils._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
-import com.island.ohara.kafka.connector.json.{ConnectorKey, ObjectKey}
 import com.typesafe.scalalogging.Logger
 import spray.json.JsString
 

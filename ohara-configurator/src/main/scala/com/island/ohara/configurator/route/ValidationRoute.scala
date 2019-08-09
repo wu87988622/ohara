@@ -29,7 +29,7 @@ import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.fake.FakeWorkerClient
 import com.island.ohara.configurator.store.DataStore
-import com.island.ohara.kafka.connector.json.ConnectorDefinitions
+import com.island.ohara.kafka.connector.json.ConnectorDefUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
@@ -186,7 +186,7 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
                         .settings(req.plain)
                         // we define the cluster name again since user may ignore the worker cluster in request
                         // matching a cluster is supported by ohara 0.3 so we have to set matched cluster to response
-                        .setting(ConnectorDefinitions.WORKER_CLUSTER_NAME_DEFINITION.key(), cluster.name)
+                        .setting(ConnectorDefUtils.WORKER_CLUSTER_NAME_DEFINITION.key(), cluster.name)
                         // the topic name is composed by group and name. However, the kafka topic is still a pure string.
                         // Hence, we can't just push Ohara topic "key" to kafka topic "name".
                         // The name of topic is a required for connector and hence we have to fill the filed when starting

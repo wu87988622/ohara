@@ -24,11 +24,11 @@ import com.island.ohara.agent.docker.{ContainerState, DockerClient}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.{ZookeeperApi, _}
 import com.island.ohara.common.data.{Row, Serializer}
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.IntegrationTest
 import com.island.ohara.kafka.Producer
-import com.island.ohara.kafka.connector.json.ObjectKey
 import com.typesafe.scalalogging.Logger
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException
 import org.junit.{After, Before, Test}

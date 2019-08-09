@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.client.kafka.TopicAdmin.TopicInfo
-import com.island.ohara.kafka.connector.json.TopicKey
+import com.island.ohara.common.setting.TopicKey
 
 import scala.concurrent.Future
 

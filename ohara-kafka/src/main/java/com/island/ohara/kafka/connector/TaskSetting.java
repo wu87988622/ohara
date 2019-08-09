@@ -24,7 +24,7 @@ import com.island.ohara.common.data.Column;
 import com.island.ohara.common.setting.PropGroups;
 import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.util.CommonUtils;
-import com.island.ohara.kafka.connector.json.ConnectorDefinitions;
+import com.island.ohara.kafka.connector.json.ConnectorDefUtils;
 import com.island.ohara.kafka.connector.json.StringList;
 import java.time.Duration;
 import java.util.Collections;
@@ -295,15 +295,15 @@ public class TaskSetting {
 
   // ----------------------------------[helper methods]----------------------------------//
   public String name() {
-    return stringValue(ConnectorDefinitions.CONNECTOR_NAME_DEFINITION.key());
+    return stringValue(ConnectorDefUtils.CONNECTOR_NAME_DEFINITION.key());
   }
 
   public List<String> topicNames() {
-    return stringList(ConnectorDefinitions.TOPIC_NAMES_DEFINITION.key());
+    return stringList(ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key());
   }
 
   public List<Column> columns() {
-    return propGroupsOption(ConnectorDefinitions.COLUMNS_DEFINITION.key())
+    return propGroupsOption(ConnectorDefUtils.COLUMNS_DEFINITION.key())
         .map(PropGroups::toColumns)
         .orElseGet(Collections::emptyList);
   }

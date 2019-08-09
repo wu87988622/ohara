@@ -37,7 +37,7 @@ public final class Setting implements JsonObject {
 
   public static Setting of(ConfigInfo configInfo) {
     return of(
-        ConnectorDefinitions.of(configInfo.configKey()), SettingValue.of(configInfo.configValue()));
+        ConnectorDefUtils.of(configInfo.configKey()), SettingValue.of(configInfo.configValue()));
   }
 
   public static Setting ofJson(String json) {

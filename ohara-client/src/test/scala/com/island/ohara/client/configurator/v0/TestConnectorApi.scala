@@ -21,9 +21,8 @@ import com.island.ohara.client.configurator.v0.ConnectorApi.{Creation, _}
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.data.{Column, DataType, Serializer}
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.setting.PropGroups
+import com.island.ohara.common.setting.{ConnectorKey, PropGroups, TopicKey}
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.json.{ConnectorKey, TopicKey}
 import org.junit.Test
 import org.scalatest.Matchers
 import spray.json.DefaultJsonProtocol._

@@ -19,10 +19,10 @@ package com.island.ohara.configurator.route
 import akka.http.scaladsl.server
 import com.island.ohara.agent.{ClusterCollie, NodeCollie}
 import com.island.ohara.client.configurator.v0.ZookeeperApi._
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.RouteUtils._
 import com.island.ohara.configurator.store.DataStore
-import com.island.ohara.kafka.connector.json.ObjectKey
 
 import scala.concurrent.{ExecutionContext, Future}
 

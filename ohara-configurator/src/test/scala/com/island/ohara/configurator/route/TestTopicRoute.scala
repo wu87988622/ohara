@@ -16,13 +16,12 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.TopicApi.{Request, TopicInfo, TopicState}
-import com.island.ohara.client.configurator.v0.TopicApi._
+import com.island.ohara.client.configurator.v0.TopicApi.{Request, TopicInfo, TopicState, _}
 import com.island.ohara.client.configurator.v0.{BrokerApi, TopicApi, ZookeeperApi}
 import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.setting.TopicKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.kafka.connector.json.TopicKey
 import org.apache.kafka.common.config.TopicConfig
 import org.junit.{After, Test}
 import org.scalatest.Matchers

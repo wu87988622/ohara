@@ -20,10 +20,10 @@ import akka.http.scaladsl.server
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.BrokerApi.{Creation, _}
 import com.island.ohara.client.configurator.v0.TopicApi
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.RouteUtils._
 import com.island.ohara.configurator.store.DataStore
-import com.island.ohara.kafka.connector.json.ObjectKey
 
 import scala.concurrent.{ExecutionContext, Future}
 object BrokerRoute {

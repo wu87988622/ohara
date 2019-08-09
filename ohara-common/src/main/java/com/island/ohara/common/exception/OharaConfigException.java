@@ -16,6 +16,13 @@
 
 package com.island.ohara.common.exception;
 
+/**
+ * The input configs are rejected by SettingDef.
+ *
+ * <p>There are many resources having a bunch of available configs, and most of them are exposed to
+ * restful APIs. In order to avoid wrong configs in using resources, SettingDef offers many check
+ * rules to validate input configs. This exception is used to say what happens on your configs.
+ */
 public class OharaConfigException extends RuntimeException {
 
   private static final long serialVersionUID = 1L;

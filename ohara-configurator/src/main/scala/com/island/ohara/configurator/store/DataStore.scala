@@ -21,8 +21,8 @@ import java.util.Objects
 import com.island.ohara.client.configurator.Data
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.data.Serializer
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.kafka.connector.json.ObjectKey
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.ClassTag

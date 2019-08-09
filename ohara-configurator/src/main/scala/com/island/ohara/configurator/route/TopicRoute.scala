@@ -21,10 +21,10 @@ import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.TopicApi._
 import com.island.ohara.client.kafka.TopicAdmin
+import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.route.RouteUtils._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
-import com.island.ohara.kafka.connector.json.{ObjectKey, TopicKey}
 import com.typesafe.scalalogging.Logger
 import spray.json.JsString
 

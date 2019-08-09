@@ -19,9 +19,8 @@ package com.island.ohara.client.configurator.v0
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.setting.SettingDef
+import com.island.ohara.common.setting.{ObjectKey, SettingDef}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
-import com.island.ohara.kafka.connector.json.ObjectKey
 import com.island.ohara.streams.config.StreamDefinitions.DefaultConfigs
 import org.junit.Test
 import org.scalatest.Matchers
