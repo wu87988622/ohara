@@ -33,8 +33,14 @@ class TestTopicAdmin extends With3Brokers with Matchers {
 
   private[this] def waitAndGetTopicInfo(topicKey: TopicKey): TopicInfo = {
     // wait the topic to be available
-    CommonUtils.await(() => result(topicAdmin.topics().map(_.exists(_.name == topicKey.topicNameOnKafka()))),
-                      java.time.Duration.ofSeconds(60))
+    CommonUtils.await(
+      () =>
+        try result(topicAdmin.topics().map(_.exists(_.name == topicKey.topicNameOnKafka())))
+        catch {
+          case _: UnknownTopicOrPartitionException => false
+      },
+      java.time.Duration.ofSeconds(60)
+    )
     result(topicAdmin.topics()).find(_.name == topicKey.topicNameOnKafka()).get
   }
 
