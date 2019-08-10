@@ -66,7 +66,9 @@ const setup = () => {
       { from: { group: 'default', name: sourceName }, to: [] },
     ],
     name: generate.name(),
-    workerClusterName: generate.name(),
+    tags: {
+      workerClusterName: generate.name(),
+    },
     objects: [
       {
         kind: 'topic',
@@ -157,7 +159,9 @@ describe('<PipelineNewPage />', () => {
     getByText('Operate');
     getByTestId('start-btn');
     getByTestId('stop-btn');
-    getByText('This pipeline is running on: ' + pipeline.workerClusterName);
+    getByText(
+      'This pipeline is running on: ' + pipeline.tags.workerClusterName,
+    );
   });
 
   it('starts the pipeline', async () => {
@@ -176,7 +180,9 @@ describe('<PipelineNewPage />', () => {
           { from: { group: 'default', name: 'b' }, to: [] },
           { from: { group: 'default', name: 'a' }, to: [] },
         ],
-        workerClusterName: generate.name(),
+        tags: {
+          workerClusterName: generate.name(),
+        },
       },
     };
 
@@ -220,7 +226,9 @@ describe('<PipelineNewPage />', () => {
           { from: { group: 'default', name: 'b' }, to: [] },
           { from: { group: 'default', name: 'a' }, to: [] },
         ],
-        workerClusterName: generate.name(),
+        tags: {
+          workerClusterName: generate.name(),
+        },
       },
     };
 

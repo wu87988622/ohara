@@ -81,8 +81,9 @@ const PipelineListPage = props => {
     const { history, match } = props;
     const params = {
       name: values.name,
-      rules: {},
-      workerClusterName: values.workspace,
+      tags: {
+        workerClusterName: values.workspace,
+      },
     };
 
     setIsNewPipelineWorking(true);

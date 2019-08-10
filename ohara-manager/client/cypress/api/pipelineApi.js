@@ -53,7 +53,9 @@ const setup = () => {
 
   cy.testCreatePipeline({
     name: pipelineName,
-    workerClusterName,
+    tags: {
+      workerClusterName,
+    },
   }).as('testCreatePipeline');
 
   return {
@@ -78,7 +80,7 @@ describe('Pipeline API', () => {
       expect(isSuccess).to.eq(true);
 
       expect(result.name).to.eq(pipelineName);
-      expect(result.workerClusterName).to.eq(workerClusterName);
+      expect(result.tags.workerClusterName).to.eq(workerClusterName);
       expect(result.objects).to.be.an('array');
       expect(result.flows).to.be.an('array');
     });
@@ -95,7 +97,7 @@ describe('Pipeline API', () => {
       expect(isSuccess).to.eq(true);
 
       expect(result.name).to.eq(pipelineName);
-      expect(result.workerClusterName).to.eq(workerClusterName);
+      expect(result.tags.workerClusterName).to.eq(workerClusterName);
       expect(result.objects).to.be.an('array');
       expect(result.flows).to.be.an('array');
     });
@@ -161,7 +163,7 @@ describe('Pipeline API', () => {
       expect(isSuccess).to.eq(true);
 
       expect(result.name).to.eq(pipelineName);
-      expect(result.workerClusterName).to.eq(workerClusterName);
+      expect(result.tags.workerClusterName).to.eq(workerClusterName);
       expect(result.objects).to.be.an('array');
       expect(result.flows).to.be.an('array');
 

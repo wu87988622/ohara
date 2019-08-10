@@ -62,7 +62,9 @@ describe('updatePipelineFlows()', () => {
           to: [],
         },
       ],
-      workerClusterName: 'e',
+      tags: {
+        workerClusterName: 'e',
+      },
     };
 
     const update = {
