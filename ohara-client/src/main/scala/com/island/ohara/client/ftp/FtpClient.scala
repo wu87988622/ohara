@@ -285,7 +285,8 @@ object FtpClient {
           } while (endTime >= CommonUtils.current())
           Releasable.close(_client)
           _client = null
-          throw new IllegalArgumentException("still fail...", lastException)
+          if (lastException != null) throw lastException
+          else throw new IllegalArgumentException("still fail...but there is no root cause ...")
         }
         override def listFileNames(dir: String): Seq[String] = retry(() => client().listFileNames(dir))
         override def open(path: String): InputStream = retry(() => client().open(path))

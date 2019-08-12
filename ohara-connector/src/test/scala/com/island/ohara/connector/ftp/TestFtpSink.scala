@@ -15,6 +15,10 @@
  */
 
 package com.island.ohara.connector.ftp
+
+import java.io.{BufferedReader, InputStreamReader}
+import java.nio.charset.Charset
+import java.nio.file.{Path, Paths}
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 
@@ -33,11 +37,14 @@ import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+
 object TestFtpSink extends With3Brokers3Workers with Matchers {
 
   private val TOPIC = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
 
   private val data = Row.of(Cell.of("a", "abc"), Cell.of("b", 123), Cell.of("c", true))
+
+  private val dataCount = 1000
 
   @BeforeClass
   def init(): Unit = {
@@ -46,15 +53,10 @@ object TestFtpSink extends With3Brokers3Workers with Matchers {
 
   def setupData(topicKey: TopicKey): Unit = {
     val client = BrokerClient.of(testUtil.brokersConnProps)
+    val topicName = topicKey.topicNameOnKafka
     try {
-      if (client.exist(topicKey.topicNameOnKafka)) client.deleteTopic(topicKey.topicNameOnKafka)
-      client
-        .topicCreator()
-        .numberOfPartitions(1)
-        .numberOfReplications(1)
-        .compacted()
-        .topicName(topicKey.topicNameOnKafka)
-        .create()
+      if (client.exist(topicName)) client.deleteTopic(topicName)
+      client.topicCreator().numberOfPartitions(1).numberOfReplications(1).compacted().topicName(topicName).create()
     } finally client.close()
 
     val producer = Producer
@@ -63,12 +65,16 @@ object TestFtpSink extends With3Brokers3Workers with Matchers {
       .keySerializer(Serializer.ROW)
       .valueSerializer(Serializer.BYTES)
       .build()
-    try producer.sender().key(data).topicName(topicKey.topicNameOnKafka).send()
-    finally producer.close()
+    try {
+      0 until dataCount foreach (_ => {
+        producer.sender().key(data).topicName(topicName).send()
+      })
+      producer.flush()
+    } finally producer.close()
 
     val consumer = Consumer
       .builder[Row, Array[Byte]]()
-      .topicName(topicKey.topicNameOnKafka)
+      .topicName(topicName)
       .offsetFromBegin()
       .connectionProps(testUtil.brokersConnProps)
       .keySerializer(Serializer.ROW)
@@ -83,7 +89,6 @@ object TestFtpSink extends With3Brokers3Workers with Matchers {
       row.cell("c").value shouldBe true
     } finally consumer.close()
   }
-
 }
 
 class TestFtpSink extends With3Brokers3Workers with Matchers {
@@ -118,51 +123,39 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
     .password(testUtil.ftpServer.password)
     .build()
 
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
+  private[this] val ftpStorage = new FtpStorage(ftpClient)
 
   @Before
   def setup(): Unit = {
-    if (ftpClient.exist(props.outputFolder)) {
-      ftpClient
-        .listFileNames(props.outputFolder)
-        .map(com.island.ohara.common.util.CommonUtils.path(props.outputFolder, _))
-        .foreach(ftpClient.delete)
-      ftpClient.listFileNames(props.outputFolder).size shouldBe 0
-      ftpClient.delete(props.outputFolder)
+    if (ftpStorage.exists(props.outputFolder)) {
+      ftpStorage.delete(props.outputFolder, true)
+      ftpStorage.exists(props.outputFolder) shouldBe false
     }
-    ftpClient.mkdir(props.outputFolder)
-
-    ftpClient.listFileNames(props.outputFolder).size shouldBe 0
+    ftpStorage.mkdirs(props.outputFolder)
+    ftpStorage.exists(props.outputFolder) shouldBe true
+    ftpStorage.list(props.outputFolder).asScala.size shouldBe 0
   }
 
+  @After
+  def tearDown(): Unit = Releasable.close(ftpStorage)
+
   @Test
-  def testReorder(): Unit = {
-    val topicKey = TOPIC
-    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+  def testRecorder(): Unit = {
+    val connectorKey = randomConnectorKey()
     val newSchema: Seq[Column] = Seq(
       Column.builder().name("a").dataType(DataType.STRING).order(3).build(),
       Column.builder().name("b").dataType(DataType.INT).order(2).build(),
       Column.builder().name("c").dataType(DataType.BOOLEAN).order(1).build()
     )
-    result(
-      workerClient
-        .connectorCreator()
-        .topicKey(topicKey)
-        .connectorClass(classOf[FtpSink])
-        .numberOfTasks(1)
-        .connectorKey(connectorKey)
-        .columns(newSchema)
-        .settings(props.toMap)
-        .create())
+    createConnector(connectorKey, newSchema, props.toMap)
 
     try {
       FtpUtils.checkConnector(testUtil, connectorKey)
-      CommonUtils.await(() => ftpClient.listFileNames(props.outputFolder).size == 1, Duration.ofSeconds(20))
-      val lines = ftpClient.readLines(
-        com.island.ohara.common.util.CommonUtils
-          .path(props.outputFolder, ftpClient.listFileNames(props.outputFolder).head))
-      ftpClient.close()
-      lines.length shouldBe 1
+      val committedFolder = getCommittedFolder()
+      checkCommittedFileSize(committedFolder, 1)
+      val committedFile = listCommittedFiles(committedFolder).head
+      val lines = readLines(committedFile)
+      lines.length shouldBe 1000
       val items = lines.head.split(",")
       items.length shouldBe data.size
       items(0) shouldBe data.cell(2).value.toString
@@ -173,27 +166,16 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
 
   @Test
   def testHeader(): Unit = {
-    val topicKey = TOPIC
-    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
-    result(
-      workerClient
-        .connectorCreator()
-        .topicKey(topicKey)
-        .connectorClass(classOf[FtpSink])
-        .numberOfTasks(1)
-        .connectorKey(connectorKey)
-        .columns(schema)
-        .settings(props.copy(needHeader = true).toMap)
-        .create())
+    val connectorKey = randomConnectorKey()
+    createConnector(connectorKey, schema, props.copy(needHeader = true).toMap)
 
     try {
       FtpUtils.checkConnector(testUtil, connectorKey)
-      CommonUtils.await(() => ftpClient.listFileNames(props.outputFolder).size == 1, Duration.ofSeconds(20))
-      val lines = ftpClient.readLines(
-        com.island.ohara.common.util.CommonUtils
-          .path(props.outputFolder, ftpClient.listFileNames(props.outputFolder).head))
-      ftpClient.close()
-      lines.length shouldBe 2
+      val committedFolder = getCommittedFolder()
+      checkCommittedFileSize(committedFolder, 1)
+      val committedFile = listCommittedFiles(committedFolder).head
+      val lines = readLines(committedFile)
+      lines.length shouldBe 1001
       lines.head shouldBe schema.sortBy(_.order).map(_.name).mkString(",")
       val items = lines(1).split(",")
       items.length shouldBe data.size
@@ -205,26 +187,16 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
 
   @Test
   def testHeaderWithoutSchema(): Unit = {
-    val topicKey = TOPIC
-    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
-    result(
-      workerClient
-        .connectorCreator()
-        .topicKey(topicKey)
-        .connectorClass(classOf[FtpSink])
-        .numberOfTasks(1)
-        .connectorKey(connectorKey)
-        .settings(props.copy(needHeader = true).toMap)
-        .create())
+    val connectorKey = randomConnectorKey()
+    createConnector(connectorKey, props.copy(needHeader = true).toMap)
 
     try {
       FtpUtils.checkConnector(testUtil, connectorKey)
-      CommonUtils.await(() => ftpClient.listFileNames(props.outputFolder).size == 1, Duration.ofSeconds(20))
-      val lines = ftpClient.readLines(
-        com.island.ohara.common.util.CommonUtils
-          .path(props.outputFolder, ftpClient.listFileNames(props.outputFolder).head))
-      ftpClient.close()
-      lines.length shouldBe 2
+      val committedFolder = getCommittedFolder()
+      checkCommittedFileSize(committedFolder, 1)
+      val committedFile = listCommittedFiles(committedFolder).head
+      val lines = readLines(committedFile)
+      lines.length shouldBe 1001
       lines.head shouldBe data.cells().asScala.map(_.name).mkString(",")
       val items = lines(1).split(",")
       items.length shouldBe data.size
@@ -236,33 +208,22 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
 
   @Test
   def testColumnRename(): Unit = {
-    val topicKey = TOPIC
-    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
-    val schema = Seq(
+    val connectorKey = randomConnectorKey()
+    val newSchema = Seq(
       Column.builder().name("a").newName("aa").dataType(DataType.STRING).order(1).build(),
       Column.builder().name("b").newName("bb").dataType(DataType.INT).order(2).build(),
       Column.builder().name("c").newName("cc").dataType(DataType.BOOLEAN).order(3).build()
     )
-    result(
-      workerClient
-        .connectorCreator()
-        .topicKey(topicKey)
-        .connectorClass(classOf[FtpSink])
-        .numberOfTasks(1)
-        .connectorKey(connectorKey)
-        .columns(schema)
-        .settings(props.copy(needHeader = true).toMap)
-        .create())
+    createConnector(connectorKey, newSchema, props.copy(needHeader = true).toMap)
 
     try {
       FtpUtils.checkConnector(testUtil, connectorKey)
-      CommonUtils.await(() => ftpClient.listFileNames(props.outputFolder).size == 1, Duration.ofSeconds(20))
-      val lines = ftpClient.readLines(
-        com.island.ohara.common.util.CommonUtils
-          .path(props.outputFolder, ftpClient.listFileNames(props.outputFolder).head))
-      ftpClient.close()
-      lines.length shouldBe 2
-      lines.head shouldBe schema.sortBy(_.order).map(_.newName).mkString(",")
+      val committedFolder = getCommittedFolder()
+      checkCommittedFileSize(committedFolder, 1)
+      val committedFile = listCommittedFiles(committedFolder).head
+      val lines = readLines(committedFile)
+      lines.length shouldBe 1001
+      lines.head shouldBe newSchema.sortBy(_.order).map(_.newName).mkString(",")
       val items = lines(1).split(",")
       items.length shouldBe data.size
       items(0) shouldBe data.cell(0).value.toString
@@ -273,27 +234,16 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
 
   @Test
   def testNormalCase(): Unit = {
-    val topicKey = TOPIC
-    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
-    result(
-      workerClient
-        .connectorCreator()
-        .topicKey(topicKey)
-        .connectorClass(classOf[FtpSink])
-        .numberOfTasks(1)
-        .connectorKey(connectorKey)
-        .columns(schema)
-        .settings(props.toMap)
-        .create())
+    val connectorKey = randomConnectorKey()
+    createConnector(connectorKey, schema, props.toMap)
 
     try {
       FtpUtils.checkConnector(testUtil, connectorKey)
-      CommonUtils.await(() => ftpClient.listFileNames(props.outputFolder).size == 1, Duration.ofSeconds(20))
-      val lines = ftpClient.readLines(
-        com.island.ohara.common.util.CommonUtils
-          .path(props.outputFolder, ftpClient.listFileNames(props.outputFolder).head))
-      ftpClient.close()
-      lines.length shouldBe 1
+      val committedFolder = getCommittedFolder()
+      checkCommittedFileSize(committedFolder, 1)
+      val committedFile = listCommittedFiles(committedFolder).head
+      val lines = readLines(committedFile)
+      lines.length shouldBe 1000
       val items = lines.head.split(",")
       items.length shouldBe data.size
       items(0) shouldBe data.cell(0).value.toString
@@ -304,26 +254,16 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
 
   @Test
   def testNormalCaseWithoutSchema(): Unit = {
-    val topicKey = TOPIC
-    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
-    result(
-      workerClient
-        .connectorCreator()
-        .topicKey(topicKey)
-        .connectorClass(classOf[FtpSink])
-        .numberOfTasks(1)
-        .connectorKey(connectorKey)
-        .settings(props.toMap)
-        .create())
+    val connectorKey = randomConnectorKey()
+    createConnector(connectorKey, props.toMap)
 
     try {
       FtpUtils.checkConnector(testUtil, connectorKey)
-      CommonUtils.await(() => ftpClient.listFileNames(props.outputFolder).size == 1, Duration.ofSeconds(20))
-      val lines = ftpClient.readLines(
-        com.island.ohara.common.util.CommonUtils
-          .path(props.outputFolder, ftpClient.listFileNames(props.outputFolder).head))
-      ftpClient.close()
-      lines.length shouldBe 1
+      val committedFolder = getCommittedFolder()
+      checkCommittedFileSize(committedFolder, 1)
+      val committedFile = listCommittedFiles(committedFolder).head
+      val lines = readLines(committedFile)
+      lines.length shouldBe 1000
       val items = lines.head.split(",")
       items.length shouldBe data.size
       items(0) shouldBe data.cell(0).value.toString
@@ -334,28 +274,18 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
 
   @Test
   def testNormalCaseWithoutEncode(): Unit = {
-    val topicKey = TOPIC
-    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
-    result(
-      workerClient
-        .connectorCreator()
-        .topicKey(topicKey)
-        .connectorClass(classOf[FtpSink])
-        .numberOfTasks(1)
-        .connectorKey(connectorKey)
-        .columns(schema)
-        //will use default UTF-8
-        .settings(props.toMap - FTP_ENCODE)
-        .create())
+    val connectorKey = randomConnectorKey()
+    //will use default UTF-8
+    val settings = props.toMap - FTP_ENCODE
+    createConnector(connectorKey, schema, settings)
 
     try {
       FtpUtils.checkConnector(testUtil, connectorKey)
-      CommonUtils.await(() => ftpClient.listFileNames(props.outputFolder).size == 1, Duration.ofSeconds(20))
-      val lines = ftpClient.readLines(
-        com.island.ohara.common.util.CommonUtils
-          .path(props.outputFolder, ftpClient.listFileNames(props.outputFolder).head))
-      ftpClient.close()
-      lines.length shouldBe 1
+      val committedFolder = getCommittedFolder()
+      checkCommittedFileSize(committedFolder, 1)
+      val committedFile = listCommittedFiles(committedFolder).head
+      val lines = readLines(committedFile)
+      lines.length shouldBe 1000
       val items = lines.head.split(",")
       items.length shouldBe data.size
       items(0) shouldBe data.cell(0).value.toString
@@ -366,28 +296,18 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
 
   @Test
   def testPartialColumns(): Unit = {
-    val topicKey = TOPIC
-    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
-    result(
-      workerClient
-        .connectorCreator()
-        .topicKey(topicKey)
-        .connectorClass(classOf[FtpSink])
-        .numberOfTasks(1)
-        .connectorKey(connectorKey)
-        // skip last column
-        .columns(schema.slice(0, schema.length - 1))
-        .settings(props.toMap)
-        .create())
+    val connectorKey = randomConnectorKey()
+    // skip last column
+    val newSchema = schema.slice(0, schema.length - 1)
+    createConnector(connectorKey, newSchema, props.toMap)
 
     try {
       FtpUtils.checkConnector(testUtil, connectorKey)
-      CommonUtils.await(() => ftpClient.listFileNames(props.outputFolder).size == 1, Duration.ofSeconds(20))
-      val lines = ftpClient.readLines(
-        com.island.ohara.common.util.CommonUtils
-          .path(props.outputFolder, ftpClient.listFileNames(props.outputFolder).head))
-      ftpClient.close()
-      lines.length shouldBe 1
+      val committedFolder = getCommittedFolder()
+      checkCommittedFileSize(committedFolder, 1)
+      val committedFile = listCommittedFiles(committedFolder).head
+      val lines = readLines(committedFile)
+      lines.length shouldBe 1000
       val items = lines.head.split(",")
       items.length shouldBe data.size - 1
       items(0) shouldBe data.cell(0).value.toString
@@ -397,30 +317,23 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
 
   @Test
   def testUnmatchedSchema(): Unit = {
-    val topicKey = TOPIC
-    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
-    result(
-      workerClient
-        .connectorCreator()
-        .topicKey(topicKey)
-        .connectorClass(classOf[FtpSink])
-        .numberOfTasks(1)
-        .connectorKey(connectorKey)
-        // the name can't be casted to int
-        .columns(Seq(Column.builder().name("name").dataType(DataType.INT).order(1).build()))
-        .settings(props.toMap)
-        .create())
+    val connectorKey = randomConnectorKey()
+    // the name can't be casted to int
+    val newSchema = Seq(Column.builder().name("name").dataType(DataType.INT).order(1).build())
+    createConnector(connectorKey, newSchema, props.toMap)
 
     try {
       FtpUtils.checkConnector(testUtil, connectorKey)
       TimeUnit.SECONDS.sleep(5)
-      ftpClient.listFileNames(props.outputFolder).size shouldBe 0
-      ftpClient.close()
+      val folder = getCommittedFolder()
+      ftpStorage.exists(folder.toString) shouldBe false
     } finally result(workerClient.delete(connectorKey))
   }
 
   @Test
   def testAutoCreateOutput(): Unit = {
+    val sink = new FtpSink
+    val connectorKey = randomConnectorKey()
     val props = FtpSinkProps(
       outputFolder = "/output",
       needHeader = false,
@@ -430,32 +343,65 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       port = testUtil.ftpServer.port,
       encode = "UTF-8"
     )
-
-    val sink = new FtpSink
-    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     sink.start(ConnectorFormatter.of().connectorKey(connectorKey).settings(props.toMap.asJava).raw())
-
-    ftpClient.exist("/output") shouldBe true
+    ftpStorage.exists("/output") shouldBe true
   }
 
   @Test
   def testInvalidPort(): Unit = {
-    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
-    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+    val connectorKey = randomConnectorKey()
     Seq(-1, 0, 10000000).foreach { port =>
-      an[IllegalArgumentException] should be thrownBy result(
-        workerClient
-          .connectorCreator()
-          .topicKey(topicKey)
-          .connectorClass(classOf[FtpSink])
-          .numberOfTasks(1)
-          .connectorKey(connectorKey)
-          .columns(schema)
-          .settings(props.copy(port = port).toMap)
-          .create())
+      an[IllegalArgumentException] should be thrownBy createConnector(connectorKey,
+                                                                      schema,
+                                                                      props.copy(port = port).toMap)
     }
   }
 
-  @After
-  def tearDown(): Unit = Releasable.close(ftpClient)
+  private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
+
+  private[this] def randomConnectorKey() = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+
+  private[this] def createConnector(connectorKey: ConnectorKey, settings: Map[String, String]): Unit = result(
+    workerClient
+      .connectorCreator()
+      .topicKey(TOPIC)
+      .connectorClass(classOf[FtpSink])
+      .numberOfTasks(1)
+      .connectorKey(connectorKey)
+      .settings(settings)
+      .create())
+
+  private[this] def createConnector(connectorKey: ConnectorKey,
+                                    columns: Seq[Column],
+                                    settings: Map[String, String]): Unit = result(
+    workerClient
+      .connectorCreator()
+      .topicKey(TOPIC)
+      .connectorClass(classOf[FtpSink])
+      .numberOfTasks(1)
+      .connectorKey(connectorKey)
+      .columns(columns)
+      .settings(settings)
+      .create())
+
+  private[this] def getCommittedFolder(): Path = Paths.get(props.outputFolder, TOPIC.topicNameOnKafka(), "partition0")
+
+  private[this] def checkCommittedFileSize(folder: Path, expectedSize: Int): Unit = {
+    CommonUtils.await(() => ftpStorage.exists(folder.toString), Duration.ofSeconds(20))
+    CommonUtils.await(() => listCommittedFiles(folder).size == expectedSize, Duration.ofSeconds(20))
+  }
+
+  private[this] def listCommittedFiles(folder: Path): Seq[Path] = ftpStorage
+    .list(folder.toString)
+    .asScala
+    .filter(file => !file.contains("_tmp"))
+    .map(file => Paths.get(folder.toString, file))
+    .toSeq
+
+  private[this] def readLines(file: Path): Array[String] = {
+    val reader = new BufferedReader(
+      new InputStreamReader(ftpStorage.open(file.toString), Charset.forName(props.encode)))
+    try Iterator.continually(reader.readLine()).takeWhile(_ != null).toArray
+    finally reader.close()
+  }
 }

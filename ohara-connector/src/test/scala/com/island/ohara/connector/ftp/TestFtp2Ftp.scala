@@ -44,14 +44,11 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
     Column.builder().name("ranking").dataType(DataType.INT).order(2).build(),
     Column.builder().name("single").dataType(DataType.BOOLEAN).order(3).build()
   )
-  private[this] val rows: Seq[Row] = Seq(
-    Row.of(Cell.of("name", "chia"), Cell.of("ranking", 1), Cell.of("single", false)),
-    Row.of(Cell.of("name", "jack"), Cell.of("ranking", 99), Cell.of("single", true))
-  )
-  private[this] val header: String = rows.head.cells().asScala.map(_.name).mkString(",")
-  private[this] val data: Seq[String] = rows.map(row => {
-    row.cells().asScala.map(_.value.toString).mkString(",")
-  })
+
+  private[this] val row = Row.of(Cell.of("name", "chia"), Cell.of("ranking", 1), Cell.of("single", false))
+  private[this] val header: String = row.cells().asScala.map(_.name).mkString(",")
+  private[this] val data = (1 to 1000).map(_ => row.cells().asScala.map(_.value.toString).mkString(","))
+
   private[this] val ftpClient = FtpClient
     .builder()
     .hostname(testUtil.ftpServer.hostname)
@@ -126,18 +123,22 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
         CommonUtils.await(() => ftpClient.listFileNames(sourceProps.inputFolder).isEmpty, Duration.ofSeconds(30))
         CommonUtils
           .await(() => ftpClient.listFileNames(sourceProps.completedFolder.get).size == 1, Duration.ofSeconds(30))
-        CommonUtils.await(() => ftpClient.listFileNames(sinkProps.outputFolder).size == 1, Duration.ofSeconds(30))
+        val committedFolder = CommonUtils.path(sinkProps.outputFolder, topicKey.topicNameOnKafka(), "partition0")
+        CommonUtils.await(() => listCommittedFiles(committedFolder).size == 1, Duration.ofSeconds(30))
         val lines =
           ftpClient.readLines(
             com.island.ohara.common.util.CommonUtils
-              .path(sinkProps.outputFolder, ftpClient.listFileNames(sinkProps.outputFolder).head))
-        lines.length shouldBe rows.length + 1 // header
+              .path(committedFolder, ftpClient.listFileNames(committedFolder).head))
+        lines.length shouldBe data.length + 1 // header
         lines(0) shouldBe header
         lines(1) shouldBe data.head
         lines(2) shouldBe data(1)
       } finally workerClient.delete(sourceConnectorKey)
     } finally workerClient.delete(sinkConnectorKey)
   }
+
+  private[this] def listCommittedFiles(folder: String): Seq[String] =
+    ftpClient.listFileNames(folder).filter(file => !file.contains("_tmp"))
 
   @After
   def tearDown(): Unit = {

@@ -134,7 +134,7 @@ class TestFtpClient extends MediumTest with Matchers {
     client.upload(s"$folder/file", data)
     client.listFileNames(folder).size shouldBe 1
 
-    an[IllegalArgumentException] should be thrownBy client.delete(folder)
+    an[IllegalStateException] should be thrownBy client.delete(folder)
     client.delete(s"$folder/file")
     client.delete(folder)
     client.listFileNames(folder).size shouldBe 0

@@ -20,7 +20,6 @@ import java.util
 
 import com.island.ohara.client.ftp.FtpClient
 import com.island.ohara.common.setting.SettingDef
-import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector._
 
 import scala.collection.JavaConverters._
@@ -47,21 +46,7 @@ class FtpSink extends RowSinkConnector {
 
   override protected def _taskClass(): Class[_ <: RowSinkTask] = classOf[FtpSinkTask]
 
-  override protected def _taskSettings(maxTasks: Int): util.List[TaskSetting] = {
-    (0 until maxTasks)
-      .map(
-        index =>
-          settings.append(FtpSinkTaskProps(
-            outputFolder = CommonUtils.path(props.outputFolder, s"${settings.name}_$index"),
-            needHeader = props.needHeader,
-            encode = props.encode,
-            hostname = props.hostname,
-            port = props.port,
-            user = props.user,
-            password = props.password
-          ).toMap.asJava))
-      .asJava
-  }
+  override protected def _taskSettings(maxTasks: Int): util.List[TaskSetting] = Seq.fill(maxTasks) { settings }.asJava
 
   override protected def _version: ConnectorVersion = ConnectorVersion.DEFAULT
 

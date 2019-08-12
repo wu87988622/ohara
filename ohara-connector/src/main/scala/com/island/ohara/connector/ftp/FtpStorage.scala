@@ -20,9 +20,10 @@ import java.io.{InputStream, OutputStream}
 import java.nio.file.Paths
 import java.util
 
-import com.island.ohara.client.ftp.FtpClient
+import com.island.ohara.client.ftp.{FileType, FtpClient}
+import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.common.exception.{OharaException, OharaFileAlreadyExistsException}
-import com.island.ohara.common.util.Releasable
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.kafka.connector.storage.Storage
 import com.typesafe.scalalogging.Logger
 
@@ -98,6 +99,25 @@ class FtpStorage(ftpClient: FtpClient) extends Storage {
     * @param path path the path to the file or folder to delete.
     */
   override def delete(path: String): Unit = if (exists(path)) ftpClient.delete(path)
+
+  @VisibleForTesting
+  private[ftp] def delete(path: String, recursive: Boolean): Unit = {
+    if (exists(path)) {
+      if (recursive) {
+        if (isFolder(path)) {
+          ftpClient
+            .listFileNames(path)
+            .map(fileName => {
+              val child = CommonUtils.path(path, fileName)
+              delete(child, recursive)
+            })
+        }
+        delete(path)
+      } else delete(path)
+    }
+  }
+
+  private[this] def isFolder(path: String): Boolean = ftpClient.fileType(path) == FileType.FOLDER
 
   /**
     * Move or rename a file from source path to target path.
