@@ -101,13 +101,11 @@ describe('WorkspacesPage', () => {
       })
       .wait('@getTopics');
 
-    cy.getByTestId(Cypress.env('TOPICS_NAME'))
+    cy.getByTestId(Cypress.env('TOPIC_NAME'))
       .click({ force: true })
       .getByText('DELETE')
       .click()
-      .getByText(
-        `Successfully deleted the topic: ${Cypress.env('TOPICS_NAME')}`,
-      )
+      .getByText(`Successfully deleted the topic: ${Cypress.env('TOPIC_NAME')}`)
       .should('have.length', 1);
   });
 

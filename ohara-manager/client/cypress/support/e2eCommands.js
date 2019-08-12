@@ -117,7 +117,7 @@ Cypress.Commands.add('createTopic', () => {
   });
 
   cy.request('PUT', `/api/topics/${topicName}/start`);
-  Cypress.env('TOPICS_NAME', topicName);
+  Cypress.env('TOPIC_NAME', topicName);
 });
 
 Cypress.Commands.add('deleteAllWorkers', () => {

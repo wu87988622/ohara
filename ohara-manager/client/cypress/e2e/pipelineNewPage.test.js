@@ -56,26 +56,24 @@ describe('PipelineNewPage', () => {
       .getByTestId('toolbar-topics')
       .click()
       .getByTestId('topic-select')
-      .select(Cypress.env('TOPICS_NAME'))
+      .select(Cypress.env('TOPIC_NAME'))
       .getByText('Add')
       .click()
       .wait('@putPipeline')
-      .getByText(Cypress.env('TOPICS_NAME'))
+      .getByText(Cypress.env('TOPIC_NAME'))
       .should('be.exist');
 
     // Remove the topic
-    cy.getByText(Cypress.env('TOPICS_NAME'))
+    cy.getByText(Cypress.env('TOPIC_NAME'))
       .click({ force: true })
       .getByTestId('delete-button')
       .click()
       .getByText('DELETE')
       .click()
-      .getByText(
-        `Successfully deleted the topic: ${Cypress.env('TOPICS_NAME')}`,
-      )
+      .getByText(`Successfully deleted the topic: ${Cypress.env('TOPIC_NAME')}`)
       .wait('@getPipeline')
       .wait(500) // wait here, so the local state is up-to-date with the API response
-      .queryByText(Cypress.env('TOPICS_NAME'), { timeout: 500 })
+      .queryByText(Cypress.env('TOPIC_NAME'), { timeout: 500 })
       .should('not.be.exist');
   });
 
@@ -285,7 +283,7 @@ describe('PipelineNewPage', () => {
       .getByTestId('toolbar-topics')
       .click()
       .getByTestId('topic-select')
-      .select(Cypress.env('TOPICS_NAME'))
+      .select(Cypress.env('TOPIC_NAME'))
       .getByText('Add')
       .click()
       .wait('@putPipeline');
@@ -297,7 +295,7 @@ describe('PipelineNewPage', () => {
       .wait('@getConnector')
       .getByText('Please select...')
       .click()
-      .get(`li[data-value=${Cypress.env('TOPICS_NAME')}]`)
+      .get(`li[data-value=${Cypress.env('TOPIC_NAME')}]`)
       .click()
       .wait(2000) // UI has one sec throttle, so we need to wait a bit time and then wait for the request
       .wait('@putPipeline')
@@ -311,7 +309,7 @@ describe('PipelineNewPage', () => {
       .click({ force: true })
       .getByText('Please select...')
       .click()
-      .get(`li[data-value=${Cypress.env('TOPICS_NAME')}]`)
+      .get(`li[data-value=${Cypress.env('TOPIC_NAME')}]`)
       .click()
       .wait(2000) // UI has one sec throttle, so we need to wait a bit time and then wait for the request
       .wait('@putPipeline')
@@ -351,7 +349,7 @@ describe('PipelineNewPage', () => {
       .getByTestId('toolbar-topics')
       .click()
       .getByTestId('topic-select')
-      .select(Cypress.env('TOPICS_NAME'))
+      .select(Cypress.env('TOPIC_NAME'))
       .getByText('Add')
       .click()
       .wait('@putPipeline');
@@ -363,7 +361,7 @@ describe('PipelineNewPage', () => {
       .click()
       .getByText('Please select...')
       .click()
-      .get(`li[data-value=${Cypress.env('TOPICS_NAME')}]`)
+      .get(`li[data-value=${Cypress.env('TOPIC_NAME')}]`)
       .click()
       .wait(2000) // UI has one sec throttle, so we need to wait a bit time and then wait for the request
       .wait('@putPipeline')
@@ -377,11 +375,83 @@ describe('PipelineNewPage', () => {
       .click()
       .getByText('Please select...')
       .click()
-      .get(`li[data-value=${Cypress.env('TOPICS_NAME')}]`)
+      .get(`li[data-value=${Cypress.env('TOPIC_NAME')}]`)
       .click()
       .wait(2000) // UI has one sec throttle, so we need to wait a bit time and then wait for the request
       .wait('@putPipeline')
       .get('g.edgePath')
       .should('have.length', 2);
+  });
+
+  it.only('connects perf source -> Topic', () => {
+    cy.server();
+    cy.route('PUT', '/api/pipelines/*').as('putPipeline');
+    cy.route('GET', '/api/pipelines/*').as('getPipeline');
+    cy.route('GET', '/api/connectors/*').as('getConnector');
+
+    const perfName = makeRandomStr();
+    const topicName = Cypress.env('TOPIC_NAME');
+
+    cy.getByTestId('toolbar-sources')
+      .click()
+      .getByText('Add a new source connector')
+      .should('be.exist')
+      .getByText(CONNECTOR_TYPES.perfSource)
+      .click()
+      .getByText('Add')
+      .click()
+      .getByPlaceholderText('Connector name')
+      .type(perfName)
+      .get('.ReactModal__Content')
+      .eq(1)
+      .within(() => {
+        cy.getByText('Add').click();
+      })
+      .wait('@putPipeline')
+      .getByTestId('toolbar-topics')
+      .click()
+      .getByTestId('topic-select')
+      .select(topicName)
+      .getByText('Add')
+      .click()
+      .wait('@putPipeline')
+      .getByText('PerfSource')
+      .click({ force: true })
+      .getByText('core')
+      .click()
+      .getByText('Please select...')
+      .click()
+      .get(`li[data-value=${topicName}]`)
+      .click()
+      .wait(2000)
+      .getByTestId('start-btn')
+      .click({ force: true })
+      .wait('@getPipeline') // Waiting for multiple `GET pipeline` requests here, so the metrics data can be ready for us to test
+      .wait('@getPipeline')
+      .wait('@getPipeline')
+      .wait('@getPipeline')
+      .wait('@getPipeline')
+      .getByText(`Metrics (${perfName})`)
+      .should('have.length', 1)
+      .get('@getPipeline')
+      .then(xhr => {
+        const perf = xhr.response.body.objects[1];
+        const metricsCount = perf.metrics.meters.length;
+        cy.getByTestId('metric-item').should('have.length', metricsCount);
+      })
+      .getByTestId(`topic-${topicName}`)
+      //Here we click DOM about gragh refresh cypress couldn't get DOM event so click unable to end
+      //reference https://docs.cypress.io/api/commands/trigger.html#Differences
+      .trigger('click')
+      .getByText(`Metrics (${topicName})`)
+      .should('have.length', 1)
+      .getByTestId('expandIcon')
+      .click({ force: true })
+      .get('@getPipeline')
+      .then(xhr => {
+        const topic = xhr.response.body.objects[0];
+        const metricsCount = topic.metrics.meters.length;
+        cy.getByTestId('metric-item').should('have.length', metricsCount);
+      });
   });
 });

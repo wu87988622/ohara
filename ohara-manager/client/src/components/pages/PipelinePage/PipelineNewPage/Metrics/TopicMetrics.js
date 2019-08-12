@@ -47,7 +47,12 @@ const TopicMetrics = props => {
   return (
     <StyledExpansionPanel>
       <ExpansionPanelSummary
-        expandIcon={<ExpandIcon className="fas fa-chevron-down" />}
+        expandIcon={
+          <ExpandIcon
+            className="fas fa-chevron-down"
+            data-testid="expandIcon"
+          />
+        }
       >
         <StyledH4>
           <i className="fas fa-tachometer-alt"></i>
