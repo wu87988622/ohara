@@ -17,6 +17,7 @@
 package com.island.ohara.client.configurator
 
 import com.island.ohara.common.setting.{ConnectorKey, ObjectKey, SettingDef, TopicKey}
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json.ConnectorDefUtils
 import spray.json.{JsNull, JsValue, RootJsonFormat}
 
@@ -65,7 +66,7 @@ package object v0 {
 
   private[v0] def noJsNull(jsValue: JsValue): Map[String, JsValue] = noJsNull(jsValue.asJsObject.fields)
 
-  implicit val OBJECT_KEY_FORMAT: RootJsonFormat[ObjectKey] = JsonRefiner[ObjectKey]
+  private[v0] implicit val OBJECT_KEY_FORMAT: RootJsonFormat[ObjectKey] = JsonRefiner[ObjectKey]
     .format(new RootJsonFormat[ObjectKey] {
       import spray.json._
       override def write(obj: ObjectKey): JsValue = ObjectKey.toJsonString(obj).parseJson
@@ -75,7 +76,7 @@ package object v0 {
     .rejectEmptyString()
     .refine
 
-  implicit val TOPIC_KEY_FORMAT: RootJsonFormat[TopicKey] = JsonRefiner[TopicKey]
+  private[v0] implicit val TOPIC_KEY_FORMAT: RootJsonFormat[TopicKey] = JsonRefiner[TopicKey]
     .format(new RootJsonFormat[TopicKey] {
       import spray.json._
       override def write(obj: TopicKey): JsValue = try TopicKey.toJsonString(obj).parseJson
@@ -93,7 +94,7 @@ package object v0 {
     .rejectEmptyString()
     .refine
 
-  implicit val CONNECTOR_KEY_FORMAT: RootJsonFormat[ConnectorKey] = JsonRefiner[ConnectorKey]
+  private[v0] implicit val CONNECTOR_KEY_FORMAT: RootJsonFormat[ConnectorKey] = JsonRefiner[ConnectorKey]
     .format(new RootJsonFormat[ConnectorKey] {
       import spray.json._
       override def write(obj: ConnectorKey): JsValue = try ConnectorKey.toJsonString(obj).parseJson
@@ -114,11 +115,73 @@ package object v0 {
   /**
     * exposed to configurator
     */
-  private[ohara] implicit val SETTING_DEFINITION_JSON_FORMAT: RootJsonFormat[SettingDef] =
+  private[v0] implicit val SETTING_DEFINITION_JSON_FORMAT: RootJsonFormat[SettingDef] =
     new RootJsonFormat[SettingDef] {
       import spray.json._
       override def read(json: JsValue): SettingDef = SettingDef.ofJson(json.toString())
 
       override def write(obj: SettingDef): JsValue = obj.toJsonString.parseJson
     }
+
+  /**
+    * docker does limit the length of name (< 64). Since we format container name with some part of prefix,
+    * limit the name length to one-third of 64 chars should be suitable for most cases.
+    */
+  private[this] val LIMIT_OF_NAME_LENGTH: Int = 20
+
+  /**
+    * use basic check rules of creation request for json refiner.
+    * 1) reject any empty string.
+    * 2) nodeName cannot use "start" and "stop" keywords.
+    * 3) nodeName cannot be empty array.
+    * 4) imageName will use {defaultImage} if not defined.
+    * 5) name must satisfy the regex [a-z0-9] and length <= 20
+    * 6) name will use randomString if not defined.
+    * 7) tags will use empty map if not defined.
+    * @param defaultImage this cluster default images
+    * @tparam T type of creation
+    * @return json refiner object
+    */
+  private[v0] def basicRulesOfCreation[T <: ClusterCreationRequest](defaultImage: String): JsonRefiner[T] =
+    JsonRefiner[T]
+      .rejectEmptyString()
+      .arrayRestriction("nodeNames")
+      // we use the same sub-path for "node" and "actions" urls:
+      // xxx/cluster/{name}/{node}
+      // xxx/cluster/{name}/[start|stop]
+      // the "actions" keywords must be avoided in nodeNames parameter
+      .rejectKeyword(START_COMMAND)
+      .rejectKeyword(STOP_COMMAND)
+      // the node names can't be empty
+      .rejectEmpty()
+      .toRefiner
+      .nullToString("imageName", defaultImage)
+      .stringRestriction(NAME_KEY)
+      .withNumber()
+      .withLowerCase()
+      .withLengthLimit(LIMIT_OF_NAME_LENGTH)
+      .toRefiner
+      .nullToString(NAME_KEY, () => CommonUtils.randomString(10))
+      .nullToEmptyObject(TAGS_KEY)
+
+  /**
+    * use basic check rules of update request for json refiner.
+    * 1) reject any empty string.
+    * 2) nodeName cannot use "start" and "stop" keywords.
+    * 3) nodeName cannot be empty array.
+    * @tparam T type of update
+    * @return json refiner object
+    */
+  private[v0] def basicRulesOfUpdate[T <: ClusterUpdateRequest]: JsonRefiner[T] = JsonRefiner[T]
+    .rejectEmptyString()
+    .arrayRestriction("nodeNames")
+    // we use the same sub-path for "node" and "actions" urls:
+    // xxx/cluster/{name}/{node}
+    // xxx/cluster/{name}/[start|stop]
+    // the "actions" keywords must be avoided in nodeNames parameter
+    .rejectKeyword(START_COMMAND)
+    .rejectKeyword(STOP_COMMAND)
+    // the node names can't be empty
+    .rejectEmpty()
+    .toRefiner
 }

@@ -62,8 +62,7 @@ object ZookeeperApi {
     * exposed to configurator
     */
   private[ohara] implicit val ZOOKEEPER_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
-    ClusterJsonRefiner
-      .basicRulesOfCreation[Creation](IMAGE_NAME_DEFAULT)
+    basicRulesOfCreation[Creation](IMAGE_NAME_DEFAULT)
       .format(jsonFormat7(Creation))
       .nullToRandomPort("clientPort")
       .requireBindPort("clientPort")
@@ -81,8 +80,7 @@ object ZookeeperApi {
                                                  tags: Option[Map[String, JsValue]])
       extends ClusterUpdateRequest
   implicit val ZOOKEEPER_UPDATE_JSON_FORMAT: OharaJsonFormat[Update] =
-    ClusterJsonRefiner
-      .basicRulesOfUpdate[Update]
+    basicRulesOfUpdate[Update]
       .format(jsonFormat6(Update))
       .requireBindPort("clientPort")
       .requireBindPort("peerPort")

@@ -60,8 +60,7 @@ object BrokerApi {
     * exposed to configurator
     */
   private[ohara] implicit val BROKER_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
-    ClusterJsonRefiner
-      .basicRulesOfCreation[Creation](IMAGE_NAME_DEFAULT)
+    basicRulesOfCreation[Creation](IMAGE_NAME_DEFAULT)
       .format(jsonFormat8(Creation))
       .nullToRandomPort("clientPort")
       .requireBindPort("clientPort")
@@ -80,8 +79,7 @@ object BrokerApi {
                                               tags: Option[Map[String, JsValue]])
       extends ClusterUpdateRequest
   implicit val BROKER_UPDATE_JSON_FORMAT: OharaJsonFormat[Update] =
-    ClusterJsonRefiner
-      .basicRulesOfUpdate[Update]
+    basicRulesOfUpdate[Update]
       .format(jsonFormat7(Update))
       .requireBindPort("clientPort")
       .requireBindPort("exporterPort")

@@ -93,8 +93,7 @@ object WorkerApi {
     * exposed to configurator
     */
   private[ohara] implicit val WORKER_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
-    ClusterJsonRefiner
-      .basicRulesOfCreation[Creation](IMAGE_NAME_DEFAULT)
+    basicRulesOfCreation[Creation](IMAGE_NAME_DEFAULT)
       .format(jsonFormat17(Creation))
       .rejectNegativeNumber()
       .nullToRandomPort("clientPort")
@@ -132,8 +131,7 @@ object WorkerApi {
                                               tags: Option[Map[String, JsValue]])
       extends ClusterUpdateRequest
   implicit val WORKER_UPDATE_JSON_FORMAT: OharaJsonFormat[Update] =
-    ClusterJsonRefiner
-      .basicRulesOfUpdate[Update]
+    basicRulesOfUpdate[Update]
       .format(jsonFormat16(Update))
       .rejectNegativeNumber()
       .requireBindPort("clientPort")
