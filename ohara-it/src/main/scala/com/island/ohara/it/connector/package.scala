@@ -104,5 +104,13 @@ package object connector {
       .documentation("port for testing")
       .optional("9999")
       .build(),
+    SettingDef
+      .builder()
+      .displayName("dumb tags")
+      .key("dumb.tags")
+      .valueType(Type.TAGS)
+      .documentation("Tags")
+      .optional()
+      .build(),
   )
 }
