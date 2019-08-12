@@ -47,22 +47,16 @@ object PipelineApi {
     * @param flows  this filed is declared as option type since ohara supports partial update. Empty array means you want to **cleanup** this
     *               field. And none means you don't want to change any bit of this field.
     */
-  final case class Update(workerClusterName: Option[String],
-                          flows: Option[Seq[Flow]],
-                          tags: Option[Map[String, JsValue]])
+  final case class Update(flows: Option[Seq[Flow]], tags: Option[Map[String, JsValue]])
 
   implicit val PIPELINE_UPDATE_JSON_FORMAT: RootJsonFormat[Update] =
-    JsonRefiner[Update].format(jsonFormat3(Update)).rejectEmptyString().refine
+    JsonRefiner[Update].format(jsonFormat2(Update)).rejectEmptyString().refine
 
-  final case class Creation(group: String,
-                            name: String,
-                            workerClusterName: Option[String],
-                            flows: Seq[Flow],
-                            tags: Map[String, JsValue])
+  final case class Creation(group: String, name: String, flows: Seq[Flow], tags: Map[String, JsValue])
       extends CreationRequest
 
   implicit val PIPELINE_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] = JsonRefiner[Creation]
-    .format(jsonFormat5(Creation))
+    .format(jsonFormat4(Creation))
     .rejectEmptyString()
     .stringRestriction(Set(GROUP_KEY, NAME_KEY))
     .withNumber()
@@ -95,14 +89,13 @@ object PipelineApi {
                             name: String,
                             flows: Seq[Flow],
                             objects: Set[ObjectAbstract],
-                            workerClusterName: Option[String],
                             lastModified: Long,
                             tags: Map[String, JsValue])
       extends Data {
     override def kind: String = "pipeline"
   }
 
-  implicit val PIPELINE_JSON_FORMAT: RootJsonFormat[Pipeline] = jsonFormat7(Pipeline)
+  implicit val PIPELINE_JSON_FORMAT: RootJsonFormat[Pipeline] = jsonFormat6(Pipeline)
 
   /**
     * used to generate the payload and url for POST/PUT request.
@@ -124,9 +117,6 @@ object PipelineApi {
 
     @Optional("default name is a random string. But it is required in updating")
     def name(name: String): Request
-
-    @Optional("useless field")
-    def workerClusterName(workerClusterName: String): Request
 
     @Optional("default value is empty")
     def flows(flows: Seq[Flow]): Request
@@ -169,7 +159,6 @@ object PipelineApi {
     def request: Request = new Request {
       private[this] var group: String = GROUP_DEFAULT
       private[this] var name: String = _
-      private[this] var workerClusterName: Option[String] = None
       private[this] var flows: Seq[Flow] = _
       private[this] var tags: Map[String, JsValue] = _
 
@@ -180,11 +169,6 @@ object PipelineApi {
 
       override def name(name: String): Request = {
         this.name = CommonUtils.requireNonEmpty(name)
-        this
-      }
-
-      override def workerClusterName(workerClusterName: String): Request = {
-        this.workerClusterName = Some(CommonUtils.requireNonEmpty(workerClusterName))
         this
       }
 
@@ -201,13 +185,11 @@ object PipelineApi {
       override private[v0] def creation: Creation = Creation(
         group = CommonUtils.requireNonEmpty(group),
         name = if (CommonUtils.isEmpty(name)) CommonUtils.randomString(10) else name,
-        workerClusterName = workerClusterName,
         flows = if (flows == null) Seq.empty else flows,
         tags = if (tags == null) Map.empty else tags
       )
 
       override private[v0] def update: Update = Update(
-        workerClusterName = workerClusterName,
         flows = Option(flows),
         tags = Option(tags)
       )

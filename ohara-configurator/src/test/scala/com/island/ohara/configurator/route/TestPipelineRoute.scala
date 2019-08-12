@@ -64,7 +64,6 @@ class TestPipelineRoute extends MediumTest with Matchers {
     pipeline.flows.head.from shouldBe connector.key
     pipeline.flows.head.to shouldBe Set(topic.key)
     pipeline.objects.size shouldBe 2
-    pipeline.workerClusterName shouldBe None
 
     result(topicApi.stop(topic.key))
     // remove topic
@@ -103,11 +102,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
     val streamApp = result(streamApi.request.create())
 
     val pipeline = result(
-      pipelineApi.request
-        .workerClusterName(wk.name)
-        .name(CommonUtils.randomString(10))
-        .flow(Flow(streamApp.key, Set.empty))
-        .create()
+      pipelineApi.request.name(CommonUtils.randomString(10)).flow(Flow(streamApp.key, Set.empty)).create()
     )
     pipeline.flows.size shouldBe 1
     pipeline.flows.head.from shouldBe streamApp.key
@@ -115,7 +110,6 @@ class TestPipelineRoute extends MediumTest with Matchers {
     pipeline.objects.size shouldBe 1
     // we cannot parse class name from empty jar
     pipeline.objects.head.className shouldBe None
-    pipeline.workerClusterName shouldBe Some(wk.name)
 
     // remove worker cluster
     result(workerApi.delete(wk.name))
@@ -133,12 +127,6 @@ class TestPipelineRoute extends MediumTest with Matchers {
     // the "to" is reference to an nonexistent data
     pipeline.objects.size shouldBe 1
   }
-
-  // the worker cluster name is useless in pipeline so it is ok to use an nonexistent worker cluster
-  @Test
-  def addPipelineWithUnknownCluster(): Unit = result(
-    pipelineApi.request.name(CommonUtils.randomString()).workerClusterName(CommonUtils.randomString()).create()
-  )
 
   @Test
   def addMultiPipelines(): Unit = {
@@ -260,15 +248,6 @@ class TestPipelineRoute extends MediumTest with Matchers {
     result(pipelineApi.list()).size shouldBe 1
     pipeline2.name shouldBe pipeline.name
     pipeline2.flows shouldBe Seq.empty
-  }
-
-  @Test
-  def updateOnlyWorkerClusterName(): Unit = {
-    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
-    val pipeline = result(
-      pipelineApi.request.name(CommonUtils.randomString()).flow(topic.key, Set.empty[ObjectKey]).update())
-    // worker cluster is useless to pipeline
-    result(pipelineApi.request.key(pipeline.key).workerClusterName(CommonUtils.randomString()).update())
   }
 
   @Test

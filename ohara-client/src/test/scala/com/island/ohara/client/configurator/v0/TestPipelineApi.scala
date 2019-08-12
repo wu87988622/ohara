@@ -22,10 +22,9 @@ import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
-import spray.json.DeserializationException
+import spray.json.{DeserializationException, _}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import spray.json._
 class TestPipelineApi extends SmallTest with Matchers {
 
   @Test
@@ -63,14 +62,6 @@ class TestPipelineApi extends SmallTest with Matchers {
 
   @Test
   def nullName(): Unit = an[NullPointerException] should be thrownBy PipelineApi.access.request.name(null)
-
-  @Test
-  def emptyWorkerClusterName(): Unit =
-    an[IllegalArgumentException] should be thrownBy PipelineApi.access.request.workerClusterName("")
-
-  @Test
-  def nullWorkerClusterName(): Unit =
-    an[NullPointerException] should be thrownBy PipelineApi.access.request.workerClusterName(null)
 
   @Test
   def emptyFlows(): Unit = {
@@ -132,7 +123,6 @@ class TestPipelineApi extends SmallTest with Matchers {
     """.stripMargin.parseJson)
     creation.group shouldBe PipelineApi.GROUP_DEFAULT
     creation.name.length shouldBe 10
-    creation.workerClusterName shouldBe None
     creation.flows shouldBe Seq.empty
 
     val group = CommonUtils.randomString()
@@ -146,7 +136,6 @@ class TestPipelineApi extends SmallTest with Matchers {
     """.stripMargin.parseJson)
     creation2.group shouldBe group
     creation2.name shouldBe name
-    creation2.workerClusterName shouldBe None
     creation2.flows shouldBe Seq.empty
     creation2.tags shouldBe Map.empty
   }
@@ -156,24 +145,6 @@ class TestPipelineApi extends SmallTest with Matchers {
     an[DeserializationException] should be thrownBy PIPELINE_CREATION_JSON_FORMAT.read("""
       |  {
       |    "name": ""
-      |  }
-      |
-    """.stripMargin.parseJson)
-  @Test
-  def emptyWorkerClusterNameInCreation(): Unit =
-    an[DeserializationException] should be thrownBy PIPELINE_CREATION_JSON_FORMAT.read("""
-      |  {
-      |    "name": "aaa",
-      |    "workerClusterName": ""
-      |  }
-      |
-    """.stripMargin.parseJson)
-
-  @Test
-  def emptyWorkerClusterNameInUpdate(): Unit =
-    an[DeserializationException] should be thrownBy PIPELINE_UPDATE_JSON_FORMAT.read("""
-      |  {
-      |    "workerClusterName": ""
       |  }
       |
     """.stripMargin.parseJson)
