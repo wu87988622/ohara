@@ -133,7 +133,6 @@ object FakeWorkerClient {
     * @return local connector definitions
     */
   private[configurator] lazy val localConnectorDefinitions: Seq[Definition] = {
-    Seq.empty
     val reflections = new Reflections()
     val classes = reflections.getSubTypesOf(classOf[RowSourceConnector]).asScala ++ reflections
       .getSubTypesOf(classOf[RowSinkConnector])
