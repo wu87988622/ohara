@@ -136,10 +136,11 @@ object StreamApi {
 
     def jmxPort: Option[Int] = noJsNull(settings).get(DefaultConfigs.JMX_PORT_DEFINITION.key()).map(_.convertTo[Int])
 
-    def from: Set[String] =
-      noJsNull(settings)(DefaultConfigs.FROM_TOPICS_DEFINITION.key()).convertTo[Set[String]]
+    def from: Option[Set[String]] =
+      noJsNull(settings).get(DefaultConfigs.FROM_TOPICS_DEFINITION.key()).map(_.convertTo[Set[String]])
 
-    def to: Set[String] = noJsNull(settings)(DefaultConfigs.TO_TOPICS_DEFINITION.key()).convertTo[Set[String]]
+    def to: Option[Set[String]] =
+      noJsNull(settings).get(DefaultConfigs.TO_TOPICS_DEFINITION.key()).map(_.convertTo[Set[String]])
 
     def nodeNames: Option[Set[String]] =
       noJsNull(settings).get(DefaultConfigs.NODE_NAMES_DEFINITION.key()).map(_.convertTo[Seq[String]].toSet)
@@ -312,11 +313,11 @@ object StreamApi {
         this
       }
       override def from(from: Set[String]): Request = {
-        this._from = Some(CommonUtils.requireNonEmpty(from.asJava).asScala.toSet)
+        this._from = Some(Objects.requireNonNull(from))
         this
       }
       override def to(to: Set[String]): Request = {
-        this._to = Some(CommonUtils.requireNonEmpty(to.asJava).asScala.toSet)
+        this._to = Some(Objects.requireNonNull(to))
         this
       }
       override def jmxPort(jmxPort: Int): Request = {
@@ -350,6 +351,12 @@ object StreamApi {
             if (CommonUtils.isEmpty(name)) CommonUtils.randomString(LIMIT_OF_NAME_LENGTH) else name),
           // default group
           DefaultConfigs.GROUP_DEFINITION.key() -> JsString(GROUP_DEFAULT),
+          // default from is empty object in creation
+          DefaultConfigs.FROM_TOPICS_DEFINITION.key() -> _from.fold[JsValue](JsArray.empty)(s =>
+            JsArray(s.map(JsString(_)).toVector)),
+          // default to is empty object in creation
+          DefaultConfigs.TO_TOPICS_DEFINITION.key() -> _to.fold[JsValue](JsArray.empty)(s =>
+            JsArray(s.map(JsString(_)).toVector)),
           // default tags is empty object in creation
           DefaultConfigs.TAGS_DEFINITION.key() -> Option(tags).fold[JsValue](JsObject.empty)(JsObject(_))
           // extra settings maybe have same key before, we overwrite it
@@ -364,10 +371,10 @@ object StreamApi {
             JsString(ObjectKey.toJsonString(s))),
           DefaultConfigs.JMX_PORT_DEFINITION.key() -> JsNumber(
             CommonUtils.requireConnectionPort(_jmxPort.getOrElse(CommonUtils.availablePort()))),
-          DefaultConfigs.FROM_TOPICS_DEFINITION.key() -> _from.fold[JsArray](JsArray.empty)(s =>
-            JsArray(CommonUtils.requireNonEmpty(s.asJava).asScala.map(JsString(_)).toVector)),
-          DefaultConfigs.TO_TOPICS_DEFINITION.key() -> _to.fold[JsArray](JsArray.empty)(s =>
-            JsArray(CommonUtils.requireNonEmpty(s.asJava).asScala.map(JsString(_)).toVector)),
+          DefaultConfigs.FROM_TOPICS_DEFINITION.key() -> _from.fold[JsValue](JsNull)(s =>
+            JsArray(s.map(JsString(_)).toVector)),
+          DefaultConfigs.TO_TOPICS_DEFINITION.key() -> _to.fold[JsValue](JsNull)(s =>
+            JsArray(s.map(JsString(_)).toVector)),
           DefaultConfigs.INSTANCES_DEFINITION.key() -> _instances.fold[JsNumber](JsNumber(1))(n =>
             JsNumber(CommonUtils.requirePositiveInt(n))),
           DefaultConfigs.NODE_NAMES_DEFINITION.key() -> _nodeNames.fold[JsArray](JsArray.empty)(s =>

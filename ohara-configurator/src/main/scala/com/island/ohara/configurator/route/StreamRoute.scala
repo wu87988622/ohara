@@ -188,8 +188,10 @@ private[configurator] object StreamRoute {
           settings = req.settings ++
             Map(
               DefaultConfigs.NAME_DEFINITION.key() -> JsString(key.name),
-              DefaultConfigs.FROM_TOPICS_DEFINITION.key() -> JsArray(req.from.map(JsString(_)).toVector),
-              DefaultConfigs.TO_TOPICS_DEFINITION.key() -> JsArray(req.to.map(JsString(_)).toVector),
+              DefaultConfigs.FROM_TOPICS_DEFINITION.key() -> JsArray(
+                req.from.getOrElse(Set.empty).map(JsString(_)).toVector),
+              DefaultConfigs.TO_TOPICS_DEFINITION.key() -> JsArray(
+                req.to.getOrElse(Set.empty).map(JsString(_)).toVector),
               DefaultConfigs.JAR_KEY_DEFINITION.key() -> {
                 val jarKey = checkField(key, req.jarKey, DefaultConfigs.JAR_KEY_DEFINITION.key())
                 JsString(ObjectKey.toJsonString(jarKey))
@@ -218,14 +220,12 @@ private[configurator] object StreamRoute {
               DefaultConfigs.INSTANCES_DEFINITION.key() -> JsNumber(
                 req.instances.getOrElse(previous.instances)
               ),
-              DefaultConfigs.FROM_TOPICS_DEFINITION.key() -> {
-                if (req.from.isEmpty) JsArray(previous.from.map(JsString(_)).toVector)
-                else JsArray(req.from.map(JsString(_)).toVector)
-              },
-              DefaultConfigs.TO_TOPICS_DEFINITION.key() -> {
-                if (req.to.isEmpty) JsArray(previous.to.map(JsString(_)).toVector)
-                else JsArray(req.to.map(JsString(_)).toVector)
-              },
+              DefaultConfigs.FROM_TOPICS_DEFINITION.key() -> JsArray(
+                req.from.getOrElse(previous.from).map(JsString(_)).toVector
+              ),
+              DefaultConfigs.TO_TOPICS_DEFINITION.key() -> JsArray(
+                req.to.getOrElse(previous.to).map(JsString(_)).toVector
+              ),
               DefaultConfigs.JMX_PORT_DEFINITION.key() -> JsNumber(
                 req.jmxPort.getOrElse(previous.jmxPort)
               ),

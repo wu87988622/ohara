@@ -293,6 +293,21 @@ class TestStreamRoute extends SmallTest with Matchers {
     streamDesc4.tags shouldBe Map.empty
   }
 
+  @Test
+  def testUpdateTopics(): Unit = {
+    val file = CommonUtils.createTempJar("empty_")
+    val jar = result(accessJar.request.file(file).upload())
+    val streamDesc = result(accessStream.request.jarKey(ObjectKey.of(jar.group, jar.name)).create())
+    streamDesc.from shouldBe Set.empty
+    streamDesc.to shouldBe Set.empty
+    // update from topic
+    result(accessStream.request.name(streamDesc.name).from(Set("from")).update()).from shouldBe Set("from")
+    // update from topic to empty
+    result(accessStream.request.name(streamDesc.name).from(Set.empty).update()).from shouldBe Set.empty
+    // to topic should still be empty
+    result(accessStream.get(streamDesc.name)).to shouldBe Set.empty
+  }
+
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }

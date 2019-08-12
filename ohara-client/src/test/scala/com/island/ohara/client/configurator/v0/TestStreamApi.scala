@@ -138,7 +138,6 @@ class TestStreamApi extends SmallTest with Matchers {
   @Test
   def topicFromFieldCheck(): Unit = {
     an[NullPointerException] should be thrownBy accessRequest.from(null)
-    an[IllegalArgumentException] should be thrownBy accessRequest.from(Set.empty)
 
     // default from field will be empty
     accessRequest.name(CommonUtils.randomString()).creation.from shouldBe Set.empty
@@ -147,7 +146,6 @@ class TestStreamApi extends SmallTest with Matchers {
   @Test
   def topicToFieldCheck(): Unit = {
     an[NullPointerException] should be thrownBy accessRequest.to(null)
-    an[IllegalArgumentException] should be thrownBy accessRequest.to(Set.empty)
 
     // default to field will be empty
     accessRequest.name(CommonUtils.randomString()).creation.to shouldBe Set.empty
@@ -407,8 +405,8 @@ class TestStreamApi extends SmallTest with Matchers {
       .settings(DefaultConfigs.IMAGE_NAME_DEFINITION.key())
       .asInstanceOf[JsString]
       .value shouldBe StreamApi.IMAGE_NAME_DEFAULT
-    data.settings(DefaultConfigs.FROM_TOPICS_DEFINITION.key()).asInstanceOf[JsArray].elements.isEmpty shouldBe true
-    data.settings(DefaultConfigs.TO_TOPICS_DEFINITION.key()).asInstanceOf[JsArray].elements.isEmpty shouldBe true
+    data.settings.get(DefaultConfigs.FROM_TOPICS_DEFINITION.key()).isEmpty shouldBe true
+    data.settings.get(DefaultConfigs.TO_TOPICS_DEFINITION.key()).isEmpty shouldBe true
     data.settings.get(DefaultConfigs.JMX_PORT_DEFINITION.key()).isDefined shouldBe true
     data.settings(DefaultConfigs.INSTANCES_DEFINITION.key()).asInstanceOf[JsNumber].value shouldBe 1
     data.settings(DefaultConfigs.NODE_NAMES_DEFINITION.key()).asInstanceOf[JsArray].elements.isEmpty shouldBe true
