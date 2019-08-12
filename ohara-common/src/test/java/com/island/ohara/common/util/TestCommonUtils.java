@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
@@ -518,5 +519,15 @@ public class TestCommonUtils extends SmallTest {
     Assert.assertTrue(CommonUtils.hasExtension(".a"));
     Assert.assertFalse(CommonUtils.hasExtension("bbaa"));
     Assert.assertFalse(CommonUtils.hasExtension("bbaa."));
+  }
+
+  @Test
+  public void testToDuration() {
+    Assert.assertEquals(Duration.ofSeconds(1), CommonUtils.toDuration("1 second"));
+    Assert.assertEquals(Duration.ofSeconds(1), CommonUtils.toDuration("1 seconds"));
+    Assert.assertEquals(Duration.ofSeconds(3), CommonUtils.toDuration("3 seconds"));
+    Assert.assertEquals(Duration.ofDays(1), CommonUtils.toDuration("1 day"));
+    Assert.assertEquals(Duration.ofDays(1), CommonUtils.toDuration("1 days"));
+    Assert.assertEquals(Duration.ofDays(3), CommonUtils.toDuration("3 days"));
   }
 }

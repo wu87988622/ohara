@@ -68,7 +68,8 @@ public final class CommonUtils {
   }
 
   /**
-   * convert the string to java.Duration or scala.Duration.
+   * convert the string to java.Duration. Apart from java.Duration string, the simple format "1
+   * second", "3 seconds" and "10 minutes" are totally supported.
    *
    * @param value duration string
    * @return java.time.Duration
@@ -93,7 +94,13 @@ public final class CommonUtils {
                 + value
                 + " can't be converted to either java.time.Duration or scala.concurrent.duration.Duration type");
       long number = Long.valueOf(stringValue.substring(0, indexOfUnit));
-      TimeUnit unit = TimeUnit.valueOf(stringValue.substring(indexOfUnit).toUpperCase());
+      String unitString = stringValue.substring(indexOfUnit).toUpperCase();
+      // all units in TimeUnit end with "S". However, it forbids the representation like "1 second",
+      // "1 minute" and "1 day".
+      // Hence, we give user a hand to add "S" to reduce the failure of converting string to
+      // Duration.
+      if (!unitString.endsWith("S")) unitString += "S";
+      TimeUnit unit = TimeUnit.valueOf(unitString);
       return Duration.ofMillis(unit.toMillis(number));
     }
   }
