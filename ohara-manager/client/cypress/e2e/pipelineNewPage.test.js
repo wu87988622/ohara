@@ -383,11 +383,12 @@ describe('PipelineNewPage', () => {
       .should('have.length', 2);
   });
 
-  it.only('connects perf source -> Topic', () => {
+  it('connects perf source -> Topic', () => {
     cy.server();
     cy.route('PUT', '/api/pipelines/*').as('putPipeline');
     cy.route('GET', '/api/pipelines/*').as('getPipeline');
     cy.route('GET', '/api/connectors/*').as('getConnector');
+    cy.route('PUT', '/api/connectors/*').as('putConnector');
 
     const perfName = makeRandomStr();
     const topicName = Cypress.env('TOPIC_NAME');
@@ -424,8 +425,10 @@ describe('PipelineNewPage', () => {
       .get(`li[data-value=${topicName}]`)
       .click()
       .wait(2000)
+      .wait('@putPipeline')
       .getByTestId('start-btn')
       .click({ force: true })
+      .wait('@putConnector')
       .wait('@getPipeline') // Waiting for multiple `GET pipeline` requests here, so the metrics data can be ready for us to test
       .wait('@getPipeline')
       .wait('@getPipeline')
@@ -437,12 +440,26 @@ describe('PipelineNewPage', () => {
       .then(xhr => {
         const perf = xhr.response.body.objects[1];
         const metricsCount = perf.metrics.meters.length;
-        cy.getByTestId('metric-item').should('have.length', metricsCount);
+        cy.get('[data-testid="metric-item"]').should(
+          'have.length',
+          metricsCount,
+        );
       })
+      //Element is effective width and height of 0x0, even though it is not.
+      //reference https://github.com/cypress-io/cypress/issues/695
+      //1.We should be able to write an assertion that checks on non-zero width where the tests will not move forward until it is greater than non-zero
+      //reference https://github.com/cypress-io/cypress/issues/695#issuecomment-379817133
+      //2.Topic click cause refresh cypress couldn't get DOM event so click unable to end, we need click two time.
+      //reference https://github.com/cypress-io/cypress/issues/695#issuecomment-493578023
+      .get('@getPipeline')
       .getByTestId(`topic-${topicName}`)
-      //Here we click DOM about gragh refresh cypress couldn't get DOM event so click unable to end
-      //reference https://docs.cypress.io/api/commands/trigger.html#Differences
-      .trigger('click')
+      .invoke('width')
+      .should('be.gt', 0)
+      .getByTestId(`topic-${topicName}`)
+      .click({ force: true })
+      .getByTestId(`topic-${topicName}`)
+      .click({ force: true })
+
       .getByText(`Metrics (${topicName})`)
       .should('have.length', 1)
       .getByTestId('expandIcon')
@@ -451,7 +468,10 @@ describe('PipelineNewPage', () => {
       .then(xhr => {
         const topic = xhr.response.body.objects[0];
         const metricsCount = topic.metrics.meters.length;
-        cy.getByTestId('metric-item').should('have.length', metricsCount);
+        cy.get('[data-testid="metric-item"]').should(
+          'have.length',
+          metricsCount,
+        );
       });
   });
 });
