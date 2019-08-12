@@ -193,6 +193,24 @@ describe('sortByOrder', () => {
   });
 });
 
+describe('getDisplayValue()', () => {
+  it('returns config value if it contains a value', () => {
+    const params = { configValue: 'abc', defaultValue: 2 };
+    expect(utils.getDisplayValue(params)).toBe(params.configValue);
+  });
+
+  it(`returns defalut value if configValue doesn't contain any value`, () => {
+    const params = { configValue: null, defaultValue: 10 };
+    expect(utils.getDisplayValue(params)).toBe(params.defaultValue);
+  });
+
+  // Edge case, see the getDisplayValue function comments
+  it('handles `Boolean` values correctly', () => {
+    const params = { configValue: true, defaultValue: false };
+    expect(utils.getDisplayValue(params)).toBe(params.configValue);
+  });
+});
+
 describe('getRenderData()', () => {
   it('gets the correct format of render data', () => {
     const state = CONNECTOR_STATES.running;

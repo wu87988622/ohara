@@ -177,6 +177,14 @@ export const getEditable = ({ key, defaultEditable }) => {
 };
 
 export const getDisplayValue = ({ configValue, defaultValue }) => {
+  // The configValue could be a `Boolean` value, so we have
+  // to handle it differently, otherwise, it will always
+  // return back `true` here
+  if (typeof configValue === 'boolean') {
+    return configValue;
+  }
+
+  // handle other types normally here
   return configValue ? configValue : defaultValue;
 };
 
