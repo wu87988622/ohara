@@ -16,6 +16,7 @@
 
 package com.island.ohara.agent
 
+import java.net.URL
 import java.util.Objects
 
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
@@ -45,15 +46,16 @@ class TestStreamCreator extends SmallTest with Matchers {
       CommonUtils.requireConnectionPort(jmxPort)
       Objects.requireNonNull(settings)
       Objects.requireNonNull(executionContext)
-      Future.successful(
+      Future.successful {
+        val jarKey = StreamCollie.urlToDataKey(jarUrl)
         StreamClusterInfo(
           settings = Map(
             DefaultConfigs.NAME_DEFINITION.key() -> JsString(clusterName),
             DefaultConfigs.IMAGE_NAME_DEFINITION.key() -> JsString(imageName),
             DefaultConfigs.INSTANCES_DEFINITION.key() -> JsNumber(nodeNames.size),
             DefaultConfigs.JAR_KEY_DEFINITION.key() -> JsObject(
-              com.island.ohara.client.configurator.v0.GROUP_KEY -> JsString("group"),
-              com.island.ohara.client.configurator.v0.NAME_KEY -> JsString("name")),
+              com.island.ohara.client.configurator.v0.GROUP_KEY -> JsString(jarKey.group()),
+              com.island.ohara.client.configurator.v0.NAME_KEY -> JsString(jarKey.name())),
             DefaultConfigs.FROM_TOPICS_DEFINITION.key() -> JsArray(
               JsString(settings(DefaultConfigs.FROM_TOPICS_DEFINITION.key()))
             ),
@@ -69,7 +71,8 @@ class TestStreamCreator extends SmallTest with Matchers {
           state = None,
           error = None,
           lastModified = CommonUtils.current()
-        ))
+        )
+      }
     }
 
   private[this] def awaitResult[T](f: Future[T]): T = Await.result(f, 10 seconds)
@@ -132,7 +135,7 @@ class TestStreamCreator extends SmallTest with Matchers {
     streamCreator()
       .clusterName(CommonUtils.randomString(StreamApi.LIMIT_OF_NAME_LENGTH))
       .imageName(CommonUtils.randomString())
-      .jarUrl("jar")
+      .jarUrl("http://abc/jar")
       .settings(
         Map(
           DefaultConfigs.FROM_TOPICS_DEFINITION.key() -> "from",
@@ -182,7 +185,7 @@ class TestStreamCreator extends SmallTest with Matchers {
       streamCreator()
         .clusterName(CommonUtils.randomString(StreamApi.LIMIT_OF_NAME_LENGTH))
         .imageName(CommonUtils.randomString())
-        .jarUrl("jar")
+        .jarUrl("http://abc/jar")
         .settings(Map(
           DefaultConfigs.FROM_TOPICS_DEFINITION.key() -> "from",
           DefaultConfigs.TO_TOPICS_DEFINITION.key() -> "to"
@@ -190,5 +193,25 @@ class TestStreamCreator extends SmallTest with Matchers {
         .nodeNames(Set("bar", "foo"))
         .jmxPort(1000)
         .create()).jmxPort shouldBe 1000
+  }
+
+  @Test
+  def testParseJarKey(): Unit = {
+    //a normal url
+    val url = new URL("http://localhost:12345/group/abc.jar")
+    val res = awaitResult(
+      streamCreator()
+        .clusterName(CommonUtils.randomString(StreamApi.LIMIT_OF_NAME_LENGTH))
+        .imageName(CommonUtils.randomString())
+        .nodeNames(Set("bar", "foo"))
+        .settings(
+          Map(
+            DefaultConfigs.FROM_TOPICS_DEFINITION.key() -> "from",
+            DefaultConfigs.TO_TOPICS_DEFINITION.key() -> "to"
+          ))
+        .jarUrl(url.toString)
+        .create())
+    res.jarKey.group() shouldBe "group"
+    res.jarKey.name() shouldBe "abc.jar"
   }
 }

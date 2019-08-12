@@ -51,6 +51,13 @@ public class TestStreamApp extends SmallTest {
     file.deleteOnExit();
   }
 
+  @Test(expected = OharaException.class)
+  public void testWrongURLJar() {
+    File file = CommonUtils.createTempJar("streamApp");
+    // redundant quotes
+    StreamApp.downloadJarByUrl("\"" + file.toURI().toString() + "\"");
+  }
+
   @Test
   public void testCanFindJarEntry() {
     String projectPath = System.getProperty("user.dir");
