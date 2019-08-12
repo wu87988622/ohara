@@ -28,7 +28,6 @@ const SidebarRoutes = props => {
   const getConnectorDefs = ({ connectors, type }) => {
     const getByClassName = connector => connector.className === type;
     const connector = connectors.find(getByClassName);
-
     return connector.definitions;
   };
 
@@ -39,6 +38,7 @@ const SidebarRoutes = props => {
     hdfsSink,
     ftpSink,
     customSource,
+    customSink,
   } = PIPELINES.CONNECTOR_TYPES;
 
   return (
@@ -119,13 +119,26 @@ const SidebarRoutes = props => {
       />
 
       <Route
-        path={`${routeBaseUrl}/com.island.ohara.it.connector.(DumbSourceConnector|DumbSinkConnector)`}
+        path={`${routeBaseUrl}/${customSource}`}
         render={() => (
           <Connectors.CustomConnector
             {...connectorProps}
             defs={getConnectorDefs({
               connectors,
               type: customSource,
+            })}
+          />
+        )}
+      />
+
+      <Route
+        path={`${routeBaseUrl}/${customSink}`}
+        render={() => (
+          <Connectors.CustomConnector
+            {...connectorProps}
+            defs={getConnectorDefs({
+              connectors,
+              type: customSink,
             })}
           />
         )}

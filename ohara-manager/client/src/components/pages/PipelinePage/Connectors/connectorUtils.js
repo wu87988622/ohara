@@ -304,6 +304,7 @@ export const renderer = props => {
       case 'JDBC_TABLE':
       case 'LONG':
       case 'PORT':
+      case 'TAGS':
         const inputType = switchType(valueType);
 
         return (

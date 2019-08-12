@@ -60,6 +60,7 @@ class CustomConnector extends React.Component {
   };
 
   componentDidMount() {
+    this.connectorName = this.props.match.params.connectorName;
     this.fetchConnector();
     this.setTopics();
   }
@@ -67,15 +68,16 @@ class CustomConnector extends React.Component {
   componentDidUpdate(prevProps) {
     const { pipelineTopics: prevTopics } = prevProps;
     const { pipelineTopics: currTopics } = this.props;
-    const { connectorId: prevConnectorId } = prevProps.match.params;
-    const { connectorId: currConnectorId } = this.props.match.params;
+    const { connectorName: prevConnectorName } = prevProps.match.params;
+    const { connectorName: currConnectorName } = this.props.match.params;
 
     if (prevTopics !== currTopics) {
       const topics = currTopics.map(currTopic => currTopic.name);
       this.setState({ topics });
     }
 
-    if (prevConnectorId !== currConnectorId) {
+    if (prevConnectorName !== currConnectorName) {
+      this.connectorName = currConnectorName;
       this.fetchConnector();
     }
   }
@@ -86,14 +88,14 @@ class CustomConnector extends React.Component {
   };
 
   fetchConnector = async () => {
-    const { connectorId } = this.props.match.params;
-    const res = await connectorApi.fetchConnector(connectorId);
+    const res = await connectorApi.fetchConnector(this.connectorName);
     this.setState({ isLoading: false });
     const result = get(res, 'data.result', null);
 
     if (result) {
-      const { settings, state } = result;
+      const { settings } = result;
       const { topicKeys } = settings;
+      const state = get(result, 'state', null);
       const topicName = get(topicKeys, '[0].name', '');
 
       const _settings = utils.changeToken({
@@ -150,28 +152,28 @@ class CustomConnector extends React.Component {
 
   handleDeleteConnector = async () => {
     const { match, refreshGraph, history } = this.props;
-    const { connectorId, pipelineId } = match.params;
-    const res = await connectorApi.deleteConnector(connectorId);
+    const { pipelineName } = match.params;
+    const res = await connectorApi.deleteConnector(this.connectorName);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (isSuccess) {
-      const { name: connectorName } = this.state;
-      toastr.success(`${MESSAGES.CONNECTOR_DELETION_SUCCESS} ${connectorName}`);
+      const { configs } = this.state;
+      toastr.success(
+        `${MESSAGES.CONNECTOR_DELETION_SUCCESS} ${configs.connector_name}`,
+      );
       await refreshGraph();
 
-      const path = `/pipelines/edit/${pipelineId}`;
+      const path = `/pipelines/edit/${pipelineName}`;
       history.push(path);
     }
   };
 
   triggerConnector = async action => {
-    const { match } = this.props;
-    const sinkId = get(match, 'params.connectorId', null);
     let res;
     if (action === CONNECTOR_ACTIONS.start) {
-      res = await connectorApi.startConnector(sinkId);
+      res = await connectorApi.startConnector(this.connectorName);
     } else {
-      res = await connectorApi.stopConnector(sinkId);
+      res = await connectorApi.stopConnector(this.connectorName);
     }
 
     this.handleTriggerConnectorResponse(action, res);
@@ -182,7 +184,7 @@ class CustomConnector extends React.Component {
 
     const topic = utils.getCurrTopicId({
       originals: this.props.globalTopics,
-      target: values.topics,
+      target: values.topicKeys,
     });
 
     const topicKeys = Array.isArray(topic)
@@ -210,26 +212,26 @@ class CustomConnector extends React.Component {
     const isSuccess = get(res, 'data.isSuccess', false);
     if (!isSuccess) return;
 
-    const { match, graph, updateGraph } = this.props;
-    const sinkId = get(match, 'params.connectorId', null);
+    const { graph, updateGraph } = this.props;
     const state = get(res, 'data.result.state');
     this.setState({ state });
-    const currSink = findByGraphName(graph, sinkId);
+    const currSink = findByGraphName(graph, this.connectorName);
     const update = { ...currSink, state };
     updateGraph({ update, dispatcher: { name: 'CONNECTOR' } });
 
     if (action === CONNECTOR_ACTIONS.start) {
-      if (!isNull(state)) toastr.success(MESSAGES.START_CONNECTOR_SUCCESS);
+      if (action === CONNECTOR_ACTIONS.start) {
+        if (!isNull(state)) toastr.success(MESSAGES.START_CONNECTOR_SUCCESS);
+      }
     }
   };
 
   handleSave = async values => {
-    const { match, globalTopics, graph, updateGraph } = this.props;
-    const { connectorId } = match.params;
+    const { globalTopics, graph, updateGraph } = this.props;
 
     const topic = utils.getCurrTopicId({
       originals: globalTopics,
-      target: values.topics,
+      target: values.topicKeys,
     });
 
     const topicKeys = Array.isArray(topic)
@@ -242,15 +244,15 @@ class CustomConnector extends React.Component {
       replaceToken: '.',
     });
 
-    const params = { ..._values, topicKeys };
-    await connectorApi.updateConnector({ id: connectorId, params });
+    const params = { ..._values, topicKeys, name: this.connectorName };
+    await connectorApi.updateConnector({ name: this.connectorName, params });
 
     const { sinkProps, update } = utils.getUpdatedTopic({
-      currTopicId: topic,
+      currTopicName: topic,
       configs: values,
       originalTopics: globalTopics,
       graph,
-      connectorId,
+      connectorName: this.connectorName,
     });
 
     updateGraph({ update, dispatcher: { name: 'CONNECTOR' }, ...sinkProps });
@@ -264,7 +266,6 @@ class CustomConnector extends React.Component {
 
     const formData = utils.getRenderData({
       defs,
-      topics,
       configs,
       state,
     });
@@ -289,6 +290,7 @@ class CustomConnector extends React.Component {
           <H5Wrapper>Custom connector</H5Wrapper>
           <Controller
             kind="connector"
+            connectorName={this.connectorName}
             onStart={this.handleStartConnector}
             onStop={this.handleStopConnector}
             onDelete={this.handleDeleteConnector}
