@@ -50,7 +50,7 @@ private class K8SStreamCollieImpl(node: NodeCollie, k8sClient: K8SClient)
       .routes(route)
       .envs(containerInfo.environments)
       .args(StreamCollie.formatJMXProperties(node.name, jmxPort) ++
-        Seq(StreamCollie.MAIN_ENTRY, s"""${DefaultConfigs.JAR_KEY_DEFINITION.key()}=$jarUrl"""))
+        Seq(StreamCollie.MAIN_ENTRY, s"""${DefaultConfigs.JAR_KEY_DEFINITION.key()}="$jarUrl""""))
       .threadPool(executionContext)
       .create()
       .recover {

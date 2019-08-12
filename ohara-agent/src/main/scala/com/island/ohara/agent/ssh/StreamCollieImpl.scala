@@ -50,7 +50,7 @@ private class StreamCollieImpl(node: NodeCollie, dockerCache: DockerClientCache,
             " ",
             StreamCollie.formatJMXProperties(node.name, jmxPort).mkString(" "),
             StreamCollie.MAIN_ENTRY,
-            s"""${DefaultConfigs.JAR_KEY_DEFINITION.key()}=$jarUrl"""
+            s"""${DefaultConfigs.JAR_KEY_DEFINITION.key()}="$jarUrl""""
           ))
           .create()
       )

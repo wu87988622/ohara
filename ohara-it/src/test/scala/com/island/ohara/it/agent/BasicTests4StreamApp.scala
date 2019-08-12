@@ -248,6 +248,11 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     val to = "toTopic"
     val jar = new File(CommonUtils.path(System.getProperty("user.dir"), "build", "libs", "ohara-streamapp.jar"))
 
+    // jar should be parse-able
+    val definition = result(configurator.clusterCollie.streamCollie.definitions(jar.toURI.toURL))
+    definition.isDefined shouldBe true
+    definition.get.className shouldBe "com.island.ohara.it.streamapp.DumbStreamApp"
+
     // we make sure the broker cluster exists again (for create topic)
     assertCluster(() => result(bkApi.list()), bkName)
 

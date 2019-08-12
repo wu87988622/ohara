@@ -154,13 +154,14 @@ trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator
     * @param jarUrl the custom streamApp jar url
     * @return stream definition
     */
+  //TODO : this workaround should be removed and use a new API instead in #2191...by Sam
   def definitions(jarUrl: URL): Future[Option[Definition]] =
     Future.successful {
       import sys.process._
       val classpath = System.getProperty("java.class.path")
       val command =
-        s"""java -cp $classpath ${StreamCollie.MAIN_ENTRY} ${DefaultConfigs.JAR_KEY_DEFINITION
-          .key()}=\"${jarUrl.toString}\" ${StreamCollie.CONFIG_KEY}"""
+        s"""java -cp "$classpath" ${StreamCollie.MAIN_ENTRY} ${DefaultConfigs.JAR_KEY_DEFINITION
+          .key()}="${jarUrl.toString}" ${StreamCollie.CONFIG_KEY}"""
       try {
         val result = command.!!
         Some(Definition(result.split("=")(0), StreamDefinitions.ofJson(result.split("=")(1)).values().asScala))
