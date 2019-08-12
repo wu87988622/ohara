@@ -46,24 +46,10 @@ afterEach(cleanup);
 const workers = generate.workers({ count: 1 });
 const pipelines = [
   {
-    name: 'a',
-    workerClusterName: 'worker-a',
+    name: generate.name(),
     status: 'Stopped',
-    id: '1234',
-    objects: [
-      { kind: 'topic', id: '123', name: 'bb' },
-      { kind: 'source', id: '789', name: 'dd' },
-    ],
-  },
-  {
-    name: 'b',
-    workerClusterName: 'worker-b',
-    status: 'Running',
-    id: '5678',
-    objects: [
-      { kind: 'topic', id: '456', name: 'aa' },
-      { kind: 'source', id: '012', name: 'cc' },
-    ],
+    objects: [{ kind: 'topic', name: 'bb' }, { kind: 'source', name: 'dd' }],
+    tags: { workerClusterName: generate.serviceName() },
   },
 ];
 
@@ -91,6 +77,7 @@ describe('<PipelineListPage />', () => {
           refetch: jest.fn(),
         };
       }
+
       if (url === API_URL.PIPELINE_URL) {
         return {
           data: {
@@ -159,21 +146,24 @@ describe('<PipelineListPage />', () => {
   });
 
   it('renders pipeline data list', async () => {
-    const { getByText, getAllByTestId } = await waitForElement(() =>
+    const { getByText, getByTestId } = await waitForElement(() =>
       renderWithProvider(<PipelineListPage {...props} />),
     );
 
+    // Ensure we're rendering the correct table head
     getByText('Name');
     getByText('Workspace');
     getByText('Status');
     getByText('Edit');
     getByText('Delete');
 
-    const pipelineTr = await waitForElement(() =>
-      getAllByTestId('pipeline-name'),
-    );
+    const [pipeline] = pipelines;
 
-    expect(pipelineTr.length).toBe(pipelines.length);
+    expect(getByTestId('pipeline-name').textContent).toBe(pipeline.name);
+    expect(getByTestId('pipeline-workspace').textContent).toBe(
+      pipeline.tags.workerClusterName,
+    );
+    expect(getByTestId('pipeline-status').textContent).toBe(pipeline.status);
   });
 
   it('toggles delete pipeline modal', async () => {
@@ -182,13 +172,12 @@ describe('<PipelineListPage />', () => {
     const pipelines = [
       {
         name: pipelineName,
-        workerClusterName: 'worker-a',
         status: 'Stopped',
-        id: '1234',
         objects: [
-          { kind: 'topic', id: '123', name: 'bb' },
-          { kind: 'source', id: '789', name: 'dd' },
+          { kind: 'topic', name: 'bb' },
+          { kind: 'source', name: 'dd' },
         ],
+        tags: { workerClusterName: generate.serviceName() },
       },
     ];
 

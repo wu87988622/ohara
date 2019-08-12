@@ -165,19 +165,19 @@ const PipelineListPage = props => {
     .map(pipeline => {
       return {
         name: pipeline.name,
-        workspace: pipeline.workerClusterName,
+        workspace: pipeline.tags.workerClusterName,
         status: pipeline.status,
         edit: editButton(pipeline),
         delete: deleteButton(pipeline),
       };
     });
   return (
-    <Form
-      onSubmit={handleSelectClusterModalConfirm}
-      initialValues={{}}
-      render={({ handleSubmit, submitting, values }) => {
-        return (
-          <DocumentTitle title={PIPELINE}>
+    <DocumentTitle title={PIPELINE}>
+      <Form
+        onSubmit={handleSelectClusterModalConfirm}
+        initialValues={{}}
+        render={({ handleSubmit, submitting, values }) => {
+          return (
             <>
               <Dialog
                 title="New pipeline"
@@ -265,10 +265,10 @@ const PipelineListPage = props => {
                 />
               </s.Wrapper>
             </>
-          </DocumentTitle>
-        );
-      }}
-    />
+          );
+        }}
+      />
+    </DocumentTitle>
   );
 };
 
