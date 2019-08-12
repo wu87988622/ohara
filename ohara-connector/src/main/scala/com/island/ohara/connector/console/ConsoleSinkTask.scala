@@ -47,7 +47,7 @@ class ConsoleSinkTask extends RowSinkTask {
   }
 
   override protected def _put(records: util.List[RowSinkRecord]): Unit =
-    if (!records.isEmpty && (lastLog == -1 || lastLog + freq.toMillis >= CommonUtils.current())) {
+    if (!records.isEmpty && (lastLog == -1 || CommonUtils.current() - lastLog >= freq.toMillis)) {
       try {
         LOG.info(records.asScala.map(_.row()).mkString(divider))
       } finally lastLog = CommonUtils.current()

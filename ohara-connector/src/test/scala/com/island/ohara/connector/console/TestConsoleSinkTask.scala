@@ -60,23 +60,39 @@ class TestConsoleSinkTask extends SmallTest with Matchers {
   @Test
   def testPrint(): Unit = {
     val task = new ConsoleSinkTask()
-    task.start(configs(CONSOLE_FREQUENCE, "1 seconds"))
-    task.freq shouldBe (1 seconds)
+    task.start(configs(CONSOLE_FREQUENCE, "2 seconds"))
     task.lastLog shouldBe -1
+
     task.put(java.util.Collections.emptyList())
     task.lastLog shouldBe -1
-    TimeUnit.SECONDS.sleep(3)
-    task.put(
-      java.util.Collections.singletonList(
-        new SinkRecord(
-          CommonUtils.randomString(),
-          1,
-          null,
-          Row.EMPTY,
-          null,
-          null,
-          1
-        )))
-    task.lastLog should not be -1
+
+    putRecord(task)
+    val lastLogCopy1 = task.lastLog
+    lastLogCopy1 should not be -1
+
+    TimeUnit.SECONDS.sleep(1)
+
+    putRecord(task)
+    val lastLogCopy2 = task.lastLog
+    lastLogCopy2 shouldBe lastLogCopy1
+
+    TimeUnit.SECONDS.sleep(1)
+
+    putRecord(task)
+    val lastLogCopy3 = task.lastLog
+    lastLogCopy3 should not be lastLogCopy2
+    lastLogCopy3 should not be -1
   }
+
+  private[this] def putRecord(task: ConsoleSinkTask): Unit = task.put(
+    java.util.Collections.singletonList(
+      new SinkRecord(
+        CommonUtils.randomString(),
+        1,
+        null,
+        Row.EMPTY,
+        null,
+        null,
+        1
+      )))
 }
