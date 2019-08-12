@@ -31,6 +31,7 @@ describe('PipelineNewPage', () => {
     cy.route('POST', 'api/pipelines').as('postPipeline');
     cy.route('GET', 'api/topics').as('getTopics');
     cy.route('GET', 'api/workers').as('getWorkers');
+    cy.route('GET', '/api/connectors/*').as('getConnector');
 
     const pipelineName = makeRandomStr();
 
@@ -78,8 +79,67 @@ describe('PipelineNewPage', () => {
       .should('not.be.exist');
   });
 
-  it('adds all connectors', () => {
-    const filters = [
+  it('should prevent user from deleting a topic that has connection', () => {
+    // Add topic
+    cy.wait('@getTopics')
+      .getByTestId('toolbar-topics')
+      .click()
+      .getByTestId('topic-select')
+      .select(Cypress.env('TOPICS_NAME'))
+      .getByText('Add')
+      .click()
+      .wait('@putPipeline');
+
+    // Add ftp source connector
+    const connectorName = makeRandomStr();
+    cy.getByTestId('toolbar-sources')
+      .click()
+      .getByText(CONNECTOR_TYPES.jdbcSource)
+      .click()
+      .getByText('Add')
+      .click()
+      .getByPlaceholderText('Connector name')
+      .type(connectorName)
+      .get('.ReactModal__Content')
+      .eq(1)
+      .within(() => {
+        cy.getByText('Add').click();
+      });
+
+    // Set the connection between them
+    cy.getByText(connectorName)
+      .click({ force: true })
+      .wait('@getConnector')
+      .getByText('core')
+      .click({ force: true })
+      .getByText('Please select...')
+      .click()
+      .get(`li[data-value=${Cypress.env('TOPICS_NAME')}]`)
+      .click()
+      .wait(2000) // UI has one sec throttle, so we need to wait a bit time and then wait for the request
+      .wait('@putPipeline');
+
+    // Try to remove the topic
+    cy.getByTestId('pipeline-graph')
+      .within(() => {
+        cy.getByText(Cypress.env('TOPICS_NAME')).click({ force: true });
+      })
+      .getByTestId('delete-button')
+      .click()
+      .getByTestId('delete-dialog')
+      .within(() => {
+        cy.getByText('DELETE').click();
+      });
+
+    cy.getByText('You cannot delete the topic while it has any connection');
+    // The topic should still be there
+    cy.getByTestId('pipeline-graph').within(() =>
+      cy.getByText(Cypress.env('TOPICS_NAME')),
+    );
+  });
+
+  it('adds and deletes all connectors', () => {
+    const connectors = [
       {
         type: CONNECTOR_TYPES.ftpSource,
         nodeType: 'FtpSource',
@@ -109,10 +169,12 @@ describe('PipelineNewPage', () => {
     cy.server();
     cy.route('POST', '/api/connectors').as('createConnector');
 
-    cy.wrap(filters).each(filter => {
-      const { toolbarTestId, type, nodeType, connectorName } = filter;
-      cy.getByTestId(toolbarTestId).click();
-      cy.getByText(type)
+    // Add connector to the graph
+    cy.wrap(connectors).each(connector => {
+      const { toolbarTestId, type, nodeType, connectorName } = connector;
+      cy.getByTestId(toolbarTestId)
+        .click()
+        .getByText(type)
         .click()
         .getByText('Add')
         .click()
@@ -130,11 +192,26 @@ describe('PipelineNewPage', () => {
         .get('.node-type')
         .should('contain', nodeType);
     });
+
+    // Remove connectors from the graph
+    cy.wrap(connectors).each(connector => {
+      const { connectorName } = connector;
+
+      cy.getByText(connectorName)
+        .click({ force: true })
+        .getByTestId('delete-button')
+        .click()
+        .getByText('DELETE')
+        .click()
+        .getByText(`Successfully deleted the connector: ${connectorName}`)
+        .wait('@getPipeline')
+        .wait(500) // wait here, so the local state is up-to-date with the API response
+        .queryByText(connectorName, { timeout: 500 })
+        .should('not.be.exist');
+    });
   });
 
-  // Skip for now, this test is currently broken and is tracked in
-  // https://github.com/oharastream/ohara/issues/1944
-  it.skip('saves and removes a connector even after page refresh', () => {
+  it('saves and removes a connector even after page refresh', () => {
     const connectorName = makeRandomStr();
     cy.getByTestId('toolbar-sources')
       .click()
@@ -177,15 +254,8 @@ describe('PipelineNewPage', () => {
   });
 
   it('connects Ftp soure -> Topic -> Ftp sink', () => {
-    cy.server();
-    cy.route('PUT', 'api/pipelines/*').as('putPipeline');
-    cy.route('GET', 'api/connectors/*').as('getConnector');
-    cy.route('GET', 'api/workers').as('getWorkers');
-
     cy.getByTestId('toolbar-sinks')
       .click()
-      .getByText('Add a new sink connector')
-      .should('be.exist')
       .getByText(CONNECTOR_TYPES.ftpSink)
       .click()
       .getByText('Add')
@@ -200,8 +270,6 @@ describe('PipelineNewPage', () => {
       .wait('@putPipeline')
       .getByTestId('toolbar-sources')
       .click()
-      .getByText('Add a new source connector')
-      .should('be.exist')
       .getByText(CONNECTOR_TYPES.ftpSource)
       .click()
       .getByText('Add')
@@ -224,8 +292,6 @@ describe('PipelineNewPage', () => {
 
     cy.getByText('FtpSink')
       .click({ force: true })
-      .getByText('FTP sink connector')
-      .should('have.length', '1')
       .getByText('core')
       .click()
       .wait('@getConnector')
@@ -240,8 +306,6 @@ describe('PipelineNewPage', () => {
 
     cy.getByText('FtpSource')
       .click({ force: true })
-      .getByText('FTP source connector')
-      .should('have.length', '1')
       .wait('@getConnector')
       .getByText('core')
       .click({ force: true })
@@ -256,14 +320,8 @@ describe('PipelineNewPage', () => {
   });
 
   it('connects Jdbc source -> Topic -> Hdfs sink together', () => {
-    cy.server();
-    cy.route('PUT', '/api/pipelines/*').as('putPipeline');
-    cy.route('GET', '/api/connectors/*').as('getConnector');
-
     cy.getByTestId('toolbar-sinks')
       .click()
-      .getByText('Add a new sink connector')
-      .should('be.exist')
       .getByText(CONNECTOR_TYPES.hdfsSink)
       .click()
       .getByText('Add')
@@ -278,8 +336,6 @@ describe('PipelineNewPage', () => {
       .wait('@putPipeline')
       .getByTestId('toolbar-sources')
       .click()
-      .getByText('Add a new source connector')
-      .should('be.exist')
       .getByText(CONNECTOR_TYPES.jdbcSource)
       .click()
       .getByText('Add')
@@ -303,8 +359,6 @@ describe('PipelineNewPage', () => {
     cy.getByText('HDFSSink')
       .click({ force: true })
       .wait('@getConnector')
-      .getByText('HDFS sink connector')
-      .should('have.length', '1')
       .getByText('core')
       .click()
       .getByText('Please select...')
@@ -319,8 +373,6 @@ describe('PipelineNewPage', () => {
     cy.getByText('JDBCSourceConnector')
       .click({ force: true })
       .wait('@getConnector')
-      .getByText('JDBC source connector')
-      .should('have.length', '1')
       .getByText('core')
       .click()
       .getByText('Please select...')

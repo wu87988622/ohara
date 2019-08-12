@@ -121,7 +121,7 @@ const PipelineGraph = props => {
   }, [props, props.graph]);
 
   return (
-    <Wrapper>
+    <Wrapper data-testid="pipeline-graph">
       <H5Wrapper>Pipeline graph</H5Wrapper>
       <Svg className="pipeline-graph">
         <g />

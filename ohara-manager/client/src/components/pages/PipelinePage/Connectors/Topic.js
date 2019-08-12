@@ -17,7 +17,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import toastr from 'toastr';
-import { get, isEmpty, some, includes } from 'lodash';
+import { get, isEmpty } from 'lodash';
 
 import * as pipelineApi from 'api/pipelineApi';
 import * as MESSAGES from 'constants/messages';
@@ -78,30 +78,28 @@ class Topic extends React.Component {
   };
 
   deleteTopic = async () => {
-    const { history, pipeline, graph, refreshGraph } = this.props;
+    const { history, pipeline, refreshGraph } = this.props;
+    const { name: pipelineName, flows } = pipeline;
 
-    if (this.hasConnection(graph, this.topicName)) {
+    if (this.hasConnection(flows, this.topicName)) {
       toastr.error(MESSAGES.CANNOT_DELETE_TOPIC_ERROR);
       return;
     }
-
-    const { name: pipelineName, flows } = pipeline;
 
     const updatedFlows = flows.filter(
       flow => flow.from.name !== this.topicName,
     );
 
-    const params = {
-      name: pipelineName,
-      flows: updatedFlows,
-    };
-
     const res = await pipelineApi.updatePipeline({
       name: pipelineName,
-      params,
+      params: {
+        name: pipelineName,
+        flows: updatedFlows,
+      },
     });
 
     const isSuccess = get(res, 'data.isSuccess', false);
+
     if (isSuccess) {
       const {
         topic: { name: topicName },
@@ -112,11 +110,21 @@ class Topic extends React.Component {
     }
   };
 
-  hasConnection = (graph, topicName) =>
-    some(graph, ({ name, to }) => {
-      if (name === topicName && !isEmpty(to)) return true;
-      if (includes(to, topicName)) return true;
+  hasConnection = (flows, topicName) => {
+    const hasToConnections = flows.some(flow => {
+      if (flow.from.name === topicName) {
+        return !isEmpty(flow.to);
+      }
+
+      return false;
     });
+
+    const hasFromConnections = flows.some(flow => {
+      return flow.to.some(t => t.name === topicName);
+    });
+
+    return hasFromConnections || hasToConnections;
+  };
 
   render() {
     const { topic, isLoading } = this.state;

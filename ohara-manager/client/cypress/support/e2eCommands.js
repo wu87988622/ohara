@@ -116,7 +116,7 @@ Cypress.Commands.add('createTopic', () => {
       numberOfReplications: 1,
       numberOfPartitions: 1,
       brokerClusterName,
-    }).then(({ body }) => body); // we'll need the returned data later on
+    }).then(({ body }) => body);
   });
 
   cy.request('PUT', `/api/topics/${topicName}/start`);
