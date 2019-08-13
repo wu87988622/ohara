@@ -544,7 +544,7 @@ object WorkerCollie {
   private[agent] def toMap(jarInfos: Seq[FileInfo]): Map[String, String] = if (jarInfos.isEmpty) Map.empty
   else
     Map(
-      WorkerCollie.JAR_URLS_KEY -> jarInfos.map(_.url.toString).mkString(","),
+      WorkerCollie.JAR_URLS_KEY -> jarInfos.map(_.url.toURI.toASCIIString).mkString(","),
       WorkerCollie.JAR_INFOS_KEY -> WorkerCollie.toString(jarInfos),
     )
 

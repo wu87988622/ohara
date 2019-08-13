@@ -22,7 +22,7 @@ import com.island.ohara.common.data.Serializer;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.BrokerClient;
 import com.island.ohara.kafka.Producer;
-import com.island.ohara.streams.config.StreamDefinitions.DefaultConfigs;
+import com.island.ohara.streams.config.StreamDefinitions;
 import com.island.ohara.streams.examples.PageViewRegionExample;
 import com.island.ohara.testing.WithBroker;
 import java.util.HashMap;
@@ -113,10 +113,10 @@ public class TestPageViewRegionExample extends WithBroker {
 
     // prepare ohara environment
     Map<String, String> settings = new HashMap<>();
-    settings.putIfAbsent(DefaultConfigs.BROKER_DEFINITION.key(), client.connectionProps());
-    settings.putIfAbsent(DefaultConfigs.NAME_DEFINITION.key(), appId);
-    settings.putIfAbsent(DefaultConfigs.FROM_TOPICS_DEFINITION.key(), fromTopic);
-    settings.putIfAbsent(DefaultConfigs.TO_TOPICS_DEFINITION.key(), toTopic);
+    settings.putIfAbsent(StreamDefinitions.BROKER_DEFINITION.key(), client.connectionProps());
+    settings.putIfAbsent(StreamDefinitions.NAME_DEFINITION.key(), appId);
+    settings.putIfAbsent(StreamDefinitions.FROM_TOPICS_DEFINITION.key(), fromTopic);
+    settings.putIfAbsent(StreamDefinitions.TO_TOPICS_DEFINITION.key(), toTopic);
     settings.putIfAbsent("joinTopic", joinTableTopic);
     StreamTestUtils.setOharaEnv(settings);
 

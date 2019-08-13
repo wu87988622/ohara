@@ -49,11 +49,10 @@ public class TestWordCountExample extends WithBroker {
 
     // prepare ohara environment
     Map<String, String> settings = new HashMap<>();
-    settings.putIfAbsent(
-        StreamDefinitions.DefaultConfigs.BROKER_DEFINITION.key(), client.connectionProps());
-    settings.putIfAbsent(StreamDefinitions.DefaultConfigs.NAME_DEFINITION.key(), methodName());
-    settings.putIfAbsent(StreamDefinitions.DefaultConfigs.FROM_TOPICS_DEFINITION.key(), fromTopic);
-    settings.putIfAbsent(StreamDefinitions.DefaultConfigs.TO_TOPICS_DEFINITION.key(), toTopic);
+    settings.putIfAbsent(StreamDefinitions.BROKER_DEFINITION.key(), client.connectionProps());
+    settings.putIfAbsent(StreamDefinitions.NAME_DEFINITION.key(), methodName());
+    settings.putIfAbsent(StreamDefinitions.FROM_TOPICS_DEFINITION.key(), fromTopic);
+    settings.putIfAbsent(StreamDefinitions.TO_TOPICS_DEFINITION.key(), toTopic);
     StreamTestUtils.setOharaEnv(settings);
     StreamTestUtils.createTopic(client, fromTopic, partitions, replications);
     StreamTestUtils.createTopic(client, toTopic, partitions, replications);

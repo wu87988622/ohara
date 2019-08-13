@@ -77,20 +77,15 @@ public class LaunchImpl {
 
                   OStream<Row> ostream =
                       OStream.builder()
-                          .appid(
-                              streamDefinitions.get(
-                                  StreamDefinitions.DefaultConfigs.NAME_DEFINITION.key()))
+                          .appid(streamDefinitions.get(StreamDefinitions.NAME_DEFINITION.key()))
                           .bootstrapServers(
-                              streamDefinitions.get(
-                                  StreamDefinitions.DefaultConfigs.BROKER_DEFINITION.key()))
+                              streamDefinitions.get(StreamDefinitions.BROKER_DEFINITION.key()))
                           .fromTopicWith(
-                              streamDefinitions.get(
-                                  StreamDefinitions.DefaultConfigs.FROM_TOPICS_DEFINITION.key()),
+                              streamDefinitions.get(StreamDefinitions.FROM_TOPICS_DEFINITION.key()),
                               Serdes.ROW,
                               Serdes.BYTES)
                           .toTopicWith(
-                              streamDefinitions.get(
-                                  StreamDefinitions.DefaultConfigs.TO_TOPICS_DEFINITION.key()),
+                              streamDefinitions.get(StreamDefinitions.TO_TOPICS_DEFINITION.key()),
                               Serdes.ROW,
                               Serdes.BYTES)
                           .build();
