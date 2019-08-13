@@ -14,8 +14,6 @@
 .. limitations under the License.
 ..
 
-.. OharaStream documentation master file
-
 .. image:: images/ohara-logo.png
    :width: 150pt
    :align: right
@@ -23,7 +21,7 @@
 Documentation
 =============
 
-OharaStream is open to users, developers and man living in earth. Hence, we prepare a bunch of docs to help you to
+Ohara is open to users, developers and man living in earth. Hence, we prepare a bunch of docs to help you to
 understand ohara comprehensively but quickly.
 
 
