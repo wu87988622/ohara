@@ -256,7 +256,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     val jar = new File(CommonUtils.path(System.getProperty("user.dir"), "build", "libs", "ohara-streamapp.jar"))
 
     // jar should be parse-able
-    val definition = result(configurator.clusterCollie.streamCollie.definitions(jar.toURI.toURL))
+    val definition = result(configurator.clusterCollie.streamCollie.loadDefinition(jar.toURI.toURL))
     definition.isDefined shouldBe true
     definition.get.className shouldBe "com.island.ohara.it.streamapp.DumbStreamApp"
 

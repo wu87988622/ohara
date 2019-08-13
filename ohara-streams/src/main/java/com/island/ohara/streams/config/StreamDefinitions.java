@@ -48,14 +48,186 @@ public final class StreamDefinitions implements JsonObject {
 
   static final String CORE_GROUP = "core";
 
-  private Map<String, SettingDef> configs;
+  /** This is the default configurations we will load into {@code StreamDefinitions}. */
+  private static final AtomicInteger ORDER_COUNTER = new AtomicInteger(0);
 
-  private StreamDefinitions() {}
+  public static final SettingDef BROKER_DEFINITION =
+      SettingDef.builder()
+          .key("servers")
+          .group(CORE_GROUP)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
+          .displayName("Broker list")
+          .documentation("The broker list of current workspace")
+          .valueType(Type.STRING)
+          .internal()
+          .build();
 
-  private StreamDefinitions(Map<String, SettingDef> configs) {
-    // sort the configs
-    this.configs = new TreeMap<>(configs);
-  }
+  public static final SettingDef IMAGE_NAME_DEFINITION =
+      SettingDef.builder()
+          .key("imageName")
+          .group(CORE_GROUP)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
+          .displayName("Image name")
+          .documentation("The image name of this streamApp running with")
+          .valueType(Type.STRING)
+          .optional()
+          .build();
+
+  public static final SettingDef NAME_DEFINITION =
+      SettingDef.builder()
+          .key("name")
+          .group(CORE_GROUP)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
+          .displayName("StreamApp name")
+          .documentation("The unique name of this streamApp")
+          .valueType(Type.STRING)
+          .optional()
+          .build();
+
+  public static final SettingDef GROUP_DEFINITION =
+      SettingDef.builder()
+          .key("group")
+          .group(CORE_GROUP)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
+          .displayName("StreamApp group")
+          .internal()
+          .documentation("The group name of this streamApp")
+          .valueType(Type.STRING)
+          .build();
+
+  public static final SettingDef JAR_KEY_DEFINITION =
+      SettingDef.builder()
+          .key("jarKey")
+          .group(CORE_GROUP)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
+          .displayName("Jar primary key")
+          .documentation("The jar key of this streamApp using")
+          .valueType(Type.JAR_KEY)
+          .build();
+
+  /** this field is used to store whole info for a jar file */
+  public static final SettingDef JAR_INFO_DEFINITION =
+      SettingDef.builder()
+          .key("jarInfo")
+          .group(CORE_GROUP)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
+          .displayName("Jar Info")
+          .documentation("The jar info of this streamApp using")
+          .valueType(Type.STRING)
+          .internal()
+          .build();
+
+  public static final SettingDef FROM_TOPICS_DEFINITION =
+      SettingDef.builder()
+          .key("from")
+          .group(CORE_GROUP)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
+          .reference(SettingDef.Reference.TOPIC)
+          .displayName("From topic of data consuming from")
+          .documentation("The topic name of this streamApp should consume from")
+          .valueType(Type.STRING)
+          .build();
+
+  public static final SettingDef TO_TOPICS_DEFINITION =
+      SettingDef.builder()
+          .key("to")
+          .group(CORE_GROUP)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
+          .reference(SettingDef.Reference.TOPIC)
+          .displayName("To topic of data produce to")
+          .documentation("The topic name of this streamApp should produce to")
+          .valueType(Type.STRING)
+          .build();
+
+  public static final SettingDef JMX_PORT_DEFINITION =
+      SettingDef.builder()
+          .key("jmxPort")
+          .group(CORE_GROUP)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
+          .displayName("JMX export port")
+          .documentation("The port of this streamApp using to export jmx metrics")
+          .valueType(Type.PORT)
+          .optional()
+          .build();
+
+  public static final SettingDef INSTANCES_DEFINITION =
+      SettingDef.builder()
+          .key("instances")
+          .group(CORE_GROUP)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
+          .displayName("Instances")
+          .documentation("The running container number of this streamApp")
+          .valueType(Type.INT)
+          .build();
+
+  public static final SettingDef NODE_NAMES_DEFINITION =
+      SettingDef.builder()
+          .key("nodeNames")
+          .group(CORE_GROUP)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
+          .displayName("Node name list")
+          .documentation("The used node name list of this streamApp")
+          .valueType(Type.ARRAY)
+          .build();
+
+  public static final SettingDef EXACTLY_ONCE_DEFINITION =
+      SettingDef.builder()
+          .key("exactlyOnce")
+          .group(CORE_GROUP)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
+          .displayName("Enable exactly once")
+          .documentation("Enable this streamApp to process each record exactly once")
+          .readonly()
+          .valueType(Type.BOOLEAN)
+          .optional("false")
+          .build();
+
+  public static final SettingDef VERSION_DEFINITION =
+      SettingDef.builder()
+          .key("version")
+          .group(CORE_GROUP)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
+          .displayName("Version")
+          .documentation("Version of streamApp")
+          .readonly()
+          .valueType(Type.STRING)
+          .optional("unknown")
+          .build();
+
+  public static final SettingDef REVISION_DEFINITION =
+      SettingDef.builder()
+          .key("revision")
+          .group(CORE_GROUP)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
+          .displayName("Revision")
+          .readonly()
+          .documentation("Revision of streamApp")
+          .valueType(Type.STRING)
+          .optional("unknown")
+          .build();
+
+  public static final SettingDef AUTHOR_DEFINITION =
+      SettingDef.builder()
+          .key("author")
+          .group(CORE_GROUP)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
+          .displayName("Author")
+          .readonly()
+          .documentation("Author of streamApp")
+          .valueType(Type.STRING)
+          .optional("unknown")
+          .build();
+
+  public static final SettingDef TAGS_DEFINITION =
+      SettingDef.builder()
+          .key("tags")
+          .group(CORE_GROUP)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
+          .displayName("Tags")
+          .documentation("Tags of streamApp")
+          .valueType(Type.TAGS)
+          .optional()
+          .build();
 
   /**
    * create default configurations
@@ -63,32 +235,40 @@ public final class StreamDefinitions implements JsonObject {
    * @return StreamDefinitions object
    */
   public static StreamDefinitions create() {
-    return new StreamDefinitions(getDefault());
+    return new StreamDefinitions(DEFAULT);
   }
 
   /**
    * Load configs from default definitions.
    *
-   * @return map of configs with format : <b>(SettingDef.key, SettingDef)</b>
-   * @see DefaultConfigs
+   * <p>This field is associated to a immutable map.
    */
-  private static Map<String, SettingDef> getDefault() {
-    return new TreeMap<>(
-        Stream.of(
-                DefaultConfigs.BROKER_DEFINITION,
-                DefaultConfigs.IMAGE_NAME_DEFINITION,
-                DefaultConfigs.NAME_DEFINITION,
-                DefaultConfigs.GROUP_DEFINITION,
-                DefaultConfigs.FROM_TOPICS_DEFINITION,
-                DefaultConfigs.TO_TOPICS_DEFINITION,
-                DefaultConfigs.JMX_PORT_DEFINITION,
-                DefaultConfigs.INSTANCES_DEFINITION,
-                DefaultConfigs.NODE_NAMES_DEFINITION,
-                DefaultConfigs.VERSION_DEFINITION,
-                DefaultConfigs.REVISION_DEFINITION,
-                DefaultConfigs.AUTHOR_DEFINITION,
-                DefaultConfigs.TAGS_DEFINITION)
-            .collect(Collectors.toMap(SettingDef::key, Function.identity())));
+  public static final Map<String, SettingDef> DEFAULT =
+      Stream.of(
+              StreamDefinitions.BROKER_DEFINITION,
+              StreamDefinitions.IMAGE_NAME_DEFINITION,
+              StreamDefinitions.NAME_DEFINITION,
+              StreamDefinitions.GROUP_DEFINITION,
+              StreamDefinitions.FROM_TOPICS_DEFINITION,
+              StreamDefinitions.TO_TOPICS_DEFINITION,
+              StreamDefinitions.JMX_PORT_DEFINITION,
+              StreamDefinitions.INSTANCES_DEFINITION,
+              StreamDefinitions.NODE_NAMES_DEFINITION,
+              StreamDefinitions.VERSION_DEFINITION,
+              StreamDefinitions.REVISION_DEFINITION,
+              StreamDefinitions.AUTHOR_DEFINITION,
+              StreamDefinitions.TAGS_DEFINITION,
+              StreamDefinitions.JAR_KEY_DEFINITION,
+              StreamDefinitions.JAR_INFO_DEFINITION)
+          .collect(Collectors.toMap(SettingDef::key, Function.identity()));
+
+  private Map<String, SettingDef> configs;
+
+  private StreamDefinitions() {}
+
+  private StreamDefinitions(Map<String, SettingDef> configs) {
+    // sort the configs
+    this.configs = new TreeMap<>(configs);
   }
 
   /**
@@ -152,178 +332,6 @@ public final class StreamDefinitions implements JsonObject {
   @JsonGetter(CONFIGS_FIELD_NAME)
   public List<SettingDef> values() {
     return new ArrayList<>(configs.values());
-  }
-
-  /** This is the default configurations we will load into {@code StreamDefinitions}. */
-  public static final class DefaultConfigs {
-    private static final AtomicInteger ORDER_COUNTER = new AtomicInteger(0);
-
-    public static final SettingDef BROKER_DEFINITION =
-        SettingDef.builder()
-            .key("servers")
-            .group(CORE_GROUP)
-            .orderInGroup(ORDER_COUNTER.getAndIncrement())
-            .displayName("Broker list")
-            .readonly()
-            .documentation("The broker list of current workspace")
-            .valueType(Type.ARRAY)
-            .build();
-
-    public static final SettingDef IMAGE_NAME_DEFINITION =
-        SettingDef.builder()
-            .key("imageName")
-            .group(CORE_GROUP)
-            .orderInGroup(ORDER_COUNTER.getAndIncrement())
-            .displayName("Image name")
-            .readonly()
-            .documentation("The image name of this streamApp running with")
-            .valueType(Type.STRING)
-            .build();
-
-    public static final SettingDef NAME_DEFINITION =
-        SettingDef.builder()
-            .key("name")
-            .group(CORE_GROUP)
-            .orderInGroup(ORDER_COUNTER.getAndIncrement())
-            .displayName("StreamApp name")
-            .readonly()
-            .documentation("The unique name of this streamApp")
-            .valueType(Type.STRING)
-            .build();
-
-    public static final SettingDef GROUP_DEFINITION =
-        SettingDef.builder()
-            .key("group")
-            .group(CORE_GROUP)
-            .orderInGroup(ORDER_COUNTER.getAndIncrement())
-            .displayName("StreamApp group")
-            .readonly()
-            .documentation("The group name of this streamApp")
-            .valueType(Type.STRING)
-            .build();
-
-    public static final SettingDef JAR_KEY_DEFINITION =
-        SettingDef.builder()
-            .key("jarKey")
-            .group(CORE_GROUP)
-            .orderInGroup(ORDER_COUNTER.getAndIncrement())
-            .displayName("Jar primary key")
-            .readonly()
-            .documentation("The jar key of this streamApp using")
-            .valueType(Type.JAR_KEY)
-            .build();
-
-    public static final SettingDef FROM_TOPICS_DEFINITION =
-        SettingDef.builder()
-            .key("from")
-            .group(CORE_GROUP)
-            .orderInGroup(ORDER_COUNTER.getAndIncrement())
-            .reference(SettingDef.Reference.TOPIC)
-            .displayName("From topic of data consuming from")
-            .documentation("The topic name of this streamApp should consume from")
-            .valueType(Type.STRING)
-            .build();
-
-    public static final SettingDef TO_TOPICS_DEFINITION =
-        SettingDef.builder()
-            .key("to")
-            .group(CORE_GROUP)
-            .orderInGroup(ORDER_COUNTER.getAndIncrement())
-            .reference(SettingDef.Reference.TOPIC)
-            .displayName("To topic of data produce to")
-            .documentation("The topic name of this streamApp should produce to")
-            .valueType(Type.STRING)
-            .build();
-
-    public static final SettingDef JMX_PORT_DEFINITION =
-        SettingDef.builder()
-            .key("jmxPort")
-            .group(CORE_GROUP)
-            .orderInGroup(ORDER_COUNTER.getAndIncrement())
-            .displayName("JMX export port")
-            .readonly()
-            .documentation("The port of this streamApp using to export jmx metrics")
-            .valueType(Type.PORT)
-            .build();
-
-    public static final SettingDef INSTANCES_DEFINITION =
-        SettingDef.builder()
-            .key("instances")
-            .group(CORE_GROUP)
-            .orderInGroup(ORDER_COUNTER.getAndIncrement())
-            .displayName("Instances")
-            .documentation("The running container number of this streamApp")
-            .valueType(Type.INT)
-            .build();
-
-    public static final SettingDef NODE_NAMES_DEFINITION =
-        SettingDef.builder()
-            .key("nodeNames")
-            .group(CORE_GROUP)
-            .orderInGroup(ORDER_COUNTER.getAndIncrement())
-            .displayName("Node name list")
-            .documentation("The used node name list of this streamApp")
-            .valueType(Type.ARRAY)
-            .build();
-
-    public static final SettingDef EXACTLY_ONCE_DEFINITION =
-        SettingDef.builder()
-            .key("exactlyOnce")
-            .group(CORE_GROUP)
-            .orderInGroup(ORDER_COUNTER.getAndIncrement())
-            .displayName("Enable exactly once")
-            .documentation("Enable this streamApp to process each record exactly once")
-            .readonly()
-            .valueType(Type.BOOLEAN)
-            .optional("false")
-            .build();
-
-    public static final SettingDef VERSION_DEFINITION =
-        SettingDef.builder()
-            .key("version")
-            .group(CORE_GROUP)
-            .orderInGroup(ORDER_COUNTER.getAndIncrement())
-            .displayName("Version")
-            .documentation("Version of streamApp")
-            .readonly()
-            .valueType(Type.STRING)
-            .optional("unknown")
-            .build();
-
-    public static final SettingDef REVISION_DEFINITION =
-        SettingDef.builder()
-            .key("revision")
-            .group(CORE_GROUP)
-            .orderInGroup(ORDER_COUNTER.getAndIncrement())
-            .displayName("Revision")
-            .readonly()
-            .documentation("Revision of streamApp")
-            .valueType(Type.STRING)
-            .optional("unknown")
-            .build();
-
-    public static final SettingDef AUTHOR_DEFINITION =
-        SettingDef.builder()
-            .key("author")
-            .group(CORE_GROUP)
-            .orderInGroup(ORDER_COUNTER.getAndIncrement())
-            .displayName("Author")
-            .readonly()
-            .documentation("Author of streamApp")
-            .valueType(Type.STRING)
-            .optional("unknown")
-            .build();
-
-    public static final SettingDef TAGS_DEFINITION =
-        SettingDef.builder()
-            .key("tags")
-            .group(CORE_GROUP)
-            .orderInGroup(ORDER_COUNTER.getAndIncrement())
-            .displayName("Tags")
-            .documentation("Tags of streamApp")
-            .valueType(Type.TAGS)
-            .optional()
-            .build();
   }
 
   /**

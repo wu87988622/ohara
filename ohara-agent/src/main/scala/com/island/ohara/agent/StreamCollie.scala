@@ -16,11 +16,12 @@
 
 package com.island.ohara.agent
 
-import java.net.{URI, URL}
+import java.net.URL
 import java.util.Objects
 
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
+import com.island.ohara.client.configurator.v0.FileInfoApi.{FILE_INFO_JSON_FORMAT, FileInfo}
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
@@ -31,11 +32,12 @@ import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
 import com.island.ohara.streams.config.StreamDefinitions
-import com.island.ohara.streams.config.StreamDefinitions.DefaultConfigs
 import com.typesafe.scalalogging.Logger
-import spray.json.{JsArray, JsNumber, JsObject, JsString}
+import spray.json.DefaultJsonProtocol._
+import spray.json._
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -46,7 +48,7 @@ trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator
   private[this] val LOG = Logger(classOf[StreamCollie])
 
   override def creator: StreamCollie.ClusterCreator =
-    (clusterName, nodeNames, imageName, jarUrl, jmxPort, settings, executionContext) => {
+    (clusterName, nodeNames, imageName, jarInfo, jmxPort, _, _, settings, executionContext) => {
       implicit val exec: ExecutionContext = executionContext
       clusters().flatMap(clusters => {
         if (clusters.keys.filter(_.isInstanceOf[StreamClusterInfo]).exists(_.name == clusterName))
@@ -57,13 +59,11 @@ trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator
             .map(_.map(node => node -> ContainerCollie.format(prefixKey, clusterName, serviceName)).toMap)
             .flatMap {
               nodes =>
-                def urlToHost(url: String): String = new URI(url).getHost
-
                 val route: Map[String, String] = nodes.keys.map { node =>
                   node.hostname -> CommonUtils.address(node.hostname)
                 }.toMap +
                   // make sure the streamApp can connect to configurator
-                  (urlToHost(jarUrl.toString) -> CommonUtils.address(urlToHost(jarUrl.toString)))
+                  (jarInfo.url.getHost -> CommonUtils.address(jarInfo.url.getHost))
                 // ssh connection is slow so we submit request by multi-thread
                 Future
                   .sequence(nodes.map {
@@ -88,35 +88,38 @@ trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator
                             )
                           )
                         ),
-                        environments = settings,
+                        environments = settings.map {
+                          case (k, v) =>
+                            k -> (v match {
+                              case JsString(value) => value
+                              // TODO: discard the js array? by chia
+                              case JsArray(arr) =>
+                                arr.map(_.convertTo[String]).mkString(",")
+                              case _ => v.toString()
+                            })
+                        }
+                        // we convert all settings to specific string in order to fetch all settings from
+                        // container env quickly. Also, the specific string enable us to pick up the "true" settings
+                        // from envs since there are many system-defined settings in container envs.
+                          ++ toEnvString(settings),
                         // we should set the hostname to container name in order to avoid duplicate name with other containers
                         hostname = containerName
                       )
-                      doCreator(executionContext, containerName, containerInfo, node, route, jmxPort, jarUrl).map(_ =>
+                      doCreator(executionContext, containerName, containerInfo, node, route, jmxPort, jarInfo).map(_ =>
                         Some(containerInfo))
                   })
                   .map(_.flatten.toSeq)
+                  .flatMap(cs => loadDefinition(jarInfo.url).map(definition => cs -> definition))
                   .map {
-                    successfulContainers =>
+                    case (successfulContainers, definition) =>
                       if (successfulContainers.isEmpty)
                         throw new IllegalArgumentException(s"failed to create $clusterName on $serviceName")
-                      val jarKey = StreamCollie.urlToDataKey(jarUrl.toString)
                       val clusterInfo = StreamClusterInfo(
-                        settings = Map(
-                          DefaultConfigs.NAME_DEFINITION.key() -> JsString(clusterName),
-                          DefaultConfigs.IMAGE_NAME_DEFINITION.key() -> JsString(imageName),
-                          DefaultConfigs.INSTANCES_DEFINITION.key() -> JsNumber(successfulContainers.size),
-                          DefaultConfigs.JAR_KEY_DEFINITION.key() -> JsString(ObjectKey.toJsonString(jarKey)),
-                          DefaultConfigs.FROM_TOPICS_DEFINITION.key() -> JsArray(
-                            JsString(settings(DefaultConfigs.FROM_TOPICS_DEFINITION.key()))
-                          ),
-                          DefaultConfigs.TO_TOPICS_DEFINITION.key() -> JsArray(
-                            JsString(settings(DefaultConfigs.TO_TOPICS_DEFINITION.key()))
-                          ),
-                          DefaultConfigs.JMX_PORT_DEFINITION.key() -> JsNumber(jmxPort),
-                        ),
-                        // we don't care the runtime definitions; it's saved to store already
-                        definition = None,
+                        // the other arguments (clusterName, imageName and so on) are extracted from settings so
+                        // we don't need to add them back to settings.
+                        settings = settings,
+                        // TODO: cluster info
+                        definition = definition,
                         nodeNames = successfulContainers.map(_.nodeName).toSet,
                         deadNodes = Set.empty,
                         metrics = Metrics(Seq.empty),
@@ -153,48 +156,34 @@ trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator
     * @return stream definition
     */
   //TODO : this workaround should be removed and use a new API instead in #2191...by Sam
-  def definitions(jarUrl: URL): Future[Option[Definition]] =
-    Future.successful {
+  def loadDefinition(jarUrl: URL)(implicit executionContext: ExecutionContext): Future[Option[Definition]] =
+    Future {
       import sys.process._
       val classpath = System.getProperty("java.class.path")
       val command =
-        s"""java -cp "$classpath" ${StreamCollie.MAIN_ENTRY} ${DefaultConfigs.JAR_KEY_DEFINITION.key()}=${StreamCollie
-          .urlEncode(jarUrl)} ${StreamCollie.CONFIG_KEY}"""
-      try {
-        val result = command.!!
-        Some(Definition(result.split("=")(0), StreamDefinitions.ofJson(result.split("=")(1)).values().asScala))
-      } catch {
-        case e: RuntimeException =>
-          // We cannot parse the provided jar, return nothing and log it
-          LOG.warn(s"the provided jar url: [$jarUrl] could not be parsed, skipped it :", e)
-          None
-      }
+        s"""java -cp "$classpath" ${StreamCollie.MAIN_ENTRY} ${StreamDefinitions.JAR_KEY_DEFINITION
+          .key()}=${jarUrl.toString} ${StreamCollie.CONFIG_KEY}"""
+      val result = command.!!
+      val className = result.split("=")(0)
+      Some(Definition(className, StreamDefinitions.ofJson(result.split("=")(1)).values().asScala))
+    }.recover {
+      case e: RuntimeException =>
+        // We cannot parse the provided jar, return nothing and log it
+        LOG.warn(s"the provided jar url: [$jarUrl] could not be parsed, return default settings only.", e)
+        None
     }
 
-  private[agent] def toStreamCluster(clusterName: String, containers: Seq[ContainerInfo]): Future[StreamClusterInfo] = {
+  private[agent] def toStreamCluster(clusterName: String, containers: Seq[ContainerInfo])(
+    implicit executionContext: ExecutionContext): Future[StreamClusterInfo] = {
     // get the first running container, or first non-running container if not found
     val first = containers.find(_.state == ContainerState.RUNNING.name).getOrElse(containers.head)
-    val jarKey = ObjectKey.toObjectKey(first.environments(DefaultConfigs.JAR_KEY_DEFINITION.key()))
-    Future.successful(
+    val settings = toSettings(first.environments)
+    val jarInfo = FILE_INFO_JSON_FORMAT.read(settings(StreamDefinitions.JAR_INFO_DEFINITION.key()))
+    loadDefinition(jarInfo.url).map { definition =>
       StreamClusterInfo(
-        settings = Map(
-          DefaultConfigs.NAME_DEFINITION.key() -> JsString(clusterName),
-          DefaultConfigs.IMAGE_NAME_DEFINITION.key() -> JsString(first.imageName),
-          DefaultConfigs.INSTANCES_DEFINITION.key() -> JsNumber(containers.size),
-          DefaultConfigs.JAR_KEY_DEFINITION.key() -> JsObject(
-            com.island.ohara.client.configurator.v0.GROUP_KEY -> JsString(jarKey.group()),
-            com.island.ohara.client.configurator.v0.NAME_KEY -> JsString(jarKey.name())),
-          DefaultConfigs.FROM_TOPICS_DEFINITION.key() -> JsArray(
-            JsString(first.environments(DefaultConfigs.FROM_TOPICS_DEFINITION.key()))
-          ),
-          DefaultConfigs.TO_TOPICS_DEFINITION.key() -> JsArray(
-            JsString(first.environments(DefaultConfigs.TO_TOPICS_DEFINITION.key()))
-          ),
-          DefaultConfigs.JMX_PORT_DEFINITION.key() -> JsNumber(
-            first.environments(DefaultConfigs.JMX_PORT_DEFINITION.key()).toInt)
-        ),
+        settings = settings,
         // we don't care the runtime definitions; it's saved to store already
-        definition = None,
+        definition = definition,
         nodeNames = containers.map(_.nodeName).toSet,
         // Currently, docker and k8s has same naming rule for "Running",
         // it is ok that we use the containerState.RUNNING here.
@@ -210,7 +199,7 @@ trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator
         error = None,
         lastModified = CommonUtils.current()
       )
-    )
+    }
   }
 
   /**
@@ -237,7 +226,7 @@ trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator
                           node: Node,
                           route: Map[String, String],
                           jmxPort: Int,
-                          jarUrl: URL): Future[Unit]
+                          jarInfo: FileInfo): Future[Unit]
 
   protected def postCreateCluster(clusterInfo: ClusterInfo, successfulContainers: Seq[ContainerInfo]): Unit = {
     //Default do nothing
@@ -246,10 +235,8 @@ trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator
 
 object StreamCollie {
   trait ClusterCreator extends Collie.ClusterCreator[StreamClusterInfo] {
-    private[this] var jarUrl: URL = _
-    private[this] var jmxPort: Int = CommonUtils.availablePort()
-    private[this] var settings: Map[String, String] = Map.empty
-
+    private[this] var jarInfo: FileInfo = _
+    private[this] val settings: mutable.Map[String, JsValue] = mutable.Map[String, JsValue]()
     override protected def doCopy(clusterInfo: StreamClusterInfo): Unit = {
       // doCopy is used to add node for a running cluster.
       // Currently, StreamClusterInfo does not carry enough information to be copied and it is unsupported to add a node to a running streamapp cluster
@@ -258,48 +245,107 @@ object StreamCollie {
     }
 
     /**
+      * Stream collie overrides this method in order to put the same config to settings.
+      * @param clusterName cluster name
+      * @return this creator
+      */
+    override def clusterName(clusterName: String): ClusterCreator.this.type = {
+      super.clusterName(clusterName)
+      settings += StreamDefinitions.NAME_DEFINITION.key() -> JsString(clusterName)
+      this
+    }
+
+    /**
+      * Stream collie overrides this method in order to put the same config to settings.
+      * @param nodeNames nodes' name
+      * @return cluster description
+      */
+    override def nodeNames(nodeNames: Set[String]): ClusterCreator.this.type = {
+      super.nodeNames(nodeNames)
+      settings += StreamDefinitions.NODE_NAMES_DEFINITION.key() -> JsArray(nodeNames.map(JsString(_)).toVector)
+      this
+    }
+
+    /**
+      * Stream collie overrides this method in order to put the same config to settings.
+      * @param imageName image name
+      * @return this creator
+      */
+    override def imageName(imageName: String): ClusterCreator.this.type = {
+      super.imageName(imageName)
+      settings += StreamDefinitions.IMAGE_NAME_DEFINITION.key() -> JsString(imageName)
+      this
+    }
+
+    /**
       * set the jar url for the streamApp running
       *
-      * @param jarUrl jar url
+      * @param jarInfo jar info
       * @return this creator
       */
-    def jarUrl(jarUrl: URL): ClusterCreator = {
-      this.jarUrl = Objects.requireNonNull(jarUrl)
+    def jarInfo(jarInfo: FileInfo): ClusterCreator = {
+      this.jarInfo = Objects.requireNonNull(jarInfo)
+      import spray.json._
+      settings += StreamDefinitions.JAR_KEY_DEFINITION.key() -> ObjectKey.toJsonString(jarInfo.key).parseJson
+      settings += StreamDefinitions.JAR_INFO_DEFINITION.key() -> FILE_INFO_JSON_FORMAT.write(jarInfo)
       this
     }
 
     /**
-      * set the jmx port
+      * add a key-value data map for container
       *
-      * @param jmxPort jmx port
+      * @param key data key
+      * @param value data value
       * @return this creator
       */
-    @Optional("default is local random port")
-    def jmxPort(jmxPort: Int): ClusterCreator = {
-      this.jmxPort = CommonUtils.requireConnectionPort(jmxPort)
-      this
-    }
+    @Optional("default is empty map")
+    def setting(key: String, value: JsValue): ClusterCreator = settings(Map(key -> value))
 
     /**
-      * set the key-value data map for container
+      * add the key-value data map for container
       *
       * @param settings data settings
       * @return this creator
       */
     @Optional("default is empty map")
-    def settings(settings: Map[String, String]): ClusterCreator = {
-      this.settings = Objects.requireNonNull(settings)
+    def settings(settings: Map[String, JsValue]): ClusterCreator = {
+      this.settings ++= Objects.requireNonNull(settings)
       this
     }
 
+    /**
+      * get the value, which is mapped to input key, from settings. If the key is not associated, NoSuchElementException will
+      * be thrown.
+      * @param key key
+      * @param f marshalling function
+      * @tparam T type
+      * @return value
+      */
+    private[this] def get[T](key: String, f: JsValue => T): T =
+      settings.get(key).map(f).getOrElse(throw new NoSuchElementException(s"$key is required"))
+
     override def create(): Future[StreamClusterInfo] = doCreate(
-      CommonUtils.requireNonEmpty(clusterName),
-      CommonUtils.requireNonEmpty(nodeNames.asJava).asScala.toSet,
-      CommonUtils.requireNonEmpty(imageName),
-      Objects.requireNonNull(jarUrl),
-      CommonUtils.requireConnectionPort(jmxPort),
-      Objects.requireNonNull(settings),
-      Objects.requireNonNull(executionContext)
+      clusterName = get(StreamDefinitions.NAME_DEFINITION.key(), _.convertTo[String]),
+      nodeNames = get(StreamDefinitions.NODE_NAMES_DEFINITION.key(), _.convertTo[Vector[String]].toSet),
+      imageName = get(StreamDefinitions.IMAGE_NAME_DEFINITION.key(), _.convertTo[String]),
+      jarInfo = Objects.requireNonNull(jarInfo),
+      jmxPort = get(StreamDefinitions.JMX_PORT_DEFINITION.key(), _.convertTo[Int]),
+      fromTopics = CommonUtils
+        .requireNonEmpty(
+          get(StreamDefinitions.FROM_TOPICS_DEFINITION.key(), _.convertTo[Set[String]]).asJava,
+          () => s"${StreamDefinitions.FROM_TOPICS_DEFINITION.key()} can't be associated to empty array"
+        )
+        .asScala
+        .toSet,
+      toTopics = CommonUtils
+        .requireNonEmpty(
+          get(StreamDefinitions.TO_TOPICS_DEFINITION.key(), _.convertTo[Set[String]]).asJava,
+          () => s"${StreamDefinitions.TO_TOPICS_DEFINITION.key()} can't be associated to empty array"
+        )
+        .asScala
+        .toSet,
+      settings = Objects.requireNonNull(settings.toMap),
+      executionContext = Objects.requireNonNull(executionContext)
     )
 
     override protected def checkClusterName(clusterName: String): String = {
@@ -310,16 +356,18 @@ object StreamCollie {
     protected def doCreate(clusterName: String,
                            nodeNames: Set[String],
                            imageName: String,
-                           jarUrl: URL,
+                           jarInfo: FileInfo,
                            jmxPort: Int,
-                           settings: Map[String, String],
+                           fromTopics: Set[String],
+                           toTopics: Set[String],
+                           settings: Map[String, JsValue],
                            executionContext: ExecutionContext): Future[StreamClusterInfo]
   }
 
   /**
     * the only entry for ohara streamApp
     */
-  private[agent] val MAIN_ENTRY = "com.island.ohara.streams.StreamApp"
+  val MAIN_ENTRY = "com.island.ohara.streams.StreamApp"
 
   /**
     * the flag to get/set streamApp configs for container
@@ -355,19 +403,4 @@ object StreamCollie {
     val group = jarUrl.split("\\/").init.last
     ObjectKey.of(group, name)
   }
-
-  /**
-    * A convenience way to convert an url to true "encode" string and could pass it to server property.
-    * see https://stackoverflow.com/a/4571518 for more details
-    * @param jarUrl the url
-    * @return encode string
-    */
-  private[agent] def urlEncode(jarUrl: URL): String =
-    new URI(jarUrl.getProtocol,
-            jarUrl.getUserInfo,
-            jarUrl.getHost,
-            jarUrl.getPort,
-            jarUrl.getPath,
-            jarUrl.getQuery,
-            jarUrl.getRef).toASCIIString
 }

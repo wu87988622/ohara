@@ -16,14 +16,13 @@
 
 package com.island.ohara.agent.ssh
 
-import java.net.URL
-
 import com.island.ohara.agent.{ClusterCache, NodeCollie, StreamCollie}
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import com.island.ohara.streams.config.StreamDefinitions.DefaultConfigs
+import com.island.ohara.streams.config.StreamDefinitions
 
 import scala.concurrent.{ExecutionContext, Future}
 private class StreamCollieImpl(node: NodeCollie, dockerCache: DockerClientCache, clusterCache: ClusterCache)
@@ -36,7 +35,7 @@ private class StreamCollieImpl(node: NodeCollie, dockerCache: DockerClientCache,
                                    node: Node,
                                    route: Map[String, String],
                                    jmxPort: Int,
-                                   jarUrl: URL): Future[Unit] =
+                                   jarInfo: FileInfo): Future[Unit] =
     Future.successful(try {
       dockerCache.exec(
         node,
@@ -52,7 +51,7 @@ private class StreamCollieImpl(node: NodeCollie, dockerCache: DockerClientCache,
             " ",
             StreamCollie.formatJMXProperties(node.name, jmxPort).mkString(" "),
             StreamCollie.MAIN_ENTRY,
-            s"""${DefaultConfigs.JAR_KEY_DEFINITION.key()}=${StreamCollie.urlEncode(jarUrl)}"""
+            s"""${StreamDefinitions.JAR_KEY_DEFINITION.key()}="${jarInfo.url.toURI.toASCIIString}""""
           ))
           .create()
       )

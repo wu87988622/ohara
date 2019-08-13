@@ -22,9 +22,10 @@ import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
+import com.island.ohara.streams.config.StreamDefinitions
 import org.junit.{After, Test}
 import org.scalatest.Matchers
-import spray.json.{JsNumber, JsString}
+import spray.json.{JsArray, JsNumber, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -242,8 +243,8 @@ class TestStreamRoute extends SmallTest with Matchers {
     an[IllegalArgumentException] should be thrownBy result(accessStream.start(streamAppName))
 
     // run topics
-    topicApi.request.key(from).create().flatMap(info => topicApi.start(info.key))
-    topicApi.request.key(to).create().flatMap(info => topicApi.start(info.key))
+    result(topicApi.request.key(from).create().flatMap(info => topicApi.start(info.key)))
+    result(topicApi.request.key(to).create().flatMap(info => topicApi.start(info.key)))
 
     // after all required parameters are set, it is ok to run
     result(accessStream.start(streamAppName))
@@ -306,6 +307,40 @@ class TestStreamRoute extends SmallTest with Matchers {
     result(accessStream.request.name(streamDesc.name).from(Set.empty).update()).from shouldBe Set.empty
     // to topic should still be empty
     result(accessStream.get(streamDesc.name)).to shouldBe Set.empty
+  }
+
+  @Test
+  def testSettingDefault(): Unit = {
+    val file = CommonUtils.createTempJar("empty_")
+    val jar = result(accessJar.request.file(file).upload())
+    val key = CommonUtils.randomString()
+    val value = JsString(CommonUtils.randomString())
+    val streamDesc = result(accessStream.request.jarKey(ObjectKey.of(jar.group, jar.name)).setting(key, value).create())
+    // the url is not illegal
+    streamDesc.definition should not be None
+    streamDesc.settings(key) shouldBe value
+  }
+
+  @Test
+  def createStream(): Unit = {
+    val name = CommonUtils.randomString(5)
+    val file = CommonUtils.createTempJar("empty_")
+    val jar = result(accessJar.request.file(file).upload())
+    val key = CommonUtils.randomString()
+    val value = JsString(CommonUtils.randomString())
+    val streamDesc = result(
+      configurator.clusterCollie.streamCollie.creator
+        .jarInfo(jar)
+        .nodeName(CommonUtils.randomString(5))
+        .imageName(CommonUtils.randomString())
+        .clusterName(name)
+        .setting(key, value)
+        .setting(StreamDefinitions.JMX_PORT_DEFINITION.key(), JsNumber(123))
+        .setting(StreamDefinitions.FROM_TOPICS_DEFINITION.key(), JsArray(JsString("FROM")))
+        .setting(StreamDefinitions.TO_TOPICS_DEFINITION.key(), JsArray(JsString("TO")))
+        .create())
+    streamDesc.name shouldBe name
+    streamDesc.settings(key) shouldBe value
   }
 
   @After

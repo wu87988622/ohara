@@ -20,16 +20,15 @@ import java.net.URL
 
 import com.island.ohara.agent.{ClusterState, NodeCollie, StreamCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.{Definition, StreamApi}
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import com.island.ohara.common.setting.SettingDef
+import com.island.ohara.client.configurator.v0.{Definition, StreamApi}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
-import com.island.ohara.streams.config.StreamDefinitions.DefaultConfigs
-import spray.json.{JsArray, JsNumber, JsObject, JsString}
+import com.island.ohara.streams.config.StreamDefinitions
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
@@ -43,23 +42,12 @@ private[configurator] class FakeStreamCollie(node: NodeCollie)
     BeanChannel.local().counterMBeans().asScala
 
   override def creator: StreamCollie.ClusterCreator =
-    (clusterName, nodeNames, imageName, _, jmxPort, _, _) =>
+    (_, nodeNames, _, _, _, _, _, settings, _) =>
       Future.successful(
         addCluster(
           StreamApi.StreamClusterInfo(
-            settings = Map(
-              DefaultConfigs.NAME_DEFINITION.key() -> JsString(clusterName),
-              DefaultConfigs.IMAGE_NAME_DEFINITION.key() -> JsString(imageName),
-              DefaultConfigs.INSTANCES_DEFINITION.key() -> JsNumber(1),
-              DefaultConfigs.JAR_KEY_DEFINITION.key() -> JsObject(
-                com.island.ohara.client.configurator.v0.GROUP_KEY -> JsString("fgroup"),
-                com.island.ohara.client.configurator.v0.NAME_KEY -> JsString("fname")),
-              DefaultConfigs.FROM_TOPICS_DEFINITION.key() -> JsArray(JsString("bar")),
-              DefaultConfigs.TO_TOPICS_DEFINITION.key() -> JsArray(JsString("foo")),
-              DefaultConfigs.JMX_PORT_DEFINITION.key() -> JsNumber(jmxPort),
-              DefaultConfigs.TAGS_DEFINITION.key() -> JsObject(Map("bar" -> JsString("foo"), "he" -> JsNumber(1)))
-            ),
-            definition = Some(Definition("className", Seq(SettingDef.builder().key("key").group("group").build()))),
+            settings = settings,
+            definition = Some(Definition("fake_class", StreamDefinitions.DEFAULT.asScala.values.toSeq)),
             nodeNames = nodeNames,
             deadNodes = Set.empty,
             // In fake mode, we need to assign a state in creation for "GET" method to act like real case
@@ -86,10 +74,25 @@ private[configurator] class FakeStreamCollie(node: NodeCollie)
                                    node: Node,
                                    route: Map[String, String],
                                    jmxPort: Int,
-                                   jarUrl: URL): Future[Unit] =
-    throw new UnsupportedOperationException("stream collie doesn't support to doCreator function")
+                                   jarInfo: FileInfo): Future[Unit] = Future.unit
 
   override protected def nodeCollie: NodeCollie = node
 
   override protected def prefixKey: String = "fakestream"
+
+  /**
+    * in fake mode, we never return empty result or exception.
+    *
+    * @param jarUrl the custom streamApp jar url
+    * @param executionContext thread pool
+    * @return stream definition
+    */
+  override def loadDefinition(jarUrl: URL)(implicit executionContext: ExecutionContext): Future[Option[Definition]] =
+    super
+      .loadDefinition(jarUrl)
+      .recover {
+        case _: Throwable =>
+          Some(Definition("fake_class", StreamDefinitions.DEFAULT.asScala.values.toList)) // a serializable collection
+      }
+      .map(_.orElse(Some(Definition("fake_class", StreamDefinitions.DEFAULT.asScala.values.toList)))) // a serializable collection
 }

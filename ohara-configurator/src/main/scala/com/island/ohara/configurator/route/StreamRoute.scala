@@ -28,7 +28,7 @@ import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.file.FileStore
 import com.island.ohara.configurator.route.RouteUtils._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
-import com.island.ohara.streams.config.StreamDefinitions.DefaultConfigs
+import com.island.ohara.streams.config.StreamDefinitions
 import org.slf4j.LoggerFactory
 import spray.json.{JsNumber, JsObject, _}
 
@@ -76,7 +76,7 @@ private[configurator] object StreamRoute {
         .flatMap(
           url =>
             clusterCollie.streamCollie
-              .definitions(url)
+              .loadDefinition(url)
               .map(streamDefOption =>
                 StreamClusterInfo(
                   settings = req.settings,
@@ -187,20 +187,20 @@ private[configurator] object StreamRoute {
         StreamClusterInfo(
           settings = req.settings ++
             Map(
-              DefaultConfigs.NAME_DEFINITION.key() -> JsString(key.name),
-              DefaultConfigs.FROM_TOPICS_DEFINITION.key() -> JsArray(
+              StreamDefinitions.NAME_DEFINITION.key() -> JsString(key.name),
+              StreamDefinitions.FROM_TOPICS_DEFINITION.key() -> JsArray(
                 req.from.getOrElse(Set.empty).map(JsString(_)).toVector),
-              DefaultConfigs.TO_TOPICS_DEFINITION.key() -> JsArray(
+              StreamDefinitions.TO_TOPICS_DEFINITION.key() -> JsArray(
                 req.to.getOrElse(Set.empty).map(JsString(_)).toVector),
-              DefaultConfigs.JAR_KEY_DEFINITION.key() -> {
-                val jarKey = checkField(key, req.jarKey, DefaultConfigs.JAR_KEY_DEFINITION.key())
+              StreamDefinitions.JAR_KEY_DEFINITION.key() -> {
+                val jarKey = checkField(key, req.jarKey, StreamDefinitions.JAR_KEY_DEFINITION.key())
                 JsString(ObjectKey.toJsonString(jarKey))
               },
-              DefaultConfigs.IMAGE_NAME_DEFINITION.key() -> JsString(req.imageName.getOrElse(IMAGE_NAME_DEFAULT)),
-              DefaultConfigs.INSTANCES_DEFINITION.key() -> JsNumber(
+              StreamDefinitions.IMAGE_NAME_DEFINITION.key() -> JsString(req.imageName.getOrElse(IMAGE_NAME_DEFAULT)),
+              StreamDefinitions.INSTANCES_DEFINITION.key() -> JsNumber(
                 req.nodeNames.fold(checkField(key, req.instances, "instances"))(_.size)
               ),
-              DefaultConfigs.TAGS_DEFINITION.key() -> JsObject(req.tags.getOrElse(Map.empty))
+              StreamDefinitions.TAGS_DEFINITION.key() -> JsObject(req.tags.getOrElse(Map.empty))
             ),
           definition = None,
           nodeNames = req.nodeNames.getOrElse(Set.empty),
@@ -214,24 +214,24 @@ private[configurator] object StreamRoute {
         previous.copy(
           settings = previous.settings ++
             Map(
-              DefaultConfigs.IMAGE_NAME_DEFINITION.key() -> JsString(
+              StreamDefinitions.IMAGE_NAME_DEFINITION.key() -> JsString(
                 req.imageName.getOrElse(previous.imageName)
               ),
-              DefaultConfigs.INSTANCES_DEFINITION.key() -> JsNumber(
+              StreamDefinitions.INSTANCES_DEFINITION.key() -> JsNumber(
                 req.instances.getOrElse(previous.instances)
               ),
-              DefaultConfigs.FROM_TOPICS_DEFINITION.key() -> JsArray(
+              StreamDefinitions.FROM_TOPICS_DEFINITION.key() -> JsArray(
                 req.from.getOrElse(previous.from).map(JsString(_)).toVector
               ),
-              DefaultConfigs.TO_TOPICS_DEFINITION.key() -> JsArray(
+              StreamDefinitions.TO_TOPICS_DEFINITION.key() -> JsArray(
                 req.to.getOrElse(previous.to).map(JsString(_)).toVector
               ),
-              DefaultConfigs.JMX_PORT_DEFINITION.key() -> JsNumber(
+              StreamDefinitions.JMX_PORT_DEFINITION.key() -> JsNumber(
                 req.jmxPort.getOrElse(previous.jmxPort)
               ),
-              DefaultConfigs.JAR_KEY_DEFINITION.key() ->
+              StreamDefinitions.JAR_KEY_DEFINITION.key() ->
                 JsString(ObjectKey.toJsonString(req.jarKey.getOrElse(previous.jarKey))),
-              DefaultConfigs.TAGS_DEFINITION.key() -> JsObject(
+              StreamDefinitions.TAGS_DEFINITION.key() -> JsObject(
                 req.tags.getOrElse(previous.tags)
               )
             ),
@@ -284,7 +284,7 @@ private[configurator] object StreamRoute {
           }
           .flatMap {
             case (bkProps, topicInfos) =>
-              fileStore.fileInfo(data.jarKey).map(_.url).flatMap { url =>
+              fileStore.fileInfo(data.jarKey).flatMap { fileInfo =>
                 // check the require fields
                 assertParameters(data, topicInfos)
                 nodeCollie
@@ -304,25 +304,17 @@ private[configurator] object StreamRoute {
                       CommonUtils.requireNonEmpty(all.filter(n => data.nodeNames.contains(n.name)).asJava).asScala.toSet
                   }
                   .flatMap(nodes => {
-                    import DefaultJsonProtocol._
                     clusterCollie.streamCollie.creator
                       .clusterName(data.name)
                       .nodeNames(nodes.map(_.name))
                       .imageName(IMAGE_NAME_DEFAULT)
-                      .jarUrl(url)
-                      .jmxPort(data.settings(DefaultConfigs.JMX_PORT_DEFINITION.key()).convertTo[Int])
+                      .jarInfo(fileInfo)
                       // these settings will send to container environment
                       // we convert all value to string for convenient
-                      .settings(data.settings.map {
-                        case (k, v) =>
-                          k -> (v match {
-                            case JsString(value) => value
-                            case JsArray(arr) =>
-                              arr.map(_.convertTo[String]).mkString(",")
-                            case _ => v.toString()
-                          })
-                      } + (DefaultConfigs.BROKER_DEFINITION.key() -> bkProps)
-                        + (DefaultConfigs.EXACTLY_ONCE_DEFINITION.key() -> data.exactlyOnce.toString))
+                      .settings(data.settings)
+                      .setting(StreamDefinitions.BROKER_DEFINITION.key(), JsString(bkProps))
+                      // TODO: we should use boolean type ... by chia
+                      .setting(StreamDefinitions.EXACTLY_ONCE_DEFINITION.key(), JsString(data.exactlyOnce.toString))
                       .threadPool(executionContext)
                       .create()
                   })

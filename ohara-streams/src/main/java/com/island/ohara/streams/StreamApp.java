@@ -165,7 +165,9 @@ public abstract class StreamApp {
    */
   public static void main(String[] args) throws OharaException {
     Properties props = loadArgs(args);
-    String jarUrl = props.getProperty(StreamDefinitions.DefaultConfigs.JAR_KEY_DEFINITION.key());
+    // TODO: Reusing the variable to point to different behavior is very dangerous ... by chia
+    // https://github.com/oharastream/ohara/issues/2246
+    String jarUrl = props.getProperty(StreamDefinitions.JAR_KEY_DEFINITION.key());
     if (CommonUtils.isEmpty(jarUrl))
       throw new RuntimeException("It seems you are not running in Ohara Environment?");
     File jarFile = downloadJarByUrl(jarUrl);
