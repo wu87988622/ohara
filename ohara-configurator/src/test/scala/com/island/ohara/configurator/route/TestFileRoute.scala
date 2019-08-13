@@ -28,6 +28,8 @@ import org.scalatest.Matchers
 import spray.json.{JsNumber, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration.Duration
 class TestFileRoute extends SmallTest with Matchers {
 
   private[this] val configurator: Configurator = Configurator.builder.fake().build()
@@ -44,6 +46,7 @@ class TestFileRoute extends SmallTest with Matchers {
     f
   }
 
+  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration("20 seconds"))
   @Test
   def testUpload(): Unit = {
     // upload jar to random group
@@ -68,7 +71,7 @@ class TestFileRoute extends SmallTest with Matchers {
 
   @Test
   def testUploadOutOfLimitFile(): Unit = {
-    val bytes = new Array[Byte](RouteUtils.DEFAULT_FILE_SIZE_BYTES.toInt + 1)
+    val bytes = new Array[Byte](DEFAULT_FILE_SIZE_BYTES.toInt + 1)
     val f = tmpFile(bytes)
 
     an[IllegalArgumentException] should be thrownBy result(fileApi.request.file(f).upload())

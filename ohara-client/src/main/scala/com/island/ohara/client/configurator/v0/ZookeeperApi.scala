@@ -17,6 +17,7 @@
 package com.island.ohara.client.configurator.v0
 import java.util.Objects
 
+import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
@@ -103,7 +104,17 @@ object ZookeeperApi {
     override def group: String = GROUP_DEFAULT
     override def kind: String = ZOOKEEPER_SERVICE_NAME
     override def ports: Set[Int] = Set(clientPort, peerPort, electionPort)
-    override def clone(newNodeNames: Set[String]): ClusterInfo = this.copy(nodeNames = newNodeNames)
+    override def clone(newNodeNames: Set[String]): ZookeeperClusterInfo = this.copy(nodeNames = newNodeNames)
+
+    override def clone(state: Option[String], error: Option[String]): ZookeeperClusterInfo = this.copy(
+      state = state,
+      error = error
+    )
+
+    override def clone(metrics: Metrics): ZookeeperClusterInfo = this
+
+    // TODO: expose the metrics for zk
+    override def metrics: Metrics = Metrics(Seq.empty)
   }
 
   /**

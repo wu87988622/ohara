@@ -19,6 +19,7 @@ package com.island.ohara.client.configurator.v0
 import java.util.Objects
 
 import com.island.ohara.client.configurator.v0.FileInfoApi._
+import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
@@ -174,7 +175,17 @@ object WorkerApi {
 
     override def kind: String = WORKER_SERVICE_NAME
 
-    override def clone(newNodeNames: Set[String]): ClusterInfo = copy(nodeNames = newNodeNames)
+    override def clone(newNodeNames: Set[String]): WorkerClusterInfo = copy(nodeNames = newNodeNames)
+
+    override def clone(state: Option[String], error: Option[String]): WorkerClusterInfo = this.copy(
+      state = state,
+      error = error
+    )
+
+    override def clone(metrics: Metrics): WorkerClusterInfo = this
+
+    // TODO: expose the metrics for wk
+    override def metrics: Metrics = Metrics(Seq.empty)
   }
 
   /**

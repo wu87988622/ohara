@@ -29,7 +29,15 @@ import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.route.RouteUtils._
+import com.island.ohara.configurator.route.hook.{
+  HookBeforeDelete,
+  HookOfAction,
+  HookOfCreation,
+  HookOfGet,
+  HookOfGroup,
+  HookOfList,
+  HookOfUpdate
+}
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.island.ohara.kafka.connector.json.ConnectorDefUtils
 
@@ -227,7 +235,7 @@ private[configurator] object PipelineRoute {
             clusterCollie: ClusterCollie,
             executionContext: ExecutionContext,
             meterCache: MeterCache): server.Route =
-    RouteUtils.route[Creation, Update, Pipeline](
+    route[Creation, Update, Pipeline](
       root = PIPELINES_PREFIX_PATH,
       hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,

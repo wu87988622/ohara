@@ -28,6 +28,8 @@ import org.scalatest.Matchers
 import spray.json.{JsNumber, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration.Duration
 class TestConnectorRoute extends SmallTest with Matchers {
   private[this] val configurator = Configurator.builder.fake(1, 1).build()
 
@@ -36,6 +38,7 @@ class TestConnectorRoute extends SmallTest with Matchers {
 
   private[this] var defaultWk: WorkerClusterInfo = _
 
+  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration("20 seconds"))
   @Before
   def setup(): Unit = {
     defaultWk = result(configurator.clusterCollie.workerCollie.clusters().map(_.keys.headOption))

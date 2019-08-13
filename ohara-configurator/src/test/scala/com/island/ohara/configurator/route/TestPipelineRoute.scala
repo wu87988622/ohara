@@ -27,6 +27,8 @@ import org.scalatest.Matchers
 import spray.json.{JsNumber, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration.Duration
 
 // there are too many test cases in this file so we promote  it from small test to medium test
 class TestPipelineRoute extends MediumTest with Matchers {
@@ -42,6 +44,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
 
   private[this] val streamApi = StreamApi.access.hostname(configurator.hostname).port(configurator.port)
 
+  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration("20 seconds"))
   @Test
   def testFlowAndObjects(): Unit = {
     val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())

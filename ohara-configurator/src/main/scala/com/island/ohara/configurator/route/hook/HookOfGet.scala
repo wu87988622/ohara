@@ -14,11 +14,17 @@
  * limitations under the License.
  */
 
-package com.island.ohara.configurator
+package com.island.ohara.configurator.route.hook
 
-import scala.concurrent.{Await, Future}
+import com.island.ohara.client.configurator.Data
 
-import scala.concurrent.duration._
-package object route {
-  def result[T](f: Future[T]): T = Await.result(f, 30 seconds)
+import scala.concurrent.Future
+
+/**
+  * process the data for input Get request
+  *
+  * @tparam Res data
+  */
+private[route] trait HookOfGet[Res <: Data] {
+  def apply(res: Res): Future[Res]
 }

@@ -17,6 +17,7 @@
 package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.Data
+import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 
 /**
   * There are many kinds of cluster hosted by ohara. We extract an interface to define "what" information should be included by a "cluster
@@ -55,9 +56,36 @@ trait ClusterInfo extends Data {
   def deadNodes: Set[String]
 
   /**
+    * @return the state of this cluster. None means the cluster is not running
+    */
+  def state: Option[String]
+
+  /**
+    * @return the error message of this cluster.
+    */
+  def error: Option[String]
+
+  def metrics: Metrics
+
+  /**
     * Create an new instance with new node names.
     * @param newNodeNames new node names
     * @return an new instance
     */
   def clone(newNodeNames: Set[String]): ClusterInfo
+
+  /**
+    * Create an new instance with new state and error message.
+    * @param state new state
+    * @param error new error message
+    * @return an new instance
+    */
+  def clone(state: Option[String], error: Option[String]): ClusterInfo
+
+  /**
+    * Create an new instance with new metrics.
+    * @param metrics new metrics
+    * @return an new instance
+    */
+  def clone(metrics: Metrics): ClusterInfo
 }

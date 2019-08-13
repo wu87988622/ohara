@@ -37,7 +37,6 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 private[configurator] object ValidationRoute extends SprayJsonSupport {
-  private[this] val CLUSTER_KEY = RouteUtils.CLUSTER_KEY
   private[this] val DEFAULT_NUMBER_OF_VALIDATION = 3
 
   private[this] def verifyRoute[Req, Report](root: String, verify: (Option[String], Req) => Future[Seq[Report]])(

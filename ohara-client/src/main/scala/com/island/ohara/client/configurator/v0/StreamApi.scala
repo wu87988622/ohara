@@ -224,6 +224,13 @@ object StreamApi {
     def exactlyOnce: Boolean = false
 
     override def clone(newNodeNames: Set[String]): StreamClusterInfo = copy(nodeNames = newNodeNames)
+
+    override def clone(state: Option[String], error: Option[String]): StreamClusterInfo = this.copy(
+      state = state,
+      error = error
+    )
+
+    override def clone(metrics: Metrics): StreamClusterInfo = this.copy(metrics = metrics)
   }
   private[ohara] implicit val STREAM_CLUSTER_INFO_JSON_FORMAT: OharaJsonFormat[StreamClusterInfo] =
     JsonRefiner[StreamClusterInfo]

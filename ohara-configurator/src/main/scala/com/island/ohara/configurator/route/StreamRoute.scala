@@ -19,14 +19,14 @@ package com.island.ohara.configurator.route
 import java.util.Objects
 
 import akka.http.scaladsl.server
-import com.island.ohara.agent.{BrokerCollie, ClusterCollie, NodeCollie, WorkerCollie}
+import com.island.ohara.agent.{BrokerCollie, ClusterCollie, NodeCollie, StreamCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.StreamApi._
 import com.island.ohara.client.kafka.TopicAdmin.TopicInfo
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.file.FileStore
-import com.island.ohara.configurator.route.RouteUtils._
+import com.island.ohara.configurator.route.hook.{HookOfAction, HookOfCreation, HookOfGroup, HookOfUpdate}
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.island.ohara.streams.config.StreamDefinitions
 import org.slf4j.LoggerFactory
@@ -92,47 +92,6 @@ private[configurator] object StreamRoute {
   }
 
   /**
-    * Update the streamApp cluster state.
-    *
-    * @param info the streamApp data
-    * @param store data store
-    * @param clusterCollie the management of cluster
-    * @param executionContext execution context
-    * @return updated streamApp data
-    */
-  private[this] def updateState(info: StreamClusterInfo)(
-    implicit
-    store: DataStore,
-    clusterCollie: ClusterCollie,
-    meterCache: MeterCache,
-    executionContext: ExecutionContext): Future[StreamClusterInfo] = {
-    store
-      .value[StreamClusterInfo](info.key)
-      .flatMap(cluster =>
-        clusterCollie.streamCollie.exist(cluster.name).flatMap {
-          if (_) {
-            clusterCollie.streamCollie.cluster(cluster.name).map(_._1)
-          } else {
-            // if stream cluster was not created, we initial an empty class
-            Future.successful(cluster.copy(state = None, error = None))
-          }
-      })
-      .flatMap { finalData =>
-        store.addIfPresent[StreamClusterInfo](
-          key = finalData.key,
-          updater = (previous: StreamClusterInfo) =>
-            previous.copy(
-              nodeNames = finalData.nodeNames,
-              deadNodes = finalData.deadNodes,
-              state = finalData.state,
-              error = finalData.error,
-              metrics = Metrics(meterCache.meters(finalData).getOrElse(STREAM_APP_GROUP, Seq.empty))
-          )
-        )
-      }
-  }
-
-  /**
     * Check if field was defined, throw exception otherwise
     *
     * @param key the request object key
@@ -142,7 +101,7 @@ private[configurator] object StreamRoute {
     * @return field
     */
   private[this] def checkField[T](key: ObjectKey, field: Option[T], fieldName: String): T =
-    field.getOrElse(throw new IllegalArgumentException(RouteUtils.errorMessage(key, fieldName)))
+    field.getOrElse(throw new IllegalArgumentException(errorMessage(key, fieldName)))
 
   /**
     * Assert the require streamApp properties before running
@@ -163,17 +122,6 @@ private[configurator] object StreamRoute {
     if (!topicInfos.exists(t => toTopics.contains(t.name)))
       throw new NoSuchElementException(s"topic:$toTopics is not running")
   }
-
-  private[this] def hookOfGet(implicit store: DataStore,
-                              clusterCollie: ClusterCollie,
-                              meterCache: MeterCache,
-                              executionContext: ExecutionContext): HookOfGet[StreamClusterInfo] = updateState
-
-  private[this] def hookOfList(implicit store: DataStore,
-                               clusterCollie: ClusterCollie,
-                               meterCache: MeterCache,
-                               executionContext: ExecutionContext): HookOfList[StreamClusterInfo] =
-    Future.traverse(_)(updateState)
 
   private[this] def hookOfCreation(implicit fileStore: FileStore,
                                    clusterCollie: ClusterCollie,
@@ -245,22 +193,6 @@ private[configurator] object StreamRoute {
       else Future.successful(updateReq)
     }
 
-  private[this] def hookBeforeDelete(implicit store: DataStore,
-                                     clusterCollie: ClusterCollie,
-                                     meterCache: MeterCache,
-                                     executionContext: ExecutionContext): HookBeforeDelete = (key: ObjectKey) =>
-    // get the latest status first
-    store.get[StreamClusterInfo](key).flatMap {
-      _.fold(Future.unit) { desc =>
-        updateState(desc).flatMap { data =>
-          if (data.state.isEmpty) {
-            // state is not exists, could remove this streamApp
-            Future.unit
-          } else Future.failed(new RuntimeException(s"You cannot delete a non-stopped streamApp :$key"))
-        }
-      }
-  }
-
   private[this] def hookOfStart(implicit store: DataStore,
                                 fileStore: FileStore,
                                 adminCleaner: AdminCleaner,
@@ -330,21 +262,19 @@ private[configurator] object StreamRoute {
   def apply(implicit store: DataStore,
             adminCleaner: AdminCleaner,
             nodeCollie: NodeCollie,
+            streamCollie: StreamCollie,
             clusterCollie: ClusterCollie,
             workerCollie: WorkerCollie,
             brokerCollie: BrokerCollie,
             fileStore: FileStore,
             meterCache: MeterCache,
             executionContext: ExecutionContext): server.Route =
-    RouteUtils.route(
+    clusterRoute(
       root = STREAM_PREFIX_PATH,
+      metricsKey = Some(STREAM_APP_GROUP),
       hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
       hookOfUpdate = hookOfUpdate,
-      hookBeforeDelete = hookBeforeDelete,
-      hookOfGet = hookOfGet,
-      hookOfList = hookOfList,
-      collie = clusterCollie.streamCollie,
       hookOfStart = hookOfStart,
       hookBeforeStop = hookBeforeStop
     )

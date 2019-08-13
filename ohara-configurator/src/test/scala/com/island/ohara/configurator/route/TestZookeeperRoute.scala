@@ -25,6 +25,8 @@ import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration.Duration
 class TestZookeeperRoute extends MediumTest with Matchers {
   private[this] val numberOfCluster = 1
   private[this] val configurator = Configurator.builder.fake(numberOfCluster, 0).build()
@@ -37,6 +39,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
 
   private[this] val nodeNames: Set[String] = Set("n0", "n1")
 
+  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration("20 seconds"))
   @Before
   def setup(): Unit = {
     val nodeAccess = NodeApi.access.hostname(configurator.hostname).port(configurator.port)

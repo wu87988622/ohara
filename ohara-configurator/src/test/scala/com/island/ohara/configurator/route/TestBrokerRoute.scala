@@ -24,7 +24,9 @@ import com.island.ohara.configurator.fake.FakeBrokerCollie
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
+import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.Duration
 class TestBrokerRoute extends MediumTest with Matchers {
   private[this] val configurator = Configurator.builder.fake(0, 0).build()
   private[this] val brokerApi = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)
@@ -32,6 +34,8 @@ class TestBrokerRoute extends MediumTest with Matchers {
   private[this] val zkClusterName = CommonUtils.randomString(10)
 
   private[this] val nodeNames: Set[String] = Set("n0", "n1")
+
+  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration("20 seconds"))
 
   @Before
   def setup(): Unit = {
@@ -227,8 +231,8 @@ class TestBrokerRoute extends MediumTest with Matchers {
     result(brokerApi.start(cluster.name))
 
     // it's ok use keyword, but the "actual" behavior is not expected (expected addNode, but start/stop cluster)
-    result(brokerApi.addNode(cluster.name, RouteUtils.START_COMMAND).flatMap(_ => brokerApi.get(cluster.name))).nodeNames shouldBe cluster.nodeNames
-    result(brokerApi.addNode(cluster.name, RouteUtils.STOP_COMMAND).flatMap(_ => brokerApi.get(cluster.name))).nodeNames shouldBe cluster.nodeNames
+    result(brokerApi.addNode(cluster.name, START_COMMAND).flatMap(_ => brokerApi.get(cluster.name))).nodeNames shouldBe cluster.nodeNames
+    result(brokerApi.addNode(cluster.name, STOP_COMMAND).flatMap(_ => brokerApi.get(cluster.name))).nodeNames shouldBe cluster.nodeNames
     result(brokerApi.get(cluster.name)).state shouldBe None
   }
 

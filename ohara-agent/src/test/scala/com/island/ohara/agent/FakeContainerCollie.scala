@@ -17,7 +17,7 @@
 package com.island.ohara.agent
 
 import com.island.ohara.agent.Collie.ClusterCreator
-import com.island.ohara.client.configurator.v0.ClusterInfo
+import com.island.ohara.client.configurator.v0.{ClusterInfo, MetricsApi}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.common.util.CommonUtils
 import spray.json.JsValue
@@ -71,7 +71,8 @@ case class FakeContainerCollieClusterInfo(name: String, nodeNames: Set[String]) 
 
   override def ports: Set[Int] = Set.empty
 
-  override def clone(newNodeNames: Set[String]): ClusterInfo = throw new UnsupportedOperationException
+  override def clone(newNodeNames: Set[String]): FakeContainerCollieClusterInfo =
+    throw new UnsupportedOperationException
 
   override def group: String = "fake_group"
 
@@ -80,6 +81,18 @@ case class FakeContainerCollieClusterInfo(name: String, nodeNames: Set[String]) 
   override def kind: String = "fake_cluster"
 
   override def tags: Map[String, JsValue] = Map.empty
+
+  override def state: Option[String] = None
+
+  override def error: Option[String] = None
+
+  override def metrics: MetricsApi.Metrics = MetricsApi.Metrics(Seq.empty)
+
+  override def clone(state: Option[String], error: Option[String]): FakeContainerCollieClusterInfo =
+    throw new UnsupportedOperationException
+
+  override def clone(metrics: MetricsApi.Metrics): FakeContainerCollieClusterInfo =
+    throw new UnsupportedOperationException
 }
 
 object FakeContainerCollie {

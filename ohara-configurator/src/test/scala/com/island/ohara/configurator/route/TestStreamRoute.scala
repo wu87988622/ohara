@@ -28,6 +28,8 @@ import org.scalatest.Matchers
 import spray.json.{JsArray, JsNumber, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
 class TestStreamRoute extends SmallTest with Matchers {
 
@@ -39,6 +41,7 @@ class TestStreamRoute extends SmallTest with Matchers {
   private[this] val accessJar = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val accessStream = StreamApi.access.hostname(configurator.hostname).port(configurator.port)
 
+  private[this] def result[T](f: Future[T]): T = Await.result(f, 20 seconds)
   @Test
   def testStreamAppPropertyPage(): Unit = {
     val file = CommonUtils.createTempJar("empty_")

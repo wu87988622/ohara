@@ -391,16 +391,4 @@ object StreamCollie {
       s"-Djava.rmi.server.hostname=$hostname"
     )
   }
-
-  /**
-    * This is a helper method to convert the jar url to DataKey
-    *
-    * @param jarUrl jar url
-    * @return data key
-    */
-  private[agent] def urlToDataKey(jarUrl: String): ObjectKey = {
-    val name = jarUrl.split("\\/").last
-    val group = jarUrl.split("\\/").init.last
-    ObjectKey.of(group, name)
-  }
 }

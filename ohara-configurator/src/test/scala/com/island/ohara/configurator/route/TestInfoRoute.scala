@@ -25,9 +25,12 @@ import org.junit.{After, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration.Duration
 class TestInfoRoute extends SmallTest with Matchers {
   private[this] val configurator = Configurator.builder.fake().build()
 
+  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration("20 seconds"))
   @Test
   def test(): Unit = {
     // only test the configurator based on mini cluster

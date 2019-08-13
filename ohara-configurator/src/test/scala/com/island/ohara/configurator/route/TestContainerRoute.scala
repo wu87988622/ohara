@@ -24,6 +24,8 @@ import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration.Duration
 
 class TestContainerRoute extends MediumTest with Matchers {
   private[this] val configurator = Configurator.builder.fake(0, 0).build()
@@ -37,6 +39,7 @@ class TestContainerRoute extends MediumTest with Matchers {
 
   private[this] val nodeNames: Set[String] = Set("n0", "n1")
 
+  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration("20 seconds"))
   @Before
   def setup(): Unit = {
     val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
