@@ -18,7 +18,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
-import * as PIPELINES from 'constants/pipelines';
 import * as utils from './pipelineToolbarUtils';
 import { Modal } from 'components/common/Modal';
 import { ListLoader } from 'components/common/Loader';
@@ -87,7 +86,7 @@ class PipelineNewConnector extends React.Component {
         {!activeConnector ? (
           <ListLoader />
         ) : (
-          <Table headers={PIPELINES.TABLE_HEADERS}>
+          <Table headers={['connector name', 'version', 'revision']}>
             {connectors.map(({ className: name, version, revision }) => {
               const isActive =
                 name === activeConnector.className ? 'is-active' : '';
