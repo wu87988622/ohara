@@ -64,7 +64,7 @@ Configurator via following docker command.
 
 .. code:: bash
 
-   docker run --rm -p 12345:12345 oharastream/configurator:0.7.0-SNAPSHOT --port 12345
+   docker run --rm -p 12345:12345 oharastream/configurator:$|version| --port 12345
 
 .. note::
    click :ref:`here <userguide-execute-configurator>` to see more options for
@@ -75,7 +75,7 @@ on above Ohara Configurator.
 
 .. code:: bash
 
-   docker run --rm -p 5050:5050 oharastream/manager:0.7.0-SNAPSHOT --port 5050 --configurator http://$ip:12345/v0
+   docker run --rm -p 5050:5050 oharastream/manager:$|version| --port 5050 --configurator http://$ip:12345/v0
 
 .. note::
    Please replace the **ip** by your host’s address
@@ -165,7 +165,7 @@ Execute Configurator
 
 .. code:: sh
 
-   docker run --rm -p ${port}:${port} --add-host ${nodeHostName}:${nodeHostIP} oharastream/configurator:0.7.0-SNAPSHOT --port ${port} --hostname ${host}
+   docker run --rm -p ${port}:${port} --add-host ${nodeHostName}:${nodeHostIP} oharastream/configurator:$|version| --port ${port} --hostname ${host}
 
 -  folder: the folder used to store data (default is random). Mount the
    volume if you want to keep your data after restarting Configurator
@@ -208,7 +208,7 @@ is to mount a local folder (/tmp/configurator) on
    $ mkdir /tmp/configurator
    $ docker run -v /tmp/configurator:/home/ohara/configurator \
             -p 12345:12345 \
-            oharastream/configurator:0.7.0-SNAPSHOT \
+            oharastream/configurator:$|version| \
             --port 12345 \
             --folder /home/ohara/configurator
 
@@ -224,7 +224,7 @@ Execute Manager
 
 .. code:: sh
 
-   docker run --rm -p 5050:5050 oharastream/manager:0.7.0-SNAPSHOT --port 5050 --configurator http://localhost:12345/v0
+   docker run --rm -p 5050:5050 oharastream/manager:$|version| --port 5050 --configurator http://localhost:12345/v0
 
 -  port: bound by manager (default is 5050)
 -  configurator: basic form of restful API of Ohara Configurator
@@ -251,7 +251,7 @@ Execute FTP Instance
 
 .. code:: bash
 
-   docker run --rm -p 10000-10011:10000-10011 oharastream/backend:0.7.0-SNAPSHOT com.island.ohara.testing.service.FtpServer --controlPort 10000 --dataPorts 10001-10011 --user ${UserName} --password ${Password} --hostname ${hostIP or hostName}
+   docker run --rm -p 10000-10011:10000-10011 oharastream/backend:$|version| com.island.ohara.testing.service.FtpServer --controlPort 10000 --dataPorts 10001-10011 --user ${UserName} --password ${Password} --hostname ${hostIP or hostName}
 
 -  controlPort: bound by FTP Server
 -  dataPorts: bound by data transportation in FTP Server
@@ -691,7 +691,7 @@ https://kubernetes.io/docs/concepts/overview/what-is-kubernetes/
 Ohara builds multiple docker images. This includes zookeeper,
 broker, and connect-worker. These services can be run and controlled
 through Kubernets and making container management a lot easier. Before
-running any OharaStream containers, you need to install Kubernets first.
+running any Ohara containers, you need to install Kubernets first.
 We’ll walk you through this process with a few k8s commands:
 
 Install distribute mode for Kubernetes
@@ -799,7 +799,7 @@ How to use Kubernetes in Ohara?
    cd $OHARA_HOME/kubernetes
    kubectl create -f dns-service.yaml
 
-- Below is an example command to run OharaStream configurator service
+- Below is an example command to run Ohara configurator service
   for K8S mode:
 
 .. code:: sh
@@ -902,7 +902,7 @@ How to get the log info in container for debug?
 Other
 ~~~~~
 
--  OharaStream K8SClient ImagePullPolicy default is IfNotPresent.
+-  Ohara K8SClient ImagePullPolicy default is IfNotPresent.
 
 -  Please remember to start K8S API server after you reboot the K8S
    master server:

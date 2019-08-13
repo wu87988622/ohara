@@ -98,7 +98,7 @@ Build docs
     [docs]$ make html
     Running Sphinx v1.8.5
     ========================================
-    Ohara version: 0.7.0-SNAPSHOT
+    Ohara version: $|version|
     Ohara branch/tag: master
     Producton Mode: False
     ========================================
