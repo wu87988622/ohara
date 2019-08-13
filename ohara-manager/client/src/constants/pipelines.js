@@ -26,12 +26,8 @@ export const CONNECTOR_TYPES = {
   topic: 'topic',
 };
 
-export const TABLE_HEADERS = ['connector name', 'version', 'revision'];
-
 export const CONNECTOR_FILTERS = [
-  'com.island.ohara.connector.validation.Validator',
-  'org.apache.kafka.connect.file.FileStreamSourceConnector',
-  'org.apache.kafka.connect.file.FileStreamSinkConnector',
+  'com.island.ohara.connector.console.ConsoleSink',
 ];
 
 export const CONNECTOR_STATES = {
