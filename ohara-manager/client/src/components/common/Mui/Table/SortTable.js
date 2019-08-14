@@ -34,6 +34,8 @@ const SortTable = props => {
     defaultOrder = 'asc',
     defaultOrderBy = headRows[0].id,
     tableName = 'sort',
+    dataRowTestId = 'sort-list',
+    buttonTestId = 'sort-button',
   } = props;
 
   const [order, setOrder] = useState(defaultOrder);
@@ -97,6 +99,7 @@ const SortTable = props => {
                         active={orderBy === id}
                         direction={order}
                         onClick={createSortHandler(id)}
+                        data-testid={buttonTestId}
                       >
                         {label}
                       </TableSortLabel>
@@ -113,7 +116,7 @@ const SortTable = props => {
           {stableSort(rows, getSorting(order, orderBy)).map(row => {
             const keys = Object.keys(row);
             return (
-              <TableRow key={row[keys[0]]}>
+              <TableRow data-testid={dataRowTestId} key={row[keys[0]]}>
                 {keys.map(key => {
                   return (
                     <TableCell
@@ -146,6 +149,8 @@ SortTable.propTypes = {
   tableName: PropTypes.string,
   defaultOrder: PropTypes.string,
   defaultOrderBy: PropTypes.string,
+  dataRowTestId: PropTypes.string,
+  buttonTestId: PropTypes.string,
 };
 
 export default SortTable;
