@@ -22,6 +22,7 @@ import com.island.ohara.common.json.JsonObject;
 import com.island.ohara.common.json.JsonUtils;
 import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.setting.SettingDef.Type;
+import com.island.ohara.common.util.VersionUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -71,6 +72,8 @@ public final class StreamDefinitions implements JsonObject {
           .documentation("The image name of this streamApp running with")
           .valueType(Type.STRING)
           .optional()
+          // In manager, user cannot change the image name
+          .readonly()
           .build();
 
   public static final SettingDef NAME_DEFINITION =
@@ -191,7 +194,7 @@ public final class StreamDefinitions implements JsonObject {
           .documentation("Version of streamApp")
           .readonly()
           .valueType(Type.STRING)
-          .optional("unknown")
+          .optional(VersionUtils.VERSION)
           .build();
 
   public static final SettingDef REVISION_DEFINITION =
@@ -203,7 +206,7 @@ public final class StreamDefinitions implements JsonObject {
           .readonly()
           .documentation("Revision of streamApp")
           .valueType(Type.STRING)
-          .optional("unknown")
+          .optional(VersionUtils.REVISION)
           .build();
 
   public static final SettingDef AUTHOR_DEFINITION =
@@ -215,7 +218,7 @@ public final class StreamDefinitions implements JsonObject {
           .readonly()
           .documentation("Author of streamApp")
           .valueType(Type.STRING)
-          .optional("unknown")
+          .optional(VersionUtils.USER)
           .build();
 
   public static final SettingDef TAGS_DEFINITION =
@@ -226,6 +229,8 @@ public final class StreamDefinitions implements JsonObject {
           .displayName("Tags")
           .documentation("Tags of streamApp")
           .valueType(Type.TAGS)
+          // In manager, the tags field is for internal use
+          .internal()
           .optional()
           .build();
 
