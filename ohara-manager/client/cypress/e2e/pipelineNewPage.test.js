@@ -83,7 +83,7 @@ describe('PipelineNewPage', () => {
       .getByTestId('toolbar-topics')
       .click()
       .getByTestId('topic-select')
-      .select(Cypress.env('TOPICS_NAME'))
+      .select(Cypress.env('TOPIC_NAME'))
       .getByText('Add')
       .click()
       .wait('@putPipeline');
@@ -112,7 +112,7 @@ describe('PipelineNewPage', () => {
       .click({ force: true })
       .getByText('Please select...')
       .click()
-      .get(`li[data-value=${Cypress.env('TOPICS_NAME')}]`)
+      .get(`li[data-value=${Cypress.env('TOPIC_NAME')}]`)
       .click()
       .wait(2000) // UI has one sec throttle, so we need to wait a bit time and then wait for the request
       .wait('@putPipeline');
@@ -120,7 +120,7 @@ describe('PipelineNewPage', () => {
     // Try to remove the topic
     cy.getByTestId('pipeline-graph')
       .within(() => {
-        cy.getByText(Cypress.env('TOPICS_NAME')).click({ force: true });
+        cy.getByText(Cypress.env('TOPIC_NAME')).click({ force: true });
       })
       .getByTestId('delete-button')
       .click()
@@ -132,7 +132,7 @@ describe('PipelineNewPage', () => {
     cy.getByText('You cannot delete the topic while it has any connection');
     // The topic should still be there
     cy.getByTestId('pipeline-graph').within(() =>
-      cy.getByText(Cypress.env('TOPICS_NAME')),
+      cy.getByText(Cypress.env('TOPIC_NAME')),
     );
   });
 
