@@ -246,12 +246,13 @@ private[configurator] object StreamRoute {
                   .flatMap(nodes => {
                     clusterCollie.streamCollie.creator
                       .clusterName(data.name)
-                      .nodeNames(nodes.map(_.name))
                       .imageName(IMAGE_NAME_DEFAULT)
                       .jarInfo(fileInfo)
                       // these settings will send to container environment
                       // we convert all value to string for convenient
                       .settings(data.settings)
+                      // This nodeNames() should put after settings() because we decide nodeName in starting phase
+                      .nodeNames(nodes.map(_.name))
                       .setting(StreamDefinitions.BROKER_DEFINITION.key(), JsString(bkProps))
                       // TODO: we should use boolean type ... by chia
                       .setting(StreamDefinitions.EXACTLY_ONCE_DEFINITION.key(), JsString(data.exactlyOnce.toString))

@@ -42,7 +42,7 @@ private class StreamCollieImpl(node: NodeCollie, dockerCache: DockerClientCache,
         _.containerCreator()
           .imageName(containerInfo.imageName)
           .hostname(containerInfo.name)
-          .envs(escapeQuote(containerInfo.environments))
+          .envs(containerInfo.environments)
           .name(containerInfo.name)
           .portMappings(
             containerInfo.portMappings.flatMap(_.portPairs).map(pair => pair.hostPort -> pair.containerPort).toMap)
@@ -81,14 +81,4 @@ private class StreamCollieImpl(node: NodeCollie, dockerCache: DockerClientCache,
 
   override protected def nodeCollie: NodeCollie = node
   override protected def prefixKey: String = PREFIX_KEY
-
-  /**
-    * Since docker will "swallow" quote of environment variable in container
-    * We need to escape the special quote (like json string) here.
-    * @param envs environment
-    * @return the escape environment
-    */
-  private[this] def escapeQuote(envs: Map[String, String]): Map[String, String] = {
-    envs.map { case (k, v) => (k, v.replaceAll("\"", "\\\\\"")) }
-  }
 }
