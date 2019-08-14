@@ -17,56 +17,16 @@
 package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
-import com.island.ohara.agent.{ClusterCollie, NodeCollie}
+import com.island.ohara.agent.{ClusterCollie, NodeCollie, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.ZookeeperApi._
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.route.RouteUtils._
-import com.island.ohara.configurator.store.DataStore
+import com.island.ohara.configurator.route.hook.{HookOfAction, HookOfCreation, HookOfGroup, HookOfUpdate}
+import com.island.ohara.configurator.store.{DataStore, MeterCache}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 object ZookeeperRoute {
-
-  private[this] def updateState(info: ZookeeperClusterInfo)(
-    implicit store: DataStore,
-    clusterCollie: ClusterCollie,
-    executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
-    store
-      .value[ZookeeperClusterInfo](info.key)
-      .flatMap(
-        cluster =>
-          clusterCollie.zookeeperCollie
-            .exist(cluster.name)
-            .flatMap {
-              if (_) {
-                clusterCollie.zookeeperCollie.cluster(cluster.name).map(_._1)
-              } else {
-                // if zookeeper cluster was not created, we initial state and error
-                Future.successful(cluster.copy(state = None, error = None))
-              }
-            }
-            .flatMap { finalData =>
-              store.addIfPresent[ZookeeperClusterInfo](
-                key = info.key,
-                updater = (previous: ZookeeperClusterInfo) =>
-                  previous.copy(
-                    state = finalData.state,
-                    nodeNames = finalData.nodeNames,
-                    deadNodes = finalData.deadNodes
-                )
-              )
-          }
-      )
-
-  private[this] def hookOfGet(implicit store: DataStore,
-                              clusterCollie: ClusterCollie,
-                              executionContext: ExecutionContext): HookOfGet[ZookeeperClusterInfo] = updateState(_)
-
-  private[this] def hookOfList(implicit store: DataStore,
-                               clusterCollie: ClusterCollie,
-                               executionContext: ExecutionContext): HookOfList[ZookeeperClusterInfo] =
-    Future.traverse(_)(updateState)
 
   private[this] def hookOfCreation: HookOfCreation[Creation, ZookeeperClusterInfo] = (creation: Creation) =>
     Future.successful(
@@ -118,18 +78,6 @@ object ZookeeperRoute {
           }
     }
 
-  private[this] def hookBeforeDelete(implicit store: DataStore,
-                                     clusterCollie: ClusterCollie,
-                                     executionContext: ExecutionContext): HookBeforeDelete = (key: ObjectKey) =>
-    store.get[ZookeeperClusterInfo](key).flatMap {
-      _.fold(Future.unit) { info =>
-        updateState(info).flatMap { data =>
-          if (data.state.isEmpty) Future.unit
-          else Future.failed(new RuntimeException(s"You cannot delete a non-stopped zookeeper :$key"))
-        }
-      }
-  }
-
   private[this] def hookOfStart(implicit store: DataStore,
                                 clusterCollie: ClusterCollie,
                                 executionContext: ExecutionContext): HookOfAction =
@@ -170,18 +118,17 @@ object ZookeeperRoute {
   private[this] def hookOfGroup: HookOfGroup = _ => GROUP_DEFAULT
 
   def apply(implicit store: DataStore,
+            meterCache: MeterCache,
+            zookeeperCollie: ZookeeperCollie,
             clusterCollie: ClusterCollie,
             nodeCollie: NodeCollie,
             executionContext: ExecutionContext): server.Route =
-    RouteUtils.route(
+    clusterRoute(
       root = ZOOKEEPER_PREFIX_PATH,
+      metricsKey = None,
       hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
       hookOfUpdate = hookOfUpdate,
-      hookOfGet = hookOfGet,
-      hookOfList = hookOfList,
-      hookBeforeDelete = hookBeforeDelete,
-      collie = clusterCollie.zookeeperCollie,
       hookOfStart = hookOfStart,
       hookBeforeStop = hookBeforeStop
     )

@@ -17,58 +17,16 @@
 package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
-import com.island.ohara.agent.{ClusterCollie, NodeCollie, ZookeeperCollie}
+import com.island.ohara.agent.{BrokerCollie, ClusterCollie, NodeCollie, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.{Creation, _}
 import com.island.ohara.client.configurator.v0.TopicApi
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.route.RouteUtils._
-import com.island.ohara.configurator.store.DataStore
+import com.island.ohara.configurator.route.hook.{HookOfAction, HookOfCreation, HookOfGroup, HookOfUpdate}
+import com.island.ohara.configurator.store.{DataStore, MeterCache}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 object BrokerRoute {
-
-  private[this] def updateState(info: BrokerClusterInfo)(
-    implicit store: DataStore,
-    clusterCollie: ClusterCollie,
-    executionContext: ExecutionContext): Future[BrokerClusterInfo] =
-    store
-      .value[BrokerClusterInfo](info.key)
-      .flatMap(
-        cluster =>
-          clusterCollie.brokerCollie
-            .exist(cluster.name)
-            .flatMap {
-              if (_) {
-                clusterCollie.brokerCollie.cluster(cluster.name).map(_._1)
-              } else {
-                // if broker cluster was not created, we initial state and error
-                Future.successful(cluster.copy(state = None, error = None))
-              }
-            }
-            .flatMap { finalData =>
-              store.addIfPresent[BrokerClusterInfo](
-                key = info.key,
-                updater = (previous: BrokerClusterInfo) =>
-                  previous.copy(
-                    zookeeperClusterName = finalData.zookeeperClusterName,
-                    state = finalData.state,
-                    nodeNames = finalData.nodeNames,
-                    deadNodes = finalData.deadNodes,
-                )
-              )
-          }
-      )
-
-  private[this] def hookOfGet(implicit store: DataStore,
-                              clusterCollie: ClusterCollie,
-                              executionContext: ExecutionContext): HookOfGet[BrokerClusterInfo] =
-    updateState(_)
-
-  private[this] def hookOfList(implicit store: DataStore,
-                               clusterCollie: ClusterCollie,
-                               executionContext: ExecutionContext): HookOfList[BrokerClusterInfo] =
-    Future.traverse(_)(updateState)
 
   private[this] def hookOfCreation(implicit zookeeperCollie: ZookeeperCollie,
                                    executionContext: ExecutionContext): HookOfCreation[Creation, BrokerClusterInfo] =
@@ -133,18 +91,6 @@ object BrokerRoute {
           }
       }
 
-  private[this] def hookBeforeDelete(implicit store: DataStore,
-                                     clusterCollie: ClusterCollie,
-                                     executionContext: ExecutionContext): HookBeforeDelete = (key: ObjectKey) =>
-    store.get[BrokerClusterInfo](key).flatMap {
-      _.fold(Future.unit) { info =>
-        updateState(info).flatMap { data =>
-          if (data.state.isEmpty) Future.unit
-          else Future.failed(new RuntimeException(s"You cannot delete a non-stopped broker :$key"))
-        }
-      }
-  }
-
   private[this] def hookOfStart(implicit store: DataStore,
                                 clusterCollie: ClusterCollie,
                                 executionContext: ExecutionContext): HookOfAction =
@@ -195,19 +141,18 @@ object BrokerRoute {
   private[this] def hookOfGroup: HookOfGroup = _ => GROUP_DEFAULT
 
   def apply(implicit store: DataStore,
+            meterCache: MeterCache,
             zookeeperCollie: ZookeeperCollie,
+            brokerCollie: BrokerCollie,
             clusterCollie: ClusterCollie,
             nodeCollie: NodeCollie,
             executionContext: ExecutionContext): server.Route =
-    RouteUtils.route(
+    clusterRoute(
       root = BROKER_PREFIX_PATH,
+      metricsKey = None,
       hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
       hookOfUpdate = hookOfUpdate,
-      hookOfGet = hookOfGet,
-      hookOfList = hookOfList,
-      hookBeforeDelete = hookBeforeDelete,
-      collie = clusterCollie.brokerCollie,
       hookOfStart = hookOfStart,
       hookBeforeStop = hookBeforeStop
     )

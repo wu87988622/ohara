@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 import com.island.ohara.agent.ClusterCache.{RequestKey, Service}
-import com.island.ohara.client.configurator.v0.ClusterInfo
+import com.island.ohara.client.configurator.v0.{ClusterInfo, MetricsApi}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
@@ -170,6 +170,17 @@ class TestClusterCache extends SmallTest with Matchers {
       override def kind: String = "fake_cluster"
 
       override def tags: Map[String, JsValue] = Map.empty
+
+      override def state: Option[String] = None
+
+      override def error: Option[String] = None
+
+      override def metrics: MetricsApi.Metrics = MetricsApi.Metrics(Seq.empty)
+
+      override def clone(state: Option[String], error: Option[String]): ClusterInfo =
+        throw new UnsupportedOperationException
+
+      override def clone(metrics: MetricsApi.Metrics): ClusterInfo = throw new UnsupportedOperationException
     }
     val cache = ClusterCache.builder
       .supplier(() => {

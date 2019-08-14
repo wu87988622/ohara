@@ -25,7 +25,6 @@ import akka.stream.ActorMaterializer
 import com.island.ohara.client.configurator.v0.ErrorApi
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.configurator.route.RouteUtils
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
@@ -39,7 +38,7 @@ class TestResponseFromUnsupportedApis extends SmallTest with Matchers {
   private[this] implicit val actorSystem: ActorSystem = ActorSystem("Executor-TestResponseFromUnsupportedApis")
   private[this] implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
 
-  private[this] val expectedMessage = RouteUtils.apiUrl
+  private[this] val expectedMessage = com.island.ohara.configurator.route.apiUrl
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 20 seconds)
 

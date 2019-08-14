@@ -23,55 +23,11 @@ import com.island.ohara.client.configurator.v0.WorkerApi._
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.file.FileStore
-import com.island.ohara.configurator.route.RouteUtils._
-import com.island.ohara.configurator.store.DataStore
+import com.island.ohara.configurator.route.hook.{HookOfAction, HookOfCreation, HookOfGroup, HookOfUpdate}
+import com.island.ohara.configurator.store.{DataStore, MeterCache}
 
 import scala.concurrent.{ExecutionContext, Future}
 object WorkerRoute {
-
-  private[this] def updateState(info: WorkerClusterInfo)(
-    implicit store: DataStore,
-    clusterCollie: ClusterCollie,
-    executionContext: ExecutionContext): Future[WorkerClusterInfo] =
-    store
-      .value[WorkerClusterInfo](info.key)
-      .flatMap(
-        cluster =>
-          clusterCollie.workerCollie
-            .exist(cluster.name)
-            .flatMap {
-              if (_) {
-                clusterCollie.workerCollie.cluster(cluster.name).map(_._1)
-              } else {
-                // if cluster was not created, we initial state and error
-                Future.successful(cluster.copy(state = None, error = None))
-              }
-            }
-            .flatMap { finalData =>
-              store.addIfPresent[WorkerClusterInfo](
-                key = info.key,
-                updater = (previous: WorkerClusterInfo) =>
-                  previous.copy(
-                    brokerClusterName = finalData.brokerClusterName,
-                    state = finalData.state,
-                    nodeNames = finalData.nodeNames,
-                    deadNodes = finalData.deadNodes,
-                    // the connector list is get by REST, we should update it again
-                    connectors = finalData.connectors
-                )
-              )
-          }
-      )
-
-  private[this] def hookOfGet(implicit store: DataStore,
-                              clusterCollie: ClusterCollie,
-                              executionContext: ExecutionContext): HookOfGet[WorkerClusterInfo] =
-    updateState
-
-  private[this] def hookOfList(implicit store: DataStore,
-                               clusterCollie: ClusterCollie,
-                               executionContext: ExecutionContext): HookOfList[WorkerClusterInfo] =
-    Future.traverse(_)(updateState)
 
   private[this] def hookOfCreation(implicit fileStore: FileStore,
                                    brokerCollie: BrokerCollie,
@@ -187,18 +143,6 @@ object WorkerRoute {
           }
       }
 
-  private[this] def hookBeforeDelete(implicit store: DataStore,
-                                     clusterCollie: ClusterCollie,
-                                     executionContext: ExecutionContext): HookBeforeDelete =
-    (key: ObjectKey) =>
-      store.get[WorkerClusterInfo](key).flatMap {
-        _.fold(Future.unit)(info =>
-          updateState(info).flatMap { data =>
-            if (data.state.isEmpty) Future.unit
-            else Future.failed(new RuntimeException(s"You cannot delete a non-stopped worker :$key"))
-        })
-    }
-
   private[this] def hookOfStart(implicit store: DataStore,
                                 clusterCollie: ClusterCollie,
                                 executionContext: ExecutionContext): HookOfAction =
@@ -269,20 +213,19 @@ object WorkerRoute {
   private[this] def hookOfGroup: HookOfGroup = _ => GROUP_DEFAULT
 
   def apply(implicit store: DataStore,
+            meterCache: MeterCache,
             brokerCollie: BrokerCollie,
+            workerCollie: WorkerCollie,
             clusterCollie: ClusterCollie,
             nodeCollie: NodeCollie,
             fileStore: FileStore,
             executionContext: ExecutionContext): server.Route =
-    RouteUtils.route(
+    clusterRoute(
       root = WORKER_PREFIX_PATH,
+      metricsKey = None,
       hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
       hookOfUpdate = hookOfUpdate,
-      hookOfGet = hookOfGet,
-      hookOfList = hookOfList,
-      hookBeforeDelete = hookBeforeDelete,
-      collie = clusterCollie.workerCollie,
       hookOfStart = hookOfStart,
       hookBeforeStop = hookBeforeStop
     )

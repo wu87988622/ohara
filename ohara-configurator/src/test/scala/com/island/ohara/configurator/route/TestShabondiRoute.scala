@@ -25,12 +25,15 @@ import org.junit.{After, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration.Duration
 
 class TestShabondiRoute extends SmallTest with Matchers {
 
   private val configurator = Configurator.builder.fake().build()
   private val access = ShabondiApi.access.hostname(configurator.hostname).port(configurator.port)
 
+  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration("20 seconds"))
   @Test
   def testAdd(): Unit = {
     val desc1: ShabondiApi.ShabondiDescription = result(access.add())

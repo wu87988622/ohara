@@ -37,7 +37,7 @@ private[configurator] object ObjectRoute {
   def apply(implicit store: DataStore, executionContext: ExecutionContext): server.Route =
     pathPrefix(OBJECT_PREFIX_PATH) {
       pathEnd(get(complete(store.raws().map(_.map(toObject))))) ~ path(Segment) { name =>
-        parameter(RouteUtils.GROUP_KEY ?) { groupOption =>
+        parameter(GROUP_KEY ?) { groupOption =>
           val group = groupOption.getOrElse(GROUP_DEFAULT)
           get(complete(store.raws(ObjectKey.of(group, name)).map(_.map(toObject))))
         }

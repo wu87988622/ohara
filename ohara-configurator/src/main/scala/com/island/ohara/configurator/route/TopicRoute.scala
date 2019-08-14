@@ -23,7 +23,15 @@ import com.island.ohara.client.configurator.v0.TopicApi._
 import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.configurator.route.RouteUtils._
+import com.island.ohara.configurator.route.hook.{
+  HookBeforeDelete,
+  HookOfAction,
+  HookOfCreation,
+  HookOfGet,
+  HookOfGroup,
+  HookOfList,
+  HookOfUpdate
+}
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.typesafe.scalalogging.Logger
 import spray.json.JsString
@@ -228,7 +236,7 @@ private[configurator] object TopicRoute {
             meterCache: MeterCache,
             brokerCollie: BrokerCollie,
             executionContext: ExecutionContext): server.Route =
-    RouteUtils.route[Creation, Update, TopicInfo](
+    route[Creation, Update, TopicInfo](
       root = TOPICS_PREFIX_PATH,
       hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,

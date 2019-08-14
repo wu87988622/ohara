@@ -75,7 +75,7 @@ private[configurator] object FileRoute {
                                                            executionContext: ExecutionContext): server.Route =
     pathPrefix(root) {
       path(Segment) { name =>
-        parameter(RouteUtils.GROUP_KEY ?) { groupOption =>
+        parameter(GROUP_KEY ?) { groupOption =>
           val key = ObjectKey.of(groupOption.getOrElse(GROUP_DEFAULT), name)
           get(complete(fileStore.fileInfo(key))) ~ delete(
             complete(fileStore
@@ -106,10 +106,10 @@ private[configurator] object FileRoute {
           }
         }
       } ~ pathEnd {
-        withSizeLimit(RouteUtils.DEFAULT_FILE_SIZE_BYTES) {
+        withSizeLimit(DEFAULT_FILE_SIZE_BYTES) {
           //see https://github.com/akka/akka-http/issues/1216#issuecomment-311973943
           toStrictEntity(1.seconds) {
-            formFields((RouteUtils.GROUP_KEY ?, RouteUtils.TAGS_KEY ?)) {
+            formFields((GROUP_KEY ?, TAGS_KEY ?)) {
               case (group, tagsString) =>
                 storeUploadedFile(fieldName, tempDestination) {
                   case (metadata, file) =>
@@ -125,7 +125,7 @@ private[configurator] object FileRoute {
             }
           }
         } ~ get {
-          parameter(RouteUtils.GROUP_KEY ?) { groupOption =>
+          parameter(GROUP_KEY ?) { groupOption =>
             val fileInfos: Future[Seq[FileInfo]] = groupOption.map(fileStore.fileInfos).getOrElse(fileStore.fileInfos())
             complete(fileInfos)
           }

@@ -230,7 +230,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(i
       complete(StatusCodes.NotFound -> s"you have to buy the license for advanced API: $path")))
 
   private[this] def finalRoute(): server.Route =
-    path(Remaining)(RouteUtils.routeToOfficialUrl)
+    path(Remaining)(routeToOfficialUrl)
 
   private[this] implicit val actorSystem: ActorSystem = ActorSystem(s"${classOf[Configurator].getSimpleName}-system")
   private[this] implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()

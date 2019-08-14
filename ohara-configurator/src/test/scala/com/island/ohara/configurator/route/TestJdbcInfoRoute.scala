@@ -27,11 +27,14 @@ import org.scalatest.Matchers
 import spray.json.{JsNumber, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration.Duration
 class TestJdbcInfoRoute extends SmallTest with Matchers {
   private[this] val configurator = Configurator.builder.fake().build()
 
   private[this] val jdbcApi = JdbcInfoApi.access.hostname(configurator.hostname).port(configurator.port)
 
+  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration("20 seconds"))
   @Test
   def test(): Unit = {
     // test add

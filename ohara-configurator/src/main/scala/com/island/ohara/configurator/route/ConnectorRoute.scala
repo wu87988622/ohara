@@ -25,7 +25,15 @@ import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.setting.{ConnectorKey, ObjectKey}
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.route.RouteUtils._
+import com.island.ohara.configurator.route.hook.{
+  HookBeforeDelete,
+  HookOfAction,
+  HookOfCreation,
+  HookOfGet,
+  HookOfGroup,
+  HookOfList,
+  HookOfUpdate
+}
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.typesafe.scalalogging.Logger
 import spray.json.JsString
@@ -237,7 +245,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
             workerCollie: WorkerCollie,
             executionContext: ExecutionContext,
             meterCache: MeterCache): server.Route =
-    RouteUtils.route[Creation, Update, ConnectorDescription](
+    route[Creation, Update, ConnectorDescription](
       root = CONNECTORS_PREFIX_PATH,
       hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,

@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-package com.island.ohara.configurator.route
+package com.island.ohara.configurator
+
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
@@ -23,12 +24,14 @@ import com.island.ohara.agent.Collie.ClusterCreator
 import com.island.ohara.agent.{ClusterCollie, Collie, NodeCollie}
 import com.island.ohara.client.configurator.Data
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0.{
   ClusterCreationRequest,
   ClusterInfo,
+  ClusterUpdateRequest,
   CreationRequest,
   ErrorApi,
   OharaJsonFormat
@@ -36,142 +39,24 @@ import com.island.ohara.client.configurator.v0.{
 import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.VersionUtils
-import com.island.ohara.configurator.store.DataStore
-import com.typesafe.scalalogging.Logger
+import com.island.ohara.configurator.route.hook.{
+  HookBeforeDelete,
+  HookOfAction,
+  HookOfCreation,
+  HookOfGet,
+  HookOfGroup,
+  HookOfList,
+  HookOfSubName,
+  HookOfUpdate
+}
+import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsArray, JsString, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
-private[configurator] object RouteUtils {
 
-  /**
-    * process the group for all requests.
-    */
-  trait HookOfGroup {
-
-    /**
-      * return the group you do want to exercise
-      * @param groupOption the group from request. it may be none
-      * @return the group sent to route to process
-      */
-    def apply(groupOption: Option[String]): String
-  }
-
-  /**
-    * process the data for input Get request
-    * @tparam Res data
-    */
-  trait HookOfGet[Res <: Data] {
-    def apply(res: Res): Future[Res]
-  }
-
-  /**
-    * process the data for input List request
-    * @tparam Res data
-    */
-  trait HookOfList[Res <: Data] {
-    def apply(res: Seq[Res]): Future[Seq[Res]]
-  }
-
-  /**
-    * this hook is invoked after http request is parsed and converted to scala object.
-    * @tparam Creation creation object
-    * @tparam Res result to response
-    */
-  trait HookOfCreation[Creation <: CreationRequest, Res <: Data] {
-    def apply(creation: Creation): Future[Res]
-  }
-
-  /**
-    * this hook is invoked after http request is parsed and converted to scala object.
-    *
-    * Noted: the update request ought to create a new object if the input (group, key) are not associated to an existent object
-    * (it means the previous is not defined).
-    * @tparam Creation creation object
-    * @tparam Res result to response
-    */
-  trait HookOfUpdate[Creation <: CreationRequest, Update, Res <: Data] {
-    def apply(key: ObjectKey, update: Update, previous: Option[Res]): Future[Res]
-  }
-
-  /**
-    * Do something before the objects does be removed from store actually.
-    *
-    * Noted: the returned (group, name) can differ from input. And the removed object is associated to the returned stuff.
-    */
-  trait HookBeforeDelete {
-    def apply(key: ObjectKey): Future[Unit]
-  }
-
-  /**
-    * The basic interface of handling the request carrying the sub name (/$name/$subName)
-    */
-  private[this] trait HookOfSubName {
-    def apply(key: ObjectKey, subName: String, params: Map[String, String]): Option[Future[Unit]]
-  }
-
-  /**
-    * The basic interface of handling particular action
-    */
-  trait HookOfAction {
-    def apply(key: ObjectKey, subName: String, params: Map[String, String]): Future[Unit]
-  }
-
-  /**
-    * a collection of action hooks.
-    * The order of calling hook is shown below.
-    * /$name/$action?group=${group}
-    * 1) the hook which has key composed by (group, name)
-    * 2) the hook
-    * 3) return NotFound
-    *
-    * For cluster resource, the "action" may be a node name that the request is used to add/remove node from cluster.
-    */
-  private[this] object HookOfSubName {
-    val empty: HookOfSubName = (_, _, _) => None
-
-    def apply(hook: HookOfAction): HookOfSubName = builder.hook(hook).build()
-
-    def apply(hooks: Map[String, HookOfAction]): HookOfSubName = {
-      val builder = new Builder
-      hooks.foreach {
-        case (action, hook) => builder.addHook(action, hook)
-      }
-      builder.build()
-    }
-
-    def builder: Builder = new Builder
-    class Builder extends com.island.ohara.common.pattern.Builder[HookOfSubName] {
-      private[this] var hooks: Map[String, HookOfAction] = Map.empty
-      private[this] var finalHook: Option[HookOfAction] = None
-
-      /**
-        * add the hook for particular action from PUT method.
-        * @param action action
-        * @param hook hook
-        * @return this builder
-        */
-      def addHook(action: String, hook: HookOfAction): Builder = {
-        if (hooks.contains(action)) throw new IllegalArgumentException(s"the action:$action already has hook")
-        this.hooks += (action -> hook)
-        this
-      }
-
-      /**
-        * set the hook for all actions from PUT method
-        * @param hook hook
-        * @return this builder
-        */
-      def hook(hook: HookOfAction): Builder = {
-        this.finalHook = Some(hook)
-        this
-      }
-
-      override def build(): HookOfSubName = (key: ObjectKey, subName: String, params: Map[String, String]) =>
-        hooks.get(subName).orElse(finalHook).map(_(key, subName, params))
-    }
-  }
+package object route {
 
   /**
     * generate the error message used to indicate that some fields are miss in the update request.
@@ -181,10 +66,6 @@ private[configurator] object RouteUtils {
     */
   def errorMessage(key: ObjectKey, fieldName: String): String =
     s"$key does not exist so there is an new object will be created. Hence, you cannot ignore $fieldName"
-
-  //-------------------- global parameter for route -------------------------//
-  val LOG = Logger(RouteUtils.getClass)
-  type Id = String
 
   /** default we restrict the jar size to 50MB */
   private[route] val DEFAULT_FILE_SIZE_BYTES = 50 * 1024 * 1024L
@@ -219,7 +100,7 @@ private[configurator] object RouteUtils {
     * @tparam Res response type
     * @return route
     */
-  def route[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
+  private[route] def route[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
     root: String,
     hookOfGroup: HookOfGroup,
     hookOfCreation: HookOfCreation[Creation, Res],
@@ -261,7 +142,7 @@ private[configurator] object RouteUtils {
     * @tparam Res response
     * @return route
     */
-  def route[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
+  private[route] def route[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
     root: String,
     hookOfGroup: HookOfGroup,
     hookOfCreation: HookOfCreation[Creation, Res],
@@ -331,7 +212,7 @@ private[configurator] object RouteUtils {
     * @tparam Res response
     * @return route
     */
-  def route[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
+  private[route] def route[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
     root: String,
     hookOfGroup: HookOfGroup,
     hookOfCreation: HookOfCreation[Creation, Res],
@@ -394,7 +275,7 @@ private[configurator] object RouteUtils {
     * @tparam Res response
     * @return route
     */
-  def route[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
+  private[route] def route[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
     root: String,
     hookOfGroup: HookOfGroup,
     hookOfCreation: HookOfCreation[Creation, Res],
@@ -455,7 +336,7 @@ private[configurator] object RouteUtils {
     * @tparam Res response
     * @return route
     */
-  def route[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
+  private[route] def route[Creation <: CreationRequest, Update, Res <: Data: ClassTag](
     root: String,
     hookOfGroup: HookOfGroup,
     hookOfCreation: HookOfCreation[Creation, Res],
@@ -563,6 +444,68 @@ private[configurator] object RouteUtils {
     * The DELETE is routed to "DELETE /$root/$name"
     * The START is routed to "PUT /$root/$name/start"
     * The STOP is routed to "PUT /$root/$name/stop"
+    *
+    * The following routes are added autmatically.
+    * The GET/LIST route auto-update the state of cluster
+    * The DELETE route reject the request to a running cluster
+    * @param root path to root
+    * @param hookOfGroup used to generate the true group used by route
+    * @param hookOfCreation used to convert request to response for Add function
+    * @param hookOfUpdate used to convert request to response for Update function
+    * @param hookOfStart used to handle start command
+    * @param hookBeforeStop used to perform checks before stopping cluster
+    * @param store data store
+    * @param rm marshalling of creation
+    * @param rm1 marshalling of update
+    * @param rm2 marshalling of response
+    * @param executionContext thread pool
+    * @tparam Creation creation request for cluster resources
+    * @tparam Creator another type ot indicate the cluster resources
+    * @tparam Update creation request
+    * @tparam Cluster cluster info
+    * @return route
+    */
+  private[route] def clusterRoute[Cluster <: ClusterInfo: ClassTag,
+                                  Creator <: ClusterCreator[Cluster],
+                                  Creation <: ClusterCreationRequest,
+                                  Update <: ClusterUpdateRequest](root: String,
+                                                                  metricsKey: Option[String],
+                                                                  hookOfGroup: HookOfGroup,
+                                                                  hookOfCreation: HookOfCreation[Creation, Cluster],
+                                                                  hookOfUpdate: HookOfUpdate[Creation, Update, Cluster],
+                                                                  hookOfStart: HookOfAction,
+                                                                  hookBeforeStop: HookOfAction)(
+    implicit store: DataStore,
+    meterCache: MeterCache,
+    collie: Collie[Cluster, Creator],
+    clusterCollie: ClusterCollie,
+    nodeCollie: NodeCollie,
+    rm: OharaJsonFormat[Creation],
+    rm1: RootJsonFormat[Update],
+    rm2: RootJsonFormat[Cluster],
+    executionContext: ExecutionContext): server.Route =
+    clusterRoute[Cluster, Creator, Creation, Update](
+      root = root,
+      hookOfGroup = hookOfGroup,
+      hookOfCreation = hookOfCreation,
+      hookOfUpdate = hookOfUpdate,
+      hookOfGet = updateState[Cluster, Creator](_, metricsKey),
+      hookOfList = (clusters: Seq[Cluster]) => Future.traverse(clusters)(updateState(_, metricsKey)),
+      hookBeforeDelete = hookBeforeDelete[Cluster, Creator](metricsKey),
+      hookOfStart = hookOfStart,
+      hookBeforeStop = hookBeforeStop
+    )
+
+  /**
+    * this is a variety to basic route of all APIs to access ohara's "cluster" data.
+    * It implements 1) get, 2) list, 3) delete, 4) add, 5) update, 6) start and 7) stop function.
+    * The CREATION is routed to "POST  /$root"
+    * The UPDATE is routed to "PUT /$root/$name"
+    * The GET is routed to "GET /$root/$name"
+    * The LIST is routed to "GET /$root"
+    * The DELETE is routed to "DELETE /$root/$name"
+    * The START is routed to "PUT /$root/$name/start"
+    * The STOP is routed to "PUT /$root/$name/stop"
     * @param root path to root
     * @param hookOfGroup used to generate the true group used by route
     * @param hookOfCreation used to convert request to response for Add function
@@ -580,26 +523,29 @@ private[configurator] object RouteUtils {
     * @tparam Creation creation request for cluster resources
     * @tparam Creator another type ot indicate the cluster resources
     * @tparam Update creation request
-    * @tparam Res response
+    * @tparam Cluster cluster info
     * @return route
     */
-  def route[Res <: ClusterInfo: ClassTag, Creator <: ClusterCreator[Res], Creation <: ClusterCreationRequest, Update](
-    root: String,
-    hookOfGroup: HookOfGroup,
-    hookOfCreation: HookOfCreation[Creation, Res],
-    hookOfUpdate: HookOfUpdate[Creation, Update, Res],
-    hookOfList: HookOfList[Res],
-    hookOfGet: HookOfGet[Res],
-    hookBeforeDelete: HookBeforeDelete,
-    collie: Collie[Res, Creator],
-    hookOfStart: HookOfAction,
-    hookBeforeStop: HookOfAction)(implicit store: DataStore,
-                                  clusterCollie: ClusterCollie,
-                                  nodeCollie: NodeCollie,
-                                  rm: OharaJsonFormat[Creation],
-                                  rm1: RootJsonFormat[Update],
-                                  rm2: RootJsonFormat[Res],
-                                  executionContext: ExecutionContext): server.Route =
+  private[this] def clusterRoute[Cluster <: ClusterInfo: ClassTag,
+                                 Creator <: ClusterCreator[Cluster],
+                                 Creation <: ClusterCreationRequest,
+                                 Update <: ClusterUpdateRequest](root: String,
+                                                                 hookOfGroup: HookOfGroup,
+                                                                 hookOfCreation: HookOfCreation[Creation, Cluster],
+                                                                 hookOfUpdate: HookOfUpdate[Creation, Update, Cluster],
+                                                                 hookOfGet: HookOfGet[Cluster],
+                                                                 hookOfList: HookOfList[Cluster],
+                                                                 hookBeforeDelete: HookBeforeDelete,
+                                                                 hookOfStart: HookOfAction,
+                                                                 hookBeforeStop: HookOfAction)(
+    implicit store: DataStore,
+    collie: Collie[Cluster, Creator],
+    clusterCollie: ClusterCollie,
+    nodeCollie: NodeCollie,
+    rm: OharaJsonFormat[Creation],
+    rm1: RootJsonFormat[Update],
+    rm2: RootJsonFormat[Cluster],
+    executionContext: ExecutionContext): server.Route =
     route(
       root = root,
       hookOfGroup = hookOfGroup,
@@ -610,10 +556,10 @@ private[configurator] object RouteUtils {
       hookBeforeDelete = hookBeforeDelete,
       HookOfSubNameOfPut = HookOfSubName.builder
       // start cluster
-        .addHook(
+        .hook(
           START_COMMAND,
           (key: ObjectKey, subName: String, params: Map[String, String]) =>
-            store.value[Res](key).flatMap { req =>
+            store.value[Cluster](key).flatMap { req =>
               collie.exist(req.name).flatMap {
                 if (_) {
                   // this cluster already exists, return OK
@@ -625,7 +571,7 @@ private[configurator] object RouteUtils {
           }
         )
         // stop cluster
-        .addHook(
+        .hook(
           STOP_COMMAND,
           (key: ObjectKey, subName: String, params: Map[String, String]) =>
             hookBeforeStop(key, subName, params).flatMap(
@@ -688,13 +634,13 @@ private[configurator] object RouteUtils {
     * @param clusterCollie clusterCollie instance
     * @param req cluster creation request
     * @param executionContext execution context
-    * @tparam Req type of request
+    * @tparam Cluster type of request
     * @return clusters that fitted the requires
     */
-  private[route] def checkResourcesConflict[Req <: ClusterInfo: ClassTag](
+  private[route] def checkResourcesConflict[Cluster <: ClusterInfo: ClassTag](
     nodeCollie: NodeCollie,
     clusterCollie: ClusterCollie,
-    req: Req)(implicit executionContext: ExecutionContext): Future[Unit] =
+    req: Cluster)(implicit executionContext: ExecutionContext): Future[Unit] =
     // nodeCollie.nodes(req.nodeNames) is used to check the existence of node names of request
     nodeCollie
       .nodes(req.nodeNames)
@@ -718,8 +664,8 @@ private[configurator] object RouteUtils {
         }
         // check name conflict
         clusters
-          .filter(c => classTag[Req].runtimeClass.isInstance(c))
-          .map(_.asInstanceOf[Req])
+          .filter(c => classTag[Cluster].runtimeClass.isInstance(c))
+          .map(_.asInstanceOf[Cluster])
           .find(_.name == req.name)
           .foreach(conflictCluster => throw new IllegalArgumentException(s"${serviceName(conflictCluster)} is running"))
 
@@ -737,4 +683,48 @@ private[configurator] object RouteUtils {
           .mkString(";")).filter(_.nonEmpty).foreach(s => throw new IllegalArgumentException(s))
         Future.unit
       }
+
+  private[this] def updateState[Cluster <: ClusterInfo: ClassTag, Creator <: ClusterCreator[Cluster]](
+    cluster: Cluster,
+    metricsKey: Option[String])(implicit meterCache: MeterCache,
+                                store: DataStore,
+                                collie: Collie[Cluster, Creator],
+                                executionContext: ExecutionContext): Future[Cluster] =
+    collie
+      .clusters()
+      .map(
+        _.keys
+          .find(_.name == cluster.name)
+          .map(runningCluster =>
+            runningCluster.clone(metrics =
+              Metrics(metricsKey.flatMap(key => meterCache.meters(runningCluster).get(key)).getOrElse(Seq.empty))))
+          .getOrElse(cluster
+            .clone(state = None, error = None)
+            // the cluster is stooped (all containers are gone) so we don't need to fetch metrics.
+            .clone(metrics = Metrics(Seq.empty)))
+          // the actual type is erased since the clone method returns the ClusterInfo type.
+          // However, it is safe to case the type to the input type since all sub classes of ClusterInfo should work well.
+          .asInstanceOf[Cluster]
+      )
+      .flatMap { cluster =>
+        // add the up-to-date object to store
+        // TODO: in fact, this may be a useless action since all Getters do update state before generating response.
+        store.add[Cluster](cluster)
+      }
+
+  private[this] def hookBeforeDelete[Cluster <: ClusterInfo: ClassTag, Creator <: ClusterCreator[Cluster]](
+    metricsKey: Option[String])(implicit store: DataStore,
+                                meterCache: MeterCache,
+                                collie: Collie[Cluster, Creator],
+                                executionContext: ExecutionContext): HookBeforeDelete = (key: ObjectKey) =>
+    store.get[Cluster](key).flatMap {
+      _.fold(Future.unit) { info =>
+        updateState(info, metricsKey).flatMap { data =>
+          if (data.state.isEmpty) Future.unit
+          else
+            Future.failed(new RuntimeException(
+              s"You cannot delete a non-stopped ${classTag[Cluster].runtimeClass.getSimpleName} :$key"))
+        }
+      }
+  }
 }

@@ -21,7 +21,14 @@ import com.island.ohara.agent.ClusterCollie
 import com.island.ohara.client.configurator.v0.NodeApi._
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.route.RouteUtils._
+import com.island.ohara.configurator.route.hook.{
+  HookBeforeDelete,
+  HookOfCreation,
+  HookOfGet,
+  HookOfGroup,
+  HookOfList,
+  HookOfUpdate
+}
 import com.island.ohara.configurator.store.DataStore
 import com.typesafe.scalalogging.Logger
 
@@ -97,7 +104,7 @@ object NodeRoute {
   private[this] def hookOfGroup: HookOfGroup = _ => GROUP_DEFAULT
 
   def apply(implicit store: DataStore, clusterCollie: ClusterCollie, executionContext: ExecutionContext): server.Route =
-    RouteUtils.route[Creation, Update, Node](
+    route[Creation, Update, Node](
       root = NODES_PREFIX_PATH,
       hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,

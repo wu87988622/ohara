@@ -24,6 +24,8 @@ import org.junit.{After, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration.Duration
 
 class TestClusterNameUpperCaseRoute extends SmallTest with Matchers {
   private[this] val numberOfCluster = 1
@@ -32,6 +34,7 @@ class TestClusterNameUpperCaseRoute extends SmallTest with Matchers {
   private[this] val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val zookeeperApi = ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port)
 
+  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration("20 seconds"))
   @Test
   def testAddZookeeper(): Unit = {
     result(nodeApi.request.hostname("host1").port(22).user("b").password("c").create())

@@ -27,6 +27,8 @@ import org.scalatest.Matchers
 import spray.json.{JsNumber, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration.Duration
 class TestNodeRoute extends SmallTest with Matchers {
   private[this] val numberOfCluster = 1
   private[this] val configurator = Configurator.builder.fake(numberOfCluster, numberOfCluster).build()
@@ -44,6 +46,7 @@ class TestNodeRoute extends SmallTest with Matchers {
     lhs.password shouldBe rhs.password
   }
 
+  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration("20 seconds"))
   @Test
   def testServices(): Unit = {
     val nodes = result(nodeApi.list())
