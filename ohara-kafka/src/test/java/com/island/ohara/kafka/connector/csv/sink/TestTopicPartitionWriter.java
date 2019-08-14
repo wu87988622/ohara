@@ -21,7 +21,6 @@ import com.island.ohara.kafka.connector.RowSinkRecord;
 import com.island.ohara.kafka.connector.csv.CsvSinkConfig;
 import com.island.ohara.kafka.connector.csv.WithMockStorage;
 import java.io.File;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -141,7 +140,7 @@ public class TestTopicPartitionWriter extends WithMockStorage {
 
     List<String> actualFilenames =
         StreamUtils.iterate(storage.list(dir))
-            .map(filePath -> Paths.get(filePath).getFileName().toString())
+            .map(path -> path.getFileName().toString())
             .collect(Collectors.toList());
 
     for (String filename : filenames) {

@@ -17,6 +17,8 @@
 package com.island.ohara.connector.hdfs.sink
 
 import java.io.{InputStream, OutputStream}
+import java.nio.file
+import java.nio.file.Paths
 import java.util
 import java.util.Collections
 
@@ -32,7 +34,7 @@ class HDFSStorage(fileSystem: FileSystem) extends Storage {
 
   override def exists(path: String): Boolean = fileSystem.exists(new Path(path))
 
-  override def list(path: String): util.Iterator[String] = {
+  override def list(path: String): util.Iterator[file.Path] = {
     implicit def convertToScalaIterator[T](underlying: RemoteIterator[T]): Iterator[T] = {
       case class wrapper(underlying: RemoteIterator[T]) extends Iterator[T] {
         override def hasNext: Boolean = underlying.hasNext
@@ -46,7 +48,7 @@ class HDFSStorage(fileSystem: FileSystem) extends Storage {
       fileSystem
         .listLocatedStatus(new Path(path))
         .map(fileStatus => {
-          fileStatus.getPath.toString
+          Paths.get(fileStatus.getPath.toString)
         })
         .asJava
     else throw new OharaException(s"${path} doesn't exist", null)

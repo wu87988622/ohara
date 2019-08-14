@@ -21,6 +21,7 @@ import com.island.ohara.common.exception.OharaFileAlreadyExistsException;
 import com.island.ohara.common.util.Releasable;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Path;
 import java.util.Iterator;
 
 /**
@@ -43,11 +44,14 @@ public interface Storage extends Releasable {
   /**
    * List the contents of the storage at a given path.
    *
+   * <p>WARNING: We only want to use {@link Path} to assist us in representing a system dependent
+   * file path. Please avoid using methods related to file operations. e.g. {@link Path#toFile()}
+   *
    * @throws OharaException if the path does not exist.
    * @param path the path.
    * @return the listing of the contents.
    */
-  Iterator<String> list(String path);
+  Iterator<Path> list(String path);
 
   /**
    * Creates a new object in the given path.

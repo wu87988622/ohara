@@ -391,12 +391,8 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
     CommonUtils.await(() => listCommittedFiles(folder).size == expectedSize, Duration.ofSeconds(20))
   }
 
-  private[this] def listCommittedFiles(folder: Path): Seq[Path] = ftpStorage
-    .list(folder.toString)
-    .asScala
-    .filter(file => !file.contains("_tmp"))
-    .map(file => Paths.get(folder.toString, file))
-    .toSeq
+  private[this] def listCommittedFiles(folder: Path): Seq[Path] =
+    ftpStorage.list(folder.toString).asScala.filter(file => !file.toString.contains("_tmp")).toSeq
 
   private[this] def readLines(file: Path): Array[String] = {
     val reader = new BufferedReader(

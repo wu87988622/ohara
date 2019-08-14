@@ -172,7 +172,7 @@ public abstract class StorageTestBase extends WithTestUtils {
     return CommonUtils.randomString(10);
   }
 
-  protected int size(Iterator<String> it) {
+  protected int size(Iterator<Path> it) {
     return Iterators.size(it);
   }
 

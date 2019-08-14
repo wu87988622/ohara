@@ -57,9 +57,9 @@ public class WithMockStorage extends CsvSinkTestBase {
 
   static class MockStorage implements Storage {
     @Override
-    public Iterator<String> list(String dirPath) {
+    public Iterator<Path> list(String dirPath) {
       try {
-        return Files.list(Paths.get(dirPath)).map(p -> p.toString()).iterator();
+        return Files.list(Paths.get(dirPath)).iterator();
       } catch (IOException e) {
         throw new OharaException(e);
       }

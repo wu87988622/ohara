@@ -17,7 +17,7 @@
 package com.island.ohara.connector.ftp
 
 import java.io.{InputStream, OutputStream}
-import java.nio.file.Paths
+import java.nio.file.{Path, Paths}
 import java.util
 
 import com.island.ohara.client.ftp.{FileType, FtpClient}
@@ -45,10 +45,10 @@ class FtpStorage(ftpClient: FtpClient) extends Storage {
     *
     * @param path the folder path.
     * @throws OharaException if the folder does not exist.
-    * @return the path listing of the files.
+    * @return the path listing of the files or folders.
     */
-  override def list(path: String): util.Iterator[String] = if (exists(path))
-    ftpClient.listFileNames(path).iterator.asJava
+  override def list(path: String): util.Iterator[Path] = if (exists(path))
+    ftpClient.listFileNames(path).map(name => Paths.get(path, name)).iterator.asJava
   else throw new OharaException(s"${path} doesn't exist")
 
   /**
