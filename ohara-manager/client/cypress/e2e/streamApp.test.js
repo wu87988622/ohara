@@ -19,18 +19,20 @@ import { makeRandomStr } from '../utils';
 
 // This test is broken and somehow related to
 // https://github.com/oharastream/ohara/issues/1944
-describe.skip('StreamApp', () => {
+describe('StreamApp', () => {
   before(() => {
     cy.deleteAllWorkers();
     cy.createWorker();
   });
 
-  it('starts a stream app', () => {
+  beforeEach(() => {
     cy.server();
     cy.route('GET', 'api/pipelines/*').as('getPipeline');
     cy.route('PUT', 'api/pipelines/*').as('putPipeline');
     cy.route('GET', 'api/files?*').as('getJars');
+  });
 
+  it.skip('starts a stream app', () => {
     cy.createTopic().as('fromTopic');
     cy.createTopic().as('toTopic');
 

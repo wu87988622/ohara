@@ -59,14 +59,14 @@ export const updateFlows = ({
     ];
   } else if (
     dispatcher.name === 'CONNECTOR' ||
-    dispatcher.name === 'STEAM_APP'
+    dispatcher.name === 'STREAM_APP'
   ) {
     updatedFlows = flows.map(flow => {
       if (flow.from.name === connectorName) {
-        const newTo = to.map(to => {
+        const newTo = to.map(t => {
           // If the to is a string, let's wrap it with an object
-          if (isString(to)) return { group: 'default', name: to };
-          return to;
+          if (isString(t)) return { group: 'default', name: t };
+          return t;
         });
 
         // 1. reset the `to` to an empty array which means there's no
@@ -160,9 +160,6 @@ export const updateGraph = params => {
 
 export const loadGraph = (pipeline, currentConnectorName) => {
   const { objects, flows } = pipeline;
-
-  // temp fix, if the flows and objects are not the same
-  if (isEmpty(objects) && !isEmpty(flows)) return [];
 
   const graph = flows.map((flow, index) => {
     const target = objects.find(object => object.name === flow.from.name);

@@ -215,13 +215,13 @@ class PipelineNewPage extends React.Component {
     if (isEqual(updatedFlows, flows)) return;
 
     this.setState({ isUpdating: true }, async () => {
-      const res = await pipelineApi.updatePipeline({
+      const response = await pipelineApi.updatePipeline({
         name,
         params: { flows: updatedFlows },
       });
 
       this.setState({ isUpdating: false });
-      const updatedPipelines = get(res, 'data.result', null);
+      const updatedPipelines = get(response, 'data.result', null);
 
       if (!isEmpty(updatedPipelines)) {
         const { topics: pipelineTopics } = getConnectors(

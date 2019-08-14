@@ -32,7 +32,9 @@ const props = {
   },
   graph: [],
   pipeline: {
-    workerClusterName: generate.serviceName(),
+    name: generate.name(),
+    flows: [],
+    tags: { workerClusterName: generate.serviceName() },
   },
   updateGraph: jest.fn(),
   refreshGraph: jest.fn(),
@@ -43,8 +45,7 @@ const props = {
   },
 };
 
-// Skip the tests for now
-describe.skip('<StreamApp />', () => {
+describe('<StreamApp />', () => {
   it('renders without crash', () => {
     render(<StreamApp {...props} />);
   });
@@ -58,14 +59,77 @@ describe.skip('<StreamApp />', () => {
     const res = {
       data: {
         result: {
-          id: generate.id(),
-          from: [],
-          to: [],
-          instances: 0,
-          name: generate.name(),
-          jar: {
-            group: generate.name(),
+          definition: {
+            className: 'com.island.ohara.it.streamapp.DumbStreamApp',
+            definitions: [
+              {
+                reference: 'NONE',
+                displayName: 'Author',
+                internal: false,
+                documentation: 'Author of streamApp',
+                valueType: 'STRING',
+                tableKeys: [],
+                orderInGroup: 14,
+                key: 'author',
+                required: false,
+                defaultValue: 'root',
+                group: 'core',
+                editable: false,
+              },
+              {
+                reference: 'TOPIC',
+                displayName: 'From topic of data consuming from',
+                internal: false,
+                documentation:
+                  'The topic name of this streamApp should consume from',
+                valueType: 'STRING',
+                tableKeys: [],
+                orderInGroup: 6,
+                key: 'from',
+                required: true,
+                defaultValue: null,
+                group: 'core',
+                editable: true,
+              },
+              {
+                reference: 'NONE',
+                displayName: 'Instances',
+                internal: false,
+                documentation: 'The running container number of this streamApp',
+                valueType: 'INT',
+                tableKeys: [],
+                orderInGroup: 9,
+                key: 'instances',
+                required: true,
+                defaultValue: null,
+                group: 'core',
+                editable: true,
+              },
+              {
+                reference: 'NONE',
+                displayName: 'StreamApp name',
+                internal: false,
+                documentation: 'The unique name of this streamApp',
+                valueType: 'STRING',
+                tableKeys: [],
+                orderInGroup: 2,
+                key: 'name',
+                required: false,
+                defaultValue: null,
+                group: 'core',
+                editable: true,
+              },
+            ],
+          },
+          settings: {
+            from: [],
+            to: [],
+            instances: 1,
             name: generate.name(),
+            jar: {
+              group: generate.name(),
+              name: generate.name(),
+            },
           },
         },
       },
@@ -77,19 +141,15 @@ describe.skip('<StreamApp />', () => {
       <StreamApp {...props} />,
     );
 
-    const { instances, jar } = res.data.result;
-    const { name: jarName } = jar;
+    const { instances } = res.data.result.settings;
 
-    expect(getByText('Stream app')).toBeInTheDocument();
+    getByText('Stream app');
     expect(getByLabelText('Instances')).toHaveAttribute(
       'value',
       String(instances),
     );
 
-    // TODO: add select tests
-
     expect(getByTestId('start-button')).toBeInTheDocument();
     expect(getByTestId('stop-button')).toBeInTheDocument();
-    expect(getByText(jarName)).toBeInTheDocument();
   });
 });

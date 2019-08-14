@@ -176,7 +176,17 @@ export const getEditable = ({ key, defaultEditable }) => {
   return key === 'name' || key === 'connector_class' ? false : defaultEditable;
 };
 
-export const getDisplayValue = ({ configValue, defaultValue }) => {
+export const getDisplayValue = ({ configValue, defaultValue, newKey }) => {
+  if (newKey === 'from' || newKey === 'to') {
+    // A patch for stream app since it supplys an empty array: `[]`
+    // as the default value for `from` and `to` fields. However,
+    // connectors are using: `null` as the default
+
+    if (Array.isArray(configValue) && isEmpty(configValue)) {
+      return null;
+    }
+  }
+
   // The configValue could be a `Boolean` value, so we have
   // to handle it differently, otherwise, it will always
   // return back `true` here
@@ -237,6 +247,7 @@ export const getRenderData = ({ state, defs, configs }) => {
       const displayValue = getDisplayValue({
         configValue,
         defaultValue,
+        newKey,
       });
 
       const editable = getEditable({
@@ -358,6 +369,7 @@ export const renderer = props => {
 
   const renderWithReference = params => {
     const { reference, key, displayName, isRunning, documentation } = params;
+
     switch (reference) {
       case 'TOPIC':
         return (
