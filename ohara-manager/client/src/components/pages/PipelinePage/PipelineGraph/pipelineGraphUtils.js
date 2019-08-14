@@ -97,7 +97,7 @@ export const createHtml = params => {
   const displayKind = className.split('.').pop();
   const metricsHtml = createMetricsHtml(meters);
 
-  const html = `<div class="node-graph ${topicClass} ${stateClass} ${activeClass}">
+  const html = `<div class="node-graph ${topicClass} ${stateClass} ${activeClass}" data-testid="${kind}-${name}">
         <div class="basic-info">
           <span class="node-icon"><i class="fa ${icon}"></i></span>
           <div class="node-text-wrapper">
