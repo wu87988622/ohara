@@ -52,7 +52,7 @@ private class K8SStreamCollieImpl(node: NodeCollie, bkCollie: BrokerCollie, k8sC
       .envs(containerInfo.environments)
       .args(StreamCollie.formatJMXProperties(node.name, jmxPort) ++
         Seq(StreamCollie.MAIN_ENTRY,
-            s"""${StreamDefinitions.JAR_KEY_DEFINITION.key()}=${jarInfo.url.toURI.toASCIIString}"""))
+            s"""${StreamDefinitions.JAR_URL_DEFINITION.key()}=${jarInfo.url.toURI.toASCIIString}"""))
       .threadPool(executionContext)
       .create()
       .recover {

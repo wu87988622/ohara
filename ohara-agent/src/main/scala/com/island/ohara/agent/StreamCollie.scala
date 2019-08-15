@@ -162,7 +162,7 @@ trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator
       import sys.process._
       val classpath = System.getProperty("java.class.path")
       val command =
-        s"""java -cp "$classpath" ${StreamCollie.MAIN_ENTRY} ${StreamDefinitions.JAR_KEY_DEFINITION
+        s"""java -cp "$classpath" ${StreamCollie.MAIN_ENTRY} ${StreamDefinitions.JAR_URL_DEFINITION
           .key()}=${jarUrl.toString} ${StreamCollie.CONFIG_KEY}"""
       val result = command.!!
       val className = result.split("=")(0)

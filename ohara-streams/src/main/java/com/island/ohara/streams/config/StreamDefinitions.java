@@ -250,6 +250,18 @@ public final class StreamDefinitions implements JsonObject {
           .optional()
           .build();
 
+  // this is the jar url definition that used in container start argument
+  public static final SettingDef JAR_URL_DEFINITION =
+      SettingDef.builder()
+          .key("jarUrl")
+          .group(CORE_GROUP)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
+          .displayName("Jar url key")
+          .documentation("The jar url that will be used in streamApp")
+          .internal()
+          .valueType(Type.STRING)
+          .build();
+
   /**
    * create default configurations
    *
