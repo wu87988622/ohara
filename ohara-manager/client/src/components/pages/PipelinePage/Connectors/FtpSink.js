@@ -213,7 +213,8 @@ class FtpSink extends React.Component {
       res = await connectorApi.stopConnector(this.connectorName);
     }
 
-    this.handleTriggerConnectorResponse(action, res);
+    const isSuccess = get(res, 'data.isSuccess', false);
+    this.handleTriggerConnectorResponse(action, isSuccess);
   };
 
   handleTestConfigs = async (e, values) => {
@@ -245,12 +246,13 @@ class FtpSink extends React.Component {
     }
   };
 
-  handleTriggerConnectorResponse = (action, res) => {
-    const isSuccess = get(res, 'data.isSuccess', false);
+  handleTriggerConnectorResponse = async (action, isSuccess) => {
     if (!isSuccess) return;
 
+    const response = await connectorApi.fetchConnector(this.connectorName);
+    const state = get(response, 'data.result.state', null);
     const { graph, updateGraph } = this.props;
-    const state = get(res, 'data.result.state');
+
     this.setState({ state });
     const currSink = findByGraphName(graph, this.connectorName);
     const update = { ...currSink, state };

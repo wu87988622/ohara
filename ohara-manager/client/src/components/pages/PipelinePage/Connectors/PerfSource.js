@@ -22,6 +22,7 @@ import { get, isNull } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
 import * as connectorApi from 'api/connectorApi';
+import * as pipelineApi from 'api/pipelineApi';
 import * as utils from './connectorUtils';
 import * as types from 'propTypes/pipeline';
 import Controller from './Controller';
@@ -44,6 +45,15 @@ class PerfSource extends React.Component {
     globalTopics: PropTypes.arrayOf(types.topic).isRequired,
     defs: PropTypes.arrayOf(types.definition),
     graph: PropTypes.arrayOf(types.graph).isRequired,
+    pipeline: PropTypes.shape({
+      name: PropTypes.string.isRequired,
+      flows: PropTypes.arrayOf(
+        PropTypes.shape({
+          from: PropTypes.object,
+          to: PropTypes.arrayOf(PropTypes.object),
+        }),
+      ).isRequired,
+    }).isRequired,
     match: PropTypes.shape({
       params: PropTypes.object.isRequired,
     }).isRequired,
@@ -152,12 +162,38 @@ class PerfSource extends React.Component {
   };
 
   handleDeleteConnector = async () => {
-    const { match, refreshGraph, history } = this.props;
-    const { pipelineName } = match.params;
-    const res = await connectorApi.deleteConnector(this.connectorName);
-    const isSuccess = get(res, 'data.isSuccess', false);
+    const { refreshGraph, history, pipeline } = this.props;
+    const { name: pipelineName, flows } = pipeline;
 
-    if (isSuccess) {
+    if (this.state.state) {
+      toastr.error(
+        `The connector is running! Please stop the connector first before deleting`,
+      );
+
+      return;
+    }
+
+    const connectorResponse = await connectorApi.deleteConnector(
+      this.connectorName,
+    );
+
+    const connectorHasDeleted = get(connectorResponse, 'data.isSuccess', false);
+
+    const updatedFlows = flows.filter(
+      flow => flow.from.name !== this.connectorName,
+    );
+
+    const pipelineResponse = await pipelineApi.updatePipeline({
+      name: pipelineName,
+      params: {
+        name: pipelineName,
+        flows: updatedFlows,
+      },
+    });
+
+    const pipelineHasUpdated = get(pipelineResponse, 'data.isSuccess', false);
+
+    if (connectorHasDeleted && pipelineHasUpdated) {
       const { configs } = this.state;
       toastr.success(
         `${MESSAGES.CONNECTOR_DELETION_SUCCESS} ${configs.connector_name}`,
@@ -177,7 +213,8 @@ class PerfSource extends React.Component {
       res = await connectorApi.stopConnector(this.connectorName);
     }
 
-    this.handleTriggerConnectorResponse(action, res);
+    const isSuccess = get(res, 'data.isSuccess', false);
+    this.handleTriggerConnectorResponse(action, isSuccess);
   };
 
   handleTestConfigs = async (event, values) => {
@@ -209,12 +246,13 @@ class PerfSource extends React.Component {
     }
   };
 
-  handleTriggerConnectorResponse = (action, res) => {
-    const isSuccess = get(res, 'data.isSuccess', false);
+  handleTriggerConnectorResponse = async (action, isSuccess) => {
     if (!isSuccess) return;
 
+    const response = await connectorApi.fetchConnector(this.connectorName);
+    const state = get(response, 'data.result.state', null);
     const { graph, updateGraph } = this.props;
-    const state = get(res, 'data.result.state');
+
     this.setState({ state });
     const currSink = findByGraphName(graph, this.connectorName);
     const update = { ...currSink, state };
