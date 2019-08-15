@@ -108,13 +108,13 @@ Example Request
      - name (**string**) — the name without extension of this jar
 
   #. jmxPort (**int**) — expose port for jmx ; default is random port
-  #. from (**array(string)**) — source topic ; default is empty array
+  #. from (**array(TopicKey)**) — source topic ; default is empty array
       .. note::
        we only support one topic for current version. We will throw exception in start api if you assign
        more than 1 topic.
 
       [TODO] We will support multiple topics on issue :ohara-issue:`688`
-  #. to (**array(string)**) — target topic ; default is empty array
+  #. to (**array(TopicKey)**) — target topic ; default is empty array
       .. note::
        we only support one topic for current version. We will throw exception in start api if you assign
        more than 1 topic.

@@ -17,13 +17,14 @@
 package com.island.ohara.client.configurator.v0
 import java.util.Objects
 
+import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
-import com.island.ohara.common.setting.ObjectKey
+import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import com.island.ohara.streams.config.StreamDefinitions
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsArray, JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
@@ -82,14 +83,16 @@ object StreamApi {
 
     override def ports: Set[Int] = Set(plain(StreamDefinitions.JMX_PORT_DEFINITION.key()).toInt)
 
-    def jarKey: Option[ObjectKey] = plain.get(StreamDefinitions.JAR_KEY_DEFINITION.key()).map(ObjectKey.toObjectKey)
+    def jarKey: Option[ObjectKey] =
+      noJsNull(settings).get(StreamDefinitions.JAR_KEY_DEFINITION.key()).map(OBJECT_KEY_FORMAT.read)
 
     def jmxPort: Int = plain(StreamDefinitions.JMX_PORT_DEFINITION.key()).toInt
 
-    def from: Set[String] =
-      noJsNull(settings)(StreamDefinitions.FROM_TOPICS_DEFINITION.key()).convertTo[Set[String]]
+    def from: Set[TopicKey] =
+      noJsNull(settings)(StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key()).convertTo[Set[TopicKey]]
 
-    def to: Set[String] = noJsNull(settings)(StreamDefinitions.TO_TOPICS_DEFINITION.key()).convertTo[Set[String]]
+    def to: Set[TopicKey] =
+      noJsNull(settings)(StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key()).convertTo[Set[TopicKey]]
 
     def instances: Int = plain(StreamDefinitions.INSTANCES_DEFINITION.key()).toInt
   }
@@ -104,8 +107,8 @@ object StreamApi {
       .nullToRandomPort(StreamDefinitions.JMX_PORT_DEFINITION.key())
       .nullToInt(StreamDefinitions.INSTANCES_DEFINITION.key(), 1)
       .nullToEmptyArray(StreamDefinitions.NODE_NAMES_DEFINITION.key())
-      .nullToEmptyArray(StreamDefinitions.FROM_TOPICS_DEFINITION.key())
-      .nullToEmptyArray(StreamDefinitions.TO_TOPICS_DEFINITION.key())
+      .nullToEmptyArray(StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key())
+      .nullToEmptyArray(StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key())
       .nullToString(StreamDefinitions.NAME_DEFINITION.key(), () => CommonUtils.randomString(LIMIT_OF_NAME_LENGTH))
       .nullToString(StreamDefinitions.GROUP_DEFINITION.key(), GROUP_DEFAULT)
       .nullToEmptyObject(TAGS_KEY)
@@ -129,18 +132,16 @@ object StreamApi {
     def imageName: Option[String] =
       noJsNull(settings).get(StreamDefinitions.IMAGE_NAME_DEFINITION.key()).map(_.convertTo[String])
 
-    def jarKey: Option[ObjectKey] = noJsNull(settings)
-      .get(StreamDefinitions.JAR_KEY_DEFINITION.key())
-      .map(_.convertTo[String])
-      .map(ObjectKey.toObjectKey)
+    def jarKey: Option[ObjectKey] =
+      noJsNull(settings).get(StreamDefinitions.JAR_KEY_DEFINITION.key()).map(OBJECT_KEY_FORMAT.read)
 
     def jmxPort: Option[Int] = noJsNull(settings).get(StreamDefinitions.JMX_PORT_DEFINITION.key()).map(_.convertTo[Int])
 
-    def from: Option[Set[String]] =
-      noJsNull(settings).get(StreamDefinitions.FROM_TOPICS_DEFINITION.key()).map(_.convertTo[Set[String]])
+    def from: Option[Set[TopicKey]] =
+      noJsNull(settings).get(StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key()).map(_.convertTo[Set[TopicKey]])
 
-    def to: Option[Set[String]] =
-      noJsNull(settings).get(StreamDefinitions.TO_TOPICS_DEFINITION.key()).map(_.convertTo[Set[String]])
+    def to: Option[Set[TopicKey]] =
+      noJsNull(settings).get(StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key()).map(_.convertTo[Set[TopicKey]])
 
     def nodeNames: Option[Set[String]] =
       noJsNull(settings).get(StreamDefinitions.NODE_NAMES_DEFINITION.key()).map(_.convertTo[Seq[String]].toSet)
@@ -215,10 +216,25 @@ object StreamApi {
 
     def imageName: String = plain(StreamDefinitions.IMAGE_NAME_DEFINITION.key())
     def instances: Int = plain(StreamDefinitions.INSTANCES_DEFINITION.key()).toInt
-    // jarKey is required field in info
-    def jarKey: ObjectKey = ObjectKey.toObjectKey(plain(StreamDefinitions.JAR_KEY_DEFINITION.key()))
-    def from: Set[String] = noJsNull(settings)(StreamDefinitions.FROM_TOPICS_DEFINITION.key()).convertTo[Set[String]]
-    def to: Set[String] = noJsNull(settings)(StreamDefinitions.TO_TOPICS_DEFINITION.key()).convertTo[Set[String]]
+
+    /**
+      * Return the key of explicit value. Otherwise, return the key of jar info.
+      * Normally, the key should be equal to jar info
+      * @return key of jar
+      */
+    def jarKey: ObjectKey =
+      noJsNull(settings)
+        .get(StreamDefinitions.JAR_KEY_DEFINITION.key())
+        .map(OBJECT_KEY_FORMAT.read)
+        .getOrElse(jarInfo.key)
+
+    def jarInfo: FileInfo =
+      FileInfoApi.FILE_INFO_JSON_FORMAT.read(noJsNull(settings)(StreamDefinitions.JAR_INFO_DEFINITION.key()))
+
+    def from: Set[TopicKey] =
+      noJsNull(settings)(StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key()).convertTo[Set[TopicKey]]
+    def to: Set[TopicKey] =
+      noJsNull(settings)(StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key()).convertTo[Set[TopicKey]]
     def jmxPort: Int = plain(StreamDefinitions.JMX_PORT_DEFINITION.key()).toInt
     // TODO remove this default value after we could handle from UI
     def exactlyOnce: Boolean = false
@@ -252,8 +268,10 @@ object StreamApi {
     @Optional("the default image is IMAGE_NAME_DEFAULT")
     def imageName(imageName: String): Request
     def jarKey(jarKey: ObjectKey): Request
-    def from(from: Set[String]): Request
-    def to(to: Set[String]): Request
+    def fromTopicKey(fromTopicKey: TopicKey): Request = fromTopicKeys(Set(fromTopicKey))
+    def fromTopicKeys(fromTopicKeys: Set[TopicKey]): Request
+    def toTopicKey(toTopicKey: TopicKey): Request = toTopicKeys(Set(toTopicKey))
+    def toTopicKeys(toTopicKeys: Set[TopicKey]): Request
     @Optional("the default port is random")
     def jmxPort(jmxPort: Int): Request
     @Optional("this parameter has lower priority than nodeNames")
@@ -305,8 +323,8 @@ object StreamApi {
       private[this] var name: String = _
       private[this] var _imageName: Option[String] = None
       private[this] var jarKey: Option[ObjectKey] = None
-      private[this] var _from: Option[Set[String]] = None
-      private[this] var _to: Option[Set[String]] = None
+      private[this] var _from: Option[Set[TopicKey]] = None
+      private[this] var _to: Option[Set[TopicKey]] = None
       private[this] var _jmxPort: Option[Int] = None
       private[this] var _instances: Option[Int] = None
       private[this] var _nodeNames: Option[Set[String]] = None
@@ -325,12 +343,12 @@ object StreamApi {
         this.jarKey = Some(Objects.requireNonNull(jarKey))
         this
       }
-      override def from(from: Set[String]): Request = {
-        this._from = Some(Objects.requireNonNull(from))
+      override def fromTopicKeys(fromTopicKeys: Set[TopicKey]): Request = {
+        this._from = Some(Objects.requireNonNull(fromTopicKeys))
         this
       }
-      override def to(to: Set[String]): Request = {
-        this._to = Some(Objects.requireNonNull(to))
+      override def toTopicKeys(toTopicKeys: Set[TopicKey]): Request = {
+        this._to = Some(Objects.requireNonNull(toTopicKeys))
         this
       }
       override def jmxPort(jmxPort: Int): Request = {
@@ -366,11 +384,11 @@ object StreamApi {
             // default group
             StreamDefinitions.GROUP_DEFINITION.key() -> JsString(GROUP_DEFAULT),
             // default from is empty object in creation
-            StreamDefinitions.FROM_TOPICS_DEFINITION.key() -> _from.fold[JsValue](JsArray.empty)(s =>
-              JsArray(s.map(JsString(_)).toVector)),
+            StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key() -> _from.fold[JsValue](JsArray.empty)(s =>
+              JsArray(s.map(TOPIC_KEY_FORMAT.write).toVector)),
             // default to is empty object in creation
-            StreamDefinitions.TO_TOPICS_DEFINITION.key() -> _to.fold[JsValue](JsArray.empty)(s =>
-              JsArray(s.map(JsString(_)).toVector)),
+            StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key() -> _to.fold[JsValue](JsArray.empty)(s =>
+              JsArray(s.map(TOPIC_KEY_FORMAT.write).toVector)),
             // default tags is empty object in creation
             StreamDefinitions.TAGS_DEFINITION.key() -> Option(tags).fold[JsValue](JsObject.empty)(JsObject(_))
             // extra settings maybe have same key before, we overwrite it
@@ -382,14 +400,14 @@ object StreamApi {
           Map(
             StreamDefinitions.IMAGE_NAME_DEFINITION.key() -> JsString(
               CommonUtils.requireNonEmpty(_imageName.getOrElse(IMAGE_NAME_DEFAULT))),
-            StreamDefinitions.JAR_KEY_DEFINITION.key() -> jarKey.fold[JsValue](JsNull)(s =>
-              JsString(ObjectKey.toJsonString(s))),
+            StreamDefinitions.JAR_KEY_DEFINITION
+              .key() -> jarKey.fold[JsValue](JsNull)(ObjectKey.toJsonString(_).parseJson),
             StreamDefinitions.JMX_PORT_DEFINITION.key() -> JsNumber(
               CommonUtils.requireConnectionPort(_jmxPort.getOrElse(CommonUtils.availablePort()))),
-            StreamDefinitions.FROM_TOPICS_DEFINITION.key() -> _from.fold[JsValue](JsNull)(s =>
-              JsArray(s.map(JsString(_)).toVector)),
-            StreamDefinitions.TO_TOPICS_DEFINITION.key() -> _to.fold[JsValue](JsNull)(s =>
-              JsArray(s.map(JsString(_)).toVector)),
+            StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key() -> _from.fold[JsValue](JsNull)(s =>
+              JsArray(s.map(TOPIC_KEY_FORMAT.write).toVector)),
+            StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key() -> _to.fold[JsValue](JsNull)(s =>
+              JsArray(s.map(TOPIC_KEY_FORMAT.write).toVector)),
             StreamDefinitions.INSTANCES_DEFINITION.key() -> _instances.fold[JsNumber](JsNumber(1))(n =>
               JsNumber(CommonUtils.requirePositiveInt(n))),
             StreamDefinitions.NODE_NAMES_DEFINITION.key() -> _nodeNames.fold[JsArray](JsArray.empty)(s =>

@@ -18,6 +18,7 @@ package com.island.ohara.agent
 
 import java.net.URL
 
+import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.FileInfoApi.{FILE_INFO_JSON_FORMAT, FileInfo}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi
@@ -335,13 +336,32 @@ class TestWorkerCreator extends SmallTest with Matchers {
       tags = Map.empty
     )
 
-    val fakeWorkerCollie = new FakeWorkerCollie(NodeCollie(Seq(node1, node2)))
+    val bkName = CommonUtils.randomString(5)
+    val fakeWorkerCollie = new FakeWorkerCollie(
+      NodeCollie(Seq(node1, node2)),
+      Map(
+        bkName -> Seq(
+          ContainerInfo(
+            "node1",
+            "aaaa",
+            "broker",
+            "2019-05-28 00:00:00",
+            "running",
+            "unknown",
+            "ohara-xxx-bk-0000",
+            "unknown",
+            Seq.empty,
+            Map(BrokerCollie.CLIENT_PORT_KEY -> "9092"),
+            "ohara-xxx-bk-0000"
+          )
+        ))
+    )
     val workerClusterInfo: Future[WorkerClusterInfo] = fakeWorkerCollie.creator
       .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
       .clusterName("wk1")
       .clientPort(8083)
       .jmxPort(8084)
-      .brokerClusterName("bk1")
+      .brokerClusterName(bkName)
       .groupId(CommonUtils.randomString(10))
       .configTopicName(CommonUtils.randomString(10))
       .statusTopicName(CommonUtils.randomString(10))
@@ -350,7 +370,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
       .create()
 
     val result: WorkerClusterInfo = Await.result(workerClusterInfo, TIMEOUT)
-    result.brokerClusterName shouldBe "bk1"
+    result.brokerClusterName shouldBe bkName
     result.clientPort shouldBe 8083
     result.nodeNames.size shouldBe 2
     result.connectionProps shouldBe "node2:8083,node1:8083"
@@ -370,7 +390,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
       tags = Map.empty
     )
 
-    val fakeWorkerCollie = new FakeWorkerCollie(NodeCollie(Seq(node1)))
+    val fakeWorkerCollie = new FakeWorkerCollie(NodeCollie(Seq(node1)), Map.empty)
     val workerClusterInfo: Future[WorkerClusterInfo] = fakeWorkerCollie.creator
       .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
       .clusterName("wk1")
@@ -414,22 +434,57 @@ class TestWorkerCreator extends SmallTest with Matchers {
       tags = Map.empty
     )
 
-    val fakeWorkerCollie = new FakeWorkerCollie(NodeCollie(Seq(node1, node2)))
-    val workerClusterInfo: Future[WorkerClusterInfo] = fakeWorkerCollie.creator
-      .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
-      .clusterName("wk1")
-      .clientPort(8083)
-      .jmxPort(8084)
-      .brokerClusterName("bk2") // bk2 not exists
-      .groupId(CommonUtils.randomString(10))
-      .configTopicName(CommonUtils.randomString(10))
-      .statusTopicName(CommonUtils.randomString(10))
-      .offsetTopicName(CommonUtils.randomString(10))
-      .nodeName(node2Name)
-      .create()
+    val bkName = CommonUtils.randomString(5)
+    val fakeWorkerCollie = new FakeWorkerCollie(
+      NodeCollie(Seq(node1, node2)),
+      Map(
+        bkName -> Seq(
+          ContainerInfo(
+            "node1",
+            "aaaa",
+            "broker",
+            "2019-05-28 00:00:00",
+            "running",
+            "unknown",
+            "ohara-xxx-bk-0000",
+            "unknown",
+            Seq.empty,
+            Map(BrokerCollie.CLIENT_PORT_KEY -> "9092"),
+            "ohara-xxx-bk-0000"
+          )
+        ))
+    )
 
-    an[NoSuchClusterException] shouldBe thrownBy {
-      Await.result(workerClusterInfo, TIMEOUT)
-    }
+    Await.result(
+      fakeWorkerCollie.creator
+        .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
+        .clusterName("wk1")
+        .clientPort(8083)
+        .jmxPort(8084)
+        .brokerClusterName(bkName) // bk2 not exists
+        .groupId(CommonUtils.randomString(10))
+        .configTopicName(CommonUtils.randomString(10))
+        .statusTopicName(CommonUtils.randomString(10))
+        .offsetTopicName(CommonUtils.randomString(10))
+        .nodeName(node2Name)
+        .create(),
+      TIMEOUT
+    )
+
+    an[NoSuchClusterException] should be thrownBy Await.result(
+      fakeWorkerCollie.creator
+        .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
+        .clusterName("wk1")
+        .clientPort(8083)
+        .jmxPort(8084)
+        .brokerClusterName(CommonUtils.randomString()) // bk2 not exists
+        .groupId(CommonUtils.randomString(10))
+        .configTopicName(CommonUtils.randomString(10))
+        .statusTopicName(CommonUtils.randomString(10))
+        .offsetTopicName(CommonUtils.randomString(10))
+        .nodeName(node2Name)
+        .create(),
+      TIMEOUT
+    )
   }
 }

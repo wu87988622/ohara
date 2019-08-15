@@ -16,19 +16,18 @@
 
 package com.island.ohara.agent.ssh
 
-import com.island.ohara.agent.Collie.ClusterCreator
-import com.island.ohara.agent.{ClusterCache, ContainerCollie, NoSuchClusterException, NodeCollie}
+import com.island.ohara.agent.{ClusterCache, Collie, NoSuchClusterException, NodeCollie}
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
-private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: ClusterCreator[T]](
+private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: Collie.ClusterCreator[T]](
   nodeCollie: NodeCollie,
   dockerCache: DockerClientCache,
   clusterCache: ClusterCache)
-    extends ContainerCollie[T, Creator](nodeCollie) {
+    extends Collie[T, Creator] {
 
   final override def clusterWithAllContainers()(
     implicit executionContext: ExecutionContext): Future[Map[T, Seq[ContainerInfo]]] = {
@@ -51,7 +50,7 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: Cl
         .find(_._1.name == name)
         .getOrElse(throw new NoSuchClusterException(s"$name doesn't exist")))
 
-  def updateRoute(node: Node, containerName: String, route: Map[String, String]): Unit =
+  protected def updateRoute(node: Node, containerName: String, route: Map[String, String]): Unit =
     dockerCache.exec(node,
                      _.containerInspector(containerName)
                        .asRoot()

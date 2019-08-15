@@ -32,7 +32,8 @@ class FakeZookeeperCollie(node: NodeCollie) extends ZookeeperCollie {
     Future.unit
   }
 
-  override def remove(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
+  protected def doRemove(clusterInfo: ZookeeperClusterInfo, containerInfos: Seq[ContainerInfo])(
+    implicit executionContext: ExecutionContext): Future[Boolean] =
     throw new UnsupportedOperationException("Not support remove function")
 
   override def logs(clusterName: String)(
@@ -43,11 +44,13 @@ class FakeZookeeperCollie(node: NodeCollie) extends ZookeeperCollie {
     implicit executionContext: ExecutionContext): Future[Map[ZookeeperClusterInfo, Seq[ContainerInfo]]] =
     Future.successful(Map.empty)
 
-  override def addNode(clusterName: String, nodeName: String)(
-    implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
+  override def doAddNode(
+    previousCluster: ZookeeperClusterInfo,
+    previousContainers: Seq[ContainerInfo],
+    newNodeName: String)(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
     throw new UnsupportedOperationException("Not support addNode function")
 
-  override def removeNode(clusterName: String, nodeName: String)(
+  override protected def doRemoveNode(previousCluster: ZookeeperClusterInfo, beRemovedContainer: ContainerInfo)(
     implicit executionContext: ExecutionContext): Future[Boolean] =
     throw new UnsupportedOperationException("Not support removeNode function")
 
@@ -56,6 +59,4 @@ class FakeZookeeperCollie(node: NodeCollie) extends ZookeeperCollie {
   override protected def nodeCollie: NodeCollie = node
 
   override protected def prefixKey: String = "fakezookeeper"
-
-  override protected def serviceName: String = "zk"
 }

@@ -76,7 +76,7 @@ package object v0 {
     .rejectEmptyString()
     .refine
 
-  private[v0] implicit val TOPIC_KEY_FORMAT: RootJsonFormat[TopicKey] = JsonRefiner[TopicKey]
+  implicit val TOPIC_KEY_FORMAT: RootJsonFormat[TopicKey] = JsonRefiner[TopicKey]
     .format(new RootJsonFormat[TopicKey] {
       import spray.json._
       override def write(obj: TopicKey): JsValue = try TopicKey.toJsonString(obj).parseJson

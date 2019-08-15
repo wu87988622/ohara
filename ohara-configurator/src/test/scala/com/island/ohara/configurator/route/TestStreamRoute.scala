@@ -25,7 +25,7 @@ import com.island.ohara.configurator.Configurator
 import com.island.ohara.streams.config.StreamDefinitions
 import org.junit.{After, Test}
 import org.scalatest.Matchers
-import spray.json.{JsArray, JsNumber, JsString}
+import spray.json.{JsNumber, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -42,6 +42,9 @@ class TestStreamRoute extends SmallTest with Matchers {
   private[this] val accessStream = StreamApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 20 seconds)
+  private[this] def topicKey(): TopicKey = topicKey(CommonUtils.randomString())
+  private[this] def topicKey(name: String): TopicKey = TopicKey.of(TopicApi.GROUP_DEFAULT, name)
+
   @Test
   def testStreamAppPropertyPage(): Unit = {
     val file = CommonUtils.createTempJar("empty_")
@@ -67,34 +70,38 @@ class TestStreamRoute extends SmallTest with Matchers {
     res1.instances shouldBe 1
 
     // update partial properties
-    val res2 = result(accessStream.request.name(defaultProps.name).to(Set("to1")).instances(10).update())
+    val to = topicKey()
+    val res2 = result(accessStream.request.name(defaultProps.name).toTopicKey(to).instances(10).update())
     res2.name shouldBe name
     res2.jarKey shouldBe jar.key
     res2.from shouldBe Set.empty
-    res2.to shouldBe Set("to1")
+    res2.to shouldBe Set(to)
     res2.instances shouldBe 10
 
     // create property with some user defined properties
     val userAppId = CommonUtils.randomString(5)
+    val to2 = topicKey()
     val userProps = result(
       accessStream.request
         .name(userAppId)
         .jarKey(ObjectKey.of(jar.group, jar.name))
-        .to(Set("to"))
+        .toTopicKey(to2)
         .instances(99)
         .create())
     userProps.name shouldBe userAppId
-    userProps.to shouldBe Set("to")
+    userProps.to shouldBe Set(to2)
     userProps.instances shouldBe 99
 
     // we create two properties, the list size should be 2
     result(accessStream.list()).size shouldBe 2
 
     // update properties
-    val res3 = result(accessStream.request.name(userAppId).from(Set("from")).to(Set("to")).instances(1).update())
+    val from3 = topicKey()
+    val to3 = topicKey()
+    val res3 = result(accessStream.request.name(userAppId).fromTopicKey(from3).toTopicKey(to3).instances(1).update())
     res3.name shouldBe userAppId
-    res3.from shouldBe Set("from")
-    res3.to shouldBe Set("to")
+    res3.from shouldBe Set(from3)
+    res3.to shouldBe Set(to3)
     res3.instances shouldBe 1
 
     // delete properties
@@ -116,8 +123,8 @@ class TestStreamRoute extends SmallTest with Matchers {
     val streamAppName = CommonUtils.randomString(5)
     // we should have only one worker cluster
     val wkName = result(wkApi.list).head.name
-    val from = TopicKey.of("group", "fromTopic")
-    val to = TopicKey.of("group", "toTopic")
+    val from = topicKey()
+    val to = topicKey()
 
     // upload jar
     val streamJar = result(accessJar.request.group(wkName).file(file).upload())
@@ -127,13 +134,7 @@ class TestStreamRoute extends SmallTest with Matchers {
       accessStream.request.name(streamAppName).jarKey(ObjectKey.of(streamJar.group, streamJar.name)).create())
 
     // update properties
-    result(
-      accessStream.request
-        .name(streamAppName)
-        .from(Set(from.topicNameOnKafka()))
-        .to(Set(to.topicNameOnKafka()))
-        .instances(instances)
-        .update())
+    result(accessStream.request.name(streamAppName).fromTopicKey(from).toTopicKey(to).instances(instances).update())
 
     // run topics
     topicApi.request.key(from).create().flatMap(info => topicApi.start(info.key))
@@ -143,8 +144,8 @@ class TestStreamRoute extends SmallTest with Matchers {
     val res1 = result(accessStream.get(props.name))
     res1.name shouldBe props.name
     res1.name shouldBe streamAppName
-    res1.from shouldBe Set(from.topicNameOnKafka())
-    res1.to shouldBe Set(to.topicNameOnKafka())
+    res1.from shouldBe Set(from)
+    res1.to shouldBe Set(to)
     res1.jarKey.name shouldBe streamJar.name
     res1.instances shouldBe instances
     res1.state.get shouldBe ContainerState.RUNNING.name
@@ -207,10 +208,10 @@ class TestStreamRoute extends SmallTest with Matchers {
     an[IllegalArgumentException] should be thrownBy result(accessStream.get("non_exist_id"))
 
     an[IllegalArgumentException] should be thrownBy result(
-      accessStream.request.name(streamAppName).from(Set.empty).update())
+      accessStream.request.name(streamAppName).fromTopicKeys(Set.empty).update())
 
     an[IllegalArgumentException] should be thrownBy result(
-      accessStream.request.name(streamAppName).to(Set.empty).update())
+      accessStream.request.name(streamAppName).toTopicKeys(Set.empty).update())
 
     an[IllegalArgumentException] should be thrownBy result(
       accessStream.request.name(streamAppName).instances(0).update())
@@ -227,8 +228,8 @@ class TestStreamRoute extends SmallTest with Matchers {
     val file = CommonUtils.createTempJar("empty_")
     val streamAppName = CommonUtils.randomString(5)
     val wkName = result(wkApi.list()).head.name
-    val from = TopicKey.of("group", "fromTopic")
-    val to = TopicKey.of("group", "toTopic")
+    val from = topicKey()
+    val to = topicKey()
 
     // upload jar
     val streamJar = result(accessJar.request.group(wkName).file(file).upload())
@@ -237,10 +238,10 @@ class TestStreamRoute extends SmallTest with Matchers {
     result(accessStream.request.name(streamAppName).jarKey(ObjectKey.of(streamJar.group, streamJar.name)).create())
     an[IllegalArgumentException] should be thrownBy result(accessStream.start(streamAppName))
 
-    result(accessStream.request.name(streamAppName).from(Set(from.topicNameOnKafka())).update())
+    result(accessStream.request.name(streamAppName).fromTopicKey(from).update())
     an[IllegalArgumentException] should be thrownBy result(accessStream.start(streamAppName))
 
-    result(accessStream.request.name(streamAppName).to(Set(to.topicNameOnKafka())).update())
+    result(accessStream.request.name(streamAppName).toTopicKey(to).update())
 
     // non-exist topics in broker will cause running fail
     an[IllegalArgumentException] should be thrownBy result(accessStream.start(streamAppName))
@@ -304,10 +305,11 @@ class TestStreamRoute extends SmallTest with Matchers {
     val streamDesc = result(accessStream.request.jarKey(ObjectKey.of(jar.group, jar.name)).create())
     streamDesc.from shouldBe Set.empty
     streamDesc.to shouldBe Set.empty
+    val from = topicKey()
     // update from topic
-    result(accessStream.request.name(streamDesc.name).from(Set("from")).update()).from shouldBe Set("from")
+    result(accessStream.request.name(streamDesc.name).fromTopicKey(from).update()).from shouldBe Set(from)
     // update from topic to empty
-    result(accessStream.request.name(streamDesc.name).from(Set.empty).update()).from shouldBe Set.empty
+    result(accessStream.request.name(streamDesc.name).fromTopicKeys(Set.empty).update()).from shouldBe Set.empty
     // to topic should still be empty
     result(accessStream.get(streamDesc.name)).to shouldBe Set.empty
   }
@@ -326,6 +328,7 @@ class TestStreamRoute extends SmallTest with Matchers {
 
   @Test
   def createStream(): Unit = {
+    import spray.json._
     val name = CommonUtils.randomString(5)
     val file = CommonUtils.createTempJar("empty_")
     val jar = result(accessJar.request.file(file).upload())
@@ -337,10 +340,12 @@ class TestStreamRoute extends SmallTest with Matchers {
         .nodeName(CommonUtils.randomString(5))
         .imageName(CommonUtils.randomString())
         .clusterName(name)
+        .brokerClusterName(CommonUtils.randomString())
         .setting(key, value)
         .setting(StreamDefinitions.JMX_PORT_DEFINITION.key(), JsNumber(123))
-        .setting(StreamDefinitions.FROM_TOPICS_DEFINITION.key(), JsArray(JsString("FROM")))
-        .setting(StreamDefinitions.TO_TOPICS_DEFINITION.key(), JsArray(JsString("TO")))
+        .setting(StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key(),
+                 JsArray(TopicKey.toJsonString(topicKey()).parseJson))
+        .setting(StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key(), JsArray(TopicKey.toJsonString(topicKey()).parseJson))
         .create())
     streamDesc.name shouldBe name
     streamDesc.settings(key) shouldBe value
@@ -364,8 +369,8 @@ class TestStreamRoute extends SmallTest with Matchers {
     val thrown1 = the[IllegalArgumentException] thrownBy result(
       accessStream.request
         .name(streamDesc.name)
-        .from(Set("from"))
-        .to(Set("to1", "to2"))
+        .fromTopicKey(topicKey())
+        .toTopicKeys(Set(topicKey(), topicKey()))
         .update()
         .flatMap(info => accessStream.start(info.name)))
     thrown1.getMessage should include("We don't allow multiple topics of from/to field")

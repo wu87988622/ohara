@@ -26,8 +26,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class TestContainerCollie extends SmallTest with Matchers {
-  private[this] val fakeClusterName: String = FakeContainerCollie.clusterName
+class TestCollie extends SmallTest with Matchers {
+  private[this] val fakeClusterName: String = FakeCollie.clusterName
   private[this] val TIMEOUT = 10 seconds
 
   private[this] def node(hostname: String): Node = Node(
@@ -47,7 +47,7 @@ class TestContainerCollie extends SmallTest with Matchers {
 
   @Test
   def testAddNodeNameEmpty(): Unit = {
-    validErrorNodeName("", "cluster and node name can't empty")
+    validErrorNodeName("", "nodeName can't empty")
   }
 
   @Test
@@ -61,12 +61,12 @@ class TestContainerCollie extends SmallTest with Matchers {
     val container1 =
       ContainerInfo(nodeName1, "0", "fakeimage", "", "RUNNING", "", "container1", "0", Seq(), Map(), s"xxx")
 
-    val fakeContainerCollie = new FakeContainerCollie(NodeCollie(Seq(node1, node2)), Seq(container1))
-    val cluster = Await.result(fakeContainerCollie.cluster(FakeContainerCollie.clusterName), TIMEOUT)
+    val fakeCollie = new FakeCollie(NodeCollie(Seq(node1, node2)), Seq(container1))
+    val cluster = Await.result(fakeCollie.cluster(FakeCollie.clusterName), TIMEOUT)
     cluster._1.nodeNames.size shouldBe 1
 
-    val result: FakeContainerCollieClusterInfo =
-      Await.result(fakeContainerCollie.addNode(FakeContainerCollie.clusterName, nodeName2), TIMEOUT)
+    val result: FakeCollieClusterInfo =
+      Await.result(fakeCollie.addNode(FakeCollie.clusterName, nodeName2), TIMEOUT)
     result.nodeNames.size shouldBe 2
     result.nodeNames.contains("node1") shouldBe true
     result.nodeNames.contains("node2") shouldBe true
@@ -74,8 +74,8 @@ class TestContainerCollie extends SmallTest with Matchers {
 
   @Test
   def testRemoveEmptyNode(): Unit = {
-    val fakeContainerCollie = new FakeContainerCollie(NodeCollie(Seq.empty), Seq.empty)
-    val removeNode: Future[Boolean] = fakeContainerCollie.removeNode(fakeClusterName, "node1")
+    val fakeCollie = new FakeCollie(NodeCollie(Seq.empty), Seq.empty)
+    val removeNode: Future[Boolean] = fakeCollie.removeNode(fakeClusterName, "node1")
     Await.result(removeNode, TIMEOUT) shouldBe false
   }
 
@@ -85,8 +85,8 @@ class TestContainerCollie extends SmallTest with Matchers {
     val node1 = node(node1Name)
     val containerInfo =
       ContainerInfo("node2", "0", "fakeimage", "", "RUNNING", "", "container1", "0", Seq.empty, Map.empty, s"xxx")
-    val fakeContainerCollie = new FakeContainerCollie(NodeCollie(Seq(node1)), Seq(containerInfo))
-    val removeNode: Future[Boolean] = fakeContainerCollie.removeNode(fakeClusterName, node1Name)
+    val fakeCollie = new FakeCollie(NodeCollie(Seq(node1)), Seq(containerInfo))
+    val removeNode: Future[Boolean] = fakeCollie.removeNode(fakeClusterName, node1Name)
     Await.result(removeNode, TIMEOUT) shouldBe false
   }
 
@@ -106,11 +106,11 @@ class TestContainerCollie extends SmallTest with Matchers {
                     Seq(),
                     Map(),
                     s"xxx-${node1Name}")
-    val fakeContainerCollie = new FakeContainerCollie(NodeCollie(Seq(node1)), Seq(containerInfo))
-    val removeNode: Future[Boolean] = fakeContainerCollie.removeNode(fakeClusterName, node1Name)
+    val fakeCollie = new FakeCollie(NodeCollie(Seq(node1)), Seq(containerInfo))
+    val removeNode: Future[Boolean] = fakeCollie.removeNode(fakeClusterName, node1Name)
     intercept[IllegalArgumentException] {
       Await.result(removeNode, TIMEOUT)
-    }.getMessage shouldBe s"${FakeContainerCollie.clusterName} is a single-node cluster. You can't remove the last node by removeNode(). Please use remove(clusterName) instead"
+    }.getMessage shouldBe s"${FakeCollie.clusterName} is a single-node cluster. You can't remove the last node by removeNode(). Please use remove(clusterName) instead"
   }
 
   @Test
@@ -129,8 +129,8 @@ class TestContainerCollie extends SmallTest with Matchers {
                     Seq(),
                     Map(),
                     s"xxx-${node1Name}")
-    val fakeContainerCollie = new FakeContainerCollie(NodeCollie(Seq(node1)), Seq(containerInfo))
-    val removeNode: Future[Boolean] = fakeContainerCollie.removeNode(fakeClusterName, "node3")
+    val fakeCollie = new FakeCollie(NodeCollie(Seq(node1)), Seq(containerInfo))
+    val removeNode: Future[Boolean] = fakeCollie.removeNode(fakeClusterName, "node3")
     Await.result(removeNode, TIMEOUT) shouldBe false
   }
 
@@ -167,8 +167,8 @@ class TestContainerCollie extends SmallTest with Matchers {
                     Map(),
                     s"xxx-${node1Name}")
 
-    val fakeContainerCollie = new FakeContainerCollie(NodeCollie(Seq(node1, node2)), Seq(container1, container2))
-    val removeNode: Future[Boolean] = fakeContainerCollie.removeNode(fakeClusterName, "node1")
+    val fakeCollie = new FakeCollie(NodeCollie(Seq(node1, node2)), Seq(container1, container2))
+    val removeNode: Future[Boolean] = fakeCollie.removeNode(fakeClusterName, "node1")
     Await.result(removeNode, TIMEOUT) shouldBe true
   }
 
@@ -186,8 +186,8 @@ class TestContainerCollie extends SmallTest with Matchers {
                     Seq(),
                     Map(),
                     s"xxx-${node1.name}")
-    val fakeContainerCollie = new FakeContainerCollie(NodeCollie(Seq(node1)), Seq(containerInfo))
-    val addNode: Future[FakeContainerCollieClusterInfo] = fakeContainerCollie.addNode(fakeClusterName, nodeName)
+    val fakeCollie = new FakeCollie(NodeCollie(Seq(node1)), Seq(containerInfo))
+    val addNode: Future[FakeCollieClusterInfo] = fakeCollie.addNode(fakeClusterName, nodeName)
     intercept[IllegalArgumentException] {
       Await.result(addNode, TIMEOUT)
     }.getMessage shouldBe expectErrMsg

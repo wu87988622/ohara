@@ -22,10 +22,15 @@ import com.island.ohara.common.json.JsonObject;
 import com.island.ohara.common.json.JsonUtils;
 import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.setting.SettingDef.Type;
+import com.island.ohara.common.setting.TopicKey;
+import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.common.util.VersionUtils;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -51,6 +56,17 @@ public final class StreamDefinitions implements JsonObject {
 
   /** This is the default configurations we will load into {@code StreamDefinitions}. */
   private static final AtomicInteger ORDER_COUNTER = new AtomicInteger(0);
+
+  public static final SettingDef BROKER_CLUSTER_NAME_DEFINITION =
+      SettingDef.builder()
+          .key("broker.cluster.name")
+          .group(CORE_GROUP)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
+          .displayName("Broker cluster name")
+          .documentation("the name of broker cluster used to transfer data for this streamapp")
+          .valueType(Type.STRING)
+          .internal()
+          .build();
 
   public static final SettingDef BROKER_DEFINITION =
       SettingDef.builder()
@@ -120,7 +136,7 @@ public final class StreamDefinitions implements JsonObject {
           .internal()
           .build();
 
-  public static final SettingDef FROM_TOPICS_DEFINITION =
+  public static final SettingDef FROM_TOPIC_KEYS_DEFINITION =
       SettingDef.builder()
           .key("from")
           .group(CORE_GROUP)
@@ -128,10 +144,10 @@ public final class StreamDefinitions implements JsonObject {
           .reference(SettingDef.Reference.TOPIC)
           .displayName("From topic of data consuming from")
           .documentation("The topic name of this streamApp should consume from")
-          .valueType(Type.STRING)
+          .valueType(Type.TOPIC_KEYS)
           .build();
 
-  public static final SettingDef TO_TOPICS_DEFINITION =
+  public static final SettingDef TO_TOPIC_KEYS_DEFINITION =
       SettingDef.builder()
           .key("to")
           .group(CORE_GROUP)
@@ -139,7 +155,7 @@ public final class StreamDefinitions implements JsonObject {
           .reference(SettingDef.Reference.TOPIC)
           .displayName("To topic of data produce to")
           .documentation("The topic name of this streamApp should produce to")
-          .valueType(Type.STRING)
+          .valueType(Type.TOPIC_KEYS)
           .build();
 
   public static final SettingDef JMX_PORT_DEFINITION =
@@ -254,8 +270,8 @@ public final class StreamDefinitions implements JsonObject {
               StreamDefinitions.IMAGE_NAME_DEFINITION,
               StreamDefinitions.NAME_DEFINITION,
               StreamDefinitions.GROUP_DEFINITION,
-              StreamDefinitions.FROM_TOPICS_DEFINITION,
-              StreamDefinitions.TO_TOPICS_DEFINITION,
+              StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION,
+              StreamDefinitions.TO_TOPIC_KEYS_DEFINITION,
               StreamDefinitions.JMX_PORT_DEFINITION,
               StreamDefinitions.INSTANCES_DEFINITION,
               StreamDefinitions.NODE_NAMES_DEFINITION,
@@ -322,11 +338,59 @@ public final class StreamDefinitions implements JsonObject {
   /**
    * Get value from specific name. Note: This is a helper method for container environment.
    *
-   * @param name config name
+   * @param key config key
    * @return value from container environment
    */
-  public String get(String name) {
-    return System.getenv(name);
+  public String string(String key) {
+    return CommonUtils.fromEnvString(Objects.requireNonNull(System.getenv(key)));
+  }
+
+  public Optional<String> stringOption(String key) {
+    return Optional.ofNullable(System.getenv(key)).map(CommonUtils::fromEnvString);
+  }
+
+  /**
+   * this is a workaround function since the LaunchImpl does not care null point. Hence, we can't do
+   * totally check for env variables for it ...
+   *
+   * @return string or none
+   */
+  public Optional<String> nameOption() {
+    return stringOption(StreamDefinitions.NAME_DEFINITION.key());
+  }
+
+  /** @return the name of this streamapp */
+  public String name() {
+    return string(StreamDefinitions.NAME_DEFINITION.key());
+  }
+
+  /**
+   * this is a workaround function since the LaunchImpl does not care null point. Hence, we can't do
+   * totally check for env variables for it ...
+   *
+   * @return string or none
+   */
+  public Optional<String> brokerConnectionPropsOption() {
+    return stringOption(StreamDefinitions.BROKER_DEFINITION.key());
+  }
+
+  /** @return brokers' connection props */
+  public String brokerConnectionProps() {
+    return string(StreamDefinitions.BROKER_DEFINITION.key());
+  }
+
+  /** @return the keys of from topics */
+  public List<TopicKey> fromTopicKeys() {
+    return stringOption(StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key())
+        .map(TopicKey::toTopicKeys)
+        .orElse(Collections.emptyList());
+  }
+
+  /** @return the keys of to topics */
+  public List<TopicKey> toTopicKeys() {
+    return stringOption(StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key())
+        .map(TopicKey::toTopicKeys)
+        .orElse(Collections.emptyList());
   }
 
   /**

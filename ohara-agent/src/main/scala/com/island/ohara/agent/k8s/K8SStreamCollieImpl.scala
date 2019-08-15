@@ -16,7 +16,7 @@
 
 package com.island.ohara.agent.k8s
 
-import com.island.ohara.agent.{NodeCollie, StreamCollie}
+import com.island.ohara.agent.{BrokerCollie, NoSuchClusterException, NodeCollie, StreamCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
@@ -26,7 +26,7 @@ import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
 
-private class K8SStreamCollieImpl(node: NodeCollie, k8sClient: K8SClient)
+private class K8SStreamCollieImpl(node: NodeCollie, bkCollie: BrokerCollie, k8sClient: K8SClient)
     extends K8SBasicCollieImpl[StreamClusterInfo, StreamCollie.ClusterCreator](node, k8sClient)
     with StreamCollie {
   private[this] val LOG = Logger(classOf[K8SStreamCollieImpl])
@@ -80,4 +80,13 @@ private class K8SStreamCollieImpl(node: NodeCollie, k8sClient: K8SClient)
 
   override protected def nodeCollie: NodeCollie = node
   override protected def prefixKey: String = PREFIX_KEY
+
+  override protected def brokerContainers(clusterName: String)(
+    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
+    bkCollie
+      .clusters()
+      .map(
+        _.find(_._1.name == clusterName)
+          .map(_._2)
+          .getOrElse(throw new NoSuchClusterException(s"broker cluster:$clusterName does not exist")))
 }

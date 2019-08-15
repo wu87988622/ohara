@@ -16,6 +16,7 @@
 
 package com.island.ohara.common.util;
 
+import com.island.ohara.common.annotations.VisibleForTesting;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -789,6 +790,35 @@ public final class CommonUtils {
 
     copyURLToFile(url, outputFile, ct, rt);
     return outputFile;
+  }
+
+  /** this is a specific string used to replace the quota in the env. */
+  @VisibleForTesting static String INTERNAL_STRING_FOR_ENV = "\\\\\"";
+
+  /**
+   * remove the unsupported charset - quote - and replace it by slash
+   *
+   * @param string string
+   * @return a string is accepted by env
+   */
+  public static String toEnvString(String string) {
+    if (string.contains(INTERNAL_STRING_FOR_ENV))
+      throw new IllegalArgumentException(
+          string
+              + " has internal string:"
+              + INTERNAL_STRING_FOR_ENV
+              + " so we can't convert it to env string");
+    return string.replaceAll("\"", INTERNAL_STRING_FOR_ENV);
+  }
+
+  /**
+   * replace the cryptic and internal charset from the env string.
+   *
+   * @param string string from env
+   * @return a absolutely normal string
+   */
+  public static String fromEnvString(String string) {
+    return string.replaceAll(INTERNAL_STRING_FOR_ENV, "\"");
   }
 
   /** disable to instantiate CommonUtils. */

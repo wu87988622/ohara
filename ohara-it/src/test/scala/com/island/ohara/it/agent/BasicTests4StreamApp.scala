@@ -58,6 +58,11 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
   private[this] var nodeCache: Seq[Node] = _
   private[this] var nameHolder: ClusterNameHolder = _
 
+  /**
+    * useful to debug. setting it to false to keep all testing containers.
+    */
+  private[this] val cleanup: Boolean = true
+
   protected def createNodes(): Seq[Node]
 
   protected def createNameHolder(nodeCache: Seq[Node]): ClusterNameHolder
@@ -184,10 +189,10 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
 
     // update streamApp properties
     val properties = result(
-      access.request.name(stream.name).from(Set(topic1.topicNameOnKafka)).to(Set(topic2.topicNameOnKafka)).update()
+      access.request.name(stream.name).fromTopicKey(topic1.key).toTopicKey(topic2.key).update()
     )
-    properties.from.isEmpty shouldBe false
-    properties.to.isEmpty shouldBe false
+    properties.from shouldBe Set(topic1.key)
+    properties.to shouldBe Set(topic2.key)
     properties.instances shouldBe instances
     properties.state shouldBe None
     properties.error shouldBe None
@@ -280,23 +285,18 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
 
     // update streamApp properties
     val properties = result(
-      access.request
-        .name(stream.name)
-        .from(Set(topic1.topicNameOnKafka))
-        .to(Set(topic2.topicNameOnKafka))
-        .instances(instances)
-        .update()
+      access.request.name(stream.name).fromTopicKey(topic1.key).toTopicKey(topic2.key).instances(instances).update()
     )
-    properties.from shouldBe Set(topic1.topicNameOnKafka)
-    properties.to shouldBe Set(topic2.topicNameOnKafka)
+    properties.from shouldBe Set(topic1.key)
+    properties.to shouldBe Set(topic2.key)
     properties.instances shouldBe instances
     properties.state shouldBe None
     properties.error shouldBe None
 
     // get streamApp property (cluster not create yet, hence no state)
     val getProperties = result(access.get(stream.name))
-    getProperties.from shouldBe Set(topic1.topicNameOnKafka)
-    getProperties.to shouldBe Set(topic2.topicNameOnKafka)
+    getProperties.from shouldBe Set(topic1.key)
+    getProperties.to shouldBe Set(topic2.key)
     getProperties.instances shouldBe instances
     getProperties.state shouldBe None
     getProperties.error shouldBe None
@@ -368,7 +368,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
 
   @After
   def cleanUp(): Unit = {
-    Releasable.close(nameHolder)
+    if (cleanup) Releasable.close(nameHolder)
     Releasable.close(configurator)
   }
 }

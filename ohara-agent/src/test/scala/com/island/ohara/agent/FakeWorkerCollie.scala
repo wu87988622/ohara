@@ -17,59 +17,24 @@
 package com.island.ohara.agent
 
 import com.island.ohara.agent.docker.ContainerState
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterInfo, NodeApi, TopicApi}
-import com.island.ohara.common.util.CommonUtils
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class FakeWorkerCollie(node: NodeCollie) extends WorkerCollie {
-  override protected def brokerClusters(
-    implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = Future.successful(
-    Map(
-      BrokerClusterInfo(
-        name = "bk1",
-        imageName = BrokerApi.IMAGE_NAME_DEFAULT,
-        zookeeperClusterName = "zk1",
-        clientPort = 2181,
-        exporterPort = 2182,
-        jmxPort = 2183,
-        nodeNames = Set("node1"),
-        deadNodes = Set.empty,
-        tags = Map.empty,
-        lastModified = CommonUtils.current(),
-        state = None,
-        error = None,
-        topicSettingDefinitions = TopicApi.TOPIC_DEFINITIONS
-      ) -> Seq(ContainerInfo(
-        "node1",
-        "aaaa",
-        "broker",
-        "2019-05-28 00:00:00",
-        "running",
-        "unknown",
-        "ohara-xxx-bk-0000",
-        "unknown",
-        Seq.empty,
-        Map(BrokerCollie.CLIENT_PORT_KEY -> "9092"),
-        "ohara-xxx-bk-0000"
-      )))
-  )
+class FakeWorkerCollie(node: NodeCollie, brokerClusters: Map[String, Seq[ContainerInfo]]) extends WorkerCollie {
+  override protected def brokerContainers(clusterName: String)(
+    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
+    Future.successful(
+      brokerClusters.get(clusterName).getOrElse(throw new NoSuchClusterException(s"$clusterName does not exist")))
 
   override protected def doCreator(executionContext: ExecutionContext,
                                    clusterName: String,
                                    containerName: String,
                                    containerInfo: ContainerInfo,
                                    node: NodeApi.Node,
-                                   route: Map[String, String]): Future[Unit] = {
-    //Nothing
-    Future.unit
-  }
-
-  override def remove(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
-    throw new UnsupportedOperationException("FakeWorkerCollie doesn't support remove function")
+                                   route: Map[String, String]): Future[Unit] = Future.unit
 
   override def logs(clusterName: String)(
     implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
@@ -116,35 +81,23 @@ class FakeWorkerCollie(node: NodeCollie) extends WorkerCollie {
                         Map.empty,
                         "ohara-xxx-wk-0000")))
     )
+  override protected def resolveHostName(hostname: String): String = hostname
 
-  override def addNode(clusterName: String, nodeName: String)(
-    implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] =
-    throw new UnsupportedOperationException("FakeWorkCollie doesn't support addNode function")
-
-  override def removeNode(clusterName: String, nodeName: String)(
-    implicit executionContext: ExecutionContext): Future[Boolean] =
-    throw new UnsupportedOperationException("FakeWorkCollie doesn't support removeNode function")
-
-  override protected def resolveHostName(node: String): String = "1.1.1.1"
-
-  /**
-    * Please implement nodeCollie
-    *
-    * @return
-    */
   override protected def nodeCollie: NodeCollie = node
 
-  /**
-    * Implement prefix name for paltform
-    *
-    * @return
-    */
   override protected def prefixKey: String = "fakeworker"
 
-  /**
-    * return service name
-    *
-    * @return
-    */
-  override protected def serviceName: String = "wk"
+  override protected def doRemove(clusterInfo: WorkerClusterInfo, containerInfos: Seq[ContainerInfo])(
+    implicit executionContext: ExecutionContext): Future[Boolean] =
+    throw new UnsupportedOperationException("FakeWorkerCollie doesn't support this function")
+
+  override protected def doAddNode(
+    previousCluster: WorkerClusterInfo,
+    previousContainers: Seq[ContainerInfo],
+    newNodeName: String)(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] =
+    throw new UnsupportedOperationException("FakeWorkerCollie doesn't support this function")
+
+  override protected def doRemoveNode(previousCluster: WorkerClusterInfo, beRemovedContainer: ContainerInfo)(
+    implicit executionContext: ExecutionContext): Future[Boolean] =
+    throw new UnsupportedOperationException("FakeWorkerCollie doesn't support this function")
 }

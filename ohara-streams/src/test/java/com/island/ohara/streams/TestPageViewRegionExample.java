@@ -19,6 +19,7 @@ package com.island.ohara.streams;
 import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.data.Serializer;
+import com.island.ohara.common.setting.TopicKey;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.BrokerClient;
 import com.island.ohara.kafka.Producer;
@@ -44,9 +45,9 @@ public class TestPageViewRegionExample extends WithBroker {
           .keySerializer(Serializer.ROW)
           .valueSerializer(Serializer.BYTES)
           .build();
-  private final String fromTopic = "page-views";
+  private final TopicKey fromTopic = TopicKey.of("default", "page-views");
+  private final TopicKey toTopic = TopicKey.of("default", "view-by-region");
   private final String joinTableTopic = "user-profiles";
-  private final String toTopic = "view-by-region";
 
   // prepare data
   private final List<Row> views =
@@ -115,14 +116,18 @@ public class TestPageViewRegionExample extends WithBroker {
     Map<String, String> settings = new HashMap<>();
     settings.putIfAbsent(StreamDefinitions.BROKER_DEFINITION.key(), client.connectionProps());
     settings.putIfAbsent(StreamDefinitions.NAME_DEFINITION.key(), appId);
-    settings.putIfAbsent(StreamDefinitions.FROM_TOPICS_DEFINITION.key(), fromTopic);
-    settings.putIfAbsent(StreamDefinitions.TO_TOPICS_DEFINITION.key(), toTopic);
+    settings.putIfAbsent(
+        StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key(),
+        "[" + TopicKey.toJsonString(fromTopic) + "]");
+    settings.putIfAbsent(
+        StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key(),
+        "[" + TopicKey.toJsonString(toTopic) + "]");
     settings.putIfAbsent("joinTopic", joinTableTopic);
     StreamTestUtils.setOharaEnv(settings);
 
-    StreamTestUtils.createTopic(client, fromTopic, partitions, replications);
+    StreamTestUtils.createTopic(client, fromTopic.topicNameOnKafka(), partitions, replications);
     StreamTestUtils.createTopic(client, joinTableTopic, partitions, replications);
-    StreamTestUtils.createTopic(client, toTopic, partitions, replications);
+    StreamTestUtils.createTopic(client, toTopic.topicNameOnKafka(), partitions, replications);
   }
 
   @Test
@@ -134,7 +139,7 @@ public class TestPageViewRegionExample extends WithBroker {
     StreamTestUtils.produceData(producer, profiles, joinTableTopic);
     // the default commit.interval.ms=30 seconds, which should make sure join table ready
     TimeUnit.SECONDS.sleep(30);
-    StreamTestUtils.produceData(producer, views, fromTopic);
+    StreamTestUtils.produceData(producer, views, fromTopic.topicNameOnKafka());
 
     // Assert the result
     List<Row> expected =
@@ -144,7 +149,7 @@ public class TestPageViewRegionExample extends WithBroker {
                 Row.of(Cell.of("region", "Jordan"), Cell.of("count", 5L)),
                 Row.of(Cell.of("region", "Cuba"), Cell.of("count", 3L)))
             .collect(Collectors.toList());
-    StreamTestUtils.assertResult(client, toTopic, expected, 20);
+    StreamTestUtils.assertResult(client, toTopic.topicNameOnKafka(), expected, 20);
   }
 
   @After

@@ -17,10 +17,11 @@
 package com.island.ohara.agent.ssh
 
 import com.island.ohara.agent._
-import com.island.ohara.client.configurator.v0.{ClusterInfo, NodeApi}
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
+import com.island.ohara.client.configurator.v0.{ClusterInfo, NodeApi}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -74,16 +75,19 @@ private class WorkerCollieImpl(node: NodeCollie, dockerCache: DockerClientCache,
         None
     })
 
-  override protected def hookUpdate(node: Node, container: ContainerInfo, route: Map[String, String]): Unit = {
+  override protected def hookOfNewRoute(node: Node, container: ContainerInfo, route: Map[String, String]): Unit = {
     updateRoute(node, container.name, route)
   }
 
-  override protected def brokerClusters(
-    implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = {
-    Future {
+  override protected def brokerContainers(clusterName: String)(
+    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
+    Future.successful(
       clusterCache.snapshot
-    }
-  }
+        .filter(_._1.isInstanceOf[BrokerClusterInfo])
+        .find(_._1.name == clusterName)
+        .map(_._2)
+        .getOrElse(
+          throw new NoSuchClusterException(s"broker cluster:$clusterName doesn't exist. other broker clusters")))
 
   /**
     * Please implement nodeCollie

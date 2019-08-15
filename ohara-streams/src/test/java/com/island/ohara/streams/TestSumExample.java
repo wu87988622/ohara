@@ -19,6 +19,7 @@ package com.island.ohara.streams;
 import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.data.Serializer;
+import com.island.ohara.common.setting.TopicKey;
 import com.island.ohara.kafka.BrokerClient;
 import com.island.ohara.kafka.Producer;
 import com.island.ohara.streams.config.StreamDefinitions;
@@ -44,24 +45,28 @@ public class TestSumExample extends WithBroker {
             .build();
     final int partitions = 1;
     final short replications = 1;
-    String fromTopic = "number-input";
-    String toTopic = "sum-output";
+    TopicKey fromTopic = TopicKey.of("default", "number-input");
+    TopicKey toTopic = TopicKey.of("default", "sum-output");
 
     // prepare ohara environment
     Map<String, String> settings = new HashMap<>();
     settings.putIfAbsent(StreamDefinitions.BROKER_DEFINITION.key(), client.connectionProps());
     settings.putIfAbsent(StreamDefinitions.NAME_DEFINITION.key(), methodName());
-    settings.putIfAbsent(StreamDefinitions.FROM_TOPICS_DEFINITION.key(), fromTopic);
-    settings.putIfAbsent(StreamDefinitions.TO_TOPICS_DEFINITION.key(), toTopic);
+    settings.putIfAbsent(
+        StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key(),
+        "[" + TopicKey.toJsonString(fromTopic) + "]");
+    settings.putIfAbsent(
+        StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key(),
+        "[" + TopicKey.toJsonString(toTopic) + "]");
     StreamTestUtils.setOharaEnv(settings);
-    StreamTestUtils.createTopic(client, fromTopic, partitions, replications);
-    StreamTestUtils.createTopic(client, toTopic, partitions, replications);
+    StreamTestUtils.createTopic(client, fromTopic.topicNameOnKafka(), partitions, replications);
+    StreamTestUtils.createTopic(client, toTopic.topicNameOnKafka(), partitions, replications);
     // prepare data
     List<Row> rows =
         Stream.of(1, 2, 14, 17, 36, 99)
             .map(v -> Row.of(Cell.of("number", v)))
             .collect(Collectors.toList());
-    StreamTestUtils.produceData(producer, rows, fromTopic);
+    StreamTestUtils.produceData(producer, rows, fromTopic.topicNameOnKafka());
 
     // run example
     SumExample app = new SumExample();
@@ -74,6 +79,6 @@ public class TestSumExample extends WithBroker {
                 Row.of(Cell.of("dummy", 1), Cell.of("number", 18)),
                 Row.of(Cell.of("dummy", 1), Cell.of("number", 117)))
             .collect(Collectors.toList());
-    StreamTestUtils.assertResult(client, toTopic, expected, 3);
+    StreamTestUtils.assertResult(client, toTopic.topicNameOnKafka(), expected, 3);
   }
 }

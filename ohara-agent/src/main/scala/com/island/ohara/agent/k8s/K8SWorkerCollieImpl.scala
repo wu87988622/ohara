@@ -18,8 +18,8 @@ package com.island.ohara.agent.k8s
 
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import com.island.ohara.client.configurator.v0.{ClusterInfo, NodeApi}
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -60,10 +60,14 @@ private class K8SWorkerCollieImpl(node: NodeCollie, bkCollie: BrokerCollie, k8sC
       .map(_ => Unit)
   }
 
-  override protected def brokerClusters(
-    implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = {
-    bkCollie.clusters().asInstanceOf[Future[Map[ClusterInfo, Seq[ContainerInfo]]]]
-  }
+  override protected def brokerContainers(clusterName: String)(
+    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
+    bkCollie
+      .clusters()
+      .map(
+        _.find(_._1.name == clusterName)
+          .map(_._2)
+          .getOrElse(throw new NoSuchClusterException(s"broker cluster:$clusterName does not exist")))
 
   /**
     * Please implement nodeCollie

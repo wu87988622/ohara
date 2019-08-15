@@ -56,7 +56,8 @@ private class FakeBrokerCollie(node: NodeCollie,
     Future.unit
   }
 
-  override def remove(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
+  override protected def doRemove(clusterInfo: BrokerClusterInfo, containerInfos: Seq[ContainerInfo])(
+    implicit executionContext: ExecutionContext): Future[Boolean] =
     throw new UnsupportedOperationException("Not support remove function")
 
   override def logs(clusterName: String)(
@@ -87,11 +88,13 @@ private class FakeBrokerCollie(node: NodeCollie,
 
   override protected def resolveHostName(node: String): String = "1.1.1.1"
 
-  override def addNode(clusterName: String, nodeName: String)(
-    implicit executionContext: ExecutionContext): Future[BrokerApi.BrokerClusterInfo] =
+  override protected def doAddNode(
+    previousCluster: BrokerClusterInfo,
+    previousContainers: Seq[ContainerInfo],
+    newNodeName: String)(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] =
     throw new UnsupportedOperationException("Not support addNode function")
 
-  override def removeNode(clusterName: String, nodeName: String)(
+  override protected def doRemoveNode(previousCluster: BrokerClusterInfo, beRemovedContainer: ContainerInfo)(
     implicit executionContext: ExecutionContext): Future[Boolean] =
     throw new UnsupportedOperationException("Not support removeNode function")
 
@@ -108,13 +111,6 @@ private class FakeBrokerCollie(node: NodeCollie,
     * @return
     */
   override protected def prefixKey: String = "fakebroker"
-
-  /**
-    * Setting service name
-    *
-    * @return
-    */
-  override protected def serviceName: String = "bk"
 }
 
 object FakeBrokerCollie {

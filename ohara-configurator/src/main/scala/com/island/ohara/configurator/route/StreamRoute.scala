@@ -19,23 +19,22 @@ package com.island.ohara.configurator.route
 import java.util.Objects
 
 import akka.http.scaladsl.server
-import com.island.ohara.agent.{BrokerCollie, ClusterCollie, NodeCollie, StreamCollie, WorkerCollie}
+import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.StreamApi._
 import com.island.ohara.client.kafka.TopicAdmin.TopicInfo
-import com.island.ohara.common.setting.ObjectKey
+import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.file.FileStore
 import com.island.ohara.configurator.route.hook.{HookOfAction, HookOfCreation, HookOfGroup, HookOfUpdate}
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.island.ohara.streams.config.StreamDefinitions
 import org.slf4j.LoggerFactory
-import spray.json.{JsNumber, JsObject, _}
+import spray.json._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Random
-
 private[configurator] object StreamRoute {
 
   /**
@@ -92,18 +91,6 @@ private[configurator] object StreamRoute {
   }
 
   /**
-    * Check if field was defined, throw exception otherwise
-    *
-    * @param key the request object key
-    * @param field the testing field
-    * @param fieldName field name
-    * @tparam T field type
-    * @return field
-    */
-  private[this] def checkField[T](key: ObjectKey, field: Option[T], fieldName: String): T =
-    field.getOrElse(throw new IllegalArgumentException(errorMessage(key, fieldName)))
-
-  /**
     * Assert the require streamApp properties before running
     *
     * @param data streamApp data
@@ -113,22 +100,20 @@ private[configurator] object StreamRoute {
     CommonUtils.requireConnectionPort(data.jmxPort)
     Objects.requireNonNull(data.jarKey)
 
-    // check the from/to topic size equals one
-    // TODO: this is a workaround to avoid input multiple topics
-    // TODO: please refactor this after the single from/to topic issue resolved...by Sam
-    if (data.from.size > 1 || data.to.size > 1)
-      throw new IllegalArgumentException(
-        s"We don't allow multiple topics of from/to field, actual: from[${data.from}], to[${data.to}]")
-
-    // from topic should be defined and starting
-    val fromTopics = CommonUtils.requireNonEmpty(data.from.asJava, () => "from topic fail assert")
-    if (!topicInfos.exists(t => fromTopics.contains(t.name)))
-      throw new NoSuchElementException(s"topic:$fromTopics is not running")
-
-    // to topic should be defined and starting
-    val toTopics = CommonUtils.requireNonEmpty(data.to.asJava, () => "to topic fail assert")
-    if (!topicInfos.exists(t => toTopics.contains(t.name)))
-      throw new NoSuchElementException(s"topic:$toTopics is not running")
+    def checkStoppedTopics(topicKeys: Set[TopicKey], prefix: String): Unit = {
+      CommonUtils.requireNonEmpty(topicKeys.asJava, () => s"$prefix topics can't be empty")
+      // check the from/to topic size equals one
+      // TODO: this is a workaround to avoid input multiple topics
+      // TODO: please refactor this after the single from/to topic issue resolved...by Sam
+      if (topicKeys.size > 1)
+        throw new IllegalArgumentException(
+          s"We don't allow multiple topics of $prefix field, actual: ${topicKeys.mkString(",")}")
+      val stoppedFromTopics = topicKeys.filterNot(topicKey => topicInfos.exists(_.name == topicKey.topicNameOnKafka()))
+      if (stoppedFromTopics.nonEmpty)
+        throw new NoSuchElementException(s"topics:${stoppedFromTopics.mkString(",")} is not running")
+    }
+    checkStoppedTopics(data.from, "from")
+    checkStoppedTopics(data.to, "to")
   }
 
   private[this] def hookOfCreation(implicit fileStore: FileStore,
@@ -141,23 +126,7 @@ private[configurator] object StreamRoute {
       val updateReq = previousOption.fold(
         // data not exists, we used PUT as create object method
         StreamClusterInfo(
-          settings = req.settings ++
-            Map(
-              StreamDefinitions.NAME_DEFINITION.key() -> JsString(key.name),
-              StreamDefinitions.FROM_TOPICS_DEFINITION.key() -> JsArray(
-                req.from.getOrElse(Set.empty).map(JsString(_)).toVector),
-              StreamDefinitions.TO_TOPICS_DEFINITION.key() -> JsArray(
-                req.to.getOrElse(Set.empty).map(JsString(_)).toVector),
-              StreamDefinitions.JAR_KEY_DEFINITION.key() -> {
-                val jarKey = checkField(key, req.jarKey, StreamDefinitions.JAR_KEY_DEFINITION.key())
-                JsString(ObjectKey.toJsonString(jarKey))
-              },
-              StreamDefinitions.IMAGE_NAME_DEFINITION.key() -> JsString(req.imageName.getOrElse(IMAGE_NAME_DEFAULT)),
-              StreamDefinitions.INSTANCES_DEFINITION.key() -> JsNumber(
-                req.nodeNames.fold(checkField(key, req.instances, "instances"))(_.size)
-              ),
-              StreamDefinitions.TAGS_DEFINITION.key() -> JsObject(req.tags.getOrElse(Map.empty))
-            ),
+          settings = req.settings,
           definition = None,
           nodeNames = req.nodeNames.getOrElse(Set.empty),
           deadNodes = Set.empty,
@@ -168,29 +137,7 @@ private[configurator] object StreamRoute {
         )
       ) { previous =>
         previous.copy(
-          settings = previous.settings ++
-            Map(
-              StreamDefinitions.IMAGE_NAME_DEFINITION.key() -> JsString(
-                req.imageName.getOrElse(previous.imageName)
-              ),
-              StreamDefinitions.INSTANCES_DEFINITION.key() -> JsNumber(
-                req.instances.getOrElse(previous.instances)
-              ),
-              StreamDefinitions.FROM_TOPICS_DEFINITION.key() -> JsArray(
-                req.from.getOrElse(previous.from).map(JsString(_)).toVector
-              ),
-              StreamDefinitions.TO_TOPICS_DEFINITION.key() -> JsArray(
-                req.to.getOrElse(previous.to).map(JsString(_)).toVector
-              ),
-              StreamDefinitions.JMX_PORT_DEFINITION.key() -> JsNumber(
-                req.jmxPort.getOrElse(previous.jmxPort)
-              ),
-              StreamDefinitions.JAR_KEY_DEFINITION.key() ->
-                JsString(ObjectKey.toJsonString(req.jarKey.getOrElse(previous.jarKey))),
-              StreamDefinitions.TAGS_DEFINITION.key() -> JsObject(
-                req.tags.getOrElse(previous.tags)
-              )
-            ),
+          settings = previous.settings ++ req.settings,
           nodeNames = req.nodeNames.getOrElse(previous.nodeNames)
         )
       }
@@ -220,10 +167,10 @@ private[configurator] object StreamRoute {
           .both(Some(data.jarKey.group()))
           // get broker props from worker cluster
           .flatMap {
-            case (_, topicAdmin, _, _) => topicAdmin.topics().map(topics => (topicAdmin.connectionProps, topics))
+            case (brokerClusterInfo, topicAdmin, _, _) => topicAdmin.topics().map(topics => (brokerClusterInfo, topics))
           }
           .flatMap {
-            case (bkProps, topicInfos) =>
+            case (brokerClusterInfo, topicInfos) =>
               fileStore.fileInfo(data.jarKey).flatMap { fileInfo =>
                 // check the require fields
                 assertParameters(data, topicInfos)
@@ -251,12 +198,13 @@ private[configurator] object StreamRoute {
                       // these settings will send to container environment
                       // we convert all value to string for convenient
                       .settings(data.settings)
-                      .setting(StreamDefinitions.BROKER_DEFINITION.key(), JsString(bkProps))
+                      .setting(StreamDefinitions.BROKER_DEFINITION.key(), JsString(brokerClusterInfo.connectionProps))
                       // This nodeNames() should put after settings() because we decide nodeName in starting phase
                       // TODO: the order should not be a problem and please refactor this in #2288
                       .nodeNames(nodes.map(_.name))
                       // TODO: we should use boolean type ... by chia
                       .setting(StreamDefinitions.EXACTLY_ONCE_DEFINITION.key(), JsString(data.exactlyOnce.toString))
+                      .brokerClusterName(brokerClusterInfo.name)
                       .threadPool(executionContext)
                       .create()
                   })

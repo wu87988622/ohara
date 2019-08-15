@@ -84,7 +84,7 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
           .flatMap(existNodes =>
             nodeCollie
               .nodes(nodeNames)
-              .map(_.map(node => node -> ContainerCollie.format(prefixKey, clusterName, serviceName)).toMap)
+              .map(_.map(node => node -> Collie.format(prefixKey, clusterName, serviceName)).toMap)
               .map((existNodes, _)))
           .map {
             case (existNodes, newNodes) =>
@@ -104,12 +104,12 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
                     .map(c => s"${c.nodeName}:${c.environments(ZookeeperCollie.CLIENT_PORT_KEY).toInt}")
                     .mkString(",")
 
-                  //Use asInstanceOf function to solve compiler data type error
-                  val route = ContainerCollie.preSettingEnvironment(existNodes.asInstanceOf[Map[Node, ContainerInfo]],
-                                                                    newNodes.asInstanceOf[Map[Node, String]],
-                                                                    zkContainers,
-                                                                    resolveHostName,
-                                                                    hookUpdate)
+                  val route = resolveHostNames((existNodes.keys.map(_.hostname) ++ newNodes.keys
+                    .map(_.hostname) ++ zkContainers.map(_.nodeName)).toSet)
+                  existNodes.foreach {
+                    case (node, container) => hookOfNewRoute(node, container, route)
+                  }
+
                   // the new broker node can't take used id so we find out the max id which is used by current cluster
                   val maxId: Int =
                     if (existNodes.isEmpty) 0
@@ -120,15 +120,15 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
                     case ((node, containerName), index) =>
                       val containerInfo = ContainerInfo(
                         nodeName = node.name,
-                        id = ContainerCollie.UNKNOWN,
+                        id = Collie.UNKNOWN,
                         imageName = imageName,
-                        created = ContainerCollie.UNKNOWN,
-                        state = ContainerCollie.UNKNOWN,
-                        kind = ContainerCollie.UNKNOWN,
+                        created = Collie.UNKNOWN,
+                        state = Collie.UNKNOWN,
+                        kind = Collie.UNKNOWN,
                         name = containerName,
-                        size = ContainerCollie.UNKNOWN,
+                        size = Collie.UNKNOWN,
                         portMappings = Seq(PortMapping(
-                          hostIp = ContainerCollie.UNKNOWN,
+                          hostIp = Collie.UNKNOWN,
                           portPairs = Seq(
                             PortPair(
                               hostPort = clientPort,
@@ -201,11 +201,7 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
     */
   protected def prefixKey: String
 
-  /**
-    * Setting service name
-    * @return
-    */
-  protected def serviceName: String
+  override val serviceName: String = BrokerApi.BROKER_SERVICE_NAME
 
   /**
     * Please implement this function to get Zookeeper cluster information
@@ -223,15 +219,6 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
     */
   protected def hookUpdate(node: Node, container: ContainerInfo, route: Map[String, String]): Unit = {
     //Nothing
-  }
-
-  /**
-    * Hostname resolve to IP address
-    * @param nodeName node name
-    * @return ip
-    */
-  protected def resolveHostName(nodeName: String): String = {
-    CommonUtils.address(nodeName)
   }
 
   /**
@@ -330,6 +317,13 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
         .map(_._2)
         .getOrElse(throw new NoSuchClusterException(s"zookeeper cluster:$zkClusterName doesn't exist"))
     )
+  }
+
+  /**
+    * there is new route to the node. the sub class can update the running container to apply new route.
+    */
+  protected def hookOfNewRoute(node: Node, container: ContainerInfo, route: Map[String, String]): Unit = {
+    //Nothing
   }
 }
 

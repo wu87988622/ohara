@@ -35,6 +35,8 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 trait ZookeeperCollie extends Collie[ZookeeperClusterInfo, ZookeeperCollie.ClusterCreator] {
 
+  override val serviceName: String = ZookeeperApi.ZOOKEEPER_SERVICE_NAME
+
   /**
     * This is a complicated process. We must address following issues.
     * 1) check the existence of cluster
@@ -53,7 +55,7 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo, ZookeeperCollie.Clust
         else
           nodeCollie
             .nodes(nodeNames)
-            .map(_.map(node => node -> ContainerCollie.format(prefixKey, clusterName, serviceName)).toMap)
+            .map(_.map(node => node -> Collie.format(prefixKey, clusterName, serviceName)).toMap)
             .flatMap {
               nodes =>
                 // add route in order to make zk node can connect to each other.
@@ -66,15 +68,15 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo, ZookeeperCollie.Clust
                     case ((node, containerName), index) =>
                       val containerInfo = ContainerInfo(
                         nodeName = node.name,
-                        id = ContainerCollie.UNKNOWN,
+                        id = Collie.UNKNOWN,
                         imageName = imageName,
-                        created = ContainerCollie.UNKNOWN,
-                        state = ContainerCollie.UNKNOWN,
-                        kind = ContainerCollie.UNKNOWN,
+                        created = Collie.UNKNOWN,
+                        state = Collie.UNKNOWN,
+                        kind = Collie.UNKNOWN,
                         name = containerName,
-                        size = ContainerCollie.UNKNOWN,
+                        size = Collie.UNKNOWN,
                         portMappings = Seq(PortMapping(
-                          hostIp = ContainerCollie.UNKNOWN,
+                          hostIp = Collie.UNKNOWN,
                           portPairs = Seq(
                             PortPair(
                               hostPort = clientPort,
@@ -140,12 +142,6 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo, ZookeeperCollie.Clust
     * @return
     */
   protected def prefixKey: String
-
-  /**
-    * return service name
-    * @return
-    */
-  protected def serviceName: String
 
   protected def doCreator(executionContext: ExecutionContext,
                           clusterName: String,

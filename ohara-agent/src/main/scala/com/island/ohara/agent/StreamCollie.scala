@@ -27,13 +27,12 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.{ClusterInfo, Definition, StreamApi}
 import com.island.ohara.common.annotations.Optional
-import com.island.ohara.common.setting.ObjectKey
+import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
 import com.island.ohara.streams.config.StreamDefinitions
 import com.typesafe.scalalogging.Logger
-import spray.json.DefaultJsonProtocol._
 import spray.json._
 
 import scala.collection.JavaConverters._
@@ -48,7 +47,7 @@ trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator
   private[this] val LOG = Logger(classOf[StreamCollie])
 
   override def creator: StreamCollie.ClusterCreator =
-    (clusterName, nodeNames, imageName, jarInfo, jmxPort, _, _, settings, executionContext) => {
+    (clusterName, nodeNames, imageName, brokerClusterName, jarInfo, jmxPort, _, _, settings, executionContext) => {
       implicit val exec: ExecutionContext = executionContext
       clusters().flatMap(clusters => {
         if (clusters.keys.filter(_.isInstanceOf[StreamClusterInfo]).exists(_.name == clusterName))
@@ -56,30 +55,31 @@ trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator
         else
           nodeCollie
             .nodes(nodeNames)
-            .map(_.map(node => node -> ContainerCollie.format(prefixKey, clusterName, serviceName)).toMap)
+            .map(_.map(node => node -> Collie.format(prefixKey, clusterName, serviceName)).toMap)
+            .flatMap(nodes => brokerContainers(brokerClusterName).map(cs => (nodes, cs)))
             .flatMap {
-              nodes =>
-                val route: Map[String, String] = nodes.keys.map { node =>
-                  node.hostname -> CommonUtils.address(node.hostname)
-                }.toMap +
+              case (nodes, brokerContainers) =>
+                val route = resolveHostNames(
+                  (nodes.map(_._1.hostname)
+                    ++ brokerContainers.map(_.nodeName)
                   // make sure the streamApp can connect to configurator
-                  (jarInfo.url.getHost -> CommonUtils.address(jarInfo.url.getHost))
+                    ++ Seq(jarInfo.url.getHost)).toSet)
                 // ssh connection is slow so we submit request by multi-thread
                 Future
                   .sequence(nodes.map {
                     case (node, containerName) =>
                       val containerInfo = ContainerInfo(
                         nodeName = node.name,
-                        id = ContainerCollie.UNKNOWN,
+                        id = Collie.UNKNOWN,
                         imageName = imageName,
-                        created = ContainerCollie.UNKNOWN,
-                        state = ContainerCollie.UNKNOWN,
-                        kind = ContainerCollie.UNKNOWN,
+                        created = Collie.UNKNOWN,
+                        state = Collie.UNKNOWN,
+                        kind = Collie.UNKNOWN,
                         name = containerName,
-                        size = ContainerCollie.UNKNOWN,
+                        size = Collie.UNKNOWN,
                         portMappings = Seq(
                           PortMapping(
-                            hostIp = ContainerCollie.UNKNOWN,
+                            hostIp = Collie.UNKNOWN,
                             portPairs = Seq(
                               PortPair(
                                 hostPort = jmxPort,
@@ -91,11 +91,12 @@ trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator
                         environments = settings.map {
                           case (k, v) =>
                             k -> (v match {
-                              case JsString(value) => value
-                              // TODO: discard the js array? by chia
-                              case JsArray(arr) =>
-                                arr.map(_.convertTo[String]).mkString(",")
-                              case _ => v.toString()
+                              // the string in json representation has quote in the beginning and end.
+                              // we don't like the quotes since it obstruct us to cast value to pure string.
+                              case JsString(s) => s
+                              // save the json string for all settings
+                              // StreamDefinitions offers the helper method to turn them back.
+                              case _ => CommonUtils.toEnvString(v.toString)
                             })
                         }
                         // we convert all settings to specific string in order to fetch all settings from
@@ -214,11 +215,7 @@ trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator
     */
   protected def prefixKey: String
 
-  /**
-    * Define serviceName by different environment
-    * @return service name
-    */
-  protected def serviceName: String
+  override val serviceName: String = StreamApi.STREAM_SERVICE_NAME
 
   protected def doCreator(executionContext: ExecutionContext,
                           containerName: String,
@@ -231,18 +228,21 @@ trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator
   protected def postCreateCluster(clusterInfo: ClusterInfo, successfulContainers: Seq[ContainerInfo]): Unit = {
     //Default do nothing
   }
+
+  /**
+    * get the containers for specific broker cluster. This method is used to update the route.
+    * @param clusterName name of broker cluster
+    * @param executionContext thread pool
+    * @return containers
+    */
+  protected def brokerContainers(clusterName: String)(
+    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]]
 }
 
 object StreamCollie {
   trait ClusterCreator extends Collie.ClusterCreator[StreamClusterInfo] {
-    private[this] var jarInfo: FileInfo = _
     private[this] val settings: mutable.Map[String, JsValue] = mutable.Map[String, JsValue]()
-    override protected def doCopy(clusterInfo: StreamClusterInfo): Unit = {
-      // doCopy is used to add node for a running cluster.
-      // Currently, StreamClusterInfo does not carry enough information to be copied and it is unsupported to add a node to a running streamapp cluster
-      // Hence, it is fine to do nothing here
-      // TODO: fill the correct implementation if we support to add node to a running streamapp cluster.
-    }
+    override protected def doCopy(clusterInfo: StreamClusterInfo): Unit = this.settings ++= clusterInfo.settings
 
     /**
       * Stream collie overrides this method in order to put the same config to settings.
@@ -284,8 +284,6 @@ object StreamCollie {
       * @return this creator
       */
     def jarInfo(jarInfo: FileInfo): ClusterCreator = {
-      this.jarInfo = Objects.requireNonNull(jarInfo)
-      import spray.json._
       settings += StreamDefinitions.JAR_KEY_DEFINITION.key() -> ObjectKey.toJsonString(jarInfo.key).parseJson
       settings += StreamDefinitions.JAR_INFO_DEFINITION.key() -> FILE_INFO_JSON_FORMAT.write(jarInfo)
       this
@@ -313,6 +311,12 @@ object StreamCollie {
       this
     }
 
+    def brokerClusterName(brokerClusterName: String): ClusterCreator = {
+      settings += StreamDefinitions.BROKER_CLUSTER_NAME_DEFINITION.key() -> JsString(
+        CommonUtils.requireNonEmpty(brokerClusterName))
+      this
+    }
+
     /**
       * get the value, which is mapped to input key, from settings. If the key is not associated, NoSuchElementException will
       * be thrown.
@@ -324,23 +328,27 @@ object StreamCollie {
     private[this] def get[T](key: String, f: JsValue => T): T =
       settings.get(key).map(f).getOrElse(throw new NoSuchElementException(s"$key is required"))
 
+    import com.island.ohara.client.configurator.v0.TOPIC_KEY_FORMAT
+    import com.island.ohara.client.configurator.v0.FileInfoApi.FILE_INFO_JSON_FORMAT
+    import spray.json.DefaultJsonProtocol._
     override def create(): Future[StreamClusterInfo] = doCreate(
       clusterName = get(StreamDefinitions.NAME_DEFINITION.key(), _.convertTo[String]),
       nodeNames = get(StreamDefinitions.NODE_NAMES_DEFINITION.key(), _.convertTo[Vector[String]].toSet),
       imageName = get(StreamDefinitions.IMAGE_NAME_DEFINITION.key(), _.convertTo[String]),
-      jarInfo = Objects.requireNonNull(jarInfo),
+      brokerClusterName = get(StreamDefinitions.BROKER_CLUSTER_NAME_DEFINITION.key(), _.convertTo[String]),
+      jarInfo = get(StreamDefinitions.JAR_INFO_DEFINITION.key(), _.convertTo[FileInfo]),
       jmxPort = get(StreamDefinitions.JMX_PORT_DEFINITION.key(), _.convertTo[Int]),
       fromTopics = CommonUtils
         .requireNonEmpty(
-          get(StreamDefinitions.FROM_TOPICS_DEFINITION.key(), _.convertTo[Set[String]]).asJava,
-          () => s"${StreamDefinitions.FROM_TOPICS_DEFINITION.key()} can't be associated to empty array"
+          get(StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key(), _.convertTo[Set[TopicKey]]).asJava,
+          () => s"${StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key()} can't be associated to empty array"
         )
         .asScala
         .toSet,
       toTopics = CommonUtils
         .requireNonEmpty(
-          get(StreamDefinitions.TO_TOPICS_DEFINITION.key(), _.convertTo[Set[String]]).asJava,
-          () => s"${StreamDefinitions.TO_TOPICS_DEFINITION.key()} can't be associated to empty array"
+          get(StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key(), _.convertTo[Set[TopicKey]]).asJava,
+          () => s"${StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key()} can't be associated to empty array"
         )
         .asScala
         .toSet,
@@ -356,10 +364,11 @@ object StreamCollie {
     protected def doCreate(clusterName: String,
                            nodeNames: Set[String],
                            imageName: String,
+                           brokerClusterName: String,
                            jarInfo: FileInfo,
                            jmxPort: Int,
-                           fromTopics: Set[String],
-                           toTopics: Set[String],
+                           fromTopics: Set[TopicKey],
+                           toTopics: Set[TopicKey],
                            settings: Map[String, JsValue],
                            executionContext: ExecutionContext): Future[StreamClusterInfo]
   }

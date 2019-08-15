@@ -42,7 +42,20 @@ trait Collie[T <: ClusterInfo, Creator <: ClusterCreator[T]] {
     * @param executionContext thread pool
     * @return true if it does remove a running cluster. Otherwise, false
     */
-  def remove(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean]
+  final def remove(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
+    clusterWithAllContainers().flatMap(_.find(_._1.name == clusterName).fold(Future.successful(false)) {
+      case (cluster, containerInfos) => doRemove(cluster, containerInfos)
+    })
+
+  /**
+    * remove whole cluster gracefully.
+    * @param clusterInfo cluster info
+    * @param containerInfos containers info
+    * @param executionContext thread pool
+    * @return true if success. otherwise false
+    */
+  protected def doRemove(clusterInfo: T, containerInfos: Seq[ContainerInfo])(
+    implicit executionContext: ExecutionContext): Future[Boolean]
 
   /**
     * This method open a door to sub class to implement a force remove which kill whole cluster without graceful shutdown.
@@ -51,8 +64,20 @@ trait Collie[T <: ClusterInfo, Creator <: ClusterCreator[T]] {
     * @param executionContext thread pool
     * @return true if it does remove a running cluster. Otherwise, false
     */
-  def forceRemove(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean] = remove(
-    clusterName)
+  final def forceRemove(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
+    clusterWithAllContainers().flatMap(_.find(_._1.name == clusterName).fold(Future.successful(false)) {
+      case (cluster, containerInfos) => doForceRemove(cluster, containerInfos)
+    })
+
+  /**
+    * remove whole cluster forcely. the impl, by default, is similar to doRemove().
+    * @param clusterInfo cluster info
+    * @param containerInfos containers info
+    * @param executionContext thread pool
+    * @return true if success. otherwise false
+    */
+  protected def doForceRemove(clusterInfo: T, containerInfos: Seq[ContainerInfo])(
+    implicit executionContext: ExecutionContext): Future[Boolean] = doRemove(clusterInfo, containerInfos)
 
   /**
     * get logs from all containers.
@@ -125,7 +150,31 @@ trait Collie[T <: ClusterInfo, Creator <: ClusterCreator[T]] {
     * @param nodeName node name
     * @return updated cluster
     */
-  def addNode(clusterName: String, nodeName: String)(implicit executionContext: ExecutionContext): Future[T]
+  final def addNode(clusterName: String, nodeName: String)(implicit executionContext: ExecutionContext): Future[T] =
+    cluster(clusterName).flatMap {
+      case (cluster, containers) =>
+        if (CommonUtils.isEmpty(clusterName))
+          Future.failed(new IllegalArgumentException("clusterName can't empty"))
+        else if (CommonUtils.isEmpty(nodeName))
+          Future.failed(new IllegalArgumentException("nodeName can't empty"))
+        else if (CommonUtils.hasUpperCase(nodeName))
+          Future.failed(new IllegalArgumentException("Your node name can't uppercase"))
+        else if (cluster.nodeNames.contains(nodeName))
+          // the new node is running so we don't need to do anything for this method
+          Future.successful(cluster)
+        else doAddNode(cluster, containers, nodeName)
+    }
+
+  /**
+    * do the add actually. Normally, the sub-class doesn't need to check the existence of removed node.
+    * @param previousCluster previous cluster
+    * @param previousContainers previous container
+    * @param newNodeName new node
+    * @param executionContext thread pool
+    * @return true if success. otherwise, false
+    */
+  protected def doAddNode(previousCluster: T, previousContainers: Seq[ContainerInfo], newNodeName: String)(
+    implicit executionContext: ExecutionContext): Future[T]
 
   /**
     * remove a node from a running cluster.
@@ -134,10 +183,86 @@ trait Collie[T <: ClusterInfo, Creator <: ClusterCreator[T]] {
     * @param nodeName node name
     * @return true if it does remove a node from a running cluster. Otherwise, false
     */
-  def removeNode(clusterName: String, nodeName: String)(implicit executionContext: ExecutionContext): Future[Boolean]
+  final def removeNode(clusterName: String, nodeName: String)(
+    implicit executionContext: ExecutionContext): Future[Boolean] = clusters().flatMap(
+    _.find(_._1.name == clusterName)
+      .filter(_._1.nodeNames.contains(nodeName))
+      .filter(_._2.exists(_.nodeName == nodeName))
+      .fold(Future.successful(false)) {
+        case (cluster, runningContainers) =>
+          runningContainers.size match {
+            case 1 =>
+              Future.failed(new IllegalArgumentException(
+                s"$clusterName is a single-node cluster. You can't remove the last node by removeNode(). Please use remove(clusterName) instead"))
+            case _ =>
+              doRemoveNode(
+                cluster,
+                runningContainers
+                  .find(_.nodeName == nodeName)
+                  .getOrElse(throw new IllegalArgumentException(
+                    s"This should not be happen!!! $nodeName doesn't exist on cluster:$clusterName"))
+              )
+          }
+      })
+
+  /**
+    * do the remove actually. Normally, the sub-class doesn't need to check the existence of removed node.
+    * @param previousCluster previous cluster
+    * @param beRemovedContainer the container to be removed
+    * @param executionContext thread pool
+    * @return true if success. otherwise, false
+    */
+  protected def doRemoveNode(previousCluster: T, beRemovedContainer: ContainerInfo)(
+    implicit executionContext: ExecutionContext): Future[Boolean]
+
+  /**
+    * return the short service name
+    * @return service name
+    */
+  def serviceName: String
+
+  //---------------------------[helper methods]---------------------------//
+
+  /**
+    * used to resolve the hostNames.
+    * @param hostNames hostNames
+    * @return hostname -> ip address
+    */
+  protected def resolveHostNames(hostNames: Set[String]): Map[String, String] =
+    hostNames.map(hostname => hostname -> resolveHostName(hostname)).toMap
+
+  /**
+    * used to resolve the hostname.
+    * @param hostname hostname
+    * @return ip address or hostname (if you do nothing to it)
+    */
+  protected def resolveHostName(hostname: String): String = CommonUtils.address(hostname)
 }
 
 object Collie {
+
+  /**
+    * used to distinguish the cluster name and service name
+    */
+  private[agent] val DIVIDER: String = "-"
+  private[agent] val UNKNOWN: String = "unknown"
+
+  private[agent] val LENGTH_OF_CONTAINER_NAME_ID: Int = 7
+
+  /**
+    * generate unique name for the container.
+    * It can be used in setting container's hostname and name
+    * @param clusterName cluster name
+    * @return a formatted string. form: {clusterName}-{service}-{index}
+    */
+  def format(prefixKey: String, clusterName: String, serviceName: String): String =
+    Seq(
+      prefixKey,
+      clusterName,
+      serviceName,
+      CommonUtils.randomString(LENGTH_OF_CONTAINER_NAME_ID)
+    ).mkString(DIVIDER)
+
   trait ClusterCreator[T <: ClusterInfo] extends com.island.ohara.common.pattern.Creator[Future[T]] {
     protected var imageName: String = _
     protected var clusterName: String = _
