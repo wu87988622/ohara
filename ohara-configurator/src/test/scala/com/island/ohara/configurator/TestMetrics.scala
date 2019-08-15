@@ -16,7 +16,8 @@
 
 package com.island.ohara.configurator
 
-import com.island.ohara.client.configurator.v0.{ConnectorApi, PipelineApi, TopicApi}
+import com.island.ohara.client.configurator.v0.PipelineApi.Flow
+import com.island.ohara.client.configurator.v0.{ConnectorApi, FileInfoApi, PipelineApi, StreamApi, TopicApi}
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.kafka.Producer
@@ -36,6 +37,8 @@ class TestMetrics extends WithBrokerWorker with Matchers {
 
   private[this] val connectorApi = ConnectorApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
+  private[this] val streamApi = StreamApi.access.hostname(configurator.hostname).port(configurator.port)
+  private[this] val fileApi = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 30 seconds)
 
@@ -190,6 +193,45 @@ class TestMetrics extends WithBrokerWorker with Matchers {
     CommonUtils.await(() => !result(pipelineApi.get(pipeline.key)).objects.exists(_.name == topic.name),
                       java.time.Duration.ofSeconds(30))
     assertNoMetricsForTopic(topic.name)
+  }
+
+  @Test
+  def testStreamMeterInPipeline(): Unit = {
+    val wkInfo = result(configurator.clusterCollie.workerCollie.clusters().map(_.keys)).head
+    val jar = CommonUtils.createTempJar("stream")
+    val jarInfo = result(fileApi.request.file(jar).group(wkInfo.name).upload())
+    jarInfo.name shouldBe jar.getName
+
+    val t1 = result(topicApi.request.name(CommonUtils.randomString).create())
+    val t2 = result(topicApi.request.name(CommonUtils.randomString).create())
+    result(topicApi.start(t1.key))
+    result(topicApi.start(t2.key))
+
+    val stream = result(streamApi.request.jarKey(jarInfo.key).fromTopicKey(t1.key).toTopicKey(t2.key).create())
+
+    val pipelineApi = PipelineApi.access.hostname(configurator.hostname).port(configurator.port)
+
+    val pipeline = result(
+      pipelineApi.request
+        .name(CommonUtils.randomString())
+        .flows(Seq(Flow(t1.key, Set(stream.key)), Flow(stream.key, Set(t2.key))))
+        .create())
+
+    pipeline.objects.filter(_.name == stream.name).head.metrics.meters.size shouldBe 0
+
+    result(streamApi.start(stream.name))
+    // the streamApp is running so we should "see" the beans.
+    CommonUtils.await(
+      () => result(pipelineApi.get(pipeline.key)).objects.filter(_.name == stream.name).head.metrics.meters.nonEmpty,
+      java.time.Duration.ofSeconds(20))
+
+    result(streamApi.stop(stream.name))
+    // the stream is stopped so we should NOT "see" the beans.
+    CommonUtils.await(
+      () => result(pipelineApi.get(pipeline.key)).objects.filter(_.name == stream.name).head.metrics.meters.isEmpty,
+      java.time.Duration.ofSeconds(20))
+
+    jar.deleteOnExit()
   }
 
   @After

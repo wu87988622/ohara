@@ -262,6 +262,18 @@ public final class StreamDefinitions implements JsonObject {
           .valueType(Type.STRING)
           .build();
 
+  // this is the streamApp metric group definition
+  public static final SettingDef STREAMAPP_METRIC_GROUP_DEFINITION =
+      SettingDef.builder()
+          .key("streamMetricGroup")
+          .group(CORE_GROUP)
+          .orderInGroup(ORDER_COUNTER.getAndIncrement())
+          .optional("streamapp")
+          .readonly()
+          .internal()
+          .valueType(Type.STRING)
+          .build();
+
   /**
    * create default configurations
    *

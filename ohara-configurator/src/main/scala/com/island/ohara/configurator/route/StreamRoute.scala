@@ -38,9 +38,10 @@ import scala.util.Random
 private[configurator] object StreamRoute {
 
   /**
-    * Note: please modified the value in '''MetricFactory''' also if you want to change this
+    * The group for a stream application metrics
+    * Since each streamApp has it's own metrics, it is OK to use same value
     */
-  private[this] val STREAM_APP_GROUP = "streamapp"
+  private[configurator] val STREAM_APP_GROUP = StreamDefinitions.STREAMAPP_METRIC_GROUP_DEFINITION.defaultValue()
   private[this] val log = LoggerFactory.getLogger(StreamRoute.getClass)
 
   /**

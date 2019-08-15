@@ -26,8 +26,8 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.{Definition, StreamApi}
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.metrics.BeanChannel
-import com.island.ohara.metrics.basic.CounterMBean
+import com.island.ohara.configurator.route.StreamRoute
+import com.island.ohara.metrics.basic.{Counter, CounterMBean}
 import com.island.ohara.streams.config.StreamDefinitions
 
 import scala.collection.JavaConverters._
@@ -38,8 +38,14 @@ private[configurator] class FakeStreamCollie(node: NodeCollie)
     with StreamCollie {
 
   override def counters(cluster: StreamClusterInfo): Seq[CounterMBean] =
-    // we don't care for the fake mode since both fake mode and embedded mode are running on local jvm
-    BeanChannel.local().counterMBeans().asScala
+    // we fake counters since streamApp is not really running in fake collie mode
+    Seq(
+      Counter
+        .builder()
+        .group(StreamRoute.STREAM_APP_GROUP)
+        .name("fakeCounter")
+        .value(CommonUtils.randomInteger().toLong)
+        .build())
 
   override def creator: StreamCollie.ClusterCreator =
     (_, nodeNames, _, _, _, _, _, _, settings, _) =>

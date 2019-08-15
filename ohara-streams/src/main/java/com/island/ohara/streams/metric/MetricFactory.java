@@ -18,6 +18,7 @@ package com.island.ohara.streams.metric;
 
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.metrics.basic.Counter;
+import com.island.ohara.streams.config.StreamDefinitions;
 
 /** This is a helper class to Get the desire bean object */
 public final class MetricFactory {
@@ -30,7 +31,9 @@ public final class MetricFactory {
    */
   public static Counter getCounter(IOType type) {
     return Counter.builder()
-        .group("streamapp")
+        // the group is individual for each streamApp
+        // so it is OK to use same group value
+        .group(StreamDefinitions.STREAMAPP_METRIC_GROUP_DEFINITION.defaultValue())
         .name(type.name())
         .unit("row")
         .document(type.value + ": the number of rows")
