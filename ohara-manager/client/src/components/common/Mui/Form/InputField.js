@@ -70,7 +70,11 @@ InputField.propTypes = {
   input: PropTypes.shape({
     name: PropTypes.string.isRequired,
     onChange: PropTypes.func.isRequired,
-    value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    value: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.number,
+      PropTypes.object,
+    ]).isRequired,
   }).isRequired,
   meta: PropTypes.shape({
     touched: PropTypes.bool,

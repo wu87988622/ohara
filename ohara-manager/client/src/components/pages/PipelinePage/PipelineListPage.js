@@ -252,7 +252,7 @@ const PipelineListPage = props => {
                 <s.TopWrapper>
                   <H2>Pipelines</H2>
                   <s.NewPipelineBtn
-                    text="New pipeline"
+                    text="NEW PIPELINE"
                     testId="new-pipeline"
                     onClick={handleSelectClusterModalOpen}
                   />

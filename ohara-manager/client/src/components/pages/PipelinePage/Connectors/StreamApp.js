@@ -22,6 +22,7 @@ import { get, isString, isNull } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
 import * as streamApi from 'api/streamApi';
+import * as pipelineApi from 'api/pipelineApi';
 import * as utils from './connectorUtils';
 import Controller from './Controller';
 import AutoSave from './AutoSave';
@@ -38,15 +39,21 @@ class StreamApp extends React.Component {
       params: PropTypes.object,
     }).isRequired,
     graph: PropTypes.arrayOf(graphPropType).isRequired,
+    pipeline: PropTypes.shape({
+      name: PropTypes.string.isRequired,
+      flows: PropTypes.arrayOf(
+        PropTypes.shape({
+          from: PropTypes.object,
+          to: PropTypes.arrayOf(PropTypes.object),
+        }),
+      ).isRequired,
+    }).isRequired,
     updateGraph: PropTypes.func.isRequired,
     refreshGraph: PropTypes.func.isRequired,
     updateHasChanges: PropTypes.func.isRequired,
     pipelineTopics: PropTypes.array.isRequired,
     history: PropTypes.shape({
       push: PropTypes.func.isRequired,
-    }).isRequired,
-    pipeline: PropTypes.shape({
-      workerClusterName: PropTypes.string.isRequired,
     }).isRequired,
   };
 
@@ -58,6 +65,7 @@ class StreamApp extends React.Component {
     streamApp: null,
     state: null,
     topics: [],
+    from: null,
   };
 
   componentDidMount() {
@@ -73,7 +81,8 @@ class StreamApp extends React.Component {
     const { connectorName: currConnectorName } = this.props.match.params;
 
     if (prevTopics !== currTopics) {
-      this.setState({ topics: currTopics });
+      const topics = currTopics.map(currTopic => currTopic.name);
+      this.setState({ topics });
     }
 
     if (prevConnectorName !== currConnectorName) {
@@ -83,7 +92,7 @@ class StreamApp extends React.Component {
 
   setTopics = () => {
     const { pipelineTopics } = this.props;
-    this.setState({ topics: pipelineTopics.map(t => t.name) });
+    this.setState({ topics: pipelineTopics.map(topic => topic.name) });
   };
 
   fetchStreamApp = async name => {
@@ -96,9 +105,10 @@ class StreamApp extends React.Component {
         settings,
         definition: { definitions },
       } = result;
-      const { topicKeys } = settings;
+      const { from, to } = settings;
       const state = get(result, 'state', null);
-      const topicName = get(topicKeys, '[0].name', '');
+      const fromTopic = get(from, '[0]', '');
+      const toTopic = get(to, '[0]', '');
 
       const _settings = utils.changeToken({
         values: settings,
@@ -106,15 +116,39 @@ class StreamApp extends React.Component {
         replaceToken: '_',
       });
 
-      const configs = { ..._settings, topicKeys: topicName };
-      this.setState({ configs, state, defs: definitions });
+      const configs = { ..._settings, from: fromTopic, to: toTopic };
+      this.setState({
+        configs,
+        state,
+        defs: definitions,
+        from: fromTopic,
+      });
     }
   };
 
-  handleSave = async ({ instances, from, to }) => {
+  handleSave = async values => {
+    const { instances, from, to } = values;
+
+    let isFromUpdate = false;
+    if (from !== this.state.from) {
+      if (from !== null) isFromUpdate = true;
+      this.setState({ from });
+    }
+
     const { graph, updateGraph } = this.props;
     let fromTopic = isString(from) ? [from] : from;
     let toTopic = isString(to) ? [to] : to;
+
+    if (
+      (fromTopic && fromTopic[0] === 'Please select...') ||
+      isNull(fromTopic)
+    ) {
+      fromTopic = [];
+    }
+
+    if ((toTopic && toTopic[0] === 'Please select...') || isNull(toTopic)) {
+      toTopic = [];
+    }
 
     const params = {
       name: this.streamAppName,
@@ -127,22 +161,20 @@ class StreamApp extends React.Component {
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (isSuccess) {
-      const [streamApp] = graph.filter(g => g.name === this.streamAppName);
       const [prevFromTopic] = graph.filter(g =>
         g.to.includes(this.streamAppName),
       );
-      const isToUpdate = streamApp.to[0] !== toTopic[0];
 
       // To topic update
-      if (isToUpdate) {
+      if (!isFromUpdate) {
         const currStreamApp = findByGraphName(graph, this.streamAppName);
         const toUpdate = { ...currStreamApp, to: toTopic };
         updateGraph({ update: toUpdate, dispatcher: { name: 'STREAM_APP' } });
       } else {
         // From topic update
-        let currFromTopic = findByGraphName(graph, fromTopic[0]);
-        let fromUpdate;
+        let currFromTopic = findByGraphName(graph, from);
 
+        let fromUpdate;
         if (currFromTopic) {
           fromUpdate = [...new Set([...currFromTopic.to, this.streamAppName])];
         } else {
@@ -151,10 +183,8 @@ class StreamApp extends React.Component {
           } else {
             fromUpdate = [];
           }
-
           currFromTopic = prevFromTopic;
         }
-
         let update;
         if (!currFromTopic) {
           update = { ...currFromTopic };
@@ -170,7 +200,6 @@ class StreamApp extends React.Component {
           update,
           isFromTopic: true,
           streamAppName: this.streamAppName,
-          updatedName: params.name,
         });
       }
     }
@@ -185,13 +214,38 @@ class StreamApp extends React.Component {
   };
 
   handleDeleteStreamApp = async () => {
-    const { match, refreshGraph, history } = this.props;
-    const { pipelineName } = match.params;
+    const { refreshGraph, history, pipeline } = this.props;
+    const { name: pipelineName, flows } = pipeline;
 
-    const res = await streamApi.deleteProperty(this.streamAppName);
-    const isSuccess = get(res, 'data.isSuccess', false);
+    if (this.state.state) {
+      toastr.error(
+        `The connector is running! Please stop the connector first before deleting`,
+      );
 
-    if (isSuccess) {
+      return;
+    }
+
+    const connectorResponse = await streamApi.deleteProperty(
+      this.streamAppName,
+    );
+
+    const connectorHasDeleted = get(connectorResponse, 'data.isSuccess', false);
+
+    const updatedFlows = flows.filter(
+      flow => flow.from.name !== this.streamAppName,
+    );
+
+    const pipelineResponse = await pipelineApi.updatePipeline({
+      name: pipelineName,
+      params: {
+        name: pipelineName,
+        flows: updatedFlows,
+      },
+    });
+
+    const pipelineHasUpdated = get(pipelineResponse, 'data.isSuccess', false);
+
+    if (connectorHasDeleted && pipelineHasUpdated) {
       toastr.success(
         `${MESSAGES.CONNECTOR_DELETION_SUCCESS} ${this.streamAppName}`,
       );
@@ -258,7 +312,7 @@ class StreamApp extends React.Component {
     return (
       <Box>
         <TitleWrapper>
-          <H5Wrapper>FTP source connector</H5Wrapper>
+          <H5Wrapper>Stream app</H5Wrapper>
           <Controller
             kind="connector"
             connectorName={this.streamAppName}

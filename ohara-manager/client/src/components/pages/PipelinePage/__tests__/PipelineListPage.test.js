@@ -109,7 +109,7 @@ describe('<PipelineListPage />', () => {
     const { getByText } = await waitForElement(() =>
       renderWithProvider(<PipelineListPage {...props} />),
     );
-    getByText('New pipeline');
+    getByText('NEW PIPELINE');
   });
 
   it('toggles new pipeline modal', async () => {

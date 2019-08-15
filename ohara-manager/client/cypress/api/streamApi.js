@@ -61,7 +61,7 @@ describe('Stream property API', () => {
 
         expect(isSuccess).to.eq(true);
 
-        expect(settings).to.be.a('object');
+        expect(settings).to.be.an('object');
       });
     });
   });
@@ -77,12 +77,11 @@ describe('Stream property API', () => {
 
       expect(isSuccess).to.eq(true);
 
-      expect(settings).to.be.a('object');
+      expect(settings).to.be.an('object');
     });
   });
 
-  // skip for now
-  it.skip('updateProperty', () => {
+  it('updateProperty', () => {
     const { streamName } = setup();
 
     const params = {
