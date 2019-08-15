@@ -6,7 +6,7 @@
     "mochaFile": "../test-reports/e2eReport-[hash].xml",
     "toConsole": true
   },
-  "video": false,
+  "video": true,
   "requestTimeout": 30000,
   "defaultCommandTimeout": 20000,
   "watchForFileChanges": false,
