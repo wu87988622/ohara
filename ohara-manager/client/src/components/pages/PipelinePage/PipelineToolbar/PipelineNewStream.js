@@ -93,7 +93,7 @@ class PipelineNewStream extends React.Component {
 
   handleChange = ({ target: { value } }) => {
     const test = truncate(value.replace(/[^0-9a-z]/g, ''), {
-      length: 30,
+      length: 20,
       omission: '',
     });
     this.setState({ newStreamAppName: test });

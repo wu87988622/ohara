@@ -46,6 +46,10 @@ const Progress = styled(CircularProgress)`
   margin-left: -8px;
 `;
 
+const StyledContentText = styled(DialogContentText)`
+  word-break: break-all;
+`;
+
 const AlertDialog = props => {
   const {
     title,
@@ -69,7 +73,7 @@ const AlertDialog = props => {
       <div data-testid={testId}>
         <DialogTitle>{title}</DialogTitle>
         <DialogContent>
-          <DialogContentText>{content}</DialogContentText>
+          <StyledContentText>{content}</StyledContentText>
         </DialogContent>
         <DialogActions>
           <Button disabled={isWorking} onClick={handleClose}>
