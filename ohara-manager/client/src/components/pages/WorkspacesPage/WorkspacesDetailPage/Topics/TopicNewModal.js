@@ -68,7 +68,7 @@ const TopicNewModal = props => {
           <Dialog
             title="New topic"
             open={props.isActive}
-            handelClose={() => {
+            handleClose={() => {
               form.reset();
               handleClose();
             }}

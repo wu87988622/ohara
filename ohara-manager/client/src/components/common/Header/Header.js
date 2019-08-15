@@ -21,7 +21,7 @@ import { get } from 'lodash';
 import * as URLS from 'constants/urls';
 import { ListLoader } from 'components/common/Loader';
 import { fetchInfo } from 'api/infoApi';
-import { InfoModal } from '../Modal';
+import { Dialog } from 'components/common/Mui/Dialog';
 import {
   StyledHeader,
   HeaderWrapper,
@@ -75,14 +75,11 @@ class Header extends React.Component {
 
     return (
       <StyledHeader>
-        <InfoModal
+        <Dialog
           title="Ohara version"
-          isActive={isVersionModalActive}
-          contentLabel="VersionModal"
-          ariaHideApp={false}
-          width="440px"
-          onRequestClose={this.handleVersionModalClose}
-          handleCancel={this.handleVersionModalClose}
+          open={isVersionModalActive}
+          handleClose={this.handleVersionModalClose}
+          showActions={false}
           testId="info-modal"
         >
           {isLoading ? (
@@ -109,7 +106,7 @@ class Header extends React.Component {
               </li>
             </Ul>
           )}
-        </InfoModal>
+        </Dialog>
         <HeaderWrapper>
           <Brand to={URLS.HOME}>Ohara Stream</Brand>
           <Nav>

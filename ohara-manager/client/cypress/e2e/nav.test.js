@@ -70,10 +70,6 @@ describe('Header', () => {
             .find('li')
             .should('have.length', Object.keys(info).length);
         });
-      })
-      .getByTestId('close-btn')
-      .click()
-      .queryByTestId('info-modal', { timeout: 500 }) // we don't want to throw here, so use queryByTestId instead of getByTestId
-      .should('not.be.visible');
+      });
   });
 });

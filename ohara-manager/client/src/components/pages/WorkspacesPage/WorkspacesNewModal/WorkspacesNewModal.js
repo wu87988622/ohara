@@ -389,7 +389,7 @@ const WorkerNewModal = props => {
               scroll="paper"
               title="New workspace"
               open={props.isActive}
-              handelClose={() => {
+              handleClose={() => {
                 if (!submitting) resetModal(form);
               }}
               handleConfirm={handleSubmit}

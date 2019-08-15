@@ -162,7 +162,7 @@ const Nodes = props => {
 
       <Dialog
         open={dialogOpen}
-        handelClose={handleNodeSelectClose}
+        handleClose={handleNodeSelectClose}
         title="Add Node"
         handleConfirm={handleAddNode}
         confirmDisabled={confirmDisabled}

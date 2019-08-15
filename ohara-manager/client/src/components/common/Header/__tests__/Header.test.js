@@ -77,7 +77,7 @@ describe('<Header />', () => {
     expect(getByTestId('workspaces-link').href).toBe(expectWorkspacesUrl);
   });
 
-  it('toggles info modal', async () => {
+  it('opens info modal', async () => {
     const { getByTestId, queryByTestId } = await waitForElement(() =>
       renderWithProvider(<Header />),
     );
@@ -87,8 +87,5 @@ describe('<Header />', () => {
     fireEvent.click(getByTestId('version-btn'));
     const newInfoModal = await waitForElement(() => getByTestId('info-modal'));
     expect(newInfoModal).toBeVisible();
-
-    fireEvent.click(getByTestId('close-btn'));
-    expect(queryByTestId('info-modal')).toBeNull();
   });
 });

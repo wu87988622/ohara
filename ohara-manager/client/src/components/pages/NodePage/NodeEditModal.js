@@ -96,7 +96,7 @@ const NodeEditModal = props => {
         return (
           <Dialog
             open={isOpen}
-            handelClose={handleClose}
+            handleClose={handleClose}
             title="New ohara node"
             handleConfirm={handleSubmit}
             confirmBtnText="Save"

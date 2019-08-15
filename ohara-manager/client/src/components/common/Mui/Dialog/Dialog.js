@@ -27,45 +27,50 @@ import DrabblePaper from './DrabblePaper';
 const MuiDialog = props => {
   const {
     open,
-    handelClose,
+    handleConfirm,
+    handleClose,
     title,
     confirmBtnText = 'Add',
     cancelBtnText = 'Cancel',
-    handleConfirm,
     children,
     confirmDisabled = false,
     maxWidth = 'xs',
     loading,
+    showActions = true,
     testId,
   } = props;
   return (
     <Dialog
       open={open}
-      onClose={handelClose}
+      onClose={handleClose}
       maxWidth={maxWidth}
       PaperComponent={DrabblePaper}
       fullWidth
+      data-testid="dialog-container"
     >
       <div data-testid={testId}>
         <DialogTitle>{title}</DialogTitle>
         {children}
-        <DialogActions>
-          <Button onClick={handelClose} color="primary">
-            {cancelBtnText}
-          </Button>
 
-          <Button
-            onClick={handleConfirm}
-            color="primary"
-            autoFocus
-            disabled={confirmDisabled}
-          >
-            {!loading && confirmBtnText}
-            {loading && (
-              <CircularProgress data-testid="dialog-loader" size={24} />
-            )}
-          </Button>
-        </DialogActions>
+        {showActions && (
+          <DialogActions>
+            <Button onClick={handleClose} color="primary">
+              {cancelBtnText}
+            </Button>
+
+            <Button
+              onClick={handleConfirm}
+              color="primary"
+              disabled={confirmDisabled}
+              autoFocus
+            >
+              {!loading && confirmBtnText}
+              {loading && (
+                <CircularProgress data-testid="dialog-loader" size={24} />
+              )}
+            </Button>
+          </DialogActions>
+        )}
       </div>
     </Dialog>
   );
@@ -73,16 +78,17 @@ const MuiDialog = props => {
 
 MuiDialog.propTypes = {
   open: PropTypes.bool.isRequired,
-  handelClose: PropTypes.func.isRequired,
   title: PropTypes.string.isRequired,
+  children: PropTypes.any.isRequired,
+  handleClose: PropTypes.func.isRequired,
   confirmBtnText: PropTypes.string,
   cancelBtnText: PropTypes.string,
   maxWidth: PropTypes.string,
-  handleConfirm: PropTypes.func.isRequired,
-  children: PropTypes.any.isRequired,
+  handleConfirm: PropTypes.func,
   confirmDisabled: PropTypes.bool,
   loading: PropTypes.bool,
   testId: PropTypes.string,
+  showActions: PropTypes.bool,
 };
 
 export default MuiDialog;

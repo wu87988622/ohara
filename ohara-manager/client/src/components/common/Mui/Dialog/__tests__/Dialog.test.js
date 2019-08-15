@@ -25,7 +25,7 @@ const setup = (override = {}) => {
   return {
     title: generate.name(),
     open: true,
-    handelClose: jest.fn(),
+    handleClose: jest.fn(),
     handleConfirm: jest.fn(),
     children: generate.message(),
     loading: false,
@@ -118,6 +118,6 @@ describe('<Dialog />', () => {
     const { getByText } = render(<Dialog {...props} />);
 
     fireEvent.click(getByText('Cancel'));
-    expect(props.handelClose).toHaveBeenCalledTimes(1);
+    expect(props.handleClose).toHaveBeenCalledTimes(1);
   });
 });

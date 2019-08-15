@@ -189,7 +189,7 @@ const PipelineListPage = props => {
                   isUndefined(values.name)
                 }
                 open={isSelectClusterModalActive}
-                handelClose={handleSelectClusterModalClose}
+                handleClose={handleSelectClusterModalClose}
                 testId="new-pipeline-modal"
               >
                 {isFetchingWorker ? (
