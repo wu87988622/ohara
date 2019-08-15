@@ -54,10 +54,13 @@ export const createConnector = async ({
     // Topic is created beforehand therefore, a name is already exist.
     connectorName = connector.name;
   } else if (isStream(typeName)) {
-    await createProperty({
+    const response = await createProperty({
       jarKey: connector.jarKey,
       name: newStreamAppName,
     });
+
+    if (!response.data.isSuccess) return; // failed to create
+
     connectorName = newStreamAppName;
   } else if (isSource(typeName) || isSink(typeName)) {
     const params = {
@@ -67,7 +70,9 @@ export const createConnector = async ({
       workerClusterName: workerClusterName,
     };
     connectorName = newConnectorName;
-    await connectorApi.createConnector(params);
+
+    const response = await connectorApi.createConnector(params);
+    if (!response.data.isSuccess) return; // failed to create
   }
 
   const update = {

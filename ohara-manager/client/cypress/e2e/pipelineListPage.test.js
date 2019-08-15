@@ -32,7 +32,7 @@ describe('PipelineListPage', () => {
     const pipelineName = makeRandomStr();
 
     cy.visit(URLS.PIPELINES)
-      .getByText('New pipeline')
+      .getByText('NEW PIPELINE')
       .click()
       .getByTestId('name-input')
       .type(pipelineName)

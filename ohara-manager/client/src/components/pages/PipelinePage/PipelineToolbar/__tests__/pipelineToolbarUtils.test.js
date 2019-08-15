@@ -64,6 +64,7 @@ describe('createConnector()', () => {
     const res = {
       data: {
         result: { name: connectorName, settings: { name: connectorName } },
+        isSuccess: true,
       },
     };
 

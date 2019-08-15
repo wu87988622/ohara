@@ -70,6 +70,7 @@ class PipelineNewConnector extends React.Component {
       workerClusterName,
       newConnectorName,
     });
+
     this.props.handleClose();
   };
 
