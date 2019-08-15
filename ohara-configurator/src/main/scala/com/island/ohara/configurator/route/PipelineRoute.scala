@@ -93,7 +93,8 @@ private[configurator] object PipelineRoute {
         tags = data.tags
       ))
 
-  private[this] def toAbstract(data: StreamClusterInfo, clusterInfo: StreamClusterInfo): Future[ObjectAbstract] =
+  private[this] def toAbstract(data: StreamClusterInfo, clusterInfo: StreamClusterInfo)(
+    implicit meterCache: MeterCache): Future[ObjectAbstract] =
     Future.successful(
       ObjectAbstract(
         group = data.group,
@@ -102,7 +103,7 @@ private[configurator] object PipelineRoute {
         className = data.definition.map(_.className),
         state = clusterInfo.state,
         error = None,
-        metrics = Metrics(Seq.empty),
+        metrics = Metrics(meterCache.meters(clusterInfo).getOrElse(StreamRoute.STREAM_APP_GROUP, Seq.empty)),
         lastModified = data.lastModified,
         tags = data.tags
       ))
