@@ -16,7 +16,8 @@
 
 package com.island.ohara.agent.ssh
 
-import com.island.ohara.agent.{ClusterCache, NodeCollie, StreamCollie}
+import com.island.ohara.agent.{ClusterCache, NoSuchClusterException, NodeCollie, StreamCollie}
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
@@ -81,4 +82,14 @@ private class StreamCollieImpl(node: NodeCollie, dockerCache: DockerClientCache,
 
   override protected def nodeCollie: NodeCollie = node
   override protected def prefixKey: String = PREFIX_KEY
+
+  override protected def brokerContainers(clusterName: String)(
+    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
+    Future.successful(
+      clusterCache.snapshot
+        .filter(_._1.isInstanceOf[BrokerClusterInfo])
+        .find(_._1.name == clusterName)
+        .map(_._2)
+        .getOrElse(
+          throw new NoSuchClusterException(s"broker cluster:$clusterName doesn't exist. other broker clusters")))
 }

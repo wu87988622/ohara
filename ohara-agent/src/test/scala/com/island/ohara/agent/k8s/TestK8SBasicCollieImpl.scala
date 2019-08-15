@@ -17,7 +17,7 @@
 package com.island.ohara.agent.k8s
 
 import com.island.ohara.agent.fake.FakeK8SClient
-import com.island.ohara.agent.{ContainerCollie, NodeCollie, ZookeeperCollie}
+import com.island.ohara.agent.{Collie, NodeCollie, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
@@ -33,18 +33,19 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 class TestK8SBasicCollieImpl extends SmallTest with Matchers {
   private[this] val TIMEOUT: FiniteDuration = 30 seconds
 
+  private[this] val tmpServiceName = "zk"
   @Test
   def testClusterName(): Unit = {
-    val cluster1ContainerName = ContainerCollie.format(PREFIX_KEY, "cluster1", "zk")
+    val cluster1ContainerName = Collie.format(PREFIX_KEY, "cluster1", tmpServiceName)
     zookeeperClusterName(cluster1ContainerName) shouldBe "cluster1"
 
-    val cluster2ContainerName = ContainerCollie.format(PREFIX_KEY, "zk", "zk")
+    val cluster2ContainerName = Collie.format(PREFIX_KEY, "zk", tmpServiceName)
     zookeeperClusterName(cluster2ContainerName) shouldBe "zk"
 
-    val cluster3ContainerName = ContainerCollie.format(PREFIX_KEY, "zkzk", "zk")
+    val cluster3ContainerName = Collie.format(PREFIX_KEY, "zkzk", tmpServiceName)
     zookeeperClusterName(cluster3ContainerName) shouldBe "zkzk"
 
-    val cluster4ContainerName = s"${PREFIX_KEY}${DIVIDER}zk${DIVIDER}zk"
+    val cluster4ContainerName = s"$PREFIX_KEY${DIVIDER}zk$DIVIDER$tmpServiceName"
     zookeeperClusterName(cluster4ContainerName) shouldBe "zk"
   }
 
@@ -84,6 +85,8 @@ class TestK8SBasicCollieImpl extends SmallTest with Matchers {
 
         override def creator: ZookeeperCollie.ClusterCreator =
           throw new UnsupportedOperationException("Test doesn't support creator function")
+
+        override def serviceName: String = tmpServiceName
       }
 
     val containers = k8sBasicCollieImpl.clusterWithAllContainers()(Implicits.global)

@@ -109,7 +109,7 @@ public class PageViewRegionExample extends StreamApp {
   public void start(OStream<Row> ostream, StreamDefinitions streamDefinitions) {
     ostream
         .leftJoin(
-            streamDefinitions.get(joinTopic),
+            streamDefinitions.string(joinTopic),
             Conditions.create().add(Collections.singletonList(Pair.of("user", "user"))),
             (r1, r2) ->
                 Row.of(

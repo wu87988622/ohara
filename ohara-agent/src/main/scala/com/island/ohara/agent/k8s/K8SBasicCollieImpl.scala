@@ -16,8 +16,7 @@
 
 package com.island.ohara.agent.k8s
 
-import com.island.ohara.agent.Collie.ClusterCreator
-import com.island.ohara.agent.{ContainerCollie, NodeCollie}
+import com.island.ohara.agent.{Collie, NodeCollie}
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
@@ -26,10 +25,10 @@ import com.island.ohara.common.util.Releasable
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.ClassTag
 
-private[this] abstract class K8SBasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: ClusterCreator[T]](
+private[this] abstract class K8SBasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: Collie.ClusterCreator[T]](
   nodeCollie: NodeCollie,
   k8sClient: K8SClient)
-    extends ContainerCollie[T, Creator](nodeCollie: NodeCollie)
+    extends Collie[T, Creator]
     with Releasable {
 
   protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo])(

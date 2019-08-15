@@ -29,6 +29,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
 import org.junit.Test;
 
+// TODO: the streamapp requires many arguments from env variables.
+// This tests do not care the rules required by streamapp.
+// Fortunately (or unfortunately), streamapp lacks of enough checks to variables so the
+// non-completed settings to streamapp works well in this test ... by chia
 public class TestStreamApp extends SmallTest {
 
   @Test

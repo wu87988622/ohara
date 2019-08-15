@@ -19,6 +19,7 @@ package com.island.ohara.streams;
 import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.data.Serializer;
+import com.island.ohara.common.setting.TopicKey;
 import com.island.ohara.kafka.BrokerClient;
 import com.island.ohara.kafka.Producer;
 import com.island.ohara.streams.config.StreamDefinitions;
@@ -44,24 +45,28 @@ public class TestWordCountExample extends WithBroker {
             .build();
     final int partitions = 1;
     final short replications = 1;
-    String fromTopic = "text-input";
-    String toTopic = "count-output";
+    TopicKey fromTopic = TopicKey.of("default", "text-input");
+    TopicKey toTopic = TopicKey.of("default", "count-output");
 
     // prepare ohara environment
     Map<String, String> settings = new HashMap<>();
     settings.putIfAbsent(StreamDefinitions.BROKER_DEFINITION.key(), client.connectionProps());
     settings.putIfAbsent(StreamDefinitions.NAME_DEFINITION.key(), methodName());
-    settings.putIfAbsent(StreamDefinitions.FROM_TOPICS_DEFINITION.key(), fromTopic);
-    settings.putIfAbsent(StreamDefinitions.TO_TOPICS_DEFINITION.key(), toTopic);
+    settings.putIfAbsent(
+        StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key(),
+        "[" + TopicKey.toJsonString(fromTopic) + "]");
+    settings.putIfAbsent(
+        StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key(),
+        "[" + TopicKey.toJsonString(toTopic) + "]");
     StreamTestUtils.setOharaEnv(settings);
-    StreamTestUtils.createTopic(client, fromTopic, partitions, replications);
-    StreamTestUtils.createTopic(client, toTopic, partitions, replications);
+    StreamTestUtils.createTopic(client, fromTopic.topicNameOnKafka(), partitions, replications);
+    StreamTestUtils.createTopic(client, toTopic.topicNameOnKafka(), partitions, replications);
     // prepare data
     List<Row> rows =
         Stream.of("hello", "ohara", "stream", "world", "of", "stream")
             .map(str -> Row.of(Cell.of("word", str)))
             .collect(Collectors.toList());
-    StreamTestUtils.produceData(producer, rows, fromTopic);
+    StreamTestUtils.produceData(producer, rows, fromTopic.topicNameOnKafka());
 
     // run example
     WordCountExample app = new WordCountExample();
@@ -74,6 +79,6 @@ public class TestWordCountExample extends WithBroker {
                 Row.of(Cell.of("word", "world"), Cell.of("count", 1L)))
             .collect(Collectors.toList());
     // Since the result of "count" is "accumulate", we will get the same size as input count
-    StreamTestUtils.assertResult(client, toTopic, expected, rows.size());
+    StreamTestUtils.assertResult(client, toTopic.topicNameOnKafka(), expected, rows.size());
   }
 }

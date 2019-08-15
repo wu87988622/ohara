@@ -16,6 +16,7 @@
 
 package com.island.ohara
 
+import com.island.ohara.common.util.CommonUtils
 import spray.json._
 package object agent {
 
@@ -28,7 +29,7 @@ package object agent {
     * @return string key
     */
   def toEnvString(settings: Map[String, JsValue]): Map[String, String] = Map(
-    KEY_TO_SETTINGS -> JsObject(settings).toString().replaceAll("\"", "\\\\\""))
+    KEY_TO_SETTINGS -> CommonUtils.toEnvString(JsObject(settings).toString()))
 
   /**
     * seek the internal key which stores all settings in a normal string.
@@ -37,6 +38,6 @@ package object agent {
     */
   def toSettings(envs: Map[String, String]): Map[String, JsValue] = envs
     .get(KEY_TO_SETTINGS)
-    .map(_.replaceAll("\\\\\"", "\"").parseJson.asJsObject.fields)
+    .map(CommonUtils.fromEnvString(_).parseJson.asJsObject.fields)
     .getOrElse(throw new NoSuchElementException(s"the internal key:$KEY_TO_SETTINGS does not exist!!!"))
 }

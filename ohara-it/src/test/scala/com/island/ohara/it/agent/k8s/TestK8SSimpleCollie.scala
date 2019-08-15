@@ -33,10 +33,10 @@ import com.typesafe.scalalogging.Logger
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
-import scala.concurrent.duration._
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 import scala.util.Try
 
 class TestK8SSimpleCollie extends IntegrationTest with Matchers {
@@ -235,7 +235,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
           // Confirm pod name is a common format
           val wkPodName = Await.result(workerCollie.cluster(workerClusterName), TIMEOUT)._2.head.name
           val wkPodNameFieldSize = wkPodName.split("-").size
-          val expectWKPodNameField = ContainerCollie.format("k8soccl", workerClusterName, "wk").split("-")
+          val expectWKPodNameField = Collie.format("k8soccl", workerClusterName, "wk").split("-")
           wkPodNameFieldSize shouldBe expectWKPodNameField.size
 
         } finally result(workerCollie.remove(workerClusterName))

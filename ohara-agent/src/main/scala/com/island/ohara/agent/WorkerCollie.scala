@@ -18,7 +18,6 @@ package com.island.ohara.agent
 import java.util.Objects
 
 import com.island.ohara.agent.docker.ContainerState
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.client.configurator.v0.FileInfoApi.{FileInfo, _}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
@@ -80,7 +79,7 @@ trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator
         .flatMap(existNodes =>
           nodeCollie
             .nodes(nodeNames)
-            .map(_.map(node => node -> ContainerCollie.format(prefixKey, clusterName, serviceName)).toMap)
+            .map(_.map(node => node -> Collie.format(prefixKey, clusterName, serviceName)).toMap)
             .map((existNodes, _)))
         .map {
           case (existNodes, newNodes) =>
@@ -100,11 +99,12 @@ trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator
                 .map(c => s"${c.nodeName}:${c.environments(BrokerCollie.CLIENT_PORT_KEY).toInt}")
                 .mkString(",")
 
-              val route = ContainerCollie.preSettingEnvironment(existNodes.asInstanceOf[Map[Node, ContainerInfo]],
-                                                                newNodes.asInstanceOf[Map[Node, String]],
-                                                                brokerContainers,
-                                                                resolveHostName,
-                                                                hookUpdate)
+              val route = resolveHostNames(
+                (existNodes.keys.map(_.hostname) ++ newNodes.keys.map(_.hostname) ++ brokerContainers
+                  .map(_.nodeName)).toSet)
+              existNodes.foreach {
+                case (node, container) => hookOfNewRoute(node, container, route)
+              }
 
               // ssh connection is slow so we submit request by multi-thread
               Future
@@ -112,16 +112,16 @@ trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator
                   case (node, containerName) =>
                     val containerInfo = ContainerInfo(
                       nodeName = node.name,
-                      id = ContainerCollie.UNKNOWN,
+                      id = Collie.UNKNOWN,
                       imageName = imageName,
-                      created = ContainerCollie.UNKNOWN,
-                      state = ContainerCollie.UNKNOWN,
-                      kind = ContainerCollie.UNKNOWN,
+                      created = Collie.UNKNOWN,
+                      state = Collie.UNKNOWN,
+                      kind = Collie.UNKNOWN,
                       name = containerName,
-                      size = ContainerCollie.UNKNOWN,
+                      size = Collie.UNKNOWN,
                       portMappings = Seq(
                         PortMapping(
-                          hostIp = ContainerCollie.UNKNOWN,
+                          hostIp = Collie.UNKNOWN,
                           portPairs = Seq(PortPair(
                                             hostPort = clientPort,
                                             containerPort = clientPort
@@ -203,29 +203,13 @@ trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator
     */
   protected def prefixKey: String
 
-  /**
-    * return service name
-    */
-  protected def serviceName: String
+  override val serviceName: String = WorkerApi.WORKER_SERVICE_NAME
 
   /**
-    * Please implement this function to get Broker cluster information
+    * there is new route to the node. the sub class can update the running container to apply new route.
     */
-  protected def brokerClusters(
-    implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]]
-
-  /**
-    * Update exist node info
-    */
-  protected def hookUpdate(node: Node, container: ContainerInfo, route: Map[String, String]): Unit = {
+  protected def hookOfNewRoute(node: Node, container: ContainerInfo, route: Map[String, String]): Unit = {
     //Nothing
-  }
-
-  /**
-    * Hostname resolve to IP address
-    */
-  protected def resolveHostName(nodeName: String): String = {
-    CommonUtils.address(nodeName)
   }
 
   /**
@@ -343,17 +327,14 @@ trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator
         Seq.empty
     }
 
-  private[this] def brokerContainers(bkClusterName: String)(
-    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] = {
-    brokerClusters.map(
-      _.filter(_._1.isInstanceOf[BrokerClusterInfo])
-        .find(_._1.name == bkClusterName)
-        .map(_._2)
-        .getOrElse(
-          throw new NoSuchClusterException(s"broker cluster:$bkClusterName doesn't exist. other broker clusters: " +
-            s"${brokerClusters.map(_.filter(_._1.isInstanceOf[BrokerClusterInfo]).map(_._1.name).mkString(","))}"))
-    )
-  }
+  /**
+    * get the containers for specific broker cluster.
+    * @param clusterName name of broker cluster
+    * @param executionContext thread pool
+    * @return containers
+    */
+  protected def brokerContainers(clusterName: String)(
+    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]]
 }
 
 object WorkerCollie {

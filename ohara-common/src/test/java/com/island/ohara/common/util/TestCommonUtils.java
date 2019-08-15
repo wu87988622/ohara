@@ -530,4 +530,15 @@ public class TestCommonUtils extends SmallTest {
     Assert.assertEquals(Duration.ofDays(1), CommonUtils.toDuration("1 days"));
     Assert.assertEquals(Duration.ofDays(3), CommonUtils.toDuration("3 days"));
   }
+
+  @Test
+  public void testToEnvString() {
+    String string = CommonUtils.randomString();
+    Assert.assertEquals(string, CommonUtils.fromEnvString(CommonUtils.toEnvString(string)));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void failToUseEnvString() {
+    CommonUtils.toEnvString(CommonUtils.randomString() + CommonUtils.INTERNAL_STRING_FOR_ENV);
+  }
 }

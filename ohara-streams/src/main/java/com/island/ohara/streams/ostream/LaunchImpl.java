@@ -19,6 +19,7 @@ package com.island.ohara.streams.ostream;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.exception.ExceptionHandler;
 import com.island.ohara.common.exception.OharaException;
+import com.island.ohara.common.setting.TopicKey;
 import com.island.ohara.streams.OStream;
 import com.island.ohara.streams.StreamApp;
 import com.island.ohara.streams.config.StreamDefinitions;
@@ -77,15 +78,36 @@ public class LaunchImpl {
 
                   OStream<Row> ostream =
                       OStream.builder()
-                          .appid(streamDefinitions.get(StreamDefinitions.NAME_DEFINITION.key()))
+                          // There are many tests which don't pass correct arguments to env, and the
+                          // origin design
+                          // lack of enough checks to avoid incorrect arguments. It needs to be
+                          // refactor but not now.
+                          // TODO: add enough checks for env variables ... by chia
+                          .appid(streamDefinitions.nameOption().orElse(null))
+                          // see above comments. fromTopicWith should not accepts null as input ...
+                          // TODO: add enough checks for env variables ... by chia
                           .bootstrapServers(
-                              streamDefinitions.get(StreamDefinitions.BROKER_DEFINITION.key()))
+                              streamDefinitions.brokerConnectionPropsOption().orElse(null))
+                          // TODO: Currently, the number of from topics must be 1 ... by chia
+                          // https://github.com/oharastream/ohara/issues/688
+                          // see above comments. fromTopicWith should not accepts null as input ...
+                          // TODO: add enough checks for env variables ... by chia
                           .fromTopicWith(
-                              streamDefinitions.get(StreamDefinitions.FROM_TOPICS_DEFINITION.key()),
+                              streamDefinitions.fromTopicKeys().stream()
+                                  .map(TopicKey::topicNameOnKafka)
+                                  .findFirst()
+                                  .orElse(null),
                               Serdes.ROW,
                               Serdes.BYTES)
+                          // TODO: Currently, the number of to topics must be 1
+                          // https://github.com/oharastream/ohara/issues/688
+                          // see above comments. fromTopicWith should not accepts null as input ...
+                          // TODO: add enough checks for env variables ... by chia
                           .toTopicWith(
-                              streamDefinitions.get(StreamDefinitions.TO_TOPICS_DEFINITION.key()),
+                              streamDefinitions.toTopicKeys().stream()
+                                  .map(TopicKey::topicNameOnKafka)
+                                  .findFirst()
+                                  .orElse(null),
                               Serdes.ROW,
                               Serdes.BYTES)
                           .build();

@@ -32,7 +32,7 @@ package object ssh {
   /**
     * used to distinguish the cluster name and service name
     */
-  private[ssh] val DIVIDER: String = ContainerCollie.DIVIDER
+  private[ssh] val DIVIDER: String = Collie.DIVIDER
 
   /**
     * In ssh mode we use host driver to mount /etc/hosts from container host.

@@ -21,7 +21,7 @@ package object k8s {
   /**
     * used to distinguish the cluster name and service name
     */
-  private[k8s] val DIVIDER: String = ContainerCollie.DIVIDER
+  private[k8s] val DIVIDER: String = Collie.DIVIDER
 
   /**
     * We need this prefix in order to distinguish our containers from others.

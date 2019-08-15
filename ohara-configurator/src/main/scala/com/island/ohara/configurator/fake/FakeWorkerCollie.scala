@@ -19,9 +19,9 @@ package com.island.ohara.configurator.fake
 import java.util.concurrent.ConcurrentHashMap
 
 import com.island.ohara.agent.{ClusterState, NoSuchClusterException, NodeCollie, WorkerCollie}
-import com.island.ohara.client.configurator.v0.{ClusterInfo, ContainerApi, NodeApi}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
+import com.island.ohara.client.configurator.v0.{ContainerApi, NodeApi}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
@@ -170,21 +170,11 @@ private[configurator] class FakeWorkerCollie(node: NodeCollie, wkConnectionProps
                                    route: Map[String, String]): Future[Unit] =
     throw new UnsupportedOperationException("FakeWorkerCollie doesn't support doCreator function")
 
-  override protected def brokerClusters(
-    implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] =
+  override protected def brokerContainers(clusterName: String)(
+    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
     throw new UnsupportedOperationException("FakeWorkerCollie doesn't support brokerClusters function")
 
-  /**
-    * Please implement nodeCollie
-    *
-    * @return
-    */
   override protected def nodeCollie: NodeCollie = node
 
-  /**
-    * Implement prefix name for paltform
-    *
-    * @return
-    */
   override protected def prefixKey: String = "fakeworker"
 }

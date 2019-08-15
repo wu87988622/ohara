@@ -33,7 +33,7 @@ private[ohara] class K8SClusterCollieImpl(nodeCollie: NodeCollie, k8sClient: K8S
 
   override val workerCollie: WorkerCollie = new K8SWorkerCollieImpl(nodeCollie, brokerCollie, k8sClient)
 
-  override val streamCollie: StreamCollie = new K8SStreamCollieImpl(nodeCollie, k8sClient)
+  override val streamCollie: StreamCollie = new K8SStreamCollieImpl(nodeCollie, brokerCollie, k8sClient)
 
   override protected def doClose(): Unit = Releasable.close(k8sClient)
 

@@ -42,7 +42,7 @@ private[configurator] class FakeStreamCollie(node: NodeCollie)
     BeanChannel.local().counterMBeans().asScala
 
   override def creator: StreamCollie.ClusterCreator =
-    (_, nodeNames, _, _, _, _, _, settings, _) =>
+    (_, nodeNames, _, _, _, _, _, _, settings, _) =>
       Future.successful(
         addCluster(
           StreamApi.StreamClusterInfo(
@@ -96,4 +96,8 @@ private[configurator] class FakeStreamCollie(node: NodeCollie)
           Some(Definition("fake_class", StreamDefinitions.DEFAULT.asScala.values.toList)) // a serializable collection
       }
       .map(_.orElse(Some(Definition("fake_class", StreamDefinitions.DEFAULT.asScala.values.toList)))) // a serializable collection
+
+  override protected def brokerContainers(clusterName: String)(
+    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
+    throw new UnsupportedOperationException
 }

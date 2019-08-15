@@ -22,14 +22,14 @@ import java.util.Objects
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import com.island.ohara.client.configurator.v0.{Definition, StreamApi}
+import com.island.ohara.client.configurator.v0.{Definition, FileInfoApi, StreamApi, TopicApi}
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.setting.SettingDef
+import com.island.ohara.common.setting.{SettingDef, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.streams.config.StreamDefinitions
 import org.junit.Test
 import org.scalatest.Matchers
-import spray.json.{DeserializationException, JsArray, JsNumber, JsObject, JsString}
+import spray.json._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
@@ -37,14 +37,27 @@ import scala.concurrent.{Await, Future}
 
 class TestStreamCreator extends SmallTest with Matchers {
 
+  private[this] def topicKey(): TopicKey = topicKey(CommonUtils.randomString())
+  private[this] def topicKey(name: String): TopicKey = TopicKey.of(TopicApi.GROUP_DEFAULT, name)
+
   private[this] def streamCreator(): StreamCollie.ClusterCreator =
-    (clusterName, nodeNames, imageName, jarInfo, jmxPort, fromTopics, toTopics, settings, executionContext) => {
+    (clusterName,
+     nodeNames,
+     imageName,
+     brokerClusterName,
+     jarInfo,
+     jmxPort,
+     fromTopics,
+     toTopics,
+     settings,
+     executionContext) => {
       // We only check required variables
       CommonUtils.requireNonEmpty(clusterName)
       CommonUtils.requireNonEmpty(nodeNames.asJava)
       CommonUtils.requireNonEmpty(imageName)
       Objects.requireNonNull(jarInfo)
       CommonUtils.requireConnectionPort(jmxPort)
+      CommonUtils.requireNonEmpty(brokerClusterName)
       CommonUtils.requireNonEmpty(fromTopics.asJava)
       CommonUtils.requireNonEmpty(toTopics.asJava)
       Objects.requireNonNull(settings)
@@ -119,9 +132,10 @@ class TestStreamCreator extends SmallTest with Matchers {
     streamCreator()
       .clusterName(CommonUtils.randomString(StreamApi.LIMIT_OF_NAME_LENGTH))
       .imageName(CommonUtils.randomString())
+      .brokerClusterName(CommonUtils.randomString())
       .settings(Map(
-        StreamDefinitions.FROM_TOPICS_DEFINITION.key() -> JsArray(JsString("from")),
-        StreamDefinitions.TO_TOPICS_DEFINITION.key() -> JsArray(JsString("to")),
+        StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
+        StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
         StreamDefinitions.JMX_PORT_DEFINITION.key() -> JsNumber(1000)
       ))
       .nodeName(CommonUtils.randomString())
@@ -131,10 +145,11 @@ class TestStreamCreator extends SmallTest with Matchers {
   an[DeserializationException] should be thrownBy streamCreator()
     .clusterName(CommonUtils.randomString(StreamApi.LIMIT_OF_NAME_LENGTH + 1))
     .imageName(CommonUtils.randomString())
+    .brokerClusterName(CommonUtils.randomString())
     .jarInfo(fileInfo)
     .settings(Map(
-      StreamDefinitions.FROM_TOPICS_DEFINITION.key() -> JsArray(JsString("from")),
-      StreamDefinitions.TO_TOPICS_DEFINITION.key() -> JsArray(JsString("to")),
+      StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
+      StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
       StreamDefinitions.JMX_PORT_DEFINITION.key() -> JsNumber(1000)
     ))
     .nodeName(CommonUtils.randomString())
@@ -146,11 +161,13 @@ class TestStreamCreator extends SmallTest with Matchers {
       settings = Map(
         StreamDefinitions.NAME_DEFINITION.key() -> JsString("name"),
         StreamDefinitions.IMAGE_NAME_DEFINITION.key() -> JsString("imageName"),
+        StreamDefinitions.BROKER_CLUSTER_NAME_DEFINITION.key() -> JsString("BK"),
         StreamDefinitions.INSTANCES_DEFINITION.key() -> JsNumber(1),
-        StreamDefinitions.FROM_TOPICS_DEFINITION.key() -> JsString("aa"),
-        StreamDefinitions.TO_TOPICS_DEFINITION.key() -> JsString("bb"),
-        StreamDefinitions.JMX_PORT_DEFINITION.key() -> JsNumber(0),
-        StreamDefinitions.TAGS_DEFINITION.key() -> JsObject(Map("bar" -> JsString("foo"), "he" -> JsNumber(1)))
+        StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
+        StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
+        StreamDefinitions.JMX_PORT_DEFINITION.key() -> JsNumber(100),
+        StreamDefinitions.TAGS_DEFINITION.key() -> JsObject(Map("bar" -> JsString("foo"), "he" -> JsNumber(1))),
+        StreamDefinitions.JAR_INFO_DEFINITION.key() -> FileInfoApi.FILE_INFO_JSON_FORMAT.write(fileInfo)
       ),
       definition = Some(Definition("className", Seq(SettingDef.builder().key("key").group("group").build()))),
       nodeNames = Set("node1"),
@@ -161,8 +178,8 @@ class TestStreamCreator extends SmallTest with Matchers {
       lastModified = CommonUtils.current()
     )
 
-    // copy in stream is not support yet
-    an[NullPointerException] should be thrownBy result(streamCreator().copy(info).create())
+    // pass
+    result(streamCreator().copy(info).create())
   }
 
   @Test
@@ -172,10 +189,11 @@ class TestStreamCreator extends SmallTest with Matchers {
       streamCreator()
         .clusterName(CommonUtils.randomString(StreamApi.LIMIT_OF_NAME_LENGTH))
         .imageName(CommonUtils.randomString())
+        .brokerClusterName(CommonUtils.randomString())
         .jarInfo(fileInfo)
         .settings(Map(
-          StreamDefinitions.FROM_TOPICS_DEFINITION.key() -> JsArray(JsString("from")),
-          StreamDefinitions.TO_TOPICS_DEFINITION.key() -> JsArray(JsString("to")),
+          StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
+          StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
           StreamDefinitions.JMX_PORT_DEFINITION.key() -> JsNumber(1000)
         ))
         .nodeName(CommonUtils.randomString())
@@ -189,10 +207,11 @@ class TestStreamCreator extends SmallTest with Matchers {
       streamCreator()
         .clusterName(CommonUtils.randomString(StreamApi.LIMIT_OF_NAME_LENGTH))
         .imageName(CommonUtils.randomString())
+        .brokerClusterName(CommonUtils.randomString())
         .nodeName(CommonUtils.randomString())
         .settings(Map(
-          StreamDefinitions.FROM_TOPICS_DEFINITION.key() -> JsArray(JsString("from")),
-          StreamDefinitions.TO_TOPICS_DEFINITION.key() -> JsArray(JsString("to")),
+          StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
+          StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
           StreamDefinitions.JMX_PORT_DEFINITION.key() -> JsNumber(1000)
         ))
         .jarInfo(jarInfo)
@@ -208,14 +227,15 @@ class TestStreamCreator extends SmallTest with Matchers {
         streamCreator()
           .clusterName(CommonUtils.randomString(StreamApi.LIMIT_OF_NAME_LENGTH))
           .imageName(CommonUtils.randomString())
+          .brokerClusterName(CommonUtils.randomString())
           .jarInfo(fileInfo)
           .settings(Map(
-            StreamDefinitions.TO_TOPICS_DEFINITION.key() -> JsArray(JsString("to")),
+            StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
             StreamDefinitions.JMX_PORT_DEFINITION.key() -> JsNumber(1000)
           ))
           .nodeName(CommonUtils.randomString())
           .create())
-    }.getMessage should include(StreamDefinitions.FROM_TOPICS_DEFINITION.key())
+    }.getMessage should include(StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key())
 
   @Test
   def ignoreToTopic(): Unit =
@@ -223,15 +243,15 @@ class TestStreamCreator extends SmallTest with Matchers {
       streamCreator()
         .clusterName(CommonUtils.randomString(StreamApi.LIMIT_OF_NAME_LENGTH))
         .imageName(CommonUtils.randomString())
+        .brokerClusterName(CommonUtils.randomString())
         .jarInfo(fileInfo)
-        .settings(
-          Map(
-            StreamDefinitions.FROM_TOPICS_DEFINITION.key() -> JsArray(JsString("from")),
-            StreamDefinitions.JMX_PORT_DEFINITION.key() -> JsNumber(1000)
-          ))
+        .settings(Map(
+          StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
+          StreamDefinitions.JMX_PORT_DEFINITION.key() -> JsNumber(1000)
+        ))
         .nodeName(CommonUtils.randomString())
         .create()
-    }.getMessage should include(StreamDefinitions.TO_TOPICS_DEFINITION.key())
+    }.getMessage should include(StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key())
 
   @Test
   def ignoreJmxPort(): Unit =
@@ -239,12 +259,12 @@ class TestStreamCreator extends SmallTest with Matchers {
       streamCreator()
         .clusterName(CommonUtils.randomString(StreamApi.LIMIT_OF_NAME_LENGTH))
         .imageName(CommonUtils.randomString())
+        .brokerClusterName(CommonUtils.randomString())
         .jarInfo(fileInfo)
-        .settings(
-          Map(
-            StreamDefinitions.TO_TOPICS_DEFINITION.key() -> JsArray(JsString("to")),
-            StreamDefinitions.FROM_TOPICS_DEFINITION.key() -> JsArray(JsString("from")),
-          ))
+        .settings(Map(
+          StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
+          StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson)
+        ))
         .nodeName(CommonUtils.randomString())
         .create()
     }.getMessage should include(StreamDefinitions.JMX_PORT_DEFINITION.key())

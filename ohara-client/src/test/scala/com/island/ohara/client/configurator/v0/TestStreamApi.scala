@@ -19,7 +19,7 @@ package com.island.ohara.client.configurator.v0
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.setting.{ObjectKey, SettingDef}
+import com.island.ohara.common.setting.{ObjectKey, SettingDef, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import com.island.ohara.streams.config.StreamDefinitions
 import org.junit.Test
@@ -36,7 +36,11 @@ class TestStreamApi extends SmallTest with Matchers {
   private[this] final val accessRequest =
     StreamApi.access.hostname(CommonUtils.randomString()).port(CommonUtils.availablePort()).request
   private[this] final val fakeJar = ObjectKey.of(CommonUtils.randomString(1), CommonUtils.randomString(1))
+
   private[this] final def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
+
+  private[this] def topicKey(): TopicKey = topicKey(CommonUtils.randomString())
+  private[this] def topicKey(name: String): TopicKey = TopicKey.of(TopicApi.GROUP_DEFAULT, name)
 
   @Test
   def checkVersion(): Unit = {
@@ -52,8 +56,8 @@ class TestStreamApi extends SmallTest with Matchers {
         StreamDefinitions.IMAGE_NAME_DEFINITION.key() -> JsString("imageName"),
         StreamDefinitions.INSTANCES_DEFINITION.key() -> JsNumber(1),
         StreamDefinitions.JAR_KEY_DEFINITION.key() -> ObjectKey.of("group", "name").toJson,
-        StreamDefinitions.FROM_TOPICS_DEFINITION.key() -> JsString("aa"),
-        StreamDefinitions.TO_TOPICS_DEFINITION.key() -> JsString("bb"),
+        StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key() -> JsString("aa"),
+        StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key() -> JsString("bb"),
         StreamDefinitions.JMX_PORT_DEFINITION.key() -> JsNumber(0),
         StreamDefinitions.TAGS_DEFINITION.key() -> JsObject(Map("bar" -> JsString("foo"), "he" -> JsNumber(1)))
       ),
@@ -76,14 +80,16 @@ class TestStreamApi extends SmallTest with Matchers {
 
   @Test
   def testStreamClusterInfoEquals(): Unit = {
+    val fromTopicKey = topicKey()
+    val toTopicKey = topicKey()
     val info = StreamClusterInfo(
       settings = Map(
         StreamDefinitions.NAME_DEFINITION.key() -> JsString("name"),
         StreamDefinitions.IMAGE_NAME_DEFINITION.key() -> JsString("imageName"),
         StreamDefinitions.INSTANCES_DEFINITION.key() -> JsNumber(1),
         StreamDefinitions.JAR_KEY_DEFINITION.key() -> ObjectKey.of("group", "name").toJson,
-        StreamDefinitions.FROM_TOPICS_DEFINITION.key() -> JsArray(Vector(JsString("aa"))),
-        StreamDefinitions.TO_TOPICS_DEFINITION.key() -> JsArray(Vector(JsString("bb"))),
+        StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(fromTopicKey).parseJson),
+        StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(toTopicKey).parseJson),
         StreamDefinitions.JMX_PORT_DEFINITION.key() -> JsNumber(0),
         StreamDefinitions.TAGS_DEFINITION.key() -> JsObject(Map("bar" -> JsString("foo"), "he" -> JsNumber(1)))
       ),
@@ -102,8 +108,8 @@ class TestStreamApi extends SmallTest with Matchers {
     info.imageName shouldBe "imageName"
     info.instances shouldBe 1
     info.jarKey shouldBe ObjectKey.of("group", "name")
-    info.from shouldBe Set("aa")
-    info.to shouldBe Set("bb")
+    info.from shouldBe Set(fromTopicKey)
+    info.to shouldBe Set(toTopicKey)
     info.definition.isDefined && info.definition.get.definitions.size == 1 shouldBe true
     info.tags.keys.size shouldBe 2
     // we initial exactlyOnce to be false
@@ -137,7 +143,7 @@ class TestStreamApi extends SmallTest with Matchers {
 
   @Test
   def topicFromFieldCheck(): Unit = {
-    an[NullPointerException] should be thrownBy accessRequest.from(null)
+    an[NullPointerException] should be thrownBy accessRequest.fromTopicKeys(null)
 
     // default from field will be empty
     accessRequest.name(CommonUtils.randomString()).creation.from shouldBe Set.empty
@@ -145,7 +151,7 @@ class TestStreamApi extends SmallTest with Matchers {
 
   @Test
   def topicToFieldCheck(): Unit = {
-    an[NullPointerException] should be thrownBy accessRequest.to(null)
+    an[NullPointerException] should be thrownBy accessRequest.toTopicKeys(null)
 
     // default to field will be empty
     accessRequest.name(CommonUtils.randomString()).creation.to shouldBe Set.empty
@@ -219,8 +225,8 @@ class TestStreamApi extends SmallTest with Matchers {
   def testCreation(): Unit = {
     val name = CommonUtils.randomString(10)
     val imageName = CommonUtils.randomString()
-    val from = CommonUtils.randomString()
-    val to = CommonUtils.randomString()
+    val from = topicKey()
+    val to = topicKey()
     val jmxPort = CommonUtils.availablePort()
     val instances = CommonUtils.randomString().length
     val nodeNames = Set(CommonUtils.randomString())
@@ -228,8 +234,8 @@ class TestStreamApi extends SmallTest with Matchers {
       .name(name)
       .imageName(imageName)
       .jarKey(fakeJar)
-      .from(Set(from))
-      .to(Set(to))
+      .fromTopicKey(from)
+      .toTopicKey(to)
       .jmxPort(jmxPort)
       .instances(instances)
       .nodeNames(nodeNames)
@@ -257,13 +263,23 @@ class TestStreamApi extends SmallTest with Matchers {
 
   @Test
   def parseCreation(): Unit = {
-    val from = "from"
-    val to = "to"
+    val from = topicKey()
+    val to = topicKey()
     val nodeName = "n0"
     val creation = StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
       |  {
-      |    "from": ["$from"],
-      |    "to": ["$to"],
+      |    "from": [
+      |      {
+      |        "group": "${from.group()}",
+      |        "name": "${from.name()}"
+      |      }
+      |    ],
+      |    "to": [
+      |      {
+      |        "group": "${to.group()}",
+      |        "name": "${to.name()}"
+      |      }
+      |    ],
       |    "nodeNames": ["$nodeName"],
       |    "jarKey": ${fakeJar.toJson}
       |  }
@@ -282,8 +298,18 @@ class TestStreamApi extends SmallTest with Matchers {
     val creation2 = StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
        |  {
        |    "name": "$name",
-       |    "from": ["$from"],
-       |    "to": ["$to"],
+       |    "from": [
+       |      {
+       |        "group": "${from.group()}",
+       |        "name": "${from.name()}"
+       |      }
+       |    ],
+       |    "to": [
+       |      {
+       |        "group": "${to.group()}",
+       |        "name": "${to.name()}"
+       |      }
+       |    ],
        |    "nodeNames": ["$nodeName"],
        |    "jarKey": ${fakeJar.toJson}
        |  }
@@ -406,8 +432,8 @@ class TestStreamApi extends SmallTest with Matchers {
       .settings(StreamDefinitions.IMAGE_NAME_DEFINITION.key())
       .asInstanceOf[JsString]
       .value shouldBe StreamApi.IMAGE_NAME_DEFAULT
-    data.settings.get(StreamDefinitions.FROM_TOPICS_DEFINITION.key()).isEmpty shouldBe true
-    data.settings.get(StreamDefinitions.TO_TOPICS_DEFINITION.key()).isEmpty shouldBe true
+    data.settings.get(StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key()).isEmpty shouldBe true
+    data.settings.get(StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key()).isEmpty shouldBe true
     data.settings.get(StreamDefinitions.JMX_PORT_DEFINITION.key()).isDefined shouldBe true
     data.settings(StreamDefinitions.INSTANCES_DEFINITION.key()).asInstanceOf[JsNumber].value shouldBe 1
     data.settings(StreamDefinitions.NODE_NAMES_DEFINITION.key()).asInstanceOf[JsArray].elements.isEmpty shouldBe true
@@ -537,8 +563,8 @@ class TestStreamApi extends SmallTest with Matchers {
           StreamDefinitions.IMAGE_NAME_DEFINITION.key() -> JsString("imageName"),
           StreamDefinitions.INSTANCES_DEFINITION.key() -> JsNumber(1),
           StreamDefinitions.JAR_KEY_DEFINITION.key() -> ObjectKey.of("group", "name").toJson,
-          StreamDefinitions.FROM_TOPICS_DEFINITION.key() -> JsString("aa"),
-          StreamDefinitions.TO_TOPICS_DEFINITION.key() -> JsString("bb"),
+          StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key() -> JsString("aa"),
+          StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key() -> JsString("bb"),
           StreamDefinitions.JMX_PORT_DEFINITION.key() -> JsNumber(0),
           StreamDefinitions.TAGS_DEFINITION.key() -> JsObject(Map("bar" -> JsString("foo"), "he" -> JsNumber(1)))
         ),
@@ -565,17 +591,20 @@ class TestStreamApi extends SmallTest with Matchers {
 
   @Test
   def testOverwriteSettings(): Unit = {
-    val r1 = accessRequest.from(Set("from")).to(Set("to")).jarKey(ObjectKey.of("group", "name")).creation
+    val fromTopicKey = topicKey(CommonUtils.randomString())
+    val toTopicKey = topicKey(CommonUtils.randomString())
+    val r1 =
+      accessRequest.fromTopicKey(fromTopicKey).toTopicKey(toTopicKey).jarKey(ObjectKey.of("group", "name")).creation
 
     val r2 = accessRequest
-      .from(Set("from"))
-      .to(Set("to"))
+      .fromTopicKey(fromTopicKey)
+      .toTopicKey(toTopicKey)
       .jarKey(ObjectKey.of("group", "name"))
       .settings(Map("name" -> JsString("fake")))
       .creation
 
     r1.to shouldBe r2.to
-    r1.from shouldBe Set("from")
+    r1.from shouldBe r2.from
     // settings will overwrite default value
     r1.name should not be r2.name
   }
