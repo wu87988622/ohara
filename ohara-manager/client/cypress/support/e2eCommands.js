@@ -15,6 +15,8 @@
  */
 
 import '@testing-library/cypress/add-commands';
+import { isEmpty } from 'lodash';
+
 import { axiosInstance } from '../../src/api/apiUtils';
 import * as utils from '../utils';
 
@@ -32,11 +34,8 @@ Cypress.Commands.add('createWorker', () => {
   cy.log('Create a new worker');
 
   const { name: nodeName } = utils.getFakeNode();
-  const workerName = 'wk' + utils.makeRandomStr();
+  const workerName = 'worker' + utils.makeRandomStr();
   const groupId = utils.makeRandomStr();
-  const configTopicName = 'tp' + utils.makeRandomStr();
-  const offsetTopicName = 'otp' + utils.makeRandomStr();
-  const statusTopicName = 'stp' + utils.makeRandomStr();
 
   // Store the worker names in a file as well as
   // in the Cypress env as we'll be using them in the tests
@@ -50,27 +49,21 @@ Cypress.Commands.add('createWorker', () => {
   cy.get('@broker').then(broker => {
     cy.request('POST', 'api/workers', {
       name: workerName,
-      clientPort: utils.makeRandomPort(),
-      jmxPort: utils.makeRandomPort(),
       brokerClusterName: broker.name,
       jarKeys: [],
       groupId: groupId,
-      configTopicName: configTopicName,
-      offsetTopicName: offsetTopicName,
-      statusTopicName: statusTopicName,
       nodeNames: [nodeName],
     });
     cy.request('PUT', `api/workers/${workerName}/start`);
   });
 
   let count = 0;
-  const max = 10;
+  const max = 15;
   // Make a request to configurator see if worker cluster is ready for use
   const req = endPoint => {
-    cy.request('GET', endPoint).then(res => {
-      // When connectors field has the right connector info
-      // this means that everything is ready to be tested
-      const workerIsReady = res.body.state === 'RUNNING';
+    cy.request('GET', endPoint).then(response => {
+      // Wait until the connectors are loaded in the worker we just created
+      const workerIsReady = !isEmpty(response.body.connectors);
 
       if (workerIsReady || count > max) return;
 

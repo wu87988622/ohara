@@ -15,6 +15,7 @@
  */
 
 import { WORKSPACES } from '../../src/constants/urls';
+import { CONNECTOR_FILTERS } from '../../src/constants/pipelines';
 import { divide, floor } from 'lodash';
 import * as utils from '../utils';
 
@@ -34,7 +35,7 @@ describe('WorkspacesPage', () => {
     cy.route('GET', 'api/files?*').as('getFiles');
   });
 
-  it('creates a new connect worker cluster', () => {
+  it('creates a workspace', () => {
     const nodeName = Cypress.env('nodeHost');
     const clusterName = utils.makeRandomStr();
 
@@ -225,10 +226,12 @@ describe('WorkspacesPage', () => {
             .should('have.length', 1);
         });
 
-        const connectors = xhr.response.body.connectors;
+        const connectors = xhr.response.body.connectors.filter(
+          connector => !CONNECTOR_FILTERS.includes(connector.className),
+        );
+
         connectors.forEach(connector => {
           const name = connector.className.split('.').pop();
-          if (name === 'PerfSource') return;
 
           cy.getByText(name)
             .should('have.length', 1)

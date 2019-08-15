@@ -28,20 +28,24 @@ const useCreateServices = url => {
     const { postParams, checkResult } = params;
     await postApi(postParams);
     const name = get(getData(), 'data.result.name');
+
     if (!name) {
       fail.current = true;
       return;
     }
+
     await putApi(`/${name}/start`);
     await waitApi({
       url: `${url}/${name}`,
       checkFn: checkResult,
     });
+
     if (!getFinish()) {
       fail.current = true;
       return;
     }
   };
+
   const create = async params => {
     await createServices(params);
   };
@@ -50,4 +54,5 @@ const useCreateServices = url => {
 
   return { create, handleFail };
 };
+
 export default useCreateServices;

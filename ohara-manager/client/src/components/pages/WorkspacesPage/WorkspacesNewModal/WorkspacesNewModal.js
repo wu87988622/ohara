@@ -338,8 +338,12 @@ const WorkerNewModal = props => {
 
     await createWorker({
       postParams: workerPostParams,
-      checkResult: checkResult,
+      checkResult: response => {
+        const { connectors } = response.data.result;
+        return !isEmpty(connectors);
+      },
     });
+
     if (handleWorker()) throw new ERROR();
     setActiveStep(3);
     saveService({ service: 'worker', name: values.name });
