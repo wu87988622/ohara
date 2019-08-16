@@ -68,7 +68,7 @@ export const List = styled.ul`
   li {
     color: ${props => props.theme.palette.text.primary};
     font-size: 13px;
-    padding: ${props => props.theme.spacing(2)}px;
+    padding: ${props => props.theme.spacing(1)}px;
   }
 `;
 
