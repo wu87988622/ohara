@@ -367,7 +367,10 @@ object ConnectorApi {
       */
     private[v0] def creation: Creation = Creation(
       update.settings ++
-        Map(NAME_KEY -> JsString(if (CommonUtils.isEmpty(name)) CommonUtils.randomString(10) else name)))
+        Map(
+          GROUP_KEY -> JsString(if (CommonUtils.isEmpty(group)) GROUP_DEFAULT else group),
+          NAME_KEY -> JsString(if (CommonUtils.isEmpty(name)) CommonUtils.randomString(10) else name)
+        ))
 
     private[v0] def update: Update = Update(
       settings.map {

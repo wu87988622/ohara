@@ -630,4 +630,21 @@ class TestConnectorApi extends SmallTest with Matchers {
          |  }
          |     """.stripMargin.parseJson).key.group() shouldBe ConnectorApi.GROUP_DEFAULT
   }
+
+  @Test
+  def testCustomGroup(): Unit = ConnectorApi.access
+    .hostname(CommonUtils.randomString())
+    .port(CommonUtils.availablePort())
+    .request
+    .group("abc")
+    .creation
+    .group shouldBe "abc"
+
+  @Test
+  def testDefaultGroup(): Unit = ConnectorApi.access
+    .hostname(CommonUtils.randomString())
+    .port(CommonUtils.availablePort())
+    .request
+    .creation
+    .group shouldBe GROUP_DEFAULT
 }
