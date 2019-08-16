@@ -82,7 +82,7 @@ describe('WorkspacesPage', () => {
       .type(1)
       .getByTestId('replications-input')
       .type(1)
-      .getByText('Save')
+      .getByText('Add')
       .click()
       .wait('@getTopics')
       .getByText(topicName)

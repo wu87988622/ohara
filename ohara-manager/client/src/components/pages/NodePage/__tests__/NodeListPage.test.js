@@ -153,18 +153,18 @@ describe('<NodeListPage />', () => {
       expect(queryByTestId('new-node-modal')).not.toBeVisible();
     });
 
-    it('disables the save button when the form is not valid', async () => {
+    it('disables the add button when the form is not valid', async () => {
       const { getByText } = await waitForElement(() =>
         renderWithProvider(<NodeListPage />),
       );
 
       fireEvent.click(getByText('New node'));
-      const saveButton = await waitForElement(() => getByText('Save'));
+      const addButton = await waitForElement(() => getByText('Add'));
 
-      expect(saveButton).toBeDisabled();
+      expect(addButton).toBeDisabled();
     });
 
-    it('enables the save button when the form is valid', async () => {
+    it('enables the add button when the form is valid', async () => {
       const { getByText, getByPlaceholderText } = await waitForElement(() =>
         renderWithProvider(<NodeListPage />),
       );
@@ -217,8 +217,8 @@ describe('<NodeListPage />', () => {
 
       fireEvent.click(testConnectionButton);
 
-      const saveButton = await waitForElement(() => getByText('Save'));
-      fireEvent.click(saveButton);
+      const addButton = await waitForElement(() => getByText('Add'));
+      fireEvent.click(addButton);
 
       expect(useSnackbar).toHaveBeenCalledTimes(1);
     });

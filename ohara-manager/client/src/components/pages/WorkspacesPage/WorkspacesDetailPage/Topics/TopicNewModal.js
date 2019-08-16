@@ -74,7 +74,7 @@ const TopicNewModal = props => {
             }}
             loading={isSaving}
             handleConfirm={handleSubmit}
-            confirmBtnText="Save"
+            confirmBtnText="Add"
             confirmDisabled={submitting || pristine || invalid}
             testId="topic-new-modal"
           >

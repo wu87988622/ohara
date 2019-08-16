@@ -95,9 +95,9 @@ const NodeNewModal = props => {
           <Dialog
             open={isOpen}
             handleClose={handleClose}
-            title="New ohara node"
             handleConfirm={handleSubmit}
-            confirmBtnText="Save"
+            title="New node"
+            confirmBtnText="Add"
             confirmDisabled={
               submitting || pristine || invalid || !isValidConnection
             }
