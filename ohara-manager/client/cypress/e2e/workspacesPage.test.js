@@ -117,7 +117,7 @@ describe('WorkspacesPage', () => {
       .click()
       .getByTestId('workspace-tab')
       .within(() => {
-        cy.getByText('Stream apps').click();
+        cy.getByText('Stream jars').click();
       })
       .wait('@getFiles')
       .uploadJar(
@@ -148,7 +148,7 @@ describe('WorkspacesPage', () => {
       .click()
       .getByTestId('workspace-tab')
       .within(() => {
-        cy.getByText('Stream apps').click();
+        cy.getByText('Stream jars').click();
       })
       .wait('@getFiles')
       .uploadJar(

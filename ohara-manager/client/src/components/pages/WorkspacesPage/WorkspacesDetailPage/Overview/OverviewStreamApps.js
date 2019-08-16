@@ -41,9 +41,9 @@ const OverviewStreamApps = props => {
     <>
       <TabHeading>
         <StyledIcon className="fas fa-wind" />
-        <span className="title">Stream Apps</span>
+        <span className="title">Stream Jars</span>
         <StyledIconLink onClick={() => handleRedirect('streamapps')}>
-          <Tooltip title="Link to Stream Apps page" enterDelay={1000}>
+          <Tooltip title="Link to Stream jars page" enterDelay={1000}>
             <StyledIcon
               className="fas fa-external-link-square-alt"
               data-testid="overview-streamapps-link"
