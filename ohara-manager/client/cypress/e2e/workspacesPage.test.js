@@ -17,7 +17,7 @@
 import { WORKSPACES } from '../../src/constants/urls';
 import { CONNECTOR_FILTERS } from '../../src/constants/pipelines';
 import { divide, floor } from 'lodash';
-import * as utils from '../utils';
+import * as generate from '../../src/utils/generate';
 
 describe('WorkspacesPage', () => {
   before(() => {
@@ -37,15 +37,15 @@ describe('WorkspacesPage', () => {
 
   it('creates a workspace', () => {
     const nodeName = Cypress.env('nodeHost');
-    const clusterName = utils.makeRandomStr();
+    const workerName = generate.serviceName({ prefix: 'worker' });
 
-    cy.registerWorker(clusterName);
+    cy.registerWorker(workerName);
 
     cy.visit(WORKSPACES)
       .getByText('New workspace')
       .click()
       .getByPlaceholderText('cluster00')
-      .type(clusterName)
+      .type(workerName)
       .getByTestId(nodeName)
       .click();
 
@@ -60,11 +60,11 @@ describe('WorkspacesPage', () => {
     cy.getByText('ohara-it-sink').click();
     cy.getByText('Add').click();
 
-    cy.getByText(clusterName).should('have.length', 1);
+    cy.getByText(workerName).should('have.length', 1);
   });
 
   it('adds a new topic', () => {
-    const topicName = utils.makeRandomStr();
+    const topicName = generate.serviceName({ prefix: 'topic' });
 
     cy.visit(WORKSPACES)
       .wait('@getWorkers')

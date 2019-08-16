@@ -17,8 +17,9 @@
 import '@testing-library/cypress/add-commands';
 import { isEmpty } from 'lodash';
 
-import { axiosInstance } from '../../src/api/apiUtils';
 import * as utils from '../utils';
+import * as generate from '../../src/utils/generate';
+import { axiosInstance } from '../../src/api/apiUtils';
 
 Cypress.Commands.add('registerWorker', workerName => {
   const fileName = '../scripts/servicesApi/service.json';
@@ -34,8 +35,8 @@ Cypress.Commands.add('createWorker', () => {
   cy.log('Create a new worker');
 
   const { name: nodeName } = utils.getFakeNode();
-  const workerName = 'worker' + utils.makeRandomStr();
-  const groupId = utils.makeRandomStr();
+  const workerName = generate.serviceName({ prefix: 'worker' });
+  const groupId = generate.serviceName();
 
   // Store the worker names in a file as well as
   // in the Cypress env as we'll be using them in the tests
@@ -98,7 +99,7 @@ Cypress.Commands.add('createTopic', () => {
     })
     .as('brokerClusterName');
 
-  const topicName = utils.makeRandomStr();
+  const topicName = generate.serviceName({ prefix: 'topic' });
 
   cy.get('@brokerClusterName').then(brokerClusterName => {
     cy.request('POST', '/api/topics', {

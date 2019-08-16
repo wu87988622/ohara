@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-import * as utils from '../utils';
+import * as generate from '../../src/utils/generate';
 
 const setup = () => {
-  const nodeName = `node${utils.makeRandomStr()}`;
-  const zookeeperClusterName = `zookeeper${utils.makeRandomStr()}`;
-  const brokerClusterName = `broker${utils.makeRandomStr()}`;
-  const workerClusterName = `worker${utils.makeRandomStr()}`;
-  const pipelineName = `pipeline${utils.makeRandomStr()}`;
+  const nodeName = generate.serviceName({ prefix: 'node' });
+  const zookeeperClusterName = generate.serviceName({ prefix: 'zookeeper' });
+  const brokerClusterName = generate.serviceName({ prefix: 'broker' });
+  const workerClusterName = generate.serviceName({ prefix: 'worker' });
+  const pipelineName = generate.serviceName({ prefix: 'pipeline' });
 
   cy.createNode({
     name: nodeName,
-    port: 22,
-    user: utils.makeRandomStr(),
-    password: utils.makeRandomStr(),
+    port: generate.port(),
+    user: generate.userName(),
+    password: generate.password(),
   });
 
   cy.createZookeeper({
@@ -107,12 +107,12 @@ describe('Pipeline API', () => {
     const { workerClusterName } = setup();
 
     const paramsOne = {
-      name: `pipeline${utils.makeRandomStr()}`,
+      name: generate.serviceName({ prefix: 'pipeline' }),
       workerClusterName,
     };
 
     const paramsTwo = {
-      name: `pipeline${utils.makeRandomStr()}`,
+      name: generate.serviceName({ prefix: 'pipeline' }),
       workerClusterName,
     };
 
@@ -138,7 +138,7 @@ describe('Pipeline API', () => {
   it('updatePipeline', () => {
     const { brokerClusterName, workerClusterName, pipelineName } = setup();
 
-    let topicName = `topic${utils.makeRandomStr()}`;
+    let topicName = generate.serviceName({ prefix: 'topic' });
 
     cy.testCreateTopic({
       name: topicName,

@@ -15,7 +15,7 @@
  */
 
 import * as URLS from '../../src/constants/urls';
-import { makeRandomStr } from '../utils';
+import * as generate from '../../src/utils/generate';
 
 // This test is broken and somehow related to
 // https://github.com/oharastream/ohara/issues/1944
@@ -36,8 +36,8 @@ describe('StreamApp', () => {
     cy.createTopic().as('fromTopic');
     cy.createTopic().as('toTopic');
 
-    const pipelineName = makeRandomStr();
-    const streamAppName = makeRandomStr();
+    const pipelineName = generate.serviceName({ prefix: 'pipeline' });
+    const streamAppName = generate.serviceName({ prefix: 'stream' });
 
     cy.visit(URLS.PIPELINES)
       .uploadTestStreamAppJar(Cypress.env('WORKER_NAME'))

@@ -16,7 +16,7 @@
 
 import * as URLS from '../../src/constants/urls';
 import { CONNECTOR_TYPES } from '../../src/constants/pipelines';
-import { makeRandomStr } from '../utils';
+import * as generate from '../../src/utils/generate';
 
 describe('PipelineNewPage', () => {
   before(() => {
@@ -33,7 +33,7 @@ describe('PipelineNewPage', () => {
     cy.route('GET', 'api/workers').as('getWorkers');
     cy.route('GET', '/api/connectors/*').as('getConnector');
 
-    const pipelineName = makeRandomStr();
+    const pipelineName = generate.serviceName({ prefix: 'pipeline' });
 
     cy.createTopic();
     cy.visit(URLS.PIPELINES)
@@ -89,7 +89,8 @@ describe('PipelineNewPage', () => {
       .wait('@putPipeline');
 
     // Add ftp source connector
-    const connectorName = makeRandomStr();
+    const connectorName = generate.serviceName({ prefix: 'connector' });
+
     cy.getByTestId('toolbar-sources')
       .click()
       .getByText(CONNECTOR_TYPES.jdbcSource)
@@ -142,25 +143,25 @@ describe('PipelineNewPage', () => {
         type: CONNECTOR_TYPES.ftpSource,
         nodeType: 'FtpSource',
         toolbarTestId: 'toolbar-sources',
-        connectorName: makeRandomStr(),
+        connectorName: generate.serviceName({ prefix: 'connector' }),
       },
       {
         type: CONNECTOR_TYPES.jdbcSource,
         nodeType: 'JDBCSourceConnector',
         toolbarTestId: 'toolbar-sources',
-        connectorName: makeRandomStr(),
+        connectorName: generate.serviceName({ prefix: 'connector' }),
       },
       {
         type: CONNECTOR_TYPES.ftpSink,
         nodeType: 'FtpSink',
         toolbarTestId: 'toolbar-sinks',
-        connectorName: makeRandomStr(),
+        connectorName: generate.serviceName({ prefix: 'connector' }),
       },
       {
         type: CONNECTOR_TYPES.hdfsSink,
         nodeType: 'HDFSSink',
         toolbarTestId: 'toolbar-sinks',
-        connectorName: makeRandomStr(),
+        connectorName: generate.serviceName({ prefix: 'connector' }),
       },
     ];
 
@@ -210,7 +211,7 @@ describe('PipelineNewPage', () => {
   });
 
   it('saves and removes a connector even after page refresh', () => {
-    const connectorName = makeRandomStr();
+    const connectorName = generate.serviceName({ prefix: 'connector' });
     cy.getByTestId('toolbar-sources')
       .click()
       .getByText(CONNECTOR_TYPES.jdbcSource)
@@ -259,7 +260,7 @@ describe('PipelineNewPage', () => {
       .getByText('Add')
       .click()
       .getByPlaceholderText('Connector name')
-      .type(makeRandomStr())
+      .type(generate.serviceName({ prefix: 'connector' }))
       .get('.ReactModal__Content')
       .eq(1)
       .within(() => {
@@ -273,7 +274,7 @@ describe('PipelineNewPage', () => {
       .getByText('Add')
       .click()
       .getByPlaceholderText('Connector name')
-      .type(makeRandomStr())
+      .type(generate.serviceName({ prefix: 'connector' }))
       .get('.ReactModal__Content')
       .eq(1)
       .within(() => {
@@ -325,7 +326,7 @@ describe('PipelineNewPage', () => {
       .getByText('Add')
       .click()
       .getByPlaceholderText('Connector name')
-      .type(makeRandomStr())
+      .type(generate.serviceName({ prefix: 'connector' }))
       .get('.ReactModal__Content')
       .eq(1)
       .within(() => {
@@ -339,7 +340,7 @@ describe('PipelineNewPage', () => {
       .getByText('Add')
       .click()
       .getByPlaceholderText('Connector name')
-      .type(makeRandomStr())
+      .type(generate.serviceName({ prefix: 'connector' }))
       .get('.ReactModal__Content')
       .eq(1)
       .within(() => {
@@ -390,7 +391,7 @@ describe('PipelineNewPage', () => {
     cy.route('GET', '/api/connectors/*').as('getConnector');
     cy.route('PUT', '/api/connectors/*').as('putConnector');
 
-    const perfName = makeRandomStr();
+    const perfName = generate.serviceName({ prefix: 'connector' });
     const topicName = Cypress.env('TOPIC_NAME');
 
     cy.getByTestId('toolbar-sources')
@@ -445,12 +446,12 @@ describe('PipelineNewPage', () => {
           metricsCount,
         );
       })
-      //Element is effective width and height of 0x0, even though it is not.
-      //reference https://github.com/cypress-io/cypress/issues/695
-      //1.We should be able to write an assertion that checks on non-zero width where the tests will not move forward until it is greater than non-zero
-      //reference https://github.com/cypress-io/cypress/issues/695#issuecomment-379817133
-      //2.Topic click cause refresh cypress couldn't get DOM event so click unable to end, we need click two time.
-      //reference https://github.com/cypress-io/cypress/issues/695#issuecomment-493578023
+      // Element is effective width and height of 0x0, even though it is not.
+      // reference https://github.com/cypress-io/cypress/issues/695
+      // 1.We should be able to write an assertion that checks on non-zero width  where the tests will not move forward until it is greater than non-zero
+      // reference https://github.com/cypress-io/cypress/issues/695#issuecomment-379817133
+      // 2.Topic click cause refresh cypress couldn't get DOM event so click unable to end, we need click two time.
+      // reference https://github.com/cypress-io/cypress/issues/695#issuecomment-493578023
       .get('@getPipeline')
       .getByTestId(`topic-${topicName}`)
       .invoke('width')

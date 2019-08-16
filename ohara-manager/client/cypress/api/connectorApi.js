@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-import * as utils from '../utils';
+import * as generate from '../../src/utils/generate';
 
 const setup = () => {
-  const nodeName = `node${utils.makeRandomStr()}`;
-  const zookeeperClusterName = `zookeeper${utils.makeRandomStr()}`;
-  const brokerClusterName = `broker${utils.makeRandomStr()}`;
-  const workerClusterName = `worker${utils.makeRandomStr()}`;
-  const connectorName = `connector${utils.makeRandomStr()}`;
-  const topicName = `topic${utils.makeRandomStr()}`;
+  const nodeName = generate.serviceName({ prefix: 'node' });
+  const zookeeperClusterName = generate.serviceName({ prefix: 'zookeeper' });
+  const brokerClusterName = generate.serviceName({ prefix: 'broker' });
+  const workerClusterName = generate.serviceName({ prefix: 'worker' });
+  const connectorName = generate.serviceName({ prefix: 'connector' });
+  const topicName = generate.serviceName({ prefix: 'topic' });
 
   cy.createNode({
     name: nodeName,
     port: 22,
-    user: utils.makeRandomStr(),
-    password: utils.makeRandomStr(),
+    user: generate.userName(),
+    password: generate.password(),
   });
 
   cy.createZookeeper({

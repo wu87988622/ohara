@@ -15,7 +15,7 @@
  */
 
 import * as URLS from '../../src/constants/urls';
-import { makeRandomStr } from '../utils';
+import * as generate from '../../src/utils/generate';
 
 describe('PipelineListPage', () => {
   before(() => {
@@ -29,7 +29,7 @@ describe('PipelineListPage', () => {
     cy.route('PUT', 'api/pipelines/*').as('putPipeline');
     cy.route('POST', 'api/pipelines').as('postPipeline');
 
-    const pipelineName = makeRandomStr();
+    const pipelineName = generate.serviceName({ prefix: 'pipeline' });
 
     cy.visit(URLS.PIPELINES)
       .getByText('NEW PIPELINE')
@@ -52,7 +52,7 @@ describe('PipelineListPage', () => {
     cy.server();
     cy.route('GET', 'api/pipelines').as('getPipelines');
 
-    const pipelineName = makeRandomStr();
+    const pipelineName = generate.serviceName({ prefix: 'pipeline' });
     const pipelineParams = {
       name: pipelineName,
       workerName: Cypress.env('WORKER_NAME'),
@@ -76,7 +76,7 @@ describe('PipelineListPage', () => {
     cy.route('GET', 'api/pipelines').as('getPipelines');
     cy.route('DELETE', 'api/pipelines/*').as('deletePipeline');
 
-    const pipelineName = makeRandomStr();
+    const pipelineName = generate.serviceName({ prefix: 'pipeline' });
     const pipelineParams = {
       name: pipelineName,
       workerName: Cypress.env('WORKER_NAME'),

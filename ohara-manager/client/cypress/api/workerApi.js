@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-import * as utils from '../utils';
+import * as generate from '../../src/utils/generate';
 
 /* eslint-disable no-unused-expressions */
 // eslint is complaining about `expect(thing).to.be.undefined`
 
 const setup = () => {
-  const nodeName = `node${utils.makeRandomStr()}`;
-  const zookeeperClusterName = `zookeeper${utils.makeRandomStr()}`;
-  const brokerClusterName = `broker${utils.makeRandomStr()}`;
-  const workerClusterName = `worker${utils.makeRandomStr()}`;
+  const nodeName = generate.serviceName({ prefix: 'node' });
+  const zookeeperClusterName = generate.serviceName({ prefix: 'zookeeper' });
+  const brokerClusterName = generate.serviceName({ prefix: 'broker' });
+  const workerClusterName = generate.serviceName({ prefix: 'worker' });
 
   cy.createNode({
     name: nodeName,
-    port: 22,
-    user: utils.makeRandomStr(),
-    password: utils.makeRandomStr(),
+    port: generate.port(),
+    user: generate.userName(),
+    password: generate.password(),
   });
 
   cy.createZookeeper({
@@ -120,13 +120,13 @@ describe('Worker API', () => {
     const { nodeName, brokerClusterName } = setup();
 
     const paramsOne = {
-      name: utils.makeRandomStr(),
+      name: generate.serviceName({ prefix: 'worker' }),
       brokerClusterName,
       nodeNames: [nodeName],
     };
 
     const paramsTwo = {
-      name: utils.makeRandomStr(),
+      name: generate.serviceName({ prefix: 'worker' }),
       brokerClusterName,
       nodeNames: [nodeName],
     };

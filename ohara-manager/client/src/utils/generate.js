@@ -16,7 +16,9 @@
 
 import faker from 'faker';
 
-import { CONNECTOR_TYPES } from 'constants/pipelines';
+// We need to use the relative path here, or cypress won't
+// be able to resolve the path
+import { CONNECTOR_TYPES } from '../constants/pipelines';
 
 const { system, random, lorem, internet, date } = faker;
 const { fileName: name } = system;
@@ -176,12 +178,15 @@ export const port = ({ min = 5000, max = 65535 } = {}) => {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 };
 
-export const serviceName = (length = 10) => {
+export const serviceName = ({ length = 10, prefix } = {}) => {
   let name = '';
   const possible = 'abcdefghijklmnopqrstuvwxyz0123456789';
 
-  for (let i = 0; i < length; i++)
+  for (let i = 0; i < length; i++) {
     name += possible.charAt(Math.floor(Math.random() * possible.length));
+  }
+
+  if (prefix) return `${prefix}${name}`;
 
   return name;
 };

@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import * as utils from '../utils';
+import * as generate from '../../src/utils/generate';
 
 /* eslint-disable no-unused-expressions */
 // eslint is complaining about `expect(thing).to.be.undefined`
 
 const setup = () => {
-  let streamName = `stream${utils.makeRandomStr()}`;
+  let streamName = generate.serviceName({ prefix: 'stream' });
   cy.createJar('ohara-it-source.jar').then(response => {
     const params = {
       jarKey: {
@@ -50,7 +50,7 @@ describe('Stream property API', () => {
           name: response.data.result.name,
           group: response.data.result.group,
         },
-        name: `stream${utils.makeRandomStr()}`,
+        name: generate.serviceName({ prefix: 'stream' }),
       };
 
       cy.createProperty(params).then(response => {

@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-import * as utils from '../utils';
+import * as generate from '../../src/utils/generate';
 
 const setup = () => {
-  const nodeName = `node${utils.makeRandomStr()}`;
+  const nodeName = generate.serviceName({ prefix: 'node' });
 
   cy.createNode({
     name: nodeName,
-    port: 22,
-    user: utils.makeRandomStr(),
-    password: utils.makeRandomStr(),
+    port: generate.port(),
+    user: generate.userName(),
+    password: generate.password(),
   }).as('createNode');
 
   return { nodeName };
@@ -69,9 +69,9 @@ describe('Node API', () => {
 
     const params = {
       name: nodeName,
-      port: utils.makeRandomPort(),
-      user: utils.makeRandomStr(),
-      password: utils.makeRandomStr(),
+      port: generate.port(),
+      user: generate.userName(),
+      password: generate.password(),
     };
 
     cy.updateNode(params).then(response => {
@@ -105,17 +105,17 @@ describe('Node API', () => {
 
   it('fetchNodes', () => {
     const paramsOne = {
-      name: utils.makeRandomStr(),
-      port: 22,
-      user: utils.makeRandomStr(),
-      password: utils.makeRandomStr(),
+      name: generate.serviceName({ prefix: 'node' }),
+      port: generate.port(),
+      user: generate.userName(),
+      password: generate.password(),
     };
 
     const paramsTwo = {
-      name: utils.makeRandomStr(),
-      port: 22,
-      user: utils.makeRandomStr(),
-      password: utils.makeRandomStr(),
+      name: generate.serviceName({ prefix: 'node' }),
+      port: generate.port(),
+      user: generate.userName(),
+      password: generate.password(),
     };
 
     cy.createNode(paramsOne);
