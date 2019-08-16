@@ -29,7 +29,6 @@ import { axiosInstance } from '../../src/api/apiUtils';
 import { fetchJars } from '../../src/api/jarApi';
 import { fetchLogs } from '../../src/api/logApi';
 import { validateConnector } from '../../src/api/validateApi';
-import { fetchContainers } from '../../src/api/containerApi';
 
 // Node API
 Cypress.Commands.add('fetchNodes', () => nodeApi.fetchNodes());
@@ -192,9 +191,6 @@ Cypress.Commands.add('createJar', jarName => {
       return axiosInstance.post(url, formData, config);
     });
 });
-
-// Container API
-Cypress.Commands.add('fetchContainers', name => fetchContainers(name));
 
 // Validate API
 Cypress.Commands.add('validateConnector', params => validateConnector(params));
