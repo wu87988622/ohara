@@ -217,7 +217,7 @@ const PipelineListPage = props => {
                             name="name"
                             label="Pipeline name"
                             placeholder="PipelineName"
-                            inputProps={{ 'data-testid': 'name-input' }}
+                            testId="name-input"
                             component={InputField}
                             autoFocus
                           />
@@ -226,7 +226,7 @@ const PipelineListPage = props => {
                           <Field
                             name="workspace"
                             label="Workspace name"
-                            data-testid="cluster-select"
+                            testId="workspace-select"
                             list={get(workers, 'data.result', []).map(
                               worker => worker.name,
                             )}

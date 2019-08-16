@@ -172,7 +172,7 @@ Cypress.Commands.add('updateNode', params => nodeApi.updateNode(params));
 Cypress.Commands.add('createNode', params => nodeApi.createNode(params));
 
 Cypress.Commands.add('fetchJars', group => fetchJars(group));
-Cypress.Commands.add('createJar', jarName => {
+Cypress.Commands.add('createJar', (jarName, group) => {
   cy.fixture(`plugin/${jarName}`, 'base64')
     .then(Cypress.Blob.base64StringToBlob)
     .then(blob => {
@@ -189,6 +189,7 @@ Cypress.Commands.add('createJar', jarName => {
       blob = dataTransfer.files;
       let formData = new FormData();
       formData.append('file', blob[0]);
+      formData.append('group', group);
       return axiosInstance.post(url, formData, config);
     });
 });
@@ -214,6 +215,9 @@ Cypress.Commands.add('deleteAllServices', () => {
 
     if (!isEmpty(streams)) {
       streams.forEach(stream => {
+        if (!isUndefined(stream.state)) {
+          cy.stopStreamApp(stream.name);
+        }
         cy.request('DELETE', `api/stream/${stream.name}`);
       });
     }

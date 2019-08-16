@@ -46,7 +46,7 @@ const Operate = props => {
         connectorApi.startConnector(connector),
       );
 
-      streamsPromises = streams.map(stream => streamApi.stopStreamApp(stream));
+      streamsPromises = streams.map(stream => streamApi.startStreamApp(stream));
     } else {
       connectorPromises = _connectors.map(connector =>
         connectorApi.stopConnector(connector),

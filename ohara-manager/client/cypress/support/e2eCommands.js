@@ -94,31 +94,34 @@ Cypress.Commands.add('createPipeline', pipeline => {
   }).then(({ body }) => body);
 });
 
-Cypress.Commands.add('createTopic', () => {
-  cy.request('GET', 'api/workers')
-    .then(res => {
-      // Make sure we're getting the right broker cluster name here
-      const workers = res.body;
-      const currentWorkerName = Cypress.env('WORKER_NAME');
-      const worker = workers.find(worker => worker.name === currentWorkerName);
-      return worker.brokerClusterName;
-    })
-    .as('brokerClusterName');
+Cypress.Commands.add(
+  'createTopic',
+  (topicName = `topic${utils.makeRandomStr()}`) => {
+    cy.request('GET', 'api/workers')
+      .then(res => {
+        // Make sure we're getting the right broker cluster name here
+        const workers = res.body;
+        const currentWorkerName = Cypress.env('WORKER_NAME');
+        const worker = workers.find(
+          worker => worker.name === currentWorkerName,
+        );
+        return worker.brokerClusterName;
+      })
+      .as('brokerClusterName');
 
-  const topicName = utils.makeRandomStr();
+    cy.get('@brokerClusterName').then(brokerClusterName => {
+      cy.request('POST', '/api/topics', {
+        name: topicName,
+        numberOfReplications: 1,
+        numberOfPartitions: 1,
+        brokerClusterName,
+      }).then(({ body }) => body);
+    });
 
-  cy.get('@brokerClusterName').then(brokerClusterName => {
-    cy.request('POST', '/api/topics', {
-      name: topicName,
-      numberOfReplications: 1,
-      numberOfPartitions: 1,
-      brokerClusterName,
-    }).then(({ body }) => body);
-  });
-
-  cy.request('PUT', `/api/topics/${topicName}/start`);
-  Cypress.env('TOPICS_NAME', topicName);
-});
+    cy.request('PUT', `/api/topics/${topicName}/start`);
+    Cypress.env('TOPICS_NAME', topicName);
+  },
+);
 
 Cypress.Commands.add('deleteAllWorkers', () => {
   cy.log('Delete all previous created workers');

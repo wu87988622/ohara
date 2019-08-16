@@ -20,8 +20,43 @@ import * as utils from '../utils';
 // eslint is complaining about `expect(thing).to.be.undefined`
 
 const setup = () => {
+  const nodeName = `node${utils.makeRandomStr()}`;
+  const zookeeperClusterName = `zookeeper${utils.makeRandomStr()}`;
+  const brokerClusterName = `broker${utils.makeRandomStr()}`;
+  const workerClusterName = `broker${utils.makeRandomStr()}`;
   let streamName = `stream${utils.makeRandomStr()}`;
-  cy.createJar('ohara-it-source.jar').then(response => {
+
+  cy.createNode({
+    name: nodeName,
+    port: 22,
+    user: utils.makeRandomStr(),
+    password: utils.makeRandomStr(),
+  });
+
+  cy.createZookeeper({
+    name: zookeeperClusterName,
+    nodeNames: [nodeName],
+  });
+
+  cy.startZookeeper(zookeeperClusterName);
+
+  cy.createBroker({
+    name: brokerClusterName,
+    nodeNames: [nodeName],
+    zookeeperClusterName,
+  });
+
+  cy.startBroker(brokerClusterName);
+
+  cy.testCreateWorker({
+    name: workerClusterName,
+    nodeNames: [nodeName],
+    brokerClusterName,
+  }).as('testCreateWorker');
+
+  cy.startWorker(workerClusterName);
+
+  cy.createJar('ohara-it-source.jar', workerClusterName).then(response => {
     const params = {
       jarKey: {
         name: response.data.result.name,
@@ -36,6 +71,9 @@ const setup = () => {
   });
 
   return {
+    nodeName,
+    zookeeperClusterName,
+    brokerClusterName,
     streamName,
   };
 };
@@ -101,8 +139,35 @@ describe('Stream property API', () => {
     });
   });
 
-  it.skip('startStreamApp', () => {
-    const { streamName } = setup();
+  it('startStreamApp', () => {
+    const { streamName, brokerClusterName } = setup();
+    const fromTopicName = `topic${utils.makeRandomStr()}`;
+    const toTopicName = `topic${utils.makeRandomStr()}`;
+
+    cy.testCreateTopic({
+      name: fromTopicName,
+      brokerClusterName,
+    }).as('testCreateTopic');
+
+    cy.startTopic(fromTopicName);
+
+    cy.testCreateTopic({
+      name: toTopicName,
+      brokerClusterName,
+    }).as('testCreateTopic');
+
+    cy.startTopic(toTopicName);
+
+    const params = {
+      from: [{ group: 'default', name: fromTopicName }],
+      to: [{ group: 'default', name: toTopicName }],
+      name: streamName,
+      instances: 1,
+    };
+
+    cy.updateProperty(params).then(response => {
+      expect(response.data.isSuccess).to.eq(true);
+    });
 
     cy.fetchProperty(streamName).then(response => {
       expect(response.state).to.be.undefined;
@@ -111,17 +176,56 @@ describe('Stream property API', () => {
     cy.startStreamApp(streamName).then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });
+
+    cy.fetchProperty(streamName).then(response => {
+      expect(response.data.result.state).to.eq('RUNNING');
+    });
   });
 
-  it.skip('stopStreamApp', () => {
-    const { streamName } = setup();
+  it('stopStreamApp', () => {
+    const { streamName, brokerClusterName } = setup();
+    const fromTopicName = `topic${utils.makeRandomStr()}`;
+    const toTopicName = `topic${utils.makeRandomStr()}`;
 
-    cy.startStreamApp(streamName)(response => {
+    cy.testCreateTopic({
+      name: fromTopicName,
+      brokerClusterName,
+    }).as('testCreateTopic');
+
+    cy.startTopic(fromTopicName);
+
+    cy.testCreateTopic({
+      name: toTopicName,
+      brokerClusterName,
+    }).as('testCreateTopic');
+
+    cy.startTopic(toTopicName);
+
+    const params = {
+      from: [{ group: 'default', name: fromTopicName }],
+      to: [{ group: 'default', name: toTopicName }],
+      name: streamName,
+      instances: 1,
+    };
+
+    cy.updateProperty(params).then(response => {
       expect(response.data.isSuccess).to.eq(true);
+    });
+
+    cy.startStreamApp(streamName).then(response => {
+      expect(response.data.isSuccess).to.eq(true);
+    });
+
+    cy.fetchProperty(streamName).then(response => {
+      expect(response.data.result.state).to.eq('RUNNING');
     });
 
     cy.stopStreamApp(streamName).then(response => {
       expect(response.data.isSuccess).to.eq(true);
+    });
+
+    cy.fetchProperty(streamName).then(response => {
+      expect(response.data.result.state).to.eq.undefined;
     });
   });
 

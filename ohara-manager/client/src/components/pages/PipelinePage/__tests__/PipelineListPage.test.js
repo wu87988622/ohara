@@ -138,9 +138,9 @@ describe('<PipelineListPage />', () => {
     // label
     getByText('Pipeline name');
 
-    // select
+    // dropdown
     getByText('Workspace name');
-    getByTestId('cluster-select');
+    getByTestId('workspace-select');
 
     expect(getByText('Add')).toBeDisabled();
   });

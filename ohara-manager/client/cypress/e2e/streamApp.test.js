@@ -17,8 +17,6 @@
 import * as URLS from '../../src/constants/urls';
 import { makeRandomStr } from '../utils';
 
-// This test is broken and somehow related to
-// https://github.com/oharastream/ohara/issues/1944
 describe('StreamApp', () => {
   before(() => {
     cy.deleteAllWorkers();
@@ -32,27 +30,30 @@ describe('StreamApp', () => {
     cy.route('GET', 'api/files?*').as('getJars');
   });
 
-  it.skip('starts a stream app', () => {
-    cy.createTopic().as('fromTopic');
-    cy.createTopic().as('toTopic');
+  it('starts a stream app', () => {
+    const fromTopicName = `topic${makeRandomStr()}`;
+    const toTopicName = `topic${makeRandomStr()}`;
+    const pipelineName = `pipeline${makeRandomStr()}`;
+    const streamAppName = `stream${makeRandomStr()}`;
 
-    const pipelineName = makeRandomStr();
-    const streamAppName = makeRandomStr();
+    cy.createTopic(fromTopicName);
+    cy.createTopic(toTopicName);
 
     cy.visit(URLS.PIPELINES)
       .uploadTestStreamAppJar(Cypress.env('WORKER_NAME'))
-      .getByTestId('new-pipeline')
+      .getByText('NEW PIPELINE')
       .click()
-      .getByLabelText('Pipeline name')
-      .click()
+      .getByTestId('name-input')
       .type(pipelineName)
-      .getByTestId('cluster-select')
-      .select(Cypress.env('WORKER_NAME'))
+      .getByText('Please select...')
+      .click()
+      .get(`li[data-value=${Cypress.env('WORKER_NAME')}]`)
+      .click()
       .getByText('Add')
-      .click();
+      .click()
+      .wait('@getPipeline');
 
-    cy.wait('@getPipeline')
-      .getByTestId('toolbar-streams')
+    cy.getByTestId('toolbar-streams')
       .click()
       .wait('@getJars')
       .getByText('Add')
@@ -63,58 +64,45 @@ describe('StreamApp', () => {
       .eq(1)
       .within(() => {
         cy.getByText('Add').click();
-      });
+      })
+      .wait('@putPipeline');
 
     // TODO: these two topics can be added via API which should be faster than
     // adding from the UI
     cy.getByTestId('toolbar-topics')
       .click({ force: true })
-      .get('@fromTopic')
-      .then(from => {
-        cy.getByTestId('topic-select').select(from.name);
-      })
+      .getByTestId('topic-select')
+      .select(fromTopicName)
       .getByText('Add')
       .click()
       .wait('@putPipeline');
 
     cy.getByTestId('toolbar-topics')
       .click({ force: true })
-      .get('@toTopic')
-      .then(to => {
-        cy.getByTestId('topic-select').select(to.name);
-      })
+      .getByTestId('topic-select')
+      .select(toTopicName)
       .getByText('Add')
       .click()
       .wait('@putPipeline');
 
-    cy.getByText('streamApp')
+    cy.getByText(streamAppName)
       .click({ force: true })
-      .getByDisplayValue('select a from topic...')
-      .get('@fromTopic')
-      .then(from => {
-        cy.getByDisplayValue('select a from topic...')
-          .select(from.name)
-          .wait(2000) // UI has one sec throttle, so we need to wait a bit time and then wait for the request
-          .wait('@putPipeline');
-      })
-      .getByDisplayValue('select a to topic...')
-      .get('@toTopic')
-      .then(to => {
-        cy.getByDisplayValue('select a to topic...')
-          .select(to.name)
-          .wait(2000)
-          .wait('@putPipeline');
-      })
+      .getByTestId('from')
+      .click()
+      .get(`li[data-value=${fromTopicName}]`)
+      .click()
+      .wait(2000) // UI has one sec throttle
+      .wait('@putPipeline')
+      .getByTestId('to')
+      .click()
+      .get(`li[data-value=${toTopicName}]`)
+      .click()
+      .wait(2000) // UI has one sec throttle
+      .wait('@putPipeline')
       .getByTestId('start-button')
       .click()
       .getByText('Stream app successfully started!')
-      .should('be.exist')
-      .getByText('streamApp')
-      .then($el => {
-        cy.wrap($el.parent()).within(() => {
-          cy.getByText('Status: running').should('be.exist');
-        });
-      })
+      .getByText(streamAppName)
       .getByTestId('stop-button')
       .click();
   });

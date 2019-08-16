@@ -18,7 +18,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import toastr from 'toastr';
 import { Form } from 'react-final-form';
-import { get, isString, isNull } from 'lodash';
+import { get, isString, isNull, isEmpty } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
 import * as streamApi from 'api/streamApi';
@@ -107,8 +107,8 @@ class StreamApp extends React.Component {
       } = result;
       const { from, to } = settings;
       const state = get(result, 'state', null);
-      const fromTopic = get(from, '[0]', '');
-      const toTopic = get(to, '[0]', '');
+      const fromTopic = get(from, '[0].name', '');
+      const toTopic = get(to, '[0].name', '');
 
       const _settings = utils.changeToken({
         values: settings,
@@ -150,11 +150,19 @@ class StreamApp extends React.Component {
       toTopic = [];
     }
 
+    const fromKey = isEmpty(fromTopic)
+      ? fromTopic
+      : [{ group: 'default', name: fromTopic[0] }];
+
+    const toKey = isEmpty(toTopic)
+      ? toTopic
+      : [{ group: 'default', name: toTopic[0] }];
+
     const params = {
       name: this.streamAppName,
       instances,
-      from: fromTopic,
-      to: toTopic,
+      from: fromKey,
+      to: toKey,
     };
 
     const res = await streamApi.updateProperty(params);
@@ -263,23 +271,25 @@ class StreamApp extends React.Component {
     } else {
       res = await streamApi.stopStreamApp(this.streamAppName);
     }
-    this.handleTriggerStreamAppResponse(action, res);
+
+    const isSuccess = get(res, 'data.isSuccess', false);
+    this.handleTriggerConnectorResponse(action, isSuccess);
   };
 
-  handleTriggerStreamAppResponse = (action, res) => {
-    const isSuccess = get(res, 'data.isSuccess', false);
+  handleTriggerConnectorResponse = async (action, isSuccess) => {
     if (!isSuccess) return;
 
+    const response = await streamApi.fetchProperty(this.streamAppName);
+    const state = get(response, 'data.result.state', null);
     const { graph, updateGraph } = this.props;
-    const state = get(res, 'data.result.state');
-    this.setState({ state });
 
+    this.setState({ state });
     const currStreamApp = findByGraphName(graph, this.streamAppName);
     const update = { ...currStreamApp, state };
     updateGraph({ update, dispatcher: { name: 'STREAM_APP' } });
 
     if (action === STREAM_APP_ACTIONS.start) {
-      if (!isNull(state)) toastr.success(MESSAGES.STREAM_APP_STOP_SUCCESS);
+      if (!isNull(state)) toastr.success(MESSAGES.STREAM_APP_START_SUCCESS);
     }
   };
 
