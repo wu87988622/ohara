@@ -63,7 +63,7 @@ const MuiTabs = props => {
         <Tab label="Overview" />
         <Tab label="Nodes" />
         <Tab label="Topics" />
-        <Tab label="Stream apps" />
+        <Tab label="Stream jars" />
       </StyledTabs>
       <Route
         path={`${baseUrl}/overview`}
