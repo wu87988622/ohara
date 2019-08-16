@@ -18,6 +18,7 @@ import FtpSink from './FtpSink';
 import FtpSource from './FtpSource';
 import JdbcSource from './JdbcSource';
 import PerfSource from './PerfSource';
+import ConsoleSink from './ConsoleSink';
 import HdfsSink from './HdfsSink';
 import Topic from './Topic';
 import StreamApp from './StreamApp';
@@ -28,6 +29,7 @@ export {
   FtpSource,
   JdbcSource,
   PerfSource,
+  ConsoleSink,
   HdfsSink,
   Topic,
   StreamApp,

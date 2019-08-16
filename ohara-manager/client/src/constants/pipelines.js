@@ -18,6 +18,7 @@ export const CONNECTOR_TYPES = {
   jdbcSource: 'com.island.ohara.connector.jdbc.source.JDBCSourceConnector',
   ftpSource: 'com.island.ohara.connector.ftp.FtpSource',
   perfSource: 'com.island.ohara.connector.perf.PerfSource',
+  consoleSink: 'com.island.ohara.connector.console.ConsoleSink',
   hdfsSink: 'com.island.ohara.connector.hdfs.sink.HDFSSink',
   ftpSink: 'com.island.ohara.connector.ftp.FtpSink',
   customSource: 'com.island.ohara.it.connector.DumbSourceConnector',
@@ -26,9 +27,7 @@ export const CONNECTOR_TYPES = {
   topic: 'topic',
 };
 
-export const CONNECTOR_FILTERS = [
-  'com.island.ohara.connector.console.ConsoleSink',
-];
+export const CONNECTOR_FILTERS = [];
 
 export const CONNECTOR_STATES = {
   unassigned: 'UNASSIGNED',
