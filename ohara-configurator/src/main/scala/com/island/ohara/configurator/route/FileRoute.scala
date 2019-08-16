@@ -23,10 +23,10 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.client.configurator.Data
-import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorDescription
 import com.island.ohara.client.configurator.v0.FileInfoApi
 import com.island.ohara.client.configurator.v0.FileInfoApi._
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
+import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.configurator.file.FileStore
 import com.island.ohara.configurator.store.DataStore
@@ -48,10 +48,8 @@ private[configurator] object FileRoute {
     store
       .raws()
       .map(_.filter {
-        case info: StreamClusterInfo =>
-          info.jarKey.group == fileInfo.group && info.jarKey.name == fileInfo.name
-        //TODO : does connector need checking the jar is used before deleting ??...by Sam
-        case _: ConnectorDescription => false
+        case info: StreamClusterInfo => info.jarKey == fileInfo.key
+        case info: WorkerClusterInfo => info.jarInfos.map(_.key).contains(fileInfo.key)
         // other data type do nothing
         case _ => false
       })

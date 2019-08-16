@@ -18,7 +18,7 @@ package com.island.ohara.configurator.route
 
 import java.io.{File, FileOutputStream}
 
-import com.island.ohara.client.configurator.v0.{FileInfoApi, StreamApi}
+import com.island.ohara.client.configurator.v0.{FileInfoApi, StreamApi, WorkerApi}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -152,6 +152,27 @@ class TestFileRoute extends SmallTest with Matchers {
     fileInfo2.group shouldBe fileInfo.group
     fileInfo2.name shouldBe fileInfo.name
     fileInfo2.tags shouldBe tags
+  }
+
+  @Test
+  def failToRemoveFileUsedByWorkerCluster(): Unit = {
+    val data = methodName().getBytes
+    val f = tmpFile(data)
+    val jar = result(fileApi.request.file(f).upload())
+
+    val wk = result(
+      WorkerApi.access
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .request
+        .jarKeys(Set(jar.key))
+        .nodeName(CommonUtils.randomString())
+        .create())
+
+    an[IllegalArgumentException] should be thrownBy result(fileApi.delete(jar.key))
+
+    result(WorkerApi.access.hostname(configurator.hostname).port(configurator.port).delete(wk.name))
+    result(fileApi.delete(jar.key))
   }
 
   @After
