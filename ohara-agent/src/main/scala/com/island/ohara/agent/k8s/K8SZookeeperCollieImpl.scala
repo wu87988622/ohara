@@ -25,7 +25,7 @@ import com.typesafe.scalalogging.Logger
 import scala.concurrent.{ExecutionContext, Future}
 
 private class K8SZookeeperCollieImpl(node: NodeCollie, k8sClient: K8SClient)
-    extends K8SBasicCollieImpl[ZookeeperClusterInfo, ZookeeperCollie.ClusterCreator](node, k8sClient)
+    extends K8SBasicCollieImpl[ZookeeperClusterInfo](node, k8sClient)
     with ZookeeperCollie {
   private[this] val LOG = Logger(classOf[K8SZookeeperCollieImpl])
 

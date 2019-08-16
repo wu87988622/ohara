@@ -24,7 +24,7 @@ import com.island.ohara.client.configurator.v0.{ClusterInfo, NodeApi}
 import scala.concurrent.{ExecutionContext, Future}
 
 private class BrokerCollieImpl(node: NodeCollie, dockerCache: DockerClientCache, clusterCache: ClusterCache)
-    extends BasicCollieImpl[BrokerClusterInfo, BrokerCollie.ClusterCreator](node, dockerCache, clusterCache)
+    extends BasicCollieImpl[BrokerClusterInfo](node, dockerCache, clusterCache)
     with BrokerCollie {
 
   override protected def doCreator(executionContext: ExecutionContext,

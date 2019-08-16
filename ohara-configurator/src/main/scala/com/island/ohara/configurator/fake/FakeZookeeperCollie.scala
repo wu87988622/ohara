@@ -25,7 +25,7 @@ import com.island.ohara.common.util.CommonUtils
 import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] class FakeZookeeperCollie(node: NodeCollie)
-    extends FakeCollie[ZookeeperClusterInfo, ZookeeperCollie.ClusterCreator](node)
+    extends FakeCollie[ZookeeperClusterInfo](node)
     with ZookeeperCollie {
   override def creator: ZookeeperCollie.ClusterCreator =
     (_, clusterName, imageName, clientPort, peerPort, electionPort, nodeNames) =>

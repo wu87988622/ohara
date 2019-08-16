@@ -31,7 +31,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] class FakeWorkerCollie(node: NodeCollie, wkConnectionProps: String)
-    extends FakeCollie[WorkerClusterInfo, WorkerCollie.ClusterCreator](node)
+    extends FakeCollie[WorkerClusterInfo](node)
     with WorkerCollie {
 
   override def counters(cluster: WorkerClusterInfo): Seq[CounterMBean] =

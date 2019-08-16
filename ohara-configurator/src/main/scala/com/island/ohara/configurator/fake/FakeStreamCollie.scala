@@ -34,7 +34,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] class FakeStreamCollie(node: NodeCollie)
-    extends FakeCollie[StreamClusterInfo, StreamCollie.ClusterCreator](node)
+    extends FakeCollie[StreamClusterInfo](node)
     with StreamCollie {
 
   override def counters(cluster: StreamClusterInfo): Seq[CounterMBean] =

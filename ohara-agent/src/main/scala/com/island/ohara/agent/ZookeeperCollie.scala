@@ -33,7 +33,7 @@ import scala.concurrent.{ExecutionContext, Future}
   * An interface of controlling zookeeper cluster.
   * It isolates the implementation of container manager from Configurator.
   */
-trait ZookeeperCollie extends Collie[ZookeeperClusterInfo, ZookeeperCollie.ClusterCreator] {
+trait ZookeeperCollie extends Collie[ZookeeperClusterInfo] {
 
   override val serviceName: String = ZookeeperApi.ZOOKEEPER_SERVICE_NAME
 

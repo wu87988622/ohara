@@ -15,7 +15,6 @@
  */
 
 package com.island.ohara.configurator.route
-import com.island.ohara.agent.Collie.ClusterCreator
 import com.island.ohara.agent.{BrokerCollie, Collie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ClusterInfo
@@ -72,24 +71,23 @@ private[route] object CollieUtils {
     * @param collie collie
     * @param executionContext thread pool
     * @tparam Req cluster type
-    * @tparam Creator cluster creator. collie must have both Req and Creator to distinguish the kind of cluster
     * @return matched cluster name
     */
-  def orElseClusterName[Req <: ClusterInfo: ClassTag, Creator <: ClusterCreator[Req]](clusterName: Option[String])(
-    implicit collie: Collie[Req, Creator],
-    executionContext: ExecutionContext): Future[String] = if (clusterName.isDefined)
-    Future.successful(clusterName.get)
-  else
-    collie.clusters().map { clusters =>
-      clusters.size match {
-        case 0 =>
-          throw new IllegalArgumentException(s"we can't choose default cluster since there is no cluster available")
-        case 1 => clusters.keys.head.name
-        case _ =>
-          throw new IllegalArgumentException(
-            s"we can't choose default cluster since there are too many clusters:${clusters.keys.map(_.name).mkString(",")}")
+  def orElseClusterName[Req <: ClusterInfo: ClassTag](
+    clusterName: Option[String])(implicit collie: Collie[Req], executionContext: ExecutionContext): Future[String] =
+    if (clusterName.isDefined)
+      Future.successful(clusterName.get)
+    else
+      collie.clusters().map { clusters =>
+        clusters.size match {
+          case 0 =>
+            throw new IllegalArgumentException(s"we can't choose default cluster since there is no cluster available")
+          case 1 => clusters.keys.head.name
+          case _ =>
+            throw new IllegalArgumentException(
+              s"we can't choose default cluster since there are too many clusters:${clusters.keys.map(_.name).mkString(",")}")
+        }
       }
-    }
 
   def workerClient[T](clusterName: String)(
     implicit workerCollie: WorkerCollie,

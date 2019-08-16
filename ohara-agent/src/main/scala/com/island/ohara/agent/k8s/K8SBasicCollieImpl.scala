@@ -25,10 +25,9 @@ import com.island.ohara.common.util.Releasable
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.ClassTag
 
-private[this] abstract class K8SBasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: Collie.ClusterCreator[T]](
-  nodeCollie: NodeCollie,
-  k8sClient: K8SClient)
-    extends Collie[T, Creator]
+private[this] abstract class K8SBasicCollieImpl[T <: ClusterInfo: ClassTag](nodeCollie: NodeCollie,
+                                                                            k8sClient: K8SClient)
+    extends Collie[T]
     with Releasable {
 
   protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo])(

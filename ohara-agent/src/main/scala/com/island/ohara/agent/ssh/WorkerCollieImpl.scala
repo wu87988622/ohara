@@ -26,7 +26,7 @@ import com.island.ohara.client.configurator.v0.{ClusterInfo, NodeApi}
 import scala.concurrent.{ExecutionContext, Future}
 
 private class WorkerCollieImpl(node: NodeCollie, dockerCache: DockerClientCache, clusterCache: ClusterCache)
-    extends BasicCollieImpl[WorkerClusterInfo, WorkerCollie.ClusterCreator](node, dockerCache, clusterCache)
+    extends BasicCollieImpl[WorkerClusterInfo](node, dockerCache, clusterCache)
     with WorkerCollie {
 
   override protected def postCreateWorkerCluster(clusterInfo: ClusterInfo,

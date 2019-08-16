@@ -32,7 +32,7 @@ import scala.concurrent.{ExecutionContext, Future}
   * Collie is a cute dog helping us to "manage" a bunch of sheep.
   * @tparam T cluster description
   */
-trait Collie[T <: ClusterInfo, Creator <: ClusterCreator[T]] {
+trait Collie[T <: ClusterInfo] {
 
   /**
     * remove whole cluster by specified name. The process, mostly, has a graceful shutdown
@@ -91,7 +91,7 @@ trait Collie[T <: ClusterInfo, Creator <: ClusterCreator[T]] {
     * create a cluster creator
     * @return creator of cluster
     */
-  def creator: Creator
+  def creator: ClusterCreator[T]
 
   /**
     * get the containers information from a1 cluster

@@ -43,7 +43,7 @@ import scala.concurrent.{ExecutionContext, Future}
   * An interface of controlling stream cluster.
   * It isolates the implementation of container manager from Configurator.
   */
-trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator] {
+trait StreamCollie extends Collie[StreamClusterInfo] {
   private[this] val LOG = Logger(classOf[StreamCollie])
 
   override def creator: StreamCollie.ClusterCreator =

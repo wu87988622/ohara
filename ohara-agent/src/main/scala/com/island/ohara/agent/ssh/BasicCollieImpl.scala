@@ -23,11 +23,10 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
-private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: Collie.ClusterCreator[T]](
-  nodeCollie: NodeCollie,
-  dockerCache: DockerClientCache,
-  clusterCache: ClusterCache)
-    extends Collie[T, Creator] {
+private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag](nodeCollie: NodeCollie,
+                                                                   dockerCache: DockerClientCache,
+                                                                   clusterCache: ClusterCache)
+    extends Collie[T] {
 
   final override def clusterWithAllContainers()(
     implicit executionContext: ExecutionContext): Future[Map[T, Seq[ContainerInfo]]] = {

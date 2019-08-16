@@ -20,7 +20,6 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
-import com.island.ohara.agent.Collie.ClusterCreator
 import com.island.ohara.agent.{ClusterCollie, Collie, NodeCollie}
 import com.island.ohara.client.configurator.Data
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
@@ -39,16 +38,7 @@ import com.island.ohara.client.configurator.v0.{
 import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.VersionUtils
-import com.island.ohara.configurator.route.hook.{
-  HookBeforeDelete,
-  HookOfAction,
-  HookOfCreation,
-  HookOfGet,
-  HookOfGroup,
-  HookOfList,
-  HookOfSubName,
-  HookOfUpdate
-}
+import com.island.ohara.configurator.route.hook._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsArray, JsString, RootJsonFormat}
@@ -460,13 +450,11 @@ package object route {
     * @param rm2 marshalling of response
     * @param executionContext thread pool
     * @tparam Creation creation request for cluster resources
-    * @tparam Creator another type ot indicate the cluster resources
     * @tparam Update creation request
     * @tparam Cluster cluster info
     * @return route
     */
   private[route] def clusterRoute[Cluster <: ClusterInfo: ClassTag,
-                                  Creator <: ClusterCreator[Cluster],
                                   Creation <: ClusterCreationRequest,
                                   Update <: ClusterUpdateRequest](root: String,
                                                                   metricsKey: Option[String],
@@ -477,21 +465,21 @@ package object route {
                                                                   hookBeforeStop: HookOfAction)(
     implicit store: DataStore,
     meterCache: MeterCache,
-    collie: Collie[Cluster, Creator],
+    collie: Collie[Cluster],
     clusterCollie: ClusterCollie,
     nodeCollie: NodeCollie,
     rm: OharaJsonFormat[Creation],
     rm1: RootJsonFormat[Update],
     rm2: RootJsonFormat[Cluster],
     executionContext: ExecutionContext): server.Route =
-    clusterRoute[Cluster, Creator, Creation, Update](
+    clusterRoute[Cluster, Creation, Update](
       root = root,
       hookOfGroup = hookOfGroup,
       hookOfCreation = hookOfCreation,
       hookOfUpdate = hookOfUpdate,
-      hookOfGet = updateState[Cluster, Creator](_, metricsKey),
+      hookOfGet = updateState[Cluster](_, metricsKey),
       hookOfList = (clusters: Seq[Cluster]) => Future.traverse(clusters)(updateState(_, metricsKey)),
-      hookBeforeDelete = hookBeforeDelete[Cluster, Creator](metricsKey),
+      hookBeforeDelete = hookBeforeDelete[Cluster](metricsKey),
       hookOfStart = hookOfStart,
       hookBeforeStop = hookBeforeStop
     )
@@ -521,13 +509,11 @@ package object route {
     * @param rm2 marshalling of response
     * @param executionContext thread pool
     * @tparam Creation creation request for cluster resources
-    * @tparam Creator another type ot indicate the cluster resources
     * @tparam Update creation request
     * @tparam Cluster cluster info
     * @return route
     */
   private[this] def clusterRoute[Cluster <: ClusterInfo: ClassTag,
-                                 Creator <: ClusterCreator[Cluster],
                                  Creation <: ClusterCreationRequest,
                                  Update <: ClusterUpdateRequest](root: String,
                                                                  hookOfGroup: HookOfGroup,
@@ -539,7 +525,7 @@ package object route {
                                                                  hookOfStart: HookOfAction,
                                                                  hookBeforeStop: HookOfAction)(
     implicit store: DataStore,
-    collie: Collie[Cluster, Creator],
+    collie: Collie[Cluster],
     clusterCollie: ClusterCollie,
     nodeCollie: NodeCollie,
     rm: OharaJsonFormat[Creation],
@@ -684,12 +670,11 @@ package object route {
         Future.unit
       }
 
-  private[this] def updateState[Cluster <: ClusterInfo: ClassTag, Creator <: ClusterCreator[Cluster]](
-    cluster: Cluster,
-    metricsKey: Option[String])(implicit meterCache: MeterCache,
-                                store: DataStore,
-                                collie: Collie[Cluster, Creator],
-                                executionContext: ExecutionContext): Future[Cluster] =
+  private[this] def updateState[Cluster <: ClusterInfo: ClassTag](cluster: Cluster, metricsKey: Option[String])(
+    implicit meterCache: MeterCache,
+    store: DataStore,
+    collie: Collie[Cluster],
+    executionContext: ExecutionContext): Future[Cluster] =
     collie
       .clusters()
       .map(
@@ -712,11 +697,11 @@ package object route {
         store.add[Cluster](cluster)
       }
 
-  private[this] def hookBeforeDelete[Cluster <: ClusterInfo: ClassTag, Creator <: ClusterCreator[Cluster]](
-    metricsKey: Option[String])(implicit store: DataStore,
-                                meterCache: MeterCache,
-                                collie: Collie[Cluster, Creator],
-                                executionContext: ExecutionContext): HookBeforeDelete = (key: ObjectKey) =>
+  private[this] def hookBeforeDelete[Cluster <: ClusterInfo: ClassTag](metricsKey: Option[String])(
+    implicit store: DataStore,
+    meterCache: MeterCache,
+    collie: Collie[Cluster],
+    executionContext: ExecutionContext): HookBeforeDelete = (key: ObjectKey) =>
     store.get[Cluster](key).flatMap {
       _.fold(Future.unit) { info =>
         updateState(info, metricsKey).flatMap { data =>

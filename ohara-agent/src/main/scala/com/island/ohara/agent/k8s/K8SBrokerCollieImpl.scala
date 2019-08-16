@@ -25,7 +25,7 @@ import com.typesafe.scalalogging.Logger
 import scala.concurrent.{ExecutionContext, Future}
 
 private class K8SBrokerCollieImpl(node: NodeCollie, zkCollie: ZookeeperCollie, k8sClient: K8SClient)
-    extends K8SBasicCollieImpl[BrokerClusterInfo, BrokerCollie.ClusterCreator](node, k8sClient)
+    extends K8SBasicCollieImpl[BrokerClusterInfo](node, k8sClient)
     with BrokerCollie {
   private[this] val LOG = Logger(classOf[K8SBrokerCollieImpl])
 

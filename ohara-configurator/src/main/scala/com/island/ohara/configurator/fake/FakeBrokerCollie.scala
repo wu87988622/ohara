@@ -31,7 +31,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] class FakeBrokerCollie(node: NodeCollie, bkConnectionProps: String)
-    extends FakeCollie[BrokerClusterInfo, BrokerCollie.ClusterCreator](node)
+    extends FakeCollie[BrokerClusterInfo](node)
     with BrokerCollie {
 
   override def topicMeters(cluster: BrokerClusterInfo): Seq[TopicMeter] =

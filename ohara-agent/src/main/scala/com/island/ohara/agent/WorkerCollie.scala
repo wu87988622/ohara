@@ -32,7 +32,7 @@ import spray.json.{JsArray, JsString}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
-trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator] {
+trait WorkerCollie extends Collie[WorkerClusterInfo] {
 
   /**
     * This is a complicated process. We must address following issues.

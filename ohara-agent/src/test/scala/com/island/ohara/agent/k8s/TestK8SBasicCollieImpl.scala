@@ -66,7 +66,7 @@ class TestK8SBasicCollieImpl extends SmallTest with Matchers {
     val k8sClient = new FakeK8SClient(true, None, containerName)
 
     val k8sBasicCollieImpl =
-      new K8SBasicCollieImpl[ZookeeperClusterInfo, ZookeeperCollie.ClusterCreator](nodeCollie, k8sClient) {
+      new K8SBasicCollieImpl[ZookeeperClusterInfo](nodeCollie, k8sClient) {
         override protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo])(
           implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
           Future.successful(

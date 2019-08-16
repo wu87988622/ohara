@@ -23,7 +23,7 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import scala.concurrent.{ExecutionContext, Future}
 private class ZookeeperCollieImpl(node: NodeCollie, dockerCache: DockerClientCache, clusterCache: ClusterCache)
-    extends BasicCollieImpl[ZookeeperClusterInfo, ZookeeperCollie.ClusterCreator](node, dockerCache, clusterCache)
+    extends BasicCollieImpl[ZookeeperClusterInfo](node, dockerCache, clusterCache)
     with ZookeeperCollie {
 
   override protected def doCreator(executionContext: ExecutionContext,

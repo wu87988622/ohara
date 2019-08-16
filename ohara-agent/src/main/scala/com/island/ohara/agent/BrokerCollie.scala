@@ -33,7 +33,7 @@ import spray.json.JsString
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
-trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator] {
+trait BrokerCollie extends Collie[BrokerClusterInfo] {
 
   /**
     * This is a complicated process. We must address following issues.
