@@ -216,6 +216,32 @@ trait Collie[T <: ClusterInfo] {
     implicit executionContext: ExecutionContext): Future[Boolean]
 
   /**
+    * Get the cluster state by containers.
+    * <p>
+    * Note: we should separate the implementation from docker and k8s environment.
+    * <p>
+    * a cluster state machine:
+    *       -----------------       -----------------       --------
+    *       | Some(PENDING) |  -->  | Some(RUNNING) |  -->  | None |
+    *       -----------------       -----------------       --------
+    *                                      |
+    *                                      | (terminated failure or running failure)
+    *                                      |       ----------------
+    *                                      ----->  | Some(FAILED) |
+    *                                              ----------------
+    * The cluster state rules
+    * 1) RUNNING: all of the containers have been created and at least one container is in "running" state
+    * 2) FAILED: all of the containers are terminated and at least one container has terminated failure
+    * 3) PENDING: one of the containers are in creating phase
+    * 4) UNKNOWN: other situations
+    * 4) None: no containers
+    *
+    * @param containers container list
+    * @return the cluster state
+    */
+  protected def toClusterState(containers: Seq[ContainerInfo]): Option[ClusterState]
+
+  /**
     * return the short service name
     * @return service name
     */

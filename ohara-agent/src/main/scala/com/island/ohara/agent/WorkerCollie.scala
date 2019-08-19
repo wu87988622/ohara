@@ -297,13 +297,7 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
         deadNodes = containers.filterNot(_.state == ContainerState.RUNNING.name).map(_.nodeName).toSet,
         // We do not care the user parameters since it's stored in configurator already
         tags = Map.empty,
-        state = {
-          // we only have two possible results here:
-          // 1. only assume cluster is "running" if at least one container is running
-          // 2. the cluster state is always "failed" if all containers were not running
-          val alive = containers.exists(_.state == ClusterState.RUNNING.name)
-          if (alive) Some(ContainerState.RUNNING.name) else Some(ClusterState.FAILED.name)
-        },
+        state = toClusterState(containers).map(_.name),
         // TODO how could we fetch the error?...by Sam
         error = None,
         lastModified = CommonUtils.current()

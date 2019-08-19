@@ -16,6 +16,7 @@
 
 package com.island.ohara.agent
 
+import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.{ClusterInfo, MetricsApi}
 import com.island.ohara.common.util.CommonUtils
@@ -39,7 +40,7 @@ class FakeCollie[T <: FakeCollieClusterInfo: ClassTag](nodeCollie: NodeCollie, c
     previousCluster: FakeCollieClusterInfo,
     previousContainers: Seq[ContainerInfo],
     newNodeName: String)(implicit executionContext: ExecutionContext): Future[FakeCollieClusterInfo] =
-    Future.successful(FakeCollieClusterInfo(previousCluster.name, previousCluster.nodeNames ++ Seq(newNodeName)))
+    Future.successful(FakeCollieClusterInfo(previousCluster.name, previousCluster.nodeNames ++ Seq(newNodeName), None))
 
   override protected def doRemove(clusterInfo: FakeCollieClusterInfo, containerInfos: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[Boolean] = Future.successful(true)
@@ -51,15 +52,34 @@ class FakeCollie[T <: FakeCollieClusterInfo: ClassTag](nodeCollie: NodeCollie, c
   override def clusterWithAllContainers()(
     implicit executionContext: ExecutionContext): Future[Map[FakeCollieClusterInfo, Seq[ContainerInfo]]] =
     Future.successful(
-      Map(FakeCollieClusterInfo(FakeCollie.clusterName, containers.map(c => c.nodeName).toSet) -> containers))
+      Map(
+        FakeCollieClusterInfo(FakeCollie.clusterName,
+                              containers.map(c => c.nodeName).toSet,
+                              toClusterState(containers).map(_.name)) -> containers))
 
   override def creator: FakeCollie.FakeClusterCreator =
-    () => Future.successful(FakeCollieClusterInfo(FakeCollie.clusterName, Set.empty))
+    () => Future.successful(FakeCollieClusterInfo(FakeCollie.clusterName, Set.empty, None))
+
+  override protected def toClusterState(containers: Seq[ContainerInfo]): Option[ClusterState] =
+    if (containers.isEmpty) None
+    else {
+      // one of the containers in pending state means cluster pending
+      if (containers.exists(_.state == ContainerState.CREATED.name)) Some(ClusterState.PENDING)
+      // not pending, if one of the containers in running state means cluster running (even other containers are in
+      // restarting, paused, exited or dead state
+      else if (containers.exists(_.state == ContainerState.RUNNING.name)) Some(ClusterState.RUNNING)
+      // exists one container in dead state, and others are in exited state means cluster failed
+      else if (containers.exists(_.state == ContainerState.DEAD.name) &&
+               containers.forall(c => c.state == ContainerState.EXITED.name || c.state == ContainerState.DEAD.name))
+        Some(ClusterState.FAILED)
+      // we don't care other situation for now
+      else Some(ClusterState.UNKNOWN)
+    }
 
   override def serviceName: String = "fake"
 }
 
-case class FakeCollieClusterInfo(name: String, nodeNames: Set[String]) extends ClusterInfo {
+case class FakeCollieClusterInfo(name: String, nodeNames: Set[String], state: Option[String]) extends ClusterInfo {
   override def imageName: String = "I DON'T CARE"
 
   override def deadNodes: Set[String] = Set.empty
@@ -76,8 +96,6 @@ case class FakeCollieClusterInfo(name: String, nodeNames: Set[String]) extends C
   override def kind: String = "fake_cluster"
 
   override def tags: Map[String, JsValue] = Map.empty
-
-  override def state: Option[String] = None
 
   override def error: Option[String] = None
 

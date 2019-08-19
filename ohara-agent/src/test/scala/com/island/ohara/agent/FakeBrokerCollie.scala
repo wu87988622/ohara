@@ -111,6 +111,10 @@ private class FakeBrokerCollie(node: NodeCollie,
     * @return
     */
   override protected def prefixKey: String = "fakebroker"
+
+  // In fake mode, we don't care the cluster state
+  override protected def toClusterState(containers: Seq[ContainerInfo]): Option[ClusterState] =
+    Some(ClusterState.RUNNING)
 }
 
 object FakeBrokerCollie {
