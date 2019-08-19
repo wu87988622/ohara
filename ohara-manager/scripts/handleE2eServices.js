@@ -17,7 +17,7 @@
 const fs = require('fs');
 const axios = require('axios');
 const chalk = require('chalk');
-const { get, isUndefined } = require('lodash');
+const { get, isNull } = require('lodash');
 
 const commonUtils = require('../utils/commonUtils');
 const utils = require('./scriptsUtils');
@@ -72,19 +72,6 @@ const isServiceReady = async apiUrl => {
   const response = await axios.get(apiUrl);
   const serviceIsReady = get(response, 'data.state', 'FAILED');
   return serviceIsReady === 'RUNNING';
-};
-
-const isRemovedFromList = async (url, serviceName) => {
-  const response = await axios.get(`${url}`);
-  const services = get(response, 'data', []);
-
-  // If there's nothing returned from the request,
-  // returns early at this point
-  if (services.length === 0) return true;
-
-  const hasService = service => service.name === serviceName;
-  const result = services.some(hasService);
-  return !result;
 };
 
 const createNode = async ({
@@ -173,35 +160,23 @@ exports.createServices = async ({
 };
 
 const isServiceStopped = async apiUrl => {
-  const zookeeper = await axios.get(apiUrl);
-  const zookeeperState = get(zookeeper, 'data.state', 'RUNNING');
-  return isUndefined(zookeeperState);
-};
-
-const cleanWorkers = async (workers, apiRoot) => {
-  await Promise.all(
-    workers.map(async worker => {
-      const { name: serviceName, serviceType } = worker;
-      const url = `${apiRoot}/${serviceType}`;
-      await axios.delete(`${url}/${serviceName}`);
-      const condition = () => isRemovedFromList(url, serviceName);
-
-      await utils.waitUntil({ condition });
-    }),
-  );
+  const service = await axios.get(apiUrl);
+  const serviceState = get(service, 'data.state', null);
+  return isNull(serviceState);
 };
 
 const deleteServices = async (services, apiRoot) => {
-  await Promise.all(
-    services.map(async service => {
-      const { name: serviceName, serviceType } = service;
-      const apiUrl = `${apiRoot}/${serviceType}`;
+  for (let service of services) {
+    const { name: serviceName, serviceType } = service;
+    const apiUrl = `${apiRoot}/${serviceType}`;
 
-      await axios.put(`${apiUrl}/${serviceName}/stop`);
-      await utils.waitUntil({ condition: () => isServiceStopped(apiUrl) });
-      await axios.delete(`${apiUrl}/${serviceName}`);
-    }),
-  );
+    await axios.put(`${apiUrl}/${serviceName}/stop`);
+    await utils.waitUntil({
+      condition: () => isServiceStopped(`${apiUrl}/${serviceName}`),
+    });
+
+    await axios.delete(`${apiUrl}/${serviceName}`);
+  }
 };
 
 const getByServiceType = services => {
@@ -218,18 +193,32 @@ const getByServiceType = services => {
   return { workers, brokers, zookeepers };
 };
 
+const getRunningWorkers = async (services, apiRoot) => {
+  const response = await axios.get(`${apiRoot}/workers`);
+  const workers = get(response, 'data', []);
+
+  const runningWorkers = workers.map(worker => worker.name);
+  const filteredServices = services.filter(
+    ({ serviceType, name }) =>
+      serviceType === 'workers' && runningWorkers.includes(name),
+  );
+
+  return filteredServices;
+};
+
 exports.cleanServices = async apiRoot => {
   try {
     const file = fs.readFileSync('scripts/servicesApi/service.json');
     const services = JSON.parse(file);
     const { workers, brokers, zookeepers } = getByServiceType(services);
 
-    // 1. Note that the deleting order matters, it should goes with
-    // workers -> brokers -> zookeepers
-    // 2. We're not deleting node we created early since it can be
-    // deleted safely with Jenkins
+    // Note that the deleting order matters, it should goes like:
+    // workers -> brokers -> zookeepers -> node
 
-    await cleanWorkers(workers, apiRoot);
+    // The workers that are actually running/existing at the moment
+    const runningWorkers = await getRunningWorkers(workers, apiRoot);
+
+    await deleteServices(runningWorkers, apiRoot);
     await deleteServices(brokers, apiRoot);
     await deleteServices(zookeepers, apiRoot);
   } catch (error) {

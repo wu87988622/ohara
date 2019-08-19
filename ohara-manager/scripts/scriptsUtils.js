@@ -27,7 +27,7 @@ exports.checkClientBuildDir = () => {
       chalk.red(
         `Couldn't find the build directory, please run ${chalk.blue(
           'yarn setup',
-        )} to build the static files that are needed in the end-to-tend test run`,
+        )} to build the static files that are needed in the End-to-End test`,
       ),
     );
 
