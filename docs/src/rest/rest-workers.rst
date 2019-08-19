@@ -113,12 +113,12 @@ The properties which can be set by user are shown below.
        setting is modifiable
      - connectors[i].definitions[j].key (**string**) — the key of
        configuration
-     - connectors[i].definitions[j]. :ref:`valueType <rest-workers-setting-type>` (**string**) — the type of value
+     - connectors[i].definitions[j]. :ref:`valueType <setting-definition-type>` (**string**) — the type of value
      - connectors[i].definitions[j].defaultValue (**string**) — the
        default value
      - connectors[i].definitions[j].documentation (**string**) — the
        explanation of this definition
-     - connectors[i].definitions[j]. :ref:`reference <rest-workers-setting-ref>` (**string**) — works for ohara manager.
+     - connectors[i].definitions[j]. :ref:`reference <setting-definition-reference>` (**string**) — works for ohara manager.
        It represents the reference of value.
      - connectors[i].definitions[j].required (**boolean**) — true if
        this setting has no default value and you have to assign a value.
@@ -134,114 +134,6 @@ The properties which can be set by user are shown below.
   And for another, the worker
   cluster needs to take some time to load available connectors. If you
   don’t see the setting definitions, please retry it later.
-
-.. _rest-workers-setting-type:
-
-Setting Type
-------------
-
-The type of value includes two processes to input value when you are
-trying to run a connector. For example, starting a connector will fail
-when you input a string to a setting having **int** type. The acceptable
-types are shown below.
-
-#. Boolean — the value must be castable to **java.lang.Boolean**
-#. String — the value must be castable to **java.lang.String**
-#. Short — the value must be castable to **java.lang.Short**
-#. Int — the value must be castable to **java.lang.Integer**
-#. Long — the value must be castable to **java.lang.Long**
-#. Double — the value must be castable to **java.lang.Double**
-#. Class — the value must be castable to **java.lang.String** and it must be equal to a class in worker’s jvm
-#. Password — the value must be castable to **java.lang.String**. the value is replaced by **hidden** in APIs
-#. List — the value must be castable to **java.lang.String** and it is split according to JSON array
-#. Table — the value must be castable to **java.lang.String** and it has the following JSON representation.
-
-    .. code-block:: json
-
-       [
-         {
-           "order": 1,
-           "c0": "v0",
-           "c1": "v1",
-           "c2": "v2"
-         },
-         {
-           "order": 2,
-           "c0": "t0",
-           "c1": "t1",
-           "c2": "t2"
-         }
-       ]
-
-    How to get the description of above **keys** ? If the setting type is
-    **table**, the setting must have **tableKeys**. It is a array of string
-    which shows the keys used in the table type. For instance, a setting
-    having table type is shown below.
-
-    .. code-block:: json
-
-       {
-         "reference": "NONE",
-         "displayName": "columns",
-         "internal": false,
-         "documentation": "output schema",
-         "valueType": "TABLE",
-         "tableKeys": [
-           "order",
-           "dataType",
-           "name",
-           "newName"
-         ],
-         "orderInGroup": 6,
-         "key": "columns",
-         "required": false,
-         "defaultValue": null,
-         "group": "core",
-         "editable": true
-       }
-
-#. Duration — the value must be castable to **java.time.Duration** and it is based on the ISO-860 duration
-   format PnDTnHnMn.nS
-#. TOPIC_KEYS — each field must be castable to **com.island.ohara.common.setting.TopicKey** .
-   The json representation is shown below.
-
-    .. code-block:: json
-
-      [
-        {
-          "group": "g0",
-          "name": "n0"
-        },
-        {
-          "group": "g1",
-          "name": "n1"
-        }
-      ]
-
-#. TAGS — this setting accepts a json representation string. For example:
-
-    .. code-block:: json
-
-      {
-        "k0": "g0",
-        "k1": "n0",
-        "k2": [],
-        "k3": {
-          "k3.1": "v3.1"
-        }
-      }
-
-.. _rest-workers-setting-ref:
-
-Setting Reference
------------------
-
-This element is a specific purpose. It is used by Ohara manager (UI)
-only. If you don’t have interest in UI, you can just ignore this
-element. However, we still list the available values here.
-
-#. TOPIC
-#. WORKER_CLUSTER
 
 .. _rest-workers-create:
 

@@ -221,7 +221,7 @@ Validate the connector settings
 Before starting a connector, you can send the settings to test whether
 all settings are available for specific connector. Ohara is not in
 charge of settings validation. Connector MUST define its setting via
-:ref:`setting definitions <connector-setting-def>`.
+:ref:`setting definitions <setting-definition>`.
 Ohara configurator only repackage the request to kafka format and then
 collect the validation result from kafka.
 

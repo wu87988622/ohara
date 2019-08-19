@@ -87,28 +87,25 @@ A base implementation for a custom streamApp only need to include
 which are described below for your convenience.
 
 The following example is a simple streamApp application which can run in
-Ohara. Note that this example simply starts the streamApp
-application without doing any transformation, i.e., the source topic
-won’t write data to the target topic.
+Ohara. Note that this example simply starts the streamApp application without doing any transformation but writing data,
+i.e., the target topic will have same data as the source topic.
 
 .. code-block:: java
 
    public class SimpleApplicationForOharaEnv extends StreamApp {
 
      @Override
-     public void start() {
-       OStream<Row> ostream = OStream.builder().cleanStart().toOharaEnvStream();
+     public void start(OStream<Row> ostream, StreamDefinitions streamDefinitions) {
        ostream.start();
      }
    }
 
-.. _streamapp-init-method:
-
 .. note::
-   The methods we provide here belong to Ohara StreamApp, which have
+   The following methods we provided belongs to Ohara StreamApp, which has
    many powerful and friendly features. Native Kafka Streams API does
    not have these methods.
 
+.. _streamapp-init-method:
 
 init() method
 ~~~~~~~~~~~~~
@@ -118,10 +115,35 @@ StreamApp is **init()**. This is an optional method that can be used for
 user to initialize some external data source connections or input
 parameters.
 
+.. _streamapp-config-method:
+
+config() method
+~~~~~~~~~~~~~~~
+
+In a streamApp application, you may want to configure your own parameters. We support a method here to help you define
+a custom streamDefinitions list in streamApp. The details of streamDefinitions are list :ref:`here <streamapp-setting-definitions>`.
+
+In the following example, we want to add a custom definition which is used to define "join topic":
+
+.. code-block:: java
+
+   @Override
+   public StreamDefinitions config() {
+    return StreamDefinitions
+      // add a definition of "filter name" in "default" group
+      .with(SettingDef.builder().key("filterName").group("default").build());
+   }
+
+After define the definition, you can use it in :ref:`start() method <streamapp-start-method>`
+
+.. note::
+   This method is optional. We will append all the definitions you provide in this method to the streamApp default
+   definitions. That is, the absent config() method means you only need the default definitions.
+
 .. _streamapp-start-method:
 
-start() method
-~~~~~~~~~~~~~~
+start(OStream<Row>, StreamDefinitions) method
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This method will be called after :ref:`init() <streamapp-init-method>`. Normally,
 you could only define start() method for most cases in Ohara. We encourage
@@ -129,25 +151,49 @@ user to use **source connector** (see :ref:`connector-sourceconnector` section) 
 external data source to Ohara and use topic data as custom
 streamApp data source in start() method.
 
-The only object you should remember in this method is **OStream**
-(a.k.a. ohara streamApp). You could use this object to construct your
-application and use all the powerful APIs in StreamApp.
+We provide two arguments in this method:
+
+#. OStream - the entry class of ohara streamApp
+
+   OStream (a.k.a. ohara streamApp) helps you to construct your application
+   and use all the powerful APIs in StreamApp.
+
+#. StreamDefinitions - the definitions of ohara streamApp
+
+   from the definition you can use `StreamDefinitions.get()` to get the value you set
+   in :ref:`Stream update api <rest-stream-update-information>`.
 
 For example:
 
 .. code-block:: java
 
-   ostream
-     .map(row -> Row.of(row.cell("name"), row.cell("age")))
-     .filter(row -> row.cell("name").value() != null)
-     .map(row -> Row.of(Cell.of("name", row.cell("name").value().toString().toUpperCase())))
-     .start();
+   @Override
+   public void start(OStream<Row> ostream, StreamDefinitions streamDefinitions) {
+    ostream
+      .map(row -> Row.of(row.cell("name"), row.cell("age")))
+      // use the previous defined definition in config()
+      .filter(row -> row.cell(streamDefinitions.string("filterName")).value() != null)
+      .map(row -> Row.of(Cell.of("name", row.cell("name").value().toString().toUpperCase())))
+      .start();
+   }
 
 The above code does the following transformations:
 
-1. pick cell of the header: ``name``, ``age`` from each row
-2. filter out that if ``name`` is null
-3. convert the cell of ``name`` to upperCase
+#. pick cell of the header: ``name``, ``age`` from each row
+#. filter out that if ``filterName`` is null
+
+   - here we get the value from **filterName** of definitions. the value you should update by
+     :ref:`Stream update api <rest-stream-update-information>`
+
+   PUT /v0/stream/XXX
+
+   .. code-block:: json
+
+      {
+       "filterName": "name"
+      }
+
+#. convert the cell of ``name`` to upperCase
 
 From now on, you can use the :ref:`StreamApp Java API <streamapp-java-api>` to design your own application, happy coding!
 
@@ -253,11 +299,46 @@ in javadoc.
 
 .. _streamapp-setting-definitions:
 
-Setting Definitions
--------------------
+StreamApp Definitions
+---------------------
 
-Will be implemented in the near future. Also see issue: :ohara-issue:`962`
+StreamApp stores a list of :ref:`SettingDef <setting-definition>`, which is StreamDefinitions, in the data store.
+By default, we will keep the following definitions in the "core" group and generate the definition in stream API :
 
+#. DefaultConfigs.BROKER_DEFINITION : The broker list
+#. DefaultConfigs.IMAGE_NAME_DEFINITION : The image name
+#. DefaultConfigs.NAME_DEFINITION : The streamApp application name
+#. DefaultConfigs.GROUP_DEFINITION : The streamApp group name
+#. DefaultConfigs.FROM_TOPICS_DEFINITION : The from topic
+#. DefaultConfigs.TO_TOPICS_DEFINITION : The to topic
+#. DefaultConfigs.JMX_PORT_DEFINITION : The exposed jmx port
+#. DefaultConfigs.INSTANCES_DEFINITION : The running instances
+#. DefaultConfigs.NODE_NAMES_DEFINITION : The node name list
+#. DefaultConfigs.VERSION_DEFINITION : The version of streamApp
+#. DefaultConfigs.REVISION_DEFINITION : The revision of streamApp
+#. DefaultConfigs.AUTHOR_DEFINITION : The author of streamApp
+#. DefaultConfigs.TAGS_DEFINITION : The tags of streamApp
+
+Any other definition except above list will be treated as a custom definition. You can define
+
+.. code-block:: java
+
+   SettingDef.builder().key(joinTopic).group("default").build()
+
+as a definition that is listed in "default" group, or
+
+.. code-block:: java
+
+   SettingDef.builder().key(otherKey).group("common").build()
+
+as a definition that is listed in the "common" group.
+
+.. note::
+
+   Any group category will generate a new "tab" in Ohara manager.
+
+The value of each definition will be kept in environment of streamApp running container, and you should set the value by
+:ref:`stream api <rest-stream-update-information>`.
 
 ---------------------------
 

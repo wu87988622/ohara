@@ -453,6 +453,8 @@ Example Response
        }
      ]
 
+.. _rest-stream-update-information:
+
 update properties of specific streamApp
 ---------------------------------------
 

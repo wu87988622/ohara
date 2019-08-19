@@ -51,6 +51,7 @@ or build your UI interface via :ref:`Ohara REST interface <Rest>`.
    rest/index
    custom_connector
    custom_streamapp
+   setting_definition
    how_to_build
    manager_dev_guide
    docker

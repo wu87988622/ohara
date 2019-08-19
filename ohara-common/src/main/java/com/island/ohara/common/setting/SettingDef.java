@@ -82,7 +82,7 @@ public class SettingDef implements JsonObject, Serializable {
     DURATION,
     /** The legal range for port is [1, 65535]. */
     PORT,
-    /** [ { "group": "default", "name":" name.jar" } ] */
+    /** { "group": "default", "name":" name.jar" } */
     JAR_KEY,
     /** [ { "group": "g", "name":" n" } ] */
     TOPIC_KEYS,
