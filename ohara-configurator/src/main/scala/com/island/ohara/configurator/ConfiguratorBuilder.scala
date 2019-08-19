@@ -334,8 +334,6 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
     if (this.k8sClient != null) throw new IllegalArgumentException(alreadyExistMessage("k8sClient"))
     if (this.clusterCollie != null) throw new IllegalArgumentException(alreadyExistMessage("clusterCollie"))
     this.k8sClient = Objects.requireNonNull(k8sClient)
-    // initialize collie by k8s client
-    getOrCreateCollie()
     this
   }
 

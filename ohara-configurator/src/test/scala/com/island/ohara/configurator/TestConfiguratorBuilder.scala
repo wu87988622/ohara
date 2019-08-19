@@ -24,6 +24,7 @@ import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
 import org.scalatest.mockito.MockitoSugar
+import org.scalatest.mockito.MockitoSugar._
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -135,4 +136,10 @@ class TestConfiguratorBuilder extends MediumTest with Matchers {
     // you can't change the folder of store now
     .homeFolder(CommonUtils.createTempFolder(methodName()).getCanonicalPath)
     .build()
+
+  @Test
+  def assigningK8sBeforeHomeFolderShouldNotCauseException(): Unit =
+    Configurator.builder
+      .k8sClient(mock[K8SClient])
+      .homeFolder(CommonUtils.createTempFolder(CommonUtils.randomString(5)).getAbsolutePath)
 }
