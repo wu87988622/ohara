@@ -39,7 +39,7 @@ describe('PipelineNewPage', () => {
     cy.visit(URLS.PIPELINES)
       .getByTestId('new-pipeline')
       .click()
-      .getByTestId('name-input')
+      .getByTestId('pipeline-name-input')
       .type(pipelineName)
       .getByText('Please select...')
       .click()

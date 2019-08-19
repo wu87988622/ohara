@@ -23,18 +23,21 @@ describe('PipelineListPage', () => {
     cy.createWorker();
   });
 
-  it('should display an newly created pipeline in the list', () => {
+  beforeEach(() => {
     cy.server();
     cy.route('GET', 'api/pipelines').as('getPipelines');
     cy.route('PUT', 'api/pipelines/*').as('putPipeline');
     cy.route('POST', 'api/pipelines').as('postPipeline');
+    cy.route('DELETE', 'api/pipelines/*').as('deletePipeline');
+  });
 
+  it('should display an newly created pipeline in the list', () => {
     const pipelineName = generate.serviceName({ prefix: 'pipeline' });
 
     cy.visit(URLS.PIPELINES)
       .getByText('NEW PIPELINE')
       .click()
-      .getByTestId('name-input')
+      .getByTestId('pipeline-name-input')
       .type(pipelineName)
       .getByText('Please select...')
       .click()
@@ -49,9 +52,6 @@ describe('PipelineListPage', () => {
   });
 
   it('edits a pipeline', () => {
-    cy.server();
-    cy.route('GET', 'api/pipelines').as('getPipelines');
-
     const pipelineName = generate.serviceName({ prefix: 'pipeline' });
     const pipelineParams = {
       name: pipelineName,
@@ -72,10 +72,6 @@ describe('PipelineListPage', () => {
   });
 
   it('deletes a pipeline', () => {
-    cy.server();
-    cy.route('GET', 'api/pipelines').as('getPipelines');
-    cy.route('DELETE', 'api/pipelines/*').as('deletePipeline');
-
     const pipelineName = generate.serviceName({ prefix: 'pipeline' });
     const pipelineParams = {
       name: pipelineName,

@@ -23,11 +23,12 @@ const setup = () => {
   const nodeName = generate.serviceName({ prefix: 'node' });
   const zookeeperClusterName = generate.serviceName({ prefix: 'zookeeper' });
   const brokerClusterName = generate.serviceName({ prefix: 'broker' });
+  const workerClusterName = generate.serviceName({ prefix: 'worker' });
   let streamName = generate.serviceName({ prefix: 'stream' });
 
   cy.createNode({
     name: nodeName,
-    port: 22,
+    port: generate.port(),
     user: generate.userName(),
     password: generate.password(),
   });
@@ -43,17 +44,25 @@ const setup = () => {
 
   cy.createBroker({
     name: brokerClusterName,
-    zookeeperClusterName,
     nodeNames: [nodeName],
+    zookeeperClusterName,
   });
 
   cy.startBroker(brokerClusterName);
 
-  cy.createJar('ohara-it-source.jar').then(response => {
+  cy.testCreateWorker({
+    name: workerClusterName,
+    nodeNames: [nodeName],
+    brokerClusterName,
+  }).as('testCreateWorker');
+
+  cy.startWorker(workerClusterName);
+
+  cy.createJar('ohara-it-source.jar', workerClusterName).then(response => {
     const params = {
       jarKey: {
         name: response.data.result.name,
-        group: response.data.result.group,
+        group: workerClusterName,
       },
       name: streamName,
     };
@@ -64,6 +73,9 @@ const setup = () => {
   });
 
   return {
+    nodeName,
+    zookeeperClusterName,
+    brokerClusterName,
     streamName,
   };
 };
@@ -130,8 +142,35 @@ describe('Stream property API', () => {
     });
   });
 
-  it.skip('startStreamApp', () => {
-    const { streamName } = setup();
+  it('startStreamApp', () => {
+    const { streamName, brokerClusterName } = setup();
+    const fromTopicName = generate.serviceName({ prefix: 'topic' });
+    const toTopicName = generate.serviceName({ prefix: 'topic' });
+
+    cy.testCreateTopic({
+      name: fromTopicName,
+      brokerClusterName,
+    }).as('testCreateTopic');
+
+    cy.startTopic(fromTopicName);
+
+    cy.testCreateTopic({
+      name: toTopicName,
+      brokerClusterName,
+    }).as('testCreateTopic');
+
+    cy.startTopic(toTopicName);
+
+    const params = {
+      from: [{ group: 'default', name: fromTopicName }],
+      to: [{ group: 'default', name: toTopicName }],
+      name: streamName,
+      instances: 1,
+    };
+
+    cy.updateProperty(params).then(response => {
+      expect(response.data.isSuccess).to.eq(true);
+    });
 
     cy.fetchProperty(streamName).then(response => {
       expect(response.state).to.be.undefined;
@@ -140,17 +179,56 @@ describe('Stream property API', () => {
     cy.startStreamApp(streamName).then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });
+
+    cy.fetchProperty(streamName).then(response => {
+      expect(response.data.result.state).to.eq('RUNNING');
+    });
   });
 
-  it.skip('stopStreamApp', () => {
-    const { streamName } = setup();
+  it('stopStreamApp', () => {
+    const { streamName, brokerClusterName } = setup();
+    const fromTopicName = generate.serviceName({ prefix: 'topic' });
+    const toTopicName = generate.serviceName({ prefix: 'topic' });
 
-    cy.startStreamApp(streamName)(response => {
+    cy.testCreateTopic({
+      name: fromTopicName,
+      brokerClusterName,
+    }).as('testCreateTopic');
+
+    cy.startTopic(fromTopicName);
+
+    cy.testCreateTopic({
+      name: toTopicName,
+      brokerClusterName,
+    }).as('testCreateTopic');
+
+    cy.startTopic(toTopicName);
+
+    const params = {
+      from: [{ group: 'default', name: fromTopicName }],
+      to: [{ group: 'default', name: toTopicName }],
+      name: streamName,
+      instances: 1,
+    };
+
+    cy.updateProperty(params).then(response => {
       expect(response.data.isSuccess).to.eq(true);
+    });
+
+    cy.startStreamApp(streamName).then(response => {
+      expect(response.data.isSuccess).to.eq(true);
+    });
+
+    cy.fetchProperty(streamName).then(response => {
+      expect(response.data.result.state).to.eq('RUNNING');
     });
 
     cy.stopStreamApp(streamName).then(response => {
       expect(response.data.isSuccess).to.eq(true);
+    });
+
+    cy.fetchProperty(streamName).then(response => {
+      expect(response.data.result.state).to.eq.undefined;
     });
   });
 

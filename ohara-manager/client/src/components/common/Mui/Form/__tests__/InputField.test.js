@@ -27,12 +27,12 @@ const setup = (override = {}) => {
       name: generate.name(),
       onChange: jest.fn(),
       value: generate.name(),
+      'data-testid': 'input-field',
     },
     meta: {
       touched: true,
       error: generate.message(),
     },
-    testId: 'input-field',
     ...override,
   };
 };

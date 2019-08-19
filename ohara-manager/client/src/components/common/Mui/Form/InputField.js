@@ -43,14 +43,12 @@ const InputField = props => {
     width = '100%',
     helperText,
     errorMessage,
-    testId = 'input-field',
     ...rest
   } = props;
 
   return (
     <InputWrap>
       <StyledTextField
-        data-testid={testId}
         {...rest}
         onChange={onChange}
         name={name}
@@ -83,7 +81,6 @@ InputField.propTypes = {
   width: PropTypes.string,
   helperText: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   errorMessage: PropTypes.string,
-  testId: PropTypes.string,
 };
 
 export default InputField;
