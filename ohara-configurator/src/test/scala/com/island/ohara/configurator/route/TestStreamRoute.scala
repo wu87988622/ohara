@@ -350,6 +350,7 @@ class TestStreamRoute extends SmallTest with Matchers {
     streamDesc.settings(key) shouldBe value
   }
 
+  @Test
   def testOnlyAcceptOneTopic(): Unit = {
     // we should have only one worker cluster
     val wkName = result(wkApi.list).head.name
@@ -362,17 +363,23 @@ class TestStreamRoute extends SmallTest with Matchers {
 
     // Empty topic is not allow
     val thrown = the[IllegalArgumentException] thrownBy result(accessStream.start(streamDesc.name))
-    thrown.getMessage should include("from topic fail assert")
+    thrown.getMessage should include("from topics can't be empty")
 
     // multiple topics are not allow by now
+    val from = topicKey()
+    val to = topicKey()
+    // run topics
+    result(topicApi.request.key(from).create().flatMap(info => topicApi.start(info.key)))
+    result(topicApi.request.key(to).create().flatMap(info => topicApi.start(info.key)))
     val thrown1 = the[IllegalArgumentException] thrownBy result(
       accessStream.request
         .name(streamDesc.name)
-        .fromTopicKey(topicKey())
-        .toTopicKeys(Set(topicKey(), topicKey()))
+        .fromTopicKey(from)
+        .toTopicKeys(Set(from, to))
         .update()
         .flatMap(info => accessStream.start(info.name)))
-    thrown1.getMessage should include("We don't allow multiple topics of from/to field")
+    // "to" field is used multiple topics which is not allow for current version
+    thrown1.getMessage should include("We don't allow multiple topics of to field")
   }
 
   @After
