@@ -26,7 +26,7 @@ import com.island.ohara.client.configurator.v0.{Definition, FileInfoApi, StreamA
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.setting.{SettingDef, TopicKey}
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.streams.config.StreamDefinitions
+import com.island.ohara.streams.config.StreamDefUtils
 import org.junit.Test
 import org.scalatest.Matchers
 import spray.json._
@@ -116,7 +116,7 @@ class TestStreamCreator extends SmallTest with Matchers {
   @Test
   def nullSettings(): Unit = an[NullPointerException] should be thrownBy streamCreator().settings(null)
 
-  private[this] def fileInfo: FileInfo = fileInfo(new URL(("http://abc/aaa.jar")))
+  private[this] def fileInfo: FileInfo = fileInfo(new URL("http://abc/aaa.jar"))
 
   private[this] def fileInfo(url: URL): FileInfo = FileInfo(
     group = CommonUtils.randomString(),
@@ -134,9 +134,9 @@ class TestStreamCreator extends SmallTest with Matchers {
       .imageName(CommonUtils.randomString())
       .brokerClusterName(CommonUtils.randomString())
       .settings(Map(
-        StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
-        StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
-        StreamDefinitions.JMX_PORT_DEFINITION.key() -> JsNumber(1000)
+        StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
+        StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
+        StreamDefUtils.JMX_PORT_DEFINITION.key() -> JsNumber(1000)
       ))
       .nodeName(CommonUtils.randomString())
       .jarInfo(fileInfo)
@@ -148,9 +148,9 @@ class TestStreamCreator extends SmallTest with Matchers {
     .brokerClusterName(CommonUtils.randomString())
     .jarInfo(fileInfo)
     .settings(Map(
-      StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
-      StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
-      StreamDefinitions.JMX_PORT_DEFINITION.key() -> JsNumber(1000)
+      StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
+      StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
+      StreamDefUtils.JMX_PORT_DEFINITION.key() -> JsNumber(1000)
     ))
     .nodeName(CommonUtils.randomString())
     .create()
@@ -159,15 +159,15 @@ class TestStreamCreator extends SmallTest with Matchers {
   def testCopy(): Unit = {
     val info = StreamClusterInfo(
       settings = Map(
-        StreamDefinitions.NAME_DEFINITION.key() -> JsString("name"),
-        StreamDefinitions.IMAGE_NAME_DEFINITION.key() -> JsString("imageName"),
-        StreamDefinitions.BROKER_CLUSTER_NAME_DEFINITION.key() -> JsString("BK"),
-        StreamDefinitions.INSTANCES_DEFINITION.key() -> JsNumber(1),
-        StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
-        StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
-        StreamDefinitions.JMX_PORT_DEFINITION.key() -> JsNumber(100),
-        StreamDefinitions.TAGS_DEFINITION.key() -> JsObject(Map("bar" -> JsString("foo"), "he" -> JsNumber(1))),
-        StreamDefinitions.JAR_INFO_DEFINITION.key() -> FileInfoApi.FILE_INFO_JSON_FORMAT.write(fileInfo)
+        StreamDefUtils.NAME_DEFINITION.key() -> JsString("name"),
+        StreamDefUtils.IMAGE_NAME_DEFINITION.key() -> JsString("imageName"),
+        StreamDefUtils.BROKER_CLUSTER_NAME_DEFINITION.key() -> JsString("BK"),
+        StreamDefUtils.INSTANCES_DEFINITION.key() -> JsNumber(1),
+        StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
+        StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
+        StreamDefUtils.JMX_PORT_DEFINITION.key() -> JsNumber(100),
+        StreamDefUtils.TAGS_DEFINITION.key() -> JsObject(Map("bar" -> JsString("foo"), "he" -> JsNumber(1))),
+        StreamDefUtils.JAR_INFO_DEFINITION.key() -> FileInfoApi.FILE_INFO_JSON_FORMAT.write(fileInfo)
       ),
       definition = Some(Definition("className", Seq(SettingDef.builder().key("key").group("group").build()))),
       nodeNames = Set("node1"),
@@ -192,9 +192,9 @@ class TestStreamCreator extends SmallTest with Matchers {
         .brokerClusterName(CommonUtils.randomString())
         .jarInfo(fileInfo)
         .settings(Map(
-          StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
-          StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
-          StreamDefinitions.JMX_PORT_DEFINITION.key() -> JsNumber(1000)
+          StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
+          StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
+          StreamDefUtils.JMX_PORT_DEFINITION.key() -> JsNumber(1000)
         ))
         .nodeName(CommonUtils.randomString())
         .create()).jmxPort shouldBe 1000
@@ -210,9 +210,9 @@ class TestStreamCreator extends SmallTest with Matchers {
         .brokerClusterName(CommonUtils.randomString())
         .nodeName(CommonUtils.randomString())
         .settings(Map(
-          StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
-          StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
-          StreamDefinitions.JMX_PORT_DEFINITION.key() -> JsNumber(1000)
+          StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
+          StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
+          StreamDefUtils.JMX_PORT_DEFINITION.key() -> JsNumber(1000)
         ))
         .jarInfo(jarInfo)
         .create())
@@ -230,12 +230,12 @@ class TestStreamCreator extends SmallTest with Matchers {
           .brokerClusterName(CommonUtils.randomString())
           .jarInfo(fileInfo)
           .settings(Map(
-            StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
-            StreamDefinitions.JMX_PORT_DEFINITION.key() -> JsNumber(1000)
+            StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
+            StreamDefUtils.JMX_PORT_DEFINITION.key() -> JsNumber(1000)
           ))
           .nodeName(CommonUtils.randomString())
           .create())
-    }.getMessage should include(StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key())
+    }.getMessage should include(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key())
 
   @Test
   def ignoreToTopic(): Unit =
@@ -246,12 +246,12 @@ class TestStreamCreator extends SmallTest with Matchers {
         .brokerClusterName(CommonUtils.randomString())
         .jarInfo(fileInfo)
         .settings(Map(
-          StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
-          StreamDefinitions.JMX_PORT_DEFINITION.key() -> JsNumber(1000)
+          StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
+          StreamDefUtils.JMX_PORT_DEFINITION.key() -> JsNumber(1000)
         ))
         .nodeName(CommonUtils.randomString())
         .create()
-    }.getMessage should include(StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key())
+    }.getMessage should include(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key())
 
   @Test
   def ignoreJmxPort(): Unit =
@@ -262,10 +262,10 @@ class TestStreamCreator extends SmallTest with Matchers {
         .brokerClusterName(CommonUtils.randomString())
         .jarInfo(fileInfo)
         .settings(Map(
-          StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
-          StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson)
+          StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
+          StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson)
         ))
         .nodeName(CommonUtils.randomString())
         .create()
-    }.getMessage should include(StreamDefinitions.JMX_PORT_DEFINITION.key())
+    }.getMessage should include(StreamDefUtils.JMX_PORT_DEFINITION.key())
 }

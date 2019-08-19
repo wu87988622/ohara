@@ -28,7 +28,7 @@ import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.file.FileStore
 import com.island.ohara.configurator.route.hook.{HookOfAction, HookOfCreation, HookOfGroup, HookOfUpdate}
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
-import com.island.ohara.streams.config.StreamDefinitions
+import com.island.ohara.streams.config.StreamDefUtils
 import org.slf4j.LoggerFactory
 import spray.json._
 
@@ -41,7 +41,7 @@ private[configurator] object StreamRoute {
     * The group for a stream application metrics
     * Since each streamApp has it's own metrics, it is OK to use same value
     */
-  private[configurator] val STREAM_APP_GROUP = StreamDefinitions.STREAMAPP_METRIC_GROUP_DEFINITION.defaultValue()
+  private[configurator] val STREAM_APP_GROUP = StreamDefUtils.STREAMAPP_METRIC_GROUP_DEFINITION.defaultValue()
   private[this] val log = LoggerFactory.getLogger(StreamRoute.getClass)
 
   /**
@@ -199,12 +199,12 @@ private[configurator] object StreamRoute {
                       // these settings will send to container environment
                       // we convert all value to string for convenient
                       .settings(data.settings)
-                      .setting(StreamDefinitions.BROKER_DEFINITION.key(), JsString(brokerClusterInfo.connectionProps))
+                      .setting(StreamDefUtils.BROKER_DEFINITION.key(), JsString(brokerClusterInfo.connectionProps))
                       // This nodeNames() should put after settings() because we decide nodeName in starting phase
                       // TODO: the order should not be a problem and please refactor this in #2288
                       .nodeNames(nodes.map(_.name))
                       // TODO: we should use boolean type ... by chia
-                      .setting(StreamDefinitions.EXACTLY_ONCE_DEFINITION.key(), JsString(data.exactlyOnce.toString))
+                      .setting(StreamDefUtils.EXACTLY_ONCE_DEFINITION.key(), JsString(data.exactlyOnce.toString))
                       .brokerClusterName(brokerClusterInfo.name)
                       .threadPool(executionContext)
                       .create()

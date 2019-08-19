@@ -21,6 +21,7 @@ import com.island.ohara.common.data.Row;
 import com.island.ohara.common.exception.ExceptionHandler;
 import com.island.ohara.common.exception.OharaException;
 import com.island.ohara.common.util.CommonUtils;
+import com.island.ohara.streams.config.StreamDefUtils;
 import com.island.ohara.streams.config.StreamDefinitions;
 import com.island.ohara.streams.ostream.LaunchImpl;
 import java.io.File;
@@ -165,7 +166,7 @@ public abstract class StreamApp {
    */
   public static void main(String[] args) throws OharaException {
     Properties props = loadArgs(args);
-    String jarUrl = props.getProperty(StreamDefinitions.JAR_URL_DEFINITION.key());
+    String jarUrl = props.getProperty(StreamDefUtils.JAR_URL_DEFINITION.key());
     if (CommonUtils.isEmpty(jarUrl))
       throw new RuntimeException("It seems you are not running in Ohara Environment?");
     File jarFile = downloadJarByUrl(jarUrl);

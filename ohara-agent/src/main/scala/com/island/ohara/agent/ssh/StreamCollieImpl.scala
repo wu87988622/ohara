@@ -23,7 +23,7 @@ import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import com.island.ohara.streams.config.StreamDefinitions
+import com.island.ohara.streams.config.StreamDefUtils
 
 import scala.concurrent.{ExecutionContext, Future}
 private class StreamCollieImpl(node: NodeCollie, dockerCache: DockerClientCache, clusterCache: ClusterCache)
@@ -52,7 +52,7 @@ private class StreamCollieImpl(node: NodeCollie, dockerCache: DockerClientCache,
             " ",
             StreamCollie.formatJMXProperties(node.name, jmxPort).mkString(" "),
             StreamCollie.MAIN_ENTRY,
-            s"""${StreamDefinitions.JAR_URL_DEFINITION.key()}="${jarInfo.url.toURI.toASCIIString}""""
+            s"""${StreamDefUtils.JAR_URL_DEFINITION.key()}="${jarInfo.url.toURI.toASCIIString}""""
           ))
           .create()
       )

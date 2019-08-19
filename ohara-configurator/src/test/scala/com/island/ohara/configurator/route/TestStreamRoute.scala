@@ -22,7 +22,7 @@ import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.streams.config.StreamDefinitions
+import com.island.ohara.streams.config.StreamDefUtils
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 import spray.json.{JsNumber, JsString}
@@ -342,10 +342,9 @@ class TestStreamRoute extends SmallTest with Matchers {
         .clusterName(name)
         .brokerClusterName(CommonUtils.randomString())
         .setting(key, value)
-        .setting(StreamDefinitions.JMX_PORT_DEFINITION.key(), JsNumber(123))
-        .setting(StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key(),
-                 JsArray(TopicKey.toJsonString(topicKey()).parseJson))
-        .setting(StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key(), JsArray(TopicKey.toJsonString(topicKey()).parseJson))
+        .setting(StreamDefUtils.JMX_PORT_DEFINITION.key(), JsNumber(123))
+        .setting(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(), JsArray(TopicKey.toJsonString(topicKey()).parseJson))
+        .setting(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(), JsArray(TopicKey.toJsonString(topicKey()).parseJson))
         .create())
     streamDesc.name shouldBe name
     streamDesc.settings(key) shouldBe value

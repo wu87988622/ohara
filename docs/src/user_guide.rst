@@ -695,7 +695,7 @@ running any Ohara containers, you need to install Kubernets first.
 We’ll walk you through this process with a few k8s commands:
 
 Install distribute mode for Kubernetes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Kubernetes hardware requirement**
 

@@ -21,7 +21,7 @@ import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import com.island.ohara.streams.config.StreamDefinitions
+import com.island.ohara.streams.config.StreamDefUtils
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -52,7 +52,7 @@ private class K8SStreamCollieImpl(node: NodeCollie, bkCollie: BrokerCollie, k8sC
       .envs(containerInfo.environments)
       .args(StreamCollie.formatJMXProperties(node.name, jmxPort) ++
         Seq(StreamCollie.MAIN_ENTRY,
-            s"""${StreamDefinitions.JAR_URL_DEFINITION.key()}=${jarInfo.url.toURI.toASCIIString}"""))
+            s"""${StreamDefUtils.JAR_URL_DEFINITION.key()}=${jarInfo.url.toURI.toASCIIString}"""))
       .threadPool(executionContext)
       .create()
       .recover {

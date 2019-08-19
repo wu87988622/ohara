@@ -31,7 +31,7 @@ import com.island.ohara.common.setting.{ObjectKey, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
-import com.island.ohara.streams.config.StreamDefinitions
+import com.island.ohara.streams.config.StreamDefUtils
 import com.typesafe.scalalogging.Logger
 import spray.json._
 
@@ -95,7 +95,7 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
                               // we don't like the quotes since it obstruct us to cast value to pure string.
                               case JsString(s) => s
                               // save the json string for all settings
-                              // StreamDefinitions offers the helper method to turn them back.
+                              // StreamDefUtils offers the helper method to turn them back.
                               case _ => CommonUtils.toEnvString(v.toString)
                             })
                         }
@@ -162,11 +162,11 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
       import sys.process._
       val classpath = System.getProperty("java.class.path")
       val command =
-        s"""java -cp "$classpath" ${StreamCollie.MAIN_ENTRY} ${StreamDefinitions.JAR_URL_DEFINITION
+        s"""java -cp "$classpath" ${StreamCollie.MAIN_ENTRY} ${StreamDefUtils.JAR_URL_DEFINITION
           .key()}=${jarUrl.toString} ${StreamCollie.CONFIG_KEY}"""
       val result = command.!!
       val className = result.split("=")(0)
-      Some(Definition(className, StreamDefinitions.ofJson(result.split("=")(1)).values().asScala))
+      Some(Definition(className, StreamDefUtils.ofJson(result.split("=")(1)).values.asScala))
     }.recover {
       case e: RuntimeException =>
         // We cannot parse the provided jar, return nothing and log it
@@ -179,7 +179,7 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
     // get the first running container, or first non-running container if not found
     val first = containers.find(_.state == ContainerState.RUNNING.name).getOrElse(containers.head)
     val settings = toSettings(first.environments)
-    val jarInfo = FILE_INFO_JSON_FORMAT.read(settings(StreamDefinitions.JAR_INFO_DEFINITION.key()))
+    val jarInfo = FILE_INFO_JSON_FORMAT.read(settings(StreamDefUtils.JAR_INFO_DEFINITION.key()))
     loadDefinition(jarInfo.url).map { definition =>
       StreamClusterInfo(
         settings = settings,
@@ -251,7 +251,7 @@ object StreamCollie {
       */
     override def clusterName(clusterName: String): ClusterCreator.this.type = {
       super.clusterName(clusterName)
-      settings += StreamDefinitions.NAME_DEFINITION.key() -> JsString(clusterName)
+      settings += StreamDefUtils.NAME_DEFINITION.key() -> JsString(clusterName)
       this
     }
 
@@ -262,7 +262,7 @@ object StreamCollie {
       */
     override def nodeNames(nodeNames: Set[String]): ClusterCreator.this.type = {
       super.nodeNames(nodeNames)
-      settings += StreamDefinitions.NODE_NAMES_DEFINITION.key() -> JsArray(nodeNames.map(JsString(_)).toVector)
+      settings += StreamDefUtils.NODE_NAMES_DEFINITION.key() -> JsArray(nodeNames.map(JsString(_)).toVector)
       this
     }
 
@@ -273,7 +273,7 @@ object StreamCollie {
       */
     override def imageName(imageName: String): ClusterCreator.this.type = {
       super.imageName(imageName)
-      settings += StreamDefinitions.IMAGE_NAME_DEFINITION.key() -> JsString(imageName)
+      settings += StreamDefUtils.IMAGE_NAME_DEFINITION.key() -> JsString(imageName)
       this
     }
 
@@ -284,8 +284,8 @@ object StreamCollie {
       * @return this creator
       */
     def jarInfo(jarInfo: FileInfo): ClusterCreator = {
-      settings += StreamDefinitions.JAR_KEY_DEFINITION.key() -> ObjectKey.toJsonString(jarInfo.key).parseJson
-      settings += StreamDefinitions.JAR_INFO_DEFINITION.key() -> FILE_INFO_JSON_FORMAT.write(jarInfo)
+      settings += StreamDefUtils.JAR_KEY_DEFINITION.key() -> ObjectKey.toJsonString(jarInfo.key).parseJson
+      settings += StreamDefUtils.JAR_INFO_DEFINITION.key() -> FILE_INFO_JSON_FORMAT.write(jarInfo)
       this
     }
 
@@ -312,7 +312,7 @@ object StreamCollie {
     }
 
     def brokerClusterName(brokerClusterName: String): ClusterCreator = {
-      settings += StreamDefinitions.BROKER_CLUSTER_NAME_DEFINITION.key() -> JsString(
+      settings += StreamDefUtils.BROKER_CLUSTER_NAME_DEFINITION.key() -> JsString(
         CommonUtils.requireNonEmpty(brokerClusterName))
       this
     }
@@ -332,23 +332,23 @@ object StreamCollie {
     import com.island.ohara.client.configurator.v0.FileInfoApi.FILE_INFO_JSON_FORMAT
     import spray.json.DefaultJsonProtocol._
     override def create(): Future[StreamClusterInfo] = doCreate(
-      clusterName = get(StreamDefinitions.NAME_DEFINITION.key(), _.convertTo[String]),
-      nodeNames = get(StreamDefinitions.NODE_NAMES_DEFINITION.key(), _.convertTo[Vector[String]].toSet),
-      imageName = get(StreamDefinitions.IMAGE_NAME_DEFINITION.key(), _.convertTo[String]),
-      brokerClusterName = get(StreamDefinitions.BROKER_CLUSTER_NAME_DEFINITION.key(), _.convertTo[String]),
-      jarInfo = get(StreamDefinitions.JAR_INFO_DEFINITION.key(), _.convertTo[FileInfo]),
-      jmxPort = get(StreamDefinitions.JMX_PORT_DEFINITION.key(), _.convertTo[Int]),
+      clusterName = get(StreamDefUtils.NAME_DEFINITION.key(), _.convertTo[String]),
+      nodeNames = get(StreamDefUtils.NODE_NAMES_DEFINITION.key(), _.convertTo[Vector[String]].toSet),
+      imageName = get(StreamDefUtils.IMAGE_NAME_DEFINITION.key(), _.convertTo[String]),
+      brokerClusterName = get(StreamDefUtils.BROKER_CLUSTER_NAME_DEFINITION.key(), _.convertTo[String]),
+      jarInfo = get(StreamDefUtils.JAR_INFO_DEFINITION.key(), _.convertTo[FileInfo]),
+      jmxPort = get(StreamDefUtils.JMX_PORT_DEFINITION.key(), _.convertTo[Int]),
       fromTopics = CommonUtils
         .requireNonEmpty(
-          get(StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key(), _.convertTo[Set[TopicKey]]).asJava,
-          () => s"${StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key()} can't be associated to empty array"
+          get(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(), _.convertTo[Set[TopicKey]]).asJava,
+          () => s"${StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key()} can't be associated to empty array"
         )
         .asScala
         .toSet,
       toTopics = CommonUtils
         .requireNonEmpty(
-          get(StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key(), _.convertTo[Set[TopicKey]]).asJava,
-          () => s"${StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key()} can't be associated to empty array"
+          get(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(), _.convertTo[Set[TopicKey]]).asJava,
+          () => s"${StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key()} can't be associated to empty array"
         )
         .asScala
         .toSet,

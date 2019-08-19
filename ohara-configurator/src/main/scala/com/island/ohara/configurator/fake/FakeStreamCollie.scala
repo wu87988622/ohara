@@ -28,7 +28,7 @@ import com.island.ohara.client.configurator.v0.{Definition, StreamApi}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.StreamRoute
 import com.island.ohara.metrics.basic.{Counter, CounterMBean}
-import com.island.ohara.streams.config.StreamDefinitions
+import com.island.ohara.streams.config.StreamDefUtils
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
@@ -54,7 +54,7 @@ private[configurator] class FakeStreamCollie(node: NodeCollie)
           StreamApi.StreamClusterInfo(
             settings = settings,
             // convert to list in order to be serializable
-            definition = Some(Definition("fake_class", StreamDefinitions.DEFAULT.asScala.values.toList)),
+            definition = Some(Definition("fake_class", StreamDefUtils.DEFAULT.asScala.toList)),
             nodeNames = nodeNames,
             deadNodes = Set.empty,
             // In fake mode, we need to assign a state in creation for "GET" method to act like real case
@@ -99,9 +99,9 @@ private[configurator] class FakeStreamCollie(node: NodeCollie)
       .loadDefinition(jarUrl)
       .recover {
         case _: Throwable =>
-          Some(Definition("fake_class", StreamDefinitions.DEFAULT.asScala.values.toList)) // a serializable collection
+          Some(Definition("fake_class", StreamDefUtils.DEFAULT.asScala.toList)) // a serializable collection
       }
-      .map(_.orElse(Some(Definition("fake_class", StreamDefinitions.DEFAULT.asScala.values.toList)))) // a serializable collection
+      .map(_.orElse(Some(Definition("fake_class", StreamDefUtils.DEFAULT.asScala.toList)))) // a serializable collection
 
   override protected def brokerContainers(clusterName: String)(
     implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =

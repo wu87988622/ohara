@@ -22,7 +22,7 @@ import com.island.ohara.common.data.Serializer;
 import com.island.ohara.common.setting.TopicKey;
 import com.island.ohara.kafka.BrokerClient;
 import com.island.ohara.kafka.Producer;
-import com.island.ohara.streams.config.StreamDefinitions;
+import com.island.ohara.streams.config.StreamDefUtils;
 import com.island.ohara.streams.examples.SumExample;
 import com.island.ohara.testing.WithBroker;
 import java.util.HashMap;
@@ -50,14 +50,13 @@ public class TestSumExample extends WithBroker {
 
     // prepare ohara environment
     Map<String, String> settings = new HashMap<>();
-    settings.putIfAbsent(StreamDefinitions.BROKER_DEFINITION.key(), client.connectionProps());
-    settings.putIfAbsent(StreamDefinitions.NAME_DEFINITION.key(), methodName());
+    settings.putIfAbsent(StreamDefUtils.BROKER_DEFINITION.key(), client.connectionProps());
+    settings.putIfAbsent(StreamDefUtils.NAME_DEFINITION.key(), methodName());
     settings.putIfAbsent(
-        StreamDefinitions.FROM_TOPIC_KEYS_DEFINITION.key(),
+        StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(),
         "[" + TopicKey.toJsonString(fromTopic) + "]");
     settings.putIfAbsent(
-        StreamDefinitions.TO_TOPIC_KEYS_DEFINITION.key(),
-        "[" + TopicKey.toJsonString(toTopic) + "]");
+        StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(), "[" + TopicKey.toJsonString(toTopic) + "]");
     StreamTestUtils.setOharaEnv(settings);
     StreamTestUtils.createTopic(client, fromTopic.topicNameOnKafka(), partitions, replications);
     StreamTestUtils.createTopic(client, toTopic.topicNameOnKafka(), partitions, replications);

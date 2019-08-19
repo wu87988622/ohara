@@ -26,27 +26,26 @@ import java.util.stream.IntStream;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestStreamDefinitions extends SmallTest {
+public class TestStreamDefUtils extends SmallTest {
 
   @Test
   public void testConfigJson() {
     StreamDefinitions defaultConfig = StreamDefinitions.create();
-    StreamDefinitions config = StreamDefinitions.ofJson(defaultConfig.toString());
+    StreamDefinitions config = StreamDefUtils.ofJson(StreamDefUtils.toJson(defaultConfig));
 
-    Assert.assertEquals(defaultConfig, config);
-    Assert.assertEquals(defaultConfig, config);
+    Assert.assertEquals(StreamDefUtils.toJson(defaultConfig), StreamDefUtils.toJson(config));
     Assert.assertEquals(
         "default config size not equal", config.values().size(), defaultConfig.values().size());
 
     StreamDefinitions another =
-        StreamDefinitions.create()
-            .add(
-                SettingDef.builder()
-                    .key(CommonUtils.randomString())
-                    .group(CommonUtils.randomString())
-                    .build());
+        StreamDefinitions.with(
+            SettingDef.builder()
+                .key(CommonUtils.randomString())
+                .group(CommonUtils.randomString())
+                .build());
     Assert.assertEquals(
-        another.toString(), StreamDefinitions.ofJson(another.toString()).toString());
+        StreamDefUtils.toJson(another),
+        StreamDefUtils.toJson(StreamDefUtils.ofJson(StreamDefUtils.toJson(another))));
   }
 
   @Test
@@ -55,7 +54,8 @@ public class TestStreamDefinitions extends SmallTest {
     String group = "default";
 
     StreamDefinitions newConfigs =
-        StreamDefinitions.create().add(SettingDef.builder().key(key).group(group).build());
+        StreamDefinitions.with(SettingDef.builder().key(key).group(group).build());
+
     Assert.assertEquals(newConfigs.values().size(), StreamDefinitions.create().values().size() + 1);
     Assert.assertTrue(newConfigs.keys().contains(key));
 
@@ -64,7 +64,7 @@ public class TestStreamDefinitions extends SmallTest {
         .boxed()
         .map(String::valueOf)
         .forEach(i -> list.add(SettingDef.builder().key(String.valueOf(i)).group(group).build()));
-    StreamDefinitions newConfigList = StreamDefinitions.create().addAll(list);
+    StreamDefinitions newConfigList = StreamDefinitions.withAll(list);
     Assert.assertEquals(
         newConfigList.values().size(), StreamDefinitions.create().values().size() + 10);
     Assert.assertTrue(
@@ -79,10 +79,8 @@ public class TestStreamDefinitions extends SmallTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testDuplicateKey() {
-    StreamDefinitions streamDefinitions = StreamDefinitions.create();
-    streamDefinitions
-        .add(SettingDef.builder().key("a").group("b").build())
-        .add(SettingDef.builder().key("a").group("c").build());
+    StreamDefinitions.with(
+        SettingDef.builder().key(StreamDefUtils.NAME_DEFINITION.key()).group("c").build());
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -91,10 +89,22 @@ public class TestStreamDefinitions extends SmallTest {
         IntStream.rangeClosed(1, 10)
             .boxed()
             .map(String::valueOf)
-            .map(i -> SettingDef.builder().key(String.valueOf(i)).group("b").build())
+            .map(
+                i ->
+                    SettingDef.builder()
+                        .key(String.valueOf(StreamDefUtils.BROKER_DEFINITION.key()))
+                        .group(i)
+                        .build())
             .collect(Collectors.toList());
 
-    StreamDefinitions streamDefinitions = StreamDefinitions.create();
-    streamDefinitions.add(SettingDef.builder().key("1").group("b").build()).addAll(list);
+    StreamDefinitions.withAll(list);
+  }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void testForbiddenModifyDefs() {
+    // we don't allow change the internal definitions, use with() or withAll() instead
+    StreamDefinitions.create()
+        .values()
+        .add(SettingDef.builder().key(CommonUtils.randomString()).build());
   }
 }

@@ -101,8 +101,7 @@ public class PageViewRegionExample extends StreamApp {
 
   @Override
   public StreamDefinitions config() {
-    return StreamDefinitions.create()
-        .add(SettingDef.builder().key(joinTopic).group("default").build());
+    return StreamDefinitions.with(SettingDef.builder().key(joinTopic).group("default").build());
   }
 
   @Override

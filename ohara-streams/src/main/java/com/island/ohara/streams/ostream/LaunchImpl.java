@@ -22,6 +22,7 @@ import com.island.ohara.common.exception.OharaException;
 import com.island.ohara.common.setting.TopicKey;
 import com.island.ohara.streams.OStream;
 import com.island.ohara.streams.StreamApp;
+import com.island.ohara.streams.config.StreamDefUtils;
 import com.island.ohara.streams.config.StreamDefinitions;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -71,7 +72,7 @@ public class LaunchImpl {
                     Properties props = (Properties) params[0];
                     if (props.containsKey(StreamsConfig.STREAMAPP_CONFIG_KEY)) {
                       System.out.println(
-                          clz.getCanonicalName() + "=" + streamDefinitions.toString());
+                          clz.getCanonicalName() + "=" + StreamDefUtils.toJson(streamDefinitions));
                       return;
                     }
                   }
