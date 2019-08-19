@@ -34,7 +34,7 @@ import scala.concurrent.{Await, Future}
 class TestStreamApi extends SmallTest with Matchers {
 
   private[this] final val accessRequest =
-    StreamApi.access.hostname(CommonUtils.randomString()).port(CommonUtils.availablePort()).request
+    StreamApi.access.hostname(CommonUtils.randomString(5)).port(CommonUtils.availablePort()).request
   private[this] final val fakeJar = ObjectKey.of(CommonUtils.randomString(1), CommonUtils.randomString(1))
 
   private[this] final def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
@@ -129,7 +129,7 @@ class TestStreamApi extends SmallTest with Matchers {
 
     // default value
     accessRequest
-      .name(CommonUtils.randomString())
+      .name(CommonUtils.randomString(5))
       .jarKey(fakeJar)
       .creation
       .imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
@@ -146,7 +146,7 @@ class TestStreamApi extends SmallTest with Matchers {
     an[NullPointerException] should be thrownBy accessRequest.fromTopicKeys(null)
 
     // default from field will be empty
-    accessRequest.name(CommonUtils.randomString()).creation.from shouldBe Set.empty
+    accessRequest.name(CommonUtils.randomString(5)).creation.from shouldBe Set.empty
   }
 
   @Test
@@ -154,7 +154,7 @@ class TestStreamApi extends SmallTest with Matchers {
     an[NullPointerException] should be thrownBy accessRequest.toTopicKeys(null)
 
     // default to field will be empty
-    accessRequest.name(CommonUtils.randomString()).creation.to shouldBe Set.empty
+    accessRequest.name(CommonUtils.randomString(5)).creation.to shouldBe Set.empty
   }
 
   @Test
@@ -163,7 +163,7 @@ class TestStreamApi extends SmallTest with Matchers {
     an[IllegalArgumentException] should be thrownBy accessRequest.jmxPort(-1)
 
     // default value
-    CommonUtils.requireConnectionPort(accessRequest.name(CommonUtils.randomString()).creation.jmxPort)
+    CommonUtils.requireConnectionPort(accessRequest.name(CommonUtils.randomString(5)).creation.jmxPort)
   }
 
   @Test
@@ -172,7 +172,7 @@ class TestStreamApi extends SmallTest with Matchers {
     an[IllegalArgumentException] should be thrownBy accessRequest.instances(-1)
 
     // default value
-    accessRequest.name(CommonUtils.randomString()).creation.instances shouldBe 1
+    accessRequest.name(CommonUtils.randomString(5)).creation.instances shouldBe 1
   }
 
   @Test
@@ -181,7 +181,7 @@ class TestStreamApi extends SmallTest with Matchers {
     an[IllegalArgumentException] should be thrownBy accessRequest.nodeNames(Set.empty)
 
     // default value
-    accessRequest.name(CommonUtils.randomString()).creation.nodeNames shouldBe Set.empty
+    accessRequest.name(CommonUtils.randomString(5)).creation.nodeNames shouldBe Set.empty
   }
 
   @Test
@@ -190,7 +190,7 @@ class TestStreamApi extends SmallTest with Matchers {
     accessRequest.creation
 
     // no jarKey is ok
-    accessRequest.name(CommonUtils.randomString()).creation
+    accessRequest.name(CommonUtils.randomString(5)).creation
   }
 
   @Test
@@ -418,25 +418,22 @@ class TestStreamApi extends SmallTest with Matchers {
   @Test
   def requireFieldOnPropertyUpdate(): Unit = {
     // name is required
-    an[NullPointerException] should be thrownBy result(accessRequest.jarKey(ObjectKey.of("group", "name")).update())
+    an[NoSuchElementException] should be thrownBy result(accessRequest.jarKey(ObjectKey.of("group", "name")).update())
 
     // no jar is ok
-    accessRequest.name(CommonUtils.randomString()).update
+    accessRequest.name(CommonUtils.randomString(5)).update
   }
 
   @Test
   def testDefaultUpdate(): Unit = {
     val name = CommonUtils.randomString(10)
     val data = accessRequest.name(name).update
-    data
-      .settings(StreamDefUtils.IMAGE_NAME_DEFINITION.key())
-      .asInstanceOf[JsString]
-      .value shouldBe StreamApi.IMAGE_NAME_DEFAULT
-    data.settings.get(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key()).isEmpty shouldBe true
-    data.settings.get(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key()).isEmpty shouldBe true
-    data.settings.get(StreamDefUtils.JMX_PORT_DEFINITION.key()).isDefined shouldBe true
-    data.settings(StreamDefUtils.INSTANCES_DEFINITION.key()).asInstanceOf[JsNumber].value shouldBe 1
-    data.settings(StreamDefUtils.NODE_NAMES_DEFINITION.key()).asInstanceOf[JsArray].elements.isEmpty shouldBe true
+    data.settings.contains(StreamDefUtils.IMAGE_NAME_DEFINITION.key()) shouldBe false
+    data.settings.contains(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key()) shouldBe false
+    data.settings.contains(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key()) shouldBe false
+    data.settings.contains(StreamDefUtils.JMX_PORT_DEFINITION.key()) shouldBe false
+    data.settings.contains(StreamDefUtils.INSTANCES_DEFINITION.key()) shouldBe false
+    data.settings.contains(StreamDefUtils.NODE_NAMES_DEFINITION.key()) shouldBe false
   }
 
   @Test
@@ -607,5 +604,12 @@ class TestStreamApi extends SmallTest with Matchers {
     r1.from shouldBe r2.from
     // settings will overwrite default value
     r1.name should not be r2.name
+  }
+
+  @Test
+  def testBrokerClusterName(): Unit = {
+    val bkName = CommonUtils.randomString()
+    val r1 = accessRequest.brokerClusterName(bkName).creation
+    r1.brokerClusterName.get shouldBe bkName
   }
 }

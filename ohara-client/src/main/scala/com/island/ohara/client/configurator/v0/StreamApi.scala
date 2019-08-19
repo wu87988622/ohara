@@ -15,8 +15,6 @@
  */
 
 package com.island.ohara.client.configurator.v0
-import java.util.Objects
-
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
@@ -27,6 +25,7 @@ import spray.json.DefaultJsonProtocol._
 import spray.json._
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 
 object StreamApi {
@@ -61,6 +60,8 @@ object StreamApi {
           case _               => v.toString()
         })
     }
+
+    def brokerClusterName: Option[String] = plain.get(StreamDefUtils.BROKER_CLUSTER_NAME_DEFINITION.key())
 
     override def name: String = plain(StreamDefUtils.NAME_DEFINITION.key())
 
@@ -128,6 +129,9 @@ object StreamApi {
       .refine
 
   final case class Update(settings: Map[String, JsValue]) extends ClusterUpdateRequest {
+
+    def brokerClusterName: Option[String] =
+      noJsNull(settings).get(StreamDefUtils.BROKER_CLUSTER_NAME_DEFINITION.key()).map(_.convertTo[String])
 
     def imageName: Option[String] =
       noJsNull(settings).get(StreamDefUtils.IMAGE_NAME_DEFINITION.key()).map(_.convertTo[String])
@@ -228,6 +232,7 @@ object StreamApi {
     def jarInfo: FileInfo =
       FileInfoApi.FILE_INFO_JSON_FORMAT.read(noJsNull(settings)(StreamDefUtils.JAR_INFO_DEFINITION.key()))
 
+    def brokerClusterName: String = plain(StreamDefUtils.BROKER_CLUSTER_NAME_DEFINITION.key())
     def from: Set[TopicKey] =
       noJsNull(settings)(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key()).convertTo[Set[TopicKey]]
     def to: Set[TopicKey] =
@@ -261,22 +266,37 @@ object StreamApi {
 
   sealed trait Request {
     @Optional("default name is a random string. But it is required in updating")
-    def name(name: String): Request
+    def name(name: String): Request =
+      setting(StreamDefUtils.NAME_DEFINITION.key(), JsString(CommonUtils.requireNonEmpty(name)))
+
     @Optional("the default image is IMAGE_NAME_DEFAULT")
-    def imageName(imageName: String): Request
-    def jarKey(jarKey: ObjectKey): Request
+    def imageName(imageName: String): Request =
+      setting(StreamDefUtils.IMAGE_NAME_DEFINITION.key(), JsString(CommonUtils.requireNonEmpty(imageName)))
+    def jarKey(jarKey: ObjectKey): Request =
+      setting(StreamDefUtils.JAR_KEY_DEFINITION.key(), ObjectKey.toJsonString(jarKey).parseJson)
     def fromTopicKey(fromTopicKey: TopicKey): Request = fromTopicKeys(Set(fromTopicKey))
-    def fromTopicKeys(fromTopicKeys: Set[TopicKey]): Request
+    def fromTopicKeys(fromTopicKeys: Set[TopicKey]): Request =
+      setting(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(),
+              JsArray(fromTopicKeys.map(TOPIC_KEY_FORMAT.write).toVector))
     def toTopicKey(toTopicKey: TopicKey): Request = toTopicKeys(Set(toTopicKey))
-    def toTopicKeys(toTopicKeys: Set[TopicKey]): Request
+    def toTopicKeys(toTopicKeys: Set[TopicKey]): Request =
+      setting(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(), JsArray(toTopicKeys.map(TOPIC_KEY_FORMAT.write).toVector))
+    @Optional("server picks up a broker cluster for you if broker cluster name is empty")
+    def brokerClusterName(brokerClusterName: String): Request = setting(
+      StreamDefUtils.BROKER_CLUSTER_NAME_DEFINITION.key(),
+      JsString(CommonUtils.requireNonEmpty(brokerClusterName)))
     @Optional("the default port is random")
-    def jmxPort(jmxPort: Int): Request
+    def jmxPort(jmxPort: Int): Request =
+      setting(StreamDefUtils.JMX_PORT_DEFINITION.key(), JsNumber(CommonUtils.requireConnectionPort(jmxPort)))
     @Optional("this parameter has lower priority than nodeNames")
-    def instances(instances: Int): Request
+    def instances(instances: Int): Request =
+      setting(StreamDefUtils.INSTANCES_DEFINITION.key(), JsNumber(CommonUtils.requirePositiveInt(instances)))
     @Optional("this parameter has higher priority than instances")
-    def nodeNames(nodeNames: Set[String]): Request
+    def nodeNames(nodeNames: Set[String]): Request = setting(
+      StreamDefUtils.NODE_NAMES_DEFINITION.key(),
+      JsArray(CommonUtils.requireNonEmpty(nodeNames.asJava).asScala.map(JsString(_)).toVector))
     @Optional("default value is empty array in creation and None in update")
-    def tags(tags: Map[String, JsValue]): Request
+    def tags(tags: Map[String, JsValue]): Request = setting(StreamDefUtils.TAGS_DEFINITION.key(), JsObject(tags))
 
     @Optional("extra settings is empty by default")
     def setting(key: String, value: JsValue): Request = settings(Map(key -> value))
@@ -317,111 +337,29 @@ object StreamApi {
   final class Access extends ClusterAccess[StreamClusterInfo](STREAM_PREFIX_PATH, GROUP_DEFAULT) {
 
     def request: Request = new Request {
-      private[this] var name: String = _
-      private[this] var _imageName: Option[String] = None
-      private[this] var jarKey: Option[ObjectKey] = None
-      private[this] var _from: Option[Set[TopicKey]] = None
-      private[this] var _to: Option[Set[TopicKey]] = None
-      private[this] var _jmxPort: Option[Int] = None
-      private[this] var _instances: Option[Int] = None
-      private[this] var _nodeNames: Option[Set[String]] = None
-      private[this] var tags: Map[String, JsValue] = _
-      private[this] var settings: Map[String, JsValue] = Map.empty
+      private[this] val settings: mutable.Map[String, JsValue] = mutable.Map[String, JsValue]()
 
-      override def name(name: String): Request = {
-        this.name = CommonUtils.requireNonEmpty(name)
-        this
-      }
-      override def imageName(imageName: String): Request = {
-        this._imageName = Some(CommonUtils.requireNonEmpty(imageName))
-        this
-      }
-      override def jarKey(jarKey: ObjectKey): Request = {
-        this.jarKey = Some(Objects.requireNonNull(jarKey))
-        this
-      }
-      override def fromTopicKeys(fromTopicKeys: Set[TopicKey]): Request = {
-        this._from = Some(Objects.requireNonNull(fromTopicKeys))
-        this
-      }
-      override def toTopicKeys(toTopicKeys: Set[TopicKey]): Request = {
-        this._to = Some(Objects.requireNonNull(toTopicKeys))
-        this
-      }
-      override def jmxPort(jmxPort: Int): Request = {
-        this._jmxPort = Some(CommonUtils.requireConnectionPort(jmxPort))
-        this
-      }
-      override def instances(instances: Int): Request = {
-        this._instances = Some(CommonUtils.requirePositiveInt(instances))
-        this
-      }
-      override def nodeNames(nodeNames: Set[String]): Request = {
-        this._nodeNames = Some(CommonUtils.requireNonEmpty(nodeNames.asJava).asScala.toSet)
-        this
-      }
-
-      override def tags(tags: Map[String, JsValue]): Request = {
-        this.tags = Objects.requireNonNull(tags)
-        this
-      }
-
-      @Optional("extra settings for this streamApp")
       override def settings(settings: Map[String, JsValue]): Request = {
-        this.settings = CommonUtils.requireNonEmpty(settings.asJava).asScala.toMap
+        this.settings ++= CommonUtils.requireNonEmpty(settings.asJava).asScala.toMap
         this
       }
+      override private[v0] def creation: Creation =
+        // auto-complete the creation via our refiner
+        STREAM_CREATION_JSON_FORMAT.read(STREAM_CREATION_JSON_FORMAT.write(Creation(update.settings)))
 
-      override private[v0] def creation: Creation = Creation(
-        settings = noJsNull(
-          Map(
-            // generate random string for name in creation
-            StreamDefUtils.NAME_DEFINITION.key() -> JsString(
-              if (CommonUtils.isEmpty(name)) CommonUtils.randomString(LIMIT_OF_NAME_LENGTH) else name),
-            // default group
-            StreamDefUtils.GROUP_DEFINITION.key() -> JsString(GROUP_DEFAULT),
-            // default from is empty object in creation
-            StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key() -> _from.fold[JsValue](JsArray.empty)(s =>
-              JsArray(s.map(TOPIC_KEY_FORMAT.write).toVector)),
-            // default to is empty object in creation
-            StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key() -> _to.fold[JsValue](JsArray.empty)(s =>
-              JsArray(s.map(TOPIC_KEY_FORMAT.write).toVector)),
-            // default tags is empty object in creation
-            StreamDefUtils.TAGS_DEFINITION.key() -> Option(tags).fold[JsValue](JsObject.empty)(JsObject(_))
-            // extra settings maybe have same key before, we overwrite it
-          ) ++ update.settings)
-      )
+      override private[v0] def update: Update =
+        // auto-complete the update via our refiner
+        STREAM_UPDATE_JSON_FORMAT.read(STREAM_UPDATE_JSON_FORMAT.write(Update(noJsNull(settings.toMap))))
 
-      override private[v0] def update: Update = Update(
-        settings = noJsNull(
-          Map(
-            StreamDefUtils.IMAGE_NAME_DEFINITION.key() -> JsString(
-              CommonUtils.requireNonEmpty(_imageName.getOrElse(IMAGE_NAME_DEFAULT))),
-            StreamDefUtils.JAR_KEY_DEFINITION
-              .key() -> jarKey.fold[JsValue](JsNull)(ObjectKey.toJsonString(_).parseJson),
-            StreamDefUtils.JMX_PORT_DEFINITION.key() -> JsNumber(
-              CommonUtils.requireConnectionPort(_jmxPort.getOrElse(CommonUtils.availablePort()))),
-            StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key() -> _from.fold[JsValue](JsNull)(s =>
-              JsArray(s.map(TOPIC_KEY_FORMAT.write).toVector)),
-            StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key() -> _to.fold[JsValue](JsNull)(s =>
-              JsArray(s.map(TOPIC_KEY_FORMAT.write).toVector)),
-            StreamDefUtils.INSTANCES_DEFINITION.key() -> _instances.fold[JsNumber](JsNumber(1))(n =>
-              JsNumber(CommonUtils.requirePositiveInt(n))),
-            StreamDefUtils.NODE_NAMES_DEFINITION.key() -> _nodeNames.fold[JsArray](JsArray.empty)(s =>
-              JsArray(CommonUtils.requireNonEmpty(s.asJava).asScala.map(JsString(_)).toVector)),
-            StreamDefUtils.TAGS_DEFINITION.key() -> Option(tags).fold[JsValue](JsNull)(JsObject(_))
-          ) ++ settings))
-
-      override def create()(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] = {
+      override def create()(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] =
         exec.post[Creation, StreamClusterInfo, ErrorApi.Error](
           url,
           creation
         )
-      }
 
       override def update()(implicit executionContext: ExecutionContext): Future[StreamClusterInfo] = {
         exec.put[Update, StreamClusterInfo, ErrorApi.Error](
-          s"$url/${CommonUtils.requireNonEmpty(name)}",
+          s"$url/${CommonUtils.requireNonEmpty(settings(StreamDefUtils.NAME_DEFINITION.key()).convertTo[String])}",
           update
         )
       }

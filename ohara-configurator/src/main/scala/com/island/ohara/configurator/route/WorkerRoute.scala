@@ -33,7 +33,7 @@ object WorkerRoute {
                                    brokerCollie: BrokerCollie,
                                    executionContext: ExecutionContext): HookOfCreation[Creation, WorkerClusterInfo] =
     (creation: Creation) =>
-      CollieUtils.orElseClusterName(creation.brokerClusterName).flatMap { bkName =>
+      creation.brokerClusterName.map(Future.successful).getOrElse(CollieUtils.singleCluster()).flatMap { bkName =>
         Future
           .traverse(creation.jarKeys)(fileStore.fileInfo)
           .map(_.toSeq)
@@ -76,7 +76,10 @@ object WorkerRoute {
         .flatMap { clusters =>
           if (clusters.keys.filter(_.name == key.name()).exists(_.state.nonEmpty))
             throw new RuntimeException(s"You cannot update property on non-stopped worker cluster: $key")
-          CollieUtils.orElseClusterName(update.brokerClusterName.orElse(previousOption.map(_.brokerClusterName)))
+          update.brokerClusterName
+            .orElse(previousOption.map(_.brokerClusterName))
+            .map(Future.successful)
+            .getOrElse(CollieUtils.singleCluster())
         }
         .flatMap { bkName =>
           previousOption.fold(

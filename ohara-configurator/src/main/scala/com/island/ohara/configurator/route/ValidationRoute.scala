@@ -25,6 +25,7 @@ import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.QueryApi.{RdbColumn, RdbInfo, RdbTable}
 import com.island.ohara.client.configurator.v0.ValidationApi._
+import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.fake.FakeWorkerClient
@@ -97,34 +98,49 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
       verifyRoute(
         root = VALIDATION_HDFS_PREFIX_PATH,
         verify = (clusterName, req: HdfsValidation) =>
-          CollieUtils.both(if (req.workerClusterName.isEmpty) clusterName else req.workerClusterName).flatMap {
-            case (_, topicAdmin, _, workerClient) =>
-              workerClient match {
-                case _: FakeWorkerClient => fakeReport()
-                case _                   => ValidationUtils.run(workerClient, topicAdmin, req, DEFAULT_NUMBER_OF_VALIDATION)
-              }
-        }
+          req.workerClusterName
+            .orElse(clusterName)
+            .map(Future.successful)
+            .getOrElse(CollieUtils.singleCluster[WorkerClusterInfo]())
+            .flatMap(CollieUtils.both)
+            .flatMap {
+              case (_, topicAdmin, _, workerClient) =>
+                workerClient match {
+                  case _: FakeWorkerClient => fakeReport()
+                  case _                   => ValidationUtils.run(workerClient, topicAdmin, req, DEFAULT_NUMBER_OF_VALIDATION)
+                }
+          }
       ) ~ verifyRoute(
         root = VALIDATION_RDB_PREFIX_PATH,
         verify = (clusterName, req: RdbValidation) =>
-          CollieUtils.both(if (req.workerClusterName.isEmpty) clusterName else req.workerClusterName).flatMap {
-            case (_, topicAdmin, _, workerClient) =>
-              workerClient match {
-                case _: FakeWorkerClient => fakeJdbcReport()
-                case _ =>
-                  ValidationUtils.run(workerClient, topicAdmin, req, DEFAULT_NUMBER_OF_VALIDATION)
-              }
-        }
+          req.workerClusterName
+            .orElse(clusterName)
+            .map(Future.successful)
+            .getOrElse(CollieUtils.singleCluster[WorkerClusterInfo]())
+            .flatMap(CollieUtils.both)
+            .flatMap {
+              case (_, topicAdmin, _, workerClient) =>
+                workerClient match {
+                  case _: FakeWorkerClient => fakeJdbcReport()
+                  case _ =>
+                    ValidationUtils.run(workerClient, topicAdmin, req, DEFAULT_NUMBER_OF_VALIDATION)
+                }
+          }
       ) ~ verifyRoute(
         root = VALIDATION_FTP_PREFIX_PATH,
         verify = (clusterName, req: FtpValidation) =>
-          CollieUtils.both(if (req.workerClusterName.isEmpty) clusterName else req.workerClusterName).flatMap {
-            case (_, topicAdmin, _, workerClient) =>
-              workerClient match {
-                case _: FakeWorkerClient => fakeReport()
-                case _                   => ValidationUtils.run(workerClient, topicAdmin, req, DEFAULT_NUMBER_OF_VALIDATION)
-              }
-        }
+          req.workerClusterName
+            .orElse(clusterName)
+            .map(Future.successful)
+            .getOrElse(CollieUtils.singleCluster[WorkerClusterInfo]())
+            .flatMap(CollieUtils.both)
+            .flatMap {
+              case (_, topicAdmin, _, workerClient) =>
+                workerClient match {
+                  case _: FakeWorkerClient => fakeReport()
+                  case _                   => ValidationUtils.run(workerClient, topicAdmin, req, DEFAULT_NUMBER_OF_VALIDATION)
+                }
+          }
       ) ~ verifyRoute(
         root = VALIDATION_NODE_PREFIX_PATH,
         verify = (_, req: NodeValidation) =>
@@ -175,8 +191,10 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
           entity(as[Creation])(
             req =>
               complete(
-                CollieUtils
-                  .workerClient(req.workerClusterName)
+                req.workerClusterName
+                  .map(Future.successful)
+                  .getOrElse(CollieUtils.singleCluster[WorkerClusterInfo]())
+                  .flatMap(CollieUtils.workerClient)
                   .flatMap {
                     case (cluster, workerClient) =>
                       workerClient

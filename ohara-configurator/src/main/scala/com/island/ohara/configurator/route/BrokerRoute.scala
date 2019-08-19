@@ -25,13 +25,13 @@ import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.hook.{HookOfAction, HookOfCreation, HookOfGroup, HookOfUpdate}
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 object BrokerRoute {
 
   private[this] def hookOfCreation(implicit zookeeperCollie: ZookeeperCollie,
                                    executionContext: ExecutionContext): HookOfCreation[Creation, BrokerClusterInfo] =
     (creation: Creation) =>
-      CollieUtils.orElseClusterName(creation.zookeeperClusterName).map { zkName =>
+      creation.zookeeperClusterName.map(Future.successful).getOrElse(CollieUtils.singleCluster()).map { zkName =>
         BrokerClusterInfo(
           name = creation.name,
           imageName = creation.imageName,
@@ -59,7 +59,10 @@ object BrokerRoute {
         .flatMap { clusters =>
           if (clusters.keys.filter(_.name == key.name()).exists(_.state.nonEmpty))
             throw new RuntimeException(s"You cannot update property on non-stopped broker cluster: $key")
-          CollieUtils.orElseClusterName(update.zookeeperClusterName.orElse(previous.map(_.zookeeperClusterName)))
+          update.zookeeperClusterName
+            .orElse(previous.map(_.zookeeperClusterName))
+            .map(Future.successful)
+            .getOrElse(CollieUtils.singleCluster())
         }
         .map { zkName =>
           previous.fold(

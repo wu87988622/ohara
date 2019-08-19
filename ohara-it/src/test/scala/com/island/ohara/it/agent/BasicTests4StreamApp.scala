@@ -73,14 +73,12 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
 
   private[this] var zkApi: ZookeeperApi.Access = _
   private[this] var bkApi: BrokerApi.Access = _
-  private[this] var wkApi: WorkerApi.Access = _
   private[this] var containerApi: ContainerApi.Access = _
   private[this] var topicApi: TopicApi.Access = _
   private[this] var jarApi: FileInfoApi.Access = _
 
   private[this] var access: StreamApi.Access = _
   private[this] var bkName: String = _
-  private[this] var wkName: String = _
   private[this] var brokerConnProps: String = _
   private[this] val instances = 1
 
@@ -104,11 +102,9 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     } else {
       nameHolder = createNameHolder(nodeCache)
       bkName = nameHolder.generateClusterName()
-      wkName = nameHolder.generateClusterName()
       configurator = createConfigurator(nodeCache, publicHostname, publicPort)
       zkApi = ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port)
       bkApi = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)
-      wkApi = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)
       containerApi = ContainerApi.access.hostname(configurator.hostname).port(configurator.port)
       topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
       jarApi = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
@@ -154,17 +150,6 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
       log.info("create bkCluster...done")
       brokerConnProps = bkCluster.connectionProps
 
-      // create worker cluster
-      log.info("create wkCluster...start")
-      result(
-        wkApi.request
-          .name(wkName)
-          .brokerClusterName(bkCluster.name)
-          .nodeNames(nodeCache.take(instances).map(_.name).toSet)
-          .create()
-          .flatMap(wk => wkApi.start(wk.name)))
-      assertCluster(() => result(wkApi.list()), wkName)
-      log.info("create wkCluster...done")
     }
   }
 
@@ -175,11 +160,15 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     val jar = CommonUtils.createTempJar("fake")
 
     // upload streamApp jar
-    val jarInfo = result(jarApi.request.group(wkName).file(jar).upload())
+    val jarInfo = result(jarApi.request.file(jar).upload())
 
     // create streamApp properties
     val stream = result(
-      access.request.name(CommonUtils.randomString(10)).jarKey(ObjectKey.of(jarInfo.group, jarInfo.name)).create())
+      access.request
+        .name(CommonUtils.randomString(10))
+        .jarKey(ObjectKey.of(jarInfo.group, jarInfo.name))
+        .brokerClusterName(bkName)
+        .create())
 
     // create topic
     val topic1 = result(topicApi.request.name("bar").brokerClusterName(bkName).create())
@@ -275,13 +264,16 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     result(topicApi.start(topic2.key))
 
     // upload streamApp jar
-    val jarInfo = result(jarApi.request.group(wkName).file(jar).upload())
+    val jarInfo = result(jarApi.request.file(jar).upload())
     jarInfo.name shouldBe "ohara-streamapp.jar"
-    jarInfo.group shouldBe wkName
 
     // create streamApp properties
     val stream = result(
-      access.request.name(CommonUtils.randomString(10)).jarKey(ObjectKey.of(jarInfo.group, jarInfo.name)).create())
+      access.request
+        .name(CommonUtils.randomString(10))
+        .jarKey(ObjectKey.of(jarInfo.group, jarInfo.name))
+        .brokerClusterName(bkName)
+        .create())
 
     // update streamApp properties
     val properties = result(

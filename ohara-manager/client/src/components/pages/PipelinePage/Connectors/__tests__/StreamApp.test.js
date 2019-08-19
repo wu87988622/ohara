@@ -126,7 +126,7 @@ describe('<StreamApp />', () => {
             to: [],
             instances: 1,
             name: generate.name(),
-            jar: {
+            jarKey: {
               group: generate.name(),
               name: generate.name(),
             },

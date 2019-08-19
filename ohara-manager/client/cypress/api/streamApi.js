@@ -20,7 +20,35 @@ import * as generate from '../../src/utils/generate';
 // eslint is complaining about `expect(thing).to.be.undefined`
 
 const setup = () => {
+  const nodeName = generate.serviceName({ prefix: 'node' });
+  const zookeeperClusterName = generate.serviceName({ prefix: 'zookeeper' });
+  const brokerClusterName = generate.serviceName({ prefix: 'broker' });
   let streamName = generate.serviceName({ prefix: 'stream' });
+
+  cy.createNode({
+    name: nodeName,
+    port: 22,
+    user: generate.userName(),
+    password: generate.password(),
+  });
+
+  // Configurator define the cluster for streamapp in creation phase. Hence, we have to set up the broker cluster
+  // before running stream APIs tests.
+  cy.createZookeeper({
+    name: zookeeperClusterName,
+    nodeNames: [nodeName],
+  });
+
+  cy.startZookeeper(zookeeperClusterName);
+
+  cy.createBroker({
+    name: brokerClusterName,
+    zookeeperClusterName,
+    nodeNames: [nodeName],
+  });
+
+  cy.startBroker(brokerClusterName);
+
   cy.createJar('ohara-it-source.jar').then(response => {
     const params = {
       jarKey: {
@@ -44,9 +72,10 @@ describe('Stream property API', () => {
   beforeEach(() => cy.deleteAllServices());
 
   it('createProperty', () => {
+    setup();
     cy.createJar('ohara-it-source.jar').then(response => {
       const params = {
-        jar: {
+        jarKey: {
           name: response.data.result.name,
           group: response.data.result.group,
         },

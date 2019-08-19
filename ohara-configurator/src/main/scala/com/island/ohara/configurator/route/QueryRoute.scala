@@ -21,6 +21,7 @@ import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent.{BrokerCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.QueryApi._
 import com.island.ohara.client.configurator.v0.ValidationApi.RdbValidation
+import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.database.DatabaseClient
 import com.island.ohara.configurator.fake.FakeWorkerClient
 
@@ -38,37 +39,42 @@ private[configurator] object QueryRoute extends SprayJsonSupport {
     path(RDB_PREFIX_PATH) {
       post {
         entity(as[RdbQuery]) { query =>
-          complete(CollieUtils.both(query.workerClusterName).flatMap {
-            case (_, topicAdmin, _, workerClient) =>
-              workerClient match {
-                case _: FakeWorkerClient =>
-                  val client = DatabaseClient.builder.url(query.url).user(query.user).password(query.password).build
-                  try Future.successful(RdbInfo(
-                    client.databaseType,
-                    client.tableQuery
-                      .catalog(query.catalogPattern.orNull)
-                      .schema(query.schemaPattern.orNull)
-                      .tableName(query.tableName.orNull)
-                      .execute()
-                  ))
-                  finally client.close()
-                case _ =>
-                  ValidationUtils
-                    .run(workerClient,
-                         topicAdmin,
-                         RdbValidation(
-                           url = query.url,
-                           user = query.user,
-                           password = query.password,
-                           workerClusterName = query.workerClusterName
-                         ),
-                         1)
-                    .map { reports =>
-                      if (reports.isEmpty) throw new IllegalArgumentException("no report!!!")
-                      reports.head.rdbInfo
-                    }
-              }
-          })
+          complete(
+            query.workerClusterName
+              .map(Future.successful)
+              .getOrElse(CollieUtils.singleCluster[WorkerClusterInfo]())
+              .flatMap(CollieUtils.both)
+              .flatMap {
+                case (_, topicAdmin, _, workerClient) =>
+                  workerClient match {
+                    case _: FakeWorkerClient =>
+                      val client = DatabaseClient.builder.url(query.url).user(query.user).password(query.password).build
+                      try Future.successful(RdbInfo(
+                        client.databaseType,
+                        client.tableQuery
+                          .catalog(query.catalogPattern.orNull)
+                          .schema(query.schemaPattern.orNull)
+                          .tableName(query.tableName.orNull)
+                          .execute()
+                      ))
+                      finally client.close()
+                    case _ =>
+                      ValidationUtils
+                        .run(workerClient,
+                             topicAdmin,
+                             RdbValidation(
+                               url = query.url,
+                               user = query.user,
+                               password = query.password,
+                               workerClusterName = query.workerClusterName
+                             ),
+                             1)
+                        .map { reports =>
+                          if (reports.isEmpty) throw new IllegalArgumentException("no report!!!")
+                          reports.head.rdbInfo
+                        }
+                  }
+              })
         }
       }
     }

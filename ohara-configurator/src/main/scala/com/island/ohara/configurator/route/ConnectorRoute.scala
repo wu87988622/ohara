@@ -25,15 +25,7 @@ import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.setting.{ConnectorKey, ObjectKey}
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.route.hook.{
-  HookBeforeDelete,
-  HookOfAction,
-  HookOfCreation,
-  HookOfGet,
-  HookOfGroup,
-  HookOfList,
-  HookOfUpdate
-}
+import com.island.ohara.configurator.route.hook._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.typesafe.scalalogging.Logger
 import spray.json.JsString
@@ -98,7 +90,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
   private[this] def hookOfCreation(implicit workerCollie: WorkerCollie,
                                    executionContext: ExecutionContext): HookOfCreation[Creation, ConnectorDescription] =
     (creation: Creation) =>
-      CollieUtils.orElseClusterName(creation.workerClusterName).map { clusterName =>
+      creation.workerClusterName.map(Future.successful).getOrElse(CollieUtils.singleCluster()).map { clusterName =>
         toRes(creation.copy(settings = creation.settings + (WORKER_CLUSTER_NAME_KEY -> JsString(clusterName))))
     }
 
@@ -121,7 +113,10 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
             throw new IllegalStateException(
               "the connector is working now. Please stop it before updating the properties")
           // 3) locate the correct worker cluster name
-          CollieUtils.orElseClusterName(update.workerClusterName.orElse(previous.map(_.workerClusterName)))
+          update.workerClusterName
+            .orElse(previous.map(_.workerClusterName))
+            .map(Future.successful)
+            .getOrElse(CollieUtils.singleCluster())
         }
         .map { clusterName =>
           toRes(

@@ -34,6 +34,8 @@ import scala.concurrent.duration.Duration
 class TestPipelineRoute extends MediumTest with Matchers {
   private[this] val configurator = Configurator.builder.fake(1, 1).build()
 
+  private[this] val fileApi = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
+  private[this] val brokerApi = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val workerApi = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] val pipelineApi = PipelineApi.access.hostname(configurator.hostname).port(configurator.port)
@@ -100,27 +102,37 @@ class TestPipelineRoute extends MediumTest with Matchers {
   @Test
   def testAddStreamAppToPipeline(): Unit = {
     // create worker
-    val nodes = result(configurator.nodeCollie.nodes()).map(_.name).toSet
-    val wk = result(workerApi.request.nodeNames(nodes).create())
+    val file = CommonUtils.createTempJar("empty_")
+    val fileInfo = result(fileApi.request.file(file).upload())
+    val bk = result(brokerApi.list()).head
+    val from = result(topicApi.request.brokerClusterName(bk.name).create())
+    result(topicApi.start(from.key))
+    val to = result(topicApi.request.brokerClusterName(bk.name).create())
+    result(topicApi.start(to.key))
 
     // create an empty streamApp
-    val streamApp = result(streamApi.request.create())
+    val streamApp = result(
+      streamApi.request
+        .fromTopicKey(from.key)
+        .toTopicKey(to.key)
+        .brokerClusterName(bk.name)
+        .jarKey(fileInfo.key)
+        .create())
 
     val pipeline = result(
-      pipelineApi.request.name(CommonUtils.randomString(10)).flow(Flow(streamApp.key, Set.empty)).create()
-    )
+      pipelineApi.request.name(CommonUtils.randomString(10)).flow(Flow(streamApp.key, Set.empty)).create())
     pipeline.flows.size shouldBe 1
     pipeline.flows.head.from shouldBe streamApp.key
     pipeline.flows.head.to shouldBe Set.empty
     pipeline.objects.size shouldBe 1
     // we cannot parse class name from empty jar
-    pipeline.objects.head.className shouldBe None
+    pipeline.objects.head.className should not be None
 
-    // remove worker cluster
-    result(workerApi.delete(wk.name))
-
-    // worker cluster is gone so the object abstract should contain error
+    // streamapp is not running so the objects have error
     result(pipelineApi.get(pipeline.key)).objects.head.error should not be None
+
+    result(streamApi.start(streamApp.name))
+    result(pipelineApi.get(pipeline.key)).objects.head.error shouldBe None
   }
 
   @Test

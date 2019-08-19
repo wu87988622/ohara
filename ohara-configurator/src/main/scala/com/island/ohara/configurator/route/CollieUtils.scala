@@ -32,20 +32,23 @@ import scala.reflect.ClassTag
   */
 private[route] object CollieUtils {
 
+  def topicAdmin(clusterName: String)(implicit brokerCollie: BrokerCollie,
+                                      cleaner: AdminCleaner,
+                                      executionContext: ExecutionContext): Future[(BrokerClusterInfo, TopicAdmin)] =
+    topicAdmin(Some(clusterName))
+
   /**
-    * create a topic admin and then register it into cleaner
-    * @param clusterInfo cluster info
+    * find the broker cluster info. If the input cluster name is empty, the single broker cluster is returned. Otherwise,
+    * an exception is thrown.
+    * @param clusterName broker cluster name
     * @param brokerCollie broker collie
     * @param cleaner cleaner
-    * @return topic admin
+    * @param executionContext thread pool
+    * @return broker cluster and topic admin
     */
-  def topicAdmin(clusterInfo: BrokerClusterInfo)(implicit brokerCollie: BrokerCollie,
-                                                 cleaner: AdminCleaner): TopicAdmin =
-    cleaner.add(brokerCollie.topicAdmin(clusterInfo))
-
-  def topicAdmin(clusterName: Option[String])(implicit brokerCollie: BrokerCollie,
-                                              cleaner: AdminCleaner,
-                                              executionContext: ExecutionContext)
+  private[this] def topicAdmin(clusterName: Option[String])(implicit brokerCollie: BrokerCollie,
+                                                            cleaner: AdminCleaner,
+                                                            executionContext: ExecutionContext)
     : Future[(BrokerClusterInfo, TopicAdmin)] = clusterName.fold(brokerCollie.clusters
     .map { clusters =>
       clusters.size match {
@@ -57,43 +60,35 @@ private[route] object CollieUtils {
             s"we can't choose default broker cluster since there are too many broker cluster:${clusters.keys.map(_.name).mkString(",")}")
       }
     }
-    .map(c => (c, cleaner.add(topicAdmin(c)))))(brokerCollie.topicAdmin)
+    .map(clusterInfo => (clusterInfo, cleaner.add(brokerCollie.topicAdmin(clusterInfo)))))(brokerCollie.topicAdmin)
 
   /**
-    * The routes, which is based on external system, require property to define cluster name. As a friendly server, those
-    * routes offer the auto-completion mechanism to define the cluster for the property lacking of cluster name.
-    *
     * The mechanism has three phases.
-    * 1) return the cluster name from property if the property has defined the cluster name
-    * 2) return the cluster name if there is only one running cluster
-    * 3) finally, throw exception to remind caller that server fails to do auto-completion for property
-    * @param clusterName cluster name
+    * 1) return the cluster name if there is only one running cluster
+    * 2) finally, throw exception to remind caller that server fails to do auto-completion for property
     * @param collie collie
     * @param executionContext thread pool
     * @tparam Req cluster type
     * @return matched cluster name
     */
-  def orElseClusterName[Req <: ClusterInfo: ClassTag](
-    clusterName: Option[String])(implicit collie: Collie[Req], executionContext: ExecutionContext): Future[String] =
-    if (clusterName.isDefined)
-      Future.successful(clusterName.get)
-    else
-      collie.clusters().map { clusters =>
-        clusters.size match {
-          case 0 =>
-            throw new IllegalArgumentException(s"we can't choose default cluster since there is no cluster available")
-          case 1 => clusters.keys.head.name
-          case _ =>
-            throw new IllegalArgumentException(
-              s"we can't choose default cluster since there are too many clusters:${clusters.keys.map(_.name).mkString(",")}")
-        }
+  def singleCluster[Req <: ClusterInfo: ClassTag]()(implicit collie: Collie[Req],
+                                                    executionContext: ExecutionContext): Future[String] =
+    collie.clusters().map { clusters =>
+      clusters.size match {
+        case 0 =>
+          throw new IllegalArgumentException(s"we can't choose default cluster since there is no cluster available")
+        case 1 => clusters.keys.head.name
+        case _ =>
+          throw new IllegalArgumentException(
+            s"we can't choose default cluster since there are too many clusters:${clusters.keys.map(_.name).mkString(",")}")
       }
+    }
 
   def workerClient[T](clusterName: String)(
     implicit workerCollie: WorkerCollie,
     executionContext: ExecutionContext): Future[(WorkerClusterInfo, WorkerClient)] = workerClient(Some(clusterName))
 
-  def workerClient[T](clusterName: Option[String])(
+  private[this] def workerClient[T](clusterName: Option[String])(
     implicit workerCollie: WorkerCollie,
     executionContext: ExecutionContext): Future[(WorkerClusterInfo, WorkerClient)] = clusterName
     .map(workerCollie.workerClient)
@@ -118,7 +113,7 @@ private[route] object CollieUtils {
     executionContext: ExecutionContext): Future[(BrokerClusterInfo, TopicAdmin, WorkerClusterInfo, WorkerClient)] =
     both(Some(wkClusterName))
 
-  def both[T](wkClusterName: Option[String])(
+  private[this] def both[T](wkClusterName: Option[String])(
     implicit brokerCollie: BrokerCollie,
     cleaner: AdminCleaner,
     workerCollie: WorkerCollie,

@@ -36,6 +36,8 @@ class TestStreamRoute extends SmallTest with Matchers {
   // create all fake cluster
   private[this] val configurator = Configurator.builder.fake().build()
   private[this] val topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
+  private[this] val zkApi = ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port)
+  private[this] val bkApi = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val wkApi = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] val accessJar = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
@@ -56,6 +58,7 @@ class TestStreamRoute extends SmallTest with Matchers {
     val defaultProps = result(
       accessStream.request.name(name).jarKey(ObjectKey.of(jar.group, jar.name)).create()
     )
+    defaultProps.jarKey shouldBe jar.key
     // same name property cannot create again
     an[IllegalArgumentException] should be thrownBy result(
       accessStream.request.name(name).jarKey(ObjectKey.of(jar.group, "newJar")).create())
@@ -137,8 +140,8 @@ class TestStreamRoute extends SmallTest with Matchers {
     result(accessStream.request.name(streamAppName).fromTopicKey(from).toTopicKey(to).instances(instances).update())
 
     // run topics
-    topicApi.request.key(from).create().flatMap(info => topicApi.start(info.key))
-    topicApi.request.key(to).create().flatMap(info => topicApi.start(info.key))
+    result(topicApi.request.key(from).create().flatMap(info => topicApi.start(info.key)))
+    result(topicApi.request.key(to).create().flatMap(info => topicApi.start(info.key)))
 
     result(accessStream.start(props.name))
     val res1 = result(accessStream.get(props.name))
@@ -380,6 +383,54 @@ class TestStreamRoute extends SmallTest with Matchers {
         .flatMap(info => accessStream.start(info.name)))
     // "to" field is used multiple topics which is not allow for current version
     thrown1.getMessage should include("We don't allow multiple topics of to field")
+  }
+
+  /**
+    * stream route seeks two place to find the based cluste
+    * 1) the key StreamDefinitions.BROKER_CLUSTER_NAME_DEFINITION.key()
+    * 2) the group of jar (mapped to worker cluster) (this is deprecated) (see https://github.com/oharastream/ohara/issues/2151)
+    */
+  @Test
+  def testBrokerClusterName(): Unit = {
+    val nodeNames = result(bkApi.list()).head.nodeNames
+    val zk = result(zkApi.request.name(CommonUtils.randomString(5)).nodeNames(nodeNames).create())
+    val bk = result(
+      bkApi.request.name(CommonUtils.randomString(5)).nodeNames(nodeNames).zookeeperClusterName(zk.name).create())
+    result(bkApi.start(bk.name))
+    val from0 = result(topicApi.request.brokerClusterName(bk.name).create())
+    result(topicApi.start(from0.key))
+    val to0 = result(topicApi.request.brokerClusterName(bk.name).create())
+    result(topicApi.start(to0.key))
+    result(bkApi.start(bk.name))
+    val wkName = result(wkApi.list).head.name
+
+    val file = CommonUtils.createTempJar("empty_")
+    val jar = result(accessJar.request.group(wkName).file(file).upload())
+    val streamDesc = result(
+      accessStream.request
+        .brokerClusterName(bk.name)
+        .jarKey(ObjectKey.of(jar.group, jar.name))
+        .fromTopicKey(from0.key)
+        .toTopicKey(to0.key)
+        .create())
+    streamDesc.brokerClusterName shouldBe bk.name
+    result(accessStream.start(streamDesc.name))
+
+    // fail to update a running streamapp
+    an[IllegalArgumentException] should be thrownBy result(accessStream.request.name(streamDesc.name).update())
+    result(accessStream.stop(streamDesc.name))
+  }
+
+  // TODO: this is for deprecated APIs ... fix it by https://github.com/oharastream/ohara/issues/2151
+  @Test
+  def testWorkerClusterNameInJarGroup(): Unit = {
+    val wkName = result(wkApi.list()).head.name
+    val file = CommonUtils.createTempJar("empty_")
+    val jar = result(accessJar.request.file(file).group(wkName).upload())
+    val name = CommonUtils.randomString(10)
+    val defaultProps = result(accessStream.request.name(name).jarKey(ObjectKey.of(jar.group, jar.name)).create())
+    defaultProps.jarKey shouldBe jar.key
+    defaultProps.brokerClusterName shouldBe result(wkApi.get(wkName)).brokerClusterName
   }
 
   @After

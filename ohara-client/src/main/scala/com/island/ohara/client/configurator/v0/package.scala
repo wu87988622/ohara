@@ -35,10 +35,11 @@ package object v0 {
   val GROUP_KEY: String = "group"
 
   /**
-    * This reference ensures that the name key in scala json is same to java json (connector metadata).
-    * This a bit complicated code is what we had to "enjoy" as Ohara is a hybrid project consisting of scala and java.
+    * Noted: there are other two definition having "name"
+    * 1) ConnectorDefUtils.CONNECTOR_NAME_DEFINITION.key()
+    * 2) StreamDefinitions.NAME_DEFINITION.key
     */
-  val NAME_KEY: String = ConnectorDefUtils.CONNECTOR_NAME_DEFINITION.key()
+  val NAME_KEY: String = "name"
 
   /**
     * This reference ensures that the tags key in scala json is same to java json (connector metadata).

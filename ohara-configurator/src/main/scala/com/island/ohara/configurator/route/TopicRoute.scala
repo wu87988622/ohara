@@ -63,11 +63,9 @@ private[configurator] object TopicRoute {
     * @return updated topic info
     */
   private[this] def updateState(brokerCluster: BrokerClusterInfo, topicInfo: TopicInfo)(
-    implicit adminCleaner: AdminCleaner,
-    meterCache: MeterCache,
+    implicit meterCache: MeterCache,
     brokerCollie: BrokerCollie,
     executionContext: ExecutionContext): Future[TopicInfo] = {
-    CollieUtils.topicAdmin(brokerCluster)
     val topicAdmin = brokerCollie.topicAdmin(brokerCluster)
     topicAdmin
       .exist(topicInfo.key)
@@ -102,16 +100,14 @@ private[configurator] object TopicRoute {
         finally topicAdmin.close()
       }
 
-  private[this] def hookOfGet(implicit adminCleaner: AdminCleaner,
-                              meterCache: MeterCache,
+  private[this] def hookOfGet(implicit meterCache: MeterCache,
                               brokerCollie: BrokerCollie,
                               executionContext: ExecutionContext): HookOfGet[TopicInfo] = (topicInfo: TopicInfo) =>
     brokerCollie.cluster(topicInfo.brokerClusterName).flatMap {
       case (cluster, _) => updateState(cluster, topicInfo)
   }
 
-  private[this] def hookOfList(implicit adminCleaner: AdminCleaner,
-                               meterCache: MeterCache,
+  private[this] def hookOfList(implicit meterCache: MeterCache,
                                brokerCollie: BrokerCollie,
                                executionContext: ExecutionContext): HookOfList[TopicInfo] =
     (topicInfos: Seq[TopicInfo]) =>
@@ -124,7 +120,7 @@ private[configurator] object TopicRoute {
   private[this] def hookOfCreation(implicit brokerCollie: BrokerCollie,
                                    executionContext: ExecutionContext): HookOfCreation[Creation, TopicInfo] =
     (creation: Creation) =>
-      CollieUtils.orElseClusterName(creation.brokerClusterName).map { clusterName =>
+      creation.brokerClusterName.map(Future.successful).getOrElse(CollieUtils.singleCluster()).map { clusterName =>
         TopicInfo(
           // the default custom configs is at first since it is able to be replaced by creation.
           settings = TOPIC_CUSTOM_CONFIGS
@@ -140,24 +136,30 @@ private[configurator] object TopicRoute {
                                  brokerCollie: BrokerCollie,
                                  executionContext: ExecutionContext): HookOfUpdate[Creation, Update, TopicInfo] =
     (key: ObjectKey, update: Update, previous: Option[TopicInfo]) =>
-      CollieUtils.topicAdmin(previous.map(_.brokerClusterName).orElse(update.brokerClusterName)).flatMap {
-        case (cluster, client) =>
-          client.topics().map(_.find(_.name == TopicKey.of(key.group, key.name).topicNameOnKafka)).map {
-            topicFromKafkaOption =>
-              if (topicFromKafkaOption.isDefined)
-                throw new IllegalStateException(
-                  s"the topic:$key is working now. Please stop it before updating the properties")
-              try TopicInfo(
-                settings = previous.map(_.settings).getOrElse(Map.empty)
-                  ++ update.settings
-                  + (BROKER_CLUSTER_NAME_KEY -> JsString(cluster.name)),
-                metrics = Metrics(Seq.empty),
-                state = None,
-                lastModified = CommonUtils.current()
-              )
-              finally Releasable.close(client)
-          }
-    }
+      previous
+        .map(_.brokerClusterName)
+        .orElse(update.brokerClusterName)
+        .map(Future.successful)
+        .getOrElse(CollieUtils.singleCluster())
+        .flatMap(CollieUtils.topicAdmin)
+        .flatMap {
+          case (cluster, client) =>
+            client.topics().map(_.find(_.name == TopicKey.of(key.group, key.name).topicNameOnKafka)).map {
+              topicFromKafkaOption =>
+                if (topicFromKafkaOption.isDefined)
+                  throw new IllegalStateException(
+                    s"the topic:$key is working now. Please stop it before updating the properties")
+                try TopicInfo(
+                  settings = previous.map(_.settings).getOrElse(Map.empty)
+                    ++ update.settings
+                    + (BROKER_CLUSTER_NAME_KEY -> JsString(cluster.name)),
+                  metrics = Metrics(Seq.empty),
+                  state = None,
+                  lastModified = CommonUtils.current()
+                )
+                finally Releasable.close(client)
+            }
+      }
 
   private[this] def hookBeforeDelete(implicit store: DataStore,
                                      adminCleaner: AdminCleaner,
@@ -167,7 +169,7 @@ private[configurator] object TopicRoute {
       .get[TopicInfo](key)
       .flatMap(_.fold(Future.unit) { topicInfo =>
         CollieUtils
-          .topicAdmin(Some(topicInfo.brokerClusterName))
+          .topicAdmin(topicInfo.brokerClusterName)
           .flatMap {
             case (_, client) =>
               client.exist(topicInfo.key).flatMap {
@@ -196,7 +198,7 @@ private[configurator] object TopicRoute {
       store
         .value[TopicInfo](key)
         .flatMap(topicInfo =>
-          CollieUtils.topicAdmin(Some(topicInfo.brokerClusterName)).flatMap {
+          CollieUtils.topicAdmin(topicInfo.brokerClusterName).flatMap {
             case (_, client) =>
               client.exist(topicInfo.key).flatMap {
                 if (_) Future.unit
@@ -215,7 +217,7 @@ private[configurator] object TopicRoute {
     (key: ObjectKey, _, _) =>
       store.value[TopicInfo](key).flatMap { topicInfo =>
         CollieUtils
-          .topicAdmin(Some(topicInfo.brokerClusterName))
+          .topicAdmin(topicInfo.brokerClusterName)
           .flatMap {
             case (_, client) =>
               client.exist(topicInfo.key).flatMap {
