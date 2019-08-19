@@ -27,7 +27,9 @@ const PipelineGraph = props => {
   useEffect(() => {
     const renderGraph = () => {
       const { graph, pipeline = {} } = props;
-      const { workerClusterName } = pipeline;
+      const {
+        tags: { workerClusterName },
+      } = pipeline;
       const dagreGraph = new dagreD3.graphlib.Graph().setGraph({});
 
       graph.forEach(g => {
