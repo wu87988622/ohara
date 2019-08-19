@@ -190,13 +190,7 @@ trait StreamCollie extends Collie[StreamClusterInfo, StreamCollie.ClusterCreator
         // it is ok that we use the containerState.RUNNING here.
         deadNodes = containers.filterNot(_.state == ContainerState.RUNNING.name).map(_.nodeName).toSet,
         metrics = Metrics(Seq.empty),
-        state = {
-          // we only have two possible results here:
-          // 1. only assume cluster is "running" if at least one container is running
-          // 2. the cluster state is always "dead" if all containers were not running
-          val alive = containers.exists(_.state == ContainerState.RUNNING.name)
-          if (alive) Some(ClusterState.RUNNING.name) else Some(ClusterState.FAILED.name)
-        },
+        state = toClusterState(containers).map(_.name),
         error = None,
         lastModified = CommonUtils.current()
       )

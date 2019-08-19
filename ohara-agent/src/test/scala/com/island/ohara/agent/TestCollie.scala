@@ -15,6 +15,7 @@
  */
 
 package com.island.ohara.agent
+import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.rule.SmallTest
@@ -191,5 +192,80 @@ class TestCollie extends SmallTest with Matchers {
     intercept[IllegalArgumentException] {
       Await.result(addNode, TIMEOUT)
     }.getMessage shouldBe expectErrMsg
+  }
+
+  @Test
+  def testClusterState(): Unit = {
+    val node1Name = "node1"
+    val node1 = node(node1Name)
+
+    // case : all containers are running => cluster running
+    val containers = (0 until 5).map { index =>
+      ContainerInfo(
+        nodeName = node1Name,
+        id = s"$index",
+        imageName = "fakeimage",
+        created = "",
+        state = ContainerState.RUNNING.name,
+        kind = "",
+        name = s"container-$index",
+        size = "0",
+        portMappings = Seq(),
+        environments = Map(),
+        hostname = s"xxx-$node1Name"
+      )
+    }
+    val fakeRunning = new FakeCollie(NodeCollie(Seq(node1)), containers)
+    Await.result(fakeRunning.clusterWithAllContainers(), TIMEOUT).keys.head.state shouldBe Some(
+      ClusterState.RUNNING.name)
+
+    // case : some containers are failed but one running => cluster running
+    val fakeRunning1 =
+      new FakeCollie(NodeCollie(Seq(node1)), containers :+ containers.head.copy(state = ContainerState.DEAD.name))
+    Await.result(fakeRunning1.clusterWithAllContainers(), TIMEOUT).keys.head.state shouldBe Some(
+      ClusterState.RUNNING.name)
+
+    // case : some containers are failed but one running => cluster running
+    val fakeRunning2 =
+      new FakeCollie(NodeCollie(Seq(node1)), containers :+ containers.head.copy(state = ContainerState.EXITED.name))
+    Await.result(fakeRunning2.clusterWithAllContainers(), TIMEOUT).keys.head.state shouldBe Some(
+      ClusterState.RUNNING.name)
+
+    // case : one container is pending => cluster pending
+    val fakePending =
+      new FakeCollie(NodeCollie(Seq(node1)), containers :+ containers.head.copy(state = ContainerState.CREATED.name))
+    Await.result(fakePending.clusterWithAllContainers(), TIMEOUT).keys.head.state shouldBe Some(
+      ClusterState.PENDING.name)
+
+    // case : all containers are dead => cluster failed
+    val containers2 = (0 until 5).map { index =>
+      ContainerInfo(
+        nodeName = node1Name,
+        id = s"$index",
+        imageName = "fakeimage",
+        created = "",
+        state = ContainerState.DEAD.name,
+        kind = "",
+        name = s"container-$index",
+        size = "0",
+        portMappings = Seq(),
+        environments = Map(),
+        hostname = s"xxx-$node1Name"
+      )
+    }
+    val fakeFailed = new FakeCollie(NodeCollie(Seq(node1)), containers2)
+    Await.result(fakeFailed.clusterWithAllContainers(), TIMEOUT).keys.head.state shouldBe Some(ClusterState.FAILED.name)
+
+    // case : some containers are exit but others are dead => cluster failed
+    val fakeFailed1 =
+      new FakeCollie(NodeCollie(Seq(node1)), containers2 :+ containers2.head.copy(state = ContainerState.EXITED.name))
+    Await.result(fakeFailed1.clusterWithAllContainers(), TIMEOUT).keys.head.state shouldBe Some(
+      ClusterState.FAILED.name)
+
+    // case : some containers is running but others are dead => cluster running
+    val fakeFailed2 =
+      new FakeCollie(NodeCollie(Seq(node1)), containers2 :+ containers2.head.copy(state = ContainerState.RUNNING.name))
+    Await.result(fakeFailed2.clusterWithAllContainers(), TIMEOUT).keys.head.state shouldBe Some(
+      ClusterState.RUNNING.name)
   }
 }

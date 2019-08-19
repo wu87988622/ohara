@@ -16,7 +16,7 @@
 
 package com.island.ohara.agent.k8s
 
-import com.island.ohara.agent.{Collie, NodeCollie}
+import com.island.ohara.agent.{ClusterState, Collie, NodeCollie}
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
@@ -119,5 +119,17 @@ private[this] abstract class K8SBasicCollieImpl[T <: ClusterInfo: ClassTag, Crea
         })
       )
       .map(_.flatten)
+  }
+
+  override protected def toClusterState(containers: Seq[ContainerInfo]): Option[ClusterState] = {
+    if (containers.isEmpty) None
+    else {
+      // we use a "pod" as a container of ohara cluster, so it is more easy to define a cluster state than docker
+      // since a "pod" in k8s is actually an application with multiple containers...
+      if (containers.exists(_.state == K8sContainerState.RUNNING.name)) Some(ClusterState.RUNNING)
+      else if (containers.exists(_.state == K8sContainerState.FAILED.name)) Some(ClusterState.FAILED)
+      else if (containers.exists(_.state == K8sContainerState.PENDING.name)) Some(ClusterState.PENDING)
+      else Some(ClusterState.UNKNOWN)
+    }
   }
 }

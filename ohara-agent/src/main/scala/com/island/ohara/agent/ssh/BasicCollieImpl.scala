@@ -16,7 +16,8 @@
 
 package com.island.ohara.agent.ssh
 
-import com.island.ohara.agent.{ClusterCache, Collie, NoSuchClusterException, NodeCollie}
+import com.island.ohara.agent.docker.ContainerState
+import com.island.ohara.agent.{ClusterCache, ClusterState, Collie, NoSuchClusterException, NodeCollie}
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
@@ -128,4 +129,21 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: Co
   override protected def doAddNode(previousCluster: T, previousContainers: Seq[ContainerInfo], newNodeName: String)(
     implicit executionContext: ExecutionContext): Future[T] =
     creator.copy(previousCluster).nodeName(newNodeName).threadPool(executionContext).create()
+
+  override protected def toClusterState(containers: Seq[ContainerInfo]): Option[ClusterState] = {
+    if (containers.isEmpty) None
+    else {
+      // one of the containers in pending state means cluster pending
+      if (containers.exists(_.state == ContainerState.CREATED.name)) Some(ClusterState.PENDING)
+      // not pending, if one of the containers in running state means cluster running (even other containers are in
+      // restarting, paused, exited or dead state
+      else if (containers.exists(_.state == ContainerState.RUNNING.name)) Some(ClusterState.RUNNING)
+      // exists one container in dead state, and others are in exited state means cluster failed
+      else if (containers.exists(_.state == ContainerState.DEAD.name) &&
+               containers.forall(c => c.state == ContainerState.EXITED.name || c.state == ContainerState.DEAD.name))
+        Some(ClusterState.FAILED)
+      // we don't care other situation for now
+      else Some(ClusterState.UNKNOWN)
+    }
+  }
 }

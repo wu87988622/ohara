@@ -58,5 +58,9 @@ class FakeZookeeperCollie(node: NodeCollie) extends ZookeeperCollie {
 
   override protected def nodeCollie: NodeCollie = node
 
+  // In fake mode, we don't care the cluster state
+  override protected def toClusterState(containers: Seq[ContainerInfo]): Option[ClusterState] =
+    Some(ClusterState.RUNNING)
+
   override protected def prefixKey: String = "fakezookeeper"
 }

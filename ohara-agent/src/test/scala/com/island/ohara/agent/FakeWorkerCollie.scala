@@ -100,4 +100,8 @@ class FakeWorkerCollie(node: NodeCollie, brokerClusters: Map[String, Seq[Contain
   override protected def doRemoveNode(previousCluster: WorkerClusterInfo, beRemovedContainer: ContainerInfo)(
     implicit executionContext: ExecutionContext): Future[Boolean] =
     throw new UnsupportedOperationException("FakeWorkerCollie doesn't support this function")
+
+  // In fake mode, we don't care the cluster state
+  override protected def toClusterState(containers: Seq[ContainerInfo]): Option[ClusterState] =
+    Some(ClusterState.RUNNING)
 }

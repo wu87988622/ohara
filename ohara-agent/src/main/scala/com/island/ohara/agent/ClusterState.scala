@@ -31,4 +31,6 @@ object ClusterState extends Enum[ClusterState] {
   case object RUNNING extends ClusterState("RUNNING")
 
   case object FAILED extends ClusterState("FAILED")
+
+  case object UNKNOWN extends ClusterState("UNKNOWN")
 }
