@@ -20,15 +20,22 @@ import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.agent.{ClusterCollie, NodeCollie}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.it.agent.BasicTests4ClusterCollie
+import com.island.ohara.it.agent.{BasicTests4ClusterCollie, ClusterNameHolder}
+import com.typesafe.scalalogging.Logger
 import org.junit.Before
 
+import scala.concurrent.Await
+import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestK8sClusterCollie extends BasicTests4ClusterCollie {
+  private[this] val log = Logger(classOf[TestK8sClusterCollie])
   private[this] val K8S_API_SERVER_URL_KEY: String = "ohara.it.k8s"
   private[this] val K8S_API_NODE_NAME_KEY: String = "ohara.it.k8s.nodename"
 
   private[this] val API_SERVER_URL: Option[String] = sys.env.get(K8S_API_SERVER_URL_KEY)
   private[this] val NODE_SERVER_NAME: Option[String] = sys.env.get(K8S_API_NODE_NAME_KEY)
+
+  private[this] val TIMEOUT: FiniteDuration = 30 seconds
 
   override protected val nodeCache: Seq[Node] =
     if (API_SERVER_URL.isEmpty || NODE_SERVER_NAME.isEmpty) Seq.empty
@@ -47,6 +54,35 @@ class TestK8sClusterCollie extends BasicTests4ClusterCollie {
             tags = Map.empty
         ))
 
+  override protected val nameHolder: ClusterNameHolder = new ClusterNameHolder(nodeCache) {
+    override def close(): Unit = {
+      val k8sClient = K8SClient(API_SERVER_URL.get)
+      try {
+        nodeCache.foreach { _ =>
+          Await
+            .result(k8sClient.containers(), TIMEOUT)
+            .filter(container => usedClusterNames.exists(clusterName => container.name.contains(clusterName)))
+            .foreach { container =>
+              try {
+                println(s"[-----------------------------------${container.name}-----------------------------------]")
+                val containerLogs = try k8sClient.log(container.name)
+                catch {
+                  case e: Throwable =>
+                    s"failed to fetch the logs for container:${container.name}. caused by:${e.getMessage}"
+                }
+                println(containerLogs)
+                println("[------------------------------------------------------------------------------------]")
+                k8sClient.remove(container.name)
+              } catch {
+                case e: Throwable =>
+                  log.error(s"failed to remove container ${container.name}", e)
+              }
+            }
+        }
+      } finally k8sClient.close()
+    }
+  }
+
   override protected def clusterCollie: ClusterCollie = _clusterCollie
   private[this] var _clusterCollie: ClusterCollie = _
 
@@ -57,6 +93,4 @@ class TestK8sClusterCollie extends BasicTests4ClusterCollie {
     _clusterCollie =
       ClusterCollie.builderOfK8s().nodeCollie(NodeCollie(nodeCache)).k8sClient(K8SClient(API_SERVER_URL.get)).build()
   }
-
-  override protected def generateClusterName(): String = CommonUtils.randomString(10)
 }

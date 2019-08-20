@@ -19,11 +19,11 @@ package com.island.ohara.it.agent.k8s
 import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.common.util.{CommonUtils, Releasable}
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.agent.{BasicTests4ClusterCollieByConfigurator, ClusterNameHolder}
 import com.typesafe.scalalogging.Logger
-import org.junit.{After, Before}
+import org.junit.Before
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -58,47 +58,39 @@ class TestK8SClusterCollieByConfigurator extends BasicTests4ClusterCollieByConfi
 
   override def configurator: Configurator = _configurator
   private[this] var _configurator: Configurator = _
-  private[this] var nameHolder: ClusterNameHolder = _
-
-  @Before
-  final def setup(): Unit = {
-    if (nodeCache.isEmpty) skipTest(s"You must assign nodes for collie tests")
-    else {
-      _configurator = Configurator.builder.k8sClient(K8SClient(API_SERVER_URL.get)).build()
-      nameHolder = new ClusterNameHolder(nodeCache) {
-        override def close(): Unit = {
-          val k8sClient = K8SClient(API_SERVER_URL.get)
-          try {
-            nodeCache.foreach { node =>
-              Await
-                .result(k8sClient.containers(), TIMEOUT)
-                .filter(container => usedClusterNames.exists(clusterName => container.name.contains(clusterName)))
-                .foreach { container =>
-                  try {
-                    k8sClient.remove(container.name)
-                    log.info(s"succeed to remove container ${container.name}")
-                  } catch {
-                    case e: Throwable =>
-                      log.error(s"failed to remove container ${container.name}", e)
-                  }
-                }
+  override protected val nameHolder: ClusterNameHolder = new ClusterNameHolder(nodeCache) {
+    override def close(): Unit = {
+      val k8sClient = K8SClient(API_SERVER_URL.get)
+      try {
+        nodeCache.foreach { _ =>
+          Await
+            .result(k8sClient.containers(), TIMEOUT)
+            .filter(container => usedClusterNames.exists(clusterName => container.name.contains(clusterName)))
+            .foreach { container =>
+              try {
+                k8sClient.remove(container.name)
+                log.info(s"succeed to remove container ${container.name}")
+              } catch {
+                case e: Throwable =>
+                  log.error(s"failed to remove container ${container.name}", e)
+              }
             }
-          } finally k8sClient.close()
         }
-      }
-      val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
-      nodeCache.foreach { node =>
-        result(
-          nodeApi.request.hostname(node.hostname).port(node._port).user(node._user).password(node._password).create())
-      }
-      val nodes = result(nodeApi.list())
-      nodes.size shouldBe nodeCache.size
-      nodeCache.foreach(node => nodes.exists(_.name == node.name) shouldBe true)
+      } finally k8sClient.close()
     }
   }
 
-  @After
-  def cleanAllContainers(): Unit = if (cleanup) Releasable.close(nameHolder)
-
-  override protected def generateClusterName(): String = nameHolder.generateClusterName()
+  @Before
+  final def setup(): Unit = if (nodeCache.isEmpty) skipTest(s"You must assign nodes for collie tests")
+  else {
+    _configurator = Configurator.builder.k8sClient(K8SClient(API_SERVER_URL.get)).build()
+    val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
+    nodeCache.foreach { node =>
+      result(
+        nodeApi.request.hostname(node.hostname).port(node._port).user(node._user).password(node._password).create())
+    }
+    val nodes = result(nodeApi.list())
+    nodes.size shouldBe nodeCache.size
+    nodeCache.foreach(node => nodes.exists(_.name == node.name) shouldBe true)
+  }
 }
