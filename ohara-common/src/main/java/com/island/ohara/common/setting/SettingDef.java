@@ -26,6 +26,7 @@ import com.island.ohara.common.json.JsonObject;
 import com.island.ohara.common.json.JsonUtils;
 import com.island.ohara.common.util.CommonUtils;
 import java.io.Serializable;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -392,6 +393,51 @@ public class SettingDef implements JsonObject, Serializable {
     public Builder valueType(Type valueType) {
       this.valueType = Objects.requireNonNull(valueType);
       return this;
+    }
+
+    @Optional("default is \"required!\" value")
+    public Builder optional(boolean defaultValue) {
+      return optional(String.valueOf(defaultValue));
+    }
+
+    @Optional("default is \"required!\" value")
+    public Builder optional(short defaultValue) {
+      return optional(String.valueOf(defaultValue));
+    }
+
+    @Optional("default is \"required!\" value")
+    public Builder optional(int defaultValue) {
+      return optional(String.valueOf(defaultValue));
+    }
+
+    @Optional("default is \"required!\" value")
+    public Builder optional(long defaultValue) {
+      return optional(String.valueOf(defaultValue));
+    }
+
+    @Optional("default is \"required!\" value")
+    public Builder optional(double defaultValue) {
+      return optional(String.valueOf(defaultValue));
+    }
+
+    @Optional("default is \"required!\" value")
+    public Builder optional(Duration defaultValue) {
+      return optional(defaultValue.toString());
+    }
+
+    @Optional("default is \"required!\" value")
+    public Builder optional(ObjectKey key) {
+      return optional(ObjectKey.toJsonString(key));
+    }
+
+    @Optional("default is \"required!\" value")
+    public Builder optional(TopicKey key) {
+      return optional(TopicKey.toJsonString(key));
+    }
+
+    @Optional("default is \"required!\" value")
+    public Builder optional(ConnectorKey key) {
+      return optional(ConnectorKey.toJsonString(key));
     }
 
     @Optional("default is \"required!\" value")

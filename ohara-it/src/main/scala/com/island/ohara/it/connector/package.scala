@@ -94,7 +94,7 @@ package object connector {
       .key("dumb.duration")
       .valueType(Type.DURATION)
       .documentation("duration for testing")
-      .optional(java.time.Duration.ofSeconds(30).toString)
+      .optional(java.time.Duration.ofSeconds(30))
       .build(),
     SettingDef
       .builder()

@@ -47,8 +47,28 @@ public class TestSettingDef extends SmallTest {
   }
 
   @Test(expected = NullPointerException.class)
-  public void nullValueDefault() {
-    SettingDef.builder().optional(null);
+  public void nullDefaultWithString() {
+    SettingDef.builder().optional((String) null);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void nullDefaultWithObjectKey() {
+    SettingDef.builder().optional((ObjectKey) null);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void nullDefaultWithTopicKey() {
+    SettingDef.builder().optional((TopicKey) null);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void nullDefaultWithConnectorKey() {
+    SettingDef.builder().optional((ConnectorKey) null);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void nullDefaultWithDuration() {
+    SettingDef.builder().optional((Duration) null);
   }
 
   @Test(expected = NullPointerException.class)
@@ -291,5 +311,34 @@ public class TestSettingDef extends SmallTest {
     assertException(
         OharaConfigException.class, () -> def.checker().accept(CommonUtils.randomString()));
     assertException(OharaConfigException.class, () -> def.checker().accept(100000000));
+  }
+
+  @Test
+  public void testDuration() {
+    Duration duration = Duration.ofHours(10);
+    SettingDef def =
+        SettingDef.builder().key(CommonUtils.randomString()).optional(duration).build();
+    Assert.assertEquals(Duration.parse(def.defaultValue()), duration);
+  }
+
+  @Test
+  public void testObjectKey() {
+    ObjectKey key = ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString());
+    SettingDef def = SettingDef.builder().key(CommonUtils.randomString()).optional(key).build();
+    Assert.assertEquals(ObjectKey.toObjectKey(def.defaultValue()), key);
+  }
+
+  @Test
+  public void testTopicKey() {
+    TopicKey key = TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString());
+    SettingDef def = SettingDef.builder().key(CommonUtils.randomString()).optional(key).build();
+    Assert.assertEquals(TopicKey.toTopicKey(def.defaultValue()), key);
+  }
+
+  @Test
+  public void testConnectorKey() {
+    ConnectorKey key = ConnectorKey.of(CommonUtils.randomString(), CommonUtils.randomString());
+    SettingDef def = SettingDef.builder().key(CommonUtils.randomString()).optional(key).build();
+    Assert.assertEquals(ConnectorKey.toConnectorKey(def.defaultValue()), key);
   }
 }
