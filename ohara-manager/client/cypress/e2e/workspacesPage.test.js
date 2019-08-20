@@ -33,13 +33,15 @@ describe('WorkspacesPage', () => {
     cy.route('GET', 'api/zookeepers/*').as('getZookeeper');
     cy.route('GET', 'api/topics').as('getTopics');
     cy.route('GET', 'api/files?*').as('getFiles');
+    cy.route('POST', 'api/zookeepers').as('createZookeeper');
+    cy.route('POST', 'api/brokers').as('createBroker');
   });
 
   it('creates a workspace', () => {
     const nodeName = Cypress.env('nodeHost');
     const workerName = generate.serviceName({ prefix: 'worker' });
 
-    cy.registerWorker(workerName);
+    cy.registerService(workerName, 'workers');
 
     cy.visit(WORKSPACES)
       .getByText('New workspace')
@@ -47,18 +49,28 @@ describe('WorkspacesPage', () => {
       .getByPlaceholderText('cluster00')
       .type(workerName)
       .getByTestId(nodeName)
-      .click();
-
-    cy.uploadJar(
-      'input[type=file]',
-      'plugin/ohara-it-sink.jar',
-      'ohara-it-sink.jar',
-      'application/java-archive',
-    ).wait(500);
-
-    cy.getByText('ohara-it-sink').should('have.length', 1);
-    cy.getByText('ohara-it-sink').click();
-    cy.getByText('Add').click();
+      .click()
+      .uploadJar(
+        'input[type=file]',
+        'plugin/ohara-it-sink.jar',
+        'ohara-it-sink.jar',
+        'application/java-archive',
+      )
+      .wait(500)
+      .getByText('ohara-it-sink')
+      .click()
+      .getByText('Add')
+      .click()
+      .wait('@createZookeeper')
+      .then(xhr => {
+        const { name } = xhr.response.body;
+        cy.registerService(name, 'zookeepers');
+      })
+      .wait('@createBroker')
+      .then(xhr => {
+        const { name } = xhr.response.body;
+        cy.registerService(name, 'brokers');
+      });
 
     cy.getByText(workerName).should('have.length', 1);
   });
@@ -210,14 +222,13 @@ describe('WorkspacesPage', () => {
       .click()
       .wait('@getWorker')
       .then(xhr => {
-        cy.getByText(`Image: ${xhr.response.body.imageName}`).should(
-          'have.length',
-          1,
-        );
-        const clientPort = xhr.response.body.clientPort;
-        const wkNodes = xhr.response.body.nodeNames;
-        const jmxPort = xhr.response.body.jmxPort;
-        wkNodes.forEach(node => {
+        const { imageName, clientPort, nodeNames, jmxPort } = xhr.response.body;
+
+        // Basic info
+        cy.getByText(`Image: ${imageName}`).should('have.length', 1);
+
+        // Nodes
+        nodeNames.forEach(node => {
           cy.getByText(`${node}:${clientPort}`)
             .should('have.length', 1)
             .getByTestId(`Worker-${node}:${clientPort}`)
@@ -241,13 +252,15 @@ describe('WorkspacesPage', () => {
             .should('have.length', 1);
 
           const definitions = connector.definitions;
-          const keys = ['kind', 'version', 'author'];
+          const keys = ['kind', 'version', 'author', 'class'];
 
-          definitions.forEach(definition => {
-            if (keys.includes(definition.key)) {
-              cy.getByText(definition.defaultValue).should('have.length', 1);
-            }
-          });
+          definitions
+            .filter(definition => keys.includes(definition.key))
+            .forEach((definition, index) => {
+              cy.getByTestId(`${keys[index]}-value`).then($el =>
+                cy.wrap($el.text()).should('have.eq', definition.defaultValue),
+              );
+            });
 
           cy.getByTestId(`${name}-tooltip`).trigger('mouseout');
         });

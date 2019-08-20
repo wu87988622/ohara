@@ -68,16 +68,20 @@ const OverviewConnectors = props => {
                   title={
                     <TooltipBody>
                       <li>
-                        <b>Author:</b> {author}
+                        <b>Author:</b>
+                        <span data-testid="author-value">{author}</span>
                       </li>
                       <li>
-                        <b>Kind:</b> {kind}
+                        <b>Kind:</b>
+                        <span data-testid="kind-value">{kind}</span>
                       </li>
                       <li>
-                        <b>Version:</b> {version}
+                        <b>Version:</b>
+                        <span data-testid="version-value">{version}</span>
                       </li>
                       <li>
-                        <b>Class:</b> {className}
+                        <b>Class:</b>
+                        <span data-testid="class-value">{className}</span>
                       </li>
                     </TooltipBody>
                   }

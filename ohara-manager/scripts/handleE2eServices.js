@@ -15,6 +15,7 @@
  */
 
 const fs = require('fs');
+const path = require('path');
 const axios = require('axios');
 const chalk = require('chalk');
 const { get, isNull } = require('lodash');
@@ -35,28 +36,20 @@ const randomServiceName = () => {
 };
 
 const writeServiceInfoToFile = (zookeeperClusterName, brokerClusterName) => {
-  const filePath = 'scripts/servicesApi/service.json';
+  const filePath = path.resolve('./services.json');
 
-  fs.access(filePath, function(error) {
-    if (error) {
-      fs.mkdirSync('scripts/servicesApi');
-    }
-
-    const zookeeper = {
+  const data = JSON.stringify([
+    {
       name: zookeeperClusterName,
       serviceType: 'zookeepers',
-    };
-
-    const broker = {
+    },
+    {
       name: brokerClusterName,
       serviceType: 'brokers',
-    };
+    },
+  ]);
 
-    const data = JSON.stringify([zookeeper, broker]);
-    fs.writeFile(filePath, data, error => {
-      error;
-    });
-  });
+  fs.writeFileSync(filePath, data);
 };
 
 exports.getDefaultEnv = () => {
@@ -108,8 +101,8 @@ exports.createServices = async ({
 }) => {
   console.log(chalk.blue('Creating services for this test run'));
 
-  const zookeeperClusterName = 'zk' + randomServiceName();
-  const brokerClusterName = 'bk' + randomServiceName();
+  const zookeeperClusterName = 'zookeeper' + randomServiceName();
+  const brokerClusterName = 'broker' + randomServiceName();
 
   try {
     await createNode({ apiRoot, nodeHost, nodePort, nodeUser, nodePass });
@@ -148,7 +141,6 @@ exports.createServices = async ({
     });
 
     await writeServiceInfoToFile(zookeeperClusterName, brokerClusterName);
-
     console.log(chalk.green('Services created!'));
   } catch (error) {
     console.log(
@@ -206,9 +198,10 @@ const getRunningWorkers = async (services, apiRoot) => {
   return filteredServices;
 };
 
-exports.cleanServices = async apiRoot => {
+exports.cleanServices = async (apiRoot, nodeName) => {
   try {
-    const file = fs.readFileSync('scripts/servicesApi/service.json');
+    const filePath = path.resolve('./services.json');
+    const file = fs.readFileSync(filePath);
     const services = JSON.parse(file);
     const { workers, brokers, zookeepers } = getByServiceType(services);
 
@@ -221,6 +214,7 @@ exports.cleanServices = async apiRoot => {
     await deleteServices(runningWorkers, apiRoot);
     await deleteServices(brokers, apiRoot);
     await deleteServices(zookeepers, apiRoot);
+    await axios.delete(`${apiRoot}/nodes/${nodeName}`);
   } catch (error) {
     console.log(
       chalk.red('Failed to clean services, see the detailed error below:'),

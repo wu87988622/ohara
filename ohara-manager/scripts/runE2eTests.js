@@ -163,7 +163,7 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
     );
 
     killSubProcess();
-    await services.cleanServices(configurator);
+    await services.cleanServices(configurator, envNodeHost);
 
     console.log(chalk.green('Successfully cleaned up all the services!'));
     process.exit(0);

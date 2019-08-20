@@ -21,13 +21,15 @@ import * as utils from '../utils';
 import * as generate from '../../src/utils/generate';
 import { axiosInstance } from '../../src/api/apiUtils';
 
-Cypress.Commands.add('registerWorker', workerName => {
-  const fileName = '../scripts/servicesApi/service.json';
-  const update = { name: workerName, serviceType: 'workers' };
+// Registering service name so we can do the clean up later
+// when the tests are done
+Cypress.Commands.add('registerService', (serviceName, serviceType) => {
+  const fileName = '../services.json';
+  const update = { name: serviceName, serviceType: serviceType };
 
-  cy.task('readFileMaybe', fileName).then(data => {
+  cy.task('readFileMaybe', fileName).then(services => {
     // Append a new worker to the existing file
-    cy.writeFile(fileName, [...data, update]);
+    cy.writeFile(fileName, [...services, update]);
   });
 });
 
@@ -41,7 +43,7 @@ Cypress.Commands.add('createWorker', () => {
   // Store the worker names in a file as well as
   // in the Cypress env as we'll be using them in the tests
   Cypress.env('WORKER_NAME', workerName);
-  cy.registerWorker(workerName);
+  cy.registerService(workerName, 'workers');
 
   cy.request('GET', 'api/brokers')
     .then(res => res.body[0])
@@ -119,14 +121,13 @@ Cypress.Commands.add(
 Cypress.Commands.add('deleteAllWorkers', () => {
   cy.log('Delete all previous created workers');
 
-  const fileName = '../scripts/servicesApi/service.json';
+  const fileName = '../services.json';
+  cy.task('readFileMaybe', fileName).then(services => {
+    if (!services) return; // File is not there, skip the whole process
 
-  cy.task('readFileMaybe', fileName).then(data => {
-    if (!data) return; // File is not there, skip the whole process
-
-    const workerNames = data
-      .filter(d => d.serviceType === 'workers')
-      .map(d => d.name);
+    const workerNames = services
+      .filter(service => service.serviceType === 'workers')
+      .map(worker => worker.name);
 
     cy.request('GET', 'api/workers').then(res => {
       const targetWorkers = res.body.filter(worker =>

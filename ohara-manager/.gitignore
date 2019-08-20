@@ -5,7 +5,7 @@ coverage
 yarn-error.log
 
 #Scripts
-/scripts/servicesApi/
+services.json
 
 # Client
 /client/cypress/videos
