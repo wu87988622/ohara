@@ -541,4 +541,11 @@ public class TestCommonUtils extends SmallTest {
   public void failToUseEnvString() {
     CommonUtils.toEnvString(CommonUtils.randomString() + CommonUtils.INTERNAL_STRING_FOR_ENV);
   }
+
+  @Test
+  public void availablePortShouldBeBiggerThan1024() {
+    for (int i = 0; i != 10; ++i) {
+      Assert.assertTrue(CommonUtils.availablePort() > 1024);
+    }
+  }
 }
