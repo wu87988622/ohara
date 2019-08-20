@@ -22,7 +22,6 @@ import com.island.ohara.common.util.CommonUtils;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -117,36 +116,13 @@ public final class StreamDefinitions {
    * @return value from container environment
    */
   public String string(String key) {
-    return CommonUtils.fromEnvString(Objects.requireNonNull(System.getenv(key)));
-  }
-
-  public Optional<String> stringOption(String key) {
-    return Optional.ofNullable(System.getenv(key)).map(CommonUtils::fromEnvString);
-  }
-
-  /**
-   * this is a workaround function since the LaunchImpl does not care null point. Hence, we can't do
-   * totally check for env variables for it ...
-   *
-   * @return string or none
-   */
-  public Optional<String> nameOption() {
-    return stringOption(StreamDefUtils.NAME_DEFINITION.key());
+    return CommonUtils.fromEnvString(
+        Objects.requireNonNull(System.getenv(key), key + " could not be null"));
   }
 
   /** @return the name of this streamapp */
   public String name() {
     return string(StreamDefUtils.NAME_DEFINITION.key());
-  }
-
-  /**
-   * this is a workaround function since the LaunchImpl does not care null point. Hence, we can't do
-   * totally check for env variables for it ...
-   *
-   * @return string or none
-   */
-  public Optional<String> brokerConnectionPropsOption() {
-    return stringOption(StreamDefUtils.BROKER_DEFINITION.key());
   }
 
   /** @return brokers' connection props */
@@ -156,15 +132,11 @@ public final class StreamDefinitions {
 
   /** @return the keys of from topics */
   public List<TopicKey> fromTopicKeys() {
-    return stringOption(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key())
-        .map(TopicKey::toTopicKeys)
-        .orElse(Collections.emptyList());
+    return TopicKey.toTopicKeys(string(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key()));
   }
 
   /** @return the keys of to topics */
   public List<TopicKey> toTopicKeys() {
-    return stringOption(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key())
-        .map(TopicKey::toTopicKeys)
-        .orElse(Collections.emptyList());
+    return TopicKey.toTopicKeys(string(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key()));
   }
 }

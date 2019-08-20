@@ -145,8 +145,7 @@ public interface OStream<T extends Row> {
    *
    * @return the builder
    */
-  static OStreamBuilder<byte[], byte[]> builder() {
-    // By default, we use the <byte[], byte[]> type for generic as the stream topic consume with
-    return new OStreamBuilder<>(Serdes.BYTES, Serdes.BYTES);
+  static OStreamBuilder builder() {
+    return OStreamBuilder.builder();
   }
 }

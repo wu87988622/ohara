@@ -34,8 +34,7 @@ class TestCodePattern extends MediumTest with Matchers {
       baseClass = classOf[Builder[_]],
       postfix = "builder",
       excludedClasses = Seq(
-        classOf[Builder[_]],
-        classOf[com.island.ohara.streams.ostream.OStreamBuilder[_, _]]
+        classOf[Builder[_]]
       )
     )
 

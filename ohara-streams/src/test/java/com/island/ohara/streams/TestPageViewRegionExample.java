@@ -122,6 +122,7 @@ public class TestPageViewRegionExample extends WithBroker {
     settings.putIfAbsent(
         StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(), "[" + TopicKey.toJsonString(toTopic) + "]");
     settings.putIfAbsent("joinTopic", joinTableTopic);
+    settings.putIfAbsent(PageViewRegionExample.joinTopicKey, joinTableTopic);
     StreamTestUtils.setOharaEnv(settings);
 
     StreamTestUtils.createTopic(client, fromTopic.topicNameOnKafka(), partitions, replications);

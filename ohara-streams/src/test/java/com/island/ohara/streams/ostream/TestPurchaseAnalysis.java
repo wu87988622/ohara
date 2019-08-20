@@ -20,12 +20,15 @@ import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Pair;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.data.Serializer;
+import com.island.ohara.common.setting.TopicKey;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.BrokerClient;
 import com.island.ohara.kafka.Consumer;
 import com.island.ohara.kafka.Producer;
 import com.island.ohara.streams.OStream;
 import com.island.ohara.streams.StreamApp;
+import com.island.ohara.streams.StreamTestUtils;
+import com.island.ohara.streams.config.StreamDefUtils;
 import com.island.ohara.streams.config.StreamDefinitions;
 import com.island.ohara.testing.With3Brokers;
 import java.lang.reflect.Field;
@@ -34,6 +37,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -45,10 +50,11 @@ import org.slf4j.LoggerFactory;
 public class TestPurchaseAnalysis extends With3Brokers {
   private static final Logger LOG = LoggerFactory.getLogger(TestPurchaseAnalysis.class);
   private static final String appid = "test-purchase-analysis";
-  private static final String resultTopic = "gender-amount";
-  private static final String itemTopic = "items";
-  private static final String orderTopic = "orders";
-  private static final String userTopic = "users";
+  private static final TopicKey resultTopic =
+      TopicKey.of(CommonUtils.randomString(), "gender-amount");
+  private static final TopicKey itemTopic = TopicKey.of(CommonUtils.randomString(), "items");
+  private static final TopicKey orderTopic = TopicKey.of(CommonUtils.randomString(), "orders");
+  private static final TopicKey userTopic = TopicKey.of(CommonUtils.randomString(), "users");
   private final BrokerClient client = BrokerClient.of(testUtil().brokersConnProps());
   private final Producer<Row, byte[]> producer =
       Producer.<Row, byte[]>builder()
@@ -66,25 +72,25 @@ public class TestPurchaseAnalysis extends With3Brokers {
           .topicCreator()
           .numberOfPartitions(partitions)
           .numberOfReplications(replications)
-          .topicName(orderTopic)
+          .topicName(orderTopic.topicNameOnKafka())
           .create();
       client
           .topicCreator()
           .numberOfPartitions(partitions)
           .numberOfReplications(replications)
-          .topicName(itemTopic)
+          .topicName(itemTopic.topicNameOnKafka())
           .create();
       client
           .topicCreator()
           .numberOfPartitions(partitions)
           .numberOfReplications(replications)
-          .topicName(userTopic)
+          .topicName(userTopic.topicNameOnKafka())
           .create();
       client
           .topicCreator()
           .numberOfPartitions(partitions)
           .numberOfReplications(replications)
-          .topicName(resultTopic)
+          .topicName(resultTopic.topicNameOnKafka())
           .create();
     } catch (Exception e) {
       LOG.error(e.getMessage());
@@ -94,21 +100,34 @@ public class TestPurchaseAnalysis extends With3Brokers {
   @Test
   public void testStreamApp() throws InterruptedException {
     // write items.csv to kafka broker
-    produceData("items.csv", itemTopic);
+    produceData("items.csv", itemTopic.topicNameOnKafka());
 
     // write users.csv to kafka broker
-    produceData("users.csv", userTopic);
+    produceData("users.csv", userTopic.topicNameOnKafka());
 
     // we make sure the join topic has data already
-    assertResult(client, itemTopic, 4);
-    assertResult(client, userTopic, 4);
+    assertResult(client, itemTopic.topicNameOnKafka(), 4);
+    assertResult(client, userTopic.topicNameOnKafka(), 4);
     TimeUnit.SECONDS.sleep(1);
     // write orders.csv to kafka broker
-    produceData("orders.csv", orderTopic);
-    assertResult(client, orderTopic, 16);
+    produceData("orders.csv", orderTopic.topicNameOnKafka());
+    assertResult(client, orderTopic.topicNameOnKafka(), 16);
 
-    RunStreamApp app = new RunStreamApp(client.connectionProps());
-    StreamApp.runStreamApp(app.getClass(), client.connectionProps());
+    // initial environment
+    StreamTestUtils.setOharaEnv(
+        Stream.of(
+                Pair.of(StreamDefUtils.NAME_DEFINITION.key(), appid),
+                Pair.of(StreamDefUtils.BROKER_DEFINITION.key(), client.connectionProps()),
+                Pair.of(
+                    StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(),
+                    TopicKey.toJsonString(Collections.singletonList(orderTopic))),
+                Pair.of(
+                    StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(),
+                    TopicKey.toJsonString(Collections.singletonList(resultTopic))))
+            .collect(Collectors.toMap(Pair::left, Pair::right)));
+
+    RunStreamApp app = new RunStreamApp();
+    StreamApp.runStreamApp(app.getClass());
   }
 
   @After
@@ -120,21 +139,23 @@ public class TestPurchaseAnalysis extends With3Brokers {
   /** StreamApp Main Entry */
   public static class RunStreamApp extends StreamApp {
 
-    final String brokers;
-
-    public RunStreamApp(String brokers) {
-      this.brokers = brokers;
-    }
-
     @Override
     public void start(OStream<Row> stream, StreamDefinitions streamDefinitions) {
       // We initial a new OStream object to test functionality
       OStream<Row> ostream =
           OStream.builder()
-              .appid(appid)
-              .bootstrapServers(brokers)
-              .fromTopicWith(orderTopic, Serdes.ROW, Serdes.BYTES)
-              .toTopicWith(resultTopic, Serdes.ROW, Serdes.BYTES)
+              .appId(streamDefinitions.name())
+              .bootstrapServers(streamDefinitions.brokerConnectionProps())
+              .fromTopic(
+                  streamDefinitions.fromTopicKeys().stream()
+                      .map(TopicKey::topicNameOnKafka)
+                      .findFirst()
+                      .orElse(null))
+              .toTopic(
+                  streamDefinitions.toTopicKeys().stream()
+                      .map(TopicKey::topicNameOnKafka)
+                      .findFirst()
+                      .orElse(null))
               .cleanStart()
               .timestampExtractor(MyExtractor.class)
               .enableExactlyOnce()
@@ -142,7 +163,7 @@ public class TestPurchaseAnalysis extends With3Brokers {
 
       ostream
           .leftJoin(
-              userTopic,
+              userTopic.topicNameOnKafka(),
               Conditions.create().add(Collections.singletonList(Pair.of("userName", "name"))),
               (row1, row2) ->
                   Row.of(
@@ -153,7 +174,7 @@ public class TestPurchaseAnalysis extends With3Brokers {
                       row2 == null ? Cell.of("gender", "") : row2.cell("gender")))
           .filter(row -> row.cell("address").value() != null)
           .leftJoin(
-              itemTopic,
+              itemTopic.topicNameOnKafka(),
               Conditions.create().add(Collections.singletonList(Pair.of("itemName", "itemName"))),
               (row1, row2) ->
                   Row.of(
@@ -187,9 +208,9 @@ public class TestPurchaseAnalysis extends With3Brokers {
 
       Consumer<Row, byte[]> consumer =
           Consumer.<Row, byte[]>builder()
-              .topicName(resultTopic)
-              .connectionProps(brokers)
-              .groupId("group-" + resultTopic)
+              .topicName(resultTopic.topicNameOnKafka())
+              .connectionProps(streamDefinitions.brokerConnectionProps())
+              .groupId("group-" + resultTopic.topicNameOnKafka())
               .offsetFromBegin()
               .keySerializer(Serializer.ROW)
               .valueSerializer(Serializer.BYTES)

@@ -19,41 +19,55 @@ package com.island.ohara.streams.ostream;
 import com.island.ohara.common.data.Pair;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.setting.TopicKey;
+import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.streams.OStream;
 import com.island.ohara.streams.StreamApp;
+import com.island.ohara.streams.StreamTestUtils;
+import com.island.ohara.streams.config.StreamDefUtils;
 import com.island.ohara.streams.config.StreamDefinitions;
 import com.island.ohara.streams.data.Poneglyph;
 import com.island.ohara.streams.data.Stele;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class TestStreamAppTopology extends SmallTest {
 
+  private static String appId = CommonUtils.randomString(5);
+  private static TopicKey fromKey =
+      TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString());
+  private static TopicKey toKey =
+      TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString());
+  private static String join = "join_topic";
+
   @Test
   public void testGetTopology() {
+    // initial environment
+    StreamTestUtils.setOharaEnv(
+        Stream.of(
+                Pair.of(StreamDefUtils.NAME_DEFINITION.key(), appId),
+                Pair.of(StreamDefUtils.BROKER_DEFINITION.key(), "fake"),
+                Pair.of(
+                    StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(),
+                    TopicKey.toJsonString(Collections.singletonList(fromKey))),
+                Pair.of(
+                    StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(),
+                    TopicKey.toJsonString(Collections.singletonList(toKey))))
+            .collect(Collectors.toMap(Pair::left, Pair::right)));
+
     DescribeStreamApp app = new DescribeStreamApp();
     StreamApp.runStreamApp(app.getClass());
   }
 
   public static class DescribeStreamApp extends StreamApp {
-    String from = "from_topic";
-    String to = "to_topic";
-    String join = "join_topic";
 
     @Override
-    public void start(OStream<Row> stream, StreamDefinitions streamDefinitions) {
-      // We initial a new OStream object to test functionality
-      OStream<Row> ostream =
-          OStream.builder()
-              .fromTopicWith(from, Serdes.ROW, Serdes.BYTES)
-              .toTopic(to)
-              .bootstrapServers("fake")
-              .appid("get-poneglyph")
-              .build();
-
+    public void start(OStream<Row> ostream, StreamDefinitions streamDefinitions) {
       List<Poneglyph> poneglyph =
           ostream
               .filter(row -> !row.cell(0).value().toString().isEmpty())
@@ -70,7 +84,7 @@ public class TestStreamAppTopology extends SmallTest {
       Assert.assertEquals(4, poneglyph.size());
 
       // Topics should be contained in topologies
-      Arrays.asList(from, to, join)
+      Arrays.asList(fromKey.topicNameOnKafka(), toKey.topicNameOnKafka(), join)
           .forEach(
               topic ->
                   Assert.assertTrue(

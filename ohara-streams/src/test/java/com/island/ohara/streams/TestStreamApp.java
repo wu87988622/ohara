@@ -16,28 +16,45 @@
 
 package com.island.ohara.streams;
 
+import com.island.ohara.common.data.Pair;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.exception.OharaException;
 import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.setting.TopicKey;
 import com.island.ohara.common.util.CommonUtils;
+import com.island.ohara.streams.config.StreamDefUtils;
 import com.island.ohara.streams.config.StreamDefinitions;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URLClassLoader;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.junit.Assert;
 import org.junit.Test;
 
-// TODO: the streamapp requires many arguments from env variables.
-// This tests do not care the rules required by streamapp.
-// Fortunately (or unfortunately), streamapp lacks of enough checks to variables so the
-// non-completed settings to streamapp works well in this test ... by chia
 public class TestStreamApp extends SmallTest {
 
   @Test
   public void testCanFindCustomClassEntryFromInnerClass() {
     CustomStreamApp app = new CustomStreamApp();
+    TopicKey fromKey = TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString());
+    TopicKey toKey = TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString());
+
+    // initial all required environment
+    StreamTestUtils.setOharaEnv(
+        Stream.of(
+                Pair.of(StreamDefUtils.NAME_DEFINITION.key(), CommonUtils.randomString(5)),
+                Pair.of(StreamDefUtils.BROKER_DEFINITION.key(), CommonUtils.randomString()),
+                Pair.of(
+                    StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(),
+                    TopicKey.toJsonString(Collections.singletonList(fromKey))),
+                Pair.of(
+                    StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(),
+                    TopicKey.toJsonString(Collections.singletonList(toKey))))
+            .collect(Collectors.toMap(Pair::left, Pair::right)));
     StreamApp.runStreamApp(app.getClass());
   }
 

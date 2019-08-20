@@ -34,10 +34,11 @@ import org.apache.log4j.Logger;
 import org.junit.Assert;
 
 @VisibleForTesting
-class StreamTestUtils {
+public class StreamTestUtils {
   private static final Logger log = Logger.getLogger(StreamTestUtils.class);
 
-  static void createTopic(BrokerClient client, String topic, int partitions, short replications) {
+  public static void createTopic(
+      BrokerClient client, String topic, int partitions, short replications) {
     client
         .topicCreator()
         .numberOfPartitions(partitions)
@@ -46,7 +47,7 @@ class StreamTestUtils {
         .create();
   }
 
-  static void setOharaEnv(Map<String, String> settings) {
+  public static void setOharaEnv(Map<String, String> settings) {
     try {
       setEnv(settings);
     } catch (Exception e) {
@@ -54,7 +55,7 @@ class StreamTestUtils {
     }
   }
 
-  static void produceData(Producer<Row, byte[]> producer, List<Row> rows, String topic) {
+  public static void produceData(Producer<Row, byte[]> producer, List<Row> rows, String topic) {
     rows.forEach(
         row -> {
           try {
@@ -65,7 +66,7 @@ class StreamTestUtils {
         });
   }
 
-  static void assertResult(
+  public static void assertResult(
       BrokerClient client, String toTopic, List<Row> expectedContainedRows, int expectedSize) {
     Consumer<Row, byte[]> consumer =
         Consumer.<Row, byte[]>builder()

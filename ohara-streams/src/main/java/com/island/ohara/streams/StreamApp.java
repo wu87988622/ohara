@@ -54,8 +54,8 @@ public abstract class StreamApp {
           .build();
 
   /**
-   * Running a standalone streamApp. This method is usually called from the main(). It must not be
-   * called more than once otherwise exception will be thrown.
+   * Running a standalone streamApp. This method is usually called from the main method. It must not
+   * be called more than once otherwise exception will be thrown.
    *
    * <p>Usage :
    *
@@ -66,57 +66,17 @@ public abstract class StreamApp {
    * </pre>
    *
    * @param theClass the streamApp class that is constructed and extends from {@link StreamApp}
-   * @param params parameters of {@code theClass} constructor used
    */
-  public static void runStreamApp(Class<? extends StreamApp> theClass, Object... params) {
+  public static void runStreamApp(Class<? extends StreamApp> theClass) {
     if (StreamApp.class.isAssignableFrom(theClass))
       ExceptionHandler.DEFAULT.handle(
           () -> {
-            LaunchImpl.launchApplication(theClass, params);
+            LaunchImpl.launchApplication(theClass, new Properties());
             return null;
           });
     else
       throw new RuntimeException(
           "Error: " + theClass + " is not a subclass of " + StreamApp.class.getName());
-  }
-
-  /**
-   * running a standalone streamApp. This method will try to find each methods in current thread
-   * that is extends from {@code StreamApp}
-   */
-  public static void runStreamApp() {
-
-    String entryClassName = null;
-    // Find correct class to call
-    StackTraceElement[] stack = Thread.currentThread().getStackTrace();
-
-    boolean found = false;
-    for (StackTraceElement se : stack) {
-      // Skip entries until we get to the entry for this class
-      String className = se.getClassName();
-      String methodName = se.getMethodName();
-      if (found) {
-        entryClassName = className;
-        break;
-      } else if (StreamApp.class.getName().equals(className) && "runStreamApp".equals(methodName)) {
-
-        found = true;
-      }
-    }
-    if (entryClassName == null) throw new RuntimeException("Unable to find StreamApp class.");
-
-    try {
-      Class theClass =
-          Class.forName(entryClassName, false, Thread.currentThread().getContextClassLoader());
-      if (StreamApp.class.isAssignableFrom(theClass)) LaunchImpl.launchApplication(theClass);
-      else
-        throw new RuntimeException(
-            "Error: " + theClass + " is not a subclass of " + StreamApp.class.getName());
-    } catch (RuntimeException ex) {
-      throw ex;
-    } catch (Exception ex) {
-      throw new RuntimeException(ex);
-    }
   }
 
   /** Constructor */

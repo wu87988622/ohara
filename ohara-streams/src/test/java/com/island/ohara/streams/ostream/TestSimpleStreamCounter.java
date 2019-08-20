@@ -17,8 +17,10 @@
 package com.island.ohara.streams.ostream;
 
 import com.island.ohara.common.data.Cell;
+import com.island.ohara.common.data.Pair;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.data.Serializer;
+import com.island.ohara.common.setting.TopicKey;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.BrokerClient;
 import com.island.ohara.kafka.Consumer;
@@ -26,10 +28,15 @@ import com.island.ohara.kafka.Producer;
 import com.island.ohara.metrics.BeanChannel;
 import com.island.ohara.streams.OStream;
 import com.island.ohara.streams.StreamApp;
+import com.island.ohara.streams.StreamTestUtils;
+import com.island.ohara.streams.config.StreamDefUtils;
 import com.island.ohara.streams.config.StreamDefinitions;
 import com.island.ohara.streams.metric.MetricFactory;
 import com.island.ohara.testing.WithBroker;
 import java.time.Duration;
+import java.util.Collections;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,8 +48,8 @@ import org.junit.Test;
 public class TestSimpleStreamCounter extends WithBroker {
 
   private static Duration timeout = Duration.ofSeconds(10);
-  private static String FROM_TOPIC = "metric-from";
-  private static String TO_TOPIC = "metric-to";
+  private static TopicKey fromKey = TopicKey.of(CommonUtils.randomString(), "metric-from");
+  private static TopicKey toKey = TopicKey.of(CommonUtils.randomString(), "metric-to");
 
   private final BrokerClient client = BrokerClient.of(testUtil().brokersConnProps());
   private final Producer<Row, byte[]> producer =
@@ -53,7 +60,7 @@ public class TestSimpleStreamCounter extends WithBroker {
           .build();
   private final Consumer<Row, byte[]> consumer =
       Consumer.<Row, byte[]>builder()
-          .topicName(TO_TOPIC)
+          .topicName(toKey.topicNameOnKafka())
           .connectionProps(client.connectionProps())
           .keySerializer(Serializer.ROW)
           .valueSerializer(Serializer.BYTES)
@@ -67,7 +74,7 @@ public class TestSimpleStreamCounter extends WithBroker {
         .topicCreator()
         .numberOfPartitions(partitions)
         .numberOfReplications(replications)
-        .topicName(FROM_TOPIC)
+        .topicName(fromKey.topicNameOnKafka())
         .create();
 
     try {
@@ -75,14 +82,14 @@ public class TestSimpleStreamCounter extends WithBroker {
           .sender()
           .key(Row.of(Cell.of("bar", "foo")))
           .value(new byte[0])
-          .topicName(FROM_TOPIC)
+          .topicName(fromKey.topicNameOnKafka())
           .send()
           .get();
       producer
           .sender()
           .key(Row.of(Cell.of("hello", "world")))
           .value(new byte[0])
-          .topicName(FROM_TOPIC)
+          .topicName(fromKey.topicNameOnKafka())
           .send()
           .get();
     } catch (Exception e) {
@@ -92,8 +99,21 @@ public class TestSimpleStreamCounter extends WithBroker {
 
   @Test
   public void testMetrics() {
-    DirectWriteStreamApp app = new DirectWriteStreamApp(client.connectionProps());
-    StreamApp.runStreamApp(app.getClass(), client.connectionProps());
+    // initial environment
+    StreamTestUtils.setOharaEnv(
+        Stream.of(
+                Pair.of(StreamDefUtils.NAME_DEFINITION.key(), "metric-test"),
+                Pair.of(StreamDefUtils.BROKER_DEFINITION.key(), client.connectionProps()),
+                Pair.of(
+                    StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(),
+                    TopicKey.toJsonString(Collections.singletonList(fromKey))),
+                Pair.of(
+                    StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(),
+                    TopicKey.toJsonString(Collections.singletonList(toKey))))
+            .collect(Collectors.toMap(Pair::left, Pair::right)));
+
+    DirectWriteStreamApp app = new DirectWriteStreamApp();
+    StreamApp.runStreamApp(app.getClass());
 
     // wait until topic has data
     CommonUtils.await(() -> consumer.poll(timeout).size() > 0, Duration.ofSeconds(30));
@@ -116,22 +136,8 @@ public class TestSimpleStreamCounter extends WithBroker {
 
   public static class DirectWriteStreamApp extends StreamApp {
 
-    final String brokers;
-
-    public DirectWriteStreamApp(String brokers) {
-      this.brokers = brokers;
-    }
-
     @Override
-    public void start(OStream<Row> stream, StreamDefinitions streamDefinitions) {
-      // We initial a new OStream object to test functionality
-      OStream<Row> ostream =
-          OStream.builder()
-              .fromTopicWith(FROM_TOPIC, Serdes.ROW, Serdes.BYTES)
-              .toTopicWith(TO_TOPIC, Serdes.ROW, Serdes.BYTES)
-              .bootstrapServers(brokers)
-              .appid("metric-test")
-              .build();
+    public void start(OStream<Row> ostream, StreamDefinitions streamDefinitions) {
 
       ostream.filter(row -> row.names().contains("bar")).map(row -> row).start();
     }

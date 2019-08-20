@@ -97,18 +97,18 @@ import java.util.Collections;
  * with the above format
  */
 public class PageViewRegionExample extends StreamApp {
-  private final String joinTopic = "joinTopic";
+  public static final String joinTopicKey = "joinTopicKey";
 
   @Override
   public StreamDefinitions config() {
-    return StreamDefinitions.with(SettingDef.builder().key(joinTopic).group("default").build());
+    return StreamDefinitions.with(SettingDef.builder().key(joinTopicKey).group("default").build());
   }
 
   @Override
   public void start(OStream<Row> ostream, StreamDefinitions streamDefinitions) {
     ostream
         .leftJoin(
-            streamDefinitions.string(joinTopic),
+            streamDefinitions.string(joinTopicKey),
             Conditions.create().add(Collections.singletonList(Pair.of("user", "user"))),
             (r1, r2) ->
                 Row.of(
