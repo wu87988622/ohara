@@ -204,6 +204,7 @@ object K8SClient {
         new ContainerCreator() {
           private[this] var name: String = CommonUtils.randomString()
           private[this] var imagePullPolicy: ImagePullPolicy = ImagePullPolicy.IFNOTPRESENT
+          private[this] var restartPolicy: RestartPolicy = RestartPolicy.Never
           private[this] var imageName: String = _
           private[this] var hostname: String = _
           private[this] var nodeName: String = _
@@ -268,6 +269,12 @@ object K8SClient {
             this
           }
 
+          @Optional("default is Never")
+          override def restartPolicy(restartPolicy: RestartPolicy): ContainerCreator = {
+            this.restartPolicy = Objects.requireNonNull(restartPolicy, "restartPolicy should not be null")
+            this
+          }
+
           @Optional("default is empty")
           override def command(command: Seq[String]): ContainerCreator = {
             this.command = CommonUtils.requireNonEmpty(command.asJava).asScala
@@ -300,7 +307,8 @@ object K8SClient {
                                        ports.map(x => CreatePodPortMapping(x._1, x._2)).toSeq,
                                        imagePullPolicy,
                                        command,
-                                       args))
+                                       args)),
+                  restartPolicy
                 )
               }
               .map(podSpec => //name is pod name
@@ -381,6 +389,8 @@ object K8SClient {
 
     def pullImagePolicy(imagePullPolicy: ImagePullPolicy): ContainerCreator
 
+    def restartPolicy(restartPolicy: RestartPolicy): ContainerCreator
+
     def command(command: Seq[String]): ContainerCreator
 
     def args(args: Seq[String]): ContainerCreator
@@ -399,4 +409,20 @@ object K8SClient {
       override def toString: String = "IfNotPresent"
     }
   }
+
+  sealed abstract class RestartPolicy
+  object RestartPolicy extends Enum[RestartPolicy] {
+    case object Always extends RestartPolicy {
+      override def toString: String = "Always"
+    }
+
+    case object OnFailure extends RestartPolicy {
+      override def toString: String = "OnFailure"
+    }
+
+    case object Never extends RestartPolicy {
+      override def toString: String = "Never"
+    }
+  }
+
 }

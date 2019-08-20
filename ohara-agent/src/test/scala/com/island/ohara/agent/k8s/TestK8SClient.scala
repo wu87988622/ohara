@@ -20,7 +20,7 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.{Http, server}
 import akka.stream.ActorMaterializer
-import com.island.ohara.agent.k8s.K8SClient.ImagePullPolicy
+import com.island.ohara.agent.k8s.K8SClient.{ImagePullPolicy, RestartPolicy}
 import com.island.ohara.agent.k8s.K8SJson._
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
@@ -42,6 +42,10 @@ class TestK8SClient extends SmallTest with Matchers {
     ImagePullPolicy.ALWAYS.toString shouldBe "Always"
     ImagePullPolicy.IFNOTPRESENT.toString shouldBe "IfNotPresent"
     ImagePullPolicy.NEVER.toString shouldBe "Never"
+
+    RestartPolicy.Always.toString shouldBe "Always"
+    RestartPolicy.OnFailure.toString shouldBe "OnFailure"
+    RestartPolicy.Never.toString shouldBe "Never"
   }
 
   @Test
@@ -60,7 +64,34 @@ class TestK8SClient extends SmallTest with Matchers {
             .labelName("ohara")
             .hostname("test1")
             .domainName("ohara")
-            .pullImagePolicy(ImagePullPolicy.IFNOTPRESENT)
+            .nodeName(nodeName)
+            .threadPool(scala.concurrent.ExecutionContext.Implicits.global)
+            .create(),
+          30 seconds
+        )
+        result.get.name shouldBe podName
+        result.get.environments shouldBe Map.empty
+        result.get.nodeName shouldBe nodeName
+      } finally client.close()
+    } finally s.close()
+  }
+
+  @Test
+  def testRestartPolicyDefault(): Unit = {
+    val nodeName = "ohara-it-02"
+    val podName = "container1"
+    val s = imagePolicyURL(nodeName, podName, ImagePullPolicy.IFNOTPRESENT)
+    try {
+      val client = K8SClient(s.url)
+      try {
+        val result: Option[ContainerInfo] = Await.result(
+          client
+            .containerCreator()
+            .name(podName)
+            .imageName("hello world")
+            .labelName("ohara")
+            .hostname("test1")
+            .domainName("ohara")
             .nodeName(nodeName)
             .threadPool(scala.concurrent.ExecutionContext.Implicits.global)
             .create(),

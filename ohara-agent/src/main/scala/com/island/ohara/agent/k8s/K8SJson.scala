@@ -16,7 +16,7 @@
 
 package com.island.ohara.agent.k8s
 
-import com.island.ohara.agent.k8s.K8SClient.ImagePullPolicy
+import com.island.ohara.agent.k8s.K8SClient.{ImagePullPolicy, RestartPolicy}
 import spray.json.DefaultJsonProtocol._
 import spray.json.{DeserializationException, JsObject, JsString, JsValue, RootJsonFormat}
 
@@ -144,9 +144,15 @@ object K8SJson {
                                  hostname: String,
                                  subdomain: String,
                                  hostAliases: Seq[HostAliases],
-                                 containers: Seq[CreatePodContainer])
+                                 containers: Seq[CreatePodContainer],
+                                 restartPolicy: RestartPolicy)
 
-  implicit val CREATEPOD_SPEC_FORMAT: RootJsonFormat[CreatePodSpec] = jsonFormat5(CreatePodSpec)
+  implicit val RESTART_POLICY_JSON_FORMAT: RootJsonFormat[RestartPolicy] = new RootJsonFormat[RestartPolicy] {
+    override def read(json: JsValue): RestartPolicy = RestartPolicy.forName(json.convertTo[String])
+
+    override def write(obj: RestartPolicy): JsValue = JsString(obj.toString)
+  }
+  implicit val CREATEPOD_SPEC_FORMAT: RootJsonFormat[CreatePodSpec] = jsonFormat6(CreatePodSpec)
 
   final case class CreatePodLabel(name: String)
   implicit val CREATEPOD_LABEL_FORMAT: RootJsonFormat[CreatePodLabel] = jsonFormat1(CreatePodLabel)
