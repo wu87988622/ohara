@@ -25,7 +25,7 @@ import org.junit.Before
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestSshClusterCollieByConfigurator extends BasicTests4ClusterCollieByConfigurator {
   override protected val nodeCache: Seq[Node] = CollieTestUtils.nodeCache()
-  override protected val nameHolder = new ClusterNameHolder(nodeCache)
+  override protected val nameHolder = ClusterNameHolder(nodeCache)
   override protected def configurator: Configurator = _configurator
 
   private[this] var _configurator: Configurator = _

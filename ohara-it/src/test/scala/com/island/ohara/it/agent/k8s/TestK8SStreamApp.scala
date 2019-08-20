@@ -21,10 +21,6 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.agent.{BasicTests4StreamApp, ClusterNameHolder}
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
 class TestK8SStreamApp extends BasicTests4StreamApp {
 
   private[this] val API_SERVER_URL: Option[String] = sys.env.get("ohara.it.k8s")
@@ -45,26 +41,10 @@ class TestK8SStreamApp extends BasicTests4StreamApp {
           validationReport = None,
           tags = Map.empty
       ))
-  override protected def createNameHolder(nodeCache: Seq[Node]): ClusterNameHolder = new ClusterNameHolder(nodeCache) {
-    override def close(): Unit = {
-      val k8sClient = K8SClient(API_SERVER_URL.get)
-      Await.result(
-        k8sClient
-          .containers()
-          .map {
-            _.filter(container => {
-              usedClusterNames.exists(clusterName => {
-                container.name.contains(clusterName)
-              })
-            })
-          }
-          .flatMap(Future.traverse(_) { container =>
-            k8sClient.remove(container.name)
-          }),
-        30 seconds
-      )
-    }
-  }
+
+  override protected def createNameHolder(nodeCache: Seq[Node]): ClusterNameHolder = if (API_SERVER_URL.isEmpty) null
+  else ClusterNameHolder(nodeCache, K8SClient(API_SERVER_URL.get))
+
   override protected def createConfigurator(nodeCache: Seq[Node], hostname: String, port: Int): Configurator =
     Configurator.builder.hostname(hostname).port(port).k8sClient(K8SClient(API_SERVER_URL.get)).build()
 }

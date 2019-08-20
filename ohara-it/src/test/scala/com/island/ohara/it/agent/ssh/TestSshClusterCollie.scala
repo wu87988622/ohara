@@ -24,7 +24,7 @@ import org.junit.{Before, Test}
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestSshClusterCollie extends BasicTests4ClusterCollie {
   override protected val nodeCache: Seq[Node] = CollieTestUtils.nodeCache()
-  override protected val nameHolder = new ClusterNameHolder(nodeCache)
+  override protected val nameHolder = ClusterNameHolder(nodeCache)
   override protected def clusterCollie: ClusterCollie = _clusterCollie
 
   private[this] var _clusterCollie: ClusterCollie = _

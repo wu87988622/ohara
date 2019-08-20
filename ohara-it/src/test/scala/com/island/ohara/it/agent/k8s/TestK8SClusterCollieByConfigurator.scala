@@ -22,22 +22,16 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.agent.{BasicTests4ClusterCollieByConfigurator, ClusterNameHolder}
-import com.typesafe.scalalogging.Logger
 import org.junit.Before
 
-import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.{FiniteDuration, _}
 
 class TestK8SClusterCollieByConfigurator extends BasicTests4ClusterCollieByConfigurator {
-  private[this] val log = Logger(classOf[TestK8SClusterCollieByConfigurator])
   private[this] val K8S_API_SERVER_URL_KEY: String = "ohara.it.k8s"
   private[this] val K8S_API_NODE_NAME_KEY: String = "ohara.it.k8s.nodename"
 
   private[this] val API_SERVER_URL: Option[String] = sys.env.get(K8S_API_SERVER_URL_KEY)
   private[this] val NODE_SERVER_NAME: Option[String] = sys.env.get(K8S_API_NODE_NAME_KEY)
-
-  private[this] val TIMEOUT: FiniteDuration = 30 seconds
 
   override protected val nodeCache: Seq[Node] =
     if (API_SERVER_URL.isEmpty || NODE_SERVER_NAME.isEmpty) Seq.empty
@@ -58,27 +52,9 @@ class TestK8SClusterCollieByConfigurator extends BasicTests4ClusterCollieByConfi
 
   override def configurator: Configurator = _configurator
   private[this] var _configurator: Configurator = _
-  override protected val nameHolder: ClusterNameHolder = new ClusterNameHolder(nodeCache) {
-    override def close(): Unit = {
-      val k8sClient = K8SClient(API_SERVER_URL.get)
-      try {
-        nodeCache.foreach { _ =>
-          Await
-            .result(k8sClient.containers(), TIMEOUT)
-            .filter(container => usedClusterNames.exists(clusterName => container.name.contains(clusterName)))
-            .foreach { container =>
-              try {
-                k8sClient.remove(container.name)
-                log.info(s"succeed to remove container ${container.name}")
-              } catch {
-                case e: Throwable =>
-                  log.error(s"failed to remove container ${container.name}", e)
-              }
-            }
-        }
-      } finally k8sClient.close()
-    }
-  }
+
+  override protected def nameHolder: ClusterNameHolder = _nameHolder
+  private[this] var _nameHolder: ClusterNameHolder = _
 
   @Before
   final def setup(): Unit = if (nodeCache.isEmpty) skipTest(s"You must assign nodes for collie tests")
@@ -92,5 +68,6 @@ class TestK8SClusterCollieByConfigurator extends BasicTests4ClusterCollieByConfi
     val nodes = result(nodeApi.list())
     nodes.size shouldBe nodeCache.size
     nodeCache.foreach(node => nodes.exists(_.name == node.name) shouldBe true)
+    _nameHolder = ClusterNameHolder(nodeCache, K8SClient(API_SERVER_URL.get))
   }
 }
