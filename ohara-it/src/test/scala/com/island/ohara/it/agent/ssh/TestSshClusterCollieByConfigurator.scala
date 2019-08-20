@@ -18,17 +18,18 @@ package com.island.ohara.it.agent.ssh
 
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.common.util.Releasable
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.agent.{BasicTests4ClusterCollieByConfigurator, ClusterNameHolder, CollieTestUtils}
-import org.junit.{After, Before}
+import org.junit.Before
+
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestSshClusterCollieByConfigurator extends BasicTests4ClusterCollieByConfigurator {
   override protected val nodeCache: Seq[Node] = CollieTestUtils.nodeCache()
-  private[this] val nameHolder = new ClusterNameHolder(nodeCache)
+  override protected val nameHolder = new ClusterNameHolder(nodeCache)
   override protected def configurator: Configurator = _configurator
 
   private[this] var _configurator: Configurator = _
+
   @Before
   final def setup(): Unit = if (nodeCache.isEmpty) skipTest(s"You must assign nodes for collie tests")
   else {
@@ -38,15 +39,8 @@ class TestSshClusterCollieByConfigurator extends BasicTests4ClusterCollieByConfi
       result(
         nodeApi.request.hostname(node.hostname).port(node._port).user(node._user).password(node._password).create())
     }
-
     val nodes = result(nodeApi.list())
     nodes.size shouldBe nodeCache.size
     nodeCache.foreach(node => nodes.exists(_.name == node.name) shouldBe true)
-
   }
-
-  @After
-  def cleanAllContainers(): Unit = if (cleanup) Releasable.close(nameHolder)
-
-  override protected def generateClusterName(): String = nameHolder.generateClusterName()
 }

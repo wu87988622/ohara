@@ -55,6 +55,14 @@ class ClusterNameHolder(nodes: Seq[Node]) extends Releasable {
         .filter(containerName => usedClusterNames.exists(clusterName => containerName.contains(clusterName)))
         .foreach { containerName =>
           try {
+            println(s"[-----------------------------------$containerName-----------------------------------]")
+            val containerLogs = try client.log(containerName)
+            catch {
+              case e: Throwable =>
+                s"failed to fetch the logs for container:$containerName. caused by:${e.getMessage}"
+            }
+            println(containerLogs)
+            println("[------------------------------------------------------------------------------------]")
             client.forceRemove(containerName)
             log.info(s"succeed to remove container $containerName")
           } catch {
