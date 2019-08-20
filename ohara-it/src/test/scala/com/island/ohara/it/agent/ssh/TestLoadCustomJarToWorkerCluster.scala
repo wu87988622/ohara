@@ -69,7 +69,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
 
   private[this] val fileApi = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
 
-  private[this] val nameHolder = new ClusterNameHolder(nodeCache)
+  private[this] val nameHolder = ClusterNameHolder(nodeCache)
 
   /**
     * used to debug. setting false to disable cleanup of containers after testing.

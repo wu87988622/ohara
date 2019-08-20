@@ -31,7 +31,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class TestListCluster extends IntegrationTest with Matchers {
   private[this] val log = Logger(classOf[TestListCluster])
   private[this] val nodeCache: Seq[Node] = CollieTestUtils.nodeCache()
-  private[this] val nameHolder = new ClusterNameHolder(nodeCache)
+  private[this] val nameHolder = ClusterNameHolder(nodeCache)
 
   private[this] val nodeCollie: NodeCollie = NodeCollie(nodeCache)
 
