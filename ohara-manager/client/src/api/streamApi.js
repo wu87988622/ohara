@@ -56,6 +56,7 @@ export const updateProperty = async params => {
     const to = size(params.to) > 0 ? params.to : [];
 
     const data = {
+      ...params,
       from: from,
       to: to,
       instances: params.instances ? Number(params.instances) : 1,

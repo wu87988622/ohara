@@ -159,6 +159,7 @@ class StreamApp extends React.Component {
       : [{ group: 'default', name: toTopic[0] }];
 
     const params = {
+      ...values,
       name: this.streamAppName,
       instances,
       from: fromKey,

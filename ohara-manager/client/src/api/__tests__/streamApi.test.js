@@ -141,6 +141,7 @@ describe('updateProperty()', () => {
   };
 
   const data = {
+    ...params,
     from: params.from || [],
     to: params.to || [],
     instances: params.instances ? Number(params.instances) : 1,
