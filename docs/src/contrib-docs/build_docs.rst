@@ -90,11 +90,24 @@ Other modules
 Build docs
 ----------------
 
-  Build Ohara html documentation
+  You can use `make` or `sphinx-build` to generate the html files:
 
   .. code-block:: console
 
     [ohara]$ cd docs
+    [docs]$ make html
+
+  OR
+
+  .. code-block:: console
+
+    [ohara]$ cd docs
+    [docs]$ sphinx-build -M html src/ build/
+
+  The screen output would be like following:
+
+  .. code-block:: console
+
     [docs]$ make html
     Running Sphinx v1.8.5
     ========================================
@@ -124,9 +137,7 @@ Build docs
     The HTML pages are in build/html.
     [docs]$
 
-  .. note::
-    All html files output to `build` folder.
-    Now you can open browser and open the file: ``file:///${OHARA_ROOT}/docs/build/html/index.html``
+  All html files output to `build` folder. Now you can open browser and open the file: ``file:///${OHARA_ROOT}/docs/build/html/index.html``
 
   If you want to clean **build** folder, just type: ``$ make clean``
 
