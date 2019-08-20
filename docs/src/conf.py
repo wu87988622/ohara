@@ -149,7 +149,7 @@ language = None
 exclude_patterns = ['build', 'Thumbs.db', '.DS_Store']
 
 if ohara_prod_env:
-    exclude_patterns.extend(['sample.rst'])
+    exclude_patterns.extend([])
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'

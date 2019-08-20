@@ -20,7 +20,8 @@ Document contribution
 
 
 .. toctree::
-   :maxdepth: 1
-   :caption: How to contribute docs
+   :maxdepth: 2
+   :caption: Table of contents
 
+   quick_example
    build_docs

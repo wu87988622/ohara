@@ -69,6 +69,7 @@ license {
             "**/build",
             "ohara-manager/**/node_modules",
             "ohara-manager/**/coverage",
+            "docs/**/_include",
             // we have yet to exercise gradlew on project
             "gradle/wrapper/gradle-wrapper.properties"
   ])
