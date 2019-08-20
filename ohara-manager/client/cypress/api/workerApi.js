@@ -95,6 +95,7 @@ describe('Worker API', () => {
       expect(result.configTopicName).to.be.a('string');
       expect(result.offsetTopicName).to.be.a('string');
       expect(result.statusTopicName).to.be.a('string');
+      expect(result.imageName).to.be.a('string');
     });
   });
 
@@ -113,6 +114,7 @@ describe('Worker API', () => {
       expect(result.nodeNames).to.be.a('array');
       expect(result.connectors).to.be.a('array');
       expect(result.jarInfos).to.be.a('array');
+      expect(result.imageName).to.be.a('string');
     });
   });
 

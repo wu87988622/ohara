@@ -58,6 +58,7 @@ describe('Zookeeper API', () => {
         electionPort,
         peerPort,
         state,
+        imageName,
       } = result;
 
       expect(isSuccess).to.eq(true);
@@ -70,6 +71,7 @@ describe('Zookeeper API', () => {
       expect(electionPort).to.be.a('number');
       expect(peerPort).to.be.a('number');
       expect(state).to.be.undefined;
+      expect(imageName).to.be.a('string');
     });
   });
 
@@ -87,6 +89,7 @@ describe('Zookeeper API', () => {
         electionPort,
         peerPort,
         state,
+        imageName,
       } = result;
 
       expect(isSuccess).to.eq(true);
@@ -99,6 +102,7 @@ describe('Zookeeper API', () => {
       expect(electionPort).to.be.a('number');
       expect(peerPort).to.be.a('number');
       expect(state).to.be.undefined;
+      expect(imageName).to.be.a('string');
     });
   });
 

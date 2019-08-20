@@ -16,7 +16,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { get } from 'lodash';
+import { get, isNull } from 'lodash';
 
 import OverviewTopics from './OverviewTopics';
 import OverviewConnectors from './OverviewConnectors';
@@ -80,16 +80,16 @@ const Overview = props => {
         </Box>
 
         <Box>
-          {!Array.isArray(zookeeper) && zookeeper != null && broker != null ? (
-            <OverviewNodes
-              worker={worker}
-              handleRedirect={handleRedirect}
-              zookeeper={zookeeper}
-              broker={broker}
-            />
-          ) : (
-            <></>
-          )}
+          {!Array.isArray(zookeeper) &&
+            !isNull(zookeeper) &&
+            !isNull(broker) && (
+              <OverviewNodes
+                worker={worker}
+                handleRedirect={handleRedirect}
+                zookeeper={zookeeper}
+                broker={broker}
+              />
+            )}
         </Box>
 
         <Box>
