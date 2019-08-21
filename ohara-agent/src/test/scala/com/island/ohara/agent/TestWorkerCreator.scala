@@ -16,10 +16,7 @@
 
 package com.island.ohara.agent
 
-import java.net.URL
-
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.FileInfoApi.{FILE_INFO_JSON_FORMAT, FileInfo}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
@@ -27,7 +24,7 @@ import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
-import spray.json.{DeserializationException, JsArray}
+import spray.json.DeserializationException
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -51,6 +48,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
                                                                 configTopicName,
                                                                 configTopicReplications,
                                                                 jarInfos,
+                                                                settings,
                                                                 nodeNames) => {
     // the inputs have been checked (NullPointerException). Hence, we throw another exception here.
     if (executionContext == null) throw new AssertionError()
@@ -70,6 +68,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
     if (configTopicReplications <= 0) throw new AssertionError()
     // it is ok to accept empty url
     if (jarInfos == null) throw new AssertionError()
+    if (settings == null || settings.isEmpty) throw new AssertionError()
     if (nodeNames == null || nodeNames.isEmpty) throw new AssertionError()
     Future.successful(
       WorkerClusterInfo(
@@ -216,10 +215,16 @@ class TestWorkerCreator extends SmallTest with Matchers {
     .clusterName(CommonUtils.randomString(10))
     .brokerClusterName("bk")
     .clientPort(CommonUtils.availablePort())
+    .jmxPort(8084)
     .groupId(CommonUtils.randomString(10))
-    .offsetTopicName(CommonUtils.randomString(10))
-    .statusTopicName(CommonUtils.randomString(10))
     .configTopicName(CommonUtils.randomString(10))
+    .configTopicReplications(1)
+    .statusTopicName(CommonUtils.randomString(10))
+    .statusTopicPartitions(1)
+    .statusTopicReplications(1)
+    .offsetTopicName(CommonUtils.randomString(10))
+    .offsetTopicPartitions(1)
+    .offsetTopicReplications(1)
     .nodeName(CommonUtils.randomString())
     .create()
 
@@ -255,60 +260,6 @@ class TestWorkerCreator extends SmallTest with Matchers {
       lastModified = 0
     )
     Await.result(wkCreator().copy(workerClusterInfo).create(), 30 seconds) shouldBe workerClusterInfo
-  }
-
-  @Test
-  def testJarInfo(): Unit = WorkerCollie.toMap(Seq.empty) shouldBe Map.empty
-
-  @Test
-  def testJarInfo2(): Unit = {
-    val jarInfos = Seq(
-      FileInfo(
-        name = CommonUtils.randomString(),
-        group = CommonUtils.randomString(),
-        size = 100,
-        url = new URL("http://localhost:12345/aa.jar"),
-        lastModified = CommonUtils.current(),
-        tags = Map.empty
-      ),
-      FileInfo(
-        name = CommonUtils.randomString(),
-        group = CommonUtils.randomString(),
-        size = 100,
-        url = new URL("http://localhost:12345/aa.jar"),
-        lastModified = CommonUtils.current(),
-        tags = Map.empty
-      )
-    )
-    WorkerCollie.toJarInfos(WorkerCollie.toString(jarInfos)) shouldBe jarInfos
-  }
-
-  @Test
-  def testJarInfo3(): Unit = {
-    val jarInfos = Seq(
-      FileInfo(
-        name = CommonUtils.randomString(),
-        group = CommonUtils.randomString(),
-        size = 100,
-        url = new URL("http://localhost:12345/aa.jar"),
-        lastModified = CommonUtils.current(),
-        tags = Map.empty
-      ),
-      FileInfo(
-        name = CommonUtils.randomString(),
-        group = CommonUtils.randomString(),
-        size = 100,
-        url = new URL("http://localhost:12345/aa.jar"),
-        lastModified = CommonUtils.current(),
-        tags = Map.empty
-      )
-    )
-    WorkerCollie.toString(jarInfos).contains("\\\"") shouldBe true
-
-    WorkerCollie.toJarInfos(WorkerCollie.toString(jarInfos)) shouldBe jarInfos
-
-    WorkerCollie.toJarInfos(JsArray(jarInfos.map(FILE_INFO_JSON_FORMAT.write).toVector).toString) shouldBe jarInfos
-
   }
 
   @Test
@@ -364,8 +315,13 @@ class TestWorkerCreator extends SmallTest with Matchers {
       .brokerClusterName(bkName)
       .groupId(CommonUtils.randomString(10))
       .configTopicName(CommonUtils.randomString(10))
+      .configTopicReplications(1)
       .statusTopicName(CommonUtils.randomString(10))
+      .statusTopicPartitions(1)
+      .statusTopicReplications(1)
       .offsetTopicName(CommonUtils.randomString(10))
+      .offsetTopicPartitions(1)
+      .offsetTopicReplications(1)
       .nodeName(node2Name)
       .create()
 
@@ -399,8 +355,13 @@ class TestWorkerCreator extends SmallTest with Matchers {
       .brokerClusterName("bk1")
       .groupId(CommonUtils.randomString(10))
       .configTopicName(CommonUtils.randomString(10))
+      .configTopicReplications(1)
       .statusTopicName(CommonUtils.randomString(10))
+      .statusTopicPartitions(1)
+      .statusTopicReplications(1)
       .offsetTopicName(CommonUtils.randomString(10))
+      .offsetTopicPartitions(1)
+      .offsetTopicReplications(1)
       .nodeName(node1Name)
       .create()
 
@@ -461,11 +422,16 @@ class TestWorkerCreator extends SmallTest with Matchers {
         .clusterName("wk1")
         .clientPort(8083)
         .jmxPort(8084)
-        .brokerClusterName(bkName) // bk2 not exists
+        .brokerClusterName(bkName)
         .groupId(CommonUtils.randomString(10))
         .configTopicName(CommonUtils.randomString(10))
+        .configTopicReplications(1)
         .statusTopicName(CommonUtils.randomString(10))
+        .statusTopicPartitions(1)
+        .statusTopicReplications(1)
         .offsetTopicName(CommonUtils.randomString(10))
+        .offsetTopicPartitions(1)
+        .offsetTopicReplications(1)
         .nodeName(node2Name)
         .create(),
       TIMEOUT
@@ -480,8 +446,13 @@ class TestWorkerCreator extends SmallTest with Matchers {
         .brokerClusterName(CommonUtils.randomString()) // bk2 not exists
         .groupId(CommonUtils.randomString(10))
         .configTopicName(CommonUtils.randomString(10))
+        .configTopicReplications(1)
         .statusTopicName(CommonUtils.randomString(10))
+        .statusTopicPartitions(1)
+        .statusTopicReplications(1)
         .offsetTopicName(CommonUtils.randomString(10))
+        .offsetTopicPartitions(1)
+        .offsetTopicReplications(1)
         .nodeName(node2Name)
         .create(),
       TIMEOUT

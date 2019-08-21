@@ -28,15 +28,15 @@ package object agent {
     * @param settings the settings will be stored
     * @return string key
     */
-  def toEnvString(settings: Map[String, JsValue]): Map[String, String] = Map(
-    KEY_TO_SETTINGS -> CommonUtils.toEnvString(JsObject(settings).toString()))
+  def toEnvString(settings: Map[String, JsValue]): (String, String) =
+    KEY_TO_SETTINGS -> CommonUtils.toEnvString(JsObject(settings).toString())
 
   /**
     * seek the internal key which stores all settings in a normal string.
     * @param envs all environment variables
     * @return settings
     */
-  def toSettings(envs: Map[String, String]): Map[String, JsValue] = envs
+  def seekSettings(envs: Map[String, String]): Map[String, JsValue] = envs
     .get(KEY_TO_SETTINGS)
     .map(CommonUtils.fromEnvString(_).parseJson.asJsObject.fields)
     .getOrElse(throw new NoSuchElementException(s"the internal key:$KEY_TO_SETTINGS does not exist!!!"))

@@ -102,7 +102,7 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
                         // we convert all settings to specific string in order to fetch all settings from
                         // container env quickly. Also, the specific string enable us to pick up the "true" settings
                         // from envs since there are many system-defined settings in container envs.
-                          ++ toEnvString(settings),
+                          + toEnvString(settings),
                         // we should set the hostname to container name in order to avoid duplicate name with other containers
                         hostname = containerName
                       )
@@ -178,7 +178,7 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
     implicit executionContext: ExecutionContext): Future[StreamClusterInfo] = {
     // get the first running container, or first non-running container if not found
     val first = containers.find(_.state == ContainerState.RUNNING.name).getOrElse(containers.head)
-    val settings = toSettings(first.environments)
+    val settings = seekSettings(first.environments)
     val jarInfo = FILE_INFO_JSON_FORMAT.read(settings(StreamDefUtils.JAR_INFO_DEFINITION.key()))
     loadDefinition(jarInfo.url).map { definition =>
       StreamClusterInfo(

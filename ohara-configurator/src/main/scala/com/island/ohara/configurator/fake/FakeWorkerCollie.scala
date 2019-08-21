@@ -59,6 +59,7 @@ private[configurator] class FakeWorkerCollie(node: NodeCollie, wkConnectionProps
      configTopicName,
      configTopicReplications,
      _,
+     _,
      nodeNames) =>
       Future.successful(
         addCluster(

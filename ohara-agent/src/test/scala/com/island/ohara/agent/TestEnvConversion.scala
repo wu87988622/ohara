@@ -30,9 +30,9 @@ class TestEnvConversion extends SmallTest with Matchers {
                        "c" -> JsArray(Vector(JsString("b"), JsString("c"))),
                        "d" -> JsObject(Map("a" -> JsString("b"), "b" -> JsNumber(123))))
 
-    toSettings(toEnvString(settings)) shouldBe settings
+    seekSettings(Map(toEnvString(settings))) shouldBe settings
   }
 
   @Test
-  def emptyConversion(): Unit = an[NoSuchElementException] should be thrownBy toSettings(Map.empty)
+  def emptyConversion(): Unit = an[NoSuchElementException] should be thrownBy seekSettings(Map.empty)
 }

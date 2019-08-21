@@ -19,7 +19,7 @@ import java.util.Objects
 
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
-import com.island.ohara.client.configurator.v0.FileInfoApi.{FileInfo, _}
+import com.island.ohara.client.configurator.v0.FileInfoApi.{FILE_INFO_JSON_FORMAT, FileInfo}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.{ClusterInfo, Definition, WorkerApi}
@@ -28,9 +28,11 @@ import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
-import spray.json.{JsArray, JsString}
+import spray.json.DefaultJsonProtocol._
+import spray.json.{JsArray, JsNumber, JsString, JsValue}
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 trait WorkerCollie extends Collie[WorkerClusterInfo] {
 
@@ -61,6 +63,7 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
                                                        configTopicName,
                                                        configTopicReplications,
                                                        jarInfos,
+                                                       settings,
                                                        nodeNames) => {
     implicit val exec: ExecutionContext = executionContext
     clusters().flatMap(clusters => {
@@ -131,24 +134,22 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
                                             containerPort = jmxPort
                                           ))
                         )),
-                      environments = Map(
-                        WorkerCollie.CLIENT_PORT_KEY -> clientPort.toString,
-                        WorkerCollie.BROKERS_KEY -> brokers,
-                        WorkerCollie.GROUP_ID_KEY -> groupId,
-                        WorkerCollie.OFFSET_TOPIC_KEY -> offsetTopicName,
-                        WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY -> offsetTopicPartitions.toString,
-                        WorkerCollie.OFFSET_TOPIC_REPLICATIONS_KEY -> offsetTopicReplications.toString,
-                        WorkerCollie.CONFIG_TOPIC_KEY -> configTopicName,
-                        WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY -> configTopicReplications.toString,
-                        WorkerCollie.STATUS_TOPIC_KEY -> statusTopicName,
-                        WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY -> statusTopicPartitions.toString,
-                        WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY -> statusTopicReplications.toString,
-                        WorkerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
-                        WorkerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
-                        WorkerCollie.BROKER_CLUSTER_NAME -> brokerClusterName,
-                        WorkerCollie.JMX_HOSTNAME_KEY -> node.name,
-                        WorkerCollie.JMX_PORT_KEY -> jmxPort.toString
-                      ) ++ WorkerCollie.toMap(jarInfos),
+                      environments = settings.map {
+                        case (k, v) =>
+                          k -> (v match {
+                            // the string in json representation has quote in the beginning and end.
+                            // we don't like the quotes since it obstruct us to cast value to pure string.
+                            case JsString(s) => s
+                            // save the json string for all settings
+                            // TODO: the setting required by worker scripts is either string or number. Hence, the other types
+                            // should be skipped... by chia
+                            case _ => CommonUtils.toEnvString(v.toString)
+                          })
+                      } + (WorkerCollie.BROKERS_KEY -> brokers)
+                      // we convert all settings to specific string in order to fetch all settings from
+                      // container env quickly. Also, the specific string enable us to pick up the "true" settings
+                      // from envs since there are many system-defined settings in container envs.
+                        + toEnvString(settings),
                       hostname = containerName
                     )
                     doCreator(executionContext, clusterName, containerName, containerInfo, node, route).map(_ =>
@@ -267,7 +268,8 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
 
   private[agent] def toWorkerCluster(clusterName: String, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] = {
-    val port = containers.head.environments(WorkerCollie.CLIENT_PORT_KEY).toInt
+    val settings = seekSettings(containers.head.environments)
+    val port = settings(WorkerCollie.CLIENT_PORT_KEY).convertTo[Int]
     connectors(containers.map(c => s"${c.nodeName}:$port").mkString(",")).map { connectors =>
       WorkerClusterInfo(
         name = clusterName,
@@ -286,9 +288,9 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
         statusTopicPartitions = containers.head.environments(WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY).toInt,
         statusTopicReplications = containers.head.environments(WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY).toShort,
         // The JAR_INFOS_KEY does not exist if user doesn't pass any jar info in creating worker cluster
-        jarInfos = containers.head.environments
+        jarInfos = settings
           .get(WorkerCollie.JAR_INFOS_KEY)
-          .map(WorkerCollie.toJarInfos)
+          .map(_.convertTo[JsArray].elements.map(_.convertTo[FileInfo]))
           .getOrElse(Seq.empty),
         connectors = connectors,
         nodeNames = containers.map(_.nodeName).toSet,
@@ -333,19 +335,7 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
 
 object WorkerCollie {
   trait ClusterCreator extends Collie.ClusterCreator[WorkerClusterInfo] {
-    private[this] var clientPort: Int = CommonUtils.availablePort()
-    private[this] var brokerClusterName: String = _
-    private[this] var groupId: String = CommonUtils.randomString(10)
-    private[this] var offsetTopicName: String = s"$groupId-offset-${CommonUtils.randomString(10)}"
-    private[this] var offsetTopicReplications: Short = 1
-    private[this] var offsetTopicPartitions: Int = 1
-    private[this] var configTopicName: String = s"$groupId-config-${CommonUtils.randomString(10)}"
-    private[this] var configTopicReplications: Short = 1
-    private[this] var statusTopicName: String = s"$groupId-status-${CommonUtils.randomString(10)}"
-    private[this] var statusTopicReplications: Short = 1
-    private[this] var statusTopicPartitions: Int = 1
-    private[this] var jarInfos: Seq[FileInfo] = Seq.empty
-    private[this] var jmxPort: Int = CommonUtils.availablePort()
+    private[this] val settings: mutable.Map[String, JsValue] = mutable.Map[String, JsValue]()
 
     override protected def doCopy(clusterInfo: WorkerClusterInfo): Unit = {
       clientPort(clusterInfo.clientPort)
@@ -363,78 +353,79 @@ object WorkerCollie {
       jmxPort(clusterInfo.jmxPort)
     }
 
-    def brokerClusterName(name: String): ClusterCreator = {
-      this.brokerClusterName = CommonUtils.requireNonEmpty(name)
-      this
-    }
+    def brokerClusterName(name: String): ClusterCreator =
+      setting(WorkerCollie.BROKER_CLUSTER_NAME, JsString(CommonUtils.requireNonEmpty(name)))
 
-    @Optional("default is random port")
-    def clientPort(clientPort: Int): ClusterCreator = {
-      this.clientPort = CommonUtils.requireConnectionPort(clientPort)
-      this
-    }
+    def clientPort(clientPort: Int): ClusterCreator =
+      setting(WorkerCollie.CLIENT_PORT_KEY, JsNumber(CommonUtils.requireConnectionPort(clientPort)))
 
-    @Optional("default is random string")
-    def groupId(groupId: String): ClusterCreator = {
-      this.groupId = CommonUtils.requireNonEmpty(groupId)
-      this
-    }
+    def groupId(groupId: String): ClusterCreator =
+      setting(WorkerCollie.GROUP_ID_KEY, JsString(CommonUtils.requireNonEmpty(groupId)))
 
-    @Optional("default is random string")
-    def offsetTopicName(offsetTopicName: String): ClusterCreator = {
-      this.offsetTopicName = CommonUtils.requireNonEmpty(offsetTopicName)
-      this
-    }
+    def offsetTopicName(offsetTopicName: String): ClusterCreator =
+      setting(WorkerCollie.OFFSET_TOPIC_KEY, JsString(CommonUtils.requireNonEmpty(offsetTopicName)))
 
-    @Optional("default number is 1")
-    def offsetTopicReplications(offsetTopicReplications: Short): ClusterCreator = {
-      this.offsetTopicReplications = CommonUtils.requirePositiveShort(offsetTopicReplications)
-      this
-    }
-    @Optional("default number is 1")
-    def offsetTopicPartitions(offsetTopicPartitions: Int): ClusterCreator = {
-      this.offsetTopicPartitions = CommonUtils.requirePositiveInt(offsetTopicPartitions)
-      this
-    }
+    def offsetTopicReplications(offsetTopicReplications: Short): ClusterCreator =
+      setting(WorkerCollie.OFFSET_TOPIC_REPLICATIONS_KEY,
+              JsNumber(CommonUtils.requirePositiveShort(offsetTopicReplications)))
+
+    def offsetTopicPartitions(offsetTopicPartitions: Int): ClusterCreator =
+      setting(WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY, JsNumber(CommonUtils.requirePositiveInt(offsetTopicPartitions)))
+
+    def statusTopicName(statusTopicName: String): ClusterCreator =
+      setting(WorkerCollie.STATUS_TOPIC_KEY, JsString(CommonUtils.requireNonEmpty(statusTopicName)))
+
+    def statusTopicReplications(statusTopicReplications: Short): ClusterCreator =
+      setting(WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY,
+              JsNumber(CommonUtils.requirePositiveShort(statusTopicReplications)))
+
+    def statusTopicPartitions(statusTopicPartitions: Int): ClusterCreator =
+      setting(WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY, JsNumber(CommonUtils.requirePositiveInt(statusTopicPartitions)))
 
     @Optional("default is random string")
-    def statusTopicName(statusTopicName: String): ClusterCreator = {
-      this.statusTopicName = CommonUtils.requireNonEmpty(statusTopicName)
-      this
-    }
+    def configTopicName(configTopicName: String): ClusterCreator =
+      setting(WorkerCollie.CONFIG_TOPIC_KEY, JsString(CommonUtils.requireNonEmpty(configTopicName)))
 
     @Optional("default number is 1")
-    def statusTopicReplications(statusTopicReplications: Short): ClusterCreator = {
-      this.statusTopicReplications = CommonUtils.requirePositiveShort(statusTopicReplications)
-      this
-    }
-    @Optional("default number is 1")
-    def statusTopicPartitions(statusTopicPartitions: Int): ClusterCreator = {
-      this.statusTopicPartitions = CommonUtils.requireConnectionPort(statusTopicPartitions)
-      this
-    }
-
-    @Optional("default is random string")
-    def configTopicName(configTopicName: String): ClusterCreator = {
-      this.configTopicName = CommonUtils.requireNonEmpty(configTopicName)
-      this
-    }
-
-    @Optional("default number is 1")
-    def configTopicReplications(configTopicReplications: Short): ClusterCreator = {
-      this.configTopicReplications = CommonUtils.requirePositiveShort(configTopicReplications)
-      this
-    }
+    def configTopicReplications(configTopicReplications: Short): ClusterCreator =
+      setting(WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY,
+              JsNumber(CommonUtils.requirePositiveShort(configTopicReplications)))
 
     @Optional("default is empty")
     def jarInfos(jarInfos: Seq[FileInfo]): ClusterCreator = {
-      this.jarInfos = Objects.requireNonNull(jarInfos)
+      // skip the empty array to avoid generating weird string to env
+      if (jarInfos.nonEmpty) {
+        this.settings += (JAR_INFOS_KEY -> JsArray(jarInfos.map(FILE_INFO_JSON_FORMAT.write).toVector))
+        // The URLs don't follow the json representation since we use this string in bash and we don't want
+        // to make a complicated parse process in bash.
+        this.settings += (JAR_URLS_KEY -> JsString(jarInfos.map(_.url.toURI.toASCIIString).mkString(",")))
+      }
       this
     }
 
     @Optional("default is random port")
-    def jmxPort(jmxPort: Int): ClusterCreator = {
-      this.jmxPort = CommonUtils.requireConnectionPort(jmxPort)
+    def jmxPort(jmxPort: Int): ClusterCreator =
+      setting(WorkerCollie.JMX_PORT_KEY, JsNumber(CommonUtils.requireConnectionPort(jmxPort)))
+
+    /**
+      * add a key-value data map for container
+      *
+      * @param key data key
+      * @param value data value
+      * @return this creator
+      */
+    @Optional("default is empty map")
+    def setting(key: String, value: JsValue): ClusterCreator = settings(Map(key -> value))
+
+    /**
+      * add the key-value data map for container
+      *
+      * @param settings data settings
+      * @return this creator
+      */
+    @Optional("default is empty map")
+    def settings(settings: Map[String, JsValue]): ClusterCreator = {
+      this.settings ++= Objects.requireNonNull(settings)
       this
     }
 
@@ -442,19 +433,23 @@ object WorkerCollie {
       executionContext = Objects.requireNonNull(executionContext),
       clusterName = CommonUtils.requireNonEmpty(clusterName),
       imageName = CommonUtils.requireNonEmpty(imageName),
-      brokerClusterName = CommonUtils.requireNonEmpty(brokerClusterName),
-      clientPort = CommonUtils.requireConnectionPort(clientPort),
-      jmxPort = CommonUtils.requireConnectionPort(jmxPort),
-      groupId = CommonUtils.requireNonEmpty(groupId),
-      offsetTopicName = CommonUtils.requireNonEmpty(offsetTopicName),
-      offsetTopicReplications = CommonUtils.requirePositiveShort(offsetTopicReplications),
-      offsetTopicPartitions = CommonUtils.requirePositiveInt(offsetTopicPartitions),
-      statusTopicName = CommonUtils.requireNonEmpty(statusTopicName),
-      statusTopicReplications = CommonUtils.requirePositiveShort(statusTopicReplications),
-      statusTopicPartitions = CommonUtils.requirePositiveInt(statusTopicPartitions),
-      configTopicName = CommonUtils.requireNonEmpty(configTopicName),
-      configTopicReplications = CommonUtils.requirePositiveShort(configTopicReplications),
-      jarInfos = Objects.requireNonNull(jarInfos),
+      brokerClusterName = settings(WorkerCollie.BROKER_CLUSTER_NAME).convertTo[String],
+      clientPort = settings(WorkerCollie.CLIENT_PORT_KEY).convertTo[Int],
+      jmxPort = settings(WorkerCollie.JMX_PORT_KEY).convertTo[Int],
+      groupId = settings(WorkerCollie.GROUP_ID_KEY).convertTo[String],
+      offsetTopicName = settings(WorkerCollie.OFFSET_TOPIC_KEY).convertTo[String],
+      offsetTopicReplications = settings(WorkerCollie.OFFSET_TOPIC_REPLICATIONS_KEY).convertTo[Short],
+      offsetTopicPartitions = settings(WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY).convertTo[Int],
+      statusTopicName = settings(WorkerCollie.STATUS_TOPIC_KEY).convertTo[String],
+      statusTopicReplications = settings(WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY).convertTo[Short],
+      statusTopicPartitions = settings(WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY).convertTo[Int],
+      configTopicName = settings(WorkerCollie.CONFIG_TOPIC_KEY).convertTo[String],
+      configTopicReplications = settings(WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY).convertTo[Short],
+      jarInfos = settings
+        .get(WorkerCollie.JAR_INFOS_KEY)
+        .map(_.convertTo[JsArray].elements.map(_.convertTo[FileInfo]))
+        .getOrElse(Seq.empty),
+      settings = settings.toMap,
       nodeNames = CommonUtils.requireNonEmpty(nodeNames.asJava).asScala.toSet
     )
 
@@ -479,6 +474,7 @@ object WorkerCollie {
                            configTopicName: String,
                            configTopicReplications: Short,
                            jarInfos: Seq[FileInfo],
+                           settings: Map[String, JsValue],
                            nodeNames: Set[String]): Future[WorkerClusterInfo]
   }
   private[agent] val GROUP_ID_KEY: String = "WORKER_GROUP"
@@ -509,37 +505,4 @@ object WorkerCollie {
   private[agent] val PLUGINS_KEY: String = "WORKER_PLUGINS"
   private[agent] val JMX_HOSTNAME_KEY: String = "JMX_HOSTNAME"
   private[agent] val JMX_PORT_KEY: String = "JMX_PORT"
-
-  /**
-    * We don't want to complicate our script used in starting worker node. For example, script has to parse the json string if we provide
-    * a empty array via the env variable. . Hence, we just remove the keys from env if user does not specify them.
-    * @param jarInfos jar information
-    * @return a map with input value or empty if input is empty.
-    */
-  private[agent] def toMap(jarInfos: Seq[FileInfo]): Map[String, String] = if (jarInfos.isEmpty) Map.empty
-  else
-    Map(
-      WorkerCollie.JAR_URLS_KEY -> jarInfos.map(_.url.toURI.toASCIIString).mkString(","),
-      WorkerCollie.JAR_INFOS_KEY -> WorkerCollie.toString(jarInfos),
-    )
-
-  /**
-    * convert the scala object to json string with backslash.
-    * this string is written to linux env and the env does not accept the double quote. Hence, we add backslash with
-    * double quotes to keep the origin form in env.
-    */
-  private[agent] def toString(jarInfos: Seq[FileInfo]): String =
-    JsArray(jarInfos.map(FILE_INFO_JSON_FORMAT.write).toVector).toString.replaceAll("\"", "\\\\\"")
-
-  import spray.json._
-
-  /**
-    * this method is in charge of converting string, which is serialized by toMap, to scala objects. We put those helper methods since we
-    * have two kind collies that both of them requires those parser.
-    * @param string json representation string with specific backslash and quote
-    * @return jar information
-    */
-  private[agent] def toJarInfos(string: String): Seq[FileInfo] =
-    // replace the backslash to nothing
-    string.replaceAll("\\\\\"", "\"").parseJson.asInstanceOf[JsArray].elements.map(FILE_INFO_JSON_FORMAT.read)
 }
