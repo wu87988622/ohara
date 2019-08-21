@@ -137,12 +137,13 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag](nodeCollie: N
       // not pending, if one of the containers in running state means cluster running (even other containers are in
       // restarting, paused, exited or dead state
       else if (containers.exists(_.state == ContainerState.RUNNING.name)) Some(ClusterState.RUNNING)
-      // exists one container in dead state, and others are in exited state means cluster failed
-      else if (containers.exists(_.state == ContainerState.DEAD.name) &&
-               containers.forall(c => c.state == ContainerState.EXITED.name || c.state == ContainerState.DEAD.name))
+      // since cluster(collie) is a collection of long running containers,
+      // we could assume cluster failed if containers are run into "exited" or "dead" state
+      else if (containers.forall(c => c.state == ContainerState.EXITED.name || c.state == ContainerState.DEAD.name))
         Some(ClusterState.FAILED)
-      // we don't care other situation for now
-      else Some(ClusterState.UNKNOWN)
+      // we set failed state is ok here
+      // since there are too many cases that we could not handle for now, we should open the door for whitelist only
+      else Some(ClusterState.FAILED)
     }
   }
 }
