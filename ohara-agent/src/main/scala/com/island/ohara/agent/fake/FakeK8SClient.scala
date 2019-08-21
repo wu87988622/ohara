@@ -69,4 +69,7 @@ class FakeK8SClient(isK8SNode: Boolean, k8sStatusInfo: Option[K8SStatusInfo], co
 
   override def containerCreator()(implicit executionContext: ExecutionContext): K8SClient.ContainerCreator =
     throw new UnsupportedOperationException("FakeK8SClient not support containerCreator function")
+
+  override def forceRemove(name: String)(implicit executionContext: ExecutionContext): Future[ContainerInfo] =
+    throw new UnsupportedOperationException("FakeK8SClient not support force remove function")
 }

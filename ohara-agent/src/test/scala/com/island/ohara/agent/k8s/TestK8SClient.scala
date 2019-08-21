@@ -232,6 +232,20 @@ class TestK8SClient extends SmallTest with Matchers {
     } finally s.close()
   }
 
+  @Test
+  def testForceRemovePod(): Unit = {
+    val s = forceRemovePodURL("k8soccl-057aac6a97-bk-c720992")
+    try {
+      val k8sClient = K8SClient(s.url)
+      try {
+        val result: ContainerInfo = Await.result(k8sClient.forceRemove("k8soccl-057aac6a97-bk-c720992"), 30 seconds)
+        result.name shouldBe "k8soccl-057aac6a97-bk-c720992"
+        result.hostname shouldBe "k8soccl-057aac6a97-bk-c720992-ohara-jenkins-it-00"
+        result.nodeName shouldBe "ohara-jenkins-it-00"
+      } finally k8sClient.close()
+    } finally s.close()
+  }
+
   private[this] def imagePolicyURL(nodeName: String,
                                    podName: String,
                                    expectImagePullPolicy: ImagePullPolicy): SimpleServer = {
@@ -310,6 +324,57 @@ class TestK8SClient extends SmallTest with Matchers {
             }
           }
         }
+    }
+  }
+
+  private[this] def forceRemovePodURL(podName: String): SimpleServer = {
+    val podsInfo = s"""
+                        |{"items": [
+                        |    {
+                        |      "metadata": {
+                        |        "name": "k8soccl-057aac6a97-bk-c720992",
+                        |        "uid": "0f7200b8-c3c1-11e9-8e80-8ae0e3c47d1e",
+                        |        "creationTimestamp": "2019-08-21T03:09:16Z"
+                        |      },
+                        |      "spec": {
+                        |        "containers": [
+                        |          {
+                        |            "name": "ohara",
+                        |            "image": "oharastream/broker:0.8.0-SNAPSHOT",
+                        |            "ports": [
+                        |              {
+                        |                "hostPort": 43507,
+                        |                "containerPort": 43507,
+                        |                "protocol": "TCP"
+                        |              }]
+                        |          }
+                        |        ],
+                        |        "nodeName": "ohara-jenkins-it-00",
+                        |        "hostname": "k8soccl-057aac6a97-bk-c720992-ohara-jenkins-it-00"
+                        |      },
+                        |      "status": {
+                        |        "phase": "Running",
+                        |        "conditions": [
+                        |          {
+                        |            "type": "Ready",
+                        |            "status": "True",
+                        |            "lastProbeTime": null,
+                        |            "lastTransitionTime": "2019-08-21T03:09:18Z"
+                        |          }
+                        |        ]
+                        |      }
+                        |    }
+                        |  ]
+                        |}
+       """.stripMargin
+
+    // test communication
+    toServer {
+      path("pods") {
+        get {
+          complete(HttpResponse(entity = HttpEntity(ContentTypes.`application/json`, podsInfo)))
+        }
+      }
     }
   }
 

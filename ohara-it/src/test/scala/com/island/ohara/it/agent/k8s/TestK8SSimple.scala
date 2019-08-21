@@ -111,6 +111,27 @@ class TestK8SSimple extends IntegrationTest with Matchers {
   }
 
   @Test
+  def testK8SClientForceRemoveContainer(): Unit = {
+    val k8sClient = K8SClient(k8sApiServerURL)
+    val podName: String = UUID.randomUUID().toString + "-pod123"
+
+    try {
+      //Create Pod for test delete
+      TestK8SSimple.createZookeeperPod(k8sApiServerURL, podName)
+      val containers: Seq[ContainerInfo] =
+        result(k8sClient.containers().map(cs => cs.filter(_.hostname.equals(podName))))
+      containers.size shouldBe 1
+    } finally {
+      //Remove a container
+      result(k8sClient.forceRemove(podName)).name shouldBe podName
+      val removeContainers: Seq[ContainerInfo] =
+        result(k8sClient.containers().map(cs => cs.filter(_.hostname.equals(podName))))
+      Thread.sleep(1000L)
+      removeContainers.size shouldBe 0
+    }
+  }
+
+  @Test
   def testK8SClientlog(): Unit = {
     //Must confirm to microk8s is running
     val k8sClient = K8SClient(k8sApiServerURL)

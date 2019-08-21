@@ -58,6 +58,7 @@ case class Report(nodeName: String, isK8SNode: Boolean, statusInfo: Option[K8SSt
 trait K8SClient extends Releasable {
   def containers()(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]]
   def remove(name: String)(implicit executionContext: ExecutionContext): Future[ContainerInfo]
+  def forceRemove(name: String)(implicit executionContext: ExecutionContext): Future[ContainerInfo]
   def removeNode(clusterName: String, nodeName: String, serviceName: String)(
     implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]]
   def log(name: String)(implicit executionContext: ExecutionContext): Future[String]
@@ -140,17 +141,11 @@ object K8SClient {
         }
       }
 
+      override def forceRemove(name: String)(implicit executionContext: ExecutionContext): Future[ContainerInfo] =
+        removePod(name, true)
+
       override def remove(name: String)(implicit executionContext: ExecutionContext): Future[ContainerInfo] =
-        containers()
-          .map(_.find(_.name == name).getOrElse(throw new IllegalArgumentException(s"Name:$name doesn't exist")))
-          .flatMap { container =>
-            Http()
-              .singleRequest(
-                HttpRequest(HttpMethods.DELETE, uri = s"$k8sApiServerURL/namespaces/default/pods/${container.name}"))
-              .map(_ => {
-                container
-              })
-          }
+        removePod(name, false)
 
       override def removeNode(clusterNamePrefix: String, nodeName: String, serviceName: String)(
         implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] = {
@@ -345,6 +340,25 @@ object K8SClient {
         actorMaterializer.shutdown()
         Await.result(actorSystem.terminate(), 60 seconds)
       }
+
+      private[this] def removePod(name: String, isForce: Boolean)(
+        implicit executionContext: ExecutionContext): Future[ContainerInfo] =
+        containers()
+          .map(_.find(_.name == name).getOrElse(throw new IllegalArgumentException(s"Name:$name doesn't exist")))
+          .flatMap(container => {
+            val removePodInfo: Future[HttpResponse] =
+              if (isForce)
+                Http().singleRequest(
+                  HttpRequest(HttpMethods.DELETE,
+                              uri = s"$k8sApiServerURL/namespaces/default/pods/${container.name}?gracePeriodSeconds=0"))
+              else
+                Http().singleRequest(
+                  HttpRequest(HttpMethods.DELETE, uri = s"$k8sApiServerURL/namespaces/default/pods/${container.name}"))
+
+            removePodInfo.map(_ => {
+              container
+            })
+          })
 
       private[this] def unmarshal[T](response: HttpResponse)(implicit um: RootJsonFormat[T],
                                                              executionContext: ExecutionContext): Future[T] =

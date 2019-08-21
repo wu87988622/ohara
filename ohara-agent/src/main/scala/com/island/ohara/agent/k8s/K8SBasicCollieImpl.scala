@@ -42,6 +42,11 @@ private[this] abstract class K8SBasicCollieImpl[T <: ClusterInfo: ClassTag](node
     Future.sequence(containerInfos.map(c => k8sClient.remove(c.name))).map(_.nonEmpty)
   }
 
+  override protected def doForceRemove(clusterInfo: T, containerInfos: Seq[ContainerInfo])(
+    implicit executionContext: ExecutionContext): Future[Boolean] = {
+    Future.sequence(containerInfos.map(c => k8sClient.forceRemove(c.name))).map(_.nonEmpty)
+  }
+
   override protected def doRemoveNode(previousCluster: T, beRemovedContainer: ContainerInfo)(
     implicit executionContext: ExecutionContext): Future[Boolean] = {
     k8sClient
