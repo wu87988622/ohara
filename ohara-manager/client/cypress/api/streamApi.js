@@ -50,11 +50,11 @@ const setup = () => {
 
   cy.startBroker(brokerClusterName);
 
-  cy.testCreateWorker({
+  cy.createWorker({
     name: workerClusterName,
     nodeNames: [nodeName],
     brokerClusterName,
-  }).as('testCreateWorker');
+  }).as('createWorker');
 
   cy.startWorker(workerClusterName);
 
@@ -147,17 +147,17 @@ describe('Stream property API', () => {
     const fromTopicName = generate.serviceName({ prefix: 'topic' });
     const toTopicName = generate.serviceName({ prefix: 'topic' });
 
-    cy.testCreateTopic({
+    cy.createTopic({
       name: fromTopicName,
       brokerClusterName,
-    }).as('testCreateTopic');
+    }).as('createTopic');
 
     cy.startTopic(fromTopicName);
 
-    cy.testCreateTopic({
+    cy.createTopic({
       name: toTopicName,
       brokerClusterName,
-    }).as('testCreateTopic');
+    }).as('createTopic');
 
     cy.startTopic(toTopicName);
 
@@ -190,17 +190,17 @@ describe('Stream property API', () => {
     const fromTopicName = generate.serviceName({ prefix: 'topic' });
     const toTopicName = generate.serviceName({ prefix: 'topic' });
 
-    cy.testCreateTopic({
+    cy.createTopic({
       name: fromTopicName,
       brokerClusterName,
-    }).as('testCreateTopic');
+    }).as('createTopic');
 
     cy.startTopic(fromTopicName);
 
-    cy.testCreateTopic({
+    cy.createTopic({
       name: toTopicName,
       brokerClusterName,
-    }).as('testCreateTopic');
+    }).as('createTopic');
 
     cy.startTopic(toTopicName);
 

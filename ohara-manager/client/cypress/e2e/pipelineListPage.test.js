@@ -19,8 +19,8 @@ import * as generate from '../../src/utils/generate';
 
 describe('PipelineListPage', () => {
   before(() => {
-    cy.deleteAllWorkers();
-    cy.createWorker();
+    cy.removeWorkers();
+    cy.addWorker();
   });
 
   beforeEach(() => {
@@ -58,7 +58,7 @@ describe('PipelineListPage', () => {
       workerName: Cypress.env('WORKER_NAME'),
     };
 
-    cy.createPipeline(pipelineParams)
+    cy.addPipeline(pipelineParams)
       .visit(URLS.PIPELINES)
       .wait('@getPipelines')
       .getByText(pipelineName)
@@ -78,7 +78,7 @@ describe('PipelineListPage', () => {
       workerName: Cypress.env('WORKER_NAME'),
     };
 
-    cy.createPipeline(pipelineParams)
+    cy.addPipeline(pipelineParams)
       .visit(URLS.PIPELINES)
       .wait('@getPipelines')
       .getByText(pipelineName)

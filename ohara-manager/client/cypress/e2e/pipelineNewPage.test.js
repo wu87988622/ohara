@@ -20,8 +20,8 @@ import * as generate from '../../src/utils/generate';
 
 describe('PipelineNewPage', () => {
   before(() => {
-    cy.deleteAllWorkers();
-    cy.createWorker();
+    cy.removeWorkers();
+    cy.addWorker();
   });
 
   beforeEach(() => {
@@ -35,7 +35,7 @@ describe('PipelineNewPage', () => {
 
     const pipelineName = generate.serviceName({ prefix: 'pipeline' });
 
-    cy.createTopic();
+    cy.addTopic();
     cy.visit(URLS.PIPELINES)
       .getByTestId('new-pipeline')
       .click()

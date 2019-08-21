@@ -46,7 +46,7 @@ const setup = () => {
 
   cy.startBroker(brokerClusterName);
 
-  cy.testCreateWorker({
+  cy.createWorker({
     name: workerClusterName,
     brokerClusterName,
     nodeNames: [nodeName],
@@ -54,7 +54,7 @@ const setup = () => {
 
   cy.startWorker(workerClusterName);
 
-  cy.testCreateTopic({
+  cy.createTopic({
     name: topicName,
     brokerClusterName,
   });

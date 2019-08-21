@@ -70,9 +70,7 @@ Cypress.Commands.add('deleteBroker', brokerClusterName =>
 // Worker API
 Cypress.Commands.add('fetchWorker', name => workerApi.fetchWorker(name));
 Cypress.Commands.add('fetchWorkers', () => workerApi.fetchWorkers());
-Cypress.Commands.add('testCreateWorker', params =>
-  workerApi.createWorker(params),
-);
+Cypress.Commands.add('createWorker', params => workerApi.createWorker(params));
 
 Cypress.Commands.add('startWorker', workerClusterName =>
   workerApi.startWorker(workerClusterName),
@@ -102,7 +100,7 @@ Cypress.Commands.add('deleteStreamAppJar', name => streamApp.deleteJar(name));
 Cypress.Commands.add('fetchStreamAppJars', workerClusterName =>
   streamApp.fetchJars(workerClusterName),
 );
-Cypress.Commands.add('testUploadStreamAppJar', params => {
+Cypress.Commands.add('uploadStreamAppJar', params => {
   const { jarName, workerClusterName } = params;
   cy.fixture(`streamApp/${jarName}`, 'base64')
     .then(Cypress.Blob.base64StringToBlob)
@@ -128,8 +126,8 @@ Cypress.Commands.add('testUploadStreamAppJar', params => {
 // Topic API
 Cypress.Commands.add('fetchTopics', () => topicApi.fetchTopics());
 Cypress.Commands.add('fetchTopic', name => topicApi.fetchTopic(name));
-Cypress.Commands.add('testCreateTopic', params => topicApi.createTopic(params));
-Cypress.Commands.add('testDeleteTopic', name => topicApi.deleteTopic(name));
+Cypress.Commands.add('createTopic', params => topicApi.createTopic(params));
+Cypress.Commands.add('deleteTopic', name => topicApi.deleteTopic(name));
 Cypress.Commands.add('startTopic', name => topicApi.startTopic(name));
 Cypress.Commands.add('stopTopic', name => topicApi.stopTopic(name));
 
@@ -152,7 +150,7 @@ Cypress.Commands.add('createConnector', params =>
 );
 
 // Pipeline API
-Cypress.Commands.add('testDeletePipeline', name =>
+Cypress.Commands.add('deletePipeline', name =>
   pipelineApi.deletePipeline(name),
 );
 Cypress.Commands.add('updatePipeline', params =>
@@ -160,7 +158,7 @@ Cypress.Commands.add('updatePipeline', params =>
 );
 Cypress.Commands.add('fetchPipelines', () => pipelineApi.fetchPipelines());
 Cypress.Commands.add('fetchPipeline', name => pipelineApi.fetchPipeline(name));
-Cypress.Commands.add('testCreatePipeline', params =>
+Cypress.Commands.add('createPipeline', params =>
   pipelineApi.createPipeline(params),
 );
 
@@ -251,7 +249,7 @@ Cypress.Commands.add('deleteAllServices', () => {
           cy.stopTopic(topic.name);
         }
 
-        cy.testDeleteTopic(topic.name);
+        cy.deleteTopic(topic.name);
       });
     }
   });

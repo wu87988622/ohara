@@ -55,12 +55,12 @@ const setup = () => {
     };
   });
 
-  cy.testCreateWorker({
+  cy.createWorker({
     name: workerClusterName,
     nodeNames: [nodeName],
     jarKeys,
     brokerClusterName,
-  }).as('testCreateWorker');
+  }).as('createWorker');
 
   cy.startWorker(workerClusterName);
 
@@ -78,7 +78,7 @@ describe('Worker API', () => {
   it('createWorker', () => {
     const { workerClusterName } = setup();
 
-    cy.get('@testCreateWorker').then(response => {
+    cy.get('@createWorker').then(response => {
       const {
         data: { isSuccess, result },
       } = response;
@@ -131,8 +131,8 @@ describe('Worker API', () => {
       nodeNames: [nodeName],
     };
 
-    cy.testCreateWorker(paramsOne);
-    cy.testCreateWorker(paramsTwo);
+    cy.createWorker(paramsOne);
+    cy.createWorker(paramsTwo);
 
     cy.fetchWorkers().then(res => {
       const {
@@ -185,7 +185,7 @@ describe('Worker API', () => {
   it('deleteWorker', () => {
     const { workerClusterName } = setup();
 
-    cy.get('@testCreateWorker').then(response => {
+    cy.get('@createWorker').then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });
 
@@ -210,7 +210,7 @@ describe('Worker API', () => {
   it('forceDeleteWorker', () => {
     const { workerClusterName } = setup();
 
-    cy.get('@testCreateWorker').then(response => {
+    cy.get('@createWorker').then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });
 

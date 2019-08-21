@@ -21,8 +21,8 @@ import * as generate from '../../src/utils/generate';
 
 describe('WorkspacesPage', () => {
   before(() => {
-    cy.deleteAllWorkers();
-    cy.createWorker();
+    cy.removeWorkers();
+    cy.addWorker();
   });
 
   beforeEach(() => {
@@ -102,7 +102,7 @@ describe('WorkspacesPage', () => {
   });
 
   it('deletes a topic', () => {
-    cy.createTopic();
+    cy.addTopic();
 
     cy.visit(WORKSPACES)
       .wait('@getWorkers')
@@ -213,7 +213,7 @@ describe('WorkspacesPage', () => {
   });
 
   it('should display the overview info', () => {
-    cy.createTopic().as('overviewTopic');
+    cy.addTopic().as('overviewTopic');
 
     cy.visit(WORKSPACES)
       .wait('@getWorkers')

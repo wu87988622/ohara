@@ -19,8 +19,8 @@ import * as generate from '../../src/utils/generate';
 
 describe('StreamApp', () => {
   before(() => {
-    cy.deleteAllWorkers();
-    cy.createWorker();
+    cy.removeWorkers();
+    cy.addWorker();
   });
 
   beforeEach(() => {
@@ -36,8 +36,8 @@ describe('StreamApp', () => {
     const pipelineName = generate.serviceName({ prefix: 'pipeline' });
     const streamAppName = generate.serviceName({ prefix: 'stream' });
 
-    cy.createTopic(fromTopicName);
-    cy.createTopic(toTopicName);
+    cy.addTopic(fromTopicName);
+    cy.addTopic(toTopicName);
 
     cy.visit(URLS.PIPELINES)
       .uploadTestStreamAppJar(Cypress.env('WORKER_NAME'))

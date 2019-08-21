@@ -44,11 +44,11 @@ const setup = () => {
 
   cy.startBroker(brokerClusterName);
 
-  cy.testCreateWorker({
+  cy.createWorker({
     name: workerClusterName,
     brokerClusterName,
     nodeNames: [nodeName],
-  }).as('testCreateWorker');
+  });
 
   cy.startWorker(workerClusterName);
 

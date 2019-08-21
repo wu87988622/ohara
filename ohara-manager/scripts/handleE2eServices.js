@@ -36,7 +36,7 @@ const randomServiceName = () => {
 };
 
 const writeServiceInfoToFile = (zookeeperClusterName, brokerClusterName) => {
-  const filePath = path.resolve('./services.json');
+  const filePath = path.resolve('./client/services.json');
 
   const data = JSON.stringify([
     {
@@ -200,7 +200,7 @@ const getRunningWorkers = async (services, apiRoot) => {
 
 exports.cleanServices = async (apiRoot, nodeName) => {
   try {
-    const filePath = path.resolve('./services.json');
+    const filePath = path.resolve('./client/services.json');
     const file = fs.readFileSync(filePath);
     const services = JSON.parse(file);
     const { workers, brokers, zookeepers } = getByServiceType(services);

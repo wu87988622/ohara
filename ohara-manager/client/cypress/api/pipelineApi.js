@@ -45,18 +45,18 @@ const setup = () => {
 
   cy.startBroker(brokerClusterName);
 
-  cy.testCreateWorker({
+  cy.createWorker({
     name: workerClusterName,
     nodeNames: [nodeName],
     brokerClusterName,
   });
 
-  cy.testCreatePipeline({
+  cy.createPipeline({
     name: pipelineName,
     tags: {
       workerClusterName,
     },
-  }).as('testCreatePipeline');
+  }).as('createPipeline');
 
   return {
     zookeeperClusterName,
@@ -72,7 +72,7 @@ describe('Pipeline API', () => {
   it('createPipeline', () => {
     const { pipelineName, workerClusterName } = setup();
 
-    cy.get('@testCreatePipeline').then(response => {
+    cy.get('@createPipeline').then(response => {
       const {
         data: { isSuccess, result },
       } = response;
@@ -116,8 +116,8 @@ describe('Pipeline API', () => {
       workerClusterName,
     };
 
-    cy.testCreatePipeline(paramsOne);
-    cy.testCreatePipeline(paramsTwo);
+    cy.createPipeline(paramsOne);
+    cy.createPipeline(paramsTwo);
 
     cy.fetchPipelines().then(response => {
       const {
@@ -140,7 +140,7 @@ describe('Pipeline API', () => {
 
     let topicName = generate.serviceName({ prefix: 'topic' });
 
-    cy.testCreateTopic({
+    cy.createTopic({
       name: topicName,
       brokerClusterName,
     });
@@ -179,7 +179,7 @@ describe('Pipeline API', () => {
   it('deletePipeline', () => {
     const { pipelineName } = setup();
 
-    cy.testDeletePipeline(pipelineName).then(response => {
+    cy.deletePipeline(pipelineName).then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });
   });

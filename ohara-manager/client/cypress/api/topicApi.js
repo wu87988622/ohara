@@ -47,10 +47,10 @@ const setup = () => {
 
   cy.startBroker(brokerClusterName);
 
-  cy.testCreateTopic({
+  cy.createTopic({
     name: topicName,
     brokerClusterName,
-  }).as('testCreateTopic');
+  }).as('createTopic');
 
   cy.startTopic(topicName);
 
@@ -68,7 +68,7 @@ describe('Topic API', () => {
   it('CreateTopic', () => {
     const { topicName } = setup();
 
-    cy.get('@testCreateTopic').then(response => {
+    cy.get('@createTopic').then(response => {
       const {
         data: { isSuccess, result },
       } = response;
@@ -127,8 +127,8 @@ describe('Topic API', () => {
       brokerClusterName,
     };
 
-    cy.testCreateTopic(paramsOne);
-    cy.testCreateTopic(paramsTwo);
+    cy.createTopic(paramsOne);
+    cy.createTopic(paramsTwo);
 
     cy.startTopic(paramsOne.name);
     cy.startTopic(paramsTwo.name);
@@ -191,7 +191,7 @@ describe('Topic API', () => {
       expect(response.data.isSuccess).to.eq(true);
     });
 
-    cy.testDeleteTopic(topicName).then(response => {
+    cy.deleteTopic(topicName).then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });
 

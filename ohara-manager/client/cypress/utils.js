@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-export const makeRandomPort = () => {
-  const min = 5000;
-  const max = 65535;
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-};
-
 export const getFakeNode = () => {
   const name = Cypress.env('nodeHost');
   const port = Cypress.env('nodePort');
@@ -32,14 +26,6 @@ export const getFakeNode = () => {
     user,
     password,
   };
-};
-
-export const makeRandomStr = prefix => {
-  const random = Math.random()
-    .toString(36)
-    .substring(7);
-
-  return prefix ? `${prefix}${random}` : random;
 };
 
 export const recursiveDeleteWorker = (endPoint, serviceName) => {
@@ -57,14 +43,4 @@ export const recursiveDeleteWorker = (endPoint, serviceName) => {
     cy.wait(1500);
     recursiveDeleteWorker(endPoint, serviceName);
   });
-};
-
-export const randomName = () => {
-  var text = '';
-  var possible = 'abcdefghijklmnopqrstuvwxyz0123456789';
-
-  for (var i = 0; i < 5; i++)
-    text += possible.charAt(Math.floor(Math.random() * possible.length));
-
-  return text;
 };

@@ -24,8 +24,8 @@ import { axiosInstance } from '../../src/api/apiUtils';
 // Registering service name so we can do the clean up later
 // when the tests are done
 Cypress.Commands.add('registerService', (serviceName, serviceType) => {
-  const fileName = '../services.json';
-  const update = { name: serviceName, serviceType: serviceType };
+  const fileName = './services.json';
+  const update = { name: serviceName, serviceType };
 
   cy.task('readFileMaybe', fileName).then(services => {
     // Append a new worker to the existing file
@@ -33,12 +33,9 @@ Cypress.Commands.add('registerService', (serviceName, serviceType) => {
   });
 });
 
-Cypress.Commands.add('createWorker', () => {
-  cy.log('Create a new worker');
-
+Cypress.Commands.add('addWorker', () => {
   const { name: nodeName } = utils.getFakeNode();
   const workerName = generate.serviceName({ prefix: 'worker' });
-  const groupId = generate.serviceName();
 
   // Store the worker names in a file as well as
   // in the Cypress env as we'll be using them in the tests
@@ -54,14 +51,14 @@ Cypress.Commands.add('createWorker', () => {
       name: workerName,
       brokerClusterName: broker.name,
       jarKeys: [],
-      groupId: groupId,
+      groupId: generate.id(),
       nodeNames: [nodeName],
     });
     cy.request('PUT', `api/workers/${workerName}/start`);
   });
 
   let count = 0;
-  const max = 15;
+  const max = 20;
   // Make a request to configurator see if worker cluster is ready for use
   const req = endPoint => {
     cy.request('GET', endPoint).then(response => {
@@ -81,7 +78,7 @@ Cypress.Commands.add('createWorker', () => {
   cy.request('GET', endPoint).then(() => req(endPoint));
 });
 
-Cypress.Commands.add('createPipeline', pipeline => {
+Cypress.Commands.add('addPipeline', pipeline => {
   cy.request('POST', `/api/pipelines`, {
     name: pipeline.name || 'Untitled pipeline',
     workerClusterName: pipeline.workerName,
@@ -90,7 +87,7 @@ Cypress.Commands.add('createPipeline', pipeline => {
 });
 
 Cypress.Commands.add(
-  'createTopic',
+  'addTopic',
   (topicName = generate.serviceName({ prefix: 'topic' })) => {
     cy.request('GET', 'api/workers')
       .then(res => {
@@ -118,10 +115,8 @@ Cypress.Commands.add(
   },
 );
 
-Cypress.Commands.add('deleteAllWorkers', () => {
-  cy.log('Delete all previous created workers');
-
-  const fileName = '../services.json';
+Cypress.Commands.add('removeWorkers', () => {
+  const fileName = './services.json';
   cy.task('readFileMaybe', fileName).then(services => {
     if (!services) return; // File is not there, skip the whole process
 
@@ -170,7 +165,7 @@ Cypress.Commands.add('deleteAllWorkers', () => {
   });
 });
 
-Cypress.Commands.add('deleteTopic', topicName => {
+Cypress.Commands.add('removeTopic', topicName => {
   cy.request('GET', 'api/topics').then(res => {
     res.body.forEach(({ name }) => {
       if (name === topicName) {
@@ -181,7 +176,7 @@ Cypress.Commands.add('deleteTopic', topicName => {
   });
 });
 
-Cypress.Commands.add('deletePipeline', pipelineName => {
+Cypress.Commands.add('removePipeline', pipelineName => {
   cy.request('GET', 'api/pipelines').then(res => {
     res.body.forEach(({ name, id }) => {
       if (name === pipelineName) {

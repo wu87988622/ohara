@@ -47,7 +47,7 @@ describe('Log API', () => {
 
     cy.startBroker(brokerClusterName);
 
-    cy.testCreateWorker({
+    cy.createWorker({
       name: workerClusterName,
       nodeNames: [nodeName],
       brokerClusterName,
