@@ -59,3 +59,20 @@ services:
       - POSTGRES_DB=${POSTGRES_DB:-ohara}
     ports:
       - 20000:5432
+
+  samba:
+    image: dperson/samba:${SMB_IMAGE_TAG:-latest}
+    command: >
+      -u "${SMB_USER:-user};${SMB_PASSWORD:-password}"
+      -s "${SMB_USER:-user};/tmp/;yes;no;no;all;${SMB_USER:-user};${SMB_USER:-user}"
+    # You can replace the necessary port for SMB by parameters：
+    # - SMB_NS_PORT: NETBIOS Name Service, default 137
+    # - SMB_DGM_PORT: NETBIOS Datagram Service, default 138
+    # - SMB_SSN_PORT: NETBIOS Session Service, default 139
+    # - SMB_DS_PORT: Active Directory, default 445
+    ports:
+      - "${SMB_NS_PORT:-137}:137/udp"
+      - "${SMB_DGM_PORT:-138}:138/udp"
+      - "${SMB_SSN_PORT:-139}:139/tcp"
+      - "${SMB_DS_PORT:-445}:445/tcp"
+
