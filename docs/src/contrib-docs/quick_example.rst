@@ -39,7 +39,7 @@ Section Structure
 An underline/overline is a single repeated punctuation character that begins in column 1 and forms a line extending at
 least as far as the right edge of the title text.
 
-Plain text example
+Example
   .. code-block:: text
 
    Level 1
@@ -54,11 +54,11 @@ Plain text example
    Level 4
    """""""""""
 
-
-- ``=`` --> Title level 1, Page title
-- ``-`` --> Title level 2, Section heading
-- ``^`` --> Title level 3, Sub section heading
-- ``"`` --> Title level 4, Sub sub-section heading
+Description
+  - ``=`` --> Title level 1, Page title
+  - ``-`` --> Title level 2, Section heading
+  - ``^`` --> Title level 3, Sub section heading
+  - ``"`` --> Title level 4, Sub sub-section heading
 
   .. note::
     Please use the list above as section underline character in Ohara.
@@ -67,7 +67,7 @@ Plain text example
 Inline Markup
 ^^^^^^^^^^^^^^^
 
-Plain text
+Example
   .. code-block:: text
 
     * *emphasis*
@@ -78,7 +78,6 @@ Plain text
 
       * please see `Substitution section <#quick-example-substitution>`_
 
-Result
   * *emphasis*
   * **strong emphasis**
   * ``inline literal``
@@ -96,7 +95,7 @@ ReStructuredText provides two syntaxes for delineating table cells: **Grid Table
 Simple Tables
 ^^^^^^^^^^^^^
 
-Plain text sample 1
+Example 1
   .. code-block:: text
 
     =====  =====  =======
@@ -107,7 +106,6 @@ Plain text sample 1
     True   True   True
     =====  =====  =======
 
-Result
   =====  =====  =======
     A      B    A and B
   =====  =====  =======
@@ -116,7 +114,7 @@ Result
   True   True   True
   =====  =====  =======
 
-Plain text sample 2
+Example 2
   .. code-block:: text
 
     =====  =====  ======
@@ -129,7 +127,6 @@ Plain text sample 2
     True   True   True
     =====  =====  ======
 
-Result
   =====  =====  ======
      Inputs     Output
   ------------  ------
@@ -140,7 +137,7 @@ Result
   True   True   True
   =====  =====  ======
 
-Plain text sample 3
+Example 3
   .. code-block:: text
 
     =====  =====
@@ -156,7 +153,6 @@ Plain text sample 3
     \      Row 4; column 1 will be empty.
     =====  =====
 
-Result
   =====  =====
   col 1  col 2
   =====  =====
@@ -177,7 +173,7 @@ Reference for detail:
 Grid Tables
 ^^^^^^^^^^^
 
-Plain text sample 1
+Example
   .. code-block:: text
 
     +------------------------+------------+----------+----------+
@@ -193,7 +189,6 @@ Plain text sample 1
     | body row 4             |            | - body elements.    |
     +------------------------+------------+---------------------+
 
-Result
   +------------------------+------------+----------+----------+
   | Header row, column 1   | Header 2   | Header 3 | Header 4 |
   | (header rows optional) |            |          |          |
@@ -207,7 +202,6 @@ Result
   | body row 4             |            | - body elements.    |
   +------------------------+------------+---------------------+
 
-
 Reference for detail:
   - `Grid Tables <http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html#grid-tables>`_
 
@@ -215,10 +209,11 @@ Reference for detail:
 List
 ----
 
+
 Bullet Lists
 ^^^^^^^^^^^^
 
-Plain text example
+Example
   .. code-block:: text
 
     - This is the first bullet list item.  The blank line above the
@@ -240,8 +235,6 @@ Plain text example
 
     This paragraph is not part of the list.
 
-
-Result
   - This is the first bullet list item.  The blank line above the
     first list item is required; blank lines between list items
     (such as below this paragraph) are optional.
@@ -261,36 +254,40 @@ Result
 
   This paragraph is not part of the list.
 
+Reference for detail:
+  - `Bullet Lists <http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html#bullet-lists>`_
+
 
 Enumerated Lists
 ^^^^^^^^^^^^^^^^
 
-Plain text example
+Example
   .. code-block:: text
 
     #. Item 1 initial text.
 
-       a) Item 1a.
-       b) Item 1b.
+       #. Item 1.1.
+       #. Item 1.1.
 
-    #. a) Item 2a.
-       b) Item 2b.
+    #. a) Item 2.a.
+       b) Item 2.b.
 
-Result
   #. Item 1 initial text.
 
-     a) Item 1a.
-     b) Item 1b.
+     #. Item 1.1.
+     #. Item 1.2.
 
-  #. a) Item 2a.
-     b) Item 2b.
+  #. a) Item 2.a.
+     b) Item 2.b.
 
+Reference for detail:
+  - `Enumerated Lists <http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html#enumerated-lists>`_
 
 
 Definition Lists
 ^^^^^^^^^^^^^^^^
 
-Plain text example
+Example
   .. code-block:: text
 
     term 1
@@ -307,7 +304,6 @@ Plain text example
     term 4 : classifier one : classifier two
         Definition 4.
 
-Result
   term 1
       Definition 1.
 
@@ -322,12 +318,14 @@ Result
   term 4 : classifier one : classifier two
       Definition 4.
 
+Reference for detail:
+  - `Definition Lists <http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html#definition-lists>`_
 
 
 Field Lists
 ^^^^^^^^^^^
 
-Plain text example
+Example
   .. code-block:: text
 
     :Date: 2001-08-16
@@ -341,8 +339,6 @@ Plain text example
        field name marker, and they must line up with each other.
     :Parameter i: integer
 
-
-Result
   :Date: 2001-08-16
   :Version: 1
   :Authors: - Me
@@ -354,6 +350,70 @@ Result
      field name marker, and they must line up with each other.
   :Parameter i: integer
 
+Reference for detail:
+  - `Field Lists <http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html#option-lists>`_
+
+
+Option Lists
+^^^^^^^^^^^^
+
+Example
+  .. code-block:: text
+
+    -a         Output all.
+    -b         Output both (this description is
+               quite long).
+    -c arg     Output just arg.
+    --long     Output all day long.
+
+    -p         This option has two paragraphs in the description.
+               This is the first.
+
+               This is the second.  Blank lines may be omitted between
+               options (as above) or left in (as here and below).
+
+    --very-long-option  A VMS-style option.  Note the adjustment for
+                        the required two spaces.
+
+    --an-even-longer-option
+               The description can also start on the next line.
+
+    -2, --two  This option has two variants.
+
+    -f FILE, --file=FILE  These two options are synonyms; both have
+                          arguments.
+
+    /V         A VMS/DOS-style option.
+
+  -a         Output all.
+  -b         Output both (this description is
+             quite long).
+  -c arg     Output just arg.
+  --long     Output all day long.
+
+  -p         This option has two paragraphs in the description.
+             This is the first.
+
+             This is the second.  Blank lines may be omitted between
+             options (as above) or left in (as here and below).
+
+  --very-long-option  A VMS-style option.  Note the adjustment for
+                      the required two spaces.
+
+  --an-even-longer-option
+             The description can also start on the next line.
+
+  -2, --two  This option has two variants.
+
+  -f FILE, --file=FILE  These two options are synonyms; both have
+                        arguments.
+
+  /V         A VMS/DOS-style option.
+
+Reference for detail:
+  - `Option Lists <http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html#option-lists>`_
+
+
 ..
 .. TODO: more Blocks example
 ..
@@ -364,28 +424,26 @@ Hyperlinks
 External hyperlink targets
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Plain text example
-    .. code-block:: text
+Example
+  .. code-block:: text
 
-      - External hyperlink: `<https://ohara.readthedocs.io/>`_
-      - External hyperlink: https://ohara.readthedocs.io/
-      - External hyperlink: `Apache Kafka Github Repo <https://github.com/apache/kafka>`_
-      - External hyperlink: Ohara_
-      - External hyperlink: `Ohara Document`_
-
-      .. _Ohara: https://github.com/oharastream/ohara
-      .. _Ohara Document: https://ohara.readthedocs.io/en/latest/
-
-Result
-    - External hyperlink: `<https://ohara.readthedocs.io/>`_
     - External hyperlink: https://ohara.readthedocs.io/
-    - External hyperlink: `Apache Kafka Github Repo <https://github.com/apache/kafka>`_
+    - External hyperlink: `<https://ohara.readthedocs.io/>`_
+    - External hyperlink: `Please see Ohara document <https://ohara.readthedocs.io/>`_
     - External hyperlink: Ohara_
     - External hyperlink: `Ohara Document`_
 
     .. _Ohara: https://github.com/oharastream/ohara
     .. _Ohara Document: https://ohara.readthedocs.io/en/latest/
 
+  - External hyperlink: https://ohara.readthedocs.io/
+  - External hyperlink: `<https://ohara.readthedocs.io/>`_
+  - External hyperlink: `Please see Ohara document <https://ohara.readthedocs.io/>`_
+  - External hyperlink: Ohara_
+  - External hyperlink: `Ohara Document`_
+
+  .. _Ohara: https://github.com/oharastream/ohara
+  .. _Ohara Document: https://ohara.readthedocs.io/en/latest/
 
 .. _quick-example-internal-targets:
 
@@ -394,27 +452,28 @@ Internal hyperlink targets
 
 Internal hyperlink targets is standard reST label, must be **unique** throughout the entire documentation.
 
-Plain text example
+Example
   .. code-block:: text
 
     .. _quick-rst-internal-targets:
 
+    Internal hyperlink targets
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
     - Goto :ref:`Internal hyperlink targets <quick-example-internal-targets>`
     - Goto quick-example-internal-targets_
     - Goto `Internal hyperlink targets <#quick-example-internal-targets>`_
 
-Result
-    - Goto :ref:`Internal hyperlink targets <quick-example-internal-targets>`
-    - Goto quick-example-internal-targets_
-    - Goto `Internal hyperlink targets <#quick-example-internal-targets>`_
-
+  - Goto :ref:`Internal hyperlink targets <quick-example-internal-targets>`
+  - Goto quick-example-internal-targets_
+  - Goto `Internal hyperlink targets <#quick-example-internal-targets>`_
 
 .. note::
   We can use `:ref: <https://www.sphinx-doc.org/en/master/usage/restructuredtext/roles.html#cross-referencing-arbitrary-locations>`_
   to cross-referencing arbitrary locations in any document.
 
 .. warning::
-  Please don't point the **implicit hyperlink targets** that auto generated by section titles.
+  Please don't point to the **implicit hyperlink targets** that auto generated by section titles.
   Use **internal hyperlink targets** instead to keep the internal link not broken.
 
 Reference for detail:
@@ -423,8 +482,8 @@ Reference for detail:
   - `Cross-referencing anything <https://www.sphinx-doc.org/en/master/usage/restructuredtext/roles.html#cross-referencing-arbitrary-locations>`_
 
 
-Custom external links in Ohara
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Predefined external links in Ohara
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Ohara enable `sphinx.ext.extlinks`_ to help with common pattern to point to the external sites.
 Following extlinks are define in **docs/src/conf.py**:
@@ -439,7 +498,7 @@ Following extlinks are define in **docs/src/conf.py**:
         'k8s-issue': ('https://github.com/kubernetes/kubernetes/issues/%s', '#')
     }
 
-Plain text example
+Example
   .. code-block:: text
 
     - Ohara issue link: :ohara-issue:`800`
@@ -448,7 +507,6 @@ Plain text example
     - Zookeeper issue: :zookeeper-issue:`2345`
     - Kubernetes issue: :k8s-issue:`2345`
 
-Result
   - Ohara issue link: :ohara-issue:`800`
   - Ohara source link: :ohara-source:`PageViewRegionExample <ohara-streams/src/test/java/com/island/ohara/streams/examples/PageViewRegionExample.java>`
   - Kafka issue: :kafka-issue:`8765`
@@ -457,7 +515,7 @@ Result
 
 
 .. note::
-  The extlink ``:ohara-source`` also bind *branch* variable to make sure that we can point to
+  The extlink ``:ohara-source:`` also bind *branch* variable to make sure that we can point to
   the correct url.
 
 .. _sphinx.ext.extlinks: https://www.sphinx-doc.org/en/master/usage/extensions/extlinks.html#module-sphinx.ext.extlinks
@@ -470,18 +528,23 @@ Substitution
 Substitution definition
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-Plain text example
+Example
   .. code-block:: text
 
     - About Ohara: |ohara-intro|
     - The |happy-face| symbol must be used on containers used to dispose of medical waste.
 
-Result
-  - About Ohara: |ohara-intro|
-  - The |happy-face| symbol must be used on containers used to dispose of medical waste.
+    .. |ohara-intro| replace:: Ohara, a big data platform which is powered by Apache Kafka and Docker, enables effective and quick ways of building application at streaming and scale.
+    .. |happy-face| image:: https://cdn4.iconfinder.com/data/icons/emoji-18/61/2-32.png
 
-.. |ohara-intro| replace:: Ohara, a big data platform which is powered by Apache Kafka and Docker, enables effective and quick ways of building application at streaming and scale.
-.. |happy-face| image:: https://cdn4.iconfinder.com/data/icons/emoji-18/61/2-32.png
+  - About Ohara: |ohara-intro|
+  - The |happy-face| symbol must be used when you are **very**, **very** happy.
+
+  .. |ohara-intro| replace:: Ohara, a big data platform which is powered by Apache Kafka and Docker, enables effective and quick ways of building application at streaming and scale.
+  .. |happy-face| image:: https://cdn4.iconfinder.com/data/icons/emoji-18/61/2-32.png
+
+.. tip::
+  Your substitution definition only available in the same file.
 
 Reference for detail:
   - `Substitution Definitions <http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html#substitution-definitions>`_
@@ -497,20 +560,17 @@ There are two important substitution definitions: **version**, **branch**. The t
 - **version**: Used to indicate which release version when Ohara released.
 - **branch**: Used to indicate which github repo branch the source code belongs to.
 
-Plain text example
+Example
   .. code-block:: text
 
     - Ohara version: |version|
     - Ohara branch: |branch|
 
-Result
   - Ohara version: |version|
   - Ohara branch: |branch|
 
-If you want to use it in code-block, you should add a prefix character ``$``, for example:
-
-- $\|version|
-- $\|branch|
+If you want to use variable in the code-block, you should add a prefix character ``$``,
+for example: $\|version| , $\|branch|
 
 Code-block example
   .. code-block:: groovy
@@ -528,6 +588,20 @@ Show code
 ---------
 
 Java block
+^^^^^^^^^^
+  .. code-block:: text
+
+    .. code-block:: java
+
+       public class SimpleApplicationForOharaEnv extends StreamApp {
+
+         @Override
+         public void start() {
+           OStream<Row> ostream = OStream.builder().cleanStart().toOharaEnvStream();
+           ostream.start();
+         }
+       }
+
   .. code-block:: java
 
      public class SimpleApplicationForOharaEnv extends StreamApp {
@@ -540,12 +614,38 @@ Java block
      }
 
 Console block
+^^^^^^^^^^^^^
+  .. code-block:: text
+
+    .. code-block:: console
+
+      $ su root
+      # cd $OHARA_HOME/kubernetes/distribute
+      # cat /tmp/k8s-install-info.txt
+      # kubeadm join 10.100.0.178:6443 --token 14aoza.xpgpa26br32sxwl8 --discovery-token-ca-cert-hash sha256:f5614e6b6376f7559910e66bc014df63398feb7411fe6d0e7057531d7143d47b
+
   .. code-block:: console
 
-    $ curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-    $ python get-pip.py --user
+    $ su root
+    # cd $OHARA_HOME/kubernetes/distribute
+    # cat /tmp/k8s-install-info.txt
+    # kubeadm join 10.100.0.178:6443 --token 14aoza.xpgpa26br32sxwl8 --discovery-token-ca-cert-hash sha256:f5614e6b6376f7559910e66bc014df63398feb7411fe6d0e7057531d7143d47b
+
 
 Json block
+^^^^^^^^^^
+  .. code-block:: text
+
+    .. code-block:: json
+
+       {
+         "name": "aa.jar",
+         "group": "wk01",
+         "size": 1779,
+         "url": "http://localhost:12345/v0/downloadFiles/aa.jar",
+         "lastModified": 1561012496975
+       }
+
   .. code-block:: json
 
      {
@@ -556,31 +656,66 @@ Json block
        "lastModified": 1561012496975
      }
 
+Http Restful
+^^^^^^^^^^^^
+  .. code-block:: text
 
+    .. code-block:: http
+
+      POST /auth/token HTTP/1.1
+      Content-type: application/json
+      Accept: application/json
+      Authorization: Basic YWRtaW46MUovd21IdTJYbU16dUFZaFpmMzZ5UT09
+
+      {
+         "actorId": "admin"
+      }
+
+  .. code-block:: http
+
+    POST /auth/token HTTP/1.1
+    Content-type: application/json
+    Accept: application/json
+    Authorization: Basic YWRtaW46MUovd21IdTJYbU16dUFZaFpmMzZ5UT09
+
+    {
+       "actorId": "admin"
+    }
+
+Http Response
+^^^^^^^^^^^^^
+  .. code-block:: http
+
+    POST /blog/post.cgi HTTP/1.1
+    Host: www.example.com:443
+    Date: Mon, 23 May 2005 22:38:34 GMT
+    Content-Type: application/json; charset=UTF-8
+
+    {"id": 1,
+     "title": "Example post",
+     "body": "= Document Title"
+    }
 
 Include file
 ^^^^^^^^^^^^
 
-Plain text sample 1
+Example 1
   .. code-block:: text
 
     .. literalinclude:: _include/sample.json
       :language: json
 
-Result
   .. literalinclude:: _include/sample.json
     :language: json
 
-Plain text sample 1
+Example 2
   .. code-block:: text
 
     .. literalinclude:: _include/RowSourceConnector.java
       :language: java
 
-Result
   .. literalinclude:: _include/RowSourceConnector.java
     :language: java
-
 
 Reference for detail:
   - `Showing code examples <https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html#showing-code-examples>`_
@@ -590,33 +725,80 @@ Reference for detail:
 Paragraph-level markup
 -----------------------
 
+Note
+  .. code-block:: text
+
+    .. note::
+      This is note
+
   .. note::
     This is note
+
+Danger
+  .. code-block:: text
+
+    .. danger::
+      This is danger
 
   .. danger::
     This is danger
 
+Tip
+  .. code-block:: text
+
+    .. tip::
+      This is tip
+
   .. tip::
     This is tip
+
+Warning
+  .. code-block:: text
+
+    .. warning::
+      This is warning
 
   .. warning::
     This is warning
 
-  .. option::
-    This is option
+See also
+  .. code-block:: text
+
+    .. seealso::
+      This is see also
 
   .. seealso::
     This is see also
 
+Deprecated since version X:
+  .. code-block:: text
+
+    .. deprecated:: 0.6
+      Use xxx instead.
+
   .. deprecated:: 0.6
     Use xxx instead.
 
+New in version X:
+  .. code-block:: text
+
+    .. versionadded:: 0.7
+      The *tags* parameter.
+
   .. versionadded:: 0.7
-    The *spam* parameter.
+    The *tags* parameter.
 
-  .. code-block:: console
+Horizontal List:
+  .. code-block:: text
 
-    pandoc --from=markdown --to=rst --output=README.rst README.md
+    .. hlist::
+     :columns: 3
+
+     * A list of
+     * short items
+     * that should be
+     * displayed
+     * horizontally
 
   .. hlist::
    :columns: 3
