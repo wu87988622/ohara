@@ -14,7 +14,17 @@
  * limitations under the License.
  */
 
-import { string, arrayOf, shape, bool, number, any } from 'prop-types';
+import {
+  string,
+  arrayOf,
+  shape,
+  bool,
+  number,
+  any,
+  func,
+  array,
+  object,
+} from 'prop-types';
 
 export const graph = shape({
   name: string.isRequired,
@@ -51,3 +61,29 @@ export const definition = shape({
   tableKeys: arrayOf(string),
   valueType: string.isRequired,
 });
+
+export const connector = {
+  hasChanges: bool.isRequired,
+  updateHasChanges: func.isRequired,
+  updateGraph: func.isRequired,
+  refreshGraph: func.isRequired,
+  pipelineTopics: array.isRequired,
+  globalTopics: arrayOf(topic).isRequired,
+  defs: arrayOf(definition),
+  graph: arrayOf(graph).isRequired,
+  pipeline: shape({
+    name: string.isRequired,
+    flows: arrayOf(
+      shape({
+        from: object,
+        to: arrayOf(object),
+      }),
+    ).isRequired,
+  }).isRequired,
+  match: shape({
+    params: object.isRequired,
+  }).isRequired,
+  history: shape({
+    push: func.isRequired,
+  }).isRequired,
+};

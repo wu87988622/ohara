@@ -14,12 +14,18 @@
  * limitations under the License.
  */
 
-import React from 'react';
-import { isEmpty, isUndefined, isNull } from 'lodash';
+import React, { useState, useEffect } from 'react';
+import toastr from 'toastr';
+import { isEmpty, isUndefined, isNull, get } from 'lodash';
 import { Field } from 'react-final-form';
 
+import * as connectorApi from 'api/connectorApi';
+import * as pipelineApi from 'api/pipelineApi';
+import * as MESSAGES from 'constants/messages';
 import ColumnTable from './CustomConnector/ColumnTable';
 import Tabs from './Tabs';
+import { CONNECTOR_ACTIONS } from 'constants/pipelines';
+import { validateConnector } from 'api/validateApi';
 import { FormGroup } from 'components/common/Form';
 import { InputField, Select, Checkbox } from 'components/common/Mui/Form';
 import { findByGraphName } from '../pipelineUtils/commonUtils';
@@ -229,6 +235,252 @@ export const changeKeySeparator = key => {
   }
 
   return result;
+};
+
+export const useFetchConnectors = props => {
+  const [state, setState] = useState(null);
+  const [configs, setConfigs] = useState(null);
+
+  useEffect(() => {
+    const fetchConnector = async () => {
+      const { connectorName } = props.match.params;
+      const res = await connectorApi.fetchConnector(connectorName);
+      const result = get(res, 'data.result', null);
+
+      if (result) {
+        const { settings } = result;
+        const { topicKeys } = settings;
+        const state = get(result, 'state', null);
+        const topicName = get(topicKeys, '[0].name', '');
+
+        const _settings = changeToken({
+          values: settings,
+          targetToken: '.',
+          replaceToken: '_',
+        });
+
+        const configs = { ..._settings, topicKeys: topicName };
+        setConfigs(configs);
+        setState(state);
+      }
+    };
+
+    fetchConnector();
+  }, [props.globalTopics, props.match.params, setConfigs, setState]);
+
+  return [state, setState, configs, setConfigs];
+};
+
+export const useTopics = props => {
+  const [topics, setTopics] = useState([]);
+
+  useEffect(() => {
+    const loadTopics = () => {
+      const { pipelineTopics } = props;
+      setTopics(pipelineTopics.map(topic => topic.name));
+    };
+
+    loadTopics();
+  }, [props]);
+
+  return topics;
+};
+
+export const useTestConfig = props => {
+  const [isTestingConfig, setIsTestingConfig] = useState(false);
+
+  const handleTestConfig = async (e, values) => {
+    const topic = getCurrTopicId({
+      originals: props.globalTopics,
+      target: values.topicKeys,
+    });
+
+    const topicKeys = Array.isArray(topic)
+      ? topic
+      : [{ group: 'default', name: topic }];
+
+    const _values = changeToken({
+      values,
+      targetToken: '_',
+      replaceToken: '.',
+    });
+
+    const params = { ..._values, topicKeys };
+    setIsTestingConfig(true);
+    const res = await validateConnector(params);
+    setIsTestingConfig(false);
+    const isSuccess = get(res, 'data.isSuccess', false);
+
+    if (isSuccess) {
+      toastr.success(MESSAGES.TEST_SUCCESS);
+    }
+  };
+
+  return [isTestingConfig, handleTestConfig];
+};
+
+export const updateComponent = ({
+  updatedConfigs,
+  updateHasChanges,
+  setConfigs,
+}) => {
+  updateHasChanges(true);
+  setConfigs(updatedConfigs);
+};
+
+export const handleColumnChange = ({ configs, ...rest }) => {
+  const handleColumnChange = update => {
+    const updatedConfigs = addColumn({ configs, update });
+    updateComponent({ updatedConfigs, ...rest });
+  };
+
+  return handleColumnChange;
+};
+
+export const handleColumnRowDelete = ({ configs, ...rest }) => {
+  const handleColumnRowDelete = update => {
+    const updatedConfigs = deleteColumnRow({ configs, update });
+    updateComponent({ updatedConfigs, ...rest });
+  };
+
+  return handleColumnRowDelete;
+};
+
+export const handleColumnRowUp = ({ configs, ...rest }) => {
+  const handleColumnRowUp = (e, update) => {
+    e.preventDefault();
+    const updatedConfigs = moveColumnRowUp({ configs, update });
+
+    if (updatedConfigs) updateComponent({ updatedConfigs, ...rest });
+  };
+
+  return handleColumnRowUp;
+};
+
+export const handleColumnRowDown = ({ configs, ...rest }) => {
+  const handleColumnRowDown = (e, update) => {
+    e.preventDefault();
+    const updatedConfigs = moveColumnRowDown({ configs, update });
+
+    if (updatedConfigs) updateComponent({ updatedConfigs, ...rest });
+  };
+
+  return handleColumnRowDown;
+};
+
+export const handleStartConnector = async params => {
+  await triggerConnector(params);
+};
+
+export const handleStopConnector = async params => {
+  await triggerConnector(params);
+};
+
+const triggerConnector = async ({ action, props, setState }) => {
+  const { connectorName } = props.match.params;
+  let response;
+  if (action === CONNECTOR_ACTIONS.start) {
+    response = await connectorApi.startConnector(connectorName);
+  } else {
+    response = await connectorApi.stopConnector(connectorName);
+  }
+
+  handleTriggerConnectorResponse({ action, response, props, setState });
+};
+
+const handleTriggerConnectorResponse = ({
+  action,
+  response,
+  props,
+  setState,
+}) => {
+  const isSuccess = get(response, 'data.isSuccess', false);
+  if (!isSuccess) return;
+
+  const { match, graph, updateGraph } = props;
+  const connectorName = get(match, 'params.connectorName', null);
+  const state = get(response, 'data.result.state');
+  setState(state);
+  const currSink = findByGraphName(graph, connectorName);
+  const update = { ...currSink, state };
+  updateGraph({ update, dispatcher: { name: 'CONNECTOR' } });
+
+  if (action === CONNECTOR_ACTIONS.start) {
+    if (!isNull(state)) {
+      toastr.success(MESSAGES.START_CONNECTOR_SUCCESS);
+    }
+  }
+};
+
+export const handleDeleteConnector = async (isRunning, props) => {
+  const { refreshGraph, history, pipeline } = props;
+  const { connectorName } = props.match.params;
+  const { name: pipelineName, flows } = pipeline;
+
+  if (isRunning) {
+    toastr.error(
+      `The connector is running! Please stop the connector first before deleting`,
+    );
+
+    return;
+  }
+
+  const connectorResponse = await connectorApi.deleteConnector(connectorName);
+
+  const connectorHasDeleted = get(connectorResponse, 'data.isSuccess', false);
+
+  const updatedFlows = flows.filter(flow => flow.from.name !== connectorName);
+
+  const pipelineResponse = await pipelineApi.updatePipeline({
+    name: pipelineName,
+    params: {
+      name: pipelineName,
+      flows: updatedFlows,
+    },
+  });
+
+  const pipelineHasUpdated = get(pipelineResponse, 'data.isSuccess', false);
+
+  if (connectorHasDeleted && pipelineHasUpdated) {
+    toastr.success(`${MESSAGES.CONNECTOR_DELETION_SUCCESS} ${connectorName}`);
+    await refreshGraph();
+
+    const path = `/pipelines/edit/${pipelineName}`;
+    history.push(path);
+  }
+};
+
+export const useSave = async (props, values) => {
+  const { globalTopics, graph, updateGraph } = props;
+  const { connectorName } = props.match.params;
+
+  const topic = getCurrTopicId({
+    originals: globalTopics,
+    target: values.topicKeys,
+  });
+
+  const topicKeys = Array.isArray(topic)
+    ? topic
+    : [{ group: 'default', name: topic }];
+
+  const _values = changeToken({
+    values,
+    targetToken: '_',
+    replaceToken: '.',
+  });
+
+  const params = { ..._values, topicKeys, name: connectorName };
+  await connectorApi.updateConnector({ name: connectorName, params });
+
+  const { sinkProps, update } = getUpdatedTopic({
+    currTopicName: topic,
+    configs: values,
+    originalTopics: globalTopics,
+    graph,
+    connectorName: connectorName,
+  });
+
+  updateGraph({ update, dispatcher: { name: 'CONNECTOR' }, ...sinkProps });
 };
 
 export const sortByOrder = (a, b) => a.orderInGroup - b.orderInGroup;
