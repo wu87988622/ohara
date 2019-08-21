@@ -67,6 +67,8 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
 
   private[this] val wkApi = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)
 
+  private[this] val containerApi = ContainerApi.access.hostname(configurator.hostname).port(configurator.port)
+
   private[this] val fileApi = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] val nameHolder = ClusterNameHolder(nodeCache)
@@ -109,7 +111,9 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
         .nodeNames(nodeCache.map(_.name).toSet)
         .create()
         .flatMap(info => zkApi.start(info.name).flatMap(_ => zkApi.get(info.name))))
-    assertCluster(() => result(zkApi.list()), zkCluster.name)
+    assertCluster(() => result(zkApi.list()),
+                  () => result(containerApi.get(zkCluster.name).map(_.flatMap(_.containers))),
+                  zkCluster.name)
     log.info(s"zkCluster:$zkCluster")
     val bkCluster = result(
       bkApi.request
@@ -118,7 +122,9 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
         .nodeNames(nodeCache.map(_.name).toSet)
         .create()
         .flatMap(info => bkApi.start(info.name).flatMap(_ => bkApi.get(info.name))))
-    assertCluster(() => result(bkApi.list()), bkCluster.name)
+    assertCluster(() => result(bkApi.list()),
+                  () => result(containerApi.get(bkCluster.name).map(_.flatMap(_.containers))),
+                  bkCluster.name)
     log.info(s"bkCluster:$bkCluster")
     val wkCluster = result(
       wkApi.request
@@ -128,7 +134,9 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
         .nodeName(nodeCache.head.name)
         .create())
     result(wkApi.start(wkCluster.name))
-    assertCluster(() => result(wkApi.list()), wkCluster.name)
+    assertCluster(() => result(wkApi.list()),
+                  () => result(containerApi.get(wkCluster.name).map(_.flatMap(_.containers))),
+                  wkCluster.name)
     // add all remaining node to the running worker cluster
     nodeCache.filterNot(n => wkCluster.nodeNames.contains(n.name)).foreach { n =>
       result(wkApi.addNode(wkCluster.name, n.name))

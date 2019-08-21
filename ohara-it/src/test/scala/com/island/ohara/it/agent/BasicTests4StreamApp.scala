@@ -20,7 +20,7 @@ import java.io.File
 import java.util.concurrent.ExecutionException
 
 import com.island.ohara.agent.ClusterState
-import com.island.ohara.agent.docker.{ContainerState, DockerClient}
+import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.{ZookeeperApi, _}
 import com.island.ohara.common.data.{Row, Serializer}
@@ -126,11 +126,9 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
         zkApi.request.name(nameHolder.generateClusterName()).nodeNames(nodeCache.take(1).map(_.name).toSet).create()
       )
       result(zkApi.start(zkCluster.name))
-      assertCluster(() => result(zkApi.list()), zkCluster.name)
-      await(() => {
-        val containers = result(containerApi.get(zkCluster.name).map(_.flatMap(_.containers)))
-        containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
-      })
+      assertCluster(() => result(zkApi.list()),
+                    () => result(containerApi.get(zkCluster.name).map(_.flatMap(_.containers))),
+                    zkCluster.name)
       log.info("create zkCluster...done")
 
       // create broker cluster
@@ -142,11 +140,9 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
           .nodeNames(nodeCache.take(1).map(_.name).toSet)
           .create())
       result(bkApi.start(bkCluster.name))
-      assertCluster(() => result(bkApi.list()), bkCluster.name)
-      await(() => {
-        val containers = result(containerApi.get(bkCluster.name).map(_.flatMap(_.containers)))
-        containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
-      })
+      assertCluster(() => result(bkApi.list()),
+                    () => result(containerApi.get(bkCluster.name).map(_.flatMap(_.containers))),
+                    bkCluster.name)
       log.info("create bkCluster...done")
       brokerConnProps = bkCluster.connectionProps
 
@@ -165,7 +161,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     // create streamApp properties
     val stream = result(
       access.request
-        .name(CommonUtils.randomString(10))
+        .name(nameHolder.generateClusterName())
         .jarKey(ObjectKey.of(jarInfo.group, jarInfo.name))
         .brokerClusterName(bkName)
         .create())
@@ -255,8 +251,9 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     definition.get.className shouldBe "com.island.ohara.it.streamapp.DumbStreamApp"
 
     // we make sure the broker cluster exists again (for create topic)
-    assertCluster(() => result(bkApi.list()), bkName)
-
+    assertCluster(() => result(bkApi.list()),
+                  () => result(containerApi.get(bkName).map(_.flatMap(_.containers))),
+                  bkName)
     // create topic
     val topic1 = result(topicApi.request.key(from).brokerClusterName(bkName).create())
     result(topicApi.start(topic1.key))

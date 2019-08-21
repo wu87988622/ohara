@@ -90,22 +90,21 @@ task sinkJar(type: Jar, dependsOn: compileJava) {
 }
 
 test {
-  String DOCKER = "ohara.it.docker"
-  if(project.hasProperty(DOCKER)) environment DOCKER, project.getProperty(DOCKER)
-
-  // required by TestLoadCustomJarToWorkerCluster
-  String PUBLIC_HOSTNAME= "ohara.it.hostname"
-  if(project.hasProperty(PUBLIC_HOSTNAME)) environment PUBLIC_HOSTNAME, project.getProperty(PUBLIC_HOSTNAME)
-
-  // required by TestLoadCustomJarToWorkerCluster
-  String PUBLIC_PORT = "ohara.it.port"
-  if(project.hasProperty(PUBLIC_PORT)) environment PUBLIC_PORT, project.getProperty(PUBLIC_PORT)
-
-  String KUBERNETES = "ohara.it.k8s"
-  if(project.hasProperty(KUBERNETES)) environment KUBERNETES, project.getProperty(KUBERNETES)
-
-  String KUBERNETES_NODE_NAME = "ohara.it.k8s.nodename"
-  if(project.hasProperty(KUBERNETES_NODE_NAME)) environment KUBERNETES_NODE_NAME, project.getProperty(KUBERNETES_NODE_NAME)
+  def keywords = [
+    "ohara.it.docker",
+    // hostname used to expose the location of configurator
+    "ohara.it.hostname",
+    // hostname used to expose the location of configurator
+    "ohara.it.port",
+    "ohara.it.k8s",
+    "ohara.it.k8s.nodename",
+    // set the prefix to all containers
+    "ohara.it.container.prefix"
+  ]
+  keywords.forEach {
+    keyword ->
+      if(project.hasProperty(keyword)) environment keyword, project.getProperty(keyword)
+  }
 }
 
 /**

@@ -19,7 +19,10 @@ package com.island.ohara.it
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 
+import com.island.ohara.agent.NoSuchClusterException
+import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.ClusterInfo
+import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Rule
@@ -37,24 +40,30 @@ class IntegrationTest extends OharaTest {
 
   /**
     * the creation of cluster is async so you need to wait the cluster to build.
-    * @param f clusters
+    * @param clusters clusters
+    * @param containers containers
     * @param name cluster name
     */
-  protected def assertCluster(f: () => Seq[ClusterInfo], name: String): Unit = assertClusters(f, Seq(name))
-  protected def assertClusters(f: () => Seq[ClusterInfo], names: Seq[String]): Unit = await { () =>
-    val clusters = f()
-    names.forall(name => clusters.map(_.name).contains(name))
-  }
-  protected def assertNoCluster(f: () => Seq[ClusterInfo], name: String): Unit = assertNoClusters(f, Seq(name))
-
-  protected def assertNoClusters(f: () => Seq[ClusterInfo], names: Seq[String]): Unit = await { () =>
-    val clusters = f()
-    names.forall(name => !clusters.map(_.name).contains(name))
-  }
+  protected def assertCluster(clusters: () => Seq[ClusterInfo],
+                              containers: () => Seq[ContainerInfo],
+                              name: String): Unit = await(() =>
+    try {
+      clusters().map(_.name).contains(name) &&
+      // since we only get "active" containers, all containers belong to the cluster should be running.
+      // Currently, both k8s and pure docker have the same context of "RUNNING".
+      // It is ok to filter container via RUNNING state.
+      containers().nonEmpty &&
+      containers().map(_.state).forall(_.equals(ContainerState.RUNNING.name))
+    } catch {
+      // the collie impl throw exception if the cluster "does not" exist when calling "containers"
+      case _: NoSuchClusterException => false
+  })
 }
 
 object IntegrationTest {
-  def result[T](f: Future[T]): T = Await.result(f, 800 seconds)
+  private[this] val TIMEOUT = 2 minutes
 
-  def await(f: () => Boolean): Unit = CommonUtils.await(() => f(), Duration.ofSeconds(800))
+  def result[T](f: Future[T]): T = Await.result(f, TIMEOUT)
+
+  def await(f: () => Boolean): Unit = CommonUtils.await(() => f(), Duration.ofSeconds(TIMEOUT.toSeconds))
 }

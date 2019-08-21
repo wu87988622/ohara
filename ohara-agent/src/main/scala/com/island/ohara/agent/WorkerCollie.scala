@@ -147,7 +147,11 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
                           })
                         // TODO: put this setting into definition in #2191...by Sam
                       } + (WorkerCollie.BROKERS_KEY -> brokers)
-                        + (WorkerCollie.JMX_HOSTNAME_KEY -> node.name)
+                      // the default hostname is container name and it is not exposed publicly.
+                      // Hence, we have to set the jmx hostname to node name
+                        + (WorkerCollie.JMX_HOSTNAME_KEY -> node.hostname)
+                      // the sync mechanism in kafka needs to know each other location.
+                      // the key controls the hostname exposed to other nodes.
                         + (WorkerCollie.ADVERTISED_HOSTNAME_KEY -> node.name)
                       // we convert all settings to specific string in order to fetch all settings from
                       // container env quickly. Also, the specific string enable us to pick up the "true" settings
@@ -385,11 +389,9 @@ object WorkerCollie {
     def statusTopicPartitions(statusTopicPartitions: Int): ClusterCreator =
       setting(WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY, JsNumber(CommonUtils.requirePositiveInt(statusTopicPartitions)))
 
-    @Optional("default is random string")
     def configTopicName(configTopicName: String): ClusterCreator =
       setting(WorkerCollie.CONFIG_TOPIC_KEY, JsString(CommonUtils.requireNonEmpty(configTopicName)))
 
-    @Optional("default number is 1")
     def configTopicReplications(configTopicReplications: Short): ClusterCreator =
       setting(WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY,
               JsNumber(CommonUtils.requirePositiveShort(configTopicReplications)))

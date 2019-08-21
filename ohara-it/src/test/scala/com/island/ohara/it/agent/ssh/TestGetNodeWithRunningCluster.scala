@@ -18,11 +18,11 @@ package com.island.ohara.it.agent.ssh
 
 import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.{NodeApi, ZookeeperApi}
-import com.island.ohara.common.util.{CommonUtils, Releasable}
+import com.island.ohara.client.configurator.v0.{ContainerApi, NodeApi, ZookeeperApi}
+import com.island.ohara.common.util.Releasable
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.IntegrationTest
-import com.island.ohara.it.agent.CollieTestUtils
+import com.island.ohara.it.agent.{ClusterNameHolder, CollieTestUtils}
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
@@ -30,6 +30,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class TestGetNodeWithRunningCluster extends IntegrationTest with Matchers {
 
   private[this] val nodeCache: Seq[Node] = CollieTestUtils.nodeCache()
+
+  private[this] val nameHolder: ClusterNameHolder = ClusterNameHolder(nodeCache)
 
   private[this] val configurator: Configurator = Configurator.builder.build()
 
@@ -65,7 +67,7 @@ class TestGetNodeWithRunningCluster extends IntegrationTest with Matchers {
         .hostname(configurator.hostname)
         .port(configurator.port)
         .request
-        .name(CommonUtils.randomString(10))
+        .name(nameHolder.generateClusterName())
         .nodeNames(nodeCache.map(_.name).toSet)
         .create()
         .flatMap(info =>
@@ -74,18 +76,28 @@ class TestGetNodeWithRunningCluster extends IntegrationTest with Matchers {
             .port(configurator.port)
             .start(info.name)
             .flatMap(_ => ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).get(info.name))))
-    try {
-      assertCluster(() => result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).list()),
-                    cluster.name)
-      val nodes = result(NodeApi.access.hostname(configurator.hostname).port(configurator.port).list())
-      nodes.isEmpty shouldBe false
-      nodes.foreach { node =>
-        node.services.isEmpty shouldBe false
-        withClue(s"${node.services}")(node.services.map(_.clusterNames.size).sum > 0 shouldBe true)
-      }
-    } finally result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).delete(cluster.name))
+    assertCluster(
+      () => result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).list()),
+      () =>
+        result(
+          ContainerApi.access
+            .hostname(configurator.hostname)
+            .port(configurator.port)
+            .get(cluster.name)
+            .map(_.flatMap(_.containers))),
+      cluster.name
+    )
+    val nodes = result(NodeApi.access.hostname(configurator.hostname).port(configurator.port).list())
+    nodes.isEmpty shouldBe false
+    nodes.foreach { node =>
+      node.services.isEmpty shouldBe false
+      withClue(s"${node.services}")(node.services.map(_.clusterNames.size).sum > 0 shouldBe true)
+    }
   }
 
   @After
-  final def tearDown(): Unit = Releasable.close(configurator)
+  final def tearDown(): Unit = {
+    Releasable.close(configurator)
+    Releasable.close(nameHolder)
+  }
 }

@@ -38,8 +38,14 @@ trait ClusterNameHolder extends Releasable {
     */
   protected val usedClusterNames: mutable.HashSet[String] = new mutable.HashSet[String]()
 
+  /**
+    * our IT env is flooded with many running/exited containers. As a normal human, it is hard to observer the containers
+    * invoked by our IT. Hence, this env variable enable us to add prefix to containers.
+    */
+  private[this] val prefix: String = sys.env.getOrElse("ohara.it.container.prefix", "cnh")
+
   def generateClusterName(): String = {
-    val name = CommonUtils.randomString(10)
+    val name = prefix + CommonUtils.randomString(7)
     usedClusterNames += name
     name
   }
@@ -48,6 +54,11 @@ trait ClusterNameHolder extends Releasable {
     usedClusterNames += name
     name
   }
+  override def close(): Unit = release(usedClusterNames.toSet)
+
+  def release(clusterName: String): Unit = release(Set(clusterName))
+
+  def release(clusterNames: Set[String]): Unit
 }
 
 object ClusterNameHolder {
@@ -58,34 +69,30 @@ object ClusterNameHolder {
     * @param nodes nodes
     * @return name holder
     */
-  def apply(nodes: Seq[Node]): ClusterNameHolder = new ClusterNameHolder() {
-    override def close(): Unit = {
-      nodes.foreach { node =>
-        val client =
-          DockerClient.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
-        try client
-          .containerNames()
-          .filter(containerName => usedClusterNames.exists(clusterName => containerName.contains(clusterName)))
-          .foreach { containerName =>
-            try {
-              println(s"[-----------------------------------$containerName-----------------------------------]")
-              val containerLogs = try client.log(containerName)
-              catch {
-                case e: Throwable =>
-                  s"failed to fetch the logs for container:$containerName. caused by:${e.getMessage}"
-              }
-              println(containerLogs)
-              println("[------------------------------------------------------------------------------------]")
-              client.forceRemove(containerName)
-              LOG.info(s"succeed to remove container $containerName")
-            } catch {
+  def apply(nodes: Seq[Node]): ClusterNameHolder = (clusterNames: Set[String]) =>
+    nodes.foreach { node =>
+      val client =
+        DockerClient.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
+      try client
+        .containerNames()
+        .filter(containerName => clusterNames.exists(clusterName => containerName.contains(clusterName)))
+        .foreach { containerName =>
+          try {
+            println(s"[-----------------------------------$containerName-----------------------------------]")
+            val containerLogs = try client.log(containerName)
+            catch {
               case e: Throwable =>
-                LOG.error(s"failed to remove container $containerName", e)
+                s"failed to fetch the logs for container:$containerName. caused by:${e.getMessage}"
             }
-          } finally client.close()
-
-      }
-    }
+            println(containerLogs)
+            println("[------------------------------------------------------------------------------------]")
+            client.forceRemove(containerName)
+            LOG.info(s"succeed to remove container $containerName")
+          } catch {
+            case e: Throwable =>
+              LOG.error(s"failed to remove container $containerName", e)
+          }
+        } finally client.close()
   }
 
   /**
@@ -94,32 +101,28 @@ object ClusterNameHolder {
     * @param client k8s client
     * @return name holder
     */
-  def apply(nodes: Seq[Node], client: K8SClient): ClusterNameHolder = new ClusterNameHolder() {
-    private[this] val TIMEOUT = 30 seconds
-    override def close(): Unit = {
-      try {
-        nodes.foreach { _ =>
-          Await
-            .result(client.containers(), TIMEOUT)
-            .filter(container => usedClusterNames.exists(clusterName => container.name.contains(clusterName)))
-            .foreach { container =>
-              try {
-                println(s"[-----------------------------------${container.name}-----------------------------------]")
-                val containerLogs = try Await.result(client.log(container.name), TIMEOUT)
-                catch {
-                  case e: Throwable =>
-                    s"failed to fetch the logs for container:${container.name}. caused by:${e.getMessage}"
-                }
-                println(containerLogs)
-                println("[------------------------------------------------------------------------------------]")
-                Await.result(client.remove(container.name), TIMEOUT)
-              } catch {
+  def apply(nodes: Seq[Node], client: K8SClient): ClusterNameHolder = (clusterNames: Set[String]) =>
+    try {
+      nodes.foreach { _ =>
+        Await
+          .result(client.containers(), 30 seconds)
+          .filter(container => clusterNames.exists(clusterName => container.name.contains(clusterName)))
+          .foreach { container =>
+            try {
+              println(s"[-----------------------------------${container.name}-----------------------------------]")
+              val containerLogs = try Await.result(client.log(container.name), 30 seconds)
+              catch {
                 case e: Throwable =>
-                  LOG.error(s"failed to remove container ${container.name}", e)
+                  s"failed to fetch the logs for container:${container.name}. caused by:${e.getMessage}"
               }
+              println(containerLogs)
+              println("[------------------------------------------------------------------------------------]")
+              Await.result(client.forceRemove(container.name), 30 seconds)
+            } catch {
+              case e: Throwable =>
+                LOG.error(s"failed to remove container ${container.name}", e)
             }
-        }
-      } finally client.close()
-    }
-  }
+          }
+      }
+    } finally client.close()
 }

@@ -107,7 +107,9 @@ class TestListCluster extends IntegrationTest with Matchers {
 
     log.info("[TestListCluster] before create bk cluster")
     try {
-      assertCluster(() => result(clusterCollie.zookeeperCollie.clusters()).keys.toSeq, zkCluster.name)
+      assertCluster(() => result(clusterCollie.zookeeperCollie.clusters()).keys.toSeq,
+                    () => result(clusterCollie.zookeeperCollie.containers(zkCluster.name)),
+                    zkCluster.name)
       // since we only get "active" containers, all containers belong to the cluster should be running.
       // Currently, both k8s and pure docker have the same context of "RUNNING".
       // It is ok to filter container via RUNNING state.

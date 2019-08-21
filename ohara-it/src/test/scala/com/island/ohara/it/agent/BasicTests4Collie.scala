@@ -19,7 +19,6 @@ package com.island.ohara.it.agent
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 
-import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
@@ -33,12 +32,12 @@ import com.island.ohara.it.IntegrationTest
 import com.island.ohara.kafka.{BrokerClient, Consumer, Producer}
 import com.island.ohara.metrics.BeanChannel
 import com.typesafe.scalalogging.Logger
-import org.apache.kafka.common.errors.{InvalidReplicationFactorException, UnknownTopicOrPartitionException}
+import org.apache.kafka.common.errors.InvalidReplicationFactorException
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{ExecutionException, Future}
+import scala.concurrent.Future
 
 /**
   * This abstract class extracts the "required" information of running tests on true env.
@@ -153,7 +152,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
           nodeNames = Set(nodeName)
         )))
     result(zk_start(zkCluster.name))
-    assertCluster(() => result(zk_clusters()), zkCluster.name)
+    assertCluster(() => result(zk_clusters()), () => result(zk_containers(zkCluster.name)), zkCluster.name)
     assert(result(zk_cluster(zkCluster.name)))
     log.info("start to run zookeeper cluster ... done")
     result(zk_exist(zkCluster.name)) shouldBe true
@@ -168,13 +167,6 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         log.isEmpty shouldBe false
     })
     log.info(s"verify log of zk clusters... done")
-    // since we only get "active" containers, all containers belong to the cluster should be running.
-    // Currently, both k8s and pure docker have the same context of "RUNNING".
-    // It is ok to filter container via RUNNING state.
-    await(() => {
-      val containers = result(zk_containers(clusterName))
-      containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
-    })
     val container = result(zk_containers(clusterName)).head
     log.info(s"get containers from zk:$clusterName... done")
     container.nodeName shouldBe nodeName
@@ -210,14 +202,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         nodeNames = Set(nodeCache.head.name)
       ))
     result(zk_start(zkCluster.name))
-    assertCluster(() => result(zk_clusters()), zkCluster.name)
-    // since we only get "active" containers, all containers belong to the cluster should be running.
-    // Currently, both k8s and pure docker have the same context of "RUNNING".
-    // It is ok to filter container via RUNNING state.
-    await(() => {
-      val containers = result(zk_containers(zkCluster.name))
-      containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
-    })
+    assertCluster(() => result(zk_clusters()), () => result(zk_containers(zkCluster.name)), zkCluster.name)
     log.info("[BROKER] start to run broker cluster")
     val clusterName = generateClusterName()
     result(bk_exist(clusterName)) shouldBe false
@@ -248,19 +233,12 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         )))
     result(bk_start(bkCluster.name))
     log.info("[BROKER] start to run broker cluster...done")
-    assertCluster(() => result(bk_clusters()), bkCluster.name)
+    assertCluster(() => result(bk_clusters()), () => result(bk_containers(bkCluster.name)), bkCluster.name)
     assert(result(bk_cluster(bkCluster.name)))
     log.info("[BROKER] verify cluster api...done")
     result(bk_exist(bkCluster.name)) shouldBe true
     // we can't assume the size since other tests may create zk cluster at the same time
     result(bk_clusters()).isEmpty shouldBe false
-    // since we only get "active" containers, all containers belong to the cluster should be running.
-    // Currently, both k8s and pure docker have the same context of "RUNNING".
-    // It is ok to filter container via RUNNING state.
-    await(() => {
-      val containers = result(bk_containers(clusterName))
-      containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
-    })
     result(bk_containers(clusterName)).foreach { container =>
       container.nodeName shouldBe nodeName
       container.name.contains(clusterName) shouldBe true
@@ -282,7 +260,10 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     curCluster = testAddNodeToRunningBrokerCluster(curCluster)
     testTopic(curCluster)
     testJmx(curCluster)
-    curCluster = testRemoveNodeToRunningBrokerCluster(curCluster)
+    // we can't remove the node used to set up broker cluster since the internal topic is hosted by it.
+    // In this test case, the internal topic has single replication. If we remove the node host the internal topic
+    // the broker cluster will be out-of-sync and all data operation will be frozen.
+    curCluster = testRemoveNodeToRunningBrokerCluster(curCluster, nodeName)
     testTopic(curCluster)
     testJmx(curCluster)
     result(bk_stop(clusterName))
@@ -343,7 +324,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       await(
         () => {
           try {
-            brokerClient.topicCreator().numberOfPartitions(1).topicName(topicName).create()
+            brokerClient.topicCreator().numberOfPartitions(1).numberOfReplications(1).topicName(topicName).create()
             true
           } catch {
             case e: OharaExecutionException =>
@@ -366,28 +347,12 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         .keySerializer(Serializer.STRING)
         .valueSerializer(Serializer.STRING)
         .build()
-      log.info(s"[BROKER] start to send data")
-      try {
-        await(
-          () => {
-            try producer
-              .sender()
-              .key("abc")
-              .value("abc_value")
-              .topicName(topicName)
-              .send()
-              .get()
-              .topicName() == topicName
-            catch {
-              case e: ExecutionException =>
-                e.getCause match {
-                  case _: UnknownTopicOrPartitionException => false
-                }
-            }
-          }
-        )
-
-      } finally producer.close()
+      val numberOfRecords = 5
+      log.info(s"[BROKER] start to send $numberOfRecords data")
+      (0 until numberOfRecords).foreach(index =>
+        producer.sender().key(index.toString).value(index.toString).topicName(topicName).send())
+      producer.flush()
+      producer.close()
       log.info(s"[BROKER] start to send data ... done")
       log.info(s"[BROKER] start to receive data")
       val consumer = Consumer
@@ -399,10 +364,9 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         .valueSerializer(Serializer.STRING)
         .build()
       try {
-        val records = consumer.poll(Duration.ofSeconds(30), 1)
-        records.size() shouldBe 1
-        records.get(0).key().get shouldBe "abc"
-        records.get(0).value().get shouldBe "abc_value"
+        val records = consumer.poll(Duration.ofSeconds(30), numberOfRecords)
+        records.size() shouldBe numberOfRecords
+        records.stream().forEach(record => record.key().get() shouldBe record.value().get())
         log.info(s"[BROKER] start to receive data ... done")
       } finally consumer.close()
       brokerClient.deleteTopic(topicName)
@@ -410,12 +374,15 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
 
   }
 
-  private[this] def testRemoveNodeToRunningBrokerCluster(previousCluster: BrokerClusterInfo): BrokerClusterInfo = {
+  private[this] def testRemoveNodeToRunningBrokerCluster(previousCluster: BrokerClusterInfo,
+                                                         excludedNode: String): BrokerClusterInfo = {
     await(() => result(bk_exist(previousCluster.name)))
     if (previousCluster.nodeNames.size > 1) {
-      val beRemovedNode = previousCluster.nodeNames.head
+      val beRemovedNode: String = previousCluster.nodeNames.filter(_ != excludedNode).head
       await(() => {
-        log.info(s"[BROKER] start to remove node:$beRemovedNode from bk cluster:${previousCluster.name}")
+        log.info(
+          s"[BROKER] start to remove node:$beRemovedNode from bk cluster:${previousCluster.name}, nodes:${previousCluster.nodeNames
+            .mkString(",")}")
         result(bk_removeNode(previousCluster.name, beRemovedNode))
         log.info(s"[BROKER] start to remove node:$beRemovedNode from bk cluster:${previousCluster.name} ... done")
         val newCluster = result(bk_cluster(previousCluster.name))
@@ -441,14 +408,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         nodeNames = Set(nodeCache.head.name)
       ))
     result(zk_start(zkCluster.name))
-    assertCluster(() => result(zk_clusters()), zkCluster.name)
-    // since we only get "active" containers, all containers belong to the cluster should be running.
-    // Currently, both k8s and pure docker have the same context of "RUNNING".
-    // It is ok to filter container via RUNNING state.
-    await(() => {
-      val containers = result(zk_containers(zkCluster.name))
-      containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
-    })
+    assertCluster(() => result(zk_clusters()), () => result(zk_containers(zkCluster.name)), zkCluster.name)
     val bkCluster = result(
       bk_create(
         clusterName = generateClusterName(),
@@ -459,14 +419,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         nodeNames = Set(nodeCache.head.name)
       ))
     result(bk_start(bkCluster.name))
-    assertCluster(() => result(bk_clusters()), bkCluster.name)
-    // since we only get "active" containers, all containers belong to the cluster should be running.
-    // Currently, both k8s and pure docker have the same context of "RUNNING".
-    // It is ok to filter container via RUNNING state.
-    await(() => {
-      val containers = result(bk_containers(bkCluster.name))
-      containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
-    })
+    assertCluster(() => result(bk_clusters()), () => result(bk_containers(bkCluster.name)), bkCluster.name)
     log.info("[WORKER] start to test worker")
     val nodeName = nodeCache.head.name
     val clusterName = generateClusterName()
@@ -501,7 +454,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     log.info("[WORKER] create done")
     result(wk_start(wkCluster.name))
     log.info("[WORKER] start done")
-    assertCluster(() => result(wk_clusters()), wkCluster.name)
+    assertCluster(() => result(wk_clusters()), () => result(wk_containers(wkCluster.name)), wkCluster.name)
     log.info("[WORKER] check existence")
     assert(result(wk_cluster(wkCluster.name)))
     log.info("[WORKER] verify:create done")
@@ -510,13 +463,6 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     // we can't assume the size since other tests may create zk cluster at the same time
     result(wk_clusters()).isEmpty shouldBe false
     log.info("[WORKER] verify:list done")
-    // since we only get "active" containers, all containers belong to the cluster should be running.
-    // Currently, both k8s and pure docker have the same context of "RUNNING".
-    // It is ok to filter container via RUNNING state.
-    await(() => {
-      val containers = result(wk_containers(clusterName))
-      containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
-    })
     result(wk_containers(clusterName)).foreach { container =>
       container.nodeName shouldBe nodeName
       container.name.contains(clusterName) shouldBe true
@@ -572,13 +518,28 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       }
     )
 
-  private[this] def testJmx(cluster: BrokerClusterInfo): Unit = cluster.nodeNames.foreach { node =>
-    BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().size() should not be 0
-  }
+  private[this] def testJmx(cluster: BrokerClusterInfo): Unit = cluster.nodeNames.foreach(
+    node =>
+      await(
+        () =>
+          try BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().nonEmpty()
+          catch {
+            // the jmx service may be not ready.
+            case _: Throwable =>
+              false
 
-  private[this] def testJmx(cluster: WorkerClusterInfo): Unit = cluster.nodeNames.foreach { node =>
-    BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().size() should not be 0
-  }
+        }))
+
+  private[this] def testJmx(cluster: WorkerClusterInfo): Unit = cluster.nodeNames.foreach(
+    node =>
+      await(
+        () =>
+          try BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().nonEmpty()
+          catch {
+            // the jmx service may be not ready.
+            case _: Throwable =>
+              false
+        }))
 
   private[this] def testAddNodeToRunningWorkerCluster(previousCluster: WorkerClusterInfo): WorkerClusterInfo = {
     await(() => result(wk_exist(previousCluster.name)))
@@ -636,7 +597,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
   @Test
   def testMultiZkClustersOnSingleNode(): Unit = {
     val names = (0 until numberOfClusters).map(_ => generateClusterName())
-    val clusters = names.map { name =>
+    val zkClusters = names.map { name =>
       result(
         zk_create(
           clusterName = name,
@@ -648,9 +609,10 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     }
     // add a bit wait to make sure the cluster is up
     TimeUnit.SECONDS.sleep(5)
-    assertClusters(() => result(zk_clusters()), clusters.map(_.name))
+    zkClusters.foreach(zkCluster =>
+      assertCluster(() => result(zk_clusters()), () => result(zk_containers(zkCluster.name)), zkCluster.name))
     val clusters2 = result(zk_clusters())
-    clusters.foreach { c =>
+    zkClusters.foreach { c =>
       val another = clusters2.find(_.name == c.name).get
       another.name shouldBe c.name
       another.peerPort shouldBe c.peerPort
@@ -674,7 +636,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     val zkNames = (0 until numberOfClusters).map(_ => generateClusterName())
     val bkNames = (0 until numberOfClusters).map(_ => generateClusterName())
     // NOTED: It is illegal to run multi bk clusters on same zk cluster so we have got to instantiate multi zk clusters first.
-    val zks = zkNames.map { name =>
+    val zkClusters = zkNames.map { name =>
       result(
         zk_create(
           clusterName = name,
@@ -684,17 +646,9 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
           nodeNames = Set(nodeCache.head.name)
         ).flatMap(info => zk_start(info.name).flatMap(_ => zk_cluster(info.name))))
     }
-
-    assertClusters(() => result(zk_clusters()), zks.map(_.name))
-    // since we only get "active" containers, all containers belong to the cluster should be running.
-    // Currently, both k8s and pure docker have the same context of "RUNNING".
-    // It is ok to filter container via RUNNING state.
-    await(() =>
-      zkNames.forall(name => {
-        val containers = result(zk_containers(name))
-        containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
-      }))
-    zks.zipWithIndex.foreach {
+    zkClusters.foreach(zkCluster =>
+      assertCluster(() => result(zk_clusters()), () => result(zk_containers(zkCluster.name)), zkCluster.name))
+    zkClusters.zipWithIndex.foreach {
       case (zk, index) =>
         val bkCluster = result(
           bk_create(
@@ -720,7 +674,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     val offsetTopicNames = (0 until numberOfClusters).map(_ => CommonUtils.randomString(10))
     val statusTopicNames = (0 until numberOfClusters).map(_ => CommonUtils.randomString(10))
     log.info(s"start to run zk cluster:$zkName")
-    val zk = result(
+    val zkCluster = result(
       zk_create(
         clusterName = zkName,
         clientPort = CommonUtils.availablePort(),
@@ -729,45 +683,29 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         nodeNames = Set(nodeCache.head.name)
       )
     )
-    result(zk_start(zk.name))
-    assertCluster(() => result(zk_clusters()), zk.name)
-    // since we only get "active" containers, all containers belong to the cluster should be running.
-    // Currently, both k8s and pure docker have the same context of "RUNNING".
-    // It is ok to filter container via RUNNING state.
-    await(() => {
-      val containers = result(zk_containers(zkName))
-      containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
-    })
-
+    result(zk_start(zkCluster.name))
+    assertCluster(() => result(zk_clusters()), () => result(zk_containers(zkCluster.name)), zkCluster.name)
     log.info(s"start to run bk cluster:$bkName")
-    val bk = result(
+    val bkCluster = result(
       bk_create(
         clusterName = bkName,
         clientPort = CommonUtils.availablePort(),
         exporterPort = CommonUtils.availablePort(),
         jmxPort = CommonUtils.availablePort(),
-        zkClusterName = zk.name,
+        zkClusterName = zkCluster.name,
         nodeNames = Set(nodeCache.head.name)
       ))
-    result(bk_start(bk.name))
-    assertCluster(() => result(bk_clusters()), bk.name)
-    // since we only get "active" containers, all containers belong to the cluster should be running.
-    // Currently, both k8s and pure docker have the same context of "RUNNING".
-    // It is ok to filter container via RUNNING state.
-    await(() => {
-      val containers = result(bk_containers(bkName))
-      containers.nonEmpty && containers.map(_.state).forall(_.equals(ContainerState.RUNNING.name))
-    })
-
+    result(bk_start(bkCluster.name))
+    assertCluster(() => result(bk_clusters()), () => result(bk_containers(bkCluster.name)), bkCluster.name)
     log.info(s"start to run multi wk clusters:$wkNames")
-    val clusters = wkNames.zipWithIndex.map {
+    val wkClusters = wkNames.zipWithIndex.map {
       case (wkName, index) =>
         result(
           wk_create(
             clusterName = wkName,
             clientPort = CommonUtils.availablePort(),
             jmxPort = CommonUtils.availablePort(),
-            bkClusterName = bk.name,
+            bkClusterName = bkCluster.name,
             groupId = groupIds(index),
             configTopicName = configTopicNames(index),
             offsetTopicName = offsetTopicNames(index),
@@ -775,18 +713,19 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
             nodeNames = nodeCache.map(_.name).toSet
           ))
     }
-    clusters.foreach(wk => result(wk_start(wk.name)))
+    wkClusters.foreach(wk => result(wk_start(wk.name)))
     log.info(s"check multi wk clusters:$wkNames")
     // add a bit wait to make sure the cluster is up
     TimeUnit.SECONDS.sleep(10)
-    assertClusters(() => result(wk_clusters()), clusters.map(_.name))
+    wkClusters.foreach(wkCluster =>
+      assertCluster(() => result(wk_clusters()), () => result(wk_containers(wkCluster.name)), wkCluster.name))
     wkNames.zipWithIndex.map {
       case (wkName, index) =>
-        clusters.find(_.name == wkName).get.groupId shouldBe groupIds(index)
-        clusters.find(_.name == wkName).get.configTopicName shouldBe configTopicNames(index)
-        clusters.find(_.name == wkName).get.offsetTopicName shouldBe offsetTopicNames(index)
-        clusters.find(_.name == wkName).get.statusTopicName shouldBe statusTopicNames(index)
-        clusters.find(_.name == wkName).get.brokerClusterName shouldBe bk.name
+        wkClusters.find(_.name == wkName).get.groupId shouldBe groupIds(index)
+        wkClusters.find(_.name == wkName).get.configTopicName shouldBe configTopicNames(index)
+        wkClusters.find(_.name == wkName).get.offsetTopicName shouldBe offsetTopicNames(index)
+        wkClusters.find(_.name == wkName).get.statusTopicName shouldBe statusTopicNames(index)
+        wkClusters.find(_.name == wkName).get.brokerClusterName shouldBe bkCluster.name
     }
 
     log.info(s"check multi wk clusters:$wkNames by list")

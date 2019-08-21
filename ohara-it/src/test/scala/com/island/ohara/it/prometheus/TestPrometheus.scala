@@ -64,11 +64,15 @@ class TestPrometheus extends IntegrationTest with Matchers {
   @Test
   def testExporter(): Unit = {
     startZK(zkDesc => {
-      assertCluster(() => result(clusterCollie.zookeeperCollie.clusters()).keys.toSeq, zkDesc.name)
+      assertCluster(() => result(clusterCollie.zookeeperCollie.clusters()).keys.toSeq,
+                    () => result(clusterCollie.zookeeperCollie.containers(zkDesc.name)),
+                    zkDesc.name)
       startBroker(
         zkDesc.name,
         (exporterPort, bkCluster) => {
-          assertCluster(() => result(clusterCollie.brokerCollie.clusters()).keys.toSeq, bkCluster.name)
+          assertCluster(() => result(clusterCollie.brokerCollie.clusters()).keys.toSeq,
+                        () => result(clusterCollie.brokerCollie.containers(zkDesc.name)),
+                        bkCluster.name)
           implicit val actorSystem: ActorSystem = ActorSystem(s"${classOf[PrometheusClient].getSimpleName}--system")
           implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
           val url = "http://" + node.hostname + ":" + exporterPort + "/metrics"

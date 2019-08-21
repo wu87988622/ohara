@@ -217,7 +217,11 @@ public interface BrokerClient extends Releasable {
       public void createPartitions(String topicName, int numberOfPartitions) {
         TopicDescription current = topicDescription(topicName);
         if (current.numberOfPartitions() > numberOfPartitions)
-          throw new IllegalArgumentException("Reducing the number from partitions is disallowed");
+          throw new IllegalArgumentException(
+              "Reducing the number from partitions is disallowed. current:"
+                  + current.numberOfPartitions()
+                  + ", expected:"
+                  + numberOfPartitions);
         if (current.numberOfPartitions() < numberOfPartitions) {
           handler.handle(
               () ->
