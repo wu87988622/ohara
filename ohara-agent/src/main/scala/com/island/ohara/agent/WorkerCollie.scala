@@ -145,7 +145,10 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
                             // should be skipped... by chia
                             case _ => CommonUtils.toEnvString(v.toString)
                           })
+                        // TODO: put this setting into definition in #2191...by Sam
                       } + (WorkerCollie.BROKERS_KEY -> brokers)
+                        + (WorkerCollie.JMX_HOSTNAME_KEY -> node.name)
+                        + (WorkerCollie.ADVERTISED_HOSTNAME_KEY -> node.name)
                       // we convert all settings to specific string in order to fetch all settings from
                       // container env quickly. Also, the specific string enable us to pick up the "true" settings
                       // from envs since there are many system-defined settings in container envs.
