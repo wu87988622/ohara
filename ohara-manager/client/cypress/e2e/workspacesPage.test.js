@@ -222,24 +222,13 @@ describe('WorkspacesPage', () => {
       .click()
       .wait('@getWorker')
       .then(xhr => {
-<<<<<<< HEAD
         const { imageName, clientPort, nodeNames, jmxPort } = xhr.response.body;
 
         // Basic info
-        cy.getByText(`Image: ${imageName}`).should('have.length', 1);
+        cy.getByText(`Worker Image: ${imageName}`).should('have.length', 1);
 
         // Nodes
         nodeNames.forEach(node => {
-=======
-        cy.getByText(`Worker Image: ${xhr.response.body.imageName}`).should(
-          'have.length',
-          1,
-        );
-        const clientPort = xhr.response.body.clientPort;
-        const wkNodes = xhr.response.body.nodeNames;
-        const jmxPort = xhr.response.body.jmxPort;
-        wkNodes.forEach(node => {
->>>>>>> #2297 Show all used images in workspace overview page's basic info section
           cy.getByText(`${node}:${clientPort}`)
             .should('have.length', 1)
             .getByTestId(`Worker-${node}:${clientPort}`)
