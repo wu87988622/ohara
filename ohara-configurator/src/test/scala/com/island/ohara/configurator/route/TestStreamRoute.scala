@@ -365,8 +365,7 @@ class TestStreamRoute extends SmallTest with Matchers {
     streamDesc.to shouldBe Set.empty
 
     // Empty topic is not allow
-    val thrown = the[IllegalArgumentException] thrownBy result(accessStream.start(streamDesc.name))
-    thrown.getMessage should include("from topics can't be empty")
+    an[IllegalArgumentException] should be thrownBy result(accessStream.start(streamDesc.name))
 
     // multiple topics are not allow by now
     val from = topicKey()

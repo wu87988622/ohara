@@ -299,11 +299,7 @@ public final class ConnectorDefUtils {
         // report from kafka if we don't follow the rule.
         def.required() ? ConfigDef.NO_DEFAULT_VALUE : def.defaultValue(),
         (String key, Object value) -> {
-          if (def.required() && value == null)
-            // this is the kafka internal validate catch exception
-            // do not change this exception class unless you know what you did
-            throw new ConfigException(key + " is required!");
-          if (value == null) return;
+          // TODO move this to RouteUtils in #2191
           try {
             def.checker().accept(value);
           } catch (OharaConfigException e) {

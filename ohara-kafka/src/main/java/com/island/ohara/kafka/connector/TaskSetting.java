@@ -59,6 +59,8 @@ public class TaskSetting {
    */
   static TaskSetting of(Map<String, String> options, List<SettingDef> settingDefinitions) {
     Map<String, String> copy = new HashMap<>(options);
+    // add (key, defaultValue) of settingDefinitions to options if absent
+    // TODO move this to RouteUtils in #2191
     settingDefinitions.forEach(
         setting -> {
           if (!copy.containsKey(setting.key()) && !CommonUtils.isEmpty(setting.defaultValue()))

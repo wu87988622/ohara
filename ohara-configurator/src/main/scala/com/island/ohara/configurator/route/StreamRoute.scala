@@ -166,6 +166,27 @@ private[configurator] object StreamRoute {
     (key: ObjectKey, _, _) =>
       store
         .value[StreamClusterInfo](key)
+        .map { info =>
+          // check the values by definition
+          //TODO move this to RouteUtils in #2191
+          info.definition.fold(throw new IllegalArgumentException("definition could not be empty")) { definition =>
+            var copy = info.settings
+            definition.definitions.foreach(
+              settingDef =>
+                // add the (key, defaultValue) to settings if absent
+                if (!copy.contains(settingDef.key()) && !CommonUtils.isEmpty(settingDef.defaultValue()))
+                  copy += settingDef.key() -> JsString(settingDef.defaultValue()))
+            info.plain.foreach {
+              case (k, v) =>
+                definition.definitions
+                  .find(_.key() == k)
+                  .fold(throw new IllegalArgumentException(s"$k not found in definition")) { settingDef =>
+                    settingDef.checker().accept(v)
+                  }
+            }
+            info.copy(settings = copy)
+          }
+        }
         .flatMap { streamClusterInfo =>
           brokerCollie
             .topicAdmin(streamClusterInfo.brokerClusterName)

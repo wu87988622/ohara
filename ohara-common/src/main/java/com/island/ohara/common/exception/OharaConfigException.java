@@ -16,12 +16,19 @@
 
 package com.island.ohara.common.exception;
 
+import com.island.ohara.common.setting.SettingDef;
+
 /**
- * The input configs are rejected by SettingDef.
+ * This class represent that the input configs are rejected by SettingDef.
  *
  * <p>There are many resources having a bunch of available configs, and most of them are exposed to
  * restful APIs. In order to avoid wrong configs in using resources, SettingDef offers many check
  * rules to validate input configs. This exception is used to say what happens on your configs.
+ *
+ * <p>Note: We wrap the {@link SettingDef#checker()} exception to this class since all definitions
+ * of Ohara object should use <b>SettingDef</b> to define. Some implementation may want to handle
+ * their own exception (like kafka config exception) should be responsible for their exception
+ * casting.
  */
 public class OharaConfigException extends RuntimeException {
 
@@ -38,7 +45,7 @@ public class OharaConfigException extends RuntimeException {
   public OharaConfigException(String name, Object value, String message) {
     super(
         String.format(
-            "Invalid value of [%s] for configuration [%s] :\n%s",
-            name, value, message == null ? "" : message));
+            "Invalid value \"%s\" of type \"%s\" for configuration \"%s\" :\n%s",
+            value, value.getClass().getName(), name, message == null ? "" : message));
   }
 }

@@ -151,9 +151,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
 
   @Test
   def testFailedClusterRemoveGracefully(): Unit = {
-
-    // create fake jar
-    val jar = CommonUtils.createTempJar("fake")
+    val jar = new File(CommonUtils.path(System.getProperty("user.dir"), "build", "libs", "ohara-streamapp.jar"))
 
     // upload streamApp jar
     val jarInfo = result(jarApi.request.file(jar).upload())
@@ -182,8 +180,8 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     properties.state shouldBe None
     properties.error shouldBe None
 
-    // start streamApp
-    result(access.start(stream.name))
+    // start streamApp and remove topic immediately to expect streamApp failed
+    result(access.start(stream.name).flatMap(_ => topicApi.stop(topic1.key)).flatMap(_ => topicApi.delete(topic1.key)))
     await(() => result(access.get(stream.name)).state.isDefined)
 
     // get the actually container names

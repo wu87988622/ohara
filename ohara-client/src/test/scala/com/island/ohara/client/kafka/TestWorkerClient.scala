@@ -338,7 +338,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
           .settings(Map(ConnectorDefUtils.COLUMNS_DEFINITION.key() -> "Asdasdasd"))
           .create())
     }
-    //see ConnectorDefinitions.validator
+    //see SettingDef.checker
     e.getMessage.contains("can't be converted to PropGroups type") shouldBe true
   }
 

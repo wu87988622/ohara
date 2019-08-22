@@ -279,6 +279,15 @@ in array.
 
    SettingDef.builder().key(key).valueType(Type.ARRAY).build();
 
+.. note::
+   An empty array is ok and will pass the checker:
+
+   .. code-block:: json
+
+      {
+        "key": []
+      }
+
 Type.CLASS
 ^^^^^^^^^^
 

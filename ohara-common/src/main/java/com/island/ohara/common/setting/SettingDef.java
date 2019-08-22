@@ -62,7 +62,11 @@ public class SettingDef implements JsonObject, Serializable {
     INT,
     LONG,
     DOUBLE,
-    /** ARRAY is a better naming than LIST as LIST has another meaning to ohara manager. */
+    /**
+     * ARRAY is a better naming than LIST as LIST has another meaning to ohara manager.
+     *
+     * <p>[ "a1", "a2", "a3" ]
+     */
     ARRAY,
     CLASS,
     PASSWORD,
@@ -90,8 +94,9 @@ public class SettingDef implements JsonObject, Serializable {
     /** { "group": "g0", "name": "n0" } */
     CONNECTOR_KEY,
     /**
-     * TAGS is a flexible type accepting a json representation. For example: { "k0": "v0", "k1":
-     * "v1", "k2": ["a0", "b0" ] }
+     * TAGS is a flexible type accepting a json representation. For example:
+     *
+     * <p>{ "k0": "v0", "k1": "v1", "k2": ["a0", "b0" ] }
      */
     TAGS,
   }
@@ -163,90 +168,172 @@ public class SettingDef implements JsonObject, Serializable {
    * @return checker
    */
   public Consumer<Object> checker() {
-    switch (valueType) {
-      case TABLE:
-        return (Object value) -> {
-          if (value instanceof String) {
-            try {
-              PropGroups propGroups = PropGroups.ofJson((String) value);
-              if (tableKeys.isEmpty()) return;
-              propGroups
-                  .raw()
-                  .forEach(
-                      row ->
-                          tableKeys.forEach(
-                              tableKey -> {
-                                if (!row.containsKey(tableKey))
-                                  throw new IllegalArgumentException(
-                                      "table key:"
-                                          + tableKey
-                                          + " does not exist in row:"
-                                          + String.join(",", row.keySet()));
-                              }));
+    return (Object value) -> {
+      // we don't check the optional key with null value
+      if (!this.required && this.defaultValue == null && value == null) return;
 
-            } catch (Exception e) {
+      // besides the first rule, any other combination of settings should check the value is not
+      // null (default or from api)
+      final Object trueValue = value == null ? this.defaultValue : value;
+      if (trueValue == null)
+        throw new OharaConfigException("the key [" + this.key + "] is required");
+
+      // each type checking
+      switch (valueType) {
+        case BOOLEAN:
+          if (trueValue instanceof Boolean) return;
+          try {
+            Boolean.parseBoolean(String.valueOf(trueValue));
+          } catch (Exception e) {
+            throw new OharaConfigException(this.key, trueValue, e.getMessage());
+          }
+          break;
+        case STRING:
+          try {
+            String.valueOf(trueValue);
+          } catch (Exception e) {
+            throw new OharaConfigException(this.key, trueValue, e.getMessage());
+          }
+          break;
+        case SHORT:
+          if (trueValue instanceof Short) return;
+          try {
+            Short.parseShort(String.valueOf(trueValue));
+          } catch (NumberFormatException e) {
+            throw new OharaConfigException(this.key, trueValue, e.getMessage());
+          }
+          break;
+        case INT:
+          if (trueValue instanceof Integer) return;
+          try {
+            Integer.parseInt(String.valueOf(trueValue));
+          } catch (NumberFormatException e) {
+            throw new OharaConfigException(this.key, trueValue, e.getMessage());
+          }
+          break;
+        case LONG:
+          if (trueValue instanceof Long) return;
+          try {
+            Long.parseLong(String.valueOf(trueValue));
+          } catch (NumberFormatException e) {
+            throw new OharaConfigException(this.key, trueValue, e.getMessage());
+          }
+          break;
+        case DOUBLE:
+          if (trueValue instanceof Double) return;
+          try {
+            Double.parseDouble(String.valueOf(trueValue));
+          } catch (NumberFormatException e) {
+            throw new OharaConfigException(this.key, trueValue, e.getMessage());
+          }
+          break;
+        case ARRAY:
+          try {
+            // Determine whether the value is JSON array or not.
+            // Note: we hard-code the "kafka list format" to json array here for checking,
+            // but it should be implemented a better way (add a converter interface for example)
+            JsonUtils.toObject(String.valueOf(trueValue), new TypeReference<List<String>>() {});
+          } catch (Exception e) {
+            // TODO refactor this in #2400
+            try {
+              String.valueOf(value).split(",");
+            } catch (Exception ex) {
+              throw new OharaConfigException("value not match the array string, actual: " + value);
+            }
+          }
+          break;
+        case CLASS:
+          // TODO: implement the class checking
+          break;
+        case PASSWORD:
+          try {
+            String.valueOf(trueValue);
+          } catch (Exception e) {
+            throw new OharaConfigException(this.key, trueValue, e.getMessage());
+          }
+          break;
+        case JDBC_TABLE:
+          // TODO: implement the jdbc table checking
+          break;
+        case TABLE:
+          try {
+            PropGroups propGroups = PropGroups.ofJson(String.valueOf(trueValue));
+            if (tableKeys.isEmpty()) return;
+            if (propGroups.isEmpty()) throw new IllegalArgumentException("row is empty");
+            propGroups
+                .raw()
+                .forEach(
+                    row ->
+                        tableKeys.forEach(
+                            tableKey -> {
+                              if (!row.containsKey(tableKey))
+                                throw new IllegalArgumentException(
+                                    "table key:"
+                                        + tableKey
+                                        + " does not exist in row:"
+                                        + String.join(",", row.keySet()));
+                            }));
+
+          } catch (Exception e) {
+            throw new OharaConfigException(
+                this.key, trueValue, "can't be converted to PropGroups type");
+          }
+          break;
+        case DURATION:
+          try {
+            CommonUtils.toDuration(String.valueOf(trueValue));
+          } catch (Exception e) {
+            throw new OharaConfigException(
+                this.key, trueValue, "can't be converted to Duration type");
+          }
+          break;
+        case PORT:
+          try {
+            int port = Integer.valueOf(String.valueOf(trueValue));
+            if (!CommonUtils.isConnectionPort(port))
               throw new OharaConfigException(
-                  "the value:" + value + " can't be converted to PropGroups type");
-            }
-            // It is ok to convert the value from string to list<column>, thank God!
-          } else throw new OharaConfigException("the configured value must be string type");
-        };
-      case DURATION:
-        return (Object value) -> {
-          if (value instanceof String) {
-            try {
-              CommonUtils.toDuration((String) value);
-            } catch (Exception e) {
-              throw new OharaConfigException("can't be converted to Duration type");
-            }
-          } else throw new OharaConfigException("the configured value must be string type");
-        };
-      case PORT:
-        return (Object value) -> {
-          if (value instanceof Integer) {
-            try {
-              int port = (int) value;
-              if (!CommonUtils.isConnectionPort(port))
-                throw new OharaConfigException(
-                    "the legal range for port is [1, 65535], but actual port is " + port);
-            } catch (Exception e) {
-              throw new OharaConfigException("can't be converted to Integer type");
-            }
-          } else throw new OharaConfigException("the configured value must be Integer type");
-        };
-      case TAGS:
-        return (Object value) -> {
-          if (!(value instanceof String))
-            throw new OharaConfigException("the TAGS value must be String type");
-        };
-      case TOPIC_KEYS:
-        return (Object value) -> {
-          if (value instanceof String) {
-            try {
-              if (TopicKey.toTopicKeys((String) value).isEmpty())
-                throw new OharaConfigException("TOPIC_KEYS can't be empty!!!");
-            } catch (Exception e) {
-              throw new OharaConfigException(
-                  "can't be converted to TOPIC_KEYS type. since:" + e.getMessage());
-            }
-          } else throw new OharaConfigException("the configured value must be String type");
-        };
-      case CONNECTOR_KEY:
-        return (Object value) -> {
-          if (value instanceof String) {
-            try {
-              // try parse the json string to Connector Key
-              ConnectorKey.toConnectorKey((String) value);
-              // pass
-            } catch (Exception e) {
-              throw new OharaConfigException(
-                  "can't be converted to CONNECTOR_KEY type. since:" + e.getMessage());
-            }
-          } else throw new OharaConfigException("the configured value must be String type");
-        };
-      default:
-        return (Object value) -> {};
-    }
+                  "the legal range for port is [1, 65535], but actual port is " + port);
+          } catch (Exception e) {
+            throw new OharaConfigException(this.key, trueValue, e.getMessage());
+          }
+          break;
+        case JAR_KEY:
+          try {
+            ObjectKey.toObjectKey(String.valueOf(trueValue));
+          } catch (Exception e) {
+            throw new OharaConfigException(this.key, trueValue, e.getMessage());
+          }
+          break;
+        case TOPIC_KEYS:
+          try {
+            if (TopicKey.toTopicKeys(String.valueOf(trueValue)).isEmpty())
+              throw new OharaConfigException("TOPIC_KEYS can't be empty!!!");
+          } catch (Exception e) {
+            throw new OharaConfigException(this.key, trueValue, e.getMessage());
+          }
+          break;
+        case CONNECTOR_KEY:
+          try {
+            // try parse the json string to Connector Key
+            ConnectorKey.toConnectorKey(String.valueOf(trueValue));
+          } catch (Exception e) {
+            throw new OharaConfigException(this.key, trueValue, e.getMessage());
+          }
+          break;
+        case TAGS:
+          try {
+            // Determine whether the value is JSON object or not (We assume the "tags" field is an
+            // json object)
+            JsonUtils.toObject(String.valueOf(trueValue), new TypeReference<Object>() {});
+          } catch (Exception e) {
+            throw new OharaConfigException(this.key, trueValue, e.getMessage());
+          }
+          break;
+        default:
+          // do nothing
+          break;
+      }
+    };
   }
 
   @JsonProperty(INTERNAL_KEY)

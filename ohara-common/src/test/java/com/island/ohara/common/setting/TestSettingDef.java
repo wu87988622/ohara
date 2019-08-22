@@ -199,11 +199,12 @@ public class TestSettingDef extends SmallTest {
             .valueType(SettingDef.Type.TABLE)
             .tableKeys(Arrays.asList("a", "b"))
             .build();
-    assertException(Exception.class, () -> settingDef.checker().accept(null));
-    assertException(Exception.class, () -> settingDef.checker().accept(123));
-    assertException(Exception.class, () -> settingDef.checker().accept(Collections.emptyList()));
+    assertException(OharaConfigException.class, () -> settingDef.checker().accept(null));
+    assertException(OharaConfigException.class, () -> settingDef.checker().accept(123));
     assertException(
-        Exception.class,
+        OharaConfigException.class, () -> settingDef.checker().accept(Collections.emptyList()));
+    assertException(
+        OharaConfigException.class,
         () ->
             settingDef
                 .checker()
@@ -225,9 +226,10 @@ public class TestSettingDef extends SmallTest {
             .key(CommonUtils.randomString())
             .valueType(SettingDef.Type.DURATION)
             .build();
-    assertException(Exception.class, () -> settingDef.checker().accept(null));
-    assertException(Exception.class, () -> settingDef.checker().accept(123));
-    assertException(Exception.class, () -> settingDef.checker().accept(Collections.emptyList()));
+    assertException(OharaConfigException.class, () -> settingDef.checker().accept(null));
+    assertException(OharaConfigException.class, () -> settingDef.checker().accept(123));
+    assertException(
+        OharaConfigException.class, () -> settingDef.checker().accept(Collections.emptyList()));
     settingDef.checker().accept(Duration.ofHours(3).toString());
     settingDef.checker().accept("10 MILLISECONDS");
     settingDef.checker().accept("10 SECONDS");
@@ -259,10 +261,14 @@ public class TestSettingDef extends SmallTest {
   public void testTagsType() {
     SettingDef s = SettingDef.builder().valueType(SettingDef.Type.TAGS).key("tags.key").build();
     // pass
-    s.checker().accept(CommonUtils.randomString());
-    // empty array is illegal
-    assertException(OharaConfigException.class, () -> s.checker().accept(Collections.emptyList()));
-    assertException(OharaConfigException.class, () -> s.checker().accept(100000000));
+    s.checker().accept("{\"a\": \"b\"}");
+    s.checker().accept("{\"123\":456}");
+    s.checker().accept(Collections.emptyList());
+    // not a jsonObject
+    assertException(
+        OharaConfigException.class, () -> s.checker().accept(CommonUtils.randomString()));
+    assertException(OharaConfigException.class, () -> s.checker().accept("{abc}"));
+    assertException(OharaConfigException.class, () -> s.checker().accept("{\"123\"}"));
   }
 
   @Test
@@ -340,5 +346,170 @@ public class TestSettingDef extends SmallTest {
     ConnectorKey key = ConnectorKey.of(CommonUtils.randomString(), CommonUtils.randomString());
     SettingDef def = SettingDef.builder().key(CommonUtils.randomString()).optional(key).build();
     Assert.assertEquals(ConnectorKey.toConnectorKey(def.defaultValue()), key);
+  }
+
+  @Test
+  public void testJarKeyType() {
+    SettingDef def =
+        SettingDef.builder()
+            .key(CommonUtils.randomString())
+            .valueType(SettingDef.Type.JAR_KEY)
+            .build();
+    // pass
+    def.checker()
+        .accept(
+            JsonUtils.toString(
+                ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString())));
+    // empty array is illegal
+    assertException(OharaConfigException.class, () -> def.checker().accept("{}"));
+    assertException(
+        OharaConfigException.class, () -> def.checker().accept(CommonUtils.randomString()));
+    assertException(OharaConfigException.class, () -> def.checker().accept(100000000));
+  }
+
+  @Test(expected = OharaConfigException.class)
+  public void testRejectNullValue() {
+    SettingDef.builder().key(CommonUtils.randomString()).build().checker().accept(null);
+  }
+
+  @Test
+  public void testOptionNullValue() {
+    // pass
+    SettingDef.builder().key(CommonUtils.randomString()).optional().build().checker().accept(null);
+  }
+
+  @Test
+  public void testOptionNullValueWithDefault() {
+    // pass
+    SettingDef.builder()
+        .key(CommonUtils.randomString())
+        .valueType(SettingDef.Type.STRING)
+        .optional("abc")
+        .build()
+        .checker()
+        .accept(null);
+  }
+
+  @Test
+  public void testBooleanType() {
+    SettingDef def =
+        SettingDef.builder()
+            .key(CommonUtils.randomString())
+            .valueType(SettingDef.Type.BOOLEAN)
+            .build();
+
+    def.checker().accept("aaa");
+    def.checker().accept(false);
+    def.checker().accept(123);
+  }
+
+  @Test
+  public void testStringType() {
+    SettingDef def =
+        SettingDef.builder()
+            .key(CommonUtils.randomString())
+            .valueType(SettingDef.Type.STRING)
+            .build();
+
+    def.checker().accept("aaa");
+    def.checker().accept(111);
+  }
+
+  @Test
+  public void testShortType() {
+    SettingDef def =
+        SettingDef.builder()
+            .key(CommonUtils.randomString())
+            .valueType(SettingDef.Type.SHORT)
+            .build();
+
+    def.checker().accept(111);
+
+    assertException(OharaConfigException.class, () -> def.checker().accept(""));
+    assertException(OharaConfigException.class, () -> def.checker().accept("abc"));
+    assertException(OharaConfigException.class, () -> def.checker().accept(11111111111L));
+    assertException(OharaConfigException.class, () -> def.checker().accept(2.2));
+  }
+
+  @Test
+  public void testIntType() {
+    SettingDef def =
+        SettingDef.builder().key(CommonUtils.randomString()).valueType(SettingDef.Type.INT).build();
+
+    def.checker().accept(111);
+
+    assertException(OharaConfigException.class, () -> def.checker().accept(""));
+    assertException(OharaConfigException.class, () -> def.checker().accept("abc"));
+    assertException(OharaConfigException.class, () -> def.checker().accept(11111111111L));
+    assertException(OharaConfigException.class, () -> def.checker().accept(2.2));
+  }
+
+  @Test
+  public void testLongType() {
+    SettingDef def =
+        SettingDef.builder()
+            .key(CommonUtils.randomString())
+            .valueType(SettingDef.Type.LONG)
+            .build();
+
+    def.checker().accept(111);
+    def.checker().accept(11111111111L);
+
+    assertException(OharaConfigException.class, () -> def.checker().accept(""));
+    assertException(OharaConfigException.class, () -> def.checker().accept("abc"));
+    assertException(OharaConfigException.class, () -> def.checker().accept(2.2));
+  }
+
+  @Test
+  public void testDoubleType() {
+    SettingDef def =
+        SettingDef.builder()
+            .key(CommonUtils.randomString())
+            .valueType(SettingDef.Type.DOUBLE)
+            .build();
+
+    def.checker().accept(111);
+    def.checker().accept(11111111111L);
+    def.checker().accept(2.2);
+
+    assertException(OharaConfigException.class, () -> def.checker().accept("abc"));
+    assertException(OharaConfigException.class, () -> def.checker().accept(""));
+  }
+
+  @Test
+  public void testArrayType() {
+    SettingDef def =
+        SettingDef.builder()
+            .key(CommonUtils.randomString())
+            .valueType(SettingDef.Type.ARRAY)
+            .build();
+    // pass
+    def.checker().accept("[gg]");
+    def.checker().accept("[\"aa\", \"bb\"]");
+    def.checker().accept("[123]");
+    def.checker().accept(Arrays.asList("ab", "cd"));
+
+    // empty array is ok
+    def.checker().accept(Collections.emptyList());
+    def.checker().accept("[]");
+  }
+
+  @Test
+  public void testKafkaArrayType() {
+    SettingDef def =
+        SettingDef.builder()
+            .key(CommonUtils.randomString())
+            .valueType(SettingDef.Type.ARRAY)
+            .build();
+    // since connector use "xxx,yyy" to use in kafka format
+    // we should pass this (these cases are not json array)
+    def.checker().accept("abc");
+    def.checker().accept(111);
+    def.checker().accept("null");
+    def.checker().accept("abc,def");
+    def.checker().accept("123 , 456");
+
+    // empty string means empty list, it is ok
+    def.checker().accept("");
   }
 }

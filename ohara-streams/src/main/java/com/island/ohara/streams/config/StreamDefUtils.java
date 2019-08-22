@@ -21,10 +21,10 @@ import com.island.ohara.common.json.JsonUtils;
 import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.setting.SettingDef.Type;
 import com.island.ohara.common.util.VersionUtils;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * This is an helper class for getting / setting {@link com.island.ohara.common.setting.SettingDef}
@@ -101,6 +101,7 @@ public final class StreamDefUtils {
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .displayName("Jar primary key")
           .documentation("The jar key of this streamApp using")
+          .readonly()
           .valueType(Type.JAR_KEY)
           .build();
 
@@ -166,6 +167,7 @@ public final class StreamDefUtils {
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .displayName("Node name list")
           .documentation("The used node name list of this streamApp")
+          .internal()
           .valueType(Type.ARRAY)
           .build();
 
@@ -249,7 +251,6 @@ public final class StreamDefUtils {
           .group(CORE_GROUP)
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .optional("streamapp")
-          .readonly()
           .internal()
           .valueType(Type.STRING)
           .build();
@@ -260,22 +261,16 @@ public final class StreamDefUtils {
    * <p>This field is associated to a immutable map.
    */
   public static final List<SettingDef> DEFAULT =
-      Stream.of(
-              StreamDefUtils.BROKER_DEFINITION,
-              StreamDefUtils.IMAGE_NAME_DEFINITION,
-              StreamDefUtils.NAME_DEFINITION,
-              StreamDefUtils.GROUP_DEFINITION,
-              StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION,
-              StreamDefUtils.TO_TOPIC_KEYS_DEFINITION,
-              StreamDefUtils.JMX_PORT_DEFINITION,
-              StreamDefUtils.INSTANCES_DEFINITION,
-              StreamDefUtils.NODE_NAMES_DEFINITION,
-              StreamDefUtils.VERSION_DEFINITION,
-              StreamDefUtils.REVISION_DEFINITION,
-              StreamDefUtils.AUTHOR_DEFINITION,
-              StreamDefUtils.TAGS_DEFINITION,
-              StreamDefUtils.JAR_KEY_DEFINITION,
-              StreamDefUtils.JAR_INFO_DEFINITION)
+      Arrays.stream(StreamDefUtils.class.getDeclaredFields())
+          .filter(field -> field.getType().isAssignableFrom(SettingDef.class))
+          .map(
+              field -> {
+                try {
+                  return (SettingDef) field.get(new StreamDefUtils());
+                } catch (IllegalAccessException e) {
+                  throw new IllegalArgumentException("field is not able cast to SettingDef", e);
+                }
+              })
           .collect(Collectors.toList());
 
   public static String toJson(StreamDefinitions definitions) {
