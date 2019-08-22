@@ -57,8 +57,21 @@ private[configurator] object FileRoute {
   private[this] def tempDestination(fileInfo: akka.http.scaladsl.server.directives.FileInfo): File =
     File.createTempFile(fileInfo.fileName, ".tmp")
 
-  def apply(implicit fileStore: FileStore, dataStore: DataStore, executionContext: ExecutionContext): server.Route =
-    pathPrefix(FILE_PREFIX_PATH) {
+  /**
+    * generate the route for file route.
+    * This method enables us to switch the root name and field name in uploading file. In https://github.com/oharastream/ohara/issues/1711 we change
+    * the "jars" to "files" and "jar" to "file". For compatibility, we generate two routes - first route is for new APIs and another is for stale APIs.
+    * @param root root of url
+    * @param fieldName field name indicating the new new for uploaded file
+    * @param fileStore file store
+    * @param dataStore data store
+    * @param executionContext thread pool
+    * @return route
+    */
+  private[this] def route(root: String, fieldName: String)(implicit fileStore: FileStore,
+                                                           dataStore: DataStore,
+                                                           executionContext: ExecutionContext): server.Route =
+    pathPrefix(root) {
       path(Segment) { name =>
         parameter(GROUP_KEY ?) { groupOption =>
           val key = ObjectKey.of(groupOption.getOrElse(GROUP_DEFAULT), name)
@@ -96,7 +109,7 @@ private[configurator] object FileRoute {
           toStrictEntity(1.seconds) {
             formFields((GROUP_KEY ?, TAGS_KEY ?)) {
               case (group, tagsString) =>
-                storeUploadedFile(FIELD_NAME, tempDestination) {
+                storeUploadedFile(fieldName, tempDestination) {
                   case (metadata, file) =>
                     complete(
                       fileStore.fileInfoCreator
@@ -117,4 +130,8 @@ private[configurator] object FileRoute {
         }
       }
     }
+
+  def apply(implicit fileStore: FileStore, dataStore: DataStore, executionContext: ExecutionContext): server.Route =
+    // TODO: remove the stale "jars" and "jar"
+    route(root = FILE_PREFIX_PATH, fieldName = "file") ~ route(root = "jars", fieldName = "jar")
 }
