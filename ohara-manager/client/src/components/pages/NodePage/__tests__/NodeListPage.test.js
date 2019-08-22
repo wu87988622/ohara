@@ -170,8 +170,8 @@ describe('<NodeListPage />', () => {
       );
 
       fireEvent.click(getByText('New node'));
-      const nodeInput = getByPlaceholderText('node-00');
-      const portInput = getByPlaceholderText('1021');
+      const nodeInput = getByPlaceholderText('node-01');
+      const portInput = getByPlaceholderText('22');
       const userInput = getByPlaceholderText('admin');
       const passwordInput = getByPlaceholderText('password');
 

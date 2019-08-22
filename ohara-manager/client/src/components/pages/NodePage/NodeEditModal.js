@@ -21,12 +21,12 @@ import { Form, Field, FormSpy } from 'react-final-form';
 import DialogContent from '@material-ui/core/DialogContent';
 
 import * as s from './styles';
-import { InputField } from 'components/common/Mui/Form';
-import validate from './validate';
 import * as MESSAGES from 'constants/messages';
 import * as useApi from 'components/controller';
 import * as URL from 'components/controller/url';
+import validate from './validate';
 import useSnackbar from 'components/context/Snackbar/useSnackbar';
+import { InputField } from 'components/common/Mui/Form';
 import { Dialog } from 'components/common/Mui/Dialog';
 
 const NodeEditModal = props => {
@@ -111,7 +111,7 @@ const NodeEditModal = props => {
                     disabled
                     name="name"
                     label="Node"
-                    placeholder="node-00"
+                    placeholder="node-01"
                     margin="normal"
                     fullWidth
                     autoFocus
@@ -121,10 +121,14 @@ const NodeEditModal = props => {
                   <Field
                     name="port"
                     label="Port"
-                    placeholder="1021"
+                    placeholder="22"
                     margin="normal"
                     type="number"
                     component={InputField}
+                    inputProps={{
+                      min: 0,
+                      max: 65535,
+                    }}
                   />
 
                   <Field

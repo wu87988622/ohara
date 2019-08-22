@@ -22,11 +22,11 @@ import { Form, Field, FormSpy } from 'react-final-form';
 
 import * as s from './styles';
 import * as MESSAGES from 'constants/messages';
-import { InputField } from 'components/common/Mui/Form';
-import validate from './validate';
-import useSnackbar from 'components/context/Snackbar/useSnackbar';
 import * as useApi from 'components/controller';
 import * as URL from 'components/controller/url';
+import validate from './validate';
+import useSnackbar from 'components/context/Snackbar/useSnackbar';
+import { InputField } from 'components/common/Mui/Form';
 import { Dialog } from 'components/common/Mui/Dialog';
 
 const NodeNewModal = props => {
@@ -114,7 +114,7 @@ const NodeNewModal = props => {
                     name="name"
                     id="node"
                     label="Node"
-                    placeholder="node-00"
+                    placeholder="node-01"
                     margin="normal"
                     fullWidth
                     autoFocus
@@ -125,10 +125,14 @@ const NodeNewModal = props => {
                     id="port"
                     name="port"
                     label="Port"
-                    placeholder="1021"
+                    placeholder="22"
                     margin="normal"
                     type="number"
                     component={InputField}
+                    inputProps={{
+                      min: 0,
+                      max: 65535,
+                    }}
                   />
 
                   <Field
