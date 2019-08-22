@@ -22,19 +22,19 @@ User Guide
 
 :ref:`Hello User Guide <userguide>`
 
-This documentation is for ohara users who try to exercise or test ohara
-without writing any code. Ohara team design and implement ohara to
+This documentation is for Ohara users who try to exercise or test Ohara
+without writing any code. Ohara team design and implement Ohara to
 provide a unparalleled platform which enable everyone to build streaming
-easily and quickly. For normal users, you can manipulate ohara through
-UI interface even if you have no idea about the magic infra of ohara.
+easily and quickly. For normal users, you can manipulate Ohara through
+UI interface even if you have no idea about the magic infra of Ohara.
 For advanced users trying to build custom streaming, they are encouraged
-to design and write application based on ohara’s various and powerful
+to design and write application based on Ohara's various and powerful
 APIs (see :ref:`Custom Connector <connector>` and :ref:`Custom StreamApp <streamapp>`).
 
 Ohara consists of many services, such as
 
-#. :ref:`Ohara Configurator <userguide-configurator>` — the controller of ohara. It cooperates other services and provides the :ref:`Restful APIs <rest>`
-#. :ref:`Ohara Manager <userguide-ohara-manager>` — the UI service of ohara. It offers a streaming flow called **pipeline**
+#. :ref:`Ohara Configurator <userguide-configurator>` — the controller of Ohara. It cooperates other services and provides the :ref:`Restful APIs <rest>`
+#. :ref:`Ohara Manager <userguide-ohara-manager>` — the UI service of Ohara. It offers a streaming flow called **pipeline**
 #. :ref:`Zookeeper <userguide-zookeeper>` — works for Broker. It has charge of managing the configuration of topics and health of node
 #. :ref:`Broker <userguide-broker>` — It provides the access of topics, topics’ data durability and balance.
 #. :ref:`Worker <userguide-worker>` — It hosts and execute :ref:`Custom Connector <connector>`
@@ -42,14 +42,14 @@ Ohara consists of many services, such as
 #. and :ref:`Kubernetes <userguide-k8s>` — a management tool of docker instances
 
 Ohara has a complicated software stack but most services are almost
-transparent to you. For example, before creating a topic on ohara, you
+transparent to you. For example, before creating a topic on Ohara, you
 ought to set up a zookeeper cluster and a broker cluster. There are ,
 unfortunately, a bunch of configs which you have to design and write for
 both cluster. Ohara auto-generates most configs for you as best as it
-can, and ohara offers the the readable :ref:`Restful APIs <rest>` and
+can, and Ohara offers the the readable :ref:`Restful APIs <rest>` and
 friendly UI to you. All complicated configs are replaced by some simple
 steps showed on UI. The :ref:`Quick Start <userguide-quickstart>` section teach you
-to exercise ohara easily and quickly.
+to exercise Ohara easily and quickly.
 
 --------------
 
@@ -58,11 +58,11 @@ to exercise ohara easily and quickly.
 Quick Start
 -----------
 
-The core component of ohara is :ref:`Configurator <userguide-configurator>`.
+The core component of Ohara is :ref:`Configurator <userguide-configurator>`.
 After installing :ref:`related tools <userguide-installation>`, you can set up a
 Configurator via following docker command.
 
-.. code:: bash
+.. code-block:: console
 
    docker run --rm -p 12345:12345 oharastream/configurator:$|version| --port 12345
 
@@ -73,7 +73,7 @@ Configurator via following docker command.
 And then you can also create a manager to provide a beautiful UI based
 on above Ohara Configurator.
 
-.. code:: bash
+.. code-block:: console
 
    docker run --rm -p 5050:5050 oharastream/manager:$|version| --port 5050 --configurator http://$ip:12345/v0
 
@@ -92,14 +92,14 @@ Chrome <https://www.google.com/intl/zh-TW/chrome/>`__) and link to
 Installation
 ------------
 
-We all love docker, right? All ohara services are executed by docker
-container. However, it is ok to run ohara services through
+We all love docker, right? All Ohara services are executed by docker
+container. However, it is ok to run Ohara services through
 :ref:`assembly file <build-binary>` if you really really really
 hate docker.
 
 
 Network Configurations
-~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^
 
 We are trying to do everything for you. However, your network your
 problem (reference to Hadoop’s
@@ -130,13 +130,13 @@ After install Docker-ce package in CentOS,the network default policy is
 block docker’s bridge to host network, You **must** add a rule on the
 firewall:
 
-.. code:: bash
+.. code-block:: console
 
    sudo firewall-cmd --zone=trusted --permanent --add-interface=docker0
 
 
-Install Docker-ce on Centos
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Install Docker-ce on CentOS
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Docker has provided a great docs about installing docker-ce. Please
 click this
@@ -145,7 +145,7 @@ click this
 .. _userguide-download-images:
 
 Download Ohara Images
-~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^
 
 Ohara deploys docker images on `docker
 hub <https://hub.docker.com/u/oharastream>`__. You can download images
@@ -161,9 +161,9 @@ via ``docker pull`` command. All images are list below.
 .. _userguide-execute-configurator:
 
 Execute Configurator
-~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^
 
-.. code:: sh
+.. code-block:: console
 
    docker run --rm -p ${port}:${port} --add-host ${nodeHostName}:${nodeHostIP} oharastream/configurator:$|version| --port ${port} --hostname ${host}
 
@@ -175,7 +175,7 @@ Execute Configurator
 -  hostname: hostname to run Ohara Configurator (defaults to 0.0.0.0)
 
 .. note::
-  You can enable the jmx reporter via inputing two env variables - “JMX_HOSTNAME” and “JMX_PORT”.
+  You can enable the jmx reporter via inputting two env variables - “JMX_HOSTNAME” and “JMX_PORT”.
 
   - “JMX_HOSTNAME” should be same as the host running Ohara Configurator container so as to access
     the jmx service in docker from outside.
@@ -201,9 +201,9 @@ running in docker container, you have to mount the volume, which is
 located on container host, on the home folder of Ohara Configurator if
 you want to keep all data of Ohara Configurator. The following example
 is to mount a local folder (/tmp/configurator) on
-/home/ohara/configurator of Ohara Configurator’s container.
+/home/ohara/configurator of Ohara Configurator's container.
 
-.. code:: bash
+.. code-block:: console
 
    $ mkdir /tmp/configurator
    $ docker run -v /tmp/configurator:/home/ohara/configurator \
@@ -220,9 +220,9 @@ folder. Otherwise, Ohara Configurator flush all data to a random folder.
 
 
 Execute Manager
-~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^
 
-.. code:: sh
+.. code-block:: console
 
    docker run --rm -p 5050:5050 oharastream/manager:$|version| --port 5050 --configurator http://localhost:12345/v0
 
@@ -231,7 +231,7 @@ Execute Manager
 
 
 Execute PostgreSQL Instance
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ::
 
@@ -247,9 +247,9 @@ Execute PostgreSQL Instance
 
 
 Execute FTP Instance
-~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^
 
-.. code:: bash
+.. code-block:: console
 
    docker run --rm -p 10000-10011:10000-10011 oharastream/backend:$|version| com.island.ohara.testing.service.FtpServer --controlPort 10000 --dataPorts 10001-10011 --user ${UserName} --password ${Password} --hostname ${hostIP or hostName}
 
@@ -286,7 +286,7 @@ the component in which you have interest.
 .. _userguide-configurator-route:
 
 Route of Ohara Configurator
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Ohara Configurator leverages the akka-http to implements the rest server
 and handle the conversion of json objects. You can click our
@@ -296,7 +296,7 @@ The APIs supported by Ohara Configurator is only the Restful APIs. Of
 course, you can raise a question to us - why we choose the Restful APIs
 rather than pure Java APIs? The answer is - We all hate the other
 programming language except for the one we are using. However, we always
-need to work with other people who are typing terrible and weired code,
+need to work with other people who are typing terrible and weird code,
 and all they want to do is to call your APIs. In order to save our time
 from co-working with them, providing the Restful APIs is always to be
 our solution. For another reason, Ohara Configurator is not in charge of
@@ -311,7 +311,7 @@ don’t need to care for the performance issue about Restful APIs.
 .. _userguide-configurator-store:
 
 Store of Ohara Configurator
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 All settings you request to Ohara Configurator are saved in Store, such
 as connector settings, cluster information and pipeline description. The
@@ -323,7 +323,7 @@ host’s folder on docker container.
 .. _userguide-configurator-cache:
 
 Cache of Ohara Configurator
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The cost of coordinating countless services is the big **latency**. For
 example, :ref:`Topic APIs <rest-topics>` allows you to fetch
@@ -340,7 +340,7 @@ extra cost of building connections to remote clusters.
 .. _userguide-configurator-collie:
 
 Collie of Ohara Configurator
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Apart from the data flow, Ohara Configurator is also doable to manage
 clusters for you. For instance, you can
@@ -361,11 +361,11 @@ command to Scala APIs.
 .. _userguide-configurator-client:
 
 Client of Ohara Configurator
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 As a good programmer, we all love to reuse the code. However, it is hard
 to trust all third-party libraries guarantee the suitable compatibility
-policy. The Client code in ohara is a collection of wrap for all client
+policy. The Client code in Ohara is a collection of wrap for all client
 codes to services, such as broker and worker, so as not to be badly hurt
 by the update of services.
 
@@ -391,25 +391,33 @@ of code.
 **Following is a quick walk through of Ohara Manager’s user interface:**
 
 Pipelines
-~~~~~~~~~
+^^^^^^^^^
 
-Pipeline list page is where you can see, create, edit and delete
-pipelines. |Ohara Manager Pipeline list page|
+Pipeline list page is where you can view, create, edit and delete
+pipelines.
+
+.. figure:: images/pipelines.png
+   :alt: Ohara Manager Pipelines page
 
 Inside the new/edit pipeline page, you can create and play around with
 your pipelines here. This is also where you can run and stop your
-pipelines. The pipeline graph helps you to visualize the pipeline that
-you’re working on. Also, you can edit a connector’s config by clicking
-on the graph and edit the config form which will be displayed in the
-sidebar. We know it’s sometimes tedious and time consuming to edit these
-config and it’s frustrating when you lose all of your config without
-saving them! That’s why we made these config forms automatically save
+pipelines. The pipeline graph helps you to easily visualize the pipeline that
+you’re working on. Also, you can edit and tweak a connector’s configuration by clicking
+on the graph and edit the configuration form which will be displayed in the
+sidebar. We know it’s sometimes tedious and time consuming to edit the
+configuration and it’s also frustrating when you lose all of your configuration without
+saving them! That’s why we made these configuration forms automatically save
 changes for you. Whenever you type in a text field, choose a new topic
-form a dropdown, the changes will be saved immediately. |Ohara Manager
-Pipeline new/edit page|
+form a dropdown, the changes will be saved immediately.
+
+.. figure:: images/pipelines_new.png
+   :alt: Ohara Manager Pipelines New/Edit page
+
+   Please note that a pipeline can only be added to a workspace, so before
+   creating pipelines, you will need to `create a workspace first <#userguide-ohara-manager-workspaces>`_
 
 Nodes
-~~~~~
+^^^^^
 
 This is where you create and edit Ohara Nodes. These nodes are usually
 your VMs. When you’re starting a new Ohara Configurator. You can
@@ -419,59 +427,51 @@ you supplied to the CLI will then be listed in this page.
 .. figure:: images/nodes.png
    :alt: Ohara Manager Nodes page
 
-   Ohara Manager Nodes page
+.. _userguide-ohara-manager-workspaces:
 
-Services
-~~~~~~~~
+Workspaces
+^^^^^^^^^^
 
-We have a couple of sub pages here, you can navigate between these pages
-by clicking on the sub menu on the left hand side sidebar:
+A workspace contains multiple Ohara services including: Zookeepers, Brokers and Workers. You can
+create a workspace and add new node, topic and stream application in these pages.
 
--  **Broker**:
+.. figure:: images/workspaces.png
+   :alt: Ohara Manager Workspaces page
 
-   You can view your running brokers here as well as adding new topics
-   in an existing broker. Please note that as of Ohara v0.5.0, we
-   doesn’t support creating broker with the UI yet. You can do so via
-   the :ref:`RESTful APIs <rest>`.
+   Ohara Manager Workspaces page
 
-   .. figure:: images/broker.png
-      :alt: Ohara Manager broker page
+-  **Overview**:
 
-      Ohara Manager broker page
+   Overview page is like a dashboard of the workspace. You can view the services, connectors, topics
+   and stream jars that are using in this workspace
 
--  **Zookeeper**:
+   .. figure:: images/workspaces_overview.png
+      :alt: Ohara Manager Workspaces Overview page
 
-   This is similar to broker page. The zookeeper page shows your
-   zookeeper info. As mentioned above, our UI doesn’t support creating
-   zookeepers yet. But you can definitely do so with the RESTful APIs
+-  **Nodes**:
 
-   .. figure:: images/zookeeper.png
-      :alt: Ohara Manager zookeeper page
+   When creating a workspace, you can choose which node to deploy your services. But you tweak the
+   node settings here.
 
-      Ohara Manager zookeeper page
+   .. figure:: images/workspaces_nodes.png
+      :alt: Ohara Manager Workspaces Nodes page
 
--  **Connect**:
+-  **Topics**:
 
-   In this page, you can create a new connect worker and view its
-   details info here.
+   You can add new topics to your workspace as well as deleting them here.
 
-   .. figure:: images/connect_worker.png
-      :alt: Ohara Manager connect worker page
+   .. figure:: images/workspaces_topics.png
+      :alt: Ohara Manager Workspaces Topics page
 
-      Ohara Manager connect worker page
+-  **Stream jars**:
 
-   When creating a new connect worker. You’re also able to upload custom
-   connector jars as well as database drivers like MySQL or PostgreSQL.
-   Note that once a worker is created there’s no way to edit or delete
-   directly from UI.
+   Same like the topics page, you can add and delete stream jars in this page
 
-   .. figure:: images/connect_worker_new.png
-      :alt: Ohara Manager connect worker new page
-
-      Ohara Manager connect worker new page
+   .. figure:: images/workspaces_stream_jars.png
+      :alt: Ohara Manager Workspaces Stream App page
 
 If you’d like to learn more about the development setup or have issue
-starting/working with it. Please see the :ref:`docs <managerdev>` here
+starting/working with it. Please see Ohara Manager's :ref:`Development Guideline <managerdev>`
 
 --------------
 
@@ -528,18 +528,18 @@ Broker
 After setting up a :ref:`Zookeeper cluster <userguide-zookeeper>`, you have to build
 a broker cluster before going on your streaming trip.
 `Broker <https://kafka.apache.org/intro>`__ is the streaming center of
-ohara that all applications on ohara goes through brokers to switch
+Ohara that all applications on Ohara goes through brokers to switch
 data. There are many stories about Ohara leverages the broker to
 complete countless significant works. But the most important usage of
-Brokers for ohara is the :ref:`Topic <rest-topics>`. Each
+Brokers for Ohara is the :ref:`Topic <rest-topics>`. Each
 endpoint in :ref:`Pipeline <rest-pipelines>` must connect
-to/from a topic, and each topic in ohara is mapped to a topic in broker.
+to/from a topic, and each topic in Ohara is mapped to a topic in broker.
 It means all data sent/received to/from topic is implemented by a true
 connection to a broker.
 
 As a result of addressing scalability, a topic is split to many
 **partitions** distributed on different brokers. It implies the number
-of brokers directly impact the performance of ohara
+of brokers directly impact the performance of Ohara
 :ref:`Pipeline <rest-pipelines>`. If you are streaming a
 bunch of data and there is only a broker in your broker cluster, you
 will get a slow streaming since all data in the streaming are processed
@@ -695,7 +695,7 @@ running any Ohara containers, you need to install Kubernets first.
 We’ll walk you through this process with a few k8s commands:
 
 Install distribute mode for Kubernetes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Kubernetes hardware requirement**
 
@@ -712,32 +712,32 @@ More details is `here <https://kubernetes.io/docs/setup/independent/install-kube
 
 -  Switch to root user
 
-.. code:: sh
+.. code-block:: console
 
    $ su root
 
 -  Change directory to ``kubernetes/distribute``
 
-.. code:: sh
+.. code-block:: console
 
    # cd $OHARA_HOME/kubernetes/distribute
 
 -  Run ``bash k8s-master-install.sh ${Your_K8S_Master_Host_IP}`` to
    install Kubernetes master
 
-.. code:: sh
+.. code-block:: console
 
    # bash k8s-master-install.sh ${Your_K8S_Master_Host_IP}
 
 -  Token and hash will be used in worker installation later on
 
-.. code:: sh
+.. code-block:: console
 
    # cat /tmp/k8s-install-info.txt
 
 The token and hash should look like the following:
 
-.. code:: sh
+.. code-block:: console
 
    # kubeadm join 10.100.0.178:6443 --token 14aoza.xpgpa26br32sxwl8 --discovery-token-ca-cert-hash sha256:f5614e6b6376f7559910e66bc014df63398feb7411fe6d0e7057531d7143d47b
 
@@ -758,7 +758,7 @@ The token and hash should look like the following:
 
 -  Change directory to ``--> kubernetes/distribute``
 
-.. code:: sh
+.. code-block:: console
 
    # cd $OHARA_HOME/kubernetes/distribute 
 
@@ -770,7 +770,7 @@ The token and hash should look like the following:
 
    Below is example command:
 
-   .. code:: sh
+   .. code-block:: console
 
       # bash k8s-worker-install.sh 10.100.0.178 14aoza.xpgpa26br32sxwl8 sha256:f5614e6b6376f7559910e66bc014df63398feb7411fe6d0e7057531d7143d47b
 
@@ -778,23 +778,23 @@ The token and hash should look like the following:
 
 Log into Kubernetes master and use the following command to see if these Kubernetes nodes are running properly:
 
-.. code:: sh
+.. code-block:: console
 
    # kubectl get nodes
 
 -  You can check Kubernetes node status like the following:
 
-.. code:: sh
+.. code-block:: console
 
    # curl -X GET http://${Your_K8S_Master_Host_IP}:8080/api/v1/nodes
 
 How to use Kubernetes in Ohara?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - You must create the service to Kubernetes for DNS use in kubernetes master host,
   Below is the command:
 
-.. code:: sh
+.. code-block:: console
 
    cd $OHARA_HOME/kubernetes
    kubectl create -f dns-service.yaml
@@ -802,7 +802,7 @@ How to use Kubernetes in Ohara?
 - Below is an example command to run Ohara configurator service
   for K8S mode:
 
-.. code:: sh
+.. code-block:: console
 
    # docker run --rm \
               -p 5000:5000 \
@@ -823,7 +823,7 @@ How to use Kubernetes in Ohara?
 -  Use Ohara configurator to create a zookeeper and broker in Kubernetes
    pod for the test:
 
-.. code:: sh
+.. code-block:: console
 
    # Add Ohara Node example
    curl -H "Content-Type: application/json" \
@@ -869,12 +869,12 @@ How to use Kubernetes in Ohara?
 -  You can use the kubectl command to get zookeeper and broker pod
    status with the following command:
 
-.. code:: sh
+.. code-block:: console
 
    # kubectl get pods
 
 How to revert K8S environment setting?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 -  You must stop the K8S API server with this command: ``kubeadm reset``
    command
@@ -883,31 +883,31 @@ How to revert K8S environment setting?
    `here <https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-reset>`__
 
 How to get the log info in container for debug?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 -  First, log into Kubernetes’ master server
 
 -  List all Kubernetes pod name to query
 
-.. code:: sh
+.. code-block:: console
 
    # kubectl get pods
 
 -  Get log info in container
 
-.. code:: sh
+.. code-block:: console
 
    # kubectl logs ${Your_K8S_Pod_Name}
 
 Other
-~~~~~
+^^^^^
 
 -  Ohara K8SClient ImagePullPolicy default is IfNotPresent.
 
 -  Please remember to start K8S API server after you reboot the K8S
    master server:
 
-.. code:: sh
+.. code-block:: console
 
    # nohup kubectl proxy --accept-hosts=^*$ --address=$Your_master_host_IP --port=8080 > /dev/null 2>&1 &
 
