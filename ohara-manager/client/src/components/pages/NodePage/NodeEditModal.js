@@ -85,18 +85,14 @@ const NodeEditModal = props => {
       onSubmit={onSubmit}
       initialValues={{ name, port: `${port}`, user, password }}
       validate={validate}
-      render={({
-        handleSubmit,
-        form,
-        submitting,
-        pristine,
-        invalid,
-        values,
-      }) => {
+      render={({ handleSubmit, form, values }) => {
         return (
           <Dialog
             open={isOpen}
-            handleClose={handleClose}
+            handleClose={() => {
+              handleClose();
+              form.reset();
+            }}
             title="New ohara node"
             handleConfirm={handleSubmit}
             confirmBtnText="Save"

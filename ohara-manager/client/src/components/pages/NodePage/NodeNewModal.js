@@ -38,10 +38,6 @@ const NodeNewModal = props => {
     URL.VALIDATE_NODE_URL,
   );
 
-  const handleModalClose = () => {
-    handleClose();
-  };
-
   const onSubmit = async (values, form) => {
     const data = {
       name: values.name,
@@ -55,7 +51,7 @@ const NodeNewModal = props => {
       form.reset();
       showMessage(MESSAGES.NODE_CREATION_SUCCESS);
       handleConfirm();
-      handleModalClose();
+      handleClose();
     }
   };
 
@@ -94,7 +90,10 @@ const NodeNewModal = props => {
         return (
           <Dialog
             open={isOpen}
-            handleClose={handleClose}
+            handleClose={() => {
+              handleClose();
+              form.reset();
+            }}
             handleConfirm={handleSubmit}
             title="New node"
             confirmBtnText="Add"
