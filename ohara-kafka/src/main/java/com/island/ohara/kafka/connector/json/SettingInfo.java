@@ -33,6 +33,10 @@ import org.apache.kafka.connect.runtime.rest.entities.ConfigInfos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * contains the report of settings validation. The first field is "errorCount", and the other is
+ * list of "definition and value".
+ */
 public final class SettingInfo implements JsonObject {
   public static final Logger LOG = LoggerFactory.getLogger(SettingInfo.class);
   private static final String ERROR_COUNT_KEY = "errorCount";
@@ -49,13 +53,22 @@ public final class SettingInfo implements JsonObject {
                     // if configInfo is not serialized by ohara, we will get JsonParseException in
                     // parsing json.
                     if (e.getCause() instanceof JsonParseException) {
-                      LOG.debug(
-                          "fails to serializer "
-                              + configInfo
-                              + " from "
-                              + configInfos.name()
-                              + ". [TODO] we should replace it by ohara definition",
-                          e);
+                      if (configInfos.name().startsWith("com.island"))
+                        LOG.error(
+                            "official connector:"
+                                + configInfos.name()
+                                + " has illegal display name:"
+                                + configInfo.configKey().displayName()
+                                + ". This may be a compatible issue!!!",
+                            e);
+                      else
+                        LOG.trace(
+                            "The connector:"
+                                + configInfos.name()
+                                + " has illegal display name:"
+                                + configInfo.configKey().displayName()
+                                + ". Please inherit Ohara connector!!!",
+                            e);
                       return Optional.empty();
                     }
                     throw e;
