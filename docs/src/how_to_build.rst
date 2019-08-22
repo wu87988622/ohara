@@ -46,86 +46,96 @@ to simplify the development of ohara.
 
 .. _build-binary:
 
-**Build Binary**
+  Build Binary
 
-.. code:: sh
+    .. code-block:: console
 
-   gradle clean build -x test
+      $ gradle clean build -x test
 
-..
+    .. note::
+      the tar file is located at ohara-assembly/distributions
 
-   the tar file is located at ohara-assembly/distributions
+  Run All UTs
 
+    .. code-block:: console
 
-**Run All UTs**
+      $ gradle clean test
 
-.. code:: sh
+    .. note::
 
-   gradle clean test
+       Ohara IT tests requires specific envs, and all IT tests will be
+       skipped if you don't pass the related setting to IT. Ohara recommends
+       you testing your code on `official QA`_ which offers the powerful
+       machine and IT envs.
 
-..
+    .. tip::
 
-   Ohara IT tests requires specific envs, and all IT tests will be
-   skipped if you don't pass the related setting to IT. Ohara recommends
-   you testing your code on `official QA`_ which offers the powerful
-   machine and IT envs.
+      add flag "-PskipManager" to skip the tests of Ohara Manager. Ohara Manager is a module
+      in charge of Ohara UI. Feel free to skip it if you are totally a backend developer. By
+      the way, the prerequisites of testing Ohara Manager is shown in :ref:`here <managerdev>`
 
+    .. tip::
 
-**Code Style Auto-Apply**
+      add flag "-PmaxParallelForks=6" to increase the number of test process to start in parallel.
+      The default value is number of cores / 2, and noted that too many tests running in parallel may
+      easily produce tests timeout.
 
-Use this task to make sure your added code will have the same format and
-conventions with the rest of codebase.
+  Code Style Auto-Apply
 
-.. code:: sh
+    Use this task to make sure your added code will have the same format and conventions with the rest of codebase.
 
-   gradle spotlessApply
+    .. code-block:: console
 
-..
+      $ gradle spotlessApply
 
-   Note that we have this style check in early QA build.
+    .. note::
 
-
-**License Auto-Apply**
-
-If you have added any new files in a PR. This task will automatically
-insert an Apache 2.0 license header in each one of these newly created
-files
-
-.. code:: sh
-
-   gradle licenseApply
-
-..
-
-   Note that a file without the license header will fail at early QA
-   build
+       we have this style check in early QA build.
 
 
-**Build Uber Jar**
+  License Auto-Apply
 
-.. code:: sh
+    If you have added any new files in a PR. This task will automatically
+    insert an Apache 2.0 license header in each one of these newly created
+    files
 
-   gradle clean uberJar -PskipManager
+    .. code-block:: console
 
-..
+      $ gradle licenseApply
 
-   the uber jar is under ohara-assembly/build/libs/
+    .. note::
+
+       Note that a file without the license header will fail at early QA
+       build
 
 
-**Publish Artifacts to JFrog Bintray**
+  Build Uber Jar
 
-.. code:: sh
+    .. code-block:: console
 
-   gradle clean build -PskipManager -x test bintrayUpload -PbintrayUser=$user -PbintrayKey=$key -PdryRun=false -Poverride=true
+      $ gradle clean uberJar -PskipManager
 
-- bintrayUser: the account that has write permission to the repository
-- bintrayKey: the account API Key
-- dryRun: whether to publish artifacts (default is true)
-- override: whether to override version artifacts already published
+    .. note::
 
-..
+       the uber jar is under ohara-assembly/build/libs/
 
-   Only release manager has permission to upload artifacts
+
+  Publish Artifacts to JFrog Bintray
+
+    .. code-block:: console
+
+      $ gradle clean build -PskipManager -x test bintrayUpload -PbintrayUser=$user -PbintrayKey=$key -PdryRun=false -Poverride=true
+
+    .. tip::
+
+      - bintrayUser: the account that has write permission to the repository
+      - bintrayKey: the account API Key
+      - dryRun: whether to publish artifacts (default is true)
+      - override: whether to override version artifacts already published
+
+    .. note::
+
+       Only release manager has permission to upload artifacts
 
 
 Installation
