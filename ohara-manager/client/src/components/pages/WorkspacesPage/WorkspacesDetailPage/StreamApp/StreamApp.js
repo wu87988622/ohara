@@ -127,6 +127,10 @@ const StreamApp = props => {
         accept=".jar"
         type="file"
         onChange={handleFileSelect}
+        onClick={event => {
+          /* Allow file to be added multiple times */
+          event.target.value = null;
+        }}
       />
       <StyledLabel htmlFor="fileInput">
         <Button component="span" text="New jar" />
