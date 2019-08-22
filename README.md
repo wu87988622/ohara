@@ -17,25 +17,19 @@ Ohara provides an architecture to scale, so the users can focus on their busines
 
 ----
 
-Ohara, a big data platform which is powered by [Apache Kafka](https://kafka.apache.org/) and [Docker](https://www.docker.com/), 
-enables effective and quick ways of building application at streaming and scale.
-
-* Super simple way to create following clusters:
-  * [Apache Zookeeper](https://zookeeper.apache.org/) cluster
-  * Apache Kafka - Broker cluster
-  * Apache Kafka - Connect worker cluster
-* Connect various storage: Build-in ready to use connectors for popular storage.
-* Pipeline graph: A great user interface for your data pipeline design.
-* StreamApp: Develop your own stream-processing logic for data transformation.
-* Integrate with [Docker](https://www.docker.com/) & [Kubernetes](https://kubernetes.io/).
-
-
 ## [Ohara Documentation](https://ohara.readthedocs.io/en/latest)
+
+----
+
+## [中文使用者社群](https://www.facebook.com/groups/oharastream)
+
+----
 
 ## Contributing
 
 Ohara is a completely open source project. If you're interested in contributing, you can start from the [contrubting guide](https://ohara.readthedocs.io/en/latest/contributing.html). Also, take a look at our [issue tracker](https://github.com/oharastream/ohara/issues), the [good first issues](https://github.com/oharastream/ohara/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) would be a good place to start with.
 
+----
 
 ## Ohara Team
 
@@ -47,6 +41,7 @@ Ohara is a completely open source project. If you're interested in contributing,
 - **Chih-Chiang Yeh (harryyeh@is-land.com.tw)** - committer
 - **Robert Ye (robertye@is-land.com.tw)** - committer
 
+----
 
 ## License
 
