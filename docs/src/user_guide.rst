@@ -393,20 +393,26 @@ of code.
 Pipelines
 ~~~~~~~~~
 
-Pipeline list page is where you can see, create, edit and delete
-pipelines. |Ohara Manager Pipeline list page|
+Pipeline list page is where you can view, create, edit and delete
+pipelines.
 
-Inside the new/edit pipeline page, you can create and play around with
+.. figure:: images/pipelines.png
+   :alt: Ohara Manager Pipelines page
+
+Inside the new/edit pipeline pages, you can create and play around with
 your pipelines here. This is also where you can run and stop your
-pipelines. The pipeline graph helps you to visualize the pipeline that
-you’re working on. Also, you can edit a connector’s config by clicking
-on the graph and edit the config form which will be displayed in the
-sidebar. We know it’s sometimes tedious and time consuming to edit these
-config and it’s frustrating when you lose all of your config without
-saving them! That’s why we made these config forms automatically save
+pipelines. The pipeline graph helps you to easily visualize the pipeline that
+you’re working on. Also, you can edit and tweak a connector’s configuration by clicking
+on the graph and edit the configuration form which will be displayed in the
+sidebar. We know it’s sometimes tedious and time consuming to edit the
+configuration and it’s also frustrating when you lose all of your configuration without
+saving them! That’s why we made these configuration forms automatically save
 changes for you. Whenever you type in a text field, choose a new topic
 form a dropdown, the changes will be saved immediately. |Ohara Manager
 Pipeline new/edit page|
+
+    Please note that a pipeline can only be added to a workspace, so before
+    creating pipelines, you will need to `create a workspace first <#userguide-ohara-manager-workspaces>`_
 
 Nodes
 ~~~~~
@@ -419,56 +425,48 @@ you supplied to the CLI will then be listed in this page.
 .. figure:: images/nodes.png
    :alt: Ohara Manager Nodes page
 
-   Ohara Manager Nodes page
+.. _userguide-ohara-manager-workspaces:
 
-Services
-~~~~~~~~
+Workspaces
+~~~~~~~~~~
 
-We have a couple of sub pages here, you can navigate between these pages
-by clicking on the sub menu on the left hand side sidebar:
+A workspace contains multiple Ohara services including: Zookeepers, Brokers and Workers. You can
+create a workspace and add new node, topic and stream application in these pages.
 
--  **Broker**:
+.. figure:: images/workspaces.png
+   :alt: Ohara Manager Workspaces page
 
-   You can view your running brokers here as well as adding new topics
-   in an existing broker. Please note that as of Ohara v0.5.0, we
-   doesn’t support creating broker with the UI yet. You can do so via
-   the :ref:`RESTful APIs <rest>`.
+   Ohara Manager Workspaces page
 
-   .. figure:: images/broker.png
-      :alt: Ohara Manager broker page
+-  **Overview**:
 
-      Ohara Manager broker page
+   Overview page is like a dashboard of the worksapce. You can view the services, connectors, topics
+   and stream jars that are using in this workspace
 
--  **Zookeeper**:
+   .. figure:: images/workspaces_overview.png
+      :alt: Ohara Manager Workspaces Overview page
 
-   This is similar to broker page. The zookeeper page shows your
-   zookeeper info. As mentioned above, our UI doesn’t support creating
-   zookeepers yet. But you can definitely do so with the RESTful APIs
+-  **Nodes**:
 
-   .. figure:: images/zookeeper.png
-      :alt: Ohara Manager zookeeper page
+   When creating a workspace, you can choose which node to deploy your services. But you tweak the
+   node settings here.
 
-      Ohara Manager zookeeper page
+   .. figure:: images/workspaces_nodes.png
+      :alt: Ohara Manager Workspaces Nodes page
 
--  **Connect**:
+-  **Topics**:
 
-   In this page, you can create a new connect worker and view its
-   details info here.
+   You can add new topics to your worksace as well as deleting them here.
 
-   .. figure:: images/connect_worker.png
-      :alt: Ohara Manager connect worker page
+   .. figure:: images/workspaces_topics.png
+      :alt: Ohara Manager Workspaces Topics page
 
-      Ohara Manager connect worker page
+-  **Stream jars**:
 
-   When creating a new connect worker. You’re also able to upload custom
-   connector jars as well as database drivers like MySQL or PostgreSQL.
-   Note that once a worker is created there’s no way to edit or delete
-   directly from UI.
+   Same like the topics page, you can add and delete stream jars in this page
 
-   .. figure:: images/connect_worker_new.png
-      :alt: Ohara Manager connect worker new page
-
-      Ohara Manager connect worker new page
+   .. figure:: images/workspaces_stream.png
+      :alt: Ohara Manager Workspaces Stream App page
 
 If you’d like to learn more about the development setup or have issue
 starting/working with it. Please see the :ref:`docs <managerdev>` here
