@@ -38,6 +38,11 @@ object FileInfoApi {
     */
   val GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
   val FILE_PREFIX_PATH: String = "files"
+
+  /**
+    * the key used in formData to point out the data.
+    */
+  val FIELD_NAME: String = "file"
   def toString(tags: Map[String, JsValue]): String = JsObject(tags).toString
 
   /**
@@ -158,7 +163,7 @@ object FileInfoApi {
         Marshal(
           Multipart.FormData(
             // add file
-            Multipart.FormData.BodyPart("file",
+            Multipart.FormData.BodyPart(FIELD_NAME,
                                         HttpEntity.fromFile(MediaTypes.`application/octet-stream`, file),
                                         Map("filename" -> name)),
             // add group
