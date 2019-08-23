@@ -774,7 +774,7 @@ public final class CommonUtils {
           connectionTimeout,
           readTimeout);
     } catch (IOException e) {
-      throw new IllegalStateException(e);
+      throw new IllegalStateException("failed to access the " + source, e);
     }
   }
 

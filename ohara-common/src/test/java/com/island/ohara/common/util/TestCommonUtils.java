@@ -21,6 +21,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -546,6 +548,18 @@ public class TestCommonUtils extends SmallTest {
   public void availablePortShouldBeBiggerThan1024() {
     for (int i = 0; i != 10; ++i) {
       Assert.assertTrue(CommonUtils.availablePort() > 1024);
+    }
+  }
+
+  @Test
+  public void testCopyURLToFile() throws MalformedURLException {
+    URL url = new URL("http://node99/abc.jar");
+    File file = CommonUtils.createTempFile(methodName(), null);
+    Assert.assertTrue(file.delete());
+    try {
+      CommonUtils.copyURLToFile(url, file, 10, 10);
+    } catch (IllegalStateException e) {
+      Assert.assertTrue(e.getMessage().contains(url.toString()));
     }
   }
 }
