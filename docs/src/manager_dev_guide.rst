@@ -54,18 +54,18 @@ Mac
 Make sure you have ``watchman`` installed on your machine. You can do
 this with homebrew:
 
-.. code:: sh
+.. code-block:: console
 
-   brew install watchman
+   $ brew install watchman
 
 Linux
 ^^^^^
 
 Install these dependencies for cypress:
 
-.. code:: sh
+.. code-block:: console
 
-   yum install -y xorg-x11-server-Xvfb gtk2-2.24* libXtst* libXScrnSaver* GConf2* alsa-lib*
+  $ yum install -y xorg-x11-server-Xvfb gtk2-2.24* libXtst* libXScrnSaver* GConf2* alsa-lib*
 
 ..
 
@@ -83,22 +83,21 @@ Quick start guide
 
   Make sure you’re at the Ohara manager root, then start it with:
 
-  .. code:: sh
+  .. code-block:: console
 
-    yarn start --configurator http://host:port/v0
+    $ yarn start --configurator http://host:port/v0
 
-  ..
 
-     Note that the configurator option is required, and you should have
-     configurator running before starting Ohara manager. You can see the
-     :ref:`user guide <userguide>` on how to spin up a configurator
+  Note that the configurator option is **required**, and you should have
+  configurator running before starting Ohara manager. You can see the
+  :ref:`user guide <userguide>` on how to spin up a configurator
 
 
   Open another terminal tab, and start the **Client**:
 
-  ::
+  .. code-block:: console
 
-     yarn start:client
+    $ yarn start:client
 
   Now, go to http://localhost:3000 and start your development, happy
   hacking 😎
@@ -114,9 +113,9 @@ Server:
 
   Make sure you’re at the ohara-manager root:
 
-  .. code:: sh
+  .. code-block:: console
 
-     yarn start --configurator http://host:port/v0
+     $ yarn start --configurator http://host:port/v0
 
   .. note::
     Note that the ``--configurator`` argument is required, you should
@@ -125,31 +124,34 @@ Server:
   You can also override the default port ``5050`` by passing in ``--port``
   like the following:
 
-  .. code:: sh
+  .. code-block:: console
 
-    yarn start --configurator http://host:port/v0 --port 1234
+    $ yarn start --configurator http://host:port/v0 --port 1234
 
   After starting the server, visit ``http://localhost:${PORT}`` in your
   browser.
 
-  Double check the configurator spelling and API URL, the URL should
+  .. tip::
+    Passing the CLI option ``-c`` has the same effect as ``--configurator`` and ``-p`` for ``--port`` as well
+
+  Double check the ``--configurator`` spelling and API URL, the URL should
   contain the API version number: ``/v0``
 
 Client:
 
   Start the **Client** development server with:
 
-  .. code:: sh
+  .. code-block:: console
 
-    yarn start:client
+    $ yarn start:client
 
   After starting the dev server, visit ``http://localhost:3000`` in your browser and start you development.
 
   You can override the default port ``3000`` by passing in an environment variable:
 
-  .. code:: sh
+  .. code-block:: console
 
-    PORT=7777 yarn start:client
+    $ PORT=7777 yarn start:client
 
   The dev server will then start at ``http://localhost:7777``
 
@@ -159,9 +161,9 @@ Test
 You can run both the **Server** and **Client** unit tests with a single
 npm script:
 
-.. code:: sh
+.. code-block:: console
 
-   yarn test
+  $ yarn test
 
 You can also run them separately as:
 
@@ -171,45 +173,56 @@ Server:
 
   Run the test and stay in Jest watch mode
 
-  .. code:: sh
+  .. code-block:: console
 
-    yarn test:watch
+    $ yarn test:watch
 
   Generate a test coverage report
   The coverage reports can be found in ``ohara-manager/coverage/``
 
-  .. code:: sh
+  .. code-block:: console
 
-    yarn test:coverage
+    $ yarn test:coverage
 
 Client:
 
   Run the tests and stay in Jest’s watch mode
 
-  .. code:: sh
+  .. code-block:: console
 
-    yarn test:client
+    $ yarn test:client
 
   Generate test coverage reports
   The coverage reports can be found in ``ohara-manager/client/coverage/``
 
-  .. code:: sh
+  .. code-block:: console
 
-    yarn test:client:coverage
+    $ yarn test:client:coverage
 
   We also have a npm script that runs both the **client** server and unit tests together:
 
-  .. code:: sh
+  .. code-block:: console
 
-    yarn dev:client
+    $ yarn dev:client
 
   **Client** also has End-to-End tests, you can run them via the following command:
 
-  .. code:: sh
+  **GUI mode**: this will open cypress test runner, you can then run your test manually through the UIs.
 
-    yarn test:e2e:open
+  .. code-block:: console
 
-  This will open cypress test runner, you can then run your test manually through the UIs.
+    $ yarn test:e2e:open
+
+  **Electron mode(headless)**: since we're running our E2E tests on CI under this mode. You might often want
+  to run your tests in this mode on your local machine as well.
+
+  .. code-block:: console
+
+    $ yarn test:e2e:ci --configurator http://host:port/v0
+
+  .. note::
+    Before running in this mode we advise that you run ``yarn setup`` prior to the tests as
+    the dev server is not running, so you might have stale build asserts in your build directory
 
 Linting
 ^^^^^^^
@@ -218,15 +231,15 @@ Linting
 
   Server:
 
-    .. code:: sh
+    .. code-block:: console
 
-      yarn lint:server
+      $ yarn lint:server
 
     It’s usually helpful to run linting while developing and that’s included in ``yarn start`` command:
 
-    .. code:: sh
+    .. code-block:: console
 
-      yarn start --configurator http://host:port/v0
+      $ yarn start --configurator http://host:port/v0
 
     This will start the server with ``nodemon`` and run the linting script whenever nodemon reloads.
 
@@ -249,9 +262,9 @@ Format
   We use `Prettier <https://github.com/prettier/prettier>`__ to format our
   code. You can format all ``.js`` files with:
 
-  .. code:: sh
+  .. code-block:: console
 
-    yarn format
+    $ yarn format
 
   - You can ignore files or folders when running ``yarn format`` by
     editing the ``.prettierignore`` in the Ohara-manager root.
@@ -268,9 +281,9 @@ Build
 
   You can get production-ready static files by using the following command:
 
-  .. code:: sh
+  .. code-block:: console
 
-     yarn build
+    $ yarn build
 
   .. note::
      These static files will be built and put into the **/ohara-manager/client/build** directory.
@@ -282,9 +295,9 @@ Ohara manager image
   Run the following command to get the production ready build of both the
   **Server** and **Client**.
 
-  .. code:: sh
+  .. code-block:: console
 
-    yarn setup
+    $ yarn setup
 
   After the build, copy/use these files and directories to the destination
   directory (Note this step is automatically done by Ohara-assembly
@@ -311,9 +324,9 @@ Ohara manager image
   **From the Ohara manager project root**, use the following command to
   start the manager:
 
-  .. code:: sh
+  .. code-block:: console
 
-    yarn start:prod --configurator http://host:port/v0
+    $ yarn start:prod --configurator http://host:port/v0
 
 
 CI server integration
@@ -324,9 +337,9 @@ CI server integration
 
   Run tests on CI:
 
-  .. code:: sh
+  .. code-block:: console
 
-    yarn test
+    $ yarn test
 
   -  Run all tests including the **Server** and the **Client** unit tests.
      The test reports can be found in ``ohara-manager/test-reports/``
@@ -341,15 +354,15 @@ Clean
   Clean up all running processes, removing ``test-reports/`` in the
   **Server** and ``/build`` directory in the **Client**:
 
-  .. code:: sh
+  .. code-block:: console
 
-    yarn clean
+    $ yarn clean
 
   Clean all running processes started with node.js
 
-  .. code:: sh
+  .. code-block:: console
 
-    yarn clean:process
+    $ yarn clean:process
 
   This is useful when you want to kill all node.js processes
 
@@ -360,9 +373,9 @@ Prepush
   server unit tests and e2e tests) lint, and format all the JS files with.
   **Ideally, you’d run this before pushing your code to the remote repo:**
 
-  .. code:: sh
+  .. code-block:: console
 
-    yarn prepush
+    $ yarn prepush
 
 .. _managerdev-editors:
 
@@ -420,18 +433,18 @@ Switch different version of Node.js
   for debugging. There’s a handy npm package that can reduce the pain of
   managing different version of Node.js on your machine:
 
-  First, let’s install this package ``n``
+  First, let’s install this package ``n``, note that we're installing it globally
+  so it's can be used throughout your projects
 
-  .. code:: sh
+  .. code-block:: console
 
-     # install this globally so it's can be used through out all your projects
-     npm install -g n # or yarn global add n
+    $ npm install -g n # or yarn global add n
 
   Second, let’s use ``n`` to install a specific version of Node.js:
 
-  .. code:: sh
+  .. code-block:: console
 
-    n 8.16.0
+    $ n 8.16.0
 
   .. note::
      After the specific version is installed, ``n`` will switch your
@@ -441,9 +454,9 @@ Switch different version of Node.js
   your machine with ``n``, an interactive prompt will be displayed and you
   can easily choose a Node.js version form it
 
-  .. code:: sh
+  .. code-block:: console
 
-    n # Yep, just type n in your terminal...,
+    $ n # Yep, just type n in your terminal...,
 
   For more info, you can read the `docs <https://github.com/tj/n>`__ here.
 
@@ -457,9 +470,9 @@ Having issues?
      If you’re running into this, it’s probably that this module is not
      correctly installed on your machine. You can fix this by simply run:
 
-     .. code:: sh
+     .. code-block:: console
 
-         yarn # If this doesn't work, try `yarn add ${module-name}`
+         $ yarn # If this doesn't work, try `yarn add ${module-name}`
 
      After the installation is completed, start the server again.
 
@@ -469,9 +482,9 @@ Having issues?
      Linux will watch. Read more
      `here <https://github.com/guard/listen/wiki/Increasing-the-amount-of-inotify-watchers#the-technical-details>`__.
 
-     .. code:: sh
+     .. code-block:: console
 
-        echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p.
+        $ echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p.
 
   -  **Node.js processes cannot be stopped even after using kill -9**
 
