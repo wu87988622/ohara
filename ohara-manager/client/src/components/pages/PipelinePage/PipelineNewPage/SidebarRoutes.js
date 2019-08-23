@@ -43,7 +43,7 @@ const SidebarRoutes = props => {
   } = PIPELINES.CONNECTOR_TYPES;
 
   return (
-    <>
+    <div data-testid="pipeline-config-form">
       <Route
         path={`${routeBaseUrl}/${jdbcSource}`}
         render={() => (
@@ -157,7 +157,7 @@ const SidebarRoutes = props => {
           />
         )}
       />
-    </>
+    </div>
   );
 };
 

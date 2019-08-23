@@ -198,13 +198,12 @@ Cypress.Commands.add('uploadStreamAppJar', () => {
     .wait(500);
 });
 
-Cypress.Commands.add('uploadTestStreamAppJar', wk => {
-  cy.log(wk);
+Cypress.Commands.add('uploadTestStreamAppJar', workerClusterName => {
   cy.fixture(`streamApp/ohara-streamapp.jar`, 'base64')
     .then(Cypress.Blob.base64StringToBlob)
     .then(blob => {
       const type = 'application/java-archive';
-      const url = '/api/jars';
+      const url = '/api/files';
       const config = {
         headers: {
           'content-type': 'multipart/form-data',
@@ -214,9 +213,10 @@ Cypress.Commands.add('uploadTestStreamAppJar', wk => {
       const dataTransfer = new DataTransfer();
       dataTransfer.items.add(testFile);
       blob = dataTransfer.files;
+
       let formData = new FormData();
-      formData.append('jar', blob[0]);
-      formData.append('group', wk);
+      formData.append('file', blob[0]);
+      formData.append('group', workerClusterName);
       const res = axiosInstance.post(url, formData, config);
       cy.log(res);
     });

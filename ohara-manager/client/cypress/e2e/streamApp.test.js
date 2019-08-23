@@ -88,15 +88,23 @@ describe('StreamApp', () => {
     cy.getByText(streamAppName)
       .click({ force: true })
       .getByTestId('from')
-      .click()
-      .get(`li[data-value=${fromTopicName}]`)
-      .click()
+      .siblings()
+      .then($els => {
+        cy.wrap($els.first())
+          .click()
+          .get(`li[data-value=${fromTopicName}]`)
+          .click();
+      })
       .wait(2000) // UI has one sec throttle
       .wait('@putPipeline')
       .getByTestId('to')
-      .click()
-      .get(`li[data-value=${toTopicName}]`)
-      .click()
+      .siblings()
+      .then($els => {
+        cy.wrap($els.first())
+          .click()
+          .get(`li[data-value=${toTopicName}]`)
+          .click();
+      })
       .wait(2000) // UI has one sec throttle
       .wait('@putPipeline')
       .getByTestId('start-button')

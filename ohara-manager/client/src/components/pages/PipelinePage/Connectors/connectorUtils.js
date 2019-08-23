@@ -581,7 +581,7 @@ export const renderer = props => {
               width="100%"
               name={key}
               disabled={!editable || isRunning}
-              testId={key}
+              inputProps={{ 'data-testid': key }}
             />
           </FormGroup>
         );
@@ -596,7 +596,7 @@ export const renderer = props => {
               helperText={documentation}
               component={Checkbox}
               disabled={!editable || isRunning}
-              testId={key}
+              inputProps={{ 'data-testid': key }}
             />
           </FormGroup>
         );
@@ -617,7 +617,21 @@ export const renderer = props => {
           </FormGroup>
         );
       default:
-        return null;
+        return (
+          <FormGroup key={key}>
+            <Field
+              type="text"
+              component={InputField}
+              label={displayName}
+              id={displayName}
+              helperText={documentation}
+              width="100%"
+              name={key}
+              disabled={!editable || isRunning}
+              inputProps={{ 'data-testid': key }}
+            />
+          </FormGroup>
+        );
     }
   };
 
@@ -636,7 +650,7 @@ export const renderer = props => {
               name={key}
               width="100%"
               disabled={isRunning}
-              testId={key}
+              inputProps={{ 'data-testid': key }}
             />
           </FormGroup>
         );
@@ -652,7 +666,7 @@ export const renderer = props => {
               width="100%"
               name={key}
               disabled={true}
-              testId={key}
+              inputProps={{ 'data-testid': key }}
             />
           </FormGroup>
         );

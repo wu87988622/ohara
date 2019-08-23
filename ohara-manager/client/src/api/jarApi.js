@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { get, isUndefined } from 'lodash';
+import { get } from 'lodash';
 
 import { handleError, axiosInstance } from './apiUtils';
 
@@ -39,9 +39,8 @@ export const createJar = async params => {
     const url = `/api/files`;
     const formData = new FormData();
     formData.append('file', file);
-    if (!isUndefined(workerClusterName)) {
-      formData.append('group', workerClusterName);
-    }
+    formData.append('group', workerClusterName);
+
     const config = {
       headers: {
         'content-type': 'multipart/form-data',

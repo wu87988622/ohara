@@ -32,7 +32,6 @@ const Select = props => {
     meta,
     list = [],
     width = '100%',
-    testId = 'select',
     ...rest
   } = props;
 
@@ -50,7 +49,6 @@ const Select = props => {
       value={_value}
       width={width}
       select={true}
-      data-testid={testId}
     >
       {_list.map(item => {
         return (
@@ -75,7 +73,6 @@ Select.propTypes = {
   }).isRequired,
   width: PropTypes.string,
   list: PropTypes.array.isRequired,
-  testId: PropTypes.string,
 };
 
 export default Select;
