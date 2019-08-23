@@ -225,7 +225,7 @@ describe('WorkspacesPage', () => {
         const { imageName, clientPort, nodeNames, jmxPort } = xhr.response.body;
 
         // Basic info
-        cy.getByText(`Image: ${imageName}`).should('have.length', 1);
+        cy.getByText(`Worker Image: ${imageName}`).should('have.length', 1);
 
         // Nodes
         nodeNames.forEach(node => {
@@ -271,6 +271,10 @@ describe('WorkspacesPage', () => {
         const bkNodes = xhr.response.body.nodeNames;
         const jmxPort = xhr.response.body.jmxPort;
         const exporterPort = xhr.response.body.exporterPort;
+        cy.getByText(`Broker Image: ${xhr.response.body.imageName}`).should(
+          'have.length',
+          1,
+        );
         bkNodes.forEach(node => {
           cy.getByText(`${node}:${clientPort}`)
             .should('have.length', 1)
@@ -288,6 +292,10 @@ describe('WorkspacesPage', () => {
         const ZkNodes = xhr.response.body.nodeNames;
         const peerPort = xhr.response.body.peerPort;
         const electionPort = xhr.response.body.electionPort;
+        cy.getByText(`Zookeeper Image: ${xhr.response.body.imageName}`).should(
+          'have.length',
+          1,
+        );
         ZkNodes.forEach(node => {
           cy.getByText(`${node}:${clientPort}`)
             .should('have.length', 1)

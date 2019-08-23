@@ -18,7 +18,7 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import TableRow from '@material-ui/core/TableRow';
 import Tooltip from '@material-ui/core/Tooltip';
-import { get, capitalize } from 'lodash';
+import { capitalize } from 'lodash';
 
 import OverviewTable from './OverviewTable';
 import {
@@ -28,24 +28,11 @@ import {
   StyledTableCell,
   TooltipBody,
 } from './styles';
-import * as useApi from 'components/controller';
-import * as URL from 'components/controller/url';
 
 const OverviewNodes = props => {
-  const { worker, handleRedirect } = props;
-  const { brokerClusterName } = worker;
+  const { worker, handleRedirect, broker, zookeeper } = props;
 
   const [nodes, setNodes] = useState([]);
-  const { data: brokerRes } = useApi.useFetchApi(
-    `${URL.BROKER_URL}/${brokerClusterName}`,
-  );
-  const broker = get(brokerRes, 'data.result', null);
-  const zookeeperName =
-    broker === null ? '' : '/' + broker.zookeeperClusterName;
-  const { data: zookeeperRes } = useApi.useFetchApi(
-    `${URL.ZOOKEEPER_URL}${zookeeperName}`,
-  );
-  const zookeeper = get(zookeeperRes, 'data.result', null);
 
   useEffect(() => {
     const { nodeNames, clientPort, jmxPort } = worker;
@@ -79,7 +66,7 @@ const OverviewNodes = props => {
     };
 
     fetchBroker();
-  }, [broker, brokerClusterName, brokerRes]);
+  }, [broker]);
 
   // Since zookeeper is the last request we sent, we just need to wait for this
   // in longer term, we should have a better way to determine if a request a
@@ -100,7 +87,7 @@ const OverviewNodes = props => {
     });
 
     setNodes(prevNodes => [...prevNodes, ...zookeeperNodes]);
-  }, [broker, zookeeper, zookeeperName]);
+  }, [zookeeper]);
 
   return (
     <>
@@ -165,6 +152,8 @@ OverviewNodes.propTypes = {
     clientPort: PropTypes.number.isRequired,
     jmxPort: PropTypes.number.isRequired,
   }),
+  broker: PropTypes.object,
+  zookeeper: PropTypes.object,
 };
 
 export default OverviewNodes;

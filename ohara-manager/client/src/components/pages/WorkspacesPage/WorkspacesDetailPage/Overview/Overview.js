@@ -16,6 +16,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import { get, isNull } from 'lodash';
 
 import OverviewTopics from './OverviewTopics';
 import OverviewConnectors from './OverviewConnectors';
@@ -30,10 +31,34 @@ import {
   RightColumn,
   Box,
 } from './styles';
+import * as useApi from 'components/controller';
+import * as URL from 'components/controller/url';
 
 const Overview = props => {
   const { worker } = props;
-  const { imageName, brokerClusterName, name: workerName, connectors } = worker;
+  const {
+    imageName: workerImageName,
+    brokerClusterName,
+    name: workerName,
+    connectors,
+  } = worker;
+
+  const { data: brokerRes } = useApi.useFetchApi(
+    `${URL.BROKER_URL}/${brokerClusterName}`,
+  );
+  const broker = get(brokerRes, 'data.result', null);
+
+  const zookeeperName =
+    broker === null ? '' : `/${broker.zookeeperClusterName}`;
+  const { data: zookeeperRes } = useApi.useFetchApi(
+    `${URL.ZOOKEEPER_URL}${zookeeperName}`,
+  );
+  const zookeeper = get(zookeeperRes, 'data.result', null);
+
+  const { imageName: borkerImageName } =
+    broker === null ? { imageName: '' } : broker;
+  const { imageName: zookeeperImageName } =
+    zookeeper === null ? { imageName: '' } : zookeeper;
 
   const handleRedirect = service => {
     props.history.push(service);
@@ -48,12 +73,23 @@ const Overview = props => {
             <span className="title">Basic info</span>
           </TabHeading>
           <List>
-            <li>Image: {imageName}</li>
+            <li>Worker Image: {workerImageName}</li>
+            <li>Broker Image: {borkerImageName}</li>
+            <li>Zookeeper Image: {zookeeperImageName}</li>
           </List>
         </Box>
 
         <Box>
-          <OverviewNodes worker={worker} handleRedirect={handleRedirect} />
+          {!Array.isArray(zookeeper) &&
+            !isNull(zookeeper) &&
+            !isNull(broker) && (
+              <OverviewNodes
+                worker={worker}
+                handleRedirect={handleRedirect}
+                zookeeper={zookeeper}
+                broker={broker}
+              />
+            )}
         </Box>
 
         <Box>

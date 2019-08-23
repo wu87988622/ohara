@@ -68,6 +68,7 @@ describe('Broker API', () => {
         exporterPort,
         jmxPort,
         state,
+        imageName,
       } = result;
 
       expect(isSuccess).to.eq(true);
@@ -80,6 +81,7 @@ describe('Broker API', () => {
       expect(exporterPort).to.be.a('number');
       expect(jmxPort).to.be.a('number');
       expect(state).to.be.undefined;
+      expect(imageName).to.be.a('string');
     });
   });
 
@@ -97,6 +99,7 @@ describe('Broker API', () => {
         exporterPort,
         jmxPort,
         state,
+        imageName,
       } = result;
 
       expect(isSuccess).to.eq(true);
@@ -108,6 +111,7 @@ describe('Broker API', () => {
       expect(exporterPort).to.be.a('number');
       expect(jmxPort).to.be.a('number');
       expect(state).to.be.undefined;
+      expect(imageName).to.be.a('string');
     });
   });
 
