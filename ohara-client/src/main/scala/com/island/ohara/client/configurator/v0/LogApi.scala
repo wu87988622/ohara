@@ -40,6 +40,9 @@ object LogApi {
 
     def log4WorkerCluster(clusterName: String)(implicit executionContext: ExecutionContext): Future[ClusterLog] =
       exec.get[ClusterLog, ErrorApi.Error](s"$url/${WorkerApi.WORKER_PREFIX_PATH}/$clusterName")
+
+    def log4StreamCluster(clusterName: String)(implicit executionContext: ExecutionContext): Future[ClusterLog] =
+      exec.get[ClusterLog, ErrorApi.Error](s"$url/${StreamApi.STREAMS_PREFIX_PATH}/$clusterName")
   }
 
   def access: Access = new Access

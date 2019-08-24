@@ -44,6 +44,7 @@ get the log of a running cluster
   - zookeepers
   - brokers
   - workers
+  - streams
 
 Example Response
   .. code-block:: json

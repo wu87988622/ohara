@@ -37,6 +37,12 @@ class TestLogRoute extends SmallTest with Matchers {
 
   private[this] val wkApi = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)
 
+  private[this] val streamApi = StreamApi.access.hostname(configurator.hostname).port(configurator.port)
+
+  private[this] val fileApi = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
+
+  private[this] val topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
+
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
   @Test
@@ -59,6 +65,27 @@ class TestLogRoute extends SmallTest with Matchers {
   def fetchLogFromWorker(): Unit = {
     val cluster = result(wkApi.list()).head
     val clusterLogs = result(logApi.log4WorkerCluster(cluster.name))
+    clusterLogs.name shouldBe cluster.name
+    clusterLogs.logs.isEmpty shouldBe false
+  }
+
+  @Test
+  def fetchLogFromStream(): Unit = {
+    val file = result(fileApi.request.file(CommonUtils.createTempJar(methodName())).upload())
+    val fromTopic = result(topicApi.request.create())
+    result(topicApi.start(fromTopic.key))
+    val toTopic = result(topicApi.request.create())
+    result(topicApi.start(toTopic.key))
+    val nodeNames = result(zkApi.list()).head.nodeNames
+    val cluster = result(
+      streamApi.request
+        .nodeNames(nodeNames)
+        .fromTopicKey(fromTopic.key)
+        .toTopicKey(toTopic.key)
+        .jarKey(file.key)
+        .create())
+    result(streamApi.start(cluster.name))
+    val clusterLogs = result(logApi.log4StreamCluster(cluster.name))
     clusterLogs.name shouldBe cluster.name
     clusterLogs.logs.isEmpty shouldBe false
   }

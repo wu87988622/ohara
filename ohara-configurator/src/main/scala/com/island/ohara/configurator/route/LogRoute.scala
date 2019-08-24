@@ -26,6 +26,7 @@ import com.island.ohara.client.configurator.v0.LogApi
 import com.island.ohara.client.configurator.v0.LogApi._
 import com.island.ohara.client.configurator.v0.WorkerApi.WORKER_PREFIX_PATH
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZOOKEEPER_PREFIX_PATH
+import com.island.ohara.client.configurator.v0.StreamApi.STREAMS_PREFIX_PATH
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -60,16 +61,20 @@ object LogRoute {
   def apply(implicit collie: ClusterCollie, executionContext: ExecutionContext): server.Route =
     pathPrefix(LogApi.LOG_PREFIX_PATH) {
       pathPrefix(ZOOKEEPER_PREFIX_PATH) {
-        path(Segment) { zkClusterName =>
-          route(zkClusterName, collie.zookeeperCollie.logs(zkClusterName))
+        path(Segment) { clusterName =>
+          route(clusterName, collie.zookeeperCollie.logs(clusterName))
         }
       } ~ pathPrefix(BROKER_PREFIX_PATH) {
-        path(Segment) { bkClusterName =>
-          route(bkClusterName, collie.brokerCollie.logs(bkClusterName))
+        path(Segment) { clusterName =>
+          route(clusterName, collie.brokerCollie.logs(clusterName))
         }
       } ~ pathPrefix(WORKER_PREFIX_PATH) {
-        path(Segment) { wkClusterName =>
-          route(wkClusterName, collie.workerCollie.logs(wkClusterName))
+        path(Segment) { clusterName =>
+          route(clusterName, collie.workerCollie.logs(clusterName))
+        }
+      } ~ pathPrefix(STREAMS_PREFIX_PATH) {
+        path(Segment) { clusterName =>
+          route(clusterName, collie.streamCollie.logs(clusterName))
         }
       }
     }
