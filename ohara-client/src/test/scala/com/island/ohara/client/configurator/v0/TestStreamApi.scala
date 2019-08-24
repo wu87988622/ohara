@@ -16,7 +16,7 @@
 
 package com.island.ohara.client.configurator.v0
 
-import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
+import com.island.ohara.client.configurator.v0.MetricsApi.{Meter, Metrics}
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.setting.{ObjectKey, SettingDef, TopicKey}
@@ -48,9 +48,21 @@ class TestStreamApi extends SmallTest with Matchers {
   }
 
   @Test
-  def testCloneNodeNames(): Unit = {
-    val newNodeNames = Set(CommonUtils.randomString())
-    val info = StreamClusterInfo(
+  def testClone(): Unit = {
+    val nodeNames = Set(CommonUtils.randomString())
+    val deadNodes = Set(CommonUtils.randomString())
+    val error = Some(CommonUtils.randomString())
+    val state = Some(CommonUtils.randomString())
+    val metrics = Metrics(
+      Seq(
+        Meter(
+          value = 123,
+          unit = CommonUtils.randomString(),
+          document = CommonUtils.randomString(),
+          queryTime = CommonUtils.current(),
+          startTime = None
+        )))
+    val streamClusterInfo = StreamClusterInfo(
       settings = Map(
         StreamDefUtils.NAME_DEFINITION.key() -> JsString("name"),
         StreamDefUtils.IMAGE_NAME_DEFINITION.key() -> JsString("imageName"),
@@ -66,10 +78,22 @@ class TestStreamApi extends SmallTest with Matchers {
       deadNodes = Set.empty,
       state = None,
       error = None,
-      metrics = Metrics(Seq.empty),
+      metrics = Metrics.EMPTY,
       lastModified = CommonUtils.current()
     )
-    info.clone(newNodeNames).nodeNames shouldBe newNodeNames
+    val newOne = streamClusterInfo.clone(
+      nodeNames = nodeNames,
+      deadNodes = deadNodes,
+      error = error,
+      state = state,
+      metrics = metrics,
+    )
+    newOne.settings(StreamDefUtils.NODE_NAMES_DEFINITION.key()).convertTo[Set[String]] shouldBe nodeNames
+    newOne.nodeNames shouldBe nodeNames
+    newOne.deadNodes shouldBe deadNodes
+    newOne.error shouldBe error
+    newOne.state shouldBe state
+    newOne.metrics shouldBe metrics
   }
 
   @Test
@@ -98,7 +122,7 @@ class TestStreamApi extends SmallTest with Matchers {
       deadNodes = Set.empty,
       state = None,
       error = None,
-      metrics = Metrics(Seq.empty),
+      metrics = Metrics.EMPTY,
       lastModified = CommonUtils.current()
     )
 
@@ -570,7 +594,7 @@ class TestStreamApi extends SmallTest with Matchers {
         deadNodes = Set.empty,
         state = None,
         error = None,
-        metrics = Metrics(Seq.empty),
+        metrics = Metrics.EMPTY,
         lastModified = CommonUtils.current()
       ))
     // serialize to json should see the object key (group, name)

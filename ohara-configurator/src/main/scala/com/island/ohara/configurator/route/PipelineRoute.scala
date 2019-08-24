@@ -121,7 +121,7 @@ private[configurator] object PipelineRoute {
       },
       state = None,
       error = error,
-      metrics = Metrics(Seq.empty),
+      metrics = Metrics.EMPTY,
       lastModified = data.lastModified,
       tags = data.tags
     ))

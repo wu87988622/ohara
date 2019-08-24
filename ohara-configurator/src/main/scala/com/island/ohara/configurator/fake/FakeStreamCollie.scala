@@ -60,7 +60,7 @@ private[configurator] class FakeStreamCollie(node: NodeCollie)
             // In fake mode, we need to assign a state in creation for "GET" method to act like real case
             state = Some(ClusterState.RUNNING.name),
             error = None,
-            metrics = Metrics(Seq.empty),
+            metrics = Metrics.EMPTY,
             lastModified = CommonUtils.current()
           )))
 

@@ -16,6 +16,7 @@
 
 package com.island.ohara.agent
 
+import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.{ClusterInfo, MetricsApi}
 import com.island.ohara.common.util.CommonUtils
 import spray.json.JsValue
@@ -30,10 +31,6 @@ case class FakeClusterInfo(name: String) extends ClusterInfo {
 
   override def deadNodes: Set[String] = Set.empty
 
-  // we should NOT use this method in testing
-  override def clone(newNodeNames: Set[String]): FakeClusterInfo = throw new UnsupportedOperationException(
-    "what are you doing!!!")
-
   override def group: String = "fake_group"
 
   override def lastModified: Long = CommonUtils.current()
@@ -46,10 +43,11 @@ case class FakeClusterInfo(name: String) extends ClusterInfo {
 
   override def error: Option[String] = None
 
-  override def metrics: MetricsApi.Metrics = MetricsApi.Metrics(Seq.empty)
+  override def metrics: MetricsApi.Metrics = Metrics.EMPTY
 
-  override def clone(state: Option[String], error: Option[String]): FakeClusterInfo =
-    throw new UnsupportedOperationException
-
-  override def clone(metrics: MetricsApi.Metrics): FakeClusterInfo = throw new UnsupportedOperationException
+  override def clone(nodeNames: Set[String],
+                     deadNodes: Set[String],
+                     state: Option[String],
+                     error: Option[String],
+                     metrics: Metrics): FakeClusterInfo = throw new UnsupportedOperationException
 }

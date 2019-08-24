@@ -680,13 +680,27 @@ package object route {
       .map(
         _.keys
           .find(_.name == cluster.name)
-          .map(runningCluster =>
-            runningCluster.clone(metrics =
-              Metrics(metricsKey.flatMap(key => meterCache.meters(runningCluster).get(key)).getOrElse(Seq.empty))))
-          .getOrElse(cluster
-            .clone(state = None, error = None)
+          .map(existedCluster =>
+            existedCluster.clone(
+              nodeNames = existedCluster.nodeNames,
+              deadNodes = existedCluster.deadNodes,
+              state = existedCluster.state,
+              error = existedCluster.error,
+              metrics =
+                Metrics(metricsKey.flatMap(key => meterCache.meters(existedCluster).get(key)).getOrElse(Seq.empty))
+          ))
+          .getOrElse(cluster.clone(
+            nodeNames = cluster.nodeNames,
+            // no running cluster. It means no state and no dead nodes.
+            // noted that the failed containers should still exist and we can "get" the cluster from collie.
+            // the case of getting nothing from collie is only one that there is absolutely no containers and
+            // we assume the cluster is NOT running.
+            deadNodes = Set.empty,
+            state = None,
+            error = None,
             // the cluster is stooped (all containers are gone) so we don't need to fetch metrics.
-            .clone(metrics = Metrics(Seq.empty)))
+            metrics = Metrics.EMPTY
+          ))
           // the actual type is erased since the clone method returns the ClusterInfo type.
           // However, it is safe to case the type to the input type since all sub classes of ClusterInfo should work well.
           .asInstanceOf[Cluster]

@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import com.island.ohara.agent.ClusterCache.{RequestKey, Service}
 import com.island.ohara.client.configurator.v0.{ClusterInfo, MetricsApi}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
@@ -160,8 +161,6 @@ class TestClusterCache extends SmallTest with Matchers {
       override def ports: Set[Int] = Set.empty
       override def nodeNames: Set[String] = Set.empty
       override def deadNodes: Set[String] = Set.empty
-      override def clone(newNodeNames: Set[String]): ClusterInfo = throw new UnsupportedOperationException(
-        "what are you doing!!!")
 
       override def group: String = "fake_group"
 
@@ -175,12 +174,13 @@ class TestClusterCache extends SmallTest with Matchers {
 
       override def error: Option[String] = None
 
-      override def metrics: MetricsApi.Metrics = MetricsApi.Metrics(Seq.empty)
+      override def metrics: MetricsApi.Metrics = Metrics.EMPTY
 
-      override def clone(state: Option[String], error: Option[String]): ClusterInfo =
-        throw new UnsupportedOperationException
-
-      override def clone(metrics: MetricsApi.Metrics): ClusterInfo = throw new UnsupportedOperationException
+      override def clone(nodeNames: Set[String],
+                         deadNodes: Set[String],
+                         state: Option[String],
+                         error: Option[String],
+                         metrics: Metrics): ClusterInfo = throw new UnsupportedOperationException
     }
     val cache = ClusterCache.builder
       .supplier(() => {

@@ -191,6 +191,8 @@ object StreamApi {
     */
   final case class StreamClusterInfo(settings: Map[String, JsValue],
                                      definition: Option[Definition],
+                                     // TODO: move nodeNames to settings since it is a "setting" from user ... by chia
+                                     // https://github.com/oharastream/ohara/issues/2438
                                      nodeNames: Set[String],
                                      deadNodes: Set[String],
                                      state: Option[String],
@@ -241,14 +243,19 @@ object StreamApi {
     // TODO remove this default value after we could handle from UI
     def exactlyOnce: Boolean = false
 
-    override def clone(newNodeNames: Set[String]): StreamClusterInfo = copy(nodeNames = newNodeNames)
-
-    override def clone(state: Option[String], error: Option[String]): StreamClusterInfo = this.copy(
+    override def clone(nodeNames: Set[String],
+                       deadNodes: Set[String],
+                       state: Option[String],
+                       error: Option[String],
+                       metrics: Metrics): StreamClusterInfo = copy(
+      settings = this.settings + (StreamDefUtils.NODE_NAMES_DEFINITION.key() -> JsArray(
+        nodeNames.map(JsString(_)).toVector)),
+      nodeNames = nodeNames,
+      deadNodes = deadNodes,
       state = state,
-      error = error
+      error = error,
+      metrics = metrics
     )
-
-    override def clone(metrics: Metrics): StreamClusterInfo = this.copy(metrics = metrics)
   }
   private[ohara] implicit val STREAM_CLUSTER_INFO_JSON_FORMAT: OharaJsonFormat[StreamClusterInfo] =
     JsonRefiner[StreamClusterInfo]

@@ -123,7 +123,7 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
                         definition = definition,
                         nodeNames = successfulContainers.map(_.nodeName).toSet,
                         deadNodes = Set.empty,
-                        metrics = Metrics(Seq.empty),
+                        metrics = Metrics.EMPTY,
                         // creating cluster success but still need to update state by another request
                         state = None,
                         error = None,
@@ -179,17 +179,19 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
     // get the first running container, or first non-running container if not found
     val first = containers.find(_.state == ContainerState.RUNNING.name).getOrElse(containers.head)
     val settings = seekSettings(first.environments)
+    // reuse the parser from Creation
+    val nodeNames = StreamApi.Creation(settings).nodeNames
     val jarInfo = FILE_INFO_JSON_FORMAT.read(settings(StreamDefUtils.JAR_INFO_DEFINITION.key()))
     loadDefinition(jarInfo.url).map { definition =>
       StreamClusterInfo(
         settings = settings,
         // we don't care the runtime definitions; it's saved to store already
         definition = definition,
-        nodeNames = containers.map(_.nodeName).toSet,
+        nodeNames = nodeNames,
         // Currently, docker and k8s has same naming rule for "Running",
         // it is ok that we use the containerState.RUNNING here.
-        deadNodes = containers.filterNot(_.state == ContainerState.RUNNING.name).map(_.nodeName).toSet,
-        metrics = Metrics(Seq.empty),
+        deadNodes = nodeNames -- containers.filter(_.state == ContainerState.RUNNING.name).map(_.nodeName).toSet,
+        metrics = Metrics.EMPTY,
         state = toClusterState(containers).map(_.name),
         error = None,
         lastModified = CommonUtils.current()

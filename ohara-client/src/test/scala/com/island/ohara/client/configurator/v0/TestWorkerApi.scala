@@ -16,6 +16,7 @@
 
 package com.island.ohara.client.configurator.v0
 
+import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.WorkerApi._
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
@@ -58,8 +59,11 @@ class TestWorkerApi extends SmallTest with Matchers {
   }
 
   @Test
-  def testCloneNodeNames(): Unit = {
-    val newNodeNames = Set(CommonUtils.randomString())
+  def testClone(): Unit = {
+    val nodeNames = Set(CommonUtils.randomString())
+    val deadNodes = Set(CommonUtils.randomString())
+    val error = Some(CommonUtils.randomString())
+    val state = Some(CommonUtils.randomString())
     val workerClusterInfo = WorkerClusterInfo(
       name = CommonUtils.randomString(),
       imageName = CommonUtils.randomString(),
@@ -85,7 +89,17 @@ class TestWorkerApi extends SmallTest with Matchers {
       tags = Map.empty,
       lastModified = CommonUtils.current()
     )
-    workerClusterInfo.clone(newNodeNames).nodeNames shouldBe newNodeNames
+    val newOne = workerClusterInfo.clone(
+      nodeNames = nodeNames,
+      deadNodes = deadNodes,
+      error = error,
+      state = state,
+      metrics = Metrics.EMPTY,
+    )
+    newOne.nodeNames shouldBe nodeNames
+    newOne.deadNodes shouldBe deadNodes
+    newOne.error shouldBe error
+    newOne.state shouldBe state
   }
 
   @Test

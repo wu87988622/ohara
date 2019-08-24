@@ -17,18 +17,21 @@
 package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
-import spray.json.DeserializationException
-import spray.json._
+import spray.json.{DeserializationException, _}
 
 class TestBrokerApi extends SmallTest with Matchers {
 
   @Test
-  def testCloneNodeNames(): Unit = {
-    val newNodeNames = Set(CommonUtils.randomString())
+  def testClone(): Unit = {
+    val nodeNames = Set(CommonUtils.randomString())
+    val deadNodes = Set(CommonUtils.randomString())
+    val error = Some(CommonUtils.randomString())
+    val state = Some(CommonUtils.randomString())
     val brokerClusterInfo = BrokerClusterInfo(
       name = CommonUtils.randomString(),
       imageName = CommonUtils.randomString(),
@@ -44,7 +47,17 @@ class TestBrokerApi extends SmallTest with Matchers {
       lastModified = CommonUtils.current(),
       topicSettingDefinitions = Seq.empty
     )
-    brokerClusterInfo.clone(newNodeNames).nodeNames shouldBe newNodeNames
+    val newOne = brokerClusterInfo.clone(
+      nodeNames = nodeNames,
+      deadNodes = deadNodes,
+      error = error,
+      state = state,
+      metrics = Metrics.EMPTY,
+    )
+    newOne.nodeNames shouldBe nodeNames
+    newOne.deadNodes shouldBe deadNodes
+    newOne.error shouldBe error
+    newOne.state shouldBe state
   }
 
   @Test

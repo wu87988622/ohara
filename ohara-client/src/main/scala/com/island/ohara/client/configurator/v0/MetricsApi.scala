@@ -32,5 +32,8 @@ object MetricsApi {
   final case class Meter(value: Double, unit: String, document: String, queryTime: Long, startTime: Option[Long])
   implicit val METER_JSON_FORMAT: RootJsonFormat[Meter] = jsonFormat5(Meter)
   final case class Metrics(meters: Seq[Meter])
-  implicit val METRICS_JSON_FORMAT: RootJsonFormat[Metrics] = jsonFormat1(Metrics)
+  object Metrics {
+    val EMPTY = Metrics(Seq.empty)
+  }
+  implicit val METRICS_JSON_FORMAT: RootJsonFormat[Metrics] = jsonFormat1(Metrics.apply)
 }

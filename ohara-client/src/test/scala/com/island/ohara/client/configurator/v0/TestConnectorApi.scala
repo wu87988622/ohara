@@ -145,7 +145,7 @@ class TestConnectorApi extends SmallTest with Matchers {
       ),
       state = None,
       error = None,
-      metrics = Metrics(Seq.empty),
+      metrics = Metrics.EMPTY,
       lastModified = CommonUtils.current()
     )
     // pass
@@ -162,7 +162,7 @@ class TestConnectorApi extends SmallTest with Matchers {
       ),
       state = None,
       error = None,
-      metrics = Metrics(Seq.empty),
+      metrics = Metrics.EMPTY,
       lastModified = CommonUtils.current()
     )
     ConnectorApi.CONNECTOR_DESCRIPTION_FORMAT
@@ -581,7 +581,7 @@ class TestConnectorApi extends SmallTest with Matchers {
         ),
         state = None,
         error = None,
-        metrics = Metrics(Seq.empty),
+        metrics = Metrics.EMPTY,
         lastModified = CommonUtils.current()
       ))
     js.asJsObject.fields(GROUP_KEY).convertTo[String] shouldBe ConnectorApi.GROUP_DEFAULT

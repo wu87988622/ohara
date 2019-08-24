@@ -16,6 +16,7 @@
 
 package com.island.ohara.client.configurator.v0
 
+import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
@@ -25,8 +26,11 @@ import spray.json._
 class TestZookeeperApi extends SmallTest with Matchers {
 
   @Test
-  def testCloneNodeNames(): Unit = {
-    val newNodeNames = Set(CommonUtils.randomString())
+  def testClone(): Unit = {
+    val nodeNames = Set(CommonUtils.randomString())
+    val deadNodes = Set(CommonUtils.randomString())
+    val error = Some(CommonUtils.randomString())
+    val state = Some(CommonUtils.randomString())
     val zookeeperClusterInfo = ZookeeperClusterInfo(
       name = CommonUtils.randomString(),
       imageName = CommonUtils.randomString(),
@@ -40,7 +44,17 @@ class TestZookeeperApi extends SmallTest with Matchers {
       tags = Map.empty,
       lastModified = CommonUtils.current()
     )
-    zookeeperClusterInfo.clone(newNodeNames).nodeNames shouldBe newNodeNames
+    val newOne = zookeeperClusterInfo.clone(
+      nodeNames = nodeNames,
+      deadNodes = deadNodes,
+      error = error,
+      state = state,
+      metrics = Metrics.EMPTY,
+    )
+    newOne.nodeNames shouldBe nodeNames
+    newOne.deadNodes shouldBe deadNodes
+    newOne.error shouldBe error
+    newOne.state shouldBe state
   }
 
   @Test

@@ -31,10 +31,6 @@ case class FakeClusterInfo(name: String) extends ClusterInfo {
 
   override def deadNodes: Set[String] = Set.empty
 
-  // we should NOT use this method in testing
-  override def clone(newNodeNames: Set[String]): FakeClusterInfo = throw new UnsupportedOperationException(
-    "what are you doing!!!")
-
   override def group: String = "fake_group"
 
   override def lastModified: Long = CommonUtils.current()
@@ -47,11 +43,11 @@ case class FakeClusterInfo(name: String) extends ClusterInfo {
 
   override def error: Option[String] = None
 
-  override def metrics: MetricsApi.Metrics = Metrics(Seq.empty)
+  override def metrics: MetricsApi.Metrics = Metrics.EMPTY
 
-  override def clone(state: Option[String], error: Option[String]): FakeClusterInfo =
-    throw new UnsupportedOperationException("what are you doing!!!")
-
-  override def clone(metrics: MetricsApi.Metrics): FakeClusterInfo = throw new UnsupportedOperationException(
-    "what are you doing!!!")
+  override def clone(nodeNames: Set[String],
+                     deadNodes: Set[String],
+                     state: Option[String],
+                     error: Option[String],
+                     metrics: Metrics): FakeClusterInfo = throw new UnsupportedOperationException
 }

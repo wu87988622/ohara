@@ -92,7 +92,6 @@ object K8SClient {
               val containerInfo: Container = item.spec.containers.head
               val phase = item.status.phase
               val hostIP = item.status.hostIP
-
               ContainerInfo(
                 item.spec.nodeName.getOrElse("Unknown"),
                 item.metadata.uid,

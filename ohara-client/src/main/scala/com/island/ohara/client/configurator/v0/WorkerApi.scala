@@ -175,17 +175,19 @@ object WorkerApi {
 
     override def kind: String = WORKER_SERVICE_NAME
 
-    override def clone(newNodeNames: Set[String]): WorkerClusterInfo = copy(nodeNames = newNodeNames)
-
-    override def clone(state: Option[String], error: Option[String]): WorkerClusterInfo = this.copy(
+    override def clone(nodeNames: Set[String],
+                       deadNodes: Set[String],
+                       state: Option[String],
+                       error: Option[String],
+                       metrics: Metrics): WorkerClusterInfo = copy(
+      nodeNames = nodeNames,
+      deadNodes = deadNodes,
       state = state,
       error = error
     )
 
-    override def clone(metrics: Metrics): WorkerClusterInfo = this
-
     // TODO: expose the metrics for wk
-    override def metrics: Metrics = Metrics(Seq.empty)
+    override def metrics: Metrics = Metrics.EMPTY,
   }
 
   /**

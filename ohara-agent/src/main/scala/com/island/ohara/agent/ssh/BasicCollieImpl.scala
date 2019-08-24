@@ -117,7 +117,11 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag](nodeCollie: N
       dockerCache.exec(node, _.stop(beRemovedContainer.name))
       clusterCache.put(
         previousCluster.clone(
-          newNodeNames = previousCluster.nodeNames.filter(_ != beRemovedContainer.nodeName)
+          nodeNames = previousCluster.nodeNames.filter(_ != beRemovedContainer.nodeName),
+          deadNodes = previousCluster.deadNodes,
+          state = previousCluster.state,
+          error = previousCluster.error,
+          metrics = previousCluster.metrics
         ),
         clusterCache.get(previousCluster).filter(_.name != beRemovedContainer.name)
       )

@@ -68,24 +68,11 @@ trait ClusterInfo extends Data {
   def metrics: Metrics
 
   /**
-    * Create an new instance with new node names.
-    * @param newNodeNames new node names
-    * @return an new instance
+    * create an new instance with new fields. This is a workaround to "expose" the copy from the sub class.
     */
-  def clone(newNodeNames: Set[String]): ClusterInfo
-
-  /**
-    * Create an new instance with new state and error message.
-    * @param state new state
-    * @param error new error message
-    * @return an new instance
-    */
-  def clone(state: Option[String], error: Option[String]): ClusterInfo
-
-  /**
-    * Create an new instance with new metrics.
-    * @param metrics new metrics
-    * @return an new instance
-    */
-  def clone(metrics: Metrics): ClusterInfo
+  def clone(nodeNames: Set[String],
+            deadNodes: Set[String],
+            state: Option[String],
+            error: Option[String],
+            metrics: Metrics): ClusterInfo
 }

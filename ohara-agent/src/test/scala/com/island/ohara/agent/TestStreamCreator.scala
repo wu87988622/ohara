@@ -68,7 +68,7 @@ class TestStreamCreator extends SmallTest with Matchers {
           definition = None,
           nodeNames = nodeNames,
           deadNodes = Set.empty,
-          metrics = Metrics(Seq.empty),
+          metrics = Metrics.EMPTY,
           state = None,
           error = None,
           lastModified = CommonUtils.current()
@@ -174,7 +174,7 @@ class TestStreamCreator extends SmallTest with Matchers {
       deadNodes = Set.empty,
       state = None,
       error = None,
-      metrics = Metrics(Seq.empty),
+      metrics = Metrics.EMPTY,
       lastModified = CommonUtils.current()
     )
 

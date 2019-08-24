@@ -76,7 +76,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
   /**
     * used to debug. setting false to disable cleanup of containers after testing.
     */
-  private[this] val cleanup = true
+  private[this] val cleanup: Boolean = true
 
   @Before
   def setup(): Unit = if (nodeCache.isEmpty || publicPort == invalidPort || publicHostname == invalidHostname)

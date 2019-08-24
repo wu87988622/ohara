@@ -119,7 +119,7 @@ private[configurator] object StreamRoute {
                 nodeNames = creation.nodeNames,
                 deadNodes = Set.empty,
                 state = None,
-                metrics = Metrics(Seq.empty),
+                metrics = Metrics.EMPTY,
                 error = error,
                 lastModified = CommonUtils.current()
               )
@@ -150,7 +150,7 @@ private[configurator] object StreamRoute {
             // this cluster is not running so we don't need to keep the dead nodes in the updated cluster.
             deadNodes = Set.empty,
             state = None,
-            metrics = Metrics(Seq.empty),
+            metrics = Metrics.EMPTY,
             error = None,
             lastModified = CommonUtils.current()
           )

@@ -265,7 +265,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     // create streamApp properties
     val stream = result(
       access.request
-        .name(CommonUtils.randomString(10))
+        .name(nameHolder.generateClusterName())
         .jarKey(ObjectKey.of(jarInfo.group, jarInfo.name))
         .brokerClusterName(bkName)
         .create())
@@ -298,8 +298,6 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     val res1 = result(access.get(stream.name))
     res1.name shouldBe stream.name
     res1.error shouldBe None
-    // save the cluster name to cache
-    nameHolder.addClusterName(res1.name)
 
     // check the cluster has the metrics data (each stream cluster has two metrics : IN_TOPIC and OUT_TOPIC)
     await(() => result(access.get(stream.name)).metrics.meters.nonEmpty)
@@ -351,6 +349,61 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
 
     // after stop streamApp, property should still exist
     result(access.get(stream.name)).name shouldBe stream.name
+  }
+
+  @Test
+  def testDeadNodes(): Unit = if (nodeCache.size < 2) skipTest(s"${methodName()} requires two nodes at least")
+  else {
+    val from = TopicKey.of("default", CommonUtils.randomString(5))
+    val to = TopicKey.of("default", CommonUtils.randomString(5))
+    val jar = new File(CommonUtils.path(System.getProperty("user.dir"), "build", "libs", "ohara-streamapp.jar"))
+    // create topic
+    val topic1 = result(topicApi.request.key(from).brokerClusterName(bkName).create())
+    result(topicApi.start(topic1.key))
+    val topic2 = result(topicApi.request.key(to).brokerClusterName(bkName).create())
+    result(topicApi.start(topic2.key))
+
+    // upload streamApp jar
+    val jarInfo = result(jarApi.request.file(jar).upload())
+    jarInfo.name shouldBe "ohara-streamapp.jar"
+
+    // create streamApp properties
+    val stream = result(
+      access.request
+        .name(nameHolder.generateClusterName())
+        .jarKey(ObjectKey.of(jarInfo.group, jarInfo.name))
+        .brokerClusterName(bkName)
+        .nodeNames(nodeCache.map(_.hostname).toSet)
+        .fromTopicKey(topic1.key)
+        .toTopicKey(topic2.key)
+        .create())
+
+    // start streamApp
+    result(access.start(stream.name))
+    await(() => {
+      val res = result(access.get(stream.name))
+      res.state.isDefined && res.state.get == ClusterState.RUNNING.name
+    })
+
+    result(access.get(stream.name)).nodeNames shouldBe nodeCache.map(_.hostname).toSet
+    result(access.get(stream.name)).deadNodes shouldBe Set.empty
+
+    // remove a container directly
+    val aliveNodes: Set[Node] = nodeCache.slice(1, nodeCache.size).toSet
+    val deadNodes = nodeCache.toSet -- aliveNodes
+    nameHolder.release(
+      clusterNames = Set(stream.name),
+      // remove the container from first node
+      excludedNodes = aliveNodes.map(_.hostname)
+    )
+
+    result(access.get(stream.name)).state should not be None
+
+    await { () =>
+      val cluster = result(access.get(stream.name))
+      cluster.nodeNames == nodeCache.map(_.hostname).toSet &&
+      cluster.deadNodes == deadNodes.map(_.hostname)
+    }
   }
 
   @After

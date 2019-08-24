@@ -93,7 +93,7 @@ private[configurator] object TopicRoute {
       .map { _ =>
         try topicInfo.copy(
           // the topic is just created so we don't fetch the "empty" metrics actually.
-          metrics = Metrics(Seq.empty),
+          metrics = Metrics.EMPTY,
           state = Some(TopicState.RUNNING),
           lastModified = CommonUtils.current(),
         )
@@ -126,7 +126,7 @@ private[configurator] object TopicRoute {
           settings = TOPIC_CUSTOM_CONFIGS
             ++ creation.settings
             + (BROKER_CLUSTER_NAME_KEY -> JsString(clusterName)),
-          metrics = Metrics(Seq.empty),
+          metrics = Metrics.EMPTY,
           state = None,
           lastModified = CommonUtils.current()
         )
@@ -153,7 +153,7 @@ private[configurator] object TopicRoute {
                   settings = previous.map(_.settings).getOrElse(Map.empty)
                     ++ update.settings
                     + (BROKER_CLUSTER_NAME_KEY -> JsString(cluster.name)),
-                  metrics = Metrics(Seq.empty),
+                  metrics = Metrics.EMPTY,
                   state = None,
                   lastModified = CommonUtils.current()
                 )

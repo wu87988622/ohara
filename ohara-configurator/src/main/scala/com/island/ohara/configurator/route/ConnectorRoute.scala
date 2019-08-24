@@ -41,7 +41,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
       // we don't need to fetch connector from kafka since it has not existed in kafka.
       state = None,
       error = None,
-      metrics = Metrics(Seq.empty),
+      metrics = Metrics.EMPTY,
       lastModified = CommonUtils.current()
     )
 

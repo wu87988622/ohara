@@ -105,18 +105,21 @@ object BrokerApi {
     override def group: String = GROUP_DEFAULT
     override def kind: String = BROKER_SERVICE_NAME
     override def ports: Set[Int] = Set(clientPort, exporterPort, jmxPort)
-    override def clone(newNodeNames: Set[String]): BrokerClusterInfo = copy(nodeNames = newNodeNames)
     def connectionProps: String = nodeNames.map(n => s"$n:$clientPort").mkString(",")
 
-    override def clone(state: Option[String], error: Option[String]): BrokerClusterInfo = this.copy(
+    override def clone(nodeNames: Set[String],
+                       deadNodes: Set[String],
+                       state: Option[String],
+                       error: Option[String],
+                       metrics: Metrics): BrokerClusterInfo = copy(
+      nodeNames = nodeNames,
+      deadNodes = deadNodes,
       state = state,
       error = error
     )
 
-    override def clone(metrics: Metrics): BrokerClusterInfo = this
-
     // TODO: expose the metrics for bk
-    override def metrics: Metrics = Metrics(Seq.empty)
+    override def metrics: Metrics = Metrics.EMPTY
   }
 
   /**

@@ -104,17 +104,20 @@ object ZookeeperApi {
     override def group: String = GROUP_DEFAULT
     override def kind: String = ZOOKEEPER_SERVICE_NAME
     override def ports: Set[Int] = Set(clientPort, peerPort, electionPort)
-    override def clone(newNodeNames: Set[String]): ZookeeperClusterInfo = this.copy(nodeNames = newNodeNames)
 
-    override def clone(state: Option[String], error: Option[String]): ZookeeperClusterInfo = this.copy(
+    override def clone(nodeNames: Set[String],
+                       deadNodes: Set[String],
+                       state: Option[String],
+                       error: Option[String],
+                       metrics: Metrics): ZookeeperClusterInfo = copy(
+      nodeNames = nodeNames,
+      deadNodes = deadNodes,
       state = state,
       error = error
     )
 
-    override def clone(metrics: Metrics): ZookeeperClusterInfo = this
-
     // TODO: expose the metrics for zk
-    override def metrics: Metrics = Metrics(Seq.empty)
+    override def metrics: Metrics = Metrics.EMPTY,
   }
 
   /**
