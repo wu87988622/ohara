@@ -16,28 +16,20 @@
 
 package com.island.ohara.configurator.route
 import akka.http.scaladsl.server
-import com.island.ohara.agent.ClusterCollie
+import com.island.ohara.agent.{BrokerCollie, StreamCollie, WorkerCollie}
 import com.island.ohara.client.configurator.Data
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.ConnectorApi
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorDescription
 import com.island.ohara.client.configurator.v0.MetricsApi._
 import com.island.ohara.client.configurator.v0.PipelineApi._
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.client.configurator.v0.{ConnectorApi, TopicApi}
+import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.route.hook.{
-  HookBeforeDelete,
-  HookOfAction,
-  HookOfCreation,
-  HookOfGet,
-  HookOfGroup,
-  HookOfList,
-  HookOfUpdate
-}
+import com.island.ohara.configurator.route.hook._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.island.ohara.kafka.connector.json.ConnectorDefUtils
 
@@ -77,21 +69,28 @@ private[configurator] object PipelineRoute {
         }
       }
 
-  private[this] def toAbstract(data: TopicInfo, clusterInfo: BrokerClusterInfo)(
-    implicit meterCache: MeterCache): Future[ObjectAbstract] =
-    Future.successful(
-      ObjectAbstract(
-        group = data.group,
-        name = data.name,
-        kind = data.kind,
-        className = None,
-        state = None,
-        error = None,
-        // noted we create a topic with name rather than name
-        metrics = Metrics(meterCache.meters(clusterInfo).getOrElse(data.topicNameOnKafka, Seq.empty)),
-        lastModified = data.lastModified,
-        tags = data.tags
+  private[this] def toAbstract(data: TopicInfo, clusterInfo: BrokerClusterInfo, topicAdmin: TopicAdmin)(
+    implicit meterCache: MeterCache,
+    executionContext: ExecutionContext): Future[ObjectAbstract] = {
+    topicAdmin
+      .exist(data.key)
+      .map(try if (_) Some(TopicApi.TopicState.RUNNING) else None
+      finally topicAdmin.close())
+      .map(_.map(_.name))
+      .map(state =>
+        ObjectAbstract(
+          group = data.group,
+          name = data.name,
+          kind = data.kind,
+          className = None,
+          state = state,
+          error = None,
+          // noted we create a topic with name rather than name
+          metrics = Metrics(meterCache.meters(clusterInfo).getOrElse(data.topicNameOnKafka, Seq.empty)),
+          lastModified = data.lastModified,
+          tags = data.tags
       ))
+  }
 
   private[this] def toAbstract(data: StreamClusterInfo, clusterInfo: StreamClusterInfo)(
     implicit meterCache: MeterCache): Future[ObjectAbstract] =
@@ -126,17 +125,22 @@ private[configurator] object PipelineRoute {
       tags = data.tags
     ))
 
-  private[this] def toAbstract(obj: Data)(implicit clusterCollie: ClusterCollie,
+  private[this] def toAbstract(obj: Data)(implicit brokerCollie: BrokerCollie,
+                                          workerCollie: WorkerCollie,
+                                          streamCollie: StreamCollie,
+                                          adminCleaner: AdminCleaner,
                                           executionContext: ExecutionContext,
                                           meterCache: MeterCache): Future[ObjectAbstract] = obj match {
     case data: ConnectorDescription =>
-      clusterCollie.workerCollie.workerClient(data.workerClusterName).flatMap {
+      workerCollie.workerClient(data.workerClusterName).flatMap {
         case (workerClusterInfo, workerClient) => toAbstract(data, workerClusterInfo, workerClient)
       }
     case data: TopicInfo =>
-      clusterCollie.brokerCollie.cluster(data.brokerClusterName).map(_._1).flatMap(toAbstract(data, _))
+      CollieUtils.topicAdmin(data.brokerClusterName).flatMap {
+        case (cluster, admin) => toAbstract(data, cluster, admin)
+      }
     case data: StreamClusterInfo =>
-      clusterCollie.streamCollie.cluster(data.name).map(_._1).flatMap(toAbstract(data, _))
+      streamCollie.cluster(data.name).map(_._1).flatMap(toAbstract(data, _))
     case _ => toAbstract(obj, None)
   }
 
@@ -145,13 +149,15 @@ private[configurator] object PipelineRoute {
     * to retrieve the information from many remote nodes.
     * @param pipeline pipeline
     * @param store data store
-    * @param clusterCollie cluster collie
     * @param executionContext thread pool
     * @param meterCache meter cache
     * @return updated pipeline
     */
-  private[this] def updateObjects(pipeline: Pipeline)(implicit store: DataStore,
-                                                      clusterCollie: ClusterCollie,
+  private[this] def updateObjects(pipeline: Pipeline)(implicit brokerCollie: BrokerCollie,
+                                                      workerCollie: WorkerCollie,
+                                                      streamCollie: StreamCollie,
+                                                      adminCleaner: AdminCleaner,
+                                                      store: DataStore,
                                                       executionContext: ExecutionContext,
                                                       meterCache: MeterCache): Future[Pipeline] =
     Future
@@ -164,18 +170,27 @@ private[configurator] object PipelineRoute {
       })
       .map(objects => pipeline.copy(objects = objects))
 
-  private[this] def hookOfGet(implicit store: DataStore,
-                              clusterCollie: ClusterCollie,
+  private[this] def hookOfGet(implicit brokerCollie: BrokerCollie,
+                              workerCollie: WorkerCollie,
+                              streamCollie: StreamCollie,
+                              adminCleaner: AdminCleaner,
+                              store: DataStore,
                               executionContext: ExecutionContext,
                               meterCache: MeterCache): HookOfGet[Pipeline] = updateObjects(_)
 
-  private[this] def hookOfList(implicit store: DataStore,
-                               clusterCollie: ClusterCollie,
+  private[this] def hookOfList(implicit brokerCollie: BrokerCollie,
+                               workerCollie: WorkerCollie,
+                               streamCollie: StreamCollie,
+                               adminCleaner: AdminCleaner,
+                               store: DataStore,
                                executionContext: ExecutionContext,
                                meterCache: MeterCache): HookOfList[Pipeline] = Future.traverse(_)(updateObjects)
 
-  private[this] def hookOfCreation(implicit store: DataStore,
-                                   clusterCollie: ClusterCollie,
+  private[this] def hookOfCreation(implicit brokerCollie: BrokerCollie,
+                                   workerCollie: WorkerCollie,
+                                   streamCollie: StreamCollie,
+                                   adminCleaner: AdminCleaner,
+                                   store: DataStore,
                                    executionContext: ExecutionContext,
                                    meterCache: MeterCache): HookOfCreation[Creation, Pipeline] =
     (creation: Creation) =>
@@ -189,8 +204,11 @@ private[configurator] object PipelineRoute {
           tags = creation.tags
         ))
 
-  private[this] def hookOfUpdate(implicit store: DataStore,
-                                 clusterCollie: ClusterCollie,
+  private[this] def hookOfUpdate(implicit brokerCollie: BrokerCollie,
+                                 workerCollie: WorkerCollie,
+                                 streamCollie: StreamCollie,
+                                 adminCleaner: AdminCleaner,
+                                 store: DataStore,
                                  executionContext: ExecutionContext,
                                  meterCache: MeterCache): HookOfUpdate[Creation, Update, Pipeline] =
     (key: ObjectKey, update: Update, previous: Option[Pipeline]) =>
@@ -232,8 +250,11 @@ private[configurator] object PipelineRoute {
         }
     }
 
-  def apply(implicit store: DataStore,
-            clusterCollie: ClusterCollie,
+  def apply(implicit brokerCollie: BrokerCollie,
+            workerCollie: WorkerCollie,
+            streamCollie: StreamCollie,
+            adminCleaner: AdminCleaner,
+            store: DataStore,
             executionContext: ExecutionContext,
             meterCache: MeterCache): server.Route =
     route[Creation, Update, Pipeline](

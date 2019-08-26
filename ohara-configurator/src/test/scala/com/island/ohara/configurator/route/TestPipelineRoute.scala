@@ -164,7 +164,6 @@ class TestPipelineRoute extends MediumTest with Matchers {
   @Test
   def listConnectorWhichIsNotRunning(): Unit = {
     val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
-    result(topicApi.start(topic.key))
 
     val connector = result(
       connectorApi.request
@@ -379,6 +378,19 @@ class TestPipelineRoute extends MediumTest with Matchers {
     result(pipelineApi.get(pipeline.key)).flows.size shouldBe 1
     result(pipelineApi.get(pipeline.key)).flows.head.to shouldBe Set.empty
     result(pipelineApi.get(pipeline.key)).objects.size shouldBe 1
+  }
+
+  @Test
+  def testTopicState(): Unit = {
+    val topic = result(topicApi.request.name(CommonUtils.randomString(10)).create())
+    val pipeline = result(pipelineApi.request.flow(Flow(topic.key, Set(topic.key))).create())
+    pipeline.objects.size shouldBe 1
+    // the topic is not running so no state is responded
+    pipeline.objects.flatMap(_.state).size shouldBe 0
+
+    result(topicApi.start(topic.key))
+
+    result(pipelineApi.get(pipeline.key)).objects.head.state.get shouldBe "RUNNING"
   }
 
   @After
