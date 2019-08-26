@@ -75,4 +75,3 @@ services:
       - "${SMB_DGM_PORT:-138}:138/udp"
       - "${SMB_SSN_PORT:-139}:139/tcp"
       - "${SMB_DS_PORT:-445}:445/tcp"
-

@@ -57,6 +57,8 @@ dependencies {
   }
   testImplementation project(":ohara-common").sourceSets.test.output
   testImplementation project(":ohara-testing-util").sourceSets.test.output
+  testImplementation project(":ohara-connector").sourceSets.main.output
+  testImplementation libs.postgresql
   testImplementation libs.scalatest
   testImplementation libs.junit
   testImplementation libs.akkaStream
@@ -99,7 +101,11 @@ test {
     "ohara.it.k8s",
     "ohara.it.k8s.nodename",
     // set the prefix to all containers
-    "ohara.it.container.prefix"
+    "ohara.it.container.prefix",
+    // set database setting
+    "ohara.it.db.url",
+    "ohara.it.db.username",
+    "ohara.it.db.password",
   ]
   keywords.forEach {
     keyword ->

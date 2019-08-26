@@ -734,6 +734,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       testJmx(cluster)
     }
   }
+
   @After
   def cleanAllContainers(): Unit = if (cleanup) Releasable.close(nameHolder)
 }
