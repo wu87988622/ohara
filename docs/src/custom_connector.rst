@@ -620,7 +620,7 @@ Worker invokes a separate thread to fetch data from topic and put the
 data to sink task. The input data is called **RowSinkRecord** which
 carries not only row but also metadata.
 
-#. topicName (**string**) — where the dat come from
+#. topicName (**string**) — where the data come from
 #. Row (**row**) — input data
 #. partition (**int**) — index of partition
 #. offset (**long**) — offset in topic-partition
@@ -687,7 +687,7 @@ throw the exception which obstruct connector from running.
    Noted that data offset is a order in topic-partition so the input of RowSinkContext.offset consists of topic name and partition.
 
 
-Handle Exception In _pool(List<RowSinkRecord>)
+Handle Exception In _put(List<RowSinkRecord>)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 see :ref:`handle exception in _poll() <connector-sourcetask-handle-exception>`
@@ -886,3 +886,140 @@ of CounterBuilder must be after initializing the connector/task.
    Ohara doesn’t obstruct you from using Counter directly. However,
    using CounterBuilder make sure that your custom metrics are available
    in :ref:`Connector API <rest-connectors>`.
+
+
+--------------
+
+.. _connector-csv-sink:
+
+Csv Sink Connector
+------------------
+
+.. figure:: images/csv_connector_sink_arch.png
+   :alt: Ohara Manager Pipelines page
+
+Ohara has a well-incubated task class. We call it **CsvSinkTask**. As long as your
+data format is CSV type, you can use id to develop a sink connector to connect
+various file systems.
+
+We all know that to make a strong and robust connector, you have to take care of
+a lot of details. In order to ensure that the connector works, we must also prepare
+a lot of tests. Connector developers will spend a lot of time on this.
+
+Therefore, we have encapsulated most of the logic in CsvSinkTask, which hides a lot of
+complex behaviors. Just provide a configuration object and a :ref:`Storage <connector-storage>`
+implementation to complete a sink connector. You can save time to enjoy other happy things.
+
+The following are the two methods you need to care about inherited CsvSinkTask:
+
+.. code-block:: java
+
+  public abstract class CsvSinkTask extends RowSinkTask {
+    /**
+     * Returns a configuration for CsvSinkTask.
+     *
+     * @param setting initial settings
+     * @return a configuration for Task
+     */
+    public abstract CsvSinkConfig getConfig(TaskSetting setting);
+
+    /**
+     * Returns the Storage implementation for this Task.
+     *
+     * @param setting initial settings
+     * @return a Storage instance
+     */
+    public abstract Storage getStorage(TaskSetting setting);
+  }
+
+getConfig(TaskSetting setting)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+CsvSinkTask must know some information in order to run normally, e.g. **topicsDir**
+the path to store the output files. In order to be the best friend of programmer, Ohara
+follows fluent pattern to allow you to create config through builder, and you can only
+fill the required elements.
+
+A example of creating a config is shown below:
+
+.. code-block:: java
+
+  public class ExampleOfConfig {
+    public static CsvSinkConfig config() {
+      return CsvSinkConfig.builder()
+        .topicsDir("/topics")
+        .build()
+    }
+  }
+
+.. note::
+  The input parameter *TaskSetting* carrying all settings. see :ref:`TaskSetting <connector-source-tasksetting>`
+
+getStorage(TaskSetting setting)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The goal of Task is to write the data to an external file system. For example, if we want to
+store the output files on FTP server, connector developers must provide an implementation
+of :ref:`Storage <connector-storage>` that can access FTP.
+
+.. note::
+  The input parameter *TaskSetting* carrying all settings. see :ref:`TaskSetting <connector-source-tasksetting>`
+
+.. _connector-storage:
+
+Storage
+-------
+
+This interface defines some common methods for accessing the file system, such as checking
+for the existence of a file, creating a new file, or reading an exiting file, etc. Connector
+developers can follow this interface to implement different file systems, such as FTP, HDFS,
+SMB, Amazon S3, etc. So, just provide the implementation of Storage to CsvSinkTask and you
+can implement a :ref:`Sink Connector <connector-sink>` very quickly.
+
+Below we list the important methods in the Storage interface:
+
+.. code-block:: java
+
+  public interface Storage extends Releasable {
+    /**
+     * Returns whether an object exists.
+     *
+     * @param path the path to the object.
+     * @return true if object exists, false otherwise.
+     */
+    boolean exists(String path);
+
+    /**
+     * Creates a new object in the given path.
+     *
+     * @param path the path of the object to be created.
+     * @throws OharaFileAlreadyExistsException if a object of that path already exists.
+     * @throws OharaException if the parent container does not exist.
+     * @return an output stream associated with the new object.
+     */
+    OutputStream create(String path);
+
+    /**
+     * Open for reading an object at the given path.
+     *
+     * @param path the path of the object to be read.
+     * @return an input stream with the requested object.
+     */
+    InputStream open(String path);
+
+    /**
+     * Move or rename a object from source path to target path.
+     *
+     * @param sourcePath the path to the object to move
+     * @param targetPath the path to the target object
+     * @return true if object have moved to target path , false otherwise.
+     */
+    boolean move(String sourcePath, String targetPath);
+
+    /** Stop using this storage. */
+    void close();
+  }
+
+.. note::
+  You can read the :ohara-source:`FtpStorage <ohara-connector/src/main/scala/com/island/ohara/connector/ftp/FtpStorage.scala>`
+  as an example to see how to implement your own Storage.
