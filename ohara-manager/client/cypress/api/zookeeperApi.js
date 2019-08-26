@@ -155,7 +155,7 @@ describe('Zookeeper API', () => {
     });
   });
 
-  it('stopBroker', () => {
+  it('stopZookeeper', () => {
     const { zookeeperClusterName } = setup();
 
     cy.fetchZookeeper(zookeeperClusterName).then(response => {
@@ -179,6 +179,34 @@ describe('Zookeeper API', () => {
     });
   });
 
+  it('forceStopZookeeper', () => {
+    const { zookeeperClusterName } = setup();
+
+    cy.fetchZookeeper(zookeeperClusterName).then(response => {
+      expect(response.state).to.be.undefined;
+    });
+
+    cy.startZookeeper(zookeeperClusterName).then(response => {
+      expect(response.data.isSuccess).to.eq(true);
+    });
+
+    cy.fetchZookeeper(zookeeperClusterName).then(response => {
+      expect(response.data.result.state).to.eq('RUNNING');
+    });
+
+    // This API is not actually used in the UI, but used in our E2E start scripts
+    cy.request(
+      'PUT',
+      `api/workers/${zookeeperClusterName}/stop?force=true`,
+    ).then(response => {
+      expect(response.status).to.eq(202);
+    });
+
+    cy.fetchZookeeper(zookeeperClusterName).then(response => {
+      expect(response.data.result.state).to.eq.undefined;
+    });
+  });
+
   it('deleteZookeeper', () => {
     const { zookeeperClusterName } = setup();
 
@@ -188,32 +216,6 @@ describe('Zookeeper API', () => {
 
     cy.deleteZookeeper(zookeeperClusterName).then(response => {
       expect(response.data.isSuccess).to.eq(true);
-    });
-
-    cy.fetchZookeepers().then(response => {
-      const targetZookeeper = response.data.result.find(
-        zookeeper => zookeeper.name === zookeeperClusterName,
-      );
-
-      expect(targetZookeeper).to.be.undefined;
-    });
-  });
-
-  it('forceDeleteBroker', () => {
-    const { zookeeperClusterName } = setup();
-
-    cy.fetchZookeeper(zookeeperClusterName).then(response => {
-      expect(response.data.isSuccess).to.eq(true);
-    });
-
-    // We're not currently using this API in the client, and so it's not
-    // listed in the brokerApi.js, so we're asserting the response status
-    // not the isSuccess value
-    cy.request(
-      'DELETE',
-      `api/zookeepers/${zookeeperClusterName}?force=true`,
-    ).then(response => {
-      expect(response.status).to.eq(204);
     });
 
     cy.fetchZookeepers().then(response => {

@@ -156,7 +156,7 @@ Cypress.Commands.add('removeWorkers', () => {
           const endPoint = `api/workers/${name}`;
           cy.request('GET', endPoint).then(() => req(endPoint));
 
-          cy.request('DELETE', `api/workers/${name}?force=true`).then(() =>
+          cy.request('DELETE', `api/workers/${name}`).then(() =>
             utils.recursiveDeleteWorker('api/workers', name),
           );
         });

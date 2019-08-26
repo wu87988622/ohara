@@ -193,6 +193,33 @@ describe('Broker API', () => {
     });
   });
 
+  it('forceStopBroker', () => {
+    const { brokerClusterName } = setup();
+
+    cy.fetchBroker(brokerClusterName).then(response => {
+      expect(response.state).to.be.undefined;
+    });
+
+    cy.startBroker(brokerClusterName).then(response => {
+      expect(response.data.isSuccess).to.eq(true);
+    });
+
+    cy.fetchBroker(brokerClusterName).then(response => {
+      expect(response.data.result.state).to.eq('RUNNING');
+    });
+
+    // This API is not actually used in the UI, but used in our E2E start scripts
+    cy.request('PUT', `api/brokers/${brokerClusterName}/stop?force=true`).then(
+      response => {
+        expect(response.status).to.eq(202);
+      },
+    );
+
+    cy.fetchBroker(brokerClusterName).then(response => {
+      expect(response.data.result.state).to.eq.undefined;
+    });
+  });
+
   it('deleteBroker', () => {
     const { brokerClusterName } = setup();
 
@@ -203,31 +230,6 @@ describe('Broker API', () => {
     cy.deleteBroker(brokerClusterName).then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });
-
-    cy.fetchBrokers().then(response => {
-      const targetBroker = response.data.result.find(
-        broker => broker.name === brokerClusterName,
-      );
-
-      expect(targetBroker).to.be.undefined;
-    });
-  });
-
-  it('forceDeleteBroker', () => {
-    const { brokerClusterName } = setup();
-
-    cy.fetchBroker(brokerClusterName).then(response => {
-      expect(response.data.isSuccess).to.eq(true);
-    });
-
-    // We're not currently using this API in the client, and so it's not
-    // listed in the brokerApi.js, so we're asserting the response status
-    // not the isSuccess value
-    cy.request('DELETE', `api/brokers/${brokerClusterName}?force=true`).then(
-      response => {
-        expect(response.status).to.eq(204);
-      },
-    );
 
     cy.fetchBrokers().then(response => {
       const targetBroker = response.data.result.find(

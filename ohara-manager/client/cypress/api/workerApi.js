@@ -184,6 +184,33 @@ describe('Worker API', () => {
     });
   });
 
+  it('forceStopWorker', () => {
+    const { workerClusterName } = setup();
+
+    cy.fetchWorker(workerClusterName).then(response => {
+      expect(response.state).to.be.undefined;
+    });
+
+    cy.startWorker(workerClusterName).then(response => {
+      expect(response.data.isSuccess).to.eq(true);
+    });
+
+    cy.fetchWorker(workerClusterName).then(response => {
+      expect(response.data.result.state).to.eq('RUNNING');
+    });
+
+    // This API is not actually used in the UI, but used in our E2E start scripts
+    cy.request('PUT', `api/workers/${workerClusterName}/stop?force=true`).then(
+      response => {
+        expect(response.status).to.eq(202);
+      },
+    );
+
+    cy.fetchWorker(workerClusterName).then(response => {
+      expect(response.data.result.state).to.eq.undefined;
+    });
+  });
+
   it('deleteWorker', () => {
     const { workerClusterName } = setup();
 
@@ -193,39 +220,9 @@ describe('Worker API', () => {
 
     cy.stopWorker(workerClusterName);
 
-    // We're not currently using this API in the client, and so it's not
-    // listed in the brokerApi.js, so we're asserting the response status
-    // not the isSuccess value
-    cy.request('DELETE', `api/workers/${workerClusterName}`).then(response => {
-      expect(response.status).to.eq(204);
-    });
-
-    cy.fetchWorkers().then(response => {
-      const targetWorker = response.data.result.find(
-        worker => worker.name === workerClusterName,
-      );
-
-      expect(targetWorker).to.be.undefined;
-    });
-  });
-
-  it('forceDeleteWorker', () => {
-    const { workerClusterName } = setup();
-
-    cy.get('@createWorker').then(response => {
+    cy.deleteWorker(workerClusterName).then(response => {
       expect(response.data.isSuccess).to.eq(true);
     });
-
-    cy.stopWorker(workerClusterName);
-
-    // We're not currently using this API in the client, and so it's not
-    // listed in the brokerApi.js, so we're asserting the response status
-    // not the isSuccess value
-    cy.request('DELETE', `api/workers/${workerClusterName}?force=true`).then(
-      response => {
-        expect(response.status).to.eq(204);
-      },
-    );
 
     cy.fetchWorkers().then(response => {
       const targetWorker = response.data.result.find(

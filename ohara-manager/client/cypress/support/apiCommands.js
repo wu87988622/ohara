@@ -78,6 +78,9 @@ Cypress.Commands.add('startWorker', workerClusterName =>
 Cypress.Commands.add('stopWorker', workerClusterName =>
   workerApi.stopWorker(workerClusterName),
 );
+Cypress.Commands.add('deleteWorker', workerClusterName =>
+  workerApi.deleteWorker(workerClusterName),
+);
 
 // Property API
 Cypress.Commands.add('deleteProperty', params =>

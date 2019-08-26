@@ -162,7 +162,7 @@ const deleteServices = async (services, apiRoot) => {
     const { name: serviceName, serviceType } = service;
     const apiUrl = `${apiRoot}/${serviceType}`;
 
-    await axios.put(`${apiUrl}/${serviceName}/stop`);
+    await axios.put(`${apiUrl}/${serviceName}/stop?force=true`);
     await utils.waitUntil({
       condition: () => isServiceStopped(`${apiUrl}/${serviceName}`),
     });
