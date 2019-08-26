@@ -32,6 +32,7 @@ const Progress = props => {
     deleteType = false,
     createTitle = 'Creating',
     deleteTitle = 'Deleting',
+    testId = 'step-testid',
   } = props;
   const [completed, setCompleted] = useState(0);
   const [buffer, setBuffer] = useState(0);
@@ -106,7 +107,7 @@ const Progress = props => {
             type.error = true;
           }
           return (
-            <Step key={step}>
+            <Step key={step} data-testid={testId}>
               <StepLabel {...type}>{step}</StepLabel>
             </Step>
           );
@@ -130,6 +131,7 @@ Progress.propTypes = {
   deleteType: PropTypes.bool,
   createTitle: PropTypes.string,
   deleteTitle: PropTypes.string,
+  testId: PropTypes.string,
 };
 
 export default Progress;
