@@ -16,7 +16,6 @@
 
 package com.island.ohara.kafka.connector.csv;
 
-import com.island.ohara.common.annotations.IgnoreNamingRule;
 import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.rule.SmallTest;
@@ -26,8 +25,7 @@ import com.island.ohara.kafka.connector.RowSinkRecord;
 import com.island.ohara.kafka.connector.TopicPartition;
 import java.util.*;
 
-@IgnoreNamingRule
-public class CsvSinkTestBase extends SmallTest {
+public abstract class CsvSinkTestBase extends SmallTest {
   protected static final String TOPIC = "test-topic";
   protected static final int PARTITION = 12;
   protected static final int PARTITION2 = 13;

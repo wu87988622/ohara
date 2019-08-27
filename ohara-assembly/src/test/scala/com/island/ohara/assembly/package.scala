@@ -17,6 +17,7 @@
 package com.island.ohara
 
 import java.io.FileInputStream
+import java.lang.reflect.Modifier
 import java.util.jar.JarInputStream
 import java.util.regex.Pattern
 
@@ -56,6 +57,8 @@ package object assembly {
     * @return true if the input class is anonymous.
     */
   def isAnonymous(clz: Class[_]): Boolean = clz.getName.contains("$")
+
+  def isAbstract(clz: Class[_]): Boolean = Modifier.isAbstract(clz.getModifiers)
 
   /**
     * Find the test classes which have following attributes.

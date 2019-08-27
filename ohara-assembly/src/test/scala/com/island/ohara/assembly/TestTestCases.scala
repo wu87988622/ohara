@@ -16,7 +16,6 @@
 
 package com.island.ohara.assembly
 
-import com.island.ohara.common.annotations.IgnoreNamingRule
 import com.island.ohara.common.rule.{LargeTest, MediumTest, SmallTest}
 import com.island.ohara.it.IntegrationTest
 import org.junit.Test
@@ -38,11 +37,7 @@ class TestTestCases extends MediumTest with Matchers {
     * those classes don't have correct name format.
     */
   private[this] val ignoredTestClasses: Seq[Class[_]] = Seq(
-    classOf[ListTestCases],
-    classOf[com.island.ohara.it.agent.BasicTests4ClusterCollie],
-    classOf[com.island.ohara.it.agent.BasicTests4ClusterCollieByConfigurator],
-    classOf[com.island.ohara.it.agent.BasicTests4Collie],
-    classOf[com.island.ohara.it.agent.BasicTests4StreamApp]
+    classOf[ListTestCases]
   )
 
   @Test
@@ -81,8 +76,10 @@ class TestTestCases extends MediumTest with Matchers {
   def testNameOfTestClasses(): Unit = {
     val invalidClasses = classesInTestScope()
       .filterNot(isAnonymous)
+      // there are many basic test cases for the various cases. Their names don't start with "Test" since they
+      // are no prepared to test directly.
+      .filterNot(isAbstract)
       .filterNot(ignoredTestClasses.contains)
-      .filterNot(clz => clz.isAnnotationPresent(classOf[IgnoreNamingRule]))
       .map(clz => clz -> superClasses(clz))
       .filter {
         case (_, supers) => supers.exists(validTestGroups.contains)
@@ -93,6 +90,7 @@ class TestTestCases extends MediumTest with Matchers {
       .map(_._1)
     if (invalidClasses.nonEmpty)
       throw new IllegalArgumentException(
-        s"those classes:${invalidClasses.map(_.getName).mkString(",")} extend one of ${validTestGroups.mkString(",")} but their name don't start with Test")
+        s"those classes:${invalidClasses.map(_.getName).mkString(",")} extend one of ${validTestGroups.mkString(",")} but they are not abstract class, " +
+          "and their name don't start with \"Test\"")
   }
 }

@@ -17,13 +17,16 @@
 package com.island.ohara.kafka.connector.storage;
 
 import com.google.common.collect.Iterators;
-import com.island.ohara.common.annotations.IgnoreNamingRule;
 import com.island.ohara.common.exception.OharaException;
 import com.island.ohara.common.exception.OharaFileAlreadyExistsException;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.common.util.Releasable;
 import com.island.ohara.testing.WithTestUtils;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Iterator;
@@ -33,7 +36,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-@IgnoreNamingRule
 public abstract class StorageTestBase extends WithTestUtils {
   protected static final Path ROOT_FOLDER_DEFAULT = Paths.get("/root");
 

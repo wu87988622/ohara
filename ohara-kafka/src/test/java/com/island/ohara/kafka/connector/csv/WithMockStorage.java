@@ -16,7 +16,6 @@
 
 package com.island.ohara.kafka.connector.csv;
 
-import com.island.ohara.common.annotations.IgnoreNamingRule;
 import com.island.ohara.common.exception.OharaException;
 import com.island.ohara.kafka.connector.storage.Storage;
 import java.io.*;
@@ -29,8 +28,7 @@ import java.util.Iterator;
 import java.util.stream.Collectors;
 import org.junit.rules.TemporaryFolder;
 
-@IgnoreNamingRule
-public class WithMockStorage extends CsvSinkTestBase {
+public abstract class WithMockStorage extends CsvSinkTestBase {
   protected Storage storage;
 
   @Override
