@@ -23,7 +23,8 @@ dependencies {
   /**
    * scala plugin complains that we don't put scala library in production scope... by chia
    */
-  implementation libs.scala
+  implementation libs.scalaLibrary
+  implementation libs.scalaReflect
   implementation project(':ohara-common')
   implementation project(':ohara-client')
   implementation project(':ohara-kafka')
@@ -38,22 +39,32 @@ dependencies {
   testImplementation libs.sprayJson
   // our it env use postgresql
   testImplementation libs.postgresql
+
   /**
-   * The Hadoop use jersey 1.x, but the Kafka use jersey 2.x so jar conflict
-   *
-   * Solve running Kafka Connect mini cluster failed. OHARA-103
+   * Jar conflict between Hadoop & Kafka:
+   *    * Jersey: Hadoop use jersey 1.x, Kafka use jersey 2.x
+   *        * Solve running Kafka Connect mini cluster failed. OHARA-103
+   *    * Jetty: Hadoop use org.mortbay.jetty 6.1.x, Kafka use use newer version(org.eclipse.jetty)
+   *        * Exclude older release.
+   *    * Zookeeper: Hadoop use Zookeeper 3.4.6, Kafka use newer version
+   *        * Exclude older release.
    */
-  testImplementation (libs.hadoopCommon) {
+  testImplementation(libs.hadoopCommon) {
     exclude group: 'com.sun.jersey', module: 'jersey-core'
     exclude group: 'com.sun.jersey', module: 'jersey-json'
     exclude group: 'com.sun.jersey', module: 'jersey-servlet'
     exclude group: 'com.sun.jersey', module: 'jersey-server'
+    exclude group: 'org.mortbay.jetty', module: 'jetty'
+    exclude group: 'org.mortbay.jetty', module: 'jetty-util'
+    exclude group: 'org.apache.zookeeper', module: 'zookeeper'
   }
   testImplementation (libs.hadoopHDFS) {
     exclude group: 'com.sun.jersey', module: 'jersey-core'
     exclude group: 'com.sun.jersey', module: 'jersey-json'
     exclude group: 'com.sun.jersey', module: 'jersey-servlet'
     exclude group: 'com.sun.jersey', module: 'jersey-server'
+    exclude group: 'org.mortbay.jetty', module: 'jetty'
+    exclude group: 'org.mortbay.jetty', module: 'jetty-util'
   }
   testImplementation project(":ohara-common").sourceSets.test.output
   testImplementation project(":ohara-testing-util").sourceSets.test.output

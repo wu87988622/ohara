@@ -67,6 +67,10 @@ RUN chown -R $USER:$USER /home/$USER
 ENV KAFKA_HOME=/home/$USER/default
 ENV PATH=$PATH:$KAFKA_HOME/bin
 
+# Remove old Scala version
+RUN rm /home/$USER/default/libs/scala-library-2.12.8.jar
+RUN rm /home/$USER/default/libs/scala-reflect-2.12.8.jar
+
 # copy Tini
 COPY --from=deps /tini /tini
 RUN chmod +x /tini
