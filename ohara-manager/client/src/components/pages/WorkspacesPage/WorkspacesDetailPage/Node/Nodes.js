@@ -116,6 +116,10 @@ const Nodes = props => {
   };
 
   const addNodeToService = async () => {
+    // A bug from the eslint, already fixed but not updated to CRA yet.
+    // https://github.com/babel/babel-eslint/issues/791
+
+    // eslint-disable-next-line
     for (let selectNode of selectNodes) {
       await putBroker(`/${broker}/${selectNode}`);
       await waitForServiceCreation({ name: broker });
