@@ -67,7 +67,7 @@ export const createConnector = async ({
       name: newConnectorName,
       'connector.class': className,
       'connector.name': newConnectorName,
-      workerClusterName: workerClusterName,
+      workerClusterName,
     };
     connectorName = newConnectorName;
 

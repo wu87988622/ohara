@@ -267,7 +267,7 @@ class PipelineNewPage extends React.Component {
       updateGraph: this.updateGraph,
       refreshGraph: this.refreshGraph,
       updateHasChanges: this.updateHasChanges,
-      pipelineTopics: pipelineTopics,
+      pipelineTopics,
       globalTopics: topics,
       pipeline,
       hasChanges,

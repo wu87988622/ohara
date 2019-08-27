@@ -87,7 +87,7 @@ const Topics = props => {
       lastModified,
     } = topic;
     return {
-      name: name,
+      name,
       partitions: numberOfPartitions,
       replication: numberOfReplications,
       metrics: utils.getMetrics(metrics),

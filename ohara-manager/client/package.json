@@ -52,7 +52,8 @@
   },
   "eslintConfig": {
     "extends": [
-      "react-app"
+      "react-app",
+      "eslint:recommended"
     ],
     "globals": {
       "cy": false,
@@ -68,10 +69,14 @@
       "expect": false
     },
     "rules": {
+      "no-alert": "error",
+      "no-template-curly-in-string": "error",
+      "array-callback-return": "error",
+      "object-shorthand": "warn",
       "no-console": "warn",
       "no-debugger": "warn",
-      "no-alert": "error",
-      "react/prop-types": "warn"
+      "react/prop-types": "warn",
+      "no-case-declarations": "off"
     }
   },
   "browserslist": [

@@ -477,7 +477,7 @@ export const useSave = async (props, values) => {
     configs: values,
     originalTopics: globalTopics,
     graph,
-    connectorName: connectorName,
+    connectorName,
   });
 
   updateGraph({ update, dispatcher: { name: 'CONNECTOR' }, ...sinkProps });

@@ -149,7 +149,7 @@ const WorkerNewModal = props => {
           type === 'stop' ? `${URL.ZOOKEEPER_URL}/${name}` : URL.ZOOKEEPER_URL;
         const zkParams = {
           url: zkUrl,
-          checkFn: checkFn,
+          checkFn,
           sleep: 3000,
         };
         await waitApi(zkParams);
@@ -161,7 +161,7 @@ const WorkerNewModal = props => {
           type === 'stop' ? `${URL.BROKER_URL}/${name}` : URL.BROKER_URL;
         const bkParams = {
           url: bkUrl,
-          checkFn: checkFn,
+          checkFn,
           sleep: 3000,
         };
         await waitApi(bkParams);
@@ -173,7 +173,7 @@ const WorkerNewModal = props => {
           type === 'stop' ? `${URL.WORKER_URL}/${name}` : URL.WORKER_URL;
         const wkParams = {
           url: wkUrl,
-          checkFn: checkFn,
+          checkFn,
           sleep: 3000,
         };
         await waitApi(wkParams);

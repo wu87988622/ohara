@@ -115,7 +115,7 @@ Cypress.Commands.add('uploadStreamAppJar', params => {
           'content-type': 'multipart/form-data',
         },
       };
-      const testFile = new File([blob], jarName, { type: type });
+      const testFile = new File([blob], jarName, { type });
       const dataTransfer = new DataTransfer();
       dataTransfer.items.add(testFile);
       blob = dataTransfer.files;
@@ -183,7 +183,7 @@ Cypress.Commands.add('createJar', (jarName, group) => {
           'content-type': 'multipart/form-data',
         },
       };
-      const testFile = new File([blob], jarName, { type: type });
+      const testFile = new File([blob], jarName, { type });
       const dataTransfer = new DataTransfer();
       dataTransfer.items.add(testFile);
       blob = dataTransfer.files;

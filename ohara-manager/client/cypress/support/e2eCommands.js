@@ -209,7 +209,7 @@ Cypress.Commands.add('uploadTestStreamAppJar', workerClusterName => {
           'content-type': 'multipart/form-data',
         },
       };
-      const testFile = new File([blob], 'ohara-streamapp.jar', { type: type });
+      const testFile = new File([blob], 'ohara-streamapp.jar', { type });
       const dataTransfer = new DataTransfer();
       dataTransfer.items.add(testFile);
       blob = dataTransfer.files;

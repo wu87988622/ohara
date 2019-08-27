@@ -64,7 +64,7 @@ export const createWorker = async params => {
       brokerClusterName: params.brokerClusterName,
       clientPort: toNumber(params.clientPort),
       nodeNames: params.nodeNames || [],
-      jars: jars,
+      jars,
       groupId: params.groupId,
       configTopicName: params.configTopicName,
       offsetTopicName: params.offsetTopicName,

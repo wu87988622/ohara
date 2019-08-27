@@ -57,8 +57,8 @@ export const updateProperty = async params => {
 
     const data = {
       ...params,
-      from: from,
-      to: to,
+      from,
+      to,
       instances: params.instances ? Number(params.instances) : 1,
     };
     const res = await axiosInstance.put(url, data);
