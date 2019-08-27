@@ -104,9 +104,7 @@ const NodeNewModal = props => {
             <div data-testid="new-node-modal">
               <FormSpy
                 subscription={{ values: true }}
-                onChange={() => {
-                  setIsValidConnection(false);
-                }}
+                onChange={() => setIsValidConnection(false)}
               />
               <form onSubmit={handleSubmit}>
                 <DialogContent>
@@ -162,9 +160,7 @@ const NodeNewModal = props => {
                     color="primary"
                     text=" Test connection"
                     data-testid="edit-test-connection-button"
-                    onClick={() => {
-                      testConnection(values);
-                    }}
+                    onClick={() => testConnection(values)}
                   />
                 </DialogContent>
               </form>

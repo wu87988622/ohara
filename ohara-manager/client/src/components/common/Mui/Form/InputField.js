@@ -42,9 +42,10 @@ const InputField = props => {
     meta,
     width = '100%',
     helperText,
-    errorMessage,
     ...rest
   } = props;
+
+  const error = meta.error && meta.touched;
 
   return (
     <InputWrap>
@@ -55,7 +56,8 @@ const InputField = props => {
         InputProps={restInput}
         value={value}
         width={width}
-        helperText={errorMessage}
+        helperText={error && meta.error}
+        error={error}
       />
       <TooltipWrap>
         <Tooltip text={helperText} />

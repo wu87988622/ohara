@@ -31,22 +31,22 @@ import * as s from './styles';
 import * as generate from 'utils/generate';
 import * as MESSAGES from 'constants/messages';
 import * as URLS from 'constants/urls';
+import * as useApi from 'components/controller';
+import * as URL from 'components/controller/url';
+import useSnackbar from 'components/context/Snackbar/useSnackbar';
+import useCreateServices from './useCreateServices';
+import validate from './validate';
 import { Label } from 'components/common/Form';
 import { Progress } from 'components/common/Mui/Feedback';
 import { Button } from 'components/common/Mui/Form';
 import { Dialog } from 'components/common/Mui/Dialog';
 import { InputField } from 'components/common/Mui/Form';
-import useSnackbar from 'components/context/Snackbar/useSnackbar';
-import * as useApi from 'components/controller';
-import * as URL from 'components/controller/url';
-import useCreateServices from './useCreateServices';
 
 const WorkerNewModal = props => {
   const [checkedNodes, setCheckedNodes] = useState([]);
   const [checkedFiles, setCheckedFiles] = useState([]);
   const [jars, setJars] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
   const [activeStep, setActiveStep] = useState(0);
   const [deleteType, setDeleteType] = useState(false);
   const { showMessage } = useSnackbar();
@@ -127,20 +127,6 @@ const WorkerNewModal = props => {
     plugins = [];
     setActiveStep(0);
     setDeleteType(false);
-  };
-
-  const validateServiceName = value => {
-    if (isUndefined(value)) return '';
-
-    if (value.match(/[^0-9a-z]/g)) {
-      setErrorMessage('You only can use lower case letters and numbers');
-    } else if (value.length > 30) {
-      setErrorMessage('Must be between 1 and 30 characters long');
-    } else {
-      setErrorMessage('');
-    }
-
-    return value;
   };
 
   const waitService = async params => {
@@ -324,7 +310,7 @@ const WorkerNewModal = props => {
     });
 
     const workerPostParams = {
-      name: validateServiceName(values.name),
+      name: values.name,
       nodeNames,
       jarKeys,
       jmxPort: generate.port(),
@@ -381,7 +367,15 @@ const WorkerNewModal = props => {
     <Form
       onSubmit={onSubmit}
       initialValues={{}}
-      render={({ handleSubmit, form, submitting, pristine, values }) => {
+      validate={validate}
+      render={({
+        handleSubmit,
+        form,
+        submitting,
+        pristine,
+        invalid,
+        values,
+      }) => {
         return (
           <>
             <Dialog
@@ -394,10 +388,7 @@ const WorkerNewModal = props => {
               }}
               handleConfirm={handleSubmit}
               confirmDisabled={
-                submitting ||
-                pristine ||
-                errorMessage !== '' ||
-                checkedNodes.length === 0
+                submitting || invalid || pristine || checkedNodes.length === 0
               }
             >
               {isEmpty(nodes) ? (
@@ -427,10 +418,8 @@ const WorkerNewModal = props => {
                         placeholder="cluster00"
                         data-testid="name-input"
                         disabled={submitting}
-                        format={validateServiceName}
                         autoFocus
-                        errorMessage={errorMessage}
-                        error={errorMessage !== ''}
+                        required
                       />
                     </DialogContent>
                     <s.StyledDialogContent>

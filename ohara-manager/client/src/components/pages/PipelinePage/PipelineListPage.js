@@ -19,38 +19,34 @@ import PropTypes from 'prop-types';
 import DocumentTitle from 'react-document-title';
 import Tooltip from '@material-ui/core/Tooltip';
 import IconButton from '@material-ui/core/IconButton';
-import { Link } from 'react-router-dom';
-import { get, isEmpty, isUndefined } from 'lodash';
 import DialogContent from '@material-ui/core/DialogContent';
+import { Link } from 'react-router-dom';
+import { get, isEmpty } from 'lodash';
 import { Form, Field } from 'react-final-form';
 
 import * as MESSAGES from 'constants/messages';
 import * as utils from './pipelineUtils/pipelineListPageUtils';
 import * as URLS from 'constants/urls';
+import * as useApi from 'components/controller';
+import * as s from './styles';
+import * as URL from 'components/controller/url';
+import useSnackbar from 'components/context/Snackbar/useSnackbar';
+import validate from './validate';
 import { ListLoader } from 'components/common/Loader';
 import { DeleteDialog } from 'components/common/Mui/Dialog';
 import { Warning } from 'components/common/Messages';
 import { H2 } from 'components/common/Headings';
 import { PIPELINE } from 'constants/documentTitles';
-import * as s from './styles';
 import { SortTable } from 'components/common/Mui/Table';
-import useSnackbar from 'components/context/Snackbar/useSnackbar';
-import * as useApi from 'components/controller';
-import * as URL from 'components/controller/url';
 import { Dialog } from 'components/common/Mui/Dialog';
 import { InputField, Select } from 'components/common/Mui/Form';
 
 const PipelineListPage = props => {
   const { match } = props;
-  const [isSelectClusterModalActive, setIsSelectClusterModalActive] = useState(
-    false,
-  );
-  const [
-    isDeletePipelineModalActive,
-    setIsDeletePipelineModalActive,
-  ] = useState(false);
-  const [isNewPipelineWorking, setIsNewPipelineWorking] = useState(false);
-  const [isDeletePipelineWorking, setIsDeletePipelineWorking] = useState(false);
+  const [isNewModalOpen, setIsNewModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isNewModalWorking, setisNewModalWorking] = useState(false);
+  const [isDeleteModalWorking, setisDeleteModalWorking] = useState(false);
   const [pipelineToBeDeleted, setPipelineToBeDeleted] = useState('');
   const { showMessage } = useSnackbar();
   const {
@@ -69,15 +65,7 @@ const PipelineListPage = props => {
     deleteApi: deletePipeline,
   } = useApi.useDeleteApi(URL.PIPELINE_URL);
 
-  const handleSelectClusterModalClose = () => {
-    setIsSelectClusterModalActive(false);
-  };
-
-  const handleSelectClusterModalOpen = () => {
-    setIsSelectClusterModalActive(true);
-  };
-
-  const handleSelectClusterModalConfirm = async values => {
+  const handleNewModalSubmit = async values => {
     const { history, match } = props;
     const params = {
       name: values.name,
@@ -86,43 +74,41 @@ const PipelineListPage = props => {
       },
     };
 
-    setIsNewPipelineWorking(true);
+    setisNewModalWorking(true);
     await createPipeline(params);
-    setIsNewPipelineWorking(false);
+    setisNewModalWorking(false);
     const pipelineName = get(pipelineRes(), 'data.result.name', null);
 
     if (pipelineName) {
-      handleSelectClusterModalClose();
+      setIsNewModalOpen(false);
       showMessage(MESSAGES.PIPELINE_CREATION_SUCCESS);
       history.push(`${match.url}/new/${pipelineName}`);
     }
   };
 
   const handleDeletePipelineModalOpen = name => {
-    setIsDeletePipelineModalActive(true);
+    setIsDeleteModalOpen(true);
     setPipelineToBeDeleted(name);
   };
 
-  const handleDeletePipelineModalClose = () => {
-    setIsDeletePipelineModalActive(false);
+  const handleDeleteClose = () => {
+    setIsDeleteModalOpen(false);
     setPipelineToBeDeleted('');
   };
 
-  const handleDeletePipelineConfirm = async () => {
-    setIsDeletePipelineWorking(true);
+  const handleDeleteConfirm = async () => {
+    setisDeleteModalWorking(true);
     await deletePipeline(pipelineToBeDeleted);
     const isSuccess = get(deletePipelineRes(), 'data.isSuccess', false);
-    setIsDeletePipelineWorking(false);
+    setisDeleteModalWorking(false);
 
     if (isSuccess) {
       refetchPipelines();
+      setIsDeleteModalOpen(false);
       showMessage(
         `${MESSAGES.PIPELINE_DELETION_SUCCESS} ${pipelineToBeDeleted}`,
       );
-    } else {
-      showMessage(`${MESSAGES.PIPELINE_DELETION_ERROR} ${pipelineToBeDeleted}`);
     }
-    setIsDeletePipelineModalActive(false);
   };
 
   const deleteButton = pipeline => {
@@ -174,22 +160,39 @@ const PipelineListPage = props => {
   return (
     <DocumentTitle title={PIPELINE}>
       <Form
-        onSubmit={handleSelectClusterModalConfirm}
+        onSubmit={handleNewModalSubmit}
         initialValues={{}}
-        render={({ handleSubmit, submitting, values }) => {
+        validate={validate}
+        render={({ handleSubmit, form, submitting, invalid }) => {
           return (
             <>
+              <s.Wrapper>
+                <s.TopWrapper>
+                  <H2>Pipelines</H2>
+                  <s.NewPipelineBtn
+                    text="NEW PIPELINE"
+                    testId="new-pipeline"
+                    onClick={() => setIsNewModalOpen(true)}
+                  />
+                </s.TopWrapper>
+                <SortTable
+                  isLoading={isFetchingPipeline}
+                  headRows={headRows}
+                  rows={rows}
+                  tableName="pipeline"
+                />
+              </s.Wrapper>
+
               <Dialog
                 title="New pipeline"
                 handleConfirm={handleSubmit}
-                isLoading={isNewPipelineWorking}
-                confirmDisabled={
-                  submitting ||
-                  isUndefined(values.workspace) ||
-                  isUndefined(values.name)
-                }
-                open={isSelectClusterModalActive}
-                handleClose={handleSelectClusterModalClose}
+                isLoading={isNewModalWorking}
+                confirmDisabled={submitting || invalid}
+                open={isNewModalOpen}
+                handleClose={() => {
+                  setIsNewModalOpen(false);
+                  form.reset();
+                }}
                 testId="new-pipeline-modal"
               >
                 {isFetchingWorker ? (
@@ -211,7 +214,7 @@ const PipelineListPage = props => {
                         />
                       </DialogContent>
                     ) : (
-                      <form onSubmit={handleSubmit}>
+                      <form data-testid="form" onSubmit={handleSubmit}>
                         <DialogContent>
                           <Field
                             name="name"
@@ -222,6 +225,7 @@ const PipelineListPage = props => {
                               'data-testid': 'pipeline-name-input',
                             }}
                             autoFocus
+                            required
                           />
                         </DialogContent>
                         <DialogContent>
@@ -235,6 +239,7 @@ const PipelineListPage = props => {
                               worker => worker.name,
                             )}
                             component={Select}
+                            required
                           />
                         </DialogContent>
                       </form>
@@ -246,28 +251,11 @@ const PipelineListPage = props => {
               <DeleteDialog
                 title="Delete pipeline?"
                 content={`Are you sure you want to delete the pipeline: ${pipelineToBeDeleted}? This action cannot be undone!`}
-                open={isDeletePipelineModalActive}
-                working={isDeletePipelineWorking}
-                handleConfirm={handleDeletePipelineConfirm}
-                handleClose={handleDeletePipelineModalClose}
+                open={isDeleteModalOpen}
+                working={isDeleteModalWorking}
+                handleConfirm={handleDeleteConfirm}
+                handleClose={handleDeleteClose}
               />
-
-              <s.Wrapper>
-                <s.TopWrapper>
-                  <H2>Pipelines</H2>
-                  <s.NewPipelineBtn
-                    text="NEW PIPELINE"
-                    testId="new-pipeline"
-                    onClick={handleSelectClusterModalOpen}
-                  />
-                </s.TopWrapper>
-                <SortTable
-                  isLoading={isFetchingPipeline}
-                  headRows={headRows}
-                  rows={rows}
-                  tableName="pipeline"
-                />
-              </s.Wrapper>
             </>
           );
         }}

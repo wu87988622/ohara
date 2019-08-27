@@ -30,8 +30,8 @@ const setup = (override = {}) => {
       'data-testid': 'input-field',
     },
     meta: {
-      touched: true,
-      error: generate.message(),
+      touched: false,
+      error: undefined,
     },
     ...override,
   };
@@ -78,10 +78,10 @@ describe('<InputField />', () => {
     expect(props.input.onChange).toHaveBeenCalledTimes(1);
   });
 
-  it('should display error info when set errorMessage', () => {
-    const props = setup({ errorMessage: generate.message() });
+  it('should display an error message', () => {
+    const props = setup({ meta: { touched: true, error: generate.message() } });
     const { getByText } = render(<InputField {...props} />);
 
-    getByText(props.errorMessage);
+    getByText(props.meta.error);
   });
 });

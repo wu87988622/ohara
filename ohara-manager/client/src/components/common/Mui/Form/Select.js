@@ -39,11 +39,14 @@ const Select = props => {
   const _list = [placeholder, ...list];
   const _value = value ? value : placeholder;
 
+  const error = meta.error && meta.touched;
+
   return (
     <StyledSelect
       {...rest}
       name={name}
-      error={meta.error && meta.touched}
+      error={error}
+      helperText={error && meta.error}
       InputProps={restInput}
       onChange={onChange}
       value={_value}

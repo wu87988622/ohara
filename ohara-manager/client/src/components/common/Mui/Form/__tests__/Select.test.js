@@ -30,7 +30,7 @@ const setup = (override = {}) => {
     },
     meta: {
       touched: false,
-      error: null,
+      error: undefined,
     },
     list: [],
     label: generate.name(),
@@ -74,5 +74,12 @@ describe('<Select />', () => {
     fireEvent.click(getByText('apple'));
 
     expect(props.input.onChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('should display an error message', () => {
+    const props = setup({ meta: { touched: true, error: generate.message() } });
+    const { getByText } = render(<Select {...props} />);
+
+    getByText(props.meta.error);
   });
 });
