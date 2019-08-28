@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.kafka.connector.csv;
+package com.island.ohara.kafka.connector.csv.sink;
 
 import com.island.ohara.common.util.Releasable;
 import com.island.ohara.kafka.connector.RowSinkRecord;

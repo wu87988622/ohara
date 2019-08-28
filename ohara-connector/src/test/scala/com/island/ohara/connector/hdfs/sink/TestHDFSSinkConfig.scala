@@ -26,12 +26,12 @@ import scala.collection.JavaConverters._
 class TestHDFSSinkConfig extends SmallTest with Matchers {
   private[this] val HDFS_URL_VALUE = "hdfs://test:9000"
 
-  private[this] def hdfsConfig(settings: Map[String, String]): HDFSSinkConfig =
-    HDFSSinkConfig(TaskSetting.of(settings.asJava))
+  private[this] def hdfsConfig(settings: Map[String, String]): HDFSSinkProps =
+    HDFSSinkProps(TaskSetting.of(settings.asJava))
 
   @Test
   def testGetDataDir(): Unit = {
-    val hdfsSinkConfig: HDFSSinkConfig = hdfsConfig(Map(HDFS_URL_CONFIG -> HDFS_URL_VALUE))
+    val hdfsSinkConfig: HDFSSinkProps = hdfsConfig(Map(HDFS_URL_CONFIG -> HDFS_URL_VALUE))
 
     hdfsSinkConfig.hdfsURL shouldBe HDFS_URL_VALUE
   }

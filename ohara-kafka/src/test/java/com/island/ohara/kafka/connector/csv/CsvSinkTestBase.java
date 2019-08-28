@@ -23,6 +23,7 @@ import com.island.ohara.kafka.TimestampType;
 import com.island.ohara.kafka.connector.RowSinkContext;
 import com.island.ohara.kafka.connector.RowSinkRecord;
 import com.island.ohara.kafka.connector.TopicPartition;
+import com.island.ohara.kafka.connector.csv.sink.CsvSinkConfig;
 import java.util.*;
 
 public abstract class CsvSinkTestBase extends SmallTest {
@@ -40,7 +41,7 @@ public abstract class CsvSinkTestBase extends SmallTest {
 
   protected Map<String, String> createProps() {
     Map<String, String> props = new HashMap<>();
-    props.put(CsvSinkConfig.FLUSH_SIZE_CONFIG, "3");
+    props.put(CsvConnector.FLUSH_SIZE_CONFIG, "3");
     return props;
   }
 

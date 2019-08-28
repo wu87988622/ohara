@@ -21,8 +21,6 @@ import com.island.ohara.common.util.Releasable;
 import com.island.ohara.kafka.connector.RowSinkContext;
 import com.island.ohara.kafka.connector.RowSinkRecord;
 import com.island.ohara.kafka.connector.TopicPartition;
-import com.island.ohara.kafka.connector.csv.CsvSinkConfig;
-import com.island.ohara.kafka.connector.csv.DataWriter;
 import com.island.ohara.kafka.connector.storage.Storage;
 import java.util.*;
 import org.slf4j.Logger;

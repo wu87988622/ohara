@@ -895,8 +895,45 @@ of CounterBuilder must be after initializing the connector/task.
 Csv Sink Connector
 ------------------
 
-.. figure:: images/csv_connector_sink_arch.png
-   :alt: Ohara Manager Pipelines page
+.. figure:: images/csv_sink_connector_arch.png
+   :alt: Ohara CSV Sink Connector Inheritance Architecture
+
+Csv Sink connector inherits from :ref:`Row Sink Connector <connector-sink>`.
+It also have :ref:`_start(TaskSetting) <connector-source-start>`,
+:ref:`_stop() <connector-source-stop>`,
+:ref:`_taskClass() <connector-source-taskclass>`,
+:ref:`_taskSetting(int maxTasks) <connector-source-tasksetting>`,
+:ref:`partition and offsets <connector-source-partition-offsets>`. The main difference
+between csv sink connector and row sink connector is that csv sink connector already
+has some default definitions.
+
+Below is a list of default definitions for CsvSinkConnector:
+
+#. TOPICS_DIR_DEFINITION: Read csv data from topic and then write to this folder
+#. FLUSH_SIZE_DEFINITION: Number of records write to store before invoking file commits
+#. ROTATE_INTERVAL_MS_DEFINITION: Commit file time
+#. FILE_NEED_HEADER_DEFINITION: File need header for flush data
+#. FILE_ENCODE_DEFINITION: File encode for write to file
+
+Connector developers can override **_definitions** to add other additional definitions:
+
+.. code-block:: java
+
+  public abstract class CsvSinkConnector extends RowSinkConnector {
+    /**
+     * Define the configuration for the connector.
+     *
+     * @return The SettingDef for this connector.
+     */
+    protected List<SettingDef> _definitions() {
+      return Collections.emptyList();
+    }
+  }
+
+.. _connector-csv-sink-task:
+
+Csv Sink Task
+------------------
 
 Ohara has a well-incubated task class. We call it **CsvSinkTask**. As long as your
 data format is CSV type, you can use id to develop a sink connector to connect
@@ -907,8 +944,8 @@ a lot of details. In order to ensure that the connector works, we must also prep
 a lot of tests. Connector developers will spend a lot of time on this.
 
 Therefore, we have encapsulated most of the logic in CsvSinkTask, which hides a lot of
-complex behaviors. Just provide a configuration object and a :ref:`Storage <connector-storage>`
-implementation to complete a sink connector. You can save time to enjoy other happy things.
+complex behaviors. Just provide a :ref:`Storage <connector-storage>` implementation to
+complete a sink connector. You can save time to enjoy other happy things.
 
 The following are the two methods you need to care about inherited CsvSinkTask:
 
@@ -916,46 +953,15 @@ The following are the two methods you need to care about inherited CsvSinkTask:
 
   public abstract class CsvSinkTask extends RowSinkTask {
     /**
-     * Returns a configuration for CsvSinkTask.
-     *
-     * @param setting initial settings
-     * @return a configuration for Task
-     */
-    public abstract CsvSinkConfig getConfig(TaskSetting setting);
-
-    /**
      * Returns the Storage implementation for this Task.
      *
      * @param setting initial settings
      * @return a Storage instance
      */
-    public abstract Storage getStorage(TaskSetting setting);
+    public abstract Storage _storage(TaskSetting setting);
   }
 
-getConfig(TaskSetting setting)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-CsvSinkTask must know some information in order to run normally, e.g. **topicsDir**
-the path to store the output files. In order to be the best friend of programmer, Ohara
-follows fluent pattern to allow you to create config through builder, and you can only
-fill the required elements.
-
-A example of creating a config is shown below:
-
-.. code-block:: java
-
-  public class ExampleOfConfig {
-    public static CsvSinkConfig config() {
-      return CsvSinkConfig.builder()
-        .topicsDir("/topics")
-        .build()
-    }
-  }
-
-.. note::
-  The input parameter *TaskSetting* carrying all settings. see :ref:`TaskSetting <connector-source-tasksetting>`
-
-getStorage(TaskSetting setting)
+_storage(TaskSetting setting)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The goal of Task is to write the data to an external file system. For example, if we want to

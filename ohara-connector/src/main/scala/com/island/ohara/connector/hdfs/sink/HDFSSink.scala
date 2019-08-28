@@ -20,13 +20,14 @@ import java.util
 
 import com.island.ohara.common.setting.SettingDef
 import com.island.ohara.kafka.connector._
+import com.island.ohara.kafka.connector.csv.CsvSinkConnector
 
 import scala.collection.JavaConverters._
 
 /**
   * This class extends RowSinkConnector abstract.
   */
-class HDFSSink extends RowSinkConnector {
+class HDFSSink extends CsvSinkConnector {
 
   private[this] var settings: TaskSetting = _
 
@@ -53,46 +54,6 @@ class HDFSSink extends RowSinkConnector {
       .documentation("Input HDFS namenode location")
       .valueType(SettingDef.Type.STRING)
       .key(HDFS_URL_CONFIG)
-      .build(),
-    SettingDef
-      .builder()
-      .displayName("Flush Size")
-      .documentation("Number of records write to store before invoking file commits.")
-      .valueType(SettingDef.Type.INT)
-      .optional(FLUSH_SIZE_DEFAULT.toString)
-      .key(FLUSH_SIZE_CONFIG)
-      .build(),
-    SettingDef
-      .builder()
-      .displayName("Rotate Interval(MS)")
-      .documentation("commit file time")
-      .valueType(SettingDef.Type.LONG)
-      .optional(ROTATE_INTERVAL_MS_DEFAULT.toString)
-      .key(ROTATE_INTERVAL_MS_CONFIG)
-      .build(),
-    SettingDef
-      .builder()
-      .displayName("Output Folder")
-      .documentation("HDFS sink read csv data from topic and then write to this folder")
-      .valueType(SettingDef.Type.STRING)
-      .optional(TOPICS_DIR_DEFAULT)
-      .key(TOPICS_DIR_CONFIG)
-      .build(),
-    SettingDef
-      .builder()
-      .displayName("File Need Header")
-      .documentation("File need header for flush hdfs data")
-      .valueType(SettingDef.Type.BOOLEAN)
-      .optional(FILE_NEED_HEADER_DEFAULT.toString)
-      .key(FILE_NEED_HEADER_CONFIG)
-      .build(),
-    SettingDef
-      .builder()
-      .displayName("Data File encode")
-      .documentation("File encode for write to HDFS file")
-      .valueType(SettingDef.Type.STRING)
-      .optional(FILE_ENCODE_DEFAULT)
-      .key(FILE_ENCODE_CONFIG)
-      .build(),
+      .build()
   ).asJava
 }

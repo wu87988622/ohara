@@ -118,7 +118,7 @@ public abstract class RowSinkConnector extends SinkConnector implements WithDefi
 
   /** @return custom definitions + core definitions */
   @Override
-  public final List<SettingDef> definitions() {
+  public List<SettingDef> definitions() {
     return ConnectorUtils.toSettingDefinitions(
         Stream.of(
                 Collections.singletonList(ConnectorDefUtils.SINK_KIND_DEFINITION),

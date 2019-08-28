@@ -14,24 +14,26 @@
  * limitations under the License.
  */
 
-package com.island.ohara.kafka.connector.csv;
+package com.island.ohara.kafka.connector.csv.sink;
 
-/** Provider of a record writer for this storage. */
-public interface RecordWriterProvider {
+import com.island.ohara.common.util.Releasable;
+import com.island.ohara.kafka.connector.RowSinkRecord;
+
+/** Storage specific RecordWriter. */
+public interface RecordWriter extends Releasable {
+  /**
+   * Write a record to storage.
+   *
+   * @param record the record to persist
+   */
+  void write(RowSinkRecord record);
 
   /**
-   * Get the file extension name for this storage.
-   *
-   * @return file extension name
+   * Flush writer's data and commit the records in Kafka. Optionally, this operation might also
+   * close the writer.
    */
-  String getExtension();
+  void commit();
 
-  /**
-   * Creates a record writer for this storage.
-   *
-   * @param config CSV sink configuration
-   * @param filePath filePath
-   * @return RecordWriter
-   */
-  RecordWriter getRecordWriter(CsvSinkConfig config, String filePath);
+  /** Close this writer. */
+  void close();
 }

@@ -69,7 +69,7 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
   )
 
   private[this] val sinkProps = FtpSinkProps(
-    outputFolder = "/output",
+    topicsDir = "/output",
     needHeader = true,
     user = testUtil.ftpServer.user,
     password = testUtil.ftpServer.password,
@@ -83,7 +83,7 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
     TestFtp2Ftp.rebuild(ftpClient, sourceProps.inputFolder)
     TestFtp2Ftp.rebuild(ftpClient, sourceProps.completedFolder.get)
     TestFtp2Ftp.rebuild(ftpClient, sourceProps.errorFolder)
-    TestFtp2Ftp.rebuild(ftpClient, sinkProps.outputFolder)
+    TestFtp2Ftp.rebuild(ftpClient, sinkProps.topicsDir)
     TestFtp2Ftp.setupInput(ftpClient, sourceProps, header, data)
   }
 
@@ -123,7 +123,7 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
         CommonUtils.await(() => ftpClient.listFileNames(sourceProps.inputFolder).isEmpty, Duration.ofSeconds(30))
         CommonUtils
           .await(() => ftpClient.listFileNames(sourceProps.completedFolder.get).size == 1, Duration.ofSeconds(30))
-        val committedFolder = CommonUtils.path(sinkProps.outputFolder, topicKey.topicNameOnKafka(), "partition0")
+        val committedFolder = CommonUtils.path(sinkProps.topicsDir, topicKey.topicNameOnKafka(), "partition0")
         CommonUtils.await(() => listCommittedFiles(committedFolder).size == 1, Duration.ofSeconds(30))
         val lines =
           ftpClient.readLines(

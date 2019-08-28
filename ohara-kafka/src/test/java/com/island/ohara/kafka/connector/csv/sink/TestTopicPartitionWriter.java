@@ -18,7 +18,7 @@ package com.island.ohara.kafka.connector.csv.sink;
 
 import com.island.ohara.common.util.StreamUtils;
 import com.island.ohara.kafka.connector.RowSinkRecord;
-import com.island.ohara.kafka.connector.csv.CsvSinkConfig;
+import com.island.ohara.kafka.connector.csv.CsvConnector;
 import com.island.ohara.kafka.connector.csv.WithMockStorage;
 import java.io.File;
 import java.util.HashMap;
@@ -37,7 +37,7 @@ public class TestTopicPartitionWriter extends WithMockStorage {
   @Override
   protected Map<String, String> createProps() {
     Map<String, String> props = super.createProps();
-    props.put(CsvSinkConfig.TOPICS_DIR_CONFIG, topicsDir.getPath());
+    props.put(CsvConnector.TOPICS_DIR_CONFIG, topicsDir.getPath());
     props.putAll(localProps);
     return props;
   }
@@ -52,7 +52,7 @@ public class TestTopicPartitionWriter extends WithMockStorage {
 
   @Test
   public void testWrite() {
-    localProps.put(CsvSinkConfig.FLUSH_SIZE_CONFIG, "10");
+    localProps.put(CsvConnector.FLUSH_SIZE_CONFIG, "10");
     setUp();
 
     List<RowSinkRecord> records = createRecords(7);
@@ -72,7 +72,7 @@ public class TestTopicPartitionWriter extends WithMockStorage {
 
   @Test
   public void testWriteOnSizeRotate() {
-    localProps.put(CsvSinkConfig.FLUSH_SIZE_CONFIG, "3");
+    localProps.put(CsvConnector.FLUSH_SIZE_CONFIG, "3");
 
     setUp();
 
@@ -89,8 +89,8 @@ public class TestTopicPartitionWriter extends WithMockStorage {
 
   @Test
   public void testWriteOnTimeRotate() throws Exception {
-    localProps.put(CsvSinkConfig.FLUSH_SIZE_CONFIG, "99999");
-    localProps.put(CsvSinkConfig.ROTATE_INTERVAL_MS_CONFIG, "3000"); // 3 seconds
+    localProps.put(CsvConnector.FLUSH_SIZE_CONFIG, "99999");
+    localProps.put(CsvConnector.ROTATE_INTERVAL_MS_CONFIG, "3000"); // 3 seconds
 
     setUp();
 
@@ -119,7 +119,7 @@ public class TestTopicPartitionWriter extends WithMockStorage {
 
   @Test
   public void testCommitFilename() {
-    localProps.put(CsvSinkConfig.FLUSH_SIZE_CONFIG, "3");
+    localProps.put(CsvConnector.FLUSH_SIZE_CONFIG, "3");
 
     setUp();
 

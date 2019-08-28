@@ -16,34 +16,35 @@
 
 package com.island.ohara.connector.ftp
 
+import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.kafka.connector.TaskSetting
 
-case class FtpSinkProps(outputFolder: String,
-                        needHeader: Boolean,
-                        encode: String,
-                        hostname: String,
+case class FtpSinkProps(hostname: String,
                         port: Int,
                         user: String,
-                        password: String) {
+                        password: String,
+                        @VisibleForTesting topicsDir: String,
+                        @VisibleForTesting needHeader: Boolean,
+                        @VisibleForTesting encode: String) {
   def toMap: Map[String, String] = Map(
-    FTP_OUTPUT -> outputFolder,
-    FTP_NEED_HEADER -> needHeader.toString,
-    FTP_ENCODE -> encode,
     FTP_HOSTNAME -> hostname,
     FTP_PORT -> port.toString,
     FTP_USER_NAME -> user,
-    FTP_PASSWORD -> password
+    FTP_PASSWORD -> password,
+    TOPICS_DIR_CONFIG -> topicsDir,
+    FILE_NEED_HEADER_CONFIG -> needHeader.toString,
+    FILE_ENCODE_CONFIG -> encode
   ).filter(_._2.nonEmpty)
 }
 
 object FtpSinkProps {
   def apply(settings: TaskSetting): FtpSinkProps = FtpSinkProps(
-    outputFolder = settings.stringValue(FTP_OUTPUT),
-    needHeader = settings.stringValue(FTP_NEED_HEADER).toBoolean,
-    encode = settings.stringOption(FTP_ENCODE).orElse(FTP_ENCODE_DEFAULT),
     hostname = settings.stringValue(FTP_HOSTNAME),
     port = settings.intValue(FTP_PORT),
     user = settings.stringValue(FTP_USER_NAME),
-    password = settings.stringValue(FTP_PASSWORD)
+    password = settings.stringValue(FTP_PASSWORD),
+    topicsDir = settings.stringValue(TOPICS_DIR_CONFIG),
+    needHeader = settings.booleanOption(FILE_NEED_HEADER_CONFIG).orElse(FILE_NEED_HEADER_DEFAULT),
+    encode = settings.stringOption(FILE_ENCODE_CONFIG).orElse(FILE_ENCODE_DEFAULT)
   )
 }

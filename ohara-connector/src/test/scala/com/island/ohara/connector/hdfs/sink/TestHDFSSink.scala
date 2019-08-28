@@ -340,19 +340,19 @@ class TestHDFSSink extends With3Brokers3Workers with Matchers {
         ))
         .create)
 
-    CommonUtils.await(() => SimpleHDFSSinkTask.taskProps != null && SimpleHDFSSinkTask.sinkConfig != null,
-                      Duration.ofSeconds(20))
     CommonUtils
-      .await(() => SimpleHDFSSinkTask.taskProps.stringValue(TOPICS_DIR_CONFIG) == topicsDir, Duration.ofSeconds(20))
+      .await(() => SimpleHDFSSinkTask.setting != null && SimpleHDFSSinkTask.props != null, Duration.ofSeconds(20))
     CommonUtils
-      .await(() => SimpleHDFSSinkTask.taskProps.intValue(FLUSH_SIZE_CONFIG) == flushCount, Duration.ofSeconds(20))
-    CommonUtils.await(() => SimpleHDFSSinkTask.taskProps.longValue(ROTATE_INTERVAL_MS_CONFIG) == rotateIntervalMs,
+      .await(() => SimpleHDFSSinkTask.setting.stringValue(TOPICS_DIR_CONFIG) == topicsDir, Duration.ofSeconds(20))
+    CommonUtils
+      .await(() => SimpleHDFSSinkTask.setting.intValue(FLUSH_SIZE_CONFIG) == flushCount, Duration.ofSeconds(20))
+    CommonUtils.await(() => SimpleHDFSSinkTask.setting.longValue(ROTATE_INTERVAL_MS_CONFIG) == rotateIntervalMs,
                       Duration.ofSeconds(20))
-    CommonUtils.await(() => SimpleHDFSSinkTask.taskProps.booleanValue(FILE_NEED_HEADER_CONFIG) == needHeader,
+    CommonUtils.await(() => SimpleHDFSSinkTask.setting.booleanValue(FILE_NEED_HEADER_CONFIG) == needHeader,
                       Duration.ofSeconds(20))
-    CommonUtils.await(() => SimpleHDFSSinkTask.taskProps.stringValue(FILE_ENCODE_CONFIG) == FILE_ENCODE_DEFAULT,
+    CommonUtils.await(() => SimpleHDFSSinkTask.setting.stringValue(FILE_ENCODE_CONFIG) == FILE_ENCODE_DEFAULT,
                       Duration.ofSeconds(20))
-    CommonUtils.await(() => SimpleHDFSSinkTask.sinkConfig.hdfsURL == localHdfsURL, Duration.ofSeconds(20))
+    CommonUtils.await(() => SimpleHDFSSinkTask.props.hdfsURL == localHdfsURL, Duration.ofSeconds(20))
   }
 }
 
@@ -363,14 +363,14 @@ class SimpleHDFSSink extends HDFSSink {
 }
 
 class SimpleHDFSSinkTask extends HDFSSinkTask {
-  override def _start(props: TaskSetting): Unit = {
-    super._start(props)
-    SimpleHDFSSinkTask.taskProps = props
-    SimpleHDFSSinkTask.sinkConfig = hdfsSinkConfig
+  override def _start(setting: TaskSetting): Unit = {
+    super._start(setting)
+    SimpleHDFSSinkTask.setting = setting
+    SimpleHDFSSinkTask.props = hdfsSinkProps
   }
 }
 
 object SimpleHDFSSinkTask {
-  @volatile var taskProps: TaskSetting = _
-  @volatile var sinkConfig: HDFSSinkConfig = _
+  @volatile var setting: TaskSetting = _
+  @volatile var props: HDFSSinkProps = _
 }

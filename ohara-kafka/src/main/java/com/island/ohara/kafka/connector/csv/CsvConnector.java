@@ -16,24 +16,19 @@
 
 package com.island.ohara.kafka.connector.csv;
 
-import com.island.ohara.common.util.Releasable;
-import com.island.ohara.kafka.connector.RowSinkRecord;
+public interface CsvConnector {
 
-/** Storage specific RecordWriter. */
-public interface RecordWriter extends Releasable {
-  /**
-   * Write a record to storage.
-   *
-   * @param record the record to persist
-   */
-  void write(RowSinkRecord record);
+  String TOPICS_DIR_CONFIG = "topics.dir";
 
-  /**
-   * Flush writer's data and commit the records in Kafka. Optionally, this operation might also
-   * close the writer.
-   */
-  void commit();
+  String FLUSH_SIZE_CONFIG = "flush.size";
+  int FLUSH_SIZE_DEFAULT = 1000;
 
-  /** Close this writer. */
-  void close();
+  String ROTATE_INTERVAL_MS_CONFIG = "rotate.interval.ms";
+  long ROTATE_INTERVAL_MS_DEFAULT = 60000;
+
+  String FILE_NEED_HEADER_CONFIG = "file.need.header";
+  boolean FILE_NEED_HEADER_DEFAULT = true;
+
+  String FILE_ENCODE_CONFIG = "file.encode";
+  String FILE_ENCODE_DEFAULT = "UTF-8";
 }

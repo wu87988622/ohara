@@ -14,32 +14,55 @@
  * limitations under the License.
  */
 
-package com.island.ohara.kafka.connector.csv;
+package com.island.ohara.kafka.connector.csv.sink;
 
 import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.kafka.connector.TaskSetting;
+import com.island.ohara.kafka.connector.csv.CsvConnector;
 import java.util.*;
 
 /** This class is used to define the configuration of CsvSinkTask. */
-public class CsvSinkConfig {
-  public static final String TOPICS_DIR_CONFIG = "topics.dir";
+public class CsvSinkConfig implements CsvConnector {
+  private final int flushSize;
+  private final long rotateIntervalMs;
+  private final String topicsDir;
+  private final String encode;
+  private final boolean needHeader;
+  private final List<Column> schema;
 
-  public static final String FLUSH_SIZE_CONFIG = "flush.size";
+  private CsvSinkConfig(Builder builder) {
+    this.topicsDir = builder.topicsDir;
+    this.flushSize = builder.flushSize;
+    this.rotateIntervalMs = builder.rotateIntervalMs;
+    this.encode = builder.encode;
+    this.needHeader = builder.needHeader;
+    this.schema = builder.schema;
+  }
 
-  public static final int FLUSH_SIZE_DEFAULT = 1000;
+  public int flushSize() {
+    return flushSize;
+  }
 
-  public static final String ROTATE_INTERVAL_MS_CONFIG = "rotate.interval.ms";
+  public long rotateIntervalMs() {
+    return rotateIntervalMs;
+  }
 
-  public static final long ROTATE_INTERVAL_MS_DEFAULT = 60000;
+  public String topicsDir() {
+    return topicsDir;
+  }
 
-  public static final String FILE_NEED_HEADER_CONFIG = "file.need.header";
+  public String encode() {
+    return encode;
+  }
 
-  public static final boolean FILE_NEED_HEADER_DEFAULT = true;
+  public boolean needHeader() {
+    return needHeader;
+  }
 
-  public static final String FILE_ENCODE_CONFIG = "file.encode";
-
-  public static final String FILE_ENCODE_DEFAULT = "UTF-8";
+  public List<Column> schema() {
+    return schema;
+  }
 
   /**
    * Creates a CsvSinkConfig based on raw input.
@@ -147,46 +170,6 @@ public class CsvSinkConfig {
       Objects.requireNonNull(topicsDir);
       return new CsvSinkConfig(this);
     }
-  }
-
-  private final int flushSize;
-  private final long rotateIntervalMs;
-  private final String topicsDir;
-  private final String encode;
-  private final boolean needHeader;
-  private final List<Column> schema;
-
-  private CsvSinkConfig(Builder builder) {
-    this.topicsDir = builder.topicsDir;
-    this.flushSize = builder.flushSize;
-    this.rotateIntervalMs = builder.rotateIntervalMs;
-    this.encode = builder.encode;
-    this.needHeader = builder.needHeader;
-    this.schema = builder.schema;
-  }
-
-  public int flushSize() {
-    return flushSize;
-  }
-
-  public long rotateIntervalMs() {
-    return rotateIntervalMs;
-  }
-
-  public String topicsDir() {
-    return topicsDir;
-  }
-
-  public String encode() {
-    return encode;
-  }
-
-  public boolean needHeader() {
-    return needHeader;
-  }
-
-  public List<Column> schema() {
-    return schema;
   }
 
   @VisibleForTesting

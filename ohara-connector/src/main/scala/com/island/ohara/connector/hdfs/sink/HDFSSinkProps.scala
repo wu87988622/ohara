@@ -19,19 +19,19 @@ package com.island.ohara.connector.hdfs.sink
 import com.island.ohara.kafka.connector.TaskSetting
 import org.apache.hadoop.conf.Configuration
 
-case class HDFSSinkConfig(hdfsURL: String) {
+case class HDFSSinkProps(hdfsURL: String) {
   def toMap: Map[String, String] = Map(HDFS_URL_CONFIG -> hdfsURL)
 
   def hadoopConfiguration(): Configuration = {
     val config = new Configuration()
-    config.set(HDFSSinkConfig.FS_DEFAULT, hdfsURL)
+    config.set(HDFSSinkProps.FS_DEFAULT, hdfsURL)
     config
   }
 }
 
-object HDFSSinkConfig {
+object HDFSSinkProps {
   val FS_DEFAULT: String = "fs.defaultFS"
-  def apply(settings: TaskSetting): HDFSSinkConfig = {
-    HDFSSinkConfig(hdfsURL = settings.stringValue(HDFS_URL_CONFIG))
+  def apply(settings: TaskSetting): HDFSSinkProps = {
+    HDFSSinkProps(hdfsURL = settings.stringValue(HDFS_URL_CONFIG))
   }
 }

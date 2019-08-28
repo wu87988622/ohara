@@ -16,18 +16,19 @@
 
 package com.island.ohara.connector.hdfs
 
-import com.island.ohara.kafka.connector.csv.CsvSinkConfig
+import com.island.ohara.common.annotations.VisibleForTesting
+import com.island.ohara.kafka.connector.csv.CsvConnector
 
 package object sink {
   val HDFS_URL_CONFIG: String = "hdfs.url"
-  val TOPICS_DIR_CONFIG: String = CsvSinkConfig.TOPICS_DIR_CONFIG
-  val TOPICS_DIR_DEFAULT: String = "/data"
-  val FLUSH_SIZE_CONFIG: String = CsvSinkConfig.FLUSH_SIZE_CONFIG
-  val FLUSH_SIZE_DEFAULT: Int = CsvSinkConfig.FLUSH_SIZE_DEFAULT
-  val ROTATE_INTERVAL_MS_CONFIG: String = CsvSinkConfig.ROTATE_INTERVAL_MS_CONFIG
-  val ROTATE_INTERVAL_MS_DEFAULT: Long = CsvSinkConfig.ROTATE_INTERVAL_MS_DEFAULT
-  val FILE_NEED_HEADER_CONFIG: String = CsvSinkConfig.FILE_NEED_HEADER_CONFIG
-  val FILE_NEED_HEADER_DEFAULT: Boolean = CsvSinkConfig.FILE_NEED_HEADER_DEFAULT
-  val FILE_ENCODE_CONFIG: String = CsvSinkConfig.FILE_ENCODE_CONFIG
-  val FILE_ENCODE_DEFAULT: String = CsvSinkConfig.FILE_ENCODE_DEFAULT
+
+  @VisibleForTesting val TOPICS_DIR_CONFIG: String = CsvConnector.TOPICS_DIR_CONFIG
+  @VisibleForTesting val FLUSH_SIZE_CONFIG: String = CsvConnector.FLUSH_SIZE_CONFIG
+  @VisibleForTesting val FLUSH_SIZE_DEFAULT: Int = CsvConnector.FLUSH_SIZE_DEFAULT
+  @VisibleForTesting val ROTATE_INTERVAL_MS_CONFIG: String = CsvConnector.ROTATE_INTERVAL_MS_CONFIG
+  @VisibleForTesting val ROTATE_INTERVAL_MS_DEFAULT: Long = CsvConnector.ROTATE_INTERVAL_MS_DEFAULT
+  @VisibleForTesting val FILE_NEED_HEADER_CONFIG: String = CsvConnector.FILE_NEED_HEADER_CONFIG
+  @VisibleForTesting val FILE_NEED_HEADER_DEFAULT: Boolean = CsvConnector.FILE_NEED_HEADER_DEFAULT
+  @VisibleForTesting val FILE_ENCODE_CONFIG: String = CsvConnector.FILE_ENCODE_CONFIG
+  @VisibleForTesting val FILE_ENCODE_DEFAULT: String = CsvConnector.FILE_ENCODE_DEFAULT
 }

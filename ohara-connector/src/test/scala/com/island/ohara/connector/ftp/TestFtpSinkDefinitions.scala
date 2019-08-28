@@ -28,8 +28,8 @@ class TestFtpSinkDefinitions extends SmallTest with Matchers {
 
   private[this] val ftpSink = new FtpSink
   @Test
-  def checkInputFolder(): Unit = {
-    val definition = ftpSink.definitions().asScala.find(_.key() == FTP_OUTPUT).get
+  def checkOutputFolder(): Unit = {
+    val definition = ftpSink.definitions().asScala.find(_.key() == TOPICS_DIR_CONFIG).get
     definition.required() shouldBe true
     definition.defaultValue() shouldBe null
     definition.editable() shouldBe true
@@ -39,10 +39,10 @@ class TestFtpSinkDefinitions extends SmallTest with Matchers {
   }
 
   @Test
-  def checkErrorFolder(): Unit = {
-    val definition = ftpSink.definitions().asScala.find(_.key() == FTP_NEED_HEADER).get
-    definition.required() shouldBe true
-    definition.defaultValue() shouldBe null
+  def checkNeedHeader(): Unit = {
+    val definition = ftpSink.definitions().asScala.find(_.key() == FILE_NEED_HEADER_CONFIG).get
+    definition.required() shouldBe false
+    definition.defaultValue() shouldBe "true"
     definition.editable() shouldBe true
     definition.internal() shouldBe false
     definition.reference() shouldBe Reference.NONE
@@ -51,7 +51,7 @@ class TestFtpSinkDefinitions extends SmallTest with Matchers {
 
   @Test
   def checkEncode(): Unit = {
-    val definition = ftpSink.definitions().asScala.find(_.key() == FTP_ENCODE).get
+    val definition = ftpSink.definitions().asScala.find(_.key() == FILE_ENCODE_CONFIG).get
     definition.required() shouldBe false
     definition.defaultValue() shouldBe "UTF-8"
     definition.editable() shouldBe true

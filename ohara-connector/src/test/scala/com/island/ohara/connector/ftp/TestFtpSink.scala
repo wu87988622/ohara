@@ -106,12 +106,12 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
   private[this] val data = TestFtpSink.data
 
   private[this] val props = FtpSinkProps(
-    outputFolder = "/output",
-    needHeader = false,
-    user = testUtil.ftpServer.user,
-    password = testUtil.ftpServer.password,
     hostname = testUtil.ftpServer.hostname,
     port = testUtil.ftpServer.port,
+    user = testUtil.ftpServer.user,
+    password = testUtil.ftpServer.password,
+    topicsDir = "/output",
+    needHeader = false,
     encode = "UTF-8"
   )
 
@@ -127,20 +127,20 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
 
   @Before
   def setup(): Unit = {
-    if (ftpStorage.exists(props.outputFolder)) {
-      ftpStorage.delete(props.outputFolder, true)
-      ftpStorage.exists(props.outputFolder) shouldBe false
+    if (ftpStorage.exists(props.topicsDir)) {
+      ftpStorage.delete(props.topicsDir, true)
+      ftpStorage.exists(props.topicsDir) shouldBe false
     }
-    ftpStorage.mkdirs(props.outputFolder)
-    ftpStorage.exists(props.outputFolder) shouldBe true
-    ftpStorage.list(props.outputFolder).asScala.size shouldBe 0
+    ftpStorage.mkdirs(props.topicsDir)
+    ftpStorage.exists(props.topicsDir) shouldBe true
+    ftpStorage.list(props.topicsDir).asScala.size shouldBe 0
   }
 
   @After
   def tearDown(): Unit = Releasable.close(ftpStorage)
 
   @Test
-  def testRecorder(): Unit = {
+  def testReorder(): Unit = {
     val connectorKey = randomConnectorKey()
     val newSchema: Seq[Column] = Seq(
       Column.builder().name("a").dataType(DataType.STRING).order(3).build(),
@@ -335,7 +335,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
     val sink = new FtpSink
     val connectorKey = randomConnectorKey()
     val props = FtpSinkProps(
-      outputFolder = "/output",
+      topicsDir = "/output",
       needHeader = false,
       user = testUtil.ftpServer.user,
       password = testUtil.ftpServer.password,
@@ -384,7 +384,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       .settings(settings)
       .create())
 
-  private[this] def getCommittedFolder(): Path = Paths.get(props.outputFolder, TOPIC.topicNameOnKafka(), "partition0")
+  private[this] def getCommittedFolder(): Path = Paths.get(props.topicsDir, TOPIC.topicNameOnKafka(), "partition0")
 
   private[this] def checkCommittedFileSize(folder: Path, expectedSize: Int): Unit = {
     CommonUtils.await(() => ftpStorage.exists(folder.toString), Duration.ofSeconds(20))

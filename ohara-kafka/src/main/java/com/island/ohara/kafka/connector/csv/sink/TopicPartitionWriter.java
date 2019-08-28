@@ -21,7 +21,6 @@ import com.island.ohara.common.util.Releasable;
 import com.island.ohara.kafka.connector.RowSinkContext;
 import com.island.ohara.kafka.connector.RowSinkRecord;
 import com.island.ohara.kafka.connector.TopicPartition;
-import com.island.ohara.kafka.connector.csv.CsvSinkConfig;
 import java.util.*;
 import org.apache.kafka.common.utils.SystemTime;
 import org.apache.kafka.common.utils.Time;

@@ -49,8 +49,8 @@ class TestHDFSSinkDefinition extends WithBrokerWorker with Matchers {
   @Test
   def checkTopicsDir(): Unit = {
     val definition = hdfsSink.definitions().asScala.find(_.key() == TOPICS_DIR_CONFIG).get
-    definition.required shouldBe false
-    definition.defaultValue shouldBe TOPICS_DIR_DEFAULT.toString
+    definition.required shouldBe true
+    definition.defaultValue shouldBe null
     definition.editable() shouldBe true
     definition.internal() shouldBe false
     definition.reference() shouldBe Reference.NONE

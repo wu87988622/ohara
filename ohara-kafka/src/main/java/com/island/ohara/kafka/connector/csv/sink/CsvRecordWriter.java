@@ -19,8 +19,6 @@ package com.island.ohara.kafka.connector.csv.sink;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.util.Releasable;
 import com.island.ohara.kafka.connector.RowSinkRecord;
-import com.island.ohara.kafka.connector.csv.CsvSinkConfig;
-import com.island.ohara.kafka.connector.csv.RecordWriter;
 import com.island.ohara.kafka.connector.storage.Storage;
 import java.io.*;
 import java.nio.charset.Charset;

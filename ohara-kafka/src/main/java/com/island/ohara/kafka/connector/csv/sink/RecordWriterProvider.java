@@ -16,22 +16,22 @@
 
 package com.island.ohara.kafka.connector.csv.sink;
 
-import com.island.ohara.kafka.connector.storage.Storage;
+/** Provider of a record writer for this storage. */
+public interface RecordWriterProvider {
 
-public class CsvRecordWriterProvider implements RecordWriterProvider {
-  private static final String EXTENSION = ".csv";
+  /**
+   * Get the file extension name for this storage.
+   *
+   * @return file extension name
+   */
+  String getExtension();
 
-  private final Storage storage;
-
-  public CsvRecordWriterProvider(Storage storage) {
-    this.storage = storage;
-  }
-
-  public String getExtension() {
-    return EXTENSION;
-  }
-
-  public CsvRecordWriter getRecordWriter(CsvSinkConfig config, String filePath) {
-    return new CsvRecordWriter(config, filePath, storage);
-  }
+  /**
+   * Creates a record writer for this storage.
+   *
+   * @param config CSV sink configuration
+   * @param filePath filePath
+   * @return RecordWriter
+   */
+  RecordWriter getRecordWriter(CsvSinkConfig config, String filePath);
 }

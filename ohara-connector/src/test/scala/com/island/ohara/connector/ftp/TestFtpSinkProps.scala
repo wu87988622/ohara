@@ -24,7 +24,7 @@ class TestFtpSinkProps extends SmallTest with Matchers {
 
   @Test
   def testGetter(): Unit = {
-    val outputFolder = CommonUtils.randomString()
+    val topicsDir = CommonUtils.randomString()
     val needHeader = true
     val encode = CommonUtils.randomString()
     val hostname = CommonUtils.randomString()
@@ -32,7 +32,7 @@ class TestFtpSinkProps extends SmallTest with Matchers {
     val user = CommonUtils.randomString()
     val password = CommonUtils.randomString()
     val props = FtpSinkProps(
-      outputFolder = outputFolder,
+      topicsDir = topicsDir,
       needHeader = needHeader,
       user = user,
       password = password,
@@ -41,9 +41,9 @@ class TestFtpSinkProps extends SmallTest with Matchers {
       encode = encode
     ).toMap
 
-    props(FTP_OUTPUT) shouldBe outputFolder
-    props(FTP_NEED_HEADER).toBoolean shouldBe needHeader
-    props(FTP_ENCODE) shouldBe encode
+    props(TOPICS_DIR_CONFIG) shouldBe topicsDir
+    props(FILE_NEED_HEADER_CONFIG).toBoolean shouldBe needHeader
+    props(FILE_ENCODE_CONFIG) shouldBe encode
     props(FTP_HOSTNAME) shouldBe hostname
     props(FTP_PORT).toInt shouldBe port
     props(FTP_USER_NAME) shouldBe user

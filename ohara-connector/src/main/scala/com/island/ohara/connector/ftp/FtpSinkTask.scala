@@ -18,23 +18,12 @@ package com.island.ohara.connector.ftp
 
 import com.island.ohara.client.ftp.FtpClient
 import com.island.ohara.kafka.connector._
-import com.island.ohara.kafka.connector.csv.{CsvSinkConfig, CsvSinkTask}
+import com.island.ohara.kafka.connector.csv.CsvSinkTask
 import com.island.ohara.kafka.connector.storage.Storage
 
 class FtpSinkTask extends CsvSinkTask {
-  override def getConfig(setting: TaskSetting): CsvSinkConfig = {
-    val props = FtpSinkTaskProps(setting)
-    CsvSinkConfig
-      .builder()
-      .topicsDir(props.outputFolder)
-      .needHeader(props.needHeader)
-      .encode(props.encode)
-      .schema(setting.columns())
-      .build()
-  }
-
-  override def getStorage(setting: TaskSetting): Storage = {
-    val props = FtpSinkTaskProps(setting)
+  override def _storage(setting: TaskSetting): Storage = {
+    val props = FtpSinkProps(setting)
     new FtpStorage(
       FtpClient.builder().hostname(props.hostname).port(props.port).user(props.user).password(props.password).build())
   }
