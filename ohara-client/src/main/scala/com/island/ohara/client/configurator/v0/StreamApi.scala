@@ -98,7 +98,8 @@ object StreamApi {
     def to: Set[TopicKey] =
       noJsNull(settings)(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key()).convertTo[Set[TopicKey]]
 
-    def instances: Int = plain(StreamDefUtils.INSTANCES_DEFINITION.key()).toInt
+    //TODO remove this field after #2288
+    def instances: Option[Int] = plain.get(StreamDefUtils.INSTANCES_DEFINITION.key()).map(_.toInt)
   }
   implicit val STREAM_CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
     JsonRefiner[Creation]
@@ -109,7 +110,7 @@ object StreamApi {
       // the default value
       .nullToString(StreamDefUtils.IMAGE_NAME_DEFINITION.key(), IMAGE_NAME_DEFAULT)
       .nullToRandomPort(StreamDefUtils.JMX_PORT_DEFINITION.key())
-      .nullToInt(StreamDefUtils.INSTANCES_DEFINITION.key(), 1)
+      //TODO remove this default value after #2288
       .nullToEmptyArray(StreamDefUtils.NODE_NAMES_DEFINITION.key())
       .nullToEmptyArray(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key())
       .nullToEmptyArray(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key())
@@ -153,6 +154,7 @@ object StreamApi {
     def nodeNames: Option[Set[String]] =
       noJsNull(settings).get(StreamDefUtils.NODE_NAMES_DEFINITION.key()).map(_.convertTo[Seq[String]].toSet)
 
+    //TODO remove this field after #2288
     def instances: Option[Int] =
       noJsNull(settings).get(StreamDefUtils.INSTANCES_DEFINITION.key()).map(_.convertTo[Int])
 
@@ -172,6 +174,7 @@ object StreamApi {
       .arrayRestriction("nodeNames")
       .rejectKeyword(START_COMMAND)
       .rejectKeyword(STOP_COMMAND)
+      .rejectEmpty()
       .toRefiner
       .requireBindPort(StreamDefUtils.JMX_PORT_DEFINITION.key())
       .requirePositiveNumber(StreamDefUtils.INSTANCES_DEFINITION.key())
@@ -224,6 +227,7 @@ object StreamApi {
       noJsNull(settings)(StreamDefUtils.TAGS_DEFINITION.key()).asJsObject.fields
 
     def imageName: String = plain(StreamDefUtils.IMAGE_NAME_DEFINITION.key())
+    // TODO this field is deprecated and should be removed in #2288
     def instances: Int = plain(StreamDefUtils.INSTANCES_DEFINITION.key()).toInt
 
     /**
@@ -298,10 +302,11 @@ object StreamApi {
     @Optional("the default port is random")
     def jmxPort(jmxPort: Int): Request =
       setting(StreamDefUtils.JMX_PORT_DEFINITION.key(), JsNumber(CommonUtils.requireConnectionPort(jmxPort)))
-    @Optional("this parameter has lower priority than nodeNames")
+    @Optional("you should not set both nodeNames and instances")
+    //TODO "This should be removed after #2288"
     def instances(instances: Int): Request =
       setting(StreamDefUtils.INSTANCES_DEFINITION.key(), JsNumber(CommonUtils.requirePositiveInt(instances)))
-    @Optional("this parameter has higher priority than instances")
+    @Optional("you should not set both nodeNames and instances")
     def nodeNames(nodeNames: Set[String]): Request = setting(
       StreamDefUtils.NODE_NAMES_DEFINITION.key(),
       JsArray(CommonUtils.requireNonEmpty(nodeNames.asJava).asScala.map(JsString(_)).toVector))

@@ -110,7 +110,6 @@ class TestStreamApi extends SmallTest with Matchers {
       settings = Map(
         StreamDefUtils.NAME_DEFINITION.key() -> JsString("name"),
         StreamDefUtils.IMAGE_NAME_DEFINITION.key() -> JsString("imageName"),
-        StreamDefUtils.INSTANCES_DEFINITION.key() -> JsNumber(1),
         StreamDefUtils.JAR_KEY_DEFINITION.key() -> ObjectKey.of("group", "name").toJson,
         StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(fromTopicKey).parseJson),
         StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(toTopicKey).parseJson),
@@ -130,7 +129,7 @@ class TestStreamApi extends SmallTest with Matchers {
 
     info.name shouldBe "name"
     info.imageName shouldBe "imageName"
-    info.instances shouldBe 1
+    info.nodeNames shouldBe Set("node1")
     info.jarKey shouldBe ObjectKey.of("group", "name")
     info.from shouldBe Set(fromTopicKey)
     info.to shouldBe Set(toTopicKey)
@@ -195,8 +194,8 @@ class TestStreamApi extends SmallTest with Matchers {
     an[IllegalArgumentException] should be thrownBy accessRequest.instances(0)
     an[IllegalArgumentException] should be thrownBy accessRequest.instances(-1)
 
-    // default value
-    accessRequest.name(CommonUtils.randomString(5)).creation.instances shouldBe 1
+    // default instances is None
+    accessRequest.name(CommonUtils.randomString(5)).creation.instances shouldBe None
   }
 
   @Test
@@ -227,7 +226,7 @@ class TestStreamApi extends SmallTest with Matchers {
     creationApi.from shouldBe Set.empty
     creationApi.to shouldBe Set.empty
     creationApi.jmxPort should not be 0
-    creationApi.instances shouldBe 1
+    creationApi.instances shouldBe None
     creationApi.nodeNames shouldBe Set.empty
     creationApi.tags shouldBe Map.empty
 
@@ -238,7 +237,7 @@ class TestStreamApi extends SmallTest with Matchers {
     creationJson.name.nonEmpty shouldBe true
     creationJson.imageName shouldBe StreamApi.IMAGE_NAME_DEFAULT
     creationJson.jmxPort should not be 0
-    creationJson.instances shouldBe 1
+    creationJson.instances shouldBe None
     creationJson.nodeNames shouldBe Set.empty
     creationJson.tags shouldBe Map.empty
 
@@ -271,7 +270,7 @@ class TestStreamApi extends SmallTest with Matchers {
     creation.from shouldBe Set(from)
     creation.to shouldBe Set(to)
     creation.jmxPort shouldBe jmxPort
-    creation.instances shouldBe instances
+    creation.instances shouldBe Some(instances)
     creation.nodeNames shouldBe nodeNames
   }
 
@@ -315,7 +314,7 @@ class TestStreamApi extends SmallTest with Matchers {
     creation.from shouldBe Set(from)
     creation.to shouldBe Set(to)
     creation.jmxPort should not be 0
-    creation.instances shouldBe 1
+    creation.instances shouldBe None
     creation.nodeNames shouldBe Set(nodeName)
 
     val name = CommonUtils.randomString(10)
@@ -344,7 +343,7 @@ class TestStreamApi extends SmallTest with Matchers {
     creation.from shouldBe Set(from)
     creation.to shouldBe Set(to)
     creation2.jmxPort should not be 0
-    creation2.instances shouldBe 1
+    creation2.instances shouldBe None
     creation.nodeNames shouldBe Set(nodeName)
   }
 
@@ -558,6 +557,14 @@ class TestStreamApi extends SmallTest with Matchers {
       |  }
       |  """.stripMargin.parseJson)
     thrown1.getMessage should include("the value of \"nodeNames\" can't be empty string")
+
+    // create with an empty array is ok
+    // TODO : this should be removed after #2288
+    StreamApi.STREAM_CREATION_JSON_FORMAT.read(s"""
+      |  {
+      |    "nodeNames": []
+      |  }
+      |  """.stripMargin.parseJson)
   }
 
   @Test
@@ -568,6 +575,13 @@ class TestStreamApi extends SmallTest with Matchers {
       |  }
       |  """.stripMargin.parseJson)
     thrown1.getMessage should include("the value of \"nodeNames\" can't be empty string")
+
+    val thrown2 = the[DeserializationException] thrownBy StreamApi.STREAM_UPDATE_JSON_FORMAT.read(s"""
+      |  {
+      |    "nodeNames": []
+      |  }
+      |  """.stripMargin.parseJson)
+    thrown2.getMessage should include("nodeNames cannot be an empty array")
   }
 
   @Test

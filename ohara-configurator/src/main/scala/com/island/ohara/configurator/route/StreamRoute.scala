@@ -96,39 +96,92 @@ private[configurator] object StreamRoute {
       .getOrElse(CollieUtils.singleCluster[BrokerClusterInfo]())
   } else CollieUtils.singleCluster[BrokerClusterInfo]()
 
+  /**
+    * This is a temporary solution for using both nodeNames and instances
+    * Decide streamApp running nodes. Rules:
+    * 1) If both instances and nodeNames were not defined, return empty
+    * 2) If instances was defined and nodeNames was not empty, throw exception
+    * 3) If instances was not defined but nodeNames is defined
+    * 3.1) If some nodes were not defined in nodeCollie, throw exception
+    * 3.2) return nodeNames
+    * 4) If instances is bigger than nodeCollie size, throw exception
+    * 5) Random pick node name from nodeCollie of instances size
+    *
+    * @param nodeNamesOption node name list
+    * @param instancesOption running instances
+    * @param executionContext execution context
+    * @param nodeCollie node collie
+    * @return actual node name list
+    */
+  private[this] def pickNodeNames(nodeNamesOption: Option[Set[String]], instancesOption: Option[Int])(
+    implicit executionContext: ExecutionContext,
+    nodeCollie: NodeCollie): Future[Option[Set[String]]] =
+    nodeCollie.nodes().map(n => n.map(_.name)).map { all =>
+      instancesOption.fold(
+        // not define instances, use nodeNames instead
+        // If there were some nodes that nodeCollie doesn't contain, throw exception
+        nodeNamesOption.fold[Option[Set[String]]](
+          // both instances and nodeNames are not defined, return None
+          None
+        ) { nodeNames =>
+          if (nodeNames.forall(all.contains))
+            // you are fine to going use it
+            Some(nodeNames)
+          else
+            // we find a node that is not belong to nodeCollie , throw error
+            throw new IllegalArgumentException(
+              s"Some nodes could not be found, expected: $nodeNames, actual: $all"
+            )
+        }
+      ) { instances =>
+        if (nodeNamesOption.isDefined && nodeNamesOption.get.nonEmpty)
+          throw new IllegalArgumentException(
+            s"You cannot define both nodeNames[$nodeNamesOption] and instances[$instances]")
+        if (all.size < instances)
+          throw new IllegalArgumentException(
+            s"You cannot set instances bigger than actual node list. Expect instances: $instances, actual: ${all.size}")
+        Some(Random.shuffle(all).take(instances).toSet)
+      }
+    }
+
   private[this] def hookOfCreation(implicit fileStore: FileStore,
+                                   nodeCollie: NodeCollie,
                                    workerCollie: WorkerCollie,
                                    brokerCollie: BrokerCollie,
                                    streamCollie: StreamCollie,
                                    executionContext: ExecutionContext): HookOfCreation[Creation, StreamClusterInfo] =
     (creation: Creation) =>
       pickBrokerCluster(creation.brokerClusterName, creation.jarKey).flatMap { bkName =>
-        creation.jarKey
-          .map(fileStore.fileInfo)
-          .map(_.map(_.url).flatMap(streamCollie.loadDefinition).map((_, Option.empty[String])))
-          .getOrElse(Future.successful((None, None)))
-          .recover {
-            case e: Throwable => (None, Some(e.getMessage))
-          }
-          .map {
-            case (definition, error) =>
-              StreamClusterInfo(
-                settings = creation.settings + (StreamDefUtils.BROKER_CLUSTER_NAME_DEFINITION.key() -> JsString(
-                  bkName)),
-                definition = definition,
-                nodeNames = creation.nodeNames,
-                deadNodes = Set.empty,
-                state = None,
-                metrics = Metrics.EMPTY,
-                error = error,
-                lastModified = CommonUtils.current()
-              )
-          }
-          .map(assertParameters)
+        //TODO remove this after #2288
+        pickNodeNames(Some(creation.nodeNames), creation.instances).flatMap(
+          nodes =>
+            creation.jarKey
+              .map(fileStore.fileInfo)
+              .map(_.map(_.url).flatMap(streamCollie.loadDefinition).map((_, Option.empty[String])))
+              .getOrElse(Future.successful((None, None)))
+              .recover {
+                case e: Throwable => (None, Some(e.getMessage))
+              }
+              .map {
+                case (definition, error) =>
+                  StreamClusterInfo(
+                    settings = creation.settings + (StreamDefUtils.BROKER_CLUSTER_NAME_DEFINITION.key() -> JsString(
+                      bkName)),
+                    definition = definition,
+                    nodeNames = nodes.getOrElse(Set.empty),
+                    deadNodes = Set.empty,
+                    state = None,
+                    metrics = Metrics(Seq.empty),
+                    error = error,
+                    lastModified = CommonUtils.current()
+                  )
+              }
+              .map(assertParameters))
     }
 
   private[this] def hookOfUpdate(
-    implicit workerCollie: WorkerCollie,
+    implicit nodeCollie: NodeCollie,
+    workerCollie: WorkerCollie,
     brokerCollie: BrokerCollie,
     streamCollie: StreamCollie,
     executionContext: ExecutionContext): HookOfUpdate[Creation, Update, StreamClusterInfo] =
@@ -138,9 +191,20 @@ private[configurator] object StreamRoute {
           if (clusters.keys.filter(_.name == key.name()).exists(_.state.nonEmpty))
             throw new RuntimeException(s"You cannot update property on non-stopped StreamApp cluster: $key")
           pickBrokerCluster(update.brokerClusterName.orElse(previousOption.map(_.brokerClusterName)),
-                            update.jarKey.orElse(previousOption.map(_.jarKey))).map(bkName =>
-            update.copy(
-              settings = update.settings + (StreamDefUtils.BROKER_CLUSTER_NAME_DEFINITION.key() -> JsString(bkName))))
+                            update.jarKey.orElse(previousOption.map(_.jarKey))).flatMap(
+            bkName =>
+              //TODO remove this after #2288
+              pickNodeNames(update.nodeNames, update.instances).map { nodes =>
+                var extra_settings =
+                  Map[String, JsValue](StreamDefUtils.BROKER_CLUSTER_NAME_DEFINITION.key() -> JsString(bkName))
+                if (nodes.isDefined)
+                  extra_settings += StreamDefUtils.NODE_NAMES_DEFINITION.key() -> JsArray(
+                    nodes.get.map(JsString(_)).toVector)
+                update.copy(
+                  settings = update.settings ++ extra_settings
+                )
+            }
+          )
         }
         .map { update =>
           StreamClusterInfo(
@@ -159,7 +223,6 @@ private[configurator] object StreamRoute {
 
   private[this] def hookOfStart(implicit store: DataStore,
                                 fileStore: FileStore,
-                                nodeCollie: NodeCollie,
                                 clusterCollie: ClusterCollie,
                                 brokerCollie: BrokerCollie,
                                 executionContext: ExecutionContext): HookOfAction =
@@ -204,45 +267,24 @@ private[configurator] object StreamRoute {
             }
             .flatMap { brokerClusterInfo =>
               fileStore.fileInfo(streamClusterInfo.jarKey).flatMap { fileInfo =>
-                nodeCollie
-                  .nodes()
-                  .map { all =>
-                    if (CommonUtils.isEmpty(streamClusterInfo.nodeNames.asJava)) {
-                      // Check instance first
-                      // Here we will check the following conditions:
-                      // 1. instance should be positive
-                      // 2. available nodes should be bigger than instance (one node runs one instance)
-                      if (all.size < streamClusterInfo.instances)
-                        throw new IllegalArgumentException(
-                          s"cannot run streamApp. expect: ${streamClusterInfo.instances}, actual: ${all.size}")
-                      Random.shuffle(all).take(CommonUtils.requirePositiveInt(streamClusterInfo.instances)).toSet
-                    } else
-                      // if require node name is not in nodeCollie, do not take that node
-                      CommonUtils
-                        .requireNonEmpty(all.filter(n => streamClusterInfo.nodeNames.contains(n.name)).asJava)
-                        .asScala
-                        .toSet
-                  }
-                  .flatMap { nodes =>
-                    clusterCollie.streamCollie.creator
-                      .clusterName(streamClusterInfo.name)
-                      .imageName(IMAGE_NAME_DEFAULT)
-                      .jarInfo(fileInfo)
-                      // these settings will send to container environment
-                      // we convert all value to string for convenient
-                      .settings(streamClusterInfo.settings)
-                      .setting(StreamDefUtils.BROKER_DEFINITION.key(), JsString(brokerClusterInfo.connectionProps))
-                      // This nodeNames() should put after settings() because we decide nodeName in starting phase
-                      // TODO: the order should not be a problem and please refactor this in #2288
-                      .nodeNames(nodes.map(_.name))
-                      .setting(StreamDefUtils.EXACTLY_ONCE_DEFINITION.key(),
-                               JsString(streamClusterInfo.exactlyOnce.toString))
-                      .setting(StreamDefUtils.EXACTLY_ONCE_DEFINITION.key(),
-                               JsString(streamClusterInfo.exactlyOnce.toString))
-                      .brokerClusterName(brokerClusterInfo.name)
-                      .threadPool(executionContext)
-                      .create()
-                  }
+                clusterCollie.streamCollie.creator
+                  .clusterName(streamClusterInfo.name)
+                  .imageName(IMAGE_NAME_DEFAULT)
+                  .jarInfo(fileInfo)
+                  // these settings will send to container environment
+                  // we convert all value to string for convenient
+                  .settings(streamClusterInfo.settings)
+                  .setting(StreamDefUtils.BROKER_DEFINITION.key(), JsString(brokerClusterInfo.connectionProps))
+                  // This nodeNames() should put after settings() because we decide nodeName in starting phase
+                  // TODO: the order should not be a problem and please refactor this in #2288
+                  .nodeNames(streamClusterInfo.nodeNames)
+                  .setting(StreamDefUtils.EXACTLY_ONCE_DEFINITION.key(),
+                           JsString(streamClusterInfo.exactlyOnce.toString))
+                  .setting(StreamDefUtils.EXACTLY_ONCE_DEFINITION.key(),
+                           JsString(streamClusterInfo.exactlyOnce.toString))
+                  .brokerClusterName(brokerClusterInfo.name)
+                  .threadPool(executionContext)
+                  .create()
               }
             }
         }

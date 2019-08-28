@@ -116,6 +116,7 @@ class TestPipelineRoute extends MediumTest with Matchers {
         .fromTopicKey(from.key)
         .toTopicKey(to.key)
         .brokerClusterName(bk.name)
+        .instances(1)
         .jarKey(fileInfo.key)
         .create())
 

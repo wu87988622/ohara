@@ -207,7 +207,8 @@ class TestMetrics extends WithBrokerWorker with Matchers {
     result(topicApi.start(t1.key))
     result(topicApi.start(t2.key))
 
-    val stream = result(streamApi.request.jarKey(jarInfo.key).fromTopicKey(t1.key).toTopicKey(t2.key).create())
+    val stream = result(
+      streamApi.request.jarKey(jarInfo.key).instances(1).fromTopicKey(t1.key).toTopicKey(t2.key).create())
 
     val pipelineApi = PipelineApi.access.hostname(configurator.hostname).port(configurator.port)
 

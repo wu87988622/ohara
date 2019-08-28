@@ -121,7 +121,7 @@ Example Request
        more than 1 topic.
 
       [TODO] We will support multiple topics on issue :ohara-issue:`688`
-  #. instances (**int**) — number of running streamApp ; default is 1
+  #. instances (**int**) — number of running streamApp
 
      The above fields are pre-defined and could use in request body for convenient. The option fields will have no default value,
      but others will auto fill default value as we describe above. The minimum required request fields is empty:
