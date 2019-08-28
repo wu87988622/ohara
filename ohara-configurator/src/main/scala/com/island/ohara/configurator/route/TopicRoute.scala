@@ -69,17 +69,25 @@ private[configurator] object TopicRoute {
     val topicAdmin = brokerCollie.topicAdmin(brokerCluster)
     topicAdmin
       .exist(topicInfo.key)
+      .flatMap(
+        if (_)
+          topicAdmin
+            .topics()
+            .map(_.find(_.name == topicInfo.key.topicNameOnKafka()).get)
+            .map(_.partitionInfos -> Some(TopicState.RUNNING))
+        else Future.successful(Seq.empty -> None))
       // pre-close topic admin
       .map(v =>
         try v
         finally Releasable.close(topicAdmin))
-      .map(if (_) Some(TopicState.RUNNING) else None)
-      .map(
-        state =>
+      .map {
+        case (partitions, state) =>
           topicInfo.copy(
+            partitionInfos = partitions,
             state = state,
             metrics = metrics(brokerCluster, topicInfo.key.topicNameOnKafka)
-        ))
+          )
+      }
   }
 
   private[this] def createTopic(topicAdmin: TopicAdmin, topicInfo: TopicInfo)(
@@ -126,6 +134,7 @@ private[configurator] object TopicRoute {
           settings = TOPIC_CUSTOM_CONFIGS
             ++ creation.settings
             + (BROKER_CLUSTER_NAME_KEY -> JsString(clusterName)),
+          partitionInfos = Seq.empty,
           metrics = Metrics.EMPTY,
           state = None,
           lastModified = CommonUtils.current()
@@ -153,6 +162,7 @@ private[configurator] object TopicRoute {
                   settings = previous.map(_.settings).getOrElse(Map.empty)
                     ++ update.settings
                     + (BROKER_CLUSTER_NAME_KEY -> JsString(cluster.name)),
+                  partitionInfos = Seq.empty,
                   metrics = Metrics.EMPTY,
                   state = None,
                   lastModified = CommonUtils.current()

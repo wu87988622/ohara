@@ -26,7 +26,10 @@ import com.island.ohara.common.setting.TopicKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.admin.{AdminClient, NewPartitions, NewTopic, TopicDescription}
+import org.apache.kafka.clients.consumer.{ConsumerConfig, KafkaConsumer}
+import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.config.{ConfigResource, TopicConfig}
+import org.apache.kafka.common.serialization.ByteArrayDeserializer
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{Future, Promise}
@@ -70,7 +73,9 @@ trait TopicAdmin extends Releasable {
     * @param topicKey topic key
     * @return true if it does delete a topic. otherwise, false
     */
-  def delete(topicKey: TopicKey): Future[Boolean]
+  def delete(topicKey: TopicKey): Future[Boolean] = delete(topicKey.topicNameOnKafka())
+
+  def delete(topicName: String): Future[Boolean]
 
   /**
     * the connection information to kafka's broker
@@ -130,15 +135,65 @@ object TopicAdmin {
         promise.future
       }
 
-    private[this] def toTopicInfo(topicDescription: TopicDescription, configs: Map[String, String]): TopicInfo =
+    private[this] def toTopicInfo(topicDescription: TopicDescription,
+                                  configs: Map[String, String],
+                                  offsets: TopicPartitionOffsets): TopicInfo = {
+
       TopicInfo(
         name = topicDescription.name(),
         numberOfPartitions = topicDescription.partitions().size(),
         numberOfReplications = topicDescription.partitions().get(0).replicas().size().asInstanceOf[Short],
+        partitionInfos = topicDescription.partitions().asScala.map { kafkaPartition =>
+          PartitionInfo(
+            index = kafkaPartition.partition(),
+            leaderNode = kafkaPartition.leader().host(),
+            replicaNodes = kafkaPartition.replicas().asScala.map(_.host()).toSet,
+            inSyncReplicaNodes = kafkaPartition.isr().asScala.map(_.host()).toSet,
+            beginningOffset = offsets.beginningOffset(topicDescription.name(), kafkaPartition.partition()),
+            endOffset = offsets.endOffset(topicDescription.name(), kafkaPartition.partition())
+          )
+        },
         configs = configs
       )
+    }
 
-    override def topics(): Future[Seq[TopicInfo]] = {
+    /**
+      * fetch the low/high offsets from all topics.
+      * the client code is KafkaConsumer than KafkaAdmin since the later is unsupported to fetch offsets ...
+      */
+    private[this] def topicOffsets(): TopicPartitionOffsets = {
+      val config = new Properties
+      config.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, _connectionProps)
+      config.setProperty(ConsumerConfig.CLIENT_ID_CONFIG, CommonUtils.randomString())
+      val consumer =
+        new KafkaConsumer[Array[Byte], Array[Byte]](config, new ByteArrayDeserializer, new ByteArrayDeserializer)
+      TopicPartitionOffsets(try {
+        consumer
+          .listTopics()
+          .asScala
+          .map {
+            case (topicName, pts) => topicName -> pts.asScala.map(p => new TopicPartition(p.topic(), p.partition()))
+          }
+          .map {
+            case (topicName, pts) =>
+              def fetchOffset(offsets: Map[TopicPartition, java.lang.Long], partition: TopicPartition): Long =
+                offsets.getOrElse(
+                  partition,
+                  throw new NoSuchElementException(
+                    s"topic:${partition.topic()} partition:${partition.partition()} does not exist")
+                )
+              val beginningOffsets = consumer.beginningOffsets(pts.asJava).asScala.toMap
+              val endOffsets = consumer.endOffsets(pts.asJava).asScala.toMap
+              topicName -> pts
+                .map(pt => pt.partition() -> (fetchOffset(beginningOffsets, pt) -> fetchOffset(endOffsets, pt)))
+                .toMap
+          }
+          .toMap
+      } finally Releasable.close(consumer))
+    }
+
+    override def topics(): Future[Seq[TopicInfo]] = try {
+      val allOffsets = topicOffsets()
       val promise = Promise[Seq[TopicInfo]]
       unwrap(
         () =>
@@ -160,27 +215,32 @@ object TopicAdmin {
                             .map(name => new ConfigResource(ConfigResource.Type.TOPIC, name))
                             .asJava)
                         .all()
-                        .whenComplete((topicsAndConfigs, exception) => {
-                          if (exception == null)
-                            promise.success(
-                              topicDescriptions
-                                .values()
-                                .asScala
-                                .map { topicDescription =>
-                                  val configs = topicsAndConfigs.asScala
-                                    .find(_._1.name() == topicDescription.name())
-                                    .map(_._2.entries().asScala.map(e => e.name() -> e.value()).toMap)
-                                    .getOrElse(Map.empty)
-                                  toTopicInfo(topicDescription, configs)
-                                }
-                                .toSeq)
-                          else promise.failure(exception)
+                        .whenComplete((topicsAndConfigs, exception) =>
+                          try {
+                            if (exception == null)
+                              promise.success(
+                                topicDescriptions
+                                  .values()
+                                  .asScala
+                                  .map { topicDescription =>
+                                    val configs = topicsAndConfigs.asScala
+                                      .find(_._1.name() == topicDescription.name())
+                                      .map(_._2.entries().asScala.map(e => e.name() -> e.value()).toMap)
+                                      .getOrElse(Map.empty)
+                                    toTopicInfo(topicDescription, configs, allOffsets)
+                                  }
+                                  .toSeq)
+                            else promise.failure(exception)
+                          } catch {
+                            case e: Throwable => promise.failure(e)
                         })
                     else promise.failure(exception)
                   })
               else promise.failure(exception)
             }))
       promise.future
+    } catch {
+      case e: Throwable => Future.failed(e)
     }
 
     override def changePartitions(topicKey: TopicKey, numberOfPartitions: Int): Future[Unit] = {
@@ -198,7 +258,7 @@ object TopicAdmin {
       promise.future
     }
 
-    override def delete(topicKey: TopicKey): Future[Boolean] = {
+    override def delete(topicName: String): Future[Boolean] = {
       val promise = Promise[Boolean]
       unwrap(
         () =>
@@ -207,9 +267,9 @@ object TopicAdmin {
             .names()
             .whenComplete((topicNames, exception) => {
               if (exception == null) {
-                if (topicNames.asScala.contains(topicKey.topicNameOnKafka()))
+                if (topicNames.asScala.contains(topicName))
                   admin
-                    .deleteTopics(util.Collections.singletonList(topicKey.topicNameOnKafka()))
+                    .deleteTopics(util.Collections.singletonList(topicName))
                     .all()
                     .whenComplete((_, exception) => {
                       if (exception == null) promise.success(true)
@@ -237,9 +297,33 @@ object TopicAdmin {
     }
   }
 
+  /**
+    * used by internal process.
+    * @param offsets raw offsets
+    */
+  private[this] case class TopicPartitionOffsets(offsets: Map[String, Map[Int, (Long, Long)]]) {
+
+    private[this] def offset(topicName: String, partition: Int): (Long, Long) = offsets
+      .getOrElse(topicName, throw new NoSuchElementException(s"topic:$topicName does not exist"))
+      .getOrElse(partition,
+                 throw new NoSuchElementException(s"partition:$partition does not exist in topic:$topicName"))
+
+    def beginningOffset(topicName: String, partition: Int): Long = offset(topicName, partition)._1
+
+    def endOffset(topicName: String, partition: Int): Long = offset(topicName, partition)._2
+  }
+
+  final case class PartitionInfo(index: Int,
+                                 leaderNode: String,
+                                 replicaNodes: Set[String],
+                                 inSyncReplicaNodes: Set[String],
+                                 beginningOffset: Long,
+                                 endOffset: Long)
+
   final case class TopicInfo(name: String,
                              numberOfPartitions: Int,
                              numberOfReplications: Short,
+                             partitionInfos: Seq[PartitionInfo],
                              configs: Map[String, String])
 
   trait Creator extends com.island.ohara.common.pattern.Creator[Future[Unit]] {

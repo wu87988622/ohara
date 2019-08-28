@@ -24,20 +24,25 @@ ohara will invoke a creation of kafka also. Also, the delete to ohara
 topic also invoke a delete request to kafka. The common properties in
 topic are shown below.
 
-#. group (**string**) — topic group.
-#. name (**string**) — topic name
-#. brokerClusterName (**option(string)**) — the broker cluster hosting
-   this topic (**If you don’t specify the broker cluster in request,
-   Ohara will try to find a broker cluster for you. And it works only if
-   there is only a broker cluster exists in Ohara**)
-#. numberOfReplications (**option(int)**) — the number of replications
-   for this topic (**it is illegal to input the number of replications
-   which is larger than the number of broker nodes**)
-#. numberOfPartitions (**option(int)**)— the number of partitions for
-   this topic
+#. settings(**object**) — topic settings. Normally, it includes following configs
+
+  #. group (**string**) — topic group.
+  #. name (**string**) — topic name
+  #. brokerClusterName (**option(string)**) — the broker cluster hosting this topic
+  #. numberOfReplications (**option(int)**) — the number of replications
+  #. numberOfPartitions (**option(int)**)— the number of partitions for this topic
+  #. tags (**option(object)**) — the extra description to this object
+
 #. state (**option(string)**) — state of a running topic. nothing if the topic is not running.
-#. tags (**option(object)**) — the extra description to this
-   object
+#. partitionInfos (**Array(object)**) — the details of partitions.
+
+  #. index (**int**) — the index of partition
+  #. leaderNode (**String**) — the leader (node) of this partition
+  #. replicaNodes (**Array(String)**) — the nodes hosting the replica for this partition
+  #. inSyncReplicaNodes (**Array(String)**) — the nodes which have fetched the newest data from leader
+  #. beginningOffset (**long**) — the beginning offset
+  #. endOffset (**endOffset**) — the latest offset (Normally, it is the latest commit data)
+
 
 .. note::
   #. The name must be unique in a broker cluster.

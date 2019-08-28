@@ -17,8 +17,10 @@
 package com.island.ohara.client.kafka
 
 import com.island.ohara.client.kafka.TopicAdmin.TopicInfo
+import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.setting.TopicKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
+import com.island.ohara.kafka.Producer
 import com.island.ohara.testing.With3Brokers
 import org.apache.kafka.common.config.TopicConfig
 import org.apache.kafka.common.errors.{InvalidPartitionsException, UnknownTopicOrPartitionException}
@@ -37,6 +39,8 @@ class TestTopicAdmin extends With3Brokers with Matchers {
       () =>
         try result(topicAdmin.topics().map(_.exists(_.name == topicKey.topicNameOnKafka())))
         catch {
+          // the partition is not ready
+          case _: NoSuchElementException           => false
           case _: UnknownTopicOrPartitionException => false
       },
       java.time.Duration.ofSeconds(60)
@@ -84,7 +88,7 @@ class TestTopicAdmin extends With3Brokers with Matchers {
     val topic = waitAndGetTopicInfo(topicKey)
     result(topicAdmin.changePartitions(topicKey, numberOfPartitions + 1))
     val topic2 = waitAndGetTopicInfo(topicKey)
-    topic2 shouldBe topic.copy(numberOfPartitions = numberOfPartitions + 1)
+    topic2.numberOfPartitions shouldBe topic.numberOfPartitions + 1
   }
 
   @Test
@@ -179,6 +183,37 @@ class TestTopicAdmin extends With3Brokers with Matchers {
     result(topicAdmin.creator.topicKey(topicKey).create())
     waitAndGetTopicInfo(topicKey)
     result(topicAdmin.exist(topicKey)) shouldBe true
+  }
+
+  @Test
+  def testBeginningOffsetAndEndOffset(): Unit = {
+    result(topicAdmin.exist(TopicKey.of(GROUP, CommonUtils.randomString()))) shouldBe false
+    val topicKey = TopicKey.of(GROUP, CommonUtils.randomString(10))
+    result(topicAdmin.creator.topicKey(topicKey).create())
+    waitAndGetTopicInfo(topicKey)
+    val producer = Producer
+      .builder[String, String]
+      .connectionProps(testUtil().brokersConnProps())
+      .keySerializer(Serializer.STRING)
+      .valueSerializer(Serializer.STRING)
+      .build()
+    val count = 10
+    try {
+      (0 until count).foreach(
+        _ =>
+          producer
+            .sender()
+            .topicName(topicKey.topicNameOnKafka())
+            .key(CommonUtils.randomString())
+            .value(CommonUtils.randomString())
+            .send())
+      producer.flush()
+    } finally Releasable.close(producer)
+    val topicInfo = result(topicAdmin.topics()).find(_.name == topicKey.topicNameOnKafka()).get
+    topicInfo.partitionInfos.foreach { partition =>
+      partition.beginningOffset shouldBe 0
+      partition.endOffset shouldBe count
+    }
   }
 
   @After

@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import com.island.ohara.client.Enum
 import com.island.ohara.client.configurator.Data
+import com.island.ohara.client.kafka.TopicAdmin.PartitionInfo
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.setting.{SettingDef, TopicKey}
 import com.island.ohara.common.setting.SettingDef.Type
@@ -303,12 +304,19 @@ object TopicApi {
   object TopicState extends Enum[TopicState] {
     case object RUNNING extends TopicState("RUNNING")
   }
+
   implicit val TOPIC_STATE_FORMAT: RootJsonFormat[TopicState] = new RootJsonFormat[TopicState] {
     override def read(json: JsValue): TopicState = TopicState.forName(json.convertTo[String].toUpperCase)
     override def write(obj: TopicState): JsValue = JsString(obj.name)
   }
 
-  case class TopicInfo(settings: Map[String, JsValue], metrics: Metrics, state: Option[TopicState], lastModified: Long)
+  implicit val TOPIC_PARTITION_FORMAT: RootJsonFormat[PartitionInfo] = jsonFormat6(PartitionInfo)
+
+  case class TopicInfo(settings: Map[String, JsValue],
+                       partitionInfos: Seq[PartitionInfo],
+                       metrics: Metrics,
+                       state: Option[TopicState],
+                       lastModified: Long)
       extends Data {
     override def key: TopicKey = TopicKey.of(group, name)
     override def kind: String = "topic"
@@ -350,7 +358,7 @@ object TopicApi {
   }
 
   implicit val TOPIC_INFO_FORMAT: RootJsonFormat[TopicInfo] = new RootJsonFormat[TopicInfo] {
-    private[this] val format = jsonFormat4(TopicInfo)
+    private[this] val format = jsonFormat5(TopicInfo)
     override def read(json: JsValue): TopicInfo = format.read(json)
 
     override def write(obj: TopicInfo): JsValue = JsObject(

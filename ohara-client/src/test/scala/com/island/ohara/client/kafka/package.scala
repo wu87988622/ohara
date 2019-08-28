@@ -28,7 +28,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 package object kafka {
   val ROW: Row = Row.of(Cell.of("f0", 13), Cell.of("f1", false))
 
-  def result[T](f: Future[T]): T = Await.result(f, 30 seconds)
+  def result[T](f: Future[T]): T = Await.result(f, 60 seconds)
 
   def await(f: () => Boolean): Unit = CommonUtils.await(() => f(), Duration.ofSeconds(300))
 

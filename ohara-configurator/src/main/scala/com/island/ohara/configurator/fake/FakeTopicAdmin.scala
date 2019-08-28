@@ -55,6 +55,7 @@ private[configurator] class FakeTopicAdmin extends TopicAdmin {
         name = topicKey.topicNameOnKafka(),
         numberOfPartitions = numberOfPartitions,
         numberOfReplications = numberOfReplications,
+        partitionInfos = Seq.empty,
         configs
       )
       if (cachedTopics.putIfAbsent(topicKey.topicNameOnKafka(), topicInfo) != null)
@@ -67,8 +68,8 @@ private[configurator] class FakeTopicAdmin extends TopicAdmin {
   }
 
   override def closed: Boolean = _closed
-  override def delete(topicKey: TopicKey): Future[Boolean] = {
-    val removed = cachedTopics.remove(topicKey.topicNameOnKafka())
+  override def delete(topicName: String): Future[Boolean] = {
+    val removed = cachedTopics.remove(topicName)
     if (removed == null) Future.successful(false)
     else Future.successful(true)
   }
