@@ -52,7 +52,7 @@ const TopicNewModal = props => {
     setIsSaving(false);
     const isSuccess = get(topicRes(), 'data.isSuccess', false);
     if (isSuccess) {
-      form.reset();
+      setTimeout(form.reset);
       showMessage(MESSAGES.TOPIC_CREATION_SUCCESS);
       props.onConfirm();
       handleClose();

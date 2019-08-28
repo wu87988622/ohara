@@ -15,7 +15,7 @@
  */
 
 import ReactModal from 'react-modal';
-import { injectGlobal } from 'styled-components';
+import { createGlobalStyle } from 'styled-components';
 
 import {
   blue,
@@ -36,7 +36,7 @@ import '../../node_modules/toastr/build/toastr.css';
 ReactModal.defaultStyles.overlay.backgroundColor = 'rgba(32, 42, 65, .9)';
 ReactModal.defaultStyles.overlay.zIndex = 1100;
 
-export default injectGlobal`
+export default createGlobalStyle`
   @import url('https://fonts.googleapis.com/css?family=Merriweather+Sans:400,700|Roboto:400,700,900');
   
   *, *:before, *:after {

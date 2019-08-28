@@ -48,7 +48,7 @@ const NodeNewModal = props => {
     await postApi(data);
     const isSuccess = get(getData(), 'data.isSuccess', false);
     if (isSuccess) {
-      form.reset();
+      setTimeout(form.reset);
       showMessage(MESSAGES.NODE_CREATION_SUCCESS);
       handleConfirm();
       handleClose();

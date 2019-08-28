@@ -52,7 +52,7 @@ const NodeEditModal = props => {
     await putApi(`/${values.name}`, data);
     const isSuccess = get(saveRes(), 'data.isSuccess', false);
     if (isSuccess) {
-      form.reset();
+      setTimeout(form.reset);
       showMessage(MESSAGES.NODE_CREATION_SUCCESS);
       props.handleConfirm();
       handleModalClose();

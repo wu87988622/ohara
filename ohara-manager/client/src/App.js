@@ -19,6 +19,8 @@ import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import { create } from 'jss';
 import { StylesProvider, jssPreset } from '@material-ui/styles';
 
+import GlobalStyle from 'theme/globalStyle';
+
 import Header from 'components/common/Header';
 import HomePage from 'components/pages/HomePage';
 import PipelinePage from 'components/pages/PipelinePage';
@@ -43,6 +45,7 @@ class App extends React.Component {
         <SnackbarProvider>
           <Router>
             <React.Fragment>
+              <GlobalStyle />
               <Header />
               <Switch>
                 <Route
