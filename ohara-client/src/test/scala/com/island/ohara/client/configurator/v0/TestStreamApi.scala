@@ -650,4 +650,20 @@ class TestStreamApi extends SmallTest with Matchers {
     val r1 = accessRequest.brokerClusterName(bkName).creation
     r1.brokerClusterName.get shouldBe bkName
   }
+
+  @Test
+  def testAliveNodes(): Unit = {
+    val cluster = StreamClusterInfo(
+      settings = Map.empty,
+      definition = None,
+      nodeNames = Set("n0", "n1"),
+      deadNodes = Set("n0"),
+      state = Some("running"),
+      error = None,
+      metrics = Metrics.EMPTY,
+      lastModified = CommonUtils.current()
+    )
+    cluster.aliveNodes shouldBe Set("n1")
+    cluster.copy(state = None).aliveNodes shouldBe Set.empty
+  }
 }

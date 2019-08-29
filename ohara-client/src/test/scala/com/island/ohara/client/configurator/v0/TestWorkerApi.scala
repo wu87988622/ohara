@@ -495,4 +495,34 @@ class TestWorkerApi extends SmallTest with Matchers {
     thrown3.getMessage should include("the connection port must be [1024, 65535), but actual port is \"99999\"")
   }
 
+  @Test
+  def testAliveNodes(): Unit = {
+    val cluster = WorkerClusterInfo(
+      name = CommonUtils.randomString(),
+      imageName = CommonUtils.randomString(),
+      brokerClusterName = CommonUtils.randomString(),
+      clientPort = 10,
+      jmxPort = 10,
+      groupId = CommonUtils.randomString(),
+      statusTopicName = CommonUtils.randomString(),
+      statusTopicPartitions = 10,
+      statusTopicReplications = 10,
+      configTopicName = CommonUtils.randomString(),
+      configTopicPartitions = 10,
+      configTopicReplications = 10,
+      offsetTopicName = CommonUtils.randomString(),
+      offsetTopicPartitions = 10,
+      offsetTopicReplications = 10,
+      jarInfos = Seq.empty,
+      connectors = Seq.empty,
+      nodeNames = Set("n0", "n1"),
+      deadNodes = Set("n0"),
+      state = Some("running"),
+      error = None,
+      tags = Map.empty,
+      lastModified = CommonUtils.current()
+    )
+    cluster.aliveNodes shouldBe Set("n1")
+    cluster.copy(state = None).aliveNodes shouldBe Set.empty
+  }
 }

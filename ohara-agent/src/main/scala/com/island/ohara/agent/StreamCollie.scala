@@ -141,7 +141,7 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
     * @param cluster cluster
     * @return counter beans
     */
-  def counters(cluster: StreamClusterInfo): Seq[CounterMBean] = cluster.nodeNames.flatMap { node =>
+  def counters(cluster: StreamClusterInfo): Seq[CounterMBean] = cluster.aliveNodes.flatMap { node =>
     BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().counterMBeans().asScala
   }.toSeq
 

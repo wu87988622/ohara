@@ -60,6 +60,8 @@ trait ClusterInfo extends Data {
     */
   def state: Option[String]
 
+  def aliveNodes: Set[String] = if (state.isEmpty) Set.empty else nodeNames -- deadNodes
+
   /**
     * @return the error message of this cluster.
     */
