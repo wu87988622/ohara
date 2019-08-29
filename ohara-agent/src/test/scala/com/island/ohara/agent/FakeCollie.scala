@@ -103,7 +103,8 @@ case class FakeCollieClusterInfo(name: String, nodeNames: Set[String], state: Op
                      deadNodes: Set[String],
                      state: Option[String],
                      error: Option[String],
-                     metrics: Metrics): FakeCollieClusterInfo = throw new UnsupportedOperationException
+                     metrics: Metrics,
+                     tags: Map[String, JsValue]): FakeCollieClusterInfo = throw new UnsupportedOperationException
 }
 
 object FakeCollie {

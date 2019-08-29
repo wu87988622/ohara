@@ -179,15 +179,17 @@ object WorkerApi {
                        deadNodes: Set[String],
                        state: Option[String],
                        error: Option[String],
-                       metrics: Metrics): WorkerClusterInfo = copy(
+                       metrics: Metrics,
+                       tags: Map[String, JsValue]): WorkerClusterInfo = copy(
       nodeNames = nodeNames,
       deadNodes = deadNodes,
       state = state,
-      error = error
+      error = error,
+      tags = tags
     )
 
     // TODO: expose the metrics for wk
-    override def metrics: Metrics = Metrics.EMPTY,
+    override def metrics: Metrics = Metrics.EMPTY
   }
 
   /**

@@ -111,11 +111,13 @@ object BrokerApi {
                        deadNodes: Set[String],
                        state: Option[String],
                        error: Option[String],
-                       metrics: Metrics): BrokerClusterInfo = copy(
+                       metrics: Metrics,
+                       tags: Map[String, JsValue]): BrokerClusterInfo = copy(
       nodeNames = nodeNames,
       deadNodes = deadNodes,
       state = state,
-      error = error
+      error = error,
+      tags = tags
     )
 
     // TODO: expose the metrics for bk

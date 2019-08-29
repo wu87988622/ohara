@@ -121,7 +121,8 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag](nodeCollie: N
           deadNodes = previousCluster.deadNodes,
           state = previousCluster.state,
           error = previousCluster.error,
-          metrics = previousCluster.metrics
+          metrics = previousCluster.metrics,
+          tags = previousCluster.tags
         ),
         clusterCache.get(previousCluster).filter(_.name != beRemovedContainer.name)
       )

@@ -87,6 +87,7 @@ class TestStreamApi extends SmallTest with Matchers {
       error = error,
       state = state,
       metrics = metrics,
+      tags = Map.empty
     )
     newOne.settings(StreamDefUtils.NODE_NAMES_DEFINITION.key()).convertTo[Set[String]] shouldBe nodeNames
     newOne.nodeNames shouldBe nodeNames

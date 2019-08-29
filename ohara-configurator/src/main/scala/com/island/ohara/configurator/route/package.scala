@@ -675,51 +675,43 @@ package object route {
     store: DataStore,
     collie: Collie[Cluster],
     executionContext: ExecutionContext): Future[Cluster] =
-    collie
-      .clusters()
-      .map(
-        _.keys
-          .find(_.name == cluster.name)
-          .map(existedCluster =>
-            existedCluster.clone(
-              nodeNames = existedCluster.nodeNames,
-              deadNodes = existedCluster.deadNodes,
-              state = existedCluster.state,
-              error = existedCluster.error,
-              metrics =
-                Metrics(metricsKey.flatMap(key => meterCache.meters(existedCluster).get(key)).getOrElse(Seq.empty))
+    store
+      .value[Cluster](cluster.key)
+      .flatMap(
+        data =>
+          collie
+            .clusters()
+            .map(
+              _.keys
+                .find(_.name == cluster.name)
+                .map(existedCluster =>
+                  existedCluster.clone(
+                    nodeNames = existedCluster.nodeNames,
+                    deadNodes = existedCluster.deadNodes,
+                    state = existedCluster.state,
+                    error = existedCluster.error,
+                    metrics = Metrics(
+                      metricsKey.flatMap(key => meterCache.meters(existedCluster).get(key)).getOrElse(Seq.empty)),
+                    tags = data.tags
+                ))
+                .getOrElse(cluster.clone(
+                  nodeNames = cluster.nodeNames,
+                  // no running cluster. It means no state and no dead nodes.
+                  // noted that the failed containers should still exist and we can "get" the cluster from collie.
+                  // the case of getting nothing from collie is only one that there is absolutely no containers and
+                  // we assume the cluster is NOT running.
+                  deadNodes = Set.empty,
+                  state = None,
+                  error = None,
+                  // the cluster is stooped (all containers are gone) so we don't need to fetch metrics.
+                  metrics = Metrics.EMPTY,
+                  // add the user-defined field
+                  tags = data.tags
+                ))
+                // the actual type is erased since the clone method returns the ClusterInfo type.
+                // However, it is safe to case the type to the input type since all sub classes of ClusterInfo should work well.
+                .asInstanceOf[Cluster]
           ))
-          .getOrElse(cluster.clone(
-            nodeNames = cluster.nodeNames,
-            // no running cluster. It means no state and no dead nodes.
-            // noted that the failed containers should still exist and we can "get" the cluster from collie.
-            // the case of getting nothing from collie is only one that there is absolutely no containers and
-            // we assume the cluster is NOT running.
-            deadNodes = Set.empty,
-            state = None,
-            error = None,
-            // the cluster is stooped (all containers are gone) so we don't need to fetch metrics.
-            metrics = Metrics.EMPTY
-          ))
-      )
-      // TODO: in fact, this may be a useless action since all Getters do update state before generating response.
-      .flatMap { cluster =>
-        // update the new state to object
-        // Note: there are some fields (ex: tags) are defined by user (api)
-        // we should remain the same values after update the data store
-        // Another Note: We assume that each cluster instance should belong to another property
-        // since the APIs restrict us to create a cluster after a property exists and forbid the property deletion
-        // if the cluster existed (i.e., state exists)
-        store.addIfPresent[Cluster](
-          cluster.key,
-          previous => {
-            previous.clone(cluster.nodeNames, cluster.deadNodes, cluster.state, cluster.error, cluster.metrics)
-          }
-          // the actual type is erased since the clone method returns the ClusterInfo type.
-          // However, it is safe to case the type to the input type since all sub classes of ClusterInfo should work well.
-            .asInstanceOf[Cluster]
-        )
-      }
 
   private[this] def hookBeforeDelete[Cluster <: ClusterInfo: ClassTag](metricsKey: Option[String])(
     implicit store: DataStore,

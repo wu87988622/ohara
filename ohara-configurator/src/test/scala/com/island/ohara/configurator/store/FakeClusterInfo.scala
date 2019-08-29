@@ -49,5 +49,6 @@ case class FakeClusterInfo(name: String) extends ClusterInfo {
                      deadNodes: Set[String],
                      state: Option[String],
                      error: Option[String],
-                     metrics: Metrics): FakeClusterInfo = throw new UnsupportedOperationException
+                     metrics: Metrics,
+                     tags: Map[String, JsValue]): FakeClusterInfo = throw new UnsupportedOperationException
 }

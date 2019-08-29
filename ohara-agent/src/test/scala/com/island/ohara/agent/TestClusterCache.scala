@@ -180,7 +180,8 @@ class TestClusterCache extends SmallTest with Matchers {
                          deadNodes: Set[String],
                          state: Option[String],
                          error: Option[String],
-                         metrics: Metrics): ClusterInfo = throw new UnsupportedOperationException
+                         metrics: Metrics,
+                         tags: Map[String, JsValue]): ClusterInfo = throw new UnsupportedOperationException
     }
     val cache = ClusterCache.builder
       .supplier(() => {

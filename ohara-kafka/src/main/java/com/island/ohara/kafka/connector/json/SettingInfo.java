@@ -53,10 +53,10 @@ public final class SettingInfo implements JsonObject {
                     // if configInfo is not serialized by ohara, we will get JsonParseException in
                     // parsing json.
                     if (e.getCause() instanceof JsonParseException) {
-                      if (configInfos.name().startsWith("com.island"))
+                      if (configInfo.configKey().name().startsWith("com.island"))
                         LOG.error(
                             "official connector:"
-                                + configInfos.name()
+                                + configInfo.configKey().name()
                                 + " has illegal display name:"
                                 + configInfo.configKey().displayName()
                                 + ". This may be a compatible issue!!!",
@@ -64,7 +64,7 @@ public final class SettingInfo implements JsonObject {
                       else
                         LOG.trace(
                             "The connector:"
-                                + configInfos.name()
+                                + configInfo.configKey().name()
                                 + " has illegal display name:"
                                 + configInfo.configKey().displayName()
                                 + ". Please inherit Ohara connector!!!",

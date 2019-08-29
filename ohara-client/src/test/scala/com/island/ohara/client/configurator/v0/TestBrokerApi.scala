@@ -53,6 +53,7 @@ class TestBrokerApi extends SmallTest with Matchers {
       error = error,
       state = state,
       metrics = Metrics.EMPTY,
+      tags = Map.empty
     )
     newOne.nodeNames shouldBe nodeNames
     newOne.deadNodes shouldBe deadNodes

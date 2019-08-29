@@ -18,6 +18,7 @@ package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.Data
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
+import spray.json.JsValue
 
 /**
   * There are many kinds of cluster hosted by ohara. We extract an interface to define "what" information should be included by a "cluster
@@ -76,5 +77,6 @@ trait ClusterInfo extends Data {
             deadNodes: Set[String],
             state: Option[String],
             error: Option[String],
-            metrics: Metrics): ClusterInfo
+            metrics: Metrics,
+            tags: Map[String, JsValue]): ClusterInfo
 }

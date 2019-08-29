@@ -109,15 +109,17 @@ object ZookeeperApi {
                        deadNodes: Set[String],
                        state: Option[String],
                        error: Option[String],
-                       metrics: Metrics): ZookeeperClusterInfo = copy(
+                       metrics: Metrics,
+                       tags: Map[String, JsValue]): ZookeeperClusterInfo = copy(
       nodeNames = nodeNames,
       deadNodes = deadNodes,
       state = state,
-      error = error
+      error = error,
+      tags = tags
     )
 
     // TODO: expose the metrics for zk
-    override def metrics: Metrics = Metrics.EMPTY,
+    override def metrics: Metrics = Metrics.EMPTY
   }
 
   /**

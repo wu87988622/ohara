@@ -254,9 +254,11 @@ object StreamApi {
                        deadNodes: Set[String],
                        state: Option[String],
                        error: Option[String],
-                       metrics: Metrics): StreamClusterInfo = copy(
-      settings = this.settings + (StreamDefUtils.NODE_NAMES_DEFINITION.key() -> JsArray(
-        nodeNames.map(JsString(_)).toVector)),
+                       metrics: Metrics,
+                       tags: Map[String, JsValue]): StreamClusterInfo = copy(
+      settings = this.settings ++ Map(
+        StreamDefUtils.NODE_NAMES_DEFINITION.key() -> JsArray(nodeNames.map(JsString(_)).toVector),
+        StreamDefUtils.TAGS_DEFINITION.key() -> JsObject(tags)),
       nodeNames = nodeNames,
       deadNodes = deadNodes,
       state = state,

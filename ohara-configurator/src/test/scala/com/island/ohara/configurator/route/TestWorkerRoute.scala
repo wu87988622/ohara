@@ -434,15 +434,21 @@ class TestWorkerRoute extends MediumTest with Matchers {
     wk.tags shouldBe tags
 
     // after create, tags should exist
-    result(workerApi.get(wk.name)).tags shouldBe tags
+    val res = result(workerApi.get(wk.name))
+    res.tags shouldBe tags
+    res.connectors shouldBe Seq.empty
 
     // after start, tags should still exist
     result(workerApi.start(wk.name))
-    result(workerApi.get(wk.name)).tags shouldBe tags
+    val res1 = result(workerApi.get(wk.name))
+    res1.tags shouldBe tags
+    res1.connectors should not be Seq.empty
 
     // after stop, tags should still exist
     result(workerApi.stop(wk.name))
-    result(workerApi.get(wk.name)).tags shouldBe tags
+    val res2 = result(workerApi.get(wk.name))
+    res2.tags shouldBe tags
+    res2.connectors shouldBe Seq.empty
   }
 
   @After
