@@ -49,6 +49,7 @@ const StreamApp = props => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('group', workspaceName);
+    formData.append('tags', '{"type":"streamJar"}');
     await uploadApi(formData);
 
     const isSuccess = get(getJarRes(), 'data.isSuccess', false);
@@ -96,14 +97,16 @@ const StreamApp = props => {
     );
   };
 
-  const rows = jars.map(jar => {
-    return {
-      name: jar.name,
-      size: floor(divide(jar.size, 1024), 1),
-      lastModified: utils.getDateFromTimestamp(jar.lastModified),
-      action: actionButton(jar),
-    };
-  });
+  const rows = jars
+    .filter(jar => jar.tags.type === 'streamJar')
+    .map(jar => {
+      return {
+        name: jar.name,
+        size: floor(divide(jar.size, 1024), 1),
+        lastModified: utils.getDateFromTimestamp(jar.lastModified),
+        action: actionButton(jar),
+      };
+    });
 
   const handleDelete = async () => {
     if (jarNameToBeDeleted) {

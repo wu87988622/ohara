@@ -30,7 +30,7 @@ import {
 import * as useApi from 'components/controller';
 import * as URL from 'components/controller/url';
 
-const OverviewStreamApps = props => {
+const OverviewPlugin = props => {
   const { handleRedirect, workerName } = props;
   const { data: jars, loading: fetchingJars } = useApi.useFetchApi(
     `${URL.FILE_URL}?group=${workerName}`,
@@ -39,24 +39,24 @@ const OverviewStreamApps = props => {
   return (
     <>
       <TabHeading>
-        <StyledIcon className="fas fa-wind" />
-        <span className="title">Stream Jars</span>
-        <StyledIconLink onClick={() => handleRedirect('streamapps')}>
-          <Tooltip title="Link to Stream jars page" enterDelay={1000}>
+        <StyledIcon className="fas fa-file-alt" />
+        <span className="title">Plugins</span>
+        <StyledIconLink onClick={() => handleRedirect('plugin')}>
+          <Tooltip title="Link to plugins page" enterDelay={1000}>
             <StyledIcon
               className="fas fa-external-link-square-alt"
-              data-testid="overview-streamapps-link"
+              data-testid="overview-plugin-link"
             />
           </Tooltip>
         </StyledIconLink>
       </TabHeading>
 
       <OverviewTable
-        headers={['Jar name', 'File size(KB)']}
+        headers={['File name', 'File size(KB)']}
         isLoading={fetchingJars}
       >
         {get(jars, 'data.result', [])
-          .filter(jar => jar.tags.type === 'streamJar')
+          .filter(jar => jar.tags.type === 'plugin')
           .map(jar => {
             return (
               <TableRow key={jar.name}>
@@ -72,9 +72,9 @@ const OverviewStreamApps = props => {
   );
 };
 
-OverviewStreamApps.propTypes = {
+OverviewPlugin.propTypes = {
   handleRedirect: PropTypes.func.isRequired,
   workerName: PropTypes.string.isRequired,
 };
 
-export default OverviewStreamApps;
+export default OverviewPlugin;
