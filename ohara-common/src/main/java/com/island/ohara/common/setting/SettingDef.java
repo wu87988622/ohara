@@ -182,11 +182,14 @@ public class SettingDef implements JsonObject, Serializable {
       switch (valueType) {
         case BOOLEAN:
           if (trueValue instanceof Boolean) return;
-          try {
-            Boolean.parseBoolean(String.valueOf(trueValue));
-          } catch (Exception e) {
-            throw new OharaConfigException(this.key, trueValue, e.getMessage());
-          }
+          // we implement our logic here since
+          // boolean type should only accept two possible values: "true" or "false"
+          if (!String.valueOf(trueValue).equalsIgnoreCase("true")
+              && !String.valueOf(trueValue).equalsIgnoreCase("false"))
+            throw new OharaConfigException(
+                this.key,
+                trueValue,
+                "The value should equals to case-insensitive string value of 'true' or 'false'");
           break;
         case STRING:
           try {

@@ -397,10 +397,31 @@ public class TestSettingDef extends SmallTest {
             .key(CommonUtils.randomString())
             .valueType(SettingDef.Type.BOOLEAN)
             .build();
-
-    def.checker().accept("aaa");
+    // only accept "true" or "false"
+    assertException(OharaConfigException.class, () -> def.checker().accept("aaa"));
+    assertException(OharaConfigException.class, () -> def.checker().accept(123));
+    assertException(OharaConfigException.class, () -> def.checker().accept(null));
     def.checker().accept(false);
-    def.checker().accept(123);
+    def.checker().accept("true");
+    // case in-sensitive
+    def.checker().accept("FaLse");
+
+    // optional definition
+    SettingDef defOption =
+        SettingDef.builder()
+            .key(CommonUtils.randomString())
+            .valueType(SettingDef.Type.BOOLEAN)
+            .optional()
+            .build();
+    // only accept "true" or "false"
+    assertException(OharaConfigException.class, () -> defOption.checker().accept("aaa"));
+    assertException(OharaConfigException.class, () -> defOption.checker().accept(123));
+    // since we don't have any default value, the "null" will be passed since it is optional
+    defOption.checker().accept(null);
+    defOption.checker().accept(false);
+    defOption.checker().accept("true");
+    // case in-sensitive
+    defOption.checker().accept("FaLse");
   }
 
   @Test
