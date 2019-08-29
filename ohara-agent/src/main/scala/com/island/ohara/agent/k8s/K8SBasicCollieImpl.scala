@@ -133,6 +133,8 @@ private[this] abstract class K8SBasicCollieImpl[T <: ClusterInfo: ClassTag](node
       if (containers.exists(_.state == K8sContainerState.RUNNING.name)) Some(ClusterState.RUNNING)
       else if (containers.exists(_.state == K8sContainerState.FAILED.name)) Some(ClusterState.FAILED)
       else if (containers.exists(_.state == K8sContainerState.PENDING.name)) Some(ClusterState.PENDING)
+      // All Containers in the Pod have terminated in success, BUT it is still failed :(
+      else if (containers.exists(_.state == K8sContainerState.SUCCEEDED.name)) Some(ClusterState.FAILED)
       else Some(ClusterState.UNKNOWN)
     }
   }

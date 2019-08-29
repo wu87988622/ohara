@@ -149,6 +149,10 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     }
   }
 
+  /**
+    * I felt embarrassed about this test case as it produces a error to StreamApp via our public APIs.
+    * TODO: Personally, We should protect our running cluster ... by chia
+    */
   @Test
   def testFailedClusterRemoveGracefully(): Unit = {
     val jar = new File(CommonUtils.path(System.getProperty("user.dir"), "build", "libs", "ohara-streamapp.jar"))
@@ -181,8 +185,7 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
     properties.state shouldBe None
     properties.error shouldBe None
 
-    // start streamApp and remove topic immediately to expect streamApp failed
-    result(access.start(stream.name).flatMap(_ => topicApi.stop(topic1.key)).flatMap(_ => topicApi.delete(topic1.key)))
+    result(access.start(stream.name))
     await(() => result(access.get(stream.name)).state.isDefined)
 
     // get the actually container names
@@ -197,6 +200,9 @@ abstract class BasicTests4StreamApp extends IntegrationTest with Matchers {
         finally client.close()
       }
     }
+
+    // remove the topic to make streamapp fail
+    result(topicApi.stop(topic1.key))
 
     // we only have one instance, container exited means cluster dead (the state here uses container state is ok
     // since we use the same name for cluster state

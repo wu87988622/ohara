@@ -52,10 +52,27 @@ trait ClusterNameHolder extends Releasable {
 
   override def close(): Unit = release(
     clusterNames = usedClusterNames.toSet,
-    excludedNodes = Set.empty
+    excludedNodes = Set.empty,
+    closeThisHolder = false
   )
 
-  def release(clusterNames: Set[String], excludedNodes: Set[String]): Unit
+  /**
+    * remove all containers belonging to input clusters. The argument "excludedNodes" enable you to remove a part of
+    * containers from input clusters.
+    * @param clusterNames clusters to remove
+    * @param excludedNodes nodes to keep the containers
+    */
+  def release(clusterNames: Set[String], excludedNodes: Set[String]): Unit =
+    release(clusterNames = clusterNames, excludedNodes = excludedNodes, closeThisHolder = false)
+
+  /**
+    * remove all containers belonging to input clusters. The argument "excludedNodes" enable you to remove a part of
+    * containers from input clusters.
+    * @param clusterNames clusters to remove
+    * @param excludedNodes nodes to keep the containers
+    * @param closeThisHolder true if this name holder should be closed as well
+    */
+  protected def release(clusterNames: Set[String], excludedNodes: Set[String], closeThisHolder: Boolean): Unit
 }
 
 object ClusterNameHolder {
@@ -66,31 +83,32 @@ object ClusterNameHolder {
     * @param nodes nodes
     * @return name holder
     */
-  def apply(nodes: Seq[Node]): ClusterNameHolder = (clusterNames: Set[String], excludedNodes: Set[String]) =>
-    nodes.filterNot(node => excludedNodes.contains(node.name)).foreach { node =>
-      val client =
-        DockerClient.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
-      try client
-        .containerNames()
-        .filter(containerName => clusterNames.exists(clusterName => containerName.contains(clusterName)))
-        .foreach { containerName =>
-          try {
-            println(s"[-----------------------------------$containerName-----------------------------------]")
-            val containerLogs = try client.log(containerName)
-            catch {
+  def apply(nodes: Seq[Node]): ClusterNameHolder =
+    (clusterNames: Set[String], excludedNodes: Set[String], _: Boolean) =>
+      nodes.filterNot(node => excludedNodes.contains(node.name)).foreach { node =>
+        val client =
+          DockerClient.builder.hostname(node.hostname).port(node._port).user(node._user).password(node._password).build
+        try client
+          .containerNames()
+          .filter(containerName => clusterNames.exists(clusterName => containerName.contains(clusterName)))
+          .foreach { containerName =>
+            try {
+              println(s"[-----------------------------------$containerName-----------------------------------]")
+              val containerLogs = try client.log(containerName)
+              catch {
+                case e: Throwable =>
+                  s"failed to fetch the logs for container:$containerName. caused by:${e.getMessage}"
+              }
+              println(containerLogs)
+              println("[------------------------------------------------------------------------------------]")
+              client.forceRemove(containerName)
+              LOG.info(s"succeed to remove container $containerName")
+            } catch {
               case e: Throwable =>
-                s"failed to fetch the logs for container:$containerName. caused by:${e.getMessage}"
+                LOG.error(s"failed to remove container $containerName", e)
             }
-            println(containerLogs)
-            println("[------------------------------------------------------------------------------------]")
-            client.forceRemove(containerName)
-            LOG.info(s"succeed to remove container $containerName")
-          } catch {
-            case e: Throwable =>
-              LOG.error(s"failed to remove container $containerName", e)
-          }
-        } finally client.close()
-  }
+          } finally client.close()
+    }
 
   /**
     * create a name holder based on k8s.
@@ -99,7 +117,7 @@ object ClusterNameHolder {
     * @return name holder
     */
   def apply(nodes: Seq[Node], client: K8SClient): ClusterNameHolder =
-    (clusterNames: Set[String], excludedNodes: Set[String]) =>
+    (clusterNames: Set[String], excludedNodes: Set[String], closeThisHolder: Boolean) =>
       try Await
         .result(client.containers(), 30 seconds)
         .filter(container => clusterNames.exists(clusterName => container.name.contains(clusterName)))
@@ -119,5 +137,5 @@ object ClusterNameHolder {
             case e: Throwable =>
               LOG.error(s"failed to remove container ${container.name}", e)
           }
-        } finally client.close()
+        } finally if (closeThisHolder) client.close()
 }

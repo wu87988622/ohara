@@ -787,15 +787,25 @@ public final class CommonUtils {
    * @return the downloaded file
    */
   public static File downloadUrl(URL url, Duration connectionTimeout, Duration readTimeout) {
-
     File tmpFolder = CommonUtils.createTempFolder("tmp-");
     File outputFile = new File(tmpFolder, randomString(10));
-
-    int ct = Math.toIntExact(connectionTimeout.toMillis());
-    int rt = Math.toIntExact(readTimeout.toMillis());
-
-    copyURLToFile(url, outputFile, ct, rt);
-    return outputFile;
+    try {
+      FileUtils.copyURLToFile(
+          Objects.requireNonNull(url),
+          requireNotExist(outputFile),
+          Math.toIntExact(connectionTimeout.toMillis()),
+          Math.toIntExact(readTimeout.toMillis()));
+      return outputFile;
+    } catch (IOException e) {
+      throw new IllegalStateException(
+          "failed to access the "
+              + url
+              + ", connectionTimeout:"
+              + connectionTimeout
+              + ", readTimeout:"
+              + readTimeout,
+          e);
+    }
   }
 
   /** this is a specific string used to replace the quota in the env. */
