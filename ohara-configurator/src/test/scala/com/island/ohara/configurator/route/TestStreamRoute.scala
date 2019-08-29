@@ -25,7 +25,7 @@ import com.island.ohara.configurator.Configurator
 import com.island.ohara.streams.config.StreamDefUtils
 import org.junit.{After, Test}
 import org.scalatest.Matchers
-import spray.json.{JsNumber, JsString}
+import spray.json.{JsArray, JsNumber, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -485,6 +485,49 @@ class TestStreamRoute extends SmallTest with Matchers {
     val defaultProps = result(accessStream.request.name(name).jarKey(ObjectKey.of(jar.group, jar.name)).create())
     defaultProps.jarKey shouldBe jar.key
     defaultProps.brokerClusterName shouldBe result(wkApi.get(wkName)).brokerClusterName
+  }
+
+  @Test
+  def testCustomTagsShouldExistAfterRunning(): Unit = {
+    val nodeNames = result(bkApi.list()).head.nodeNames
+    val zk = result(zkApi.request.name(CommonUtils.randomString(5)).nodeNames(nodeNames).create())
+    val bk = result(
+      bkApi.request.name(CommonUtils.randomString(5)).nodeNames(nodeNames).zookeeperClusterName(zk.name).create())
+    result(bkApi.start(bk.name))
+    val from0 = result(topicApi.request.brokerClusterName(bk.name).create())
+    result(topicApi.start(from0.key))
+    val to0 = result(topicApi.request.brokerClusterName(bk.name).create())
+    result(topicApi.start(to0.key))
+    result(bkApi.start(bk.name))
+    val file = CommonUtils.createTempJar("empty_")
+    val jar = result(accessJar.request.file(file).upload())
+
+    val tags = Map(
+      "aa" -> JsString("bb"),
+      "cc" -> JsNumber(123),
+      "dd" -> JsArray(JsString("bar"), JsString("foo"))
+    )
+    val streamDesc = result(
+      accessStream.request
+        .brokerClusterName(bk.name)
+        .jarKey(ObjectKey.of(jar.group, jar.name))
+        .tags(tags)
+        .fromTopicKey(from0.key)
+        .toTopicKey(to0.key)
+        .instances(1)
+        .create())
+    streamDesc.tags shouldBe tags
+
+    // after create, tags should exist
+    result(accessStream.get(streamDesc.name)).tags shouldBe tags
+
+    // after start, tags should still exist
+    result(accessStream.start(streamDesc.name))
+    result(accessStream.get(streamDesc.name)).tags shouldBe tags
+
+    // after stop, tags should still exist
+    result(accessStream.stop(streamDesc.name))
+    result(accessStream.get(streamDesc.name)).tags shouldBe tags
   }
 
   @After

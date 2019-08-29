@@ -23,6 +23,7 @@ import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.fake.FakeBrokerCollie
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
+import spray.json.{JsArray, JsNumber, JsString}
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -430,6 +431,28 @@ class TestBrokerRoute extends MediumTest with Matchers {
     result(brokerApi.stop(bk.name))
     result(brokerApi.request.nodeNames(nodeNames).update())
     result(brokerApi.start(bk.name))
+  }
+
+  @Test
+  def testCustomTagsShouldExistAfterRunning(): Unit = {
+    val tags = Map(
+      "aa" -> JsString("bb"),
+      "cc" -> JsNumber(123),
+      "dd" -> JsArray(JsString("bar"), JsString("foo"))
+    )
+    val bk = result(brokerApi.request.tags(tags).nodeNames(nodeNames).create())
+    bk.tags shouldBe tags
+
+    // after create, tags should exist
+    result(brokerApi.get(bk.name)).tags shouldBe tags
+
+    // after start, tags should still exist
+    result(brokerApi.start(bk.name))
+    result(brokerApi.get(bk.name)).tags shouldBe tags
+
+    // after stop, tags should still exist
+    result(brokerApi.stop(bk.name))
+    result(brokerApi.get(bk.name)).tags shouldBe tags
   }
 
   @After

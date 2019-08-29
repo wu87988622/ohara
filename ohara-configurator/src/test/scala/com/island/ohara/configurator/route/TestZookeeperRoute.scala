@@ -23,6 +23,7 @@ import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.fake.FakeZookeeperCollie
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
+import spray.json.{JsArray, JsNumber, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
@@ -291,6 +292,28 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     result(zookeeperApi.stop(zk.name))
     result(zookeeperApi.request.nodeNames(nodeNames).update())
     result(zookeeperApi.start(zk.name))
+  }
+
+  @Test
+  def testCustomTagsShouldExistAfterRunning(): Unit = {
+    val tags = Map(
+      "aa" -> JsString("bb"),
+      "cc" -> JsNumber(123),
+      "dd" -> JsArray(JsString("bar"), JsString("foo"))
+    )
+    val zk = result(zookeeperApi.request.tags(tags).nodeNames(nodeNames).create())
+    zk.tags shouldBe tags
+
+    // after create, tags should exist
+    result(zookeeperApi.get(zk.name)).tags shouldBe tags
+
+    // after start, tags should still exist
+    result(zookeeperApi.start(zk.name))
+    result(zookeeperApi.get(zk.name)).tags shouldBe tags
+
+    // after stop, tags should still exist
+    result(zookeeperApi.stop(zk.name))
+    result(zookeeperApi.get(zk.name)).tags shouldBe tags
   }
 
   @After

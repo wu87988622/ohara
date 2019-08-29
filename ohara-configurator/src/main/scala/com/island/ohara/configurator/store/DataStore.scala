@@ -84,7 +84,7 @@ trait DataStore extends Releasable {
     * Noted, the new one replaces the previous stuff if the data returned by updater has the same group and name.
     * @param updater used to update data
     * @tparam T type from data
-    * @return the removed data
+    * @return the updated data
     */
   def addIfPresent[T <: Data: ClassTag](key: ObjectKey, updater: T => T)(implicit executor: ExecutionContext): Future[T]
 

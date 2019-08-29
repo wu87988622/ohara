@@ -23,6 +23,7 @@ import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.fake.{FakeWorkerClient, FakeWorkerCollie}
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
+import spray.json.{JsArray, JsNumber, JsString}
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -420,6 +421,28 @@ class TestWorkerRoute extends MediumTest with Matchers {
     try result(configurator.clusterCollie.workerCollie.clusters()).keys
       .foreach(_.connectors shouldBe FakeWorkerClient.localConnectorDefinitions)
     finally configurator.close()
+  }
+
+  @Test
+  def testCustomTagsShouldExistAfterRunning(): Unit = {
+    val tags = Map(
+      "aa" -> JsString("bb"),
+      "cc" -> JsNumber(123),
+      "dd" -> JsArray(JsString("bar"), JsString("foo"))
+    )
+    val wk = result(workerApi.request.tags(tags).nodeNames(nodeNames).create())
+    wk.tags shouldBe tags
+
+    // after create, tags should exist
+    result(workerApi.get(wk.name)).tags shouldBe tags
+
+    // after start, tags should still exist
+    result(workerApi.start(wk.name))
+    result(workerApi.get(wk.name)).tags shouldBe tags
+
+    // after stop, tags should still exist
+    result(workerApi.stop(wk.name))
+    result(workerApi.get(wk.name)).tags shouldBe tags
   }
 
   @After

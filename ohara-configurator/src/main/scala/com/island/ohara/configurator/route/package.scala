@@ -701,14 +701,24 @@ package object route {
             // the cluster is stooped (all containers are gone) so we don't need to fetch metrics.
             metrics = Metrics.EMPTY
           ))
+      )
+      // TODO: in fact, this may be a useless action since all Getters do update state before generating response.
+      .flatMap { cluster =>
+        // update the new state to object
+        // Note: there are some fields (ex: tags) are defined by user (api)
+        // we should remain the same values after update the data store
+        // Another Note: We assume that each cluster instance should belong to another property
+        // since the APIs restrict us to create a cluster after a property exists and forbid the property deletion
+        // if the cluster existed (i.e., state exists)
+        store.addIfPresent[Cluster](
+          cluster.key,
+          previous => {
+            previous.clone(cluster.nodeNames, cluster.deadNodes, cluster.state, cluster.error, cluster.metrics)
+          }
           // the actual type is erased since the clone method returns the ClusterInfo type.
           // However, it is safe to case the type to the input type since all sub classes of ClusterInfo should work well.
-          .asInstanceOf[Cluster]
-      )
-      .flatMap { cluster =>
-        // add the up-to-date object to store
-        // TODO: in fact, this may be a useless action since all Getters do update state before generating response.
-        store.add[Cluster](cluster)
+            .asInstanceOf[Cluster]
+        )
       }
 
   private[this] def hookBeforeDelete[Cluster <: ClusterInfo: ClassTag](metricsKey: Option[String])(
