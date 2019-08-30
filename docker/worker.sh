@@ -43,9 +43,8 @@ fi
 
 # jmx setting
 
-if [[ -z $JMX_PORT ]]; then
-  # this default value should be equal to WorkerApi.JMX_PORT_DEFAULT
-  $JMX_PORT="8084"
+if [[ -z $jmxPort ]]; then
+  $jmxPort="8084"
 fi
 
 if [[ -z $JMX_HOSTNAME ]]; then
@@ -57,8 +56,8 @@ fi
 export KAFKA_JMX_OPTS="-Dcom.sun.management.jmxremote \
 -Dcom.sun.management.jmxremote.authenticate=false \
 -Dcom.sun.management.jmxremote.ssl=false \
--Dcom.sun.management.jmxremote.port=$JMX_PORT \
--Dcom.sun.management.jmxremote.rmi.port=$JMX_PORT \
+-Dcom.sun.management.jmxremote.port=$jmxPort \
+-Dcom.sun.management.jmxremote.rmi.port=$jmxPort \
 -Djava.rmi.server.hostname=$JMX_HOSTNAME
 "
 
@@ -81,56 +80,56 @@ echo "internal.value.converter=org.apache.kafka.connect.json.JsonConverter" >> "
 echo "internal.key.converter.schemas.enable=false" >> "$CONFIG"
 echo "internal.value.converter.schemas.enable=false" >> "$CONFIG"
 
-if [[ -z "${WORKER_GROUP}" ]]; then
-  WORKER_GROUP="connect-cluster"
+if [[ -z "$groupId" ]]; then
+  groupId="connect-cluster"
 fi
-echo "group.id=$WORKER_GROUP" >> "$CONFIG"
+echo "group.id=$groupId" >> "$CONFIG"
 
-if [[ -z "${WORKER_OFFSET_TOPIC}" ]]; then
-  WORKER_OFFSET_TOPIC="connect-offsets"
+if [[ -z "$offsetTopicName" ]]; then
+  offsetTopicName="connect-offsets"
 fi
-if [[ -z "${WORKER_OFFSET_TOPIC_REPLICATIONS}" ]]; then
-  WORKER_OFFSET_TOPIC_REPLICATIONS="1"
+if [[ -z "$offsetTopicReplications" ]]; then
+  offsetTopicReplications="1"
 fi
-if [[ -z "${WORKER_OFFSET_TOPIC_PARTITIONS}" ]]; then
-  WORKER_OFFSET_TOPIC_PARTITIONS="1"
+if [[ -z "$offsetTopicPartitions" ]]; then
+  offsetTopicPartitions="1"
 fi
-echo "offset.storage.topic=$WORKER_OFFSET_TOPIC" >> "$CONFIG"
-echo "offset.storage.replication.factor=$WORKER_OFFSET_TOPIC_REPLICATIONS" >> "$CONFIG"
-echo "offset.storage.partitions=$WORKER_OFFSET_TOPIC_PARTITIONS" >> "$CONFIG"
+echo "offset.storage.topic=$offsetTopicName" >> "$CONFIG"
+echo "offset.storage.replication.factor=$offsetTopicReplications" >> "$CONFIG"
+echo "offset.storage.partitions=$offsetTopicPartitions" >> "$CONFIG"
 
-if [[ -z "${WORKER_CONFIG_TOPIC}" ]]; then
-  WORKER_CONFIG_TOPIC="connect-config"
+if [[ -z "$configTopicName" ]]; then
+  configTopicName="connect-config"
 fi
-if [[ -z "${WORKER_CONFIG_TOPIC_REPLICATIONS}" ]]; then
-  WORKER_CONFIG_TOPIC_REPLICATIONS="1"
+if [[ -z "$configTopicReplications" ]]; then
+  configTopicReplications="1"
 fi
-echo "config.storage.topic=$WORKER_CONFIG_TOPIC" >> "$CONFIG"
-echo "config.storage.replication.factor=$WORKER_CONFIG_TOPIC_REPLICATIONS" >> "$CONFIG"
+echo "config.storage.topic=$configTopicName" >> "$CONFIG"
+echo "config.storage.replication.factor=$configTopicReplications" >> "$CONFIG"
 # config topic should be a single partition
 
-if [[ -z "${WORKER_STATUS_TOPIC}" ]]; then
-  WORKER_STATUS_TOPIC="connect-offsets"
+if [[ -z "$statusTopicName" ]]; then
+  statusTopicName="connect-offsets"
 fi
-if [[ -z "${WORKER_STATUS_TOPIC_REPLICATIONS}" ]]; then
-  WORKER_STATUS_TOPIC_REPLICATIONS="1"
+if [[ -z "$statusTopicReplications" ]]; then
+  statusTopicReplications="1"
 fi
-if [[ -z "${WORKER_STATUS_TOPIC_PARTITIONS}" ]]; then
-  WORKER_STATUS_TOPIC_PARTITIONS="1"
+if [[ -z "$statusTopicPartitions" ]]; then
+  statusTopicPartitions="1"
 fi
-echo "status.storage.topic=$WORKER_STATUS_TOPIC" >> "$CONFIG"
-echo "status.storage.replication.factor=$WORKER_STATUS_TOPIC_REPLICATIONS" >> "$CONFIG"
-echo "status.storage.partitions=$WORKER_STATUS_TOPIC_PARTITIONS" >> "$CONFIG"
+echo "status.storage.topic=$statusTopicName" >> "$CONFIG"
+echo "status.storage.replication.factor=$statusTopicReplications" >> "$CONFIG"
+echo "status.storage.partitions=$statusTopicPartitions" >> "$CONFIG"
 WORKER_PLUGIN_FOLDER="/tmp/plugins"
 mkdir -p $WORKER_PLUGIN_FOLDER
 
-if [[ ! -z "$WORKER_JAR_URLS" ]] && [[ -z "$WORKER_JAR_INFOS" ]]; then
-  echo "WORKER_JAR_INFOS is required since you have set the WORKER_JAR_URLS:$WORKER_JAR_URLS"
+if [[ ! -z "$WORKER_JAR_URLS" ]] && [[ -z "$jarInfos" ]]; then
+  echo "jarInfos is required since you have set the WORKER_JAR_URLS:$WORKER_JAR_URLS"
   exit 2
 fi
 
-if [[ -z "$WORKER_JAR_URLS" ]] && [[ ! -z "$WORKER_JAR_INFOS" ]]; then
-  echo "WORKER_JAR_URLS is required since you have set the WORKER_JAR_INFOS:$WORKER_JAR_INFOS"
+if [[ -z "$WORKER_JAR_URLS" ]] && [[ ! -z "$jarInfos" ]]; then
+  echo "WORKER_JAR_URLS is required since you have set the jarInfos:$jarInfos"
   exit 2
 fi
 
@@ -142,30 +141,16 @@ if [[ ! -z "$WORKER_JAR_URLS" ]]; then
   done
 fi
 
-# this variable has not been used yet
-if [[ ! -z "$WORKER_PLUGINS" ]]; then
-  IFS=','
-  read -ra ADDR <<< "$WORKER_PLUGINS"
-  for i in "${ADDR[@]}"; do
-    wget $i -P $WORKER_PLUGIN_FOLDER
-  done
-fi
-echo "plugin.path=$WORKER_PLUGIN_FOLDER" >> "$CONFIG"
-
 if [[ -z "$WORKER_BROKERS" ]]; then
   echo "You have to define WORKER_BROKERS"
   exit 2
 fi
 echo "bootstrap.servers=$WORKER_BROKERS" >> "$CONFIG"
 
-if [[ -z "${WORKER_CLIENT_PORT}" ]]; then
-  WORKER_CLIENT_PORT="8083"
+if [[ -z "$clientPort" ]]; then
+  clientPort="8083"
 fi
-echo "rest.port=$WORKER_CLIENT_PORT" >> "$CONFIG"
-
-if [[ -n "$WORKER_HOSTNAME" ]]; then
-  echo "rest.host.name=$WORKER_HOSTNAME" >> "$CONFIG"
-fi
+echo "rest.port=$clientPort" >> "$CONFIG"
 
 if [[ -n "$WORKER_ADVERTISED_HOSTNAME" ]]; then
   echo "rest.advertised.host.name=$WORKER_ADVERTISED_HOSTNAME" >> "$CONFIG"

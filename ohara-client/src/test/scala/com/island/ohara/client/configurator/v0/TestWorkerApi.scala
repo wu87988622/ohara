@@ -30,28 +30,12 @@ class TestWorkerApi extends SmallTest with Matchers {
   @Test
   def testResponseEquals(): Unit = {
     val response = WorkerClusterInfo(
-      name = CommonUtils.randomString(),
-      imageName = CommonUtils.randomString(),
-      brokerClusterName = CommonUtils.randomString(),
-      clientPort = 10,
-      jmxPort = 10,
-      groupId = CommonUtils.randomString(),
-      statusTopicName = CommonUtils.randomString(),
-      statusTopicPartitions = 10,
-      statusTopicReplications = 10,
-      configTopicName = CommonUtils.randomString(),
-      configTopicPartitions = 10,
-      configTopicReplications = 10,
-      offsetTopicName = CommonUtils.randomString(),
-      offsetTopicPartitions = 10,
-      offsetTopicReplications = 10,
-      jarInfos = Seq.empty,
+      settings = WorkerApi.access.request.brokerClusterName(CommonUtils.randomString()).creation.settings,
       connectors = Seq.empty,
       nodeNames = Set.empty,
       deadNodes = Set.empty,
       state = None,
       error = None,
-      tags = Map.empty,
       lastModified = CommonUtils.current()
     )
 
@@ -65,28 +49,12 @@ class TestWorkerApi extends SmallTest with Matchers {
     val error = Some(CommonUtils.randomString())
     val state = Some(CommonUtils.randomString())
     val workerClusterInfo = WorkerClusterInfo(
-      name = CommonUtils.randomString(),
-      imageName = CommonUtils.randomString(),
-      brokerClusterName = CommonUtils.randomString(),
-      clientPort = 10,
-      jmxPort = 10,
-      groupId = CommonUtils.randomString(),
-      statusTopicName = CommonUtils.randomString(),
-      statusTopicPartitions = 10,
-      statusTopicReplications = 10,
-      configTopicName = CommonUtils.randomString(),
-      configTopicPartitions = 10,
-      configTopicReplications = 10,
-      offsetTopicName = CommonUtils.randomString(),
-      offsetTopicPartitions = 10,
-      offsetTopicReplications = 10,
-      jarInfos = Seq.empty,
+      settings = Map("a" -> JsString("b")),
       connectors = Seq.empty,
       nodeNames = Set.empty,
       deadNodes = Set.empty,
       state = None,
       error = None,
-      tags = Map.empty,
       lastModified = CommonUtils.current()
     )
     val newOne = workerClusterInfo.clone(
@@ -125,12 +93,13 @@ class TestWorkerApi extends SmallTest with Matchers {
     .size shouldBe 2
 
   @Test
-  def ignoreNodeNamesOnCreation(): Unit = an[IllegalArgumentException] should be thrownBy WorkerApi.access
+  def ignoreNodeNamesOnCreation(): Unit = WorkerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
-    .name(CommonUtils.randomString())
+    .name(CommonUtils.randomString(5))
     .creation
+    .nodeNames shouldBe Set.empty
 
   @Test
   def nullName(): Unit = an[NullPointerException] should be thrownBy WorkerApi.access
@@ -281,7 +250,7 @@ class TestWorkerApi extends SmallTest with Matchers {
 
   @Test
   def testCreation(): Unit = {
-    val name = CommonUtils.randomString()
+    val name = CommonUtils.randomString(5)
     val imageName = CommonUtils.randomString()
     val clientPort = CommonUtils.availablePort()
     val jmxPort = CommonUtils.availablePort()
@@ -499,28 +468,12 @@ class TestWorkerApi extends SmallTest with Matchers {
   @Test
   def testAliveNodes(): Unit = {
     val cluster = WorkerClusterInfo(
-      name = CommonUtils.randomString(),
-      imageName = CommonUtils.randomString(),
-      brokerClusterName = CommonUtils.randomString(),
-      clientPort = 10,
-      jmxPort = 10,
-      groupId = CommonUtils.randomString(),
-      statusTopicName = CommonUtils.randomString(),
-      statusTopicPartitions = 10,
-      statusTopicReplications = 10,
-      configTopicName = CommonUtils.randomString(),
-      configTopicPartitions = 10,
-      configTopicReplications = 10,
-      offsetTopicName = CommonUtils.randomString(),
-      offsetTopicPartitions = 10,
-      offsetTopicReplications = 10,
-      jarInfos = Seq.empty,
+      settings = Map("a" -> JsString("b")),
       connectors = Seq.empty,
       nodeNames = Set("n0", "n1"),
       deadNodes = Set("n0"),
       state = Some("running"),
       error = None,
-      tags = Map.empty,
       lastModified = CommonUtils.current()
     )
     cluster.aliveNodes shouldBe Set("n1")

@@ -22,7 +22,7 @@ import java.util.Objects
 import com.island.ohara.agent._
 import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.{NodeApi, TopicApi}
+import com.island.ohara.client.configurator.v0.{NodeApi, TopicApi, WorkerApi}
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeService}
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
@@ -100,8 +100,8 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
       if (this.k8sClient != null) throw new IllegalArgumentException(alreadyExistMessage("k8sClient"))
       if (this.clusterCollie != null) throw new IllegalArgumentException(alreadyExistMessage("clusterCollie"))
       val store = getOrCreateStore()
-      val embeddedBkName = "embedded_broker_cluster"
-      val embeddedWkName = "embedded_worker_cluster"
+      val embeddedBkName = "embeddedbk"
+      val embeddedWkName = "embeddedwk"
       // we fake nodes for embedded bk and wk
       def nodes(s: String): Seq[String] = s.split(",").map(_.split(":").head)
       import scala.concurrent.ExecutionContext.Implicits.global
@@ -152,30 +152,18 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
         val host = pair.map(_.split(":").head).head
         val port = pair.map(_.split(":").last).head.toInt
         WorkerClusterInfo(
-          name = embeddedWkName,
-          imageName = "None",
-          brokerClusterName = bkCluster.name,
-          clientPort = port,
-          // Assigning a negative value can make test fail quickly.
-          jmxPort = -1,
-          groupId = "None",
-          statusTopicName = "None",
-          statusTopicPartitions = 1,
-          statusTopicReplications = 1.asInstanceOf[Short],
-          configTopicName = "None",
-          configTopicPartitions = 1,
-          configTopicReplications = 1.asInstanceOf[Short],
-          offsetTopicName = "None",
-          offsetTopicPartitions = 1,
-          offsetTopicReplications = 1.asInstanceOf[Short],
-          jarInfos = Seq.empty,
+          settings = WorkerApi.access.request
+            .name(embeddedWkName)
+            .brokerClusterName(bkCluster.name)
+            .clientPort(port)
+            .creation
+            .settings,
           connectors = Await.result(WorkerClient(wkConnectionProps).connectorDefinitions(), 10 seconds),
           nodeNames = Set(host),
           deadNodes = Set.empty,
           // In fake mode, we need to assign a state in creation for "GET" method to act like real case
           state = Some(ClusterState.RUNNING.name),
           error = None,
-          tags = Map.empty,
           lastModified = CommonUtils.current()
         )
       }
@@ -256,35 +244,17 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
             ))
       }
 
-      val wkClusters = (0 until numberOfWorkerCluster).map { index =>
+      val wkClusters = (0 until numberOfWorkerCluster).map { _ =>
         val bkCluster = bkClusters((Math.random() % bkClusters.size).asInstanceOf[Int])
         collie.workerCollie.addCluster(
           WorkerClusterInfo(
-            name = s"$wkClusterNamePrefix$index",
-            imageName = s"fakeImage$index",
-            brokerClusterName = bkCluster.name,
-            // Assigning a negative value can make test fail quickly.
-            clientPort = -1,
-            // Assigning a negative value can make test fail quickly.
-            jmxPort = -1,
-            groupId = s"groupId$index",
-            statusTopicName = s"statusTopicName$index",
-            statusTopicPartitions = 1,
-            statusTopicReplications = 1.asInstanceOf[Short],
-            configTopicName = s"configTopicName$index",
-            configTopicPartitions = 1,
-            configTopicReplications = 1.asInstanceOf[Short],
-            offsetTopicName = s"offsetTopicName$index",
-            offsetTopicPartitions = 1,
-            offsetTopicReplications = 1.asInstanceOf[Short],
-            jarInfos = Seq.empty,
+            settings = WorkerApi.access.request.brokerClusterName(bkCluster.name).creation.settings,
             connectors = FakeWorkerClient.localConnectorDefinitions,
             nodeNames = bkCluster.nodeNames,
             deadNodes = Set.empty,
             // In fake mode, we need to assign a state in creation for "GET" method to act like real case
             state = Some(ClusterState.RUNNING.name),
             error = None,
-            tags = Map.empty,
             lastModified = CommonUtils.current()
           ))
       }

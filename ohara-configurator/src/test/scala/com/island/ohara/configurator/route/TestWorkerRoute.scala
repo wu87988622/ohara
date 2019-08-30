@@ -23,7 +23,7 @@ import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.fake.{FakeWorkerClient, FakeWorkerCollie}
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
-import spray.json.{JsArray, JsNumber, JsString}
+import spray.json.{DeserializationException, JsArray, JsNumber, JsString}
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -231,7 +231,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
   }
 
   @Test
-  def testInvalidClusterName(): Unit = an[IllegalArgumentException] should be thrownBy result(
+  def testInvalidClusterName(): Unit = an[DeserializationException] should be thrownBy result(
     workerApi.request.name("123123.").nodeNames(nodeNames).create()
   )
 

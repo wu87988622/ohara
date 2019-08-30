@@ -18,12 +18,17 @@ package com.island.ohara.agent
 
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.NodeApi
+import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
+import com.island.ohara.client.configurator.v0.{NodeApi, WorkerApi}
+import com.island.ohara.common.util.CommonUtils
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class FakeWorkerCollie(node: NodeCollie, brokerClusters: Map[String, Seq[ContainerInfo]]) extends WorkerCollie {
+class FakeWorkerCollie(nodes: Seq[Node],
+                       brokerClusters: Map[String, Seq[ContainerInfo]],
+                       existedWorkerClusterName: String = CommonUtils.randomString(5))
+    extends WorkerCollie {
   override protected def brokerContainers(clusterName: String)(
     implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
     Future.successful(
@@ -40,50 +45,43 @@ class FakeWorkerCollie(node: NodeCollie, brokerClusters: Map[String, Seq[Contain
     implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
     throw new UnsupportedOperationException("FakeWorkerCollie doesn't support logs function")
 
+  WorkerApi.access.request.creation.settings
   override def clusterWithAllContainers()(
     implicit executionContext: ExecutionContext): Future[Map[WorkerClusterInfo, Seq[ContainerInfo]]] =
     Future.successful(
       Map(
         WorkerClusterInfo(
-          "wk1",
-          "worker",
-          "bk1",
-          8083,
-          8084,
-          "aaa",
-          "statustopic",
-          1,
-          1,
-          "conftopic",
-          1,
-          1,
-          "offsettopic",
-          1,
-          1,
-          Seq.empty,
-          Seq.empty,
-          Set("node1"),
-          Set.empty,
-          Map.empty,
-          0L,
-          Some(ContainerState.RUNNING.name),
-          None
-        ) -> Seq(
-          ContainerInfo("node1",
-                        "aaaa",
-                        "connect-worker",
-                        "2019-05-28 00:00:00",
-                        "RUNNING",
-                        "unknown",
-                        "ohara-xxx-wk-0000",
-                        "unknown",
-                        Seq.empty,
-                        Map.empty,
-                        "ohara-xxx-wk-0000")))
+          settings = WorkerApi.access.request
+            .name(existedWorkerClusterName)
+            .nodeNames(nodes.map(_.hostname).toSet)
+            .creation
+            .settings,
+          connectors = Seq.empty,
+          nodeNames = nodes.map(_.hostname).toSet,
+          deadNodes = Set.empty,
+          lastModified = CommonUtils.current(),
+          state = Some(ContainerState.RUNNING.name),
+          error = None
+        ) -> nodes
+          .map(_.hostname)
+          .map(
+            hostname =>
+              ContainerInfo(hostname,
+                            "aaaa",
+                            "connect-worker",
+                            "2019-05-28 00:00:00",
+                            "RUNNING",
+                            "unknown",
+                            "ohara-xxx-wk-0000",
+                            "unknown",
+                            Seq.empty,
+                            Map.empty,
+                            "ohara-xxx-wk-0000"))
+      )
     )
   override protected def resolveHostName(hostname: String): String = hostname
 
-  override protected def nodeCollie: NodeCollie = node
+  override protected val nodeCollie: NodeCollie = NodeCollie(nodes)
 
   override protected def prefixKey: String = "fakeworker"
 

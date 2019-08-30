@@ -20,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 import com.island.ohara.agent.{ClusterState, NoSuchClusterException, NodeCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.{ContainerApi, NodeApi}
 import com.island.ohara.client.kafka.WorkerClient
@@ -43,81 +44,31 @@ private[configurator] class FakeWorkerCollie(node: NodeCollie, wkConnectionProps
     */
   private[this] val fakeClientCache = new ConcurrentHashMap[WorkerClusterInfo, FakeWorkerClient]
   override def creator: WorkerCollie.ClusterCreator =
-    (_,
-     clusterName,
-     imageName,
-     brokerClusterName,
-     clientPort,
-     jmxPort,
-     groupId,
-     offsetTopicName,
-     offsetTopicReplications,
-     offsetTopicPartitions,
-     statusTopicName,
-     statusTopicReplications,
-     statusTopicPartitions,
-     configTopicName,
-     configTopicReplications,
-     _,
-     _,
-     nodeNames) =>
+    (_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, settings, nodeNames) =>
       Future.successful(
         addCluster(
           WorkerClusterInfo(
-            name = clusterName,
-            imageName = imageName,
-            brokerClusterName = brokerClusterName,
-            clientPort = clientPort,
-            jmxPort = jmxPort,
-            groupId = groupId,
-            offsetTopicName = offsetTopicName,
-            offsetTopicPartitions = offsetTopicPartitions,
-            offsetTopicReplications = offsetTopicReplications,
-            configTopicName = configTopicName,
-            configTopicPartitions = 1,
-            configTopicReplications = configTopicReplications,
-            statusTopicName = statusTopicName,
-            statusTopicPartitions = statusTopicPartitions,
-            statusTopicReplications = statusTopicReplications,
-            jarInfos = Seq.empty,
+            settings = settings,
             connectors = FakeWorkerClient.localConnectorDefinitions,
             nodeNames = nodeNames,
             deadNodes = Set.empty,
             // In fake mode, we need to assign a state in creation for "GET" method to act like real case
             state = Some(ClusterState.RUNNING.name),
             error = None,
-            tags = Map.empty,
             lastModified = CommonUtils.current()
           )))
 
   override protected def doRemoveNode(previousCluster: WorkerClusterInfo, beRemovedContainer: ContainerInfo)(
     implicit executionContext: ExecutionContext): Future[Boolean] = Future
     .successful(
-      addCluster(WorkerClusterInfo(
-        name = previousCluster.name,
-        imageName = previousCluster.imageName,
-        brokerClusterName = previousCluster.brokerClusterName,
-        clientPort = previousCluster.clientPort,
-        jmxPort = previousCluster.jmxPort,
-        groupId = previousCluster.groupId,
-        statusTopicName = previousCluster.statusTopicName,
-        statusTopicPartitions = previousCluster.statusTopicPartitions,
-        statusTopicReplications = previousCluster.statusTopicReplications,
-        configTopicName = previousCluster.configTopicName,
-        configTopicPartitions = previousCluster.configTopicPartitions,
-        configTopicReplications = previousCluster.configTopicReplications,
-        offsetTopicName = previousCluster.offsetTopicName,
-        offsetTopicPartitions = previousCluster.offsetTopicPartitions,
-        offsetTopicReplications = previousCluster.offsetTopicReplications,
-        jarInfos = previousCluster.jarInfos,
-        connectors = FakeWorkerClient.localConnectorDefinitions,
+      addCluster(previousCluster.clone(
         nodeNames = previousCluster.nodeNames.filterNot(_ == beRemovedContainer.nodeName),
         deadNodes = Set.empty,
         // In fake mode, we need to assign a state in creation for "GET" method to act like real case
         state = Some(ClusterState.RUNNING.name),
         error = None,
-        tags = Map.empty,
-        lastModified = CommonUtils.current()
+        tags = previousCluster.tags,
+        metrics = Metrics.EMPTY
       )))
     .map(_ => true)
 
@@ -136,31 +87,14 @@ private[configurator] class FakeWorkerCollie(node: NodeCollie, wkConnectionProps
     newNodeName: String)(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] =
     Future.successful(
       addCluster(
-        WorkerClusterInfo(
-          name = previousCluster.name,
-          imageName = previousCluster.imageName,
-          brokerClusterName = previousCluster.brokerClusterName,
-          clientPort = previousCluster.clientPort,
-          jmxPort = previousCluster.jmxPort,
-          groupId = previousCluster.groupId,
-          statusTopicName = previousCluster.statusTopicName,
-          statusTopicPartitions = previousCluster.statusTopicPartitions,
-          statusTopicReplications = previousCluster.statusTopicReplications,
-          configTopicName = previousCluster.configTopicName,
-          configTopicPartitions = previousCluster.configTopicPartitions,
-          configTopicReplications = previousCluster.configTopicReplications,
-          offsetTopicName = previousCluster.offsetTopicName,
-          offsetTopicPartitions = previousCluster.offsetTopicPartitions,
-          offsetTopicReplications = previousCluster.offsetTopicReplications,
-          jarInfos = previousCluster.jarInfos,
-          connectors = FakeWorkerClient.localConnectorDefinitions,
+        previousCluster.clone(
           nodeNames = previousCluster.nodeNames ++ Set(newNodeName),
           deadNodes = Set.empty,
           // In fake mode, we need to assign a state in creation for "GET" method to act like real case
           state = Some(ClusterState.RUNNING.name),
           error = None,
-          tags = Map.empty,
-          lastModified = CommonUtils.current()
+          tags = previousCluster.tags,
+          metrics = Metrics.EMPTY
         )))
 
   override protected def doCreator(executionContext: ExecutionContext,

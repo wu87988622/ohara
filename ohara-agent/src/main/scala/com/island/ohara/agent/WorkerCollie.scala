@@ -19,20 +19,18 @@ import java.util.Objects
 
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
-import com.island.ohara.client.configurator.v0.FileInfoApi.{FILE_INFO_JSON_FORMAT, FileInfo}
+import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
+import com.island.ohara.client.configurator.v0.WorkerApi.{Creation, WorkerClusterInfo}
 import com.island.ohara.client.configurator.v0.{ClusterInfo, Definition, WorkerApi}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
-import spray.json.DefaultJsonProtocol._
-import spray.json.{JsArray, JsNumber, JsString, JsValue}
+import spray.json.{JsString, JsValue}
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 trait WorkerCollie extends Collie[WorkerClusterInfo] {
 
@@ -53,16 +51,16 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
                                                        brokerClusterName,
                                                        clientPort,
                                                        jmxPort,
-                                                       groupId,
-                                                       offsetTopicName,
-                                                       offsetTopicReplications,
-                                                       offsetTopicPartitions,
-                                                       statusTopicName,
-                                                       statusTopicReplications,
-                                                       statusTopicPartitions,
-                                                       configTopicName,
-                                                       configTopicReplications,
-                                                       jarInfos,
+                                                       _,
+                                                       _,
+                                                       _,
+                                                       _,
+                                                       _,
+                                                       _,
+                                                       _,
+                                                       _,
+                                                       _,
+                                                       _,
                                                        settings,
                                                        nodeNames) => {
     implicit val exec: ExecutionContext = executionContext
@@ -168,27 +166,10 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
                     if (successfulContainers.isEmpty)
                       throw new IllegalArgumentException(s"failed to create $clusterName on $serviceName")
                     val clusterInfo = WorkerClusterInfo(
-                      name = clusterName,
-                      imageName = imageName,
-                      brokerClusterName = brokerClusterName,
-                      clientPort = clientPort,
-                      jmxPort = jmxPort,
-                      groupId = groupId,
-                      offsetTopicName = offsetTopicName,
-                      offsetTopicPartitions = offsetTopicPartitions,
-                      offsetTopicReplications = offsetTopicReplications,
-                      configTopicName = configTopicName,
-                      configTopicPartitions = 1,
-                      configTopicReplications = configTopicReplications,
-                      statusTopicName = statusTopicName,
-                      statusTopicPartitions = statusTopicPartitions,
-                      statusTopicReplications = statusTopicReplications,
-                      jarInfos = jarInfos,
+                      settings = settings,
                       connectors = Seq.empty,
                       nodeNames = (successfulContainers.map(_.nodeName) ++ existNodes.map(_._1.name)).toSet,
                       deadNodes = Set.empty,
-                      // We do not care the user parameters since it's stored in configurator already
-                      tags = Map.empty,
                       state = None,
                       error = None,
                       lastModified = CommonUtils.current()
@@ -275,37 +256,15 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
 
   private[agent] def toWorkerCluster(clusterName: String, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] = {
-    val settings = seekSettings(containers.head.environments)
-    val port = settings(WorkerCollie.CLIENT_PORT_KEY).convertTo[Int]
-    connectors(containers.map(c => s"${c.nodeName}:$port").mkString(",")).map { connectors =>
+    val creation = Creation(seekSettings(containers.head.environments))
+    connectors(containers.map(c => s"${c.nodeName}:${creation.clientPort}").mkString(",")).map { connectors =>
       WorkerClusterInfo(
-        name = clusterName,
-        imageName = containers.head.imageName,
-        brokerClusterName = containers.head.environments(WorkerCollie.BROKER_CLUSTER_NAME),
-        clientPort = port,
-        jmxPort = containers.head.environments(WorkerCollie.JMX_PORT_KEY).toInt,
-        groupId = containers.head.environments(WorkerCollie.GROUP_ID_KEY),
-        offsetTopicName = containers.head.environments(WorkerCollie.OFFSET_TOPIC_KEY),
-        offsetTopicPartitions = containers.head.environments(WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY).toInt,
-        offsetTopicReplications = containers.head.environments(WorkerCollie.OFFSET_TOPIC_REPLICATIONS_KEY).toShort,
-        configTopicName = containers.head.environments(WorkerCollie.CONFIG_TOPIC_KEY),
-        configTopicPartitions = 1,
-        configTopicReplications = containers.head.environments(WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY).toShort,
-        statusTopicName = containers.head.environments(WorkerCollie.STATUS_TOPIC_KEY),
-        statusTopicPartitions = containers.head.environments(WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY).toInt,
-        statusTopicReplications = containers.head.environments(WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY).toShort,
-        // The JAR_INFOS_KEY does not exist if user doesn't pass any jar info in creating worker cluster
-        jarInfos = settings
-          .get(WorkerCollie.JAR_INFOS_KEY)
-          .map(_.convertTo[JsArray].elements.map(_.convertTo[FileInfo]))
-          .getOrElse(Seq.empty),
+        settings = creation.settings,
         connectors = connectors,
         nodeNames = containers.map(_.nodeName).toSet,
         // Currently, docker and k8s has same naming rule for "Running",
         // it is ok that we use the containerState.RUNNING here.
         deadNodes = containers.filterNot(_.state == ContainerState.RUNNING.name).map(_.nodeName).toSet,
-        // We do not care the user parameters since it's stored in configurator already
-        tags = Map.empty,
         state = toClusterState(containers).map(_.name),
         // TODO how could we fetch the error?...by Sam
         error = None,
@@ -342,8 +301,7 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
 
 object WorkerCollie {
   trait ClusterCreator extends Collie.ClusterCreator[WorkerClusterInfo] {
-    private[this] val settings: mutable.Map[String, JsValue] = mutable.Map[String, JsValue]()
-
+    private[this] val request = WorkerApi.access.request
     override protected def doCopy(clusterInfo: WorkerClusterInfo): Unit = {
       clientPort(clusterInfo.clientPort)
       brokerClusterName(clusterInfo.brokerClusterName)
@@ -360,57 +318,79 @@ object WorkerCollie {
       jmxPort(clusterInfo.jmxPort)
     }
 
-    def brokerClusterName(name: String): ClusterCreator =
-      setting(WorkerCollie.BROKER_CLUSTER_NAME, JsString(CommonUtils.requireNonEmpty(name)))
+    def brokerClusterName(name: String): ClusterCreator = {
+      request.brokerClusterName(name)
+      this
+    }
 
-    def clientPort(clientPort: Int): ClusterCreator =
-      setting(WorkerCollie.CLIENT_PORT_KEY, JsNumber(CommonUtils.requireConnectionPort(clientPort)))
+    def clientPort(clientPort: Int): ClusterCreator = {
+      request.clientPort(clientPort)
+      this
+    }
 
-    def groupId(groupId: String): ClusterCreator =
-      setting(WorkerCollie.GROUP_ID_KEY, JsString(CommonUtils.requireNonEmpty(groupId)))
+    def groupId(groupId: String): ClusterCreator = {
+      request.groupId(groupId)
+      this
+    }
 
-    def offsetTopicName(offsetTopicName: String): ClusterCreator =
-      setting(WorkerCollie.OFFSET_TOPIC_KEY, JsString(CommonUtils.requireNonEmpty(offsetTopicName)))
+    def offsetTopicName(offsetTopicName: String): ClusterCreator = {
+      request.offsetTopicName(offsetTopicName)
+      this
+    }
 
-    def offsetTopicReplications(offsetTopicReplications: Short): ClusterCreator =
-      setting(WorkerCollie.OFFSET_TOPIC_REPLICATIONS_KEY,
-              JsNumber(CommonUtils.requirePositiveShort(offsetTopicReplications)))
+    def offsetTopicReplications(offsetTopicReplications: Short): ClusterCreator = {
+      request.offsetTopicReplications(offsetTopicReplications)
+      this
+    }
 
-    def offsetTopicPartitions(offsetTopicPartitions: Int): ClusterCreator =
-      setting(WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY, JsNumber(CommonUtils.requirePositiveInt(offsetTopicPartitions)))
+    def offsetTopicPartitions(offsetTopicPartitions: Int): ClusterCreator = {
+      request.offsetTopicPartitions(offsetTopicPartitions)
+      this
+    }
 
-    def statusTopicName(statusTopicName: String): ClusterCreator =
-      setting(WorkerCollie.STATUS_TOPIC_KEY, JsString(CommonUtils.requireNonEmpty(statusTopicName)))
+    def statusTopicName(statusTopicName: String): ClusterCreator = {
+      request.statusTopicName(statusTopicName)
+      this
+    }
 
-    def statusTopicReplications(statusTopicReplications: Short): ClusterCreator =
-      setting(WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY,
-              JsNumber(CommonUtils.requirePositiveShort(statusTopicReplications)))
+    def statusTopicReplications(statusTopicReplications: Short): ClusterCreator = {
+      request.statusTopicReplications(statusTopicReplications)
+      this
+    }
 
-    def statusTopicPartitions(statusTopicPartitions: Int): ClusterCreator =
-      setting(WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY, JsNumber(CommonUtils.requirePositiveInt(statusTopicPartitions)))
+    def statusTopicPartitions(statusTopicPartitions: Int): ClusterCreator = {
+      request.statusTopicPartitions(statusTopicPartitions)
+      this
+    }
 
-    def configTopicName(configTopicName: String): ClusterCreator =
-      setting(WorkerCollie.CONFIG_TOPIC_KEY, JsString(CommonUtils.requireNonEmpty(configTopicName)))
+    def configTopicName(configTopicName: String): ClusterCreator = {
+      request.configTopicName(configTopicName)
+      this
+    }
 
-    def configTopicReplications(configTopicReplications: Short): ClusterCreator =
-      setting(WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY,
-              JsNumber(CommonUtils.requirePositiveShort(configTopicReplications)))
+    def configTopicReplications(configTopicReplications: Short): ClusterCreator = {
+      request.configTopicReplications(configTopicReplications)
+      this
+    }
 
     @Optional("default is empty")
     def jarInfos(jarInfos: Seq[FileInfo]): ClusterCreator = {
       // skip the empty array to avoid generating weird string to env
       if (jarInfos.nonEmpty) {
-        this.settings += (JAR_INFOS_KEY -> JsArray(jarInfos.map(FILE_INFO_JSON_FORMAT.write).toVector))
-        // The URLs don't follow the json representation since we use this string in bash and we don't want
-        // to make a complicated parse process in bash.
-        this.settings += (JAR_URLS_KEY -> JsString(jarInfos.map(_.url.toURI.toASCIIString).mkString(",")))
+        request
+          .jarInfos(jarInfos)
+          // The URLs don't follow the json representation since we use this string in bash and we don't want
+          // to make a complicated parse process in bash.
+          .setting(JAR_URLS_KEY, JsString(jarInfos.map(_.url.toURI.toASCIIString).mkString(",")))
       }
       this
     }
 
     @Optional("default is random port")
-    def jmxPort(jmxPort: Int): ClusterCreator =
-      setting(WorkerCollie.JMX_PORT_KEY, JsNumber(CommonUtils.requireConnectionPort(jmxPort)))
+    def jmxPort(jmxPort: Int): ClusterCreator = {
+      request.jmxPort(jmxPort)
+      this
+    }
 
     /**
       * add a key-value data map for container
@@ -420,43 +400,34 @@ object WorkerCollie {
       * @return this creator
       */
     @Optional("default is empty map")
-    def setting(key: String, value: JsValue): ClusterCreator = settings(Map(key -> value))
-
-    /**
-      * add the key-value data map for container
-      *
-      * @param settings data settings
-      * @return this creator
-      */
-    @Optional("default is empty map")
-    def settings(settings: Map[String, JsValue]): ClusterCreator = {
-      this.settings ++= Objects.requireNonNull(settings)
+    def setting(key: String, value: JsValue): ClusterCreator = {
+      request.setting(key, value)
       this
     }
 
-    override def create(): Future[WorkerClusterInfo] = doCreate(
-      executionContext = Objects.requireNonNull(executionContext),
-      clusterName = CommonUtils.requireNonEmpty(clusterName),
-      imageName = CommonUtils.requireNonEmpty(imageName),
-      brokerClusterName = settings(WorkerCollie.BROKER_CLUSTER_NAME).convertTo[String],
-      clientPort = settings(WorkerCollie.CLIENT_PORT_KEY).convertTo[Int],
-      jmxPort = settings(WorkerCollie.JMX_PORT_KEY).convertTo[Int],
-      groupId = settings(WorkerCollie.GROUP_ID_KEY).convertTo[String],
-      offsetTopicName = settings(WorkerCollie.OFFSET_TOPIC_KEY).convertTo[String],
-      offsetTopicReplications = settings(WorkerCollie.OFFSET_TOPIC_REPLICATIONS_KEY).convertTo[Short],
-      offsetTopicPartitions = settings(WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY).convertTo[Int],
-      statusTopicName = settings(WorkerCollie.STATUS_TOPIC_KEY).convertTo[String],
-      statusTopicReplications = settings(WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY).convertTo[Short],
-      statusTopicPartitions = settings(WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY).convertTo[Int],
-      configTopicName = settings(WorkerCollie.CONFIG_TOPIC_KEY).convertTo[String],
-      configTopicReplications = settings(WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY).convertTo[Short],
-      jarInfos = settings
-        .get(WorkerCollie.JAR_INFOS_KEY)
-        .map(_.convertTo[JsArray].elements.map(_.convertTo[FileInfo]))
-        .getOrElse(Seq.empty),
-      settings = settings.toMap,
-      nodeNames = CommonUtils.requireNonEmpty(nodeNames.asJava).asScala.toSet
-    )
+    override def create(): Future[WorkerClusterInfo] = {
+      val creation = request.name(clusterName).imageName(imageName).nodeNames(nodeNames).creation
+      doCreate(
+        executionContext = Objects.requireNonNull(executionContext),
+        clusterName = creation.name,
+        imageName = creation.imageName,
+        brokerClusterName = creation.brokerClusterName.get,
+        clientPort = creation.clientPort,
+        jmxPort = creation.jmxPort,
+        groupId = creation.groupId,
+        offsetTopicName = creation.offsetTopicName,
+        offsetTopicReplications = creation.offsetTopicReplications,
+        offsetTopicPartitions = creation.offsetTopicPartitions,
+        statusTopicName = creation.statusTopicName,
+        statusTopicReplications = creation.statusTopicReplications,
+        statusTopicPartitions = creation.statusTopicPartitions,
+        configTopicName = creation.configTopicName,
+        configTopicReplications = creation.configTopicReplications,
+        jarInfos = creation.jarInfos,
+        settings = creation.settings,
+        nodeNames = creation.nodeNames
+      )
+    }
 
     override protected def checkClusterName(clusterName: String): String = {
       WorkerApi.WORKER_CREATION_JSON_FORMAT.check("name", JsString(clusterName))
@@ -482,32 +453,9 @@ object WorkerCollie {
                            settings: Map[String, JsValue],
                            nodeNames: Set[String]): Future[WorkerClusterInfo]
   }
-  private[agent] val GROUP_ID_KEY: String = "WORKER_GROUP"
-  private[agent] val OFFSET_TOPIC_KEY: String = "WORKER_OFFSET_TOPIC"
-  private[agent] val OFFSET_TOPIC_REPLICATIONS_KEY: String = "WORKER_OFFSET_TOPIC_REPLICATIONS"
-  private[agent] val OFFSET_TOPIC_PARTITIONS_KEY: String = "WORKER_OFFSET_TOPIC_PARTITIONS"
-  private[agent] val CONFIG_TOPIC_KEY: String = "WORKER_CONFIG_TOPIC"
-  private[agent] val CONFIG_TOPIC_REPLICATIONS_KEY: String = "WORKER_CONFIG_TOPIC_REPLICATIONS"
-  private[agent] val STATUS_TOPIC_KEY: String = "WORKER_STATUS_TOPIC"
-  private[agent] val STATUS_TOPIC_REPLICATIONS_KEY: String = "WORKER_STATUS_TOPIC_REPLICATIONS"
-  private[agent] val STATUS_TOPIC_PARTITIONS_KEY: String = "WORKER_STATUS_TOPIC_PARTITIONS"
   private[agent] val BROKERS_KEY: String = "WORKER_BROKERS"
   private[agent] val ADVERTISED_HOSTNAME_KEY: String = "WORKER_ADVERTISED_HOSTNAME"
   private[agent] val ADVERTISED_CLIENT_PORT_KEY: String = "WORKER_ADVERTISED_CLIENT_PORT"
-  private[agent] val CLIENT_PORT_KEY: String = "WORKER_CLIENT_PORT"
   private[agent] val JAR_URLS_KEY: String = "WORKER_JAR_URLS"
-  private[agent] val JAR_INFOS_KEY: String = "WORKER_JAR_INFOS"
-
-  /**
-    * internal key used to save the broker cluster name.
-    * All nodes of worker cluster should have this environment variable.
-    */
-  private[agent] val BROKER_CLUSTER_NAME: String = "CCI_BROKER_CLUSTER_NAME"
-
-  /**
-    * this key has not been used yet
-    */
-  private[agent] val PLUGINS_KEY: String = "WORKER_PLUGINS"
   private[agent] val JMX_HOSTNAME_KEY: String = "JMX_HOSTNAME"
-  private[agent] val JMX_PORT_KEY: String = "JMX_PORT"
 }

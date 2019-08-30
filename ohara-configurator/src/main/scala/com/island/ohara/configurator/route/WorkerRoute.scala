@@ -19,6 +19,7 @@ package com.island.ohara.configurator.route
 import akka.http.scaladsl.server
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.WorkerApi
 import com.island.ohara.client.configurator.v0.WorkerApi._
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
@@ -39,26 +40,15 @@ object WorkerRoute {
           .map(_.toSeq)
           .map(jarInfos =>
             WorkerClusterInfo(
-              name = creation.name,
-              imageName = creation.imageName,
-              brokerClusterName = bkName,
-              clientPort = creation.clientPort,
-              jmxPort = creation.jmxPort,
-              groupId = creation.groupId,
-              statusTopicName = creation.statusTopicName,
-              statusTopicPartitions = creation.statusTopicPartitions,
-              statusTopicReplications = creation.statusTopicReplications,
-              configTopicName = creation.configTopicName,
-              configTopicPartitions = 1,
-              configTopicReplications = creation.configTopicReplications,
-              offsetTopicName = creation.offsetTopicName,
-              offsetTopicPartitions = creation.offsetTopicPartitions,
-              offsetTopicReplications = creation.offsetTopicReplications,
-              jarInfos = jarInfos,
+              settings = WorkerApi.access.request
+                .settings(creation.settings)
+                .brokerClusterName(bkName)
+                .jarInfos(jarInfos)
+                .creation
+                .settings,
               connectors = Seq.empty,
               nodeNames = creation.nodeNames,
               deadNodes = Set.empty,
-              tags = creation.tags,
               state = None,
               error = None,
               lastModified = CommonUtils.current()
@@ -84,63 +74,41 @@ object WorkerRoute {
         .flatMap { bkName =>
           previousOption.fold(
             // use PUT as creation request
-            Future
-              .traverse(update.jarKeys.getOrElse(Set.empty))(fileStore.fileInfo)
-              .map(_.toSeq)
-              .map {
-                jarInfos =>
-                  val groupId = update.groupId.getOrElse(CommonUtils.randomString(10))
-                  WorkerClusterInfo(
-                    name = key.name,
-                    imageName = update.imageName.getOrElse(IMAGE_NAME_DEFAULT),
-                    brokerClusterName = bkName,
-                    clientPort = update.clientPort.getOrElse(CommonUtils.availablePort()),
-                    jmxPort = update.jmxPort.getOrElse(CommonUtils.availablePort()),
-                    groupId = groupId,
-                    statusTopicName =
-                      update.statusTopicName.getOrElse(s"$groupId-status-${CommonUtils.randomString(10)}"),
-                    statusTopicPartitions = update.statusTopicPartitions.getOrElse(1),
-                    statusTopicReplications = update.statusTopicReplications.getOrElse(1),
-                    configTopicName =
-                      update.configTopicName.getOrElse(s"$groupId-config-${CommonUtils.randomString(10)}"),
-                    configTopicPartitions = 1,
-                    configTopicReplications = update.configTopicReplications.getOrElse(1),
-                    offsetTopicName =
-                      update.offsetTopicName.getOrElse(s"$groupId-offset-${CommonUtils.randomString(10)}"),
-                    offsetTopicPartitions = update.offsetTopicPartitions.getOrElse(1),
-                    offsetTopicReplications = update.offsetTopicReplications.getOrElse(1),
-                    jarInfos = jarInfos,
-                    connectors = Seq.empty,
-                    nodeNames = update.nodeNames.getOrElse(Set.empty),
-                    deadNodes = Set.empty,
-                    tags = update.tags.getOrElse(Map.empty),
-                    state = None,
-                    error = None,
-                    lastModified = CommonUtils.current()
-                  )
-              }
+            Future.traverse(update.jarKeys.getOrElse(Set.empty))(fileStore.fileInfo).map(_.toSeq).map { jarInfos =>
+              WorkerClusterInfo(
+                settings = WorkerApi.access.request
+                  .settings(previousOption.map(_.settings).getOrElse(Map.empty))
+                  .settings(update.settings)
+                  .brokerClusterName(bkName)
+                  .jarInfos(jarInfos)
+                  .creation
+                  .settings,
+                connectors = Seq.empty,
+                nodeNames = update.nodeNames.getOrElse(Set.empty),
+                deadNodes = Set.empty,
+                state = None,
+                error = None,
+                lastModified = CommonUtils.current()
+              )
+            }
           ) { previous =>
             Future
               .traverse(update.jarKeys.getOrElse(Set.empty))(fileStore.fileInfo)
               .map(_.toSeq)
               .map(jarInfos =>
-                previous.copy(
-                  imageName = update.imageName.getOrElse(previous.imageName),
-                  brokerClusterName = update.brokerClusterName.getOrElse(previous.brokerClusterName),
-                  clientPort = update.clientPort.getOrElse(previous.clientPort),
-                  jmxPort = update.jmxPort.getOrElse(previous.jmxPort),
-                  groupId = update.groupId.getOrElse(previous.groupId),
-                  configTopicName = update.configTopicName.getOrElse(previous.configTopicName),
-                  configTopicReplications = update.configTopicReplications.getOrElse(previous.configTopicReplications),
-                  offsetTopicName = update.offsetTopicName.getOrElse(previous.offsetTopicName),
-                  offsetTopicPartitions = update.offsetTopicPartitions.getOrElse(previous.offsetTopicPartitions),
-                  offsetTopicReplications = update.offsetTopicReplications.getOrElse(previous.offsetTopicReplications),
-                  statusTopicName = update.statusTopicName.getOrElse(previous.statusTopicName),
-                  statusTopicPartitions = update.statusTopicPartitions.getOrElse(previous.statusTopicPartitions),
-                  statusTopicReplications = update.statusTopicReplications.getOrElse(previous.statusTopicReplications),
-                  jarInfos = if (jarInfos.isEmpty) previous.jarInfos else jarInfos,
-                  nodeNames = update.nodeNames.getOrElse(previous.nodeNames),
-                  tags = update.tags.getOrElse(previous.tags),
+                WorkerClusterInfo(
+                  settings = WorkerApi.access.request
+                    .settings(previous.settings)
+                    .settings(update.settings)
+                    .brokerClusterName(bkName)
+                    .jarInfos(jarInfos)
+                    .creation
+                    .settings,
+                  connectors = Seq.empty,
+                  nodeNames = update.nodeNames.getOrElse(Set.empty),
+                  deadNodes = Set.empty,
+                  state = None,
+                  error = None,
                   lastModified = CommonUtils.current()
               ))
           }

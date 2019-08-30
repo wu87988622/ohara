@@ -72,28 +72,12 @@ class TestWorkerCreator extends SmallTest with Matchers {
     if (nodeNames == null || nodeNames.isEmpty) throw new AssertionError()
     Future.successful(
       WorkerClusterInfo(
-        name = clusterName,
-        imageName = imageName,
-        brokerClusterName = brokerClusterName,
-        clientPort = clientPort,
-        jmxPort = jmxPort,
-        groupId = groupId,
-        offsetTopicName = offsetTopicName,
-        offsetTopicReplications = offsetTopicReplications,
-        offsetTopicPartitions = offsetTopicPartitions,
-        statusTopicName = statusTopicName,
-        statusTopicReplications = statusTopicReplications,
-        statusTopicPartitions = statusTopicPartitions,
-        configTopicName = configTopicName,
-        configTopicReplications = configTopicReplications,
-        configTopicPartitions = 1,
-        jarInfos = jarInfos,
+        settings = settings,
         connectors = Seq.empty,
         nodeNames = nodeNames,
         deadNodes = Set.empty,
         state = None,
         error = None,
-        tags = Map.empty,
         lastModified = 0
       ))
   }
@@ -234,29 +218,15 @@ class TestWorkerCreator extends SmallTest with Matchers {
 
   @Test
   def testCopy(): Unit = {
+    val nodeNames = Set(CommonUtils.randomString())
     val workerClusterInfo = WorkerClusterInfo(
-      name = CommonUtils.randomString(10),
-      imageName = CommonUtils.randomString(),
-      brokerClusterName = CommonUtils.randomString(),
-      clientPort = 10,
-      jmxPort = 10,
-      groupId = CommonUtils.randomString(),
-      statusTopicName = CommonUtils.randomString(),
-      statusTopicPartitions = 10,
-      statusTopicReplications = 10,
-      configTopicName = CommonUtils.randomString(),
-      configTopicPartitions = 1,
-      configTopicReplications = 10,
-      offsetTopicName = CommonUtils.randomString(),
-      offsetTopicPartitions = 10,
-      offsetTopicReplications = 10,
-      jarInfos = Seq.empty,
+      settings =
+        WorkerApi.access.request.brokerClusterName(CommonUtils.randomString(5)).nodeNames(nodeNames).creation.settings,
       connectors = Seq.empty,
-      nodeNames = Set(CommonUtils.randomString()),
+      nodeNames = nodeNames,
       deadNodes = Set.empty,
       state = None,
       error = None,
-      tags = Map.empty,
       lastModified = 0
     )
     Await.result(wkCreator().copy(workerClusterInfo).create(), 30 seconds) shouldBe workerClusterInfo
@@ -289,7 +259,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
 
     val bkName = CommonUtils.randomString(5)
     val fakeWorkerCollie = new FakeWorkerCollie(
-      NodeCollie(Seq(node1, node2)),
+      Seq(node1, node2),
       Map(
         bkName -> Seq(
           ContainerInfo(
@@ -328,8 +298,8 @@ class TestWorkerCreator extends SmallTest with Matchers {
     val result: WorkerClusterInfo = Await.result(workerClusterInfo, TIMEOUT)
     result.brokerClusterName shouldBe bkName
     result.clientPort shouldBe 8083
-    result.nodeNames.size shouldBe 2
-    result.connectionProps shouldBe "node2:8083,node1:8083"
+    result.nodeNames.size shouldBe 1
+    result.connectionProps shouldBe s"$node2Name:8083"
   }
 
   @Test
@@ -346,10 +316,11 @@ class TestWorkerCreator extends SmallTest with Matchers {
       tags = Map.empty
     )
 
-    val fakeWorkerCollie = new FakeWorkerCollie(NodeCollie(Seq(node1)), Map.empty)
+    val wkName = CommonUtils.randomString(5)
+    val fakeWorkerCollie = new FakeWorkerCollie(Seq(node1), Map.empty, wkName)
     val workerClusterInfo: Future[WorkerClusterInfo] = fakeWorkerCollie.creator
       .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
-      .clusterName("wk1")
+      .clusterName(wkName)
       .clientPort(8083)
       .jmxPort(8084)
       .brokerClusterName("bk1")
@@ -397,7 +368,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
 
     val bkName = CommonUtils.randomString(5)
     val fakeWorkerCollie = new FakeWorkerCollie(
-      NodeCollie(Seq(node1, node2)),
+      Seq(node1, node2),
       Map(
         bkName -> Seq(
           ContainerInfo(
