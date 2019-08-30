@@ -16,8 +16,6 @@
 
 import { isNull, isEmpty, isString } from 'lodash';
 
-import { isTopic, isStream } from '../pipelineUtils/commonUtils';
-
 export const removePrevConnector = (flows, connectorName) => {
   const updateFlows = flows.map(flow => {
     const hasConnection = flow.to.find(t => t.name === connectorName);
@@ -172,7 +170,7 @@ export const loadGraph = (pipeline, currentConnectorName) => {
       to: flows[index].to,
     };
 
-    if (isTopic(kind) || isStream(kind)) {
+    if (kind === 'topic' || kind === 'stream') {
       return {
         ...props,
         className: kind,

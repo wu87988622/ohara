@@ -55,7 +55,9 @@ describe('PipelineListPage', () => {
     const pipelineName = generate.serviceName({ prefix: 'pipeline' });
     const pipelineParams = {
       name: pipelineName,
-      workerName: Cypress.env('WORKER_NAME'),
+      tags: {
+        workerClusterName: Cypress.env('WORKER_NAME'),
+      },
     };
 
     cy.addPipeline(pipelineParams)
@@ -75,7 +77,9 @@ describe('PipelineListPage', () => {
     const pipelineName = generate.serviceName({ prefix: 'pipeline' });
     const pipelineParams = {
       name: pipelineName,
-      workerName: Cypress.env('WORKER_NAME'),
+      tags: {
+        workerClusterName: Cypress.env('WORKER_NAME'),
+      },
     };
 
     cy.addPipeline(pipelineParams)

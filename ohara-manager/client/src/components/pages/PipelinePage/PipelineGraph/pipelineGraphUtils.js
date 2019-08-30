@@ -18,23 +18,17 @@ import { isEmpty } from 'lodash';
 
 import { CONNECTOR_STATES } from 'constants/pipelines';
 import { isEmptyStr } from 'utils/commonUtils';
-import {
-  isSource,
-  isSink,
-  isTopic,
-  isStream,
-} from '../pipelineUtils/commonUtils';
 
 export const getIcon = kind => {
   let icon = '';
 
-  if (isSource(kind)) {
+  if (kind === 'source') {
     icon = 'fa-file-import';
-  } else if (isSink(kind)) {
+  } else if (kind === 'sink') {
     icon = 'fa-file-export';
-  } else if (isTopic(kind)) {
+  } else if (kind === 'topic') {
     icon = 'fa-list-ul';
-  } else if (isStream(kind)) {
+  } else if (kind === 'stream') {
     icon = 'fa-wind';
   }
 

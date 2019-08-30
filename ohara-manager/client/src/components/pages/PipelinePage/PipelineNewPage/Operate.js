@@ -23,7 +23,7 @@ import * as connectorApi from 'api/connectorApi';
 import * as streamApi from 'api/streamApi';
 import { Box } from 'components/common/Layout';
 import { Heading3, OperateWrapper } from './styles';
-import { getConnectors } from '../pipelineUtils/commonUtils';
+import { getConnectors } from '../pipelineUtils';
 
 const Operate = props => {
   const {

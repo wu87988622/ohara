@@ -31,7 +31,6 @@ import Operate from './Operate';
 import SidebarRoutes from './SidebarRoutes';
 import Metrics from './Metrics';
 import { PIPELINE_NEW, PIPELINE_EDIT } from 'constants/documentTitles';
-import { getConnectors } from '../pipelineUtils/commonUtils';
 import { Wrapper, Main, Sidebar, Heading2 } from './styles';
 
 class PipelineNewPage extends React.Component {
@@ -128,7 +127,10 @@ class PipelineNewPage extends React.Component {
       const pipeline = get(res, 'data.result', null);
 
       if (pipeline) {
-        const { topics: pipelineTopics = [] } = getConnectors(pipeline.objects);
+        const pipelineTopics = pipeline.objects.filter(
+          object => object.kind === 'topic',
+        );
+
         const hasRunningServices = pipeline.objects.some(object =>
           Boolean(object.state),
         );
@@ -224,8 +226,8 @@ class PipelineNewPage extends React.Component {
       const updatedPipelines = get(response, 'data.result', null);
 
       if (!isEmpty(updatedPipelines)) {
-        const { topics: pipelineTopics } = getConnectors(
-          updatedPipelines.objects,
+        const pipelineTopics = updatedPipelines.objects.filter(
+          object => object.kind === 'topic',
         );
 
         this.setState({

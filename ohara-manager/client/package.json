@@ -68,11 +68,12 @@
       "expect": false
     },
     "rules": {
-      "no-alert": "error",
-      "no-template-curly-in-string": "error",
-      "array-callback-return": "error",
+      "no-alert": "warn",
+      "no-template-curly-in-string": "warn",
+      "array-callback-return": "warn",
       "object-shorthand": "warn",
       "no-console": "warn",
+      "no-unused-vars": "warn",
       "no-debugger": "warn",
       "react/prop-types": "warn",
       "no-case-declarations": "off"

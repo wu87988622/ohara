@@ -28,7 +28,7 @@ import { CONNECTOR_ACTIONS } from 'constants/pipelines';
 import { validateConnector } from 'api/validateApi';
 import { FormGroup } from 'components/common/Form';
 import { InputField, Select, Checkbox } from 'components/common/Mui/Form';
-import { findByGraphName } from '../pipelineUtils/commonUtils';
+import { findByGraphName } from '../pipelineUtils';
 
 export const getCurrTopicId = ({ originals, target = '' }) => {
   if (isEmpty(originals) || isNull(target) || target === 'Please select...')

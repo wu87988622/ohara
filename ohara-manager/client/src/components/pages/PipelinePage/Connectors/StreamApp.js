@@ -30,7 +30,7 @@ import { TitleWrapper, H5Wrapper, LoaderWrap } from './styles';
 import { STREAM_APP_ACTIONS } from 'constants/pipelines';
 import { ListLoader } from 'components/common/Loader';
 import { Box } from 'components/common/Layout';
-import { findByGraphName } from '../pipelineUtils/commonUtils';
+import { findByGraphName } from '../pipelineUtils';
 import { graph as graphPropType } from 'propTypes/pipeline';
 
 class StreamApp extends React.Component {

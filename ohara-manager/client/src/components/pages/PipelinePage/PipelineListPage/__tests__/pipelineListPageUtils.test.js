@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { addPipelineStatus, getEditUrl } from '../pipelineListPageUtils';
+import { addPipelineStatus } from '../pipelineListPageUtils';
 
 describe('addPipelineStatus()', () => {
   it('adds the pipeline status', () => {
@@ -50,17 +50,5 @@ describe('addPipelineStatus()', () => {
     const result = addPipelineStatus(pipelines);
     expect(result[0]).toEqual({ ...pipelines[0], status: 'Running' });
     expect(result[1]).toEqual({ ...pipelines[1], status: 'Stopped' });
-  });
-});
-
-describe('getEditUrl()', () => {
-  it('returns the correct url', () => {
-    const pipeline = { name: 'abc' };
-    const match = { url: '/page/url' };
-
-    const result = getEditUrl(pipeline, match);
-    const expected = `${match.url}/edit/${pipeline.name}`;
-
-    expect(result).toBe(expected);
   });
 });

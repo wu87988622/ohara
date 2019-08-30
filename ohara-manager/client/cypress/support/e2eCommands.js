@@ -15,7 +15,7 @@
  */
 
 import '@testing-library/cypress/add-commands';
-import { isEmpty } from 'lodash';
+import { isEmpty, isNull } from 'lodash';
 
 import * as utils from '../utils';
 import * as generate from '../../src/utils/generate';
@@ -27,9 +27,16 @@ Cypress.Commands.add('registerService', (serviceName, serviceType) => {
   const fileName = './services.json';
   const update = { name: serviceName, serviceType };
 
-  cy.task('readFileMaybe', fileName).then(services => {
-    // Append a new worker to the existing file
-    cy.writeFile(fileName, [...services, update]);
+  cy.task('readFileMaybe', fileName).then(data => {
+    // No file in the current location, let's create one!
+    if (isNull(data)) {
+      cy.writeFile(fileName, update);
+    } else {
+      cy.readFile(fileName).then(services => {
+        // Append the update to the existing file
+        cy.writeFile(fileName, [...services, update]);
+      });
+    }
   });
 });
 

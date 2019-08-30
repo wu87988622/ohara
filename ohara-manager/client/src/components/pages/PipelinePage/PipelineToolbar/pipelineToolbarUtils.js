@@ -18,12 +18,6 @@ import { isObject } from 'lodash';
 
 import * as connectorApi from 'api/connectorApi';
 import { createProperty } from 'api/streamApi';
-import {
-  isSource,
-  isSink,
-  isTopic,
-  isStream,
-} from '../pipelineUtils/commonUtils';
 
 const getClassName = connector => {
   let className = '';
@@ -50,10 +44,10 @@ export const createConnector = async ({
   const className = getClassName(connector);
   let connectorName;
 
-  if (isTopic(typeName)) {
+  if (typeName === 'topic') {
     // Topic is created beforehand therefore, a name is already exist.
     connectorName = connector.name;
-  } else if (isStream(typeName)) {
+  } else if (typeName === 'stream') {
     const response = await createProperty({
       jarKey: connector.jarKey,
       name: newStreamAppName,
@@ -62,7 +56,7 @@ export const createConnector = async ({
     if (!response.data.isSuccess) return; // failed to create
 
     connectorName = newStreamAppName;
-  } else if (isSource(typeName) || isSink(typeName)) {
+  } else if (typeName === 'source' || typeName === 'sink') {
     const params = {
       name: newConnectorName,
       'connector.class': className,

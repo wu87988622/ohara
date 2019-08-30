@@ -18,7 +18,7 @@ import React from 'react';
 import { cleanup, waitForElement, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 
-import PipelineListPage from '../PipelineListPage';
+import PipelineListPage from '../PipelineListPage/PipelineListPage';
 import { PIPELINE } from 'constants/documentTitles';
 import { renderWithProvider } from 'utils/testUtils';
 import * as generate from 'utils/generate';
@@ -55,6 +55,14 @@ const pipelines = [
 
 describe('<PipelineListPage />', () => {
   beforeEach(() => {
+    jest.spyOn(useApi, 'useWaitApi').mockImplementation(() => {
+      return { putApi: jest.fn() };
+    });
+
+    jest.spyOn(useApi, 'usePutApi').mockImplementation(() => {
+      return { waitApi: jest.fn() };
+    });
+
     jest.spyOn(useApi, 'usePostApi').mockImplementation(() => {
       return { getData: jest.fn() };
     });

@@ -25,7 +25,7 @@ import * as URLS from 'constants/urls';
 import { Warning } from 'components/common/Messages';
 import { Select } from 'components/common/Form';
 import { createConnector } from './pipelineToolbarUtils';
-import { findByGraphName } from '../pipelineUtils/commonUtils';
+import { findByGraphName } from '../pipelineUtils';
 import { graph as graphPropType } from 'propTypes/pipeline';
 import { Wrapper } from './styles';
 

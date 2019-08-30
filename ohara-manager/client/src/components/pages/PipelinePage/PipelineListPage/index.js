@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 
-import PipelinePage from './PipelineListPage';
+import PipelineListPage from './PipelineListPage';
 
-export default PipelinePage;
+export default PipelineListPage;

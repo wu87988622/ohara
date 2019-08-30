@@ -14,54 +14,7 @@
  * limitations under the License.
  */
 
-import {
-  isSource,
-  isSink,
-  isTopic,
-  isStream,
-  findByGraphName,
-  getConnectors,
-} from '../commonUtils';
-
-describe('isSource()', () => {
-  it(`returns true if it's a source connector`, () => {
-    expect(isSource('source')).toBe(true);
-  });
-
-  it(`returns false if it's not a source connector`, () => {
-    expect(isSource('sink')).toBe(false);
-  });
-});
-
-describe('isSink()', () => {
-  it(`returns true if it's a sink connector`, () => {
-    expect(isSink('sink')).toBe(true);
-  });
-
-  it(`returns false if it's not a sink connector`, () => {
-    expect(isSink('source')).toBe(false);
-  });
-});
-
-describe('isTopic()', () => {
-  it(`returns true if it's a topic`, () => {
-    expect(isTopic('topic')).toBe(true);
-  });
-
-  it(`returns false if it's not a topic`, () => {
-    expect(isTopic('source')).toBe(false);
-  });
-});
-
-describe('isStream()', () => {
-  it(`returns true if it's a stream app`, () => {
-    expect(isStream('stream')).toBe(true);
-  });
-
-  it(`returns false if it's not a topic`, () => {
-    expect(isStream('topic')).toBe(false);
-  });
-});
+import { findByGraphName, getConnectors } from '../pipelineUtils';
 
 describe('findByGraphName()', () => {
   it('finds the right connector by name', () => {

@@ -14,18 +14,6 @@
  * limitations under the License.
  */
 
-export const isSource = type => {
-  return type === 'source';
-};
-
-export const isSink = type => {
-  return type === 'sink';
-};
-
-export const isTopic = kind => kind === 'topic';
-
-export const isStream = kind => kind === 'stream';
-
 export const findByGraphName = (graph, connectorName) =>
   graph.find(g => g.name === connectorName);
 
@@ -39,15 +27,14 @@ export const getConnectors = connectors => {
   const result = connectors.reduce((acc, connector) => {
     const { kind, name } = connector;
 
-    if (isSource(kind)) {
+    if (kind === 'source') {
       acc.sources.push(name);
-    } else if (isSink(kind)) {
+    } else if (kind === 'sink') {
       acc.sinks.push(name);
-    } else if (isStream(kind)) {
+    } else if (kind === 'stream') {
       acc.streams.push(name);
-    } else if (isTopic(kind)) {
-      // TODO: this should behave the same way as the rest of connectors
-      acc.topics.push(connector);
+    } else if (kind === 'topic') {
+      acc.topics.push(name);
     }
     return acc;
   }, init);

@@ -24,6 +24,10 @@ import StepLabel from '@material-ui/core/StepLabel';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import LinearProgress from '@material-ui/core/LinearProgress';
 
+const StyledDiv = styled.div`
+  margin-bottom: 15px;
+`;
+
 const Progress = props => {
   const {
     steps = [],
@@ -34,6 +38,7 @@ const Progress = props => {
     deleteTitle = 'Deleting',
     testId = 'step-testid',
   } = props;
+
   const [completed, setCompleted] = useState(0);
   const [buffer, setBuffer] = useState(0);
   const [diff, setDiff] = useState(0);
@@ -42,11 +47,8 @@ const Progress = props => {
   const [color, setColor] = useState();
   const [title, setTitle] = useState('');
 
-  const StyledDiv = styled.div`
-    margin-bottom: 15px;
-  `;
-
   const progress = useRef(() => {});
+
   useEffect(() => {
     progress.current = () => {
       if (completed < 100) {
