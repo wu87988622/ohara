@@ -40,13 +40,11 @@ const Topics = props => {
     isLoading: fetchingTopics,
     refetch,
   } = useApi.useFetchApi(`${URL.TOPIC_URL}?group=${worker.name}-topic`);
-  const { putApi: stopTopic } = useApi.usePutApi(
-    `${URL.TOPIC_URL}?group=${worker.name}-topic`,
-  );
+  const { putApi: stopTopic } = useApi.usePutApi(`${URL.TOPIC_URL}`);
   const {
     getData: deleteTopicRes,
     deleteApi: deleteTopic,
-  } = useApi.useDeleteApi(URL.TOPIC_URL);
+  } = useApi.useDeleteApi(`${URL.TOPIC_URL}`);
   const { waitApi } = useApi.useWaitApi();
 
   const topicsUnderBrokerCluster = get(topics, 'data.result', []);
@@ -111,12 +109,12 @@ const Topics = props => {
       return isUndefined(get(res, 'data.result.state', undefined));
     };
     const topicParams = {
-      url: `${URL.TOPIC_URL}/${topicToBeDeleted}`,
+      url: `${URL.TOPIC_URL}/${topicToBeDeleted}?group=${worker.name}-topic`,
       checkFn,
     };
-    await stopTopic(`/${topicToBeDeleted}/stop`);
+    await stopTopic(`/${topicToBeDeleted}/stop?group=${worker.name}-topic`);
     await waitApi(topicParams);
-    await deleteTopic(topicToBeDeleted);
+    await deleteTopic(`${topicToBeDeleted}?group=${worker.name}-topic`);
     const isSuccess = get(deleteTopicRes(), 'data.isSuccess', false);
     setState({ deleting: false });
 

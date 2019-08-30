@@ -45,7 +45,7 @@ const OverviewPlugin = props => {
           <Tooltip title="Link to plugins page" enterDelay={1000}>
             <StyledIcon
               className="fas fa-external-link-square-alt"
-              data-testid="overview-plugin-link"
+              data-testid="overview-plugins-link"
             />
           </Tooltip>
         </StyledIconLink>
