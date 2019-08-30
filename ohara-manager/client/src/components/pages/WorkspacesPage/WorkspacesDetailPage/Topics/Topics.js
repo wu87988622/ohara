@@ -39,17 +39,18 @@ const Topics = props => {
     data: topics,
     isLoading: fetchingTopics,
     refetch,
-  } = useApi.useFetchApi(URL.TOPIC_URL);
-  const { putApi: stopTopic } = useApi.usePutApi(URL.TOPIC_URL);
+  } = useApi.useFetchApi(`${URL.TOPIC_URL}?group=${worker.name}-topic`);
+  const { putApi: stopTopic } = useApi.usePutApi(
+    `${URL.TOPIC_URL}?group=${worker.name}-topic`,
+  );
   const {
     getData: deleteTopicRes,
     deleteApi: deleteTopic,
   } = useApi.useDeleteApi(URL.TOPIC_URL);
   const { waitApi } = useApi.useWaitApi();
 
-  const topicsUnderBrokerCluster = get(topics, 'data.result', []).filter(
-    topic => topic.brokerClusterName === worker.brokerClusterName,
-  );
+  const topicsUnderBrokerCluster = get(topics, 'data.result', []);
+
   const headRows = [
     { id: 'name', label: 'Topic name' },
     { id: 'partitions', label: 'Partitions' },
@@ -165,6 +166,7 @@ const Topics = props => {
           refetch();
         }}
         brokerClusterName={worker.brokerClusterName}
+        worker={worker}
       />
 
       <DeleteDialog
@@ -186,6 +188,7 @@ Topics.propTypes = {
   }).isRequired,
   worker: PropTypes.shape({
     brokerClusterName: PropTypes.string.isRequired,
+    name: PropTypes.string.isRequired,
   }).isRequired,
 };
 

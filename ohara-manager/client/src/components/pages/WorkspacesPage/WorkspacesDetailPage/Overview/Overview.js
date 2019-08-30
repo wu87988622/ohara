@@ -94,10 +94,7 @@ const Overview = props => {
         </Box>
 
         <Box>
-          <OverviewTopics
-            handleRedirect={handleRedirect}
-            brokerClusterName={brokerClusterName}
-          />
+          <OverviewTopics handleRedirect={handleRedirect} worker={worker} />
         </Box>
       </LeftColumn>
 

@@ -33,7 +33,7 @@ import * as URL from 'components/controller/url';
 const OverviewPlugin = props => {
   const { handleRedirect, workerName } = props;
   const { data: jars, loading: fetchingJars } = useApi.useFetchApi(
-    `${URL.FILE_URL}?group=${workerName}`,
+    `${URL.FILE_URL}?group=${workerName}-plugin`,
   );
 
   return (
@@ -41,7 +41,7 @@ const OverviewPlugin = props => {
       <TabHeading>
         <StyledIcon className="fas fa-file-alt" />
         <span className="title">Plugins</span>
-        <StyledIconLink onClick={() => handleRedirect('plugin')}>
+        <StyledIconLink onClick={() => handleRedirect('plugins')}>
           <Tooltip title="Link to plugins page" enterDelay={1000}>
             <StyledIcon
               className="fas fa-external-link-square-alt"
@@ -55,18 +55,16 @@ const OverviewPlugin = props => {
         headers={['File name', 'File size(KB)']}
         isLoading={fetchingJars}
       >
-        {get(jars, 'data.result', [])
-          .filter(jar => jar.tags.type === 'plugin')
-          .map(jar => {
-            return (
-              <TableRow key={jar.name}>
-                <StyledTableCell>{jar.name}</StyledTableCell>
-                <StyledTableCell align="right">
-                  {floor(divide(jar.size, 1024), 1)}
-                </StyledTableCell>
-              </TableRow>
-            );
-          })}
+        {get(jars, 'data.result', []).map(jar => {
+          return (
+            <TableRow key={jar.name}>
+              <StyledTableCell>{jar.name}</StyledTableCell>
+              <StyledTableCell align="right">
+                {floor(divide(jar.size, 1024), 1)}
+              </StyledTableCell>
+            </TableRow>
+          );
+        })}
       </OverviewTable>
     </>
   );

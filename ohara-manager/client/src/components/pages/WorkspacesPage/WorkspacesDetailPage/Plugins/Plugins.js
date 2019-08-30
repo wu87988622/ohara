@@ -30,13 +30,13 @@ import * as useApi from 'components/controller';
 import * as URL from 'components/controller/url';
 import useSnackbar from 'components/context/Snackbar/useSnackbar';
 
-const StreamApp = props => {
+const Plugins = props => {
   const { workspaceName } = props;
   const [jarNameToBeDeleted, setJarNameToBeDeleted] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const { data: jarsRes, isLoading, refetch } = useApi.useFetchApi(
-    `${URL.FILE_URL}?group=${workspaceName}-streamjar`,
+    `${URL.FILE_URL}?group=${workspaceName}-plugin`,
   );
   const jars = get(jarsRes, 'data.result', []);
   const { getData: getJarRes, uploadApi } = useApi.useUploadApi(URL.FILE_URL);
@@ -48,7 +48,7 @@ const StreamApp = props => {
   const uploadJar = async file => {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('group', `${workspaceName}-streamjar`);
+    formData.append('group', `${workspaceName}-plugin`);
     await uploadApi(formData);
 
     const isSuccess = get(getJarRes(), 'data.isSuccess', false);
@@ -74,7 +74,7 @@ const StreamApp = props => {
   };
 
   const headRows = [
-    { id: 'name', label: 'Jar name' },
+    { id: 'name', label: 'File name' },
     { id: 'size', label: 'File size(KB)' },
     { id: 'lastModified', label: 'Last modified' },
     { id: 'action', label: 'Action', sortable: false },
@@ -107,7 +107,7 @@ const StreamApp = props => {
 
   const handleDelete = async () => {
     if (jarNameToBeDeleted) {
-      await deleteApi(`${jarNameToBeDeleted}?group=${workspaceName}-streamjar`);
+      await deleteApi(`${jarNameToBeDeleted}?group=${workspaceName}-plugin`);
       const isSuccess = get(getDeleteRes(), 'data.isSuccess', false);
       setDeleting(false);
 
@@ -133,20 +133,20 @@ const StreamApp = props => {
         }}
       />
       <StyledLabel htmlFor="fileInput">
-        <Button component="span" text="New jar" />
+        <Button component="span" text="ADD PLUGIN" />
       </StyledLabel>
       <Main>
         <SortTable
           isLoading={isLoading}
           headRows={headRows}
           rows={rows}
-          tableName="streamApp"
+          tableName="plugins"
         />
       </Main>
 
       <DeleteDialog
-        title="Delete jar?"
-        content={`Are you sure you want to delete the jar: ${jarNameToBeDeleted} ? This action cannot be undone!`}
+        title="Delete File?"
+        content={`Are you sure you want to delete the file: ${jarNameToBeDeleted} ? This action cannot be undone!`}
         open={isModalOpen}
         handleClose={() => setIsModalOpen(false)}
         handleConfirm={handleDelete}
@@ -156,8 +156,8 @@ const StreamApp = props => {
   );
 };
 
-StreamApp.propTypes = {
+Plugins.propTypes = {
   workspaceName: PropTypes.string.isRequired,
 };
 
-export default StreamApp;
+export default Plugins;

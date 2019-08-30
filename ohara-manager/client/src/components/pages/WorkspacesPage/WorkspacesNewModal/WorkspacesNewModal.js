@@ -78,8 +78,7 @@ const WorkerNewModal = props => {
     const { file, workerName } = params;
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('tags', '{"type":"plugin"}');
-    formData.append('group', workerName);
+    formData.append('group', `${workerName}-plugin`);
     await uploadApi(formData);
 
     const isSuccess = get(jarRes(), 'data.isSuccess', false);
