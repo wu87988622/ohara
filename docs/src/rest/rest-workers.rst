@@ -36,25 +36,28 @@ worker clusters.
 
 The properties which can be set by user are shown below.
 
-#. name (**string**) — cluster name
-#. imageName (**string**) — docker image
-#. brokerClusterName (**string**) — broker cluster used to host topics for this worker cluster
-#. clientPort (**int**) — worker client port
-#. jmxPort (**int**) — worker jmx port
-#. groupId (**string**) — the id of worker stored in broker cluster
-#. configTopicName (**string**) — a internal topic used to store connector configuration
-#. configTopicReplications (**int**) — number of replications for config topic
-#. offsetTopicName (**string**) — a internal topic used to store connector offset
-#. offsetTopicPartitions (**int**) — number of partitions for offset topic
-#. offsetTopicReplications (**int**) — number of replications for offset topic
-#. statusTopicName (**string**) — a internal topic used to store connector status
-#. statusTopicPartitions (**int**) — number of partitions for status topic
-#. statusTopicReplications (**int**) — number of replications for status topic
-#. jarKeys (**array(object)**) — the “primary key” of jars that will be loaded by worker cluster.
-   You can require worker cluster to load the jars stored in ohara if you want to run custom connectors
-   on the worker cluster. see :ref:`Files APIs <rest-files>` for uploading jars to ohara. Noted: the response
-   will replace this by :ref:`JarInfo <rest-files>`.
-#. nodeNames (**array(string)**) — the nodes running the worker process
+#. settings (**objects**) — cluster settings passed by user
+
+  #. name (**string**) — cluster name
+  #. imageName (**string**) — docker image
+  #. brokerClusterName (**string**) — broker cluster used to host topics for this worker cluster
+  #. clientPort (**int**) — worker client port
+  #. jmxPort (**int**) — worker jmx port
+  #. groupId (**string**) — the id of worker stored in broker cluster
+  #. configTopicName (**string**) — a internal topic used to store connector configuration
+  #. configTopicReplications (**int**) — number of replications for config topic
+  #. offsetTopicName (**string**) — a internal topic used to store connector offset
+  #. offsetTopicPartitions (**int**) — number of partitions for offset topic
+  #. offsetTopicReplications (**int**) — number of replications for offset topic
+  #. statusTopicName (**string**) — a internal topic used to store connector status
+  #. statusTopicPartitions (**int**) — number of partitions for status topic
+  #. statusTopicReplications (**int**) — number of replications for status topic
+  #. jarKeys (**array(object)**) — the “primary key” of jars that will be loaded by worker cluster.
+     You can require worker cluster to load the jars stored in ohara if you want to run custom connectors
+     on the worker cluster. see :ref:`Files APIs <rest-files>` for uploading jars to ohara. Noted: the response
+     will replace this by :ref:`JarInfo <rest-files>`.
+  #. nodeNames (**array(string)**) — the nodes running the worker process
+
 #. deadNodes (**array(string)**) — the nodes that have failed containers of worker
 
     .. note::
@@ -168,59 +171,55 @@ create a worker properties
 Example Request
   .. code-block:: json
 
-     {
-       "name": "wk00",
-       "imageName": "oharastream/connect-worker:$|version|",
-       "clientPort": 12345,
-       "jmxPort": 12346,
-       "brokerClusterName": "preCreatedBkCluster",
-       "groupId": "abcdefg",
-       "configTopicName": "configTopic",
-       "configTopicReplications": 1,
-       "offsetTopicName": "offsetTopic",
-       "offsetTopicReplications": 1,
-       "offsetTopicPartitions": 1,
-       "statusTopicName": "statusTopic",
-       "statusTopicReplications": 1,
-       "statusTopicPartitions": 1,
-       "jarKeys": [
-         {
-           "group": "abc",
-           "name": "myjar"
-         }
-       ],
-       "nodeNames": [
-         "node00"
-       ]
-     }
+    {
+      "name": "wk00",
+      "clientPort": 12345,
+      "jmxPort": 12346,
+      "brokerClusterName": "preCreatedBkCluster",
+      "groupId": "abcdefg",
+      "configTopicName": "configTopic",
+      "configTopicReplications": 1,
+      "offsetTopicName": "offsetTopic",
+      "offsetTopicReplications": 1,
+      "offsetTopicPartitions": 1,
+      "statusTopicName": "statusTopic",
+      "statusTopicReplications": 1,
+      "statusTopicPartitions": 1,
+      "nodeNames": [
+        "node00"
+      ]
+    }
 
 Example Response
   .. code-block:: json
 
-     {
-       "statusTopicName": "statusTopic",
-       "name": "wk00",
-       "offsetTopicPartitions": 1,
-       "brokerClusterName": "preCreatedBkCluster",
-       "connectors": [],
-       "sinks": [],
-       "offsetTopicName": "offsetTopic",
-       "imageName": "oharastream/connect-worker:$|version|",
-       "groupId": "abcdefg",
-       "jarInfos": [],
-       "statusTopicReplications": 1,
-       "configTopicPartitions": 1,
-       "offsetTopicReplications": 1,
-       "configTopicReplications": 1,
-       "statusTopicPartitions": 1,
-       "configTopicName": "configTopic",
-       "jmxPort": 12346,
-       "clientPort": 12345,
-       "nodeNames": [
-         "node00"
-       ],
-       "deadNodes": []
-     }
+    {
+      "lastModified": 1567177024356,
+      "connectors": [],
+      "deadNodes": [],
+      "settings": {
+        "statusTopicName": "statusTopic",
+        "name": "wk00",
+        "offsetTopicPartitions": 1,
+        "brokerClusterName": "preCreatedBkCluster",
+        "tags": {},
+        "jarInfos": [],
+        "offsetTopicName": "offsetTopic",
+        "imageName": "oharastream/connect-worker:0.8.0-SNAPSHOT",
+        "groupId": "abcdefg",
+        "statusTopicReplications": 1,
+        "offsetTopicReplications": 1,
+        "configTopicReplications": 1,
+        "statusTopicPartitions": 1,
+        "configTopicName": "configTopic",
+        "jmxPort": 12346,
+        "clientPort": 12345,
+        "jarKeys": [],
+        "nodeNames": [
+          "node00"
+        ]
+      }
+    }
 
   As mentioned before, ohara provides default to most settings. You can
   just input name, nodeNames and jars to run a worker cluster.
@@ -228,18 +227,12 @@ Example Response
 Example Request
   .. code-block:: json
 
-     {
-       "name": "wk00",
-       "jarKeys": [
-           {
-             "group": "default",
-             "name": "ohara-it-sink.jar"
-           }
-       ],
-       "nodeNames": [
-         "node00"
-       ]
-     }
+    {
+      "name": "wk",
+      "nodeNames": [
+        "node10"
+      ]
+    }
 
   .. note::
      As you don’t input the broker cluster name, Ohara will try to pick up
@@ -253,38 +246,33 @@ Example Request
 Example Response
   .. code-block:: json
 
-     {
-       "statusTopicName": "status-89eaef1e9d",
-       "name": "wk00",
-       "offsetTopicPartitions": 1,
-       "brokerClusterName": "preCreatedBkCluster",
-       "connectors": [],
-       "offsetTopicName": "offset-956c528fa5",
-       "imageName": "oharastream/connect-worker:$|version|",
-       "groupId": "dcafb19d0e",
-       "jarInfos": [
-         {
-           "name": "ohara-it-sink.jar",
-           "size": 6805,
-           "url": "http://192.168.99.1:12345/v0/downloadFiles/default/ohara-it-sink.jar",
-           "lastModified": 1564971857485,
-           "tags": {},
-           "group": "default"
-         }
-       ],
-       "statusTopicReplications": 1,
-       "configTopicPartitions": 1,
-       "offsetTopicReplications": 1,
-       "configTopicReplications": 1,
-       "statusTopicPartitions": 1,
-       "configTopicName": "setting-67c528ca7d",
-       "jmxPort": 8084,
-       "clientPort": 8083,
-       "nodeNames": [
-         "node00"
-       ],
-       "deadNodes": []
-     }
+    {
+      "lastModified": 1567176877946,
+      "connectors": [],
+      "deadNodes": [],
+      "settings": {
+        "statusTopicName": "a6c5018531",
+        "name": "wk",
+        "offsetTopicPartitions": 1,
+        "brokerClusterName": "bk",
+        "tags": {},
+        "jarInfos": [],
+        "offsetTopicName": "6ec3cd5f1b",
+        "imageName": "oharastream/connect-worker:0.8.0-SNAPSHOT",
+        "groupId": "979a8c0c18",
+        "statusTopicReplications": 1,
+        "offsetTopicReplications": 1,
+        "configTopicReplications": 1,
+        "statusTopicPartitions": 1,
+        "configTopicName": "4fdfdabb51",
+        "jmxPort": 37116,
+        "clientPort": 37634,
+        "jarKeys": [],
+        "nodeNames": [
+          "node10"
+        ]
+      }
+    }
 
 .. _rest-workers-list:
 
@@ -296,31 +284,35 @@ list all workers clusters
 Example Response
   .. code-block:: json
 
-     [
-       {
-         "statusTopicName": "status-89eaef1e9d",
-         "name": "wk00",
-         "offsetTopicPartitions": 1,
-         "brokerClusterName": "preCreatedBkCluster",
-         "connectors": [],
-         "offsetTopicName": "offset-956c528fa5",
-         "imageName": "oharastream/connect-worker:$|version|",
-         "groupId": "dcafb19d0e",
-         "jarInfos": [],
-         "statusTopicReplications": 1,
-         "configTopicPartitions": 1,
-         "offsetTopicReplications": 1,
-         "configTopicReplications": 1,
-         "statusTopicPartitions": 1,
-         "configTopicName": "setting-67c528ca7d",
-         "jmxPort": 8084,
-         "clientPort": 8083,
-         "nodeNames": [
-           "node00"
-         ],
-         "deadNodes": []
-       }
-     ]
+    [
+      {
+        "lastModified": 1567177024356,
+        "connectors": [],
+        "deadNodes": [],
+        "settings": {
+          "statusTopicName": "statusTopic",
+          "name": "wk00",
+          "offsetTopicPartitions": 1,
+          "brokerClusterName": "preCreatedBkCluster",
+          "tags": {},
+          "jarInfos": [],
+          "offsetTopicName": "offsetTopic",
+          "imageName": "oharastream/connect-worker:0.8.0-SNAPSHOT",
+          "groupId": "abcdefg",
+          "statusTopicReplications": 1,
+          "offsetTopicReplications": 1,
+          "configTopicReplications": 1,
+          "statusTopicPartitions": 1,
+          "configTopicName": "configTopic",
+          "jmxPort": 12346,
+          "clientPort": 12345,
+          "jarKeys": [],
+          "nodeNames": [
+            "node00"
+          ],
+        }
+      }
+    ]
 
 
 delete a worker properties
@@ -349,208 +341,318 @@ get a worker cluster
 Example Response
   .. code-block:: json
 
-     {
-       "statusTopicName": "status-d7f7a35aa4",
-       "name": "wk00",
-       "offsetTopicPartitions": 1,
-       "brokerClusterName": "preCreatedBkCluster",
-       "connectors": [
-         {
-           "className": "com.island.ohara.connector.perf.PerfSource",
-           "definitions": [
-             {
-               "reference": "NONE",
-               "displayName": "connector.class",
-               "internal": false,
-               "documentation": "the class name of connector",
-               "valueType": "CLASS",
-               "tableKeys": [],
-               "orderInGroup": 0,
-               "key": "connector.class",
-               "required": true,
-               "defaultValue": null,
-               "group": "core",
-               "editable": true
-             },
-             {
-               "reference": "NONE",
-               "displayName": "tasks.max",
-               "internal": false,
-               "documentation": "the number of tasks invoked by connector",
-               "valueType": "INT",
-               "tableKeys": [],
-               "orderInGroup": 3,
-               "key": "tasks.max",
-               "required": true,
-               "defaultValue": null,
-               "group": "core",
-               "editable": true
-             },
-             {
-               "reference": "NONE",
-               "displayName": "key.converter",
-               "internal": true,
-               "documentation": "key converter",
-               "valueType": "CLASS",
-               "tableKeys": [],
-               "orderInGroup": 4,
-               "key": "key.converter",
-               "required": false,
-               "defaultValue": "org.apache.kafka.connect.converters.ByteArrayConverter",
-               "group": "core",
-               "editable": true
-             },
-             {
-               "reference": "NONE",
-               "displayName": "value.converter",
-               "internal": true,
-               "documentation": "value converter",
-               "valueType": "STRING",
-               "tableKeys": [],
-               "orderInGroup": 5,
-               "key": "value.converter",
-               "required": false,
-               "defaultValue": "org.apache.kafka.connect.converters.ByteArrayConverter",
-               "group": "core",
-               "editable": true
-             },
-             {
-               "reference": "NONE",
-               "displayName": "kind",
-               "internal": false,
-               "documentation": "kind of connector",
-               "valueType": "STRING",
-               "tableKeys": [],
-               "orderInGroup": 11,
-               "key": "kind",
-               "required": false,
-               "defaultValue": "source",
-               "group": "core",
-               "editable": false
-             },
-             {
-               "reference": "NONE",
-               "displayName": "connector.name",
-               "internal": false,
-               "documentation": "the name of connector",
-               "valueType": "STRING",
-               "tableKeys": [],
-               "orderInGroup": 1,
-               "key": "connector.name",
-               "required": false,
-               "defaultValue": null,
-               "group": "core",
-               "editable": true
-             },
-             {
-               "reference": "NONE",
-               "displayName": "columns",
-               "internal": false,
-               "documentation": "output schema",
-               "valueType": "TABLE",
-               "tableKeys": [
-                 "order",
-                 "dataType",
-                 "name",
-                 "newName"
-               ],
-               "orderInGroup": 6,
-               "key": "columns",
-               "required": false,
-               "defaultValue": null,
-               "group": "core",
-               "editable": true
-             },
-             {
-               "reference": "WORKER_CLUSTER",
-               "displayName": "workerClusterName",
-               "internal": false,
-               "documentation": "the cluster name of running this connector.If there is only one worker cluster, you can skip this setting since configurator will pick up a worker cluster for you",
-               "valueType": "STRING",
-               "tableKeys": [],
-               "orderInGroup": 7,
-               "key": "workerClusterName",
-               "required": false,
-               "defaultValue": null,
-               "group": "core",
-               "editable": true
-             },
-             {
-               "reference": "TOPIC",
-               "displayName": "topics",
-               "internal": false,
-               "documentation": "the topics used by connector",
-               "valueType": "LIST",
-               "tableKeys": [],
-               "orderInGroup": 2,
-               "key": "topics",
-               "required": true,
-               "defaultValue": null,
-               "group": "core",
-               "editable": true
-             },
-             {
-               "reference": "NONE",
-               "displayName": "version",
-               "internal": false,
-               "documentation": "version of connector",
-               "valueType": "STRING",
-               "tableKeys": [],
-               "orderInGroup": 8,
-               "key": "version",
-               "required": false,
-               "defaultValue": "$|version|",
-               "group": "core",
-               "editable": false
-             },
-             {
-               "reference": "NONE",
-               "displayName": "revision",
-               "internal": false,
-               "documentation": "revision of connector",
-               "valueType": "STRING",
-               "tableKeys": [],
-               "orderInGroup": 9,
-               "key": "revision",
-               "required": false,
-               "defaultValue": "8faa89f18370c891422dae1993def55795f7ef2e",
-               "group": "core",
-               "editable": false
-             },
-             {
-               "reference": "NONE",
-               "displayName": "author",
-               "internal": false,
-               "documentation": "author of connector",
-               "valueType": "STRING",
-               "tableKeys": [],
-               "orderInGroup": 10,
-               "key": "author",
-               "required": false,
-               "defaultValue": "root",
-               "group": "core",
-               "editable": false
-             }
-           ]
+      {
+         "lastModified":1567178933996,
+         "connectors":[
+            {
+               "className":"com.island.ohara.connector.console.ConsoleSink",
+               "definitions":[
+                  {
+                     "reference":"NONE",
+                     "displayName":"Connector name",
+                     "internal":true,
+                     "documentation":"the name of this connector",
+                     "valueType":"STRING",
+                     "tableKeys":[
+
+                     ],
+                     "orderInGroup":1,
+                     "key":"name",
+                     "required":true,
+                     "defaultValue":null,
+                     "group":"core",
+                     "editable":true
+                  },
+                  {
+                     "reference":"NONE",
+                     "displayName":"Connector class",
+                     "internal":false,
+                     "documentation":"the class name of connector",
+                     "valueType":"CLASS",
+                     "tableKeys":[
+
+                     ],
+                     "orderInGroup":2,
+                     "key":"connector.class",
+                     "required":true,
+                     "defaultValue":null,
+                     "group":"core",
+                     "editable":true
+                  },
+                  {
+                     "reference":"NONE",
+                     "displayName":"Number of tasks",
+                     "internal":false,
+                     "documentation":"the number of tasks invoked by connector",
+                     "valueType":"INT",
+                     "tableKeys":[
+
+                     ],
+                     "orderInGroup":5,
+                     "key":"tasks.max",
+                     "required":true,
+                     "defaultValue":null,
+                     "group":"core",
+                     "editable":true
+                  },
+                  {
+                     "reference":"NONE",
+                     "displayName":"key converter",
+                     "internal":true,
+                     "documentation":"key converter",
+                     "valueType":"CLASS",
+                     "tableKeys":[
+
+                     ],
+                     "orderInGroup":8,
+                     "key":"key.converter",
+                     "required":false,
+                     "defaultValue":"org.apache.kafka.connect.converters.ByteArrayConverter",
+                     "group":"core",
+                     "editable":true
+                  },
+                  {
+                     "reference":"NONE",
+                     "displayName":"value converter",
+                     "internal":true,
+                     "documentation":"value converter",
+                     "valueType":"STRING",
+                     "tableKeys":[
+
+                     ],
+                     "orderInGroup":9,
+                     "key":"value.converter",
+                     "required":false,
+                     "defaultValue":"org.apache.kafka.connect.converters.ByteArrayConverter",
+                     "group":"core",
+                     "editable":true
+                  },
+                  {
+                     "reference":"TOPIC",
+                     "displayName":"Topics",
+                     "internal":true,
+                     "documentation":"the topic names in kafka form used by connector.This field is internal and is generated from topicKeys. Normally, it is composed by group and name",
+                     "valueType":"ARRAY",
+                     "tableKeys":[
+
+                     ],
+                     "orderInGroup":4,
+                     "key":"topics",
+                     "required":true,
+                     "defaultValue":null,
+                     "group":"core",
+                     "editable":true
+                  },
+                  {
+                     "reference":"NONE",
+                     "displayName":"kind",
+                     "internal":false,
+                     "documentation":"kind of connector",
+                     "valueType":"STRING",
+                     "tableKeys":[
+
+                     ],
+                     "orderInGroup":13,
+                     "key":"kind",
+                     "required":false,
+                     "defaultValue":"sink",
+                     "group":"core",
+                     "editable":false
+                  },
+                  {
+                     "reference":"NONE",
+                     "displayName":"the frequence of printing data",
+                     "internal":false,
+                     "documentation":"the frequence to print the row on log",
+                     "valueType":"STRING",
+                     "tableKeys":[
+
+                     ],
+                     "orderInGroup":-1,
+                     "key":"console.sink.frequence",
+                     "required":false,
+                     "defaultValue":"3 seconds",
+                     "group":"common",
+                     "editable":true
+                  },
+                  {
+                     "reference":"NONE",
+                     "displayName":"the divider charset to distinguish each row",
+                     "internal":false,
+                     "documentation":"the charset used to divide the rows.",
+                     "valueType":"STRING",
+                     "tableKeys":[
+
+                     ],
+                     "orderInGroup":-1,
+                     "key":"console.sink.row.divider",
+                     "required":false,
+                     "defaultValue":"|",
+                     "group":"common",
+                     "editable":true
+                  },
+                  {
+                     "reference":"NONE",
+                     "displayName":"Connector key",
+                     "internal":false,
+                     "documentation":"the key of this connector",
+                     "valueType":"CONNECTOR_KEY",
+                     "tableKeys":[
+
+                     ],
+                     "orderInGroup":0,
+                     "key":"connectorKey",
+                     "required":true,
+                     "defaultValue":null,
+                     "group":"core",
+                     "editable":true
+                  },
+                  {
+                     "reference":"NONE",
+                     "displayName":"Schema",
+                     "internal":false,
+                     "documentation":"output schema",
+                     "valueType":"TABLE",
+                     "tableKeys":[
+                        "order",
+                        "dataType",
+                        "name",
+                        "newName"
+                     ],
+                     "orderInGroup":6,
+                     "key":"columns",
+                     "required":false,
+                     "defaultValue":null,
+                     "group":"core",
+                     "editable":true
+                  },
+                  {
+                     "reference":"WORKER_CLUSTER",
+                     "displayName":"worker cluster",
+                     "internal":false,
+                     "documentation":"the cluster name of running this connector.If there is only one worker cluster, you can skip this setting since configurator will pick up a worker cluster for you",
+                     "valueType":"STRING",
+                     "tableKeys":[
+
+                     ],
+                     "orderInGroup":7,
+                     "key":"workerClusterName",
+                     "required":false,
+                     "defaultValue":null,
+                     "group":"core",
+                     "editable":true
+                  },
+                  {
+                     "reference":"TOPIC",
+                     "displayName":"Topics",
+                     "internal":false,
+                     "documentation":"the topics used by connector",
+                     "valueType":"TOPIC_KEYS",
+                     "tableKeys":[
+
+                     ],
+                     "orderInGroup":3,
+                     "key":"topicKeys",
+                     "required":true,
+                     "defaultValue":null,
+                     "group":"core",
+                     "editable":true
+                  },
+                  {
+                     "reference":"NONE",
+                     "displayName":"tags",
+                     "internal":true,
+                     "documentation":"tags to this connector",
+                     "valueType":"TAGS",
+                     "tableKeys":[
+
+                     ],
+                     "orderInGroup":14,
+                     "key":"tags",
+                     "required":false,
+                     "defaultValue":null,
+                     "group":"core",
+                     "editable":true
+                  },
+                  {
+                     "reference":"NONE",
+                     "displayName":"version",
+                     "internal":false,
+                     "documentation":"version of connector",
+                     "valueType":"STRING",
+                     "tableKeys":[
+
+                     ],
+                     "orderInGroup":10,
+                     "key":"version",
+                     "required":false,
+                     "defaultValue":"unknown",
+                     "group":"core",
+                     "editable":false
+                  },
+                  {
+                     "reference":"NONE",
+                     "displayName":"revision",
+                     "internal":false,
+                     "documentation":"revision of connector",
+                     "valueType":"STRING",
+                     "tableKeys":[
+
+                     ],
+                     "orderInGroup":11,
+                     "key":"revision",
+                     "required":false,
+                     "defaultValue":"unknown",
+                     "group":"core",
+                     "editable":false
+                  },
+                  {
+                     "reference":"NONE",
+                     "displayName":"author",
+                     "internal":false,
+                     "documentation":"author of connector",
+                     "valueType":"STRING",
+                     "tableKeys":[
+
+                     ],
+                     "orderInGroup":12,
+                     "key":"author",
+                     "required":false,
+                     "defaultValue":"unknown",
+                     "group":"core",
+                     "editable":false
+                  }
+               ]
+            }
+         ],
+         "deadNodes":[
+         ],
+         "settings":{
+            "statusTopicName":"d28ca7c875",
+            "name":"wk",
+            "offsetTopicPartitions":1,
+            "brokerClusterName":"bk",
+            "tags":{
+
+            },
+            "offsetTopicName":"f1f6ae812c",
+            "imageName":"oharastream/connect-worker:0.8.0-SNAPSHOT",
+            "groupId":"16f3408f84",
+            "statusTopicReplications":1,
+            "offsetTopicReplications":1,
+            "configTopicReplications":1,
+            "statusTopicPartitions":1,
+            "configTopicName":"4279f8a236",
+            "jmxPort":33983,
+            "clientPort":34601,
+            "jarKeys":[
+
+            ],
+            "nodeNames":[
+               "node10"
+            ]
          }
-       ],
-       "offsetTopicName": "offset-2c564b55cf",
-       "imageName": "oharastream/connect-worker:$|version|",
-       "groupId": "a5b623d114",
-       "jarInfos": [],
-       "statusTopicReplications": 1,
-       "configTopicPartitions": 1,
-       "offsetTopicReplications": 1,
-       "configTopicReplications": 1,
-       "statusTopicPartitions": 1,
-       "configTopicName": "setting-68be0e46f7",
-       "jmxPort": 8084,
-       "clientPort": 8083,
-       "nodeNames": [
-         "node00"
-       ],
-       "deadNodes": []
-     }
+      }
 
 start a worker cluster
 ----------------------
@@ -595,34 +697,6 @@ share the heavy loading of a running worker cluster. However, the
 balance is not triggered at once. By the way, moving a task to another
 idle node needs to **stop** task first. Don’t worry about the temporary
 lower throughput when balancer is running.
-
-Example Response
-  .. code-block:: json
-
-     {
-       "statusTopicName": "status-89eaef1e9d",
-       "name": "wk00",
-       "offsetTopicPartitions": 1,
-       "brokerClusterName": "preCreatedBkCluster",
-       "connectors": [],
-       "offsetTopicName": "offset-956c528fa5",
-       "imageName": "oharastream/connect-worker:$|version|",
-       "groupId": "dcafb19d0e",
-       "jarInfos": [],
-       "statusTopicReplications": 1,
-       "configTopicPartitions": 1,
-       "offsetTopicReplications": 1,
-       "configTopicReplications": 1,
-       "statusTopicPartitions": 1,
-       "configTopicName": "setting-67c528ca7d",
-       "jmxPort": 8084,
-       "clientPort": 8083,
-       "nodeNames": [
-         "node01",
-         "node00"
-       ],
-       "deadNodes": []
-     }
 
 remove a node from a running worker cluster
 -------------------------------------------

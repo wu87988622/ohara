@@ -22,11 +22,11 @@ import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsArray, JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat, _}
+import spray.json.{JsArray, JsNumber, JsObject, JsString, JsValue, RootJsonFormat, _}
 
+import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
-import scala.collection.JavaConverters._
 object WorkerApi {
 
   /**
@@ -45,7 +45,7 @@ object WorkerApi {
   val IMAGE_NAME_DEFAULT: String = s"oharastream/connect-worker:${VersionUtils.VERSION}"
 
   private[this] val IMAGE_NAME_KEY = "imageName"
-  val BROKER_CLUSTER_NAME_KEY = "brokerClusterName"
+  private[this] val BROKER_CLUSTER_NAME_KEY = "brokerClusterName"
   private[this] val CLIENT_PORT_KEY = "clientPort"
   private[this] val JMX_PORT_KEY = "jmxPort"
   private[this] val GROUP_ID_KEY = "groupId"
@@ -59,14 +59,9 @@ object WorkerApi {
   private[this] val OFFSET_TOPIC_PARTITIONS_KEY = "offsetTopicPartitions"
   private[this] val OFFSET_TOPIC_REPLICATIONS_KEY = "offsetTopicReplications"
   private[this] val JAR_KEYS_KEY = "jarKeys"
-  val JAR_INFOS_KEY = "jarInfos"
-  private[this] val CONNECTORS_KEY = "connectors"
+  private[this] val JAR_INFOS_KEY = "jarInfos"
   private[this] val NODE_NAMES_KEY = "nodeNames"
-  private[this] val DEAD_NODES_KEY = "deadNodes"
   private[this] val TAGS_KEY = "tags"
-  private[this] val LAST_MODIFIED_KEY = "lastModified"
-  private[this] val STATE_KEY = "state"
-  private[this] val ERROR_KEY = "error"
 
   final case class Creation private[WorkerApi] (settings: Map[String, JsValue]) extends ClusterCreationRequest {
 
@@ -238,48 +233,34 @@ object WorkerApi {
   private[ohara] implicit val WORKER_CLUSTER_INFO_JSON_FORMAT: OharaJsonFormat[WorkerClusterInfo] =
     JsonRefiner[WorkerClusterInfo]
       .format(new RootJsonFormat[WorkerClusterInfo] {
+        implicit val DEFINITION_JSON_FORMAT: OharaJsonFormat[Definition] = Definition.DEFINITION_JSON_FORMAT
+        private[this] val format = jsonFormat7(WorkerClusterInfo)
         override def write(obj: WorkerClusterInfo): JsValue = JsObject(
           noJsNull(
-            Map(
-              "settings" -> JsObject(obj.settings),
-              // TODO: remove the following stale fields ... by chia
-              NAME_KEY -> JsString(obj.name),
-              IMAGE_NAME_KEY -> JsString(obj.imageName),
-              BROKER_CLUSTER_NAME_KEY -> JsString(obj.brokerClusterName),
-              CLIENT_PORT_KEY -> JsNumber(obj.clientPort),
-              JMX_PORT_KEY -> JsNumber(obj.jmxPort),
-              GROUP_ID_KEY -> JsString(obj.groupId),
-              STATUS_TOPIC_NAME_KEY -> JsString(obj.statusTopicName),
-              STATUS_TOPIC_PARTITIONS_KEY -> JsNumber(obj.statusTopicPartitions),
-              STATUS_TOPIC_REPLICATIONS_KEY -> JsNumber(obj.statusTopicReplications),
-              CONFIG_TOPIC_NAME_KEY -> JsString(obj.configTopicName),
-              CONFIG_TOPIC_PARTITIONS_KEY -> JsNumber(obj.configTopicPartitions),
-              CONFIG_TOPIC_REPLICATIONS_KEY -> JsNumber(obj.configTopicReplications),
-              OFFSET_TOPIC_NAME_KEY -> JsString(obj.offsetTopicName),
-              OFFSET_TOPIC_PARTITIONS_KEY -> JsNumber(obj.offsetTopicPartitions),
-              OFFSET_TOPIC_REPLICATIONS_KEY -> JsNumber(obj.offsetTopicReplications),
-              JAR_INFOS_KEY -> JsArray(obj.jarInfos.map(FILE_INFO_JSON_FORMAT.write).toVector),
-              TAGS_KEY -> JsObject(obj.tags),
-              NODE_NAMES_KEY -> JsArray(obj.nodeNames.map(JsString(_)).toVector),
-              // -----------------------------------------------------------//
-              CONNECTORS_KEY -> JsArray(obj.connectors.map(Definition.DEFINITION_JSON_FORMAT.write).toVector),
-              DEAD_NODES_KEY -> JsArray(obj.deadNodes.map(JsString(_)).toVector),
-              LAST_MODIFIED_KEY -> JsNumber(obj.lastModified),
-              STATE_KEY -> obj.state.fold[JsValue](JsNull)(JsString(_)),
-              ERROR_KEY -> obj.error.fold[JsValue](JsNull)(JsString(_))
-            ))
+            format.write(obj).asJsObject.fields ++
+              Map(
+                // TODO: remove the following stale fields ... by chia
+                NAME_KEY -> JsString(obj.name),
+                IMAGE_NAME_KEY -> JsString(obj.imageName),
+                BROKER_CLUSTER_NAME_KEY -> JsString(obj.brokerClusterName),
+                CLIENT_PORT_KEY -> JsNumber(obj.clientPort),
+                JMX_PORT_KEY -> JsNumber(obj.jmxPort),
+                GROUP_ID_KEY -> JsString(obj.groupId),
+                STATUS_TOPIC_NAME_KEY -> JsString(obj.statusTopicName),
+                STATUS_TOPIC_PARTITIONS_KEY -> JsNumber(obj.statusTopicPartitions),
+                STATUS_TOPIC_REPLICATIONS_KEY -> JsNumber(obj.statusTopicReplications),
+                CONFIG_TOPIC_NAME_KEY -> JsString(obj.configTopicName),
+                CONFIG_TOPIC_PARTITIONS_KEY -> JsNumber(obj.configTopicPartitions),
+                CONFIG_TOPIC_REPLICATIONS_KEY -> JsNumber(obj.configTopicReplications),
+                OFFSET_TOPIC_NAME_KEY -> JsString(obj.offsetTopicName),
+                OFFSET_TOPIC_PARTITIONS_KEY -> JsNumber(obj.offsetTopicPartitions),
+                OFFSET_TOPIC_REPLICATIONS_KEY -> JsNumber(obj.offsetTopicReplications),
+                JAR_INFOS_KEY -> JsArray(obj.jarInfos.map(FILE_INFO_JSON_FORMAT.write).toVector),
+                TAGS_KEY -> JsObject(obj.tags)
+              ))
         )
 
-        implicit val DEFINITION_JSON_FORMAT: OharaJsonFormat[Definition] = Definition.DEFINITION_JSON_FORMAT
-        override def read(json: JsValue): WorkerClusterInfo = WorkerClusterInfo(
-          settings = noJsNull(json)("settings").asJsObject.fields,
-          connectors = noJsNull(json)(CONNECTORS_KEY).convertTo[Seq[Definition]],
-          nodeNames = noJsNull(json)(NODE_NAMES_KEY).convertTo[Seq[String]].toSet,
-          deadNodes = noJsNull(json)(DEAD_NODES_KEY).convertTo[Seq[String]].toSet,
-          lastModified = noJsNull(json)(LAST_MODIFIED_KEY).convertTo[Long],
-          state = noJsNull(json).get(STATE_KEY).map(_.convertTo[String]),
-          error = noJsNull(json).get(ERROR_KEY).map(_.convertTo[String])
-        )
+        override def read(json: JsValue): WorkerClusterInfo = format.read(json)
       })
       .refine
 
@@ -335,7 +316,7 @@ object WorkerApi {
       setting(JAR_KEYS_KEY, JsArray(jarKeys.map(ObjectKey.toJsonString).map(_.parseJson).toVector))
     @Optional("the default value is empty")
     def jarInfos(jarInfos: Seq[FileInfo]): Request =
-      setting(WorkerApi.JAR_INFOS_KEY, JsArray(jarInfos.map(FILE_INFO_JSON_FORMAT.write).toVector))
+      setting(JAR_INFOS_KEY, JsArray(jarInfos.map(FILE_INFO_JSON_FORMAT.write).toVector))
     def nodeName(nodeName: String): Request = nodeNames(Set(CommonUtils.requireNonEmpty(nodeName)))
     def nodeNames(nodeNames: Set[String]): Request =
       setting(NODE_NAMES_KEY, JsArray(CommonUtils.requireNonEmpty(nodeNames.asJava).asScala.map(JsString(_)).toVector))
