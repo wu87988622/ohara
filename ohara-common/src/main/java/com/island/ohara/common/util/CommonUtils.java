@@ -758,27 +758,6 @@ public final class CommonUtils {
   }
 
   /**
-   * Download the content from remote URL to local file. The local file must be not existent.
-   *
-   * @param source remote resource
-   * @param destination local file
-   * @param connectionTimeout connection timeout
-   * @param readTimeout read timeout
-   */
-  public static void copyURLToFile(
-      URL source, File destination, int connectionTimeout, int readTimeout) {
-    try {
-      FileUtils.copyURLToFile(
-          Objects.requireNonNull(source),
-          requireNotExist(destination),
-          connectionTimeout,
-          readTimeout);
-    } catch (IOException e) {
-      throw new IllegalStateException("failed to access the " + source, e);
-    }
-  }
-
-  /**
    * download file from url
    *
    * @param url where the file is download from

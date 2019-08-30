@@ -554,10 +554,8 @@ public class TestCommonUtils extends SmallTest {
   @Test
   public void testCopyURLToFile() throws MalformedURLException {
     URL url = new URL("http://node99/abc.jar");
-    File file = CommonUtils.createTempFile(methodName(), null);
-    Assert.assertTrue(file.delete());
     try {
-      CommonUtils.copyURLToFile(url, file, 10, 10);
+      CommonUtils.downloadUrl(url, Duration.ofSeconds(10), Duration.ofSeconds(10));
     } catch (IllegalStateException e) {
       Assert.assertTrue(e.getMessage().contains(url.toString()));
     }
