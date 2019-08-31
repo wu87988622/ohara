@@ -538,10 +538,30 @@ class TestJsonRefiner extends SmallTest with Matchers {
           """.stripMargin.parseJson)
 
   @Test
-  def testRejectEmptyArrayForSpecificKey(): Unit = {
-    JsonRefiner[SimpleData]
+  def testRejectKeyRuledByStringRestriction(): Unit =
+    an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
       .format(format)
-      // the key "stringArray" is not in rejection list so it pass
+      // bindPort is not mapped to string type so it is rejected
+      .stringRestriction("bindPort")
+      .withNumber()
+      .withCharset()
+      .toRefiner
+      .refine
+      .read("""
+              |{
+              | "stringValue": "abc",
+              | "bindPort": 9999,
+              | "connectionPort": 123,
+              | "stringArray": [],
+              | "objects":{}
+              |}
+            """.stripMargin.parseJson)
+
+  @Test
+  def testRejectEmptyArrayForSpecificKey(): Unit = {
+    an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
+      .format(format)
+      // connectionPort is not mapped to array type so it is rejected
       .rejectEmptyArray("connectionPort")
       .refine
       .read("""
@@ -553,7 +573,6 @@ class TestJsonRefiner extends SmallTest with Matchers {
               | "objects":{}
               |}
             """.stripMargin.parseJson)
-      .stringArray shouldBe Seq.empty
 
     an[DeserializationException] should be thrownBy JsonRefiner[SimpleData]
       .format(format)

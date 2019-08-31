@@ -246,7 +246,11 @@ trait JsonRefiner[T] {
     valueChecker(
       key, {
         case arr: JsArray => checkers.foreach(_.apply(key, arr))
-        case _            => // we don't care for other types
+        case _ =>
+          throw DeserializationException(
+            s"""the value mapped to \"$key\" must be array type""",
+            fieldNames = List(key)
+          )
       }
   )
 
@@ -275,7 +279,11 @@ trait JsonRefiner[T] {
               }
               if (s.value.length > lengthLimit)
                 throw DeserializationException(s"the length of $s exceeds $lengthLimit", fieldNames = List(key))
-            case _ => // we don't care for other types
+            case _ =>
+              throw DeserializationException(
+                s"""the value mapped to \"$key\" must be String type""",
+                fieldNames = List(key)
+              )
           }
         )
       }
