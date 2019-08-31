@@ -18,7 +18,7 @@ package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.v0.FileInfoApi._
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
-import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
+import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
@@ -103,7 +103,7 @@ object WorkerApi {
         override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
       })
       .rejectNegativeNumber()
-      // number of config topic's partition is alwasy be 1
+      // number of config topic's partition is always be 1
       .rejectKeyword(CONFIG_TOPIC_PARTITIONS_KEY)
       .nullToRandomPort(CLIENT_PORT_KEY)
       .requireBindPort(CLIENT_PORT_KEY)
@@ -164,9 +164,6 @@ object WorkerApi {
 
   final case class WorkerClusterInfo private[ohara] (settings: Map[String, JsValue],
                                                      connectors: Seq[Definition],
-                                                     // TODO: move nodeNames to settings since it is a "setting" from user ... by chia
-                                                     // https://github.com/oharastream/ohara/issues/2438
-                                                     nodeNames: Set[String],
                                                      deadNodes: Set[String],
                                                      lastModified: Long,
                                                      state: Option[String],
@@ -197,6 +194,7 @@ object WorkerApi {
     def offsetTopicReplications: Short = settings.offsetTopicReplications
     def jarInfos: Seq[FileInfo] = settings.jarInfos
     def jarKeys: Set[ObjectKey] = settings.jarKeys
+    def nodeNames: Set[String] = settings.nodeNames
     override def tags: Map[String, JsValue] = settings.tags
 
     /**
@@ -217,7 +215,6 @@ object WorkerApi {
                        metrics: Metrics,
                        tags: Map[String, JsValue]): WorkerClusterInfo = copy(
       settings = access.request.settings(settings).nodeNames(nodeNames).tags(tags).creation.settings,
-      nodeNames = nodeNames,
       deadNodes = deadNodes,
       state = state,
       error = error
@@ -234,7 +231,7 @@ object WorkerApi {
     JsonRefiner[WorkerClusterInfo]
       .format(new RootJsonFormat[WorkerClusterInfo] {
         implicit val DEFINITION_JSON_FORMAT: OharaJsonFormat[Definition] = Definition.DEFINITION_JSON_FORMAT
-        private[this] val format = jsonFormat7(WorkerClusterInfo)
+        private[this] val format = jsonFormat6(WorkerClusterInfo)
         override def write(obj: WorkerClusterInfo): JsValue = JsObject(
           noJsNull(
             format.write(obj).asJsObject.fields ++
@@ -256,6 +253,7 @@ object WorkerApi {
                 OFFSET_TOPIC_PARTITIONS_KEY -> JsNumber(obj.offsetTopicPartitions),
                 OFFSET_TOPIC_REPLICATIONS_KEY -> JsNumber(obj.offsetTopicReplications),
                 JAR_INFOS_KEY -> JsArray(obj.jarInfos.map(FILE_INFO_JSON_FORMAT.write).toVector),
+                NODE_NAMES_KEY -> JsArray(obj.nodeNames.map(JsString(_)).toVector),
                 TAGS_KEY -> JsObject(obj.tags)
               ))
         )
@@ -342,10 +340,10 @@ object WorkerApi {
     def update()(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo]
 
     /**
-      * for testing only
+      * Creation instance includes many useful parsers for custom settings so we open it to code with a view to reusing
+      * those convenient parsers.
       * @return the payload of creation
       */
-    @VisibleForTesting
     def creation: Creation
 
     /**

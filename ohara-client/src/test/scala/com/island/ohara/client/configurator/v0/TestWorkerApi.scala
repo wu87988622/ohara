@@ -32,7 +32,6 @@ class TestWorkerApi extends SmallTest with Matchers {
     val response = WorkerClusterInfo(
       settings = WorkerApi.access.request.brokerClusterName(CommonUtils.randomString()).creation.settings,
       connectors = Seq.empty,
-      nodeNames = Set.empty,
       deadNodes = Set.empty,
       state = None,
       error = None,
@@ -51,7 +50,6 @@ class TestWorkerApi extends SmallTest with Matchers {
     val workerClusterInfo = WorkerClusterInfo(
       settings = Map("a" -> JsString("b")),
       connectors = Seq.empty,
-      nodeNames = Set.empty,
       deadNodes = Set.empty,
       state = None,
       error = None,
@@ -468,14 +466,14 @@ class TestWorkerApi extends SmallTest with Matchers {
   @Test
   def testAliveNodes(): Unit = {
     val cluster = WorkerClusterInfo(
-      settings = Map("a" -> JsString("b")),
+      settings = WorkerApi.access.request.nodeNames(Set("n0", "n1")).creation.settings,
       connectors = Seq.empty,
-      nodeNames = Set("n0", "n1"),
       deadNodes = Set("n0"),
       state = Some("running"),
       error = None,
       lastModified = CommonUtils.current()
     )
+    cluster.nodeNames shouldBe Set("n0", "n1")
     cluster.aliveNodes shouldBe Set("n1")
     cluster.copy(state = None).aliveNodes shouldBe Set.empty
   }

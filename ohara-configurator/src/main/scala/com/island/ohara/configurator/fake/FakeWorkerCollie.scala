@@ -50,7 +50,6 @@ private[configurator] class FakeWorkerCollie(node: NodeCollie, wkConnectionProps
           WorkerClusterInfo(
             settings = settings,
             connectors = FakeWorkerClient.localConnectorDefinitions,
-            nodeNames = nodeNames,
             deadNodes = Set.empty,
             // In fake mode, we need to assign a state in creation for "GET" method to act like real case
             state = Some(ClusterState.RUNNING.name),

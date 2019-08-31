@@ -21,7 +21,7 @@ import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.WorkerApi.{Creation, WorkerClusterInfo}
+import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.{ClusterInfo, Definition, WorkerApi}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.annotations.Optional
@@ -166,9 +166,12 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
                     if (successfulContainers.isEmpty)
                       throw new IllegalArgumentException(s"failed to create $clusterName on $serviceName")
                     val clusterInfo = WorkerClusterInfo(
-                      settings = settings,
+                      settings = WorkerApi.access.request
+                        .settings(settings)
+                        .nodeNames((successfulContainers.map(_.nodeName) ++ existNodes.map(_._1.name)).toSet)
+                        .creation
+                        .settings,
                       connectors = Seq.empty,
-                      nodeNames = (successfulContainers.map(_.nodeName) ++ existNodes.map(_._1.name)).toSet,
                       deadNodes = Set.empty,
                       state = None,
                       error = None,
@@ -256,12 +259,14 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
 
   private[agent] def toWorkerCluster(clusterName: String, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] = {
-    val creation = Creation(seekSettings(containers.head.environments))
+    val creation = WorkerApi.access.request
+      .settings(seekSettings(containers.head.environments))
+      .nodeNames(containers.map(_.nodeName).toSet)
+      .creation
     connectors(containers.map(c => s"${c.nodeName}:${creation.clientPort}").mkString(",")).map { connectors =>
       WorkerClusterInfo(
         settings = creation.settings,
         connectors = connectors,
-        nodeNames = containers.map(_.nodeName).toSet,
         // Currently, docker and k8s has same naming rule for "Running",
         // it is ok that we use the containerState.RUNNING here.
         deadNodes = containers.filterNot(_.state == ContainerState.RUNNING.name).map(_.nodeName).toSet,

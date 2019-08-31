@@ -156,10 +156,10 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
             .name(embeddedWkName)
             .brokerClusterName(bkCluster.name)
             .clientPort(port)
+            .nodeName(host)
             .creation
             .settings,
           connectors = Await.result(WorkerClient(wkConnectionProps).connectorDefinitions(), 10 seconds),
-          nodeNames = Set(host),
           deadNodes = Set.empty,
           // In fake mode, we need to assign a state in creation for "GET" method to act like real case
           state = Some(ClusterState.RUNNING.name),
@@ -248,9 +248,12 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
         val bkCluster = bkClusters((Math.random() % bkClusters.size).asInstanceOf[Int])
         collie.workerCollie.addCluster(
           WorkerClusterInfo(
-            settings = WorkerApi.access.request.brokerClusterName(bkCluster.name).creation.settings,
+            settings = WorkerApi.access.request
+              .brokerClusterName(bkCluster.name)
+              .nodeNames(bkCluster.nodeNames)
+              .creation
+              .settings,
             connectors = FakeWorkerClient.localConnectorDefinitions,
-            nodeNames = bkCluster.nodeNames,
             deadNodes = Set.empty,
             // In fake mode, we need to assign a state in creation for "GET" method to act like real case
             state = Some(ClusterState.RUNNING.name),

@@ -57,7 +57,6 @@ class FakeWorkerCollie(nodes: Seq[Node],
             .creation
             .settings,
           connectors = Seq.empty,
-          nodeNames = nodes.map(_.hostname).toSet,
           deadNodes = Set.empty,
           lastModified = CommonUtils.current(),
           state = Some(ContainerState.RUNNING.name),

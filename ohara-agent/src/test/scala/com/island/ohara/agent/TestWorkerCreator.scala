@@ -74,7 +74,6 @@ class TestWorkerCreator extends SmallTest with Matchers {
       WorkerClusterInfo(
         settings = settings,
         connectors = Seq.empty,
-        nodeNames = nodeNames,
         deadNodes = Set.empty,
         state = None,
         error = None,
@@ -223,7 +222,6 @@ class TestWorkerCreator extends SmallTest with Matchers {
       settings =
         WorkerApi.access.request.brokerClusterName(CommonUtils.randomString(5)).nodeNames(nodeNames).creation.settings,
       connectors = Seq.empty,
-      nodeNames = nodeNames,
       deadNodes = Set.empty,
       state = None,
       error = None,

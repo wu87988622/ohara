@@ -215,8 +215,8 @@ class TestWorkerRoute extends MediumTest with Matchers {
       workerApi.request.name(CommonUtils.randomString(10)).nodeName(nodeNames.head).create()
     )
     result(workerApi.start(cluster.name))
-    result(workerApi.addNode(cluster.name, nodeNames.last).flatMap(_ => workerApi.get(cluster.name))).nodeNames shouldBe
-      cluster.copy(nodeNames = cluster.nodeNames ++ Set(nodeNames.last)).nodeNames
+    result(workerApi.addNode(cluster.name, nodeNames.last).flatMap(_ => workerApi.get(cluster.name))).nodeNames shouldBe cluster.nodeNames ++ Set(
+      nodeNames.last)
   }
 
   @Test

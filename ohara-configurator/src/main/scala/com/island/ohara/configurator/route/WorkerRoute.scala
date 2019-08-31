@@ -47,7 +47,6 @@ object WorkerRoute {
                 .creation
                 .settings,
               connectors = Seq.empty,
-              nodeNames = creation.nodeNames,
               deadNodes = Set.empty,
               state = None,
               error = None,
@@ -84,7 +83,6 @@ object WorkerRoute {
                   .creation
                   .settings,
                 connectors = Seq.empty,
-                nodeNames = update.nodeNames.getOrElse(Set.empty),
                 deadNodes = Set.empty,
                 state = None,
                 error = None,
@@ -105,7 +103,6 @@ object WorkerRoute {
                     .creation
                     .settings,
                   connectors = Seq.empty,
-                  nodeNames = update.nodeNames.getOrElse(Set.empty),
                   deadNodes = Set.empty,
                   state = None,
                   error = None,
