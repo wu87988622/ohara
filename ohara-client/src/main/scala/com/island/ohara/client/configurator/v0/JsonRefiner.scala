@@ -103,6 +103,27 @@ trait JsonRefiner[T] {
   //-------------------------[more checks]-------------------------//
 
   /**
+    * require the key for input json. It produces exception if input json is lack of key.
+    * @param key required key
+    * @return this refiner
+    */
+  def requireKey(key: String): JsonRefiner[T] = requireKeys(Set(key))
+
+  /**
+    * require the keys for input json. It produces exception if input json is lack of those keys.
+    * @param keys required keys
+    * @return this refiner
+    */
+  def requireKeys(keys: Set[String]): JsonRefiner[T] = keysChecker { inputKeys =>
+    val nonexistentKeys = keys.diff(inputKeys)
+    if (nonexistentKeys.nonEmpty)
+      throw DeserializationException(
+        s"${nonexistentKeys.mkString(",")} are required!!!",
+        fieldNames = nonexistentKeys.toList
+      )
+  }
+
+  /**
     * check whether target port is legal to connect. The legal range is (0, 65535].
     * @param key key
     * @return this refiner
@@ -271,6 +292,13 @@ trait JsonRefiner[T] {
     */
   def valueChecker(key: String, checker: JsValue => Unit): JsonRefiner[T]
 
+  /**
+    * add your custom check for all keys
+    * @param checker checker
+    * @return this refiner
+    */
+  def keysChecker(checker: Set[String] => Unit): JsonRefiner[T]
+
   //-------------------------[more conversion]-------------------------//
 
   /**
@@ -417,8 +445,9 @@ object JsonRefiner {
 
   def apply[T]: JsonRefiner[T] = new JsonRefiner[T] {
     private[this] var format: RootJsonFormat[T] = _
-    private[this] var valueConverter: Map[String, JsValue => JsValue] = Map.empty
-    private[this] var valueChecker: Map[String, JsValue => Unit] = Map.empty
+    private[this] var valueConverters: Map[String, JsValue => JsValue] = Map.empty
+    private[this] var valueCheckers: Map[String, JsValue => Unit] = Map.empty
+    private[this] var keyCheckers: Seq[Set[String] => Unit] = Seq.empty
     private[this] var nullToJsValue: Map[String, () => JsValue] = Map.empty
     private[this] var nullToAnotherValueOfKey: Map[String, String] = Map.empty
     private[this] var _rejectEmptyString: Boolean = false
@@ -430,17 +459,22 @@ object JsonRefiner {
       this
     }
 
+    override def keysChecker(checker: Set[String] => Unit): JsonRefiner[T] = {
+      this.keyCheckers = this.keyCheckers ++ Seq(checker)
+      this
+    }
+
     override def valueChecker(key: String, checker: JsValue => Unit): JsonRefiner[T] = {
-      if (valueChecker.contains(CommonUtils.requireNonEmpty(key)))
+      if (valueCheckers.contains(CommonUtils.requireNonEmpty(key)))
         throw new IllegalArgumentException(s"""the \"$key\" already has checker""")
-      this.valueChecker = this.valueChecker ++ Map(key -> Objects.requireNonNull(checker))
+      this.valueCheckers = this.valueCheckers ++ Map(key -> Objects.requireNonNull(checker))
       this
     }
 
     override protected def valueConverter(key: String, converter: JsValue => JsValue): JsonRefiner[T] = {
-      if (valueConverter.contains(CommonUtils.requireNonEmpty(key)))
+      if (valueConverters.contains(CommonUtils.requireNonEmpty(key)))
         throw new IllegalArgumentException(s"""the \"$key\" already has converter""")
-      this.valueConverter = this.valueConverter ++ Map(key -> Objects.requireNonNull(converter))
+      this.valueConverters = this.valueConverters ++ Map(key -> Objects.requireNonNull(converter))
       this
     }
 
@@ -476,7 +510,7 @@ object JsonRefiner {
     override def refine: OharaJsonFormat[T] = {
       Objects.requireNonNull(format)
       nullToJsValue.keys.foreach(CommonUtils.requireNonEmpty)
-      valueConverter.keys.foreach(CommonUtils.requireNonEmpty)
+      valueConverters.keys.foreach(CommonUtils.requireNonEmpty)
       nullToAnotherValueOfKey.keys.foreach(CommonUtils.requireNonEmpty)
       nullToAnotherValueOfKey.values.foreach(CommonUtils.requireNonEmpty)
       new OharaJsonFormat[T] {
@@ -522,7 +556,7 @@ object JsonRefiner {
           if (_rejectEmptyArray) checkJsValueForEmptyArray(key, value)
 
           // 4) custom check
-          valueChecker.get(key).foreach(_.apply(value))
+          valueCheckers.get(key).foreach(_.apply(value))
           value
         }
 
@@ -536,7 +570,7 @@ object JsonRefiner {
           }
 
           // 1) convert the value to another type
-          fields = fields ++ valueConverter
+          fields = fields ++ valueConverters
             .filter {
               case (key, _) => fields.contains(key)
             }
@@ -569,6 +603,9 @@ object JsonRefiner {
           fields.foreach {
             case (k, v) => check(k, v)
           }
+
+          // 5) check the keys
+          keyCheckers.foreach(_(fields.keySet))
 
           format.read(JsObject(fields))
         }

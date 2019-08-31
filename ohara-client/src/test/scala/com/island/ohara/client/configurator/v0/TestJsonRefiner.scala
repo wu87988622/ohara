@@ -1151,4 +1151,31 @@ class TestJsonRefiner extends SmallTest with Matchers {
                | "abc":[]
                |}
                            """.stripMargin.parseJson)
+
+  @Test
+  def testRequireKeys(): Unit = {
+    val data = SimpleData(
+      stringValue = CommonUtils.randomString(),
+      bindPort = CommonUtils.availablePort(),
+      connectionPort = CommonUtils.availablePort(),
+      stringArray = Seq.empty,
+      objects = Map.empty
+    )
+
+    // make sure the normal format works well
+    format.read(format.write(data))
+
+    val f = JsonRefiner[SimpleData].format(format).requireKey("a").requireKey("b").refine
+    an[DeserializationException] should be thrownBy f.read(format.write(data))
+
+    an[DeserializationException] should be thrownBy f.read(
+      JsObject(
+        format.write(data).asJsObject.fields + ("a" -> JsString("bb"))
+      ))
+
+    f.read(
+      JsObject(
+        format.write(data).asJsObject.fields + ("a" -> JsString("bb")) + ("b" -> JsString("bb"))
+      ))
+  }
 }
