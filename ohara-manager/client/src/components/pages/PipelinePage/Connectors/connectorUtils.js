@@ -176,7 +176,12 @@ export const getEditable = ({ key, defaultEditable }) => {
   return key === 'name' || key === 'connector_class' ? false : defaultEditable;
 };
 
-export const getDisplayValue = ({ configValue, defaultValue, newKey }) => {
+export const getDisplayValue = ({
+  configValue,
+  defaultValue,
+  newKey,
+  valueType,
+}) => {
   if (newKey === 'from' || newKey === 'to') {
     // A patch for stream app since it supplys an empty array: `[]`
     // as the default value for `from` and `to` fields. However,
@@ -192,6 +197,12 @@ export const getDisplayValue = ({ configValue, defaultValue, newKey }) => {
   // return back `true` here
   if (typeof configValue === 'boolean') {
     return configValue;
+  }
+
+  // Since backend doesn't give us a valid value of the `BOOLEAN` type
+  // we need to set a valid default value for it
+  if (valueType === 'BOOLEAN') {
+    return configValue ? configValue : false;
   }
 
   // handle other types normally here
@@ -233,14 +244,14 @@ export const changeKeySeparator = key => {
 
 export const sortByOrder = (a, b) => a.orderInGroup - b.orderInGroup;
 
-export const getRenderData = ({ state, defs, configs }) => {
+export const getRenderData = ({ state, defs, configs, valueType }) => {
   const isRunning = !!state; // Any state indicates the connector is running
 
   const data = defs
     .sort(sortByOrder)
     .filter(def => !def.internal) // internal defs are not meant to be seen by users
     .map(def => {
-      const { key, defaultValue } = def;
+      const { key, defaultValue, valueType } = def;
       const newKey = changeKeySeparator(key);
       const configValue = configs[newKey];
 
@@ -248,6 +259,7 @@ export const getRenderData = ({ state, defs, configs }) => {
         configValue,
         defaultValue,
         newKey,
+        valueType,
       });
 
       const editable = getEditable({
