@@ -26,7 +26,6 @@ afterEach(cleanup);
 
 // Skip the tests for now. We should mock the XHR requests in the test
 describe('<Overview />', () => {
-  const imageName = generate.name();
   const brokerClusterName = generate.serviceName();
 
   const props = {
@@ -40,7 +39,17 @@ describe('<Overview />', () => {
       connectors: [],
       nodeNames: [generate.name()],
       brokerClusterName,
-      imageName,
+      imageName: generate.name(),
+      tags: {
+        broker: {
+          name: generate.name(),
+          imageName: generate.name(),
+        },
+        zookeeper: {
+          name: generate.name(),
+          imageName: generate.name(),
+        },
+      },
     },
   };
 
@@ -51,7 +60,7 @@ describe('<Overview />', () => {
   it('renders the correct docker image name', async () => {
     const { getByText } = await renderWithProvider(<Overview {...props} />);
 
-    getByText(`Worker Image: ${imageName}`);
+    getByText(`Worker Image: ${props.worker.imageName}`);
   });
 
   // The rest of the tests are covered in the end-to-end tests

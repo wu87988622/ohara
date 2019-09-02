@@ -34,7 +34,7 @@ describe('Jar API', () => {
         data: { result, isSuccess },
       } = response;
 
-      const { name, group, size, lastModified } = result;
+      const { name, group, size, lastModified, tags } = result;
 
       expect(isSuccess).to.eq(true);
 
@@ -42,6 +42,7 @@ describe('Jar API', () => {
       expect(size).to.be.a('number');
       expect(group).to.be.a('string');
       expect(lastModified).to.be.a('number');
+      expect(tags.name).to.eq(jarName);
     });
   });
 
@@ -61,6 +62,7 @@ describe('Jar API', () => {
         expect(result[0]).to.include.keys('name', 'group');
         expect(result[0].name).to.be.a('string');
         expect(result[0].group).to.be.a('string');
+        expect(result[0].tags.name).to.eq(result[0].name);
       });
     });
   });

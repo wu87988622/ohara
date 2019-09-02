@@ -134,7 +134,7 @@ const NodeListPage = () => {
           isOpen={isNewModalOpen}
           handleClose={handleModalClose}
           handleConfirm={() => {
-            refetch();
+            refetch(true);
           }}
         />
         <NodeEditModal
@@ -142,7 +142,7 @@ const NodeListPage = () => {
           isOpen={isEditModalOpen}
           handleClose={handleModalClose}
           handleConfirm={() => {
-            refetch();
+            refetch(true);
           }}
         />
       </>

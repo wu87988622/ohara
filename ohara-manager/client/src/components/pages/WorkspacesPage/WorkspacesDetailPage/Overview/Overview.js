@@ -38,27 +38,27 @@ const Overview = props => {
   const { worker } = props;
   const {
     imageName: workerImageName,
-    brokerClusterName,
     name: workerName,
     connectors,
+    tags,
   } = worker;
+
+  const {
+    name: zookeeperClusterName,
+    imageName: zookeeperImageName,
+  } = tags.zookeeper;
+
+  const { name: brokerClusterName, imageName: borkerImageName } = tags.broker;
 
   const { data: brokerRes } = useApi.useFetchApi(
     `${URL.BROKER_URL}/${brokerClusterName}`,
   );
   const broker = get(brokerRes, 'data.result', null);
 
-  const zookeeperName =
-    broker === null ? '' : `/${broker.zookeeperClusterName}`;
   const { data: zookeeperRes } = useApi.useFetchApi(
-    `${URL.ZOOKEEPER_URL}${zookeeperName}`,
+    `${URL.ZOOKEEPER_URL}/${zookeeperClusterName}`,
   );
   const zookeeper = get(zookeeperRes, 'data.result', null);
-
-  const { imageName: borkerImageName } =
-    broker === null ? { imageName: '' } : broker;
-  const { imageName: zookeeperImageName } =
-    zookeeper === null ? { imageName: '' } : zookeeper;
 
   const handleRedirect = service => {
     props.history.push(service);
@@ -80,16 +80,14 @@ const Overview = props => {
         </Box>
 
         <Box>
-          {!Array.isArray(zookeeper) &&
-            !isNull(zookeeper) &&
-            !isNull(broker) && (
-              <OverviewNodes
-                worker={worker}
-                handleRedirect={handleRedirect}
-                zookeeper={zookeeper}
-                broker={broker}
-              />
-            )}
+          {!isNull(zookeeper) && !isNull(broker) && (
+            <OverviewNodes
+              worker={worker}
+              handleRedirect={handleRedirect}
+              zookeeper={zookeeper}
+              broker={broker}
+            />
+          )}
         </Box>
 
         <Box>
@@ -125,6 +123,7 @@ Overview.propTypes = {
     brokerClusterName: PropTypes.string.isRequired,
     name: PropTypes.string.isRequired,
     connectors: PropTypes.array.isRequired,
+    tags: PropTypes.object,
   }).isRequired,
 };
 

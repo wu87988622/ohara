@@ -132,7 +132,7 @@ const Nodes = props => {
     setWorking(true);
     if (selectNodes.length > 0) {
       await addNodeToService();
-      refetch();
+      refetch(true);
       showMessage(MESSAGES.SERVICE_CREATION_SUCCESS);
       setSelectNodes([]);
     }

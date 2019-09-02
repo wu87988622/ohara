@@ -24,29 +24,41 @@ const useFetchApi = url => {
   const { showMessage } = useSnackbar();
   const [response, setResponse] = useState();
   const [isLoading, setIsLoading] = useState(true);
-  const [refetchState, refetch] = useState(null);
-  const request = useCallback(
-    async url => {
-      try {
-        const res = await axiosInstance.get(url);
-        const isSuccess = get(res, 'data.isSuccess', false);
+  const [refetchState, refetch] = useState(true);
+  const request = useCallback(async () => {
+    try {
+      const res = await axiosInstance.get(url);
+      const isSuccess = get(res, 'data.isSuccess', false);
 
-        if (!isSuccess) {
-          showMessage(handleError(res));
-        }
-        setResponse(res);
-        setIsLoading(false);
-        refetch(null);
-      } catch (err) {
-        showMessage(handleError(err));
+      if (!isSuccess) {
+        showMessage(handleError(res));
       }
-    },
-    [showMessage],
-  );
+      setIsLoading(false);
+      refetch(false);
+      return res;
+    } catch (err) {
+      showMessage(handleError(err));
+    }
+  }, [showMessage, url]);
 
   useEffect(() => {
-    request(url);
-  }, [request, url, refetchState]);
+    let didCancel = false;
+
+    const fetchData = async () => {
+      if (refetchState) {
+        const res = await request();
+
+        if (!didCancel) {
+          setResponse(res);
+        }
+      }
+    };
+    fetchData();
+
+    return () => {
+      didCancel = true;
+    };
+  }, [refetchState, request]);
 
   return { data: response, isLoading, refetch };
 };

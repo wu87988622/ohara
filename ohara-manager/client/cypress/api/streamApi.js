@@ -65,6 +65,9 @@ const setup = () => {
         group: workerClusterName,
       },
       name: streamName,
+      tags: {
+        name: streamName,
+      },
     };
 
     cy.createProperty(params)
@@ -85,13 +88,17 @@ describe('Stream property API', () => {
 
   it('createProperty', () => {
     setup();
+    const streamName = generate.serviceName({ prefix: 'stream' });
     cy.createJar('ohara-it-source.jar').then(response => {
       const params = {
         jarKey: {
           name: response.data.result.name,
           group: response.data.result.group,
         },
-        name: generate.serviceName({ prefix: 'stream' }),
+        name: streamName,
+        tags: {
+          name: streamName,
+        },
       };
 
       cy.createProperty(params).then(response => {
@@ -103,6 +110,7 @@ describe('Stream property API', () => {
         expect(isSuccess).to.eq(true);
 
         expect(settings).to.be.an('object');
+        expect(settings.tags.name).to.eq(settings.name);
       });
     });
   });
@@ -119,6 +127,7 @@ describe('Stream property API', () => {
       expect(isSuccess).to.eq(true);
 
       expect(settings).to.be.an('object');
+      expect(settings.tags.name).to.eq(settings.name);
     });
   });
 
@@ -139,6 +148,7 @@ describe('Stream property API', () => {
       expect(isSuccess).to.eq(true);
 
       expect(settings).to.be.a('object');
+      expect(settings.tags.name).to.eq(settings.name);
     });
   });
 

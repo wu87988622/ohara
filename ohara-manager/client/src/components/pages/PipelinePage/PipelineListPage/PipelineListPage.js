@@ -177,8 +177,8 @@ const PipelineListPage = props => {
     setIsDeleteModalWorking(false);
 
     if (isSuccess) {
-      refetchPipelines();
       setIsDeleteModalOpen(false);
+      refetchPipelines(true);
       showMessage(
         `${MESSAGES.PIPELINE_DELETION_SUCCESS} ${pipelineToBeDeleted}`,
       );

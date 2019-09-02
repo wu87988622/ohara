@@ -54,14 +54,32 @@ Cypress.Commands.add('addWorker', () => {
     .as('broker');
 
   cy.get('@broker').then(broker => {
-    cy.request('POST', 'api/workers', {
-      name: workerName,
-      brokerClusterName: broker.name,
-      jarKeys: [],
-      groupId: generate.id(),
-      nodeNames: [nodeName],
+    cy.request('GET', `api/zookeepers/${broker.zookeeperClusterName}`)
+      .then(res => res.body)
+      .as('zookeepers');
+  });
+
+  cy.get('@zookeepers').then(zookeepers => {
+    cy.get('@broker').then(broker => {
+      cy.request('POST', 'api/workers', {
+        name: workerName,
+        brokerClusterName: broker.name,
+        jarKeys: [],
+        groupId: generate.id(),
+        nodeNames: [nodeName],
+        tags: {
+          broker: {
+            name: broker.name,
+            imageName: broker.imageName,
+          },
+          zookeeper: {
+            name: zookeepers.name,
+            imageName: zookeepers.imageName,
+          },
+        },
+      });
+      cy.request('PUT', `api/workers/${workerName}/start`);
     });
-    cy.request('PUT', `api/workers/${workerName}/start`);
   });
 
   let count = 0;

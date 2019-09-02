@@ -190,6 +190,7 @@ Cypress.Commands.add('createJar', (jarName, group) => {
       let formData = new FormData();
       formData.append('file', blob[0]);
       formData.append('group', group);
+      formData.append('tags', `{"name":"${jarName}"}`);
       return axiosInstance.post(url, formData, config);
     });
 });

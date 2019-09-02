@@ -63,10 +63,13 @@ const WorkerNewModal = props => {
   const {
     create: createZookeeper,
     handleFail: handleZookeeper,
+    getResponse: getZookeeperRes,
   } = useCreateServices(URL.ZOOKEEPER_URL);
-  const { create: createBroker, handleFail: handleBroker } = useCreateServices(
-    URL.BROKER_URL,
-  );
+  const {
+    create: createBroker,
+    handleFail: handleBroker,
+    getResponse: getBrokerRes,
+  } = useCreateServices(URL.BROKER_URL);
   const { create: createWorker, handleFail: handleWorker } = useCreateServices(
     URL.WORKER_URL,
   );
@@ -320,6 +323,16 @@ const WorkerNewModal = props => {
       configTopicName: generate.serviceName(),
       offsetTopicName: generate.serviceName(),
       statusTopicName: generate.serviceName(),
+      tags: {
+        broker: {
+          name: getBrokerRes().data.result.name,
+          imageName: getBrokerRes().data.result.imageName,
+        },
+        zookeeper: {
+          name: getZookeeperRes().data.result.name,
+          imageName: getZookeeperRes().data.result.imageName,
+        },
+      },
     };
 
     await createWorker({

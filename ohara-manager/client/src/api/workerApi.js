@@ -69,6 +69,7 @@ export const createWorker = async params => {
       configTopicName: params.configTopicName,
       offsetTopicName: params.offsetTopicName,
       statusTopicName: params.statusTopicName,
+      tags: params.tags,
     };
     const config = {
       timeout: 3 * 60 * 1000, // set timeout to 3 minutes.
