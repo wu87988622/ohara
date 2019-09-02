@@ -112,8 +112,8 @@ class TestZookeeperCreator extends SmallTest with Matchers {
     .create()
 
   @Test
-  def testInvalidName(): Unit = an[DeserializationException] should be thrownBy zkCreator().clusterName(
-    CommonUtils.randomString(ZookeeperApi.LIMIT_OF_NAME_LENGTH + 1))
+  def testInvalidName(): Unit =
+    an[DeserializationException] should be thrownBy zkCreator().clusterName(CommonUtils.randomString(40))
 
   @Test
   def testCopy(): Unit = {

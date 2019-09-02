@@ -165,10 +165,13 @@ private[configurator] object StreamRoute {
               .map {
                 case (definition, error) =>
                   StreamClusterInfo(
-                    settings = creation.settings + (StreamDefUtils.BROKER_CLUSTER_NAME_DEFINITION.key() -> JsString(
-                      bkName)),
+                    settings = {
+                      val req = access.request.settings(creation.settings).brokerClusterName(bkName)
+                      // TODO: please reject the stupid request which does carry the node names ... by chia
+                      nodes.filter(_.nonEmpty).foreach(req.nodeNames)
+                      req.creation.settings
+                    },
                     definition = definition,
-                    nodeNames = nodes.getOrElse(Set.empty),
                     deadNodes = Set.empty,
                     state = None,
                     metrics = Metrics(Seq.empty),
@@ -208,9 +211,12 @@ private[configurator] object StreamRoute {
         }
         .map { update =>
           StreamClusterInfo(
-            settings = previousOption.map(_.settings).getOrElse(Map.empty) ++ update.settings,
+            settings = access.request
+              .settings(previousOption.map(_.settings).getOrElse(Map.empty))
+              .settings(update.settings)
+              .creation
+              .settings,
             definition = previousOption.flatMap(_.definition),
-            nodeNames = update.nodeNames.orElse(previousOption.map(_.nodeNames)).getOrElse(Set.empty),
             // this cluster is not running so we don't need to keep the dead nodes in the updated cluster.
             deadNodes = Set.empty,
             state = None,
@@ -239,14 +245,22 @@ private[configurator] object StreamRoute {
                 // add the (key, defaultValue) to settings if absent
                 if (!copy.contains(settingDef.key()) && !CommonUtils.isEmpty(settingDef.defaultValue()))
                   copy += settingDef.key() -> JsString(settingDef.defaultValue()))
-            info.plain.foreach {
-              case (k, v) =>
-                definition.definitions
-                  .find(_.key() == k)
-                  .fold(throw new IllegalArgumentException(s"$k not found in definition")) { settingDef =>
-                    settingDef.checker().accept(v)
-                  }
-            }
+            info.settings
+              .map {
+                case (k, v) =>
+                  k -> (v match {
+                    case JsString(s) => s
+                    case _           => v.toString
+                  })
+              }
+              .foreach {
+                case (k, v) =>
+                  definition.definitions
+                    .find(_.key() == k)
+                    .fold(throw new IllegalArgumentException(s"$k not found in definition")) { settingDef =>
+                      settingDef.checker().accept(v)
+                    }
+              }
             info.copy(settings = copy)
           }
         }
@@ -268,21 +282,18 @@ private[configurator] object StreamRoute {
             .flatMap { brokerClusterInfo =>
               fileStore.fileInfo(streamClusterInfo.jarKey).flatMap { fileInfo =>
                 clusterCollie.streamCollie.creator
+                // these settings will send to container environment
+                // we convert all value to string for convenient
+                  .settings(streamClusterInfo.settings)
                   .clusterName(streamClusterInfo.name)
                   .imageName(IMAGE_NAME_DEFAULT)
                   .jarInfo(fileInfo)
-                  // these settings will send to container environment
-                  // we convert all value to string for convenient
-                  .settings(streamClusterInfo.settings)
-                  .setting(StreamDefUtils.BROKER_DEFINITION.key(), JsString(brokerClusterInfo.connectionProps))
+                  .brokerCluster(brokerClusterInfo)
                   // This nodeNames() should put after settings() because we decide nodeName in starting phase
                   // TODO: the order should not be a problem and please refactor this in #2288
                   .nodeNames(streamClusterInfo.nodeNames)
                   .setting(StreamDefUtils.EXACTLY_ONCE_DEFINITION.key(),
                            JsString(streamClusterInfo.exactlyOnce.toString))
-                  .setting(StreamDefUtils.EXACTLY_ONCE_DEFINITION.key(),
-                           JsString(streamClusterInfo.exactlyOnce.toString))
-                  .brokerClusterName(brokerClusterInfo.name)
                   .threadPool(executionContext)
                   .create()
               }

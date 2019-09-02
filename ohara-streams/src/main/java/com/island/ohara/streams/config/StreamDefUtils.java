@@ -83,17 +83,6 @@ public final class StreamDefUtils {
           .optional()
           .build();
 
-  public static final SettingDef GROUP_DEFINITION =
-      SettingDef.builder()
-          .key("group")
-          .group(CORE_GROUP)
-          .orderInGroup(ORDER_COUNTER.getAndIncrement())
-          .displayName("StreamApp group")
-          .internal()
-          .documentation("The group name of this streamApp")
-          .valueType(Type.STRING)
-          .build();
-
   public static final SettingDef JAR_KEY_DEFINITION =
       SettingDef.builder()
           .key("jarKey")

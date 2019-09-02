@@ -33,7 +33,6 @@ object BrokerApi {
     * The default value of group for this API.
     */
   val GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
-  val LIMIT_OF_NAME_LENGTH: Int = ZookeeperApi.LIMIT_OF_NAME_LENGTH
 
   val BROKER_PREFIX_PATH: String = "brokers"
 

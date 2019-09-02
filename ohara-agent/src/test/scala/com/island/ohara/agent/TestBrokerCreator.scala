@@ -19,7 +19,7 @@ package com.island.ohara.agent
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.{BrokerApi, TopicApi, WorkerApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, TopicApi}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
@@ -137,8 +137,8 @@ class TestBrokerCreator extends SmallTest with Matchers {
     .create()
 
   @Test
-  def testInvalidName(): Unit = an[DeserializationException] should be thrownBy bkCreator().clusterName(
-    CommonUtils.randomString(WorkerApi.LIMIT_OF_NAME_LENGTH + 1))
+  def testInvalidName(): Unit =
+    an[DeserializationException] should be thrownBy bkCreator().clusterName(CommonUtils.randomString(40))
 
   @Test
   def testCopy(): Unit = {

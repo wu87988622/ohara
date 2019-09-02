@@ -30,7 +30,11 @@ class TestWorkerApi extends SmallTest with Matchers {
   @Test
   def testResponseEquals(): Unit = {
     val response = WorkerClusterInfo(
-      settings = WorkerApi.access.request.brokerClusterName(CommonUtils.randomString()).creation.settings,
+      settings = WorkerApi.access.request
+        .brokerClusterName(CommonUtils.randomString())
+        .nodeName(CommonUtils.randomString(10))
+        .creation
+        .settings,
       connectors = Seq.empty,
       deadNodes = Set.empty,
       state = None,
@@ -91,13 +95,12 @@ class TestWorkerApi extends SmallTest with Matchers {
     .size shouldBe 2
 
   @Test
-  def ignoreNodeNamesOnCreation(): Unit = WorkerApi.access
+  def ignoreNodeNamesOnCreation(): Unit = an[DeserializationException] should be thrownBy WorkerApi.access
     .hostname(CommonUtils.randomString())
     .port(CommonUtils.availablePort())
     .request
     .name(CommonUtils.randomString(5))
     .creation
-    .nodeNames shouldBe Set.empty
 
   @Test
   def nullName(): Unit = an[NullPointerException] should be thrownBy WorkerApi.access

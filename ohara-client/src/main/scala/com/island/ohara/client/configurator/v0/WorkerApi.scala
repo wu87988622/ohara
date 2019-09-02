@@ -35,8 +35,6 @@ object WorkerApi {
   val GROUP_DEFAULT: String = com.island.ohara.client.configurator.v0.GROUP_DEFAULT
   val WORKER_SERVICE_NAME: String = "wk"
 
-  val LIMIT_OF_NAME_LENGTH: Int = ZookeeperApi.LIMIT_OF_NAME_LENGTH
-
   val WORKER_PREFIX_PATH: String = "workers"
 
   /**
@@ -44,7 +42,6 @@ object WorkerApi {
     */
   val IMAGE_NAME_DEFAULT: String = s"oharastream/connect-worker:${VersionUtils.VERSION}"
 
-  private[this] val IMAGE_NAME_KEY = "imageName"
   private[this] val BROKER_CLUSTER_NAME_KEY = "brokerClusterName"
   private[this] val CLIENT_PORT_KEY = "clientPort"
   private[this] val JMX_PORT_KEY = "jmxPort"
@@ -60,7 +57,6 @@ object WorkerApi {
   private[this] val OFFSET_TOPIC_REPLICATIONS_KEY = "offsetTopicReplications"
   private[this] val JAR_KEYS_KEY = "jarKeys"
   private[this] val JAR_INFOS_KEY = "jarInfos"
-  private[this] val NODE_NAMES_KEY = "nodeNames"
   private[this] val TAGS_KEY = "tags"
 
   final case class Creation private[WorkerApi] (settings: Map[String, JsValue]) extends ClusterCreationRequest {
@@ -70,7 +66,7 @@ object WorkerApi {
       * @param settings settings
       * @return update
       */
-    private implicit def update(settings: Map[String, JsValue]): Update = Update(noJsNull(settings))
+    private[this] implicit def update(settings: Map[String, JsValue]): Update = Update(noJsNull(settings))
     override def group: String = GROUP_DEFAULT
     override def name: String = noJsNull(settings)(NAME_KEY).convertTo[String]
     override def imageName: String = settings.imageName.get
@@ -87,9 +83,14 @@ object WorkerApi {
     def offsetTopicPartitions: Int = settings.offsetTopicPartitions.get
     def offsetTopicReplications: Short = settings.offsetTopicReplications.get
     def jarKeys: Set[ObjectKey] = settings.jarKeys.getOrElse(Set.empty)
-    def jarInfos: Seq[FileInfo] = settings.jarInfos.getOrElse(Seq.empty)
-    override def tags: Map[String, JsValue] = settings.tags.getOrElse(Map.empty)
-    override def nodeNames: Set[String] = settings.nodeNames.getOrElse(Set.empty)
+
+    /**
+      * expose to WorkerCollie
+      */
+    private[ohara] def jarInfos: Seq[FileInfo] = settings.jarInfos.getOrElse(Seq.empty)
+
+    override def tags: Map[String, JsValue] = settings.tags.get
+    override def nodeNames: Set[String] = settings.nodeNames.get
     override def ports: Set[Int] = Set(clientPort, jmxPort)
   }
 
@@ -142,7 +143,13 @@ object WorkerApi {
     def jarKeys: Option[Set[ObjectKey]] = jarInfos
       .map(_.map(_.key).toSet)
       .orElse(noJsNull(settings).get(JAR_KEYS_KEY).map(js => ObjectKey.toObjectKeys(js.toString).asScala.toSet))
-    def jarInfos: Option[Seq[FileInfo]] =
+
+    /**
+      * Normally, Update request should not carry the jar infos since the jar infos is returned by file store according
+      * to input jar keys. Hence, this method is not public and it is opened to this scope only.
+      * @return jar infos
+      */
+    private[WorkerApi] def jarInfos: Option[Seq[FileInfo]] =
       noJsNull(settings)
         .get(JAR_INFOS_KEY)
         .map(_.convertTo[JsArray].elements.map(FileInfoApi.FILE_INFO_JSON_FORMAT.read))
@@ -175,7 +182,7 @@ object WorkerApi {
       * @param settings settings
       * @return creation
       */
-    private implicit def creation(settings: Map[String, JsValue]): Creation = Creation(noJsNull(settings))
+    private[this] implicit def creation(settings: Map[String, JsValue]): Creation = Creation(noJsNull(settings))
 
     override def name: String = settings.name
     override def imageName: String = settings.imageName

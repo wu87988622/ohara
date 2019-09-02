@@ -48,14 +48,13 @@ private[configurator] class FakeStreamCollie(node: NodeCollie)
         .build())
 
   override def creator: StreamCollie.ClusterCreator =
-    (_, nodeNames, _, _, _, _, _, _, settings, _) =>
+    (_, _, _, _, _, _, _, _, settings, _) =>
       Future.successful(
         addCluster(
           StreamApi.StreamClusterInfo(
             settings = settings,
             // convert to list in order to be serializable
             definition = Some(Definition("fake_class", StreamDefUtils.DEFAULT.asScala.toList)),
-            nodeNames = nodeNames,
             deadNodes = Set.empty,
             // In fake mode, we need to assign a state in creation for "GET" method to act like real case
             state = Some(ClusterState.RUNNING.name),

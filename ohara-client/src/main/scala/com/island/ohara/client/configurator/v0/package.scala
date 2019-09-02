@@ -18,7 +18,6 @@ package com.island.ohara.client.configurator
 
 import com.island.ohara.common.setting.{ConnectorKey, ObjectKey, SettingDef, TopicKey}
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.json.ConnectorDefUtils
 import spray.json.{JsNull, JsValue, RootJsonFormat}
 
 package object v0 {
@@ -36,22 +35,32 @@ package object v0 {
 
   /**
     * Noted: there are other two definition having "name"
-    * 1) ConnectorDefUtils.CONNECTOR_NAME_DEFINITION.key()
-    * 2) StreamDefinitions.NAME_DEFINITION.key
+    * 1) ConnectorDefUtils.CONNECTOR_NAME_DEFINITION
+    * 2) StreamDefinitions.NAME_DEFINITION
     */
   val NAME_KEY: String = "name"
 
   /**
-    * This reference ensures that the tags key in scala json is same to java json (connector metadata).
-    * This a bit complicated code is what we had to "enjoy" as Ohara is a hybrid project consisting of scala and java.
+    * Noted: there are other two definition having "tags""
+    * 1) ConnectorDefUtils.TAGS_DEFINITION
+    * 2) StreamDefinitions.TAGS_DEFINITION
     */
-  val TAGS_KEY: String = ConnectorDefUtils.TAGS_DEFINITION.key()
+  val TAGS_KEY: String = "tags"
+
+  val NODE_NAMES_KEY: String = "nodeNames"
+  val IMAGE_NAME_KEY: String = "imageName"
   val CLUSTER_KEY: String = "cluster"
   val FORCE_KEY: String = "force"
   val START_COMMAND: String = "start"
   val STOP_COMMAND: String = "stop"
   val PAUSE_COMMAND: String = "pause"
   val RESUME_COMMAND: String = "resume"
+
+  /**
+    * docker does limit the length of name (< 64). Since we format container name with some part of prefix,
+    * limit the name length to one-third of 64 chars should be suitable for most cases.
+    */
+  val LIMIT_OF_NAME_LENGTH: Int = 20
 
   /**
     * In this APIs we have to integrate json format between scala (spray-json) and java (jackson).
@@ -125,12 +134,6 @@ package object v0 {
     }
 
   /**
-    * docker does limit the length of name (< 64). Since we format container name with some part of prefix,
-    * limit the name length to one-third of 64 chars should be suitable for most cases.
-    */
-  private[this] val LIMIT_OF_NAME_LENGTH: Int = 20
-
-  /**
     * use basic check rules of creation request for json refiner.
     * 1) reject any empty string.
     * 2) nodeName cannot use "start" and "stop" keywords.
@@ -146,7 +149,7 @@ package object v0 {
   private[v0] def basicRulesOfCreation[T <: ClusterCreationRequest](defaultImage: String): JsonRefiner[T] =
     JsonRefiner[T]
       .rejectEmptyString()
-      .arrayRestriction("nodeNames")
+      .arrayRestriction(NODE_NAMES_KEY)
       // we use the same sub-path for "node" and "actions" urls:
       // xxx/cluster/{name}/{node}
       // xxx/cluster/{name}/[start|stop]
@@ -156,14 +159,15 @@ package object v0 {
       // the node names can't be empty
       .rejectEmpty()
       .toRefiner
-      .nullToString("imageName", defaultImage)
       .stringRestriction(NAME_KEY)
       .withNumber()
       .withLowerCase()
       .withLengthLimit(LIMIT_OF_NAME_LENGTH)
       .toRefiner
-      .nullToString(NAME_KEY, () => CommonUtils.randomString(10))
+      .nullToString(IMAGE_NAME_KEY, defaultImage)
+      .nullToString(NAME_KEY, () => CommonUtils.randomString(LIMIT_OF_NAME_LENGTH / 2))
       .nullToEmptyObject(TAGS_KEY)
+      .requireKey(NODE_NAMES_KEY)
 
   /**
     * use basic check rules of update request for json refiner.
@@ -175,7 +179,7 @@ package object v0 {
     */
   private[v0] def basicRulesOfUpdate[T <: ClusterUpdateRequest]: JsonRefiner[T] = JsonRefiner[T]
     .rejectEmptyString()
-    .arrayRestriction("nodeNames")
+    .arrayRestriction(NODE_NAMES_KEY)
     // we use the same sub-path for "node" and "actions" urls:
     // xxx/cluster/{name}/{node}
     // xxx/cluster/{name}/[start|stop]

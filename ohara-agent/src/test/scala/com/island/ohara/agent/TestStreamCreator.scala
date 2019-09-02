@@ -22,11 +22,10 @@ import java.util.Objects
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import com.island.ohara.client.configurator.v0.{Definition, FileInfoApi, StreamApi, TopicApi}
+import com.island.ohara.client.configurator.v0.{Definition, StreamApi, TopicApi}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.setting.{SettingDef, TopicKey}
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.streams.config.StreamDefUtils
 import org.junit.Test
 import org.scalatest.Matchers
 import spray.json._
@@ -66,7 +65,6 @@ class TestStreamCreator extends SmallTest with Matchers {
         StreamClusterInfo(
           settings = settings,
           definition = None,
-          nodeNames = nodeNames,
           deadNodes = Set.empty,
           metrics = Metrics.EMPTY,
           state = None,
@@ -128,49 +126,49 @@ class TestStreamCreator extends SmallTest with Matchers {
   )
 
   @Test
-  def testNameLength(): Unit =
+  def testNameLength(): Unit = {
     streamCreator()
-      .clusterName(CommonUtils.randomString(StreamApi.LIMIT_OF_NAME_LENGTH))
+      .clusterName(CommonUtils.randomString(10))
       .imageName(CommonUtils.randomString())
       .brokerClusterName(CommonUtils.randomString())
-      .settings(Map(
-        StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
-        StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
-        StreamDefUtils.JMX_PORT_DEFINITION.key() -> JsNumber(1000)
-      ))
+      .fromTopicKey(topicKey())
+      .toTopicKey(topicKey())
+      .jmxPort(CommonUtils.availablePort())
       .nodeName(CommonUtils.randomString())
       .jarInfo(fileInfo)
       .create()
 
-  an[DeserializationException] should be thrownBy streamCreator()
-    .clusterName(CommonUtils.randomString(StreamApi.LIMIT_OF_NAME_LENGTH + 1))
-    .imageName(CommonUtils.randomString())
-    .brokerClusterName(CommonUtils.randomString())
-    .jarInfo(fileInfo)
-    .settings(Map(
-      StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
-      StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
-      StreamDefUtils.JMX_PORT_DEFINITION.key() -> JsNumber(1000)
-    ))
-    .nodeName(CommonUtils.randomString())
-    .create()
+    an[DeserializationException] should be thrownBy streamCreator()
+      .clusterName(CommonUtils.randomString(50))
+      .imageName(CommonUtils.randomString())
+      .brokerClusterName(CommonUtils.randomString())
+      .jarInfo(fileInfo)
+      .fromTopicKey(topicKey())
+      .toTopicKey(topicKey())
+      .jmxPort(CommonUtils.availablePort())
+      .nodeName(CommonUtils.randomString())
+      .create()
+  }
 
   @Test
   def testCopy(): Unit = {
     val info = StreamClusterInfo(
-      settings = Map(
-        StreamDefUtils.NAME_DEFINITION.key() -> JsString("name"),
-        StreamDefUtils.IMAGE_NAME_DEFINITION.key() -> JsString("imageName"),
-        StreamDefUtils.BROKER_CLUSTER_NAME_DEFINITION.key() -> JsString("BK"),
-        StreamDefUtils.INSTANCES_DEFINITION.key() -> JsNumber(1),
-        StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
-        StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
-        StreamDefUtils.JMX_PORT_DEFINITION.key() -> JsNumber(100),
-        StreamDefUtils.TAGS_DEFINITION.key() -> JsObject(Map("bar" -> JsString("foo"), "he" -> JsNumber(1))),
-        StreamDefUtils.JAR_INFO_DEFINITION.key() -> FileInfoApi.FILE_INFO_JSON_FORMAT.write(fileInfo)
-      ),
+      settings = StreamApi.access.request
+        .nodeNames(Set("n0"))
+        .jarInfo(FileInfo(
+          group = CommonUtils.randomString(5),
+          name = CommonUtils.randomString(5),
+          url = new URL("http://localhost:12345/in.jar"),
+          size = 1000,
+          lastModified = CommonUtils.current(),
+          tags = Map.empty
+        ))
+        .brokerClusterName(CommonUtils.randomString(10))
+        .fromTopicKey(topicKey())
+        .toTopicKey(topicKey())
+        .creation
+        .settings,
       definition = Some(Definition("className", Seq(SettingDef.builder().key("key").group("group").build()))),
-      nodeNames = Set("node1"),
       deadNodes = Set.empty,
       state = None,
       error = None,
@@ -187,17 +185,15 @@ class TestStreamCreator extends SmallTest with Matchers {
     // could set jmx port
     result(
       streamCreator()
-        .clusterName(CommonUtils.randomString(StreamApi.LIMIT_OF_NAME_LENGTH))
+        .clusterName(CommonUtils.randomString(10))
         .imageName(CommonUtils.randomString())
         .brokerClusterName(CommonUtils.randomString())
         .jarInfo(fileInfo)
-        .settings(Map(
-          StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
-          StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
-          StreamDefUtils.JMX_PORT_DEFINITION.key() -> JsNumber(1000)
-        ))
+        .fromTopicKey(topicKey())
+        .toTopicKey(topicKey())
+        .jmxPort(CommonUtils.availablePort())
         .nodeName(CommonUtils.randomString())
-        .create()).jmxPort shouldBe 1000
+        .create())
 
   @Test
   def testParseJarKey(): Unit = {
@@ -205,15 +201,13 @@ class TestStreamCreator extends SmallTest with Matchers {
     val jarInfo = fileInfo(new URL("http://localhost:12345/group/abc.jar"))
     val res = result(
       streamCreator()
-        .clusterName(CommonUtils.randomString(StreamApi.LIMIT_OF_NAME_LENGTH))
+        .clusterName(CommonUtils.randomString(10))
         .imageName(CommonUtils.randomString())
         .brokerClusterName(CommonUtils.randomString())
         .nodeName(CommonUtils.randomString())
-        .settings(Map(
-          StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
-          StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
-          StreamDefUtils.JMX_PORT_DEFINITION.key() -> JsNumber(1000)
-        ))
+        .fromTopicKey(topicKey())
+        .toTopicKey(topicKey())
+        .jmxPort(CommonUtils.availablePort())
         .jarInfo(jarInfo)
         .create())
     res.jarKey.group() shouldBe jarInfo.group
@@ -221,51 +215,43 @@ class TestStreamCreator extends SmallTest with Matchers {
   }
 
   @Test
-  def ignoreFromTopic(): Unit =
-    intercept[NoSuchElementException] {
-      result(
-        streamCreator()
-          .clusterName(CommonUtils.randomString(StreamApi.LIMIT_OF_NAME_LENGTH))
-          .imageName(CommonUtils.randomString())
-          .brokerClusterName(CommonUtils.randomString())
-          .jarInfo(fileInfo)
-          .settings(Map(
-            StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
-            StreamDefUtils.JMX_PORT_DEFINITION.key() -> JsNumber(1000)
-          ))
-          .nodeName(CommonUtils.randomString())
-          .create())
-    }.getMessage should include(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key())
+  def ignoreFromTopic(): Unit = an[IllegalArgumentException] should be thrownBy
+    streamCreator()
+      .clusterName(CommonUtils.randomString(10))
+      .imageName(CommonUtils.randomString())
+      .brokerClusterName(CommonUtils.randomString())
+      .jarInfo(fileInfo)
+      .toTopicKey(topicKey())
+      .jmxPort(CommonUtils.availablePort())
+      .nodeName(CommonUtils.randomString())
+      .create()
 
   @Test
-  def ignoreToTopic(): Unit =
-    intercept[NoSuchElementException] {
+  def ignoreToTopic(): Unit = an[IllegalArgumentException] should be thrownBy
+    streamCreator()
+      .clusterName(CommonUtils.randomString(10))
+      .imageName(CommonUtils.randomString())
+      .brokerClusterName(CommonUtils.randomString())
+      .jarInfo(fileInfo)
+      .fromTopicKey(topicKey())
+      .jmxPort(CommonUtils.availablePort())
+      .nodeName(CommonUtils.randomString())
+      .create()
+
+  /**
+    * the ignored jmx port is replaced by random one.
+    */
+  @Test
+  def ignoreJmxPort(): Unit = CommonUtils.requireConnectionPort(
+    result(
       streamCreator()
-        .clusterName(CommonUtils.randomString(StreamApi.LIMIT_OF_NAME_LENGTH))
+        .clusterName(CommonUtils.randomString(10))
         .imageName(CommonUtils.randomString())
         .brokerClusterName(CommonUtils.randomString())
         .jarInfo(fileInfo)
-        .settings(Map(
-          StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
-          StreamDefUtils.JMX_PORT_DEFINITION.key() -> JsNumber(1000)
-        ))
+        .fromTopicKey(topicKey())
+        .toTopicKey(topicKey())
         .nodeName(CommonUtils.randomString())
-        .create()
-    }.getMessage should include(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key())
+        .create()).jmxPort)
 
-  @Test
-  def ignoreJmxPort(): Unit =
-    intercept[NoSuchElementException] {
-      streamCreator()
-        .clusterName(CommonUtils.randomString(StreamApi.LIMIT_OF_NAME_LENGTH))
-        .imageName(CommonUtils.randomString())
-        .brokerClusterName(CommonUtils.randomString())
-        .jarInfo(fileInfo)
-        .settings(Map(
-          StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson),
-          StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key() -> JsArray(TopicKey.toJsonString(topicKey()).parseJson)
-        ))
-        .nodeName(CommonUtils.randomString())
-        .create()
-    }.getMessage should include(StreamDefUtils.JMX_PORT_DEFINITION.key())
 }

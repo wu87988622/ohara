@@ -20,14 +20,15 @@ import java.net.URL
 import java.util.Objects
 
 import com.island.ohara.agent.docker.ContainerState
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
-import com.island.ohara.client.configurator.v0.FileInfoApi.{FILE_INFO_JSON_FORMAT, FileInfo}
+import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.{ClusterInfo, Definition, StreamApi}
 import com.island.ohara.common.annotations.Optional
-import com.island.ohara.common.setting.{ObjectKey, TopicKey}
+import com.island.ohara.common.setting.TopicKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
@@ -36,7 +37,6 @@ import com.typesafe.scalalogging.Logger
 import spray.json._
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -118,10 +118,13 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
                       val clusterInfo = StreamClusterInfo(
                         // the other arguments (clusterName, imageName and so on) are extracted from settings so
                         // we don't need to add them back to settings.
-                        settings = settings,
+                        settings = StreamApi.access.request
+                          .settings(settings)
+                          .nodeNames(successfulContainers.map(_.nodeName).toSet)
+                          .creation
+                          .settings,
                         // TODO: cluster info
                         definition = definition,
-                        nodeNames = successfulContainers.map(_.nodeName).toSet,
                         deadNodes = Set.empty,
                         metrics = Metrics.EMPTY,
                         // creating cluster success but still need to update state by another request
@@ -177,20 +180,21 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
   private[agent] def toStreamCluster(clusterName: String, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[StreamClusterInfo] = {
     // get the first running container, or first non-running container if not found
-    val first = containers.find(_.state == ContainerState.RUNNING.name).getOrElse(containers.head)
-    val settings = seekSettings(first.environments)
-    // reuse the parser from Creation
-    val nodeNames = StreamApi.Creation(settings).nodeNames
-    val jarInfo = FILE_INFO_JSON_FORMAT.read(settings(StreamDefUtils.JAR_INFO_DEFINITION.key()))
-    loadDefinition(jarInfo.url).map { definition =>
+    val creation = StreamApi.access.request
+      .settings(seekSettings(containers.head.environments))
+      .nodeNames(containers.map(_.nodeName).toSet)
+      .creation
+    loadDefinition(creation.jarInfo.get.url).map { definition =>
       StreamClusterInfo(
-        settings = settings,
+        settings = creation.settings,
         // we don't care the runtime definitions; it's saved to store already
         definition = definition,
-        nodeNames = nodeNames,
         // Currently, docker and k8s has same naming rule for "Running",
         // it is ok that we use the containerState.RUNNING here.
-        deadNodes = nodeNames -- containers.filter(_.state == ContainerState.RUNNING.name).map(_.nodeName).toSet,
+        deadNodes = creation.nodeNames -- containers
+          .filter(_.state == ContainerState.RUNNING.name)
+          .map(_.nodeName)
+          .toSet,
         metrics = Metrics.EMPTY,
         state = toClusterState(containers).map(_.name),
         error = None,
@@ -237,41 +241,8 @@ trait StreamCollie extends Collie[StreamClusterInfo] {
 
 object StreamCollie {
   trait ClusterCreator extends Collie.ClusterCreator[StreamClusterInfo] {
-    private[this] val settings: mutable.Map[String, JsValue] = mutable.Map[String, JsValue]()
-    override protected def doCopy(clusterInfo: StreamClusterInfo): Unit = this.settings ++= clusterInfo.settings
-
-    /**
-      * Stream collie overrides this method in order to put the same config to settings.
-      * @param clusterName cluster name
-      * @return this creator
-      */
-    override def clusterName(clusterName: String): ClusterCreator.this.type = {
-      super.clusterName(clusterName)
-      settings += StreamDefUtils.NAME_DEFINITION.key() -> JsString(clusterName)
-      this
-    }
-
-    /**
-      * Stream collie overrides this method in order to put the same config to settings.
-      * @param nodeNames nodes' name
-      * @return cluster description
-      */
-    override def nodeNames(nodeNames: Set[String]): ClusterCreator.this.type = {
-      super.nodeNames(nodeNames)
-      settings += StreamDefUtils.NODE_NAMES_DEFINITION.key() -> JsArray(nodeNames.map(JsString(_)).toVector)
-      this
-    }
-
-    /**
-      * Stream collie overrides this method in order to put the same config to settings.
-      * @param imageName image name
-      * @return this creator
-      */
-    override def imageName(imageName: String): ClusterCreator.this.type = {
-      super.imageName(imageName)
-      settings += StreamDefUtils.IMAGE_NAME_DEFINITION.key() -> JsString(imageName)
-      this
-    }
+    private[this] val request = StreamApi.access.request
+    override protected def doCopy(clusterInfo: StreamClusterInfo): Unit = request.settings(clusterInfo.settings)
 
     /**
       * set the jar url for the streamApp running
@@ -280,8 +251,7 @@ object StreamCollie {
       * @return this creator
       */
     def jarInfo(jarInfo: FileInfo): ClusterCreator = {
-      settings += StreamDefUtils.JAR_KEY_DEFINITION.key() -> ObjectKey.toJsonString(jarInfo.key).parseJson
-      settings += StreamDefUtils.JAR_INFO_DEFINITION.key() -> FILE_INFO_JSON_FORMAT.write(jarInfo)
+      request.jarInfo(jarInfo)
       this
     }
 
@@ -293,7 +263,10 @@ object StreamCollie {
       * @return this creator
       */
     @Optional("default is empty map")
-    def setting(key: String, value: JsValue): ClusterCreator = settings(Map(key -> value))
+    def setting(key: String, value: JsValue): ClusterCreator = {
+      request.setting(key, value)
+      this
+    }
 
     /**
       * add the key-value data map for container
@@ -303,54 +276,63 @@ object StreamCollie {
       */
     @Optional("default is empty map")
     def settings(settings: Map[String, JsValue]): ClusterCreator = {
-      this.settings ++= Objects.requireNonNull(settings)
+      request.settings(settings)
       this
+    }
+
+    def brokerCluster(cluster: BrokerClusterInfo): ClusterCreator = {
+      brokerClusterName(cluster.name)
+      connectionProps(cluster.connectionProps)
     }
 
     def brokerClusterName(brokerClusterName: String): ClusterCreator = {
-      settings += StreamDefUtils.BROKER_CLUSTER_NAME_DEFINITION.key() -> JsString(
-        CommonUtils.requireNonEmpty(brokerClusterName))
+      request.brokerClusterName(brokerClusterName)
       this
     }
 
-    /**
-      * get the value, which is mapped to input key, from settings. If the key is not associated, NoSuchElementException will
-      * be thrown.
-      * @param key key
-      * @param f marshalling function
-      * @tparam T type
-      * @return value
-      */
-    private[this] def get[T](key: String, f: JsValue => T): T =
-      settings.get(key).map(f).getOrElse(throw new NoSuchElementException(s"$key is required"))
+    def connectionProps(connectionProps: String): ClusterCreator = {
+      request.connectionProps(connectionProps)
+      this
+    }
 
-    import com.island.ohara.client.configurator.v0.TOPIC_KEY_FORMAT
-    import com.island.ohara.client.configurator.v0.FileInfoApi.FILE_INFO_JSON_FORMAT
-    import spray.json.DefaultJsonProtocol._
-    override def create(): Future[StreamClusterInfo] = doCreate(
-      clusterName = get(StreamDefUtils.NAME_DEFINITION.key(), _.convertTo[String]),
-      nodeNames = get(StreamDefUtils.NODE_NAMES_DEFINITION.key(), _.convertTo[Vector[String]].toSet),
-      imageName = get(StreamDefUtils.IMAGE_NAME_DEFINITION.key(), _.convertTo[String]),
-      brokerClusterName = get(StreamDefUtils.BROKER_CLUSTER_NAME_DEFINITION.key(), _.convertTo[String]),
-      jarInfo = get(StreamDefUtils.JAR_INFO_DEFINITION.key(), _.convertTo[FileInfo]),
-      jmxPort = get(StreamDefUtils.JMX_PORT_DEFINITION.key(), _.convertTo[Int]),
-      fromTopics = CommonUtils
-        .requireNonEmpty(
-          get(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(), _.convertTo[Set[TopicKey]]).asJava,
-          () => s"${StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key()} can't be associated to empty array"
-        )
-        .asScala
-        .toSet,
-      toTopics = CommonUtils
-        .requireNonEmpty(
-          get(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(), _.convertTo[Set[TopicKey]]).asJava,
-          () => s"${StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key()} can't be associated to empty array"
-        )
-        .asScala
-        .toSet,
-      settings = Objects.requireNonNull(settings.toMap),
-      executionContext = Objects.requireNonNull(executionContext)
-    )
+    def jmxPort(jmxPort: Int): ClusterCreator = {
+      request.jmxPort(jmxPort)
+      this
+    }
+
+    def fromTopicKey(fromTopicKey: TopicKey): ClusterCreator = fromTopicKeys(Set(fromTopicKey))
+
+    def fromTopicKeys(fromTopicKeys: Set[TopicKey]): ClusterCreator = {
+      request.fromTopicKeys(fromTopicKeys)
+      this
+    }
+
+    def toTopicKey(toTopicKey: TopicKey): ClusterCreator = toTopicKeys(Set(toTopicKey))
+
+    def toTopicKeys(toTopicKeys: Set[TopicKey]): ClusterCreator = {
+      request.toTopicKeys(toTopicKeys)
+      this
+    }
+
+    override def create(): Future[StreamClusterInfo] = {
+      val creation = request.name(clusterName).imageName(imageName).nodeNames(nodeNames).creation
+      doCreate(
+        clusterName = creation.name,
+        nodeNames = creation.nodeNames,
+        imageName = creation.imageName,
+        brokerClusterName = creation.brokerClusterName.get,
+        jarInfo = creation.jarInfo.get,
+        jmxPort = creation.jmxPort,
+        // TODO: the to/from topics should not be empty in building creation ... However, our stream route
+        // allowed user to enter empty for both fields... With a view to keeping the compatibility
+        // we have to move the check from "parsing json" to "running cluster"
+        // I'd say it is inconsistent to our cluster route ... by chia
+        fromTopics = CommonUtils.requireNonEmpty(creation.from.asJava).asScala.toSet,
+        toTopics = CommonUtils.requireNonEmpty(creation.to.asJava).asScala.toSet,
+        settings = creation.settings,
+        executionContext = Objects.requireNonNull(executionContext)
+      )
+    }
 
     override protected def checkClusterName(clusterName: String): String = {
       StreamApi.STREAM_CREATION_JSON_FORMAT.check("name", JsString(clusterName))

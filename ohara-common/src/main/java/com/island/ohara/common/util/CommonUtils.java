@@ -323,10 +323,10 @@ public final class CommonUtils {
    * @return uuid
    */
   public static String randomString(int len) {
-    String string = randomString();
-    if (string.length() < len)
-      throw new IllegalArgumentException(
-          "expected size:" + len + ", actual size:" + string.length());
+    StringBuilder string = new StringBuilder(randomString());
+    while (string.length() < len) {
+      string.append(string).append(randomString());
+    }
     return string.substring(0, len);
   }
 

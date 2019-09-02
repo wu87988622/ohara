@@ -45,7 +45,6 @@ class FakeWorkerCollie(nodes: Seq[Node],
     implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
     throw new UnsupportedOperationException("FakeWorkerCollie doesn't support logs function")
 
-  WorkerApi.access.request.creation.settings
   override def clusterWithAllContainers()(
     implicit executionContext: ExecutionContext): Future[Map[WorkerClusterInfo, Seq[ContainerInfo]]] =
     Future.successful(

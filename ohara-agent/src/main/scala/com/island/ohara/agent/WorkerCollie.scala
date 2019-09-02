@@ -307,21 +307,7 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
 object WorkerCollie {
   trait ClusterCreator extends Collie.ClusterCreator[WorkerClusterInfo] {
     private[this] val request = WorkerApi.access.request
-    override protected def doCopy(clusterInfo: WorkerClusterInfo): Unit = {
-      clientPort(clusterInfo.clientPort)
-      brokerClusterName(clusterInfo.brokerClusterName)
-      groupId(clusterInfo.groupId)
-      offsetTopicName(clusterInfo.offsetTopicName)
-      offsetTopicReplications(clusterInfo.offsetTopicReplications)
-      offsetTopicPartitions(clusterInfo.offsetTopicPartitions)
-      configTopicName(clusterInfo.configTopicName)
-      configTopicReplications(clusterInfo.configTopicReplications)
-      statusTopicName(clusterInfo.statusTopicName)
-      statusTopicReplications(clusterInfo.statusTopicReplications)
-      statusTopicPartitions(clusterInfo.statusTopicPartitions)
-      jarInfos(clusterInfo.jarInfos)
-      jmxPort(clusterInfo.jmxPort)
-    }
+    override protected def doCopy(clusterInfo: WorkerClusterInfo): Unit = request.settings(clusterInfo.settings)
 
     def brokerClusterName(name: String): ClusterCreator = {
       request.brokerClusterName(name)

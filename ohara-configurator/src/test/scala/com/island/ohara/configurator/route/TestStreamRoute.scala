@@ -349,7 +349,7 @@ class TestStreamRoute extends SmallTest with Matchers {
         .clusterName(name)
         .brokerClusterName(CommonUtils.randomString())
         .setting(key, value)
-        .setting(StreamDefUtils.JMX_PORT_DEFINITION.key(), JsNumber(123))
+        .setting(StreamDefUtils.JMX_PORT_DEFINITION.key(), JsNumber(CommonUtils.availablePort()))
         .setting(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(), JsArray(TopicKey.toJsonString(topicKey()).parseJson))
         .setting(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(), JsArray(TopicKey.toJsonString(topicKey()).parseJson))
         .create())
