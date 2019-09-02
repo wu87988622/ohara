@@ -31,7 +31,7 @@ describe('WorkspacesPage', () => {
     cy.route('GET', 'api/workers/*').as('getWorker');
     cy.route('GET', 'api/brokers/*').as('getBroker');
     cy.route('GET', 'api/zookeepers/*').as('getZookeeper');
-    cy.route('GET', 'api/topics').as('getTopics');
+    cy.route('GET', 'api/topics?*').as('getTopics');
     cy.route('GET', 'api/files?*').as('getFiles');
     cy.route('POST', 'api/zookeepers').as('createZookeeper');
     cy.route('POST', 'api/brokers').as('createBroker');
@@ -209,7 +209,15 @@ describe('WorkspacesPage', () => {
       .getByTestId('overview-streamapps-link')
       .click()
       .url()
-      .should('include', '/streamapps');
+      .should('include', '/streamapps')
+      .getByTestId('workspace-tab')
+      .within(() => {
+        cy.getByText('Overview').click();
+      })
+      .getByTestId('overview-plugins-link')
+      .click()
+      .url()
+      .should('include', '/plugins');
   });
 
   it('should display the overview info', () => {
@@ -331,10 +339,9 @@ describe('WorkspacesPage', () => {
       })
       .wait('@getFiles')
       .then(xhr => {
-        cy.log(xhr);
-        xhr.response.body.forEach(streamapp => {
-          const size = floor(divide(streamapp.size, 1024), 1);
-          cy.getByText(streamapp.name)
+        xhr.response.body.forEach(file => {
+          const size = floor(divide(file.size, 1024), 1);
+          cy.getByText(file.name)
             .should('have.length', 1)
             .getByText(String(size))
             .should('have.length', 1);

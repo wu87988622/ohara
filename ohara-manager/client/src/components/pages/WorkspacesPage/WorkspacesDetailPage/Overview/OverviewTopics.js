@@ -31,14 +31,12 @@ import * as useApi from 'components/controller';
 import * as URL from 'components/controller/url';
 
 const OverviewTopics = props => {
-  const { handleRedirect, brokerClusterName } = props;
-  const { data: topics, isLoading: fetchingTopics } = useApi.useFetchApi(
-    URL.TOPIC_URL,
+  const { handleRedirect, worker } = props;
+  const { data: topicsRes, isLoading: fetchingTopics } = useApi.useFetchApi(
+    `${URL.TOPIC_URL}?group=${worker.name}-topic`,
   );
 
-  const topicsUnderBrokerCluster = get(topics, 'data.result', []).filter(
-    topic => topic.brokerClusterName === brokerClusterName,
-  );
+  const topics = get(topicsRes, 'data.result', []);
   return (
     <>
       <TabHeading>
@@ -57,7 +55,7 @@ const OverviewTopics = props => {
         headers={['Name', 'Partitions', 'Replication factor']}
         isLoading={fetchingTopics}
       >
-        {topicsUnderBrokerCluster.map(topic => {
+        {topics.map(topic => {
           return (
             <TableRow key={topic.name}>
               <StyledTableCell component="th" scope="row">
@@ -85,7 +83,9 @@ const OverviewTopics = props => {
 
 OverviewTopics.propTypes = {
   handleRedirect: PropTypes.func.isRequired,
-  brokerClusterName: PropTypes.string.isRequired,
+  worker: PropTypes.shape({
+    name: PropTypes.string.isRequired,
+  }).isRequired,
 };
 
 export default OverviewTopics;

@@ -26,6 +26,7 @@ import Topics from './Topics';
 import StreamApp from './StreamApp/StreamApp';
 import Nodes from './Node/Nodes';
 import Overview from './Overview';
+import Plugins from './Plugins/Plugins';
 
 const StyledTabs = styled(Tabs)`
   border-bottom: 1px solid #eee;
@@ -34,7 +35,7 @@ const StyledTabs = styled(Tabs)`
 const MuiTabs = props => {
   const [value, setValue] = React.useState(0);
 
-  const tabArray = ['overview', 'nodes', 'topics', 'streamapps'];
+  const tabArray = ['overview', 'nodes', 'topics', 'streamapps', 'plugins'];
   const { workspaceName } = props.match.params;
   const baseUrl = `/workspaces/${workspaceName}`;
 
@@ -64,6 +65,7 @@ const MuiTabs = props => {
         <Tab label="Nodes" />
         <Tab label="Topics" />
         <Tab label="Stream jars" />
+        <Tab label="Plugins" />
       </StyledTabs>
       <Route
         path={`${baseUrl}/overview`}
@@ -77,6 +79,10 @@ const MuiTabs = props => {
       <Route
         path={`${baseUrl}/streamapps`}
         render={() => <StreamApp workspaceName={workspaceName} />}
+      />
+      <Route
+        path={`${baseUrl}/plugins`}
+        render={() => <Plugins workspaceName={workspaceName} />}
       />
     </Paper>
   );

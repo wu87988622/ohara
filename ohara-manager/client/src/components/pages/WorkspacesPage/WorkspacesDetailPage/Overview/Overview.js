@@ -21,6 +21,7 @@ import { get, isNull } from 'lodash';
 import OverviewTopics from './OverviewTopics';
 import OverviewConnectors from './OverviewConnectors';
 import OverviewStreamApps from './OverviewStreamApps';
+import OverviewPlugin from './OverviewPlugin';
 import OverviewNodes from './OverviewNodes';
 import {
   TabHeading,
@@ -91,10 +92,7 @@ const Overview = props => {
         </Box>
 
         <Box>
-          <OverviewTopics
-            handleRedirect={handleRedirect}
-            brokerClusterName={brokerClusterName}
-          />
+          <OverviewTopics handleRedirect={handleRedirect} worker={worker} />
         </Box>
       </LeftColumn>
 
@@ -105,6 +103,13 @@ const Overview = props => {
 
         <Box>
           <OverviewStreamApps
+            workerName={workerName}
+            handleRedirect={handleRedirect}
+          />
+        </Box>
+
+        <Box>
+          <OverviewPlugin
             workerName={workerName}
             handleRedirect={handleRedirect}
           />

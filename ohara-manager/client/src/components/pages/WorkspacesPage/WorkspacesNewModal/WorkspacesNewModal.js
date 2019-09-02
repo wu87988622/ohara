@@ -77,9 +77,11 @@ const WorkerNewModal = props => {
   let workingServices = [];
   let plugins = [];
 
-  const uploadJar = async file => {
+  const uploadJar = async params => {
+    const { file, workerName } = params;
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('group', `${workerName}-plugin`);
     await uploadApi(formData);
 
     const isSuccess = get(jarRes(), 'data.isSuccess', false);
@@ -350,7 +352,15 @@ const WorkerNewModal = props => {
 
   const onSubmit = async (values, form) => {
     setIsLoading(true);
-    await Promise.all(checkedFiles.map(async file => await uploadJar(file)));
+    await Promise.all(
+      checkedFiles.map(async file => {
+        const params = {
+          file,
+          workerName: values.name,
+        };
+        await uploadJar(params);
+      }),
+    );
 
     try {
       await createServices(values);

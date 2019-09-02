@@ -34,6 +34,7 @@ const TopicNewModal = props => {
   );
   const { putApi: startTopic } = useApi.usePutApi(URL.TOPIC_URL);
   const { showMessage } = useSnackbar();
+  const { worker } = props;
 
   const handleClose = () => {
     props.onClose();
@@ -47,8 +48,9 @@ const TopicNewModal = props => {
       numberOfPartitions: Number(values.numberOfPartitions),
       numberOfReplications: Number(values.numberOfReplications),
       brokerClusterName: props.brokerClusterName,
+      group: `${worker.name}-topic`,
     });
-    await startTopic(`/${values.name}/start`);
+    await startTopic(`/${values.name}/start?group=${worker.name}-topic`);
     setIsSaving(false);
     const isSuccess = get(topicRes(), 'data.isSuccess', false);
     if (isSuccess) {
@@ -125,6 +127,9 @@ TopicNewModal.propTypes = {
   onClose: PropTypes.func.isRequired,
   onConfirm: PropTypes.func.isRequired,
   brokerClusterName: PropTypes.string.isRequired,
+  worker: PropTypes.shape({
+    name: PropTypes.string.isRequired,
+  }).isRequired,
 };
 
 export default TopicNewModal;
