@@ -32,11 +32,11 @@ import * as URL from 'components/controller/url';
 
 const OverviewTopics = props => {
   const { handleRedirect, worker } = props;
-  const { data: topics, isLoading: fetchingTopics } = useApi.useFetchApi(
+  const { data: topicsRes, isLoading: fetchingTopics } = useApi.useFetchApi(
     `${URL.TOPIC_URL}?group=${worker.name}-topic`,
   );
 
-  const topicsUnderBrokerCluster = get(topics, 'data.result', []);
+  const topics = get(topicsRes, 'data.result', []);
   return (
     <>
       <TabHeading>
@@ -55,7 +55,7 @@ const OverviewTopics = props => {
         headers={['Name', 'Partitions', 'Replication factor']}
         isLoading={fetchingTopics}
       >
-        {topicsUnderBrokerCluster.map(topic => {
+        {topics.map(topic => {
           return (
             <TableRow key={topic.name}>
               <StyledTableCell component="th" scope="row">

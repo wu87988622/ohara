@@ -339,7 +339,6 @@ describe('WorkspacesPage', () => {
       })
       .wait('@getFiles')
       .then(xhr => {
-        cy.log(xhr);
         xhr.response.body.forEach(file => {
           const size = floor(divide(file.size, 1024), 1);
           cy.getByText(file.name)
