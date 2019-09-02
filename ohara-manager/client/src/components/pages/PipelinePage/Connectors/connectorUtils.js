@@ -182,28 +182,6 @@ export const getEditable = ({ key, defaultEditable }) => {
   return key === 'name' || key === 'connector_class' ? false : defaultEditable;
 };
 
-export const getDisplayValue = ({ configValue, defaultValue, newKey }) => {
-  if (newKey === 'from' || newKey === 'to') {
-    // A patch for stream app since it supplys an empty array: `[]`
-    // as the default value for `from` and `to` fields. However,
-    // connectors are using: `null` as the default
-
-    if (Array.isArray(configValue) && isEmpty(configValue)) {
-      return null;
-    }
-  }
-
-  // The configValue could be a `Boolean` value, so we have
-  // to handle it differently, otherwise, it will always
-  // return back `true` here
-  if (typeof configValue === 'boolean') {
-    return configValue;
-  }
-
-  // handle other types normally here
-  return configValue ? configValue : defaultValue;
-};
-
 export const changeToken = ({ values, targetToken, replaceToken }) => {
   return Object.keys(values).reduce((acc, key) => {
     // Two tokens we use to separate words: `.` and `_`
@@ -483,22 +461,56 @@ export const useSave = async (props, values) => {
   updateGraph({ update, dispatcher: { name: 'CONNECTOR' }, ...sinkProps });
 };
 
+export const getDisplayValue = ({
+  configValue,
+  defaultValue,
+  newKey,
+  valueType,
+}) => {
+  if (newKey === 'from' || newKey === 'to') {
+    // A patch for stream app since it supplys an empty array: `[]`
+    // as the default value for `from` and `to` fields. However,
+    // connectors are using: `null` as the default
+
+    if (Array.isArray(configValue) && isEmpty(configValue)) {
+      return null;
+    }
+  }
+
+  // The configValue could be a `Boolean` value, so we have
+  // to handle it differently, otherwise, it will always
+  // return back `true` here
+  if (typeof configValue === 'boolean') {
+    return configValue;
+  }
+
+  // Since backend doesn't give us a valid value of the `BOOLEAN` type
+  // we need to set a valid default value for it
+  if (valueType === 'BOOLEAN') {
+    return configValue ? configValue : false;
+  }
+
+  // handle other types normally here
+  return configValue ? configValue : defaultValue;
+};
+
 export const sortByOrder = (a, b) => a.orderInGroup - b.orderInGroup;
 
 export const getRenderData = ({ state, defs, configs }) => {
-  const isRunning = !!state; // Any state indicates the connector is running
+  const isRunning = Boolean(state); // Any state indicates the connector is running
 
   const data = defs
     .sort(sortByOrder)
     .filter(def => !def.internal) // internal defs are not meant to be seen by users
     .map(def => {
-      const { key, defaultValue } = def;
+      const { key, defaultValue, valueType } = def;
       const newKey = changeKeySeparator(key);
       const configValue = configs[newKey];
 
       const displayValue = getDisplayValue({
         configValue,
         defaultValue,
+        valueType,
         newKey,
       });
 
@@ -559,6 +571,7 @@ export const renderer = props => {
       displayValue,
     } = params;
     const columnTableHeader = tableKeys.concat(tableActions);
+
     switch (valueType) {
       case 'STRING':
       case 'INT':
