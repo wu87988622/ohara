@@ -24,9 +24,11 @@ const useCreateServices = url => {
   const { putApi } = useApi.usePutApi(url);
   const { waitApi, getFinish } = useApi.useWaitApi();
   const fail = useRef();
+  const response = useRef();
   const createServices = async params => {
     const { postParams, checkResult } = params;
     await postApi(postParams);
+    response.current = getData();
     const name = get(getData(), 'data.result.name');
 
     if (!name) {
@@ -51,8 +53,9 @@ const useCreateServices = url => {
   };
 
   const handleFail = () => fail.current;
+  const getResponse = () => response.current;
 
-  return { create, handleFail };
+  return { create, handleFail, getResponse };
 };
 
 export default useCreateServices;

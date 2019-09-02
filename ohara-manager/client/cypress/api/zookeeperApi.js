@@ -33,6 +33,9 @@ const setup = () => {
   cy.createZookeeper({
     name: zookeeperClusterName,
     nodeNames: [nodeName],
+    tags: {
+      name: zookeeperClusterName,
+    },
   }).as('createZookeeper');
 
   return {
@@ -59,6 +62,7 @@ describe('Zookeeper API', () => {
         peerPort,
         state,
         imageName,
+        tags,
       } = result;
 
       expect(isSuccess).to.eq(true);
@@ -72,6 +76,7 @@ describe('Zookeeper API', () => {
       expect(peerPort).to.be.a('number');
       expect(state).to.be.undefined;
       expect(imageName).to.be.a('string');
+      expect(tags.name).to.eq(zookeeperClusterName);
     });
   });
 
@@ -90,6 +95,7 @@ describe('Zookeeper API', () => {
         peerPort,
         state,
         imageName,
+        tags,
       } = result;
 
       expect(isSuccess).to.eq(true);
@@ -103,6 +109,7 @@ describe('Zookeeper API', () => {
       expect(peerPort).to.be.a('number');
       expect(state).to.be.undefined;
       expect(imageName).to.be.a('string');
+      expect(tags.name).to.eq(zookeeperClusterName);
     });
   });
 

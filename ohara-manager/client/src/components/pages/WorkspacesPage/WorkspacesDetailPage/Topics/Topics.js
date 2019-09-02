@@ -126,7 +126,7 @@ const Topics = props => {
         isDeleteModalOpen: false,
         topicToBeDeleted: '',
       });
-      refetch();
+      refetch(true);
     }
   };
 
@@ -162,7 +162,7 @@ const Topics = props => {
           setState({ isNewModalOpen: false });
         }}
         onConfirm={() => {
-          refetch();
+          refetch(true);
         }}
         brokerClusterName={worker.brokerClusterName}
       />

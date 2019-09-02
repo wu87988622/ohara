@@ -67,6 +67,7 @@ const setup = () => {
     name: connectorName,
     topicKeys: [{ group: 'default', name: topicName }],
     workerClusterName,
+    tags: { name: connectorName },
   }).as('createConnector');
 
   return {
@@ -83,7 +84,7 @@ describe('Connector API', () => {
   beforeEach(() => cy.deleteAllServices());
 
   it('createConnector', () => {
-    const { connectorName, topicName } = setup();
+    setup();
 
     cy.get('@createConnector').then(response => {
       const {
@@ -94,15 +95,7 @@ describe('Connector API', () => {
       expect(isSuccess).to.eq(true);
 
       expect(settings).to.be.a('object');
-      expect(settings.className).to.be.a('string');
-      expect(settings['connector.name']).to.eq(connectorName);
-      expect(settings['tasks.max']).to.be.a('number');
-      expect(settings.name).to.be.a('string');
-      expect(settings.workerClusterName).to.be.a('string');
-      expect(settings.topicKeys)
-        .to.be.an('array')
-        .to.have.lengthOf(1)
-        .to.have.deep.property('[0].name', topicName);
+      expect(settings.tags.name).to.eq(settings.name);
 
       expect(settings.topicKeys).to.have.deep.property('[0].group', 'default');
     });
@@ -121,11 +114,7 @@ describe('Connector API', () => {
 
       expect(result).to.include.keys('settings');
       expect(settings).to.be.an('object');
-      expect(settings['className']).to.be.a('string');
-      expect(settings['connector.name']).to.eq(connectorName);
-      expect(settings['tasks.max']).to.be.a('number');
-      expect(settings.name).to.be.a('string');
-      expect(settings.workerClusterName).to.be.a('string');
+      expect(settings.tags.name).to.eq(settings.name);
 
       expect(settings.topicKeys)
         .to.be.an('array')
@@ -175,24 +164,7 @@ describe('Connector API', () => {
       expect(isSuccess).to.eq(true);
 
       expect(settings).to.be.a('object');
-      expect(settings.author).to.be.a('string');
-      expect(settings.columns).to.be.a('array');
-      expect(settings.className).to.be.a('string');
-      expect(settings.name).to.be.a('string');
-      expect(settings['connector.name']).to.be.a('string');
-      expect(settings['ftp.completed.folder']).to.be.a('string');
-      expect(settings['ftp.encode']).to.be.a('string');
-      expect(settings['ftp.error.folder']).to.be.a('string');
-      expect(settings['ftp.hostname']).to.be.a('string');
-      expect(settings['ftp.input.folder']).to.be.a('string');
-      expect(settings['ftp.port']).to.be.a('number');
-      expect(settings['ftp.user.name']).to.be.a('string');
-      expect(settings['ftp.user.password']).to.be.a('string');
-      expect(settings.kind).to.be.a('string');
-      expect(settings.revision).to.be.a('string');
-      expect(settings['tasks.max']).to.be.a('number');
-      expect(settings.version).to.be.a('string');
-      expect(settings.workerClusterName).to.be.a('string');
+      expect(settings.tags.name).to.eq(settings.name);
 
       expect(settings.topicKeys)
         .to.be.an('array')

@@ -73,7 +73,7 @@ const WorkspacesPage = props => {
       <Container>
         <WorkspacesNewModal
           isActive={isModalOpen}
-          onConfirm={() => refetch()}
+          onConfirm={() => refetch(true)}
           onClose={() => setIsModalOpen(false)}
         />
         <PageHeader>

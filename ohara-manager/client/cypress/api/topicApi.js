@@ -50,6 +50,9 @@ const setup = () => {
   cy.createTopic({
     name: topicName,
     brokerClusterName,
+    tags: {
+      name: topicName,
+    },
   }).as('createTopic');
 
   cy.startTopic(topicName);
@@ -77,6 +80,7 @@ describe('Topic API', () => {
         numberOfPartitions,
         numberOfReplications,
         metrics,
+        tags,
       } = result;
 
       expect(isSuccess).to.eq(true);
@@ -86,6 +90,7 @@ describe('Topic API', () => {
       expect(numberOfReplications).to.be.a('number');
       expect(metrics).to.be.a('object');
       expect(metrics.meters).to.be.a('array');
+      expect(tags.name).to.eq(topicName);
     });
   });
 
@@ -102,6 +107,7 @@ describe('Topic API', () => {
         numberOfPartitions,
         numberOfReplications,
         metrics,
+        tags,
       } = result;
 
       expect(isSuccess).to.eq(true);
@@ -111,6 +117,7 @@ describe('Topic API', () => {
       expect(numberOfReplications).to.be.a('number');
       expect(metrics).to.be.a('object');
       expect(metrics.meters).to.be.a('array');
+      expect(tags.name).to.eq(topicName);
     });
   });
 

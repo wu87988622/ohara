@@ -34,6 +34,9 @@ const setup = () => {
   cy.createZookeeper({
     name: zookeeperClusterName,
     nodeNames: [nodeName],
+    tags: {
+      name: zookeeperClusterName,
+    },
   });
 
   cy.startZookeeper(zookeeperClusterName);
@@ -42,6 +45,9 @@ const setup = () => {
     name: brokerClusterName,
     nodeNames: [nodeName],
     zookeeperClusterName,
+    tags: {
+      name: brokerClusterName,
+    },
   }).as('createBroker');
 
   return {
@@ -69,6 +75,7 @@ describe('Broker API', () => {
         jmxPort,
         state,
         imageName,
+        tags,
       } = result;
 
       expect(isSuccess).to.eq(true);
@@ -82,6 +89,7 @@ describe('Broker API', () => {
       expect(jmxPort).to.be.a('number');
       expect(state).to.be.undefined;
       expect(imageName).to.be.a('string');
+      expect(tags.name).to.eq(brokerClusterName);
     });
   });
 
@@ -100,6 +108,7 @@ describe('Broker API', () => {
         jmxPort,
         state,
         imageName,
+        tags,
       } = result;
 
       expect(isSuccess).to.eq(true);
@@ -112,6 +121,7 @@ describe('Broker API', () => {
       expect(jmxPort).to.be.a('number');
       expect(state).to.be.undefined;
       expect(imageName).to.be.a('string');
+      expect(tags.name).to.eq(brokerClusterName);
     });
   });
 

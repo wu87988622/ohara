@@ -55,7 +55,7 @@ const StreamApp = props => {
     if (isSuccess) {
       showMessage(MESSAGES.STREAM_APP_UPLOAD_SUCCESS);
     }
-    refetch();
+    refetch(true);
   };
 
   const handleFileSelect = event => {
@@ -115,7 +115,7 @@ const StreamApp = props => {
         showMessage(MESSAGES.STREAM_APP_DELETE_SUCCESS);
         setIsModalOpen(false);
         setJarNameToBeDeleted('');
-        refetch();
+        refetch(true);
       }
     }
   };
